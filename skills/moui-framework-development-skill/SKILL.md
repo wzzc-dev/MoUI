@@ -86,8 +86,9 @@ Use this skill when editing or reviewing:
 ## Package Map
 
 - `core/`: one MoonBit package for platform-neutral runtime, view specs, state,
-  layout, input, semantics, rich text editing, draw commands, styles, and theme
-  tokens. Keep files grouped by responsibility (`runtime_state`,
+  app-owned route/history helpers, layout, input, semantics, rich text editing,
+  draw commands, styles, and theme tokens. Keep files grouped by responsibility
+  (`runtime_state`,
   `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
   subpackages.
 - `style/`: visual token and style compatibility aliases.
@@ -125,8 +126,8 @@ Use this skill when editing or reviewing:
 - `examples/showcase/{macos_cosmic,windows_cosmic,linux_cosmic}`: explicit Moon
   Cosmic text provider comparison entrypoints.
 - `examples/showcase/{macos_skia,windows_skia,linux_skia}` and
-  `examples/markdown_editor/macos_skia`: explicit native Skia renderer example
-  entrypoints.
+  `examples/markdown_editor/{macos_skia,windows_skia,linux_skia}`: explicit
+  native Skia renderer example entrypoints.
 
 ## Development Workflow
 
@@ -179,7 +180,15 @@ the browser-session artifact, then fold it into
 `record-platform-evidence-manifest.mjs ... web --web-presentation-manifest ...`.
 The platform evidence manifest is schema v2 and records the window fork's
 monitor/cursor probe as `monitorCursor`; native passed entries must set it to
-`yes`, while Web browser-session evidence may leave it pending.
+`yes`, while Web browser-session evidence may leave it pending. Native entries
+also record a `skiaEvidence` block for Skia provider/preflight commands,
+fallback-unavailable checks, real-renderer smoke, and Showcase/Markdown
+first-frame status. `skiaEvidence.status=passed` is Skia-route evidence, not a
+complete platform-services claim by itself, but native platform entries cannot
+be marked `passed` unless their Skia evidence is also `passed`. Use
+`record-native-skia-evidence.mjs` for matching-host Skia logs when you only
+want to validate and update `skiaEvidence`; it deliberately leaves the broader
+platform runtime status unchanged.
 A passed presentation manifest must include WebGPU startup, wasm startup,
 canvas sizing, resize/input event-bridge delivery, Markdown Editor text input,
 clean target close, clean console, and nonblank screenshots for the named
@@ -205,6 +214,9 @@ sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
 node scripts/validate-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json
 node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json <platform> ...
+node scripts/record-native-skia-evidence.mjs artifacts/conformance/platform-runtime-evidence.json <platform> ...
+node scripts/validate-skia-entrypoints.mjs
+node scripts/test-validate-skia-entrypoints.mjs
 moon test examples/showcase/app --target native
 moon test examples/counter/app --target native
 moon test examples/markdown_editor/app --target native
@@ -212,6 +224,8 @@ moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon build examples/markdown_editor/macos_skia --target native
+moon build examples/markdown_editor/windows_skia --target native
+moon build examples/markdown_editor/linux_skia --target native
 node --check scripts/validate-conformance-capture-manifest.mjs
 node scripts/test-validate-conformance-capture-manifest.mjs
 node --check scripts/validate-platform-evidence-manifest.mjs
@@ -239,6 +253,24 @@ sh scripts/dev-check.sh --platform-examples-build
 Use `--platform-examples-test` for normal current-host backend/provider checks.
 Run `moui/backend/<platform>/{wgpu,skia}` tests directly only on the matching
 host/toolchain when investigating that provider.
+macOS/Windows/Linux Skia provider tests cover the public
+`*_skia_provider_preflight_summary()` package-audit surface for renderer
+availability, `skia_mbt/native` availability, selected font resolution, and
+presenter identity, the `HostWindowRenderer` bridge that forwards Skia
+text-system, image-resource, present-count, and disposal diagnostics, inherited
+host service/input/window readiness,
+clipboard/menu/file-dialog/open URL/system-theme/async-service readiness,
+text-input/IME/drag-drop readiness, native context-menu readiness, host-modal
+file-dialog readiness, native accessibility status, and the
+first-frame smoke option state. Treat those
+summaries as preflight evidence only; the macOS first-frame smoke and matching
+Windows/Linux Showcase or Markdown Editor runtime runs are still required before
+claiming Skia presentation. Windows/Linux Skia entrypoints use
+`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`,
+`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`,
+`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1`, or
+`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` for matching-host
+auto-exit first-frame logs.
 
 Windows native uses the MSVC dynamic WGPU path. Use
 `scripts/windows/msvc_env.ps1` through the MSVC helpers and validate with
@@ -251,6 +283,12 @@ Real macOS Skia renderer smoke:
 ```sh
 scripts/macos-skia-renderer-smoke.sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke \
+  --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
+  --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log \
+  --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
+  --record-platform-evidence artifacts/conformance/platform-runtime-evidence.json
 scripts/macos-skia-renderer-smoke.sh --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
@@ -260,7 +298,15 @@ scripts/macos-skia-renderer-smoke.sh --skia-provider source
 The helper resolves JetBrains, existing, or source-built Skia providers,
 temporarily configures the local `skia_mbt` and MoUI Skia smoke packages, runs
 the renderer pixel smoke, optionally launches `examples/showcase/macos_skia` to
-verify its first presented frame, and restores touched `moon.pkg` files.
+verify its first presented frame, optionally launches
+`examples/markdown_editor/macos_skia` with `--run-markdown-smoke`, and restores
+touched `moon.pkg` files. With explicit artifact log paths,
+`--record-platform-evidence` updates only the macOS `skiaEvidence` block after a
+successful full smoke; it does not mark the broader platform-service entry
+passed. Normal macOS Skia entrypoints default to the system
+`FontMgr` text path; first-frame smoke entrypoints explicitly select
+`EmptyTypeface` only while their exit-after-first-present flag is set. Windows
+and Linux Skia entrypoints follow the same smoke-only font-resolution switch.
 
 Public API review:
 
@@ -294,6 +340,8 @@ moon info
 - Keep `core/` limited to `TextSystem`, `FontSpec`, fallback measurement, and
   platform-neutral text geometry.
 - Put native provider work in the relevant `render/wgpu/*` package.
+- Put Skia-backed measurement, glyph-run, font fallback, and diagnostic text
+  system work in `render/skia`.
 - Keep `render/wgpu` responsible for provider validation, fallback composition,
   glyph atlas upload, and cache-key discipline.
 - Keep Web measurement and glyph drawing aligned through `backend/web` and

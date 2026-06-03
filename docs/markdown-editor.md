@@ -16,6 +16,10 @@ contextual commands, and editing workflows.
 - `examples/markdown_editor/macos_skia/`: macOS native entrypoint using the
   Skia renderer provider.
 - `examples/markdown_editor/windows/`: Windows native entrypoint.
+- `examples/markdown_editor/windows_skia/`: Windows native entrypoint using the
+  Skia renderer provider.
+- `examples/markdown_editor/linux_skia/`: Linux native entrypoint using the
+  Skia renderer provider.
 - `views/markdown_editor.mbt`: public rich text editor wrappers used by the
   example.
 - `core/rich_text_*.mbt` plus `core/text_editing*.mbt`: platform-neutral rich
@@ -155,7 +159,10 @@ moon build examples/markdown_editor/macos_skia --target native
 
 The Skia entrypoint requires the same real native Skia link setup used by
 `examples/showcase/macos_skia`; `scripts/macos-skia-renderer-smoke.sh` can
-configure those flags temporarily while running Skia smoke checks.
+configure those flags temporarily while running Skia smoke checks. Use
+`scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke`
+when you need the renderer pixel smoke plus first-frame Showcase and Markdown
+Editor Skia evidence on macOS.
 
 Windows native uses the shared MSVC helper. It accepts any Windows entrypoint
 package, including the Markdown Editor package:
@@ -165,8 +172,28 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/markdown_editor/windows `
   -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows_skia `
+  -BuildOnly
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
+
+For matching-host Markdown Skia first-frame evidence, set
+`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` in the same MSVC
+environment before the `windows_skia` run. The log proves only the Windows host
+that produced it.
+
+Linux native Skia uses the Linux Skia provider package and should be run on a
+matching Wayland host with real Skia link flags before claiming runtime pixels:
+
+```sh
+moon build examples/markdown_editor/linux_skia --target native
+moon run examples/markdown_editor/linux_skia --target native
+```
+
+Set `MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` before the
+Linux `moon run` command when collecting matching-host first-frame evidence.
 
 ## Validation
 
@@ -176,6 +203,9 @@ Focused checks:
 moon test examples/markdown_editor/app --target native
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon build examples/markdown_editor/macos_skia --target native
+moon check examples/markdown_editor/windows_skia --target native
+moon check examples/markdown_editor/linux_skia --target native
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 ```
 
 When editor work changes public view wrappers, also run:

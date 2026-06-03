@@ -6,8 +6,10 @@ usage() {
 Usage: scripts/macos-skia-renderer-smoke.sh [options]
 
 Temporarily configures the local skia_mbt native package plus MoUI's Skia
-renderer smoke and macos_skia showcase entrypoints, runs the renderer pixel
-smoke, builds examples/showcase/macos_skia, then restores all package files.
+renderer smoke, examples/showcase/macos_skia, and
+examples/markdown_editor/macos_skia entrypoints. It runs the renderer pixel
+smoke, builds examples/showcase/macos_skia, optionally runs Showcase and
+Markdown Editor first-frame smokes, then restores all package files.
 Use --write-local-config when you want to keep the resolved local link flags so
 direct moon run/build commands can use the native Skia packages afterwards.
 
@@ -40,19 +42,32 @@ Options:
                          paths are resolved from the repository root.
   --showcase-log PATH    Write macos_skia Showcase smoke output to PATH.
                          Relative paths are resolved from the repository root.
+  --markdown-log PATH    Write markdown_editor/macos_skia smoke output to PATH.
+                         Relative paths are resolved from the repository root.
+  --record-platform-evidence PATH
+                         After a successful renderer, Showcase, and Markdown
+                         smoke, update the macOS skiaEvidence block in the
+                         platform runtime evidence manifest at PATH. Requires
+                         --smoke-log, --showcase-log, and --markdown-log under
+                         artifacts/platform-evidence/macos/.
   --no-sync-deps         Skip python3 tools/git-sync-deps for source provider.
   --no-fetch             Reuse an existing Skia checkout for source provider.
   --skip-showcase-build  Only run the renderer pixel smoke.
   --run-showcase-smoke   After building macos_skia, run it with a first-frame
                          exit flag and verify the renderer-present marker.
+  --run-markdown-smoke   Build and run markdown_editor/macos_skia with a
+                         first-frame exit flag and verify the marker.
   --showcase-timeout SECONDS
                          Seconds to wait for --run-showcase-smoke. Default: 20.
+  --markdown-timeout SECONDS
+                         Seconds to wait for --run-markdown-smoke. Default: 20.
   --dry-run-config       Print resolved paths and flags, then exit without
                          rewriting package files or building executables.
   --write-local-config   Persistently write resolved link flags into the local
-                         skia_mbt native, renderer smoke, and macos_skia package
-                         files, then exit. Leaves machine-local moon.pkg edits;
-                         do not commit those path-specific package files.
+                         skia_mbt native, renderer smoke, Showcase macos_skia,
+                         and Markdown Editor macos_skia package files, then
+                         exit. Leaves machine-local moon.pkg edits; do not
+                         commit those path-specific package files.
   -h, --help             Show this help.
 
 Environment defaults:
@@ -97,11 +112,15 @@ fi
 requested_build_log=""
 requested_smoke_log=""
 requested_showcase_log=""
+requested_markdown_log=""
+requested_platform_evidence_manifest=""
 sync_deps=1
 fetch_repo=1
 skip_showcase_build=0
 run_showcase_smoke=0
+run_markdown_smoke=0
 showcase_timeout=20
+markdown_timeout=20
 dry_run_config=0
 write_local_config=0
 
@@ -175,6 +194,14 @@ while [[ $# -gt 0 ]]; do
       requested_showcase_log="${2:-}"
       shift 2
       ;;
+    --markdown-log)
+      requested_markdown_log="${2:-}"
+      shift 2
+      ;;
+    --record-platform-evidence)
+      requested_platform_evidence_manifest="${2:-}"
+      shift 2
+      ;;
     --no-sync-deps)
       sync_deps=0
       shift
@@ -191,8 +218,16 @@ while [[ $# -gt 0 ]]; do
       run_showcase_smoke=1
       shift
       ;;
+    --run-markdown-smoke)
+      run_markdown_smoke=1
+      shift
+      ;;
     --showcase-timeout)
       showcase_timeout="${2:-}"
+      shift 2
+      ;;
+    --markdown-timeout)
+      markdown_timeout="${2:-}"
       shift 2
       ;;
     --dry-run-config)
@@ -223,11 +258,16 @@ renderer_pkg="$repo_root/moui/tests/skia_renderer_smoke/native/moon.pkg"
 renderer_pkg_backup="$renderer_pkg.moui-smoke.bak"
 showcase_pkg="$repo_root/examples/showcase/macos_skia/moon.pkg"
 showcase_pkg_backup="$showcase_pkg.moui-smoke.bak"
+markdown_pkg="$repo_root/examples/markdown_editor/macos_skia/moon.pkg"
+markdown_pkg_backup="$markdown_pkg.moui-smoke.bak"
 build_log=""
 smoke_log=""
 showcase_log=""
+markdown_log=""
+platform_evidence_manifest=""
 smoke_log_is_temporary=0
 showcase_log_is_temporary=0
+markdown_log_is_temporary=0
 
 resolve_path() {
   local path="$1"
@@ -247,6 +287,17 @@ resolve_existing_dir() {
   cd "$path" && pwd
 }
 
+relative_to_repo() {
+  local path="$1"
+  case "$path" in
+    "$repo_root"/*) printf '%s\n' "${path#"$repo_root"/}" ;;
+    *)
+      echo "path is outside repository root: $path" >&2
+      exit 2
+      ;;
+  esac
+}
+
 get_assignment_value() {
   local input="$1"
   local key="$2"
@@ -254,7 +305,7 @@ get_assignment_value() {
 }
 
 check_package_backups() {
-  for backup in "$native_pkg_backup" "$renderer_pkg_backup" "$showcase_pkg_backup"; do
+  for backup in "$native_pkg_backup" "$renderer_pkg_backup" "$showcase_pkg_backup" "$markdown_pkg_backup"; do
     if [[ -f "$backup" ]]; then
       echo "package backup already exists: $backup" >&2
       echo "Resolve the stale backup before running the MoUI Skia renderer smoke." >&2
@@ -306,6 +357,40 @@ if [[ -n "$requested_showcase_log" ]]; then
   showcase_log="$(resolve_path "$requested_showcase_log")"
 fi
 
+if [[ -n "$requested_markdown_log" ]]; then
+  markdown_log="$(resolve_path "$requested_markdown_log")"
+fi
+
+if [[ -n "$requested_platform_evidence_manifest" ]]; then
+  platform_evidence_manifest="$(resolve_path "$requested_platform_evidence_manifest")"
+fi
+
+ensure_platform_evidence_log_path() {
+  local label="$1"
+  local path="$2"
+  if [[ -z "$path" ]]; then
+    echo "--record-platform-evidence requires --${label}-log" >&2
+    exit 2
+  fi
+  case "$path" in
+    "$repo_root"/artifacts/platform-evidence/macos/*) ;;
+    *)
+      echo "--record-platform-evidence requires --${label}-log under artifacts/platform-evidence/macos/: $path" >&2
+      exit 2
+      ;;
+  esac
+}
+
+if [[ -n "$platform_evidence_manifest" ]]; then
+  if [[ $run_showcase_smoke -ne 1 || $run_markdown_smoke -ne 1 ]]; then
+    echo "--record-platform-evidence requires --run-showcase-smoke and --run-markdown-smoke" >&2
+    exit 2
+  fi
+  ensure_platform_evidence_log_path "smoke" "$smoke_log"
+  ensure_platform_evidence_log_path "showcase" "$showcase_log"
+  ensure_platform_evidence_log_path "markdown" "$markdown_log"
+fi
+
 if [[ $run_showcase_smoke -eq 1 && $skip_showcase_build -eq 1 ]]; then
   echo "--run-showcase-smoke cannot be combined with --skip-showcase-build" >&2
   exit 2
@@ -321,8 +406,18 @@ if [[ $run_showcase_smoke -eq 1 && $write_local_config -eq 1 ]]; then
   exit 2
 fi
 
+if [[ $run_markdown_smoke -eq 1 && $write_local_config -eq 1 ]]; then
+  echo "--write-local-config writes package files and exits; run the Markdown Editor smoke afterwards" >&2
+  exit 2
+fi
+
 if ! [[ "$showcase_timeout" =~ ^[0-9]+$ ]] || [[ "$showcase_timeout" -lt 1 ]]; then
   echo "--showcase-timeout must be a positive integer number of seconds" >&2
+  exit 2
+fi
+
+if ! [[ "$markdown_timeout" =~ ^[0-9]+$ ]] || [[ "$markdown_timeout" -lt 1 ]]; then
+  echo "--markdown-timeout must be a positive integer number of seconds" >&2
   exit 2
 fi
 
@@ -505,11 +600,21 @@ fi
 if [[ -n "$showcase_log" ]]; then
   echo "  showcase_log=$showcase_log"
 fi
+if [[ -n "$markdown_log" ]]; then
+  echo "  markdown_log=$markdown_log"
+fi
+if [[ -n "$platform_evidence_manifest" ]]; then
+  echo "  platform_evidence_manifest=$platform_evidence_manifest"
+fi
 echo "  skip_showcase_build=$skip_showcase_build"
 echo "  run_showcase_smoke=$run_showcase_smoke"
+echo "  run_markdown_smoke=$run_markdown_smoke"
 echo "  write_local_config=$write_local_config"
 if [[ $run_showcase_smoke -eq 1 ]]; then
   echo "  showcase_timeout=$showcase_timeout"
+fi
+if [[ $run_markdown_smoke -eq 1 ]]; then
+  echo "  markdown_timeout=$markdown_timeout"
 fi
 
 if [[ $dry_run_config -eq 1 ]]; then
@@ -561,7 +666,31 @@ write_showcase_pkg_config() {
 import {
   "moonbitlang/core/env",
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
+  "wzzc-dev/moui/render/skia" @skia_renderer,
   "examples/showcase/app",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "$showcase_link_flags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+EOF
+}
+
+write_markdown_pkg_config() {
+  cat > "$markdown_pkg" <<EOF
+import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "examples/markdown_editor/app",
 }
 
 supported_targets = "native"
@@ -585,8 +714,11 @@ if [[ $write_local_config -eq 1 ]]; then
   echo "Wrote local MoUI renderer smoke package link flags."
   write_showcase_pkg_config
   echo "Wrote local macos_skia showcase package link flags."
+  write_markdown_pkg_config
+  echo "Wrote local markdown_editor/macos_skia package link flags."
   echo "Local macOS Skia configuration is ready. Direct run command:"
   echo "  moon run examples/showcase/macos_skia --target native"
+  echo "  moon run examples/markdown_editor/macos_skia --target native"
   echo "These package files contain machine-local paths; keep them out of commits."
   exit 0
 fi
@@ -597,6 +729,9 @@ restore_packages() {
   fi
   if [[ $showcase_log_is_temporary -eq 1 && -n "${showcase_log:-}" && -f "$showcase_log" ]]; then
     rm -f "$showcase_log"
+  fi
+  if [[ $markdown_log_is_temporary -eq 1 && -n "${markdown_log:-}" && -f "$markdown_log" ]]; then
+    rm -f "$markdown_log"
   fi
   if [[ -f "$native_pkg_backup" ]]; then
     cp "$native_pkg_backup" "$native_pkg"
@@ -613,12 +748,18 @@ restore_packages() {
     rm -f "$showcase_pkg_backup"
     echo "Restored examples/showcase/macos_skia/moon.pkg after MoUI Skia renderer smoke."
   fi
+  if [[ -f "$markdown_pkg_backup" ]]; then
+    cp "$markdown_pkg_backup" "$markdown_pkg"
+    rm -f "$markdown_pkg_backup"
+    echo "Restored examples/markdown_editor/macos_skia/moon.pkg after MoUI Skia renderer smoke."
+  fi
 }
 trap restore_packages EXIT
 
 cp "$native_pkg" "$native_pkg_backup"
 cp "$renderer_pkg" "$renderer_pkg_backup"
 cp "$showcase_pkg" "$showcase_pkg_backup"
+cp "$markdown_pkg" "$markdown_pkg_backup"
 
 write_native_pkg_config
 echo "Wrote temporary skia_mbt/native/moon.pkg with macOS Skia link flags."
@@ -628,6 +769,9 @@ echo "Wrote temporary MoUI renderer smoke package link flags."
 
 write_showcase_pkg_config
 echo "Wrote temporary macos_skia showcase package link flags."
+
+write_markdown_pkg_config
+echo "Wrote temporary markdown_editor/macos_skia package link flags."
 
 cd "$repo_root"
 moon build moui/tests/skia_renderer_smoke/native --target native
@@ -715,6 +859,68 @@ if [[ $skip_showcase_build -eq 0 ]]; then
     fi
     echo "Verified macos_skia Showcase first-frame smoke marker."
   fi
+fi
+
+if [[ $run_markdown_smoke -eq 1 ]]; then
+  moon build examples/markdown_editor/macos_skia --target native
+  markdown_exe="$repo_root/_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe"
+  if [[ -x "$markdown_exe" ]]; then
+    echo "Built markdown_editor/macos_skia executable: $markdown_exe"
+  else
+    echo "markdown_editor/macos_skia executable was not produced at $markdown_exe" >&2
+    exit 1
+  fi
+
+  echo "Running markdown_editor/macos_skia first-frame smoke executable: $markdown_exe"
+  if [[ -z "$markdown_log" ]]; then
+    markdown_log="$(mktemp "${TMPDIR:-/tmp}/moui-macos-skia-markdown-smoke.XXXXXX.log")"
+    markdown_log_is_temporary=1
+  else
+    mkdir -p "$(dirname "$markdown_log")"
+    : > "$markdown_log"
+  fi
+
+  set +e
+  MOUI_MARKDOWN_EDITOR_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 "$markdown_exe" >"$markdown_log" 2>&1 &
+  markdown_pid=$!
+  (
+    sleep "$markdown_timeout"
+    if kill -0 "$markdown_pid" 2>/dev/null; then
+      echo "markdown_editor/macos_skia smoke timed out after ${markdown_timeout}s" >>"$markdown_log"
+      kill "$markdown_pid" 2>/dev/null
+    fi
+  ) &
+  markdown_watchdog_pid=$!
+  wait "$markdown_pid"
+  markdown_status=$?
+  kill "$markdown_watchdog_pid" 2>/dev/null
+  wait "$markdown_watchdog_pid" 2>/dev/null
+  cat "$markdown_log"
+  set -e
+  if [[ $markdown_status -ne 0 ]]; then
+    exit "$markdown_status"
+  fi
+  if ! grep -Fq "macOS renderer presented first frame; exiting by request" "$markdown_log"; then
+    echo "markdown_editor/macos_skia smoke did not print the expected first-frame marker" >&2
+    exit 1
+  fi
+  echo "Verified markdown_editor/macos_skia first-frame smoke marker."
+fi
+
+if [[ -n "$platform_evidence_manifest" ]]; then
+  node scripts/record-platform-evidence-manifest.mjs \
+    "$(relative_to_repo "$platform_evidence_manifest")" \
+    macos \
+    --skia-status passed \
+    --skia-set providerPreflight=yes \
+    --skia-set fallbackUnavailable=yes \
+    --skia-set realRendererSmoke=yes \
+    --skia-set showcaseFirstFrame=yes \
+    --skia-set markdownFirstFrame=yes \
+    --skia-artifact "$(relative_to_repo "$smoke_log")" \
+    --skia-artifact "$(relative_to_repo "$showcase_log")" \
+    --skia-artifact "$(relative_to_repo "$markdown_log")" \
+    --skia-note "macOS real-Skia renderer smoke and Showcase/Markdown Editor first-frame markers passed on the local Darwin host; this is Skia route evidence, not full platform-service runtime evidence."
 fi
 
 echo "MoUI macOS Skia renderer smoke passed."

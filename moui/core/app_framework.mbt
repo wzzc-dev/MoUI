@@ -30,6 +30,19 @@ pub(all) struct RouterSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct RouteHistoryEntry {
+  route : String
+  title : String
+  source : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RouteHistoryState {
+  entries : Array[RouteHistoryEntry]
+  cursor : Int
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct RouteFocusEntry {
   route : String
   focus_key : String
@@ -115,6 +128,206 @@ pub fn RouteDescriptor::new(
 ///|
 pub fn RouterSnapshot::new(routes~ : Array[String]) -> RouterSnapshot {
   { routes, }
+}
+
+///|
+pub fn RouteHistoryEntry::new(
+  route~ : String,
+  title? : String = "",
+  source? : String = "app",
+) -> RouteHistoryEntry {
+  { route, title, source }
+}
+
+///|
+pub fn RouteHistoryEntry::location(self : RouteHistoryEntry) -> RouteLocation {
+  RouteLocation::parse(self.route)
+}
+
+///|
+pub fn RouteHistoryState::new(
+  initial? : RouteLocation = RouteLocation::new(path="/"),
+  title? : String = "",
+  source? : String = "app",
+) -> RouteHistoryState {
+  {
+    entries: [RouteHistoryEntry::new(route=initial.to_route(), title~, source~)],
+    cursor: 0,
+  }
+}
+
+///|
+pub fn RouteHistoryState::from_deep_link(
+  route : String,
+  title? : String = "",
+  source? : String = "deep-link",
+) -> RouteHistoryState {
+  RouteHistoryState::new(initial=RouteLocation::parse(route), title~, source~)
+}
+
+///|
+pub fn RouteHistoryState::from_routes(
+  routes~ : Array[String],
+  cursor? : Int = -1,
+  title? : String = "",
+  source? : String = "app",
+) -> RouteHistoryState {
+  if routes.length() == 0 {
+    RouteHistoryState::new(title~, source~)
+  } else {
+    let entries = routes.map(route => {
+      RouteHistoryEntry::new(route~, title~, source~)
+    })
+    let selected = if cursor < 0 {
+      entries.length() - 1
+    } else {
+      clamp_route_history_cursor(entries, cursor)
+    }
+    { entries, cursor: selected }
+  }
+}
+
+///|
+pub fn RouteHistoryState::from_snapshot(
+  snapshot : RouterSnapshot,
+  title? : String = "",
+  source? : String = "router",
+) -> RouteHistoryState {
+  RouteHistoryState::from_routes(routes=snapshot.routes, title~, source~)
+}
+
+///|
+pub fn RouteHistoryState::current_entry(
+  self : RouteHistoryState,
+) -> RouteHistoryEntry? {
+  let cursor = clamp_route_history_cursor(self.entries, self.cursor)
+  if cursor < 0 {
+    None
+  } else {
+    Some(self.entries[cursor])
+  }
+}
+
+///|
+pub fn RouteHistoryState::current(self : RouteHistoryState) -> RouteLocation {
+  match self.current_entry() {
+    Some(entry) => entry.location()
+    None => RouteLocation::new(path="/")
+  }
+}
+
+///|
+pub fn RouteHistoryState::current_route(self : RouteHistoryState) -> String {
+  match self.current_entry() {
+    Some(entry) => entry.route
+    None => "/"
+  }
+}
+
+///|
+pub fn RouteHistoryState::can_go_back(self : RouteHistoryState) -> Bool {
+  clamp_route_history_cursor(self.entries, self.cursor) > 0
+}
+
+///|
+pub fn RouteHistoryState::can_go_forward(self : RouteHistoryState) -> Bool {
+  let cursor = clamp_route_history_cursor(self.entries, self.cursor)
+  cursor >= 0 && cursor + 1 < self.entries.length()
+}
+
+///|
+pub fn RouteHistoryState::push(
+  self : RouteHistoryState,
+  location : RouteLocation,
+  title? : String = "",
+  source? : String = "app",
+) -> RouteHistoryState {
+  let entry = RouteHistoryEntry::new(route=location.to_route(), title~, source~)
+  let cursor = clamp_route_history_cursor(self.entries, self.cursor)
+  let entries : Array[RouteHistoryEntry] = []
+  if cursor >= 0 {
+    for index, current in self.entries {
+      if index <= cursor {
+        entries.push(current)
+      }
+    }
+  }
+  entries.push(entry)
+  { entries, cursor: entries.length() - 1 }
+}
+
+///|
+pub fn RouteHistoryState::replace(
+  self : RouteHistoryState,
+  location : RouteLocation,
+  title? : String = "",
+  source? : String = "app",
+) -> RouteHistoryState {
+  if self.entries.length() == 0 {
+    RouteHistoryState::new(initial=location, title~, source~)
+  } else {
+    let entry = RouteHistoryEntry::new(
+      route=location.to_route(),
+      title~,
+      source~,
+    )
+    let cursor = clamp_route_history_cursor(self.entries, self.cursor)
+    let entries : Array[RouteHistoryEntry] = []
+    for index, current in self.entries {
+      if index == cursor {
+        entries.push(entry)
+      } else {
+        entries.push(current)
+      }
+    }
+    { entries, cursor }
+  }
+}
+
+///|
+pub fn RouteHistoryState::back(self : RouteHistoryState) -> RouteHistoryState {
+  let cursor = clamp_route_history_cursor(self.entries, self.cursor)
+  if cursor > 0 {
+    { ..self, cursor: cursor - 1 }
+  } else {
+    { ..self, cursor, }
+  }
+}
+
+///|
+pub fn RouteHistoryState::forward(
+  self : RouteHistoryState,
+) -> RouteHistoryState {
+  let cursor = clamp_route_history_cursor(self.entries, self.cursor)
+  if cursor >= 0 && cursor + 1 < self.entries.length() {
+    { ..self, cursor: cursor + 1 }
+  } else {
+    { ..self, cursor, }
+  }
+}
+
+///|
+pub fn RouteHistoryState::router_snapshot(
+  self : RouteHistoryState,
+) -> RouterSnapshot {
+  let routes : Array[String] = []
+  let cursor = clamp_route_history_cursor(self.entries, self.cursor)
+  if cursor >= 0 {
+    for index, entry in self.entries {
+      if index <= cursor {
+        routes.push(entry.route)
+      }
+    }
+  }
+  RouterSnapshot::new(routes~)
+}
+
+///|
+pub fn RouteHistoryState::restore_router(
+  self : RouteHistoryState,
+  router : RouterState,
+) -> Unit {
+  router.restore(self.router_snapshot())
 }
 
 ///|
@@ -487,5 +700,21 @@ fn split_once(value : String, separator : Char) -> (String, String)? {
     Some((String::from_array(before), String::from_array(after)))
   } else {
     None
+  }
+}
+
+///|
+fn clamp_route_history_cursor(
+  entries : Array[RouteHistoryEntry],
+  cursor : Int,
+) -> Int {
+  if entries.length() == 0 {
+    -1
+  } else if cursor < 0 {
+    0
+  } else if cursor >= entries.length() {
+    entries.length() - 1
+  } else {
+    cursor
   }
 }

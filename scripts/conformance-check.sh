@@ -246,16 +246,21 @@ write_platform_evidence_manifest() {
       "routineCommands": [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/macos --target native",
-        "moon build examples/markdown_editor/macos --target native"
+        "moon build examples/showcase/macos_skia --target native",
+        "moon build examples/markdown_editor/macos --target native",
+        "moon build examples/markdown_editor/macos_skia --target native"
       ],
       "runtimeEvidenceCommands": [
         "moon run examples/showcase/macos --target native",
-        "moon run examples/markdown_editor/macos --target native"
+        "moon run examples/showcase/macos_skia --target native",
+        "moon run examples/markdown_editor/macos --target native",
+        "moon run examples/markdown_editor/macos_skia --target native"
       ],
       "exampleTargets": [
         "examples/showcase/macos",
         "examples/showcase/macos_skia",
-        "examples/markdown_editor/macos"
+        "examples/markdown_editor/macos",
+        "examples/markdown_editor/macos_skia"
       ],
       "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
       "consumerCommand": "pending",
@@ -273,6 +278,30 @@ write_platform_evidence_manifest() {
         "monitorCursor": "pending",
         "cleanShutdown": "pending"
       },
+      "skiaEvidence": {
+        "status": "pending",
+        "boundary": "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named macOS host and does not reuse skia_mbt dependency evidence.",
+        "providerCommands": [
+          "moon test moui/render/skia --target native",
+          "moon test moui/backend/macos/skia --target native"
+        ],
+        "runtimeSmokeCommands": [
+          "scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log"
+        ],
+        "observations": {
+          "providerPreflight": "pending",
+          "fallbackUnavailable": "pending",
+          "realRendererSmoke": "pending",
+          "showcaseFirstFrame": "pending",
+          "markdownFirstFrame": "pending"
+        },
+        "artifacts": [
+          "artifacts/platform-evidence/macos/README.md"
+        ],
+        "notes": [
+          "macOS Skia runtime evidence is pending until the real-Skia renderer smoke and both first-frame Skia entrypoint logs are recorded as artifacts."
+        ]
+      },
       "artifacts": [
         "artifacts/platform-evidence/macos/README.md"
       ],
@@ -287,16 +316,21 @@ write_platform_evidence_manifest() {
       "routineCommands": [
         "moon test moui/backend/windows --target native",
         "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/showcase/windows -BuildOnly",
+        "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
+        "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
         "powershell -ExecutionPolicy Bypass -File scripts/windows/package_windows_app_msvc.ps1 -Package examples/showcase/windows"
       ],
       "runtimeEvidenceCommands": [
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows --target native }\"",
-        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }\""
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"",
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }\"",
+        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\""
       ],
       "exampleTargets": [
         "examples/showcase/windows",
         "examples/showcase/windows_skia",
-        "examples/markdown_editor/windows"
+        "examples/markdown_editor/windows",
+        "examples/markdown_editor/windows_skia"
       ],
       "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh windows --status pending",
       "consumerCommand": "pending",
@@ -314,6 +348,33 @@ write_platform_evidence_manifest() {
         "monitorCursor": "pending",
         "cleanShutdown": "pending"
       },
+      "skiaEvidence": {
+        "status": "pending",
+        "boundary": "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named Windows/MSVC host and does not reuse skia_mbt dependency evidence.",
+        "providerCommands": [
+          "moon test moui/render/skia --target native",
+          "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon test moui/backend/windows/skia --target native }\"",
+          "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
+          "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly"
+        ],
+        "runtimeSmokeCommands": [
+          "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; $env:MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT='1'; moon run examples/showcase/windows_skia --target native }\"",
+          "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; $env:MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT='1'; moon run examples/markdown_editor/windows_skia --target native }\""
+        ],
+        "observations": {
+          "providerPreflight": "pending",
+          "fallbackUnavailable": "pending",
+          "realRendererSmoke": "pending",
+          "showcaseFirstFrame": "pending",
+          "markdownFirstFrame": "pending"
+        },
+        "artifacts": [
+          "artifacts/platform-evidence/windows/README.md"
+        ],
+        "notes": [
+          "Windows Skia runtime evidence remains matching-host pending until MSVC first-frame Showcase and Markdown Editor logs are recorded."
+        ]
+      },
       "artifacts": [
         "artifacts/platform-evidence/windows/README.md"
       ],
@@ -328,16 +389,19 @@ write_platform_evidence_manifest() {
       "routineCommands": [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/linux --target native",
-        "moon build examples/showcase/linux_skia --target native"
+        "moon build examples/showcase/linux_skia --target native",
+        "moon build examples/markdown_editor/linux_skia --target native"
       ],
       "runtimeEvidenceCommands": [
         "moon run examples/showcase/linux --target native",
-        "moon run examples/showcase/linux_skia --target native"
+        "moon run examples/showcase/linux_skia --target native",
+        "moon run examples/markdown_editor/linux_skia --target native"
       ],
       "exampleTargets": [
         "examples/showcase/linux",
         "examples/showcase/linux_cosmic",
-        "examples/showcase/linux_skia"
+        "examples/showcase/linux_skia",
+        "examples/markdown_editor/linux_skia"
       ],
       "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh linux --status pending",
       "consumerCommand": "pending",
@@ -354,6 +418,33 @@ write_platform_evidence_manifest() {
         "rendererHandle": "pending",
         "monitorCursor": "pending",
         "cleanShutdown": "pending"
+      },
+      "skiaEvidence": {
+        "status": "pending",
+        "boundary": "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named Linux Wayland host and does not reuse skia_mbt dependency evidence.",
+        "providerCommands": [
+          "moon test moui/render/skia --target native",
+          "moon test moui/backend/linux/skia --target native",
+          "moon build examples/showcase/linux_skia --target native",
+          "moon build examples/markdown_editor/linux_skia --target native"
+        ],
+        "runtimeSmokeCommands": [
+          "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/linux_skia --target native",
+          "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/markdown_editor/linux_skia --target native"
+        ],
+        "observations": {
+          "providerPreflight": "pending",
+          "fallbackUnavailable": "pending",
+          "realRendererSmoke": "pending",
+          "showcaseFirstFrame": "pending",
+          "markdownFirstFrame": "pending"
+        },
+        "artifacts": [
+          "artifacts/platform-evidence/linux/README.md"
+        ],
+        "notes": [
+          "Linux Skia runtime evidence remains matching-host pending until Wayland/Vulkan first-frame Showcase and Markdown Editor logs are recorded."
+        ]
       },
       "artifacts": [
         "artifacts/platform-evidence/linux/README.md"

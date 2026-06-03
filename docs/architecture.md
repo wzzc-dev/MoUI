@@ -59,9 +59,12 @@ examples/showcase/linux_cosmic/ Linux showcase selecting Moon Cosmic text
 examples/showcase/linux_skia/ Linux showcase selecting native Skia raster
 examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
 examples/markdown_editor/macos/ macOS native Markdown editor
+examples/markdown_editor/macos_skia/ macOS Markdown editor selecting native Skia raster
 examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
 examples/markdown_editor/windows/ Windows native Markdown editor
 examples/markdown_editor/windows_cosmic/ Windows Markdown editor selecting Moon Cosmic text
+examples/markdown_editor/windows_skia/ Windows Markdown editor selecting native Skia raster
+examples/markdown_editor/linux_skia/ Linux Markdown editor selecting native Skia raster
 examples/{settings,data_table,file_importer,command_palette}/app/ shared app-pattern packages without platform entrypoints
 ```
 
@@ -426,8 +429,10 @@ pretending that app code can call platform APIs directly.
 `HostCapabilitySummary` folds those service flags together with input,
 window-lifecycle, text-input, IME, drag/drop, async-service, and native
 accessibility readiness. It is a high-level reporting API for apps, diagnostics,
-and Showcase; `HostServiceBridge`, `HostInputContract`, and platform backend
-setup remain the source of truth for actual behavior.
+and Showcase. Its `preflight_fields()` helper emits a renderer-neutral ready/gap
+field string for provider/package audits such as native Skia preflight logs;
+`HostServiceBridge`, `HostInputContract`, and platform backend setup remain the
+source of truth for actual behavior.
 `HostAppServices` is the app-facing facade over that same bridge, with helper
 methods for clipboard, file dialogs, URL opening, system theme, context menus,
 and optional async queue completion handling; the bridge remains the source of

@@ -2,14 +2,16 @@
 pub struct LinuxSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
+  priv exit_after_first_present : Bool
 }
 
 ///|
 pub fn LinuxSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
+  exit_after_first_present? : Bool = false,
 ) -> LinuxSkiaAppOptions {
-  { scene_resolver, font_resolution }
+  { scene_resolver, font_resolution, exit_after_first_present }
 }
 
 ///|
@@ -39,6 +41,7 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@linux_host.LinuxHostAppOptions::new(
       scene_resolver=options.scene_resolver,
+      exit_after_first_present=options.exit_after_first_present,
     ),
     window_requests~,
   )
@@ -51,6 +54,34 @@ pub fn renderer_provider(
   @linux_host.LinuxRendererProvider::new(create_renderer=(window, metrics) => {
     create_renderer(window, metrics, options)
   })
+}
+
+///|
+pub fn linux_skia_provider_preflight_summary(
+  options? : LinuxSkiaAppOptions = LinuxSkiaAppOptions::new(),
+) -> String {
+  let info = @skia_renderer.backend_info()
+  let render_status = if linux_skia_provider_ready() {
+    "ready"
+  } else {
+    "unavailable"
+  }
+  let font_resolution = match options.font_resolution {
+    @skia_renderer.SkiaFontResolution::SystemFontMgr => "system-font-mgr"
+    @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
+  }
+  let first_frame = if options.exit_after_first_present {
+    "enabled"
+  } else {
+    "disabled"
+  }
+  let host_preflight = @linux_host.linux_capability_summary().preflight_fields()
+  "Linux Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{linux_skia_presenter_description()}; first_frame_smoke=\{first_frame}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=matching-host pending; unavailable=\"\{linux_skia_unavailable_message()}\""
+}
+
+///|
+fn skia_host_renderer_bridge_preflight() -> String {
+  "renderer_bridge=HostWindowRenderer; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
 }
 
 ///|
@@ -90,11 +121,16 @@ fn linux_skia_unavailable_message() -> String {
 }
 
 ///|
+fn linux_skia_presenter_description() -> String {
+  "Linux Wayland wl_shm Skia pixel presenter"
+}
+
+///|
 fn linux_skia_present_target(
   window : @window_linux.Window,
 ) -> @skia_renderer.SkiaPresentTarget {
   @skia_renderer.SkiaPresentTarget::new(
-    description="Linux Wayland wl_shm Skia pixel presenter",
+    description=linux_skia_presenter_description(),
     present=frame => {
       window.present_rgba_pixels(
         frame.width,

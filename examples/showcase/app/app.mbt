@@ -14,6 +14,7 @@ pub(all) struct ShowcaseModel {
   draft : String
   tab : String
   selected_section : String
+  route_history : @core.RouteHistoryState
   filter : String
   slider_value : Double
   picker_value : String
@@ -46,6 +47,9 @@ pub(all) enum ShowcaseMsg {
   ShowSheet
   HideSheet
   SelectSection(String)
+  RouteBack
+  RouteForward
+  OpenRouteLink(String)
   TabSelected(String)
   ClearFilter
   FilterChanged(String)
@@ -105,6 +109,11 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     draft: "Visual polish",
     tab: "form",
     selected_section: "overview",
+    route_history: @core.RouteHistoryState::new(
+      initial=@core.RouteLocation::new(path="overview"),
+      title="Overview",
+      source="showcase",
+    ),
     filter: "",
     slider_value: 0.64,
     picker_value: "native",
@@ -167,7 +176,17 @@ pub fn ShowcaseModel::update(
     HideDialog => { ..self, dialog_visible: false }
     ShowSheet => { ..self, sheet_visible: true }
     HideSheet => { ..self, sheet_visible: false }
-    SelectSection(route) => { ..self, selected_section: route }
+    SelectSection(route) => self.with_route_pushed(route)
+    RouteBack => self.with_route_history(self.route_history.back())
+    RouteForward => self.with_route_history(self.route_history.forward())
+    OpenRouteLink(route) =>
+      self.with_route_history(
+        self.route_history.push(
+          @core.RouteLocation::parse(route),
+          title=showcase_route_title(@core.RouteLocation::parse(route).path),
+          source="deep-link",
+        ),
+      )
     TabSelected(route) => { ..self, tab: route }
     ClearFilter => { ..self, filter: "" }
     FilterChanged(value) => { ..self, filter: value }
@@ -204,6 +223,46 @@ pub fn ShowcaseModel::update(
     SidebarScrollTo(y) =>
       { ..self, sidebar_scroll_offset: @core.Point::new(x=0.0, y~) }
   }
+}
+
+///|
+fn ShowcaseModel::with_route_pushed(
+  self : ShowcaseModel,
+  route : String,
+) -> ShowcaseModel {
+  let location = @core.RouteLocation::parse(route)
+  let history = if self.route_history.current_route() == location.to_route() {
+    self.route_history.replace(
+      location,
+      title=showcase_route_title(location.path),
+      source="showcase",
+    )
+  } else {
+    self.route_history.push(
+      location,
+      title=showcase_route_title(location.path),
+      source="showcase",
+    )
+  }
+  self.with_route_history(history)
+}
+
+///|
+fn ShowcaseModel::with_route_history(
+  self : ShowcaseModel,
+  route_history : @core.RouteHistoryState,
+) -> ShowcaseModel {
+  { ..self, route_history, selected_section: route_history.current().path }
+}
+
+///|
+fn showcase_route_title(route : String) -> String {
+  for section in showcase_sections() {
+    if section.route == route {
+      return section.title
+    }
+  }
+  route
 }
 
 ///|

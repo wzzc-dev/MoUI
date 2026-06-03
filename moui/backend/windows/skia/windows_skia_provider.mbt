@@ -13,14 +13,16 @@ extern "C" fn windows_present_skia_pixels_to_hwnd(
 pub struct WindowsSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
+  priv exit_after_first_present : Bool
 }
 
 ///|
 pub fn WindowsSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
+  exit_after_first_present? : Bool = false,
 ) -> WindowsSkiaAppOptions {
-  { scene_resolver, font_resolution }
+  { scene_resolver, font_resolution, exit_after_first_present }
 }
 
 ///|
@@ -50,6 +52,7 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@windows_host.WindowsHostAppOptions::new(
       scene_resolver=options.scene_resolver,
+      exit_after_first_present=options.exit_after_first_present,
     ),
     window_requests~,
   )
@@ -62,6 +65,34 @@ pub fn renderer_provider(
   @windows_host.WindowsRendererProvider::new(create_renderer=(window, metrics) => {
     create_renderer(window, metrics, options)
   })
+}
+
+///|
+pub fn windows_skia_provider_preflight_summary(
+  options? : WindowsSkiaAppOptions = WindowsSkiaAppOptions::new(),
+) -> String {
+  let info = @skia_renderer.backend_info()
+  let render_status = if windows_skia_provider_ready() {
+    "ready"
+  } else {
+    "unavailable"
+  }
+  let font_resolution = match options.font_resolution {
+    @skia_renderer.SkiaFontResolution::SystemFontMgr => "system-font-mgr"
+    @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
+  }
+  let first_frame = if options.exit_after_first_present {
+    "enabled"
+  } else {
+    "disabled"
+  }
+  let host_preflight = @windows_host.windows_capability_summary().preflight_fields()
+  "Windows Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{windows_skia_presenter_description()}; first_frame_smoke=\{first_frame}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=matching-host pending; unavailable=\"\{windows_skia_unavailable_message()}\""
+}
+
+///|
+fn skia_host_renderer_bridge_preflight() -> String {
+  "renderer_bridge=HostWindowRenderer; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
 }
 
 ///|
@@ -101,11 +132,16 @@ fn windows_skia_unavailable_message() -> String {
 }
 
 ///|
+fn windows_skia_presenter_description() -> String {
+  "Windows GDI Skia pixel presenter"
+}
+
+///|
 fn windows_skia_present_target(
   hwnd : UInt64,
 ) -> @skia_renderer.SkiaPresentTarget {
   @skia_renderer.SkiaPresentTarget::new(
-    description="Windows GDI Skia pixel presenter",
+    description=windows_skia_presenter_description(),
     present=frame => {
       windows_present_skia_pixels_to_hwnd(
         hwnd,

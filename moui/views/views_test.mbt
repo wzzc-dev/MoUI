@@ -994,6 +994,29 @@ test "data and toast state helpers keep app owned workflow state predictable" {
     content="false",
   )
   inspect(columns.set_visible("name", false).is_visible("name"), content="true")
+  let table_columns = [
+    @views.table_column(id="name", label="Name", width=120.0),
+    @views.table_column(id="status", label="Status", width=96.0),
+    @views.table_column(id="owner", label="Owner", width=112.0),
+  ]
+  let widths = @views.ColumnWidthState::new(
+      widths=table_columns,
+      min_width=80.0,
+      max_width=160.0,
+    )
+    .resize("status", 180.0)
+    .resize("new", 40.0)
+  inspect(widths.width_for("status", 96.0), content="160")
+  inspect(widths.width_for("new", 120.0), content="80")
+  let sized = widths.apply(table_columns)
+  inspect(sized[1].width, content="160")
+  let order = @views.ColumnOrderState::new(order=["name", "status", "owner"])
+    .move_before("owner", "name")
+    .move_after("status", "owner")
+  let ordered = order.ordered_columns(table_columns)
+  inspect(ordered[0].id, content="owner")
+  inspect(ordered[1].id, content="status")
+  inspect(ordered[2].id, content="name")
   let selection = @views.SelectionState::new()
     .toggle("row-1")
     .toggle("row-2")
@@ -1334,6 +1357,45 @@ test "navigation shell components compose sidebar breadcrumb split and wizard" {
     fail("expected disabled section navigation item semantics")
   }
   assert_true(disabled_section.state.disabled)
+}
+
+///|
+test "resizable split view drag handle emits controlled primary width" {
+  let last_width = Ref(0.0)
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.resizable_split_view(
+      primary=@views.text("Primary", width=120.0, height=24.0),
+      detail=@views.text("Detail", width=160.0, height=24.0),
+      primary_width=180.0,
+      detail_width=180.0,
+      height=96.0,
+      min_primary_width=140.0,
+      max_primary_width=220.0,
+      on_drag=width => width,
+    ),
+    size=@core.Size::new(width=420.0, height=140.0),
+    on_message=Some(width => last_width.val = width),
+  )
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Primary"))
+  assert_true(has_text(commands, "Detail"))
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=190.0, y=12.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=245.0, y=12.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  inspect(last_width.val, content="220")
 }
 
 ///|

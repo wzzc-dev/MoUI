@@ -19,6 +19,8 @@ pub fn skia_available() -> Bool
 
 pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor
 
+pub fn skia_text_system(resolution? : SkiaFontResolution) -> @core.TextSystem
+
 // Errors
 pub(all) suberror SkiaRendererError {
   SkiaUnavailable
@@ -55,6 +57,7 @@ pub(all) struct SkiaRasterRenderer {
   font_resolution : SkiaFontResolution
   mut surface : @native.Surface
   image_cache : Map[String, @native.Image]
+  failed_images : Map[String, String]
   image_lifecycle : @render.ImageResourceLifecycle
   mut present_count : Int
   mut unsupported_command_count : Int

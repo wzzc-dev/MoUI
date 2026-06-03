@@ -52,6 +52,46 @@ test "router helpers resolve params snapshots and fallback routes" {
 }
 
 ///|
+test "route history tracks deep links back forward and router snapshots" {
+  let initial = RouteHistoryState::from_deep_link(
+    "/home?tab=overview",
+    title="Home",
+  )
+  inspect(initial.current().path, content="/home")
+  inspect(initial.current_route(), content="/home?tab=overview")
+  inspect(initial.current_entry().unwrap().source, content="deep-link")
+  let settings = initial.push(
+    RouteLocation::new(path="/settings"),
+    title="Settings",
+  )
+  let detail = settings.replace(
+    RouteLocation::parse("/settings?panel=display"),
+    title="Settings",
+  )
+  inspect(detail.entries.length(), content="2")
+  inspect(detail.entries[1].title, content="Settings")
+  inspect(detail.current_route(), content="/settings?panel=display")
+  assert_true(detail.can_go_back())
+  let home = detail.back()
+  inspect(home.current_route(), content="/home?tab=overview")
+  assert_true(home.can_go_forward())
+  let profile = home.push(RouteLocation::new(path="/profile"), title="Profile")
+  inspect(profile.entries.length(), content="2")
+  inspect(profile.current_route(), content="/profile")
+  assert_false(profile.can_go_forward())
+  let router = RouterState::new(initial=RouteLocation::new(path="/placeholder"))
+  profile.restore_router(router)
+  inspect(router.current().to_route(), content="/profile")
+  let restored = RouteHistoryState::from_snapshot(
+    detail.router_snapshot(),
+    source="router",
+  )
+  inspect(restored.entries.length(), content="2")
+  inspect(restored.current_route(), content="/settings?panel=display")
+  inspect(restored.entries[0].source, content="router")
+}
+
+///|
 test "route focus store restores keyed runtime focus" {
   let store = RouteFocusStore::new()
   store.remember(route="/settings", focus_key="email")

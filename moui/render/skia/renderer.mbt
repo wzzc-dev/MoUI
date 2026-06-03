@@ -74,6 +74,7 @@ fn SkiaRasterSurfacePreflight::summary(
 ///|
 priv struct SkiaTextDescriptorPreflight {
   family_count : Int
+  fallback_character : Int
   fallback_ready : Bool
   fallback_resource_count : Int
   measurement_ready : Bool
@@ -90,22 +91,82 @@ priv struct SkiaTextDescriptorPreflight {
 fn SkiaTextDescriptorPreflight::summary(
   self : SkiaTextDescriptorPreflight,
 ) -> String {
-  let ready = self.family_count > 0 &&
-    self.fallback_ready &&
-    self.fallback_resource_count > 0 &&
-    self.measurement_ready &&
-    self.measurement_resource_count >= self.fallback_resource_count &&
-    self.shaping_ready &&
-    self.shaping_resource_count >= self.fallback_resource_count &&
-    self.shaped_run_ready &&
-    self.shaped_run_resource_count >= self.shaping_resource_count &&
-    self.glyph_run_ready &&
-    self.glyph_run_resource_count >= self.shaped_run_resource_count
-  if ready {
+  if self.ready() {
     "text fallback/shaping descriptor preflight ready"
   } else {
     "text fallback/shaping descriptor preflight pending"
   }
+}
+
+///|
+fn SkiaTextDescriptorPreflight::ready(
+  self : SkiaTextDescriptorPreflight,
+) -> Bool {
+  self.family_count > 0 &&
+  self.fallback_character >= 0 &&
+  self.fallback_ready &&
+  self.fallback_resource_count > 0 &&
+  self.measurement_ready &&
+  self.measurement_resource_count >= self.fallback_resource_count &&
+  self.shaping_ready &&
+  self.shaping_resource_count >= self.fallback_resource_count &&
+  self.shaped_run_ready &&
+  self.shaped_run_resource_count >= self.shaping_resource_count &&
+  self.glyph_run_ready &&
+  self.glyph_run_resource_count >= self.shaped_run_resource_count
+}
+
+///|
+priv struct SkiaTextMaturityPreflight {
+  descriptor_ready : Bool
+  fallback_request_ready : Bool
+  shaped_cluster_caret_ready : Bool
+  fallback_cluster_caret_ready : Bool
+  emoji_hint_ready : Bool
+  empty_typeface_emoji_retry_disabled : Bool
+  bidi_reordering_ready : Bool
+  paragraph_line_breaking_ready : Bool
+  mixed_run_font_fallback_ready : Bool
+  deterministic_color_emoji_ready : Bool
+  full_grapheme_parity_ready : Bool
+  ready_count : Int
+  gap_count : Int
+}
+
+///|
+fn SkiaTextMaturityPreflight::summary(
+  self : SkiaTextMaturityPreflight,
+) -> String {
+  let baseline_ready = self.descriptor_ready &&
+    self.fallback_request_ready &&
+    self.shaped_cluster_caret_ready &&
+    self.fallback_cluster_caret_ready &&
+    self.emoji_hint_ready &&
+    self.empty_typeface_emoji_retry_disabled
+  let tracked_gaps_pending = !self.bidi_reordering_ready &&
+    !self.paragraph_line_breaking_ready &&
+    !self.mixed_run_font_fallback_ready &&
+    !self.deterministic_color_emoji_ready &&
+    !self.full_grapheme_parity_ready
+  let baseline_label = if baseline_ready {
+    "baseline ready"
+  } else {
+    "baseline pending"
+  }
+  let gap_label = if tracked_gaps_pending {
+    "tracked gaps pending"
+  } else {
+    "tracked gaps changed"
+  }
+  "text maturity audit partial: ready=" +
+  self.ready_count.to_string() +
+  " gaps=" +
+  self.gap_count.to_string() +
+  " " +
+  baseline_label +
+  ", " +
+  gap_label +
+  " (bidi, paragraph line breaking, mixed-run fallback, color emoji, and full grapheme parity pending)"
 }
 
 ///|
@@ -121,6 +182,7 @@ pub(all) struct SkiaRasterRenderer {
   font_resolution : SkiaFontResolution
   mut surface : @skia_native.Surface
   image_cache : Map[String, @skia_native.Image]
+  failed_images : Map[String, String]
   image_lifecycle : @render.ImageResourceLifecycle
   mut present_count : Int
   mut unsupported_command_count : Int
@@ -174,6 +236,7 @@ pub fn backend_info() -> @render.RendererBackendInfo {
     @core.FontSpec::new(size=12.0, weight=400),
     "MoUI",
   )
+  let text_maturity = skia_text_maturity_preflight()
   @render.RendererBackendInfo::new(
     backend=@render.RendererBackendKind::SkiaRasterNative,
     status=if available {
@@ -188,6 +251,8 @@ pub fn backend_info() -> @render.RendererBackendInfo {
       surface_preflight.summary() +
       ", " +
       text_preflight.summary() +
+      ", " +
+      text_maturity.summary() +
       ", flush-and-submit finalization, and platform pixel presenters.",
   )
 }
@@ -235,6 +300,7 @@ pub fn create_with_present_target(
     font_resolution,
     surface,
     image_cache: {},
+    failed_images: {},
     image_lifecycle: @render.ImageResourceLifecycle::new(),
     present_count: 0,
     unsupported_command_count: 0,
@@ -299,30 +365,7 @@ fn skia_text_descriptor_preflight(
   text : String,
 ) -> SkiaTextDescriptorPreflight {
   let families = skia_preflight_family_candidates(font)
-  let primary_family = if families.is_empty() {
-    b"system-ui"
-  } else {
-    @utf8.encode(families[0][:], bom=false)
-  }
-  let fallback_families : Array[Bytes] = []
-  if families.length() > 1 {
-    for index in 1..<families.length() {
-      fallback_families.push(@utf8.encode(families[index][:], bom=false))
-    }
-  }
-  let style = @skia_mbt.FontStyleRequest::new(
-    weight=font.weight,
-    width=5,
-    slant=skia_font_slant(font.style),
-  )
-  let fallback = @skia_mbt.FontFallbackRequest::new(
-    families=@skia_mbt.FontFallbackChain::new(
-      primary_family~,
-      fallback_families~,
-    ),
-    character=skia_first_codepoint_or_zero(text),
-    style~,
-  )
+  let fallback = skia_font_fallback_request(font, text)
   let font_key = fallback
     .font_descriptor(size=Float::from_double(font.size))
     .resource_key()
@@ -360,6 +403,7 @@ fn skia_text_descriptor_preflight(
   let glyph_run_plan = glyph_run.resource_plan(text_bytes)
   SkiaTextDescriptorPreflight::{
     family_count: families.length(),
+    fallback_character: fallback.character,
     fallback_ready: !fallback.is_empty(),
     fallback_resource_count: fallback_plan.length(),
     measurement_ready: measurement.is_shaped(),
@@ -371,6 +415,209 @@ fn skia_text_descriptor_preflight(
     glyph_run_ready: glyph_run.is_valid(),
     glyph_run_resource_count: glyph_run_plan.length(),
   }
+}
+
+///|
+fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
+  let descriptor = skia_text_descriptor_preflight(
+    @core.FontSpec::new(size=18.0, weight=500, style=@core.FontStyle::Italic),
+    "A\u{1F469}\u{200D}\u{1F373}",
+  )
+  let font = @core.FontSpec::new(
+    families=@core.FontFamilyStack::system_ui().with_fallback(
+      @core.FontFamily::Emoji,
+    ),
+    size=18.0,
+    weight=500,
+  )
+  let fallback_request = skia_font_fallback_request(
+    font, "A\u{1F469}\u{200D}\u{1F373}",
+  )
+  let shaped_cluster_caret_ready = skia_sample_shaped_cluster_caret_ready()
+  let fallback_cluster_caret_ready = skia_sample_fallback_cluster_caret_ready()
+  let emoji_hint_ready = skia_text_contains_emoji_hint(
+      "\u{1F469}\u{200D}\u{1F373}",
+    ) &&
+    skia_representative_fallback_codepoint("A\u{1F469}\u{200D}\u{1F373}") ==
+    0x1F469
+  let empty_typeface_emoji_retry_disabled = skia_emoji_fallback_draw_font(
+      font,
+      "\u{1F469}\u{200D}\u{1F373}",
+      SkiaFontResolution::EmptyTypeface,
+    )
+    is None
+  let ready_count = skia_ready_count([
+    descriptor.ready(),
+    !fallback_request.is_empty() && fallback_request.has_character(),
+    shaped_cluster_caret_ready,
+    fallback_cluster_caret_ready,
+    emoji_hint_ready,
+    empty_typeface_emoji_retry_disabled,
+  ])
+  let gap_count = skia_gap_count([false, false, false, false, false])
+  SkiaTextMaturityPreflight::{
+    descriptor_ready: descriptor.ready(),
+    fallback_request_ready: !fallback_request.is_empty() &&
+    fallback_request.has_character(),
+    shaped_cluster_caret_ready,
+    fallback_cluster_caret_ready,
+    emoji_hint_ready,
+    empty_typeface_emoji_retry_disabled,
+    bidi_reordering_ready: false,
+    paragraph_line_breaking_ready: false,
+    mixed_run_font_fallback_ready: false,
+    deterministic_color_emoji_ready: false,
+    full_grapheme_parity_ready: false,
+    ready_count,
+    gap_count,
+  }
+}
+
+///|
+fn skia_ready_count(values : Array[Bool]) -> Int {
+  let mut count = 0
+  for value in values {
+    if value {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+fn skia_gap_count(values : Array[Bool]) -> Int {
+  let mut count = 0
+  for value in values {
+    if !value {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+fn skia_sample_shaped_cluster_caret_ready() -> Bool {
+  let run = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(10),
+      @skia_native.GlyphId::new(11),
+      @skia_native.GlyphId::new(12),
+    ],
+    positions: [
+      @skia_mbt.Point::new(0.0, 0.0),
+      @skia_mbt.Point::new(14.0, 0.0),
+      @skia_mbt.Point::new(28.0, 0.0),
+    ],
+    clusters: [0, 1, 12],
+    width: 34.0,
+  }
+  match skia_shaped_caret_positions("A\u{1F469}\u{200D}\u{1F373}B", run) {
+    Some(carets) =>
+      skia_carets_are_monotonic(carets) &&
+      carets.length() == 6 &&
+      carets[1] == carets[2] &&
+      carets[2] == carets[3] &&
+      carets[5] == 34.0
+    None => false
+  }
+}
+
+///|
+fn skia_sample_fallback_cluster_caret_ready() -> Bool {
+  let devanagari = skia_stabilize_grapheme_cluster_carets(
+    "A\u{0915}\u{094D}\u{0937}B",
+    [0.0, 10.0, 14.0, 20.0, 30.0, 38.0],
+  )
+  let zwj_emoji = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1F469}\u{200D}\u{1F373}B",
+    [0.0, 14.0, 20.0, 22.0, 28.0, 34.0],
+  )
+  let tag_flag = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}B",
+    [0.0, 9.0, 11.0, 13.0, 15.0, 25.0, 33.0],
+  )
+  let paired_flags = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1F1FA}\u{1F1F8}\u{1F1EF}\u{1F1F5}B",
+    [0.0, 9.0, 13.0, 21.0, 27.0, 35.0, 43.0],
+  )
+  let prepend_mark = skia_stabilize_grapheme_cluster_carets(
+    "A\u{0600}\u{0628}\u{0651}B",
+    [0.0, 8.0, 11.0, 14.0, 23.0, 31.0],
+  )
+  let thai_mark = skia_stabilize_grapheme_cluster_carets("A\u{0E01}\u{0E34}B", [
+    0.0, 8.0, 13.0, 21.0, 29.0,
+  ])
+  let sinhala_mark = skia_stabilize_grapheme_cluster_carets(
+    "A\u{0D9A}\u{0DCF}B",
+    [0.0, 9.0, 15.0, 24.0, 31.0],
+  )
+  let myanmar_conjunct = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1000}\u{1039}\u{1001}B",
+    [0.0, 10.0, 14.0, 18.0, 25.0, 32.0],
+  )
+  let hangul_jamo = skia_stabilize_grapheme_cluster_carets(
+    "A\u{1100}\u{1161}\u{11A8}B",
+    [0.0, 9.0, 13.0, 18.0, 26.0, 34.0],
+  )
+  skia_carets_are_monotonic(devanagari) &&
+  devanagari.length() == 6 &&
+  devanagari[1] == devanagari[2] &&
+  devanagari[2] == devanagari[3] &&
+  devanagari[5] == 38.0 &&
+  skia_carets_are_monotonic(zwj_emoji) &&
+  zwj_emoji.length() == 6 &&
+  zwj_emoji[1] == zwj_emoji[2] &&
+  zwj_emoji[2] == zwj_emoji[3] &&
+  zwj_emoji[5] == 34.0 &&
+  skia_carets_are_monotonic(tag_flag) &&
+  tag_flag.length() == 7 &&
+  tag_flag[1] == tag_flag[2] &&
+  tag_flag[2] == tag_flag[3] &&
+  tag_flag[3] == tag_flag[4] &&
+  tag_flag[6] == 33.0 &&
+  skia_carets_are_monotonic(paired_flags) &&
+  paired_flags.length() == 7 &&
+  paired_flags[1] == paired_flags[2] &&
+  paired_flags[3] == paired_flags[4] &&
+  paired_flags[6] == 43.0 &&
+  skia_carets_are_monotonic(prepend_mark) &&
+  prepend_mark.length() == 6 &&
+  prepend_mark[1] == prepend_mark[2] &&
+  prepend_mark[2] == prepend_mark[3] &&
+  prepend_mark[5] == 31.0 &&
+  skia_carets_are_monotonic(thai_mark) &&
+  thai_mark.length() == 5 &&
+  thai_mark[1] == thai_mark[2] &&
+  thai_mark[4] == 29.0 &&
+  skia_carets_are_monotonic(sinhala_mark) &&
+  sinhala_mark.length() == 5 &&
+  sinhala_mark[1] == sinhala_mark[2] &&
+  sinhala_mark[4] == 31.0 &&
+  skia_carets_are_monotonic(myanmar_conjunct) &&
+  myanmar_conjunct.length() == 6 &&
+  myanmar_conjunct[1] == myanmar_conjunct[2] &&
+  myanmar_conjunct[2] == myanmar_conjunct[3] &&
+  myanmar_conjunct[5] == 32.0 &&
+  skia_carets_are_monotonic(hangul_jamo) &&
+  hangul_jamo.length() == 6 &&
+  hangul_jamo[1] == hangul_jamo[2] &&
+  hangul_jamo[2] == hangul_jamo[3] &&
+  hangul_jamo[5] == 34.0
+}
+
+///|
+fn skia_carets_are_monotonic(carets : Array[Double]) -> Bool {
+  let mut previous = 0.0
+  for index, caret in carets {
+    if index == 0 {
+      previous = caret
+    } else if caret < previous {
+      return false
+    } else {
+      previous = caret
+    }
+  }
+  true
 }
 
 ///|
@@ -391,11 +638,26 @@ fn skia_preflight_family_candidates(font : @core.FontSpec) -> Array[String] {
 }
 
 ///|
-fn skia_first_codepoint_or_zero(text : String) -> Int {
+fn skia_representative_fallback_codepoint(text : String) -> Int {
+  let mut first = 0
+  let mut first_non_ascii = 0
   for ch in text {
-    return ch.to_int()
+    let codepoint = ch.to_int()
+    if first == 0 {
+      first = codepoint
+    }
+    if first_non_ascii == 0 && codepoint >= 0x80 {
+      first_non_ascii = codepoint
+    }
+    if skia_codepoint_is_emoji_hint(codepoint) {
+      return codepoint
+    }
   }
-  0
+  if first_non_ascii > 0 {
+    first_non_ascii
+  } else {
+    first
+  }
 }
 
 ///|
@@ -462,6 +724,9 @@ pub fn SkiaRasterRenderer::render(
       let canvas_scopes : Array[SkiaCanvasScopeKind] = []
       for command in commands {
         self.render_command(canvas, command, canvas_scopes)
+      }
+      if !canvas_scopes.is_empty() {
+        self.unsupported_command_count += canvas_scopes.length()
       }
       canvas.restore_to_count(saved)
       if !self.surface.flush_and_submit() {
@@ -825,12 +1090,23 @@ fn SkiaRasterRenderer::skia_image_for_source(
 ) -> @skia_native.Image? {
   match self.image_cache.get(source) {
     Some(image) => Some(image)
-    None =>
+    None => {
+      match self.failed_images.get(source) {
+        Some(diagnostic) =>
+          if skia_image_failed_cache_can_retry(source) {
+            self.failed_images.remove(source)
+          } else {
+            ignore(self.image_lifecycle.mark_failed(source, diagnostic~))
+            return None
+          }
+        None => ()
+      }
       match skia_image_source_bytes(source) {
         Some(bytes) => {
           ignore(self.image_lifecycle.mark_loading(source))
           match @skia_native.Image::from_encoded_bytes(bytes) {
             Some(image) => {
+              self.failed_images.remove(source)
               self.image_cache[source] = image
               ignore(
                 self.image_lifecycle.mark_ready(
@@ -842,6 +1118,7 @@ fn SkiaRasterRenderer::skia_image_for_source(
               Some(image)
             }
             None => {
+              self.failed_images[source] = "Skia image decode failed"
               ignore(
                 self.image_lifecycle.mark_failed(
                   source,
@@ -853,6 +1130,7 @@ fn SkiaRasterRenderer::skia_image_for_source(
           }
         }
         None => {
+          self.failed_images[source] = "Skia image source bytes are unavailable"
           ignore(
             self.image_lifecycle.mark_failed(
               source,
@@ -862,7 +1140,13 @@ fn SkiaRasterRenderer::skia_image_for_source(
           None
         }
       }
+    }
   }
+}
+
+///|
+fn skia_image_failed_cache_can_retry(source : String) -> Bool {
+  !source.has_prefix("data:") && @fs.path_exists(source)
 }
 
 ///|
@@ -1086,7 +1370,7 @@ fn skia_draw_text_payload_for_resolution(
   text : String,
   resolution : SkiaFontResolution,
 ) -> (@skia_native.Font, SkiaGlyphRun)? {
-  match skia_font_with_resolution(font_spec, resolution) {
+  match skia_font_with_resolution_for_text(font_spec, text, resolution) {
     Some(font) => {
       let glyph_run = skia_glyph_run_for_resolution(font, text, resolution)
       if skia_glyph_run_can_draw_text(glyph_run) {
@@ -1354,7 +1638,7 @@ fn SkiaRasterRenderer::read_frame(
 pub fn SkiaRasterRenderer::text_system(
   self : SkiaRasterRenderer,
 ) -> @core.TextSystem {
-  skia_text_system(self.font_resolution)
+  skia_text_system(resolution=self.font_resolution)
 }
 
 ///|
@@ -1370,6 +1654,7 @@ pub fn SkiaRasterRenderer::dispose(self : SkiaRasterRenderer) -> Unit {
     ignore(self.image_lifecycle.dispose(source))
   }
   self.image_cache.clear()
+  self.failed_images.clear()
 }
 
 ///|
@@ -1408,7 +1693,9 @@ pub fn SkiaRasterRenderer::last_frame(
 }
 
 ///|
-fn skia_text_system(resolution : SkiaFontResolution) -> @core.TextSystem {
+pub fn skia_text_system(
+  resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+) -> @core.TextSystem {
   match resolution {
     SkiaFontResolution::EmptyTypeface =>
       if skia_available() {
@@ -1547,7 +1834,7 @@ fn skia_caret_positions(
     let prefix = String::from_array(chars[:index])
     carets.push(skia_measure_text_width(font, prefix))
   }
-  carets
+  skia_stabilize_grapheme_cluster_carets(text, carets)
 }
 
 ///|
@@ -1602,7 +1889,192 @@ fn skia_shaped_caret_positions(
     }
   }
   carets[carets.length() - 1] = run.width.max(carets[carets.length() - 1])
-  Some(carets)
+  Some(skia_stabilize_grapheme_cluster_carets(text, carets))
+}
+
+///|
+fn skia_stabilize_grapheme_cluster_carets(
+  text : String,
+  carets : Array[Double],
+) -> Array[Double] {
+  let chars = text.to_array()
+  if carets.length() != chars.length() + 1 {
+    return carets
+  }
+  let adjusted = carets.copy()
+  let mut index = 0
+  while index < chars.length() {
+    let cluster_end = skia_grapheme_cluster_end(chars, index)
+    if cluster_end > index + 1 {
+      skia_stabilize_caret_cluster(adjusted, index, cluster_end)
+      index = cluster_end
+    } else {
+      index = index + 1
+    }
+  }
+  adjusted
+}
+
+///|
+fn skia_grapheme_cluster_end(chars : Array[Char], start : Int) -> Int {
+  if start < 0 || start >= chars.length() {
+    return start
+  }
+  if skia_codepoint_is_regional_indicator(chars[start].to_int()) {
+    return skia_regional_indicator_cluster_end(chars, start)
+  }
+  if skia_codepoint_is_grapheme_prepend(chars[start].to_int()) {
+    return skia_prepend_cluster_end(chars, start)
+  }
+  if skia_codepoint_is_hangul_cluster_codepoint(chars[start].to_int()) {
+    return skia_hangul_cluster_end(chars, start)
+  }
+  if skia_codepoint_can_start_emoji_tag_sequence(chars[start].to_int()) {
+    let tag_end = skia_emoji_tag_sequence_end(chars, start)
+    if tag_end > start + 1 {
+      return tag_end
+    }
+  }
+  let mut end = skia_grapheme_extend_end(chars, start + 1)
+  let mut advanced = true
+  while advanced {
+    advanced = false
+    if end < chars.length() &&
+      chars[end].to_int() == 0x200D &&
+      end + 1 < chars.length() {
+      end = skia_grapheme_extend_end(chars, end + 2)
+      advanced = true
+    } else if end < chars.length() &&
+      end > start &&
+      skia_codepoint_is_virama(chars[end - 1].to_int()) {
+      end = skia_grapheme_extend_end(chars, end + 1)
+      advanced = true
+    }
+  }
+  end
+}
+
+///|
+fn skia_regional_indicator_cluster_end(chars : Array[Char], start : Int) -> Int {
+  let mut end = start
+  while end < chars.length() &&
+        skia_codepoint_is_regional_indicator(chars[end].to_int()) &&
+        end - start < 2 {
+    end = end + 1
+  }
+  end
+}
+
+///|
+fn skia_emoji_tag_sequence_end(chars : Array[Char], start : Int) -> Int {
+  let mut end = start + 1
+  let mut saw_tag = false
+  while end < chars.length() && skia_codepoint_is_emoji_tag(chars[end].to_int()) {
+    saw_tag = true
+    end = end + 1
+    if chars[end - 1].to_int() == 0xE007F {
+      return end
+    }
+  }
+  if saw_tag {
+    end
+  } else {
+    start
+  }
+}
+
+///|
+fn skia_prepend_cluster_end(chars : Array[Char], start : Int) -> Int {
+  let mut base = start + 1
+  while base < chars.length() &&
+        skia_codepoint_is_grapheme_prepend(chars[base].to_int()) {
+    base = base + 1
+  }
+  if base >= chars.length() {
+    return base
+  }
+  skia_grapheme_cluster_end(chars, base)
+}
+
+///|
+fn skia_hangul_cluster_end(chars : Array[Char], start : Int) -> Int {
+  let codepoint = chars[start].to_int()
+  if skia_codepoint_is_hangul_l(codepoint) {
+    return skia_hangul_l_cluster_end(chars, start)
+  }
+  if skia_codepoint_is_hangul_v(codepoint) ||
+    skia_codepoint_is_hangul_lv(codepoint) {
+    return skia_hangul_v_cluster_end(chars, start + 1)
+  }
+  if skia_codepoint_is_hangul_t(codepoint) ||
+    skia_codepoint_is_hangul_lvt(codepoint) {
+    return skia_hangul_t_cluster_end(chars, start + 1)
+  }
+  start
+}
+
+///|
+fn skia_hangul_l_cluster_end(chars : Array[Char], start : Int) -> Int {
+  let mut end = start + 1
+  while end < chars.length() && skia_codepoint_is_hangul_l(chars[end].to_int()) {
+    end = end + 1
+  }
+  if end < chars.length() {
+    let codepoint = chars[end].to_int()
+    if skia_codepoint_is_hangul_v(codepoint) ||
+      skia_codepoint_is_hangul_lv(codepoint) {
+      end = skia_hangul_v_cluster_end(chars, end + 1)
+    } else if skia_codepoint_is_hangul_lvt(codepoint) {
+      end = skia_hangul_t_cluster_end(chars, end + 1)
+    }
+  }
+  skia_grapheme_extend_end(chars, end)
+}
+
+///|
+fn skia_hangul_v_cluster_end(chars : Array[Char], start : Int) -> Int {
+  let mut end = start
+  while end < chars.length() && skia_codepoint_is_hangul_v(chars[end].to_int()) {
+    end = end + 1
+  }
+  skia_hangul_t_cluster_end(chars, end)
+}
+
+///|
+fn skia_hangul_t_cluster_end(chars : Array[Char], start : Int) -> Int {
+  let mut end = start
+  while end < chars.length() && skia_codepoint_is_hangul_t(chars[end].to_int()) {
+    end = end + 1
+  }
+  skia_grapheme_extend_end(chars, end)
+}
+
+///|
+fn skia_grapheme_extend_end(chars : Array[Char], start : Int) -> Int {
+  let mut end = start
+  while end < chars.length() &&
+        skia_codepoint_is_grapheme_extend(chars[end].to_int()) {
+    end = end + 1
+  }
+  end
+}
+
+///|
+fn skia_stabilize_caret_cluster(
+  carets : Array[Double],
+  start : Int,
+  end : Int,
+) -> Unit {
+  if start < 0 || end <= start + 1 || end >= carets.length() {
+    return ()
+  }
+  let cluster_start = carets[start]
+  for caret_index in (start + 1)..<end {
+    carets[caret_index] = cluster_start
+  }
+  if carets[end] < cluster_start {
+    carets[end] = cluster_start
+  }
 }
 
 ///|
@@ -1815,15 +2287,217 @@ fn skia_codepoint_is_emoji_hint(codepoint : Int) -> Bool {
 }
 
 ///|
-fn skia_font_with_resolution(
+fn skia_codepoint_is_variation_selector(codepoint : Int) -> Bool {
+  (codepoint >= 0xFE00 && codepoint <= 0xFE0F) ||
+  (codepoint >= 0xE0100 && codepoint <= 0xE01EF)
+}
+
+///|
+fn skia_codepoint_is_grapheme_extend(codepoint : Int) -> Bool {
+  skia_codepoint_is_variation_selector(codepoint) ||
+  skia_codepoint_is_combining_mark(codepoint) ||
+  skia_codepoint_is_spacing_mark(codepoint) ||
+  skia_codepoint_is_emoji_modifier(codepoint) ||
+  skia_codepoint_is_emoji_tag(codepoint)
+}
+
+///|
+fn skia_codepoint_is_grapheme_prepend(codepoint : Int) -> Bool {
+  (codepoint >= 0x0600 && codepoint <= 0x0605) ||
+  codepoint == 0x06DD ||
+  codepoint == 0x070F ||
+  codepoint == 0x0890 ||
+  codepoint == 0x0891 ||
+  codepoint == 0x08E2 ||
+  codepoint == 0x110BD ||
+  codepoint == 0x110CD
+}
+
+///|
+fn skia_codepoint_is_combining_mark(codepoint : Int) -> Bool {
+  (codepoint >= 0x0300 && codepoint <= 0x036F) ||
+  (codepoint >= 0x0591 && codepoint <= 0x05BD) ||
+  codepoint == 0x05BF ||
+  (codepoint >= 0x05C1 && codepoint <= 0x05C2) ||
+  (codepoint >= 0x05C4 && codepoint <= 0x05C5) ||
+  codepoint == 0x05C7 ||
+  (codepoint >= 0x0610 && codepoint <= 0x061A) ||
+  (codepoint >= 0x064B && codepoint <= 0x065F) ||
+  codepoint == 0x0670 ||
+  (codepoint >= 0x06D6 && codepoint <= 0x06DC) ||
+  (codepoint >= 0x06DF && codepoint <= 0x06E4) ||
+  (codepoint >= 0x06E7 && codepoint <= 0x06E8) ||
+  (codepoint >= 0x06EA && codepoint <= 0x06ED) ||
+  codepoint == 0x0711 ||
+  (codepoint >= 0x0730 && codepoint <= 0x074A) ||
+  (codepoint >= 0x07A6 && codepoint <= 0x07B0) ||
+  (codepoint >= 0x07EB && codepoint <= 0x07F3) ||
+  (codepoint >= 0x0816 && codepoint <= 0x0819) ||
+  (codepoint >= 0x081B && codepoint <= 0x0823) ||
+  (codepoint >= 0x0825 && codepoint <= 0x0827) ||
+  (codepoint >= 0x0829 && codepoint <= 0x082D) ||
+  (codepoint >= 0x0859 && codepoint <= 0x085B) ||
+  (codepoint >= 0x08D3 && codepoint <= 0x08FF) ||
+  (codepoint >= 0x1AB0 && codepoint <= 0x1AFF) ||
+  (codepoint >= 0x1DC0 && codepoint <= 0x1DFF) ||
+  (codepoint >= 0x20D0 && codepoint <= 0x20FF) ||
+  (codepoint >= 0x102B && codepoint <= 0x103E) ||
+  (codepoint >= 0x1056 && codepoint <= 0x1059) ||
+  (codepoint >= 0x105E && codepoint <= 0x1060) ||
+  (codepoint >= 0x1062 && codepoint <= 0x1064) ||
+  (codepoint >= 0x1067 && codepoint <= 0x106D) ||
+  (codepoint >= 0x1071 && codepoint <= 0x1074) ||
+  (codepoint >= 0x1082 && codepoint <= 0x108D) ||
+  codepoint == 0x108F ||
+  (codepoint >= 0x109A && codepoint <= 0x109D) ||
+  (codepoint >= 0x3099 && codepoint <= 0x309A) ||
+  (codepoint >= 0xFE20 && codepoint <= 0xFE2F)
+}
+
+///|
+fn skia_codepoint_is_spacing_mark(codepoint : Int) -> Bool {
+  (codepoint >= 0x0900 && codepoint <= 0x0903) ||
+  (codepoint >= 0x093A && codepoint <= 0x093C) ||
+  (codepoint >= 0x093E && codepoint <= 0x094F) ||
+  (codepoint >= 0x0951 && codepoint <= 0x0957) ||
+  (codepoint >= 0x0962 && codepoint <= 0x0963) ||
+  (codepoint >= 0x0981 && codepoint <= 0x0983) ||
+  codepoint == 0x09BC ||
+  (codepoint >= 0x09BE && codepoint <= 0x09C4) ||
+  (codepoint >= 0x09C7 && codepoint <= 0x09C8) ||
+  (codepoint >= 0x09CB && codepoint <= 0x09CD) ||
+  codepoint == 0x09D7 ||
+  (codepoint >= 0x09E2 && codepoint <= 0x09E3) ||
+  (codepoint >= 0x0A01 && codepoint <= 0x0A03) ||
+  codepoint == 0x0A3C ||
+  (codepoint >= 0x0A3E && codepoint <= 0x0A42) ||
+  (codepoint >= 0x0A47 && codepoint <= 0x0A48) ||
+  (codepoint >= 0x0A4B && codepoint <= 0x0A4D) ||
+  codepoint == 0x0A51 ||
+  (codepoint >= 0x0A70 && codepoint <= 0x0A71) ||
+  codepoint == 0x0A75 ||
+  (codepoint >= 0x0B01 && codepoint <= 0x0B03) ||
+  codepoint == 0x0B3C ||
+  (codepoint >= 0x0B3E && codepoint <= 0x0B44) ||
+  (codepoint >= 0x0B47 && codepoint <= 0x0B48) ||
+  (codepoint >= 0x0B4B && codepoint <= 0x0B4D) ||
+  (codepoint >= 0x0B55 && codepoint <= 0x0B57) ||
+  (codepoint >= 0x0B62 && codepoint <= 0x0B63) ||
+  (codepoint >= 0x0C00 && codepoint <= 0x0C04) ||
+  (codepoint >= 0x0C3E && codepoint <= 0x0C44) ||
+  (codepoint >= 0x0C46 && codepoint <= 0x0C48) ||
+  (codepoint >= 0x0C4A && codepoint <= 0x0C4D) ||
+  (codepoint >= 0x0C55 && codepoint <= 0x0C56) ||
+  (codepoint >= 0x0C62 && codepoint <= 0x0C63) ||
+  (codepoint >= 0x0D00 && codepoint <= 0x0D03) ||
+  (codepoint >= 0x0D3B && codepoint <= 0x0D44) ||
+  (codepoint >= 0x0D46 && codepoint <= 0x0D48) ||
+  codepoint == 0x0DCA ||
+  (codepoint >= 0x0D4A && codepoint <= 0x0D4D) ||
+  (codepoint >= 0x0DCF && codepoint <= 0x0DD4) ||
+  codepoint == 0x0DD6 ||
+  (codepoint >= 0x0DD8 && codepoint <= 0x0DDF) ||
+  codepoint == 0x0D57 ||
+  (codepoint >= 0x0D62 && codepoint <= 0x0D63) ||
+  codepoint == 0x0E31 ||
+  (codepoint >= 0x0E34 && codepoint <= 0x0E3A) ||
+  (codepoint >= 0x0E47 && codepoint <= 0x0E4E) ||
+  codepoint == 0x0EB1 ||
+  (codepoint >= 0x0EB4 && codepoint <= 0x0EBC) ||
+  (codepoint >= 0x0EC8 && codepoint <= 0x0ECD) ||
+  (codepoint >= 0x17B4 && codepoint <= 0x17D3) ||
+  codepoint == 0x17DD
+}
+
+///|
+fn skia_codepoint_is_virama(codepoint : Int) -> Bool {
+  codepoint == 0x094D ||
+  codepoint == 0x09CD ||
+  codepoint == 0x0A4D ||
+  codepoint == 0x0ACD ||
+  codepoint == 0x0B4D ||
+  codepoint == 0x0BCD ||
+  codepoint == 0x0C4D ||
+  codepoint == 0x0CCD ||
+  codepoint == 0x0D4D ||
+  codepoint == 0x0DCA ||
+  codepoint == 0x1039 ||
+  codepoint == 0x17D2
+}
+
+///|
+fn skia_codepoint_is_hangul_cluster_codepoint(codepoint : Int) -> Bool {
+  skia_codepoint_is_hangul_l(codepoint) ||
+  skia_codepoint_is_hangul_v(codepoint) ||
+  skia_codepoint_is_hangul_t(codepoint) ||
+  skia_codepoint_is_hangul_lv(codepoint) ||
+  skia_codepoint_is_hangul_lvt(codepoint)
+}
+
+///|
+fn skia_codepoint_is_hangul_l(codepoint : Int) -> Bool {
+  (codepoint >= 0x1100 && codepoint <= 0x115F) ||
+  (codepoint >= 0xA960 && codepoint <= 0xA97C)
+}
+
+///|
+fn skia_codepoint_is_hangul_v(codepoint : Int) -> Bool {
+  (codepoint >= 0x1160 && codepoint <= 0x11A7) ||
+  (codepoint >= 0xD7B0 && codepoint <= 0xD7C6)
+}
+
+///|
+fn skia_codepoint_is_hangul_t(codepoint : Int) -> Bool {
+  (codepoint >= 0x11A8 && codepoint <= 0x11FF) ||
+  (codepoint >= 0xD7CB && codepoint <= 0xD7FB)
+}
+
+///|
+fn skia_codepoint_is_hangul_lv(codepoint : Int) -> Bool {
+  skia_codepoint_is_hangul_syllable(codepoint) && (codepoint - 0xAC00) % 28 == 0
+}
+
+///|
+fn skia_codepoint_is_hangul_lvt(codepoint : Int) -> Bool {
+  skia_codepoint_is_hangul_syllable(codepoint) && (codepoint - 0xAC00) % 28 != 0
+}
+
+///|
+fn skia_codepoint_is_hangul_syllable(codepoint : Int) -> Bool {
+  codepoint >= 0xAC00 && codepoint <= 0xD7A3
+}
+
+///|
+fn skia_codepoint_is_emoji_modifier(codepoint : Int) -> Bool {
+  codepoint >= 0x1F3FB && codepoint <= 0x1F3FF
+}
+
+///|
+fn skia_codepoint_is_emoji_tag(codepoint : Int) -> Bool {
+  (codepoint >= 0xE0020 && codepoint <= 0xE007E) || codepoint == 0xE007F
+}
+
+///|
+fn skia_codepoint_can_start_emoji_tag_sequence(codepoint : Int) -> Bool {
+  codepoint == 0x1F3F4
+}
+
+///|
+fn skia_codepoint_is_regional_indicator(codepoint : Int) -> Bool {
+  codepoint >= 0x1F1E6 && codepoint <= 0x1F1FF
+}
+
+///|
+fn skia_font_with_resolution_for_text(
   font : @core.FontSpec,
+  text : String,
   resolution : SkiaFontResolution,
 ) -> @skia_native.Font? {
   match resolution {
     SkiaFontResolution::EmptyTypeface =>
       @skia_native.Font::empty(size=Float::from_double(font.size))
     SkiaFontResolution::SystemFontMgr =>
-      match skia_typeface(font) {
+      match skia_typeface_for_text(font, text) {
         Some(typeface) =>
           @skia_native.Font::from_typeface(
             typeface,
@@ -1835,11 +2509,30 @@ fn skia_font_with_resolution(
 }
 
 ///|
-fn skia_typeface(font : @core.FontSpec) -> @skia_native.Typeface? {
+fn skia_typeface_for_text(
+  font : @core.FontSpec,
+  text : String,
+) -> @skia_native.Typeface? {
   match @skia_native.FontMgr::default() {
-    Some(font_mgr) => skia_typeface_from_font_mgr(font_mgr, font)
+    Some(font_mgr) => skia_typeface_from_font_mgr_for_text(font_mgr, font, text)
     None => None
   }
+}
+
+///|
+fn skia_typeface_from_font_mgr_for_text(
+  font_mgr : @skia_native.FontMgr,
+  font : @core.FontSpec,
+  text : String,
+) -> @skia_native.Typeface? {
+  let request = skia_font_fallback_request(font, text)
+  if !request.is_empty() {
+    match font_mgr.match_fallback_request(request) {
+      Some(typeface) => return Some(typeface)
+      None => ()
+    }
+  }
+  skia_typeface_from_font_mgr(font_mgr, font)
 }
 
 ///|
@@ -1862,6 +2555,46 @@ fn skia_typeface_from_font_mgr(
     }
   }
   None
+}
+
+///|
+fn skia_font_fallback_request(
+  font : @core.FontSpec,
+  text : String,
+) -> @skia_mbt.FontFallbackRequest {
+  @skia_mbt.FontFallbackRequest::new(
+    families=skia_font_fallback_chain(font),
+    character=skia_representative_fallback_codepoint(text),
+    style=skia_font_style_request(font),
+  )
+}
+
+///|
+fn skia_font_fallback_chain(
+  font : @core.FontSpec,
+) -> @skia_mbt.FontFallbackChain {
+  let families = skia_preflight_family_candidates(font)
+  let primary_family = if families.is_empty() {
+    b"system-ui"
+  } else {
+    @utf8.encode(families[0][:], bom=false)
+  }
+  let fallback_families : Array[Bytes] = []
+  if families.length() > 1 {
+    for index in 1..<families.length() {
+      fallback_families.push(@utf8.encode(families[index][:], bom=false))
+    }
+  }
+  @skia_mbt.FontFallbackChain::new(primary_family~, fallback_families~)
+}
+
+///|
+fn skia_font_style_request(font : @core.FontSpec) -> @skia_mbt.FontStyleRequest {
+  @skia_mbt.FontStyleRequest::new(
+    weight=font.weight,
+    width=5,
+    slant=skia_font_slant(font.style),
+  )
 }
 
 ///|
@@ -1983,15 +2716,32 @@ fn skia_shader_effect_colors(
 fn skia_color_filter_matrix(
   values : Array[Double],
 ) -> @skia_native.ColorFilter? {
-  let matrix : Array[Float] = []
+  @skia_native.ColorFilter::matrix(skia_color_filter_matrix_values(values))
+}
+
+///|
+fn skia_color_filter_matrix_values(values : Array[Double]) -> Array[Float] {
+  let matrix = skia_identity_color_matrix_values()
   let count = values.length().min(20)
   for index in 0..<count {
-    matrix.push(Float::from_double(values[index]))
+    matrix[index] = Float::from_double(values[index])
   }
-  for _ in count..<20 {
-    matrix.push(0.0)
+  matrix
+}
+
+///|
+fn skia_identity_color_matrix_values() -> Array[Float] {
+  let matrix : Array[Float] = []
+  for index in 0..<20 {
+    matrix.push(
+      if index == 0 || index == 6 || index == 12 || index == 18 {
+        1.0
+      } else {
+        0.0
+      },
+    )
   }
-  @skia_native.ColorFilter::matrix(matrix)
+  matrix
 }
 
 ///|

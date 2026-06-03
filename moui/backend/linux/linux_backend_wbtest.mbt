@@ -1,5 +1,5 @@
 ///|
-test "linux host options carry optional scene resolver" {
+test "linux host options carry optional scene resolver and first-frame smoke" {
   let request = @host.HostWindowOpenRequest::new(
     title="Inspector",
     scene=@host.HostWindowScene::new(scene_id="inspector"),
@@ -12,6 +12,7 @@ test "linux host options carry optional scene resolver" {
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Linux scene resolver rejection")
   }
+  assert_false(LinuxHostAppOptions::new().exit_after_first_present)
   let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
     @host.HostWindowSceneResolution::SceneResolved(
       @host.HostWindowSceneInstance::new(
@@ -23,7 +24,11 @@ test "linux host options carry optional scene resolver" {
       ),
     )
   })
-  let options = LinuxHostAppOptions::new(scene_resolver=resolver)
+  let options = LinuxHostAppOptions::new(
+    scene_resolver=resolver,
+    exit_after_first_present=true,
+  )
+  assert_true(options.exit_after_first_present)
   match options.scene_resolver.resolve(request) {
     @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))

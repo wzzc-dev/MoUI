@@ -163,9 +163,10 @@ scripts/macos-skia-renderer-smoke.sh --enable-skshaper --write-local-config
 
 That command writes absolute paths into `.local_repos/skia_mbt/native/moon.pkg`,
 `moui/tests/skia_renderer_smoke/native/moon.pkg`, and
-`examples/showcase/macos_skia/moon.pkg`; keep those machine-local edits out of
-commits. Re-run the command after changing Skia provider options or after
-restoring those package files.
+`examples/showcase/macos_skia/moon.pkg`, and
+`examples/markdown_editor/macos_skia/moon.pkg`; keep those machine-local edits
+out of commits. Re-run the command after changing Skia provider options or
+after restoring those package files.
 
 Pass `--enable-skshaper` when the selected Skia library directory includes the
 SkShaper module libraries. The helper then configures `skia_mbt/native` with
@@ -175,19 +176,22 @@ smoke log proves the optional shaped-run path was available.
 
 Add `--run-showcase-smoke` when you want the helper to launch the built
 `examples/showcase/macos_skia` executable, wait for the first Skia-presented
-frame, and then exit automatically:
+frame, and then exit automatically. Add `--run-markdown-smoke` to do the same
+for `examples/markdown_editor/macos_skia`:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 ```
 
-The renderer smoke uses the default system-FontMgr text path, including optional
-SkShaper when enabled. The macOS showcase smoke intentionally uses the renderer's
-`EmptyTypeface` font resolution mode during startup, so measurement and drawing
-retry with Skia's default font if the empty typeface would produce blank glyphs.
-This keeps text-field carets aligned with drawn text while still verifying first
-Skia presentation through AppKit and avoiding known CoreText/Skia FontMgr and
-SkShaper crashes in early CLI-launched AppKit runs.
+The renderer smoke and normal macOS Skia app entrypoints use the default
+system-FontMgr text path, including optional SkShaper when enabled. The
+first-frame Showcase and Markdown Editor smokes set each entrypoint's
+exit-after-first-present flag, and those entrypoints explicitly select
+`EmptyTypeface` only for the smoke run. This keeps first-frame AppKit
+presentation evidence on the safer default-font retry path while preserving the
+normal app default that exercises platform font lookup, emoji retry, and
+optional SkShaper when linked.
 
 Use `--skia-provider existing` when you already have a Skia checkout or binary
 package:
@@ -346,9 +350,11 @@ moon build examples/markdown_editor/macos --target native
 moon build examples/showcase/windows_skia --target native
 moon build examples/markdown_editor/windows --target native
 moon build examples/markdown_editor/windows_cosmic --target native
+moon build examples/markdown_editor/windows_skia --target native
 moon build examples/showcase/linux --target native
 moon build examples/showcase/linux_cosmic --target native
 moon build examples/showcase/linux_skia --target native
+moon build examples/markdown_editor/linux_skia --target native
 ```
 
 Use the direct native example builds only on a matching configured host. The

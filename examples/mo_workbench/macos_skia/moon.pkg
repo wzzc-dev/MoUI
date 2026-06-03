@@ -2,6 +2,7 @@ import {
   "moonbitlang/async",
   "moonbitlang/core/env",
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
+  "wzzc-dev/moui/render/skia" @skia_renderer,
   "examples/mo_workbench/app",
   "examples/mo_workbench/native_transport",
 }

@@ -1,11 +1,9 @@
 ///|
 fn main {
-  let app = @showcase_app.ShowcaseApp::new()
-  let runtime = app.runtime_with_host_summary(
-    @windows_backend.windows_capability_summary(),
-  )
+  let app = @markdown_app.MarkdownEditorApp::new()
+  let runtime = app.runtime(width=980.0, height=640.0)
   let exit_after_first_present = @env.get_env_var(
-      "MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
     ) ==
     Some("1")
   let font_resolution = if exit_after_first_present {
@@ -13,10 +11,10 @@ fn main {
   } else {
     @skia_renderer.SkiaFontResolution::SystemFontMgr
   }
-  @windows_skia_backend.run_app_with_options(
-    "MoUI Showcase",
+  @linux_skia_backend.run_app_with_options(
+    "MoUI Markdown Editor",
     runtime,
-    options=@windows_skia_backend.WindowsSkiaAppOptions::new(
+    options=@linux_skia_backend.LinuxSkiaAppOptions::new(
       font_resolution~,
       exit_after_first_present~,
     ),
