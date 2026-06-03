@@ -268,6 +268,8 @@ node --check scripts/record-platform-evidence-manifest.mjs
 node scripts/test-record-platform-evidence-manifest.mjs
 node --check scripts/validate-web-runtime-handoff.mjs
 node scripts/test-validate-web-runtime-handoff.mjs
+node --check scripts/test-browser-runtime-events.mjs
+node scripts/test-browser-runtime-events.mjs
 node --check scripts/validate-web-runtime-handoff-manifest.mjs
 node scripts/test-validate-web-runtime-handoff-manifest.mjs
 node --check scripts/record-web-runtime-presentation.mjs

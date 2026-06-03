@@ -605,18 +605,66 @@ export function createWindowWebImports(options = {}) {
       let suppressNextInputUntil = 0;
       let lastPointerEventAt = 0;
       let lastButtonEventAt = 0;
+      let suppressMouseFallback = null;
+      let suppressClickFallback = null;
       const add = (target, type, handler, options) => {
         target.addEventListener(type, handler, options);
         handlers.push([target, type, handler, options]);
       };
-      const markPointerEvent = () => {
+      const pointerSignature = event => ({
+        type: event.type,
+        button: Number.isFinite(event.button) ? event.button | 0 : 0,
+        x: Number.isFinite(event.clientX) ? Math.round(event.clientX) : 0,
+        y: Number.isFinite(event.clientY) ? Math.round(event.clientY) : 0,
+      });
+      const samePointerSignature = (event, signature) => {
+        if (!signature) return false;
+        const current = pointerSignature(event);
+        return current.type === signature.type &&
+          current.button === signature.button &&
+          current.x === signature.x &&
+          current.y === signature.y;
+      };
+      const compatibilityMouseType = type => {
+        switch (type) {
+          case "pointerenter": return "mouseenter";
+          case "pointermove": return "mousemove";
+          case "pointerleave": return "mouseleave";
+          case "pointerdown": return "mousedown";
+          case "pointerup": return "mouseup";
+          default: return "";
+        }
+      };
+      const markPointerEvent = event => {
         lastPointerEventAt = Date.now();
+        const mouseType = compatibilityMouseType(event.type);
+        suppressMouseFallback = mouseType
+          ? { ...pointerSignature(event), type: mouseType }
+          : null;
       };
-      const markButtonEvent = () => {
+      const markButtonEvent = event => {
         lastButtonEventAt = Date.now();
+        if (event.type === "pointerup" || event.type === "mouseup") {
+          suppressClickFallback = { ...pointerSignature(event), type: "click" };
+        } else if (event.type === "pointerdown" || event.type === "mousedown") {
+          suppressClickFallback = null;
+        }
       };
-      const shouldUseMouseFallback = () => Date.now() - lastPointerEventAt > 250;
-      const shouldUseClickFallback = () => Date.now() - lastButtonEventAt > 250;
+      const shouldUseMouseFallback = event => {
+        if (samePointerSignature(event, suppressMouseFallback)) {
+          suppressMouseFallback = null;
+          return false;
+        }
+        return Date.now() - lastPointerEventAt > 250;
+      };
+      const shouldUseClickFallback = event => {
+        if (samePointerSignature(event, suppressClickFallback)) {
+          suppressClickFallback = null;
+          return false;
+        }
+        suppressClickFallback = null;
+        return Date.now() - lastButtonEventAt > 250;
+      };
       const hostHasFocus = () => textInputHostHasFocus(textState);
       const acceptFileDrag = event => {
         preventDefaultIfCancelable(event);
@@ -647,61 +695,61 @@ export function createWindowWebImports(options = {}) {
         }
       };
       add(canvas, "pointerenter", event => {
-        markPointerEvent();
+        markPointerEvent(event);
         const p = pointerPosition(canvas, event);
         emit(20, rawId, p.x, p.y);
       });
       add(canvas, "pointermove", event => {
-        markPointerEvent();
+        markPointerEvent(event);
         const p = pointerPosition(canvas, event);
         emit(21, rawId, p.x, p.y);
       });
       add(canvas, "pointerleave", event => {
-        markPointerEvent();
+        markPointerEvent(event);
         const p = pointerPosition(canvas, event);
         emit(22, rawId, p.x, p.y);
       });
       add(canvas, "pointerdown", event => {
-        markPointerEvent();
-        markButtonEvent();
+        markPointerEvent(event);
+        markButtonEvent(event);
         preventDefaultIfCancelable(event);
         focusInputTarget();
         const p = pointerPosition(canvas, event);
         emit(23, rawId, p.x, p.y, event.button);
       });
       add(canvas, "pointerup", event => {
-        markPointerEvent();
-        markButtonEvent();
+        markPointerEvent(event);
+        markButtonEvent(event);
         const p = pointerPosition(canvas, event);
         emit(24, rawId, p.x, p.y, event.button);
         focusInputTarget();
       });
       add(canvas, "mouseenter", event => {
-        if (!shouldUseMouseFallback()) return;
+        if (!shouldUseMouseFallback(event)) return;
         const p = pointerPosition(canvas, event);
         emit(20, rawId, p.x, p.y);
       });
       add(canvas, "mousemove", event => {
-        if (!shouldUseMouseFallback()) return;
+        if (!shouldUseMouseFallback(event)) return;
         const p = pointerPosition(canvas, event);
         emit(21, rawId, p.x, p.y);
       });
       add(canvas, "mouseleave", event => {
-        if (!shouldUseMouseFallback()) return;
+        if (!shouldUseMouseFallback(event)) return;
         const p = pointerPosition(canvas, event);
         emit(22, rawId, p.x, p.y);
       });
       add(canvas, "mousedown", event => {
         preventDefaultIfCancelable(event);
-        if (!shouldUseMouseFallback()) return;
-        markButtonEvent();
+        if (!shouldUseMouseFallback(event)) return;
+        markButtonEvent(event);
         focusInputTarget();
         const p = pointerPosition(canvas, event);
         emit(23, rawId, p.x, p.y, event.button);
       });
       add(canvas, "mouseup", event => {
-        if (!shouldUseMouseFallback()) return;
-        markButtonEvent();
+        if (!shouldUseMouseFallback(event)) return;
+        markButtonEvent(event);
         const p = pointerPosition(canvas, event);
         emit(24, rawId, p.x, p.y, event.button);
         focusInputTarget();
@@ -709,8 +757,8 @@ export function createWindowWebImports(options = {}) {
       add(canvas, "click", event => {
         preventDefaultIfCancelable(event);
         focusInputTarget();
-        if (!shouldUseClickFallback()) return;
-        markButtonEvent();
+        if (!shouldUseClickFallback(event)) return;
+        markButtonEvent(event);
         const p = pointerPosition(canvas, event);
         emit(23, rawId, p.x, p.y, event.button);
         emit(24, rawId, p.x, p.y, event.button);

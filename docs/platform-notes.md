@@ -176,7 +176,11 @@ The reusable browser runtime assets live under `backend/web/*.js`. Each
 `examples/*/web_wasm/` package is only the app-specific Web entrypoint and
 supplies the example-specific wasm URL. The canvas host reports logical event
 coordinates after DPR mapping and avoids CSS transforms, borders, and padding so
-resize and input coordinates stay stable.
+resize and input coordinates stay stable. The browser runtime treats native
+pointer events as authoritative when present and suppresses matching
+mouse/click fallback events by event signature, so a slow app rebuild after a
+button release cannot replay the same browser click as a second MoUI pointer
+activation.
 
 ## macOS Native
 
