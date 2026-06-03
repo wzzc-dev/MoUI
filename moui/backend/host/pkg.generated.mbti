@@ -213,6 +213,11 @@ pub(all) struct HostImageResourceRepaintResult {
   status : HostImageResourceRepaintStatus
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct HostImageResourceRepaintSnapshot {
+  tracked_window_count : Int
+  tracked_windows : Array[HostImageResourceTrackedWindow]
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum HostImageResourceRepaintStatus {
   ImageRepaintRecorded
   ImageRepaintUnchanged
@@ -228,7 +233,13 @@ pub fn HostImageResourceRepaintTracker::record_presented(Self, HostWindowId, Hos
 pub fn HostImageResourceRepaintTracker::remove_window(Self, HostWindowId) -> Bool
 pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(Self, HostWindowId, HostWindowRenderer, window_open~ : Bool, request_redraw~ : (HostWindowId) -> Unit) -> HostImageResourceRepaintResult
 pub fn HostImageResourceRepaintTracker::revision_for(Self, HostWindowId) -> Int?
+pub fn HostImageResourceRepaintTracker::snapshot(Self) -> HostImageResourceRepaintSnapshot
 pub fn HostImageResourceRepaintTracker::tracked_count(Self) -> Int
+
+pub(all) struct HostImageResourceTrackedWindow {
+  window_id : HostWindowId
+  revision : Int
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct HostInputCapabilities {
   pointer : Bool
