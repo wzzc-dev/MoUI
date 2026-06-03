@@ -26,6 +26,12 @@ pub(all) struct SubscriptionDescriptor {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct SubscriptionKindCount {
+  kind : String
+  count : Int
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum SubscriptionPlanKind {
   SubscriptionPlanNone
   SubscriptionPlanBatch
@@ -124,6 +130,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   duplicate_subscription_keys : Array[String]
   ignored_subscription_dispatch_count : Int
   active_subscriptions : Array[SubscriptionDescriptor]
+  active_subscription_kind_counts : Array[SubscriptionKindCount]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
 } derive(Eq, Debug, ToJson)
 
@@ -912,8 +919,29 @@ fn ProgramRuntimeDiagnostics::snapshot(
       kind: active.kind,
       label: active.label,
     }),
+    active_subscription_kind_counts: self.active_subscription_kind_counts(),
     subscription_lifecycle: self.subscription_lifecycle.copy(),
   }
+}
+
+///|
+fn ProgramRuntimeDiagnostics::active_subscription_kind_counts(
+  self : ProgramRuntimeDiagnostics,
+) -> Array[SubscriptionKindCount] {
+  let counts : Array[SubscriptionKindCount] = []
+  for active in self.active_subscriptions {
+    let mut found = false
+    for index, count in counts {
+      if count.kind == active.kind {
+        counts[index] = { ..count, count: count.count + 1 }
+        found = true
+      }
+    }
+    if !found {
+      counts.push({ kind: active.kind, count: 1 })
+    }
+  }
+  counts
 }
 
 ///|
@@ -954,6 +982,7 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     duplicate_subscription_keys: [],
     ignored_subscription_dispatch_count: 0,
     active_subscriptions: [],
+    active_subscription_kind_counts: [],
     subscription_lifecycle: [],
   }
 }

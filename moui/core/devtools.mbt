@@ -46,6 +46,7 @@ pub(all) struct RuntimeInspectorSnapshot {
   duplicate_subscription_keys : Array[String]
   ignored_subscription_dispatch_count : Int
   active_subscriptions : Array[SubscriptionDescriptor]
+  active_subscription_kind_counts : Array[SubscriptionKindCount]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
   rebuild_reason : String
   dirty_reasons : Array[String]
@@ -214,6 +215,7 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     duplicate_subscription_keys: program.duplicate_subscription_keys,
     ignored_subscription_dispatch_count: program.ignored_subscription_dispatch_count,
     active_subscriptions: program.active_subscriptions,
+    active_subscription_kind_counts: program.active_subscription_kind_counts,
     subscription_lifecycle: program.subscription_lifecycle,
     rebuild_reason,
     dirty_reasons,

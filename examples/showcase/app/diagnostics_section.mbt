@@ -80,6 +80,9 @@ fn ShowcaseModel::inspector_snapshot_card(
   } else {
     "none"
   }
+  let active_subscription_kinds = subscription_kind_count_summary(
+    runtime.active_subscription_kind_counts,
+  )
   let duplicate_effect_keys = if runtime.last_scheduled_effect_summary.duplicate_descriptor_keys.length() >
     0 {
     runtime.last_scheduled_effect_summary.duplicate_descriptor_keys.join(", ")
@@ -211,14 +214,16 @@ fn ShowcaseModel::inspector_snapshot_card(
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
         text(
-          "TEA counters: messages " +
+          "TEA subscriptions: messages " +
           runtime.program_dispatched_count.to_string() +
           "; effect runs " +
           runtime.program_effect_run_count.to_string() +
           "; subscription plans " +
           runtime.program_subscription_plan_count.to_string() +
           "; active " +
-          runtime.active_subscription_count.to_string(),
+          runtime.active_subscription_count.to_string() +
+          "; kinds " +
+          active_subscription_kinds,
           width=inner_width,
           height=22.0,
         )
@@ -264,6 +269,21 @@ fn ShowcaseModel::inspector_snapshot_card(
     height=card_height,
     padding=theme.spacing_scale.md,
   )
+}
+
+///|
+fn subscription_kind_count_summary(
+  counts : Array[@core.SubscriptionKindCount],
+) -> String {
+  if counts.length() == 0 {
+    "none"
+  } else {
+    let parts : Array[String] = []
+    for count in counts {
+      parts.push(count.kind + " " + count.count.to_string())
+    }
+    parts.join(", ")
+  }
 }
 
 ///|
@@ -361,6 +381,11 @@ fn diagnostics_inspector_sample_program(
           @core.Subscription::animation_tick(
             key="diagnostics:tick",
             label="Duplicate tick ignored",
+            start=_dispatch => Some(() => ()),
+          ),
+          @core.Subscription::host_event(
+            key="diagnostics:host",
+            label="Inspector host event",
             start=_dispatch => Some(() => ()),
           ),
         ])

@@ -786,6 +786,57 @@ test "subscription source helpers standardize diagnostic kinds" {
 }
 
 ///|
+test "program snapshots aggregate active subscription kinds" {
+  let program = Program::new(
+    init=() => ("ready", Effect::none()),
+    update=(_model, message) => (message, Effect::none()),
+    view=model => runtime_test_label(model),
+    subscriptions=_model => {
+      Subscription::batch([
+        Subscription::timer(key="timer:refresh", label="Refresh timer", start=_dispatch => {
+          None
+        }),
+        Subscription::timer(key="timer:clock", label="Clock timer", start=_dispatch => {
+          None
+        }),
+        Subscription::host_event(key="host:theme", label="Host theme", start=_dispatch => {
+          None
+        }),
+        Subscription::service_completion(
+          key="host-service:completion:42",
+          label="Host completion",
+          start=_dispatch => None,
+        ),
+      ])
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=180.0, height=48.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "ready"))
+  let snapshot = runtime.program_runtime_snapshot()
+  inspect(snapshot.active_subscription_count, content="4")
+  inspect(snapshot.active_subscription_kind_counts.length(), content="3")
+  inspect(snapshot.active_subscription_kind_counts[0].kind, content="timer")
+  inspect(snapshot.active_subscription_kind_counts[0].count, content="2")
+  inspect(
+    snapshot.active_subscription_kind_counts[1].kind,
+    content="host-event",
+  )
+  inspect(snapshot.active_subscription_kind_counts[1].count, content="1")
+  inspect(
+    snapshot.active_subscription_kind_counts[2].kind,
+    content="host-service",
+  )
+  inspect(snapshot.active_subscription_kind_counts[2].count, content="1")
+  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  inspect(inspector.active_subscription_kind_counts.length(), content="3")
+  inspect(inspector.active_subscription_kind_counts[0].kind, content="timer")
+  inspect(inspector.active_subscription_kind_counts[0].count, content="2")
+}
+
+///|
 enum ProgramSubscriptionMsg {
   ProgramSubscriptionToggle
   ProgramSubscriptionTick
