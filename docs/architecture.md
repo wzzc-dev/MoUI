@@ -73,7 +73,9 @@ examples/{settings,data_table,file_importer,command_palette}/app/ shared app-pat
 MoUI app code builds UI with opaque `@core.View[Msg]` values. The standard
 shape is a typed TEA loop: `view : Model -> View[Msg]`, events carry typed
 messages, `update` handles those messages, and explicit `Effect[Msg]` values
-model follow-up work. Views that need viewport or platform inputs use
+model follow-up work. App-level `Subscription[Msg]` values declare ongoing
+event sources that should be started, reused by key, or canceled as the model
+changes. Views that need viewport or platform inputs use
 `view : (Model, ViewEnvironment) -> View[Msg]` through
 `Program::simple_with_environment` or `Program::new_with_environment`. User code
 does not call `lower`, `to_spec`, or `ViewSpec`; those names belong to the core
@@ -113,7 +115,18 @@ control state, but shared app runtimes should default to `Program::simple` and
 `update` returns follow-up work: `Effect::send` re-enters the typed message loop
 directly, and `Effect::dispatch` gives an effect runner the typed message
 dispatcher for app-owned host-service bridges or other callbacks without making
-`core` platform-specific. Environment-aware TEA apps should use the
+`core` platform-specific. `Program` constructors also accept
+`subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
+uses a stable key, receives the typed dispatcher, and may return a cleanup
+callback. Existing keys are reused across model changes, missing keys are
+canceled, duplicate keys in one subscription batch are ignored after the first
+and reported in runtime diagnostics, and `Subscription::map` preserves child
+feature identity while lifting messages to a parent type. Dispatchers captured
+by canceled or destroyed subscriptions are ignored, so stale callbacks cannot
+re-enter the model loop after their subscription lifetime ends. Concrete timer,
+window, route, or host-service adapters remain outside `core`; the core
+subscription runtime only owns the platform-neutral lifecycle and typed
+dispatch contract. Environment-aware TEA apps should use the
 `*_with_environment` constructors instead of taking `BuildContext` in their view
 layer. In both cases event dispatch flows through typed messages instead of
 exposing the internal view tree.
@@ -149,6 +162,12 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   cleanups run when keys disappear or the component leaves the tree.
   `BuildContext` also exposes scoped save/restore helpers for small saveable
   string, bool, and int state.
+- `AppRuntime` owns app-level `Program` diagnostics, including dispatch,
+  update, effect, active subscription, start/reuse/cancel, and duplicate-key
+  counters. This is separate from component-local `BuildContext::watch` and
+  `BuildContext::run_effect`; program subscriptions model ongoing app event
+  sources, while build-context subscriptions model component-local state
+  invalidation and lifecycle effects.
 - Layout uses constraints down, measured size up, then parent placement, and
   writes the result into `LayoutTree`.
 - Paint consumes `LayoutTree` frames to build `RenderTree` and emits

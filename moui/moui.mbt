@@ -56,6 +56,24 @@ pub type Program[Model, Msg] = @core.Program[Model, Msg]
 pub type Effect[Msg] = @core.Effect[Msg]
 
 ///|
+pub type Subscription[Msg] = @core.Subscription[Msg]
+
+///|
+pub type SubscriptionDescriptor = @core.SubscriptionDescriptor
+
+///|
+pub type SubscriptionLifecycleStatus = @core.SubscriptionLifecycleStatus
+
+///|
+pub type SubscriptionCancelReason = @core.SubscriptionCancelReason
+
+///|
+pub type SubscriptionLifecycleSnapshot = @core.SubscriptionLifecycleSnapshot
+
+///|
+pub type ProgramRuntimeSnapshot = @core.ProgramRuntimeSnapshot
+
+///|
 pub type ButtonStyle = @style.ButtonStyle
 
 ///|

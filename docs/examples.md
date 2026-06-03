@@ -5,6 +5,10 @@ now follows the same TEA shape as ordinary apps: `Model / Msg / update / view`
 driven by `Program::simple_with_environment`. It still contains the Counter and
 Todo interaction patterns. The WYSIWYG Markdown editor stays separate because
 it demonstrates a larger editing workflow with its own model and parser tests.
+Apps that need host-service work should use `Program::new` with `Effect[Msg]`;
+apps that need ongoing typed callbacks can add `subscriptions=model => ...` and
+stable `Subscription` keys while keeping concrete timer or host adapters out of
+`core`.
 Showcase surfaces renderer capability follow-ups first so visible docs do not
 hide partial or gap status behind ready features.
 

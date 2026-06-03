@@ -50,7 +50,7 @@ editor remains a separate practical editing demo.
 ## Project Shape
 
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,
-  draw command model, typed events, `Program`, and `Effect`.
+  draw command model, typed events, `Program`, `Effect`, and `Subscription`.
 - `style/` owns visual tokens and style aliases during the split from `core`.
 - `views/` exposes public view constructors returning opaque `@core.View[Msg]`.
 - `backend/host/` defines shared host contracts; platform backends normalize

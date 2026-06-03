@@ -14,8 +14,9 @@ with current files and validation output:
   `View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer`.
 - Public view constructors return opaque `@core.View[Msg]`; app code uses the
   TEA-shaped `Program` surface with typed messages, explicit `Effect[Msg]`
-  follow-up work when needed, and shared logic through Web wasm-gc, macOS
-  native, and Windows native entrypoints where those platforms are supported.
+  follow-up work when needed, app-level `Subscription[Msg]` event sources for
+  ongoing callbacks, and shared logic through Web wasm-gc, macOS native, and
+  Windows native entrypoints where those platforms are supported.
 - Renderer capability status is synchronized between
   `render/capabilities.mbt`, `render/capabilities_test.mbt`, and
   `docs/renderer-capability-report.md`.
@@ -41,12 +42,12 @@ with current files and validation output:
 | --- | --- | --- |
 | Daily validation | `sh scripts/dev-check.sh` passes after the Windows Showcase unused import cleanup. | ready |
 | Package boundaries | `docs/architecture.md`, `AGENTS.md`, and repo-local skills describe the same `core` / `views` / `backend` / `render` / `examples` split. | ready |
-| Public view model | `views/` constructors are documented as returning opaque `@core.View[Msg]`; `Program::simple`, `Program::new`, and `Effect[Msg]` are the app-facing TEA surface; public API edits require `moon info`. | ready |
+| Public view model | `views/` constructors are documented as returning opaque `@core.View[Msg]`; `Program::simple`, `Program::new`, `Effect[Msg]`, and app-level `Subscription[Msg]` are the app-facing TEA surface; public API edits require `moon info`. Concrete timer/host subscription adapters remain follow-up work outside `core`. | ready with adapter follow-ups |
 | Example shape | Showcase and Markdown Editor keep shared app logic under `examples/*/app/` with platform entrypoints as wiring; File Importer demonstrates effect-capable host-service flow through `Program::new`, typed completions, and pending host-service callbacks that re-enter the TEA message loop. Showcase Navigation Shell now exercises `RouteHistoryState` as app-owned route/deep-link shadow history, a sampled fade/slide route transition preview, and `resizable_split_view` as a controlled pane-size workflow, while the Data Table example exercises `ColumnWidthState`/`ColumnOrderState` for controlled column resizing/reordering without moving table state into `views`. Browser history/native deep-link dispatch and automatic transition scheduling remain pending host/app work, not MoUI runtime evidence. | ready |
 | Renderer capability tracking | Capability status is recorded in code, tests, and `docs/renderer-capability-report.md`. | ready with tracked gaps |
 | Platform contracts | `backend/host` owns shared events, services, windows, redraw, and request/completion contracts. | ready with tracked Linux service gaps |
 | Text system | `docs/text-system.md` documents `TextSystem`, provider composition, embedded fonts, Skia `skia_text_system()` diagnostic coverage, and shaping gaps; stable and diagnostic text conformance checks pass without claiming full bidi/paragraph shaping parity. | ready with tracked gaps |
-| Devtool counters | Core inspector snapshots expose runtime, layout, semantics, frame, and render command counters; render snapshots also report open clip/layer/filter scopes and unbalanced pops, and Showcase Diagnostics surfaces the render command/scope counters with app-test coverage. | ready for command-level diagnostics |
+| Devtool counters | Core inspector snapshots expose runtime, layout, semantics, frame, render command, TEA dispatch/update/effect, and app subscription lifecycle counters; render snapshots also report open clip/layer/filter scopes and unbalanced pops, and Showcase Diagnostics surfaces the render command/scope counters with app-test coverage. | ready for command-level diagnostics |
 | Guidance surface | `docs/ai-collaboration.md`, `AGENTS.md`, and `skills/` define focused agent workflows. | ready |
 
 ## Required Gates

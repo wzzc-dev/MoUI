@@ -56,11 +56,12 @@ Use this skill when editing or reviewing:
   ```
 
 - `core/` stays platform-neutral.
-- `Program` and `Effect[Msg]` are the default app model surface: pure apps use
-  `Program::simple`, environment-aware apps use the `*_with_environment`
-  constructors, and effect-capable apps use `Program::new` with
-  `Effect::send` or `Effect::dispatch` so follow-up work re-enters the typed
-  message loop without exposing runtime internals.
+- `Program`, `Effect[Msg]`, and `Subscription[Msg]` are the default app model
+  surface: pure apps use `Program::simple`, environment-aware apps use the
+  `*_with_environment` constructors, effect-capable apps use `Program::new`
+  with `Effect::send` or `Effect::dispatch`, and app-level ongoing event
+  sources use `subscriptions=model => ...` with stable keys so callbacks
+  re-enter the typed message loop without exposing runtime internals.
 - Platform packages normalize native events into `@host.HostEvent`.
 - Backends do not mutate element or render trees directly.
 - Renderers consume platform-neutral `@core.DrawCommand` values.
@@ -86,8 +87,9 @@ Use this skill when editing or reviewing:
 ## Package Map
 
 - `core/`: one MoonBit package for platform-neutral runtime, view specs, state,
-  app-owned route/history helpers, layout, input, semantics, rich text editing,
-  draw commands, styles, and theme tokens. Keep files grouped by responsibility
+  app-owned route/history helpers, `Program` / `Effect` / `Subscription`,
+  layout, input, semantics, rich text editing, draw commands, styles, and theme
+  tokens. Keep files grouped by responsibility
   (`runtime_state`,
   `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
   subpackages.

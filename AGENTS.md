@@ -13,7 +13,7 @@ paths, or abstractions that only preserve old shapes.
 
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,
   draw command model, opaque public `View[Msg]`, typed events, app-owned
-  route/history helpers, `Program`, and `Effect`.
+  route/history helpers, `Program`, `Effect`, and `Subscription`.
   It remains one MoonBit package; internal files are grouped by responsibility
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
   etc.) rather than by additional package boundaries.
