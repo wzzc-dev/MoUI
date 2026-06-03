@@ -9,7 +9,14 @@ pub(all) struct RuntimeInspectorSnapshot {
   draw_command_count : Int
   program_dispatched_count : Int
   program_update_count : Int
+  program_effect_plan_count : Int
   program_effect_count : Int
+  program_effect_none_count : Int
+  program_effect_batch_count : Int
+  program_effect_send_count : Int
+  program_effect_dispatch_count : Int
+  last_effect_summary : EffectPlanSummary
+  last_scheduled_effect_summary : EffectPlanSummary
   active_subscription_count : Int
   started_subscription_count : Int
   reused_subscription_count : Int
@@ -144,7 +151,14 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     draw_command_count: runtime.draw_commands().length(),
     program_dispatched_count: program.dispatched_count,
     program_update_count: program.update_count,
+    program_effect_plan_count: program.effect_plan_count,
     program_effect_count: program.effect_count,
+    program_effect_none_count: program.effect_none_count,
+    program_effect_batch_count: program.effect_batch_count,
+    program_effect_send_count: program.effect_send_count,
+    program_effect_dispatch_count: program.effect_dispatch_count,
+    last_effect_summary: program.last_effect_summary,
+    last_scheduled_effect_summary: program.last_scheduled_effect_summary,
     active_subscription_count: program.active_subscription_count,
     started_subscription_count: program.started_subscription_count,
     reused_subscription_count: program.reused_subscription_count,

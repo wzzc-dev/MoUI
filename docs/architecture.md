@@ -115,7 +115,10 @@ control state, but shared app runtimes should default to `Program::simple` and
 `update` returns follow-up work: `Effect::send` re-enters the typed message loop
 directly, and `Effect::dispatch` gives an effect runner the typed message
 dispatcher for app-owned host-service bridges or other callbacks without making
-`core` platform-specific. `Program` constructors also accept
+`core` platform-specific. `Effect::plan_summary` exposes a platform-neutral
+diagnostic summary of the effect tree, including batch, send, dispatch, none,
+scheduled leaf count, and max depth, without running effect callbacks.
+`Program` constructors also accept
 `subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
 uses a stable key, receives the typed dispatcher, and may return a cleanup
 callback. Existing keys are reused across model changes, missing keys are
@@ -163,8 +166,10 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   `BuildContext` also exposes scoped save/restore helpers for small saveable
   string, bool, and int state.
 - `AppRuntime` owns app-level `Program` diagnostics, including dispatch,
-  update, effect, active subscription, start/reuse/cancel, and duplicate-key
-  counters. This is separate from component-local `BuildContext::watch` and
+  update, effect plan, scheduled effect, effect-kind, active subscription,
+  start/reuse/cancel, and duplicate-key counters. It also keeps the latest
+  effect summary and the latest scheduled effect summary for inspector tooling.
+  This is separate from component-local `BuildContext::watch` and
   `BuildContext::run_effect`; program subscriptions model ongoing app event
   sources, while build-context subscriptions model component-local state
   invalidation and lifecycle effects.

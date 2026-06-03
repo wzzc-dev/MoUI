@@ -99,8 +99,9 @@ pub fn[Model, Msg] AppRuntime::new_program(
         let (next_model, effect) = (program.update)(model.get(), message)
         program_runtime.record_update()
         model.set(next_model)
+        let effect_summary = effect.plan_summary()
         let effect_count = run_effect(effect, dispatch)
-        program_runtime.record_effects(effect_count)
+        program_runtime.record_effects(effect_summary, effect_count)
         sync_subscriptions()
       }
       pending_messages.clear()
@@ -109,8 +110,9 @@ pub fn[Model, Msg] AppRuntime::new_program(
     }
   }
   process_ref.val = Some(process_messages)
+  let initial_effect_summary = initial_effect.plan_summary()
   let initial_effect_count = run_effect(initial_effect, dispatch)
-  program_runtime.record_effects(initial_effect_count)
+  program_runtime.record_effects(initial_effect_summary, initial_effect_count)
   sync_subscriptions()
   match process_ref.val {
     Some(process) => process()
