@@ -64,14 +64,15 @@ Use this skill when editing or reviewing:
   re-enter the typed message loop without exposing runtime internals. Effect
   diagnostics stay platform-neutral through `Effect::plan_summary`,
   distinct anonymous-dispatch vs structured-run counters, `Effect::run`
-  descriptors, duplicate descriptor-key counts, and aggregate program-runtime
-  inspector counters; message
+  descriptors, duplicate descriptor-key counts/names, and aggregate
+  program-runtime inspector counters; message
   queue diagnostics stay
   platform-neutral through enqueue/drain/pending counters; pipeline cost
   diagnostics stay platform-neutral through rebuild/layout/paint/draw-command
   pass counters; subscription diagnostics stay platform-neutral through
   `Subscription::plan_summary`, planned and active subscription descriptors,
-  subscription lifecycle/plan counters, and ignored stale-dispatch counters for
+  duplicate subscription-key counts/names, subscription lifecycle/plan counters,
+  and ignored stale-dispatch counters for
   callbacks captured by canceled or destroyed subscription lifetimes; effect
   runners and subscription adapters still own any concrete async work outside
   `core`.
