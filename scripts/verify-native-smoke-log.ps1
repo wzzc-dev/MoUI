@@ -206,6 +206,7 @@ $defaultStageMarkers = @(
   "native smoke decoded bitmap width",
   "native smoke decoded bitmap height",
   "native smoke font spacing",
+  "native smoke non-finite font scalars sanitized",
   "native smoke font resource plan count",
   "native smoke text run resource plan count",
   "native smoke text run range byte size",
@@ -996,6 +997,10 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke invalid shaped glyph replay skipped"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke non-finite font scalars sanitized"
     Value = "1"
   }
   [pscustomobject]@{

@@ -1016,8 +1016,14 @@ test "bitmap api typechecks" {
 
 ///|
 test "font api typechecks" {
+  let invalid_scalar : Float = 0.0 / 0.0
+  let infinite : Float = 1.0 / 0.0
   assert_true(@native.Font::default(size=0.0) is None)
+  assert_true(@native.Font::default(size=invalid_scalar) is None)
+  assert_true(@native.Font::default(size=infinite) is None)
   assert_true(@native.Font::empty(size=0.0) is None)
+  assert_true(@native.Font::empty(size=invalid_scalar) is None)
+  assert_true(@native.Font::empty(size=infinite) is None)
   match @native.Font::empty(size=14.0) {
     None => assert_true(!@native.skia_available())
     Some(font) => {
@@ -1027,6 +1033,10 @@ test "font api typechecks" {
       assert_eq(font.count_text_utf8(b""), 0)
       assert_eq(font.text_to_glyphs_utf8(b"").length(), 0)
       font.set_size(18.0)
+      assert_eq(font.size(), 18.0)
+      font.set_size(invalid_scalar)
+      assert_eq(font.size(), 18.0)
+      font.set_size(infinite)
       assert_eq(font.size(), 18.0)
     }
   }
@@ -1048,6 +1058,10 @@ test "font api typechecks" {
       assert_eq(font.size(), 14.0)
       font.set_size(18.0)
       assert_eq(font.size(), 18.0)
+      font.set_size(invalid_scalar)
+      assert_eq(font.size(), 18.0)
+      font.set_size(infinite)
+      assert_eq(font.size(), 18.0)
       assert_eq(font.measure_text_utf8(b""), 0.0)
       assert_eq(font.count_text_utf8(b""), 0)
       assert_eq(font.text_to_glyphs_utf8(b"").length(), 0)
@@ -1068,6 +1082,13 @@ test "font api typechecks" {
       assert_eq(glyph_x_positions.length(), glyphs.length())
       assert_eq(glyph_x_positions[0], 3.0)
       assert_true(glyph_x_positions[1] > glyph_x_positions[0])
+      let invalid_glyph_x_positions = font.glyph_x_positions(
+        glyphs,
+        origin=infinite,
+      )
+      assert_eq(invalid_glyph_x_positions.length(), glyphs.length())
+      assert_eq(invalid_glyph_x_positions[0], 0.0)
+      assert_true(invalid_glyph_x_positions[1] > invalid_glyph_x_positions[0])
       let glyph_positions = font.glyph_positions(
         glyphs,
         origin=@skia.Point::new(3.0, 5.0),
@@ -1075,6 +1096,13 @@ test "font api typechecks" {
       assert_eq(glyph_positions.length(), glyphs.length())
       assert_true(glyph_positions[0] == @skia.Point::new(3.0, 5.0))
       assert_true(glyph_positions[1].x > glyph_positions[0].x)
+      let invalid_glyph_positions = font.glyph_positions(
+        glyphs,
+        origin=@skia.Point::new(infinite, invalid_scalar),
+      )
+      assert_eq(invalid_glyph_positions.length(), glyphs.length())
+      assert_true(invalid_glyph_positions[0] == @skia.Point::zero())
+      assert_true(invalid_glyph_positions[1].x > invalid_glyph_positions[0].x)
       let text_glyph_x_positions = font.text_glyph_x_positions_utf8(
         b"Skia",
         origin=3.0,
@@ -1082,6 +1110,15 @@ test "font api typechecks" {
       assert_eq(text_glyph_x_positions.length(), glyphs.length())
       assert_eq(text_glyph_x_positions[0], 3.0)
       assert_true(text_glyph_x_positions[1] > text_glyph_x_positions[0])
+      let invalid_text_glyph_x_positions = font.text_glyph_x_positions_utf8(
+        b"Skia",
+        origin=invalid_scalar,
+      )
+      assert_eq(invalid_text_glyph_x_positions.length(), glyphs.length())
+      assert_eq(invalid_text_glyph_x_positions[0], 0.0)
+      assert_true(
+        invalid_text_glyph_x_positions[1] > invalid_text_glyph_x_positions[0],
+      )
       let text_glyph_positions = font.text_glyph_positions_utf8(
         b"Skia",
         origin=@skia.Point::new(3.0, 5.0),
@@ -1089,6 +1126,15 @@ test "font api typechecks" {
       assert_eq(text_glyph_positions.length(), glyphs.length())
       assert_true(text_glyph_positions[0] == @skia.Point::new(3.0, 5.0))
       assert_true(text_glyph_positions[1].x > text_glyph_positions[0].x)
+      let invalid_text_glyph_positions = font.text_glyph_positions_utf8(
+        b"Skia",
+        origin=@skia.Point::new(invalid_scalar, infinite),
+      )
+      assert_eq(invalid_text_glyph_positions.length(), glyphs.length())
+      assert_true(invalid_text_glyph_positions[0] == @skia.Point::zero())
+      assert_true(
+        invalid_text_glyph_positions[1].x > invalid_text_glyph_positions[0].x,
+      )
       let glyph_bounds = font.glyph_bounds(glyphs[0])
       assert_true(glyph_bounds.width() > 0.0)
       assert_true(glyph_bounds.height() > 0.0)
@@ -1140,6 +1186,8 @@ test "font api typechecks" {
       }
       assert_true(font.shape_text_utf8(b"") is None)
       assert_true(font.shape_text_utf8(b"Skia", width=0.0) is None)
+      assert_true(font.shape_text_utf8(b"Skia", width=invalid_scalar) is None)
+      assert_true(font.shape_text_utf8(b"Skia", width=infinite) is None)
       assert_true(font.shape_text_run_utf8(b"", shaping) is None)
       assert_true(
         font.shape_text_run_utf8(
@@ -1165,6 +1213,10 @@ test "font api typechecks" {
     None => ()
     Some(typeface) => {
       assert_true(typeface.is_available())
+      assert_true(
+        @native.Font::from_typeface(typeface, size=invalid_scalar) is None,
+      )
+      assert_true(@native.Font::from_typeface(typeface, size=infinite) is None)
       ignore(typeface.is_bold())
       ignore(typeface.is_italic())
       ignore(typeface.is_fixed_pitch())

@@ -128,7 +128,9 @@ The `native` subpackage contains the first opt-in native boundary:
   `@native.Typeface::default()` / `from_name(family, weight, width, slant)` and
   `@native.Font::default(size)` / `from_typeface(typeface, size)` create the
   first native text handles for drawing and measurement; native typefaces can
-  report their Skia family name; `FontStyleRequest` and `FontFallbackRequest`
+  report their Skia family name; native font sizes, shaping widths, and glyph
+  position origins are finite-checked before crossing into Skia;
+  `FontStyleRequest` and `FontFallbackRequest`
   can be passed through the native FontMgr/Typeface adapters, including Skia
   character fallback when the request includes BCP47 language tags and a code
   point, then recorded with `FontFallbackMatchDescriptor` metadata for cache

@@ -378,6 +378,7 @@ if ($status.schema_version -ge 3) {
     "bitmap.decode-readback",
     "bitmap.decode-readback-height",
     "text.font-spacing",
+    "text.non-finite-font-scalars-sanitized",
     "text.font-resource-plan",
     "text.text-run-resource-plan",
     "text.text-run-range",
@@ -736,6 +737,7 @@ if ($status.schema_version -ge 3) {
       "native smoke invalid shaped glyph resource plan count" = "1"
       "native smoke invalid shaped glyph command plan count" = "1"
       "native smoke invalid shaped glyph replay skipped" = "1"
+      "native smoke non-finite font scalars sanitized" = "1"
       "native smoke font resource plan count" = "1"
       "native smoke invalid fallback request resource plan count" = "1"
       "native smoke font fallback key variation" = "1"

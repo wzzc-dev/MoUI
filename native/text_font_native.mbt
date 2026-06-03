@@ -284,8 +284,35 @@ fn Font::from_handle(handle : FontHandle) -> Font? {
 }
 
 ///|
+fn native_font_scalar_is_finite(value : Float) -> Bool {
+  value == value && value - value == 0.0
+}
+
+///|
+fn native_font_positive_scalar_is_valid(value : Float) -> Bool {
+  native_font_scalar_is_finite(value) && value > 0.0
+}
+
+///|
+fn native_font_position_scalar(value : Float) -> Float {
+  if native_font_scalar_is_finite(value) {
+    value
+  } else {
+    0.0
+  }
+}
+
+///|
+fn native_font_position_origin(origin : @skia.Point) -> @skia.Point {
+  @skia.Point::new(
+    native_font_position_scalar(origin.x),
+    native_font_position_scalar(origin.y),
+  )
+}
+
+///|
 pub fn Font::default(size? : Float = 12.0) -> Font? {
-  if size <= 0.0 {
+  if !native_font_positive_scalar_is_valid(size) {
     None
   } else {
     Font::from_handle(native_font_default(size))
@@ -294,7 +321,7 @@ pub fn Font::default(size? : Float = 12.0) -> Font? {
 
 ///|
 pub fn Font::empty(size? : Float = 12.0) -> Font? {
-  if size <= 0.0 {
+  if !native_font_positive_scalar_is_valid(size) {
     None
   } else {
     Font::from_handle(native_font_empty(size))
@@ -303,7 +330,7 @@ pub fn Font::empty(size? : Float = 12.0) -> Font? {
 
 ///|
 pub fn Font::from_typeface(typeface : Typeface, size? : Float = 12.0) -> Font? {
-  if size <= 0.0 {
+  if !native_font_positive_scalar_is_valid(size) {
     None
   } else {
     Font::from_handle(native_font_from_typeface(typeface.handle, size))
@@ -322,7 +349,7 @@ pub fn Font::size(self : Font) -> Float {
 
 ///|
 pub fn Font::set_size(self : Font, size : Float) -> Unit {
-  if size > 0.0 {
+  if native_font_positive_scalar_is_valid(size) {
     native_font_set_size(self.handle, size)
   }
 }
@@ -375,6 +402,7 @@ pub fn Font::glyph_x_positions(
   origin? : Float = 0.0,
 ) -> Array[Float] {
   let positions : Array[Float] = Array::new(capacity=glyphs.length())
+  let origin = native_font_position_scalar(origin)
   for x = origin, i = 0; i < glyphs.length(); i = i + 1 {
     positions.push(x)
     continue x + self.glyph_width(glyphs[i]), i + 1
@@ -389,6 +417,7 @@ pub fn Font::glyph_positions(
   origin? : @skia.Point = @skia.Point::new(0.0, 0.0),
 ) -> Array[@skia.Point] {
   let positions : Array[@skia.Point] = Array::new(capacity=glyphs.length())
+  let origin = native_font_position_origin(origin)
   let x_positions = self.glyph_x_positions(glyphs, origin=origin.x)
   for x in x_positions {
     positions.push(@skia.Point::new(x, origin.y))
@@ -405,7 +434,11 @@ pub fn Font::text_glyph_x_positions_utf8(
   if text.is_empty() {
     []
   } else {
-    native_font_text_glyph_x_positions_utf8(self.handle, text, origin)
+    native_font_text_glyph_x_positions_utf8(
+      self.handle,
+      text,
+      native_font_position_scalar(origin),
+    )
   }
 }
 
@@ -418,6 +451,7 @@ pub fn Font::text_glyph_positions_utf8(
   if text.is_empty() {
     []
   } else {
+    let origin = native_font_position_origin(origin)
     native_font_text_glyph_positions_utf8(self.handle, text, origin.x, origin.y)
   }
 }
@@ -509,7 +543,7 @@ pub fn Font::shape_text_utf8(
   width? : Float = 1000000000.0,
   left_to_right? : Bool = true,
 ) -> ShapedTextRun? {
-  if text.is_empty() || width <= 0.0 {
+  if text.is_empty() || !native_font_positive_scalar_is_valid(width) {
     None
   } else {
     ShapedTextRun::from_handle(

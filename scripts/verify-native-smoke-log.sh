@@ -221,6 +221,7 @@ default_stage_markers=(
   "native smoke decoded bitmap width" \
   "native smoke decoded bitmap height" \
   "native smoke font spacing" \
+  "native smoke non-finite font scalars sanitized" \
   "native smoke font resource plan count" \
   "native smoke text run resource plan count" \
   "native smoke text run range byte size" \
@@ -456,6 +457,7 @@ default_expected_stage_values=(
   $'native smoke invalid shaped glyph resource plan count\t1'
   $'native smoke invalid shaped glyph command plan count\t1'
   $'native smoke invalid shaped glyph replay skipped\t1'
+  $'native smoke non-finite font scalars sanitized\t1'
   $'native smoke font resource plan count\t1'
   $'native smoke invalid fallback request resource plan count\t1'
   $'native smoke font fallback key variation\t1'
