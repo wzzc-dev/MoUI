@@ -40,6 +40,7 @@ pub(all) struct SubscriptionPlanSummary {
   source_count : Int
   duplicate_key_count : Int
   max_depth : Int
+  descriptors : Array[SubscriptionDescriptor]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -209,6 +210,7 @@ pub fn SubscriptionPlanSummary::empty() -> SubscriptionPlanSummary {
     source_count: 0,
     duplicate_key_count: 0,
     max_depth: 0,
+    descriptors: [],
   }
 }
 
@@ -257,8 +259,9 @@ fn[Msg] subscription_plan_summary(
         source_count: 0,
         duplicate_key_count: 0,
         max_depth: depth,
+        descriptors: [],
       }
-    SubscriptionSource(_) =>
+    SubscriptionSource(source) =>
       {
         root_kind: SubscriptionPlanKind::SubscriptionPlanSource,
         none_count: 0,
@@ -266,12 +269,14 @@ fn[Msg] subscription_plan_summary(
         source_count: 1,
         duplicate_key_count: 0,
         max_depth: depth,
+        descriptors: [source.descriptor()],
       }
     SubscriptionBatch(subscriptions) => {
       let mut none_count = 0
       let mut batch_count = 1
       let mut source_count = 0
       let mut max_depth = depth
+      let descriptors : Array[SubscriptionDescriptor] = []
       for child in subscriptions {
         let child_summary = subscription_plan_summary(child, depth=depth + 1)
         none_count = none_count + child_summary.none_count
@@ -280,6 +285,7 @@ fn[Msg] subscription_plan_summary(
         if child_summary.max_depth > max_depth {
           max_depth = child_summary.max_depth
         }
+        descriptors.append(child_summary.descriptors)
       }
       {
         root_kind: SubscriptionPlanKind::SubscriptionPlanBatch,
@@ -288,6 +294,7 @@ fn[Msg] subscription_plan_summary(
         source_count,
         duplicate_key_count: 0,
         max_depth,
+        descriptors,
       }
     }
   }
