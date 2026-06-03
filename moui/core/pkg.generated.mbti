@@ -1350,6 +1350,8 @@ pub(all) struct RuntimeInspectorSnapshot {
   cancelled_subscription_count : Int
   duplicate_subscription_key_count : Int
   ignored_subscription_dispatch_count : Int
+  active_subscriptions : Array[SubscriptionDescriptor]
+  subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
   rebuild_reason : String
   dirty_reasons : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
