@@ -1305,6 +1305,30 @@ export function createWebGpuImports(options = {}) {
         u0: 0, v0: 0, u1: 1, v1: 1,
       };
     };
+    const fitWidthPlacement = () => {
+      const height = rect.width / imageRatio;
+      if (height <= rect.height) {
+        return {
+          rect: { x: rect.x, y: rect.y + (rect.height - height) * 0.5, width: rect.width, height },
+          u0: 0, v0: 0, u1: 1, v1: 1,
+        };
+      }
+      const visible = rect.height / height;
+      const inset = (1 - visible) * 0.5;
+      return { rect, u0: 0, v0: inset, u1: 1, v1: 1 - inset };
+    };
+    const fitHeightPlacement = () => {
+      const width = rect.height * imageRatio;
+      if (width <= rect.width) {
+        return {
+          rect: { x: rect.x + (rect.width - width) * 0.5, y: rect.y, width, height: rect.height },
+          u0: 0, v0: 0, u1: 1, v1: 1,
+        };
+      }
+      const visible = rect.width / width;
+      const inset = (1 - visible) * 0.5;
+      return { rect, u0: inset, v0: 0, u1: 1 - inset, v1: 1 };
+    };
     if (Number(fit) === 3) {
       if (imageWidth <= rect.width && imageHeight <= rect.height) {
         return {
@@ -1318,6 +1342,12 @@ export function createWebGpuImports(options = {}) {
         };
       }
       return containPlacement();
+    }
+    if (Number(fit) === 4) {
+      return fitWidthPlacement();
+    }
+    if (Number(fit) === 5) {
+      return fitHeightPlacement();
     }
     if (Number(fit) === 1) {
       if (imageRatio > frameRatio) {

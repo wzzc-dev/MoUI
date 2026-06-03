@@ -1260,6 +1260,10 @@ fn skia_image_placement(
       } else {
         skia_contain_image_placement(frame, image_ratio, frame_ratio)
       }
+    @core.ImageFit::FitWidth =>
+      skia_fit_width_image_placement(frame, image_ratio)
+    @core.ImageFit::FitHeight =>
+      skia_fit_height_image_placement(frame, image_ratio)
     @core.ImageFit::Contain =>
       skia_contain_image_placement(frame, image_ratio, frame_ratio)
     @core.ImageFit::Cover =>
@@ -1272,6 +1276,58 @@ fn skia_image_placement(
         let inset = (1.0 - visible) / 2.0
         { frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset }
       }
+  }
+}
+
+///|
+fn skia_fit_width_image_placement(
+  frame : @core.Rect,
+  image_ratio : Double,
+) -> SkiaImagePlacement {
+  let scaled_height = frame.size.width / image_ratio
+  if scaled_height <= frame.size.height {
+    {
+      frame: @core.Rect::new(
+        x=frame.origin.x,
+        y=frame.origin.y + (frame.size.height - scaled_height) / 2.0,
+        width=frame.size.width,
+        height=scaled_height,
+      ),
+      u0: 0.0,
+      v0: 0.0,
+      u1: 1.0,
+      v1: 1.0,
+    }
+  } else {
+    let visible = frame.size.height / scaled_height
+    let inset = (1.0 - visible) / 2.0
+    { frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset }
+  }
+}
+
+///|
+fn skia_fit_height_image_placement(
+  frame : @core.Rect,
+  image_ratio : Double,
+) -> SkiaImagePlacement {
+  let scaled_width = frame.size.height * image_ratio
+  if scaled_width <= frame.size.width {
+    {
+      frame: @core.Rect::new(
+        x=frame.origin.x + (frame.size.width - scaled_width) / 2.0,
+        y=frame.origin.y,
+        width=scaled_width,
+        height=frame.size.height,
+      ),
+      u0: 0.0,
+      v0: 0.0,
+      u1: 1.0,
+      v1: 1.0,
+    }
+  } else {
+    let visible = frame.size.width / scaled_width
+    let inset = (1.0 - visible) / 2.0
+    { frame, u0: inset, v0: 0.0, u1: 1.0 - inset, v1: 1.0 }
   }
 }
 

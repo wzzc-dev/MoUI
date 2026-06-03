@@ -819,6 +819,8 @@ pub(all) enum ImageFit {
   Cover
   Stretch
   ScaleDown
+  FitWidth
+  FitHeight
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ImageRun {

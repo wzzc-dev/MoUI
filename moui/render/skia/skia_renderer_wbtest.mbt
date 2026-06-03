@@ -766,6 +766,62 @@ test "skia image placement records contain and cover sampling geometry" {
   inspect(large_scale_down.frame.size.width, content="100")
   inspect(large_scale_down.frame.size.height, content="50")
 
+  let fit_width_short = skia_image_placement(
+    frame,
+    @core.Size::new(width=200.0, height=100.0),
+    @core.ImageFit::FitWidth,
+  )
+  inspect(fit_width_short.frame.origin.x, content="10")
+  inspect(fit_width_short.frame.origin.y, content="45")
+  inspect(fit_width_short.frame.size.width, content="100")
+  inspect(fit_width_short.frame.size.height, content="50")
+  inspect(fit_width_short.u0, content="0")
+  inspect(fit_width_short.v0, content="0")
+  inspect(fit_width_short.u1, content="1")
+  inspect(fit_width_short.v1, content="1")
+
+  let fit_width_tall = skia_image_placement(
+    frame,
+    @core.Size::new(width=100.0, height=200.0),
+    @core.ImageFit::FitWidth,
+  )
+  inspect(fit_width_tall.frame.origin.x, content="10")
+  inspect(fit_width_tall.frame.origin.y, content="20")
+  inspect(fit_width_tall.frame.size.width, content="100")
+  inspect(fit_width_tall.frame.size.height, content="100")
+  inspect(fit_width_tall.u0, content="0")
+  inspect(fit_width_tall.v0, content="0.25")
+  inspect(fit_width_tall.u1, content="1")
+  inspect(fit_width_tall.v1, content="0.75")
+
+  let fit_height_narrow = skia_image_placement(
+    frame,
+    @core.Size::new(width=100.0, height=200.0),
+    @core.ImageFit::FitHeight,
+  )
+  inspect(fit_height_narrow.frame.origin.x, content="35")
+  inspect(fit_height_narrow.frame.origin.y, content="20")
+  inspect(fit_height_narrow.frame.size.width, content="50")
+  inspect(fit_height_narrow.frame.size.height, content="100")
+  inspect(fit_height_narrow.u0, content="0")
+  inspect(fit_height_narrow.v0, content="0")
+  inspect(fit_height_narrow.u1, content="1")
+  inspect(fit_height_narrow.v1, content="1")
+
+  let fit_height_wide = skia_image_placement(
+    frame,
+    @core.Size::new(width=200.0, height=100.0),
+    @core.ImageFit::FitHeight,
+  )
+  inspect(fit_height_wide.frame.origin.x, content="10")
+  inspect(fit_height_wide.frame.origin.y, content="20")
+  inspect(fit_height_wide.frame.size.width, content="100")
+  inspect(fit_height_wide.frame.size.height, content="100")
+  inspect(fit_height_wide.u0, content="0.25")
+  inspect(fit_height_wide.v0, content="0")
+  inspect(fit_height_wide.u1, content="0.75")
+  inspect(fit_height_wide.v1, content="1")
+
   let degenerate = skia_image_placement(
     frame,
     @core.Size::new(width=0.0, height=200.0),

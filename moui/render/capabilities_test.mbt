@@ -46,7 +46,9 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     image
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
-    .contains("contain/cover/stretch/scale-down placement geometry"),
+    .contains(
+      "contain/cover/stretch/scale-down/fit-width/fit-height placement geometry",
+    ),
   )
   assert_true(
     image

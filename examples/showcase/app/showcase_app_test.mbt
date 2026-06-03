@@ -20,6 +20,8 @@ test "showcase app emits visual polish commands" {
     renderer_commands.any(command => command is @core.DrawCommand::DrawPath(_)),
   )
   assert_true(has_image_fit(renderer_commands, @core.ImageFit::ScaleDown))
+  assert_true(has_image_fit(renderer_commands, @core.ImageFit::FitWidth))
+  assert_true(has_image_fit(renderer_commands, @core.ImageFit::FitHeight))
   assert_true(
     commands.any(command => command is @core.DrawCommand::DrawImage(_)),
   )
