@@ -49,6 +49,18 @@ fn host_test_text_field(
 }
 
 ///|
+fn host_test_image_renderer(revision : Ref[Int]) -> HostWindowRenderer {
+  HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => {
+      @render.ImageResourceSnapshot::new(revision=revision.val, records=[])
+    }),
+  )
+}
+
+///|
 test "host surface metrics tracks logical physical and dpr" {
   let metrics = HostSurfaceMetrics::from_logical(
     size=@core.Size::new(width=120.0, height=80.0),
@@ -119,6 +131,100 @@ test "host window renderer image resource diagnostics default empty" {
   let image_snapshot = renderer.image_resource_snapshot()
   inspect(image_snapshot.revision, content="0")
   inspect(image_snapshot.records.length(), content="0")
+}
+
+///|
+test "host image repaint tracker routes revision changes per window" {
+  let tracker = HostImageResourceRepaintTracker::new()
+  let main_id = HostWindowId::new(1)
+  let inspector_id = HostWindowId::new(2)
+  let main_revision = Ref(0)
+  let inspector_revision = Ref(0)
+  let main_renderer = host_test_image_renderer(main_revision)
+  let inspector_renderer = host_test_image_renderer(inspector_revision)
+  let main_baseline = tracker.record_presented(main_id, main_renderer)
+  let inspector_baseline = tracker.record_presented(
+    inspector_id, inspector_renderer,
+  )
+  assert_true(
+    main_baseline.status == HostImageResourceRepaintStatus::ImageRepaintRecorded,
+  )
+  inspect(inspector_baseline.current_revision, content="0")
+  inspect(tracker.tracked_count(), content="2")
+  inspector_revision.val = 1
+  let requested : Array[HostWindowId] = []
+  let inspector_result = tracker.request_redraw_if_changed(
+    inspector_id,
+    inspector_renderer,
+    window_open=true,
+    request_redraw=id => requested.push(id),
+  )
+  assert_true(
+    inspector_result.status ==
+    HostImageResourceRepaintStatus::ImageRepaintRequested,
+  )
+  inspect(inspector_result.previous_revision, content="0")
+  inspect(inspector_result.current_revision, content="1")
+  inspect(requested.length(), content="1")
+  assert_true(requested[0] == inspector_id)
+  let unchanged = tracker.request_redraw_if_changed(
+    inspector_id,
+    inspector_renderer,
+    window_open=true,
+    request_redraw=id => requested.push(id),
+  )
+  assert_true(
+    unchanged.status == HostImageResourceRepaintStatus::ImageRepaintUnchanged,
+  )
+  inspect(requested.length(), content="1")
+  main_revision.val = 3
+  let main_result = tracker.request_redraw_if_changed(
+    main_id,
+    main_renderer,
+    window_open=true,
+    request_redraw=id => requested.push(id),
+  )
+  assert_true(
+    main_result.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+  )
+  inspect(requested.length(), content="2")
+  assert_true(requested[1] == main_id)
+}
+
+///|
+test "host image repaint tracker discards closed window changes" {
+  let tracker = HostImageResourceRepaintTracker::new()
+  let window_id = HostWindowId::new(7)
+  let revision = Ref(1)
+  let snapshot_reads = Ref(0)
+  let renderer = HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => {
+      snapshot_reads.val = snapshot_reads.val + 1
+      @render.ImageResourceSnapshot::new(revision=revision.val, records=[])
+    }),
+  )
+  let baseline = tracker.record_presented(window_id, renderer)
+  inspect(baseline.current_revision, content="1")
+  inspect(snapshot_reads.val, content="1")
+  revision.val = 2
+  let redraws = Ref(0)
+  let result = tracker.request_redraw_if_changed(
+    window_id,
+    renderer,
+    window_open=false,
+    request_redraw=_id => redraws.val = redraws.val + 1,
+  )
+  assert_true(
+    result.status == HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed,
+  )
+  inspect(result.previous_revision, content="1")
+  inspect(result.current_revision, content="1")
+  inspect(redraws.val, content="0")
+  inspect(snapshot_reads.val, content="1")
+  inspect(tracker.tracked_count(), content="0")
 }
 
 ///|

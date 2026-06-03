@@ -256,6 +256,10 @@ status, and the runtime evidence boundary. Treat that summary as
 provider/package evidence
 only; MoUI macOS Skia runtime proof still comes from the real-Skia renderer
 pixel smoke plus Showcase or Markdown Editor first-frame smoke markers.
+The macOS host loop records the renderer image-resource revision after each
+present, routes later observed revision changes through the matching window's
+`request_redraw`, and removes tracked image revisions when a host window is
+disposed.
 
 Packages that use `backend/macos` directly must link the AppKit service bridge
 frameworks during the final native link step. Missing `_objc_msgSend` or
@@ -394,7 +398,11 @@ diagnostics, native context-menu and host-modal
 file-dialog readiness, native accessibility status, and the matching-host
 runtime boundary, including whether the first-frame smoke option is enabled.
 Treat that summary and its package test as provider/preflight evidence only;
-passed Windows runtime evidence still needs a Windows/MSVC host running the
+The Windows host loop records the renderer image-resource revision after each
+present, routes later observed revision changes through the matching HWND's
+`request_redraw`, and removes tracked image revisions when a host window is
+disposed.
+Passed Windows runtime evidence still needs a Windows/MSVC host running the
 Showcase or Markdown Editor Skia entrypoints with recorded artifacts. On
 non-Windows hosts, the Win32 presenter and service stubs may fail C compilation
 because they require `windows.h`, so a Darwin failure of
@@ -491,8 +499,12 @@ context-menu/host-modal/native accessibility gaps, `HostWindowRenderer` bridge
 forwarding for Skia text-system, image-resource, present-count, and disposal
 diagnostics, plus system-theme readiness
 and the matching-host runtime boundary, including whether the first-frame smoke
-option is enabled. The summary is useful for provider/package audits, but it does not
-prove a real Wayland compositor presented Showcase or Markdown Editor frames;
+option is enabled. The Linux host loop records the renderer image-resource
+revision after each present, routes later observed revision changes through the
+matching Wayland window's `request_redraw`, and removes tracked image revisions
+when a host window is disposed. The summary is useful for provider/package
+audits, but it does not prove a real Wayland compositor presented Showcase or
+Markdown Editor frames;
 those claims still require matching-host runtime runs and platform evidence
 manifest entries.
 
