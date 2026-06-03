@@ -15,8 +15,9 @@ paths, or abstractions that only preserve old shapes.
   draw command model, opaque public `View[Msg]`, typed events, app-owned
   route/history helpers, `Program`, `Effect`, `Subscription`, and TEA runtime
   diagnostics. Standard `Effect`/`Subscription` helpers may name common
-  descriptor kinds, but concrete timer, host, window, route, or service
-  adapters remain outside `core`.
+  descriptor kinds, and runtime dirty diagnostics may expose structured
+  rebuild/layout/paint/redraw summaries, but concrete timer, host, window,
+  route, or service adapters remain outside `core`.
   It remains one MoonBit package; internal files are grouped by responsibility
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
   etc.) rather than by additional package boundaries.

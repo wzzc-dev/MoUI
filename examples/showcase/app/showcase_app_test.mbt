@@ -495,7 +495,9 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(diagnostics_commands, "Effect runs"))
   assert_true(has_text(diagnostics_commands, "Subscription plans"))
   assert_true(has_text(diagnostics_commands, "Active subscriptions"))
-  assert_true(has_text(diagnostics_commands, "Dirty: redraw requested"))
+  assert_true(
+    has_text(diagnostics_commands, "Dirty: redraw requested; elements 0"),
+  )
   assert_true(
     has_text_containing(
       diagnostics_commands, "Render scopes: max clip/layer/filter",

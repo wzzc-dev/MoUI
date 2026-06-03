@@ -191,7 +191,10 @@ fn ShowcaseModel::inspector_snapshot_card(
           column_spacing=theme.spacing_scale.sm,
         ),
         text(
-          "Dirty: " + snapshot.runtime.rebuild_reason,
+          "Dirty: " +
+          snapshot.runtime.dirty_state.reason +
+          "; elements " +
+          snapshot.runtime.dirty_state.dirty_count.to_string(),
           width=inner_width,
           height=22.0,
         )

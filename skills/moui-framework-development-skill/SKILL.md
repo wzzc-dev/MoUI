@@ -80,7 +80,9 @@ Use this skill when editing or reviewing:
   queue diagnostics stay
   platform-neutral through enqueue/drain/pending counters; pipeline cost
   diagnostics stay platform-neutral through rebuild/layout/paint/draw-command
-  pass counters; subscription diagnostics stay platform-neutral through
+  pass counters and structured dirty-state summaries for pending
+  rebuild/layout/paint/redraw work; subscription diagnostics stay
+  platform-neutral through
   `Subscription::plan_summary`, planned and active subscription descriptors,
   active subscription kind-count summaries, duplicate subscription-key
   counts/names in plan summaries plus aggregate
