@@ -624,6 +624,7 @@ pub(all) struct EffectPlanSummary {
   scheduled_count : Int
   max_depth : Int
   descriptors : Array[EffectDescriptor]
+  duplicate_descriptor_key_count : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn EffectPlanSummary::empty() -> Self
 

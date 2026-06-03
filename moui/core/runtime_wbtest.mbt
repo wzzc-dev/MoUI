@@ -269,6 +269,38 @@ test "effect plan summary describes nested effect structure" {
 }
 
 ///|
+test "effect plan summary reports duplicate structured effect keys" {
+  let effect : Effect[String] = Effect::batch([
+    Effect::run(key="host:sync", kind="host-service", label="Sync host data", run=_dispatch => {
+      ()
+    }),
+    Effect::batch([
+      Effect::run(
+        key="host:sync",
+        kind="host-service",
+        label="Duplicate sync",
+        run=_dispatch => (),
+      ),
+      Effect::run(
+        key="animation:tick",
+        kind="animation",
+        label="Animation tick",
+        run=_dispatch => (),
+      ),
+    ]),
+  ])
+  let summary = effect.plan_summary()
+  inspect(summary.descriptors.length(), content="3")
+  inspect(summary.duplicate_descriptor_key_count, content="1")
+  let nested = match effect {
+    Effect::Batch([_, child]) => child.plan_summary()
+    _ => fail("expected nested effect batch")
+  }
+  inspect(nested.descriptors.length(), content="2")
+  inspect(nested.duplicate_descriptor_key_count, content="0")
+}
+
+///|
 test "program initial effects run before first view build" {
   let program = Program::new(
     init=() => {

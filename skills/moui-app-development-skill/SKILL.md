@@ -85,8 +85,9 @@ separate framework task using `moui-framework-development-skill`.
   declares them. Keep concrete timer or host adapters outside `core`.
 - Keep host-service calls out of pure reducers. For app-owned clipboard, file
   dialog, URL, theme, or menu work, return `@core.Effect::run` with a stable
-  diagnostic key, call `@host.HostAppServices` inside the effect runner, and
-  dispatch a typed completion message back into the model. When a service returns
+  diagnostic key that is unique within the returned effect batch, call
+  `@host.HostAppServices` inside the effect runner, and dispatch a typed
+  completion message back into the model. When a service returns
   `HostServiceResponse::Pending(id)`, register `HostAppServices::on_completed`
   so the later host callback re-enters the same typed message loop.
 - Keep platform-specific setup in `web_wasm`, `macos`, `windows`, or `linux`
@@ -231,9 +232,9 @@ sh scripts/dev-check.sh --platform-examples-build
 - Route user actions through existing MoUI event APIs and app reducers/helpers.
 - Use `Program::new` plus `Effect::run` for app-level host-service or async
   bridge work that should appear in diagnostics; give the effect a stable key,
-  kind, and label, then dispatch typed completion messages for sync,
-  unavailable, or pending responses. `Effect::dispatch` remains available for
-  anonymous one-off runners.
+  kind, and label, keep keys unique within the returned batch, then dispatch
+  typed completion messages for sync, unavailable, or pending responses.
+  `Effect::dispatch` remains available for anonymous one-off runners.
 - Use `Subscription::listen` / `Subscription::run` for app-level ongoing
   sources that need lifecycle reuse and cleanup. Use `Subscription::map` when a
   parent app embeds a child feature and wants to preserve typed message
