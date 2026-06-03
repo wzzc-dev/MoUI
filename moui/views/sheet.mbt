@@ -43,7 +43,7 @@ pub fn[Msg] sheet_host(
       @core.SheetPresentationMode::BottomSheet =>
         sheet_spec
         .corner_radius(theme.radius_scale.lg)
-        .align(alignment=@core.Alignment::new(x=0.5, y=1.0))
+        .align(alignment=@core.Alignment::new(x=0.0, y=1.0))
     }
     let aligned_sheet = if trap_focus {
       aligned_sheet.focus_trap()
