@@ -42,7 +42,6 @@ pub fn[Msg] sheet_host(
         .align()
       @core.SheetPresentationMode::BottomSheet =>
         sheet_spec
-        .frame(max_height=500.0)
         .corner_radius(theme.radius_scale.lg)
         .align(alignment=@core.Alignment::new(x=0.5, y=1.0))
     }
