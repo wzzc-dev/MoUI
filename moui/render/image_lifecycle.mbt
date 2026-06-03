@@ -16,8 +16,15 @@ pub(all) struct ImageResourceRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct ImageResourceSnapshot {
+  revision : Int
+  records : Array[ImageResourceRecord]
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct ImageResourceLifecycle {
   mut records : Map[String, ImageResourceRecord]
+  mut revision : Int
 } derive(Eq, Debug)
 
 ///|
@@ -73,7 +80,27 @@ pub fn ImageResourceRecord::disposed(source : String) -> ImageResourceRecord {
 
 ///|
 pub fn ImageResourceLifecycle::new() -> ImageResourceLifecycle {
-  { records: {} }
+  { records: {}, revision: 0 }
+}
+
+///|
+pub fn ImageResourceSnapshot::new(
+  revision~ : Int,
+  records~ : Array[ImageResourceRecord],
+) -> ImageResourceSnapshot {
+  { revision, records }
+}
+
+///|
+pub fn ImageResourceSnapshot::empty() -> ImageResourceSnapshot {
+  { revision: 0, records: [] }
+}
+
+///|
+pub fn ImageResourceSnapshot::from_records(
+  records : Array[ImageResourceRecord],
+) -> ImageResourceSnapshot {
+  { revision: 0, records }
 }
 
 ///|
@@ -81,9 +108,7 @@ pub fn ImageResourceLifecycle::mark_loading(
   self : ImageResourceLifecycle,
   source : String,
 ) -> ImageResourceRecord {
-  let record = ImageResourceRecord::loading(source)
-  self.records[record.source] = record
-  record
+  self.store_record(ImageResourceRecord::loading(source))
 }
 
 ///|
@@ -93,9 +118,7 @@ pub fn ImageResourceLifecycle::mark_ready(
   width~ : Int,
   height~ : Int,
 ) -> ImageResourceRecord {
-  let record = ImageResourceRecord::ready(source, width~, height~)
-  self.records[record.source] = record
-  record
+  self.store_record(ImageResourceRecord::ready(source, width~, height~))
 }
 
 ///|
@@ -104,9 +127,7 @@ pub fn ImageResourceLifecycle::mark_failed(
   source : String,
   diagnostic~ : String,
 ) -> ImageResourceRecord {
-  let record = ImageResourceRecord::failed(source, diagnostic~)
-  self.records[record.source] = record
-  record
+  self.store_record(ImageResourceRecord::failed(source, diagnostic~))
 }
 
 ///|
@@ -114,9 +135,7 @@ pub fn ImageResourceLifecycle::dispose(
   self : ImageResourceLifecycle,
   source : String,
 ) -> ImageResourceRecord {
-  let record = ImageResourceRecord::disposed(source)
-  self.records[source] = record
-  record
+  self.store_record(ImageResourceRecord::disposed(source))
 }
 
 ///|
@@ -131,11 +150,57 @@ pub fn ImageResourceLifecycle::lookup(
 pub fn ImageResourceLifecycle::snapshot(
   self : ImageResourceLifecycle,
 ) -> Array[ImageResourceRecord] {
+  self.snapshot_records()
+}
+
+///|
+pub fn ImageResourceLifecycle::snapshot_with_revision(
+  self : ImageResourceLifecycle,
+) -> ImageResourceSnapshot {
+  { revision: self.revision, records: self.snapshot_records() }
+}
+
+///|
+pub fn ImageResourceLifecycle::revision(self : ImageResourceLifecycle) -> Int {
+  self.revision
+}
+
+///|
+pub fn ImageResourceLifecycle::changed_since(
+  self : ImageResourceLifecycle,
+  revision : Int,
+) -> Bool {
+  self.revision > revision
+}
+
+///|
+fn ImageResourceLifecycle::snapshot_records(
+  self : ImageResourceLifecycle,
+) -> Array[ImageResourceRecord] {
   let records : Array[ImageResourceRecord] = []
   for _, record in self.records {
     records.push(record)
   }
   records
+}
+
+///|
+fn ImageResourceLifecycle::store_record(
+  self : ImageResourceLifecycle,
+  record : ImageResourceRecord,
+) -> ImageResourceRecord {
+  match self.records.get(record.source) {
+    Some(existing) =>
+      if existing != record {
+        self.revision = self.revision + 1
+        self.records[record.source] = record
+      }
+    None => {
+      self.revision = self.revision + 1
+      self.records[record.source] = record
+    }
+  }
+  record
 }
 
 ///|
@@ -152,5 +217,8 @@ pub fn ImageResourceLifecycle::evict_disposed(
     }
   }
   self.records = kept
+  if removed > 0 {
+    self.revision = self.revision + 1
+  }
   removed
 }

@@ -123,3 +123,10 @@ pub fn WgpuRenderer::image_resources(
 ) -> Array[@render.ImageResourceRecord] {
   self.backend.image_lifecycle.snapshot()
 }
+
+///|
+pub fn WgpuRenderer::image_resource_snapshot(
+  self : WgpuRenderer,
+) -> @render.ImageResourceSnapshot {
+  self.backend.image_lifecycle.snapshot_with_revision()
+}

@@ -122,6 +122,7 @@ pub(all) struct WebGpuWasmRenderer {
 pub fn WebGpuWasmRenderer::backend_info(Self) -> @render.RendererBackendInfo
 pub fn WebGpuWasmRenderer::backend_kind(Self) -> @render.RendererBackendKind
 pub fn WebGpuWasmRenderer::dispose(Self) -> Unit
+pub fn WebGpuWasmRenderer::image_resource_snapshot(Self) -> @render.ImageResourceSnapshot
 pub fn WebGpuWasmRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
 pub fn WebGpuWasmRenderer::last_calls(Self) -> Array[WebGpuHostCall]
 pub fn WebGpuWasmRenderer::last_fallback_plan(Self) -> @render.RendererCommandPlan

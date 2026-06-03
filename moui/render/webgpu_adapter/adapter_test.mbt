@@ -331,6 +331,9 @@ test "wgpu web renderer refreshes ready image lifecycle from host" {
   assert_true(resources[0].status == @render.ImageResourceStatus::ImageReady)
   inspect(resources[0].width, content="64")
   inspect(resources[0].height, content="32")
+  let snapshot = renderer.image_resource_snapshot()
+  inspect(snapshot.revision, content="2")
+  inspect(snapshot.records.length(), content="1")
 }
 
 ///|

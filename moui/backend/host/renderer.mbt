@@ -4,6 +4,7 @@ pub struct HostWindowRenderer {
   priv render_fn : (Array[@core.DrawCommand]) -> Unit
   priv text_system_fn : () -> @core.TextSystem
   priv image_resources_fn : () -> Array[@render.ImageResourceRecord]
+  priv image_resource_snapshot_fn : () -> @render.ImageResourceSnapshot
   priv present_count_fn : () -> Int
   priv dispose_fn : () -> Unit
 }
@@ -14,14 +15,20 @@ pub fn HostWindowRenderer::new(
   render~ : (Array[@core.DrawCommand]) -> Unit,
   text_system~ : () -> @core.TextSystem,
   image_resources? : () -> Array[@render.ImageResourceRecord] = () => [],
+  image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)? = None,
   present_count? : () -> Int = () => 0,
   dispose? : () -> Unit = () => (),
 ) -> HostWindowRenderer {
+  let image_resource_snapshot = match image_resource_snapshot {
+    Some(snapshot) => snapshot
+    None => () => @render.ImageResourceSnapshot::from_records(image_resources())
+  }
   {
     resize_fn: resize,
     render_fn: render,
     text_system_fn: text_system,
     image_resources_fn: image_resources,
+    image_resource_snapshot_fn: image_resource_snapshot,
     present_count_fn: present_count,
     dispose_fn: dispose,
   }
@@ -55,6 +62,13 @@ pub fn HostWindowRenderer::image_resources(
   self : HostWindowRenderer,
 ) -> Array[@render.ImageResourceRecord] {
   (self.image_resources_fn)()
+}
+
+///|
+pub fn HostWindowRenderer::image_resource_snapshot(
+  self : HostWindowRenderer,
+) -> @render.ImageResourceSnapshot {
+  (self.image_resource_snapshot_fn)()
 }
 
 ///|
