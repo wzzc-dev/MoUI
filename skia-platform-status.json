@@ -863,6 +863,11 @@
       "marker": "native smoke encoded PNG bytes"
     },
     {
+      "id": "image.encode-parameters-sanitized",
+      "area": "Image",
+      "marker": "native smoke image encode parameters sanitized"
+    },
+    {
       "id": "image.decode",
       "area": "Image",
       "marker": "native smoke decoded image width"
@@ -1914,6 +1919,11 @@
     {
       "id": "surface.bounds-rejected",
       "marker": "native smoke surface bounds rejected",
+      "value": "1"
+    },
+    {
+      "id": "image.encode-parameters-sanitized",
+      "marker": "native smoke image encode parameters sanitized",
       "value": "1"
     },
     {

@@ -362,6 +362,7 @@ if ($status.schema_version -ge 3) {
     "surface.bounded-snapshot-height",
     "surface.bounds-rejected",
     "image.encode-png",
+    "image.encode-parameters-sanitized",
     "image.decode",
     "image.decode-height",
     "image.render-command-replay",
@@ -691,6 +692,7 @@ if ($status.schema_version -ge 3) {
       "native smoke bounded snapshot width" = "4"
       "native smoke bounded snapshot height" = "4"
       "native smoke surface bounds rejected" = "1"
+      "native smoke image encode parameters sanitized" = "1"
       "native smoke filter layer count" = "1"
       "native smoke path verbs" = "9"
       "native smoke non-finite path from-value rejected" = "1"

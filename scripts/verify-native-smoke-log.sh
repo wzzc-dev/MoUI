@@ -201,6 +201,7 @@ default_stage_markers=(
   "native smoke bounded snapshot height" \
   "native smoke surface bounds rejected" \
   "native smoke encoded PNG bytes" \
+  "native smoke image encode parameters sanitized" \
   "native smoke decoded image width" \
   "native smoke decoded image height" \
   "native smoke render image command replay" \
@@ -398,6 +399,7 @@ default_expected_stage_values=(
   $'native smoke bounded snapshot width\t4'
   $'native smoke bounded snapshot height\t4'
   $'native smoke surface bounds rejected\t1'
+  $'native smoke image encode parameters sanitized\t1'
   $'native smoke filter layer count\t1'
   $'native smoke path verbs\t9'
   $'native smoke decoded image width\t32'
