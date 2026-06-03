@@ -201,6 +201,7 @@ test "skia renderer descriptor exposes evidence-gated backend capabilities" {
       assert_true(image.note.contains("local PNG/JPEG/BMP"))
       assert_true(image.note.contains("failed-image placeholders"))
       assert_true(gradient.note.contains("fills and strokes"))
+      assert_true(gradient.note.contains("radial"))
       assert_true(path.note.contains("quadratic and cubic"))
       assert_true(layer.note.contains("nested layer/filter"))
       assert_true(blend.note.contains("overlay"))

@@ -455,6 +455,12 @@ test "wgpu web command bridge preserves gradient and shadow command payloads" {
     start_color=@core.Color::blue(),
     end_color=@core.Color::gray(),
   )
+  let radial = @core.Brush::radial_gradient(
+    center=@core.Point::new(x=42.0, y=38.0),
+    radius=28.0,
+    center_color=@core.Color::blue(),
+    edge_color=@core.Color::gray(),
+  )
   let shadow = @core.ShadowSpec::new(
     rect=rounded,
     color=@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.4),
@@ -465,11 +471,12 @@ test "wgpu web command bridge preserves gradient and shadow command payloads" {
     [
       @core.DrawCommand::FillRoundedRectBrush(rounded, gradient),
       @core.DrawCommand::StrokeRoundedRectBrush(rounded, gradient, 2.0),
+      @core.DrawCommand::FillRoundedRectBrush(rounded, radial),
       @core.DrawCommand::DrawShadow(shadow),
     ],
     @core.Size::new(width=120.0, height=80.0),
   )
-  inspect(calls.length(), content="5")
+  inspect(calls.length(), content="6")
   assert_true(
     calls[1]
     is WebGpuHostCall::FillRoundedRectBrush(_, @core.Brush::LinearGradient(_)),
@@ -484,6 +491,10 @@ test "wgpu web command bridge preserves gradient and shadow command payloads" {
   )
   assert_true(
     calls[3]
+    is WebGpuHostCall::FillRoundedRectBrush(_, @core.Brush::RadialGradient(_)),
+  )
+  assert_true(
+    calls[4]
     is WebGpuHostCall::DrawShadow({ blur_radius: 12.0, spread: 2.0, .. }),
   )
 }

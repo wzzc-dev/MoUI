@@ -210,10 +210,12 @@ pub fn BorderStyle::new(brush~ : Brush, width? : Double) -> Self
 pub(all) enum Brush {
   Solid(Color)
   LinearGradient(LinearGradientSpec)
+  RadialGradient(RadialGradientSpec)
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Brush::fallback_color(Self) -> Color
 pub fn Brush::linear_gradient(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
 pub fn Brush::multiply_alpha(Self, Double) -> Self
+pub fn Brush::radial_gradient(center~ : Point, radius~ : Double, center_color~ : Color, edge_color~ : Color) -> Self
 pub fn Brush::solid(Color) -> Self
 
 pub struct BuildContext {
@@ -1044,6 +1046,14 @@ pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (M
 pub fn[Model, Msg] Program::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model, ViewEnvironment) -> View[Msg]) -> Self[Model, Msg]
+
+pub(all) struct RadialGradientSpec {
+  center : Point
+  radius : Double
+  center_color : Color
+  edge_color : Color
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RadialGradientSpec::new(center~ : Point, radius~ : Double, center_color~ : Color, edge_color~ : Color) -> Self
 
 pub(all) struct RadiusScale {
   sm : Double

@@ -885,6 +885,16 @@ fn brush_payload(brush : @core.Brush, frame : @core.Rect) -> HostBrushPayload {
         start_color: gradient.start_color,
         end_color: gradient.end_color,
       }
+    @core.Brush::RadialGradient(gradient) =>
+      {
+        start: gradient.center,
+        end: @core.Point::new(
+          x=gradient.center.x + gradient.radius.max(1.0),
+          y=gradient.center.y,
+        ),
+        start_color: gradient.center_color,
+        end_color: gradient.edge_color,
+      }
   }
 }
 
@@ -942,6 +952,21 @@ fn submit_fill_rounded_rect_brush(
           gradient.end_color.a,
         ),
       )
+    @core.Brush::RadialGradient(gradient) =>
+      raise_for_host_status(
+        host_fill_rounded_rect(
+          renderer,
+          rounded.rect.origin.x,
+          rounded.rect.origin.y,
+          rounded.rect.size.width,
+          rounded.rect.size.height,
+          rounded.radius,
+          gradient.center_color.r,
+          gradient.center_color.g,
+          gradient.center_color.b,
+          gradient.center_color.a,
+        ),
+      )
   }
 }
 
@@ -991,6 +1016,22 @@ fn submit_stroke_rounded_rect_brush(
           gradient.end_color.g,
           gradient.end_color.b,
           gradient.end_color.a,
+        ),
+      )
+    @core.Brush::RadialGradient(gradient) =>
+      raise_for_host_status(
+        host_stroke_rounded_rect(
+          renderer,
+          rounded.rect.origin.x,
+          rounded.rect.origin.y,
+          rounded.rect.size.width,
+          rounded.rect.size.height,
+          rounded.radius,
+          gradient.center_color.r,
+          gradient.center_color.g,
+          gradient.center_color.b,
+          gradient.center_color.a,
+          width,
         ),
       )
   }

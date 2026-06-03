@@ -245,12 +245,12 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     ),
     renderer_feature_capability_entry(
       RendererFeature::Gradient,
+      RendererFeatureStatus::Partial,
+      "Native wgpu evaluates linear gradients in the visual shader and lowers radial brushes to a deterministic center-to-edge linear fallback until true radial shader support lands.",
       RendererFeatureStatus::Ready,
-      "Native wgpu evaluates linear gradients in the visual shader.",
-      RendererFeatureStatus::Ready,
-      "Skia raster renders linear-gradient fills and strokes for rounded rects and paths, with real native renderer pixel smoke coverage.",
-      RendererFeatureStatus::Ready,
-      "The browser WebGPU host evaluates solid and linear-gradient brush payloads.",
+      "Skia raster renders linear-gradient and radial-gradient fills and strokes for rounded rects and paths; linear gradients have real native renderer pixel smoke coverage and radial brushes have renderer-local guarded pixel coverage.",
+      RendererFeatureStatus::Partial,
+      "The browser WebGPU host evaluates solid and linear-gradient brush payloads; radial rounded brushes fall back to their center color and radial shader-effect payloads use a deterministic center-to-edge linear brush.",
     ),
     renderer_feature_capability_entry(
       RendererFeature::Shadow,

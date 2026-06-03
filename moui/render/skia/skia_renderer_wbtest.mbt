@@ -190,6 +190,24 @@ test "skia font resolver maps MoUI font families to platform candidates" {
 }
 
 ///|
+test "skia brush shader maps radial gradients when native Skia is linked" {
+  let radial = @core.Brush::radial_gradient(
+    center=@core.Point::new(x=12.0, y=10.0),
+    radius=8.0,
+    center_color=@core.Color::blue(),
+    edge_color=@core.Color::gray(),
+  )
+  assert_true(
+    skia_brush_shader(@core.Brush::solid(@core.Color::blue())) is None,
+  )
+  if skia_available() {
+    assert_true(skia_brush_shader(radial) is Some(_))
+  } else {
+    assert_true(skia_brush_shader(radial) is None)
+  }
+}
+
+///|
 test "skia emoji hints cover representative diagnostic samples" {
   assert_true(skia_text_contains_emoji_hint("\u{1F642}"))
   assert_true(skia_text_contains_emoji_hint("\u{2615}\u{FE0F}"))
@@ -1327,6 +1345,81 @@ test "skia renderer paints path linear gradient pixels" {
       frame,
       @core.Rect::new(x=29.0, y=8.0, width=6.0, height=4.0),
       (r, g, b, a) => a > 0 && b > 150 && r < 120 && g < 140,
+    ),
+  )
+}
+
+///|
+test "skia renderer paints radial gradient brush pixels" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=48.0, height=24.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::FillRoundedRectBrush(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=2.0, y=2.0, width=20.0, height=20.0),
+        radius=10.0,
+      ),
+      @core.Brush::radial_gradient(
+        center=@core.Point::new(x=12.0, y=12.0),
+        radius=10.0,
+        center_color=@core.Color::rgba(r=0.95, g=0.05, b=0.05),
+        edge_color=@core.Color::rgba(r=0.05, g=0.10, b=0.95),
+      ),
+    ),
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=26.0, y=2.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=46.0, y=2.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=46.0, y=22.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=26.0, y=22.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(
+          @core.Brush::radial_gradient(
+            center=@core.Point::new(x=36.0, y=12.0),
+            radius=10.0,
+            center_color=@core.Color::rgba(r=0.05, g=0.85, b=0.18),
+            edge_color=@core.Color::black(),
+          ),
+        ),
+      ),
+    ),
+  ]) catch {
+    err => fail("expected Skia radial gradient render: \{err.message()}")
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+  guard renderer.last_frame() is Some(frame) else {
+    fail("expected rendered frame")
+  }
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=10.0, y=10.0, width=4.0, height=4.0),
+      (r, g, b, a) => a > 0 && r > 150 && g < 130 && b < 130,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=19.0, y=10.0, width=3.0, height=4.0),
+      (r, _, b, a) => a > 0 && b > 130 && r < 150,
+    ),
+  )
+  assert_true(
+    skia_test_region_has_matching_pixel(
+      frame,
+      @core.Rect::new(x=34.0, y=10.0, width=4.0, height=4.0),
+      (r, g, b, a) => a > 0 && g > 130 && r < 130 && b < 130,
     ),
   )
 }

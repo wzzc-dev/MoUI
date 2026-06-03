@@ -426,6 +426,15 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(advanced_commands, "Filter"))
   assert_true(has_text(advanced_commands, "Shader"))
   assert_true(has_text(advanced_commands, "Path + Transform"))
+  assert_true(
+    advanced_commands.any(command => {
+      command
+      is @core.DrawCommand::FillRoundedRectBrush(
+        _,
+        @core.Brush::RadialGradient(_)
+      )
+    }),
+  )
   let text_commands = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("text-diagnostics"))
     .runtime(width=960.0, height=620.0)
@@ -736,14 +745,15 @@ test "showcase renderer section clips long capability content" {
     commands.any(command => command is @core.DrawCommand::PushClip(_)),
   )
   assert_true(has_text(commands, "Host capability"))
+  assert_true(has_text(commands, "gradient"))
   assert_true(has_text(commands, "transform"))
   assert_true(has_text(commands, "text-shaping"))
   assert_true(has_text(commands, "emoji-text"))
-  assert_true(has_text(commands, "async-image"))
+  assert_false(has_text(commands, "async-image"))
   assert_true(has_text(commands, "wgpu partial"))
   assert_true(has_text(commands, "skia partial"))
   assert_false(has_text(commands, "native gap"))
-  assert_false(has_text(commands, "web partial"))
+  assert_true(has_text(commands, "webgpu partial"))
 }
 
 ///|

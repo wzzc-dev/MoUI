@@ -21,7 +21,7 @@ Status meanings:
 | --- | --- | --- | --- | --- |
 | Rect | ready | ready | ready | Skia rect fill/stroke has real native renderer pixel smoke coverage. |
 | Rounded rect | ready | ready | ready | Skia rounded fill/stroke and solid rounded brushes have real native renderer pixel smoke coverage. |
-| Gradient | ready | ready | ready | Skia linear-gradient fills and strokes for rounded rects and paths have real native renderer pixel smoke coverage. |
+| Gradient | partial | ready | partial | Skia now renders linear and radial gradient brushes for rounded rects and paths; WGPU/Web keep linear gradients ready while radial brushes use deterministic fallback paths until true radial shaders land. |
 | Shadow | ready | ready | ready | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
 | Text | ready | ready | ready | Skia `Font` measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interior stabilization for both caret paths, grapheme-safe mixed-run fallback segments, and best-available glyph-run rendering clip to `TextRun.frame` while resolving `FontSpec` family, weight, style, and representative coverage characters through Skia `FontMgr` `FontFallbackRequest`/`Font`; real native renderer smoke covers glyph-run pixels and bounded `TextRun.frame` clipping; broader shaping is tracked separately. |
 | Image | ready | ready | ready | Skia validates PNG/JPEG/BMP data URI decode, local PNG/JPEG/BMP decode, contain/cover/stretch/scale-down/fit-width/fit-height placement geometry, `draw_image_rect` output, ready/failed lifecycle records, failed-image placeholders, immutable-source failed-cache reuse, and local-file failure retry once the file appears; the real native renderer smoke covers ready data URI/local PNG drawing and failed-image placeholders. |
@@ -60,7 +60,7 @@ capability record shape.
 
 ## Current Native Notes
 
-Native wgpu now renders rects, rounded geometry, gradients, soft shadows,
+Native wgpu now renders rects, rounded geometry, linear gradients, soft shadows,
 glyph-atlas text, and images directly. Image commands use a complete pipeline:
 PNG/JPEG/BMP decoding through `mizchi/image`, local file and base64 data URI
 sources, texture caching, GPU sampling, contain/cover/stretch/scale-down/fit-width/fit-height fit
@@ -202,7 +202,8 @@ failed-image placeholders plus local-file retry recovery, basic text glyph-run p
 `TextRun.frame` clipping, and optional SkShaper availability when the smoke is
 run with `--enable-skshaper`, while requiring
 `unsupported_command_count == 0`. Focused Skia renderer white-box tests also
-cover unmatched and mismatched scope-pop diagnostics. Native Skia provider
+cover radial-gradient rounded brush and path brush pixels, plus unmatched and
+mismatched scope-pop diagnostics. Native Skia provider
 packages expose the same
 renderer image-resource snapshot records through `HostWindowRenderer`, so host
 diagnostics can inspect loading, ready, failed, and disposed image resources
