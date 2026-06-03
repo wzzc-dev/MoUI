@@ -200,6 +200,9 @@ The `native` subpackage contains the first opt-in native boundary:
   calls skip non-finite coordinates without mutating pixels;
 - native Canvas paint forwarding sanitizes non-finite stroke scalars, and
   `save_layer` treats non-finite bounds as an unbounded layer;
+- native Canvas image sampling disables cubic resampling when cubic
+  coefficients are non-finite, preserving the image draw with ordinary
+  filter/mipmap sampling;
 - `@native.Canvas` also exposes the first state and transform calls:
   `save`, `save_layer`, `restore`, `restore_to_count`, `save_count`,
   `translate`, `scale`, `rotate`, `skew`, `concat`, `reset_matrix`, and

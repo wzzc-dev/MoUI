@@ -55,6 +55,7 @@ default_stage_markers=(
   "native smoke canvas clip device width" \
   "native smoke non-finite canvas direct geometry skipped" \
   "native smoke non-finite canvas paint layer sanitized" \
+  "native smoke image sampling scalars sanitized" \
   "native smoke canvas replay commands" \
   "native smoke render frame replay commands" \
   "native smoke render frame replay complete" \
@@ -278,6 +279,7 @@ default_expected_stage_values=(
   $'native smoke canvas state restored\t1'
   $'native smoke non-finite canvas direct geometry skipped\t1'
   $'native smoke non-finite canvas paint layer sanitized\t1'
+  $'native smoke image sampling scalars sanitized\t1'
   $'native smoke canvas replay commands\t29'
   $'native smoke render frame replay commands\t29'
   $'native smoke render frame replay complete\t1'

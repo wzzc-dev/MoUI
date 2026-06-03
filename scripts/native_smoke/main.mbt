@@ -2651,6 +2651,30 @@ fn main {
   }
   println("native smoke surface bounds rejected")
   println(1)
+  guard @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4))
+    is Some(sampling_surface) else {
+    fail_smoke("failed to create image sampling guard surface")
+  }
+  guard sampling_surface.canvas() is Some(sampling_canvas) else {
+    fail_smoke("failed to create image sampling guard canvas")
+  }
+  sampling_canvas.clear(@skia.Color::white())
+  sampling_canvas.draw_image_rect(
+    red_image,
+    @skia.Rect::from_xywh(0, 0, 4, 4),
+    @skia.Rect::from_xywh(0, 0, 4, 4),
+    @skia.Paint::new(),
+    sampling=@skia.SamplingOptions::from_cubic(
+      @skia.CubicResampler::new(0.0 / 0.0, 1.0 / 0.0),
+    ),
+  )
+  guard sampling_surface.read_pixels(bounds=@skia.IRect::from_xywh(0, 0, 1, 1))
+    is Some(sampling_pixmap) else {
+    fail_smoke("failed to read image sampling guard pixel")
+  }
+  assert_pixel(sampling_pixmap, @skia.IPoint::new(0, 0), 0xff, 0x00, 0x00, 0xff)
+  println("native smoke image sampling scalars sanitized")
+  println(1)
   guard image.encode_to_data(format=@skia.PNG, quality=100) is Some(data) else {
     fail_smoke("failed to encode surface snapshot as PNG")
   }

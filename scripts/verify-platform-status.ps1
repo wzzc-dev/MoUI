@@ -250,6 +250,7 @@ if ($status.schema_version -ge 3) {
     "canvas.clip",
     "canvas.non-finite-direct-geometry-skipped",
     "canvas.non-finite-paint-layer-sanitized",
+    "canvas.image-sampling-scalars-sanitized",
     "canvas.command-replay",
     "canvas.replay-status-contract",
     "canvas.replay-deferred-present",
@@ -570,6 +571,7 @@ if ($status.schema_version -ge 3) {
       "native smoke canvas state restored" = "1"
       "native smoke non-finite canvas direct geometry skipped" = "1"
       "native smoke non-finite canvas paint layer sanitized" = "1"
+      "native smoke image sampling scalars sanitized" = "1"
       "native smoke canvas replay commands" = "29"
       "native smoke render frame replay commands" = "29"
       "native smoke render frame replay complete" = "1"
