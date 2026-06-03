@@ -209,9 +209,19 @@ pub fn HostAppServices::on_completed(
   id : HostServiceRequestId,
   handle : (HostCompletedServiceResponse) -> Unit,
 ) -> Bool {
+  let (registered, _) = self.on_completed_with_cleanup(id, handle)
+  registered
+}
+
+///|
+fn HostAppServices::on_completed_with_cleanup(
+  self : HostAppServices,
+  id : HostServiceRequestId,
+  handle : (HostCompletedServiceResponse) -> Unit,
+) -> (Bool, (() -> Unit)?) {
   match self.async_queue {
-    Some(queue) => queue.on_completed(id, handle)
-    None => false
+    Some(queue) => queue.on_completed_with_cleanup(id, handle)
+    None => (false, None)
   }
 }
 
@@ -230,8 +240,10 @@ pub fn[Msg] HostAppServices::completion_subscription(
     key
   }
   @core.Subscription::run(key=subscription_key, kind~, label~, start=dispatch => {
-    ignore(self.on_completed(id, completion => dispatch(map(completion))))
-    None
+    let (_, cleanup) = self.on_completed_with_cleanup(id, completion => {
+      dispatch(map(completion))
+    })
+    cleanup
   })
 }
 

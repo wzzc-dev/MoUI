@@ -22,9 +22,15 @@ pub struct HostServiceAsyncQueue {
   mut pending : Array[HostPendingServiceRequest]
   mut in_flight : Array[HostPendingServiceRequest]
   mut completed : Array[HostCompletedServiceResponse]
-  priv mut completion_handlers : Array[
-    (HostServiceRequestId, (HostCompletedServiceResponse) -> Unit),
-  ]
+  priv mut next_completion_handler_value : Int
+  priv mut completion_handlers : Array[HostServiceCompletionHandler]
+}
+
+///|
+priv struct HostServiceCompletionHandler {
+  token : Int
+  id : HostServiceRequestId
+  handle : (HostCompletedServiceResponse) -> Unit
 }
 
 ///|
@@ -39,6 +45,7 @@ pub fn HostServiceAsyncQueue::new() -> HostServiceAsyncQueue {
     pending: [],
     in_flight: [],
     completed: [],
+    next_completion_handler_value: 1,
     completion_handlers: [],
   }
 }
@@ -151,17 +158,30 @@ pub fn HostServiceAsyncQueue::on_completed(
   id : HostServiceRequestId,
   handle : (HostCompletedServiceResponse) -> Unit,
 ) -> Bool {
+  let (registered, _) = self.on_completed_with_cleanup(id, handle)
+  registered
+}
+
+///|
+fn HostServiceAsyncQueue::on_completed_with_cleanup(
+  self : HostServiceAsyncQueue,
+  id : HostServiceRequestId,
+  handle : (HostCompletedServiceResponse) -> Unit,
+) -> (Bool, (() -> Unit)?) {
   match self.take_completed(id) {
     Some(completion) => {
       handle(completion)
-      true
+      (true, None)
     }
     None =>
       if self.has_outstanding(id) {
-        self.completion_handlers.push((id, handle))
-        true
+        let token = self.next_completion_handler_value
+        self.next_completion_handler_value = self.next_completion_handler_value +
+          1
+        self.completion_handlers.push({ token, id, handle })
+        (true, Some(() => ignore(self.cancel_completion_handler(token))))
       } else {
-        false
+        (false, None)
       }
   }
 }
@@ -171,15 +191,10 @@ fn HostServiceAsyncQueue::dispatch_completion_handlers(
   self : HostServiceAsyncQueue,
   completion : HostCompletedServiceResponse,
 ) -> Bool {
-  let handlers : Array[
-    (HostServiceRequestId, (HostCompletedServiceResponse) -> Unit),
-  ] = []
-  let remaining : Array[
-    (HostServiceRequestId, (HostCompletedServiceResponse) -> Unit),
-  ] = []
+  let handlers : Array[HostServiceCompletionHandler] = []
+  let remaining : Array[HostServiceCompletionHandler] = []
   for handler in self.completion_handlers {
-    let (id, _) = handler
-    if id == completion.id {
+    if handler.id == completion.id {
       handlers.push(handler)
     } else {
       remaining.push(handler)
@@ -187,10 +202,27 @@ fn HostServiceAsyncQueue::dispatch_completion_handlers(
   }
   self.completion_handlers = remaining
   for handler in handlers {
-    let (_, handle) = handler
-    handle(completion)
+    (handler.handle)(completion)
   }
   !handlers.is_empty()
+}
+
+///|
+fn HostServiceAsyncQueue::cancel_completion_handler(
+  self : HostServiceAsyncQueue,
+  token : Int,
+) -> Bool {
+  let mut cancelled = false
+  let remaining : Array[HostServiceCompletionHandler] = []
+  for handler in self.completion_handlers {
+    if !cancelled && handler.token == token {
+      cancelled = true
+    } else {
+      remaining.push(handler)
+    }
+  }
+  self.completion_handlers = remaining
+  cancelled
 }
 
 ///|
