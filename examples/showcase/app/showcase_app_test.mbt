@@ -132,6 +132,10 @@ test "showcase open sheet button presents bottom sheet" {
     fail("expected sheet surface frame")
   }
   assert_true(sheet_frame.origin.y > 560.0)
+  let sheet_center_x = sheet_frame.origin.x + sheet_frame.size.width / 2.0
+  assert_true((sheet_center_x - 480.0).abs() <= 1.0)
+  click_text(runtime, "Done")
+  assert_false(has_text(runtime.draw_commands(), "Showcase sheet"))
 }
 
 ///|

@@ -283,6 +283,35 @@ test "dialog sheet and popover can trap presentation focus" {
 }
 
 ///|
+test "sheet host centers bottom sheet presentation" {
+  let runtime = test_runtime(
+    @views.sheet_host(
+      child=@views.text("Host", width=640.0, height=480.0),
+      sheet=Some(
+        @views.sheet(
+          content=@views.text("Sheet body", width=200.0, height=24.0),
+          presentation_mode=@core.SheetPresentationMode::BottomSheet,
+        ),
+      ),
+      presented=true,
+      presentation_mode=@core.SheetPresentationMode::BottomSheet,
+      trap_focus=false,
+    ),
+  )
+  let commands = runtime.draw_commands()
+  guard text_frame(commands, "Sheet body") is Some(body_frame) else {
+    fail("expected sheet body frame")
+  }
+  guard smallest_rounded_brush_containing(commands, body_frame)
+    is Some(sheet_frame) else {
+    fail("expected sheet surface frame")
+  }
+  let center_x = sheet_frame.origin.x + sheet_frame.size.width / 2.0
+  assert_true((center_x - 320.0).abs() <= 1.0)
+  assert_true(sheet_frame.origin.y + sheet_frame.size.height <= 480.0)
+}
+
+///|
 test "controlled and binding view facades build together" {
   let enabled = @core.State::new(false)
   let draft = @core.State::new("draft")
@@ -2409,6 +2438,46 @@ fn text_frame(
     }
   }
   None
+}
+
+///|
+fn smallest_rounded_brush_containing(
+  commands : Array[@core.DrawCommand],
+  frame : @core.Rect,
+) -> @core.Rect? {
+  let mut candidate : @core.Rect? = None
+  for command in commands {
+    match command {
+      @core.DrawCommand::FillRoundedRectBrush({ rect, .. }, _) =>
+        if rect_contains_rect(rect, frame) {
+          candidate = match candidate {
+            Some(existing) =>
+              if rect_area(rect) < rect_area(existing) {
+                Some(rect)
+              } else {
+                Some(existing)
+              }
+            None => Some(rect)
+          }
+        }
+      _ => ()
+    }
+  }
+  candidate
+}
+
+///|
+fn rect_contains_rect(container : @core.Rect, child : @core.Rect) -> Bool {
+  child.origin.x >= container.origin.x &&
+  child.origin.y >= container.origin.y &&
+  child.origin.x + child.size.width <= container.origin.x + container.size.width &&
+  child.origin.y + child.size.height <=
+  container.origin.y + container.size.height
+}
+
+///|
+fn rect_area(rect : @core.Rect) -> Double {
+  rect.size.width * rect.size.height
 }
 
 ///|
