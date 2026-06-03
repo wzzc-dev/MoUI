@@ -205,6 +205,30 @@ pub(all) struct HostFocusEvent {
 pub fn HostFocusEvent::new(focused~ : Bool, pointer_cancel_position? : @wzzc-dev/moui/core.Point?) -> Self
 pub fn HostFocusEvent::to_core(Self) -> @wzzc-dev/moui/core.AppEvent?
 
+pub(all) struct HostImageResourceRepaintResult {
+  window_id : HostWindowId
+  previous_revision : Int
+  current_revision : Int
+  status : HostImageResourceRepaintStatus
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum HostImageResourceRepaintStatus {
+  ImageRepaintRecorded
+  ImageRepaintUnchanged
+  ImageRepaintRequested
+  ImageRepaintDiscardedClosed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostImageResourceRepaintTracker {
+  // private fields
+}
+pub fn HostImageResourceRepaintTracker::new() -> Self
+pub fn HostImageResourceRepaintTracker::record_presented(Self, HostWindowId, HostWindowRenderer) -> HostImageResourceRepaintResult
+pub fn HostImageResourceRepaintTracker::remove_window(Self, HostWindowId) -> Bool
+pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(Self, HostWindowId, HostWindowRenderer, window_open~ : Bool, request_redraw~ : (HostWindowId) -> Unit) -> HostImageResourceRepaintResult
+pub fn HostImageResourceRepaintTracker::revision_for(Self, HostWindowId) -> Int?
+pub fn HostImageResourceRepaintTracker::tracked_count(Self) -> Int
+
 pub(all) struct HostInputCapabilities {
   pointer : Bool
   scroll : Bool

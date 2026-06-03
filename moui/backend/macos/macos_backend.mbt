@@ -74,6 +74,7 @@ struct MacosApp {
   runtime_slots : @host.HostWindowRuntimeSlots
   platform_windows : @host.HostPlatformWindowMap
   platform_slots : MacosWindowPlatformSlots
+  image_repaint_tracker : @host.HostImageResourceRepaintTracker
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut exit_after_first_present : Bool
@@ -358,6 +359,7 @@ fn create_macos_app(
     runtime_slots: @host.HostWindowRuntimeSlots::new(),
     platform_windows: @host.HostPlatformWindowMap::new(),
     platform_slots: MacosWindowPlatformSlots::new(),
+    image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     exit_after_first_present: options.exit_after_first_present,
@@ -691,6 +693,12 @@ fn MacosApp::redraw_window(
       runtime_slot.driver.begin_redraw()
       platform_slot.renderer.render(runtime_slot.driver.draw_commands())
       runtime_slot.driver.finish_redraw()
+      ignore(
+        self.image_repaint_tracker.record_presented(
+          window_id,
+          platform_slot.renderer,
+        ),
+      )
       self.sync_text_input_session()
       if self.exit_after_first_present &&
         platform_slot.renderer.present_count() > 0 {
@@ -1030,11 +1038,51 @@ fn MacosApp::request_redraw_window_if_needed(
   window_id : @host.HostWindowId,
 ) -> Unit {
   match self.runtime_slots.lookup(window_id) {
-    Some(slot) =>
-      if runtime_slot_needs_redraw(slot) {
+    Some(slot) => {
+      let image_redraw_requested = self.request_image_resource_redraw_if_changed(
+        window_id,
+      )
+      if runtime_slot_needs_redraw(slot) && !image_redraw_requested {
         self.request_platform_redraw(window_id)
       }
+    }
     None => ()
+  }
+}
+
+///|
+fn MacosApp::request_image_resource_redraw_if_changed(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+) -> Bool {
+  match
+    (
+      self.platform_slots.lookup_host(window_id),
+      self.runtime_slots.lookup(window_id),
+    ) {
+    (Some(platform_slot), Some(runtime_slot)) => {
+      let result = self.image_repaint_tracker.request_redraw_if_changed(
+        window_id,
+        platform_slot.renderer,
+        window_open=runtime_slot.record.phase !=
+          @host.HostWindowLifecyclePhase::WindowClosed,
+        request_redraw=id => self.request_platform_redraw(id),
+      )
+      result.status ==
+      @host.HostImageResourceRepaintStatus::ImageRepaintRequested
+    }
+    (Some(platform_slot), None) => {
+      ignore(
+        self.image_repaint_tracker.request_redraw_if_changed(
+          window_id,
+          platform_slot.renderer,
+          window_open=false,
+          request_redraw=_id => (),
+        ),
+      )
+      false
+    }
+    _ => false
   }
 }
 
@@ -1056,6 +1104,7 @@ fn MacosApp::dispose_window(
 ) -> Unit {
   ignore(self.windows.close(window_id))
   self.sync_runtime_slot(window_id)
+  ignore(self.image_repaint_tracker.remove_window(window_id))
   ignore(self.runtime_slots.remove(window_id))
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
