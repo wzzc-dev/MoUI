@@ -282,7 +282,7 @@ The visual system keeps platform-neutral tokens and styles:
   visuals. `View::transition` and `View::presence` apply those samples through
   existing opacity, offset, scale, and foreground modifiers, including a
   reduced-motion shortcut.
-- `ImageFit::Contain/Cover/Stretch/ScaleDown` records image intent, with
+- `ImageFit::Contain/Cover/Stretch/ScaleDown/FitWidth/FitHeight` records image intent, with
   source, opacity, and rounded clipping preserved in the view spec.
 - Native and WebGPU renderers draw text through glyph-atlas GPU pipelines,
   evaluate linear gradients in shader code, and render rounded soft shadows as

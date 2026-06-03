@@ -162,6 +162,70 @@ test "image placement for scale-down fit contains oversized image" {
 }
 
 ///|
+test "image placement for fit-width preserves full width" {
+  let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
+  let short = calculate_image_placement(
+    frame,
+    @core.Size::new(width=200.0, height=100.0),
+    @core.ImageFit::FitWidth,
+  )
+  inspect(short.frame.origin.x, content="10")
+  inspect(short.frame.origin.y, content="45")
+  inspect(short.frame.size.width, content="100")
+  inspect(short.frame.size.height, content="50")
+  inspect(short.u0, content="0")
+  inspect(short.v0, content="0")
+  inspect(short.u1, content="1")
+  inspect(short.v1, content="1")
+
+  let tall = calculate_image_placement(
+    frame,
+    @core.Size::new(width=100.0, height=200.0),
+    @core.ImageFit::FitWidth,
+  )
+  inspect(tall.frame.origin.x, content="10")
+  inspect(tall.frame.origin.y, content="20")
+  inspect(tall.frame.size.width, content="100")
+  inspect(tall.frame.size.height, content="100")
+  inspect(tall.u0, content="0")
+  inspect(tall.v0, content="0.25")
+  inspect(tall.u1, content="1")
+  inspect(tall.v1, content="0.75")
+}
+
+///|
+test "image placement for fit-height preserves full height" {
+  let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
+  let narrow = calculate_image_placement(
+    frame,
+    @core.Size::new(width=100.0, height=200.0),
+    @core.ImageFit::FitHeight,
+  )
+  inspect(narrow.frame.origin.x, content="35")
+  inspect(narrow.frame.origin.y, content="20")
+  inspect(narrow.frame.size.width, content="50")
+  inspect(narrow.frame.size.height, content="100")
+  inspect(narrow.u0, content="0")
+  inspect(narrow.v0, content="0")
+  inspect(narrow.u1, content="1")
+  inspect(narrow.v1, content="1")
+
+  let wide = calculate_image_placement(
+    frame,
+    @core.Size::new(width=200.0, height=100.0),
+    @core.ImageFit::FitHeight,
+  )
+  inspect(wide.frame.origin.x, content="10")
+  inspect(wide.frame.origin.y, content="20")
+  inspect(wide.frame.size.width, content="100")
+  inspect(wide.frame.size.height, content="100")
+  inspect(wide.u0, content="0.25")
+  inspect(wide.v0, content="0")
+  inspect(wide.u1, content="0.75")
+  inspect(wide.v1, content="1")
+}
+
+///|
 test "image vertex generation" {
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=80.0)
   let vertices = generate_image_vertices(

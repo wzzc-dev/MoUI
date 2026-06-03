@@ -456,7 +456,7 @@ fn ShowcaseModel::visual_correctness_card(
       [
         image(
           showcase_image_source(),
-          width=82.0,
+          width=48.0,
           height=50.0,
           opacity=1.0,
           corner_radius=theme.radius_scale.sm,
@@ -464,7 +464,7 @@ fn ShowcaseModel::visual_correctness_card(
         ).clip(),
         image(
           showcase_image_source(),
-          width=82.0,
+          width=48.0,
           height=50.0,
           opacity~,
           corner_radius=theme.radius_scale.sm,
@@ -472,7 +472,23 @@ fn ShowcaseModel::visual_correctness_card(
         ).clip(),
         image(
           showcase_image_source(),
-          width=82.0,
+          width=48.0,
+          height=50.0,
+          opacity=0.92,
+          corner_radius=theme.radius_scale.sm,
+          fit=@core.ImageFit::FitWidth,
+        ).clip(),
+        image(
+          showcase_image_source(),
+          width=48.0,
+          height=50.0,
+          opacity=0.86,
+          corner_radius=theme.radius_scale.sm,
+          fit=@core.ImageFit::FitHeight,
+        ).clip(),
+        image(
+          showcase_image_source(),
+          width=48.0,
           height=50.0,
           opacity=0.78,
           corner_radius=theme.radius_scale.md,
