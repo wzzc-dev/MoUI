@@ -47,7 +47,7 @@ with current files and validation output:
 | Renderer capability tracking | Capability status is recorded in code, tests, and `docs/renderer-capability-report.md`. | ready with tracked gaps |
 | Platform contracts | `backend/host` owns shared events, services, windows, redraw, and request/completion contracts. | ready with tracked Linux service gaps |
 | Text system | `docs/text-system.md` documents `TextSystem`, provider composition, embedded fonts, Skia `skia_text_system()` diagnostic coverage, and shaping gaps; stable and diagnostic text conformance checks pass without claiming full bidi/paragraph shaping parity. | ready with tracked gaps |
-| Devtool counters | Core inspector snapshots expose runtime, layout, semantics, frame, render command, rebuild/layout/paint/draw-command pass counters, TEA dispatch/update/message-queue/effect-plan/effect-kind counters that distinguish send, anonymous dispatch, and structured run, latest effect summaries with structured effect descriptors, duplicate effect descriptor-key counters, subscription-plan counters/summaries with planned source descriptors, active subscription descriptors, app subscription lifecycle entries, and ignored stale subscription dispatch counters; render snapshots also report open clip/layer/filter scopes and unbalanced pops, and Showcase Diagnostics surfaces the render command/scope counters with app-test coverage. | ready for command-level diagnostics |
+| Devtool counters | Core inspector snapshots expose runtime, layout, semantics, frame, render command, rebuild/layout/paint/draw-command pass counters, TEA dispatch/update/message-queue/effect-plan/effect-kind counters that distinguish send, anonymous dispatch, and structured run, latest effect summaries with structured effect descriptors, duplicate effect descriptor-key counters, subscription-plan counters/summaries with planned source descriptors, active subscription descriptors, app subscription lifecycle entries, and ignored stale subscription dispatch counters; render snapshots also report open clip/layer/filter scopes and unbalanced pops, and Showcase Diagnostics surfaces render command/scope counters plus TEA message, structured effect, subscription plan, active subscription, and descriptor labels with app-test coverage. | ready for command-level diagnostics |
 | Guidance surface | `docs/ai-collaboration.md`, `AGENTS.md`, and `skills/` define focused agent workflows. | ready |
 
 ## Required Gates
@@ -288,8 +288,10 @@ documentation evidence.
      `AppRuntime` or an explicit draw-command stream and reports draw command
      counts, max clip/layer/filter depths, open scope depths, unbalanced pop
      count, path count, and shader count. Showcase Diagnostics now surfaces
-     render command count plus max/open clip/layer/filter scope counters and
-     unbalanced pop count in the visible inspector snapshot card. The
+     render command count plus max/open clip/layer/filter scope counters,
+     unbalanced pop count, TEA message/effect/subscription counters, and
+     effect/subscription descriptor labels in the visible inspector snapshot
+     card. The
      conformance `--golden` and `--bench` scaffolds now write and validate
      ignored capture manifests under `artifacts/conformance/` that name the
      screenshot targets, benchmark metrics, and render-inspector counters to

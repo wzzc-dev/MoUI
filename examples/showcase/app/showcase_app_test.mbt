@@ -478,10 +478,24 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(diagnostics_commands, "Layout bounds"))
   assert_true(has_text(diagnostics_commands, "Semantics nodes"))
   assert_true(has_text(diagnostics_commands, "Render commands"))
+  assert_true(has_text(diagnostics_commands, "Program messages"))
+  assert_true(has_text(diagnostics_commands, "Effect runs"))
+  assert_true(has_text(diagnostics_commands, "Subscription plans"))
+  assert_true(has_text(diagnostics_commands, "Active subscriptions"))
   assert_true(has_text(diagnostics_commands, "Dirty: redraw requested"))
   assert_true(
     has_text_containing(
       diagnostics_commands, "Render scopes: max clip/layer/filter",
+    ),
+  )
+  assert_true(
+    has_text(
+      diagnostics_commands, "TEA counters: messages 1; effect runs 1; subscription plans 2; active 1",
+    ),
+  )
+  assert_true(
+    has_text(
+      diagnostics_commands, "TEA descriptors: effect Inspector boot; subscription Inspector tick",
     ),
   )
   assert_true(has_text_containing(diagnostics_commands, "unbalanced pops 0"))
