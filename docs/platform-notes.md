@@ -307,11 +307,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_m
   -AppName MoUIShowcase
 ```
 
-The MSVC helper imports `vcvarsall.bat` through `vswhere`, sets `CC=cl`, enables
-MSVC C11 mode and atomics for `wgpu_mbt` native stubs with
-`CL=/std:c11 /experimental:c11atomics`, sets `MBT_WGPU_LINK_MODE=dynamic`, and points
-`MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `skia_mbt` emits
-`/std:c++20` stub flags for its Windows Skia C++ bindings. Packaged MSVC apps
+The MSVC helper imports `vcvarsall.bat` through `vswhere`, sets `CC` and `CXX`
+to `scripts\windows\msvc_cl.cmd`, enables MSVC C11 mode and atomics only for
+`.c` native stubs such as `wgpu_mbt`, sets `MBT_WGPU_LINK_MODE=dynamic`, and
+points `MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `skia_mbt`
+emits `/std:c++20` stub flags for its Windows Skia C++ bindings, which remain
+separate from the C11-only path. Packaged MSVC apps
 use the vcpkg `zlib:x64-windows` runtime for native image decoding. When the
 Visual Studio-bundled vcpkg rejects direct classic installs, run
 `setup_msvc_deps.ps1 -InstallZlib` so the dependency is installed with an

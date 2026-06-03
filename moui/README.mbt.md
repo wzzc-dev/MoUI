@@ -242,7 +242,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps
 ```
 
 To run a Windows entrypoint directly, import the MSVC environment in the same
-PowerShell process:
+PowerShell process. The helper routes `.c` native stubs through C11 atomics and
+keeps Skia `.cpp` stubs on their own C++ standard flags:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"

@@ -308,7 +308,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_m
   -BuildNumber 1
 ```
 
-The helper imports `vcvarsall.bat`, sets `CC=cl` and
+The helper imports `vcvarsall.bat`, sets `CC` and `CXX` to the repository's
+MSVC wrapper, enables C11 atomics only for `.c` native stubs, sets
 `MBT_WGPU_LINK_MODE=dynamic`, uses vcpkg `zlib:x64-windows`, and extracts the
 official `wgpu-windows-x86_64-msvc-release.zip` release when no
 `-WgpuNativeRoot` is supplied. Its folder is written under

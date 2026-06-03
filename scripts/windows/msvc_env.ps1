@@ -184,10 +184,11 @@ if (Test-Path -LiteralPath $zlibBin) {
   Add-PathPrefix "PATH" $zlibBin
 }
 
-$env:CC = "cl"
-$env:CXX = "cl"
+$compilerWrapper = Join-Path $scriptDir "msvc_cl.cmd"
+$env:CC = $compilerWrapper
+$env:CXX = $compilerWrapper
 $env:MBT_WGPU_LINK_MODE = "dynamic"
-$env:CL = "/std:c11 /experimental:c11atomics /wd4005 /DMOONBIT_FFI_EXPORT="
+$env:CL = "/wd4005 /DMOONBIT_FFI_EXPORT="
 $env:LINK = "comdlg32.lib shell32.lib advapi32.lib ole32.lib user32.lib gdi32.lib dwrite.lib d2d1.lib $zlibImportLibName /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
 $env:MOUI_MSVC_VCPKG_ROOT = $resolvedVcpkgRoot
 $env:MOUI_MSVC_ZLIB_TRIPLET_ROOT = $vcpkgInstalled
@@ -218,4 +219,5 @@ if (-not [string]::IsNullOrWhiteSpace($resolvedWgpuNativeRoot)) {
   Write-Host "==> WGPU native root: not set; run build_windows_msvc.ps1 once or pass -WgpuNativeRoot"
 }
 Write-Host "==> CC: $env:CC"
+Write-Host "==> CXX: $env:CXX"
 Write-Host "==> MBT_WGPU_LINK_MODE: $env:MBT_WGPU_LINK_MODE"
