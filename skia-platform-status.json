@@ -803,6 +803,11 @@
       "marker": "native smoke filter finite validation"
     },
     {
+      "id": "filter.non-finite-handle-validation",
+      "area": "Filter",
+      "marker": "native smoke filter non-finite handle validation"
+    },
+    {
       "id": "filter.resource-plan",
       "area": "Filter",
       "marker": "native smoke filter resource plan count"
@@ -2124,6 +2129,11 @@
     {
       "id": "filter.finite-validation",
       "marker": "native smoke filter finite validation",
+      "value": "1"
+    },
+    {
+      "id": "filter.non-finite-handle-validation",
+      "marker": "native smoke filter non-finite handle validation",
       "value": "1"
     },
     {

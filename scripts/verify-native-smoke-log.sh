@@ -189,6 +189,7 @@ default_stage_markers=(
   "native smoke invalid shader filter replay filter resources" \
   "native smoke filter layer count" \
   "native smoke filter finite validation" \
+  "native smoke filter non-finite handle validation" \
   "native smoke filter resource plan count" \
   "native smoke path verbs" \
   "native smoke non-finite path from-value rejected" \
@@ -446,6 +447,7 @@ default_expected_stage_values=(
   $'native smoke non-finite path replay path cache hits\t0'
   $'native smoke filter resource plan count\t3'
   $'native smoke filter finite validation\t1'
+  $'native smoke filter non-finite handle validation\t1'
   $'native smoke non-finite path from-value rejected\t1'
   $'native smoke non-finite path add skipped\t2'
   $'native smoke non-finite path direct mutations skipped\t7'

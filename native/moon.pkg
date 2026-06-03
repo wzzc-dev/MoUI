@@ -27,6 +27,7 @@ options(
     "path_native.mbt": [ "native", "llvm" ],
     "text_font_native.mbt": [ "native", "llvm" ],
     "shader_filter_native.mbt": [ "native", "llvm" ],
+    "shader_filter_ffi_wbtest.mbt": [ "native", "llvm" ],
     "handles_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "skia_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "availability_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
