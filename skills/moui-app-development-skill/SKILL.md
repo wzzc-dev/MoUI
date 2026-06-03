@@ -79,6 +79,10 @@ separate framework task using `moui-framework-development-skill`.
   model/update/view apps, `@core.Program::simple_with_environment` when the
   view needs `ViewEnvironment`, and `@core.Program::new` when `update` returns
   `@core.Effect[Msg]` follow-up work.
+- Use `subscriptions=model => ...` on `Program` when an app has ongoing typed
+  event sources such as ticks, route/deep-link streams, or service completions
+  that should be reused by stable key and canceled when the model no longer
+  declares them. Keep concrete timer or host adapters outside `core`.
 - Keep host-service calls out of pure reducers. For app-owned clipboard, file
   dialog, URL, theme, or menu work, return `@core.Effect::dispatch`, call
   `@host.HostAppServices` inside the effect runner, and dispatch a typed
@@ -229,6 +233,10 @@ sh scripts/dev-check.sh --platform-examples-build
   views should emit intent messages such as `BrowseRequested`, and effects
   should dispatch typed completion messages for sync, unavailable, or pending
   responses.
+- Use `Subscription::listen` / `Subscription::run` for app-level ongoing
+  sources that need lifecycle reuse and cleanup. Use `Subscription::map` when a
+  parent app embeds a child feature and wants to preserve typed message
+  composition.
 - Keep host-specific input conversion in backend packages out of app code.
 
 ### Add Platform Entry Points

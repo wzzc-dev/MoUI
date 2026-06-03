@@ -46,11 +46,23 @@ pub using @core {type Point}
 
 pub using @core {type Program}
 
+pub using @core {type ProgramRuntimeSnapshot}
+
 pub using @core {type Rect}
 
 pub using @core {type Size}
 
 pub using @core {type State}
+
+pub using @core {type Subscription}
+
+pub using @core {type SubscriptionCancelReason}
+
+pub using @core {type SubscriptionDescriptor}
+
+pub using @core {type SubscriptionLifecycleSnapshot}
+
+pub using @core {type SubscriptionLifecycleStatus}
 
 pub using @core {type SurfaceStyle}
 

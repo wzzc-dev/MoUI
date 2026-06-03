@@ -142,6 +142,7 @@ pub(all) enum AppEvent {
 
 pub struct AppRuntime {
   state : RuntimeState
+  // private fields
 }
 pub fn AppRuntime::action_commands(Self) -> Array[ActionCommand]
 pub fn AppRuntime::add_animation(Self, AnimationController) -> Unit
@@ -168,6 +169,7 @@ pub fn AppRuntime::needs_redraw(Self) -> Bool
 pub fn[Model, Msg] AppRuntime::new_program(program~ : Program[Model, Msg], size~ : Size, environment? : Environment) -> Self
 pub fn[Msg] AppRuntime::new_view(root~ : View[Msg], size~ : Size, environment? : Environment, on_message? : ((Msg) -> Unit)?) -> Self
 pub fn AppRuntime::paint_pass(Self) -> Array[DrawCommand]
+pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
 pub fn AppRuntime::rebuild(Self) -> Unit
 pub fn AppRuntime::register_font_data(Self, FontFamily, Bytes) -> Unit
 pub fn AppRuntime::semantics(Self) -> SemanticsNode
@@ -1041,11 +1043,25 @@ pub(all) struct Program[Model, Msg] {
   init : () -> (Model, Effect[Msg])
   update : (Model, Msg) -> (Model, Effect[Msg])
   view : (Model, ViewEnvironment) -> View[Msg]
+  subscriptions : (Model) -> Subscription[Msg]
 }
-pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg]) -> Self[Model, Msg]
-pub fn[Model, Msg] Program::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg]) -> Self[Model, Msg]
-pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg]) -> Self[Model, Msg]
-pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model, ViewEnvironment) -> View[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Program::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
+
+pub(all) struct ProgramRuntimeSnapshot {
+  dispatched_count : Int
+  update_count : Int
+  effect_count : Int
+  active_subscription_count : Int
+  started_subscription_count : Int
+  reused_subscription_count : Int
+  cancelled_subscription_count : Int
+  duplicate_subscription_key_count : Int
+  active_subscriptions : Array[SubscriptionDescriptor]
+  subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RadialGradientSpec {
   center : Point
@@ -1275,6 +1291,14 @@ pub(all) struct RuntimeInspectorSnapshot {
   needs_paint : Bool
   needs_redraw : Bool
   draw_command_count : Int
+  program_dispatched_count : Int
+  program_update_count : Int
+  program_effect_count : Int
+  active_subscription_count : Int
+  started_subscription_count : Int
+  reused_subscription_count : Int
+  cancelled_subscription_count : Int
+  duplicate_subscription_key_count : Int
   rebuild_reason : String
   dirty_reasons : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
@@ -1521,6 +1545,40 @@ pub(all) struct StateSubscription {
 }
 pub fn StateSubscription::cancel(Self) -> Unit
 pub fn StateSubscription::is_active(Self) -> Bool
+
+pub struct Subscription[Msg] {
+  // private fields
+}
+pub fn[Msg] Subscription::batch(Array[Self[Msg]]) -> Self[Msg]
+pub fn[Msg] Subscription::descriptors(Self[Msg]) -> Array[SubscriptionDescriptor]
+pub fn[Msg] Subscription::listen(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
+pub fn[Msg, NextMsg] Subscription::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
+pub fn[Msg] Subscription::none() -> Self[Msg]
+pub fn[Msg] Subscription::run(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
+
+pub(all) enum SubscriptionCancelReason {
+  SubscriptionKeyChanged
+  SubscriptionRuntimeDestroyed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SubscriptionDescriptor {
+  key : String
+  kind : String
+  label : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SubscriptionLifecycleSnapshot {
+  key : String
+  kind : String
+  label : String
+  status : SubscriptionLifecycleStatus
+  cancel_reason : SubscriptionCancelReason?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum SubscriptionLifecycleStatus {
+  SubscriptionActive
+  SubscriptionCancelled
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum SurfaceLevel {
   Base

@@ -123,7 +123,11 @@ fn AppRuntime::new_spec(
   size~ : Size,
   environment? : Environment = Environment::default(),
 ) -> AppRuntime {
-  { state: RuntimeState::new_spec(root~, size~, environment~) }
+  {
+    state: RuntimeState::new_spec(root~, size~, environment~),
+    program_runtime_snapshot_fn: () => ProgramRuntimeSnapshot::empty(),
+    destroy_program_runtime_fn: () => (),
+  }
 }
 
 ///|

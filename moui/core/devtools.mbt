@@ -7,6 +7,14 @@ pub(all) struct RuntimeInspectorSnapshot {
   needs_paint : Bool
   needs_redraw : Bool
   draw_command_count : Int
+  program_dispatched_count : Int
+  program_update_count : Int
+  program_effect_count : Int
+  active_subscription_count : Int
+  started_subscription_count : Int
+  reused_subscription_count : Int
+  cancelled_subscription_count : Int
+  duplicate_subscription_key_count : Int
   rebuild_reason : String
   dirty_reasons : Array[String]
 } derive(Eq, Debug, ToJson)
@@ -125,6 +133,7 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
   let needs_redraw = runtime.needs_redraw()
   let rebuild_reason = runtime.inspector_rebuild_reason()
   let dirty_reasons = runtime.inspector_dirty_reasons()
+  let program = runtime.program_runtime_snapshot()
   RuntimeInspectorSnapshot::{
     size: runtime.size(),
     dirty_count,
@@ -133,6 +142,14 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     needs_paint,
     needs_redraw,
     draw_command_count: runtime.draw_commands().length(),
+    program_dispatched_count: program.dispatched_count,
+    program_update_count: program.update_count,
+    program_effect_count: program.effect_count,
+    active_subscription_count: program.active_subscription_count,
+    started_subscription_count: program.started_subscription_count,
+    reused_subscription_count: program.reused_subscription_count,
+    cancelled_subscription_count: program.cancelled_subscription_count,
+    duplicate_subscription_key_count: program.duplicate_subscription_key_count,
     rebuild_reason,
     dirty_reasons,
   }

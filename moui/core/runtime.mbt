@@ -1,6 +1,8 @@
 ///|
 pub struct AppRuntime {
   state : RuntimeState
+  priv mut program_runtime_snapshot_fn : () -> ProgramRuntimeSnapshot
+  priv mut destroy_program_runtime_fn : () -> Unit
 }
 
 ///|
@@ -20,6 +22,8 @@ pub fn[Msg] AppRuntime::new_view(
       size~,
       environment~,
     ),
+    program_runtime_snapshot_fn: () => ProgramRuntimeSnapshot::empty(),
+    destroy_program_runtime_fn: () => (),
   }
 }
 
@@ -29,7 +33,11 @@ fn AppRuntime::new_component(
   size~ : Size,
   environment? : Environment = Environment::default(),
 ) -> AppRuntime {
-  { state: RuntimeState::new_component(root~, size~, environment~) }
+  {
+    state: RuntimeState::new_component(root~, size~, environment~),
+    program_runtime_snapshot_fn: () => ProgramRuntimeSnapshot::empty(),
+    destroy_program_runtime_fn: () => (),
+  }
 }
 
 ///|
@@ -58,25 +66,69 @@ pub fn[Model, Msg] AppRuntime::new_program(
 ) -> AppRuntime {
   let (initial_model, initial_effect) = (program.init)()
   let model = State::new(initial_model)
-  let dispatch_ref : Ref[((Msg) -> Unit)?] = Ref(None)
+  let program_runtime = ProgramRuntimeDiagnostics::new()
+  let pending_messages : Array[Msg] = []
+  let pending_index = Ref(0)
+  let dispatching = Ref(false)
+  let syncing_subscriptions = Ref(false)
+  let process_ref : Ref[(() -> Unit)?] = Ref(None)
   let dispatch = message => {
-    let (next_model, effect) = (program.update)(model.get(), message)
-    model.set(next_model)
-    run_effect(effect, message => {
-      match dispatch_ref.val {
-        Some(dispatch) => dispatch(message)
+    pending_messages.push(message)
+    if !syncing_subscriptions.val {
+      match process_ref.val {
+        Some(process) => process()
         None => ()
       }
-    })
+    }
   }
-  dispatch_ref.val = Some(dispatch)
-  run_effect(initial_effect, dispatch)
-  AppRuntime::new_component_view(
+  let sync_subscriptions = () => {
+    syncing_subscriptions.val = true
+    program_runtime.sync_subscriptions(
+      (program.subscriptions)(model.get()),
+      dispatch,
+    )
+    syncing_subscriptions.val = false
+  }
+  let process_messages = () => {
+    if !dispatching.val && !syncing_subscriptions.val {
+      dispatching.val = true
+      while pending_index.val < pending_messages.length() {
+        let message = pending_messages[pending_index.val]
+        pending_index.val = pending_index.val + 1
+        program_runtime.record_dispatch()
+        let (next_model, effect) = (program.update)(model.get(), message)
+        program_runtime.record_update()
+        model.set(next_model)
+        let effect_count = run_effect(effect, dispatch)
+        program_runtime.record_effects(effect_count)
+        sync_subscriptions()
+      }
+      pending_messages.clear()
+      pending_index.val = 0
+      dispatching.val = false
+    }
+  }
+  process_ref.val = Some(process_messages)
+  let initial_effect_count = run_effect(initial_effect, dispatch)
+  program_runtime.record_effects(initial_effect_count)
+  sync_subscriptions()
+  match process_ref.val {
+    Some(process) => process()
+    None => ()
+  }
+  let runtime = AppRuntime::new_component_view(
     root=ctx => (program.view)(ctx.watch(model), ctx.view_environment()),
     size~,
     environment~,
     on_message=Some(dispatch),
   )
+  runtime.program_runtime_snapshot_fn = () => program_runtime.snapshot()
+  runtime.destroy_program_runtime_fn = () => {
+    program_runtime.cancel_all_subscriptions(
+      SubscriptionCancelReason::SubscriptionRuntimeDestroyed,
+    )
+  }
+  runtime
 }
 
 ///|
@@ -134,6 +186,7 @@ pub fn AppRuntime::advance_time(self : AppRuntime, time_ms : Double) -> Unit {
 
 ///|
 pub fn AppRuntime::destroy(self : AppRuntime) -> Unit {
+  (self.destroy_program_runtime_fn)()
   self.state.destroy()
 }
 
@@ -242,6 +295,13 @@ pub fn AppRuntime::dirty_count(self : AppRuntime) -> Int {
 ///|
 pub fn AppRuntime::inspector_snapshot(self : AppRuntime) -> InspectorSnapshot {
   InspectorSnapshot::from_runtime(self)
+}
+
+///|
+pub fn AppRuntime::program_runtime_snapshot(
+  self : AppRuntime,
+) -> ProgramRuntimeSnapshot {
+  (self.program_runtime_snapshot_fn)()
 }
 
 ///|

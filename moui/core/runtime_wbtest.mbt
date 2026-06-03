@@ -266,6 +266,10 @@ test "program initial effects run before first view build" {
   assert_true(
     has_draw_text(runtime.draw_commands(), "Boot booting+sent+dispatched"),
   )
+  let program_snapshot = runtime.program_runtime_snapshot()
+  inspect(program_snapshot.dispatched_count, content="2")
+  inspect(program_snapshot.update_count, content="2")
+  inspect(program_snapshot.effect_count, content="2")
 }
 
 ///|
@@ -318,6 +322,215 @@ test "program effects can dispatch typed follow-up messages" {
     ),
   )
   assert_true(has_draw_text(runtime.draw_commands(), "done"))
+}
+
+///|
+test "subscription descriptors and map preserve feature composition" {
+  let child_dispatch : Ref[((String) -> Unit)?] = Ref(None)
+  let child = Subscription::batch([
+    Subscription::none(),
+    Subscription::run(key="child-tick", kind="timer", label="Child tick", start=dispatch => {
+      child_dispatch.val = Some(dispatch)
+      None
+    }),
+  ])
+  let parent = child.map(message => "parent:" + message)
+  let descriptors = parent.descriptors()
+  inspect(descriptors.length(), content="1")
+  inspect(descriptors[0].key, content="child-tick")
+  inspect(descriptors[0].kind, content="timer")
+  inspect(descriptors[0].label, content="Child tick")
+  let program = Program::new(
+    init=() => ("waiting", Effect::none()),
+    update=(_model, message) => (message, Effect::none()),
+    view=model => runtime_test_label(model),
+    subscriptions=_model => parent,
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=180.0, height=48.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "waiting"))
+  match child_dispatch.val {
+    Some(dispatch) => dispatch("pulse")
+    None => fail("expected child dispatch")
+  }
+  assert_true(has_draw_text(runtime.draw_commands(), "parent:pulse"))
+}
+
+///|
+enum ProgramSubscriptionMsg {
+  ProgramSubscriptionToggle
+  ProgramSubscriptionTick
+}
+
+///|
+struct ProgramSubscriptionModel {
+  channel : String
+  ticks : Int
+}
+
+///|
+test "program subscriptions start reuse cancel and dispatch typed messages" {
+  let alpha_dispatch : Ref[((ProgramSubscriptionMsg) -> Unit)?] = Ref(None)
+  let beta_dispatch : Ref[((ProgramSubscriptionMsg) -> Unit)?] = Ref(None)
+  let cleanup_log : Array[String] = []
+  let program = Program::new(
+    init=() => ({ channel: "alpha", ticks: 0 }, Effect::none()),
+    update=(model, message) => {
+      match message {
+        ProgramSubscriptionTick =>
+          ({ ..model, ticks: model.ticks + 1 }, Effect::none())
+        ProgramSubscriptionToggle =>
+          (
+            {
+              ..model,
+              channel: if model.channel == "alpha" {
+                "beta"
+              } else {
+                "alpha"
+              },
+            },
+            Effect::none(),
+          )
+      }
+    },
+    view=model => runtime_test_label("\{model.channel}:\{model.ticks}"),
+    subscriptions=model => {
+      Subscription::run(
+        key="timer:\{model.channel}",
+        kind="timer",
+        label=model.channel,
+        start=dispatch => {
+          if model.channel == "alpha" {
+            alpha_dispatch.val = Some(dispatch)
+          } else {
+            beta_dispatch.val = Some(dispatch)
+          }
+          Some(() => cleanup_log.push(model.channel))
+        },
+      )
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=180.0, height=48.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "alpha:0"))
+  let initial = runtime.program_runtime_snapshot()
+  inspect(initial.active_subscription_count, content="1")
+  inspect(initial.started_subscription_count, content="1")
+  inspect(initial.active_subscriptions[0].key, content="timer:alpha")
+  match alpha_dispatch.val {
+    Some(dispatch) => dispatch(ProgramSubscriptionTick)
+    None => fail("expected alpha subscription dispatch")
+  }
+  assert_true(has_draw_text(runtime.draw_commands(), "alpha:1"))
+  let reused = runtime.program_runtime_snapshot()
+  inspect(reused.dispatched_count, content="1")
+  inspect(reused.update_count, content="1")
+  inspect(reused.reused_subscription_count, content="1")
+  match alpha_dispatch.val {
+    Some(dispatch) => dispatch(ProgramSubscriptionToggle)
+    None => fail("expected alpha subscription dispatch")
+  }
+  assert_true(has_draw_text(runtime.draw_commands(), "beta:1"))
+  let switched = runtime.program_runtime_snapshot()
+  inspect(switched.active_subscription_count, content="1")
+  inspect(switched.dispatched_count, content="2")
+  inspect(switched.started_subscription_count, content="2")
+  inspect(switched.cancelled_subscription_count, content="1")
+  inspect(cleanup_log.join(","), content="alpha")
+  match alpha_dispatch.val {
+    Some(dispatch) => dispatch(ProgramSubscriptionTick)
+    None => fail("expected stale alpha subscription dispatch")
+  }
+  assert_true(has_draw_text(runtime.draw_commands(), "beta:1"))
+  let after_stale_alpha = runtime.program_runtime_snapshot()
+  inspect(after_stale_alpha.dispatched_count, content="2")
+  inspect(after_stale_alpha.update_count, content="2")
+  match beta_dispatch.val {
+    Some(dispatch) => dispatch(ProgramSubscriptionTick)
+    None => fail("expected beta subscription dispatch")
+  }
+  assert_true(has_draw_text(runtime.draw_commands(), "beta:2"))
+  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  inspect(inspector.program_dispatched_count, content="3")
+  inspect(inspector.program_update_count, content="3")
+  inspect(inspector.active_subscription_count, content="1")
+  inspect(inspector.reused_subscription_count, content="2")
+  inspect(inspector.duplicate_subscription_key_count, content="0")
+  runtime.destroy()
+  let destroyed = runtime.program_runtime_snapshot()
+  inspect(destroyed.active_subscription_count, content="0")
+  inspect(destroyed.cancelled_subscription_count, content="2")
+  inspect(cleanup_log.join(","), content="alpha,beta")
+  assert_true(
+    destroyed.subscription_lifecycle.any(entry => {
+      entry.key == "timer:beta" &&
+      entry.status == SubscriptionLifecycleStatus::SubscriptionCancelled &&
+      entry.cancel_reason ==
+      Some(SubscriptionCancelReason::SubscriptionRuntimeDestroyed)
+    }),
+  )
+  match beta_dispatch.val {
+    Some(dispatch) => dispatch(ProgramSubscriptionTick)
+    None => fail("expected stale beta subscription dispatch")
+  }
+  let after_destroy_dispatch = runtime.program_runtime_snapshot()
+  inspect(after_destroy_dispatch.dispatched_count, content="3")
+  inspect(after_destroy_dispatch.update_count, content="3")
+  inspect(cleanup_log.join(","), content="alpha,beta")
+}
+
+///|
+test "program subscriptions queue synchronous start dispatch and report duplicate keys" {
+  let start_count = Ref(0)
+  let program = Program::new(
+    init=() => ({ channel: "instant", ticks: 0 }, Effect::none()),
+    update=(model, message) => {
+      match message {
+        ProgramSubscriptionTick =>
+          ({ ..model, ticks: model.ticks + 1 }, Effect::none())
+        ProgramSubscriptionToggle => (model, Effect::none())
+      }
+    },
+    view=model => runtime_test_label("\{model.channel}:\{model.ticks}"),
+    subscriptions=_model => {
+      Subscription::batch([
+        Subscription::listen(key="instant", kind="timer", label="Instant", start=dispatch => {
+          start_count.val = start_count.val + 1
+          dispatch(ProgramSubscriptionTick)
+          None
+        }),
+        Subscription::listen(
+          key="instant",
+          kind="timer",
+          label="Duplicate ignored",
+          start=_dispatch => {
+            start_count.val = start_count.val + 1
+            None
+          },
+        ),
+      ])
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=180.0, height=48.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "instant:1"))
+  let snapshot = runtime.program_runtime_snapshot()
+  inspect(start_count.val, content="1")
+  inspect(snapshot.started_subscription_count, content="1")
+  inspect(snapshot.reused_subscription_count, content="1")
+  inspect(snapshot.duplicate_subscription_key_count, content="2")
+  inspect(snapshot.active_subscription_count, content="1")
+  inspect(snapshot.active_subscriptions[0].label, content="Instant")
+  inspect(snapshot.dispatched_count, content="1")
+  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  inspect(inspector.reused_subscription_count, content="1")
+  inspect(inspector.duplicate_subscription_key_count, content="2")
 }
 
 ///|
