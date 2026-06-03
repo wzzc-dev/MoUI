@@ -103,7 +103,9 @@ pub fn[Model, Msg] AppRuntime::new_program(
         program_runtime.record_update()
         model.set(next_model)
         let effect_summary = effect.plan_summary()
-        let effect_count = run_effect(effect, dispatch)
+        let effect_count = run_effect(effect, dispatch, (descriptor, start) => {
+          program_runtime.start_effect_task(descriptor, start, dispatch)
+        })
         program_runtime.record_effects(effect_summary, effect_count)
         sync_subscriptions()
         program_runtime.record_message_processed(pending_count())
@@ -116,7 +118,10 @@ pub fn[Model, Msg] AppRuntime::new_program(
   }
   process_ref.val = Some(process_messages)
   let initial_effect_summary = initial_effect.plan_summary()
-  let initial_effect_count = run_effect(initial_effect, dispatch)
+  let initial_effect_count = run_effect(initial_effect, dispatch, (
+    descriptor,
+    start,
+  ) => program_runtime.start_effect_task(descriptor, start, dispatch))
   program_runtime.record_effects(initial_effect_summary, initial_effect_count)
   sync_subscriptions()
   match process_ref.val {
@@ -131,6 +136,9 @@ pub fn[Model, Msg] AppRuntime::new_program(
   )
   runtime.program_runtime_snapshot_fn = () => program_runtime.snapshot()
   runtime.destroy_program_runtime_fn = () => {
+    program_runtime.cancel_all_effect_tasks(
+      EffectTaskCancelReason::EffectTaskRuntimeDestroyed,
+    )
     program_runtime.cancel_all_subscriptions(
       SubscriptionCancelReason::SubscriptionRuntimeDestroyed,
     )

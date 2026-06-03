@@ -495,6 +495,11 @@ test "showcase navigates to system gallery sections" {
   )
   assert_true(
     has_text(
+      diagnostics_commands, "TEA tasks: active 1; completed 0; cancelled 0",
+    ),
+  )
+  assert_true(
+    has_text(
       diagnostics_commands, "TEA descriptors: effect Inspector boot; subscription Inspector tick",
     ),
   )

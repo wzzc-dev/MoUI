@@ -7,9 +7,11 @@ Todo interaction patterns. The WYSIWYG Markdown editor stays separate because
 it demonstrates a larger editing workflow with its own model and parser tests.
 Apps that need host-service work should use `Program::new` with `Effect[Msg]`;
 prefer `Effect::run` when a host-service or async bridge should carry a stable
-diagnostic key. Apps that need ongoing typed callbacks can add
-`subscriptions=model => ...` and stable `Subscription` keys while keeping
-concrete timer or host adapters out of `core`.
+diagnostic key, and use `Effect::task` when a one-shot async task needs runtime
+managed cancellation, completion, and stale-dispatch diagnostics. Apps that
+need ongoing typed callbacks can add `subscriptions=model => ...` and stable
+`Subscription` keys while keeping concrete timer or host adapters out of
+`core`.
 Showcase surfaces renderer capability follow-ups first so visible docs do not
 hide partial or gap status behind ready features.
 
@@ -91,7 +93,7 @@ Showcase is organized around the main catalog order:
 Shell -> Feedback -> Runtime/Renderer -> Diagnostics`. The first eight sections
 cover user-facing components and layout patterns. `Runtime/Renderer` displays
 host capability and renderer status cards. `Diagnostics` shows a compact
-inspector snapshot with runtime, TEA program message/effect/subscription,
+inspector snapshot with runtime, TEA program message/effect task/subscription,
 duplicate key names, view, layout, semantics, render command, and render-scope
 counters, then links to the deeper diagnostic routes for
 interaction wiring, text diagnostics, advanced rendering, and reusable examples

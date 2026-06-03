@@ -320,6 +320,7 @@ fn run_file_importer_effect(update : FileImporterUpdate) -> FileImporterModel {
     @core.Effect::Send(message) => dispatch(message)
     @core.Effect::Dispatch(run) => run(dispatch)
     @core.Effect::Run(_descriptor, run) => run(dispatch)
+    @core.Effect::Task(_descriptor, start) => ignore(start(dispatch))
   }
   model.get()
 }

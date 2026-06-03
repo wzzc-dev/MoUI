@@ -5580,6 +5580,7 @@ fn run_workbench_effect(update : WorkbenchUpdate) -> WorkbenchModel {
     Send(message) => dispatch(message)
     Dispatch(run) => run(dispatch)
     Run(_descriptor, run) => run(dispatch)
+    Task(_descriptor, start) => ignore(start(dispatch))
   }
   model.get()
 }
@@ -5612,6 +5613,7 @@ fn run_workbench_effect_with_transport(
     Send(message) => dispatch(message)
     Dispatch(run) => run(dispatch)
     Run(_descriptor, run) => run(dispatch)
+    Task(_descriptor, start) => ignore(start(dispatch))
   }
   model.get()
 }

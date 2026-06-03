@@ -24,9 +24,17 @@ pub(all) struct RuntimeInspectorSnapshot {
   program_effect_send_count : Int
   program_effect_dispatch_count : Int
   program_effect_run_count : Int
+  program_effect_task_count : Int
   duplicate_effect_descriptor_key_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
+  active_effect_task_count : Int
+  started_effect_task_count : Int
+  completed_effect_task_count : Int
+  cancelled_effect_task_count : Int
+  ignored_effect_task_dispatch_count : Int
+  active_effect_tasks : Array[EffectDescriptor]
+  effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
   program_subscription_plan_count : Int
   last_subscription_plan_summary : SubscriptionPlanSummary
   active_subscription_count : Int
@@ -182,9 +190,17 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     program_effect_send_count: program.effect_send_count,
     program_effect_dispatch_count: program.effect_dispatch_count,
     program_effect_run_count: program.effect_run_count,
+    program_effect_task_count: program.effect_task_count,
     duplicate_effect_descriptor_key_count: program.duplicate_effect_descriptor_key_count,
     last_effect_summary: program.last_effect_summary,
     last_scheduled_effect_summary: program.last_scheduled_effect_summary,
+    active_effect_task_count: program.active_effect_task_count,
+    started_effect_task_count: program.started_effect_task_count,
+    completed_effect_task_count: program.completed_effect_task_count,
+    cancelled_effect_task_count: program.cancelled_effect_task_count,
+    ignored_effect_task_dispatch_count: program.ignored_effect_task_dispatch_count,
+    active_effect_tasks: program.active_effect_tasks,
+    effect_task_lifecycle: program.effect_task_lifecycle,
     program_subscription_plan_count: program.subscription_plan_count,
     last_subscription_plan_summary: program.last_subscription_plan_summary,
     active_subscription_count: program.active_subscription_count,

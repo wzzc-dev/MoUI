@@ -59,12 +59,14 @@ Use this skill when editing or reviewing:
 - `Program`, `Effect[Msg]`, and `Subscription[Msg]` are the default app model
   surface: pure apps use `Program::simple`, environment-aware apps use the
   `*_with_environment` constructors, effect-capable apps use `Program::new`
-  with `Effect::send`, `Effect::dispatch`, or structured `Effect::run`, and
-  app-level ongoing event sources use `subscriptions=model => ...` with stable keys so callbacks
-  re-enter the typed message loop without exposing runtime internals. Effect
-  diagnostics stay platform-neutral through `Effect::plan_summary`,
-  distinct anonymous-dispatch vs structured-run counters, `Effect::run`
-  descriptors, duplicate descriptor-key counts/names, and aggregate
+  with `Effect::send`, `Effect::dispatch`, structured `Effect::run`, or
+  one-shot cancellable `Effect::task`, and app-level ongoing event sources use
+  `subscriptions=model => ...` with stable keys so callbacks re-enter the typed
+  message loop without exposing runtime internals. Effect diagnostics stay
+  platform-neutral through `Effect::plan_summary`, distinct anonymous-dispatch
+  vs structured-run/task counters, `Effect::run` / `Effect::task` descriptors,
+  duplicate descriptor-key counts/names, active/completed/cancelled effect-task
+  lifecycle snapshots, stale effect-task dispatch counters, and aggregate
   program-runtime inspector counters; message
   queue diagnostics stay
   platform-neutral through enqueue/drain/pending counters; pipeline cost

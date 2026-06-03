@@ -12,6 +12,7 @@ pub(all) enum Effect[Msg] {
   Send(Msg)
   Dispatch(((Msg) -> Unit) -> Unit)
   Run(EffectDescriptor, ((Msg) -> Unit) -> Unit)
+  Task(EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?)
 }
 
 ///|
@@ -21,6 +22,7 @@ pub(all) enum EffectPlanKind {
   EffectPlanSend
   EffectPlanDispatch
   EffectPlanRun
+  EffectPlanTask
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -31,6 +33,7 @@ pub(all) struct EffectPlanSummary {
   send_count : Int
   dispatch_count : Int
   run_count : Int
+  task_count : Int
   scheduled_count : Int
   max_depth : Int
   descriptors : Array[EffectDescriptor]
@@ -77,6 +80,16 @@ pub fn[Msg] Effect::run(
 }
 
 ///|
+pub fn[Msg] Effect::task(
+  key~ : String,
+  start~ : ((Msg) -> Unit) -> (() -> Unit)?,
+  kind? : String = "task",
+  label? : String = "",
+) -> Effect[Msg] {
+  Task({ key, kind, label }, start)
+}
+
+///|
 pub fn[Msg] Effect::plan_summary(self : Effect[Msg]) -> EffectPlanSummary {
   effect_plan_summary(self, depth=1)
 }
@@ -94,6 +107,8 @@ pub fn[Msg, NextMsg] Effect::map(
       Dispatch(dispatch => run(message => dispatch(map(message))))
     Run(descriptor, run) =>
       Run(descriptor, dispatch => run(message => dispatch(map(message))))
+    Task(descriptor, start) =>
+      Task(descriptor, dispatch => start(message => dispatch(map(message))))
   }
 }
 
@@ -106,6 +121,7 @@ pub fn EffectPlanSummary::empty() -> EffectPlanSummary {
     send_count: 0,
     dispatch_count: 0,
     run_count: 0,
+    task_count: 0,
     scheduled_count: 0,
     max_depth: 0,
     descriptors: [],
@@ -178,6 +194,7 @@ fn[Msg] effect_plan_summary(
         send_count: 0,
         dispatch_count: 0,
         run_count: 0,
+        task_count: 0,
         scheduled_count: 0,
         max_depth: depth,
         descriptors: [],
@@ -192,6 +209,7 @@ fn[Msg] effect_plan_summary(
         send_count: 1,
         dispatch_count: 0,
         run_count: 0,
+        task_count: 0,
         scheduled_count: 1,
         max_depth: depth,
         descriptors: [],
@@ -206,6 +224,7 @@ fn[Msg] effect_plan_summary(
         send_count: 0,
         dispatch_count: 1,
         run_count: 0,
+        task_count: 0,
         scheduled_count: 1,
         max_depth: depth,
         descriptors: [],
@@ -220,6 +239,22 @@ fn[Msg] effect_plan_summary(
         send_count: 0,
         dispatch_count: 0,
         run_count: 1,
+        task_count: 0,
+        scheduled_count: 1,
+        max_depth: depth,
+        descriptors: [descriptor],
+        duplicate_descriptor_key_count: 0,
+        duplicate_descriptor_keys: [],
+      }
+    Task(descriptor, _) =>
+      {
+        root_kind: EffectPlanKind::EffectPlanTask,
+        none_count: 0,
+        batch_count: 0,
+        send_count: 0,
+        dispatch_count: 0,
+        run_count: 0,
+        task_count: 1,
         scheduled_count: 1,
         max_depth: depth,
         descriptors: [descriptor],
@@ -232,6 +267,7 @@ fn[Msg] effect_plan_summary(
       let mut send_count = 0
       let mut dispatch_count = 0
       let mut run_count = 0
+      let mut task_count = 0
       let mut scheduled_count = 0
       let mut max_depth = depth
       let descriptors : Array[EffectDescriptor] = []
@@ -242,6 +278,7 @@ fn[Msg] effect_plan_summary(
         send_count = send_count + child_summary.send_count
         dispatch_count = dispatch_count + child_summary.dispatch_count
         run_count = run_count + child_summary.run_count
+        task_count = task_count + child_summary.task_count
         scheduled_count = scheduled_count + child_summary.scheduled_count
         if child_summary.max_depth > max_depth {
           max_depth = child_summary.max_depth
@@ -261,6 +298,7 @@ fn[Msg] effect_plan_summary(
         send_count,
         dispatch_count,
         run_count,
+        task_count,
         scheduled_count,
         max_depth,
         descriptors,
@@ -306,13 +344,17 @@ fn duplicate_effect_descriptor_key_count(
 }
 
 ///|
-fn[Msg] run_effect(effect : Effect[Msg], dispatch : (Msg) -> Unit) -> Int {
+fn[Msg] run_effect(
+  effect : Effect[Msg],
+  dispatch : (Msg) -> Unit,
+  start_task : (EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit,
+) -> Int {
   match effect {
     NoEffect => 0
     Batch(effects) => {
       let mut count = 0
       for effect in effects {
-        count = count + run_effect(effect, dispatch)
+        count = count + run_effect(effect, dispatch, start_task)
       }
       count
     }
@@ -326,6 +368,10 @@ fn[Msg] run_effect(effect : Effect[Msg], dispatch : (Msg) -> Unit) -> Int {
     }
     Run(_descriptor, run) => {
       run(dispatch)
+      1
+    }
+    Task(descriptor, start) => {
+      start_task(descriptor, start)
       1
     }
   }
