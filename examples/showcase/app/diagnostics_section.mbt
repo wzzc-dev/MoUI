@@ -60,7 +60,7 @@ fn ShowcaseModel::inspector_snapshot_card(
       (inner_width - theme.spacing_scale.sm * 3.0) / 4.0,
     )
   }
-  let card_height = if stat_columns == 1 { 890.0 } else { 448.0 }
+  let card_height = if stat_columns == 1 { 930.0 } else { 478.0 }
   let snapshot = showcase_inspector_snapshot(theme)
   let runtime = snapshot.runtime
   let scope_caption = "Open scopes " +
@@ -225,6 +225,18 @@ fn ShowcaseModel::inspector_snapshot_card(
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
         text(
+          "TEA tasks: active " +
+          runtime.active_effect_task_count.to_string() +
+          "; completed " +
+          runtime.completed_effect_task_count.to_string() +
+          "; cancelled " +
+          runtime.cancelled_effect_task_count.to_string(),
+          width=inner_width,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        text(
           "TEA descriptors: effect " +
           scheduled_effect_label +
           "; subscription " +
@@ -284,12 +296,20 @@ fn diagnostics_inspector_sample_program(
     init=() => {
       (
         { event_count: 0 },
-        @core.Effect::run(
-          key="diagnostics:boot",
-          kind="inspector",
-          label="Inspector boot",
-          run=dispatch => dispatch(DiagnosticsInspectorSampleBooted),
-        ),
+        @core.Effect::batch([
+          @core.Effect::run(
+            key="diagnostics:boot",
+            kind="inspector",
+            label="Inspector boot",
+            run=dispatch => dispatch(DiagnosticsInspectorSampleBooted),
+          ),
+          @core.Effect::task(
+            key="diagnostics:task",
+            kind="inspector",
+            label="Inspector task",
+            start=_dispatch => Some(() => ()),
+          ),
+        ]),
       )
     },
     update=(model, message) => {

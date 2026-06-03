@@ -87,7 +87,9 @@ separate framework task using `moui-framework-development-skill`.
   dialog, URL, theme, or menu work, return `@core.Effect::run` with a stable
   diagnostic key that is unique within the returned effect batch, call
   `@host.HostAppServices` inside the effect runner, and dispatch a typed
-  completion message back into the model. When a service returns
+  completion message back into the model. Use `@core.Effect::task` instead for
+  one-shot async tasks that need runtime-owned cancellation, completion, and
+  stale-dispatch diagnostics. When a service returns
   `HostServiceResponse::Pending(id)`, store the id in app model state and
   declare `HostAppServices::completion_subscription` from
   `subscriptions=model => ...` so the later host callback re-enters the same
@@ -235,10 +237,13 @@ sh scripts/dev-check.sh --platform-examples-build
 - Keep app state transitions testable without platform hosts.
 - Route user actions through existing MoUI event APIs and app reducers/helpers.
 - Use `Program::new` plus `Effect::run` for app-level host-service or async
-  bridge work that should appear in diagnostics; give the effect a stable key,
-  kind, and label, keep keys unique within the returned batch, then dispatch
-  typed completion messages for sync, unavailable, or pending responses.
-  `Effect::run` is reported separately from anonymous dispatch in runtime
+  bridge work that should appear in diagnostics but does not need runtime-owned
+  cancellation. Use `Effect::task` for one-shot async tasks that should stay
+  active until their first typed dispatch, be canceled when replaced by the same
+  key or when the runtime is destroyed, and report active/completed/cancelled
+  lifecycle diagnostics. Give structured effects stable key/kind/label values
+  and keep keys unique within the returned batch. `Effect::run` and
+  `Effect::task` are reported separately from anonymous dispatch in runtime
   diagnostics; `Effect::dispatch` remains available for anonymous one-off
   runners. When composing child features, lift child follow-up work with
   `Effect::map`; structured descriptors are preserved for parent diagnostics.

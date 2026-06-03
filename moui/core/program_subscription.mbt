@@ -66,6 +66,28 @@ pub(all) struct SubscriptionLifecycleSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum EffectTaskLifecycleStatus {
+  EffectTaskActive
+  EffectTaskCompleted
+  EffectTaskCancelled
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) enum EffectTaskCancelReason {
+  EffectTaskKeyChanged
+  EffectTaskRuntimeDestroyed
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct EffectTaskLifecycleSnapshot {
+  key : String
+  kind : String
+  label : String
+  status : EffectTaskLifecycleStatus
+  cancel_reason : EffectTaskCancelReason?
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct ProgramRuntimeSnapshot {
   dispatched_count : Int
   update_count : Int
@@ -80,9 +102,17 @@ pub(all) struct ProgramRuntimeSnapshot {
   effect_send_count : Int
   effect_dispatch_count : Int
   effect_run_count : Int
+  effect_task_count : Int
   duplicate_effect_descriptor_key_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
+  active_effect_task_count : Int
+  started_effect_task_count : Int
+  completed_effect_task_count : Int
+  cancelled_effect_task_count : Int
+  ignored_effect_task_dispatch_count : Int
+  active_effect_tasks : Array[EffectDescriptor]
+  effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
   subscription_plan_count : Int
   last_subscription_plan_summary : SubscriptionPlanSummary
   active_subscription_count : Int
@@ -106,6 +136,16 @@ priv struct ActiveProgramSubscription {
 }
 
 ///|
+priv struct ActiveProgramEffectTask {
+  token : Int
+  key : String
+  kind : String
+  label : String
+  active : Ref[Bool]
+  cancel : Ref[(() -> Unit)?]
+}
+
+///|
 priv struct ProgramRuntimeDiagnostics {
   mut dispatched_count : Int
   mut update_count : Int
@@ -120,9 +160,17 @@ priv struct ProgramRuntimeDiagnostics {
   mut effect_send_count : Int
   mut effect_dispatch_count : Int
   mut effect_run_count : Int
+  mut effect_task_count : Int
   mut duplicate_effect_descriptor_key_count : Int
   mut last_effect_summary : EffectPlanSummary
   mut last_scheduled_effect_summary : EffectPlanSummary
+  mut next_effect_task_value : Int
+  mut started_effect_task_count : Int
+  mut completed_effect_task_count : Int
+  mut cancelled_effect_task_count : Int
+  mut ignored_effect_task_dispatch_count : Int
+  mut active_effect_tasks : Array[ActiveProgramEffectTask]
+  effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
   mut subscription_plan_count : Int
   mut last_subscription_plan_summary : SubscriptionPlanSummary
   mut started_subscription_count : Int
@@ -348,9 +396,17 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
     effect_send_count: 0,
     effect_dispatch_count: 0,
     effect_run_count: 0,
+    effect_task_count: 0,
     duplicate_effect_descriptor_key_count: 0,
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
+    next_effect_task_value: 1,
+    started_effect_task_count: 0,
+    completed_effect_task_count: 0,
+    cancelled_effect_task_count: 0,
+    ignored_effect_task_dispatch_count: 0,
+    active_effect_tasks: [],
+    effect_task_lifecycle: [],
     subscription_plan_count: 0,
     last_subscription_plan_summary: SubscriptionPlanSummary::empty(),
     started_subscription_count: 0,
@@ -437,12 +493,152 @@ fn ProgramRuntimeDiagnostics::record_effects(
   self.effect_dispatch_count = self.effect_dispatch_count +
     summary.dispatch_count
   self.effect_run_count = self.effect_run_count + summary.run_count
+  self.effect_task_count = self.effect_task_count + summary.task_count
   self.duplicate_effect_descriptor_key_count = self.duplicate_effect_descriptor_key_count +
     summary.duplicate_descriptor_key_count
   self.last_effect_summary = summary
   if summary.scheduled_count > 0 {
     self.last_scheduled_effect_summary = summary
   }
+}
+
+///|
+fn ProgramRuntimeDiagnostics::record_ignored_effect_task_dispatch(
+  self : ProgramRuntimeDiagnostics,
+) -> Unit {
+  self.ignored_effect_task_dispatch_count = self.ignored_effect_task_dispatch_count +
+    1
+}
+
+///|
+fn[Msg] ProgramRuntimeDiagnostics::start_effect_task(
+  self : ProgramRuntimeDiagnostics,
+  descriptor : EffectDescriptor,
+  start : ((Msg) -> Unit) -> (() -> Unit)?,
+  dispatch : (Msg) -> Unit,
+) -> Unit {
+  self.cancel_effect_tasks_by_key(
+    descriptor.key,
+    EffectTaskCancelReason::EffectTaskKeyChanged,
+  )
+  let token = self.next_effect_task_value
+  self.next_effect_task_value = self.next_effect_task_value + 1
+  let active = Ref(true)
+  let cancel : Ref[(() -> Unit)?] = Ref(None)
+  self.active_effect_tasks.push({
+    token,
+    key: descriptor.key,
+    kind: descriptor.kind,
+    label: descriptor.label,
+    active,
+    cancel,
+  })
+  self.started_effect_task_count = self.started_effect_task_count + 1
+  self.effect_task_lifecycle.push({
+    key: descriptor.key,
+    kind: descriptor.kind,
+    label: descriptor.label,
+    status: EffectTaskLifecycleStatus::EffectTaskActive,
+    cancel_reason: None,
+  })
+  let cleanup = start(message => {
+    if active.val {
+      active.val = false
+      ignore(self.complete_effect_task(token))
+      dispatch(message)
+    } else {
+      self.record_ignored_effect_task_dispatch()
+    }
+  })
+  cancel.val = cleanup
+  if cleanup is None && active.val {
+    active.val = false
+    ignore(self.complete_effect_task(token))
+  }
+}
+
+///|
+fn ProgramRuntimeDiagnostics::complete_effect_task(
+  self : ProgramRuntimeDiagnostics,
+  token : Int,
+) -> Bool {
+  let mut completed : ActiveProgramEffectTask? = None
+  let remaining : Array[ActiveProgramEffectTask] = []
+  for task in self.active_effect_tasks {
+    match completed {
+      None =>
+        if task.token == token {
+          completed = Some(task)
+        } else {
+          remaining.push(task)
+        }
+      Some(_) => remaining.push(task)
+    }
+  }
+  self.active_effect_tasks = remaining
+  match completed {
+    Some(task) => {
+      self.completed_effect_task_count = self.completed_effect_task_count + 1
+      self.effect_task_lifecycle.push({
+        key: task.key,
+        kind: task.kind,
+        label: task.label,
+        status: EffectTaskLifecycleStatus::EffectTaskCompleted,
+        cancel_reason: None,
+      })
+      true
+    }
+    None => false
+  }
+}
+
+///|
+fn ProgramRuntimeDiagnostics::cancel_effect_tasks_by_key(
+  self : ProgramRuntimeDiagnostics,
+  key : String,
+  reason : EffectTaskCancelReason,
+) -> Unit {
+  let remaining : Array[ActiveProgramEffectTask] = []
+  for task in self.active_effect_tasks {
+    if task.key == key {
+      self.cancel_effect_task(task, reason)
+    } else {
+      remaining.push(task)
+    }
+  }
+  self.active_effect_tasks = remaining
+}
+
+///|
+fn ProgramRuntimeDiagnostics::cancel_all_effect_tasks(
+  self : ProgramRuntimeDiagnostics,
+  reason : EffectTaskCancelReason,
+) -> Unit {
+  for task in self.active_effect_tasks {
+    self.cancel_effect_task(task, reason)
+  }
+  self.active_effect_tasks = []
+}
+
+///|
+fn ProgramRuntimeDiagnostics::cancel_effect_task(
+  self : ProgramRuntimeDiagnostics,
+  task : ActiveProgramEffectTask,
+  reason : EffectTaskCancelReason,
+) -> Unit {
+  task.active.val = false
+  match task.cancel.val {
+    Some(cancel) => cancel()
+    None => ()
+  }
+  self.cancelled_effect_task_count = self.cancelled_effect_task_count + 1
+  self.effect_task_lifecycle.push({
+    key: task.key,
+    kind: task.kind,
+    label: task.label,
+    status: EffectTaskLifecycleStatus::EffectTaskCancelled,
+    cancel_reason: Some(reason),
+  })
 }
 
 ///|
@@ -598,9 +794,21 @@ fn ProgramRuntimeDiagnostics::snapshot(
     effect_send_count: self.effect_send_count,
     effect_dispatch_count: self.effect_dispatch_count,
     effect_run_count: self.effect_run_count,
+    effect_task_count: self.effect_task_count,
     duplicate_effect_descriptor_key_count: self.duplicate_effect_descriptor_key_count,
     last_effect_summary: self.last_effect_summary,
     last_scheduled_effect_summary: self.last_scheduled_effect_summary,
+    active_effect_task_count: self.active_effect_tasks.length(),
+    started_effect_task_count: self.started_effect_task_count,
+    completed_effect_task_count: self.completed_effect_task_count,
+    cancelled_effect_task_count: self.cancelled_effect_task_count,
+    ignored_effect_task_dispatch_count: self.ignored_effect_task_dispatch_count,
+    active_effect_tasks: self.active_effect_tasks.map(task => {
+      key: task.key,
+      kind: task.kind,
+      label: task.label,
+    }),
+    effect_task_lifecycle: self.effect_task_lifecycle.copy(),
     subscription_plan_count: self.subscription_plan_count,
     last_subscription_plan_summary: self.last_subscription_plan_summary,
     active_subscription_count: self.active_subscriptions.length(),
@@ -634,9 +842,17 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     effect_send_count: 0,
     effect_dispatch_count: 0,
     effect_run_count: 0,
+    effect_task_count: 0,
     duplicate_effect_descriptor_key_count: 0,
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
+    active_effect_task_count: 0,
+    started_effect_task_count: 0,
+    completed_effect_task_count: 0,
+    cancelled_effect_task_count: 0,
+    ignored_effect_task_dispatch_count: 0,
+    active_effect_tasks: [],
+    effect_task_lifecycle: [],
     subscription_plan_count: 0,
     last_subscription_plan_summary: SubscriptionPlanSummary::empty(),
     active_subscription_count: 0,
