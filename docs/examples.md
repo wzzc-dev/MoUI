@@ -176,7 +176,10 @@ synchronous responses and cancels when the model leaves `Pending`. Its app
 tests also compose the importer as a child feature with `View::map`,
 `Effect::map`, and `Subscription::map`, which is the recommended pattern when a
 parent TEA model owns a child workflow that can still return follow-up effects
-or ongoing event sources. Browser hosts commonly expose file
+or ongoing event sources; the parent runtime assertions also keep the mapped
+child effect descriptors, active completion subscription descriptor, and
+subscription lifecycle cancellation visible through program diagnostics.
+Browser hosts commonly expose file
 names while native hosts can expose filesystem paths, so production apps should
 treat these strings as host-provided display or import handles rather than
 assuming one platform shape.
