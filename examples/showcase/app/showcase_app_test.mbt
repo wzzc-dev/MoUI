@@ -56,29 +56,34 @@ test "showcase state toggles theme and active copy" {
 
 ///|
 test "showcase navigation dialog and sheet state are wired" {
-  let model = @app.ShowcaseModel::new()
+  let dialog_model = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::ShowDialog)
+    .update(@app.ShowcaseMsg::SelectSection("navigation"))
+  let dialog_commands = dialog_model
+    .runtime(width=760.0, height=420.0)
+    .draw_commands()
+  assert_true(has_text(dialog_commands, "Showcase dialog"))
+  assert_true(has_text(dialog_commands, "Custom content shell"))
+  assert_true(has_text(dialog_commands, "Host"))
+  assert_true(has_text(dialog_commands, "view-level"))
+  assert_true(has_text(dialog_commands, "Dismiss"))
+  let sheet_model = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::ShowDialog)
     .update(@app.ShowcaseMsg::ShowSheet)
     .update(@app.ShowcaseMsg::SelectSection("navigation"))
-  let runtime = model.runtime(width=760.0, height=420.0)
-  let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Showcase dialog"))
-  assert_true(has_text(commands, "Custom content shell"))
-  assert_true(has_text(commands, "Host"))
-  assert_true(has_text(commands, "view-level"))
-  assert_true(has_text(commands, "Dismiss"))
-  assert_true(has_text(commands, "Showcase sheet"))
+  let sheet_commands = sheet_model
+    .runtime(width=760.0, height=420.0)
+    .draw_commands()
+  assert_false(has_text(sheet_commands, "Showcase dialog"))
+  assert_true(has_text(sheet_commands, "Showcase sheet"))
   assert_true(
-    commands.any(command => command is @core.DrawCommand::DrawShadow(_)),
+    sheet_commands.any(command => command is @core.DrawCommand::DrawShadow(_)),
   )
-  assert_true(
-    commands.any(command => {
-      command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, 1.5)
-    }),
-  )
-  assert_true(model.dialog_visible)
-  assert_true(model.sheet_visible)
-  assert_true(model.selected_section == "navigation")
+  assert_true(dialog_model.dialog_visible)
+  assert_false(dialog_model.sheet_visible)
+  assert_false(sheet_model.dialog_visible)
+  assert_true(sheet_model.sheet_visible)
+  assert_true(sheet_model.selected_section == "navigation")
 }
 
 ///|
@@ -108,6 +113,36 @@ test "showcase bottom sheet wraps content instead of filling viewport" {
     subtitle_frame.origin.y + subtitle_frame.size.height <=
     sheet_frame.origin.y + sheet_frame.size.height,
   )
+}
+
+///|
+test "showcase open sheet button presents bottom sheet" {
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("navigation"))
+    .update(@app.ShowcaseMsg::TabSelected("values"))
+    .runtime(width=960.0, height=900.0)
+  click_text(runtime, "Open sheet")
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Showcase sheet"))
+  guard text_frame(commands, "Showcase sheet") is Some(title_frame) else {
+    fail("expected sheet title")
+  }
+  guard smallest_rounded_brush_containing(commands, title_frame)
+    is Some(sheet_frame) else {
+    fail("expected sheet surface frame")
+  }
+  assert_true(sheet_frame.origin.y > 560.0)
+}
+
+///|
+test "showcase dialog sheet action replaces dialog" {
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::ShowDialog)
+    .runtime(width=760.0, height=420.0)
+  click_last_text(runtime, "Sheet")
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "Showcase sheet"))
+  assert_false(has_text(commands, "Showcase dialog"))
 }
 
 ///|
@@ -949,6 +984,58 @@ fn text_frame(
     }
   }
   None
+}
+
+///|
+fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+  guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
+    fail("expected text frame for \{text}")
+  }
+  click_frame(runtime, frame)
+}
+
+///|
+fn click_last_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+  guard last_text_frame(runtime.draw_commands(), text) is Some(frame) else {
+    fail("expected text frame for \{text}")
+  }
+  click_frame(runtime, frame)
+}
+
+///|
+fn click_frame(runtime : @core.AppRuntime, frame : @core.Rect) -> Unit {
+  let position = @core.Point::new(
+    x=frame.origin.x + frame.size.width / 2.0,
+    y=frame.origin.y + frame.size.height / 2.0,
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up),
+    ),
+  )
+}
+
+///|
+fn last_text_frame(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> @core.Rect? {
+  let mut frame : @core.Rect? = None
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, frame: next, .. }) =>
+        if value == text {
+          frame = Some(next)
+        }
+      _ => ()
+    }
+  }
+  frame
 }
 
 ///|

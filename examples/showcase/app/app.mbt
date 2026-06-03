@@ -174,7 +174,7 @@ pub fn ShowcaseModel::update(
     ToggleActive => { ..self, active: !self.active }
     ShowDialog => { ..self, dialog_visible: true }
     HideDialog => { ..self, dialog_visible: false }
-    ShowSheet => { ..self, sheet_visible: true }
+    ShowSheet => { ..self, dialog_visible: false, sheet_visible: true }
     HideSheet => { ..self, sheet_visible: false }
     SelectSection(route) => self.with_route_pushed(route)
     RouteBack => self.with_route_history(self.route_history.back())
