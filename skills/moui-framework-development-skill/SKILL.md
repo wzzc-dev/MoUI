@@ -72,16 +72,20 @@ Use this skill when editing or reviewing:
   platform-neutral through `Effect::plan_summary`, distinct anonymous-dispatch
   vs structured-run/task counters, `Effect::run` / `Effect::host_service` /
   `Effect::service_task` / `Effect::task` descriptors,
-  duplicate descriptor-key counts/names, active/completed/cancelled effect-task
-  lifecycle snapshots, stale effect-task dispatch counters, and aggregate
-  program-runtime inspector counters; message
+  duplicate descriptor-key counts/names in effect summaries plus aggregate
+  duplicate descriptor-key counters/names on program-runtime and inspector
+  snapshots, active/completed/cancelled effect-task lifecycle snapshots, stale
+  effect-task dispatch counters, and aggregate program-runtime inspector
+  counters; message
   queue diagnostics stay
   platform-neutral through enqueue/drain/pending counters; pipeline cost
   diagnostics stay platform-neutral through rebuild/layout/paint/draw-command
   pass counters; subscription diagnostics stay platform-neutral through
   `Subscription::plan_summary`, planned and active subscription descriptors,
-  duplicate subscription-key counts/names, subscription lifecycle/plan counters,
-  and ignored stale-dispatch counters for
+  duplicate subscription-key counts/names in plan summaries plus aggregate
+  duplicate subscription-key counters/names on program-runtime and inspector
+  snapshots, subscription lifecycle/plan counters, and ignored stale-dispatch
+  counters for
   callbacks captured by canceled or destroyed subscription lifetimes; effect
   runners and subscription adapters still own any concrete async work outside
   `core`.

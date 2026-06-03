@@ -26,6 +26,7 @@ pub(all) struct RuntimeInspectorSnapshot {
   program_effect_run_count : Int
   program_effect_task_count : Int
   duplicate_effect_descriptor_key_count : Int
+  duplicate_effect_descriptor_keys : Array[String]
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
   active_effect_task_count : Int
@@ -42,6 +43,7 @@ pub(all) struct RuntimeInspectorSnapshot {
   reused_subscription_count : Int
   cancelled_subscription_count : Int
   duplicate_subscription_key_count : Int
+  duplicate_subscription_keys : Array[String]
   ignored_subscription_dispatch_count : Int
   active_subscriptions : Array[SubscriptionDescriptor]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
@@ -192,6 +194,7 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     program_effect_run_count: program.effect_run_count,
     program_effect_task_count: program.effect_task_count,
     duplicate_effect_descriptor_key_count: program.duplicate_effect_descriptor_key_count,
+    duplicate_effect_descriptor_keys: program.duplicate_effect_descriptor_keys,
     last_effect_summary: program.last_effect_summary,
     last_scheduled_effect_summary: program.last_scheduled_effect_summary,
     active_effect_task_count: program.active_effect_task_count,
@@ -208,6 +211,7 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     reused_subscription_count: program.reused_subscription_count,
     cancelled_subscription_count: program.cancelled_subscription_count,
     duplicate_subscription_key_count: program.duplicate_subscription_key_count,
+    duplicate_subscription_keys: program.duplicate_subscription_keys,
     ignored_subscription_dispatch_count: program.ignored_subscription_dispatch_count,
     active_subscriptions: program.active_subscriptions,
     subscription_lifecycle: program.subscription_lifecycle,

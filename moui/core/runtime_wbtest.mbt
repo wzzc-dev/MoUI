@@ -326,6 +326,14 @@ test "program runtime aggregates duplicate structured effect keys" {
   inspect(program_snapshot.effect_dispatch_count, content="0")
   inspect(program_snapshot.effect_run_count, content="2")
   inspect(program_snapshot.duplicate_effect_descriptor_key_count, content="1")
+  inspect(
+    program_snapshot.duplicate_effect_descriptor_keys.length(),
+    content="1",
+  )
+  inspect(
+    program_snapshot.duplicate_effect_descriptor_keys[0],
+    content="host:sync",
+  )
   inspect(program_snapshot.last_effect_summary.run_count, content="2")
   inspect(
     program_snapshot.last_effect_summary.duplicate_descriptor_key_count,
@@ -338,6 +346,8 @@ test "program runtime aggregates duplicate structured effect keys" {
   let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
   inspect(inspector.program_effect_run_count, content="2")
   inspect(inspector.duplicate_effect_descriptor_key_count, content="1")
+  inspect(inspector.duplicate_effect_descriptor_keys.length(), content="1")
+  inspect(inspector.duplicate_effect_descriptor_keys[0], content="host:sync")
   inspect(inspector.last_effect_summary.descriptors.length(), content="2")
   inspect(
     inspector.last_effect_summary.duplicate_descriptor_keys[0],
@@ -994,6 +1004,8 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
   inspect(snapshot.started_subscription_count, content="1")
   inspect(snapshot.reused_subscription_count, content="1")
   inspect(snapshot.duplicate_subscription_key_count, content="2")
+  inspect(snapshot.duplicate_subscription_keys.length(), content="1")
+  inspect(snapshot.duplicate_subscription_keys[0], content="instant")
   inspect(snapshot.active_subscription_count, content="1")
   inspect(snapshot.active_subscriptions[0].label, content="Instant")
   inspect(snapshot.dispatched_count, content="1")
@@ -1013,6 +1025,8 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
   )
   inspect(inspector.reused_subscription_count, content="1")
   inspect(inspector.duplicate_subscription_key_count, content="2")
+  inspect(inspector.duplicate_subscription_keys.length(), content="1")
+  inspect(inspector.duplicate_subscription_keys[0], content="instant")
 }
 
 ///|
