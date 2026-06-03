@@ -35,7 +35,7 @@ Status meanings:
 | Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have renderer-local pixel tests plus real native renderer pixel smoke coverage; unknown names still use fallback paths. |
 | Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interiors in both caret paths, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, can draw optional SkShaper shaped glyph runs after linking, and audits `skia_mbt` fallback/measurement/shaping descriptor resource plans through fallback-safe tests; SkParagraph-style line breaking, bidi, deterministic color emoji, and typography conformance remain follow-up work. |
 | Emoji text | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo cluster samples, prefers emoji coverage characters in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path; deterministic color emoji, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. |
-| Async image | partial | partial | partial | Renderer-neutral lifecycle records and monotonic revision snapshots are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; macOS/Windows/Linux hosts track presented image revisions, route repaint requests per window when a newer revision is observed, expose tracked-window revision snapshots, and discard closed-window image changes; Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, and records disposed cached image resources during renderer disposal; Web renderer/backend diagnostics expose the same revisioned snapshot shape. Native async loader/notifier trigger sources remain follow-up work. |
+| Async image | partial | partial | partial | Renderer-neutral lifecycle records and monotonic revision snapshots are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; macOS/Windows/Linux hosts track presented image revisions, route repaint requests per window when a newer revision is observed, expose tracked-window revision/status-count snapshots, and discard closed-window image changes; Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, and records disposed cached image resources during renderer disposal; Web renderer/backend diagnostics expose the same revisioned snapshot shape. Native async loader/notifier trigger sources remain follow-up work. |
 
 ## Renderer Descriptors
 
@@ -154,12 +154,15 @@ tests also pin `ImageFit::Contain` letterboxing,
 
 `render/skia` is a native-only renderer package over the editable
 `wzzc-dev/skia_mbt` checkout. It exposes `SkiaRasterRenderer`,
-`SkiaPixelFrame`, `SkiaPresentTarget`, `SkiaFontResolution`, `renderer_descriptor()`,
-backend info, fallback-safe availability checks, a basic Skia-backed text
-system, image resource records plus revisioned snapshots that native Skia
-providers forward through `HostWindowRenderer`, cached-image disposal
-diagnostics, and diagnostics for unsupported commands. Unmatched, mismatched,
-and frame-end unclosed canvas
+`SkiaPixelFrame`, `SkiaPresentTarget`, `SkiaFontResolution`,
+`SkiaUnsupportedCommandDiagnostic`, `renderer_descriptor()`, backend info,
+fallback-safe availability checks, a basic Skia-backed text system, image
+resource records plus revisioned snapshots that native Skia providers forward
+through `HostWindowRenderer`, cached-image disposal diagnostics, and structured
+unsupported-command diagnostics with command/reason payloads. The
+`unsupported_command_count()` accessor remains the count summary, while
+`unsupported_command_diagnostics()` returns the per-frame command/reason list.
+Unmatched, mismatched, and frame-end unclosed canvas
 scopes are treated as unsupported diagnostics and ignored or restored at the
 frame boundary instead of restoring past the frame-root canvas scope. In
 fallback builds `skia_available()`
@@ -210,8 +213,10 @@ failed-image placeholders plus local-file retry recovery, basic text glyph-run p
 `TextRun.frame` clipping, and optional SkShaper availability when the smoke is
 run with `--enable-skshaper`, while requiring
 `unsupported_command_count == 0`. Focused Skia renderer white-box tests also
-cover radial-gradient rounded brush and path brush pixels, plus unmatched and
-mismatched scope-pop diagnostics. Native Skia provider packages expose the same
+cover radial-gradient rounded brush and path brush pixels, plus structured
+unsupported-command diagnostics for unmatched pops, mismatched pops, unclosed
+scopes, unknown shader fallback, and per-frame diagnostic reset. Native Skia
+provider packages expose the same
 renderer image-resource records and revisioned snapshots through
 `HostWindowRenderer`, so host diagnostics can inspect loading, ready, failed,
 and disposed image resources without importing `render/skia`; macOS, Windows,

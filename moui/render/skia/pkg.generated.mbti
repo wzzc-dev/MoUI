@@ -61,6 +61,7 @@ pub(all) struct SkiaRasterRenderer {
   image_lifecycle : @render.ImageResourceLifecycle
   mut present_count : Int
   mut unsupported_command_count : Int
+  unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
   mut last_frame : SkiaPixelFrame?
 }
 pub fn SkiaRasterRenderer::backend_info(Self) -> @render.RendererBackendInfo
@@ -74,6 +75,12 @@ pub fn SkiaRasterRenderer::render(Self, Array[@core.DrawCommand]) -> Unit raise 
 pub fn SkiaRasterRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit raise SkiaRendererError
 pub fn SkiaRasterRenderer::text_system(Self) -> @core.TextSystem
 pub fn SkiaRasterRenderer::unsupported_command_count(Self) -> Int
+pub fn SkiaRasterRenderer::unsupported_command_diagnostics(Self) -> Array[SkiaUnsupportedCommandDiagnostic]
+
+pub(all) struct SkiaUnsupportedCommandDiagnostic {
+  command : String
+  reason : String
+} derive(Eq, ToJson, @debug.Debug)
 
 // Type aliases
 

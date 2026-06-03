@@ -34,6 +34,12 @@ pub(all) struct SkiaPresentTarget {
 }
 
 ///|
+pub(all) struct SkiaUnsupportedCommandDiagnostic {
+  command : String
+  reason : String
+} derive(Eq, Debug, ToJson)
+
+///|
 priv struct SkiaRasterSurfacePreflight {
   physical_width : Int
   physical_height : Int
@@ -192,6 +198,7 @@ pub(all) struct SkiaRasterRenderer {
   image_lifecycle : @render.ImageResourceLifecycle
   mut present_count : Int
   mut unsupported_command_count : Int
+  unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
   mut last_frame : SkiaPixelFrame?
 }
 
@@ -325,6 +332,7 @@ pub fn create_with_present_target(
     image_lifecycle: @render.ImageResourceLifecycle::new(),
     present_count: 0,
     unsupported_command_count: 0,
+    unsupported_command_diagnostics: [],
     last_frame: None,
   }
 }
@@ -733,6 +741,52 @@ pub fn SkiaRasterRenderer::resize(
 }
 
 ///|
+fn SkiaRasterRenderer::record_unsupported_command(
+  self : SkiaRasterRenderer,
+  command : String,
+  reason : String,
+) -> Unit {
+  self.unsupported_command_count = self.unsupported_command_count + 1
+  self.unsupported_command_diagnostics.push({ command, reason })
+}
+
+///|
+fn skia_scope_name(scope : SkiaCanvasScopeKind) -> String {
+  match scope {
+    Clip => "clip"
+    RoundedClip => "rounded-clip"
+    Transform => "transform"
+    Opacity => "opacity"
+    Layer => "layer"
+    Filter => "filter"
+  }
+}
+
+///|
+fn skia_scope_push_command(scope : SkiaCanvasScopeKind) -> String {
+  match scope {
+    Clip => "PushClip"
+    RoundedClip => "PushRoundedClip"
+    Transform => "PushTransform"
+    Opacity => "PushOpacity"
+    Layer => "PushLayer"
+    Filter => "PushFilter"
+  }
+}
+
+///|
+fn skia_scope_pop_command(scope : SkiaCanvasScopeKind) -> String {
+  match scope {
+    Clip => "PopClip"
+    RoundedClip => "PopRoundedClip"
+    Transform => "PopTransform"
+    Opacity => "PopOpacity"
+    Layer => "PopLayer"
+    Filter => "PopFilter"
+  }
+}
+
+///|
 pub fn SkiaRasterRenderer::render(
   self : SkiaRasterRenderer,
   commands : Array[@core.DrawCommand],
@@ -748,12 +802,18 @@ pub fn SkiaRasterRenderer::render(
         ),
       )
       self.unsupported_command_count = 0
+      self.unsupported_command_diagnostics.clear()
       let canvas_scopes : Array[SkiaCanvasScopeKind] = []
       for command in commands {
         self.render_command(canvas, command, canvas_scopes)
       }
       if !canvas_scopes.is_empty() {
-        self.unsupported_command_count += canvas_scopes.length()
+        for scope in canvas_scopes {
+          self.record_unsupported_command(
+            skia_scope_push_command(scope),
+            "command stream ended with an open \{skia_scope_name(scope)} scope",
+          )
+        }
       }
       canvas.restore_to_count(saved)
       if !self.surface.flush_and_submit() {
@@ -876,9 +936,16 @@ fn SkiaRasterRenderer::pop_canvas_scope(
         canvas.restore()
       } else {
         canvas_scopes.push(actual)
-        self.unsupported_command_count = self.unsupported_command_count + 1
+        self.record_unsupported_command(
+          skia_scope_pop_command(expected),
+          "pop did not match active \{skia_scope_name(actual)} scope",
+        )
       }
-    None => self.unsupported_command_count = self.unsupported_command_count + 1
+    None =>
+      self.record_unsupported_command(
+        skia_scope_pop_command(expected),
+        "pop has no matching push scope",
+      )
   }
 }
 
@@ -899,7 +966,9 @@ fn SkiaRasterRenderer::push_filter(
           ignore(canvas.save_layer(image_filter=Some(image_filter)))
         None => {
           ignore(canvas.save_layer())
-          self.unsupported_command_count = self.unsupported_command_count + 1
+          self.record_unsupported_command(
+            "PushFilter", "Skia blur image filter unavailable; used unfiltered layer",
+          )
         }
       }
     @core.FilterEffect::Saturate(amount) =>
@@ -933,7 +1002,9 @@ fn SkiaRasterRenderer::push_color_filter(
       ignore(canvas.save_layer(color_filter=Some(color_filter)))
     None => {
       ignore(canvas.save_layer())
-      self.unsupported_command_count = self.unsupported_command_count + 1
+      self.record_unsupported_command(
+        "PushFilter", "Skia color filter unavailable; used unfiltered layer",
+      )
     }
   }
 }
@@ -972,7 +1043,9 @@ fn SkiaRasterRenderer::draw_shadow(
           Float::from_double(radius),
           skia_paint(shadow.color),
         )
-        self.unsupported_command_count = self.unsupported_command_count + 1
+        self.record_unsupported_command(
+          "DrawShadow", "Skia mask filter unavailable; drew unblurred shadow",
+        )
       }
     }
     return ()
@@ -1052,7 +1125,9 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
             Float::from_double(rounded.radius),
             skia_paint(brush.fallback_color()),
           )
-          self.unsupported_command_count = self.unsupported_command_count + 1
+          self.record_unsupported_command(
+            "FillRoundedRectBrush", "Skia brush shader unavailable; used fallback color",
+          )
         }
       }
   }
@@ -1429,7 +1504,10 @@ fn SkiaRasterRenderer::draw_text(
       }
       canvas.restore_to_count(saved)
     }
-    None => self.unsupported_command_count = self.unsupported_command_count + 1
+    None =>
+      self.record_unsupported_command(
+        "DrawText", "Skia text layout unavailable; skipped text run",
+      )
   }
 }
 
@@ -1665,7 +1743,10 @@ fn SkiaRasterRenderer::draw_path(
         None => ()
       }
     }
-    None => self.unsupported_command_count = self.unsupported_command_count + 1
+    None =>
+      self.record_unsupported_command(
+        "DrawPath", "Skia path conversion unavailable; skipped path",
+      )
   }
 }
 
@@ -1707,7 +1788,9 @@ fn SkiaRasterRenderer::draw_path_brush(
         None => skia_paint(brush.fallback_color())
       }
       canvas.draw_path(path, paint)
-      self.unsupported_command_count = self.unsupported_command_count + 1
+      self.record_unsupported_command(
+        "DrawPath", "Skia brush shader unavailable; used fallback color",
+      )
     }
   }
 }
@@ -1725,7 +1808,10 @@ fn SkiaRasterRenderer::draw_shader_effect(
     "vignette" => self.draw_vignette_effect(canvas, spec)
     _ => {
       self.draw_brush_rect(canvas, spec.frame, spec.fallback)
-      self.unsupported_command_count = self.unsupported_command_count + 1
+      self.record_unsupported_command(
+        "DrawShaderEffect",
+        "unknown shader effect '\{spec.name}' used fallback brush",
+      )
     }
   }
 }
@@ -1750,7 +1836,9 @@ fn SkiaRasterRenderer::draw_brush_rect(
           )
         None => {
           canvas.draw_rect(skia_rect(frame), skia_paint(brush.fallback_color()))
-          self.unsupported_command_count = self.unsupported_command_count + 1
+          self.record_unsupported_command(
+            "FillRectBrush", "Skia brush shader unavailable; used fallback color",
+          )
         }
       }
   }
@@ -1867,7 +1955,9 @@ fn SkiaRasterRenderer::draw_vignette_effect(
       )
     None => {
       self.draw_brush_rect(canvas, spec.frame, spec.fallback)
-      self.unsupported_command_count = self.unsupported_command_count + 1
+      self.record_unsupported_command(
+        "DrawShaderEffect", "Skia radial shader unavailable for vignette; used fallback brush",
+      )
     }
   }
 }
@@ -1953,6 +2043,13 @@ pub fn SkiaRasterRenderer::unsupported_command_count(
   self : SkiaRasterRenderer,
 ) -> Int {
   self.unsupported_command_count
+}
+
+///|
+pub fn SkiaRasterRenderer::unsupported_command_diagnostics(
+  self : SkiaRasterRenderer,
+) -> Array[SkiaUnsupportedCommandDiagnostic] {
+  self.unsupported_command_diagnostics.copy()
 }
 
 ///|
