@@ -82,6 +82,35 @@ test "showcase navigation dialog and sheet state are wired" {
 }
 
 ///|
+test "showcase bottom sheet wraps content instead of filling viewport" {
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::ShowSheet)
+    .runtime(width=760.0, height=420.0)
+  let commands = runtime.draw_commands()
+  guard text_frame(commands, "Showcase sheet") is Some(title_frame) else {
+    fail("expected sheet title")
+  }
+  guard smallest_rounded_brush_containing(commands, title_frame)
+    is Some(sheet_frame) else {
+    fail("expected sheet surface frame")
+  }
+  assert_true(sheet_frame.size.height < 220.0)
+  assert_true(sheet_frame.origin.y > 190.0)
+  assert_true(sheet_frame.origin.y + sheet_frame.size.height <= 420.0)
+  guard text_frame(
+      commands, "Sheet content is built with the same presentation primitives.",
+    )
+    is Some(subtitle_frame) else {
+    fail("expected sheet subtitle")
+  }
+  assert_true(subtitle_frame.origin.y >= sheet_frame.origin.y)
+  assert_true(
+    subtitle_frame.origin.y + subtitle_frame.size.height <=
+    sheet_frame.origin.y + sheet_frame.size.height,
+  )
+}
+
+///|
 test "showcase navigation shell demos use public constructors" {
   let commands = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("navigation"))
@@ -920,6 +949,46 @@ fn text_frame(
     }
   }
   None
+}
+
+///|
+fn smallest_rounded_brush_containing(
+  commands : Array[@core.DrawCommand],
+  frame : @core.Rect,
+) -> @core.Rect? {
+  let mut candidate : @core.Rect? = None
+  for command in commands {
+    match command {
+      @core.DrawCommand::FillRoundedRectBrush({ rect, .. }, _) =>
+        if rect_contains_rect(rect, frame) {
+          candidate = match candidate {
+            Some(existing) =>
+              if rect_area(rect) < rect_area(existing) {
+                Some(rect)
+              } else {
+                Some(existing)
+              }
+            None => Some(rect)
+          }
+        }
+      _ => ()
+    }
+  }
+  candidate
+}
+
+///|
+fn rect_contains_rect(container : @core.Rect, child : @core.Rect) -> Bool {
+  child.origin.x >= container.origin.x &&
+  child.origin.y >= container.origin.y &&
+  child.origin.x + child.size.width <= container.origin.x + container.size.width &&
+  child.origin.y + child.size.height <=
+  container.origin.y + container.size.height
+}
+
+///|
+fn rect_area(rect : @core.Rect) -> Double {
+  rect.size.width * rect.size.height
 }
 
 ///|
