@@ -259,6 +259,7 @@ fn brush_to_path_color(brush : @core.Brush) -> @core.Color {
   match brush {
     @core.Brush::Solid(color) => color
     @core.Brush::LinearGradient(gradient) => gradient.start_color
+    @core.Brush::RadialGradient(gradient) => gradient.center_color
   }
 }
 

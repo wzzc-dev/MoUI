@@ -218,15 +218,25 @@ test "brush commands degrade to deterministic rect batches" {
         end_color=@core.Color::gray(),
       ),
     ),
+    @core.DrawCommand::FillRoundedRectBrush(
+      rounded,
+      @core.Brush::radial_gradient(
+        center=@core.Point::new(x=15.0, y=20.0),
+        radius=24.0,
+        center_color=@core.Color::rgba(r=0.8, g=0.1, b=0.1),
+        edge_color=@core.Color::gray(),
+      ),
+    ),
     @core.DrawCommand::StrokeRoundedRectBrush(
       rounded,
       @core.Brush::solid(@core.Color::gray()),
       1.0,
     ),
   ])
-  inspect(batches.length(), content="5")
+  inspect(batches.length(), content="6")
   assert_true(batches[0].color == @core.Color::blue())
-  assert_true(batches[1].color == @core.Color::gray())
+  assert_true(batches[1].color == @core.Color::rgba(r=0.8, g=0.1, b=0.1))
+  assert_true(batches[2].color == @core.Color::gray())
 }
 
 ///|

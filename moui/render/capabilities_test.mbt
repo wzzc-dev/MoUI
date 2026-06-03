@@ -78,13 +78,36 @@ test "renderer capability report tracks draw command support" {
     fail("expected gradient capability")
   }
   assert_true(
+    gradient.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
+    gradient.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
     gradient.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
     @render.RendererFeatureStatus::Ready,
   )
   assert_true(
     gradient
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("center-to-edge linear fallback"),
+  )
+  assert_true(
+    gradient
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("fills and strokes"),
+  )
+  assert_true(
+    gradient
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("radial"),
+  )
+  assert_true(
+    gradient
+    .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
+    .contains("center color"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::Shadow)
     is Some(shadow) else {
@@ -648,10 +671,19 @@ test "renderer capability follow ups stay focused on incomplete features" {
   let follow_ups = @render.renderer_feature_follow_ups()
   assert_true(follow_ups.length() >= 3)
   let mut has_transform = false
+  let mut has_gradient = false
   let mut has_text_shaping = false
   let mut has_emoji_text = false
   let mut has_async_image = false
   for entry in follow_ups {
+    if entry.feature == @render.RendererFeature::Gradient {
+      has_gradient = true
+      assert_true(
+        entry
+        .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+        .contains("radial"),
+      )
+    }
     if entry.feature == @render.RendererFeature::Transform {
       has_transform = true
     }
@@ -674,6 +706,7 @@ test "renderer capability follow ups stay focused on incomplete features" {
       has_async_image = true
     }
   }
+  assert_true(has_gradient)
   assert_true(has_transform)
   assert_true(has_text_shaping)
   assert_true(has_emoji_text)

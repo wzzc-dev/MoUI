@@ -201,6 +201,40 @@ test "native renderer plans visual primitives instead of fallback-only batches" 
 }
 
 ///|
+test "native renderer plans radial brush as center edge visual fallback" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=80.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::FillRoundedRectBrush(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=10.0, y=20.0, width=40.0, height=24.0),
+        radius=8.0,
+      ),
+      @core.Brush::radial_gradient(
+        center=@core.Point::new(x=18.0, y=32.0),
+        radius=12.0,
+        center_color=@core.Color::blue(),
+        edge_color=@core.Color::gray(),
+      ),
+    ),
+  ])
+  inspect(renderer.unsupported_command_count, content="0")
+  inspect(renderer.visual_vertices.length(), content="6")
+  let vertex = renderer.visual_vertices[0]
+  inspect(vertex.mode, content="0")
+  inspect(vertex.start_x, content="8")
+  inspect(vertex.start_y, content="12")
+  inspect(vertex.end_x, content="20")
+  inspect(vertex.end_y, content="12")
+  assert_true(vertex.r0 == @core.Color::blue().r)
+  assert_true(vertex.r1 == @core.Color::gray().r)
+}
+
+///|
 test "native renderer plans DrawPath mesh as visible visual triangles" {
   let renderer = new_test_renderer_handle()
   renderer.resize(

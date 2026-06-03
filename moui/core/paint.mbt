@@ -71,9 +71,18 @@ pub(all) struct LinearGradientSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct RadialGradientSpec {
+  center : Point
+  radius : Double
+  center_color : Color
+  edge_color : Color
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum Brush {
   Solid(Color)
   LinearGradient(LinearGradientSpec)
+  RadialGradient(RadialGradientSpec)
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -368,6 +377,16 @@ pub fn LinearGradientSpec::new(
 }
 
 ///|
+pub fn RadialGradientSpec::new(
+  center~ : Point,
+  radius~ : Double,
+  center_color~ : Color,
+  edge_color~ : Color,
+) -> RadialGradientSpec {
+  { center, radius: radius.max(0.0), center_color, edge_color }
+}
+
+///|
 pub fn Brush::solid(color : Color) -> Brush {
   Solid(color)
 }
@@ -385,10 +404,23 @@ pub fn Brush::linear_gradient(
 }
 
 ///|
+pub fn Brush::radial_gradient(
+  center~ : Point,
+  radius~ : Double,
+  center_color~ : Color,
+  edge_color~ : Color,
+) -> Brush {
+  RadialGradient(
+    RadialGradientSpec::new(center~, radius~, center_color~, edge_color~),
+  )
+}
+
+///|
 pub fn Brush::fallback_color(self : Brush) -> Color {
   match self {
     Solid(color) => color
     LinearGradient(gradient) => gradient.start_color
+    RadialGradient(gradient) => gradient.center_color
   }
 }
 
@@ -401,6 +433,12 @@ pub fn Brush::multiply_alpha(self : Brush, opacity : Double) -> Brush {
         ..gradient,
         start_color: gradient.start_color.multiply_alpha(opacity),
         end_color: gradient.end_color.multiply_alpha(opacity),
+      })
+    RadialGradient(gradient) =>
+      RadialGradient({
+        ..gradient,
+        center_color: gradient.center_color.multiply_alpha(opacity),
+        edge_color: gradient.edge_color.multiply_alpha(opacity),
       })
   }
 }

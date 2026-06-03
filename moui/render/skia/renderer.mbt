@@ -1022,14 +1022,8 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
             skia_paint(color),
           )
       }
-    @core.Brush::LinearGradient(gradient) =>
-      match
-        @skia_native.Shader::linear_gradient(
-          skia_point(gradient.start),
-          skia_point(gradient.end),
-          skia_color(gradient.start_color),
-          skia_color(gradient.end_color),
-        ) {
+    _ =>
+      match skia_brush_shader(brush) {
         Some(shader) =>
           match stroke_width {
             Some(width) =>
@@ -1038,7 +1032,7 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
                 Float::from_double(rounded.radius),
                 Float::from_double(rounded.radius),
                 shader,
-                skia_stroke_paint(gradient.start_color, width),
+                skia_stroke_paint(brush.fallback_color(), width),
               )
             None => {
               ignore(canvas.save())
@@ -1056,7 +1050,7 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
             skia_rect(rounded.rect),
             Float::from_double(rounded.radius),
             Float::from_double(rounded.radius),
-            skia_paint(gradient.start_color),
+            skia_paint(brush.fallback_color()),
           )
           self.unsupported_command_count = self.unsupported_command_count + 1
         }
@@ -1654,18 +1648,18 @@ fn SkiaRasterRenderer::draw_path(
       match spec.fill {
         Some(@core.Brush::Solid(color)) =>
           canvas.draw_path(path, skia_paint(color))
-        Some(@core.Brush::LinearGradient(gradient)) =>
-          self.draw_path_gradient(canvas, path, gradient, stroke_width=None)
+        Some(brush) =>
+          self.draw_path_brush(canvas, path, brush, stroke_width=None)
         None => ()
       }
       match spec.stroke {
         Some(@core.Brush::Solid(color)) =>
           canvas.draw_path(path, skia_stroke_paint(color, spec.stroke_width))
-        Some(@core.Brush::LinearGradient(gradient)) =>
-          self.draw_path_gradient(
+        Some(brush) =>
+          self.draw_path_brush(
             canvas,
             path,
-            gradient,
+            brush,
             stroke_width=Some(spec.stroke_width),
           )
         None => ()
@@ -1676,27 +1670,21 @@ fn SkiaRasterRenderer::draw_path(
 }
 
 ///|
-fn SkiaRasterRenderer::draw_path_gradient(
+fn SkiaRasterRenderer::draw_path_brush(
   self : SkiaRasterRenderer,
   canvas : @skia_native.Canvas,
   path : @skia_native.Path,
-  gradient : @core.LinearGradientSpec,
+  brush : @core.Brush,
   stroke_width~ : Double?,
 ) -> Unit {
-  match
-    @skia_native.Shader::linear_gradient(
-      skia_point(gradient.start),
-      skia_point(gradient.end),
-      skia_color(gradient.start_color),
-      skia_color(gradient.end_color),
-    ) {
+  match skia_brush_shader(brush) {
     Some(shader) =>
       match stroke_width {
         Some(width) =>
           canvas.draw_path_shader(
             path,
             shader,
-            skia_stroke_paint(gradient.start_color, width),
+            skia_stroke_paint(brush.fallback_color(), width),
           )
         None =>
           match path.bounds() {
@@ -1715,8 +1703,8 @@ fn SkiaRasterRenderer::draw_path_gradient(
       }
     None => {
       let paint = match stroke_width {
-        Some(width) => skia_stroke_paint(gradient.start_color, width)
-        None => skia_paint(gradient.start_color)
+        Some(width) => skia_stroke_paint(brush.fallback_color(), width)
+        None => skia_paint(brush.fallback_color())
       }
       canvas.draw_path(path, paint)
       self.unsupported_command_count = self.unsupported_command_count + 1
@@ -1752,14 +1740,8 @@ fn SkiaRasterRenderer::draw_brush_rect(
   match brush {
     @core.Brush::Solid(color) =>
       canvas.draw_rect(skia_rect(frame), skia_paint(color))
-    @core.Brush::LinearGradient(gradient) =>
-      match
-        @skia_native.Shader::linear_gradient(
-          skia_point(gradient.start),
-          skia_point(gradient.end),
-          skia_color(gradient.start_color),
-          skia_color(gradient.end_color),
-        ) {
+    _ =>
+      match skia_brush_shader(brush) {
         Some(shader) =>
           canvas.draw_rect_shader(
             skia_rect(frame),
@@ -1767,10 +1749,31 @@ fn SkiaRasterRenderer::draw_brush_rect(
             @skia_mbt.Paint::new(anti_alias=true),
           )
         None => {
-          canvas.draw_rect(skia_rect(frame), skia_paint(gradient.start_color))
+          canvas.draw_rect(skia_rect(frame), skia_paint(brush.fallback_color()))
           self.unsupported_command_count = self.unsupported_command_count + 1
         }
       }
+  }
+}
+
+///|
+fn skia_brush_shader(brush : @core.Brush) -> @skia_native.Shader? {
+  match brush {
+    @core.Brush::Solid(_) => None
+    @core.Brush::LinearGradient(gradient) =>
+      @skia_native.Shader::linear_gradient(
+        skia_point(gradient.start),
+        skia_point(gradient.end),
+        skia_color(gradient.start_color),
+        skia_color(gradient.end_color),
+      )
+    @core.Brush::RadialGradient(gradient) =>
+      @skia_native.Shader::radial_gradient(
+        skia_point(gradient.center),
+        Float::from_double(gradient.radius),
+        skia_color(gradient.center_color),
+        skia_color(gradient.edge_color),
+      )
   }
 }
 
@@ -3034,6 +3037,8 @@ fn skia_shader_effect_colors(
     @core.Brush::Solid(color) => (color, color)
     @core.Brush::LinearGradient(gradient) =>
       (gradient.start_color, gradient.end_color)
+    @core.Brush::RadialGradient(gradient) =>
+      (gradient.center_color, gradient.edge_color)
   }
 }
 

@@ -1034,6 +1034,16 @@ fn visual_gradient(brush : @core.Brush) -> @core.LinearGradientSpec {
         end_color=color,
       )
     @core.Brush::LinearGradient(gradient) => gradient
+    @core.Brush::RadialGradient(gradient) =>
+      @core.LinearGradientSpec::new(
+        start=gradient.center,
+        end=@core.Point::new(
+          x=gradient.center.x + gradient.radius.max(1.0),
+          y=gradient.center.y,
+        ),
+        start_color=gradient.center_color,
+        end_color=gradient.edge_color,
+      )
   }
 }
 
@@ -1473,6 +1483,8 @@ fn native_shader_effect_colors(
     @core.Brush::Solid(color) => (color, color)
     @core.Brush::LinearGradient(gradient) =>
       (gradient.start_color, gradient.end_color)
+    @core.Brush::RadialGradient(gradient) =>
+      (gradient.center_color, gradient.edge_color)
   }
 }
 

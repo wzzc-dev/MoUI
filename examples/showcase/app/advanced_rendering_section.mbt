@@ -178,6 +178,23 @@ fn advanced_rendering_canvas(
         }
         "shader" => {
           commands.push(
+            @core.DrawCommand::FillRoundedRectBrush(
+              @core.RoundedRect::new(
+                rect=frame.inset(@core.Insets::all(14.0)),
+                radius=theme.radius_scale.lg,
+              ),
+              @core.Brush::radial_gradient(
+                center=@core.Point::new(
+                  x=frame.origin.x + width * 0.62,
+                  y=frame.origin.y + height * 0.48,
+                ),
+                radius=width * 0.42,
+                center_color=theme.accent.multiply_alpha(0.78),
+                edge_color=theme.palette.primary.multiply_alpha(0.12),
+              ),
+            ),
+          )
+          commands.push(
             @core.DrawCommand::DrawShaderEffect(
               @core.ShaderEffectSpec::new(
                 name="checker",
