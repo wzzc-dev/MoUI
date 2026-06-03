@@ -24,7 +24,7 @@ fn ShowcaseModel::feedback_section(
     ),
   ])
   let toast_items = toast_queue.to_stack_items()
-  section_panel(
+  self.section_panel(
     theme,
     "Feedback",
     "Status, notification, badge, and empty-state components for app workflows.",

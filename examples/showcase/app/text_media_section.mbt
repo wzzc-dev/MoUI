@@ -5,7 +5,7 @@ fn ShowcaseModel::text_media_section(
   metrics : ShowcaseMetrics,
   opacity : Double,
 ) -> @core.View[ShowcaseMsg] {
-  section_panel(
+  self.section_panel(
     theme,
     "Text & Media",
     "Text, image, rich text editor, and Markdown editor share one app state.",

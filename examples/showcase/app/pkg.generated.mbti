@@ -34,6 +34,7 @@ pub(all) struct ShowcaseModel {
   slider_value : Double
   picker_value : String
   date_value : @core.DateValue
+  detail_scroll_offset : @core.Point
   sidebar_scroll_offset : @core.Point
   list_scroll : @core.ScrollState
   grid_scroll : @core.ScrollState
@@ -80,6 +81,7 @@ pub(all) enum ShowcaseMsg {
   RecordFileDrop(Array[String])
   RecordGesture(String)
   ResizePanel(Double)
+  DetailScrollTo(Double)
   SidebarScrollTo(Double)
 }
 

@@ -12,7 +12,7 @@ fn ShowcaseModel::catalog_shell(
     detail=@views.router_stack(
       router,
       self.destinations(theme, metrics, offset, opacity),
-      fallback=section_panel(
+      fallback=self.section_panel(
         theme,
         "Missing section",
         "The selected route is not in the Showcase catalog.",

@@ -16,7 +16,7 @@ fn ShowcaseModel::forms_section(
     default_action="save_profile",
     dismiss_action="cancel_profile",
   )
-  section_panel(
+  self.section_panel(
     theme,
     "Forms",
     "Form primitives compose validation, helper text, field states, and input wrappers.",

@@ -19,6 +19,7 @@ pub(all) struct ShowcaseModel {
   slider_value : Double
   picker_value : String
   date_value : @core.DateValue
+  detail_scroll_offset : @core.Point
   sidebar_scroll_offset : @core.Point
   list_scroll : @core.ScrollState
   grid_scroll : @core.ScrollState
@@ -67,6 +68,7 @@ pub(all) enum ShowcaseMsg {
   RecordFileDrop(Array[String])
   RecordGesture(String)
   ResizePanel(Double)
+  DetailScrollTo(Double)
   SidebarScrollTo(Double)
 }
 
@@ -118,6 +120,7 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     slider_value: 0.64,
     picker_value: "native",
     date_value: @core.DateValue::new(year=2026, month=5, day=21),
+    detail_scroll_offset: @core.Point::new(x=0.0, y=0.0),
     sidebar_scroll_offset: @core.Point::new(x=0.0, y=0.0),
     list_scroll: @core.ScrollState::new(),
     grid_scroll: @core.ScrollState::new(),
@@ -176,17 +179,26 @@ pub fn ShowcaseModel::update(
     HideDialog => { ..self, dialog_visible: false }
     ShowSheet => { ..self, dialog_visible: false, sheet_visible: true }
     HideSheet => { ..self, sheet_visible: false }
-    SelectSection(route) => self.with_route_pushed(route)
-    RouteBack => self.with_route_history(self.route_history.back())
-    RouteForward => self.with_route_history(self.route_history.forward())
+    SelectSection(route) =>
+      self.with_route_pushed(route).with_detail_scroll_reset()
+    RouteBack =>
+      self
+      .with_route_history(self.route_history.back())
+      .with_detail_scroll_reset()
+    RouteForward =>
+      self
+      .with_route_history(self.route_history.forward())
+      .with_detail_scroll_reset()
     OpenRouteLink(route) =>
-      self.with_route_history(
+      self
+      .with_route_history(
         self.route_history.push(
           @core.RouteLocation::parse(route),
           title=showcase_route_title(@core.RouteLocation::parse(route).path),
           source="deep-link",
         ),
       )
+      .with_detail_scroll_reset()
     TabSelected(route) => { ..self, tab: route }
     ClearFilter => { ..self, filter: "" }
     FilterChanged(value) => { ..self, filter: value }
@@ -220,6 +232,14 @@ pub fn ShowcaseModel::update(
       { ..self, last_drop_label: "Dropped \{paths.length()} file(s)" }
     RecordGesture(label) => { ..self, gesture_label: label }
     ResizePanel(size) => { ..self, slider_value: size / 520.0 }
+    DetailScrollTo(y) =>
+      {
+        ..self,
+        detail_scroll_offset: @core.Point::new(
+          x=0.0,
+          y=max_showcase_double(0.0, y),
+        ),
+      }
     SidebarScrollTo(y) =>
       { ..self, sidebar_scroll_offset: @core.Point::new(x=0.0, y~) }
   }
@@ -253,6 +273,13 @@ fn ShowcaseModel::with_route_history(
   route_history : @core.RouteHistoryState,
 ) -> ShowcaseModel {
   { ..self, route_history, selected_section: route_history.current().path }
+}
+
+///|
+fn ShowcaseModel::with_detail_scroll_reset(
+  self : ShowcaseModel,
+) -> ShowcaseModel {
+  { ..self, detail_scroll_offset: @core.Point::new(x=0.0, y=0.0) }
 }
 
 ///|

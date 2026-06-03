@@ -4,7 +4,7 @@ fn ShowcaseModel::data_section(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
-  section_panel(
+  self.section_panel(
     theme,
     "Data",
     "Tables, lists, pagination, selection detail, trees, avatars, and metadata views compose from existing primitives.",

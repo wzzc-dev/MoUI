@@ -5,7 +5,7 @@ fn ShowcaseModel::text_diagnostics_section(
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
   let card_width = if metrics.compact { metrics.body_width } else { 300.0 }
-  section_panel(
+  self.section_panel(
     theme,
     "Text Diagnostics",
     "CJK, bidi, emoji, wrapping, Markdown, and rich text diagnostics.",

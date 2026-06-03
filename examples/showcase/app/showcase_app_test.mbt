@@ -275,6 +275,38 @@ test "showcase sidebar catalog scrolls to lower sections" {
 }
 
 ///|
+test "showcase detail panel scrolls long section content" {
+  let size = @core.Size::new(width=760.0, height=420.0)
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("layout"))
+    .runtime(width=760.0, height=420.0)
+  let initial_commands = runtime.draw_commands()
+  assert_true(text_within(initial_commands, "Layout", size))
+  assert_false(text_within(initial_commands, "Resizable Panel", size))
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=520.0, y=330.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@core.Point::new(x=0.0, y=-680.0),
+      ),
+    ),
+  )
+  runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
+  let scrolled_commands = runtime.draw_commands()
+  assert_true(text_within(scrolled_commands, "Resizable Panel", size))
+  let reset_model = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("layout"))
+    .update(@app.ShowcaseMsg::DetailScrollTo(220.0))
+    .update(@app.ShowcaseMsg::SelectSection("forms"))
+  assert_true(reset_model.detail_scroll_offset.y == 0.0)
+  let clamped_model = @app.ShowcaseModel::new().update(
+    @app.ShowcaseMsg::DetailScrollTo(-16.0),
+  )
+  assert_true(clamped_model.detail_scroll_offset.y == 0.0)
+}
+
+///|
 fn sidebar_visible_lower_label(
   commands : Array[@core.DrawCommand],
   size : @core.Size,

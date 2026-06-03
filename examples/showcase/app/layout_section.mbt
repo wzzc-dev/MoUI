@@ -182,7 +182,7 @@ fn ShowcaseModel::layout_section(
     spacing=theme.spacing_scale.sm,
     align=@views.CrossAlign::Start,
   )
-  section_panel(
+  self.section_panel(
     theme,
     "Layout",
     "Rows, columns, grids, lazy windows, intrinsic sizing, and custom placement.",

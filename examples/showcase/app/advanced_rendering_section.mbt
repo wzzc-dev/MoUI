@@ -12,7 +12,7 @@ fn ShowcaseModel::advanced_rendering_section(
     advanced_rendering_card(theme, "Shader", card_width, "shader"),
     advanced_rendering_card(theme, "Path + Transform", card_width, "path"),
   ]
-  section_panel(
+  self.section_panel(
     theme,
     "Advanced Rendering",
     "Layers, blend modes, filters, shader effects, paths, transforms, and opacity.",

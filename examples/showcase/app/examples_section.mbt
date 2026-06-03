@@ -4,7 +4,7 @@ fn ShowcaseModel::examples_section(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
-  section_panel(
+  self.section_panel(
     theme,
     "Examples",
     "Counter and Todo are built into Showcase as reusable app patterns.",

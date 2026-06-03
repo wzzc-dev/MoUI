@@ -5,7 +5,7 @@ fn ShowcaseModel::diagnostics_section(
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
   let card_width = if metrics.compact { metrics.body_width } else { 300.0 }
-  section_panel(
+  self.section_panel(
     theme,
     "Diagnostics",
     "Input, text, renderer, and reusable example diagnostics stay grouped away from the main catalog.",
