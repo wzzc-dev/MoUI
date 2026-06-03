@@ -246,6 +246,15 @@ pub fn[Msg] Subscription::window_event(
 }
 
 ///|
+pub fn[Msg] Subscription::host_event(
+  key~ : String,
+  start~ : ((Msg) -> Unit) -> (() -> Unit)?,
+  label? : String = "",
+) -> Subscription[Msg] {
+  Subscription::listen(key~, start~, kind="host-event", label~)
+}
+
+///|
 pub fn[Msg] Subscription::route_event(
   key~ : String,
   start~ : ((Msg) -> Unit) -> (() -> Unit)?,
