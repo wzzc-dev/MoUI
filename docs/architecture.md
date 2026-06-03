@@ -196,18 +196,18 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   that distinguish send, anonymous dispatch, structured run, and cancellable
   task effects, active/completed/cancelled effect-task lifecycle counters,
   active subscription, subscription plan, start/reuse/cancel, duplicate effect
-  descriptor-key, and duplicate subscription-key counters, plus ignored
-  effect-task and subscription dispatch counters for stale callbacks from
-  canceled or destroyed lifetimes. Program runtime and runtime inspector
-  snapshots expose active effect-task descriptors, effect-task lifecycle
-  entries, active subscription descriptors, and subscription lifecycle entries
-  so tooling can identify which tasks and sources completed, were reused, or
-  were canceled without inspecting app messages. Structured effect descriptors
-  from `Effect::run`, `Effect::host_service`, `Effect::task`, and
-  `Effect::service_task` travel through effect summaries so tooling can identify
-  planned host-service or service/task runners without inspecting `Msg` values;
-  duplicate descriptor-key counts/names make planned key conflicts visible
-  before execution. Runtime
+  descriptor-key counters/names, and duplicate subscription-key counters/names,
+  plus ignored effect-task and subscription dispatch counters for stale
+  callbacks from canceled or destroyed lifetimes. Program runtime and runtime
+  inspector snapshots expose active effect-task descriptors, effect-task
+  lifecycle entries, active subscription descriptors, and subscription
+  lifecycle entries so tooling can identify which tasks and sources completed,
+  were reused, or were canceled without inspecting app messages. Structured
+  effect descriptors from `Effect::run`, `Effect::host_service`,
+  `Effect::task`, and `Effect::service_task` travel through effect summaries so
+  tooling can identify planned host-service or service/task runners without
+  inspecting `Msg` values; duplicate descriptor-key counts/names make planned
+  key conflicts visible before execution. Runtime
   inspector snapshots also expose platform-neutral pipeline pass counters for
   rebuild, layout, paint, and draw-command building. It keeps
   the latest effect summary, latest scheduled effect summary, and latest

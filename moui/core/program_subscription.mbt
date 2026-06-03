@@ -104,6 +104,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   effect_run_count : Int
   effect_task_count : Int
   duplicate_effect_descriptor_key_count : Int
+  duplicate_effect_descriptor_keys : Array[String]
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
   active_effect_task_count : Int
@@ -120,6 +121,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   reused_subscription_count : Int
   cancelled_subscription_count : Int
   duplicate_subscription_key_count : Int
+  duplicate_subscription_keys : Array[String]
   ignored_subscription_dispatch_count : Int
   active_subscriptions : Array[SubscriptionDescriptor]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
@@ -162,6 +164,7 @@ priv struct ProgramRuntimeDiagnostics {
   mut effect_run_count : Int
   mut effect_task_count : Int
   mut duplicate_effect_descriptor_key_count : Int
+  duplicate_effect_descriptor_keys : Array[String]
   mut last_effect_summary : EffectPlanSummary
   mut last_scheduled_effect_summary : EffectPlanSummary
   mut next_effect_task_value : Int
@@ -177,6 +180,7 @@ priv struct ProgramRuntimeDiagnostics {
   mut reused_subscription_count : Int
   mut cancelled_subscription_count : Int
   mut duplicate_subscription_key_count : Int
+  duplicate_subscription_keys : Array[String]
   mut ignored_subscription_dispatch_count : Int
   mut active_subscriptions : Array[ActiveProgramSubscription]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
@@ -443,6 +447,7 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
     effect_run_count: 0,
     effect_task_count: 0,
     duplicate_effect_descriptor_key_count: 0,
+    duplicate_effect_descriptor_keys: [],
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
     next_effect_task_value: 1,
@@ -458,6 +463,7 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
     reused_subscription_count: 0,
     cancelled_subscription_count: 0,
     duplicate_subscription_key_count: 0,
+    duplicate_subscription_keys: [],
     ignored_subscription_dispatch_count: 0,
     active_subscriptions: [],
     subscription_lifecycle: [],
@@ -541,6 +547,9 @@ fn ProgramRuntimeDiagnostics::record_effects(
   self.effect_task_count = self.effect_task_count + summary.task_count
   self.duplicate_effect_descriptor_key_count = self.duplicate_effect_descriptor_key_count +
     summary.duplicate_descriptor_key_count
+  self.record_duplicate_effect_descriptor_keys(
+    summary.duplicate_descriptor_keys,
+  )
   self.last_effect_summary = summary
   if summary.scheduled_count > 0 {
     self.last_scheduled_effect_summary = summary
@@ -553,6 +562,18 @@ fn ProgramRuntimeDiagnostics::record_ignored_effect_task_dispatch(
 ) -> Unit {
   self.ignored_effect_task_dispatch_count = self.ignored_effect_task_dispatch_count +
     1
+}
+
+///|
+fn ProgramRuntimeDiagnostics::record_duplicate_effect_descriptor_keys(
+  self : ProgramRuntimeDiagnostics,
+  keys : Array[String],
+) -> Unit {
+  for key in keys {
+    if !self.duplicate_effect_descriptor_keys.any(existing => existing == key) {
+      self.duplicate_effect_descriptor_keys.push(key)
+    }
+  }
 }
 
 ///|
@@ -692,7 +713,20 @@ fn ProgramRuntimeDiagnostics::record_subscription_plan(
   summary : SubscriptionPlanSummary,
 ) -> Unit {
   self.subscription_plan_count = self.subscription_plan_count + 1
+  self.record_duplicate_subscription_keys(summary.duplicate_keys)
   self.last_subscription_plan_summary = summary
+}
+
+///|
+fn ProgramRuntimeDiagnostics::record_duplicate_subscription_keys(
+  self : ProgramRuntimeDiagnostics,
+  keys : Array[String],
+) -> Unit {
+  for key in keys {
+    if !self.duplicate_subscription_keys.any(existing => existing == key) {
+      self.duplicate_subscription_keys.push(key)
+    }
+  }
 }
 
 ///|
@@ -841,6 +875,7 @@ fn ProgramRuntimeDiagnostics::snapshot(
     effect_run_count: self.effect_run_count,
     effect_task_count: self.effect_task_count,
     duplicate_effect_descriptor_key_count: self.duplicate_effect_descriptor_key_count,
+    duplicate_effect_descriptor_keys: self.duplicate_effect_descriptor_keys.copy(),
     last_effect_summary: self.last_effect_summary,
     last_scheduled_effect_summary: self.last_scheduled_effect_summary,
     active_effect_task_count: self.active_effect_tasks.length(),
@@ -861,6 +896,7 @@ fn ProgramRuntimeDiagnostics::snapshot(
     reused_subscription_count: self.reused_subscription_count,
     cancelled_subscription_count: self.cancelled_subscription_count,
     duplicate_subscription_key_count: self.duplicate_subscription_key_count,
+    duplicate_subscription_keys: self.duplicate_subscription_keys.copy(),
     ignored_subscription_dispatch_count: self.ignored_subscription_dispatch_count,
     active_subscriptions: self.active_subscriptions.map(active => {
       key: active.key,
@@ -889,6 +925,7 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     effect_run_count: 0,
     effect_task_count: 0,
     duplicate_effect_descriptor_key_count: 0,
+    duplicate_effect_descriptor_keys: [],
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
     active_effect_task_count: 0,
@@ -905,6 +942,7 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     reused_subscription_count: 0,
     cancelled_subscription_count: 0,
     duplicate_subscription_key_count: 0,
+    duplicate_subscription_keys: [],
     ignored_subscription_dispatch_count: 0,
     active_subscriptions: [],
     subscription_lifecycle: [],
