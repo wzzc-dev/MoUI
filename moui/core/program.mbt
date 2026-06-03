@@ -20,6 +20,7 @@ pub(all) enum EffectPlanKind {
   EffectPlanBatch
   EffectPlanSend
   EffectPlanDispatch
+  EffectPlanRun
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -29,6 +30,7 @@ pub(all) struct EffectPlanSummary {
   batch_count : Int
   send_count : Int
   dispatch_count : Int
+  run_count : Int
   scheduled_count : Int
   max_depth : Int
   descriptors : Array[EffectDescriptor]
@@ -102,6 +104,7 @@ pub fn EffectPlanSummary::empty() -> EffectPlanSummary {
     batch_count: 0,
     send_count: 0,
     dispatch_count: 0,
+    run_count: 0,
     scheduled_count: 0,
     max_depth: 0,
     descriptors: [],
@@ -172,6 +175,7 @@ fn[Msg] effect_plan_summary(
         batch_count: 0,
         send_count: 0,
         dispatch_count: 0,
+        run_count: 0,
         scheduled_count: 0,
         max_depth: depth,
         descriptors: [],
@@ -184,6 +188,7 @@ fn[Msg] effect_plan_summary(
         batch_count: 0,
         send_count: 1,
         dispatch_count: 0,
+        run_count: 0,
         scheduled_count: 1,
         max_depth: depth,
         descriptors: [],
@@ -196,6 +201,7 @@ fn[Msg] effect_plan_summary(
         batch_count: 0,
         send_count: 0,
         dispatch_count: 1,
+        run_count: 0,
         scheduled_count: 1,
         max_depth: depth,
         descriptors: [],
@@ -203,11 +209,12 @@ fn[Msg] effect_plan_summary(
       }
     Run(descriptor, _) =>
       {
-        root_kind: EffectPlanKind::EffectPlanDispatch,
+        root_kind: EffectPlanKind::EffectPlanRun,
         none_count: 0,
         batch_count: 0,
         send_count: 0,
-        dispatch_count: 1,
+        dispatch_count: 0,
+        run_count: 1,
         scheduled_count: 1,
         max_depth: depth,
         descriptors: [descriptor],
@@ -218,6 +225,7 @@ fn[Msg] effect_plan_summary(
       let mut batch_count = 1
       let mut send_count = 0
       let mut dispatch_count = 0
+      let mut run_count = 0
       let mut scheduled_count = 0
       let mut max_depth = depth
       let descriptors : Array[EffectDescriptor] = []
@@ -227,6 +235,7 @@ fn[Msg] effect_plan_summary(
         batch_count = batch_count + child_summary.batch_count
         send_count = send_count + child_summary.send_count
         dispatch_count = dispatch_count + child_summary.dispatch_count
+        run_count = run_count + child_summary.run_count
         scheduled_count = scheduled_count + child_summary.scheduled_count
         if child_summary.max_depth > max_depth {
           max_depth = child_summary.max_depth
@@ -242,6 +251,7 @@ fn[Msg] effect_plan_summary(
         batch_count,
         send_count,
         dispatch_count,
+        run_count,
         scheduled_count,
         max_depth,
         descriptors,

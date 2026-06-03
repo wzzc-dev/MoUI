@@ -23,6 +23,7 @@ pub(all) struct RuntimeInspectorSnapshot {
   program_effect_batch_count : Int
   program_effect_send_count : Int
   program_effect_dispatch_count : Int
+  program_effect_run_count : Int
   duplicate_effect_descriptor_key_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
@@ -180,6 +181,7 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     program_effect_batch_count: program.effect_batch_count,
     program_effect_send_count: program.effect_send_count,
     program_effect_dispatch_count: program.effect_dispatch_count,
+    program_effect_run_count: program.effect_run_count,
     duplicate_effect_descriptor_key_count: program.duplicate_effect_descriptor_key_count,
     last_effect_summary: program.last_effect_summary,
     last_scheduled_effect_summary: program.last_scheduled_effect_summary,

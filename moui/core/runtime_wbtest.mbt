@@ -255,7 +255,8 @@ test "effect plan summary describes nested effect structure" {
   inspect(summary.batch_count, content="2")
   inspect(summary.none_count, content="1")
   inspect(summary.send_count, content="1")
-  inspect(summary.dispatch_count, content="1")
+  inspect(summary.dispatch_count, content="0")
+  inspect(summary.run_count, content="1")
   inspect(summary.scheduled_count, content="2")
   inspect(summary.max_depth, content="3")
   inspect(summary.descriptors.length(), content="1")
@@ -330,12 +331,16 @@ test "program runtime aggregates duplicate structured effect keys" {
   let program_snapshot = runtime.program_runtime_snapshot()
   inspect(program_snapshot.effect_plan_count, content="1")
   inspect(program_snapshot.effect_count, content="2")
+  inspect(program_snapshot.effect_dispatch_count, content="0")
+  inspect(program_snapshot.effect_run_count, content="2")
   inspect(program_snapshot.duplicate_effect_descriptor_key_count, content="1")
+  inspect(program_snapshot.last_effect_summary.run_count, content="2")
   inspect(
     program_snapshot.last_effect_summary.duplicate_descriptor_key_count,
     content="1",
   )
   let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  inspect(inspector.program_effect_run_count, content="2")
   inspect(inspector.duplicate_effect_descriptor_key_count, content="1")
   inspect(inspector.last_effect_summary.descriptors.length(), content="2")
 }
@@ -382,6 +387,7 @@ test "program initial effects run before first view build" {
   inspect(program_snapshot.effect_batch_count, content="1")
   inspect(program_snapshot.effect_send_count, content="1")
   inspect(program_snapshot.effect_dispatch_count, content="1")
+  inspect(program_snapshot.effect_run_count, content="0")
   inspect(program_snapshot.duplicate_effect_descriptor_key_count, content="0")
   inspect(program_snapshot.effect_none_count, content="2")
   assert_true(
@@ -464,10 +470,11 @@ test "program effects can dispatch typed follow-up messages" {
   inspect(snapshot.message_drain_count, content="1")
   inspect(snapshot.pending_message_count, content="0")
   inspect(snapshot.max_pending_message_count, content="2")
-  inspect(snapshot.effect_dispatch_count, content="1")
+  inspect(snapshot.effect_dispatch_count, content="0")
+  inspect(snapshot.effect_run_count, content="1")
   assert_true(
     snapshot.last_scheduled_effect_summary.root_kind ==
-    EffectPlanKind::EffectPlanDispatch,
+    EffectPlanKind::EffectPlanRun,
   )
   inspect(snapshot.last_scheduled_effect_summary.scheduled_count, content="1")
   inspect(

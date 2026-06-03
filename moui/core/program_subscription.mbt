@@ -77,6 +77,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   effect_batch_count : Int
   effect_send_count : Int
   effect_dispatch_count : Int
+  effect_run_count : Int
   duplicate_effect_descriptor_key_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
@@ -116,6 +117,7 @@ priv struct ProgramRuntimeDiagnostics {
   mut effect_batch_count : Int
   mut effect_send_count : Int
   mut effect_dispatch_count : Int
+  mut effect_run_count : Int
   mut duplicate_effect_descriptor_key_count : Int
   mut last_effect_summary : EffectPlanSummary
   mut last_scheduled_effect_summary : EffectPlanSummary
@@ -313,6 +315,7 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
     effect_batch_count: 0,
     effect_send_count: 0,
     effect_dispatch_count: 0,
+    effect_run_count: 0,
     duplicate_effect_descriptor_key_count: 0,
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
@@ -401,6 +404,7 @@ fn ProgramRuntimeDiagnostics::record_effects(
   self.effect_send_count = self.effect_send_count + summary.send_count
   self.effect_dispatch_count = self.effect_dispatch_count +
     summary.dispatch_count
+  self.effect_run_count = self.effect_run_count + summary.run_count
   self.duplicate_effect_descriptor_key_count = self.duplicate_effect_descriptor_key_count +
     summary.duplicate_descriptor_key_count
   self.last_effect_summary = summary
@@ -561,6 +565,7 @@ fn ProgramRuntimeDiagnostics::snapshot(
     effect_batch_count: self.effect_batch_count,
     effect_send_count: self.effect_send_count,
     effect_dispatch_count: self.effect_dispatch_count,
+    effect_run_count: self.effect_run_count,
     duplicate_effect_descriptor_key_count: self.duplicate_effect_descriptor_key_count,
     last_effect_summary: self.last_effect_summary,
     last_scheduled_effect_summary: self.last_scheduled_effect_summary,
@@ -596,6 +601,7 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     effect_batch_count: 0,
     effect_send_count: 0,
     effect_dispatch_count: 0,
+    effect_run_count: 0,
     duplicate_effect_descriptor_key_count: 0,
     last_effect_summary: EffectPlanSummary::empty(),
     last_scheduled_effect_summary: EffectPlanSummary::empty(),
