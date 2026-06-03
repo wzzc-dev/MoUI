@@ -1,5 +1,7 @@
 #include "skia_stub_common.h"
 
+#include <cmath>
+
 extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaColorFilter*
 moonbit_skia_color_filter_null(void) {
   return moonbit_skia_make_color_filter_wrapper(nullptr);
@@ -168,7 +170,12 @@ moonbit_skia_shader_radial_gradient(
   uint32_t color1_argb,
   int32_t tile_mode
 ) {
-  if (radius <= 0.0f) {
+  if (
+    !std::isfinite(center_x) ||
+    !std::isfinite(center_y) ||
+    !std::isfinite(radius) ||
+    radius <= 0.0f
+  ) {
     return moonbit_skia_make_shader_wrapper(nullptr);
   }
 #if defined(SKIA_MBT_HAS_SKIA)
