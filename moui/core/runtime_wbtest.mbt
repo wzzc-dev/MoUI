@@ -301,6 +301,46 @@ test "effect plan summary reports duplicate structured effect keys" {
 }
 
 ///|
+test "program runtime aggregates duplicate structured effect keys" {
+  let program = Program::new(
+    init=() => {
+      let effect : Effect[String] = Effect::batch([
+        Effect::run(
+          key="host:sync",
+          kind="host-service",
+          label="Sync host data",
+          run=_dispatch => (),
+        ),
+        Effect::run(
+          key="host:sync",
+          kind="host-service",
+          label="Duplicate sync",
+          run=_dispatch => (),
+        ),
+      ])
+      ("idle", effect)
+    },
+    update=(model, _message) => (model, Effect::none()),
+    view=model => runtime_test_label(model),
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=160.0, height=48.0),
+  )
+  let program_snapshot = runtime.program_runtime_snapshot()
+  inspect(program_snapshot.effect_plan_count, content="1")
+  inspect(program_snapshot.effect_count, content="2")
+  inspect(program_snapshot.duplicate_effect_descriptor_key_count, content="1")
+  inspect(
+    program_snapshot.last_effect_summary.duplicate_descriptor_key_count,
+    content="1",
+  )
+  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  inspect(inspector.duplicate_effect_descriptor_key_count, content="1")
+  inspect(inspector.last_effect_summary.descriptors.length(), content="2")
+}
+
+///|
 test "program initial effects run before first view build" {
   let program = Program::new(
     init=() => {
@@ -342,6 +382,7 @@ test "program initial effects run before first view build" {
   inspect(program_snapshot.effect_batch_count, content="1")
   inspect(program_snapshot.effect_send_count, content="1")
   inspect(program_snapshot.effect_dispatch_count, content="1")
+  inspect(program_snapshot.duplicate_effect_descriptor_key_count, content="0")
   inspect(program_snapshot.effect_none_count, content="2")
   assert_true(
     program_snapshot.last_effect_summary.root_kind ==
