@@ -99,6 +99,15 @@ pub fn[Msg] Effect::task(
 }
 
 ///|
+pub fn[Msg] Effect::service_task(
+  key~ : String,
+  start~ : ((Msg) -> Unit) -> (() -> Unit)?,
+  label? : String = "",
+) -> Effect[Msg] {
+  Effect::task(key~, start~, kind="service", label~)
+}
+
+///|
 pub fn[Msg] Effect::plan_summary(self : Effect[Msg]) -> EffectPlanSummary {
   effect_plan_summary(self, depth=1)
 }

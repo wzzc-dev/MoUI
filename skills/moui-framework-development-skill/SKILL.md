@@ -60,7 +60,8 @@ Use this skill when editing or reviewing:
   surface: pure apps use `Program::simple`, environment-aware apps use the
   `*_with_environment` constructors, effect-capable apps use `Program::new`
   with `Effect::send`, `Effect::dispatch`, structured `Effect::run`,
-  structured host-service `Effect::host_service`, or one-shot cancellable
+  structured host-service `Effect::host_service`, standard service-like
+  cancellable `Effect::service_task`, or custom one-shot cancellable
   `Effect::task`, and app-level ongoing event sources use
   `subscriptions=model => ...` with stable keys so callbacks re-enter the typed
   message loop without exposing runtime internals. `Subscription::timer`,
@@ -70,7 +71,7 @@ Use this skill when editing or reviewing:
   outside `core`. Effect diagnostics stay
   platform-neutral through `Effect::plan_summary`, distinct anonymous-dispatch
   vs structured-run/task counters, `Effect::run` / `Effect::host_service` /
-  `Effect::task` descriptors,
+  `Effect::service_task` / `Effect::task` descriptors,
   duplicate descriptor-key counts/names, active/completed/cancelled effect-task
   lifecycle snapshots, stale effect-task dispatch counters, and aggregate
   program-runtime inspector counters; message

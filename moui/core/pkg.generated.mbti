@@ -603,6 +603,7 @@ pub fn[Msg] Effect::none() -> Self[Msg]
 pub fn[Msg] Effect::plan_summary(Self[Msg]) -> EffectPlanSummary
 pub fn[Msg] Effect::run(key~ : String, run~ : ((Msg) -> Unit) -> Unit, kind? : String, label? : String) -> Self[Msg]
 pub fn[Msg] Effect::send(Msg) -> Self[Msg]
+pub fn[Msg] Effect::service_task(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Effect::task(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 
 pub(all) struct EffectDescriptor {

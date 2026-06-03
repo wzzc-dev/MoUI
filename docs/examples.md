@@ -8,10 +8,11 @@ it demonstrates a larger editing workflow with its own model and parser tests.
 Apps that need host-service work should use `Program::new` with `Effect[Msg]`;
 prefer `Effect::host_service` when a host-service bridge should carry a stable
 diagnostic key, use `Effect::run` for custom structured async bridges, and use
-`Effect::task` when a one-shot async task needs runtime managed cancellation,
-completion, and stale-dispatch diagnostics. Apps that need ongoing typed
-callbacks can add `subscriptions=model => ...` and stable `Subscription` keys
-while keeping concrete timer or host adapters out of `core`.
+`Effect::service_task` when a service-like one-shot async task needs runtime
+managed cancellation, completion, and stale-dispatch diagnostics. Use
+`Effect::task` for custom task kinds. Apps that need ongoing typed callbacks can
+add `subscriptions=model => ...` and stable `Subscription` keys while keeping
+concrete timer or host adapters out of `core`.
 Showcase surfaces renderer capability follow-ups first so visible docs do not
 hide partial or gap status behind ready features.
 
