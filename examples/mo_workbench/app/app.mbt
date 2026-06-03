@@ -1471,63 +1471,46 @@ pub fn WorkbenchModel::update_with_transport(
   match message {
     SelectSession(id) =>
       self.select_session_with_transport(id, transport_runtime)
-    DispatchPrompt => self.dispatch_prompt_with_transport(transport_runtime)
-    DispatchSteering => self.dispatch_steering_with_transport(transport_runtime)
-    DispatchFollowUp =>
-      self.dispatch_follow_up_with_transport(transport_runtime)
-    InvokeCommand(name) =>
-      self.invoke_command_with_transport(name, transport_runtime)
-    FollowTranscript(role, summary, detail) =>
-      self.follow_transcript_with_transport(
-        role, summary, detail, transport_runtime,
-      )
-    FollowActivity(phase, title, detail) =>
-      self.follow_activity_with_transport(
-        phase, title, detail, transport_runtime,
-      )
-    InspectFile(path) =>
-      self.inspect_file_with_transport(path, transport_runtime)
-    ReviewDiff => self.review_diff_with_transport(transport_runtime)
-    RefreshSession => self.refresh_session_with_transport(transport_runtime)
     ReceiveTransport(event) =>
       self.receive_transport_with_transport(event, transport_runtime)
-    NewSession => self.new_session_with_transport(transport_runtime)
-    RefreshForkMessages =>
-      self.refresh_fork_messages_with_transport(transport_runtime)
-    ForkFromMessage(entry_id) =>
-      self.fork_from_message_with_transport(entry_id, transport_runtime)
-    ExportSessionHtml =>
-      self.export_session_html_with_transport(transport_runtime)
-    QueueCommand(command) =>
-      self.queue_command_with_transport(command, transport_runtime)
-    QueueFocusedChecks =>
-      self.queue_focused_checks_with_transport(transport_runtime)
-    InspectCommandRun(command, status, cwd, output_path) =>
-      self.inspect_command_run_with_transport(
-        command, status, cwd, output_path, transport_runtime,
+    _ =>
+      WorkbenchUpdate::from_transport_delta(
+        self,
+        self.update(message),
+        transport_runtime,
       )
-    FixCommandRun(command, status, cwd, output_path) =>
-      self.fix_command_run_with_transport(
-        command, status, cwd, output_path, transport_runtime,
-      )
-    FixDiagnostic(source, severity, message) =>
-      self.fix_diagnostic_with_transport(
-        source, severity, message, transport_runtime,
-      )
-    SyncSessionName => self.sync_session_name_with_transport(transport_runtime)
-    SetModel(provider, id, label) =>
-      self.set_model_with_transport(provider, id, label, transport_runtime)
-    CycleModel => self.cycle_model_with_transport(transport_runtime)
-    CompactSession => self.compact_session_with_transport(transport_runtime)
-    CycleThinkingLevel =>
-      self.cycle_thinking_level_with_transport(transport_runtime)
-    ToggleSteeringMode =>
-      self.toggle_steering_mode_with_transport(transport_runtime)
-    ToggleFollowUpMode =>
-      self.toggle_follow_up_mode_with_transport(transport_runtime)
-    CancelRun => self.cancel_run_with_transport(transport_runtime)
-    _ => WorkbenchUpdate::new(self.update(message))
   }
+}
+
+///|
+fn WorkbenchUpdate::from_transport_delta(
+  previous : WorkbenchModel,
+  model : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+) -> WorkbenchUpdate {
+  let commands = model.transport_commands_added_after(previous)
+  WorkbenchUpdate::new(
+    model,
+    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  )
+}
+
+///|
+fn WorkbenchModel::transport_commands_added_after(
+  self : WorkbenchModel,
+  previous : WorkbenchModel,
+) -> Array[PiTransportCommand] {
+  let previous_queue = previous.transport.command_queue
+  let current_queue = self.transport.command_queue
+  if current_queue.length() <= previous_queue.length() {
+    return []
+  }
+  for index in 0..<previous_queue.length() {
+    if current_queue[index] != previous_queue[index] {
+      return []
+    }
+  }
+  current_queue[previous_queue.length():].to_owned()
 }
 
 ///|
@@ -1771,19 +1754,6 @@ fn WorkbenchModel::refresh_session(self : WorkbenchModel) -> WorkbenchModel {
 }
 
 ///|
-fn WorkbenchModel::refresh_session_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let commands = self.commands_for_session_selection(session)
-  WorkbenchUpdate::new(
-    self.refresh_session(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
-}
-
-///|
 fn WorkbenchModel::new_session(self : WorkbenchModel) -> WorkbenchModel {
   if !self.active_agent_backend_capabilities().supports_new_session {
     return {
@@ -1808,19 +1778,6 @@ fn WorkbenchModel::new_session(self : WorkbenchModel) -> WorkbenchModel {
     transport: self.transport.enqueue_many(commands),
     last_status: "Pi new session queued",
   }
-}
-
-///|
-fn WorkbenchModel::new_session_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let commands = self.commands_for_new_session(session)
-  WorkbenchUpdate::new(
-    self.new_session(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
 }
 
 ///|
@@ -1850,22 +1807,6 @@ fn WorkbenchModel::refresh_fork_messages(
     transport: self.transport.enqueue_many(commands),
     last_status: "Pi fork discovery queued",
   }
-}
-
-///|
-fn WorkbenchModel::refresh_fork_messages_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let commands = self.commands_with_session_start(
-    session,
-    FetchRpcForkMessages(session.id),
-  )
-  WorkbenchUpdate::new(
-    self.refresh_fork_messages(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
 }
 
 ///|
@@ -1904,28 +1845,6 @@ fn WorkbenchModel::fork_from_message(
 }
 
 ///|
-fn WorkbenchModel::fork_from_message_with_transport(
-  self : WorkbenchModel,
-  entry_id : String,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let clean_entry_id = entry_id.trim().to_owned()
-  if clean_entry_id == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Fork entry id is empty" })
-  } else {
-    let session = self.active_session()
-    let commands = self.commands_with_session_start(
-      session,
-      ForkRpcSession(session.id, clean_entry_id),
-    )
-    WorkbenchUpdate::new(
-      self.fork_from_message(entry_id),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
-  }
-}
-
-///|
 fn WorkbenchModel::export_session_html(self : WorkbenchModel) -> WorkbenchModel {
   if !self.active_agent_backend_capabilities().supports_html_export {
     return { ..self, last_status: "Agent backend does not support HTML export" }
@@ -1950,22 +1869,6 @@ fn WorkbenchModel::export_session_html(self : WorkbenchModel) -> WorkbenchModel 
     transport: self.transport.enqueue_many(commands),
     last_status: "Pi HTML export queued",
   }
-}
-
-///|
-fn WorkbenchModel::export_session_html_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let commands = self.commands_with_session_start(
-    session,
-    ExportRpcSessionHtml(session.id, ""),
-  )
-  WorkbenchUpdate::new(
-    self.export_session_html(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
 }
 
 ///|
@@ -2054,28 +1957,6 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
 }
 
 ///|
-fn WorkbenchModel::dispatch_prompt_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let prompt = self.prompt.trim().to_owned()
-  if prompt == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Prompt is empty" })
-  } else {
-    let payload = self.dispatch_prompt_payload(prompt)
-    let session = self.active_session()
-    let commands = self.commands_with_session_start(
-      session,
-      SendUserInput(session.id, payload),
-    )
-    WorkbenchUpdate::new(
-      self.dispatch_prompt(),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
-  }
-}
-
-///|
 fn WorkbenchModel::dispatch_steering(self : WorkbenchModel) -> WorkbenchModel {
   if !self.active_agent_backend_capabilities().supports_input_modes {
     return { ..self, last_status: "Agent backend does not support input modes" }
@@ -2109,28 +1990,6 @@ fn WorkbenchModel::dispatch_steering(self : WorkbenchModel) -> WorkbenchModel {
 }
 
 ///|
-fn WorkbenchModel::dispatch_steering_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let prompt = self.prompt.trim().to_owned()
-  if prompt == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Prompt is empty" })
-  } else {
-    let payload = self.composer_prompt_payload(prompt)
-    let session = self.active_session()
-    let commands = self.commands_with_session_start(
-      session,
-      SendSteeringInput(session.id, payload),
-    )
-    WorkbenchUpdate::new(
-      self.dispatch_steering(),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
-  }
-}
-
-///|
 fn WorkbenchModel::dispatch_follow_up(self : WorkbenchModel) -> WorkbenchModel {
   if !self.active_agent_backend_capabilities().supports_input_modes {
     return { ..self, last_status: "Agent backend does not support input modes" }
@@ -2160,28 +2019,6 @@ fn WorkbenchModel::dispatch_follow_up(self : WorkbenchModel) -> WorkbenchModel {
       transport: self.transport.enqueue_many(commands),
       last_status: "Queued follow-up input for Pi RPC",
     }.scroll_main_to_latest()
-  }
-}
-
-///|
-fn WorkbenchModel::dispatch_follow_up_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let prompt = self.prompt.trim().to_owned()
-  if prompt == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Prompt is empty" })
-  } else {
-    let payload = self.composer_prompt_payload(prompt)
-    let session = self.active_session()
-    let commands = self.commands_with_session_start(
-      session,
-      SendFollowUpInput(session.id, payload),
-    )
-    WorkbenchUpdate::new(
-      self.dispatch_follow_up(),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
   }
 }
 
@@ -2336,29 +2173,6 @@ fn WorkbenchModel::invoke_command(
 }
 
 ///|
-fn WorkbenchModel::invoke_command_with_transport(
-  self : WorkbenchModel,
-  name : String,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let command_name = name.trim().to_owned()
-  if command_name == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Pi command is empty" })
-  } else {
-    let session = self.active_session()
-    let prompt = "/" + command_name
-    let commands = self.commands_with_session_start(
-      session,
-      SendUserInput(session.id, prompt),
-    )
-    WorkbenchUpdate::new(
-      self.invoke_command(name),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
-  }
-}
-
-///|
 fn WorkbenchModel::queue_agent_prompt_action(
   self : WorkbenchModel,
   payload : String,
@@ -2423,32 +2237,6 @@ fn WorkbenchModel::follow_transcript(
 }
 
 ///|
-fn WorkbenchModel::follow_transcript_with_transport(
-  self : WorkbenchModel,
-  role : String,
-  summary : String,
-  detail : String,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let clean_summary = summary.trim().to_owned()
-  let clean_detail = detail.trim().to_owned()
-  if clean_summary == "" && clean_detail == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Transcript item is empty" })
-  } else {
-    let prompt = transcript_follow_up_prompt(role, summary, detail)
-    let session = self.active_session()
-    let commands = self.commands_with_session_start(
-      session,
-      SendUserInput(session.id, prompt),
-    )
-    WorkbenchUpdate::new(
-      self.follow_transcript(role, summary, detail),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
-  }
-}
-
-///|
 fn transcript_follow_up_prompt(
   role : String,
   summary : String,
@@ -2487,32 +2275,6 @@ fn WorkbenchModel::follow_activity(
       event_detail=prompt,
       tone="info",
       pi_status="Queued activity follow-up for Pi RPC",
-    )
-  }
-}
-
-///|
-fn WorkbenchModel::follow_activity_with_transport(
-  self : WorkbenchModel,
-  phase : String,
-  title : String,
-  detail : String,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let clean_title = title.trim().to_owned()
-  let clean_detail = detail.trim().to_owned()
-  if clean_title == "" && clean_detail == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Activity item is empty" })
-  } else {
-    let prompt = activity_follow_up_prompt(phase, title, detail)
-    let session = self.active_session()
-    let commands = self.commands_with_session_start(
-      session,
-      SendUserInput(session.id, prompt),
-    )
-    WorkbenchUpdate::new(
-      self.follow_activity(phase, title, detail),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
     )
   }
 }
@@ -2558,29 +2320,6 @@ fn WorkbenchModel::inspect_file(
 }
 
 ///|
-fn WorkbenchModel::inspect_file_with_transport(
-  self : WorkbenchModel,
-  path : String,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let file_path = path.trim().to_owned()
-  if file_path == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "File context is empty" })
-  } else {
-    let session = self.active_session()
-    let prompt = self.file_inspection_payload(file_path)
-    let commands = self.commands_with_session_start(
-      session,
-      SendUserInput(session.id, prompt),
-    )
-    WorkbenchUpdate::new(
-      self.inspect_file(path),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
-  }
-}
-
-///|
 fn WorkbenchModel::review_diff(self : WorkbenchModel) -> WorkbenchModel {
   if self.diff.has_context() {
     let prompt = self.diff_review_payload()
@@ -2593,27 +2332,6 @@ fn WorkbenchModel::review_diff(self : WorkbenchModel) -> WorkbenchModel {
     )
   } else {
     { ..self, last_status: "Diff context is empty" }
-  }
-}
-
-///|
-fn WorkbenchModel::review_diff_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  if self.diff.has_context() {
-    let session = self.active_session()
-    let prompt = self.diff_review_payload()
-    let commands = self.commands_with_session_start(
-      session,
-      SendUserInput(session.id, prompt),
-    )
-    WorkbenchUpdate::new(
-      self.review_diff(),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
-  } else {
-    WorkbenchUpdate::new({ ..self, last_status: "Diff context is empty" })
   }
 }
 
@@ -2684,32 +2402,6 @@ fn WorkbenchModel::fix_diagnostic(
 }
 
 ///|
-fn WorkbenchModel::fix_diagnostic_with_transport(
-  self : WorkbenchModel,
-  source : String,
-  severity : String,
-  message : String,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let clean_source = source.trim().to_owned()
-  let clean_message = message.trim().to_owned()
-  if clean_source == "" && clean_message == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Diagnostic is empty" })
-  } else {
-    let prompt = self.diagnostic_fix_payload(source, severity, message)
-    let session = self.active_session()
-    let commands = self.commands_with_session_start(
-      session,
-      SendUserInput(session.id, prompt),
-    )
-    WorkbenchUpdate::new(
-      self.fix_diagnostic(source, severity, message),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
-  }
-}
-
-///|
 fn diagnostic_fix_prompt(
   source : String,
   severity : String,
@@ -2718,6 +2410,10 @@ fn diagnostic_fix_prompt(
   let source = source.trim().to_owned()
   let severity = severity.trim().to_owned()
   let message = message.trim().to_owned()
+  if diagnostic_source_is_agent_intervention(source) {
+    let detail = if message == "" { "" } else { ": " + message }
+    return "Resolve " + source + " request" + detail
+  }
   let label = if severity == "" {
     "diagnostic"
   } else {
@@ -2726,6 +2422,14 @@ fn diagnostic_fix_prompt(
   let origin = if source == "" { "" } else { " from " + source }
   let detail = if message == "" { "" } else { ": " + message }
   "Fix " + label + origin + detail
+}
+
+///|
+fn diagnostic_source_is_agent_intervention(source : String) -> Bool {
+  source == "Agent approval" ||
+  source == "Agent permission" ||
+  source == "Agent input" ||
+  source == "Agent intervention"
 }
 
 ///|
@@ -2795,25 +2499,6 @@ fn WorkbenchModel::queue_command(
 }
 
 ///|
-fn WorkbenchModel::queue_command_with_transport(
-  self : WorkbenchModel,
-  command : String,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let transport_commands = self.commands_with_session_start(
-    session,
-    RunShellCommand(session.id, command),
-  )
-  WorkbenchUpdate::new(
-    self.queue_command(command),
-    effect=transport_runtime.effect(transport_commands, event => {
-      ReceiveTransport(event)
-    }),
-  )
-}
-
-///|
 fn WorkbenchModel::queue_focused_checks(
   self : WorkbenchModel,
 ) -> WorkbenchModel {
@@ -2845,21 +2530,6 @@ fn WorkbenchModel::queue_focused_checks(
 }
 
 ///|
-fn WorkbenchModel::queue_focused_checks_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let transport_commands = self.commands_for_focused_checks(session)
-  WorkbenchUpdate::new(
-    self.queue_focused_checks(),
-    effect=transport_runtime.effect(transport_commands, event => {
-      ReceiveTransport(event)
-    }),
-  )
-}
-
-///|
 fn WorkbenchModel::inspect_command_run(
   self : WorkbenchModel,
   command : String,
@@ -2886,35 +2556,6 @@ fn WorkbenchModel::inspect_command_run(
 }
 
 ///|
-fn WorkbenchModel::inspect_command_run_with_transport(
-  self : WorkbenchModel,
-  command : String,
-  status : String,
-  cwd : String,
-  output_path : String,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let clean_command = command.trim().to_owned()
-  let clean_output_path = output_path.trim().to_owned()
-  if clean_command == "" && clean_output_path == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Command evidence is empty" })
-  } else {
-    let prompt = self.command_evidence_payload(
-      command, status, cwd, output_path,
-    )
-    let session = self.active_session()
-    let commands = self.commands_with_session_start(
-      session,
-      SendUserInput(session.id, prompt),
-    )
-    WorkbenchUpdate::new(
-      self.inspect_command_run(command, status, cwd, output_path),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
-  }
-}
-
-///|
 fn WorkbenchModel::fix_command_run(
   self : WorkbenchModel,
   command : String,
@@ -2934,33 +2575,6 @@ fn WorkbenchModel::fix_command_run(
       event_detail=prompt,
       tone="warning",
       pi_status="Queued command fix for Pi RPC",
-    )
-  }
-}
-
-///|
-fn WorkbenchModel::fix_command_run_with_transport(
-  self : WorkbenchModel,
-  command : String,
-  status : String,
-  cwd : String,
-  output_path : String,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let clean_command = command.trim().to_owned()
-  let clean_output_path = output_path.trim().to_owned()
-  if clean_command == "" && clean_output_path == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Command evidence is empty" })
-  } else {
-    let prompt = self.command_fix_payload(command, status, cwd, output_path)
-    let session = self.active_session()
-    let commands = self.commands_with_session_start(
-      session,
-      SendUserInput(session.id, prompt),
-    )
-    WorkbenchUpdate::new(
-      self.fix_command_run(command, status, cwd, output_path),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
     )
   }
 }
@@ -3109,22 +2723,6 @@ fn WorkbenchModel::sync_session_name(self : WorkbenchModel) -> WorkbenchModel {
 }
 
 ///|
-fn WorkbenchModel::sync_session_name_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let commands = self.commands_with_session_start(
-    session,
-    SetRpcSessionName(session.id, session.title),
-  )
-  WorkbenchUpdate::new(
-    self.sync_session_name(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
-}
-
-///|
 fn WorkbenchModel::set_model(
   self : WorkbenchModel,
   provider : String,
@@ -3167,31 +2765,6 @@ fn WorkbenchModel::set_model(
 }
 
 ///|
-fn WorkbenchModel::set_model_with_transport(
-  self : WorkbenchModel,
-  provider : String,
-  id : String,
-  label : String,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let provider = provider.trim().to_owned()
-  let id = id.trim().to_owned()
-  if provider == "" || id == "" {
-    WorkbenchUpdate::new({ ..self, last_status: "Pi model selection is empty" })
-  } else {
-    let session = self.active_session()
-    let commands = self.commands_with_session_start(
-      session,
-      SetRpcModel(session.id, provider, id),
-    )
-    WorkbenchUpdate::new(
-      self.set_model(provider, id, label),
-      effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-    )
-  }
-}
-
-///|
 fn WorkbenchModel::cycle_model(self : WorkbenchModel) -> WorkbenchModel {
   if !self.active_agent_backend_capabilities().supports_model_catalog {
     return {
@@ -3222,22 +2795,6 @@ fn WorkbenchModel::cycle_model(self : WorkbenchModel) -> WorkbenchModel {
 }
 
 ///|
-fn WorkbenchModel::cycle_model_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let commands = self.commands_with_session_start(
-    session,
-    CycleRpcModel(session.id),
-  )
-  WorkbenchUpdate::new(
-    self.cycle_model(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
-}
-
-///|
 fn WorkbenchModel::compact_session(self : WorkbenchModel) -> WorkbenchModel {
   if !self.active_agent_backend_capabilities().supports_context_compaction {
     return { ..self, last_status: "Agent backend does not support compaction" }
@@ -3262,22 +2819,6 @@ fn WorkbenchModel::compact_session(self : WorkbenchModel) -> WorkbenchModel {
     transport: self.transport.enqueue_many(transport_commands),
     last_status: "Pi compact queued",
   }
-}
-
-///|
-fn WorkbenchModel::compact_session_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let commands = self.commands_with_session_start(
-    session,
-    CompactRpcSession(session.id, ""),
-  )
-  WorkbenchUpdate::new(
-    self.compact_session(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
 }
 
 ///|
@@ -3313,22 +2854,6 @@ fn WorkbenchModel::cycle_thinking_level(
 }
 
 ///|
-fn WorkbenchModel::cycle_thinking_level_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let commands = self.commands_with_session_start(
-    session,
-    CycleRpcThinkingLevel(session.id),
-  )
-  WorkbenchUpdate::new(
-    self.cycle_thinking_level(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
-}
-
-///|
 fn WorkbenchModel::toggle_steering_mode(
   self : WorkbenchModel,
 ) -> WorkbenchModel {
@@ -3352,23 +2877,6 @@ fn WorkbenchModel::toggle_steering_mode(
 }
 
 ///|
-fn WorkbenchModel::toggle_steering_mode_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let mode = next_agent_input_mode(self.pi_agent.steering_mode)
-  let commands = self.commands_with_session_start(
-    session,
-    SetRpcSteeringMode(session.id, mode),
-  )
-  WorkbenchUpdate::new(
-    self.toggle_steering_mode(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
-}
-
-///|
 fn WorkbenchModel::toggle_follow_up_mode(
   self : WorkbenchModel,
 ) -> WorkbenchModel {
@@ -3389,23 +2897,6 @@ fn WorkbenchModel::toggle_follow_up_mode(
   )
   .set_agent_modes(steering_mode=None, follow_up_mode=Some(mode))
   .enqueue_transport_commands(transport_commands)
-}
-
-///|
-fn WorkbenchModel::toggle_follow_up_mode_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  let session = self.active_session()
-  let mode = next_agent_input_mode(self.pi_agent.follow_up_mode)
-  let commands = self.commands_with_session_start(
-    session,
-    SetRpcFollowUpMode(session.id, mode),
-  )
-  WorkbenchUpdate::new(
-    self.toggle_follow_up_mode(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
 }
 
 ///|
@@ -3492,22 +2983,6 @@ fn WorkbenchModel::cancel_run(self : WorkbenchModel) -> WorkbenchModel {
       "Cancellation queued"
     },
   }
-}
-
-///|
-fn WorkbenchModel::cancel_run_with_transport(
-  self : WorkbenchModel,
-  transport_runtime : PiTransportRuntime,
-) -> WorkbenchUpdate {
-  if !self.active_agent_backend_capabilities().uses_pi_transport {
-    return WorkbenchUpdate::new(self.cancel_run())
-  }
-  let session = self.active_session()
-  let commands = [self.cancel_transport_command(session)]
-  WorkbenchUpdate::new(
-    self.cancel_run(),
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
 }
 
 ///|

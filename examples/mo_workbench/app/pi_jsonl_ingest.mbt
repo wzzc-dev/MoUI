@@ -99,6 +99,12 @@ fn WorkbenchModel::ingest_pi_json_object(
     Some("command_started") => self.ingest_command_started(session_id, fields)
     Some("command_finished") => self.ingest_command_finished(session_id, fields)
     Some("diagnostic") => self.ingest_diagnostic(session_id, fields)
+    Some("approval_required") =>
+      self.ingest_agent_intervention_required(session_id, fields)
+    Some("permission_required") =>
+      self.ingest_agent_intervention_required(session_id, fields)
+    Some("input_required") =>
+      self.ingest_agent_intervention_required(session_id, fields)
     Some("file_context") => self.ingest_file_context(session_id, fields)
     Some("diff_summary") => self.ingest_diff_summary(session_id, fields)
     Some("plan_update") => self.ingest_plan_update(session_id, fields)
@@ -1960,6 +1966,48 @@ fn WorkbenchModel::ingest_diagnostic(
 }
 
 ///|
+fn WorkbenchModel::ingest_agent_intervention_required(
+  self : WorkbenchModel,
+  session_id : String,
+  fields : Map[String, Json],
+) -> WorkbenchModel {
+  let event_type = json_string(fields, "type").unwrap_or(
+    "intervention_required",
+  )
+  let data = json_object(fields, "data")
+  let source = agent_intervention_source_label(event_type)
+  let kind_label = agent_intervention_kind_label(event_type)
+  let detail = agent_intervention_first_string(fields, data, [
+    "message", "reason", "detail", "title", "prompt", "description",
+  ])
+  let target = agent_intervention_first_string(fields, data, [
+    "command", "toolName", "tool", "path", "scope", "action",
+  ])
+  let message = agent_intervention_message(kind_label, detail, target)
+  let diagnostics = self.diagnostics.copy()
+  diagnostics.push(DiagnosticItem::new(source~, severity="warning", message~))
+  let model = {
+    ..self.update_active_session_for_pi(
+      status="waiting",
+      active_task=agent_intervention_task_label(event_type),
+      unread_events=Some(self.active_session().unread_events + 1),
+      summary=Some("等待用户处理 Agent 请求"),
+    ),
+    diagnostics,
+    pi_agent: { ..self.pi_agent, phase: "waiting", message_preview: message },
+  }
+  model.append_ingested_event(
+    AgentEvent::new(
+      phase="agent",
+      title=agent_intervention_event_title(event_type),
+      detail=session_id + ": " + message,
+      tone="warning",
+    ),
+    status="Pi agent intervention required",
+  )
+}
+
+///|
 fn WorkbenchModel::ingest_file_context(
   self : WorkbenchModel,
   session_id : String,
@@ -2874,6 +2922,110 @@ fn plan_step_is_active(step : PlanStep) -> Bool {
 fn plan_summary(steps : Array[PlanStep]) -> String {
   let done = steps.length() - plan_open_count(steps)
   done.to_string() + "/" + steps.length().to_string() + " plan steps complete"
+}
+
+///|
+fn agent_intervention_source_label(event_type : String) -> String {
+  match event_type {
+    "approval_required" => "Agent approval"
+    "permission_required" => "Agent permission"
+    "input_required" => "Agent input"
+    _ => "Agent intervention"
+  }
+}
+
+///|
+fn agent_intervention_kind_label(event_type : String) -> String {
+  match event_type {
+    "approval_required" => "approval"
+    "permission_required" => "permission"
+    "input_required" => "input"
+    _ => "intervention"
+  }
+}
+
+///|
+fn agent_intervention_task_label(event_type : String) -> String {
+  match event_type {
+    "approval_required" => "等待用户批准"
+    "permission_required" => "等待权限确认"
+    "input_required" => "等待用户输入"
+    _ => "等待用户处理"
+  }
+}
+
+///|
+fn agent_intervention_event_title(event_type : String) -> String {
+  match event_type {
+    "approval_required" => "Pi approval required"
+    "permission_required" => "Pi permission required"
+    "input_required" => "Pi input required"
+    _ => "Pi intervention required"
+  }
+}
+
+///|
+fn agent_intervention_first_string(
+  fields : Map[String, Json],
+  data : Map[String, Json]?,
+  keys : Array[String],
+) -> String {
+  for key in keys {
+    match agent_intervention_string(fields, data, key) {
+      Some(value) => return value
+      None => ()
+    }
+  }
+  ""
+}
+
+///|
+fn agent_intervention_string(
+  fields : Map[String, Json],
+  data : Map[String, Json]?,
+  key : String,
+) -> String? {
+  match json_string(fields, key) {
+    Some(value) => {
+      let clean = value.trim().to_owned()
+      if clean != "" {
+        return Some(clean)
+      }
+    }
+    None => ()
+  }
+  match data {
+    Some(data_fields) =>
+      match json_string(data_fields, key) {
+        Some(value) => {
+          let clean = value.trim().to_owned()
+          if clean == "" {
+            None
+          } else {
+            Some(clean)
+          }
+        }
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
+fn agent_intervention_message(
+  kind_label : String,
+  detail : String,
+  target : String,
+) -> String {
+  if detail == "" && target == "" {
+    kind_label + " required"
+  } else if detail == "" {
+    kind_label + " required: " + target
+  } else if target == "" || detail.contains(target) {
+    detail
+  } else {
+    detail + " · " + target
+  }
 }
 
 ///|
