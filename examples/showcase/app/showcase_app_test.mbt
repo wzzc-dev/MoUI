@@ -498,6 +498,11 @@ test "showcase navigates to system gallery sections" {
       diagnostics_commands, "TEA descriptors: effect Inspector boot; subscription Inspector tick",
     ),
   )
+  assert_true(
+    has_text(
+      diagnostics_commands, "TEA duplicate keys: effects none; subscriptions diagnostics:tick",
+    ),
+  )
   assert_true(has_text_containing(diagnostics_commands, "unbalanced pops 0"))
   assert_true(has_text(diagnostics_commands, "Interaction Lab"))
   assert_true(has_text(diagnostics_commands, "Text Diagnostics"))

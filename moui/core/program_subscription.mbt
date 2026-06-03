@@ -39,6 +39,7 @@ pub(all) struct SubscriptionPlanSummary {
   batch_count : Int
   source_count : Int
   duplicate_key_count : Int
+  duplicate_keys : Array[String]
   max_depth : Int
   descriptors : Array[SubscriptionDescriptor]
 } derive(Eq, Debug, ToJson)
@@ -198,7 +199,11 @@ pub fn[Msg] Subscription::plan_summary(
   self : Subscription[Msg],
 ) -> SubscriptionPlanSummary {
   let summary = subscription_plan_summary(self, depth=1)
-  { ..summary, duplicate_key_count: self.duplicate_key_count() }
+  {
+    ..summary,
+    duplicate_key_count: self.duplicate_key_count(),
+    duplicate_keys: self.duplicate_keys(),
+  }
 }
 
 ///|
@@ -209,6 +214,7 @@ pub fn SubscriptionPlanSummary::empty() -> SubscriptionPlanSummary {
     batch_count: 0,
     source_count: 0,
     duplicate_key_count: 0,
+    duplicate_keys: [],
     max_depth: 0,
     descriptors: [],
   }
@@ -246,6 +252,22 @@ fn[Msg] Subscription::duplicate_key_count(self : Subscription[Msg]) -> Int {
 }
 
 ///|
+fn[Msg] Subscription::duplicate_keys(self : Subscription[Msg]) -> Array[String] {
+  let seen_keys : Array[String] = []
+  let duplicate_keys : Array[String] = []
+  for source in self.sources() {
+    if seen_keys.any(key => key == source.key) {
+      if !duplicate_keys.any(key => key == source.key) {
+        duplicate_keys.push(source.key)
+      }
+    } else {
+      seen_keys.push(source.key)
+    }
+  }
+  duplicate_keys
+}
+
+///|
 fn[Msg] subscription_plan_summary(
   subscription : Subscription[Msg],
   depth~ : Int,
@@ -258,6 +280,7 @@ fn[Msg] subscription_plan_summary(
         batch_count: 0,
         source_count: 0,
         duplicate_key_count: 0,
+        duplicate_keys: [],
         max_depth: depth,
         descriptors: [],
       }
@@ -268,6 +291,7 @@ fn[Msg] subscription_plan_summary(
         batch_count: 0,
         source_count: 1,
         duplicate_key_count: 0,
+        duplicate_keys: [],
         max_depth: depth,
         descriptors: [source.descriptor()],
       }
@@ -293,6 +317,7 @@ fn[Msg] subscription_plan_summary(
         batch_count,
         source_count,
         duplicate_key_count: 0,
+        duplicate_keys: [],
         max_depth,
         descriptors,
       }

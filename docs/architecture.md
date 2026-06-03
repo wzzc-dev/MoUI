@@ -122,17 +122,18 @@ leaving concrete async execution and cancellation ownership outside `core`.
 `Effect::plan_summary` exposes a platform-neutral diagnostic summary of the
 effect tree, including batch, send, anonymous dispatch, structured run, none,
 scheduled leaf count, max depth, structured effect descriptors, and duplicate
-descriptor-key counts, without running effect callbacks.
+descriptor-key counts/names, without running effect callbacks.
 Program runtime snapshots also report message queue enqueue, drain, pending,
 and max-pending counters without requiring `Msg` values to be serializable.
 `Program` constructors also accept
 `subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
 uses a stable key, receives the typed dispatcher, and may return a cleanup
 callback. `Subscription::plan_summary` exposes the declared none, batch,
-source, duplicate-key, max-depth, and declared source descriptor structure
-without starting sources. Existing keys are reused across model changes, missing
-keys are canceled, duplicate keys in one subscription batch are ignored after
-the first and reported in runtime diagnostics, and `Subscription::map`
+source, duplicate-key counts/names, max-depth, and declared source descriptor
+structure without starting sources. Existing keys are reused across model
+changes, missing keys are canceled, duplicate keys in one subscription batch are
+ignored after the first and reported in runtime diagnostics, and
+`Subscription::map`
 preserves child feature message and descriptor identity while lifting messages
 to a parent type. Dispatchers captured by canceled or destroyed subscriptions
 are ignored, so stale callbacks cannot re-enter the model loop after their

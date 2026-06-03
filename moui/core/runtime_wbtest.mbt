@@ -293,12 +293,15 @@ test "effect plan summary reports duplicate structured effect keys" {
   let summary = effect.plan_summary()
   inspect(summary.descriptors.length(), content="3")
   inspect(summary.duplicate_descriptor_key_count, content="1")
+  inspect(summary.duplicate_descriptor_keys.length(), content="1")
+  inspect(summary.duplicate_descriptor_keys[0], content="host:sync")
   let nested = match effect {
     Effect::Batch([_, child]) => child.plan_summary()
     _ => fail("expected nested effect batch")
   }
   inspect(nested.descriptors.length(), content="2")
   inspect(nested.duplicate_descriptor_key_count, content="0")
+  inspect(nested.duplicate_descriptor_keys.length(), content="0")
 }
 
 ///|
@@ -339,10 +342,18 @@ test "program runtime aggregates duplicate structured effect keys" {
     program_snapshot.last_effect_summary.duplicate_descriptor_key_count,
     content="1",
   )
+  inspect(
+    program_snapshot.last_effect_summary.duplicate_descriptor_keys[0],
+    content="host:sync",
+  )
   let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
   inspect(inspector.program_effect_run_count, content="2")
   inspect(inspector.duplicate_effect_descriptor_key_count, content="1")
   inspect(inspector.last_effect_summary.descriptors.length(), content="2")
+  inspect(
+    inspector.last_effect_summary.duplicate_descriptor_keys[0],
+    content="host:sync",
+  )
 }
 
 ///|
@@ -783,6 +794,10 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
     snapshot.last_subscription_plan_summary.duplicate_key_count,
     content="1",
   )
+  inspect(
+    snapshot.last_subscription_plan_summary.duplicate_keys[0],
+    content="instant",
+  )
   inspect(snapshot.started_subscription_count, content="1")
   inspect(snapshot.reused_subscription_count, content="1")
   inspect(snapshot.duplicate_subscription_key_count, content="2")
@@ -794,6 +809,10 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
   inspect(
     inspector.last_subscription_plan_summary.duplicate_key_count,
     content="1",
+  )
+  inspect(
+    inspector.last_subscription_plan_summary.duplicate_keys[0],
+    content="instant",
   )
   inspect(
     inspector.last_subscription_plan_summary.descriptors[1].key,

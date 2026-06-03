@@ -60,7 +60,7 @@ fn ShowcaseModel::inspector_snapshot_card(
       (inner_width - theme.spacing_scale.sm * 3.0) / 4.0,
     )
   }
-  let card_height = if stat_columns == 1 { 850.0 } else { 418.0 }
+  let card_height = if stat_columns == 1 { 890.0 } else { 448.0 }
   let snapshot = showcase_inspector_snapshot(theme)
   let runtime = snapshot.runtime
   let scope_caption = "Open scopes " +
@@ -77,6 +77,18 @@ fn ShowcaseModel::inspector_snapshot_card(
   }
   let active_subscription_label = if runtime.active_subscriptions.length() > 0 {
     runtime.active_subscriptions[0].label
+  } else {
+    "none"
+  }
+  let duplicate_effect_keys = if runtime.last_scheduled_effect_summary.duplicate_descriptor_keys.length() >
+    0 {
+    runtime.last_scheduled_effect_summary.duplicate_descriptor_keys.join(", ")
+  } else {
+    "none"
+  }
+  let duplicate_subscription_keys = if runtime.last_subscription_plan_summary.duplicate_keys.length() >
+    0 {
+    runtime.last_subscription_plan_summary.duplicate_keys.join(", ")
   } else {
     "none"
   }
@@ -222,6 +234,16 @@ fn ShowcaseModel::inspector_snapshot_card(
         )
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
+        text(
+          "TEA duplicate keys: effects " +
+          duplicate_effect_keys +
+          "; subscriptions " +
+          duplicate_subscription_keys,
+          width=inner_width,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Start,
@@ -310,12 +332,20 @@ fn diagnostics_inspector_sample_program(
     },
     subscriptions=model => {
       if model.event_count > 0 {
-        @core.Subscription::run(
-          key="diagnostics:tick",
-          kind="animation",
-          label="Inspector tick",
-          start=_dispatch => Some(() => ()),
-        )
+        @core.Subscription::batch([
+          @core.Subscription::run(
+            key="diagnostics:tick",
+            kind="animation",
+            label="Inspector tick",
+            start=_dispatch => Some(() => ()),
+          ),
+          @core.Subscription::run(
+            key="diagnostics:tick",
+            kind="animation",
+            label="Duplicate tick ignored",
+            start=_dispatch => Some(() => ()),
+          ),
+        ])
       } else {
         @core.Subscription::none()
       }

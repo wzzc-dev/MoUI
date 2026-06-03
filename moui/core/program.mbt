@@ -35,6 +35,7 @@ pub(all) struct EffectPlanSummary {
   max_depth : Int
   descriptors : Array[EffectDescriptor]
   duplicate_descriptor_key_count : Int
+  duplicate_descriptor_keys : Array[String]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -109,6 +110,7 @@ pub fn EffectPlanSummary::empty() -> EffectPlanSummary {
     max_depth: 0,
     descriptors: [],
     duplicate_descriptor_key_count: 0,
+    duplicate_descriptor_keys: [],
   }
 }
 
@@ -180,6 +182,7 @@ fn[Msg] effect_plan_summary(
         max_depth: depth,
         descriptors: [],
         duplicate_descriptor_key_count: 0,
+        duplicate_descriptor_keys: [],
       }
     Send(_) =>
       {
@@ -193,6 +196,7 @@ fn[Msg] effect_plan_summary(
         max_depth: depth,
         descriptors: [],
         duplicate_descriptor_key_count: 0,
+        duplicate_descriptor_keys: [],
       }
     Dispatch(_) =>
       {
@@ -206,6 +210,7 @@ fn[Msg] effect_plan_summary(
         max_depth: depth,
         descriptors: [],
         duplicate_descriptor_key_count: 0,
+        duplicate_descriptor_keys: [],
       }
     Run(descriptor, _) =>
       {
@@ -219,6 +224,7 @@ fn[Msg] effect_plan_summary(
         max_depth: depth,
         descriptors: [descriptor],
         duplicate_descriptor_key_count: 0,
+        duplicate_descriptor_keys: [],
       }
     Batch(effects) => {
       let mut none_count = 0
@@ -245,6 +251,9 @@ fn[Msg] effect_plan_summary(
       let duplicate_descriptor_key_count = duplicate_effect_descriptor_key_count(
         descriptors,
       )
+      let duplicate_descriptor_keys = duplicate_effect_descriptor_keys(
+        descriptors,
+      )
       {
         root_kind: EffectPlanKind::EffectPlanBatch,
         none_count,
@@ -256,9 +265,28 @@ fn[Msg] effect_plan_summary(
         max_depth,
         descriptors,
         duplicate_descriptor_key_count,
+        duplicate_descriptor_keys,
       }
     }
   }
+}
+
+///|
+fn duplicate_effect_descriptor_keys(
+  descriptors : Array[EffectDescriptor],
+) -> Array[String] {
+  let seen_keys : Array[String] = []
+  let duplicate_keys : Array[String] = []
+  for descriptor in descriptors {
+    if seen_keys.any(key => key == descriptor.key) {
+      if !duplicate_keys.any(key => key == descriptor.key) {
+        duplicate_keys.push(descriptor.key)
+      }
+    } else {
+      seen_keys.push(descriptor.key)
+    }
+  }
+  duplicate_keys
 }
 
 ///|

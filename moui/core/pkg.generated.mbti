@@ -627,6 +627,7 @@ pub(all) struct EffectPlanSummary {
   max_depth : Int
   descriptors : Array[EffectDescriptor]
   duplicate_descriptor_key_count : Int
+  duplicate_descriptor_keys : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn EffectPlanSummary::empty() -> Self
 
@@ -1662,6 +1663,7 @@ pub(all) struct SubscriptionPlanSummary {
   batch_count : Int
   source_count : Int
   duplicate_key_count : Int
+  duplicate_keys : Array[String]
   max_depth : Int
   descriptors : Array[SubscriptionDescriptor]
 } derive(Eq, ToJson, @debug.Debug)
