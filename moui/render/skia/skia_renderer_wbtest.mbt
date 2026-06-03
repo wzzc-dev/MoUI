@@ -946,6 +946,11 @@ test "skia unmatched scope pops are ignored and counted" {
       fail("expected Skia renderer to ignore unmatched pops: \{err.message()}")
   }
   inspect(renderer.unsupported_command_count(), content="6")
+  let diagnostics = renderer.unsupported_command_diagnostics()
+  inspect(diagnostics.length(), content="6")
+  inspect(diagnostics[0].command, content="PopClip")
+  assert_true(diagnostics[0].reason.contains("no matching push"))
+  inspect(diagnostics[5].command, content="PopFilter")
   inspect(renderer.present_count(), content="1")
   guard renderer.last_frame() is Some(frame) else {
     fail("expected rendered frame")
@@ -982,6 +987,10 @@ test "skia mismatched scope pop preserves the active scope" {
       fail("expected Skia renderer to ignore mismatched pop: \{err.message()}")
   }
   inspect(renderer.unsupported_command_count(), content="1")
+  let diagnostics = renderer.unsupported_command_diagnostics()
+  inspect(diagnostics.length(), content="1")
+  inspect(diagnostics[0].command, content="PopTransform")
+  assert_true(diagnostics[0].reason.contains("active clip scope"))
   guard renderer.last_frame() is Some(frame) else {
     fail("expected rendered frame")
   }
@@ -1025,6 +1034,10 @@ test "skia unclosed scopes are counted and restored at frame boundary" {
       fail("expected Skia renderer to restore unclosed clip: \{err.message()}")
   }
   inspect(renderer.unsupported_command_count(), content="1")
+  let diagnostics = renderer.unsupported_command_diagnostics()
+  inspect(diagnostics.length(), content="1")
+  inspect(diagnostics[0].command, content="PushClip")
+  assert_true(diagnostics[0].reason.contains("open clip scope"))
   guard renderer.last_frame() is Some(clipped_frame) else {
     fail("expected clipped rendered frame")
   }
@@ -1052,6 +1065,7 @@ test "skia unclosed scopes are counted and restored at frame boundary" {
       fail("expected next Skia frame after unclosed clip: \{err.message()}")
   }
   inspect(renderer.unsupported_command_count(), content="0")
+  inspect(renderer.unsupported_command_diagnostics().length(), content="0")
   inspect(renderer.present_count(), content="2")
   guard renderer.last_frame() is Some(restored_frame) else {
     fail("expected restored rendered frame")
@@ -1088,11 +1102,17 @@ test "skia unsupported command diagnostics reset per frame" {
     err => fail("expected Skia fallback render: \{err.message()}")
   }
   inspect(renderer.unsupported_command_count(), content="1")
+  let diagnostics = renderer.unsupported_command_diagnostics()
+  inspect(diagnostics.length(), content="1")
+  inspect(diagnostics[0].command, content="DrawShaderEffect")
+  assert_true(diagnostics[0].reason.contains("missing-shader"))
+  assert_true(diagnostics[0].reason.contains("fallback brush"))
   inspect(renderer.present_count(), content="1")
   renderer.render([@core.DrawCommand::Clear(@core.Color::white())]) catch {
     err => fail("expected Skia supported render: \{err.message()}")
   }
   inspect(renderer.unsupported_command_count(), content="0")
+  inspect(renderer.unsupported_command_diagnostics().length(), content="0")
   inspect(renderer.present_count(), content="2")
 }
 

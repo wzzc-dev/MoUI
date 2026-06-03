@@ -116,7 +116,9 @@ bind to the editable fork.
 It carries native Skia binding work needed by `render/skia`, including
 fallback-safe APIs that compile when real Skia link flags are absent. Keep
 missing Skia FFI surface area in `skia_mbt` instead of adding large private Skia
-stubs inside MoUI. A fallback compile is not renderer readiness:
+stubs inside MoUI. Renderer-local fallbacks should expose structured
+diagnostics such as command/reason payloads instead of only aggregate counts.
+A fallback compile is not renderer readiness:
 `skia_available() == false` must keep Skia renderer creation unavailable.
 The checkout owns its binding-level platform acceptance status in
 `skia-platform-status.json` and `SKIA_PLATFORM_STATUS.md`, plus its native
