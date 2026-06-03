@@ -9,6 +9,10 @@ struct RuntimeState {
   mut needs_rebuild : Bool
   mut needs_layout : Bool
   mut needs_paint : Bool
+  mut rebuild_pass_count : Int
+  mut layout_pass_count : Int
+  mut paint_pass_count : Int
+  mut draw_command_build_count : Int
   mut next_element_id : Int
   dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
@@ -38,6 +42,10 @@ fn RuntimeState::new_spec(
     needs_rebuild: false,
     needs_layout: true,
     needs_paint: true,
+    rebuild_pass_count: 0,
+    layout_pass_count: 0,
+    paint_pass_count: 0,
+    draw_command_build_count: 0,
     next_element_id: initial.next_id,
     dirty_elements: [],
     focused_element: None,
@@ -75,6 +83,10 @@ fn RuntimeState::new_component(
     needs_rebuild: false,
     needs_layout: true,
     needs_paint: true,
+    rebuild_pass_count: 0,
+    layout_pass_count: 0,
+    paint_pass_count: 0,
+    draw_command_build_count: 0,
     next_element_id: mounted.next_id,
     dirty_elements: [],
     focused_element: None,
@@ -163,10 +175,15 @@ pub fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.needs_layout = false
   self.needs_paint = false
   self.needs_redraw = false
+  self.rebuild_pass_count = 0
+  self.layout_pass_count = 0
+  self.paint_pass_count = 0
+  self.draw_command_build_count = 0
 }
 
 ///|
 pub fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
+  self.rebuild_pass_count = self.rebuild_pass_count + 1
   let result = reconcile_element_for_runtime(
     self.element_tree.root,
     self.root_spec,
@@ -564,6 +581,7 @@ pub fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
 pub fn RuntimeState::build_draw_commands(
   self : RuntimeState,
 ) -> Array[DrawCommand] {
+  self.draw_command_build_count = self.draw_command_build_count + 1
   let commands : Array[DrawCommand] = [Clear(Color::white())]
   self.rebuild_if_possible()
   self.ensure_render_tree()
@@ -575,6 +593,7 @@ pub fn RuntimeState::build_draw_commands(
 pub fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
   if self.needs_rebuild {
     if self.element_tree.root.has_dirty_build() {
+      self.rebuild_pass_count = self.rebuild_pass_count + 1
       let result = self.element_tree.root.rebuild_dirty_components(
         self,
         self.next_element_id,
@@ -670,6 +689,7 @@ fn RuntimeState::ensure_layout_tree(self : RuntimeState) -> Unit {
 ///|
 fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
   self.rebuild_if_possible()
+  self.layout_pass_count = self.layout_pass_count + 1
   self.layout_tree = {
     root: self.element_tree.root.place_with_text_system(
       Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
@@ -684,6 +704,7 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
 ///|
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   self.ensure_layout_tree()
+  self.paint_pass_count = self.paint_pass_count + 1
   self.render_tree = {
     root: self.element_tree.root.render_focused_with_text_system(
       self.layout_tree.root,

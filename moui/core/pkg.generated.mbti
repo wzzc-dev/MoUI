@@ -1323,6 +1323,10 @@ pub(all) struct RuntimeInspectorSnapshot {
   needs_paint : Bool
   needs_redraw : Bool
   draw_command_count : Int
+  rebuild_pass_count : Int
+  layout_pass_count : Int
+  paint_pass_count : Int
+  draw_command_build_count : Int
   program_dispatched_count : Int
   program_update_count : Int
   program_message_enqueue_count : Int
