@@ -241,12 +241,12 @@ sh scripts/dev-check.sh --platform-examples-build
 - Use `Subscription::listen` / `Subscription::run` for app-level ongoing
   sources that need lifecycle reuse and cleanup. Use `Subscription::map` when a
   parent app embeds a child feature and wants to preserve typed message
-  composition. Give sources stable key/kind/label values because subscription
-  plan diagnostics expose planned descriptors before runtime reuse/cancel
-  decisions, while active descriptors report sources kept by the runtime. Do
-  not retain and reuse old dispatchers after a subscription key changes or the
-  runtime is destroyed; stale callbacks are ignored and counted in runtime
-  diagnostics.
+  composition and planned/active descriptor identity. Give sources stable
+  key/kind/label values because subscription plan diagnostics expose planned
+  descriptors before runtime reuse/cancel decisions, while active descriptors
+  report sources kept by the runtime. Do not retain and reuse old dispatchers
+  after a subscription key changes or the runtime is destroyed; stale callbacks
+  are ignored and counted in runtime diagnostics.
 - Keep host-specific input conversion in backend packages out of app code.
 
 ### Add Platform Entry Points

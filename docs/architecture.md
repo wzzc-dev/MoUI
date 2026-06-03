@@ -133,13 +133,13 @@ source, duplicate-key, max-depth, and declared source descriptor structure
 without starting sources. Existing keys are reused across model changes, missing
 keys are canceled, duplicate keys in one subscription batch are ignored after
 the first and reported in runtime diagnostics, and `Subscription::map`
-preserves child feature identity while lifting messages to a parent type.
-Dispatchers captured by canceled or destroyed subscriptions are ignored, so
-stale callbacks cannot re-enter the model loop after their subscription
-lifetime ends; program runtime and inspector snapshots count those ignored
-subscription dispatches separately from normal typed dispatch/update counters
-and expose planned subscription descriptors, active subscription descriptors,
-and lifecycle entries for tooling. Concrete timer, window, route, or
+preserves child feature message and descriptor identity while lifting messages
+to a parent type. Dispatchers captured by canceled or destroyed subscriptions
+are ignored, so stale callbacks cannot re-enter the model loop after their
+subscription lifetime ends; program runtime and inspector snapshots count those
+ignored subscription dispatches separately from normal typed dispatch/update
+counters and expose planned subscription descriptors, active subscription
+descriptors, and lifecycle entries for tooling. Concrete timer, window, route, or
 host-service adapters remain outside `core`; the core
 subscription runtime only owns the platform-neutral lifecycle, subscription plan
 diagnostics, and typed dispatch contract. Environment-aware TEA apps should use

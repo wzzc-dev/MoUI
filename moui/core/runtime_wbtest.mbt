@@ -509,6 +509,10 @@ test "subscription descriptors and map preserve feature composition" {
   inspect(plan.source_count, content="1")
   inspect(plan.duplicate_key_count, content="0")
   inspect(plan.max_depth, content="2")
+  inspect(plan.descriptors.length(), content="1")
+  inspect(plan.descriptors[0].key, content="child-tick")
+  inspect(plan.descriptors[0].kind, content="timer")
+  inspect(plan.descriptors[0].label, content="Child tick")
   let descriptors = parent.descriptors()
   inspect(descriptors.length(), content="1")
   inspect(descriptors[0].key, content="child-tick")
@@ -525,11 +529,32 @@ test "subscription descriptors and map preserve feature composition" {
     size=Size::new(width=180.0, height=48.0),
   )
   assert_true(has_draw_text(runtime.draw_commands(), "waiting"))
+  let snapshot = runtime.program_runtime_snapshot()
+  inspect(
+    snapshot.last_subscription_plan_summary.descriptors.length(),
+    content="1",
+  )
+  inspect(
+    snapshot.last_subscription_plan_summary.descriptors[0].key,
+    content="child-tick",
+  )
+  inspect(snapshot.active_subscriptions.length(), content="1")
+  inspect(snapshot.active_subscriptions[0].key, content="child-tick")
   match child_dispatch.val {
     Some(dispatch) => dispatch("pulse")
     None => fail("expected child dispatch")
   }
   assert_true(has_draw_text(runtime.draw_commands(), "parent:pulse"))
+  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  inspect(
+    inspector.last_subscription_plan_summary.descriptors.length(),
+    content="1",
+  )
+  inspect(
+    inspector.last_subscription_plan_summary.descriptors[0].label,
+    content="Child tick",
+  )
+  inspect(inspector.active_subscriptions[0].label, content="Child tick")
 }
 
 ///|
