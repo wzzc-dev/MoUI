@@ -409,7 +409,7 @@ fn move_text_caret(
   let caret = clamp_int(caret, 0, length)
   if extend {
     let anchor = clamp_int(text_selection_anchor(caret, selection), 0, length)
-    let next = move_text_caret_index(caret, length, direction)
+    let next = move_text_caret_index(text, caret, direction)
     {
       caret: next,
       selection: if next == anchor {
@@ -429,7 +429,7 @@ fn move_text_caret(
         }
       None =>
         {
-          caret: move_text_caret_index(caret, length, direction),
+          caret: move_text_caret_index(text, caret, direction),
           selection: None,
         }
     }
@@ -438,13 +438,15 @@ fn move_text_caret(
 
 ///|
 fn move_text_caret_index(
+  text : String,
   caret : Int,
-  length : Int,
   direction : TextCaretDirection,
 ) -> Int {
+  let length = text_length(text)
+  let caret = clamp_int(caret, 0, length)
   match direction {
-    MoveLeft => clamp_int(caret - 1, 0, length)
-    MoveRight => clamp_int(caret + 1, 0, length)
+    MoveLeft => text_previous_grapheme_caret_boundary(text, caret)
+    MoveRight => text_next_grapheme_caret_boundary(text, caret)
     MoveStart => 0
     MoveEnd => length
   }
