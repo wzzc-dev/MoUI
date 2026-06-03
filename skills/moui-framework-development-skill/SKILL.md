@@ -188,7 +188,9 @@ complete platform-services claim by itself, but native platform entries cannot
 be marked `passed` unless their Skia evidence is also `passed`. Use
 `record-native-skia-evidence.mjs` for matching-host Skia logs when you only
 want to validate and update `skiaEvidence`; it deliberately leaves the broader
-platform runtime status unchanged.
+platform runtime status unchanged. Its provider-preflight log check requires
+both the matching Skia provider identity and a passing preflight, test, or build
+marker; do not use generic passing test output as provider evidence.
 A passed presentation manifest must include WebGPU startup, wasm startup,
 canvas sizing, resize/input event-bridge delivery, Markdown Editor text input,
 clean target close, clean console, and nonblank screenshots for the named

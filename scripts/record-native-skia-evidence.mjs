@@ -34,7 +34,10 @@ const platforms = new Map([
     {
       hostPattern: /(macOS|Darwin)/i,
       firstFrameMarker: "macOS renderer presented first frame; exiting by request",
-      providerMarker: /macOS Skia provider preflight|moui\/backend\/macos\/skia|backend\/macos\/skia|Total tests:\s*\d+, passed:\s*\d+, failed:\s*0/i,
+      providerMarker: [
+        /macOS Skia provider preflight|moui\/backend\/macos\/skia|backend\/macos\/skia/i,
+        /Total tests:\s*\d+, passed:\s*\d+, failed:\s*0|build (succeeded|finished)|Finished|renderer=ready|can_render=true/i,
+      ],
       fallbackMarker: /macOS Skia renderer selected, but skia_mbt\/native is unavailable|skia_mbt\/native is unavailable/i,
     },
   ],
@@ -43,7 +46,10 @@ const platforms = new Map([
     {
       hostPattern: /(Windows|MSVC)/i,
       firstFrameMarker: "Windows renderer presented first frame; exiting by request",
-      providerMarker: /Windows Skia provider preflight|moui\/backend\/windows\/skia|backend\/windows\/skia|build_windows_msvc\.ps1|Total tests:\s*\d+, passed:\s*\d+, failed:\s*0/i,
+      providerMarker: [
+        /Windows Skia provider preflight|moui\/backend\/windows\/skia|backend\/windows\/skia|build_windows_msvc\.ps1/i,
+        /Total tests:\s*\d+, passed:\s*\d+, failed:\s*0|build (succeeded|finished)|Finished|renderer=ready|can_render=true/i,
+      ],
       fallbackMarker: /Windows Skia renderer selected, but skia_mbt\/native is unavailable|skia_mbt\/native is unavailable/i,
     },
   ],
@@ -52,7 +58,10 @@ const platforms = new Map([
     {
       hostPattern: /(Linux|Wayland)/i,
       firstFrameMarker: "Linux renderer presented first frame; exiting by request",
-      providerMarker: /Linux Skia provider preflight|moui\/backend\/linux\/skia|backend\/linux\/skia|Total tests:\s*\d+, passed:\s*\d+, failed:\s*0/i,
+      providerMarker: [
+        /Linux Skia provider preflight|moui\/backend\/linux\/skia|backend\/linux\/skia/i,
+        /Total tests:\s*\d+, passed:\s*\d+, failed:\s*0|build (succeeded|finished)|Finished|renderer=ready|can_render=true/i,
+      ],
       fallbackMarker: /Linux Skia renderer selected, but skia_mbt\/native is unavailable|skia_mbt\/native is unavailable/i,
     },
   ],
@@ -73,7 +82,7 @@ const logOptions = new Map([
       observation: "providerPreflight",
       label: "provider preflight log",
       marker: platform => platform.providerMarker,
-      markerDescription: "a platform Skia provider preflight or provider package command marker",
+      markerDescription: "a platform Skia provider identity plus a preflight/test/build pass marker",
     },
   ],
   [
@@ -192,8 +201,18 @@ const normalizeArtifactPath = path => {
   return { absolute, rel };
 };
 
+const matcherMatches = (content, matcher) => {
+  if (typeof matcher === "string") {
+    return content.includes(matcher);
+  }
+  if (Array.isArray(matcher)) {
+    return matcher.every(item => matcherMatches(content, item));
+  }
+  return matcher.test(content);
+};
+
 const assertMarker = (content, matcher, label, description) => {
-  const matched = typeof matcher === "string" ? content.includes(matcher) : matcher.test(content);
+  const matched = matcherMatches(content, matcher);
   if (!matched) {
     console.error(`${label} is missing expected marker: ${description}`);
     process.exit(1);
