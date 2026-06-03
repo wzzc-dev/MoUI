@@ -120,7 +120,8 @@ runners that should appear in diagnostics; it adds a stable key, kind, and label
 while leaving concrete async execution and cancellation ownership outside
 `core`. `Effect::plan_summary` exposes a platform-neutral diagnostic summary of
 the effect tree, including batch, send, dispatch, none, scheduled leaf count,
-max depth, and structured effect descriptors, without running effect callbacks.
+max depth, structured effect descriptors, and duplicate descriptor-key counts,
+without running effect callbacks.
 Program runtime snapshots also report message queue enqueue, drain, pending,
 and max-pending counters without requiring `Msg` values to be serializable.
 `Program` constructors also accept
@@ -184,7 +185,9 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   lifecycle entries so tooling can identify which sources were reused or
   canceled without inspecting app messages. Structured effect descriptors from
   `Effect::run` travel through effect summaries so tooling can identify planned
-  host-service or task runners without inspecting `Msg` values. Runtime
+  host-service or task runners without inspecting `Msg` values; duplicate
+  descriptor-key counts make planned key conflicts visible before effect
+  runners grow cancellation or reuse semantics. Runtime
   inspector snapshots also expose platform-neutral pipeline pass counters for
   rebuild, layout, paint, and draw-command building. It keeps
   the latest effect summary, latest scheduled effect summary, and latest

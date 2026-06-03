@@ -32,6 +32,7 @@ pub(all) struct EffectPlanSummary {
   scheduled_count : Int
   max_depth : Int
   descriptors : Array[EffectDescriptor]
+  duplicate_descriptor_key_count : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -104,6 +105,7 @@ pub fn EffectPlanSummary::empty() -> EffectPlanSummary {
     scheduled_count: 0,
     max_depth: 0,
     descriptors: [],
+    duplicate_descriptor_key_count: 0,
   }
 }
 
@@ -173,6 +175,7 @@ fn[Msg] effect_plan_summary(
         scheduled_count: 0,
         max_depth: depth,
         descriptors: [],
+        duplicate_descriptor_key_count: 0,
       }
     Send(_) =>
       {
@@ -184,6 +187,7 @@ fn[Msg] effect_plan_summary(
         scheduled_count: 1,
         max_depth: depth,
         descriptors: [],
+        duplicate_descriptor_key_count: 0,
       }
     Dispatch(_) =>
       {
@@ -195,6 +199,7 @@ fn[Msg] effect_plan_summary(
         scheduled_count: 1,
         max_depth: depth,
         descriptors: [],
+        duplicate_descriptor_key_count: 0,
       }
     Run(descriptor, _) =>
       {
@@ -206,6 +211,7 @@ fn[Msg] effect_plan_summary(
         scheduled_count: 1,
         max_depth: depth,
         descriptors: [descriptor],
+        duplicate_descriptor_key_count: 0,
       }
     Batch(effects) => {
       let mut none_count = 0
@@ -227,6 +233,9 @@ fn[Msg] effect_plan_summary(
         }
         descriptors.append(child_summary.descriptors)
       }
+      let duplicate_descriptor_key_count = duplicate_effect_descriptor_key_count(
+        descriptors,
+      )
       {
         root_kind: EffectPlanKind::EffectPlanBatch,
         none_count,
@@ -236,9 +245,26 @@ fn[Msg] effect_plan_summary(
         scheduled_count,
         max_depth,
         descriptors,
+        duplicate_descriptor_key_count,
       }
     }
   }
+}
+
+///|
+fn duplicate_effect_descriptor_key_count(
+  descriptors : Array[EffectDescriptor],
+) -> Int {
+  let seen_keys : Array[String] = []
+  let mut duplicate_count = 0
+  for descriptor in descriptors {
+    if seen_keys.any(key => key == descriptor.key) {
+      duplicate_count = duplicate_count + 1
+    } else {
+      seen_keys.push(descriptor.key)
+    }
+  }
+  duplicate_count
 }
 
 ///|

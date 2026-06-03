@@ -63,7 +63,8 @@ Use this skill when editing or reviewing:
   app-level ongoing event sources use `subscriptions=model => ...` with stable keys so callbacks
   re-enter the typed message loop without exposing runtime internals. Effect
   diagnostics stay platform-neutral through `Effect::plan_summary`,
-  `Effect::run` descriptors, and program-runtime inspector counters; message
+  `Effect::run` descriptors, duplicate descriptor-key counts, and
+  program-runtime inspector counters; message
   queue diagnostics stay
   platform-neutral through enqueue/drain/pending counters; pipeline cost
   diagnostics stay platform-neutral through rebuild/layout/paint/draw-command
