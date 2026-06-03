@@ -817,6 +817,7 @@ pub(all) struct HitTestResult {
 pub(all) enum ImageFit {
   Contain
   Cover
+  Stretch
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ImageRun {

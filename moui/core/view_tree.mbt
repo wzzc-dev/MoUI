@@ -56,6 +56,7 @@ pub(all) struct ViewStyle {
 pub(all) enum ImageFit {
   Contain
   Cover
+  Stretch
 } derive(Eq, Debug, ToJson)
 
 ///|

@@ -1286,6 +1286,9 @@ export function createWebGpuImports(options = {}) {
   };
 
   const imagePlacement = (rect, imageWidth, imageHeight, fit) => {
+    if (Number(fit) === 2) {
+      return { rect, u0: 0, v0: 0, u1: 1, v1: 1 };
+    }
     const frameRatio = rect.width / Math.max(rect.height, 0.0001);
     const imageRatio = imageWidth / Math.max(imageHeight, 0.0001);
     if (Number(fit) === 1) {
