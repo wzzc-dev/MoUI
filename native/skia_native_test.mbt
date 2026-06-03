@@ -678,6 +678,14 @@ test "image api typechecks" {
           assert_eq(image.height(), 8)
         }
       }
+      assert_true(
+        surface.image_snapshot_with_bounds(@skia.IRect::from_xywh(14, 14, 4, 4))
+        is None,
+      )
+      assert_true(
+        surface.image_snapshot_with_bounds(@skia.IRect::from_xywh(-1, 0, 4, 4))
+        is None,
+      )
       match surface.read_pixels() {
         None => ()
         Some(pixmap) => {
@@ -694,6 +702,12 @@ test "image api typechecks" {
           assert_eq(pixmap.row_bytes, 16)
         }
       }
+      assert_true(
+        surface.read_pixels(bounds=@skia.IRect::from_xywh(14, 14, 4, 4)) is None,
+      )
+      assert_true(
+        surface.read_pixels(bounds=@skia.IRect::from_xywh(-1, 0, 4, 4)) is None,
+      )
       let descriptor = surface.descriptor()
       assert_true(descriptor.is_raster())
       assert_true(descriptor.image_info == surface.image_info())

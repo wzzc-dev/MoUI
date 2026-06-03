@@ -517,13 +517,16 @@ moonbit_skia_surface_read_pixels(
   }
 #if defined(SKIA_MBT_HAS_SKIA)
   SkImageInfo info = moonbit_skia_make_rgba8888_premul_info(width, height);
-  wrapper->surface->readPixels(
+  bool ok = wrapper->surface->readPixels(
     info,
     bytes,
     static_cast<size_t>(row_bytes),
     left,
     top
   );
+  if (!ok) {
+    return moonbit_make_bytes(0, 0);
+  }
 #else
   (void)left;
   (void)top;

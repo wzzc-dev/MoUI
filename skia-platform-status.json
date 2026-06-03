@@ -853,6 +853,11 @@
       "marker": "native smoke bounded snapshot height"
     },
     {
+      "id": "surface.bounds-rejected",
+      "area": "Surface",
+      "marker": "native smoke surface bounds rejected"
+    },
+    {
       "id": "image.encode-png",
       "area": "Image",
       "marker": "native smoke encoded PNG bytes"
@@ -1905,6 +1910,11 @@
       "id": "surface.bounded-snapshot-height",
       "marker": "native smoke bounded snapshot height",
       "value": "4"
+    },
+    {
+      "id": "surface.bounds-rejected",
+      "marker": "native smoke surface bounds rejected",
+      "value": "1"
     },
     {
       "id": "filter.layer",
