@@ -86,6 +86,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   reused_subscription_count : Int
   cancelled_subscription_count : Int
   duplicate_subscription_key_count : Int
+  ignored_subscription_dispatch_count : Int
   active_subscriptions : Array[SubscriptionDescriptor]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
 } derive(Eq, Debug, ToJson)
@@ -122,6 +123,7 @@ priv struct ProgramRuntimeDiagnostics {
   mut reused_subscription_count : Int
   mut cancelled_subscription_count : Int
   mut duplicate_subscription_key_count : Int
+  mut ignored_subscription_dispatch_count : Int
   mut active_subscriptions : Array[ActiveProgramSubscription]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
 }
@@ -317,6 +319,7 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
     reused_subscription_count: 0,
     cancelled_subscription_count: 0,
     duplicate_subscription_key_count: 0,
+    ignored_subscription_dispatch_count: 0,
     active_subscriptions: [],
     subscription_lifecycle: [],
   }
@@ -411,6 +414,14 @@ fn ProgramRuntimeDiagnostics::record_subscription_plan(
 }
 
 ///|
+fn ProgramRuntimeDiagnostics::record_ignored_subscription_dispatch(
+  self : ProgramRuntimeDiagnostics,
+) -> Unit {
+  self.ignored_subscription_dispatch_count = self.ignored_subscription_dispatch_count +
+    1
+}
+
+///|
 fn[Msg] ProgramRuntimeDiagnostics::sync_subscriptions(
   self : ProgramRuntimeDiagnostics,
   subscription : Subscription[Msg],
@@ -482,7 +493,13 @@ fn[Msg] ProgramRuntimeDiagnostics::start_subscription(
   dispatch : (Msg) -> Unit,
 ) -> ActiveProgramSubscription {
   let active = Ref(true)
-  let cancel = (source.start)(message => if active.val { dispatch(message) })
+  let cancel = (source.start)(message => {
+    if active.val {
+      dispatch(message)
+    } else {
+      self.record_ignored_subscription_dispatch()
+    }
+  })
   self.started_subscription_count = self.started_subscription_count + 1
   self.subscription_lifecycle.push({
     key: source.key,
@@ -548,6 +565,7 @@ fn ProgramRuntimeDiagnostics::snapshot(
     reused_subscription_count: self.reused_subscription_count,
     cancelled_subscription_count: self.cancelled_subscription_count,
     duplicate_subscription_key_count: self.duplicate_subscription_key_count,
+    ignored_subscription_dispatch_count: self.ignored_subscription_dispatch_count,
     active_subscriptions: self.active_subscriptions.map(active => {
       key: active.key,
       kind: active.kind,
@@ -581,6 +599,7 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     reused_subscription_count: 0,
     cancelled_subscription_count: 0,
     duplicate_subscription_key_count: 0,
+    ignored_subscription_dispatch_count: 0,
     active_subscriptions: [],
     subscription_lifecycle: [],
   }
