@@ -499,8 +499,11 @@ effects such as async paste are handed to `HostRuntimeDriver`, while app-owned
 service flows should store pending request ids in model state and declare
 `HostAppServices::completion_subscription` from `Program` subscriptions so the
 completion re-enters the typed message loop without exposing platform APIs to
-`core`. The lower-level `HostAppServices::on_completed` callback remains
-available for custom adapters.
+`core`. When that subscription is canceled because the model leaves the pending
+state or the runtime is destroyed, the host queue releases its completion
+handler; a later platform response is retained as a normal completed record
+instead of dispatching through a dead app callback. The lower-level
+`HostAppServices::on_completed` callback remains available for custom adapters.
 The Web backend wires that queue to browser host imports and exported wasm
 completion callbacks for clipboard reads and file pickers.
 Web, macOS, and Windows entrypoints query that bridge at startup and install

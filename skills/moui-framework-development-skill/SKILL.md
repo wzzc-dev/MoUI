@@ -385,8 +385,10 @@ moon info
 - For app-owned pending services, expose a typed completion path through
   `HostAppServices::completion_subscription` so callbacks re-enter an app
   `Program` subscription instead of teaching `HostRuntimeDriver` about app
-  messages. Keep lower-level `HostAppServices::on_completed` available for
-  custom adapters.
+  messages. Subscription cleanup should release the host queue handler so late
+  platform responses remain available as completed records instead of
+  dispatching into stale app state. Keep lower-level
+  `HostAppServices::on_completed` available for custom adapters.
 - Run the affected backend package tests.
 - Update `docs/platform-notes.md` when constraints or setup change.
 

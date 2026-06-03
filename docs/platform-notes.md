@@ -108,7 +108,9 @@ constructors and platform event conversion.
   clipboard paste are dispatched through `HostRuntimeDriver`; app-owned service
   workflows should declare `HostAppServices::completion_subscription` while the
   model stores a pending request id so pending completions re-enter the app's
-  typed message loop and are canceled when that model state changes.
+  typed message loop. When that subscription is canceled, the queue removes the
+  handler so a later platform response remains available through the completed
+  response queue instead of dispatching into stale app state.
 - Host service bridges can apply a reported light/dark system theme to a runtime
   `Environment`. Web, macOS, and Windows do this once at startup before the
   first layout/redraw pass. Runtime `ThemeChanged` window events are normalized
