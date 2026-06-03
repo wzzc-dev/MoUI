@@ -72,8 +72,10 @@ pub fn[Model, Msg] AppRuntime::new_program(
   let dispatching = Ref(false)
   let syncing_subscriptions = Ref(false)
   let process_ref : Ref[(() -> Unit)?] = Ref(None)
+  let pending_count = () => pending_messages.length() - pending_index.val
   let dispatch = message => {
     pending_messages.push(message)
+    program_runtime.record_message_enqueued(pending_count())
     if !syncing_subscriptions.val {
       match process_ref.val {
         Some(process) => process()
@@ -91,6 +93,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
   }
   let process_messages = () => {
     if !dispatching.val && !syncing_subscriptions.val {
+      program_runtime.record_message_drain_started(pending_count())
       dispatching.val = true
       while pending_index.val < pending_messages.length() {
         let message = pending_messages[pending_index.val]
@@ -103,9 +106,11 @@ pub fn[Model, Msg] AppRuntime::new_program(
         let effect_count = run_effect(effect, dispatch)
         program_runtime.record_effects(effect_summary, effect_count)
         sync_subscriptions()
+        program_runtime.record_message_processed(pending_count())
       }
       pending_messages.clear()
       pending_index.val = 0
+      program_runtime.record_message_queue_cleared()
       dispatching.val = false
     }
   }

@@ -1072,6 +1072,10 @@ pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Mo
 pub(all) struct ProgramRuntimeSnapshot {
   dispatched_count : Int
   update_count : Int
+  message_enqueue_count : Int
+  message_drain_count : Int
+  pending_message_count : Int
+  max_pending_message_count : Int
   effect_plan_count : Int
   effect_count : Int
   effect_none_count : Int
@@ -1321,6 +1325,10 @@ pub(all) struct RuntimeInspectorSnapshot {
   draw_command_count : Int
   program_dispatched_count : Int
   program_update_count : Int
+  program_message_enqueue_count : Int
+  program_message_drain_count : Int
+  program_pending_message_count : Int
+  program_max_pending_message_count : Int
   program_effect_plan_count : Int
   program_effect_count : Int
   program_effect_none_count : Int

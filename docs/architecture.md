@@ -117,7 +117,9 @@ directly, and `Effect::dispatch` gives an effect runner the typed message
 dispatcher for app-owned host-service bridges or other callbacks without making
 `core` platform-specific. `Effect::plan_summary` exposes a platform-neutral
 diagnostic summary of the effect tree, including batch, send, dispatch, none,
-scheduled leaf count, and max depth, without running effect callbacks.
+scheduled leaf count, and max depth, without running effect callbacks. Program
+runtime snapshots also report message queue enqueue, drain, pending, and
+max-pending counters without requiring `Msg` values to be serializable.
 `Program` constructors also accept
 `subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
 uses a stable key, receives the typed dispatcher, and may return a cleanup
@@ -168,11 +170,11 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   `BuildContext` also exposes scoped save/restore helpers for small saveable
   string, bool, and int state.
 - `AppRuntime` owns app-level `Program` diagnostics, including dispatch,
-  update, effect plan, scheduled effect, effect-kind, active subscription,
-  subscription plan, start/reuse/cancel, and duplicate-key counters. It also
-  keeps the latest effect summary, latest scheduled effect summary, and latest
-  subscription plan summary for inspector tooling. This is separate from
-  component-local `BuildContext::watch` and
+  update, message queue, effect plan, scheduled effect, effect-kind, active
+  subscription, subscription plan, start/reuse/cancel, and duplicate-key
+  counters. It also keeps the latest effect summary, latest scheduled effect
+  summary, and latest subscription plan summary for inspector tooling. This is
+  separate from component-local `BuildContext::watch` and
   `BuildContext::run_effect`; program subscriptions model ongoing app event
   sources, while build-context subscriptions model component-local state
   invalidation and lifecycle effects.

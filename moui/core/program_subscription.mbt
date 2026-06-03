@@ -67,6 +67,10 @@ pub(all) struct SubscriptionLifecycleSnapshot {
 pub(all) struct ProgramRuntimeSnapshot {
   dispatched_count : Int
   update_count : Int
+  message_enqueue_count : Int
+  message_drain_count : Int
+  pending_message_count : Int
+  max_pending_message_count : Int
   effect_plan_count : Int
   effect_count : Int
   effect_none_count : Int
@@ -100,6 +104,10 @@ priv struct ActiveProgramSubscription {
 priv struct ProgramRuntimeDiagnostics {
   mut dispatched_count : Int
   mut update_count : Int
+  mut message_enqueue_count : Int
+  mut message_drain_count : Int
+  mut pending_message_count : Int
+  mut max_pending_message_count : Int
   mut effect_plan_count : Int
   mut effect_count : Int
   mut effect_none_count : Int
@@ -291,6 +299,10 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
   {
     dispatched_count: 0,
     update_count: 0,
+    message_enqueue_count: 0,
+    message_drain_count: 0,
+    pending_message_count: 0,
+    max_pending_message_count: 0,
     effect_plan_count: 0,
     effect_count: 0,
     effect_none_count: 0,
@@ -322,6 +334,52 @@ fn ProgramRuntimeDiagnostics::record_update(
   self : ProgramRuntimeDiagnostics,
 ) -> Unit {
   self.update_count = self.update_count + 1
+}
+
+///|
+fn ProgramRuntimeDiagnostics::record_message_enqueued(
+  self : ProgramRuntimeDiagnostics,
+  pending_count : Int,
+) -> Unit {
+  self.message_enqueue_count = self.message_enqueue_count + 1
+  self.record_pending_message_count(pending_count)
+}
+
+///|
+fn ProgramRuntimeDiagnostics::record_message_drain_started(
+  self : ProgramRuntimeDiagnostics,
+  pending_count : Int,
+) -> Unit {
+  if pending_count > 0 {
+    self.message_drain_count = self.message_drain_count + 1
+  }
+  self.record_pending_message_count(pending_count)
+}
+
+///|
+fn ProgramRuntimeDiagnostics::record_message_processed(
+  self : ProgramRuntimeDiagnostics,
+  pending_count : Int,
+) -> Unit {
+  self.record_pending_message_count(pending_count)
+}
+
+///|
+fn ProgramRuntimeDiagnostics::record_message_queue_cleared(
+  self : ProgramRuntimeDiagnostics,
+) -> Unit {
+  self.record_pending_message_count(0)
+}
+
+///|
+fn ProgramRuntimeDiagnostics::record_pending_message_count(
+  self : ProgramRuntimeDiagnostics,
+  pending_count : Int,
+) -> Unit {
+  self.pending_message_count = pending_count
+  if pending_count > self.max_pending_message_count {
+    self.max_pending_message_count = pending_count
+  }
 }
 
 ///|
@@ -471,6 +529,10 @@ fn ProgramRuntimeDiagnostics::snapshot(
   {
     dispatched_count: self.dispatched_count,
     update_count: self.update_count,
+    message_enqueue_count: self.message_enqueue_count,
+    message_drain_count: self.message_drain_count,
+    pending_message_count: self.pending_message_count,
+    max_pending_message_count: self.max_pending_message_count,
     effect_plan_count: self.effect_plan_count,
     effect_count: self.effect_count,
     effect_none_count: self.effect_none_count,
@@ -500,6 +562,10 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
   {
     dispatched_count: 0,
     update_count: 0,
+    message_enqueue_count: 0,
+    message_drain_count: 0,
+    pending_message_count: 0,
+    max_pending_message_count: 0,
     effect_plan_count: 0,
     effect_count: 0,
     effect_none_count: 0,
