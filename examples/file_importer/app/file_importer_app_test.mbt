@@ -57,9 +57,14 @@ test "file importer handles mocked pending completion" {
     services,
   )
   assert_true(update.model.status is FileImporterStatus::Requesting)
+  let summary = update.effect.plan_summary()
+  inspect(summary.descriptors.length(), content="1")
+  inspect(summary.descriptors[0].key, content="host:file-import")
+  inspect(summary.descriptors[0].kind, content="host-service")
+  inspect(summary.descriptors[0].label, content="Import files")
   let model = @core.State::new(update.model)
   match update.effect {
-    @core.Effect::Dispatch(run) =>
+    @core.Effect::Run(_descriptor, run) =>
       run(message => model.set(model.get().update(message)))
     _ => fail("expected file importer browse effect")
   }
@@ -300,6 +305,7 @@ fn run_file_importer_effect(update : FileImporterUpdate) -> FileImporterModel {
       }
     @core.Effect::Send(message) => dispatch(message)
     @core.Effect::Dispatch(run) => run(dispatch)
+    @core.Effect::Run(_descriptor, run) => run(dispatch)
   }
   model.get()
 }

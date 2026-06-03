@@ -56,6 +56,9 @@ pub type Program[Model, Msg] = @core.Program[Model, Msg]
 pub type Effect[Msg] = @core.Effect[Msg]
 
 ///|
+pub type EffectDescriptor = @core.EffectDescriptor
+
+///|
 pub type Subscription[Msg] = @core.Subscription[Msg]
 
 ///|

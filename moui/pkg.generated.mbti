@@ -36,6 +36,8 @@ pub using @core {type DrawCommand}
 
 pub using @core {type Effect}
 
+pub using @core {type EffectDescriptor}
+
 pub using @core {type Environment}
 
 pub using @core {type FontSpec}

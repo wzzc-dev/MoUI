@@ -681,6 +681,11 @@ test "workbench transport runtime effect dispatches prompt events" {
     .update_with_transport(DispatchPrompt, transport)
   inspect(captured.val.length(), content="0")
   inspect(update.model.pending_transport_count(), content="2")
+  let summary = update.effect.plan_summary()
+  inspect(summary.descriptors.length(), content="1")
+  inspect(summary.descriptors[0].key, content="pi-transport:dispatch")
+  inspect(summary.descriptors[0].kind, content="transport")
+  inspect(summary.descriptors[0].label, content="Pi transport dispatch")
   let accepted = run_workbench_effect(update)
   inspect(captured.val.length(), content="2")
   let refresh = accepted.update_with_transport(
@@ -5574,6 +5579,7 @@ fn run_workbench_effect(update : WorkbenchUpdate) -> WorkbenchModel {
       }
     Send(message) => dispatch(message)
     Dispatch(run) => run(dispatch)
+    Run(_descriptor, run) => run(dispatch)
   }
   model.get()
 }
@@ -5605,6 +5611,7 @@ fn run_workbench_effect_with_transport(
       }
     Send(message) => dispatch(message)
     Dispatch(run) => run(dispatch)
+    Run(_descriptor, run) => run(dispatch)
   }
   model.get()
 }

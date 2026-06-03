@@ -115,11 +115,14 @@ control state, but shared app runtimes should default to `Program::simple` and
 `update` returns follow-up work: `Effect::send` re-enters the typed message loop
 directly, and `Effect::dispatch` gives an effect runner the typed message
 dispatcher for app-owned host-service bridges or other callbacks without making
-`core` platform-specific. `Effect::plan_summary` exposes a platform-neutral
-diagnostic summary of the effect tree, including batch, send, dispatch, none,
-scheduled leaf count, and max depth, without running effect callbacks. Program
-runtime snapshots also report message queue enqueue, drain, pending, and
-max-pending counters without requiring `Msg` values to be serializable.
+`core` platform-specific. `Effect::run` is the structured form for dispatch
+runners that should appear in diagnostics; it adds a stable key, kind, and label
+while leaving concrete async execution and cancellation ownership outside
+`core`. `Effect::plan_summary` exposes a platform-neutral diagnostic summary of
+the effect tree, including batch, send, dispatch, none, scheduled leaf count,
+max depth, and structured effect descriptors, without running effect callbacks.
+Program runtime snapshots also report message queue enqueue, drain, pending,
+and max-pending counters without requiring `Msg` values to be serializable.
 `Program` constructors also accept
 `subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
 uses a stable key, receives the typed dispatcher, and may return a cleanup
@@ -179,9 +182,11 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   from canceled or destroyed subscription lifetimes. Program runtime and
   runtime inspector snapshots expose active subscription descriptors and
   lifecycle entries so tooling can identify which sources were reused or
-  canceled without inspecting app messages. Runtime inspector snapshots also
-  expose platform-neutral pipeline pass counters for rebuild, layout, paint,
-  and draw-command building. It keeps
+  canceled without inspecting app messages. Structured effect descriptors from
+  `Effect::run` travel through effect summaries so tooling can identify planned
+  host-service or task runners without inspecting `Msg` values. Runtime
+  inspector snapshots also expose platform-neutral pipeline pass counters for
+  rebuild, layout, paint, and draw-command building. It keeps
   the latest effect summary, latest scheduled effect summary, and latest
   subscription plan summary for inspector tooling. This is separate from
   component-local `BuildContext::watch` and
@@ -483,8 +488,8 @@ pending requests into an in-flight set at the platform edge, completes them with
 the original request attached, and records the completion. Runtime-owned
 effects such as async paste are handed to `HostRuntimeDriver`, while app-owned
 service flows can register a `HostAppServices::on_completed` callback from
-`Effect::dispatch` so the completion re-enters the typed message loop without
-exposing platform APIs to `core`.
+`Effect::run` or `Effect::dispatch` so the completion re-enters the typed
+message loop without exposing platform APIs to `core`.
 The Web backend wires that queue to browser host imports and exported wasm
 completion callbacks for clipboard reads and file pickers.
 Web, macOS, and Windows entrypoints query that bridge at startup and install
@@ -515,7 +520,7 @@ File drop targets use the `View::on_file_drop` modifier; hosts normalize native
 file drag/drop positions and paths before the runtime dispatches typed messages
 to the hit view. `views.drop_zone` and `views.file_import_panel` are view-level
 workflow shells over that modifier; their browse action remains an app message,
-so effect-capable app code can return an `Effect::dispatch` runner that calls
+so effect-capable app code can return an `Effect::run` runner that calls
 `HostAppServices::open_file`, register `HostAppServices::on_completed` for
 pending dialogs, and dispatch typed completion messages for unavailable,
 synchronous, or async file dialog responses. Web file import may

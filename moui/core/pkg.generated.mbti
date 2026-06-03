@@ -592,13 +592,21 @@ pub(all) enum Effect[Msg] {
   Batch(Array[Effect[Msg]])
   Send(Msg)
   Dispatch(((Msg) -> Unit) -> Unit)
+  Run(EffectDescriptor, ((Msg) -> Unit) -> Unit)
 }
 pub fn[Msg] Effect::batch(Array[Self[Msg]]) -> Self[Msg]
 pub fn[Msg] Effect::dispatch(((Msg) -> Unit) -> Unit) -> Self[Msg]
 pub fn[Msg, NextMsg] Effect::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] Effect::none() -> Self[Msg]
 pub fn[Msg] Effect::plan_summary(Self[Msg]) -> EffectPlanSummary
+pub fn[Msg] Effect::run(key~ : String, run~ : ((Msg) -> Unit) -> Unit, kind? : String, label? : String) -> Self[Msg]
 pub fn[Msg] Effect::send(Msg) -> Self[Msg]
+
+pub(all) struct EffectDescriptor {
+  key : String
+  kind : String
+  label : String
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum EffectPlanKind {
   EffectPlanNone
@@ -615,6 +623,7 @@ pub(all) struct EffectPlanSummary {
   dispatch_count : Int
   scheduled_count : Int
   max_depth : Int
+  descriptors : Array[EffectDescriptor]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn EffectPlanSummary::empty() -> Self
 

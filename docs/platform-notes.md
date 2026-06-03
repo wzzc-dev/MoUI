@@ -106,8 +106,8 @@ constructors and platform event conversion.
   Hosts drain pending requests into in-flight platform work, complete them with
   the original request, and record completions. Runtime-owned responses such as
   clipboard paste are dispatched through `HostRuntimeDriver`; app-owned service
-  workflows can register `HostAppServices::on_completed` from an
-  `Effect::dispatch` runner so a pending completion re-enters the app's typed
+  workflows can register `HostAppServices::on_completed` from an `Effect::run`
+  or `Effect::dispatch` runner so a pending completion re-enters the app's typed
   message loop.
 - Host service bridges can apply a reported light/dark system theme to a runtime
   `Environment`. Web, macOS, and Windows do this once at startup before the

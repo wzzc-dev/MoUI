@@ -6,9 +6,10 @@ driven by `Program::simple_with_environment`. It still contains the Counter and
 Todo interaction patterns. The WYSIWYG Markdown editor stays separate because
 it demonstrates a larger editing workflow with its own model and parser tests.
 Apps that need host-service work should use `Program::new` with `Effect[Msg]`;
-apps that need ongoing typed callbacks can add `subscriptions=model => ...` and
-stable `Subscription` keys while keeping concrete timer or host adapters out of
-`core`.
+prefer `Effect::run` when a host-service or async bridge should carry a stable
+diagnostic key. Apps that need ongoing typed callbacks can add
+`subscriptions=model => ...` and stable `Subscription` keys while keeping
+concrete timer or host adapters out of `core`.
 Showcase surfaces renderer capability follow-ups first so visible docs do not
 hide partial or gap status behind ready features.
 
@@ -162,7 +163,7 @@ column width/order persistence, and bulk action effects remain app-owned.
 The File Importer example demonstrates the non-render file workflow surface. The
 view uses `drop_zone` and `file_import_panel`; the pure model accepts dropped
 paths, while the effect-capable runtime uses `Program::new` and
-`Effect::dispatch` to request an app-level host file dialog through
+`Effect::run` to request an app-level host file dialog through
 `HostAppServices` and feed unavailable, immediate, or pending responses back as
 typed `HostCompleted` messages. Pending file-dialog responses register
 `HostAppServices::on_completed`, so the later host completion dispatches through
