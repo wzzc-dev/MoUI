@@ -155,6 +155,10 @@ test "host image repaint tracker routes revision changes per window" {
   inspect(baseline_snapshot.tracked_window_count, content="2")
   assert_true(baseline_snapshot.tracked_windows[0].window_id == main_id)
   inspect(baseline_snapshot.tracked_windows[0].revision, content="0")
+  inspect(
+    baseline_snapshot.tracked_windows[0].status_counts.record_count,
+    content="0",
+  )
   assert_true(baseline_snapshot.tracked_windows[1].window_id == inspector_id)
   inspect(baseline_snapshot.tracked_windows[1].revision, content="0")
   inspector_revision.val = 1
@@ -179,6 +183,10 @@ test "host image repaint tracker routes revision changes per window" {
   inspect(requested_snapshot.tracked_windows[0].revision, content="0")
   assert_true(requested_snapshot.tracked_windows[1].window_id == inspector_id)
   inspect(requested_snapshot.tracked_windows[1].revision, content="1")
+  inspect(
+    requested_snapshot.tracked_windows[1].status_counts.record_count,
+    content="0",
+  )
   let unchanged = tracker.request_redraw_if_changed(
     inspector_id,
     inspector_renderer,
@@ -201,6 +209,65 @@ test "host image repaint tracker routes revision changes per window" {
   )
   inspect(requested.length(), content="2")
   assert_true(requested[1] == main_id)
+}
+
+///|
+test "host image repaint tracker snapshots lifecycle status counts" {
+  let tracker = HostImageResourceRepaintTracker::new()
+  let window_id = HostWindowId::new(5)
+  let revision = Ref(1)
+  let records : Ref[Array[@render.ImageResourceRecord]] = Ref([
+    @render.ImageResourceRecord::loading("loading.png"),
+    @render.ImageResourceRecord::ready("ready.png", width=64, height=48),
+    @render.ImageResourceRecord::failed("failed.png", diagnostic="decode"),
+  ])
+  let renderer = HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => {
+      @render.ImageResourceSnapshot::new(
+        revision=revision.val,
+        records=records.val,
+      )
+    }),
+  )
+  let baseline = tracker.record_presented(window_id, renderer)
+  inspect(baseline.current_revision, content="1")
+  let baseline_snapshot = tracker.snapshot()
+  inspect(baseline_snapshot.tracked_window_count, content="1")
+  let baseline_counts = baseline_snapshot.tracked_windows[0].status_counts
+  inspect(baseline_counts.record_count, content="3")
+  inspect(baseline_counts.loading_count, content="1")
+  inspect(baseline_counts.ready_count, content="1")
+  inspect(baseline_counts.failed_count, content="1")
+  inspect(baseline_counts.disposed_count, content="0")
+  revision.val = 2
+  records.val = [
+    @render.ImageResourceRecord::ready("loading.png", width=12, height=8),
+    @render.ImageResourceRecord::ready("ready.png", width=64, height=48),
+    @render.ImageResourceRecord::failed("failed.png", diagnostic="decode"),
+    @render.ImageResourceRecord::disposed("old.png"),
+  ]
+  let redraws = Ref(0)
+  let result = tracker.request_redraw_if_changed(
+    window_id,
+    renderer,
+    window_open=true,
+    request_redraw=_id => redraws.val = redraws.val + 1,
+  )
+  assert_true(
+    result.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+  )
+  inspect(redraws.val, content="1")
+  let updated_snapshot = tracker.snapshot()
+  inspect(updated_snapshot.tracked_windows[0].revision, content="2")
+  let updated_counts = updated_snapshot.tracked_windows[0].status_counts
+  inspect(updated_counts.record_count, content="4")
+  inspect(updated_counts.loading_count, content="0")
+  inspect(updated_counts.ready_count, content="2")
+  inspect(updated_counts.failed_count, content="1")
+  inspect(updated_counts.disposed_count, content="1")
 }
 
 ///|

@@ -482,7 +482,10 @@ shared unavailable-resolver message.
 
 `HostWindowRenderer` is the renderer-neutral runtime handle used by native host
 cores. It is a record of closures for resize, render, text-system access,
-image-resource diagnostics, present-count diagnostics, and disposal. Host cores depend only on
+image-resource diagnostics, present-count diagnostics, and disposal. The shared
+image repaint tracker consumes renderer-neutral image snapshots to route
+late-image redraws per open window and expose tracked-window revision plus
+loading/ready/failed/disposed status-count diagnostics. Host cores depend only on
 `core`/`backend/host` plus the platform `window` package; they do not import
 `render/wgpu`, `render/skia`, `wgpu_mbt`, or `skia_mbt`. WGPU provider packages
 own GPU surface bridges, `wgpu-native`, and native WGPU text provider

@@ -28,7 +28,8 @@ paths, or abstractions that only preserve old shapes.
   per-window runtime slot collection, platform-window id mapping,
   request/completion, window event conversion, and renderer-neutral
   `HostWindowRenderer` diagnostics, image-resource repaint routing contracts,
-  and tracked-window image-resource repaint diagnostics.
+  and tracked-window image-resource repaint diagnostics with revision and
+  lifecycle status counts.
 - `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
   cores: platform windows, event conversion, services, lifecycle, runtime slots,
   and renderer-neutral provider hooks. They must not import `render/wgpu`,
