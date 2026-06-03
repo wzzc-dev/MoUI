@@ -215,6 +215,10 @@ test "runtime inspector and frame profile expose devtool counters" {
   inspect(snapshot.last_scheduled_effect_summary.max_depth, content="0")
   inspect(snapshot.program_subscription_plan_count, content="0")
   inspect(snapshot.last_subscription_plan_summary.max_depth, content="0")
+  inspect(
+    snapshot.last_subscription_plan_summary.descriptors.length(),
+    content="0",
+  )
   inspect(snapshot.active_subscription_count, content="0")
   inspect(snapshot.reused_subscription_count, content="0")
   inspect(snapshot.duplicate_subscription_key_count, content="0")

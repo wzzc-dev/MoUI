@@ -128,17 +128,18 @@ and max-pending counters without requiring `Msg` values to be serializable.
 `subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
 uses a stable key, receives the typed dispatcher, and may return a cleanup
 callback. `Subscription::plan_summary` exposes the declared none, batch,
-source, duplicate-key, and max-depth structure without starting sources.
-Existing keys are reused across model changes, missing keys are canceled,
-duplicate keys in one subscription batch are ignored after the first and
-reported in runtime diagnostics, and `Subscription::map` preserves child
-feature identity while lifting messages to a parent type. Dispatchers captured
-by canceled or destroyed subscriptions are ignored, so stale callbacks cannot
-re-enter the model loop after their subscription lifetime ends; program runtime
-and inspector snapshots count those ignored subscription dispatches separately
-from normal typed dispatch/update counters and expose active subscription
-descriptors plus lifecycle entries for tooling. Concrete timer, window, route,
-or host-service adapters remain outside `core`; the core
+source, duplicate-key, max-depth, and declared source descriptor structure
+without starting sources. Existing keys are reused across model changes, missing
+keys are canceled, duplicate keys in one subscription batch are ignored after
+the first and reported in runtime diagnostics, and `Subscription::map`
+preserves child feature identity while lifting messages to a parent type.
+Dispatchers captured by canceled or destroyed subscriptions are ignored, so
+stale callbacks cannot re-enter the model loop after their subscription
+lifetime ends; program runtime and inspector snapshots count those ignored
+subscription dispatches separately from normal typed dispatch/update counters
+and expose planned subscription descriptors, active subscription descriptors,
+and lifecycle entries for tooling. Concrete timer, window, route, or
+host-service adapters remain outside `core`; the core
 subscription runtime only owns the platform-neutral lifecycle, subscription plan
 diagnostics, and typed dispatch contract. Environment-aware TEA apps should use
 the `*_with_environment` constructors instead of taking `BuildContext` in their
@@ -193,7 +194,8 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   inspector snapshots also expose platform-neutral pipeline pass counters for
   rebuild, layout, paint, and draw-command building. It keeps
   the latest effect summary, latest scheduled effect summary, and latest
-  subscription plan summary for inspector tooling. This is separate from
+  subscription plan summary, including planned subscription descriptors, for
+  inspector tooling. This is separate from
   component-local `BuildContext::watch` and
   `BuildContext::run_effect`; program subscriptions model ongoing app event
   sources, while build-context subscriptions model component-local state

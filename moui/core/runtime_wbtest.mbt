@@ -598,6 +598,22 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
     SubscriptionPlanKind::SubscriptionPlanSource,
   )
   inspect(initial.last_subscription_plan_summary.source_count, content="1")
+  inspect(
+    initial.last_subscription_plan_summary.descriptors.length(),
+    content="1",
+  )
+  inspect(
+    initial.last_subscription_plan_summary.descriptors[0].key,
+    content="timer:alpha",
+  )
+  inspect(
+    initial.last_subscription_plan_summary.descriptors[0].kind,
+    content="timer",
+  )
+  inspect(
+    initial.last_subscription_plan_summary.descriptors[0].label,
+    content="alpha",
+  )
   inspect(initial.active_subscription_count, content="1")
   inspect(initial.started_subscription_count, content="1")
   inspect(initial.active_subscriptions[0].key, content="timer:alpha")
@@ -727,6 +743,18 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
   inspect(snapshot.subscription_plan_count, content="2")
   inspect(snapshot.last_subscription_plan_summary.source_count, content="2")
   inspect(
+    snapshot.last_subscription_plan_summary.descriptors.length(),
+    content="2",
+  )
+  inspect(
+    snapshot.last_subscription_plan_summary.descriptors[0].label,
+    content="Instant",
+  )
+  inspect(
+    snapshot.last_subscription_plan_summary.descriptors[1].label,
+    content="Duplicate ignored",
+  )
+  inspect(
     snapshot.last_subscription_plan_summary.duplicate_key_count,
     content="1",
   )
@@ -741,6 +769,10 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
   inspect(
     inspector.last_subscription_plan_summary.duplicate_key_count,
     content="1",
+  )
+  inspect(
+    inspector.last_subscription_plan_summary.descriptors[1].key,
+    content="instant",
   )
   inspect(inspector.reused_subscription_count, content="1")
   inspect(inspector.duplicate_subscription_key_count, content="2")

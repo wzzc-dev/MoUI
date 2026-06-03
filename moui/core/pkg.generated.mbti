@@ -1663,6 +1663,7 @@ pub(all) struct SubscriptionPlanSummary {
   source_count : Int
   duplicate_key_count : Int
   max_depth : Int
+  descriptors : Array[SubscriptionDescriptor]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SubscriptionPlanSummary::empty() -> Self
 
