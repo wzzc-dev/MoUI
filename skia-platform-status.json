@@ -963,6 +963,11 @@
       "marker": "native smoke font spacing"
     },
     {
+      "id": "text.non-finite-font-scalars-sanitized",
+      "area": "Text",
+      "marker": "native smoke non-finite font scalars sanitized"
+    },
+    {
       "id": "text.font-resource-plan",
       "area": "Text",
       "marker": "native smoke font resource plan count"
@@ -2159,6 +2164,11 @@
     {
       "id": "text.invalid-shaped-glyph-replay-skipped",
       "marker": "native smoke invalid shaped glyph replay skipped",
+      "value": "1"
+    },
+    {
+      "id": "text.non-finite-font-scalars-sanitized",
+      "marker": "native smoke non-finite font scalars sanitized",
       "value": "1"
     },
     {

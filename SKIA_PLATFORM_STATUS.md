@@ -94,7 +94,7 @@ these facts recorded in logs:
   zero-cache-touch proof, non-finite path append/direct mutation skip proof,
   canvas command replay, linear-gradient shader validation, invalid shader/filter descriptor cache safety,
   invalid shader/filter replay skip and all-filter zero-cache-touch proof,
-  non-finite filter input rejection,
+  non-finite filter input rejection, non-finite native font scalar sanitization,
   canvas replay resource-category stats, render resource planning,
   GPU context
   resource planning, GPU context identity variation, GPU frame context validation,
@@ -146,7 +146,8 @@ these facts recorded in logs:
   canvas paint-shader fill replay,
   linear-gradient shader validation, invalid shader/filter descriptor cache
   safety, invalid shader/filter replay skip and all-filter zero-cache-touch
-  proof, non-finite filter validation, and shader/filter resource planning.
+  proof, non-finite filter validation, non-finite native font scalar
+  sanitization, and shader/filter resource planning.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains
   `smoke_status=0`, `native_smoke_marker=passed`, and
   `native_pkg_restore=passed`.
