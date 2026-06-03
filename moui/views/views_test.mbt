@@ -1244,7 +1244,7 @@ test "dialog composes custom content dismiss and action messages" {
 }
 
 ///|
-test "dialog host dims background and keeps modal boundary visible" {
+test "dialog host uses transparent scrim and keeps modal boundary visible" {
   let runtime = @core.AppRuntime::new_view(
     root=@views.dialog_host(
       @views.text("Background", width=180.0, height=32.0),
@@ -1265,18 +1265,11 @@ test "dialog host dims background and keeps modal boundary visible" {
     size=@core.Size::new(width=640.0, height=480.0),
   )
   let draw = runtime.draw_commands()
+  inspect(full_frame_solid_fill_count(draw), content="1")
+  assert_true(has_full_frame_solid_fill(draw, alpha=0.28))
   assert_true(has_text(draw, "Visible dialog"))
   assert_true(has_text(draw, "Bounded modal content"))
   assert_true(has_text(draw, "Close"))
-  assert_true(
-    draw.any(command => {
-      command
-      is @core.DrawCommand::FillRoundedRectBrush(
-        _,
-        @core.Brush::Solid({ r: 0.0, g: 0.0, b: 0.0, a: 0.46 })
-      )
-    }),
-  )
   assert_true(draw.any(command => command is @core.DrawCommand::DrawShadow(_)))
   assert_true(
     draw.any(command => {
@@ -2416,6 +2409,56 @@ fn text_frame(
     }
   }
   None
+}
+
+///|
+fn full_frame_solid_fill_count(commands : Array[@core.DrawCommand]) -> Int {
+  let mut count = 0
+  for command in commands {
+    if is_full_frame_solid_fill(command) {
+      count = count + 1
+    }
+  }
+  count
+}
+
+///|
+fn has_full_frame_solid_fill(
+  commands : Array[@core.DrawCommand],
+  alpha~ : Double,
+) -> Bool {
+  commands.any(command => {
+    match command {
+      @core.DrawCommand::FillRoundedRectBrush(
+        { rect: { origin, size }, .. },
+        @core.Brush::Solid({ r, g, b, a })
+      ) =>
+        origin.x == 0.0 &&
+        origin.y == 0.0 &&
+        size.width == 640.0 &&
+        size.height == 480.0 &&
+        r == 0.0 &&
+        g == 0.0 &&
+        b == 0.0 &&
+        a == alpha
+      _ => false
+    }
+  })
+}
+
+///|
+fn is_full_frame_solid_fill(command : @core.DrawCommand) -> Bool {
+  match command {
+    @core.DrawCommand::FillRoundedRectBrush(
+      { rect: { origin, size }, .. },
+      @core.Brush::Solid(_)
+    ) =>
+      origin.x == 0.0 &&
+      origin.y == 0.0 &&
+      size.width == 640.0 &&
+      size.height == 480.0
+    _ => false
+  }
 }
 
 ///|
