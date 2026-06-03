@@ -134,6 +134,15 @@ test "showcase open sheet button presents bottom sheet" {
   assert_true(sheet_frame.origin.y > 560.0)
   let sheet_center_x = sheet_frame.origin.x + sheet_frame.size.width / 2.0
   assert_true((sheet_center_x - 480.0).abs() <= 1.0)
+  click_text(runtime, "Showcase sheet")
+  assert_true(has_text(runtime.draw_commands(), "Showcase sheet"))
+  click_point(
+    runtime,
+    @core.Point::new(x=sheet_center_x, y=sheet_frame.origin.y - 24.0),
+  )
+  assert_false(has_text(runtime.draw_commands(), "Showcase sheet"))
+  click_text(runtime, "Open sheet")
+  assert_true(has_text(runtime.draw_commands(), "Showcase sheet"))
   click_text(runtime, "Done")
   assert_false(has_text(runtime.draw_commands(), "Showcase sheet"))
 }
@@ -1036,6 +1045,11 @@ fn click_frame(runtime : @core.AppRuntime, frame : @core.Rect) -> Unit {
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )
+  click_point(runtime, position)
+}
+
+///|
+fn click_point(runtime : @core.AppRuntime, position : @core.Point) -> Unit {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),
