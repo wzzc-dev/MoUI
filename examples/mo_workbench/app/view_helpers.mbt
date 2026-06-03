@@ -2227,6 +2227,7 @@ fn session_status_label(status : String) -> String {
     "active" => "活跃"
     "queued" => "排队"
     "running" => "运行中"
+    "waiting" => "等待"
     "idle" => "空闲"
     "failed" => "失败"
     _ => status
@@ -2238,6 +2239,7 @@ fn session_status_tone(status : String) -> @views.BadgeTone {
   match status {
     "running" | "active" => Success
     "queued" => Accent
+    "waiting" => Warning
     "failed" => Danger
     _ => Neutral
   }
@@ -2278,9 +2280,17 @@ fn WorkbenchModel::next_action(self : WorkbenchModel) -> WorkbenchNextAction? {
   if !self.diagnostics.is_empty() {
     let diagnostic = self.diagnostics[self.diagnostics.length() - 1]
     return Some({
-      title: "修复最新诊断",
+      title: if diagnostic_is_agent_intervention(diagnostic) {
+        "处理 Agent 请求"
+      } else {
+        "修复最新诊断"
+      },
       detail: diagnostic_detail_label(diagnostic),
-      primary_label: "修复",
+      primary_label: if diagnostic_is_agent_intervention(diagnostic) {
+        "处理"
+      } else {
+        "修复"
+      },
       primary_message: FixDiagnostic(
         diagnostic.source,
         diagnostic.severity,
@@ -2366,6 +2376,14 @@ fn diagnostic_detail_label(diagnostic : DiagnosticItem) -> String {
   } else {
     source + ": " + message
   }
+}
+
+///|
+fn diagnostic_is_agent_intervention(diagnostic : DiagnosticItem) -> Bool {
+  diagnostic.source == "Agent approval" ||
+  diagnostic.source == "Agent permission" ||
+  diagnostic.source == "Agent input" ||
+  diagnostic.source == "Agent intervention"
 }
 
 ///|

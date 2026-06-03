@@ -716,6 +716,34 @@ test "workbench transport runtime effect dispatches prompt events" {
 }
 
 ///|
+test "workbench transport effect interprets only pure update queue delta" {
+  let seed = WorkbenchModel::new().update(QueueCommand("moon check"))
+  inspect(seed.pending_transport_count(), content="2")
+  let captured : Ref[Array[PiTransportCommand]] = Ref([])
+  let transport = PiTransportRuntime::new(run=(commands, _emit) => {
+    captured.val = commands
+  })
+  let update = seed.update_with_transport(
+    QueueCommand("moon test examples/mo_workbench/app --target native"),
+    transport,
+  )
+  inspect(update.model.pending_transport_count(), content="3")
+  inspect(captured.val.length(), content="0")
+  ignore(run_workbench_effect(update))
+  inspect(captured.val.length(), content="1")
+  match captured.val[0] {
+    RunShellCommand(session, command) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        command,
+        content="moon test examples/mo_workbench/app --target native",
+      )
+    }
+    _ => fail("expected one newly queued shell command")
+  }
+}
+
+///|
 test "workbench dispatch queues steering and follow-up inputs" {
   let steering = WorkbenchModel::new()
     .update(PromptChanged("Prefer the Skia route"))
@@ -2806,6 +2834,117 @@ test "workbench ingests Pi diagnostics files and diff jsonl" {
   assert_true(has_text(commands, "moon check"))
   assert_true(has_text(commands, "unused variable in app.mbt"))
   assert_false(has_text(commands, "工作区证据"))
+}
+
+///|
+test "workbench ingests Pi approval request as waiting intervention" {
+  let seed = WorkbenchModel::new()
+  let initial_unread = seed.active_session().unread_events
+  let model = seed.update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"approval_required","reason":"Run shell command","command":"moon test examples/mo_workbench/app --target native"}
+        ),
+      ),
+    ),
+  )
+  inspect(model.active_session().status, content="waiting")
+  inspect(model.active_session().active_task, content="等待用户批准")
+  inspect(
+    model.active_session().summary,
+    content="等待用户处理 Agent 请求",
+  )
+  inspect(model.active_session().unread_events - initial_unread, content="1")
+  inspect(model.pi_agent.phase, content="waiting")
+  inspect(
+    model.pi_agent.message_preview,
+    content="Run shell command · moon test examples/mo_workbench/app --target native",
+  )
+  inspect(model.last_status, content="Pi agent intervention required")
+  let diagnostic = model.diagnostics[model.diagnostics.length() - 1]
+  inspect(diagnostic.source, content="Agent approval")
+  inspect(diagnostic.severity, content="warning")
+  inspect(
+    diagnostic.message,
+    content="Run shell command · moon test examples/mo_workbench/app --target native",
+  )
+  assert_true(model.events.any(event => event.title == "Pi approval required"))
+  let commands = model.runtime(width=1220.0, height=780.0).draw_commands()
+  assert_true(has_text(commands, "等待"))
+  assert_true(has_text(commands, "等待用户批准"))
+  assert_true(has_text(commands, "处理 Agent 请求"))
+  assert_true(
+    has_text(
+      commands, "Agent approval: Run shell command · moon test examples/mo_workbench/app --target native",
+    ),
+  )
+  assert_true(has_text(commands, "处理"))
+  assert_true(has_text(commands, "清除"))
+
+  let queued = model.update(
+    FixDiagnostic(diagnostic.source, diagnostic.severity, diagnostic.message),
+  )
+  inspect(queued.last_status, content="Queued diagnostic fix for Pi RPC")
+  match queued.transport.command_queue[1] {
+    SendUserInput(session, text) => {
+      inspect(session, content="moui-skia")
+      inspect(
+        text,
+        content=context_task_payload(
+          "Resolve Agent approval request: Run shell command · moon test examples/mo_workbench/app --target native",
+        ),
+      )
+    }
+    _ => fail("expected queued intervention prompt")
+  }
+}
+
+///|
+test "workbench maps Pi permission and input intervention labels" {
+  let seed = WorkbenchModel::new()
+  let initial_unread = seed.active_session().unread_events
+  let permission = seed.update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"permission_required","data":{"message":"Write access needs confirmation","path":"examples/mo_workbench/app/app.mbt"}}
+        ),
+      ),
+    ),
+  )
+  inspect(permission.active_session().status, content="waiting")
+  inspect(permission.active_session().active_task, content="等待权限确认")
+  inspect(
+    permission.active_session().unread_events - initial_unread,
+    content="1",
+  )
+  let permission_diagnostic_index = permission.diagnostics.length() - 1
+  let permission_diagnostic = permission.diagnostics[permission_diagnostic_index]
+  inspect(permission_diagnostic.source, content="Agent permission")
+  inspect(
+    permission_diagnostic.message,
+    content="Write access needs confirmation · examples/mo_workbench/app/app.mbt",
+  )
+
+  let input = permission.update(
+    ReceiveTransport(
+      JsonLineReceived(
+        "moui-skia",
+        (
+          #|{"type":"input_required","prompt":"Choose a branch name"}
+        ),
+      ),
+    ),
+  )
+  inspect(input.active_session().status, content="waiting")
+  inspect(input.active_session().active_task, content="等待用户输入")
+  inspect(input.active_session().unread_events - initial_unread, content="2")
+  let input_diagnostic = input.diagnostics[input.diagnostics.length() - 1]
+  inspect(input_diagnostic.source, content="Agent input")
+  inspect(input_diagnostic.message, content="Choose a branch name")
 }
 
 ///|
