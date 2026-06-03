@@ -60,14 +60,26 @@ fn ShowcaseModel::inspector_snapshot_card(
       (inner_width - theme.spacing_scale.sm * 3.0) / 4.0,
     )
   }
-  let card_height = if stat_columns == 1 { 468.0 } else { 248.0 }
+  let card_height = if stat_columns == 1 { 850.0 } else { 418.0 }
   let snapshot = showcase_inspector_snapshot(theme)
+  let runtime = snapshot.runtime
   let scope_caption = "Open scopes " +
     snapshot.render.open_clip_depth.to_string() +
     "/" +
     snapshot.render.open_layer_depth.to_string() +
     "/" +
     snapshot.render.open_filter_depth.to_string()
+  let scheduled_effect_label = if runtime.last_scheduled_effect_summary.descriptors.length() >
+    0 {
+    runtime.last_scheduled_effect_summary.descriptors[0].label
+  } else {
+    "none"
+  }
+  let active_subscription_label = if runtime.active_subscriptions.length() > 0 {
+    runtime.active_subscriptions[0].label
+  } else {
+    "none"
+  }
   showcase_soft_card(
     theme,
     column(
@@ -76,7 +88,7 @@ fn ShowcaseModel::inspector_snapshot_card(
         .font(theme.typography.control)
         .foreground(theme.palette.foreground),
         text(
-          "View/component summary, layout bounds, semantics, and dirty reasons",
+          "View/component, TEA runtime, layout, semantics, and dirty reasons",
           width=inner_width,
           height=22.0,
         )
@@ -122,6 +134,47 @@ fn ShowcaseModel::inspector_snapshot_card(
           row_spacing=theme.spacing_scale.sm,
           column_spacing=theme.spacing_scale.sm,
         ),
+        grid(
+          [
+            stat_card(
+              "Program messages",
+              runtime.program_dispatched_count.to_string(),
+              caption="Updates " + runtime.program_update_count.to_string(),
+              theme~,
+              width=stat_width,
+              height=96.0,
+            ),
+            stat_card(
+              "Effect runs",
+              runtime.program_effect_run_count.to_string(),
+              caption="Plans " + runtime.program_effect_plan_count.to_string(),
+              theme~,
+              width=stat_width,
+              height=96.0,
+            ),
+            stat_card(
+              "Subscription plans",
+              runtime.program_subscription_plan_count.to_string(),
+              caption="Sources " +
+                runtime.last_subscription_plan_summary.source_count.to_string(),
+              theme~,
+              width=stat_width,
+              height=96.0,
+            ),
+            stat_card(
+              "Active subscriptions",
+              runtime.active_subscription_count.to_string(),
+              caption="Started " +
+                runtime.started_subscription_count.to_string(),
+              theme~,
+              width=stat_width,
+              height=96.0,
+            ),
+          ],
+          columns=stat_columns,
+          row_spacing=theme.spacing_scale.sm,
+          column_spacing=theme.spacing_scale.sm,
+        ),
         text(
           "Dirty: " + snapshot.runtime.rebuild_reason,
           width=inner_width,
@@ -145,6 +198,30 @@ fn ShowcaseModel::inspector_snapshot_card(
         )
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
+        text(
+          "TEA counters: messages " +
+          runtime.program_dispatched_count.to_string() +
+          "; effect runs " +
+          runtime.program_effect_run_count.to_string() +
+          "; subscription plans " +
+          runtime.program_subscription_plan_count.to_string() +
+          "; active " +
+          runtime.active_subscription_count.to_string(),
+          width=inner_width,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
+        text(
+          "TEA descriptors: effect " +
+          scheduled_effect_label +
+          "; subscription " +
+          active_subscription_label,
+          width=inner_width,
+          height=22.0,
+        )
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Start,
@@ -157,14 +234,62 @@ fn ShowcaseModel::inspector_snapshot_card(
 
 ///|
 fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
-  let runtime = @core.AppRuntime::new_view(
-    root=surface(
+  let runtime = @core.AppRuntime::new_program(
+    program=diagnostics_inspector_sample_program(theme),
+    size=@core.Size::new(width=220.0, height=120.0),
+  )
+  runtime.inspector_snapshot()
+}
+
+///|
+priv struct DiagnosticsInspectorSampleModel {
+  event_count : Int
+}
+
+///|
+priv enum DiagnosticsInspectorSampleMsg {
+  DiagnosticsInspectorSampleBooted
+}
+
+///|
+fn diagnostics_inspector_sample_program(
+  theme : @core.Theme,
+) -> @core.Program[
+  DiagnosticsInspectorSampleModel,
+  DiagnosticsInspectorSampleMsg,
+] {
+  @core.Program::new_with_environment(
+    init=() => {
+      (
+        { event_count: 0 },
+        @core.Effect::run(
+          key="diagnostics:boot",
+          kind="inspector",
+          label="Inspector boot",
+          run=dispatch => dispatch(DiagnosticsInspectorSampleBooted),
+        ),
+      )
+    },
+    update=(model, message) => {
+      match message {
+        DiagnosticsInspectorSampleBooted =>
+          ({ event_count: model.event_count + 1 }, @core.Effect::none())
+      }
+    },
+    view=(model, _env) => {
+      surface(
         column(
           [
             text("Inspector sample", theme~, width=150.0, height=24.0),
+            text(
+              "Program events: " + model.event_count.to_string(),
+              theme~,
+              width=150.0,
+              height=22.0,
+            ),
             button(
               "Inspect",
-              on_click=ToggleActive,
+              on_click=DiagnosticsInspectorSampleBooted,
               variant=@views.ButtonVariant::Outline,
               theme~,
               width=112.0,
@@ -175,16 +300,27 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
           align=@views.CrossAlign::Start,
         ),
         width=180.0,
-        height=76.0,
+        height=104.0,
         variant=@views.SurfaceVariant::Base,
         theme~,
         padding=theme.spacing_scale.sm,
       )
       .semantics_invalid(invalid=true)
-      .semantics_description("Inspector sample surface"),
-    size=@core.Size::new(width=220.0, height=120.0),
+      .semantics_description("Inspector sample surface")
+    },
+    subscriptions=model => {
+      if model.event_count > 0 {
+        @core.Subscription::run(
+          key="diagnostics:tick",
+          kind="animation",
+          label="Inspector tick",
+          start=_dispatch => Some(() => ()),
+        )
+      } else {
+        @core.Subscription::none()
+      }
+    },
   )
-  runtime.inspector_snapshot()
 }
 
 ///|

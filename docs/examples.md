@@ -91,8 +91,9 @@ Showcase is organized around the main catalog order:
 Shell -> Feedback -> Runtime/Renderer -> Diagnostics`. The first eight sections
 cover user-facing components and layout patterns. `Runtime/Renderer` displays
 host capability and renderer status cards. `Diagnostics` shows a compact
-inspector snapshot with runtime, view, layout, semantics, render command, and
-render-scope counters, then links to the deeper diagnostic routes for
+inspector snapshot with runtime, TEA program message/effect/subscription,
+view, layout, semantics, render command, and render-scope counters, then links
+to the deeper diagnostic routes for
 interaction wiring, text diagnostics, advanced rendering, and reusable examples
 without crowding the main sidebar.
 
