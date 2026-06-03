@@ -141,8 +141,8 @@ and failed decodes mark records failed with a diagnostic. The shared host
 `HostImageResourceRepaintTracker` records the last presented revision for each
 window, routes repaint requests only to the matching open window when a newer
 revision is observed, exposes a diagnostic snapshot of tracked window
-revisions, and discards closed-window image changes while removing the closed
-window from the tracked repaint table. Native async loader/notifier trigger
+revisions and lifecycle status counts, and discards closed-window image changes
+while removing the closed window from the tracked repaint table. Native async loader/notifier trigger
 sources remain follow-up work. Skia renderer-local
 tests also pin `ImageFit::Contain` letterboxing,
 `ImageFit::Cover` UV crop geometry, `ImageFit::Stretch` full-frame sampling,
@@ -217,7 +217,7 @@ renderer image-resource records and revisioned snapshots through
 and disposed image resources without importing `render/skia`; macOS, Windows,
 and Linux hosts use the shared image repaint tracker to baseline presented
 Skia revisions, route per-window repaint requests, expose tracked-window
-revision snapshots, and drop closed-window image changes; renderer tests cover
+revision/status-count snapshots, and drop closed-window image changes; renderer tests cover
 JPEG/BMP data URI and local-file decode,
 contain/cover/stretch/scale-down/fit-width/fit-height source/destination placement, immutable
 failed-cache reuse, and local-file retry once a missing file appears.

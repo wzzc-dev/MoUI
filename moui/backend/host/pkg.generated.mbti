@@ -236,9 +236,18 @@ pub fn HostImageResourceRepaintTracker::revision_for(Self, HostWindowId) -> Int?
 pub fn HostImageResourceRepaintTracker::snapshot(Self) -> HostImageResourceRepaintSnapshot
 pub fn HostImageResourceRepaintTracker::tracked_count(Self) -> Int
 
+pub(all) struct HostImageResourceStatusCounts {
+  record_count : Int
+  loading_count : Int
+  ready_count : Int
+  failed_count : Int
+  disposed_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct HostImageResourceTrackedWindow {
   window_id : HostWindowId
   revision : Int
+  status_counts : HostImageResourceStatusCounts
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct HostInputCapabilities {

@@ -15,9 +15,19 @@ pub(all) struct HostImageResourceRepaintResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostImageResourceStatusCounts {
+  record_count : Int
+  loading_count : Int
+  ready_count : Int
+  failed_count : Int
+  disposed_count : Int
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct HostImageResourceTrackedWindow {
   window_id : HostWindowId
   revision : Int
+  status_counts : HostImageResourceStatusCounts
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -30,11 +40,12 @@ pub(all) struct HostImageResourceRepaintSnapshot {
 pub struct HostImageResourceRepaintTracker {
   priv mut window_ids : Array[HostWindowId]
   priv mut revisions : Array[Int]
+  priv mut status_counts : Array[HostImageResourceStatusCounts]
 }
 
 ///|
 pub fn HostImageResourceRepaintTracker::new() -> HostImageResourceRepaintTracker {
-  { window_ids: [], revisions: [] }
+  { window_ids: [], revisions: [], status_counts: [] }
 }
 
 ///|
@@ -54,6 +65,7 @@ pub fn HostImageResourceRepaintTracker::snapshot(
       tracked_windows.push(HostImageResourceTrackedWindow::{
         window_id: id,
         revision: self.revisions[index],
+        status_counts: self.status_counts_for_index(index),
       })
     }
   }
@@ -83,7 +95,7 @@ pub fn HostImageResourceRepaintTracker::record_presented(
   renderer : HostWindowRenderer,
 ) -> HostImageResourceRepaintResult {
   let snapshot = renderer.image_resource_snapshot()
-  self.record_revision(window_id, snapshot.revision)
+  self.record_snapshot(window_id, snapshot)
 }
 
 ///|
@@ -108,7 +120,7 @@ pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
   match self.revision_for(window_id) {
     Some(previous_revision) =>
       if snapshot.revision > previous_revision {
-        self.set_revision(window_id, snapshot.revision)
+        self.set_snapshot(window_id, snapshot)
         request_redraw(window_id)
         HostImageResourceRepaintResult::{
           window_id,
@@ -117,7 +129,7 @@ pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
           status: HostImageResourceRepaintStatus::ImageRepaintRequested,
         }
       } else if snapshot.revision < previous_revision {
-        self.set_revision(window_id, snapshot.revision)
+        self.set_snapshot(window_id, snapshot)
         HostImageResourceRepaintResult::{
           window_id,
           previous_revision,
@@ -125,6 +137,7 @@ pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
           status: HostImageResourceRepaintStatus::ImageRepaintRecorded,
         }
       } else {
+        self.set_snapshot(window_id, snapshot)
         HostImageResourceRepaintResult::{
           window_id,
           previous_revision,
@@ -132,7 +145,7 @@ pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
           status: HostImageResourceRepaintStatus::ImageRepaintUnchanged,
         }
       }
-    None => self.record_revision(window_id, snapshot.revision)
+    None => self.record_snapshot(window_id, snapshot)
   }
 }
 
@@ -143,6 +156,7 @@ pub fn HostImageResourceRepaintTracker::remove_window(
 ) -> Bool {
   let kept_ids : Array[HostWindowId] = []
   let kept_revisions : Array[Int] = []
+  let kept_status_counts : Array[HostImageResourceStatusCounts] = []
   let mut removed = false
   for index, id in self.window_ids {
     if id == window_id {
@@ -150,25 +164,27 @@ pub fn HostImageResourceRepaintTracker::remove_window(
     } else if index < self.revisions.length() {
       kept_ids.push(id)
       kept_revisions.push(self.revisions[index])
+      kept_status_counts.push(self.status_counts_for_index(index))
     }
   }
   self.window_ids = kept_ids
   self.revisions = kept_revisions
+  self.status_counts = kept_status_counts
   removed
 }
 
 ///|
-fn HostImageResourceRepaintTracker::record_revision(
+fn HostImageResourceRepaintTracker::record_snapshot(
   self : HostImageResourceRepaintTracker,
   window_id : HostWindowId,
-  revision : Int,
+  snapshot : @render.ImageResourceSnapshot,
 ) -> HostImageResourceRepaintResult {
   let previous_revision = self.previous_revision_or_zero(window_id)
-  self.set_revision(window_id, revision)
+  self.set_snapshot(window_id, snapshot)
   HostImageResourceRepaintResult::{
     window_id,
     previous_revision,
-    current_revision: revision,
+    current_revision: snapshot.revision,
     status: HostImageResourceRepaintStatus::ImageRepaintRecorded,
   }
 }
@@ -185,17 +201,73 @@ fn HostImageResourceRepaintTracker::previous_revision_or_zero(
 }
 
 ///|
-fn HostImageResourceRepaintTracker::set_revision(
+fn HostImageResourceRepaintTracker::set_snapshot(
   self : HostImageResourceRepaintTracker,
   window_id : HostWindowId,
-  revision : Int,
+  snapshot : @render.ImageResourceSnapshot,
 ) -> Unit {
+  let counts = host_image_resource_status_counts(snapshot.records)
   for index, id in self.window_ids {
     if id == window_id && index < self.revisions.length() {
-      self.revisions[index] = revision
+      self.revisions[index] = snapshot.revision
+      if index < self.status_counts.length() {
+        self.status_counts[index] = counts
+      }
       return
     }
   }
   self.window_ids.push(window_id)
-  self.revisions.push(revision)
+  self.revisions.push(snapshot.revision)
+  self.status_counts.push(counts)
+}
+
+///|
+fn HostImageResourceRepaintTracker::status_counts_for_index(
+  self : HostImageResourceRepaintTracker,
+  index : Int,
+) -> HostImageResourceStatusCounts {
+  if index < self.status_counts.length() {
+    self.status_counts[index]
+  } else {
+    host_image_resource_empty_status_counts()
+  }
+}
+
+///|
+fn host_image_resource_empty_status_counts() -> HostImageResourceStatusCounts {
+  {
+    record_count: 0,
+    loading_count: 0,
+    ready_count: 0,
+    failed_count: 0,
+    disposed_count: 0,
+  }
+}
+
+///|
+fn host_image_resource_status_counts(
+  records : Array[@render.ImageResourceRecord],
+) -> HostImageResourceStatusCounts {
+  let mut loading_count = 0
+  let mut ready_count = 0
+  let mut failed_count = 0
+  let mut disposed_count = 0
+  for record in records {
+    match record.status {
+      @render.ImageResourceStatus::ImageLoading =>
+        loading_count = loading_count + 1
+      @render.ImageResourceStatus::ImageReady => ready_count = ready_count + 1
+      @render.ImageResourceStatus::ImageFailed =>
+        failed_count = failed_count + 1
+      @render.ImageResourceStatus::ImageDisposed =>
+        disposed_count = disposed_count + 1
+    }
+  }
+  {
+    record_count: records.length(),
+    loading_count,
+    ready_count,
+    failed_count,
+    disposed_count,
+  }
 }
