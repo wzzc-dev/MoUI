@@ -516,6 +516,7 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
   let after_stale_alpha = runtime.program_runtime_snapshot()
   inspect(after_stale_alpha.dispatched_count, content="2")
   inspect(after_stale_alpha.update_count, content="2")
+  inspect(after_stale_alpha.ignored_subscription_dispatch_count, content="1")
   match beta_dispatch.val {
     Some(dispatch) => dispatch(ProgramSubscriptionTick)
     None => fail("expected beta subscription dispatch")
@@ -527,6 +528,7 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
   inspect(inspector.active_subscription_count, content="1")
   inspect(inspector.reused_subscription_count, content="2")
   inspect(inspector.duplicate_subscription_key_count, content="0")
+  inspect(inspector.ignored_subscription_dispatch_count, content="1")
   runtime.destroy()
   let destroyed = runtime.program_runtime_snapshot()
   inspect(destroyed.active_subscription_count, content="0")
@@ -547,6 +549,10 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
   let after_destroy_dispatch = runtime.program_runtime_snapshot()
   inspect(after_destroy_dispatch.dispatched_count, content="3")
   inspect(after_destroy_dispatch.update_count, content="3")
+  inspect(
+    after_destroy_dispatch.ignored_subscription_dispatch_count,
+    content="2",
+  )
   inspect(cleanup_log.join(","), content="alpha,beta")
 }
 
