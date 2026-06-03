@@ -242,12 +242,9 @@ test "effect plan summary describes nested effect structure" {
     Effect::send("first"),
     Effect::batch([
       Effect::none(),
-      Effect::run(
-        key="host:load",
-        kind="host-service",
-        label="Load host data",
-        run=_dispatch => (),
-      ),
+      Effect::host_service(key="host:load", label="Load host data", run=_dispatch => {
+        ()
+      }),
     ]),
   ])
   let summary = effect.plan_summary()
@@ -273,16 +270,13 @@ test "effect plan summary describes nested effect structure" {
 ///|
 test "effect plan summary reports duplicate structured effect keys" {
   let effect : Effect[String] = Effect::batch([
-    Effect::run(key="host:sync", kind="host-service", label="Sync host data", run=_dispatch => {
+    Effect::host_service(key="host:sync", label="Sync host data", run=_dispatch => {
       ()
     }),
     Effect::batch([
-      Effect::run(
-        key="host:sync",
-        kind="host-service",
-        label="Duplicate sync",
-        run=_dispatch => (),
-      ),
+      Effect::host_service(key="host:sync", label="Duplicate sync", run=_dispatch => {
+        ()
+      }),
       Effect::run(
         key="animation:tick",
         kind="animation",
@@ -310,18 +304,12 @@ test "program runtime aggregates duplicate structured effect keys" {
   let program = Program::new(
     init=() => {
       let effect : Effect[String] = Effect::batch([
-        Effect::run(
-          key="host:sync",
-          kind="host-service",
-          label="Sync host data",
-          run=_dispatch => (),
-        ),
-        Effect::run(
-          key="host:sync",
-          kind="host-service",
-          label="Duplicate sync",
-          run=_dispatch => (),
-        ),
+        Effect::host_service(key="host:sync", label="Sync host data", run=_dispatch => {
+          ()
+        }),
+        Effect::host_service(key="host:sync", label="Duplicate sync", run=_dispatch => {
+          ()
+        }),
       ])
       ("idle", effect)
     },

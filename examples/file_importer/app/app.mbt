@@ -309,9 +309,8 @@ fn FileImporterModel::request_file_dialog(
       last_event: "Waiting for file picker",
       availability_reason: "",
     },
-    effect=@core.Effect::run(
+    effect=@core.Effect::host_service(
       key="host:file-import",
-      kind="host-service",
       label="Import files",
       run=dispatch => {
         let response = services.open_file(title="Import files", filters=[

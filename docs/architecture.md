@@ -118,11 +118,14 @@ directly, and `Effect::dispatch` gives an effect runner the typed message
 dispatcher for app-owned host-service bridges or other callbacks without making
 `core` platform-specific. `Effect::run` is the structured form for ordinary
 one-shot runners that should appear in diagnostics; it adds a stable key, kind,
-and label while leaving concrete async execution outside `core`. `Effect::task`
-starts a one-shot cancellable task from an effect update: the runtime records an
-active task descriptor, completes it on the first typed dispatch, cancels an
-older active task when a new task with the same key starts, and cancels active
-tasks when the runtime is destroyed.
+and label while leaving concrete async execution outside `core`.
+`Effect::host_service` is the standard structured-run helper for host-service
+bridges; it fixes the descriptor kind to `host-service` while the app/backend
+still owns the actual service call. `Effect::task` starts a one-shot
+cancellable task from an effect update: the runtime records an active task
+descriptor, completes it on the first typed dispatch, cancels an older active
+task when a new task with the same key starts, and cancels active tasks when
+the runtime is destroyed.
 `Effect::plan_summary` exposes a platform-neutral diagnostic summary of the
 effect tree, including batch, send, anonymous dispatch, structured run, task,
 none, scheduled leaf count, max depth, structured effect descriptors, and
@@ -544,7 +547,7 @@ File drop targets use the `View::on_file_drop` modifier; hosts normalize native
 file drag/drop positions and paths before the runtime dispatches typed messages
 to the hit view. `views.drop_zone` and `views.file_import_panel` are view-level
 workflow shells over that modifier; their browse action remains an app message,
-so effect-capable app code can return an `Effect::run` runner that calls
+so effect-capable app code can return an `Effect::host_service` runner that calls
 `HostAppServices::open_file`, dispatch typed completion messages for
 unavailable or synchronous file dialog responses, and declare
 `HostAppServices::completion_subscription` for pending dialogs. Web file import may

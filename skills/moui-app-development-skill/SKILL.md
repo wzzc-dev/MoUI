@@ -89,12 +89,13 @@ separate framework task using `moui-framework-development-skill`.
   `Subscription::listen` / `Subscription::run` for custom kinds. Keep concrete
   timer or host adapters outside `core`.
 - Keep host-service calls out of pure reducers. For app-owned clipboard, file
-  dialog, URL, theme, or menu work, return `@core.Effect::run` with a stable
-  diagnostic key that is unique within the returned effect batch, call
+  dialog, URL, theme, or menu work, return `@core.Effect::host_service` with a
+  stable diagnostic key that is unique within the returned effect batch, call
   `@host.HostAppServices` inside the effect runner, and dispatch a typed
-  completion message back into the model. Use `@core.Effect::task` instead for
-  one-shot async tasks that need runtime-owned cancellation, completion, and
-  stale-dispatch diagnostics. When a service returns
+  completion message back into the model. Use `@core.Effect::run` for custom
+  structured effect kinds, or `@core.Effect::task` for one-shot async tasks
+  that need runtime-owned cancellation, completion, and stale-dispatch
+  diagnostics. When a service returns
   `HostServiceResponse::Pending(id)`, store the id in app model state and
   declare `HostAppServices::completion_subscription` from
   `subscriptions=model => ...` so the later host callback re-enters the same
@@ -241,17 +242,19 @@ sh scripts/dev-check.sh --platform-examples-build
 
 - Keep app state transitions testable without platform hosts.
 - Route user actions through existing MoUI event APIs and app reducers/helpers.
-- Use `Program::new` plus `Effect::run` for app-level host-service or async
+- Use `Program::new` plus `Effect::host_service` for app-level host-service
   bridge work that should appear in diagnostics but does not need runtime-owned
-  cancellation. Use `Effect::task` for one-shot async tasks that should stay
-  active until their first typed dispatch, be canceled when replaced by the same
-  key or when the runtime is destroyed, and report active/completed/cancelled
-  lifecycle diagnostics. Give structured effects stable key/kind/label values
-  and keep keys unique within the returned batch. `Effect::run` and
-  `Effect::task` are reported separately from anonymous dispatch in runtime
-  diagnostics; `Effect::dispatch` remains available for anonymous one-off
-  runners. When composing child features, lift child follow-up work with
-  `Effect::map`; structured descriptors are preserved for parent diagnostics.
+  cancellation. Use `Effect::run` for custom structured effect kinds, and
+  `Effect::task` for one-shot async tasks that should stay active until their
+  first typed dispatch, be canceled when replaced by the same key or when the
+  runtime is destroyed, and report active/completed/cancelled lifecycle
+  diagnostics. Give structured effects stable key/label values and keep keys
+  unique within the returned batch; custom `Effect::run` calls should also use
+  stable kind values. `Effect::run` and `Effect::task` are reported separately
+  from anonymous dispatch in runtime diagnostics; `Effect::dispatch` remains
+  available for anonymous one-off runners. When composing child features, lift
+  child follow-up work with `Effect::map`; structured descriptors are preserved
+  for parent diagnostics.
 - Use the standard `Subscription::timer`,
   `Subscription::animation_tick`, `Subscription::window_event`,
   `Subscription::route_event`, and `Subscription::service_completion` helpers

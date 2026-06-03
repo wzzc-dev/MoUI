@@ -401,9 +401,8 @@ pub fn EditorModel::update_with_services(
     BrowseForDocument =>
       (
         self,
-        @core.Effect::run(
+        @core.Effect::host_service(
           key="host:open-document",
-          kind="host-service",
           label="Open document",
           run=dispatch => {
             let response = services.open_file(title="Open document", filters=["md", "txt"])
