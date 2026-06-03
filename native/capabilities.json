@@ -224,6 +224,7 @@
       "smoke_markers": [
         "native smoke font spacing",
         "native smoke measured text width",
+        "native smoke non-finite font scalars sanitized",
         "native smoke invalid measured text resource plan count",
         "native smoke invalid measured text uncacheable count",
         "native smoke text glyph count",
