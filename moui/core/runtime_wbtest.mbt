@@ -529,6 +529,18 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
   inspect(inspector.reused_subscription_count, content="2")
   inspect(inspector.duplicate_subscription_key_count, content="0")
   inspect(inspector.ignored_subscription_dispatch_count, content="1")
+  inspect(inspector.active_subscriptions.length(), content="1")
+  inspect(inspector.active_subscriptions[0].key, content="timer:beta")
+  inspect(inspector.active_subscriptions[0].kind, content="timer")
+  inspect(inspector.active_subscriptions[0].label, content="beta")
+  assert_true(
+    inspector.subscription_lifecycle.any(entry => {
+      entry.key == "timer:alpha" &&
+      entry.status == SubscriptionLifecycleStatus::SubscriptionCancelled &&
+      entry.cancel_reason ==
+      Some(SubscriptionCancelReason::SubscriptionKeyChanged)
+    }),
+  )
   runtime.destroy()
   let destroyed = runtime.program_runtime_snapshot()
   inspect(destroyed.active_subscription_count, content="0")

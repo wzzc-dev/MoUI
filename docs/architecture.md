@@ -132,8 +132,9 @@ feature identity while lifting messages to a parent type. Dispatchers captured
 by canceled or destroyed subscriptions are ignored, so stale callbacks cannot
 re-enter the model loop after their subscription lifetime ends; program runtime
 and inspector snapshots count those ignored subscription dispatches separately
-from normal typed dispatch/update counters. Concrete timer, window, route, or
-host-service adapters remain outside `core`; the core
+from normal typed dispatch/update counters and expose active subscription
+descriptors plus lifecycle entries for tooling. Concrete timer, window, route,
+or host-service adapters remain outside `core`; the core
 subscription runtime only owns the platform-neutral lifecycle, subscription plan
 diagnostics, and typed dispatch contract. Environment-aware TEA apps should use
 the `*_with_environment` constructors instead of taking `BuildContext` in their
@@ -175,9 +176,12 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   update, message queue, effect plan, scheduled effect, effect-kind, active
   subscription, subscription plan, start/reuse/cancel, and duplicate-key
   counters, plus ignored subscription dispatch counters for stale callbacks
-  from canceled or destroyed subscription lifetimes. Runtime inspector snapshots
-  also expose platform-neutral pipeline pass counters for rebuild, layout,
-  paint, and draw-command building. It keeps
+  from canceled or destroyed subscription lifetimes. Program runtime and
+  runtime inspector snapshots expose active subscription descriptors and
+  lifecycle entries so tooling can identify which sources were reused or
+  canceled without inspecting app messages. Runtime inspector snapshots also
+  expose platform-neutral pipeline pass counters for rebuild, layout, paint,
+  and draw-command building. It keeps
   the latest effect summary, latest scheduled effect summary, and latest
   subscription plan summary for inspector tooling. This is separate from
   component-local `BuildContext::watch` and
