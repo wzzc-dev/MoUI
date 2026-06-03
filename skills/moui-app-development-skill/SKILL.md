@@ -88,8 +88,12 @@ separate framework task using `moui-framework-development-skill`.
   diagnostic key that is unique within the returned effect batch, call
   `@host.HostAppServices` inside the effect runner, and dispatch a typed
   completion message back into the model. When a service returns
-  `HostServiceResponse::Pending(id)`, register `HostAppServices::on_completed`
-  so the later host callback re-enters the same typed message loop.
+  `HostServiceResponse::Pending(id)`, store the id in app model state and
+  declare `HostAppServices::completion_subscription` from
+  `subscriptions=model => ...` so the later host callback re-enters the same
+  typed message loop and is canceled when the model no longer declares it.
+  Lift child service-completion subscriptions with `Subscription::map` when
+  composing child features.
 - Keep platform-specific setup in `web_wasm`, `macos`, `windows`, or `linux`
   entrypoints.
 - Showcase also has `macos_cosmic`, `windows_cosmic`, and `linux_cosmic`

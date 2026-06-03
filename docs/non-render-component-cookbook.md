@@ -260,13 +260,16 @@ theme, and native context menus. Effect-capable apps should return
 `Effect::run` from `Program::new` updates when the runner should carry a stable
 diagnostic key, call the service from the effect runner, and dispatch a typed
 completion message for `Unavailable`, synchronous responses, and pending async
-completions. For pending app-owned services,
-register `HostAppServices::on_completed` with the pending request id so the
-later host callback re-enters the same typed message loop. `views` should only
-emit messages such as `BrowseRequested` or `RecordFileDrop(paths)`. When a
-host-service workflow is implemented as a child feature, lift the child view
-with `View::map` and lift the child effect with `Effect::map` in the parent
-update so the parent still owns the top-level message loop.
+completions. For pending app-owned services, store the pending request id in
+the model and declare `HostAppServices::completion_subscription` from
+`subscriptions=model => ...` so the later host callback re-enters the same
+typed message loop and is canceled when the model no longer declares it.
+`views` should only emit messages such as `BrowseRequested` or
+`RecordFileDrop(paths)`. When a host-service workflow is implemented as a child
+feature, lift the child view with `View::map`, lift the child effect with
+`Effect::map`, and lift the child completion subscription with
+`Subscription::map` in the parent so the parent still owns the top-level
+message loop.
 
 ```moonbit nocheck
 fn request_browse(
@@ -279,17 +282,25 @@ fn request_browse(
     run=dispatch => {
       let response = services.open_file(title="Import files", filters=["csv", "json"])
       dispatch(HostCompleted(file_dialog_completion(response)))
-      match response {
-        @host.HostServiceResponse::Pending(id) =>
-          ignore(
-            services.on_completed(id, completion => {
-              dispatch(HostCompleted(completion))
-            }),
-          )
-        _ => ()
-      }
     },
   )
+}
+```
+
+```moonbit nocheck
+fn subscriptions(
+  model : ImportModel,
+  services : @host.HostAppServices,
+) -> @core.Subscription[ImportMsg] {
+  match model.pending_request {
+    Some(id) =>
+      services.completion_subscription(
+        id,
+        map=completion => HostCompleted(completion),
+        label="Import files completion",
+      )
+    None => @core.Subscription::none()
+  }
 }
 ```
 

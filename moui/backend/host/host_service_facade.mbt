@@ -216,6 +216,26 @@ pub fn HostAppServices::on_completed(
 }
 
 ///|
+pub fn[Msg] HostAppServices::completion_subscription(
+  self : HostAppServices,
+  id : HostServiceRequestId,
+  map~ : (HostCompletedServiceResponse) -> Msg,
+  key? : String = "",
+  kind? : String = "host-service",
+  label? : String = "Host service completion",
+) -> @core.Subscription[Msg] {
+  let subscription_key = if key == "" {
+    "host-service:completion:" + id.value.to_string()
+  } else {
+    key
+  }
+  @core.Subscription::run(key=subscription_key, kind~, label~, start=dispatch => {
+    ignore(self.on_completed(id, completion => dispatch(map(completion))))
+    None
+  })
+}
+
+///|
 pub fn HostAppServices::take_completed(
   self : HostAppServices,
   id : HostServiceRequestId,

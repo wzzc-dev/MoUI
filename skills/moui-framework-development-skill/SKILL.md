@@ -383,9 +383,10 @@ moon info
 - Use `HostServiceAsyncQueue` for permission- or callback-driven services
   instead of pretending browser/platform async work completed synchronously.
 - For app-owned pending services, expose a typed completion path through
-  `HostAppServices::on_completed` so callbacks re-enter an app `Effect::run`
-  or `Effect::dispatch` runner instead of teaching `HostRuntimeDriver` about
-  app messages.
+  `HostAppServices::completion_subscription` so callbacks re-enter an app
+  `Program` subscription instead of teaching `HostRuntimeDriver` about app
+  messages. Keep lower-level `HostAppServices::on_completed` available for
+  custom adapters.
 - Run the affected backend package tests.
 - Update `docs/platform-notes.md` when constraints or setup change.
 

@@ -166,12 +166,14 @@ view uses `drop_zone` and `file_import_panel`; the pure model accepts dropped
 paths, while the effect-capable runtime uses `Program::new` and
 `Effect::run` to request an app-level host file dialog through
 `HostAppServices` and feed unavailable, immediate, or pending responses back as
-typed `HostCompleted` messages. Pending file-dialog responses register
-`HostAppServices::on_completed`, so the later host completion dispatches through
-the same typed TEA update path as synchronous responses. Its app tests also
-compose the importer as a child feature with `View::map` and `Effect::map`,
-which is the recommended pattern when a parent TEA model owns a child workflow
-that can still return follow-up effects. Browser hosts commonly expose file
+typed `HostCompleted` messages. Pending file-dialog responses are stored as
+model state and declared through `HostAppServices::completion_subscription`, so
+the later host completion dispatches through the same typed TEA update path as
+synchronous responses and cancels when the model leaves `Pending`. Its app
+tests also compose the importer as a child feature with `View::map`,
+`Effect::map`, and `Subscription::map`, which is the recommended pattern when a
+parent TEA model owns a child workflow that can still return follow-up effects
+or ongoing event sources. Browser hosts commonly expose file
 names while native hosts can expose filesystem paths, so production apps should
 treat these strings as host-provided display or import handles rather than
 assuming one platform shape.
