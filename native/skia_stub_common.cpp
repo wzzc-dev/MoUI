@@ -1,5 +1,7 @@
 #include "skia_stub_common.h"
 
+#include <cmath>
+
 static uint32_t moonbit_skia_regular_object_header(
   uint32_t pointer_field_offset_words,
   uint32_t pointer_field_count,
@@ -1308,7 +1310,7 @@ SkSamplingOptions moonbit_skia_make_sampling_options(
   float cubic_b,
   float cubic_c
 ) {
-  if (use_cubic != 0) {
+  if (use_cubic != 0 && std::isfinite(cubic_b) && std::isfinite(cubic_c)) {
     return SkSamplingOptions(SkCubicResampler{cubic_b, cubic_c});
   }
   return SkSamplingOptions(

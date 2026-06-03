@@ -725,6 +725,31 @@ fn native_canvas_paint_stroke_miter(paint : @skia.Paint) -> Float {
 }
 
 ///|
+fn native_canvas_sampling_uses_cubic(sampling : @skia.SamplingOptions) -> Bool {
+  sampling.uses_cubic() &&
+  native_canvas_scalar_is_finite(sampling.cubic_b()) &&
+  native_canvas_scalar_is_finite(sampling.cubic_c())
+}
+
+///|
+fn native_canvas_sampling_cubic_b(sampling : @skia.SamplingOptions) -> Float {
+  if native_canvas_sampling_uses_cubic(sampling) {
+    sampling.cubic_b()
+  } else {
+    0.0
+  }
+}
+
+///|
+fn native_canvas_sampling_cubic_c(sampling : @skia.SamplingOptions) -> Float {
+  if native_canvas_sampling_uses_cubic(sampling) {
+    sampling.cubic_c()
+  } else {
+    0.0
+  }
+}
+
+///|
 fn native_canvas_rrect_is_finite(rrect : @skia.RRect) -> Bool {
   rrect.rect.is_finite() &&
   rrect.upper_left.is_finite() &&
@@ -1347,9 +1372,9 @@ pub fn Canvas::draw_image_rect(
       paint.blend_mode_ordinal(),
       sampling.filter_ordinal(),
       sampling.mipmap_ordinal(),
-      sampling.uses_cubic(),
-      sampling.cubic_b(),
-      sampling.cubic_c(),
+      native_canvas_sampling_uses_cubic(sampling),
+      native_canvas_sampling_cubic_b(sampling),
+      native_canvas_sampling_cubic_c(sampling),
     )
   }
 }

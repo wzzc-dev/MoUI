@@ -133,6 +133,11 @@
       "marker": "native smoke non-finite canvas paint layer sanitized"
     },
     {
+      "id": "canvas.image-sampling-scalars-sanitized",
+      "area": "Canvas",
+      "marker": "native smoke image sampling scalars sanitized"
+    },
+    {
       "id": "canvas.command-replay",
       "area": "Canvas",
       "marker": "native smoke canvas replay commands"
@@ -1269,6 +1274,11 @@
     {
       "id": "canvas.non-finite-paint-layer-sanitized",
       "marker": "native smoke non-finite canvas paint layer sanitized",
+      "value": "1"
+    },
+    {
+      "id": "canvas.image-sampling-scalars-sanitized",
+      "marker": "native smoke image sampling scalars sanitized",
       "value": "1"
     },
     {
