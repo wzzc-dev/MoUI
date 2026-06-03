@@ -93,7 +93,8 @@ these facts recorded in logs:
   canvas rrect/path clip replay, empty path replay zero-resource/miss/hit proof,
   non-finite path `from_value` rejection, non-finite path replay skip and
   zero-cache-touch proof, non-finite path append/direct mutation skip proof,
-  canvas command replay, linear-gradient and radial-gradient shader validation,
+  canvas command replay, linear-gradient finite/degenerate validation,
+  radial-gradient shader validation,
   invalid shader/filter descriptor cache safety,
   invalid shader/filter replay skip and all-filter zero-cache-touch proof,
   non-finite filter input rejection, non-finite native font scalar sanitization,
@@ -148,8 +149,8 @@ these facts recorded in logs:
   non-finite path `from_value` rejection, non-finite path replay skip and
   zero-cache-touch proof, non-finite path append/direct mutation skip proof,
   canvas paint-shader fill replay,
-  linear-gradient and radial-gradient shader validation, invalid shader/filter
-  descriptor cache safety, invalid shader/filter replay skip and all-filter zero-cache-touch
+  linear-gradient finite/degenerate validation, radial-gradient shader
+  validation, invalid shader/filter descriptor cache safety, invalid shader/filter replay skip and all-filter zero-cache-touch
   proof, non-finite filter validation, non-finite native font scalar
   sanitization, and shader/filter resource planning.
 - The acceptance log passed `scripts/verify-acceptance-log.*` and contains

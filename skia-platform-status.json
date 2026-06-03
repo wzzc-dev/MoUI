@@ -758,6 +758,11 @@
       "marker": "native smoke shader linear gradient validation"
     },
     {
+      "id": "shader.linear-gradient-finite-validation",
+      "area": "Shader",
+      "marker": "native smoke shader linear gradient finite validation"
+    },
+    {
       "id": "shader.radial-gradient-validation",
       "area": "Shader",
       "marker": "native smoke shader radial gradient validation"
@@ -2074,6 +2079,11 @@
     {
       "id": "shader.linear-gradient-validation",
       "marker": "native smoke shader linear gradient validation",
+      "value": "1"
+    },
+    {
+      "id": "shader.linear-gradient-finite-validation",
+      "marker": "native smoke shader linear gradient finite validation",
       "value": "1"
     },
     {
