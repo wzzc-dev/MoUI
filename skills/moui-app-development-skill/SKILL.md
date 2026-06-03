@@ -236,7 +236,8 @@ sh scripts/dev-check.sh --platform-examples-build
   typed completion messages for sync, unavailable, or pending responses.
   `Effect::run` is reported separately from anonymous dispatch in runtime
   diagnostics; `Effect::dispatch` remains available for anonymous one-off
-  runners.
+  runners. When composing child features, lift child follow-up work with
+  `Effect::map`; structured descriptors are preserved for parent diagnostics.
 - Use `Subscription::listen` / `Subscription::run` for app-level ongoing
   sources that need lifecycle reuse and cleanup. Use `Subscription::map` when a
   parent app embeds a child feature and wants to preserve typed message

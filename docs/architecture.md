@@ -101,8 +101,9 @@ Function components are ordinary functions returning `View[Msg]`. Child
 messages are lifted with `View::map`, for example
 `todo_row(todo).map(TodoRowMsg)`. Child updates that return follow-up work lift
 their effects with `Effect::map`, so a parent update can preserve typed child
-message composition without exposing runtime dispatch. Ordinary controls are
-TEA-first controlled views: app code passes the current value plus `on_input`,
+message composition and structured effect descriptors without exposing runtime
+dispatch. Ordinary controls are TEA-first controlled views: app code passes the
+current value plus `on_input`,
 `on_change`, or `on_select`, then updates the model from the emitted message.
 Controls that require complex local state, such as rich text editing or
 virtualized resources, keep that state explicit through bindings, cells, or
