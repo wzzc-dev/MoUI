@@ -113,6 +113,11 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     text
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
+    .contains("mixed-run fallback"),
+  )
+  assert_true(
+    text
+    .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("real native renderer smoke"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::Transform)
@@ -436,6 +441,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(skia_text_note.contains("FontMgr"))
   assert_true(skia_text_note.contains("FontFallbackRequest"))
   assert_true(skia_text_note.contains("representative emoji/non-ASCII"))
+  assert_true(skia_text_note.contains("grapheme-safe fallback segments"))
   assert_true(skia_text_note.contains("weight"))
   assert_true(skia_text_note.contains("baseline"))
   assert_true(skia_text_note.contains("shaped-run cluster carets"))

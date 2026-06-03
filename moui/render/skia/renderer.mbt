@@ -145,7 +145,6 @@ fn SkiaTextMaturityPreflight::summary(
     self.empty_typeface_emoji_retry_disabled
   let tracked_gaps_pending = !self.bidi_reordering_ready &&
     !self.paragraph_line_breaking_ready &&
-    !self.mixed_run_font_fallback_ready &&
     !self.deterministic_color_emoji_ready &&
     !self.full_grapheme_parity_ready
   let baseline_label = if baseline_ready {
@@ -158,6 +157,11 @@ fn SkiaTextMaturityPreflight::summary(
   } else {
     "tracked gaps changed"
   }
+  let mixed_run_label = if self.mixed_run_font_fallback_ready {
+    "mixed-run fallback ready; bidi, paragraph line breaking, color emoji, and full grapheme parity pending"
+  } else {
+    "bidi, paragraph line breaking, mixed-run fallback, color emoji, and full grapheme parity pending"
+  }
   "text maturity audit partial: ready=" +
   self.ready_count.to_string() +
   " gaps=" +
@@ -166,7 +170,9 @@ fn SkiaTextMaturityPreflight::summary(
   baseline_label +
   ", " +
   gap_label +
-  " (bidi, paragraph line breaking, mixed-run fallback, color emoji, and full grapheme parity pending)"
+  " (" +
+  mixed_run_label +
+  ")"
 }
 
 ///|
@@ -207,6 +213,21 @@ priv struct SkiaGlyphRun {
 priv struct SkiaTextPlacement {
   origin : @skia_mbt.Point
   clip : @core.Rect
+}
+
+///|
+priv struct SkiaTextRunSegment {
+  text : String
+  font : @skia_native.Font
+  glyph_run : SkiaGlyphRun
+  x_offset : Double
+}
+
+///|
+priv struct SkiaResolvedTextLayout {
+  segments : Array[SkiaTextRunSegment]
+  width : Double
+  metrics : SkiaTextMetrics
 }
 
 ///|
@@ -446,6 +467,9 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
       SkiaFontResolution::EmptyTypeface,
     )
     is None
+  let mixed_run_font_fallback_ready = skia_mixed_text_segments("A你\u{1F642}B").length() ==
+    4 &&
+    skia_grapheme_cluster_texts("\u{1F469}\u{200D}\u{1F4BB}").length() == 1
   let ready_count = skia_ready_count([
     descriptor.ready(),
     !fallback_request.is_empty() && fallback_request.has_character(),
@@ -453,8 +477,11 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
     fallback_cluster_caret_ready,
     emoji_hint_ready,
     empty_typeface_emoji_retry_disabled,
+    mixed_run_font_fallback_ready,
   ])
-  let gap_count = skia_gap_count([false, false, false, false, false])
+  let gap_count = skia_gap_count([
+    false, false, mixed_run_font_fallback_ready, false, false,
+  ])
   SkiaTextMaturityPreflight::{
     descriptor_ready: descriptor.ready(),
     fallback_request_ready: !fallback_request.is_empty() &&
@@ -465,7 +492,7 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
     empty_typeface_emoji_retry_disabled,
     bidi_reordering_ready: false,
     paragraph_line_breaking_ready: false,
-    mixed_run_font_fallback_ready: false,
+    mixed_run_font_fallback_ready,
     deterministic_color_emoji_ready: false,
     full_grapheme_parity_ready: false,
     ready_count,
@@ -1295,23 +1322,34 @@ fn SkiaRasterRenderer::draw_text(
   if !skia_text_frame_can_draw(run.frame) {
     return ()
   }
-  match self.skia_draw_text_payload(run.font, run.text) {
-    Some((font, glyph_run)) => {
-      let metrics = skia_text_metrics(
-        font,
-        fallback_baseline=run.font.size,
-        fallback_height=run.font.size * 1.25,
-      )
-      let placement = skia_text_placement(run, glyph_run, metrics)
+  match
+    skia_resolved_text_layout_for_resolution(
+      run.font,
+      run.text,
+      self.font_resolution,
+    ) {
+    Some(layout) => {
+      let placement = if layout.segments.length() == 1 {
+        skia_text_placement(run, layout.segments[0].glyph_run, layout.metrics)
+      } else {
+        skia_text_placement_for_width(run, layout.width, layout.metrics)
+      }
       let saved = canvas.save()
       canvas.clip_rect(skia_rect(placement.clip), anti_alias=true)
-      canvas.draw_glyphs(
-        glyph_run.glyphs,
-        glyph_run.positions,
-        font,
-        skia_paint(run.color),
-        origin=placement.origin,
-      )
+      for segment in layout.segments {
+        canvas.draw_glyphs(
+          segment.glyph_run.glyphs,
+          segment.glyph_run.positions,
+          segment.font,
+          skia_paint(run.color),
+          origin=@skia_mbt.Point::new(
+            Float::from_double(
+              placement.origin.x.to_double() + segment.x_offset,
+            ),
+            placement.origin.y,
+          ),
+        )
+      }
       canvas.restore_to_count(saved)
     }
     None => self.unsupported_command_count = self.unsupported_command_count + 1
@@ -1329,12 +1367,21 @@ fn skia_text_placement(
   glyph_run : SkiaGlyphRun,
   metrics : SkiaTextMetrics,
 ) -> SkiaTextPlacement {
+  skia_text_placement_for_width(run, glyph_run.width, metrics)
+}
+
+///|
+fn skia_text_placement_for_width(
+  run : @core.TextRun,
+  text_width : Double,
+  metrics : SkiaTextMetrics,
+) -> SkiaTextPlacement {
   let x = match run.align {
     @core.TextAlign::TextStart => run.frame.origin.x
     @core.TextAlign::TextCenter =>
-      run.frame.origin.x + (run.frame.size.width - glyph_run.width) / 2.0
+      run.frame.origin.x + (run.frame.size.width - text_width) / 2.0
     @core.TextAlign::TextEnd =>
-      run.frame.origin.x + run.frame.size.width - glyph_run.width
+      run.frame.origin.x + run.frame.size.width - text_width
   }
   let y = skia_text_baseline_y(run.frame, metrics)
   {
@@ -1357,15 +1404,6 @@ fn skia_text_baseline_y(
 }
 
 ///|
-fn SkiaRasterRenderer::skia_draw_text_payload(
-  self : SkiaRasterRenderer,
-  font_spec : @core.FontSpec,
-  text : String,
-) -> (@skia_native.Font, SkiaGlyphRun)? {
-  skia_draw_text_payload_for_resolution(font_spec, text, self.font_resolution)
-}
-
-///|
 fn skia_draw_text_payload_for_resolution(
   font_spec : @core.FontSpec,
   text : String,
@@ -1382,6 +1420,144 @@ fn skia_draw_text_payload_for_resolution(
     }
     None => None
   }
+}
+
+///|
+fn skia_resolved_text_layout_for_resolution(
+  font_spec : @core.FontSpec,
+  text : String,
+  resolution : SkiaFontResolution,
+) -> SkiaResolvedTextLayout? {
+  if text == "" {
+    match skia_draw_text_payload_for_resolution(font_spec, text, resolution) {
+      Some((font, glyph_run)) =>
+        Some({
+          segments: [{ text, font, glyph_run, x_offset: 0.0 }],
+          width: glyph_run.width,
+          metrics: skia_text_metrics(
+            font,
+            fallback_baseline=font_spec.size,
+            fallback_height=font_spec.size * 1.25,
+          ),
+        })
+      None => None
+    }
+  } else {
+    skia_resolved_text_segments(font_spec, text, resolution)
+  }
+}
+
+///|
+fn skia_resolved_text_segments(
+  font_spec : @core.FontSpec,
+  text : String,
+  resolution : SkiaFontResolution,
+) -> SkiaResolvedTextLayout? {
+  let text_segments = skia_mixed_text_segments(text)
+  if text_segments.is_empty() {
+    return None
+  }
+  let segments : Array[SkiaTextRunSegment] = []
+  let mut x_offset = 0.0
+  let mut baseline = 0.0
+  let mut height = 0.0
+  for segment_text in text_segments {
+    match
+      skia_draw_text_payload_for_resolution(font_spec, segment_text, resolution) {
+      Some((font, glyph_run)) => {
+        let metrics = skia_text_metrics(
+          font,
+          fallback_baseline=font_spec.size,
+          fallback_height=font_spec.size * 1.25,
+        )
+        baseline = baseline.max(metrics.baseline)
+        height = height.max(metrics.height)
+        segments.push({ text: segment_text, font, glyph_run, x_offset })
+        x_offset = x_offset + glyph_run.width
+      }
+      None => return None
+    }
+  }
+  if segments.is_empty() {
+    None
+  } else {
+    Some({
+      segments,
+      width: x_offset,
+      metrics: { baseline, height: height.max(baseline) },
+    })
+  }
+}
+
+///|
+fn skia_mixed_text_segments(text : String) -> Array[String] {
+  let clusters = skia_grapheme_cluster_texts(text)
+  let segments : Array[String] = []
+  let current : Array[Char] = []
+  let mut current_class = -1
+  for cluster in clusters {
+    let cluster_class = skia_text_segment_class(cluster)
+    if !current.is_empty() && cluster_class != current_class {
+      segments.push(String::from_array(current))
+      current.clear()
+    }
+    for ch in cluster {
+      current.push(ch)
+    }
+    current_class = cluster_class
+  }
+  if !current.is_empty() {
+    segments.push(String::from_array(current))
+  }
+  segments
+}
+
+///|
+fn skia_grapheme_cluster_texts(text : String) -> Array[String] {
+  let chars = text.to_array()
+  let clusters : Array[String] = []
+  let mut index = 0
+  while index < chars.length() {
+    let end = skia_grapheme_cluster_end(chars, index)
+    let safe_end = if end <= index { index + 1 } else { end }
+    clusters.push(String::from_array(chars[index:safe_end]))
+    index = safe_end
+  }
+  clusters
+}
+
+///|
+fn skia_text_segment_class(text : String) -> Int {
+  let representative = skia_representative_fallback_codepoint(text)
+  if skia_codepoint_is_emoji_hint(representative) {
+    1
+  } else if skia_codepoint_is_cjk(representative) {
+    2
+  } else if skia_codepoint_is_hangul_cluster_codepoint(representative) {
+    3
+  } else if skia_codepoint_is_rtl_script(representative) {
+    4
+  } else if representative < 0x0300 {
+    0
+  } else {
+    5
+  }
+}
+
+///|
+fn skia_codepoint_is_cjk(codepoint : Int) -> Bool {
+  (codepoint >= 0x3400 && codepoint <= 0x4DBF) ||
+  (codepoint >= 0x4E00 && codepoint <= 0x9FFF) ||
+  (codepoint >= 0xF900 && codepoint <= 0xFAFF) ||
+  (codepoint >= 0x20000 && codepoint <= 0x2FA1F) ||
+  (codepoint >= 0x3040 && codepoint <= 0x30FF)
+}
+
+///|
+fn skia_codepoint_is_rtl_script(codepoint : Int) -> Bool {
+  (codepoint >= 0x0590 && codepoint <= 0x08FF) ||
+  (codepoint >= 0xFB1D && codepoint <= 0xFDFF) ||
+  (codepoint >= 0xFE70 && codepoint <= 0xFEFF)
 }
 
 ///|
@@ -1713,13 +1889,12 @@ fn skia_empty_typeface_text_system() -> @core.TextSystem {
   @core.TextSystem::new(id="skia-raster-empty-typeface-text-system", measure=input => {
     let fallback = @core.TextSystem::fallback().measure_text(input)
     match
-      skia_draw_text_payload_for_resolution(
+      skia_resolved_text_layout_for_resolution(
         input.font,
         input.text,
         SkiaFontResolution::EmptyTypeface,
       ) {
-      Some((font, glyph_run)) =>
-        skia_text_layout_result(font, input, fallback, glyph_run~)
+      Some(layout) => skia_resolved_text_layout_result(input, fallback, layout~)
       None => fallback
     }
   })
@@ -1730,16 +1905,58 @@ fn skia_system_font_mgr_text_system() -> @core.TextSystem {
   @core.TextSystem::new(id="skia-raster-text-system", measure=input => {
     let fallback = @core.TextSystem::fallback().measure_text(input)
     match
-      skia_draw_text_payload_for_resolution(
+      skia_resolved_text_layout_for_resolution(
         input.font,
         input.text,
         SkiaFontResolution::SystemFontMgr,
       ) {
-      Some((font, glyph_run)) =>
-        skia_text_layout_result(font, input, fallback, glyph_run~)
+      Some(layout) => skia_resolved_text_layout_result(input, fallback, layout~)
       None => fallback
     }
   })
+}
+
+///|
+fn skia_resolved_text_layout_result(
+  input : @core.TextLayoutInput,
+  fallback : @core.TextLayoutResult,
+  layout~ : SkiaResolvedTextLayout,
+) -> @core.TextLayoutResult {
+  if layout.segments.is_empty() {
+    return fallback
+  }
+  if layout.segments.length() == 1 && layout.segments[0].text == input.text {
+    return skia_text_layout_result(
+      layout.segments[0].font,
+      input,
+      fallback,
+      glyph_run=layout.segments[0].glyph_run,
+    )
+  }
+  let carets = skia_resolved_text_caret_positions(input.text, layout)
+  let measured = skia_layout_width_from_carets(carets)
+  match input.max_width {
+    Some(max_width) => {
+      let clamped : Array[Double] = []
+      for caret in carets {
+        clamped.push(caret.min(max_width))
+      }
+      {
+        size: @core.Size::new(
+          width=measured.min(max_width),
+          height=layout.metrics.height,
+        ),
+        baseline: layout.metrics.baseline,
+        caret_positions: clamped,
+      }
+    }
+    None =>
+      {
+        size: @core.Size::new(width=measured, height=layout.metrics.height),
+        baseline: layout.metrics.baseline,
+        caret_positions: carets,
+      }
+  }
 }
 
 ///|
@@ -1781,6 +1998,30 @@ fn skia_text_layout_result(
         caret_positions: carets,
       }
   }
+}
+
+///|
+fn skia_resolved_text_caret_positions(
+  text : String,
+  layout : SkiaResolvedTextLayout,
+) -> Array[Double] {
+  let carets : Array[Double] = [0.0]
+  for segment in layout.segments {
+    let segment_carets = skia_caret_positions(
+      segment.font,
+      segment.text,
+      glyph_run=segment.glyph_run,
+    )
+    if segment_carets.length() > 1 {
+      for index in 1..<segment_carets.length() {
+        carets.push(segment.x_offset + segment_carets[index])
+      }
+    }
+  }
+  if carets.length() != text.to_array().length() + 1 {
+    return carets
+  }
+  skia_stabilize_grapheme_cluster_carets(text, carets)
 }
 
 ///|

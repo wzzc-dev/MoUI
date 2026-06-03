@@ -145,12 +145,13 @@ test "skia text maturity preflight separates covered baseline from gaps" {
   assert_true(preflight.empty_typeface_emoji_retry_disabled)
   assert_false(preflight.bidi_reordering_ready)
   assert_false(preflight.paragraph_line_breaking_ready)
-  assert_false(preflight.mixed_run_font_fallback_ready)
+  assert_true(preflight.mixed_run_font_fallback_ready)
   assert_false(preflight.deterministic_color_emoji_ready)
   assert_false(preflight.full_grapheme_parity_ready)
-  inspect(preflight.ready_count, content="6")
-  inspect(preflight.gap_count, content="5")
+  inspect(preflight.ready_count, content="7")
+  inspect(preflight.gap_count, content="4")
   assert_true(preflight.summary().contains("text maturity audit partial"))
+  assert_true(preflight.summary().contains("mixed-run fallback ready"))
   assert_true(preflight.summary().contains("bidi"))
   assert_true(preflight.summary().contains("full grapheme parity"))
 }
@@ -343,10 +344,12 @@ test "skia empty typeface drawing falls back when the glyph run is blank" {
   ) catch {
     _ => return ()
   }
+  ignore(renderer)
   match
-    renderer.skia_draw_text_payload(
+    skia_draw_text_payload_for_resolution(
       @core.FontSpec::new(size=18.0, weight=400),
       "Slim",
+      SkiaFontResolution::EmptyTypeface,
     ) {
     Some((font, run)) => {
       assert_true(font.size() == 18.0)
@@ -1432,26 +1435,19 @@ test "skia empty typeface text system follows drawing fallback font metrics" {
   } else {
     assert_true(system.id() == "skia-raster-empty-typeface-text-system")
     match
-      skia_draw_text_payload_for_resolution(
+      skia_resolved_text_layout_for_resolution(
         input.font,
         input.text,
         SkiaFontResolution::EmptyTypeface,
       ) {
-      Some((font, run)) => {
+      Some(layout) => {
         let measured = system.measure_text(input)
-        assert_true(measured.size.width == run.width)
+        assert_true(measured.size.width == layout.width)
         assert_true(
-          measured.caret_positions[input.text.to_array().length()] == run.width,
+          measured.caret_positions[input.text.to_array().length()] ==
+          layout.width,
         )
-        assert_true(
-          measured.size.width == skia_measure_text_width(font, input.text),
-        )
-        assert_true(
-          measured.caret_positions[input.text.to_array().length()] == run.width,
-        )
-        assert_true(
-          measured.size.width == skia_measure_text_width(font, input.text),
-        )
+        assert_true(layout.segments.length() > 0)
       }
       None =>
         fail(
@@ -1486,6 +1482,65 @@ test "skia text system exposes measured caret positions" {
       }
     }
     None => assert_true(!skia_available())
+  }
+}
+
+///|
+test "skia mixed text segmentation preserves grapheme clusters" {
+  let clusters = skia_grapheme_cluster_texts(
+    "A\u{1F469}\u{200D}\u{1F4BB}B\u{1F1FA}\u{1F1F8}",
+  )
+  inspect(clusters.length(), content="4")
+  inspect(clusters[0], content="A")
+  inspect(clusters[1].to_array().length(), content="3")
+  inspect(clusters[2], content="B")
+  inspect(clusters[3].to_array().length(), content="2")
+
+  let segments = skia_mixed_text_segments("AB你好\u{1F642}CD")
+  inspect(segments.length(), content="4")
+  inspect(segments[0], content="AB")
+  inspect(segments[1], content="你好")
+  inspect(segments[2], content="\u{1F642}")
+  inspect(segments[3], content="CD")
+}
+
+///|
+test "skia resolved mixed text layout accumulates segment carets" {
+  guard skia_available() else { return () }
+  let text = "A你\u{1F642}B"
+  let font = @core.FontSpec::new(
+    families=@core.FontFamilyStack::system_ui().with_fallback(
+      @core.FontFamily::Emoji,
+    ),
+    size=18.0,
+    weight=400,
+  )
+  match
+    skia_resolved_text_layout_for_resolution(
+      font,
+      text,
+      SkiaFontResolution::SystemFontMgr,
+    ) {
+    Some(layout) => {
+      inspect(layout.segments.length(), content="4")
+      assert_true(layout.width > 0.0)
+      assert_true(layout.metrics.baseline > 0.0)
+      let carets = skia_resolved_text_caret_positions(text, layout)
+      inspect(carets.length(), content="\{text.to_array().length() + 1}")
+      assert_true(skia_test_carets_are_monotonic(carets))
+      assert_true(carets[carets.length() - 1] == layout.width)
+
+      let system = skia_text_system()
+      let measured = system.measure_text(
+        @core.TextLayoutInput::new(text~, font~),
+      )
+      assert_true(measured.size.width == layout.width)
+      assert_true(
+        measured.caret_positions[measured.caret_positions.length() - 1] ==
+        layout.width,
+      )
+    }
+    None => fail("expected resolved Skia mixed text layout")
   }
 }
 
