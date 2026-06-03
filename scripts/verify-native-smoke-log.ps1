@@ -186,6 +186,7 @@ $defaultStageMarkers = @(
   "native smoke bounded snapshot height",
   "native smoke surface bounds rejected",
   "native smoke encoded PNG bytes",
+  "native smoke image encode parameters sanitized",
   "native smoke decoded image width",
   "native smoke decoded image height",
   "native smoke render image command replay",
@@ -758,6 +759,10 @@ $defaultExpectedStageValues = @(
   }
   [pscustomobject]@{
     Marker = "native smoke surface bounds rejected"
+    Value = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke image encode parameters sanitized"
     Value = "1"
   }
   [pscustomobject]@{

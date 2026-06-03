@@ -2662,6 +2662,21 @@ fn main {
   assert_png_signature(encoded)
   println("native smoke encoded PNG bytes")
   println(encoded.length())
+  guard image.encode_to_data(format=@skia.PNG, quality=-100)
+    is Some(low_quality_data) else {
+    fail_smoke("failed to encode PNG with clamped low quality")
+  }
+  guard image.encode_to_data(format=@skia.PNG, quality=999)
+    is Some(high_quality_data) else {
+    fail_smoke("failed to encode PNG with clamped high quality")
+  }
+  if low_quality_data.size() <= 0 || high_quality_data.size() <= 0 ||
+    image.encode_to_data(format=@skia.AVIF, quality=100) is Some(_) ||
+    image.encode_to_data(format=@skia.JPEGXL, quality=100) is Some(_) {
+    fail_smoke("native image encode parameter validation failed")
+  }
+  println("native smoke image encode parameters sanitized")
+  println(1)
 
   guard @native.Image::from_encoded_bytes(encoded) is Some(decoded) else {
     fail_smoke("failed to decode encoded PNG bytes")

@@ -115,7 +115,8 @@ The `native` subpackage contains the first opt-in native boundary:
   into an owned `@skia_mbt.Pixmap`, rejecting rectangles outside the surface
   bounds;
 - `@native.Image::encode_to_data(format, quality)` returns immutable
-  `@native.Data` bytes for encoded image output;
+  `@native.Data` bytes for PNG/JPEG/WEBP output, rejecting unsupported native
+  encode formats and clamping quality to Skia's `0..100` range;
 - `@native.Image::from_bitmap(bitmap)` snapshots a native bitmap into an
   immutable image;
 - `@native.Data::from_bytes(bytes)` and `@native.Image::from_encoded_bytes(bytes)`

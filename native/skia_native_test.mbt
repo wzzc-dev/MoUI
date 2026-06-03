@@ -666,6 +666,26 @@ test "image api typechecks" {
                   }
                 }
               }
+              match image.encode_to_data(format=@skia.PNG, quality=-100) {
+                None => ()
+                Some(clamped_quality_data) => {
+                  assert_true(clamped_quality_data.is_available())
+                  assert_true(clamped_quality_data.size() > 0)
+                }
+              }
+              match image.encode_to_data(format=@skia.PNG, quality=999) {
+                None => ()
+                Some(clamped_quality_data) => {
+                  assert_true(clamped_quality_data.is_available())
+                  assert_true(clamped_quality_data.size() > 0)
+                }
+              }
+              assert_true(
+                image.encode_to_data(format=@skia.AVIF, quality=100) is None,
+              )
+              assert_true(
+                image.encode_to_data(format=@skia.JPEGXL, quality=100) is None,
+              )
             }
           }
       }

@@ -82,6 +82,7 @@
         "native smoke bounded snapshot width",
         "native smoke surface bounds rejected",
         "native smoke encoded PNG bytes",
+        "native smoke image encode parameters sanitized",
         "native smoke decoded image width",
         "native smoke codec encoded format PNG",
         "native smoke decoded bitmap width"
