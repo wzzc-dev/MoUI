@@ -841,6 +841,30 @@ test "program child effects map into parent messages" {
     ),
   )
   assert_true(has_draw_text(runtime.draw_commands(), "Child dispatched"))
+  let snapshot = runtime.program_runtime_snapshot()
+  inspect(snapshot.effect_send_count, content="1")
+  inspect(snapshot.effect_dispatch_count, content="0")
+  inspect(snapshot.effect_run_count, content="1")
+  assert_true(
+    snapshot.last_scheduled_effect_summary.root_kind ==
+    EffectPlanKind::EffectPlanBatch,
+  )
+  inspect(
+    snapshot.last_scheduled_effect_summary.descriptors.length(),
+    content="1",
+  )
+  inspect(
+    snapshot.last_scheduled_effect_summary.descriptors[0].key,
+    content="child-effect:follow-up",
+  )
+  inspect(
+    snapshot.last_scheduled_effect_summary.descriptors[0].kind,
+    content="child-task",
+  )
+  inspect(
+    snapshot.last_scheduled_effect_summary.descriptors[0].label,
+    content="Child follow-up",
+  )
 }
 
 ///|
@@ -854,9 +878,12 @@ fn update_child_effect(
         "running",
         Effect::batch([
           Effect::send(ChildEffectSent("sent")),
-          Effect::dispatch(dispatch => {
-            dispatch(ChildEffectDispatched("dispatched"))
-          }),
+          Effect::run(
+            key="child-effect:follow-up",
+            kind="child-task",
+            label="Child follow-up",
+            run=dispatch => dispatch(ChildEffectDispatched("dispatched")),
+          ),
         ]),
       )
     ChildEffectSent(value) => ("\{child}+\{value}", Effect::none())
