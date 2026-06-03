@@ -64,10 +64,12 @@ Use this skill when editing or reviewing:
   re-enter the typed message loop without exposing runtime internals. Effect
   diagnostics stay platform-neutral through `Effect::plan_summary` and
   program-runtime inspector counters; message queue diagnostics stay
-  platform-neutral through enqueue/drain/pending counters; subscription
-  diagnostics stay platform-neutral through `Subscription::plan_summary` and
-  subscription lifecycle/plan counters; effect runners and subscription
-  adapters still own any concrete async work outside `core`.
+  platform-neutral through enqueue/drain/pending counters; pipeline cost
+  diagnostics stay platform-neutral through rebuild/layout/paint/draw-command
+  pass counters; subscription diagnostics stay platform-neutral through
+  `Subscription::plan_summary` and subscription lifecycle/plan counters; effect
+  runners and subscription adapters still own any concrete async work outside
+  `core`.
 - Platform packages normalize native events into `@host.HostEvent`.
 - Backends do not mutate element or render trees directly.
 - Renderers consume platform-neutral `@core.DrawCommand` values.

@@ -172,9 +172,11 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
 - `AppRuntime` owns app-level `Program` diagnostics, including dispatch,
   update, message queue, effect plan, scheduled effect, effect-kind, active
   subscription, subscription plan, start/reuse/cancel, and duplicate-key
-  counters. It also keeps the latest effect summary, latest scheduled effect
-  summary, and latest subscription plan summary for inspector tooling. This is
-  separate from component-local `BuildContext::watch` and
+  counters. Runtime inspector snapshots also expose platform-neutral pipeline
+  pass counters for rebuild, layout, paint, and draw-command building. It keeps
+  the latest effect summary, latest scheduled effect summary, and latest
+  subscription plan summary for inspector tooling. This is separate from
+  component-local `BuildContext::watch` and
   `BuildContext::run_effect`; program subscriptions model ongoing app event
   sources, while build-context subscriptions model component-local state
   invalidation and lifecycle effects.

@@ -194,6 +194,10 @@ test "runtime inspector and frame profile expose devtool counters" {
   runtime.dispatch_event(Redraw(Initial))
   let snapshot = RuntimeInspectorSnapshot::from_runtime(runtime)
   inspect(snapshot.draw_command_count, content="2")
+  inspect(snapshot.rebuild_pass_count, content="0")
+  inspect(snapshot.layout_pass_count, content="1")
+  inspect(snapshot.paint_pass_count, content="1")
+  inspect(snapshot.draw_command_build_count, content="1")
   inspect(snapshot.dirty_count, content="0")
   inspect(snapshot.program_dispatched_count, content="0")
   inspect(snapshot.program_update_count, content="0")
@@ -243,6 +247,32 @@ test "runtime inspector and frame profile expose devtool counters" {
   )
   inspect(profile.draw_command_count, content="2")
   inspect(profile.active_animations, content="0")
+}
+
+///|
+test "runtime pipeline counters track layout paint and draw command work" {
+  let runtime = AppRuntime::new_spec(
+    root=ViewSpec::TextSpec({
+      key: None,
+      text: "Counters",
+      size: Size::new(width=80.0, height=20.0),
+      font: FontSpec::new(size=12.0, weight=400),
+      color: Color::black(),
+    }),
+    size=Size::new(width=100.0, height=40.0),
+  )
+  inspect(runtime.state.rebuild_pass_count, content="0")
+  inspect(runtime.state.layout_pass_count, content="1")
+  inspect(runtime.state.paint_pass_count, content="1")
+  inspect(runtime.state.draw_command_build_count, content="0")
+  ignore(runtime.draw_commands())
+  inspect(runtime.state.draw_command_build_count, content="1")
+  runtime.dispatch_event(Redraw(Initial))
+  runtime.dispatch_event(AppEvent::Resize(Size::new(width=140.0, height=60.0)))
+  ignore(runtime.draw_commands())
+  inspect(runtime.state.layout_pass_count, content="2")
+  inspect(runtime.state.paint_pass_count, content="2")
+  inspect(runtime.state.draw_command_build_count, content="2")
 }
 
 ///|

@@ -7,6 +7,10 @@ pub(all) struct RuntimeInspectorSnapshot {
   needs_paint : Bool
   needs_redraw : Bool
   draw_command_count : Int
+  rebuild_pass_count : Int
+  layout_pass_count : Int
+  paint_pass_count : Int
+  draw_command_build_count : Int
   program_dispatched_count : Int
   program_update_count : Int
   program_message_enqueue_count : Int
@@ -147,6 +151,7 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
   let rebuild_reason = runtime.inspector_rebuild_reason()
   let dirty_reasons = runtime.inspector_dirty_reasons()
   let program = runtime.program_runtime_snapshot()
+  let draw_commands = runtime.draw_commands()
   RuntimeInspectorSnapshot::{
     size: runtime.size(),
     dirty_count,
@@ -154,7 +159,11 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     needs_layout,
     needs_paint,
     needs_redraw,
-    draw_command_count: runtime.draw_commands().length(),
+    draw_command_count: draw_commands.length(),
+    rebuild_pass_count: runtime.state.rebuild_pass_count,
+    layout_pass_count: runtime.state.layout_pass_count,
+    paint_pass_count: runtime.state.paint_pass_count,
+    draw_command_build_count: runtime.state.draw_command_build_count,
     program_dispatched_count: program.dispatched_count,
     program_update_count: program.update_count,
     program_message_enqueue_count: program.message_enqueue_count,
