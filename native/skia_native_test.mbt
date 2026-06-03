@@ -1860,6 +1860,53 @@ test "canvas skips non-finite direct geometry" {
 }
 
 ///|
+test "canvas sanitizes non-finite image sampling scalars" {
+  match @native.Surface::raster_n32_premul(@skia.ISize::new(1, 1)) {
+    None => ()
+    Some(source_surface) =>
+      match source_surface.canvas() {
+        None => ()
+        Some(source_canvas) => {
+          source_canvas.clear(@skia.Color::red())
+          match source_surface.image_snapshot() {
+            None => ()
+            Some(image) =>
+              match @native.Surface::raster_n32_premul(@skia.ISize::new(1, 1)) {
+                None => ()
+                Some(target_surface) =>
+                  match target_surface.canvas() {
+                    None => ()
+                    Some(target_canvas) => {
+                      target_canvas.clear(@skia.Color::white())
+                      target_canvas.draw_image_rect(
+                        image,
+                        @skia.Rect::from_xywh(0, 0, 1, 1),
+                        @skia.Rect::from_xywh(0, 0, 1, 1),
+                        @skia.Paint::new(),
+                        sampling=@skia.SamplingOptions::from_cubic(
+                          @skia.CubicResampler::new(0.0 / 0.0, 1.0 / 0.0),
+                        ),
+                      )
+                      match
+                        target_surface.read_pixels(
+                          bounds=@skia.IRect::from_xywh(0, 0, 1, 1),
+                        ) {
+                        None => ()
+                        Some(pixmap) =>
+                          native_test_assert_pixel(
+                            pixmap, 0xff, 0x00, 0x00, 0xff,
+                          )
+                      }
+                    }
+                  }
+              }
+          }
+        }
+      }
+  }
+}
+
+///|
 fn native_test_encoded_image_descriptor() -> @skia.ImageDescriptor? {
   match @native.Surface::raster_n32_premul(@skia.ISize::new(4, 4)) {
     None => None

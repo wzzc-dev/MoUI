@@ -89,7 +89,7 @@ these facts recorded in logs:
   canvas state restore, canvas clipping, canvas color/paint fill replay,
   undecodable/empty image replay skip and cache-safety proof,
   non-finite direct Canvas geometry skip proof, non-finite Canvas paint/layer
-  sanitization proof,
+  sanitization proof, non-finite Canvas image sampling scalar sanitization,
   canvas rrect/path clip replay, empty path replay zero-resource/miss/hit proof,
   non-finite path `from_value` rejection, non-finite path replay skip and
   zero-cache-touch proof, non-finite path append/direct mutation skip proof,
@@ -141,7 +141,8 @@ these facts recorded in logs:
   request/result cache safety, out-of-bounds surface rectangle rejection,
   image encode parameter sanitization, native fallback resolution bridging, font
   fallback resource planning, non-finite direct Canvas geometry skip proof,
-  non-finite Canvas paint/layer sanitization proof,
+  non-finite Canvas paint/layer sanitization proof, non-finite Canvas image
+  sampling scalar sanitization,
   empty path replay zero-resource/miss/hit proof,
   non-finite path `from_value` rejection, non-finite path replay skip and
   zero-cache-touch proof, non-finite path append/direct mutation skip proof,
