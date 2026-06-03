@@ -106,9 +106,9 @@ constructors and platform event conversion.
   Hosts drain pending requests into in-flight platform work, complete them with
   the original request, and record completions. Runtime-owned responses such as
   clipboard paste are dispatched through `HostRuntimeDriver`; app-owned service
-  workflows can register `HostAppServices::on_completed` from an `Effect::run`
-  or `Effect::dispatch` runner so a pending completion re-enters the app's typed
-  message loop.
+  workflows should declare `HostAppServices::completion_subscription` while the
+  model stores a pending request id so pending completions re-enter the app's
+  typed message loop and are canceled when that model state changes.
 - Host service bridges can apply a reported light/dark system theme to a runtime
   `Environment`. Web, macOS, and Windows do this once at startup before the
   first layout/redraw pass. Runtime `ThemeChanged` window events are normalized
@@ -156,8 +156,8 @@ The active Web runtime now drains pending async service requests into browser
 callbacks. Clipboard reads complete through exported wasm callback functions.
 Open-file and directory dialogs use a hidden browser file input and return
 browser-exposed file names or relative paths, which app-owned handlers can
-receive through typed completion messages registered with
-`HostAppServices::on_completed`. Save dialogs use the File System Access API
+receive through typed completion messages from
+`HostAppServices::completion_subscription`. Save dialogs use the File System Access API
 when `showSaveFilePicker` is available and otherwise complete as an unavailable
 service. Canceled file pickers return an empty selection.
 The browser host import reads `prefers-color-scheme` at startup and listens for

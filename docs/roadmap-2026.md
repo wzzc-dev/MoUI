@@ -194,8 +194,8 @@ Focus areas:
   browser host import, focused browser text input can still paste through input
   events, and app-level clipboard reads/file dialogs flow through
   `HostServiceAsyncQueue` into browser permission or picker callbacks. App-owned
-  pending services should register `HostAppServices::on_completed` so callbacks
-  return through the typed TEA message loop.
+  pending services should declare `HostAppServices::completion_subscription` so
+  callbacks return through the typed TEA message loop as subscription events.
 - Keep URL opening honest across active hosts: macOS uses `NSWorkspace`, Windows
   uses `ShellExecuteW`, and Web uses a browser host import that calls
   `window.open` and can report popup-blocked failures.

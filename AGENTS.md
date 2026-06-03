@@ -21,7 +21,8 @@ paths, or abstractions that only preserve old shapes.
 - `views/` is a facade over core primitive builders. Public constructors return
   opaque `@core.View[Msg]`; `ViewSpec` and node payloads stay inside `core`.
 - `backend/host/` defines shared host event, surface, input, async
-  host-service, window lifecycle, window scene resolution,
+  host-service, app-owned service completion subscription adapters, window
+  lifecycle, window scene resolution,
   per-window runtime slot collection, platform-window id mapping,
   request/completion, window event conversion, and renderer-neutral
   `HostWindowRenderer` diagnostics and image-resource repaint routing contracts.

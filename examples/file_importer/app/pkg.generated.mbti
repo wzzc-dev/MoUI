@@ -35,6 +35,7 @@ pub fn FileImporterModel::new() -> Self
 pub fn FileImporterModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn FileImporterModel::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn FileImporterModel::selection(Self) -> @views.FileSelection
+pub fn FileImporterModel::subscriptions(Self, @host.HostAppServices) -> @core.Subscription[FileImporterMsg]
 pub fn FileImporterModel::update(Self, FileImporterMsg) -> Self
 pub fn FileImporterModel::update_with_services(Self, FileImporterMsg, @host.HostAppServices) -> FileImporterUpdate
 pub fn FileImporterModel::view(Self) -> @core.View[FileImporterMsg]

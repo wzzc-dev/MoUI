@@ -408,15 +408,6 @@ pub fn EditorModel::update_with_services(
           run=dispatch => {
             let response = services.open_file(title="Open document", filters=["md", "txt"])
             dispatch(HostCompleted(file_dialog_completion(response)))
-            match response {
-              @host.HostServiceResponse::Pending(id) =>
-                ignore(
-                  services.on_completed(id, completion => {
-                    dispatch(HostCompleted(completion))
-                  }),
-                )
-              _ => ()
-            }
           },
         ),
       )
@@ -439,9 +430,26 @@ pub fn EditorModel::runtime_with_services(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => model.update_with_services(message, services),
       view=model => model.view(),
+      subscriptions=model => model.subscriptions(services),
     ),
     size=@core.Size::new(width~, height~),
   )
+}
+
+///|
+pub fn EditorModel::subscriptions(
+  self : EditorModel,
+  services : @host.HostAppServices,
+) -> @core.Subscription[EditorMsg] {
+  match self.pending_host_request {
+    Some(id) =>
+      services.completion_subscription(
+        id,
+        map=completion => HostCompleted(completion),
+        label="Open document completion",
+      )
+    None => @core.Subscription::none()
+  }
 }
 ```
 

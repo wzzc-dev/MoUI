@@ -84,6 +84,7 @@ pub struct HostAppServices {
 pub fn HostAppServices::capabilities(Self) -> HostServiceCapabilities
 pub fn HostAppServices::complete(Self, HostServiceRequestId, HostServiceResponse) -> Bool
 pub fn HostAppServices::completed_count(Self) -> Int
+pub fn[Msg] HostAppServices::completion_subscription(Self, HostServiceRequestId, map~ : (HostCompletedServiceResponse) -> Msg, key? : String, kind? : String, label? : String) -> @wzzc-dev/moui/core.Subscription[Msg]
 pub fn HostAppServices::dispatch(Self, HostServiceRequest) -> HostServiceResponse
 pub fn HostAppServices::drain_completed(Self) -> Array[HostCompletedServiceResponse]
 pub fn HostAppServices::drain_pending(Self) -> Array[HostPendingServiceRequest]

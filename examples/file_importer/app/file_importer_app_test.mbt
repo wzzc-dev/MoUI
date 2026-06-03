@@ -80,14 +80,19 @@ test "file importer handles mocked pending completion" {
       @host.HostServiceResponse::FileDialogSelection(["/tmp/later.txt"]),
     ),
   )
+  let runtime = model
+    .get()
+    .runtime_with_services(services, width=860.0, height=620.0)
   match services.take_completed(id) {
     Some(_) => fail("expected registered completion to be consumed")
     None => ()
   }
-  let completed = model.get()
-  inspect(completed.files.length(), content="1")
-  inspect(completed.files[0].path, content="/tmp/later.txt")
-  inspect(completed.last_event, content="Imported 1 file(s) from Dialog")
+  let commands = runtime.draw_commands()
+  assert_true(has_text(commands, "/tmp/later.txt"))
+  assert_true(has_text(commands, "Imported 1 file(s) from Dialog"))
+  let snapshot = runtime.program_runtime_snapshot()
+  inspect(snapshot.started_subscription_count, content="1")
+  inspect(snapshot.cancelled_subscription_count, content="1")
 }
 
 ///|
@@ -274,6 +279,14 @@ fn ParentImporterModel::view(
 }
 
 ///|
+fn ParentImporterModel::subscriptions(
+  self : ParentImporterModel,
+  services : @host.HostAppServices,
+) -> @core.Subscription[ParentImporterMsg] {
+  self.child.subscriptions(services).map(message => Child(message))
+}
+
+///|
 fn ParentImporterModel::runtime_with_services(
   self : ParentImporterModel,
   services : @host.HostAppServices,
@@ -285,6 +298,7 @@ fn ParentImporterModel::runtime_with_services(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => model.update_with_services(message, services),
       view=model => model.view(),
+      subscriptions=model => model.subscriptions(services),
     ),
     size=@core.Size::new(width~, height~),
   )

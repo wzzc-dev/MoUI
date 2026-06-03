@@ -275,9 +275,26 @@ pub fn FileImporterModel::runtime_with_services(
         model.update_with_services(message, services).as_tuple()
       },
       view~,
+      subscriptions=model => model.subscriptions(services),
     ),
     size=@core.Size::new(width~, height~),
   )
+}
+
+///|
+pub fn FileImporterModel::subscriptions(
+  self : FileImporterModel,
+  services : @host.HostAppServices,
+) -> @core.Subscription[FileImporterMsg] {
+  match self.status {
+    FileImporterStatus::Pending(id) =>
+      services.completion_subscription(
+        id,
+        map=completion => HostCompleted(completion),
+        label="Import files completion",
+      )
+    _ => @core.Subscription::none()
+  }
 }
 
 ///|
@@ -301,15 +318,6 @@ fn FileImporterModel::request_file_dialog(
           "csv", "json", "txt",
         ])
         dispatch(HostCompleted(file_dialog_completion_for_response(response)))
-        match response {
-          @host.HostServiceResponse::Pending(id) =>
-            ignore(
-              services.on_completed(id, completion => {
-                dispatch(HostCompleted(completion))
-              }),
-            )
-          _ => ()
-        }
       },
     ),
   )
