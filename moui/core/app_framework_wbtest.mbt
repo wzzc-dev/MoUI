@@ -209,6 +209,7 @@ test "runtime inspector and frame profile expose devtool counters" {
   inspect(snapshot.program_effect_count, content="0")
   inspect(snapshot.program_effect_send_count, content="0")
   inspect(snapshot.program_effect_dispatch_count, content="0")
+  inspect(snapshot.program_effect_run_count, content="0")
   inspect(snapshot.duplicate_effect_descriptor_key_count, content="0")
   inspect(snapshot.last_effect_summary.max_depth, content="0")
   inspect(snapshot.last_scheduled_effect_summary.max_depth, content="0")

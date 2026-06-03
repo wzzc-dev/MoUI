@@ -115,13 +115,13 @@ control state, but shared app runtimes should default to `Program::simple` and
 `update` returns follow-up work: `Effect::send` re-enters the typed message loop
 directly, and `Effect::dispatch` gives an effect runner the typed message
 dispatcher for app-owned host-service bridges or other callbacks without making
-`core` platform-specific. `Effect::run` is the structured form for dispatch
-runners that should appear in diagnostics; it adds a stable key, kind, and label
-while leaving concrete async execution and cancellation ownership outside
-`core`. `Effect::plan_summary` exposes a platform-neutral diagnostic summary of
-the effect tree, including batch, send, dispatch, none, scheduled leaf count,
-max depth, structured effect descriptors, and duplicate descriptor-key counts,
-without running effect callbacks.
+`core` platform-specific. `Effect::run` is the structured form for task runners
+that should appear in diagnostics; it adds a stable key, kind, and label while
+leaving concrete async execution and cancellation ownership outside `core`.
+`Effect::plan_summary` exposes a platform-neutral diagnostic summary of the
+effect tree, including batch, send, anonymous dispatch, structured run, none,
+scheduled leaf count, max depth, structured effect descriptors, and duplicate
+descriptor-key counts, without running effect callbacks.
 Program runtime snapshots also report message queue enqueue, drain, pending,
 and max-pending counters without requiring `Msg` values to be serializable.
 `Program` constructors also accept
@@ -177,7 +177,8 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   `BuildContext` also exposes scoped save/restore helpers for small saveable
   string, bool, and int state.
 - `AppRuntime` owns app-level `Program` diagnostics, including dispatch,
-  update, message queue, effect plan, scheduled effect, effect-kind, active
+  update, message queue, effect plan, scheduled effect, effect-kind counters
+  that distinguish send, anonymous dispatch, and structured run, active
   subscription, subscription plan, start/reuse/cancel, duplicate effect
   descriptor-key, and duplicate subscription-key counters, plus ignored
   subscription dispatch counters for stale callbacks from canceled or destroyed

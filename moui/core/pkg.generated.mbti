@@ -613,6 +613,7 @@ pub(all) enum EffectPlanKind {
   EffectPlanBatch
   EffectPlanSend
   EffectPlanDispatch
+  EffectPlanRun
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct EffectPlanSummary {
@@ -621,6 +622,7 @@ pub(all) struct EffectPlanSummary {
   batch_count : Int
   send_count : Int
   dispatch_count : Int
+  run_count : Int
   scheduled_count : Int
   max_depth : Int
   descriptors : Array[EffectDescriptor]
@@ -1092,6 +1094,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   effect_batch_count : Int
   effect_send_count : Int
   effect_dispatch_count : Int
+  effect_run_count : Int
   duplicate_effect_descriptor_key_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
@@ -1351,6 +1354,7 @@ pub(all) struct RuntimeInspectorSnapshot {
   program_effect_batch_count : Int
   program_effect_send_count : Int
   program_effect_dispatch_count : Int
+  program_effect_run_count : Int
   duplicate_effect_descriptor_key_count : Int
   last_effect_summary : EffectPlanSummary
   last_scheduled_effect_summary : EffectPlanSummary
