@@ -1110,6 +1110,16 @@ fn MarkdownEditorApp::action_commands(
       () => ignore(self.update(ApplyCommand(Image))),
     ),
     markdown_editor_command_binding(
+      "Paragraph",
+      markdown_editor_shortcut("0"),
+      () => ignore(self.update(ApplyCommand(Paragraph))),
+    ),
+    markdown_editor_command_binding(
+      "Paragraph",
+      markdown_editor_control_shortcut("0"),
+      () => ignore(self.update(ApplyCommand(Paragraph))),
+    ),
+    markdown_editor_command_binding(
       "Heading 1",
       markdown_editor_shortcut("1"),
       () => ignore(self.update(ApplyCommand(Heading(1)))),
@@ -1175,6 +1185,16 @@ fn MarkdownEditorApp::action_commands(
       () => ignore(self.update(ApplyCommand(BulletList))),
     ),
     markdown_editor_command_binding(
+      "Bullet List",
+      markdown_editor_control_shift_shortcut("8"),
+      () => ignore(self.update(ApplyCommand(BulletList))),
+    ),
+    markdown_editor_command_binding(
+      "Bullet List",
+      markdown_editor_control_shift_shortcut("*"),
+      () => ignore(self.update(ApplyCommand(BulletList))),
+    ),
+    markdown_editor_command_binding(
       "Task List",
       markdown_editor_shortcut("t"),
       () => ignore(self.update(ApplyCommand(TaskList))),
@@ -1184,9 +1204,29 @@ fn MarkdownEditorApp::action_commands(
       markdown_editor_shortcut("o"),
       () => ignore(self.update(ApplyCommand(OrderedList))),
     ),
+    markdown_editor_command_binding(
+      "Ordered List",
+      markdown_editor_control_shift_shortcut("7"),
+      () => ignore(self.update(ApplyCommand(OrderedList))),
+    ),
+    markdown_editor_command_binding(
+      "Ordered List",
+      markdown_editor_control_shift_shortcut("&"),
+      () => ignore(self.update(ApplyCommand(OrderedList))),
+    ),
     markdown_editor_command_binding("Quote", markdown_editor_shortcut("q"), () => {
       ignore(self.update(ApplyCommand(Quote)))
     }),
+    markdown_editor_command_binding(
+      "Quote",
+      markdown_editor_control_shift_shortcut("9"),
+      () => ignore(self.update(ApplyCommand(Quote))),
+    ),
+    markdown_editor_command_binding(
+      "Quote",
+      markdown_editor_control_shift_shortcut("("),
+      () => ignore(self.update(ApplyCommand(Quote))),
+    ),
     markdown_editor_command_binding(
       "Code Block",
       markdown_editor_shortcut("k"),
