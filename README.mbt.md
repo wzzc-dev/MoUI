@@ -100,7 +100,7 @@ The `native` subpackage contains the first opt-in native boundary:
 - `@native.Surface::image_snapshot()` returns an immutable `@native.Image`
   handle when a surface is available;
 - `@native.Surface::image_snapshot_with_bounds(bounds)` snapshots a bounded
-  surface rectangle;
+  surface rectangle and rejects rectangles outside the surface bounds;
 - `@native.Surface::flush_and_submit()` establishes an explicit finalization
   boundary for native surfaces; current raster surfaces treat it as a no-op;
 - `@native.Surface::render_frame(frame)` and `render_frame_with_resources(...)`
@@ -112,7 +112,8 @@ The `native` subpackage contains the first opt-in native boundary:
   resident resources, byte budgets, hits, misses, and evictions across the
   native replay caches used by Canvas and Surface frame replay;
 - `@native.Surface::read_pixels(bounds)` reads N32 premultiplied surface pixels
-  into an owned `@skia_mbt.Pixmap`;
+  into an owned `@skia_mbt.Pixmap`, rejecting rectangles outside the surface
+  bounds;
 - `@native.Image::encode_to_data(format, quality)` returns immutable
   `@native.Data` bytes for encoded image output;
 - `@native.Image::from_bitmap(bitmap)` snapshots a native bitmap into an
