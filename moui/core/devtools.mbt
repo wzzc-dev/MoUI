@@ -2,6 +2,7 @@
 pub(all) struct RuntimeInspectorSnapshot {
   size : Size
   dirty_count : Int
+  dirty_state : RuntimeDirtyStateSummary
   needs_rebuild : Bool
   needs_layout : Bool
   needs_paint : Bool
@@ -50,6 +51,18 @@ pub(all) struct RuntimeInspectorSnapshot {
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
   rebuild_reason : String
   dirty_reasons : Array[String]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RuntimeDirtyStateSummary {
+  dirty_count : Int
+  needs_rebuild : Bool
+  needs_layout : Bool
+  needs_paint : Bool
+  needs_redraw : Bool
+  has_pending_work : Bool
+  reason : String
+  reasons : Array[String]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -166,11 +179,26 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
   let needs_redraw = runtime.needs_redraw()
   let rebuild_reason = runtime.inspector_rebuild_reason()
   let dirty_reasons = runtime.inspector_dirty_reasons()
+  let dirty_state = RuntimeDirtyStateSummary::{
+    dirty_count,
+    needs_rebuild,
+    needs_layout,
+    needs_paint,
+    needs_redraw,
+    has_pending_work: needs_rebuild ||
+    needs_layout ||
+    needs_paint ||
+    needs_redraw ||
+    dirty_count > 0,
+    reason: rebuild_reason,
+    reasons: dirty_reasons.copy(),
+  }
   let program = runtime.program_runtime_snapshot()
   let draw_commands = runtime.draw_commands()
   RuntimeInspectorSnapshot::{
     size: runtime.size(),
     dirty_count,
+    dirty_state,
     needs_rebuild,
     needs_layout,
     needs_paint,

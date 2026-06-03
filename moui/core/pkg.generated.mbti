@@ -1367,9 +1367,21 @@ pub fn RouterState::restore(Self, RouterSnapshot) -> Unit
 pub fn RouterState::snapshot(Self) -> RouterSnapshot
 pub fn RouterState::stack(Self) -> Array[RouteLocation]
 
+pub(all) struct RuntimeDirtyStateSummary {
+  dirty_count : Int
+  needs_rebuild : Bool
+  needs_layout : Bool
+  needs_paint : Bool
+  needs_redraw : Bool
+  has_pending_work : Bool
+  reason : String
+  reasons : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct RuntimeInspectorSnapshot {
   size : Size
   dirty_count : Int
+  dirty_state : RuntimeDirtyStateSummary
   needs_rebuild : Bool
   needs_layout : Bool
   needs_paint : Bool

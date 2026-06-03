@@ -206,7 +206,10 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   lifecycle entries, active subscription descriptors, active subscription
   kind-count summaries, and subscription lifecycle entries so tooling can
   identify which tasks and sources completed, were reused, or were canceled
-  without inspecting app messages. Structured
+  without inspecting app messages. Runtime inspector snapshots also expose a
+  structured dirty-state summary for pending rebuild/layout/paint/redraw work
+  alongside legacy reason strings, so devtools can consume stable fields instead
+  of parsing captions. Structured
   effect descriptors from `Effect::run`, `Effect::host_service`,
   `Effect::task`, and `Effect::service_task` travel through effect summaries so
   tooling can identify planned host-service or service/task runners without
