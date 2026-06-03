@@ -24,7 +24,7 @@ Status meanings:
 | Gradient | ready | ready | ready | Skia linear-gradient fills and strokes for rounded rects and paths have real native renderer pixel smoke coverage. |
 | Shadow | ready | ready | ready | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
 | Text | ready | ready | ready | Skia `Font` measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interior stabilization for both caret paths, grapheme-safe mixed-run fallback segments, and best-available glyph-run rendering clip to `TextRun.frame` while resolving `FontSpec` family, weight, style, and representative coverage characters through Skia `FontMgr` `FontFallbackRequest`/`Font`; real native renderer smoke covers glyph-run pixels and bounded `TextRun.frame` clipping; broader shaping is tracked separately. |
-| Image | ready | ready | ready | Skia validates PNG/JPEG/BMP data URI decode, local PNG/JPEG/BMP decode, contain/cover/stretch placement geometry, `draw_image_rect` output, ready/failed lifecycle records, failed-image placeholders, immutable-source failed-cache reuse, and local-file failure retry once the file appears; the real native renderer smoke covers ready data URI/local PNG drawing and failed-image placeholders. |
+| Image | ready | ready | ready | Skia validates PNG/JPEG/BMP data URI decode, local PNG/JPEG/BMP decode, contain/cover/stretch/scale-down placement geometry, `draw_image_rect` output, ready/failed lifecycle records, failed-image placeholders, immutable-source failed-cache reuse, and local-file failure retry once the file appears; the real native renderer smoke covers ready data URI/local PNG drawing and failed-image placeholders. |
 | Clip | ready | ready | ready | Skia rectangular, rounded, and path clip scopes have representative real native smoke coverage. |
 | Transform | partial | ready | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated, scaled-and-clipped, layer-masked opacity, and filter-scoped pixel proof. |
 | Opacity | ready | ready | ready | Skia save-layer opacity has blended pixel smoke coverage. |
@@ -63,8 +63,8 @@ capability record shape.
 Native wgpu now renders rects, rounded geometry, gradients, soft shadows,
 glyph-atlas text, and images directly. Image commands use a complete pipeline:
 PNG/JPEG/BMP decoding through `mizchi/image`, local file and base64 data URI
-sources, texture caching, GPU sampling, contain/cover/stretch fit modes, and
-fallback handling.
+sources, texture caching, GPU sampling, contain/cover/stretch/scale-down fit
+modes, and fallback handling.
 Clip support uses transformed rectangular scissor rectangles and rounded clips
 with shader SDF masks. Transform support is applied to planned visual, image,
 text, shader-effect advanced vertices, and masked layer composite vertices.
@@ -138,8 +138,9 @@ image commands are marked loading until the native cache can resolve them;
 successful synchronous decode/cache upload marks records ready with dimensions,
 and failed decodes mark records failed with a diagnostic. Skia renderer-local
 tests also pin `ImageFit::Contain` letterboxing, `ImageFit::Cover` UV crop
-geometry, and `ImageFit::Stretch` full-frame sampling before `draw_image_rect`
-submits the source/destination rects.
+geometry, `ImageFit::Stretch` full-frame sampling, and
+`ImageFit::ScaleDown` natural-size-or-contain placement before
+`draw_image_rect` submits the source/destination rects.
 
 ## Current Skia Raster Notes
 
@@ -194,7 +195,7 @@ blur/saturation/brightness/contrast/color-matrix filters, color-matrix short/lon
 payload normalization, solid and gradient
 paths including quadratic and cubic curve verbs, the solid, checker,
 linear-gradient-debug, and vignette shader effects, PNG/JPEG/BMP data URI
-decode, local PNG/JPEG/BMP decode, contain/cover/stretch image placement geometry,
+decode, local PNG/JPEG/BMP decode, contain/cover/stretch/scale-down image placement geometry,
 local PNG image drawing, immutable
 failed-image placeholders plus local-file retry recovery, basic text glyph-run pixels, bounded
 `TextRun.frame` clipping, and optional SkShaper availability when the smoke is
@@ -205,7 +206,7 @@ packages expose the same
 renderer image-resource snapshot records through `HostWindowRenderer`, so host
 diagnostics can inspect loading, ready, failed, and disposed image resources
 without importing `render/skia`; renderer tests cover JPEG/BMP data URI and
-local-file decode, contain/cover/stretch source/destination placement, immutable
+local-file decode, contain/cover/stretch/scale-down source/destination placement, immutable
 failed-cache reuse, and local-file retry once a missing file appears.
 Remaining Skia renderer gaps are now narrower: complex text shaping. Basic text
 measurement/drawing uses Skia `FontMgr`/`Font` with `FontSpec` family, weight,
@@ -246,7 +247,7 @@ payloads to the `webgpu` host import module. The browser runtime now renders
 rects, rounded geometry, gradients, soft shadows, opacity, text, and loaded
 images through WebGPU pipelines. Text uses a DPR-aware canvas-rasterized glyph
 atlas before the glyphs are composited by WebGPU. Images are cached as WebGPU
-textures, support contain/cover/stretch fit, and use a deterministic fallback color
+textures, support contain/cover/stretch/scale-down fit, and use a deterministic fallback color
 while the browser is still loading the source or if loading fails.
 `WebGpuWasmRenderer::image_resources()` exposes renderer-local image resource
 snapshots, and `backend/web.WebRenderer::image_resources()` forwards the same

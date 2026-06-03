@@ -124,6 +124,44 @@ test "image placement for stretch fit fills frame without cropping" {
 }
 
 ///|
+test "image placement for scale-down fit preserves smaller natural size" {
+  let image_size = @core.Size::new(width=40.0, height=20.0)
+  let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
+  let result = calculate_image_placement(
+    frame,
+    image_size,
+    @core.ImageFit::ScaleDown,
+  )
+  inspect(result.frame.origin.x, content="40")
+  inspect(result.frame.origin.y, content="60")
+  inspect(result.frame.size.width, content="40")
+  inspect(result.frame.size.height, content="20")
+  inspect(result.u0, content="0")
+  inspect(result.v0, content="0")
+  inspect(result.u1, content="1")
+  inspect(result.v1, content="1")
+}
+
+///|
+test "image placement for scale-down fit contains oversized image" {
+  let image_size = @core.Size::new(width=200.0, height=100.0)
+  let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=100.0)
+  let result = calculate_image_placement(
+    frame,
+    image_size,
+    @core.ImageFit::ScaleDown,
+  )
+  inspect(result.frame.origin.x, content="10")
+  inspect(result.frame.origin.y, content="45")
+  inspect(result.frame.size.width, content="100")
+  inspect(result.frame.size.height, content="50")
+  inspect(result.u0, content="0")
+  inspect(result.v0, content="0")
+  inspect(result.u1, content="1")
+  inspect(result.v1, content="1")
+}
+
+///|
 test "image vertex generation" {
   let frame = @core.Rect::new(x=10.0, y=20.0, width=100.0, height=80.0)
   let vertices = generate_image_vertices(

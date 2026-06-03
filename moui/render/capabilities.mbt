@@ -273,11 +273,11 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     renderer_feature_capability_entry(
       RendererFeature::Image,
       RendererFeatureStatus::Ready,
-      "Native wgpu decodes local file paths and base64 data URIs through mizchi/image for PNG, JPEG, and BMP, then caches GPU textures with contain/cover/stretch sampling.",
+      "Native wgpu decodes local file paths and base64 data URIs through mizchi/image for PNG, JPEG, and BMP, then caches GPU textures with contain/cover/stretch/scale-down sampling.",
       RendererFeatureStatus::Ready,
-      "Skia raster decodes PNG/JPEG/BMP data URIs and local PNG/JPEG/BMP files through skia_mbt encoded image APIs, validates contain/cover/stretch placement geometry and draw_image_rect output, records ready/failed image lifecycle states, and renders failed-image placeholders in the real native renderer smoke.",
+      "Skia raster decodes PNG/JPEG/BMP data URIs and local PNG/JPEG/BMP files through skia_mbt encoded image APIs, validates contain/cover/stretch/scale-down placement geometry and draw_image_rect output, records ready/failed image lifecycle states, and renders failed-image placeholders in the real native renderer smoke.",
       RendererFeatureStatus::Ready,
-      "The browser WebGPU host loads image sources into a texture cache, samples contain/cover/stretch image fits through a WebGPU image pipeline, and falls back to a deterministic source color while loading or on failure.",
+      "The browser WebGPU host loads image sources into a texture cache, samples contain/cover/stretch/scale-down image fits through a WebGPU image pipeline, and falls back to a deterministic source color while loading or on failure.",
     ),
     renderer_feature_capability_entry(
       RendererFeature::Clip,

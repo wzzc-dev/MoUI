@@ -49,16 +49,15 @@ fn calculate_image_placement(
 
   match fit {
     @core.ImageFit::Stretch => { frame, u0: 0.0, v0: 0.0, u1: 1.0, v1: 1.0 }
-    @core.ImageFit::Contain =>
-      if image_ratio > frame_ratio {
-        let scaled_height = frame.size.width / image_ratio
-        let offset_y = (frame.size.height - scaled_height) / 2.0
+    @core.ImageFit::ScaleDown =>
+      if image_size.width <= frame.size.width &&
+        image_size.height <= frame.size.height {
         {
           frame: @core.Rect::new(
-            x=frame.origin.x,
-            y=frame.origin.y + offset_y,
-            width=frame.size.width,
-            height=scaled_height,
+            x=frame.origin.x + (frame.size.width - image_size.width) / 2.0,
+            y=frame.origin.y + (frame.size.height - image_size.height) / 2.0,
+            width=image_size.width,
+            height=image_size.height,
           ),
           u0: 0.0,
           v0: 0.0,
@@ -66,21 +65,10 @@ fn calculate_image_placement(
           v1: 1.0,
         }
       } else {
-        let scaled_width = frame.size.height * image_ratio
-        let offset_x = (frame.size.width - scaled_width) / 2.0
-        {
-          frame: @core.Rect::new(
-            x=frame.origin.x + offset_x,
-            y=frame.origin.y,
-            width=scaled_width,
-            height=frame.size.height,
-          ),
-          u0: 0.0,
-          v0: 0.0,
-          u1: 1.0,
-          v1: 1.0,
-        }
+        contain_image_placement(frame, image_ratio, frame_ratio)
       }
+    @core.ImageFit::Contain =>
+      contain_image_placement(frame, image_ratio, frame_ratio)
     @core.ImageFit::Cover =>
       if image_ratio > frame_ratio {
         let visible = frame_ratio / image_ratio
@@ -91,6 +79,45 @@ fn calculate_image_placement(
         let inset = (1.0 - visible) / 2.0
         { frame, u0: 0.0, v0: inset, u1: 1.0, v1: 1.0 - inset }
       }
+  }
+}
+
+///|
+fn contain_image_placement(
+  frame : @core.Rect,
+  image_ratio : Double,
+  frame_ratio : Double,
+) -> NativeImagePlacement {
+  if image_ratio > frame_ratio {
+    let scaled_height = frame.size.width / image_ratio
+    let offset_y = (frame.size.height - scaled_height) / 2.0
+    {
+      frame: @core.Rect::new(
+        x=frame.origin.x,
+        y=frame.origin.y + offset_y,
+        width=frame.size.width,
+        height=scaled_height,
+      ),
+      u0: 0.0,
+      v0: 0.0,
+      u1: 1.0,
+      v1: 1.0,
+    }
+  } else {
+    let scaled_width = frame.size.height * image_ratio
+    let offset_x = (frame.size.width - scaled_width) / 2.0
+    {
+      frame: @core.Rect::new(
+        x=frame.origin.x + offset_x,
+        y=frame.origin.y,
+        width=scaled_width,
+        height=frame.size.height,
+      ),
+      u0: 0.0,
+      v0: 0.0,
+      u1: 1.0,
+      v1: 1.0,
+    }
   }
 }
 

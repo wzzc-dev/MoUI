@@ -1291,6 +1291,34 @@ export function createWebGpuImports(options = {}) {
     }
     const frameRatio = rect.width / Math.max(rect.height, 0.0001);
     const imageRatio = imageWidth / Math.max(imageHeight, 0.0001);
+    const containPlacement = () => {
+      if (imageRatio > frameRatio) {
+        const height = rect.width / imageRatio;
+        return {
+          rect: { x: rect.x, y: rect.y + (rect.height - height) * 0.5, width: rect.width, height },
+          u0: 0, v0: 0, u1: 1, v1: 1,
+        };
+      }
+      const width = rect.height * imageRatio;
+      return {
+        rect: { x: rect.x + (rect.width - width) * 0.5, y: rect.y, width, height: rect.height },
+        u0: 0, v0: 0, u1: 1, v1: 1,
+      };
+    };
+    if (Number(fit) === 3) {
+      if (imageWidth <= rect.width && imageHeight <= rect.height) {
+        return {
+          rect: {
+            x: rect.x + (rect.width - imageWidth) * 0.5,
+            y: rect.y + (rect.height - imageHeight) * 0.5,
+            width: imageWidth,
+            height: imageHeight,
+          },
+          u0: 0, v0: 0, u1: 1, v1: 1,
+        };
+      }
+      return containPlacement();
+    }
     if (Number(fit) === 1) {
       if (imageRatio > frameRatio) {
         const visible = frameRatio / imageRatio;
@@ -1301,18 +1329,7 @@ export function createWebGpuImports(options = {}) {
       const inset = (1 - visible) * 0.5;
       return { rect, u0: 0, v0: inset, u1: 1, v1: 1 - inset };
     }
-    if (imageRatio > frameRatio) {
-      const height = rect.width / imageRatio;
-      return {
-        rect: { x: rect.x, y: rect.y + (rect.height - height) * 0.5, width: rect.width, height },
-        u0: 0, v0: 0, u1: 1, v1: 1,
-      };
-    }
-    const width = rect.height * imageRatio;
-    return {
-      rect: { x: rect.x + (rect.width - width) * 0.5, y: rect.y, width, height: rect.height },
-      u0: 0, v0: 0, u1: 1, v1: 1,
-    };
+    return containPlacement();
   };
 
   const pushImageQuad = (renderer, rect, source, opacity, fit) => {
