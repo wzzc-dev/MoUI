@@ -105,6 +105,7 @@ fn fallback_text_layout_result(input : TextLayoutInput) -> TextLayoutResult {
     cursor = cursor + input.font.size * 0.5
     carets.push(cursor)
   }
+  let carets = fallback_stabilize_grapheme_cluster_carets(input.text, carets)
   {
     size: Size::new(width~, height=input.font.size * 1.25),
     baseline: input.font.size * 0.8,

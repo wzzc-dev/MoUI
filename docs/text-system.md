@@ -8,7 +8,11 @@ shapes are no longer part of the framework contract.
 ## Runtime Boundary
 
 - `core/text_layout.mbt` defines `TextSystem`, `TextSystem::fallback()`, and
-  font data registration.
+  font data registration. The deterministic fallback keeps per-character caret
+  arrays for stable geometry while folding representative cluster interiors
+  such as variation selectors, combining marks, keycap/emoji modifier/ZWJ
+  emoji, regional-indicator pairs, tag sequences, prepend marks, and Hangul
+  Jamo clusters back to the cluster start.
 - `AppRuntime` exposes `text_system()` and `set_text_system()` so hosts can
   install a platform text system before layout, painting, hit testing,
   selection, and IME anchor geometry are produced. The underlying
@@ -169,14 +173,16 @@ Remote font loading is intentionally outside the current backend contract.
 
 - Full bidi, line breaking, typography conformance, native emoji font fallback,
   ZWJ/color emoji conformance, and full grapheme-cluster parity remain follow-up
-  work. Native WGPU can preserve RGBA color glyph payloads through the provider
+  work. Core fallback carets now stabilize representative cluster interiors for
+  deterministic text-field, selection, and IME-anchor geometry without claiming
+  full Unicode segmentation. Native WGPU can preserve RGBA color glyph payloads through the provider
   protocol and glyph atlas path, with Cosmic platform emoji fallback candidate
   loading, Cosmic color swash preservation, provider-safe emoji layout mapping,
   and a CoreText AppleColorEmoji RGBA path covered by focused tests. Stable and
   diagnostic tests assert caret counts, monotonicity, clamping, editor selection
-  behavior, IME anchor geometry, and provider fallback safety across mixed bidi,
-  CJK, single-codepoint emoji, variation-selector emoji, and ZWJ emoji samples;
-  Cosmic run-layout tests additionally assert glyph output plus caret coverage
+  behavior, IME anchor geometry, core fallback cluster stabilization, and
+  provider fallback safety across mixed bidi, CJK, single-codepoint emoji,
+  variation-selector emoji, and ZWJ emoji samples; Cosmic run-layout tests additionally assert glyph output plus caret coverage
   through the safe-mapped layout path. Skia renderer tests cover the same
   representative emoji caret coverage, shaped-run and fallback caret
   stabilization for combining-mark, Indic matra/virama, Arabic mark, Thai mark,

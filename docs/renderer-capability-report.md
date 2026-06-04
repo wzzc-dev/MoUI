@@ -94,7 +94,10 @@ vertex shader marker as RGBA data; Cosmic loads platform emoji fallback font
 candidates when available, preserves color swash pixels, and safe-maps
 provider-fragile emoji samples before native layout so caret diagnostics remain
 stable; CoreText marks AppleColorEmoji raster payloads as RGBA on macOS. Text shaping is
-partial: `core/` keeps only a deterministic fallback `TextSystem`,
+partial: `core/` keeps only a deterministic fallback `TextSystem` with
+representative variation-selector, combining-mark, emoji modifier, keycap, ZWJ,
+regional-indicator, tag-sequence, prepend-mark, script-mark, and Hangul Jamo
+cluster interior caret stabilization,
 `render/wgpu` owns provider validation and atlas upload, including rejection of
 non-empty run-layout caret arrays that do not cover the input text,
 `render/wgpu/cosmic_text` owns the native Cosmic
@@ -123,8 +126,11 @@ Fallback composition is explicit at the backend/provider boundary; the
 `render/wgpu` package validates provider responses but does not depend on the
 Cosmic provider package. Diagnostic text conformance covers deterministic emoji
 measurement and caret invariants for single-codepoint, variation-selector, and
-ZWJ samples; Cosmic run-layout tests also assert glyph output plus monotonic
-caret coverage through the provider-safe mapped layout path, and focused Cosmic
+ZWJ samples, plus core fallback cluster-safe caret geometry for representative
+combining-mark, emoji modifier, keycap, regional-indicator, tag-sequence,
+prepend-mark, script-mark, and Hangul Jamo samples; Cosmic run-layout tests also
+assert glyph output plus monotonic caret coverage through the provider-safe
+mapped layout path, and focused Cosmic
 tests cover platform emoji fallback font loading and emoji codepoint resolution
 when such a font is available. Full bidi, line breaking, typography
 conformance, native emoji font fallback across all providers, color emoji
