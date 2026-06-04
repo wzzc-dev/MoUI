@@ -1685,6 +1685,116 @@ test "host window event source subscription cleanup removes late publishers" {
 }
 
 ///|
+test "host route source subscription dispatches mapped route events" {
+  let source = HostRouteSource::new()
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init="idle",
+      update=(_model, message : String) => message,
+      view=model => {
+        @core.View::text(
+          text=model,
+          size=@core.Size::new(width=280.0, height=24.0),
+          font=@core.FontSpec::new(size=14.0),
+          color=@core.Color::black(),
+        )
+      },
+      subscriptions=_model => {
+        source.subscription(key="host:route", label="Host route adapter", map=event => {
+          if event.source == "deep-link" {
+            Some("route \{event.route()}")
+          } else {
+            None
+          }
+        })
+      },
+    ),
+    size=@core.Size::new(width=320.0, height=80.0),
+  )
+  inspect(source.active_handler_count(), content="1")
+  let initial = runtime.program_runtime_snapshot()
+  inspect(initial.active_subscription_count, content="1")
+  inspect(initial.active_subscriptions[0].key, content="host:route")
+  inspect(initial.active_subscriptions[0].kind, content="route-event")
+  inspect(initial.active_subscriptions[0].label, content="Host route adapter")
+  inspect(
+    source.publish(HostRouteEvent::from_route(route="/ignored", source="app")),
+    content="1",
+  )
+  inspect(runtime.program_runtime_snapshot().dispatched_count, content="0")
+  let deep_link = HostRouteEvent::from_route(
+    route="/docs?tab=api",
+    source="deep-link",
+  )
+  inspect(deep_link.route(), content="/docs?tab=api")
+  inspect(source.publish(deep_link), content="1")
+  inspect(runtime.program_runtime_snapshot().dispatched_count, content="1")
+  assert_true(
+    runtime
+    .draw_commands()
+    .any(command => {
+      command is @core.DrawCommand::DrawText({ text, .. }) &&
+      text == "route /docs?tab=api"
+    }),
+  )
+}
+
+///|
+test "host route event constructor preserves location and source" {
+  let event = HostRouteEvent::new(
+    location=@core.RouteLocation::parse("/docs?tab=api&lang=moonbit"),
+    source="browser",
+  )
+  inspect(event.location.path, content="/docs")
+  inspect(event.location.query.length(), content="2")
+  match event.location.query_value("tab") {
+    Some(tab) => inspect(tab, content="api")
+    None => fail("expected tab query")
+  }
+  match event.location.query_value("lang") {
+    Some(lang) => inspect(lang, content="moonbit")
+    None => fail("expected lang query")
+  }
+  inspect(event.source, content="browser")
+  inspect(event.route(), content="/docs?tab=api&lang=moonbit")
+}
+
+///|
+test "host route source subscription cleanup removes late publishers" {
+  let source = HostRouteSource::new()
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init="idle",
+      update=(_model, message : String) => message,
+      view=model => {
+        @core.View::text(
+          text=model,
+          size=@core.Size::new(width=240.0, height=24.0),
+          font=@core.FontSpec::new(size=14.0),
+          color=@core.Color::black(),
+        )
+      },
+      subscriptions=_model => {
+        source.subscription(key="host:route", label="Host route adapter", map=_event => {
+          Some("route event")
+        })
+      },
+    ),
+    size=@core.Size::new(width=320.0, height=80.0),
+  )
+  inspect(source.active_handler_count(), content="1")
+  runtime.destroy()
+  inspect(source.active_handler_count(), content="0")
+  inspect(
+    source.publish(HostRouteEvent::from_route(route="/late")),
+    content="0",
+  )
+  let destroyed = runtime.program_runtime_snapshot()
+  inspect(destroyed.cancelled_subscription_count, content="1")
+  inspect(destroyed.ignored_subscription_dispatch_count, content="0")
+}
+
+///|
 test "host timer source subscription starts timer and dispatches mapped frames" {
   let timer_dispatch : Ref[((@core.Frame) -> Unit)?] = Ref(None)
   let captured_interval = Ref(0.0)

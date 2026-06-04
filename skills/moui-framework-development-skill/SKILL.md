@@ -139,9 +139,9 @@ Use this skill when editing or reviewing:
   routing and tracked-window revision/status diagnostics plus repaint-result
   previous/current status counts,
   host-event subscription source fanout, window-scoped subscription source,
-  scheduler-backed timer subscription source, window request/completion queue,
-  text-input session, window-event conversion, async host-service queue, and
-  redraw driver.
+  scheduler-backed timer subscription source, route/deep-link subscription source,
+  window request/completion queue, text-input session, window-event conversion,
+  async host-service queue, and redraw driver.
 - `backend/web/`: wasm-gc Web host, canvas constraints, resolver-backed
   multi-canvas window slots, browser runtime bridge, and accessibility adapter.
 - `backend/macos/`: AppKit/window host, resolver-backed multi-window slots,
@@ -455,6 +455,12 @@ moon info
   Keep raw platform event conversion in platform packages, and make adapter
   cleanup remove the publisher handler so late window events do not reach stale
   app subscriptions.
+- For app-owned route/deep-link sources, use `HostRouteSource::subscription` in
+  `backend/host` so published `HostRouteEvent` values can map to typed
+  `Program` messages through `Subscription::route_event`. Keep browser history,
+  native URL bars, OS deep-link dispatch, and app history mutation in
+  platform/app code, and make adapter cleanup remove the publisher handler so
+  late route events do not reach stale app subscriptions.
 - For app-owned timer sources, use `HostTimerSource::subscription` in
   `backend/host` so platform/app schedulers can map `@core.Frame` ticks to typed
   `Program` messages through `Subscription::timer`. Keep platform clock

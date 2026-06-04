@@ -303,6 +303,22 @@ pub fn HostPlatformWindowMap::new() -> Self
 pub fn HostPlatformWindowMap::remove_host(Self, HostWindowId) -> @wzzc-dev/window/core.WindowId?
 pub fn HostPlatformWindowMap::remove_platform(Self, @wzzc-dev/window/core.WindowId) -> HostWindowId?
 
+pub(all) struct HostRouteEvent {
+  location : @wzzc-dev/moui/core.RouteLocation
+  source : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostRouteEvent::from_route(route~ : String, source? : String) -> Self
+pub fn HostRouteEvent::new(location~ : @wzzc-dev/moui/core.RouteLocation, source? : String) -> Self
+pub fn HostRouteEvent::route(Self) -> String
+
+pub struct HostRouteSource {
+  // private fields
+}
+pub fn HostRouteSource::active_handler_count(Self) -> Int
+pub fn HostRouteSource::new() -> Self
+pub fn HostRouteSource::publish(Self, HostRouteEvent) -> Int
+pub fn[Msg] HostRouteSource::subscription(Self, key? : String, label? : String, map~ : (HostRouteEvent) -> Msg?) -> @wzzc-dev/moui/core.Subscription[Msg]
+
 pub(all) struct HostRuntimeDriver {
   runtime : @wzzc-dev/moui/core.AppRuntime
   scheduler : RedrawScheduler

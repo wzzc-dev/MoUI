@@ -121,9 +121,11 @@ development workflows:
   sheets, command metadata, app-owned route/deep-link history, a controlled
   fade/slide route transition preview, a controlled drag-resizable split pane,
   and `RouteFocusStore` evidence showing which `runtime.focus_key(...)` call
-  should restore route focus after a route switch. The visible route history is
-  a serializable shadow stack and the transition is sampled by app state;
-  browser history, automatic route-transition scheduling, and native deep-link
+  should restore route focus after a route switch. `HostRouteSource` provides
+  the host-layer route/deep-link subscription fanout that apps can feed into
+  this shared state, but the visible route history is still a serializable
+  shadow stack and the transition is sampled by app state; browser history,
+  automatic route-transition scheduling, and native deep-link
   dispatch remain host/app follow-up work.
 - `Feedback`: toast/banner/callout/progress/inline-error surfaces plus a
   `ToastQueue` example that converts queued items into `toast_stack` rows while

@@ -16,9 +16,21 @@ pub(all) struct HostWindowEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostRouteEvent {
+  location : @core.RouteLocation
+  source : String
+} derive(Eq, Debug, ToJson)
+
+///|
 pub struct HostWindowEventSource {
   priv mut next_handler_value : Int
   priv mut handlers : Array[HostWindowEventSubscriptionHandler]
+}
+
+///|
+pub struct HostRouteSource {
+  priv mut next_handler_value : Int
+  priv mut handlers : Array[HostRouteSubscriptionHandler]
 }
 
 ///|
@@ -31,6 +43,12 @@ priv struct HostEventSubscriptionHandler {
 priv struct HostWindowEventSubscriptionHandler {
   token : Int
   handle : (HostWindowEvent) -> Unit
+}
+
+///|
+priv struct HostRouteSubscriptionHandler {
+  token : Int
+  handle : (HostRouteEvent) -> Unit
 }
 
 ///|
@@ -54,7 +72,33 @@ pub fn HostWindowEvent::new(
 }
 
 ///|
+pub fn HostRouteEvent::new(
+  location~ : @core.RouteLocation,
+  source? : String = "host-route",
+) -> HostRouteEvent {
+  { location, source }
+}
+
+///|
+pub fn HostRouteEvent::from_route(
+  route~ : String,
+  source? : String = "host-route",
+) -> HostRouteEvent {
+  HostRouteEvent::new(location=@core.RouteLocation::parse(route), source~)
+}
+
+///|
+pub fn HostRouteEvent::route(self : HostRouteEvent) -> String {
+  self.location.to_route()
+}
+
+///|
 pub fn HostWindowEventSource::new() -> HostWindowEventSource {
+  { next_handler_value: 1, handlers: [] }
+}
+
+///|
+pub fn HostRouteSource::new() -> HostRouteSource {
   { next_handler_value: 1, handlers: [] }
 }
 
@@ -67,6 +111,11 @@ pub fn HostEventSource::active_handler_count(self : HostEventSource) -> Int {
 pub fn HostWindowEventSource::active_handler_count(
   self : HostWindowEventSource,
 ) -> Int {
+  self.handlers.length()
+}
+
+///|
+pub fn HostRouteSource::active_handler_count(self : HostRouteSource) -> Int {
   self.handlers.length()
 }
 
@@ -116,6 +165,18 @@ pub fn HostWindowEventSource::publish(
 }
 
 ///|
+pub fn HostRouteSource::publish(
+  self : HostRouteSource,
+  event : HostRouteEvent,
+) -> Int {
+  let handlers = self.handlers.copy()
+  for handler in handlers {
+    (handler.handle)(event)
+  }
+  handlers.length()
+}
+
+///|
 pub fn[Msg] HostWindowEventSource::subscription(
   self : HostWindowEventSource,
   key? : String = "host:window-event",
@@ -132,6 +193,25 @@ pub fn[Msg] HostWindowEventSource::subscription(
     Some(() => ignore(self.remove_handler(token)))
   }
   @core.Subscription::window_event(key~, label~, start~)
+}
+
+///|
+pub fn[Msg] HostRouteSource::subscription(
+  self : HostRouteSource,
+  key? : String = "host:route",
+  label? : String = "Host route",
+  map~ : (HostRouteEvent) -> Msg?,
+) -> @core.Subscription[Msg] {
+  let start = dispatch => {
+    let token = self.add_handler(event => {
+      match map(event) {
+        Some(message) => dispatch(message)
+        None => ()
+      }
+    })
+    Some(() => ignore(self.remove_handler(token)))
+  }
+  @core.Subscription::route_event(key~, label~, start~)
 }
 
 ///|
@@ -171,9 +251,35 @@ fn HostWindowEventSource::add_handler(
 }
 
 ///|
+fn HostRouteSource::add_handler(
+  self : HostRouteSource,
+  handle : (HostRouteEvent) -> Unit,
+) -> Int {
+  let token = self.next_handler_value
+  self.next_handler_value = self.next_handler_value + 1
+  self.handlers.push({ token, handle })
+  token
+}
+
+///|
 fn HostEventSource::remove_handler(self : HostEventSource, token : Int) -> Bool {
   let mut removed = false
   let remaining : Array[HostEventSubscriptionHandler] = []
+  for handler in self.handlers {
+    if !removed && handler.token == token {
+      removed = true
+    } else {
+      remaining.push(handler)
+    }
+  }
+  self.handlers = remaining
+  removed
+}
+
+///|
+fn HostRouteSource::remove_handler(self : HostRouteSource, token : Int) -> Bool {
+  let mut removed = false
+  let remaining : Array[HostRouteSubscriptionHandler] = []
   for handler in self.handlers {
     if !removed && handler.token == token {
       removed = true
