@@ -76,6 +76,44 @@ fn assert_fallback_cluster_carets(
 }
 
 ///|
+fn assert_cluster_caret_movement(
+  text : String,
+  start : Int,
+  end : Int,
+) -> Unit raise {
+  let from_end = move_text_caret(text, end, None, MoveLeft, extend=false)
+  inspect(from_end.caret, content="\{start}")
+  assert_true(from_end.selection is None)
+  let from_start = move_text_caret(text, start, None, MoveRight, extend=false)
+  inspect(from_start.caret, content="\{end}")
+  assert_true(from_start.selection is None)
+  let from_inside_left = move_text_caret(
+    text,
+    start + 1,
+    None,
+    MoveLeft,
+    extend=false,
+  )
+  inspect(from_inside_left.caret, content="\{start}")
+  let from_inside_right = move_text_caret(
+    text,
+    end - 1,
+    None,
+    MoveRight,
+    extend=false,
+  )
+  inspect(from_inside_right.caret, content="\{end}")
+  let extended = move_text_caret(text, start, None, MoveRight, extend=true)
+  inspect(extended.caret, content="\{end}")
+  guard extended.selection is Some(selection) else {
+    fail("expected cluster selection")
+  }
+  let selection = selection.normalized()
+  inspect(selection.start, content="\{start}")
+  inspect(selection.end, content="\{end}")
+}
+
+///|
 fn fixed_advance_text_system(advance : Double) -> TextSystem {
   TextSystem::new(id="test-fixed-advance-conformance", measure=input => {
     let carets : Array[Double] = [0.0]
@@ -182,6 +220,20 @@ test "fallback text system stabilizes representative cluster carets" {
   assert_fallback_cluster_carets("\u{1000}\u{1039}\u{1001}", 0, 3)
   assert_fallback_cluster_carets("\u{1100}\u{1161}\u{11A8}", 0, 3)
   assert_fallback_cluster_carets("A\u{1F1FA}\u{1F1F8}B", 1, 3)
+}
+
+///|
+test "text caret movement skips representative cluster interiors" {
+  assert_cluster_caret_movement("e\u{0301}", 0, 2)
+  assert_cluster_caret_movement("A☕️B", 1, 3)
+  assert_cluster_caret_movement("A👩‍💻B", 1, 4)
+  assert_cluster_caret_movement("A👍🏽B", 1, 3)
+  assert_cluster_caret_movement("A1️⃣B", 1, 4)
+  assert_cluster_caret_movement("A\u{1F1FA}\u{1F1F8}B", 1, 3)
+  assert_cluster_caret_movement("A\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}B", 1, 5)
+  assert_cluster_caret_movement("A\u{0600}\u{0628}\u{0651}B", 1, 4)
+  assert_cluster_caret_movement("A\u{0E01}\u{0E34}B", 1, 3)
+  assert_cluster_caret_movement("A\u{1100}\u{1161}\u{11A8}B", 1, 4)
 }
 
 ///|

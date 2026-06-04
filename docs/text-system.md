@@ -12,7 +12,8 @@ shapes are no longer part of the framework contract.
   arrays for stable geometry while folding representative cluster interiors
   such as variation selectors, combining marks, keycap/emoji modifier/ZWJ
   emoji, regional-indicator pairs, tag sequences, prepend marks, and Hangul
-  Jamo clusters back to the cluster start.
+  Jamo clusters back to the cluster start. Core text editing uses the same
+  cluster boundaries for basic left/right caret movement and shift-selection.
 - `AppRuntime` exposes `text_system()` and `set_text_system()` so hosts can
   install a platform text system before layout, painting, hit testing,
   selection, and IME anchor geometry are produced. The underlying
@@ -174,17 +175,19 @@ Remote font loading is intentionally outside the current backend contract.
 - Full bidi, line breaking, typography conformance, native emoji font fallback,
   ZWJ/color emoji conformance, and full grapheme-cluster parity remain follow-up
   work. Core fallback carets now stabilize representative cluster interiors for
-  deterministic text-field, selection, and IME-anchor geometry without claiming
-  full Unicode segmentation. Native WGPU can preserve RGBA color glyph payloads through the provider
-  protocol and glyph atlas path, with Cosmic platform emoji fallback candidate
-  loading, Cosmic color swash preservation, provider-safe emoji layout mapping,
-  and a CoreText AppleColorEmoji RGBA path covered by focused tests. Stable and
-  diagnostic tests assert caret counts, monotonicity, clamping, editor selection
-  behavior, IME anchor geometry, core fallback cluster stabilization, and
-  provider fallback safety across mixed bidi, CJK, single-codepoint emoji,
-  variation-selector emoji, and ZWJ emoji samples; Cosmic run-layout tests additionally assert glyph output plus caret coverage
-  through the safe-mapped layout path. Skia renderer tests cover the same
-  representative emoji caret coverage, shaped-run and fallback caret
+  deterministic text-field, selection, and IME-anchor geometry, and left/right
+  caret movement skips those representative cluster interiors without claiming
+  full Unicode segmentation. Native WGPU can preserve RGBA color glyph payloads
+  through the provider protocol and glyph atlas path, with Cosmic platform
+  emoji fallback candidate loading, Cosmic color swash preservation,
+  provider-safe emoji layout mapping, and a CoreText AppleColorEmoji RGBA path
+  covered by focused tests. Stable and diagnostic tests assert caret counts,
+  monotonicity, clamping, editor selection behavior, IME anchor geometry, core
+  fallback cluster stabilization and movement, and provider fallback safety
+  across mixed bidi, CJK, single-codepoint emoji, variation-selector emoji, and
+  ZWJ emoji samples; Cosmic run-layout tests additionally assert glyph output
+  plus caret coverage through the safe-mapped layout path. Skia renderer tests
+  cover the same representative emoji caret coverage, shaped-run and fallback caret
   stabilization for combining-mark, Indic matra/virama, Arabic mark, Thai mark,
   Lao mark, Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo L/V/T
   clusters, emoji-modifier, variation-selector, regional-indicator pairs, emoji

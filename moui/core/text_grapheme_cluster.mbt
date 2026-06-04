@@ -192,6 +192,52 @@ fn fallback_stabilize_caret_cluster(
 }
 
 ///|
+fn text_previous_grapheme_caret_boundary(text : String, caret : Int) -> Int {
+  let chars = text.to_array()
+  let caret = clamp_int(caret, 0, chars.length())
+  if caret <= 0 {
+    return 0
+  }
+  let mut index = 0
+  while index < chars.length() {
+    let end = fallback_grapheme_cluster_end_safe(chars, index)
+    if caret > index && caret <= end {
+      return index
+    }
+    index = end
+  }
+  clamp_int(caret - 1, 0, chars.length())
+}
+
+///|
+fn text_next_grapheme_caret_boundary(text : String, caret : Int) -> Int {
+  let chars = text.to_array()
+  let caret = clamp_int(caret, 0, chars.length())
+  if caret >= chars.length() {
+    return chars.length()
+  }
+  let mut index = 0
+  while index < chars.length() {
+    let end = fallback_grapheme_cluster_end_safe(chars, index)
+    if caret < end {
+      return end
+    }
+    index = end
+  }
+  chars.length()
+}
+
+///|
+fn fallback_grapheme_cluster_end_safe(chars : Array[Char], start : Int) -> Int {
+  let end = fallback_grapheme_cluster_end(chars, start)
+  if end <= start {
+    min_int(start + 1, chars.length())
+  } else {
+    min_int(end, chars.length())
+  }
+}
+
+///|
 fn fallback_codepoint_is_variation_selector(codepoint : Int) -> Bool {
   (codepoint >= 0xFE00 && codepoint <= 0xFE0F) ||
   (codepoint >= 0xE0100 && codepoint <= 0xE01EF)
