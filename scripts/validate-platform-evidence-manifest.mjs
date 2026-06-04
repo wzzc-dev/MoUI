@@ -148,6 +148,72 @@ const skiaObservationKeys = [
   "markdownFirstFrame",
 ];
 
+const provenanceKinds = ["github-actions", "matching-host-artifact"];
+
+const validateEvidenceProvenance = (provenance, label, name, status) => {
+  if (provenance === undefined) {
+    if (status === "passed") {
+      fail(`${label}.evidenceProvenance must be recorded when status is passed`);
+    }
+    return;
+  }
+
+  if (!provenance || typeof provenance !== "object" || Array.isArray(provenance)) {
+    fail(`${label}.evidenceProvenance must be an object`);
+    return;
+  }
+
+  const kind = requireString(provenance, "kind", `${label}.evidenceProvenance.kind`);
+  if (!provenanceKinds.includes(kind)) {
+    fail(`${label}.evidenceProvenance.kind must be github-actions or matching-host-artifact`);
+  }
+
+  const host = requireString(provenance, "host", `${label}.evidenceProvenance.host`);
+  if (status === "passed") {
+    const expected = platforms.get(name);
+    if (expected && !expected.hostPattern.test(host)) {
+      fail(`${label}.evidenceProvenance.host must name a matching ${name} host when status is passed`);
+    }
+  }
+
+  const artifacts = requireArray(
+    provenance,
+    "artifacts",
+    `${label}.evidenceProvenance.artifacts`,
+  );
+  const notes = requireArray(provenance, "notes", `${label}.evidenceProvenance.notes`);
+  assertStringArray(artifacts, `${label}.evidenceProvenance.artifacts`);
+  assertStringArray(notes, `${label}.evidenceProvenance.notes`);
+  if (artifacts.length === 0) {
+    fail(`${label}.evidenceProvenance.artifacts must include at least one artifact reference`);
+  }
+  if (notes.length === 0) {
+    fail(`${label}.evidenceProvenance.notes must include at least one note`);
+  }
+
+  artifacts.forEach((artifact, artifactIndex) => {
+    if (
+      artifact.startsWith("artifacts/platform-evidence/") &&
+      !artifact.startsWith(`artifacts/platform-evidence/${name}/`)
+    ) {
+      fail(`${label}.evidenceProvenance.artifacts[${artifactIndex}] must stay under artifacts/platform-evidence/${name}/`);
+    }
+  });
+
+  if (kind === "github-actions") {
+    requireString(provenance, "workflow", `${label}.evidenceProvenance.workflow`);
+    requireString(provenance, "job", `${label}.evidenceProvenance.job`);
+    requireString(provenance, "runner", `${label}.evidenceProvenance.runner`);
+    const runUrl = requireString(provenance, "runUrl", `${label}.evidenceProvenance.runUrl`);
+    if (!/^https:\/\/github\.com\/.+\/.+\/actions\/runs\/\d+/.test(runUrl)) {
+      fail(`${label}.evidenceProvenance.runUrl must be a GitHub Actions run URL`);
+    }
+    if (provenance.runId !== undefined) {
+      requireString(provenance, "runId", `${label}.evidenceProvenance.runId`);
+    }
+  }
+};
+
 const nativeSkiaEvidence = new Map([
   [
     "macos",
@@ -300,6 +366,13 @@ const validateSkiaEvidence = (entry, label, name, platformStatus) => {
       fail(`${label}.skiaEvidence.observations.${incompleteObservation} must be yes when skiaEvidence.status is passed`);
     }
   }
+
+  validateEvidenceProvenance(
+    skiaEvidence.evidenceProvenance,
+    `${label}.skiaEvidence`,
+    name,
+    status,
+  );
 
   if (status === "failed" && !observedValues.includes("no")) {
     fail(`${label}.skiaEvidence.observations must include at least one no when skiaEvidence.status is failed`);
@@ -508,6 +581,8 @@ entries.forEach((entry, index) => {
       fail(`${label}.consumerCommand must not be pending when status is passed`);
     }
   }
+
+  validateEvidenceProvenance(entry.evidenceProvenance, label, name, status);
 
   if (status === "failed" && !observedValues.includes("no")) {
     fail(`${label}.observations must include at least one no when status is failed`);

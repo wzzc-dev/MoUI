@@ -234,9 +234,15 @@ monitor/cursor probe as `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native entries
 also record a `skiaEvidence` block for Skia provider/preflight commands,
 fallback-unavailable checks, real-renderer smoke, and Showcase/Markdown
-first-frame status. `skiaEvidence.status=passed` is Skia-route evidence, not a
-complete platform-services claim by itself, but native platform entries cannot
-be marked `passed` unless their Skia evidence is also `passed`. Use
+first-frame status. Any `status=passed` platform entry, and any
+`skiaEvidence.status=passed` route, must include `evidenceProvenance` that
+traces the claim to a non-skipped successful GitHub Actions job/run or to a
+matching-host artifact bundle. Build-only jobs, package-only jobs,
+provider/preflight summaries, dependency smokes, and skipped workflow-dispatch
+paths are not runtime proof. `skiaEvidence.status=passed` is Skia-route
+evidence, not a complete platform-services claim by itself, but native platform
+entries cannot be marked `passed` unless their Skia evidence is also `passed`.
+Use
 `record-native-skia-evidence.mjs` for matching-host Skia logs when you only
 want to validate and update `skiaEvidence`; it deliberately leaves the broader
 platform runtime status unchanged. Its provider-preflight log check requires

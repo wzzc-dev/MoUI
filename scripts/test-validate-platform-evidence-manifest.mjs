@@ -39,6 +39,25 @@ const passedSkiaObservations = Object.fromEntries(
   Object.keys(pendingSkiaObservations).map(key => [key, "yes"]),
 );
 
+const matchingHostProvenance = (platform, host, artifacts) => ({
+  kind: "matching-host-artifact",
+  host,
+  artifacts,
+  notes: [`${platform} matching-host artifacts prove this passed evidence entry`],
+});
+
+const githubActionsProvenance = (platform, host, job, artifacts) => ({
+  kind: "github-actions",
+  host,
+  workflow: "MoUI CI",
+  job,
+  runUrl: "https://github.com/wzzc-dev/MoUI/actions/runs/123456789",
+  runId: "123456789",
+  runner: host,
+  artifacts,
+  notes: [`${platform} evidence was produced by GitHub Actions`],
+});
+
 const skiaEvidence = name => {
   if (name === "macos") {
     return {
@@ -280,12 +299,21 @@ const windowsPassed = {
               "artifacts/platform-evidence/windows/showcase-skia-first-frame.log",
               "artifacts/platform-evidence/windows/markdown-skia-first-frame.log",
             ],
+            evidenceProvenance: matchingHostProvenance("windows", "Windows MSVC CI", [
+              "artifacts/platform-evidence/windows/skia-provider.log",
+              "artifacts/platform-evidence/windows/showcase-skia-first-frame.log",
+              "artifacts/platform-evidence/windows/markdown-skia-first-frame.log",
+            ]),
             notes: ["matching-host Windows Skia first-frame evidence observed"],
           },
           artifacts: [
             "artifacts/platform-evidence/windows/window-smoke.md",
             "artifacts/platform-evidence/windows/showcase-run.log",
           ],
+          evidenceProvenance: githubActionsProvenance("windows", "Windows MSVC CI", "Windows MSVC native smoke", [
+            "artifacts/platform-evidence/windows/window-smoke.md",
+            "artifacts/platform-evidence/windows/showcase-run.log",
+          ]),
           notes: ["matching-host Windows evidence observed"],
         }
       : entry,
@@ -294,6 +322,103 @@ const windowsPassed = {
 expectPass(
   "valid windows passed manifest",
   runValidator(writeFixture("valid-windows-passed.json", windowsPassed)),
+);
+
+const passedWithoutProvenance = {
+  ...windowsPassed,
+  platforms: windowsPassed.platforms.map(entry =>
+    entry.name === "windows"
+      ? Object.fromEntries(
+          Object.entries(entry).filter(([key]) => key !== "evidenceProvenance"),
+        )
+      : entry,
+  ),
+};
+expectFail(
+  "passed platform requires provenance",
+  runValidator(writeFixture("passed-without-provenance.json", passedWithoutProvenance)),
+  "evidenceProvenance must be recorded when status is passed",
+);
+
+const passedSkiaWithoutProvenance = {
+  ...windowsPassed,
+  platforms: windowsPassed.platforms.map(entry =>
+    entry.name === "windows"
+      ? {
+          ...entry,
+          skiaEvidence: Object.fromEntries(
+            Object.entries(entry.skiaEvidence).filter(([key]) => key !== "evidenceProvenance"),
+          ),
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "passed skia evidence requires provenance",
+  runValidator(writeFixture("passed-skia-without-provenance.json", passedSkiaWithoutProvenance)),
+  "skiaEvidence.evidenceProvenance must be recorded when status is passed",
+);
+
+const badGithubRunUrl = {
+  ...windowsPassed,
+  platforms: windowsPassed.platforms.map(entry =>
+    entry.name === "windows"
+      ? {
+          ...entry,
+          evidenceProvenance: {
+            ...entry.evidenceProvenance,
+            runUrl: "https://example.com/not-actions",
+          },
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "github provenance requires actions run url",
+  runValidator(writeFixture("bad-github-run-url.json", badGithubRunUrl)),
+  "evidenceProvenance.runUrl must be a GitHub Actions run URL",
+);
+
+const escapedProvenanceArtifact = {
+  ...windowsPassed,
+  platforms: windowsPassed.platforms.map(entry =>
+    entry.name === "windows"
+      ? {
+          ...entry,
+          evidenceProvenance: {
+            ...entry.evidenceProvenance,
+            artifacts: ["artifacts/platform-evidence/linux/showcase-run.log"],
+          },
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "provenance artifact path must stay under platform",
+  runValidator(writeFixture("escaped-provenance-artifact.json", escapedProvenanceArtifact)),
+  "evidenceProvenance.artifacts[0] must stay under artifacts/platform-evidence/windows/",
+);
+
+const pendingWithMalformedProvenance = {
+  ...validManifest,
+  platforms: validManifest.platforms.map(entry =>
+    entry.name === "web"
+      ? {
+          ...entry,
+          evidenceProvenance: {
+            kind: "unknown",
+            host: "Web wasm-gc browser host",
+            artifacts: ["artifacts/platform-evidence/web/web-runtime-presentation.json"],
+            notes: ["malformed pending provenance should still be validated"],
+          },
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "pending malformed provenance is rejected",
+  runValidator(writeFixture("pending-malformed-provenance.json", pendingWithMalformedProvenance)),
+  "evidenceProvenance.kind must be github-actions or matching-host-artifact",
 );
 
 expectFail(

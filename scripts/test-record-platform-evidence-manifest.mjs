@@ -344,6 +344,26 @@ expectPass(
     "artifacts/platform-evidence/windows/showcase-run.log",
     "--note",
     "matching-host Windows evidence observed",
+    "--provenance-kind",
+    "github-actions",
+    "--provenance-host",
+    "Windows MSVC CI",
+    "--provenance-workflow",
+    "MoUI CI",
+    "--provenance-job",
+    "Windows MSVC native smoke",
+    "--provenance-run-url",
+    "https://github.com/wzzc-dev/MoUI/actions/runs/123456789",
+    "--provenance-run-id",
+    "123456789",
+    "--provenance-runner",
+    "windows-2022",
+    "--provenance-artifact",
+    "artifacts/platform-evidence/windows/window-smoke.md",
+    "--provenance-artifact",
+    "artifacts/platform-evidence/windows/showcase-run.log",
+    "--provenance-note",
+    "Windows platform evidence came from a GitHub Actions job",
     "--skia-status",
     "passed",
     ...passedSkiaObservationArgs,
@@ -355,6 +375,18 @@ expectPass(
     "artifacts/platform-evidence/windows/markdown-skia-first-frame.log",
     "--skia-note",
     "matching-host Windows Skia first-frame evidence observed",
+    "--skia-provenance-kind",
+    "matching-host-artifact",
+    "--skia-provenance-host",
+    "Windows MSVC CI",
+    "--skia-provenance-artifact",
+    "artifacts/platform-evidence/windows/skia-provider.log",
+    "--skia-provenance-artifact",
+    "artifacts/platform-evidence/windows/showcase-skia-first-frame.log",
+    "--skia-provenance-artifact",
+    "artifacts/platform-evidence/windows/markdown-skia-first-frame.log",
+    "--skia-provenance-note",
+    "Windows Skia evidence came from matching-host first-frame artifacts",
   ]),
 );
 const windowsManifest = JSON.parse(readFileSync(windowsPath, "utf8"));
@@ -363,8 +395,10 @@ if (
   windowsEntry.status !== "passed" ||
   windowsEntry.observations.textInput !== "yes" ||
   windowsEntry.observations.monitorCursor !== "yes" ||
+  windowsEntry.evidenceProvenance?.kind !== "github-actions" ||
   windowsEntry.skiaEvidence.status !== "passed" ||
-  windowsEntry.skiaEvidence.observations.showcaseFirstFrame !== "yes"
+  windowsEntry.skiaEvidence.observations.showcaseFirstFrame !== "yes" ||
+  windowsEntry.skiaEvidence.evidenceProvenance?.kind !== "matching-host-artifact"
 ) {
   console.error("record windows passed evidence: manifest was not updated");
   process.exit(1);
@@ -383,6 +417,47 @@ expectFail(
   ]),
   "host must name a matching windows host",
 );
+
+const missingProvenancePath = writeManifest("missing-provenance-passed.json");
+const missingProvenanceBefore = readFileSync(missingProvenancePath, "utf8");
+expectFail(
+  "reject passed evidence without provenance",
+  runRecorder(missingProvenancePath, "windows", [
+    "--status",
+    "passed",
+    "--host",
+    "Windows MSVC CI",
+    "--window-evidence-command",
+    ".local_repos/window/scripts/record_moui_evidence.sh windows --status passed --host 'Windows MSVC CI'",
+    "--consumer-command",
+    "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows --target native }\"",
+    ...passedObservationArgs,
+    "--artifact",
+    "artifacts/platform-evidence/windows/window-smoke.md",
+    "--note",
+    "missing provenance should be rejected",
+    "--skia-status",
+    "passed",
+    ...passedSkiaObservationArgs,
+    "--skia-artifact",
+    "artifacts/platform-evidence/windows/skia-provider.log",
+    "--skia-note",
+    "matching-host Windows Skia first-frame evidence observed",
+    "--skia-provenance-kind",
+    "matching-host-artifact",
+    "--skia-provenance-host",
+    "Windows MSVC CI",
+    "--skia-provenance-artifact",
+    "artifacts/platform-evidence/windows/skia-provider.log",
+    "--skia-provenance-note",
+    "Skia route provenance is present but platform provenance is missing",
+  ]),
+  "evidenceProvenance must be recorded when status is passed",
+);
+if (readFileSync(missingProvenancePath, "utf8") !== missingProvenanceBefore) {
+  console.error("reject passed evidence without provenance: recorder left an invalid manifest on disk");
+  process.exit(1);
+}
 
 const linuxFailedPath = writeManifest("linux-failed.json");
 expectPass(
@@ -500,7 +575,8 @@ if (
   webPassedEntry.observations.cleanShutdown !== "yes" ||
   webPassedEntry.observations.representativeInput !== "yes" ||
   webPassedEntry.observations.monitorCursor !== "pending" ||
-  !webPassedEntry.consumerCommand.includes("--require-passed")
+  !webPassedEntry.consumerCommand.includes("--require-passed") ||
+  webPassedEntry.evidenceProvenance?.kind !== "matching-host-artifact"
 ) {
   console.error("record passed web presentation evidence: manifest should be passed");
   process.exit(1);
