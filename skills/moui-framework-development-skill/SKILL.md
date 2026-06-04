@@ -220,6 +220,11 @@ and verifier scripts, then runs
 that as binding-level Skia provider/status and native capability evidence; MoUI
 renderer pixels and platform runtime behavior still need the opt-in real-Skia
 smoke or matching-host example runs.
+The runnable `moui_skia` GitHub Actions workflows live in the repository root
+as `.github/workflows/moui-skia-*.yml`, and Copilot setup lives at root
+`.github/workflows/copilot-setup-steps.yml`. Keep workflow files there while
+`moui_skia` is a workspace member; nested workflow files are not discovered by
+GitHub Actions in the monorepo.
 For Web runtime evidence, use `record-web-runtime-presentation.mjs` to collect
 the browser-session artifact, then fold it into
 `platform-runtime-evidence.json` with

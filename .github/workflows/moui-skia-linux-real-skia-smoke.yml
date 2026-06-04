@@ -1,4 +1,4 @@
-name: Linux Real Skia Smoke
+name: MoUI Skia Linux Real Skia Smoke
 
 on:
   schedule:
@@ -65,6 +65,9 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: moui_skia
     timeout-minutes: 90
     concurrency:
       group: linux-real-skia-smoke-${{ github.ref }}
@@ -147,18 +150,18 @@ jobs:
         if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'source' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
         uses: actions/cache@v4
         with:
-          path: .skia-cache/linux
-          key: skia-linux-${{ inputs.skia_rev || hashFiles('skia-revision.txt') }}-${{ hashFiles('scripts/linux-build-skia.sh', 'scripts/linux-skia-smoke.sh', 'scripts/linux-real-skia-smoke.sh', 'scripts/linux-accept-real-skia-smoke.sh') }}
+          path: moui_skia/.skia-cache/linux
+          key: skia-linux-${{ inputs.skia_rev || hashFiles('moui_skia/skia-revision.txt') }}-${{ hashFiles('moui_skia/scripts/linux-build-skia.sh', 'moui_skia/scripts/linux-skia-smoke.sh', 'moui_skia/scripts/linux-real-skia-smoke.sh', 'moui_skia/scripts/linux-accept-real-skia-smoke.sh') }}
           restore-keys: |
-            skia-linux-${{ inputs.skia_rev || hashFiles('skia-revision.txt') }}-
+            skia-linux-${{ inputs.skia_rev || hashFiles('moui_skia/skia-revision.txt') }}-
             skia-linux-
 
       - name: Cache release Skia
         if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'release' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
         uses: actions/cache@v4
         with:
-          path: .skia-cache/release
-          key: release-skia-linux-${{ inputs.link_mode }}-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
+          path: moui_skia/.skia-cache/release
+          key: release-skia-linux-${{ inputs.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
           restore-keys: |
             release-skia-linux-${{ inputs.link_mode }}-${{ runner.arch }}-
             release-skia-linux-${{ inputs.link_mode }}-
@@ -292,12 +295,12 @@ jobs:
         with:
           name: linux-real-skia-smoke-log
           path: |
-            logs/linux-real-skia-smoke-preflight.log
-            logs/linux-skia-build.log
-            logs/linux-real-skia-smoke.log
-            logs/linux-native-smoke-output.log
-            logs/linux-real-skia-acceptance.log
-            logs/linux-acceptance-state.patch
+            moui_skia/logs/linux-real-skia-smoke-preflight.log
+            moui_skia/logs/linux-skia-build.log
+            moui_skia/logs/linux-real-skia-smoke.log
+            moui_skia/logs/linux-native-smoke-output.log
+            moui_skia/logs/linux-real-skia-acceptance.log
+            moui_skia/logs/linux-acceptance-state.patch
           if-no-files-found: warn
 
       - name: Verify package files restored
