@@ -763,6 +763,89 @@ test "program effect tasks cancel by key change and runtime destroy" {
 }
 
 ///|
+test "program effect task replacement reports same-key kind changes" {
+  let first_dispatch : Ref[((ProgramTaskMsg) -> Unit)?] = Ref(None)
+  let second_dispatch : Ref[((ProgramTaskMsg) -> Unit)?] = Ref(None)
+  let cleanup_log : Array[String] = []
+  let service_task = Effect::service_task(
+    key="task:shared-loader",
+    label="Service load",
+    start=dispatch => {
+      first_dispatch.val = Some(dispatch)
+      Some(() => cleanup_log.push("service"))
+    },
+  )
+  let custom_task = Effect::task(
+    key="task:shared-loader",
+    kind="custom-load",
+    label="Custom load",
+    start=dispatch => {
+      second_dispatch.val = Some(dispatch)
+      Some(() => cleanup_log.push("custom"))
+    },
+  )
+  let program = Program::new(
+    init=() => ("service", service_task),
+    update=(_model, message) => {
+      match message {
+        ProgramTaskReplace => ("custom", custom_task)
+        ProgramTaskFinished(value) => (value, Effect::none())
+      }
+    },
+    view=model => {
+      View::button(
+        text=model,
+        size=Size::new(width=140.0, height=44.0),
+        font=FontSpec::new(size=16.0),
+        foreground=Color::black(),
+        background=Brush::solid(Color::gray()),
+        hovered_background=Brush::solid(Color::gray()),
+        pressed_background=Brush::solid(Color::blue()),
+        on_click=Some(ProgramTaskReplace),
+      )
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=180.0, height=80.0),
+  )
+  let initial = runtime.program_runtime_snapshot()
+  inspect(initial.active_effect_tasks[0].kind, content="service")
+  runtime_wbtest_click(runtime, x=20.0, y=20.0)
+  assert_true(has_draw_text(runtime.draw_commands(), "custom"))
+  let replaced = runtime.program_runtime_snapshot()
+  inspect(replaced.started_effect_task_count, content="2")
+  inspect(replaced.cancelled_effect_task_count, content="1")
+  inspect(replaced.active_effect_tasks[0].kind, content="custom-load")
+  inspect(cleanup_log.join(","), content="service")
+  assert_true(
+    replaced.effect_task_lifecycle.any(entry => {
+      entry.key == "task:shared-loader" &&
+      entry.kind == "service" &&
+      entry.status == EffectTaskLifecycleStatus::EffectTaskCancelled &&
+      entry.cancel_reason == Some(EffectTaskCancelReason::EffectTaskKindChanged)
+    }),
+  )
+  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  assert_true(
+    inspector.effect_task_lifecycle.any(entry => {
+      entry.key == "task:shared-loader" &&
+      entry.kind == "service" &&
+      entry.status == EffectTaskLifecycleStatus::EffectTaskCancelled &&
+      entry.cancel_reason == Some(EffectTaskCancelReason::EffectTaskKindChanged)
+    }),
+  )
+  match first_dispatch.val {
+    Some(dispatch) => dispatch(ProgramTaskFinished("stale-service"))
+    None => fail("expected first task dispatch")
+  }
+  inspect(
+    runtime.program_runtime_snapshot().ignored_effect_task_dispatch_count,
+    content="1",
+  )
+}
+
+///|
 test "subscription descriptors and map preserve feature composition" {
   let child_dispatch : Ref[((String) -> Unit)?] = Ref(None)
   let child = Subscription::batch([

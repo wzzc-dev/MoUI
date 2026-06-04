@@ -16,8 +16,10 @@ paths, or abstractions that only preserve old shapes.
   route/history helpers, `Program`, `Effect`, `Subscription`, and TEA runtime
   diagnostics. Standard `Effect`/`Subscription` helpers may name common
   descriptor kinds, subscription reuse is keyed by the stable key plus source
-  kind, program diagnostics may count late dispatches ignored after runtime
-  destruction, and runtime dirty diagnostics may expose structured
+  kind, effect-task lifecycle diagnostics may distinguish same-key descriptor
+  kind changes from ordinary same-kind task replacement, program diagnostics
+  may count late dispatches ignored after runtime destruction, and runtime dirty
+  diagnostics may expose structured
   rebuild/layout/paint/redraw summaries, but concrete timer, host, window,
   route, or service adapters remain outside `core`.
   It remains one MoonBit package; internal files are grouped by responsibility

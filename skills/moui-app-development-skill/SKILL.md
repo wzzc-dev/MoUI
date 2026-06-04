@@ -252,10 +252,11 @@ sh scripts/dev-check.sh --platform-examples-build
   Use `Effect::run` for custom structured effect kinds and `Effect::task` for
   custom task descriptor kinds. Give structured effects stable key/label values
   and keep keys unique within the returned batch; custom `Effect::run` and
-  `Effect::task` calls should also use stable kind values. `Effect::run` and
-  task effects are reported separately from anonymous dispatch in runtime
-  diagnostics; `Effect::dispatch` remains available for anonymous one-off
-  runners. When composing child features, lift child follow-up work with
+  `Effect::task` calls should also use stable kind values because replacing an
+  active task with the same key but a different kind is reported as a kind
+  change in lifecycle diagnostics. `Effect::run` and task effects are reported
+  separately from anonymous dispatch in runtime diagnostics; `Effect::dispatch`
+  remains available for anonymous one-off runners. When composing child features, lift child follow-up work with
   `Effect::map`; structured descriptors are preserved for parent diagnostics.
 - Use the standard `Subscription::timer`,
   `Subscription::animation_tick`, `Subscription::window_event`,
