@@ -7,8 +7,8 @@ for MoUI development.
 
 The upstream `moonbit-community/window` package does not currently cover the targets
 MoUI needs, so use the `wzzc-dev/window` fork checkout instead.
-MoUI also uses `wzzc-dev/skia_mbt` as an editable local checkout while the Skia
-renderer backend and binding surface evolve together.
+MoUI also carries `wzzc-dev/skia_mbt` as a repo-local editable workspace member
+while the Skia renderer backend and binding surface evolve together.
 
 From the repository root:
 
@@ -17,10 +17,11 @@ sh scripts/setup-local-deps.sh
 sh scripts/check-local-deps.sh
 ```
 
-`scripts/setup-local-deps.sh` creates missing checkouts and safely
-fast-forwards existing clean checkouts to the expected branches. If either
-editable dependency has local changes, commit or stash them before rerunning
-setup; the helper will not overwrite work in `.local_repos/`.
+`scripts/setup-local-deps.sh` creates the missing window checkout and safely
+fast-forwards the existing clean window checkout to the expected branch. If the
+window dependency has local changes, commit or stash them before rerunning
+setup; the helper will not overwrite work in `.local_repos/`. The Skia binding
+is part of the main checkout at `skia_mbt`.
 
 This keeps `wzzc-dev/window` and `wzzc-dev/skia_mbt` declared in
 `moui/moon.mod` and resolved through local workspace members in `moon.work`:
@@ -28,7 +29,7 @@ This keeps `wzzc-dev/window` and `wzzc-dev/skia_mbt` declared in
 ```moonbit
 import {
   "wzzc-dev/window@0.5.1",
-  "wzzc-dev/skia_mbt@0.1.1",
+  "wzzc-dev/skia_mbt@0.1.2",
 }
 ```
 
@@ -36,7 +37,7 @@ import {
 members = [
   "./moui",
   "./.local_repos/window",
-  "./.local_repos/skia_mbt",
+  "./skia_mbt",
   "./examples/counter",
   "./examples/showcase",
   "./examples/markdown_editor",
@@ -48,7 +49,8 @@ members = [
 ]
 ```
 
-The checkout is intentionally a normal editable Git repository, not a submodule.
+The window checkout is intentionally a normal editable Git repository, not a
+submodule.
 MoUI uses the `wzzc-dev/window` fork on the `moui-support` branch because the
 current upstream package is macOS-only.
 
@@ -65,21 +67,15 @@ on the `moon run examples/moui_macos_smoke --target native` path, and the Web
 smoke pages/scripts point at module-qualified `wzzc-dev/window/examples/...`
 wasm-gc artifacts with the expected MoUI consumer sentinel lines.
 
-The Skia binding checkout is also editable:
-
-- MoUI Skia binding repo: `git@github.com:wzzc-dev/skia_mbt.git`
-- HTTPS fallback: `https://github.com/wzzc-dev/skia_mbt.git`
-- Branch: `master`
-
-Set `MOUI_SKIA_MBT_REMOTE` to override the clone URL. The default daily check
-validates fallback-safe Skia package tests and the binding checkout's platform
-status contract. `scripts/check-local-deps.sh` requires
+The Skia binding is editable in the main repository at `skia_mbt`. The default
+daily check validates fallback-safe Skia package tests and the binding
+workspace's platform status contract. `scripts/check-local-deps.sh` requires
 `skia-platform-status.json`, `skia-provider-lock.json`,
 `SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
 and the verifier scripts, then runs
-`.local_repos/skia_mbt/scripts/verify-platform-status.sh` and
-`.local_repos/skia_mbt/scripts/verify-native-capability-contract.sh`. That
-proves the editable binding dependency still has a pinned real-Skia
+`skia_mbt/scripts/verify-platform-status.sh` and
+`skia_mbt/scripts/verify-native-capability-contract.sh`. That
+proves the editable binding workspace still has a pinned real-Skia
 artifact/status contract, CI evidence wiring, fallback parity, FFI
 ownership/borrow coverage, and native smoke marker coverage. It does not prove
 a MoUI platform entrypoint has rendered with real Skia; use `--skia-real-smoke`
@@ -96,7 +92,8 @@ requires that broader change.
 When updating this repository, update all Git checkouts that participate in the
 workspace, not just the root checkout. That includes the main MoUI repository,
 Git submodules such as `.agents/skills/moonbit-skills`, and every editable
-repository under `.local_repos/` such as `.local_repos/window`.
+repository under `.local_repos/` such as `.local_repos/window`. `skia_mbt`
+updates with the main MoUI checkout.
 
 On Windows, use the repository update helper:
 
@@ -105,9 +102,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.p
 ```
 
 That helper also creates or updates `.local_repos/window` on the `moui-support`
-branch and `.local_repos/skia_mbt` on `master`.
+branch. The `skia_mbt` workspace member is updated by the root repository pull.
 
-Local setup defaults to the SSH fork URL. CI defaults to the HTTPS fork URL so
+Local window setup defaults to the SSH fork URL. CI defaults to the HTTPS fork URL so
 GitHub Actions can clone the dependency without a deploy key. Set
 `MOUI_WINDOW_REMOTE` when you need to force a specific fork URL.
 
@@ -124,9 +121,9 @@ fallback-safe checks, guidance consistency checks, and Web wasm-gc example
 builds without invoking all-repository native or wasm-gc test targets.
 Fallback-safe Skia checks prove API shape and unavailable diagnostics; they do
 not mean a real Skia renderer is ready. The local dependency check also runs
-`.local_repos/skia_mbt/scripts/verify-platform-status.sh` and
-`.local_repos/skia_mbt/scripts/verify-native-capability-contract.sh`, which
-validate the binding checkout's `skia-platform-status.json`, provider lock,
+`skia_mbt/scripts/verify-platform-status.sh` and
+`skia_mbt/scripts/verify-native-capability-contract.sh`, which
+validate the binding workspace's `skia-platform-status.json`, provider lock,
 native capability manifest, fallback parity, ownership, FFI borrow annotations,
 and native smoke marker coverage before the MoUI daily baseline can pass.
 
@@ -146,7 +143,7 @@ directly so failures propagate through the process exit status.
 
 On macOS, use the dedicated helper when you want the script to resolve Skia and
 wire the temporary package link flags for you. By default it uses the pinned
-JetBrains Skia binary provider from `.local_repos/skia_mbt`:
+JetBrains Skia binary provider from `skia_mbt`:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh
@@ -162,7 +159,7 @@ first persist the resolved local link configuration:
 scripts/macos-skia-renderer-smoke.sh --enable-skshaper --write-local-config
 ```
 
-That command writes absolute paths into `.local_repos/skia_mbt/native/moon.pkg`,
+That command writes absolute paths into `skia_mbt/native/moon.pkg`,
 `moui/tests/skia_renderer_smoke/native/moon.pkg`, and
 `examples/showcase/macos_skia/moon.pkg`, and
 `examples/markdown_editor/macos_skia/moon.pkg`, and
@@ -212,7 +209,7 @@ scripts/macos-skia-renderer-smoke.sh \
 ```
 
 Use `--skia-provider source` to build the small CPU Skia library through
-`.local_repos/skia_mbt/scripts/macos-build-skia.sh` before running the same
+`skia_mbt/scripts/macos-build-skia.sh` before running the same
 MoUI renderer smoke:
 
 ```sh
@@ -221,7 +218,7 @@ scripts/macos-skia-renderer-smoke.sh \
   --work-dir .skia-cache/macos
 ```
 
-It temporarily configures `.local_repos/skia_mbt/native`,
+It temporarily configures `skia_mbt/native`,
 `moui/tests/skia_renderer_smoke/native`, `examples/showcase/macos_skia`,
 `examples/markdown_editor/macos_skia`, and
 `examples/mo_workbench/macos_skia`, runs the MoUI renderer pixel smoke, builds
@@ -341,7 +338,7 @@ Useful focused commands:
 ```sh
 moon test moui/render/wgpu --target native
 moon test moui/render/skia --target native
-moon test .local_repos/skia_mbt --target native
+moon test skia_mbt --target native
 moon build moui/tests/skia_renderer_smoke/native --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native

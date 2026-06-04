@@ -16,7 +16,7 @@ import {
   "moonbitlang/async@0.16.6",
   "moonbitlang/quickcheck@0.13.0",
   "moonbitlang/x@0.4.43",
-  "wzzc-dev/skia_mbt@0.1.1",
+  "wzzc-dev/skia_mbt@0.1.2",
 }
 
 readme = "README.mbt.md"

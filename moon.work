@@ -1,7 +1,7 @@
 members = [
   "./moui",
   "./.local_repos/window",
-  "./.local_repos/skia_mbt",
+  "./skia_mbt",
   "./examples/counter",
   "./examples/showcase",
   "./examples/markdown_editor",
