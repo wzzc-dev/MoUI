@@ -310,11 +310,13 @@ documentation evidence.
      companion `scripts/validate-web-runtime-handoff-manifest.mjs` guard checks
      that artifact schema before the scaffold reports success. The focused
      `scripts/test-browser-runtime-events.mjs` guard covers browser pointer,
-     mouse, and click fallback de-duplication, including delayed fallback
-     events whose rounded coordinates drift from the original pointer event, so
-     delayed app rebuilds do not replay a single browser click as multiple
-     MoUI pointer activations. This remains static/HTTP handoff evidence rather
-     than browser WebGPU presentation proof.
+     mouse, and click fallback routing: pointer-capable browsers ignore
+     compatibility mouse/click activation entirely, while non-pointer fallback
+     mode still de-duplicates delayed fallback events whose rounded coordinates
+     drift from the original pointer event. This keeps delayed app rebuilds from
+     replaying a single browser click as multiple MoUI pointer activations. This
+     remains static/HTTP handoff evidence rather than browser WebGPU
+     presentation proof.
      The shared
      `scripts/validate-conformance-capture-manifest.mjs` guard checks the
      schema, canonical viewports, artifact paths, inspector counter list,

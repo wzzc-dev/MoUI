@@ -177,11 +177,13 @@ The reusable browser runtime assets live under `backend/web/*.js`. Each
 supplies the example-specific wasm URL. The canvas host reports logical event
 coordinates after DPR mapping and avoids CSS transforms, borders, and padding so
 resize and input coordinates stay stable. The browser runtime treats native
-pointer events as authoritative when present and suppresses the browser
-mouse/click fallback that belongs to the same input transaction, even if that
-fallback arrives late or its rounded coordinates drift slightly. This keeps a
-slow app rebuild after a button release from replaying the same browser click
-as a second MoUI pointer activation.
+pointer events as authoritative when the browser supports `PointerEvent` and
+does not synthesize MoUI pointer activation from compatibility mouse/click
+fallbacks in that mode. Older environments without pointer-event support still
+use mouse/click fallback with transaction de-duplication, including delayed
+fallback events whose rounded coordinates drift slightly. This keeps a slow app
+rebuild after a button release from replaying the same browser click as a
+second MoUI pointer activation.
 
 ## macOS Native
 
