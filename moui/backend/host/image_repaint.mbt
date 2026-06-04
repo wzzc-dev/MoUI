@@ -11,6 +11,8 @@ pub(all) struct HostImageResourceRepaintResult {
   window_id : HostWindowId
   previous_revision : Int
   current_revision : Int
+  previous_status_counts : HostImageResourceStatusCounts
+  current_status_counts : HostImageResourceStatusCounts
   status : HostImageResourceRepaintStatus
 } derive(Eq, Debug, ToJson)
 
@@ -108,24 +110,33 @@ pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
 ) -> HostImageResourceRepaintResult {
   if !window_open {
     let previous_revision = self.previous_revision_or_zero(window_id)
+    let previous_status_counts = self.status_counts_for_window(window_id)
     ignore(self.remove_window(window_id))
     return HostImageResourceRepaintResult::{
       window_id,
       previous_revision,
       current_revision: previous_revision,
+      previous_status_counts,
+      current_status_counts: host_image_resource_empty_status_counts(),
       status: HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed,
     }
   }
   let snapshot = renderer.image_resource_snapshot()
   match self.revision_for(window_id) {
-    Some(previous_revision) =>
+    Some(previous_revision) => {
+      let previous_status_counts = self.status_counts_for_window(window_id)
       if snapshot.revision > previous_revision {
+        let current_status_counts = host_image_resource_status_counts(
+          snapshot.records,
+        )
         self.set_snapshot(window_id, snapshot)
         request_redraw(window_id)
         HostImageResourceRepaintResult::{
           window_id,
           previous_revision,
           current_revision: snapshot.revision,
+          previous_status_counts,
+          current_status_counts,
           status: HostImageResourceRepaintStatus::ImageRepaintRequested,
         }
       } else if snapshot.revision < previous_revision {
@@ -133,17 +144,25 @@ pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
           window_id,
           previous_revision,
           current_revision: previous_revision,
+          previous_status_counts,
+          current_status_counts: previous_status_counts,
           status: HostImageResourceRepaintStatus::ImageRepaintUnchanged,
         }
       } else {
+        let current_status_counts = host_image_resource_status_counts(
+          snapshot.records,
+        )
         self.set_snapshot(window_id, snapshot)
         HostImageResourceRepaintResult::{
           window_id,
           previous_revision,
           current_revision: snapshot.revision,
+          previous_status_counts,
+          current_status_counts,
           status: HostImageResourceRepaintStatus::ImageRepaintUnchanged,
         }
       }
+    }
     None => self.record_snapshot(window_id, snapshot)
   }
 }
@@ -179,11 +198,17 @@ fn HostImageResourceRepaintTracker::record_snapshot(
   snapshot : @render.ImageResourceSnapshot,
 ) -> HostImageResourceRepaintResult {
   let previous_revision = self.previous_revision_or_zero(window_id)
+  let previous_status_counts = self.status_counts_for_window(window_id)
+  let current_status_counts = host_image_resource_status_counts(
+    snapshot.records,
+  )
   self.set_snapshot(window_id, snapshot)
   HostImageResourceRepaintResult::{
     window_id,
     previous_revision,
     current_revision: snapshot.revision,
+    previous_status_counts,
+    current_status_counts,
     status: HostImageResourceRepaintStatus::ImageRepaintRecorded,
   }
 }
@@ -230,6 +255,19 @@ fn HostImageResourceRepaintTracker::status_counts_for_index(
   } else {
     host_image_resource_empty_status_counts()
   }
+}
+
+///|
+fn HostImageResourceRepaintTracker::status_counts_for_window(
+  self : HostImageResourceRepaintTracker,
+  window_id : HostWindowId,
+) -> HostImageResourceStatusCounts {
+  for index, id in self.window_ids {
+    if id == window_id {
+      return self.status_counts_for_index(index)
+    }
+  }
+  host_image_resource_empty_status_counts()
 }
 
 ///|
