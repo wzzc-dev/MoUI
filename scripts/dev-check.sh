@@ -78,7 +78,7 @@ run moon test moui/render/wgpu --target native
 run moon test moui/render/skia --target native
 run moon test moui/backend/host --target native
 
-run moon test .local_repos/skia_mbt --target native
+run moon test skia_mbt --target native
 
 run moon test moui/render/webgpu_adapter --target wasm-gc
 run moon test moui/backend/web --target wasm-gc
@@ -145,8 +145,8 @@ else
 fi
 
 if "$RUN_SKIA_REAL_SMOKE"; then
-  run moon build .local_repos/skia_mbt/scripts/native_smoke --target native
-  run_built_executable "./.local_repos/skia_mbt/scripts/native_smoke/_build/native/debug/build/skia_mbt_native_smoke.exe"
+  run moon build skia_mbt/scripts/native_smoke --target native
+  run_built_executable "./skia_mbt/scripts/native_smoke/_build/native/debug/build/skia_mbt_native_smoke.exe"
   run moon build moui/tests/skia_renderer_smoke/native --target native
   run_built_executable "./_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
 else

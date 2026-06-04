@@ -7,10 +7,7 @@ WINDOW_REMOTE_SSH="git@github.com:wzzc-dev/window.git"
 WINDOW_REMOTE_HTTPS="https://github.com/wzzc-dev/window.git"
 WINDOW_UPSTREAM="https://github.com/moonbit-community/window.git"
 WINDOW_BRANCH="moui-support"
-SKIA_MBT_DIR="$ROOT_DIR/.local_repos/skia_mbt"
-SKIA_MBT_REMOTE_SSH="git@github.com:wzzc-dev/skia_mbt.git"
-SKIA_MBT_REMOTE_HTTPS="https://github.com/wzzc-dev/skia_mbt.git"
-SKIA_MBT_BRANCH="master"
+SKIA_MBT_DIR="$ROOT_DIR/skia_mbt"
 
 if [ -n "${MOUI_WINDOW_REMOTE:-}" ]; then
   WINDOW_REMOTE="$MOUI_WINDOW_REMOTE"
@@ -18,14 +15,6 @@ elif [ -n "${CI:-}" ]; then
   WINDOW_REMOTE="$WINDOW_REMOTE_HTTPS"
 else
   WINDOW_REMOTE="$WINDOW_REMOTE_SSH"
-fi
-
-if [ -n "${MOUI_SKIA_MBT_REMOTE:-}" ]; then
-  SKIA_MBT_REMOTE="$MOUI_SKIA_MBT_REMOTE"
-elif [ -n "${CI:-}" ]; then
-  SKIA_MBT_REMOTE="$SKIA_MBT_REMOTE_HTTPS"
-else
-  SKIA_MBT_REMOTE="$SKIA_MBT_REMOTE_SSH"
 fi
 
 run() {
@@ -104,31 +93,11 @@ checkout_and_fast_forward "$WINDOW_DIR" "$WINDOW_BRANCH"
 
 WINDOW_SUMMARY="window: $WINDOW_DIR on branch $WINDOW_BRANCH"
 
-if [ ! -d "$SKIA_MBT_DIR/.git" ]; then
-  run git clone "$SKIA_MBT_REMOTE" "$SKIA_MBT_DIR"
-else
-  printf '==> Reusing existing %s\n' "$SKIA_MBT_DIR"
-fi
-
-cd "$SKIA_MBT_DIR"
-
-skia_mbt_origin_url="$(git remote get-url origin 2>/dev/null || true)"
-case "$skia_mbt_origin_url" in
-  *wzzc-dev/skia_mbt.git|*wzzc-dev/skia_mbt)
-    ;;
-  "")
-    printf 'No origin remote is configured in %s\n' "$SKIA_MBT_DIR" >&2
-    exit 1
-    ;;
-  *)
-    printf 'Unexpected skia_mbt origin remote: %s\n' "$skia_mbt_origin_url" >&2
-    printf 'Expected the MoUI Skia binding repo: %s or %s\n' "$SKIA_MBT_REMOTE_SSH" "$SKIA_MBT_REMOTE_HTTPS" >&2
-    exit 1
-    ;;
-esac
-
-checkout_and_fast_forward "$SKIA_MBT_DIR" "$SKIA_MBT_BRANCH"
+[ -d "$SKIA_MBT_DIR" ] || {
+  printf 'Missing repo-local skia_mbt workspace at %s. Update the main MoUI checkout.\n' "$SKIA_MBT_DIR" >&2
+  exit 1
+}
 
 printf '\nLocal dependencies are ready.\n'
 printf '%s\n' "$WINDOW_SUMMARY"
-printf 'skia_mbt: %s on branch %s\n' "$SKIA_MBT_DIR" "$SKIA_MBT_BRANCH"
+printf 'skia_mbt: %s workspace member\n' "$SKIA_MBT_DIR"
