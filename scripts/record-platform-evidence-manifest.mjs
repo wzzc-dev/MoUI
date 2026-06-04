@@ -76,6 +76,7 @@ const skiaObservationKeys = new Set([
   "providerPreflight",
   "fallbackUnavailable",
   "realRendererSmoke",
+  "asyncImageSecondFrame",
   "showcaseFirstFrame",
   "markdownFirstFrame",
 ]);
@@ -85,6 +86,7 @@ const pendingSkiaObservations = () => ({
   providerPreflight: "pending",
   fallbackUnavailable: "pending",
   realRendererSmoke: "pending",
+  asyncImageSecondFrame: "pending",
   showcaseFirstFrame: "pending",
   markdownFirstFrame: "pending",
 });
@@ -100,7 +102,7 @@ const defaultSkiaEvidence = platform => {
         "moon test moui/backend/macos/skia --target native",
       ],
       runtimeSmokeCommands: [
-        "scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log",
+        "scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log --record-platform-evidence artifacts/conformance/platform-runtime-evidence.json",
       ],
       observations: pendingSkiaObservations(),
       artifacts: ["artifacts/platform-evidence/macos/README.md"],

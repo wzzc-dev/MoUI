@@ -272,7 +272,11 @@ present, routes later observed revision changes through the matching window's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
 calls the optional provider-owned `HostAsyncImageLoader` after the presented
 revision is baselined, and removes tracked image revisions plus in-flight image
-loads when a host window is disposed.
+loads when a host window is disposed. The macOS Skia provider creates
+renderers with post-present async image loading so local/data URI image sources
+can be baselined as loading, completed through `skia_image_load_completion`,
+and repainted on a second frame; the real-Skia smoke records that as a
+matching-host artifact only when the async second-frame marker is present.
 
 Packages that use `backend/macos` directly must link the AppKit service bridge
 frameworks during the final native link step. Missing `_objc_msgSend` or
@@ -416,7 +420,10 @@ present, routes later observed revision changes through the matching HWND's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
 calls the optional provider-owned `HostAsyncImageLoader` after the presented
 revision is baselined, and removes tracked image revisions plus in-flight image
-loads when a host window is disposed.
+loads when a host window is disposed. The Windows Skia provider creates
+renderers with post-present async image loading, but the required async
+second-frame artifact remains matching-host pending until a Windows/MSVC run
+records it from the Skia entrypoints or provider smoke.
 Passed Windows runtime evidence still needs a Windows/MSVC host running the
 Showcase or Markdown Editor Skia entrypoints with recorded artifacts. On
 non-Windows hosts, the Win32 presenter and service stubs may fail C compilation
@@ -520,7 +527,10 @@ matching Wayland window's `request_redraw`, exposes tracked-window revision
 snapshots for diagnostics, calls the optional provider-owned
 `HostAsyncImageLoader` after the presented revision is baselined, and removes
 tracked image revisions plus in-flight image loads when a host window is
-disposed. The summary is useful for provider/package
+disposed. The Linux Skia provider creates renderers with post-present async
+image loading, but the required async second-frame artifact remains
+matching-host pending until a Wayland run records it from the Skia entrypoints
+or provider smoke. The summary is useful for provider/package
 audits, but it does not prove a real Wayland compositor presented Showcase or
 Markdown Editor frames;
 those claims still require matching-host runtime runs and platform evidence
