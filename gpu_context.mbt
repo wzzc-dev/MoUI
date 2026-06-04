@@ -1,6 +1,5 @@
 ///|
 /// Future GPU context families that can back a GPU surface target.
-#warnings("-deprecated_syntax")
 pub(all) enum GpuContextBackend {
   MockGpuContext
   MetalGpuContext

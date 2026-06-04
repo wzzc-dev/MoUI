@@ -15,7 +15,7 @@ options(
   "native-stub": [ "macos_present.m" ],
   link: {
     "native": {
-      "cc-link-flags": "-L./.skia-cache/jetbrains/m148-8967a2e80c/macos-Release-arm64/package/out/Release-macos-arm64 -lskia -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices -framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+      "cc-link-flags": "${build.SKIA_MBT_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS}",
     },
   },
   targets: { "main.mbt": [ "native" ], "macos_present.mbt": [ "native" ] },

@@ -4,7 +4,7 @@ param(
   [string] $PkgPath = "native/moon.pkg",
   [string] $Ownership = "native/ownership.json",
   [string] $StatusFile = "skia-platform-status.json",
-  [string] $SmokeSource = "scripts/native_smoke/main.mbt"
+  [string] $SmokeSource = "scripts/native_smoke"
 )
 
 $ErrorActionPreference = "Stop"
@@ -96,13 +96,27 @@ $resolvedOwnership = Resolve-RepoPath $Ownership
 $resolvedStatusFile = Resolve-RepoPath $StatusFile
 $resolvedSmokeSource = Resolve-RepoPath $SmokeSource
 
-foreach ($path in @($resolvedManifest, $resolvedPkgPath, $resolvedOwnership, $resolvedStatusFile, $resolvedSmokeSource)) {
+foreach ($path in @($resolvedManifest, $resolvedPkgPath, $resolvedOwnership, $resolvedStatusFile)) {
   if (!(Test-Path -LiteralPath $path -PathType Leaf)) {
     throw "native capability contract input is missing: $path"
   }
 }
 if (!(Test-Path -LiteralPath $resolvedNativeDir -PathType Container)) {
   throw "native package directory is missing: $resolvedNativeDir"
+}
+if (Test-Path -LiteralPath $resolvedSmokeSource -PathType Leaf) {
+  $smokeSourceFiles = @($resolvedSmokeSource)
+} elseif (Test-Path -LiteralPath $resolvedSmokeSource -PathType Container) {
+  $smokeSourceFiles = @(
+    Get-ChildItem -LiteralPath $resolvedSmokeSource -Filter "*.mbt" -File |
+      Sort-Object Name |
+      ForEach-Object { $_.FullName }
+  )
+  if ($smokeSourceFiles.Count -eq 0) {
+    throw "native smoke source directory has no .mbt files: $resolvedSmokeSource"
+  }
+} else {
+  throw "native capability contract input is missing: $resolvedSmokeSource"
 }
 
 $manifestData = Get-Content -LiteralPath $resolvedManifest -Raw | ConvertFrom-Json
@@ -119,7 +133,9 @@ if ($capabilities.Count -eq 0) {
 }
 
 $targetEntries = Get-TargetEntries -PkgText (Get-Content -LiteralPath $resolvedPkgPath -Raw)
-$smokeSourceText = Get-Content -LiteralPath $resolvedSmokeSource -Raw
+$smokeSourceText = ($smokeSourceFiles | ForEach-Object {
+    Get-Content -LiteralPath $_ -Raw
+  }) -join "`n"
 
 $ownedNames = @{}
 foreach ($section in @("external_wrappers", "regular_objects")) {

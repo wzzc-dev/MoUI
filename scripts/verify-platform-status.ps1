@@ -73,6 +73,7 @@ if ($status.schema_version -ge 4) {
     "native.ownership",
     "native.ffi-borrows",
     "native.fallback-parity",
+    "example.link-config",
     "platform.status",
     "artifact.native-smoke-log",
     "artifact.real-skia"

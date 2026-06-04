@@ -225,7 +225,7 @@ pub fn Shader::linear_gradient(
   end : @skia.Point,
   start_color : @skia.Color,
   end_color : @skia.Color,
-  tile_mode? : @skia.TileMode = @skia.Clamp,
+  tile_mode? : @skia.TileMode = Clamp,
 ) -> Shader? {
   if !start.is_finite() ||
     !end.is_finite() ||
@@ -252,7 +252,7 @@ pub fn Shader::radial_gradient(
   radius : Float,
   inner_color : @skia.Color,
   outer_color : @skia.Color,
-  tile_mode? : @skia.TileMode = @skia.Clamp,
+  tile_mode? : @skia.TileMode = Clamp,
 ) -> Shader? {
   if !center.is_finite() || !skia_scalar_is_finite(radius) || radius <= 0.0 {
     None

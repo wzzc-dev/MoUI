@@ -310,7 +310,7 @@ pub fn Image::from_encoded_bytes(bytes : Bytes) -> Image? {
 fn native_image_encode_format_is_supported(
   format : @skia.EncodedImageFormat,
 ) -> Bool {
-  format is (@skia.PNG | @skia.JPEG | @skia.WEBP)
+  format is (PNG | JPEG | WEBP)
 }
 
 ///|
@@ -321,7 +321,7 @@ fn native_image_encode_quality(quality : Int) -> Int {
 ///|
 pub fn Image::encode_to_data(
   self : Image,
-  format? : @skia.EncodedImageFormat = @skia.PNG,
+  format? : @skia.EncodedImageFormat = PNG,
   quality? : Int = 100,
 ) -> Data? {
   if !native_image_encode_format_is_supported(format) {

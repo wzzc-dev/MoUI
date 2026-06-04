@@ -73,6 +73,12 @@
       "powershell_command": ".\\scripts\\verify-native-fallback-parity.ps1"
     },
     {
+      "id": "example.link-config",
+      "area": "Example",
+      "unix_command": "bash scripts/verify-example-link-config.sh",
+      "powershell_command": ".\\scripts\\verify-example-link-config.ps1"
+    },
+    {
       "id": "platform.status",
       "area": "PlatformStatus",
       "unix_command": "bash scripts/verify-platform-status.sh",

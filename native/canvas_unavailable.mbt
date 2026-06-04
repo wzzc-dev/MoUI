@@ -90,7 +90,7 @@ pub fn Canvas::discard(self : Canvas) -> Unit {
 pub fn Canvas::clip_rect(
   self : Canvas,
   rect : @skia.Rect,
-  op? : @skia.ClipOp = @skia.Intersect,
+  op? : @skia.ClipOp = Intersect,
   anti_alias? : Bool = false,
 ) -> Unit {
   ignore(self)
@@ -103,7 +103,7 @@ pub fn Canvas::clip_rect(
 pub fn Canvas::clip_rrect(
   self : Canvas,
   rrect : @skia.RRect,
-  op? : @skia.ClipOp = @skia.Intersect,
+  op? : @skia.ClipOp = Intersect,
   anti_alias? : Bool = false,
 ) -> Unit {
   ignore(self)
@@ -116,7 +116,7 @@ pub fn Canvas::clip_rrect(
 pub fn Canvas::clip_path(
   self : Canvas,
   path : Path,
-  op? : @skia.ClipOp = @skia.Intersect,
+  op? : @skia.ClipOp = Intersect,
   anti_alias? : Bool = false,
 ) -> Unit {
   ignore(self)
@@ -155,7 +155,7 @@ pub fn Canvas::quick_reject_path(self : Canvas, path : Path) -> Bool {
 pub fn Canvas::draw_color(
   self : Canvas,
   color : @skia.Color,
-  blend_mode? : @skia.BlendMode = @skia.SrcOver,
+  blend_mode? : @skia.BlendMode = SrcOver,
 ) -> Unit {
   ignore(self)
   ignore(color)
@@ -203,7 +203,7 @@ pub fn Canvas::draw_points(
   self : Canvas,
   points : Array[@skia.Point],
   paint : @skia.Paint,
-  mode? : @skia.PointMode = @skia.Points,
+  mode? : @skia.PointMode = Points,
 ) -> Unit {
   ignore(self)
   ignore(points)

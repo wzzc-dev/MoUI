@@ -300,13 +300,12 @@ fn canvas_replay_command_resource_counts(
   let mut text_resource_count = 0
   for descriptor in command.resource_descriptors() {
     match descriptor.key.kind {
-      @skia.ImageResource => image_resource_count += 1
-      @skia.ShaderResource => shader_resource_count += 1
-      @skia.PathResource => path_resource_count += 1
-      @skia.ColorFilterResource
-      | @skia.ImageFilterResource
-      | @skia.MaskFilterResource => filter_resource_count += 1
-      @skia.TypefaceResource | @skia.FontResource | @skia.TextRunResource =>
+      ImageResource => image_resource_count += 1
+      ShaderResource => shader_resource_count += 1
+      PathResource => path_resource_count += 1
+      ColorFilterResource | ImageFilterResource | MaskFilterResource =>
+        filter_resource_count += 1
+      TypefaceResource | FontResource | TextRunResource =>
         text_resource_count += 1
       _ => ()
     }

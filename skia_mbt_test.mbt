@@ -211,7 +211,7 @@ test "rect exposes corner points and quads" {
     ],
   )
   assert_true(
-    rect.to_quad(direction=@skia_mbt.CCW) ==
+    rect.to_quad(direction=CCW) ==
     [
       @skia_mbt.Point::new(1, 2),
       @skia_mbt.Point::new(1, 6),
@@ -233,12 +233,12 @@ test "matrix maps point" {
 test "surface descriptors model raster window and gpu contracts" {
   let size = @skia_mbt.ISize::new(32, 24)
   let raster = @skia_mbt.SurfaceDescriptor::raster_n32_premul(size)
-  assert_true(raster.backend == @skia_mbt.Raster)
+  assert_true(raster.backend == Raster)
   assert_true(raster.image_info == @skia_mbt.ImageInfo::n32_premul(size))
-  assert_true(raster.origin == @skia_mbt.TopLeft)
+  assert_true(raster.origin == TopLeft)
   assert_eq(raster.sample_count, 1)
   assert_eq(raster.stencil_bits, 0)
-  assert_true(raster.budget == @skia_mbt.Unbudgeted)
+  assert_true(raster.budget == Unbudgeted)
   assert_true(raster.is_raster())
   assert_true(!raster.is_window())
   assert_true(!raster.is_gpu())
@@ -247,7 +247,7 @@ test "surface descriptors model raster window and gpu contracts" {
   assert_eq(raster.width(), 32)
   assert_eq(raster.height(), 24)
   assert_true(raster.bounds() == @skia_mbt.IRect::from_wh(32, 24))
-  assert_true(raster.resource_key().kind == @skia_mbt.SurfaceResource)
+  assert_true(raster.resource_key().kind == SurfaceResource)
   assert_true(raster.resource_key() == raster.resource_key())
   let raster_resource = raster.resource_descriptor()
   assert_true(raster_resource.is_cacheable())
@@ -263,21 +263,19 @@ test "surface descriptors model raster window and gpu contracts" {
   assert_true(window.is_msaa())
   assert_eq(window.sample_count, 4)
   assert_eq(window.stencil_bits, 8)
-  assert_true(window.resource_key().kind == @skia_mbt.SurfaceResource)
+  assert_true(window.resource_key().kind == SurfaceResource)
   assert_true(window.resource_key() != raster.resource_key())
 
   let gpu = @skia_mbt.SurfaceDescriptor::gpu_n32_premul(
     size,
-    origin=@skia_mbt.BottomLeft,
+    origin=BottomLeft,
     sample_count=4,
     stencil_bits=8,
   )
   assert_true(gpu.is_gpu())
-  assert_true(gpu.origin == @skia_mbt.BottomLeft)
+  assert_true(gpu.origin == BottomLeft)
   assert_true(gpu.is_budgeted())
-  assert_true(
-    gpu.with_budget(@skia_mbt.Unbudgeted).budget == @skia_mbt.Unbudgeted,
-  )
+  assert_true(gpu.with_budget(Unbudgeted).budget == Unbudgeted)
   assert_true(
     gpu.with_dimensions(@skia_mbt.ISize::new(8, 6)).dimensions() ==
     @skia_mbt.ISize::new(8, 6),
@@ -285,7 +283,7 @@ test "surface descriptors model raster window and gpu contracts" {
   assert_eq(gpu.with_sample_count(-2).sample_count, 1)
   assert_eq(gpu.with_stencil_bits(-2).stencil_bits, 0)
   let gpu_resource = gpu.resource_descriptor()
-  assert_true(gpu_resource.key.kind == @skia_mbt.GpuSurfaceResource)
+  assert_true(gpu_resource.key.kind == GpuSurfaceResource)
   assert_true(gpu_resource.is_gpu_backed())
   assert_eq(gpu_resource.byte_size, 12288L)
 
@@ -307,14 +305,12 @@ test "surface target descriptors model present modes and frame pacing" {
   assert_true(!raster.needs_present())
   assert_true(raster.present_mode is None)
   assert_eq(raster.max_frames_in_flight, 1)
-  assert_true(
-    !raster.with_present_mode(@skia_mbt.ImmediatePresent).is_presentable(),
-  )
+  assert_true(!raster.with_present_mode(ImmediatePresent).is_presentable())
   assert_true(!raster.with_target_id(b"ignored-raster").has_target_id())
 
   let window = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
     @skia_mbt.ISize::new(32, 24),
-    present_mode=@skia_mbt.MailboxPresent,
+    present_mode=MailboxPresent,
     max_frames_in_flight=3,
   )
   assert_true(window.surface.is_window())
@@ -322,8 +318,8 @@ test "surface target descriptors model present modes and frame pacing" {
   assert_true(window.is_presentable())
   assert_true(window.needs_present())
   assert_true(window.is_multibuffered())
-  assert_true(window.present_mode == Some(@skia_mbt.MailboxPresent))
-  assert_true(window.resource_key().kind == @skia_mbt.SurfaceResource)
+  assert_true(window.present_mode == Some(MailboxPresent))
+  assert_true(window.resource_key().kind == SurfaceResource)
   assert_true(window.resource_descriptor().is_cacheable())
   assert_eq(window.resource_descriptor().byte_size, 3072L)
   let named_window = window.with_target_id(b"window:main")
@@ -334,14 +330,14 @@ test "surface target descriptors model present modes and frame pacing" {
     named_window.without_target_id().resource_key() == window.resource_key(),
   )
   assert_true(
-    window.with_present_mode(@skia_mbt.ImmediatePresent).present_mode ==
-    Some(@skia_mbt.ImmediatePresent),
+    window.with_present_mode(ImmediatePresent).present_mode ==
+    Some(ImmediatePresent),
   )
   assert_true(
-    window.with_present_mode(@skia_mbt.ImmediatePresent).resource_key() !=
+    window.with_present_mode(ImmediatePresent).resource_key() !=
     window.resource_key(),
   )
-  match window.with_present_mode(@skia_mbt.ImmediatePresent).present_mode {
+  match window.with_present_mode(ImmediatePresent).present_mode {
     None => fail("window target should retain an immediate present mode")
     Some(mode) => assert_true(mode.allows_tearing())
   }
@@ -357,22 +353,19 @@ test "surface target descriptors model present modes and frame pacing" {
 
   let gpu = @skia_mbt.SurfaceTargetDescriptor::gpu_n32_premul(
     @skia_mbt.ISize::new(64, 48),
-    origin=@skia_mbt.BottomLeft,
-    present_mode=@skia_mbt.FifoPresent,
+    origin=BottomLeft,
+    present_mode=FifoPresent,
   )
   assert_true(gpu.surface.is_gpu())
-  assert_true(gpu.surface.origin == @skia_mbt.BottomLeft)
-  assert_true(gpu.present_mode == Some(@skia_mbt.FifoPresent))
-  assert_true(gpu.resource_key().kind == @skia_mbt.GpuSurfaceResource)
+  assert_true(gpu.surface.origin == BottomLeft)
+  assert_true(gpu.present_mode == Some(FifoPresent))
+  assert_true(gpu.resource_key().kind == GpuSurfaceResource)
   assert_true(gpu.resource_descriptor().is_gpu_backed())
   let target_plan = gpu.resource_plan()
   assert_eq(target_plan.length(), 1)
   assert_eq(target_plan.gpu_backed_count, 1)
   assert_true(target_plan.contains_key(gpu.resource_key()))
-  assert_eq(
-    target_plan.byte_size_for_kind(@skia_mbt.GpuSurfaceResource),
-    12288L,
-  )
+  assert_eq(target_plan.byte_size_for_kind(GpuSurfaceResource), 12288L)
   let gpu_plan = @skia_mbt.RenderCommandList::for_target(gpu).resource_plan()
   assert_true(gpu_plan.has_gpu_backed_resources())
   assert_eq(gpu_plan.gpu_backed_count, 1)
@@ -391,7 +384,7 @@ test "window surface descriptors derive stable targets and resource plans" {
     device_pixel_ratio=2.0,
     sample_count=4,
     stencil_bits=8,
-    present_mode=@skia_mbt.MailboxPresent,
+    present_mode=MailboxPresent,
     max_frames_in_flight=3,
   )
   assert_true(window.has_window_id())
@@ -406,7 +399,7 @@ test "window surface descriptors derive stable targets and resource plans" {
   assert_true(target.is_presentable())
   assert_true(target.has_target_id())
   assert_true(target.target_id == b"main-window")
-  assert_true(target.present_mode == Some(@skia_mbt.MailboxPresent))
+  assert_true(target.present_mode == Some(MailboxPresent))
   assert_eq(target.resource_descriptor().byte_size, 4096000L)
   assert_true(window.resource_key() == target.resource_key())
   let plan = window.resource_plan()
@@ -458,9 +451,7 @@ test "window surface descriptors derive stable targets and resource plans" {
 
 ///|
 test "gpu context descriptors attach to gpu surface targets" {
-  let anonymous = @skia_mbt.GpuContextDescriptor::new(
-    backend=@skia_mbt.MetalGpuContext,
-  )
+  let anonymous = @skia_mbt.GpuContextDescriptor::new(backend=MetalGpuContext)
   assert_true(anonymous.is_anonymous())
   assert_true(anonymous.resource_key().is_empty())
   assert_true(!anonymous.resource_descriptor().is_cacheable())
@@ -477,7 +468,7 @@ test "gpu context descriptors attach to gpu surface targets" {
   ).with_protected_context(true)
   assert_true(metal.backend.is_native_window_backend())
   assert_true(metal.resource_key() == same_metal.resource_key())
-  assert_true(metal.resource_key().kind == @skia_mbt.GpuContextResource)
+  assert_true(metal.resource_key().kind == GpuContextResource)
   assert_true(metal.resource_descriptor().is_gpu_backed())
   assert_true(!metal.resource_descriptor().key.kind.is_surface())
 
@@ -508,8 +499,8 @@ test "gpu context descriptors attach to gpu surface targets" {
   assert_eq(target_plan.gpu_backed_count, 2)
   assert_true(target_plan.contains_key(gpu.resource_key()))
   assert_true(target_plan.contains_key(metal.resource_key()))
-  assert_eq(target_plan.count_kind(@skia_mbt.GpuContextResource), 1)
-  assert_eq(target_plan.count_kind(@skia_mbt.GpuSurfaceResource), 1)
+  assert_eq(target_plan.count_kind(GpuContextResource), 1)
+  assert_eq(target_plan.count_kind(GpuSurfaceResource), 1)
 
   let gpu_plan = @skia_mbt.RenderCommandList::for_target(gpu).resource_plan()
   assert_eq(gpu_plan.length(), 2)
@@ -529,7 +520,7 @@ test "gpu context descriptors attach to gpu surface targets" {
 test "surface present descriptors track frame pacing slots and resources" {
   let target = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
     @skia_mbt.ISize::new(64, 48),
-    present_mode=@skia_mbt.MailboxPresent,
+    present_mode=MailboxPresent,
     max_frames_in_flight=3,
     target_id=b"main-window",
   )
@@ -537,11 +528,11 @@ test "surface present descriptors track frame pacing slots and resources" {
   assert_true(present.is_presentable())
   assert_eq(present.frame_index, 5)
   assert_eq(present.buffer_index, 2)
-  assert_true(present.present_mode == Some(@skia_mbt.MailboxPresent))
+  assert_true(present.present_mode == Some(MailboxPresent))
   assert_true(!present.prefers_vsync())
   assert_true(!present.allows_tearing())
   let present_key = present.resource_key()
-  assert_true(present_key.kind == @skia_mbt.SurfaceResource)
+  assert_true(present_key.kind == SurfaceResource)
   assert_true(present_key == present.resource_key())
   assert_true(
     present_key != target.present_descriptor(frame_index=6).resource_key(),
@@ -553,7 +544,7 @@ test "surface present descriptors track frame pacing slots and resources" {
   assert_true(
     present_key !=
     target
-    .with_present_mode(@skia_mbt.ImmediatePresent)
+    .with_present_mode(ImmediatePresent)
     .present_descriptor(frame_index=5)
     .resource_key(),
   )
@@ -567,7 +558,7 @@ test "surface present descriptors track frame pacing slots and resources" {
   assert_eq(plan.length(), 2)
   assert_eq(plan.cacheable_count, 1)
   assert_eq(plan.uncacheable_count, 1)
-  assert_eq(plan.count_kind(@skia_mbt.SurfaceResource), 2)
+  assert_eq(plan.count_kind(SurfaceResource), 2)
   assert_true(plan.contains_key(target.resource_key()))
   assert_true(plan.contains_key(present_key))
   let finalization = target.finalization_descriptor(frame_index=5)
@@ -575,7 +566,7 @@ test "surface present descriptors track frame pacing slots and resources" {
   assert_true(!finalization.requires_gpu_context())
   assert_eq(finalization.frame_index, 5)
   let finalization_key = finalization.resource_key()
-  assert_true(finalization_key.kind == @skia_mbt.SurfaceResource)
+  assert_true(finalization_key.kind == SurfaceResource)
   assert_true(finalization_key != present_key)
   assert_true(finalization_key == finalization.resource_key())
   assert_true(
@@ -585,7 +576,7 @@ test "surface present descriptors track frame pacing slots and resources" {
   assert_true(
     finalization_key !=
     target
-    .with_present_mode(@skia_mbt.ImmediatePresent)
+    .with_present_mode(ImmediatePresent)
     .finalization_descriptor(frame_index=5)
     .resource_key(),
   )
@@ -597,17 +588,17 @@ test "surface present descriptors track frame pacing slots and resources" {
   assert_eq(finalization_plan.length(), 2)
   assert_eq(finalization_plan.cacheable_count, 1)
   assert_eq(finalization_plan.uncacheable_count, 1)
-  assert_eq(finalization_plan.count_kind(@skia_mbt.SurfaceResource), 2)
+  assert_eq(finalization_plan.count_kind(SurfaceResource), 2)
   assert_true(finalization_plan.contains_key(target.resource_key()))
   assert_true(finalization_plan.contains_key(finalization_key))
 
   let fifo = target
-    .with_present_mode(@skia_mbt.FifoPresent)
+    .with_present_mode(FifoPresent)
     .present_descriptor(frame_index=0)
   assert_true(fifo.prefers_vsync())
   assert_true(!fifo.allows_tearing())
   let immediate = target
-    .with_present_mode(@skia_mbt.ImmediatePresent)
+    .with_present_mode(ImmediatePresent)
     .present_descriptor(frame_index=0)
   assert_true(!immediate.prefers_vsync())
   assert_true(immediate.allows_tearing())
@@ -621,7 +612,7 @@ test "surface present descriptors track frame pacing slots and resources" {
   )
   let gpu_present = gpu_target.present_descriptor(frame_index=2)
   let gpu_plan = gpu_present.resource_plan()
-  assert_true(gpu_present.resource_key().kind == @skia_mbt.GpuSurfaceResource)
+  assert_true(gpu_present.resource_key().kind == GpuSurfaceResource)
   assert_eq(gpu_plan.length(), 3)
   assert_eq(gpu_plan.gpu_backed_count, 3)
   assert_eq(gpu_plan.cacheable_count, 2)
@@ -632,15 +623,13 @@ test "surface present descriptors track frame pacing slots and resources" {
   let gpu_finalization = gpu_target.finalization_descriptor(frame_index=2)
   let gpu_finalization_plan = gpu_finalization.resource_plan()
   assert_true(gpu_finalization.requires_gpu_context())
-  assert_true(
-    gpu_finalization.resource_key().kind == @skia_mbt.GpuSurfaceResource,
-  )
+  assert_true(gpu_finalization.resource_key().kind == GpuSurfaceResource)
   assert_eq(gpu_finalization_plan.length(), 3)
   assert_eq(gpu_finalization_plan.gpu_backed_count, 3)
   assert_eq(gpu_finalization_plan.cacheable_count, 2)
   assert_eq(gpu_finalization_plan.uncacheable_count, 1)
-  assert_eq(gpu_finalization_plan.count_kind(@skia_mbt.GpuSurfaceResource), 2)
-  assert_eq(gpu_finalization_plan.count_kind(@skia_mbt.GpuContextResource), 1)
+  assert_eq(gpu_finalization_plan.count_kind(GpuSurfaceResource), 2)
+  assert_eq(gpu_finalization_plan.count_kind(GpuContextResource), 1)
   assert_true(gpu_finalization_plan.contains_key(gpu_target.resource_key()))
   assert_true(gpu_finalization_plan.contains_key(gpu_context.resource_key()))
   assert_true(
@@ -835,9 +824,7 @@ test "renderer resource descriptors provide typed cache keys" {
   assert_true(uncacheable_plan.has_uncacheable_resources())
   assert_true(uncacheable_plan.contains_key(scratch.key))
   assert_true(!uncacheable_plan.contains_key(image.key))
-  let gpu_surface_descriptors = plan.descriptors_of_kind(
-    @skia_mbt.GpuSurfaceResource,
-  )
+  let gpu_surface_descriptors = plan.descriptors_of_kind(GpuSurfaceResource)
   assert_eq(gpu_surface_descriptors.length(), 1)
   assert_true(gpu_surface_descriptors[0] == gpu_surface)
   let gpu_backed_descriptors = plan.gpu_backed_descriptors()
@@ -852,9 +839,9 @@ test "renderer resource descriptors provide typed cache keys" {
   assert_true(gpu_backed_plan.contains_key(gpu_surface.key))
   assert_true(gpu_backed_plan.contains_key(gpu_context.key))
   assert_true(!gpu_backed_plan.contains_key(image.key))
-  assert_eq(plan.count_kind(@skia_mbt.ImageResource), 2)
-  assert_eq(plan.byte_size_for_kind(@skia_mbt.ImageResource), 10L)
-  assert_eq(plan.byte_size_for_kind(@skia_mbt.ShaderResource), 0L)
+  assert_eq(plan.count_kind(ImageResource), 2)
+  assert_eq(plan.byte_size_for_kind(ImageResource), 10L)
+  assert_eq(plan.byte_size_for_kind(ShaderResource), 0L)
   let empty_plan = @skia_mbt.RendererResourcePlan::empty()
   assert_true(empty_plan.is_empty())
   assert_true(!empty_plan.has_cacheable_resources())
@@ -933,7 +920,7 @@ test "shader descriptors produce stable resource keys" {
   assert_true(color.is_valid())
   assert_true(color.resource_key() == same_color.resource_key())
   let color_descriptor = color.resource_descriptor()
-  assert_true(color_descriptor.key.kind == @skia_mbt.ShaderResource)
+  assert_true(color_descriptor.key.kind == ShaderResource)
   assert_true(color_descriptor.is_cacheable())
   assert_true(color_descriptor.byte_size > 0L)
 
@@ -942,7 +929,7 @@ test "shader descriptors produce stable resource keys" {
       @skia_mbt.Point::new(12.0, 6.0),
       @skia_mbt.Color::red(),
       @skia_mbt.Color::blue(),
-      tile_mode=@skia_mbt.Repeat,
+      tile_mode=Repeat,
     )
     is Some(linear) else {
     fail("finite linear gradient descriptor should be accepted")
@@ -972,7 +959,7 @@ test "shader descriptors produce stable resource keys" {
     @skia_mbt.Point::new(1.0, 1.0),
     @skia_mbt.Color::red(),
     @skia_mbt.Color::blue(),
-    @skia_mbt.Clamp,
+    Clamp,
   )
   assert_true(!invalid_linear.is_valid())
   assert_true(invalid_linear.resource_key().is_empty())
@@ -1001,7 +988,7 @@ test "shader descriptors produce stable resource keys" {
     0.0,
     @skia_mbt.Color::cyan(),
     @skia_mbt.Color::magenta(),
-    @skia_mbt.Clamp,
+    Clamp,
   )
   assert_true(!invalid_radial.is_valid())
   assert_true(!invalid_radial.resource_descriptor().is_cacheable())
@@ -1085,9 +1072,9 @@ test "filter descriptors produce typed resource keys" {
   let color_descriptor = saturation.resource_descriptor()
   let image_descriptor = image_blur.resource_descriptor()
   let mask_descriptor = mask_blur.resource_descriptor()
-  assert_true(color_descriptor.key.kind == @skia_mbt.ColorFilterResource)
-  assert_true(image_descriptor.key.kind == @skia_mbt.ImageFilterResource)
-  assert_true(mask_descriptor.key.kind == @skia_mbt.MaskFilterResource)
+  assert_true(color_descriptor.key.kind == ColorFilterResource)
+  assert_true(image_descriptor.key.kind == ImageFilterResource)
+  assert_true(mask_descriptor.key.kind == MaskFilterResource)
   assert_true(color_descriptor.key.kind.is_filter())
   assert_true(image_descriptor.key.kind.is_filter())
   assert_true(mask_descriptor.key.kind.is_filter())
@@ -1107,13 +1094,13 @@ test "filter descriptors produce typed resource keys" {
 ///|
 test "image descriptors produce stable resource keys" {
   assert_true(@skia_mbt.ImageDescriptor::encoded(b"") is None)
-  let empty_image = @skia_mbt.EncodedImage(b"", Some(@skia_mbt.PNG), None)
+  let empty_image = @skia_mbt.EncodedImage(b"", Some(PNG), None)
   assert_true(empty_image.resource_key().is_empty())
   assert_true(!empty_image.resource_descriptor().is_cacheable())
   assert_eq(empty_image.resource_descriptor().byte_size, 0L)
   guard @skia_mbt.ImageDescriptor::encoded(
       b"encoded-image-bytes",
-      format=Some(@skia_mbt.PNG),
+      format=Some(PNG),
       dimensions=Some(@skia_mbt.ISize::new(2, 3)),
     )
     is Some(image) else {
@@ -1121,7 +1108,7 @@ test "image descriptors produce stable resource keys" {
   }
   guard @skia_mbt.ImageDescriptor::encoded(
       b"encoded-image-bytes",
-      format=Some(@skia_mbt.PNG),
+      format=Some(PNG),
       dimensions=Some(@skia_mbt.ISize::new(2, 3)),
     )
     is Some(same_image) else {
@@ -1129,7 +1116,7 @@ test "image descriptors produce stable resource keys" {
   }
   guard @skia_mbt.ImageDescriptor::encoded(
       b"encoded-image-bytes",
-      format=Some(@skia_mbt.JPEG),
+      format=Some(JPEG),
       dimensions=Some(@skia_mbt.ISize::new(2, 3)),
     )
     is Some(other_format) else {
@@ -1137,7 +1124,7 @@ test "image descriptors produce stable resource keys" {
   }
   guard @skia_mbt.ImageDescriptor::encoded(
       b"encoded-image-bytes",
-      format=Some(@skia_mbt.PNG),
+      format=Some(PNG),
       dimensions=Some(@skia_mbt.ISize::new(3, 2)),
     )
     is Some(other_dimensions) else {
@@ -1157,7 +1144,7 @@ test "image descriptors produce stable resource keys" {
   assert_eq(image.byte_size(), 19L)
   assert_eq(image.encoded_bytes(), b"encoded-image-bytes")
   let descriptor = image.resource_descriptor()
-  assert_true(descriptor.key.kind == @skia_mbt.ImageResource)
+  assert_true(descriptor.key.kind == ImageResource)
   assert_true(descriptor.key == image.resource_key())
   assert_true(descriptor.is_cacheable())
   assert_eq(descriptor.byte_size, 19L)
@@ -1175,18 +1162,18 @@ test "render pass descriptor clips clear and present boundaries" {
     surface,
     @skia_mbt.Color::black(),
     bounds=Some(@skia_mbt.IRect::from_xywh(5, -5, 20, 20)),
-    store_op=@skia_mbt.PresentPixels,
+    store_op=PresentPixels,
   )
   assert_true(pass.surface == surface)
   assert_true(pass.bounds == @skia_mbt.IRect::new(5, 0, 20, 10))
-  assert_true(pass.load_op == @skia_mbt.ClearBeforeDraw)
+  assert_true(pass.load_op == ClearBeforeDraw)
   assert_true(pass.clear_color == Some(@skia_mbt.Color::black()))
-  assert_true(pass.store_op == @skia_mbt.PresentPixels)
+  assert_true(pass.store_op == PresentPixels)
   assert_true(pass.needs_clear())
   assert_true(pass.needs_present())
   assert_true(pass.keeps_pixels())
   assert_true(pass.is_msaa())
-  assert_true(pass.resource_descriptor().key.kind == @skia_mbt.SurfaceResource)
+  assert_true(pass.resource_descriptor().key.kind == SurfaceResource)
   assert_true(pass.resource_descriptor().key == surface.resource_key())
   assert_eq(pass.resource_descriptor().byte_size, 3200L)
 
@@ -1198,14 +1185,11 @@ test "render pass descriptor clips clear and present boundaries" {
   )
   assert_true(!load.has_target_binding())
   assert_true(load.is_bound_to_target(unbound_target))
-  assert_true(load.load_op == @skia_mbt.LoadExisting)
+  assert_true(load.load_op == LoadExisting)
   assert_true(load.clear_color is None)
-  assert_true(load.store_op == @skia_mbt.StorePixels)
+  assert_true(load.store_op == StorePixels)
   assert_true(load.bounds == surface.bounds())
-  assert_true(
-    load.with_store_op(@skia_mbt.DiscardPixels).store_op ==
-    @skia_mbt.DiscardPixels,
-  )
+  assert_true(load.with_store_op(DiscardPixels).store_op == DiscardPixels)
   assert_true(load.with_clear_color(@skia_mbt.Color::red()).needs_clear())
   assert_true(
     load.with_clear_color(@skia_mbt.Color::red()).without_clear().clear_color
@@ -1234,7 +1218,7 @@ test "render pass descriptor derives present defaults from surface targets" {
   )
   assert_true(!raster_pass.needs_present())
   assert_true(raster_pass.keeps_pixels())
-  assert_true(raster_pass.store_op == @skia_mbt.StorePixels)
+  assert_true(raster_pass.store_op == StorePixels)
 
   let window_target = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
     @skia_mbt.ISize::new(20, 10),
@@ -1259,7 +1243,7 @@ test "render pass descriptor derives present defaults from surface targets" {
     window_target.surface.resource_key(),
   )
   assert_true(present_pass.keeps_pixels())
-  assert_true(present_pass.store_op == @skia_mbt.PresentPixels)
+  assert_true(present_pass.store_op == PresentPixels)
   assert_true(present_pass.bounds == @skia_mbt.IRect::new(4, 2, 20, 10))
   assert_true(present_pass.is_msaa())
 
@@ -1276,11 +1260,11 @@ test "render pass descriptor derives present defaults from surface targets" {
 
   let discard_pass = @skia_mbt.RenderPassDescriptor::for_target(
     window_target.without_present(),
-    store_op=Some(@skia_mbt.DiscardPixels),
+    store_op=Some(DiscardPixels),
   )
   assert_true(!discard_pass.needs_present())
   assert_true(!discard_pass.keeps_pixels())
-  assert_true(discard_pass.store_op == @skia_mbt.DiscardPixels)
+  assert_true(discard_pass.store_op == DiscardPixels)
 }
 
 ///|
@@ -1357,11 +1341,11 @@ test "render command list records canvas fill commands" {
   )
   let paint = @skia_mbt.Paint::new(
     color=@skia_mbt.Color::blue(),
-    blend_mode=@skia_mbt.Src,
+    blend_mode=Src,
   )
   let commands = @skia_mbt.RenderCommandList::for_target(target)
     .clip_rect(@skia_mbt.Rect::from_xywh(4, 4, 8, 8))
-    .draw_color(@skia_mbt.Color::red(), blend_mode=@skia_mbt.Src)
+    .draw_color(@skia_mbt.Color::red(), blend_mode=Src)
     .draw_paint(paint~)
   let stats = commands.stats()
   assert_eq(commands.length(), 3)
@@ -1426,7 +1410,7 @@ test "render command list estimates text touched bounds" {
 
   let rtl_run = @skia_mbt.TextRunDescriptor::new(
     range=@skia_mbt.TextRange::new(1, 4),
-    direction=@skia_mbt.RightToLeft,
+    direction=RightToLeft,
   )
   let rtl = @skia_mbt.RenderCommandList::for_target(target).draw_text_run_utf8(
     b"abcde",
@@ -1578,7 +1562,7 @@ test "render command touched bounds respect rectangular clips" {
   )
 
   let difference_clip = @skia_mbt.RenderCommandList::for_target(target)
-    .clip_rect(@skia_mbt.Rect::from_xywh(4, 4, 8, 8), op=@skia_mbt.Difference)
+    .clip_rect(@skia_mbt.Rect::from_xywh(4, 4, 8, 8), op=Difference)
     .draw_rect(@skia_mbt.Rect::from_xywh(0, 0, 16, 16))
   assert_true(
     difference_clip.touched_bounds() ==
@@ -1630,7 +1614,7 @@ test "render command list records point line and arc draw commands" {
   )
   let stroke = @skia_mbt.Paint::new(
     color=@skia_mbt.Color::green(),
-    style=@skia_mbt.Stroke,
+    style=Stroke,
     stroke_width=2.0,
   )
   let commands = @skia_mbt.RenderCommandList::for_target(target)
@@ -1647,7 +1631,7 @@ test "render command list records point line and arc draw commands" {
         @skia_mbt.Point::new(16, 12),
       ],
       paint=stroke,
-      mode=@skia_mbt.Polygon,
+      mode=Polygon,
     )
     .draw_arc(
       @skia_mbt.Rect::from_xywh(18, 18, 6, 6),
@@ -1672,7 +1656,7 @@ test "render command list records point line and arc draw commands" {
       @skia_mbt.Point::new(30, 30),
     ],
     paint=stroke,
-    mode=@skia_mbt.Lines,
+    mode=Lines,
   )
   assert_true(
     line_pairs.touched_bounds() == Some(@skia_mbt.Rect::new(1, 1, 7, 3)),
@@ -1729,7 +1713,7 @@ test "render command list exposes text run resource keys" {
     )
     .resource_descriptors()
   assert_eq(descriptors.length(), 5)
-  assert_true(descriptors[0].key.kind == @skia_mbt.SurfaceResource)
+  assert_true(descriptors[0].key.kind == SurfaceResource)
   assert_true(descriptors[0].key == target.resource_key())
   assert_true(descriptors[0].key != target.surface.resource_key())
   assert_eq(descriptors[0].byte_size, 2048L)
@@ -1738,7 +1722,7 @@ test "render command list exposes text run resource keys" {
   let mut font_descriptor_seen = false
   let mut fallback_descriptor_seen = false
   for descriptor in descriptors {
-    if descriptor.key.kind == @skia_mbt.PathResource {
+    if descriptor.key.kind == PathResource {
       path_descriptor_seen = descriptor.is_cacheable()
     }
     if descriptor.key == expected_key {
@@ -1776,8 +1760,8 @@ test "render command list exposes text run resource keys" {
   assert_eq(plan.cacheable_count, 5)
   assert_eq(plan.uncacheable_count, 0)
   assert_eq(plan.gpu_backed_count, 0)
-  assert_eq(plan.count_kind(@skia_mbt.FontResource), 1)
-  assert_eq(plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(plan.count_kind(FontResource), 1)
+  assert_eq(plan.count_kind(TypefaceResource), 1)
 
   let cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
@@ -1875,10 +1859,10 @@ test "render command list records shaped glyph run resources" {
   assert_true(descriptors[0].key == target.resource_key())
   let plan = commands.resource_plan()
   assert_eq(plan.length(), 7)
-  assert_eq(plan.count_kind(@skia_mbt.SurfaceResource), 1)
-  assert_eq(plan.count_kind(@skia_mbt.TextRunResource), 4)
-  assert_eq(plan.count_kind(@skia_mbt.FontResource), 1)
-  assert_eq(plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(plan.count_kind(SurfaceResource), 1)
+  assert_eq(plan.count_kind(TextRunResource), 4)
+  assert_eq(plan.count_kind(FontResource), 1)
+  assert_eq(plan.count_kind(TypefaceResource), 1)
   assert_true(plan.contains_key(glyph_run.resource_key(b"hello")))
   assert_true(plan.contains_key(shaped.resource_key(b"hello")))
   assert_true(plan.contains_key(shaping.resource_key(b"hello")))
@@ -1907,14 +1891,8 @@ test "render command list records shaped glyph run resources" {
   assert_true(invalid_commands.touched_bounds() is None)
   assert_eq(invalid_commands.commands[0].resource_descriptors().length(), 1)
   assert_eq(invalid_commands.resource_plan().length(), 1)
-  assert_eq(
-    invalid_commands.resource_plan().count_kind(@skia_mbt.SurfaceResource),
-    1,
-  )
-  assert_eq(
-    invalid_commands.resource_plan().count_kind(@skia_mbt.TextRunResource),
-    0,
-  )
+  assert_eq(invalid_commands.resource_plan().count_kind(SurfaceResource), 1)
+  assert_eq(invalid_commands.resource_plan().count_kind(TextRunResource), 0)
 }
 
 ///|
@@ -1948,7 +1926,7 @@ test "render command list includes declared resource descriptors" {
   let mask_filter_descriptor = mask_filter.resource_descriptor()
   guard @skia_mbt.ImageDescriptor::encoded(
       b"render-command-image",
-      format=Some(@skia_mbt.PNG),
+      format=Some(PNG),
       dimensions=Some(@skia_mbt.ISize::new(2, 3)),
     )
     is Some(image) else {
@@ -2031,14 +2009,8 @@ test "render command list includes declared resource descriptors" {
   assert_eq(path_shader_descriptors.length(), 2)
   assert_true(path_shader_descriptors[0].key == shader_path_descriptor.key)
   assert_true(path_shader_descriptors[1].key == shader_descriptor.key)
-  assert_eq(
-    path_shader_command.resource_count_for_kind(@skia_mbt.PathResource),
-    1,
-  )
-  assert_eq(
-    path_shader_command.resource_count_for_kind(@skia_mbt.ShaderResource),
-    1,
-  )
+  assert_eq(path_shader_command.resource_count_for_kind(PathResource), 1)
+  assert_eq(path_shader_command.resource_count_for_kind(ShaderResource), 1)
   assert_eq(path_shader_command.filter_resource_count(), 0)
   assert_eq(path_shader_command.text_resource_count(), 0)
   assert_true(
@@ -2072,7 +2044,7 @@ test "render command list includes declared resource descriptors" {
   )
   let descriptors = commands.resource_descriptors()
   assert_eq(descriptors.length(), 8)
-  assert_true(descriptors[0].key.kind == @skia_mbt.SurfaceResource)
+  assert_true(descriptors[0].key.kind == SurfaceResource)
   assert_true(descriptors[0].key == target.resource_key())
   assert_true(descriptors[0].key != target.surface.resource_key())
   let plan = commands.resource_plan()
@@ -2123,7 +2095,7 @@ test "render command list includes declared resource descriptors" {
 test "render frame descriptor summarizes target commands and resources" {
   let target = @skia_mbt.SurfaceTargetDescriptor::window_n32_premul(
     @skia_mbt.ISize::new(24, 16),
-    present_mode=@skia_mbt.MailboxPresent,
+    present_mode=MailboxPresent,
   )
   let path = @skia_mbt.Path::new().add_rect(
     @skia_mbt.Rect::from_xywh(2, 3, 5, 6),
@@ -2137,7 +2109,7 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(frame.needs_present())
   assert_true(frame.has_present())
   assert_true(frame.is_ready())
-  assert_true(frame.validation_status() == @skia_mbt.FrameReady)
+  assert_true(frame.validation_status() == FrameReady)
   assert_true(frame.validation_status().is_ready())
   assert_eq(frame.stats.command_count, 4)
   assert_eq(frame.stats.present_count, 1)
@@ -2152,8 +2124,8 @@ test "render frame descriptor summarizes target commands and resources" {
     ),
   )
   assert_true(!frame.resource_plan.contains_key(target.surface.resource_key()))
-  assert_eq(frame.resource_plan.count_kind(@skia_mbt.SurfaceResource), 1)
-  assert_eq(frame.resource_plan.count_kind(@skia_mbt.PathResource), 1)
+  assert_eq(frame.resource_plan.count_kind(SurfaceResource), 1)
+  assert_eq(frame.resource_plan.count_kind(PathResource), 1)
   let frame_cacheable_plan = frame.cacheable_resource_plan()
   let frame_uncacheable_plan = frame.uncacheable_resource_plan()
   assert_true(
@@ -2191,8 +2163,8 @@ test "render frame descriptor summarizes target commands and resources" {
   }
   assert_eq(present.frame_index, 5)
   assert_eq(present.buffer_index, 1)
-  assert_true(present.present_mode == Some(@skia_mbt.MailboxPresent))
-  assert_true(present.resource_key().kind == @skia_mbt.SurfaceResource)
+  assert_true(present.present_mode == Some(MailboxPresent))
+  assert_true(present.resource_key().kind == SurfaceResource)
   assert_true(!present.resource_descriptor().is_cacheable())
   let present_plan = frame.present_resource_plan(frame_index=5)
   assert_eq(present_plan.length(), 2)
@@ -2203,14 +2175,14 @@ test "render frame descriptor summarizes target commands and resources" {
   let submission = frame.submission_descriptor(frame_index=5)
   assert_true(submission.is_ready())
   assert_eq(submission.frame_index, 5)
-  assert_true(submission.validation_status == @skia_mbt.FrameReady)
+  assert_true(submission.validation_status == FrameReady)
   assert_true(submission.has_present())
   assert_true(submission.present == Some(present))
   assert_eq(submission.resource_plan.length(), 3)
   assert_eq(submission.resource_plan.cacheable_count, 2)
   assert_eq(submission.resource_plan.uncacheable_count, 1)
-  assert_eq(submission.resource_plan.count_kind(@skia_mbt.SurfaceResource), 2)
-  assert_eq(submission.resource_plan.count_kind(@skia_mbt.PathResource), 1)
+  assert_eq(submission.resource_plan.count_kind(SurfaceResource), 2)
+  assert_eq(submission.resource_plan.count_kind(PathResource), 1)
   assert_true(submission.resource_plan.contains_key(target.resource_key()))
   assert_true(submission.resource_plan.contains_key(path.resource_key()))
   assert_true(submission.resource_plan.contains_key(present.resource_key()))
@@ -2261,7 +2233,7 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(finalization.is_ready())
   assert_true(finalization.has_finalization())
   assert_eq(finalization.frame_index, 5)
-  assert_true(finalization.validation_status == @skia_mbt.FrameReady)
+  assert_true(finalization.validation_status == FrameReady)
   assert_true(!finalization.requires_gpu_context())
   guard finalization.finalization is Some(surface_finalization) else {
     fail("ready window frame should expose a finalization descriptor")
@@ -2277,8 +2249,8 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_eq(finalization.resource_plan.length(), 3)
   assert_eq(finalization.resource_plan.cacheable_count, 2)
   assert_eq(finalization.resource_plan.uncacheable_count, 1)
-  assert_eq(finalization.resource_plan.count_kind(@skia_mbt.SurfaceResource), 2)
-  assert_eq(finalization.resource_plan.count_kind(@skia_mbt.PathResource), 1)
+  assert_eq(finalization.resource_plan.count_kind(SurfaceResource), 2)
+  assert_eq(finalization.resource_plan.count_kind(PathResource), 1)
   assert_true(finalization.resource_plan.contains_key(target.resource_key()))
   assert_true(finalization.resource_plan.contains_key(path.resource_key()))
   assert_true(
@@ -2375,18 +2347,14 @@ test "render frame descriptor summarizes target commands and resources" {
     target,
   )
   assert_true(!mismatch_frame.is_target_consistent())
-  assert_true(
-    mismatch_frame.validation_status() == @skia_mbt.FrameTargetMismatch,
-  )
+  assert_true(mismatch_frame.validation_status() == FrameTargetMismatch)
   assert_true(!mismatch_frame.is_ready())
   assert_true(mismatch_frame.present_descriptor(frame_index=5) is None)
   assert_true(mismatch_frame.present_resource_plan(frame_index=5).is_empty())
   let mismatch_submission = mismatch_frame.submission_descriptor(frame_index=5)
   assert_true(!mismatch_submission.is_ready())
   assert_true(!mismatch_submission.has_present())
-  assert_true(
-    mismatch_submission.validation_status == @skia_mbt.FrameTargetMismatch,
-  )
+  assert_true(mismatch_submission.validation_status == FrameTargetMismatch)
   let mismatch_cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
     @skia_mbt.RendererResourceDescriptor,
@@ -2398,9 +2366,7 @@ test "render frame descriptor summarizes target commands and resources" {
   )
   assert_true(!mismatch_finalization.is_ready())
   assert_true(!mismatch_finalization.has_finalization())
-  assert_true(
-    mismatch_finalization.validation_status == @skia_mbt.FrameTargetMismatch,
-  )
+  assert_true(mismatch_finalization.validation_status == FrameTargetMismatch)
   let mismatch_finalization_cache : @skia_mbt.ResourceCache[
     @skia_mbt.RendererResourceKey,
     @skia_mbt.RendererResourceDescriptor,
@@ -2420,16 +2386,14 @@ test "render frame descriptor summarizes target commands and resources" {
   ).frame_descriptor(identity_mismatch_target)
   assert_true(!identity_mismatch_frame.is_target_consistent())
   assert_true(
-    identity_mismatch_frame.validation_status() == @skia_mbt.FrameTargetMismatch,
+    identity_mismatch_frame.validation_status() == FrameTargetMismatch,
   )
   assert_true(!identity_mismatch_frame.is_ready())
 
   let unbalanced_frame = @skia_mbt.RenderCommandList::for_target(target)
     .save()
     .frame_descriptor(target)
-  assert_true(
-    unbalanced_frame.validation_status() == @skia_mbt.FrameUnbalancedState,
-  )
+  assert_true(unbalanced_frame.validation_status() == FrameUnbalancedState)
   assert_true(!unbalanced_frame.is_ready())
 
   let gpu_context = @skia_mbt.GpuContextDescriptor::mock(
@@ -2495,8 +2459,7 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_true(missing_context_frame.requires_gpu_context())
   assert_true(!missing_context_frame.has_gpu_context())
   assert_true(
-    missing_context_frame.validation_status() ==
-    @skia_mbt.FrameMissingGpuContext,
+    missing_context_frame.validation_status() == FrameMissingGpuContext,
   )
   assert_true(!missing_context_frame.is_ready())
   assert_true(missing_context_frame.present_descriptor(frame_index=1) is None)
@@ -2508,7 +2471,7 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_eq(
     missing_context_submission
     .gpu_backed_resource_plan()
-    .count_kind(@skia_mbt.GpuContextResource),
+    .count_kind(GpuContextResource),
     0,
   )
   let missing_context_finalization = missing_context_frame.finalization_descriptor(
@@ -2520,7 +2483,7 @@ test "render frame descriptor summarizes target commands and resources" {
   assert_eq(
     missing_context_finalization
     .gpu_backed_resource_plan()
-    .count_kind(@skia_mbt.GpuContextResource),
+    .count_kind(GpuContextResource),
     0,
   )
 }
@@ -2555,7 +2518,7 @@ test "font fallback contracts normalize style family and language requests" {
   assert_eq(empty_request_plan.length(), 1)
   assert_eq(empty_request_plan.cacheable_count, 0)
   assert_eq(empty_request_plan.uncacheable_count, 1)
-  assert_eq(empty_request_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(empty_request_plan.count_kind(TypefaceResource), 1)
 
   let request = @skia_mbt.FontFallbackRequest::new(
     families=extended,
@@ -2573,7 +2536,7 @@ test "font fallback contracts normalize style family and language requests" {
     !request.with_character(-1).has_character(),
   )
   let key = request.resource_key()
-  assert_true(key.kind == @skia_mbt.TypefaceResource)
+  assert_true(key.kind == TypefaceResource)
   assert_true(key == request.resource_key())
   assert_true(key != request.with_character(0x4F61).resource_key())
   assert_true(
@@ -2591,12 +2554,12 @@ test "font fallback contracts normalize style family and language requests" {
 
   let fallback_font = request.font_descriptor(size=14.0, scale_x=1.1)
   assert_true(fallback_font.typeface_key == key)
-  assert_true(fallback_font.resource_key().kind == @skia_mbt.FontResource)
+  assert_true(fallback_font.resource_key().kind == FontResource)
   assert_true(fallback_font.resource_descriptor().is_cacheable())
   let fallback_font_plan = request.resource_plan(size=14.0, scale_x=1.1)
   assert_eq(fallback_font_plan.length(), 2)
-  assert_eq(fallback_font_plan.count_kind(@skia_mbt.TypefaceResource), 1)
-  assert_eq(fallback_font_plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_eq(fallback_font_plan.count_kind(TypefaceResource), 1)
+  assert_eq(fallback_font_plan.count_kind(FontResource), 1)
   assert_true(fallback_font_plan.contains_key(key))
   assert_true(fallback_font_plan.contains_key(fallback_font.resource_key()))
   assert_true(fallback_font_plan.byte_size > descriptor.byte_size)
@@ -2619,7 +2582,7 @@ test "font fallback contracts normalize style family and language requests" {
   assert_eq(inferred_match.fallback_index, 2)
   assert_true(inferred_match.source_family() == Some(b"Segoe UI Emoji"))
   let match_key = match_descriptor.resource_key()
-  assert_true(match_key.kind == @skia_mbt.TypefaceResource)
+  assert_true(match_key.kind == TypefaceResource)
   assert_true(match_key != key)
   assert_true(match_key == match_descriptor.resource_key())
   assert_true(
@@ -2640,12 +2603,12 @@ test "font fallback contracts normalize style family and language requests" {
   assert_true(match_resource.byte_size > descriptor.byte_size)
   let match_font = match_descriptor.font_descriptor(size=14.0, scale_x=1.1)
   assert_true(match_font.typeface_key == match_key)
-  assert_true(match_font.resource_key().kind == @skia_mbt.FontResource)
+  assert_true(match_font.resource_key().kind == FontResource)
   assert_true(match_font.resource_descriptor().is_cacheable())
   let match_plan = match_descriptor.resource_plan(size=14.0, scale_x=1.1)
   assert_eq(match_plan.length(), 2)
-  assert_eq(match_plan.count_kind(@skia_mbt.TypefaceResource), 1)
-  assert_eq(match_plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_eq(match_plan.count_kind(TypefaceResource), 1)
+  assert_eq(match_plan.count_kind(FontResource), 1)
   assert_true(match_plan.contains_key(match_key))
   assert_true(match_plan.contains_key(match_font.resource_key()))
   assert_true(match_plan.byte_size > match_resource.byte_size)
@@ -2659,7 +2622,7 @@ test "font fallback contracts normalize style family and language requests" {
   assert_true(resolution.source_family() == Some(b"Noto Sans CJK SC"))
   assert_true(resolution.resolved_match == match_descriptor)
   let resolution_key = resolution.resource_key()
-  assert_true(resolution_key.kind == @skia_mbt.TypefaceResource)
+  assert_true(resolution_key.kind == TypefaceResource)
   assert_true(resolution_key != key)
   assert_true(resolution_key != match_key)
   assert_true(resolution_key == resolution.resource_key())
@@ -2686,11 +2649,11 @@ test "font fallback contracts normalize style family and language requests" {
   )
   let resolution_font = resolution.font_descriptor(size=14.0, scale_x=1.1)
   assert_true(resolution_font.typeface_key == resolution_key)
-  assert_true(resolution_font.resource_key().kind == @skia_mbt.FontResource)
+  assert_true(resolution_font.resource_key().kind == FontResource)
   let resolution_plan = resolution.resource_plan(size=14.0, scale_x=1.1)
   assert_eq(resolution_plan.length(), 4)
-  assert_eq(resolution_plan.count_kind(@skia_mbt.TypefaceResource), 3)
-  assert_eq(resolution_plan.count_kind(@skia_mbt.FontResource), 1)
+  assert_eq(resolution_plan.count_kind(TypefaceResource), 3)
+  assert_eq(resolution_plan.count_kind(FontResource), 1)
   assert_true(resolution_plan.contains_key(key))
   assert_true(resolution_plan.contains_key(match_key))
   assert_true(resolution_plan.contains_key(resolution_key))
@@ -2740,7 +2703,7 @@ test "font descriptors derive font resource keys" {
   )
   assert_true(font.is_valid())
   assert_true(font.resource_key() == same_font.resource_key())
-  assert_true(font.resource_key().kind == @skia_mbt.FontResource)
+  assert_true(font.resource_key().kind == FontResource)
   assert_true(font.resource_key() != font.with_size(18.0).resource_key())
   assert_true(font.resource_key() != font.with_scale_x(1.2).resource_key())
   assert_true(font.resource_key() != font.with_skew_x(0.25).resource_key())
@@ -2757,7 +2720,7 @@ test "font descriptors derive font resource keys" {
 
   let default_font = @skia_mbt.FontDescriptor::default(size=12.0)
   assert_true(default_font.is_valid())
-  assert_true(default_font.resource_key().kind == @skia_mbt.FontResource)
+  assert_true(default_font.resource_key().kind == FontResource)
   assert_true(!font.with_size(-1.0).is_valid())
   assert_true(font.with_size(-1.0).resource_key().is_empty())
   assert_true(!font.with_scale_x(0.0).resource_descriptor().is_cacheable())
@@ -2791,20 +2754,18 @@ test "text run descriptor records byte ranges direction and fallback query" {
   )
   let run = @skia_mbt.TextRunDescriptor::new(
     range~,
-    direction=@skia_mbt.RightToLeft,
+    direction=RightToLeft,
     fallback~,
   )
   assert_true(run.is_right_to_left())
   assert_true(!run.is_empty())
   assert_true(run.fallback.families.primary_family == b"Inter")
-  assert_true(
-    run.with_direction(@skia_mbt.LeftToRight).direction.is_left_to_right(),
-  )
+  assert_true(run.with_direction(LeftToRight).direction.is_left_to_right())
   assert_true(run.with_range(@skia_mbt.TextRange::new(1, 1)).is_empty())
 
   let font_key = @skia_mbt.RendererResourceKey::font(b"Inter:16:400")
   let key = run.resource_key(b"hello", font_key~)
-  assert_true(key.kind == @skia_mbt.TextRunResource)
+  assert_true(key.kind == TextRunResource)
   assert_true(!key.is_empty())
   assert_true(key == run.resource_key(b"hello", font_key~))
   assert_true(key != run.resource_key(b"hello!", font_key~))
@@ -2815,8 +2776,7 @@ test "text run descriptor records byte ranges direction and fallback query" {
     .resource_key(b"hello", font_key~),
   )
   assert_true(
-    key !=
-    run.with_direction(@skia_mbt.LeftToRight).resource_key(b"hello", font_key~),
+    key != run.with_direction(LeftToRight).resource_key(b"hello", font_key~),
   )
   assert_true(
     key !=
@@ -2851,9 +2811,9 @@ test "text run descriptor records byte ranges direction and fallback query" {
   )
   let text_plan = run.resource_plan(b"hello", font_key~)
   assert_eq(text_plan.length(), 3)
-  assert_eq(text_plan.count_kind(@skia_mbt.TextRunResource), 1)
-  assert_eq(text_plan.count_kind(@skia_mbt.FontResource), 1)
-  assert_eq(text_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(text_plan.count_kind(TextRunResource), 1)
+  assert_eq(text_plan.count_kind(FontResource), 1)
+  assert_eq(text_plan.count_kind(TypefaceResource), 1)
   assert_true(text_plan.contains_key(key))
   assert_true(text_plan.contains_key(font_key))
   assert_true(text_plan.contains_key(fallback.resource_key()))
@@ -2861,9 +2821,9 @@ test "text run descriptor records byte ranges direction and fallback query" {
   let plain_run = @skia_mbt.TextRunDescriptor::new(range~)
   let plain_plan = plain_run.resource_plan(b"hello")
   assert_eq(plain_plan.length(), 1)
-  assert_eq(plain_plan.count_kind(@skia_mbt.TextRunResource), 1)
-  assert_eq(plain_plan.count_kind(@skia_mbt.FontResource), 0)
-  assert_eq(plain_plan.count_kind(@skia_mbt.TypefaceResource), 0)
+  assert_eq(plain_plan.count_kind(TextRunResource), 1)
+  assert_eq(plain_plan.count_kind(FontResource), 0)
+  assert_eq(plain_plan.count_kind(TypefaceResource), 0)
 }
 
 ///|
@@ -2875,7 +2835,7 @@ test "text measurement descriptors track cache identity and dependencies" {
   )
   let run = @skia_mbt.TextRunDescriptor::new(
     range=@skia_mbt.TextRange::new(1, 5),
-    direction=@skia_mbt.LeftToRight,
+    direction=LeftToRight,
     fallback~,
   )
   let font_key = @skia_mbt.RendererResourceKey::font(b"Inter:14")
@@ -2886,7 +2846,7 @@ test "text measurement descriptors track cache identity and dependencies" {
     shape=true,
   )
   let key = measurement.resource_key(b"xhelloz")
-  assert_true(key.kind == @skia_mbt.TextRunResource)
+  assert_true(key.kind == TextRunResource)
   assert_true(key == measurement.resource_key(b"yhelloq"))
   assert_true(key != measurement.resource_key(b"yhelpq"))
   assert_true(key != measurement.with_width(120.0).resource_key(b"xhelloz"))
@@ -2904,7 +2864,7 @@ test "text measurement descriptors track cache identity and dependencies" {
   assert_true(
     key !=
     measurement
-    .with_run(run.with_direction(@skia_mbt.RightToLeft))
+    .with_run(run.with_direction(RightToLeft))
     .resource_key(b"xhelloz"),
   )
   assert_eq(
@@ -2918,9 +2878,9 @@ test "text measurement descriptors track cache identity and dependencies" {
   assert_true(descriptor.byte_size > 0L)
   let plan = measurement.resource_plan(b"xhelloz")
   assert_eq(plan.length(), 4)
-  assert_eq(plan.count_kind(@skia_mbt.TextRunResource), 2)
-  assert_eq(plan.count_kind(@skia_mbt.FontResource), 1)
-  assert_eq(plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(plan.count_kind(TextRunResource), 2)
+  assert_eq(plan.count_kind(FontResource), 1)
+  assert_eq(plan.count_kind(TypefaceResource), 1)
   assert_true(plan.contains_key(key))
   assert_true(plan.contains_key(run.resource_key(b"xhelloz", font_key~)))
   assert_true(plan.contains_key(font_key))
@@ -2935,7 +2895,7 @@ test "text measurement descriptors track cache identity and dependencies" {
     measured.bounds == Some(@skia_mbt.Rect::new(2.0, -2.0, 12.0, 6.0)),
   )
   let measured_key = measured.resource_key(b"xhelloz")
-  assert_true(measured_key.kind == @skia_mbt.TextRunResource)
+  assert_true(measured_key.kind == TextRunResource)
   assert_true(measured_key != key)
   assert_true(measured_key == measured.resource_key(b"yhelloq"))
   assert_true(
@@ -2950,9 +2910,9 @@ test "text measurement descriptors track cache identity and dependencies" {
   )
   let measured_plan = measured.resource_plan(b"xhelloz")
   assert_eq(measured_plan.length(), 5)
-  assert_eq(measured_plan.count_kind(@skia_mbt.TextRunResource), 3)
-  assert_eq(measured_plan.count_kind(@skia_mbt.FontResource), 1)
-  assert_eq(measured_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(measured_plan.count_kind(TextRunResource), 3)
+  assert_eq(measured_plan.count_kind(FontResource), 1)
+  assert_eq(measured_plan.count_kind(TypefaceResource), 1)
   assert_true(measured_plan.contains_key(measured_key))
   assert_true(measured_plan.contains_key(key))
   assert_true(measured_plan.byte_size > plan.byte_size)
@@ -2979,9 +2939,9 @@ test "text measurement descriptors track cache identity and dependencies" {
   )
   let plain_plan = plain.resource_plan(b"hello")
   assert_eq(plain_plan.length(), 2)
-  assert_eq(plain_plan.count_kind(@skia_mbt.TextRunResource), 2)
-  assert_eq(plain_plan.count_kind(@skia_mbt.FontResource), 0)
-  assert_eq(plain_plan.count_kind(@skia_mbt.TypefaceResource), 0)
+  assert_eq(plain_plan.count_kind(TextRunResource), 2)
+  assert_eq(plain_plan.count_kind(FontResource), 0)
+  assert_eq(plain_plan.count_kind(TypefaceResource), 0)
 }
 
 ///|
@@ -2993,7 +2953,7 @@ test "text shaping descriptors track request and shaped run resources" {
   )
   let run = @skia_mbt.TextRunDescriptor::new(
     range=@skia_mbt.TextRange::new(1, 5),
-    direction=@skia_mbt.LeftToRight,
+    direction=LeftToRight,
     fallback~,
   )
   let font_key = @skia_mbt.RendererResourceKey::font(b"Inter:14")
@@ -3003,7 +2963,7 @@ test "text shaping descriptors track request and shaped run resources" {
     width=240.0,
   )
   let key = shaping.resource_key(b"xhelloz")
-  assert_true(key.kind == @skia_mbt.TextRunResource)
+  assert_true(key.kind == TextRunResource)
   assert_true(key == shaping.resource_key(b"yhelloq"))
   assert_true(key != shaping.resource_key(b"yhelpq"))
   assert_true(key != shaping.with_width(120.0).resource_key(b"xhelloz"))
@@ -3015,9 +2975,7 @@ test "text shaping descriptors track request and shaped run resources" {
   )
   assert_true(
     key !=
-    shaping
-    .with_run(run.with_direction(@skia_mbt.RightToLeft))
-    .resource_key(b"xhelloz"),
+    shaping.with_run(run.with_direction(RightToLeft)).resource_key(b"xhelloz"),
   )
   assert_eq(
     @skia_mbt.TextShapingDescriptor::new(width=-1.0).width,
@@ -3035,9 +2993,9 @@ test "text shaping descriptors track request and shaped run resources" {
   assert_true(descriptor.byte_size > 0L)
   let plan = shaping.resource_plan(b"xhelloz")
   assert_eq(plan.length(), 4)
-  assert_eq(plan.count_kind(@skia_mbt.TextRunResource), 2)
-  assert_eq(plan.count_kind(@skia_mbt.FontResource), 1)
-  assert_eq(plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(plan.count_kind(TextRunResource), 2)
+  assert_eq(plan.count_kind(FontResource), 1)
+  assert_eq(plan.count_kind(TypefaceResource), 1)
   assert_true(plan.contains_key(key))
   assert_true(plan.contains_key(run.resource_key(b"xhelloz", font_key~)))
   assert_true(plan.contains_key(font_key))
@@ -3050,7 +3008,7 @@ test "text shaping descriptors track request and shaped run resources" {
   )
   assert_true(shaped.is_valid())
   let shaped_key = shaped.resource_key(b"xhelloz")
-  assert_true(shaped_key.kind == @skia_mbt.TextRunResource)
+  assert_true(shaped_key.kind == TextRunResource)
   assert_true(shaped_key != key)
   assert_true(shaped_key == shaped.resource_key(b"yhelloq"))
   assert_true(
@@ -3075,9 +3033,9 @@ test "text shaping descriptors track request and shaped run resources" {
   )
   let shaped_plan = shaped.resource_plan(b"xhelloz")
   assert_eq(shaped_plan.length(), 5)
-  assert_eq(shaped_plan.count_kind(@skia_mbt.TextRunResource), 3)
-  assert_eq(shaped_plan.count_kind(@skia_mbt.FontResource), 1)
-  assert_eq(shaped_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(shaped_plan.count_kind(TextRunResource), 3)
+  assert_eq(shaped_plan.count_kind(FontResource), 1)
+  assert_eq(shaped_plan.count_kind(TypefaceResource), 1)
   assert_true(shaped_plan.contains_key(shaped_key))
   assert_true(shaped_plan.contains_key(key))
   assert_true(shaped_plan.byte_size > plan.byte_size)
@@ -3100,7 +3058,7 @@ test "text shaping descriptors track request and shaped run resources" {
   assert_true(glyph_run.positions[1] == @skia_mbt.Point::new(4.0, 0.0))
   assert_eq(glyph_run.clusters[2], 2)
   let glyph_run_key = glyph_run.resource_key(b"xhelloz")
-  assert_true(glyph_run_key.kind == @skia_mbt.TextRunResource)
+  assert_true(glyph_run_key.kind == TextRunResource)
   assert_true(glyph_run_key != shaped_key)
   assert_true(glyph_run_key == glyph_run.resource_key(b"yhelloq"))
   assert_true(
@@ -3140,9 +3098,9 @@ test "text shaping descriptors track request and shaped run resources" {
   )
   let glyph_run_plan = glyph_run.resource_plan(b"xhelloz")
   assert_eq(glyph_run_plan.length(), 6)
-  assert_eq(glyph_run_plan.count_kind(@skia_mbt.TextRunResource), 4)
-  assert_eq(glyph_run_plan.count_kind(@skia_mbt.FontResource), 1)
-  assert_eq(glyph_run_plan.count_kind(@skia_mbt.TypefaceResource), 1)
+  assert_eq(glyph_run_plan.count_kind(TextRunResource), 4)
+  assert_eq(glyph_run_plan.count_kind(FontResource), 1)
+  assert_eq(glyph_run_plan.count_kind(TypefaceResource), 1)
   assert_true(glyph_run_plan.contains_key(glyph_run_key))
   assert_true(glyph_run_plan.contains_key(shaped_key))
   assert_true(glyph_run_plan.contains_key(key))
@@ -3380,8 +3338,8 @@ test "pixmap validates copied pixel layout" {
   assert_eq(pixmap.width(), 2)
   assert_eq(pixmap.height(), 2)
   assert_eq(pixmap.row_bytes(), 8)
-  assert_true(pixmap.color_type() == @skia_mbt.RGBA8888)
-  assert_true(pixmap.alpha_type() == @skia_mbt.Premul)
+  assert_true(pixmap.color_type() == RGBA8888)
+  assert_true(pixmap.alpha_type() == Premul)
   assert_eq(pixmap.bytes_per_pixel(), 4)
   assert_eq(pixmap.shift_per_pixel(), 2)
   assert_eq(pixmap.byte_size(), 16)
@@ -3410,7 +3368,7 @@ test "paint builder updates value state" {
     .set_color(@skia_mbt.Color::red())
     .set_alpha(0x40)
   assert_true(paint.anti_alias)
-  assert_true(paint.style == @skia_mbt.Stroke)
+  assert_true(paint.style == Stroke)
   assert_eq(paint.stroke_width, 2.5)
   assert_true(paint.color == @skia_mbt.Color::red().with_alpha(0x40))
 }
@@ -3451,8 +3409,8 @@ test "sampling options expose skia-compatible state" {
   assert_eq(nearest.mipmap_ordinal(), 0)
   assert_true(!nearest.uses_cubic())
   let linear_mipmap = @skia_mbt.SamplingOptions::new(
-    filter=@skia_mbt.FilterMode::Linear,
-    mipmap=@skia_mbt.MipmapMode::Linear,
+    filter=Linear,
+    mipmap=Linear,
   )
   assert_eq(linear_mipmap.filter_ordinal(), 1)
   assert_eq(linear_mipmap.mipmap_ordinal(), 2)
@@ -3464,7 +3422,7 @@ test "sampling options expose skia-compatible state" {
 
 ///|
 test "path value layer records portable verbs" {
-  let path = @skia_mbt.Path::new(fill_type=@skia_mbt.EvenOdd)
+  let path = @skia_mbt.Path::new(fill_type=EvenOdd)
     .move_to(@skia_mbt.Point::new(0, 0))
     .line_to(@skia_mbt.Point::new(10, 0))
     .quad_to(@skia_mbt.Point::new(12, 5), @skia_mbt.Point::new(10, 10))
@@ -3481,7 +3439,7 @@ test "path value layer records portable verbs" {
   assert_eq(path.count_points(), 9)
   assert_true(path.is_last_contour_closed())
   assert_true(path.is_finite())
-  assert_true(path.fill_type == @skia_mbt.EvenOdd)
+  assert_true(path.fill_type == EvenOdd)
   assert_true(path.last_point() == Some(@skia_mbt.Point::new(0, 10)))
   assert_true(path.bounds() == Some(@skia_mbt.Rect::new(0, 0, 12, 14)))
   let segments = path.segment_masks()
@@ -3497,10 +3455,10 @@ test "path value layer records portable verbs" {
   assert_true(!path.is_inverse_fill_type())
   assert_true(@skia_mbt.InverseEvenOdd.is_inverse())
   let key = path.resource_key()
-  assert_true(key.kind == @skia_mbt.PathResource)
+  assert_true(key.kind == PathResource)
   assert_true(!key.is_empty())
   assert_true(key == path.resource_key())
-  assert_true(key != path.with_fill_type(@skia_mbt.Winding).resource_key())
+  assert_true(key != path.with_fill_type(Winding).resource_key())
   assert_true(
     key != path.transform(@skia_mbt.Matrix::translate(1, 0)).resource_key(),
   )
@@ -3522,8 +3480,8 @@ test "path value layer records portable verbs" {
     .clip_path(non_finite_path)
     .draw_path(non_finite_path)
   let non_finite_plan = non_finite_commands.resource_plan()
-  assert_eq(non_finite_plan.count_kind(@skia_mbt.PathResource), 0)
-  assert_eq(non_finite_plan.count_kind(@skia_mbt.SurfaceResource), 1)
+  assert_eq(non_finite_plan.count_kind(PathResource), 0)
+  assert_eq(non_finite_plan.count_kind(SurfaceResource), 1)
 }
 
 ///|
@@ -3564,14 +3522,14 @@ test "path add poly builds open and closed contours" {
   assert_true(open.bounds() == Some(@skia_mbt.Rect::from_xywh(0, 0, 10, 10)))
   assert_true(open.segment_masks().contains(@skia_mbt.PathSegmentMask::line()))
 
-  let closed = @skia_mbt.Path::new(fill_type=@skia_mbt.EvenOdd).add_poly(
+  let closed = @skia_mbt.Path::new(fill_type=EvenOdd).add_poly(
     points,
     close=true,
   )
   assert_eq(closed.count_verbs(), 4)
   assert_eq(closed.count_points(), 3)
   assert_true(closed.is_last_contour_closed())
-  assert_true(closed.fill_type == @skia_mbt.EvenOdd)
+  assert_true(closed.fill_type == EvenOdd)
   assert_true(closed.contains(@skia_mbt.Point::new(8, 2)))
   assert_true(!closed.contains(@skia_mbt.Point::new(2, 8)))
 
@@ -3581,7 +3539,7 @@ test "path add poly builds open and closed contours" {
 
 ///|
 test "path add path appends transformed verbs" {
-  let base = @skia_mbt.Path::new(fill_type=@skia_mbt.EvenOdd).add_rect(
+  let base = @skia_mbt.Path::new(fill_type=EvenOdd).add_rect(
     @skia_mbt.Rect::from_xywh(0, 0, 2, 2),
   )
   let triangle = @skia_mbt.Path::new().add_poly(
@@ -3596,7 +3554,7 @@ test "path add path appends transformed verbs" {
     triangle,
     matrix=@skia_mbt.Matrix::translate(10, 0),
   )
-  assert_true(combined.fill_type == @skia_mbt.EvenOdd)
+  assert_true(combined.fill_type == EvenOdd)
   assert_eq(combined.count_verbs(), base.count_verbs() + triangle.count_verbs())
   assert_eq(
     combined.count_points(),
@@ -3621,31 +3579,21 @@ test "path add path appends transformed verbs" {
   let segment = @skia_mbt.Path::new()
     .move_to(@skia_mbt.Point::new(10, 0))
     .line_to(@skia_mbt.Point::new(12, 0))
-  let extended = open.add_path(segment, mode=@skia_mbt.Extend)
-  assert_true(
-    extended.verbs[2] == @skia_mbt.LineTo(@skia_mbt.Point::new(10, 0)),
-  )
-  assert_true(
-    extended.verbs[3] == @skia_mbt.LineTo(@skia_mbt.Point::new(12, 0)),
-  )
+  let extended = open.add_path(segment, mode=Extend)
+  assert_true(extended.verbs[2] == LineTo(@skia_mbt.Point::new(10, 0)))
+  assert_true(extended.verbs[3] == LineTo(@skia_mbt.Point::new(12, 0)))
   assert_eq(extended.count_verbs(), 4)
   assert_true(extended.bounds() == Some(@skia_mbt.Rect::from_xywh(0, 0, 12, 0)))
-  assert_true(
-    @skia_mbt.Path::new().add_path(segment, mode=@skia_mbt.Extend) == segment,
-  )
+  assert_true(@skia_mbt.Path::new().add_path(segment, mode=Extend) == segment)
 }
 
 ///|
 test "path recognizes closed rectangle contours" {
   let rect = @skia_mbt.Rect::from_xywh(1, 2, 3, 4)
   let cw = @skia_mbt.Path::new().add_rect(rect)
-  assert_true(
-    cw.is_rect() == Some(@skia_mbt.PathRect::new(rect, true, @skia_mbt.CW)),
-  )
-  let ccw = @skia_mbt.Path::new().add_rect(rect, direction=@skia_mbt.CCW)
-  assert_true(
-    ccw.is_rect() == Some(@skia_mbt.PathRect::new(rect, true, @skia_mbt.CCW)),
-  )
+  assert_true(cw.is_rect() == Some(@skia_mbt.PathRect::new(rect, true, CW)))
+  let ccw = @skia_mbt.Path::new().add_rect(rect, direction=CCW)
+  assert_true(ccw.is_rect() == Some(@skia_mbt.PathRect::new(rect, true, CCW)))
   assert_true(
     @skia_mbt.Path::new()
     .move_to(@skia_mbt.Point::new(1, 2))
@@ -3657,7 +3605,7 @@ test "path recognizes closed rectangle contours" {
 
 ///|
 test "path reset returns an empty winding path" {
-  let path = @skia_mbt.Path::new(fill_type=@skia_mbt.InverseWinding)
+  let path = @skia_mbt.Path::new(fill_type=InverseWinding)
     .move_to(@skia_mbt.Point::new(1, 2))
     .reset()
   assert_true(path.is_empty())
@@ -3666,21 +3614,21 @@ test "path reset returns an empty winding path" {
   assert_eq(path.count_points(), 0)
   assert_true(path.segment_masks() == @skia_mbt.PathSegmentMask::empty())
   assert_true(!path.is_last_contour_closed())
-  assert_true(path.fill_type == @skia_mbt.Winding)
+  assert_true(path.fill_type == Winding)
   assert_true(path.last_point() is None)
   assert_true(path.bounds() is None)
 }
 
 ///|
 test "path rewind clears path for reuse" {
-  let path = @skia_mbt.Path::new(fill_type=@skia_mbt.EvenOdd)
+  let path = @skia_mbt.Path::new(fill_type=EvenOdd)
     .add_rect(@skia_mbt.Rect::from_xywh(0, 0, 4, 4))
     .rewind()
   assert_true(path.is_empty())
   assert_eq(path.count_verbs(), 0)
   assert_eq(path.count_points(), 0)
   assert_true(!path.is_last_contour_closed())
-  assert_true(path.fill_type == @skia_mbt.Winding)
+  assert_true(path.fill_type == Winding)
   assert_true(path.bounds() is None)
 }
 
@@ -3696,27 +3644,27 @@ test "path add rect expands in requested direction" {
   assert_true(
     cw.verbs ==
     [
-      @skia_mbt.MoveTo(@skia_mbt.Point::new(1, 2)),
-      @skia_mbt.LineTo(@skia_mbt.Point::new(4, 2)),
-      @skia_mbt.LineTo(@skia_mbt.Point::new(4, 6)),
-      @skia_mbt.LineTo(@skia_mbt.Point::new(1, 6)),
-      @skia_mbt.Close,
+      MoveTo(@skia_mbt.Point::new(1, 2)),
+      LineTo(@skia_mbt.Point::new(4, 2)),
+      LineTo(@skia_mbt.Point::new(4, 6)),
+      LineTo(@skia_mbt.Point::new(1, 6)),
+      Close,
     ],
   )
-  let ccw = @skia_mbt.Path::new().add_rect(rect, direction=@skia_mbt.CCW)
+  let ccw = @skia_mbt.Path::new().add_rect(rect, direction=CCW)
   assert_true(ccw.contains(@skia_mbt.Point::new(2, 3)))
-  let inverse = cw.with_fill_type(@skia_mbt.InverseWinding)
+  let inverse = cw.with_fill_type(InverseWinding)
   assert_true(inverse.is_inverse_fill_type())
   assert_true(!inverse.contains(@skia_mbt.Point::new(2, 3)))
   assert_true(inverse.contains(@skia_mbt.Point::new(9, 9)))
   assert_true(
     ccw.verbs ==
     [
-      @skia_mbt.MoveTo(@skia_mbt.Point::new(1, 2)),
-      @skia_mbt.LineTo(@skia_mbt.Point::new(1, 6)),
-      @skia_mbt.LineTo(@skia_mbt.Point::new(4, 6)),
-      @skia_mbt.LineTo(@skia_mbt.Point::new(4, 2)),
-      @skia_mbt.Close,
+      MoveTo(@skia_mbt.Point::new(1, 2)),
+      LineTo(@skia_mbt.Point::new(1, 6)),
+      LineTo(@skia_mbt.Point::new(4, 6)),
+      LineTo(@skia_mbt.Point::new(4, 2)),
+      Close,
     ],
   )
 }
@@ -3729,24 +3677,20 @@ test "path add oval and circle expand to conics" {
   assert_true(cw.bounds() == Some(oval))
   assert_true(cw.is_oval() == Some(oval))
   assert_true(cw.last_point() == Some(@skia_mbt.Point::new(10, 10)))
-  assert_true(cw.verbs[0] == @skia_mbt.MoveTo(@skia_mbt.Point::new(10, 10)))
+  assert_true(cw.verbs[0] == MoveTo(@skia_mbt.Point::new(10, 10)))
   assert_true(
     cw.verbs[1] ==
-    @skia_mbt.ConicTo(
+    ConicTo(
       @skia_mbt.Point::new(10, 20),
       @skia_mbt.Point::new(5, 20),
       0.70710677,
     ),
   )
-  let ccw = @skia_mbt.Path::new().add_oval(oval, direction=@skia_mbt.CCW)
+  let ccw = @skia_mbt.Path::new().add_oval(oval, direction=CCW)
   assert_true(ccw.is_oval() == Some(oval))
   assert_true(
     ccw.verbs[1] ==
-    @skia_mbt.ConicTo(
-      @skia_mbt.Point::new(10, 0),
-      @skia_mbt.Point::new(5, 0),
-      0.70710677,
-    ),
+    ConicTo(@skia_mbt.Point::new(10, 0), @skia_mbt.Point::new(5, 0), 0.70710677),
   )
   let circle = @skia_mbt.Path::new().add_circle(@skia_mbt.Point::new(5, 5), 3)
   assert_true(circle.bounds() == Some(@skia_mbt.Rect::from_xywh(2, 2, 6, 6)))
@@ -3769,29 +3713,20 @@ test "path add round rect expands to lines and conics" {
   assert_eq(cw.verb_count(), 10)
   assert_true(cw.bounds() == Some(rect))
   assert_true(cw.last_point() == Some(@skia_mbt.Point::new(2, 0)))
-  assert_true(cw.verbs[0] == @skia_mbt.MoveTo(@skia_mbt.Point::new(2, 0)))
-  assert_true(cw.verbs[1] == @skia_mbt.LineTo(@skia_mbt.Point::new(8, 0)))
+  assert_true(cw.verbs[0] == MoveTo(@skia_mbt.Point::new(2, 0)))
+  assert_true(cw.verbs[1] == LineTo(@skia_mbt.Point::new(8, 0)))
   assert_true(
     cw.verbs[2] ==
-    @skia_mbt.ConicTo(
+    ConicTo(
       @skia_mbt.Point::new(10, 0),
       @skia_mbt.Point::new(10, 3),
       0.70710677,
     ),
   )
-  let ccw = @skia_mbt.Path::new().add_round_rect(
-    rect,
-    2,
-    3,
-    direction=@skia_mbt.CCW,
-  )
+  let ccw = @skia_mbt.Path::new().add_round_rect(rect, 2, 3, direction=CCW)
   assert_true(
     ccw.verbs[1] ==
-    @skia_mbt.ConicTo(
-      @skia_mbt.Point::new(0, 0),
-      @skia_mbt.Point::new(0, 3),
-      0.70710677,
-    ),
+    ConicTo(@skia_mbt.Point::new(0, 0), @skia_mbt.Point::new(0, 3), 0.70710677),
   )
   assert_true(
     @skia_mbt.Path::new().add_round_rect(rect, 0, 3).verb_count() == 5,
@@ -3889,26 +3824,22 @@ test "path add rrect expands mixed corners" {
   assert_eq(path.verb_count(), 10)
   assert_true(path.bounds() == Some(rect))
   assert_true(path.last_point() == Some(@skia_mbt.Point::new(2, 0)))
-  assert_true(path.verbs[0] == @skia_mbt.MoveTo(@skia_mbt.Point::new(2, 0)))
-  assert_true(path.verbs[1] == @skia_mbt.LineTo(@skia_mbt.Point::new(7, 0)))
+  assert_true(path.verbs[0] == MoveTo(@skia_mbt.Point::new(2, 0)))
+  assert_true(path.verbs[1] == LineTo(@skia_mbt.Point::new(7, 0)))
   assert_true(
     path.verbs[2] ==
-    @skia_mbt.ConicTo(
+    ConicTo(
       @skia_mbt.Point::new(10, 0),
       @skia_mbt.Point::new(10, 1),
       0.70710677,
     ),
   )
-  assert_true(path.verbs[6] == @skia_mbt.LineTo(@skia_mbt.Point::new(0, 8)))
+  assert_true(path.verbs[6] == LineTo(@skia_mbt.Point::new(0, 8)))
 
-  let ccw = @skia_mbt.Path::new().add_rrect(rrect, direction=@skia_mbt.CCW)
+  let ccw = @skia_mbt.Path::new().add_rrect(rrect, direction=CCW)
   assert_true(
     ccw.verbs[1] ==
-    @skia_mbt.ConicTo(
-      @skia_mbt.Point::new(0, 0),
-      @skia_mbt.Point::new(0, 2),
-      0.70710677,
-    ),
+    ConicTo(@skia_mbt.Point::new(0, 0), @skia_mbt.Point::new(0, 2), 0.70710677),
   )
 
   let rect_path = @skia_mbt.Path::new().add_rrect(
@@ -3919,7 +3850,7 @@ test "path add rrect expands mixed corners" {
 
 ///|
 test "path transform maps every verb point" {
-  let path = @skia_mbt.Path::new(fill_type=@skia_mbt.EvenOdd)
+  let path = @skia_mbt.Path::new(fill_type=EvenOdd)
     .move_to(@skia_mbt.Point::new(1, 2))
     .line_to(@skia_mbt.Point::new(3, 4))
     .quad_to(@skia_mbt.Point::new(5, 6), @skia_mbt.Point::new(7, 8))
@@ -3933,20 +3864,14 @@ test "path transform maps every verb point" {
   let transformed = path.transform(
     @skia_mbt.Matrix::scale_translate(2, 3, 10, 20),
   )
-  assert_true(transformed.fill_type == @skia_mbt.EvenOdd)
+  assert_true(transformed.fill_type == EvenOdd)
   assert_true(transformed.last_point() == Some(@skia_mbt.Point::new(44, 74)))
-  assert_true(
-    transformed.verbs[0] == @skia_mbt.MoveTo(@skia_mbt.Point::new(12, 26)),
-  )
+  assert_true(transformed.verbs[0] == MoveTo(@skia_mbt.Point::new(12, 26)))
   assert_true(
     transformed.verbs[3] ==
-    @skia_mbt.ConicTo(
-      @skia_mbt.Point::new(28, 50),
-      @skia_mbt.Point::new(32, 56),
-      0.5,
-    ),
+    ConicTo(@skia_mbt.Point::new(28, 50), @skia_mbt.Point::new(32, 56), 0.5),
   )
-  assert_true(transformed.verbs[5] == @skia_mbt.Close)
+  assert_true(transformed.verbs[5] == Close)
 
   let offset = path.offset(2, 3)
   assert_true(offset.bounds() == Some(@skia_mbt.Rect::new(3, 5, 19, 21)))
@@ -3957,14 +3882,14 @@ test "path stroke bounds conservatively outsets geometry" {
   let path = @skia_mbt.Path::new().add_rect(
     @skia_mbt.Rect::from_xywh(1, 2, 3, 4),
   )
-  let fill = @skia_mbt.Paint::new(style=@skia_mbt.Fill, stroke_width=10)
+  let fill = @skia_mbt.Paint::new(style=Fill, stroke_width=10)
   assert_true(path.stroke_bounds(fill) == path.bounds())
-  let stroke = @skia_mbt.Paint::new(style=@skia_mbt.Stroke, stroke_width=6)
+  let stroke = @skia_mbt.Paint::new(style=Stroke, stroke_width=6)
   assert_true(
     path.stroke_bounds(stroke) == Some(@skia_mbt.Rect::new(-2, -1, 7, 9)),
   )
   let stroke_and_fill = @skia_mbt.Paint::new(
-    style=@skia_mbt.StrokeAndFill,
+    style=StrokeAndFill,
     stroke_width=2,
   )
   assert_true(

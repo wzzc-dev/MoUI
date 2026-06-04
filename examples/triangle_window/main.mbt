@@ -88,13 +88,13 @@ pub impl @windows.ApplicationHandler for App with fn window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::CloseRequested => event_loop.exit()
-    @core.WindowEvent::SurfaceResized(_) =>
+    CloseRequested => event_loop.exit()
+    SurfaceResized(_) =>
       match self.window {
         Some(window) => window.request_redraw()
         None => ()
       }
-    @core.WindowEvent::RedrawRequested =>
+    RedrawRequested =>
       match self.window {
         Some(window) => redraw_window(window)
         None => ()

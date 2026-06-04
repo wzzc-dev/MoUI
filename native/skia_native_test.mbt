@@ -111,10 +111,10 @@ test "canvas replays color and paint fills" {
     replay_size,
   )
   let commands = @skia.RenderCommandList::for_target(replay_target)
-    .draw_color(@skia.Color::red(), blend_mode=@skia.Src)
+    .draw_color(@skia.Color::red(), blend_mode=Src)
     .clip_rect(@skia.Rect::from_xywh(2, 2, 3, 3))
     .draw_paint(
-      paint=@skia.Paint::new(color=@skia.Color::blue(), blend_mode=@skia.Src),
+      paint=@skia.Paint::new(color=@skia.Color::blue(), blend_mode=Src),
     )
   let command_stats = commands.stats()
   assert_eq(command_stats.command_count, 3)
@@ -211,7 +211,7 @@ test "canvas skips invalid shader and filter descriptors" {
     @skia.Point::new(1, 1),
     @skia.Color::red(),
     @skia.Color::blue(),
-    @skia.Clamp,
+    Clamp,
   )
   let invalid_filter = @skia.ColorMatrixFilter([
     invalid_scalar, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
@@ -223,9 +223,9 @@ test "canvas skips invalid shader and filter descriptors" {
     .save_layer(color_filter=Some(invalid_filter))
   let resource_plan = commands.resource_plan()
   assert_eq(resource_plan.length(), 1)
-  assert_eq(resource_plan.count_kind(@skia.SurfaceResource), 1)
-  assert_eq(resource_plan.count_kind(@skia.ShaderResource), 0)
-  assert_eq(resource_plan.count_kind(@skia.ColorFilterResource), 0)
+  assert_eq(resource_plan.count_kind(SurfaceResource), 1)
+  assert_eq(resource_plan.count_kind(ShaderResource), 0)
+  assert_eq(resource_plan.count_kind(ColorFilterResource), 0)
   assert_eq(resource_plan.cacheable_count, 1)
   assert_eq(resource_plan.uncacheable_count, 0)
   match @native.Surface::raster_n32_premul(replay_size) {
@@ -263,7 +263,7 @@ test "canvas skips undecodable image descriptors" {
   )
   guard @skia.ImageDescriptor::encoded(
       b"not-a-real-png",
-      format=Some(@skia.PNG),
+      format=Some(PNG),
       dimensions=Some(@skia.ISize::new(2, 2)),
     )
     is Some(image_descriptor) else {
@@ -279,8 +279,8 @@ test "canvas skips undecodable image descriptors" {
     )
   let resource_plan = commands.resource_plan()
   assert_eq(resource_plan.length(), 2)
-  assert_eq(resource_plan.count_kind(@skia.SurfaceResource), 1)
-  assert_eq(resource_plan.count_kind(@skia.ImageResource), 1)
+  assert_eq(resource_plan.count_kind(SurfaceResource), 1)
+  assert_eq(resource_plan.count_kind(ImageResource), 1)
   assert_eq(resource_plan.cacheable_count, 2)
   assert_eq(resource_plan.uncacheable_count, 0)
   assert_true(resource_plan.contains_key(image_descriptor.resource_key()))
@@ -305,11 +305,7 @@ test "canvas skips undecodable image descriptors" {
           assert_eq(resources.image_cache.length(), 0)
           assert_eq(image_cache_stats.misses, 2)
           assert_eq(image_cache_stats.hits, 0)
-          let empty_image_descriptor = @skia.EncodedImage(
-            b"",
-            Some(@skia.PNG),
-            None,
-          )
+          let empty_image_descriptor = @skia.EncodedImage(b"", Some(PNG), None)
           assert_true(empty_image_descriptor.resource_key().is_empty())
           assert_true(
             !empty_image_descriptor.resource_descriptor().is_cacheable(),
@@ -354,8 +350,8 @@ test "canvas skips empty text run ranges" {
     )
   let resource_plan = commands.resource_plan()
   assert_eq(resource_plan.length(), 2)
-  assert_eq(resource_plan.count_kind(@skia.SurfaceResource), 1)
-  assert_eq(resource_plan.count_kind(@skia.TextRunResource), 1)
+  assert_eq(resource_plan.count_kind(SurfaceResource), 1)
+  assert_eq(resource_plan.count_kind(TextRunResource), 1)
   assert_eq(resource_plan.cacheable_count, 2)
   match @native.Surface::raster_n32_premul(replay_size) {
     None => ()
@@ -407,8 +403,8 @@ test "canvas skips invalid shaped glyph runs" {
     )
   let resource_plan = commands.resource_plan()
   assert_eq(resource_plan.length(), 1)
-  assert_eq(resource_plan.count_kind(@skia.SurfaceResource), 1)
-  assert_eq(resource_plan.count_kind(@skia.TextRunResource), 0)
+  assert_eq(resource_plan.count_kind(SurfaceResource), 1)
+  assert_eq(resource_plan.count_kind(TextRunResource), 0)
   match @native.Surface::raster_n32_premul(replay_size) {
     None => ()
     Some(surface) =>
@@ -508,7 +504,7 @@ test "surface factory follows target descriptor support" {
   if @native.skia_available() {
     assert_true(
       @native.Surface::target_support_status(raster_target) ==
-      @native.SurfaceTargetSupported,
+      SurfaceTargetSupported,
     )
     assert_true(
       @native.Surface::target_support_status(raster_target).is_supported(),
@@ -523,7 +519,7 @@ test "surface factory follows target descriptor support" {
   } else {
     assert_true(
       @native.Surface::target_support_status(raster_target) ==
-      @native.SurfaceTargetSkiaUnavailable,
+      SurfaceTargetSkiaUnavailable,
     )
     assert_true(
       !@native.Surface::target_support_status(raster_target).is_supported(),
@@ -534,7 +530,7 @@ test "surface factory follows target descriptor support" {
     @native.Surface::target_support_status(
       @skia.SurfaceTargetDescriptor::raster_n32_premul(@skia.ISize::new(0, 16)),
     ) ==
-    @native.SurfaceTargetEmpty,
+    SurfaceTargetEmpty,
   )
   assert_true(
     @native.Surface::for_target(
@@ -551,16 +547,16 @@ test "surface factory follows target descriptor support" {
   if @native.skia_available() {
     assert_true(
       @native.Surface::target_support_status(window_target) ==
-      @native.SurfaceTargetWindowUnsupported,
+      SurfaceTargetWindowUnsupported,
     )
   } else {
     assert_true(
       @native.Surface::target_support_status(window_target) ==
-      @native.SurfaceTargetSkiaUnavailable,
+      SurfaceTargetSkiaUnavailable,
     )
   }
   let window_plan = window_target.resource_plan()
-  assert_eq(window_plan.count_kind(@skia.SurfaceResource), 1)
+  assert_eq(window_plan.count_kind(SurfaceResource), 1)
   assert_eq(window_plan.length(), 1)
 
   let gpu_context = @skia.GpuContextDescriptor::mock(
@@ -574,17 +570,17 @@ test "surface factory follows target descriptor support" {
   if @native.skia_available() {
     assert_true(
       @native.Surface::target_support_status(gpu_target) ==
-      @native.SurfaceTargetGpuUnsupported,
+      SurfaceTargetGpuUnsupported,
     )
   } else {
     assert_true(
       @native.Surface::target_support_status(gpu_target) ==
-      @native.SurfaceTargetSkiaUnavailable,
+      SurfaceTargetSkiaUnavailable,
     )
   }
   let gpu_plan = gpu_target.resource_plan()
-  assert_eq(gpu_plan.count_kind(@skia.GpuSurfaceResource), 1)
-  assert_eq(gpu_plan.count_kind(@skia.GpuContextResource), 1)
+  assert_eq(gpu_plan.count_kind(GpuSurfaceResource), 1)
+  assert_eq(gpu_plan.count_kind(GpuContextResource), 1)
   assert_eq(gpu_plan.length(), 2)
 }
 
@@ -620,7 +616,7 @@ test "image api typechecks" {
       match surface.image_snapshot() {
         None => ()
         Some(image) =>
-          match image.encode_to_data(format=@skia.PNG, quality=100) {
+          match image.encode_to_data(format=PNG, quality=100) {
             None => ()
             Some(data) => {
               assert_true(data.is_available())
@@ -655,7 +651,7 @@ test "image api typechecks" {
                     codec.image_info() ==
                     @skia.ImageInfo::n32_premul(@skia.ISize::new(16, 16)),
                   )
-                  assert_true(codec.encoded_format() == Some(@skia.PNG))
+                  assert_true(codec.encoded_format() == Some(PNG))
                   match codec.decode_n32_premul() {
                     None => ()
                     Some(bitmap) => {
@@ -666,14 +662,14 @@ test "image api typechecks" {
                   }
                 }
               }
-              match image.encode_to_data(format=@skia.PNG, quality=-100) {
+              match image.encode_to_data(format=PNG, quality=-100) {
                 None => ()
                 Some(clamped_quality_data) => {
                   assert_true(clamped_quality_data.is_available())
                   assert_true(clamped_quality_data.size() > 0)
                 }
               }
-              match image.encode_to_data(format=@skia.PNG, quality=999) {
+              match image.encode_to_data(format=PNG, quality=999) {
                 None => ()
                 Some(clamped_quality_data) => {
                   assert_true(clamped_quality_data.is_available())
@@ -681,10 +677,10 @@ test "image api typechecks" {
                 }
               }
               assert_true(
-                image.encode_to_data(format=@skia.AVIF, quality=100) is None,
+                image.encode_to_data(format=AVIF, quality=100) is None,
               )
               assert_true(
-                image.encode_to_data(format=@skia.JPEGXL, quality=100) is None,
+                image.encode_to_data(format=JPEGXL, quality=100) is None,
               )
             }
           }
@@ -782,12 +778,12 @@ test "path api typechecks" {
       assert_eq(path.count_points(), 0)
       assert_true(!path.is_last_contour_closed())
       assert_true(path.bounds() is None)
-      path.set_fill_type(@skia.EvenOdd)
-      assert_true(path.fill_type() == @skia.EvenOdd)
+      path.set_fill_type(EvenOdd)
+      assert_true(path.fill_type() == EvenOdd)
       assert_true(!path.is_inverse_fill_type())
-      path.set_fill_type(@skia.InverseEvenOdd)
+      path.set_fill_type(InverseEvenOdd)
       assert_true(path.is_inverse_fill_type())
-      path.set_fill_type(@skia.EvenOdd)
+      path.set_fill_type(EvenOdd)
       path.move_to(@skia.Point::new(1, 2))
       path.line_to(@skia.Point::new(3, 4))
       assert_true(path.last_point() == Some(@skia.Point::new(3, 4)))
@@ -802,9 +798,7 @@ test "path api typechecks" {
       assert_true(path.bounds() == Some(@skia.Rect::from_xywh(1, 2, 3, 4)))
       assert_true(
         path.is_rect() ==
-        Some(
-          @skia.PathRect::new(@skia.Rect::from_xywh(1, 2, 3, 4), true, @skia.CW),
-        ),
+        Some(@skia.PathRect::new(@skia.Rect::from_xywh(1, 2, 3, 4), true, CW)),
       )
       assert_true(path.contains(@skia.Point::new(2, 3)))
       assert_true(!path.contains(@skia.Point::new(9, 9)))
@@ -877,14 +871,14 @@ test "path api typechecks" {
         @skia.Path::new()
         .move_to(@skia.Point::new(10, 0))
         .line_to(@skia.Point::new(12, 0)),
-        mode=@skia.Extend,
+        mode=Extend,
       )
       assert_eq(path.count_verbs(), 4)
       assert_eq(path.count_points(), 4)
       assert_true(path.last_point() == Some(@skia.Point::new(12, 0)))
       assert_true(path.bounds() == Some(@skia.Rect::from_xywh(0, 0, 12, 0)))
       path.rewind()
-      path.add_oval(@skia.Rect::from_xywh(0, 0, 10, 20), direction=@skia.CCW)
+      path.add_oval(@skia.Rect::from_xywh(0, 0, 10, 20), direction=CCW)
       assert_true(path.bounds() == Some(@skia.Rect::from_xywh(0, 0, 10, 20)))
       assert_true(path.is_oval() == Some(@skia.Rect::from_xywh(0, 0, 10, 20)))
       assert_true(path.compute_tight_bounds() == path.bounds())
@@ -994,7 +988,7 @@ test "path api typechecks" {
       assert_eq(path.count_verbs(), value_path.count_verbs())
       assert_eq(path.count_points(), value_path.count_points())
       assert_true(path.is_last_contour_closed())
-      path.set_fill_type(@skia.EvenOdd)
+      path.set_fill_type(EvenOdd)
       path.rewind()
       assert_true(path.is_empty())
       assert_eq(path.count_verbs(), 0)
@@ -1002,7 +996,7 @@ test "path api typechecks" {
       assert_true(path.segment_masks() == @skia.PathSegmentMask::empty())
       assert_true(!path.is_last_contour_closed())
       assert_true(path.bounds() is None)
-      assert_true(path.fill_type() == @skia.Winding)
+      assert_true(path.fill_type() == Winding)
       path.reset()
       assert_true(path.bounds() is None)
     }
@@ -1214,8 +1208,8 @@ test "font api typechecks" {
           assert_true(glyph_run.is_valid())
           assert_true(glyph_run.glyph_count() > 0)
           let glyph_run_plan = glyph_run.resource_plan(b"Skia")
-          assert_eq(glyph_run_plan.count_kind(@skia.TextRunResource), 4)
-          assert_eq(glyph_run_plan.count_kind(@skia.FontResource), 1)
+          assert_eq(glyph_run_plan.count_kind(TextRunResource), 4)
+          assert_eq(glyph_run_plan.count_kind(FontResource), 1)
         }
       }
       assert_true(font.shape_text_utf8(b"") is None)
@@ -1364,11 +1358,8 @@ test "font api typechecks" {
                     assert_true(resolved.resolution.is_valid())
                     assert_true(!resolved.resolution.resource_key().is_empty())
                     let resolved_plan = resolved.resource_plan(size=14.0)
-                    assert_eq(
-                      resolved_plan.count_kind(@skia.TypefaceResource),
-                      3,
-                    )
-                    assert_eq(resolved_plan.count_kind(@skia.FontResource), 1)
+                    assert_eq(resolved_plan.count_kind(TypefaceResource), 3)
+                    assert_eq(resolved_plan.count_kind(FontResource), 1)
                   }
                 }
                 let latin_fallback_request = @skia.FontFallbackRequest::new(
@@ -1447,7 +1438,7 @@ test "shader api typechecks" {
       @skia.Point::new(16, 0),
       @skia.Color::red(),
       @skia.Color::blue(),
-      tile_mode=@skia.Mirror,
+      tile_mode=Mirror,
     ) {
     None => ()
     Some(shader) => assert_true(shader.is_available())
@@ -1512,7 +1503,7 @@ test "shader api typechecks" {
       8.0,
       @skia.Color::white(),
       @skia.Color::black(),
-      tile_mode=@skia.Clamp,
+      tile_mode=Clamp,
     ) {
     None => ()
     Some(shader) => assert_true(shader.is_available())
@@ -1557,7 +1548,7 @@ test "canvas draw api typechecks" {
     canvas.clip_rect(@skia.Rect::from_xywh(0, 0, 16, 16))
     canvas.clip_rect(
       @skia.Rect::from_xywh(2, 2, 8, 8),
-      op=@skia.Difference,
+      op=Difference,
       anti_alias=true,
     )
     let clip_rrect = @skia.RRect::from_rect_xy(
@@ -1566,7 +1557,7 @@ test "canvas draw api typechecks" {
       3,
     )
     canvas.clip_rrect(clip_rrect)
-    canvas.clip_rrect(clip_rrect, op=@skia.Difference, anti_alias=true)
+    canvas.clip_rrect(clip_rrect, op=Difference, anti_alias=true)
     ignore(canvas.local_clip_bounds())
     ignore(canvas.device_clip_bounds())
     assert_true(!canvas.quick_reject_rect(@skia.Rect::from_xywh(1, 1, 2, 2)))
@@ -1585,7 +1576,7 @@ test "canvas draw api typechecks" {
     canvas.discard()
     canvas.clear(@skia.Color::transparent())
     canvas.draw_color(@skia.Color::blue())
-    canvas.draw_color(@skia.Color::red(), blend_mode=@skia.Src)
+    canvas.draw_color(@skia.Color::red(), blend_mode=Src)
     canvas.draw_paint(paint)
     canvas.draw_point(@skia.Point::new(0, 0), paint)
     canvas.draw_line(@skia.Point::new(0, 0), @skia.Point::new(15, 15), paint)
@@ -1612,7 +1603,7 @@ test "canvas draw api typechecks" {
     canvas.draw_path_value(
       @skia.Path::new().add_rect(
         @skia.Rect::from_xywh(1, 1, 7, 7),
-        direction=@skia.CCW,
+        direction=CCW,
       ),
       paint,
     )
@@ -1785,7 +1776,7 @@ test "canvas skips non-finite direct geometry" {
           canvas.draw_points(
             [@skia.Point::new(0, 0), @skia.Point::new(1.0 / 0.0, 1)],
             paint,
-            mode=@skia.Lines,
+            mode=Lines,
           )
           canvas.draw_rect(@skia.Rect::new(0, 0, 1.0 / 0.0, 1), paint)
           canvas.draw_oval(@skia.Rect::new(0, 0, 1, 0.0 / 0.0), paint)
@@ -1954,12 +1945,12 @@ fn native_test_encoded_image_descriptor() -> @skia.ImageDescriptor? {
           match surface.image_snapshot() {
             None => None
             Some(image) =>
-              match image.encode_to_data(format=@skia.PNG, quality=100) {
+              match image.encode_to_data(format=PNG, quality=100) {
                 None => None
                 Some(data) =>
                   @skia.ImageDescriptor::encoded(
                     data.to_bytes(),
-                    format=Some(@skia.PNG),
+                    format=Some(PNG),
                     dimensions=Some(@skia.ISize::new(4, 4)),
                   )
               }
@@ -2017,7 +2008,7 @@ test "canvas replays render command lists" {
         @skia.Point::new(26, 14),
       ],
       paint=@skia.Paint::new(color=@skia.Color::black(), stroke_width=2.0),
-      mode=@skia.Polygon,
+      mode=Polygon,
     )
     .draw_rect(
       @skia.Rect::from_xywh(2, 2, 4, 4),
@@ -2125,7 +2116,7 @@ test "canvas replays render command lists" {
             None => assert_true(stats.skipped_count <= 1)
             Some(_) => {
               assert_true(stats.is_complete())
-              assert_true(stats.status() == @native.CanvasReplayComplete)
+              assert_true(stats.status() == CanvasReplayComplete)
               assert_true(stats.status().is_complete())
             }
           }
@@ -2147,9 +2138,7 @@ test "canvas replays render command lists" {
           assert_eq(present_stats.present_count, 1)
           assert_eq(present_stats.skipped_count, 0)
           assert_true(present_stats.is_complete())
-          assert_true(
-            present_stats.status() == @native.CanvasReplayDeferredPresent,
-          )
+          assert_true(present_stats.status() == CanvasReplayDeferredPresent)
           assert_true(present_stats.status().is_complete())
           let frame_stats = canvas.replay_frame(replay_frame, font~)
           assert_eq(frame_stats.command_count, commands.length())
@@ -2165,7 +2154,7 @@ test "canvas replays render command lists" {
             None => assert_true(frame_stats.skipped_count <= 1)
             Some(_) => {
               assert_true(frame_stats.is_complete())
-              assert_true(frame_stats.status() == @native.CanvasReplayComplete)
+              assert_true(frame_stats.status() == CanvasReplayComplete)
             }
           }
           let rejected_frame_stats = canvas.replay_frame(rejected_frame, font~)
@@ -2177,7 +2166,7 @@ test "canvas replays render command lists" {
           assert_true(rejected_frame_stats.skipped_count > 0)
           assert_true(!rejected_frame_stats.is_complete())
           assert_true(
-            rejected_frame_stats.status() == @native.CanvasReplaySkippedCommands,
+            rejected_frame_stats.status() == CanvasReplaySkippedCommands,
           )
           assert_true(!rejected_frame_stats.status().is_complete())
           native_test_assert_replay_resource_counts(
@@ -2350,13 +2339,10 @@ test "canvas replays render command lists" {
               )
               assert_true(surface_frame_stats.is_complete())
               assert_true(
-                surface_frame_stats.status() ==
-                @native.SurfaceFrameReplayComplete,
+                surface_frame_stats.status() == SurfaceFrameReplayComplete,
               )
               assert_true(surface_frame_stats.status().is_complete())
-              assert_true(
-                surface_frame_stats.validation_status == @skia.FrameReady,
-              )
+              assert_true(surface_frame_stats.validation_status == FrameReady)
               assert_true(surface_frame_stats.surface_matches)
               assert_true(surface_frame_stats.finalized)
               assert_true(surface_frame_stats.finalization_is_ready())
@@ -2398,8 +2384,7 @@ test "canvas replays render command lists" {
               )
               assert_true(!mismatch_stats.is_complete())
               assert_true(
-                mismatch_stats.status() ==
-                @native.SurfaceFrameReplaySurfaceMismatch,
+                mismatch_stats.status() == SurfaceFrameReplaySurfaceMismatch,
               )
               assert_true(!mismatch_stats.status().is_complete())
               assert_true(!mismatch_stats.surface_matches)

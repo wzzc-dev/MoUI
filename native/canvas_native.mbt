@@ -829,7 +829,7 @@ pub fn Canvas::discard(self : Canvas) -> Unit {
 pub fn Canvas::clip_rect(
   self : Canvas,
   rect : @skia.Rect,
-  op? : @skia.ClipOp = @skia.Intersect,
+  op? : @skia.ClipOp = Intersect,
   anti_alias? : Bool = false,
 ) -> Unit {
   if rect.is_finite() {
@@ -849,7 +849,7 @@ pub fn Canvas::clip_rect(
 pub fn Canvas::clip_rrect(
   self : Canvas,
   rrect : @skia.RRect,
-  op? : @skia.ClipOp = @skia.Intersect,
+  op? : @skia.ClipOp = Intersect,
   anti_alias? : Bool = false,
 ) -> Unit {
   if native_canvas_rrect_is_finite(rrect) {
@@ -877,7 +877,7 @@ pub fn Canvas::clip_rrect(
 pub fn Canvas::clip_path(
   self : Canvas,
   path : Path,
-  op? : @skia.ClipOp = @skia.Intersect,
+  op? : @skia.ClipOp = Intersect,
   anti_alias? : Bool = false,
 ) -> Unit {
   native_canvas_clip_path(
@@ -941,7 +941,7 @@ pub fn Canvas::quick_reject_path(self : Canvas, path : Path) -> Bool {
 pub fn Canvas::draw_color(
   self : Canvas,
   color : @skia.Color,
-  blend_mode? : @skia.BlendMode = @skia.SrcOver,
+  blend_mode? : @skia.BlendMode = SrcOver,
 ) -> Unit {
   native_canvas_draw_color(
     self.handle,
@@ -952,7 +952,7 @@ pub fn Canvas::draw_color(
 
 ///|
 pub fn Canvas::clear(self : Canvas, color : @skia.Color) -> Unit {
-  self.draw_color(color, blend_mode=@skia.Src)
+  self.draw_color(color, blend_mode=Src)
 }
 
 ///|
@@ -1027,18 +1027,18 @@ pub fn Canvas::draw_points(
   self : Canvas,
   points : Array[@skia.Point],
   paint : @skia.Paint,
-  mode? : @skia.PointMode = @skia.Points,
+  mode? : @skia.PointMode = Points,
 ) -> Unit {
   match mode {
-    @skia.Points =>
+    Points =>
       for point in points {
         self.draw_point(point, paint)
       }
-    @skia.Lines =>
+    Lines =>
       for i = 0; i + 1 < points.length(); i = i + 2 {
         self.draw_line(points[i], points[i + 1], paint)
       }
-    @skia.Polygon =>
+    Polygon =>
       for i = 0; i + 1 < points.length(); i = i + 1 {
         self.draw_line(points[i], points[i + 1], paint)
       }
@@ -1558,7 +1558,7 @@ fn native_replay_font_from_resources(
   font : Font?,
   resources : NativeReplayResources?,
 ) -> Font? {
-  if font_key.kind != @skia.FontResource || font_key.is_empty() {
+  if font_key.kind != FontResource || font_key.is_empty() {
     native_replay_font(font)
   } else {
     match resources {
@@ -1585,7 +1585,7 @@ fn native_replay_typeface_from_resources(
   resources : NativeReplayResources?,
 ) -> Typeface? {
   let key = request.resource_key()
-  if request.is_empty() || key.kind != @skia.TypefaceResource || key.is_empty() {
+  if request.is_empty() || key.kind != TypefaceResource || key.is_empty() {
     None
   } else {
     match resources {
@@ -1816,16 +1816,10 @@ fn native_shader_from_descriptor(
   descriptor : @skia.ShaderDescriptor,
 ) -> Shader? {
   match descriptor {
-    @skia.ColorShader(color) => Shader::color(color)
-    @skia.LinearGradientShader(start, end, start_color, end_color, tile_mode) =>
+    ColorShader(color) => Shader::color(color)
+    LinearGradientShader(start, end, start_color, end_color, tile_mode) =>
       Shader::linear_gradient(start, end, start_color, end_color, tile_mode~)
-    @skia.RadialGradientShader(
-      center,
-      radius,
-      inner_color,
-      outer_color,
-      tile_mode
-    ) =>
+    RadialGradientShader(center, radius, inner_color, outer_color, tile_mode) =>
       Shader::radial_gradient(
         center,
         radius,
@@ -1945,7 +1939,7 @@ fn Canvas::replay_path_shader(
 ///|
 fn native_image_decode_descriptor(descriptor : @skia.ImageDescriptor) -> Image? {
   match descriptor {
-    @skia.EncodedImage(bytes, _, _) => Image::from_encoded_bytes(bytes)
+    EncodedImage(bytes, _, _) => Image::from_encoded_bytes(bytes)
   }
 }
 
@@ -2022,10 +2016,10 @@ fn native_color_filter_from_descriptor(
   descriptor : @skia.ColorFilterDescriptor,
 ) -> ColorFilter? {
   match descriptor {
-    @skia.ColorMatrixFilter(values) => ColorFilter::matrix(values)
-    @skia.SaturationFilter(amount) => ColorFilter::saturation(amount)
-    @skia.BrightnessFilter(amount) => ColorFilter::brightness(amount)
-    @skia.ContrastFilter(amount) => ColorFilter::contrast(amount)
+    ColorMatrixFilter(values) => ColorFilter::matrix(values)
+    SaturationFilter(amount) => ColorFilter::saturation(amount)
+    BrightnessFilter(amount) => ColorFilter::brightness(amount)
+    ContrastFilter(amount) => ColorFilter::contrast(amount)
   }
 }
 
@@ -2067,8 +2061,7 @@ fn native_image_filter_from_descriptor(
   descriptor : @skia.ImageFilterDescriptor,
 ) -> ImageFilter? {
   match descriptor {
-    @skia.BlurImageFilter(sigma_x, sigma_y) =>
-      ImageFilter::blur(sigma_x, sigma_y)
+    BlurImageFilter(sigma_x, sigma_y) => ImageFilter::blur(sigma_x, sigma_y)
   }
 }
 
@@ -2110,7 +2103,7 @@ fn native_mask_filter_from_descriptor(
   descriptor : @skia.MaskFilterDescriptor,
 ) -> MaskFilter? {
   match descriptor {
-    @skia.BlurMaskFilter(sigma) => MaskFilter::blur(sigma)
+    BlurMaskFilter(sigma) => MaskFilter::blur(sigma)
   }
 }
 
@@ -2207,137 +2200,131 @@ fn Canvas::replay_command(
   resources : NativeReplayResources?,
 ) -> Bool {
   match command {
-    @skia.SaveCanvas => {
+    SaveCanvas => {
       ignore(self.save())
       true
     }
-    @skia.RestoreCanvas => {
+    RestoreCanvas => {
       self.restore()
       true
     }
-    @skia.SaveCanvasLayer(
-      bounds,
-      paint,
-      color_filter,
-      image_filter,
-      mask_filter
-    ) =>
+    SaveCanvasLayer(bounds, paint, color_filter, image_filter, mask_filter) =>
       self.replay_save_layer(
         bounds, paint, color_filter, image_filter, mask_filter, resources,
       )
-    @skia.TranslateCanvas(delta) => {
+    TranslateCanvas(delta) => {
       self.translate(delta)
       true
     }
-    @skia.ScaleCanvas(scale) => {
+    ScaleCanvas(scale) => {
       self.scale(scale)
       true
     }
-    @skia.RotateCanvas(degrees) => {
+    RotateCanvas(degrees) => {
       self.rotate(degrees)
       true
     }
-    @skia.SkewCanvas(skew) => {
+    SkewCanvas(skew) => {
       self.skew(skew)
       true
     }
-    @skia.ConcatCanvas(matrix) => {
+    ConcatCanvas(matrix) => {
       self.concat(matrix)
       true
     }
-    @skia.ResetCanvasMatrix => {
+    ResetCanvasMatrix => {
       self.reset_matrix()
       true
     }
-    @skia.ClearCanvas(color) => {
+    ClearCanvas(color) => {
       self.clear(color)
       true
     }
-    @skia.DrawCanvasColor(color, blend_mode) => {
+    DrawCanvasColor(color, blend_mode) => {
       self.draw_color(color, blend_mode~)
       true
     }
-    @skia.DrawCanvasPaint(paint) => {
+    DrawCanvasPaint(paint) => {
       self.draw_paint(paint)
       true
     }
-    @skia.DrawCanvasPaintShader(shader_descriptor, paint) =>
+    DrawCanvasPaintShader(shader_descriptor, paint) =>
       self.replay_paint_shader(shader_descriptor, paint, resources)
-    @skia.ClipCanvasRect(rect, op) => {
+    ClipCanvasRect(rect, op) => {
       self.clip_rect(rect, op~)
       true
     }
-    @skia.ClipCanvasRRect(rrect, op) => {
+    ClipCanvasRRect(rrect, op) => {
       self.clip_rrect(rrect, op~)
       true
     }
-    @skia.ClipCanvasPath(path, op) => self.replay_clip_path(path, op, resources)
-    @skia.DrawCanvasPoint(point, paint) => {
+    ClipCanvasPath(path, op) => self.replay_clip_path(path, op, resources)
+    DrawCanvasPoint(point, paint) => {
       self.draw_point(point, paint)
       true
     }
-    @skia.DrawCanvasLine(start, end, paint) => {
+    DrawCanvasLine(start, end, paint) => {
       self.draw_line(start, end, paint)
       true
     }
-    @skia.DrawCanvasPoints(points, mode, paint) => {
+    DrawCanvasPoints(points, mode, paint) => {
       self.draw_points(points, paint, mode~)
       true
     }
-    @skia.DrawCanvasRect(rect, paint) => {
+    DrawCanvasRect(rect, paint) => {
       self.draw_rect(rect, paint)
       true
     }
-    @skia.DrawCanvasOval(oval, paint) => {
+    DrawCanvasOval(oval, paint) => {
       self.draw_oval(oval, paint)
       true
     }
-    @skia.DrawCanvasCircle(center, radius, paint) => {
+    DrawCanvasCircle(center, radius, paint) => {
       self.draw_circle(center, radius, paint)
       true
     }
-    @skia.DrawCanvasArc(oval, start_angle, sweep_angle, use_center, paint) => {
+    DrawCanvasArc(oval, start_angle, sweep_angle, use_center, paint) => {
       self.draw_arc(oval, start_angle, sweep_angle, use_center, paint)
       true
     }
-    @skia.DrawCanvasRoundRect(rect, rx, ry, paint) => {
+    DrawCanvasRoundRect(rect, rx, ry, paint) => {
       self.draw_round_rect(rect, rx, ry, paint)
       true
     }
-    @skia.DrawCanvasRRect(rrect, paint) => {
+    DrawCanvasRRect(rrect, paint) => {
       self.draw_rrect(rrect, paint)
       true
     }
-    @skia.DrawCanvasDRRect(outer, inner, paint) => {
+    DrawCanvasDRRect(outer, inner, paint) => {
       self.draw_drrect(outer, inner, paint)
       true
     }
-    @skia.DrawCanvasRectShader(rect, shader_descriptor, paint) =>
+    DrawCanvasRectShader(rect, shader_descriptor, paint) =>
       self.replay_rect_shader(rect, shader_descriptor, paint, resources)
-    @skia.DrawCanvasRoundRectShader(rect, rx, ry, shader_descriptor, paint) =>
+    DrawCanvasRoundRectShader(rect, rx, ry, shader_descriptor, paint) =>
       self.replay_round_rect_shader(
         rect, rx, ry, shader_descriptor, paint, resources,
       )
-    @skia.DrawCanvasPath(path, paint) =>
+    DrawCanvasPath(path, paint) =>
       self.replay_path_value(path, paint, resources)
-    @skia.DrawCanvasPathShader(path, shader_descriptor, paint) =>
+    DrawCanvasPathShader(path, shader_descriptor, paint) =>
       self.replay_path_shader(path, shader_descriptor, paint, resources)
-    @skia.DrawCanvasImage(image_descriptor, top_left) =>
+    DrawCanvasImage(image_descriptor, top_left) =>
       self.replay_image(image_descriptor, top_left, resources)
-    @skia.DrawCanvasImageRect(image_descriptor, src, dst, paint, sampling) =>
+    DrawCanvasImageRect(image_descriptor, src, dst, paint, sampling) =>
       self.replay_image_rect(
         image_descriptor, src, dst, paint, sampling, resources,
       )
-    @skia.DrawCanvasTextUtf8(text, origin, paint) =>
+    DrawCanvasTextUtf8(text, origin, paint) =>
       self.replay_text_utf8(text, origin, paint, font)
-    @skia.DrawCanvasTextRunUtf8(text, descriptor, font_key, origin, paint) =>
+    DrawCanvasTextRunUtf8(text, descriptor, font_key, origin, paint) =>
       self.replay_text_run_utf8(
         text, descriptor, font_key, origin, paint, font, resources,
       )
-    @skia.DrawCanvasShapedGlyphRunUtf8(_, glyph_run, origin, paint) =>
+    DrawCanvasShapedGlyphRunUtf8(_, glyph_run, origin, paint) =>
       self.replay_shaped_glyph_run_utf8(glyph_run, origin, paint, font)
-    @skia.DeclareRenderResource(_) => true
-    @skia.PresentSurface => false
+    DeclareRenderResource(_) => true
+    PresentSurface => false
   }
 }
 

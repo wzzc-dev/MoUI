@@ -351,10 +351,10 @@ pub fn Path::set_fill_type(self : Path, fill_type : @skia.PathFillType) -> Unit 
 ///|
 pub fn Path::fill_type(self : Path) -> @skia.PathFillType {
   match native_path_fill_type(self.handle) {
-    1 => @skia.EvenOdd
-    2 => @skia.InverseWinding
-    3 => @skia.InverseEvenOdd
-    _ => @skia.Winding
+    1 => EvenOdd
+    2 => InverseWinding
+    3 => InverseEvenOdd
+    _ => Winding
   }
 }
 
@@ -463,14 +463,14 @@ pub fn Path::add_path_value(
   self : Path,
   path : @skia.Path,
   matrix? : @skia.Matrix = @skia.Matrix::identity(),
-  mode? : @skia.AddPathMode = @skia.Append,
+  mode? : @skia.AddPathMode = Append,
 ) -> Unit {
   if path.is_finite() && matrix.is_finite() {
     let path = path.transform(matrix)
     if path.is_finite() {
-      let start_index = if mode is @skia.Extend && !path.verbs.is_empty() {
+      let start_index = if mode is Extend && !path.verbs.is_empty() {
         match (self.last_point(), path.verbs[0]) {
-          (Some(_), @skia.MoveTo(point)) => {
+          (Some(_), MoveTo(point)) => {
             self.line_to(point)
             1
           }
@@ -482,14 +482,13 @@ pub fn Path::add_path_value(
       for i = start_index; i < path.verbs.length(); i = i + 1 {
         let verb = path.verbs[i]
         match verb {
-          @skia.MoveTo(point) => self.move_to(point)
-          @skia.LineTo(point) => self.line_to(point)
-          @skia.QuadTo(control, end) => self.quad_to(control, end)
-          @skia.ConicTo(control, end, weight) =>
-            self.conic_to(control, end, weight)
-          @skia.CubicTo(control0, control1, end) =>
+          MoveTo(point) => self.move_to(point)
+          LineTo(point) => self.line_to(point)
+          QuadTo(control, end) => self.quad_to(control, end)
+          ConicTo(control, end, weight) => self.conic_to(control, end, weight)
+          CubicTo(control0, control1, end) =>
             self.cubic_to(control0, control1, end)
-          @skia.Close => self.close()
+          Close => self.close()
         }
       }
     }
@@ -501,7 +500,7 @@ pub fn Path::add_path_value_matrix(
   self : Path,
   path : @skia.Path,
   matrix : @skia.Matrix,
-  mode? : @skia.AddPathMode = @skia.Append,
+  mode? : @skia.AddPathMode = Append,
 ) -> Unit {
   self.add_path_value(path, matrix~, mode~)
 }
@@ -511,7 +510,7 @@ pub fn Path::add_path_value_offset(
   self : Path,
   path : @skia.Path,
   offset : @skia.Point,
-  mode? : @skia.AddPathMode = @skia.Append,
+  mode? : @skia.AddPathMode = Append,
 ) -> Unit {
   self.add_path_value(
     path,
@@ -547,7 +546,7 @@ pub fn Path::add_poly(
 pub fn Path::add_rect(
   self : Path,
   rect : @skia.Rect,
-  direction? : @skia.PathDirection = @skia.CW,
+  direction? : @skia.PathDirection = CW,
 ) -> Unit {
   if rect.is_finite() {
     native_path_add_rect(
@@ -565,7 +564,7 @@ pub fn Path::add_rect(
 pub fn Path::add_oval(
   self : Path,
   oval : @skia.Rect,
-  direction? : @skia.PathDirection = @skia.CW,
+  direction? : @skia.PathDirection = CW,
 ) -> Unit {
   if oval.is_finite() {
     native_path_add_oval(
@@ -584,7 +583,7 @@ pub fn Path::add_circle(
   self : Path,
   center : @skia.Point,
   radius : Float,
-  direction? : @skia.PathDirection = @skia.CW,
+  direction? : @skia.PathDirection = CW,
 ) -> Unit {
   if center.is_finite() && native_path_scalar_is_finite(radius) && radius > 0.0 {
     native_path_add_circle(
@@ -603,7 +602,7 @@ pub fn Path::add_round_rect(
   rect : @skia.Rect,
   rx : Float,
   ry : Float,
-  direction? : @skia.PathDirection = @skia.CW,
+  direction? : @skia.PathDirection = CW,
 ) -> Unit {
   if rect.is_finite() &&
     native_path_scalar_is_finite(rx) &&
@@ -625,7 +624,7 @@ pub fn Path::add_round_rect(
 pub fn Path::add_rrect(
   self : Path,
   rrect : @skia.RRect,
-  direction? : @skia.PathDirection = @skia.CW,
+  direction? : @skia.PathDirection = CW,
 ) -> Unit {
   if native_path_rrect_is_finite(rrect) {
     native_path_add_rrect(
@@ -746,7 +745,7 @@ pub fn Path::is_rect(self : Path) -> @skia.PathRect? {
   if native_path_is_rect(self.handle) {
     let direction = match native_path_rect_direction(self.handle) {
       1 => @skia.CCW
-      _ => @skia.CW
+      _ => CW
     }
     Some(
       @skia.PathRect::new(
