@@ -10,9 +10,27 @@ pub struct HostTimerSource {
 }
 
 ///|
+pub(all) struct HostWindowEvent {
+  window_id : HostWindowId
+  event : HostEvent
+} derive(Eq, Debug, ToJson)
+
+///|
+pub struct HostWindowEventSource {
+  priv mut next_handler_value : Int
+  priv mut handlers : Array[HostWindowEventSubscriptionHandler]
+}
+
+///|
 priv struct HostEventSubscriptionHandler {
   token : Int
   handle : (HostEvent) -> Unit
+}
+
+///|
+priv struct HostWindowEventSubscriptionHandler {
+  token : Int
+  handle : (HostWindowEvent) -> Unit
 }
 
 ///|
@@ -28,7 +46,27 @@ pub fn HostTimerSource::new(
 }
 
 ///|
+pub fn HostWindowEvent::new(
+  window_id~ : HostWindowId,
+  event~ : HostEvent,
+) -> HostWindowEvent {
+  { window_id, event }
+}
+
+///|
+pub fn HostWindowEventSource::new() -> HostWindowEventSource {
+  { next_handler_value: 1, handlers: [] }
+}
+
+///|
 pub fn HostEventSource::active_handler_count(self : HostEventSource) -> Int {
+  self.handlers.length()
+}
+
+///|
+pub fn HostWindowEventSource::active_handler_count(
+  self : HostWindowEventSource,
+) -> Int {
   self.handlers.length()
 }
 
@@ -64,6 +102,39 @@ pub fn[Msg] HostEventSource::subscription(
 }
 
 ///|
+pub fn HostWindowEventSource::publish(
+  self : HostWindowEventSource,
+  window_id~ : HostWindowId,
+  event~ : HostEvent,
+) -> Int {
+  let handlers = self.handlers.copy()
+  let window_event = HostWindowEvent::new(window_id~, event~)
+  for handler in handlers {
+    (handler.handle)(window_event)
+  }
+  handlers.length()
+}
+
+///|
+pub fn[Msg] HostWindowEventSource::subscription(
+  self : HostWindowEventSource,
+  key? : String = "host:window-event",
+  label? : String = "Host window event",
+  map~ : (HostWindowEvent) -> Msg?,
+) -> @core.Subscription[Msg] {
+  let start = dispatch => {
+    let token = self.add_handler(window_event => {
+      match map(window_event) {
+        Some(message) => dispatch(message)
+        None => ()
+      }
+    })
+    Some(() => ignore(self.remove_handler(token)))
+  }
+  @core.Subscription::window_event(key~, label~, start~)
+}
+
+///|
 pub fn[Msg] HostTimerSource::subscription(
   self : HostTimerSource,
   interval_ms~ : Double,
@@ -89,9 +160,38 @@ fn HostEventSource::add_handler(
 }
 
 ///|
+fn HostWindowEventSource::add_handler(
+  self : HostWindowEventSource,
+  handle : (HostWindowEvent) -> Unit,
+) -> Int {
+  let token = self.next_handler_value
+  self.next_handler_value = self.next_handler_value + 1
+  self.handlers.push({ token, handle })
+  token
+}
+
+///|
 fn HostEventSource::remove_handler(self : HostEventSource, token : Int) -> Bool {
   let mut removed = false
   let remaining : Array[HostEventSubscriptionHandler] = []
+  for handler in self.handlers {
+    if !removed && handler.token == token {
+      removed = true
+    } else {
+      remaining.push(handler)
+    }
+  }
+  self.handlers = remaining
+  removed
+}
+
+///|
+fn HostWindowEventSource::remove_handler(
+  self : HostWindowEventSource,
+  token : Int,
+) -> Bool {
+  let mut removed = false
+  let remaining : Array[HostWindowEventSubscriptionHandler] = []
   for handler in self.handlers {
     if !removed && handler.token == token {
       removed = true
