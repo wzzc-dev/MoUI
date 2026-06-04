@@ -143,6 +143,8 @@ Use this skill when editing or reviewing:
   native provider async-image scheduling hooks,
   native async image completion source,
   host-event subscription source fanout, window-scoped subscription source,
+  platform event-source bundles for feeding normalized Web/native host and window
+  events into app-owned subscriptions,
   scheduler-backed timer subscription source, route/deep-link subscription source,
   window request/completion queue, text-input session, window-event conversion,
   async host-service queue, and redraw driver.
@@ -465,6 +467,11 @@ moon info
   Keep raw platform event conversion in platform packages, and make adapter
   cleanup remove the publisher handler so late window events do not reach stale
   app subscriptions.
+- Use `HostPlatformEventSources` when a Web or native platform app needs to
+  expose its normalized runtime host/window event stream to app-owned
+  subscriptions. The backend should publish only after raw platform events have
+  been converted and dispatched through the matching `HostRuntimeDriver`; route,
+  timer, and history adapters remain separate platform/app concerns.
 - For app-owned route/deep-link sources, use `HostRouteSource::subscription` in
   `backend/host` so published `HostRouteEvent` values can map to typed
   `Program` messages through `Subscription::route_event`. Keep browser history,

@@ -41,6 +41,7 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 pub struct WindowsHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv exit_after_first_present : Bool
+  priv event_sources : @host.HostPlatformEventSources?
 }
 
 ///|
@@ -65,6 +66,7 @@ struct WindowsApp {
   platform_windows : @host.HostPlatformWindowMap
   platform_slots : WindowsWindowPlatformSlots
   image_repaint_tracker : @host.HostImageResourceRepaintTracker
+  event_sources : @host.HostPlatformEventSources?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut exit_after_first_present : Bool
@@ -87,8 +89,9 @@ priv struct WindowsWindowPlatformSlots {
 pub fn WindowsHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   exit_after_first_present? : Bool = false,
+  event_sources? : @host.HostPlatformEventSources? = None,
 ) -> WindowsHostAppOptions {
-  { scene_resolver, exit_after_first_present }
+  { scene_resolver, exit_after_first_present, event_sources }
 }
 
 ///|
@@ -159,6 +162,7 @@ pub fn run_app_with_renderer_provider(
     platform_windows: @host.HostPlatformWindowMap::new(),
     platform_slots: WindowsWindowPlatformSlots::new(),
     image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
+    event_sources: options.event_sources,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     exit_after_first_present: options.exit_after_first_present,
@@ -664,9 +668,22 @@ fn WindowsApp::dispatch_window_event(
           }
         None => ()
       }
+      ignore(self.publish_subscription_event(window_id, host_event))
       self.sync_text_input_session()
     }
     None => ()
+  }
+}
+
+///|
+fn WindowsApp::publish_subscription_event(
+  self : WindowsApp,
+  window_id : @host.HostWindowId,
+  event : @host.HostEvent,
+) -> @host.HostPlatformEventPublishResult? {
+  match self.event_sources {
+    Some(sources) => Some(sources.publish(window_id~, event~))
+    None => None
   }
 }
 
