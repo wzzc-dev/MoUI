@@ -20,7 +20,7 @@ moui/                         root public facade workspace member
 moui/core/                    one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
 moui/style/                   visual token and control style compatibility package
 moui/views/                   public view constructors
-moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, input, redraw driver, window/core + dpi event conversion
+moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
 moui/backend/windows/         Windows native host core
 moui/backend/windows/wgpu/    Windows WGPU renderer provider
 moui/backend/windows/skia/    Windows Skia renderer provider
@@ -540,6 +540,15 @@ previous/current counts on repaint results. Host cores depend only on
 own GPU surface bridges, `wgpu-native`, and native WGPU text provider
 composition. Skia provider packages own Skia renderer creation, pixel presenter
 bridges, and Skia availability diagnostics.
+
+`HostImageResourceCompletionSource` is the host-layer boundary for native async
+image loader completions. Native provider/platform loaders publish revisioned
+`@render.ImageResourceSnapshot` completions through it; the host routes them
+through `HostImageResourceRepaintTracker`, requests redraw only for matching
+open windows, ignores stale lower revisions, and discards closed-window
+completions. The source does not decode images, mutate renderer caches, or live
+in `core`; renderer/provider packages still own concrete loading and lifecycle
+records.
 
 `RendererDescriptor` and `RendererSelection` remain renderer facade reporting tools:
 they describe static capability identity and matching, not native host runtime
