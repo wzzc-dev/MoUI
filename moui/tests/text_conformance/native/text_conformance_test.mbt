@@ -16,7 +16,7 @@ fn assert_diagnostic_native_text_layout(
   system : @core.TextSystem,
   text : String,
 ) -> Unit raise {
-  let font = @core.FontSpec::new(size=18.0, weight=500)
+  let font = diagnostic_native_text_font()
   let measured = system.measure_text(@core.TextLayoutInput::new(text~, font~))
   inspect(measured.size.width > 0.0, content="true")
   inspect(measured.size.height > 0.0, content="true")
@@ -44,6 +44,44 @@ fn assert_diagnostic_native_text_layout(
   for caret in clamped.caret_positions {
     inspect(caret <= 36.0, content="true")
   }
+}
+
+///|
+fn diagnostic_native_text_font() -> @core.FontSpec {
+  @core.FontSpec::new(size=18.0, weight=500)
+}
+
+///|
+fn assert_diagnostic_native_skia_maturity_gap(gap : String) -> Unit raise {
+  let description = @skia_renderer.backend_info().description
+  assert_true(description.contains("text maturity audit partial"))
+  assert_true(description.contains("tracked gaps pending"))
+  assert_true(description.contains(gap))
+}
+
+///|
+fn assert_diagnostic_native_cluster_carets(
+  system : @core.TextSystem,
+  text : String,
+  start : Int,
+  end : Int,
+) -> Unit raise {
+  let layout = system.measure_text(
+    @core.TextLayoutInput::new(text~, font=diagnostic_native_text_font()),
+  )
+  inspect(
+    layout.caret_positions.length(),
+    content="\{text.to_array().length() + 1}",
+  )
+  assert_true(diagnostic_native_carets_are_monotonic(layout.caret_positions))
+  assert_true(start >= 0)
+  assert_true(end > start + 1)
+  assert_true(end < layout.caret_positions.length())
+  let anchor = layout.caret_positions[start]
+  for index in (start + 1)..<end {
+    assert_true(layout.caret_positions[index] == anchor)
+  }
+  assert_true(layout.caret_positions[end] > anchor)
 }
 
 ///|
@@ -114,6 +152,68 @@ test "diagnostic native cosmic engine matrix conforms" {
 ///|
 test "diagnostic native skia text system matrix conforms" {
   assert_diagnostic_native_text_matrix(@skia_renderer.skia_text_system())
+}
+
+///|
+test "diagnostic native skia bidi sample keeps logical carets and marks reordering pending" {
+  let system = @skia_renderer.skia_text_system()
+  let sample = "abc אבג def"
+  assert_diagnostic_native_text_layout(system, sample)
+  let layout = system.measure_text(
+    @core.TextLayoutInput::new(text=sample, font=diagnostic_native_text_font()),
+  )
+  inspect(
+    layout.caret_positions.length(),
+    content="\{sample.to_array().length() + 1}",
+  )
+  assert_true(diagnostic_native_carets_are_monotonic(layout.caret_positions))
+  assert_true(
+    layout.caret_positions[layout.caret_positions.length() - 1] ==
+    layout.size.width,
+  )
+  assert_diagnostic_native_skia_maturity_gap("bidi")
+}
+
+///|
+test "diagnostic native skia paragraph sample clamps instead of claiming line breaking" {
+  let system = @skia_renderer.skia_text_system()
+  let sample = "alpha beta gamma delta epsilon"
+  let font = diagnostic_native_text_font()
+  let unbounded = system.measure_text(
+    @core.TextLayoutInput::new(text=sample, font~),
+  )
+  let max_width = 48.0
+  let clamped = system.measure_text(
+    @core.TextLayoutInput::new(text=sample, font~, max_width~),
+  )
+  assert_true(unbounded.size.width > max_width)
+  assert_true(clamped.size.width <= max_width)
+  assert_true(clamped.size.height == unbounded.size.height)
+  assert_true(clamped.baseline == unbounded.baseline)
+  inspect(
+    clamped.caret_positions.length(),
+    content="\{sample.to_array().length() + 1}",
+  )
+  assert_true(diagnostic_native_carets_are_monotonic(clamped.caret_positions))
+  assert_true(
+    clamped.caret_positions[clamped.caret_positions.length() - 1] == max_width,
+  )
+  for caret in clamped.caret_positions {
+    assert_true(caret <= max_width)
+  }
+  assert_diagnostic_native_skia_maturity_gap("paragraph line breaking")
+}
+
+///|
+test "diagnostic native skia zwj and color emoji samples keep caret coverage without readiness claim" {
+  let system = @skia_renderer.skia_text_system()
+  assert_diagnostic_native_text_layout(system, "A👩‍💻B")
+  assert_diagnostic_native_cluster_carets(system, "A👩‍💻B", 1, 4)
+  assert_diagnostic_native_text_layout(system, "A☕️B")
+  assert_diagnostic_native_cluster_carets(system, "A☕️B", 1, 3)
+  assert_diagnostic_native_text_layout(system, "A🙂B")
+  assert_diagnostic_native_skia_maturity_gap("color emoji")
+  assert_diagnostic_native_skia_maturity_gap("full grapheme parity")
 }
 
 ///|

@@ -459,6 +459,12 @@ test "renderer capability report tracks draw command support" {
     text_shaping.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
     @render.RendererFeatureStatus::Partial,
   )
+  assert_true(
+    text_shaping.status_for_backend(
+      @render.RendererBackendKind::SkiaRasterNative,
+    ) ==
+    @render.RendererFeatureStatus::Partial,
+  )
   let native_text_note = text_shaping.note_for_backend(
     @render.RendererBackendKind::NativeWgpu,
   )
@@ -498,6 +504,10 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     emoji.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
+    emoji.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
     @render.RendererFeatureStatus::Partial,
   )
   let native_emoji_note = emoji.note_for_backend(
