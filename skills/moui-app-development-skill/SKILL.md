@@ -71,10 +71,13 @@ separate framework task using `moui-framework-development-skill`.
   package when the behavior should work across platforms.
 - Keep route and deep-link history in shared app state with
   `@core.RouteHistoryState` when the app needs a serializable back/forward
-  shadow stack. Use `View::transition` with app-owned progress when a route
-  preview needs controlled fade/slide/scale motion. Browser history updates,
-  native URL/deep-link dispatch, and automatic transition scheduling remain
-  explicit app/host work rather than automatic platform behavior.
+  shadow stack. Use `@host.HostRouteSource` when a host or platform publishes
+  typed route/deep-link events through `Subscription::route_event`, then update
+  the app-owned history in the reducer. Use `View::transition` with app-owned
+  progress when a route preview needs controlled fade/slide/scale motion.
+  Browser history updates, native URL/deep-link dispatch, and automatic
+  transition scheduling remain explicit app/host work rather than automatic
+  platform behavior.
 - Prefer the TEA runtime helpers: use `@core.Program::simple` for pure
   model/update/view apps, `@core.Program::simple_with_environment` when the
   view needs `ViewEnvironment`, and `@core.Program::new` when `update` returns
