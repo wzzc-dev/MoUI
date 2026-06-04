@@ -144,18 +144,21 @@ callback. `Subscription::timer`, `Subscription::animation_tick`,
 ongoing source categories without starting any concrete platform work in
 `core`. `Subscription::plan_summary` exposes the declared none, batch, source,
 duplicate-key counts/names, max-depth, and declared source descriptor structure
-without starting sources. Existing keys are reused across model changes,
-missing keys are canceled, duplicate keys in one subscription batch are ignored
-after the first and reported in runtime diagnostics, and `Subscription::map`
-preserves child feature message and descriptor identity while lifting messages
-to a parent type. Dispatchers captured by canceled or destroyed subscriptions
-are ignored, so stale callbacks cannot re-enter the model loop after their
-subscription lifetime ends; program runtime and inspector snapshots count those
-ignored subscription dispatches separately from normal typed dispatch/update
-counters and expose planned subscription descriptors, active subscription
-descriptors, active subscription kind-count summaries, and lifecycle entries
-for tooling. Concrete timer, window, host, route, or host-service adapters
-remain outside `core`; the core
+without starting sources. Existing keys are reused across model changes only
+when their descriptor kind still matches, missing keys are canceled, and a
+source that keeps the same key but changes kind is restarted with a
+`SubscriptionKindChanged` lifecycle reason so an app cannot silently keep an old
+timer, host-event, or service adapter running under a reused key. Duplicate keys
+in one subscription batch are ignored after the first and reported in runtime
+diagnostics, and `Subscription::map` preserves child feature message and
+descriptor identity while lifting messages to a parent type. Dispatchers
+captured by canceled or destroyed subscriptions are ignored, so stale callbacks
+cannot re-enter the model loop after their subscription lifetime ends; program
+runtime and inspector snapshots count those ignored subscription dispatches
+separately from normal typed dispatch/update counters and expose planned
+subscription descriptors, active subscription descriptors, active subscription
+kind-count summaries, and lifecycle entries for tooling. Concrete timer,
+window, host, route, or host-service adapters remain outside `core`; the core
 subscription runtime only owns the platform-neutral lifecycle, subscription plan
 diagnostics, and typed dispatch contract. Environment-aware TEA apps should use
 the `*_with_environment` constructors instead of taking `BuildContext` in their
