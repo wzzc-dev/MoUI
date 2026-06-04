@@ -54,7 +54,7 @@ mapping is:
 | Menus and commands | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/command_palette/app --target native` |
 | Host services and file import | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native` |
 | Host event, window, timer, and route subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native` |
-| Native async image completion | `moon test moui/render --target native`, `moon test moui/backend/host --target native`, touched native backend/provider package tests such as `moon test moui/backend/macos --target native` or `moon test moui/backend/linux --target native`; Windows package tests require a Windows/MSVC host, use `moon check moui/backend/windows --target native` on non-Windows hosts for static API coverage |
+| Native async image completion | `moon test moui/render --target native`, `moon test moui/render/wgpu --target native`, `moon test moui/backend/host --target native`, touched native backend/provider package tests such as `moon test moui/backend/macos --target native`, `moon test moui/backend/macos/wgpu --target native`, `moon test moui/backend/linux --target native`, or `moon test moui/backend/linux/wgpu --target native`; Windows package tests require a Windows/MSVC host, use `moon check moui/backend/windows --target native` and `moon check moui/backend/windows/wgpu --target native` on non-Windows hosts for static API coverage |
 | Virtual lists | `moon test moui/views --target native`, `sh scripts/conformance-check.sh --layout` |
 
 ## Platform Validation
@@ -291,7 +291,10 @@ instead of one large end-to-end assertion:
    completion behavior are host contracts before provider/platform loaders
    supply real completion snapshots. Native platform backend tests should also
    pin that provider-owned image loaders are optional, invoked only through the
-   post-present host hook, and cancelled when a window is disposed.
+   post-present host hook, and cancelled when a window is disposed. WGPU
+   provider package tests also pin that provider-owned loaders can turn native
+   PNG/JPEG/BMP source decode results into ready/failed completion payloads and
+   route them through the host scheduler.
 3. Implementation layer: renderer and provider packages prove concrete
    implementations honor the contract. This includes WGPU renderer capability
    evidence, native text-provider metrics/raster validation, and Web adapter

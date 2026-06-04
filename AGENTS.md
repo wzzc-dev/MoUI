@@ -47,7 +47,10 @@ paths, or abstractions that only preserve old shapes.
   `render/skia`, `wgpu_mbt`, or `moui_skia`. `backend/web/` is the browser
   wasm-gc host.
 - `backend/macos/wgpu`, `backend/windows/wgpu`, and `backend/linux/wgpu`
-  provide native WGPU renderer providers. `backend/macos/skia`,
+  provide native WGPU renderer providers, including provider-owned
+  `HostAsyncImageLoader` hooks that call renderer-owned source decode helpers
+  such as `native_image_load_completion`; keep off-main loader/runtime evidence
+  separate from package-level completion wiring. `backend/macos/skia`,
   `backend/windows/skia`, and `backend/linux/skia` provide native Skia renderer
   providers.
 - `render/` is the renderer facade and shared reporting layer.

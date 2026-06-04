@@ -534,6 +534,8 @@ test "renderer capability report tracks draw command support" {
   assert_true(native_image_note.contains("HostWindowRenderer"))
   assert_true(native_image_note.contains("HostAsyncImageLoader"))
   assert_true(native_image_note.contains("HostImageResourceCompletionSource"))
+  assert_true(native_image_note.contains("native_image_load_completion"))
+  assert_true(native_image_note.contains("macOS/Windows/Linux WGPU providers"))
   assert_true(
     native_image_note.contains("optional provider-owned async image loaders"),
   )
@@ -541,7 +543,9 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     native_image_note.contains("apply_image_resource_load_completion"),
   )
-  assert_true(native_image_note.contains("provider/platform async loader"))
+  assert_true(
+    native_image_note.contains("off-main provider/platform async loader"),
+  )
   assert_true(
     async_image.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
     @render.RendererFeatureStatus::Partial,

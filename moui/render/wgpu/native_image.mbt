@@ -233,6 +233,25 @@ fn load_native_image_data(source : String) -> NativeDecodedImage? {
 }
 
 ///|
+pub fn native_image_load_completion(
+  source : String,
+) -> @render.ImageResourceLoadCompletion {
+  match load_native_image_data(source) {
+    Some(decoded) =>
+      @render.ImageResourceLoadCompletion::ready(
+        source,
+        width=decoded.width,
+        height=decoded.height,
+      )
+    None =>
+      @render.ImageResourceLoadCompletion::failed(
+        source,
+        diagnostic="native image decode failed",
+      )
+  }
+}
+
+///|
 fn native_image_source_bytes(source : String) -> Bytes? {
   if source.has_prefix("data:") {
     native_image_data_uri_bytes(source)
