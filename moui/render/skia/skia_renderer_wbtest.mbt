@@ -578,6 +578,75 @@ test "skia renderer dispose clears cached image resources and records disposal" 
 }
 
 ///|
+test "skia renderer notifies image lifecycle revisions for ready and disposed resources" {
+  guard skia_available() else { return () }
+  let source = skia_test_png_data_uri()
+  let revisions : Array[Int] = []
+  let record_counts : Array[Int] = []
+  let statuses : Array[@render.ImageResourceStatus] = []
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+    on_image_resource_change=Some(snapshot => {
+      revisions.push(snapshot.revision)
+      record_counts.push(snapshot.records.length())
+      if snapshot.records.length() > 0 {
+        statuses.push(snapshot.records[0].status)
+      }
+    }),
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+
+  renderer.render([
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]) catch {
+    err => fail("expected Skia image render: \{err.message()}")
+  }
+  assert_true(revisions == [1, 2])
+  assert_true(record_counts == [1, 1])
+  assert_true(
+    statuses ==
+    [
+      @render.ImageResourceStatus::ImageLoading,
+      @render.ImageResourceStatus::ImageReady,
+    ],
+  )
+
+  renderer.render([
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]) catch {
+    err => fail("expected cached Skia image render: \{err.message()}")
+  }
+  inspect(revisions.length(), content="2")
+
+  renderer.dispose()
+  assert_true(revisions == [1, 2, 3])
+  assert_true(record_counts == [1, 1, 1])
+  assert_true(
+    statuses ==
+    [
+      @render.ImageResourceStatus::ImageLoading,
+      @render.ImageResourceStatus::ImageReady,
+      @render.ImageResourceStatus::ImageDisposed,
+    ],
+  )
+}
+
+///|
 test "skia renderer records failed image resources and reuses failed cache" {
   guard skia_available() else { return () }
   let missing_source = "moui-skia-missing-image-resource://not-a-file"
@@ -623,6 +692,64 @@ test "skia renderer records failed image resources and reuses failed cache" {
   }
   assert_true(cached.status == @render.ImageResourceStatus::ImageFailed)
   inspect(cached.diagnostic, content="cached failure")
+}
+
+///|
+test "skia renderer notifies failed image lifecycle revision once for unchanged failed cache" {
+  guard skia_available() else { return () }
+  let missing_source = "moui-skia-missing-image-resource://not-a-file"
+  let callback_count = Ref(0)
+  let revisions : Array[Int] = []
+  let record_counts : Array[Int] = []
+  let statuses : Array[@render.ImageResourceStatus] = []
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.set_image_resource_change_callback(
+    Some(snapshot => {
+      callback_count.val = callback_count.val + 1
+      revisions.push(snapshot.revision)
+      record_counts.push(snapshot.records.length())
+      if snapshot.records.length() > 0 {
+        statuses.push(snapshot.records[0].status)
+      }
+    }),
+  )
+
+  renderer.render([
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: missing_source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]) catch {
+    err =>
+      fail("expected Skia missing-image placeholder render: \{err.message()}")
+  }
+  inspect(callback_count.val, content="1")
+  assert_true(revisions == [1])
+  assert_true(record_counts == [1])
+  assert_true(statuses == [@render.ImageResourceStatus::ImageFailed])
+
+  renderer.render([
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: missing_source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]) catch {
+    err =>
+      fail("expected cached failed-image placeholder render: \{err.message()}")
+  }
+  inspect(callback_count.val, content="1")
 }
 
 ///|

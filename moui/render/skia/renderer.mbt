@@ -196,6 +196,7 @@ pub(all) struct SkiaRasterRenderer {
   image_cache : Map[String, @skia_native.Image]
   failed_images : Map[String, String]
   image_lifecycle : @render.ImageResourceLifecycle
+  mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
   mut present_count : Int
   mut unsupported_command_count : Int
   unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
@@ -317,6 +318,7 @@ pub fn create_with_present_target(
   metrics : @render.RendererSurfaceMetrics,
   target : SkiaPresentTarget,
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  on_image_resource_change? : ((@render.ImageResourceSnapshot) -> Unit)? = None,
 ) -> SkiaRasterRenderer raise SkiaRendererError {
   if !skia_available() {
     raise SkiaRendererError::SkiaUnavailable
@@ -330,6 +332,7 @@ pub fn create_with_present_target(
     image_cache: {},
     failed_images: {},
     image_lifecycle: @render.ImageResourceLifecycle::new(),
+    on_image_resource_change,
     present_count: 0,
     unsupported_command_count: 0,
     unsupported_command_diagnostics: [],
@@ -1192,34 +1195,30 @@ fn SkiaRasterRenderer::skia_image_for_source(
           if skia_image_failed_cache_can_retry(source) {
             self.failed_images.remove(source)
           } else {
-            ignore(self.image_lifecycle.mark_failed(source, diagnostic~))
+            self.mark_image_failed(source, diagnostic~)
             return None
           }
         None => ()
       }
       match skia_image_source_bytes(source) {
         Some(bytes) => {
-          ignore(self.image_lifecycle.mark_loading(source))
+          self.mark_image_loading(source)
           match @skia_native.Image::from_encoded_bytes(bytes) {
             Some(image) => {
               self.failed_images.remove(source)
               self.image_cache[source] = image
-              ignore(
-                self.image_lifecycle.mark_ready(
-                  source,
-                  width=image.width(),
-                  height=image.height(),
-                ),
+              self.mark_image_ready(
+                source,
+                width=image.width(),
+                height=image.height(),
               )
               Some(image)
             }
             None => {
               self.failed_images[source] = "Skia image decode failed"
-              ignore(
-                self.image_lifecycle.mark_failed(
-                  source,
-                  diagnostic="Skia image decode failed",
-                ),
+              self.mark_image_failed(
+                source,
+                diagnostic="Skia image decode failed",
               )
               None
             }
@@ -1227,15 +1226,69 @@ fn SkiaRasterRenderer::skia_image_for_source(
         }
         None => {
           self.failed_images[source] = "Skia image source bytes are unavailable"
-          ignore(
-            self.image_lifecycle.mark_failed(
-              source,
-              diagnostic="Skia image source bytes are unavailable",
-            ),
+          self.mark_image_failed(
+            source,
+            diagnostic="Skia image source bytes are unavailable",
           )
           None
         }
       }
+    }
+  }
+}
+
+///|
+fn SkiaRasterRenderer::mark_image_loading(
+  self : SkiaRasterRenderer,
+  source : String,
+) -> Unit {
+  let previous_revision = self.image_lifecycle.revision()
+  ignore(self.image_lifecycle.mark_loading(source))
+  self.notify_image_resource_change_if_needed(previous_revision)
+}
+
+///|
+fn SkiaRasterRenderer::mark_image_ready(
+  self : SkiaRasterRenderer,
+  source : String,
+  width~ : Int,
+  height~ : Int,
+) -> Unit {
+  let previous_revision = self.image_lifecycle.revision()
+  ignore(self.image_lifecycle.mark_ready(source, width~, height~))
+  self.notify_image_resource_change_if_needed(previous_revision)
+}
+
+///|
+fn SkiaRasterRenderer::mark_image_failed(
+  self : SkiaRasterRenderer,
+  source : String,
+  diagnostic~ : String,
+) -> Unit {
+  let previous_revision = self.image_lifecycle.revision()
+  ignore(self.image_lifecycle.mark_failed(source, diagnostic~))
+  self.notify_image_resource_change_if_needed(previous_revision)
+}
+
+///|
+fn SkiaRasterRenderer::dispose_image_resource(
+  self : SkiaRasterRenderer,
+  source : String,
+) -> Unit {
+  let previous_revision = self.image_lifecycle.revision()
+  ignore(self.image_lifecycle.dispose(source))
+  self.notify_image_resource_change_if_needed(previous_revision)
+}
+
+///|
+fn SkiaRasterRenderer::notify_image_resource_change_if_needed(
+  self : SkiaRasterRenderer,
+  previous_revision : Int,
+) -> Unit {
+  if self.image_lifecycle.revision() > previous_revision {
+    match self.on_image_resource_change {
+      Some(notify) => notify(self.image_lifecycle.snapshot_with_revision())
+      None => ()
     }
   }
 }
@@ -2011,10 +2064,18 @@ pub fn SkiaRasterRenderer::image_resource_snapshot(
 ///|
 pub fn SkiaRasterRenderer::dispose(self : SkiaRasterRenderer) -> Unit {
   for source, _ in self.image_cache {
-    ignore(self.image_lifecycle.dispose(source))
+    self.dispose_image_resource(source)
   }
   self.image_cache.clear()
   self.failed_images.clear()
+}
+
+///|
+pub fn SkiaRasterRenderer::set_image_resource_change_callback(
+  self : SkiaRasterRenderer,
+  callback : ((@render.ImageResourceSnapshot) -> Unit)?,
+) -> Unit {
+  self.on_image_resource_change = callback
 }
 
 ///|
