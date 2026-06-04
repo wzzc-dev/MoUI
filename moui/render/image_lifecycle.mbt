@@ -22,6 +22,21 @@ pub(all) struct ImageResourceSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum ImageResourceLoadCompletionStatus {
+  ImageLoadReady
+  ImageLoadFailed
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ImageResourceLoadCompletion {
+  source : String
+  status : ImageResourceLoadCompletionStatus
+  width : Int
+  height : Int
+  diagnostic : String
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct ImageResourceLifecycle {
   mut records : Map[String, ImageResourceRecord]
   mut revision : Int
@@ -104,6 +119,35 @@ pub fn ImageResourceSnapshot::from_records(
 }
 
 ///|
+pub fn ImageResourceLoadCompletion::ready(
+  source : String,
+  width~ : Int,
+  height~ : Int,
+) -> ImageResourceLoadCompletion {
+  {
+    source,
+    status: ImageResourceLoadCompletionStatus::ImageLoadReady,
+    width,
+    height,
+    diagnostic: "",
+  }
+}
+
+///|
+pub fn ImageResourceLoadCompletion::failed(
+  source : String,
+  diagnostic~ : String,
+) -> ImageResourceLoadCompletion {
+  {
+    source,
+    status: ImageResourceLoadCompletionStatus::ImageLoadFailed,
+    width: 0,
+    height: 0,
+    diagnostic,
+  }
+}
+
+///|
 pub fn ImageResourceLifecycle::mark_loading(
   self : ImageResourceLifecycle,
   source : String,
@@ -171,6 +215,35 @@ pub fn ImageResourceLifecycle::changed_since(
   revision : Int,
 ) -> Bool {
   self.revision > revision
+}
+
+///|
+pub fn ImageResourceLifecycle::apply_load_completion(
+  self : ImageResourceLifecycle,
+  completion : ImageResourceLoadCompletion,
+) -> ImageResourceSnapshot {
+  match self.lookup(completion.source) {
+    Some({ status: ImageResourceStatus::ImageLoading, .. }) =>
+      match completion.status {
+        ImageResourceLoadCompletionStatus::ImageLoadReady =>
+          ignore(
+            self.mark_ready(
+              completion.source,
+              width=completion.width,
+              height=completion.height,
+            ),
+          )
+        ImageResourceLoadCompletionStatus::ImageLoadFailed =>
+          ignore(
+            self.mark_failed(
+              completion.source,
+              diagnostic=completion.diagnostic,
+            ),
+          )
+      }
+    _ => ()
+  }
+  self.snapshot_with_revision()
 }
 
 ///|

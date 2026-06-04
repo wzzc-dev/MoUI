@@ -119,6 +119,7 @@ pub(all) struct WebGpuWasmRenderer {
   mut last_fallback_plan : @render.RendererCommandPlan
   image_lifecycle : @render.ImageResourceLifecycle
 }
+pub fn WebGpuWasmRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
 pub fn WebGpuWasmRenderer::backend_info(Self) -> @render.RendererBackendInfo
 pub fn WebGpuWasmRenderer::backend_kind(Self) -> @render.RendererBackendKind
 pub fn WebGpuWasmRenderer::dispose(Self) -> Unit

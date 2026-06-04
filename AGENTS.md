@@ -34,6 +34,7 @@ paths, or abstractions that only preserve old shapes.
   platform-window id mapping,
   request/completion, window event conversion, and renderer-neutral
   `HostWindowRenderer` diagnostics and image-resource change callback bridge,
+  image-resource load completion apply bridge,
   image-resource repaint routing contracts,
   native async image completion source,
   tracked-window image-resource repaint diagnostics with revision and lifecycle

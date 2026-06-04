@@ -647,6 +647,67 @@ test "skia renderer notifies image lifecycle revisions for ready and disposed re
 }
 
 ///|
+test "skia renderer applies image load completions and notifies revision callbacks" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.mark_image_loading("async.png")
+  let revisions : Array[Int] = []
+  let async_statuses : Array[@render.ImageResourceStatus] = []
+  let missing_statuses : Array[@render.ImageResourceStatus] = []
+  renderer.set_image_resource_change_callback(
+    Some(snapshot => {
+      revisions.push(snapshot.revision)
+      for record in snapshot.records {
+        if record.source == "async.png" {
+          async_statuses.push(record.status)
+        } else if record.source == "missing.png" {
+          missing_statuses.push(record.status)
+        }
+      }
+    }),
+  )
+  let ready = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::ready("async.png", width=18, height=10),
+  )
+  inspect(ready.revision, content="2")
+  assert_true(revisions == [2])
+  assert_true(async_statuses == [@render.ImageResourceStatus::ImageReady])
+  let stale = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::failed(
+      "async.png",
+      diagnostic="late failure",
+    ),
+  )
+  inspect(stale.revision, content="2")
+  inspect(revisions.length(), content="1")
+  renderer.mark_image_loading("missing.png")
+  let failed = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::failed(
+      "missing.png",
+      diagnostic="decode failed",
+    ),
+  )
+  inspect(failed.revision, content="4")
+  inspect(revisions.length(), content="3")
+  assert_true(
+    missing_statuses ==
+    [
+      @render.ImageResourceStatus::ImageLoading,
+      @render.ImageResourceStatus::ImageFailed,
+    ],
+  )
+  assert_true(renderer.failed_images.get("missing.png") is Some(_))
+}
+
+///|
 test "skia renderer records failed image resources and reuses failed cache" {
   guard skia_available() else { return () }
   let missing_source = "moui-skia-missing-image-resource://not-a-file"
