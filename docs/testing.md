@@ -403,7 +403,13 @@ passed evidence provenance as mandatory: a `status=passed` platform entry or a
 the claim to a non-skipped successful GitHub Actions job or a matching-host
 artifact bundle. A host label, build-only job, package artifact, provider
 preflight, or skipped workflow-dispatch path is not enough to support passed
-runtime evidence.
+runtime evidence. For Web folding,
+`record-platform-evidence-manifest.mjs ... web --web-presentation-manifest ...`
+derives provenance from the execution context: GitHub Actions runs record
+`kind=github-actions` with the workflow, job, run id, run URL, runner, and Web
+presentation/platform evidence artifacts; local or manual matching-host runs
+record `kind=matching-host-artifact` with the host label and browser-session
+artifact bundle.
 
 For Windows/Linux matching-host Skia route evidence, the convenience wrapper
 checks the expected log markers before delegating to the manifest recorder:
@@ -661,7 +667,10 @@ observations set to `yes`, `record-platform-evidence-manifest.mjs ... web
 --web-presentation-manifest ...` records the Web platform entry as passed for
 that browser session. The Web entry may keep `monitorCursor` pending because
 browser CDP evidence does not prove native monitor/current-monitor or cursor
-probes.
+probes. The browser-session manifest remains the runtime evidence artifact:
+GitHub Actions provenance is added only when the fold runs inside a non-skipped
+successful Actions job that also uploads those artifacts. A CI run URL, runner,
+or job name is not a substitute for a passed browser-session manifest.
 
 ## Release-Oriented Checklist
 
