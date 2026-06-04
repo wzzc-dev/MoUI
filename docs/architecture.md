@@ -554,8 +554,12 @@ deduplicates in-flight `(window, source)` work, and gates late or cancelled
 completion callbacks before they can apply to a renderer. The native macOS,
 Windows, and Linux host cores call the optional provider-owned loader hook after
 the presented image-resource revision has been baselined, then cancel in-flight
-window loads during disposal. The source and loader do not decode images,
-mutate renderer caches, or live in `core`;
+window loads during disposal. Native WGPU provider packages now supply a
+provider-owned loader that turns renderer-owned PNG/JPEG/BMP source decode
+results into `ImageResourceLoadCompletion` payloads; matching-host off-main
+async runtime evidence is still required before treating the route as fully
+ready. The host source and scheduler do not decode images, mutate renderer
+caches, or live in `core`;
 renderer/provider packages still own concrete loading and lifecycle records.
 
 `RendererDescriptor` and `RendererSelection` remain renderer facade reporting tools:
