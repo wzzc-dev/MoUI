@@ -138,8 +138,9 @@ Use this skill when editing or reviewing:
   diagnostics and image-resource change callback bridge, image-resource repaint
   routing and tracked-window revision/status diagnostics plus repaint-result
   previous/current status counts,
-  window request/completion queue, text-input session, window-event conversion,
-  async host-service queue, and redraw driver.
+  host-event subscription source fanout, window request/completion queue,
+  text-input session, window-event conversion, async host-service queue, and
+  redraw driver.
 - `backend/web/`: wasm-gc Web host, canvas constraints, resolver-backed
   multi-canvas window slots, browser runtime bridge, and accessibility adapter.
 - `backend/macos/`: AppKit/window host, resolver-backed multi-window slots,
@@ -442,6 +443,11 @@ moon info
   platform responses remain available as completed records instead of
   dispatching into stale app state. Keep lower-level
   `HostAppServices::on_completed` available for custom adapters.
+- For app-owned host-event sources, use `HostEventSource::subscription` in
+  `backend/host` so normalized `HostEvent` values can fan out to typed
+  `Program` messages through `Subscription::host_event`. Keep platform event
+  conversion in platform packages, and make adapter cleanup remove the publisher
+  handler so late host events do not reach stale app subscriptions.
 - Run the affected backend package tests.
 - Update `docs/platform-notes.md` when constraints or setup change.
 

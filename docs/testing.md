@@ -53,6 +53,7 @@ mapping is:
 | Navigation shell | `moon test moui/views --target native`, `moon test examples/showcase/app --target native` |
 | Menus and commands | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/command_palette/app --target native` |
 | Host services and file import | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native` |
+| Host event subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native` |
 | Virtual lists | `moon test moui/views --target native`, `sh scripts/conformance-check.sh --layout` |
 
 ## Platform Validation
@@ -278,7 +279,10 @@ instead of one large end-to-end assertion:
    state transitions belong here.
 2. Host layer: `backend/host` and active platform backends prove that native or
    browser events, services, window lifecycle requests, paste/composition, and
-   focused commands drive the runtime through shared contracts.
+   focused commands drive the runtime through shared contracts. Host-owned
+   subscription adapters also prove source start, typed dispatch mapping,
+   cancellation cleanup, and late-publisher behavior here before platform
+   packages wire concrete event sources.
 3. Implementation layer: renderer and provider packages prove concrete
    implementations honor the contract. This includes WGPU renderer capability
    evidence, native text-provider metrics/raster validation, and Web adapter
@@ -308,8 +312,9 @@ before it grows broad platform claims:
   selection, clipboard service routing, file drop dispatch, and semantics action
   roundtrips.
 - Platform/tooling: host-service capability checks, Linux readiness, Web
-  wasm-gc backend tests, async host-service completion, window lifecycle
-  registry behavior, app-owned route history/deep-link state, devtool
+  wasm-gc backend tests, async host-service completion, host-event subscription
+  adapter fanout/cleanup, window lifecycle registry behavior, app-owned route
+  history/deep-link state, devtool
   snapshots, render inspector scope diagnostics, frame-profile counters,
   guidance freshness, and example builds. Showcase app tests also assert that
   the Navigation Shell surfaces route history state and app-sampled route
