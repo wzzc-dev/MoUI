@@ -1,0 +1,2371 @@
+{
+  "schema_version": 4,
+  "revision_file": "skia-revision.txt",
+  "default_provider": "release",
+  "provider_lock_file": "skia-provider-lock.json",
+  "ci_gate_evidence_files": [
+    ".github/workflows/fallback.yml",
+    ".github/workflows/linux-real-skia-smoke.yml",
+    ".github/workflows/macos-real-skia-smoke.yml",
+    ".github/workflows/windows-real-skia-smoke.yml",
+    ".github/workflows/real-skia-acceptance.yml",
+    "scripts/check-fallback.ps1"
+  ],
+  "ci_gates": [
+    {
+      "id": "moonbit.fmt-check",
+      "area": "MoonBit",
+      "unix_command": "moon fmt && moon check --fmt",
+      "powershell_command": "moon fmt; moon check --fmt"
+    },
+    {
+      "id": "moonbit.check-test",
+      "area": "MoonBit",
+      "unix_command": "moon check && moon test",
+      "powershell_command": "moon check; moon test"
+    },
+    {
+      "id": "moonbit.all-target-check",
+      "area": "MoonBit",
+      "unix_command": "moon check --target all",
+      "powershell_command": ""
+    },
+    {
+      "id": "native.smoke-build",
+      "area": "NativeSmoke",
+      "unix_command": "moon -C scripts/native_smoke check && moon -C scripts/native_smoke build --target native",
+      "powershell_command": "moon -C scripts/native_smoke check; moon -C scripts/native_smoke build --target native"
+    },
+    {
+      "id": "native.asan-smoke-dry-run",
+      "area": "NativeSmoke",
+      "unix_command": "bash scripts/linux-skia-smoke.sh --dry-run-config --enable-asan && bash scripts/macos-skia-smoke.sh --dry-run-config --enable-asan",
+      "powershell_command": ""
+    },
+    {
+      "id": "native.smoke-capability-sync",
+      "area": "NativeSmoke",
+      "unix_command": "bash scripts/verify-native-smoke-capabilities.sh",
+      "powershell_command": ".\\scripts\\verify-native-smoke-capabilities.ps1"
+    },
+    {
+      "id": "native.capability-contract",
+      "area": "FFI",
+      "unix_command": "bash scripts/verify-native-capability-contract.sh",
+      "powershell_command": ".\\scripts\\verify-native-capability-contract.ps1"
+    },
+    {
+      "id": "native.ownership",
+      "area": "FFI",
+      "unix_command": "bash scripts/verify-native-ownership.sh",
+      "powershell_command": ".\\scripts\\verify-native-ownership.ps1"
+    },
+    {
+      "id": "native.ffi-borrows",
+      "area": "FFI",
+      "unix_command": "bash scripts/verify-native-ffi-borrows.sh",
+      "powershell_command": ".\\scripts\\verify-native-ffi-borrows.ps1"
+    },
+    {
+      "id": "native.fallback-parity",
+      "area": "FFI",
+      "unix_command": "bash scripts/verify-native-fallback-parity.sh",
+      "powershell_command": ".\\scripts\\verify-native-fallback-parity.ps1"
+    },
+    {
+      "id": "example.link-config",
+      "area": "Example",
+      "unix_command": "bash scripts/verify-example-link-config.sh",
+      "powershell_command": ".\\scripts\\verify-example-link-config.ps1"
+    },
+    {
+      "id": "platform.status",
+      "area": "PlatformStatus",
+      "unix_command": "bash scripts/verify-platform-status.sh",
+      "powershell_command": ".\\scripts\\verify-platform-status.ps1"
+    },
+    {
+      "id": "artifact.native-smoke-log",
+      "area": "Artifact",
+      "unix_command": "bash scripts/verify-native-smoke-log.sh logs/<platform>-native-smoke-output.log",
+      "powershell_command": ".\\scripts\\verify-native-smoke-log.ps1 -LogPath logs\\<platform>-native-smoke-output.log"
+    },
+    {
+      "id": "artifact.real-skia",
+      "area": "Artifact",
+      "unix_command": "bash scripts/verify-real-skia-artifact.sh --platform <platform> --log-dir logs",
+      "powershell_command": ".\\scripts\\verify-real-skia-artifact.ps1 -Platform <platform> -LogDir logs"
+    }
+  ],
+  "native_smoke_capabilities": [
+    {
+      "id": "surface.descriptor",
+      "area": "Surface",
+      "marker": "native smoke surface descriptor backend"
+    },
+    {
+      "id": "surface.target-factory-raster",
+      "area": "Surface",
+      "marker": "native smoke surface target factory raster"
+    },
+    {
+      "id": "surface.target-factory-unsupported",
+      "area": "Surface",
+      "marker": "native smoke surface target factory unsupported"
+    },
+    {
+      "id": "surface.target-support-diagnostics",
+      "area": "Surface",
+      "marker": "native smoke surface target support diagnostics"
+    },
+    {
+      "id": "canvas.state",
+      "area": "Canvas",
+      "marker": "native smoke canvas state restored"
+    },
+    {
+      "id": "canvas.clip",
+      "area": "Canvas",
+      "marker": "native smoke canvas clip device width"
+    },
+    {
+      "id": "canvas.non-finite-direct-geometry-skipped",
+      "area": "Canvas",
+      "marker": "native smoke non-finite canvas direct geometry skipped"
+    },
+    {
+      "id": "canvas.non-finite-paint-layer-sanitized",
+      "area": "Canvas",
+      "marker": "native smoke non-finite canvas paint layer sanitized"
+    },
+    {
+      "id": "canvas.image-sampling-scalars-sanitized",
+      "area": "Canvas",
+      "marker": "native smoke image sampling scalars sanitized"
+    },
+    {
+      "id": "canvas.command-replay",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay commands"
+    },
+    {
+      "id": "canvas.frame-replay",
+      "area": "Canvas",
+      "marker": "native smoke render frame replay commands"
+    },
+    {
+      "id": "canvas.frame-replay-complete",
+      "area": "Canvas",
+      "marker": "native smoke render frame replay complete"
+    },
+    {
+      "id": "canvas.replay-status-contract",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay status contract"
+    },
+    {
+      "id": "canvas.replay-deferred-present",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay deferred present"
+    },
+    {
+      "id": "canvas.replay-transforms",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay transforms"
+    },
+    {
+      "id": "canvas.replay-state-stats",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay state stats"
+    },
+    {
+      "id": "canvas.replay-resource-declarations",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay resource declarations"
+    },
+    {
+      "id": "canvas.replay-image-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay image resources"
+    },
+    {
+      "id": "canvas.replay-shader-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay shader resources"
+    },
+    {
+      "id": "canvas.replay-filter-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay filter resources"
+    },
+    {
+      "id": "canvas.replay-path-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay path resources"
+    },
+    {
+      "id": "canvas.replay-text-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay text resources"
+    },
+    {
+      "id": "canvas.replay-rrect-path-clips",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay rrect path clips"
+    },
+    {
+      "id": "canvas.replay-clip-path-cache-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay clip path cache resources"
+    },
+    {
+      "id": "canvas.empty-path-replay-cache-resources",
+      "area": "Canvas",
+      "marker": "native smoke empty path replay path cache resources"
+    },
+    {
+      "id": "canvas.empty-path-replay-path-resources",
+      "area": "Canvas",
+      "marker": "native smoke empty path replay path resources"
+    },
+    {
+      "id": "canvas.empty-path-replay-cache-misses",
+      "area": "Canvas",
+      "marker": "native smoke empty path replay path cache misses"
+    },
+    {
+      "id": "canvas.empty-path-replay-cache-hits",
+      "area": "Canvas",
+      "marker": "native smoke empty path replay path cache hits"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-skipped",
+      "area": "Canvas",
+      "marker": "native smoke non-finite path replay skipped"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-path-resources",
+      "area": "Canvas",
+      "marker": "native smoke non-finite path replay path resources"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-resources",
+      "area": "Canvas",
+      "marker": "native smoke non-finite path replay path cache resources"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-misses",
+      "area": "Canvas",
+      "marker": "native smoke non-finite path replay path cache misses"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-hits",
+      "area": "Canvas",
+      "marker": "native smoke non-finite path replay path cache hits"
+    },
+    {
+      "id": "canvas.replay-color-paint-fills",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay color paint fills"
+    },
+    {
+      "id": "canvas.replay-paint-fill-clipped",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay paint fill clipped"
+    },
+    {
+      "id": "canvas.replay-paint-shader-fills",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay paint shader fills"
+    },
+    {
+      "id": "canvas.replay-paint-shader-cache-resources",
+      "area": "Canvas",
+      "marker": "native smoke canvas replay paint shader cache resources"
+    },
+    {
+      "id": "canvas.frame-replay-rejected-skipped",
+      "area": "Canvas",
+      "marker": "native smoke render frame replay rejected skipped"
+    },
+    {
+      "id": "surface.frame-render-commands",
+      "area": "Surface",
+      "marker": "native smoke surface render frame commands"
+    },
+    {
+      "id": "surface.frame-render-finalized",
+      "area": "Surface",
+      "marker": "native smoke surface render frame finalized"
+    },
+    {
+      "id": "surface.frame-render-status-contract",
+      "area": "Surface",
+      "marker": "native smoke surface render frame status contract"
+    },
+    {
+      "id": "surface.frame-render-finalization-frame-index",
+      "area": "Surface",
+      "marker": "native smoke surface render frame finalization frame index"
+    },
+    {
+      "id": "surface.frame-render-finalization-resource-plan",
+      "area": "Surface",
+      "marker": "native smoke surface render frame finalization resource plan count"
+    },
+    {
+      "id": "surface.frame-render-finalization-cacheable",
+      "area": "Surface",
+      "marker": "native smoke surface render frame finalization cacheable count"
+    },
+    {
+      "id": "surface.frame-render-finalization-uncacheable",
+      "area": "Surface",
+      "marker": "native smoke surface render frame finalization uncacheable count"
+    },
+    {
+      "id": "surface.frame-render-cache-resources",
+      "area": "Surface",
+      "marker": "native smoke surface render frame cache resources"
+    },
+    {
+      "id": "pipeline.native-replay-resource-stats-caches",
+      "area": "Pipeline",
+      "marker": "native smoke native replay resource stats caches"
+    },
+    {
+      "id": "pipeline.native-replay-resource-stats-resources",
+      "area": "Pipeline",
+      "marker": "native smoke native replay resource stats resources"
+    },
+    {
+      "id": "surface.frame-render-mismatch-rejected",
+      "area": "Surface",
+      "marker": "native smoke surface render frame mismatch rejected"
+    },
+    {
+      "id": "surface.frame-render-pixmap-sample-proof",
+      "area": "Surface",
+      "marker": "native smoke render frame pixmap sample proof"
+    },
+    {
+      "id": "pipeline.shaped-glyph-run-command",
+      "area": "Pipeline",
+      "marker": "native smoke render shaped glyph run command replay"
+    },
+    {
+      "id": "pipeline.shader-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render shader cache resources"
+    },
+    {
+      "id": "pipeline.shader-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render shader cache misses"
+    },
+    {
+      "id": "pipeline.shader-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render shader cache hits"
+    },
+    {
+      "id": "pipeline.path-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render path cache resources"
+    },
+    {
+      "id": "pipeline.path-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render path cache misses"
+    },
+    {
+      "id": "pipeline.path-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render path cache hits"
+    },
+    {
+      "id": "pipeline.text-run-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render text run cache resources"
+    },
+    {
+      "id": "pipeline.text-run-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render text run cache misses"
+    },
+    {
+      "id": "pipeline.text-run-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render text run cache hits"
+    },
+    {
+      "id": "pipeline.font-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render font cache resources"
+    },
+    {
+      "id": "pipeline.font-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render font cache misses"
+    },
+    {
+      "id": "pipeline.font-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render font cache hits"
+    },
+    {
+      "id": "pipeline.typeface-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render typeface cache resources"
+    },
+    {
+      "id": "pipeline.typeface-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render typeface cache misses"
+    },
+    {
+      "id": "pipeline.typeface-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render typeface cache hits"
+    },
+    {
+      "id": "pipeline.color-filter-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render color filter cache resources"
+    },
+    {
+      "id": "pipeline.color-filter-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render color filter cache misses"
+    },
+    {
+      "id": "pipeline.color-filter-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render color filter cache hits"
+    },
+    {
+      "id": "pipeline.image-filter-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render image filter cache resources"
+    },
+    {
+      "id": "pipeline.image-filter-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render image filter cache misses"
+    },
+    {
+      "id": "pipeline.image-filter-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render image filter cache hits"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render mask filter cache resources"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render mask filter cache misses"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render mask filter cache hits"
+    },
+    {
+      "id": "pipeline.resource-plan",
+      "area": "Pipeline",
+      "marker": "native smoke render resource plan count"
+    },
+    {
+      "id": "pipeline.frame-resource-plan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame resource plan count"
+    },
+    {
+      "id": "pipeline.frame-validation",
+      "area": "Pipeline",
+      "marker": "native smoke render frame validation status"
+    },
+    {
+      "id": "pipeline.frame-cacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame cacheable subplan count"
+    },
+    {
+      "id": "pipeline.frame-uncacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame uncacheable subplan count"
+    },
+    {
+      "id": "pipeline.frame-unbalanced-validation",
+      "area": "Pipeline",
+      "marker": "native smoke render frame unbalanced validation"
+    },
+    {
+      "id": "pipeline.target-identity-validation",
+      "area": "Pipeline",
+      "marker": "native smoke render target identity validation"
+    },
+    {
+      "id": "pipeline.target-resource-binding",
+      "area": "Pipeline",
+      "marker": "native smoke render target resource binding"
+    },
+    {
+      "id": "pipeline.frame-present",
+      "area": "Pipeline",
+      "marker": "native smoke render frame present count"
+    },
+    {
+      "id": "pipeline.frame-present-descriptor",
+      "area": "Pipeline",
+      "marker": "native smoke render frame present descriptor validation"
+    },
+    {
+      "id": "pipeline.frame-submission-resource-plan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission resource plan count"
+    },
+    {
+      "id": "pipeline.frame-submission-cacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission cacheable subplan count"
+    },
+    {
+      "id": "pipeline.frame-submission-uncacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission uncacheable subplan count"
+    },
+    {
+      "id": "pipeline.frame-submission-preflight-missing",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission preflight missing count"
+    },
+    {
+      "id": "pipeline.frame-submission-preflight-cached",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission preflight cached count"
+    },
+    {
+      "id": "pipeline.frame-submission-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render frame submission cache resources"
+    },
+    {
+      "id": "pipeline.frame-finalization-resource-plan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization resource plan count"
+    },
+    {
+      "id": "pipeline.frame-finalization-cacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization cacheable subplan count"
+    },
+    {
+      "id": "pipeline.frame-finalization-uncacheable-subplan",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization uncacheable subplan count"
+    },
+    {
+      "id": "pipeline.frame-finalization-preflight-missing",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization preflight missing count"
+    },
+    {
+      "id": "pipeline.frame-finalization-preflight-cached",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization preflight cached count"
+    },
+    {
+      "id": "pipeline.frame-finalization-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render frame finalization cache resources"
+    },
+    {
+      "id": "pipeline.frame-missing-present-validation",
+      "area": "Pipeline",
+      "marker": "native smoke render frame missing present validation"
+    },
+    {
+      "id": "pipeline.frame-missing-finalization-validation",
+      "area": "Pipeline",
+      "marker": "native smoke render frame missing finalization validation"
+    },
+    {
+      "id": "pipeline.frame-touched-bounds",
+      "area": "Pipeline",
+      "marker": "native smoke render frame touched bounds width"
+    },
+    {
+      "id": "pipeline.frame-cache-resources",
+      "area": "Pipeline",
+      "marker": "native smoke render frame cache resources"
+    },
+    {
+      "id": "pipeline.resource-cache",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache inserts"
+    },
+    {
+      "id": "pipeline.resource-cache-preflight-missing",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache preflight missing count"
+    },
+    {
+      "id": "pipeline.resource-cache-preflight-cached",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache preflight cached count"
+    },
+    {
+      "id": "pipeline.resource-cache-plan-coverage",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache plan coverage"
+    },
+    {
+      "id": "pipeline.resource-cache-eviction",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache evictions"
+    },
+    {
+      "id": "pipeline.resource-cache-hits",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache hits"
+    },
+    {
+      "id": "pipeline.resource-cache-misses",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache misses"
+    },
+    {
+      "id": "pipeline.resource-cache-byte-size",
+      "area": "Pipeline",
+      "marker": "native smoke render resource cache byte size"
+    },
+    {
+      "id": "gpu.context-resource-plan",
+      "area": "GPU",
+      "marker": "native smoke gpu context resource plan count"
+    },
+    {
+      "id": "gpu.context-key-variation",
+      "area": "GPU",
+      "marker": "native smoke gpu context key variation"
+    },
+    {
+      "id": "gpu.frame-context-validation",
+      "area": "GPU",
+      "marker": "native smoke gpu frame context validation"
+    },
+    {
+      "id": "gpu.present-resource-plan",
+      "area": "GPU",
+      "marker": "native smoke gpu present resource plan count"
+    },
+    {
+      "id": "gpu.finalization-resource-plan",
+      "area": "GPU",
+      "marker": "native smoke gpu finalization resource plan count"
+    },
+    {
+      "id": "gpu.frame-finalization-resource-plan",
+      "area": "GPU",
+      "marker": "native smoke gpu frame finalization resource plan count"
+    },
+    {
+      "id": "gpu.frame-finalization-gpu-resources",
+      "area": "GPU",
+      "marker": "native smoke gpu frame finalization gpu resource count"
+    },
+    {
+      "id": "gpu.frame-submission-resource-plan",
+      "area": "GPU",
+      "marker": "native smoke gpu frame submission resource plan count"
+    },
+    {
+      "id": "gpu.frame-submission-gpu-resources",
+      "area": "GPU",
+      "marker": "native smoke gpu frame submission gpu resource count"
+    },
+    {
+      "id": "surface.target-resource-plan",
+      "area": "Surface",
+      "marker": "native smoke surface target resource plan count"
+    },
+    {
+      "id": "surface.target-cache-resources",
+      "area": "Surface",
+      "marker": "native smoke surface target cache resources"
+    },
+    {
+      "id": "surface.window-target-resource-plan",
+      "area": "Surface",
+      "marker": "native smoke window target resource plan count"
+    },
+    {
+      "id": "surface.window-physical-width",
+      "area": "Surface",
+      "marker": "native smoke window physical width"
+    },
+    {
+      "id": "surface.window-frame-pacing",
+      "area": "Surface",
+      "marker": "native smoke window frame pacing"
+    },
+    {
+      "id": "surface.window-frame-pacing-key",
+      "area": "Surface",
+      "marker": "native smoke window frame pacing key variation"
+    },
+    {
+      "id": "surface.window-present-mode-key",
+      "area": "Surface",
+      "marker": "native smoke window present mode key variation"
+    },
+    {
+      "id": "surface.finalization-resource-plan",
+      "area": "Surface",
+      "marker": "native smoke surface finalization resource plan count"
+    },
+    {
+      "id": "surface.finalization-key",
+      "area": "Surface",
+      "marker": "native smoke surface finalization key variation"
+    },
+    {
+      "id": "surface.present-buffer-index",
+      "area": "Surface",
+      "marker": "native smoke surface present buffer index"
+    },
+    {
+      "id": "surface.present-resource-plan",
+      "area": "Surface",
+      "marker": "native smoke surface present resource plan count"
+    },
+    {
+      "id": "surface.flush-and-submit",
+      "area": "Surface",
+      "marker": "native smoke surface flush-and-submit"
+    },
+    {
+      "id": "shader.draw",
+      "area": "Shader",
+      "marker": "native smoke shader draws"
+    },
+    {
+      "id": "shader.resource-plan",
+      "area": "Shader",
+      "marker": "native smoke shader resource plan count"
+    },
+    {
+      "id": "shader.linear-gradient-validation",
+      "area": "Shader",
+      "marker": "native smoke shader linear gradient validation"
+    },
+    {
+      "id": "shader.linear-gradient-finite-validation",
+      "area": "Shader",
+      "marker": "native smoke shader linear gradient finite validation"
+    },
+    {
+      "id": "shader.radial-gradient-validation",
+      "area": "Shader",
+      "marker": "native smoke shader radial gradient validation"
+    },
+    {
+      "id": "shader-filter.invalid-descriptor-resources",
+      "area": "Shader",
+      "marker": "native smoke invalid shader filter descriptor resources"
+    },
+    {
+      "id": "shader-filter.invalid-replay-skipped",
+      "area": "Shader",
+      "marker": "native smoke invalid shader filter replay skipped"
+    },
+    {
+      "id": "shader-filter.invalid-replay-cache-resources",
+      "area": "Shader",
+      "marker": "native smoke invalid shader filter replay cache resources"
+    },
+    {
+      "id": "shader-filter.invalid-replay-cache-misses",
+      "area": "Shader",
+      "marker": "native smoke invalid shader filter replay cache misses"
+    },
+    {
+      "id": "shader-filter.invalid-replay-filter-resources",
+      "area": "Shader",
+      "marker": "native smoke invalid shader filter replay filter resources"
+    },
+    {
+      "id": "filter.layer",
+      "area": "Filter",
+      "marker": "native smoke filter layer count"
+    },
+    {
+      "id": "filter.finite-validation",
+      "area": "Filter",
+      "marker": "native smoke filter finite validation"
+    },
+    {
+      "id": "filter.non-finite-handle-validation",
+      "area": "Filter",
+      "marker": "native smoke filter non-finite handle validation"
+    },
+    {
+      "id": "filter.resource-plan",
+      "area": "Filter",
+      "marker": "native smoke filter resource plan count"
+    },
+    {
+      "id": "path.geometry",
+      "area": "Path",
+      "marker": "native smoke path verbs"
+    },
+    {
+      "id": "path.non-finite-from-value-rejected",
+      "area": "Path",
+      "marker": "native smoke non-finite path from-value rejected"
+    },
+    {
+      "id": "path.non-finite-add-skipped",
+      "area": "Path",
+      "marker": "native smoke non-finite path add skipped"
+    },
+    {
+      "id": "path.non-finite-direct-mutations-skipped",
+      "area": "Path",
+      "marker": "native smoke non-finite path direct mutations skipped"
+    },
+    {
+      "id": "surface.readback",
+      "area": "Surface",
+      "marker": "native smoke readback width"
+    },
+    {
+      "id": "surface.readback-height",
+      "area": "Surface",
+      "marker": "native smoke readback height"
+    },
+    {
+      "id": "surface.readback-row-bytes",
+      "area": "Surface",
+      "marker": "native smoke readback row_bytes"
+    },
+    {
+      "id": "surface.readback-pixmap-sample-proof",
+      "area": "Surface",
+      "marker": "native smoke pixmap readback sample proof"
+    },
+    {
+      "id": "surface.bounded-readback",
+      "area": "Surface",
+      "marker": "native smoke bounded readback width"
+    },
+    {
+      "id": "surface.bounded-readback-height",
+      "area": "Surface",
+      "marker": "native smoke bounded readback height"
+    },
+    {
+      "id": "surface.bounded-snapshot",
+      "area": "Surface",
+      "marker": "native smoke bounded snapshot width"
+    },
+    {
+      "id": "surface.bounded-snapshot-height",
+      "area": "Surface",
+      "marker": "native smoke bounded snapshot height"
+    },
+    {
+      "id": "surface.bounds-rejected",
+      "area": "Surface",
+      "marker": "native smoke surface bounds rejected"
+    },
+    {
+      "id": "image.encode-png",
+      "area": "Image",
+      "marker": "native smoke encoded PNG bytes"
+    },
+    {
+      "id": "image.encode-parameters-sanitized",
+      "area": "Image",
+      "marker": "native smoke image encode parameters sanitized"
+    },
+    {
+      "id": "image.decode",
+      "area": "Image",
+      "marker": "native smoke decoded image width"
+    },
+    {
+      "id": "image.decode-height",
+      "area": "Image",
+      "marker": "native smoke decoded image height"
+    },
+    {
+      "id": "image.render-command-replay",
+      "area": "Image",
+      "marker": "native smoke render image command replay"
+    },
+    {
+      "id": "image.render-command-count",
+      "area": "Image",
+      "marker": "native smoke render image command count"
+    },
+    {
+      "id": "image.render-command-resource-plan",
+      "area": "Image",
+      "marker": "native smoke render image resource plan count"
+    },
+    {
+      "id": "image.render-command-cache-resources",
+      "area": "Image",
+      "marker": "native smoke render image cache resources"
+    },
+    {
+      "id": "image.render-command-cache-misses",
+      "area": "Image",
+      "marker": "native smoke render image cache misses"
+    },
+    {
+      "id": "image.render-command-cache-hits",
+      "area": "Image",
+      "marker": "native smoke render image cache hits"
+    },
+    {
+      "id": "image.render-decode-failure-resource-plan",
+      "area": "Image",
+      "marker": "native smoke render image decode failure resource plan count"
+    },
+    {
+      "id": "image.render-decode-failure-skipped",
+      "area": "Image",
+      "marker": "native smoke render image decode failure skipped"
+    },
+    {
+      "id": "image.render-decode-failure-cache-resources",
+      "area": "Image",
+      "marker": "native smoke render image decode failure cache resources"
+    },
+    {
+      "id": "image.render-decode-failure-cache-misses",
+      "area": "Image",
+      "marker": "native smoke render image decode failure cache misses"
+    },
+    {
+      "id": "image.empty-descriptor-command-plan",
+      "area": "Image",
+      "marker": "native smoke empty image descriptor command plan count"
+    },
+    {
+      "id": "image.empty-descriptor-replay-skipped",
+      "area": "Image",
+      "marker": "native smoke empty image descriptor replay skipped"
+    },
+    {
+      "id": "image.empty-descriptor-cache-misses",
+      "area": "Image",
+      "marker": "native smoke empty image descriptor cache misses"
+    },
+    {
+      "id": "codec.metadata",
+      "area": "Codec",
+      "marker": "native smoke codec encoded format PNG"
+    },
+    {
+      "id": "codec.width",
+      "area": "Codec",
+      "marker": "native smoke codec width"
+    },
+    {
+      "id": "codec.height",
+      "area": "Codec",
+      "marker": "native smoke codec height"
+    },
+    {
+      "id": "bitmap.decode-readback",
+      "area": "Bitmap",
+      "marker": "native smoke decoded bitmap width"
+    },
+    {
+      "id": "bitmap.decode-readback-height",
+      "area": "Bitmap",
+      "marker": "native smoke decoded bitmap height"
+    },
+    {
+      "id": "text.font-spacing",
+      "area": "Text",
+      "marker": "native smoke font spacing"
+    },
+    {
+      "id": "text.non-finite-font-scalars-sanitized",
+      "area": "Text",
+      "marker": "native smoke non-finite font scalars sanitized"
+    },
+    {
+      "id": "text.font-resource-plan",
+      "area": "Text",
+      "marker": "native smoke font resource plan count"
+    },
+    {
+      "id": "text.text-run-resource-plan",
+      "area": "Text",
+      "marker": "native smoke text run resource plan count"
+    },
+    {
+      "id": "text.text-run-range",
+      "area": "Text",
+      "marker": "native smoke text run range byte size"
+    },
+    {
+      "id": "text.text-run-empty-range-resource-plan",
+      "area": "Text",
+      "marker": "native smoke text run empty range resource plan count"
+    },
+    {
+      "id": "text.text-run-empty-range-skipped",
+      "area": "Text",
+      "marker": "native smoke text run empty range skipped"
+    },
+    {
+      "id": "text.text-run-empty-range-cache-resources",
+      "area": "Text",
+      "marker": "native smoke text run empty range cache resources"
+    },
+    {
+      "id": "text.measurement-resource-plan",
+      "area": "Text",
+      "marker": "native smoke text measurement resource plan count"
+    },
+    {
+      "id": "text.measured-run-resource-plan",
+      "area": "Text",
+      "marker": "native smoke measured text resource plan count"
+    },
+    {
+      "id": "text.measured-run-key",
+      "area": "Text",
+      "marker": "native smoke measured text key variation"
+    },
+    {
+      "id": "text.invalid-measured-run-resource-plan",
+      "area": "Text",
+      "marker": "native smoke invalid measured text resource plan count"
+    },
+    {
+      "id": "text.invalid-measured-run-uncacheable",
+      "area": "Text",
+      "marker": "native smoke invalid measured text uncacheable count"
+    },
+    {
+      "id": "text.measurement-key",
+      "area": "Text",
+      "marker": "native smoke text measurement key variation"
+    },
+    {
+      "id": "text.shaping-resource-plan",
+      "area": "Text",
+      "marker": "native smoke text shaping resource plan count"
+    },
+    {
+      "id": "text.shaped-text-resource-plan",
+      "area": "Text",
+      "marker": "native smoke shaped text resource plan count"
+    },
+    {
+      "id": "text.shaped-glyph-run-resource-plan",
+      "area": "Text",
+      "marker": "native smoke shaped glyph run resource plan count"
+    },
+    {
+      "id": "text.shaped-glyph-run-key",
+      "area": "Text",
+      "marker": "native smoke shaped glyph run key variation"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-resource-plan",
+      "area": "Text",
+      "marker": "native smoke invalid shaped glyph resource plan count"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-command-plan",
+      "area": "Text",
+      "marker": "native smoke invalid shaped glyph command plan count"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-replay-skipped",
+      "area": "Text",
+      "marker": "native smoke invalid shaped glyph replay skipped"
+    },
+    {
+      "id": "text.measure",
+      "area": "Text",
+      "marker": "native smoke measured text width"
+    },
+    {
+      "id": "text.glyph-count",
+      "area": "Text",
+      "marker": "native smoke text glyph count"
+    },
+    {
+      "id": "text.glyph-id",
+      "area": "Text",
+      "marker": "native smoke first glyph id"
+    },
+    {
+      "id": "text.glyph-width",
+      "area": "Text",
+      "marker": "native smoke first glyph width"
+    },
+    {
+      "id": "text.glyph-position",
+      "area": "Text",
+      "marker": "native smoke second glyph position x"
+    },
+    {
+      "id": "text.glyph-x-position",
+      "area": "Text",
+      "marker": "native smoke second glyph x position"
+    },
+    {
+      "id": "text.glyph-bounds",
+      "area": "Text",
+      "marker": "native smoke first glyph bounds width"
+    },
+    {
+      "id": "text.bounds",
+      "area": "Text",
+      "marker": "native smoke measured text bounds width"
+    },
+    {
+      "id": "text.shaper-availability",
+      "area": "Text",
+      "marker": "native smoke shaper availability"
+    },
+    {
+      "id": "text.default-typeface-availability",
+      "area": "Text",
+      "marker": "native smoke default typeface availability"
+    },
+    {
+      "id": "fontmgr.family-count",
+      "area": "FontMgr",
+      "marker": "native smoke font family count"
+    },
+    {
+      "id": "fontmgr.family-name",
+      "area": "FontMgr",
+      "marker": "native smoke first font family bytes"
+    },
+    {
+      "id": "fontmgr.typeface-family",
+      "area": "FontMgr",
+      "marker": "native smoke typeface family bytes"
+    },
+    {
+      "id": "fontmgr.character-fallback",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback width"
+    },
+    {
+      "id": "fontmgr.invalid-fallback-request-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke invalid fallback request resource plan count"
+    },
+    {
+      "id": "fontmgr.fallback-key",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback key variation"
+    },
+    {
+      "id": "fontmgr.fallback-family-name",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback family bytes"
+    },
+    {
+      "id": "fontmgr.fallback-match-key",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback match key variation"
+    },
+    {
+      "id": "fontmgr.fallback-match-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback match resource plan count"
+    },
+    {
+      "id": "fontmgr.fallback-resolution-key",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback resolution key variation"
+    },
+    {
+      "id": "fontmgr.fallback-resolution-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback resolution resource plan count"
+    },
+    {
+      "id": "fontmgr.invalid-fallback-match-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke invalid fallback match resource plan count"
+    },
+    {
+      "id": "fontmgr.invalid-fallback-resolution-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke invalid fallback resolution resource plan count"
+    },
+    {
+      "id": "fontmgr.fallback-resolution-bridge",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback resolution bridge"
+    },
+    {
+      "id": "fontmgr.fallback-resolution-bridge-cache-resources",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback resolution bridge cache resources"
+    },
+    {
+      "id": "fontmgr.fallback-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback resource plan count"
+    },
+    {
+      "id": "fontmgr.fallback-font-resource-plan",
+      "area": "FontMgr",
+      "marker": "native smoke font fallback font resource plan count"
+    }
+  ],
+  "native_smoke_conditional_capabilities": [
+    {
+      "id": "text.shaped-glyph-count",
+      "area": "Text",
+      "marker": "native smoke shaped glyph count",
+      "when_marker": "native smoke shaper availability",
+      "when_value": "1"
+    },
+    {
+      "id": "text.native-shaped-text-resource-plan",
+      "area": "Text",
+      "marker": "native smoke shaped text native resource plan count",
+      "when_marker": "native smoke shaper availability",
+      "when_value": "1"
+    },
+    {
+      "id": "text.native-shaped-glyph-run-resource-plan",
+      "area": "Text",
+      "marker": "native smoke shaped glyph run native resource plan count",
+      "when_marker": "native smoke shaper availability",
+      "when_value": "1"
+    },
+    {
+      "id": "text.shaped-glyph-descriptor-bridge",
+      "area": "Text",
+      "marker": "native smoke shaped glyph descriptor bridge",
+      "when_marker": "native smoke shaper availability",
+      "when_value": "1"
+    },
+    {
+      "id": "text.shaped-glyph-descriptor-bridge-cache-resources",
+      "area": "Text",
+      "marker": "native smoke shaped glyph descriptor bridge cache resources",
+      "when_marker": "native smoke shaper availability",
+      "when_value": "1"
+    }
+  ],
+  "native_smoke_expected_values": [
+    {
+      "id": "surface.target-support-diagnostics",
+      "marker": "native smoke surface target support diagnostics",
+      "value": "2"
+    },
+    {
+      "id": "canvas.clip",
+      "marker": "native smoke canvas clip device width",
+      "value": "4"
+    },
+    {
+      "id": "canvas.state",
+      "marker": "native smoke canvas state restored",
+      "value": "1"
+    },
+    {
+      "id": "canvas.non-finite-direct-geometry-skipped",
+      "marker": "native smoke non-finite canvas direct geometry skipped",
+      "value": "1"
+    },
+    {
+      "id": "canvas.non-finite-paint-layer-sanitized",
+      "marker": "native smoke non-finite canvas paint layer sanitized",
+      "value": "1"
+    },
+    {
+      "id": "canvas.image-sampling-scalars-sanitized",
+      "marker": "native smoke image sampling scalars sanitized",
+      "value": "1"
+    },
+    {
+      "id": "canvas.command-replay",
+      "marker": "native smoke canvas replay commands",
+      "value": "29"
+    },
+    {
+      "id": "canvas.frame-replay",
+      "marker": "native smoke render frame replay commands",
+      "value": "29"
+    },
+    {
+      "id": "canvas.frame-replay-complete",
+      "marker": "native smoke render frame replay complete",
+      "value": "1"
+    },
+    {
+      "id": "canvas.replay-status-contract",
+      "marker": "native smoke canvas replay status contract",
+      "value": "3"
+    },
+    {
+      "id": "canvas.replay-deferred-present",
+      "marker": "native smoke canvas replay deferred present",
+      "value": "1"
+    },
+    {
+      "id": "canvas.replay-transforms",
+      "marker": "native smoke canvas replay transforms",
+      "value": "6"
+    },
+    {
+      "id": "canvas.replay-state-stats",
+      "marker": "native smoke canvas replay state stats",
+      "value": "4"
+    },
+    {
+      "id": "canvas.replay-resource-declarations",
+      "marker": "native smoke canvas replay resource declarations",
+      "value": "4"
+    },
+    {
+      "id": "canvas.replay-image-resources",
+      "marker": "native smoke canvas replay image resources",
+      "value": "0"
+    },
+    {
+      "id": "canvas.replay-shader-resources",
+      "marker": "native smoke canvas replay shader resources",
+      "value": "4"
+    },
+    {
+      "id": "canvas.replay-filter-resources",
+      "marker": "native smoke canvas replay filter resources",
+      "value": "6"
+    },
+    {
+      "id": "canvas.replay-path-resources",
+      "marker": "native smoke canvas replay path resources",
+      "value": "2"
+    },
+    {
+      "id": "canvas.replay-text-resources",
+      "marker": "native smoke canvas replay text resources",
+      "value": "9"
+    },
+    {
+      "id": "canvas.replay-rrect-path-clips",
+      "marker": "native smoke canvas replay rrect path clips",
+      "value": "2"
+    },
+    {
+      "id": "canvas.replay-clip-path-cache-resources",
+      "marker": "native smoke canvas replay clip path cache resources",
+      "value": "1"
+    },
+    {
+      "id": "canvas.empty-path-replay-cache-resources",
+      "marker": "native smoke empty path replay path cache resources",
+      "value": "0"
+    },
+    {
+      "id": "canvas.empty-path-replay-path-resources",
+      "marker": "native smoke empty path replay path resources",
+      "value": "3"
+    },
+    {
+      "id": "canvas.empty-path-replay-cache-misses",
+      "marker": "native smoke empty path replay path cache misses",
+      "value": "0"
+    },
+    {
+      "id": "canvas.empty-path-replay-cache-hits",
+      "marker": "native smoke empty path replay path cache hits",
+      "value": "0"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-skipped",
+      "marker": "native smoke non-finite path replay skipped",
+      "value": "2"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-path-resources",
+      "marker": "native smoke non-finite path replay path resources",
+      "value": "2"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-resources",
+      "marker": "native smoke non-finite path replay path cache resources",
+      "value": "0"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-misses",
+      "marker": "native smoke non-finite path replay path cache misses",
+      "value": "0"
+    },
+    {
+      "id": "canvas.non-finite-path-replay-cache-hits",
+      "marker": "native smoke non-finite path replay path cache hits",
+      "value": "0"
+    },
+    {
+      "id": "canvas.replay-color-paint-fills",
+      "marker": "native smoke canvas replay color paint fills",
+      "value": "2"
+    },
+    {
+      "id": "canvas.replay-paint-fill-clipped",
+      "marker": "native smoke canvas replay paint fill clipped",
+      "value": "1"
+    },
+    {
+      "id": "canvas.replay-paint-shader-fills",
+      "marker": "native smoke canvas replay paint shader fills",
+      "value": "1"
+    },
+    {
+      "id": "canvas.replay-paint-shader-cache-resources",
+      "marker": "native smoke canvas replay paint shader cache resources",
+      "value": "1"
+    },
+    {
+      "id": "canvas.frame-replay-rejected-skipped",
+      "marker": "native smoke render frame replay rejected skipped",
+      "value": "26"
+    },
+    {
+      "id": "surface.frame-render-commands",
+      "marker": "native smoke surface render frame commands",
+      "value": "29"
+    },
+    {
+      "id": "surface.frame-render-finalized",
+      "marker": "native smoke surface render frame finalized",
+      "value": "1"
+    },
+    {
+      "id": "surface.frame-render-status-contract",
+      "marker": "native smoke surface render frame status contract",
+      "value": "2"
+    },
+    {
+      "id": "surface.frame-render-finalization-frame-index",
+      "marker": "native smoke surface render frame finalization frame index",
+      "value": "7"
+    },
+    {
+      "id": "surface.frame-render-finalization-resource-plan",
+      "marker": "native smoke surface render frame finalization resource plan count",
+      "value": "16"
+    },
+    {
+      "id": "surface.frame-render-finalization-cacheable",
+      "marker": "native smoke surface render frame finalization cacheable count",
+      "value": "15"
+    },
+    {
+      "id": "surface.frame-render-finalization-uncacheable",
+      "marker": "native smoke surface render frame finalization uncacheable count",
+      "value": "1"
+    },
+    {
+      "id": "surface.frame-render-cache-resources",
+      "marker": "native smoke surface render frame cache resources",
+      "value": "9"
+    },
+    {
+      "id": "pipeline.native-replay-resource-stats-caches",
+      "marker": "native smoke native replay resource stats caches",
+      "value": "9"
+    },
+    {
+      "id": "pipeline.native-replay-resource-stats-resources",
+      "marker": "native smoke native replay resource stats resources",
+      "value": "9"
+    },
+    {
+      "id": "surface.frame-render-mismatch-rejected",
+      "marker": "native smoke surface render frame mismatch rejected",
+      "value": "1"
+    },
+    {
+      "id": "surface.frame-render-pixmap-sample-proof",
+      "marker": "native smoke render frame pixmap sample proof",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.shaped-glyph-run-command",
+      "marker": "native smoke render shaped glyph run command replay",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.shader-cache-resources",
+      "marker": "native smoke render shader cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.shader-cache-misses",
+      "marker": "native smoke render shader cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.shader-cache-hits",
+      "marker": "native smoke render shader cache hits",
+      "value": "2"
+    },
+    {
+      "id": "pipeline.path-cache-resources",
+      "marker": "native smoke render path cache resources",
+      "value": "2"
+    },
+    {
+      "id": "pipeline.path-cache-misses",
+      "marker": "native smoke render path cache misses",
+      "value": "2"
+    },
+    {
+      "id": "pipeline.path-cache-hits",
+      "marker": "native smoke render path cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.text-run-cache-resources",
+      "marker": "native smoke render text run cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.text-run-cache-misses",
+      "marker": "native smoke render text run cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.text-run-cache-hits",
+      "marker": "native smoke render text run cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.font-cache-resources",
+      "marker": "native smoke render font cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.font-cache-misses",
+      "marker": "native smoke render font cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.font-cache-hits",
+      "marker": "native smoke render font cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.typeface-cache-resources",
+      "marker": "native smoke render typeface cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.typeface-cache-misses",
+      "marker": "native smoke render typeface cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.typeface-cache-hits",
+      "marker": "native smoke render typeface cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.color-filter-cache-resources",
+      "marker": "native smoke render color filter cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.color-filter-cache-misses",
+      "marker": "native smoke render color filter cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.color-filter-cache-hits",
+      "marker": "native smoke render color filter cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.image-filter-cache-resources",
+      "marker": "native smoke render image filter cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.image-filter-cache-misses",
+      "marker": "native smoke render image filter cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.image-filter-cache-hits",
+      "marker": "native smoke render image filter cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-resources",
+      "marker": "native smoke render mask filter cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-misses",
+      "marker": "native smoke render mask filter cache misses",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.mask-filter-cache-hits",
+      "marker": "native smoke render mask filter cache hits",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.resource-plan",
+      "marker": "native smoke render resource plan count",
+      "value": "15"
+    },
+    {
+      "id": "pipeline.frame-resource-plan",
+      "marker": "native smoke render frame resource plan count",
+      "value": "15"
+    },
+    {
+      "id": "pipeline.frame-validation",
+      "marker": "native smoke render frame validation status",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-cacheable-subplan",
+      "marker": "native smoke render frame cacheable subplan count",
+      "value": "15"
+    },
+    {
+      "id": "pipeline.frame-uncacheable-subplan",
+      "marker": "native smoke render frame uncacheable subplan count",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.frame-unbalanced-validation",
+      "marker": "native smoke render frame unbalanced validation",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.target-identity-validation",
+      "marker": "native smoke render target identity validation",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.target-resource-binding",
+      "marker": "native smoke render target resource binding",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-present",
+      "marker": "native smoke render frame present count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-present-descriptor",
+      "marker": "native smoke render frame present descriptor validation",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-submission-resource-plan",
+      "marker": "native smoke render frame submission resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "pipeline.frame-submission-cacheable-subplan",
+      "marker": "native smoke render frame submission cacheable subplan count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-submission-uncacheable-subplan",
+      "marker": "native smoke render frame submission uncacheable subplan count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-submission-preflight-missing",
+      "marker": "native smoke render frame submission preflight missing count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-submission-preflight-cached",
+      "marker": "native smoke render frame submission preflight cached count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-submission-cache-resources",
+      "marker": "native smoke render frame submission cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-finalization-resource-plan",
+      "marker": "native smoke render frame finalization resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "pipeline.frame-finalization-cacheable-subplan",
+      "marker": "native smoke render frame finalization cacheable subplan count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-finalization-uncacheable-subplan",
+      "marker": "native smoke render frame finalization uncacheable subplan count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-finalization-preflight-missing",
+      "marker": "native smoke render frame finalization preflight missing count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-finalization-preflight-cached",
+      "marker": "native smoke render frame finalization preflight cached count",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-finalization-cache-resources",
+      "marker": "native smoke render frame finalization cache resources",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-missing-present-validation",
+      "marker": "native smoke render frame missing present validation",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-missing-finalization-validation",
+      "marker": "native smoke render frame missing finalization validation",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.frame-touched-bounds",
+      "marker": "native smoke render frame touched bounds width",
+      "value": "4"
+    },
+    {
+      "id": "pipeline.frame-cache-resources",
+      "marker": "native smoke render frame cache resources",
+      "value": "15"
+    },
+    {
+      "id": "pipeline.resource-cache",
+      "marker": "native smoke render resource cache inserts",
+      "value": "15"
+    },
+    {
+      "id": "pipeline.resource-cache-preflight-missing",
+      "marker": "native smoke render resource cache preflight missing count",
+      "value": "15"
+    },
+    {
+      "id": "pipeline.resource-cache-preflight-cached",
+      "marker": "native smoke render resource cache preflight cached count",
+      "value": "15"
+    },
+    {
+      "id": "pipeline.resource-cache-plan-coverage",
+      "marker": "native smoke render resource cache plan coverage",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.resource-cache-eviction",
+      "marker": "native smoke render resource cache evictions",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.resource-cache-hits",
+      "marker": "native smoke render resource cache hits",
+      "value": "1"
+    },
+    {
+      "id": "pipeline.resource-cache-misses",
+      "marker": "native smoke render resource cache misses",
+      "value": "0"
+    },
+    {
+      "id": "pipeline.resource-cache-byte-size",
+      "marker": "native smoke render resource cache byte size",
+      "value": "8"
+    },
+    {
+      "id": "gpu.context-resource-plan",
+      "marker": "native smoke gpu context resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "gpu.context-key-variation",
+      "marker": "native smoke gpu context key variation",
+      "value": "1"
+    },
+    {
+      "id": "gpu.frame-context-validation",
+      "marker": "native smoke gpu frame context validation",
+      "value": "1"
+    },
+    {
+      "id": "gpu.present-resource-plan",
+      "marker": "native smoke gpu present resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "gpu.finalization-resource-plan",
+      "marker": "native smoke gpu finalization resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "gpu.frame-finalization-resource-plan",
+      "marker": "native smoke gpu frame finalization resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "gpu.frame-finalization-gpu-resources",
+      "marker": "native smoke gpu frame finalization gpu resource count",
+      "value": "3"
+    },
+    {
+      "id": "gpu.frame-submission-resource-plan",
+      "marker": "native smoke gpu frame submission resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "gpu.frame-submission-gpu-resources",
+      "marker": "native smoke gpu frame submission gpu resource count",
+      "value": "3"
+    },
+    {
+      "id": "surface.target-resource-plan",
+      "marker": "native smoke surface target resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "surface.target-cache-resources",
+      "marker": "native smoke surface target cache resources",
+      "value": "2"
+    },
+    {
+      "id": "surface.window-target-resource-plan",
+      "marker": "native smoke window target resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "surface.window-physical-width",
+      "marker": "native smoke window physical width",
+      "value": "16"
+    },
+    {
+      "id": "surface.window-frame-pacing",
+      "marker": "native smoke window frame pacing",
+      "value": "2"
+    },
+    {
+      "id": "surface.window-frame-pacing-key",
+      "marker": "native smoke window frame pacing key variation",
+      "value": "1"
+    },
+    {
+      "id": "surface.window-present-mode-key",
+      "marker": "native smoke window present mode key variation",
+      "value": "1"
+    },
+    {
+      "id": "surface.finalization-resource-plan",
+      "marker": "native smoke surface finalization resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "surface.finalization-key",
+      "marker": "native smoke surface finalization key variation",
+      "value": "1"
+    },
+    {
+      "id": "surface.present-buffer-index",
+      "marker": "native smoke surface present buffer index",
+      "value": "1"
+    },
+    {
+      "id": "surface.present-resource-plan",
+      "marker": "native smoke surface present resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "surface.flush-and-submit",
+      "marker": "native smoke surface flush-and-submit",
+      "value": "1"
+    },
+    {
+      "id": "surface.readback",
+      "marker": "native smoke readback width",
+      "value": "32"
+    },
+    {
+      "id": "surface.readback-height",
+      "marker": "native smoke readback height",
+      "value": "32"
+    },
+    {
+      "id": "surface.readback-row-bytes",
+      "marker": "native smoke readback row_bytes",
+      "value": "128"
+    },
+    {
+      "id": "surface.readback-pixmap-sample-proof",
+      "marker": "native smoke pixmap readback sample proof",
+      "value": "1"
+    },
+    {
+      "id": "surface.bounded-readback",
+      "marker": "native smoke bounded readback width",
+      "value": "4"
+    },
+    {
+      "id": "surface.bounded-readback-height",
+      "marker": "native smoke bounded readback height",
+      "value": "4"
+    },
+    {
+      "id": "surface.bounded-snapshot",
+      "marker": "native smoke bounded snapshot width",
+      "value": "4"
+    },
+    {
+      "id": "surface.bounded-snapshot-height",
+      "marker": "native smoke bounded snapshot height",
+      "value": "4"
+    },
+    {
+      "id": "surface.bounds-rejected",
+      "marker": "native smoke surface bounds rejected",
+      "value": "1"
+    },
+    {
+      "id": "image.encode-parameters-sanitized",
+      "marker": "native smoke image encode parameters sanitized",
+      "value": "1"
+    },
+    {
+      "id": "filter.layer",
+      "marker": "native smoke filter layer count",
+      "value": "1"
+    },
+    {
+      "id": "path.geometry",
+      "marker": "native smoke path verbs",
+      "value": "9"
+    },
+    {
+      "id": "path.non-finite-from-value-rejected",
+      "marker": "native smoke non-finite path from-value rejected",
+      "value": "1"
+    },
+    {
+      "id": "path.non-finite-add-skipped",
+      "marker": "native smoke non-finite path add skipped",
+      "value": "2"
+    },
+    {
+      "id": "path.non-finite-direct-mutations-skipped",
+      "marker": "native smoke non-finite path direct mutations skipped",
+      "value": "7"
+    },
+    {
+      "id": "image.decode",
+      "marker": "native smoke decoded image width",
+      "value": "32"
+    },
+    {
+      "id": "image.decode-height",
+      "marker": "native smoke decoded image height",
+      "value": "32"
+    },
+    {
+      "id": "image.render-command-replay",
+      "marker": "native smoke render image command replay",
+      "value": "1"
+    },
+    {
+      "id": "image.render-command-count",
+      "marker": "native smoke render image command count",
+      "value": "3"
+    },
+    {
+      "id": "image.render-command-resource-plan",
+      "marker": "native smoke render image resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "image.render-command-cache-resources",
+      "marker": "native smoke render image cache resources",
+      "value": "1"
+    },
+    {
+      "id": "image.render-command-cache-misses",
+      "marker": "native smoke render image cache misses",
+      "value": "1"
+    },
+    {
+      "id": "image.render-command-cache-hits",
+      "marker": "native smoke render image cache hits",
+      "value": "1"
+    },
+    {
+      "id": "image.render-decode-failure-resource-plan",
+      "marker": "native smoke render image decode failure resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "image.render-decode-failure-skipped",
+      "marker": "native smoke render image decode failure skipped",
+      "value": "2"
+    },
+    {
+      "id": "image.render-decode-failure-cache-resources",
+      "marker": "native smoke render image decode failure cache resources",
+      "value": "0"
+    },
+    {
+      "id": "image.render-decode-failure-cache-misses",
+      "marker": "native smoke render image decode failure cache misses",
+      "value": "2"
+    },
+    {
+      "id": "image.empty-descriptor-command-plan",
+      "marker": "native smoke empty image descriptor command plan count",
+      "value": "1"
+    },
+    {
+      "id": "image.empty-descriptor-replay-skipped",
+      "marker": "native smoke empty image descriptor replay skipped",
+      "value": "2"
+    },
+    {
+      "id": "image.empty-descriptor-cache-misses",
+      "marker": "native smoke empty image descriptor cache misses",
+      "value": "0"
+    },
+    {
+      "id": "codec.width",
+      "marker": "native smoke codec width",
+      "value": "32"
+    },
+    {
+      "id": "codec.height",
+      "marker": "native smoke codec height",
+      "value": "32"
+    },
+    {
+      "id": "bitmap.decode-readback",
+      "marker": "native smoke decoded bitmap width",
+      "value": "32"
+    },
+    {
+      "id": "bitmap.decode-readback-height",
+      "marker": "native smoke decoded bitmap height",
+      "value": "32"
+    },
+    {
+      "id": "shader.draw",
+      "marker": "native smoke shader draws",
+      "value": "3"
+    },
+    {
+      "id": "shader.resource-plan",
+      "marker": "native smoke shader resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "shader.linear-gradient-validation",
+      "marker": "native smoke shader linear gradient validation",
+      "value": "1"
+    },
+    {
+      "id": "shader.linear-gradient-finite-validation",
+      "marker": "native smoke shader linear gradient finite validation",
+      "value": "1"
+    },
+    {
+      "id": "shader.radial-gradient-validation",
+      "marker": "native smoke shader radial gradient validation",
+      "value": "1"
+    },
+    {
+      "id": "shader-filter.invalid-descriptor-resources",
+      "marker": "native smoke invalid shader filter descriptor resources",
+      "value": "4"
+    },
+    {
+      "id": "shader-filter.invalid-replay-skipped",
+      "marker": "native smoke invalid shader filter replay skipped",
+      "value": "2"
+    },
+    {
+      "id": "shader-filter.invalid-replay-cache-resources",
+      "marker": "native smoke invalid shader filter replay cache resources",
+      "value": "0"
+    },
+    {
+      "id": "shader-filter.invalid-replay-cache-misses",
+      "marker": "native smoke invalid shader filter replay cache misses",
+      "value": "0"
+    },
+    {
+      "id": "shader-filter.invalid-replay-filter-resources",
+      "marker": "native smoke invalid shader filter replay filter resources",
+      "value": "3"
+    },
+    {
+      "id": "filter.resource-plan",
+      "marker": "native smoke filter resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "filter.finite-validation",
+      "marker": "native smoke filter finite validation",
+      "value": "1"
+    },
+    {
+      "id": "filter.non-finite-handle-validation",
+      "marker": "native smoke filter non-finite handle validation",
+      "value": "1"
+    },
+    {
+      "id": "text.text-run-resource-plan",
+      "marker": "native smoke text run resource plan count",
+      "value": "3"
+    },
+    {
+      "id": "text.text-run-range",
+      "marker": "native smoke text run range byte size",
+      "value": "4"
+    },
+    {
+      "id": "text.text-run-empty-range-resource-plan",
+      "marker": "native smoke text run empty range resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "text.text-run-empty-range-skipped",
+      "marker": "native smoke text run empty range skipped",
+      "value": "1"
+    },
+    {
+      "id": "text.text-run-empty-range-cache-resources",
+      "marker": "native smoke text run empty range cache resources",
+      "value": "0"
+    },
+    {
+      "id": "text.measurement-resource-plan",
+      "marker": "native smoke text measurement resource plan count",
+      "value": "4"
+    },
+    {
+      "id": "text.measured-run-resource-plan",
+      "marker": "native smoke measured text resource plan count",
+      "value": "5"
+    },
+    {
+      "id": "text.measured-run-key",
+      "marker": "native smoke measured text key variation",
+      "value": "1"
+    },
+    {
+      "id": "text.invalid-measured-run-resource-plan",
+      "marker": "native smoke invalid measured text resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "text.invalid-measured-run-uncacheable",
+      "marker": "native smoke invalid measured text uncacheable count",
+      "value": "1"
+    },
+    {
+      "id": "text.measurement-key",
+      "marker": "native smoke text measurement key variation",
+      "value": "1"
+    },
+    {
+      "id": "text.shaping-resource-plan",
+      "marker": "native smoke text shaping resource plan count",
+      "value": "4"
+    },
+    {
+      "id": "text.shaped-text-resource-plan",
+      "marker": "native smoke shaped text resource plan count",
+      "value": "5"
+    },
+    {
+      "id": "text.shaped-glyph-run-resource-plan",
+      "marker": "native smoke shaped glyph run resource plan count",
+      "value": "6"
+    },
+    {
+      "id": "text.shaped-glyph-run-key",
+      "marker": "native smoke shaped glyph run key variation",
+      "value": "1"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-resource-plan",
+      "marker": "native smoke invalid shaped glyph resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-command-plan",
+      "marker": "native smoke invalid shaped glyph command plan count",
+      "value": "1"
+    },
+    {
+      "id": "text.invalid-shaped-glyph-replay-skipped",
+      "marker": "native smoke invalid shaped glyph replay skipped",
+      "value": "1"
+    },
+    {
+      "id": "text.non-finite-font-scalars-sanitized",
+      "marker": "native smoke non-finite font scalars sanitized",
+      "value": "1"
+    },
+    {
+      "id": "text.font-resource-plan",
+      "marker": "native smoke font resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.invalid-fallback-request-resource-plan",
+      "marker": "native smoke invalid fallback request resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-key",
+      "marker": "native smoke font fallback key variation",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-match-key",
+      "marker": "native smoke font fallback match key variation",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-match-resource-plan",
+      "marker": "native smoke font fallback match resource plan count",
+      "value": "2"
+    },
+    {
+      "id": "fontmgr.fallback-resolution-key",
+      "marker": "native smoke font fallback resolution key variation",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-resolution-resource-plan",
+      "marker": "native smoke font fallback resolution resource plan count",
+      "value": "4"
+    },
+    {
+      "id": "fontmgr.invalid-fallback-match-resource-plan",
+      "marker": "native smoke invalid fallback match resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.invalid-fallback-resolution-resource-plan",
+      "marker": "native smoke invalid fallback resolution resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-resolution-bridge",
+      "marker": "native smoke font fallback resolution bridge",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-resolution-bridge-cache-resources",
+      "marker": "native smoke font fallback resolution bridge cache resources",
+      "value": "4"
+    },
+    {
+      "id": "fontmgr.fallback-resource-plan",
+      "marker": "native smoke font fallback resource plan count",
+      "value": "1"
+    },
+    {
+      "id": "fontmgr.fallback-font-resource-plan",
+      "marker": "native smoke font fallback font resource plan count",
+      "value": "2"
+    }
+  ],
+  "platforms": {
+    "linux": {
+      "accepted": true,
+      "state": "accepted",
+      "first_acceptance_platform": true,
+      "source_build": true,
+      "existing_build": true,
+      "requires_pinned_revision": false,
+      "accepted_artifact": "github-actions:26799671199:linux-real-skia-acceptance",
+      "accepted_commit": "6d73578a36506d10bc044e920cc71037982e481d",
+      "accepted_provider": "release",
+      "accepted_version": "dev-6d73578a36",
+      "required_artifact_logs": [
+        "linux-real-skia-smoke-preflight.log",
+        "linux-real-skia-smoke.log",
+        "linux-native-smoke-output.log",
+        "linux-real-skia-acceptance.log"
+      ],
+      "required_verifier": "scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs",
+      "next_step": "Keep running real Skia smoke for this platform and verify each run against the accepted release Skia version dev-6d73578a36.",
+      "release_provider": true
+    },
+    "macos": {
+      "accepted": true,
+      "state": "accepted",
+      "first_acceptance_platform": false,
+      "source_build": true,
+      "existing_build": true,
+      "requires_pinned_revision": true,
+      "accepted_artifact": "github-actions:26799671199:macos-real-skia-acceptance",
+      "accepted_commit": "6d73578a36506d10bc044e920cc71037982e481d",
+      "accepted_provider": "release",
+      "accepted_version": "dev-6d73578a36",
+      "required_artifact_logs": [
+        "macos-real-skia-smoke-preflight.log",
+        "macos-real-skia-smoke.log",
+        "macos-native-smoke-output.log",
+        "macos-real-skia-acceptance.log"
+      ],
+      "required_verifier": "scripts/verify-real-skia-artifact.sh --platform macos --log-dir logs",
+      "next_step": "Keep running real Skia smoke for this platform and verify each run against the accepted release Skia version dev-6d73578a36.",
+      "release_provider": true
+    },
+    "windows": {
+      "accepted": true,
+      "state": "accepted",
+      "first_acceptance_platform": false,
+      "source_build": false,
+      "existing_build": true,
+      "requires_pinned_revision": true,
+      "accepted_artifact": "github-actions:26802937992:windows-real-skia-acceptance",
+      "accepted_commit": "6d73578a36506d10bc044e920cc71037982e481d",
+      "accepted_provider": "release",
+      "accepted_version": "dev-6d73578a36",
+      "required_artifact_logs": [
+        "windows-real-skia-smoke-preflight.log",
+        "windows-real-skia-smoke.log",
+        "windows-native-smoke-output.log",
+        "windows-real-skia-acceptance.log"
+      ],
+      "required_verifier": "scripts/verify-real-skia-artifact.ps1 -Platform windows -LogDir logs",
+      "next_step": "Keep running real Skia smoke for this platform and verify each run against the accepted release Skia version dev-6d73578a36.",
+      "release_provider": true
+    }
+  }
+}
