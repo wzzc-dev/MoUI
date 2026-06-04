@@ -152,6 +152,25 @@ const withMockClock = callback => {
   }
 };
 
+const withPointerEventSupport = (supported, callback) => {
+  const hadPointerEvent = Object.hasOwn(globalThis, "PointerEvent");
+  const originalPointerEvent = globalThis.PointerEvent;
+  if (supported) {
+    globalThis.PointerEvent = function PointerEvent() {};
+  } else {
+    delete globalThis.PointerEvent;
+  }
+  try {
+    callback();
+  } finally {
+    if (hadPointerEvent) {
+      globalThis.PointerEvent = originalPointerEvent;
+    } else {
+      delete globalThis.PointerEvent;
+    }
+  }
+};
+
 const createRuntime = () => {
   const imports = createWindowWebImports();
   const events = [];
@@ -171,6 +190,36 @@ const expectKinds = (label, events, expected) => {
     process.exit(1);
   }
 };
+
+withMockClock(() => {
+  withPointerEventSupport(true, () => {
+    const { canvas, events } = createRuntime();
+    canvas.dispatch("mousedown", { clientX: 12, clientY: 18 });
+    canvas.dispatch("mouseup", { clientX: 12, clientY: 18 });
+    canvas.dispatch("click", { clientX: 12, clientY: 18 });
+    expectKinds(
+      "pointer-capable browsers ignore mouse/click fallback activation",
+      events,
+      [],
+    );
+  });
+});
+
+withMockClock(() => {
+  withPointerEventSupport(true, () => {
+    const { canvas, events } = createRuntime();
+    canvas.dispatch("pointerdown", { clientX: 24, clientY: 30 });
+    canvas.dispatch("mousedown", { clientX: 24, clientY: 30 });
+    canvas.dispatch("pointerup", { clientX: 24, clientY: 30 });
+    canvas.dispatch("mouseup", { clientX: 24, clientY: 30 });
+    canvas.dispatch("click", { clientX: 24, clientY: 30 });
+    expectKinds(
+      "pointer-capable browsers keep pointer events authoritative",
+      events,
+      [23, 24],
+    );
+  });
+});
 
 withMockClock(tick => {
   const { canvas, events } = createRuntime();

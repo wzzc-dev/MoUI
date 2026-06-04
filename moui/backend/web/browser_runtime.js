@@ -608,6 +608,7 @@ export function createWindowWebImports(options = {}) {
       let suppressMouseFallback = null;
       let suppressClickFallback = null;
       const fallbackDedupWindowMs = 250;
+      const pointerEventsSupported = typeof globalThis.PointerEvent === "function";
       const add = (target, type, handler, options) => {
         target.addEventListener(type, handler, options);
         handlers.push([target, type, handler, options]);
@@ -714,22 +715,26 @@ export function createWindowWebImports(options = {}) {
         focusInputTarget();
       });
       add(canvas, "mouseenter", event => {
+        if (pointerEventsSupported) return;
         if (!shouldUseMouseFallback(event)) return;
         const p = pointerPosition(canvas, event);
         emit(20, rawId, p.x, p.y);
       });
       add(canvas, "mousemove", event => {
+        if (pointerEventsSupported) return;
         if (!shouldUseMouseFallback(event)) return;
         const p = pointerPosition(canvas, event);
         emit(21, rawId, p.x, p.y);
       });
       add(canvas, "mouseleave", event => {
+        if (pointerEventsSupported) return;
         if (!shouldUseMouseFallback(event)) return;
         const p = pointerPosition(canvas, event);
         emit(22, rawId, p.x, p.y);
       });
       add(canvas, "mousedown", event => {
         preventDefaultIfCancelable(event);
+        if (pointerEventsSupported) return;
         if (!shouldUseMouseFallback(event)) return;
         markButtonEvent(event);
         focusInputTarget();
@@ -737,6 +742,7 @@ export function createWindowWebImports(options = {}) {
         emit(23, rawId, p.x, p.y, event.button);
       });
       add(canvas, "mouseup", event => {
+        if (pointerEventsSupported) return;
         if (!shouldUseMouseFallback(event)) return;
         markButtonEvent(event);
         const p = pointerPosition(canvas, event);
@@ -746,6 +752,7 @@ export function createWindowWebImports(options = {}) {
       add(canvas, "click", event => {
         preventDefaultIfCancelable(event);
         focusInputTarget();
+        if (pointerEventsSupported) return;
         if (!shouldUseClickFallback(event)) return;
         markButtonEvent(event);
         const p = pointerPosition(canvas, event);
