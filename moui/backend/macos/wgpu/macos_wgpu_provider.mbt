@@ -60,7 +60,16 @@ pub fn renderer_provider(
       create_renderer(window, metrics, options)
     },
     sync_surface~,
+    image_loader=Some(wgpu_native_image_loader()),
   )
+}
+
+///|
+fn wgpu_native_image_loader() -> @host.HostAsyncImageLoader {
+  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
+    complete(@wgpu_renderer.native_image_load_completion(source))
+    None
+  })
 }
 
 ///|

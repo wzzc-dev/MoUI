@@ -156,7 +156,8 @@ Use this skill when editing or reviewing:
   native WGPU Wayland surface path, shared host event conversion, and explicit
   unsupported-service reporting.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
-- `render/wgpu/`: native wgpu renderer.
+- `render/wgpu/`: native wgpu renderer, including source decode completion
+  helpers used by provider-owned native image loader hooks.
 - `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
 - `render/wgpu/coretext/`: macOS CoreText provider.
 - `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
@@ -483,6 +484,10 @@ moon info
   `HostAsyncImageLoader` for host-side loading-record scans, in-flight
   de-duplication, cancellation cleanup, and late-completion gating before
   concrete platform loaders call into that completion source.
+  Native WGPU providers may use renderer-owned helpers such as
+  `native_image_load_completion` to convert PNG/JPEG/BMP data URI and local-file
+  decode results into completion payloads, but matching-host off-main runtime
+  evidence is still required before claiming full native async image readiness.
   Native macOS, Windows, and Linux host cores should invoke optional
   provider-owned image loaders only after the image-resource presented revision
   has been baselined, and cancel in-flight window loads during disposal.

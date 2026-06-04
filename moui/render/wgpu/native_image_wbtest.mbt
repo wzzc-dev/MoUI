@@ -369,3 +369,27 @@ test "native image decodes local png file through mizchi image" {
   inspect(decoded.data[0].to_int(), content="255")
   inspect(decoded.data[2].to_int(), content="64")
 }
+
+///|
+test "native image load completion reports decoded dimensions or failure" {
+  let png = @image.encode_png({
+    width: 2,
+    height: 1,
+    data: b"\x20\x80\xff\xcc\xff\x00\x40\xff",
+  }) catch {
+    _ => panic()
+  }
+  let source = "data:image/png;base64," + @base64.encode(png)
+  let ready = native_image_load_completion(source)
+  assert_true(
+    ready.status == @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
+  )
+  inspect(ready.source, content=source)
+  inspect(ready.width, content="2")
+  inspect(ready.height, content="1")
+  let failed = native_image_load_completion("moui-native-image-missing://nope")
+  assert_true(
+    failed.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
+  )
+  inspect(failed.diagnostic, content="native image decode failed")
+}
