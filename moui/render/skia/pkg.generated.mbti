@@ -17,6 +17,8 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor
 
 pub fn skia_available() -> Bool
 
+pub fn skia_image_load_completion(String) -> @render.ImageResourceLoadCompletion
+
 pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor
 
 pub fn skia_text_system(resolution? : SkiaFontResolution) -> @core.TextSystem
@@ -65,6 +67,7 @@ pub(all) struct SkiaRasterRenderer {
   unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
   mut last_frame : SkiaPixelFrame?
 }
+pub fn SkiaRasterRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
 pub fn SkiaRasterRenderer::backend_info(Self) -> @render.RendererBackendInfo
 pub fn SkiaRasterRenderer::backend_kind(Self) -> @render.RendererBackendKind
 pub fn SkiaRasterRenderer::dispose(Self) -> Unit

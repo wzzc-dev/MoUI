@@ -527,6 +527,39 @@ assertIncludes("moui/backend/windows/wgpu/windows_wgpu_provider.mbt", "wgpu_nati
 assertIncludes("moui/backend/windows/wgpu/windows_wgpu_provider.mbt", "image_loader=Some(wgpu_native_image_loader())");
 assertIncludes("moui/backend/linux/wgpu/linux_wgpu_provider.mbt", "wgpu_native_image_loader");
 assertIncludes("moui/backend/linux/wgpu/linux_wgpu_provider.mbt", "image_loader=Some(wgpu_native_image_loader())");
+assertIncludes("moui/render/skia/renderer.mbt", "pub fn skia_image_load_completion");
+assertIncludes(
+  "moui/render/skia/pkg.generated.mbti",
+  "pub fn skia_image_load_completion(String) -> @render.ImageResourceLoadCompletion",
+);
+assertIncludes(
+  "moui/render/skia/skia_renderer_wbtest.mbt",
+  "skia image load completion reports decoded dimensions or fallback failure",
+);
+for (const platform of ["macos", "windows", "linux"]) {
+  assertIncludes(
+    `moui/backend/${platform}/skia/${platform}_skia_provider.mbt`,
+    "skia_native_image_loader",
+  );
+  assertIncludes(
+    `moui/backend/${platform}/skia/${platform}_skia_provider.mbt`,
+    "image_loader=Some(skia_native_image_loader())",
+  );
+  assertIncludes(
+    `moui/backend/${platform}/skia/${platform}_skia_provider.mbt`,
+    "renderer_image_loader=skia_image_load_completion",
+  );
+  assertIncludes(
+    `moui/backend/${platform}/skia/${platform}_skia_provider_wbtest.mbt`,
+    `${platform} skia native image loader completes loading resources`,
+  );
+}
+assertIncludes("AGENTS.md", "skia_image_load_completion");
+assertIncludes("docs/architecture.md", "skia_image_load_completion");
+assertIncludes("docs/release-readiness.md", "skia_image_load_completion");
+assertIncludes("docs/renderer-capability-report.md", "skia_image_load_completion");
+assertIncludes("docs/testing.md", "skia_image_load_completion");
+assertIncludes("skills/moui-framework-development-skill/SKILL.md", "skia_image_load_completion");
 assertIncludes("moui/render/wgpu/renderer.mbt", "WgpuRenderer::apply_image_resource_load_completion");
 assertIncludes("moui/render/skia/renderer.mbt", "SkiaRasterRenderer::apply_image_resource_load_completion");
 assertIncludes("moui/render/webgpu_adapter/adapter.mbt", "WebGpuWasmRenderer::apply_image_resource_load_completion");
