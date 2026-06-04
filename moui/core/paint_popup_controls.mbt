@@ -211,7 +211,7 @@ fn append_datepicker_commands(
       height=header_height,
     )
     let view_date = element.control.datepicker_view
-    let header_text = "{view_date.year}年{view_date.month}月"
+    let header_text = "\{view_date.year}年\{view_date.month}月"
     commands.push(
       DrawText(
         TextRun::new(
@@ -288,17 +288,9 @@ fn append_datepicker_commands(
     let cell_height = 36.0
     let start_y = panel_frame.origin.y + header_height + day_header_height
 
-    // 计算该月第一天是星期几 (0=周日, 1=周一...)
-    // 使用 Zeller 公式的简化版本
     let year = view_date.year
     let month = view_date.month
-    let q = 1
-    let m = if month < 3 { month + 12 } else { month }
-    let y = if month < 3 { year - 1 } else { year }
-    let k = y % 100
-    let j = y / 100
-    let h = (q + 13 * (m + 1) / 5 + k + k / 4 + j / 4 + 5 * j) % 7
-    let first_day_weekday = h
+    let first_day_weekday = first_weekday_of_month_sunday0(year, month)
 
     let days_in_month_count = days_in_month(year, month)
 
@@ -344,7 +336,7 @@ fn append_datepicker_commands(
       commands.push(
         DrawText(
           TextRun::new(
-            text="{day}",
+            text="\{day}",
             frame=cell_frame,
             font=FontSpec::new(size=14.0),
             color=day_color,

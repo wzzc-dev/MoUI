@@ -154,6 +154,20 @@ fn has_draw_text(commands : Array[DrawCommand], text : String) -> Bool {
 }
 
 ///|
+fn draw_text_frame(commands : Array[DrawCommand], text : String) -> Rect? {
+  for command in commands {
+    match command {
+      DrawCommand::DrawText({ text: value, frame, .. }) =>
+        if value == text {
+          return Some(frame)
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 enum ProgramSimpleMsg {
   ProgramSimpleIncrement
 }
@@ -1538,7 +1552,24 @@ test "controlled checkbox picker and datepicker emit new value messages" {
     size=Size::new(width=320.0, height=240.0),
   )
   runtime_wbtest_click(date_runtime, x=10.0, y=10.0)
-  runtime_wbtest_click(date_runtime, x=300.0, y=148.0)
+  let open_date_commands = date_runtime.draw_commands()
+  assert_true(has_draw_text(open_date_commands, "2026年5月"))
+  assert_false(
+    has_draw_text(open_date_commands, "{view_date.year}年{view_date.month}月"),
+  )
+  assert_false(has_draw_text(open_date_commands, "{day}"))
+  guard draw_text_frame(open_date_commands, "五") is Some(friday_frame) else {
+    fail("expected Friday header frame")
+  }
+  guard draw_text_frame(open_date_commands, "1") is Some(day_one_frame) else {
+    fail("expected first day frame")
+  }
+  let day_one_center_x = day_one_frame.origin.x + day_one_frame.size.width / 2.0
+  assert_true(day_one_center_x >= friday_frame.origin.x)
+  assert_true(
+    day_one_center_x <= friday_frame.origin.x + friday_frame.size.width,
+  )
+  runtime_wbtest_click_draw_text(date_runtime, "1")
   assert_true(has_draw_text(date_runtime.draw_commands(), "2026-5-1"))
 }
 
@@ -1577,9 +1608,9 @@ test "controlled datepicker ignores dates outside min max range" {
     size=Size::new(width=320.0, height=240.0),
   )
   runtime_wbtest_click(date_runtime, x=10.0, y=10.0)
-  runtime_wbtest_click(date_runtime, x=300.0, y=148.0)
+  runtime_wbtest_click_draw_text(date_runtime, "1")
   assert_true(has_draw_text(date_runtime.draw_commands(), "2026-5-21"))
-  runtime_wbtest_click(date_runtime, x=70.0, y=220.0)
+  runtime_wbtest_click_draw_text(date_runtime, "10")
   assert_true(has_draw_text(date_runtime.draw_commands(), "2026-5-10"))
 }
 
@@ -1601,5 +1632,20 @@ fn runtime_wbtest_click(runtime : AppRuntime, x~ : Double, y~ : Double) -> Unit 
   )
   runtime.dispatch_event(
     AppEvent::Pointer(PointerEvent::new(position~, phase=PointerPhase::Up)),
+  )
+}
+
+///|
+fn runtime_wbtest_click_draw_text(
+  runtime : AppRuntime,
+  text : String,
+) -> Unit raise {
+  guard draw_text_frame(runtime.draw_commands(), text) is Some(frame) else {
+    fail("expected text frame for \{text}")
+  }
+  runtime_wbtest_click(
+    runtime,
+    x=frame.origin.x + frame.size.width / 2.0,
+    y=frame.origin.y + frame.size.height / 2.0,
   )
 }

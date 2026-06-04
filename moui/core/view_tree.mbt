@@ -1260,6 +1260,21 @@ fn date_value_in_range(
 }
 
 ///|
+fn first_weekday_of_month_sunday0(year : Int, month : Int) -> Int {
+  let q = 1
+  let zeller_month = if month < 3 { month + 12 } else { month }
+  let zeller_year = if month < 3 { year - 1 } else { year }
+  let k = zeller_year % 100
+  let j = zeller_year / 100
+  let h = (q + 13 * (zeller_month + 1) / 5 + k + k / 4 + j / 4 + 5 * j) % 7
+  if h == 0 {
+    6
+  } else {
+    h - 1
+  }
+}
+
+///|
 fn is_leap_year(year : Int) -> Bool {
   year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 }

@@ -585,13 +585,7 @@ fn handle_datepicker_element_pointer(
         // 点击了日期单元格
         let year = element.control.datepicker_view.year
         let month = element.control.datepicker_view.month
-        let q = 1
-        let m = if month < 3 { month + 12 } else { month }
-        let y = if month < 3 { year - 1 } else { year }
-        let k = y % 100
-        let j = y / 100
-        let h = (q + 13 * (m + 1) / 5 + k + k / 4 + j / 4 + 5 * j) % 7
-        let first_day_weekday = h
+        let first_day_weekday = first_weekday_of_month_sunday0(year, month)
 
         let day_cell_width = panel_frame.size.width / 7.0
         let clicked_x = event.position.x - panel_frame.origin.x
