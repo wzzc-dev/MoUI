@@ -150,6 +150,7 @@ pub fn AppRuntime::advance_time(Self, Double) -> Unit
 pub fn AppRuntime::animation_count(Self) -> Int
 pub fn AppRuntime::destroy(Self) -> Unit
 pub fn AppRuntime::dirty_count(Self) -> Int
+pub fn AppRuntime::dirty_element_ids(Self) -> Array[ElementId]
 pub fn AppRuntime::dispatch_command(Self, CommandIntent) -> Bool
 pub fn AppRuntime::dispatch_event(Self, AppEvent) -> Unit
 pub fn AppRuntime::dispatch_focused_text_command(Self, CommandIntent, paste_text? : String?) -> TextCommandResult
@@ -1369,6 +1370,7 @@ pub fn RouterState::stack(Self) -> Array[RouteLocation]
 
 pub(all) struct RuntimeDirtyStateSummary {
   dirty_count : Int
+  dirty_element_ids : Array[ElementId]
   needs_rebuild : Bool
   needs_layout : Bool
   needs_paint : Bool
@@ -1381,6 +1383,7 @@ pub(all) struct RuntimeDirtyStateSummary {
 pub(all) struct RuntimeInspectorSnapshot {
   size : Size
   dirty_count : Int
+  dirty_element_ids : Array[ElementId]
   dirty_state : RuntimeDirtyStateSummary
   needs_rebuild : Bool
   needs_layout : Bool
@@ -1442,6 +1445,7 @@ pub fn RuntimeState::build_draw_commands(Self) -> Array[DrawCommand]
 pub fn RuntimeState::clear_dirty_queue(Self) -> Unit
 pub fn RuntimeState::destroy(Self) -> Unit
 pub fn RuntimeState::dirty_count(Self) -> Int
+pub fn RuntimeState::dirty_element_ids(Self) -> Array[ElementId]
 pub fn RuntimeState::dispatch_command(Self, CommandIntent) -> Bool
 pub fn RuntimeState::dispatch_event(Self, AppEvent) -> Unit
 pub fn RuntimeState::dispatch_focused_text_command(Self, CommandIntent, paste_text? : String?) -> TextCommandResult

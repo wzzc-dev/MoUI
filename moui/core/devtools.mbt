@@ -2,6 +2,7 @@
 pub(all) struct RuntimeInspectorSnapshot {
   size : Size
   dirty_count : Int
+  dirty_element_ids : Array[ElementId]
   dirty_state : RuntimeDirtyStateSummary
   needs_rebuild : Bool
   needs_layout : Bool
@@ -56,6 +57,7 @@ pub(all) struct RuntimeInspectorSnapshot {
 ///|
 pub(all) struct RuntimeDirtyStateSummary {
   dirty_count : Int
+  dirty_element_ids : Array[ElementId]
   needs_rebuild : Bool
   needs_layout : Bool
   needs_paint : Bool
@@ -173,6 +175,7 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
   runtime : AppRuntime,
 ) -> RuntimeInspectorSnapshot {
   let dirty_count = runtime.dirty_count()
+  let dirty_element_ids = runtime.dirty_element_ids()
   let needs_rebuild = runtime.needs_rebuild()
   let needs_layout = runtime.needs_layout()
   let needs_paint = runtime.needs_paint()
@@ -181,6 +184,7 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
   let dirty_reasons = runtime.inspector_dirty_reasons()
   let dirty_state = RuntimeDirtyStateSummary::{
     dirty_count,
+    dirty_element_ids: dirty_element_ids.copy(),
     needs_rebuild,
     needs_layout,
     needs_paint,
@@ -194,10 +198,11 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     reasons: dirty_reasons.copy(),
   }
   let program = runtime.program_runtime_snapshot()
-  let draw_commands = runtime.draw_commands()
+  let draw_commands = runtime.state.cached_draw_commands()
   RuntimeInspectorSnapshot::{
     size: runtime.size(),
     dirty_count,
+    dirty_element_ids,
     dirty_state,
     needs_rebuild,
     needs_layout,
@@ -261,13 +266,16 @@ pub fn ViewTreeInspectorSnapshot::from_runtime(
 pub fn LayoutInspectorSnapshot::from_runtime(
   runtime : AppRuntime,
 ) -> LayoutInspectorSnapshot {
-  let layout = runtime.layout()
+  let layout = runtime.state.cached_layout()
   {
     root_frame: layout.frame,
     node_count: layout_node_count(layout),
     leaf_count: layout_leaf_count(layout),
     max_depth: layout_max_depth(layout),
-    bounds: layout_bounds_entries(runtime.layout_tree_root(), depth=0),
+    bounds: layout_bounds_entries(
+      runtime.state.cached_layout_tree_root(),
+      depth=0,
+    ),
   }
 }
 
@@ -275,7 +283,7 @@ pub fn LayoutInspectorSnapshot::from_runtime(
 pub fn RenderInspectorSnapshot::from_runtime(
   runtime : AppRuntime,
 ) -> RenderInspectorSnapshot {
-  RenderInspectorSnapshot::from_commands(runtime.draw_commands())
+  RenderInspectorSnapshot::from_commands(runtime.state.cached_draw_commands())
 }
 
 ///|
@@ -289,7 +297,7 @@ pub fn RenderInspectorSnapshot::from_commands(
 pub fn SemanticsInspectorSnapshot::from_runtime(
   runtime : AppRuntime,
 ) -> SemanticsInspectorSnapshot {
-  let semantics = runtime.semantics()
+  let semantics = runtime.state.cached_semantics()
   {
     root_role: semantics.role,
     node_count: semantics_node_count(semantics),

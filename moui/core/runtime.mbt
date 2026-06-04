@@ -221,11 +221,6 @@ pub fn AppRuntime::layout(self : AppRuntime) -> LayoutResult {
 }
 
 ///|
-fn AppRuntime::layout_tree_root(self : AppRuntime) -> PlacedNode {
-  self.state.layout_tree_root()
-}
-
-///|
 fn AppRuntime::view_tree_inspector_snapshot(
   self : AppRuntime,
 ) -> ViewTreeInspectorSnapshot {
@@ -305,6 +300,11 @@ pub fn AppRuntime::needs_paint(self : AppRuntime) -> Bool {
 ///|
 pub fn AppRuntime::dirty_count(self : AppRuntime) -> Int {
   self.state.dirty_count()
+}
+
+///|
+pub fn AppRuntime::dirty_element_ids(self : AppRuntime) -> Array[ElementId] {
+  self.state.dirty_element_ids()
 }
 
 ///|
