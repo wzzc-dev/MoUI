@@ -413,6 +413,14 @@ pub fn WebGpuWasmRenderer::image_resource_snapshot(
 }
 
 ///|
+pub fn WebGpuWasmRenderer::apply_image_resource_load_completion(
+  self : WebGpuWasmRenderer,
+  completion : @render.ImageResourceLoadCompletion,
+) -> @render.ImageResourceSnapshot {
+  self.image_lifecycle.apply_load_completion(completion)
+}
+
+///|
 fn WebGpuWasmRenderer::record_web_image_commands(
   self : WebGpuWasmRenderer,
   commands : Array[@core.DrawCommand],

@@ -130,3 +130,21 @@ pub fn WgpuRenderer::image_resource_snapshot(
 ) -> @render.ImageResourceSnapshot {
   self.backend.image_lifecycle.snapshot_with_revision()
 }
+
+///|
+pub fn WgpuRenderer::apply_image_resource_load_completion(
+  self : WgpuRenderer,
+  completion : @render.ImageResourceLoadCompletion,
+) -> @render.ImageResourceSnapshot {
+  let previous_revision = self.backend.image_lifecycle.revision()
+  let snapshot = self.backend.image_lifecycle.apply_load_completion(completion)
+  if snapshot.revision > previous_revision {
+    match completion.status {
+      @render.ImageResourceLoadCompletionStatus::ImageLoadReady =>
+        ignore(self.backend.failed_images.remove(completion.source))
+      @render.ImageResourceLoadCompletionStatus::ImageLoadFailed =>
+        self.backend.failed_images[completion.source] = true
+    }
+  }
+  snapshot
+}

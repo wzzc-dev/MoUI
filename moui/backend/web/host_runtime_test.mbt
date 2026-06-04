@@ -109,6 +109,45 @@ test "web renderer exposes app-visible failed image resource snapshots" {
 }
 
 ///|
+test "web renderer applies app-visible image load completions" {
+  let port : @webgpu.WebGpuHostRendererPort = {
+    capabilities: () => @webgpu.required_capabilities(),
+    create_surface: (canvas_id, metrics) => { canvas_id, metrics },
+    create_renderer: _surface => (),
+    resize: _metrics => (),
+    measure_text: input => @core.TextSystem::fallback().measure_text(input),
+    register_font_data: (_family, _data) => (),
+    image_resource: _source => None,
+    submit: _calls => (),
+    dispose: () => (),
+  }
+  let renderer : WebRenderer = {
+    renderer: @webgpu.create_renderer(
+      canvas_id="moui-test-canvas",
+      logical_size=@core.Size::new(width=100.0, height=50.0),
+      port~,
+    ),
+  }
+  renderer.render([
+    @core.DrawCommand::DrawImage({
+      source: "async.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=10.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ])
+  let ready = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::ready("async.png", width=30, height=15),
+  )
+  inspect(ready.revision, content="2")
+  let resources = renderer.image_resources()
+  inspect(resources.length(), content="1")
+  assert_true(resources[0].status == @render.ImageResourceStatus::ImageReady)
+  inspect(resources[0].width, content="30")
+  inspect(resources[0].height, content="15")
+}
+
+///|
 test "web maps close event to host event" {
   let event = window_event_to_host(
     @window_core.WindowEvent::CloseRequested,

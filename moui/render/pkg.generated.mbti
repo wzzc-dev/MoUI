@@ -48,6 +48,7 @@ pub(all) struct ImageResourceLifecycle {
   mut records : Map[String, ImageResourceRecord]
   mut revision : Int
 } derive(Eq, @debug.Debug)
+pub fn ImageResourceLifecycle::apply_load_completion(Self, ImageResourceLoadCompletion) -> ImageResourceSnapshot
 pub fn ImageResourceLifecycle::changed_since(Self, Int) -> Bool
 pub fn ImageResourceLifecycle::dispose(Self, String) -> ImageResourceRecord
 pub fn ImageResourceLifecycle::evict_disposed(Self) -> Int
@@ -59,6 +60,21 @@ pub fn ImageResourceLifecycle::new() -> Self
 pub fn ImageResourceLifecycle::revision(Self) -> Int
 pub fn ImageResourceLifecycle::snapshot(Self) -> Array[ImageResourceRecord]
 pub fn ImageResourceLifecycle::snapshot_with_revision(Self) -> ImageResourceSnapshot
+
+pub(all) struct ImageResourceLoadCompletion {
+  source : String
+  status : ImageResourceLoadCompletionStatus
+  width : Int
+  height : Int
+  diagnostic : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ImageResourceLoadCompletion::failed(String, diagnostic~ : String) -> Self
+pub fn ImageResourceLoadCompletion::ready(String, width~ : Int, height~ : Int) -> Self
+
+pub(all) enum ImageResourceLoadCompletionStatus {
+  ImageLoadReady
+  ImageLoadFailed
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ImageResourceRecord {
   source : String
