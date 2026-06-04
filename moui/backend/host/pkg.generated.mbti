@@ -185,6 +185,14 @@ pub(all) struct HostEventResult {
   close_requested : Bool
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct HostEventSource {
+  // private fields
+}
+pub fn HostEventSource::active_handler_count(Self) -> Int
+pub fn HostEventSource::new() -> Self
+pub fn HostEventSource::publish(Self, HostEvent) -> Int
+pub fn[Msg] HostEventSource::subscription(Self, key? : String, label? : String, map~ : (HostEvent) -> Msg?) -> @wzzc-dev/moui/core.Subscription[Msg]
+
 pub(all) enum HostFileDialogKind {
   OpenFile
   SaveFile
