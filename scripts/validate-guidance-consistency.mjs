@@ -410,6 +410,8 @@ assertIncludes("docs/release-readiness.md", "host-event subscription fanout");
 assertIncludes("docs/release-readiness.md", "HostWindowEventSource::subscription");
 assertIncludes("docs/release-readiness.md", "HostWindowEventSource::publish");
 assertIncludes("docs/release-readiness.md", "window-scoped subscription fanout");
+assertIncludes("docs/release-readiness.md", "HostPlatformEventSources");
+assertIncludes("docs/release-readiness.md", "normalized runtime host/window events");
 assertIncludes("docs/release-readiness.md", "HostRouteSource::subscription");
 assertIncludes("docs/release-readiness.md", "HostRouteSource::publish");
 assertIncludes("docs/release-readiness.md", "route/deep-link subscription fanout");
@@ -421,6 +423,8 @@ assertIncludes("docs/architecture.md", "`Subscription::host_event`");
 assertIncludes("docs/architecture.md", "`HostWindowEventSource`");
 assertIncludes("docs/architecture.md", "`HostWindowEvent`");
 assertIncludes("docs/architecture.md", "`Subscription::window_event`");
+assertIncludes("docs/architecture.md", "`HostPlatformEventSources`");
+assertIncludes("docs/architecture.md", "Web, macOS, Windows, and Linux app options");
 assertIncludes("docs/architecture.md", "`HostRouteSource`");
 assertIncludes("docs/architecture.md", "`HostRouteEvent`");
 assertIncludes("docs/architecture.md", "`Subscription::route_event`");
@@ -430,8 +434,21 @@ assertIncludes("docs/testing.md", "Host event, window, timer, and route subscrip
 assertIncludes("docs/testing.md", "window identity preservation");
 assertIncludes("docs/testing.md", "window/timer/route subscription adapter start/cleanup");
 assertIncludes("docs/testing.md", "scheduler interval capture");
+assertIncludes("docs/testing.md", "HostPlatformEventSources");
+assertIncludes("docs/testing.md", "event-source wiring through `HostPlatformEventSources`");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub struct HostEventSource");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub struct HostPlatformEventSources");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub(all) struct HostPlatformEventPublishResult");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "HostPlatformEventSources::publish");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "Subscription::host_event");
+assertIncludes("moui/backend/web/host_runtime.mbt", "event_sources : @host.HostPlatformEventSources?");
+assertIncludes("moui/backend/web/host_runtime.mbt", "publish_subscription_event");
+assertIncludes("moui/backend/macos/macos_backend.mbt", "event_sources : @host.HostPlatformEventSources?");
+assertIncludes("moui/backend/macos/macos_backend.mbt", "publish_subscription_event");
+assertIncludes("moui/backend/windows/windows_backend.mbt", "event_sources : @host.HostPlatformEventSources?");
+assertIncludes("moui/backend/windows/windows_backend.mbt", "publish_subscription_event");
+assertIncludes("moui/backend/linux/linux_backend.mbt", "event_sources : @host.HostPlatformEventSources?");
+assertIncludes("moui/backend/linux/linux_backend.mbt", "publish_subscription_event");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub(all) struct HostWindowEvent");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub struct HostWindowEventSource");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "HostWindowEventSource::publish");
@@ -448,6 +465,7 @@ assertIncludes("moui/backend/host/subscription_adapters.mbt", "HostTimerSource::
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "Subscription::timer");
 assertIncludes("moui/backend/host/host_test.mbt", "host event source subscription dispatches mapped host events");
 assertIncludes("moui/backend/host/host_test.mbt", "host event source subscription cleanup removes late publishers");
+assertIncludes("moui/backend/host/host_test.mbt", "host platform event sources publish host and window subscriptions");
 assertIncludes("moui/backend/host/host_test.mbt", "host window event source subscription dispatches mapped window events");
 assertIncludes("moui/backend/host/host_test.mbt", "host window event source subscription cleanup removes late publishers");
 assertIncludes("moui/backend/host/host_test.mbt", "host route source subscription dispatches mapped route events");
@@ -589,6 +607,7 @@ assertIncludes("AGENTS.md", "--web-presentation-manifest");
 assertIncludes("AGENTS.md", "monitor/cursor");
 assertIncludes("AGENTS.md", "host-event fanout subscription adapters");
 assertIncludes("AGENTS.md", "window-scoped subscription adapters");
+assertIncludes("AGENTS.md", "platform event-source bundles");
 assertIncludes("AGENTS.md", "scheduler-backed timer subscription adapters");
 assertIncludes("AGENTS.md", "route/deep-link subscription adapters");
 assertIncludes(
@@ -626,6 +645,14 @@ assertIncludes(
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "HostWindowEventSource::subscription",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "HostPlatformEventSources",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "normalized runtime host/window event stream",
 );
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",

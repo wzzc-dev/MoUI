@@ -52,6 +52,7 @@ pub(all) struct MacosAccessibilityBridgeInfo {
 pub struct MacosHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv exit_after_first_present : Bool
+  priv event_sources : @host.HostPlatformEventSources?
 }
 
 ///|
@@ -76,6 +77,7 @@ struct MacosApp {
   platform_windows : @host.HostPlatformWindowMap
   platform_slots : MacosWindowPlatformSlots
   image_repaint_tracker : @host.HostImageResourceRepaintTracker
+  event_sources : @host.HostPlatformEventSources?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut exit_after_first_present : Bool
@@ -98,8 +100,9 @@ priv struct MacosWindowPlatformSlots {
 pub fn MacosHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   exit_after_first_present? : Bool = false,
+  event_sources? : @host.HostPlatformEventSources? = None,
 ) -> MacosHostAppOptions {
-  { scene_resolver, exit_after_first_present }
+  { scene_resolver, exit_after_first_present, event_sources }
 }
 
 ///|
@@ -362,6 +365,7 @@ fn create_macos_app(
     platform_windows: @host.HostPlatformWindowMap::new(),
     platform_slots: MacosWindowPlatformSlots::new(),
     image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
+    event_sources: options.event_sources,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     exit_after_first_present: options.exit_after_first_present,
@@ -759,9 +763,22 @@ fn MacosApp::dispatch_window_event(
           }
         None => ()
       }
+      ignore(self.publish_subscription_event(window_id, host_event))
       self.sync_text_input_session()
     }
     None => ()
+  }
+}
+
+///|
+fn MacosApp::publish_subscription_event(
+  self : MacosApp,
+  window_id : @host.HostWindowId,
+  event : @host.HostEvent,
+) -> @host.HostPlatformEventPublishResult? {
+  match self.event_sources {
+    Some(sources) => Some(sources.publish(window_id~, event~))
+    None => None
   }
 }
 

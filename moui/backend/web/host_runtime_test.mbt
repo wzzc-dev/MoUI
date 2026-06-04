@@ -29,6 +29,49 @@ test "web exposes WebGPU renderer contract" {
 }
 
 ///|
+test "web app options carry scene resolver and platform event sources" {
+  let request = @host.HostWindowOpenRequest::new(
+    title="Inspector",
+    scene=@host.HostWindowScene::new(scene_id="inspector"),
+    metrics=@host.HostSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=320.0, height=240.0),
+    ),
+  )
+  match WebAppOptions::new().scene_resolver.resolve(request) {
+    @host.HostWindowSceneResolution::SceneRejected(message) =>
+      inspect(message, content="window scene resolver is unavailable")
+    _ => fail("expected default Web scene resolver rejection")
+  }
+  let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
+    @host.HostWindowSceneResolution::SceneResolved(
+      @host.HostWindowSceneInstance::new(
+        request~,
+        runtime=@core.AppRuntime::new_view(
+          root=(@core.View::empty() : @core.View[Unit]),
+          size=request.metrics.logical_size,
+        ),
+      ),
+    )
+  })
+  let options = WebAppOptions::new(
+    scene_resolver=resolver,
+    event_sources=Some(@host.HostPlatformEventSources::new()),
+  )
+  match options.event_sources {
+    Some(sources) => {
+      inspect(sources.host_events().active_handler_count(), content="0")
+      inspect(sources.window_events().active_handler_count(), content="0")
+    }
+    None => fail("expected configured Web platform event sources")
+  }
+  match options.scene_resolver.resolve(request) {
+    @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
+      assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))
+    _ => fail("expected configured Web scene resolver")
+  }
+}
+
+///|
 test "web renderer exposes app-visible ready image resource snapshots" {
   let port : @webgpu.WebGpuHostRendererPort = {
     capabilities: () => @webgpu.required_capabilities(),
