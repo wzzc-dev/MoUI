@@ -210,6 +210,8 @@ pub(all) struct HostImageResourceRepaintResult {
   window_id : HostWindowId
   previous_revision : Int
   current_revision : Int
+  previous_status_counts : HostImageResourceStatusCounts
+  current_status_counts : HostImageResourceStatusCounts
   status : HostImageResourceRepaintStatus
 } derive(Eq, ToJson, @debug.Debug)
 

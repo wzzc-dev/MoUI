@@ -130,7 +130,7 @@ Use this skill when editing or reviewing:
   window lifecycle registry, window scene resolver, per-window runtime slot
   collection, platform-window id map, renderer-neutral `HostWindowRenderer`
   diagnostics, image-resource repaint routing and tracked-window revision/status
-  diagnostics,
+  diagnostics plus repaint-result previous/current status counts,
   window request/completion queue, text-input session, window-event conversion,
   async host-service queue, and redraw driver.
 - `backend/web/`: wasm-gc Web host, canvas constraints, resolver-backed

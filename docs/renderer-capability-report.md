@@ -35,7 +35,7 @@ Status meanings:
 | Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have renderer-local pixel tests plus real native renderer pixel smoke coverage; unknown names still use fallback paths. |
 | Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interiors in both caret paths, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, can draw optional SkShaper shaped glyph runs after linking, and audits `skia_mbt` fallback/measurement/shaping descriptor resource plans through fallback-safe tests; SkParagraph-style line breaking, bidi, deterministic color emoji, and typography conformance remain follow-up work. |
 | Emoji text | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo cluster samples, prefers emoji coverage characters in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path; deterministic color emoji, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. |
-| Async image | partial | partial | partial | Renderer-neutral lifecycle records and monotonic revision snapshots are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; macOS/Windows/Linux hosts track presented image revisions, route repaint requests per window when a newer revision is observed, expose tracked-window revision/status-count snapshots, and discard closed-window image changes; Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, and records disposed cached image resources during renderer disposal; Web renderer/backend diagnostics expose the same revisioned snapshot shape. Native async loader/notifier trigger sources remain follow-up work. |
+| Async image | partial | partial | partial | Renderer-neutral lifecycle records and monotonic revision snapshots are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; macOS/Windows/Linux hosts track presented image revisions, route repaint requests per window when a newer revision is observed, expose previous/current loading/ready/failed/disposed status counts on repaint results plus tracked-window revision/status-count snapshots, and discard closed-window image changes; Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, and records disposed cached image resources during renderer disposal; Web renderer/backend diagnostics expose the same revisioned snapshot shape. Native async loader/notifier trigger sources remain follow-up work. |
 
 ## Renderer Descriptors
 
@@ -150,8 +150,9 @@ window, treats that revision as a high-water mark so stale lower revision
 snapshots cannot roll back status diagnostics or trigger a redraw, routes
 repaint requests only to the matching open window when a newer revision is
 observed, exposes a diagnostic snapshot of tracked window revisions and
-lifecycle status counts, and discards closed-window image changes while
-removing the closed window from the tracked repaint table. Native async
+lifecycle status counts, reports previous/current lifecycle status counts on
+each repaint result, and discards closed-window image changes while removing
+the closed window from the tracked repaint table. Native async
 loader/notifier trigger sources remain follow-up work. Skia renderer-local
 tests also pin `ImageFit::Contain` letterboxing,
 `ImageFit::Cover` UV crop geometry, `ImageFit::Stretch` full-frame sampling,
@@ -231,7 +232,8 @@ renderer image-resource records and revisioned snapshots through
 and disposed image resources without importing `render/skia`; macOS, Windows,
 and Linux hosts use the shared image repaint tracker to baseline presented
 Skia revisions, route per-window repaint requests, expose tracked-window
-revision/status-count snapshots, and drop closed-window image changes; renderer tests cover
+revision/status-count snapshots, report previous/current status counts on
+repaint results, and drop closed-window image changes; renderer tests cover
 JPEG/BMP data URI and local-file decode,
 contain/cover/stretch/scale-down/fit-width/fit-height source/destination placement, immutable
 failed-cache reuse, and local-file retry once a missing file appears.
