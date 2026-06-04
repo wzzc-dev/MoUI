@@ -274,6 +274,10 @@ const recorderArgs = [
   host,
   "--skia-status",
   skiaStatus,
+  "--skia-provenance-kind",
+  "matching-host-artifact",
+  "--skia-provenance-host",
+  host,
 ];
 
 for (const key of skiaObservationKeys) {
@@ -282,12 +286,15 @@ for (const key of skiaObservationKeys) {
 
 for (const artifact of artifacts) {
   recorderArgs.push("--skia-artifact", artifact);
+  recorderArgs.push("--skia-provenance-artifact", artifact);
 }
 
 recorderArgs.push("--skia-note", defaultNote);
+recorderArgs.push("--skia-provenance-note", defaultNote);
 for (const note of notes) {
   if (note.trim()) {
     recorderArgs.push("--skia-note", note);
+    recorderArgs.push("--skia-provenance-note", note);
   }
 }
 

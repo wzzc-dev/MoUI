@@ -397,7 +397,13 @@ cursor probes. Native platform entries also carry `skiaEvidence`; use
 `--skia-status`, repeated `--skia-set`, `--skia-artifact`, and `--skia-note`
 when recording first-frame Skia smoke results. Keep the overall platform
 `status` pending when only the Skia first-frame route passed and broader
-platform-service observations are still pending.
+platform-service observations are still pending. Schema version 2 also treats
+passed evidence provenance as mandatory: a `status=passed` platform entry or a
+`skiaEvidence.status=passed` route must include `evidenceProvenance` that traces
+the claim to a non-skipped successful GitHub Actions job or a matching-host
+artifact bundle. A host label, build-only job, package artifact, provider
+preflight, or skipped workflow-dispatch path is not enough to support passed
+runtime evidence.
 
 For Windows/Linux matching-host Skia route evidence, the convenience wrapper
 checks the expected log markers before delegating to the manifest recorder:
@@ -447,6 +453,16 @@ node scripts/record-platform-evidence-manifest.mjs \
   --artifact artifacts/platform-evidence/windows/window-smoke.md \
   --artifact artifacts/platform-evidence/windows/showcase-run.log \
   --note "matching-host Windows evidence observed" \
+  --provenance-kind github-actions \
+  --provenance-host "Windows MSVC CI" \
+  --provenance-workflow "MoUI CI" \
+  --provenance-job "Windows MSVC native smoke" \
+  --provenance-run-url "https://github.com/wzzc-dev/MoUI/actions/runs/<run-id>" \
+  --provenance-run-id "<run-id>" \
+  --provenance-runner "windows-2022" \
+  --provenance-artifact artifacts/platform-evidence/windows/window-smoke.md \
+  --provenance-artifact artifacts/platform-evidence/windows/showcase-run.log \
+  --provenance-note "Windows runtime evidence came from a successful non-skipped CI job" \
   --skia-status passed \
   --skia-set providerPreflight=yes \
   --skia-set fallbackUnavailable=yes \
@@ -456,7 +472,13 @@ node scripts/record-platform-evidence-manifest.mjs \
   --skia-artifact artifacts/platform-evidence/windows/skia-provider.log \
   --skia-artifact artifacts/platform-evidence/windows/showcase-skia-first-frame.log \
   --skia-artifact artifacts/platform-evidence/windows/markdown-skia-first-frame.log \
-  --skia-note "matching-host Windows Skia first-frame evidence observed"
+  --skia-note "matching-host Windows Skia first-frame evidence observed" \
+  --skia-provenance-kind matching-host-artifact \
+  --skia-provenance-host "Windows MSVC CI" \
+  --skia-provenance-artifact artifacts/platform-evidence/windows/skia-provider.log \
+  --skia-provenance-artifact artifacts/platform-evidence/windows/showcase-skia-first-frame.log \
+  --skia-provenance-artifact artifacts/platform-evidence/windows/markdown-skia-first-frame.log \
+  --skia-provenance-note "Windows Skia route evidence came from matching-host first-frame artifacts"
 node scripts/validate-platform-evidence-manifest.mjs \
   artifacts/conformance/platform-runtime-evidence.json
 node scripts/validate-platform-evidence-manifest.mjs \
