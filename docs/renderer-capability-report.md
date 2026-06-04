@@ -33,7 +33,7 @@ Status meanings:
 | Filter effect | ready | ready | ready | Skia validates saturation and identity-normalized color matrix filters through renderer-local tests, with blur, saturation, brightness, contrast, and color matrix filters also covered by the real native renderer smoke. |
 | Path/vector | ready | ready | ready | Skia replays `PathSpec` into native paths with renderer-local solid/gradient pixel tests and real native smoke coverage for solid/gradient fill and stroke output, plus quadratic and cubic curve verbs. |
 | Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have renderer-local pixel tests plus real native renderer pixel smoke coverage; unknown names still use fallback paths. |
-| Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interiors in both caret paths, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, can draw optional SkShaper shaped glyph runs after linking, and audits `skia_mbt` fallback/measurement/shaping descriptor resource plans through fallback-safe tests; SkParagraph-style line breaking, bidi, deterministic color emoji, and typography conformance remain follow-up work. |
+| Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interiors in both caret paths, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, can draw optional SkShaper shaped glyph runs after linking, and audits `moui_skia` fallback/measurement/shaping descriptor resource plans through fallback-safe tests; SkParagraph-style line breaking, bidi, deterministic color emoji, and typography conformance remain follow-up work. |
 | Emoji text | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo cluster samples, prefers emoji coverage characters in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path; deterministic color emoji, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. |
 | Async image | partial | partial | partial | Renderer-neutral lifecycle records and monotonic revision snapshots are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; Skia providers also forward the renderer image-resource callback setter through that bridge, and macOS/Windows/Linux hosts install baseline-guarded callbacks that route redraw requests only after a window has presented an image-resource revision. Hosts track presented image revisions, route repaint requests per window when a newer revision is observed, expose previous/current loading/ready/failed/disposed status counts on repaint results plus tracked-window revision/status-count snapshots, and discard closed-window image changes; Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, records disposed cached image resources during renderer disposal, and exposes renderer-local image-resource change callbacks when lifecycle revisions advance; Web renderer/backend diagnostics expose the same revisioned snapshot shape. True native async loader completion sources remain follow-up work. |
 
@@ -167,7 +167,7 @@ tests also pin `ImageFit::Contain` letterboxing,
 ## Current Skia Raster Notes
 
 `render/skia` is a native-only renderer package over the editable
-`wzzc-dev/skia_mbt` checkout. It exposes `SkiaRasterRenderer`,
+`wzzc-dev/moui_skia` checkout. It exposes `SkiaRasterRenderer`,
 `SkiaPixelFrame`, `SkiaPresentTarget`, `SkiaFontResolution`,
 `SkiaUnsupportedCommandDiagnostic`, `renderer_descriptor()`, backend info,
 fallback-safe availability checks, a basic Skia-backed text system, image
@@ -192,13 +192,13 @@ runtime smoke runs; those logs prove presentation only for the host that
 produced them.
 
 When real Skia is linked, the renderer creates a CPU `raster_n32_premul` surface
-using physical pixels through `skia_mbt`'s `SurfaceTargetDescriptor` and
+using physical pixels through `moui_skia`'s `SurfaceTargetDescriptor` and
 `Surface::for_target` value-layer surface contract, scales the canvas by the
 host scale factor so MoUI commands remain in logical coordinates, draws the
 command stream, finalizes the surface through `Surface::flush_and_submit`,
 reads pixels back into `SkiaPixelFrame`, and calls the platform presenter. The
 fallback-safe `raster_surface_preflight` diagnostic summarizes the same
-`skia_mbt` surface/frame/finalization resource plans so MoUI can audit the
+`moui_skia` surface/frame/finalization resource plans so MoUI can audit the
 Skia raster target contract even when real native Skia is not linked. The
 fallback-safe `skia_text_descriptor_preflight` similarly consumes the
 `FontFallbackRequest`, `TextMeasurementDescriptor`, `TextShapingDescriptor`,

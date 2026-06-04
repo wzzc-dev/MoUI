@@ -280,7 +280,7 @@ write_platform_evidence_manifest() {
       },
       "skiaEvidence": {
         "status": "pending",
-        "boundary": "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named macOS host and does not reuse skia_mbt dependency evidence.",
+        "boundary": "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named macOS host and does not reuse moui_skia dependency evidence.",
         "providerCommands": [
           "moon test moui/render/skia --target native",
           "moon test moui/backend/macos/skia --target native"
@@ -350,7 +350,7 @@ write_platform_evidence_manifest() {
       },
       "skiaEvidence": {
         "status": "pending",
-        "boundary": "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named Windows/MSVC host and does not reuse skia_mbt dependency evidence.",
+        "boundary": "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named Windows/MSVC host and does not reuse moui_skia dependency evidence.",
         "providerCommands": [
           "moon test moui/render/skia --target native",
           "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon test moui/backend/windows/skia --target native }\"",
@@ -421,7 +421,7 @@ write_platform_evidence_manifest() {
       },
       "skiaEvidence": {
         "status": "pending",
-        "boundary": "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named Linux Wayland host and does not reuse skia_mbt dependency evidence.",
+        "boundary": "Provider/preflight evidence proves native Skia package wiring only; runtime smoke evidence must come from MoUI Skia entrypoints on the named Linux Wayland host and does not reuse moui_skia dependency evidence.",
         "providerCommands": [
           "moon test moui/render/skia --target native",
           "moon test moui/backend/linux/skia --target native",

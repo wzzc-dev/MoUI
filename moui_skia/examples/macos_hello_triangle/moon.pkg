@@ -1,0 +1,22 @@
+import {
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8",
+  "wzzc-dev/moui_skia" @skia,
+  "wzzc-dev/moui_skia/native",
+  "wzzc-dev/window/core",
+  "wzzc-dev/window/dpi",
+  "wzzc-dev/window/macos",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  "native-stub": [ "macos_present.m" ],
+  link: {
+    "native": {
+      "cc-link-flags": "${build.MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS}",
+    },
+  },
+  targets: { "main.mbt": [ "native" ], "macos_present.mbt": [ "native" ] },
+)

@@ -700,7 +700,7 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
 fn main {
   if !@skia_renderer.skia_available() {
     fail_smoke(
-      "real Skia backend is unavailable; configure skia_mbt/native with SKIA_MBT_HAS_SKIA, Skia headers, and linker flags before running this MoUI smoke",
+      "real Skia backend is unavailable; configure moui_skia/native with MOUI_SKIA_HAS_SKIA, Skia headers, and linker flags before running this MoUI smoke",
     )
   }
   if @skia_native.skia_shaper_available() {

@@ -156,7 +156,7 @@ Use this skill when editing or reviewing:
 - `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
 - `render/wgpu/fontconfig/`: Linux fontconfig/HarfBuzz/FreeType scaffold.
 - `render/wgpu/text_protocol/`: shared native text provider payload protocol.
-- `render/skia/`: native Skia raster renderer over the local `skia_mbt` binding,
+- `render/skia/`: native Skia raster renderer over the local `moui_skia` binding,
   including renderer-local command/reason diagnostics for unsupported Skia
   fallbacks and renderer-local image-resource lifecycle change callbacks.
   Native provider or host redraw scheduling from async image load/error
@@ -199,7 +199,7 @@ sh scripts/dev-check.sh
 ```
 
 The daily check runs `sh scripts/check-local-deps.sh`, which verifies the local
-`window` fork, repo-local `skia_mbt` workspace, and the `window` fork's MoUI-oriented smoke
+`window` fork, repo-local `moui_skia` workspace, and the `window` fork's MoUI-oriented smoke
 and evidence files are present, including `scripts/record_moui_evidence.sh`.
 It also checks that the fork's current MoUI smoke contract still uses the
 `moon run examples/moui_macos_smoke --target native` macOS path, the
@@ -211,12 +211,12 @@ local `.local_repos/` edits.
 Treat those window smoke helpers as dependency-level matching-host evidence,
 not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
 validation.
-The same local-dependency check also requires the `skia_mbt` binding workspace's
+The same local-dependency check also requires the `moui_skia` binding workspace's
 `skia-platform-status.json`, `skia-provider-lock.json`,
 `SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
 and verifier scripts, then runs
-`skia_mbt/scripts/verify-platform-status.sh` and
-`skia_mbt/scripts/verify-native-capability-contract.sh`. Treat
+`moui_skia/scripts/verify-platform-status.sh` and
+`moui_skia/scripts/verify-native-capability-contract.sh`. Treat
 that as binding-level Skia provider/status and native capability evidence; MoUI
 renderer pixels and platform runtime behavior still need the opt-in real-Skia
 smoke or matching-host example runs.
@@ -305,7 +305,7 @@ Run `moui/backend/<platform>/{wgpu,skia}` tests directly only on the matching
 host/toolchain when investigating that provider.
 macOS/Windows/Linux Skia provider tests cover the public
 `*_skia_provider_preflight_summary()` package-audit surface for renderer
-availability, `skia_mbt/native` availability, selected font resolution, and
+availability, `moui_skia/native` availability, selected font resolution, and
 presenter identity, the `HostWindowRenderer` bridge that forwards Skia
 text-system, image-resource snapshots, image-resource change callbacks,
 present-count, and disposal diagnostics, inherited host service/input/window readiness,
@@ -346,7 +346,7 @@ scripts/macos-skia-renderer-smoke.sh --skia-provider source
 ```
 
 The helper resolves JetBrains, existing, or source-built Skia providers,
-temporarily configures the local `skia_mbt` and MoUI Skia smoke packages, runs
+temporarily configures the local `moui_skia` and MoUI Skia smoke packages, runs
 the renderer pixel smoke, optionally launches `examples/showcase/macos_skia` to
 verify its first presented frame, optionally launches
 `examples/markdown_editor/macos_skia` with `--run-markdown-smoke`, and restores
@@ -355,7 +355,7 @@ touched `moon.pkg` files. It also writes/restores
 the same real-Skia configuration. In `auto` link mode, persistent
 `--write-local-config` defaults to dynamic `libskia.dylib` flags for direct
 `moon run`, while temporary smoke/build setup defaults to static `libskia.a`
-flags when available; set `SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or pass
+flags when available; set `MOUI_SKIA_MACOS_LINK_MODE=dynamic|static` or pass
 `--link-mode dynamic|static` to override. With explicit artifact log paths,
 `--record-platform-evidence` updates only the macOS `skiaEvidence` block after a
 successful full smoke; it does not mark the broader platform-service entry

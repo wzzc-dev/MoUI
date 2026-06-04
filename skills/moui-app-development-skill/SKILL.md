@@ -180,7 +180,7 @@ Editor check. Use `scripts/macos-skia-renderer-smoke.sh --write-local-config`
 when direct local `moon run` commands need real Skia; in `auto` link mode that
 persistent setup prefers dynamic `libskia.dylib`, while temporary smoke/build
 setup prefers static `libskia.a` when available. Set
-`SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or pass `--link-mode` to override.
+`MOUI_SKIA_MACOS_LINK_MODE=dynamic|static` or pass `--link-mode` to override.
 
 Native packaging helpers:
 
