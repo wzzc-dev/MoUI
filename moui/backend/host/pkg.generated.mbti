@@ -328,6 +328,19 @@ pub(all) struct HostPendingServiceRequest {
   request : HostServiceRequest
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct HostPlatformEventPublishResult {
+  host_event_count : Int
+  window_event_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostPlatformEventSources {
+  // private fields
+}
+pub fn HostPlatformEventSources::host_events(Self) -> HostEventSource
+pub fn HostPlatformEventSources::new(host_events? : HostEventSource, window_events? : HostWindowEventSource) -> Self
+pub fn HostPlatformEventSources::publish(Self, window_id~ : HostWindowId, event~ : HostEvent) -> HostPlatformEventPublishResult
+pub fn HostPlatformEventSources::window_events(Self) -> HostWindowEventSource
+
 pub(all) struct HostPlatformWindowBinding {
   platform_id : @wzzc-dev/window/core.WindowId
   host_id : HostWindowId

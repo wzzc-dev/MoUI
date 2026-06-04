@@ -53,7 +53,7 @@ mapping is:
 | Navigation shell | `moon test moui/views --target native`, `moon test examples/showcase/app --target native` |
 | Menus and commands | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/command_palette/app --target native` |
 | Host services and file import | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native` |
-| Host event, window, timer, and route subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native` |
+| Host event, window, timer, and route subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, touched native backend checks such as `moon test moui/backend/macos --target native`, `moon test moui/backend/linux --target native`, or `moon check moui/backend/windows --target native` |
 | Native async image completion | `moon test moui/render --target native`, `moon test moui/render/wgpu --target native`, `moon test moui/backend/host --target native`, touched native backend/provider package tests such as `moon test moui/backend/macos --target native`, `moon test moui/backend/macos/wgpu --target native`, `moon test moui/backend/linux --target native`, or `moon test moui/backend/linux/wgpu --target native`; Windows package tests require a Windows/MSVC host, use `moon check moui/backend/windows --target native` and `moon check moui/backend/windows/wgpu --target native` on non-Windows hosts for static API coverage |
 | Virtual lists | `moon test moui/views --target native`, `sh scripts/conformance-check.sh --layout` |
 
@@ -284,7 +284,11 @@ instead of one large end-to-end assertion:
    subscription adapters also prove source start, window identity preservation,
    scheduler interval capture, typed dispatch mapping, cancellation cleanup, and
    route fanout, and late-publisher/callback behavior here before platform
-   packages wire concrete event, window, timer, or route sources. Native async
+   packages wire concrete event, window, timer, or route sources. Web, macOS,
+   Windows, and Linux backend tests now also pin that optional
+   `HostPlatformEventSources` can be carried by host app options while the
+   runtime dispatch path publishes normalized host/window events through the
+   shared fanout after `HostRuntimeDriver` dispatch. Native async
    image completion source behavior also belongs here: loading-record scheduling,
    in-flight de-duplication, publish, redraw routing, renderer apply-port
    forwarding, stale revision handling, closed-window discard, and cleanup/late
@@ -325,7 +329,8 @@ before it grows broad platform claims:
   roundtrips.
 - Platform/tooling: host-service capability checks, Linux readiness, Web
   wasm-gc backend tests, async host-service completion, host-event fanout and
-  window/timer/route subscription adapter start/cleanup, window lifecycle registry
+  window/timer/route subscription adapter start/cleanup, platform host/window
+  event-source wiring through `HostPlatformEventSources`, window lifecycle registry
   behavior, native async image completion source schedule/publish/apply/redraw/cleanup,
   native provider async-image hook wiring,
   app-owned route history/deep-link state, devtool snapshots, render

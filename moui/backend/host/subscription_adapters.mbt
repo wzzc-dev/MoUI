@@ -5,6 +5,18 @@ pub struct HostEventSource {
 }
 
 ///|
+pub struct HostPlatformEventSources {
+  priv host_events : HostEventSource
+  priv window_events : HostWindowEventSource
+}
+
+///|
+pub(all) struct HostPlatformEventPublishResult {
+  host_event_count : Int
+  window_event_count : Int
+} derive(Eq, Debug, ToJson)
+
+///|
 pub struct HostTimerSource {
   priv start_timer_fn : (Double, (@core.Frame) -> Unit) -> (() -> Unit)?
 }
@@ -54,6 +66,40 @@ priv struct HostRouteSubscriptionHandler {
 ///|
 pub fn HostEventSource::new() -> HostEventSource {
   { next_handler_value: 1, handlers: [] }
+}
+
+///|
+pub fn HostPlatformEventSources::new(
+  host_events? : HostEventSource = HostEventSource::new(),
+  window_events? : HostWindowEventSource = HostWindowEventSource::new(),
+) -> HostPlatformEventSources {
+  { host_events, window_events }
+}
+
+///|
+pub fn HostPlatformEventSources::host_events(
+  self : HostPlatformEventSources,
+) -> HostEventSource {
+  self.host_events
+}
+
+///|
+pub fn HostPlatformEventSources::window_events(
+  self : HostPlatformEventSources,
+) -> HostWindowEventSource {
+  self.window_events
+}
+
+///|
+pub fn HostPlatformEventSources::publish(
+  self : HostPlatformEventSources,
+  window_id~ : HostWindowId,
+  event~ : HostEvent,
+) -> HostPlatformEventPublishResult {
+  {
+    host_event_count: self.host_events.publish(event),
+    window_event_count: self.window_events.publish(window_id~, event~),
+  }
 }
 
 ///|

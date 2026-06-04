@@ -22,6 +22,7 @@ struct WebApp {
   runtime_slots : @host.HostWindowRuntimeSlots
   platform_windows : @host.HostPlatformWindowMap
   platform_slots : WebWindowPlatformSlots
+  event_sources : @host.HostPlatformEventSources?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
 }
@@ -37,6 +38,7 @@ priv struct WebWindowPlatformSlot {
 ///|
 pub(all) struct WebAppOptions {
   scene_resolver : @host.HostWindowSceneResolver
+  event_sources : @host.HostPlatformEventSources?
 }
 
 ///|
@@ -137,6 +139,7 @@ pub fn run_app_with_options(
     runtime_slots: @host.HostWindowRuntimeSlots::new(),
     platform_windows: @host.HostPlatformWindowMap::new(),
     platform_slots: WebWindowPlatformSlots::new(),
+    event_sources: options.event_sources,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
   }
@@ -147,8 +150,9 @@ pub fn run_app_with_options(
 ///|
 pub fn WebAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
+  event_sources? : @host.HostPlatformEventSources? = None,
 ) -> WebAppOptions {
-  { scene_resolver, }
+  { scene_resolver, event_sources }
 }
 
 ///|
@@ -437,6 +441,18 @@ fn WebApp::dispatch_pointer_or_context_menu(
 }
 
 ///|
+fn WebApp::publish_subscription_event(
+  self : WebApp,
+  window_id : @host.HostWindowId,
+  event : @host.HostEvent,
+) -> @host.HostPlatformEventPublishResult? {
+  match self.event_sources {
+    Some(sources) => Some(sources.publish(window_id~, event~))
+    None => None
+  }
+}
+
+///|
 fn WebApp::redraw_window(self : WebApp, window_id : @host.HostWindowId) -> Unit {
   match
     (
@@ -491,6 +507,7 @@ fn WebApp::dispatch_window_event(
           }
         None => ()
       }
+      ignore(self.publish_subscription_event(window_id, host_event))
       self.drain_async_host_services()
       self.sync_text_input_session()
     }
