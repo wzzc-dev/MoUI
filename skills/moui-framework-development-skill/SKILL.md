@@ -138,8 +138,8 @@ Use this skill when editing or reviewing:
   diagnostics and image-resource change callback bridge, image-resource repaint
   routing and tracked-window revision/status diagnostics plus repaint-result
   previous/current status counts,
-  host-event subscription source fanout, scheduler-backed timer subscription source,
-  window request/completion queue,
+  host-event subscription source fanout, window-scoped subscription source,
+  scheduler-backed timer subscription source, window request/completion queue,
   text-input session, window-event conversion, async host-service queue, and
   redraw driver.
 - `backend/web/`: wasm-gc Web host, canvas constraints, resolver-backed
@@ -449,6 +449,12 @@ moon info
   `Program` messages through `Subscription::host_event`. Keep platform event
   conversion in platform packages, and make adapter cleanup remove the publisher
   handler so late host events do not reach stale app subscriptions.
+- For app-owned window-event sources, use `HostWindowEventSource::subscription`
+  in `backend/host` so normalized `HostEvent` values keep their `HostWindowId`
+  while entering typed `Program` messages through `Subscription::window_event`.
+  Keep raw platform event conversion in platform packages, and make adapter
+  cleanup remove the publisher handler so late window events do not reach stale
+  app subscriptions.
 - For app-owned timer sources, use `HostTimerSource::subscription` in
   `backend/host` so platform/app schedulers can map `@core.Frame` ticks to typed
   `Program` messages through `Subscription::timer`. Keep platform clock

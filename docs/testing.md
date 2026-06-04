@@ -53,7 +53,7 @@ mapping is:
 | Navigation shell | `moon test moui/views --target native`, `moon test examples/showcase/app --target native` |
 | Menus and commands | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/command_palette/app --target native` |
 | Host services and file import | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native` |
-| Host event and timer subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native` |
+| Host event, window, and timer subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native` |
 | Virtual lists | `moon test moui/views --target native`, `sh scripts/conformance-check.sh --layout` |
 
 ## Platform Validation
@@ -280,9 +280,10 @@ instead of one large end-to-end assertion:
 2. Host layer: `backend/host` and active platform backends prove that native or
    browser events, services, window lifecycle requests, paste/composition, and
    focused commands drive the runtime through shared contracts. Host-owned
-   subscription adapters also prove source start, scheduler interval capture,
-   typed dispatch mapping, cancellation cleanup, and late-publisher/callback
-   behavior here before platform packages wire concrete event or timer sources.
+   subscription adapters also prove source start, window identity preservation,
+   scheduler interval capture, typed dispatch mapping, cancellation cleanup, and
+   late-publisher/callback behavior here before platform packages wire concrete
+   event, window, or timer sources.
 3. Implementation layer: renderer and provider packages prove concrete
    implementations honor the contract. This includes WGPU renderer capability
    evidence, native text-provider metrics/raster validation, and Web adapter
@@ -313,9 +314,9 @@ before it grows broad platform claims:
   roundtrips.
 - Platform/tooling: host-service capability checks, Linux readiness, Web
   wasm-gc backend tests, async host-service completion, host-event fanout and
-  timer subscription adapter start/cleanup, window lifecycle registry behavior,
-  app-owned route history/deep-link state, devtool snapshots, render inspector
-  scope diagnostics, frame-profile counters,
+  window/timer subscription adapter start/cleanup, window lifecycle registry
+  behavior, app-owned route history/deep-link state, devtool snapshots, render
+  inspector scope diagnostics, frame-profile counters,
   guidance freshness, and example builds. Showcase app tests also assert that
   the Navigation Shell surfaces route history state and app-sampled route
   transition state, and that the Diagnostics route surfaces render command and
