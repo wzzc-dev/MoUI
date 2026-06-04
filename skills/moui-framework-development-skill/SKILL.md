@@ -78,7 +78,8 @@ Use this skill when editing or reviewing:
   duplicate descriptor-key counts/names in effect summaries plus aggregate
   duplicate descriptor-key counters/names on program-runtime and inspector
   snapshots, active/completed/cancelled effect-task lifecycle snapshots, stale
-  effect-task dispatch counters, and aggregate program-runtime inspector
+  effect-task dispatch counters, ignored program-dispatch counters for late
+  callbacks after runtime destruction, and aggregate program-runtime inspector
   counters; message
   queue diagnostics stay
   platform-neutral through enqueue/drain/pending counters; pipeline cost

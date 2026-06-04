@@ -98,6 +98,7 @@ pub(all) struct EffectTaskLifecycleSnapshot {
 pub(all) struct ProgramRuntimeSnapshot {
   dispatched_count : Int
   update_count : Int
+  ignored_program_dispatch_count : Int
   message_enqueue_count : Int
   message_drain_count : Int
   pending_message_count : Int
@@ -159,6 +160,7 @@ priv struct ActiveProgramEffectTask {
 priv struct ProgramRuntimeDiagnostics {
   mut dispatched_count : Int
   mut update_count : Int
+  mut ignored_program_dispatch_count : Int
   mut message_enqueue_count : Int
   mut message_drain_count : Int
   mut pending_message_count : Int
@@ -451,6 +453,7 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
   {
     dispatched_count: 0,
     update_count: 0,
+    ignored_program_dispatch_count: 0,
     message_enqueue_count: 0,
     message_drain_count: 0,
     pending_message_count: 0,
@@ -499,6 +502,13 @@ fn ProgramRuntimeDiagnostics::record_update(
   self : ProgramRuntimeDiagnostics,
 ) -> Unit {
   self.update_count = self.update_count + 1
+}
+
+///|
+fn ProgramRuntimeDiagnostics::record_ignored_program_dispatch(
+  self : ProgramRuntimeDiagnostics,
+) -> Unit {
+  self.ignored_program_dispatch_count = self.ignored_program_dispatch_count + 1
 }
 
 ///|
@@ -889,6 +899,7 @@ fn ProgramRuntimeDiagnostics::snapshot(
   {
     dispatched_count: self.dispatched_count,
     update_count: self.update_count,
+    ignored_program_dispatch_count: self.ignored_program_dispatch_count,
     message_enqueue_count: self.message_enqueue_count,
     message_drain_count: self.message_drain_count,
     pending_message_count: self.pending_message_count,
@@ -960,6 +971,7 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
   {
     dispatched_count: 0,
     update_count: 0,
+    ignored_program_dispatch_count: 0,
     message_enqueue_count: 0,
     message_drain_count: 0,
     pending_message_count: 0,

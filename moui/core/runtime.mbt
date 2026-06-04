@@ -71,16 +71,21 @@ pub fn[Model, Msg] AppRuntime::new_program(
   let pending_index = Ref(0)
   let dispatching = Ref(false)
   let syncing_subscriptions = Ref(false)
+  let program_active = Ref(true)
   let process_ref : Ref[(() -> Unit)?] = Ref(None)
   let pending_count = () => pending_messages.length() - pending_index.val
   let dispatch = message => {
-    pending_messages.push(message)
-    program_runtime.record_message_enqueued(pending_count())
-    if !syncing_subscriptions.val {
-      match process_ref.val {
-        Some(process) => process()
-        None => ()
+    if program_active.val {
+      pending_messages.push(message)
+      program_runtime.record_message_enqueued(pending_count())
+      if !syncing_subscriptions.val {
+        match process_ref.val {
+          Some(process) => process()
+          None => ()
+        }
       }
+    } else {
+      program_runtime.record_ignored_program_dispatch()
     }
   }
   let sync_subscriptions = () => {
@@ -136,12 +141,15 @@ pub fn[Model, Msg] AppRuntime::new_program(
   )
   runtime.program_runtime_snapshot_fn = () => program_runtime.snapshot()
   runtime.destroy_program_runtime_fn = () => {
-    program_runtime.cancel_all_effect_tasks(
-      EffectTaskCancelReason::EffectTaskRuntimeDestroyed,
-    )
-    program_runtime.cancel_all_subscriptions(
-      SubscriptionCancelReason::SubscriptionRuntimeDestroyed,
-    )
+    if program_active.val {
+      program_active.val = false
+      program_runtime.cancel_all_effect_tasks(
+        EffectTaskCancelReason::EffectTaskRuntimeDestroyed,
+      )
+      program_runtime.cancel_all_subscriptions(
+        SubscriptionCancelReason::SubscriptionRuntimeDestroyed,
+      )
+    }
   }
   runtime
 }

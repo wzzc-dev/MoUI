@@ -207,6 +207,7 @@ test "runtime inspector and frame profile expose devtool counters" {
   inspect(snapshot.dirty_state.reasons.length(), content="0")
   inspect(snapshot.program_dispatched_count, content="0")
   inspect(snapshot.program_update_count, content="0")
+  inspect(snapshot.ignored_program_dispatch_count, content="0")
   inspect(snapshot.program_message_enqueue_count, content="0")
   inspect(snapshot.program_message_drain_count, content="0")
   inspect(snapshot.program_pending_message_count, content="0")

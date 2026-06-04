@@ -532,6 +532,62 @@ test "program effects can dispatch typed follow-up messages" {
 }
 
 ///|
+test "program ignores effect dispatches after runtime destroy" {
+  let anonymous_dispatch : Ref[((ProgramEffectMsg) -> Unit)?] = Ref(None)
+  let structured_dispatch : Ref[((ProgramEffectMsg) -> Unit)?] = Ref(None)
+  let program = Program::new(
+    init=() => {
+      (
+        "idle",
+        Effect::batch([
+          Effect::dispatch(dispatch => anonymous_dispatch.val = Some(dispatch)),
+          Effect::run(
+            key="effect:late-structured",
+            kind="late-callback",
+            label="Late structured callback",
+            run=dispatch => structured_dispatch.val = Some(dispatch),
+          ),
+        ]),
+      )
+    },
+    update=(_model, message) => {
+      match message {
+        ProgramEffectStart => ("started", Effect::none())
+        ProgramEffectBoot(value) => (value, Effect::none())
+        ProgramEffectFinished(value) => (value, Effect::none())
+      }
+    },
+    view=model => runtime_test_label(model),
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=160.0, height=80.0),
+  )
+  let initial = runtime.program_runtime_snapshot()
+  inspect(initial.effect_dispatch_count, content="1")
+  inspect(initial.effect_run_count, content="1")
+  inspect(initial.message_enqueue_count, content="0")
+  inspect(initial.ignored_program_dispatch_count, content="0")
+  runtime.destroy()
+  match anonymous_dispatch.val {
+    Some(dispatch) => dispatch(ProgramEffectBoot("late-anonymous"))
+    None => fail("expected anonymous effect dispatch")
+  }
+  match structured_dispatch.val {
+    Some(dispatch) => dispatch(ProgramEffectFinished("late-structured"))
+    None => fail("expected structured effect dispatch")
+  }
+  let ignored = runtime.program_runtime_snapshot()
+  inspect(ignored.dispatched_count, content="0")
+  inspect(ignored.update_count, content="0")
+  inspect(ignored.message_enqueue_count, content="0")
+  inspect(ignored.ignored_program_dispatch_count, content="2")
+  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  inspect(inspector.program_dispatched_count, content="0")
+  inspect(inspector.ignored_program_dispatch_count, content="2")
+}
+
+///|
 enum ProgramTaskMsg {
   ProgramTaskReplace
   ProgramTaskFinished(String)
