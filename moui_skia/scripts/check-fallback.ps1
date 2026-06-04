@@ -66,6 +66,24 @@ function Assert-WorkflowUsesHashtableSplatting {
   }
 }
 
+function Resolve-WorkflowPath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string] $RelativePath
+  )
+
+  $candidates = @(
+    (Join-Path $repoRoot $RelativePath),
+    (Join-Path (Split-Path -Parent $repoRoot) $RelativePath)
+  )
+  foreach ($candidate in $candidates) {
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+      return $candidate
+    }
+  }
+  throw "workflow file is missing: $RelativePath"
+}
+
 function Set-FakeNativeSmokeLog {
   param(
     [Parameter(Mandatory = $true)]
@@ -295,8 +313,8 @@ try {
   & (Join-Path $repoRoot "scripts/verify-example-link-config.ps1")
   & (Join-Path $repoRoot "scripts/verify-native-smoke-capabilities.ps1")
   & (Join-Path $repoRoot "scripts/verify-native-capability-contract.ps1")
-  Assert-WorkflowUsesHashtableSplatting -Path (Join-Path $repoRoot ".github/workflows/windows-real-skia-smoke.yml")
-  Assert-WorkflowUsesHashtableSplatting -Path (Join-Path $repoRoot ".github/workflows/real-skia-acceptance.yml")
+  Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-windows-real-skia-smoke.yml")
+  Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-real-skia-acceptance.yml")
 
   Push-Location (Join-Path $repoRoot "scripts/native_smoke")
   try {

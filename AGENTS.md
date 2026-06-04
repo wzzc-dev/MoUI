@@ -99,6 +99,12 @@ status and native capability contract prove the editable binding workspace has a
 pinned platform-status contract, CI evidence wiring, fallback parity, FFI
 ownership/borrow checks, and native smoke marker coverage; they do not replace
 MoUI real-Skia smoke or platform runtime evidence.
+The runnable GitHub Actions workflows for this binding live at the repository
+root under `.github/workflows/moui-skia-*.yml`, with
+`.github/workflows/copilot-setup-steps.yml` preparing GitHub Copilot coding
+agent runs against the `moui_skia` workspace. Do not add workflow files under
+`moui_skia`; GitHub will not discover them while the binding is part of this
+main repository.
 
 When asked to update the repository, treat it as a multi-checkout update:
 update the main MoUI checkout, initialize/update any Git submodules such as

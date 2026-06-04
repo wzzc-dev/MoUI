@@ -8,9 +8,11 @@ on:
   push:
     paths:
       - .github/workflows/copilot-setup-steps.yml
+      - moui_skia/**
   pull_request:
     paths:
       - .github/workflows/copilot-setup-steps.yml
+      - moui_skia/**
 
 jobs:
   # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
@@ -35,7 +37,8 @@ jobs:
           echo "$HOME/.moon/bin" >> $GITHUB_PATH
 
       - name: Update MoonBit dependencies
+        working-directory: moui_skia
         run: |
-            moon version --all
-            moon update
-            
+          moon version --all
+          moon update
+

@@ -491,6 +491,22 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   `dist/windows-msvc`, validates the package manifest, and uploads the portable
   folder artifact.
 
+`moui_skia` binding CI is also rooted in `.github/workflows` so GitHub Actions
+can discover it while the binding is a workspace member:
+
+- `.github/workflows/moui-skia-fallback.yml` runs fallback-safe formatting,
+  check, native-smoke scaffold, status, capability, ownership, and artifact-lock
+  gates from the `moui_skia` working directory on Ubuntu and Windows.
+- `.github/workflows/moui-skia-real-skia-acceptance.yml` runs the release Skia
+  acceptance matrix from `moui_skia` on Linux, macOS, and Windows.
+- `.github/workflows/moui-skia-linux-real-skia-smoke.yml`,
+  `.github/workflows/moui-skia-macos-real-skia-smoke.yml`, and
+  `.github/workflows/moui-skia-windows-real-skia-smoke.yml` expose the
+  platform real-Skia smoke workflows with their original manual or scheduled
+  trigger shape.
+- `.github/workflows/copilot-setup-steps.yml` keeps GitHub Copilot coding agent
+  setup discoverable and runs MoonBit dependency setup from `moui_skia`.
+
 Manual `workflow_dispatch` inputs add heavier coverage when needed:
 
 - `run_slow_native_examples` builds current-platform native examples in the

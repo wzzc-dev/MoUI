@@ -1,4 +1,4 @@
-name: macOS Real Skia Smoke
+name: MoUI Skia macOS Real Skia Smoke
 
 on:
   workflow_dispatch:
@@ -63,6 +63,9 @@ on:
 jobs:
   smoke:
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: moui_skia
     timeout-minutes: 90
 
     steps:
@@ -134,18 +137,18 @@ jobs:
         if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'source' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
         uses: actions/cache@v4
         with:
-          path: .skia-cache/macos
-          key: skia-macos-${{ inputs.skia_rev || hashFiles('skia-revision.txt') }}-${{ hashFiles('scripts/macos-build-skia.sh', 'scripts/macos-real-skia-smoke.sh', 'scripts/macos-skia-smoke.sh') }}
+          path: moui_skia/.skia-cache/macos
+          key: skia-macos-${{ inputs.skia_rev || hashFiles('moui_skia/skia-revision.txt') }}-${{ hashFiles('moui_skia/scripts/macos-build-skia.sh', 'moui_skia/scripts/macos-real-skia-smoke.sh', 'moui_skia/scripts/macos-skia-smoke.sh') }}
           restore-keys: |
-            skia-macos-${{ inputs.skia_rev || hashFiles('skia-revision.txt') }}-
+            skia-macos-${{ inputs.skia_rev || hashFiles('moui_skia/skia-revision.txt') }}-
             skia-macos-
 
       - name: Cache release Skia
         if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'release' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
         uses: actions/cache@v4
         with:
-          path: .skia-cache/release
-          key: release-skia-macos-${{ inputs.link_mode }}-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
+          path: moui_skia/.skia-cache/release
+          key: release-skia-macos-${{ inputs.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
           restore-keys: |
             release-skia-macos-${{ inputs.link_mode }}-${{ runner.arch }}-
             release-skia-macos-${{ inputs.link_mode }}-
@@ -223,11 +226,11 @@ jobs:
         with:
           name: macos-real-skia-smoke-log
           path: |
-            logs/macos-real-skia-smoke-preflight.log
-            logs/macos-skia-build.log
-            logs/macos-real-skia-smoke.log
-            logs/macos-native-smoke-output.log
-            logs/macos-real-skia-acceptance.log
+            moui_skia/logs/macos-real-skia-smoke-preflight.log
+            moui_skia/logs/macos-skia-build.log
+            moui_skia/logs/macos-real-skia-smoke.log
+            moui_skia/logs/macos-native-smoke-output.log
+            moui_skia/logs/macos-real-skia-acceptance.log
           if-no-files-found: warn
 
       - name: Verify package files restored

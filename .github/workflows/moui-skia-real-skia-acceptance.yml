@@ -1,18 +1,15 @@
-name: Real Skia Acceptance
+name: MoUI Skia Real Skia Acceptance
 
 on:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ main ]
     paths:
-      - ".github/workflows/real-skia-acceptance.yml"
-      - "native/**"
-      - "scripts/**"
-      - "*.mbt"
-      - "moon.mod"
-      - "moon.pkg"
-      - "skia-provider-lock.json"
-      - "skia-platform-status.json"
+      - "moui_skia/**"
+      - "moon.work"
+      - "moui/moon.mod"
+      - "scripts/check-local-deps.sh"
+      - ".github/workflows/moui-skia-real-skia-acceptance.yml"
   schedule:
     - cron: "41 4 * * 2"
 
@@ -23,6 +20,9 @@ jobs:
   linux:
     name: Linux release Skia acceptance (${{ matrix.link_mode }})
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: moui_skia
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -58,8 +58,8 @@ jobs:
       - name: Cache release Skia
         uses: actions/cache@v4
         with:
-          path: .skia-cache/release
-          key: release-skia-linux-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
+          path: moui_skia/.skia-cache/release
+          key: release-skia-linux-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
           restore-keys: |
             release-skia-linux-${{ matrix.link_mode }}-${{ runner.arch }}-
             release-skia-linux-${{ matrix.link_mode }}-
@@ -108,17 +108,20 @@ jobs:
         with:
           name: linux-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
-            logs/linux-real-skia-smoke-preflight.log
-            logs/linux-skia-build.log
-            logs/linux-real-skia-smoke.log
-            logs/linux-native-smoke-output.log
-            logs/linux-real-skia-acceptance.log
-            logs/linux-platform-acceptance.patch
+            moui_skia/logs/linux-real-skia-smoke-preflight.log
+            moui_skia/logs/linux-skia-build.log
+            moui_skia/logs/linux-real-skia-smoke.log
+            moui_skia/logs/linux-native-smoke-output.log
+            moui_skia/logs/linux-real-skia-acceptance.log
+            moui_skia/logs/linux-platform-acceptance.patch
           if-no-files-found: warn
 
   macos:
     name: macOS release Skia acceptance (${{ matrix.link_mode }})
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: moui_skia
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -150,8 +153,8 @@ jobs:
       - name: Cache release Skia
         uses: actions/cache@v4
         with:
-          path: .skia-cache/release
-          key: release-skia-macos-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
+          path: moui_skia/.skia-cache/release
+          key: release-skia-macos-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
           restore-keys: |
             release-skia-macos-${{ matrix.link_mode }}-${{ runner.arch }}-
             release-skia-macos-${{ matrix.link_mode }}-
@@ -194,17 +197,20 @@ jobs:
         with:
           name: macos-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
-            logs/macos-real-skia-smoke-preflight.log
-            logs/macos-skia-build.log
-            logs/macos-real-skia-smoke.log
-            logs/macos-native-smoke-output.log
-            logs/macos-real-skia-acceptance.log
-            logs/macos-platform-acceptance.patch
+            moui_skia/logs/macos-real-skia-smoke-preflight.log
+            moui_skia/logs/macos-skia-build.log
+            moui_skia/logs/macos-real-skia-smoke.log
+            moui_skia/logs/macos-native-smoke-output.log
+            moui_skia/logs/macos-real-skia-acceptance.log
+            moui_skia/logs/macos-platform-acceptance.patch
           if-no-files-found: warn
 
   windows:
     name: Windows MSVC release Skia acceptance (${{ matrix.link_mode }})
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: moui_skia
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -249,8 +255,8 @@ jobs:
       - name: Cache release Skia
         uses: actions/cache@v4
         with:
-          path: .skia-cache/release
-          key: release-skia-windows-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
+          path: moui_skia/.skia-cache/release
+          key: release-skia-windows-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
           restore-keys: |
             release-skia-windows-${{ matrix.link_mode }}-${{ runner.arch }}-
             release-skia-windows-${{ matrix.link_mode }}-
@@ -330,9 +336,9 @@ jobs:
         with:
           name: windows-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
-            logs/windows-real-skia-smoke-preflight.log
-            logs/windows-real-skia-smoke.log
-            logs/windows-native-smoke-output.log
-            logs/windows-real-skia-acceptance.log
-            logs/windows-platform-acceptance.patch
+            moui_skia/logs/windows-real-skia-smoke-preflight.log
+            moui_skia/logs/windows-real-skia-smoke.log
+            moui_skia/logs/windows-native-smoke-output.log
+            moui_skia/logs/windows-real-skia-acceptance.log
+            moui_skia/logs/windows-platform-acceptance.patch
           if-no-files-found: warn

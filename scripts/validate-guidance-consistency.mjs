@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
-import { lstatSync, readFileSync, readlinkSync } from "node:fs";
+import {
+  existsSync,
+  lstatSync,
+  readFileSync,
+  readdirSync,
+  readlinkSync,
+} from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -22,6 +28,21 @@ const assertIncludes = (path, token) => {
 const assertAbsent = (path, token) => {
   if (read(path).includes(token)) {
     fail(`${path}: stale guidance token '${token}'`);
+  }
+};
+
+const assertFileExists = path => {
+  if (!existsSync(join(root, path))) {
+    fail(`${path}: expected file to exist`);
+  }
+};
+
+const assertNoWorkflowFiles = path => {
+  const absolute = join(root, path);
+  if (!existsSync(absolute)) return;
+  const entries = readdirSync(absolute).filter(entry => /\.ya?ml$/.test(entry));
+  if (entries.length > 0) {
+    fail(`${path}: workflow files must live in root .github/workflows: ${entries.join(", ")}`);
   }
 };
 
@@ -64,11 +85,41 @@ for (const member of moonWorkMembers()) {
 
 for (const path of guidanceFiles) {
   assertAbsent(path, "Milky2018/window");
+  assertAbsent(path, "moui_skia/.github/workflows");
   assertAbsent(path, "`tests/*_conformance`");
   assertAbsent(path, "`tests/text_conformance/`");
   assertAbsent(path, "`tests/skia_renderer_smoke/native`");
   assertAbsent(path, "`README.mbt.md`");
 }
+
+for (const path of [
+  ".github/workflows/moui-skia-fallback.yml",
+  ".github/workflows/moui-skia-linux-real-skia-smoke.yml",
+  ".github/workflows/moui-skia-macos-real-skia-smoke.yml",
+  ".github/workflows/moui-skia-windows-real-skia-smoke.yml",
+  ".github/workflows/moui-skia-real-skia-acceptance.yml",
+  ".github/workflows/copilot-setup-steps.yml",
+]) {
+  assertFileExists(path);
+}
+
+for (const path of [
+  ".github/workflows/moui-skia-fallback.yml",
+  ".github/workflows/moui-skia-linux-real-skia-smoke.yml",
+  ".github/workflows/moui-skia-macos-real-skia-smoke.yml",
+  ".github/workflows/moui-skia-windows-real-skia-smoke.yml",
+  ".github/workflows/moui-skia-real-skia-acceptance.yml",
+]) {
+  assertIncludes(path, "working-directory: moui_skia");
+}
+
+assertIncludes(".github/workflows/moui-skia-fallback.yml", "branches: [ main ]");
+assertIncludes(".github/workflows/moui-skia-real-skia-acceptance.yml", "branches: [ main ]");
+assertIncludes(".github/workflows/moui-skia-linux-real-skia-smoke.yml", "path: moui_skia/.skia-cache");
+assertIncludes(".github/workflows/moui-skia-macos-real-skia-smoke.yml", "path: moui_skia/.skia-cache");
+assertIncludes(".github/workflows/moui-skia-real-skia-acceptance.yml", "path: moui_skia/.skia-cache");
+assertIncludes(".github/workflows/copilot-setup-steps.yml", "working-directory: moui_skia");
+assertNoWorkflowFiles("moui_skia/.github/workflows");
 
 assertSymlinkTarget("README.md", "moui/README.mbt.md");
 assertIncludes("AGENTS.md", "`moui/README.mbt.md`");
@@ -252,6 +303,15 @@ assertIncludes("docs/development.md", "skia-platform-status.json");
 assertIncludes("docs/development.md", "verify-platform-status.sh");
 assertIncludes("docs/development.md", "native/capabilities.json");
 assertIncludes("docs/development.md", "verify-native-capability-contract.sh");
+assertIncludes("docs/development.md", ".github/workflows/moui-skia-*.yml");
+assertIncludes("docs/testing.md", ".github/workflows/moui-skia-fallback.yml");
+assertIncludes("docs/testing.md", ".github/workflows/moui-skia-real-skia-acceptance.yml");
+assertIncludes("docs/testing.md", ".github/workflows/copilot-setup-steps.yml");
+assertIncludes("AGENTS.md", ".github/workflows/moui-skia-*.yml");
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  ".github/workflows/moui-skia-*.yml",
+);
 assertIncludes("scripts/conformance-check.sh", "xdg-shell-protocol.c");
 for (const path of [
   "examples/counter/web_wasm/index.html",

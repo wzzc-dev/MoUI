@@ -96,11 +96,11 @@ if ($status.schema_version -ge 4) {
     throw "schema v4 platform status is missing ci_gate_evidence_files list"
   }
   $requiredEvidenceFiles = @(
-    ".github/workflows/fallback.yml",
-    ".github/workflows/linux-real-skia-smoke.yml",
-    ".github/workflows/macos-real-skia-smoke.yml",
-    ".github/workflows/windows-real-skia-smoke.yml",
-    ".github/workflows/real-skia-acceptance.yml",
+    ".github/workflows/moui-skia-fallback.yml",
+    ".github/workflows/moui-skia-linux-real-skia-smoke.yml",
+    ".github/workflows/moui-skia-macos-real-skia-smoke.yml",
+    ".github/workflows/moui-skia-windows-real-skia-smoke.yml",
+    ".github/workflows/moui-skia-real-skia-acceptance.yml",
     "scripts/check-fallback.ps1"
   )
   $seenEvidenceFiles = @{}
@@ -126,13 +126,32 @@ if ($status.schema_version -ge 4) {
     return $normalized
   }
 
+  function Resolve-CiGateEvidencePath {
+    param(
+      [Parameter(Mandatory = $true)]
+      [string] $Path
+    )
+
+    $candidates = @((Join-Path $repoRoot $Path))
+    if ($Path.StartsWith(".github/workflows/")) {
+      $workspaceRoot = Split-Path -Parent $repoRoot
+      $candidates += (Join-Path $workspaceRoot $Path)
+    }
+    foreach ($candidate in $candidates) {
+      if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+        return $candidate
+      }
+    }
+    return $null
+  }
+
   foreach ($evidenceFile in $evidenceFiles) {
     $evidencePath = Normalize-RepoRelativePath "$evidenceFile"
     if ($seenEvidenceFiles.ContainsKey($evidencePath)) {
       throw "duplicate CI gate evidence file: $evidencePath"
     }
-    $resolvedEvidencePath = Join-Path $repoRoot $evidencePath
-    if (!(Test-Path -LiteralPath $resolvedEvidencePath -PathType Leaf)) {
+    $resolvedEvidencePath = Resolve-CiGateEvidencePath $evidencePath
+    if ($null -eq $resolvedEvidencePath) {
       throw "CI gate evidence file is missing: $evidencePath"
     }
     $seenEvidenceFiles[$evidencePath] = $true

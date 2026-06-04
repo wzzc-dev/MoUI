@@ -80,6 +80,12 @@ artifact/status contract, CI evidence wiring, fallback parity, FFI
 ownership/borrow coverage, and native smoke marker coverage. It does not prove
 a MoUI platform entrypoint has rendered with real Skia; use `--skia-real-smoke`
 after configuring real Skia native link flags for that renderer-level proof.
+The binding's GitHub Actions workflows are maintained at the repository root as
+`.github/workflows/moui-skia-*.yml`; the root
+`.github/workflows/copilot-setup-steps.yml` sets up MoonBit from the
+`moui_skia` workspace for GitHub Copilot coding agent runs. Keep workflow files
+in the root `.github/workflows` directory so GitHub discovers them in this
+monorepo layout.
 
 `scripts/setup-local-deps.sh` configures the fork as `origin`, upstream as
 `upstream`, and fast-forwards the `moui-support` branch from `origin` when the

@@ -1,15 +1,30 @@
-name: Fallback
+name: MoUI Skia Fallback
 
 on:
   workflow_dispatch:
   push:
-    branches: [ master ]
+    branches: [ main ]
+    paths:
+      - "moui_skia/**"
+      - "moon.work"
+      - "moui/moon.mod"
+      - "scripts/check-local-deps.sh"
+      - ".github/workflows/moui-skia-fallback.yml"
   pull_request:
+    paths:
+      - "moui_skia/**"
+      - "moon.work"
+      - "moui/moon.mod"
+      - "scripts/check-local-deps.sh"
+      - ".github/workflows/moui-skia-fallback.yml"
 
 jobs:
   fallback:
     name: fallback (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: moui_skia
     strategy:
       fail-fast: false
       matrix:
