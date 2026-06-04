@@ -35,6 +35,7 @@ paths, or abstractions that only preserve old shapes.
   request/completion, window event conversion, and renderer-neutral
   `HostWindowRenderer` diagnostics and image-resource change callback bridge,
   image-resource repaint routing contracts,
+  native async image completion source,
   tracked-window image-resource repaint diagnostics with revision and lifecycle
   status counts, and repaint-result previous/current lifecycle status counts.
 - `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
@@ -50,9 +51,9 @@ paths, or abstractions that only preserve old shapes.
 - `render/wgpu/` is the native wgpu renderer. `render/webgpu_adapter/` is the
   wasm-gc browser WebGPU host-import bridge. `render/skia/` is the native Skia
   raster renderer facade over the local `wzzc-dev/moui_skia` binding, including
-  renderer-local image-resource lifecycle change callbacks; native provider or
-  host redraw scheduling from async image load/error notifications remains
-  outside `render/skia`.
+  renderer-local image-resource lifecycle change callbacks; host-layer
+  completion routing and native provider/platform redraw scheduling from async
+  image load/error notifications remain outside `render/skia`.
 - Native text providers live in `render/wgpu/cosmic_text/`,
   `render/wgpu/coretext/`, `render/wgpu/directwrite/`,
   `render/wgpu/fontconfig/`, and the shared `render/wgpu/text_protocol/`

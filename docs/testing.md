@@ -54,6 +54,7 @@ mapping is:
 | Menus and commands | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/command_palette/app --target native` |
 | Host services and file import | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native` |
 | Host event, window, timer, and route subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native` |
+| Native async image completion | `moon test moui/backend/host --target native`, renderer/provider package tests for the touched backend |
 | Virtual lists | `moon test moui/views --target native`, `sh scripts/conformance-check.sh --layout` |
 
 ## Platform Validation
@@ -283,7 +284,11 @@ instead of one large end-to-end assertion:
    subscription adapters also prove source start, window identity preservation,
    scheduler interval capture, typed dispatch mapping, cancellation cleanup, and
    route fanout, and late-publisher/callback behavior here before platform
-   packages wire concrete event, window, timer, or route sources.
+   packages wire concrete event, window, timer, or route sources. Native async
+   image completion source behavior also belongs here: publish, redraw routing,
+   stale revision handling, closed-window discard, and cleanup/late completion
+   behavior are host contracts before provider/platform loaders supply real
+   completion snapshots.
 3. Implementation layer: renderer and provider packages prove concrete
    implementations honor the contract. This includes WGPU renderer capability
    evidence, native text-provider metrics/raster validation, and Web adapter
@@ -315,7 +320,8 @@ before it grows broad platform claims:
 - Platform/tooling: host-service capability checks, Linux readiness, Web
   wasm-gc backend tests, async host-service completion, host-event fanout and
   window/timer/route subscription adapter start/cleanup, window lifecycle registry
-  behavior, app-owned route history/deep-link state, devtool snapshots, render
+  behavior, native async image completion source publish/redraw/cleanup,
+  app-owned route history/deep-link state, devtool snapshots, render
   inspector scope diagnostics, frame-profile counters,
   guidance freshness, and example builds. Showcase app tests also assert that
   the Navigation Shell surfaces route history state and app-sampled route
