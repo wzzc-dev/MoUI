@@ -234,6 +234,11 @@ from the successful non-skipped job/run. When it runs locally, expect
 `matching-host-artifact` provenance for the browser-session manifest and
 screenshots. Do not invent CI run URL, runner, or job fields for local
 artifacts.
+The canonical Actions job for Web browser-session evidence is
+`web-runtime-presentation`; it runs `scripts/ci-web-runtime-presentation.sh` to
+build Showcase and Markdown Editor Web wasm-gc targets, serve the repository,
+start Chrome CDP, record and fold the presentation manifest, validate the Web
+platform entry, and upload `moui-web-runtime-presentation` artifacts.
 The platform evidence manifest is schema v2 and records the window fork's
 monitor/cursor probe as `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native entries

@@ -235,6 +235,53 @@ jobs:
           path: dist/windows-msvc/MoUIShowcase
           if-no-files-found: error
 
+  web-runtime-presentation:
+    name: Web runtime presentation
+    runs-on: ubuntu-24.04
+    env:
+      WEB_RUNTIME_BASE_URL: http://127.0.0.1:18080
+      WEB_RUNTIME_CDP_URL: http://127.0.0.1:9223
+      WEB_RUNTIME_PRESENTATION_MANIFEST: artifacts/conformance/web-runtime-presentation.json
+      WEB_RUNTIME_PRESENTATION_ARTIFACT_NAME: moui-web-runtime-presentation
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install native Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Restore local dependencies
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Record Web runtime presentation evidence
+        run: sh scripts/ci-web-runtime-presentation.sh
+
+      - name: Upload Web runtime presentation evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.WEB_RUNTIME_PRESENTATION_ARTIFACT_NAME }}
+          path: |
+            artifacts/conformance/web-runtime-presentation.json
+            artifacts/conformance/web-runtime-presentation/
+            artifacts/platform-evidence/web/
+            artifacts/conformance/platform-runtime-evidence.json
+          if-no-files-found: warn
+
   real-skia-smoke:
     name: Real Skia smoke
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_real_skia_smoke }}

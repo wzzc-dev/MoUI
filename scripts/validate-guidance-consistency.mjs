@@ -221,10 +221,39 @@ assertIncludes(
   "scripts/dev-check.sh",
   "node scripts/test-validate-web-runtime-presentation-manifest.mjs",
 );
+assertIncludes("scripts/dev-check.sh", "sh -n scripts/ci-web-runtime-presentation.sh");
 assertIncludes(
   "scripts/dev-check.sh",
   "node scripts/test-record-native-skia-evidence.mjs",
 );
+assertIncludes(".github/workflows/ci.yml", "web-runtime-presentation:");
+assertIncludes(".github/workflows/ci.yml", "name: Web runtime presentation");
+assertIncludes(".github/workflows/ci.yml", "runs-on: ubuntu-24.04");
+assertIncludes(".github/workflows/ci.yml", "WEB_RUNTIME_BASE_URL: http://127.0.0.1:18080");
+assertIncludes(".github/workflows/ci.yml", "WEB_RUNTIME_CDP_URL: http://127.0.0.1:9223");
+assertIncludes(".github/workflows/ci.yml", "WEB_RUNTIME_PRESENTATION_MANIFEST: artifacts/conformance/web-runtime-presentation.json");
+assertIncludes(".github/workflows/ci.yml", "WEB_RUNTIME_PRESENTATION_ARTIFACT_NAME: moui-web-runtime-presentation");
+assertIncludes(".github/workflows/ci.yml", "sh scripts/ci-web-runtime-presentation.sh");
+assertIncludes(".github/workflows/ci.yml", "uses: actions/upload-artifact@v4");
+assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/web-runtime-presentation.json");
+assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/web-runtime-presentation/");
+assertIncludes(".github/workflows/ci.yml", "artifacts/platform-evidence/web/");
+assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/platform-runtime-evidence.json");
+assertIncludes(".github/workflows/ci.yml", "if-no-files-found: warn");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "moon build examples/showcase/web_wasm --target wasm-gc");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "moon build examples/markdown_editor/web_wasm --target wasm-gc");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "python3 -m http.server");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "--remote-debugging-port=\"$WEB_RUNTIME_CDP_PORT\"");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "--enable-unsafe-webgpu");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "--use-angle=swiftshader");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "node scripts/record-web-runtime-presentation.mjs");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "--require-passed");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "node scripts/validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "sh scripts/conformance-check.sh --platform-services");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "node scripts/record-platform-evidence-manifest.mjs");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "--web-presentation-manifest");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "node scripts/validate-platform-evidence-manifest.mjs");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "--platform web");
 assertIncludes("docs/testing.md", "node scripts/validate-guidance-consistency.mjs");
 assertIncludes("docs/testing.md", "validate-conformance-capture-manifest.mjs");
 assertIncludes("docs/testing.md", "markdown-editor-web-wasm");
@@ -251,6 +280,8 @@ assertIncludes("docs/testing.md", "monitorCursor");
 assertIncludes("docs/testing.md", "monitor/cursor");
 assertIncludes("docs/testing.md", "evidenceProvenance");
 assertIncludes("docs/testing.md", "non-skipped successful GitHub Actions job");
+assertIncludes("docs/testing.md", "Web runtime presentation");
+assertIncludes("docs/testing.md", "`moui-web-runtime-presentation` artifact");
 assertIncludes("scripts/validate-platform-evidence-manifest.mjs", "schemaVersion must be 2");
 assertIncludes("scripts/validate-platform-evidence-manifest.mjs", "evidenceProvenance");
 assertIncludes("scripts/record-platform-evidence-manifest.mjs", "monitorCursor");
@@ -428,6 +459,12 @@ assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "test-record-web-runtime-presentation.mjs",
 );
+assertIncludes("docs/release-readiness.md", "`web-runtime-presentation`");
+assertIncludes("docs/release-readiness.md", "`moui-web-runtime-presentation`");
+assertIncludes("AGENTS.md", "`web-runtime-presentation`");
+assertIncludes("AGENTS.md", "`moui-web-runtime-presentation`");
+assertIncludes("skills/moui-framework-development-skill/SKILL.md", "`web-runtime-presentation`");
+assertIncludes("skills/moui-framework-development-skill/SKILL.md", "`moui-web-runtime-presentation`");
 assertIncludes("moui/README.mbt.md", "sh scripts/dev-check.sh --platform-examples-test");
 assertIncludes("moui/README.mbt.md", "sh scripts/conformance-check.sh --platform-services");
 assertIncludes("moui/README.mbt.md", "verify-platform-status.sh");
