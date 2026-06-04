@@ -270,7 +270,9 @@ pixel smoke plus Showcase or Markdown Editor first-frame smoke markers.
 The macOS host loop records the renderer image-resource revision after each
 present, routes later observed revision changes through the matching window's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
-and removes tracked image revisions when a host window is disposed.
+calls the optional provider-owned `HostAsyncImageLoader` after the presented
+revision is baselined, and removes tracked image revisions plus in-flight image
+loads when a host window is disposed.
 
 Packages that use `backend/macos` directly must link the AppKit service bridge
 frameworks during the final native link step. Missing `_objc_msgSend` or
@@ -412,7 +414,9 @@ Treat that summary and its package test as provider/preflight evidence only;
 The Windows host loop records the renderer image-resource revision after each
 present, routes later observed revision changes through the matching HWND's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
-and removes tracked image revisions when a host window is disposed.
+calls the optional provider-owned `HostAsyncImageLoader` after the presented
+revision is baselined, and removes tracked image revisions plus in-flight image
+loads when a host window is disposed.
 Passed Windows runtime evidence still needs a Windows/MSVC host running the
 Showcase or Markdown Editor Skia entrypoints with recorded artifacts. On
 non-Windows hosts, the Win32 presenter and service stubs may fail C compilation
@@ -513,8 +517,10 @@ and the matching-host runtime boundary, including whether the first-frame smoke
 option is enabled. The Linux host loop records the renderer image-resource
 revision after each present, routes later observed revision changes through the
 matching Wayland window's `request_redraw`, exposes tracked-window revision
-snapshots for diagnostics, and removes tracked image revisions when a host
-window is disposed. The summary is useful for provider/package
+snapshots for diagnostics, calls the optional provider-owned
+`HostAsyncImageLoader` after the presented revision is baselined, and removes
+tracked image revisions plus in-flight image loads when a host window is
+disposed. The summary is useful for provider/package
 audits, but it does not prove a real Wayland compositor presented Showcase or
 Markdown Editor frames;
 those claims still require matching-host runtime runs and platform evidence

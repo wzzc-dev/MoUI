@@ -47,6 +47,7 @@ pub struct WindowsHostAppOptions {
 pub struct WindowsRendererProvider {
   priv create_renderer : (@win.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?
   priv sync_surface : (@win.Window, @host.HostSurfaceMetrics) -> Unit
+  priv image_loader : @host.HostAsyncImageLoader?
 }
 
 ///|
@@ -97,8 +98,38 @@ pub fn WindowsRendererProvider::new(
     _window,
     _metrics,
   ) => (),
+  image_loader? : @host.HostAsyncImageLoader? = None,
 ) -> WindowsRendererProvider {
-  { create_renderer, sync_surface }
+  { create_renderer, sync_surface, image_loader }
+}
+
+///|
+fn WindowsRendererProvider::schedule_image_resource_loads(
+  self : WindowsRendererProvider,
+  window_id : @host.HostWindowId,
+  renderer : @host.HostWindowRenderer,
+  completion_source : @host.HostImageResourceCompletionSource,
+) -> @host.HostAsyncImageLoadScheduleResult? {
+  match self.image_loader {
+    Some(loader) =>
+      Some(
+        loader.schedule_loading_resources(
+          window_id, renderer, completion_source,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn WindowsRendererProvider::cancel_image_resource_loads(
+  self : WindowsRendererProvider,
+  window_id : @host.HostWindowId,
+) -> Int {
+  match self.image_loader {
+    Some(loader) => loader.cancel_window(window_id)
+    None => 0
+  }
 }
 
 ///|
@@ -578,6 +609,13 @@ fn WindowsApp::redraw_window(
           platform_slot.renderer,
         ),
       )
+      ignore(
+        self.renderer_provider.schedule_image_resource_loads(
+          window_id,
+          platform_slot.renderer,
+          self.image_resource_completion_source(),
+        ),
+      )
       self.sync_text_input_session()
       if self.exit_after_first_present &&
         platform_slot.renderer.present_count() > 0 {
@@ -1005,6 +1043,29 @@ fn WindowsApp::request_platform_redraw(
 }
 
 ///|
+fn WindowsApp::image_resource_completion_source(
+  self : WindowsApp,
+) -> @host.HostImageResourceCompletionSource {
+  @host.HostImageResourceCompletionSource::new(
+    tracker=self.image_repaint_tracker,
+    window_open=id => self.image_resource_window_open(id),
+    request_redraw=id => self.request_platform_redraw(id),
+  )
+}
+
+///|
+fn WindowsApp::image_resource_window_open(
+  self : WindowsApp,
+  window_id : @host.HostWindowId,
+) -> Bool {
+  match self.runtime_slots.lookup(window_id) {
+    Some(slot) =>
+      slot.record.phase != @host.HostWindowLifecyclePhase::WindowClosed
+    None => false
+  }
+}
+
+///|
 fn WindowsApp::dispose_window(
   self : WindowsApp,
   window_id : @host.HostWindowId,
@@ -1012,6 +1073,7 @@ fn WindowsApp::dispose_window(
   ignore(self.windows.close(window_id))
   self.sync_runtime_slot(window_id)
   ignore(self.image_repaint_tracker.remove_window(window_id))
+  ignore(self.renderer_provider.cancel_image_resource_loads(window_id))
   ignore(self.runtime_slots.remove(window_id))
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {

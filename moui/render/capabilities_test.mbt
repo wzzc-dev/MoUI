@@ -534,6 +534,9 @@ test "renderer capability report tracks draw command support" {
   assert_true(native_image_note.contains("HostWindowRenderer"))
   assert_true(native_image_note.contains("HostAsyncImageLoader"))
   assert_true(native_image_note.contains("HostImageResourceCompletionSource"))
+  assert_true(
+    native_image_note.contains("optional provider-owned async image loaders"),
+  )
   assert_true(native_image_note.contains("ImageResourceLoadCompletion"))
   assert_true(
     native_image_note.contains("apply_image_resource_load_completion"),
@@ -549,6 +552,9 @@ test "renderer capability report tracks draw command support" {
   assert_true(skia_image_note.contains("HostWindowRenderer"))
   assert_true(skia_image_note.contains("HostAsyncImageLoader"))
   assert_true(skia_image_note.contains("HostImageResourceCompletionSource"))
+  assert_true(
+    skia_image_note.contains("optional provider-owned async image loaders"),
+  )
   assert_true(skia_image_note.contains("ImageResourceLoadCompletion"))
   assert_true(skia_image_note.contains("apply_image_resource_load_completion"))
   assert_true(skia_image_note.contains("failed-image placeholder"))

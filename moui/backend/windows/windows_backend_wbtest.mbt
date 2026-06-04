@@ -51,3 +51,72 @@ test "windows host options carry optional scene resolver and first-frame smoke" 
     _ => fail("expected configured Windows scene resolver")
   }
 }
+
+///|
+test "windows renderer provider exposes async image loader hook" {
+  let loader_started = Ref(0)
+  let loader = @host.HostAsyncImageLoader::new(start_load=(
+    _id,
+    _source,
+    _complete,
+  ) => {
+    loader_started.val = loader_started.val + 1
+    None
+  })
+  let provider = WindowsRendererProvider::new(
+    create_renderer=(_window, _metrics) => None,
+    image_loader=Some(loader),
+  )
+  let renderer = @host.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+    @core.TextSystem::fallback()
+  })
+  let tracker = @host.HostImageResourceRepaintTracker::new()
+  let source = @host.HostImageResourceCompletionSource::new(
+    tracker~,
+    window_open=_id => true,
+    request_redraw=_id => (),
+  )
+  match
+    provider.schedule_image_resource_loads(
+      @host.HostWindowId::new(1),
+      renderer,
+      source,
+    ) {
+    Some(result) => {
+      inspect(result.loading_count, content="0")
+      inspect(result.scheduled_count, content="0")
+    }
+    None => fail("expected Windows async image loader hook result")
+  }
+  inspect(loader_started.val, content="0")
+  inspect(
+    provider.cancel_image_resource_loads(@host.HostWindowId::new(1)),
+    content="0",
+  )
+}
+
+///|
+test "windows renderer provider async image hook defaults to unavailable" {
+  let provider = WindowsRendererProvider::new(create_renderer=(
+    _window,
+    _metrics,
+  ) => None)
+  let renderer = @host.HostWindowRenderer::new(resize=_ => (), render=_ => (), text_system=() => {
+    @core.TextSystem::fallback()
+  })
+  let tracker = @host.HostImageResourceRepaintTracker::new()
+  let source = @host.HostImageResourceCompletionSource::new(
+    tracker~,
+    window_open=_id => true,
+    request_redraw=_id => (),
+  )
+  match
+    provider.schedule_image_resource_loads(
+      @host.HostWindowId::new(2),
+      renderer,
+      source,
+    ) {
+    None => ()
+    Some(_) => fail("expected absent Windows async image loader hook")
+  }
+}
