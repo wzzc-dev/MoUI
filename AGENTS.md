@@ -54,12 +54,15 @@ paths, or abstractions that only preserve old shapes.
   such as `native_image_load_completion`; keep off-main loader/runtime evidence
   separate from package-level completion wiring. `backend/macos/skia`,
   `backend/windows/skia`, and `backend/linux/skia` provide native Skia renderer
-  providers.
+  providers, including provider-owned `HostAsyncImageLoader` hooks around
+  `skia_image_load_completion`; keep this as provider completion evidence until
+  matching-host off-main runtime artifacts prove real late repaint behavior.
 - `render/` is the renderer facade and shared reporting layer.
 - `render/wgpu/` is the native wgpu renderer. `render/webgpu_adapter/` is the
   wasm-gc browser WebGPU host-import bridge. `render/skia/` is the native Skia
   raster renderer facade over the local `wzzc-dev/moui_skia` binding, including
-  renderer-local image-resource lifecycle change callbacks; host-layer
+  renderer-local image-resource lifecycle change callbacks and
+  `skia_image_load_completion` source decode completion payloads; host-layer
   completion routing and native provider/platform redraw scheduling from async
   image load/error notifications remain outside `render/skia`.
 - Native text providers live in `render/wgpu/cosmic_text/`,

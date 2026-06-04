@@ -167,7 +167,8 @@ Use this skill when editing or reviewing:
 - `render/wgpu/text_protocol/`: shared native text provider payload protocol.
 - `render/skia/`: native Skia raster renderer over the local `moui_skia` binding,
   including renderer-local command/reason diagnostics for unsupported Skia
-  fallbacks and renderer-local image-resource lifecycle change callbacks.
+  fallbacks, renderer-local image-resource lifecycle change callbacks, and
+  `skia_image_load_completion` source decode completion payloads.
   Host-layer completion routing and native provider/platform redraw scheduling
   from async image load/error notifications remain outside `render/skia`.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
@@ -495,6 +496,10 @@ moon info
   `native_image_load_completion` to convert PNG/JPEG/BMP data URI and local-file
   decode results into completion payloads, but matching-host off-main runtime
   evidence is still required before claiming full native async image readiness.
+  Native Skia providers may use `skia_image_load_completion` for provider-owned
+  completion payloads from Skia encoded-image source decode, but that remains
+  provider completion evidence until a matching host records true off-main late
+  repaint behavior.
   Native macOS, Windows, and Linux host cores should invoke optional
   provider-owned image loaders only after the image-resource presented revision
   has been baselined, and cancel in-flight window loads during disposal.
