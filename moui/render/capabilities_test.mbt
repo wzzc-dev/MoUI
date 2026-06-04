@@ -112,7 +112,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     gradient
     .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
-    .contains("center-to-edge gradient fallback"),
+    .contains("true radial rounded brush payloads"),
   )
   assert_true(
     gradient
