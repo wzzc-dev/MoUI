@@ -51,6 +51,7 @@ pub struct LinuxHostAppOptions {
 pub struct LinuxRendererProvider {
   priv create_renderer : (@window_linux.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?
   priv sync_surface : (@window_linux.Window, @host.HostSurfaceMetrics) -> Unit
+  priv image_loader : @host.HostAsyncImageLoader?
 }
 
 ///|
@@ -108,8 +109,38 @@ pub fn LinuxRendererProvider::new(
     _window,
     _metrics,
   ) => (),
+  image_loader? : @host.HostAsyncImageLoader? = None,
 ) -> LinuxRendererProvider {
-  { create_renderer, sync_surface }
+  { create_renderer, sync_surface, image_loader }
+}
+
+///|
+fn LinuxRendererProvider::schedule_image_resource_loads(
+  self : LinuxRendererProvider,
+  window_id : @host.HostWindowId,
+  renderer : @host.HostWindowRenderer,
+  completion_source : @host.HostImageResourceCompletionSource,
+) -> @host.HostAsyncImageLoadScheduleResult? {
+  match self.image_loader {
+    Some(loader) =>
+      Some(
+        loader.schedule_loading_resources(
+          window_id, renderer, completion_source,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn LinuxRendererProvider::cancel_image_resource_loads(
+  self : LinuxRendererProvider,
+  window_id : @host.HostWindowId,
+) -> Int {
+  match self.image_loader {
+    Some(loader) => loader.cancel_window(window_id)
+    None => 0
+  }
 }
 
 ///|
@@ -1003,6 +1034,13 @@ fn LinuxApp::redraw_window(
           platform_slot.renderer,
         ),
       )
+      ignore(
+        self.renderer_provider.schedule_image_resource_loads(
+          window_id,
+          platform_slot.renderer,
+          self.image_resource_completion_source(),
+        ),
+      )
       self.sync_text_input_session()
       if self.exit_after_first_present &&
         platform_slot.renderer.present_count() > 0 {
@@ -1490,6 +1528,29 @@ fn LinuxApp::request_platform_redraw(
 }
 
 ///|
+fn LinuxApp::image_resource_completion_source(
+  self : LinuxApp,
+) -> @host.HostImageResourceCompletionSource {
+  @host.HostImageResourceCompletionSource::new(
+    tracker=self.image_repaint_tracker,
+    window_open=id => self.image_resource_window_open(id),
+    request_redraw=id => self.request_platform_redraw(id),
+  )
+}
+
+///|
+fn LinuxApp::image_resource_window_open(
+  self : LinuxApp,
+  window_id : @host.HostWindowId,
+) -> Bool {
+  match self.runtime_slots.lookup(window_id) {
+    Some(slot) =>
+      slot.record.phase != @host.HostWindowLifecyclePhase::WindowClosed
+    None => false
+  }
+}
+
+///|
 fn LinuxApp::dispose_window(
   self : LinuxApp,
   window_id : @host.HostWindowId,
@@ -1497,6 +1558,7 @@ fn LinuxApp::dispose_window(
   ignore(self.windows.close(window_id))
   self.sync_runtime_slot(window_id)
   ignore(self.image_repaint_tracker.remove_window(window_id))
+  ignore(self.renderer_provider.cancel_image_resource_loads(window_id))
   ignore(self.runtime_slots.remove(window_id))
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {

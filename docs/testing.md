@@ -54,7 +54,7 @@ mapping is:
 | Menus and commands | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/command_palette/app --target native` |
 | Host services and file import | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native` |
 | Host event, window, timer, and route subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native` |
-| Native async image completion | `moon test moui/render --target native`, `moon test moui/backend/host --target native`, renderer/provider package tests for the touched backend |
+| Native async image completion | `moon test moui/render --target native`, `moon test moui/backend/host --target native`, touched native backend/provider package tests such as `moon test moui/backend/macos --target native` or `moon test moui/backend/linux --target native`; Windows package tests require a Windows/MSVC host, use `moon check moui/backend/windows --target native` on non-Windows hosts for static API coverage |
 | Virtual lists | `moon test moui/views --target native`, `sh scripts/conformance-check.sh --layout` |
 
 ## Platform Validation
@@ -289,7 +289,9 @@ instead of one large end-to-end assertion:
    in-flight de-duplication, publish, redraw routing, renderer apply-port
    forwarding, stale revision handling, closed-window discard, and cleanup/late
    completion behavior are host contracts before provider/platform loaders
-   supply real completion snapshots.
+   supply real completion snapshots. Native platform backend tests should also
+   pin that provider-owned image loaders are optional, invoked only through the
+   post-present host hook, and cancelled when a window is disposed.
 3. Implementation layer: renderer and provider packages prove concrete
    implementations honor the contract. This includes WGPU renderer capability
    evidence, native text-provider metrics/raster validation, and Web adapter
@@ -322,6 +324,7 @@ before it grows broad platform claims:
   wasm-gc backend tests, async host-service completion, host-event fanout and
   window/timer/route subscription adapter start/cleanup, window lifecycle registry
   behavior, native async image completion source schedule/publish/apply/redraw/cleanup,
+  native provider async-image hook wiring,
   app-owned route history/deep-link state, devtool snapshots, render
   inspector scope diagnostics, frame-profile counters,
   guidance freshness, and example builds. Showcase app tests also assert that
