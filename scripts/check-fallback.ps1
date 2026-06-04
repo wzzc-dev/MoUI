@@ -259,6 +259,7 @@ try {
   & (Join-Path $repoRoot "scripts/verify-native-ownership.ps1")
   & (Join-Path $repoRoot "scripts/verify-native-ffi-borrows.ps1")
   & (Join-Path $repoRoot "scripts/verify-native-fallback-parity.ps1")
+  & (Join-Path $repoRoot "scripts/verify-example-link-config.ps1")
   & (Join-Path $repoRoot "scripts/verify-native-smoke-capabilities.ps1")
   & (Join-Path $repoRoot "scripts/verify-native-capability-contract.ps1")
   Assert-WorkflowUsesHashtableSplatting -Path (Join-Path $repoRoot ".github/workflows/windows-real-skia-smoke.yml")

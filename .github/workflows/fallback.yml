@@ -81,6 +81,7 @@ jobs:
           bash -n scripts/verify-native-ownership.sh
           bash -n scripts/verify-native-ffi-borrows.sh
           bash -n scripts/verify-native-fallback-parity.sh
+          bash -n scripts/verify-example-link-config.sh
           bash -n scripts/check-real-skia-artifact-lock.sh
           bash -n scripts/accept-platform-status.sh
           bash -n scripts/pin-skia-revision.sh
@@ -94,6 +95,7 @@ jobs:
           bash scripts/verify-native-ownership.sh
           bash scripts/verify-native-ffi-borrows.sh
           bash scripts/verify-native-fallback-parity.sh
+          bash scripts/verify-example-link-config.sh
           bash scripts/verify-native-smoke-capabilities.sh
           bash scripts/verify-native-capability-contract.sh
           bash scripts/check-real-skia-artifact-lock.sh

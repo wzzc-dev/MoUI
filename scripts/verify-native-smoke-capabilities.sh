@@ -6,12 +6,12 @@ usage() {
 Usage: scripts/verify-native-smoke-capabilities.sh [options]
 
 Checks that every native_smoke_capabilities marker in skia-platform-status.json
-is emitted by scripts/native_smoke/main.mbt and remains listed by both native
+is emitted by the native smoke MoonBit sources and remains listed by both native
 smoke log verifier fallback marker tables.
 
 Options:
   --status-file PATH                 Platform status JSON file. Defaults to skia-platform-status.json.
-  --smoke-source PATH                Native smoke MoonBit source. Defaults to scripts/native_smoke/main.mbt.
+  --smoke-source PATH                Native smoke MoonBit source file or directory. Defaults to scripts/native_smoke.
   --unix-log-verifier PATH           Unix log verifier. Defaults to scripts/verify-native-smoke-log.sh.
   --powershell-log-verifier PATH     PowerShell log verifier. Defaults to scripts/verify-native-smoke-log.ps1.
   -h, --help                         Show this help.
@@ -19,7 +19,7 @@ EOF
 }
 
 status_file="skia-platform-status.json"
-smoke_source="scripts/native_smoke/main.mbt"
+smoke_source="scripts/native_smoke"
 unix_log_verifier="scripts/verify-native-smoke-log.sh"
 powershell_log_verifier="scripts/verify-native-smoke-log.ps1"
 
@@ -104,12 +104,20 @@ def fail(message: str) -> None:
 
 for path in (
     status_path,
-    smoke_source_path,
     unix_log_verifier_path,
     powershell_log_verifier_path,
 ):
     if not path.is_file():
         fail(f"required capability proof input is missing: {path}")
+
+if smoke_source_path.is_file():
+    smoke_source_files = [smoke_source_path]
+elif smoke_source_path.is_dir():
+    smoke_source_files = sorted(smoke_source_path.glob("*.mbt"))
+    if not smoke_source_files:
+        fail(f"native smoke source directory has no .mbt files: {smoke_source_path}")
+else:
+    fail(f"required capability proof input is missing: {smoke_source_path}")
 
 try:
     status = json.loads(status_path.read_text(encoding="utf-8"))
@@ -125,7 +133,9 @@ if conditional_capabilities is None:
 if not isinstance(conditional_capabilities, list):
     fail("platform status native_smoke_conditional_capabilities must be a list")
 
-smoke_source = smoke_source_path.read_text(encoding="utf-8")
+smoke_source = "\n".join(
+    path.read_text(encoding="utf-8") for path in smoke_source_files
+)
 unix_log_verifier = unix_log_verifier_path.read_text(encoding="utf-8")
 powershell_log_verifier = powershell_log_verifier_path.read_text(encoding="utf-8")
 
