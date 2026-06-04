@@ -268,6 +268,11 @@ validated browser-session manifest plus `evidenceProvenance`: GitHub Actions
 folds record `github-actions` provenance with run URL/run id/workflow/job/runner
 and uploaded artifact paths, while local folds record `matching-host-artifact`
 provenance with the host label and artifact bundle.
+The repository CI job `web-runtime-presentation` is the canonical GitHub
+Actions path for Web browser-session evidence: it builds Showcase and Markdown
+Editor Web wasm-gc targets, starts local HTTP plus Chrome CDP, records and
+folds the presentation manifest, validates the Web platform evidence entry, and
+uploads the `moui-web-runtime-presentation` artifact bundle.
 Examples demonstrate workflows but should not be the only proof for a
 shared contract.
 If CDP is unavailable during Web presentation startup, the recorder writes a

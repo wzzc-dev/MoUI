@@ -68,6 +68,7 @@ run node scripts/test-record-native-skia-evidence.mjs
 run node scripts/test-validate-web-runtime-handoff-manifest.mjs
 run node scripts/test-record-web-runtime-presentation.mjs
 run node scripts/test-validate-web-runtime-presentation-manifest.mjs
+run sh -n scripts/ci-web-runtime-presentation.sh
 
 run moon check
 
