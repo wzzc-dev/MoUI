@@ -49,6 +49,24 @@ pub(all) struct HostImageResourceCompletionSourceDiagnostics {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostAsyncImageLoadScheduleResult {
+  window_id : HostWindowId
+  snapshot_revision : Int
+  loading_count : Int
+  scheduled_count : Int
+  already_in_flight_count : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostAsyncImageLoaderDiagnostics {
+  scheduled_count : Int
+  completed_count : Int
+  cancelled_count : Int
+  already_in_flight_count : Int
+  in_flight_count : Int
+} derive(Eq, Debug, ToJson)
+
+///|
 pub struct HostImageResourceRepaintTracker {
   priv mut window_ids : Array[HostWindowId]
   priv mut revisions : Array[Int]
@@ -68,6 +86,27 @@ pub struct HostImageResourceCompletionSource {
 }
 
 ///|
+priv struct HostAsyncImageLoadInFlight {
+  window_id : HostWindowId
+  source : String
+  cancel : (() -> Unit)?
+}
+
+///|
+pub struct HostAsyncImageLoader {
+  priv start_load_fn : (
+    HostWindowId,
+    String,
+    (@render.ImageResourceLoadCompletion) -> Unit,
+  ) -> (() -> Unit)?
+  priv mut in_flight : Array[HostAsyncImageLoadInFlight]
+  priv mut scheduled_count : Int
+  priv mut completed_count : Int
+  priv mut cancelled_count : Int
+  priv mut already_in_flight_count : Int
+}
+
+///|
 pub fn HostImageResourceCompletionSource::new(
   tracker~ : HostImageResourceRepaintTracker,
   window_open~ : (HostWindowId) -> Bool,
@@ -82,6 +121,24 @@ pub fn HostImageResourceCompletionSource::new(
     redraw_requested_count: 0,
     unchanged_count: 0,
     discarded_closed_count: 0,
+  }
+}
+
+///|
+pub fn HostAsyncImageLoader::new(
+  start_load~ : (
+    HostWindowId,
+    String,
+    (@render.ImageResourceLoadCompletion) -> Unit,
+  ) -> (() -> Unit)?,
+) -> HostAsyncImageLoader {
+  {
+    start_load_fn: start_load,
+    in_flight: [],
+    scheduled_count: 0,
+    completed_count: 0,
+    cancelled_count: 0,
+    already_in_flight_count: 0,
   }
 }
 
@@ -114,6 +171,102 @@ pub fn HostImageResourceCompletionSource::complete(
 }
 
 ///|
+pub fn HostAsyncImageLoader::schedule_loading_resources(
+  self : HostAsyncImageLoader,
+  window_id : HostWindowId,
+  renderer : HostWindowRenderer,
+  completion_source : HostImageResourceCompletionSource,
+) -> HostAsyncImageLoadScheduleResult {
+  let snapshot = renderer.image_resource_snapshot()
+  let mut loading_count = 0
+  let mut scheduled_count = 0
+  let mut already_in_flight_count = 0
+  for record in snapshot.records {
+    match record.status {
+      @render.ImageResourceStatus::ImageLoading => {
+        loading_count = loading_count + 1
+        if self.is_in_flight(window_id, record.source) {
+          already_in_flight_count = already_in_flight_count + 1
+          self.already_in_flight_count = self.already_in_flight_count + 1
+        } else {
+          self.schedule_one(
+            window_id,
+            record.source,
+            renderer,
+            completion_source,
+          )
+          scheduled_count = scheduled_count + 1
+        }
+      }
+      _ => ()
+    }
+  }
+  HostAsyncImageLoadScheduleResult::{
+    window_id,
+    snapshot_revision: snapshot.revision,
+    loading_count,
+    scheduled_count,
+    already_in_flight_count,
+  }
+}
+
+///|
+pub fn HostAsyncImageLoader::cancel_window(
+  self : HostAsyncImageLoader,
+  window_id : HostWindowId,
+) -> Int {
+  let kept : Array[HostAsyncImageLoadInFlight] = []
+  let cancelled_entries : Array[HostAsyncImageLoadInFlight] = []
+  let mut cancelled = 0
+  for entry in self.in_flight {
+    if entry.window_id == window_id {
+      cancelled = cancelled + 1
+      cancelled_entries.push(entry)
+    } else {
+      kept.push(entry)
+    }
+  }
+  self.in_flight = kept
+  self.cancelled_count = self.cancelled_count + cancelled
+  for entry in cancelled_entries {
+    match entry.cancel {
+      Some(cancel) => cancel()
+      None => ()
+    }
+  }
+  cancelled
+}
+
+///|
+pub fn HostAsyncImageLoader::cancel_all(self : HostAsyncImageLoader) -> Int {
+  let cancelled_entries = self.in_flight
+  let mut cancelled = 0
+  self.in_flight = []
+  for entry in cancelled_entries {
+    cancelled = cancelled + 1
+    match entry.cancel {
+      Some(cancel) => cancel()
+      None => ()
+    }
+  }
+  self.cancelled_count = self.cancelled_count + cancelled
+  cancelled
+}
+
+///|
+pub fn HostAsyncImageLoader::diagnostics(
+  self : HostAsyncImageLoader,
+) -> HostAsyncImageLoaderDiagnostics {
+  {
+    scheduled_count: self.scheduled_count,
+    completed_count: self.completed_count,
+    cancelled_count: self.cancelled_count,
+    already_in_flight_count: self.already_in_flight_count,
+    in_flight_count: self.in_flight.length(),
+  }
+}
+
+///|
 pub fn HostImageResourceCompletionSource::diagnostics(
   self : HostImageResourceCompletionSource,
 ) -> HostImageResourceCompletionSourceDiagnostics {
@@ -125,6 +278,70 @@ pub fn HostImageResourceCompletionSource::diagnostics(
     discarded_closed_count: self.discarded_closed_count,
     tracked_window_count: self.tracker.tracked_count(),
   }
+}
+
+///|
+fn HostAsyncImageLoader::schedule_one(
+  self : HostAsyncImageLoader,
+  window_id : HostWindowId,
+  source : String,
+  renderer : HostWindowRenderer,
+  completion_source : HostImageResourceCompletionSource,
+) -> Unit {
+  self.in_flight.push({ window_id, source, cancel: None })
+  self.scheduled_count = self.scheduled_count + 1
+  let cancel = (self.start_load_fn)(window_id, source, completion => {
+    if self.remove_in_flight(window_id, source) && completion.source == source {
+      self.completed_count = self.completed_count + 1
+      ignore(completion_source.complete(window_id, renderer, completion))
+    }
+  })
+  self.set_cancel_handler(window_id, source, cancel)
+}
+
+///|
+fn HostAsyncImageLoader::is_in_flight(
+  self : HostAsyncImageLoader,
+  window_id : HostWindowId,
+  source : String,
+) -> Bool {
+  self.in_flight.any(entry => {
+    entry.window_id == window_id && entry.source == source
+  })
+}
+
+///|
+fn HostAsyncImageLoader::set_cancel_handler(
+  self : HostAsyncImageLoader,
+  window_id : HostWindowId,
+  source : String,
+  cancel : (() -> Unit)?,
+) -> Unit {
+  for index, entry in self.in_flight {
+    if entry.window_id == window_id && entry.source == source {
+      self.in_flight[index] = { window_id, source, cancel }
+      return
+    }
+  }
+}
+
+///|
+fn HostAsyncImageLoader::remove_in_flight(
+  self : HostAsyncImageLoader,
+  window_id : HostWindowId,
+  source : String,
+) -> Bool {
+  let kept : Array[HostAsyncImageLoadInFlight] = []
+  let mut removed = false
+  for entry in self.in_flight {
+    if !removed && entry.window_id == window_id && entry.source == source {
+      removed = true
+    } else {
+      kept.push(entry)
+    }
+  }
+  self.in_flight = kept
+  removed
 }
 
 ///|

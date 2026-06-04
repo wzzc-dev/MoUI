@@ -285,10 +285,11 @@ instead of one large end-to-end assertion:
    scheduler interval capture, typed dispatch mapping, cancellation cleanup, and
    route fanout, and late-publisher/callback behavior here before platform
    packages wire concrete event, window, timer, or route sources. Native async
-   image completion source behavior also belongs here: publish, redraw routing,
-   renderer apply-port forwarding, stale revision handling, closed-window
-   discard, and cleanup/late completion behavior are host contracts before
-   provider/platform loaders supply real completion snapshots.
+   image completion source behavior also belongs here: loading-record scheduling,
+   in-flight de-duplication, publish, redraw routing, renderer apply-port
+   forwarding, stale revision handling, closed-window discard, and cleanup/late
+   completion behavior are host contracts before provider/platform loaders
+   supply real completion snapshots.
 3. Implementation layer: renderer and provider packages prove concrete
    implementations honor the contract. This includes WGPU renderer capability
    evidence, native text-provider metrics/raster validation, and Web adapter
@@ -320,7 +321,7 @@ before it grows broad platform claims:
 - Platform/tooling: host-service capability checks, Linux readiness, Web
   wasm-gc backend tests, async host-service completion, host-event fanout and
   window/timer/route subscription adapter start/cleanup, window lifecycle registry
-  behavior, native async image completion source publish/apply/redraw/cleanup,
+  behavior, native async image completion source schedule/publish/apply/redraw/cleanup,
   app-owned route history/deep-link state, devtool snapshots, render
   inspector scope diagnostics, frame-profile counters,
   guidance freshness, and example builds. Showcase app tests also assert that
