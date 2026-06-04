@@ -222,7 +222,7 @@ if (-not $SkipLocalRepos) {
 
   if (Test-Path -LiteralPath $localReposRoot) {
     $localRepos = Get-ChildItem -LiteralPath $localReposRoot -Directory |
-      Where-Object { $_.Name -ne "window" -and $_.Name -ne "skia_mbt" -and (Test-GitRepository $_.FullName) } |
+      Where-Object { $_.Name -ne "window" -and $_.Name -ne "moui_skia" -and (Test-GitRepository $_.FullName) } |
       Sort-Object FullName
 
     foreach ($localRepo in $localRepos) {

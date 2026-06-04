@@ -7,7 +7,7 @@ WINDOW_REMOTE_SSH="git@github.com:wzzc-dev/window.git"
 WINDOW_REMOTE_HTTPS="https://github.com/wzzc-dev/window.git"
 WINDOW_UPSTREAM="https://github.com/moonbit-community/window.git"
 WINDOW_BRANCH="moui-support"
-SKIA_MBT_DIR="$ROOT_DIR/skia_mbt"
+MOUI_SKIA_DIR="$ROOT_DIR/moui_skia"
 
 if [ -n "${MOUI_WINDOW_REMOTE:-}" ]; then
   WINDOW_REMOTE="$MOUI_WINDOW_REMOTE"
@@ -93,11 +93,11 @@ checkout_and_fast_forward "$WINDOW_DIR" "$WINDOW_BRANCH"
 
 WINDOW_SUMMARY="window: $WINDOW_DIR on branch $WINDOW_BRANCH"
 
-[ -d "$SKIA_MBT_DIR" ] || {
-  printf 'Missing repo-local skia_mbt workspace at %s. Update the main MoUI checkout.\n' "$SKIA_MBT_DIR" >&2
+[ -d "$MOUI_SKIA_DIR" ] || {
+  printf 'Missing repo-local moui_skia workspace at %s. Update the main MoUI checkout.\n' "$MOUI_SKIA_DIR" >&2
   exit 1
 }
 
 printf '\nLocal dependencies are ready.\n'
 printf '%s\n' "$WINDOW_SUMMARY"
-printf 'skia_mbt: %s workspace member\n' "$SKIA_MBT_DIR"
+printf 'moui_skia: %s workspace member\n' "$MOUI_SKIA_DIR"

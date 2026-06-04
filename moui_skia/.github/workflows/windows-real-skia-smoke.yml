@@ -1,0 +1,315 @@
+name: Windows Real Skia Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      toolchain:
+        description: Windows Skia toolchain path to validate
+        type: choice
+        required: false
+        default: msvc
+        options:
+          - mingw
+          - msvc
+      skia_provider:
+        description: Skia provider to use for MSVC smoke; release downloads the locked wzzc-dev/skia release
+        type: choice
+        required: false
+        default: release
+        options:
+          - release
+          - existing
+      link_mode:
+        description: Skia release link mode
+        type: choice
+        required: false
+        default: static
+        options:
+          - static
+          - dynamic
+          - auto
+      skia_include:
+        description: Existing MinGW-compatible Skia checkout/include root; falls back to MOUI_SKIA_SKIA_INCLUDE on the runner
+        required: false
+        default: ""
+      skia_lib_dir:
+        description: Existing directory containing Skia libraries; falls back to MOUI_SKIA_SKIA_LIB_DIR on the runner
+        required: false
+        default: ""
+      skia_root:
+        description: Existing MSVC Skia release root; falls back to MOUI_SKIA_SKIA_ROOT on the runner
+        required: false
+        default: ""
+      skia_zip:
+        description: Existing MSVC Skia release zip; falls back to MOUI_SKIA_SKIA_ZIP or Downloads/Skia-Windows-Release-x64.zip
+        required: false
+        default: ""
+      vcvarsall:
+        description: Visual Studio vcvarsall.bat path for MSVC; falls back to VCVARSALL or the BuildTools default
+        required: false
+        default: ""
+      vc_arch:
+        description: Visual Studio architecture argument for vcvarsall.bat
+        required: false
+        default: x64
+      skia_lib:
+        description: Library name without prefix/suffix
+        required: false
+        default: skia
+      extra_cc_flags:
+        description: Extra C/C++ flags
+        required: false
+        default: ""
+      extra_link_flags:
+        description: Extra linker flags
+        required: false
+        default: ""
+      dry_run_config:
+        description: Print resolved config without building the smoke binary or rewriting package files
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  smoke:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Preflight smoke configuration
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          if ("${{ inputs.toolchain }}" -eq "msvc") {
+            if ("${{ inputs.skia_provider }}" -eq "release") {
+              .\scripts\fetch-release-skia.ps1 `
+                -Platform windows `
+                -Arch auto `
+                -Config Release `
+                -LinkMode "${{ inputs.link_mode }}" `
+                -DryRunConfig 2>&1 | Tee-Object -FilePath logs/windows-real-skia-smoke-preflight.log
+              exit 0
+            }
+            New-Item -ItemType Directory -Force -Path .skia-dry-run/msvc/include/core | Out-Null
+            New-Item -ItemType Directory -Force -Path .skia-dry-run/msvc/out/Release-x64 | Out-Null
+            New-Item -ItemType File -Force -Path .skia-dry-run/msvc/include/core/SkSurface.h | Out-Null
+            New-Item -ItemType File -Force -Path .skia-dry-run/msvc/out/Release-x64/skia.lib | Out-Null
+            $args = @{
+              SkiaRoot = ".skia-dry-run/msvc"
+              SkiaLibDir = ".skia-dry-run/msvc/out/Release-x64"
+              VcArch = "${{ inputs.vc_arch }}"
+              SkiaProvider = "existing"
+              SkiaLinkMode = "${{ inputs.link_mode }}"
+              DryRunConfig = $true
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.vcvarsall }}")) {
+              $args["VcVarsAll"] = "${{ inputs.vcvarsall }}"
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_cc_flags }}")) {
+              $args["ExtraCcFlags"] = "${{ inputs.extra_cc_flags }}"
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_link_flags }}")) {
+              $args["ExtraLinkFlags"] = "${{ inputs.extra_link_flags }}"
+            }
+            .\scripts\windows-msvc-skia-smoke.ps1 @args 2>&1 | Tee-Object -FilePath logs/windows-real-skia-smoke-preflight.log
+          } else {
+            New-Item -ItemType Directory -Force -Path .skia-dry-run/skia/include/core | Out-Null
+            New-Item -ItemType Directory -Force -Path .skia-dry-run/lib | Out-Null
+            New-Item -ItemType File -Force -Path .skia-dry-run/skia/include/core/SkSurface.h | Out-Null
+            New-Item -ItemType File -Force -Path ".skia-dry-run/lib/lib${{ inputs.skia_lib }}.a" | Out-Null
+            .\scripts\windows-skia-smoke.ps1 `
+              -SkiaInclude .skia-dry-run/skia `
+              -SkiaLibDir .skia-dry-run/lib `
+              -SkiaLib "${{ inputs.skia_lib }}" `
+              -ExtraCcFlags "${{ inputs.extra_cc_flags }}" `
+              -ExtraLinkFlags "${{ inputs.extra_link_flags }}" `
+              -DryRunConfig 2>&1 | Tee-Object -FilePath logs/windows-real-skia-smoke-preflight.log
+          }
+
+      - name: Set up MoonBit
+        if: ${{ !inputs.dry_run_config }}
+        shell: pwsh
+        run: |
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Update MoonBit registry
+        if: ${{ !inputs.dry_run_config }}
+        shell: pwsh
+        run: moon update
+
+      - name: Run native smoke test
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          if ("${{ inputs.dry_run_config }}" -eq "true") {
+            "dry_run_config=true; real Windows smoke was not run" | Tee-Object -FilePath logs/windows-real-skia-smoke.log
+            exit 0
+          }
+          $args = @{ LogDir = "logs" }
+          if ("${{ inputs.toolchain }}" -eq "msvc") {
+            if ("${{ inputs.skia_provider }}" -eq "release") {
+              $envLines = .\scripts\fetch-release-skia.ps1 `
+                -Platform windows `
+                -Arch auto `
+                -Config Release `
+                -LinkMode "${{ inputs.link_mode }}" `
+                -PrintEnv
+              $envMap = @{}
+              foreach ($line in $envLines) {
+                if ($line -match '^([^=]+)=(.*)$') {
+                  $envMap[$Matches[1]] = $Matches[2]
+                }
+              }
+              $args["SkiaRoot"] = $envMap["MOUI_SKIA_SKIA_ROOT"]
+              $args["SkiaInclude"] = $envMap["MOUI_SKIA_SKIA_INCLUDE"]
+              $args["SkiaLibDir"] = $envMap["MOUI_SKIA_SKIA_LIB_DIR"]
+              $args["SkiaProvider"] = "release"
+              $args["SkiaLinkMode"] = $envMap["MOUI_SKIA_SKIA_LINK_MODE"]
+              $args["ReleaseOwner"] = $envMap["MOUI_SKIA_RELEASE_OWNER"]
+              $args["ReleaseRepo"] = $envMap["MOUI_SKIA_RELEASE_REPO"]
+              $args["ReleaseTag"] = $envMap["MOUI_SKIA_RELEASE_TAG"]
+              $args["ReleaseUrl"] = $envMap["MOUI_SKIA_RELEASE_URL"]
+              $args["SkiaCommit"] = $envMap["MOUI_SKIA_SKIA_COMMIT"]
+              $args["SkiaPackage"] = $envMap["MOUI_SKIA_SKIA_PACKAGE"]
+              $args["SkiaPackageSha256"] = $envMap["MOUI_SKIA_SKIA_PACKAGE_SHA256"]
+              if (![string]::IsNullOrWhiteSpace($envMap["MOUI_SKIA_EXTRA_CC_FLAGS"])) {
+                $args["ExtraCcFlags"] = $envMap["MOUI_SKIA_EXTRA_CC_FLAGS"]
+              }
+              if (![string]::IsNullOrWhiteSpace($envMap["MOUI_SKIA_EXTRA_LINK_FLAGS"])) {
+                $args["ExtraLinkFlags"] = $envMap["MOUI_SKIA_EXTRA_LINK_FLAGS"]
+              }
+            } else {
+              $args["SkiaProvider"] = "existing"
+              $args["SkiaLinkMode"] = "${{ inputs.link_mode }}"
+              if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_root }}")) {
+                $args["SkiaRoot"] = "${{ inputs.skia_root }}"
+              }
+              if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_zip }}")) {
+                $args["SkiaZip"] = "${{ inputs.skia_zip }}"
+              }
+              if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib_dir }}")) {
+                $args["SkiaLibDir"] = "${{ inputs.skia_lib_dir }}"
+              }
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.vcvarsall }}")) {
+              $args["VcVarsAll"] = "${{ inputs.vcvarsall }}"
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.vc_arch }}")) {
+              $args["VcArch"] = "${{ inputs.vc_arch }}"
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_cc_flags }}")) {
+              $args["ExtraCcFlags"] = "${{ inputs.extra_cc_flags }}"
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_link_flags }}")) {
+              $args["ExtraLinkFlags"] = "${{ inputs.extra_link_flags }}"
+            }
+            .\scripts\windows-msvc-accept-real-skia-smoke.ps1 @args
+          } else {
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_include }}")) {
+              $args["SkiaInclude"] = "${{ inputs.skia_include }}"
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib_dir }}")) {
+              $args["SkiaLibDir"] = "${{ inputs.skia_lib_dir }}"
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_lib }}")) {
+              $args["SkiaLib"] = "${{ inputs.skia_lib }}"
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_cc_flags }}")) {
+              $args["ExtraCcFlags"] = "${{ inputs.extra_cc_flags }}"
+            }
+            if (![string]::IsNullOrWhiteSpace("${{ inputs.extra_link_flags }}")) {
+              $args["ExtraLinkFlags"] = "${{ inputs.extra_link_flags }}"
+            }
+            .\scripts\windows-accept-real-skia-smoke.ps1 @args
+          }
+
+      - name: Verify native smoke success marker
+        if: ${{ always() && !inputs.dry_run_config }}
+        shell: pwsh
+        run: .\scripts\verify-native-smoke-log.ps1 -LogPath logs\windows-native-smoke-output.log
+
+      - name: Verify acceptance summary
+        if: ${{ always() && !inputs.dry_run_config }}
+        shell: pwsh
+        run: .\scripts\verify-acceptance-log.ps1 -LogPath logs\windows-real-skia-acceptance.log
+
+      - name: Verify real Skia artifact bundle
+        if: ${{ always() && !inputs.dry_run_config }}
+        shell: pwsh
+        run: .\scripts\verify-real-skia-artifact.ps1 -Platform windows -LogDir logs
+
+      - name: Verify pinned Skia revision match
+        if: ${{ always() && !inputs.dry_run_config && inputs.skia_provider == 'existing' }}
+        shell: pwsh
+        run: .\scripts\verify-skia-revision-pin.ps1 -AcceptanceLog logs\windows-real-skia-acceptance.log -SkipIfUnpinned
+
+      - name: Upload smoke log
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-real-skia-smoke-log
+          path: |
+            logs/windows-real-skia-smoke-preflight.log
+            logs/windows-real-skia-smoke.log
+            logs/windows-native-smoke-output.log
+            logs/windows-real-skia-acceptance.log
+          if-no-files-found: warn
+
+      - name: Verify package files restored
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          if (Test-Path -LiteralPath native/moon.pkg.smoke.bak) {
+            throw "native/moon.pkg smoke backup is still present"
+          }
+          if (Test-Path -LiteralPath scripts/native_smoke/moon.pkg.smoke.bak) {
+            throw "scripts/native_smoke/moon.pkg smoke backup is still present"
+          }
+          git diff --exit-code -- native/moon.pkg scripts/native_smoke/moon.pkg
+          if ($LASTEXITCODE -ne 0) {
+            throw "package files differ after Windows Skia smoke"
+          }
+
+      - name: Write workflow summary
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          $resolvedCommit = "not run"
+          if ($env:windows_skia_commit) {
+            $resolvedCommit = $env:windows_skia_commit
+          } elseif (Test-Path -LiteralPath logs/windows-real-skia-smoke.log) {
+            $commitLine = Select-String -LiteralPath logs/windows-real-skia-smoke.log -Pattern '^\s*skia_commit=' | Select-Object -Last 1
+            if ($commitLine) {
+              $resolvedCommit = $commitLine.Line -replace '^\s*skia_commit=', ''
+            }
+          }
+          $markerStatus = if ($env:native_smoke_marker_status) { $env:native_smoke_marker_status } else { "not run" }
+          $restoreStatus = if ($env:restore_status) { $env:restore_status } else { "not run" }
+          @(
+            "## Windows Real Skia Smoke"
+            ""
+            "- Dry run only: ${{ inputs.dry_run_config }}"
+            "- Toolchain: ${{ inputs.toolchain }}"
+            "- Skia provider: ${{ inputs.skia_provider }}"
+            "- Skia link mode: ${{ inputs.link_mode }}"
+            "- Existing Skia include: ${{ inputs.skia_include }}"
+            "- Existing Skia lib dir: ${{ inputs.skia_lib_dir }}"
+            "- MSVC Skia root: ${{ inputs.skia_root }}"
+            "- MSVC Skia zip: ${{ inputs.skia_zip }}"
+            "- MSVC vcvarsall: ${{ inputs.vcvarsall }}"
+            "- MSVC vc_arch: ${{ inputs.vc_arch }}"
+            "- Skia library: ${{ inputs.skia_lib }}"
+            "- Resolved Skia commit: $resolvedCommit"
+            "- Extra C/C++ flags: ${{ inputs.extra_cc_flags }}"
+            "- Extra link flags: ${{ inputs.extra_link_flags }}"
+            "- Artifact: windows-real-skia-smoke-log"
+            "- Preflight log: logs/windows-real-skia-smoke-preflight.log"
+            "- Smoke log: logs/windows-real-skia-smoke.log"
+            "- Native smoke executable log: logs/windows-native-smoke-output.log"
+            "- Acceptance log: logs/windows-real-skia-acceptance.log"
+            "- Native smoke success marker: $markerStatus"
+            "- native/moon.pkg restore check: $restoreStatus"
+          ) | Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY
