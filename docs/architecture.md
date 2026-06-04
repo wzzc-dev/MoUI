@@ -548,7 +548,11 @@ image loader completions. Native provider/platform loaders publish
 `@render.ImageResourceSnapshot`; the host routes that snapshot through
 `HostImageResourceRepaintTracker`, requests redraw only for matching open
 windows, ignores stale lower revisions, and discards closed-window completions.
-The source does not decode images, mutate renderer caches, or live in `core`;
+`HostAsyncImageLoader` is the host-side scheduler adapter for that boundary: it
+scans renderer snapshots for loading records, starts a platform/provider loader,
+deduplicates in-flight `(window, source)` work, and gates late or cancelled
+completion callbacks before they can apply to a renderer. The source and loader
+do not decode images, mutate renderer caches, or live in `core`;
 renderer/provider packages still own concrete loading and lifecycle records.
 
 `RendererDescriptor` and `RendererSelection` remain renderer facade reporting tools:

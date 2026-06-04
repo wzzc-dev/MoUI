@@ -108,6 +108,31 @@ pub fn HostAppServices::take_completed(Self, HostServiceRequestId) -> HostComple
 pub fn HostAppServices::unavailable() -> Self
 pub fn HostAppServices::write_clipboard_text(Self, String) -> HostServiceResponse
 
+pub(all) struct HostAsyncImageLoadScheduleResult {
+  window_id : HostWindowId
+  snapshot_revision : Int
+  loading_count : Int
+  scheduled_count : Int
+  already_in_flight_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostAsyncImageLoader {
+  // private fields
+}
+pub fn HostAsyncImageLoader::cancel_all(Self) -> Int
+pub fn HostAsyncImageLoader::cancel_window(Self, HostWindowId) -> Int
+pub fn HostAsyncImageLoader::diagnostics(Self) -> HostAsyncImageLoaderDiagnostics
+pub fn HostAsyncImageLoader::new(start_load~ : (HostWindowId, String, (@render.ImageResourceLoadCompletion) -> Unit) -> (() -> Unit)?) -> Self
+pub fn HostAsyncImageLoader::schedule_loading_resources(Self, HostWindowId, HostWindowRenderer, HostImageResourceCompletionSource) -> HostAsyncImageLoadScheduleResult
+
+pub(all) struct HostAsyncImageLoaderDiagnostics {
+  scheduled_count : Int
+  completed_count : Int
+  cancelled_count : Int
+  already_in_flight_count : Int
+  in_flight_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum HostBackendKind {
   Native
   Web

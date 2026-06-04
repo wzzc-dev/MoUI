@@ -139,6 +139,7 @@ Use this skill when editing or reviewing:
   routing and tracked-window revision/status diagnostics plus repaint-result
   previous/current status counts,
   image-resource load completion apply bridge,
+  native async image loading-record scheduler,
   native async image completion source,
   host-event subscription source fanout, window-scoped subscription source,
   scheduler-backed timer subscription source, route/deep-link subscription source,
@@ -472,7 +473,10 @@ moon info
 - For native async image completions, route provider/platform loader completion
   results through `ImageResourceLoadCompletion` and
   `HostWindowRenderer::apply_image_resource_load_completion`, then route the returned
-  snapshots through `HostImageResourceCompletionSource` in `backend/host`.
+  snapshots through `HostImageResourceCompletionSource` in `backend/host`. Use
+  `HostAsyncImageLoader` for host-side loading-record scans, in-flight
+  de-duplication, cancellation cleanup, and late-completion gating before
+  concrete platform loaders call into that completion source.
   Keep decoding/cache mutation in renderer/provider packages, route redraw via
   `HostImageResourceRepaintTracker`, discard closed-window or stale-revision
   completions, and require matching-host runtime artifacts before claiming full

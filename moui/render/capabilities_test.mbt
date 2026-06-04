@@ -532,6 +532,7 @@ test "renderer capability report tracks draw command support" {
     @render.RendererBackendKind::NativeWgpu,
   )
   assert_true(native_image_note.contains("HostWindowRenderer"))
+  assert_true(native_image_note.contains("HostAsyncImageLoader"))
   assert_true(native_image_note.contains("HostImageResourceCompletionSource"))
   assert_true(native_image_note.contains("ImageResourceLoadCompletion"))
   assert_true(
@@ -546,6 +547,7 @@ test "renderer capability report tracks draw command support" {
     @render.RendererBackendKind::SkiaRasterNative,
   )
   assert_true(skia_image_note.contains("HostWindowRenderer"))
+  assert_true(skia_image_note.contains("HostAsyncImageLoader"))
   assert_true(skia_image_note.contains("HostImageResourceCompletionSource"))
   assert_true(skia_image_note.contains("ImageResourceLoadCompletion"))
   assert_true(skia_image_note.contains("apply_image_resource_load_completion"))

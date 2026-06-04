@@ -36,6 +36,7 @@ paths, or abstractions that only preserve old shapes.
   `HostWindowRenderer` diagnostics and image-resource change callback bridge,
   image-resource load completion apply bridge,
   image-resource repaint routing contracts,
+  native async image loading-record scheduler,
   native async image completion source,
   tracked-window image-resource repaint diagnostics with revision and lifecycle
   status counts, and repaint-result previous/current lifecycle status counts.
