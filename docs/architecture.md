@@ -128,7 +128,10 @@ cancellation lifecycle plus a stable `service` descriptor kind: the runtime
 records an active task descriptor, completes it on the first typed dispatch,
 cancels an older active task when a new task with the same key starts, cancels
 active tasks when the runtime is destroyed, and ignores stale task dispatches
-after completion or cancellation.
+after completion or cancellation. Same-key task replacements that change the
+descriptor kind are recorded with `EffectTaskKindChanged`, so tooling can
+distinguish a service-like task being swapped for another task category from an
+ordinary same-kind restart.
 `Effect::plan_summary` exposes a platform-neutral diagnostic summary of the
 effect tree, including batch, send, anonymous dispatch, structured run, task,
 none, scheduled leaf count, max depth, structured effect descriptors, and

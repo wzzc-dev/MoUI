@@ -82,6 +82,7 @@ pub(all) enum EffectTaskLifecycleStatus {
 ///|
 pub(all) enum EffectTaskCancelReason {
   EffectTaskKeyChanged
+  EffectTaskKindChanged
   EffectTaskRuntimeDestroyed
 } derive(Eq, Debug, ToJson)
 
@@ -610,10 +611,7 @@ fn[Msg] ProgramRuntimeDiagnostics::start_effect_task(
   start : ((Msg) -> Unit) -> (() -> Unit)?,
   dispatch : (Msg) -> Unit,
 ) -> Unit {
-  self.cancel_effect_tasks_by_key(
-    descriptor.key,
-    EffectTaskCancelReason::EffectTaskKeyChanged,
-  )
+  self.cancel_effect_tasks_replaced_by_descriptor(descriptor)
   let token = self.next_effect_task_value
   self.next_effect_task_value = self.next_effect_task_value + 1
   let active = Ref(true)
@@ -686,14 +684,18 @@ fn ProgramRuntimeDiagnostics::complete_effect_task(
 }
 
 ///|
-fn ProgramRuntimeDiagnostics::cancel_effect_tasks_by_key(
+fn ProgramRuntimeDiagnostics::cancel_effect_tasks_replaced_by_descriptor(
   self : ProgramRuntimeDiagnostics,
-  key : String,
-  reason : EffectTaskCancelReason,
+  descriptor : EffectDescriptor,
 ) -> Unit {
   let remaining : Array[ActiveProgramEffectTask] = []
   for task in self.active_effect_tasks {
-    if task.key == key {
+    if task.key == descriptor.key {
+      let reason = if task.kind == descriptor.kind {
+        EffectTaskCancelReason::EffectTaskKeyChanged
+      } else {
+        EffectTaskCancelReason::EffectTaskKindChanged
+      }
       self.cancel_effect_task(task, reason)
     } else {
       remaining.push(task)

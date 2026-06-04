@@ -640,6 +640,7 @@ pub fn EffectPlanSummary::empty() -> Self
 
 pub(all) enum EffectTaskCancelReason {
   EffectTaskKeyChanged
+  EffectTaskKindChanged
   EffectTaskRuntimeDestroyed
 } derive(Eq, ToJson, @debug.Debug)
 
