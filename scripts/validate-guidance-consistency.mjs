@@ -392,15 +392,25 @@ assertIncludes("docs/release-readiness.md", "Web host capability reporting now a
 assertIncludes("docs/release-readiness.md", "HostEventSource::subscription");
 assertIncludes("docs/release-readiness.md", "HostEventSource::publish");
 assertIncludes("docs/release-readiness.md", "host-event subscription fanout");
+assertIncludes("docs/release-readiness.md", "HostTimerSource::subscription");
+assertIncludes("docs/release-readiness.md", "HostTimerSource::new");
+assertIncludes("docs/release-readiness.md", "scheduler-backed timer subscriptions");
 assertIncludes("docs/architecture.md", "`HostEventSource`");
 assertIncludes("docs/architecture.md", "`Subscription::host_event`");
-assertIncludes("docs/testing.md", "Host event subscriptions");
-assertIncludes("docs/testing.md", "host-event subscription");
-assertIncludes("docs/testing.md", "adapter fanout/cleanup");
+assertIncludes("docs/architecture.md", "`HostTimerSource`");
+assertIncludes("docs/architecture.md", "`Subscription::timer`");
+assertIncludes("docs/testing.md", "Host event and timer subscriptions");
+assertIncludes("docs/testing.md", "scheduler interval capture");
+assertIncludes("docs/testing.md", "timer subscription adapter start/cleanup");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub struct HostEventSource");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "Subscription::host_event");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub struct HostTimerSource");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "HostTimerSource::subscription");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "Subscription::timer");
 assertIncludes("moui/backend/host/host_test.mbt", "host event source subscription dispatches mapped host events");
 assertIncludes("moui/backend/host/host_test.mbt", "host event source subscription cleanup removes late publishers");
+assertIncludes("moui/backend/host/host_test.mbt", "host timer source subscription starts timer and dispatches mapped frames");
+assertIncludes("moui/backend/host/host_test.mbt", "host timer source subscription cleanup cancels timer");
 assertIncludes("docs/platform-notes.md", "The Web host now advertises IME readiness");
 assertIncludes("docs/text-system.md", "routes browser IME composition events");
 assertIncludes("moui/backend/web/web_host.mbt", "ime_ready=true");
@@ -452,6 +462,7 @@ assertIncludes("AGENTS.md", "resize/input event-bridge");
 assertIncludes("AGENTS.md", "--web-presentation-manifest");
 assertIncludes("AGENTS.md", "monitor/cursor");
 assertIncludes("AGENTS.md", "host-event fanout subscription adapters");
+assertIncludes("AGENTS.md", "scheduler-backed timer subscription adapters");
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "resize/input event-bridge delivery",
@@ -479,6 +490,14 @@ assertIncludes(
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "HostEventSource::subscription",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "scheduler-backed timer subscription source",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "HostTimerSource::subscription",
 );
 assertIncludes("docs/release-readiness.md", "`web-runtime-presentation`");
 assertIncludes("docs/release-readiness.md", "`moui-web-runtime-presentation`");
