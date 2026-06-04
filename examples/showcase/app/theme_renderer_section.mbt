@@ -12,7 +12,7 @@ fn ShowcaseModel::theme_renderer_section(
   )
   let environment = @views.environment(theme=custom_theme)
   ignore(environment)
-  section_panel(
+  self.section_panel(
     theme,
     "Runtime & Renderer",
     "Host capability, theme helpers, and renderer reports stay visible in the catalog.",

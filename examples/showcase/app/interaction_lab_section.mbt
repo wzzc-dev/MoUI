@@ -5,7 +5,7 @@ fn ShowcaseModel::interaction_lab_section(
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
   let card_width = if metrics.compact { metrics.body_width } else { 300.0 }
-  section_panel(
+  self.section_panel(
     theme,
     "Interaction Lab",
     "Tooltip, file drop, focus, shortcuts, variants, and image lifecycle states.",

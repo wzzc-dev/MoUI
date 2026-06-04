@@ -6,7 +6,7 @@ fn ShowcaseModel::overview_section(
   offset : Double,
   opacity : Double,
 ) -> @core.View[ShowcaseMsg] {
-  section_panel(
+  self.section_panel(
     theme,
     "Overview",
     "Showcase is now a data-driven catalog of MoUI views.",

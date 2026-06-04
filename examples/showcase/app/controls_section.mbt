@@ -9,7 +9,7 @@ fn ShowcaseModel::controls_section(
     choice_item("web", "Web"),
     choice_item("test", "Test"),
   ]
-  section_panel(
+  self.section_panel(
     theme,
     "Controls",
     "TEA-controlled controls plus the current preview ecosystem baseline.",

@@ -21,7 +21,7 @@ fn ShowcaseModel::navigation_section(
   let restore_key = route_focus_store
     .focus_key(self.selected_section)
     .unwrap_or("section-nav-button-overview")
-  section_panel(
+  self.section_panel(
     theme,
     "Navigation",
     "Navigation stack, sidebar shells, breadcrumbs, wizard steps, dialog host, and sheet host are wired together.",
