@@ -56,6 +56,9 @@ Use this skill when editing or reviewing:
   ```
 
 - `core/` stays platform-neutral.
+- `BuildContext`-owned state listeners from `watch`, `watch_derived`,
+  `binding`, and `saveable` must be stored in `BuildContext.subscriptions` so
+  rebuild and unmount cancel stale handles.
 - `Program`, `Effect[Msg]`, and `Subscription[Msg]` are the default app model
   surface: pure apps use `Program::simple`, environment-aware apps use the
   `*_with_environment` constructors, effect-capable apps use `Program::new`
