@@ -551,8 +551,11 @@ windows, ignores stale lower revisions, and discards closed-window completions.
 `HostAsyncImageLoader` is the host-side scheduler adapter for that boundary: it
 scans renderer snapshots for loading records, starts a platform/provider loader,
 deduplicates in-flight `(window, source)` work, and gates late or cancelled
-completion callbacks before they can apply to a renderer. The source and loader
-do not decode images, mutate renderer caches, or live in `core`;
+completion callbacks before they can apply to a renderer. The native macOS,
+Windows, and Linux host cores call the optional provider-owned loader hook after
+the presented image-resource revision has been baselined, then cancel in-flight
+window loads during disposal. The source and loader do not decode images,
+mutate renderer caches, or live in `core`;
 renderer/provider packages still own concrete loading and lifecycle records.
 
 `RendererDescriptor` and `RendererSelection` remain renderer facade reporting tools:

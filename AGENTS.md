@@ -37,6 +37,7 @@ paths, or abstractions that only preserve old shapes.
   image-resource load completion apply bridge,
   image-resource repaint routing contracts,
   native async image loading-record scheduler,
+  native provider async-image scheduling hooks,
   native async image completion source,
   tracked-window image-resource repaint diagnostics with revision and lifecycle
   status counts, and repaint-result previous/current lifecycle status counts.

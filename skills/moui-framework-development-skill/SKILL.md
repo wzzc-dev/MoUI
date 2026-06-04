@@ -140,6 +140,7 @@ Use this skill when editing or reviewing:
   previous/current status counts,
   image-resource load completion apply bridge,
   native async image loading-record scheduler,
+  native provider async-image scheduling hooks,
   native async image completion source,
   host-event subscription source fanout, window-scoped subscription source,
   scheduler-backed timer subscription source, route/deep-link subscription source,
@@ -477,6 +478,9 @@ moon info
   `HostAsyncImageLoader` for host-side loading-record scans, in-flight
   de-duplication, cancellation cleanup, and late-completion gating before
   concrete platform loaders call into that completion source.
+  Native macOS, Windows, and Linux host cores should invoke optional
+  provider-owned image loaders only after the image-resource presented revision
+  has been baselined, and cancel in-flight window loads during disposal.
   Keep decoding/cache mutation in renderer/provider packages, route redraw via
   `HostImageResourceRepaintTracker`, discard closed-window or stale-revision
   completions, and require matching-host runtime artifacts before claiming full
