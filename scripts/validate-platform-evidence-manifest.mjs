@@ -146,6 +146,7 @@ const skiaObservationKeys = [
   "providerPreflight",
   "fallbackUnavailable",
   "realRendererSmoke",
+  "asyncImageSecondFrame",
   "showcaseFirstFrame",
   "markdownFirstFrame",
 ];

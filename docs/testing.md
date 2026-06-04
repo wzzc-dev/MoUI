@@ -269,6 +269,10 @@ scripts/macos-skia-renderer-smoke.sh \
 
 That manifest update records Skia route evidence only; keep the broader macOS
 platform entry pending until full platform-service observations are collected.
+The renderer smoke log must include both `MoUI Skia renderer smoke passed` and
+`MoUI Skia async image second-frame smoke passed`; the latter is folded into
+the native Skia evidence as `asyncImageSecondFrame=yes` only for the host that
+produced the artifact.
 
 ## Conformance Ownership Layers
 
@@ -303,8 +307,10 @@ instead of one large end-to-end assertion:
    `HostNativeAsyncImageSource` callback that completes later through
    `native_image_load_completion`; Skia provider package tests pin the same
    scheduler path around `skia_image_load_completion`, including the deferred
-   native-source callback boundary, while keeping off-main async loader runtime
-   evidence as a separate matching-host gate.
+   native-source callback boundary. The real-Skia renderer smoke additionally
+   proves a post-present data URI/local-file completion can request repaint and
+   draw on a second frame, while off-main async loader runtime evidence remains
+   a separate matching-host gate.
 3. Implementation layer: renderer and provider packages prove concrete
    implementations honor the contract. This includes WGPU renderer capability
    evidence, native text-provider metrics/raster validation, and Web adapter
@@ -382,8 +388,9 @@ including the native Skia entrypoints: pending entries are not runtime proof,
 and a passed Windows or Linux entry must name the matching host, commands, MoUI
 consumer run, observations, and artifacts. Native entries also include a
 `skiaEvidence` block for the Skia-first route: provider/preflight commands,
-fallback-unavailable checks, real renderer smoke, Showcase first-frame, and
-Markdown Editor first-frame. `skiaEvidence.status=passed` is native Skia route
+fallback-unavailable checks, real renderer smoke, async image second-frame
+smoke, Showcase first-frame, and Markdown Editor first-frame.
+`skiaEvidence.status=passed` is native Skia route
 evidence, not full platform-service proof by itself; however a native platform
 entry cannot be marked `passed` unless its Skia evidence is also `passed`.
 `--golden` builds the Showcase Web

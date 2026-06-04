@@ -31,6 +31,7 @@ const pendingSkiaObservations = {
   providerPreflight: "pending",
   fallbackUnavailable: "pending",
   realRendererSmoke: "pending",
+  asyncImageSecondFrame: "pending",
   showcaseFirstFrame: "pending",
   markdownFirstFrame: "pending",
 };

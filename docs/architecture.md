@@ -571,11 +571,14 @@ provider-owned loader that turns renderer-owned PNG/JPEG/BMP source decode
 results into `ImageResourceLoadCompletion` payloads; matching-host off-main
 async runtime evidence is still required before treating the route as fully
 ready. Native Skia provider packages now install the same provider-owned loader
-boundary around `skia_image_load_completion`, which converts Skia encoded-image
-decode results into ready/failed completion payloads without mutating renderer
-caches. This is provider completion evidence, not matching-host off-main runtime
-proof. The host source and scheduler do not decode images, mutate renderer
-caches, or live in `core`;
+boundary around `skia_image_load_completion`, and provider-created Skia
+renderers opt into post-present async image loading so the first presented
+snapshot can contain loading records before the host routes ready/failed
+completions into a repaint. The helper converts Skia encoded-image decode
+results into ready/failed completion payloads without pre-populating renderer
+caches. This is provider completion and smoke evidence, not matching-host
+off-main runtime proof. The host source and scheduler do not decode images,
+mutate renderer caches, or live in `core`;
 renderer/provider packages still own concrete loading and lifecycle records.
 
 `RendererDescriptor` and `RendererSelection` remain renderer facade reporting tools:

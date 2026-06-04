@@ -75,6 +75,7 @@ const skiaObservationKeys = [
   "providerPreflight",
   "fallbackUnavailable",
   "realRendererSmoke",
+  "asyncImageSecondFrame",
   "showcaseFirstFrame",
   "markdownFirstFrame",
 ];
@@ -422,6 +423,7 @@ if (
   windowsEntry.observations.monitorCursor !== "yes" ||
   windowsEntry.evidenceProvenance?.kind !== "github-actions" ||
   windowsEntry.skiaEvidence.status !== "passed" ||
+  windowsEntry.skiaEvidence.observations.asyncImageSecondFrame !== "yes" ||
   windowsEntry.skiaEvidence.observations.showcaseFirstFrame !== "yes" ||
   windowsEntry.skiaEvidence.evidenceProvenance?.kind !== "matching-host-artifact"
 ) {
@@ -529,6 +531,7 @@ if (
   legacyManifest.schemaVersion !== 2 ||
   legacyLinuxEntry.observations.monitorCursor !== "pending" ||
   legacyLinuxEntry.skiaEvidence.status !== "pending" ||
+  legacyLinuxEntry.skiaEvidence.observations.asyncImageSecondFrame !== "pending" ||
   legacyLinuxEntry.skiaEvidence.observations.showcaseFirstFrame !== "pending"
 ) {
   console.error("migrate legacy platform evidence manifest: schema was not upgraded");

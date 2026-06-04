@@ -63,6 +63,7 @@ test "linux skia provider preflight records package evidence boundary" {
   assert_true(
     preflight.contains("renderer_image_loader=skia_image_load_completion"),
   )
+  assert_true(preflight.contains("renderer_async_image_loading=post-present"))
   assert_true(
     preflight.contains(
       "renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion",

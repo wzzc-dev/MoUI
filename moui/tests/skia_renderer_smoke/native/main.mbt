@@ -697,6 +697,203 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
 }
 
 ///|
+fn async_image_smoke_commands(
+  local_png_path : String,
+) -> Array[@core.DrawCommand] {
+  [
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: one_pixel_red_png_data_uri(),
+      frame: @core.Rect::new(x=2.0, y=2.0, width=6.0, height=6.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: local_png_path,
+      frame: @core.Rect::new(x=12.0, y=2.0, width=6.0, height=6.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]
+}
+
+///|
+fn assert_image_status(
+  renderer : @skia_renderer.SkiaRasterRenderer,
+  source : String,
+  status : @render.ImageResourceStatus,
+) -> Unit {
+  for record in renderer.image_resources() {
+    if record.source == source {
+      if record.status != status {
+        fail_smoke("Skia async image smoke recorded an unexpected image status")
+      }
+      return ()
+    }
+  }
+  fail_smoke("Skia async image smoke did not record the expected image source")
+}
+
+///|
+fn run_async_image_second_frame_smoke() -> Unit {
+  let local_png_path = "/private/tmp/moui-skia-renderer-smoke-async-image.png"
+  remove_local_smoke_file(local_png_path)
+  write_local_smoke_png(local_png_path)
+  let captured : Ref[@skia_renderer.SkiaPixelFrame?] = Ref(None)
+  let target = @skia_renderer.SkiaPresentTarget::new(
+    description="MoUI Skia async image smoke presenter",
+    present=frame => {
+      captured.val = Some(frame)
+      true
+    },
+  )
+  guard (try? @skia_renderer.create_with_present_target(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=24.0, height=10.0),
+        scale_factor=1.0,
+      ),
+      target,
+      async_image_loading=true,
+    ))
+    is Ok(renderer) else {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke("failed to create MoUI Skia async image smoke renderer")
+  }
+
+  let commands = async_image_smoke_commands(local_png_path)
+  renderer.render(commands) catch {
+    err => {
+      remove_local_smoke_file(local_png_path)
+      fail_smoke(
+        "failed to render MoUI Skia async image first frame: \{err.message()}",
+      )
+    }
+  }
+  if renderer.present_count() != 1 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke("Skia async image smoke did not present the loading frame")
+  }
+  assert_image_status(
+    renderer,
+    one_pixel_red_png_data_uri(),
+    @render.ImageResourceStatus::ImageLoading,
+  )
+  assert_image_status(
+    renderer,
+    local_png_path,
+    @render.ImageResourceStatus::ImageLoading,
+  )
+
+  let host_renderer = @host.HostWindowRenderer::new(
+    resize=metrics => {
+      renderer.resize(
+        @render.RendererSurfaceMetrics::new(
+          logical_size=metrics.logical_size,
+          physical_size=metrics.physical_size,
+          scale_factor=metrics.scale_factor,
+        ),
+      ) catch {
+        err =>
+          fail_smoke(
+            "failed to resize Skia async image smoke renderer: \{err.message()}",
+          )
+      }
+    },
+    render=draw_commands => {
+      renderer.render(draw_commands) catch {
+        err =>
+          fail_smoke(
+            "failed to render Skia async image smoke host frame: \{err.message()}",
+          )
+      }
+    },
+    text_system=() => renderer.text_system(),
+    image_resources=() => renderer.image_resources(),
+    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+    apply_image_resource_load_completion=Some(completion => {
+      renderer.apply_image_resource_load_completion(completion)
+    }),
+    set_image_resource_change_callback=callback => {
+      renderer.set_image_resource_change_callback(callback)
+    },
+    present_count=() => renderer.present_count(),
+    dispose=() => renderer.dispose(),
+  )
+  let window_id = @host.HostWindowId::new(99)
+  let tracker = @host.HostImageResourceRepaintTracker::new()
+  let baseline = tracker.record_presented(window_id, host_renderer)
+  if baseline.current_status_counts.loading_count != 2 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke("Skia async image smoke did not baseline two loading images")
+  }
+  let redraws : Array[@host.HostWindowId] = []
+  let completion_source = @host.HostImageResourceCompletionSource::new(
+    tracker~,
+    window_open=id => id == window_id,
+    request_redraw=id => redraws.push(id),
+  )
+  let loader = @host.HostAsyncImageLoader::new(start_load=(
+    _id,
+    source,
+    complete,
+  ) => {
+    complete(@skia_renderer.skia_image_load_completion(source))
+    None
+  })
+  let scheduled = loader.schedule_loading_resources(
+    window_id, host_renderer, completion_source,
+  )
+  if scheduled.loading_count != 2 || scheduled.scheduled_count != 2 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke("Skia async image smoke did not schedule both loading images")
+  }
+  if redraws.length() < 1 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke("Skia async image smoke did not request a repaint")
+  }
+  if loader.diagnostics().completed_count != 2 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke("Skia async image smoke did not complete both image loads")
+  }
+  if completion_source.diagnostics().redraw_requested_count < 1 {
+    remove_local_smoke_file(local_png_path)
+    fail_smoke("Skia async image smoke did not route through repaint tracker")
+  }
+  assert_image_status(
+    renderer,
+    one_pixel_red_png_data_uri(),
+    @render.ImageResourceStatus::ImageReady,
+  )
+  assert_image_status(
+    renderer,
+    local_png_path,
+    @render.ImageResourceStatus::ImageReady,
+  )
+
+  renderer.render(commands) catch {
+    err => {
+      remove_local_smoke_file(local_png_path)
+      fail_smoke(
+        "failed to render MoUI Skia async image second frame: \{err.message()}",
+      )
+    }
+  }
+  remove_local_smoke_file(local_png_path)
+  if renderer.present_count() != 2 {
+    fail_smoke("Skia async image smoke did not present the second frame")
+  }
+  match captured.val {
+    Some(frame) => {
+      assert_pixel(frame, 4, 4, 255, 0, 0, 255)
+      assert_pixel(frame, 14, 4, 255, 0, 0, 255)
+    }
+    None =>
+      fail_smoke("Skia async image smoke presenter did not receive a frame")
+  }
+  println("MoUI Skia async image second-frame smoke passed")
+}
+
+///|
 fn main {
   if !@skia_renderer.skia_available() {
     fail_smoke(
@@ -888,6 +1085,7 @@ fn main {
         frame,
         @core.Rect::new(x=146.0, y=124.0, width=44.0, height=22.0),
       )
+      run_async_image_second_frame_smoke()
       println("MoUI Skia renderer smoke passed")
     }
     None => fail_smoke("MoUI Skia smoke presenter did not receive a frame")

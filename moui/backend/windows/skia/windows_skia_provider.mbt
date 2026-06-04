@@ -103,7 +103,7 @@ pub fn windows_skia_provider_preflight_summary(
 
 ///|
 fn skia_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_image_loader=skia_image_load_completion; renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SkiaRasterRenderer.set_image_resource_change_callback; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
+  "renderer_bridge=HostWindowRenderer; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_image_loader=skia_image_load_completion; renderer_async_image_loading=post-present; renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SkiaRasterRenderer.set_image_resource_change_callback; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
 }
 
 ///|
@@ -122,6 +122,7 @@ fn create_renderer(
         renderer_metrics_from_host(metrics),
         windows_skia_present_target(window.window_handle()),
         font_resolution=options.font_resolution,
+        async_image_loading=true,
       ),
     ),
   ) catch {
