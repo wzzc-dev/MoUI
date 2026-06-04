@@ -502,8 +502,12 @@ pub fn RuntimeState::layout(self : RuntimeState) -> LayoutResult {
 }
 
 ///|
-fn RuntimeState::layout_tree_root(self : RuntimeState) -> PlacedNode {
-  self.ensure_layout_tree()
+fn RuntimeState::cached_layout(self : RuntimeState) -> LayoutResult {
+  self.layout_tree.root.to_layout_result()
+}
+
+///|
+fn RuntimeState::cached_layout_tree_root(self : RuntimeState) -> PlacedNode {
   self.layout_tree.root
 }
 
@@ -512,6 +516,14 @@ fn RuntimeState::view_tree_inspector_snapshot(
   self : RuntimeState,
 ) -> ViewTreeInspectorSnapshot {
   self.element_tree.root.view_tree_inspector_snapshot()
+}
+
+///|
+fn RuntimeState::cached_semantics(self : RuntimeState) -> SemanticsNode {
+  self.element_tree.root.semantics(
+    self.render_tree.root,
+    focused=self.focused_element,
+  )
 }
 
 ///|
@@ -585,6 +597,15 @@ pub fn RuntimeState::build_draw_commands(
   let commands : Array[DrawCommand] = [Clear(Color::white())]
   self.rebuild_if_possible()
   self.ensure_render_tree()
+  self.render_tree.root.collect_draw_commands(commands)
+  commands
+}
+
+///|
+fn RuntimeState::cached_draw_commands(
+  self : RuntimeState,
+) -> Array[DrawCommand] {
+  let commands : Array[DrawCommand] = [Clear(Color::white())]
   self.render_tree.root.collect_draw_commands(commands)
   commands
 }
@@ -732,6 +753,11 @@ pub fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
 ///|
 pub fn RuntimeState::dirty_count(self : RuntimeState) -> Int {
   self.dirty_elements.length()
+}
+
+///|
+pub fn RuntimeState::dirty_element_ids(self : RuntimeState) -> Array[ElementId] {
+  self.dirty_elements.copy()
 }
 
 ///|
