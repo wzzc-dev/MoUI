@@ -99,6 +99,7 @@ for (const path of [
   ".github/workflows/moui-skia-windows-real-skia-smoke.yml",
   ".github/workflows/moui-skia-real-skia-acceptance.yml",
   ".github/workflows/copilot-setup-steps.yml",
+  ".github/workflows/moui-real-skia-smoke.yml",
 ]) {
   assertFileExists(path);
 }
@@ -240,6 +241,20 @@ assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/web-runtime-pr
 assertIncludes(".github/workflows/ci.yml", "artifacts/platform-evidence/web/");
 assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/platform-runtime-evidence.json");
 assertIncludes(".github/workflows/ci.yml", "if-no-files-found: warn");
+assertAbsent(".github/workflows/ci.yml", "run_real_skia_smoke");
+assertAbsent(".github/workflows/ci.yml", "real-skia-smoke:");
+assertIncludes(".github/workflows/moui-real-skia-smoke.yml", "name: MoUI Real Skia Smoke");
+assertIncludes(".github/workflows/moui-real-skia-smoke.yml", "workflow_dispatch:");
+assertIncludes(".github/workflows/moui-real-skia-smoke.yml", "macos-real-skia-smoke:");
+assertIncludes(".github/workflows/moui-real-skia-smoke.yml", "scripts/macos-skia-renderer-smoke.sh");
+assertIncludes(".github/workflows/moui-real-skia-smoke.yml", "--smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log");
+assertIncludes(".github/workflows/moui-real-skia-smoke.yml", "--run-showcase-smoke");
+assertIncludes(".github/workflows/moui-real-skia-smoke.yml", "--run-markdown-smoke");
+assertIncludes(".github/workflows/moui-real-skia-smoke.yml", "moui-macos-real-skia-smoke");
+assertIncludes("docs/testing.md", ".github/workflows/moui-real-skia-smoke.yml");
+assertIncludes("docs/testing.md", "not create a skipped real-Skia check");
+assertIncludes("AGENTS.md", ".github/workflows/moui-real-skia-smoke.yml");
+assertIncludes("skills/moui-framework-development-skill/SKILL.md", ".github/workflows/moui-real-skia-smoke.yml");
 assertIncludes("scripts/ci-web-runtime-presentation.sh", "moon build examples/showcase/web_wasm --target wasm-gc");
 assertIncludes("scripts/ci-web-runtime-presentation.sh", "moon build examples/markdown_editor/web_wasm --target wasm-gc");
 assertIncludes("scripts/ci-web-runtime-presentation.sh", "python3 -m http.server");
