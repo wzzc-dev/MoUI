@@ -20,7 +20,7 @@ moui/                         root public facade workspace member
 moui/core/                    one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
 moui/style/                   visual token and control style compatibility package
 moui/views/                   public view constructors
-moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, metrics, HostWindowRenderer, input, redraw driver, window/core + dpi event conversion
+moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, input, redraw driver, window/core + dpi event conversion
 moui/backend/windows/         Windows native host core
 moui/backend/windows/wgpu/    Windows WGPU renderer provider
 moui/backend/windows/skia/    Windows Skia renderer provider
@@ -171,8 +171,10 @@ core subscription runtime only owns the platform-neutral lifecycle,
 subscription plan diagnostics, and typed dispatch contract. `backend/host`
 provides the concrete `HostEventSource` fanout adapter for
 `Subscription::host_event`, `HostWindowEventSource` for
-`Subscription::window_event`, and `HostTimerSource` for `Subscription::timer`
-ticks, while route sources remain platform/app-layer follow-up work.
+`Subscription::window_event`, `HostTimerSource` for `Subscription::timer`
+ticks, and `HostRouteSource` for `Subscription::route_event` fanout. Browser
+history, native URL bars, and OS deep-link dispatch remain platform/app-layer
+follow-up work.
 Environment-aware TEA apps should use
 the `*_with_environment` constructors instead of taking `BuildContext` in their
 view layer. In both cases event dispatch flows through typed messages instead of
@@ -474,6 +476,12 @@ timer ticks: host/platform code provides the scheduler callback, while apps map
 `@core.Frame` ticks back into typed `Program` messages through
 `Subscription::timer`; cancellation runs the scheduler cleanup so late timer
 callbacks are ignored by the stale-dispatch guard.
+`HostRouteSource` is the matching host-layer subscription adapter for app-owned
+route/deep-link streams: host/platform code can publish `HostRouteEvent` values
+carrying `@core.RouteLocation` plus a source label, while apps map those events
+through `Subscription::route_event`; cancellation removes the publisher handler
+so late route events do not re-enter stale app state. The adapter does not
+mutate `RouteHistoryState` or synchronize browser/native history by itself.
 `HostWindowRegistry::resolve_open_request` pairs a successful scene resolution
 with the created registry record so the host can keep window id, scene metadata,
 and runtime together. `HostWindowRuntimeSlot` then wraps that record with a

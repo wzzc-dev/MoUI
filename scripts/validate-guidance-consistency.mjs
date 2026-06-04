@@ -395,6 +395,9 @@ assertIncludes("docs/release-readiness.md", "host-event subscription fanout");
 assertIncludes("docs/release-readiness.md", "HostWindowEventSource::subscription");
 assertIncludes("docs/release-readiness.md", "HostWindowEventSource::publish");
 assertIncludes("docs/release-readiness.md", "window-scoped subscription fanout");
+assertIncludes("docs/release-readiness.md", "HostRouteSource::subscription");
+assertIncludes("docs/release-readiness.md", "HostRouteSource::publish");
+assertIncludes("docs/release-readiness.md", "route/deep-link subscription fanout");
 assertIncludes("docs/release-readiness.md", "HostTimerSource::subscription");
 assertIncludes("docs/release-readiness.md", "HostTimerSource::new");
 assertIncludes("docs/release-readiness.md", "scheduler-backed timer subscriptions");
@@ -403,11 +406,14 @@ assertIncludes("docs/architecture.md", "`Subscription::host_event`");
 assertIncludes("docs/architecture.md", "`HostWindowEventSource`");
 assertIncludes("docs/architecture.md", "`HostWindowEvent`");
 assertIncludes("docs/architecture.md", "`Subscription::window_event`");
+assertIncludes("docs/architecture.md", "`HostRouteSource`");
+assertIncludes("docs/architecture.md", "`HostRouteEvent`");
+assertIncludes("docs/architecture.md", "`Subscription::route_event`");
 assertIncludes("docs/architecture.md", "`HostTimerSource`");
 assertIncludes("docs/architecture.md", "`Subscription::timer`");
-assertIncludes("docs/testing.md", "Host event, window, and timer subscriptions");
+assertIncludes("docs/testing.md", "Host event, window, timer, and route subscriptions");
 assertIncludes("docs/testing.md", "window identity preservation");
-assertIncludes("docs/testing.md", "window/timer subscription adapter start/cleanup");
+assertIncludes("docs/testing.md", "window/timer/route subscription adapter start/cleanup");
 assertIncludes("docs/testing.md", "scheduler interval capture");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub struct HostEventSource");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "Subscription::host_event");
@@ -416,6 +422,12 @@ assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub struct HostWi
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "HostWindowEventSource::publish");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "HostWindowEventSource::subscription");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "Subscription::window_event");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub(all) struct HostRouteEvent");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub struct HostRouteSource");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "HostRouteEvent::from_route");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "HostRouteSource::publish");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "HostRouteSource::subscription");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "Subscription::route_event");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub struct HostTimerSource");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "HostTimerSource::subscription");
 assertIncludes("moui/backend/host/subscription_adapters.mbt", "Subscription::timer");
@@ -423,6 +435,9 @@ assertIncludes("moui/backend/host/host_test.mbt", "host event source subscriptio
 assertIncludes("moui/backend/host/host_test.mbt", "host event source subscription cleanup removes late publishers");
 assertIncludes("moui/backend/host/host_test.mbt", "host window event source subscription dispatches mapped window events");
 assertIncludes("moui/backend/host/host_test.mbt", "host window event source subscription cleanup removes late publishers");
+assertIncludes("moui/backend/host/host_test.mbt", "host route source subscription dispatches mapped route events");
+assertIncludes("moui/backend/host/host_test.mbt", "host route event constructor preserves location and source");
+assertIncludes("moui/backend/host/host_test.mbt", "host route source subscription cleanup removes late publishers");
 assertIncludes("moui/backend/host/host_test.mbt", "host timer source subscription starts timer and dispatches mapped frames");
 assertIncludes("moui/backend/host/host_test.mbt", "host timer source subscription cleanup cancels timer");
 assertIncludes("docs/platform-notes.md", "The Web host now advertises IME readiness");
@@ -478,6 +493,7 @@ assertIncludes("AGENTS.md", "monitor/cursor");
 assertIncludes("AGENTS.md", "host-event fanout subscription adapters");
 assertIncludes("AGENTS.md", "window-scoped subscription adapters");
 assertIncludes("AGENTS.md", "scheduler-backed timer subscription adapters");
+assertIncludes("AGENTS.md", "route/deep-link subscription adapters");
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "resize/input event-bridge delivery",
@@ -516,12 +532,24 @@ assertIncludes(
 );
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
+  "route/deep-link subscription source",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "HostRouteSource::subscription",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
   "scheduler-backed timer subscription source",
 );
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "HostTimerSource::subscription",
 );
+assertIncludes("skills/moui-app-development-skill/SKILL.md", "HostRouteSource");
+assertIncludes("docs/platform-notes.md", "`HostRouteSource`");
+assertIncludes("docs/view-catalog.md", "`@host.HostRouteSource`");
+assertIncludes("docs/examples.md", "`HostRouteSource`");
 assertIncludes("docs/release-readiness.md", "`web-runtime-presentation`");
 assertIncludes("docs/release-readiness.md", "`moui-web-runtime-presentation`");
 assertIncludes("AGENTS.md", "`web-runtime-presentation`");
