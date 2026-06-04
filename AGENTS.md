@@ -29,6 +29,8 @@ paths, or abstractions that only preserve old shapes.
   opaque `@core.View[Msg]`; `ViewSpec` and node payloads stay inside `core`.
 - `backend/host/` defines shared host event, surface, input, async
   host-service, host-event fanout subscription adapters, window-scoped subscription adapters,
+  platform event-source bundles for feeding normalized Web/native host and window
+  events into app-owned subscriptions,
   scheduler-backed timer subscription adapters, route/deep-link subscription adapters,
   app-owned service completion subscription adapters, window lifecycle, window scene resolution, per-window runtime slot collection,
   platform-window id mapping,

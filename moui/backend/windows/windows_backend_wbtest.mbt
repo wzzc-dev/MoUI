@@ -43,8 +43,16 @@ test "windows host options carry optional scene resolver and first-frame smoke" 
   let options = WindowsHostAppOptions::new(
     scene_resolver=resolver,
     exit_after_first_present=true,
+    event_sources=Some(@host.HostPlatformEventSources::new()),
   )
   assert_true(options.exit_after_first_present)
+  match options.event_sources {
+    Some(sources) => {
+      inspect(sources.host_events().active_handler_count(), content="0")
+      inspect(sources.window_events().active_handler_count(), content="0")
+    }
+    None => fail("expected configured Windows platform event sources")
+  }
   match options.scene_resolver.resolve(request) {
     @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>
       assert_true(runtime.size() == @core.Size::new(width=320.0, height=240.0))

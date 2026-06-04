@@ -45,6 +45,7 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
 pub struct LinuxHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv exit_after_first_present : Bool
+  priv event_sources : @host.HostPlatformEventSources?
 }
 
 ///|
@@ -75,6 +76,7 @@ struct LinuxApp {
   platform_windows : @host.HostPlatformWindowMap
   platform_slots : LinuxWindowPlatformSlots
   image_repaint_tracker : @host.HostImageResourceRepaintTracker
+  event_sources : @host.HostPlatformEventSources?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut exit_after_first_present : Bool
@@ -98,8 +100,9 @@ priv struct LinuxWindowPlatformSlots {
 pub fn LinuxHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   exit_after_first_present? : Bool = false,
+  event_sources? : @host.HostPlatformEventSources? = None,
 ) -> LinuxHostAppOptions {
-  { scene_resolver, exit_after_first_present }
+  { scene_resolver, exit_after_first_present, event_sources }
 }
 
 ///|
@@ -590,6 +593,7 @@ pub fn run_app_with_renderer_provider(
     platform_windows: @host.HostPlatformWindowMap::new(),
     platform_slots: LinuxWindowPlatformSlots::new(),
     image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
+    event_sources: options.event_sources,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     exit_after_first_present: options.exit_after_first_present,
@@ -1106,9 +1110,22 @@ fn LinuxApp::dispatch_host_event(
           }
         None => ()
       }
+      ignore(self.publish_subscription_event(window_id, adjusted))
       self.sync_text_input_session()
     }
     None => ()
+  }
+}
+
+///|
+fn LinuxApp::publish_subscription_event(
+  self : LinuxApp,
+  window_id : @host.HostWindowId,
+  event : @host.HostEvent,
+) -> @host.HostPlatformEventPublishResult? {
+  match self.event_sources {
+    Some(sources) => Some(sources.publish(window_id~, event~))
+    None => None
   }
 }
 

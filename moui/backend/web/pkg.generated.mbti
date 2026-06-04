@@ -88,8 +88,9 @@ pub impl @wzzc-dev/window/web.ApplicationHandler for WebApp
 
 pub(all) struct WebAppOptions {
   scene_resolver : @host.HostWindowSceneResolver
+  event_sources : @host.HostPlatformEventSources?
 }
-pub fn WebAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver) -> Self
+pub fn WebAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?) -> Self
 
 type WebAsyncHostServiceKind derive(Eq, ToJson, @debug.Debug)
 

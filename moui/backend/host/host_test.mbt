@@ -2025,6 +2025,68 @@ test "host event source subscription cleanup removes late publishers" {
 }
 
 ///|
+test "host platform event sources publish host and window subscriptions" {
+  let sources = HostPlatformEventSources::new()
+  let window_id = HostWindowId::new(9)
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init="idle",
+      update=(_model, message : String) => message,
+      view=model => {
+        @core.View::text(
+          text=model,
+          size=@core.Size::new(width=280.0, height=24.0),
+          font=@core.FontSpec::new(size=14.0),
+          color=@core.Color::black(),
+        )
+      },
+      subscriptions=_model => {
+        @core.Subscription::batch([
+          sources
+          .host_events()
+          .subscription(key="host:event", label="Host event adapter", map=event => {
+            match event {
+              HostEvent::ThemeChanged(_) => Some("host theme")
+              _ => None
+            }
+          }),
+          sources
+          .window_events()
+          .subscription(
+            key="host:window-event",
+            label="Host window event adapter",
+            map=event => {
+              if event.window_id == window_id {
+                Some("window \{event.window_id.value.to_string()}")
+              } else {
+                None
+              }
+            },
+          ),
+        ])
+      },
+    ),
+    size=@core.Size::new(width=320.0, height=80.0),
+  )
+  inspect(sources.host_events().active_handler_count(), content="1")
+  inspect(sources.window_events().active_handler_count(), content="1")
+  let result = sources.publish(
+    window_id~,
+    event=HostEvent::ThemeChanged(@core.ColorScheme::Dark),
+  )
+  inspect(result.host_event_count, content="1")
+  inspect(result.window_event_count, content="1")
+  inspect(runtime.program_runtime_snapshot().dispatched_count, content="2")
+  assert_true(
+    runtime
+    .draw_commands()
+    .any(command => {
+      command is @core.DrawCommand::DrawText({ text, .. }) && text == "window 9"
+    }),
+  )
+}
+
+///|
 test "host window event source subscription dispatches mapped window events" {
   let source = HostWindowEventSource::new()
   let target = HostWindowId::new(7)

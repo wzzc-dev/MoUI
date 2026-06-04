@@ -471,6 +471,13 @@ window-scoped platform events: platform code can publish a `HostWindowId` plus
 normalized `HostEvent`, while apps map those `HostWindowEvent` values through
 `Subscription::window_event`; cancellation removes the publisher handler so late
 window events do not re-enter stale app state.
+`HostPlatformEventSources` bundles the host-event and window-event sources for
+platform runtimes. Web, macOS, Windows, and Linux app options can carry that
+bundle; after a raw platform event is normalized and dispatched through the
+matching `HostRuntimeDriver`, the backend publishes the same `HostEvent` with
+its `HostWindowId` so app-owned `Subscription::host_event` and
+`Subscription::window_event` adapters can observe real runtime events without
+moving platform event conversion into `core`.
 `HostTimerSource` is the matching host-layer subscription adapter for app-owned
 timer ticks: host/platform code provides the scheduler callback, while apps map
 `@core.Frame` ticks back into typed `Program` messages through
