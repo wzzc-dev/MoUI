@@ -7,6 +7,25 @@ import { spawnSync } from "node:child_process";
 
 const tmp = mkdtempSync(join(tmpdir(), "moui-platform-evidence-record-"));
 const recorder = "scripts/record-platform-evidence-manifest.mjs";
+const githubEnvKeys = [
+  "GITHUB_ACTIONS",
+  "GITHUB_SERVER_URL",
+  "GITHUB_REPOSITORY",
+  "GITHUB_RUN_ID",
+  "GITHUB_WORKFLOW",
+  "GITHUB_JOB",
+  "RUNNER_NAME",
+  "RUNNER_OS",
+  "RUNNER_ARCH",
+];
+
+const withoutGithubEnv = () => {
+  const env = { ...process.env };
+  for (const key of githubEnvKeys) {
+    delete env[key];
+  }
+  return env;
+};
 
 const pendingObservations = {
   windowOpened: "pending",
@@ -295,9 +314,13 @@ const writeWebPresentationManifest = (name, overallStatus) => {
   return path;
 };
 
-const runRecorder = (path, platform, args) =>
+const runRecorder = (path, platform, args, options = {}) =>
   spawnSync(process.execPath, [recorder, path, platform, ...args], {
     encoding: "utf8",
+    env: {
+      ...withoutGithubEnv(),
+      ...(options.env ?? {}),
+    },
   });
 
 const expectPass = (label, result) => {
@@ -576,9 +599,50 @@ if (
   webPassedEntry.observations.representativeInput !== "yes" ||
   webPassedEntry.observations.monitorCursor !== "pending" ||
   !webPassedEntry.consumerCommand.includes("--require-passed") ||
-  webPassedEntry.evidenceProvenance?.kind !== "matching-host-artifact"
+  webPassedEntry.evidenceProvenance?.kind !== "matching-host-artifact" ||
+  webPassedEntry.evidenceProvenance.workflow !== undefined ||
+  webPassedEntry.evidenceProvenance.runUrl !== undefined
 ) {
   console.error("record passed web presentation evidence: manifest should be passed");
+  process.exit(1);
+}
+
+const webGithubPath = writeManifest("web-presentation-github-passed.json");
+expectPass(
+  "record passed web presentation evidence with GitHub Actions provenance",
+  runRecorder(
+    webGithubPath,
+    "web",
+    [
+      "--web-presentation-manifest",
+      writeWebPresentationManifest("github-web-runtime-presentation.json", "passed"),
+    ],
+    {
+      env: {
+        GITHUB_ACTIONS: "true",
+        GITHUB_SERVER_URL: "https://github.com",
+        GITHUB_REPOSITORY: "wzzc-dev/MoUI",
+        GITHUB_RUN_ID: "123456789",
+        GITHUB_WORKFLOW: "MoUI CI",
+        GITHUB_JOB: "web-runtime-presentation",
+        RUNNER_NAME: "GitHub Actions 1",
+      },
+    },
+  ),
+);
+const webGithubManifest = JSON.parse(readFileSync(webGithubPath, "utf8"));
+const webGithubEntry = webGithubManifest.platforms.find(entry => entry.name === "web");
+if (
+  webGithubEntry.status !== "passed" ||
+  webGithubEntry.evidenceProvenance?.kind !== "github-actions" ||
+  webGithubEntry.evidenceProvenance.workflow !== "MoUI CI" ||
+  webGithubEntry.evidenceProvenance.job !== "web-runtime-presentation" ||
+  webGithubEntry.evidenceProvenance.runId !== "123456789" ||
+  webGithubEntry.evidenceProvenance.runUrl !== "https://github.com/wzzc-dev/MoUI/actions/runs/123456789" ||
+  webGithubEntry.evidenceProvenance.runner !== "GitHub Actions 1" ||
+  !webGithubEntry.evidenceProvenance.artifacts.includes("artifacts/platform-evidence/web/web-runtime-presentation.json")
+) {
+  console.error("record passed web presentation evidence with GitHub Actions provenance: provenance was not derived");
   process.exit(1);
 }
 

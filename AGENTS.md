@@ -263,8 +263,11 @@ evidence; fold that artifact into
 `artifacts/conformance/platform-runtime-evidence.json` with
 `scripts/record-platform-evidence-manifest.mjs ... web
 --web-presentation-manifest ...`. Failed or missing presentation manifests must
-stay out of passed Web runtime claims, and passed Web entries must retain the
-browser-session manifest or CI artifact provenance produced by that recorder.
+stay out of passed Web runtime claims. Passed Web entries must retain the
+validated browser-session manifest plus `evidenceProvenance`: GitHub Actions
+folds record `github-actions` provenance with run URL/run id/workflow/job/runner
+and uploaded artifact paths, while local folds record `matching-host-artifact`
+provenance with the host label and artifact bundle.
 Examples demonstrate workflows but should not be the only proof for a
 shared contract.
 If CDP is unavailable during Web presentation startup, the recorder writes a
