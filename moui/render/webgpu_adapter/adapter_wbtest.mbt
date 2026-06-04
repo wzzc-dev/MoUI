@@ -9,24 +9,23 @@ test "wgpu web adapter encodes image fit host codes" {
 }
 
 ///|
-test "wgpu web adapter lowers radial brush to deterministic center edge payload" {
-  let payload = brush_payload(
-    @core.Brush::radial_gradient(
+test "wgpu web adapter preserves radial brush host payload" {
+  let payload = radial_brush_payload(
+    @core.RadialGradientSpec::new(
       center=@core.Point::new(x=4.0, y=6.0),
       radius=12.0,
       center_color=@core.Color::blue(),
       edge_color=@core.Color::gray(),
     ),
-    @core.Rect::new(x=1.0, y=2.0, width=40.0, height=20.0),
   )
-  assert_true(payload.start == @core.Point::new(x=4.0, y=6.0))
-  assert_true(payload.end == @core.Point::new(x=16.0, y=6.0))
-  assert_true(payload.start_color == @core.Color::blue())
-  assert_true(payload.end_color == @core.Color::gray())
+  assert_true(payload.center == @core.Point::new(x=4.0, y=6.0))
+  inspect(payload.radius, content="12")
+  assert_true(payload.center_color == @core.Color::blue())
+  assert_true(payload.edge_color == @core.Color::gray())
 }
 
 ///|
-test "wgpu web adapter routes radial rounded brush through gradient payload" {
+test "wgpu web adapter routes radial rounded brush through radial payload" {
   let payload = rounded_brush_host_payload(
     @core.Brush::radial_gradient(
       center=@core.Point::new(x=14.0, y=11.0),
@@ -36,13 +35,13 @@ test "wgpu web adapter routes radial rounded brush through gradient payload" {
     ),
     @core.Rect::new(x=10.0, y=6.0, width=32.0, height=18.0),
   )
-  guard payload is RoundedBrushHostPayload::GradientPayload(gradient) else {
-    fail("expected radial rounded brush to use gradient host payload")
+  guard payload is RoundedBrushHostPayload::RadialGradientPayload(radial) else {
+    fail("expected radial rounded brush to use radial host payload")
   }
-  assert_true(gradient.start == @core.Point::new(x=14.0, y=11.0))
-  assert_true(gradient.end == @core.Point::new(x=23.0, y=11.0))
-  assert_true(gradient.start_color == @core.Color::blue())
-  assert_true(gradient.end_color == @core.Color::gray())
+  assert_true(radial.center == @core.Point::new(x=14.0, y=11.0))
+  inspect(radial.radius, content="9")
+  assert_true(radial.center_color == @core.Color::blue())
+  assert_true(radial.edge_color == @core.Color::gray())
 }
 
 ///|

@@ -82,9 +82,18 @@ priv struct HostBrushPayload {
 }
 
 ///|
+priv struct HostRadialBrushPayload {
+  center : @core.Point
+  radius : Double
+  center_color : @core.Color
+  edge_color : @core.Color
+}
+
+///|
 priv enum RoundedBrushHostPayload {
   SolidColor(@core.Color)
-  GradientPayload(HostBrushPayload)
+  LinearGradientPayload(HostBrushPayload)
+  RadialGradientPayload(HostRadialBrushPayload)
 }
 
 ///|
@@ -920,14 +929,32 @@ fn brush_payload(brush : @core.Brush, frame : @core.Rect) -> HostBrushPayload {
 }
 
 ///|
+fn radial_brush_payload(
+  gradient : @core.RadialGradientSpec,
+) -> HostRadialBrushPayload {
+  {
+    center: gradient.center,
+    radius: gradient.radius.max(1.0),
+    center_color: gradient.center_color,
+    edge_color: gradient.edge_color,
+  }
+}
+
+///|
 fn rounded_brush_host_payload(
   brush : @core.Brush,
   frame : @core.Rect,
 ) -> RoundedBrushHostPayload {
   match brush {
     @core.Brush::Solid(color) => RoundedBrushHostPayload::SolidColor(color)
-    @core.Brush::LinearGradient(_) | @core.Brush::RadialGradient(_) =>
-      RoundedBrushHostPayload::GradientPayload(brush_payload(brush, frame))
+    @core.Brush::LinearGradient(_) =>
+      RoundedBrushHostPayload::LinearGradientPayload(
+        brush_payload(brush, frame),
+      )
+    @core.Brush::RadialGradient(gradient) =>
+      RoundedBrushHostPayload::RadialGradientPayload(
+        radial_brush_payload(gradient),
+      )
   }
 }
 
@@ -962,7 +989,7 @@ fn submit_fill_rounded_rect_brush(
           color.a,
         ),
       )
-    RoundedBrushHostPayload::GradientPayload(payload) =>
+    RoundedBrushHostPayload::LinearGradientPayload(payload) =>
       raise_for_host_status(
         host_fill_rounded_rect_gradient(
           renderer,
@@ -983,6 +1010,28 @@ fn submit_fill_rounded_rect_brush(
           payload.end_color.g,
           payload.end_color.b,
           payload.end_color.a,
+        ),
+      )
+    RoundedBrushHostPayload::RadialGradientPayload(payload) =>
+      raise_for_host_status(
+        host_fill_rounded_rect_radial(
+          renderer,
+          rounded.rect.origin.x,
+          rounded.rect.origin.y,
+          rounded.rect.size.width,
+          rounded.rect.size.height,
+          rounded.radius,
+          payload.center.x,
+          payload.center.y,
+          payload.radius,
+          payload.center_color.r,
+          payload.center_color.g,
+          payload.center_color.b,
+          payload.center_color.a,
+          payload.edge_color.r,
+          payload.edge_color.g,
+          payload.edge_color.b,
+          payload.edge_color.a,
         ),
       )
   }
@@ -1012,7 +1061,7 @@ fn submit_stroke_rounded_rect_brush(
           width,
         ),
       )
-    RoundedBrushHostPayload::GradientPayload(payload) =>
+    RoundedBrushHostPayload::LinearGradientPayload(payload) =>
       raise_for_host_status(
         host_stroke_rounded_rect_gradient(
           renderer,
@@ -1034,6 +1083,29 @@ fn submit_stroke_rounded_rect_brush(
           payload.end_color.g,
           payload.end_color.b,
           payload.end_color.a,
+        ),
+      )
+    RoundedBrushHostPayload::RadialGradientPayload(payload) =>
+      raise_for_host_status(
+        host_stroke_rounded_rect_radial(
+          renderer,
+          rounded.rect.origin.x,
+          rounded.rect.origin.y,
+          rounded.rect.size.width,
+          rounded.rect.size.height,
+          rounded.radius,
+          width,
+          payload.center.x,
+          payload.center.y,
+          payload.radius,
+          payload.center_color.r,
+          payload.center_color.g,
+          payload.center_color.b,
+          payload.center_color.a,
+          payload.edge_color.r,
+          payload.edge_color.g,
+          payload.edge_color.b,
+          payload.edge_color.a,
         ),
       )
   }
@@ -1309,6 +1381,27 @@ fn host_fill_rounded_rect_gradient(
 ) -> Int = "webgpu" "fill_rounded_rect_gradient"
 
 ///|
+fn host_fill_rounded_rect_radial(
+  renderer : HostWebGpuRenderer,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  radius : Double,
+  center_x : Double,
+  center_y : Double,
+  gradient_radius : Double,
+  r0 : Double,
+  g0 : Double,
+  b0 : Double,
+  a0 : Double,
+  r1 : Double,
+  g1 : Double,
+  b1 : Double,
+  a1 : Double,
+) -> Int = "webgpu" "fill_rounded_rect_radial"
+
+///|
 fn host_stroke_rounded_rect_gradient(
   renderer : HostWebGpuRenderer,
   x : Double,
@@ -1330,6 +1423,28 @@ fn host_stroke_rounded_rect_gradient(
   b1 : Double,
   a1 : Double,
 ) -> Int = "webgpu" "stroke_rounded_rect_gradient"
+
+///|
+fn host_stroke_rounded_rect_radial(
+  renderer : HostWebGpuRenderer,
+  x : Double,
+  y : Double,
+  width : Double,
+  height : Double,
+  radius : Double,
+  stroke_width : Double,
+  center_x : Double,
+  center_y : Double,
+  gradient_radius : Double,
+  r0 : Double,
+  g0 : Double,
+  b0 : Double,
+  a0 : Double,
+  r1 : Double,
+  g1 : Double,
+  b1 : Double,
+  a1 : Double,
+) -> Int = "webgpu" "stroke_rounded_rect_radial"
 
 ///|
 fn host_draw_shadow(

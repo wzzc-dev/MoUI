@@ -776,6 +776,13 @@ assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "test-record-web-runtime-presentation.mjs",
 );
+assertIncludes("AGENTS.md", "test-webgpu-runtime-radial.mjs");
+assertIncludes("docs/testing.md", "test-webgpu-runtime-radial.mjs");
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "test-webgpu-runtime-radial.mjs",
+);
+assertIncludes("scripts/conformance-check.sh", "test-webgpu-runtime-radial.mjs");
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "host-event subscription source fanout",

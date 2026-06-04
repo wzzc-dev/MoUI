@@ -213,6 +213,7 @@ moon test moui/backend/web --target wasm-gc
 moon test moui/render/skia --target native
 moon test moui_skia --target native
 moon test moui/render/wgpu/cosmic_text --target native
+node scripts/test-webgpu-runtime-radial.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 sh scripts/conformance-check.sh --input
 sh scripts/conformance-check.sh --layout

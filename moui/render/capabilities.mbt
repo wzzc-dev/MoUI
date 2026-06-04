@@ -250,7 +250,7 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
       RendererFeatureStatus::Ready,
       "Skia raster renders linear-gradient and radial-gradient fills and strokes for rounded rects and paths; linear gradients have real native renderer pixel smoke coverage and radial brushes have renderer-local guarded pixel coverage.",
       RendererFeatureStatus::Partial,
-      "The browser WebGPU host evaluates solid and linear-gradient brush payloads; radial rounded brushes use deterministic center-to-edge gradient fallback and radial path brushes use deterministic center-color tessellation fallback until true radial shader support lands.",
+      "The browser WebGPU host evaluates solid, linear-gradient, and true radial rounded brush payloads in the visual shader; radial path brushes still use deterministic center-color tessellation fallback until true radial path shading lands.",
     ),
     renderer_feature_capability_entry(
       RendererFeature::Shadow,
