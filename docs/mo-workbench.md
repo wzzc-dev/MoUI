@@ -794,7 +794,7 @@ stdin EOF.
 
 The macOS app intentionally selects the Skia provider instead of the default
 WGPU provider. When workbench UI needs renderer capabilities that are missing
-from `.local_repos/skia_mbt`, add clean fallback-safe APIs there first, then
+from `skia_mbt`, add clean fallback-safe APIs there first, then
 wire MoUI `DrawCommand` support through `render/skia`, update renderer
 capability reporting, and add focused tests.
 

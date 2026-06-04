@@ -30,7 +30,7 @@ Options:
                          moon run setup, and static for temporary smoke/build
                          setup when libskia.a exists.
   --skia-rev REV         Skia git revision, branch, or tag for source provider.
-                         Default: .local_repos/skia_mbt/skia-revision.txt.
+                         Default: skia_mbt/skia-revision.txt.
   --jetbrains-tag TAG    JetBrains/skia release tag. Default: m148-8967a2e80c.
   --jetbrains-config Release|Debug
                          JetBrains/skia package configuration. Default: Release.
@@ -264,7 +264,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-skia_repo="$repo_root/.local_repos/skia_mbt"
+skia_repo="$repo_root/skia_mbt"
 native_pkg="$skia_repo/native/moon.pkg"
 native_pkg_backup="$native_pkg.moui-smoke.bak"
 renderer_pkg="$repo_root/moui/tests/skia_renderer_smoke/native/moon.pkg"

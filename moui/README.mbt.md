@@ -76,9 +76,9 @@ sh scripts/dev-check.sh
 ```
 
 The local dependency check verifies the `window` fork's MoUI smoke/evidence
-surface and the `skia_mbt` binding checkout's platform status and native
-capability contracts via `.local_repos/skia_mbt/scripts/verify-platform-status.sh`
-and `.local_repos/skia_mbt/scripts/verify-native-capability-contract.sh`. Those
+surface and the `skia_mbt` binding workspace's platform status and native
+capability contracts via `skia_mbt/scripts/verify-platform-status.sh`
+and `skia_mbt/scripts/verify-native-capability-contract.sh`. Those
 Skia guards prove the provider lock, fallback parity, FFI ownership/borrow
 metadata, native smoke marker coverage, and binding-level evidence wiring are
 present; renderer pixels and platform runtime behavior still come from the
