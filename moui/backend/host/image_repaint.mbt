@@ -109,19 +109,28 @@ pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
   request_redraw~ : (HostWindowId) -> Unit,
 ) -> HostImageResourceRepaintResult {
   if !window_open {
-    let previous_revision = self.previous_revision_or_zero(window_id)
-    let previous_status_counts = self.status_counts_for_window(window_id)
-    ignore(self.remove_window(window_id))
-    return HostImageResourceRepaintResult::{
-      window_id,
-      previous_revision,
-      current_revision: previous_revision,
-      previous_status_counts,
-      current_status_counts: host_image_resource_empty_status_counts(),
-      status: HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed,
-    }
+    return self.discard_closed_window_change(window_id)
   }
   let snapshot = renderer.image_resource_snapshot()
+  self.request_redraw_for_snapshot_if_changed(
+    window_id,
+    snapshot,
+    window_open~,
+    request_redraw~,
+  )
+}
+
+///|
+pub fn HostImageResourceRepaintTracker::request_redraw_for_snapshot_if_changed(
+  self : HostImageResourceRepaintTracker,
+  window_id : HostWindowId,
+  snapshot : @render.ImageResourceSnapshot,
+  window_open~ : Bool,
+  request_redraw~ : (HostWindowId) -> Unit,
+) -> HostImageResourceRepaintResult {
+  if !window_open {
+    return self.discard_closed_window_change(window_id)
+  }
   match self.revision_for(window_id) {
     Some(previous_revision) => {
       let previous_status_counts = self.status_counts_for_window(window_id)
@@ -164,6 +173,24 @@ pub fn HostImageResourceRepaintTracker::request_redraw_if_changed(
       }
     }
     None => self.record_snapshot(window_id, snapshot)
+  }
+}
+
+///|
+fn HostImageResourceRepaintTracker::discard_closed_window_change(
+  self : HostImageResourceRepaintTracker,
+  window_id : HostWindowId,
+) -> HostImageResourceRepaintResult {
+  let previous_revision = self.previous_revision_or_zero(window_id)
+  let previous_status_counts = self.status_counts_for_window(window_id)
+  ignore(self.remove_window(window_id))
+  HostImageResourceRepaintResult::{
+    window_id,
+    previous_revision,
+    current_revision: previous_revision,
+    previous_status_counts,
+    current_status_counts: host_image_resource_empty_status_counts(),
+    status: HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed,
   }
 }
 

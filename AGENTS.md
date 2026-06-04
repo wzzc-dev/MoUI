@@ -29,7 +29,8 @@ paths, or abstractions that only preserve old shapes.
   lifecycle, window scene resolution,
   per-window runtime slot collection, platform-window id mapping,
   request/completion, window event conversion, and renderer-neutral
-  `HostWindowRenderer` diagnostics, image-resource repaint routing contracts,
+  `HostWindowRenderer` diagnostics and image-resource change callback bridge,
+  image-resource repaint routing contracts,
   tracked-window image-resource repaint diagnostics with revision and lifecycle
   status counts, and repaint-result previous/current lifecycle status counts.
 - `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
@@ -233,7 +234,7 @@ that native Skia evidence is also `passed`; a passed `skiaEvidence` block is
 still Skia-route evidence, not full platform service/runtime proof by itself.
 Native Skia provider preflight summaries also audit the renderer-neutral
 `HostWindowRenderer` bridge used to forward Skia text-system, image-resource,
-present-count, and disposal diagnostics. Treat those bridge fields as
+image-resource change callback, present-count, and disposal diagnostics. Treat those bridge fields as
 provider/package evidence, not as proof that a matching platform window
 presented a frame.
 The Web runtime handoff validator

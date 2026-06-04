@@ -5,6 +5,9 @@ pub struct HostWindowRenderer {
   priv text_system_fn : () -> @core.TextSystem
   priv image_resources_fn : () -> Array[@render.ImageResourceRecord]
   priv image_resource_snapshot_fn : () -> @render.ImageResourceSnapshot
+  priv set_image_resource_change_callback_fn : (
+    ((@render.ImageResourceSnapshot) -> Unit)?,
+  ) -> Unit
   priv present_count_fn : () -> Int
   priv dispose_fn : () -> Unit
 }
@@ -16,6 +19,9 @@ pub fn HostWindowRenderer::new(
   text_system~ : () -> @core.TextSystem,
   image_resources? : () -> Array[@render.ImageResourceRecord] = () => [],
   image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)? = None,
+  set_image_resource_change_callback? : (
+    ((@render.ImageResourceSnapshot) -> Unit)?,
+  ) -> Unit = _callback => (),
   present_count? : () -> Int = () => 0,
   dispose? : () -> Unit = () => (),
 ) -> HostWindowRenderer {
@@ -29,6 +35,7 @@ pub fn HostWindowRenderer::new(
     text_system_fn: text_system,
     image_resources_fn: image_resources,
     image_resource_snapshot_fn: image_resource_snapshot,
+    set_image_resource_change_callback_fn: set_image_resource_change_callback,
     present_count_fn: present_count,
     dispose_fn: dispose,
   }
@@ -69,6 +76,14 @@ pub fn HostWindowRenderer::image_resource_snapshot(
   self : HostWindowRenderer,
 ) -> @render.ImageResourceSnapshot {
   (self.image_resource_snapshot_fn)()
+}
+
+///|
+pub fn HostWindowRenderer::set_image_resource_change_callback(
+  self : HostWindowRenderer,
+  callback : ((@render.ImageResourceSnapshot) -> Unit)?,
+) -> Unit {
+  (self.set_image_resource_change_callback_fn)(callback)
 }
 
 ///|

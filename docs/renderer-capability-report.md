@@ -35,7 +35,7 @@ Status meanings:
 | Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have renderer-local pixel tests plus real native renderer pixel smoke coverage; unknown names still use fallback paths. |
 | Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interiors in both caret paths, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, can draw optional SkShaper shaped glyph runs after linking, and audits `skia_mbt` fallback/measurement/shaping descriptor resource plans through fallback-safe tests; SkParagraph-style line breaking, bidi, deterministic color emoji, and typography conformance remain follow-up work. |
 | Emoji text | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo cluster samples, prefers emoji coverage characters in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path; deterministic color emoji, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. |
-| Async image | partial | partial | partial | Renderer-neutral lifecycle records and monotonic revision snapshots are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; macOS/Windows/Linux hosts track presented image revisions, route repaint requests per window when a newer revision is observed, expose previous/current loading/ready/failed/disposed status counts on repaint results plus tracked-window revision/status-count snapshots, and discard closed-window image changes; Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, records disposed cached image resources during renderer disposal, and exposes renderer-local image-resource change callbacks when lifecycle revisions advance; Web renderer/backend diagnostics expose the same revisioned snapshot shape. Native provider/host async loader notification wiring remains follow-up work. |
+| Async image | partial | partial | partial | Renderer-neutral lifecycle records and monotonic revision snapshots are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; Skia providers also forward the renderer image-resource callback setter through that bridge, and macOS/Windows/Linux hosts install baseline-guarded callbacks that route redraw requests only after a window has presented an image-resource revision. Hosts track presented image revisions, route repaint requests per window when a newer revision is observed, expose previous/current loading/ready/failed/disposed status counts on repaint results plus tracked-window revision/status-count snapshots, and discard closed-window image changes; Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, records disposed cached image resources during renderer disposal, and exposes renderer-local image-resource change callbacks when lifecycle revisions advance; Web renderer/backend diagnostics expose the same revisioned snapshot shape. True native async loader completion sources remain follow-up work. |
 
 ## Renderer Descriptors
 
@@ -153,9 +153,11 @@ observed, exposes a diagnostic snapshot of tracked window revisions and
 lifecycle status counts, reports previous/current lifecycle status counts on
 each repaint result, and discards closed-window image changes while removing
 the closed window from the tracked repaint table. Skia now exposes a
-renderer-local image-resource change callback when lifecycle revisions advance,
-but native provider/host async loader notification wiring remains follow-up
-work. Skia renderer-local
+renderer-local image-resource change callback when lifecycle revisions advance;
+native Skia providers forward that callback setter through `HostWindowRenderer`,
+and macOS/Windows/Linux hosts install baseline-guarded callbacks that request
+redraw for post-present image revisions. True native async loader completion
+sources remain follow-up work. Skia renderer-local
 tests also pin `ImageFit::Contain` letterboxing,
 `ImageFit::Cover` UV crop geometry, `ImageFit::Stretch` full-frame sampling,
 `ImageFit::ScaleDown` natural-size-or-contain placement, and
@@ -171,9 +173,10 @@ tests also pin `ImageFit::Contain` letterboxing,
 fallback-safe availability checks, a basic Skia-backed text system, image
 resource records plus revisioned snapshots that native Skia providers forward
 through `HostWindowRenderer`, an optional renderer-local image-resource change
-callback that publishes revisioned snapshots, cached-image disposal
-diagnostics, and structured unsupported-command diagnostics with command/reason
-payloads. The
+callback that publishes revisioned snapshots, provider forwarding for that
+callback setter into native host baseline-guarded redraw scheduling,
+cached-image disposal diagnostics, and structured unsupported-command
+diagnostics with command/reason payloads. The
 `unsupported_command_count()` accessor remains the count summary, while
 `unsupported_command_diagnostics()` returns the per-frame command/reason list.
 Unmatched, mismatched, and frame-end unclosed canvas

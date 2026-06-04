@@ -258,7 +258,7 @@ evidence for the selected font resolution, renderer availability,
 `skia_mbt/native` availability, the `NSImageView` presenter path, inherited
 AppKit host service/input/window readiness, explicit
 `HostWindowRenderer` bridge forwarding for Skia text-system, image-resource,
-present-count, and disposal diagnostics,
+image-resource change callbacks, present-count, and disposal diagnostics,
 clipboard/menu/file-dialog/open URL/system-theme/async-service readiness,
 native context-menu and host-modal file-dialog readiness, native accessibility
 status, and the runtime evidence boundary. Treat that summary as

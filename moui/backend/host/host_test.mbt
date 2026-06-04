@@ -79,6 +79,8 @@ test "host window renderer forwards lifecycle closures" {
   let rendered = Ref(0)
   let disposed = Ref(0)
   let presenter = Ref(3)
+  let callback_sets = Ref(0)
+  let callback_revisions : Array[Int] = []
   let image_records = [
     @render.ImageResourceRecord::ready("loaded.png", width=32, height=18),
     @render.ImageResourceRecord::failed(
@@ -94,6 +96,14 @@ test "host window renderer forwards lifecycle closures" {
     image_resource_snapshot=Some(() => {
       @render.ImageResourceSnapshot::new(revision=7, records=image_records)
     }),
+    set_image_resource_change_callback=callback => {
+      callback_sets.val = callback_sets.val + 1
+      match callback {
+        Some(notify) =>
+          notify(@render.ImageResourceSnapshot::new(revision=9, records=[]))
+        None => ()
+      }
+    },
     present_count=() => presenter.val,
     dispose=() => disposed.val = disposed.val + 1,
   )
@@ -117,6 +127,13 @@ test "host window renderer forwards lifecycle closures" {
   let image_snapshot = renderer.image_resource_snapshot()
   inspect(image_snapshot.revision, content="7")
   inspect(image_snapshot.records.length(), content="2")
+  renderer.set_image_resource_change_callback(
+    Some(snapshot => callback_revisions.push(snapshot.revision)),
+  )
+  inspect(callback_sets.val, content="1")
+  assert_true(callback_revisions == [9])
+  renderer.set_image_resource_change_callback(None)
+  inspect(callback_sets.val, content="2")
   inspect(renderer.present_count(), content="3")
   renderer.dispose()
   inspect(disposed.val, content="1")
@@ -131,6 +148,8 @@ test "host window renderer image resource diagnostics default empty" {
   let image_snapshot = renderer.image_resource_snapshot()
   inspect(image_snapshot.revision, content="0")
   inspect(image_snapshot.records.length(), content="0")
+  renderer.set_image_resource_change_callback(Some(_snapshot => ()))
+  renderer.set_image_resource_change_callback(None)
 }
 
 ///|
@@ -209,6 +228,44 @@ test "host image repaint tracker routes revision changes per window" {
   )
   inspect(requested.length(), content="2")
   assert_true(requested[1] == main_id)
+}
+
+///|
+test "host image repaint tracker routes callback snapshots without renderer reads" {
+  let tracker = HostImageResourceRepaintTracker::new()
+  let window_id = HostWindowId::new(4)
+  let revision = Ref(1)
+  let snapshot_reads = Ref(0)
+  let renderer = HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => {
+      snapshot_reads.val = snapshot_reads.val + 1
+      @render.ImageResourceSnapshot::new(revision=revision.val, records=[])
+    }),
+  )
+  let baseline = tracker.record_presented(window_id, renderer)
+  inspect(baseline.current_revision, content="1")
+  inspect(snapshot_reads.val, content="1")
+  let requested : Array[HostWindowId] = []
+  let result = tracker.request_redraw_for_snapshot_if_changed(
+    window_id,
+    @render.ImageResourceSnapshot::new(revision=2, records=[
+      @render.ImageResourceRecord::ready("late.png", width=12, height=8),
+    ]),
+    window_open=true,
+    request_redraw=id => requested.push(id),
+  )
+  assert_true(
+    result.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+  )
+  inspect(result.previous_revision, content="1")
+  inspect(result.current_revision, content="2")
+  inspect(result.current_status_counts.ready_count, content="1")
+  inspect(snapshot_reads.val, content="1")
+  inspect(requested.length(), content="1")
+  assert_true(requested[0] == window_id)
 }
 
 ///|

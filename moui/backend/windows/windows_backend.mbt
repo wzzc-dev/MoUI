@@ -441,6 +441,7 @@ pub impl @win.ApplicationHandler for WindowsApp with fn can_create_surfaces(
       })
       match (self.renderer_provider.create_renderer)(window, metrics) {
         Some(renderer) => {
+          self.bind_renderer_image_resource_changes(window_id, renderer)
           self.driver.set_text_system(renderer.text_system())
           ignore(self.driver.dispatch(@host.HostEvent::Resized(metrics)))
           ignore(
@@ -762,6 +763,7 @@ fn WindowsApp::attach_resolved_window(
   )
   match (self.renderer_provider.create_renderer)(window, metrics) {
     Some(renderer) => {
+      self.bind_renderer_image_resource_changes(resolved.id, renderer)
       ignore(self.windows.resize(resolved.id, metrics))
       ignore(self.runtime_slots.sync_open_from_registry(self.windows))
       let record = match self.windows.lookup(resolved.id) {
@@ -950,6 +952,48 @@ fn WindowsApp::request_image_resource_redraw_if_changed(
 }
 
 ///|
+fn WindowsApp::bind_renderer_image_resource_changes(
+  self : WindowsApp,
+  window_id : @host.HostWindowId,
+  renderer : @host.HostWindowRenderer,
+) -> Unit {
+  renderer.set_image_resource_change_callback(
+    Some(snapshot => {
+      match self.image_repaint_tracker.revision_for(window_id) {
+        Some(_) =>
+          match
+            (
+              self.platform_slots.lookup_host(window_id),
+              self.runtime_slots.lookup(window_id),
+            ) {
+            (Some(_platform_slot), Some(runtime_slot)) =>
+              ignore(
+                self.image_repaint_tracker.request_redraw_for_snapshot_if_changed(
+                  window_id,
+                  snapshot,
+                  window_open=runtime_slot.record.phase !=
+                    @host.HostWindowLifecyclePhase::WindowClosed,
+                  request_redraw=id => self.request_platform_redraw(id),
+                ),
+              )
+            (Some(_platform_slot), None) =>
+              ignore(
+                self.image_repaint_tracker.request_redraw_for_snapshot_if_changed(
+                  window_id,
+                  snapshot,
+                  window_open=false,
+                  request_redraw=_id => (),
+                ),
+              )
+            _ => ()
+          }
+        None => ()
+      }
+    }),
+  )
+}
+
+///|
 fn WindowsApp::request_platform_redraw(
   self : WindowsApp,
   window_id : @host.HostWindowId,
@@ -972,6 +1016,7 @@ fn WindowsApp::dispose_window(
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
+      slot.renderer.set_image_resource_change_callback(None)
       slot.renderer.dispose()
       slot.window.drop()
     }
