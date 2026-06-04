@@ -1,0 +1,125 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+cd "$ROOT_DIR"
+
+WEB_RUNTIME_HTTP_PORT="${WEB_RUNTIME_HTTP_PORT:-18080}"
+WEB_RUNTIME_CDP_PORT="${WEB_RUNTIME_CDP_PORT:-9223}"
+WEB_RUNTIME_BASE_URL="${WEB_RUNTIME_BASE_URL:-http://127.0.0.1:${WEB_RUNTIME_HTTP_PORT}}"
+WEB_RUNTIME_CDP_URL="${WEB_RUNTIME_CDP_URL:-http://127.0.0.1:${WEB_RUNTIME_CDP_PORT}}"
+WEB_RUNTIME_PRESENTATION_MANIFEST="${WEB_RUNTIME_PRESENTATION_MANIFEST:-artifacts/conformance/web-runtime-presentation.json}"
+WEB_RUNTIME_PRESENTATION_TIMEOUT_MS="${WEB_RUNTIME_PRESENTATION_TIMEOUT_MS:-20000}"
+
+SERVER_PID=""
+CHROME_PID=""
+USER_DATA_DIR=""
+
+cleanup() {
+  if [ -n "$CHROME_PID" ]; then
+    kill "$CHROME_PID" >/dev/null 2>&1 || true
+    wait "$CHROME_PID" >/dev/null 2>&1 || true
+  fi
+  if [ -n "$SERVER_PID" ]; then
+    kill "$SERVER_PID" >/dev/null 2>&1 || true
+    wait "$SERVER_PID" >/dev/null 2>&1 || true
+  fi
+  if [ -n "$USER_DATA_DIR" ]; then
+    rm -rf "$USER_DATA_DIR"
+  fi
+}
+trap cleanup EXIT INT TERM
+
+run() {
+  printf '\n==> %s\n' "$*"
+  "$@"
+}
+
+wait_for_url() {
+  url="$1"
+  label="$2"
+  timeout_seconds="$3"
+  deadline=$(( $(date +%s) + timeout_seconds ))
+  while :; do
+    if curl -fsS "$url" >/dev/null 2>&1; then
+      printf '%s ready: %s\n' "$label" "$url"
+      return 0
+    fi
+    if [ "$(date +%s)" -ge "$deadline" ]; then
+      printf '%s did not become ready: %s\n' "$label" "$url" >&2
+      return 1
+    fi
+    sleep 1
+  done
+}
+
+find_chrome() {
+  if [ -n "${WEB_RUNTIME_CHROME_BIN:-}" ]; then
+    if [ -x "$WEB_RUNTIME_CHROME_BIN" ] || command -v "$WEB_RUNTIME_CHROME_BIN" >/dev/null 2>&1; then
+      printf '%s\n' "$WEB_RUNTIME_CHROME_BIN"
+      return 0
+    fi
+    printf 'WEB_RUNTIME_CHROME_BIN is not executable or on PATH: %s\n' "$WEB_RUNTIME_CHROME_BIN" >&2
+    return 1
+  fi
+
+  for candidate in google-chrome-stable google-chrome chromium-browser chromium; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+      command -v "$candidate"
+      return 0
+    fi
+  done
+  printf 'No Chrome or Chromium binary found for Web runtime presentation evidence.\n' >&2
+  return 1
+}
+
+mkdir -p artifacts/conformance/web-runtime-presentation artifacts/platform-evidence/web
+
+run moon build examples/showcase/web_wasm --target wasm-gc
+run moon build examples/markdown_editor/web_wasm --target wasm-gc
+
+printf '\n==> python3 -m http.server %s --bind 127.0.0.1\n' "$WEB_RUNTIME_HTTP_PORT"
+python3 -m http.server "$WEB_RUNTIME_HTTP_PORT" --bind 127.0.0.1 \
+  > artifacts/conformance/web-runtime-presentation/http-server.log 2>&1 &
+SERVER_PID="$!"
+wait_for_url "${WEB_RUNTIME_BASE_URL}/" "static server" 30
+
+CHROME_BIN="$(find_chrome)"
+USER_DATA_DIR="$(mktemp -d "${TMPDIR:-/tmp}/moui-web-runtime-presentation.XXXXXX")"
+printf '\n==> %s --headless=new --remote-debugging-port=%s\n' "$CHROME_BIN" "$WEB_RUNTIME_CDP_PORT"
+"$CHROME_BIN" \
+  --headless=new \
+  --remote-debugging-address=127.0.0.1 \
+  --remote-debugging-port="$WEB_RUNTIME_CDP_PORT" \
+  --enable-unsafe-webgpu \
+  --use-angle=swiftshader \
+  --use-gl=angle \
+  --no-sandbox \
+  --disable-dev-shm-usage \
+  --user-data-dir="$USER_DATA_DIR" \
+  about:blank \
+  > artifacts/conformance/web-runtime-presentation/chrome.log 2>&1 &
+CHROME_PID="$!"
+wait_for_url "${WEB_RUNTIME_CDP_URL}/json/version" "Chrome CDP" 60
+
+run node scripts/record-web-runtime-presentation.mjs \
+  --base-url "$WEB_RUNTIME_BASE_URL" \
+  --cdp-url "$WEB_RUNTIME_CDP_URL" \
+  --manifest "$WEB_RUNTIME_PRESENTATION_MANIFEST" \
+  --timeout-ms "$WEB_RUNTIME_PRESENTATION_TIMEOUT_MS" \
+  --require-passed
+
+run node scripts/validate-web-runtime-presentation-manifest.mjs \
+  "$WEB_RUNTIME_PRESENTATION_MANIFEST" \
+  --require-passed
+
+run sh scripts/conformance-check.sh --platform-services
+
+run node scripts/record-platform-evidence-manifest.mjs \
+  artifacts/conformance/platform-runtime-evidence.json \
+  web \
+  --web-presentation-manifest "$WEB_RUNTIME_PRESENTATION_MANIFEST"
+
+run node scripts/validate-platform-evidence-manifest.mjs \
+  artifacts/conformance/platform-runtime-evidence.json \
+  --platform web

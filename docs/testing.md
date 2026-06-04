@@ -179,6 +179,7 @@ bash moui_skia/scripts/verify-platform-status.sh
 bash moui_skia/scripts/verify-native-capability-contract.sh
 sh -n scripts/preview-loop.sh
 sh -n scripts/package-macos-app.sh
+sh -n scripts/ci-web-runtime-presentation.sh
 node --check scripts/validate-guidance-consistency.mjs
 node scripts/validate-guidance-consistency.mjs
 node --check scripts/validate-package-manifest.mjs
@@ -509,6 +510,15 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   `pkg.generated.mbti` files drift.
 - `Linux platform contracts` installs Wayland development packages and runs the
   current-platform backend checks on Ubuntu.
+- `Web runtime presentation` builds Showcase and Markdown Editor Web wasm-gc
+  targets, serves the repository root, starts a Chrome DevTools Protocol
+  browser session, runs `record-web-runtime-presentation.mjs --require-passed`,
+  validates the browser-session manifest, folds it into the Web platform entry
+  with `record-platform-evidence-manifest.mjs ... web
+  --web-presentation-manifest ...`, validates that Web entry, and uploads the
+  presentation manifest, screenshots, browser/server logs, copied platform
+  Web evidence, and `platform-runtime-evidence.json` as the
+  `moui-web-runtime-presentation` artifact.
 - `macOS packaging smoke` packages Showcase as a local `.app`, validates the
   package manifest, and uploads the bundle artifact.
 - `Benchmark scaffold` runs `sh scripts/conformance-check.sh --bench` to keep
@@ -544,12 +554,14 @@ Manual `workflow_dispatch` inputs add heavier coverage when needed:
   handoff also needs current-host first-frame Showcase and Markdown Editor
   runtime evidence.
 
-CI still does not run browser screenshot automation or pixel diffing; the
-golden job remains a build-and-capture handoff until a browser runner is added.
-The handoff now writes and validates an ignored capture manifest under
-`artifacts/conformance/` so screenshot and benchmark captures have an explicit,
-script-checked place to record the render inspector counters that travel with
-the artifacts.
+CI now runs browser-session Web presentation automation for Showcase and
+Markdown Editor, including nonblank screenshots and Web platform evidence
+folding. CI still does not run deterministic golden pixel diffing; the golden
+job remains a build-and-capture handoff for approved screenshot comparison.
+The handoff writes and validates an ignored capture manifest under
+`artifacts/conformance/` so golden screenshot and benchmark captures have an
+explicit, script-checked place to record the render inspector counters that
+travel with the artifacts.
 
 ## Golden Screenshots And Benchmarks
 
