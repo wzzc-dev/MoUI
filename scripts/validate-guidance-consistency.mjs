@@ -249,8 +249,12 @@ assertIncludes("docs/testing.md", "web-runtime-handoff.json");
 assertIncludes("docs/testing.md", "platform-runtime-evidence.json");
 assertIncludes("docs/testing.md", "monitorCursor");
 assertIncludes("docs/testing.md", "monitor/cursor");
+assertIncludes("docs/testing.md", "evidenceProvenance");
+assertIncludes("docs/testing.md", "non-skipped successful GitHub Actions job");
 assertIncludes("scripts/validate-platform-evidence-manifest.mjs", "schemaVersion must be 2");
+assertIncludes("scripts/validate-platform-evidence-manifest.mjs", "evidenceProvenance");
 assertIncludes("scripts/record-platform-evidence-manifest.mjs", "monitorCursor");
+assertIncludes("scripts/record-platform-evidence-manifest.mjs", "provenance-kind");
 assertIncludes("scripts/record-platform-evidence-manifest.mjs", "browserObservablePlatformObservationsPassed");
 assertIncludes("scripts/conformance-check.sh", '"schemaVersion": 2');
 assertIncludes("scripts/conformance-check.sh", '"monitorCursor": "pending"');
@@ -351,6 +355,8 @@ assertIncludes("docs/release-readiness.md", "resize/input event-bridge");
 assertIncludes("docs/release-readiness.md", "Markdown Editor text input");
 assertIncludes("docs/release-readiness.md", "--web-presentation-manifest");
 assertIncludes("docs/release-readiness.md", "monitor/cursor");
+assertIncludes("docs/release-readiness.md", "evidenceProvenance");
+assertIncludes("docs/release-readiness.md", "non-skipped successful GitHub Actions job");
 assertIncludes("docs/release-readiness.md", "Web host capability reporting now advertises browser IME plumbing");
 assertIncludes("docs/platform-notes.md", "The Web host now advertises IME readiness");
 assertIncludes("docs/text-system.md", "routes browser IME composition events");
@@ -359,6 +365,14 @@ assertIncludes("examples/showcase/app/showcase_app_test.mbt", "web ime readiness
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "scripts/record_moui_evidence.sh",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "evidenceProvenance",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "non-skipped successful GitHub Actions job",
 );
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
@@ -383,6 +397,7 @@ assertIncludes("AGENTS.md", "verify-native-capability-contract.sh");
 assertIncludes("AGENTS.md", "platform-runtime-evidence.json");
 assertIncludes("AGENTS.md", "record-platform-evidence-manifest.mjs");
 assertIncludes("AGENTS.md", "record-native-skia-evidence.mjs");
+assertIncludes("AGENTS.md", "evidenceProvenance");
 assertIncludes("AGENTS.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("AGENTS.md", "test-validate-web-runtime-handoff.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-handoff-manifest.mjs");

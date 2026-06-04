@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 
@@ -18,6 +18,15 @@ Options:
   --set <observation=yes|no|pending>   May be repeated.
   --artifact <path>                    May be repeated.
   --note <text>                        May be repeated.
+  --provenance-kind <github-actions|matching-host-artifact>
+  --provenance-host <description>
+  --provenance-workflow <name>         Required for github-actions provenance.
+  --provenance-job <name>              Required for github-actions provenance.
+  --provenance-run-url <url>           Required for github-actions provenance.
+  --provenance-run-id <id>
+  --provenance-runner <label>          Required for github-actions provenance.
+  --provenance-artifact <ref>          May be repeated.
+  --provenance-note <text>             May be repeated.
   --web-presentation-manifest <path>   Derive the web entry from a validated
                                        web-runtime-presentation manifest.
   --skia-status <passed|failed|pending>
@@ -30,6 +39,15 @@ Options:
                                        may repeat.
   --skia-artifact <path>               Native Skia artifact; may be repeated.
   --skia-note <text>                   Native Skia note; may be repeated.
+  --skia-provenance-kind <github-actions|matching-host-artifact>
+  --skia-provenance-host <description>
+  --skia-provenance-workflow <name>    Required for github-actions provenance.
+  --skia-provenance-job <name>         Required for github-actions provenance.
+  --skia-provenance-run-url <url>      Required for github-actions provenance.
+  --skia-provenance-run-id <id>
+  --skia-provenance-runner <label>     Required for github-actions provenance.
+  --skia-provenance-artifact <ref>     May be repeated.
+  --skia-provenance-note <text>        May be repeated.
 
 The script updates one platform entry in a platform runtime evidence manifest
 and then validates that platform with validate-platform-evidence-manifest.mjs.`);
@@ -39,6 +57,7 @@ const defaultPath = "artifacts/conformance/platform-runtime-evidence.json";
 const platforms = new Set(["web", "macos", "windows", "linux"]);
 const nativeSkiaPlatforms = new Set(["macos", "windows", "linux"]);
 const statuses = new Set(["passed", "failed", "pending"]);
+const provenanceKinds = new Set(["github-actions", "matching-host-artifact"]);
 const observationKeys = new Set([
   "windowOpened",
   "resizeRedraw",
@@ -161,6 +180,10 @@ let consumerCommand;
 const observations = new Map();
 const artifacts = [];
 const notes = [];
+const provenance = {
+  artifacts: [],
+  notes: [],
+};
 let webPresentationManifest;
 let skiaStatus;
 let skiaBoundary;
@@ -169,6 +192,10 @@ const skiaProviderCommands = [];
 const skiaRuntimeSmokeCommands = [];
 const skiaArtifacts = [];
 const skiaNotes = [];
+const skiaProvenance = {
+  artifacts: [],
+  notes: [],
+};
 
 for (let i = 2; i < args.length; i += 1) {
   const arg = args[i];
@@ -208,6 +235,33 @@ for (let i = 2; i < args.length; i += 1) {
     i += 1;
   } else if (arg === "--note") {
     notes.push(args[i + 1] ?? "");
+    i += 1;
+  } else if (arg === "--provenance-kind") {
+    provenance.kind = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--provenance-host") {
+    provenance.host = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--provenance-workflow") {
+    provenance.workflow = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--provenance-job") {
+    provenance.job = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--provenance-run-url") {
+    provenance.runUrl = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--provenance-run-id") {
+    provenance.runId = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--provenance-runner") {
+    provenance.runner = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--provenance-artifact") {
+    provenance.artifacts.push(args[i + 1] ?? "");
+    i += 1;
+  } else if (arg === "--provenance-note") {
+    provenance.notes.push(args[i + 1] ?? "");
     i += 1;
   } else if (arg === "--web-presentation-manifest") {
     webPresentationManifest = args[i + 1] ?? "";
@@ -249,6 +303,33 @@ for (let i = 2; i < args.length; i += 1) {
   } else if (arg === "--skia-note") {
     skiaNotes.push(args[i + 1] ?? "");
     i += 1;
+  } else if (arg === "--skia-provenance-kind") {
+    skiaProvenance.kind = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--skia-provenance-host") {
+    skiaProvenance.host = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--skia-provenance-workflow") {
+    skiaProvenance.workflow = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--skia-provenance-job") {
+    skiaProvenance.job = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--skia-provenance-run-url") {
+    skiaProvenance.runUrl = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--skia-provenance-run-id") {
+    skiaProvenance.runId = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--skia-provenance-runner") {
+    skiaProvenance.runner = args[i + 1] ?? "";
+    i += 1;
+  } else if (arg === "--skia-provenance-artifact") {
+    skiaProvenance.artifacts.push(args[i + 1] ?? "");
+    i += 1;
+  } else if (arg === "--skia-provenance-note") {
+    skiaProvenance.notes.push(args[i + 1] ?? "");
+    i += 1;
   } else {
     console.error(`Unknown argument: ${arg}`);
     usage();
@@ -264,6 +345,14 @@ if (skiaStatus && !statuses.has(skiaStatus)) {
   console.error(`--skia-status must be passed, failed, or pending; got ${skiaStatus}`);
   process.exit(2);
 }
+if (provenance.kind && !provenanceKinds.has(provenance.kind)) {
+  console.error(`--provenance-kind must be github-actions or matching-host-artifact; got ${provenance.kind}`);
+  process.exit(2);
+}
+if (skiaProvenance.kind && !provenanceKinds.has(skiaProvenance.kind)) {
+  console.error(`--skia-provenance-kind must be github-actions or matching-host-artifact; got ${skiaProvenance.kind}`);
+  process.exit(2);
+}
 
 const hasSkiaUpdate =
   skiaStatus !== undefined ||
@@ -272,7 +361,16 @@ const hasSkiaUpdate =
   skiaProviderCommands.length > 0 ||
   skiaRuntimeSmokeCommands.length > 0 ||
   skiaArtifacts.length > 0 ||
-  skiaNotes.length > 0;
+  skiaNotes.length > 0 ||
+  skiaProvenance.kind !== undefined ||
+  skiaProvenance.host !== undefined ||
+  skiaProvenance.workflow !== undefined ||
+  skiaProvenance.job !== undefined ||
+  skiaProvenance.runUrl !== undefined ||
+  skiaProvenance.runId !== undefined ||
+  skiaProvenance.runner !== undefined ||
+  skiaProvenance.artifacts.length > 0 ||
+  skiaProvenance.notes.length > 0;
 if (hasSkiaUpdate && !nativeSkiaPlatforms.has(platform)) {
   console.error("Skia evidence options can only update native Skia platform entries: macos, windows, or linux");
   process.exit(2);
@@ -285,6 +383,60 @@ const nonEmpty = (value, label) => {
   }
 };
 
+const hasProvenanceUpdate = data =>
+  data.kind !== undefined ||
+  data.host !== undefined ||
+  data.workflow !== undefined ||
+  data.job !== undefined ||
+  data.runUrl !== undefined ||
+  data.runId !== undefined ||
+  data.runner !== undefined ||
+  data.artifacts.length > 0 ||
+  data.notes.length > 0;
+
+const validateProvenanceInput = (data, label) => {
+  if (!hasProvenanceUpdate(data)) return;
+  nonEmpty(data.kind, `${label}-kind`);
+  nonEmpty(data.host, `${label}-host`);
+  data.artifacts.forEach((artifact, index) => nonEmpty(artifact, `${label}-artifact ${index + 1}`));
+  data.notes.forEach((note, index) => nonEmpty(note, `${label}-note ${index + 1}`));
+  if (data.artifacts.length === 0) {
+    console.error(`${label}-artifact is required when provenance is recorded`);
+    process.exit(2);
+  }
+  if (data.notes.length === 0) {
+    console.error(`${label}-note is required when provenance is recorded`);
+    process.exit(2);
+  }
+  if (data.kind === "github-actions") {
+    nonEmpty(data.workflow, `${label}-workflow`);
+    nonEmpty(data.job, `${label}-job`);
+    nonEmpty(data.runUrl, `${label}-run-url`);
+    nonEmpty(data.runner, `${label}-runner`);
+    if (!/^https:\/\/github\.com\/.+\/.+\/actions\/runs\/\d+/.test(data.runUrl)) {
+      console.error(`${label}-run-url must be a GitHub Actions run URL`);
+      process.exit(2);
+    }
+    if (data.runId !== undefined) nonEmpty(data.runId, `${label}-run-id`);
+  }
+};
+
+const buildProvenance = data => {
+  if (!hasProvenanceUpdate(data)) return undefined;
+  const result = {
+    kind: data.kind,
+    host: data.host,
+    artifacts: data.artifacts,
+    notes: data.notes,
+  };
+  if (data.workflow !== undefined) result.workflow = data.workflow;
+  if (data.job !== undefined) result.job = data.job;
+  if (data.runUrl !== undefined) result.runUrl = data.runUrl;
+  if (data.runId !== undefined) result.runId = data.runId;
+  if (data.runner !== undefined) result.runner = data.runner;
+  return result;
+};
+
 if (host !== undefined) nonEmpty(host, "--host");
 if (windowEvidenceCommand !== undefined) {
   nonEmpty(windowEvidenceCommand, "--window-evidence-command");
@@ -292,11 +444,13 @@ if (windowEvidenceCommand !== undefined) {
 if (consumerCommand !== undefined) nonEmpty(consumerCommand, "--consumer-command");
 artifacts.forEach((artifact, index) => nonEmpty(artifact, `--artifact ${index + 1}`));
 notes.forEach((note, index) => nonEmpty(note, `--note ${index + 1}`));
+validateProvenanceInput(provenance, "--provenance");
 if (skiaBoundary !== undefined) nonEmpty(skiaBoundary, "--skia-boundary");
 skiaProviderCommands.forEach((command, index) => nonEmpty(command, `--skia-provider-command ${index + 1}`));
 skiaRuntimeSmokeCommands.forEach((command, index) => nonEmpty(command, `--skia-runtime-smoke-command ${index + 1}`));
 skiaArtifacts.forEach((artifact, index) => nonEmpty(artifact, `--skia-artifact ${index + 1}`));
 skiaNotes.forEach((note, index) => nonEmpty(note, `--skia-note ${index + 1}`));
+validateProvenanceInput(skiaProvenance, "--skia-provenance");
 if (webPresentationManifest !== undefined) {
   nonEmpty(webPresentationManifest, "--web-presentation-manifest");
   if (platform !== "web") {
@@ -310,6 +464,7 @@ if (webPresentationManifest !== undefined) {
     consumerCommand !== undefined ||
     observations.size > 0 ||
     artifacts.length > 0 ||
+    hasProvenanceUpdate(provenance) ||
     hasSkiaUpdate
   ) {
     console.error(
@@ -416,6 +571,15 @@ const applyWebPresentationEvidence = (entry, path) => {
     ...platformObservations,
   };
   entry.artifacts = copyWebPresentationArtifacts(webManifest, path);
+  entry.evidenceProvenance = {
+    kind: "matching-host-artifact",
+    host: entry.host,
+    artifacts: entry.artifacts,
+    notes: [
+      "Web platform evidence was derived from the browser presentation manifest artifact.",
+      `Source manifest: ${path}`,
+    ],
+  };
   entry.notes = [
     webEvidencePassed
       ? "Web browser presentation manifest passed with resize, input, text-input, and clean-shutdown observations; monitor/cursor remains pending because CDP evidence is browser-local."
@@ -481,6 +645,10 @@ if (windowEvidenceCommand !== undefined) {
   entry.windowEvidenceCommand = windowEvidenceCommand;
 }
 if (consumerCommand !== undefined) entry.consumerCommand = consumerCommand;
+const provenanceRecord = buildProvenance(provenance);
+if (provenanceRecord !== undefined) {
+  entry.evidenceProvenance = provenanceRecord;
+}
 
 if (!entry.observations || typeof entry.observations !== "object" || Array.isArray(entry.observations)) {
   entry.observations = {};
@@ -523,6 +691,10 @@ if (nativeSkiaPlatforms.has(platform)) {
   if (skiaNotes.length > 0) {
     entry.skiaEvidence.notes = skiaNotes;
   }
+  const skiaProvenanceRecord = buildProvenance(skiaProvenance);
+  if (skiaProvenanceRecord !== undefined) {
+    entry.skiaEvidence.evidenceProvenance = skiaProvenanceRecord;
+  }
 }
 
 if (artifacts.length > 0) {
@@ -535,18 +707,24 @@ if (notes.length > 0) {
 }
 
 mkdirSync(dirname(manifestPath), { recursive: true });
-writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+const pendingManifestPath = join(
+  dirname(manifestPath),
+  `.${basename(manifestPath)}.${process.pid}.tmp`,
+);
+writeFileSync(pendingManifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 const validation = spawnSync(
   process.execPath,
-  ["scripts/validate-platform-evidence-manifest.mjs", manifestPath, "--platform", platform],
+  ["scripts/validate-platform-evidence-manifest.mjs", pendingManifestPath, "--platform", platform],
   { encoding: "utf8" },
 );
 
 if (validation.stdout) process.stdout.write(validation.stdout);
 if (validation.stderr) process.stderr.write(validation.stderr);
 if (validation.status !== 0) {
+  rmSync(pendingManifestPath, { force: true });
   process.exit(validation.status ?? 1);
 }
 
+renameSync(pendingManifestPath, manifestPath);
 console.log(`${manifestPath}: updated ${platform} evidence entry`);

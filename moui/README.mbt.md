@@ -99,7 +99,10 @@ host to fill a platform entry with passed or failed observations before a
 preview handoff. Native passed entries include the window fork's monitor/cursor
 probe as `monitorCursor=yes`; Web browser-session evidence may leave that field
 pending because CDP does not prove native monitor/current-monitor or cursor
-behavior.
+behavior. A passed entry must also carry provenance that traces the evidence to
+a successful GitHub Actions job or a matching-host artifact bundle; skipped CI
+jobs, build-only/package-only jobs, and provider/preflight checks cannot be used
+as passed runtime evidence.
 
 For release-oriented screenshot and benchmark handoffs, use
 `sh scripts/conformance-check.sh --golden` and
@@ -116,9 +119,9 @@ event-bridge delivery, Markdown Editor text input, clean target close, clean
 console, and nonblank screenshot thresholds. Fold the browser artifact into
 `artifacts/conformance/platform-runtime-evidence.json` with
 `node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json web --web-presentation-manifest artifacts/conformance/web-runtime-presentation.json`
-so Web platform claims cite one validated evidence manifest. A failed browser
-manifest records failed Web platform evidence; a missing browser manifest keeps
-the Web platform entry pending.
+so Web platform claims cite one validated evidence manifest and browser-session
+artifact provenance. A failed browser manifest records failed Web platform
+evidence; a missing browser manifest keeps the Web platform entry pending.
 
 ## Web Wasm-GC
 
