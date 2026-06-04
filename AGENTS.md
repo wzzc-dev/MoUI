@@ -331,6 +331,9 @@ override the default. Normal macOS Skia
 entrypoints default to the system `FontMgr` text path; first-frame smoke
 entrypoints explicitly select `EmptyTypeface` only while their
 exit-after-first-present flag is set.
+The GitHub Actions wrapper for this MoUI-level macOS real-Skia smoke lives in
+`.github/workflows/moui-real-skia-smoke.yml` as a separate manual workflow, not
+as a skipped job in the required `MoUI CI` workflow.
 Windows/Linux Skia entrypoints expose matching-host first-frame flags
 (`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
 `MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
