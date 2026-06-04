@@ -1,6 +1,5 @@
 ///|
 /// Porter-Duff and extended blend modes mirrored from Skia.
-#warnings("-deprecated_syntax")
 pub(all) enum BlendMode {
   Clear
   Src
@@ -75,7 +74,6 @@ pub fn BlendMode::to_skia_ordinal(self : BlendMode) -> Int {
 
 ///|
 /// How paint geometry is rasterized.
-#warnings("-deprecated_syntax")
 pub(all) enum PaintStyle {
   Fill
   Stroke
@@ -98,7 +96,6 @@ pub fn PaintStyle::to_skia_ordinal(self : PaintStyle) -> Int {
 
 ///|
 /// Shape used at the end of an open stroked contour.
-#warnings("-deprecated_syntax")
 pub(all) enum StrokeCap {
   Butt
   Round
@@ -121,7 +118,6 @@ pub fn StrokeCap::to_skia_ordinal(self : StrokeCap) -> Int {
 
 ///|
 /// Shape used when two stroked segments meet.
-#warnings("-deprecated_syntax")
 pub(all) enum StrokeJoin {
   Miter
   Round
@@ -144,7 +140,6 @@ pub fn StrokeJoin::to_skia_ordinal(self : StrokeJoin) -> Int {
 
 ///|
 /// How `Canvas::draw_points` interprets a point array.
-#warnings("-deprecated_syntax")
 pub(all) enum PointMode {
   Points
   Lines
@@ -167,7 +162,6 @@ pub fn PointMode::to_skia_ordinal(self : PointMode) -> Int {
 
 ///|
 /// Interpretation of alpha in pixel data.
-#warnings("-deprecated_syntax")
 pub(all) enum AlphaType {
   Unknown
   Opaque
@@ -182,7 +176,6 @@ pub impl Default for AlphaType with fn default() {
 
 ///|
 /// Pixel storage formats common in Skia surfaces and images.
-#warnings("-deprecated_syntax")
 pub(all) enum ColorType {
   Unknown
   Alpha8
@@ -205,7 +198,6 @@ pub impl Default for ColorType with fn default() {
 
 ///|
 /// Sampling behavior when coordinates land outside shader bounds.
-#warnings("-deprecated_syntax")
 pub(all) enum TileMode {
   Clamp
   Repeat
@@ -230,7 +222,6 @@ pub fn TileMode::to_skia_ordinal(self : TileMode) -> Int {
 
 ///|
 /// Encoded image container formats accepted by Skia encoders.
-#warnings("-deprecated_syntax")
 pub(all) enum EncodedImageFormat {
   BMP
   GIF
@@ -298,7 +289,6 @@ pub fn EncodedImageFormat::from_skia_ordinal(
 
 ///|
 /// How a new clip geometry combines with the current canvas clip.
-#warnings("-deprecated_syntax")
 pub(all) enum ClipOp {
   Difference
   Intersect
@@ -319,7 +309,6 @@ pub fn ClipOp::to_skia_ordinal(self : ClipOp) -> Int {
 
 ///|
 /// Pixel reconstruction filter used when images are sampled.
-#warnings("-deprecated_syntax")
 pub(all) enum FilterMode {
   Nearest
   Linear
@@ -340,7 +329,6 @@ pub fn FilterMode::to_skia_ordinal(self : FilterMode) -> Int {
 
 ///|
 /// Mipmap sampling mode used together with `FilterMode`.
-#warnings("-deprecated_syntax")
 pub(all) enum MipmapMode {
   None
   Nearest

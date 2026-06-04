@@ -49,7 +49,7 @@ fn draw_background(canvas : @native.Canvas, width : Int, height : Int) -> Unit {
     @skia.Paint::new(
       color=@skia.Color::from_rgb(110, 124, 148),
       anti_alias=true,
-      style=@skia.Stroke,
+      style=Stroke,
       stroke_width=2.0,
     ),
   )
@@ -99,9 +99,9 @@ fn draw_triangle(canvas : @native.Canvas, width : Int, height : Int) -> Unit {
     @skia.Paint::new(
       color=@skia.Color::from_rgb(96, 70, 52),
       anti_alias=true,
-      style=@skia.Stroke,
+      style=Stroke,
       stroke_width=4.0,
-      stroke_join=@skia.Round,
+      stroke_join=Round,
     ),
   )
 }
@@ -177,13 +177,13 @@ pub impl @macos.ApplicationHandler for App with fn window_event(
   event,
 ) {
   match event {
-    @core.WindowEvent::CloseRequested => event_loop.exit()
-    @core.WindowEvent::SurfaceResized(_) =>
+    CloseRequested => event_loop.exit()
+    SurfaceResized(_) =>
       match self.window {
         Some(window) => window.request_redraw()
         None => ()
       }
-    @core.WindowEvent::RedrawRequested =>
+    RedrawRequested =>
       match self.window {
         Some(window) => redraw_window(window)
         None => ()

@@ -128,7 +128,7 @@ pub fn Image::from_encoded_bytes(bytes : Bytes) -> Image? {
 ///|
 pub fn Image::encode_to_data(
   self : Image,
-  format? : @skia.EncodedImageFormat = @skia.PNG,
+  format? : @skia.EncodedImageFormat = PNG,
   quality? : Int = 100,
 ) -> Data? {
   ignore(self)

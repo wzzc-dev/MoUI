@@ -3,7 +3,22 @@
 MoonBit bindings for the Skia Graphics Library, structured after
 `rust-skia/rust-skia`.
 
-The current package exposes the first value-layer API surface:
+The public API is organized in the same spirit as `skia-safe`: start with safe
+value-layer drawing types, opt into native handles through the `native`
+subpackage, and treat resource planning/frame submission contracts as backend
+integration APIs.
+
+- Safe drawing values: geometry, colors, image metadata, transforms, paint,
+  sampling, and portable paths are available directly from `@skia_mbt`.
+- Native drawing handles: `@native.Surface`, `@native.Canvas`, `@native.Image`,
+  `@native.Path`, `@native.Font`, shaders, filters, and codecs are opt-in and
+  return `None` on the fallback build instead of exposing unavailable handles.
+- Backend planning contracts: `SurfaceTargetDescriptor`, `RenderCommandList`,
+  `RenderFrameDescriptor`, `RendererResourcePlan`, and related descriptors are
+  for GUI/runtime integrations that need replay, cache preflight, presentation,
+  or future GPU admission checks.
+
+The current package exposes the following value-layer API surface:
 
 - geometry: `Point`, `IPoint`, `Size`, `ISize`, `Rect`, `IRect`, `RRect`,
   including point vector helpers, rectangle constructors, sortedness, centers,
@@ -498,7 +513,7 @@ test {
     @skia_mbt.Rect::from_xywh(0, 0, 8, 8),
   )
 
-  assert_true(paint.style == @skia_mbt.Stroke)
+  assert_true(paint.style == Stroke)
   assert_true(paint.color == @skia_mbt.Color::red())
   assert_true(
     path.stroke_bounds(paint) == Some(@skia_mbt.Rect::new(-2, -2, 10, 10)),
@@ -509,10 +524,7 @@ test {
 ```mbt check
 ///|
 test {
-  let sampling = @skia_mbt.SamplingOptions::new(
-    filter=@skia_mbt.FilterMode::Linear,
-    mipmap=@skia_mbt.MipmapMode::Linear,
-  )
+  let sampling = @skia_mbt.SamplingOptions::new(filter=Linear, mipmap=Linear)
 
   assert_eq(sampling.filter_ordinal(), 1)
   assert_eq(sampling.mipmap_ordinal(), 2)
@@ -543,16 +555,16 @@ test {
 ```mbt check
 ///|
 test {
-  let path = @skia_mbt.Path::new(fill_type=@skia_mbt.EvenOdd).add_circle(
+  let path = @skia_mbt.Path::new(fill_type=EvenOdd).add_circle(
     @skia_mbt.Point::new(5, 5),
     5,
-    direction=@skia_mbt.CCW,
+    direction=CCW,
   )
 
   let shifted = path.offset(10, 20)
 
   assert_eq(path.verb_count(), 6)
-  assert_true(path.fill_type == @skia_mbt.EvenOdd)
+  assert_true(path.fill_type == EvenOdd)
   assert_true(
     shifted.bounds() == Some(@skia_mbt.Rect::from_xywh(10, 20, 10, 10)),
   )
