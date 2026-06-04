@@ -155,7 +155,9 @@ Use this skill when editing or reviewing:
 - `render/wgpu/text_protocol/`: shared native text provider payload protocol.
 - `render/skia/`: native Skia raster renderer over the local `skia_mbt` binding,
   including renderer-local command/reason diagnostics for unsupported Skia
-  fallbacks.
+  fallbacks and renderer-local image-resource lifecycle change callbacks.
+  Native provider or host redraw scheduling from async image load/error
+  notifications remains outside `render/skia`.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
 - `moui/tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
   verifies MoUI draw commands against captured Skia presenter pixels.

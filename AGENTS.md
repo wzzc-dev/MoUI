@@ -44,7 +44,10 @@ paths, or abstractions that only preserve old shapes.
 - `render/` is the renderer facade and shared reporting layer.
 - `render/wgpu/` is the native wgpu renderer. `render/webgpu_adapter/` is the
   wasm-gc browser WebGPU host-import bridge. `render/skia/` is the native Skia
-  raster renderer facade over the local `wzzc-dev/skia_mbt` binding.
+  raster renderer facade over the local `wzzc-dev/skia_mbt` binding, including
+  renderer-local image-resource lifecycle change callbacks; native provider or
+  host redraw scheduling from async image load/error notifications remains
+  outside `render/skia`.
 - Native text providers live in `render/wgpu/cosmic_text/`,
   `render/wgpu/coretext/`, `render/wgpu/directwrite/`,
   `render/wgpu/fontconfig/`, and the shared `render/wgpu/text_protocol/`

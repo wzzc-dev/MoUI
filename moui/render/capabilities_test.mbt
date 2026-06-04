@@ -543,6 +543,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(skia_image_note.contains("failed-image placeholder"))
   assert_true(skia_image_note.contains("failed-cache snapshot"))
   assert_true(skia_image_note.contains("local-file retry"))
+  assert_true(skia_image_note.contains("image-resource callback snapshots"))
   assert_true(skia_image_note.contains("dispose-record"))
   let web_image_note = async_image.note_for_backend(
     @render.RendererBackendKind::WebGpuWasm,
