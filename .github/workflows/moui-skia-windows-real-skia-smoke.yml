@@ -1,4 +1,4 @@
-name: Windows Real Skia Smoke
+name: MoUI Skia Windows Real Skia Smoke
 
 on:
   workflow_dispatch:
@@ -73,6 +73,9 @@ on:
 jobs:
   smoke:
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: moui_skia
 
     steps:
       - name: Checkout code
@@ -252,10 +255,10 @@ jobs:
         with:
           name: windows-real-skia-smoke-log
           path: |
-            logs/windows-real-skia-smoke-preflight.log
-            logs/windows-real-skia-smoke.log
-            logs/windows-native-smoke-output.log
-            logs/windows-real-skia-acceptance.log
+            moui_skia/logs/windows-real-skia-smoke-preflight.log
+            moui_skia/logs/windows-real-skia-smoke.log
+            moui_skia/logs/windows-native-smoke-output.log
+            moui_skia/logs/windows-real-skia-acceptance.log
           if-no-files-found: warn
 
       - name: Verify package files restored

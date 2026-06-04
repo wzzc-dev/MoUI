@@ -303,7 +303,7 @@ Skia backend pass.
 
 GitHub Actions:
 
-- `.github/workflows/fallback.yml` runs the fallback gate on Windows and Linux;
+- `.github/workflows/moui-skia-fallback.yml` runs the fallback gate on Windows and Linux;
   the Linux job also syntax-checks the Linux shell helpers with `bash -n`,
   verifies `native/ownership.json` against the MoonBit handle declarations and
   C++ wrapper finalizers, checks MoonBit native extern borrow annotations,
@@ -312,7 +312,7 @@ GitHub Actions:
   branches and argument construction are checked without building Skia. It also
   dry-runs the lower-level Linux smoke helper against fake static and shared
   libraries and verifies `native/moon.pkg` is unchanged.
-- `.github/workflows/linux-real-skia-smoke.yml` is a manual Linux job that
+- `.github/workflows/moui-skia-linux-real-skia-smoke.yml` is a manual Linux job that
   uses `scripts/linux-accept-real-skia-smoke.sh` for real runs; it can build Skia from source or
   reuse user-supplied `skia_include` / `skia_lib_dir` inputs with extra flags.
   It also runs weekly as the first scheduled real-backend canary.
@@ -329,10 +329,10 @@ GitHub Actions:
   without installing MoonBit/build dependencies, restoring the Skia cache,
   building Skia, or rewriting package files. The Skia cache step only runs
   for source-built Skia, and `extra_gn_args` is ignored for existing-build mode.
-- `.github/workflows/macos-real-skia-smoke.yml` is a manual macOS job that
+- `.github/workflows/moui-skia-macos-real-skia-smoke.yml` is a manual macOS job that
   builds Skia from source, runs `scripts/macos-accept-real-skia-smoke.sh`, and
   uploads preflight/build/wrapper/native/acceptance logs.
-- `.github/workflows/windows-real-skia-smoke.yml` is a manual Windows job for
+- `.github/workflows/moui-skia-windows-real-skia-smoke.yml` is a manual Windows job for
   runners with a preinstalled MinGW-compatible Skia build; it runs a fake-Skia
   preflight, then uses `scripts/windows-accept-real-skia-smoke.ps1` for real
   existing-build smoke acceptance and uploads wrapper/native/acceptance logs.
