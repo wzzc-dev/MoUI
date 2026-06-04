@@ -15,6 +15,7 @@ pub(all) struct RuntimeInspectorSnapshot {
   draw_command_build_count : Int
   program_dispatched_count : Int
   program_update_count : Int
+  ignored_program_dispatch_count : Int
   program_message_enqueue_count : Int
   program_message_drain_count : Int
   program_pending_message_count : Int
@@ -215,6 +216,7 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     draw_command_build_count: runtime.state.draw_command_build_count,
     program_dispatched_count: program.dispatched_count,
     program_update_count: program.update_count,
+    ignored_program_dispatch_count: program.ignored_program_dispatch_count,
     program_message_enqueue_count: program.message_enqueue_count,
     program_message_drain_count: program.message_drain_count,
     program_pending_message_count: program.pending_message_count,

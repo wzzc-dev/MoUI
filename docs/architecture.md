@@ -134,7 +134,11 @@ effect tree, including batch, send, anonymous dispatch, structured run, task,
 none, scheduled leaf count, max depth, structured effect descriptors, and
 duplicate descriptor-key counts/names, without running effect callbacks.
 Program runtime snapshots also report message queue enqueue, drain, pending,
-and max-pending counters without requiring `Msg` values to be serializable.
+max-pending, and ignored program-dispatch counters without requiring `Msg`
+values to be serializable. Dispatch closures captured by anonymous
+`Effect::dispatch` or structured `Effect::run` callbacks are ignored after
+`AppRuntime::destroy()` so late app-owned callbacks cannot re-enter a destroyed
+program runtime.
 `Program` constructors also accept
 `subscriptions=model => ...`; each `Subscription::listen` / `Subscription::run`
 uses a stable key, receives the typed dispatcher, and may return a cleanup
@@ -205,7 +209,9 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   start/reuse/cancel, duplicate effect descriptor-key counters/names, and
   duplicate subscription-key counters/names, plus ignored effect-task and
   subscription dispatch counters for stale callbacks from completed, canceled,
-  or destroyed lifetimes. Program runtime and runtime
+  or destroyed lifetimes, and ignored program-dispatch counters for anonymous or
+  structured effect dispatchers that fire after runtime destruction. Program
+  runtime and runtime
   inspector snapshots expose active effect-task descriptors, effect-task
   lifecycle entries, active subscription descriptors, active subscription
   kind-count summaries, and subscription lifecycle entries so tooling can
