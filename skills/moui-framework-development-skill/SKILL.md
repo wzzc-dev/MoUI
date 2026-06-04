@@ -199,24 +199,24 @@ sh scripts/dev-check.sh
 ```
 
 The daily check runs `sh scripts/check-local-deps.sh`, which verifies the local
-`window` fork, `skia_mbt` checkout, and the `window` fork's MoUI-oriented smoke
+`window` fork, repo-local `skia_mbt` workspace, and the `window` fork's MoUI-oriented smoke
 and evidence files are present, including `scripts/record_moui_evidence.sh`.
 It also checks that the fork's current MoUI smoke contract still uses the
 `moon run examples/moui_macos_smoke --target native` macOS path, the
 module-qualified `wzzc-dev/window/examples/...` Web wasm-gc artifact paths, and
 the MoUI Web smoke consumer sentinel lines.
-Run `sh scripts/setup-local-deps.sh` first when a checkout is missing or stale;
-it fast-forwards clean local dependency checkouts and refuses to overwrite
+Run `sh scripts/setup-local-deps.sh` first when the window checkout is missing or stale;
+it fast-forwards the clean local window dependency checkout and refuses to overwrite
 local `.local_repos/` edits.
 Treat those window smoke helpers as dependency-level matching-host evidence,
 not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
 validation.
-The same local-dependency check also requires the `skia_mbt` binding checkout's
+The same local-dependency check also requires the `skia_mbt` binding workspace's
 `skia-platform-status.json`, `skia-provider-lock.json`,
 `SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
 and verifier scripts, then runs
-`.local_repos/skia_mbt/scripts/verify-platform-status.sh` and
-`.local_repos/skia_mbt/scripts/verify-native-capability-contract.sh`. Treat
+`skia_mbt/scripts/verify-platform-status.sh` and
+`skia_mbt/scripts/verify-native-capability-contract.sh`. Treat
 that as binding-level Skia provider/status and native capability evidence; MoUI
 renderer pixels and platform runtime behavior still need the opt-in real-Skia
 smoke or matching-host example runs.

@@ -6,9 +6,7 @@ param(
   [switch]$SkipLocalRepos,
   [string]$WindowRemote = "",
   [string]$WindowUpstream = "https://github.com/moonbit-community/window.git",
-  [string]$WindowBranch = "moui-support",
-  [string]$SkiaMbtRemote = "",
-  [string]$SkiaMbtBranch = "master"
+  [string]$WindowBranch = "moui-support"
 )
 
 $ErrorActionPreference = "Stop"
@@ -182,49 +180,6 @@ function Update-WindowDependency {
   Invoke-Git -RepoPath $windowDir -Arguments @("pull", "--ff-only", "origin", $Branch)
 }
 
-function Update-SkiaMbtDependency {
-  param(
-    [string]$RepoRoot,
-    [string]$LocalReposRoot,
-    [string]$Remote,
-    [string]$Branch
-  )
-
-  $skiaMbtDir = Join-Path $LocalReposRoot "skia_mbt"
-
-  Write-Host "==> skia_mbt remote: $Remote"
-  Write-Host "==> skia_mbt branch: $Branch"
-
-  if (-not (Test-Path -LiteralPath $LocalReposRoot)) {
-    New-Item -ItemType Directory -Path $LocalReposRoot | Out-Null
-  }
-
-  if (-not (Test-Path -LiteralPath (Join-Path $skiaMbtDir ".git"))) {
-    Invoke-GitRoot -WorkingDirectory $RepoRoot -Arguments @("clone", $Remote, $skiaMbtDir)
-  }
-
-  Set-RemoteUrl -RepoPath $skiaMbtDir -Name "origin" -Url $Remote
-  Invoke-Git -RepoPath $skiaMbtDir -Arguments @("fetch", "origin", $Branch, "--prune")
-
-  if ($FetchOnly) {
-    return
-  }
-
-  Assert-CleanWorktree -RepoPath $skiaMbtDir
-
-  $currentBranch = Get-GitOutput -RepoPath $skiaMbtDir -Arguments @("branch", "--show-current")
-  if ($currentBranch -ne $Branch) {
-    $hasLocalBranch = Test-GitSuccess -RepoPath $skiaMbtDir -Arguments @("show-ref", "--verify", "--quiet", "refs/heads/$Branch")
-    if ($hasLocalBranch) {
-      Invoke-Git -RepoPath $skiaMbtDir -Arguments @("checkout", $Branch)
-    } else {
-      Invoke-Git -RepoPath $skiaMbtDir -Arguments @("checkout", "-B", $Branch, "origin/$Branch")
-    }
-  }
-
-  Invoke-Git -RepoPath $skiaMbtDir -Arguments @("pull", "--ff-only", "origin", $Branch)
-}
-
 Require-Command "git"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -232,8 +187,6 @@ $repoRoot = (Resolve-Path (Join-Path $scriptDir "..\..")).Path
 $localReposRoot = Join-Path $repoRoot ".local_repos"
 $defaultWindowRemoteSsh = "git@github.com:wzzc-dev/window.git"
 $defaultWindowRemoteHttps = "https://github.com/wzzc-dev/window.git"
-$defaultSkiaMbtRemoteSsh = "git@github.com:wzzc-dev/skia_mbt.git"
-$defaultSkiaMbtRemoteHttps = "https://github.com/wzzc-dev/skia_mbt.git"
 
 if ([string]::IsNullOrWhiteSpace($WindowRemote)) {
   if (-not [string]::IsNullOrWhiteSpace($env:MOUI_WINDOW_REMOTE)) {
@@ -242,16 +195,6 @@ if ([string]::IsNullOrWhiteSpace($WindowRemote)) {
     $WindowRemote = $defaultWindowRemoteHttps
   } else {
     $WindowRemote = $defaultWindowRemoteSsh
-  }
-}
-
-if ([string]::IsNullOrWhiteSpace($SkiaMbtRemote)) {
-  if (-not [string]::IsNullOrWhiteSpace($env:MOUI_SKIA_MBT_REMOTE)) {
-    $SkiaMbtRemote = $env:MOUI_SKIA_MBT_REMOTE
-  } elseif (-not [string]::IsNullOrWhiteSpace($env:CI)) {
-    $SkiaMbtRemote = $defaultSkiaMbtRemoteHttps
-  } else {
-    $SkiaMbtRemote = $defaultSkiaMbtRemoteSsh
   }
 }
 
@@ -276,12 +219,6 @@ if (-not $SkipLocalRepos) {
     -Remote $WindowRemote `
     -Upstream $WindowUpstream `
     -Branch $WindowBranch
-
-  Update-SkiaMbtDependency `
-    -RepoRoot $repoRoot `
-    -LocalReposRoot $localReposRoot `
-    -Remote $SkiaMbtRemote `
-    -Branch $SkiaMbtBranch
 
   if (Test-Path -LiteralPath $localReposRoot) {
     $localRepos = Get-ChildItem -LiteralPath $localReposRoot -Directory |

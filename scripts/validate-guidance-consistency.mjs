@@ -246,7 +246,7 @@ assertIncludes("scripts/check-local-deps.sh", "native/capabilities.json");
 assertIncludes("scripts/check-local-deps.sh", "native/ownership.json");
 assertIncludes("scripts/check-local-deps.sh", "verify-native-capability-contract.sh");
 assertIncludes("scripts/setup-local-deps.sh", "merge --ff-only");
-assertIncludes("docs/development.md", "fast-forwards existing clean checkouts");
+assertIncludes("docs/development.md", "fast-forwards the existing clean window checkout");
 assertIncludes("docs/development.md", "module-qualified `wzzc-dev/window/examples/...`");
 assertIncludes("docs/development.md", "skia-platform-status.json");
 assertIncludes("docs/development.md", "verify-platform-status.sh");
@@ -302,7 +302,7 @@ assertIncludes(
 );
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
-  "fast-forwards clean local dependency checkouts",
+  "fast-forwards the clean local window dependency checkout",
 );
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
@@ -313,7 +313,7 @@ assertIncludes(
   "module-qualified `wzzc-dev/window/examples/...`",
 );
 assertIncludes("AGENTS.md", "scripts/record_moui_evidence.sh");
-assertIncludes("AGENTS.md", "fast-forwards existing clean local dependency");
+assertIncludes("AGENTS.md", "fast-forwards the existing clean window");
 assertIncludes("AGENTS.md", "`moon run examples/moui_macos_smoke --target native`");
 assertIncludes("AGENTS.md", "module-qualified `wzzc-dev/window/examples/...`");
 assertIncludes("AGENTS.md", "skia-platform-status.json");

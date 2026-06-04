@@ -5,8 +5,8 @@
 MoUI expects the modified `wzzc-dev/window` checkout under `.local_repos/window`.
 The README shows the setup commands. The local branch currently supplies target
 support that the upstream package does not yet cover for MoUI.
-The same local setup now creates `.local_repos/skia_mbt`, which provides the
-editable Skia binding used by the opt-in native Skia raster renderer.
+The main checkout now includes `skia_mbt`, which provides the editable Skia
+binding used by the opt-in native Skia raster renderer.
 
 ## Shared Host Contract
 
