@@ -168,6 +168,20 @@ fn draw_text_frame(commands : Array[DrawCommand], text : String) -> Rect? {
 }
 
 ///|
+fn draw_text_index(commands : Array[DrawCommand], text : String) -> Int {
+  for index, command in commands {
+    match command {
+      DrawCommand::DrawText({ text: value, .. }) =>
+        if value == text {
+          return index
+        }
+      _ => ()
+    }
+  }
+  -1
+}
+
+///|
 enum ProgramSimpleMsg {
   ProgramSimpleIncrement
 }
@@ -1520,6 +1534,63 @@ test "controlled checkbox picker and datepicker emit new value messages" {
   runtime_wbtest_click(picker_runtime, x=10.0, y=10.0)
   runtime_wbtest_click(picker_runtime, x=10.0, y=90.0)
   assert_true(has_draw_text(picker_runtime.draw_commands(), "Beta"))
+
+  let stacked_items = [
+    PickerItem::{ id: "beta", label: "Beta" },
+    PickerItem::{ id: "alpha", label: "Alpha" },
+  ]
+  let stacked_popup_program = Program::simple(
+    init="alpha",
+    update=(model, message) => {
+      match message {
+        ControlledPicked(value) => value
+        _ => model
+      }
+    },
+    view=selected => {
+      View::flex(
+        children=[
+          View::controlled_picker(
+            items=stacked_items,
+            selected~,
+            on_select=value => ControlledPicked(value),
+            placeholder="Select",
+            font=FontSpec::new(size=14.0),
+            foreground=Color::black(),
+            background=Brush::solid(Color::white()),
+            corner_radius=6.0,
+            max_height=120.0,
+          ),
+          View::controlled_datepicker(
+            selected=DateValue::new(year=2026, month=5, day=21),
+            on_select=value => ControlledDated(value),
+            mode=DatePickerMode::Date,
+            placeholder="Date",
+            font=FontSpec::new(size=14.0),
+            foreground=Color::black(),
+            background=Brush::solid(Color::white()),
+            corner_radius=6.0,
+          ),
+        ],
+        axis=Axis::Vertical,
+        spacing=0.0,
+      )
+    },
+  )
+  let stacked_runtime = AppRuntime::new_program(
+    program=stacked_popup_program,
+    size=Size::new(width=320.0, height=220.0),
+  )
+  runtime_wbtest_click(stacked_runtime, x=10.0, y=10.0)
+  let stacked_open = stacked_runtime.draw_commands()
+  assert_true(
+    draw_text_index(stacked_open, "Beta") >
+    draw_text_index(stacked_open, "2026-5-21"),
+  )
+  runtime_wbtest_click_draw_text(stacked_runtime, "Beta")
+  let stacked_selected = stacked_runtime.draw_commands()
+  assert_true(has_draw_text(stacked_selected, "Beta"))
+  assert_false(has_draw_text(stacked_selected, "2026年5月"))
 
   let date_program = Program::simple(
     init=DateValue::new(year=2026, month=5, day=21),

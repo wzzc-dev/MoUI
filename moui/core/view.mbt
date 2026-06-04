@@ -149,6 +149,7 @@ priv enum ViewModifierNode[Msg] {
   LongPressModifier(Msg)
   DoubleTapModifier(Msg)
   DragModifier((DragGestureEvent) -> Msg)
+  DragWithFrameModifier((DragGestureEvent, Rect) -> Msg)
   FileDropModifier((Array[String], Point) -> Msg)
 }
 
@@ -1131,6 +1132,14 @@ pub fn[Msg] View::on_drag(
 }
 
 ///|
+pub fn[Msg] View::on_drag_with_frame(
+  self : View[Msg],
+  handler : (DragGestureEvent, Rect) -> Msg,
+) -> View[Msg] {
+  modify_view(self, DragWithFrameModifier(handler))
+}
+
+///|
 pub fn[Msg] View::on_file_drop(
   self : View[Msg],
   handler : (Array[String], Point) -> Msg,
@@ -1500,6 +1509,10 @@ fn[Msg] realize_view_node(
         DoubleTapModifier(message) => spec.on_double_tap(() => emit(message))
         DragModifier(handler) =>
           spec.on_drag(drag_event => emit(handler(drag_event)))
+        DragWithFrameModifier(handler) =>
+          spec.on_drag_with_frame((drag_event, frame) => {
+            emit(handler(drag_event, frame))
+          })
         FileDropModifier(handler) =>
           spec.on_file_drop((paths, point) => emit(handler(paths, point)))
       }
@@ -1688,6 +1701,10 @@ fn[Msg, NextMsg] map_modifier_node(
     DoubleTapModifier(message) => DoubleTapModifier(map(message))
     DragModifier(handler) =>
       DragModifier(drag_event => map(handler(drag_event)))
+    DragWithFrameModifier(handler) =>
+      DragWithFrameModifier((drag_event, frame) => {
+        map(handler(drag_event, frame))
+      })
     FileDropModifier(handler) =>
       FileDropModifier((paths, point) => map(handler(paths, point)))
   }

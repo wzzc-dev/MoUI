@@ -35,6 +35,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
       data.modifier is OnLongPressModifier(_) ||
       data.modifier is OnDoubleTapModifier(_) ||
       data.modifier is OnDragModifier(_) ||
+      data.modifier is OnDragWithFrameModifier(_) ||
       data.modifier is OnFileDropModifier(_) ||
       data.modifier is FocusableModifier(true)
     CustomSpec(_) | CustomLayoutSpec(_) => true
@@ -64,6 +65,7 @@ fn ElementNode::render_with_environment(
   let children : Array[RenderNode] = []
   let commands : Array[DrawCommand] = []
   let post_commands : Array[DrawCommand] = []
+  let overlay_commands : Array[DrawCommand] = []
   match self.spec {
     EmptySpec => ()
     SpacerSpec(_) => ()
@@ -164,9 +166,13 @@ fn ElementNode::render_with_environment(
     CheckboxSpec(data) =>
       append_checkbox_commands(commands, data, bounds, environment)
     PickerSpec(data) =>
-      append_picker_commands(commands, self, data, bounds, environment)
+      append_picker_commands(
+        commands, overlay_commands, self, data, bounds, environment,
+      )
     DatePickerSpec(data) =>
-      append_datepicker_commands(commands, self, data, bounds, environment)
+      append_datepicker_commands(
+        commands, overlay_commands, self, data, bounds, environment,
+      )
     SearchBarSpec(data) =>
       append_searchbar_commands(
         commands, self, data, bounds, environment, focused,
@@ -394,6 +400,7 @@ fn ElementNode::render_with_environment(
     hit_testable: element_hit_testable(self.spec),
     paint_commands: commands,
     post_paint_commands: post_commands,
+    overlay_paint_commands: overlay_commands,
   }
   if environment.matches_default_cache_key() {
     self.render_cache.cached_render_frame = Some(bounds)

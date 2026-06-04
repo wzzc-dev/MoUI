@@ -84,6 +84,7 @@ struct RenderNode {
   hit_testable : Bool
   paint_commands : Array[DrawCommand]
   post_paint_commands : Array[DrawCommand]
+  overlay_paint_commands : Array[DrawCommand]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -100,6 +101,7 @@ fn RenderNode::empty() -> RenderNode {
     hit_testable: false,
     paint_commands: [],
     post_paint_commands: [],
+    overlay_paint_commands: [],
   }
 }
 

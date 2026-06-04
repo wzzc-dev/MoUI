@@ -144,6 +144,7 @@ fn ShowcaseModel::controls_section(
                     self.slider_value,
                     width=300.0,
                     foreground=theme.palette.primary,
+                    on_change=Some(value => SliderChanged(value)),
                   ),
                   progress(
                     self.slider_value,

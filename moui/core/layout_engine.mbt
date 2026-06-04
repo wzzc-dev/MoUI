@@ -180,6 +180,7 @@ fn modified_intrinsic_size(
     | OnLongPressModifier(_)
     | OnDoubleTapModifier(_)
     | OnDragModifier(_)
+    | OnDragWithFrameModifier(_)
     | OnFileDropModifier(_)
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)

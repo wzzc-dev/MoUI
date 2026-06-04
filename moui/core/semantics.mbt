@@ -305,6 +305,7 @@ fn modified_semantics_info(modifier : ViewModifier) -> SemanticsInfo {
     | OnLongPressModifier(_)
     | OnDoubleTapModifier(_)
     | OnDragModifier(_)
+    | OnDragWithFrameModifier(_)
     | KeyboardShortcutModifier(_) =>
       {
         role: Button,

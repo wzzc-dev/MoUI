@@ -117,11 +117,12 @@ pub fn[Msg] slider(
   height? : Double = 28.0,
   foreground? : @core.Color = @core.Theme::default().palette.primary,
   background? : @core.Color = @core.Theme::default().palette.surface_variant,
+  on_change? : ((Double) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let range = if max <= min { 1.0 } else { max - min }
   let normalized = clamp_view_double((value - min) / range, 0.0, 1.0)
   let knob = height * 0.72
-  @core.View::custom_view(
+  let base = @core.View::custom_view(
     measure=constraints => {
       constraints.constrain(@core.Size::new(width~, height~))
     },
@@ -169,6 +170,20 @@ pub fn[Msg] slider(
     semantics_role=@core.SemanticsRole::Slider,
     semantics_label="Slider",
   )
+  match on_change {
+    Some(handler) =>
+      base.on_drag_with_frame((event, frame) => {
+        let track_width = max_view_double(1.0, width)
+        let local_x = clamp_view_double(
+          event.position.x - frame.origin.x,
+          0.0,
+          track_width,
+        )
+        let next = min + local_x / track_width * range
+        handler(clamp_view_double(next, min, max))
+      })
+    None => base
+  }
 }
 
 ///|
