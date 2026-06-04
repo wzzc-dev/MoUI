@@ -138,6 +138,7 @@ Use this skill when editing or reviewing:
   diagnostics and image-resource change callback bridge, image-resource repaint
   routing and tracked-window revision/status diagnostics plus repaint-result
   previous/current status counts,
+  native async image completion source,
   host-event subscription source fanout, window-scoped subscription source,
   scheduler-backed timer subscription source, route/deep-link subscription source,
   window request/completion queue, text-input session, window-event conversion,
@@ -161,8 +162,8 @@ Use this skill when editing or reviewing:
 - `render/skia/`: native Skia raster renderer over the local `moui_skia` binding,
   including renderer-local command/reason diagnostics for unsupported Skia
   fallbacks and renderer-local image-resource lifecycle change callbacks.
-  Native provider or host redraw scheduling from async image load/error
-  notifications remains outside `render/skia`.
+  Host-layer completion routing and native provider/platform redraw scheduling
+  from async image load/error notifications remain outside `render/skia`.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
 - `moui/tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
   verifies MoUI draw commands against captured Skia presenter pixels.
@@ -467,6 +468,12 @@ moon info
   scheduling outside `core`, pass the requested interval to the host scheduler,
   and make adapter cleanup cancel the scheduler so late callbacks hit the stale
   subscription-dispatch guard instead of live app state.
+- For native async image completions, route provider/platform loader completion
+  snapshots through `HostImageResourceCompletionSource` in `backend/host`.
+  Keep decoding/cache mutation in renderer/provider packages, route redraw via
+  `HostImageResourceRepaintTracker`, discard closed-window or stale-revision
+  completions, and require matching-host runtime artifacts before claiming full
+  native async image readiness.
 - Run the affected backend package tests.
 - Update `docs/platform-notes.md` when constraints or setup change.
 

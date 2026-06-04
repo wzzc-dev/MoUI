@@ -532,6 +532,7 @@ test "renderer capability report tracks draw command support" {
     @render.RendererBackendKind::NativeWgpu,
   )
   assert_true(native_image_note.contains("HostWindowRenderer"))
+  assert_true(native_image_note.contains("HostImageResourceCompletionSource"))
   assert_true(
     async_image.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
     @render.RendererFeatureStatus::Partial,
@@ -540,6 +541,7 @@ test "renderer capability report tracks draw command support" {
     @render.RendererBackendKind::SkiaRasterNative,
   )
   assert_true(skia_image_note.contains("HostWindowRenderer"))
+  assert_true(skia_image_note.contains("HostImageResourceCompletionSource"))
   assert_true(skia_image_note.contains("failed-image placeholder"))
   assert_true(skia_image_note.contains("failed-cache snapshot"))
   assert_true(skia_image_note.contains("local-file retry"))
@@ -547,6 +549,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(skia_image_note.contains("HostWindowRenderer callback bridge"))
   assert_true(skia_image_note.contains("baseline-guarded callbacks"))
   assert_true(skia_image_note.contains("dispose-record"))
+  assert_true(skia_image_note.contains("provider/platform async loader"))
   let web_image_note = async_image.note_for_backend(
     @render.RendererBackendKind::WebGpuWasm,
   )
