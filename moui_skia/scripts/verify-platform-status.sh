@@ -170,11 +170,11 @@ if schema_version >= 4:
     if not isinstance(evidence_files, list) or not evidence_files:
         fail("schema v4 platform status is missing ci_gate_evidence_files list")
     required_evidence_files = {
-        ".github/workflows/fallback.yml",
-        ".github/workflows/linux-real-skia-smoke.yml",
-        ".github/workflows/macos-real-skia-smoke.yml",
-        ".github/workflows/windows-real-skia-smoke.yml",
-        ".github/workflows/real-skia-acceptance.yml",
+        ".github/workflows/moui-skia-fallback.yml",
+        ".github/workflows/moui-skia-linux-real-skia-smoke.yml",
+        ".github/workflows/moui-skia-macos-real-skia-smoke.yml",
+        ".github/workflows/moui-skia-windows-real-skia-smoke.yml",
+        ".github/workflows/moui-skia-real-skia-acceptance.yml",
         "scripts/check-fallback.ps1",
     }
     seen_evidence_files = set()
@@ -190,12 +190,21 @@ if schema_version >= 4:
             fail(f"CI gate evidence file must be repo-relative: {path}")
         return normalized
 
+    def resolve_ci_gate_evidence_path(evidence_path):
+        candidates = [repo_root / evidence_path]
+        if evidence_path.startswith(".github/workflows/"):
+            candidates.append(repo_root.parent / evidence_path)
+        for candidate in candidates:
+            if candidate.is_file():
+                return candidate
+        return None
+
     for evidence_file in evidence_files:
         evidence_path = normalize_repo_relative_path(evidence_file)
         if evidence_path in seen_evidence_files:
             fail(f"duplicate CI gate evidence file: {evidence_path}")
-        resolved_evidence_path = repo_root / evidence_path
-        if not resolved_evidence_path.is_file():
+        resolved_evidence_path = resolve_ci_gate_evidence_path(evidence_path)
+        if resolved_evidence_path is None:
             fail(f"CI gate evidence file is missing: {evidence_path}")
         seen_evidence_files.add(evidence_path)
         evidence_parts.append(resolved_evidence_path.read_text(encoding="utf-8"))
