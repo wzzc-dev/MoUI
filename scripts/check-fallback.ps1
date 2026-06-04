@@ -178,25 +178,42 @@ function New-FakeLinuxSourceArtifact {
   $acceptanceLines | Set-Content -LiteralPath $acceptanceLog
 }
 
-function New-FakeJetBrainsArtifact {
+function New-FakeReleaseArtifact {
   param(
     [Parameter(Mandatory = $true)]
     [string] $Directory,
-    [string] $Commit = "8967a2e80c71be363146da2395f503cab5f5fb9c",
-    [string] $Tag = "m148-8967a2e80c",
-    [string] $Package = "Skia-m148-8967a2e80c-windows-Release-x64.zip",
-    [string] $Sha256 = "1927edce6567785870558bfc5e84fac99af45cbe91eb62f260025bc1cf7aa5df",
+    [string] $Owner = "wzzc-dev",
+    [string] $Repo = "skia",
+    [string] $Tag = "dev-6d73578a36",
+    [string] $ReleaseUrl = "https://github.com/wzzc-dev/skia/releases/tag/dev-6d73578a36",
+    [string] $Commit = "6d73578a36506d10bc044e920cc71037982e481d",
+    [string] $Package = "Skia-dev-6d73578a36-windows-Release-x64.zip",
+    [string] $Sha256 = "c38ef245dc18dec445b371ed66cf6ae13d11ef804cfd1f11bf5139294f9c80fd",
+    [string] $LinkMode = "static",
+    [string] $AcceptanceOwner = "",
+    [string] $AcceptanceRepo = "",
     [string] $AcceptanceCommit = "",
     [string] $AcceptanceTag = "",
+    [string] $AcceptanceReleaseUrl = "",
     [string] $AcceptancePackage = "",
-    [string] $AcceptanceSha256 = ""
+    [string] $AcceptanceSha256 = "",
+    [string] $AcceptanceLinkMode = ""
   )
 
+  if ([string]::IsNullOrWhiteSpace($AcceptanceOwner)) {
+    $AcceptanceOwner = $Owner
+  }
+  if ([string]::IsNullOrWhiteSpace($AcceptanceRepo)) {
+    $AcceptanceRepo = $Repo
+  }
   if ([string]::IsNullOrWhiteSpace($AcceptanceCommit)) {
     $AcceptanceCommit = $Commit
   }
   if ([string]::IsNullOrWhiteSpace($AcceptanceTag)) {
     $AcceptanceTag = $Tag
+  }
+  if ([string]::IsNullOrWhiteSpace($AcceptanceReleaseUrl)) {
+    $AcceptanceReleaseUrl = $ReleaseUrl
   }
   if ([string]::IsNullOrWhiteSpace($AcceptancePackage)) {
     $AcceptancePackage = $Package
@@ -204,36 +221,52 @@ function New-FakeJetBrainsArtifact {
   if ([string]::IsNullOrWhiteSpace($AcceptanceSha256)) {
     $AcceptanceSha256 = $Sha256
   }
+  if ([string]::IsNullOrWhiteSpace($AcceptanceLinkMode)) {
+    $AcceptanceLinkMode = $LinkMode
+  }
 
   New-Item -ItemType Directory -Force -Path $Directory | Out-Null
   $preflightLog = Join-Path $Directory "windows-real-skia-smoke-preflight.log"
   $wrapperLog = Join-Path $Directory "windows-real-skia-smoke.log"
   $nativeLog = Join-Path $Directory "windows-native-smoke-output.log"
   $acceptanceLog = Join-Path $Directory "windows-real-skia-acceptance.log"
+  $libraryLines = @("  library=skia.lib 123 bytes")
+  if ($LinkMode.Trim().ToLowerInvariant() -eq "dynamic") {
+    $libraryLines += "  library=skia.dll 456 bytes"
+  }
 
-  "JetBrains Skia provider dry run" | Set-Content -LiteralPath $preflightLog
-  @(
+  "release Skia provider dry run" | Set-Content -LiteralPath $preflightLog
+  $wrapperLines = @(
     "Windows MSVC Skia smoke environment:"
     "  skia_include=C:/fake/skia"
     "  skia_lib_dir=C:/fake/skia/out/Release-x64"
     "  skia_lib=skia"
-    "  skia_provider=jetbrains"
-    "  jetbrains_tag=$Tag"
+    "  skia_link_mode=$LinkMode"
+    "  skia_provider=release"
+    "  release_owner=$Owner"
+    "  release_repo=$Repo"
+    "  release_tag=$Tag"
+    "  release_url=$ReleaseUrl"
     "  skia_commit=$Commit"
     "  skia_package=$Package"
     "  skia_package_sha256=$Sha256"
-    "  library=skia.lib 123 bytes"
+  ) + $libraryLines + @(
     "  stub_cc_flags=/DSKIA_MBT_HAS_SKIA /IC:/fake/skia"
     "  cc_link_flags=C:/fake/skia/out/Release-x64/skia.lib user32.lib"
-  ) | Set-Content -LiteralPath $wrapperLog
+  )
+  $wrapperLines | Set-Content -LiteralPath $wrapperLog
   Set-FakeNativeSmokeLog -Path $nativeLog
   @(
     "Windows MSVC real Skia acceptance result:"
     "  smoke_status=0"
     "  native_smoke_marker=passed"
     "  native_pkg_restore=passed"
-    "  skia_provider=jetbrains"
-    "  jetbrains_tag=$AcceptanceTag"
+    "  skia_provider=release"
+    "  skia_link_mode=$AcceptanceLinkMode"
+    "  release_owner=$AcceptanceOwner"
+    "  release_repo=$AcceptanceRepo"
+    "  release_tag=$AcceptanceTag"
+    "  release_url=$AcceptanceReleaseUrl"
     "  skia_commit=$AcceptanceCommit"
     "  skia_package=$AcceptancePackage"
     "  skia_package_sha256=$AcceptanceSha256"
@@ -323,54 +356,33 @@ try {
 
     Assert-NativePkgUnchanged -ExpectedHash $beforeNativePkgHash -ExpectedSmokeHash $beforeSmokePkgHash
 
-    $fetchDryRunEnv = & (Join-Path $repoRoot "scripts/fetch-jetbrains-skia.ps1") `
+    $fetchDryRunEnv = & (Join-Path $repoRoot "scripts/fetch-release-skia.ps1") `
       -Platform windows `
       -Arch x64 `
       -Config Release `
-      -CacheDir (Join-Path $dryRunRoot "jetbrains-cache") `
+      -LinkMode static `
+      -CacheDir (Join-Path $dryRunRoot "release-cache") `
       -DryRunConfig `
       -PrintEnv
-    if (($fetchDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_PACKAGE=Skia-m148-8967a2e80c-windows-Release-x64.zip*" -or
-      ($fetchDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_PACKAGE_SHA256=1927edce6567785870558bfc5e84fac99af45cbe91eb62f260025bc1cf7aa5df*") {
-      throw "fetch-jetbrains-skia.ps1 did not map Windows x64 Release to the locked package"
+    if (($fetchDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_PROVIDER=release*" -or
+      ($fetchDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_LINK_MODE=static*" -or
+      ($fetchDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_PACKAGE=Skia-dev-6d73578a36-windows-Release-x64.zip*" -or
+      ($fetchDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_PACKAGE_SHA256=c38ef245dc18dec445b371ed66cf6ae13d11ef804cfd1f11bf5139294f9c80fd*") {
+      throw "fetch-release-skia.ps1 did not map Windows x64 Release static to the locked package"
     }
 
-    $fakeJetBrainsCache = Join-Path $dryRunRoot "jetbrains-cache"
-    $fakeJetBrainsPackage = Join-Path $fakeJetBrainsCache "m148-8967a2e80c/windows-Release-x64/package/fake"
-    New-Item -ItemType Directory -Force -Path (Join-Path $fakeJetBrainsPackage "include/core") | Out-Null
-    New-Item -ItemType Directory -Force -Path (Join-Path $fakeJetBrainsPackage "out/Release-x64") | Out-Null
-    New-Item -ItemType File -Force -Path (Join-Path $fakeJetBrainsPackage "include/core/SkSurface.h") | Out-Null
-    New-Item -ItemType File -Force -Path (Join-Path $fakeJetBrainsPackage "out/Release-x64/skia.lib") | Out-Null
-    $env:SKIA_MBT_ALLOW_FAKE_JETBRAINS_ZIP = "1"
-    try {
-      $fakeFetchEnv = & (Join-Path $repoRoot "scripts/fetch-jetbrains-skia.ps1") `
-        -Platform windows `
-        -Arch x64 `
-        -Config Release `
-        -CacheDir $fakeJetBrainsCache `
-        -PrintEnv
-    } finally {
-      Remove-Item Env:SKIA_MBT_ALLOW_FAKE_JETBRAINS_ZIP -ErrorAction SilentlyContinue
-    }
-    if (($fakeFetchEnv -join "`n") -notlike "*SKIA_MBT_SKIA_INCLUDE=*" -or
-      ($fakeFetchEnv -join "`n") -notlike "*SKIA_MBT_SKIA_LIB_DIR=*") {
-      throw "fetch-jetbrains-skia.ps1 did not resolve fake package include/lib paths"
-    }
-
-    $fakeJetBrainsNoHeaders = Join-Path $fakeJetBrainsCache "m148-8967a2e80c/windows-Release-arm64/package/fake"
-    New-Item -ItemType Directory -Force -Path (Join-Path $fakeJetBrainsNoHeaders "out/Release-arm64") | Out-Null
-    New-Item -ItemType File -Force -Path (Join-Path $fakeJetBrainsNoHeaders "out/Release-arm64/skia.lib") | Out-Null
-    $fakeJetBrainsSource = Join-Path $fakeJetBrainsCache "m148-8967a2e80c/source/JetBrains-skia-m148-8967a2e80c"
-    New-Item -ItemType Directory -Force -Path (Join-Path $fakeJetBrainsSource "include/core") | Out-Null
-    New-Item -ItemType File -Force -Path (Join-Path $fakeJetBrainsSource "include/core/SkSurface.h") | Out-Null
-    $fallbackFetchEnv = & (Join-Path $repoRoot "scripts/fetch-jetbrains-skia.ps1") `
+    $fetchDynamicDryRunEnv = & (Join-Path $repoRoot "scripts/fetch-release-skia.ps1") `
       -Platform windows `
-      -Arch arm64 `
+      -Arch x64 `
       -Config Release `
-      -CacheDir $fakeJetBrainsCache `
+      -LinkMode dynamic `
+      -CacheDir (Join-Path $dryRunRoot "release-cache") `
+      -DryRunConfig `
       -PrintEnv
-    if (($fallbackFetchEnv -join "`n") -notlike "*jetbrains-cache/m148-8967a2e80c/source/*") {
-      throw "fetch-jetbrains-skia.ps1 did not fall back to source headers"
+    if (($fetchDynamicDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_LINK_MODE=dynamic*" -or
+      ($fetchDynamicDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_PACKAGE=Skia-dev-6d73578a36-windows-Release-x64-shared.zip*" -or
+      ($fetchDynamicDryRunEnv -join "`n") -notlike "*SKIA_MBT_SKIA_PACKAGE_SHA256=2a8a54ae44c0370d8b20000e0bc044bf0da14059b76bcfde00256c37fb0ea41c*") {
+      throw "fetch-release-skia.ps1 did not map Windows x64 Release dynamic to the locked package"
     }
 
     try {
@@ -654,51 +666,61 @@ try {
       -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakePrefixedAcceptanceReferenceArtifactDir -RequireCommit } `
       -ExpectedMessage "preflight_log="
 
-    $fakeJetBrainsArtifactDir = Join-Path $dryRunRoot "fake-jetbrains-artifact"
-    New-FakeJetBrainsArtifact -Directory $fakeJetBrainsArtifactDir
+    $fakeReleaseArtifactDir = Join-Path $dryRunRoot "fake-release-artifact"
+    New-FakeReleaseArtifact -Directory $fakeReleaseArtifactDir
     & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") `
       -Platform windows `
-      -LogDir $fakeJetBrainsArtifactDir
+      -LogDir $fakeReleaseArtifactDir
 
-    $fakeJetBrainsBadShaDir = Join-Path $dryRunRoot "fake-jetbrains-artifact-bad-sha"
-    New-FakeJetBrainsArtifact `
-      -Directory $fakeJetBrainsBadShaDir `
+    $fakeDynamicReleaseArtifactDir = Join-Path $dryRunRoot "fake-release-artifact-dynamic"
+    New-FakeReleaseArtifact `
+      -Directory $fakeDynamicReleaseArtifactDir `
+      -Package "Skia-dev-6d73578a36-windows-Release-x64-shared.zip" `
+      -Sha256 "2a8a54ae44c0370d8b20000e0bc044bf0da14059b76bcfde00256c37fb0ea41c" `
+      -LinkMode "dynamic"
+    & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") `
+      -Platform windows `
+      -LogDir $fakeDynamicReleaseArtifactDir
+
+    $fakeReleaseBadShaDir = Join-Path $dryRunRoot "fake-release-artifact-bad-sha"
+    New-FakeReleaseArtifact `
+      -Directory $fakeReleaseBadShaDir `
       -Sha256 "0000000000000000000000000000000000000000000000000000000000000000"
     Assert-CommandFailsWith `
-      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsBadShaDir } `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeReleaseBadShaDir } `
       -ExpectedMessage "SHA256 mismatch"
 
-    $fakeJetBrainsBadTagDir = Join-Path $dryRunRoot "fake-jetbrains-artifact-bad-tag"
-    New-FakeJetBrainsArtifact `
-      -Directory $fakeJetBrainsBadTagDir `
-      -Tag "m000-0000000000"
+    $fakeReleaseBadTagDir = Join-Path $dryRunRoot "fake-release-artifact-bad-tag"
+    New-FakeReleaseArtifact `
+      -Directory $fakeReleaseBadTagDir `
+      -Tag "dev-bad"
     Assert-CommandFailsWith `
-      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsBadTagDir } `
-      -ExpectedMessage "JetBrains tag mismatch"
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeReleaseBadTagDir } `
+      -ExpectedMessage "release tag mismatch"
 
-    $fakeJetBrainsBadCommitDir = Join-Path $dryRunRoot "fake-jetbrains-artifact-bad-commit"
-    New-FakeJetBrainsArtifact `
-      -Directory $fakeJetBrainsBadCommitDir `
+    $fakeReleaseBadCommitDir = Join-Path $dryRunRoot "fake-release-artifact-bad-commit"
+    New-FakeReleaseArtifact `
+      -Directory $fakeReleaseBadCommitDir `
       -Commit "0123456789abcdef0123456789abcdef01234567"
     Assert-CommandFailsWith `
-      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsBadCommitDir } `
-      -ExpectedMessage "JetBrains commit mismatch"
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeReleaseBadCommitDir } `
+      -ExpectedMessage "release commit mismatch"
 
-    $fakeJetBrainsBadPackageDir = Join-Path $dryRunRoot "fake-jetbrains-artifact-bad-package"
-    New-FakeJetBrainsArtifact `
-      -Directory $fakeJetBrainsBadPackageDir `
-      -Package "Skia-m148-8967a2e80c-windows-Release-ppc64.zip"
+    $fakeReleaseBadPackageDir = Join-Path $dryRunRoot "fake-release-artifact-bad-package"
+    New-FakeReleaseArtifact `
+      -Directory $fakeReleaseBadPackageDir `
+      -Package "Skia-dev-6d73578a36-windows-Release-ppc64.zip"
     Assert-CommandFailsWith `
-      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsBadPackageDir } `
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeReleaseBadPackageDir } `
       -ExpectedMessage "not locked"
 
-    $fakeJetBrainsMismatchedAcceptanceDir = Join-Path $dryRunRoot "fake-jetbrains-artifact-mismatched-acceptance"
-    New-FakeJetBrainsArtifact `
-      -Directory $fakeJetBrainsMismatchedAcceptanceDir `
-      -AcceptanceTag "m000-0000000000"
+    $fakeReleaseMismatchedAcceptanceDir = Join-Path $dryRunRoot "fake-release-artifact-mismatched-acceptance"
+    New-FakeReleaseArtifact `
+      -Directory $fakeReleaseMismatchedAcceptanceDir `
+      -AcceptanceTag "dev-bad"
     Assert-CommandFailsWith `
-      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeJetBrainsMismatchedAcceptanceDir } `
-      -ExpectedMessage "disagree on JetBrains jetbrains_tag"
+      -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeReleaseMismatchedAcceptanceDir } `
+      -ExpectedMessage "disagree on release release_tag"
 
 
     $fakeMacosArtifactDir = Join-Path $dryRunRoot "fake-macos-artifact"

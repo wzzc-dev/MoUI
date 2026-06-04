@@ -20,35 +20,40 @@ matrix and the exact evidence still missing per platform.
   still contain dry-run markers. The preflight log is intentionally a dry-run
   configuration preview, but it is not acceptance evidence by itself.
 
-## JetBrains/skia Provider
+## GitHub Release Provider
 
-The default desktop provider is JetBrains/skia, locked in
+The default desktop provider is the `wzzc-dev/skia` GitHub release locked in
 `skia-provider-lock.json`:
 
-- provider: `jetbrains`
-- tag: `m148-8967a2e80c`
-- commit: `8967a2e80c71be363146da2395f503cab5f5fb9c`
+- provider: `release`
+- owner/repo: `wzzc-dev/skia`
+- tag: `dev-6d73578a36`
+- commit: `6d73578a36506d10bc044e920cc71037982e481d`
 - config: `Release`
+- default link mode: `static`
 
 The fetch helpers select the host package, cache it under
-`.skia-cache/jetbrains/<tag>/<platform>-<config>-<arch>/`, verify the package
-SHA256, scan for headers and libraries, and fall back to the same-tag source
-archive for headers when a binary zip does not include them:
+`.skia-cache/release/<tag>/<platform>-<config>-<arch>-<link-mode>/`, verify the
+package SHA256, scan for headers and libraries, and fall back to the same-tag
+source archive for headers when a binary zip does not include them:
 
 ```bash
-bash scripts/fetch-jetbrains-skia.sh --platform auto --arch auto --print-env
+bash scripts/fetch-release-skia.sh --platform auto --arch auto --print-env
 ```
 
 ```powershell
-.\scripts\fetch-jetbrains-skia.ps1 -Platform auto -Arch auto -PrintEnv
+.\scripts\fetch-release-skia.ps1 -Platform auto -Arch auto -PrintEnv
 ```
 
 The real-smoke wrappers consume the fetch output and still delegate final
-`native/moon.pkg` generation to the existing configure scripts. JetBrains logs
-must record `skia_provider=jetbrains`, `jetbrains_tag`, full `skia_commit`,
+`native/moon.pkg` generation to the existing configure scripts. Release logs
+must record `skia_provider=release`, `skia_link_mode`, `release_owner`,
+`release_repo`, `release_tag`, `release_url`, full `skia_commit`,
 `skia_package`, `skia_package_sha256`, include/lib paths, and final compile/link
-flags. `scripts/verify-real-skia-artifact.*` rejects logs whose tag, commit,
-package, or SHA256 does not match the lock file.
+flags. `scripts/verify-real-skia-artifact.*` rejects logs whose release
+metadata, link mode, package, or SHA256 does not match the lock file. Use
+`SKIA_MBT_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic` to select the dynamic
+asset explicitly.
 
 Use `--skia-provider source` for source-built fallback and diagnostic runs, or
 `--skia-provider existing` with explicit include/lib paths for a prepared Skia
@@ -66,7 +71,7 @@ verification only until its sanitizer mode is proven separately.
 
 Linux remains the first source-build path and should be used when establishing
 or refreshing the canonical `skia-revision.txt` fallback pin. The default Linux
-real smoke now uses JetBrains/skia; pass `--skia-provider source` for this
+real smoke now uses the locked release provider; pass `--skia-provider source` for this
 source-built path.
 
 Run locally on Ubuntu or trigger the `Linux Real Skia Smoke` workflow without
@@ -86,7 +91,7 @@ Wayland headers, and `wayland-scanner`. The source-build path installs `clang`
 plus fontconfig/FreeType/HarfBuzz development headers and sets Skia GN
 `cc="clang"` / `cxx="clang++"` by default for reproducible Linux smoke builds.
 
-Default JetBrains expected artifact/log files:
+Default release expected artifact/log files:
 
 - `logs/linux-real-skia-smoke-preflight.log`
 - `logs/linux-real-skia-smoke.log`
@@ -216,7 +221,7 @@ bash scripts/verify-skia-revision-pin.sh logs/linux-real-skia-acceptance.log
 Source-provider real-smoke workflows run the same check with
 `--skip-if-unpinned`: the first source-built Linux run is allowed while
 `skia-revision.txt` is still `main`, and later source runs fail if their
-accepted `skia_commit` diverges from the pinned commit. JetBrains-provider runs
+accepted `skia_commit` diverges from the pinned commit. Release-provider runs
 are checked against `skia-provider-lock.json` instead.
 
 PowerShell equivalent:
@@ -283,7 +288,7 @@ platform-status checks.
 
 ## macOS Acceptance
 
-macOS defaults to the locked JetBrains provider and also has source-build and
+macOS defaults to the locked release provider and also has source-build and
 existing-build modes. Run locally on macOS or trigger the `macOS Real Skia Smoke`
 workflow without `dry_run_config`:
 
@@ -337,10 +342,9 @@ record that in the workflow input or local command line.
 macOS helpers also accept `SKIA_MBT_SKIA_INCLUDE`, `SKIA_MBT_SKIA_LIB_DIR`,
 `SKIA_MBT_SKIA_LIB`, `SKIA_MBT_SKIA_REV`, `SKIA_MBT_EXTRA_GN_ARGS`,
 `SKIA_MBT_EXTRA_CC_FLAGS`, and `SKIA_MBT_EXTRA_LINK_FLAGS` as environment
-defaults. `SKIA_MBT_MACOS_LINK_MODE=auto|dynamic|static` controls whether the
-generated macOS native package links `libskia.dylib` or `libskia.a`; `auto`
-prefers dynamic for persistent direct-run package generation and static for
-temporary smoke/build package generation when the requested library exists.
+defaults. `SKIA_MBT_SKIA_LINK_MODE=static|dynamic|auto` controls whether the
+generated macOS native package links `libskia.a` or `libskia.dylib`;
+`SKIA_MBT_MACOS_LINK_MODE` remains a compatibility alias.
 Workflow inputs and command-line options override those environment values.
 When you want a persistent macOS link configuration instead of a temporary
 smoke rewrite, use `scripts/configure-macos-native-pkg.sh` to preview, write, or
@@ -353,13 +357,13 @@ bash scripts/verify-skia-revision-pin.sh logs/macos-real-skia-acceptance.log
 
 ## Windows Acceptance
 
-Windows defaults to the locked JetBrains/skia package through the MSVC helper.
+Windows defaults to the locked `wzzc-dev/skia` release package through the MSVC helper.
 It does not build Skia from source in CI. The MinGW-compatible path is still
-available for GCC native-stub builds, and the MSVC path covers JetBrains or
+available for GCC native-stub builds, and the MSVC path covers release or
 prepared release zips/checkouts that provide `skia.lib`.
 
 Run locally on Windows or trigger the `Windows Real Skia Smoke` workflow with
-the default `skia_provider=jetbrains`:
+the default `skia_provider=release`:
 
 ```powershell
 .\scripts\windows-msvc-accept-real-skia-smoke.ps1 -LogDir logs
@@ -373,8 +377,8 @@ For a prepared MinGW-compatible Skia build:
   -SkiaLibDir C:\path\to\skia\out\moonbit-smoke
 ```
 
-The JetBrains workflow fetches the locked Windows package into
-`.skia-cache/jetbrains`. The MSVC helper calls `vcvarsall.bat`, prepends the
+The release workflow fetches the locked Windows package into
+`.skia-cache/release`. The MSVC helper calls `vcvarsall.bat`, prepends the
 Skia library directory to `PATH`, and uses `cl` with the generated MSVC
 `native/moon.pkg` link config. Pass `-SkiaRoot`, `-SkiaInclude`, `-SkiaZip`,
 `-SkiaLibDir`, `-VcVarsAll`, or `-VcArch` when a runner uses a different layout.

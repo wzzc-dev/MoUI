@@ -128,6 +128,9 @@ except json.JSONDecodeError as error:
 jetbrains = provider_lock.get("providers", {}).get("jetbrains", {})
 jetbrains_commit = str(jetbrains.get("commit", "")).lower()
 jetbrains_tag = str(jetbrains.get("tag", ""))
+release = provider_lock.get("providers", {}).get("release", {})
+release_commit = str(release.get("commit", "")).lower()
+release_tag = str(release.get("tag", ""))
 
 revision = ""
 for line in revision_path.read_text(encoding="utf-8").splitlines():
@@ -885,7 +888,7 @@ for platform in platforms:
             fail(f"accepted platform is missing accepted_commit: {platform}")
         accepted_provider = entry.get("accepted_provider") if schema_version >= 2 else "source"
         accepted_version = entry.get("accepted_version") if schema_version >= 2 else revision
-        if accepted_provider not in ("source", "jetbrains"):
+        if accepted_provider not in ("source", "jetbrains", "release"):
             fail(f"accepted platform has unsupported accepted_provider: {platform}")
         if not accepted_version:
             fail(f"accepted platform is missing accepted_version: {platform}")
@@ -936,6 +939,19 @@ for platform in accepted_platforms:
             fail(
                 "accepted JetBrains platform version does not match provider lock tag: "
                 f"platform={platform} accepted_version={accepted_version} jetbrains_tag={jetbrains_tag}"
+            )
+    if accepted_provider == "release":
+        if not release_commit or not release_tag:
+            fail("release provider lock is missing tag or commit")
+        if accepted_commit != release_commit:
+            fail(
+                "accepted release platform commit does not match provider lock: "
+                f"platform={platform} accepted_commit={accepted_commit} release_commit={release_commit}"
+            )
+        if accepted_version != release_tag:
+            fail(
+                "accepted release platform version does not match provider lock tag: "
+                f"platform={platform} accepted_version={accepted_version} release_tag={release_tag}"
             )
 
 linux = platform_entries["linux"]

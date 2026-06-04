@@ -11,11 +11,20 @@ on:
         description: Skia provider to use
         type: choice
         required: false
-        default: jetbrains
+        default: release
         options:
-          - jetbrains
+          - release
           - source
           - existing
+      link_mode:
+        description: Skia release link mode
+        type: choice
+        required: false
+        default: static
+        options:
+          - static
+          - dynamic
+          - auto
       skia_include:
         description: Existing Skia checkout/include root; falls back to SKIA_MBT_SKIA_INCLUDE on the runner
         required: false
@@ -65,6 +74,7 @@ jobs:
         env:
           SKIA_REV: ${{ inputs.skia_rev }}
           SKIA_PROVIDER: ${{ inputs.skia_provider }}
+          LINK_MODE: ${{ inputs.link_mode }}
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
           SKIA_LIB: ${{ inputs.skia_lib }}
@@ -75,6 +85,9 @@ jobs:
         run: |
           mkdir -p logs
           args=(--dry-run-config --skia-provider "$SKIA_PROVIDER")
+          if [[ -n "$LINK_MODE" ]]; then
+            args+=(--link-mode "$LINK_MODE")
+          fi
           if [[ -n "$SKIA_REV" ]]; then
             args+=(--skia-rev "$SKIA_REV")
           fi
@@ -127,12 +140,24 @@ jobs:
             skia-macos-${{ inputs.skia_rev || hashFiles('skia-revision.txt') }}-
             skia-macos-
 
+      - name: Cache release Skia
+        if: ${{ !inputs.dry_run_config && inputs.skia_provider == 'release' && inputs.skia_include == '' && inputs.skia_lib_dir == '' }}
+        uses: actions/cache@v4
+        with:
+          path: .skia-cache/release
+          key: release-skia-macos-${{ inputs.link_mode }}-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
+          restore-keys: |
+            release-skia-macos-${{ inputs.link_mode }}-${{ runner.arch }}-
+            release-skia-macos-${{ inputs.link_mode }}-
+            release-skia-macos-
+
       - name: Run native smoke test
         shell: bash
         env:
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
           SKIA_PROVIDER: ${{ inputs.skia_provider }}
+          LINK_MODE: ${{ inputs.link_mode }}
           SKIA_REV: ${{ inputs.skia_rev }}
           SKIA_LIB: ${{ inputs.skia_lib }}
           EXTRA_GN_ARGS: ${{ inputs.extra_gn_args }}
@@ -147,6 +172,9 @@ jobs:
             exit 0
           fi
           args=(--skia-provider "$SKIA_PROVIDER")
+          if [[ -n "$LINK_MODE" ]]; then
+            args+=(--link-mode "$LINK_MODE")
+          fi
           if [[ -n "$SKIA_INCLUDE" || -n "$SKIA_LIB_DIR" ]]; then
             args+=(--skia-include "$SKIA_INCLUDE")
             args+=(--skia-lib-dir "$SKIA_LIB_DIR")
@@ -185,7 +213,7 @@ jobs:
         run: bash scripts/verify-real-skia-artifact.sh --platform macos --log-dir logs
 
       - name: Verify pinned Skia revision match
-        if: ${{ always() && !inputs.dry_run_config && inputs.skia_provider != 'jetbrains' }}
+        if: ${{ always() && !inputs.dry_run_config && inputs.skia_provider == 'source' }}
         shell: bash
         run: bash scripts/verify-skia-revision-pin.sh logs/macos-real-skia-acceptance.log --skip-if-unpinned
 
@@ -230,6 +258,7 @@ jobs:
         env:
           SKIA_REV: ${{ inputs.skia_rev }}
           SKIA_PROVIDER: ${{ inputs.skia_provider }}
+          LINK_MODE: ${{ inputs.link_mode }}
           SKIA_INCLUDE: ${{ inputs.skia_include }}
           SKIA_LIB_DIR: ${{ inputs.skia_lib_dir }}
           SKIA_LIB: ${{ inputs.skia_lib }}
@@ -251,12 +280,13 @@ jobs:
             echo "- Dry run only: ${DRY_RUN_CONFIG:-false}"
             if [[ -n "$SKIA_INCLUDE" || -n "$SKIA_LIB_DIR" ]]; then
               echo "- Mode: existing Skia build"
-            elif [[ "$SKIA_PROVIDER" == "jetbrains" ]]; then
-              echo "- Mode: JetBrains Skia binary"
+            elif [[ "$SKIA_PROVIDER" == "release" ]]; then
+              echo "- Mode: GitHub release Skia binary"
             else
               echo "- Mode: source-built Skia"
             fi
-            echo "- Skia provider: ${SKIA_PROVIDER:-jetbrains}"
+            echo "- Skia provider: ${SKIA_PROVIDER:-release}"
+            echo "- Skia link mode: ${LINK_MODE:-static}"
             echo "- Skia revision: ${SKIA_REV:-<skia-revision.txt>}"
             echo "- Resolved Skia commit: ${resolved_commit:-not run}"
             echo "- Skia include: ${SKIA_INCLUDE:-<source build>}"

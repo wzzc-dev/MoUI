@@ -61,16 +61,16 @@ The helper reruns artifact verification before it updates
 `skia-platform-status.json`. For `source` artifacts it also checks the
 revision pin. Accepted entries record `accepted_artifact`, `accepted_provider`,
 `accepted_version`, and `accepted_commit`; the status verifier requires source
-commits to match `skia-revision.txt` and JetBrains commits/versions to match
+commits to match `skia-revision.txt` and release commits/versions to match
 `skia-provider-lock.json`.
 
 ## Current Matrix
 
 | Platform | Current state | What exists | Missing before accepted |
 | --- | --- | --- | --- |
-| Linux | Accepted with JetBrains `m148-8967a2e80c` artifact | JetBrains fetch/cache provider, source-build helper, existing-build smoke helper, acceptance wrapper, dependency checker, artifact verifier, guarded revision pin wrapper, workflow | Keep verifying refreshed Linux runs against the locked JetBrains provider; use the source-built path only when refreshing `skia-revision.txt` |
-| macOS | Accepted with JetBrains `m148-8967a2e80c` artifact | JetBrains fetch/cache provider, source-build helper, existing-build smoke helper, acceptance wrapper, artifact verifier, workflow | Keep verifying refreshed macOS runs against the locked JetBrains provider |
-| Windows | Accepted with JetBrains `m148-8967a2e80c` artifact | JetBrains fetch/cache provider, existing MinGW-compatible helper, MSVC smoke/acceptance helper, artifact verifier, workflow, persistent link-config generators | Keep verifying refreshed Windows MSVC runs against the locked JetBrains provider |
+| Linux | Accepted with release `dev-6d73578a36` artifact | GitHub release fetch/cache provider, static/dynamic link modes, source-build helper, existing-build smoke helper, acceptance wrapper, dependency checker, artifact verifier, guarded revision pin wrapper, workflow | Keep verifying refreshed Linux runs against the locked release provider; use the source-built path only when refreshing `skia-revision.txt` |
+| macOS | Accepted with release `dev-6d73578a36` artifact | GitHub release fetch/cache provider, static/dynamic link modes, source-build helper, existing-build smoke helper, acceptance wrapper, artifact verifier, workflow | Keep verifying refreshed macOS runs against the locked release provider |
+| Windows | Accepted with release `dev-6d73578a36` artifact | GitHub release fetch/cache provider, static/dynamic asset selection, existing MinGW-compatible helper, MSVC smoke/acceptance helper, artifact verifier, workflow, persistent link-config generators | Keep verifying refreshed Windows MSVC runs against the locked release provider |
 
 ## Acceptance Evidence
 
@@ -166,12 +166,12 @@ these facts recorded in logs:
   temporary link rewrite.
 
 The `Real Skia Acceptance` GitHub Actions workflow is designed to produce that
-evidence with the locked JetBrains/skia provider. A successful job for one
+evidence with the locked `wzzc-dev/skia` GitHub release provider. A successful job for one
 platform can be used as that platform's acceptance evidence when all of these
 conditions are true:
 
 - the job is not a dry run and did not use the fallback workflow;
-- the job used `skia_provider=jetbrains` from `skia-provider-lock.json`;
+- the job used `skia_provider=release` from `skia-provider-lock.json`;
 - the native smoke executable log contains the full required marker set and
   `skia_mbt native smoke test passed`;
 - `scripts/verify-real-skia-artifact.*` passed for the uploaded log bundle;
@@ -197,20 +197,20 @@ Linux source-built acceptance also needs stronger revision evidence:
   `accepted_commit`, `accepted_provider=source`, and matching
   `accepted_version` before that source path is considered accepted.
 
-JetBrains acceptance needs provider evidence:
+Release acceptance needs provider evidence:
 
-- The wrapper and acceptance logs record `skia_provider=jetbrains`,
-  `jetbrains_tag`, full `skia_commit`, `skia_package`, and
-  `skia_package_sha256`.
+- The wrapper and acceptance logs record `skia_provider=release`,
+  `skia_link_mode`, `release_owner`, `release_repo`, `release_tag`,
+  `release_url`, full `skia_commit`, `skia_package`, and `skia_package_sha256`.
 - The artifact verifier checks those fields against `skia-provider-lock.json`.
-- `skia-platform-status.json` records `accepted_provider=jetbrains`,
+- `skia-platform-status.json` records `accepted_provider=release`,
   `accepted_version` equal to the locked tag, and `accepted_commit` equal to the
-  locked JetBrains commit.
+  locked release commit.
 
 ## Next Acceptance Step
 
-Linux, macOS, and Windows are accepted with the locked JetBrains
-`m148-8967a2e80c` package and should continue to run as real-Skia regression
+Linux, macOS, and Windows are accepted with the locked `wzzc-dev/skia`
+`dev-6d73578a36` package and should continue to run as real-Skia regression
 checks. The source-built Linux path remains the canonical fallback pin path when
 the repository needs to move `skia-revision.txt` away from `main`:
 
@@ -220,7 +220,7 @@ bash scripts/linux-accept-and-pin-skia.sh --install-deps --work-dir .skia-cache/
 
 On managed Ubuntu runners where dependencies are already installed, replace
 `--install-deps` with `--skip-deps-check` only when dependency provisioning is
-handled elsewhere. Keep `skia-revision.txt` as `main` for JetBrains-provider
+handled elsewhere. Keep `skia-revision.txt` as `main` for release-provider
 acceptance; pin it only after this source-built run produces a verified full
 Skia commit.
 

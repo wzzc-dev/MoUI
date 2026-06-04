@@ -12,13 +12,22 @@ on:
           - mingw
           - msvc
       skia_provider:
-        description: Skia provider to use for MSVC smoke; jetbrains downloads the locked JetBrains/skia release
+        description: Skia provider to use for MSVC smoke; release downloads the locked wzzc-dev/skia release
         type: choice
         required: false
-        default: jetbrains
+        default: release
         options:
-          - jetbrains
+          - release
           - existing
+      link_mode:
+        description: Skia release link mode
+        type: choice
+        required: false
+        default: static
+        options:
+          - static
+          - dynamic
+          - auto
       skia_include:
         description: Existing MinGW-compatible Skia checkout/include root; falls back to SKIA_MBT_SKIA_INCLUDE on the runner
         required: false
@@ -74,11 +83,12 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
           if ("${{ inputs.toolchain }}" -eq "msvc") {
-            if ("${{ inputs.skia_provider }}" -eq "jetbrains") {
-              .\scripts\fetch-jetbrains-skia.ps1 `
+            if ("${{ inputs.skia_provider }}" -eq "release") {
+              .\scripts\fetch-release-skia.ps1 `
                 -Platform windows `
                 -Arch auto `
                 -Config Release `
+                -LinkMode "${{ inputs.link_mode }}" `
                 -DryRunConfig 2>&1 | Tee-Object -FilePath logs/windows-real-skia-smoke-preflight.log
               exit 0
             }
@@ -91,6 +101,7 @@ jobs:
               SkiaLibDir = ".skia-dry-run/msvc/out/Release-x64"
               VcArch = "${{ inputs.vc_arch }}"
               SkiaProvider = "existing"
+              SkiaLinkMode = "${{ inputs.link_mode }}"
               DryRunConfig = $true
             }
             if (![string]::IsNullOrWhiteSpace("${{ inputs.vcvarsall }}")) {
@@ -139,11 +150,12 @@ jobs:
           }
           $args = @{ LogDir = "logs" }
           if ("${{ inputs.toolchain }}" -eq "msvc") {
-            if ("${{ inputs.skia_provider }}" -eq "jetbrains") {
-              $envLines = .\scripts\fetch-jetbrains-skia.ps1 `
+            if ("${{ inputs.skia_provider }}" -eq "release") {
+              $envLines = .\scripts\fetch-release-skia.ps1 `
                 -Platform windows `
                 -Arch auto `
                 -Config Release `
+                -LinkMode "${{ inputs.link_mode }}" `
                 -PrintEnv
               $envMap = @{}
               foreach ($line in $envLines) {
@@ -154,8 +166,12 @@ jobs:
               $args["SkiaRoot"] = $envMap["SKIA_MBT_SKIA_ROOT"]
               $args["SkiaInclude"] = $envMap["SKIA_MBT_SKIA_INCLUDE"]
               $args["SkiaLibDir"] = $envMap["SKIA_MBT_SKIA_LIB_DIR"]
-              $args["SkiaProvider"] = "jetbrains"
-              $args["JetBrainsTag"] = $envMap["SKIA_MBT_JETBRAINS_TAG"]
+              $args["SkiaProvider"] = "release"
+              $args["SkiaLinkMode"] = $envMap["SKIA_MBT_SKIA_LINK_MODE"]
+              $args["ReleaseOwner"] = $envMap["SKIA_MBT_RELEASE_OWNER"]
+              $args["ReleaseRepo"] = $envMap["SKIA_MBT_RELEASE_REPO"]
+              $args["ReleaseTag"] = $envMap["SKIA_MBT_RELEASE_TAG"]
+              $args["ReleaseUrl"] = $envMap["SKIA_MBT_RELEASE_URL"]
               $args["SkiaCommit"] = $envMap["SKIA_MBT_SKIA_COMMIT"]
               $args["SkiaPackage"] = $envMap["SKIA_MBT_SKIA_PACKAGE"]
               $args["SkiaPackageSha256"] = $envMap["SKIA_MBT_SKIA_PACKAGE_SHA256"]
@@ -167,6 +183,7 @@ jobs:
               }
             } else {
               $args["SkiaProvider"] = "existing"
+              $args["SkiaLinkMode"] = "${{ inputs.link_mode }}"
               if (![string]::IsNullOrWhiteSpace("${{ inputs.skia_root }}")) {
                 $args["SkiaRoot"] = "${{ inputs.skia_root }}"
               }
@@ -225,7 +242,7 @@ jobs:
         run: .\scripts\verify-real-skia-artifact.ps1 -Platform windows -LogDir logs
 
       - name: Verify pinned Skia revision match
-        if: ${{ always() && !inputs.dry_run_config && inputs.skia_provider != 'jetbrains' }}
+        if: ${{ always() && !inputs.dry_run_config && inputs.skia_provider == 'existing' }}
         shell: pwsh
         run: .\scripts\verify-skia-revision-pin.ps1 -AcceptanceLog logs\windows-real-skia-acceptance.log -SkipIfUnpinned
 
@@ -277,6 +294,7 @@ jobs:
             "- Dry run only: ${{ inputs.dry_run_config }}"
             "- Toolchain: ${{ inputs.toolchain }}"
             "- Skia provider: ${{ inputs.skia_provider }}"
+            "- Skia link mode: ${{ inputs.link_mode }}"
             "- Existing Skia include: ${{ inputs.skia_include }}"
             "- Existing Skia lib dir: ${{ inputs.skia_lib_dir }}"
             "- MSVC Skia root: ${{ inputs.skia_root }}"

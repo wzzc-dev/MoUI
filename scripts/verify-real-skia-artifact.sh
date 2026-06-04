@@ -282,6 +282,111 @@ PY
   done
 fi
 
+if [[ "$wrapper_provider" == "release" ]]; then
+  for field in skia_provider= skia_link_mode= release_owner= release_repo= release_tag= release_url= skia_commit= skia_package= skia_package_sha256=; do
+    require_log_field "$wrapper_log" "$field" "release wrapper log is missing required field"
+  done
+  if ! grep -Eq '^[[:space:]]*skia_link_mode=(static|dynamic)[[:space:]]*$' "$wrapper_log"; then
+    echo "release wrapper log is missing resolved skia_link_mode=static|dynamic" >&2
+    exit 1
+  fi
+  if ! grep -Eq '^[[:space:]]*skia_commit=[0-9a-fA-F]{40}[[:space:]]*$' "$wrapper_log"; then
+    echo "release wrapper log is missing a full 40-character skia_commit hash" >&2
+    exit 1
+  fi
+  if ! grep -Eq '^[[:space:]]*skia_package_sha256=[0-9a-fA-F]{64}[[:space:]]*$' "$wrapper_log"; then
+    echo "release wrapper log is missing a full 64-character skia_package_sha256 hash" >&2
+    exit 1
+  fi
+
+  python3 - \
+    "$repo_root/skia-provider-lock.json" \
+    "$platform" \
+    "$(extract_field "$wrapper_log" release_owner)" \
+    "$(extract_field "$wrapper_log" release_repo)" \
+    "$(extract_field "$wrapper_log" release_tag)" \
+    "$(extract_field "$wrapper_log" release_url)" \
+    "$(extract_field "$wrapper_log" skia_commit)" \
+    "$(extract_field "$wrapper_log" skia_package)" \
+    "$(extract_field "$wrapper_log" skia_package_sha256)" \
+    "$(extract_field "$wrapper_log" skia_link_mode)" <<'PY'
+import json
+import pathlib
+import sys
+
+manifest_path = pathlib.Path(sys.argv[1])
+platform = sys.argv[2]
+owner = sys.argv[3]
+repo = sys.argv[4]
+tag = sys.argv[5]
+release_url = sys.argv[6]
+commit = sys.argv[7].lower()
+package = sys.argv[8]
+sha256 = sys.argv[9].lower()
+link_mode = sys.argv[10]
+
+def fail(message: str) -> None:
+    print(message, file=sys.stderr)
+    raise SystemExit(1)
+
+try:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+except FileNotFoundError:
+    fail(f"release provider manifest is missing: {manifest_path}")
+except json.JSONDecodeError as error:
+    fail(f"release provider manifest is invalid: {error}")
+
+provider = manifest.get("providers", {}).get("release")
+if not isinstance(provider, dict):
+    fail("release provider manifest is missing providers.release")
+for field, actual in (
+    ("owner", owner),
+    ("repo", repo),
+    ("tag", tag),
+    ("release_url", release_url),
+):
+    expected = str(provider.get(field, ""))
+    if actual != expected:
+        fail(f"release {field} mismatch: log={actual} manifest={expected}")
+if commit != str(provider.get("commit", "")).lower():
+    fail(f"release commit mismatch: log={commit} manifest={provider.get('commit')}")
+
+assets = provider.get("assets", {}).get(platform, {})
+matches = []
+for by_config in assets.values():
+    if isinstance(by_config, dict):
+        for by_arch in by_config.values():
+            if isinstance(by_arch, dict):
+                asset = by_arch.get(link_mode)
+                if isinstance(asset, dict) and asset.get("name") == package:
+                    matches.append(asset)
+if not matches:
+    fail(
+        f"release package is not locked for platform={platform} "
+        f"link_mode={link_mode}: {package}"
+    )
+if not any(str(asset.get("sha256", "")).lower() == sha256 for asset in matches):
+    fail(f"release package SHA256 mismatch for {package}: {sha256}")
+PY
+
+  for field in release_owner release_repo release_tag release_url skia_commit skia_package skia_package_sha256 skia_link_mode; do
+    wrapper_value="$(extract_field "$wrapper_log" "$field" || true)"
+    acceptance_value="$(extract_field "$acceptance_log" "$field" || true)"
+    case "$field" in
+      skia_commit|skia_package_sha256)
+        wrapper_value="$(printf '%s' "$wrapper_value" | tr '[:upper:]' '[:lower:]')"
+        acceptance_value="$(printf '%s' "$acceptance_value" | tr '[:upper:]' '[:lower:]')"
+        ;;
+    esac
+    if [[ "$wrapper_value" != "$acceptance_value" ]]; then
+      echo "wrapper and acceptance logs disagree on release $field" >&2
+      echo "  wrapper_$field=$wrapper_value" >&2
+      echo "  acceptance_$field=$acceptance_value" >&2
+      exit 1
+    fi
+  done
+fi
+
 extract_commit() {
   local log_path="$1"
   grep -E '^[[:space:]]*skia_commit=[0-9a-fA-F]{40}[[:space:]]*$' "$log_path" \

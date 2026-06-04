@@ -9,7 +9,12 @@ Options:
   --skia-include PATH    Skia checkout or include root containing Skia headers.
   --skia-lib-dir PATH    Directory containing libskia.a or libskia.dylib.
   --skia-lib NAME        Library name without lib prefix, default: skia.
-  --skia-provider NAME   Provider label to record in logs, e.g. jetbrains.
+  --link-mode MODE       static|dynamic|auto. Default: static.
+  --skia-provider NAME   Provider label to record in logs, e.g. release.
+  --release-owner OWNER  GitHub release owner to record when provider is release.
+  --release-repo REPO    GitHub release repository to record when provider is release.
+  --release-tag TAG      GitHub release tag to record when provider is release.
+  --release-url URL      GitHub release URL to record when provider is release.
   --jetbrains-tag TAG    JetBrains/skia tag to record when provider is jetbrains.
   --skia-commit HASH     Full Skia commit to record in logs.
   --skia-package NAME    Skia binary package name to record in logs.
@@ -37,8 +42,10 @@ proves the real backend path reached the end of the test.
 
 Environment defaults:
   SKIA_MBT_SKIA_INCLUDE, SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB,
-  SKIA_MBT_SKIA_PROVIDER, SKIA_MBT_JETBRAINS_TAG, SKIA_MBT_SKIA_COMMIT,
-  SKIA_MBT_SKIA_PACKAGE, SKIA_MBT_SKIA_PACKAGE_SHA256,
+  SKIA_MBT_SKIA_LINK_MODE, SKIA_MBT_MACOS_LINK_MODE,
+  SKIA_MBT_SKIA_PROVIDER, SKIA_MBT_RELEASE_OWNER, SKIA_MBT_RELEASE_REPO,
+  SKIA_MBT_RELEASE_TAG, SKIA_MBT_RELEASE_URL, SKIA_MBT_JETBRAINS_TAG,
+  SKIA_MBT_SKIA_COMMIT, SKIA_MBT_SKIA_PACKAGE, SKIA_MBT_SKIA_PACKAGE_SHA256,
   SKIA_MBT_ENABLE_ASAN, SKIA_MBT_EXTRA_CC_FLAGS, and
   SKIA_MBT_EXTRA_LINK_FLAGS are used when the matching command-line option is
   omitted.
@@ -59,7 +66,12 @@ normalize_bool() {
 skia_include="${SKIA_MBT_SKIA_INCLUDE:-}"
 skia_lib_dir="${SKIA_MBT_SKIA_LIB_DIR:-}"
 skia_lib="${SKIA_MBT_SKIA_LIB:-skia}"
+skia_link_mode="${SKIA_MBT_SKIA_LINK_MODE:-${SKIA_MBT_MACOS_LINK_MODE:-static}}"
 skia_provider="${SKIA_MBT_SKIA_PROVIDER:-}"
+release_owner="${SKIA_MBT_RELEASE_OWNER:-}"
+release_repo="${SKIA_MBT_RELEASE_REPO:-}"
+release_tag="${SKIA_MBT_RELEASE_TAG:-}"
+release_url="${SKIA_MBT_RELEASE_URL:-}"
 jetbrains_tag="${SKIA_MBT_JETBRAINS_TAG:-}"
 skia_commit="${SKIA_MBT_SKIA_COMMIT:-}"
 skia_package="${SKIA_MBT_SKIA_PACKAGE:-}"
@@ -85,8 +97,28 @@ while [[ $# -gt 0 ]]; do
       skia_lib="${2:-}"
       shift 2
       ;;
+    --link-mode)
+      skia_link_mode="${2:-}"
+      shift 2
+      ;;
     --skia-provider)
       skia_provider="${2:-}"
+      shift 2
+      ;;
+    --release-owner)
+      release_owner="${2:-}"
+      shift 2
+      ;;
+    --release-repo)
+      release_repo="${2:-}"
+      shift 2
+      ;;
+    --release-tag)
+      release_tag="${2:-}"
+      shift 2
+      ;;
+    --release-url)
+      release_url="${2:-}"
       shift 2
       ;;
     --jetbrains-tag)
@@ -142,6 +174,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 enable_asan="$(normalize_bool "$enable_asan")"
+case "$skia_link_mode" in
+  static|dynamic|auto) ;;
+  *) echo "unsupported --link-mode: $skia_link_mode" >&2; usage >&2; exit 2 ;;
+esac
 
 if [[ -z "$skia_include" || -z "$skia_lib_dir" ]]; then
   usage >&2
@@ -169,10 +205,38 @@ if [[ ! -f "$include_path/include/core/SkSurface.h" ]]; then
   exit 1
 fi
 
-if [[ ! -f "$lib_path/lib$skia_lib.a" && ! -f "$lib_path/lib$skia_lib.dylib" ]]; then
+static_lib="$lib_path/lib$skia_lib.a"
+dynamic_lib="$lib_path/lib$skia_lib.dylib"
+if [[ ! -f "$static_lib" && ! -f "$dynamic_lib" ]]; then
   echo "Skia library lib$skia_lib.a or lib$skia_lib.dylib was not found in $lib_path" >&2
   exit 1
 fi
+resolved_link_mode="$skia_link_mode"
+if [[ "$resolved_link_mode" == "auto" ]]; then
+  if [[ -f "$dynamic_lib" ]]; then
+    resolved_link_mode="dynamic"
+  else
+    resolved_link_mode="static"
+  fi
+fi
+case "$resolved_link_mode" in
+  dynamic)
+    if [[ ! -f "$dynamic_lib" ]]; then
+      echo "Requested dynamic Skia link mode, but $dynamic_lib was not found" >&2
+      exit 1
+    fi
+    skia_library_link_flags="$dynamic_lib"
+    skia_runtime_link_flags="-Wl,-rpath,$lib_path"
+    ;;
+  static)
+    if [[ ! -f "$static_lib" ]]; then
+      echo "Requested static Skia link mode, but $static_lib was not found" >&2
+      exit 1
+    fi
+    skia_library_link_flags="$static_lib"
+    skia_runtime_link_flags=""
+    ;;
+esac
 if [[ $enable_skshaper -eq 1 ]]; then
   if [[ ! -f "$include_path/modules/skshaper/include/SkShaper.h" ]]; then
     echo "SkShaper header was not found under $include_path/modules/skshaper/include" >&2
@@ -203,8 +267,21 @@ echo "  cxx=$(${CXX:-c++} --version 2>/dev/null | head -n 1 || true)"
 echo "  skia_include=$include_path"
 echo "  skia_lib_dir=$lib_path"
 echo "  skia_lib=$skia_lib"
+echo "  skia_link_mode=$resolved_link_mode"
 if [[ -n "$skia_provider" ]]; then
   echo "  skia_provider=$skia_provider"
+fi
+if [[ -n "$release_owner" ]]; then
+  echo "  release_owner=$release_owner"
+fi
+if [[ -n "$release_repo" ]]; then
+  echo "  release_repo=$release_repo"
+fi
+if [[ -n "$release_tag" ]]; then
+  echo "  release_tag=$release_tag"
+fi
+if [[ -n "$release_url" ]]; then
+  echo "  release_url=$release_url"
 fi
 if [[ -n "$jetbrains_tag" ]]; then
   echo "  jetbrains_tag=$jetbrains_tag"
@@ -258,7 +335,10 @@ if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
-link_flags="-L$lib_path -l$skia_lib -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices"
+link_flags="$skia_library_link_flags -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices"
+if [[ -n "$skia_runtime_link_flags" ]]; then
+  link_flags="$link_flags $skia_runtime_link_flags"
+fi
 if [[ $enable_skshaper -eq 1 ]]; then
   link_flags="$link_flags -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu"
 fi
@@ -307,6 +387,7 @@ bash "$repo_root/scripts/configure-macos-native-pkg.sh" \
   --skia-include "$include_path" \
   --skia-lib-dir "$lib_path" \
   --skia-lib "$skia_lib" \
+  --link-mode "$resolved_link_mode" \
   --extra-cc-flags "$native_extra_cc_flags" \
   --extra-link-flags "$native_extra_link_flags" \
   --output "$native_pkg" \

@@ -12,16 +12,24 @@ Options:
                         --skia-lib-dir, selects existing provider.
   --skia-lib-dir PATH   Existing directory containing libskia.a or libskia.dylib.
   --skia-lib NAME       Library name without lib prefix, default: skia.
-  --skia-provider source|existing|jetbrains
-                        Skia acquisition mode. Default: jetbrains unless
+  --skia-provider source|existing|release|jetbrains
+                        Skia acquisition mode. Default: release unless
                         --skia-include/--skia-lib-dir select existing.
+                        jetbrains is accepted as a compatibility alias for release.
+  --link-mode static|dynamic|auto
+                        Skia release link mode. Default: static.
   --skia-rev REV        Skia git revision, branch, or tag to checkout.
                         Default: first non-comment line of skia-revision.txt.
-  --jetbrains-tag TAG   JetBrains/skia release tag. Default: m148-8967a2e80c.
+  --release-tag TAG     GitHub release tag. Default from skia-provider-lock.json.
+  --release-config Release|Debug
+                        GitHub release package configuration. Default: Release.
+  --release-cache-dir PATH
+                        GitHub release cache root. Default: .skia-cache/release.
+  --jetbrains-tag TAG   Compatibility alias; ignored by the release provider.
   --jetbrains-config Release|Debug
-                        JetBrains/skia package configuration. Default: Release.
+                        Compatibility alias for --release-config.
   --jetbrains-cache-dir PATH
-                        JetBrains/skia cache root. Default: .skia-cache/jetbrains.
+                        Compatibility alias for --release-cache-dir.
   --extra-gn-args STR   Extra GN args appended to the source-built Skia build.
   --extra-cc-flags STR  Extra C/C++ flags appended when linking the MoonBit stub.
   --extra-link-flags STR
@@ -39,9 +47,16 @@ Options:
                         then exit without fetching/building Skia or rewriting package files.
   -h, --help            Show this help.
 
-This wrapper mirrors scripts/linux-real-skia-smoke.sh for macOS. It consumes
-JetBrains provider output and delegates final native/moon.pkg generation to
-scripts/macos-skia-smoke.sh.
+Environment defaults:
+  SKIA_MBT_SKIA_INCLUDE, SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB,
+  SKIA_MBT_SKIA_PROVIDER, SKIA_MBT_PROVIDER, SKIA_MBT_SKIA_LINK_MODE,
+  SKIA_MBT_MACOS_LINK_MODE, SKIA_MBT_SKIA_REV, SKIA_MBT_RELEASE_TAG,
+  SKIA_MBT_RELEASE_CONFIG, SKIA_MBT_RELEASE_CACHE_DIR,
+  SKIA_MBT_JETBRAINS_TAG, SKIA_MBT_JETBRAINS_CONFIG,
+  SKIA_MBT_JETBRAINS_CACHE_DIR, SKIA_MBT_EXTRA_GN_ARGS,
+  SKIA_MBT_ENABLE_ASAN, SKIA_MBT_EXTRA_CC_FLAGS, and
+  SKIA_MBT_EXTRA_LINK_FLAGS are used when the matching command-line option is
+  omitted.
 EOF
 }
 
@@ -65,14 +80,15 @@ skia_provider_explicit=0
 if [[ -n "${SKIA_MBT_SKIA_PROVIDER:-}${SKIA_MBT_PROVIDER:-}" ]]; then
   skia_provider_explicit=1
 fi
+skia_link_mode="${SKIA_MBT_SKIA_LINK_MODE:-${SKIA_MBT_MACOS_LINK_MODE:-static}}"
 skia_rev="${SKIA_MBT_SKIA_REV:-main}"
 skia_rev_explicit=0
 if [[ -n "${SKIA_MBT_SKIA_REV:-}" ]]; then
   skia_rev_explicit=1
 fi
-jetbrains_tag="${SKIA_MBT_JETBRAINS_TAG:-m148-8967a2e80c}"
-jetbrains_config="${SKIA_MBT_JETBRAINS_CONFIG:-Release}"
-jetbrains_cache_dir="${SKIA_MBT_JETBRAINS_CACHE_DIR:-.skia-cache/jetbrains}"
+release_tag="${SKIA_MBT_RELEASE_TAG:-}"
+release_config="${SKIA_MBT_RELEASE_CONFIG:-${SKIA_MBT_JETBRAINS_CONFIG:-Release}}"
+release_cache_dir="${SKIA_MBT_RELEASE_CACHE_DIR:-${SKIA_MBT_JETBRAINS_CACHE_DIR:-.skia-cache/release}}"
 extra_gn_args="${SKIA_MBT_EXTRA_GN_ARGS:-}"
 extra_cc_flags="${SKIA_MBT_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${SKIA_MBT_EXTRA_LINK_FLAGS:-}"
@@ -114,21 +130,28 @@ while [[ $# -gt 0 ]]; do
       skia_provider_explicit=1
       shift 2
       ;;
+    --link-mode)
+      skia_link_mode="${2:-}"
+      shift 2
+      ;;
     --skia-rev)
       skia_rev="${2:-}"
       skia_rev_explicit=1
       shift 2
       ;;
+    --release-tag)
+      release_tag="${2:-}"
+      shift 2
+      ;;
+    --release-config|--jetbrains-config)
+      release_config="${2:-}"
+      shift 2
+      ;;
+    --release-cache-dir|--jetbrains-cache-dir)
+      release_cache_dir="${2:-}"
+      shift 2
+      ;;
     --jetbrains-tag)
-      jetbrains_tag="${2:-}"
-      shift 2
-      ;;
-    --jetbrains-config)
-      jetbrains_config="${2:-}"
-      shift 2
-      ;;
-    --jetbrains-cache-dir)
-      jetbrains_cache_dir="${2:-}"
       shift 2
       ;;
     --extra-gn-args)
@@ -182,6 +205,14 @@ while [[ $# -gt 0 ]]; do
 done
 
 enable_asan="$(normalize_bool "$enable_asan")"
+case "$skia_link_mode" in
+  static|dynamic|auto) ;;
+  *) echo "unsupported --link-mode: $skia_link_mode" >&2; usage >&2; exit 2 ;;
+esac
+case "$release_config" in
+  Release|Debug) ;;
+  *) echo "unsupported --release-config: $release_config" >&2; exit 2 ;;
+esac
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ $skia_rev_explicit -eq 0 && -f "$repo_root/skia-revision.txt" ]]; then
@@ -199,21 +230,23 @@ if [[ $skia_provider_explicit -eq 0 ]]; then
   if [[ -n "$skia_include" || -n "$skia_lib_dir" ]]; then
     skia_provider="existing"
   else
-    skia_provider="jetbrains"
+    skia_provider="release"
   fi
 fi
+if [[ "$skia_provider" == "jetbrains" ]]; then
+  skia_provider="release"
+fi
 case "$skia_provider" in
-  source|existing|jetbrains) ;;
+  source|existing|release) ;;
   *) echo "unsupported --skia-provider: $skia_provider" >&2; exit 2 ;;
 esac
-case "$jetbrains_config" in
-  Release|Debug) ;;
-  *) echo "unsupported --jetbrains-config: $jetbrains_config" >&2; exit 2 ;;
-esac
 
-jetbrains_package=""
-jetbrains_package_sha256=""
-jetbrains_commit=""
+release_owner=""
+release_repo=""
+release_url=""
+release_package=""
+release_package_sha256=""
+release_commit=""
 
 if [[ "$skia_provider" == "existing" ]]; then
   if [[ -z "$skia_include" || -z "$skia_lib_dir" ]]; then
@@ -233,33 +266,40 @@ elif [[ "$skia_provider" == "source" ]]; then
   smoke_lib_dir="$resolved_work_dir/skia/out/moonbit-smoke"
 else
   if [[ -n "$skia_include" || -n "$skia_lib_dir" ]]; then
-    echo "--skia-provider jetbrains cannot be combined with --skia-include/--skia-lib-dir" >&2
+    echo "--skia-provider release cannot be combined with --skia-include/--skia-lib-dir" >&2
     exit 2
   fi
   fetch_args=(
     --platform macos
     --arch auto
-    --config "$jetbrains_config"
-    --tag "$jetbrains_tag"
-    --cache-dir "$jetbrains_cache_dir"
+    --config "$release_config"
+    --link-mode "$skia_link_mode"
+    --cache-dir "$release_cache_dir"
     --print-env
   )
+  if [[ -n "$release_tag" ]]; then
+    fetch_args+=(--tag "$release_tag")
+  fi
   if [[ $dry_run_config -eq 1 ]]; then
     fetch_args+=(--dry-run-config)
   fi
-  fetch_output="$(bash "$repo_root/scripts/fetch-jetbrains-skia.sh" "${fetch_args[@]}")"
+  fetch_output="$(bash "$repo_root/scripts/fetch-release-skia.sh" "${fetch_args[@]}")"
   get_fetch_value() {
     local key="$1"
     printf '%s\n' "$fetch_output" | sed -n "s/^${key}=//p" | tail -n 1
   }
-  smoke_mode="JetBrains Skia binary"
+  smoke_mode="GitHub release Skia binary"
   smoke_include="$(get_fetch_value SKIA_MBT_SKIA_INCLUDE)"
   smoke_lib_dir="$(get_fetch_value SKIA_MBT_SKIA_LIB_DIR)"
   skia_lib="$(get_fetch_value SKIA_MBT_SKIA_LIB)"
-  jetbrains_tag="$(get_fetch_value SKIA_MBT_JETBRAINS_TAG)"
-  jetbrains_commit="$(get_fetch_value SKIA_MBT_SKIA_COMMIT)"
-  jetbrains_package="$(get_fetch_value SKIA_MBT_SKIA_PACKAGE)"
-  jetbrains_package_sha256="$(get_fetch_value SKIA_MBT_SKIA_PACKAGE_SHA256)"
+  skia_link_mode="$(get_fetch_value SKIA_MBT_SKIA_LINK_MODE)"
+  release_owner="$(get_fetch_value SKIA_MBT_RELEASE_OWNER)"
+  release_repo="$(get_fetch_value SKIA_MBT_RELEASE_REPO)"
+  release_tag="$(get_fetch_value SKIA_MBT_RELEASE_TAG)"
+  release_url="$(get_fetch_value SKIA_MBT_RELEASE_URL)"
+  release_commit="$(get_fetch_value SKIA_MBT_SKIA_COMMIT)"
+  release_package="$(get_fetch_value SKIA_MBT_SKIA_PACKAGE)"
+  release_package_sha256="$(get_fetch_value SKIA_MBT_SKIA_PACKAGE_SHA256)"
   if [[ $extra_cc_flags_explicit -eq 0 ]]; then
     extra_cc_flags="$(get_fetch_value SKIA_MBT_EXTRA_CC_FLAGS)"
   fi
@@ -270,13 +310,17 @@ fi
 
 echo "macOS real Skia smoke mode: $smoke_mode"
 echo "  skia_provider=$skia_provider"
-if [[ "$skia_provider" == "jetbrains" ]]; then
-  echo "  jetbrains_tag=$jetbrains_tag"
-  echo "  skia_commit=$jetbrains_commit"
-  echo "  skia_package=$jetbrains_package"
-  echo "  skia_package_sha256=$jetbrains_package_sha256"
+echo "  skia_link_mode=$skia_link_mode"
+if [[ "$skia_provider" == "release" ]]; then
+  echo "  release_owner=$release_owner"
+  echo "  release_repo=$release_repo"
+  echo "  release_tag=$release_tag"
+  echo "  release_url=$release_url"
+  echo "  skia_commit=$release_commit"
+  echo "  skia_package=$release_package"
+  echo "  skia_package_sha256=$release_package_sha256"
 fi
-if [[ "$skia_provider" == "existing" || "$skia_provider" == "jetbrains" ]]; then
+if [[ "$skia_provider" == "existing" || "$skia_provider" == "release" ]]; then
   if [[ -n "$extra_gn_args" ]]; then
     echo "  note: extra_gn_args is ignored unless --skia-provider source is selected"
   fi
@@ -354,14 +398,18 @@ smoke_args=(
   --skia-include "$smoke_include"
   --skia-lib-dir "$smoke_lib_dir"
   --skia-lib "$skia_lib"
+  --link-mode "$skia_link_mode"
   --skia-provider "$skia_provider"
 )
-if [[ "$skia_provider" == "jetbrains" ]]; then
+if [[ "$skia_provider" == "release" ]]; then
   smoke_args+=(
-    --jetbrains-tag "$jetbrains_tag"
-    --skia-commit "$jetbrains_commit"
-    --skia-package "$jetbrains_package"
-    --skia-package-sha256 "$jetbrains_package_sha256"
+    --release-owner "$release_owner"
+    --release-repo "$release_repo"
+    --release-tag "$release_tag"
+    --release-url "$release_url"
+    --skia-commit "$release_commit"
+    --skia-package "$release_package"
+    --skia-package-sha256 "$release_package_sha256"
   )
 fi
 if [[ -n "$extra_cc_flags" ]]; then
@@ -383,8 +431,7 @@ if [[ $dry_run_config -eq 1 ]]; then
   fi
   if [[ "$skia_provider" == "source" ]]; then
     bash "$repo_root/scripts/macos-build-skia.sh" --dry-run-config "${build_args[@]}"
-  fi
-  if [[ "$skia_provider" == "existing" ]]; then
+  elif [[ "$skia_provider" == "existing" ]]; then
     bash "$repo_root/scripts/macos-skia-smoke.sh" --dry-run-config "${smoke_args[@]}"
   fi
   echo "Dry run complete; package files were not modified and no build was run."

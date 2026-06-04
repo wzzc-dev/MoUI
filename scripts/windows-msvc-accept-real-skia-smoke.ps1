@@ -7,6 +7,11 @@ param(
   [string] $VcVarsAll = $env:VCVARSALL,
   [string] $VcArch = "x64",
   [string] $SkiaProvider = $env:SKIA_MBT_SKIA_PROVIDER,
+  [string] $SkiaLinkMode = $(if ($env:SKIA_MBT_SKIA_LINK_MODE) { $env:SKIA_MBT_SKIA_LINK_MODE } else { "static" }),
+  [string] $ReleaseOwner = $env:SKIA_MBT_RELEASE_OWNER,
+  [string] $ReleaseRepo = $env:SKIA_MBT_RELEASE_REPO,
+  [string] $ReleaseTag = $env:SKIA_MBT_RELEASE_TAG,
+  [string] $ReleaseUrl = $env:SKIA_MBT_RELEASE_URL,
   [string] $JetBrainsTag = $env:SKIA_MBT_JETBRAINS_TAG,
   [string] $SkiaCommit = $env:SKIA_MBT_SKIA_COMMIT,
   [string] $SkiaPackage = $env:SKIA_MBT_SKIA_PACKAGE,
@@ -81,6 +86,11 @@ Write-Host "  acceptance_log=$acceptanceLog"
   -VcVarsAll $VcVarsAll `
   -VcArch $VcArch `
   -SkiaProvider $SkiaProvider `
+  -SkiaLinkMode $SkiaLinkMode `
+  -ReleaseOwner $ReleaseOwner `
+  -ReleaseRepo $ReleaseRepo `
+  -ReleaseTag $ReleaseTag `
+  -ReleaseUrl $ReleaseUrl `
   -JetBrainsTag $JetBrainsTag `
   -SkiaCommit $SkiaCommit `
   -SkiaPackage $SkiaPackage `
@@ -102,6 +112,11 @@ try {
     -VcVarsAll $VcVarsAll `
     -VcArch $VcArch `
     -SkiaProvider $SkiaProvider `
+    -SkiaLinkMode $SkiaLinkMode `
+    -ReleaseOwner $ReleaseOwner `
+    -ReleaseRepo $ReleaseRepo `
+    -ReleaseTag $ReleaseTag `
+    -ReleaseUrl $ReleaseUrl `
     -JetBrainsTag $JetBrainsTag `
     -SkiaCommit $SkiaCommit `
     -SkiaPackage $SkiaPackage `
@@ -160,6 +175,11 @@ if ($smokeStatus -eq 0) {
 
 $skiaCommit = ""
 $skiaProvider = ""
+$skiaLinkMode = ""
+$releaseOwner = ""
+$releaseRepo = ""
+$releaseTag = ""
+$releaseUrl = ""
 $jetbrainsTag = ""
 $skiaPackage = ""
 $skiaPackageSha256 = ""
@@ -171,6 +191,26 @@ if (Test-Path -LiteralPath $wrapperLog) {
   $providerLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*skia_provider=' | Select-Object -Last 1
   if ($providerLine) {
     $skiaProvider = $providerLine.Line -replace '^\s*skia_provider=', ''
+  }
+  $linkModeLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*skia_link_mode=' | Select-Object -Last 1
+  if ($linkModeLine) {
+    $skiaLinkMode = $linkModeLine.Line -replace '^\s*skia_link_mode=', ''
+  }
+  $releaseOwnerLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*release_owner=' | Select-Object -Last 1
+  if ($releaseOwnerLine) {
+    $releaseOwner = $releaseOwnerLine.Line -replace '^\s*release_owner=', ''
+  }
+  $releaseRepoLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*release_repo=' | Select-Object -Last 1
+  if ($releaseRepoLine) {
+    $releaseRepo = $releaseRepoLine.Line -replace '^\s*release_repo=', ''
+  }
+  $releaseTagLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*release_tag=' | Select-Object -Last 1
+  if ($releaseTagLine) {
+    $releaseTag = $releaseTagLine.Line -replace '^\s*release_tag=', ''
+  }
+  $releaseUrlLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*release_url=' | Select-Object -Last 1
+  if ($releaseUrlLine) {
+    $releaseUrl = $releaseUrlLine.Line -replace '^\s*release_url=', ''
   }
   $tagLine = Select-String -LiteralPath $wrapperLog -Pattern '^\s*jetbrains_tag=' | Select-Object -Last 1
   if ($tagLine) {
@@ -191,6 +231,21 @@ if ($skiaCommit.Trim().Length -eq 0) {
 if ($skiaProvider.Trim().Length -eq 0) {
   $skiaProvider = "unknown"
 }
+if ($skiaLinkMode.Trim().Length -eq 0) {
+  $skiaLinkMode = "unknown"
+}
+if ($releaseOwner.Trim().Length -eq 0) {
+  $releaseOwner = "unknown"
+}
+if ($releaseRepo.Trim().Length -eq 0) {
+  $releaseRepo = "unknown"
+}
+if ($releaseTag.Trim().Length -eq 0) {
+  $releaseTag = "unknown"
+}
+if ($releaseUrl.Trim().Length -eq 0) {
+  $releaseUrl = "unknown"
+}
 if ($jetbrainsTag.Trim().Length -eq 0) {
   $jetbrainsTag = "unknown"
 }
@@ -207,6 +262,11 @@ if ($skiaPackageSha256.Trim().Length -eq 0) {
   "  native_smoke_marker=$markerStatus"
   "  native_pkg_restore=$restoreStatus"
   "  skia_provider=$skiaProvider"
+  "  skia_link_mode=$skiaLinkMode"
+  "  release_owner=$releaseOwner"
+  "  release_repo=$releaseRepo"
+  "  release_tag=$releaseTag"
+  "  release_url=$releaseUrl"
   "  jetbrains_tag=$jetbrainsTag"
   "  skia_commit=$skiaCommit"
   "  skia_package=$skiaPackage"
@@ -224,6 +284,7 @@ if ($env:GITHUB_ENV) {
     "restore_status=$restoreStatus"
     "windows_msvc_acceptance_log=$acceptanceLog"
     "windows_skia_provider=$skiaProvider"
+    "windows_skia_link_mode=$skiaLinkMode"
     "windows_skia_commit=$skiaCommit"
   ) | Add-Content -LiteralPath $env:GITHUB_ENV
 }

@@ -134,12 +134,22 @@ fi
 
 skia_commit=""
 skia_provider=""
+skia_link_mode=""
+release_owner=""
+release_repo=""
+release_tag=""
+release_url=""
 jetbrains_tag=""
 skia_package=""
 skia_package_sha256=""
 if [[ -f "$wrapper_log" ]]; then
   skia_commit="$(grep -E '^[[:space:]]*skia_commit=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_commit=//' || true)"
   skia_provider="$(grep -E '^[[:space:]]*skia_provider=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_provider=//' || true)"
+  skia_link_mode="$(grep -E '^[[:space:]]*skia_link_mode=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_link_mode=//' || true)"
+  release_owner="$(grep -E '^[[:space:]]*release_owner=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*release_owner=//' || true)"
+  release_repo="$(grep -E '^[[:space:]]*release_repo=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*release_repo=//' || true)"
+  release_tag="$(grep -E '^[[:space:]]*release_tag=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*release_tag=//' || true)"
+  release_url="$(grep -E '^[[:space:]]*release_url=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*release_url=//' || true)"
   jetbrains_tag="$(grep -E '^[[:space:]]*jetbrains_tag=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*jetbrains_tag=//' || true)"
   skia_package="$(grep -E '^[[:space:]]*skia_package=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_package=//' || true)"
   skia_package_sha256="$(grep -E '^[[:space:]]*skia_package_sha256=' "$wrapper_log" | tail -n 1 | sed 's/^[[:space:]]*skia_package_sha256=//' || true)"
@@ -151,6 +161,11 @@ Linux real Skia acceptance result:
   native_smoke_marker=$marker_status
   native_pkg_restore=$restore_status
   skia_provider=${skia_provider:-unknown}
+  skia_link_mode=${skia_link_mode:-unknown}
+  release_owner=${release_owner:-unknown}
+  release_repo=${release_repo:-unknown}
+  release_tag=${release_tag:-unknown}
+  release_url=${release_url:-unknown}
   jetbrains_tag=${jetbrains_tag:-unknown}
   skia_commit=${skia_commit:-unknown}
   skia_package=${skia_package:-unknown}
@@ -168,6 +183,7 @@ if [[ -n "${GITHUB_ENV:-}" ]]; then
     echo "restore_status=$restore_status"
     echo "linux_acceptance_log=$acceptance_log"
     echo "linux_skia_provider=${skia_provider:-unknown}"
+    echo "linux_skia_link_mode=${skia_link_mode:-unknown}"
     echo "linux_skia_commit=${skia_commit:-unknown}"
   } >> "$GITHUB_ENV"
 fi

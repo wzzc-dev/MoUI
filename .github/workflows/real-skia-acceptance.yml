@@ -21,9 +21,13 @@ permissions:
 
 jobs:
   linux:
-    name: Linux JetBrains Skia acceptance
+    name: Linux release Skia acceptance (${{ matrix.link_mode }})
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        link_mode: [ static, dynamic ]
 
     steps:
       - name: Checkout code
@@ -51,14 +55,15 @@ jobs:
         shell: bash
         run: bash scripts/install-linux-smoke-deps.sh --check
 
-      - name: Cache JetBrains Skia
+      - name: Cache release Skia
         uses: actions/cache@v4
         with:
-          path: .skia-cache/jetbrains
-          key: jetbrains-skia-linux-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
+          path: .skia-cache/release
+          key: release-skia-linux-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
           restore-keys: |
-            jetbrains-skia-linux-${{ runner.arch }}-
-            jetbrains-skia-linux-
+            release-skia-linux-${{ matrix.link_mode }}-${{ runner.arch }}-
+            release-skia-linux-${{ matrix.link_mode }}-
+            release-skia-linux-
 
       - name: Run real Skia acceptance
         shell: bash
@@ -66,11 +71,13 @@ jobs:
           mkdir -p logs
           set -o pipefail
           bash scripts/linux-real-skia-smoke.sh \
-            --skia-provider jetbrains \
+            --skia-provider release \
+            --link-mode "${{ matrix.link_mode }}" \
             --dry-run-config 2>&1 | tee logs/linux-real-skia-smoke-preflight.log
           bash scripts/linux-accept-real-skia-smoke.sh \
             --log-dir logs \
-            --skia-provider jetbrains
+            --skia-provider release \
+            --link-mode "${{ matrix.link_mode }}"
 
       - name: Verify real Skia artifact bundle
         shell: bash
@@ -84,7 +91,7 @@ jobs:
           bash scripts/accept-platform-status.sh \
             --platform linux \
             --log-dir logs \
-            --artifact-label "github-actions:${GITHUB_RUN_ID}:linux-real-skia-acceptance"
+            --artifact-label "github-actions:${GITHUB_RUN_ID}:linux-real-skia-acceptance:${{ matrix.link_mode }}"
           git diff -- skia-platform-status.json > logs/linux-platform-acceptance.patch
           cp "$before_status" skia-platform-status.json
           rm -f "$before_status"
@@ -99,7 +106,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: linux-real-skia-acceptance-log
+          name: linux-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
             logs/linux-real-skia-smoke-preflight.log
             logs/linux-skia-build.log
@@ -110,9 +117,13 @@ jobs:
           if-no-files-found: warn
 
   macos:
-    name: macOS JetBrains Skia acceptance
+    name: macOS release Skia acceptance (${{ matrix.link_mode }})
     runs-on: macos-latest
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        link_mode: [ static, dynamic ]
 
     steps:
       - name: Checkout code
@@ -136,21 +147,23 @@ jobs:
         shell: bash
         run: brew install ninja
 
-      - name: Cache JetBrains Skia
+      - name: Cache release Skia
         uses: actions/cache@v4
         with:
-          path: .skia-cache/jetbrains
-          key: jetbrains-skia-macos-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
+          path: .skia-cache/release
+          key: release-skia-macos-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
           restore-keys: |
-            jetbrains-skia-macos-${{ runner.arch }}-
-            jetbrains-skia-macos-
+            release-skia-macos-${{ matrix.link_mode }}-${{ runner.arch }}-
+            release-skia-macos-${{ matrix.link_mode }}-
+            release-skia-macos-
 
       - name: Run real Skia acceptance
         shell: bash
         run: |
           bash scripts/macos-accept-real-skia-smoke.sh \
             --log-dir logs \
-            --skia-provider jetbrains
+            --skia-provider release \
+            --link-mode "${{ matrix.link_mode }}"
 
       - name: Verify real Skia artifact bundle
         shell: bash
@@ -164,7 +177,7 @@ jobs:
           bash scripts/accept-platform-status.sh \
             --platform macos \
             --log-dir logs \
-            --artifact-label "github-actions:${GITHUB_RUN_ID}:macos-real-skia-acceptance"
+            --artifact-label "github-actions:${GITHUB_RUN_ID}:macos-real-skia-acceptance:${{ matrix.link_mode }}"
           git diff -- skia-platform-status.json > logs/macos-platform-acceptance.patch
           cp "$before_status" skia-platform-status.json
           rm -f "$before_status"
@@ -179,7 +192,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: macos-real-skia-acceptance-log
+          name: macos-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
             logs/macos-real-skia-smoke-preflight.log
             logs/macos-skia-build.log
@@ -190,9 +203,13 @@ jobs:
           if-no-files-found: warn
 
   windows:
-    name: Windows MSVC JetBrains Skia acceptance
+    name: Windows MSVC release Skia acceptance (${{ matrix.link_mode }})
     runs-on: windows-latest
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        link_mode: [ static, dynamic ]
 
     steps:
       - name: Checkout code
@@ -229,23 +246,25 @@ jobs:
           }
           "VCVARSALL=$vcvarsall" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Cache JetBrains Skia
+      - name: Cache release Skia
         uses: actions/cache@v4
         with:
-          path: .skia-cache/jetbrains
-          key: jetbrains-skia-windows-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
+          path: .skia-cache/release
+          key: release-skia-windows-${{ matrix.link_mode }}-${{ runner.arch }}-${{ hashFiles('skia-provider-lock.json') }}
           restore-keys: |
-            jetbrains-skia-windows-${{ runner.arch }}-
-            jetbrains-skia-windows-
+            release-skia-windows-${{ matrix.link_mode }}-${{ runner.arch }}-
+            release-skia-windows-${{ matrix.link_mode }}-
+            release-skia-windows-
 
       - name: Run real Skia acceptance
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
-          $envLines = .\scripts\fetch-jetbrains-skia.ps1 `
+          $envLines = .\scripts\fetch-release-skia.ps1 `
             -Platform windows `
             -Arch auto `
             -Config Release `
+            -LinkMode "${{ matrix.link_mode }}" `
             -PrintEnv
           $envMap = @{}
           foreach ($line in $envLines) {
@@ -258,8 +277,12 @@ jobs:
             SkiaRoot = $envMap["SKIA_MBT_SKIA_ROOT"]
             SkiaInclude = $envMap["SKIA_MBT_SKIA_INCLUDE"]
             SkiaLibDir = $envMap["SKIA_MBT_SKIA_LIB_DIR"]
-            SkiaProvider = "jetbrains"
-            JetBrainsTag = $envMap["SKIA_MBT_JETBRAINS_TAG"]
+            SkiaProvider = "release"
+            SkiaLinkMode = $envMap["SKIA_MBT_SKIA_LINK_MODE"]
+            ReleaseOwner = $envMap["SKIA_MBT_RELEASE_OWNER"]
+            ReleaseRepo = $envMap["SKIA_MBT_RELEASE_REPO"]
+            ReleaseTag = $envMap["SKIA_MBT_RELEASE_TAG"]
+            ReleaseUrl = $envMap["SKIA_MBT_RELEASE_URL"]
             SkiaCommit = $envMap["SKIA_MBT_SKIA_COMMIT"]
             SkiaPackage = $envMap["SKIA_MBT_SKIA_PACKAGE"]
             SkiaPackageSha256 = $envMap["SKIA_MBT_SKIA_PACKAGE_SHA256"]
@@ -285,7 +308,7 @@ jobs:
           .\scripts\accept-platform-status.ps1 `
             -Platform windows `
             -LogDir logs `
-            -ArtifactLabel "github-actions:${env:GITHUB_RUN_ID}:windows-real-skia-acceptance"
+            -ArtifactLabel "github-actions:${env:GITHUB_RUN_ID}:windows-real-skia-acceptance:${{ matrix.link_mode }}"
           git diff -- skia-platform-status.json | Out-File -FilePath logs\windows-platform-acceptance.patch -Encoding utf8
           [System.IO.File]::WriteAllText(
             (Resolve-Path -LiteralPath skia-platform-status.json).Path,
@@ -305,7 +328,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: windows-real-skia-acceptance-log
+          name: windows-real-skia-acceptance-log-${{ matrix.link_mode }}
           path: |
             logs/windows-real-skia-smoke-preflight.log
             logs/windows-real-skia-smoke.log
