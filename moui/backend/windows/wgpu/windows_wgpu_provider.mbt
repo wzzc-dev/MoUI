@@ -52,8 +52,19 @@ pub fn run_app_with_options(
 pub fn renderer_provider(
   options? : WindowsWgpuAppOptions = WindowsWgpuAppOptions::new(),
 ) -> @windows_host.WindowsRendererProvider {
-  @windows_host.WindowsRendererProvider::new(create_renderer=(window, metrics) => {
-    create_renderer(window, metrics, options)
+  @windows_host.WindowsRendererProvider::new(
+    create_renderer=(window, metrics) => {
+      create_renderer(window, metrics, options)
+    },
+    image_loader=Some(wgpu_native_image_loader()),
+  )
+}
+
+///|
+fn wgpu_native_image_loader() -> @host.HostAsyncImageLoader {
+  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
+    complete(@wgpu_renderer.native_image_load_completion(source))
+    None
   })
 }
 
