@@ -174,7 +174,13 @@ function requireValue(values, key) {
 }
 
 function appendFlags(base, extra) {
-  return extra ? `${base} ${extra}` : base;
+  if (!extra) {
+    return base;
+  }
+  if (!base) {
+    return extra;
+  }
+  return `${base} ${extra}`;
 }
 
 function appendMissingFlags(base, flags) {
@@ -185,6 +191,13 @@ function appendMissingFlags(base, flags) {
     }
   }
   return parts.join(" ");
+}
+
+function macosExampleLinkFlags(base, extraFrameworks) {
+  if (process.platform !== "darwin") {
+    return base;
+  }
+  return appendFlags(base, extraFrameworks);
 }
 
 function overlayEnvValues(config, values, keys) {
@@ -293,11 +306,21 @@ function platformFlags(config, values) {
 function main() {
   const config = readJsonFromStdin();
   if (!shouldConfigureSkia(config)) {
+    const triangleLinkFlags = macosExampleLinkFlags(
+      "",
+      "-framework QuartzCore -framework AppKit",
+    );
+    const metalWindowLinkFlags = macosExampleLinkFlags(
+      "",
+      "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+    );
     console.log(
       JSON.stringify({
         vars: {
           SKIA_MBT_STUB_CC_FLAGS: "",
           SKIA_MBT_CC_LINK_FLAGS: "",
+          SKIA_MBT_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
+          SKIA_MBT_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
         },
       }),
     );
@@ -308,12 +331,22 @@ function main() {
   const nativePackageName = `${moduleName}/native`;
   const values = skiaValues(config);
   const flags = platformFlags(config, values);
+  const triangleLinkFlags = macosExampleLinkFlags(
+    flags.linkFlags,
+    "-framework QuartzCore -framework AppKit",
+  );
+  const metalWindowLinkFlags = macosExampleLinkFlags(
+    flags.linkFlags,
+    "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+  );
 
   console.log(
     JSON.stringify({
       vars: {
         SKIA_MBT_STUB_CC_FLAGS: flags.stubCcFlags,
         SKIA_MBT_CC_LINK_FLAGS: flags.linkFlags,
+        SKIA_MBT_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
+        SKIA_MBT_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
       },
       link_configs: [
         {

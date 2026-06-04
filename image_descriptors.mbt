@@ -1,7 +1,6 @@
 ///|
 /// Portable image recipes that can be planned before native Skia images are
 /// decoded or uploaded.
-#warnings("-deprecated_syntax")
 pub(all) enum ImageDescriptor {
   EncodedImage(Bytes, EncodedImageFormat?, ISize?)
 } derive(Debug, Eq)

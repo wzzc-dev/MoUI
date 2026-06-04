@@ -1,6 +1,6 @@
 param(
   [string] $StatusFile = "skia-platform-status.json",
-  [string] $SmokeSource = "scripts/native_smoke/main.mbt",
+  [string] $SmokeSource = "scripts/native_smoke",
   [string] $UnixLogVerifier = "scripts/verify-native-smoke-log.sh",
   [string] $PowershellLogVerifier = "scripts/verify-native-smoke-log.ps1"
 )
@@ -29,13 +29,26 @@ $resolvedPowershellLogVerifier = Resolve-RepoPath $PowershellLogVerifier
 
 foreach ($path in @(
     $resolvedStatusFile,
-    $resolvedSmokeSource,
     $resolvedUnixLogVerifier,
     $resolvedPowershellLogVerifier
   )) {
   if (!(Test-Path -LiteralPath $path -PathType Leaf)) {
     throw "required capability proof input is missing: $path"
   }
+}
+if (Test-Path -LiteralPath $resolvedSmokeSource -PathType Leaf) {
+  $smokeSourceFiles = @($resolvedSmokeSource)
+} elseif (Test-Path -LiteralPath $resolvedSmokeSource -PathType Container) {
+  $smokeSourceFiles = @(
+    Get-ChildItem -LiteralPath $resolvedSmokeSource -Filter "*.mbt" -File |
+      Sort-Object Name |
+      ForEach-Object { $_.FullName }
+  )
+  if ($smokeSourceFiles.Count -eq 0) {
+    throw "native smoke source directory has no .mbt files: $resolvedSmokeSource"
+  }
+} else {
+  throw "required capability proof input is missing: $resolvedSmokeSource"
 }
 
 $status = Get-Content -LiteralPath $resolvedStatusFile -Raw | ConvertFrom-Json
@@ -48,7 +61,9 @@ if ($null -ne $status.native_smoke_conditional_capabilities) {
   $conditionalCapabilities = @($status.native_smoke_conditional_capabilities)
 }
 
-$smokeSourceContent = Get-Content -LiteralPath $resolvedSmokeSource -Raw
+$smokeSourceContent = ($smokeSourceFiles | ForEach-Object {
+    Get-Content -LiteralPath $_ -Raw
+  }) -join "`n"
 $unixLogVerifierContent = Get-Content -LiteralPath $resolvedUnixLogVerifier -Raw
 $powershellLogVerifierContent = Get-Content -LiteralPath $resolvedPowershellLogVerifier -Raw
 

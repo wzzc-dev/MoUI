@@ -24,7 +24,7 @@ pub fn Path::set_fill_type(self : Path, fill_type : @skia.PathFillType) -> Unit 
 ///|
 pub fn Path::fill_type(self : Path) -> @skia.PathFillType {
   ignore(self)
-  @skia.Winding
+  Winding
 }
 
 ///|
@@ -102,7 +102,7 @@ pub fn Path::add_path_value(
   self : Path,
   path : @skia.Path,
   matrix? : @skia.Matrix = @skia.Matrix::identity(),
-  mode? : @skia.AddPathMode = @skia.Append,
+  mode? : @skia.AddPathMode = Append,
 ) -> Unit {
   ignore(self)
   ignore(path)
@@ -115,7 +115,7 @@ pub fn Path::add_path_value_matrix(
   self : Path,
   path : @skia.Path,
   matrix : @skia.Matrix,
-  mode? : @skia.AddPathMode = @skia.Append,
+  mode? : @skia.AddPathMode = Append,
 ) -> Unit {
   ignore(self)
   ignore(path)
@@ -128,7 +128,7 @@ pub fn Path::add_path_value_offset(
   self : Path,
   path : @skia.Path,
   offset : @skia.Point,
-  mode? : @skia.AddPathMode = @skia.Append,
+  mode? : @skia.AddPathMode = Append,
 ) -> Unit {
   ignore(self)
   ignore(path)
@@ -151,7 +151,7 @@ pub fn Path::add_poly(
 pub fn Path::add_rect(
   self : Path,
   rect : @skia.Rect,
-  direction? : @skia.PathDirection = @skia.CW,
+  direction? : @skia.PathDirection = CW,
 ) -> Unit {
   ignore(self)
   ignore(rect)
@@ -162,7 +162,7 @@ pub fn Path::add_rect(
 pub fn Path::add_oval(
   self : Path,
   oval : @skia.Rect,
-  direction? : @skia.PathDirection = @skia.CW,
+  direction? : @skia.PathDirection = CW,
 ) -> Unit {
   ignore(self)
   ignore(oval)
@@ -174,7 +174,7 @@ pub fn Path::add_circle(
   self : Path,
   center : @skia.Point,
   radius : Float,
-  direction? : @skia.PathDirection = @skia.CW,
+  direction? : @skia.PathDirection = CW,
 ) -> Unit {
   ignore(self)
   ignore(center)
@@ -188,7 +188,7 @@ pub fn Path::add_round_rect(
   rect : @skia.Rect,
   rx : Float,
   ry : Float,
-  direction? : @skia.PathDirection = @skia.CW,
+  direction? : @skia.PathDirection = CW,
 ) -> Unit {
   ignore(self)
   ignore(rect)
@@ -201,7 +201,7 @@ pub fn Path::add_round_rect(
 pub fn Path::add_rrect(
   self : Path,
   rrect : @skia.RRect,
-  direction? : @skia.PathDirection = @skia.CW,
+  direction? : @skia.PathDirection = CW,
 ) -> Unit {
   ignore(self)
   ignore(rrect)

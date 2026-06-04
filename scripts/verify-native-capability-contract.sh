@@ -16,7 +16,7 @@ Options:
   --pkg PATH            Native moon.pkg path. Defaults to native/moon.pkg.
   --ownership PATH      Native ownership manifest. Defaults to native/ownership.json.
   --status-file PATH    Platform status JSON. Defaults to skia-platform-status.json.
-  --smoke-source PATH   Native smoke source. Defaults to scripts/native_smoke/main.mbt.
+  --smoke-source PATH   Native smoke source file or directory. Defaults to scripts/native_smoke.
   -h, --help            Show this help.
 EOF
 }
@@ -26,7 +26,7 @@ native_dir="native"
 pkg_path="native/moon.pkg"
 ownership="native/ownership.json"
 status_file="skia-platform-status.json"
-smoke_source="scripts/native_smoke/main.mbt"
+smoke_source="scripts/native_smoke"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -154,11 +154,19 @@ if not native_dir.is_dir():
     fail(f"native package directory is missing: {native_dir}")
 if not pkg_path.is_file():
     fail(f"native moon.pkg is missing: {pkg_path}")
-if not smoke_source_path.is_file():
+if smoke_source_path.is_file():
+    smoke_source_files = [smoke_source_path]
+elif smoke_source_path.is_dir():
+    smoke_source_files = sorted(smoke_source_path.glob("*.mbt"))
+    if not smoke_source_files:
+        fail(f"native smoke source directory has no .mbt files: {smoke_source_path}")
+else:
     fail(f"native smoke source is missing: {smoke_source_path}")
 
 target_entries = parse_target_entries(pkg_path.read_text(encoding="utf-8"))
-smoke_source = smoke_source_path.read_text(encoding="utf-8")
+smoke_source = "\n".join(
+    path.read_text(encoding="utf-8") for path in smoke_source_files
+)
 
 owned_names = {
     str(entry.get("name", "")).strip()
