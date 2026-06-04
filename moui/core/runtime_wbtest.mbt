@@ -773,6 +773,118 @@ test "subscription descriptors and map preserve feature composition" {
 }
 
 ///|
+enum ChildMappedSubscriptionMsg {
+  ChildMappedSubscriptionStop
+  ChildMappedSubscriptionPulse
+}
+
+///|
+enum ParentMappedSubscriptionMsg {
+  ParentMappedSubscriptionChild(ChildMappedSubscriptionMsg)
+}
+
+///|
+struct ParentMappedSubscriptionModel {
+  active : Bool
+  pulses : Int
+}
+
+///|
+test "mapped child subscriptions cancel and ignore stale dispatches" {
+  let child_dispatch : Ref[((ChildMappedSubscriptionMsg) -> Unit)?] = Ref(None)
+  let cleanup_log : Array[String] = []
+  let program = Program::new(
+    init=() => ({ active: true, pulses: 0 }, Effect::none()),
+    update=(model, message) => {
+      match message {
+        ParentMappedSubscriptionChild(child_message) =>
+          match child_message {
+            ChildMappedSubscriptionPulse =>
+              ({ ..model, pulses: model.pulses + 1 }, Effect::none())
+            ChildMappedSubscriptionStop =>
+              ({ ..model, active: false }, Effect::none())
+          }
+      }
+    },
+    view=model => {
+      runtime_test_label("active:\{model.active} pulses:\{model.pulses}")
+    },
+    subscriptions=model => {
+      if model.active {
+        Subscription::timer(
+          key="child-mapped:tick",
+          label="Child mapped tick",
+          start=dispatch => {
+            child_dispatch.val = Some(dispatch)
+            Some(() => cleanup_log.push("child"))
+          },
+        ).map(message => ParentMappedSubscriptionChild(message))
+      } else {
+        Subscription::none()
+      }
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=180.0, height=48.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "active:true pulses:0"))
+  let initial = runtime.program_runtime_snapshot()
+  inspect(initial.active_subscription_count, content="1")
+  inspect(initial.started_subscription_count, content="1")
+  inspect(initial.active_subscriptions[0].key, content="child-mapped:tick")
+  inspect(initial.active_subscriptions[0].kind, content="timer")
+  inspect(initial.active_subscriptions[0].label, content="Child mapped tick")
+  assert_true(
+    initial.subscription_lifecycle.any(entry => {
+      entry.key == "child-mapped:tick" &&
+      entry.kind == "timer" &&
+      entry.label == "Child mapped tick" &&
+      entry.status == SubscriptionLifecycleStatus::SubscriptionActive
+    }),
+  )
+  match child_dispatch.val {
+    Some(dispatch) => dispatch(ChildMappedSubscriptionPulse)
+    None => fail("expected mapped child subscription dispatch")
+  }
+  assert_true(has_draw_text(runtime.draw_commands(), "active:true pulses:1"))
+  let reused = runtime.program_runtime_snapshot()
+  inspect(reused.dispatched_count, content="1")
+  inspect(reused.update_count, content="1")
+  inspect(reused.reused_subscription_count, content="1")
+  inspect(cleanup_log.length(), content="0")
+  match child_dispatch.val {
+    Some(dispatch) => dispatch(ChildMappedSubscriptionStop)
+    None => fail("expected mapped child stop dispatch")
+  }
+  assert_true(has_draw_text(runtime.draw_commands(), "active:false pulses:1"))
+  let cancelled = runtime.program_runtime_snapshot()
+  inspect(cancelled.dispatched_count, content="2")
+  inspect(cancelled.update_count, content="2")
+  inspect(cancelled.active_subscription_count, content="0")
+  inspect(cancelled.cancelled_subscription_count, content="1")
+  inspect(cleanup_log.join(","), content="child")
+  assert_true(
+    cancelled.subscription_lifecycle.any(entry => {
+      entry.key == "child-mapped:tick" &&
+      entry.kind == "timer" &&
+      entry.status == SubscriptionLifecycleStatus::SubscriptionCancelled &&
+      entry.cancel_reason ==
+      Some(SubscriptionCancelReason::SubscriptionKeyChanged)
+    }),
+  )
+  match child_dispatch.val {
+    Some(dispatch) => dispatch(ChildMappedSubscriptionPulse)
+    None => fail("expected stale mapped child subscription dispatch")
+  }
+  let stale = runtime.program_runtime_snapshot()
+  inspect(stale.dispatched_count, content="2")
+  inspect(stale.update_count, content="2")
+  inspect(stale.ignored_subscription_dispatch_count, content="1")
+  assert_true(has_draw_text(runtime.draw_commands(), "active:false pulses:1"))
+}
+
+///|
 test "subscription source helpers standardize diagnostic kinds" {
   let subscription : Subscription[String] = Subscription::batch([
     Subscription::timer(key="timer:refresh", label="Refresh timer", start=_dispatch => {
