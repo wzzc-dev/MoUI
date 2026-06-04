@@ -20,7 +20,6 @@ on:
 
 env:
   MOUI_WINDOW_REMOTE: https://github.com/wzzc-dev/window.git
-  MOUI_SKIA_MBT_REMOTE: https://github.com/wzzc-dev/skia_mbt.git
 
 jobs:
   conformance:

@@ -731,7 +731,7 @@ test "renderer capability report exposes backend-driven entries" {
   )
   inspect(wgpu.length(), content="17")
   inspect(skia.length(), content="17")
-  assert_true(skia.any(capability => capability.note.contains("skia_mbt")))
+  assert_true(skia.any(capability => capability.note.contains("moui_skia")))
 }
 
 ///|

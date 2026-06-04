@@ -16,7 +16,7 @@ Options:
   --provider-preflight-log <path>       Log proving the platform Skia provider
                                         preflight/package test or build checks.
   --fallback-unavailable-log <path>     Log proving fallback builds fail with
-                                        the explicit skia_mbt/native unavailable
+                                        the explicit moui_skia/native unavailable
                                         diagnostic instead of presenting.
   --renderer-smoke-log <path>           Real MoUI Skia renderer pixel smoke log.
   --showcase-log <path>                 Showcase *_skia first-frame log.
@@ -38,7 +38,7 @@ const platforms = new Map([
         /macOS Skia provider preflight|moui\/backend\/macos\/skia|backend\/macos\/skia/i,
         /Total tests:\s*\d+, passed:\s*\d+, failed:\s*0|build (succeeded|finished)|Finished|renderer=ready|can_render=true/i,
       ],
-      fallbackMarker: /macOS Skia renderer selected, but skia_mbt\/native is unavailable|skia_mbt\/native is unavailable/i,
+      fallbackMarker: /macOS Skia renderer selected, but moui_skia\/native is unavailable|moui_skia\/native is unavailable/i,
     },
   ],
   [
@@ -50,7 +50,7 @@ const platforms = new Map([
         /Windows Skia provider preflight|moui\/backend\/windows\/skia|backend\/windows\/skia|build_windows_msvc\.ps1/i,
         /Total tests:\s*\d+, passed:\s*\d+, failed:\s*0|build (succeeded|finished)|Finished|renderer=ready|can_render=true/i,
       ],
-      fallbackMarker: /Windows Skia renderer selected, but skia_mbt\/native is unavailable|skia_mbt\/native is unavailable/i,
+      fallbackMarker: /Windows Skia renderer selected, but moui_skia\/native is unavailable|moui_skia\/native is unavailable/i,
     },
   ],
   [
@@ -62,7 +62,7 @@ const platforms = new Map([
         /Linux Skia provider preflight|moui\/backend\/linux\/skia|backend\/linux\/skia/i,
         /Total tests:\s*\d+, passed:\s*\d+, failed:\s*0|build (succeeded|finished)|Finished|renderer=ready|can_render=true/i,
       ],
-      fallbackMarker: /Linux Skia renderer selected, but skia_mbt\/native is unavailable|skia_mbt\/native is unavailable/i,
+      fallbackMarker: /Linux Skia renderer selected, but moui_skia\/native is unavailable|moui_skia\/native is unavailable/i,
     },
   ],
 ]);
@@ -91,7 +91,7 @@ const logOptions = new Map([
       observation: "fallbackUnavailable",
       label: "fallback unavailable log",
       marker: platform => platform.fallbackMarker,
-      markerDescription: "the explicit skia_mbt/native unavailable diagnostic",
+      markerDescription: "the explicit moui_skia/native unavailable diagnostic",
     },
   ],
   [

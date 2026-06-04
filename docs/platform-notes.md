@@ -5,7 +5,7 @@
 MoUI expects the modified `wzzc-dev/window` checkout under `.local_repos/window`.
 The README shows the setup commands. The local branch currently supplies target
 support that the upstream package does not yet cover for MoUI.
-The main checkout now includes `skia_mbt`, which provides the editable Skia
+The main checkout now includes `moui_skia`, which provides the editable Skia
 binding used by the opt-in native Skia raster renderer.
 
 ## Shared Host Contract
@@ -59,7 +59,7 @@ response.
 Native renderer choice is package selection, not a field on host-core app
 options. Use `backend/<platform>/wgpu` for native WGPU or
 `backend/<platform>/skia` for native Skia raster. The Skia provider remains
-explicit and preflights `skia_mbt/native` availability before handing control
+explicit and preflights `moui_skia/native` availability before handing control
 to the host app runner. Fallback builds therefore return with a clear diagnostic
 instead of opening a platform window that later fails to attach a renderer.
 
@@ -195,7 +195,7 @@ window `NSView` for native WGPU, while `backend/macos/skia` presents CPU pixel
 frames through an `NSImageView`.
 Window events pass through the shared `backend/host` conversion helpers, and the
 native host never imports `render/wgpu`, `render/skia`, `wgpu_mbt`, or
-`skia_mbt`.
+`moui_skia`.
 The macOS service bridge routes text clipboard requests through `NSPasteboard`,
 opens URLs through `NSWorkspace`, presents open/save/directory dialogs through
 `NSOpenPanel` and `NSSavePanel`, presents command menus at the current pointer
@@ -252,10 +252,10 @@ For local real-Skia configuration, `scripts/macos-skia-renderer-smoke.sh` uses
 dynamic `libskia.dylib` by default when `--write-local-config` is preparing
 direct `moon run` commands, and static `libskia.a` by default for temporary
 smoke/build rewrites when the archive is available; set
-`SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or pass `--link-mode` to override.
+`MOUI_SKIA_MACOS_LINK_MODE=dynamic|static` or pass `--link-mode` to override.
 `macos_skia_provider_preflight_summary()` exposes package-level preflight
 evidence for the selected font resolution, renderer availability,
-`skia_mbt/native` availability, the `NSImageView` presenter path, inherited
+`moui_skia/native` availability, the `NSImageView` presenter path, inherited
 AppKit host service/input/window readiness, explicit
 `HostWindowRenderer` bridge forwarding for Skia text-system, image-resource,
 image-resource change callbacks, present-count, and disposal diagnostics,
@@ -323,7 +323,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_m
 The MSVC helper imports `vcvarsall.bat` through `vswhere`, sets `CC` and `CXX`
 to `scripts\windows\msvc_cl.cmd`, enables MSVC C11 mode and atomics only for
 `.c` native stubs such as `wgpu_mbt`, sets `MBT_WGPU_LINK_MODE=dynamic`, and
-points `MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `skia_mbt`
+points `MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `moui_skia`
 emits `/std:c++20` stub flags for its Windows Skia C++ bindings, which remain
 separate from the C11-only path. Packaged MSVC apps
 use the vcpkg `zlib:x64-windows` runtime for native image decoding. When the
@@ -394,12 +394,12 @@ Select Skia by importing `wzzc-dev/moui/backend/windows/skia` and using
 `WindowsSkiaAppOptions`. The provider creates `render/skia.SkiaRasterRenderer`
 and presents the CPU pixel frame through the Win32 presenter. The C presenter
 copies the RGBA premultiplied readback into a top-down 32-bit BGRA DIB buffer
-and blits it to the client DC with `StretchDIBits`. If `skia_mbt/native` is only
+and blits it to the client DC with `StretchDIBits`. If `moui_skia/native` is only
 in fallback mode, renderer creation is rejected with a diagnostic instead of
 opening an empty HWND.
 `windows_skia_provider_preflight_summary()` exposes package-level preflight
 evidence for the selected font resolution, renderer availability,
-`skia_mbt/native` availability, the GDI presenter path, inherited Win32 host
+`moui_skia/native` availability, the GDI presenter path, inherited Win32 host
 service/input/window readiness, explicit clipboard/menu/file-dialog/open
 URL/system-theme/async-service readiness, the `HostWindowRenderer` bridge that
 forwards Skia text-system, image-resource, present-count, and disposal
@@ -501,7 +501,7 @@ display flush. Keeping the `wl_shm` presenter in the window backend avoids
 duplicating Wayland registry and buffer ownership in MoUI.
 `linux_skia_provider_preflight_summary()` exposes package-level preflight
 evidence for the selected font resolution, renderer availability,
-`skia_mbt/native` availability, the `wl_shm` presenter path, inherited Wayland
+`moui_skia/native` availability, the `wl_shm` presenter path, inherited Wayland
 host service/input/window readiness, explicit Linux clipboard/menu/file-dialog/open
 URL/async-service, text-input/IME/drag-drop, and native
 context-menu/host-modal/native accessibility gaps, `HostWindowRenderer` bridge
@@ -533,7 +533,7 @@ separate application-level evidence.
 this provider explicitly for Showcase and the editing workflow. Configure real
 Skia link flags before relying on native Skia-rendered pixels.
 The default JetBrains Linux provider links fontconfig, FreeType, and HarfBuzz;
-with those libraries available, `skia_mbt` builds a system `FontMgr` through
+with those libraries available, `moui_skia` builds a system `FontMgr` through
 fontconfig and falls back to common font directories such as `/usr/share/fonts`
 when fontconfig reports no families. Missing CJK or emoji glyph coverage still
 depends on installed system fonts, and full mixed-script fallback runs remain a

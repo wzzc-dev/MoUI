@@ -5,7 +5,7 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
-  "wzzc-dev/skia_mbt/native",
+  "wzzc-dev/moui_skia/native",
 }
 
 // Values

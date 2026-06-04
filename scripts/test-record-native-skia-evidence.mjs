@@ -175,7 +175,7 @@ try {
   const fallbackLog = writeArtifact(
     "windows",
     "skia-fallback-unavailable.log",
-    "Windows Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags\n",
+    "Windows Skia renderer selected, but moui_skia/native is unavailable; configure real Skia link flags\n",
   );
   const rendererLog = writeArtifact(
     "windows",

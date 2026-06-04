@@ -5,7 +5,7 @@ usage() {
   cat <<'EOF'
 Usage: scripts/macos-skia-renderer-smoke.sh [options]
 
-Temporarily configures the local skia_mbt native package plus MoUI's Skia
+Temporarily configures the local moui_skia native package plus MoUI's Skia
 renderer smoke, examples/showcase/macos_skia, and
 examples/markdown_editor/macos_skia entrypoints, plus the Mo Workbench macOS
 Skia entrypoint for local direct runs. It runs the renderer pixel smoke, builds
@@ -30,17 +30,17 @@ Options:
                          moon run setup, and static for temporary smoke/build
                          setup when libskia.a exists.
   --skia-rev REV         Skia git revision, branch, or tag for source provider.
-                         Default: skia_mbt/skia-revision.txt.
+                         Default: moui_skia/skia-revision.txt.
   --jetbrains-tag TAG    JetBrains/skia release tag. Default: m148-8967a2e80c.
   --jetbrains-config Release|Debug
                          JetBrains/skia package configuration. Default: Release.
   --jetbrains-cache-dir PATH
                          JetBrains/skia cache root. Default: .skia-cache/jetbrains.
   --extra-gn-args STR    Extra GN args appended to the source-built Skia build.
-  --enable-skshaper      Enable the optional skia_mbt SkShaper boundary.
+  --enable-skshaper      Enable the optional moui_skia SkShaper boundary.
                          Requires libskshaper and its dependent module
                          libraries in --skia-lib-dir.
-  --extra-cc-flags STR   Extra C/C++ flags appended to skia_mbt stub flags.
+  --extra-cc-flags STR   Extra C/C++ flags appended to moui_skia stub flags.
   --extra-link-flags STR Extra linker flags appended to executable link flags.
   --build-log PATH       Write source-built Skia build output to PATH. Relative
                          paths are resolved from the repository root.
@@ -70,7 +70,7 @@ Options:
   --dry-run-config       Print resolved paths and flags, then exit without
                          rewriting package files or building executables.
   --write-local-config   Persistently write resolved link flags into the local
-                         skia_mbt native, renderer smoke, Showcase macos_skia,
+                         moui_skia native, renderer smoke, Showcase macos_skia,
                          Markdown Editor macos_skia, and Mo Workbench
                          macos_skia package files, then exit. Leaves
                          machine-local moon.pkg edits; do not commit those
@@ -78,44 +78,44 @@ Options:
   -h, --help             Show this help.
 
 Environment defaults:
-  SKIA_MBT_SKIA_PROVIDER, SKIA_MBT_PROVIDER, SKIA_MBT_SKIA_INCLUDE,
-  SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB, SKIA_MBT_SKIA_REV,
-  SKIA_MBT_JETBRAINS_TAG, SKIA_MBT_JETBRAINS_CONFIG,
-  SKIA_MBT_JETBRAINS_CACHE_DIR, SKIA_MBT_EXTRA_GN_ARGS,
-  SKIA_MBT_MACOS_LINK_MODE, SKIA_MBT_EXTRA_CC_FLAGS, and
-  SKIA_MBT_EXTRA_LINK_FLAGS are used when the matching command-line option is
+  MOUI_SKIA_SKIA_PROVIDER, MOUI_SKIA_PROVIDER, MOUI_SKIA_SKIA_INCLUDE,
+  MOUI_SKIA_SKIA_LIB_DIR, MOUI_SKIA_SKIA_LIB, MOUI_SKIA_SKIA_REV,
+  MOUI_SKIA_JETBRAINS_TAG, MOUI_SKIA_JETBRAINS_CONFIG,
+  MOUI_SKIA_JETBRAINS_CACHE_DIR, MOUI_SKIA_EXTRA_GN_ARGS,
+  MOUI_SKIA_MACOS_LINK_MODE, MOUI_SKIA_EXTRA_CC_FLAGS, and
+  MOUI_SKIA_EXTRA_LINK_FLAGS are used when the matching command-line option is
   omitted. Explicit command-line options still override environment defaults.
 EOF
 }
 
 work_dir=".skia-cache/macos"
-skia_include="${SKIA_MBT_SKIA_INCLUDE:-}"
-skia_lib_dir="${SKIA_MBT_SKIA_LIB_DIR:-}"
-skia_lib="${SKIA_MBT_SKIA_LIB:-skia}"
-macos_link_mode="${SKIA_MBT_MACOS_LINK_MODE:-auto}"
-skia_provider="${SKIA_MBT_SKIA_PROVIDER:-${SKIA_MBT_PROVIDER:-}}"
+skia_include="${MOUI_SKIA_SKIA_INCLUDE:-}"
+skia_lib_dir="${MOUI_SKIA_SKIA_LIB_DIR:-}"
+skia_lib="${MOUI_SKIA_SKIA_LIB:-skia}"
+macos_link_mode="${MOUI_SKIA_MACOS_LINK_MODE:-auto}"
+skia_provider="${MOUI_SKIA_SKIA_PROVIDER:-${MOUI_SKIA_PROVIDER:-}}"
 skia_provider_explicit=0
-if [[ -n "${SKIA_MBT_SKIA_PROVIDER:-}${SKIA_MBT_PROVIDER:-}" ]]; then
+if [[ -n "${MOUI_SKIA_SKIA_PROVIDER:-}${MOUI_SKIA_PROVIDER:-}" ]]; then
   skia_provider_explicit=1
 fi
-skia_rev="${SKIA_MBT_SKIA_REV:-main}"
+skia_rev="${MOUI_SKIA_SKIA_REV:-main}"
 skia_rev_explicit=0
-if [[ -n "${SKIA_MBT_SKIA_REV:-}" ]]; then
+if [[ -n "${MOUI_SKIA_SKIA_REV:-}" ]]; then
   skia_rev_explicit=1
 fi
-jetbrains_tag="${SKIA_MBT_JETBRAINS_TAG:-m148-8967a2e80c}"
-jetbrains_config="${SKIA_MBT_JETBRAINS_CONFIG:-Release}"
-jetbrains_cache_dir="${SKIA_MBT_JETBRAINS_CACHE_DIR:-.skia-cache/jetbrains}"
-extra_gn_args="${SKIA_MBT_EXTRA_GN_ARGS:-}"
-extra_cc_flags="${SKIA_MBT_EXTRA_CC_FLAGS:-}"
-extra_link_flags="${SKIA_MBT_EXTRA_LINK_FLAGS:-}"
+jetbrains_tag="${MOUI_SKIA_JETBRAINS_TAG:-m148-8967a2e80c}"
+jetbrains_config="${MOUI_SKIA_JETBRAINS_CONFIG:-Release}"
+jetbrains_cache_dir="${MOUI_SKIA_JETBRAINS_CACHE_DIR:-.skia-cache/jetbrains}"
+extra_gn_args="${MOUI_SKIA_EXTRA_GN_ARGS:-}"
+extra_cc_flags="${MOUI_SKIA_EXTRA_CC_FLAGS:-}"
+extra_link_flags="${MOUI_SKIA_EXTRA_LINK_FLAGS:-}"
 enable_skshaper=0
 extra_cc_flags_explicit=0
 extra_link_flags_explicit=0
-if [[ -n "${SKIA_MBT_EXTRA_CC_FLAGS:-}" ]]; then
+if [[ -n "${MOUI_SKIA_EXTRA_CC_FLAGS:-}" ]]; then
   extra_cc_flags_explicit=1
 fi
-if [[ -n "${SKIA_MBT_EXTRA_LINK_FLAGS:-}" ]]; then
+if [[ -n "${MOUI_SKIA_EXTRA_LINK_FLAGS:-}" ]]; then
   extra_link_flags_explicit=1
 fi
 requested_build_log=""
@@ -264,7 +264,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-skia_repo="$repo_root/skia_mbt"
+skia_repo="$repo_root/moui_skia"
 native_pkg="$skia_repo/native/moon.pkg"
 native_pkg_backup="$native_pkg.moui-smoke.bak"
 renderer_pkg="$repo_root/moui/tests/skia_renderer_smoke/native/moon.pkg"
@@ -490,18 +490,18 @@ else
   fi
   fetch_output="$(bash "$skia_repo/scripts/fetch-jetbrains-skia.sh" "${fetch_args[@]}")"
   smoke_mode="JetBrains Skia binary"
-  include_path="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_INCLUDE)"
-  lib_path="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_LIB_DIR)"
-  skia_lib="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_LIB)"
-  jetbrains_tag="$(get_assignment_value "$fetch_output" SKIA_MBT_JETBRAINS_TAG)"
-  jetbrains_commit="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_COMMIT)"
-  jetbrains_package="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_PACKAGE)"
-  jetbrains_package_sha256="$(get_assignment_value "$fetch_output" SKIA_MBT_SKIA_PACKAGE_SHA256)"
+  include_path="$(get_assignment_value "$fetch_output" MOUI_SKIA_SKIA_INCLUDE)"
+  lib_path="$(get_assignment_value "$fetch_output" MOUI_SKIA_SKIA_LIB_DIR)"
+  skia_lib="$(get_assignment_value "$fetch_output" MOUI_SKIA_SKIA_LIB)"
+  jetbrains_tag="$(get_assignment_value "$fetch_output" MOUI_SKIA_JETBRAINS_TAG)"
+  jetbrains_commit="$(get_assignment_value "$fetch_output" MOUI_SKIA_SKIA_COMMIT)"
+  jetbrains_package="$(get_assignment_value "$fetch_output" MOUI_SKIA_SKIA_PACKAGE)"
+  jetbrains_package_sha256="$(get_assignment_value "$fetch_output" MOUI_SKIA_SKIA_PACKAGE_SHA256)"
   if [[ $extra_cc_flags_explicit -eq 0 ]]; then
-    extra_cc_flags="$(get_assignment_value "$fetch_output" SKIA_MBT_EXTRA_CC_FLAGS)"
+    extra_cc_flags="$(get_assignment_value "$fetch_output" MOUI_SKIA_EXTRA_CC_FLAGS)"
   fi
   if [[ $extra_link_flags_explicit -eq 0 ]]; then
-    extra_link_flags="$(get_assignment_value "$fetch_output" SKIA_MBT_EXTRA_LINK_FLAGS)"
+    extra_link_flags="$(get_assignment_value "$fetch_output" MOUI_SKIA_EXTRA_LINK_FLAGS)"
   fi
 fi
 
@@ -598,7 +598,7 @@ esac
 native_extra_cc_flags="$extra_cc_flags"
 native_extra_link_flags="$extra_link_flags"
 if [[ $enable_skshaper -eq 1 ]]; then
-  native_extra_cc_flags="-DSKIA_MBT_HAS_SKSHAPER${native_extra_cc_flags:+ $native_extra_cc_flags}"
+  native_extra_cc_flags="-DMOUI_SKIA_HAS_SKSHAPER${native_extra_cc_flags:+ $native_extra_cc_flags}"
   shaper_link_flags=""
   for shaper_lib in skshaper skunicode_core skunicode_icu harfbuzz icu; do
     shaper_static_lib="$lib_path/lib$shaper_lib.a"
@@ -623,9 +623,9 @@ if [[ $enable_skshaper -eq 1 ]]; then
   native_extra_link_flags="${shaper_link_flags# }${native_extra_link_flags:+ $native_extra_link_flags}"
 fi
 
-cc_flags="-DSKIA_MBT_HAS_SKIA -std=c++17 -I$include_path"
+cc_flags="-DMOUI_SKIA_HAS_SKIA -std=c++17 -I$include_path"
 if [[ $enable_skshaper -eq 1 ]]; then
-  cc_flags="$cc_flags -DSKIA_MBT_HAS_SKSHAPER"
+  cc_flags="$cc_flags -DMOUI_SKIA_HAS_SKSHAPER"
 fi
 if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
@@ -728,7 +728,7 @@ write_renderer_smoke_pkg_config() {
 import {
   "moonbitlang/core/encoding/base64",
   "moonbitlang/x/fs",
-  "wzzc-dev/skia_mbt/native" @skia_native,
+  "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
@@ -822,7 +822,7 @@ EOF
 
 if [[ $write_local_config -eq 1 ]]; then
   write_native_pkg_config
-  echo "Wrote local skia_mbt/native/moon.pkg with macOS Skia link flags."
+  echo "Wrote local moui_skia/native/moon.pkg with macOS Skia link flags."
   write_renderer_smoke_pkg_config
   echo "Wrote local MoUI renderer smoke package link flags."
   write_showcase_pkg_config
@@ -852,7 +852,7 @@ restore_packages() {
   if [[ -f "$native_pkg_backup" ]]; then
     cp "$native_pkg_backup" "$native_pkg"
     rm -f "$native_pkg_backup"
-    echo "Restored skia_mbt/native/moon.pkg after MoUI Skia renderer smoke."
+    echo "Restored moui_skia/native/moon.pkg after MoUI Skia renderer smoke."
   fi
   if [[ -f "$renderer_pkg_backup" ]]; then
     cp "$renderer_pkg_backup" "$renderer_pkg"
@@ -884,7 +884,7 @@ cp "$markdown_pkg" "$markdown_pkg_backup"
 cp "$workbench_pkg" "$workbench_pkg_backup"
 
 write_native_pkg_config
-echo "Wrote temporary skia_mbt/native/moon.pkg with macOS Skia link flags."
+echo "Wrote temporary moui_skia/native/moon.pkg with macOS Skia link flags."
 
 write_renderer_smoke_pkg_config
 echo "Wrote temporary MoUI renderer smoke package link flags."

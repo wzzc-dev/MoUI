@@ -38,7 +38,7 @@ moui/render/wgpu/coretext/    macOS CoreText provider for native wgpu text
 moui/render/wgpu/text_protocol/ shared native measure/run/raster/register bytes protocol
 moui/render/wgpu/directwrite/ Windows DirectWrite provider scaffold
 moui/render/wgpu/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffold
-moui/render/skia/             native Skia raster renderer facade over skia_mbt
+moui/render/skia/             native Skia raster renderer facade over moui_skia
 moui/render/webgpu_adapter/   browser WebGPU host-import renderer for wasm-gc
 moui/tests/tooling/           quickcheck and pixelmatch integration tests
 moui/tests/text_conformance/  opt-in native/Web text diagnostic matrix
@@ -508,7 +508,7 @@ late-image redraws per open window and expose tracked-window revision plus
 loading/ready/failed/disposed status-count diagnostics, including
 previous/current counts on repaint results. Host cores depend only on
 `core`/`backend/host` plus the platform `window` package; they do not import
-`render/wgpu`, `render/skia`, `wgpu_mbt`, or `skia_mbt`. WGPU provider packages
+`render/wgpu`, `render/skia`, `wgpu_mbt`, or `moui_skia`. WGPU provider packages
 own GPU surface bridges, `wgpu-native`, and native WGPU text provider
 composition. Skia provider packages own Skia renderer creation, pixel presenter
 bridges, and Skia availability diagnostics.

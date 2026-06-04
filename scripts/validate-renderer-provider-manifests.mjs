@@ -29,7 +29,7 @@ for (const platform of ["macos", "windows", "linux"]) {
     "wzzc-dev/moui/render/wgpu",
     "wzzc-dev/moui/render/skia",
     "Milky2018/wgpu_mbt",
-    "wzzc-dev/skia_mbt",
+    "wzzc-dev/moui_skia",
   ]);
 
   assertAbsent(`moui/backend/${platform}/skia/moon.pkg`, [
@@ -40,7 +40,7 @@ for (const platform of ["macos", "windows", "linux"]) {
 
   assertAbsent(`moui/backend/${platform}/wgpu/moon.pkg`, [
     "wzzc-dev/moui/render/skia",
-    "wzzc-dev/skia_mbt",
+    "wzzc-dev/moui_skia",
     `wzzc-dev/moui/backend/${platform}/skia`,
   ]);
 }

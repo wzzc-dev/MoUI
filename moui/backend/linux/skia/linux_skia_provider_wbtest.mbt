@@ -33,7 +33,7 @@ test "linux skia availability follows render skia backend info" {
 test "linux skia preflight diagnostic describes unavailable renderer setup" {
   let message = linux_skia_unavailable_message()
   assert_true(message.contains("Linux Skia renderer selected"))
-  assert_true(message.contains("skia_mbt/native is unavailable"))
+  assert_true(message.contains("moui_skia/native is unavailable"))
   assert_true(message.contains("real Skia link flags"))
 }
 

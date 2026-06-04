@@ -1,0 +1,395 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_skia/native"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui_skia",
+}
+
+// Values
+pub fn skia_available() -> Bool
+
+pub fn skia_shaper_available() -> Bool
+
+// Errors
+
+// Types and methods
+pub(all) struct Bitmap {
+  // private fields
+}
+pub fn Bitmap::alloc_n32_premul(@moui_skia.ISize) -> Self?
+pub fn Bitmap::byte_size(Self) -> Int
+pub fn Bitmap::dimensions(Self) -> @moui_skia.ISize
+pub fn Bitmap::erase_color(Self, @moui_skia.Color) -> Unit
+pub fn Bitmap::height(Self) -> Int
+pub fn Bitmap::image_info(Self) -> @moui_skia.ImageInfo
+pub fn Bitmap::is_available(Self) -> Bool
+pub fn Bitmap::row_bytes(Self) -> Int
+pub fn Bitmap::to_bytes(Self) -> Bytes
+pub fn Bitmap::to_pixmap(Self) -> @moui_skia.Pixmap?
+pub fn Bitmap::width(Self) -> Int
+
+pub(all) struct Canvas {
+  // private fields
+}
+pub fn Canvas::clear(Self, @moui_skia.Color) -> Unit
+pub fn Canvas::clip_path(Self, Path, op? : @moui_skia.ClipOp, anti_alias? : Bool) -> Unit
+pub fn Canvas::clip_rect(Self, @moui_skia.Rect, op? : @moui_skia.ClipOp, anti_alias? : Bool) -> Unit
+pub fn Canvas::clip_rrect(Self, @moui_skia.RRect, op? : @moui_skia.ClipOp, anti_alias? : Bool) -> Unit
+pub fn Canvas::concat(Self, @moui_skia.Matrix) -> Unit
+pub fn Canvas::device_clip_bounds(Self) -> @moui_skia.IRect?
+pub fn Canvas::discard(Self) -> Unit
+pub fn Canvas::draw_arc(Self, @moui_skia.Rect, Float, Float, Bool, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_circle(Self, @moui_skia.Point, Float, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_color(Self, @moui_skia.Color, blend_mode? : @moui_skia.BlendMode) -> Unit
+pub fn Canvas::draw_drrect(Self, @moui_skia.RRect, @moui_skia.RRect, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_glyphs(Self, Array[GlyphId], Array[@moui_skia.Point], Font, @moui_skia.Paint, origin? : @moui_skia.Point) -> Unit
+pub fn Canvas::draw_image(Self, Image, @moui_skia.Point) -> Unit
+pub fn Canvas::draw_image_rect(Self, Image, @moui_skia.Rect, @moui_skia.Rect, @moui_skia.Paint, sampling? : @moui_skia.SamplingOptions) -> Unit
+pub fn Canvas::draw_line(Self, @moui_skia.Point, @moui_skia.Point, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_oval(Self, @moui_skia.Rect, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_paint(Self, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_paint_shader(Self, Shader, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_path(Self, Path, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_path_shader(Self, Path, Shader, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_path_value(Self, @moui_skia.Path, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_point(Self, @moui_skia.Point, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_points(Self, Array[@moui_skia.Point], @moui_skia.Paint, mode? : @moui_skia.PointMode) -> Unit
+pub fn Canvas::draw_rect(Self, @moui_skia.Rect, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_rect_shader(Self, @moui_skia.Rect, Shader, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_round_rect(Self, @moui_skia.Rect, Float, Float, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_round_rect_shader(Self, @moui_skia.Rect, Float, Float, Shader, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_rrect(Self, @moui_skia.RRect, @moui_skia.Paint) -> Unit
+pub fn Canvas::draw_text_utf8(Self, Bytes, @moui_skia.Point, Font, @moui_skia.Paint) -> Unit
+pub fn Canvas::is_available(Self) -> Bool
+pub fn Canvas::local_clip_bounds(Self) -> @moui_skia.Rect?
+pub fn Canvas::quick_reject_path(Self, Path) -> Bool
+pub fn Canvas::quick_reject_rect(Self, @moui_skia.Rect) -> Bool
+pub fn Canvas::replay(Self, @moui_skia.RenderCommandList, font? : Font?) -> CanvasReplayStats
+pub fn Canvas::replay_frame(Self, @moui_skia.RenderFrameDescriptor, font? : Font?) -> CanvasReplayStats
+pub fn Canvas::replay_frame_with_resources(Self, @moui_skia.RenderFrameDescriptor, NativeReplayResources, font? : Font?) -> CanvasReplayStats
+pub fn Canvas::replay_with_image_cache(Self, @moui_skia.RenderCommandList, @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, Image], font? : Font?) -> CanvasReplayStats
+pub fn Canvas::replay_with_resources(Self, @moui_skia.RenderCommandList, NativeReplayResources, font? : Font?) -> CanvasReplayStats
+pub fn Canvas::reset_matrix(Self) -> Unit
+pub fn Canvas::restore(Self) -> Unit
+pub fn Canvas::restore_to_count(Self, Int) -> Unit
+pub fn Canvas::rotate(Self, Float) -> Unit
+pub fn Canvas::save(Self) -> Int
+pub fn Canvas::save_count(Self) -> Int
+pub fn Canvas::save_layer(Self, bounds? : @moui_skia.Rect?, paint? : @moui_skia.Paint, color_filter? : ColorFilter?, image_filter? : ImageFilter?, mask_filter? : MaskFilter?) -> Int
+pub fn Canvas::scale(Self, @moui_skia.Size) -> Unit
+pub fn Canvas::skew(Self, @moui_skia.Point) -> Unit
+pub fn Canvas::translate(Self, @moui_skia.Point) -> Unit
+
+pub(all) struct CanvasReplayStats {
+  command_count : Int
+  replayed_count : Int
+  skipped_count : Int
+  draw_count : Int
+  state_count : Int
+  transform_count : Int
+  clip_count : Int
+  clear_count : Int
+  text_count : Int
+  present_count : Int
+  resource_declaration_count : Int
+  image_resource_count : Int
+  shader_resource_count : Int
+  filter_resource_count : Int
+  path_resource_count : Int
+  text_resource_count : Int
+} derive(Eq, @debug.Debug)
+pub fn CanvasReplayStats::empty() -> Self
+pub fn CanvasReplayStats::is_complete(Self) -> Bool
+pub fn CanvasReplayStats::status(Self) -> CanvasReplayStatus
+
+pub(all) enum CanvasReplayStatus {
+  CanvasReplayComplete
+  CanvasReplayDeferredPresent
+  CanvasReplaySkippedCommands
+} derive(Eq, @debug.Debug)
+pub fn CanvasReplayStatus::is_complete(Self) -> Bool
+
+pub(all) struct Codec {
+  // private fields
+}
+pub fn Codec::decode_n32_premul(Self) -> Bitmap?
+pub fn Codec::dimensions(Self) -> @moui_skia.ISize
+pub fn Codec::encoded_format(Self) -> @moui_skia.EncodedImageFormat?
+pub fn Codec::from_bytes(Bytes) -> Self?
+pub fn Codec::from_data(Data) -> Self?
+pub fn Codec::height(Self) -> Int
+pub fn Codec::image_info(Self) -> @moui_skia.ImageInfo
+pub fn Codec::is_available(Self) -> Bool
+pub fn Codec::width(Self) -> Int
+
+pub(all) struct ColorFilter {
+  // private fields
+}
+pub fn ColorFilter::brightness(Float) -> Self?
+pub fn ColorFilter::contrast(Float) -> Self?
+pub fn ColorFilter::is_available(Self) -> Bool
+pub fn ColorFilter::matrix(Array[Float]) -> Self?
+pub fn ColorFilter::saturation(Float) -> Self?
+
+pub(all) struct Data {
+  // private fields
+}
+pub fn Data::from_bytes(Bytes) -> Self?
+pub fn Data::is_available(Self) -> Bool
+pub fn Data::is_empty(Self) -> Bool
+pub fn Data::size(Self) -> Int
+pub fn Data::to_bytes(Self) -> Bytes
+
+pub(all) struct Font {
+  // private fields
+}
+pub fn Font::count_text_utf8(Self, Bytes) -> Int
+pub fn Font::default(size? : Float) -> Self?
+pub fn Font::empty(size? : Float) -> Self?
+pub fn Font::from_typeface(Typeface, size? : Float) -> Self?
+pub fn Font::glyph_bounds(Self, GlyphId) -> @moui_skia.Rect
+pub fn Font::glyph_bounds_many(Self, Array[GlyphId]) -> Array[@moui_skia.Rect]
+pub fn Font::glyph_positions(Self, Array[GlyphId], origin? : @moui_skia.Point) -> Array[@moui_skia.Point]
+pub fn Font::glyph_width(Self, GlyphId) -> Float
+pub fn Font::glyph_widths(Self, Array[GlyphId]) -> Array[Float]
+pub fn Font::glyph_x_positions(Self, Array[GlyphId], origin? : Float) -> Array[Float]
+pub fn Font::is_available(Self) -> Bool
+pub fn Font::measure_text_bounds_utf8(Self, Bytes) -> @moui_skia.Rect?
+pub fn Font::measure_text_utf8(Self, Bytes) -> Float
+pub fn Font::metrics(Self) -> FontMetrics
+pub fn Font::set_size(Self, Float) -> Unit
+pub fn Font::shape_text_run_utf8(Self, Bytes, @moui_skia.TextShapingDescriptor) -> @moui_skia.ShapedGlyphRunDescriptor?
+pub fn Font::shape_text_utf8(Self, Bytes, width? : Float, left_to_right? : Bool) -> ShapedTextRun?
+pub fn Font::size(Self) -> Float
+pub fn Font::spacing(Self) -> Float
+pub fn Font::text_glyph_positions_utf8(Self, Bytes, origin? : @moui_skia.Point) -> Array[@moui_skia.Point]
+pub fn Font::text_glyph_x_positions_utf8(Self, Bytes, origin? : Float) -> Array[Float]
+pub fn Font::text_to_glyphs_utf8(Self, Bytes) -> Array[GlyphId]
+
+pub(all) struct FontMetrics {
+  top : Float
+  ascent : Float
+  descent : Float
+  bottom : Float
+  leading : Float
+  average_char_width : Float
+  max_char_width : Float
+  x_min : Float
+  x_max : Float
+  x_height : Float
+  cap_height : Float
+  underline_thickness : Float?
+  underline_position : Float?
+  strikeout_thickness : Float?
+  strikeout_position : Float?
+  has_bounds : Bool
+} derive(Eq, @debug.Debug)
+
+pub(all) struct FontMgr {
+  // private fields
+}
+pub fn FontMgr::count_families(Self) -> Int
+pub fn FontMgr::default() -> Self?
+pub fn FontMgr::family_name(Self, Int) -> Bytes?
+pub fn FontMgr::is_available(Self) -> Bool
+pub fn FontMgr::match_fallback_request(Self, @moui_skia.FontFallbackRequest) -> Typeface?
+pub fn FontMgr::match_family_style(Self, Bytes, weight? : Int, width? : Int, slant? : Int) -> Typeface?
+pub fn FontMgr::match_family_style_character(Self, Bytes, Array[Bytes], Int, style? : @moui_skia.FontStyleRequest) -> Typeface?
+pub fn FontMgr::match_family_style_request(Self, Bytes, @moui_skia.FontStyleRequest) -> Typeface?
+pub fn FontMgr::resolve_fallback_request(Self, @moui_skia.FontFallbackRequest) -> ResolvedTypeface?
+
+pub(all) struct GlyphId(UInt16) derive(Eq, @debug.Debug)
+pub fn GlyphId::new(UInt16) -> Self
+pub fn GlyphId::to_int(Self) -> Int
+pub fn GlyphId::to_uint16(Self) -> UInt16
+
+pub(all) struct Image {
+  // private fields
+}
+pub fn Image::dimensions(Self) -> @moui_skia.ISize
+pub fn Image::encode_to_data(Self, format? : @moui_skia.EncodedImageFormat, quality? : Int) -> Data?
+pub fn Image::from_bitmap(Bitmap) -> Self?
+pub fn Image::from_encoded_bytes(Bytes) -> Self?
+pub fn Image::from_encoded_data(Data) -> Self?
+pub fn Image::height(Self) -> Int
+pub fn Image::image_info(Self) -> @moui_skia.ImageInfo
+pub fn Image::is_available(Self) -> Bool
+pub fn Image::width(Self) -> Int
+
+pub(all) struct ImageFilter {
+  // private fields
+}
+pub fn ImageFilter::blur(Float, Float) -> Self?
+pub fn ImageFilter::is_available(Self) -> Bool
+
+pub(all) struct MaskFilter {
+  // private fields
+}
+pub fn MaskFilter::blur(Float) -> Self?
+pub fn MaskFilter::is_available(Self) -> Bool
+
+pub(all) struct NativeReplayResourceStats {
+  cache_count : Int
+  resource_count : Int
+  byte_size : Int64
+  max_bytes : Int64
+  hits : Int
+  misses : Int
+  evictions : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct NativeReplayResources {
+  image_cache : @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, Image]
+  shader_cache : @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, Shader]
+  path_cache : @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, Path]
+  text_run_cache : @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, NativeReplayTextRun]
+  font_cache : @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, Font]
+  typeface_cache : @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, Typeface]
+  color_filter_cache : @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, ColorFilter]
+  image_filter_cache : @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, ImageFilter]
+  mask_filter_cache : @moui_skia.ResourceCache[@moui_skia.RendererResourceKey, MaskFilter]
+}
+pub fn NativeReplayResources::new(image_max_bytes? : Int64, shader_max_bytes? : Int64, path_max_bytes? : Int64, text_run_max_bytes? : Int64, font_max_bytes? : Int64, typeface_max_bytes? : Int64, color_filter_max_bytes? : Int64, image_filter_max_bytes? : Int64, mask_filter_max_bytes? : Int64) -> Self
+pub fn NativeReplayResources::stats(Self) -> NativeReplayResourceStats
+
+pub(all) enum NativeReplayTextRun {
+  DirectTextRun(@moui_skia.TextRunDescriptor)
+  ShapedTextRun(@moui_skia.ShapedGlyphRunDescriptor)
+}
+
+pub(all) struct Path {
+  // private fields
+}
+pub fn Path::add_circle(Self, @moui_skia.Point, Float, direction? : @moui_skia.PathDirection) -> Unit
+pub fn Path::add_oval(Self, @moui_skia.Rect, direction? : @moui_skia.PathDirection) -> Unit
+pub fn Path::add_path_value(Self, @moui_skia.Path, matrix? : @moui_skia.Matrix, mode? : @moui_skia.AddPathMode) -> Unit
+pub fn Path::add_path_value_matrix(Self, @moui_skia.Path, @moui_skia.Matrix, mode? : @moui_skia.AddPathMode) -> Unit
+pub fn Path::add_path_value_offset(Self, @moui_skia.Path, @moui_skia.Point, mode? : @moui_skia.AddPathMode) -> Unit
+pub fn Path::add_poly(Self, Array[@moui_skia.Point], close? : Bool) -> Unit
+pub fn Path::add_rect(Self, @moui_skia.Rect, direction? : @moui_skia.PathDirection) -> Unit
+pub fn Path::add_round_rect(Self, @moui_skia.Rect, Float, Float, direction? : @moui_skia.PathDirection) -> Unit
+pub fn Path::add_rrect(Self, @moui_skia.RRect, direction? : @moui_skia.PathDirection) -> Unit
+pub fn Path::bounds(Self) -> @moui_skia.Rect?
+pub fn Path::close(Self) -> Unit
+pub fn Path::compute_tight_bounds(Self) -> @moui_skia.Rect?
+pub fn Path::conic_to(Self, @moui_skia.Point, @moui_skia.Point, Float) -> Unit
+pub fn Path::contains(Self, @moui_skia.Point) -> Bool
+pub fn Path::count_points(Self) -> Int
+pub fn Path::count_verbs(Self) -> Int
+pub fn Path::cubic_to(Self, @moui_skia.Point, @moui_skia.Point, @moui_skia.Point) -> Unit
+pub fn Path::fill_type(Self) -> @moui_skia.PathFillType
+pub fn Path::from_value(@moui_skia.Path) -> Self?
+pub fn Path::is_available(Self) -> Bool
+pub fn Path::is_empty(Self) -> Bool
+pub fn Path::is_finite(Self) -> Bool
+pub fn Path::is_inverse_fill_type(Self) -> Bool
+pub fn Path::is_last_contour_closed(Self) -> Bool
+pub fn Path::is_line(Self) -> @moui_skia.PathLine?
+pub fn Path::is_oval(Self) -> @moui_skia.Rect?
+pub fn Path::is_rect(Self) -> @moui_skia.PathRect?
+pub fn Path::last_point(Self) -> @moui_skia.Point?
+pub fn Path::line_to(Self, @moui_skia.Point) -> Unit
+pub fn Path::move_to(Self, @moui_skia.Point) -> Unit
+pub fn Path::new() -> Self?
+pub fn Path::offset(Self, Float, Float) -> Unit
+pub fn Path::quad_to(Self, @moui_skia.Point, @moui_skia.Point) -> Unit
+pub fn Path::reset(Self) -> Unit
+pub fn Path::rewind(Self) -> Unit
+pub fn Path::segment_masks(Self) -> @moui_skia.PathSegmentMask
+pub fn Path::set_fill_type(Self, @moui_skia.PathFillType) -> Unit
+pub fn Path::transform(Self, @moui_skia.Matrix) -> Unit
+
+pub(all) struct ResolvedTypeface {
+  typeface : Typeface
+  resolution : @moui_skia.FontFallbackResolutionDescriptor
+}
+pub fn ResolvedTypeface::font_descriptor(Self, size? : Float, scale_x? : Float, skew_x? : Float) -> @moui_skia.FontDescriptor
+pub fn ResolvedTypeface::is_available(Self) -> Bool
+pub fn ResolvedTypeface::resource_plan(Self, size? : Float, scale_x? : Float, skew_x? : Float, request_byte_size? : Int64, resolution_byte_size? : Int64, match_byte_size? : Int64, font_byte_size? : Int64) -> @moui_skia.RendererResourcePlan
+
+pub(all) struct Shader {
+  // private fields
+}
+pub fn Shader::color(@moui_skia.Color) -> Self?
+pub fn Shader::is_available(Self) -> Bool
+pub fn Shader::linear_gradient(@moui_skia.Point, @moui_skia.Point, @moui_skia.Color, @moui_skia.Color, tile_mode? : @moui_skia.TileMode) -> Self?
+pub fn Shader::radial_gradient(@moui_skia.Point, Float, @moui_skia.Color, @moui_skia.Color, tile_mode? : @moui_skia.TileMode) -> Self?
+
+pub(all) struct ShapedTextRun {
+  // private fields
+}
+pub fn ShapedTextRun::advance(Self) -> @moui_skia.Point
+pub fn ShapedTextRun::clusters(Self) -> Array[Int]
+pub fn ShapedTextRun::glyph_count(Self) -> Int
+pub fn ShapedTextRun::glyphs(Self) -> Array[GlyphId]
+pub fn ShapedTextRun::is_available(Self) -> Bool
+pub fn ShapedTextRun::positions(Self) -> Array[@moui_skia.Point]
+
+pub(all) struct Surface {
+  // private fields
+}
+pub fn Surface::canvas(Self) -> Canvas?
+pub fn Surface::descriptor(Self) -> @moui_skia.SurfaceDescriptor
+pub fn Surface::dimensions(Self) -> @moui_skia.ISize
+pub fn Surface::flush_and_submit(Self) -> Bool
+pub fn Surface::for_target(@moui_skia.SurfaceTargetDescriptor) -> Self?
+pub fn Surface::height(Self) -> Int
+pub fn Surface::image_info(Self) -> @moui_skia.ImageInfo
+pub fn Surface::image_snapshot(Self) -> Image?
+pub fn Surface::image_snapshot_with_bounds(Self, @moui_skia.IRect) -> Image?
+pub fn Surface::raster_n32_premul(@moui_skia.ISize) -> Self?
+pub fn Surface::read_pixels(Self, bounds? : @moui_skia.IRect) -> @moui_skia.Pixmap?
+pub fn Surface::render_frame(Self, @moui_skia.RenderFrameDescriptor, font? : Font?, frame_index? : Int) -> SurfaceFrameReplayStats
+pub fn Surface::render_frame_with_resources(Self, @moui_skia.RenderFrameDescriptor, NativeReplayResources, font? : Font?, frame_index? : Int) -> SurfaceFrameReplayStats
+pub fn Surface::target_support_status(@moui_skia.SurfaceTargetDescriptor) -> SurfaceTargetSupportStatus
+pub fn Surface::width(Self) -> Int
+
+pub(all) struct SurfaceFrameReplayStats {
+  replay : CanvasReplayStats
+  validation_status : @moui_skia.RenderFrameValidationStatus
+  surface_matches : Bool
+  finalization : @moui_skia.RenderFrameFinalizationDescriptor
+  finalized : Bool
+} derive(Eq, @debug.Debug)
+pub fn SurfaceFrameReplayStats::finalization_is_ready(Self) -> Bool
+pub fn SurfaceFrameReplayStats::finalization_resource_plan(Self) -> @moui_skia.RendererResourcePlan
+pub fn SurfaceFrameReplayStats::is_complete(Self) -> Bool
+pub fn SurfaceFrameReplayStats::status(Self) -> SurfaceFrameReplayStatus
+
+pub(all) enum SurfaceFrameReplayStatus {
+  SurfaceFrameReplayComplete
+  SurfaceFrameReplayValidationFailed(@moui_skia.RenderFrameValidationStatus)
+  SurfaceFrameReplaySurfaceMismatch
+  SurfaceFrameReplaySkippedCommands
+  SurfaceFrameReplayFinalizationFailed
+} derive(Eq, @debug.Debug)
+pub fn SurfaceFrameReplayStatus::is_complete(Self) -> Bool
+
+pub(all) enum SurfaceTargetSupportStatus {
+  SurfaceTargetSupported
+  SurfaceTargetEmpty
+  SurfaceTargetSkiaUnavailable
+  SurfaceTargetWindowUnsupported
+  SurfaceTargetGpuUnsupported
+} derive(Eq, @debug.Debug)
+pub fn SurfaceTargetSupportStatus::is_supported(Self) -> Bool
+
+pub(all) struct Typeface {
+  // private fields
+}
+pub fn Typeface::default() -> Self?
+pub fn Typeface::family_name(Self) -> Bytes?
+pub fn Typeface::from_font_mgr_family(FontMgr, Bytes, weight? : Int, width? : Int, slant? : Int) -> Self?
+pub fn Typeface::from_font_mgr_request(FontMgr, @moui_skia.FontFallbackRequest) -> Self?
+pub fn Typeface::from_name(Bytes, weight? : Int, width? : Int, slant? : Int) -> Self?
+pub fn Typeface::from_name_style(Bytes, @moui_skia.FontStyleRequest) -> Self?
+pub fn Typeface::is_available(Self) -> Bool
+pub fn Typeface::is_bold(Self) -> Bool
+pub fn Typeface::is_fixed_pitch(Self) -> Bool
+pub fn Typeface::is_italic(Self) -> Bool
+
+// Type aliases
+
+// Traits
+

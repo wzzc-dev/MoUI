@@ -81,7 +81,7 @@ The macOS, Windows, and Linux Skia provider packages expose
 `macos_skia_provider_preflight_summary()`,
 `windows_skia_provider_preflight_summary()`, and
 `linux_skia_provider_preflight_summary()` for package-level audits of renderer
-availability, `skia_mbt/native` availability, selected font resolution, the
+availability, `moui_skia/native` availability, selected font resolution, the
 presenter path, the renderer-neutral `HostWindowRenderer` bridge used to
 forward the Skia text system, image-resource diagnostics, present count, and
 disposal hooks, host service/input readiness, clipboard/menu/file-dialog/open
@@ -175,8 +175,8 @@ sh -n scripts/dev-check.sh
 sh -n scripts/conformance-check.sh
 sh -n scripts/setup-local-deps.sh
 sh -n scripts/check-local-deps.sh
-bash skia_mbt/scripts/verify-platform-status.sh
-bash skia_mbt/scripts/verify-native-capability-contract.sh
+bash moui_skia/scripts/verify-platform-status.sh
+bash moui_skia/scripts/verify-native-capability-contract.sh
 sh -n scripts/preview-loop.sh
 sh -n scripts/package-macos-app.sh
 node --check scripts/validate-guidance-consistency.mjs
@@ -246,7 +246,7 @@ This renderer slice includes the native Skia raster package at
 On macOS, use `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
 --run-markdown-smoke` when you need renderer pixels plus first-frame Showcase
 and Markdown Editor runtime evidence with temporary real-Skia link flags. Add
-`--link-mode dynamic|static` or set `SKIA_MBT_MACOS_LINK_MODE` when the
+`--link-mode dynamic|static` or set `MOUI_SKIA_MACOS_LINK_MODE` when the
 default auto mode is not what you want; auto prefers static `libskia.a` for
 temporary smoke/build rewrites and dynamic `libskia.dylib` for
 `--write-local-config` direct-run setup when those files exist. Add
@@ -376,12 +376,12 @@ helpers build wasm-gc artifacts under the module-qualified
 the public consumer sentinel lines. This is a dependency-readiness guard only;
 run the window smoke helpers on matching hosts before claiming runtime platform
 evidence.
-The same local-dependency check requires the repo-local `skia_mbt` workspace to expose its
+The same local-dependency check requires the repo-local `moui_skia` workspace to expose its
 binding-level platform acceptance surface: `skia-platform-status.json`,
 `skia-provider-lock.json`, `SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`,
 `native/ownership.json`, and the native verifier scripts. It runs
-`skia_mbt/scripts/verify-platform-status.sh` and
-`skia_mbt/scripts/verify-native-capability-contract.sh`, which
+`moui_skia/scripts/verify-platform-status.sh` and
+`moui_skia/scripts/verify-native-capability-contract.sh`, which
 check the provider lock, CI gate wiring, native smoke capability markers,
 artifact evidence references, fallback parity, FFI ownership/borrow metadata,
 and native capability manifest coverage. That is Skia binding dependency

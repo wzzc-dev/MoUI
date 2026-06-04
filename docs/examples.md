@@ -574,7 +574,7 @@ moon build examples/mo_workbench/macos_skia --target native
 ```
 
 The `macos_skia` entrypoints select the native Skia raster renderer explicitly.
-They require the local Skia native link setup that makes `skia_mbt/native`
+They require the local Skia native link setup that makes `moui_skia/native`
 available at runtime. Normal macOS Skia runs use the renderer's system
 `FontMgr` path; first-frame smoke runs explicitly select the `EmptyTypeface`
 fallback path through their exit-after-first-present environment flag.
@@ -587,7 +587,7 @@ sh scripts/dev-check.sh --skia-real-smoke
 ```
 
 On macOS, the helper below resolves the pinned JetBrains Skia binary provider,
-temporarily wires the resulting include/library paths into `skia_mbt`, the MoUI
+temporarily wires the resulting include/library paths into `moui_skia`, the MoUI
 renderer smoke, Showcase, Markdown Editor, and Mo Workbench `macos_skia`
 packages, then runs the renderer pixel smoke and builds the Showcase entrypoint:
 
@@ -602,7 +602,7 @@ with the optional shaped-run path available.
 Use `--write-local-config` when you want direct local `moon run` commands to use
 real Skia. In `auto` link mode that persistent setup prefers dynamic
 `libskia.dylib`, while the helper's temporary smoke/build setup prefers static
-`libskia.a` when available. Set `SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or
+`libskia.a` when available. Set `MOUI_SKIA_MACOS_LINK_MODE=dynamic|static` or
 pass `--link-mode dynamic|static` to override the default.
 
 For a fuller local smoke, pass `--run-showcase-smoke`. The helper then launches
@@ -685,7 +685,7 @@ powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps
 ```
 
 `windows_skia` follows the same Skia availability rules as the backend provider:
-if `skia_mbt/native` is only in fallback mode, renderer creation reports a
+if `moui_skia/native` is only in fallback mode, renderer creation reports a
 diagnostic instead of opening an empty HWND.
 Set `MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` or
 `MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` in the same MSVC

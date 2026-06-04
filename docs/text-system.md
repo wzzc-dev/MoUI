@@ -72,13 +72,13 @@ directly. Showcase also has explicit `macos_cosmic`, `windows_cosmic`, and
 Markdown Editor `*_skia` entrypoints select Skia provider packages, not WGPU
 text-provider variants. By default, Skia basic text
 measurement and drawing
-resolve the MoUI `FontSpec` family stack, weight, and style through `skia_mbt`
+resolve the MoUI `FontSpec` family stack, weight, and style through `moui_skia`
 `FontMgr` and `Font`. The system `FontMgr` path now builds a `FontFallbackRequest`
 with a representative coverage character, preferring emoji hints, then
 non-ASCII code points, then the first code point before falling back to regular
 family matching. Its `TextSystem` returns Skia font-metric baseline/height plus
 caret positions for basic input geometry. When
-`skia_mbt/native` is linked with SkShaper support, the Skia text system maps
+`moui_skia/native` is linked with SkShaper support, the Skia text system maps
 shaped-run source clusters back to MoUI's per-character caret array; otherwise
 it falls back to Skia-measured prefix carets. Both caret paths apply
 representative combining-mark, Indic matra/virama, Arabic mark, Thai mark,
@@ -117,7 +117,7 @@ first-frame smoke entrypoints still explicitly select
 environment flag is set; that keeps CLI smoke runs on the safer default-font
 retry path without changing the normal app default. The fallback-safe Skia
 renderer tests also consume the
-new `skia_mbt` `FontFallbackRequest`, `TextMeasurementDescriptor`,
+new `moui_skia` `FontFallbackRequest`, `TextMeasurementDescriptor`,
 `TextShapingDescriptor`, `ShapedTextRunDescriptor`, and
 `ShapedGlyphRunDescriptor` resource plans through an internal descriptor
 preflight so font fallback and shaped-run cache keys stay auditable without

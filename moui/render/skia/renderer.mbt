@@ -10,7 +10,7 @@ pub(all) suberror SkiaRendererError {
 ///|
 pub fn SkiaRendererError::message(self : SkiaRendererError) -> String {
   match self {
-    SkiaUnavailable => "skia_mbt/native is unavailable"
+    SkiaUnavailable => "moui_skia/native is unavailable"
     SurfaceUnavailable => "failed to create Skia raster surface"
     CanvasUnavailable => "failed to acquire Skia canvas"
     ReadPixelsUnavailable => "failed to read Skia surface pixels"
@@ -212,14 +212,14 @@ priv struct SkiaTextMetrics {
 ///|
 priv struct SkiaGlyphRun {
   glyphs : Array[@skia_native.GlyphId]
-  positions : Array[@skia_mbt.Point]
+  positions : Array[@moui_skia.Point]
   clusters : Array[Int]
   width : Double
 }
 
 ///|
 priv struct SkiaTextPlacement {
-  origin : @skia_mbt.Point
+  origin : @moui_skia.Point
   clip : @core.Rect
 }
 
@@ -276,7 +276,7 @@ pub fn backend_info() -> @render.RendererBackendInfo {
     can_render=available,
     can_resize=available,
     owns_surface=true,
-    description="Native Skia raster renderer using skia_mbt/native CPU surfaces, " +
+    description="Native Skia raster renderer using moui_skia/native CPU surfaces, " +
       surface_preflight.summary() +
       ", " +
       text_preflight.summary() +
@@ -354,9 +354,9 @@ fn create_surface(
 ///|
 fn skia_raster_surface_target(
   metrics : @render.RendererSurfaceMetrics,
-) -> @skia_mbt.SurfaceTargetDescriptor {
-  @skia_mbt.SurfaceTargetDescriptor::raster_n32_premul(
-    @skia_mbt.ISize::new(
+) -> @moui_skia.SurfaceTargetDescriptor {
+  @moui_skia.SurfaceTargetDescriptor::raster_n32_premul(
+    @moui_skia.ISize::new(
       skia_dim_to_int(metrics.physical_size.width),
       skia_dim_to_int(metrics.physical_size.height),
     ),
@@ -368,8 +368,8 @@ fn raster_surface_preflight(
   metrics : @render.RendererSurfaceMetrics,
 ) -> SkiaRasterSurfacePreflight {
   let target = skia_raster_surface_target(metrics)
-  let command_list = @skia_mbt.RenderCommandList::for_target(target).clear(
-    @skia_mbt.Color::transparent(),
+  let command_list = @moui_skia.RenderCommandList::for_target(target).clear(
+    @moui_skia.Color::transparent(),
   )
   let frame = command_list.frame_descriptor(target)
   let finalization = frame.finalization_descriptor()
@@ -386,7 +386,7 @@ fn raster_surface_preflight(
     cacheable_resource_count: resource_plan.cacheable_count,
     uncacheable_resource_count: resource_plan.uncacheable_count,
     gpu_backed_resource_count: resource_plan.gpu_backed_count,
-    surface_resource_count: resource_plan.count_kind(@skia_mbt.SurfaceResource),
+    surface_resource_count: resource_plan.count_kind(@moui_skia.SurfaceResource),
     byte_size: resource_plan.byte_size,
   }
 }
@@ -402,17 +402,17 @@ fn skia_text_descriptor_preflight(
     .font_descriptor(size=Float::from_double(font.size))
     .resource_key()
   let text_bytes = @utf8.encode(text[:], bom=false)
-  let run = @skia_mbt.TextRunDescriptor::new(
-    range=@skia_mbt.TextRange::new(0, text_bytes.length()),
+  let run = @moui_skia.TextRunDescriptor::new(
+    range=@moui_skia.TextRange::new(0, text_bytes.length()),
     fallback~,
   )
-  let measurement = @skia_mbt.TextMeasurementDescriptor::new(
+  let measurement = @moui_skia.TextMeasurementDescriptor::new(
     run~,
     font_key~,
     width=Float::from_double(font.size * 32.0),
     shape=true,
   )
-  let shaping = @skia_mbt.TextShapingDescriptor::new(
+  let shaping = @moui_skia.TextShapingDescriptor::new(
     run~,
     font_key~,
     width=Float::from_double(font.size * 32.0),
@@ -421,7 +421,7 @@ fn skia_text_descriptor_preflight(
   let shaped_run = shaping.shaped_run_descriptor(
     glyph_count~,
     cluster_count=glyph_count,
-    advance=@skia_mbt.Point::new(Float::from_double(font.size), 0.0),
+    advance=@moui_skia.Point::new(Float::from_double(font.size), 0.0),
   )
   let glyph_run = shaped_run.glyph_run_descriptor(
     glyph_ids=skia_preflight_glyph_ids(glyph_count),
@@ -542,9 +542,9 @@ fn skia_sample_shaped_cluster_caret_ready() -> Bool {
       @skia_native.GlyphId::new(12),
     ],
     positions: [
-      @skia_mbt.Point::new(0.0, 0.0),
-      @skia_mbt.Point::new(14.0, 0.0),
-      @skia_mbt.Point::new(28.0, 0.0),
+      @moui_skia.Point::new(0.0, 0.0),
+      @moui_skia.Point::new(14.0, 0.0),
+      @moui_skia.Point::new(28.0, 0.0),
     ],
     clusters: [0, 1, 12],
     width: 34.0,
@@ -717,10 +717,10 @@ fn skia_preflight_glyph_ids(count : Int) -> Array[Int] {
 }
 
 ///|
-fn skia_preflight_glyph_positions(count : Int) -> Array[@skia_mbt.Point] {
-  let positions : Array[@skia_mbt.Point] = []
+fn skia_preflight_glyph_positions(count : Int) -> Array[@moui_skia.Point] {
+  let positions : Array[@moui_skia.Point] = []
   for index in 0..<count {
-    positions.push(@skia_mbt.Point::new(Float::from_int(index), 0.0))
+    positions.push(@moui_skia.Point::new(Float::from_int(index), 0.0))
   }
   positions
 }
@@ -799,7 +799,7 @@ pub fn SkiaRasterRenderer::render(
       canvas.clear(skia_color(@render.first_clear_color(commands)))
       let saved = canvas.save()
       canvas.scale(
-        @skia_mbt.Size::new(
+        @moui_skia.Size::new(
           Float::from_double(self.metrics.scale_factor),
           Float::from_double(self.metrics.scale_factor),
         ),
@@ -1116,7 +1116,7 @@ fn SkiaRasterRenderer::draw_brush_rounded_rect(
               canvas.draw_rect_shader(
                 skia_rect(rounded.rect),
                 shader,
-                @skia_mbt.Paint::new(anti_alias=true),
+                @moui_skia.Paint::new(anti_alias=true),
               )
               canvas.restore()
             }
@@ -1154,7 +1154,7 @@ fn SkiaRasterRenderer::draw_image(
       )
       canvas.draw_image_rect(
         image,
-        @skia_mbt.Rect::from_xywh(
+        @moui_skia.Rect::from_xywh(
           Float::from_double(placement.u0 * image.width().to_double()),
           Float::from_double(placement.v0 * image.height().to_double()),
           Float::from_double(
@@ -1166,7 +1166,7 @@ fn SkiaRasterRenderer::draw_image(
         ),
         skia_rect(placement.frame),
         skia_opacity_paint(run.opacity),
-        sampling=@skia_mbt.SamplingOptions::linear(),
+        sampling=@moui_skia.SamplingOptions::linear(),
       )
     }
     None => self.draw_image_placeholder(canvas, run)
@@ -1547,7 +1547,7 @@ fn SkiaRasterRenderer::draw_text(
           segment.glyph_run.positions,
           segment.font,
           skia_paint(run.color),
-          origin=@skia_mbt.Point::new(
+          origin=@moui_skia.Point::new(
             Float::from_double(
               placement.origin.x.to_double() + segment.x_offset,
             ),
@@ -1593,7 +1593,7 @@ fn skia_text_placement_for_width(
   }
   let y = skia_text_baseline_y(run.frame, metrics)
   {
-    origin: @skia_mbt.Point::new(Float::from_double(x), Float::from_double(y)),
+    origin: @moui_skia.Point::new(Float::from_double(x), Float::from_double(y)),
     clip: run.frame,
   }
 }
@@ -1828,7 +1828,7 @@ fn SkiaRasterRenderer::draw_path_brush(
               canvas.draw_rect_shader(
                 bounds,
                 shader,
-                @skia_mbt.Paint::new(anti_alias=true),
+                @moui_skia.Paint::new(anti_alias=true),
               )
               canvas.restore()
             }
@@ -1885,7 +1885,7 @@ fn SkiaRasterRenderer::draw_brush_rect(
           canvas.draw_rect_shader(
             skia_rect(frame),
             shader,
-            @skia_mbt.Paint::new(anti_alias=true),
+            @moui_skia.Paint::new(anti_alias=true),
           )
         None => {
           canvas.draw_rect(skia_rect(frame), skia_paint(brush.fallback_color()))
@@ -2004,7 +2004,7 @@ fn SkiaRasterRenderer::draw_vignette_effect(
       canvas.draw_rect_shader(
         skia_rect(spec.frame),
         shader,
-        @skia_mbt.Paint::new(anti_alias=true),
+        @moui_skia.Paint::new(anti_alias=true),
       )
     None => {
       self.draw_brush_rect(canvas, spec.frame, spec.fallback)
@@ -3054,8 +3054,8 @@ fn skia_typeface_from_font_mgr(
 fn skia_font_fallback_request(
   font : @core.FontSpec,
   text : String,
-) -> @skia_mbt.FontFallbackRequest {
-  @skia_mbt.FontFallbackRequest::new(
+) -> @moui_skia.FontFallbackRequest {
+  @moui_skia.FontFallbackRequest::new(
     families=skia_font_fallback_chain(font),
     character=skia_representative_fallback_codepoint(text),
     style=skia_font_style_request(font),
@@ -3065,7 +3065,7 @@ fn skia_font_fallback_request(
 ///|
 fn skia_font_fallback_chain(
   font : @core.FontSpec,
-) -> @skia_mbt.FontFallbackChain {
+) -> @moui_skia.FontFallbackChain {
   let families = skia_preflight_family_candidates(font)
   let primary_family = if families.is_empty() {
     b"system-ui"
@@ -3078,12 +3078,14 @@ fn skia_font_fallback_chain(
       fallback_families.push(@utf8.encode(families[index][:], bom=false))
     }
   }
-  @skia_mbt.FontFallbackChain::new(primary_family~, fallback_families~)
+  @moui_skia.FontFallbackChain::new(primary_family~, fallback_families~)
 }
 
 ///|
-fn skia_font_style_request(font : @core.FontSpec) -> @skia_mbt.FontStyleRequest {
-  @skia_mbt.FontStyleRequest::new(
+fn skia_font_style_request(
+  font : @core.FontSpec,
+) -> @moui_skia.FontStyleRequest {
+  @moui_skia.FontStyleRequest::new(
     weight=font.weight,
     width=5,
     slant=skia_font_slant(font.style),
@@ -3148,8 +3150,8 @@ fn skia_dim_to_int(value : Double) -> Int {
 }
 
 ///|
-fn skia_color(color : @core.Color) -> @skia_mbt.Color {
-  @skia_mbt.Color::from_argb(
+fn skia_color(color : @core.Color) -> @moui_skia.Color {
+  @moui_skia.Color::from_argb(
     color_component_byte(color.a),
     color_component_byte(color.r),
     color_component_byte(color.g),
@@ -3163,34 +3165,34 @@ fn color_component_byte(value : Double) -> Byte {
 }
 
 ///|
-fn skia_paint(color : @core.Color) -> @skia_mbt.Paint {
-  @skia_mbt.Paint::new(color=skia_color(color), anti_alias=true)
+fn skia_paint(color : @core.Color) -> @moui_skia.Paint {
+  @moui_skia.Paint::new(color=skia_color(color), anti_alias=true)
 }
 
 ///|
-fn skia_opacity_paint(opacity : Double) -> @skia_mbt.Paint {
-  @skia_mbt.Paint::new(
-    color=@skia_mbt.Color::white().with_alpha(color_component_byte(opacity)),
+fn skia_opacity_paint(opacity : Double) -> @moui_skia.Paint {
+  @moui_skia.Paint::new(
+    color=@moui_skia.Color::white().with_alpha(color_component_byte(opacity)),
     anti_alias=true,
   )
 }
 
 ///|
-fn skia_stroke_paint(color : @core.Color, width : Double) -> @skia_mbt.Paint {
-  @skia_mbt.Paint::new(color=skia_color(color), anti_alias=true)
+fn skia_stroke_paint(color : @core.Color, width : Double) -> @moui_skia.Paint {
+  @moui_skia.Paint::new(color=skia_color(color), anti_alias=true)
   .set_stroke(true)
   .set_stroke_width(Float::from_double(width.max(0.0)))
 }
 
 ///|
-fn skia_blend_mode(mode : @core.BlendMode) -> @skia_mbt.BlendMode {
+fn skia_blend_mode(mode : @core.BlendMode) -> @moui_skia.BlendMode {
   match mode {
-    @core.BlendMode::SourceOver => @skia_mbt.BlendMode::SrcOver
-    @core.BlendMode::Multiply => @skia_mbt.BlendMode::Multiply
-    @core.BlendMode::Screen => @skia_mbt.BlendMode::Screen
-    @core.BlendMode::Overlay => @skia_mbt.BlendMode::Overlay
-    @core.BlendMode::Darken => @skia_mbt.BlendMode::Darken
-    @core.BlendMode::Lighten => @skia_mbt.BlendMode::Lighten
+    @core.BlendMode::SourceOver => @moui_skia.BlendMode::SrcOver
+    @core.BlendMode::Multiply => @moui_skia.BlendMode::Multiply
+    @core.BlendMode::Screen => @moui_skia.BlendMode::Screen
+    @core.BlendMode::Overlay => @moui_skia.BlendMode::Overlay
+    @core.BlendMode::Darken => @moui_skia.BlendMode::Darken
+    @core.BlendMode::Lighten => @moui_skia.BlendMode::Lighten
   }
 }
 
@@ -3240,8 +3242,8 @@ fn skia_identity_color_matrix_values() -> Array[Float] {
 }
 
 ///|
-fn skia_rect(rect : @core.Rect) -> @skia_mbt.Rect {
-  @skia_mbt.Rect::from_xywh(
+fn skia_rect(rect : @core.Rect) -> @moui_skia.Rect {
+  @moui_skia.Rect::from_xywh(
     Float::from_double(rect.origin.x),
     Float::from_double(rect.origin.y),
     Float::from_double(rect.size.width),
@@ -3250,13 +3252,16 @@ fn skia_rect(rect : @core.Rect) -> @skia_mbt.Rect {
 }
 
 ///|
-fn skia_point(point : @core.Point) -> @skia_mbt.Point {
-  @skia_mbt.Point::new(Float::from_double(point.x), Float::from_double(point.y))
+fn skia_point(point : @core.Point) -> @moui_skia.Point {
+  @moui_skia.Point::new(
+    Float::from_double(point.x),
+    Float::from_double(point.y),
+  )
 }
 
 ///|
-fn skia_rrect(rounded : @core.RoundedRect) -> @skia_mbt.RRect {
-  @skia_mbt.RRect::from_rect_xy(
+fn skia_rrect(rounded : @core.RoundedRect) -> @moui_skia.RRect {
+  @moui_skia.RRect::from_rect_xy(
     skia_rect(rounded.rect),
     Float::from_double(rounded.radius),
     Float::from_double(rounded.radius),
@@ -3264,15 +3269,15 @@ fn skia_rrect(rounded : @core.RoundedRect) -> @skia_mbt.RRect {
 }
 
 ///|
-fn skia_matrix(transform : @core.Transform2D) -> @skia_mbt.Matrix {
-  @skia_mbt.Matrix::from_affine([
+fn skia_matrix(transform : @core.Transform2D) -> @moui_skia.Matrix {
+  @moui_skia.Matrix::from_affine([
     Float::from_double(transform.a),
     Float::from_double(transform.c),
     Float::from_double(transform.tx),
     Float::from_double(transform.b),
     Float::from_double(transform.d),
     Float::from_double(transform.ty),
-  ]).unwrap_or(@skia_mbt.Matrix::identity())
+  ]).unwrap_or(@moui_skia.Matrix::identity())
 }
 
 ///|

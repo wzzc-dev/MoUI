@@ -13,13 +13,13 @@ test "skia transform maps MoUI affine fields to Skia matrix members" {
     matrix.values() == [2.0, 5.0, 11.0, 3.0, 7.0, 13.0, 0.0, 0.0, 1.0],
   )
   assert_true(
-    matrix.map_point(@skia_mbt.Point::new(17.0, 19.0)) ==
-    @skia_mbt.Point::new(140.0, 197.0),
+    matrix.map_point(@moui_skia.Point::new(17.0, 19.0)) ==
+    @moui_skia.Point::new(140.0, 197.0),
   )
 }
 
 ///|
-test "skia raster surface preflight consumes skia_mbt resource descriptors" {
+test "skia raster surface preflight consumes moui_skia resource descriptors" {
   let preflight = raster_surface_preflight(
     @render.RendererSurfaceMetrics::from_logical(
       size=@core.Size::new(width=12.0, height=8.0),
@@ -114,10 +114,10 @@ test "skia font fallback request preserves family chain style and coverage chara
   inspect(request.style.weight, content="650")
   inspect(request.style.width, content="5")
   inspect(request.style.slant, content="1")
-  assert_true(request.resource_key().kind == @skia_mbt.TypefaceResource)
+  assert_true(request.resource_key().kind == @moui_skia.TypefaceResource)
   assert_true(
     request.font_descriptor(size=18.0).resource_key().kind ==
-    @skia_mbt.FontResource,
+    @moui_skia.FontResource,
   )
 }
 
@@ -1711,7 +1711,7 @@ test "skia text placement clips to the TextRun frame" {
   )
   let glyph_run = SkiaGlyphRun::{
     glyphs: [@skia_native.GlyphId::new(10)],
-    positions: [@skia_mbt.Point::zero()],
+    positions: [@moui_skia.Point::zero()],
     clusters: [0],
     width: 70.0,
   }
@@ -1873,7 +1873,7 @@ test "skia text drawing builds best available glyph runs" {
         inspect(run.glyphs.length(), content="4")
         inspect(run.positions.length(), content="4")
         assert_true(run.width > 0.0)
-        assert_true(run.positions[0] == @skia_mbt.Point::zero())
+        assert_true(run.positions[0] == @moui_skia.Point::zero())
         assert_true(run.positions[1].x > run.positions[0].x)
         assert_true(run.positions[2].x > run.positions[1].x)
         if @skia_native.skia_shaper_available() {
@@ -1925,8 +1925,8 @@ test "skia text layout consumes the draw payload glyph run" {
       let glyph_run = SkiaGlyphRun::{
         glyphs: [@skia_native.GlyphId::new(10), @skia_native.GlyphId::new(11)],
         positions: [
-          @skia_mbt.Point::new(0.0, 0.0),
-          @skia_mbt.Point::new(77.0, 0.0),
+          @moui_skia.Point::new(0.0, 0.0),
+          @moui_skia.Point::new(77.0, 0.0),
         ],
         clusters: [0, 1],
         width: 123.0,
@@ -1974,9 +1974,9 @@ test "skia shaped caret mapping uses glyph clusters when available" {
       @skia_native.GlyphId::new(12),
     ],
     positions: [
-      @skia_mbt.Point::new(0.0, 0.0),
-      @skia_mbt.Point::new(9.0, 0.0),
-      @skia_mbt.Point::new(21.0, 0.0),
+      @moui_skia.Point::new(0.0, 0.0),
+      @moui_skia.Point::new(9.0, 0.0),
+      @moui_skia.Point::new(21.0, 0.0),
     ],
     clusters: [0, 1, 4],
     width: 30.0,
@@ -1997,7 +1997,10 @@ test "skia shaped caret mapping uses glyph clusters when available" {
 test "skia shaped caret mapping fills cluster gaps monotonically" {
   let run = SkiaGlyphRun::{
     glyphs: [@skia_native.GlyphId::new(10), @skia_native.GlyphId::new(11)],
-    positions: [@skia_mbt.Point::new(0.0, 0.0), @skia_mbt.Point::new(18.0, 0.0)],
+    positions: [
+      @moui_skia.Point::new(0.0, 0.0),
+      @moui_skia.Point::new(18.0, 0.0),
+    ],
     clusters: [0, 5],
     width: 24.0,
   }
@@ -2023,9 +2026,9 @@ test "skia shaped caret mapping keeps emoji cluster caret coverage" {
       @skia_native.GlyphId::new(12),
     ],
     positions: [
-      @skia_mbt.Point::new(0.0, 0.0),
-      @skia_mbt.Point::new(10.0, 0.0),
-      @skia_mbt.Point::new(22.0, 0.0),
+      @moui_skia.Point::new(0.0, 0.0),
+      @moui_skia.Point::new(10.0, 0.0),
+      @moui_skia.Point::new(22.0, 0.0),
     ],
     clusters: [0, 1, 7],
     width: 30.0,
@@ -2049,9 +2052,9 @@ test "skia shaped caret mapping keeps emoji cluster caret coverage" {
       @skia_native.GlyphId::new(22),
     ],
     positions: [
-      @skia_mbt.Point::new(0.0, 0.0),
-      @skia_mbt.Point::new(14.0, 0.0),
-      @skia_mbt.Point::new(28.0, 0.0),
+      @moui_skia.Point::new(0.0, 0.0),
+      @moui_skia.Point::new(14.0, 0.0),
+      @moui_skia.Point::new(28.0, 0.0),
     ],
     clusters: [0, 1, 12],
     width: 34.0,
@@ -2080,9 +2083,9 @@ test "skia shaped caret mapping stabilizes Indic cluster interiors" {
       @skia_native.GlyphId::new(12),
     ],
     positions: [
-      @skia_mbt.Point::new(0.0, 0.0),
-      @skia_mbt.Point::new(11.0, 0.0),
-      @skia_mbt.Point::new(24.0, 0.0),
+      @moui_skia.Point::new(0.0, 0.0),
+      @moui_skia.Point::new(11.0, 0.0),
+      @moui_skia.Point::new(24.0, 0.0),
     ],
     clusters: [0, 1, 7],
     width: 32.0,
@@ -2107,9 +2110,9 @@ test "skia shaped caret mapping stabilizes Indic cluster interiors" {
       @skia_native.GlyphId::new(22),
     ],
     positions: [
-      @skia_mbt.Point::new(0.0, 0.0),
-      @skia_mbt.Point::new(10.0, 0.0),
-      @skia_mbt.Point::new(30.0, 0.0),
+      @moui_skia.Point::new(0.0, 0.0),
+      @moui_skia.Point::new(10.0, 0.0),
+      @moui_skia.Point::new(30.0, 0.0),
     ],
     clusters: [0, 1, 13],
     width: 38.0,
@@ -2142,9 +2145,9 @@ test "skia shaped caret mapping stabilizes Hangul Jamo cluster interiors" {
       @skia_native.GlyphId::new(12),
     ],
     positions: [
-      @skia_mbt.Point::new(0.0, 0.0),
-      @skia_mbt.Point::new(9.0, 0.0),
-      @skia_mbt.Point::new(26.0, 0.0),
+      @moui_skia.Point::new(0.0, 0.0),
+      @moui_skia.Point::new(9.0, 0.0),
+      @moui_skia.Point::new(26.0, 0.0),
     ],
     clusters: [0, 1, 10],
     width: 34.0,
@@ -2174,10 +2177,10 @@ test "skia shaped caret mapping stabilizes representative cluster interiors" {
       @skia_native.GlyphId::new(13),
     ],
     positions: [
-      @skia_mbt.Point::new(0.0, 0.0),
-      @skia_mbt.Point::new(7.0, 0.0),
-      @skia_mbt.Point::new(13.0, 0.0),
-      @skia_mbt.Point::new(16.0, 0.0),
+      @moui_skia.Point::new(0.0, 0.0),
+      @moui_skia.Point::new(7.0, 0.0),
+      @moui_skia.Point::new(13.0, 0.0),
+      @moui_skia.Point::new(16.0, 0.0),
     ],
     clusters: [0, 1, 2, 4],
     width: 24.0,
@@ -2203,10 +2206,10 @@ test "skia shaped caret mapping stabilizes representative cluster interiors" {
       @skia_native.GlyphId::new(23),
     ],
     positions: [
-      @skia_mbt.Point::new(0.0, 0.0),
-      @skia_mbt.Point::new(12.0, 0.0),
-      @skia_mbt.Point::new(18.0, 0.0),
-      @skia_mbt.Point::new(26.0, 0.0),
+      @moui_skia.Point::new(0.0, 0.0),
+      @moui_skia.Point::new(12.0, 0.0),
+      @moui_skia.Point::new(18.0, 0.0),
+      @moui_skia.Point::new(26.0, 0.0),
     ],
     clusters: [0, 1, 5, 9],
     width: 34.0,
@@ -2604,7 +2607,7 @@ test "skia layout width follows caret source" {
 test "skia shaped caret mapping rejects invalid shaped data" {
   let run = SkiaGlyphRun::{
     glyphs: [@skia_native.GlyphId::new(10)],
-    positions: [@skia_mbt.Point::new(0.0, 0.0)],
+    positions: [@moui_skia.Point::new(0.0, 0.0)],
     clusters: [],
     width: 10.0,
   }

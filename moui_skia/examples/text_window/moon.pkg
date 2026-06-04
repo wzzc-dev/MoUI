@@ -1,0 +1,16 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "wzzc-dev/moui_skia" @skia,
+  "wzzc-dev/moui_skia/native",
+  "wzzc-dev/window/core",
+  "wzzc-dev/window/dpi",
+  "wzzc-dev/window/windows",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  targets: { "main.mbt": [ "native" ], "win32_present.mbt": [ "native" ] },
+)

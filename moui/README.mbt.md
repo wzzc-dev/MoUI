@@ -66,7 +66,7 @@ editor remains a separate practical editing demo.
 
 ## Quick Start
 
-Set up the local `wzzc-dev/window` and `wzzc-dev/skia_mbt` checkouts, then run
+Set up the local `wzzc-dev/window` and `wzzc-dev/moui_skia` checkouts, then run
 the bounded development check:
 
 ```sh
@@ -76,9 +76,9 @@ sh scripts/dev-check.sh
 ```
 
 The local dependency check verifies the `window` fork's MoUI smoke/evidence
-surface and the `skia_mbt` binding workspace's platform status and native
-capability contracts via `skia_mbt/scripts/verify-platform-status.sh`
-and `skia_mbt/scripts/verify-native-capability-contract.sh`. Those
+surface and the `moui_skia` binding workspace's platform status and native
+capability contracts via `moui_skia/scripts/verify-platform-status.sh`
+and `moui_skia/scripts/verify-native-capability-contract.sh`. Those
 Skia guards prove the provider lock, fallback parity, FFI ownership/borrow
 metadata, native smoke marker coverage, and binding-level evidence wiring are
 present; renderer pixels and platform runtime behavior still come from the

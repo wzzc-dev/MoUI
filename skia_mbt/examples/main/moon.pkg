@@ -1,7 +1,0 @@
-// import {
-//   "wzzc-dev/skia_mbt" @lib,
-// }
-
-options(
-  "is-main": true,
-)

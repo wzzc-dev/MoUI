@@ -33,7 +33,7 @@ test "windows skia availability follows render skia backend info" {
 test "windows skia preflight diagnostic describes unavailable renderer setup" {
   let message = windows_skia_unavailable_message()
   assert_true(message.contains("Windows Skia renderer selected"))
-  assert_true(message.contains("skia_mbt/native is unavailable"))
+  assert_true(message.contains("moui_skia/native is unavailable"))
   assert_true(message.contains("real Skia link flags"))
 }
 

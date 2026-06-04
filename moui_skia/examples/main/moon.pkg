@@ -1,0 +1,7 @@
+// import {
+//   "wzzc-dev/moui_skia" @lib,
+// }
+
+options(
+  "is-main": true,
+)
