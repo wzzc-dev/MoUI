@@ -551,6 +551,48 @@ const copyWebPresentationArtifacts = (webManifest, sourcePath) => {
   return copied;
 };
 
+const githubActionsProvenanceForWeb = (entry, artifacts) => {
+  const env = process.env;
+  if (env.GITHUB_ACTIONS !== "true") {
+    return undefined;
+  }
+
+  const serverUrl = env.GITHUB_SERVER_URL || "https://github.com";
+  const repository = env.GITHUB_REPOSITORY || "";
+  const runId = env.GITHUB_RUN_ID || "";
+  const workflow = env.GITHUB_WORKFLOW || "";
+  const job = env.GITHUB_JOB || "";
+  const runner = env.RUNNER_NAME || env.RUNNER_OS || env.RUNNER_ARCH || "";
+  if (!repository || !runId || !workflow || !job || !runner) {
+    return undefined;
+  }
+
+  return {
+    kind: "github-actions",
+    host: entry.host,
+    workflow,
+    job,
+    runUrl: `${serverUrl}/${repository}/actions/runs/${runId}`,
+    runId,
+    runner,
+    artifacts,
+    notes: [
+      "Web platform evidence was derived from a browser presentation manifest produced by GitHub Actions.",
+      `GitHub Actions job ${job} in workflow ${workflow}.`,
+    ],
+  };
+};
+
+const matchingHostWebProvenance = (entry, path) => ({
+  kind: "matching-host-artifact",
+  host: entry.host,
+  artifacts: entry.artifacts,
+  notes: [
+    "Web platform evidence was derived from the browser presentation manifest artifact.",
+    `Source manifest: ${path}`,
+  ],
+});
+
 const applyWebPresentationEvidence = (entry, path) => {
   validateWebPresentationManifest(path);
   const webManifest = JSON.parse(readFileSync(path, "utf8"));
@@ -571,15 +613,9 @@ const applyWebPresentationEvidence = (entry, path) => {
     ...platformObservations,
   };
   entry.artifacts = copyWebPresentationArtifacts(webManifest, path);
-  entry.evidenceProvenance = {
-    kind: "matching-host-artifact",
-    host: entry.host,
-    artifacts: entry.artifacts,
-    notes: [
-      "Web platform evidence was derived from the browser presentation manifest artifact.",
-      `Source manifest: ${path}`,
-    ],
-  };
+  entry.evidenceProvenance =
+    githubActionsProvenanceForWeb(entry, entry.artifacts) ??
+    matchingHostWebProvenance(entry, path);
   entry.notes = [
     webEvidencePassed
       ? "Web browser presentation manifest passed with resize, input, text-input, and clean-shutdown observations; monitor/cursor remains pending because CDP evidence is browser-local."

@@ -99,10 +99,12 @@ host to fill a platform entry with passed or failed observations before a
 preview handoff. Native passed entries include the window fork's monitor/cursor
 probe as `monitorCursor=yes`; Web browser-session evidence may leave that field
 pending because CDP does not prove native monitor/current-monitor or cursor
-behavior. A passed entry must also carry provenance that traces the evidence to
-a successful GitHub Actions job or a matching-host artifact bundle; skipped CI
-jobs, build-only/package-only jobs, and provider/preflight checks cannot be used
-as passed runtime evidence.
+behavior. A passed entry must carry provenance from either a non-skipped
+successful GitHub Actions job/run, including run URL, workflow, job, runner, and
+uploaded artifacts, or a local matching-host artifact bundle. For Web, the fold
+derives this from the browser-session presentation manifest and the environment
+that performed the fold. Skipped CI jobs, build-only/package-only jobs, and
+provider/preflight checks cannot be used as passed runtime evidence.
 
 For release-oriented screenshot and benchmark handoffs, use
 `sh scripts/conformance-check.sh --golden` and

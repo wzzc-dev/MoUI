@@ -229,6 +229,11 @@ For Web runtime evidence, use `record-web-runtime-presentation.mjs` to collect
 the browser-session artifact, then fold it into
 `platform-runtime-evidence.json` with
 `record-platform-evidence-manifest.mjs ... web --web-presentation-manifest ...`.
+When Web folding runs in GitHub Actions, expect `github-actions` provenance
+from the successful non-skipped job/run. When it runs locally, expect
+`matching-host-artifact` provenance for the browser-session manifest and
+screenshots. Do not invent CI run URL, runner, or job fields for local
+artifacts.
 The platform evidence manifest is schema v2 and records the window fork's
 monitor/cursor probe as `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native entries
