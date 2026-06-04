@@ -1574,6 +1574,117 @@ test "host event source subscription cleanup removes late publishers" {
 }
 
 ///|
+test "host window event source subscription dispatches mapped window events" {
+  let source = HostWindowEventSource::new()
+  let target = HostWindowId::new(7)
+  let other = HostWindowId::new(8)
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init="idle",
+      update=(_model, message : String) => message,
+      view=model => {
+        @core.View::text(
+          text=model,
+          size=@core.Size::new(width=240.0, height=24.0),
+          font=@core.FontSpec::new(size=14.0),
+          color=@core.Color::black(),
+        )
+      },
+      subscriptions=_model => {
+        source.subscription(
+          key="host:window-event",
+          label="Host window event adapter",
+          map=window_event => {
+            if window_event.window_id == target {
+              match window_event.event {
+                HostEvent::CloseRequested =>
+                  Some(
+                    "window \{window_event.window_id.value.to_string()} close",
+                  )
+                _ => None
+              }
+            } else {
+              None
+            }
+          },
+        )
+      },
+    ),
+    size=@core.Size::new(width=320.0, height=80.0),
+  )
+  inspect(source.active_handler_count(), content="1")
+  let initial = runtime.program_runtime_snapshot()
+  inspect(initial.active_subscription_count, content="1")
+  inspect(initial.active_subscriptions[0].key, content="host:window-event")
+  inspect(initial.active_subscriptions[0].kind, content="window-event")
+  inspect(
+    initial.active_subscriptions[0].label,
+    content="Host window event adapter",
+  )
+  inspect(
+    source.publish(window_id=other, event=HostEvent::CloseRequested),
+    content="1",
+  )
+  inspect(runtime.program_runtime_snapshot().dispatched_count, content="0")
+  inspect(
+    source.publish(window_id=target, event=HostEvent::RedrawRequested),
+    content="1",
+  )
+  inspect(runtime.program_runtime_snapshot().dispatched_count, content="0")
+  inspect(
+    source.publish(window_id=target, event=HostEvent::CloseRequested),
+    content="1",
+  )
+  inspect(runtime.program_runtime_snapshot().dispatched_count, content="1")
+  assert_true(
+    runtime
+    .draw_commands()
+    .any(command => {
+      command is @core.DrawCommand::DrawText({ text, .. }) &&
+      text == "window 7 close"
+    }),
+  )
+}
+
+///|
+test "host window event source subscription cleanup removes late publishers" {
+  let source = HostWindowEventSource::new()
+  let window_id = HostWindowId::new(1)
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init="idle",
+      update=(_model, message : String) => message,
+      view=model => {
+        @core.View::text(
+          text=model,
+          size=@core.Size::new(width=240.0, height=24.0),
+          font=@core.FontSpec::new(size=14.0),
+          color=@core.Color::black(),
+        )
+      },
+      subscriptions=_model => {
+        source.subscription(
+          key="host:window-event",
+          label="Host window event adapter",
+          map=_window_event => Some("window event"),
+        )
+      },
+    ),
+    size=@core.Size::new(width=320.0, height=80.0),
+  )
+  inspect(source.active_handler_count(), content="1")
+  runtime.destroy()
+  inspect(source.active_handler_count(), content="0")
+  inspect(
+    source.publish(window_id~, event=HostEvent::CloseRequested),
+    content="0",
+  )
+  let destroyed = runtime.program_runtime_snapshot()
+  inspect(destroyed.cancelled_subscription_count, content="1")
+  inspect(destroyed.ignored_subscription_dispatch_count, content="0")
+}
+
+///|
 test "host timer source subscription starts timer and dispatches mapped frames" {
   let timer_dispatch : Ref[((@core.Frame) -> Unit)?] = Ref(None)
   let captured_interval = Ref(0.0)

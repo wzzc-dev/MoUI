@@ -20,7 +20,7 @@ moui/                         root public facade workspace member
 moui/core/                    one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
 moui/style/                   visual token and control style compatibility package
 moui/views/                   public view constructors
-moui/backend/host/            shared HostEvent, HostTimerSource, metrics, HostWindowRenderer, input, redraw driver, window/core + dpi event conversion
+moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, metrics, HostWindowRenderer, input, redraw driver, window/core + dpi event conversion
 moui/backend/windows/         Windows native host core
 moui/backend/windows/wgpu/    Windows WGPU renderer provider
 moui/backend/windows/skia/    Windows Skia renderer provider
@@ -170,8 +170,9 @@ window, host-event, route, or host-service adapters remain outside `core`; the
 core subscription runtime only owns the platform-neutral lifecycle,
 subscription plan diagnostics, and typed dispatch contract. `backend/host`
 provides the concrete `HostEventSource` fanout adapter for
-`Subscription::host_event` and `HostTimerSource` for `Subscription::timer`
-ticks, while window and route sources remain platform/app-layer follow-up work.
+`Subscription::host_event`, `HostWindowEventSource` for
+`Subscription::window_event`, and `HostTimerSource` for `Subscription::timer`
+ticks, while route sources remain platform/app-layer follow-up work.
 Environment-aware TEA apps should use
 the `*_with_environment` constructors instead of taking `BuildContext` in their
 view layer. In both cases event dispatch flows through typed messages instead of
@@ -463,6 +464,11 @@ host-event fanout: platform code can publish normalized `HostEvent` values,
 while apps map selected events back into typed `Program` messages through
 `Subscription::host_event`; cancellation removes the publisher handler so late
 host events do not re-enter stale app state.
+`HostWindowEventSource` is the matching host-layer subscription adapter for
+window-scoped platform events: platform code can publish a `HostWindowId` plus
+normalized `HostEvent`, while apps map those `HostWindowEvent` values through
+`Subscription::window_event`; cancellation removes the publisher handler so late
+window events do not re-enter stale app state.
 `HostTimerSource` is the matching host-layer subscription adapter for app-owned
 timer ticks: host/platform code provides the scheduler callback, while apps map
 `@core.Frame` ticks back into typed `Program` messages through
