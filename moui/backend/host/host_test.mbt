@@ -1487,6 +1487,93 @@ test "host runtime driver exposes runtime state for platform slots" {
 }
 
 ///|
+test "host event source subscription dispatches mapped host events" {
+  let source = HostEventSource::new()
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init="idle",
+      update=(_model, message : String) => message,
+      view=model => {
+        @core.View::text(
+          text=model,
+          size=@core.Size::new(width=240.0, height=24.0),
+          font=@core.FontSpec::new(size=14.0),
+          color=@core.Color::black(),
+        )
+      },
+      subscriptions=_model => {
+        source.subscription(key="host:event", label="Host event adapter", map=event => {
+          match event {
+            HostEvent::ThemeChanged(_) => Some("theme changed")
+            _ => None
+          }
+        })
+      },
+    ),
+    size=@core.Size::new(width=320.0, height=80.0),
+  )
+  inspect(source.active_handler_count(), content="1")
+  let initial = runtime.program_runtime_snapshot()
+  inspect(initial.active_subscription_count, content="1")
+  inspect(initial.active_subscriptions[0].key, content="host:event")
+  inspect(initial.active_subscriptions[0].kind, content="host-event")
+  inspect(initial.active_subscriptions[0].label, content="Host event adapter")
+  inspect(source.publish(HostEvent::RedrawRequested), content="1")
+  inspect(runtime.program_runtime_snapshot().dispatched_count, content="0")
+  inspect(
+    source.publish(HostEvent::ThemeChanged(@core.ColorScheme::Dark)),
+    content="1",
+  )
+  inspect(runtime.program_runtime_snapshot().dispatched_count, content="1")
+  assert_true(
+    runtime
+    .draw_commands()
+    .any(command => {
+      command is @core.DrawCommand::DrawText({ text, .. }) &&
+      text == "theme changed"
+    }),
+  )
+}
+
+///|
+test "host event source subscription cleanup removes late publishers" {
+  let source = HostEventSource::new()
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init="idle",
+      update=(_model, message : String) => message,
+      view=model => {
+        @core.View::text(
+          text=model,
+          size=@core.Size::new(width=240.0, height=24.0),
+          font=@core.FontSpec::new(size=14.0),
+          color=@core.Color::black(),
+        )
+      },
+      subscriptions=_model => {
+        source.subscription(key="host:event", label="Host event adapter", map=event => {
+          match event {
+            HostEvent::ThemeChanged(_) => Some("theme changed")
+            _ => None
+          }
+        })
+      },
+    ),
+    size=@core.Size::new(width=320.0, height=80.0),
+  )
+  inspect(source.active_handler_count(), content="1")
+  runtime.destroy()
+  inspect(source.active_handler_count(), content="0")
+  inspect(
+    source.publish(HostEvent::ThemeChanged(@core.ColorScheme::Dark)),
+    content="0",
+  )
+  let destroyed = runtime.program_runtime_snapshot()
+  inspect(destroyed.cancelled_subscription_count, content="1")
+  inspect(destroyed.ignored_subscription_dispatch_count, content="0")
+}
+
+///|
 test "host window registry applies platform-neutral window requests" {
   let registry = HostWindowRegistry::new()
   let main = registry.open(
