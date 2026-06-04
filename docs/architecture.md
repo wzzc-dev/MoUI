@@ -542,13 +542,14 @@ composition. Skia provider packages own Skia renderer creation, pixel presenter
 bridges, and Skia availability diagnostics.
 
 `HostImageResourceCompletionSource` is the host-layer boundary for native async
-image loader completions. Native provider/platform loaders publish revisioned
-`@render.ImageResourceSnapshot` completions through it; the host routes them
-through `HostImageResourceRepaintTracker`, requests redraw only for matching
-open windows, ignores stale lower revisions, and discards closed-window
-completions. The source does not decode images, mutate renderer caches, or live
-in `core`; renderer/provider packages still own concrete loading and lifecycle
-records.
+image loader completions. Native provider/platform loaders publish
+`@render.ImageResourceLoadCompletion` ready/failed results through
+`HostWindowRenderer::apply_image_resource_load_completion`, which returns a revisioned
+`@render.ImageResourceSnapshot`; the host routes that snapshot through
+`HostImageResourceRepaintTracker`, requests redraw only for matching open
+windows, ignores stale lower revisions, and discards closed-window completions.
+The source does not decode images, mutate renderer caches, or live in `core`;
+renderer/provider packages still own concrete loading and lifecycle records.
 
 `RendererDescriptor` and `RendererSelection` remain renderer facade reporting tools:
 they describe static capability identity and matching, not native host runtime

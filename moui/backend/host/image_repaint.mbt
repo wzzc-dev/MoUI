@@ -103,6 +103,17 @@ pub fn HostImageResourceCompletionSource::publish(
 }
 
 ///|
+pub fn HostImageResourceCompletionSource::complete(
+  self : HostImageResourceCompletionSource,
+  window_id : HostWindowId,
+  renderer : HostWindowRenderer,
+  completion : @render.ImageResourceLoadCompletion,
+) -> HostImageResourceRepaintResult {
+  let snapshot = renderer.apply_image_resource_load_completion(completion)
+  self.publish(window_id, snapshot)
+}
+
+///|
 pub fn HostImageResourceCompletionSource::diagnostics(
   self : HostImageResourceCompletionSource,
 ) -> HostImageResourceCompletionSourceDiagnostics {

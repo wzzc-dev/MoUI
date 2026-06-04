@@ -360,6 +360,47 @@ test "native renderer records image lifecycle diagnostics while planning" {
 }
 
 ///|
+test "native wgpu renderer applies image load completions to lifecycle" {
+  let renderer : WgpuRenderer = { backend: new_test_renderer_handle() }
+  ignore(renderer.backend.image_lifecycle.mark_loading("async.png"))
+  let ready = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::ready("async.png", width=48, height=24),
+  )
+  inspect(ready.revision, content="2")
+  guard renderer.backend.image_lifecycle.lookup("async.png") is Some(record) else {
+    fail("expected applied ready completion")
+  }
+  assert_true(record.status == @render.ImageResourceStatus::ImageReady)
+  inspect(record.width, content="48")
+  inspect(record.height, content="24")
+  ignore(renderer.backend.image_lifecycle.mark_loading("missing.png"))
+  let failed = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::failed(
+      "missing.png",
+      diagnostic="decode failed",
+    ),
+  )
+  inspect(failed.revision, content="4")
+  assert_true(
+    renderer.backend.failed_images.get("missing.png").unwrap_or(false),
+  )
+  guard renderer.backend.image_lifecycle.lookup("missing.png") is Some(missing) else {
+    fail("expected applied failed completion")
+  }
+  assert_true(missing.status == @render.ImageResourceStatus::ImageFailed)
+  assert_true(missing.diagnostic.contains("decode"))
+  let stale = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::ready("missing.png", width=8, height=8),
+  )
+  inspect(stale.revision, content="4")
+  guard renderer.backend.image_lifecycle.lookup("missing.png")
+    is Some(still_failed) else {
+    fail("expected stale completion to leave failed record")
+  }
+  assert_true(still_failed.status == @render.ImageResourceStatus::ImageFailed)
+}
+
+///|
 test "native renderer plans advanced GPU layer filter and shader items" {
   let renderer = new_test_renderer_handle()
   renderer.resize(

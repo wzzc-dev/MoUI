@@ -72,6 +72,14 @@ pub fn WebRenderer::image_resource_snapshot(
 }
 
 ///|
+pub fn WebRenderer::apply_image_resource_load_completion(
+  self : WebRenderer,
+  completion : @render.ImageResourceLoadCompletion,
+) -> @render.ImageResourceSnapshot {
+  self.renderer.apply_image_resource_load_completion(completion)
+}
+
+///|
 pub fn WebRenderer::dispose(self : WebRenderer) -> Unit {
   self.renderer.dispose()
 }

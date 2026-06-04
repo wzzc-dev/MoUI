@@ -138,6 +138,7 @@ Use this skill when editing or reviewing:
   diagnostics and image-resource change callback bridge, image-resource repaint
   routing and tracked-window revision/status diagnostics plus repaint-result
   previous/current status counts,
+  image-resource load completion apply bridge,
   native async image completion source,
   host-event subscription source fanout, window-scoped subscription source,
   scheduler-backed timer subscription source, route/deep-link subscription source,
@@ -469,6 +470,8 @@ moon info
   and make adapter cleanup cancel the scheduler so late callbacks hit the stale
   subscription-dispatch guard instead of live app state.
 - For native async image completions, route provider/platform loader completion
+  results through `ImageResourceLoadCompletion` and
+  `HostWindowRenderer::apply_image_resource_load_completion`, then route the returned
   snapshots through `HostImageResourceCompletionSource` in `backend/host`.
   Keep decoding/cache mutation in renderer/provider packages, route redraw via
   `HostImageResourceRepaintTracker`, discard closed-window or stale-revision

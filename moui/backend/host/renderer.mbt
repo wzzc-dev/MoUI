@@ -5,6 +5,9 @@ pub struct HostWindowRenderer {
   priv text_system_fn : () -> @core.TextSystem
   priv image_resources_fn : () -> Array[@render.ImageResourceRecord]
   priv image_resource_snapshot_fn : () -> @render.ImageResourceSnapshot
+  priv apply_image_resource_load_completion_fn : (
+    @render.ImageResourceLoadCompletion,
+  ) -> @render.ImageResourceSnapshot
   priv set_image_resource_change_callback_fn : (
     ((@render.ImageResourceSnapshot) -> Unit)?,
   ) -> Unit
@@ -19,6 +22,7 @@ pub fn HostWindowRenderer::new(
   text_system~ : () -> @core.TextSystem,
   image_resources? : () -> Array[@render.ImageResourceRecord] = () => [],
   image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)? = None,
+  apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)? = None,
   set_image_resource_change_callback? : (
     ((@render.ImageResourceSnapshot) -> Unit)?,
   ) -> Unit = _callback => (),
@@ -29,12 +33,18 @@ pub fn HostWindowRenderer::new(
     Some(snapshot) => snapshot
     None => () => @render.ImageResourceSnapshot::from_records(image_resources())
   }
+  let apply_image_resource_load_completion = match
+    apply_image_resource_load_completion {
+    Some(apply) => apply
+    None => _completion => image_resource_snapshot()
+  }
   {
     resize_fn: resize,
     render_fn: render,
     text_system_fn: text_system,
     image_resources_fn: image_resources,
     image_resource_snapshot_fn: image_resource_snapshot,
+    apply_image_resource_load_completion_fn: apply_image_resource_load_completion,
     set_image_resource_change_callback_fn: set_image_resource_change_callback,
     present_count_fn: present_count,
     dispose_fn: dispose,
@@ -76,6 +86,14 @@ pub fn HostWindowRenderer::image_resource_snapshot(
   self : HostWindowRenderer,
 ) -> @render.ImageResourceSnapshot {
   (self.image_resource_snapshot_fn)()
+}
+
+///|
+pub fn HostWindowRenderer::apply_image_resource_load_completion(
+  self : HostWindowRenderer,
+  completion : @render.ImageResourceLoadCompletion,
+) -> @render.ImageResourceSnapshot {
+  (self.apply_image_resource_load_completion_fn)(completion)
 }
 
 ///|

@@ -533,6 +533,11 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(native_image_note.contains("HostWindowRenderer"))
   assert_true(native_image_note.contains("HostImageResourceCompletionSource"))
+  assert_true(native_image_note.contains("ImageResourceLoadCompletion"))
+  assert_true(
+    native_image_note.contains("apply_image_resource_load_completion"),
+  )
+  assert_true(native_image_note.contains("provider/platform async loader"))
   assert_true(
     async_image.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
     @render.RendererFeatureStatus::Partial,
@@ -542,6 +547,8 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(skia_image_note.contains("HostWindowRenderer"))
   assert_true(skia_image_note.contains("HostImageResourceCompletionSource"))
+  assert_true(skia_image_note.contains("ImageResourceLoadCompletion"))
+  assert_true(skia_image_note.contains("apply_image_resource_load_completion"))
   assert_true(skia_image_note.contains("failed-image placeholder"))
   assert_true(skia_image_note.contains("failed-cache snapshot"))
   assert_true(skia_image_note.contains("local-file retry"))
@@ -887,6 +894,65 @@ test "image lifecycle exposes revisioned change snapshots" {
     ready.records.any(record => {
       record.source == "late.png" &&
       record.status == @render.ImageResourceStatus::ImageReady
+    }),
+  )
+}
+
+///|
+test "image lifecycle applies async load completions" {
+  let lifecycle = @render.ImageResourceLifecycle::new()
+  ignore(lifecycle.mark_loading("late.png"))
+  inspect(lifecycle.revision(), content="1")
+  let ready = lifecycle.apply_load_completion(
+    @render.ImageResourceLoadCompletion::ready("late.png", width=40, height=20),
+  )
+  inspect(ready.revision, content="2")
+  assert_true(
+    ready.records.any(record => {
+      record.source == "late.png" &&
+      record.status == @render.ImageResourceStatus::ImageReady &&
+      record.width == 40 &&
+      record.height == 20
+    }),
+  )
+  let unchanged = lifecycle.apply_load_completion(
+    @render.ImageResourceLoadCompletion::ready("late.png", width=40, height=20),
+  )
+  inspect(unchanged.revision, content="2")
+  assert_true(
+    unchanged.records.any(record => {
+      record.source == "late.png" &&
+      record.status == @render.ImageResourceStatus::ImageReady
+    }),
+  )
+  ignore(lifecycle.mark_loading("missing.png"))
+  inspect(lifecycle.revision(), content="3")
+  let failed = lifecycle.apply_load_completion(
+    @render.ImageResourceLoadCompletion::failed(
+      "missing.png",
+      diagnostic="decode failed",
+    ),
+  )
+  inspect(failed.revision, content="4")
+  assert_true(
+    failed.records.any(record => {
+      record.source == "missing.png" &&
+      record.status == @render.ImageResourceStatus::ImageFailed &&
+      record.diagnostic.contains("decode")
+    }),
+  )
+  let stale = lifecycle.apply_load_completion(
+    @render.ImageResourceLoadCompletion::ready(
+      "missing.png",
+      width=10,
+      height=5,
+    ),
+  )
+  inspect(stale.revision, content="4")
+  assert_true(
+    stale.records.any(record => {
+      record.source == "missing.png" &&
+      record.status == @render.ImageResourceStatus::ImageFailed
     }),
   )
 }

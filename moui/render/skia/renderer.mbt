@@ -2062,6 +2062,25 @@ pub fn SkiaRasterRenderer::image_resource_snapshot(
 }
 
 ///|
+pub fn SkiaRasterRenderer::apply_image_resource_load_completion(
+  self : SkiaRasterRenderer,
+  completion : @render.ImageResourceLoadCompletion,
+) -> @render.ImageResourceSnapshot {
+  let previous_revision = self.image_lifecycle.revision()
+  let snapshot = self.image_lifecycle.apply_load_completion(completion)
+  if snapshot.revision > previous_revision {
+    match completion.status {
+      @render.ImageResourceLoadCompletionStatus::ImageLoadReady =>
+        self.failed_images.remove(completion.source)
+      @render.ImageResourceLoadCompletionStatus::ImageLoadFailed =>
+        self.failed_images[completion.source] = completion.diagnostic
+    }
+    self.notify_image_resource_change_if_needed(previous_revision)
+  }
+  snapshot
+}
+
+///|
 pub fn SkiaRasterRenderer::dispose(self : SkiaRasterRenderer) -> Unit {
   for source, _ in self.image_cache {
     self.dispose_image_resource(source)

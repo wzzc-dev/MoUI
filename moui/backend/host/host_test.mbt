@@ -81,6 +81,7 @@ test "host window renderer forwards lifecycle closures" {
   let presenter = Ref(3)
   let callback_sets = Ref(0)
   let callback_revisions : Array[Int] = []
+  let completion_sources : Array[String] = []
   let image_records = [
     @render.ImageResourceRecord::ready("loaded.png", width=32, height=18),
     @render.ImageResourceRecord::failed(
@@ -95,6 +96,16 @@ test "host window renderer forwards lifecycle closures" {
     image_resources=() => image_records,
     image_resource_snapshot=Some(() => {
       @render.ImageResourceSnapshot::new(revision=7, records=image_records)
+    }),
+    apply_image_resource_load_completion=Some(completion => {
+      completion_sources.push(completion.source)
+      @render.ImageResourceSnapshot::new(revision=11, records=[
+        @render.ImageResourceRecord::ready(
+          completion.source,
+          width=completion.width,
+          height=completion.height,
+        ),
+      ])
     }),
     set_image_resource_change_callback=callback => {
       callback_sets.val = callback_sets.val + 1
@@ -127,6 +138,14 @@ test "host window renderer forwards lifecycle closures" {
   let image_snapshot = renderer.image_resource_snapshot()
   inspect(image_snapshot.revision, content="7")
   inspect(image_snapshot.records.length(), content="2")
+  let completed = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::ready("async.png", width=44, height=22),
+  )
+  inspect(completed.revision, content="11")
+  inspect(completion_sources.length(), content="1")
+  inspect(completion_sources[0], content="async.png")
+  assert_true(completed.records[0].source == "async.png")
+  inspect(completed.records[0].width, content="44")
   renderer.set_image_resource_change_callback(
     Some(snapshot => callback_revisions.push(snapshot.revision)),
   )
@@ -148,6 +167,14 @@ test "host window renderer image resource diagnostics default empty" {
   let image_snapshot = renderer.image_resource_snapshot()
   inspect(image_snapshot.revision, content="0")
   inspect(image_snapshot.records.length(), content="0")
+  let completion_snapshot = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::failed(
+      "missing.png",
+      diagnostic="decode failed",
+    ),
+  )
+  inspect(completion_snapshot.revision, content="0")
+  inspect(completion_snapshot.records.length(), content="0")
   renderer.set_image_resource_change_callback(Some(_snapshot => ()))
   renderer.set_image_resource_change_callback(None)
 }
@@ -600,6 +627,61 @@ test "host image completion source ignores stale completion revisions" {
   let snapshot = tracker.snapshot()
   inspect(snapshot.tracked_windows[0].revision, content="6")
   inspect(snapshot.tracked_windows[0].status_counts.ready_count, content="1")
+}
+
+///|
+test "host image completion source applies renderer load completions" {
+  let tracker = HostImageResourceRepaintTracker::new()
+  let window_id = HostWindowId::new(11)
+  let lifecycle = @render.ImageResourceLifecycle::new()
+  ignore(lifecycle.mark_loading("async.png"))
+  let applied_sources : Array[String] = []
+  let renderer = HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+    apply_image_resource_load_completion=Some(completion => {
+      applied_sources.push(completion.source)
+      lifecycle.apply_load_completion(completion)
+    }),
+  )
+  let baseline = tracker.record_presented(window_id, renderer)
+  inspect(baseline.current_revision, content="1")
+  inspect(baseline.current_status_counts.loading_count, content="1")
+  let requested : Array[HostWindowId] = []
+  let source = HostImageResourceCompletionSource::new(
+    tracker~,
+    window_open=id => id == window_id,
+    request_redraw=id => requested.push(id),
+  )
+  let result = source.complete(
+    window_id,
+    renderer,
+    @render.ImageResourceLoadCompletion::ready("async.png", width=72, height=36),
+  )
+  assert_true(
+    result.status == HostImageResourceRepaintStatus::ImageRepaintRequested,
+  )
+  inspect(result.previous_revision, content="1")
+  inspect(result.current_revision, content="2")
+  inspect(result.previous_status_counts.loading_count, content="1")
+  inspect(result.current_status_counts.ready_count, content="1")
+  inspect(applied_sources.length(), content="1")
+  inspect(applied_sources[0], content="async.png")
+  inspect(requested.length(), content="1")
+  assert_true(requested[0] == window_id)
+  match lifecycle.lookup("async.png") {
+    Some(record) => {
+      assert_true(record.status == @render.ImageResourceStatus::ImageReady)
+      inspect(record.width, content="72")
+      inspect(record.height, content="36")
+    }
+    None => fail("expected applied async image record")
+  }
+  let diagnostics = source.diagnostics()
+  inspect(diagnostics.publish_count, content="1")
+  inspect(diagnostics.redraw_requested_count, content="1")
 }
 
 ///|
