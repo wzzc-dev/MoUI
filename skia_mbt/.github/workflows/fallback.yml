@@ -1,0 +1,726 @@
+name: Fallback
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  fallback:
+    name: fallback (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit on Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Set up MoonBit on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Show MoonBit version
+        run: moon version --all
+
+      - name: Update MoonBit registry
+        run: moon update
+
+      - name: Install Linux smoke dependencies
+        if: runner.os != 'Windows'
+        shell: bash
+        run: bash scripts/install-linux-smoke-deps.sh
+
+      - name: Run fallback gate on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\scripts\check-fallback.ps1
+
+      - name: Run fallback gate on Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          moon fmt
+          moon check --fmt
+          moon check
+          moon check --target all
+          moon info
+          moon test
+          moon -C scripts/native_smoke check
+          moon -C scripts/native_smoke build --target native
+          bash -n scripts/linux-build-skia.sh
+          bash -n scripts/linux-skia-smoke.sh
+          bash -n scripts/linux-real-skia-smoke.sh
+          bash -n scripts/linux-accept-real-skia-smoke.sh
+          bash -n scripts/fetch-release-skia.sh
+          bash -n scripts/fetch-jetbrains-skia.sh
+          bash -n scripts/macos-real-skia-smoke.sh
+          bash -n scripts/linux-accept-and-pin-skia.sh
+          bash -n scripts/linux-accept-artifact-and-pin.sh
+          bash -n scripts/install-linux-smoke-deps.sh
+          bash -n scripts/configure-linux-native-pkg.sh
+          bash -n scripts/verify-native-smoke-log.sh
+          bash -n scripts/verify-native-smoke-capabilities.sh
+          bash -n scripts/verify-native-capability-contract.sh
+          bash -n scripts/verify-acceptance-log.sh
+          bash -n scripts/verify-real-skia-artifact.sh
+          bash -n scripts/verify-skia-revision-pin.sh
+          bash -n scripts/verify-platform-status.sh
+          bash -n scripts/verify-native-ownership.sh
+          bash -n scripts/verify-native-ffi-borrows.sh
+          bash -n scripts/verify-native-fallback-parity.sh
+          bash -n scripts/verify-example-link-config.sh
+          bash -n scripts/check-real-skia-artifact-lock.sh
+          bash -n scripts/accept-platform-status.sh
+          bash -n scripts/pin-skia-revision.sh
+          bash -n scripts/macos-build-skia.sh
+          bash -n scripts/macos-skia-smoke.sh
+          bash -n scripts/macos-accept-real-skia-smoke.sh
+          bash -n scripts/configure-macos-native-pkg.sh
+          mkdir -p logs
+          python3 -m json.tool skia-provider-lock.json >/dev/null
+          python3 -m json.tool native/ownership.json >/dev/null
+          bash scripts/verify-native-ownership.sh
+          bash scripts/verify-native-ffi-borrows.sh
+          bash scripts/verify-native-fallback-parity.sh
+          bash scripts/verify-example-link-config.sh
+          bash scripts/verify-native-smoke-capabilities.sh
+          bash scripts/verify-native-capability-contract.sh
+          bash scripts/check-real-skia-artifact-lock.sh
+          bash scripts/fetch-release-skia.sh --platform linux --arch x64 --config Release --link-mode static --cache-dir .skia-dry-run/release-cache --dry-run-config --print-env > logs/fetch-release-linux-static.env
+          grep -Fq 'SKIA_MBT_SKIA_PROVIDER=release' logs/fetch-release-linux-static.env
+          grep -Fq 'SKIA_MBT_SKIA_LINK_MODE=static' logs/fetch-release-linux-static.env
+          grep -Fq 'SKIA_MBT_SKIA_PACKAGE=Skia-dev-6d73578a36-linux-Release-x64.zip' logs/fetch-release-linux-static.env
+          grep -Fq 'SKIA_MBT_SKIA_PACKAGE_SHA256=79ef48c0831a5d27740e9da738236df35ac868dba95dff2ad29e91737e252a14' logs/fetch-release-linux-static.env
+          bash scripts/fetch-release-skia.sh --platform linux --arch x64 --config Release --link-mode dynamic --cache-dir .skia-dry-run/release-cache --dry-run-config --print-env > logs/fetch-release-linux-dynamic.env
+          grep -Fq 'SKIA_MBT_SKIA_LINK_MODE=dynamic' logs/fetch-release-linux-dynamic.env
+          grep -Fq 'SKIA_MBT_SKIA_PACKAGE=Skia-dev-6d73578a36-linux-Release-x64-shared.zip' logs/fetch-release-linux-dynamic.env
+          grep -Fq 'SKIA_MBT_SKIA_PACKAGE_SHA256=8a14e34dc9f3f8fa6108407b2391471a97c1183e62a5c11e3bf5e346fb8014fd' logs/fetch-release-linux-dynamic.env
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          expected_values = {
+              entry['marker'].strip(): str(entry['value']).strip()
+              for entry in status.get('native_smoke_expected_values', [])
+              if entry.get('marker', '').strip() and str(entry.get('value', '')).strip()
+          }
+          marker_values = {}
+          lines = []
+          for capability in status['native_smoke_capabilities']:
+              marker = capability['marker'].strip()
+              if marker:
+                  value = expected_values.get(marker, '1')
+                  marker_values[marker] = value
+                  lines.extend([marker, value])
+          for conditional in status.get('native_smoke_conditional_capabilities', []):
+              marker = conditional.get('marker', '').strip()
+              when_marker = conditional.get('when_marker', '').strip()
+              when_value = str(conditional.get('when_value', '')).strip()
+              if marker and marker_values.get(when_marker) == when_value:
+                  lines.extend([marker, '1'])
+          lines.append('skia_mbt native smoke test passed')
+          Path('logs/fake-native-smoke-good.log').write_text(
+              '\n'.join(lines) + '\n'
+          )
+          PY
+          bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-good.log
+          python3 - <<'PY'
+          from pathlib import Path
+          lines = Path('logs/fake-native-smoke-good.log').read_text().splitlines()
+          filtered = []
+          index = 0
+          while index < len(lines):
+              if lines[index] == 'native smoke shaped glyph count':
+                  index += 2
+                  continue
+              filtered.append(lines[index])
+              index += 1
+          Path('logs/fake-native-smoke-missing-conditional.log').write_text(
+              '\n'.join(filtered) + '\n'
+          )
+          PY
+          if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-missing-conditional.log; then
+            echo "verify-native-smoke-log unexpectedly accepted a missing conditional stage marker" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          lines = Path('logs/fake-native-smoke-good.log').read_text().splitlines()
+          filtered = []
+          index = 0
+          while index < len(lines):
+              if lines[index] == 'native smoke shaper availability' and index + 1 < len(lines):
+                  filtered.extend([lines[index], '0'])
+                  index += 2
+                  continue
+              if lines[index] == 'native smoke shaped glyph count':
+                  index += 2
+                  continue
+              filtered.append(lines[index])
+              index += 1
+          Path('logs/fake-native-smoke-unavailable-conditional.log').write_text(
+              '\n'.join(filtered) + '\n'
+          )
+          PY
+          bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-unavailable-conditional.log
+          sed 's/^skia_mbt native smoke test passed$/not_skia_mbt native smoke test passed/' \
+            logs/fake-native-smoke-good.log \
+            > logs/fake-native-smoke-prefixed-success.log
+          if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-prefixed-success.log; then
+            echo "verify-native-smoke-log unexpectedly accepted a prefixed success marker" >&2
+            exit 1
+          fi
+          sed 's/^native smoke surface descriptor backend$/not_native smoke surface descriptor backend/' \
+            logs/fake-native-smoke-good.log \
+            > logs/fake-native-smoke-prefixed-stage.log
+          if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-prefixed-stage.log; then
+            echo "verify-native-smoke-log unexpectedly accepted a prefixed stage marker" >&2
+            exit 1
+          fi
+          printf '%s\n' 'skia_mbt native smoke test passed' > logs/fake-native-smoke-missing-stage.log
+          if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-missing-stage.log; then
+            echo "verify-native-smoke-log unexpectedly accepted a missing stage marker" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          lines = Path('logs/fake-native-smoke-good.log').read_text().splitlines()
+          marker = 'native smoke text run resource plan count'
+          index = lines.index(marker)
+          lines[index + 1] = '2'
+          Path('logs/fake-native-smoke-bad-stage-value.log').write_text(
+              '\n'.join(lines) + '\n'
+          )
+          PY
+          if bash scripts/verify-native-smoke-log.sh logs/fake-native-smoke-bad-stage-value.log; then
+            echo "verify-native-smoke-log unexpectedly accepted a bad stage marker value" >&2
+            exit 1
+          fi
+          printf '%s\n' \
+            'Linux real Skia acceptance result:' \
+            '  smoke_status=0' \
+            '  native_smoke_marker=passed' \
+            '  native_pkg_restore=passed' \
+            '  skia_commit=0123456789abcdef0123456789abcdef01234567' \
+            > logs/fake-acceptance-good.log
+          bash scripts/verify-acceptance-log.sh logs/fake-acceptance-good.log
+          bash scripts/verify-acceptance-log.sh logs/fake-acceptance-good.log --require-commit
+          printf '%s\n' \
+            'Linux real Skia acceptance result:' \
+            '  not_smoke_status=0' \
+            '  native_smoke_marker=passed' \
+            '  native_pkg_restore=passed' \
+            > logs/fake-acceptance-prefixed-status.log
+          if bash scripts/verify-acceptance-log.sh logs/fake-acceptance-prefixed-status.log; then
+            echo "verify-acceptance-log unexpectedly accepted a prefixed smoke_status field" >&2
+            exit 1
+          fi
+          printf '%s\n' \
+            'Linux real Skia acceptance result:' \
+            '  smoke_status=0' \
+            '  native_smoke_marker=passed' \
+            '  native_pkg_restore=passed' \
+            '  not_skia_commit=0123456789abcdef0123456789abcdef01234567' \
+            > logs/fake-acceptance-prefixed-commit.log
+          if bash scripts/verify-acceptance-log.sh logs/fake-acceptance-prefixed-commit.log --require-commit; then
+            echo "verify-acceptance-log unexpectedly accepted a prefixed skia_commit field" >&2
+            exit 1
+          fi
+          printf '%s\n' '0123456789abcdef0123456789abcdef01234567' > logs/fake-skia-revision.txt
+          bash scripts/verify-skia-revision-pin.sh logs/fake-acceptance-good.log --revision-file logs/fake-skia-revision.txt
+          printf '%s\n' 'main' > logs/fake-floating-skia-revision.txt
+          bash scripts/verify-skia-revision-pin.sh logs/fake-acceptance-good.log --revision-file logs/fake-floating-skia-revision.txt --skip-if-unpinned
+          bash scripts/verify-platform-status.sh
+          cat > logs/fake-platform-status-doc.md <<'EOF'
+          ## Current Matrix
+
+          | Platform | Current state | What exists | Missing before accepted |
+          | --- | --- | --- | --- |
+          | Linux | Ready, not accepted yet | fake | fake |
+          | macOS | Ready, not accepted yet | fake | fake |
+          | Windows | Ready, not accepted yet | fake | fake |
+
+          ## Next Section
+          EOF
+          if bash scripts/verify-platform-status.sh --status-doc logs/fake-platform-status-doc.md; then
+            echo "verify-platform-status unexpectedly accepted a stale Markdown status matrix" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          status['ci_gates'] = [
+              gate for gate in status['ci_gates']
+              if gate['id'] != 'native.ffi-borrows'
+          ]
+          Path('logs/fake-platform-status-missing-ci-gate.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-missing-ci-gate.json; then
+            echo "verify-platform-status unexpectedly accepted a missing CI gate" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          for gate in status['ci_gates']:
+              if gate['id'] == 'native.ffi-borrows':
+                  gate['unix_command'] = 'bash scripts/missing-native-ffi-borrows.sh'
+          Path('logs/fake-platform-status-missing-ci-script.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-missing-ci-script.json; then
+            echo "verify-platform-status unexpectedly accepted a missing CI script" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          for gate in status['ci_gates']:
+              if gate['id'] == 'native.ffi-borrows':
+                  gate['unix_command'] = 'bash scripts/verify-native-ffi-borrows.sh --' + 'unwired'
+          Path('logs/fake-platform-status-unwired-ci-gate.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-unwired-ci-gate.json; then
+            echo "verify-platform-status unexpectedly accepted an unwired CI gate" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          for capability in status['native_smoke_capabilities']:
+              if capability['id'].startswith('bitmap.'):
+                  capability['area'] = 'Image'
+          Path('logs/fake-platform-status-missing-capability-area.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-missing-capability-area.json; then
+            echo "verify-platform-status unexpectedly accepted a missing capability area" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          status['native_smoke_conditional_capabilities'] = [
+              capability for capability in status['native_smoke_conditional_capabilities']
+              if capability['id'] != 'text.shaped-glyph-count'
+          ]
+          Path('logs/fake-platform-status-missing-conditional-capability.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-missing-conditional-capability.json; then
+            echo "verify-platform-status unexpectedly accepted missing conditional capability coverage" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          for capability in status['native_smoke_conditional_capabilities']:
+              if capability['id'] == 'text.shaped-glyph-count':
+                  capability['when_marker'] = 'native smoke unknown optional marker'
+          Path('logs/fake-platform-status-bad-conditional-condition.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-bad-conditional-condition.json; then
+            echo "verify-platform-status unexpectedly accepted an unknown conditional marker" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('skia-platform-status.json').read_text())
+          status['platforms']['linux']['required_artifact_logs'] = [
+              log for log in status['platforms']['linux']['required_artifact_logs']
+              if log != 'linux-native-smoke-output.log'
+          ]
+          Path('logs/fake-platform-status-missing-artifact-log.json').write_text(
+              json.dumps(status, indent=2) + '\n'
+          )
+          PY
+          if bash scripts/verify-platform-status.sh --status-file logs/fake-platform-status-missing-artifact-log.json; then
+            echo "verify-platform-status unexpectedly accepted missing artifact log coverage" >&2
+            exit 1
+          fi
+          if bash scripts/verify-skia-revision-pin.sh logs/fake-acceptance-good.log --revision-file logs/fake-floating-skia-revision.txt; then
+            echo "verify-skia-revision-pin unexpectedly accepted a floating revision" >&2
+            exit 1
+          fi
+          printf '%s\n' 'fedcba9876543210fedcba9876543210fedcba98' > logs/fake-mismatched-skia-revision.txt
+          if bash scripts/verify-skia-revision-pin.sh logs/fake-acceptance-good.log --revision-file logs/fake-mismatched-skia-revision.txt; then
+            echo "verify-skia-revision-pin unexpectedly accepted a mismatched commit" >&2
+            exit 1
+          fi
+          before_skia_revision="$(cat skia-revision.txt)"
+          bash scripts/pin-skia-revision.sh logs/fake-acceptance-good.log
+          test "$(cat skia-revision.txt)" = "0123456789abcdef0123456789abcdef01234567"
+          printf '%s\n' "$before_skia_revision" > skia-revision.txt
+          printf '%s\n' \
+            'Linux real Skia acceptance result:' \
+            '  smoke_status=0' \
+            '  native_smoke_marker=passed' \
+            '  native_pkg_restore=passed' \
+            '  skia_commit=unknown' \
+            > logs/fake-acceptance-no-commit.log
+          if bash scripts/verify-acceptance-log.sh logs/fake-acceptance-no-commit.log --require-commit; then
+            echo "verify-acceptance-log unexpectedly accepted a missing commit hash" >&2
+            exit 1
+          fi
+          if bash scripts/pin-skia-revision.sh logs/fake-acceptance-no-commit.log; then
+            echo "pin-skia-revision unexpectedly accepted a missing commit hash" >&2
+            exit 1
+          fi
+          if bash scripts/linux-accept-and-pin-skia.sh --dry-run-config; then
+            echo "linux-accept-and-pin-skia unexpectedly accepted dry-run pinning" >&2
+            exit 1
+          fi
+          if bash scripts/linux-accept-and-pin-skia.sh --skip-deps-check --dry-run-config; then
+            echo "linux-accept-and-pin-skia unexpectedly accepted dry-run pinning after dependency options" >&2
+            exit 1
+          fi
+          if bash scripts/linux-accept-and-pin-skia.sh --accept-platform-status --dry-run-config; then
+            echo "linux-accept-and-pin-skia unexpectedly accepted dry-run platform status update" >&2
+            exit 1
+          fi
+          if bash scripts/linux-accept-and-pin-skia.sh --skia-include /tmp/skia --skia-lib-dir /tmp/skia/out; then
+            echo "linux-accept-and-pin-skia unexpectedly accepted existing-build pinning" >&2
+            exit 1
+          fi
+          if bash scripts/linux-accept-and-pin-skia.sh --accept-platform-status --skia-include /tmp/skia --skia-lib-dir /tmp/skia/out; then
+            echo "linux-accept-and-pin-skia unexpectedly accepted existing-build platform status update" >&2
+            exit 1
+          fi
+          printf '%s\n' \
+            'Linux real Skia acceptance result:' \
+            '  smoke_status=0' \
+            '  native_smoke_marker=passed' \
+            '  skia_commit=0123456789abcdef0123456789abcdef01234567' \
+            > logs/fake-acceptance-missing-restore.log
+          if bash scripts/verify-acceptance-log.sh logs/fake-acceptance-missing-restore.log; then
+            echo "verify-acceptance-log unexpectedly accepted a missing restore field" >&2
+            exit 1
+          fi
+          if bash scripts/pin-skia-revision.sh logs/fake-acceptance-missing-restore.log; then
+            echo "pin-skia-revision unexpectedly accepted a missing restore field" >&2
+            exit 1
+          fi
+          mkdir -p logs/fake-artifact logs/fake-artifact-prefixed-wrapper-field logs/fake-artifact-prefixed-wrapper-build-log logs/fake-artifact-prefixed-build-field logs/fake-artifact-prefixed-acceptance-reference logs/fake-artifact-prefixed-acceptance-build-log logs/fake-artifact-missing-preflight logs/fake-artifact-missing-wrapper-field logs/fake-artifact-missing-build-reference logs/fake-artifact-mismatched-acceptance-commit logs/fake-artifact-mismatched-build-commit
+          printf '%s\n' 'Linux Skia dry-run preflight' \
+            > logs/fake-artifact/linux-real-skia-smoke-preflight.log
+          printf '%s\n' \
+            'Linux Skia smoke environment:' \
+            '  skia_include=/tmp/fake/skia' \
+            '  skia_lib_dir=/tmp/fake/skia/out/moonbit-smoke' \
+            '  skia_lib=skia' \
+            '  skia_commit=0123456789abcdef0123456789abcdef01234567' \
+            '  library=libskia.a 123 bytes' \
+            '  stub_cc_flags=-DSKIA_MBT_HAS_SKIA -I/tmp/fake/skia' \
+            '  cc_link_flags=-L/tmp/fake/skia/out/moonbit-smoke -lskia' \
+            '  build_log=logs/fake-artifact/linux-skia-build.log' \
+            > logs/fake-artifact/linux-real-skia-smoke.log
+          cp logs/fake-native-smoke-good.log logs/fake-artifact/linux-native-smoke-output.log
+          printf '%s\n' \
+            'Linux Skia source build environment:' \
+            '  git=git version 2.0.0' \
+            '  python3=Python 3.12.0' \
+            '  ninja=1.11.1' \
+            '  clang=Ubuntu clang version 18.0.0' \
+            '  clang++=Ubuntu clang version 18.0.0' \
+            '  skia_checkout=/tmp/fake/skia' \
+            '  skia_commit=0123456789abcdef0123456789abcdef01234567' \
+            '  gn=1.0.0' \
+            '  gn_args=is_official_build=true cc="clang" cxx="clang++"' \
+            > logs/fake-artifact/linux-skia-build.log
+          printf '%s\n' \
+            'Linux real Skia acceptance result:' \
+            '  smoke_status=0' \
+            '  native_smoke_marker=passed' \
+            '  native_pkg_restore=passed' \
+            '  skia_commit=0123456789abcdef0123456789abcdef01234567' \
+            '  preflight_log=logs/fake-artifact/linux-real-skia-smoke-preflight.log' \
+            '  wrapper_log=logs/fake-artifact/linux-real-skia-smoke.log' \
+            '  build_log=logs/fake-artifact/linux-skia-build.log' \
+            '  native_log=logs/fake-artifact/linux-native-smoke-output.log' \
+            '  acceptance_log=logs/fake-artifact/linux-real-skia-acceptance.log' \
+            > logs/fake-artifact/linux-real-skia-acceptance.log
+          bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact --require-commit
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-prefixed-wrapper-field/linux-real-skia-smoke-preflight.log
+          sed 's/skia_include=/not_skia_include=/' \
+            logs/fake-artifact/linux-real-skia-smoke.log \
+            > logs/fake-artifact-prefixed-wrapper-field/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-prefixed-wrapper-field/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-prefixed-wrapper-field/linux-native-smoke-output.log
+          cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-prefixed-wrapper-field/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-prefixed-wrapper-field --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a prefixed wrapper field" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-prefixed-wrapper-build-log/linux-real-skia-smoke-preflight.log
+          sed 's/build_log=/not_build_log=/' \
+            logs/fake-artifact/linux-real-skia-smoke.log \
+            > logs/fake-artifact-prefixed-wrapper-build-log/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-prefixed-wrapper-build-log/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-prefixed-wrapper-build-log/linux-native-smoke-output.log
+          cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-prefixed-wrapper-build-log/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-prefixed-wrapper-build-log --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a prefixed wrapper build_log field" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-prefixed-build-field/linux-real-skia-smoke-preflight.log
+          cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-prefixed-build-field/linux-real-skia-smoke.log
+          sed 's/skia_checkout=/not_skia_checkout=/' \
+            logs/fake-artifact/linux-skia-build.log \
+            > logs/fake-artifact-prefixed-build-field/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-prefixed-build-field/linux-native-smoke-output.log
+          cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-prefixed-build-field/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-prefixed-build-field --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a prefixed source build field" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-prefixed-acceptance-reference/linux-real-skia-smoke-preflight.log
+          cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-prefixed-acceptance-reference/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-prefixed-acceptance-reference/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-prefixed-acceptance-reference/linux-native-smoke-output.log
+          sed 's/preflight_log=/not_preflight_log=/' \
+            logs/fake-artifact/linux-real-skia-acceptance.log \
+            > logs/fake-artifact-prefixed-acceptance-reference/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-prefixed-acceptance-reference --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a prefixed acceptance artifact reference" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-prefixed-acceptance-build-log/linux-real-skia-smoke-preflight.log
+          cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-prefixed-acceptance-build-log/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-prefixed-acceptance-build-log/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-prefixed-acceptance-build-log/linux-native-smoke-output.log
+          sed 's/build_log=/not_build_log=/' \
+            logs/fake-artifact/linux-real-skia-acceptance.log \
+            > logs/fake-artifact-prefixed-acceptance-build-log/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-prefixed-acceptance-build-log --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a prefixed acceptance build_log reference" >&2
+            exit 1
+          fi
+          bash scripts/linux-accept-artifact-and-pin.sh \
+            --log-dir logs/fake-artifact \
+            --revision-file logs/fake-linux-artifact-pinned-by-shell.txt
+          test "$(cat logs/fake-linux-artifact-pinned-by-shell.txt)" = "0123456789abcdef0123456789abcdef01234567"
+          mkdir -p logs/fake-accepted-platform-status
+          cp skia-platform-status.json logs/fake-accepted-platform-status/skia-platform-status.json
+          bash scripts/linux-accept-artifact-and-pin.sh \
+            --log-dir logs/fake-artifact \
+            --revision-file logs/fake-accepted-platform-status/skia-revision.txt \
+            --accept-platform-status \
+            --status-file logs/fake-accepted-platform-status/skia-platform-status.json \
+            --artifact-label fake-linux-source-artifact
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('logs/fake-accepted-platform-status/skia-platform-status.json').read_text())
+          linux = status['platforms']['linux']
+          assert linux['accepted'] is True
+          assert linux['accepted_artifact'] == 'fake-linux-source-artifact'
+          assert linux['accepted_commit'] == '0123456789abcdef0123456789abcdef01234567'
+          assert linux['accepted_provider'] == 'source'
+          assert linux['accepted_version'] == '0123456789abcdef0123456789abcdef01234567'
+          PY
+          cp skia-platform-status.json logs/fake-floating-platform-status.json
+          if bash scripts/accept-platform-status.sh \
+            --platform linux \
+            --log-dir logs/fake-artifact \
+            --status-file logs/fake-floating-platform-status.json \
+            --revision-file skia-revision.txt \
+            --artifact-label should-not-accept-floating-revision; then
+            echo "accept-platform-status unexpectedly accepted a floating revision" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-missing-wrapper-field/linux-skia-build.log
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-missing-wrapper-field/linux-real-skia-smoke-preflight.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-missing-wrapper-field/linux-native-smoke-output.log
+          cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-missing-wrapper-field/linux-real-skia-acceptance.log
+          printf '%s\n' '  library=libskia.a 123 bytes' > logs/fake-artifact-missing-wrapper-field/linux-real-skia-smoke.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-missing-wrapper-field --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a missing wrapper field" >&2
+            exit 1
+          fi
+          if bash scripts/linux-accept-artifact-and-pin.sh \
+            --log-dir logs/fake-artifact-missing-wrapper-field \
+            --revision-file logs/should-not-pin-bad-linux-artifact.txt; then
+            echo "linux-accept-artifact-and-pin unexpectedly accepted a bad artifact" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-missing-preflight/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-missing-preflight/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-missing-preflight/linux-native-smoke-output.log
+          cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-missing-preflight/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-missing-preflight --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a missing Linux preflight log" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-missing-build-reference/linux-real-skia-smoke-preflight.log
+          cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-missing-build-reference/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-missing-build-reference/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-missing-build-reference/linux-native-smoke-output.log
+          grep -v 'build_log=' logs/fake-artifact/linux-real-skia-acceptance.log \
+            > logs/fake-artifact-missing-build-reference/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-missing-build-reference --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted a missing build log reference" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-mismatched-acceptance-commit/linux-real-skia-smoke-preflight.log
+          cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-mismatched-acceptance-commit/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-skia-build.log logs/fake-artifact-mismatched-acceptance-commit/linux-skia-build.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-mismatched-acceptance-commit/linux-native-smoke-output.log
+          sed 's/skia_commit=0123456789abcdef0123456789abcdef01234567/skia_commit=fedcba9876543210fedcba9876543210fedcba98/' \
+            logs/fake-artifact/linux-real-skia-acceptance.log \
+            > logs/fake-artifact-mismatched-acceptance-commit/linux-real-skia-acceptance.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-mismatched-acceptance-commit --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted mismatched acceptance commit" >&2
+            exit 1
+          fi
+          cp logs/fake-artifact/linux-real-skia-smoke-preflight.log logs/fake-artifact-mismatched-build-commit/linux-real-skia-smoke-preflight.log
+          cp logs/fake-artifact/linux-real-skia-smoke.log logs/fake-artifact-mismatched-build-commit/linux-real-skia-smoke.log
+          cp logs/fake-artifact/linux-real-skia-acceptance.log logs/fake-artifact-mismatched-build-commit/linux-real-skia-acceptance.log
+          cp logs/fake-artifact/linux-native-smoke-output.log logs/fake-artifact-mismatched-build-commit/linux-native-smoke-output.log
+          sed 's/skia_commit=0123456789abcdef0123456789abcdef01234567/skia_commit=fedcba9876543210fedcba9876543210fedcba98/' \
+            logs/fake-artifact/linux-skia-build.log \
+            > logs/fake-artifact-mismatched-build-commit/linux-skia-build.log
+          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-artifact-mismatched-build-commit --require-commit; then
+            echo "verify-real-skia-artifact unexpectedly accepted mismatched build commit" >&2
+            exit 1
+          fi
+          bash scripts/linux-real-skia-smoke.sh --skia-provider source --dry-run-config --work-dir .skia-cache/linux
+          test "$(bash scripts/install-linux-smoke-deps.sh --print-packages | tr '\n' ' ')" = "build-essential git python3 ninja-build clang curl ca-certificates libfontconfig1-dev libfreetype-dev libharfbuzz-dev libwayland-dev libwayland-bin wayland-protocols "
+          SKIA_MBT_SKIA_REV=fake-env-revision \
+            SKIA_MBT_EXTRA_GN_ARGS='skia_enable_fontmgr_empty=true' \
+            bash scripts/linux-real-skia-smoke.sh --skia-provider source --dry-run-config --work-dir .skia-cache/linux-env-rev
+          mkdir -p .skia-dry-run/skia/include/core .skia-dry-run/static .skia-dry-run/shared
+          touch .skia-dry-run/skia/include/core/SkSurface.h
+          touch .skia-dry-run/static/libskia.a .skia-dry-run/shared/libskia.so
+          bash scripts/configure-linux-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --extra-cc-flags -DSKIA_MBT_FAKE_CONFIG_CC \
+            --extra-link-flags -lskia_fake_config_dep \
+            > logs/fake-linux-native.moon.pkg
+          grep -Fq -- '-DSKIA_MBT_HAS_SKIA' logs/fake-linux-native.moon.pkg
+          grep -Fq -- '-DSKIA_MBT_FAKE_CONFIG_CC' logs/fake-linux-native.moon.pkg
+          grep -Fq -- '-lskia_fake_config_dep' logs/fake-linux-native.moon.pkg
+          bash scripts/configure-linux-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --extra-cc-flags -DSKIA_MBT_FAKE_CONFIG_CC \
+            --extra-link-flags -lskia_fake_config_dep \
+            --output logs/fake-linux-native-written.moon.pkg \
+            --write
+          bash scripts/configure-linux-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --extra-cc-flags -DSKIA_MBT_FAKE_CONFIG_CC \
+            --extra-link-flags -lskia_fake_config_dep \
+            --output logs/fake-linux-native-written.moon.pkg \
+            --check
+          if bash scripts/configure-linux-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --output logs/fake-linux-native-written.moon.pkg \
+            --check; then
+            echo "configure-linux-native-pkg unexpectedly accepted mismatched generated config" >&2
+            exit 1
+          fi
+          bash scripts/configure-macos-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --extra-cc-flags -DSKIA_MBT_FAKE_MACOS_CONFIG_CC \
+            --extra-link-flags -lskia_fake_macos_config_dep \
+            > logs/fake-macos-native.moon.pkg
+          grep -Fq -- '-DSKIA_MBT_HAS_SKIA' logs/fake-macos-native.moon.pkg
+          grep -Fq -- '-DSKIA_MBT_FAKE_MACOS_CONFIG_CC' logs/fake-macos-native.moon.pkg
+          grep -Fq -- '-framework CoreGraphics' logs/fake-macos-native.moon.pkg
+          grep -Fq -- '-lskia_fake_macos_config_dep' logs/fake-macos-native.moon.pkg
+          bash scripts/configure-macos-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --extra-cc-flags -DSKIA_MBT_FAKE_MACOS_CONFIG_CC \
+            --extra-link-flags -lskia_fake_macos_config_dep \
+            --output logs/fake-macos-native-written.moon.pkg \
+            --write
+          bash scripts/configure-macos-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --extra-cc-flags -DSKIA_MBT_FAKE_MACOS_CONFIG_CC \
+            --extra-link-flags -lskia_fake_macos_config_dep \
+            --output logs/fake-macos-native-written.moon.pkg \
+            --check
+          if bash scripts/configure-macos-native-pkg.sh \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            --output logs/fake-macos-native-written.moon.pkg \
+            --check; then
+            echo "configure-macos-native-pkg unexpectedly accepted mismatched generated config" >&2
+            exit 1
+          fi
+          bash scripts/linux-real-skia-smoke.sh --dry-run-config \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static
+          SKIA_MBT_SKIA_INCLUDE=.skia-dry-run/skia \
+            SKIA_MBT_SKIA_LIB_DIR=.skia-dry-run/static \
+            SKIA_MBT_EXTRA_CC_FLAGS=-DSKIA_MBT_FAKE_ENV_CC \
+            SKIA_MBT_EXTRA_LINK_FLAGS=-lskia_fake_env_dep \
+            bash scripts/linux-real-skia-smoke.sh --dry-run-config
+          SKIA_MBT_SKIA_REV=fake-macos-env-revision \
+            SKIA_MBT_EXTRA_GN_ARGS='skia_enable_fontmgr_empty=true' \
+            bash scripts/macos-build-skia.sh --dry-run-config --work-dir .skia-cache/macos-env-rev
+          SKIA_MBT_SKIA_INCLUDE=.skia-dry-run/skia \
+            SKIA_MBT_SKIA_LIB_DIR=.skia-dry-run/static \
+            SKIA_MBT_EXTRA_CC_FLAGS=-DSKIA_MBT_FAKE_MACOS_ENV_CC \
+            SKIA_MBT_EXTRA_LINK_FLAGS=-lskia_fake_macos_env_dep \
+            bash scripts/macos-skia-smoke.sh --dry-run-config
+          before_pkg_hash="$(sha256sum native/moon.pkg | cut -d ' ' -f 1)"
+          bash scripts/linux-skia-smoke.sh --dry-run-config \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static
+          bash scripts/linux-skia-smoke.sh --dry-run-config \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/shared \
+            --smoke-log logs/linux-native-smoke-output.log
+          bash scripts/linux-skia-smoke.sh --dry-run-config --enable-asan \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            > logs/linux-skia-smoke-asan-dry-run.log
+          grep -Fq 'asan=enabled' logs/linux-skia-smoke-asan-dry-run.log
+          grep -Fq 'asan_options=detect_leaks=1:fast_unwind_on_malloc=0' logs/linux-skia-smoke-asan-dry-run.log
+          grep -Fq -- '-fsanitize=address' logs/linux-skia-smoke-asan-dry-run.log
+          bash scripts/macos-skia-smoke.sh --dry-run-config --enable-asan \
+            --skia-include .skia-dry-run/skia \
+            --skia-lib-dir .skia-dry-run/static \
+            > logs/macos-skia-smoke-asan-dry-run.log
+          grep -Fq 'asan=enabled' logs/macos-skia-smoke-asan-dry-run.log
+          grep -Fq 'asan_options=detect_leaks=0:fast_unwind_on_malloc=0' logs/macos-skia-smoke-asan-dry-run.log
+          grep -Fq -- '-fsanitize=address' logs/macos-skia-smoke-asan-dry-run.log
+          after_pkg_hash="$(sha256sum native/moon.pkg | cut -d ' ' -f 1)"
+          test "$before_pkg_hash" = "$after_pkg_hash"

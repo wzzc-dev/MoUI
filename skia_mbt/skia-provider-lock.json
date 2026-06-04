@@ -1,0 +1,782 @@
+{
+  "schema_version": 2,
+  "default_provider": "release",
+  "default_config": "Release",
+  "default_link_mode": "static",
+  "providers": {
+    "release": {
+      "kind": "github-release",
+      "owner": "wzzc-dev",
+      "repo": "skia",
+      "tag": "dev-6d73578a36",
+      "commit": "6d73578a36506d10bc044e920cc71037982e481d",
+      "release_url": "https://github.com/wzzc-dev/skia/releases/tag/dev-6d73578a36",
+      "source_archive": {
+        "name": "wzzc-dev-skia-dev-6d73578a36-source.zip",
+        "url": "https://github.com/wzzc-dev/skia/archive/refs/tags/dev-6d73578a36.zip"
+      },
+      "default_extra_cc_flags": {
+        "linux": "",
+        "macos": "",
+        "windows": "",
+        "android": "",
+        "ios": "",
+        "iosSim": "",
+        "tvos": "",
+        "tvosSim": "",
+        "wasm": ""
+      },
+      "default_extra_link_flags": {
+        "linux": "-lfontconfig -lfreetype -lharfbuzz -lpthread -ldl -lm",
+        "macos": "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+        "windows": "",
+        "android": "",
+        "ios": "",
+        "iosSim": "",
+        "tvos": "",
+        "tvosSim": "",
+        "wasm": ""
+      },
+      "assets": {
+        "android": {
+          "Debug": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-android-Debug-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-android-Debug-arm64-shared.zip",
+                "sha256": "ba609f969fd803a7716f9309443736b78bcbe0626b21ef54ad4ec81fd90190d4",
+                "size": 40045790,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-android-Debug-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-android-Debug-arm64.zip",
+                "sha256": "b082f8c046a260b85716a386bf83b4b764eae4aa6271835bac2f01709b340a2c",
+                "size": 140478193,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-android-Debug-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-android-Debug-x64-shared.zip",
+                "sha256": "2429825549276a0c29ab95c49cbe48a36ca3ee42f3790cbeff307ddf257680bf",
+                "size": 39636921,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-android-Debug-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-android-Debug-x64.zip",
+                "sha256": "db39d0836f7ee1eef3d6a8fc4cd18fd44ee6e879cdb705f9ce77a8c2bad6dad3",
+                "size": 135382885,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          },
+          "Release": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-android-Release-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-android-Release-arm64-shared.zip",
+                "sha256": "138d5b13b070ee3a2313e08e535cfa4e7a3ea416f97dfe8f3631527441bd118a",
+                "size": 14286641,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-android-Release-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-android-Release-arm64.zip",
+                "sha256": "9f64575fde74c403554d1d518408c434a6f987c9ee10ce22509a0e1de48f25d3",
+                "size": 46672580,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-android-Release-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-android-Release-x64-shared.zip",
+                "sha256": "da4ee3e354d0c411523e62409fb9e75d113c8732ffaa9307a122dc8f1f9d0de9",
+                "size": 14279357,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-android-Release-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-android-Release-x64.zip",
+                "sha256": "1c8b0eb617f052c90cfef732867a2496e0142811beb0bee38469736641f970d9",
+                "size": 46464063,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          }
+        },
+        "ios": {
+          "Debug": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-ios-Debug-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-ios-Debug-arm64-shared.zip",
+                "sha256": "6f7a57cce18c8956567a74814efac0505aeaa639ee5b92d132dbba4271128142",
+                "size": 195034815,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-ios-Debug-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-ios-Debug-arm64.zip",
+                "sha256": "28d99b42ebc9907af95f62c5ede7e21c7fd5f6b28e2d6b5ba8bd862ceaf26b5a",
+                "size": 939734552,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-ios-Debug-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-ios-Debug-x64-shared.zip",
+                "sha256": "18558d055ee79f7b1e3f39353365b43081f1e1a66e3a0830bddc281c31bd9e31",
+                "size": 100969375,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-ios-Debug-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-ios-Debug-x64.zip",
+                "sha256": "0cb63f55f7ef224a0fcde86947589f7e427c4db09643d96bcd7d02461463bd35",
+                "size": 475743456,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          },
+          "Release": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-ios-Release-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-ios-Release-arm64-shared.zip",
+                "sha256": "b55ebd46cf529770f8b7315f2a86915d60695b7cec37f48fcf171d90fe360830",
+                "size": 17328486,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-ios-Release-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-ios-Release-arm64.zip",
+                "sha256": "e3fb50d2466128dc7f30e3a2ca2d21f1dfe5b037dca328783bc40506d62b089e",
+                "size": 65016174,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-ios-Release-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-ios-Release-x64-shared.zip",
+                "sha256": "b28d8e3fa97b8f373ccb329f11086fd5d7a29dc62f3ddb5f7141091b8a5f1172",
+                "size": 12627331,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-ios-Release-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-ios-Release-x64.zip",
+                "sha256": "942042c3498d19e15ebc65d3641fb1fd98c2340b5ff0a13a1e193c1c5fc6cfea",
+                "size": 36900512,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          }
+        },
+        "iosSim": {
+          "Debug": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-iosSim-Debug-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-iosSim-Debug-arm64-shared.zip",
+                "sha256": "e617a8168ede87029709530668b7bb0791a99d7d99f2918c0a3d6f8703455bfc",
+                "size": 195465360,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-iosSim-Debug-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-iosSim-Debug-arm64.zip",
+                "sha256": "46e23e1bb4c952b4054df052d70d08bea62153ba4e89ba8930e2aa1082739d3e",
+                "size": 939816603,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-iosSim-Debug-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-iosSim-Debug-x64-shared.zip",
+                "sha256": "f4f8fa15897b62f91482ea40331eea779732edfb292e2b319ce9c9f05bb5dfae",
+                "size": 100964412,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-iosSim-Debug-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-iosSim-Debug-x64.zip",
+                "sha256": "fb4e693930fefc57e5d32aac6ac7de87019e19095171a7b6045d96bdf91af051",
+                "size": 475746080,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          },
+          "Release": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-iosSim-Release-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-iosSim-Release-arm64-shared.zip",
+                "sha256": "0001c15a513a1cdc813171c4065a39c84825280b70a762cfa512de4fd6781f1f",
+                "size": 17478389,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-iosSim-Release-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-iosSim-Release-arm64.zip",
+                "sha256": "7dfd30161a30910cca0934752138c740c1ff6913cf5ad1dad3ce77ea49b15592",
+                "size": 65154402,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-iosSim-Release-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-iosSim-Release-x64-shared.zip",
+                "sha256": "256b53d6b7f456db0b5905a77e0cfc1fda860f52703b4990409df4a7d55e18a8",
+                "size": 12623883,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-iosSim-Release-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-iosSim-Release-x64.zip",
+                "sha256": "0f379dbf4b94341a4d346b4af6debf2d0651e9a83029487bea54cd1d0635f0aa",
+                "size": 36899742,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          }
+        },
+        "linux": {
+          "Debug": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-linux-Debug-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Debug-arm64-shared.zip",
+                "sha256": "da5492379c34ceb569455ac40dfda83c57a758ef18443e4fc1ef87bf53c57cac",
+                "size": 198708284,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-linux-Debug-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Debug-arm64.zip",
+                "sha256": "3aad84c1f8d7d31901db9732fdc19cf1ea8132ff81e6c6c042a94fa94d5025cf",
+                "size": 722051383,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "riscv64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-linux-Debug-riscv64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Debug-riscv64-shared.zip",
+                "sha256": "4ff31ffbe91822299851d0ee377cf1f520804a1f308ff00b0b9fcf0177fbc39d",
+                "size": 235169597,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-linux-Debug-riscv64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Debug-riscv64.zip",
+                "sha256": "6563c1ba7475951b5107a8bfb51efa66fda23759dcb35b8d85d71c9d05cc6ade",
+                "size": 999144497,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-linux-Debug-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Debug-x64-shared.zip",
+                "sha256": "49e6b6e23db754f182fddecd921e1342256556e8ab16589ff950b0eae2058b35",
+                "size": 201034812,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-linux-Debug-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Debug-x64.zip",
+                "sha256": "97de5b4555ce28f70ec1672a1e2a87aed082ed686840bf3fa093bb90859d2d68",
+                "size": 722867413,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          },
+          "Release": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-linux-Release-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Release-arm64-shared.zip",
+                "sha256": "86f22fd0a082869282328d87e9ce37cd467e7edb070601dfeb061c66dd08b428",
+                "size": 15255204,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-linux-Release-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Release-arm64.zip",
+                "sha256": "3340e09a10430a89c37efe58906174b84b506c7e21c8bc4acf86e4bfdb5d26c3",
+                "size": 54536135,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "riscv64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-linux-Release-riscv64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Release-riscv64-shared.zip",
+                "sha256": "9640abd0569b354cd2cb07f72b8d05d42403b13fe32f673575546cf362f8a3a4",
+                "size": 17854343,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-linux-Release-riscv64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Release-riscv64.zip",
+                "sha256": "785613ad313799f02989e94ee7c7a926b47a89df64e6e9582bada2fe03d4af6e",
+                "size": 83773343,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-linux-Release-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Release-x64-shared.zip",
+                "sha256": "8a14e34dc9f3f8fa6108407b2391471a97c1183e62a5c11e3bf5e346fb8014fd",
+                "size": 15557036,
+                "library_names": [
+                  "libskia.so"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-linux-Release-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-linux-Release-x64.zip",
+                "sha256": "79ef48c0831a5d27740e9da738236df35ac868dba95dff2ad29e91737e252a14",
+                "size": 54710636,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          }
+        },
+        "macos": {
+          "Debug": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-macos-Debug-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-macos-Debug-arm64-shared.zip",
+                "sha256": "fb2906350885d9761c8c40c5db4dbc262e1ee82c02d927bb3345d86b04405daa",
+                "size": 132098452,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-macos-Debug-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-macos-Debug-arm64.zip",
+                "sha256": "162c9dd005a0a86cf522c8e56c7ddc360126c6ac6e6e7b261e8e3c21ab6f1260",
+                "size": 598465057,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-macos-Debug-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-macos-Debug-x64-shared.zip",
+                "sha256": "d88ec3a2c31ddb067ba0fe3cd58967d2f44175f207d8411614db07308b086d3e",
+                "size": 133022685,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-macos-Debug-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-macos-Debug-x64.zip",
+                "sha256": "ed41657d80583895f32a17decfa9e21ca9a9d66cfe2e175d556b29eef6a46012",
+                "size": 606657806,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          },
+          "Release": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-macos-Release-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-macos-Release-arm64-shared.zip",
+                "sha256": "f6d85293c0730a0a1c190989ec278cb761eaeca6d7fa417d2c25dbb8bbc28657",
+                "size": 13079788,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-macos-Release-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-macos-Release-arm64.zip",
+                "sha256": "7b01209a28c6da3f2cad3b39dcc8b6befe0a6df68bb61b7498794bd129f52c54",
+                "size": 46251216,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-macos-Release-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-macos-Release-x64-shared.zip",
+                "sha256": "26f5683468be831b64042934420b4d23a27e0a7dab594d472aeb0c0f4b94859d",
+                "size": 13648045,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-macos-Release-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-macos-Release-x64.zip",
+                "sha256": "5d9aca8d7a89ea3db8e1eeefe69cff1dfdb15b59156cac3817db0994eec44b4f",
+                "size": 48583684,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          }
+        },
+        "tvos": {
+          "Debug": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-tvos-Debug-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvos-Debug-arm64-shared.zip",
+                "sha256": "e363fe44e83d46e0a08877b2141c65da34fb6a73a30f305081bee06f7f378233",
+                "size": 195034649,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-tvos-Debug-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvos-Debug-arm64.zip",
+                "sha256": "2524a8359074a52816db7e605f1411b18bd442ac94601c023f12a894f7ba6e40",
+                "size": 939803295,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          },
+          "Release": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-tvos-Release-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvos-Release-arm64-shared.zip",
+                "sha256": "57ff5d33855b99733b0ddb12332b329f181ed7017b2a56dca0bb5a2a2f573318",
+                "size": 17325858,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-tvos-Release-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvos-Release-arm64.zip",
+                "sha256": "22da63b69280fff4987b239ad60f5008a94d79800f971ae4f74ee163ffc01154",
+                "size": 65040494,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          }
+        },
+        "tvosSim": {
+          "Debug": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-tvosSim-Debug-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvosSim-Debug-arm64-shared.zip",
+                "sha256": "76dfd639e209d0a2763bdef852df600e0349f26d9559ed5aba7f595dd478125e",
+                "size": 195459065,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-tvosSim-Debug-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvosSim-Debug-arm64.zip",
+                "sha256": "fa8a2240091c3b324d53f970dd19b11a3b077cef2ad166898f659b0ff22826b2",
+                "size": 939840878,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-tvosSim-Debug-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvosSim-Debug-x64-shared.zip",
+                "sha256": "0854a99785abcb969a2338e81f5c5f4ca5de8c88425cccf7e3a771929873f4b6",
+                "size": 100961672,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-tvosSim-Debug-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvosSim-Debug-x64.zip",
+                "sha256": "093a23baf723473fb34ce2223d1e0e35f208a34e7a8b2bba8f231a950c02b164",
+                "size": 475729108,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          },
+          "Release": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-tvosSim-Release-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvosSim-Release-arm64-shared.zip",
+                "sha256": "b5995bd597e6067632cf8d6975484e8d3faf750dc61a97881bd6a39f2f405d6f",
+                "size": 17476180,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-tvosSim-Release-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvosSim-Release-arm64.zip",
+                "sha256": "7e42c582e8be93da07db2a4f26e08da206ba3c7598a3c5263e4113dd64234509",
+                "size": 65152544,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-tvosSim-Release-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvosSim-Release-x64-shared.zip",
+                "sha256": "ee896c97a676d3abe9b96aebcc7d4ddf82ded189a7a19a76de63b58bd3f07885",
+                "size": 12622102,
+                "library_names": [
+                  "libskia.dylib"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-tvosSim-Release-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-tvosSim-Release-x64.zip",
+                "sha256": "691af4b72ea15841b29d364182ca27fcbecf2fb768b76c983f6ea260c2b77388",
+                "size": 36897052,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          }
+        },
+        "wasm": {
+          "Debug": {
+            "wasm": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-wasm-Debug-wasm-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-wasm-Debug-wasm-shared.zip",
+                "sha256": "dda776187cc80b8786b6d370412bf7af332b3c8590927d25791a4a2954b09e2b",
+                "size": 14184989,
+                "library_names": [
+                  "libskia.a"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-wasm-Debug-wasm.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-wasm-Debug-wasm.zip",
+                "sha256": "8d7f487395dbac14b92afce46c0989ceb7bc1405670bf0fa836980bd4a99a565",
+                "size": 320109010,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          },
+          "Release": {
+            "wasm": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-wasm-Release-wasm-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-wasm-Release-wasm-shared.zip",
+                "sha256": "1685e3053dc46be528cf5f08c96f45e4561e5d6d0b5a29a9c8350023c2d11086",
+                "size": 9294330,
+                "library_names": [
+                  "libskia.a"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-wasm-Release-wasm.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-wasm-Release-wasm.zip",
+                "sha256": "937deade4d7eef4e872024f603acf5df7016056e4498792171c53d734b4eff44",
+                "size": 29707042,
+                "library_names": [
+                  "libskia.a"
+                ]
+              }
+            }
+          }
+        },
+        "windows": {
+          "Debug": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-windows-Debug-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-windows-Debug-arm64-shared.zip",
+                "sha256": "0b284dc1a6f412e4d48f3c607ac3a349517e9cea6cca319247fd9eb3d914e7f0",
+                "size": 157928034,
+                "library_names": [
+                  "skia.lib",
+                  "skia.dll"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-windows-Debug-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-windows-Debug-arm64.zip",
+                "sha256": "af45236895ed7ed8a2a9f30aea60faf12519ebccf5e3f5fe8369798769af0108",
+                "size": 337102680,
+                "library_names": [
+                  "skia.lib"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-windows-Debug-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-windows-Debug-x64-shared.zip",
+                "sha256": "ce10b1c29a07809a4e5e7d82cb1dfc75b9a97bfd1cf953d922a802e98420bb39",
+                "size": 162650534,
+                "library_names": [
+                  "skia.lib",
+                  "skia.dll"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-windows-Debug-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-windows-Debug-x64.zip",
+                "sha256": "a90eb2cbb475db32512f14a319dd4e78722fe9bbe378ab7794500a9795414c13",
+                "size": 346792556,
+                "library_names": [
+                  "skia.lib"
+                ]
+              }
+            }
+          },
+          "Release": {
+            "arm64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-windows-Release-arm64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-windows-Release-arm64-shared.zip",
+                "sha256": "f67a728f274eff27077c70680fcdd0a2817d106eb9685250894f85125bf8b96a",
+                "size": 30427517,
+                "library_names": [
+                  "skia.lib",
+                  "skia.dll"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-windows-Release-arm64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-windows-Release-arm64.zip",
+                "sha256": "51ba8295d2fcb6651cf8b8e9c0e9323cf6ad84dc114b99e33bd2d3d911d99bb4",
+                "size": 60663935,
+                "library_names": [
+                  "skia.lib"
+                ]
+              }
+            },
+            "x64": {
+              "dynamic": {
+                "name": "Skia-dev-6d73578a36-windows-Release-x64-shared.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-windows-Release-x64-shared.zip",
+                "sha256": "2a8a54ae44c0370d8b20000e0bc044bf0da14059b76bcfde00256c37fb0ea41c",
+                "size": 32558079,
+                "library_names": [
+                  "skia.lib",
+                  "skia.dll"
+                ]
+              },
+              "static": {
+                "name": "Skia-dev-6d73578a36-windows-Release-x64.zip",
+                "url": "https://github.com/wzzc-dev/skia/releases/download/dev-6d73578a36/Skia-dev-6d73578a36-windows-Release-x64.zip",
+                "sha256": "c38ef245dc18dec445b371ed66cf6ae13d11ef804cfd1f11bf5139294f9c80fd",
+                "size": 64053404,
+                "library_names": [
+                  "skia.lib"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

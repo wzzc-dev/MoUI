@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "moonbit_handle_files": [
+    "native/handles_native.mbt",
+    "native/handles_unavailable.mbt"
+  ],
+  "moonbit_type_file": "native/types.mbt",
+  "native_header": "native/skia_stub_common.h",
+  "native_source": "native/skia_stub_common.cpp",
+  "external_wrappers": [
+    {
+      "name": "Surface",
+      "moonbit_handle": "SurfaceHandle",
+      "moonbit_type": "Surface",
+      "wrapper_struct": "MoonbitSkiaSurface",
+      "field": "surface",
+      "factory": "moonbit_skia_make_surface_wrapper",
+      "finalizer": "moonbit_skia_surface_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
+      "name": "Data",
+      "moonbit_handle": "DataHandle",
+      "moonbit_type": "Data",
+      "wrapper_struct": "MoonbitSkiaData",
+      "field": "data",
+      "factory": "moonbit_skia_make_data_wrapper",
+      "finalizer": "moonbit_skia_data_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
+      "name": "Codec",
+      "moonbit_handle": "CodecHandle",
+      "moonbit_type": "Codec",
+      "wrapper_struct": "MoonbitSkiaCodec",
+      "field": "codec",
+      "factory": "moonbit_skia_make_codec_wrapper",
+      "finalizer": "moonbit_skia_codec_finalize",
+      "ownership": "owned_delete"
+    },
+    {
+      "name": "Image",
+      "moonbit_handle": "ImageHandle",
+      "moonbit_type": "Image",
+      "wrapper_struct": "MoonbitSkiaImage",
+      "field": "image",
+      "factory": "moonbit_skia_make_image_wrapper",
+      "finalizer": "moonbit_skia_image_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
+      "name": "Canvas",
+      "moonbit_handle": "CanvasHandle",
+      "moonbit_type": "Canvas",
+      "wrapper_struct": "MoonbitSkiaCanvas",
+      "field": "canvas",
+      "owner_field": "surface_owner",
+      "owner_type": "Surface",
+      "moonbit_owner_field": "owner",
+      "factory": "moonbit_skia_make_canvas_wrapper",
+      "finalizer": "moonbit_skia_canvas_finalize",
+      "ownership": "borrowed_with_refcnt_owner"
+    },
+    {
+      "name": "Path",
+      "moonbit_handle": "PathHandle",
+      "moonbit_type": "Path",
+      "wrapper_struct": "MoonbitSkiaPath",
+      "field": "path",
+      "factory": "moonbit_skia_make_path_wrapper",
+      "finalizer": "moonbit_skia_path_finalize",
+      "ownership": "owned_delete"
+    },
+    {
+      "name": "Font",
+      "moonbit_handle": "FontHandle",
+      "moonbit_type": "Font",
+      "wrapper_struct": "MoonbitSkiaFont",
+      "field": "font",
+      "factory": "moonbit_skia_make_font_wrapper",
+      "finalizer": "moonbit_skia_font_finalize",
+      "ownership": "owned_delete"
+    },
+    {
+      "name": "Typeface",
+      "moonbit_handle": "TypefaceHandle",
+      "moonbit_type": "Typeface",
+      "wrapper_struct": "MoonbitSkiaTypeface",
+      "field": "typeface",
+      "factory": "moonbit_skia_make_typeface_wrapper",
+      "finalizer": "moonbit_skia_typeface_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
+      "name": "FontMgr",
+      "moonbit_handle": "FontMgrHandle",
+      "moonbit_type": "FontMgr",
+      "wrapper_struct": "MoonbitSkiaFontMgr",
+      "field": "font_mgr",
+      "factory": "moonbit_skia_make_font_mgr_wrapper",
+      "finalizer": "moonbit_skia_font_mgr_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
+      "name": "Shader",
+      "moonbit_handle": "ShaderHandle",
+      "moonbit_type": "Shader",
+      "wrapper_struct": "MoonbitSkiaShader",
+      "field": "shader",
+      "factory": "moonbit_skia_make_shader_wrapper",
+      "finalizer": "moonbit_skia_shader_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
+      "name": "ColorFilter",
+      "moonbit_handle": "ColorFilterHandle",
+      "moonbit_type": "ColorFilter",
+      "wrapper_struct": "MoonbitSkiaColorFilter",
+      "field": "color_filter",
+      "factory": "moonbit_skia_make_color_filter_wrapper",
+      "finalizer": "moonbit_skia_color_filter_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
+      "name": "ImageFilter",
+      "moonbit_handle": "ImageFilterHandle",
+      "moonbit_type": "ImageFilter",
+      "wrapper_struct": "MoonbitSkiaImageFilter",
+      "field": "image_filter",
+      "factory": "moonbit_skia_make_image_filter_wrapper",
+      "finalizer": "moonbit_skia_image_filter_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
+      "name": "MaskFilter",
+      "moonbit_handle": "MaskFilterHandle",
+      "moonbit_type": "MaskFilter",
+      "wrapper_struct": "MoonbitSkiaMaskFilter",
+      "field": "mask_filter",
+      "factory": "moonbit_skia_make_mask_filter_wrapper",
+      "finalizer": "moonbit_skia_mask_filter_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
+      "name": "Bitmap",
+      "moonbit_handle": "BitmapHandle",
+      "moonbit_type": "Bitmap",
+      "wrapper_struct": "MoonbitSkiaBitmap",
+      "field": "bitmap",
+      "factory": "moonbit_skia_make_bitmap_wrapper",
+      "finalizer": "moonbit_skia_bitmap_finalize",
+      "ownership": "owned_delete"
+    }
+  ],
+  "regular_objects": [
+    {
+      "name": "ShapedTextRun",
+      "moonbit_handle": "ShapedTextRunHandle",
+      "moonbit_type": "ShapedTextRun",
+      "wrapper_struct": "MoonbitSkiaShapedTextRun",
+      "factory": "moonbit_skia_make_shaped_text_run",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 3,
+      "pointer_fields": [
+        "glyphs",
+        "positions",
+        "clusters"
+      ],
+      "value_fields": [
+        "glyph_count",
+        "advance_x",
+        "advance_y"
+      ]
+    }
+  ],
+  "regular_runtime_objects": [
+    {
+      "name": "FloatArray",
+      "wrapper_struct": "MoonbitSkiaFloatArray",
+      "factory": "moonbit_skia_make_float_array",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 1,
+      "pointer_fields": [
+        "buffer"
+      ],
+      "value_fields": [
+        "length"
+      ]
+    },
+    {
+      "name": "GlyphIdArray",
+      "wrapper_struct": "MoonbitSkiaGlyphIdArray",
+      "factory": "moonbit_skia_make_glyph_id_array",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 1,
+      "pointer_fields": [
+        "buffer"
+      ],
+      "value_fields": [
+        "length"
+      ]
+    },
+    {
+      "name": "Point",
+      "wrapper_struct": "MoonbitSkiaPoint",
+      "factory": "moonbit_skia_make_point",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 0,
+      "pointer_fields": [],
+      "value_fields": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "name": "Rect",
+      "wrapper_struct": "MoonbitSkiaRect",
+      "factory": "moonbit_skia_make_rect",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 0,
+      "pointer_fields": [],
+      "value_fields": [
+        "left",
+        "top",
+        "right",
+        "bottom"
+      ]
+    },
+    {
+      "name": "PointArray",
+      "wrapper_struct": "MoonbitSkiaPointArray",
+      "factory": "moonbit_skia_make_point_array",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 1,
+      "pointer_fields": [
+        "buffer"
+      ],
+      "value_fields": [
+        "length"
+      ]
+    },
+    {
+      "name": "RectArray",
+      "wrapper_struct": "MoonbitSkiaRectArray",
+      "factory": "moonbit_skia_make_rect_array",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 1,
+      "pointer_fields": [
+        "buffer"
+      ],
+      "value_fields": [
+        "length"
+      ]
+    },
+    {
+      "name": "Int32Array",
+      "wrapper_struct": "MoonbitSkiaInt32Array",
+      "factory": "moonbit_skia_make_int32_array",
+      "allocation": "moonbit_malloc",
+      "pointer_field_count": 1,
+      "pointer_fields": [
+        "buffer"
+      ],
+      "value_fields": [
+        "length"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+import {
+  "wzzc-dev/skia_mbt" @skia,
+  "wzzc-dev/skia_mbt/native",
+}
+
+options(
+  "is-main": true,
+  "native-stub": [ "smoke_debug.c" ],
+)
