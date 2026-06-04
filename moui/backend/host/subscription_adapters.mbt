@@ -5,6 +5,11 @@ pub struct HostEventSource {
 }
 
 ///|
+pub struct HostTimerSource {
+  priv start_timer_fn : (Double, (@core.Frame) -> Unit) -> (() -> Unit)?
+}
+
+///|
 priv struct HostEventSubscriptionHandler {
   token : Int
   handle : (HostEvent) -> Unit
@@ -13,6 +18,13 @@ priv struct HostEventSubscriptionHandler {
 ///|
 pub fn HostEventSource::new() -> HostEventSource {
   { next_handler_value: 1, handlers: [] }
+}
+
+///|
+pub fn HostTimerSource::new(
+  start_timer~ : (Double, (@core.Frame) -> Unit) -> (() -> Unit)?,
+) -> HostTimerSource {
+  { start_timer_fn: start_timer }
 }
 
 ///|
@@ -49,6 +61,20 @@ pub fn[Msg] HostEventSource::subscription(
     Some(() => ignore(self.remove_handler(token)))
   }
   @core.Subscription::host_event(key~, label~, start~)
+}
+
+///|
+pub fn[Msg] HostTimerSource::subscription(
+  self : HostTimerSource,
+  interval_ms~ : Double,
+  key? : String = "host:timer",
+  label? : String = "Host timer",
+  map~ : (@core.Frame) -> Msg,
+) -> @core.Subscription[Msg] {
+  let start = dispatch => {
+    (self.start_timer_fn)(interval_ms, frame => dispatch(map(frame)))
+  }
+  @core.Subscription::timer(key~, label~, start~)
 }
 
 ///|

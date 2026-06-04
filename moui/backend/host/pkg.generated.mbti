@@ -445,6 +445,12 @@ pub(all) struct HostSurfaceMetrics {
 pub fn HostSurfaceMetrics::from_logical(size~ : @wzzc-dev/moui/core.Size, scale_factor? : Double) -> Self
 pub fn HostSurfaceMetrics::new(logical_size~ : @wzzc-dev/moui/core.Size, physical_size~ : @wzzc-dev/moui/core.Size, scale_factor? : Double) -> Self
 
+pub struct HostTimerSource {
+  // private fields
+}
+pub fn HostTimerSource::new(start_timer~ : (Double, (@wzzc-dev/moui/core.Frame) -> Unit) -> (() -> Unit)?) -> Self
+pub fn[Msg] HostTimerSource::subscription(Self, interval_ms~ : Double, key? : String, label? : String, map~ : (@wzzc-dev/moui/core.Frame) -> Msg) -> @wzzc-dev/moui/core.Subscription[Msg]
+
 pub struct HostWindowCommands {
   queue : HostWindowRequestQueue
 }
