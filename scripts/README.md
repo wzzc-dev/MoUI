@@ -67,27 +67,29 @@ capability, keep the release proof in the same patch as the API:
   `accept-platform-status.*` after downloaded real Skia artifacts pass native
   smoke log, acceptance log, and real artifact verification.
 
-## JetBrains/skia provider
+## GitHub release Skia provider
 
-JetBrains/skia is the default binary provider for desktop real-smoke runs. The
-locked release lives in `../skia-provider-lock.json` and currently points at
-tag `m148-8967a2e80c`, commit
-`8967a2e80c71be363146da2395f503cab5f5fb9c`, config `Release`.
+The `wzzc-dev/skia` GitHub release is the default binary provider for desktop
+real-smoke runs. The locked release lives in `../skia-provider-lock.json` and
+currently points at tag `dev-6d73578a36`, commit
+`6d73578a36506d10bc044e920cc71037982e481d`, config `Release`. Static linking is
+the default; dynamic assets are selected explicitly with
+`SKIA_MBT_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic`.
 
 Fetch or inspect the selected package with:
 
 ```bash
-bash scripts/fetch-jetbrains-skia.sh --platform auto --arch auto --print-env
+bash scripts/fetch-release-skia.sh --platform auto --arch auto --print-env
 ```
 
 ```powershell
-.\scripts\fetch-jetbrains-skia.ps1 -Platform auto -Arch auto -PrintEnv
+.\scripts\fetch-release-skia.ps1 -Platform auto -Arch auto -PrintEnv
 ```
 
 The fetch helpers cache packages under
-`.skia-cache/jetbrains/<tag>/<platform>-<config>-<arch>/`, verify locked
+`.skia-cache/release/<tag>/<platform>-<config>-<arch>-<link-mode>/`, verify locked
 SHA256 values, scan for `include/core/SkSurface.h` and platform Skia libraries,
-and use the same-tag JetBrains source archive as a header fallback. They only
+and use the same-tag release source archive as a header fallback. They only
 print include/lib/flag environment values; `configure-*-native-pkg.*` remains
 the only layer that generates `native/moon.pkg` contents.
 
@@ -106,7 +108,7 @@ expected to fail fast when the real backend is unavailable.
 ## Linux real Skia smoke
 
 Use one entry point for Linux real-backend validation. With no provider option,
-it uses the locked JetBrains binary package:
+it uses the locked release binary package:
 
 ```bash
 bash scripts/linux-accept-real-skia-smoke.sh --work-dir .skia-cache/linux
@@ -250,7 +252,7 @@ matching, typeface family metadata, and font fallback resource planning whenever
 the native smoke can create the relevant font objects. Fallback evidence also
 records resolved-match and request-to-match resolution metadata resource plans.
 
-To reuse an existing Skia checkout/build instead of the default JetBrains
+To reuse an existing Skia checkout/build instead of the default release
 provider:
 
 ```bash
@@ -390,7 +392,7 @@ ASan mode is proven separately for that toolchain.
 ## macOS real Skia smoke
 
 Use one entry point for macOS real-backend acceptance. With no provider option,
-it uses the locked JetBrains binary package:
+it uses the locked release binary package:
 
 ```bash
 bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs
@@ -422,19 +424,16 @@ The macOS helpers accept the same `SKIA_MBT_*` environment defaults as Linux:
 `SKIA_MBT_SKIA_INCLUDE`, `SKIA_MBT_SKIA_LIB_DIR`, `SKIA_MBT_SKIA_LIB`,
 `SKIA_MBT_SKIA_REV`, `SKIA_MBT_EXTRA_GN_ARGS`, `SKIA_MBT_EXTRA_CC_FLAGS`, and
 `SKIA_MBT_EXTRA_LINK_FLAGS`. They also accept
-`SKIA_MBT_MACOS_LINK_MODE=auto|dynamic|static`; `auto` prefers
-`libskia.dylib` for persistent direct-run package generation and
-`libskia.a` for temporary smoke/build package generation when the requested
-library exists. Command-line arguments and workflow inputs override environment
-variables.
+`SKIA_MBT_SKIA_LINK_MODE=static|dynamic|auto`; `SKIA_MBT_MACOS_LINK_MODE`
+remains a compatibility alias. Command-line arguments and workflow inputs
+override environment variables.
 
 The module-level prebuild hook uses the same environment names for direct
 `moon build`, `moon test`, and `moon run` commands. Native real-Skia
 configuration is enabled by default; set `SKIA_MBT_ENABLE_PREBUILD_SKIA=0` or
 `SKIA_MBT_DISABLE_PREBUILD_SKIA=1` to keep the fallback-unavailable native
-compile. On macOS, `SKIA_MBT_MACOS_LINK_MODE=auto` selects `libskia.dylib` when
-that file exists in `SKIA_MBT_SKIA_LIB_DIR`, otherwise it selects
-`libskia.a`.
+compile. On macOS, `SKIA_MBT_SKIA_LINK_MODE=auto` selects `libskia.dylib` when
+that file exists in `SKIA_MBT_SKIA_LIB_DIR`, otherwise it selects `libskia.a`.
 
 To generate a persistent `native/moon.pkg` for an existing macOS Skia build,
 preview the config first and then write it explicitly:
@@ -475,9 +474,9 @@ MinGW-compatible path when MoonBit is building native stubs through GCC/MinGW:
   -SkiaLibDir C:\path\to\skia\out\moonbit-smoke
 ```
 
-Use the MSVC path for the default JetBrains provider or a prepared release zip
-or checkout that provides `skia.lib`. The workflow fetches JetBrains packages
-into `.skia-cache/jetbrains`; the helper calls `vcvarsall.bat`, builds with
+Use the MSVC path for the default release provider or a prepared release zip
+or checkout that provides `skia.lib`. The workflow fetches release packages
+into `.skia-cache/release`; the helper calls `vcvarsall.bat`, builds with
 `cl`, prepends the Skia library directory to `PATH`, captures the same artifact
 log names, and restores both temporary package rewrites:
 

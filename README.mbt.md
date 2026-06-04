@@ -270,18 +270,20 @@ when the Skia library directory also contains `libskshaper`, `libskunicode_core`
 `-DSKIA_MBT_HAS_SKSHAPER`, links those module libraries, and verifies the native
 smoke log contains the shaped-run marker.
 
-The default real-Skia binary provider is now JetBrains/skia, locked by
-`skia-provider-lock.json` to tag `m148-8967a2e80c` and commit
-`8967a2e80c71be363146da2395f503cab5f5fb9c`. The fetch helpers cache packages
-under `.skia-cache/jetbrains` and print the include/lib/flag values consumed by
-the existing native package configurators:
+The default real-Skia binary provider is now the `wzzc-dev/skia` GitHub release
+locked by `skia-provider-lock.json` to tag `dev-6d73578a36` and commit
+`6d73578a36506d10bc044e920cc71037982e481d`. The fetch helpers cache packages
+under `.skia-cache/release` and print the include/lib/flag values consumed by
+the existing native package configurators. The default link mode is static;
+dynamic libraries are selected explicitly with
+`SKIA_MBT_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic`:
 
 ```bash
-bash scripts/fetch-jetbrains-skia.sh --platform auto --arch auto --print-env
+bash scripts/fetch-release-skia.sh --platform auto --arch auto --print-env
 ```
 
 ```powershell
-.\scripts\fetch-jetbrains-skia.ps1 -Platform auto -Arch auto -PrintEnv
+.\scripts\fetch-release-skia.ps1 -Platform auto -Arch auto -PrintEnv
 ```
 
 Use [REAL_SKIA_SMOKE.md](REAL_SKIA_SMOKE.md) as the acceptance checklist for
@@ -348,9 +350,9 @@ bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
 The macOS helper adds common CoreFoundation/CoreGraphics/CoreText/ImageIO
 frameworks by default; pass `--extra-link-flags` for additional Skia build
 dependencies. Use `--link-mode dynamic|static` or
-`SKIA_MBT_MACOS_LINK_MODE=dynamic|static` when you need to force
-`libskia.dylib` or `libskia.a`; `auto` chooses the mode based on the helper
-workflow and available library files.
+`SKIA_MBT_SKIA_LINK_MODE=dynamic|static` when you need to force
+`libskia.dylib` or `libskia.a`; `SKIA_MBT_MACOS_LINK_MODE` remains a macOS
+compatibility alias. `auto` chooses the mode based on available library files.
 
 The package prebuild hook now enables native real-Skia configuration by
 default for native builds. Set `SKIA_MBT_ENABLE_PREBUILD_SKIA=0` or
@@ -358,9 +360,8 @@ default for native builds. Set `SKIA_MBT_ENABLE_PREBUILD_SKIA=0` or
 compile path. Environment values for `SKIA_MBT_SKIA_INCLUDE`,
 `SKIA_MBT_SKIA_LIB_DIR`, `SKIA_MBT_SKIA_LIB`,
 `SKIA_MBT_EXTRA_CC_FLAGS`, `SKIA_MBT_EXTRA_LINK_FLAGS`, and
-`SKIA_MBT_MACOS_LINK_MODE` take precedence over the JetBrains provider
-defaults. On macOS, `SKIA_MBT_MACOS_LINK_MODE=auto` chooses
-`libskia.dylib` when present and falls back to `libskia.a`.
+`SKIA_MBT_SKIA_LINK_MODE` take precedence over the release provider defaults.
+On macOS, `SKIA_MBT_MACOS_LINK_MODE` remains a compatibility alias.
 
 To build a small CPU-only Skia from source for the macOS smoke test, run:
 
@@ -396,8 +397,8 @@ When `--skia-rev` is omitted, the Linux source-build helpers read
 successful real runner, or override it with `--skia-rev` while testing a new
 Skia revision. The acceptance summary log records the resolved `skia_commit`;
 use the guarded pin helpers below to write that value after a passing
-source-built run. Do not write JetBrains fork commits into `skia-revision.txt`;
-they are tracked in `skia-provider-lock.json`.
+source-built run. Do not write release-provider commits into
+`skia-revision.txt`; they are tracked in `skia-provider-lock.json`.
 
 For the first source-built Linux acceptance, the guarded pinning wrapper runs
 the smoke, verifies the artifact bundle with a required full commit hash, pins

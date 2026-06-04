@@ -125,7 +125,7 @@ function runPowerShell(script, args, description) {
   return result.stdout.trim();
 }
 
-function fetchSkiaEnv() {
+function fetchSkiaEnv(config) {
   const common = [
     "--platform",
     "auto",
@@ -133,14 +133,16 @@ function fetchSkiaEnv() {
     "auto",
     "--config",
     "Release",
+    "--link-mode",
+    skiaLinkMode(config),
     "--cache-dir",
-    ".skia-cache/jetbrains",
+    ".skia-cache/release",
     "--print-env",
   ];
   if (process.platform === "win32") {
     return parseEnvLines(
       runPowerShell(
-        path.join(repoRoot, "scripts", "fetch-jetbrains-skia.ps1"),
+        path.join(repoRoot, "scripts", "fetch-release-skia.ps1"),
         [
           "-Platform",
           "auto",
@@ -148,19 +150,21 @@ function fetchSkiaEnv() {
           "auto",
           "-Config",
           "Release",
+          "-LinkMode",
+          skiaLinkMode(config),
           "-CacheDir",
-          ".skia-cache/jetbrains",
+          ".skia-cache/release",
           "-PrintEnv",
         ],
-        "fetch JetBrains Skia",
+        "fetch Skia release",
       ),
     );
   }
   return parseEnvLines(
     run(
       "bash",
-      [ path.join("scripts", "fetch-jetbrains-skia.sh"), ...common ],
-      "fetch JetBrains Skia",
+      [ path.join("scripts", "fetch-release-skia.sh"), ...common ],
+      "fetch Skia release",
     ),
   );
 }
@@ -218,20 +222,24 @@ function skiaValues(config) {
     "SKIA_MBT_SKIA_LIB",
     "SKIA_MBT_EXTRA_CC_FLAGS",
     "SKIA_MBT_EXTRA_LINK_FLAGS",
+    "SKIA_MBT_SKIA_LINK_MODE",
+    "SKIA_MBT_MACOS_LINK_MODE",
   ];
   const envValues = overlayEnvValues(config, {}, keys);
   if (envValues.SKIA_MBT_SKIA_INCLUDE && envValues.SKIA_MBT_SKIA_LIB_DIR) {
     return envValues;
   }
-  return overlayEnvValues(config, fetchSkiaEnv(), keys);
+  return overlayEnvValues(config, fetchSkiaEnv(config), keys);
 }
 
-function macosLinkMode(config) {
+function skiaLinkMode(config) {
   const mode = (
-    configEnvValue(config, "SKIA_MBT_MACOS_LINK_MODE") || "auto"
+    configEnvValue(config, "SKIA_MBT_SKIA_LINK_MODE") ||
+    configEnvValue(config, "SKIA_MBT_MACOS_LINK_MODE") ||
+    "static"
   ).trim().toLowerCase();
   if (!["auto", "dynamic", "static"].includes(mode)) {
-    throw new Error(`unsupported SKIA_MBT_MACOS_LINK_MODE: ${mode}`);
+    throw new Error(`unsupported SKIA_MBT_SKIA_LINK_MODE: ${mode}`);
   }
   return mode;
 }
@@ -239,7 +247,7 @@ function macosLinkMode(config) {
 function macosLibraryFlags(config, libPath, skiaLib) {
   const staticLib = path.join(libPath, `lib${skiaLib}.a`);
   const dynamicLib = path.join(libPath, `lib${skiaLib}.dylib`);
-  let mode = macosLinkMode(config);
+  let mode = skiaLinkMode(config);
   if (mode === "auto") {
     if (fs.existsSync(dynamicLib)) {
       mode = "dynamic";
@@ -255,7 +263,7 @@ function macosLibraryFlags(config, libPath, skiaLib) {
   if (mode === "dynamic") {
     if (!fs.existsSync(dynamicLib)) {
       throw new Error(
-        `SKIA_MBT_MACOS_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
+        `SKIA_MBT_SKIA_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
       );
     }
     return `${dynamicLib} -Wl,-rpath,${libPath}`;
@@ -263,7 +271,7 @@ function macosLibraryFlags(config, libPath, skiaLib) {
 
   if (!fs.existsSync(staticLib)) {
     throw new Error(
-      `SKIA_MBT_MACOS_LINK_MODE=static requested, but ${staticLib} was not found`,
+      `SKIA_MBT_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
     );
   }
   return staticLib;
@@ -275,6 +283,7 @@ function platformFlags(config, values) {
   const skiaLib = values.SKIA_MBT_SKIA_LIB || "skia";
   const extraCcFlags = values.SKIA_MBT_EXTRA_CC_FLAGS || "";
   const extraLinkFlags = values.SKIA_MBT_EXTRA_LINK_FLAGS || "";
+  const linkMode = (values.SKIA_MBT_SKIA_LINK_MODE || skiaLinkMode(config)).trim().toLowerCase();
 
   let stubCcFlags = `-DSKIA_MBT_HAS_SKIA -I${includePath}`;
   let linkFlags = `-L${libPath} -l${skiaLib}`;
@@ -289,6 +298,27 @@ function platformFlags(config, values) {
       " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices";
   } else if (process.platform === "linux") {
     stubCcFlags = `-DSKIA_MBT_HAS_SKIA -std=c++17 -I${includePath}`;
+    const staticLib = path.join(libPath, `lib${skiaLib}.a`);
+    const dynamicLib = path.join(libPath, `lib${skiaLib}.so`);
+    let resolvedLinkMode = linkMode;
+    if (resolvedLinkMode === "auto") {
+      resolvedLinkMode = fs.existsSync(dynamicLib) ? "dynamic" : "static";
+    }
+    if (resolvedLinkMode === "static") {
+      if (!fs.existsSync(staticLib)) {
+        throw new Error(
+          `SKIA_MBT_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
+        );
+      }
+      linkFlags = staticLib;
+    } else {
+      if (!fs.existsSync(dynamicLib)) {
+        throw new Error(
+          `SKIA_MBT_SKIA_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
+        );
+      }
+      linkFlags = `-L${libPath} -l${skiaLib} -Wl,-rpath,${libPath}`;
+    }
     linkFlags = appendMissingFlags(linkFlags, [
       "-lstdc++",
       "-lfontconfig",

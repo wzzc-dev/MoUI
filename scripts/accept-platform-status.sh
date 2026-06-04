@@ -188,10 +188,13 @@ for line in acceptance_log.read_text(encoding="utf-8").splitlines():
     version_match = re.fullmatch(r"\s*jetbrains_tag=([^\s]+)\s*", line)
     if version_match and version_match.group(1) != "unknown":
         accepted_version = version_match.group(1)
+    release_version_match = re.fullmatch(r"\s*release_tag=([^\s]+)\s*", line)
+    if release_version_match and release_version_match.group(1) != "unknown":
+        accepted_version = release_version_match.group(1)
 
 if not accepted_commit:
     fail(f"platform acceptance log is missing a full 40-character skia_commit hash: {acceptance_log}")
-if accepted_provider not in ("source", "jetbrains"):
+if accepted_provider not in ("source", "jetbrains", "release"):
     fail(f"unsupported accepted provider in acceptance log: {accepted_provider}")
 if accepted_provider == "source":
     for line in revision_path.read_text(encoding="utf-8").splitlines():
@@ -206,6 +209,13 @@ if accepted_provider == "jetbrains":
         fail("accepted JetBrains commit does not match provider lock")
     if accepted_version != str(jetbrains.get("tag", "")):
         fail("accepted JetBrains tag does not match provider lock")
+if accepted_provider == "release":
+    provider_lock = json.loads(provider_lock_path.read_text(encoding="utf-8"))
+    release = provider_lock.get("providers", {}).get("release", {})
+    if accepted_commit != str(release.get("commit", "")).lower():
+        fail("accepted release commit does not match provider lock")
+    if accepted_version != str(release.get("tag", "")):
+        fail("accepted release tag does not match provider lock")
 if not accepted_version:
     fail(f"accepted platform is missing accepted_version: {platform}")
 

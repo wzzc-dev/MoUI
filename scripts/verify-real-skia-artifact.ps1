@@ -239,6 +239,90 @@ if ($wrapperProvider -eq "jetbrains") {
   }
 }
 
+if ($wrapperProvider -eq "release") {
+  foreach ($field in @("skia_provider=", "skia_link_mode=", "release_owner=", "release_repo=", "release_tag=", "release_url=", "skia_commit=", "skia_package=", "skia_package_sha256=")) {
+    Assert-LogFieldLine -Content $wrapperContent -Field $field -MessagePrefix "release wrapper log is missing required field"
+  }
+  if ($wrapperContent -notmatch '(?m)^\s*skia_link_mode=(static|dynamic)\s*$') {
+    throw "release wrapper log is missing resolved skia_link_mode=static|dynamic"
+  }
+  if ($wrapperContent -notmatch '(?m)^\s*skia_commit=[0-9a-fA-F]{40}\s*$') {
+    throw "release wrapper log is missing a full 40-character skia_commit hash"
+  }
+  if ($wrapperContent -notmatch '(?m)^\s*skia_package_sha256=[0-9a-fA-F]{64}\s*$') {
+    throw "release wrapper log is missing a full 64-character skia_package_sha256 hash"
+  }
+
+  $manifestPath = Join-Path (Split-Path -Parent $PSScriptRoot) "skia-provider-lock.json"
+  if (!(Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+    throw "release provider manifest is missing: $manifestPath"
+  }
+  $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+  $provider = $manifest.providers.release
+  if (!$provider) {
+    throw "release provider manifest is missing providers.release"
+  }
+  $releaseOwner = Get-LogField -LogPath $wrapperLog -Field "release_owner"
+  $releaseRepo = Get-LogField -LogPath $wrapperLog -Field "release_repo"
+  $releaseTag = Get-LogField -LogPath $wrapperLog -Field "release_tag"
+  $releaseUrl = Get-LogField -LogPath $wrapperLog -Field "release_url"
+  $releaseCommit = (Get-LogField -LogPath $wrapperLog -Field "skia_commit").ToLowerInvariant()
+  $releasePackage = Get-LogField -LogPath $wrapperLog -Field "skia_package"
+  $releaseSha256 = (Get-LogField -LogPath $wrapperLog -Field "skia_package_sha256").ToLowerInvariant()
+  $releaseLinkMode = Get-LogField -LogPath $wrapperLog -Field "skia_link_mode"
+
+  if ($releaseOwner -ne $provider.owner) {
+    throw "release owner mismatch: log=$releaseOwner manifest=$($provider.owner)"
+  }
+  if ($releaseRepo -ne $provider.repo) {
+    throw "release repo mismatch: log=$releaseRepo manifest=$($provider.repo)"
+  }
+  if ($releaseTag -ne $provider.tag) {
+    throw "release tag mismatch: log=$releaseTag manifest=$($provider.tag)"
+  }
+  if ($releaseUrl -ne $provider.release_url) {
+    throw "release release_url mismatch: log=$releaseUrl manifest=$($provider.release_url)"
+  }
+  if ($releaseCommit -ne $provider.commit.ToLowerInvariant()) {
+    throw "release commit mismatch: log=$releaseCommit manifest=$($provider.commit)"
+  }
+
+  $platformAssets = $provider.assets.PSObject.Properties[$Platform].Value
+  $matchedAssets = @()
+  foreach ($configProperty in $platformAssets.PSObject.Properties) {
+    foreach ($archProperty in $configProperty.Value.PSObject.Properties) {
+      $modeProperty = $archProperty.Value.PSObject.Properties[$releaseLinkMode]
+      if ($modeProperty -and $modeProperty.Value.name -eq $releasePackage) {
+        $matchedAssets += $modeProperty.Value
+      }
+    }
+  }
+  if ($matchedAssets.Count -eq 0) {
+    throw "release package is not locked for platform=${Platform} link_mode=${releaseLinkMode}: $releasePackage"
+  }
+  $shaMatched = $false
+  foreach ($asset in $matchedAssets) {
+    if ($asset.sha256.ToLowerInvariant() -eq $releaseSha256) {
+      $shaMatched = $true
+    }
+  }
+  if (!$shaMatched) {
+    throw "release package SHA256 mismatch for $releasePackage`: $releaseSha256"
+  }
+
+  foreach ($field in @("release_owner", "release_repo", "release_tag", "release_url", "skia_commit", "skia_package", "skia_package_sha256", "skia_link_mode")) {
+    $wrapperValue = Get-LogField -LogPath $wrapperLog -Field $field
+    $acceptanceValue = Get-LogField -LogPath $acceptanceLog -Field $field
+    if ($field -in @("skia_commit", "skia_package_sha256")) {
+      $wrapperValue = $wrapperValue.ToLowerInvariant()
+      $acceptanceValue = $acceptanceValue.ToLowerInvariant()
+    }
+    if ($wrapperValue -ne $acceptanceValue) {
+      throw "wrapper and acceptance logs disagree on release $field`: wrapper_$field=$wrapperValue acceptance_$field=$acceptanceValue"
+    }
+  }
+}
+
 function Get-AcceptedSkiaCommit([string] $LogPath) {
   $matches = Select-String -LiteralPath $LogPath -Pattern '^\s*skia_commit=([0-9a-fA-F]{40})\s*$'
   if (!$matches) {

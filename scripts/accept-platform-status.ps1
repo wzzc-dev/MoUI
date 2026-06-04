@@ -126,6 +126,20 @@ if ($acceptedProvider -eq "jetbrains") {
   if ($acceptedVersion -ne $jetbrains.tag) {
     throw "accepted JetBrains tag does not match provider lock"
   }
+} elseif ($acceptedProvider -eq "release") {
+  $providerLockPath = Resolve-RepoPath "skia-provider-lock.json"
+  $providerLock = Get-Content -LiteralPath $providerLockPath -Raw | ConvertFrom-Json
+  $release = $providerLock.providers.release
+  $acceptedVersion = Get-LogField -LogPath $acceptanceLog -Field "release_tag"
+  if ([string]::IsNullOrWhiteSpace($acceptedVersion) -or $acceptedVersion -eq "unknown") {
+    $acceptedVersion = Get-LogField -LogPath $wrapperLog -Field "release_tag"
+  }
+  if ($acceptedCommit -ne $release.commit.ToLowerInvariant()) {
+    throw "accepted release commit does not match provider lock"
+  }
+  if ($acceptedVersion -ne $release.tag) {
+    throw "accepted release tag does not match provider lock"
+  }
 } elseif ($acceptedProvider -eq "source") {
   $acceptedVersion = (Get-Content -LiteralPath $resolvedRevisionFile | Where-Object {
       $line = $_.Trim()

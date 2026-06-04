@@ -52,6 +52,12 @@ if ($providerLockData -and $providerLockData.providers.jetbrains) {
   $jetbrainsCommit = $providerLockData.providers.jetbrains.commit.ToLowerInvariant()
   $jetbrainsTag = $providerLockData.providers.jetbrains.tag
 }
+$releaseCommit = ""
+$releaseTag = ""
+if ($providerLockData -and $providerLockData.providers.release) {
+  $releaseCommit = $providerLockData.providers.release.commit.ToLowerInvariant()
+  $releaseTag = $providerLockData.providers.release.tag
+}
 
 if ($status.schema_version -notin @(1, 2, 3, 4)) {
   throw "unsupported Skia platform status schema_version: $($status.schema_version)"
@@ -880,7 +886,7 @@ foreach ($platform in $platforms) {
     }
     $acceptedProvider = if ($status.schema_version -ge 2) { $entry.accepted_provider } else { "source" }
     $acceptedVersion = if ($status.schema_version -ge 2) { $entry.accepted_version } else { $revision }
-    if ($acceptedProvider -notin @("source", "jetbrains")) {
+    if ($acceptedProvider -notin @("source", "jetbrains", "release")) {
       throw "accepted platform has unsupported accepted_provider: $platform"
     }
     if ([string]::IsNullOrWhiteSpace($acceptedVersion)) {
@@ -929,6 +935,17 @@ foreach ($platform in $acceptedPlatforms) {
     }
     if ($acceptedVersion -ne $jetbrainsTag) {
       throw "accepted JetBrains platform version does not match provider lock tag: platform=$platform accepted_version=$acceptedVersion jetbrains_tag=$jetbrainsTag"
+    }
+  }
+  if ($acceptedProvider -eq "release") {
+    if ([string]::IsNullOrWhiteSpace($releaseCommit) -or [string]::IsNullOrWhiteSpace($releaseTag)) {
+      throw "release provider lock is missing tag or commit"
+    }
+    if ($acceptedCommit -ne $releaseCommit) {
+      throw "accepted release platform commit does not match provider lock: platform=$platform accepted_commit=$acceptedCommit release_commit=$releaseCommit"
+    }
+    if ($acceptedVersion -ne $releaseTag) {
+      throw "accepted release platform version does not match provider lock tag: platform=$platform accepted_version=$acceptedVersion release_tag=$releaseTag"
     }
   }
 }
