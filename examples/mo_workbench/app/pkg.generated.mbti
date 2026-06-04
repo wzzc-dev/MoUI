@@ -370,6 +370,7 @@ pub(all) struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
   selected_agent_id : String
+  appearance_mode : String
   main_scroll_offset_y : Double
   prompt : String
   composer_controls_expanded : Bool
@@ -416,6 +417,7 @@ pub fn WorkbenchModel::view(Self) -> @core.View[WorkbenchMsg]
 pub(all) enum WorkbenchMsg {
   SelectSession(String)
   SelectPanel(String)
+  SetAppearanceMode(String)
   SwitchAgentBackend(String)
   CreateConversation
   SelectAgent(String)

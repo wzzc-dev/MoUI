@@ -171,15 +171,19 @@ fn WorkbenchModel::view_with_environment(
   self : WorkbenchModel,
   env : @core.ViewEnvironment,
 ) -> @core.View[WorkbenchMsg] {
-  self.view_for_size(env.viewport_size())
+  self.view_for_size(
+    env.viewport_size(),
+    scheme=self.appearance_color_scheme(env.environment().color_scheme),
+  )
 }
 
 ///|
 fn WorkbenchModel::view_for_size(
   self : WorkbenchModel,
   viewport : @core.Size,
+  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> @core.View[WorkbenchMsg] {
-  let theme = @views.light_theme()
+  let theme = workbench_theme(scheme)
   let layout = workbench_layout(viewport, true)
   surface(
     row(
@@ -192,7 +196,7 @@ fn WorkbenchModel::view_for_size(
     ),
     width=layout.viewport.width,
     height=layout.viewport.height,
-    background=ui_color(0.98, 0.98, 0.97),
+    background=workbench_app_background(theme),
     corner_radius=0.0,
     theme~,
     padding=0.0,
@@ -212,6 +216,7 @@ fn WorkbenchModel::app_sidebar(
     self.pinned_threads(layout, theme),
   ]
   rows.push(spacer(min_length=8.0, weight=1.0))
+  rows.push(self.sidebar_settings_button(layout, theme))
   if self.should_show_sidebar_transport_footer() {
     rows.push(self.sidebar_footer(layout, theme))
   }
@@ -219,7 +224,7 @@ fn WorkbenchModel::app_sidebar(
     column(rows, spacing=theme.spacing_scale.sm, align=Stretch),
     width=layout.sidebar_width,
     height=layout.viewport.height,
-    background=ui_color(0.93, 0.94, 0.93),
+    background=workbench_sidebar_background(theme),
     corner_radius=0.0,
     theme~,
     padding=18.0,
@@ -302,6 +307,22 @@ fn WorkbenchModel::should_show_sidebar_transport_footer(
 }
 
 ///|
+fn WorkbenchModel::sidebar_settings_button(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  button(
+    "设置",
+    on_click=SelectPanel("settings"),
+    variant=if self.settings_page_active() { Outline } else { Ghost },
+    theme~,
+    width=layout.sidebar_inner_width,
+    height=34.0,
+  )
+}
+
+///|
 fn WorkbenchModel::sidebar_footer(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
@@ -354,9 +375,9 @@ fn WorkbenchModel::thread_button(
 ) -> @core.View[WorkbenchMsg] {
   ignore(self)
   let background = if selected {
-    @core.Color::white()
+    workbench_sidebar_selected_background(theme)
   } else {
-    ui_color(0.93, 0.94, 0.93)
+    workbench_sidebar_background(theme)
   }
   let label_width = layout.sidebar_inner_width - 72.0
   surface(
@@ -381,12 +402,12 @@ fn WorkbenchModel::thread_button(
     width=layout.sidebar_inner_width,
     height=38.0,
     background~,
-    corner_radius=8.0,
+    corner_radius=6.0,
     theme~,
     padding=2.0,
   ).border(
     if selected {
-      workbench_hairline_border()
+      workbench_hairline_border(theme)
     } else {
       workbench_clear_border()
     },
@@ -441,7 +462,9 @@ fn WorkbenchModel::conversation_surface(
     spacing=14.0,
     align=Center,
   )
-  let workspace_body = if layout.inspector_visible {
+  let workspace_body = if self.settings_page_active() {
+    self.settings_page(layout, theme)
+  } else if layout.inspector_visible {
     row(
       [center_column, self.workspace_inspector(layout, theme)],
       spacing=layout.inspector_gap,
@@ -458,11 +481,333 @@ fn WorkbenchModel::conversation_surface(
     ),
     width=layout.main_width,
     height=layout.viewport.height,
-    background=ui_color(0.975, 0.976, 0.970),
+    background=workbench_main_background(theme),
     corner_radius=0.0,
     theme~,
     padding=layout.main_padding,
   )
+}
+
+///|
+fn WorkbenchModel::settings_page_active(self : WorkbenchModel) -> Bool {
+  self.selected_panel == "settings"
+}
+
+///|
+fn WorkbenchModel::settings_page(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let width = settings_page_width(layout)
+  let body_width = workbench_max_double(1.0, width - 28.0)
+  let rows : Array[@core.View[WorkbenchMsg]] = [
+    self.settings_header_row(body_width, theme),
+    self.settings_appearance_row(body_width, theme),
+    self.settings_workspace_row(body_width, theme),
+    self.settings_context_row(body_width, theme),
+    self.settings_backend_row(body_width, theme),
+  ]
+  surface(
+    column(rows, spacing=10.0, align=Stretch),
+    width~,
+    height=layout.workspace_body_height,
+    background=workbench_panel_background(theme),
+    corner_radius=8.0,
+    theme~,
+    padding=14.0,
+  ).border(workbench_hairline_border(theme))
+}
+
+///|
+fn settings_page_width(layout : WorkbenchLayout) -> Double {
+  let inspector_width = if layout.inspector_visible {
+    layout.inspector_gap + layout.inspector_width
+  } else {
+    0.0
+  }
+  layout.content_width + layout.scrollbar_width + inspector_width
+}
+
+///|
+fn WorkbenchModel::settings_header_row(
+  self : WorkbenchModel,
+  width : Double,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  ignore(self)
+  row(
+    [
+      column(
+        [
+          text("设置", role=Title, theme~, width=width - 78.0, height=28.0),
+          text(
+            "工作台偏好",
+            role=Caption,
+            theme~,
+            width=width - 78.0,
+            height=20.0,
+          ),
+        ],
+        spacing=0.0,
+        align=Start,
+      ),
+      button(
+        "返回",
+        on_click=SelectPanel("agent"),
+        variant=Ghost,
+        theme~,
+        width=64.0,
+        height=34.0,
+      ),
+    ],
+    spacing=14.0,
+    align=Center,
+  ).frame(width~, height=52.0)
+}
+
+///|
+fn WorkbenchModel::settings_appearance_row(
+  self : WorkbenchModel,
+  width : Double,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let label_width = 112.0
+  let button_width = workbench_clamp_double(
+    (width - label_width - 16.0 - 16.0) / 3.0,
+    82.0,
+    122.0,
+  )
+  settings_row_surface(
+    row(
+      [
+        settings_row_label(
+          "外观",
+          appearance_mode_label(self.appearance_mode),
+          label_width,
+          theme,
+        ),
+        setting_choice_button(
+          "跟随系统",
+          selected=self.appearance_mode == "system",
+          message=SetAppearanceMode("system"),
+          width=button_width,
+          theme,
+        ),
+        setting_choice_button(
+          "浅色",
+          selected=self.appearance_mode == "light",
+          message=SetAppearanceMode("light"),
+          width=button_width,
+          theme,
+        ),
+        setting_choice_button(
+          "深色",
+          selected=self.appearance_mode == "dark",
+          message=SetAppearanceMode("dark"),
+          width=button_width,
+          theme,
+        ),
+      ],
+      spacing=8.0,
+      align=Center,
+    ),
+    width,
+    theme,
+  )
+}
+
+///|
+fn WorkbenchModel::settings_workspace_row(
+  self : WorkbenchModel,
+  width : Double,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let label_width = 112.0
+  let button_width = workbench_clamp_double(
+    (width - label_width - 16.0 - 8.0) / 2.0,
+    112.0,
+    154.0,
+  )
+  settings_row_surface(
+    row(
+      [
+        settings_row_label("界面", "工作流", label_width, theme),
+        button(
+          if self.composer_controls_expanded {
+            "收起选项"
+          } else {
+            "展开选项"
+          },
+          on_click=ToggleComposerControls,
+          variant=if self.composer_controls_expanded { Outline } else { Ghost },
+          theme~,
+          width=button_width,
+          height=34.0,
+        ),
+        button(
+          if self.workspace_details_expanded {
+            "收起详情"
+          } else {
+            "展开详情"
+          },
+          on_click=ToggleWorkspaceDetails,
+          variant=if self.workspace_details_expanded { Outline } else { Ghost },
+          theme~,
+          width=button_width,
+          height=34.0,
+        ),
+      ],
+      spacing=8.0,
+      align=Center,
+    ),
+    width,
+    theme,
+  )
+}
+
+///|
+fn WorkbenchModel::settings_context_row(
+  self : WorkbenchModel,
+  width : Double,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let label_width = 112.0
+  let chip_width = workbench_clamp_double(
+    (width - label_width - 16.0 - 18.0) / 4.0,
+    54.0,
+    82.0,
+  )
+  settings_row_surface(
+    row(
+      [
+        settings_row_label(
+          "范围",
+          self.status_bar_context_label(),
+          label_width,
+          theme,
+        ),
+        self.context_chip("仓库", "repo", theme, width=chip_width),
+        self.context_chip("示例", "examples", theme, width=chip_width),
+        self.context_chip("证据", "evidence", theme, width=chip_width),
+        self.context_chip("会话", "session", theme, width=chip_width),
+      ],
+      spacing=6.0,
+      align=Center,
+    ),
+    width,
+    theme,
+  )
+}
+
+///|
+fn WorkbenchModel::settings_backend_row(
+  self : WorkbenchModel,
+  width : Double,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let label_width = 112.0
+  settings_row_surface(
+    row(
+      [
+        settings_row_label(
+          "Agent",
+          self.active_agent_backend_profile().label,
+          label_width,
+          theme,
+        ),
+        self.backend_selector_cell(theme),
+        spacer(min_length=8.0, weight=1.0),
+      ],
+      spacing=8.0,
+      align=Center,
+    ),
+    width,
+    theme,
+  )
+}
+
+///|
+fn settings_row_label(
+  title : String,
+  detail : String,
+  width : Double,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  column(
+    [
+      text(title, role=Control, theme~, width~, height=22.0),
+      text(
+        if detail == "" {
+          "默认"
+        } else {
+          detail
+        },
+        role=Caption,
+        theme~,
+        width~,
+        height=18.0,
+      ),
+    ],
+    spacing=0.0,
+    align=Start,
+  )
+}
+
+///|
+fn setting_choice_button(
+  label : String,
+  selected~ : Bool,
+  message~ : WorkbenchMsg,
+  width~ : Double,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  button(
+    label,
+    on_click=message,
+    variant=if selected { Outline } else { Ghost },
+    theme~,
+    width~,
+    height=34.0,
+  )
+}
+
+///|
+fn settings_row_surface(
+  child : @core.View[WorkbenchMsg],
+  width : Double,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  surface(
+    child,
+    width~,
+    height=58.0,
+    background=workbench_panel_raised_background(theme),
+    corner_radius=6.0,
+    theme~,
+    padding=10.0,
+  ).border(workbench_hairline_border(theme))
+}
+
+///|
+fn WorkbenchModel::appearance_color_scheme(
+  self : WorkbenchModel,
+  environment_scheme : @core.ColorScheme,
+) -> @core.ColorScheme {
+  match self.appearance_mode {
+    "light" => @core.ColorScheme::Light
+    "dark" => @core.ColorScheme::Dark
+    _ => environment_scheme
+  }
+}
+
+///|
+fn appearance_mode_label(mode : String) -> String {
+  match mode {
+    "light" => "浅色"
+    "dark" => "深色"
+    _ => "跟随系统"
+  }
 }
 
 ///|
@@ -512,11 +857,11 @@ fn WorkbenchModel::top_bar(
     row(controls, spacing=8.0, align=Center),
     width=layout.content_width + layout.scrollbar_width,
     height=58.0,
-    background=@core.Color::white(),
-    corner_radius=12.0,
+    background=workbench_panel_background(theme),
+    corner_radius=8.0,
     theme~,
     padding=12.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -859,11 +1204,11 @@ fn WorkbenchModel::turn_evidence_card(
     column(rows, spacing=7.0, align=Start),
     width=layout.panel_width,
     height=self.turn_evidence_card_height(),
-    background=@core.Color::white(),
-    corner_radius=12.0,
+    background=workbench_panel_background(theme),
+    corner_radius=8.0,
     theme~,
     padding=12.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -1112,11 +1457,11 @@ fn WorkbenchModel::workspace_detail_panel(
         column(lines, spacing=2.0, align=Start),
         width=detail_width,
         height=self.workspace_detail_panel_height(),
-        background=ui_color(0.975, 0.977, 0.972),
-        corner_radius=8.0,
+        background=workbench_panel_nested_background(theme),
+        corner_radius=6.0,
         theme~,
         padding=8.0,
-      ).border(workbench_hairline_border()),
+      ).border(workbench_hairline_border(theme)),
     ],
     spacing=8.0,
     align=Start,
@@ -1269,11 +1614,11 @@ fn WorkbenchModel::transcript_panel(
     column(rows, spacing=4.0, align=Start),
     width=layout.panel_width,
     height=self.transcript_panel_height(layout),
-    background=@core.Color::white(),
-    corner_radius=10.0,
+    background=workbench_panel_background(theme),
+    corner_radius=8.0,
     theme~,
     padding=8.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -1435,7 +1780,7 @@ fn WorkbenchModel::process_summary_row(
     ),
     width=layout.panel_body_width,
     height=process_summary_row_height(),
-    background=ui_color(0.975, 0.977, 0.972),
+    background=workbench_panel_subtle_background(theme),
     corner_radius=6.0,
     theme~,
     padding=7.0,
@@ -1468,11 +1813,11 @@ fn WorkbenchModel::process_detail_panel(
         column(views, spacing=2.0, align=Start),
         width=detail_width + 16.0,
         height=self.process_detail_panel_height(),
-        background=ui_color(0.985, 0.986, 0.982),
+        background=workbench_panel_nested_background(theme),
         corner_radius=6.0,
         theme~,
         padding=8.0,
-      ).border(workbench_hairline_border()),
+      ).border(workbench_hairline_border(theme)),
     ],
     spacing=8.0,
     align=Start,
@@ -1769,7 +2114,7 @@ fn WorkbenchModel::transcript_row(
     theme,
     badge_label=transcript_role_label(item.role),
     tone=transcript_badge_tone(item.tone),
-    background=transcript_row_background(item.role),
+    background=transcript_row_background(item.role, theme),
   )
 }
 
@@ -1865,11 +2210,11 @@ fn transcript_row_text_width(layout : WorkbenchLayout) -> Double {
 }
 
 ///|
-fn transcript_row_background(role : String) -> @core.Color {
+fn transcript_row_background(role : String, theme : @core.Theme) -> @core.Color {
   match role {
-    "assistant" => ui_color(0.985, 0.987, 0.982)
-    "user" => ui_color(0.965, 0.974, 0.985)
-    _ => ui_color(0.985, 0.985, 0.980)
+    "assistant" => workbench_transcript_assistant_background(theme)
+    "user" => workbench_transcript_user_background(theme)
+    _ => workbench_panel_subtle_background(theme)
   }
 }
 
@@ -2009,7 +2354,7 @@ fn fork_affordance_row(
         ),
         width~,
         height=fork_affordance_row_height(point, layout),
-        background=ui_color(0.980, 0.985, 0.990),
+        background=workbench_panel_nested_background(theme),
         corner_radius=6.0,
         theme~,
         padding=4.0,
@@ -2141,11 +2486,11 @@ fn WorkbenchModel::session_status_panel(
     column(rows, spacing=6.0, align=Start),
     width=layout.panel_width,
     height=session_status_panel_height(self.session_status_row_count()),
-    background=@core.Color::white(),
-    corner_radius=12.0,
+    background=workbench_panel_background(theme),
+    corner_radius=8.0,
     theme~,
     padding=12.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -3433,11 +3778,11 @@ fn command_detail_panel(
         column(lines, spacing=2.0, align=Start),
         width=detail_width,
         height=command_detail_panel_height(command),
-        background=ui_color(0.975, 0.977, 0.972),
-        corner_radius=8.0,
+        background=workbench_panel_nested_background(theme),
+        corner_radius=6.0,
         theme~,
         padding=8.0,
-      ).border(workbench_hairline_border()),
+      ).border(workbench_hairline_border(theme)),
     ],
     spacing=8.0,
     align=Start,
@@ -3798,7 +4143,7 @@ fn blank_cell(width~ : Double, height~ : Double) -> @core.View[WorkbenchMsg] {
     empty(),
     width~,
     height~,
-    background=@core.Color::white(),
+    background=workbench_transparent(),
     padding=0.0,
   )
 }
@@ -3837,11 +4182,11 @@ fn WorkbenchModel::composer(
     column(content, spacing=6.0, align=Stretch),
     width=layout.composer_width,
     height=self.composer_height(layout),
-    background=@core.Color::white(),
-    corner_radius=10.0,
+    background=workbench_panel_background(theme),
+    corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -4305,11 +4650,12 @@ fn main_scrollbar(
 }
 
 ///|
-fn workbench_hairline_border() -> @core.BorderStyle {
-  @core.BorderStyle::new(
-    brush=@core.Brush::solid(@core.Color::black().multiply_alpha(0.08)),
-    width=1.0,
-  )
+fn workbench_hairline_border(theme : @core.Theme) -> @core.BorderStyle {
+  let color = match theme.scheme {
+    @core.ColorScheme::Light => @core.Color::black().multiply_alpha(0.10)
+    @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.10)
+  }
+  @core.BorderStyle::new(brush=@core.Brush::solid(color), width=1.0)
 }
 
 ///|
@@ -4323,4 +4669,117 @@ fn workbench_clear_border() -> @core.BorderStyle {
 ///|
 fn ui_color(r : Double, g : Double, b : Double) -> @core.Color {
   @core.Color::rgba(r~, g~, b~)
+}
+
+///|
+fn workbench_theme(scheme : @core.ColorScheme) -> @core.Theme {
+  match scheme {
+    @core.ColorScheme::Light =>
+      @views.light_theme().with_accent(ui_color(0.22, 0.38, 0.95))
+    @core.ColorScheme::Dark =>
+      @views.dark_theme().with_accent(ui_color(0.48, 0.62, 1.0))
+  }
+}
+
+///|
+fn workbench_app_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.965, 0.966, 0.958)
+    @core.ColorScheme::Dark => ui_color(0.055, 0.060, 0.070)
+  }
+}
+
+///|
+fn workbench_sidebar_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.905, 0.910, 0.905)
+    @core.ColorScheme::Dark => ui_color(0.075, 0.080, 0.092)
+  }
+}
+
+///|
+fn workbench_sidebar_selected_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.985, 0.986, 0.980)
+    @core.ColorScheme::Dark => ui_color(0.145, 0.153, 0.174)
+  }
+}
+
+///|
+fn workbench_main_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.975, 0.976, 0.968)
+    @core.ColorScheme::Dark => ui_color(0.062, 0.067, 0.078)
+  }
+}
+
+///|
+fn workbench_panel_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.992, 0.993, 0.988)
+    @core.ColorScheme::Dark => ui_color(0.105, 0.112, 0.128)
+  }
+}
+
+///|
+fn workbench_panel_raised_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.975, 0.977, 0.972)
+    @core.ColorScheme::Dark => ui_color(0.132, 0.141, 0.160)
+  }
+}
+
+///|
+fn workbench_panel_subtle_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.955, 0.961, 0.956)
+    @core.ColorScheme::Dark => ui_color(0.122, 0.130, 0.148)
+  }
+}
+
+///|
+fn workbench_panel_nested_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.930, 0.938, 0.934)
+    @core.ColorScheme::Dark => ui_color(0.087, 0.093, 0.108)
+  }
+}
+
+///|
+fn workbench_status_bar_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.910, 0.918, 0.912)
+    @core.ColorScheme::Dark => ui_color(0.083, 0.089, 0.102)
+  }
+}
+
+///|
+fn workbench_transcript_assistant_background(
+  theme : @core.Theme,
+) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.985, 0.987, 0.982)
+    @core.ColorScheme::Dark => ui_color(0.116, 0.124, 0.141)
+  }
+}
+
+///|
+fn workbench_transcript_user_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.940, 0.958, 0.985)
+    @core.ColorScheme::Dark => ui_color(0.105, 0.132, 0.168)
+  }
+}
+
+///|
+fn workbench_danger_background(theme : @core.Theme) -> @core.Color {
+  match theme.scheme {
+    @core.ColorScheme::Light => ui_color(0.995, 0.975, 0.970)
+    @core.ColorScheme::Dark => ui_color(0.185, 0.094, 0.096)
+  }
+}
+
+///|
+fn workbench_transparent() -> @core.Color {
+  @core.Color::black().multiply_alpha(0.0)
 }

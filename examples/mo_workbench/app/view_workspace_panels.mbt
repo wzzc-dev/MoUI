@@ -28,11 +28,11 @@ fn WorkbenchModel::workspace_inspector(
     column(rows, spacing=8.0, align=Stretch),
     width=layout.inspector_width,
     height=layout.workspace_body_height,
-    background=@core.Color::white(),
-    corner_radius=10.0,
+    background=workbench_panel_background(theme),
+    corner_radius=8.0,
     theme~,
     padding=12.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -222,11 +222,11 @@ fn WorkbenchModel::workspace_context_panel(
     column(rows, spacing=7.0, align=Stretch),
     width=layout.inspector_body_width,
     height=layout.inspector_content_height(),
-    background=ui_color(0.988, 0.989, 0.985),
+    background=workbench_panel_nested_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -314,11 +314,11 @@ fn WorkbenchModel::inspector_diff_card(
     ),
     width=layout.inspector_body_width,
     height=74.0,
-    background=@core.Color::white(),
+    background=workbench_panel_raised_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -340,11 +340,11 @@ fn WorkbenchModel::inspector_workspace_detail_card(
     column(lines, spacing=2.0, align=Start),
     width=layout.inspector_body_width,
     height=inspector_workspace_detail_card_height(self),
-    background=@core.Color::white(),
+    background=workbench_panel_raised_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -386,11 +386,11 @@ fn inspector_file_card(
     ),
     width=layout.inspector_body_width,
     height=62.0,
-    background=@core.Color::white(),
+    background=workbench_panel_raised_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -455,11 +455,11 @@ fn WorkbenchModel::workspace_runs_panel(
     column(rows, spacing=7.0, align=Stretch),
     width=layout.inspector_body_width,
     height=layout.inspector_content_height(),
-    background=ui_color(0.988, 0.989, 0.985),
+    background=workbench_panel_nested_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -504,11 +504,11 @@ fn inspector_event_card(
     ),
     width=layout.inspector_body_width,
     height=62.0,
-    background=@core.Color::white(),
+    background=workbench_panel_raised_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -596,11 +596,11 @@ fn WorkbenchModel::inspector_runtime_signal_card(
     ),
     width=layout.inspector_body_width,
     height=62.0,
-    background=@core.Color::white(),
+    background=workbench_panel_raised_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -693,11 +693,11 @@ fn inspector_command_card(
     column(rows, spacing=6.0, align=Stretch),
     width=layout.inspector_body_width,
     height=inspector_command_card_height(command),
-    background=@core.Color::white(),
+    background=workbench_panel_raised_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -725,7 +725,7 @@ fn inspector_command_detail(
     column(lines, spacing=1.0, align=Start),
     width=layout.inspector_body_width - 20.0,
     height=inspector_command_detail_height(command),
-    background=ui_color(0.980, 0.982, 0.978),
+    background=workbench_panel_nested_background(theme),
     corner_radius=6.0,
     theme~,
     padding=8.0,
@@ -784,11 +784,11 @@ fn WorkbenchModel::workspace_diagnostics_panel(
     column(rows, spacing=7.0, align=Stretch),
     width=layout.inspector_body_width,
     height=layout.inspector_content_height(),
-    background=ui_color(0.988, 0.989, 0.985),
+    background=workbench_panel_nested_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -826,7 +826,7 @@ fn WorkbenchModel::inspector_diagnostic_header(
       empty(),
       width=54.0,
       height=28.0,
-      background=ui_color(0.988, 0.989, 0.985),
+      background=workbench_transparent(),
       padding=0.0,
     )
   }
@@ -919,11 +919,11 @@ fn inspector_diagnostic_card(
     ),
     width=layout.inspector_body_width,
     height=96.0,
-    background=@core.Color::white(),
+    background=workbench_panel_raised_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -945,11 +945,11 @@ fn inspector_error_card(
     ),
     width=layout.inspector_body_width,
     height=82.0,
-    background=ui_color(0.995, 0.975, 0.970),
+    background=workbench_danger_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -1035,11 +1035,11 @@ fn inspector_empty_state(
     ),
     width=layout.inspector_body_width,
     height=88.0,
-    background=@core.Color::white(),
+    background=workbench_panel_raised_background(theme),
     corner_radius=8.0,
     theme~,
     padding=10.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -1088,11 +1088,11 @@ fn WorkbenchModel::workspace_status_bar(
     ),
     width~,
     height=layout.status_bar_height,
-    background=ui_color(0.945, 0.948, 0.942),
+    background=workbench_status_bar_background(theme),
     corner_radius=8.0,
     theme~,
     padding=6.0,
-  ).border(workbench_hairline_border())
+  ).border(workbench_hairline_border(theme))
 }
 
 ///|
@@ -1106,7 +1106,7 @@ fn status_bar_metric_cell(
       empty(),
       width~,
       height=24.0,
-      background=ui_color(0.945, 0.948, 0.942),
+      background=workbench_transparent(),
       padding=0.0,
     )
   } else {
@@ -1123,6 +1123,10 @@ fn WorkbenchModel::status_bar_status_label(self : WorkbenchModel) -> String {
     "输入为空"
   } else if status == "Workbench conversation created" {
     "已创建新对话"
+  } else if status == "Appearance mode changed" {
+    "外观已更新"
+  } else if status == "Appearance mode unavailable" {
+    "外观设置不可用"
   } else if status.contains("Agent backend switched") {
     "后端已切换"
   } else if status.contains("queued") || status.contains("排队") {

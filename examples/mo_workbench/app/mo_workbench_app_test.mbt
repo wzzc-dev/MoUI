@@ -4796,6 +4796,123 @@ test "workbench runtime draws agent desktop shell" {
 }
 
 ///|
+test "workbench runtime follows light and dark chrome surfaces" {
+  let runtime = WorkbenchModel::new().runtime(width=1220.0, height=780.0)
+  let commands = runtime.draw_commands()
+  assert_true(
+    draw_solid_fill_count(
+      commands,
+      test_workbench_app_background(@core.ColorScheme::Light),
+    ) >=
+    1,
+  )
+  assert_true(
+    draw_solid_fill_count(
+      commands,
+      test_workbench_sidebar_background(@core.ColorScheme::Light),
+    ) >=
+    1,
+  )
+  assert_true(
+    draw_solid_fill_count(
+      commands,
+      test_workbench_main_background(@core.ColorScheme::Light),
+    ) >=
+    1,
+  )
+  assert_true(
+    draw_solid_fill_count(
+      commands,
+      test_workbench_panel_background(@core.ColorScheme::Light),
+    ) >=
+    3,
+  )
+  assert_true(
+    draw_solid_fill_count(
+      commands,
+      test_workbench_status_bar_background(@core.ColorScheme::Light),
+    ) >=
+    1,
+  )
+
+  runtime.set_environment(
+    runtime.environment().with_color_scheme(@core.ColorScheme::Dark),
+  )
+  let dark_commands = runtime.draw_commands()
+  assert_true(
+    draw_solid_fill_count(
+      dark_commands,
+      test_workbench_app_background(@core.ColorScheme::Dark),
+    ) >=
+    1,
+  )
+  assert_true(
+    draw_solid_fill_count(
+      dark_commands,
+      test_workbench_panel_background(@core.ColorScheme::Dark),
+    ) >=
+    3,
+  )
+  assert_true(
+    draw_solid_fill_count(
+      dark_commands,
+      test_workbench_status_bar_background(@core.ColorScheme::Dark),
+    ) >=
+    1,
+  )
+}
+
+///|
+test "workbench settings page switches appearance mode from sidebar" {
+  let runtime = WorkbenchModel::new().runtime(width=1220.0, height=780.0)
+  assert_true(has_text(runtime.draw_commands(), "设置"))
+  assert_false(has_text(runtime.draw_commands(), "外观"))
+
+  click_text(runtime, "设置")
+  assert_true(has_text(runtime.draw_commands(), "外观"))
+  assert_true(has_text(runtime.draw_commands(), "跟随系统"))
+  assert_true(has_text(runtime.draw_commands(), "浅色"))
+  assert_true(has_text(runtime.draw_commands(), "深色"))
+  assert_true(has_text(runtime.draw_commands(), "返回"))
+
+  click_text(runtime, "深色")
+  assert_true(
+    draw_solid_fill_count(
+      runtime.draw_commands(),
+      test_workbench_app_background(@core.ColorScheme::Dark),
+    ) >=
+    1,
+  )
+
+  click_text(runtime, "浅色")
+  assert_true(
+    draw_solid_fill_count(
+      runtime.draw_commands(),
+      test_workbench_app_background(@core.ColorScheme::Light),
+    ) >=
+    1,
+  )
+
+  click_text(runtime, "返回")
+  assert_true(has_text(runtime.draw_commands(), "当前会话"))
+  assert_false(has_text(runtime.draw_commands(), "外观"))
+}
+
+///|
+test "workbench appearance mode validates setting values" {
+  let dark = WorkbenchModel::new().update(SetAppearanceMode("dark"))
+  inspect(dark.appearance_mode, content="dark")
+  inspect(dark.last_status, content="Appearance mode changed")
+  let light = dark.update(SetAppearanceMode("light"))
+  inspect(light.appearance_mode, content="light")
+  let system = light.update(SetAppearanceMode("system"))
+  inspect(system.appearance_mode, content="system")
+  let invalid = system.update(SetAppearanceMode("sepia"))
+  inspect(invalid.appearance_mode, content="system")
+  inspect(invalid.last_status, content="Appearance mode unavailable")
+}
+
+///|
 test "workbench backend and session controls appear only in expanded composer options" {
   let collapsed = WorkbenchModel::new()
     .runtime(width=1220.0, height=780.0)
@@ -5455,6 +5572,75 @@ fn draw_text_total(commands : Array[@core.DrawCommand]) -> Int {
     }
   }
   count
+}
+
+///|
+fn draw_solid_fill_count(
+  commands : Array[@core.DrawCommand],
+  color : @core.Color,
+) -> Int {
+  let mut count = 0
+  for command in commands {
+    match command {
+      Clear(value) | FillRect(_, value) | FillRoundedRect(_, value) =>
+        if value == color {
+          count = count + 1
+        }
+      FillRoundedRectBrush(_, @core.Brush::Solid(value)) =>
+        if value == color {
+          count = count + 1
+        }
+      _ => ()
+    }
+  }
+  count
+}
+
+///|
+fn test_workbench_app_background(scheme : @core.ColorScheme) -> @core.Color {
+  match scheme {
+    @core.ColorScheme::Light => test_ui_color(0.965, 0.966, 0.958)
+    @core.ColorScheme::Dark => test_ui_color(0.055, 0.060, 0.070)
+  }
+}
+
+///|
+fn test_workbench_sidebar_background(scheme : @core.ColorScheme) -> @core.Color {
+  match scheme {
+    @core.ColorScheme::Light => test_ui_color(0.905, 0.910, 0.905)
+    @core.ColorScheme::Dark => test_ui_color(0.075, 0.080, 0.092)
+  }
+}
+
+///|
+fn test_workbench_main_background(scheme : @core.ColorScheme) -> @core.Color {
+  match scheme {
+    @core.ColorScheme::Light => test_ui_color(0.975, 0.976, 0.968)
+    @core.ColorScheme::Dark => test_ui_color(0.062, 0.067, 0.078)
+  }
+}
+
+///|
+fn test_workbench_panel_background(scheme : @core.ColorScheme) -> @core.Color {
+  match scheme {
+    @core.ColorScheme::Light => test_ui_color(0.992, 0.993, 0.988)
+    @core.ColorScheme::Dark => test_ui_color(0.105, 0.112, 0.128)
+  }
+}
+
+///|
+fn test_workbench_status_bar_background(
+  scheme : @core.ColorScheme,
+) -> @core.Color {
+  match scheme {
+    @core.ColorScheme::Light => test_ui_color(0.910, 0.918, 0.912)
+    @core.ColorScheme::Dark => test_ui_color(0.083, 0.089, 0.102)
+  }
+}
+
+///|
+fn test_ui_color(r : Double, g : Double, b : Double) -> @core.Color {
+  @core.Color::rgba(r~, g~, b~)
 }
 
 ///|

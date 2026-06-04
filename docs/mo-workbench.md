@@ -120,8 +120,14 @@ packages:
   Pi transport worker cooperate on the same native async loop.
 - Conversation-first workbench UI that keeps session state, transcript,
   command evidence, command discovery, file context, diff review, diagnostics,
-  compact Agent status, and the next prompt in one visible flow. The current shell
-  is rebuilt from `ViewEnvironment.viewport_size()` instead of a fixed
+  compact Agent status, and the next prompt in one visible flow. The visible
+  shell now uses a compact Codex-like chrome that follows the runtime
+  light/dark color scheme, with low-contrast panel borders, distinct
+  sidebar/main/status surfaces, and slightly raised cards for conversation,
+  composer, and inspector content. A lower-left `设置` entry opens a dedicated
+  settings page for appearance mode, composer/detail visibility, context scope,
+  and backend selection. The current shell is rebuilt from
+  `ViewEnvironment.viewport_size()` instead of a fixed
   `1200x750` surface, so the macOS Skia runtime responds to window resize
   events with adaptive sidebar, scroll, and composer dimensions. The main
   canvas now follows Codex's hierarchy: a compact `当前任务` strip for the
