@@ -372,6 +372,11 @@ scripts/macos-skia-renderer-smoke.sh --skia-provider existing \
 scripts/macos-skia-renderer-smoke.sh --skia-provider source
 ```
 
+The GitHub Actions wrapper for this MoUI-level macOS real-Skia smoke is
+`.github/workflows/moui-real-skia-smoke.yml`. Keep it as a separate
+`workflow_dispatch` workflow so ordinary required `MoUI CI` push and pull
+request checks do not report a skipped real-Skia job.
+
 The helper resolves JetBrains, existing, or source-built Skia providers,
 temporarily configures the local `moui_skia` and MoUI Skia smoke packages, runs
 the renderer pixel smoke, optionally launches `examples/showcase/macos_skia` to

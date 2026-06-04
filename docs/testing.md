@@ -561,14 +561,18 @@ can discover it while the binding is a workspace member:
 - `.github/workflows/copilot-setup-steps.yml` keeps GitHub Copilot coding agent
   setup discoverable and runs MoonBit dependency setup from `moui_skia`.
 
-Manual `workflow_dispatch` inputs add heavier coverage when needed:
+Manual `workflow_dispatch` entrypoints add heavier coverage when needed:
 
 - `run_slow_native_examples` builds current-platform native examples in the
   macOS packaging and Linux platform jobs.
-- `run_real_skia_smoke` runs the opt-in macOS real Skia renderer smoke; use
-  the local helper's `--run-showcase-smoke --run-markdown-smoke` flags when a
+- `.github/workflows/moui-real-skia-smoke.yml` runs the opt-in macOS real Skia
+  renderer smoke as a separate manual workflow so the required `MoUI CI` jobs do
+  not create a skipped real-Skia check on ordinary push or pull request runs.
+  Its `run_showcase_smoke` and `run_markdown_smoke` inputs map to the local
+  helper's `--run-showcase-smoke` and `--run-markdown-smoke` flags when a
   handoff also needs current-host first-frame Showcase and Markdown Editor
-  runtime evidence.
+  runtime evidence; the workflow uploads the `moui-macos-real-skia-smoke`
+  artifact with logs under `artifacts/platform-evidence/macos/`.
 
 CI now runs browser-session Web presentation automation for Showcase and
 Markdown Editor, including nonblank screenshots and Web platform evidence
