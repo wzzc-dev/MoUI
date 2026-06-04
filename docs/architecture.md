@@ -565,7 +565,11 @@ window loads during disposal. Native WGPU provider packages now supply a
 provider-owned loader that turns renderer-owned PNG/JPEG/BMP source decode
 results into `ImageResourceLoadCompletion` payloads; matching-host off-main
 async runtime evidence is still required before treating the route as fully
-ready. The host source and scheduler do not decode images, mutate renderer
+ready. Native Skia provider packages now install the same provider-owned loader
+boundary around `skia_image_load_completion`, which converts Skia encoded-image
+decode results into ready/failed completion payloads without mutating renderer
+caches. This is provider completion evidence, not matching-host off-main runtime
+proof. The host source and scheduler do not decode images, mutate renderer
 caches, or live in `core`;
 renderer/provider packages still own concrete loading and lifecycle records.
 

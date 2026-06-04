@@ -51,8 +51,19 @@ pub fn run_app_with_options(
 pub fn renderer_provider(
   options? : LinuxSkiaAppOptions = LinuxSkiaAppOptions::new(),
 ) -> @linux_host.LinuxRendererProvider {
-  @linux_host.LinuxRendererProvider::new(create_renderer=(window, metrics) => {
-    create_renderer(window, metrics, options)
+  @linux_host.LinuxRendererProvider::new(
+    create_renderer=(window, metrics) => {
+      create_renderer(window, metrics, options)
+    },
+    image_loader=Some(skia_native_image_loader()),
+  )
+}
+
+///|
+fn skia_native_image_loader() -> @host.HostAsyncImageLoader {
+  @host.HostAsyncImageLoader::new(start_load=(_window_id, source, complete) => {
+    complete(@skia_renderer.skia_image_load_completion(source))
+    None
   })
 }
 
@@ -81,7 +92,7 @@ pub fn linux_skia_provider_preflight_summary(
 
 ///|
 fn skia_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SkiaRasterRenderer.set_image_resource_change_callback; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
+  "renderer_bridge=HostWindowRenderer; renderer_text_system=SkiaRasterRenderer.text_system; renderer_image_resources=SkiaRasterRenderer.image_resources; renderer_image_loader=skia_image_load_completion; renderer_image_resource_apply=SkiaRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SkiaRasterRenderer.set_image_resource_change_callback; renderer_present_count=SkiaRasterRenderer.present_count; renderer_dispose=SkiaRasterRenderer.dispose"
 }
 
 ///|

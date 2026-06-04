@@ -541,6 +541,32 @@ test "skia renderer decodes jpeg and bmp local files through encoded image api" 
 }
 
 ///|
+test "skia image load completion reports decoded dimensions or fallback failure" {
+  let source = skia_test_png_data_uri()
+  let completion = skia_image_load_completion(source)
+  if skia_available() {
+    assert_true(
+      completion.status ==
+      @render.ImageResourceLoadCompletionStatus::ImageLoadReady,
+    )
+    inspect(completion.source, content=source)
+    inspect(completion.width, content="1")
+    inspect(completion.height, content="1")
+  } else {
+    assert_true(
+      completion.status ==
+      @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
+    )
+    inspect(completion.diagnostic, content="Skia image decode failed")
+  }
+  let missing = skia_image_load_completion("moui-skia-missing://nope")
+  assert_true(
+    missing.status == @render.ImageResourceLoadCompletionStatus::ImageLoadFailed,
+  )
+  inspect(missing.diagnostic, content="Skia image source bytes are unavailable")
+}
+
+///|
 test "skia renderer dispose clears cached image resources and records disposal" {
   guard skia_available() else { return () }
   let source = skia_test_png_data_uri()

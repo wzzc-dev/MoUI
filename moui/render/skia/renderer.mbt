@@ -1299,6 +1299,33 @@ fn skia_image_failed_cache_can_retry(source : String) -> Bool {
 }
 
 ///|
+pub fn skia_image_load_completion(
+  source : String,
+) -> @render.ImageResourceLoadCompletion {
+  match skia_image_source_bytes(source) {
+    Some(bytes) =>
+      match @skia_native.Image::from_encoded_bytes(bytes) {
+        Some(image) =>
+          @render.ImageResourceLoadCompletion::ready(
+            source,
+            width=image.width(),
+            height=image.height(),
+          )
+        None =>
+          @render.ImageResourceLoadCompletion::failed(
+            source,
+            diagnostic="Skia image decode failed",
+          )
+      }
+    None =>
+      @render.ImageResourceLoadCompletion::failed(
+        source,
+        diagnostic="Skia image source bytes are unavailable",
+      )
+  }
+}
+
+///|
 fn skia_image_source_bytes(source : String) -> Bytes? {
   if source.has_prefix("data:") {
     skia_image_data_uri_bytes(source)
