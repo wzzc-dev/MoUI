@@ -59,6 +59,7 @@ pub(all) enum SubscriptionLifecycleStatus {
 ///|
 pub(all) enum SubscriptionCancelReason {
   SubscriptionKeyChanged
+  SubscriptionKindChanged
   SubscriptionRuntimeDestroyed
 } derive(Eq, Debug, ToJson)
 
@@ -772,7 +773,7 @@ fn[Msg] ProgramRuntimeDiagnostics::sync_subscriptions(
       continue
     }
     seen_keys.push(source.key)
-    match self.reusable_subscription(source.key) {
+    match self.reusable_subscription(source.key, source.kind) {
       Some(active) => {
         active.reused = true
         active.kind = source.kind
@@ -785,10 +786,7 @@ fn[Msg] ProgramRuntimeDiagnostics::sync_subscriptions(
   }
   for active in self.active_subscriptions {
     if !active.reused {
-      self.cancel_subscription(
-        active,
-        SubscriptionCancelReason::SubscriptionKeyChanged,
-      )
+      self.cancel_subscription(active, subscription_cancel_reason(active, next))
     }
   }
   self.active_subscriptions = next
@@ -809,13 +807,26 @@ fn ProgramRuntimeDiagnostics::cancel_all_subscriptions(
 fn ProgramRuntimeDiagnostics::reusable_subscription(
   self : ProgramRuntimeDiagnostics,
   key : String,
+  kind : String,
 ) -> ActiveProgramSubscription? {
   for active in self.active_subscriptions {
-    if !active.reused && active.key == key {
+    if !active.reused && active.key == key && active.kind == kind {
       return Some(active)
     }
   }
   None
+}
+
+///|
+fn subscription_cancel_reason(
+  active : ActiveProgramSubscription,
+  next : Array[ActiveProgramSubscription],
+) -> SubscriptionCancelReason {
+  if next.any(subscription => subscription.key == active.key) {
+    SubscriptionCancelReason::SubscriptionKindChanged
+  } else {
+    SubscriptionCancelReason::SubscriptionKeyChanged
+  }
 }
 
 ///|

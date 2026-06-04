@@ -87,7 +87,8 @@ Use this skill when editing or reviewing:
   active subscription kind-count summaries, duplicate subscription-key
   counts/names in plan summaries plus aggregate
   duplicate subscription-key counters/names on program-runtime and inspector
-  snapshots, subscription lifecycle/plan counters, and ignored stale-dispatch
+  snapshots, subscription lifecycle/plan counters, same-key kind-change
+  restarts reported with `SubscriptionKindChanged`, and ignored stale-dispatch
   counters for
   callbacks captured by canceled or destroyed subscription lifetimes; effect
   runners and subscription adapters still own any concrete async work outside

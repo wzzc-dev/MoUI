@@ -1694,6 +1694,7 @@ pub fn[Msg] Subscription::window_event(key~ : String, start~ : ((Msg) -> Unit) -
 
 pub(all) enum SubscriptionCancelReason {
   SubscriptionKeyChanged
+  SubscriptionKindChanged
   SubscriptionRuntimeDestroyed
 } derive(Eq, ToJson, @debug.Debug)
 

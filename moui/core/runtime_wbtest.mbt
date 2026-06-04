@@ -849,6 +849,18 @@ struct ProgramSubscriptionModel {
 }
 
 ///|
+enum ProgramSubscriptionKindMsg {
+  ProgramSubscriptionKindToggle
+  ProgramSubscriptionKindPulse
+}
+
+///|
+struct ProgramSubscriptionKindModel {
+  use_host : Bool
+  pulses : Int
+}
+
+///|
 test "program subscriptions start reuse cancel and dispatch typed messages" {
   let alpha_dispatch : Ref[((ProgramSubscriptionMsg) -> Unit)?] = Ref(None)
   let beta_dispatch : Ref[((ProgramSubscriptionMsg) -> Unit)?] = Ref(None)
@@ -994,6 +1006,87 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
     content="2",
   )
   inspect(cleanup_log.join(","), content="alpha,beta")
+}
+
+///|
+test "program subscriptions restart when source kind changes under same key" {
+  let timer_dispatch : Ref[((ProgramSubscriptionKindMsg) -> Unit)?] = Ref(None)
+  let host_dispatch : Ref[((ProgramSubscriptionKindMsg) -> Unit)?] = Ref(None)
+  let cleanup_log : Array[String] = []
+  let program = Program::new(
+    init=() => ({ use_host: false, pulses: 0 }, Effect::none()),
+    update=(model, message) => {
+      match message {
+        ProgramSubscriptionKindToggle =>
+          ({ ..model, use_host: !model.use_host }, Effect::none())
+        ProgramSubscriptionKindPulse =>
+          ({ ..model, pulses: model.pulses + 1 }, Effect::none())
+      }
+    },
+    view=model => {
+      runtime_test_label(
+        if model.use_host {
+          "host:\{model.pulses}"
+        } else {
+          "timer:\{model.pulses}"
+        },
+      )
+    },
+    subscriptions=model => {
+      if model.use_host {
+        Subscription::host_event(key="shared-source", label="Host source", start=dispatch => {
+          host_dispatch.val = Some(dispatch)
+          Some(() => cleanup_log.push("host"))
+        })
+      } else {
+        Subscription::timer(key="shared-source", label="Timer source", start=dispatch => {
+          timer_dispatch.val = Some(dispatch)
+          Some(() => cleanup_log.push("timer"))
+        })
+      }
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=180.0, height=48.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "timer:0"))
+  let initial = runtime.program_runtime_snapshot()
+  inspect(initial.active_subscriptions[0].kind, content="timer")
+  match timer_dispatch.val {
+    Some(dispatch) => dispatch(ProgramSubscriptionKindToggle)
+    None => fail("expected timer subscription dispatch")
+  }
+  assert_true(has_draw_text(runtime.draw_commands(), "host:0"))
+  let switched = runtime.program_runtime_snapshot()
+  inspect(switched.started_subscription_count, content="2")
+  inspect(switched.reused_subscription_count, content="0")
+  inspect(switched.cancelled_subscription_count, content="1")
+  inspect(switched.active_subscription_count, content="1")
+  inspect(switched.active_subscriptions[0].key, content="shared-source")
+  inspect(switched.active_subscriptions[0].kind, content="host-event")
+  inspect(cleanup_log.join(","), content="timer")
+  assert_true(
+    switched.subscription_lifecycle.any(entry => {
+      entry.key == "shared-source" &&
+      entry.kind == "timer" &&
+      entry.status == SubscriptionLifecycleStatus::SubscriptionCancelled &&
+      entry.cancel_reason ==
+      Some(SubscriptionCancelReason::SubscriptionKindChanged)
+    }),
+  )
+  match timer_dispatch.val {
+    Some(dispatch) => dispatch(ProgramSubscriptionKindPulse)
+    None => fail("expected stale timer subscription dispatch")
+  }
+  let after_stale_timer = runtime.program_runtime_snapshot()
+  inspect(after_stale_timer.ignored_subscription_dispatch_count, content="1")
+  assert_true(has_draw_text(runtime.draw_commands(), "host:0"))
+  match host_dispatch.val {
+    Some(dispatch) => dispatch(ProgramSubscriptionKindPulse)
+    None => fail("expected host subscription dispatch")
+  }
+  assert_true(has_draw_text(runtime.draw_commands(), "host:1"))
 }
 
 ///|
