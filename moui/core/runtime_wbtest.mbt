@@ -1295,6 +1295,115 @@ test "program child effects map into parent messages" {
 }
 
 ///|
+enum ChildTaskEffectMsg {
+  ChildTaskEffectStart
+  ChildTaskEffectFinished(String)
+}
+
+///|
+enum ParentTaskEffectMsg {
+  ParentTaskEffectChild(ChildTaskEffectMsg)
+}
+
+///|
+struct ParentTaskEffectModel {
+  child : String
+}
+
+///|
+test "mapped child service tasks complete through parent messages" {
+  let child_dispatch : Ref[((ChildTaskEffectMsg) -> Unit)?] = Ref(None)
+  let cleanup_count = Ref(0)
+  let program = Program::new(
+    init=() => ({ child: "idle" }, Effect::none()),
+    update=(_model, message) => {
+      match message {
+        ParentTaskEffectChild(child_message) =>
+          match child_message {
+            ChildTaskEffectStart => {
+              let effect = Effect::service_task(
+                key="child-task:load",
+                label="Child load",
+                start=dispatch => {
+                  child_dispatch.val = Some(dispatch)
+                  Some(() => cleanup_count.val = cleanup_count.val + 1)
+                },
+              )
+              (
+                { child: "loading" },
+                effect.map(message => ParentTaskEffectChild(message)),
+              )
+            }
+            ChildTaskEffectFinished(value) => ({ child: value }, Effect::none())
+          }
+      }
+    },
+    view=model => {
+      child_task_effect_view(model.child).map(message => {
+        ParentTaskEffectChild(message)
+      })
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=220.0, height=96.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "Child idle"))
+  runtime_wbtest_click(runtime, x=20.0, y=20.0)
+  assert_true(has_draw_text(runtime.draw_commands(), "Child loading"))
+  let started = runtime.program_runtime_snapshot()
+  inspect(started.effect_task_count, content="1")
+  inspect(started.active_effect_task_count, content="1")
+  inspect(started.started_effect_task_count, content="1")
+  inspect(started.completed_effect_task_count, content="0")
+  inspect(started.active_effect_tasks[0].key, content="child-task:load")
+  inspect(started.active_effect_tasks[0].kind, content="service")
+  inspect(started.active_effect_tasks[0].label, content="Child load")
+  assert_true(
+    started.last_scheduled_effect_summary.root_kind ==
+    EffectPlanKind::EffectPlanTask,
+  )
+  inspect(started.last_scheduled_effect_summary.task_count, content="1")
+  inspect(
+    started.last_scheduled_effect_summary.descriptors[0].key,
+    content="child-task:load",
+  )
+  inspect(
+    started.last_scheduled_effect_summary.descriptors[0].kind,
+    content="service",
+  )
+  match child_dispatch.val {
+    Some(dispatch) => dispatch(ChildTaskEffectFinished("loaded"))
+    None => fail("expected mapped child task dispatch")
+  }
+  assert_true(has_draw_text(runtime.draw_commands(), "Child loaded"))
+  let completed = runtime.program_runtime_snapshot()
+  inspect(completed.dispatched_count, content="2")
+  inspect(completed.update_count, content="2")
+  inspect(completed.active_effect_task_count, content="0")
+  inspect(completed.completed_effect_task_count, content="1")
+  inspect(completed.cancelled_effect_task_count, content="0")
+  inspect(cleanup_count.val, content="0")
+  assert_true(
+    completed.effect_task_lifecycle.any(entry => {
+      entry.key == "child-task:load" &&
+      entry.kind == "service" &&
+      entry.label == "Child load" &&
+      entry.status == EffectTaskLifecycleStatus::EffectTaskCompleted
+    }),
+  )
+  match child_dispatch.val {
+    Some(dispatch) => dispatch(ChildTaskEffectFinished("late"))
+    None => fail("expected stale mapped child task dispatch")
+  }
+  let stale = runtime.program_runtime_snapshot()
+  inspect(stale.dispatched_count, content="2")
+  inspect(stale.update_count, content="2")
+  inspect(stale.ignored_effect_task_dispatch_count, content="1")
+  assert_true(has_draw_text(runtime.draw_commands(), "Child loaded"))
+}
+
+///|
 fn update_child_effect(
   child : String,
   message : ChildEffectMsg,
@@ -1329,6 +1438,20 @@ fn child_effect_view(child : String) -> View[ChildEffectMsg] {
     hovered_background=Brush::solid(Color::gray()),
     pressed_background=Brush::solid(Color::blue()),
     on_click=Some(ChildEffectStart),
+  )
+}
+
+///|
+fn child_task_effect_view(child : String) -> View[ChildTaskEffectMsg] {
+  View::button(
+    text="Child \{child}",
+    size=Size::new(width=160.0, height=44.0),
+    font=FontSpec::new(size=16.0),
+    foreground=Color::black(),
+    background=Brush::solid(Color::gray()),
+    hovered_background=Brush::solid(Color::gray()),
+    pressed_background=Brush::solid(Color::blue()),
+    on_click=Some(ChildTaskEffectStart),
   )
 }
 

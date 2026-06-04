@@ -126,8 +126,9 @@ cancellable task from an effect update, and `Effect::service_task` is the
 standard helper for service-like one-shot tasks that need the same runtime-owned
 cancellation lifecycle plus a stable `service` descriptor kind: the runtime
 records an active task descriptor, completes it on the first typed dispatch,
-cancels an older active task when a new task with the same key starts, and
-cancels active tasks when the runtime is destroyed.
+cancels an older active task when a new task with the same key starts, cancels
+active tasks when the runtime is destroyed, and ignores stale task dispatches
+after completion or cancellation.
 `Effect::plan_summary` exposes a platform-neutral diagnostic summary of the
 effect tree, including batch, send, anonymous dispatch, structured run, task,
 none, scheduled leaf count, max depth, structured effect descriptors, and
@@ -203,8 +204,8 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   active subscription counts/kind summaries, subscription plan,
   start/reuse/cancel, duplicate effect descriptor-key counters/names, and
   duplicate subscription-key counters/names, plus ignored effect-task and
-  subscription dispatch counters for stale
-  callbacks from canceled or destroyed lifetimes. Program runtime and runtime
+  subscription dispatch counters for stale callbacks from completed, canceled,
+  or destroyed lifetimes. Program runtime and runtime
   inspector snapshots expose active effect-task descriptors, effect-task
   lifecycle entries, active subscription descriptors, active subscription
   kind-count summaries, and subscription lifecycle entries so tooling can
