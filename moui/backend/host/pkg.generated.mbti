@@ -474,6 +474,20 @@ pub fn HostWindowCommands::resize(Self, HostWindowId, HostSurfaceMetrics) -> Uni
 pub fn HostWindowCommands::set_primary(Self, HostWindowId) -> Unit
 pub fn HostWindowCommands::show(Self, HostWindowId) -> Unit
 
+pub(all) struct HostWindowEvent {
+  window_id : HostWindowId
+  event : HostEvent
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostWindowEvent::new(window_id~ : HostWindowId, event~ : HostEvent) -> Self
+
+pub struct HostWindowEventSource {
+  // private fields
+}
+pub fn HostWindowEventSource::active_handler_count(Self) -> Int
+pub fn HostWindowEventSource::new() -> Self
+pub fn HostWindowEventSource::publish(Self, window_id~ : HostWindowId, event~ : HostEvent) -> Int
+pub fn[Msg] HostWindowEventSource::subscription(Self, key? : String, label? : String, map~ : (HostWindowEvent) -> Msg?) -> @wzzc-dev/moui/core.Subscription[Msg]
+
 pub(all) struct HostWindowId {
   value : Int
 } derive(Eq, ToJson, @debug.Debug)
