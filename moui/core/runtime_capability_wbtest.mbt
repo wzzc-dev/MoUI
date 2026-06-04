@@ -391,3 +391,52 @@ test "saveable bool and int states survive rebuild and remount" {
     fail("expected typed saveable state after same-root remount")
   }
 }
+
+///|
+test "stale saveable state subscriptions are cancelled after rebuild" {
+  let states : Array[State[Int]] = []
+  let runtime = RuntimeState::new_component(
+    root=Component::new(ctx => {
+      let count = ctx.saveable_int(key="count", 1)
+      states.push(count)
+      ViewSpec::TextSpec({
+        key: None,
+        text: "Count \{count.get()}",
+        size: Size::new(width=120.0, height=20.0),
+        font: FontSpec::new(size=12.0, weight=400),
+        color: Color::black(),
+      })
+    }),
+    size=Size::new(width=120.0, height=20.0),
+  )
+  guard runtime.build_draw_commands()[1] is DrawText({ text: "Count 1", .. }) else {
+    fail("expected initial saveable state")
+  }
+  guard states.length() == 1 else {
+    fail("expected first saveable state handle")
+  }
+  let stale = states[0]
+  stale.set(4)
+  guard runtime.build_draw_commands()[1] is DrawText({ text: "Count 4", .. }) else {
+    fail("expected active saveable state to rebuild")
+  }
+  guard states.length() == 2 else {
+    fail("expected rebuilt saveable state handle")
+  }
+  inspect(runtime.needs_rebuild, content="false")
+  stale.set(9)
+  inspect(runtime.needs_rebuild, content="false")
+  runtime.mount(runtime.root_spec)
+  guard runtime.build_draw_commands()[1] is DrawText({ text: "Count 4", .. }) else {
+    fail("expected stale state write to be ignored")
+  }
+  let unmounted = states[states.length() - 1]
+  let root_spec = runtime.root_spec
+  runtime.mount(ViewSpec::EmptySpec)
+  unmounted.set(13)
+  inspect(runtime.needs_rebuild, content="false")
+  runtime.mount(root_spec)
+  guard runtime.build_draw_commands()[1] is DrawText({ text: "Count 4", .. }) else {
+    fail("expected unmounted state write to be ignored")
+  }
+}

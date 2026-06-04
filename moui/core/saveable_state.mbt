@@ -298,7 +298,7 @@ pub fn[T] BuildContext::saveable(
   let store = self.runtime.saveable_state
   let runtime = self.runtime
   let component_id = self.component_id
-  ignore(
+  self.subscriptions.push(
     state.subscribe(() => {
       store.set(scoped, state.get(), codec)
       runtime.request_component_rebuild(component_id)
