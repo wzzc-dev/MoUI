@@ -166,9 +166,12 @@ runtime and inspector snapshots count those ignored subscription dispatches
 separately from normal typed dispatch/update counters and expose planned
 subscription descriptors, active subscription descriptors, active subscription
 kind-count summaries, and lifecycle entries for tooling. Concrete timer,
-window, host, route, or host-service adapters remain outside `core`; the core
-subscription runtime only owns the platform-neutral lifecycle, subscription plan
-diagnostics, and typed dispatch contract. Environment-aware TEA apps should use
+window, host-event, route, or host-service adapters remain outside `core`; the
+core subscription runtime only owns the platform-neutral lifecycle,
+subscription plan diagnostics, and typed dispatch contract. `backend/host`
+provides the concrete `HostEventSource` fanout adapter for
+`Subscription::host_event`, while timer, window, and route sources remain
+platform/app-layer follow-up work. Environment-aware TEA apps should use
 the `*_with_environment` constructors instead of taking `BuildContext` in their
 view layer. In both cases event dispatch flows through typed messages instead of
 exposing the internal view tree.
@@ -454,6 +457,11 @@ multi-window hosts have enough app-level identity to choose the runtime/content
 for the new platform window. `HostWindowSceneResolver` is the matching shared
 contract for resolving those scene requests into new `AppRuntime` instances or
 explicit scene rejections before a platform backend allocates a native window.
+`HostEventSource` is the host-layer subscription adapter for app-owned
+host-event fanout: platform code can publish normalized `HostEvent` values,
+while apps map selected events back into typed `Program` messages through
+`Subscription::host_event`; cancellation removes the publisher handler so late
+host events do not re-enter stale app state.
 `HostWindowRegistry::resolve_open_request` pairs a successful scene resolution
 with the created registry record so the host can keep window id, scene metadata,
 and runtime together. `HostWindowRuntimeSlot` then wraps that record with a

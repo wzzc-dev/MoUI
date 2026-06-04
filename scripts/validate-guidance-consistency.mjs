@@ -389,6 +389,18 @@ assertIncludes("docs/release-readiness.md", "monitor/cursor");
 assertIncludes("docs/release-readiness.md", "evidenceProvenance");
 assertIncludes("docs/release-readiness.md", "non-skipped successful GitHub Actions job");
 assertIncludes("docs/release-readiness.md", "Web host capability reporting now advertises browser IME plumbing");
+assertIncludes("docs/release-readiness.md", "HostEventSource::subscription");
+assertIncludes("docs/release-readiness.md", "HostEventSource::publish");
+assertIncludes("docs/release-readiness.md", "host-event subscription fanout");
+assertIncludes("docs/architecture.md", "`HostEventSource`");
+assertIncludes("docs/architecture.md", "`Subscription::host_event`");
+assertIncludes("docs/testing.md", "Host event subscriptions");
+assertIncludes("docs/testing.md", "host-event subscription");
+assertIncludes("docs/testing.md", "adapter fanout/cleanup");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "pub struct HostEventSource");
+assertIncludes("moui/backend/host/subscription_adapters.mbt", "Subscription::host_event");
+assertIncludes("moui/backend/host/host_test.mbt", "host event source subscription dispatches mapped host events");
+assertIncludes("moui/backend/host/host_test.mbt", "host event source subscription cleanup removes late publishers");
 assertIncludes("docs/platform-notes.md", "The Web host now advertises IME readiness");
 assertIncludes("docs/text-system.md", "routes browser IME composition events");
 assertIncludes("moui/backend/web/web_host.mbt", "ime_ready=true");
@@ -439,6 +451,7 @@ assertIncludes("AGENTS.md", "CDP is unavailable");
 assertIncludes("AGENTS.md", "resize/input event-bridge");
 assertIncludes("AGENTS.md", "--web-presentation-manifest");
 assertIncludes("AGENTS.md", "monitor/cursor");
+assertIncludes("AGENTS.md", "host-event fanout subscription adapters");
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "resize/input event-bridge delivery",
@@ -458,6 +471,14 @@ assertIncludes(
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "test-record-web-runtime-presentation.mjs",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "host-event subscription source fanout",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "HostEventSource::subscription",
 );
 assertIncludes("docs/release-readiness.md", "`web-runtime-presentation`");
 assertIncludes("docs/release-readiness.md", "`moui-web-runtime-presentation`");
