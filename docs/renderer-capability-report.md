@@ -21,7 +21,7 @@ Status meanings:
 | --- | --- | --- | --- | --- |
 | Rect | ready | ready | ready | Skia rect fill/stroke has real native renderer pixel smoke coverage. |
 | Rounded rect | ready | ready | ready | Skia rounded fill/stroke and solid rounded brushes have real native renderer pixel smoke coverage. |
-| Gradient | partial | ready | partial | Skia now renders linear and radial gradient brushes for rounded rects and paths; WGPU/Web keep linear gradients ready while radial rounded fill/stroke brushes use deterministic center-to-edge gradient fallback and radial path brushes use deterministic center-color tessellation fallback until true radial shaders land. |
+| Gradient | partial | ready | partial | Skia now renders linear and radial gradient brushes for rounded rects and paths; native WGPU keeps linear gradients ready while radial rounded fill/stroke brushes use deterministic center-to-edge gradient fallback and radial path brushes use deterministic center-color tessellation fallback. WebGPU now renders radial rounded fill/stroke brushes through a true visual-shader radial payload, while radial path brushes still use deterministic center-color tessellation fallback until true radial path shading lands. |
 | Shadow | ready | ready | ready | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
 | Text | ready | ready | ready | Skia `Font` measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interior stabilization for both caret paths, grapheme-safe mixed-run fallback segments, and best-available glyph-run rendering clip to `TextRun.frame` while resolving `FontSpec` family, weight, style, and representative coverage characters through Skia `FontMgr` `FontFallbackRequest`/`Font`; real native renderer smoke covers glyph-run pixels and bounded `TextRun.frame` clipping; broader shaping is tracked separately. |
 | Image | ready | ready | ready | Skia validates PNG/JPEG/BMP data URI decode, local PNG/JPEG/BMP decode, contain/cover/stretch/scale-down/fit-width/fit-height placement geometry, `draw_image_rect` output, ready/failed lifecycle records, failed-image placeholders, immutable-source failed-cache reuse, and local-file failure retry once the file appears; the real native renderer smoke covers ready data URI/local PNG drawing and failed-image placeholders. |
@@ -317,8 +317,12 @@ payloads to the `webgpu` host import module. The browser runtime now renders
 rects, rounded geometry, gradients, soft shadows, opacity, text, and loaded
 images through WebGPU pipelines. Text uses a DPR-aware canvas-rasterized glyph
 atlas before the glyphs are composited by WebGPU. Images are cached as WebGPU
-textures, support contain/cover/stretch/scale-down/fit-width/fit-height fit, and use a deterministic fallback color
-while the browser is still loading the source or if loading fails.
+textures, support contain/cover/stretch/scale-down/fit-width/fit-height fit,
+render radial rounded fill/stroke brushes through the visual shader, and use a
+deterministic fallback color while the browser is still loading the source or
+if loading fails. Radial path brushes still use the shared center-color
+tessellation fallback until the Web path mesh carries enough brush data for
+true radial path shading.
 `WebGpuWasmRenderer::image_resources()` exposes renderer-local image resource
 records, and `WebGpuWasmRenderer::image_resource_snapshot()` adds the same
 monotonic revision snapshot shape forwarded by

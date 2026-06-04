@@ -241,6 +241,7 @@ moon test moui/render --target native
 moon test moui/render/wgpu --target native
 moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
+node scripts/test-webgpu-runtime-radial.mjs
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
 
@@ -373,8 +374,9 @@ sh scripts/conformance-check.sh --platform
 The base command runs runtime, host, renderer, Web backend, and Showcase app
 contracts. `--input` runs core input/focus semantics and shared host input
 routing. `--layout` runs core layout, baseline, and TextSystem-dependent
-geometry contracts. `--render` runs renderer facade, native WGPU, and Web
-adapter capability evidence. `--text` runs the stable text conformance surface
+geometry contracts. `--render` runs renderer facade, native WGPU, native Skia,
+Web adapter capability evidence, and the browser WebGPU runtime radial brush
+payload check. `--text` runs the stable text conformance surface
 across core, native renderer, the standalone Cosmic provider, Web adapter, and
 Web backend packages. `--text-diagnostic` runs the opt-in cross-engine text
 matrix packages.

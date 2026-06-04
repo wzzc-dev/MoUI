@@ -489,6 +489,7 @@ if "$RUN_RENDER"; then
   run moon test moui/render/wgpu --target native
   run moon test moui/render/skia --target native
   run moon test moui/render/webgpu_adapter --target wasm-gc
+  run node scripts/test-webgpu-runtime-radial.mjs
 fi
 
 if "$RUN_PLATFORM_SERVICES"; then
