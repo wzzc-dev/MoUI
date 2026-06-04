@@ -14,7 +14,7 @@ Options:
   --skia-include PATH    Skia checkout or include root containing Skia headers.
   --skia-lib-dir PATH    Directory containing libskia.a or libskia.dylib.
   --skia-lib NAME        Library name without lib prefix, default: skia.
-  --link-mode MODE       auto|dynamic|static. Default: auto.
+  --link-mode MODE       static|dynamic|auto. Default: static.
                          auto prefers libskia.dylib for direct local runs and
                          falls back to libskia.a when no dylib is present.
   --extra-cc-flags STR   Extra C/C++ flags appended to stub-cc-flags.
@@ -26,16 +26,16 @@ Options:
 
 Environment defaults:
   SKIA_MBT_SKIA_INCLUDE, SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB,
-  SKIA_MBT_MACOS_LINK_MODE, SKIA_MBT_EXTRA_CC_FLAGS, and
-  SKIA_MBT_EXTRA_LINK_FLAGS are used when the matching command-line option is
-  omitted.
+  SKIA_MBT_SKIA_LINK_MODE, SKIA_MBT_MACOS_LINK_MODE, SKIA_MBT_EXTRA_CC_FLAGS,
+  and SKIA_MBT_EXTRA_LINK_FLAGS are used when the matching command-line option
+  is omitted. SKIA_MBT_MACOS_LINK_MODE is a compatibility alias.
 EOF
 }
 
 skia_include="${SKIA_MBT_SKIA_INCLUDE:-}"
 skia_lib_dir="${SKIA_MBT_SKIA_LIB_DIR:-}"
 skia_lib="${SKIA_MBT_SKIA_LIB:-skia}"
-link_mode="${SKIA_MBT_MACOS_LINK_MODE:-auto}"
+link_mode="${SKIA_MBT_SKIA_LINK_MODE:-${SKIA_MBT_MACOS_LINK_MODE:-static}}"
 extra_cc_flags="${SKIA_MBT_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${SKIA_MBT_EXTRA_LINK_FLAGS:-}"
 output_path="native/moon.pkg"

@@ -6,6 +6,11 @@ param(
   [string] $VcVarsAll = $env:VCVARSALL,
   [string] $VcArch = "x64",
   [string] $SkiaProvider = $env:SKIA_MBT_SKIA_PROVIDER,
+  [string] $SkiaLinkMode = $(if ($env:SKIA_MBT_SKIA_LINK_MODE) { $env:SKIA_MBT_SKIA_LINK_MODE } else { "static" }),
+  [string] $ReleaseOwner = $env:SKIA_MBT_RELEASE_OWNER,
+  [string] $ReleaseRepo = $env:SKIA_MBT_RELEASE_REPO,
+  [string] $ReleaseTag = $env:SKIA_MBT_RELEASE_TAG,
+  [string] $ReleaseUrl = $env:SKIA_MBT_RELEASE_URL,
   [string] $JetBrainsTag = $env:SKIA_MBT_JETBRAINS_TAG,
   [string] $SkiaCommit = $env:SKIA_MBT_SKIA_COMMIT,
   [string] $SkiaPackage = $env:SKIA_MBT_SKIA_PACKAGE,
@@ -18,6 +23,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+$normalizedSkiaLinkMode = $SkiaLinkMode.Trim().ToLowerInvariant()
+if ($normalizedSkiaLinkMode -notin @("static", "dynamic", "auto")) {
+  throw "unsupported SkiaLinkMode: $SkiaLinkMode"
+}
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $nativePkg = Join-Path $repoRoot "native/moon.pkg"
@@ -108,6 +118,18 @@ $skiaLib = Join-Path $resolvedLibDir "skia.lib"
 if (!(Test-Path -LiteralPath $skiaLib -PathType Leaf)) {
   throw "skia.lib was not found in $resolvedLibDir"
 }
+$skiaDll = Join-Path $resolvedLibDir "skia.dll"
+$resolvedSkiaLinkMode = $normalizedSkiaLinkMode
+if ($resolvedSkiaLinkMode -eq "auto") {
+  if (Test-Path -LiteralPath $skiaDll -PathType Leaf) {
+    $resolvedSkiaLinkMode = "dynamic"
+  } else {
+    $resolvedSkiaLinkMode = "static"
+  }
+}
+if ($resolvedSkiaLinkMode -eq "dynamic" -and !(Test-Path -LiteralPath $skiaDll -PathType Leaf)) {
+  throw "Requested dynamic Skia link mode, but skia.dll was not found in $resolvedLibDir"
+}
 
 if (Test-Path -LiteralPath $backupPkg) {
   throw "native/moon.pkg smoke backup already exists: $backupPkg. Resolve the stale backup before running smoke."
@@ -171,8 +193,21 @@ Write-Output "  skia_root=$resolvedRoot"
 Write-Output "  skia_include=$includePath"
 Write-Output "  skia_lib_dir=$libPath"
 Write-Output "  skia_lib=skia"
+Write-Output "  skia_link_mode=$resolvedSkiaLinkMode"
 if (![string]::IsNullOrWhiteSpace($SkiaProvider)) {
   Write-Output "  skia_provider=$SkiaProvider"
+}
+if (![string]::IsNullOrWhiteSpace($ReleaseOwner)) {
+  Write-Output "  release_owner=$ReleaseOwner"
+}
+if (![string]::IsNullOrWhiteSpace($ReleaseRepo)) {
+  Write-Output "  release_repo=$ReleaseRepo"
+}
+if (![string]::IsNullOrWhiteSpace($ReleaseTag)) {
+  Write-Output "  release_tag=$ReleaseTag"
+}
+if (![string]::IsNullOrWhiteSpace($ReleaseUrl)) {
+  Write-Output "  release_url=$ReleaseUrl"
 }
 if (![string]::IsNullOrWhiteSpace($JetBrainsTag)) {
   Write-Output "  jetbrains_tag=$JetBrainsTag"
@@ -193,6 +228,10 @@ if (![string]::IsNullOrWhiteSpace($SkiaPackageSha256)) {
 }
 $item = Get-Item -LiteralPath $skiaLib
 Write-Output "  library=$($item.Name) $($item.Length) bytes"
+if ($resolvedSkiaLinkMode -eq "dynamic") {
+  $dllItem = Get-Item -LiteralPath $skiaDll
+  Write-Output "  library=$($dllItem.Name) $($dllItem.Length) bytes"
+}
 Write-Output "  stub_cc_flags=$ccFlags"
 Write-Output "  cc_link_flags=$linkFlags"
 if ($resolvedSmokeLog.Length -gt 0) {
