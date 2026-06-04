@@ -220,6 +220,9 @@ try {
     windowsEntry.host !== "Windows MSVC CI" ||
     windowsEntry.skiaEvidence.status !== "passed" ||
     windowsEntry.skiaEvidence.observations.realRendererSmoke !== "yes" ||
+    windowsEntry.skiaEvidence.evidenceProvenance?.kind !== "matching-host-artifact" ||
+    windowsEntry.skiaEvidence.evidenceProvenance?.host !== "Windows MSVC CI" ||
+    !windowsEntry.skiaEvidence.evidenceProvenance.artifacts.includes(providerLog) ||
     !windowsEntry.skiaEvidence.notes.some(note => note.includes("helper test"))
   ) {
     console.error("record passed Windows Skia evidence: manifest was not updated correctly");
