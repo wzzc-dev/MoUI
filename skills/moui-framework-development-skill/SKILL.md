@@ -168,12 +168,14 @@ Use this skill when editing or reviewing:
 - `render/skia/`: native Skia raster renderer over the local `moui_skia` binding,
   including renderer-local command/reason diagnostics for unsupported Skia
   fallbacks, renderer-local image-resource lifecycle change callbacks, and
-  `skia_image_load_completion` source decode completion payloads.
+  `skia_image_load_completion` source decode completion payloads plus opt-in
+  post-present async image loading for native providers.
   Host-layer completion routing and native provider/platform redraw scheduling
   from async image load/error notifications remain outside `render/skia`.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
 - `moui/tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
-  verifies MoUI draw commands against captured Skia presenter pixels.
+  verifies MoUI draw commands against captured Skia presenter pixels and checks
+  async image second-frame repaint through the host completion route.
 - `moui/tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
   packages for comparing supported text systems and documented gaps.
 - `examples/*/app`: shared application logic.
@@ -253,8 +255,9 @@ The platform evidence manifest is schema v2 and records the window fork's
 monitor/cursor probe as `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native entries
 also record a `skiaEvidence` block for Skia provider/preflight commands,
-fallback-unavailable checks, real-renderer smoke, and Showcase/Markdown
-first-frame status. Any `status=passed` platform entry, and any
+fallback-unavailable checks, real-renderer smoke, async image second-frame
+smoke, and Showcase/Markdown first-frame status. Any `status=passed` platform
+entry, and any
 `skiaEvidence.status=passed` route, must include `evidenceProvenance` that
 traces the claim to a non-skipped successful GitHub Actions job/run or to a
 matching-host artifact bundle. Build-only jobs, package-only jobs,
@@ -396,8 +399,10 @@ the same real-Skia configuration. In `auto` link mode, persistent
 flags when available; set `MOUI_SKIA_MACOS_LINK_MODE=dynamic|static` or pass
 `--link-mode dynamic|static` to override. With explicit artifact log paths,
 `--record-platform-evidence` updates only the macOS `skiaEvidence` block after a
-successful full smoke; it does not mark the broader platform-service entry
-passed. Normal macOS Skia entrypoints default to the system
+successful full smoke; the renderer smoke log must include the async image
+second-frame marker, and omitted provider/fallback observations remain pending
+until their own artifacts are supplied. It does not mark the broader
+platform-service entry passed. Normal macOS Skia entrypoints default to the system
 `FontMgr` text path; first-frame smoke entrypoints explicitly select
 `EmptyTypeface` only while their exit-after-first-present flag is set. Windows
 and Linux Skia entrypoints follow the same smoke-only font-resolution switch.
@@ -502,9 +507,10 @@ moon info
   decode results into completion payloads, but matching-host off-main runtime
   evidence is still required before claiming full native async image readiness.
   Native Skia providers may use `skia_image_load_completion` for provider-owned
-  completion payloads from Skia encoded-image source decode, but that remains
-  provider completion evidence until a matching host records true off-main late
-  repaint behavior.
+  completion payloads from Skia encoded-image source decode, and provider-created
+  Skia renderers opt into post-present async image loading so a matching smoke
+  can prove second-frame repaint after completion. This remains provider/smoke
+  evidence until a matching host records true off-main late repaint behavior.
   Native macOS, Windows, and Linux host cores should invoke optional
   provider-owned image loaders only after the image-resource presented revision
   has been baselined, and cancel in-flight window loads during disposal.

@@ -734,6 +734,56 @@ test "skia renderer applies image load completions and notifies revision callbac
 }
 
 ///|
+test "skia renderer async image loading waits for explicit completion before caching" {
+  guard skia_available() else { return () }
+  let source = skia_test_png_data_uri()
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+    async_image_loading=true,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let commands = [
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source,
+      frame: @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ]
+  renderer.render(commands) catch {
+    err => fail("expected Skia async placeholder render: \{err.message()}")
+  }
+  inspect(renderer.present_count(), content="1")
+  assert_true(renderer.image_cache.get(source) is None)
+  guard renderer.image_lifecycle.lookup(source) is Some(loading) else {
+    fail("expected loading image lifecycle record")
+  }
+  assert_true(loading.status == @render.ImageResourceStatus::ImageLoading)
+
+  let completed = renderer.apply_image_resource_load_completion(
+    skia_image_load_completion(source),
+  )
+  inspect(completed.revision, content="2")
+  guard renderer.image_lifecycle.lookup(source) is Some(ready) else {
+    fail("expected ready image lifecycle record")
+  }
+  assert_true(ready.status == @render.ImageResourceStatus::ImageReady)
+  assert_true(renderer.image_cache.get(source) is None)
+
+  renderer.render(commands) catch {
+    err => fail("expected Skia async second-frame render: \{err.message()}")
+  }
+  inspect(renderer.present_count(), content="2")
+  assert_true(renderer.image_cache.get(source) is Some(_))
+}
+
+///|
 test "skia renderer records failed image resources and reuses failed cache" {
   guard skia_available() else { return () }
   let missing_source = "moui-skia-missing-image-resource://not-a-file"

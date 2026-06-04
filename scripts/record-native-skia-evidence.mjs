@@ -19,6 +19,8 @@ Options:
                                         the explicit moui_skia/native unavailable
                                         diagnostic instead of presenting.
   --renderer-smoke-log <path>           Real MoUI Skia renderer pixel smoke log.
+  --async-image-log <path>              Real MoUI Skia async image second-frame
+                                        smoke log.
   --showcase-log <path>                 Showcase *_skia first-frame log.
   --markdown-log <path>                 Markdown Editor *_skia first-frame log.
   --note <text>                         Additional Skia evidence note; may repeat.
@@ -71,6 +73,7 @@ const skiaObservationKeys = [
   "providerPreflight",
   "fallbackUnavailable",
   "realRendererSmoke",
+  "asyncImageSecondFrame",
   "showcaseFirstFrame",
   "markdownFirstFrame",
 ];
@@ -101,6 +104,15 @@ const logOptions = new Map([
       label: "renderer smoke log",
       marker: () => "MoUI Skia renderer smoke passed",
       markerDescription: "MoUI Skia renderer smoke passed",
+    },
+  ],
+  [
+    "--async-image-log",
+    {
+      observation: "asyncImageSecondFrame",
+      label: "async image second-frame log",
+      marker: () => "MoUI Skia async image second-frame smoke passed",
+      markerDescription: "MoUI Skia async image second-frame smoke passed",
     },
   ],
   [
