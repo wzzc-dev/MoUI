@@ -128,7 +128,7 @@ fn windows_skia_provider_ready() -> Bool {
 
 ///|
 fn windows_skia_unavailable_message() -> String {
-  "Windows Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative"
+  "Windows Skia renderer selected, but moui_skia/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative"
 }
 
 ///|

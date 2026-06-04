@@ -117,7 +117,7 @@ fn linux_skia_provider_ready() -> Bool {
 
 ///|
 fn linux_skia_unavailable_message() -> String {
-  "Linux Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative"
+  "Linux Skia renderer selected, but moui_skia/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative"
 }
 
 ///|

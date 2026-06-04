@@ -1,0 +1,499 @@
+#ifndef MOUI_SKIA_STUB_COMMON_H
+#define MOUI_SKIA_STUB_COMMON_H
+
+#include <moonbit.h>
+
+#include <string.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <algorithm>
+#include <limits>
+#include <memory>
+#include <vector>
+
+#if defined(MOUI_SKIA_HAS_SKIA)
+#if defined(_WIN32) && !defined(SK_BUILD_FOR_WIN)
+#define SK_BUILD_FOR_WIN
+#endif
+#if defined(__APPLE__) && !defined(SK_BUILD_FOR_MAC)
+#define SK_BUILD_FOR_MAC
+#endif
+#include "include/core/SkCanvas.h"
+#include "include/core/SkBitmap.h"
+#include "include/core/SkClipOp.h"
+#include "include/core/SkColor.h"
+#include "include/core/SkData.h"
+#include "include/core/SkFont.h"
+#include "include/core/SkFontMetrics.h"
+#include "include/core/SkFontMgr.h"
+#include "include/core/SkFontStyle.h"
+#include "include/core/SkImage.h"
+#include "include/core/SkImageInfo.h"
+#include "include/core/SkMatrix.h"
+#include "include/core/SkPaint.h"
+#include "include/core/SkPath.h"
+#include "include/core/SkPathTypes.h"
+#if __has_include("include/core/SkPathBuilder.h")
+#include "include/core/SkPathBuilder.h"
+#define MOUI_SKIA_HAS_PATH_BUILDER 1
+#endif
+#include "include/core/SkPoint.h"
+#include "include/core/SkRect.h"
+#include "include/core/SkRRect.h"
+#include "include/core/SkSamplingOptions.h"
+#include "include/core/SkShader.h"
+#include "include/core/SkString.h"
+#include "include/core/SkSurface.h"
+#include "include/core/SkTypeface.h"
+#include "include/core/SkTypes.h"
+#if defined(MOUI_SKIA_HAS_SKSHAPER) && __has_include("modules/skshaper/include/SkShaper.h")
+#include "modules/skshaper/include/SkShaper.h"
+#define MOUI_SKIA_HAS_SKSHAPER_HEADERS 1
+#if !defined(SK_DISABLE_LEGACY_SKSHAPER_FUNCTIONS)
+#define MOUI_SKIA_HAS_SKSHAPER_LEGACY 1
+#endif
+#if defined(__APPLE__) && __has_include("modules/skshaper/include/SkShaper_coretext.h")
+#include "modules/skshaper/include/SkShaper_coretext.h"
+#define MOUI_SKIA_HAS_SKSHAPER_CORETEXT 1
+#endif
+#endif
+#include "include/codec/SkCodec.h"
+#include "include/codec/SkEncodedImageFormat.h"
+#include "include/encode/SkJpegEncoder.h"
+#include "include/encode/SkPngEncoder.h"
+#include "include/encode/SkWebpEncoder.h"
+#if __has_include("include/effects/SkColorFilter.h")
+#include "include/effects/SkColorFilter.h"
+#define MOUI_SKIA_HAS_LEGACY_COLOR_FILTER 1
+#elif __has_include("include/core/SkColorFilter.h")
+#include "include/core/SkColorFilter.h"
+#define MOUI_SKIA_HAS_CORE_COLOR_FILTER 1
+#endif
+#if __has_include("include/effects/SkImageFilters.h")
+#include "include/effects/SkImageFilters.h"
+#define MOUI_SKIA_HAS_IMAGE_FILTERS 1
+#endif
+#if __has_include("include/core/SkMaskFilter.h")
+#include "include/core/SkMaskFilter.h"
+#define MOUI_SKIA_HAS_MASK_FILTER 1
+#endif
+#if __has_include("include/core/SkBlurTypes.h")
+#include "include/core/SkBlurTypes.h"
+#define MOUI_SKIA_HAS_BLUR_TYPES 1
+#endif
+#if __has_include("include/effects/SkGradientShader.h")
+#include "include/effects/SkGradientShader.h"
+#define MOUI_SKIA_HAS_LEGACY_GRADIENT_SHADER 1
+#elif __has_include("include/effects/SkGradient.h")
+#include "include/effects/SkGradient.h"
+#define MOUI_SKIA_HAS_NEW_GRADIENT_SHADER 1
+#endif
+#include "include/core/SkRefCnt.h"
+#if defined(_WIN32)
+#include "include/ports/SkTypeface_win.h"
+#endif
+#if defined(__APPLE__)
+#include "include/ports/SkFontMgr_mac_ct.h"
+#endif
+#if defined(__linux__) && __has_include(<fontconfig/fontconfig.h>) && \
+  __has_include("include/ports/SkFontMgr_fontconfig.h") && \
+  __has_include("include/ports/SkFontScanner_FreeType.h")
+#include "include/ports/SkFontMgr_fontconfig.h"
+#include "include/ports/SkFontScanner_FreeType.h"
+#define MOUI_SKIA_HAS_FONTCONFIG_FONTMGR 1
+#endif
+#if defined(__linux__) && __has_include("include/ports/SkFontMgr_directory.h")
+#include "include/ports/SkFontMgr_directory.h"
+#define MOUI_SKIA_HAS_DIRECTORY_FONTMGR 1
+#endif
+#if defined(__linux__) && __has_include("include/ports/SkFontMgr_empty.h")
+#include "include/ports/SkFontMgr_empty.h"
+#define MOUI_SKIA_HAS_EMPTY_FONTMGR 1
+#endif
+#if defined(__linux__) && __has_include("include/utils/SkOrderedFontMgr.h")
+#include "include/utils/SkOrderedFontMgr.h"
+#define MOUI_SKIA_HAS_ORDERED_FONTMGR 1
+#endif
+#endif
+
+struct MoonbitSkiaSurface {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkSurface* surface;
+#else
+  void* surface;
+#endif
+};
+
+struct MoonbitSkiaData {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkData* data;
+#else
+  void* data;
+#endif
+};
+
+struct MoonbitSkiaCodec {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkCodec* codec;
+#else
+  void* codec;
+#endif
+};
+
+struct MoonbitSkiaImage {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkImage* image;
+#else
+  void* image;
+#endif
+};
+
+struct MoonbitSkiaCanvas {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkCanvas* canvas;
+  SkSurface* surface_owner;
+#else
+  void* canvas;
+  void* surface_owner;
+#endif
+};
+
+struct MoonbitSkiaPath {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkPath* path;
+#else
+  void* path;
+#endif
+};
+
+struct MoonbitSkiaFont {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkFont* font;
+#else
+  void* font;
+#endif
+};
+
+struct MoonbitSkiaTypeface {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkTypeface* typeface;
+#else
+  void* typeface;
+#endif
+};
+
+struct MoonbitSkiaFontMgr {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkFontMgr* font_mgr;
+#else
+  void* font_mgr;
+#endif
+};
+
+struct MoonbitSkiaShader {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkShader* shader;
+#else
+  void* shader;
+#endif
+};
+
+struct MoonbitSkiaColorFilter {
+#if defined(MOUI_SKIA_HAS_SKIA) && \
+  (defined(MOUI_SKIA_HAS_LEGACY_COLOR_FILTER) || defined(MOUI_SKIA_HAS_CORE_COLOR_FILTER))
+  SkColorFilter* color_filter;
+#else
+  void* color_filter;
+#endif
+};
+
+struct MoonbitSkiaImageFilter {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_IMAGE_FILTERS)
+  SkImageFilter* image_filter;
+#else
+  void* image_filter;
+#endif
+};
+
+struct MoonbitSkiaMaskFilter {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_MASK_FILTER)
+  SkMaskFilter* mask_filter;
+#else
+  void* mask_filter;
+#endif
+};
+
+struct MoonbitSkiaBitmap {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkBitmap* bitmap;
+#else
+  void* bitmap;
+#endif
+};
+
+struct MoonbitSkiaFloatArray {
+  int32_t length;
+  float* buffer;
+};
+
+struct MoonbitSkiaGlyphIdArray {
+  int32_t length;
+  uint16_t* buffer;
+};
+
+struct MoonbitSkiaPoint {
+  float x;
+  float y;
+};
+
+struct MoonbitSkiaRect {
+  float left;
+  float top;
+  float right;
+  float bottom;
+};
+
+struct MoonbitSkiaPointArray {
+  int32_t length;
+  MoonbitSkiaPoint** buffer;
+};
+
+struct MoonbitSkiaRectArray {
+  int32_t length;
+  MoonbitSkiaRect** buffer;
+};
+
+struct MoonbitSkiaInt32Array {
+  int32_t length;
+  int32_t* buffer;
+};
+
+struct MoonbitSkiaShapedTextRun {
+  int32_t glyph_count;
+  float advance_x;
+  float advance_y;
+  MoonbitSkiaGlyphIdArray* glyphs;
+  MoonbitSkiaPointArray* positions;
+  MoonbitSkiaInt32Array* clusters;
+};
+
+
+MoonbitSkiaFloatArray* moonbit_skia_make_float_array(
+  int32_t length,
+  float* buffer
+);
+MoonbitSkiaGlyphIdArray* moonbit_skia_make_glyph_id_array(
+  int32_t length,
+  uint16_t* buffer
+);
+MoonbitSkiaPoint* moonbit_skia_make_point(float x, float y);
+MoonbitSkiaRect* moonbit_skia_make_rect(
+  float left,
+  float top,
+  float right,
+  float bottom
+);
+MoonbitSkiaPointArray* moonbit_skia_make_point_array(
+  int32_t length,
+  MoonbitSkiaPoint** buffer
+);
+MoonbitSkiaRectArray* moonbit_skia_make_rect_array(
+  int32_t length,
+  MoonbitSkiaRect** buffer
+);
+MoonbitSkiaInt32Array* moonbit_skia_make_int32_array(
+  int32_t length,
+  int32_t* buffer
+);
+MoonbitSkiaShapedTextRun* moonbit_skia_make_shaped_text_run(
+  int32_t glyph_count,
+  float advance_x,
+  float advance_y,
+  MoonbitSkiaGlyphIdArray* glyphs,
+  MoonbitSkiaPointArray* positions,
+  MoonbitSkiaInt32Array* clusters
+);
+MoonbitSkiaShapedTextRun* moonbit_skia_make_empty_shaped_text_run();
+
+#if defined(MOUI_SKIA_HAS_SKIA)
+moonbit_bytes_t moonbit_skia_make_bytes_from_sk_string(
+  const SkString& value
+);
+sk_sp<SkTypeface> moonbit_skia_default_typeface(void);
+sk_sp<SkTypeface> moonbit_skia_typeface_from_family(
+  const char* family_name,
+  const SkFontStyle& style
+);
+sk_sp<SkFontMgr> moonbit_skia_default_font_mgr(void);
+SkFontStyle moonbit_skia_font_style(
+  int32_t weight,
+  int32_t width,
+  int32_t slant
+);
+SkPaint moonbit_skia_make_paint(
+  uint32_t color_argb,
+  int32_t anti_alias,
+  int32_t dither,
+  int32_t style,
+  float stroke_width,
+  float stroke_miter,
+  int32_t stroke_cap,
+  int32_t stroke_join,
+  int32_t blend_mode,
+  MoonbitSkiaColorFilter* color_filter,
+  MoonbitSkiaImageFilter* image_filter,
+  MoonbitSkiaMaskFilter* mask_filter
+);
+SkPaint moonbit_skia_make_paint(
+  uint32_t color_argb,
+  int32_t anti_alias,
+  int32_t dither,
+  int32_t style,
+  float stroke_width,
+  float stroke_miter,
+  int32_t stroke_cap,
+  int32_t stroke_join,
+  int32_t blend_mode
+);
+SkPaint moonbit_skia_make_paint_with_shader(
+  MoonbitSkiaShader* shader,
+  uint32_t color_argb,
+  int32_t anti_alias,
+  int32_t dither,
+  int32_t style,
+  float stroke_width,
+  float stroke_miter,
+  int32_t stroke_cap,
+  int32_t stroke_join,
+  int32_t blend_mode
+);
+SkSamplingOptions moonbit_skia_make_sampling_options(
+  int32_t filter,
+  int32_t mipmap,
+  int32_t use_cubic,
+  float cubic_b,
+  float cubic_c
+);
+SkImageInfo moonbit_skia_make_rgba8888_premul_info(
+  int32_t width,
+  int32_t height
+);
+SkRRect moonbit_skia_make_rrect(
+  float left,
+  float top,
+  float right,
+  float bottom,
+  float upper_left_width,
+  float upper_left_height,
+  float upper_right_width,
+  float upper_right_height,
+  float lower_right_width,
+  float lower_right_height,
+  float lower_left_width,
+  float lower_left_height
+);
+#endif
+
+MoonbitSkiaFont* moonbit_skia_make_font_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkFont* font
+#else
+  void* font
+#endif
+);
+MoonbitSkiaTypeface* moonbit_skia_make_typeface_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkTypeface* typeface
+#else
+  void* typeface
+#endif
+);
+MoonbitSkiaFontMgr* moonbit_skia_make_font_mgr_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkFontMgr* font_mgr
+#else
+  void* font_mgr
+#endif
+);
+MoonbitSkiaShader* moonbit_skia_make_shader_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkShader* shader
+#else
+  void* shader
+#endif
+);
+MoonbitSkiaColorFilter* moonbit_skia_make_color_filter_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA) && \
+  (defined(MOUI_SKIA_HAS_LEGACY_COLOR_FILTER) || defined(MOUI_SKIA_HAS_CORE_COLOR_FILTER))
+  SkColorFilter* color_filter
+#else
+  void* color_filter
+#endif
+);
+MoonbitSkiaImageFilter* moonbit_skia_make_image_filter_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_IMAGE_FILTERS)
+  SkImageFilter* image_filter
+#else
+  void* image_filter
+#endif
+);
+MoonbitSkiaMaskFilter* moonbit_skia_make_mask_filter_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_MASK_FILTER)
+  SkMaskFilter* mask_filter
+#else
+  void* mask_filter
+#endif
+);
+MoonbitSkiaCodec* moonbit_skia_make_codec_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkCodec* codec
+#else
+  void* codec
+#endif
+);
+MoonbitSkiaBitmap* moonbit_skia_make_bitmap_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkBitmap* bitmap
+#else
+  void* bitmap
+#endif
+);
+MoonbitSkiaPath* moonbit_skia_make_path_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkPath* path
+#else
+  void* path
+#endif
+);
+MoonbitSkiaData* moonbit_skia_make_data_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkData* data
+#else
+  void* data
+#endif
+);
+MoonbitSkiaImage* moonbit_skia_make_image_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkImage* image
+#else
+  void* image
+#endif
+);
+MoonbitSkiaSurface* moonbit_skia_make_surface_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkSurface* surface
+#else
+  void* surface
+#endif
+);
+MoonbitSkiaCanvas* moonbit_skia_make_canvas_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkCanvas* canvas,
+  SkSurface* surface_owner
+#else
+  void* canvas,
+  void* surface_owner
+#endif
+);
+
+#endif

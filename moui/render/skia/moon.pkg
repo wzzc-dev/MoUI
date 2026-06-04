@@ -4,8 +4,8 @@ import {
   "moonbitlang/core/encoding/utf8",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
-  "wzzc-dev/skia_mbt",
-  "wzzc-dev/skia_mbt/native" @skia_native,
+  "wzzc-dev/moui_skia",
+  "wzzc-dev/moui_skia/native" @skia_native,
 }
 
 supported_targets = "native"

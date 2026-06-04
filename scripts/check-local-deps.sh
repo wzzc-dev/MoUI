@@ -4,8 +4,8 @@ set -eu
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 WINDOW_DIR="$ROOT_DIR/.local_repos/window"
 WINDOW_BRANCH="moui-support"
-SKIA_MBT_DIR="$ROOT_DIR/skia_mbt"
-SKIA_MBT_VERSION="0.1.2"
+MOUI_SKIA_DIR="$ROOT_DIR/moui_skia"
+MOUI_SKIA_VERSION="0.1.2"
 
 fail() {
   printf 'local dependency check failed: %s\n' "$1" >&2
@@ -53,14 +53,14 @@ else
   fail ".local_repos/window must contain moon.mod or moon.mod.json"
 fi
 
-grep -q "\"wzzc-dev/skia_mbt@$SKIA_MBT_VERSION\"" "$ROOT_DIR/moui/moon.mod" ||
-  fail "moui/moon.mod must import wzzc-dev/skia_mbt@$SKIA_MBT_VERSION"
+grep -q "\"wzzc-dev/moui_skia@$MOUI_SKIA_VERSION\"" "$ROOT_DIR/moui/moon.mod" ||
+  fail "moui/moon.mod must import wzzc-dev/moui_skia@$MOUI_SKIA_VERSION"
 
 grep -Eq '"(\./)?\.local_repos/window"' "$ROOT_DIR/moon.work" ||
   fail "moon.work must include .local_repos/window"
 
-grep -Eq '"(\./)?skia_mbt"' "$ROOT_DIR/moon.work" ||
-  fail "moon.work must include skia_mbt"
+grep -Eq '"(\./)?moui_skia"' "$ROOT_DIR/moon.work" ||
+  fail "moon.work must include moui_skia"
 
 for pkg in core dpi web windows linux macos; do
   [ -f "$WINDOW_DIR/$pkg/moon.pkg" ] || fail "missing .local_repos/window/$pkg/moon.pkg"
@@ -115,12 +115,12 @@ require_text "$WINDOW_DIR/examples/moui_web_smoke/index.html" \
 require_text "$WINDOW_DIR/examples/moui_web_smoke/index.html" \
   'MOUISmoke: surface canvas_id=moui-web-smoke-canvas size=640x360'
 
-[ -d "$SKIA_MBT_DIR" ] || fail "missing skia_mbt workspace member; update the main checkout"
+[ -d "$MOUI_SKIA_DIR" ] || fail "missing moui_skia workspace member; update the main checkout"
 
-grep -q 'name = "wzzc-dev/skia_mbt"' "$SKIA_MBT_DIR/moon.mod" ||
-  fail "skia_mbt/moon.mod must declare name wzzc-dev/skia_mbt"
-grep -q "version = \"$SKIA_MBT_VERSION\"" "$SKIA_MBT_DIR/moon.mod" ||
-  fail "skia_mbt/moon.mod must declare version $SKIA_MBT_VERSION"
+grep -q 'name = "wzzc-dev/moui_skia"' "$MOUI_SKIA_DIR/moon.mod" ||
+  fail "moui_skia/moon.mod must declare name wzzc-dev/moui_skia"
+grep -q "version = \"$MOUI_SKIA_VERSION\"" "$MOUI_SKIA_DIR/moon.mod" ||
+  fail "moui_skia/moon.mod must declare version $MOUI_SKIA_VERSION"
 
 for pkg_file in \
   moon.pkg \
@@ -131,7 +131,7 @@ for pkg_file in \
   native/ownership.json \
   scripts/native_smoke/main.mbt
 do
-  [ -f "$SKIA_MBT_DIR/$pkg_file" ] || fail "missing skia_mbt/$pkg_file"
+  [ -f "$MOUI_SKIA_DIR/$pkg_file" ] || fail "missing moui_skia/$pkg_file"
 done
 
 for skia_evidence_file in \
@@ -156,13 +156,13 @@ for skia_evidence_file in \
   scripts/verify-native-smoke-log.sh \
   scripts/verify-native-smoke-log.ps1
 do
-  [ -f "$SKIA_MBT_DIR/$skia_evidence_file" ] || fail "missing skia_mbt/$skia_evidence_file"
+  [ -f "$MOUI_SKIA_DIR/$skia_evidence_file" ] || fail "missing moui_skia/$skia_evidence_file"
 done
 
-bash "$SKIA_MBT_DIR/scripts/verify-platform-status.sh" ||
-  fail "skia_mbt platform status evidence did not validate"
+bash "$MOUI_SKIA_DIR/scripts/verify-platform-status.sh" ||
+  fail "moui_skia platform status evidence did not validate"
 
-bash "$SKIA_MBT_DIR/scripts/verify-native-capability-contract.sh" ||
-  fail "skia_mbt native capability contract did not validate"
+bash "$MOUI_SKIA_DIR/scripts/verify-native-capability-contract.sh" ||
+  fail "moui_skia native capability contract did not validate"
 
 printf 'Local dependency check passed.\n'

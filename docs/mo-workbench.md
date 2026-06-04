@@ -794,7 +794,7 @@ stdin EOF.
 
 The macOS app intentionally selects the Skia provider instead of the default
 WGPU provider. When workbench UI needs renderer capabilities that are missing
-from `skia_mbt`, add clean fallback-safe APIs there first, then
+from `moui_skia`, add clean fallback-safe APIs there first, then
 wire MoUI `DrawCommand` support through `render/skia`, update renderer
 capability reporting, and add focused tests.
 
@@ -806,7 +806,7 @@ commands such as `moon run examples/mo_workbench/macos_skia --target native`
 can use real Skia after configuration. In `auto` mode that persistent direct-run
 setup prefers dynamic `libskia.dylib`; temporary smoke/build setup prefers
 static `libskia.a` when available. Set
-`SKIA_MBT_MACOS_LINK_MODE=dynamic|static` or pass `--link-mode dynamic|static`
+`MOUI_SKIA_MACOS_LINK_MODE=dynamic|static` or pass `--link-mode dynamic|static`
 to override.
 
 ## Focused Validation

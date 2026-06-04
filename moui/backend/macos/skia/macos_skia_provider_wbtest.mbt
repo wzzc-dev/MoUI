@@ -43,7 +43,7 @@ test "macos skia availability follows render skia backend info" {
 test "macos skia preflight diagnostic describes unavailable renderer setup" {
   let message = macos_skia_unavailable_message()
   assert_true(message.contains("macOS Skia renderer selected"))
-  assert_true(message.contains("skia_mbt/native is unavailable"))
+  assert_true(message.contains("moui_skia/native is unavailable"))
   assert_true(message.contains("real Skia link flags"))
 }
 

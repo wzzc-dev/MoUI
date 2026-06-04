@@ -152,7 +152,7 @@ fn macos_skia_provider_ready() -> Bool {
 
 ///|
 fn macos_skia_unavailable_message() -> String {
-  "macOS Skia renderer selected, but skia_mbt/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative"
+  "macOS Skia renderer selected, but moui_skia/native is unavailable; configure real Skia link flags before selecting SkiaRasterNative"
 }
 
 ///|
