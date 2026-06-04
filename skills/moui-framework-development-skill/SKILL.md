@@ -133,8 +133,9 @@ Use this skill when editing or reviewing:
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
   window lifecycle registry, window scene resolver, per-window runtime slot
   collection, platform-window id map, renderer-neutral `HostWindowRenderer`
-  diagnostics, image-resource repaint routing and tracked-window revision/status
-  diagnostics plus repaint-result previous/current status counts,
+  diagnostics and image-resource change callback bridge, image-resource repaint
+  routing and tracked-window revision/status diagnostics plus repaint-result
+  previous/current status counts,
   window request/completion queue, text-input session, window-event conversion,
   async host-service queue, and redraw driver.
 - `backend/web/`: wasm-gc Web host, canvas constraints, resolver-backed
@@ -304,8 +305,8 @@ macOS/Windows/Linux Skia provider tests cover the public
 `*_skia_provider_preflight_summary()` package-audit surface for renderer
 availability, `skia_mbt/native` availability, selected font resolution, and
 presenter identity, the `HostWindowRenderer` bridge that forwards Skia
-text-system, image-resource, present-count, and disposal diagnostics, inherited
-host service/input/window readiness,
+text-system, image-resource snapshots, image-resource change callbacks,
+present-count, and disposal diagnostics, inherited host service/input/window readiness,
 clipboard/menu/file-dialog/open URL/system-theme/async-service readiness,
 text-input/IME/drag-drop readiness, native context-menu readiness, host-modal
 file-dialog readiness, native accessibility status, and the
