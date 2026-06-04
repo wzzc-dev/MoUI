@@ -214,6 +214,22 @@ pub(all) struct HostFocusEvent {
 pub fn HostFocusEvent::new(focused~ : Bool, pointer_cancel_position? : @wzzc-dev/moui/core.Point?) -> Self
 pub fn HostFocusEvent::to_core(Self) -> @wzzc-dev/moui/core.AppEvent?
 
+pub struct HostImageResourceCompletionSource {
+  // private fields
+}
+pub fn HostImageResourceCompletionSource::diagnostics(Self) -> HostImageResourceCompletionSourceDiagnostics
+pub fn HostImageResourceCompletionSource::new(tracker~ : HostImageResourceRepaintTracker, window_open~ : (HostWindowId) -> Bool, request_redraw~ : (HostWindowId) -> Unit) -> Self
+pub fn HostImageResourceCompletionSource::publish(Self, HostWindowId, @render.ImageResourceSnapshot) -> HostImageResourceRepaintResult
+
+pub(all) struct HostImageResourceCompletionSourceDiagnostics {
+  publish_count : Int
+  recorded_count : Int
+  redraw_requested_count : Int
+  unchanged_count : Int
+  discarded_closed_count : Int
+  tracked_window_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct HostImageResourceRepaintResult {
   window_id : HostWindowId
   previous_revision : Int

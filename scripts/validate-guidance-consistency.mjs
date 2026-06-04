@@ -440,6 +440,18 @@ assertIncludes("moui/backend/host/host_test.mbt", "host route event constructor 
 assertIncludes("moui/backend/host/host_test.mbt", "host route source subscription cleanup removes late publishers");
 assertIncludes("moui/backend/host/host_test.mbt", "host timer source subscription starts timer and dispatches mapped frames");
 assertIncludes("moui/backend/host/host_test.mbt", "host timer source subscription cleanup cancels timer");
+assertIncludes("docs/release-readiness.md", "HostImageResourceCompletionSource");
+assertIncludes("docs/release-readiness.md", "native async image completion");
+assertIncludes("docs/release-readiness.md", "provider/platform async loader");
+assertIncludes("docs/architecture.md", "`HostImageResourceCompletionSource`");
+assertIncludes("docs/testing.md", "Native async image completion");
+assertIncludes("AGENTS.md", "native async image completion source");
+assertIncludes("skills/moui-framework-development-skill/SKILL.md", "native async image completion source");
+assertIncludes("moui/backend/host/image_repaint.mbt", "pub struct HostImageResourceCompletionSource");
+assertIncludes("moui/backend/host/image_repaint.mbt", "HostImageResourceCompletionSource::publish");
+assertIncludes("moui/backend/host/host_test.mbt", "host image completion source routes native loader completions");
+assertIncludes("moui/backend/host/host_test.mbt", "host image completion source discards closed-window completions");
+assertIncludes("moui/backend/host/host_test.mbt", "host image completion source ignores stale completion revisions");
 assertIncludes("docs/platform-notes.md", "The Web host now advertises IME readiness");
 assertIncludes("docs/text-system.md", "routes browser IME composition events");
 assertIncludes("moui/backend/web/web_host.mbt", "ime_ready=true");

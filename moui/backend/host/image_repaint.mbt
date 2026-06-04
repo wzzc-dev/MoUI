@@ -39,10 +39,98 @@ pub(all) struct HostImageResourceRepaintSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostImageResourceCompletionSourceDiagnostics {
+  publish_count : Int
+  recorded_count : Int
+  redraw_requested_count : Int
+  unchanged_count : Int
+  discarded_closed_count : Int
+  tracked_window_count : Int
+} derive(Eq, Debug, ToJson)
+
+///|
 pub struct HostImageResourceRepaintTracker {
   priv mut window_ids : Array[HostWindowId]
   priv mut revisions : Array[Int]
   priv mut status_counts : Array[HostImageResourceStatusCounts]
+}
+
+///|
+pub struct HostImageResourceCompletionSource {
+  priv tracker : HostImageResourceRepaintTracker
+  priv window_open_fn : (HostWindowId) -> Bool
+  priv request_redraw_fn : (HostWindowId) -> Unit
+  priv mut publish_count : Int
+  priv mut recorded_count : Int
+  priv mut redraw_requested_count : Int
+  priv mut unchanged_count : Int
+  priv mut discarded_closed_count : Int
+}
+
+///|
+pub fn HostImageResourceCompletionSource::new(
+  tracker~ : HostImageResourceRepaintTracker,
+  window_open~ : (HostWindowId) -> Bool,
+  request_redraw~ : (HostWindowId) -> Unit,
+) -> HostImageResourceCompletionSource {
+  {
+    tracker,
+    window_open_fn: window_open,
+    request_redraw_fn: request_redraw,
+    publish_count: 0,
+    recorded_count: 0,
+    redraw_requested_count: 0,
+    unchanged_count: 0,
+    discarded_closed_count: 0,
+  }
+}
+
+///|
+pub fn HostImageResourceCompletionSource::publish(
+  self : HostImageResourceCompletionSource,
+  window_id : HostWindowId,
+  snapshot : @render.ImageResourceSnapshot,
+) -> HostImageResourceRepaintResult {
+  self.publish_count = self.publish_count + 1
+  let result = self.tracker.request_redraw_for_snapshot_if_changed(
+    window_id,
+    snapshot,
+    window_open=(self.window_open_fn)(window_id),
+    request_redraw=id => (self.request_redraw_fn)(id),
+  )
+  self.record_result_status(result.status)
+  result
+}
+
+///|
+pub fn HostImageResourceCompletionSource::diagnostics(
+  self : HostImageResourceCompletionSource,
+) -> HostImageResourceCompletionSourceDiagnostics {
+  {
+    publish_count: self.publish_count,
+    recorded_count: self.recorded_count,
+    redraw_requested_count: self.redraw_requested_count,
+    unchanged_count: self.unchanged_count,
+    discarded_closed_count: self.discarded_closed_count,
+    tracked_window_count: self.tracker.tracked_count(),
+  }
+}
+
+///|
+fn HostImageResourceCompletionSource::record_result_status(
+  self : HostImageResourceCompletionSource,
+  status : HostImageResourceRepaintStatus,
+) -> Unit {
+  match status {
+    HostImageResourceRepaintStatus::ImageRepaintRecorded =>
+      self.recorded_count = self.recorded_count + 1
+    HostImageResourceRepaintStatus::ImageRepaintUnchanged =>
+      self.unchanged_count = self.unchanged_count + 1
+    HostImageResourceRepaintStatus::ImageRepaintRequested =>
+      self.redraw_requested_count = self.redraw_requested_count + 1
+    HostImageResourceRepaintStatus::ImageRepaintDiscardedClosed =>
+      self.discarded_closed_count = self.discarded_closed_count + 1
+  }
 }
 
 ///|
