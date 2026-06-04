@@ -209,6 +209,9 @@ fn host_renderer_from_wgpu(
     text_system=() => renderer.text_system(),
     image_resources=() => renderer.image_resources(),
     image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+    apply_image_resource_load_completion=Some(completion => {
+      renderer.apply_image_resource_load_completion(completion)
+    }),
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
   )

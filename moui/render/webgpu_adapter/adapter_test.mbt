@@ -366,6 +366,43 @@ test "wgpu web renderer refreshes failed image lifecycle from host" {
 }
 
 ///|
+test "wgpu web renderer applies image load completions" {
+  let renderer = create_renderer(
+    canvas_id="moui-web-wasm",
+    logical_size=@core.Size::new(width=100.0, height=50.0),
+    port=test_port(created=Ref(0)),
+  )
+  renderer.render([
+    @core.DrawCommand::DrawImage({
+      source: "async.png",
+      frame: @core.Rect::new(x=0.0, y=0.0, width=20.0, height=20.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+  ])
+  let ready = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::ready("async.png", width=90, height=45),
+  )
+  inspect(ready.revision, content="2")
+  let resources = renderer.image_resources()
+  inspect(resources.length(), content="1")
+  assert_true(resources[0].status == @render.ImageResourceStatus::ImageReady)
+  inspect(resources[0].width, content="90")
+  inspect(resources[0].height, content="45")
+  let stale = renderer.apply_image_resource_load_completion(
+    @render.ImageResourceLoadCompletion::failed(
+      "async.png",
+      diagnostic="late failure",
+    ),
+  )
+  inspect(stale.revision, content="2")
+  assert_true(
+    renderer.image_resources()[0].status ==
+    @render.ImageResourceStatus::ImageReady,
+  )
+}
+
+///|
 test "wgpu web command bridge preserves full draw command parity order" {
   let rect = @core.Rect::new(x=1.0, y=2.0, width=30.0, height=40.0)
   let rounded = @core.RoundedRect::new(rect~, radius=6.0)
