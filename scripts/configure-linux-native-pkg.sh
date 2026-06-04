@@ -14,6 +14,9 @@ Options:
   --skia-include PATH    Skia checkout or include root containing Skia headers.
   --skia-lib-dir PATH    Directory containing libskia.a or libskia.so.
   --skia-lib NAME        Library name without lib prefix, default: skia.
+  --link-mode MODE       static|dynamic|auto. Default: static.
+                         auto prefers libskia.so when present and falls back to
+                         libskia.a.
   --extra-cc-flags STR   Extra C/C++ flags appended to stub-cc-flags.
   --extra-link-flags STR Extra linker flags appended to cc-link-flags.
   --output PATH          Package file to write/check. Default: native/moon.pkg.
@@ -23,14 +26,16 @@ Options:
 
 Environment defaults:
   SKIA_MBT_SKIA_INCLUDE, SKIA_MBT_SKIA_LIB_DIR, SKIA_MBT_SKIA_LIB,
-  SKIA_MBT_EXTRA_CC_FLAGS, and SKIA_MBT_EXTRA_LINK_FLAGS are used when the
-  matching command-line option is omitted.
+  SKIA_MBT_SKIA_LINK_MODE, SKIA_MBT_EXTRA_CC_FLAGS, and
+  SKIA_MBT_EXTRA_LINK_FLAGS are used when the matching command-line option is
+  omitted.
 EOF
 }
 
 skia_include="${SKIA_MBT_SKIA_INCLUDE:-}"
 skia_lib_dir="${SKIA_MBT_SKIA_LIB_DIR:-}"
 skia_lib="${SKIA_MBT_SKIA_LIB:-skia}"
+link_mode="${SKIA_MBT_SKIA_LINK_MODE:-static}"
 extra_cc_flags="${SKIA_MBT_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${SKIA_MBT_EXTRA_LINK_FLAGS:--lfontconfig -lfreetype -lharfbuzz -lpthread -ldl -lm}"
 output_path="native/moon.pkg"
@@ -49,6 +54,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skia-lib)
       skia_lib="${2:-}"
+      shift 2
+      ;;
+    --link-mode)
+      link_mode="${2:-}"
       shift 2
       ;;
     --extra-cc-flags)
@@ -87,6 +96,10 @@ if [[ $write_config -eq 1 && $check_config -eq 1 ]]; then
   echo "--write and --check cannot be used together" >&2
   exit 2
 fi
+case "$link_mode" in
+  static|dynamic|auto) ;;
+  *) echo "unsupported --link-mode: $link_mode" >&2; usage >&2; exit 2 ;;
+esac
 if [[ -z "$skia_include" || -z "$skia_lib_dir" ]]; then
   usage >&2
   exit 2
@@ -106,17 +119,46 @@ if [[ ! -f "$include_path/include/core/SkSurface.h" ]]; then
   exit 1
 fi
 
-if [[ ! -f "$lib_path/lib$skia_lib.a" && ! -f "$lib_path/lib$skia_lib.so" ]]; then
+static_lib="$lib_path/lib$skia_lib.a"
+dynamic_lib="$lib_path/lib$skia_lib.so"
+
+if [[ ! -f "$static_lib" && ! -f "$dynamic_lib" ]]; then
   echo "Skia library lib$skia_lib.a or lib$skia_lib.so was not found in $lib_path" >&2
   exit 1
 fi
+
+resolved_link_mode="$link_mode"
+if [[ "$resolved_link_mode" == "auto" ]]; then
+  if [[ -f "$dynamic_lib" ]]; then
+    resolved_link_mode="dynamic"
+  else
+    resolved_link_mode="static"
+  fi
+fi
+
+case "$resolved_link_mode" in
+  dynamic)
+    if [[ ! -f "$dynamic_lib" ]]; then
+      echo "Requested dynamic Skia link mode, but $dynamic_lib was not found" >&2
+      exit 1
+    fi
+    skia_library_link_flags="-L$lib_path -l$skia_lib -Wl,-rpath,$lib_path"
+    ;;
+  static)
+    if [[ ! -f "$static_lib" ]]; then
+      echo "Requested static Skia link mode, but $static_lib was not found" >&2
+      exit 1
+    fi
+    skia_library_link_flags="$static_lib"
+    ;;
+esac
 
 cc_flags="-DSKIA_MBT_HAS_SKIA -std=c++17 -I$include_path"
 if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
-link_flags="-L$lib_path -l$skia_lib -lstdc++"
+link_flags="$skia_library_link_flags -lstdc++"
 if [[ -n "$extra_link_flags" ]]; then
   link_flags="$link_flags $extra_link_flags"
 fi

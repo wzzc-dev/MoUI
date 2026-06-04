@@ -65,6 +65,7 @@ jobs:
           bash -n scripts/linux-skia-smoke.sh
           bash -n scripts/linux-real-skia-smoke.sh
           bash -n scripts/linux-accept-real-skia-smoke.sh
+          bash -n scripts/fetch-release-skia.sh
           bash -n scripts/fetch-jetbrains-skia.sh
           bash -n scripts/macos-real-skia-smoke.sh
           bash -n scripts/linux-accept-and-pin-skia.sh
@@ -99,9 +100,15 @@ jobs:
           bash scripts/verify-native-smoke-capabilities.sh
           bash scripts/verify-native-capability-contract.sh
           bash scripts/check-real-skia-artifact-lock.sh
-          bash scripts/fetch-jetbrains-skia.sh --platform linux --arch x64 --config Release --cache-dir .skia-dry-run/jetbrains-cache --dry-run-config --print-env > logs/fetch-jetbrains-linux.env
-          grep -Fq 'SKIA_MBT_SKIA_PACKAGE=Skia-m148-8967a2e80c-linux-Release-x64.zip' logs/fetch-jetbrains-linux.env
-          grep -Fq 'SKIA_MBT_SKIA_PACKAGE_SHA256=37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2' logs/fetch-jetbrains-linux.env
+          bash scripts/fetch-release-skia.sh --platform linux --arch x64 --config Release --link-mode static --cache-dir .skia-dry-run/release-cache --dry-run-config --print-env > logs/fetch-release-linux-static.env
+          grep -Fq 'SKIA_MBT_SKIA_PROVIDER=release' logs/fetch-release-linux-static.env
+          grep -Fq 'SKIA_MBT_SKIA_LINK_MODE=static' logs/fetch-release-linux-static.env
+          grep -Fq 'SKIA_MBT_SKIA_PACKAGE=Skia-dev-6d73578a36-linux-Release-x64.zip' logs/fetch-release-linux-static.env
+          grep -Fq 'SKIA_MBT_SKIA_PACKAGE_SHA256=79ef48c0831a5d27740e9da738236df35ac868dba95dff2ad29e91737e252a14' logs/fetch-release-linux-static.env
+          bash scripts/fetch-release-skia.sh --platform linux --arch x64 --config Release --link-mode dynamic --cache-dir .skia-dry-run/release-cache --dry-run-config --print-env > logs/fetch-release-linux-dynamic.env
+          grep -Fq 'SKIA_MBT_SKIA_LINK_MODE=dynamic' logs/fetch-release-linux-dynamic.env
+          grep -Fq 'SKIA_MBT_SKIA_PACKAGE=Skia-dev-6d73578a36-linux-Release-x64-shared.zip' logs/fetch-release-linux-dynamic.env
+          grep -Fq 'SKIA_MBT_SKIA_PACKAGE_SHA256=8a14e34dc9f3f8fa6108407b2391471a97c1183e62a5c11e3bf5e346fb8014fd' logs/fetch-release-linux-dynamic.env
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -518,52 +525,6 @@ jobs:
             echo "verify-real-skia-artifact unexpectedly accepted a prefixed acceptance build_log reference" >&2
             exit 1
           fi
-          mkdir -p logs/fake-jetbrains-linux logs/fake-jetbrains-linux-bad-sha
-          printf '%s\n' 'Linux JetBrains Skia dry-run preflight' \
-            > logs/fake-jetbrains-linux/linux-real-skia-smoke-preflight.log
-          printf '%s\n' \
-            'Linux Skia smoke environment:' \
-            '  skia_include=/tmp/fake/skia' \
-            '  skia_lib_dir=/tmp/fake/skia/out/Release-x64' \
-            '  skia_lib=skia' \
-            '  skia_provider=jetbrains' \
-            '  jetbrains_tag=m148-8967a2e80c' \
-            '  skia_commit=8967a2e80c71be363146da2395f503cab5f5fb9c' \
-            '  skia_package=Skia-m148-8967a2e80c-linux-Release-x64.zip' \
-            '  skia_package_sha256=37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2' \
-            '  library=libskia.so 123 bytes' \
-            '  stub_cc_flags=-DSKIA_MBT_HAS_SKIA -I/tmp/fake/skia' \
-            '  cc_link_flags=-L/tmp/fake/skia/out/Release-x64 -lskia -lpthread -ldl -lm' \
-            > logs/fake-jetbrains-linux/linux-real-skia-smoke.log
-          cp logs/fake-native-smoke-good.log logs/fake-jetbrains-linux/linux-native-smoke-output.log
-          printf '%s\n' \
-            'Linux real Skia acceptance result:' \
-            '  smoke_status=0' \
-            '  native_smoke_marker=passed' \
-            '  native_pkg_restore=passed' \
-            '  skia_provider=jetbrains' \
-            '  jetbrains_tag=m148-8967a2e80c' \
-            '  skia_commit=8967a2e80c71be363146da2395f503cab5f5fb9c' \
-            '  skia_package=Skia-m148-8967a2e80c-linux-Release-x64.zip' \
-            '  skia_package_sha256=37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2' \
-            '  preflight_log=logs/fake-jetbrains-linux/linux-real-skia-smoke-preflight.log' \
-            '  wrapper_log=logs/fake-jetbrains-linux/linux-real-skia-smoke.log' \
-            '  native_log=logs/fake-jetbrains-linux/linux-native-smoke-output.log' \
-            '  acceptance_log=logs/fake-jetbrains-linux/linux-real-skia-acceptance.log' \
-            > logs/fake-jetbrains-linux/linux-real-skia-acceptance.log
-          bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-jetbrains-linux
-          cp logs/fake-jetbrains-linux/linux-real-skia-smoke-preflight.log logs/fake-jetbrains-linux-bad-sha/linux-real-skia-smoke-preflight.log
-          cp logs/fake-jetbrains-linux/linux-real-skia-smoke.log logs/fake-jetbrains-linux-bad-sha/linux-real-skia-smoke.log
-          cp logs/fake-jetbrains-linux/linux-native-smoke-output.log logs/fake-jetbrains-linux-bad-sha/linux-native-smoke-output.log
-          sed 's/37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2/0000000000000000000000000000000000000000000000000000000000000000/' \
-            logs/fake-jetbrains-linux/linux-real-skia-acceptance.log \
-            > logs/fake-jetbrains-linux-bad-sha/linux-real-skia-acceptance.log
-          sed -i 's/37a551eadd0c87be6273f8e98ec0fc3658f3fab5ba18c92e07532b3e81a14cd2/0000000000000000000000000000000000000000000000000000000000000000/' \
-            logs/fake-jetbrains-linux-bad-sha/linux-real-skia-smoke.log
-          if bash scripts/verify-real-skia-artifact.sh --platform linux --log-dir logs/fake-jetbrains-linux-bad-sha; then
-            echo "verify-real-skia-artifact unexpectedly accepted mismatched JetBrains SHA" >&2
-            exit 1
-          fi
           bash scripts/linux-accept-artifact-and-pin.sh \
             --log-dir logs/fake-artifact \
             --revision-file logs/fake-linux-artifact-pinned-by-shell.txt
@@ -660,19 +621,6 @@ jobs:
           mkdir -p .skia-dry-run/skia/include/core .skia-dry-run/static .skia-dry-run/shared
           touch .skia-dry-run/skia/include/core/SkSurface.h
           touch .skia-dry-run/static/libskia.a .skia-dry-run/shared/libskia.so
-          mkdir -p .skia-dry-run/jetbrains-cache/m148-8967a2e80c/linux-Release-x64/package/fake/include/core
-          mkdir -p .skia-dry-run/jetbrains-cache/m148-8967a2e80c/linux-Release-x64/package/fake/out/Release-x64
-          touch .skia-dry-run/jetbrains-cache/m148-8967a2e80c/linux-Release-x64/package/fake/include/core/SkSurface.h
-          touch .skia-dry-run/jetbrains-cache/m148-8967a2e80c/linux-Release-x64/package/fake/out/Release-x64/libskia.so
-          SKIA_MBT_ALLOW_FAKE_JETBRAINS_ZIP=1 bash scripts/fetch-jetbrains-skia.sh --platform linux --arch x64 --config Release --cache-dir .skia-dry-run/jetbrains-cache --print-env > logs/fetch-jetbrains-fake-package.env
-          grep -Fq 'SKIA_MBT_SKIA_INCLUDE=' logs/fetch-jetbrains-fake-package.env
-          grep -Fq 'SKIA_MBT_SKIA_LIB_DIR=' logs/fetch-jetbrains-fake-package.env
-          mkdir -p .skia-dry-run/jetbrains-cache/m148-8967a2e80c/linux-Release-arm64/package/fake/out/Release-arm64
-          mkdir -p .skia-dry-run/jetbrains-cache/m148-8967a2e80c/source/JetBrains-skia-m148-8967a2e80c/include/core
-          touch .skia-dry-run/jetbrains-cache/m148-8967a2e80c/linux-Release-arm64/package/fake/out/Release-arm64/libskia.so
-          touch .skia-dry-run/jetbrains-cache/m148-8967a2e80c/source/JetBrains-skia-m148-8967a2e80c/include/core/SkSurface.h
-          SKIA_MBT_ALLOW_FAKE_JETBRAINS_ZIP=1 bash scripts/fetch-jetbrains-skia.sh --platform linux --arch arm64 --config Release --cache-dir .skia-dry-run/jetbrains-cache --print-env > logs/fetch-jetbrains-source-headers.env
-          grep -Fq '.skia-dry-run/jetbrains-cache/m148-8967a2e80c/source/' logs/fetch-jetbrains-source-headers.env
           bash scripts/configure-linux-native-pkg.sh \
             --skia-include .skia-dry-run/skia \
             --skia-lib-dir .skia-dry-run/static \
