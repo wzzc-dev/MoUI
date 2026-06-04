@@ -90,9 +90,11 @@ constructors and platform event conversion.
   leaking platform checks into `core` or `views`.
 - App-owned route history lives in `core` as `RouteHistoryState`, where it can
   model deep-link strings, back/forward cursors, and `RouterSnapshot`
-  restoration without depending on a platform host. Browser history updates,
-  native URL bars, and OS deep-link dispatch are separate host/app integrations
-  and are not implied by the current Skia native route evidence.
+  restoration without depending on a platform host. `backend/host` provides
+  `HostRouteSource` for typed route/deep-link fanout through
+  `Subscription::route_event`, but browser history updates, native URL bars, OS
+  deep-link dispatch, and app history mutation are separate host/app
+  integrations and are not implied by the current Skia native route evidence.
 - `HostCapabilitySummary` is the app-facing diagnostics rollup over service,
   input, window, text-input, IME, drag/drop, async-service, and accessibility
   readiness. Web, macOS, Windows, and Linux expose package-local summary
