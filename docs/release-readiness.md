@@ -119,6 +119,24 @@ the same scheduler route before applying renderer lifecycle state and requesting
 redraw; this is host/provider package evidence, not matching-host off-main
 runtime proof.
 
+## GitHub Actions Evidence Refresh
+
+This refresh records the post-repair `main` evidence gathered on 2026-06-05 UTC
+for head SHA `8b89c00e8271a4cf69cecda09df8599da4016c04`.
+
+| Workflow | Run | Key successful jobs | Uploaded artifact names | Evidence boundary |
+| --- | --- | --- | --- | --- |
+| MoUI CI | [27042717416](https://github.com/wzzc-dev/MoUI/actions/runs/27042717416) | `Web runtime presentation`; `Native WGPU renderer proof (macos)`, `(linux)`, `(windows)`; `Native Skia renderer proof (macos)`, `(linux)`, `(windows)`; `Renderer proof summary`; `Core conformance`; `Linux platform contracts`; `Windows MSVC native smoke`; `macOS packaging smoke`; `Public API surface`; `Benchmark scaffold`. | `moui-web-runtime-presentation`; `moui-renderer-proof-wgpu-native-macos`; `moui-renderer-proof-wgpu-native-linux`; `moui-renderer-proof-wgpu-native-windows`; `moui-renderer-proof-skia-native-macos`; `moui-renderer-proof-skia-native-linux`; `moui-renderer-proof-skia-native-windows`; `moui-showcase-windows-msvc-portable`; `moui-showcase-macos-app`. | Proves the CI gates and uploaded manifest/artifact contracts for this SHA. Web presentation is Chrome/CDP browser-session evidence for Showcase and Markdown Editor Web wasm-gc. Renderer proof summary validates the native WGPU, native Skia, and Web proof manifests as passed, but this evidence does not by itself promote `render/capabilities.mbt` statuses. Native packaging/smoke artifacts are build and packaging evidence, not broad platform-service runtime proof. |
+| Deploy Website | [27042717432](https://github.com/wzzc-dev/MoUI/actions/runs/27042717432) | `Build website`; `Deploy website`. | `github-pages`. | Proves the website workspace builds with native Linux dependencies installed before the Web wasm-gc build and that GitHub Pages accepted the uploaded artifact. It is website deployment evidence, not renderer or platform runtime proof. |
+| MoUI Skia Fallback | [27043023672](https://github.com/wzzc-dev/MoUI/actions/runs/27043023672) | `fallback (ubuntu-latest)`; `fallback (windows-latest)`. | None. | Manually dispatched on `main` for the same head SHA. This is fallback-safe binding/workspace evidence: formatting, checks, all-target fallback compilation, ownership/borrow/capability/status verifiers, release-lock dry-run checks, and Windows fallback gate. It does not prove real Skia presentation. |
+| MoUI Skia Real Skia Acceptance | [27043022760](https://github.com/wzzc-dev/MoUI/actions/runs/27043022760) | `Linux release Skia acceptance (static)`, `(dynamic)`; `macOS release Skia acceptance (static)`, `(dynamic)`; `Windows MSVC release Skia acceptance (static)`, `(dynamic)`. | `linux-real-skia-acceptance-log-static`; `linux-real-skia-acceptance-log-dynamic`; `macos-real-skia-acceptance-log-static`; `macos-real-skia-acceptance-log-dynamic`; `windows-real-skia-acceptance-log-static`; `windows-real-skia-acceptance-log-dynamic`. | Manually dispatched on `main` for the same head SHA. This is real release-Skia binding acceptance for static and dynamic link modes. The Windows dynamic job preserves the shared package path and uploads `windows-real-skia-acceptance-log-dynamic`; it remains binding/provider acceptance evidence, not a claim that every MoUI Windows platform runtime service is passed. |
+
+The Skia fallback workflow does not upload artifacts by design, so the run URL
+and successful job logs are the evidence handle. The acceptance workflow uploads
+per-platform/per-link-mode log bundles. Failed or missing artifacts must not be
+treated as passed evidence, and this table must be refreshed for a release
+candidate rather than reused as a permanent passed manifest.
+
 ## Platform Validation Matrix
 
 Preview handoffs must say which host produced platform evidence. Platform
