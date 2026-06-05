@@ -141,9 +141,31 @@ fn macos_cjk_font_path() -> String {
 }
 
 ///|
+fn macos_user_font_path(name : String) -> String {
+  match @env.get_env_var("HOME") {
+    Some(home) => {
+      let clean = home.trim().to_owned()
+      if clean == "" {
+        ""
+      } else {
+        clean + "/Library/Fonts/" + name
+      }
+    }
+    None => ""
+  }
+}
+
+///|
 fn macos_emoji_font_path() -> String {
   first_existing_font_path([
-    "/System/Library/Fonts/Apple Color Emoji.ttc", "/System/Library/Fonts/AppleColorEmoji.ttc",
+    macos_user_font_path("NotoColorEmoji.ttf"),
+    macos_user_font_path("NotoColorEmoji-Regular.ttf"),
+    macos_user_font_path("Noto Color Emoji.ttf"),
+    "/Library/Fonts/NotoColorEmoji.ttf",
+    "/Library/Fonts/NotoColorEmoji-Regular.ttf",
+    "/Library/Fonts/Noto Color Emoji.ttf",
+    "/System/Library/Fonts/Apple Color Emoji.ttc",
+    "/System/Library/Fonts/AppleColorEmoji.ttc",
   ])
 }
 
@@ -236,7 +258,7 @@ fn first_existing_font_path(paths : Array[String]) -> String {
       return path
     }
   }
-  paths[0]
+  ""
 }
 
 ///|
@@ -266,6 +288,9 @@ fn CosmicTextCache::load_font_path(
   self : CosmicTextCache,
   path : String,
 ) -> Unit {
+  if path == "" {
+    return
+  }
   match self.loaded_paths.get(path) {
     Some(true) => ()
     _ => {
@@ -374,10 +399,21 @@ fn build_cosmic_text_buffer(
     Float::from_double(run.font.size * 1.25),
   )
   let attrs = cosmic_text_attrs_for_font(run.font)
-  let text = cosmic_text_safe_text(run.text)
+  let text = cosmic_text_layout_text(run.text, run.font)
+  let preserves_source = cosmic_text_preserves_source_text(run.font)
+  let wrap = if preserves_source {
+    @moon_cosmic.Wrap::Glyph
+  } else {
+    @moon_cosmic.Wrap::None
+  }
+  let width = if preserves_source {
+    None
+  } else {
+    Some(Float::from_double(run.frame.size.width))
+  }
   @moon_cosmic.Buffer::new(metrics)
-  .set_wrap(@moon_cosmic.Wrap::None)
-  .set_size(Some(Float::from_double(run.frame.size.width)), None)
+  .set_wrap(wrap)
+  .set_size(width, None)
   .set_text(
     text,
     @moon_cosmic.AttrsList::new(attrs),
@@ -398,9 +434,14 @@ fn build_cosmic_text_input_buffer(
     Float::from_double(input.font.size * 1.25),
   )
   let attrs = cosmic_text_attrs_for_font(input.font)
-  let text = cosmic_text_safe_text(input.text)
+  let text = cosmic_text_layout_text(input.text, input.font)
+  let wrap = if cosmic_text_preserves_source_text(input.font) {
+    @moon_cosmic.Wrap::Glyph
+  } else {
+    @moon_cosmic.Wrap::None
+  }
   @moon_cosmic.Buffer::new(metrics)
-  .set_wrap(@moon_cosmic.Wrap::None)
+  .set_wrap(wrap)
   // MoUI clamps measured results after provider validation. Keeping the
   // provider measure pass unconstrained avoids width-triggered shaping panics
   // for emoji and mixed-script diagnostic strings.
@@ -446,6 +487,7 @@ fn cosmic_text_layout_result_from_runs(
   runs : Array[@moon_cosmic.LayoutRun],
 ) -> @core.TextLayoutResult {
   let char_count = input.text.to_array().length()
+  let caret_text = cosmic_text_layout_text(input.text, input.font)
   let carets = Array::make(char_count + 1, 0.0)
   let mut width = 0.0
   let mut height = input.font.size * 1.25
@@ -455,12 +497,27 @@ fn cosmic_text_layout_result_from_runs(
     width = width.max(run.line_w.to_double())
     height = height.max((run.line_top + run.line_height).to_double())
     for glyph in run.glyphs {
-      let start = cosmic_clamp_int(glyph.start, 0, char_count)
-      let end = cosmic_clamp_int(glyph.end, start, char_count)
+      let start = cosmic_clamp_int(
+        cosmic_text_utf16_offset_to_char_index(caret_text, glyph.start),
+        0,
+        char_count,
+      )
+      let end = cosmic_clamp_int(
+        cosmic_text_utf16_offset_to_char_index(caret_text, glyph.end),
+        start,
+        char_count,
+      )
       let left = glyph.x.to_double()
       let right = (glyph.x + glyph.w).to_double()
       if start < carets.length() {
         carets[start] = carets[start].max(left)
+      }
+      if end > start + 1 {
+        for index in (start + 1)..<=end {
+          if index < carets.length() {
+            carets[index] = carets[index].max(right)
+          }
+        }
       }
       if end < carets.length() {
         carets[end] = carets[end].max(right)
@@ -468,13 +525,72 @@ fn cosmic_text_layout_result_from_runs(
     }
   }
   if !saw_run || (char_count > 0 && carets[char_count] == 0.0) {
-    return @core.TextSystem::fallback().measure_text(input)
+    let fallback = @core.TextSystem::fallback().measure_text(input)
+    cosmic_fold_zwj_caret_positions(input.text, fallback.caret_positions)
+    return fallback
   }
   cosmic_fill_missing_caret_positions(carets)
+  cosmic_fold_zwj_caret_positions(input.text, carets)
   {
     size: @core.Size::new(width~, height~),
     baseline: input.font.size * 0.8,
     caret_positions: carets,
+  }
+}
+
+///|
+fn cosmic_text_utf16_offset_to_char_index(text : String, offset : Int) -> Int {
+  if offset <= 0 {
+    return 0
+  }
+  let mut utf16 = 0
+  let mut index = 0
+  for ch in text {
+    utf16 += cosmic_text_utf16_len_of_char(ch)
+    index += 1
+    if utf16 >= offset {
+      return index
+    }
+  }
+  index
+}
+
+///|
+fn cosmic_text_utf16_len_of_char(ch : Char) -> Int {
+  if ch.to_int() <= 0xFFFF {
+    1
+  } else {
+    2
+  }
+}
+
+///|
+fn cosmic_fold_zwj_caret_positions(
+  text : String,
+  carets : Array[Double],
+) -> Unit {
+  let chars = text.to_array()
+  let mut index = 0
+  while index < chars.length() {
+    let mut end = index + 1
+    let mut saw_zwj = false
+    while end < chars.length() {
+      if chars[end - 1].to_int() == 0x200D || chars[end].to_int() == 0x200D {
+        saw_zwj = true
+        end += 1
+      } else {
+        break
+      }
+    }
+    if saw_zwj && end < carets.length() {
+      let folded = carets[end]
+      for caret_index in (index + 1)..<=end {
+        carets[caret_index] = folded
+      }
+      index = end
+    } else {
+      index += 1
+    }
   }
 }
 
@@ -536,6 +652,20 @@ fn cosmic_text_safe_text(text : String) -> String {
   } else {
     text
   }
+}
+
+///|
+fn cosmic_text_layout_text(text : String, font : @core.FontSpec) -> String {
+  if cosmic_text_preserves_source_text(font) {
+    text
+  } else {
+    cosmic_text_safe_text(text)
+  }
+}
+
+///|
+fn cosmic_text_preserves_source_text(font : @core.FontSpec) -> Bool {
+  font.families.families.any(family => family is @core.FontFamily::Emoji)
 }
 
 ///|
@@ -625,7 +755,7 @@ fn cosmic_text_glyph_is_whitespace(
   glyph : @moon_cosmic.LayoutGlyph,
 ) -> Bool {
   cosmic_text_source_range_is_whitespace(
-    cosmic_text_safe_text(run.text),
+    cosmic_text_layout_text(run.text, run.font),
     glyph.start,
     glyph.end,
   )
@@ -656,7 +786,11 @@ fn cosmic_text_cache_key_with_fallback(
   glyph : @moon_cosmic.LayoutGlyph,
   cache_key : @moon_cosmic.CacheKey,
 ) -> @moon_cosmic.CacheKey {
-  match cosmic_text_codepoint_at(cosmic_text_safe_text(run.text), glyph.start) {
+  match
+    cosmic_text_codepoint_at(
+      cosmic_text_layout_text(run.text, run.font),
+      glyph.start,
+    ) {
     None => cache_key
     Some(codepoint) =>
       if cosmic_text_glyph_matches_codepoint(cache, glyph, codepoint) {
