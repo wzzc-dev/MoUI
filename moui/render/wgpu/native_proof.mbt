@@ -276,6 +276,13 @@ fn RendererHandle::render_offscreen_proof_frame(
     self.glyph_atlas.dirty = false
   }
   self.prepare_native_image_items(device, queue)
+  let root_plan = {
+    visual_vertices: self.visual_vertices,
+    text_vertices: self.text_vertices,
+    image_vertices: self.image_vertices,
+    items: self.draw_items,
+    atlas_dirty: self.text_atlas_dirty,
+  }
   let size = self.effective_physical_size()
   let width = @render.size_dim_to_uint(size.width)
   let height = @render.size_dim_to_uint(size.height)
@@ -302,7 +309,7 @@ fn RendererHandle::render_offscreen_proof_frame(
     texture,
     view,
     visual_pipeline,
-    plan,
+    root_plan,
     @render.first_clear_color(commands),
     frame_offscreens,
     frame_backdrops,
