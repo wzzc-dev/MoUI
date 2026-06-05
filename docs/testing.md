@@ -585,6 +585,12 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   `skia-text-emoji-smoke.log`, and intentionally leave manifests failed until
   true radial/transform pixels, text/emoji glyph or raster evidence, and async
   image second-frame artifacts exist for that backend/platform.
+  The Skia proof path builds and runs
+  `moui/tests/skia_text_emoji_smoke/native` when real Skia is linked; that smoke
+  prints renderer-proof markers only after captured Skia pixels and text-system
+  evidence prove color emoji, ZWJ grapheme, paragraph wrapping, and bidi
+  observations, so partial output may mark some observations passed while the
+  overall manifest remains failed.
 - `Renderer proof summary` downloads those artifacts, requires
   `webgpu-wasm-web.json`, `wgpu-native-{macos,windows,linux}.json`, and
   `skia-native-{macos,windows,linux}.json`, then runs
