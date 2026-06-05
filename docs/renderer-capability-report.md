@@ -166,20 +166,25 @@ can apply to renderer state. `HostNativeAsyncImageSource` records pending
 native `(window, source)` requests and lets a platform callback deliver
 `ImageResourceLoadCompletion` later through the same scheduler and repaint
 route; it is host-boundary proof for deferred completion delivery, not
-matching-host off-main runtime evidence. The macOS, Windows, and Linux host cores now call
+matching-host off-main runtime evidence. The macOS, Windows, and Linux WGPU/Skia
+provider package tests now also prove deferred native-source callbacks carry
+renderer decode-helper payloads before renderer lifecycle apply and redraw
+routing; this remains package-local evidence. The macOS, Windows, and Linux host cores now call
 an optional provider-owned loader hook after each presented revision is
 baselined and cancel in-flight loader work when a window is disposed. WGPU
 providers now install a provider-owned loader that maps native PNG/JPEG/BMP
 data URI and local-file decode results into `ImageResourceLoadCompletion`
-payloads through `native_image_load_completion`; this is provider completion
-evidence, not matching-host off-main runtime proof.
+payloads through `native_image_load_completion`; native WGPU provider tests also
+exercise that helper through a deferred native-source callback. This is provider
+completion evidence, not matching-host off-main runtime proof.
 Skia now exposes `skia_image_load_completion` for Skia encoded-image source
 decode completion payloads, and native Skia providers install provider-owned
 loader hooks around that helper while also forwarding the renderer-local
-image-resource change callback setter through `HostWindowRenderer`. The helper
-reports ready/failed lifecycle completions; it does not pre-populate renderer
-caches, and it is provider completion evidence rather than matching-host
-off-main runtime proof. MacOS/Windows/Linux hosts install baseline-guarded
+image-resource change callback setter through `HostWindowRenderer`; native Skia
+provider tests also exercise that helper through a deferred native-source
+callback. The helper reports ready/failed lifecycle completions; it does not
+pre-populate renderer caches, and it is provider completion evidence rather than
+matching-host off-main runtime proof. macOS/Windows/Linux hosts install baseline-guarded
 callbacks that request redraw for post-present image revisions. Real
 provider/platform async loader implementations and matching-host runtime
 evidence remain follow-up work. Skia renderer-local
