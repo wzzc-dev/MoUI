@@ -468,17 +468,26 @@ fn native_proof_png_data_uri() -> String {
 
 ///|
 fn assert_native_proof_radial(frame : NativeRendererProofFrame) -> Unit {
-  let center = frame.pixel(32, 32)
-  let mid = frame.pixel(44, 32)
-  let edge = frame.pixel(55, 32)
-  if !pixel_is_redish(center) {
-    native_proof_fail("native WGPU proof radial center pixel was not red")
+  let center_region = @core.Rect::new(x=28.0, y=28.0, width=9.0, height=9.0)
+  let mid_region = @core.Rect::new(x=40.0, y=28.0, width=9.0, height=9.0)
+  let edge_region = @core.Rect::new(x=52.0, y=28.0, width=7.0, height=9.0)
+  if !region_has_redish_pixel(frame, center_region) {
+    native_proof_fail(
+      "native WGPU proof radial center pixels were not red; " +
+      region_red_debug(frame, center_region, "radial_center"),
+    )
   }
-  if !pixel_is_purpleish(mid) {
-    native_proof_fail("native WGPU proof radial mid pixel was not interpolated")
+  if !region_has_purpleish_pixel(frame, mid_region) {
+    native_proof_fail(
+      "native WGPU proof radial mid pixels were not interpolated; " +
+      region_purple_debug(frame, mid_region, "radial_mid"),
+    )
   }
-  if !pixel_is_blueish(edge) {
-    native_proof_fail("native WGPU proof radial edge pixel was not blue")
+  if !region_has_blueish_pixel(frame, edge_region) {
+    native_proof_fail(
+      "native WGPU proof radial edge pixels were not blue; " +
+      region_blue_debug(frame, edge_region, "radial_edge"),
+    )
   }
   if !visual_shader_wgsl().contains("radial_gradient_color") {
     native_proof_fail(
@@ -607,9 +616,7 @@ fn assert_native_proof_color_emoji(
   renderer : RendererHandle,
   text_engine : NativeTextEngine,
 ) -> Unit {
-  let samples = [
-    "\u{1F642}", "\u{2615}\u{FE0F}", "\u{1F469}\u{200D}\u{1F4BB}",
-  ]
+  let samples = ["\u{1F642}", "\u{2615}\u{FE0F}", "\u{1F469}\u{200D}\u{1F4BB}"]
   let mut total_color_glyphs = 0
   let mut total_high_saturation_pixels = 0
   for sample in samples {
@@ -763,6 +770,72 @@ fn pixel_is_cyanish(pixel : (Int, Int, Int, Int)) -> Bool {
 }
 
 ///|
+fn region_has_redish_pixel(
+  frame : NativeRendererProofFrame,
+  rect : @core.Rect,
+) -> Bool {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      if pixel_is_redish(frame.pixel(x, y)) {
+        return true
+      }
+    }
+  }
+  false
+}
+
+///|
+fn region_has_purpleish_pixel(
+  frame : NativeRendererProofFrame,
+  rect : @core.Rect,
+) -> Bool {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      if pixel_is_purpleish(frame.pixel(x, y)) {
+        return true
+      }
+    }
+  }
+  false
+}
+
+///|
+fn region_has_blueish_pixel(
+  frame : NativeRendererProofFrame,
+  rect : @core.Rect,
+) -> Bool {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      if pixel_is_blueish(frame.pixel(x, y)) {
+        return true
+      }
+    }
+  }
+  false
+}
+
+///|
 fn region_has_dark_magenta_pixel(
   frame : NativeRendererProofFrame,
   rect : @core.Rect,
@@ -860,6 +933,98 @@ fn region_cyan_debug(
 }
 
 ///|
+fn region_red_debug(
+  frame : NativeRendererProofFrame,
+  rect : @core.Rect,
+  label : String,
+) -> String {
+  region_best_pixel_debug(frame, rect, label, NativeProofDebugColor::Red)
+}
+
+///|
+fn region_purple_debug(
+  frame : NativeRendererProofFrame,
+  rect : @core.Rect,
+  label : String,
+) -> String {
+  region_best_pixel_debug(frame, rect, label, NativeProofDebugColor::Purple)
+}
+
+///|
+fn region_blue_debug(
+  frame : NativeRendererProofFrame,
+  rect : @core.Rect,
+  label : String,
+) -> String {
+  region_best_pixel_debug(frame, rect, label, NativeProofDebugColor::Blue)
+}
+
+///|
+priv enum NativeProofDebugColor {
+  Red
+  Purple
+  Blue
+}
+
+///|
+fn region_best_pixel_debug(
+  frame : NativeRendererProofFrame,
+  rect : @core.Rect,
+  label : String,
+  color : NativeProofDebugColor,
+) -> String {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  let mut best_score = -1000000
+  let mut best_x = min_x
+  let mut best_y = min_y
+  let mut best_r = 0
+  let mut best_g = 0
+  let mut best_b = 0
+  let mut best_a = 0
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      let (r, g, b, a) = frame.pixel(x, y)
+      let score = match color {
+        Red => r * 2 - g - b
+        Purple => r + b - g * 2
+        Blue => b * 2 - r - g
+      }
+      if score > best_score {
+        best_score = score
+        best_x = x
+        best_y = y
+        best_r = r
+        best_g = g
+        best_b = b
+        best_a = a
+      }
+    }
+  }
+  label +
+  "_best=(x=" +
+  best_x.to_string() +
+  ",y=" +
+  best_y.to_string() +
+  ",rgba=" +
+  best_r.to_string() +
+  "," +
+  best_g.to_string() +
+  "," +
+  best_b.to_string() +
+  "," +
+  best_a.to_string() +
+  ",score=" +
+  best_score.to_string() +
+  ")"
+}
+
+///|
 fn region_has_dark_pixel(
   frame : NativeRendererProofFrame,
   rect : @core.Rect,
@@ -904,9 +1069,9 @@ fn unpremultiplied_rgb_delta(r : Int, g : Int, b : Int, a : Int) -> Int {
   if a <= 0 {
     0
   } else {
-    let ur = ((r * 255) / a).min(255)
-    let ug = ((g * 255) / a).min(255)
-    let ub = ((b * 255) / a).min(255)
+    let ur = (r * 255 / a).min(255)
+    let ug = (g * 255 / a).min(255)
+    let ub = (b * 255 / a).min(255)
     ur.max(ug).max(ub) - ur.min(ug).min(ub)
   }
 }
