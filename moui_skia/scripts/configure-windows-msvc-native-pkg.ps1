@@ -18,8 +18,7 @@ if ($Write -and $Check) {
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$defaultCacheRoot = Join-Path $repoRoot ".skia-cache/windows-msvc/aseprite/Skia-Windows-Release-x64"
-$defaultZip = Join-Path $env:USERPROFILE "Downloads/Skia-Windows-Release-x64.zip"
+. (Join-Path $PSScriptRoot "windows-msvc-skia-paths.ps1")
 
 function Resolve-SkiaMsvcLibrary {
   param([Parameter(Mandatory = $true)][string] $LibDir)
@@ -37,46 +36,16 @@ function Resolve-SkiaMsvcLibrary {
   throw "Skia MSVC library was not found in $LibDir; expected skia.lib or skia.dll.lib"
 }
 
-if ([string]::IsNullOrWhiteSpace($SkiaRoot)) {
-  if (Test-Path -LiteralPath $defaultCacheRoot -PathType Container) {
-    $SkiaRoot = $defaultCacheRoot
-  } elseif (![string]::IsNullOrWhiteSpace($SkiaZip)) {
-    $SkiaRoot = $defaultCacheRoot
-  } elseif (Test-Path -LiteralPath $defaultZip -PathType Leaf) {
-    $SkiaZip = $defaultZip
-    $SkiaRoot = $defaultCacheRoot
-  } else {
-    throw "SkiaRoot is required; pass -SkiaRoot, set MOUI_SKIA_SKIA_ROOT, or place Skia-Windows-Release-x64.zip in Downloads."
-  }
-}
-
-if (!(Test-Path -LiteralPath $SkiaRoot -PathType Container)) {
-  if ([string]::IsNullOrWhiteSpace($SkiaZip)) {
-    throw "Skia root is missing and no SkiaZip was provided: $SkiaRoot"
-  }
-  if (!(Test-Path -LiteralPath $SkiaZip -PathType Leaf)) {
-    throw "Skia zip was not found: $SkiaZip"
-  }
-  $extractParent = Split-Path -Parent $SkiaRoot
-  New-Item -ItemType Directory -Force -Path $extractParent | Out-Null
-  Write-Host "Extracting Skia zip to $extractParent"
-  Expand-Archive -LiteralPath $SkiaZip -DestinationPath $extractParent -Force:$ForceExtract
-}
-
-$resolvedRoot = (Resolve-Path -LiteralPath $SkiaRoot).Path
-$resolvedIncludeRoot = $resolvedRoot
-if (![string]::IsNullOrWhiteSpace($SkiaInclude)) {
-  $resolvedIncludeRoot = (Resolve-Path -LiteralPath $SkiaInclude).Path
-}
-$headerPath = Join-Path $resolvedIncludeRoot "include/core/SkSurface.h"
-if (!(Test-Path -LiteralPath $headerPath -PathType Leaf)) {
-  throw "Skia include root does not look like a Skia checkout/root: $resolvedIncludeRoot"
-}
-
-if ([string]::IsNullOrWhiteSpace($SkiaLibDir)) {
-  $SkiaLibDir = Join-Path $resolvedRoot "out/Release-x64"
-}
-$resolvedLibDir = (Resolve-Path -LiteralPath $SkiaLibDir).Path
+$resolvedPaths = Resolve-MouiSkiaMsvcPaths `
+  -RepoRoot $repoRoot `
+  -SkiaRoot $SkiaRoot `
+  -SkiaInclude $SkiaInclude `
+  -SkiaZip $SkiaZip `
+  -SkiaLibDir $SkiaLibDir `
+  -ForceExtract:$ForceExtract
+$resolvedRoot = $resolvedPaths.Root
+$resolvedIncludeRoot = $resolvedPaths.IncludeRoot
+$resolvedLibDir = $resolvedPaths.LibDir
 $skiaLib = Resolve-SkiaMsvcLibrary -LibDir $resolvedLibDir
 
 if ([System.IO.Path]::IsPathRooted($Output)) {
