@@ -15,6 +15,7 @@ options(
     "wasm-gc": {
       "exports": [
         "web_dispatch_event",
+        "web_dispatch_route",
         "web_complete_async_clipboard_read",
         "web_complete_async_file_dialog",
       ],

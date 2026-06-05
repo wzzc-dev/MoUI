@@ -51,6 +51,7 @@ pub(all) enum ShowcaseMsg {
   RouteBack
   RouteForward
   OpenRouteLink(String)
+  HostRouteChanged(@host.HostRouteEvent)
   TabSelected(String)
   ClearFilter
   FilterChanged(String)
@@ -70,6 +71,20 @@ pub(all) enum ShowcaseMsg {
   ResizePanel(Double)
   DetailScrollTo(Double)
   SidebarScrollTo(Double)
+}
+
+///|
+pub(all) enum ShowcaseRouteHistoryCommand {
+  PushRoute(String)
+  ReplaceRoute(String)
+  BackRoute
+  ForwardRoute
+} derive(Eq, Debug, ToJson)
+
+///|
+pub struct ShowcaseRouteHost {
+  route_source : @host.HostRouteSource
+  dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit
 }
 
 ///|
@@ -153,6 +168,14 @@ pub fn ShowcaseTodoItem::new(id~ : Int, text~ : String) -> ShowcaseTodoItem {
 }
 
 ///|
+pub fn ShowcaseRouteHost::new(
+  route_source~ : @host.HostRouteSource,
+  dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit,
+) -> ShowcaseRouteHost {
+  { route_source, dispatch_command }
+}
+
+///|
 pub fn ShowcaseModel::todo_count(self : ShowcaseModel) -> Int {
   self.todo_items.length()
 }
@@ -199,6 +222,8 @@ pub fn ShowcaseModel::update(
         ),
       )
       .with_detail_scroll_reset()
+    HostRouteChanged(event) =>
+      self.with_host_route_event(event).with_detail_scroll_reset()
     TabSelected(route) => { ..self, tab: route }
     ClearFilter => { ..self, filter: "" }
     FilterChanged(value) => { ..self, filter: value }
@@ -246,6 +271,60 @@ pub fn ShowcaseModel::update(
 }
 
 ///|
+fn ShowcaseModel::update_with_route_host(
+  self : ShowcaseModel,
+  message : ShowcaseMsg,
+  route_host : ShowcaseRouteHost?,
+) -> (ShowcaseModel, @core.Effect[ShowcaseMsg]) {
+  let next = self.update(message)
+  let effect = match message {
+    SelectSection(route) => {
+      let location = @core.RouteLocation::parse(route)
+      let command = if self.route_history.current_route() == location.to_route() {
+        ReplaceRoute(location.to_route())
+      } else {
+        PushRoute(location.to_route())
+      }
+      command.effect(route_host)
+    }
+    OpenRouteLink(route) =>
+      PushRoute(@core.RouteLocation::parse(route).to_route()).effect(route_host)
+    RouteBack => BackRoute.effect(route_host)
+    RouteForward => ForwardRoute.effect(route_host)
+    _ => @core.Effect::none()
+  }
+  (next, effect)
+}
+
+///|
+fn ShowcaseRouteHistoryCommand::effect(
+  self : ShowcaseRouteHistoryCommand,
+  route_host : ShowcaseRouteHost?,
+) -> @core.Effect[ShowcaseMsg] {
+  match route_host {
+    Some(host) =>
+      @core.Effect::host_service(
+        key="showcase:route-history",
+        label=self.label(),
+        run=_dispatch => (host.dispatch_command)(self),
+      )
+    None => @core.Effect::none()
+  }
+}
+
+///|
+fn ShowcaseRouteHistoryCommand::label(
+  self : ShowcaseRouteHistoryCommand,
+) -> String {
+  match self {
+    PushRoute(route) => "Push route " + route
+    ReplaceRoute(route) => "Replace route " + route
+    BackRoute => "Back route"
+    ForwardRoute => "Forward route"
+  }
+}
+
+///|
 fn ShowcaseModel::with_route_pushed(
   self : ShowcaseModel,
   route : String,
@@ -265,6 +344,45 @@ fn ShowcaseModel::with_route_pushed(
     )
   }
   self.with_route_history(history)
+}
+
+///|
+fn ShowcaseModel::with_host_route_event(
+  self : ShowcaseModel,
+  event : @host.HostRouteEvent,
+) -> ShowcaseModel {
+  let route = event.location.to_route()
+  let history = if self.route_history.current_route() == route {
+    self.route_history.replace(
+      event.location,
+      title=showcase_route_title(event.location.path),
+      source=event.source,
+    )
+  } else {
+    match showcase_route_history_cursor_for_route(self.route_history, route) {
+      Some(cursor) => { ..self.route_history, cursor, }
+      None =>
+        self.route_history.push(
+          event.location,
+          title=showcase_route_title(event.location.path),
+          source=event.source,
+        )
+    }
+  }
+  self.with_route_history(history)
+}
+
+///|
+fn showcase_route_history_cursor_for_route(
+  history : @core.RouteHistoryState,
+  route : String,
+) -> Int? {
+  for index, entry in history.entries {
+    if entry.route == route {
+      return Some(index)
+    }
+  }
+  None
 }
 
 ///|
@@ -356,12 +474,50 @@ pub fn ShowcaseModel::runtime(
   width? : Double = 960.0,
   height? : Double = 560.0,
 ) -> @core.AppRuntime {
+  self.runtime_with_optional_route_host(None, width~, height~)
+}
+
+///|
+pub fn ShowcaseModel::runtime_with_route_host(
+  self : ShowcaseModel,
+  route_host : ShowcaseRouteHost,
+  width? : Double = 960.0,
+  height? : Double = 560.0,
+) -> @core.AppRuntime {
+  self.runtime_with_optional_route_host(Some(route_host), width~, height~)
+}
+
+///|
+fn ShowcaseModel::runtime_with_optional_route_host(
+  self : ShowcaseModel,
+  route_host : ShowcaseRouteHost?,
+  width~ : Double,
+  height~ : Double,
+) -> @core.AppRuntime {
   @core.AppRuntime::new_program(
-    program=@core.Program::simple_with_environment(
-      init=self,
-      update=(model, message) => model.update(message),
+    program=@core.Program::new_with_environment(
+      init=() => (self, @core.Effect::none()),
+      update=(model, message) => {
+        model.update_with_route_host(message, route_host)
+      },
       view=(model, env) => model.view(env),
+      subscriptions=_model => showcase_route_subscription(route_host),
     ),
     size=@core.Size::new(width~, height~),
   )
+}
+
+///|
+fn showcase_route_subscription(
+  route_host : ShowcaseRouteHost?,
+) -> @core.Subscription[ShowcaseMsg] {
+  match route_host {
+    Some(host) =>
+      host.route_source.subscription(
+        key="showcase:host-route",
+        label="Showcase host route",
+        map=event => Some(HostRouteChanged(event)),
+      )
+    None => @core.Subscription::none()
+  }
 }

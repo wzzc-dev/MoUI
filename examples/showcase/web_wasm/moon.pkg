@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui/backend/web",
+  "wzzc-dev/moui/backend/host",
   "examples/showcase/app" @showcase_app,
 }
 
@@ -11,6 +12,7 @@ options(
     "wasm-gc": {
       "exports": [
         "web_dispatch_event",
+        "web_dispatch_route",
         "web_complete_async_clipboard_read",
         "web_complete_async_file_dialog",
       ],

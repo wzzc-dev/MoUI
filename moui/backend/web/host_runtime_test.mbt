@@ -56,6 +56,7 @@ test "web app options carry scene resolver and platform event sources" {
   let options = WebAppOptions::new(
     scene_resolver=resolver,
     event_sources=Some(@host.HostPlatformEventSources::new()),
+    route_source=Some(@host.HostRouteSource::new()),
   )
   match options.event_sources {
     Some(sources) => {
@@ -63,6 +64,10 @@ test "web app options carry scene resolver and platform event sources" {
       inspect(sources.window_events().active_handler_count(), content="0")
     }
     None => fail("expected configured Web platform event sources")
+  }
+  match options.route_source {
+    Some(source) => inspect(source.active_handler_count(), content="0")
+    None => fail("expected configured Web route source")
   }
   match options.scene_resolver.resolve(request) {
     @host.HostWindowSceneResolution::SceneResolved({ runtime, .. }) =>

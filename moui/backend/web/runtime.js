@@ -2233,6 +2233,7 @@ export async function bootMouiWasmGcApp(options = {}) {
   connectWindowWeb(result.instance, windowWeb);
   report("Starting MoonBit app...");
   result.instance.exports._start?.();
+  windowWeb.history_dispatch_current?.(0);
   report("MoonBit app started.");
   return result.instance;
 }

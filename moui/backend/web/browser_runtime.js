@@ -15,11 +15,19 @@ export function createWindowWebImports(options = {}) {
   let nextStringHandle = 1;
   let nextEventTextId = 1;
   let dispatchEvent = null;
+  let dispatchRoute = null;
   let wasmExports = null;
+  let routeListenerInstalled = false;
   const eventObserver =
     typeof options.onEvent === "function"
       ? options.onEvent
       : globalThis.__mouiWebRuntimeEvidence?.recordEvent?.bind(
+          globalThis.__mouiWebRuntimeEvidence,
+        );
+  const routeObserver =
+    typeof options.onRoute === "function"
+      ? options.onRoute
+      : globalThis.__mouiWebRuntimeEvidence?.recordRoute?.bind(
           globalThis.__mouiWebRuntimeEvidence,
         );
 
@@ -61,6 +69,74 @@ export function createWindowWebImports(options = {}) {
     }
   };
 
+  const observeRoute = event => {
+    if (!routeObserver) return;
+    try {
+      routeObserver(event);
+    } catch (error) {
+      globalThis.console?.error?.("MoUI Web route evidence observer failed", error);
+    }
+  };
+
+  const routeSourceName = source => {
+    switch (source | 0) {
+      case 0: return "initial";
+      case 1: return "popstate";
+      case 2: return "pushstate";
+      case 3: return "replacestate";
+      default: return "route";
+    }
+  };
+
+  const normalizeRouteString = route => {
+    const value = `${route ?? ""}`.trim();
+    if (!value || value === "/" || value === ".") {
+      return "overview";
+    }
+    const withoutHash = value.startsWith("#") ? value.slice(1) : value;
+    return withoutHash.replace(/^\/+/, "").replace(/\/+$/, "") || "overview";
+  };
+
+  const currentBrowserRoute = () => {
+    const location = globalThis.window?.location;
+    if (!location) {
+      return "overview";
+    }
+    const params = new URLSearchParams(location.search || "");
+    const explicitRoute = params.get("route");
+    if (explicitRoute) {
+      return normalizeRouteString(explicitRoute);
+    }
+    const section = params.get("section");
+    if (section) {
+      return normalizeRouteString(section);
+    }
+    const hash = `${location.hash || ""}`.replace(/^#/, "");
+    if (hash) {
+      return normalizeRouteString(decodeURIComponent(hash));
+    }
+    return "overview";
+  };
+
+  const routeUrl = route => {
+    const location = globalThis.window?.location;
+    const url = new URL(location?.href || "http://localhost/");
+    const params = new URLSearchParams();
+    const current = new URLSearchParams(url.search || "");
+    if (current.get("debug") === "1") {
+      params.set("debug", "1");
+    }
+    const normalized = normalizeRouteString(route);
+    if (normalized.includes("?")) {
+      params.set("route", normalized);
+    } else {
+      params.set("section", normalized);
+    }
+    url.search = params.toString();
+    url.hash = "";
+    return url;
+  };
+
   const resolveCanvasHost = () => {
     const host = options.canvasHost;
     if (host instanceof HTMLElement) {
@@ -94,6 +170,33 @@ export function createWindowWebImports(options = {}) {
     }
   };
 
+  const emitRoute = (source, route = currentBrowserRoute()) => {
+    const normalized = normalizeRouteString(route);
+    if (dispatchRoute) {
+      const textId = nextEventTextId++;
+      eventTexts.set(textId, normalized);
+      try {
+        dispatchRoute(source | 0, textId);
+      } finally {
+        eventTexts.delete(textId);
+      }
+    }
+    observeRoute({
+      source: routeSourceName(source),
+      route: normalized,
+      href: `${globalThis.window?.location?.href ?? ""}`,
+      at: Number(globalThis.performance?.now?.() ?? Date.now()),
+    });
+  };
+
+  const installRouteListener = () => {
+    if (routeListenerInstalled || !globalThis.window?.addEventListener) {
+      return;
+    }
+    globalThis.window.addEventListener("popstate", () => emitRoute(1));
+    routeListenerInstalled = true;
+  };
+
   const completeAsyncText = (exportName, requestId, ok, text = "") => {
     const complete = wasmExports?.[exportName];
     if (typeof complete !== "function") {
@@ -119,6 +222,9 @@ export function createWindowWebImports(options = {}) {
   const stringValue = handle => {
     if (typeof handle === "number") {
       return stringHandles.get(handle)?.value ?? "";
+    }
+    if (typeof handle === "string") {
+      return handle;
     }
     return handle?.value ?? "";
   };
@@ -582,8 +688,36 @@ export function createWindowWebImports(options = {}) {
     set_dispatch_event(fn) {
       dispatchEvent = fn;
     },
+    set_route_dispatch(fn) {
+      dispatchRoute = typeof fn === "function" ? fn : null;
+      if (dispatchRoute) {
+        installRouteListener();
+      }
+    },
     set_wasm_exports(exports) {
       wasmExports = exports;
+    },
+    history_current_route() {
+      return createStringHandle(currentBrowserRoute());
+    },
+    history_push_route(route) {
+      const normalized = normalizeRouteString(stringValue(route));
+      globalThis.window?.history?.pushState?.({ mouiRoute: normalized }, "", routeUrl(normalized));
+      emitRoute(2, normalized);
+    },
+    history_replace_route(route) {
+      const normalized = normalizeRouteString(stringValue(route));
+      globalThis.window?.history?.replaceState?.({ mouiRoute: normalized }, "", routeUrl(normalized));
+      emitRoute(3, normalized);
+    },
+    history_back() {
+      globalThis.window?.history?.back?.();
+    },
+    history_forward() {
+      globalThis.window?.history?.forward?.();
+    },
+    history_dispatch_current(source = 0) {
+      emitRoute(source | 0);
     },
     install_canvas_events(rawId, handle) {
       const canvas = canvasValue(handle);
@@ -951,6 +1085,10 @@ export function connectWindowWeb(instance, imports) {
     throw new Error("MoonBit wasm module must export web_dispatch_event");
   }
   imports.set_dispatch_event(dispatch);
+  const routeDispatch = instance?.exports?.web_dispatch_route;
+  if (typeof routeDispatch === "function") {
+    imports.set_route_dispatch?.(routeDispatch);
+  }
   imports.set_wasm_exports?.(instance.exports);
   return instance;
 }

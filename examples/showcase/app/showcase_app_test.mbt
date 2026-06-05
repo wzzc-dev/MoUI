@@ -174,7 +174,7 @@ test "showcase navigation shell demos use public constructors" {
   assert_true(has_text(commands, "Transition route: navigation"))
   assert_true(
     has_text(
-      commands, "Transition state: app-owned preview; host/browser history remains separate",
+      commands, "Transition state: host route subscription mirrors browser history",
     ),
   )
   assert_true(has_text(commands, "Section Nav"))
@@ -219,6 +219,58 @@ test "showcase route history keeps app owned deep link state" {
   assert_true(
     has_text(
       commands, "History: overview -> navigation -> navigation?panel=history -> forms",
+    ),
+  )
+}
+
+///|
+test "showcase route host emits push command for selected section" {
+  let route_source = @host.HostRouteSource::new()
+  let commands : Array[@app.ShowcaseRouteHistoryCommand] = []
+  let route_host = @app.ShowcaseRouteHost::new(route_source~, dispatch_command=command => {
+    commands.push(command)
+  })
+  let runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("navigation"))
+    .runtime_with_route_host(route_host, width=960.0, height=720.0)
+  click_text(runtime, "Forms")
+  inspect(commands.length(), content="1")
+  match commands[0] {
+    @app.ShowcaseRouteHistoryCommand::PushRoute(route) =>
+      inspect(route, content="forms")
+    _ => fail("expected route push command")
+  }
+  assert_true(has_text(runtime.draw_commands(), "Forms"))
+}
+
+///|
+test "showcase route host subscription applies browser popstate route" {
+  let route_source = @host.HostRouteSource::new()
+  let commands : Array[@app.ShowcaseRouteHistoryCommand] = []
+  let route_host = @app.ShowcaseRouteHost::new(route_source~, dispatch_command=command => {
+    commands.push(command)
+  })
+  let runtime = @app.ShowcaseModel::new().runtime_with_route_host(
+    route_host,
+    width=960.0,
+    height=720.0,
+  )
+  inspect(route_source.active_handler_count(), content="1")
+  inspect(
+    route_source.publish(
+      @host.HostRouteEvent::from_route(
+        route="navigation?panel=history",
+        source="web-popstate",
+      ),
+    ),
+    content="1",
+  )
+  inspect(commands.length(), content="0")
+  let rendered = runtime.draw_commands()
+  assert_true(has_text(rendered, "Deep link: navigation?panel=history"))
+  assert_true(
+    has_text(
+      rendered, "Transition state: host route subscription mirrors browser history",
     ),
   )
 }
