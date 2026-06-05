@@ -14,6 +14,7 @@ priv struct CosmicTextCache {
   loaded_paths : Map[String, Bool]
   warned_paths : Map[String, Bool]
   glyph_keys : Map[String, @moon_cosmic.CacheKey]
+  emoji_font_ids : Array[Int]
 }
 
 ///|
@@ -48,6 +49,7 @@ fn CosmicTextCache::new() -> CosmicTextCache {
     loaded_paths: {},
     warned_paths: {},
     glyph_keys: {},
+    emoji_font_ids: [],
   }
 }
 
@@ -302,6 +304,11 @@ fn CosmicTextCache::load_font_path(
           let before = self.font_system.fonts().length()
           self.font_system = self.font_system.load_font_data(bytes)
           let after = self.font_system.fonts().length()
+          if path == self.catalog.emoji_path && after > before {
+            for id in before..<after {
+              self.emoji_font_ids.push(id)
+            }
+          }
           if after == before {
             self.warn_font_once(path)
           }
@@ -860,6 +867,19 @@ fn cosmic_text_fallback_cache_key(
   cache_key : @moon_cosmic.CacheKey,
   codepoint : UInt,
 ) -> @moon_cosmic.CacheKey {
+  if cosmic_text_preserves_source_text(run.font) &&
+    cosmic_text_codepoint_is_emoji(codepoint) {
+    match
+      cosmic_text_fallback_cache_key_from_font_ids(
+        cache,
+        cache.emoji_font_ids,
+        cache_key,
+        codepoint,
+      ) {
+      Some(key) => return key
+      None => ()
+    }
+  }
   match
     cache.font_system.resolve_for_codepoint(
       cosmic_text_attrs_for_font(run.font),
@@ -887,6 +907,54 @@ fn cosmic_text_fallback_cache_key(
           }
         }
       }
+  }
+}
+
+///|
+fn cosmic_text_fallback_cache_key_from_font_ids(
+  cache : CosmicTextCache,
+  font_ids : Array[Int],
+  cache_key : @moon_cosmic.CacheKey,
+  codepoint : UInt,
+) -> @moon_cosmic.CacheKey? {
+  for font_id in font_ids {
+    match
+      cosmic_text_fallback_cache_key_from_font_id(
+        cache, font_id, cache_key, codepoint,
+      ) {
+      Some(key) => return Some(key)
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+fn cosmic_text_fallback_cache_key_from_font_id(
+  cache : CosmicTextCache,
+  font_id : Int,
+  cache_key : @moon_cosmic.CacheKey,
+  codepoint : UInt,
+) -> @moon_cosmic.CacheKey? {
+  match cache.font_system.get_font_entry(font_id) {
+    None => None
+    Some(entry) => {
+      let charmap = entry.charmap_proxy.materialize(entry.font)
+      let glyph_id = charmap.map(codepoint).to_int()
+      if glyph_id == 0 {
+        None
+      } else {
+        let (fallback_key, _, _) = @moon_cosmic.CacheKey::new(
+          font_id,
+          glyph_id,
+          Float::reinterpret_from_uint(cache_key.font_size_bits),
+          (cache_key.x_bin.as_float(), cache_key.y_bin.as_float()),
+          cache_key.font_weight,
+          cache_key.flags,
+        )
+        Some(fallback_key)
+      }
+    }
   }
 }
 
