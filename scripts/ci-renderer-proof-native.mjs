@@ -142,6 +142,7 @@ const recordArgs = [
   artifactName,
   "--output",
   manifestPath,
+  "--require-passed",
 ];
 for (const path of logs) {
   recordArgs.push("--log", path);
