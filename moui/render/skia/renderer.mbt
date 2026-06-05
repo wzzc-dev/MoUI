@@ -40,6 +40,18 @@ pub(all) struct SkiaUnsupportedCommandDiagnostic {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct SkiaTextVisualOrderProof {
+  logical_text : String
+  visual_text : String
+  logical_cluster_count : Int
+  visual_cluster_count : Int
+  segment_count : Int
+  glyph_count : Int
+  width : Double
+  visual_order_differs : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
 priv struct SkiaRasterSurfacePreflight {
   physical_width : Int
   physical_height : Int
@@ -304,6 +316,41 @@ pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor {
     ),
     description="Native Skia raster renderer that presents copied RGBA premultiplied pixel frames to the host.",
   )
+}
+
+///|
+pub fn skia_text_visual_order_proof(
+  text : String,
+  font? : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
+  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+) -> SkiaTextVisualOrderProof? {
+  if text == "" {
+    return None
+  }
+  let logical_clusters = skia_grapheme_cluster_texts(text)
+  let visual_clusters = skia_bidi_visual_cluster_texts(logical_clusters)
+  match skia_resolved_text_layout_for_resolution(font, text, font_resolution) {
+    Some(layout) => {
+      let mut glyph_count = 0
+      for segment in layout.segments {
+        glyph_count += segment.glyph_run.glyphs.length()
+      }
+      Some({
+        logical_text: skia_join_clusters(logical_clusters),
+        visual_text: skia_join_clusters(visual_clusters),
+        logical_cluster_count: logical_clusters.length(),
+        visual_cluster_count: visual_clusters.length(),
+        segment_count: layout.segments.length(),
+        glyph_count,
+        width: layout.width,
+        visual_order_differs: !skia_string_arrays_equal(
+          logical_clusters,
+          visual_clusters,
+        ),
+      })
+    }
+    None => None
+  }
 }
 
 ///|
@@ -1758,7 +1805,14 @@ fn skia_resolved_text_segments(
 
 ///|
 fn skia_mixed_text_segments(text : String) -> Array[String] {
-  let clusters = skia_grapheme_cluster_texts(text)
+  let clusters = skia_bidi_visual_cluster_texts(skia_grapheme_cluster_texts(text))
+  skia_mixed_text_segments_from_clusters(clusters)
+}
+
+///|
+fn skia_mixed_text_segments_from_clusters(
+  clusters : Array[String],
+) -> Array[String] {
   let segments : Array[String] = []
   let current : Array[Char] = []
   let mut current_class = -1
@@ -1777,6 +1831,64 @@ fn skia_mixed_text_segments(text : String) -> Array[String] {
     segments.push(String::from_array(current))
   }
   segments
+}
+
+///|
+fn skia_bidi_visual_cluster_texts(clusters : Array[String]) -> Array[String] {
+  let visual : Array[String] = []
+  let mut index = 0
+  while index < clusters.length() {
+    let rtl = skia_cluster_is_rtl(clusters[index])
+    let start = index
+    index = index + 1
+    while index < clusters.length() && skia_cluster_is_rtl(clusters[index]) == rtl {
+      index = index + 1
+    }
+    if rtl {
+      let mut cursor = index
+      while cursor > start {
+        cursor = cursor - 1
+        visual.push(clusters[cursor])
+      }
+    } else {
+      for cursor in start..<index {
+        visual.push(clusters[cursor])
+      }
+    }
+  }
+  visual
+}
+
+///|
+fn skia_cluster_is_rtl(cluster : String) -> Bool {
+  skia_text_segment_class(cluster) == 4
+}
+
+///|
+fn skia_join_clusters(clusters : Array[String]) -> String {
+  let chars : Array[Char] = []
+  for cluster in clusters {
+    for ch in cluster {
+      chars.push(ch)
+    }
+  }
+  String::from_array(chars)
+}
+
+///|
+fn skia_string_arrays_equal(
+  left : Array[String],
+  right : Array[String],
+) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for index in 0..<left.length() {
+    if left[index] != right[index] {
+      return false
+    }
+  }
+  true
 }
 
 ///|

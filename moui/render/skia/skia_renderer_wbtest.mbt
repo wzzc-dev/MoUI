@@ -96,6 +96,24 @@ test "skia font fallback request prefers emoji and non-ascii representative char
 }
 
 ///|
+test "skia text visual order proof records rtl glyph layout evidence" {
+  guard skia_available() else { return () }
+  guard
+    skia_text_visual_order_proof("ABC \u{05D0}\u{05D1}\u{05D2} 123")
+    is Some(proof)
+  else {
+    fail("expected Skia visual order proof")
+  }
+  inspect(proof.logical_text, content="ABC \u{05D0}\u{05D1}\u{05D2} 123")
+  inspect(proof.visual_text, content="ABC \u{05D2}\u{05D1}\u{05D0} 123")
+  assert_true(proof.visual_order_differs)
+  assert_true(proof.logical_cluster_count == proof.visual_cluster_count)
+  assert_true(proof.segment_count >= 3)
+  assert_true(proof.glyph_count >= 6)
+  assert_true(proof.width > 0.0)
+}
+
+///|
 test "skia font fallback request preserves family chain style and coverage character" {
   let font = @core.FontSpec::new(
     families=@core.FontFamilyStack::system_ui().with_fallback(
