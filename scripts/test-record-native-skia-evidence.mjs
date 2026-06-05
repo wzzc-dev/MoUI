@@ -182,7 +182,7 @@ try {
   const rendererLog = writeArtifact(
     "windows",
     "skia-renderer-smoke.log",
-    "MoUI Skia renderer smoke passed\n",
+    "MoUI Skia async image second-frame smoke passed\nMoUI Skia renderer smoke passed\n",
   );
   const showcaseLog = writeArtifact(
     "windows",
@@ -207,6 +207,8 @@ try {
       fallbackLog,
       "--renderer-smoke-log",
       rendererLog,
+      "--async-image-log",
+      rendererLog,
       "--showcase-log",
       showcaseLog,
       "--markdown-log",
@@ -221,6 +223,7 @@ try {
     windowsEntry.status !== "pending" ||
     windowsEntry.host !== "Windows MSVC CI" ||
     windowsEntry.skiaEvidence.status !== "passed" ||
+    windowsEntry.skiaEvidence.observations.asyncImageSecondFrame !== "yes" ||
     windowsEntry.skiaEvidence.observations.realRendererSmoke !== "yes" ||
     windowsEntry.skiaEvidence.evidenceProvenance?.kind !== "matching-host-artifact" ||
     windowsEntry.skiaEvidence.evidenceProvenance?.host !== "Windows MSVC CI" ||

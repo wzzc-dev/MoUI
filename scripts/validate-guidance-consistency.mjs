@@ -595,9 +595,25 @@ assertIncludes(
   "pub fn skia_image_load_completion(String) -> @render.ImageResourceLoadCompletion",
 );
 assertIncludes(
+  "moui/render/skia/pkg.generated.mbti",
+  "async_image_loading? : Bool",
+);
+assertIncludes(
   "moui/render/skia/skia_renderer_wbtest.mbt",
   "skia image load completion reports decoded dimensions or fallback failure",
 );
+assertIncludes(
+  "moui/render/skia/skia_renderer_wbtest.mbt",
+  "skia renderer async image loading waits for explicit completion before caching",
+);
+assertIncludes("moui/render/skia/renderer.mbt", "async_image_loading? : Bool = false");
+assertIncludes(
+  "moui/tests/skia_renderer_smoke/native/main.mbt",
+  "MoUI Skia async image second-frame smoke passed",
+);
+assertIncludes("scripts/record-platform-evidence-manifest.mjs", "asyncImageSecondFrame");
+assertIncludes("scripts/record-native-skia-evidence.mjs", "--async-image-log");
+assertIncludes("docs/testing.md", "asyncImageSecondFrame=yes");
 for (const platform of ["macos", "windows", "linux"]) {
   assertIncludes(
     `moui/backend/${platform}/skia/${platform}_skia_provider.mbt`,
@@ -610,6 +626,14 @@ for (const platform of ["macos", "windows", "linux"]) {
   assertIncludes(
     `moui/backend/${platform}/skia/${platform}_skia_provider.mbt`,
     "renderer_image_loader=skia_image_load_completion",
+  );
+  assertIncludes(
+    `moui/backend/${platform}/skia/${platform}_skia_provider.mbt`,
+    "renderer_async_image_loading=post-present",
+  );
+  assertIncludes(
+    `moui/backend/${platform}/skia/${platform}_skia_provider.mbt`,
+    "async_image_loading=true",
   );
   assertIncludes(
     `moui/backend/${platform}/skia/${platform}_skia_provider_wbtest.mbt`,

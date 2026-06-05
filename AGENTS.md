@@ -55,14 +55,17 @@ paths, or abstractions that only preserve old shapes.
   separate from package-level completion wiring. `backend/macos/skia`,
   `backend/windows/skia`, and `backend/linux/skia` provide native Skia renderer
   providers, including provider-owned `HostAsyncImageLoader` hooks around
-  `skia_image_load_completion`; keep this as provider completion evidence until
-  matching-host off-main runtime artifacts prove real late repaint behavior.
+  `skia_image_load_completion`; provider-created Skia renderers opt into
+  post-present async image loading, but keep this as provider/smoke evidence
+  until matching-host off-main runtime artifacts prove real late repaint
+  behavior.
 - `render/` is the renderer facade and shared reporting layer.
 - `render/wgpu/` is the native wgpu renderer. `render/webgpu_adapter/` is the
   wasm-gc browser WebGPU host-import bridge. `render/skia/` is the native Skia
   raster renderer facade over the local `wzzc-dev/moui_skia` binding, including
   renderer-local image-resource lifecycle change callbacks and
-  `skia_image_load_completion` source decode completion payloads; host-layer
+  `skia_image_load_completion` source decode completion payloads plus opt-in
+  post-present async image loading for native providers; host-layer
   completion routing and native provider/platform redraw scheduling from async
   image load/error notifications remain outside `render/skia`.
 - Native text providers live in `render/wgpu/cosmic_text/`,
@@ -258,8 +261,9 @@ field as `monitorCursor`; native passed evidence must set it to `yes`, while
 Web browser evidence may leave it pending because CDP does not prove native
 monitor/current-monitor or cursor behavior. Native platform entries also carry
 `skiaEvidence`, which separately records Skia provider/preflight commands,
-fallback-unavailable checks, real-renderer smoke, and Showcase/Markdown
-first-frame status. A native platform entry cannot be marked `passed` unless
+fallback-unavailable checks, real-renderer smoke, async image second-frame
+smoke, and Showcase/Markdown first-frame status. A native platform entry cannot
+be marked `passed` unless
 that native Skia evidence is also `passed`; a passed `skiaEvidence` block is
 still Skia-route evidence, not full platform service/runtime proof by itself.
 Native Skia provider preflight summaries also audit the renderer-neutral
@@ -326,8 +330,10 @@ first-frame check for `examples/markdown_editor/macos_skia`. With explicit
 `--smoke-log`, `--showcase-log`, and `--markdown-log` paths under
 `artifacts/platform-evidence/macos/`, pass `--record-platform-evidence
 artifacts/conformance/platform-runtime-evidence.json` to update the macOS
-`skiaEvidence` block after a successful full smoke; that still records Skia
-route evidence only. Pass `--write-local-config` only when you want to persist
+`skiaEvidence` block after a successful full smoke; the renderer smoke log must
+also include the async image second-frame marker, and omitted provider/fallback
+observations remain pending until their own artifacts are supplied. That still
+records Skia route evidence only. Pass `--write-local-config` only when you want to persist
 local absolute Skia paths so direct commands such as
 `moon run examples/showcase/macos_skia --target native` or
 `moon run examples/markdown_editor/macos_skia --target native` or

@@ -729,6 +729,7 @@ import {
   "moonbitlang/core/encoding/base64",
   "moonbitlang/x/fs",
   "wzzc-dev/moui_skia/native" @skia_native,
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
@@ -930,6 +931,11 @@ if ! grep -Fq "MoUI Skia renderer smoke passed" "$smoke_log"; then
   exit 1
 fi
 echo "Verified MoUI Skia renderer smoke success marker."
+if ! grep -Fq "MoUI Skia async image second-frame smoke passed" "$smoke_log"; then
+  echo "MoUI Skia renderer smoke did not prove async image second-frame repaint" >&2
+  exit 1
+fi
+echo "Verified MoUI Skia async image second-frame marker."
 if [[ $enable_skshaper -eq 1 ]]; then
   if ! grep -Fq "MoUI Skia renderer smoke shaper available" "$smoke_log"; then
     echo "MoUI Skia renderer smoke did not prove the enabled SkShaper path" >&2
@@ -1033,19 +1039,16 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
 fi
 
 if [[ -n "$platform_evidence_manifest" ]]; then
-  node scripts/record-platform-evidence-manifest.mjs \
+  record_host="$(uname -s 2>/dev/null || echo Darwin) $(uname -m 2>/dev/null || true) local Skia smoke"
+  node scripts/record-native-skia-evidence.mjs \
     "$(relative_to_repo "$platform_evidence_manifest")" \
     macos \
-    --skia-status passed \
-    --skia-set providerPreflight=yes \
-    --skia-set fallbackUnavailable=yes \
-    --skia-set realRendererSmoke=yes \
-    --skia-set showcaseFirstFrame=yes \
-    --skia-set markdownFirstFrame=yes \
-    --skia-artifact "$(relative_to_repo "$smoke_log")" \
-    --skia-artifact "$(relative_to_repo "$showcase_log")" \
-    --skia-artifact "$(relative_to_repo "$markdown_log")" \
-    --skia-note "macOS real-Skia renderer smoke and Showcase/Markdown Editor first-frame markers passed on the local Darwin host; this is Skia route evidence, not full platform-service runtime evidence."
+    --host "$record_host" \
+    --renderer-smoke-log "$(relative_to_repo "$smoke_log")" \
+    --async-image-log "$(relative_to_repo "$smoke_log")" \
+    --showcase-log "$(relative_to_repo "$showcase_log")" \
+    --markdown-log "$(relative_to_repo "$markdown_log")" \
+    --note "macOS real-Skia renderer, async image second-frame, and Showcase/Markdown Editor first-frame markers passed on the local Darwin host; provider preflight and fallback-unavailable observations require their own artifacts before Skia route evidence is passed."
 fi
 
 echo "MoUI macOS Skia renderer smoke passed."

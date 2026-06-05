@@ -196,6 +196,7 @@ pub(all) struct SkiaRasterRenderer {
   image_cache : Map[String, @skia_native.Image]
   failed_images : Map[String, String]
   image_lifecycle : @render.ImageResourceLifecycle
+  async_image_loading : Bool
   mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
   mut present_count : Int
   mut unsupported_command_count : Int
@@ -318,6 +319,7 @@ pub fn create_with_present_target(
   metrics : @render.RendererSurfaceMetrics,
   target : SkiaPresentTarget,
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  async_image_loading? : Bool = false,
   on_image_resource_change? : ((@render.ImageResourceSnapshot) -> Unit)? = None,
 ) -> SkiaRasterRenderer raise SkiaRendererError {
   if !skia_available() {
@@ -332,6 +334,7 @@ pub fn create_with_present_target(
     image_cache: {},
     failed_images: {},
     image_lifecycle: @render.ImageResourceLifecycle::new(),
+    async_image_loading,
     on_image_resource_change,
     present_count: 0,
     unsupported_command_count: 0,
@@ -1200,39 +1203,68 @@ fn SkiaRasterRenderer::skia_image_for_source(
           }
         None => ()
       }
-      match skia_image_source_bytes(source) {
-        Some(bytes) => {
-          self.mark_image_loading(source)
-          match @skia_native.Image::from_encoded_bytes(bytes) {
-            Some(image) => {
-              self.failed_images.remove(source)
-              self.image_cache[source] = image
-              self.mark_image_ready(
-                source,
-                width=image.width(),
-                height=image.height(),
-              )
-              Some(image)
-            }
-            None => {
-              self.failed_images[source] = "Skia image decode failed"
-              self.mark_image_failed(
-                source,
-                diagnostic="Skia image decode failed",
-              )
-              None
-            }
+      if self.async_image_loading {
+        match self.image_lifecycle.lookup(source) {
+          Some({ status: @render.ImageResourceStatus::ImageLoading, .. }) =>
+            return None
+          Some({ status: @render.ImageResourceStatus::ImageReady, .. }) =>
+            return self.decode_and_cache_image_source(
+              source,
+              mark_loading=false,
+            )
+          Some(
+            { status: @render.ImageResourceStatus::ImageFailed, diagnostic, .. }
+          ) => {
+            self.failed_images[source] = diagnostic
+            return None
+          }
+          _ => {
+            self.mark_image_loading(source)
+            return None
           }
         }
-        None => {
-          self.failed_images[source] = "Skia image source bytes are unavailable"
-          self.mark_image_failed(
+      }
+      self.decode_and_cache_image_source(source, mark_loading=true)
+    }
+  }
+}
+
+///|
+fn SkiaRasterRenderer::decode_and_cache_image_source(
+  self : SkiaRasterRenderer,
+  source : String,
+  mark_loading~ : Bool,
+) -> @skia_native.Image? {
+  match skia_image_source_bytes(source) {
+    Some(bytes) => {
+      if mark_loading {
+        self.mark_image_loading(source)
+      }
+      match @skia_native.Image::from_encoded_bytes(bytes) {
+        Some(image) => {
+          self.failed_images.remove(source)
+          self.image_cache[source] = image
+          self.mark_image_ready(
             source,
-            diagnostic="Skia image source bytes are unavailable",
+            width=image.width(),
+            height=image.height(),
           )
+          Some(image)
+        }
+        None => {
+          self.failed_images[source] = "Skia image decode failed"
+          self.mark_image_failed(source, diagnostic="Skia image decode failed")
           None
         }
       }
+    }
+    None => {
+      self.failed_images[source] = "Skia image source bytes are unavailable"
+      self.mark_image_failed(
+        source,
+        diagnostic="Skia image source bytes are unavailable",
+      )
+      None
     }
   }
 }
