@@ -94,11 +94,14 @@ jobs:
         run: |
           export LIBGL_ALWAYS_SOFTWARE=1
           export WGPU_BACKEND=vulkan
-          export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
           echo "LIBGL_ALWAYS_SOFTWARE=$LIBGL_ALWAYS_SOFTWARE" >> "$GITHUB_ENV"
           echo "WGPU_BACKEND=$WGPU_BACKEND" >> "$GITHUB_ENV"
-          echo "VK_ICD_FILENAMES=$VK_ICD_FILENAMES" >> "$GITHUB_ENV"
-          test -f /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          LVP_ICD="$(ls /usr/share/vulkan/icd.d/lvp_icd*.json 2>/dev/null | head -n 1 || true)"
+          if [ -n "$LVP_ICD" ]; then
+            echo "VK_ICD_FILENAMES=$LVP_ICD" >> "$GITHUB_ENV"
+          else
+            echo "::warning::lavapipe Vulkan ICD not found under /usr/share/vulkan/icd.d"
+          fi
           vulkaninfo --summary || true
 
       - name: Set up MoonBit
@@ -220,6 +223,7 @@ jobs:
         run: |
           . .\scripts\windows\msvc_env.ps1
           moon test moui/backend/windows --target native
+          Enable-MsvcC11Atomics
           moon test moui/backend/windows/wgpu --target native
 
       - name: Build Showcase Windows entrypoint with MSVC
@@ -273,11 +277,14 @@ jobs:
         run: |
           export LIBGL_ALWAYS_SOFTWARE=1
           export WGPU_BACKEND=vulkan
-          export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
           echo "LIBGL_ALWAYS_SOFTWARE=$LIBGL_ALWAYS_SOFTWARE" >> "$GITHUB_ENV"
           echo "WGPU_BACKEND=$WGPU_BACKEND" >> "$GITHUB_ENV"
-          echo "VK_ICD_FILENAMES=$VK_ICD_FILENAMES" >> "$GITHUB_ENV"
-          test -f /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          LVP_ICD="$(ls /usr/share/vulkan/icd.d/lvp_icd*.json 2>/dev/null | head -n 1 || true)"
+          if [ -n "$LVP_ICD" ]; then
+            echo "VK_ICD_FILENAMES=$LVP_ICD" >> "$GITHUB_ENV"
+          else
+            echo "::warning::lavapipe Vulkan ICD not found under /usr/share/vulkan/icd.d"
+          fi
           vulkaninfo --summary || true
 
       - name: Set up vcpkg zlib
@@ -322,6 +329,7 @@ jobs:
         shell: pwsh
         run: |
           . .\scripts\windows\msvc_env.ps1
+          Enable-MsvcC11Atomics
           node scripts\ci-renderer-proof-native.mjs wgpu-native windows
 
       - name: Upload native WGPU renderer proof
