@@ -499,7 +499,25 @@ fn assert_native_proof_transform(frame : NativeRendererProofFrame) -> Unit {
       frame,
       @core.Rect::new(x=88.0, y=8.0, width=32.0, height=32.0),
     ) {
-    native_proof_fail("native WGPU proof transform/path marker missing")
+    native_proof_fail(
+      "native WGPU proof transform/path marker missing; " +
+      region_cyan_debug(
+        frame,
+        @core.Rect::new(x=88.0, y=8.0, width=32.0, height=32.0),
+        "path_region",
+      ) +
+      "; " +
+      region_cyan_debug(
+        frame,
+        @core.Rect::new(
+          x=0.0,
+          y=0.0,
+          width=frame.width.to_double(),
+          height=frame.height.to_double(),
+        ),
+        "frame",
+      ),
+    )
   }
   if !region_has_dark_pixel(
       frame,
@@ -762,6 +780,59 @@ fn region_has_cyanish_pixel(
     }
   }
   false
+}
+
+///|
+fn region_cyan_debug(
+  frame : NativeRendererProofFrame,
+  rect : @core.Rect,
+  label : String,
+) -> String {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  let mut best_score = -1000000
+  let mut best_x = min_x
+  let mut best_y = min_y
+  let mut best_r = 0
+  let mut best_g = 0
+  let mut best_b = 0
+  let mut best_a = 0
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      let (r, g, b, a) = frame.pixel(x, y)
+      let score = g + b - r
+      if score > best_score {
+        best_score = score
+        best_x = x
+        best_y = y
+        best_r = r
+        best_g = g
+        best_b = b
+        best_a = a
+      }
+    }
+  }
+  label +
+  "_best=(x=" +
+  best_x.to_string() +
+  ",y=" +
+  best_y.to_string() +
+  ",rgba=" +
+  best_r.to_string() +
+  "," +
+  best_g.to_string() +
+  "," +
+  best_b.to_string() +
+  "," +
+  best_a.to_string() +
+  ",score=" +
+  best_score.to_string() +
+  ")"
 }
 
 ///|
