@@ -216,11 +216,13 @@ const validManifest = {
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/linux --target native",
+        "moon build examples/showcase/linux_cosmic --target native",
         "moon build examples/showcase/linux_skia --target native",
         "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/linux --target native",
+        "moon run examples/showcase/linux_cosmic --target native",
         "moon run examples/showcase/linux_skia --target native",
         "moon run examples/markdown_editor/linux_skia --target native",
       ],
@@ -322,6 +324,68 @@ const windowsPassed = {
 expectPass(
   "valid windows passed manifest",
   runValidator(writeFixture("valid-windows-passed.json", windowsPassed)),
+);
+
+const passedWithPlaceholderArtifact = {
+  ...windowsPassed,
+  platforms: windowsPassed.platforms.map(entry =>
+    entry.name === "windows"
+      ? {
+          ...entry,
+          artifacts: ["artifacts/platform-evidence/windows/README.md"],
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "passed platform rejects README placeholder artifact",
+  runValidator(writeFixture("passed-placeholder-artifact.json", passedWithPlaceholderArtifact)),
+  "artifacts[0] must reference runtime evidence, not README.md placeholder documentation",
+);
+
+const passedWithPlaceholderProvenanceArtifact = {
+  ...windowsPassed,
+  platforms: windowsPassed.platforms.map(entry =>
+    entry.name === "windows"
+      ? {
+          ...entry,
+          evidenceProvenance: {
+            ...entry.evidenceProvenance,
+            artifacts: ["artifacts/platform-evidence/windows/README.md"],
+          },
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "passed platform rejects README placeholder provenance artifact",
+  runValidator(
+    writeFixture(
+      "passed-placeholder-provenance-artifact.json",
+      passedWithPlaceholderProvenanceArtifact,
+    ),
+  ),
+  "evidenceProvenance.artifacts[0] must reference runtime evidence, not README.md placeholder documentation",
+);
+
+const passedSkiaWithPlaceholderArtifact = {
+  ...windowsPassed,
+  platforms: windowsPassed.platforms.map(entry =>
+    entry.name === "windows"
+      ? {
+          ...entry,
+          skiaEvidence: {
+            ...entry.skiaEvidence,
+            artifacts: ["artifacts/platform-evidence/windows/README.md"],
+          },
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "passed skia evidence rejects README placeholder artifact",
+  runValidator(writeFixture("passed-skia-placeholder-artifact.json", passedSkiaWithPlaceholderArtifact)),
+  "skiaEvidence.artifacts[0] must reference runtime evidence, not README.md placeholder documentation",
 );
 
 const passedWithoutProvenance = {
@@ -515,6 +579,44 @@ expectFail(
   "consumer observation requires command",
   runValidator(writeFixture("consumer-without-command.json", consumerWithoutCommand)),
   "consumerCommand must name the MoUI consumer run",
+);
+
+const linuxMissingCosmicRuntime = {
+  ...validManifest,
+  platforms: validManifest.platforms.map(entry =>
+    entry.name === "linux"
+      ? {
+          ...entry,
+          runtimeEvidenceCommands: entry.runtimeEvidenceCommands.filter(
+            command => !command.includes("examples/showcase/linux_cosmic"),
+          ),
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "linux evidence requires linux_cosmic runtime command",
+  runValidator(writeFixture("linux-missing-cosmic-runtime.json", linuxMissingCosmicRuntime)),
+  "runtimeEvidenceCommands must contain an entry mentioning 'moon run examples/showcase/linux_cosmic --target native'",
+);
+
+const linuxMissingCosmicBuild = {
+  ...validManifest,
+  platforms: validManifest.platforms.map(entry =>
+    entry.name === "linux"
+      ? {
+          ...entry,
+          routineCommands: entry.routineCommands.filter(
+            command => !command.includes("examples/showcase/linux_cosmic"),
+          ),
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "linux evidence requires linux_cosmic build command",
+  runValidator(writeFixture("linux-missing-cosmic-build.json", linuxMissingCosmicBuild)),
+  "routineCommands must contain an entry mentioning 'moon build examples/showcase/linux_cosmic --target native'",
 );
 
 const escapedArtifact = {

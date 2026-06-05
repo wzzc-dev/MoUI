@@ -180,11 +180,13 @@ const validManifest = {
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/linux --target native",
+        "moon build examples/showcase/linux_cosmic --target native",
         "moon build examples/showcase/linux_skia --target native",
         "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/linux --target native",
+        "moon run examples/showcase/linux_cosmic --target native",
         "moon run examples/showcase/linux_skia --target native",
         "moon run examples/markdown_editor/linux_skia --target native",
       ],

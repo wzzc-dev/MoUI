@@ -431,7 +431,9 @@ passed evidence provenance as mandatory: a `status=passed` platform entry or a
 the claim to a non-skipped successful GitHub Actions job or a matching-host
 artifact bundle. A host label, build-only job, package artifact, provider
 preflight, or skipped workflow-dispatch path is not enough to support passed
-runtime evidence. For Web folding,
+runtime evidence. `README.md` files under `artifacts/platform-evidence/` are
+placeholder documentation and must not be listed as passed platform or
+provenance artifacts. For Web folding,
 `record-platform-evidence-manifest.mjs ... web --web-presentation-manifest ...`
 derives provenance from the execution context: GitHub Actions runs record
 `kind=github-actions` with the workflow, job, run id, run URL, runner, and Web

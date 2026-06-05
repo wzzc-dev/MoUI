@@ -113,11 +113,13 @@ const platforms = new Map([
       routineTokens: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/linux --target native",
+        "moon build examples/showcase/linux_cosmic --target native",
         "moon build examples/showcase/linux_skia --target native",
         "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeTokens: [
         "moon run examples/showcase/linux --target native",
+        "moon run examples/showcase/linux_cosmic --target native",
         "moon run examples/showcase/linux_skia --target native",
         "moon run examples/markdown_editor/linux_skia --target native",
       ],
@@ -149,6 +151,15 @@ const skiaObservationKeys = [
 ];
 
 const provenanceKinds = ["github-actions", "matching-host-artifact"];
+
+const assertNoPlaceholderPassedArtifacts = (artifacts, label, status) => {
+  if (status !== "passed") return;
+  artifacts.forEach((artifact, index) => {
+    if (/\/README\.md$/i.test(artifact)) {
+      fail(`${label}[${index}] must reference runtime evidence, not README.md placeholder documentation, when status is passed`);
+    }
+  });
+};
 
 const validateEvidenceProvenance = (provenance, label, name, status) => {
   if (provenance === undefined) {
@@ -184,6 +195,11 @@ const validateEvidenceProvenance = (provenance, label, name, status) => {
   const notes = requireArray(provenance, "notes", `${label}.evidenceProvenance.notes`);
   assertStringArray(artifacts, `${label}.evidenceProvenance.artifacts`);
   assertStringArray(notes, `${label}.evidenceProvenance.notes`);
+  assertNoPlaceholderPassedArtifacts(
+    artifacts,
+    `${label}.evidenceProvenance.artifacts`,
+    status,
+  );
   if (artifacts.length === 0) {
     fail(`${label}.evidenceProvenance.artifacts must include at least one artifact reference`);
   }
@@ -323,6 +339,11 @@ const validateSkiaEvidence = (entry, label, name, platformStatus) => {
   assertStringArray(runtimeSmokeCommands, `${label}.skiaEvidence.runtimeSmokeCommands`);
   assertStringArray(artifacts, `${label}.skiaEvidence.artifacts`);
   assertStringArray(notes, `${label}.skiaEvidence.notes`);
+  assertNoPlaceholderPassedArtifacts(
+    artifacts,
+    `${label}.skiaEvidence.artifacts`,
+    status,
+  );
   if (notes.length === 0) {
     fail(`${label}.skiaEvidence.notes must include at least one note`);
   }
@@ -518,6 +539,7 @@ entries.forEach((entry, index) => {
   assertStringArray(exampleTargets, `${label}.exampleTargets`);
   assertStringArray(artifacts, `${label}.artifacts`);
   assertStringArray(notes, `${label}.notes`);
+  assertNoPlaceholderPassedArtifacts(artifacts, `${label}.artifacts`, status);
   if (notes.length === 0) {
     fail(`${label}.notes must include at least one note`);
   }

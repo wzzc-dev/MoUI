@@ -259,7 +259,9 @@ first-frame status. Any `status=passed` platform entry, and any
 traces the claim to a non-skipped successful GitHub Actions job/run or to a
 matching-host artifact bundle. Build-only jobs, package-only jobs,
 provider/preflight summaries, dependency smokes, and skipped workflow-dispatch
-paths are not runtime proof. `skiaEvidence.status=passed` is Skia-route
+paths are not runtime proof. `artifacts/platform-evidence/*/README.md` files
+are placeholder documentation and must not be used as passed platform, Skia, or
+provenance artifacts. `skiaEvidence.status=passed` is Skia-route
 evidence, not a complete platform-services claim by itself, but native platform
 entries cannot be marked `passed` unless their Skia evidence is also `passed`.
 Use
