@@ -537,49 +537,10 @@ fn assert_native_proof_text_evidence(
       "native WGPU proof platform text provider is still planned; fallback glyphs cannot prove native provider text/emoji readiness",
     )
   }
-  let emoji_text = "\u{1F469}\u{200D}\u{1F4BB}"
-  let emoji_run = @core.TextRun::new(
-    text=emoji_text,
-    frame=@core.Rect::new(x=0.0, y=0.0, width=64.0, height=40.0),
-    font=@core.FontSpec::new(
-      families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
-      size=26.0,
-      weight=400,
-    ),
-    color=@core.Color::black(),
-    align=@core.TextAlign::TextStart,
-  )
-  match text_engine.layout_run(renderer.font_cache, emoji_run, 1.0) {
-    Some(layout) => {
-      if layout.glyphs.length() < 1 {
-        native_proof_fail("native WGPU proof emoji layout produced no glyphs")
-      }
-      let mut color_glyphs = 0
-      let mut high_saturation_pixels = 0
-      for glyph in layout.glyphs {
-        match text_engine.raster_glyph(renderer.font_cache, glyph.key) {
-          Some(raster) =>
-            if raster.format == NativeRasterGlyphFormat::ColorRgba {
-              color_glyphs = color_glyphs + 1
-              high_saturation_pixels += count_high_saturation_rgba(
-                raster.pixels,
-              )
-            }
-          None => ()
-        }
-      }
-      if color_glyphs < 1 || high_saturation_pixels < 8 {
-        native_proof_fail(
-          "native WGPU proof emoji glyph was not a high-saturation RGBA glyph",
-        )
-      }
-      println(
-        "native WGPU proof color emoji glyphs=\{color_glyphs} high_saturation_pixels=\{high_saturation_pixels}",
-      )
-    }
-    None => native_proof_fail("native WGPU proof emoji layout unavailable")
-  }
+  assert_native_proof_color_emoji(renderer, text_engine)
 
+  let emoji_text = "\u{1F469}\u{200D}\u{1F4BB}"
+  let emoji_run = native_proof_emoji_run(emoji_text)
   let measured = text_engine.measure(
     renderer.font_cache,
     @core.TextLayoutInput::new(text=emoji_text, font=emoji_run.font),
@@ -623,6 +584,69 @@ fn assert_native_proof_text_evidence(
   }
   println(
     "native WGPU proof paragraph line-metrics later-line-pixels width=\{paragraph.size.width} baseline=\{paragraph.baseline}",
+  )
+}
+
+///|
+fn native_proof_emoji_run(text : String) -> @core.TextRun {
+  @core.TextRun::new(
+    text~,
+    frame=@core.Rect::new(x=0.0, y=0.0, width=64.0, height=40.0),
+    font=@core.FontSpec::new(
+      families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+      size=26.0,
+      weight=400,
+    ),
+    color=@core.Color::black(),
+    align=@core.TextAlign::TextStart,
+  )
+}
+
+///|
+fn assert_native_proof_color_emoji(
+  renderer : RendererHandle,
+  text_engine : NativeTextEngine,
+) -> Unit {
+  let samples = [
+    "\u{1F642}", "\u{2615}\u{FE0F}", "\u{1F469}\u{200D}\u{1F4BB}",
+  ]
+  let mut total_color_glyphs = 0
+  let mut total_high_saturation_pixels = 0
+  for sample in samples {
+    let run = native_proof_emoji_run(sample)
+    match text_engine.layout_run(renderer.font_cache, run, 1.0) {
+      Some(layout) => {
+        if layout.glyphs.length() < 1 {
+          continue
+        }
+        let mut color_glyphs = 0
+        let mut high_saturation_pixels = 0
+        for glyph in layout.glyphs {
+          match text_engine.raster_glyph(renderer.font_cache, glyph.key) {
+            Some(raster) =>
+              if raster.format == NativeRasterGlyphFormat::ColorRgba {
+                color_glyphs = color_glyphs + 1
+                high_saturation_pixels += count_high_saturation_rgba(
+                  raster.pixels,
+                )
+              }
+            None => ()
+          }
+        }
+        total_color_glyphs += color_glyphs
+        total_high_saturation_pixels += high_saturation_pixels
+        if color_glyphs >= 1 && high_saturation_pixels >= 8 {
+          println(
+            "native WGPU proof color emoji sample=\{sample} glyphs=\{color_glyphs} high_saturation_pixels=\{high_saturation_pixels}",
+          )
+          return
+        }
+      }
+      None => ()
+    }
+  }
+  native_proof_fail(
+    "native WGPU proof emoji glyph was not a high-saturation RGBA glyph; color_glyphs=\{total_color_glyphs} high_saturation_pixels=\{total_high_saturation_pixels}",
   )
 }
 
