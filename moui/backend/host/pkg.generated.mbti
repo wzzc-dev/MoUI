@@ -323,6 +323,39 @@ pub(all) struct HostInputContract {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostInputContract::new(capabilities? : HostInputCapabilities, coordinates? : HostCoordinatePolicy) -> Self
 
+pub(all) struct HostNativeAsyncImageCompletionResult {
+  window_id : HostWindowId
+  source : String
+  status : HostNativeAsyncImageCompletionStatus
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum HostNativeAsyncImageCompletionStatus {
+  NativeAsyncImageCompletionDelivered
+  NativeAsyncImageCompletionMissing
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct HostNativeAsyncImageLoadRequest {
+  window_id : HostWindowId
+  source : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct HostNativeAsyncImageSource {
+  // private fields
+}
+pub fn HostNativeAsyncImageSource::complete(Self, HostWindowId, @render.ImageResourceLoadCompletion) -> HostNativeAsyncImageCompletionResult
+pub fn HostNativeAsyncImageSource::diagnostics(Self) -> HostNativeAsyncImageSourceDiagnostics
+pub fn HostNativeAsyncImageSource::loader(Self) -> HostAsyncImageLoader
+pub fn HostNativeAsyncImageSource::new() -> Self
+pub fn HostNativeAsyncImageSource::pending_requests(Self) -> Array[HostNativeAsyncImageLoadRequest]
+
+pub(all) struct HostNativeAsyncImageSourceDiagnostics {
+  requested_count : Int
+  completed_count : Int
+  cancelled_count : Int
+  missing_completion_count : Int
+  pending_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct HostPendingServiceRequest {
   id : HostServiceRequestId
   request : HostServiceRequest

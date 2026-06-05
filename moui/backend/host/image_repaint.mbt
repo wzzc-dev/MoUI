@@ -67,6 +67,34 @@ pub(all) struct HostAsyncImageLoaderDiagnostics {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum HostNativeAsyncImageCompletionStatus {
+  NativeAsyncImageCompletionDelivered
+  NativeAsyncImageCompletionMissing
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostNativeAsyncImageLoadRequest {
+  window_id : HostWindowId
+  source : String
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostNativeAsyncImageCompletionResult {
+  window_id : HostWindowId
+  source : String
+  status : HostNativeAsyncImageCompletionStatus
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostNativeAsyncImageSourceDiagnostics {
+  requested_count : Int
+  completed_count : Int
+  cancelled_count : Int
+  missing_completion_count : Int
+  pending_count : Int
+} derive(Eq, Debug, ToJson)
+
+///|
 pub struct HostImageResourceRepaintTracker {
   priv mut window_ids : Array[HostWindowId]
   priv mut revisions : Array[Int]
@@ -93,6 +121,13 @@ priv struct HostAsyncImageLoadInFlight {
 }
 
 ///|
+priv struct HostNativeAsyncImageLoadPending {
+  window_id : HostWindowId
+  source : String
+  complete : (@render.ImageResourceLoadCompletion) -> Unit
+}
+
+///|
 pub struct HostAsyncImageLoader {
   priv start_load_fn : (
     HostWindowId,
@@ -104,6 +139,15 @@ pub struct HostAsyncImageLoader {
   priv mut completed_count : Int
   priv mut cancelled_count : Int
   priv mut already_in_flight_count : Int
+}
+
+///|
+pub struct HostNativeAsyncImageSource {
+  priv mut pending : Array[HostNativeAsyncImageLoadPending]
+  priv mut requested_count : Int
+  priv mut completed_count : Int
+  priv mut cancelled_count : Int
+  priv mut missing_completion_count : Int
 }
 
 ///|
@@ -139,6 +183,78 @@ pub fn HostAsyncImageLoader::new(
     completed_count: 0,
     cancelled_count: 0,
     already_in_flight_count: 0,
+  }
+}
+
+///|
+pub fn HostNativeAsyncImageSource::new() -> HostNativeAsyncImageSource {
+  {
+    pending: [],
+    requested_count: 0,
+    completed_count: 0,
+    cancelled_count: 0,
+    missing_completion_count: 0,
+  }
+}
+
+///|
+pub fn HostNativeAsyncImageSource::loader(
+  self : HostNativeAsyncImageSource,
+) -> HostAsyncImageLoader {
+  HostAsyncImageLoader::new(start_load=(window_id, source, complete) => {
+    self.register(window_id, source, complete)
+    Some(() => ignore(self.cancel(window_id, source)))
+  })
+}
+
+///|
+pub fn HostNativeAsyncImageSource::pending_requests(
+  self : HostNativeAsyncImageSource,
+) -> Array[HostNativeAsyncImageLoadRequest] {
+  let requests : Array[HostNativeAsyncImageLoadRequest] = []
+  for entry in self.pending {
+    requests.push({ window_id: entry.window_id, source: entry.source })
+  }
+  requests
+}
+
+///|
+pub fn HostNativeAsyncImageSource::complete(
+  self : HostNativeAsyncImageSource,
+  window_id : HostWindowId,
+  completion : @render.ImageResourceLoadCompletion,
+) -> HostNativeAsyncImageCompletionResult {
+  match self.remove_pending(window_id, completion.source) {
+    Some(entry) => {
+      self.completed_count = self.completed_count + 1
+      (entry.complete)(completion)
+      {
+        window_id,
+        source: completion.source,
+        status: HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
+      }
+    }
+    None => {
+      self.missing_completion_count = self.missing_completion_count + 1
+      {
+        window_id,
+        source: completion.source,
+        status: HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionMissing,
+      }
+    }
+  }
+}
+
+///|
+pub fn HostNativeAsyncImageSource::diagnostics(
+  self : HostNativeAsyncImageSource,
+) -> HostNativeAsyncImageSourceDiagnostics {
+  {
+    requested_count: self.requested_count,
+    completed_count: self.completed_count,
+    cancelled_count: self.cancelled_count,
+    missing_completion_count: self.missing_completion_count,
+    pending_count: self.pending.length(),
   }
 }
 
@@ -308,6 +424,51 @@ fn HostAsyncImageLoader::is_in_flight(
   self.in_flight.any(entry => {
     entry.window_id == window_id && entry.source == source
   })
+}
+
+///|
+fn HostNativeAsyncImageSource::register(
+  self : HostNativeAsyncImageSource,
+  window_id : HostWindowId,
+  source : String,
+  complete : (@render.ImageResourceLoadCompletion) -> Unit,
+) -> Unit {
+  self.pending.push({ window_id, source, complete })
+  self.requested_count = self.requested_count + 1
+}
+
+///|
+fn HostNativeAsyncImageSource::cancel(
+  self : HostNativeAsyncImageSource,
+  window_id : HostWindowId,
+  source : String,
+) -> Bool {
+  match self.remove_pending(window_id, source) {
+    Some(_) => {
+      self.cancelled_count = self.cancelled_count + 1
+      true
+    }
+    None => false
+  }
+}
+
+///|
+fn HostNativeAsyncImageSource::remove_pending(
+  self : HostNativeAsyncImageSource,
+  window_id : HostWindowId,
+  source : String,
+) -> HostNativeAsyncImageLoadPending? {
+  let kept : Array[HostNativeAsyncImageLoadPending] = []
+  let mut removed : HostNativeAsyncImageLoadPending? = None
+  for entry in self.pending {
+    if removed is None && entry.window_id == window_id && entry.source == source {
+      removed = Some(entry)
+    } else {
+      kept.push(entry)
+    }
+  }
+  self.pending = kept
+  removed
 }
 
 ///|

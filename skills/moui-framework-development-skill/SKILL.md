@@ -141,7 +141,7 @@ Use this skill when editing or reviewing:
   image-resource load completion apply bridge,
   native async image loading-record scheduler,
   native provider async-image scheduling hooks,
-  native async image completion source,
+  native async image completion source and deferred native completion request source,
   host-event subscription source fanout, window-scoped subscription source,
   platform event-source bundles for feeding normalized Web/native host and window
   events into app-owned subscriptions,
@@ -491,7 +491,10 @@ moon info
   snapshots through `HostImageResourceCompletionSource` in `backend/host`. Use
   `HostAsyncImageLoader` for host-side loading-record scans, in-flight
   de-duplication, cancellation cleanup, and late-completion gating before
-  concrete platform loaders call into that completion source.
+  concrete platform loaders call into that completion source. Use
+  `HostNativeAsyncImageSource` when a platform loader needs to capture pending
+  native `(window, source)` requests and deliver ready/failed completions later
+  from an independent callback.
   Native WGPU providers may use renderer-owned helpers such as
   `native_image_load_completion` to convert PNG/JPEG/BMP data URI and local-file
   decode results into completion payloads, but matching-host off-main runtime
