@@ -236,7 +236,11 @@ test "cosmic text rasterizes lowercase and digits with valid glyph bitmaps" {
             assert_true(
               raster.format == @wgpu_renderer.NativeRasterGlyphFormat::AlphaMask,
             )
-            match cosmic_text_char_at(run.text, glyph.start) {
+            match
+              cosmic_text_char_at_index(
+                run.text,
+                cosmic_text_utf16_offset_to_char_index(run.text, glyph.start),
+              ) {
               Some('A') => upper_height = raster.height
               Some('a') => letter_height = raster.height
               Some('1') => digit_height = raster.height
