@@ -359,6 +359,10 @@ fn RendererHandle::ensure_native_image_resource(
     return None
   }
   guard load_native_image_data(source) is Some(image) else {
+    if native_image_source_is_pending(source) {
+      ignore(self.image_lifecycle.mark_loading(source))
+      return None
+    }
     self.failed_images[source] = true
     ignore(
       self.image_lifecycle.mark_failed(
@@ -416,6 +420,11 @@ fn RendererHandle::ensure_native_image_resource(
       None
     }
   }
+}
+
+///|
+fn native_image_source_is_pending(source : String) -> Bool {
+  !source.has_prefix("data:") && !@fs.path_exists(source)
 }
 
 ///|
