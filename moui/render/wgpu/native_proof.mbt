@@ -4,6 +4,7 @@ pub(all) struct NativeRendererProofFrame {
   height : Int
   row_bytes : Int
   pixels : Bytes
+  flip_y : Bool
 }
 
 ///|
@@ -324,12 +325,13 @@ fn RendererHandle::render_offscreen_proof_frame(
   view.release()
   texture.destroy()
   texture.release()
-  {
+  detect_native_proof_frame_orientation({
     width: width.reinterpret_as_int(),
     height: height.reinterpret_as_int(),
     row_bytes,
     pixels,
-  }
+    flip_y: false,
+  })
 }
 
 ///|
@@ -727,7 +729,8 @@ fn NativeRendererProofFrame::pixel(
   if x < 0 || y < 0 || x >= self.width || y >= self.height {
     return (0, 0, 0, 0)
   }
-  let offset = y * self.row_bytes + x * 4
+  let row = if self.flip_y { self.height - 1 - y } else { y }
+  let offset = row * self.row_bytes + x * 4
   if offset + 3 >= self.pixels.length() {
     return (0, 0, 0, 0)
   }
@@ -737,6 +740,76 @@ fn NativeRendererProofFrame::pixel(
     self.pixels[offset + 2].to_int(),
     self.pixels[offset + 3].to_int(),
   )
+}
+
+///|
+fn NativeRendererProofFrame::with_y_orientation(
+  self : NativeRendererProofFrame,
+  flip_y : Bool,
+) -> NativeRendererProofFrame {
+  {
+    width: self.width,
+    height: self.height,
+    row_bytes: self.row_bytes,
+    pixels: self.pixels,
+    flip_y,
+  }
+}
+
+///|
+fn detect_native_proof_frame_orientation(
+  frame : NativeRendererProofFrame,
+) -> NativeRendererProofFrame {
+  let upright_score = native_proof_orientation_score(frame, flip_y=false)
+  let flipped_score = native_proof_orientation_score(frame, flip_y=true)
+  if flipped_score >= 3 && flipped_score > upright_score {
+    println(
+      "native WGPU proof readback rows use bottom-left origin; normalizing logical pixel checks",
+    )
+    frame.with_y_orientation(true)
+  } else {
+    frame
+  }
+}
+
+///|
+fn native_proof_orientation_score(
+  frame : NativeRendererProofFrame,
+  flip_y~ : Bool,
+) -> Int {
+  let candidate = frame.with_y_orientation(flip_y)
+  let mut score = 0
+  if region_has_redish_pixel(
+      candidate,
+      @core.Rect::new(x=28.0, y=28.0, width=9.0, height=9.0),
+    ) {
+    score += 2
+  }
+  if region_has_purpleish_pixel(
+      candidate,
+      @core.Rect::new(x=40.0, y=28.0, width=9.0, height=9.0),
+    ) {
+    score += 1
+  }
+  if region_has_blueish_pixel(
+      candidate,
+      @core.Rect::new(x=52.0, y=28.0, width=7.0, height=9.0),
+    ) {
+    score += 1
+  }
+  if region_has_dark_magenta_pixel(
+      candidate,
+      @core.Rect::new(x=76.0, y=12.0, width=10.0, height=10.0),
+    ) {
+    score += 1
+  }
+  if region_has_cyanish_pixel(
+      candidate,
+      @core.Rect::new(x=88.0, y=8.0, width=32.0, height=32.0),
+    ) {
+    score += 1
+  }
+  score
 }
 
 ///|
