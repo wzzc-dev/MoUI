@@ -714,6 +714,11 @@ fn CosmicTextCache::layout_for_run(
   if runs.is_empty() || !self.has_loaded_fonts() {
     return None
   }
+  let diagnostics = cosmic_text_diagnostics_enabled() &&
+    cosmic_text_preserves_source_text(run.font)
+  if diagnostics {
+    self.print_emoji_diagnostics_header(run)
+  }
   let result = cosmic_text_layout_result_from_runs(
     @core.TextLayoutInput::new(text=run.text, font=run.font),
     runs,
@@ -735,6 +740,14 @@ fn CosmicTextCache::layout_for_run(
           glyph,
           physical.cache_key,
         )
+        if diagnostics {
+          self.print_emoji_glyph_diagnostics(
+            run,
+            glyph,
+            physical.cache_key,
+            cache_key,
+          )
+        }
         let key = self.native_glyph_key(cache_key)
         glyphs.push(
           @wgpu_renderer.NativeGlyphPlacement::new(
@@ -753,6 +766,47 @@ fn CosmicTextCache::layout_for_run(
       caret_positions=result.caret_positions,
       glyphs~,
     ),
+  )
+}
+
+///|
+fn cosmic_text_diagnostics_enabled() -> Bool {
+  match @env.get_env_var("MOUI_COSMIC_TEXT_DIAGNOSTICS") {
+    Some(value) => value.trim().to_owned() == "1"
+    None => false
+  }
+}
+
+///|
+fn CosmicTextCache::print_emoji_diagnostics_header(
+  self : CosmicTextCache,
+  run : @core.TextRun,
+) -> Unit {
+  println(
+    "MoUI cosmic text diagnostic text=\{run.text} emoji_path=\{self.catalog.emoji_path} emoji_font_ids=\{self.emoji_font_ids.length()}",
+  )
+  for font in self.font_system.fonts() {
+    println(
+      "MoUI cosmic text diagnostic font id=\{font.id()} family=\{font.family_name()} postscript=\{font.postscript_name()} not_emoji=\{font.not_emoji()}",
+    )
+  }
+}
+
+///|
+fn CosmicTextCache::print_emoji_glyph_diagnostics(
+  self : CosmicTextCache,
+  run : @core.TextRun,
+  glyph : @moon_cosmic.LayoutGlyph,
+  original_key : @moon_cosmic.CacheKey,
+  fallback_key : @moon_cosmic.CacheKey,
+) -> Unit {
+  let text = cosmic_text_layout_text(run.text, run.font)
+  let codepoint = match cosmic_text_codepoint_at_utf16(text, glyph.start) {
+    Some(value) => value.to_string()
+    None => "none"
+  }
+  println(
+    "MoUI cosmic text diagnostic glyph start=\{glyph.start} end=\{glyph.end} codepoint=\{codepoint} glyph_font=\{glyph.font_id} glyph_id=\{glyph.glyph_id} original_font=\{original_key.font_id} original_glyph=\{original_key.glyph_id} original_color=\{self.cosmic_glyph_uses_color_bitmap(original_key)} fallback_font=\{fallback_key.font_id} fallback_glyph=\{fallback_key.glyph_id} fallback_color=\{self.cosmic_glyph_uses_color_bitmap(fallback_key)}",
   )
 }
 
