@@ -236,6 +236,21 @@ test "native renderer plans radial brush as true radial visual payload" {
 }
 
 ///|
+test "native proof frame normalizes flipped readback rows" {
+  let frame = NativeRendererProofFrame::{
+    width: 1,
+    height: 2,
+    row_bytes: 4,
+    pixels: Bytes::from_array([
+      b'\xff', b'\x00', b'\x00', b'\xff', b'\x00', b'\x00', b'\xff', b'\xff',
+    ]),
+    flip_y: false,
+  }
+  assert_true(frame.pixel(0, 0) == (255, 0, 0, 255))
+  assert_true(frame.with_y_orientation(true).pixel(0, 0) == (0, 0, 255, 255))
+}
+
+///|
 test "native renderer plans radial stroke brush as true radial visual payload" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
