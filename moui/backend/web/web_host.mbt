@@ -190,6 +190,15 @@ pub fn web_service_bridge(
 }
 
 ///|
+pub fn web_app_services(
+  system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
+) -> @host.HostAppServices {
+  @host.HostAppServices::new(
+    bridge=web_service_bridge(system_theme~, open_url=dispatch_web_open_url),
+  )
+}
+
+///|
 fn WebAsyncHostServiceKind::browser_code(self : WebAsyncHostServiceKind) -> Int {
   match self {
     ClipboardReadText => -1

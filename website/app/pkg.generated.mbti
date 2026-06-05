@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "website/app"
+
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn runtime_with_services(@host.HostAppServices, width? : Double, height? : Double) -> @core.AppRuntime
+
+// Errors
+
+// Types and methods
+pub(all) enum HeroDemoMode {
+  HeroSource
+  HeroCounter
+} derive(Eq)
+
+pub(all) struct Model {
+  dark : Bool
+  body_scroll_y : Double
+  hero_demo : HeroDemoMode
+  hero_count : Int
+}
+pub fn Model::new() -> Self
+pub fn Model::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn Model::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn Model::update(Self, Msg) -> Self
+pub fn Model::update_with_services(Self, Msg, @host.HostAppServices) -> (Self, @core.Effect[Msg])
+pub fn Model::view(Self, @core.ViewEnvironment) -> @core.View[Msg]
+
+pub(all) enum Msg {
+  ToggleDark
+  ScrollBodyTo(Double)
+  SelectHeroDemo(HeroDemoMode)
+  CounterIncrement
+  CounterReset
+  OpenRepository
+}
+
+// Type aliases
+
+// Traits
+
