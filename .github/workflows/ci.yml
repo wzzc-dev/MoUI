@@ -87,7 +87,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
-            libfontconfig1-dev libfreetype-dev libharfbuzz-dev
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji
 
       - name: Set up MoonBit
         run: |

@@ -87,12 +87,43 @@ const webRendererProofEvidence = {
 const webRendererProof = (name, status, key) => {
   const required = name === "showcase-web-wasm";
   const passed = required && status === "passed";
-  return {
+  const base = {
     required,
     passed,
     evidence: passed ? webRendererProofEvidence[key] : [],
     matchedMarkers: passed ? webRendererProofEvidence[key].length : 0,
   };
+  if (!passed) return base;
+  if (key === "colorEmojiPixels") {
+    return { ...base, glyphHighSaturationPixels: 42, glyphAlphaPixels: 120 };
+  }
+  if (key === "zwjGrapheme") {
+    return { ...base, logicalClusters: 1, visualClusters: 1 };
+  }
+  if (key === "bidiLayout") {
+    return {
+      ...base,
+      logicalClusters: ["A", "B", "C", " ", "א", "ב", "ג"],
+      visualClusters: ["A", "B", "C", " ", "ג", "ב", "א"],
+    };
+  }
+  if (key === "paragraphWrapping") {
+    return { ...base, paragraphLineCount: 3, paragraphRows: 3, darkRows: 8 };
+  }
+  if (key === "asyncImageSecondFrame") {
+    return {
+      ...base,
+      eventIndexes: {
+        placeholder: 4,
+        load: 6,
+        change: 7,
+        repaint: 8,
+        ready: 10,
+        present: [5, 11],
+      },
+    };
+  }
+  return base;
 };
 
 const webPlatformObservations = value =>
@@ -312,6 +343,19 @@ const webPresentationTarget = ({
         { kind: 23, name: "pointer_down" },
         { kind: 40, name: "key_down" },
         { kind: 42, name: "ime_commit" },
+        { kind: 94, name: "text_color_glyph" },
+        { kind: 95, name: "text_grapheme_layout" },
+        { kind: 96, name: "text_bidi_layout" },
+        { kind: 97, name: "text_paragraph_line", lineIndex: 1 },
+        { kind: 97, name: "text_paragraph_line", lineIndex: 2 },
+        { kind: 97, name: "text_paragraph_line", lineIndex: 3 },
+        { kind: 98, name: "image_placeholder_frame" },
+        { kind: 100, name: "present_frame", frame: 1 },
+        { kind: 90, name: "image_load" },
+        { kind: 92, name: "image_resource_change" },
+        { kind: 93, name: "image_repaint_request" },
+        { kind: 99, name: "image_ready_frame" },
+        { kind: 100, name: "present_frame", frame: 2 },
       ]
     : [],
   observations: {

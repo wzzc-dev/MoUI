@@ -565,13 +565,19 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   current-platform backend checks on Ubuntu.
 - `Web runtime presentation` builds Showcase and Markdown Editor Web wasm-gc
   targets, serves the repository root, starts a Chrome DevTools Protocol
-  browser session, runs `record-web-runtime-presentation.mjs --require-passed`,
-  validates the browser-session manifest, folds it into the Web platform entry
-  with `record-platform-evidence-manifest.mjs ... web
+  browser session with `fonts-noto-color-emoji` installed, runs
+  `record-web-runtime-presentation.mjs --require-passed`, validates the
+  browser-session manifest, folds it into the Web platform entry with
+  `record-platform-evidence-manifest.mjs ... web
   --web-presentation-manifest ...`, validates that Web entry, and uploads the
   presentation manifest, screenshots, browser/server logs, copied platform
   Web evidence, and `platform-runtime-evidence.json` as the
-  `moui-web-runtime-presentation` artifact.
+  `moui-web-runtime-presentation` artifact. Showcase's first Advanced
+  Rendering card is the Web renderer-proof probe scene; passed Web proof
+  requires screenshot markers plus runtime evidence events for RGBA color emoji
+  glyph atlas pixels, one-cluster ZWJ layout, bidi visual-order reordering,
+  paragraph line metrics with later-line pixels, and placeholder -> image load
+  -> repaint -> ready second-frame image ordering.
 - `Native WGPU renderer proof` and `Native Skia renderer proof` run macOS,
   Windows, and Linux matrices, write renderer-proof manifests under
   `artifacts/conformance/renderer-proof/`, upload matching
