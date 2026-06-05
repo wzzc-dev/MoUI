@@ -393,11 +393,23 @@ export function createWebGpuImports(options = {}) {
         return length(max(q, vec2f(0.0))) + min(max(q.x, q.y), 0.0) - r;
       }
 
-      fn gradient_color(local: vec2f, start: vec2f, end: vec2f, c0: vec4f, c1: vec4f) -> vec4f {
+      fn linear_gradient_color(local: vec2f, start: vec2f, end: vec2f, c0: vec4f, c1: vec4f) -> vec4f {
         let axis = end - start;
         let denom = max(dot(axis, axis), 0.0001);
         let t = clamp(dot(local - start, axis) / denom, 0.0, 1.0);
         return mix(c0, c1, t);
+      }
+
+      fn radial_gradient_color(local: vec2f, center: vec2f, radius: f32, c0: vec4f, c1: vec4f) -> vec4f {
+        let t = clamp(distance(local, center) / max(radius, 0.0001), 0.0, 1.0);
+        return mix(c0, c1, t);
+      }
+
+      fn brush_color(local: vec2f, start: vec2f, end: vec2f, c0: vec4f, c1: vec4f, kind: f32) -> vec4f {
+        if (kind > 0.5) {
+          return radial_gradient_color(local, start, end.x, c0, c1);
+        }
+        return linear_gradient_color(local, start, end, c0, c1);
       }
 
       @fragment
@@ -427,7 +439,7 @@ export function createWebGpuImports(options = {}) {
           let innerAlpha = 1.0 - smoothstep(-0.5, 0.5, innerDist);
           alpha = max(alpha - innerAlpha, 0.0);
         }
-        let color = gradient_color(in.local, in.blurStart.zw, in.end, in.color0, in.color1);
+        let color = brush_color(in.local, in.blurStart.zw, in.end, in.color0, in.color1, in.blurStart.y);
         return vec4f(color.rgb, color.a * alpha);
       }
     `,
@@ -983,6 +995,25 @@ export function createWebGpuImports(options = {}) {
   const pushGradientRounded = (renderer, x, y, width, height, radius, strokeWidth, start, end, c0, c1, mode) => {
     const rect = { x: Number(x), y: Number(y), width: Number(width), height: Number(height) };
     pushVisualQuad(renderer, rect, Number(radius), mode, Number(strokeWidth), 0, start, end, c0, c1);
+  };
+
+  const pushRadialRounded = (renderer, x, y, width, height, radius, strokeWidth, center, gradientRadius, c0, c1, mode) => {
+    const rect = { x: Number(x), y: Number(y), width: Number(width), height: Number(height) };
+    pushVisualQuad(
+      renderer,
+      rect,
+      Number(radius),
+      mode,
+      Number(strokeWidth),
+      1,
+      center,
+      {
+        x: rect.x + Math.max(0.0001, Number(gradientRadius) || 0),
+        y: rect.y,
+      },
+      c0,
+      c1,
+    );
   };
 
   const ensureGlyph = (renderer, char, font) => {
@@ -1809,6 +1840,18 @@ export function createWebGpuImports(options = {}) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
       pushGradientRounded(renderer, x, y, width, height, radius, strokeWidth, { x: startX, y: startY }, { x: endX, y: endY }, { r: r0, g: g0, b: b0, a: a0 }, { r: r1, g: g1, b: b1, a: a1 }, 1);
+      return ok();
+    },
+    fill_rounded_rect_radial(rendererHandle, x, y, width, height, radius, centerX, centerY, gradientRadius, r0, g0, b0, a0, r1, g1, b1, a1) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      pushRadialRounded(renderer, x, y, width, height, radius, 0, { x: centerX, y: centerY }, gradientRadius, { r: r0, g: g0, b: b0, a: a0 }, { r: r1, g: g1, b: b1, a: a1 }, 0);
+      return ok();
+    },
+    stroke_rounded_rect_radial(rendererHandle, x, y, width, height, radius, strokeWidth, centerX, centerY, gradientRadius, r0, g0, b0, a0, r1, g1, b1, a1) {
+      const renderer = renderers.get(rendererHandle);
+      if (!renderer) return invalidResource();
+      pushRadialRounded(renderer, x, y, width, height, radius, strokeWidth, { x: centerX, y: centerY }, gradientRadius, { r: r0, g: g0, b: b0, a: a0 }, { r: r1, g: g1, b: b1, a: a1 }, 1);
       return ok();
     },
     draw_shadow(rendererHandle, x, y, width, height, radius, offsetX, offsetY, blurRadius, spread, r, g, b, a) {
