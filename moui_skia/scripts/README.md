@@ -475,10 +475,11 @@ MinGW-compatible path when MoonBit is building native stubs through GCC/MinGW:
 ```
 
 Use the MSVC path for the default release provider or a prepared release zip
-or checkout that provides `skia.lib`. The workflow fetches release packages
-into `.skia-cache/release`; the helper calls `vcvarsall.bat`, builds with
-`cl`, prepends the Skia library directory to `PATH`, captures the same artifact
-log names, and restores both temporary package rewrites:
+or checkout that provides `skia.lib` for static mode or `skia.dll.lib` plus
+`skia.dll` for dynamic mode. The workflow fetches release packages into
+`.skia-cache/release`; the helper calls `vcvarsall.bat`, builds with `cl`,
+prepends the Skia library directory to `PATH`, captures the same artifact log
+names, and restores both temporary package rewrites:
 
 ```powershell
 .\scripts\windows-msvc-accept-real-skia-smoke.ps1 -LogDir logs
