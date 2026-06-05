@@ -391,11 +391,13 @@ fn native_proof_commands(async_source : String) -> Array[@core.DrawCommand] {
     @core.DrawCommand::DrawPath(
       @core.PathSpec::new(
         verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=22.0, y=22.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=44.0, y=22.0)),
+          @core.PathVerb::MoveTo(@core.Point::new(x=22.0, y=8.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=44.0, y=8.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=44.0, y=30.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=22.0, y=30.0)),
+          @core.PathVerb::Close,
         ],
-        stroke=Some(@core.Brush::solid(@core.Color::rgba(r=0.0, g=1.0, b=1.0))),
-        stroke_width=10.0,
+        fill=Some(@core.Brush::solid(@core.Color::rgba(r=0.0, g=1.0, b=1.0))),
       ),
     ),
     @core.DrawCommand::PopClip,
