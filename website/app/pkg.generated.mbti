@@ -14,15 +14,9 @@ pub fn runtime_with_services(@host.HostAppServices, width? : Double, height? : D
 // Errors
 
 // Types and methods
-pub(all) enum HeroDemoMode {
-  HeroSource
-  HeroCounter
-} derive(Eq)
-
 pub(all) struct Model {
   dark : Bool
   body_scroll_y : Double
-  hero_demo : HeroDemoMode
   hero_count : Int
 }
 pub fn Model::new() -> Self
@@ -35,7 +29,6 @@ pub fn Model::view(Self, @core.ViewEnvironment) -> @core.View[Msg]
 pub(all) enum Msg {
   ToggleDark
   ScrollBodyTo(Double)
-  SelectHeroDemo(HeroDemoMode)
   CounterIncrement
   CounterReset
   OpenRepository
