@@ -85,7 +85,7 @@ jobs:
           moon check
           moon check --target all
           moon info
-          moon test
+          moon test . --target native
           moon -C scripts/native_smoke check
           moon -C scripts/native_smoke build --target native
           bash -n scripts/linux-build-skia.sh

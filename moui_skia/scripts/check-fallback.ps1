@@ -265,9 +265,13 @@ function New-FakeReleaseArtifact {
   $wrapperLog = Join-Path $Directory "windows-real-skia-smoke.log"
   $nativeLog = Join-Path $Directory "windows-native-smoke-output.log"
   $acceptanceLog = Join-Path $Directory "windows-real-skia-acceptance.log"
-  $libraryLines = @("  library=skia.lib 123 bytes")
   if ($LinkMode.Trim().ToLowerInvariant() -eq "dynamic") {
+    $libraryLines = @("  library=skia.dll.lib 123 bytes")
     $libraryLines += "  library=skia.dll 456 bytes"
+    $linkLibrary = "skia.dll.lib"
+  } else {
+    $libraryLines = @("  library=skia.lib 123 bytes")
+    $linkLibrary = "skia.lib"
   }
 
   "release Skia provider dry run" | Set-Content -LiteralPath $preflightLog
@@ -287,7 +291,7 @@ function New-FakeReleaseArtifact {
     "  skia_package_sha256=$Sha256"
   ) + $libraryLines + @(
     "  stub_cc_flags=/DMOUI_SKIA_HAS_SKIA /IC:/fake/skia"
-    "  cc_link_flags=C:/fake/skia/out/Release-x64/skia.lib user32.lib"
+    "  cc_link_flags=C:/fake/skia/out/Release-x64/$linkLibrary user32.lib"
   )
   $wrapperLines | Set-Content -LiteralPath $wrapperLog
   Set-FakeNativeSmokeLog -Path $nativeLog

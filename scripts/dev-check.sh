@@ -42,6 +42,10 @@ for arg in "$@"; do
   esac
 done
 
+if ! "$RUN_SKIA_REAL_SMOKE"; then
+  export MOUI_SKIA_DISABLE_PREBUILD_SKIA="${MOUI_SKIA_DISABLE_PREBUILD_SKIA:-1}"
+fi
+
 run() {
   printf '\n==> %s\n' "$*"
   "$@"

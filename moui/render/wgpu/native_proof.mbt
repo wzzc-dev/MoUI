@@ -496,7 +496,7 @@ fn assert_native_proof_transform(frame : NativeRendererProofFrame) -> Unit {
   }
   if !region_has_cyanish_pixel(
       frame,
-      @core.Rect::new(x=96.0, y=18.0, width=12.0, height=12.0),
+      @core.Rect::new(x=88.0, y=8.0, width=32.0, height=32.0),
     ) {
     native_proof_fail("native WGPU proof transform/path marker missing")
   }

@@ -290,8 +290,42 @@ function platformFlags(config, values) {
 
   if (process.platform === "win32") {
     stubCcFlags = `/DMOUI_SKIA_HAS_SKIA /std:c++20 /EHsc /I${includePath}`;
-    const skiaLibFlag = path.join(libPath, `${skiaLib}.lib`).replace(/\\/g, "/");
-    linkFlags = `${skiaLibFlag} user32.lib gdi32.lib ole32.lib opengl32.lib usp10.lib fontsub.lib imm32.lib winmm.lib version.lib dwrite.lib d2d1.lib dxgi.lib advapi32.lib shell32.lib`;
+    const staticLib = path.join(libPath, `${skiaLib}.lib`);
+    const dynamicImportLib = path.join(libPath, `${skiaLib}.dll.lib`);
+    const dynamicDll = path.join(libPath, `${skiaLib}.dll`);
+    let resolvedLinkMode = linkMode;
+    if (resolvedLinkMode === "auto") {
+      resolvedLinkMode = fs.existsSync(dynamicDll) && fs.existsSync(dynamicImportLib)
+        ? "dynamic"
+        : "static";
+    }
+    let skiaLibFlag = staticLib;
+    if (resolvedLinkMode === "dynamic") {
+      if (!fs.existsSync(dynamicDll)) {
+        throw new Error(
+          `MOUI_SKIA_SKIA_LINK_MODE=dynamic requested, but ${dynamicDll} was not found`,
+        );
+      }
+      if (!fs.existsSync(dynamicImportLib) && !fs.existsSync(staticLib)) {
+        throw new Error(
+          `MOUI_SKIA_SKIA_LINK_MODE=dynamic requested, but ${dynamicImportLib} or ${staticLib} was not found`,
+        );
+      }
+      skiaLibFlag = fs.existsSync(dynamicImportLib) ? dynamicImportLib : staticLib;
+    } else if (!fs.existsSync(staticLib)) {
+      throw new Error(
+        `MOUI_SKIA_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
+      );
+    }
+    const packageLibs = fs.readdirSync(libPath)
+      .filter(name => name.toLowerCase().endsWith(".lib"))
+      .map(name => path.join(libPath, name))
+      .sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
+    const orderedPackageLibs = [
+      skiaLibFlag,
+      ...packageLibs.filter(candidate => candidate !== skiaLibFlag),
+    ].map(candidate => candidate.replace(/\\/g, "/"));
+    linkFlags = `${orderedPackageLibs.join(" ")} user32.lib gdi32.lib ole32.lib opengl32.lib usp10.lib fontsub.lib imm32.lib winmm.lib version.lib dwrite.lib d2d1.lib dxgi.lib advapi32.lib shell32.lib`;
   } else if (process.platform === "darwin") {
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
     linkFlags = macosLibraryFlags(config, libPath, skiaLib) +

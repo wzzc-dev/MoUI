@@ -56,7 +56,9 @@ jobs:
         run: |
           mkdir -p dist/pages
           cp website/web_wasm/index.html dist/pages/index.html
-          cp -R website/web_wasm/assets dist/pages/assets
+          if [ -d website/web_wasm/assets ]; then
+            cp -R website/web_wasm/assets dist/pages/assets
+          fi
 
           mkdir -p dist/pages/moui/backend/web
           cp moui/backend/web/runtime.js dist/pages/moui/backend/web/runtime.js

@@ -21,6 +21,22 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $defaultCacheRoot = Join-Path $repoRoot ".skia-cache/windows-msvc/aseprite/Skia-Windows-Release-x64"
 $defaultZip = Join-Path $env:USERPROFILE "Downloads/Skia-Windows-Release-x64.zip"
 
+function Resolve-SkiaMsvcLibrary {
+  param([Parameter(Mandatory = $true)][string] $LibDir)
+
+  $candidates = @(
+    (Join-Path $LibDir "skia.lib"),
+    (Join-Path $LibDir "skia.dll.lib")
+  )
+  foreach ($candidate in $candidates) {
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+      return $candidate
+    }
+  }
+
+  throw "Skia MSVC library was not found in $LibDir; expected skia.lib or skia.dll.lib"
+}
+
 if ([string]::IsNullOrWhiteSpace($SkiaRoot)) {
   if (Test-Path -LiteralPath $defaultCacheRoot -PathType Container) {
     $SkiaRoot = $defaultCacheRoot
@@ -61,10 +77,7 @@ if ([string]::IsNullOrWhiteSpace($SkiaLibDir)) {
   $SkiaLibDir = Join-Path $resolvedRoot "out/Release-x64"
 }
 $resolvedLibDir = (Resolve-Path -LiteralPath $SkiaLibDir).Path
-$skiaLib = Join-Path $resolvedLibDir "skia.lib"
-if (!(Test-Path -LiteralPath $skiaLib -PathType Leaf)) {
-  throw "skia.lib was not found in $resolvedLibDir"
-}
+$skiaLib = Resolve-SkiaMsvcLibrary -LibDir $resolvedLibDir
 
 if ([System.IO.Path]::IsPathRooted($Output)) {
   $resolvedOutput = $Output
