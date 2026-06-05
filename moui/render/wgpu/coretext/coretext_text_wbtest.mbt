@@ -12,6 +12,39 @@ fn caret_positions_are_monotonic(carets : Array[Double]) -> Bool {
 }
 
 ///|
+test "coretext zwj caret folder moves cluster interiors to end" {
+  let carets = [0.0, 4.0, 9.0, 39.0]
+  coretext_fold_zwj_caret_positions("\u{1F469}\u{200D}\u{1F4BB}", carets)
+  inspect(
+    carets[1] == 39.0 && carets[2] == 39.0 && carets[3] == 39.0,
+    content="true",
+  )
+}
+
+///|
+test "coretext explicit emoji measure folds zwj interior carets" {
+  let font = @core.FontSpec::new(
+    families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+    size=26.0,
+    weight=400,
+  )
+  match
+    coretext_measure_layout(
+      @core.TextLayoutInput::new(text="\u{1F469}\u{200D}\u{1F4BB}", font~),
+    ) {
+    Some(layout) => {
+      inspect(layout.caret_positions.length(), content="4")
+      inspect(
+        layout.caret_positions[1] == layout.caret_positions[2] &&
+        layout.caret_positions[2] == layout.caret_positions[3],
+        content="true",
+      )
+    }
+    None => inspect("missing", content="available")
+  }
+}
+
+///|
 fn bytes_has_nonzero(bytes : Bytes) -> Bool {
   for byte in bytes {
     if byte != b'\x00' {

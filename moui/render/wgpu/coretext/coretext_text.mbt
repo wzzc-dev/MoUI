@@ -158,13 +158,65 @@ fn coretext_native_glyph_key(
 fn coretext_measure_layout(
   input : @core.TextLayoutInput,
 ) -> @wgpu_renderer.NativeTextLayout? {
-  @text_protocol.native_measure_layout_from_bytes(
-    input,
-    macos_coretext_measure_utf32(
-      @text_protocol.native_utf32_bytes(input.text),
-      @text_protocol.native_font_spec_bytes(input.font),
-    ),
+  match
+    @text_protocol.native_measure_layout_from_bytes(
+      input,
+      macos_coretext_measure_utf32(
+        @text_protocol.native_utf32_bytes(input.text),
+        @text_protocol.native_font_spec_bytes(input.font),
+      ),
+    ) {
+    Some(layout) => Some(coretext_folded_zwj_layout(input.text, layout))
+    None => None
+  }
+}
+
+///|
+fn coretext_folded_zwj_layout(
+  text : String,
+  layout : @wgpu_renderer.NativeTextLayout,
+) -> @wgpu_renderer.NativeTextLayout {
+  let carets = layout.caret_positions.copy()
+  coretext_fold_zwj_caret_positions(text, carets)
+  @wgpu_renderer.NativeTextLayout::new(
+    size=layout.size,
+    baseline=layout.baseline,
+    caret_positions=carets,
+    glyphs=layout.glyphs,
   )
+}
+
+///|
+fn coretext_fold_zwj_caret_positions(
+  text : String,
+  carets : Array[Double],
+) -> Unit {
+  let chars = text.to_array()
+  if carets.length() != chars.length() + 1 {
+    return ()
+  }
+  let mut index = 0
+  while index < chars.length() {
+    let mut end = index + 1
+    let mut saw_zwj = false
+    while end < chars.length() {
+      if chars[end - 1].to_int() == 0x200D || chars[end].to_int() == 0x200D {
+        saw_zwj = true
+        end += 1
+      } else {
+        break
+      }
+    }
+    if saw_zwj && end < carets.length() {
+      let folded = carets[end]
+      for caret_index in (index + 1)..<=end {
+        carets[caret_index] = folded
+      }
+      index = end
+    } else {
+      index += 1
+    }
+  }
 }
 
 ///|
