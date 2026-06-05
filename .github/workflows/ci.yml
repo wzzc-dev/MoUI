@@ -405,7 +405,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
-            libfontconfig1-dev libfreetype-dev libharfbuzz-dev
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji
+
+      - name: Set up Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
 
       - name: Set up MoonBit
         run: |
@@ -421,6 +427,8 @@ jobs:
           moon update
 
       - name: Record Web runtime presentation evidence
+        env:
+          WEB_RUNTIME_CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: sh scripts/ci-web-runtime-presentation.sh
 
       - name: Upload Web runtime presentation evidence
