@@ -30,6 +30,13 @@ proof_dir="artifacts/conformance/renderer-proof"
 platform_dir="artifacts/platform-evidence/${platform}"
 log_path="${proof_dir}/${backend}-${platform}.log"
 manifest_path="${proof_dir}/${backend}-${platform}.json"
+skia_text_emoji_smoke_package="moui/tests/skia_text_emoji_smoke/native"
+skia_text_emoji_smoke_exe="./_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe"
+case "$(uname -s 2>/dev/null || printf unknown)" in
+  MINGW*|MSYS*|CYGWIN*)
+    skia_text_emoji_smoke_exe=".\\_build\\native\\debug\\build\\wzzc-dev\\moui\\tests\\skia_text_emoji_smoke\\native\\native.exe"
+    ;;
+esac
 
 mkdir -p "$proof_dir" "$platform_dir"
 record_logs=
@@ -40,6 +47,22 @@ run() {
     cat "$log_path"
     exit 1
   fi
+}
+
+run_to_log() {
+  output_path="$1"
+  shift
+  printf '\n==> %s\n' "$*" >> "$log_path"
+  printf '\n==> %s\n' "$*" >> "$output_path"
+  if "$@" >> "$log_path" 2>&1; then
+    printf '%s\n' 'status=passed' >> "$output_path"
+    return 0
+  fi
+  status="$?"
+  printf 'command failed with status %s: %s\n' "$status" "$*" >> "$log_path"
+  printf 'command failed with status %s: %s\n' "$status" "$*" >> "$output_path"
+  printf '%s\n' 'status=failed' >> "$output_path"
+  return "$status"
 }
 
 printf 'MoUI renderer proof backend=%s platform=%s\n' "$backend" "$platform" > "$log_path"
@@ -59,18 +82,26 @@ else
   record_logs="${record_logs} ${skia_text_emoji_log_path}"
   cat > "$skia_text_emoji_log_path" <<EOF
 MoUI Skia text/emoji smoke platform=${platform}
-status=failed
-missing colorEmojiPixels: requires real Skia high-saturation color emoji pixels or Skia glyph/paragraph evidence.
-missing zwjGrapheme: requires single grapheme cluster and no interior caret evidence.
-missing bidiLayout: requires visual-order glyph/paragraph evidence.
-missing paragraphWrapping: requires line metrics and later-line pixels.
 EOF
+  skia_text_emoji_status=0
   run moon test moui/render/skia --target native
   case "$platform" in
     macos) run moon test moui/backend/macos/skia --target native ;;
     windows) run moon test moui/backend/windows/skia --target native ;;
     linux) run moon test moui/backend/linux/skia --target native ;;
   esac
+  if ! run_to_log "$skia_text_emoji_log_path" moon build "$skia_text_emoji_smoke_package" --target native; then
+    skia_text_emoji_status=1
+  elif ! run_to_log "$skia_text_emoji_log_path" "$skia_text_emoji_smoke_exe"; then
+    skia_text_emoji_status=1
+  fi
+  if [ "$skia_text_emoji_status" -ne 0 ]; then
+    printf '%s\n' \
+      'Skia text/emoji smoke did not complete every proof observation; inspect renderer proof manifest observation statuses.' \
+      >> "$skia_text_emoji_log_path"
+    cat "$log_path"
+    exit 1
+  fi
   printf '%s\n' 'MoUI renderer proof package tests passed for native Skia.' >> "$log_path"
 fi
 

@@ -212,6 +212,7 @@ moon test moui/views --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/web --target wasm-gc
 moon test moui/render/skia --target native
+moon check moui/tests/skia_text_emoji_smoke/native --target native
 moon test moui_skia --target native
 moon test moui/render/wgpu/cosmic_text --target native
 node scripts/test-webgpu-runtime-radial.mjs
@@ -342,6 +343,11 @@ fallback-safe Skia checks. Use `sh scripts/dev-check.sh --skia-real-smoke` only
 after configuring real native Skia link flags; that opt-in path also runs
 `moui/tests/skia_renderer_smoke/native` to verify MoUI `DrawCommand` rendering
 against captured Skia presenter pixels.
+For renderer-proof text/emoji work, `moui/tests/skia_text_emoji_smoke/native`
+is the opt-in real-Skia proof entrypoint; it writes proof markers only when
+captured Skia pixels and text-system evidence prove color emoji, ZWJ grapheme,
+paragraph wrapping, and bidi observations, and otherwise keeps the corresponding
+renderer-proof observations failed.
 On macOS, `scripts/macos-skia-renderer-smoke.sh` can resolve Skia from an
 existing build, the pinned JetBrains binary provider, or a source build; it then
 temporarily wires the resolved link flags into the local `moui_skia` and MoUI

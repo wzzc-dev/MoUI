@@ -23,6 +23,10 @@ mkdirSync(platformDir, { recursive: true });
 writeFileSync(logPath, `MoUI renderer proof backend=${backend} platform=${platform}\n`);
 const logs = [logPath];
 let failureStatus = 0;
+const skiaTextEmojiSmokePackage = "moui/tests/skia_text_emoji_smoke/native";
+const skiaTextEmojiSmokeExe = process.platform === "win32"
+  ? ".\\_build\\native\\debug\\build\\wzzc-dev\\moui\\tests\\skia_text_emoji_smoke\\native\\native.exe"
+  : "./_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe";
 
 const log = text => appendFileSync(logPath, `${text}\n`);
 const run = args => {
@@ -43,6 +47,34 @@ const run = args => {
   return true;
 };
 
+const runToLog = (args, outputPath) => {
+  log(`\n==> ${args.join(" ")}`);
+  appendFileSync(outputPath, `\n==> ${args.join(" ")}\n`);
+  const result = spawnSync(args[0], args.slice(1), {
+    encoding: "utf8",
+    env: process.env,
+  });
+  if (result.stdout) {
+    appendFileSync(logPath, result.stdout);
+    appendFileSync(outputPath, result.stdout);
+  }
+  if (result.stderr) {
+    appendFileSync(logPath, result.stderr);
+    appendFileSync(outputPath, result.stderr);
+  }
+  if (result.status !== 0) {
+    if (result.stdout) process.stdout.write(result.stdout);
+    if (result.stderr) process.stderr.write(result.stderr);
+    failureStatus ||= result.status ?? 1;
+    const message = `command failed with status ${result.status ?? 1}: ${args.join(" ")}`;
+    log(message);
+    appendFileSync(outputPath, `${message}\nstatus=failed\n`);
+    return false;
+  }
+  appendFileSync(outputPath, "status=passed\n");
+  return true;
+};
+
 if (backend === "wgpu-native") {
   if (run(["moon", "test", "moui/render/wgpu", "--target", "native"]) &&
       run(["moon", "test", "moui/render/wgpu/text_protocol", "--target", "native"]) &&
@@ -57,16 +89,18 @@ if (backend === "wgpu-native") {
     skiaTextEmojiLogPath,
     [
       `MoUI Skia text/emoji smoke platform=${platform}`,
-      "status=failed",
-      "missing colorEmojiPixels: requires real Skia high-saturation color emoji pixels or Skia glyph/paragraph evidence.",
-      "missing zwjGrapheme: requires single grapheme cluster and no interior caret evidence.",
-      "missing bidiLayout: requires visual-order glyph/paragraph evidence.",
-      "missing paragraphWrapping: requires line metrics and later-line pixels.",
     ].join("\n") + "\n",
   );
   if (run(["moon", "test", "moui/render/skia", "--target", "native"]) &&
-      run(["moon", "test", `moui/backend/${platform}/skia`, "--target", "native"])) {
+      run(["moon", "test", `moui/backend/${platform}/skia`, "--target", "native"]) &&
+      runToLog(["moon", "build", skiaTextEmojiSmokePackage, "--target", "native"], skiaTextEmojiLogPath) &&
+      runToLog([skiaTextEmojiSmokeExe], skiaTextEmojiLogPath)) {
     log("MoUI renderer proof package tests passed for native Skia.");
+  } else {
+    appendFileSync(
+      skiaTextEmojiLogPath,
+      "Skia text/emoji smoke did not complete every proof observation; inspect renderer proof manifest observation statuses.\n",
+    );
   }
 }
 

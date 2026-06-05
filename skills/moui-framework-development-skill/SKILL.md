@@ -176,6 +176,10 @@ Use this skill when editing or reviewing:
 - `moui/tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
   verifies MoUI draw commands against captured Skia presenter pixels and checks
   async image second-frame repaint through the host completion route.
+- `moui/tests/skia_text_emoji_smoke/native`: opt-in real-Skia text/emoji proof
+  smoke that records renderer-proof markers only after captured Skia pixels and
+  text-system evidence prove color emoji, ZWJ grapheme, paragraph wrapping, and
+  bidi observations.
 - `moui/tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
   packages for comparing supported text systems and documented gaps.
 - `examples/*/app`: shared application logic.
@@ -300,6 +304,7 @@ moon test moui/backend/web --target wasm-gc
 moon test moui/render --target native
 moon test moui/render/wgpu --target native
 moon test moui/render/skia --target native
+moon check moui/tests/skia_text_emoji_smoke/native --target native
 moon test moui/render/wgpu/cosmic_text --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 node scripts/test-webgpu-runtime-radial.mjs
