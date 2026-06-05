@@ -326,11 +326,15 @@ jobs:
 
       - name: Record native WGPU renderer proof
         if: ${{ matrix.platform != 'windows' }}
+        env:
+          MOUI_COSMIC_TEXT_DIAGNOSTICS: "1"
         run: node scripts/ci-renderer-proof-native.mjs wgpu-native ${{ matrix.platform }}
 
       - name: Record native WGPU renderer proof (Windows)
         if: ${{ matrix.platform == 'windows' }}
         shell: pwsh
+        env:
+          MOUI_COSMIC_TEXT_DIAGNOSTICS: "1"
         run: |
           . .\scripts\windows\msvc_env.ps1
           Enable-MsvcC11Atomics
