@@ -33,6 +33,16 @@ const artifactDir = dirname(output);
 const logPath = join(artifactDir, "webgpu-wasm-web.log");
 mkdirSync(artifactDir, { recursive: true });
 
+const proofKeys = [
+  "radialGradient",
+  "transformPixels",
+  "colorEmojiPixels",
+  "zwjGrapheme",
+  "bidiLayout",
+  "paragraphWrapping",
+  "asyncImageSecondFrame",
+];
+
 const markerLines = [];
 const addMarker = (condition, line) => {
   if (condition) markerLines.push(line);
@@ -74,6 +84,17 @@ const notes = [
   `showcaseObservations=${JSON.stringify(showcase?.observations || {})}`,
 ];
 writeFileSync(logPath, `${notes.concat(markerLines).join("\n")}\n`);
+
+const missingProofs = proofKeys.filter(key => showcase?.observations?.[key] !== "yes");
+if ((webManifest.overallStatus || "failed") !== "passed" || missingProofs.length > 0) {
+  console.error("web renderer proof failed summary:");
+  console.error(`  webPresentationStatus=${webManifest.overallStatus || "unknown"}`);
+  console.error(`  showcaseStatus=${showcase?.status || "missing"}`);
+  console.error(
+    `  missingProofs=${missingProofs.length > 0 ? missingProofs.join(",") : "(none)"}`,
+  );
+  console.error(`  log=${logPath}`);
+}
 
 const recorderArgs = [
   "scripts/record-renderer-proof-manifest.mjs",
