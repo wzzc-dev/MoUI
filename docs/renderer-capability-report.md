@@ -118,11 +118,12 @@ CoreText glyph runs for glyph ids and positions before atlas upload, and its
 glyph payloads carry PostScript font identity so fallback-font glyph runs can be
 rasterized with the same font that shaped them. Windows composes a DirectWrite
 scaffold provider with Cosmic fallback, and Linux composes its
-fontconfig/HarfBuzz/FreeType scaffold provider with Cosmic fallback. Web injects
-a Canvas-backed text system that uses the same CSS `system-ui` family stack as
-text drawing. The Windows and Linux native stubs intentionally return no
-platform layout/raster data today, so hosts rely on the composed Cosmic fallback
-until real engines are implemented.
+fontconfig/FreeType provider with Cosmic fallback. The Linux provider can emit
+native FreeType RGBA glyphs for explicit emoji-family runs when Noto Color Emoji
+is available, but general measurement, shaping, and non-emoji raster data still
+fall back to Cosmic until the full fontconfig/HarfBuzz path is implemented. Web
+injects a Canvas-backed text system that uses the same CSS `system-ui` family
+stack as text drawing.
 Fallback composition is explicit at the backend/provider boundary; the
 `render/wgpu` package validates provider responses but does not depend on the
 Cosmic provider package. Diagnostic text conformance covers deterministic emoji

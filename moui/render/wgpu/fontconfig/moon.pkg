@@ -8,7 +8,12 @@ import {
 supported_targets = "native"
 
 options(
-  link: { "native": { "cc-link-flags": "-lz" } },
+  link: {
+    "native": {
+      "stub-cc-flags": "-I/usr/include/freetype2",
+      "cc-link-flags": "-lz",
+    },
+  },
   "native-stub": [ "linux_fontconfig_text.c" ],
   targets: { },
 )

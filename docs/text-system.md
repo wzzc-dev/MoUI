@@ -53,9 +53,12 @@ Provider packages are intentionally separate:
 - `render/wgpu/directwrite/`: Windows DirectWrite scaffold. Windows defaults to
   this scaffold composed with Cosmic fallback until the real DirectWrite engine
   returns platform layout and raster data.
-- `render/wgpu/fontconfig/`: Linux fontconfig/HarfBuzz/FreeType scaffold. Linux
-  defaults to this scaffold composed with Cosmic fallback until the real
-  fontconfig provider returns platform layout and raster data.
+- `render/wgpu/fontconfig/`: Linux fontconfig/FreeType provider boundary.
+  Linux defaults to this provider composed with Cosmic fallback. The provider
+  can return native color-emoji glyphs from Noto Color Emoji for explicit emoji
+  family runs when FreeType and the font are available; broader shaping,
+  measurement, and non-emoji raster data still fall back to Cosmic until the
+  full fontconfig/HarfBuzz path is implemented.
 - `render/wgpu/text_protocol/`: shared native-stub payload protocol for UTF-32
   input, versioned `FontSpec` encoding, measure/run/raster envelopes, and
   embedded-font registration payloads.
@@ -201,8 +204,9 @@ Remote font loading is intentionally outside the current backend contract.
   select-all commands through host context menus, so keyboard shortcuts and
   native menu selections share the same selection, clipboard, and Unicode paste
   dispatch path.
-- Windows and Linux native platform providers are scaffolds; composed Cosmic
-  fallback handles real text until those engines are implemented.
+- Windows native platform provider work remains scaffolded; Linux native
+  provider work is still partial, with only the explicit FreeType color-emoji
+  path handled natively while composed Cosmic fallback handles general text.
 - Web can surface browser emoji and font fallback behavior, while stable Web
   adapter tests keep the host-backed `TextSystem` contract deterministic.
 - Text changes that affect renderer feature status must update
