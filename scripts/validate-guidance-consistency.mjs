@@ -299,6 +299,57 @@ assertIncludes("docs/testing.md", "Web runtime presentation");
 assertIncludes("docs/testing.md", "`moui-web-runtime-presentation` artifact");
 assertIncludes("scripts/validate-platform-evidence-manifest.mjs", "schemaVersion must be 2");
 assertIncludes("scripts/validate-platform-evidence-manifest.mjs", "evidenceProvenance");
+assertIncludes(
+  "scripts/validate-platform-evidence-manifest.mjs",
+  "README.md placeholder documentation",
+);
+assertIncludes(
+  "scripts/test-validate-platform-evidence-manifest.mjs",
+  "passed platform rejects README placeholder artifact",
+);
+assertIncludes(
+  "scripts/test-validate-platform-evidence-manifest.mjs",
+  "linux evidence requires linux_cosmic runtime command",
+);
+assertIncludes(
+  "scripts/test-record-native-skia-evidence.mjs",
+  "moon build examples/showcase/linux_cosmic --target native",
+);
+assertIncludes(
+  "scripts/test-record-native-skia-evidence.mjs",
+  "moon run examples/showcase/linux_cosmic --target native",
+);
+assertIncludes(
+  "scripts/conformance-check.sh",
+  "moon build examples/showcase/linux_cosmic --target native",
+);
+assertIncludes(
+  "scripts/conformance-check.sh",
+  "moon run examples/showcase/linux_cosmic --target native",
+);
+assertIncludes(
+  "scripts/validate-platform-evidence-manifest.mjs",
+  "moon build examples/showcase/linux_cosmic --target native",
+);
+assertIncludes(
+  "scripts/validate-platform-evidence-manifest.mjs",
+  "moon run examples/showcase/linux_cosmic --target native",
+);
+assertIncludes(
+  "scripts/test-record-platform-evidence-manifest.mjs",
+  "moon build examples/showcase/linux_cosmic --target native",
+);
+assertIncludes(
+  "scripts/test-record-platform-evidence-manifest.mjs",
+  "moon run examples/showcase/linux_cosmic --target native",
+);
+assertIncludes("docs/release-readiness.md", "Platform evidence guard refresh");
+assertIncludes("docs/testing.md", "README.md` files under `artifacts/platform-evidence/`");
+assertIncludes("AGENTS.md", "must not be used as passed platform, Skia, or provenance");
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "must not be used as passed platform, Skia, or",
+);
 assertIncludes("scripts/record-platform-evidence-manifest.mjs", "monitorCursor");
 assertIncludes("scripts/record-platform-evidence-manifest.mjs", "provenance-kind");
 assertIncludes("scripts/record-platform-evidence-manifest.mjs", "browserObservablePlatformObservationsPassed");
