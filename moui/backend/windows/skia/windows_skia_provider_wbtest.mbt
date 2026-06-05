@@ -167,3 +167,66 @@ test "windows skia native image loader completes loading resources" {
   inspect(redraws.length(), content="1")
   assert_true(redraws[0] == window_id)
 }
+
+///|
+test "windows skia deferred native source completes through decode helper" {
+  let native_source = @host.HostNativeAsyncImageSource::new()
+  let loader = native_source.loader()
+  let window_id = @host.HostWindowId::new(2)
+  let lifecycle = @render.ImageResourceLifecycle::new()
+  let source = skia_test_png_data_uri()
+  ignore(lifecycle.mark_loading(source))
+  let renderer = @host.HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+    apply_image_resource_load_completion=Some(completion => {
+      lifecycle.apply_load_completion(completion)
+    }),
+  )
+  let tracker = @host.HostImageResourceRepaintTracker::new()
+  ignore(tracker.record_presented(window_id, renderer))
+  let redraws : Array[@host.HostWindowId] = []
+  let completion_source = @host.HostImageResourceCompletionSource::new(
+    tracker~,
+    window_open=id => id == window_id,
+    request_redraw=id => redraws.push(id),
+  )
+  let scheduled = loader.schedule_loading_resources(
+    window_id, renderer, completion_source,
+  )
+  inspect(scheduled.loading_count, content="1")
+  inspect(scheduled.scheduled_count, content="1")
+  inspect(native_source.pending_requests().length(), content="1")
+  inspect(redraws.length(), content="0")
+  match lifecycle.lookup(source) {
+    Some(record) =>
+      assert_true(record.status == @render.ImageResourceStatus::ImageLoading)
+    None => fail("expected deferred Windows Skia image record")
+  }
+  let delivered = native_source.complete(
+    window_id,
+    @skia_renderer.skia_image_load_completion(source),
+  )
+  assert_true(
+    delivered.status ==
+    @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
+  )
+  match lifecycle.lookup(source) {
+    Some(record) =>
+      if @skia_renderer.skia_available() {
+        assert_true(record.status == @render.ImageResourceStatus::ImageReady)
+        inspect(record.width, content="1")
+        inspect(record.height, content="1")
+      } else {
+        assert_true(record.status == @render.ImageResourceStatus::ImageFailed)
+        inspect(record.diagnostic, content="Skia image decode failed")
+      }
+    None => fail("expected completed Windows Skia deferred image resource")
+  }
+  inspect(redraws.length(), content="1")
+  assert_true(redraws[0] == window_id)
+  inspect(loader.diagnostics().completed_count, content="1")
+  inspect(native_source.diagnostics().pending_count, content="0")
+}

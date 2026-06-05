@@ -106,8 +106,12 @@ Deferred native async-image source refresh: `backend/host` now exposes
 requests and deliver ready/failed completions later through the same
 `HostAsyncImageLoader` and repaint route. Host tests prove schedule-return-first
 completion delivery, redraw routing, cancellation cleanup, and missing late
-completion diagnostics; this is host-boundary evidence, not matching-host
-off-main runtime proof.
+completion diagnostics. macOS, Windows, and Linux WGPU/Skia provider package
+tests now also prove deferred native-source callbacks can carry
+`native_image_load_completion` and `skia_image_load_completion` payloads through
+the same scheduler route before applying renderer lifecycle state and requesting
+redraw; this is host/provider package evidence, not matching-host off-main
+runtime proof.
 
 ## Platform Validation Matrix
 

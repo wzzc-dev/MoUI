@@ -299,9 +299,12 @@ instead of one large end-to-end assertion:
    post-present host hook, and cancelled when a window is disposed. WGPU
    provider package tests also pin that provider-owned loaders can turn native
    PNG/JPEG/BMP source decode results into ready/failed completion payloads and
-   route them through the host scheduler; Skia provider package tests pin the
-   same scheduler path around `skia_image_load_completion`, while keeping
-   off-main async loader runtime evidence as a separate matching-host gate.
+   route them through the host scheduler, including a deferred
+   `HostNativeAsyncImageSource` callback that completes later through
+   `native_image_load_completion`; Skia provider package tests pin the same
+   scheduler path around `skia_image_load_completion`, including the deferred
+   native-source callback boundary, while keeping off-main async loader runtime
+   evidence as a separate matching-host gate.
 3. Implementation layer: renderer and provider packages prove concrete
    implementations honor the contract. This includes WGPU renderer capability
    evidence, native text-provider metrics/raster validation, and Web adapter
