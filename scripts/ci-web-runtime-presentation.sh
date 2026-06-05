@@ -113,6 +113,11 @@ run node scripts/validate-web-runtime-presentation-manifest.mjs \
   "$WEB_RUNTIME_PRESENTATION_MANIFEST" \
   --require-passed
 
+run node scripts/record-web-renderer-proof-manifest.mjs \
+  --web-presentation-manifest "$WEB_RUNTIME_PRESENTATION_MANIFEST" \
+  --output artifacts/conformance/renderer-proof/webgpu-wasm-web.json \
+  --require-passed
+
 run sh scripts/conformance-check.sh --platform-services
 
 run node scripts/record-platform-evidence-manifest.mjs \

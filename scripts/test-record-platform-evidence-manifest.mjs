@@ -58,7 +58,13 @@ const webPresentationObservationKeys = [
   "pointerInput",
   "keyboardInput",
   "textInput",
+  "radialGradient",
   "transformPixels",
+  "colorEmojiPixels",
+  "zwjGrapheme",
+  "bidiLayout",
+  "paragraphWrapping",
+  "asyncImageSecondFrame",
   "targetClosed",
 ];
 
@@ -68,6 +74,26 @@ const webPlatformObservationKeys = Object.keys(pendingObservations).filter(
 
 const webPresentationObservations = value =>
   Object.fromEntries(webPresentationObservationKeys.map(key => [key, value]));
+
+const webRendererProofEvidence = {
+  radialGradient: ["center-mid-edge-pixels", "shader-payload"],
+  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster"],
+  zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
+  bidiLayout: ["visual-order"],
+  paragraphWrapping: ["line-metrics", "later-line-pixels"],
+  asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
+};
+
+const webRendererProof = (name, status, key) => {
+  const required = name === "showcase-web-wasm";
+  const passed = required && status === "passed";
+  return {
+    required,
+    passed,
+    evidence: passed ? webRendererProofEvidence[key] : [],
+    matchedMarkers: passed ? webRendererProofEvidence[key].length : 0,
+  };
+};
 
 const webPlatformObservations = value =>
   Object.fromEntries(webPlatformObservationKeys.map(key => [key, value]));
@@ -273,6 +299,12 @@ const webPresentationTarget = ({
       goldPixels: name === "showcase-web-wasm" && status === "passed" ? 18 : 0,
       matchedMarkers: name === "showcase-web-wasm" && status === "passed" ? 3 : 0,
     },
+    radialGradient: webRendererProof(name, status, "radialGradient"),
+    colorEmojiPixels: webRendererProof(name, status, "colorEmojiPixels"),
+    zwjGrapheme: webRendererProof(name, status, "zwjGrapheme"),
+    bidiLayout: webRendererProof(name, status, "bidiLayout"),
+    paragraphWrapping: webRendererProof(name, status, "paragraphWrapping"),
+    asyncImageSecondFrame: webRendererProof(name, status, "asyncImageSecondFrame"),
   },
   evidenceEvents: status === "passed"
     ? [
@@ -285,7 +317,13 @@ const webPresentationTarget = ({
   observations: {
     ...webPresentationObservations(status === "passed" ? "yes" : "no"),
     textInput: name === "markdown-editor-web-wasm" && status === "passed" ? "yes" : "no",
+    radialGradient: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     transformPixels: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    colorEmojiPixels: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    zwjGrapheme: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    bidiLayout: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    paragraphWrapping: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    asyncImageSecondFrame: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
   },
   consoleErrors: status === "passed" ? [] : ["No WebGPU adapter is available"],
   notes: status === "passed" ? ["browser evidence captured"] : ["adapter unavailable"],

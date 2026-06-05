@@ -128,7 +128,13 @@ const observationKeys = [
   "pointerInput",
   "keyboardInput",
   "textInput",
+  "radialGradient",
   "transformPixels",
+  "colorEmojiPixels",
+  "zwjGrapheme",
+  "bidiLayout",
+  "paragraphWrapping",
+  "asyncImageSecondFrame",
   "targetClosed",
 ];
 
@@ -335,6 +341,46 @@ targets.forEach((target, index) => {
   if (hotPinkPixels < 0 || cyanPixels < 0 || goldPixels < 0 || matchedMarkers < 0) {
     fail(`${label}.screenshot.transformPixels counts must be nonnegative`);
   }
+  const rendererProofKeys = [
+    "radialGradient",
+    "colorEmojiPixels",
+    "zwjGrapheme",
+    "bidiLayout",
+    "paragraphWrapping",
+    "asyncImageSecondFrame",
+  ];
+  for (const proofKey of rendererProofKeys) {
+    const proof = requireObject(
+      screenshot,
+      proofKey,
+      `${label}.screenshot.${proofKey}`,
+    );
+    const required = requireBoolean(proof, "required", `${label}.screenshot.${proofKey}.required`);
+    const passed = requireBoolean(proof, "passed", `${label}.screenshot.${proofKey}.passed`);
+    const proofEvidence = requireArray(
+      proof,
+      "evidence",
+      `${label}.screenshot.${proofKey}.evidence`,
+    );
+    assertStringArray(proofEvidence, `${label}.screenshot.${proofKey}.evidence`);
+    const proofMarkers = requireNumber(
+      proof,
+      "matchedMarkers",
+      `${label}.screenshot.${proofKey}.matchedMarkers`,
+    );
+    if (name === "showcase-web-wasm" && required !== true) {
+      fail(`${label}.screenshot.${proofKey}.required must be true for Showcase`);
+    }
+    if (name !== "showcase-web-wasm" && required !== false) {
+      fail(`${label}.screenshot.${proofKey}.required must be false for non-Showcase targets`);
+    }
+    if (passed && proofEvidence.length === 0) {
+      fail(`${label}.screenshot.${proofKey}.passed requires evidence tokens`);
+    }
+    if (proofMarkers < 0) {
+      fail(`${label}.screenshot.${proofKey}.matchedMarkers must be nonnegative`);
+    }
+  }
 
   const observations = requireObject(target, "observations", `${label}.observations`);
   for (const key of observationKeys) {
@@ -375,12 +421,32 @@ targets.forEach((target, index) => {
       if (key === "transformPixels" && name !== "showcase-web-wasm") {
         continue;
       }
+      if (
+        [
+          "radialGradient",
+          "colorEmojiPixels",
+          "zwjGrapheme",
+          "bidiLayout",
+          "paragraphWrapping",
+          "asyncImageSecondFrame",
+        ].includes(key) &&
+        name !== "showcase-web-wasm"
+      ) {
+        continue;
+      }
       if (observations[key] !== "yes") {
         fail(`${label}.observations.${key} must be yes for passed evidence`);
       }
     }
     if (name === "showcase-web-wasm" && transformPixelsPassed !== true) {
       fail(`${label} passed evidence requires Showcase transform pixel markers`);
+    }
+    if (name === "showcase-web-wasm") {
+      for (const proofKey of rendererProofKeys) {
+        if (screenshot[proofKey].passed !== true) {
+          fail(`${label} passed evidence requires Showcase ${proofKey} proof markers`);
+        }
+      }
     }
   } else {
     if (!observationKeys.some(key => observations[key] === "no")) {

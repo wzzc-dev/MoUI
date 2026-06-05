@@ -24,7 +24,13 @@ const observationKeys = [
   "pointerInput",
   "keyboardInput",
   "textInput",
+  "radialGradient",
   "transformPixels",
+  "colorEmojiPixels",
+  "zwjGrapheme",
+  "bidiLayout",
+  "paragraphWrapping",
+  "asyncImageSecondFrame",
   "targetClosed",
 ];
 
@@ -46,6 +52,13 @@ const observations = value => Object.fromEntries(observationKeys.map(key => [key
 
 const platformObservations = value =>
   Object.fromEntries(platformObservationKeys.map(key => [key, value]));
+
+const proof = (name, status, evidence) => ({
+  required: name === "showcase-web-wasm",
+  passed: name === "showcase-web-wasm" && status === "passed",
+  evidence: name === "showcase-web-wasm" && status === "passed" ? evidence : [],
+  matchedMarkers: name === "showcase-web-wasm" && status === "passed" ? evidence.length : 0,
+});
 
 const target = ({ name, packagePath, path, status = "passed" }) => ({
   name,
@@ -91,6 +104,16 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
       goldPixels: name === "showcase-web-wasm" && status === "passed" ? 18 : 0,
       matchedMarkers: name === "showcase-web-wasm" && status === "passed" ? 3 : 0,
     },
+    radialGradient: proof(name, status, ["center-mid-edge-pixels", "shader-payload"]),
+    colorEmojiPixels: proof(name, status, ["high-saturation-pixels", "glyph-or-raster"]),
+    zwjGrapheme: proof(name, status, ["single-grapheme-cluster", "no-interior-caret"]),
+    bidiLayout: proof(name, status, ["visual-order"]),
+    paragraphWrapping: proof(name, status, ["line-metrics", "later-line-pixels"]),
+    asyncImageSecondFrame: proof(name, status, [
+      "late-completion",
+      "repaint-request",
+      "second-frame-pixels",
+    ]),
   },
   evidenceEvents: status === "passed"
     ? [
@@ -98,12 +121,19 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
         { kind: 23, name: "pointer_down" },
         { kind: 40, name: "key_down" },
         { kind: 42, name: "ime_commit" },
+        { kind: 90, name: "image_load" },
       ]
     : [],
   observations: {
     ...observations(status === "passed" ? "yes" : "no"),
     textInput: name === "markdown-editor-web-wasm" && status === "passed" ? "yes" : "no",
     transformPixels: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    radialGradient: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    colorEmojiPixels: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    zwjGrapheme: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    bidiLayout: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    paragraphWrapping: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    asyncImageSecondFrame: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
   },
   consoleErrors: status === "passed" ? [] : ["Browser WebGPU is required"],
   notes: status === "passed" ? ["browser evidence captured"] : ["navigator.gpu unavailable"],
