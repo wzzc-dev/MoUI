@@ -78,6 +78,7 @@ function Ensure-WgpuNativeRoot {
 
 $resolvedWgpuRoot = Ensure-WgpuNativeRoot $WgpuNativeRoot
 . (Join-Path $scriptDir "msvc_env.ps1") -VcpkgRoot $VcpkgRoot -WgpuNativeRoot $resolvedWgpuRoot
+Enable-MsvcC11Atomics
 
 if (-not (Get-Command moon -ErrorAction SilentlyContinue)) {
   throw "MoonBit toolchain is not available in PATH. Install moon and try again."
