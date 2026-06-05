@@ -283,11 +283,30 @@ fn paragraph_later_line_pixels(
 }
 
 ///|
-fn bidi_visual_order_evidence_available() -> Bool {
-  // This smoke intentionally requires a real bidi/paragraph evidence surface.
-  // Current Skia text diagnostics only prove logical caret coverage, so this
-  // stays false until SkParagraph/bidi glyph order evidence is wired.
-  false
+fn bidi_visual_order_evidence_available(
+  frame : @skia_renderer.SkiaPixelFrame,
+) -> Bool {
+  let sample = "ABC \u{05D0}\u{05D1}\u{05D2} 123"
+  match
+    @skia_renderer.skia_text_visual_order_proof(
+      sample,
+      font=@core.FontSpec::new(size=20.0, weight=500),
+    ) {
+    Some(proof) => {
+      println(
+        "MoUI Skia text/emoji smoke bidi logical=\{proof.logical_text} visual=\{proof.visual_text} segments=\{proof.segment_count} glyphs=\{proof.glyph_count} width=\{proof.width}",
+      )
+      proof.visual_order_differs &&
+      proof.logical_cluster_count == proof.visual_cluster_count &&
+      proof.segment_count >= 3 &&
+      proof.glyph_count >= 6 &&
+      rect_dark_rows(
+        frame,
+        @core.Rect::new(x=8.0, y=58.0, width=150.0, height=28.0),
+      ) >= 4
+    }
+    None => false
+  }
 }
 
 ///|
@@ -382,17 +401,17 @@ fn main {
           "paragraphWrapping missing Skia line metrics and later-line pixels",
         )
       }
+
+      if bidi_visual_order_evidence_available(frame) {
+        println("MoUI renderer proof bidiLayout passed visual-order")
+      } else {
+        failures.push(
+          "bidiLayout missing Skia visual-order glyph/paragraph evidence",
+        )
+      }
     }
     None =>
       failures.push("Skia text/emoji proof presenter did not receive pixels")
-  }
-
-  if bidi_visual_order_evidence_available() {
-    println("MoUI renderer proof bidiLayout passed visual-order")
-  } else {
-    failures.push(
-      "bidiLayout missing Skia visual-order glyph/paragraph evidence",
-    )
   }
 
   renderer.dispose()
