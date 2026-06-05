@@ -18,8 +18,7 @@ $nativePkg = Join-Path $repoRoot "native/moon.pkg"
 $trianglePkg = Join-Path $repoRoot "examples/triangle_window/moon.pkg"
 $nativeBackup = "$nativePkg.triangle.bak"
 $triangleBackup = "$trianglePkg.triangle.bak"
-$defaultCacheRoot = Join-Path $repoRoot ".skia-cache/windows-msvc/aseprite/Skia-Windows-Release-x64"
-$defaultZip = Join-Path $env:USERPROFILE "Downloads/Skia-Windows-Release-x64.zip"
+. (Join-Path $PSScriptRoot "windows-msvc-skia-paths.ps1")
 
 function Resolve-SkiaMsvcLibrary {
   param([Parameter(Mandatory = $true)][string] $LibDir)
@@ -41,41 +40,14 @@ if (!(Test-Path -LiteralPath $VcVarsAll -PathType Leaf)) {
   throw "vcvarsall.bat was not found: $VcVarsAll"
 }
 
-if ([string]::IsNullOrWhiteSpace($SkiaRoot)) {
-  if (Test-Path -LiteralPath $defaultCacheRoot -PathType Container) {
-    $SkiaRoot = $defaultCacheRoot
-  } elseif (![string]::IsNullOrWhiteSpace($SkiaZip)) {
-    $SkiaRoot = $defaultCacheRoot
-  } elseif (Test-Path -LiteralPath $defaultZip -PathType Leaf) {
-    $SkiaZip = $defaultZip
-    $SkiaRoot = $defaultCacheRoot
-  } else {
-    throw "SkiaRoot is required; pass -SkiaRoot, set MOUI_SKIA_SKIA_ROOT, or place Skia-Windows-Release-x64.zip in Downloads."
-  }
-}
-
-if (!(Test-Path -LiteralPath $SkiaRoot -PathType Container)) {
-  if ([string]::IsNullOrWhiteSpace($SkiaZip)) {
-    throw "Skia root is missing and no SkiaZip was provided: $SkiaRoot"
-  }
-  if (!(Test-Path -LiteralPath $SkiaZip -PathType Leaf)) {
-    throw "Skia zip was not found: $SkiaZip"
-  }
-  $extractParent = Split-Path -Parent $SkiaRoot
-  New-Item -ItemType Directory -Force -Path $extractParent | Out-Null
-  Expand-Archive -LiteralPath $SkiaZip -DestinationPath $extractParent -Force:$ForceExtract
-}
-
-$resolvedRoot = (Resolve-Path -LiteralPath $SkiaRoot).Path
-$headerPath = Join-Path $resolvedRoot "include/core/SkSurface.h"
-if (!(Test-Path -LiteralPath $headerPath -PathType Leaf)) {
-  throw "SkiaRoot does not look like a Skia release root: $resolvedRoot"
-}
-
-if ([string]::IsNullOrWhiteSpace($SkiaLibDir)) {
-  $SkiaLibDir = Join-Path $resolvedRoot "out/Release-x64"
-}
-$resolvedLibDir = (Resolve-Path -LiteralPath $SkiaLibDir).Path
+$resolvedPaths = Resolve-MouiSkiaMsvcPaths `
+  -RepoRoot $repoRoot `
+  -SkiaRoot $SkiaRoot `
+  -SkiaZip $SkiaZip `
+  -SkiaLibDir $SkiaLibDir `
+  -ForceExtract:$ForceExtract
+$resolvedRoot = $resolvedPaths.Root
+$resolvedLibDir = $resolvedPaths.LibDir
 $skiaLib = Resolve-SkiaMsvcLibrary -LibDir $resolvedLibDir
 
 if (Test-Path -LiteralPath $nativeBackup) {
