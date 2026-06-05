@@ -620,6 +620,7 @@ moonbit_bytes_t moui_macos_coretext_measure_utf32(moonbit_bytes_t utf32, moonbit
   if (line_height <= 0.0) {
     line_height = (spec.size_key > 0 ? ((double)spec.size_key / 64.0) : 16.0) * 1.25;
   }
+  double last_caret = 0.0;
   for (int32_t i = 0; i <= count; i++) {
     double x = 0.0;
     if (line != NULL) {
@@ -628,6 +629,11 @@ moonbit_bytes_t moui_macos_coretext_measure_utf32(moonbit_bytes_t utf32, moonbit
       } else {
         x = CTLineGetOffsetForStringIndex(line, boundaries[i], NULL);
       }
+    }
+    if (x < last_caret) {
+      x = last_caret;
+    } else {
+      last_caret = x;
     }
     moui_write_double_le(dst + 24 + i * 8, x);
   }

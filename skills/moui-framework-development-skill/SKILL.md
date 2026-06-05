@@ -163,7 +163,8 @@ Use this skill when editing or reviewing:
 - `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
 - `render/wgpu/coretext/`: macOS CoreText provider.
 - `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
-- `render/wgpu/fontconfig/`: Linux fontconfig/HarfBuzz/FreeType scaffold.
+- `render/wgpu/fontconfig/`: Linux fontconfig/FreeType provider boundary with
+  a narrow native color-emoji path and Cosmic fallback for general text.
 - `render/wgpu/text_protocol/`: shared native text provider payload protocol.
 - `render/skia/`: native Skia raster renderer over the local `moui_skia` binding,
   including renderer-local command/reason diagnostics for unsupported Skia

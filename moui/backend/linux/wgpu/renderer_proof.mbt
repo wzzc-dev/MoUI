@@ -3,7 +3,7 @@ pub fn run_renderer_proof_smoke() -> Unit raise @wgpu_mbt.WgpuError {
   @wgpu_renderer.native_renderer_proof_smoke(
     platform_label="linux",
     text_engine=linux_text_engine(
-      @wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
+      @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
     ),
   )
   assert_linux_wgpu_async_repaint_proof()
