@@ -345,7 +345,7 @@ fn build_native_draw_plan_range(
                 scissor: native_layer_scissor(state, size, scale_factor, mask),
               }),
             )
-            index = child.next_index
+            index = child.next_index - 1
           }
           @core.DrawCommand::PopLayer =>
             if stop_at_layer {
@@ -382,7 +382,7 @@ fn build_native_draw_plan_range(
                 scissor: native_scissor_for_state(state, size, scale_factor),
               }),
             )
-            index = child.next_index
+            index = child.next_index - 1
           }
           @core.DrawCommand::PopFilter =>
             if stop_at_filter {
