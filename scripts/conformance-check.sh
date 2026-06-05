@@ -292,6 +292,7 @@ write_platform_evidence_manifest() {
           "providerPreflight": "pending",
           "fallbackUnavailable": "pending",
           "realRendererSmoke": "pending",
+          "asyncImageSecondFrame": "pending",
           "showcaseFirstFrame": "pending",
           "markdownFirstFrame": "pending"
         },
@@ -365,6 +366,7 @@ write_platform_evidence_manifest() {
           "providerPreflight": "pending",
           "fallbackUnavailable": "pending",
           "realRendererSmoke": "pending",
+          "asyncImageSecondFrame": "pending",
           "showcaseFirstFrame": "pending",
           "markdownFirstFrame": "pending"
         },
@@ -438,6 +440,7 @@ write_platform_evidence_manifest() {
           "providerPreflight": "pending",
           "fallbackUnavailable": "pending",
           "realRendererSmoke": "pending",
+          "asyncImageSecondFrame": "pending",
           "showcaseFirstFrame": "pending",
           "markdownFirstFrame": "pending"
         },

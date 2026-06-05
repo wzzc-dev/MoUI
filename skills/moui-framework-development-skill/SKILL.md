@@ -480,14 +480,18 @@ moon info
 - Use `HostPlatformEventSources` when a Web or native platform app needs to
   expose its normalized runtime host/window event stream to app-owned
   subscriptions. The backend should publish only after raw platform events have
-  been converted and dispatched through the matching `HostRuntimeDriver`; route,
-  timer, and history adapters remain separate platform/app concerns.
+  been converted and dispatched through the matching `HostRuntimeDriver`;
+  route/history and timer adapters remain separate platform/app concerns.
+  `backend/web` owns the browser history bridge for initial route,
+  `pushState`/`replaceState`, `back`/`forward`, and `popstate` publication
+  through `HostRouteSource`.
 - For app-owned route/deep-link sources, use `HostRouteSource::subscription` in
   `backend/host` so published `HostRouteEvent` values can map to typed
-  `Program` messages through `Subscription::route_event`. Keep browser history,
-  native URL bars, OS deep-link dispatch, and app history mutation in
-  platform/app code, and make adapter cleanup remove the publisher handler so
-  late route events do not reach stale app subscriptions.
+  `Program` messages through `Subscription::route_event`. Keep Web browser
+  history wiring in `backend/web`, native URL bars, OS deep-link dispatch, and
+  app history mutation in platform/app code, and make adapter cleanup remove
+  the publisher handler so late route events do not reach stale app
+  subscriptions.
 - For app-owned timer sources, use `HostTimerSource::subscription` in
   `backend/host` so platform/app schedulers can map `@core.Frame` ticks to typed
   `Program` messages through `Subscription::timer`. Keep platform clock

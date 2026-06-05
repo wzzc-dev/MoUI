@@ -47,7 +47,8 @@ paths, or abstractions that only preserve old shapes.
   cores: platform windows, event conversion, services, lifecycle, runtime slots,
   and renderer-neutral provider hooks. They must not import `render/wgpu`,
   `render/skia`, `wgpu_mbt`, or `moui_skia`. `backend/web/` is the browser
-  wasm-gc host.
+  wasm-gc host, including the browser history route bridge that feeds
+  `HostRouteSource` and keeps shared app route history app-owned.
 - `backend/macos/wgpu`, `backend/windows/wgpu`, and `backend/linux/wgpu`
   provide native WGPU renderer providers, including provider-owned
   `HostAsyncImageLoader` hooks that call renderer-owned source decode helpers

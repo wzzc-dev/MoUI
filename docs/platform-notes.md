@@ -92,9 +92,11 @@ constructors and platform event conversion.
   model deep-link strings, back/forward cursors, and `RouterSnapshot`
   restoration without depending on a platform host. `backend/host` provides
   `HostRouteSource` for typed route/deep-link fanout through
-  `Subscription::route_event`, but browser history updates, native URL bars, OS
-  deep-link dispatch, and app history mutation are separate host/app
-  integrations and are not implied by the current Skia native route evidence.
+  `Subscription::route_event`. `backend/web` wires browser
+  `pushState`/`replaceState`/`popstate` into that route source and exposes Web
+  history commands for app-owned route effects. Native URL bars, OS deep-link
+  dispatch, and app history mutation remain separate platform/app
+  integrations.
 - `HostCapabilitySummary` is the app-facing diagnostics rollup over service,
   input, window, text-input, IME, drag/drop, async-service, and accessibility
   readiness. Web, macOS, Windows, and Linux expose package-local summary
@@ -171,6 +173,12 @@ Browser file drag/drop events on the canvas are normalized through
 `HostEvent::DragDrop` and dispatched to `View::on_file_drop` targets. The
 Web platform receives browser-exposed file names or relative names rather than
 native filesystem paths.
+The Web browser runtime normalizes the initial route from `?route=`,
+`?section=`, or the hash, listens for `popstate`, and dispatches those route
+events through the optional `HostRouteSource` passed in `WebAppOptions`.
+Entrypoints can keep shared app logic platform-neutral by translating abstract
+route commands into `web_history_push_route`, `web_history_replace_route`,
+`web_history_back`, and `web_history_forward` at the Web edge.
 See [Text system](text-system.md) for the shared runtime and renderer text
 contract.
 
