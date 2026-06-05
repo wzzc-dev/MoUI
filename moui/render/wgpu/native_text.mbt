@@ -163,6 +163,21 @@ fn NativeTextEngine::id(self : NativeTextEngine) -> String {
 }
 
 ///|
+pub fn NativeTextEngine::provider_id(self : NativeTextEngine) -> String {
+  self.provider.id
+}
+
+///|
+pub fn NativeTextEngine::fallback_provider_id(
+  self : NativeTextEngine,
+) -> String {
+  match self.fallback {
+    Some(provider) => provider.id
+    None => ""
+  }
+}
+
+///|
 pub fn NativePlatformTextProvider::new(
   id~ : String,
   measure~ : (@core.TextLayoutInput) -> NativeTextLayout?,
