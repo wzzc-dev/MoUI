@@ -371,6 +371,19 @@ test "native image decodes local png file through mizchi image" {
 }
 
 ///|
+test "native image missing local source stays pending for async loader" {
+  let path = "moui_native_image_pending_test.tmp.png"
+  @fs.remove_file(path) catch {
+    _ => ()
+  }
+  inspect(native_image_source_is_pending(path), content="true")
+  inspect(
+    native_image_source_is_pending("data:image/png;base64,nope"),
+    content="false",
+  )
+}
+
+///|
 test "native image load completion reports decoded dimensions or failure" {
   let png = @image.encode_png({
     width: 2,
