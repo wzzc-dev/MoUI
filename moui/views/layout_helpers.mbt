@@ -143,6 +143,7 @@ pub fn[Msg] responsive_grid(
       responsive_grid_place(
         ctx.child_sizes,
         ctx.frame,
+        width,
         min_column_width,
         row_spacing,
         column_spacing,
@@ -182,6 +183,7 @@ pub fn[Msg] baseline_form_rows(
         ctx.child_sizes,
         ctx.child_baselines,
         ctx.frame,
+        width,
         label_width,
         row_spacing,
         column_spacing,
@@ -225,7 +227,7 @@ fn flow_place(
   row_spacing : Double,
   direction : @core.LayoutDirection,
 ) -> Array[@core.Rect] {
-  let available = if frame.size.width > 0.0 { frame.size.width } else { width }
+  let available = placement_width(width, frame)
   let rows = flow_rows(sizes, available, spacing, row_spacing)
   let rects : Array[@core.Rect] = []
   for item in rows {
@@ -276,20 +278,18 @@ fn responsive_grid_measure(
 fn responsive_grid_place(
   sizes : Array[@core.Size],
   frame : @core.Rect,
+  width : Double,
   min_column_width : Double,
   row_spacing : Double,
   column_spacing : Double,
   direction : @core.LayoutDirection,
 ) -> Array[@core.Rect] {
+  let available = placement_width(width, frame)
   let columns = responsive_grid_columns(
-    frame.size.width,
-    min_column_width,
-    column_spacing,
+    available, min_column_width, column_spacing,
   )
   let column_width = responsive_grid_column_width(
-    frame.size.width,
-    columns,
-    column_spacing,
+    available, columns, column_spacing,
   )
   let rects : Array[@core.Rect] = []
   let mut y = frame.origin.y
@@ -345,6 +345,7 @@ fn baseline_form_place(
   sizes : Array[@core.Size],
   baselines : Array[Double?],
   frame : @core.Rect,
+  width : Double,
   label_width : Double,
   row_spacing : Double,
   column_spacing : Double,
@@ -352,9 +353,10 @@ fn baseline_form_place(
 ) -> Array[@core.Rect] {
   let rects : Array[@core.Rect] = []
   let row_count = sizes.length() / 2
+  let available = placement_width(width, frame)
   let control_width = layout_max_double(
     0.0,
-    frame.size.width - label_width - column_spacing,
+    available - label_width - column_spacing,
   )
   let mut y = frame.origin.y
   for row in 0..<row_count {
@@ -452,11 +454,14 @@ fn responsive_grid_columns(
 ) -> Int {
   let min_column_width = layout_max_double(1.0, min_column_width)
   let mut columns = 1
-  let mut needed = min_column_width * 2.0 + column_spacing
+  let mut candidate = 2
+  let mut needed = candidate.to_double() * min_column_width +
+    (candidate - 1).to_double() * column_spacing
   while needed <= width {
-    columns = columns + 1
-    needed = columns.to_double() * min_column_width +
-      (columns - 1).to_double() * column_spacing
+    columns = candidate
+    candidate = candidate + 1
+    needed = candidate.to_double() * min_column_width +
+      (candidate - 1).to_double() * column_spacing
   }
   columns
 }
@@ -476,10 +481,15 @@ fn responsive_grid_column_width(
 
 ///|
 fn available_width(width : Double, constraints : @core.Constraints) -> Double {
-  if constraints.max.width < 1.0e9 {
-    constraints.max.width
+  constraints.constrain(@core.Size::new(width~, height=0.0)).width
+}
+
+///|
+fn placement_width(width : Double, frame : @core.Rect) -> Double {
+  if frame.size.width > 0.0 {
+    layout_max_double(1.0, layout_min_double(width, frame.size.width))
   } else {
-    width
+    layout_max_double(1.0, width)
   }
 }
 
@@ -551,6 +561,15 @@ fn layout_min_int(a : Int, b : Int) -> Int {
 ///|
 fn layout_max_int(a : Int, b : Int) -> Int {
   if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn layout_min_double(a : Double, b : Double) -> Double {
+  if a < b {
     a
   } else {
     b

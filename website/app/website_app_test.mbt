@@ -34,12 +34,12 @@ test "website initial render includes bilingual homepage sections" {
 }
 
 ///|
-test "website dark toggle updates visible state text" {
+test "website theme toggle updates visible icon" {
   let runtime = runtime(width=1180.0, height=760.0)
-  assert_true(has_text(runtime.draw_commands(), "Dark / 深色"))
-  click_text(runtime, "Dark / 深色")
+  assert_true(has_text(runtime.draw_commands(), "☾"))
+  click_text(runtime, "☾")
   let commands = runtime.draw_commands()
-  assert_true(has_text(commands, "Light / 浅色"))
+  assert_true(has_text(commands, "☀"))
 }
 
 ///|
@@ -72,29 +72,44 @@ test "website hero CTA buttons open repository URL" {
 ///|
 test "website hero code snippet is compact and visible" {
   let runtime = runtime(width=1180.0, height=760.0)
-  click_first_text(runtime, "Source")
   let commands = runtime.draw_commands()
   assert_true(has_text_color_different(commands, "enum", "count"))
   assert_true(has_text_color_different(commands, "Msg", "count"))
   assert_true(has_text_color_different(commands, "button", "count"))
   assert_true(has_text_color_different(commands, "\"Reset\"", "count"))
   assert_true(has_text(commands, "15"))
+  guard text_frame(commands, "01") is Some(first_line) else {
+    fail("expected first source line")
+  }
+  guard text_frame(commands, "15") is Some(last_line) else {
+    fail("expected last source line")
+  }
+  assert_true(last_line.origin.y > first_line.origin.y + 185.0)
 }
 
 ///|
-test "website hero switches between source and live counter" {
+test "website hero shows source and live counter side by side" {
   let runtime = runtime(width=1180.0, height=760.0)
-  assert_true(has_text(runtime.draw_commands(), "Live Counter"))
-  assert_true(has_text(runtime.draw_commands(), "0"))
+  let initial = runtime.draw_commands()
+  guard text_frame(initial, "Source") is Some(source_title) else {
+    fail("expected source title")
+  }
+  guard text_frame(initial, "Counter") is Some(counter_title) else {
+    fail("expected counter title")
+  }
+  assert_true(source_title.origin.x < counter_title.origin.x)
+  assert_true(source_title.origin.y <= counter_title.origin.y + 1.0)
+  assert_true(counter_title.origin.y <= source_title.origin.y + 1.0)
+  assert_true(has_text(initial, "Live Counter"))
+  assert_true(has_text(initial, "0"))
   click_text(runtime, "+")
-  assert_true(has_text(runtime.draw_commands(), "1"))
+  let incremented = runtime.draw_commands()
+  assert_true(has_text(incremented, "1"))
+  assert_true(has_text_color_different(incremented, "view", "count"))
+  assert_true(has_text_color_different(incremented, "@core", "count"))
+  assert_true(has_text_color_different(incremented, "View", "count"))
   click_text(runtime, "Reset")
   assert_true(has_text(runtime.draw_commands(), "0"))
-  click_first_text(runtime, "Source")
-  let source = runtime.draw_commands()
-  assert_true(has_text_color_different(source, "view", "count"))
-  assert_true(has_text_color_different(source, "@core", "count"))
-  assert_true(has_text_color_different(source, "View", "count"))
 }
 
 ///|
@@ -112,6 +127,45 @@ test "website shows visible main scrollbar and moves thumb" {
     fail("expected moved website scrollbar thumb")
   }
   assert_true(after.origin.y > before.origin.y)
+}
+
+///|
+test "website feature cards stack supporting copy below the header row" {
+  let commands = runtime(width=1180.0, height=760.0).draw_commands()
+  assert_feature_card_stacked(
+    commands, "Predictable", "Model, Msg, update, view.", "Typed messages drive one explicit update path.",
+  )
+  assert_feature_card_stacked(
+    commands, "Strict Types", "Opaque View[Msg] public API.", "No stringly UI protocol or Any sprawl.",
+  )
+  assert_feature_card_stacked(
+    commands, "Modular Hosts", "Shared app, thin entrypoints.", "Web and native hosts reuse the same model.",
+  )
+  assert_feature_card_stacked(
+    commands, "Renderer Neutral", "WGPU, Skia, WebGPU.", "Renderer capability stays out of app logic.",
+  )
+}
+
+///|
+test "website platform card summaries render as separate lines" {
+  let commands = runtime(width=1180.0, height=760.0).draw_commands()
+  assert_true(has_text(commands, "This page: shared app logic"))
+  assert_true(has_text(commands, "in website/app and a thin"))
+  assert_true(has_text(commands, "Web entrypoint."))
+  assert_true(has_text(commands, "Layout, input, drawing,"))
+  assert_true(has_text(commands, "renderer reporting, and"))
+  assert_true(has_text(commands, "platform smoke paths."))
+  assert_true(has_text(commands, "Source and visual editing"))
+  assert_true(has_text(commands, "share one typed Markdown"))
+  assert_true(has_text(commands, "application model."))
+  assert_true(has_text(commands, "Native Skia dogfood surface"))
+  assert_true(has_text(commands, "for workflow, evidence, and"))
+  assert_true(has_text(commands, "session state."))
+  assert_false(
+    has_text(
+      commands, "Source and visual editing share one typed Markdown application model.",
+    ),
+  )
 }
 
 ///|
@@ -144,16 +198,32 @@ test "website hero and product signal remain visible on desktop and compact size
 }
 
 ///|
-fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
-  guard last_text_frame(runtime.draw_commands(), text) is Some(frame) else {
-    fail("expected text frame")
+fn assert_feature_card_stacked(
+  commands : Array[@core.DrawCommand],
+  title_text : String,
+  zh_summary_text : String,
+  summary_text : String,
+) -> Unit raise {
+  guard text_frame(commands, title_text) is Some(title) else {
+    fail("expected feature card title")
   }
-  click_frame(runtime, frame)
+  guard text_frame(commands, zh_summary_text) is Some(zh_summary) else {
+    fail("expected feature card supporting copy")
+  }
+  guard text_frame(commands, summary_text) is Some(summary) else {
+    fail("expected feature card secondary copy")
+  }
+  assert_true(zh_summary.origin.y > title.origin.y + 24.0)
+  assert_true(summary.origin.y > zh_summary.origin.y)
+  assert_true(zh_summary.origin.x < title.origin.x)
+  assert_true(summary.origin.x >= zh_summary.origin.x - 1.0)
+  assert_true(summary.origin.x <= zh_summary.origin.x + 1.0)
+  assert_true(summary.size.width > title.size.width)
 }
 
 ///|
-fn click_first_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
-  guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
+fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+  guard last_text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame")
   }
   click_frame(runtime, frame)

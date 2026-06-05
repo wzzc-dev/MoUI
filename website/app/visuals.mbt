@@ -4,118 +4,115 @@ fn hero_demo_panel(
   width : Double,
   height : Double,
   compact : Bool,
-  mode : HeroDemoMode,
   count : Int,
 ) -> @core.View[Msg] {
-  let tab_height = if compact { 42.0 } else { 46.0 }
-  let content_height = height - tab_height
-  let content = match mode {
-    HeroSource => hero_source_code(theme, width, content_height, compact)
-    HeroCounter =>
-      hero_counter_demo(theme, width, content_height, compact, count)
-  }
+  let padding = if compact { 8.0 } else { 10.0 }
+  let gap = if compact { 6.0 } else { 12.0 }
+  let inner_width = width - padding * 2.0
+  let inner_height = height - padding * 2.0
+  let source_width = (inner_width - gap) / 2.0
+  let counter_width = inner_width - source_width - gap
   surface(
-    column(
-      [hero_demo_tabs(theme, width, tab_height, compact, mode), content],
-      spacing=0.0,
-      align=@views.CrossAlign::Start,
+    row(
+      [
+        hero_source_panel(theme, source_width, inner_height, compact),
+        hero_counter_panel(theme, counter_width, inner_height, compact, count),
+      ],
+      spacing=gap,
+      align=@views.CrossAlign::Center,
     ),
     width~,
     height~,
     background=code_panel_background(theme),
     corner_radius=12.0,
     theme~,
-    padding=0.0,
+    padding~,
   ).border(accent_border(theme, theme.palette.primary))
 }
 
 ///|
-fn hero_demo_tabs(
+fn hero_source_panel(
   theme : @core.Theme,
   width : Double,
   height : Double,
   compact : Bool,
-  mode : HeroDemoMode,
 ) -> @core.View[Msg] {
-  let tab_width = if compact { (width - 28.0) / 2.0 } else { 104.0 }
-  let tabs = row(
-    [
-      hero_demo_tab(
-        theme,
-        "Source",
-        mode == HeroSource,
-        HeroSource,
-        tab_width,
-        height - 16.0,
-      ),
-      hero_demo_tab(
-        theme,
-        "Counter",
-        mode == HeroCounter,
-        HeroCounter,
-        tab_width,
-        height - 16.0,
-      ),
-    ],
-    spacing=6.0,
-    align=@views.CrossAlign::Center,
-  )
-  let content = if compact {
-    tabs
-  } else {
+  let header_height = if compact { 34.0 } else { 36.0 }
+  surface(
+    column(
+      [
+        hero_demo_header(theme, "Source", "View[Msg]", width, header_height),
+        hero_source_code(theme, width, height - header_height, compact),
+      ],
+      spacing=0.0,
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    height~,
+    background=code_panel_background(theme),
+    corner_radius=8.0,
+    theme~,
+    padding=0.0,
+  ).border(website_border(theme))
+}
+
+///|
+fn hero_counter_panel(
+  theme : @core.Theme,
+  width : Double,
+  height : Double,
+  compact : Bool,
+  count : Int,
+) -> @core.View[Msg] {
+  let header_height = if compact { 34.0 } else { 36.0 }
+  surface(
+    column(
+      [
+        hero_demo_header(theme, "Counter", "TEA", width, header_height),
+        hero_counter_demo(theme, width, height - header_height, compact, count),
+      ],
+      spacing=0.0,
+      align=@views.CrossAlign::Start,
+    ),
+    width~,
+    height~,
+    background=hero_counter_background(theme),
+    corner_radius=8.0,
+    theme~,
+    padding=0.0,
+  ).border(website_border(theme))
+}
+
+///|
+fn hero_demo_header(
+  theme : @core.Theme,
+  label : String,
+  trailing : String,
+  width : Double,
+  height : Double,
+) -> @core.View[Msg] {
+  let label_width = max_website_double(44.0, width - 92.0)
+  surface(
     row(
       [
-        tabs,
+        text(label, width=label_width, height=height - 14.0)
+        .font(@core.FontSpec::new(size=13.0, weight=800))
+        .foreground(theme.palette.foreground),
         spacer(min_length=0.0, weight=1.0),
-        text("View[Msg]", width=86.0, height=height - 16.0)
-        .font(code_snippet_font(12.0))
+        text(trailing, width=64.0, height=height - 14.0)
+        .font(code_snippet_font(10.8))
         .foreground(theme.palette.muted),
       ],
       spacing=8.0,
       align=@views.CrossAlign::Center,
-    )
-  }
-  surface(
-    content,
+    ),
     width~,
     height~,
     background=hero_demo_header_background(theme),
     corner_radius=0.0,
     theme~,
-    padding=8.0,
+    padding=7.0,
   )
-}
-
-///|
-fn hero_demo_tab(
-  theme : @core.Theme,
-  label : String,
-  selected : Bool,
-  mode : HeroDemoMode,
-  width : Double,
-  height : Double,
-) -> @core.View[Msg] {
-  button(
-    label,
-    on_click=SelectHeroDemo(mode),
-    variant=if selected {
-      @views.ButtonVariant::Primary
-    } else {
-      @views.ButtonVariant::Ghost
-    },
-    theme~,
-    width~,
-    height~,
-  )
-  .foreground(
-    if selected {
-      theme.palette.primary_foreground
-    } else {
-      theme.palette.muted
-    },
-  )
-  .semantics_role(@core.SemanticsRole::Tab)
-  .semantics_selected(selected~)
 }
 
 ///|
@@ -125,11 +122,12 @@ fn hero_source_code(
   height : Double,
   compact : Bool,
 ) -> @core.View[Msg] {
-  let padding = if compact { 10.0 } else { 18.0 }
+  let narrow = width < 240.0
+  let padding = if narrow { 8.0 } else if compact { 10.0 } else { 18.0 }
   let inner_width = width - padding * 2.0
-  let row_gap = if compact { 0.0 } else { 1.0 }
+  let row_gap = if compact || narrow { 0.0 } else { 1.0 }
   let line_height = (height - padding * 2.0 - row_gap * 14.0) / 15.0
-  let font_size = if compact { 9.4 } else { 12.8 }
+  let font_size = if narrow { 4.6 } else if compact { 9.4 } else { 12.2 }
   surface(
     column(
       [
@@ -201,20 +199,45 @@ fn hero_counter_demo(
   compact : Bool,
   count : Int,
 ) -> @core.View[Msg] {
-  let padding = if compact { 16.0 } else { 24.0 }
+  let narrow = width < 220.0
+  let padding = if narrow { 10.0 } else if compact { 16.0 } else { 24.0 }
   let inner_width = width - padding * 2.0
-  let button_width = if compact { (inner_width - 8.0) / 2.0 } else { 118.0 }
-  let value_height = if compact { 58.0 } else { 88.0 }
-  let value_font_size = if compact { 34.0 } else { 48.0 }
+  let button_width = if narrow {
+    (inner_width - 6.0) / 2.0
+  } else if compact {
+    (inner_width - 8.0) / 2.0
+  } else {
+    118.0
+  }
+  let value_height = if narrow { 52.0 } else if compact { 58.0 } else { 74.0 }
+  let value_font_size = if narrow {
+    30.0
+  } else if compact {
+    34.0
+  } else {
+    42.0
+  }
   surface(
     column(
       [
         spacer(min_length=0.0, weight=1.0),
         text("Live Counter", width=inner_width, height=32.0)
-        .font(@core.FontSpec::new(size=22.0, weight=820))
+        .font(
+          @core.FontSpec::new(size=if narrow { 17.0 } else { 22.0 }, weight=820),
+        )
         .foreground(theme.palette.foreground),
         text("Model -> update -> view", width=inner_width, height=24.0)
-        .font(code_snippet_font(if compact { 10.8 } else { 12.0 }))
+        .font(
+          code_snippet_font(
+            if narrow {
+              8.2
+            } else if compact {
+              10.8
+            } else {
+              12.0
+            },
+          ),
+        )
         .foreground(theme.palette.muted),
         surface(
           text("\{count}", width=inner_width - 28.0, height=value_height - 16.0)
@@ -235,7 +258,7 @@ fn hero_counter_demo(
               variant=@views.ButtonVariant::Primary,
               theme~,
               width=button_width,
-              height=if compact { 34.0 } else { 38.0 },
+              height=if narrow { 30.0 } else if compact { 34.0 } else { 38.0 },
             ),
             button(
               "Reset",
@@ -243,15 +266,15 @@ fn hero_counter_demo(
               variant=@views.ButtonVariant::Outline,
               theme~,
               width=button_width,
-              height=if compact { 34.0 } else { 38.0 },
+              height=if narrow { 30.0 } else if compact { 34.0 } else { 38.0 },
             ),
           ],
-          spacing=8.0,
+          spacing=if narrow { 6.0 } else { 8.0 },
           align=@views.CrossAlign::Center,
         ),
         spacer(min_length=0.0, weight=1.0),
       ],
-      spacing=if compact { 8.0 } else { 12.0 },
+      spacing=if narrow { 6.0 } else if compact { 8.0 } else { 10.0 },
       align=@views.CrossAlign::Center,
     ),
     width~,
