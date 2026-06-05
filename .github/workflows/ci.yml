@@ -287,6 +287,10 @@ jobs:
           fi
           vulkaninfo --summary || true
 
+      - name: Install native macOS emoji font
+        if: ${{ matrix.platform == 'macos' }}
+        run: brew list --cask font-noto-color-emoji >/dev/null 2>&1 || brew install --cask font-noto-color-emoji
+
       - name: Set up vcpkg zlib
         if: ${{ matrix.platform == 'windows' }}
         shell: pwsh
