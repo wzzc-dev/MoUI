@@ -250,7 +250,9 @@ entries must also include `evidenceProvenance` that traces the claim to a
 non-skipped successful GitHub Actions job/run or to a matching-host artifact
 bundle; a host label, skipped CI job, build-only/package-only job, provider
 preflight, or dependency smoke is not enough for `status=passed` runtime
-evidence. The
+evidence. `artifacts/platform-evidence/*/README.md` files are placeholder
+documentation and must not be used as passed platform, Skia, or provenance
+artifacts. The
 manifest is schema v2 and mirrors the local window recorder's monitor/cursor
 field as `monitorCursor`; native passed evidence must set it to `yes`, while
 Web browser evidence may leave it pending because CDP does not prove native
