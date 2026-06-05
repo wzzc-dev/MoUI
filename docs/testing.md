@@ -291,9 +291,10 @@ instead of one large end-to-end assertion:
    shared fanout after `HostRuntimeDriver` dispatch. Native async
    image completion source behavior also belongs here: loading-record scheduling,
    in-flight de-duplication, publish, redraw routing, renderer apply-port
-   forwarding, stale revision handling, closed-window discard, and cleanup/late
-   completion behavior are host contracts before provider/platform loaders
-   supply real completion snapshots. Native platform backend tests should also
+   forwarding, deferred native request capture, later completion delivery, stale
+   revision handling, closed-window discard, and cleanup/late completion
+   behavior are host contracts before provider/platform loaders supply real
+   completion snapshots. Native platform backend tests should also
    pin that provider-owned image loaders are optional, invoked only through the
    post-present host hook, and cancelled when a window is disposed. WGPU
    provider package tests also pin that provider-owned loaders can turn native
