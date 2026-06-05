@@ -512,11 +512,12 @@ test "wgpu web command bridge preserves gradient and shadow command payloads" {
       @core.DrawCommand::FillRoundedRectBrush(rounded, gradient),
       @core.DrawCommand::StrokeRoundedRectBrush(rounded, gradient, 2.0),
       @core.DrawCommand::FillRoundedRectBrush(rounded, radial),
+      @core.DrawCommand::StrokeRoundedRectBrush(rounded, radial, 3.0),
       @core.DrawCommand::DrawShadow(shadow),
     ],
     @core.Size::new(width=120.0, height=80.0),
   )
-  inspect(calls.length(), content="6")
+  inspect(calls.length(), content="7")
   assert_true(
     calls[1]
     is WebGpuHostCall::FillRoundedRectBrush(_, @core.Brush::LinearGradient(_)),
@@ -535,6 +536,14 @@ test "wgpu web command bridge preserves gradient and shadow command payloads" {
   )
   assert_true(
     calls[4]
+    is WebGpuHostCall::StrokeRoundedRectBrush(
+      _,
+      @core.Brush::RadialGradient(_),
+      3.0
+    ),
+  )
+  assert_true(
+    calls[5]
     is WebGpuHostCall::DrawShadow({ blur_radius: 12.0, spread: 2.0, .. }),
   )
 }
