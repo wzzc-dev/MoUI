@@ -378,16 +378,6 @@ fn native_proof_commands(async_source : String) -> Array[@core.DrawCommand] {
       @core.Color::rgba(r=1.0, g=0.0, b=1.0),
     ),
     @core.DrawCommand::PopFilter,
-    @core.DrawCommand::DrawPath(
-      @core.PathSpec::new(
-        verbs=[
-          @core.PathVerb::MoveTo(@core.Point::new(x=22.0, y=22.0)),
-          @core.PathVerb::LineTo(@core.Point::new(x=44.0, y=22.0)),
-        ],
-        stroke=Some(@core.Brush::solid(@core.Color::rgba(r=0.0, g=1.0, b=1.0))),
-        stroke_width=10.0,
-      ),
-    ),
     @core.DrawCommand::DrawText(
       @core.TextRun::new(
         text="A",
@@ -398,6 +388,16 @@ fn native_proof_commands(async_source : String) -> Array[@core.DrawCommand] {
       ),
     ),
     @core.DrawCommand::PopLayer,
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=22.0, y=22.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=44.0, y=22.0)),
+        ],
+        stroke=Some(@core.Brush::solid(@core.Color::rgba(r=0.0, g=1.0, b=1.0))),
+        stroke_width=10.0,
+      ),
+    ),
     @core.DrawCommand::PopClip,
     @core.DrawCommand::PopTransform,
     @core.DrawCommand::DrawText(
