@@ -85,8 +85,87 @@ fn rect_dark_rows(
 }
 
 ///|
-fn skia_text_emoji_smoke_commands() -> Array[@core.DrawCommand] {
+struct SkiaParagraphProofLine {
+  text : String
+  frame : @core.Rect
+  line_index : Int
+  baseline : Double
+  measured_width : Double
+}
+
+///|
+fn paragraph_font() -> @core.FontSpec {
+  @core.FontSpec::new(size=18.0, weight=500)
+}
+
+///|
+fn paragraph_words() -> Array[String] {
   [
+    "Proof", "wrap", "line", "alpha", "beta", "gamma", "delta", "epsilon", "zeta",
+  ]
+}
+
+///|
+fn measured_text_width(
+  system : @core.TextSystem,
+  text : String,
+  font : @core.FontSpec,
+) -> Double {
+  system.measure_text(@core.TextLayoutInput::new(text~, font~)).size.width
+}
+
+///|
+fn skia_paragraph_proof_lines(
+  system : @core.TextSystem,
+) -> Array[SkiaParagraphProofLine] {
+  let font = paragraph_font()
+  let max_width = 96.0
+  let start_x = 8.0
+  let start_y = 94.0
+  let metrics = system.measure_text(
+    @core.TextLayoutInput::new(text="Ag", font~),
+  )
+  let line_height = metrics.size.height.max(font.size * 1.25)
+  let line_texts : Array[String] = []
+  let mut current = ""
+  for word in paragraph_words() {
+    let candidate = if current == "" { word } else { current + " " + word }
+    if current == "" ||
+      measured_text_width(system, candidate, font) <= max_width {
+      current = candidate
+    } else {
+      line_texts.push(current)
+      current = word
+    }
+  }
+  if current != "" {
+    line_texts.push(current)
+  }
+  let lines : Array[SkiaParagraphProofLine] = []
+  for index, line_text in line_texts {
+    let y = start_y + index.to_double() * line_height
+    let frame = @core.Rect::new(
+      x=start_x,
+      y~,
+      width=max_width,
+      height=line_height,
+    )
+    lines.push({
+      text: line_text,
+      frame,
+      line_index: index,
+      baseline: y + metrics.baseline,
+      measured_width: measured_text_width(system, line_text, font),
+    })
+  }
+  lines
+}
+
+///|
+fn skia_text_emoji_smoke_commands(
+  paragraph_lines : Array[SkiaParagraphProofLine],
+) -> Array[@core.DrawCommand] {
+  let commands : Array[@core.DrawCommand] = [
     @core.DrawCommand::Clear(@core.Color::white()),
     @core.DrawCommand::DrawText(
       @core.TextRun::new(
@@ -101,20 +180,34 @@ fn skia_text_emoji_smoke_commands() -> Array[@core.DrawCommand] {
         align=@core.TextAlign::TextStart,
       ),
     ),
+  ]
+  for command in skia_bidi_visual_order_commands() {
+    commands.push(command)
+  }
+  for line in paragraph_lines {
+    commands.push(
+      @core.DrawCommand::DrawText(
+        @core.TextRun::new(
+          text=line.text,
+          frame=line.frame,
+          font=paragraph_font(),
+          color=@core.Color::black(),
+          align=@core.TextAlign::TextStart,
+        ),
+      ),
+    )
+  }
+  commands
+}
+
+///|
+fn skia_bidi_visual_order_commands() -> Array[@core.DrawCommand] {
+  [
     @core.DrawCommand::DrawText(
       @core.TextRun::new(
         text="ABC \u{05D0}\u{05D1}\u{05D2} 123",
         frame=@core.Rect::new(x=8.0, y=58.0, width=150.0, height=28.0),
         font=@core.FontSpec::new(size=20.0, weight=500),
-        color=@core.Color::black(),
-        align=@core.TextAlign::TextStart,
-      ),
-    ),
-    @core.DrawCommand::DrawText(
-      @core.TextRun::new(
-        text="Proof wrap line alpha beta gamma delta epsilon zeta",
-        frame=@core.Rect::new(x=8.0, y=94.0, width=96.0, height=86.0),
-        font=@core.FontSpec::new(size=18.0, weight=500),
         color=@core.Color::black(),
         align=@core.TextAlign::TextStart,
       ),
@@ -162,16 +255,31 @@ fn zwj_has_no_interior_caret(system : @core.TextSystem) -> Bool {
 }
 
 ///|
-fn paragraph_wraps(system : @core.TextSystem) -> Bool {
-  let text = "Proof wrap line alpha beta gamma delta epsilon zeta"
-  let font = @core.FontSpec::new(size=18.0, weight=500)
-  let unbounded = system.measure_text(@core.TextLayoutInput::new(text~, font~))
-  let wrapped = system.measure_text(
-    @core.TextLayoutInput::new(text~, font~, max_width=96.0),
-  )
-  wrapped.size.width <= 96.0 &&
-  wrapped.size.height > unbounded.size.height * 1.5 &&
-  wrapped.baseline > 0.0
+fn paragraph_wraps(lines : Array[SkiaParagraphProofLine]) -> Bool {
+  if lines.length() < 3 {
+    return false
+  }
+  for line in lines {
+    if line.measured_width <= 0.0 ||
+      line.measured_width > line.frame.size.width + 0.01 ||
+      line.baseline <= line.frame.origin.y {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn paragraph_later_line_pixels(
+  frame : @skia_renderer.SkiaPixelFrame,
+  lines : Array[SkiaParagraphProofLine],
+) -> Bool {
+  if lines.length() < 3 {
+    return false
+  }
+  let line_1_rows = rect_dark_rows(frame, lines[1].frame)
+  let line_2_rows = rect_dark_rows(frame, lines[2].frame)
+  line_1_rows >= 4 && line_2_rows >= 4
 }
 
 ///|
@@ -212,7 +320,14 @@ fn main {
     fail_smoke("failed to create MoUI Skia text/emoji proof renderer")
   }
 
-  renderer.render(skia_text_emoji_smoke_commands()) catch {
+  let paragraph_lines = skia_paragraph_proof_lines(renderer.text_system())
+  for line in paragraph_lines {
+    println(
+      "MoUI Skia text/emoji smoke paragraph line=\{line.line_index} text=\{line.text} baseline=\{line.baseline} measured_width=\{line.measured_width}",
+    )
+  }
+
+  renderer.render(skia_text_emoji_smoke_commands(paragraph_lines)) catch {
     err =>
       fail_smoke(
         "failed to render MoUI Skia text/emoji proof frame: \{err.message()}",
@@ -251,9 +366,11 @@ fn main {
 
       let paragraph_rows = rect_dark_rows(
         frame,
-        @core.Rect::new(x=8.0, y=94.0, width=96.0, height=86.0),
+        @core.Rect::new(x=8.0, y=94.0, width=96.0, height=94.0),
       )
-      if paragraph_wraps(renderer.text_system()) && paragraph_rows >= 12 {
+      if paragraph_wraps(paragraph_lines) &&
+        paragraph_later_line_pixels(frame, paragraph_lines) &&
+        paragraph_rows >= 12 {
         println(
           "MoUI Skia text/emoji smoke paragraph dark_rows=\{paragraph_rows}",
         )
