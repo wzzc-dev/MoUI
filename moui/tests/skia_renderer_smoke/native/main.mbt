@@ -154,6 +154,52 @@ fn assert_region_has_dark_pixel(
 }
 
 ///|
+fn assert_region_has_redish_pixel(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Unit {
+  if region_has_pixel_matching(
+    frame,
+    rect,
+    (r, g, b, a) => a > 0 && r > 170 && g < 120 && b < 130,
+  ) {
+    return ()
+  }
+  fail_smoke("MoUI Skia smoke region did not contain a red proof pixel")
+}
+
+///|
+fn assert_region_has_blueish_pixel(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Unit {
+  if region_has_pixel_matching(
+    frame,
+    rect,
+    (r, g, b, a) => a > 0 && b > 150 && r < 140 && g < 150,
+  ) {
+    return ()
+  }
+  fail_smoke("MoUI Skia smoke region did not contain a blue proof pixel")
+}
+
+///|
+fn assert_region_has_purpleish_pixel(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Unit {
+  if region_has_pixel_matching(
+    frame,
+    rect,
+    (r, g, b, a) =>
+      a > 0 && r > 70 && r < 210 && b > 70 && b < 230 && g < 150,
+  ) {
+    return ()
+  }
+  fail_smoke("MoUI Skia smoke region did not contain a radial mid proof pixel")
+}
+
+///|
 fn assert_region_has_no_dark_pixel(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
@@ -161,6 +207,36 @@ fn assert_region_has_no_dark_pixel(
   if region_has_dark_pixel(frame, rect) {
     fail_smoke("MoUI Skia smoke text leaked dark pixels outside its frame")
   }
+}
+
+///|
+fn region_has_pixel_matching(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+  predicate : (Int, Int, Int, Int) -> Bool,
+) -> Bool {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      let offset = y * frame.row_bytes + x * 4
+      if offset + 3 < frame.pixels.length() {
+        let actual_r = frame.pixels[offset].to_int()
+        let actual_g = frame.pixels[offset + 1].to_int()
+        let actual_b = frame.pixels[offset + 2].to_int()
+        let actual_a = frame.pixels[offset + 3].to_int()
+        if predicate(actual_r, actual_g, actual_b, actual_a) {
+          return true
+        }
+      }
+    }
+  }
+  false
 }
 
 ///|
@@ -697,6 +773,148 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
 }
 
 ///|
+fn renderer_proof_pixel_commands() -> Array[@core.DrawCommand] {
+  [
+    @core.DrawCommand::Clear(@core.Color::white()),
+    @core.DrawCommand::FillRoundedRectBrush(
+      @core.RoundedRect::new(
+        rect=@core.Rect::new(x=8.0, y=8.0, width=48.0, height=48.0),
+        radius=24.0,
+      ),
+      @core.Brush::radial_gradient(
+        center=@core.Point::new(x=32.0, y=32.0),
+        radius=24.0,
+        center_color=@core.Color::rgba(r=0.95, g=0.05, b=0.05),
+        edge_color=@core.Color::rgba(r=0.05, g=0.08, b=0.95),
+      ),
+    ),
+    @core.DrawCommand::PushTransform(
+      @core.Transform2D::translation(dx=72.0, dy=8.0),
+    ),
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=0.0, y=0.0, width=48.0, height=48.0),
+    ),
+    @core.DrawCommand::PushLayer(
+      @core.LayerSpec::new(
+        opacity=0.9,
+        mask=@core.LayerMask::RectMask(
+          @core.Rect::new(x=0.0, y=0.0, width=48.0, height=48.0),
+        ),
+      ),
+    ),
+    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(0.6)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=4.0, y=4.0, width=14.0, height=14.0),
+      magenta(),
+    ),
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=22.0, y=4.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=38.0, y=18.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=22.0, y=18.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(@core.Brush::solid(cyan())),
+      ),
+    ),
+    @core.DrawCommand::DrawImage(@core.ImageRun::{
+      source: one_pixel_red_png_data_uri(),
+      frame: @core.Rect::new(x=2.0, y=26.0, width=8.0, height=8.0),
+      opacity: 1.0,
+      fit: @core.ImageFit::Contain,
+    }),
+    @core.DrawCommand::DrawText(
+      @core.TextRun::new(
+        text="A",
+        frame=@core.Rect::new(x=32.0, y=22.0, width=20.0, height=24.0),
+        font=@core.FontSpec::new(size=20.0, weight=600),
+        color=@core.Color::black(),
+        align=@core.TextAlign::TextStart,
+      ),
+    ),
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::PopClip,
+    @core.DrawCommand::PopTransform,
+  ]
+}
+
+///|
+fn run_renderer_proof_pixel_smoke() -> Unit {
+  let captured : Ref[@skia_renderer.SkiaPixelFrame?] = Ref(None)
+  let target = @skia_renderer.SkiaPresentTarget::new(
+    description="MoUI Skia renderer proof pixel presenter",
+    present=frame => {
+      captured.val = Some(frame)
+      true
+    },
+  )
+  guard (try? @skia_renderer.create_with_present_target(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=128.0, height=64.0),
+        scale_factor=1.0,
+      ),
+      target,
+    ))
+    is Ok(renderer) else {
+    fail_smoke("failed to create MoUI Skia renderer proof pixel renderer")
+  }
+  renderer.render(renderer_proof_pixel_commands()) catch {
+    err =>
+      fail_smoke(
+        "failed to render MoUI Skia renderer proof pixels: \{err.message()}",
+      )
+  }
+  if renderer.unsupported_command_count() != 0 {
+    fail_smoke("MoUI Skia renderer proof hit unsupported commands")
+  }
+  match captured.val {
+    Some(frame) => {
+      assert_region_has_redish_pixel(
+        frame,
+        @core.Rect::new(x=28.0, y=28.0, width=8.0, height=8.0),
+      )
+      assert_region_has_purpleish_pixel(
+        frame,
+        @core.Rect::new(x=42.0, y=28.0, width=6.0, height=8.0),
+      )
+      assert_region_has_blueish_pixel(
+        frame,
+        @core.Rect::new(x=52.0, y=28.0, width=4.0, height=8.0),
+      )
+      assert_region_has_purpleish_pixel(
+        frame,
+        @core.Rect::new(x=76.0, y=12.0, width=16.0, height=16.0),
+      )
+      assert_region_has_pixel_near(
+        frame,
+        @core.Rect::new(x=94.0, y=12.0, width=18.0, height=16.0),
+        0,
+        255,
+        255,
+        255,
+        40,
+      )
+      assert_region_has_redish_pixel(
+        frame,
+        @core.Rect::new(x=74.0, y=34.0, width=10.0, height=10.0),
+      )
+      assert_region_has_dark_pixel(
+        frame,
+        @core.Rect::new(x=104.0, y=30.0, width=20.0, height=24.0),
+      )
+    }
+    None => fail_smoke("Skia renderer proof presenter did not receive a frame")
+  }
+  renderer.dispose()
+  println(
+    "MoUI renderer proof radialGradient passed center-mid-edge-pixels shader-payload",
+  )
+  println("MoUI renderer proof transformPixels passed pixel-markers")
+}
+
+///|
 fn async_image_smoke_commands(
   local_png_path : String,
 ) -> Array[@core.DrawCommand] {
@@ -891,6 +1109,9 @@ fn run_async_image_second_frame_smoke() -> Unit {
       fail_smoke("Skia async image smoke presenter did not receive a frame")
   }
   println("MoUI Skia async image second-frame smoke passed")
+  println(
+    "MoUI renderer proof asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
+  )
 }
 
 ///|
@@ -903,6 +1124,8 @@ fn main {
   if @skia_native.skia_shaper_available() {
     println("MoUI Skia renderer smoke shaper available")
   }
+
+  run_renderer_proof_pixel_smoke()
 
   let local_png_path = "/private/tmp/moui-skia-renderer-smoke-local-image.png"
   remove_local_smoke_file(local_png_path)
