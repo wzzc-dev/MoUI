@@ -82,6 +82,12 @@ priv struct HostBrushPayload {
 }
 
 ///|
+priv enum RoundedBrushHostPayload {
+  SolidColor(@core.Color)
+  GradientPayload(HostBrushPayload)
+}
+
+///|
 pub(all) struct WebGpuHostSurface {
   canvas_id : String
   mut metrics : @render.RendererSurfaceMetrics
@@ -914,6 +920,18 @@ fn brush_payload(brush : @core.Brush, frame : @core.Rect) -> HostBrushPayload {
 }
 
 ///|
+fn rounded_brush_host_payload(
+  brush : @core.Brush,
+  frame : @core.Rect,
+) -> RoundedBrushHostPayload {
+  match brush {
+    @core.Brush::Solid(color) => RoundedBrushHostPayload::SolidColor(color)
+    @core.Brush::LinearGradient(_) | @core.Brush::RadialGradient(_) =>
+      RoundedBrushHostPayload::GradientPayload(brush_payload(brush, frame))
+  }
+}
+
+///|
 fn double_array_string(values : Array[Double]) -> String {
   let parts : Array[String] = []
   for value in values {
@@ -928,8 +946,8 @@ fn submit_fill_rounded_rect_brush(
   rounded : @core.RoundedRect,
   brush : @core.Brush,
 ) -> Unit raise WebGpuHostError {
-  match brush {
-    @core.Brush::Solid(color) =>
+  match rounded_brush_host_payload(brush, rounded.rect) {
+    RoundedBrushHostPayload::SolidColor(color) =>
       raise_for_host_status(
         host_fill_rounded_rect(
           renderer,
@@ -944,7 +962,7 @@ fn submit_fill_rounded_rect_brush(
           color.a,
         ),
       )
-    @core.Brush::LinearGradient(gradient) =>
+    RoundedBrushHostPayload::GradientPayload(payload) =>
       raise_for_host_status(
         host_fill_rounded_rect_gradient(
           renderer,
@@ -953,33 +971,18 @@ fn submit_fill_rounded_rect_brush(
           rounded.rect.size.width,
           rounded.rect.size.height,
           rounded.radius,
-          gradient.start.x,
-          gradient.start.y,
-          gradient.end.x,
-          gradient.end.y,
-          gradient.start_color.r,
-          gradient.start_color.g,
-          gradient.start_color.b,
-          gradient.start_color.a,
-          gradient.end_color.r,
-          gradient.end_color.g,
-          gradient.end_color.b,
-          gradient.end_color.a,
-        ),
-      )
-    @core.Brush::RadialGradient(gradient) =>
-      raise_for_host_status(
-        host_fill_rounded_rect(
-          renderer,
-          rounded.rect.origin.x,
-          rounded.rect.origin.y,
-          rounded.rect.size.width,
-          rounded.rect.size.height,
-          rounded.radius,
-          gradient.center_color.r,
-          gradient.center_color.g,
-          gradient.center_color.b,
-          gradient.center_color.a,
+          payload.start.x,
+          payload.start.y,
+          payload.end.x,
+          payload.end.y,
+          payload.start_color.r,
+          payload.start_color.g,
+          payload.start_color.b,
+          payload.start_color.a,
+          payload.end_color.r,
+          payload.end_color.g,
+          payload.end_color.b,
+          payload.end_color.a,
         ),
       )
   }
@@ -992,8 +995,8 @@ fn submit_stroke_rounded_rect_brush(
   brush : @core.Brush,
   width : Double,
 ) -> Unit raise WebGpuHostError {
-  match brush {
-    @core.Brush::Solid(color) =>
+  match rounded_brush_host_payload(brush, rounded.rect) {
+    RoundedBrushHostPayload::SolidColor(color) =>
       raise_for_host_status(
         host_stroke_rounded_rect(
           renderer,
@@ -1009,7 +1012,7 @@ fn submit_stroke_rounded_rect_brush(
           width,
         ),
       )
-    @core.Brush::LinearGradient(gradient) =>
+    RoundedBrushHostPayload::GradientPayload(payload) =>
       raise_for_host_status(
         host_stroke_rounded_rect_gradient(
           renderer,
@@ -1019,34 +1022,18 @@ fn submit_stroke_rounded_rect_brush(
           rounded.rect.size.height,
           rounded.radius,
           width,
-          gradient.start.x,
-          gradient.start.y,
-          gradient.end.x,
-          gradient.end.y,
-          gradient.start_color.r,
-          gradient.start_color.g,
-          gradient.start_color.b,
-          gradient.start_color.a,
-          gradient.end_color.r,
-          gradient.end_color.g,
-          gradient.end_color.b,
-          gradient.end_color.a,
-        ),
-      )
-    @core.Brush::RadialGradient(gradient) =>
-      raise_for_host_status(
-        host_stroke_rounded_rect(
-          renderer,
-          rounded.rect.origin.x,
-          rounded.rect.origin.y,
-          rounded.rect.size.width,
-          rounded.rect.size.height,
-          rounded.radius,
-          gradient.center_color.r,
-          gradient.center_color.g,
-          gradient.center_color.b,
-          gradient.center_color.a,
-          width,
+          payload.start.x,
+          payload.start.y,
+          payload.end.x,
+          payload.end.y,
+          payload.start_color.r,
+          payload.start_color.g,
+          payload.start_color.b,
+          payload.start_color.a,
+          payload.end_color.r,
+          payload.end_color.g,
+          payload.end_color.b,
+          payload.end_color.a,
         ),
       )
   }
