@@ -3,7 +3,7 @@ pub fn run_renderer_proof_smoke() -> Unit raise @wgpu_mbt.WgpuError {
   @wgpu_renderer.native_renderer_proof_smoke(
     platform_label="windows",
     text_engine=windows_text_engine(
-      @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
+      @wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
     ),
   )
   assert_windows_wgpu_async_repaint_proof()
