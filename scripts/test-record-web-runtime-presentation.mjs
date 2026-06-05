@@ -31,6 +31,15 @@ if (!result.stdout.includes("web runtime presentation manifest:")) {
   console.error(result.stderr);
   process.exit(1);
 }
+if (
+  !result.stderr.includes("web runtime presentation failed summary:") ||
+  !result.stderr.includes("target showcase-web-wasm status=failed")
+) {
+  console.error("CDP preflight failure should print a structured failure summary");
+  console.error(result.stdout);
+  console.error(result.stderr);
+  process.exit(1);
+}
 
 const manifest = JSON.parse(readFileSync(failedManifestPath, "utf8"));
 if (

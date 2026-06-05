@@ -147,6 +147,68 @@ const writeManifest = manifest => {
   console.log(`web runtime presentation manifest: ${manifestPath}`);
 };
 
+const missingObservationKeys = observations =>
+  Object.entries(observations ?? {})
+    .filter(([, value]) => value === "no")
+    .map(([key]) => key);
+
+const summarizeEventNames = events => {
+  const names = [];
+  for (const event of events ?? []) {
+    const name = event?.name;
+    if (typeof name === "string" && name.trim() !== "") names.push(name);
+  }
+  return names.length > 0 ? names.join(",") : "(none)";
+};
+
+const printFailureSummary = manifest => {
+  if (manifest?.overallStatus === "passed") return;
+  console.error("web runtime presentation failed summary:");
+  const platformMissing = missingObservationKeys(manifest?.platformObservations);
+  console.error(
+    `  platform missing: ${platformMissing.length > 0 ? platformMissing.join(",") : "(none)"}`,
+  );
+  for (const target of manifest?.targets ?? []) {
+    const targetMissing = missingObservationKeys(target?.observations);
+    console.error(
+      `  target ${target?.name ?? "unknown"} status=${target?.status ?? "unknown"} missing=${targetMissing.length > 0 ? targetMissing.join(",") : "(none)"}`,
+    );
+    if (target?.statusText) {
+      console.error(`    statusText=${target.statusText}`);
+    }
+    if (target?.runtimeSignals) {
+      console.error(`    runtimeSignals=${JSON.stringify(target.runtimeSignals)}`);
+    }
+    if (target?.screenshot) {
+      const screenshot = target.screenshot;
+      console.error(
+        `    screenshot contentPixels=${screenshot.contentPixels ?? 0} buckets=${screenshot.distinctColorBuckets ?? 0}`,
+      );
+      for (const key of [
+        "transformPixels",
+        "radialGradient",
+        "colorEmojiPixels",
+        "zwjGrapheme",
+        "bidiLayout",
+        "paragraphWrapping",
+        "asyncImageSecondFrame",
+      ]) {
+        const proof = screenshot[key];
+        if (proof?.required === true && proof?.passed !== true) {
+          console.error(`    ${key}=${JSON.stringify(proof)}`);
+        }
+      }
+    }
+    if ((target?.notes ?? []).length > 0) {
+      console.error(`    notes=${target.notes.join(" | ")}`);
+    }
+    if ((target?.consoleErrors ?? []).length > 0) {
+      console.error(`    consoleErrors=${target.consoleErrors.join(" | ")}`);
+    }
+    console.error(`    evidenceEvents=${summarizeEventNames(target?.evidenceEvents)}`);
+  }
+};
+
 const validateManifest = () => {
   const validationArgs = ["scripts/validate-web-runtime-presentation-manifest.mjs", manifestPath];
   if (requirePassed) validationArgs.push("--require-passed");
@@ -222,6 +284,7 @@ const writePreflightFailureManifest = error => {
     targets: targetResults,
   };
   writeManifest(manifest);
+  printFailureSummary(manifest);
   validateManifest();
   console.error(`web runtime presentation preflight failed: ${message}`);
   process.exit(1);
@@ -1227,6 +1290,7 @@ const manifest = {
 };
 
 writeManifest(manifest);
+printFailureSummary(manifest);
 validateManifest();
 
 if (requirePassed && overallStatus !== "passed") {
