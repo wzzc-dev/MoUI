@@ -18,6 +18,11 @@ pub fn web_dispatch_event(
 }
 
 ///|
+pub fn web_dispatch_route(source_code : Int, text_id : Int) -> Unit {
+  @web.web_dispatch_route(source_code, text_id)
+}
+
+///|
 pub fn web_complete_async_clipboard_read(
   id : Int,
   ok : Bool,

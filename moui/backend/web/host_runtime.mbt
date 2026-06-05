@@ -39,6 +39,7 @@ priv struct WebWindowPlatformSlot {
 pub(all) struct WebAppOptions {
   scene_resolver : @host.HostWindowSceneResolver
   event_sources : @host.HostPlatformEventSources?
+  route_source : @host.HostRouteSource?
 }
 
 ///|
@@ -111,6 +112,7 @@ pub fn run_app_with_options(
   event_loop.set_control_flow(@window_core.ControlFlow::Poll)
   let async_services = @host.HostServiceAsyncQueue::new()
   set_web_async_host_service_queue(Some(async_services))
+  set_web_route_source(options.route_source)
   let services = web_service_bridge(
     system_theme=match event_loop.system_theme() {
       Some(theme) => @host.window_theme_to_color_scheme(theme)
@@ -151,8 +153,9 @@ pub fn run_app_with_options(
 pub fn WebAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   event_sources? : @host.HostPlatformEventSources? = None,
+  route_source? : @host.HostRouteSource? = None,
 ) -> WebAppOptions {
-  { scene_resolver, event_sources }
+  { scene_resolver, event_sources, route_source }
 }
 
 ///|

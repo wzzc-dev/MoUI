@@ -398,8 +398,12 @@ fn web_host_string(value : String) -> WebHostString {
 
 ///|
 fn web_host_string_from_id(id : Int) -> String {
+  web_host_string_to_string(web_begin_read_string(id))
+}
+
+///|
+fn web_host_string_to_string(handle : WebHostString) -> String {
   let buf = StringBuilder::new()
-  let handle = web_begin_read_string(id)
   while true {
     let ch = web_string_read_char(handle)
     if ch == -1 {
