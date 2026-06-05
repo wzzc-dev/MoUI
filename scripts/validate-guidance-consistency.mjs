@@ -509,9 +509,16 @@ assertIncludes("moui/render/wgpu/native_image.mbt", "pub fn native_image_load_co
 assertIncludes("moui/backend/host/renderer.mbt", "HostWindowRenderer::apply_image_resource_load_completion");
 assertIncludes("moui/backend/host/image_repaint.mbt", "pub struct HostImageResourceCompletionSource");
 assertIncludes("moui/backend/host/image_repaint.mbt", "pub struct HostAsyncImageLoader");
+assertIncludes("moui/backend/host/image_repaint.mbt", "pub struct HostNativeAsyncImageSource");
 assertIncludes("moui/backend/host/image_repaint.mbt", "HostImageResourceCompletionSource::publish");
 assertIncludes("moui/backend/host/image_repaint.mbt", "HostImageResourceCompletionSource::complete");
 assertIncludes("moui/backend/host/image_repaint.mbt", "HostAsyncImageLoader::schedule_loading_resources");
+assertIncludes("moui/backend/host/image_repaint.mbt", "HostNativeAsyncImageSource::loader");
+assertIncludes("moui/backend/host/image_repaint.mbt", "HostNativeAsyncImageSource::complete");
+assertIncludes(
+  "moui/backend/host/pkg.generated.mbti",
+  "pub fn HostNativeAsyncImageSource::complete",
+);
 assertIncludes("moui/backend/macos/macos_backend.mbt", "image_loader? : @host.HostAsyncImageLoader? = None");
 assertIncludes("moui/backend/macos/macos_backend.mbt", "MacosRendererProvider::schedule_image_resource_loads");
 assertIncludes("moui/backend/macos/macos_backend.mbt", "cancel_image_resource_loads");
@@ -560,6 +567,12 @@ assertIncludes("docs/release-readiness.md", "skia_image_load_completion");
 assertIncludes("docs/renderer-capability-report.md", "skia_image_load_completion");
 assertIncludes("docs/testing.md", "skia_image_load_completion");
 assertIncludes("skills/moui-framework-development-skill/SKILL.md", "skia_image_load_completion");
+assertIncludes("AGENTS.md", "deferred native completion request source");
+assertIncludes("docs/architecture.md", "HostNativeAsyncImageSource");
+assertIncludes("docs/release-readiness.md", "HostNativeAsyncImageSource");
+assertIncludes("docs/renderer-capability-report.md", "HostNativeAsyncImageSource");
+assertIncludes("docs/testing.md", "deferred native request capture");
+assertIncludes("skills/moui-framework-development-skill/SKILL.md", "HostNativeAsyncImageSource");
 assertIncludes("moui/render/wgpu/renderer.mbt", "WgpuRenderer::apply_image_resource_load_completion");
 assertIncludes("moui/render/skia/renderer.mbt", "SkiaRasterRenderer::apply_image_resource_load_completion");
 assertIncludes("moui/render/webgpu_adapter/adapter.mbt", "WebGpuWasmRenderer::apply_image_resource_load_completion");
@@ -577,6 +590,14 @@ assertIncludes("moui/backend/host/host_test.mbt", "host image completion source 
 assertIncludes("moui/backend/host/host_test.mbt", "host async image loader schedules loading records and completes redraw");
 assertIncludes("moui/backend/host/host_test.mbt", "host async image loader cancels window loads and ignores late completions");
 assertIncludes("moui/backend/host/host_test.mbt", "host async image loader ignores mismatched completion sources");
+assertIncludes(
+  "moui/backend/host/host_test.mbt",
+  "host native async image source defers completion until platform callback",
+);
+assertIncludes(
+  "moui/backend/host/host_test.mbt",
+  "host native async image source drops completions after loader cancellation",
+);
 assertIncludes("moui/backend/macos/macos_backend_wbtest.mbt", "macos renderer provider exposes async image loader hook");
 assertIncludes("moui/backend/macos/macos_backend_wbtest.mbt", "macos renderer provider async image hook defaults to unavailable");
 assertIncludes("moui/backend/windows/windows_backend_wbtest.mbt", "windows renderer provider exposes async image loader hook");

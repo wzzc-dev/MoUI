@@ -558,7 +558,12 @@ windows, ignores stale lower revisions, and discards closed-window completions.
 `HostAsyncImageLoader` is the host-side scheduler adapter for that boundary: it
 scans renderer snapshots for loading records, starts a platform/provider loader,
 deduplicates in-flight `(window, source)` work, and gates late or cancelled
-completion callbacks before they can apply to a renderer. The native macOS,
+completion callbacks before they can apply to a renderer. `HostNativeAsyncImageSource`
+is the host-owned deferred request source for platform loaders that need to
+record pending `(window, source)` work and deliver a completion later from an
+independent native callback. It proves the host boundary can receive late
+completion callbacks after scheduling returns, but matching-host off-main runtime
+artifacts are still required before the feature is ready. The native macOS,
 Windows, and Linux host cores call the optional provider-owned loader hook after
 the presented image-resource revision has been baselined, then cancel in-flight
 window loads during disposal. Native WGPU provider packages now supply a
