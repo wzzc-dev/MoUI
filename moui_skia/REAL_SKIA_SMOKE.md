@@ -360,7 +360,8 @@ bash scripts/verify-skia-revision-pin.sh logs/macos-real-skia-acceptance.log
 Windows defaults to the locked `wzzc-dev/skia` release package through the MSVC helper.
 It does not build Skia from source in CI. The MinGW-compatible path is still
 available for GCC native-stub builds, and the MSVC path covers release or
-prepared release zips/checkouts that provide `skia.lib`.
+prepared release zips/checkouts that provide `skia.lib` for static mode or
+`skia.dll.lib` plus `skia.dll` for dynamic mode.
 
 Run locally on Windows or trigger the `Windows Real Skia Smoke` workflow with
 the default `skia_provider=release`:
@@ -400,7 +401,8 @@ Required checks:
 
 Windows MinGW acceptance requires `lib<name>.a` or `<name>.lib` that is
 compatible with the GCC/MinGW toolchain used by that native-stub path.
-Windows MSVC acceptance requires `skia.lib` and a Visual Studio developer
+Windows MSVC acceptance requires `skia.lib` for static mode, or `skia.dll.lib`
+and adjacent `skia.dll` for dynamic mode, plus a Visual Studio developer
 environment selected through `vcvarsall.bat`.
 For self-hosted or manually prepared runners, the Windows helpers also accept
 `MOUI_SKIA_SKIA_INCLUDE`, `MOUI_SKIA_SKIA_LIB_DIR`, `MOUI_SKIA_SKIA_LIB`,

@@ -695,7 +695,7 @@
                 "sha256": "0b284dc1a6f412e4d48f3c607ac3a349517e9cea6cca319247fd9eb3d914e7f0",
                 "size": 157928034,
                 "library_names": [
-                  "skia.lib",
+                  "skia.dll.lib",
                   "skia.dll"
                 ]
               },
@@ -716,7 +716,7 @@
                 "sha256": "ce10b1c29a07809a4e5e7d82cb1dfc75b9a97bfd1cf953d922a802e98420bb39",
                 "size": 162650534,
                 "library_names": [
-                  "skia.lib",
+                  "skia.dll.lib",
                   "skia.dll"
                 ]
               },
@@ -739,7 +739,7 @@
                 "sha256": "f67a728f274eff27077c70680fcdd0a2817d106eb9685250894f85125bf8b96a",
                 "size": 30427517,
                 "library_names": [
-                  "skia.lib",
+                  "skia.dll.lib",
                   "skia.dll"
                 ]
               },
@@ -760,7 +760,7 @@
                 "sha256": "2a8a54ae44c0370d8b20000e0bc044bf0da14059b76bcfde00256c37fb0ea41c",
                 "size": 32558079,
                 "library_names": [
-                  "skia.lib",
+                  "skia.dll.lib",
                   "skia.dll"
                 ]
               },

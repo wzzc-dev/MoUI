@@ -91,11 +91,13 @@ jobs:
             libvulkan1 mesa-vulkan-drivers vulkan-tools
 
       - name: Configure Linux software Vulkan adapter
-        if: ${{ matrix.platform == 'linux' }}
         run: |
-          echo "LIBGL_ALWAYS_SOFTWARE=1" >> "$GITHUB_ENV"
-          echo "WGPU_BACKEND=vulkan" >> "$GITHUB_ENV"
-          echo "VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json" >> "$GITHUB_ENV"
+          export LIBGL_ALWAYS_SOFTWARE=1
+          export WGPU_BACKEND=vulkan
+          export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          echo "LIBGL_ALWAYS_SOFTWARE=$LIBGL_ALWAYS_SOFTWARE" >> "$GITHUB_ENV"
+          echo "WGPU_BACKEND=$WGPU_BACKEND" >> "$GITHUB_ENV"
+          echo "VK_ICD_FILENAMES=$VK_ICD_FILENAMES" >> "$GITHUB_ENV"
           test -f /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
           vulkaninfo --summary
 
@@ -263,7 +265,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
-            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji \
+            libvulkan1 mesa-vulkan-drivers vulkan-tools
+
+      - name: Configure Linux software Vulkan adapter
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          export LIBGL_ALWAYS_SOFTWARE=1
+          export WGPU_BACKEND=vulkan
+          export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          echo "LIBGL_ALWAYS_SOFTWARE=$LIBGL_ALWAYS_SOFTWARE" >> "$GITHUB_ENV"
+          echo "WGPU_BACKEND=$WGPU_BACKEND" >> "$GITHUB_ENV"
+          echo "VK_ICD_FILENAMES=$VK_ICD_FILENAMES" >> "$GITHUB_ENV"
+          test -f /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          vulkaninfo --summary
 
       - name: Set up vcpkg zlib
         if: ${{ matrix.platform == 'windows' }}

@@ -37,6 +37,33 @@ $smokeBackupPkg = "$smokePkg.smoke.bak"
 $defaultCacheRoot = Join-Path $repoRoot ".skia-cache/windows-msvc/aseprite/Skia-Windows-Release-x64"
 $defaultZip = Join-Path $env:USERPROFILE "Downloads/Skia-Windows-Release-x64.zip"
 
+function Resolve-StaticSkiaLib {
+  param([Parameter(Mandatory = $true)][string] $LibDir)
+
+  $candidate = Join-Path $LibDir "skia.lib"
+  if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+    return $candidate
+  }
+
+  throw "skia.lib was not found in $LibDir"
+}
+
+function Resolve-DynamicSkiaImportLib {
+  param([Parameter(Mandatory = $true)][string] $LibDir)
+
+  $candidates = @(
+    (Join-Path $LibDir "skia.dll.lib"),
+    (Join-Path $LibDir "skia.lib")
+  )
+  foreach ($candidate in $candidates) {
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+      return $candidate
+    }
+  }
+
+  throw "Skia dynamic import library was not found in $LibDir; expected skia.dll.lib or skia.lib"
+}
+
 function Resolve-VcVarsAll {
   param(
     [string] $Path
@@ -114,10 +141,6 @@ if ([string]::IsNullOrWhiteSpace($SkiaLibDir)) {
   $SkiaLibDir = Join-Path $resolvedRoot "out/Release-x64"
 }
 $resolvedLibDir = (Resolve-Path -LiteralPath $SkiaLibDir).Path
-$skiaLib = Join-Path $resolvedLibDir "skia.lib"
-if (!(Test-Path -LiteralPath $skiaLib -PathType Leaf)) {
-  throw "skia.lib was not found in $resolvedLibDir"
-}
 $skiaDll = Join-Path $resolvedLibDir "skia.dll"
 $resolvedSkiaLinkMode = $normalizedSkiaLinkMode
 if ($resolvedSkiaLinkMode -eq "auto") {
@@ -129,6 +152,11 @@ if ($resolvedSkiaLinkMode -eq "auto") {
 }
 if ($resolvedSkiaLinkMode -eq "dynamic" -and !(Test-Path -LiteralPath $skiaDll -PathType Leaf)) {
   throw "Requested dynamic Skia link mode, but skia.dll was not found in $resolvedLibDir"
+}
+$skiaLib = if ($resolvedSkiaLinkMode -eq "dynamic") {
+  Resolve-DynamicSkiaImportLib -LibDir $resolvedLibDir
+} else {
+  Resolve-StaticSkiaLib -LibDir $resolvedLibDir
 }
 
 if (Test-Path -LiteralPath $backupPkg) {

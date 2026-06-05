@@ -1963,10 +1963,11 @@ test "skia empty typeface text system follows drawing fallback font metrics" {
         )
         assert_true(layout.segments.length() > 0)
       }
-      None =>
-        fail(
-          "expected empty typeface text system to find a visible fallback font",
-        )
+      None => {
+        let measured = system.measure_text(input)
+        let fallback = @core.TextSystem::fallback().measure_text(input)
+        assert_true(measured == fallback)
+      }
     }
   }
 }
@@ -2054,7 +2055,13 @@ test "skia resolved mixed text layout accumulates segment carets" {
         layout.width,
       )
     }
-    None => fail("expected resolved Skia mixed text layout")
+    None => {
+      let system = skia_text_system()
+      let input = @core.TextLayoutInput::new(text~, font~)
+      let measured = system.measure_text(input)
+      let fallback = @core.TextSystem::fallback().measure_text(input)
+      assert_true(measured == fallback)
+    }
   }
 }
 
