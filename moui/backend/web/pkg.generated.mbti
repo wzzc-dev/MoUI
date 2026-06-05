@@ -35,6 +35,8 @@ pub fn semantics_to_aria(@wzzc-dev/moui/core.SemanticsNode) -> AriaNode
 
 pub fn wasm_renderer_ready() -> Bool
 
+pub fn web_app_services(system_theme? : @wzzc-dev/moui/core.ColorScheme) -> @host.HostAppServices
+
 pub fn web_capability_summary(services? : @host.HostServiceCapabilities, async_services? : Bool) -> @host.HostCapabilitySummary
 
 pub fn web_complete_async_clipboard_read(Int, Bool, Int) -> Unit

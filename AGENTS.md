@@ -80,6 +80,9 @@ paths, or abstractions that only preserve old shapes.
   explicitly selecting the native Skia renderer. Markdown Editor has
   `macos_skia`, `windows_skia`, and `linux_skia` for explicit native Skia
   renderer entrypoints.
+- `website/` is the MoUI-built homepage workspace. Keep shared homepage logic
+  in `website/app/` and keep `website/web_wasm/` as a thin Web wasm-gc
+  entrypoint; it is not an example-platform matrix.
 
 ## Local Dependencies
 
