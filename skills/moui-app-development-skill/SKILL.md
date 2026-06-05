@@ -75,9 +75,10 @@ separate framework task using `moui-framework-development-skill`.
   typed route/deep-link events through `Subscription::route_event`, then update
   the app-owned history in the reducer. Use `View::transition` with app-owned
   progress when a route preview needs controlled fade/slide/scale motion.
-  Browser history updates, native URL/deep-link dispatch, and automatic
-  transition scheduling remain explicit app/host work rather than automatic
-  platform behavior.
+  Web entrypoints can wire `backend/web` browser history helpers to abstract
+  app route commands and pass a `HostRouteSource` through `WebAppOptions`.
+  Native URL/deep-link dispatch and automatic transition scheduling remain
+  explicit app/host work rather than automatic platform behavior.
 - Prefer the TEA runtime helpers: use `@core.Program::simple` for pure
   model/update/view apps, `@core.Program::simple_with_environment` when the
   view needs `ViewEnvironment`, and `@core.Program::new` when `update` returns
