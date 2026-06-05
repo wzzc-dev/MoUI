@@ -22,6 +22,7 @@ mkdirSync(proofDir, { recursive: true });
 mkdirSync(platformDir, { recursive: true });
 writeFileSync(logPath, `MoUI renderer proof backend=${backend} platform=${platform}\n`);
 const logs = [logPath];
+let failureStatus = 0;
 
 const log = text => appendFileSync(logPath, `${text}\n`);
 const run = args => {
@@ -35,15 +36,20 @@ const run = args => {
   if (result.status !== 0) {
     if (result.stdout) process.stdout.write(result.stdout);
     if (result.stderr) process.stderr.write(result.stderr);
-    process.exit(result.status ?? 1);
+    failureStatus ||= result.status ?? 1;
+    log(`command failed with status ${result.status ?? 1}: ${args.join(" ")}`);
+    return false;
   }
+  return true;
 };
 
 if (backend === "wgpu-native") {
-  run(["moon", "test", "moui/render/wgpu", "--target", "native"]);
-  run(["moon", "test", "moui/render/wgpu/text_protocol", "--target", "native"]);
-  run(["moon", "test", `moui/backend/${platform}/wgpu`, "--target", "native"]);
-  log("MoUI renderer proof package tests passed for native WGPU.");
+  if (run(["moon", "test", "moui/render/wgpu", "--target", "native"]) &&
+      run(["moon", "test", "moui/render/wgpu/text_protocol", "--target", "native"]) &&
+      run(["moon", "test", `moui/backend/${platform}/wgpu`, "--target", "native"]) &&
+      run(["moon", "run", `moui/tests/wgpu_renderer_proof/${platform}`, "--target", "native"])) {
+    log("MoUI renderer proof package tests passed for native WGPU.");
+  }
 } else {
   const skiaTextEmojiLogPath = `${platformDir}/skia-text-emoji-smoke.log`;
   logs.push(skiaTextEmojiLogPath);
@@ -58,9 +64,10 @@ if (backend === "wgpu-native") {
       "missing paragraphWrapping: requires line metrics and later-line pixels.",
     ].join("\n") + "\n",
   );
-  run(["moon", "test", "moui/render/skia", "--target", "native"]);
-  run(["moon", "test", `moui/backend/${platform}/skia`, "--target", "native"]);
-  log("MoUI renderer proof package tests passed for native Skia.");
+  if (run(["moon", "test", "moui/render/skia", "--target", "native"]) &&
+      run(["moon", "test", `moui/backend/${platform}/skia`, "--target", "native"])) {
+    log("MoUI renderer proof package tests passed for native Skia.");
+  }
 }
 
 log("MoUI renderer proof radialGradient missing: requires true radial center/mid/edge pixel artifact.");
@@ -89,3 +96,4 @@ const record = spawnSync(process.execPath, recordArgs, { encoding: "utf8", env: 
 if (record.stdout) process.stdout.write(record.stdout);
 if (record.stderr) process.stderr.write(record.stderr);
 if (record.status !== 0) process.exit(record.status ?? 1);
+if (failureStatus !== 0) process.exit(failureStatus);
