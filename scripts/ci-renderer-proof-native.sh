@@ -30,10 +30,13 @@ proof_dir="artifacts/conformance/renderer-proof"
 platform_dir="artifacts/platform-evidence/${platform}"
 log_path="${proof_dir}/${backend}-${platform}.log"
 manifest_path="${proof_dir}/${backend}-${platform}.json"
+skia_renderer_smoke_package="moui/tests/skia_renderer_smoke/native"
+skia_renderer_smoke_exe="./_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
 skia_text_emoji_smoke_package="moui/tests/skia_text_emoji_smoke/native"
 skia_text_emoji_smoke_exe="./_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe"
 case "$(uname -s 2>/dev/null || printf unknown)" in
   MINGW*|MSYS*|CYGWIN*)
+    skia_renderer_smoke_exe=".\\_build\\native\\debug\\build\\wzzc-dev\\moui\\tests\\skia_renderer_smoke\\native\\native.exe"
     skia_text_emoji_smoke_exe=".\\_build\\native\\debug\\build\\wzzc-dev\\moui\\tests\\skia_text_emoji_smoke\\native\\native.exe"
     ;;
 esac
@@ -78,24 +81,36 @@ if [ "$backend" = "wgpu-native" ]; then
   esac
   printf '%s\n' 'MoUI renderer proof package tests passed for native WGPU.' >> "$log_path"
 else
+  skia_renderer_log_path="${platform_dir}/skia-renderer-smoke.log"
   skia_text_emoji_log_path="${platform_dir}/skia-text-emoji-smoke.log"
-  record_logs="${record_logs} ${skia_text_emoji_log_path}"
+  record_logs="${record_logs} ${skia_renderer_log_path} ${skia_text_emoji_log_path}"
+  cat > "$skia_renderer_log_path" <<EOF
+MoUI Skia renderer smoke platform=${platform}
+EOF
   cat > "$skia_text_emoji_log_path" <<EOF
 MoUI Skia text/emoji smoke platform=${platform}
 EOF
-  skia_text_emoji_status=0
+  skia_proof_status=0
   run moon test moui/render/skia --target native
   case "$platform" in
     macos) run moon test moui/backend/macos/skia --target native ;;
     windows) run moon test moui/backend/windows/skia --target native ;;
     linux) run moon test moui/backend/linux/skia --target native ;;
   esac
-  if ! run_to_log "$skia_text_emoji_log_path" moon build "$skia_text_emoji_smoke_package" --target native; then
-    skia_text_emoji_status=1
-  elif ! run_to_log "$skia_text_emoji_log_path" "$skia_text_emoji_smoke_exe"; then
-    skia_text_emoji_status=1
+  if ! run_to_log "$skia_renderer_log_path" moon build "$skia_renderer_smoke_package" --target native; then
+    skia_proof_status=1
+  elif ! run_to_log "$skia_renderer_log_path" "$skia_renderer_smoke_exe"; then
+    skia_proof_status=1
   fi
-  if [ "$skia_text_emoji_status" -ne 0 ]; then
+  if ! run_to_log "$skia_text_emoji_log_path" moon build "$skia_text_emoji_smoke_package" --target native; then
+    skia_proof_status=1
+  elif ! run_to_log "$skia_text_emoji_log_path" "$skia_text_emoji_smoke_exe"; then
+    skia_proof_status=1
+  fi
+  if [ "$skia_proof_status" -ne 0 ]; then
+    printf '%s\n' \
+      'Skia renderer smoke did not complete every proof observation; inspect renderer proof manifest observation statuses.' \
+      >> "$skia_renderer_log_path"
     printf '%s\n' \
       'Skia text/emoji smoke did not complete every proof observation; inspect renderer proof manifest observation statuses.' \
       >> "$skia_text_emoji_log_path"
