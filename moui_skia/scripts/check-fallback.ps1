@@ -424,6 +424,32 @@ try {
       throw "fetch-release-skia.ps1 did not map Windows x64 Release dynamic to the locked package"
     }
 
+    $fakeMsvcSharedRoot = Join-Path $dryRunRoot "fake-msvc-shared-root"
+    New-Item -ItemType Directory -Force -Path (Join-Path $fakeMsvcSharedRoot "include/core") | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $fakeMsvcSharedRoot "out/Release-windows-x64-shared") | Out-Null
+    New-Item -ItemType File -Force -Path (Join-Path $fakeMsvcSharedRoot "include/core/SkSurface.h") | Out-Null
+    New-Item -ItemType File -Force -Path (Join-Path $fakeMsvcSharedRoot "out/Release-windows-x64-shared/skia.dll.lib") | Out-Null
+    New-Item -ItemType File -Force -Path (Join-Path $fakeMsvcSharedRoot "out/Release-windows-x64-shared/skia.dll") | Out-Null
+    $fakeMsvcSharedZip = Join-Path $dryRunRoot "Skia-dev-6d73578a36-windows-Release-x64-shared.zip"
+    Compress-Archive -Path (Join-Path $fakeMsvcSharedRoot "*") -DestinationPath $fakeMsvcSharedZip -Force
+    $fakeMsvcSharedExtract = Join-Path $dryRunRoot "fake-msvc-shared-extract"
+    $fakeMsvcSharedPkg = Join-Path $dryRunRoot "fake-msvc-shared.moon.pkg"
+    & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
+      -SkiaRoot $fakeMsvcSharedExtract `
+      -SkiaZip $fakeMsvcSharedZip `
+      -Output $fakeMsvcSharedPkg `
+      -Write
+    $fakeMsvcSharedConfig = Get-Content -LiteralPath $fakeMsvcSharedPkg -Raw
+    if ($fakeMsvcSharedConfig -notlike "*out/Release-windows-x64-shared/skia.dll.lib*" -or
+      $fakeMsvcSharedConfig -notlike "*/DMOUI_SKIA_HAS_SKIA*" -or
+      $fakeMsvcSharedConfig -notlike "*cc-link-flags*") {
+      throw "configure-windows-msvc-native-pkg.ps1 did not resolve the Windows shared release zip layout"
+    }
+    & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
+      -SkiaRoot $fakeMsvcSharedExtract `
+      -Output $fakeMsvcSharedPkg `
+      -Check
+
     try {
       & (Join-Path $repoRoot "scripts/windows-accept-real-skia-smoke.ps1") `
         -SkiaInclude $fakeSkiaInclude `
