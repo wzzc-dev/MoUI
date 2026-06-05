@@ -698,18 +698,20 @@ node scripts/validate-platform-evidence-manifest.mjs \
   --platform web
 ```
 
-The presentation recorder opens Showcase and Markdown Editor through the named
-browser session, injects a read-only browser-runtime event observer, waits for
-the page status, records WebGPU/wasm/canvas signals, performs a viewport resize,
-representative pointer and keyboard input, Markdown Editor text input, closes
-the CDP targets, writes screenshots under
+The presentation recorder opens Showcase's Advanced Rendering section and
+Markdown Editor through the named browser session, injects a read-only
+browser-runtime event observer, waits for the page status, records
+WebGPU/wasm/canvas signals, performs a viewport resize, representative pointer
+and keyboard input, Markdown Editor text input, closes the CDP targets, writes
+screenshots under
 `artifacts/conformance/web-runtime-presentation/`, and validates
 `artifacts/conformance/web-runtime-presentation.json`. A passed manifest is
 stronger than the handoff artifact because it proves browser-local WebGPU
 startup, wasm app startup, canvas sizing, resize/input event-bridge delivery,
-clean target close, clean console, and nonblank screenshot thresholds for that
-Chrome session. It is still not cross-browser coverage, deterministic
-pixel-golden proof, or native platform runtime evidence. If the local browser
+clean target close, clean console, nonblank screenshot thresholds, and Showcase
+transform-scene pixel markers for that Chrome session. It is still not
+cross-browser coverage, deterministic pixel-golden proof beyond the recorded
+marker thresholds, or native platform runtime evidence. If the local browser
 cannot create a WebGPU adapter or device, keep the manifest failed or omit it
 from release claims; do not use the static handoff artifact as a substitute for
 passed browser presentation evidence. The platform recorder can also consume a
