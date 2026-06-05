@@ -297,6 +297,8 @@ moon run examples/markdown_editor/linux_skia --target native
 
 For headless validation, use a compositor such as Weston headless and set
 `WAYLAND_DISPLAY` to its socket before running the examples. The default Linux
-text path composes the fontconfig provider scaffold with Moon Cosmic fallback;
-`linux_cosmic` selects Moon Cosmic directly. Configure real Skia link flags
-before relying on Skia-rendered pixels from `linux_skia` entrypoints.
+text path composes the fontconfig/FreeType provider with Moon Cosmic fallback;
+that provider currently has a narrow native color-emoji path for explicit emoji
+family runs, while general text still falls back to Cosmic. `linux_cosmic`
+selects Moon Cosmic directly. Configure real Skia link flags before relying on
+Skia-rendered pixels from `linux_skia` entrypoints.
