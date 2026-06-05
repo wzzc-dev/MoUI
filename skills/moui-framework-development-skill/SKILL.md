@@ -251,6 +251,17 @@ The canonical Actions job for Web browser-session evidence is
 build Showcase and Markdown Editor Web wasm-gc targets, serve the repository,
 start Chrome CDP, record and fold the presentation manifest, validate the Web
 platform entry, and upload `moui-web-runtime-presentation` artifacts.
+Renderer proof is tracked separately in schema v1 manifests under
+`artifacts/conformance/renderer-proof/<backend>-<platform>.json`. Validate them
+with `scripts/validate-renderer-proof-manifest.mjs`; passed entries require
+GitHub Actions provenance plus exactly `radialGradient`, `transformPixels`,
+`colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`, `paragraphWrapping`, and
+`asyncImageSecondFrame` observations with strong marker tokens. Package-only
+tests, skipped jobs, missing uploaded artifacts, blank screenshots, caret-only
+diagnostics, coverage-only font matching, provider preflights, and fallback-safe
+descriptor audits must stay failed proof. The `renderer-proof-summary` job
+downloads the native WGPU, native Skia, and WebGPU wasm proof artifacts and
+requires all seven manifests to validate as passed before capability promotion.
 The platform evidence manifest is schema v2 and records the window fork's
 monitor/cursor probe as `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native entries
@@ -328,6 +339,15 @@ node --check scripts/record-web-runtime-presentation.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
+node --check scripts/validate-renderer-proof-manifest.mjs
+node scripts/test-validate-renderer-proof-manifest.mjs
+node --check scripts/record-renderer-proof-manifest.mjs
+node scripts/test-record-renderer-proof-manifest.mjs
+node --check scripts/record-web-renderer-proof-manifest.mjs
+node scripts/test-record-web-renderer-proof-manifest.mjs
+node --check scripts/ci-renderer-proof-native.mjs
+sh -n scripts/ci-renderer-proof-native.sh
+sh -n scripts/ci-renderer-proof-summary.sh
 node --check scripts/validate-package-manifest.mjs
 ```
 

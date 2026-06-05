@@ -962,6 +962,15 @@ fn push_visual_vertex(
   size~ : @core.Size,
 ) -> Unit {
   let gradient = visual_gradient(brush)
+  let shader_brush_kind = if mode < visual_mode_shadow {
+    visual_brush_kind(brush)
+  } else {
+    blur_radius
+  }
+  let start_x = visual_brush_start_x(brush, gradient, rect)
+  let start_y = visual_brush_start_y(brush, gradient, rect)
+  let end_x = visual_brush_end_x(brush, gradient, rect)
+  let end_y = visual_brush_end_y(brush, gradient, rect)
   let transformed = transform_point(state.transform, x, y)
   vertices.push({
     x: visual_pixel_x_to_ndc(transformed.x, size.width),
@@ -973,11 +982,11 @@ fn push_visual_vertex(
     radius: radius.min(rect.size.width.min(rect.size.height) / 2.0).max(0.0),
     mode,
     stroke_width,
-    blur_radius,
-    start_x: gradient.start.x - rect.origin.x,
-    start_y: gradient.start.y - rect.origin.y,
-    end_x: gradient.end.x - rect.origin.x,
-    end_y: gradient.end.y - rect.origin.y,
+    blur_radius: shader_brush_kind,
+    start_x,
+    start_y,
+    end_x,
+    end_y,
     r0: gradient.start_color.r,
     g0: gradient.start_color.g,
     b0: gradient.start_color.b,
@@ -1000,26 +1009,26 @@ fn push_path_visual_vertex(
   vertices.push({
     x: visual_pixel_x_to_ndc(transformed.x, size.width),
     y: visual_pixel_y_to_ndc(transformed.y, size.height),
-    local_x: 0.0,
-    local_y: 0.0,
+    local_x: vertex.x,
+    local_y: vertex.y,
     width: 0.0,
     height: 0.0,
     radius: 0.0,
     mode: visual_mode_path,
     stroke_width: 0.0,
-    blur_radius: 0.0,
-    start_x: 0.0,
-    start_y: 0.0,
-    end_x: 0.0,
-    end_y: 0.0,
+    blur_radius: vertex.brush_kind,
+    start_x: vertex.start_x,
+    start_y: vertex.start_y,
+    end_x: vertex.end_x,
+    end_y: vertex.end_y,
     r0: vertex.r,
     g0: vertex.g,
     b0: vertex.b,
     a0: vertex.a * state.opacity,
-    r1: vertex.r,
-    g1: vertex.g,
-    b1: vertex.b,
-    a1: vertex.a * state.opacity,
+    r1: vertex.r1,
+    g1: vertex.g1,
+    b1: vertex.b1,
+    a1: vertex.a1 * state.opacity,
   })
 }
 
@@ -1044,6 +1053,62 @@ fn visual_gradient(brush : @core.Brush) -> @core.LinearGradientSpec {
         start_color=gradient.center_color,
         end_color=gradient.edge_color,
       )
+  }
+}
+
+///|
+fn visual_brush_kind(brush : @core.Brush) -> Double {
+  match brush {
+    @core.Brush::RadialGradient(_) => 1.0
+    _ => 0.0
+  }
+}
+
+///|
+fn visual_brush_start_x(
+  brush : @core.Brush,
+  gradient : @core.LinearGradientSpec,
+  rect : @core.Rect,
+) -> Double {
+  match brush {
+    @core.Brush::RadialGradient(radial) => radial.center.x - rect.origin.x
+    _ => gradient.start.x - rect.origin.x
+  }
+}
+
+///|
+fn visual_brush_start_y(
+  brush : @core.Brush,
+  gradient : @core.LinearGradientSpec,
+  rect : @core.Rect,
+) -> Double {
+  match brush {
+    @core.Brush::RadialGradient(radial) => radial.center.y - rect.origin.y
+    _ => gradient.start.y - rect.origin.y
+  }
+}
+
+///|
+fn visual_brush_end_x(
+  brush : @core.Brush,
+  gradient : @core.LinearGradientSpec,
+  rect : @core.Rect,
+) -> Double {
+  match brush {
+    @core.Brush::RadialGradient(radial) => radial.radius.max(1.0)
+    _ => gradient.end.x - rect.origin.x
+  }
+}
+
+///|
+fn visual_brush_end_y(
+  brush : @core.Brush,
+  gradient : @core.LinearGradientSpec,
+  rect : @core.Rect,
+) -> Double {
+  match brush {
+    @core.Brush::RadialGradient(_) => 0.0
+    _ => gradient.end.y - rect.origin.y
   }
 }
 
@@ -1546,11 +1611,23 @@ fn visual_shader_wgsl() -> String {
     #|  return length(max(q, vec2<f32>(0.0, 0.0))) + min(max(q.x, q.y), 0.0) - r;
     #|}
     #|
-    #|fn gradient_color(local: vec2<f32>, start: vec2<f32>, end: vec2<f32>, c0: vec4<f32>, c1: vec4<f32>) -> vec4<f32> {
+    #|fn linear_gradient_color(local: vec2<f32>, start: vec2<f32>, end: vec2<f32>, c0: vec4<f32>, c1: vec4<f32>) -> vec4<f32> {
     #|  let axis = end - start;
     #|  let denom = max(dot(axis, axis), 0.0001);
     #|  let t = clamp(dot(local - start, axis) / denom, 0.0, 1.0);
     #|  return mix(c0, c1, t);
+    #|}
+    #|
+    #|fn radial_gradient_color(local: vec2<f32>, center: vec2<f32>, radius: f32, c0: vec4<f32>, c1: vec4<f32>) -> vec4<f32> {
+    #|  let t = clamp(distance(local, center) / max(radius, 0.0001), 0.0, 1.0);
+    #|  return mix(c0, c1, t);
+    #|}
+    #|
+    #|fn brush_color(local: vec2<f32>, start: vec2<f32>, end: vec2<f32>, c0: vec4<f32>, c1: vec4<f32>, kind: f32) -> vec4<f32> {
+    #|  if kind > 0.5 {
+    #|    return radial_gradient_color(local, start, end.x, c0, c1);
+    #|  }
+    #|  return linear_gradient_color(local, start, end, c0, c1);
     #|}
     #|
     #|@fragment
@@ -1564,7 +1641,7 @@ fn visual_shader_wgsl() -> String {
     #|  let start = in.blur_start.zw;
     #|  let end = in.end;
     #|  if mode > 2.5 {
-    #|    return in.color0;
+    #|    return brush_color(in.local, start, end, in.color0, in.color1, blur_radius);
     #|  }
     #|  let center = vec2<f32>(width * 0.5, height * 0.5);
     #|  let half_size = center;
@@ -1583,7 +1660,7 @@ fn visual_shader_wgsl() -> String {
     #|    let inner_alpha = 1.0 - smoothstep(-0.5, 0.5, inner_dist);
     #|    alpha = max(alpha - inner_alpha, 0.0);
     #|  }
-    #|  let color = gradient_color(in.local, start, end, in.color0, in.color1);
+    #|  let color = brush_color(in.local, start, end, in.color0, in.color1, blur_radius);
     #|  return vec4<f32>(color.rgb, color.a * alpha);
     #|}
     #|

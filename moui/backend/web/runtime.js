@@ -49,6 +49,13 @@ export function createWebGpuImports(options = {}) {
       globalThis.console?.error?.("MoUI image resource notification failed", error);
     }
   };
+  const recordRuntimeEvidenceEvent = event => {
+    try {
+      globalThis.__mouiWebRuntimeEvidence?.recordEvent?.(event);
+    } catch {
+      // Evidence recording is best-effort and must not affect rendering.
+    }
+  };
 
   const createStringHandle = value => {
     const handle = nextStringHandle++;
@@ -425,7 +432,7 @@ export function createWebGpuImports(options = {}) {
         let blurRadius = in.blurStart.y;
         let center = vec2f(width * 0.5, height * 0.5);
         if (mode > 2.5) {
-          return in.color0;
+          return brush_color(in.local, in.blurStart.zw, in.end, in.color0, in.color1, in.blurStart.y);
         }
         let dist = rounded_box_sdf(in.local - center, center, radius);
         var alpha = 1.0 - smoothstep(-0.5, 0.5, dist);
@@ -960,28 +967,30 @@ export function createWebGpuImports(options = {}) {
 
   const pushPathMesh = (renderer, payload) => {
     const values = parseDoubleList(payload);
-    if (values.length < 18) return;
+    const stride = 15;
+    if (values.length < stride * 3) return;
     const scope = rendererScope(renderer);
     const startIndex = scope.visualVertices.length / VISUAL_STRIDE_FLOATS;
     const state = rendererState(renderer);
     const w = Number(renderer.width || renderer.surface.width || 1);
     const h = Number(renderer.height || renderer.surface.height || 1);
-    for (let index = 0; index + 5 < values.length; index += 6) {
+    for (let index = 0; index + stride - 1 < values.length; index += stride) {
       const transformed = transformPoint(state.transform, values[index], values[index + 1]);
-      const alpha = values[index + 5] * state.opacity;
+      const alpha0 = values[index + 10] * state.opacity;
+      const alpha1 = values[index + 14] * state.opacity;
       scope.visualVertices.push(
         transformed.x / w * 2 - 1,
         1 - transformed.y / h * 2,
-        0, 0,
+        values[index], values[index + 1],
         0, 0,
         0,
         3,
         0,
-        0,
-        0, 0,
-        0, 0,
-        values[index + 2], values[index + 3], values[index + 4], alpha,
-        values[index + 2], values[index + 3], values[index + 4], alpha,
+        values[index + 2],
+        values[index + 3], values[index + 4],
+        values[index + 5], values[index + 6],
+        values[index + 7], values[index + 8], values[index + 9], alpha0,
+        values[index + 11], values[index + 12], values[index + 13], alpha1,
       );
     }
     const count = scope.visualVertices.length / VISUAL_STRIDE_FLOATS - startIndex;
@@ -1256,6 +1265,13 @@ export function createWebGpuImports(options = {}) {
         entry.loaded = true;
         entry.width = image.naturalWidth || image.width || 1;
         entry.height = image.naturalHeight || image.height || 1;
+        recordRuntimeEvidenceEvent({
+          kind: 90,
+          name: "image_load",
+          source: key,
+          width: entry.width,
+          height: entry.height,
+        });
         reportImageResourceChange({
           source: key,
           status: "ready",
@@ -1266,6 +1282,11 @@ export function createWebGpuImports(options = {}) {
       image.onerror = () => {
         entry.loaded = false;
         entry.failed = true;
+        recordRuntimeEvidenceEvent({
+          kind: 91,
+          name: "image_error",
+          source: key,
+        });
         reportImageResourceChange({
           source: key,
           status: "failed",

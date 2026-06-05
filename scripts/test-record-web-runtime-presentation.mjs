@@ -42,7 +42,15 @@ if (
     target.status === "failed" &&
     target.observations.pageLoaded === "no" &&
     target.observations.transformPixels === "no" &&
+    target.observations.radialGradient === "no" &&
+    target.observations.colorEmojiPixels === "no" &&
+    target.observations.zwjGrapheme === "no" &&
+    target.observations.bidiLayout === "no" &&
+    target.observations.paragraphWrapping === "no" &&
+    target.observations.asyncImageSecondFrame === "no" &&
     target.screenshot.transformPixels.required === (target.name === "showcase-web-wasm") &&
+    target.screenshot.radialGradient.required === (target.name === "showcase-web-wasm") &&
+    target.screenshot.asyncImageSecondFrame.required === (target.name === "showcase-web-wasm") &&
     target.evidenceEvents.length === 0 &&
     target.consoleErrors.length > 0
   )

@@ -156,6 +156,12 @@ assert(
   shaderSources.some(source => source.includes("radial_gradient_color")),
   "visual shader must include radial_gradient_color",
 );
+assert(
+  shaderSources.some(source =>
+    source.includes("return brush_color(in.local, in.blurStart.zw, in.end, in.color0, in.color1, in.blurStart.y);"),
+  ),
+  "visual shader must shade path mode through brush_color",
+);
 
 assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame failed");
 assert(
@@ -223,6 +229,31 @@ assertNear(visual[strokeOffset + 9], 1, "stroke brush kind");
 assertNear(visual[strokeOffset + 10], 14, "stroke radial center x");
 assertNear(visual[strokeOffset + 11], 12, "stroke radial center y");
 assertNear(visual[strokeOffset + 12], 18, "stroke radial radius");
+
+uploadedBuffers.length = 0;
+assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for radial path failed");
+const radialPathPayload = [
+  10, 10, 1, 20, 20, 16, 0, 1, 0, 0, 1, 0, 0, 1, 1,
+  42, 10, 1, 20, 20, 16, 0, 1, 0, 0, 1, 0, 0, 1, 1,
+  10, 42, 1, 20, 20, 16, 0, 1, 0, 0, 1, 0, 0, 1, 1,
+].join(",");
+assert(
+  imports.draw_path_mesh(renderer, stringHandle(radialPathPayload)) === 0,
+  "draw_path_mesh radial payload failed",
+);
+assert(imports.present(renderer) === 0, "present radial path failed");
+const pathVisual = uploadedBuffers.find(buffer => buffer.length === 3 * 22);
+assert(pathVisual, "expected uploaded visual vertex buffer for radial path");
+assertNear(pathVisual[2], 10, "path local x");
+assertNear(pathVisual[3], 10, "path local y");
+assertNear(pathVisual[7], 3, "path mode");
+assertNear(pathVisual[9], 1, "path radial brush kind");
+assertNear(pathVisual[10], 20, "path radial center x");
+assertNear(pathVisual[11], 20, "path radial center y");
+assertNear(pathVisual[12], 16, "path radial radius");
+assertNear(pathVisual[18], 0, "path edge red");
+assertNear(pathVisual[19], 0, "path edge green");
+assertNear(pathVisual[20], 1, "path edge blue");
 
 uploadedBuffers.length = 0;
 bindGroupEntryCounts.length = 0;

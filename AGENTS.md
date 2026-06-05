@@ -239,6 +239,15 @@ node --check scripts/record-web-runtime-presentation.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
+node --check scripts/validate-renderer-proof-manifest.mjs
+node scripts/test-validate-renderer-proof-manifest.mjs
+node --check scripts/record-renderer-proof-manifest.mjs
+node scripts/test-record-renderer-proof-manifest.mjs
+node --check scripts/record-web-renderer-proof-manifest.mjs
+node scripts/test-record-web-renderer-proof-manifest.mjs
+node --check scripts/ci-renderer-proof-native.mjs
+sh -n scripts/ci-renderer-proof-native.sh
+sh -n scripts/ci-renderer-proof-summary.sh
 node --check scripts/validate-package-manifest.mjs
 ```
 
@@ -294,6 +303,18 @@ Actions path for Web browser-session evidence: it builds Showcase and Markdown
 Editor Web wasm-gc targets, starts local HTTP plus Chrome CDP, records and
 folds the presentation manifest, validates the Web platform evidence entry, and
 uploads the `moui-web-runtime-presentation` artifact bundle.
+Renderer proof uses a separate schema v1 manifest under
+`artifacts/conformance/renderer-proof/<backend>-<platform>.json`, validated by
+`scripts/validate-renderer-proof-manifest.mjs`. A passed renderer-proof entry
+must have GitHub Actions provenance and exactly `radialGradient`,
+`transformPixels`, `colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`,
+`paragraphWrapping`, and `asyncImageSecondFrame` observations with strong marker
+tokens. Skipped jobs, package-only tests, missing uploaded artifacts, blank
+screenshots, caret-only diagnostics, coverage-only font matching, provider
+preflights, and fallback-safe descriptor audits must remain failed proof. The
+`renderer-proof-summary` CI job downloads the proof artifacts and requires all
+native WGPU, native Skia, and WebGPU wasm manifests to validate as passed
+before any capability promotion can cite them.
 Examples demonstrate workflows but should not be the only proof for a
 shared contract.
 If CDP is unavailable during Web presentation startup, the recorder writes a

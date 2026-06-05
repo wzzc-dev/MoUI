@@ -16,10 +16,19 @@ pub(all) struct ShaderRegistryResult {
 pub(all) struct PathVertex {
   x : Double
   y : Double
+  brush_kind : Double
+  start_x : Double
+  start_y : Double
+  end_x : Double
+  end_y : Double
   r : Double
   g : Double
   b : Double
   a : Double
+  r1 : Double
+  g1 : Double
+  b1 : Double
+  a1 : Double
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -27,6 +36,15 @@ pub(all) struct PathMesh {
   vertices : Array[PathVertex]
   diagnostics : Array[String]
 } derive(Eq, Debug, ToJson)
+
+///|
+priv struct PathBrushPayload {
+  kind : Double
+  start : @core.Point
+  end : @core.Point
+  color0 : @core.Color
+  color1 : @core.Color
+}
 
 ///|
 pub fn builtin_shader_names() -> Array[String] {
@@ -129,7 +147,7 @@ fn append_zeno_fill_mesh(
         mesh.vertices,
         path,
         @zeno.Style::Fill(@zeno.Fill::NonZero),
-        brush_to_path_color(brush),
+        brush_to_path_payload(brush),
       )
     None => ()
   }
@@ -149,7 +167,7 @@ fn append_zeno_stroke_mesh(
           mesh.vertices,
           path,
           @zeno.Style::Stroke(@zeno.Stroke::Stroke(stroke_width)),
-          brush_to_path_color(brush),
+          brush_to_path_payload(brush),
         )
       }
     None => ()
@@ -161,7 +179,7 @@ fn append_line_only_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool 
   match spec.stroke {
     Some(brush) =>
       if spec.stroke_width > 0.0 {
-        let color = brush_to_path_color(brush)
+        let payload = brush_to_path_payload(brush)
         let vertices : Array[PathVertex] = []
         let mut current : @core.Point? = None
         let mut emitted = false
@@ -176,7 +194,7 @@ fn append_line_only_stroke_mesh(mesh : PathMesh, spec : @core.PathSpec) -> Bool 
                       start,
                       point,
                       spec.stroke_width,
-                      color,
+                      payload,
                     ) {
                     emitted = true
                   }
@@ -208,7 +226,7 @@ fn append_line_stroke_vertices(
   start : @core.Point,
   end : @core.Point,
   stroke_width : Double,
-  color : @core.Color,
+  payload : PathBrushPayload,
 ) -> Bool {
   let dx = end.x - start.x
   let dy = end.y - start.y
@@ -219,12 +237,12 @@ fn append_line_stroke_vertices(
   let half_width = stroke_width / 2.0
   let nx = -dy / length * half_width
   let ny = dx / length * half_width
-  push_path_vertex(vertices, @zeno.Vector(start.x + nx, start.y + ny), color)
-  push_path_vertex(vertices, @zeno.Vector(start.x - nx, start.y - ny), color)
-  push_path_vertex(vertices, @zeno.Vector(end.x - nx, end.y - ny), color)
-  push_path_vertex(vertices, @zeno.Vector(start.x + nx, start.y + ny), color)
-  push_path_vertex(vertices, @zeno.Vector(end.x - nx, end.y - ny), color)
-  push_path_vertex(vertices, @zeno.Vector(end.x + nx, end.y + ny), color)
+  push_path_vertex(vertices, @zeno.Vector(start.x + nx, start.y + ny), payload)
+  push_path_vertex(vertices, @zeno.Vector(start.x - nx, start.y - ny), payload)
+  push_path_vertex(vertices, @zeno.Vector(end.x - nx, end.y - ny), payload)
+  push_path_vertex(vertices, @zeno.Vector(start.x + nx, start.y + ny), payload)
+  push_path_vertex(vertices, @zeno.Vector(end.x - nx, end.y - ny), payload)
+  push_path_vertex(vertices, @zeno.Vector(end.x + nx, end.y + ny), payload)
   true
 }
 
@@ -233,7 +251,7 @@ fn append_zeno_vertices(
   vertices : Array[PathVertex],
   path : Array[@zeno.Command],
   style : @zeno.Style,
-  color : @core.Color,
+  payload : PathBrushPayload,
 ) -> Unit {
   let applied : Array[@zeno.Command] = []
   ignore(@zeno.apply(path, style, None, applied))
@@ -248,18 +266,39 @@ fn append_zeno_vertices(
   }
   for index in 0..<(points.length() / 3) {
     let base = index * 3
-    push_path_vertex(vertices, points[base], color)
-    push_path_vertex(vertices, points[base + 1], color)
-    push_path_vertex(vertices, points[base + 2], color)
+    push_path_vertex(vertices, points[base], payload)
+    push_path_vertex(vertices, points[base + 1], payload)
+    push_path_vertex(vertices, points[base + 2], payload)
   }
 }
 
 ///|
-fn brush_to_path_color(brush : @core.Brush) -> @core.Color {
+fn brush_to_path_payload(brush : @core.Brush) -> PathBrushPayload {
   match brush {
-    @core.Brush::Solid(color) => color
-    @core.Brush::LinearGradient(gradient) => gradient.start_color
-    @core.Brush::RadialGradient(gradient) => gradient.center_color
+    @core.Brush::Solid(color) =>
+      {
+        kind: 0.0,
+        start: @core.Point::new(x=0.0, y=0.0),
+        end: @core.Point::new(x=1.0, y=0.0),
+        color0: color,
+        color1: color,
+      }
+    @core.Brush::LinearGradient(gradient) =>
+      {
+        kind: 0.0,
+        start: gradient.start,
+        end: gradient.end,
+        color0: gradient.start_color,
+        color1: gradient.end_color,
+      }
+    @core.Brush::RadialGradient(gradient) =>
+      {
+        kind: 1.0,
+        start: gradient.center,
+        end: @core.Point::new(x=gradient.radius.max(1.0), y=0.0),
+        color0: gradient.center_color,
+        color1: gradient.edge_color,
+      }
   }
 }
 
@@ -267,15 +306,24 @@ fn brush_to_path_color(brush : @core.Brush) -> @core.Color {
 fn push_path_vertex(
   vertices : Array[PathVertex],
   point : @zeno.Vector,
-  color : @core.Color,
+  payload : PathBrushPayload,
 ) -> Unit {
   vertices.push({
     x: point.x(),
     y: point.y(),
-    r: color.r,
-    g: color.g,
-    b: color.b,
-    a: color.a,
+    brush_kind: payload.kind,
+    start_x: payload.start.x,
+    start_y: payload.start.y,
+    end_x: payload.end.x,
+    end_y: payload.end.y,
+    r: payload.color0.r,
+    g: payload.color0.g,
+    b: payload.color0.b,
+    a: payload.color0.a,
+    r1: payload.color1.r,
+    g1: payload.color1.g,
+    b1: payload.color1.b,
+    a1: payload.color1.a,
   })
 }
 

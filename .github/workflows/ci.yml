@@ -230,6 +230,164 @@ jobs:
           path: dist/windows-msvc/MoUIShowcase
           if-no-files-found: error
 
+  renderer-proof-wgpu-native:
+    name: Native WGPU renderer proof (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            os: macos-14
+          - platform: linux
+            os: ubuntu-24.04
+          - platform: windows
+            os: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install native Linux dependencies
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev
+
+      - name: Set up vcpkg zlib
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
+
+      - name: Set up MoonBit
+        if: ${{ matrix.platform != 'windows' }}
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Set up MoonBit (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -UseBasicParsing https://cli.moonbitlang.com/install/powershell.ps1 -OutFile install-moonbit.ps1
+          ./install-moonbit.ps1
+          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Restore local dependencies
+        if: ${{ matrix.platform != 'windows' }}
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Restore local dependencies (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1 -SkipRoot -SkipSubmodules
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Record native WGPU renderer proof
+        if: ${{ matrix.platform != 'windows' }}
+        run: node scripts/ci-renderer-proof-native.mjs wgpu-native ${{ matrix.platform }}
+
+      - name: Record native WGPU renderer proof (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          . .\scripts\windows\msvc_env.ps1
+          node scripts\ci-renderer-proof-native.mjs wgpu-native windows
+
+      - name: Upload native WGPU renderer proof
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-renderer-proof-wgpu-native-${{ matrix.platform }}
+          path: |
+            artifacts/conformance/renderer-proof/
+            artifacts/platform-evidence/${{ matrix.platform }}/
+          if-no-files-found: warn
+
+  renderer-proof-skia-native:
+    name: Native Skia renderer proof (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            os: macos-14
+          - platform: linux
+            os: ubuntu-24.04
+          - platform: windows
+            os: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install native Linux dependencies
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji
+
+      - name: Set up vcpkg zlib
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
+
+      - name: Set up MoonBit
+        if: ${{ matrix.platform != 'windows' }}
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Set up MoonBit (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -UseBasicParsing https://cli.moonbitlang.com/install/powershell.ps1 -OutFile install-moonbit.ps1
+          ./install-moonbit.ps1
+          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Restore local dependencies
+        if: ${{ matrix.platform != 'windows' }}
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Restore local dependencies (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1 -SkipRoot -SkipSubmodules
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Record native Skia renderer proof
+        if: ${{ matrix.platform != 'windows' }}
+        run: node scripts/ci-renderer-proof-native.mjs skia-native ${{ matrix.platform }}
+
+      - name: Record native Skia renderer proof (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          . .\scripts\windows\msvc_env.ps1
+          node scripts\ci-renderer-proof-native.mjs skia-native windows
+
+      - name: Upload native Skia renderer proof
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-renderer-proof-skia-native-${{ matrix.platform }}
+          path: |
+            artifacts/conformance/renderer-proof/
+            artifacts/platform-evidence/${{ matrix.platform }}/
+          if-no-files-found: warn
+
   web-runtime-presentation:
     name: Web runtime presentation
     runs-on: ubuntu-24.04
@@ -273,6 +431,27 @@ jobs:
           path: |
             artifacts/conformance/web-runtime-presentation.json
             artifacts/conformance/web-runtime-presentation/
+            artifacts/conformance/renderer-proof/
             artifacts/platform-evidence/web/
             artifacts/conformance/platform-runtime-evidence.json
           if-no-files-found: warn
+
+  renderer-proof-summary:
+    name: Renderer proof summary
+    runs-on: ubuntu-24.04
+    if: ${{ always() }}
+    needs:
+      - renderer-proof-wgpu-native
+      - renderer-proof-skia-native
+      - web-runtime-presentation
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download renderer proof artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/downloaded-renderer-proof
+
+      - name: Validate renderer proof manifests
+        run: sh scripts/ci-renderer-proof-summary.sh artifacts/downloaded-renderer-proof

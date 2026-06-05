@@ -111,10 +111,19 @@ pub(all) struct PathMesh {
 pub(all) struct PathVertex {
   x : Double
   y : Double
+  brush_kind : Double
+  start_x : Double
+  start_y : Double
+  end_x : Double
+  end_y : Double
   r : Double
   g : Double
   b : Double
   a : Double
+  r1 : Double
+  g1 : Double
+  b1 : Double
+  a1 : Double
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RectBatch {

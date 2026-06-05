@@ -1,0 +1,106 @@
+#!/usr/bin/env node
+
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+
+const tmp = mkdtempSync(join(tmpdir(), "moui-renderer-proof-record-"));
+const recorder = "scripts/record-renderer-proof-manifest.mjs";
+
+const markers = [
+  "MoUI renderer proof radialGradient passed center-mid-edge-pixels shader-payload",
+  "MoUI renderer proof transformPixels passed pixel-markers",
+  "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster",
+  "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret",
+  "MoUI renderer proof bidiLayout passed visual-order",
+  "MoUI renderer proof paragraphWrapping passed line-metrics later-line-pixels",
+  "MoUI renderer proof asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
+];
+
+const runRecorder = (name, logText, extraArgs = []) => {
+  const artifactDir = join(tmp, "artifacts", "conformance", "renderer-proof");
+  mkdirSync(artifactDir, { recursive: true });
+  const logPath = join(artifactDir, `${name}.log`);
+  const outputPath = join(artifactDir, `${name}.json`);
+  writeFileSync(logPath, `${logText}\n`);
+  const result = spawnSync(
+    process.execPath,
+    [
+      recorder,
+      "--backend",
+      "webgpu-wasm",
+      "--platform",
+      "web",
+      "--artifact-name",
+      "moui-web-runtime-presentation",
+      "--output",
+      outputPath,
+      "--log",
+      logPath,
+      ...extraArgs,
+    ],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        GITHUB_ACTIONS: "true",
+        GITHUB_REPOSITORY: "wzzc-dev/moui",
+        GITHUB_RUN_ID: "42",
+        GITHUB_SERVER_URL: "https://github.com",
+        GITHUB_WORKFLOW: "MoUI CI",
+        GITHUB_JOB: "web-runtime-presentation",
+        RUNNER_NAME: "ubuntu-24.04",
+      },
+    },
+  );
+  return { result, outputPath };
+};
+
+const passed = runRecorder("passed", markers.join("\n"), ["--require-passed"]);
+if (passed.result.status !== 0) {
+  console.error("expected passed proof recording");
+  console.error(passed.result.stdout);
+  console.error(passed.result.stderr);
+  process.exit(1);
+}
+const passedManifest = JSON.parse(readFileSync(passed.outputPath, "utf8"));
+if (
+  passedManifest.status !== "passed" ||
+  passedManifest.observations.colorEmojiPixels.status !== "passed" ||
+  passedManifest.provenance.kind !== "github-actions"
+) {
+  console.error("passed manifest did not preserve passed observations/provenance");
+  process.exit(1);
+}
+
+const failed = runRecorder("failed", markers.slice(0, -1).join("\n"));
+if (failed.result.status !== 0) {
+  console.error("expected failed proof manifest to validate structurally without --require-passed");
+  console.error(failed.result.stdout);
+  console.error(failed.result.stderr);
+  process.exit(1);
+}
+const failedManifest = JSON.parse(readFileSync(failed.outputPath, "utf8"));
+if (
+  failedManifest.status !== "failed" ||
+  failedManifest.observations.asyncImageSecondFrame.status !== "failed"
+) {
+  console.error("missing async proof marker should keep manifest failed");
+  process.exit(1);
+}
+
+const failedRequired = runRecorder("failed-required", markers.slice(0, -1).join("\n"), [
+  "--require-passed",
+]);
+if (
+  failedRequired.result.status === 0 ||
+  !failedRequired.result.stderr.includes("status must be passed")
+) {
+  console.error("expected --require-passed to reject incomplete proof");
+  console.error(failedRequired.result.stdout);
+  console.error(failedRequired.result.stderr);
+  process.exit(1);
+}
+
+console.log("renderer proof manifest recorder tests: ok");
