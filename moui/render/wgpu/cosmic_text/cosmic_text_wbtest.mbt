@@ -349,6 +349,78 @@ test "cosmic text maps control symbols before layout" {
 }
 
 ///|
+test "cosmic text preserves source emoji for explicit emoji family" {
+  let emoji_font = @core.FontSpec::new(
+    families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+  )
+  inspect(cosmic_text_layout_text("🙂", emoji_font), content="🙂")
+  inspect(cosmic_text_layout_text("🙂", @core.FontSpec::new()), content=":")
+}
+
+///|
+test "cosmic zwj caret folder moves cluster interiors to end" {
+  let carets = [0.0, 0.0, 0.0, 39.0]
+  cosmic_fold_zwj_caret_positions("\u{1F469}\u{200D}\u{1F4BB}", carets)
+  inspect(
+    carets[1] == 39.0 && carets[2] == 39.0 && carets[3] == 39.0,
+    content="true",
+  )
+}
+
+///|
+test "cosmic explicit emoji measure folds zwj interior carets" {
+  if @fs.path_exists(cosmic_emoji_font_path()) {
+    let cache = CosmicTextCache::new()
+    let font = @core.FontSpec::new(
+      families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+      size=26.0,
+      weight=400,
+    )
+    match
+      cache.measure(
+        @core.TextLayoutInput::new(text="\u{1F469}\u{200D}\u{1F4BB}", font~),
+      ) {
+      Some(layout) => {
+        inspect(layout.caret_positions.length(), content="4")
+        inspect(
+          layout.caret_positions[1] == layout.caret_positions[2] &&
+          layout.caret_positions[2] == layout.caret_positions[3],
+          content="true",
+        )
+      }
+      None => fail("expected explicit emoji measure")
+    }
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
+test "cosmic explicit emoji layout keeps source glyphs when available" {
+  if @fs.path_exists(cosmic_emoji_font_path()) {
+    let cache = CosmicTextCache::new()
+    let run = @core.TextRun::new(
+      text="🙂",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=80.0, height=48.0),
+      font=@core.FontSpec::new(
+        families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+        size=26.0,
+        weight=400,
+      ),
+      color=@core.Color::black(),
+      align=@core.TextAlign::TextStart,
+    )
+    let mut glyphs = 0
+    for layout_run in cosmic_text_layout_runs(cache, run) {
+      glyphs += layout_run.glyphs.length()
+    }
+    inspect(glyphs >= 1, content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
 fn cosmic_test_carets_are_monotonic(carets : Array[Double]) -> Bool {
   if carets.length() <= 1 {
     return true
