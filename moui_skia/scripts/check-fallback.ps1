@@ -8,6 +8,23 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $nativePkg = Join-Path $repoRoot "native/moon.pkg"
 $smokePkg = Join-Path $repoRoot "scripts/native_smoke/moon.pkg"
 
+function Get-Sha256Hex {
+  param([Parameter(Mandatory = $true)][string] $Path)
+  if (Get-Command Get-FileHash -ErrorAction SilentlyContinue) {
+    return (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash
+  }
+
+  $stream = [System.IO.File]::OpenRead($Path)
+  $sha256 = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    $hashBytes = $sha256.ComputeHash($stream)
+    return ([System.BitConverter]::ToString($hashBytes) -replace "-", "")
+  } finally {
+    $sha256.Dispose()
+    $stream.Dispose()
+  }
+}
+
 function Assert-NativePkgUnchanged {
   param(
     [Parameter(Mandatory = $true)]
@@ -16,11 +33,11 @@ function Assert-NativePkgUnchanged {
     [string] $ExpectedSmokeHash
   )
 
-  $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
+  $actualHash = Get-Sha256Hex -Path $nativePkg
   if ($actualHash -ne $ExpectedHash) {
     throw "native/moon.pkg changed during fallback validation"
   }
-  $actualSmokeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $smokePkg).Hash
+  $actualSmokeHash = Get-Sha256Hex -Path $smokePkg
   if ($actualSmokeHash -ne $ExpectedSmokeHash) {
     throw "scripts/native_smoke/moon.pkg changed during fallback validation"
   }
@@ -324,8 +341,8 @@ try {
     Pop-Location
   }
 
-  $beforeNativePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
-  $beforeSmokePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $smokePkg).Hash
+  $beforeNativePkgHash = Get-Sha256Hex -Path $nativePkg
+  $beforeSmokePkgHash = Get-Sha256Hex -Path $smokePkg
   $dryRunRoot = Join-Path $repoRoot ".skia-dry-run/windows-fallback"
   try {
     $fakeSkiaInclude = Join-Path $dryRunRoot "skia"

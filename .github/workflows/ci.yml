@@ -87,7 +87,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
-            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji \
+            libvulkan1 mesa-vulkan-drivers vulkan-tools
+
+      - name: Configure Linux software Vulkan adapter
+        if: ${{ matrix.platform == 'linux' }}
+        run: |
+          echo "LIBGL_ALWAYS_SOFTWARE=1" >> "$GITHUB_ENV"
+          echo "WGPU_BACKEND=vulkan" >> "$GITHUB_ENV"
+          echo "VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json" >> "$GITHUB_ENV"
+          test -f /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          vulkaninfo --summary
 
       - name: Set up MoonBit
         run: |

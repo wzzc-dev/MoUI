@@ -60,6 +60,23 @@ function Convert-LogToUtf8NoBom {
   }
 }
 
+function Get-Sha256Hex {
+  param([Parameter(Mandatory = $true)][string] $Path)
+  if (Get-Command Get-FileHash -ErrorAction SilentlyContinue) {
+    return (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash
+  }
+
+  $stream = [System.IO.File]::OpenRead($Path)
+  $sha256 = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    $hashBytes = $sha256.ComputeHash($stream)
+    return ([System.BitConverter]::ToString($hashBytes) -replace "-", "")
+  } finally {
+    $sha256.Dispose()
+    $stream.Dispose()
+  }
+}
+
 if (Test-Path -LiteralPath $backupPkg) {
   throw "native/moon.pkg smoke backup already exists: $backupPkg. Resolve the stale backup before running acceptance."
 }
@@ -69,8 +86,8 @@ if (Test-Path -LiteralPath $smokeBackupPkg) {
 
 New-Item -ItemType Directory -Force -Path $resolvedLogDir | Out-Null
 
-$beforePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
-$beforeSmokePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $smokePkg).Hash
+$beforePkgHash = Get-Sha256Hex -Path $nativePkg
+$beforeSmokePkgHash = Get-Sha256Hex -Path $smokePkg
 
 Write-Host "Windows MSVC real Skia acceptance logs:"
 Write-Host "  preflight_log=$preflightLog"
@@ -147,7 +164,7 @@ if (!(Test-Path -LiteralPath $nativePkg -PathType Leaf)) {
   Write-Error "native/moon.pkg is missing after acceptance run" -ErrorAction Continue
   $restoreStatus = "failed"
 } else {
-  $afterPkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
+  $afterPkgHash = Get-Sha256Hex -Path $nativePkg
   if ($beforePkgHash -ne $afterPkgHash) {
     Write-Error "native/moon.pkg hash changed after acceptance run" -ErrorAction Continue
     $restoreStatus = "failed"
@@ -157,7 +174,7 @@ if (!(Test-Path -LiteralPath $smokePkg -PathType Leaf)) {
   Write-Error "scripts/native_smoke/moon.pkg is missing after acceptance run" -ErrorAction Continue
   $restoreStatus = "failed"
 } else {
-  $afterSmokePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $smokePkg).Hash
+  $afterSmokePkgHash = Get-Sha256Hex -Path $smokePkg
   if ($beforeSmokePkgHash -ne $afterSmokePkgHash) {
     Write-Error "scripts/native_smoke/moon.pkg hash changed after acceptance run" -ErrorAction Continue
     $restoreStatus = "failed"
