@@ -41,6 +41,8 @@ if (
   !manifest.targets.every(target =>
     target.status === "failed" &&
     target.observations.pageLoaded === "no" &&
+    target.observations.transformPixels === "no" &&
+    target.screenshot.transformPixels.required === (target.name === "showcase-web-wasm") &&
     target.evidenceEvents.length === 0 &&
     target.consoleErrors.length > 0
   )

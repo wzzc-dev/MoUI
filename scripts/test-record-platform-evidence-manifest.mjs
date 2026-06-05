@@ -58,6 +58,7 @@ const webPresentationObservationKeys = [
   "pointerInput",
   "keyboardInput",
   "textInput",
+  "transformPixels",
   "targetClosed",
 ];
 
@@ -232,7 +233,9 @@ const webPresentationTarget = ({
   name,
   packagePath,
   path,
-  url: `http://127.0.0.1:18080/${path}?debug=1`,
+  url: name === "showcase-web-wasm"
+    ? `http://127.0.0.1:18080/${path}?debug=1&section=advanced-rendering`
+    : `http://127.0.0.1:18080/${path}?debug=1`,
   status,
   title: name === "showcase-web-wasm"
     ? "MoUI Showcase Wasm GC"
@@ -262,6 +265,14 @@ const webPresentationTarget = ({
     totalPixels: status === "passed" ? 1024000 : 0,
     contentPixels: status === "passed" ? 50000 : 0,
     distinctColorBuckets: status === "passed" ? 18 : 0,
+    transformPixels: {
+      required: name === "showcase-web-wasm",
+      passed: name === "showcase-web-wasm" && status === "passed",
+      hotPinkPixels: name === "showcase-web-wasm" && status === "passed" ? 72 : 0,
+      cyanPixels: name === "showcase-web-wasm" && status === "passed" ? 96 : 0,
+      goldPixels: name === "showcase-web-wasm" && status === "passed" ? 18 : 0,
+      matchedMarkers: name === "showcase-web-wasm" && status === "passed" ? 3 : 0,
+    },
   },
   evidenceEvents: status === "passed"
     ? [
@@ -274,6 +285,7 @@ const webPresentationTarget = ({
   observations: {
     ...webPresentationObservations(status === "passed" ? "yes" : "no"),
     textInput: name === "markdown-editor-web-wasm" && status === "passed" ? "yes" : "no",
+    transformPixels: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
   },
   consoleErrors: status === "passed" ? [] : ["No WebGPU adapter is available"],
   notes: status === "passed" ? ["browser evidence captured"] : ["adapter unavailable"],
@@ -290,7 +302,7 @@ const writeWebPresentationManifest = (name, overallStatus) => {
     cdpUrl: "http://127.0.0.1:9223",
     overallStatus,
     evidenceBoundary:
-      "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
+      "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, Showcase transform-scene pixel markers, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels beyond the recorded marker thresholds, or native platform runtime behavior.",
     browser: {
       product: "Chrome/148.0.7778.216",
       userAgent: "Mozilla/5.0 HeadlessChrome/148.0.0.0",

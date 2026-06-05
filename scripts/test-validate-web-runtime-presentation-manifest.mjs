@@ -24,6 +24,7 @@ const observationKeys = [
   "pointerInput",
   "keyboardInput",
   "textInput",
+  "transformPixels",
   "targetClosed",
 ];
 
@@ -50,7 +51,9 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
   name,
   packagePath,
   path,
-  url: `http://127.0.0.1:18080/${path}?debug=1`,
+  url: name === "showcase-web-wasm"
+    ? `http://127.0.0.1:18080/${path}?debug=1&section=advanced-rendering`
+    : `http://127.0.0.1:18080/${path}?debug=1`,
   status,
   title: name === "showcase-web-wasm"
     ? "MoUI Showcase Wasm GC"
@@ -80,6 +83,14 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
     totalPixels: status === "passed" ? 1024000 : 0,
     contentPixels: status === "passed" ? 50000 : 0,
     distinctColorBuckets: status === "passed" ? 18 : 0,
+    transformPixels: {
+      required: name === "showcase-web-wasm",
+      passed: name === "showcase-web-wasm" && status === "passed",
+      hotPinkPixels: name === "showcase-web-wasm" && status === "passed" ? 72 : 0,
+      cyanPixels: name === "showcase-web-wasm" && status === "passed" ? 96 : 0,
+      goldPixels: name === "showcase-web-wasm" && status === "passed" ? 18 : 0,
+      matchedMarkers: name === "showcase-web-wasm" && status === "passed" ? 3 : 0,
+    },
   },
   evidenceEvents: status === "passed"
     ? [
@@ -92,6 +103,7 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
   observations: {
     ...observations(status === "passed" ? "yes" : "no"),
     textInput: name === "markdown-editor-web-wasm" && status === "passed" ? "yes" : "no",
+    transformPixels: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
   },
   consoleErrors: status === "passed" ? [] : ["Browser WebGPU is required"],
   notes: status === "passed" ? ["browser evidence captured"] : ["navigator.gpu unavailable"],
@@ -211,6 +223,32 @@ expectFail(
     }),
   ),
   "passed evidence requires a nonblank screenshot",
+);
+
+expectFail(
+  "passed showcase target without transform pixels",
+  runValidator(
+    writeFixture("missing-transform-pixels.json", {
+      ...validManifest,
+      targets: validManifest.targets.map(target =>
+        target.name === "showcase-web-wasm"
+          ? {
+              ...target,
+              screenshot: {
+                ...target.screenshot,
+                transformPixels: {
+                  ...target.screenshot.transformPixels,
+                  passed: false,
+                  matchedMarkers: 2,
+                },
+              },
+              observations: { ...target.observations, transformPixels: "no" },
+            }
+          : target,
+      ),
+    }),
+  ),
+  "targets[0].observations.transformPixels must be yes for passed evidence",
 );
 
 expectFail(
