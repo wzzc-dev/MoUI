@@ -312,6 +312,51 @@ test "native renderer plans DrawPath mesh as visible visual triangles" {
 }
 
 ///|
+test "native renderer plans radial DrawPath as deterministic center color fallback" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=100.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=0.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=20.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(
+          @core.Brush::radial_gradient(
+            center=@core.Point::new(x=6.0, y=6.0),
+            radius=12.0,
+            center_color=@core.Color::blue(),
+            edge_color=@core.Color::gray(),
+          ),
+        ),
+      ),
+    ),
+  ])
+  inspect(renderer.unsupported_command_count, content="0")
+  inspect(renderer.draw_items.length(), content="1")
+  inspect(renderer.visual_vertices.length(), content="3")
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeVisual(_, count, None) => inspect(count, content="3")
+    _ => fail("expected native visual path item")
+  }
+  let vertex = renderer.visual_vertices[0]
+  inspect(vertex.mode, content="3")
+  assert_true(vertex.r0 == @core.Color::blue().r)
+  assert_true(vertex.g0 == @core.Color::blue().g)
+  assert_true(vertex.b0 == @core.Color::blue().b)
+  assert_true(vertex.r1 == @core.Color::blue().r)
+  assert_true(vertex.g1 == @core.Color::blue().g)
+  assert_true(vertex.b1 == @core.Color::blue().b)
+}
+
+///|
 test "native renderer plans image clip transform and opacity commands" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
