@@ -66,15 +66,19 @@ const targets = [
     name: "showcase-web-wasm",
     packagePath: "examples/showcase/web_wasm",
     path: "examples/showcase/web_wasm/index.html",
+    query: "debug=1&section=advanced-rendering",
   },
   {
     name: "markdown-editor-web-wasm",
     packagePath: "examples/markdown_editor/web_wasm",
     path: "examples/markdown_editor/web_wasm/index.html",
+    query: "debug=1",
   },
 ];
 
 const normalizeBaseUrl = url => url.replace(/\/+$/, "");
+const targetUrl = target => `${normalizeBaseUrl(baseUrl)}/${target.path}?${target.query}`;
+const targetRequiresTransformPixels = target => target.name === "showcase-web-wasm";
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const failedObservations = () => ({
@@ -93,6 +97,7 @@ const failedObservations = () => ({
   pointerInput: "no",
   keyboardInput: "no",
   textInput: "no",
+  transformPixels: "no",
   targetClosed: "no",
 });
 
@@ -111,7 +116,16 @@ const failedPlatformObservations = () => ({
 });
 
 const evidenceBoundary =
-  "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.";
+  "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, Showcase transform-scene pixel markers, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels beyond the recorded marker thresholds, or native platform runtime behavior.";
+
+const emptyTransformPixelEvidence = required => ({
+  required,
+  passed: false,
+  hotPinkPixels: 0,
+  cyanPixels: 0,
+  goldPixels: 0,
+  matchedMarkers: 0,
+});
 
 const writeManifest = manifest => {
   mkdirSync(dirname(manifestPath), { recursive: true });
@@ -136,7 +150,7 @@ const writePreflightFailureManifest = error => {
     name: target.name,
     packagePath: target.packagePath,
     path: target.path,
-    url: `${normalizeBaseUrl(baseUrl)}/${target.path}?debug=1`,
+    url: targetUrl(target),
     status: "failed",
     title: "unavailable",
     statusText: "Failed",
@@ -165,6 +179,7 @@ const writePreflightFailureManifest = error => {
       totalPixels: 0,
       contentPixels: 0,
       distinctColorBuckets: 0,
+      transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
     },
     observations: failedObservations(),
     consoleErrors: [message],
@@ -405,7 +420,42 @@ const decodePng8 = buffer => {
   return { width, height, data: pixels };
 };
 
-const summarizeScreenshot = base64 => {
+const summarizeTransformPixels = png => {
+  let hotPinkPixels = 0;
+  let cyanPixels = 0;
+  let goldPixels = 0;
+  for (let i = 0; i < png.data.length; i += 4) {
+    const r = png.data[i];
+    const g = png.data[i + 1];
+    const b = png.data[i + 2];
+    const a = png.data[i + 3];
+    if (a < 180) continue;
+    if (r >= 200 && g <= 110 && b >= 90) {
+      hotPinkPixels += 1;
+    }
+    if (r <= 110 && g >= 145 && b >= 165) {
+      cyanPixels += 1;
+    }
+    if (r >= 180 && g >= 125 && b <= 115) {
+      goldPixels += 1;
+    }
+  }
+  const matchedMarkers = [
+    hotPinkPixels >= 24,
+    cyanPixels >= 24,
+    goldPixels >= 8,
+  ].filter(Boolean).length;
+  return {
+    required: true,
+    passed: matchedMarkers === 3,
+    hotPinkPixels,
+    cyanPixels,
+    goldPixels,
+    matchedMarkers,
+  };
+};
+
+const summarizeTargetScreenshot = (base64, target) => {
   const buffer = Buffer.from(base64, "base64");
   const png = decodePng8(buffer);
   const buckets = new Set();
@@ -420,12 +470,16 @@ const summarizeScreenshot = base64 => {
     }
     buckets.add(`${r >> 4}:${g >> 4}:${b >> 4}:${a >> 4}`);
   }
+  const transformPixels = targetRequiresTransformPixels(target)
+    ? summarizeTransformPixels(png)
+    : emptyTransformPixelEvidence(false);
   return {
     width: png.width,
     height: png.height,
     totalPixels: png.width * png.height,
     contentPixels,
     distinctColorBuckets: buckets.size,
+    transformPixels,
   };
 };
 
@@ -534,6 +588,20 @@ const performInteractionProbe = async (session, target) => {
     nativeVirtualKeyCode: 65,
   });
   await session.send("Input.insertText", { text: "moui" });
+  await session.send("Input.dispatchKeyEvent", {
+    type: "keyDown",
+    key: "ArrowRight",
+    code: "ArrowRight",
+    windowsVirtualKeyCode: 39,
+    nativeVirtualKeyCode: 39,
+  });
+  await session.send("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: "ArrowRight",
+    code: "ArrowRight",
+    windowsVirtualKeyCode: 39,
+    nativeVirtualKeyCode: 39,
+  });
   await sleep(550);
 };
 
@@ -564,6 +632,9 @@ const deriveTargetStatus = (target, observations) => {
     "keyboardInput",
     "targetClosed",
   ];
+  if (target.name === "showcase-web-wasm") {
+    required.push("transformPixels");
+  }
   if (target.name === "markdown-editor-web-wasm") {
     required.push("textInput");
   }
@@ -599,7 +670,7 @@ const consoleErrorsFor = events => {
 const probeTarget = async target => {
   const pageTarget = await createPageTarget();
   const session = new CdpSession(pageTarget.webSocketDebuggerUrl);
-  const url = `${normalizeBaseUrl(baseUrl)}/${target.path}?debug=1&evidence=${Date.now()}`;
+  const url = `${targetUrl(target)}&evidence=${Date.now()}`;
   const artifact = join(
     "artifacts/conformance/web-runtime-presentation",
     `${target.name}.png`,
@@ -646,6 +717,7 @@ const probeTarget = async target => {
       totalPixels: 0,
       contentPixels: 0,
       distinctColorBuckets: 0,
+      transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
     };
     try {
       const screenshotResult = await session.send("Page.captureScreenshot", {
@@ -656,7 +728,7 @@ const probeTarget = async target => {
       writeFileSync(artifact, Buffer.from(screenshotResult.data, "base64"));
       screenshot = {
         artifact,
-        ...(await summarizeScreenshot(screenshotResult.data)),
+        ...(await summarizeTargetScreenshot(screenshotResult.data, target)),
       };
     } catch (error) {
       screenshotError = `Screenshot capture failed: ${error.message}`;
@@ -703,6 +775,7 @@ const probeTarget = async target => {
       pointerInput: hasEvent(evidenceEvents, ["pointer_down", "pointer_up", "pointer_move"]) ? "yes" : "no",
       keyboardInput: hasEvent(evidenceEvents, ["key_down", "key_up"]) ? "yes" : "no",
       textInput: hasEvent(evidenceEvents, ["ime_commit"]) ? "yes" : "no",
+      transformPixels: screenshot.transformPixels?.passed ? "yes" : "no",
       targetClosed: targetClosed ? "yes" : "no",
     };
     if (observations.resizeEvent !== "yes" || observations.resizedCanvas !== "yes") {
@@ -713,6 +786,9 @@ const probeTarget = async target => {
     }
     if (observations.textInput !== "yes") {
       notes.push("text input commit was not observed for this target");
+    }
+    if (targetRequiresTransformPixels(target) && observations.transformPixels !== "yes") {
+      notes.push("Showcase transform-scene pixel markers were not observed in the screenshot");
     }
     if (observations.targetClosed !== "yes") {
       notes.push("CDP target did not close cleanly after evidence collection");
@@ -745,6 +821,7 @@ const probeTarget = async target => {
       totalPixels: 0,
       contentPixels: 0,
       distinctColorBuckets: 0,
+      transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
     };
     return {
       name: target.name,
@@ -773,18 +850,7 @@ const probeTarget = async target => {
       },
       screenshot: fallbackScreenshot,
       evidenceEvents: [],
-      observations: {
-        pageLoaded: "no",
-        webGpuAvailable: "no",
-        adapterRequested: "no",
-        deviceRequested: "no",
-        wasmStarted: "no",
-        statusRunning: "no",
-        canvasCreated: "no",
-        canvasSized: "no",
-        nonblankScreenshot: "no",
-        cleanConsole: "no",
-      },
+      observations: failedObservations(),
       consoleErrors: [error.message],
       notes: ["CDP probe failed before page evidence was complete"],
     };

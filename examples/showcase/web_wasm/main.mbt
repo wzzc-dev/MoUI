@@ -1,7 +1,19 @@
 ///|
+fn showcase_initial_section_code() -> Int = "showcase" "initial_section"
+
+///|
 fn main {
-  let app = @showcase_app.ShowcaseApp::new()
-  let runtime = app.runtime_with_host_summary(@web.web_capability_summary())
+  let model = match showcase_initial_section_code() {
+    1 =>
+      @showcase_app.ShowcaseModel::new()
+      .with_host_summary(@web.web_capability_summary())
+      .update(@showcase_app.ShowcaseMsg::SelectSection("advanced-rendering"))
+    _ =>
+      @showcase_app.ShowcaseModel::new().with_host_summary(
+        @web.web_capability_summary(),
+      )
+  }
+  let runtime = model.runtime()
   @web.run_app("MoUI Showcase Wasm Host", runtime)
 }
 
