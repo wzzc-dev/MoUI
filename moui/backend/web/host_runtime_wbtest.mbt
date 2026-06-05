@@ -85,6 +85,34 @@ test "web app options carry optional scene resolver" {
 }
 
 ///|
+test "web route dispatch publishes active route source events" {
+  let source = @host.HostRouteSource::new()
+  let observed : Array[@host.HostRouteEvent] = []
+  let runtime = @core.AppRuntime::new_program(
+    program=@core.Program::simple(
+      init=(),
+      update=(model, _message : Unit) => model,
+      view=_model => (@core.View::empty() : @core.View[Unit]),
+      subscriptions=_model => {
+        source.subscription(key="web:route", label="Web route", map=event => {
+          observed.push(event)
+          None
+        })
+      },
+    ),
+    size=@core.Size::new(width=320.0, height=80.0),
+  )
+  ignore(runtime)
+  inspect(source.active_handler_count(), content="1")
+  set_web_route_source(Some(source))
+  inspect(web_dispatch_route_text(1, "navigation?panel=history"), content="1")
+  set_web_route_source(None)
+  inspect(observed.length(), content="1")
+  inspect(observed[0].route(), content="navigation?panel=history")
+  inspect(observed[0].source, content="web-popstate")
+}
+
+///|
 test "web tracks modifiers from keyboard input events" {
   let control_down = @window_core.WindowEvent::KeyboardInput(
     None,

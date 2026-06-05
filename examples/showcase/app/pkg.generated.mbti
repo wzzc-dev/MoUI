@@ -48,6 +48,7 @@ pub(all) struct ShowcaseModel {
 }
 pub fn ShowcaseModel::new() -> Self
 pub fn ShowcaseModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn ShowcaseModel::runtime_with_route_host(Self, ShowcaseRouteHost, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn ShowcaseModel::todo_count(Self) -> Int
 pub fn ShowcaseModel::update(Self, ShowcaseMsg) -> Self
 pub fn ShowcaseModel::view(Self, @core.ViewEnvironment) -> @core.View[ShowcaseMsg]
@@ -64,6 +65,7 @@ pub(all) enum ShowcaseMsg {
   RouteBack
   RouteForward
   OpenRouteLink(String)
+  HostRouteChanged(@host.HostRouteEvent)
   TabSelected(String)
   ClearFilter
   FilterChanged(String)
@@ -84,6 +86,19 @@ pub(all) enum ShowcaseMsg {
   DetailScrollTo(Double)
   SidebarScrollTo(Double)
 }
+
+pub(all) enum ShowcaseRouteHistoryCommand {
+  PushRoute(String)
+  ReplaceRoute(String)
+  BackRoute
+  ForwardRoute
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct ShowcaseRouteHost {
+  route_source : @host.HostRouteSource
+  dispatch_command : (ShowcaseRouteHistoryCommand) -> Unit
+}
+pub fn ShowcaseRouteHost::new(route_source~ : @host.HostRouteSource, dispatch_command~ : (ShowcaseRouteHistoryCommand) -> Unit) -> Self
 
 pub(all) struct ShowcaseTodoItem {
   id : Int

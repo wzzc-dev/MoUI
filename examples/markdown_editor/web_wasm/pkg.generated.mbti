@@ -8,6 +8,8 @@ pub fn web_complete_async_file_dialog(Int, Bool, Int) -> Unit
 
 pub fn web_dispatch_event(Int, Int, Int, Int, Double, Int) -> Unit
 
+pub fn web_dispatch_route(Int, Int) -> Unit
+
 // Errors
 
 // Types and methods

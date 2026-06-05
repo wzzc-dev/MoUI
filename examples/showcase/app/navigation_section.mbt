@@ -273,7 +273,7 @@ fn ShowcaseModel::navigation_transition_card(
           height=22.0,
         ),
         text(
-          "Transition state: app-owned preview; host/browser history remains separate",
+          "Transition state: host route subscription mirrors browser history",
           role=@views.TextRole::Caption,
           theme~,
           width=500.0,
