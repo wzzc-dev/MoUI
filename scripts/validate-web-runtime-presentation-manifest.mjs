@@ -447,6 +447,109 @@ targets.forEach((target, index) => {
           fail(`${label} passed evidence requires Showcase ${proofKey} proof markers`);
         }
       }
+      const colorEmoji = screenshot.colorEmojiPixels;
+      const glyphHighSaturationPixels = requireNumber(
+        colorEmoji,
+        "glyphHighSaturationPixels",
+        `${label}.screenshot.colorEmojiPixels.glyphHighSaturationPixels`,
+      );
+      if (glyphHighSaturationPixels < 8) {
+        fail(`${label} passed color emoji proof requires high-saturation glyph pixels`);
+      }
+      const zwjGrapheme = screenshot.zwjGrapheme;
+      const logicalClusters = requireNumber(
+        zwjGrapheme,
+        "logicalClusters",
+        `${label}.screenshot.zwjGrapheme.logicalClusters`,
+      );
+      const visualClusters = requireNumber(
+        zwjGrapheme,
+        "visualClusters",
+        `${label}.screenshot.zwjGrapheme.visualClusters`,
+      );
+      if (logicalClusters !== 1 || visualClusters !== 1) {
+        fail(`${label} passed ZWJ proof requires one logical and visual grapheme cluster`);
+      }
+      const bidiLayout = screenshot.bidiLayout;
+      const logicalBidi = requireArray(
+        bidiLayout,
+        "logicalClusters",
+        `${label}.screenshot.bidiLayout.logicalClusters`,
+      );
+      const visualBidi = requireArray(
+        bidiLayout,
+        "visualClusters",
+        `${label}.screenshot.bidiLayout.visualClusters`,
+      );
+      if (
+        logicalBidi.length === 0 ||
+        visualBidi.length === 0 ||
+        logicalBidi.join("\u0000") === visualBidi.join("\u0000")
+      ) {
+        fail(`${label} passed bidi proof requires differing logical and visual cluster order`);
+      }
+      const paragraph = screenshot.paragraphWrapping;
+      const paragraphLineCount = requireNumber(
+        paragraph,
+        "paragraphLineCount",
+        `${label}.screenshot.paragraphWrapping.paragraphLineCount`,
+      );
+      const paragraphRows = requireNumber(
+        paragraph,
+        "paragraphRows",
+        `${label}.screenshot.paragraphWrapping.paragraphRows`,
+      );
+      if (paragraphLineCount < 3 || paragraphRows < 3) {
+        fail(`${label} passed paragraph proof requires multiple line metrics`);
+      }
+      const asyncImage = screenshot.asyncImageSecondFrame;
+      const eventOrder = requireObject(
+        asyncImage,
+        "eventIndexes",
+        `${label}.screenshot.asyncImageSecondFrame.eventIndexes`,
+      );
+      const placeholderIndex = requireNumber(
+        eventOrder,
+        "placeholder",
+        `${label}.screenshot.asyncImageSecondFrame.eventIndexes.placeholder`,
+      );
+      const loadIndex = requireNumber(
+        eventOrder,
+        "load",
+        `${label}.screenshot.asyncImageSecondFrame.eventIndexes.load`,
+      );
+      const repaintIndex = requireNumber(
+        eventOrder,
+        "repaint",
+        `${label}.screenshot.asyncImageSecondFrame.eventIndexes.repaint`,
+      );
+      const changeIndex = requireNumber(
+        eventOrder,
+        "change",
+        `${label}.screenshot.asyncImageSecondFrame.eventIndexes.change`,
+      );
+      const readyIndex = requireNumber(
+        eventOrder,
+        "ready",
+        `${label}.screenshot.asyncImageSecondFrame.eventIndexes.ready`,
+      );
+      const presentIndexes = requireArray(
+        eventOrder,
+        "present",
+        `${label}.screenshot.asyncImageSecondFrame.eventIndexes.present`,
+      );
+      if (
+        !(
+          placeholderIndex >= 0 &&
+          loadIndex > placeholderIndex &&
+          changeIndex > loadIndex &&
+          repaintIndex > loadIndex &&
+          readyIndex > Math.max(changeIndex, repaintIndex)
+        ) ||
+        presentIndexes.length < 2
+      ) {
+        fail(`${label} passed async image proof requires placeholder, late load, repaint, ready second-frame order`);
+      }
     }
   } else {
     if (!observationKeys.some(key => observations[key] === "no")) {

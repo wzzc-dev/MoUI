@@ -15,9 +15,20 @@ export function createImageResourceChangeNotifier(callback, scheduleRedraw) {
   const schedule = typeof scheduleRedraw === "function" ? scheduleRedraw : () => {};
   return event => {
     try {
+      globalThis.__mouiWebRuntimeEvidence?.recordEvent?.({
+        kind: 92,
+        name: "image_resource_change",
+        ...(event ?? {}),
+      });
       notify?.(event);
     } finally {
       schedule();
+      globalThis.__mouiWebRuntimeEvidence?.recordEvent?.({
+        kind: 93,
+        name: "image_repaint_request",
+        source: event?.source ?? "",
+        status: event?.status ?? "unknown",
+      });
     }
   };
 }
@@ -508,6 +519,9 @@ export function createWebGpuImports(options = {}) {
       @fragment
       fn fs_main(in: VSOut) -> @location(0) vec4f {
         let sample = textureSample(glyphAtlas, glyphSampler, in.uv);
+        if (in.color.r < -0.5) {
+          return vec4f(sample.rgb, sample.a * in.color.a);
+        }
         return vec4f(in.color.rgb, in.color.a * sample.a);
       }
     `,
@@ -1028,9 +1042,37 @@ export function createWebGpuImports(options = {}) {
     );
   };
 
-  const ensureGlyph = (renderer, char, font) => {
+  const summarizeGlyphPixels = image => {
+    let alphaPixels = 0;
+    let highSaturationPixels = 0;
+    for (let index = 0; index < image.data.length; index += 4) {
+      const r = image.data[index];
+      const g = image.data[index + 1];
+      const b = image.data[index + 2];
+      const a = image.data[index + 3];
+      if (a < 24) continue;
+      alphaPixels += 1;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      if (max - min >= 64 && max >= 140) {
+        highSaturationPixels += 1;
+      }
+    }
+    return { alphaPixels, highSaturationPixels };
+  };
+
+  const fallbackClusterAdvance = (cluster, fontSize) => {
+    let width = 0;
+    for (const char of `${cluster ?? ""}`) {
+      width += textLayoutAdvance(char, fontSize);
+    }
+    return width;
+  };
+
+  const ensureGlyph = (renderer, cluster, font) => {
     const dpr = Number(renderer.surface.scaleFactor) || 1;
-    const key = `${dpr}|${font.style}|${font.weight}|${font.size}|${font.family}|${char}`;
+    const wantsColorGlyph = isEmojiCluster(cluster);
+    const key = `${dpr}|${font.style}|${font.weight}|${font.size}|${font.family}|${wantsColorGlyph ? "rgba" : "alpha"}|${cluster}`;
     const cached = renderer.glyphs.get(key);
     if (cached) return cached;
     const ctx = renderer.glyphContext;
@@ -1038,7 +1080,7 @@ export function createWebGpuImports(options = {}) {
     ctx.font = `${font.style} ${font.weight} ${physicalSize}px ${font.family}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-    const metrics = ctx.measureText(char);
+    const metrics = ctx.measureText(cluster);
     const left = Math.ceil(Math.max(1, -metrics.actualBoundingBoxLeft));
     const right = Math.ceil(Math.max(1, metrics.actualBoundingBoxRight));
     const ascent = Math.ceil(Math.max(physicalSize * 0.8, metrics.actualBoundingBoxAscent || physicalSize * 0.8));
@@ -1049,10 +1091,12 @@ export function createWebGpuImports(options = {}) {
     const placed = placeGlyph(renderer, width, height);
     if (!placed) return undefined;
     ctx.clearRect(0, 0, renderer.glyphCanvas.width, renderer.glyphCanvas.height);
-    ctx.fillStyle = "white";
+    ctx.fillStyle = wantsColorGlyph ? "black" : "white";
     ctx.font = `${font.style} ${font.weight} ${physicalSize}px ${font.family}`;
-    ctx.fillText(char, left + padding, ascent + padding);
+    ctx.fillText(cluster, left + padding, ascent + padding);
     const image = ctx.getImageData(0, 0, width, height);
+    const pixelSummary = summarizeGlyphPixels(image);
+    const colorGlyph = wantsColorGlyph && pixelSummary.highSaturationPixels >= 8;
     device.queue.writeTexture(
       { texture: renderer.atlasTexture, origin: { x: placed.x, y: placed.y } },
       image.data,
@@ -1068,8 +1112,21 @@ export function createWebGpuImports(options = {}) {
       textureHeight: height,
       offsetX: -(left + padding) / dpr,
       offsetY: -(ascent + padding) / dpr,
-      advance: metrics.width > 0 ? metrics.width / dpr : textLayoutAdvance(char, font.size),
+      advance: metrics.width > 0 ? metrics.width / dpr : fallbackClusterAdvance(cluster, font.size),
+      colorGlyph,
+      pixelSummary,
     };
+    if (wantsColorGlyph) {
+      recordRuntimeEvidenceEvent({
+        kind: 94,
+        name: colorGlyph ? "text_color_glyph" : "text_emoji_glyph",
+        text: cluster,
+        codepoints: codepointsFor(cluster).map(codepointHex),
+        format: colorGlyph ? "rgba" : "alpha",
+        highSaturationPixels: pixelSummary.highSaturationPixels,
+        alphaPixels: pixelSummary.alphaPixels,
+      });
+    }
     renderer.glyphs.set(key, glyph);
     return glyph;
   };
@@ -1156,6 +1213,120 @@ export function createWebGpuImports(options = {}) {
     inRange(codepoint, 0xff00, 0xff60) ||
     inRange(codepoint, 0xffe0, 0xffe6);
 
+  const codepointsFor = text => Array.from(`${text ?? ""}`).map(ch => ch.codePointAt(0) || 0);
+
+  const codepointHex = codepoint => `U+${codepoint.toString(16).toUpperCase().padStart(4, "0")}`;
+
+  const isVariationSelectorCodepoint = codepoint =>
+    inRange(codepoint, 0xfe00, 0xfe0f) || inRange(codepoint, 0xe0100, 0xe01ef);
+
+  const isEmojiModifierCodepoint = codepoint => inRange(codepoint, 0x1f3fb, 0x1f3ff);
+
+  const isRegionalIndicatorCodepoint = codepoint => inRange(codepoint, 0x1f1e6, 0x1f1ff);
+
+  const isEmojiCodepoint = codepoint =>
+    inRange(codepoint, 0x1f000, 0x1faff) ||
+    inRange(codepoint, 0x2600, 0x27bf) ||
+    codepoint === 0x00a9 ||
+    codepoint === 0x00ae ||
+    isEmojiModifierCodepoint(codepoint) ||
+    isRegionalIndicatorCodepoint(codepoint);
+
+  const isRtlCodepoint = codepoint =>
+    inRange(codepoint, 0x0590, 0x08ff) ||
+    inRange(codepoint, 0xfb1d, 0xfdff) ||
+    inRange(codepoint, 0xfe70, 0xfeff);
+
+  const clusterHasCodepoint = (cluster, predicate) =>
+    codepointsFor(cluster).some(predicate);
+
+  const isEmojiCluster = cluster =>
+    cluster.includes("\u200d") ||
+    clusterHasCodepoint(cluster, isEmojiCodepoint) ||
+    clusterHasCodepoint(cluster, isVariationSelectorCodepoint);
+
+  const isRtlCluster = cluster => clusterHasCodepoint(cluster, isRtlCodepoint);
+
+  const segmentTextClusters = text => {
+    const value = `${text ?? ""}`;
+    if (value.length === 0) return [];
+    try {
+      if (typeof globalThis.Intl?.Segmenter === "function") {
+        const segmenter = new globalThis.Intl.Segmenter(undefined, { granularity: "grapheme" });
+        const segments = Array.from(segmenter.segment(value), item => item.segment);
+        if (segments.length > 0) return segments;
+      }
+    } catch {
+      // Fall through to the compact local segmenter.
+    }
+    const chars = Array.from(value);
+    const out = [];
+    let index = 0;
+    while (index < chars.length) {
+      const start = index;
+      index += 1;
+      let advanced = true;
+      while (advanced && index < chars.length) {
+        advanced = false;
+        const codepoint = chars[index].codePointAt(0) || 0;
+        if (
+          isZeroWidthTextCodepoint(codepoint) ||
+          isVariationSelectorCodepoint(codepoint) ||
+          isEmojiModifierCodepoint(codepoint)
+        ) {
+          index += 1;
+          advanced = true;
+        } else if (chars[index] === "\u200d" && index + 1 < chars.length) {
+          index += 2;
+          advanced = true;
+        } else if (
+          index > start &&
+          isRegionalIndicatorCodepoint(chars[index - 1].codePointAt(0) || 0) &&
+          isRegionalIndicatorCodepoint(codepoint) &&
+          index - start < 2
+        ) {
+          index += 1;
+          advanced = true;
+        }
+      }
+      out.push(chars.slice(start, index).join(""));
+    }
+    return out;
+  };
+
+  const visualTextClusters = clusters => {
+    const visual = [];
+    let index = 0;
+    while (index < clusters.length) {
+      const rtl = isRtlCluster(clusters[index]);
+      const start = index;
+      index += 1;
+      while (index < clusters.length && isRtlCluster(clusters[index]) === rtl) {
+        index += 1;
+      }
+      const run = clusters.slice(start, index);
+      if (rtl) run.reverse();
+      visual.push(...run);
+    }
+    return visual;
+  };
+
+  const cssColor = color => {
+    const r = Math.round(Math.max(0, Math.min(1, Number(color.r) || 0)) * 255);
+    const g = Math.round(Math.max(0, Math.min(1, Number(color.g) || 0)) * 255);
+    const b = Math.round(Math.max(0, Math.min(1, Number(color.b) || 0)) * 255);
+    const a = Math.max(0, Math.min(1, Number(color.a) || 0));
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  };
+
+  const proofRoleForText = text => {
+    const value = `${text ?? ""}`;
+    if (value.includes("👩‍💻")) return "emoji-zwj";
+    if (value.includes("אבג")) return "bidi";
+    if (value.startsWith("Proof wrap line ")) return "paragraph-line";
+    return "";
+  };
+
   const textLayoutAdvance = (char, fontSize) => {
     const codepoint = char.codePointAt(0) || 0;
     if (isZeroWidthTextCodepoint(codepoint)) return 0;
@@ -1230,12 +1401,15 @@ export function createWebGpuImports(options = {}) {
       weight: Number(weight) || 400,
     };
     const value = `${text ?? ""}`;
+    const logicalClusters = segmentTextClusters(value);
+    const visualClusters = visualTextClusters(logicalClusters);
+    const proofRole = proofRoleForText(value);
     const glyphs = [];
     let total = 0;
-    for (const char of value) {
-      const glyph = ensureGlyph(renderer, char, font);
+    for (const cluster of visualClusters) {
+      const glyph = ensureGlyph(renderer, cluster, font);
       if (!glyph) continue;
-      glyphs.push(glyph);
+      glyphs.push({ cluster, glyph });
       total += glyph.advance;
     }
     const scope = rendererScope(renderer);
@@ -1244,12 +1418,50 @@ export function createWebGpuImports(options = {}) {
     const baseline = Number(y) + Math.max(font.size, (Number(height) + font.size * 0.72) / 2);
     const state = rendererState(renderer);
     const drawColor = multiplyColorAlpha(color, state.opacity);
-    for (const glyph of glyphs) {
-      pushTextQuad(renderer, cursor + glyph.offsetX, baseline + glyph.offsetY, glyph, drawColor);
+    for (const { glyph } of glyphs) {
+      const glyphColor = glyph.colorGlyph
+        ? { r: -1, g: 0, b: 0, a: drawColor.a }
+        : drawColor;
+      pushTextQuad(renderer, cursor + glyph.offsetX, baseline + glyph.offsetY, glyph, glyphColor);
       cursor += glyph.advance;
     }
     const count = scope.textVertices.length / TEXT_STRIDE_FLOATS - startIndex;
     if (count > 0) pushRendererItem(renderer, { type: "text", start: startIndex, count });
+    if (proofRole === "emoji-zwj") {
+      recordRuntimeEvidenceEvent({
+        kind: 95,
+        name: "text_grapheme_layout",
+        text: value,
+        logicalClusters: logicalClusters.length,
+        visualClusters: visualClusters.length,
+        containsZwj: value.includes("\u200d"),
+        singleGraphemeCluster: logicalClusters.length === 1,
+        noInteriorCaret: logicalClusters.length === 1 && value.includes("\u200d"),
+        codepoints: codepointsFor(value).map(codepointHex),
+      });
+    } else if (proofRole === "bidi") {
+      recordRuntimeEvidenceEvent({
+        kind: 96,
+        name: "text_bidi_layout",
+        text: value,
+        logicalClusters,
+        visualClusters,
+        visualOrderDiffers: logicalClusters.join("\u0000") !== visualClusters.join("\u0000"),
+      });
+    } else if (proofRole === "paragraph-line") {
+      const match = value.match(/^Proof wrap line (\d+)/);
+      recordRuntimeEvidenceEvent({
+        kind: 97,
+        name: "text_paragraph_line",
+        text: value,
+        lineIndex: match ? Number(match[1]) : 0,
+        baseline,
+        x: Number(x),
+        y: Number(y),
+        width: Number(width),
+        height: Number(height),
+      });
+    }
   };
 
   const ensureImageResource = (renderer, source) => {
@@ -1787,6 +1999,7 @@ export function createWebGpuImports(options = {}) {
         layerStack: [],
         frameResources: [],
         stateStack: [{ opacity: 1, transform: identityTransform(), clip: undefined }],
+        presentCount: 0,
       };
       const handle = nextRendererHandle++;
       renderers.set(handle, renderer);
@@ -1901,9 +2114,29 @@ export function createWebGpuImports(options = {}) {
     draw_image(rendererHandle, source, x, y, width, height, opacity, fit) {
       const renderer = renderers.get(rendererHandle);
       if (!renderer) return invalidResource();
+      const imageSource = stringValue(source);
       const rect = { x: Number(x), y: Number(y), width: Number(width), height: Number(height) };
-      if (!pushImageQuad(renderer, rect, stringValue(source), opacity, fit)) {
-        const color = fallbackImageColor(stringValue(source));
+      if (pushImageQuad(renderer, rect, imageSource, opacity, fit)) {
+        recordRuntimeEvidenceEvent({
+          kind: 99,
+          name: "image_ready_frame",
+          source: imageSource,
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+        });
+      } else {
+        recordRuntimeEvidenceEvent({
+          kind: 98,
+          name: "image_placeholder_frame",
+          source: imageSource,
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+        });
+        const color = fallbackImageColor(imageSource);
         const alpha = clampOpacity(opacity);
         pushGradientRounded(
           renderer,
@@ -2114,6 +2347,12 @@ export function createWebGpuImports(options = {}) {
         renderTargetSnapshot,
       );
       device.queue.submit([encoder.finish()]);
+      renderer.presentCount += 1;
+      recordRuntimeEvidenceEvent({
+        kind: 100,
+        name: "present_frame",
+        frame: renderer.presentCount,
+      });
       return ok();
     },
     renderer_dispose(rendererHandle) {

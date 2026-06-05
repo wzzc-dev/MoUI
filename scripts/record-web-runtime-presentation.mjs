@@ -523,7 +523,6 @@ const summarizeRendererProofPixels = (png, target) => {
   }
 
   const radialPassed = redPixels >= 24 && bluePixels >= 24 && midGradientPixels >= 8;
-  const colorEmojiPassed = highSaturationPixels >= 64;
   const bidiPassed = darkTextPixels >= 120 && darkRows.size >= 3;
   const paragraphPassed = darkTextPixels >= 180 && darkRows.size >= 4;
 
@@ -539,9 +538,9 @@ const summarizeRendererProofPixels = (png, target) => {
     },
     colorEmojiPixels: {
       required: true,
-      passed: colorEmojiPassed,
-      evidence: colorEmojiPassed ? ["high-saturation-pixels", "glyph-or-raster"] : [],
-      matchedMarkers: colorEmojiPassed ? 2 : 0,
+      passed: false,
+      evidence: [],
+      matchedMarkers: 0,
       highSaturationPixels,
     },
     zwjGrapheme: {
@@ -731,6 +730,123 @@ const runtimeSignalsFromLog = logText => ({
 
 const hasEvent = (events, names) => events.some(event => names.includes(event?.name));
 
+const eventIndex = (events, predicate) => events.findIndex(predicate);
+
+const eventIndexes = (events, predicate) => {
+  const indexes = [];
+  for (let index = 0; index < events.length; index += 1) {
+    if (predicate(events[index])) indexes.push(index);
+  }
+  return indexes;
+};
+
+const deriveRendererProofFromEvents = (screenshot, target, events) => {
+  if (!targetRequiresRendererProofPixels(target)) return screenshot;
+
+  const colorGlyph = events.find(event =>
+    event?.name === "text_color_glyph" &&
+    `${event.text ?? ""}`.includes("👩‍💻") &&
+    Number(event.highSaturationPixels) >= 8 &&
+    event.format === "rgba"
+  );
+  const grapheme = events.find(event =>
+    event?.name === "text_grapheme_layout" &&
+    event.containsZwj === true &&
+    event.singleGraphemeCluster === true &&
+    event.noInteriorCaret === true
+  );
+  const bidi = events.find(event =>
+    event?.name === "text_bidi_layout" &&
+    event.visualOrderDiffers === true &&
+    Array.isArray(event.logicalClusters) &&
+    Array.isArray(event.visualClusters)
+  );
+  const paragraphLines = events
+    .filter(event => event?.name === "text_paragraph_line")
+    .sort((left, right) => Number(left.lineIndex) - Number(right.lineIndex));
+  const paragraphLineIndexes = new Set(
+    paragraphLines.map(event => Number(event.lineIndex)).filter(Number.isFinite),
+  );
+  const paragraphYs = new Set(
+    paragraphLines.map(event => Math.round(Number(event.y))).filter(Number.isFinite),
+  );
+  const paragraphPassed =
+    paragraphLineIndexes.has(1) &&
+    paragraphLineIndexes.has(2) &&
+    paragraphLineIndexes.has(3) &&
+    paragraphYs.size >= 3 &&
+    Number(screenshot.paragraphWrapping?.darkRows ?? 0) >= 4;
+
+  const placeholderIndex = eventIndex(events, event => event?.name === "image_placeholder_frame");
+  const loadIndex = eventIndex(events, event => event?.name === "image_load");
+  const changeIndex = eventIndex(events, event => event?.name === "image_resource_change");
+  const repaintIndex = eventIndex(events, event => event?.name === "image_repaint_request");
+  const readyIndex = eventIndex(events, event => event?.name === "image_ready_frame");
+  const presentFrames = events
+    .filter(event => event?.name === "present_frame")
+    .map(event => Number(event.frame))
+    .filter(Number.isFinite);
+  const asyncPassed =
+    placeholderIndex >= 0 &&
+    loadIndex > placeholderIndex &&
+    changeIndex > loadIndex &&
+    repaintIndex > loadIndex &&
+    readyIndex > Math.max(changeIndex, repaintIndex) &&
+    presentFrames.length >= 2 &&
+    Math.max(...presentFrames) >= 2 &&
+    screenshot.contentPixels >= 500;
+
+  return {
+    ...screenshot,
+    colorEmojiPixels: {
+      ...(screenshot.colorEmojiPixels ?? emptyRendererProofEvidence(true)),
+      passed: !!colorGlyph,
+      evidence: colorGlyph ? ["high-saturation-pixels", "glyph-or-raster"] : [],
+      matchedMarkers: colorGlyph ? 2 : 0,
+      glyphHighSaturationPixels: Number(colorGlyph?.highSaturationPixels ?? 0),
+      glyphAlphaPixels: Number(colorGlyph?.alphaPixels ?? 0),
+    },
+    zwjGrapheme: {
+      ...(screenshot.zwjGrapheme ?? emptyRendererProofEvidence(true)),
+      passed: !!grapheme,
+      evidence: grapheme ? ["single-grapheme-cluster", "no-interior-caret"] : [],
+      matchedMarkers: grapheme ? 2 : 0,
+      logicalClusters: Number(grapheme?.logicalClusters ?? 0),
+      visualClusters: Number(grapheme?.visualClusters ?? 0),
+    },
+    bidiLayout: {
+      ...(screenshot.bidiLayout ?? emptyRendererProofEvidence(true)),
+      passed: !!bidi,
+      evidence: bidi ? ["visual-order"] : [],
+      matchedMarkers: bidi ? 1 : 0,
+      logicalClusters: bidi?.logicalClusters ?? [],
+      visualClusters: bidi?.visualClusters ?? [],
+    },
+    paragraphWrapping: {
+      ...(screenshot.paragraphWrapping ?? emptyRendererProofEvidence(true)),
+      passed: paragraphPassed,
+      evidence: paragraphPassed ? ["line-metrics", "later-line-pixels"] : [],
+      matchedMarkers: paragraphPassed ? 2 : 0,
+      paragraphLineCount: paragraphLineIndexes.size,
+      paragraphRows: paragraphYs.size,
+    },
+    asyncImageSecondFrame: {
+      required: true,
+      passed: asyncPassed,
+      evidence: asyncPassed ? ["late-completion", "repaint-request", "second-frame-pixels"] : [],
+      matchedMarkers: asyncPassed ? 3 : 0,
+      eventIndexes: {
+        placeholder: placeholderIndex,
+        load: loadIndex,
+        change: changeIndex,
+        repaint: repaintIndex,
+        ready: readyIndex,
+        present: eventIndexes(events, event => event?.name === "present_frame"),
+      },
+    },
+  };
+};
+
 const deriveTargetStatus = (target, observations) => {
   const required = [
     "pageLoaded",
@@ -866,17 +982,7 @@ const probeTarget = async target => {
     }
     const runtimeSignals = runtimeSignalsFromLog(state.logText);
     const evidenceEvents = await collectEvidenceEvents(session);
-    const asyncImageSecondFrame = hasEvent(evidenceEvents, ["image_load"])
-      ? {
-          required: targetRequiresRendererProofPixels(target),
-          passed: targetRequiresRendererProofPixels(target),
-          evidence: targetRequiresRendererProofPixels(target)
-            ? ["late-completion", "repaint-request", "second-frame-pixels"]
-            : [],
-          matchedMarkers: targetRequiresRendererProofPixels(target) ? 3 : 0,
-        }
-      : emptyRendererProofEvidence(targetRequiresRendererProofPixels(target));
-    screenshot = { ...screenshot, asyncImageSecondFrame };
+    screenshot = deriveRendererProofFromEvents(screenshot, target, evidenceEvents);
     const errors = consoleErrorsFor(session.events);
     if (screenshotError) {
       errors.push(screenshotError);

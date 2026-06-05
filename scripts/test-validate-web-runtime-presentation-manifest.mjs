@@ -53,11 +53,12 @@ const observations = value => Object.fromEntries(observationKeys.map(key => [key
 const platformObservations = value =>
   Object.fromEntries(platformObservationKeys.map(key => [key, value]));
 
-const proof = (name, status, evidence) => ({
+const proof = (name, status, evidence, extra = {}) => ({
   required: name === "showcase-web-wasm",
   passed: name === "showcase-web-wasm" && status === "passed",
   evidence: name === "showcase-web-wasm" && status === "passed" ? evidence : [],
   matchedMarkers: name === "showcase-web-wasm" && status === "passed" ? evidence.length : 0,
+  ...(name === "showcase-web-wasm" && status === "passed" ? extra : {}),
 });
 
 const target = ({ name, packagePath, path, status = "passed" }) => ({
@@ -105,15 +106,44 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
       matchedMarkers: name === "showcase-web-wasm" && status === "passed" ? 3 : 0,
     },
     radialGradient: proof(name, status, ["center-mid-edge-pixels", "shader-payload"]),
-    colorEmojiPixels: proof(name, status, ["high-saturation-pixels", "glyph-or-raster"]),
-    zwjGrapheme: proof(name, status, ["single-grapheme-cluster", "no-interior-caret"]),
-    bidiLayout: proof(name, status, ["visual-order"]),
-    paragraphWrapping: proof(name, status, ["line-metrics", "later-line-pixels"]),
+    colorEmojiPixels: proof(
+      name,
+      status,
+      ["high-saturation-pixels", "glyph-or-raster"],
+      { glyphHighSaturationPixels: 42, glyphAlphaPixels: 120 },
+    ),
+    zwjGrapheme: proof(
+      name,
+      status,
+      ["single-grapheme-cluster", "no-interior-caret"],
+      { logicalClusters: 1, visualClusters: 1 },
+    ),
+    bidiLayout: proof(
+      name,
+      status,
+      ["visual-order"],
+      { logicalClusters: ["A", "B", "C", " ", "א", "ב", "ג"], visualClusters: ["A", "B", "C", " ", "ג", "ב", "א"] },
+    ),
+    paragraphWrapping: proof(
+      name,
+      status,
+      ["line-metrics", "later-line-pixels"],
+      { paragraphLineCount: 3, paragraphRows: 3, darkRows: 8 },
+    ),
     asyncImageSecondFrame: proof(name, status, [
       "late-completion",
       "repaint-request",
       "second-frame-pixels",
-    ]),
+    ], {
+      eventIndexes: {
+        placeholder: 4,
+        load: 6,
+        change: 7,
+        repaint: 8,
+        ready: 10,
+        present: [5, 11],
+      },
+    }),
   },
   evidenceEvents: status === "passed"
     ? [
@@ -121,7 +151,19 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
         { kind: 23, name: "pointer_down" },
         { kind: 40, name: "key_down" },
         { kind: 42, name: "ime_commit" },
+        { kind: 94, name: "text_color_glyph", text: "👩‍💻", format: "rgba", highSaturationPixels: 42 },
+        { kind: 95, name: "text_grapheme_layout", containsZwj: true, singleGraphemeCluster: true, noInteriorCaret: true },
+        { kind: 96, name: "text_bidi_layout", visualOrderDiffers: true },
+        { kind: 97, name: "text_paragraph_line", lineIndex: 1 },
+        { kind: 97, name: "text_paragraph_line", lineIndex: 2 },
+        { kind: 97, name: "text_paragraph_line", lineIndex: 3 },
+        { kind: 98, name: "image_placeholder_frame" },
+        { kind: 100, name: "present_frame", frame: 1 },
         { kind: 90, name: "image_load" },
+        { kind: 92, name: "image_resource_change" },
+        { kind: 93, name: "image_repaint_request" },
+        { kind: 99, name: "image_ready_frame" },
+        { kind: 100, name: "present_frame", frame: 2 },
       ]
     : [],
   observations: {
@@ -344,6 +386,37 @@ expectFail(
     }),
   ),
   "targets[0].observations.resizeEvent must be yes for passed evidence",
+);
+
+expectFail(
+  "passed showcase target with weak async order",
+  runValidator(
+    writeFixture("weak-async-order.json", {
+      ...validManifest,
+      targets: validManifest.targets.map(target =>
+        target.name === "showcase-web-wasm"
+          ? {
+              ...target,
+              screenshot: {
+                ...target.screenshot,
+                asyncImageSecondFrame: {
+                  ...target.screenshot.asyncImageSecondFrame,
+                  eventIndexes: {
+                    placeholder: 8,
+                    load: 6,
+                    change: 7,
+                    repaint: 9,
+                    ready: 10,
+                    present: [5, 11],
+                  },
+                },
+              },
+            }
+          : target,
+      ),
+    }),
+  ),
+  "passed async image proof requires placeholder, late load, repaint, ready second-frame order",
 );
 
 expectFail(

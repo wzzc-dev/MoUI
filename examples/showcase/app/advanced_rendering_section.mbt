@@ -8,6 +8,9 @@ fn ShowcaseModel::advanced_rendering_section(
   let card_width = if metrics.compact { 260.0 } else { 300.0 }
   let cards = [
     advanced_rendering_card(
+      theme, "Renderer Proof", card_width, "renderer-proof",
+    ),
+    advanced_rendering_card(
       theme, "Transform Pixel", card_width, "transform-pixel",
     ),
     advanced_rendering_card(theme, "Layer + Blend", card_width, "blend"),
@@ -324,6 +327,97 @@ fn advanced_rendering_canvas(
           commands.push(@core.DrawCommand::PopFilter)
           commands.push(@core.DrawCommand::PopLayer)
           commands.push(@core.DrawCommand::PopClip)
+        }
+        "renderer-proof" => {
+          let proof_font = @core.FontSpec::new(
+            families=@core.FontFamilyStack::new([
+              @core.FontFamily::Emoji,
+              @core.FontFamily::SystemUi,
+            ]),
+            size=28.0,
+            weight=500,
+          )
+          let body_font = @core.FontSpec::new(
+            families=@core.FontFamilyStack::system_ui(),
+            size=14.0,
+            weight=600,
+          )
+          commands.push(
+            @core.DrawCommand::FillRoundedRectBrush(
+              @core.RoundedRect::new(
+                rect=@core.Rect::new(x=left, y=top, width=78.0, height=78.0),
+                radius=18.0,
+              ),
+              @core.Brush::radial_gradient(
+                center=@core.Point::new(x=left + 24.0, y=top + 24.0),
+                radius=64.0,
+                center_color=@core.Color::rgba(r=1.0, g=0.04, b=0.18),
+                edge_color=@core.Color::rgba(r=0.02, g=0.2, b=1.0),
+              ),
+            ),
+          )
+          commands.push(
+            @core.DrawCommand::DrawImage(@core.ImageRun::{
+              source: showcase_image_source(),
+              frame: @core.Rect::new(
+                x=left + 92.0,
+                y=top + 4.0,
+                width=52.0,
+                height=32.0,
+              ),
+              opacity: 1.0,
+              fit: @core.ImageFit::Cover,
+            }),
+          )
+          commands.push(
+            @core.DrawCommand::DrawText(
+              @core.TextRun::new(
+                text="👩‍💻",
+                frame=@core.Rect::new(
+                  x=left + 154.0,
+                  y=top + 2.0,
+                  width=56.0,
+                  height=36.0,
+                ),
+                font=proof_font,
+                color=@core.Color::black(),
+              ),
+            ),
+          )
+          commands.push(
+            @core.DrawCommand::DrawText(
+              @core.TextRun::new(
+                text="ABC אבג 123",
+                frame=@core.Rect::new(
+                  x=left + 92.0,
+                  y=top + 42.0,
+                  width=126.0,
+                  height=20.0,
+                ),
+                font=body_font,
+                color=@core.Color::black(),
+                align=@core.TextAlign::TextStart,
+              ),
+            ),
+          )
+          for index in 0..<3 {
+            commands.push(
+              @core.DrawCommand::DrawText(
+                @core.TextRun::new(
+                  text="Proof wrap line " + (index + 1).to_string(),
+                  frame=@core.Rect::new(
+                    x=left + 92.0,
+                    y=top + 64.0 + index.to_double() * 16.0,
+                    width=126.0,
+                    height=16.0,
+                  ),
+                  font=body_font,
+                  color=@core.Color::black(),
+                  align=@core.TextAlign::TextStart,
+                ),
+              ),
+            )
+          }
         }
         _ => {
           commands.push(@core.DrawCommand::PushOpacity(0.82))
