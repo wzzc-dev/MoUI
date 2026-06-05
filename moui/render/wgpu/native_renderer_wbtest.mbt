@@ -201,7 +201,7 @@ test "native renderer plans visual primitives instead of fallback-only batches" 
 }
 
 ///|
-test "native renderer plans radial brush as center edge visual fallback" {
+test "native renderer plans radial brush as true radial visual payload" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
     @render.RendererSurfaceMetrics::from_logical(
@@ -228,14 +228,15 @@ test "native renderer plans radial brush as center edge visual fallback" {
   inspect(vertex.mode, content="0")
   inspect(vertex.start_x, content="8")
   inspect(vertex.start_y, content="12")
-  inspect(vertex.end_x, content="20")
-  inspect(vertex.end_y, content="12")
+  inspect(vertex.end_x, content="12")
+  inspect(vertex.end_y, content="0")
+  inspect(vertex.blur_radius, content="1")
   assert_true(vertex.r0 == @core.Color::blue().r)
   assert_true(vertex.r1 == @core.Color::gray().r)
 }
 
 ///|
-test "native renderer plans radial stroke brush as center edge visual fallback" {
+test "native renderer plans radial stroke brush as true radial visual payload" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
     @render.RendererSurfaceMetrics::from_logical(
@@ -264,8 +265,9 @@ test "native renderer plans radial stroke brush as center edge visual fallback" 
   inspect(vertex.stroke_width, content="3")
   inspect(vertex.start_x, content="8")
   inspect(vertex.start_y, content="12")
-  inspect(vertex.end_x, content="20")
-  inspect(vertex.end_y, content="12")
+  inspect(vertex.end_x, content="12")
+  inspect(vertex.end_y, content="0")
+  inspect(vertex.blur_radius, content="1")
   assert_true(vertex.r0 == @core.Color::blue().r)
   assert_true(vertex.r1 == @core.Color::gray().r)
 }
@@ -312,7 +314,7 @@ test "native renderer plans DrawPath mesh as visible visual triangles" {
 }
 
 ///|
-test "native renderer plans radial DrawPath as deterministic center color fallback" {
+test "native renderer plans radial DrawPath as true radial path payload" {
   let renderer = new_test_renderer_handle()
   renderer.resize(
     @render.RendererSurfaceMetrics::from_logical(
@@ -348,12 +350,28 @@ test "native renderer plans radial DrawPath as deterministic center color fallba
   }
   let vertex = renderer.visual_vertices[0]
   inspect(vertex.mode, content="3")
+  inspect(vertex.blur_radius, content="1")
+  inspect(vertex.start_x, content="6")
+  inspect(vertex.start_y, content="6")
+  inspect(vertex.end_x, content="12")
+  inspect(vertex.end_y, content="0")
   assert_true(vertex.r0 == @core.Color::blue().r)
   assert_true(vertex.g0 == @core.Color::blue().g)
   assert_true(vertex.b0 == @core.Color::blue().b)
-  assert_true(vertex.r1 == @core.Color::blue().r)
-  assert_true(vertex.g1 == @core.Color::blue().g)
-  assert_true(vertex.b1 == @core.Color::blue().b)
+  assert_true(vertex.r1 == @core.Color::gray().r)
+  assert_true(vertex.g1 == @core.Color::gray().g)
+  assert_true(vertex.b1 == @core.Color::gray().b)
+}
+
+///|
+test "native visual shader shades radial path payloads" {
+  let shader = visual_shader_wgsl()
+  assert_true(shader.contains("radial_gradient_color"))
+  assert_true(
+    shader.contains(
+      "return brush_color(in.local, start, end, in.color0, in.color1, blur_radius);",
+    ),
+  )
 }
 
 ///|

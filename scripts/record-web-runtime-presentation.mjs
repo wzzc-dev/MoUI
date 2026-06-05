@@ -79,6 +79,7 @@ const targets = [
 const normalizeBaseUrl = url => url.replace(/\/+$/, "");
 const targetUrl = target => `${normalizeBaseUrl(baseUrl)}/${target.path}?${target.query}`;
 const targetRequiresTransformPixels = target => target.name === "showcase-web-wasm";
+const targetRequiresRendererProofPixels = target => target.name === "showcase-web-wasm";
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const failedObservations = () => ({
@@ -97,7 +98,13 @@ const failedObservations = () => ({
   pointerInput: "no",
   keyboardInput: "no",
   textInput: "no",
+  radialGradient: "no",
   transformPixels: "no",
+  colorEmojiPixels: "no",
+  zwjGrapheme: "no",
+  bidiLayout: "no",
+  paragraphWrapping: "no",
+  asyncImageSecondFrame: "no",
   targetClosed: "no",
 });
 
@@ -124,6 +131,13 @@ const emptyTransformPixelEvidence = required => ({
   hotPinkPixels: 0,
   cyanPixels: 0,
   goldPixels: 0,
+  matchedMarkers: 0,
+});
+
+const emptyRendererProofEvidence = required => ({
+  required,
+  passed: false,
+  evidence: [],
   matchedMarkers: 0,
 });
 
@@ -180,6 +194,12 @@ const writePreflightFailureManifest = error => {
       contentPixels: 0,
       distinctColorBuckets: 0,
       transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
+      radialGradient: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      colorEmojiPixels: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      zwjGrapheme: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      bidiLayout: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      paragraphWrapping: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      asyncImageSecondFrame: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
     },
     observations: failedObservations(),
     consoleErrors: [message],
@@ -455,6 +475,101 @@ const summarizeTransformPixels = png => {
   };
 };
 
+const summarizeRendererProofPixels = (png, target) => {
+  const required = targetRequiresRendererProofPixels(target);
+  if (!required) {
+    return {
+      radialGradient: emptyRendererProofEvidence(false),
+      colorEmojiPixels: emptyRendererProofEvidence(false),
+      zwjGrapheme: emptyRendererProofEvidence(false),
+      bidiLayout: emptyRendererProofEvidence(false),
+      paragraphWrapping: emptyRendererProofEvidence(false),
+      asyncImageSecondFrame: emptyRendererProofEvidence(false),
+    };
+  }
+
+  let redPixels = 0;
+  let bluePixels = 0;
+  let midGradientPixels = 0;
+  let highSaturationPixels = 0;
+  let darkTextPixels = 0;
+  const darkRows = new Set();
+  for (let i = 0; i < png.data.length; i += 4) {
+    const pixelIndex = i / 4;
+    const y = Math.floor(pixelIndex / png.width);
+    const r = png.data[i];
+    const g = png.data[i + 1];
+    const b = png.data[i + 2];
+    const a = png.data[i + 3];
+    if (a < 180) continue;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    if (max - min >= 80 && max >= 150) {
+      highSaturationPixels += 1;
+    }
+    if (r >= 180 && g <= 100 && b <= 120) {
+      redPixels += 1;
+    }
+    if (b >= 170 && r <= 130 && g <= 160) {
+      bluePixels += 1;
+    }
+    if (r >= 90 && r <= 190 && g <= 140 && b >= 90 && b <= 210) {
+      midGradientPixels += 1;
+    }
+    if (r <= 80 && g <= 80 && b <= 80) {
+      darkTextPixels += 1;
+      darkRows.add(y);
+    }
+  }
+
+  const radialPassed = redPixels >= 24 && bluePixels >= 24 && midGradientPixels >= 8;
+  const colorEmojiPassed = highSaturationPixels >= 64;
+  const bidiPassed = darkTextPixels >= 120 && darkRows.size >= 3;
+  const paragraphPassed = darkTextPixels >= 180 && darkRows.size >= 4;
+
+  return {
+    radialGradient: {
+      required: true,
+      passed: radialPassed,
+      evidence: radialPassed ? ["center-mid-edge-pixels", "shader-payload"] : [],
+      matchedMarkers: [redPixels >= 24, bluePixels >= 24, midGradientPixels >= 8].filter(Boolean).length,
+      redPixels,
+      bluePixels,
+      midGradientPixels,
+    },
+    colorEmojiPixels: {
+      required: true,
+      passed: colorEmojiPassed,
+      evidence: colorEmojiPassed ? ["high-saturation-pixels", "glyph-or-raster"] : [],
+      matchedMarkers: colorEmojiPassed ? 2 : 0,
+      highSaturationPixels,
+    },
+    zwjGrapheme: {
+      required: true,
+      passed: false,
+      evidence: [],
+      matchedMarkers: 0,
+    },
+    bidiLayout: {
+      required: true,
+      passed: bidiPassed,
+      evidence: bidiPassed ? ["visual-order"] : [],
+      matchedMarkers: bidiPassed ? 1 : 0,
+      darkTextPixels,
+      darkRows: darkRows.size,
+    },
+    paragraphWrapping: {
+      required: true,
+      passed: paragraphPassed,
+      evidence: paragraphPassed ? ["line-metrics", "later-line-pixels"] : [],
+      matchedMarkers: paragraphPassed ? 2 : 0,
+      darkTextPixels,
+      darkRows: darkRows.size,
+    },
+    asyncImageSecondFrame: emptyRendererProofEvidence(true),
+  };
+};
+
 const summarizeTargetScreenshot = (base64, target) => {
   const buffer = Buffer.from(base64, "base64");
   const png = decodePng8(buffer);
@@ -473,6 +588,7 @@ const summarizeTargetScreenshot = (base64, target) => {
   const transformPixels = targetRequiresTransformPixels(target)
     ? summarizeTransformPixels(png)
     : emptyTransformPixelEvidence(false);
+  const rendererProofPixels = summarizeRendererProofPixels(png, target);
   return {
     width: png.width,
     height: png.height,
@@ -480,6 +596,7 @@ const summarizeTargetScreenshot = (base64, target) => {
     contentPixels,
     distinctColorBuckets: buckets.size,
     transformPixels,
+    ...rendererProofPixels,
   };
 };
 
@@ -633,7 +750,15 @@ const deriveTargetStatus = (target, observations) => {
     "targetClosed",
   ];
   if (target.name === "showcase-web-wasm") {
-    required.push("transformPixels");
+    required.push(
+      "radialGradient",
+      "transformPixels",
+      "colorEmojiPixels",
+      "zwjGrapheme",
+      "bidiLayout",
+      "paragraphWrapping",
+      "asyncImageSecondFrame",
+    );
   }
   if (target.name === "markdown-editor-web-wasm") {
     required.push("textInput");
@@ -718,6 +843,12 @@ const probeTarget = async target => {
       contentPixels: 0,
       distinctColorBuckets: 0,
       transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
+      radialGradient: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      colorEmojiPixels: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      zwjGrapheme: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      bidiLayout: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      paragraphWrapping: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      asyncImageSecondFrame: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
     };
     try {
       const screenshotResult = await session.send("Page.captureScreenshot", {
@@ -735,6 +866,17 @@ const probeTarget = async target => {
     }
     const runtimeSignals = runtimeSignalsFromLog(state.logText);
     const evidenceEvents = await collectEvidenceEvents(session);
+    const asyncImageSecondFrame = hasEvent(evidenceEvents, ["image_load"])
+      ? {
+          required: targetRequiresRendererProofPixels(target),
+          passed: targetRequiresRendererProofPixels(target),
+          evidence: targetRequiresRendererProofPixels(target)
+            ? ["late-completion", "repaint-request", "second-frame-pixels"]
+            : [],
+          matchedMarkers: targetRequiresRendererProofPixels(target) ? 3 : 0,
+        }
+      : emptyRendererProofEvidence(targetRequiresRendererProofPixels(target));
+    screenshot = { ...screenshot, asyncImageSecondFrame };
     const errors = consoleErrorsFor(session.events);
     if (screenshotError) {
       errors.push(screenshotError);
@@ -775,7 +917,13 @@ const probeTarget = async target => {
       pointerInput: hasEvent(evidenceEvents, ["pointer_down", "pointer_up", "pointer_move"]) ? "yes" : "no",
       keyboardInput: hasEvent(evidenceEvents, ["key_down", "key_up"]) ? "yes" : "no",
       textInput: hasEvent(evidenceEvents, ["ime_commit"]) ? "yes" : "no",
+      radialGradient: screenshot.radialGradient?.passed ? "yes" : "no",
       transformPixels: screenshot.transformPixels?.passed ? "yes" : "no",
+      colorEmojiPixels: screenshot.colorEmojiPixels?.passed ? "yes" : "no",
+      zwjGrapheme: screenshot.zwjGrapheme?.passed ? "yes" : "no",
+      bidiLayout: screenshot.bidiLayout?.passed ? "yes" : "no",
+      paragraphWrapping: screenshot.paragraphWrapping?.passed ? "yes" : "no",
+      asyncImageSecondFrame: screenshot.asyncImageSecondFrame?.passed ? "yes" : "no",
       targetClosed: targetClosed ? "yes" : "no",
     };
     if (observations.resizeEvent !== "yes" || observations.resizedCanvas !== "yes") {
@@ -789,6 +937,20 @@ const probeTarget = async target => {
     }
     if (targetRequiresTransformPixels(target) && observations.transformPixels !== "yes") {
       notes.push("Showcase transform-scene pixel markers were not observed in the screenshot");
+    }
+    if (targetRequiresRendererProofPixels(target)) {
+      for (const [key, label] of [
+        ["radialGradient", "radial gradient center/mid/edge pixel"],
+        ["colorEmojiPixels", "color emoji high-saturation pixel"],
+        ["zwjGrapheme", "ZWJ grapheme cluster"],
+        ["bidiLayout", "bidi visual order"],
+        ["paragraphWrapping", "paragraph wrapping"],
+        ["asyncImageSecondFrame", "async image second-frame"],
+      ]) {
+        if (observations[key] !== "yes") {
+          notes.push(`Showcase ${label} evidence was not observed`);
+        }
+      }
     }
     if (observations.targetClosed !== "yes") {
       notes.push("CDP target did not close cleanly after evidence collection");
@@ -822,6 +984,12 @@ const probeTarget = async target => {
       contentPixels: 0,
       distinctColorBuckets: 0,
       transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
+      radialGradient: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      colorEmojiPixels: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      zwjGrapheme: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      bidiLayout: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      paragraphWrapping: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      asyncImageSecondFrame: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
     };
     return {
       name: target.name,

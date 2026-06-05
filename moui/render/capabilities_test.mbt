@@ -92,12 +92,12 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     gradient
     .note_for_backend(@render.RendererBackendKind::NativeWgpu)
-    .contains("center-to-edge linear fallback"),
+    .contains("radial rounded/path brushes"),
   )
   assert_true(
     gradient
     .note_for_backend(@render.RendererBackendKind::NativeWgpu)
-    .contains("center-color tessellation fallback"),
+    .contains("renderer-proof CI"),
   )
   assert_true(
     gradient
@@ -112,12 +112,12 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     gradient
     .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
-    .contains("true radial rounded brush payloads"),
+    .contains("true radial rounded/path brush payloads"),
   )
   assert_true(
     gradient
     .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
-    .contains("center-color tessellation fallback"),
+    .contains("renderer-proof presentation artifact"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::Shadow)
     is Some(shadow) else {
@@ -802,7 +802,7 @@ test "path tessellator lowers fill stroke and curves into vertices" {
 }
 
 ///|
-test "path tessellator lowers radial path brush to deterministic center color" {
+test "path tessellator preserves radial path brush payload" {
   let center_color = @core.Color::blue()
   let edge_color = @core.Color::gray()
   let path = @core.PathSpec::new(
@@ -825,10 +825,18 @@ test "path tessellator lowers radial path brush to deterministic center color" {
   inspect(mesh.vertices.length(), content="3")
   inspect(mesh.diagnostics.length(), content="0")
   for vertex in mesh.vertices {
+    assert_true(vertex.brush_kind == 1.0)
+    assert_true(vertex.start_x == 4.0)
+    assert_true(vertex.start_y == 4.0)
+    assert_true(vertex.end_x == 8.0)
     assert_true(vertex.r == center_color.r)
     assert_true(vertex.g == center_color.g)
     assert_true(vertex.b == center_color.b)
     assert_true(vertex.a == center_color.a)
+    assert_true(vertex.r1 == edge_color.r)
+    assert_true(vertex.g1 == edge_color.g)
+    assert_true(vertex.b1 == edge_color.b)
+    assert_true(vertex.a1 == edge_color.a)
   }
 }
 

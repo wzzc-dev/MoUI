@@ -182,6 +182,8 @@ bash moui_skia/scripts/verify-native-capability-contract.sh
 sh -n scripts/preview-loop.sh
 sh -n scripts/package-macos-app.sh
 sh -n scripts/ci-web-runtime-presentation.sh
+sh -n scripts/ci-renderer-proof-native.sh
+sh -n scripts/ci-renderer-proof-summary.sh
 node --check scripts/validate-guidance-consistency.mjs
 node scripts/validate-guidance-consistency.mjs
 node --check scripts/validate-package-manifest.mjs
@@ -203,6 +205,13 @@ node --check scripts/record-web-runtime-presentation.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
+node --check scripts/validate-renderer-proof-manifest.mjs
+node scripts/test-validate-renderer-proof-manifest.mjs
+node --check scripts/record-renderer-proof-manifest.mjs
+node scripts/test-record-renderer-proof-manifest.mjs
+node --check scripts/record-web-renderer-proof-manifest.mjs
+node scripts/test-record-web-renderer-proof-manifest.mjs
+node --check scripts/ci-renderer-proof-native.mjs
 node --check scripts/validate-renderer-provider-manifests.mjs
 ```
 
@@ -243,6 +252,9 @@ moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 node scripts/test-webgpu-runtime-radial.mjs
 moon build examples/showcase/web_wasm --target wasm-gc
+node scripts/test-validate-renderer-proof-manifest.mjs
+node scripts/test-record-renderer-proof-manifest.mjs
+node scripts/test-record-web-renderer-proof-manifest.mjs
 ```
 
 This renderer slice includes the native Skia raster package at
@@ -560,6 +572,19 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   presentation manifest, screenshots, browser/server logs, copied platform
   Web evidence, and `platform-runtime-evidence.json` as the
   `moui-web-runtime-presentation` artifact.
+- `Native WGPU renderer proof` and `Native Skia renderer proof` run macOS,
+  Windows, and Linux matrices, write renderer-proof manifests under
+  `artifacts/conformance/renderer-proof/`, upload matching
+  `artifacts/platform-evidence/<platform>/` logs such as
+  `skia-text-emoji-smoke.log`, and intentionally leave manifests failed until
+  true radial/transform pixels, text/emoji glyph or raster evidence, and async
+  image second-frame artifacts exist for that backend/platform.
+- `Renderer proof summary` downloads those artifacts, requires
+  `webgpu-wasm-web.json`, `wgpu-native-{macos,windows,linux}.json`, and
+  `skia-native-{macos,windows,linux}.json`, then runs
+  `validate-renderer-proof-manifest.mjs --require-passed` on each one. This job
+  runs with `always()` so skipped or failed upstream proof jobs produce an
+  explicit missing/failed renderer-proof signal.
 - `macOS packaging smoke` packages Showcase as a local `.app`, validates the
   package manifest, and uploads the bundle artifact.
 - `Benchmark scaffold` runs `sh scripts/conformance-check.sh --bench` to keep
@@ -730,6 +755,27 @@ probes. The browser-session manifest remains the runtime evidence artifact:
 GitHub Actions provenance is added only when the fold runs inside a non-skipped
 successful Actions job that also uploads those artifacts. A CI run URL, runner,
 or job name is not a substitute for a passed browser-session manifest.
+
+Renderer-proof manifests are separate from the platform runtime manifest. They
+live under `artifacts/conformance/renderer-proof/<backend>-<platform>.json` and
+use schema v1 with exactly these observations: `radialGradient`,
+`transformPixels`, `colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`,
+`paragraphWrapping`, and `asyncImageSecondFrame`. Passed manifests must carry
+GitHub Actions provenance and strong marker tokens; package tests, skipped jobs,
+blank screenshots, missing uploaded artifacts, caret-only diagnostics,
+coverage-only font matching, provider preflights, and fallback-safe descriptor
+audits remain failed renderer proof. CI summary validates them with the
+downloaded artifact directory as `--artifact-root`, so a manifest cannot pass
+unless its referenced logs/artifacts were actually uploaded. Use the recorder
+tests before changing the schema or marker vocabulary:
+
+```sh
+node scripts/test-validate-renderer-proof-manifest.mjs
+node scripts/test-record-renderer-proof-manifest.mjs
+node scripts/test-record-web-renderer-proof-manifest.mjs
+sh -n scripts/ci-renderer-proof-native.sh
+sh -n scripts/ci-renderer-proof-summary.sh
+```
 
 ## Release-Oriented Checklist
 
