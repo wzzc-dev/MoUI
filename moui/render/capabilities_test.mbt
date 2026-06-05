@@ -96,6 +96,11 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     gradient
+    .note_for_backend(@render.RendererBackendKind::NativeWgpu)
+    .contains("center-color tessellation fallback"),
+  )
+  assert_true(
+    gradient
     .note_for_backend(@render.RendererBackendKind::SkiaRasterNative)
     .contains("fills and strokes"),
   )
@@ -107,7 +112,12 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     gradient
     .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
-    .contains("center color"),
+    .contains("center-to-edge gradient fallback"),
+  )
+  assert_true(
+    gradient
+    .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
+    .contains("center-color tessellation fallback"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::Shadow)
     is Some(shadow) else {
@@ -775,6 +785,37 @@ test "path tessellator lowers fill stroke and curves into vertices" {
   let mesh = @render.tessellate_path(path)
   assert_true(mesh.vertices.length() > 3)
   inspect(mesh.diagnostics.length(), content="0")
+}
+
+///|
+test "path tessellator lowers radial path brush to deterministic center color" {
+  let center_color = @core.Color::blue()
+  let edge_color = @core.Color::gray()
+  let path = @core.PathSpec::new(
+    verbs=[
+      @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
+      @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=0.0)),
+      @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=12.0)),
+      @core.PathVerb::Close,
+    ],
+    fill=Some(
+      @core.Brush::radial_gradient(
+        center=@core.Point::new(x=4.0, y=4.0),
+        radius=8.0,
+        center_color~,
+        edge_color~,
+      ),
+    ),
+  )
+  let mesh = @render.tessellate_path(path)
+  inspect(mesh.vertices.length(), content="3")
+  inspect(mesh.diagnostics.length(), content="0")
+  for vertex in mesh.vertices {
+    assert_true(vertex.r == center_color.r)
+    assert_true(vertex.g == center_color.g)
+    assert_true(vertex.b == center_color.b)
+    assert_true(vertex.a == center_color.a)
+  }
 }
 
 ///|

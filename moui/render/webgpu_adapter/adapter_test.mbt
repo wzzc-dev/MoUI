@@ -257,6 +257,44 @@ test "wgpu web command bridge forwards DrawPath to host ABI" {
 }
 
 ///|
+test "wgpu web command bridge preserves radial DrawPath fallback payload" {
+  let path = @core.PathSpec::new(
+    verbs=[
+      @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
+      @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=0.0)),
+      @core.PathVerb::LineTo(@core.Point::new(x=0.0, y=10.0)),
+      @core.PathVerb::Close,
+    ],
+    fill=Some(
+      @core.Brush::radial_gradient(
+        center=@core.Point::new(x=4.0, y=4.0),
+        radius=8.0,
+        center_color=@core.Color::blue(),
+        edge_color=@core.Color::gray(),
+      ),
+    ),
+  )
+  let calls = draw_commands_to_host_calls(
+    [@core.DrawCommand::DrawPath(path)],
+    @core.Size::new(width=100.0, height=50.0),
+  )
+  guard calls[1] is WebGpuHostCall::DrawPath(forwarded) else {
+    fail("expected DrawPath host call")
+  }
+  guard forwarded.fill is Some(@core.Brush::RadialGradient(gradient)) else {
+    fail("expected radial path brush to stay visible to the host bridge")
+  }
+  assert_true(gradient.center_color == @core.Color::blue())
+  let mesh = @render.tessellate_path(forwarded)
+  inspect(mesh.vertices.length(), content="3")
+  for vertex in mesh.vertices {
+    assert_true(vertex.r == @core.Color::blue().r)
+    assert_true(vertex.g == @core.Color::blue().g)
+    assert_true(vertex.b == @core.Color::blue().b)
+  }
+}
+
+///|
 test "wgpu web renderer submits DrawPath without fallback diagnostics" {
   let last_calls : Array[WebGpuHostCall] = []
   let renderer = create_renderer(
