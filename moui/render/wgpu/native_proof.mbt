@@ -891,14 +891,24 @@ fn count_high_saturation_rgba(bytes : Bytes) -> Int {
     let g = bytes[offset + 1].to_int()
     let b = bytes[offset + 2].to_int()
     let a = bytes[offset + 3].to_int()
-    let max_channel = r.max(g).max(b)
-    let min_channel = r.min(g).min(b)
-    if a > 32 && max_channel - min_channel > 80 {
+    if a > 8 && unpremultiplied_rgb_delta(r, g, b, a) > 80 {
       count += 1
     }
     offset += 4
   }
   count
+}
+
+///|
+fn unpremultiplied_rgb_delta(r : Int, g : Int, b : Int, a : Int) -> Int {
+  if a <= 0 {
+    0
+  } else {
+    let ur = ((r * 255) / a).min(255)
+    let ug = ((g * 255) / a).min(255)
+    let ub = ((b * 255) / a).min(255)
+    ur.max(ug).max(ub) - ur.min(ug).min(ub)
+  }
 }
 
 ///|
