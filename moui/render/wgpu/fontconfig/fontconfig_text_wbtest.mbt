@@ -1,16 +1,13 @@
 ///|
-test "fontconfig provider is an explicit fallback scaffold" {
+test "fontconfig provider exposes a native emoji text boundary" {
   let system = @wgpu_renderer.native_text_system_with_engine(
     fontconfig_text_engine(),
   )
-  inspect(
-    system.id(),
-    content="native-wgpu-fontconfig-harfbuzz-freetype-planned",
-  )
+  inspect(system.id(), content="native-wgpu-fontconfig-freetype-emoji")
 }
 
 ///|
-test "fontconfig provider delegates empty stub to shared text protocol" {
+test "fontconfig provider delegates non-emoji measure to shared fallback" {
   let input = @core.TextLayoutInput::new(
     text="fallback",
     font=@core.FontSpec::new(size=14.0, weight=400),
@@ -50,7 +47,7 @@ test "fontconfig native stub parses versioned font spec payload" {
 }
 
 ///|
-test "fontconfig run layout delegates native stub to shared text protocol" {
+test "fontconfig run layout delegates non-emoji runs to shared fallback" {
   let run = @core.TextRun::new(
     text="fallback",
     frame=@core.Rect::new(x=0.0, y=0.0, width=120.0, height=24.0),
@@ -59,6 +56,34 @@ test "fontconfig run layout delegates native stub to shared text protocol" {
     align=@core.TextAlign::TextStart,
   )
   inspect(fontconfig_layout_run(run, 1.0) is None, content="true")
+}
+
+///|
+#cfg(platform="linux")
+test "fontconfig run layout returns native emoji glyphs when color font is available" {
+  let color_pixels = linux_fontconfig_debug_color_emoji_raster_pixels()
+  if color_pixels < 0 {
+    inspect("missing", content="available")
+    return
+  }
+  let run = @core.TextRun::new(
+    text="\u{1F642}",
+    frame=@core.Rect::new(x=0.0, y=0.0, width=80.0, height=48.0),
+    font=@core.FontSpec::new(
+      families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+      size=26.0,
+      weight=400,
+    ),
+    color=@core.Color::black(),
+    align=@core.TextAlign::TextStart,
+  )
+  match fontconfig_layout_run(run, 1.0) {
+    Some(layout) => {
+      inspect(layout.glyphs.length() > 0, content="true")
+      inspect(color_pixels > 0, content="true")
+    }
+    None => inspect("missing", content="available")
+  }
 }
 
 ///|
@@ -117,3 +142,7 @@ extern "C" fn linux_fontconfig_debug_font_registration_protocol_version() -> Int
 extern "C" fn linux_fontconfig_debug_font_registration_data_len(
   payload : Bytes,
 ) -> Int = "moui_linux_fontconfig_debug_font_registration_data_len"
+
+///|
+#cfg(platform="linux")
+extern "C" fn linux_fontconfig_debug_color_emoji_raster_pixels() -> Int = "moui_linux_fontconfig_debug_color_emoji_raster_pixels"
