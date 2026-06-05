@@ -278,8 +278,8 @@ browser WebGPU presentation. Use
 `scripts/record-web-runtime-presentation.mjs` and
 `scripts/validate-web-runtime-presentation-manifest.mjs` to collect passed
 browser-session WebGPU, wasm startup, canvas, resize/input event-bridge,
-Markdown Editor text input, clean target close, console, and screenshot
-evidence; fold that artifact into
+Markdown Editor text input, clean target close, console, nonblank screenshots,
+and Showcase transform-scene pixel marker evidence; fold that artifact into
 `artifacts/conformance/platform-runtime-evidence.json` with
 `scripts/record-platform-evidence-manifest.mjs ... web
 --web-presentation-manifest ...`. Failed or missing presentation manifests must

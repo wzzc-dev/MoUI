@@ -78,7 +78,8 @@
     <script type="module">
       import { bootMouiWasmGcApp } from "../../../moui/backend/web/runtime.js";
 
-      if (new URLSearchParams(window.location.search).get("debug") === "1") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("debug") === "1") {
         document.body.classList.add("debug");
       }
 
@@ -102,6 +103,13 @@
           import.meta.url,
         ),
         canvasHost: "#canvas-host",
+        imports: {
+          showcase: {
+            initial_section() {
+              return params.get("section") === "advanced-rendering" ? 1 : 0;
+            },
+          },
+        },
         onStatus: setStatus,
         onPrint(ch) {
           if (ch === "\n") {

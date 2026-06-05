@@ -275,8 +275,9 @@ both the matching Skia provider identity and a passing preflight, test, or build
 marker; do not use generic passing test output as provider evidence.
 A passed presentation manifest must include WebGPU startup, wasm startup,
 canvas sizing, resize/input event-bridge delivery, Markdown Editor text input,
-clean target close, clean console, and nonblank screenshots for the named
-browser session before the Web platform entry can be marked passed.
+clean target close, clean console, nonblank screenshots, and Showcase
+transform-scene pixel markers for the named browser session before the Web
+platform entry can be marked passed.
 
 Focused checks:
 

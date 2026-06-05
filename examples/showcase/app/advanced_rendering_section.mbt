@@ -7,6 +7,9 @@ fn ShowcaseModel::advanced_rendering_section(
   ignore(self)
   let card_width = if metrics.compact { 260.0 } else { 300.0 }
   let cards = [
+    advanced_rendering_card(
+      theme, "Transform Pixel", card_width, "transform-pixel",
+    ),
     advanced_rendering_card(theme, "Layer + Blend", card_width, "blend"),
     advanced_rendering_card(theme, "Filter", card_width, "filter"),
     advanced_rendering_card(theme, "Shader", card_width, "shader"),
@@ -216,6 +219,111 @@ fn advanced_rendering_canvas(
               ),
             ),
           )
+        }
+        "transform-pixel" => {
+          let clip = frame.inset(@core.Insets::all(10.0))
+          let mask_rect = @core.Rect::new(
+            x=clip.origin.x + 4.0,
+            y=clip.origin.y + 4.0,
+            width=clip.size.width - 8.0,
+            height=clip.size.height - 8.0,
+          )
+          commands.push(@core.DrawCommand::PushClip(clip))
+          commands.push(
+            @core.DrawCommand::PushLayer(
+              @core.LayerSpec::new(
+                opacity=0.96,
+                blend_mode=@core.BlendMode::SourceOver,
+                mask=@core.LayerMask::RoundedMask(
+                  @core.RoundedRect::new(rect=mask_rect, radius=18.0),
+                ),
+                offscreen=true,
+              ),
+            ),
+          )
+          commands.push(
+            @core.DrawCommand::PushFilter(@core.FilterEffect::Saturate(1.08)),
+          )
+          commands.push(
+            @core.DrawCommand::FillRoundedRectBrush(
+              @core.RoundedRect::new(rect=mask_rect, radius=18.0),
+              @core.Brush::solid(@core.Color::rgba(r=0.03, g=0.08, b=0.12)),
+            ),
+          )
+          commands.push(
+            @core.DrawCommand::PushTransform(
+              @core.Transform2D::translation(
+                dx=mask_rect.origin.x + 16.0,
+                dy=mask_rect.origin.y + 10.0,
+              ),
+            ),
+          )
+          commands.push(
+            @core.DrawCommand::PushTransform(
+              @core.Transform2D::scale(sx=1.08, sy=0.92),
+            ),
+          )
+          commands.push(
+            @core.DrawCommand::DrawPath(
+              @core.PathSpec::new(
+                verbs=[
+                  @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=60.0)),
+                  @core.PathVerb::LineTo(@core.Point::new(x=34.0, y=4.0)),
+                  @core.PathVerb::LineTo(@core.Point::new(x=78.0, y=54.0)),
+                  @core.PathVerb::LineTo(@core.Point::new(x=42.0, y=44.0)),
+                  @core.PathVerb::Close,
+                ],
+                fill=Some(
+                  @core.Brush::solid(@core.Color::rgba(r=1.0, g=0.04, b=0.46)),
+                ),
+                stroke=Some(
+                  @core.Brush::solid(@core.Color::rgba(r=1.0, g=0.78, b=0.08)),
+                ),
+                stroke_width=3.0,
+              ),
+            ),
+          )
+          commands.push(
+            @core.DrawCommand::FillRoundedRectBrush(
+              @core.RoundedRect::new(
+                rect=@core.Rect::new(x=8.0, y=18.0, width=46.0, height=24.0),
+                radius=8.0,
+              ),
+              @core.Brush::solid(@core.Color::rgba(r=1.0, g=0.04, b=0.46)),
+            ),
+          )
+          commands.push(
+            @core.DrawCommand::FillRoundedRectBrush(
+              @core.RoundedRect::new(
+                rect=@core.Rect::new(x=72.0, y=10.0, width=54.0, height=32.0),
+                radius=10.0,
+              ),
+              @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.82, b=0.92)),
+            ),
+          )
+          commands.push(
+            @core.DrawCommand::DrawImage(@core.ImageRun::{
+              source: showcase_image_source(),
+              frame: @core.Rect::new(x=118.0, y=18.0, width=52.0, height=30.0),
+              opacity: 0.95,
+              fit: @core.ImageFit::Cover,
+            }),
+          )
+          commands.push(
+            @core.DrawCommand::DrawText(
+              @core.TextRun::new(
+                text="PX",
+                frame=@core.Rect::new(x=76.0, y=52.0, width=74.0, height=24.0),
+                font=theme.typography.caption,
+                color=@core.Color::rgba(r=1.0, g=1.0, b=1.0),
+              ),
+            ),
+          )
+          commands.push(@core.DrawCommand::PopTransform)
+          commands.push(@core.DrawCommand::PopTransform)
+          commands.push(@core.DrawCommand::PopFilter)
+          commands.push(@core.DrawCommand::PopLayer)
+          commands.push(@core.DrawCommand::PopClip)
         }
         _ => {
           commands.push(@core.DrawCommand::PushOpacity(0.82))

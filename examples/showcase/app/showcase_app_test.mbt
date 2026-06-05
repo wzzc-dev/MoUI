@@ -569,6 +569,7 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(advanced_commands, "Filter"))
   assert_true(has_text(advanced_commands, "Shader"))
   assert_true(has_text(advanced_commands, "Path + Transform"))
+  assert_true(has_text(advanced_commands, "Transform Pixel"))
   assert_true(
     advanced_commands.any(command => {
       command
@@ -720,6 +721,15 @@ test "showcase advanced rendering emits low level draw commands" {
   )
   assert_true(
     commands.any(command => command is @core.DrawCommand::PushClip(_)),
+  )
+  assert_true(
+    commands.any(command => command is @core.DrawCommand::DrawImage(_)),
+  )
+  assert_true(has_text(commands, "PX"))
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::PushFilter(@core.FilterEffect::Saturate(_))
+    }),
   )
   assert_false(
     commands.any(command => {

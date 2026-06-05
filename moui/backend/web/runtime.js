@@ -122,6 +122,7 @@ export function createWebGpuImports(options = {}) {
 
   const intersectRects = (a, b) => {
     if (!a) return b;
+    if (!b) return a;
     const x0 = Math.max(a.x, b.x);
     const y0 = Math.max(a.y, b.y);
     const x1 = Math.min(a.x + a.width, b.x + b.width);
@@ -318,12 +319,14 @@ export function createWebGpuImports(options = {}) {
     });
   };
 
-  const createSamplerTextureBindGroup = (layout, sampler, view, backdropView) => {
+  const createSamplerTextureBindGroup = (layout, sampler, view, backdropView, includeBackdrop = false) => {
     const entries = [
       { binding: 0, resource: sampler },
       { binding: 1, resource: view },
-      { binding: 2, resource: backdropView ?? view },
     ];
+    if (includeBackdrop) {
+      entries.push({ binding: 2, resource: backdropView ?? view });
+    }
     return device.createBindGroup({ layout, entries });
   };
 
@@ -332,7 +335,7 @@ export function createWebGpuImports(options = {}) {
     const layout = overlay
       ? advancedOverlayPipeline.getBindGroupLayout(0)
       : advancedPipelineForBlend(blendMode).getBindGroupLayout(0);
-    return createSamplerTextureBindGroup(layout, sampler, view, backdropView);
+    return createSamplerTextureBindGroup(layout, sampler, view, backdropView, true);
   };
 
   const setPassClip = (pass, renderer, clip) => {
@@ -2214,9 +2217,11 @@ export async function bootMouiWasmGcApp(options = {}) {
     onImageResourceChange: notifyImageResourceChanged,
   });
   const imports = {
+    ...(options.imports ?? {}),
     window_web: windowWeb,
     webgpu,
     spectest: {
+      ...(options.imports?.spectest ?? {}),
       print_char(value) {
         const ch = String.fromCodePoint(Number(value));
         options.onPrint?.(ch);

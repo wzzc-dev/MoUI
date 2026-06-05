@@ -128,6 +128,7 @@ const observationKeys = [
   "pointerInput",
   "keyboardInput",
   "textInput",
+  "transformPixels",
   "targetClosed",
 ];
 
@@ -287,6 +288,53 @@ targets.forEach((target, index) => {
     "distinctColorBuckets",
     `${label}.screenshot.distinctColorBuckets`,
   );
+  const transformPixels = requireObject(
+    screenshot,
+    "transformPixels",
+    `${label}.screenshot.transformPixels`,
+  );
+  const transformPixelsRequired = requireBoolean(
+    transformPixels,
+    "required",
+    `${label}.screenshot.transformPixels.required`,
+  );
+  const transformPixelsPassed = requireBoolean(
+    transformPixels,
+    "passed",
+    `${label}.screenshot.transformPixels.passed`,
+  );
+  const hotPinkPixels = requireNumber(
+    transformPixels,
+    "hotPinkPixels",
+    `${label}.screenshot.transformPixels.hotPinkPixels`,
+  );
+  const cyanPixels = requireNumber(
+    transformPixels,
+    "cyanPixels",
+    `${label}.screenshot.transformPixels.cyanPixels`,
+  );
+  const goldPixels = requireNumber(
+    transformPixels,
+    "goldPixels",
+    `${label}.screenshot.transformPixels.goldPixels`,
+  );
+  const matchedMarkers = requireNumber(
+    transformPixels,
+    "matchedMarkers",
+    `${label}.screenshot.transformPixels.matchedMarkers`,
+  );
+  if (name === "showcase-web-wasm" && transformPixelsRequired !== true) {
+    fail(`${label}.screenshot.transformPixels.required must be true for Showcase`);
+  }
+  if (name !== "showcase-web-wasm" && transformPixelsRequired !== false) {
+    fail(`${label}.screenshot.transformPixels.required must be false for non-Showcase targets`);
+  }
+  if (transformPixelsPassed && matchedMarkers < 3) {
+    fail(`${label}.screenshot.transformPixels.passed requires three matched markers`);
+  }
+  if (hotPinkPixels < 0 || cyanPixels < 0 || goldPixels < 0 || matchedMarkers < 0) {
+    fail(`${label}.screenshot.transformPixels counts must be nonnegative`);
+  }
 
   const observations = requireObject(target, "observations", `${label}.observations`);
   for (const key of observationKeys) {
@@ -324,9 +372,15 @@ targets.forEach((target, index) => {
       if (key === "textInput" && name !== "markdown-editor-web-wasm") {
         continue;
       }
+      if (key === "transformPixels" && name !== "showcase-web-wasm") {
+        continue;
+      }
       if (observations[key] !== "yes") {
         fail(`${label}.observations.${key} must be yes for passed evidence`);
       }
+    }
+    if (name === "showcase-web-wasm" && transformPixelsPassed !== true) {
+      fail(`${label} passed evidence requires Showcase transform pixel markers`);
     }
   } else {
     if (!observationKeys.some(key => observations[key] === "no")) {
