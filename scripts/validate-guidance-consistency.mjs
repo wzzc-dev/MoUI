@@ -533,6 +533,8 @@ assertIncludes("docs/release-readiness.md", "HostAsyncImageLoader");
 assertIncludes("docs/release-readiness.md", "optional provider-owned async image loader hooks");
 assertIncludes("docs/release-readiness.md", "native_image_load_completion");
 assertIncludes("docs/release-readiness.md", "WGPU provider-owned source completion wiring");
+assertIncludes("docs/release-readiness.md", "deferred native-source callbacks can carry");
+assertIncludes("docs/release-readiness.md", "skia_image_load_completion` payloads");
 assertIncludes("docs/architecture.md", "`HostImageResourceCompletionSource`");
 assertIncludes("docs/architecture.md", "`HostWindowRenderer::apply_image_resource_load_completion`");
 assertIncludes("docs/architecture.md", "`HostAsyncImageLoader`");
@@ -543,6 +545,8 @@ assertIncludes("docs/testing.md", "schedule/publish/apply/redraw/cleanup");
 assertIncludes("docs/testing.md", "native provider async-image hook wiring");
 assertIncludes("docs/testing.md", "moon test moui/backend/macos/wgpu --target native");
 assertIncludes("docs/testing.md", "provider package tests also pin");
+assertIncludes("docs/testing.md", "`HostNativeAsyncImageSource` callback");
+assertIncludes("docs/testing.md", "native-source callback boundary");
 assertIncludes("docs/platform-notes.md", "optional provider-owned `HostAsyncImageLoader`");
 assertIncludes("AGENTS.md", "native async image completion source");
 assertIncludes("AGENTS.md", "image-resource load completion apply bridge");
@@ -622,6 +626,8 @@ assertIncludes("AGENTS.md", "deferred native completion request source");
 assertIncludes("docs/architecture.md", "HostNativeAsyncImageSource");
 assertIncludes("docs/release-readiness.md", "HostNativeAsyncImageSource");
 assertIncludes("docs/renderer-capability-report.md", "HostNativeAsyncImageSource");
+assertIncludes("docs/renderer-capability-report.md", "renderer decode-helper payloads");
+assertIncludes("docs/renderer-capability-report.md", "deferred native-source callback");
 assertIncludes("docs/testing.md", "deferred native request capture");
 assertIncludes("skills/moui-framework-development-skill/SKILL.md", "HostNativeAsyncImageSource");
 assertIncludes("moui/render/wgpu/renderer.mbt", "WgpuRenderer::apply_image_resource_load_completion");
@@ -656,9 +662,20 @@ assertIncludes("moui/backend/windows/windows_backend_wbtest.mbt", "windows rende
 assertIncludes("moui/backend/linux/linux_backend_wbtest.mbt", "linux renderer provider exposes async image loader hook");
 assertIncludes("moui/backend/linux/linux_backend_wbtest.mbt", "linux renderer provider async image hook defaults to unavailable");
 assertIncludes("moui/render/wgpu/native_image_wbtest.mbt", "native image load completion reports decoded dimensions or failure");
-assertIncludes("moui/backend/macos/wgpu/macos_wgpu_provider_wbtest.mbt", "macos wgpu native image loader completes loading resources");
-assertIncludes("moui/backend/windows/wgpu/windows_wgpu_provider_wbtest.mbt", "windows wgpu native image loader completes loading resources");
-assertIncludes("moui/backend/linux/wgpu/linux_wgpu_provider_wbtest.mbt", "linux wgpu native image loader completes loading resources");
+for (const platform of ["macos", "windows", "linux"]) {
+  assertIncludes(
+    `moui/backend/${platform}/wgpu/${platform}_wgpu_provider_wbtest.mbt`,
+    `${platform} wgpu native image loader completes loading resources`,
+  );
+  assertIncludes(
+    `moui/backend/${platform}/wgpu/${platform}_wgpu_provider_wbtest.mbt`,
+    `${platform} wgpu deferred native source completes through decode helper`,
+  );
+  assertIncludes(
+    `moui/backend/${platform}/skia/${platform}_skia_provider_wbtest.mbt`,
+    `${platform} skia deferred native source completes through decode helper`,
+  );
+}
 assertIncludes("moui/render/capabilities_test.mbt", "image lifecycle applies async load completions");
 assertIncludes("docs/platform-notes.md", "The Web host now advertises IME readiness");
 assertIncludes("docs/text-system.md", "routes browser IME composition events");
