@@ -38,7 +38,8 @@ Detailed notes live in:
 
 The example suite is intentionally small: Showcase is the visual catalog and now
 contains the Counter and Todo interaction patterns, while the WYSIWYG Markdown
-editor remains a separate practical editing demo.
+editor remains a separate practical editing demo. The root `website/` workspace
+is the MoUI-built bilingual homepage and Web demo surface.
 
 ## Screenshots
 
@@ -63,6 +64,8 @@ editor remains a separate practical editing demo.
   `render/webgpu_adapter/`.
 - `examples/*/app/` contains shared app logic, while platform subpackages are
   thin entrypoints.
+- `website/` is a root workspace member for the MoUI homepage, with shared app
+  logic in `website/app/` and a Web wasm-gc entrypoint in `website/web_wasm/`.
 
 ## Quick Start
 
@@ -126,6 +129,19 @@ artifact provenance. A failed browser manifest records failed Web platform
 evidence; a missing browser manifest keeps the Web platform entry pending.
 
 ## Web Wasm-GC
+
+Build and serve the MoUI homepage:
+
+```sh
+moon build website/web_wasm --target wasm-gc
+python3 -m http.server 8080 --bind 127.0.0.1
+```
+
+Open:
+
+```text
+http://127.0.0.1:8080/website/web_wasm/index.html
+```
 
 Build and serve the visual showcase:
 

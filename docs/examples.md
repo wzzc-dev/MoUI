@@ -23,10 +23,12 @@ that exercise them.
 
 Use [App templates](app-templates.md) when starting a new shared app package.
 The templates cover counter, dashboard, and document-editor skeletons without
-introducing a generator.
+introducing a generator. The root `website/` workspace uses the same app-first
+shape outside `examples/` so MoUI can render its own bilingual homepage.
 
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
+| Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, Web-only `website/web_wasm` entrypoint |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces, `status_badge` feedback chips, helper-backed table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore evidence, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
@@ -35,6 +37,13 @@ introducing a generator.
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `runtime_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Mo Workbench | Multi-backend agent desktop dogfood app | `examples/mo_workbench/app/` | Codex-style conversation-first coding-agent shell, quiet Agent-branded default UI, signal-only current-agent top-bar chip, expanded-options backend selector, Pi and Local backend capabilities, capability-gated advanced controls, lightweight agent focus routing, composer slash-command suggestions, wide three-panel inspector with context/run/diagnostic tabs, low-noise status bar, current task strip, compact current-turn evidence fallback on narrow layouts, backend-neutral backend-status/runtime-signal/session/model/metrics/fork/input-setting projections, platform-neutral Pi transport command/event model for the Pi provider, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+
+Focused Website checks:
+
+```sh
+moon test website/app --target native
+moon build website/web_wasm --target wasm-gc
+```
 
 ## Counter
 
@@ -757,9 +766,11 @@ moon test examples/data_table/app --target native
 moon test examples/file_importer/app --target native
 moon test examples/command_palette/app --target native
 moon test examples/markdown_editor/app --target native
+moon test website/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+moon build website/web_wasm --target wasm-gc
 ```
 
 Before changing platform entrypoints, include the affected host package tests and

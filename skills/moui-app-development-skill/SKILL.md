@@ -17,6 +17,7 @@ platform entrypoints. It is intentionally separate from framework maintenance.
 Use this skill when the user asks to:
 
 - Create or extend a MoUI app, demo, prototype, editor, tool, or example.
+- Create or extend the root `website/` homepage app workspace.
 - Compose views from `views/` and `core/` public APIs.
 - Add app state, event handling, layout, styling, text input, lists, scrolling,
   or navigation behavior.
@@ -56,8 +57,11 @@ separate framework task using `moui-framework-development-skill`.
 
 ## App Shape
 
-- Shared app logic lives in `examples/<name>/app`.
+- Shared app logic usually lives in `examples/<name>/app`; the root
+  `website/` workspace is the MoUI homepage exception and keeps shared homepage
+  logic in `website/app`.
 - Platform packages stay thin and only wire the shared app to the host.
+- `website/web_wasm` is Web-only and should stay a thin homepage entrypoint.
 - Counter has `web_wasm`, `macos`, `windows`, `linux`, and `windows_cosmic`
   entrypoints and is the smallest runnable app shape.
 - Some examples are shared-app only. Settings, Data Table, File Importer, and
