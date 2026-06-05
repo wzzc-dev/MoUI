@@ -582,15 +582,18 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   Windows, and Linux matrices, write renderer-proof manifests under
   `artifacts/conformance/renderer-proof/`, upload matching
   `artifacts/platform-evidence/<platform>/` logs such as
-  `skia-text-emoji-smoke.log`, and intentionally leave manifests failed until
-  true radial/transform pixels, text/emoji glyph or raster evidence, and async
-  image second-frame artifacts exist for that backend/platform.
-  The Skia proof path builds and runs
-  `moui/tests/skia_text_emoji_smoke/native` when real Skia is linked; that smoke
-  prints renderer-proof markers only after captured Skia pixels and text-system
-  evidence prove color emoji, ZWJ grapheme, paragraph wrapping, and bidi
-  observations, so partial output may mark some observations passed while the
-  overall manifest remains failed.
+  `skia-renderer-smoke.log` and `skia-text-emoji-smoke.log`, and intentionally
+  leave manifests failed until true radial/transform pixels, text/emoji glyph
+  or raster evidence, and async image second-frame artifacts exist for that
+  backend/platform. The Skia proof matrix configures the locked release Skia
+  artifact before running the proof helper, then builds and runs
+  `moui/tests/skia_renderer_smoke/native` plus
+  `moui/tests/skia_text_emoji_smoke/native`; those smokes print renderer-proof
+  markers only after captured Skia pixels, glyph/layout evidence, and
+  text-system evidence prove radial, transform, color emoji, ZWJ grapheme, bidi
+  visual order, paragraph wrapping, and async second-frame observations. Native
+  WGPU proof still requires a usable runner WGPU adapter for its offscreen
+  readback smoke.
 - `Renderer proof summary` downloads those artifacts, requires
   `webgpu-wasm-web.json`, `wgpu-native-{macos,windows,linux}.json`, and
   `skia-native-{macos,windows,linux}.json`, then runs

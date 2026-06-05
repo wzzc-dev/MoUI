@@ -367,6 +367,58 @@ jobs:
           moon version --all
           moon update
 
+      - name: Cache release Skia
+        uses: actions/cache@v4
+        with:
+          path: moui_skia/.skia-cache/release
+          key: renderer-proof-release-skia-${{ matrix.platform }}-${{ runner.arch }}-${{ hashFiles('moui_skia/skia-provider-lock.json') }}
+          restore-keys: |
+            renderer-proof-release-skia-${{ matrix.platform }}-${{ runner.arch }}-
+            renderer-proof-release-skia-${{ matrix.platform }}-
+
+      - name: Configure release Skia for renderer proof
+        if: ${{ matrix.platform != 'windows' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          env_file="$(mktemp)"
+          bash moui_skia/scripts/fetch-release-skia.sh \
+            --platform "${{ matrix.platform }}" \
+            --arch auto \
+            --config Release \
+            --link-mode static \
+            --print-env > "$env_file"
+          while IFS='=' read -r key value; do
+            if [[ -n "$key" ]]; then
+              export "$key=$value"
+              printf '%s=%s\n' "$key" "$value" >> "$GITHUB_ENV"
+            fi
+          done < "$env_file"
+          case "${{ matrix.platform }}" in
+            macos) bash moui_skia/scripts/configure-macos-native-pkg.sh --write ;;
+            linux) bash moui_skia/scripts/configure-linux-native-pkg.sh --write ;;
+          esac
+
+      - name: Configure release Skia for renderer proof (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: |
+          $envLines = .\moui_skia\scripts\fetch-release-skia.ps1 `
+            -Platform windows `
+            -Arch auto `
+            -Config Release `
+            -LinkMode static `
+            -PrintEnv
+          foreach ($line in $envLines) {
+            if ($line -match '^([^=]+)=(.*)$') {
+              $key = $Matches[1]
+              $value = $Matches[2]
+              Set-Item -Path "Env:$key" -Value $value
+              Add-Content -Path $env:GITHUB_ENV -Value "$key=$value"
+            }
+          }
+          .\moui_skia\scripts\configure-windows-msvc-native-pkg.ps1 -Write
+
       - name: Record native Skia renderer proof
         if: ${{ matrix.platform != 'windows' }}
         run: node scripts/ci-renderer-proof-native.mjs skia-native ${{ matrix.platform }}
