@@ -149,7 +149,7 @@ if ($Platform -eq "linux" -and $RequireCommit -and $wrapperProvider -eq "source"
   Assert-LogFieldLine -Content $wrapperContent -Field "build_log=" -MessagePrefix "wrapper log is missing required field"
 }
 
-if ($wrapperContent -notmatch 'library=.*\b(lib)?skia\.(a|so|dylib|lib)\b') {
+if ($wrapperContent -notmatch 'library=.*\b(libskia\.(a|so|dylib)|skia\.(lib|dll\.lib|dll))\b') {
   throw "wrapper log does not record a Skia library file"
 }
 
