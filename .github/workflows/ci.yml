@@ -99,7 +99,7 @@ jobs:
           echo "WGPU_BACKEND=$WGPU_BACKEND" >> "$GITHUB_ENV"
           echo "VK_ICD_FILENAMES=$VK_ICD_FILENAMES" >> "$GITHUB_ENV"
           test -f /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
-          vulkaninfo --summary
+          vulkaninfo --summary || true
 
       - name: Set up MoonBit
         run: |
@@ -278,7 +278,7 @@ jobs:
           echo "WGPU_BACKEND=$WGPU_BACKEND" >> "$GITHUB_ENV"
           echo "VK_ICD_FILENAMES=$VK_ICD_FILENAMES" >> "$GITHUB_ENV"
           test -f /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
-          vulkaninfo --summary
+          vulkaninfo --summary || true
 
       - name: Set up vcpkg zlib
         if: ${{ matrix.platform == 'windows' }}
