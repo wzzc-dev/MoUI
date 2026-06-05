@@ -364,6 +364,94 @@ test "native renderer plans radial DrawPath as true radial path payload" {
 }
 
 ///|
+test "native renderer keeps DrawPath immediately after layer" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=100.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=0.9)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=12.0, height=12.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopLayer,
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=20.0, y=20.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=36.0, y=20.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=36.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(@core.Brush::solid(@core.Color::blue())),
+      ),
+    ),
+  ])
+  inspect(renderer.draw_items.length(), content="2")
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeLayer(layer) =>
+      inspect(layer.plan.visual_vertices.length(), content="6")
+    _ => fail("expected native layer item")
+  }
+  match renderer.draw_items[1] {
+    NativeDrawItem::NativeVisual(_, count, None) => inspect(count, content="3")
+    _ => fail("expected post-layer native visual path item")
+  }
+  inspect(renderer.visual_vertices.length(), content="3")
+}
+
+///|
+test "native renderer keeps DrawPath immediately after nested filter" {
+  let renderer = new_test_renderer_handle()
+  renderer.resize(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=100.0, height=100.0),
+    ),
+  )
+  renderer.render([
+    @core.DrawCommand::PushLayer(@core.LayerSpec::new(opacity=1.0)),
+    @core.DrawCommand::PushFilter(@core.FilterEffect::Brightness(0.6)),
+    @core.DrawCommand::FillRect(
+      @core.Rect::new(x=0.0, y=0.0, width=12.0, height=12.0),
+      @core.Color::blue(),
+    ),
+    @core.DrawCommand::PopFilter,
+    @core.DrawCommand::DrawPath(
+      @core.PathSpec::new(
+        verbs=[
+          @core.PathVerb::MoveTo(@core.Point::new(x=20.0, y=20.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=36.0, y=20.0)),
+          @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=36.0)),
+          @core.PathVerb::Close,
+        ],
+        fill=Some(@core.Brush::solid(@core.Color::blue())),
+      ),
+    ),
+    @core.DrawCommand::PopLayer,
+  ])
+  inspect(renderer.draw_items.length(), content="1")
+  match renderer.draw_items[0] {
+    NativeDrawItem::NativeLayer(layer) => {
+      inspect(layer.plan.items.length(), content="2")
+      match layer.plan.items[0] {
+        NativeDrawItem::NativeLayer(filter_layer) =>
+          inspect(filter_layer.plan.visual_vertices.length(), content="6")
+        _ => fail("expected nested filter layer")
+      }
+      match layer.plan.items[1] {
+        NativeDrawItem::NativeVisual(_, count, None) =>
+          inspect(count, content="3")
+        _ => fail("expected post-filter native visual path item")
+      }
+    }
+    _ => fail("expected native layer item")
+  }
+}
+
+///|
 test "native visual shader shades radial path payloads" {
   let shader = visual_shader_wgsl()
   assert_true(shader.contains("radial_gradient_color"))
