@@ -362,6 +362,21 @@ test "cosmic text preserves source emoji for explicit emoji family" {
 }
 
 ///|
+test "cosmic text records loaded emoji font ids" {
+  if @fs.path_exists(cosmic_emoji_font_path()) {
+    let cache = CosmicTextCache::new()
+    cache.ensure_fonts_for_font(
+      @core.FontSpec::new(
+        families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+      ),
+    )
+    inspect(cache.emoji_font_ids.length() > 0, content="true")
+  } else {
+    inspect("skipped", content="skipped")
+  }
+}
+
+///|
 test "cosmic zwj caret folder moves cluster interiors to end" {
   let carets = [0.0, 0.0, 0.0, 39.0]
   cosmic_fold_zwj_caret_positions("\u{1F469}\u{200D}\u{1F4BB}", carets)
