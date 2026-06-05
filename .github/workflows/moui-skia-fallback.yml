@@ -734,6 +734,7 @@ jobs:
           bash scripts/linux-skia-smoke.sh --dry-run-config \
             --skia-include .skia-dry-run/skia \
             --skia-lib-dir .skia-dry-run/shared \
+            --link-mode dynamic \
             --smoke-log logs/linux-native-smoke-output.log
           bash scripts/linux-skia-smoke.sh --dry-run-config --enable-asan \
             --skia-include .skia-dry-run/skia \
