@@ -313,9 +313,12 @@ must have GitHub Actions provenance and exactly `radialGradient`,
 tokens. Skipped jobs, package-only tests, missing uploaded artifacts, blank
 screenshots, caret-only diagnostics, coverage-only font matching, provider
 preflights, and fallback-safe descriptor audits must remain failed proof. The
-`renderer-proof-summary` CI job downloads the proof artifacts and requires all
-native WGPU, native Skia, and WebGPU wasm manifests to validate as passed
-before any capability promotion can cite them.
+native Skia proof matrix configures the locked release Skia artifact before
+running its real renderer/text smokes; native WGPU proof still requires a
+usable runner WGPU adapter for offscreen readback. The `renderer-proof-summary`
+CI job downloads the proof artifacts and requires all native WGPU, native Skia,
+and WebGPU wasm manifests to validate as passed before any capability promotion
+can cite them.
 Examples demonstrate workflows but should not be the only proof for a
 shared contract.
 If CDP is unavailable during Web presentation startup, the recorder writes a
