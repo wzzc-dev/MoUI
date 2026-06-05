@@ -4,7 +4,12 @@ fn Model::top_bar(
   theme : @core.Theme,
   metrics : Metrics,
 ) -> @core.View[Msg] {
-  let action_label = if self.dark { "Light / 浅色" } else { "Dark / 深色" }
+  let action_label = if self.dark { "☀" } else { "☾" }
+  let action_accessibility_label = if self.dark {
+    "Switch to light theme"
+  } else {
+    "Switch to dark theme"
+  }
   let items : Array[@core.View[Msg]] = [brand_mark(theme)]
   if !metrics.compact {
     items.push(nav_button(theme, "Home", true, ScrollBodyTo(0.0)))
@@ -20,9 +25,11 @@ fn Model::top_bar(
       on_click=ToggleDark,
       variant=@views.ButtonVariant::Outline,
       theme~,
-      width=112.0,
+      width=48.0,
       height=34.0,
-    ),
+    )
+    .font(@core.FontSpec::new(size=18.0, weight=760))
+    .accessibility_label(action_accessibility_label),
   )
   let top_bar_content = row(
     [
@@ -169,7 +176,7 @@ fn Model::hero(
         text(
           "MoonBit GUI Framework",
           width=metrics.hero_copy_width,
-          height=92.0,
+          height=54.0,
         )
         .font(hero_statement_font(metrics))
         .foreground(theme.palette.foreground),
@@ -183,21 +190,21 @@ fn Model::hero(
         text(
           "Model, Msg, update, view. One app surface, several render routes.",
           width=metrics.hero_copy_width,
-          height=34.0,
+          height=26.0,
         )
         .font(theme.typography.body)
         .foreground(theme.palette.muted),
         text(
           "用 MoonBit 写一次应用逻辑，让 Web 与原生宿主共享同一套界面模型。",
           width=metrics.hero_copy_width,
-          height=48.0,
+          height=34.0,
         )
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
         ctas,
       ],
-      spacing=16.0,
-      align=@views.CrossAlign::Start,
+      spacing=10.0,
+      align=@views.CrossAlign::Center,
     )
   }
   let visual = hero_demo_panel(
@@ -205,20 +212,19 @@ fn Model::hero(
     metrics.hero_scene_width,
     metrics.hero_scene_height,
     metrics.compact,
-    self.hero_demo,
     self.hero_count,
   )
-  let hero_body = if metrics.compact {
-    column([copy, visual], spacing=18.0, align=@views.CrossAlign::Start)
-  } else {
-    row([copy, visual], spacing=52.0, align=@views.CrossAlign::Center)
-  }
+  let hero_body = column(
+    [copy, visual],
+    spacing=if metrics.compact { 18.0 } else { 14.0 },
+    align=@views.CrossAlign::Center,
+  )
   painted_section_shell(
     theme,
     metrics,
     hero_body,
-    top=if metrics.compact { 24.0 } else { 52.0 },
-    bottom=if metrics.compact { 24.0 } else { 48.0 },
+    top=if metrics.compact { 24.0 } else { 20.0 },
+    bottom=if metrics.compact { 24.0 } else { 10.0 },
     background=Some(hero_background(theme)),
     dotted=true,
     wash=false,
@@ -383,7 +389,9 @@ fn Model::platform_section(
               theme,
               "MoUI Website",
               "Official homepage",
-              "This page: shared app logic in website/app and a thin Web entrypoint.",
+              [
+                "This page: shared app logic", "in website/app and a thin", "Web entrypoint.",
+              ],
               "MoUI",
               1.0,
               metrics.platform_card_width,
@@ -393,7 +401,9 @@ fn Model::platform_section(
               theme,
               "Showcase",
               "Component gallery",
-              "Layout, input, drawing, renderer reporting, and platform smoke paths.",
+              [
+                "Layout, input, drawing,", "renderer reporting, and", "platform smoke paths.",
+              ],
               "01",
               0.76,
               metrics.platform_card_width,
@@ -403,7 +413,9 @@ fn Model::platform_section(
               theme,
               "Markdown Editor",
               "WYSIWYG editing",
-              "Source and visual editing share one typed Markdown application model.",
+              [
+                "Source and visual editing", "share one typed Markdown", "application model.",
+              ],
               "02",
               0.70,
               metrics.platform_card_width,
@@ -413,7 +425,9 @@ fn Model::platform_section(
               theme,
               "Mo Workbench",
               "Agent workspace",
-              "Native Skia dogfood surface for workflow, evidence, and session state.",
+              [
+                "Native Skia dogfood surface", "for workflow, evidence, and", "session state.",
+              ],
               "03",
               0.64,
               metrics.platform_card_width,
@@ -633,41 +647,42 @@ fn feature_card(
   width : Double,
   accent : @core.Color,
 ) -> @core.View[Msg] {
+  let content_width = width - 40.0
   surface(
-    row(
+    column(
       [
-        surface(
-          text(index, width=32.0, height=32.0)
-          .font(@core.FontSpec::new(size=17.0, weight=820))
-          .foreground(accent),
-          width=42.0,
-          height=42.0,
-          background=accent.multiply_alpha(0.09),
-          corner_radius=8.0,
-          theme~,
-          padding=5.0,
-        ),
-        column(
+        row(
           [
-            text(title, width=width - 104.0, height=28.0)
+            surface(
+              text(index, width=28.0, height=28.0)
+              .font(@core.FontSpec::new(size=16.0, weight=820))
+              .foreground(accent),
+              width=36.0,
+              height=36.0,
+              background=accent.multiply_alpha(0.10),
+              corner_radius=8.0,
+              theme~,
+              padding=4.0,
+            ),
+            text(title, width=content_width - 48.0, height=30.0)
             .font(theme.typography.control)
             .foreground(theme.palette.foreground),
-            text(zh_summary, width=width - 104.0, height=32.0)
-            .font(theme.typography.caption)
-            .foreground(theme.palette.foreground),
-            text(summary, width=width - 104.0, height=36.0)
-            .font(theme.typography.caption)
-            .foreground(theme.palette.muted),
           ],
-          spacing=4.0,
-          align=@views.CrossAlign::Start,
+          spacing=12.0,
+          align=@views.CrossAlign::Center,
         ),
+        text(zh_summary, width=content_width, height=34.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.foreground),
+        text(summary, width=content_width, height=44.0)
+        .font(theme.typography.caption)
+        .foreground(theme.palette.muted),
       ],
-      spacing=18.0,
+      spacing=8.0,
       align=@views.CrossAlign::Start,
     ),
     width~,
-    height=148.0,
+    height=162.0,
     background=theme.palette.surface,
     corner_radius=8.0,
     theme~,
@@ -680,7 +695,7 @@ fn platform_card(
   theme : @core.Theme,
   title : String,
   subtitle : String,
-  summary : String,
+  summary_lines : Array[String],
   status : String,
   value : Double,
   width : Double,
@@ -699,9 +714,7 @@ fn platform_card(
             text(subtitle, width=width - 32.0, height=24.0)
             .font(theme.typography.caption)
             .foreground(accent),
-            text(summary, width=width - 32.0, height=58.0)
-            .font(theme.typography.caption)
-            .foreground(theme.palette.muted),
+            platform_card_summary(theme, summary_lines, width - 32.0),
           ],
           spacing=4.0,
           align=@views.CrossAlign::Start,
@@ -717,6 +730,23 @@ fn platform_card(
     theme~,
     padding=1.0,
   ).border(website_border(theme))
+}
+
+///|
+fn platform_card_summary(
+  theme : @core.Theme,
+  lines : Array[String],
+  width : Double,
+) -> @core.View[Msg] {
+  column(
+    lines.map(line => {
+      text(line, width~, height=17.0)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted)
+    }),
+    spacing=1.0,
+    align=@views.CrossAlign::Start,
+  ).frame(width~, height=58.0)
 }
 
 ///|

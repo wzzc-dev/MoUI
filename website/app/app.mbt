@@ -1,14 +1,7 @@
 ///|
-pub(all) enum HeroDemoMode {
-  HeroSource
-  HeroCounter
-} derive(Eq)
-
-///|
 pub(all) struct Model {
   dark : Bool
   body_scroll_y : Double
-  hero_demo : HeroDemoMode
   hero_count : Int
 }
 
@@ -16,7 +9,6 @@ pub(all) struct Model {
 pub(all) enum Msg {
   ToggleDark
   ScrollBodyTo(Double)
-  SelectHeroDemo(HeroDemoMode)
   CounterIncrement
   CounterReset
   OpenRepository
@@ -44,7 +36,7 @@ priv struct Metrics {
 
 ///|
 pub fn Model::new() -> Model {
-  { dark: false, body_scroll_y: 0.0, hero_demo: HeroCounter, hero_count: 0 }
+  { dark: false, body_scroll_y: 0.0, hero_count: 0 }
 }
 
 ///|
@@ -53,7 +45,6 @@ pub fn Model::update(self : Model, message : Msg) -> Model {
     ToggleDark => { ..self, dark: !self.dark }
     ScrollBodyTo(offset_y) =>
       { ..self, body_scroll_y: max_website_double(0.0, offset_y) }
-    SelectHeroDemo(mode) => { ..self, hero_demo: mode }
     CounterIncrement => { ..self, hero_count: self.hero_count + 1 }
     CounterReset => { ..self, hero_count: 0 }
     OpenRepository => self
@@ -208,16 +199,12 @@ fn website_metrics(viewport : @core.Size) -> Metrics {
   let top_bar_height = 60.0
   let section_top = if compact { 52.0 } else { 82.0 }
   let section_bottom = if compact { 52.0 } else { 82.0 }
-  let hero_scene_width = if compact {
-    min_website_double(content_width, 430.0)
-  } else {
-    clamp_website_double(content_width * 0.50, 520.0, 560.0)
-  }
-  let hero_scene_height = if compact { 264.0 } else { 426.0 }
+  let hero_scene_width = content_width
+  let hero_scene_height = if compact { 260.0 } else { 300.0 }
   let hero_copy_width = if compact {
     content_width
   } else {
-    max_website_double(390.0, content_width - hero_scene_width - 52.0)
+    min_website_double(content_width, 740.0)
   }
   let feature_card_width = if compact {
     content_width

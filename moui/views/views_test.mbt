@@ -545,6 +545,22 @@ test "flow responsive grid and baseline rows place children" {
   assert_true(has_text(commands, "Grid B"))
   assert_true(has_text(commands, "Label"))
   assert_true(has_text(commands, "Value"))
+  guard text_frame(commands, "Grid A") is Some(grid_a) else {
+    fail("expected Grid A text")
+  }
+  guard text_frame(commands, "Grid B") is Some(grid_b) else {
+    fail("expected Grid B text")
+  }
+  guard text_frame(commands, "Grid C") is Some(grid_c) else {
+    fail("expected Grid C text")
+  }
+  guard text_frame(commands, "Label") is Some(label) else {
+    fail("expected Label text")
+  }
+  assert_true(grid_b.origin.x > grid_a.origin.x)
+  assert_true(grid_c.origin.x < grid_b.origin.x)
+  assert_true(grid_c.origin.y > grid_a.origin.y)
+  assert_true(label.origin.y > grid_c.origin.y + grid_c.size.height)
 }
 
 ///|
