@@ -51,13 +51,30 @@ function Convert-LogToUtf8NoBom {
   }
 }
 
+function Get-Sha256Hex {
+  param([Parameter(Mandatory = $true)][string] $Path)
+  if (Get-Command Get-FileHash -ErrorAction SilentlyContinue) {
+    return (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash
+  }
+
+  $stream = [System.IO.File]::OpenRead($Path)
+  $sha256 = [System.Security.Cryptography.SHA256]::Create()
+  try {
+    $hashBytes = $sha256.ComputeHash($stream)
+    return ([System.BitConverter]::ToString($hashBytes) -replace "-", "")
+  } finally {
+    $sha256.Dispose()
+    $stream.Dispose()
+  }
+}
+
 if (Test-Path -LiteralPath $backupPkg) {
   throw "native/moon.pkg smoke backup already exists: $backupPkg. Resolve the stale backup before running acceptance."
 }
 
 New-Item -ItemType Directory -Force -Path $resolvedLogDir | Out-Null
 
-$beforePkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
+$beforePkgHash = Get-Sha256Hex -Path $nativePkg
 
 Write-Host "Windows real Skia acceptance logs:"
 Write-Host "  preflight_log=$preflightLog"
@@ -92,7 +109,7 @@ try {
 }
 Convert-LogToUtf8NoBom -Path $wrapperLog
 
-$afterPkgHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $nativePkg).Hash
+$afterPkgHash = Get-Sha256Hex -Path $nativePkg
 $restoreStatus = "passed"
 if (Test-Path -LiteralPath $backupPkg) {
   Write-Error "native/moon.pkg smoke backup remains after acceptance run" -ErrorAction Continue
