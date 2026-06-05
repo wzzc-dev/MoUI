@@ -786,19 +786,34 @@ fn cosmic_text_cache_key_with_fallback(
   glyph : @moon_cosmic.LayoutGlyph,
   cache_key : @moon_cosmic.CacheKey,
 ) -> @moon_cosmic.CacheKey {
-  match
-    cosmic_text_codepoint_at(
-      cosmic_text_layout_text(run.text, run.font),
-      glyph.start,
-    ) {
+  let text = cosmic_text_layout_text(run.text, run.font)
+  match cosmic_text_codepoint_at_utf16(text, glyph.start) {
     None => cache_key
     Some(codepoint) =>
-      if cosmic_text_glyph_matches_codepoint(cache, glyph, codepoint) {
+      if !cosmic_text_should_use_fallback_glyph(
+          cache, run, glyph, cache_key, codepoint,
+        ) {
         cache_key
       } else {
         cosmic_text_fallback_cache_key(cache, run, cache_key, codepoint)
       }
   }
+}
+
+///|
+fn cosmic_text_should_use_fallback_glyph(
+  cache : CosmicTextCache,
+  run : @core.TextRun,
+  glyph : @moon_cosmic.LayoutGlyph,
+  cache_key : @moon_cosmic.CacheKey,
+  codepoint : UInt,
+) -> Bool {
+  if !cosmic_text_glyph_matches_codepoint(cache, glyph, codepoint) {
+    return true
+  }
+  cosmic_text_preserves_source_text(run.font) &&
+  cosmic_text_codepoint_is_emoji(codepoint) &&
+  !cache.cosmic_glyph_uses_color_bitmap(cache_key)
 }
 
 ///|
@@ -830,6 +845,12 @@ fn cosmic_text_codepoint_needs_direct_cmap_check(codepoint : UInt) -> Bool {
   (codepoint >= 0x3040U && codepoint <= 0x30FFU) ||
   (codepoint >= 0x3100U && codepoint <= 0x312FU) ||
   (codepoint >= 0xAC00U && codepoint <= 0xD7AFU)
+}
+
+///|
+fn cosmic_text_codepoint_is_emoji(codepoint : UInt) -> Bool {
+  (codepoint >= 0x1F000U && codepoint <= 0x1FAFFU) ||
+  (codepoint >= 0x2600U && codepoint <= 0x27BFU)
 }
 
 ///|
@@ -870,25 +891,25 @@ fn cosmic_text_fallback_cache_key(
 }
 
 ///|
-fn cosmic_text_codepoint_at(text : String, index : Int) -> UInt? {
-  match cosmic_text_char_at(text, index) {
+fn cosmic_text_codepoint_at_utf16(text : String, offset : Int) -> UInt? {
+  let index = cosmic_text_utf16_offset_to_char_index(text, offset)
+  match cosmic_text_char_at_index(text, index) {
     Some(ch) => Some(ch.to_uint())
     None => None
   }
 }
 
 ///|
-fn cosmic_text_char_at(text : String, index : Int) -> Char? {
+fn cosmic_text_char_at_index(text : String, index : Int) -> Char? {
   if index < 0 {
     return None
   }
-  for pair in text.iter2() {
-    if pair.0 == index {
-      return Some(pair.1)
+  let mut current = 0
+  for ch in text {
+    if current == index {
+      return Some(ch)
     }
-    if pair.0 > index {
-      return None
-    }
+    current += 1
   }
   None
 }
