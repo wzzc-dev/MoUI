@@ -1,0 +1,16 @@
+import {
+  "wzzc-dev/moui/backend/macos/wgpu" @macos_wgpu,
+  "Milky2018/wgpu_mbt",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)

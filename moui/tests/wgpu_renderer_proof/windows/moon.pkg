@@ -1,0 +1,11 @@
+import {
+  "wzzc-dev/moui/backend/windows/wgpu" @windows_wgpu,
+  "Milky2018/wgpu_mbt",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  targets: { "main.mbt": [ "native" ] },
+)
