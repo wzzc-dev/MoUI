@@ -134,7 +134,8 @@ set -- scripts/record-renderer-proof-manifest.mjs \
   --backend "$backend" \
   --platform "$platform" \
   --artifact-name "$artifact_name" \
-  --output "$manifest_path"
+  --output "$manifest_path" \
+  --require-passed
 
 for path in $record_logs; do
   set -- "$@" --log "$path"

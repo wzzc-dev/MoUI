@@ -319,6 +319,11 @@ jobs:
         shell: pwsh
         run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1 -SkipRoot -SkipSubmodules
 
+      - name: Set up WGPU native release (Windows)
+        if: ${{ matrix.platform == 'windows' }}
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_wgpu_native.ps1
+
       - name: Install dependencies
         run: |
           moon version --all
