@@ -92,8 +92,10 @@ printf '\n==> %s --headless=new --remote-debugging-port=%s\n' "$CHROME_BIN" "$WE
   --remote-debugging-address=127.0.0.1 \
   --remote-debugging-port="$WEB_RUNTIME_CDP_PORT" \
   --enable-unsafe-webgpu \
+  --enable-features=Vulkan,UnsafeWebGPU \
   --use-angle=swiftshader \
   --use-gl=angle \
+  --use-vulkan=swiftshader \
   --no-sandbox \
   --disable-dev-shm-usage \
   --user-data-dir="$USER_DATA_DIR" \
@@ -102,12 +104,28 @@ printf '\n==> %s --headless=new --remote-debugging-port=%s\n' "$CHROME_BIN" "$WE
 CHROME_PID="$!"
 wait_for_url "${WEB_RUNTIME_CDP_URL}/json/version" "Chrome CDP" 60
 
+presentation_status=0
 run node scripts/record-web-runtime-presentation.mjs \
   --base-url "$WEB_RUNTIME_BASE_URL" \
   --cdp-url "$WEB_RUNTIME_CDP_URL" \
   --manifest "$WEB_RUNTIME_PRESENTATION_MANIFEST" \
   --timeout-ms "$WEB_RUNTIME_PRESENTATION_TIMEOUT_MS" \
-  --require-passed
+  --require-passed || presentation_status="$?"
+
+if [ -f "$WEB_RUNTIME_PRESENTATION_MANIFEST" ]; then
+  proof_status=0
+  run node scripts/record-web-renderer-proof-manifest.mjs \
+    --web-presentation-manifest "$WEB_RUNTIME_PRESENTATION_MANIFEST" \
+    --output artifacts/conformance/renderer-proof/webgpu-wasm-web.json ||
+    proof_status="$?"
+  if [ "$proof_status" -ne 0 ]; then
+    printf 'web renderer proof diagnostic manifest failed to record; status=%s\n' "$proof_status" >&2
+  fi
+fi
+
+if [ "$presentation_status" -ne 0 ]; then
+  exit "$presentation_status"
+fi
 
 run node scripts/validate-web-runtime-presentation-manifest.mjs \
   "$WEB_RUNTIME_PRESENTATION_MANIFEST" \

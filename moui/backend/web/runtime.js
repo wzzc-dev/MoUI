@@ -2431,7 +2431,12 @@ export async function createWebGpuImportsAsync(options = {}) {
     report(`WebGPU uncaptured error: ${message}`);
   });
   device.lost?.then(info => {
+    const reason = `${info?.reason || ""}`.toLowerCase();
     const message = info?.message || info?.reason || "unknown reason";
+    if (reason === "destroyed" || `${message}`.toLowerCase().includes("destroyed")) {
+      globalThis.console?.info?.(`MoUI WebGPU device destroyed during shutdown: ${message}`);
+      return;
+    }
     globalThis.console?.error?.(`MoUI WebGPU device lost: ${message}`);
     report(`WebGPU device lost: ${message}`);
   });

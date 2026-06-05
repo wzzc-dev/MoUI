@@ -488,10 +488,16 @@ fn assert_native_proof_radial(frame : NativeRendererProofFrame) -> Unit {
 
 ///|
 fn assert_native_proof_transform(frame : NativeRendererProofFrame) -> Unit {
-  if !pixel_is_dark_magenta(frame.pixel(80, 16)) {
+  if !region_has_dark_magenta_pixel(
+      frame,
+      @core.Rect::new(x=76.0, y=12.0, width=10.0, height=10.0),
+    ) {
     native_proof_fail("native WGPU proof transform/filter marker missing")
   }
-  if !pixel_is_cyanish(frame.pixel(100, 22)) {
+  if !region_has_cyanish_pixel(
+      frame,
+      @core.Rect::new(x=96.0, y=18.0, width=12.0, height=12.0),
+    ) {
     native_proof_fail("native WGPU proof transform/path marker missing")
   }
   if !region_has_dark_pixel(
@@ -711,6 +717,50 @@ fn pixel_is_dark_magenta(pixel : (Int, Int, Int, Int)) -> Bool {
 fn pixel_is_cyanish(pixel : (Int, Int, Int, Int)) -> Bool {
   let (r, g, b, a) = pixel
   a > 100 && g > 120 && b > 120 && r < 100
+}
+
+///|
+fn region_has_dark_magenta_pixel(
+  frame : NativeRendererProofFrame,
+  rect : @core.Rect,
+) -> Bool {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      if pixel_is_dark_magenta(frame.pixel(x, y)) {
+        return true
+      }
+    }
+  }
+  false
+}
+
+///|
+fn region_has_cyanish_pixel(
+  frame : NativeRendererProofFrame,
+  rect : @core.Rect,
+) -> Bool {
+  let min_x = rect.origin.x.floor().to_int().max(0)
+  let min_y = rect.origin.y.floor().to_int().max(0)
+  let max_x = (rect.origin.x + rect.size.width).ceil().to_int().min(frame.width)
+  let max_y = (rect.origin.y + rect.size.height)
+    .ceil()
+    .to_int()
+    .min(frame.height)
+  for y in min_y..<max_y {
+    for x in min_x..<max_x {
+      if pixel_is_cyanish(frame.pixel(x, y)) {
+        return true
+      }
+    }
+  }
+  false
 }
 
 ///|

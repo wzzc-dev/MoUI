@@ -46,6 +46,7 @@ members = [
   "./examples/file_importer",
   "./examples/command_palette",
   "./examples/mo_workbench",
+  "./website",
 ]
 ```
 

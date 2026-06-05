@@ -19,6 +19,47 @@ test "skia transform maps MoUI affine fields to Skia matrix members" {
 }
 
 ///|
+fn skia_test_temp_env(name : String) -> String? {
+  match @env.get_env_var(name) {
+    Some(value) => {
+      let clean = value.trim().to_owned()
+      if clean == "" {
+        None
+      } else {
+        Some(clean)
+      }
+    }
+    None => None
+  }
+}
+
+///|
+fn skia_test_temp_dir() -> String {
+  let names = ["MOUI_TEST_TMPDIR", "TMPDIR", "TEMP", "TMP"]
+  for name in names {
+    match skia_test_temp_env(name) {
+      Some(value) => return value
+      None => ()
+    }
+  }
+  "/tmp"
+}
+
+///|
+fn skia_test_temp_path(filename : String) -> String {
+  let dir = skia_test_temp_dir()
+  let chars = dir.to_array()
+  if chars.length() == 0 {
+    filename
+  } else if chars[chars.length() - 1] == '/' ||
+    chars[chars.length() - 1] == '\\' {
+    dir + filename
+  } else {
+    dir + "/" + filename
+  }
+}
+
+///|
 test "skia raster surface preflight consumes moui_skia resource descriptors" {
   let preflight = raster_surface_preflight(
     @render.RendererSurfaceMetrics::from_logical(
@@ -98,10 +139,8 @@ test "skia font fallback request prefers emoji and non-ascii representative char
 ///|
 test "skia text visual order proof records rtl glyph layout evidence" {
   guard skia_available() else { return () }
-  guard
-    skia_text_visual_order_proof("ABC \u{05D0}\u{05D1}\u{05D2} 123")
-    is Some(proof)
-  else {
+  guard skia_text_visual_order_proof("ABC \u{05D0}\u{05D1}\u{05D2} 123")
+    is Some(proof) else {
     fail("expected Skia visual order proof")
   }
   inspect(proof.logical_text, content="ABC \u{05D0}\u{05D1}\u{05D2} 123")
@@ -493,8 +532,8 @@ test "skia renderer decodes jpeg and bmp data uris through encoded image api" {
 ///|
 test "skia renderer decodes jpeg and bmp local files through encoded image api" {
   guard skia_available() else { return () }
-  let jpeg_path = "/private/tmp/moui-skia-local-image-fixture.jpg"
-  let bmp_path = "/private/tmp/moui-skia-local-image-fixture.bmp"
+  let jpeg_path = skia_test_temp_path("moui-skia-local-image-fixture.jpg")
+  let bmp_path = skia_test_temp_path("moui-skia-local-image-fixture.bmp")
   @fs.remove_file(jpeg_path) catch {
     _ => ()
   }
@@ -910,7 +949,7 @@ test "skia renderer notifies failed image lifecycle revision once for unchanged 
 ///|
 test "skia renderer retries local image failures when the file appears" {
   guard skia_available() else { return () }
-  let source = "/private/tmp/moui-skia-local-image-retry.png"
+  let source = skia_test_temp_path("moui-skia-local-image-retry.png")
   @fs.remove_file(source) catch {
     _ => ()
   }
