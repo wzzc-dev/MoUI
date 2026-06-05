@@ -263,9 +263,12 @@ GitHub Actions provenance plus exactly `radialGradient`, `transformPixels`,
 `asyncImageSecondFrame` observations with strong marker tokens. Package-only
 tests, skipped jobs, missing uploaded artifacts, blank screenshots, caret-only
 diagnostics, coverage-only font matching, provider preflights, and fallback-safe
-descriptor audits must stay failed proof. The `renderer-proof-summary` job
-downloads the native WGPU, native Skia, and WebGPU wasm proof artifacts and
-requires all seven manifests to validate as passed before capability promotion.
+descriptor audits must stay failed proof. The native Skia proof matrix
+configures the locked release Skia artifact before running real renderer/text
+smokes; native WGPU proof still requires a usable runner WGPU adapter for
+offscreen readback. The `renderer-proof-summary` job downloads the native WGPU,
+native Skia, and WebGPU wasm proof artifacts and requires all seven manifests to
+validate as passed before capability promotion.
 The platform evidence manifest is schema v2 and records the window fork's
 monitor/cursor probe as `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native entries
