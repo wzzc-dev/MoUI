@@ -23,6 +23,10 @@ mkdirSync(platformDir, { recursive: true });
 writeFileSync(logPath, `MoUI renderer proof backend=${backend} platform=${platform}\n`);
 const logs = [logPath];
 let failureStatus = 0;
+const skiaRendererSmokePackage = "moui/tests/skia_renderer_smoke/native";
+const skiaRendererSmokeExe = process.platform === "win32"
+  ? ".\\_build\\native\\debug\\build\\wzzc-dev\\moui\\tests\\skia_renderer_smoke\\native\\native.exe"
+  : "./_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe";
 const skiaTextEmojiSmokePackage = "moui/tests/skia_text_emoji_smoke/native";
 const skiaTextEmojiSmokeExe = process.platform === "win32"
   ? ".\\_build\\native\\debug\\build\\wzzc-dev\\moui\\tests\\skia_text_emoji_smoke\\native\\native.exe"
@@ -83,20 +87,36 @@ if (backend === "wgpu-native") {
     log("MoUI renderer proof package tests passed for native WGPU.");
   }
 } else {
+  const skiaRendererLogPath = `${platformDir}/skia-renderer-smoke.log`;
   const skiaTextEmojiLogPath = `${platformDir}/skia-text-emoji-smoke.log`;
+  logs.push(skiaRendererLogPath);
   logs.push(skiaTextEmojiLogPath);
+  writeFileSync(
+    skiaRendererLogPath,
+    [
+      `MoUI Skia renderer smoke platform=${platform}`,
+    ].join("\n") + "\n",
+  );
   writeFileSync(
     skiaTextEmojiLogPath,
     [
       `MoUI Skia text/emoji smoke platform=${platform}`,
     ].join("\n") + "\n",
   );
-  if (run(["moon", "test", "moui/render/skia", "--target", "native"]) &&
-      run(["moon", "test", `moui/backend/${platform}/skia`, "--target", "native"]) &&
-      runToLog(["moon", "build", skiaTextEmojiSmokePackage, "--target", "native"], skiaTextEmojiLogPath) &&
-      runToLog([skiaTextEmojiSmokeExe], skiaTextEmojiLogPath)) {
+  let skiaProofOk = true;
+  if (!run(["moon", "test", "moui/render/skia", "--target", "native"])) skiaProofOk = false;
+  if (!run(["moon", "test", `moui/backend/${platform}/skia`, "--target", "native"])) skiaProofOk = false;
+  if (!runToLog(["moon", "build", skiaRendererSmokePackage, "--target", "native"], skiaRendererLogPath)) skiaProofOk = false;
+  if (!runToLog([skiaRendererSmokeExe], skiaRendererLogPath)) skiaProofOk = false;
+  if (!runToLog(["moon", "build", skiaTextEmojiSmokePackage, "--target", "native"], skiaTextEmojiLogPath)) skiaProofOk = false;
+  if (!runToLog([skiaTextEmojiSmokeExe], skiaTextEmojiLogPath)) skiaProofOk = false;
+  if (skiaProofOk) {
     log("MoUI renderer proof package tests passed for native Skia.");
   } else {
+    appendFileSync(
+      skiaRendererLogPath,
+      "Skia renderer smoke did not complete every proof observation; inspect renderer proof manifest observation statuses.\n",
+    );
     appendFileSync(
       skiaTextEmojiLogPath,
       "Skia text/emoji smoke did not complete every proof observation; inspect renderer proof manifest observation statuses.\n",
