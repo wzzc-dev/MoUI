@@ -21,6 +21,10 @@ pub fn native_renderer_proof_smoke(
   println(
     "MoUI native WGPU renderer proof platform=\{platform_label} provider=\{text_engine.provider_id()} fallback=\{text_engine.fallback_provider_id()}",
   )
+  let async_source = native_proof_async_png_path(platform_label)
+  @fs.remove_file(async_source) catch {
+    _ => ()
+  }
   let renderer = create_headless_proof_renderer(
     @render.RendererSurfaceMetrics::from_logical(
       size=@core.Size::new(width=160.0, height=112.0),
@@ -28,7 +32,6 @@ pub fn native_renderer_proof_smoke(
     ),
     text_engine,
   )
-  let async_source = native_proof_png_data_uri()
   let proof_commands = native_proof_commands(async_source)
   let first_frame = renderer.render_offscreen_proof_frame(proof_commands)
   assert_native_proof_radial(first_frame)
@@ -404,6 +407,9 @@ fn native_proof_commands(async_source : String) -> Array[@core.DrawCommand] {
     ),
     @core.DrawCommand::PopClip,
     @core.DrawCommand::PopTransform,
+    @core.DrawCommand::PushClip(
+      @core.Rect::new(x=8.0, y=62.0, width=42.0, height=34.0),
+    ),
     @core.DrawCommand::DrawText(
       @core.TextRun::new(
         text="\u{1F469}\u{200D}\u{1F4BB}",
@@ -417,6 +423,7 @@ fn native_proof_commands(async_source : String) -> Array[@core.DrawCommand] {
         align=@core.TextAlign::TextStart,
       ),
     ),
+    @core.DrawCommand::PopClip,
     @core.DrawCommand::DrawText(
       @core.TextRun::new(
         text="ABC \u{05D0}\u{05D1}\u{05D2} 123",
@@ -463,9 +470,18 @@ fn native_proof_commands(async_source : String) -> Array[@core.DrawCommand] {
 }
 
 ///|
-fn native_proof_png_data_uri() -> String {
-  "data:image/png;base64," +
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=="
+fn native_proof_png_bytes() -> Bytes {
+  @base64.decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
+    ignore_whitespace=true,
+  ) catch {
+    _ => Bytes::from_array([])
+  }
+}
+
+///|
+fn native_proof_async_png_path(platform_label : String) -> String {
+  "moui-native-wgpu-proof-async-\{platform_label}.png"
 }
 
 ///|
@@ -670,6 +686,12 @@ fn assert_native_proof_async_second_frame(
     source,
     @render.ImageResourceStatus::ImageLoading,
   )
+  @fs.write_bytes_to_file(source, native_proof_png_bytes()) catch {
+    _ =>
+      native_proof_fail(
+        "native WGPU proof async image fixture could not be written",
+      )
+  }
   let completion = native_image_load_completion(source)
   let previous_revision = renderer.image_lifecycle.revision()
   let snapshot = renderer.image_lifecycle.apply_load_completion(completion)
@@ -697,6 +719,9 @@ fn assert_native_proof_async_second_frame(
     native_proof_fail(
       "native WGPU proof async second-frame image pixel missing",
     )
+  }
+  @fs.remove_file(source) catch {
+    _ => ()
   }
   println(
     "native WGPU proof async image late-completion second-frame-pixels renderer-lifecycle",
