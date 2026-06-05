@@ -793,6 +793,61 @@ const runtimeSignalsFromLog = logText => ({
 
 const hasEvent = (events, names) => events.some(event => names.includes(event?.name));
 
+const maxPresentFrame = events => {
+  const frames = events
+    .filter(event => event?.name === "present_frame")
+    .map(event => Number(event.frame))
+    .filter(Number.isFinite);
+  return frames.length > 0 ? Math.max(...frames) : 0;
+};
+
+const rendererProofEventsReady = events => {
+  const paragraphLines = new Set(
+    events
+      .filter(event => event?.name === "text_paragraph_line")
+      .map(event => Number(event.lineIndex))
+      .filter(Number.isFinite),
+  );
+  return (
+    hasEvent(events, ["text_color_glyph"]) &&
+    hasEvent(events, ["text_grapheme_layout"]) &&
+    hasEvent(events, ["text_bidi_layout"]) &&
+    paragraphLines.has(1) &&
+    paragraphLines.has(2) &&
+    paragraphLines.has(3) &&
+    hasEvent(events, ["image_placeholder_frame"]) &&
+    hasEvent(events, ["image_load"]) &&
+    hasEvent(events, ["image_resource_change"]) &&
+    hasEvent(events, ["image_repaint_request"]) &&
+    hasEvent(events, ["image_ready_frame"]) &&
+    maxPresentFrame(events) >= 2
+  );
+};
+
+const presentationEvidenceReady = (target, state, events) => {
+  if (state.bodyFailed || state.statusText !== "Running") return false;
+  if (targetRequiresRendererProofPixels(target)) {
+    return rendererProofEventsReady(events);
+  }
+  if (target.name === "markdown-editor-web-wasm") {
+    return hasEvent(events, ["ime_commit"]);
+  }
+  return maxPresentFrame(events) >= 1;
+};
+
+const waitForPresentationEvidence = async (session, target, initialState) => {
+  let state = initialState;
+  let events = await collectEvidenceEvents(session);
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (presentationEvidenceReady(target, state, events)) break;
+    await sleep(250);
+    state = await collectPageState(session);
+    events = await collectEvidenceEvents(session);
+  }
+  return { state, events };
+};
+
 const eventIndex = (events, predicate) => events.findIndex(predicate);
 
 const eventIndexes = (events, predicate) => {
@@ -1012,6 +1067,9 @@ const probeTarget = async target => {
     await sleep(500);
     await performInteractionProbe(session, target);
     state = await collectPageState(session);
+    const evidence = await waitForPresentationEvidence(session, target, state);
+    state = evidence.state;
+    const evidenceEvents = evidence.events;
 
     let screenshotError = "";
     let screenshot = {
@@ -1044,7 +1102,6 @@ const probeTarget = async target => {
       screenshotError = `Screenshot capture failed: ${error.message}`;
     }
     const runtimeSignals = runtimeSignalsFromLog(state.logText);
-    const evidenceEvents = await collectEvidenceEvents(session);
     screenshot = deriveRendererProofFromEvents(screenshot, target, evidenceEvents);
     const errors = consoleErrorsFor(session.events);
     if (screenshotError) {

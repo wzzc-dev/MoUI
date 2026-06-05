@@ -31,6 +31,13 @@ jobs:
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
 
+      - name: Install native Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji
+
       - name: Restore local dependencies
         run: sh scripts/setup-local-deps.sh
 

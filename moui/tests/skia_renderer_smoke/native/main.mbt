@@ -5,6 +5,47 @@ fn fail_smoke(message : String) -> Unit {
 }
 
 ///|
+fn smoke_temp_env(name : String) -> String? {
+  match @env.get_env_var(name) {
+    Some(value) => {
+      let clean = value.trim().to_owned()
+      if clean == "" {
+        None
+      } else {
+        Some(clean)
+      }
+    }
+    None => None
+  }
+}
+
+///|
+fn smoke_temp_dir() -> String {
+  let names = ["MOUI_TEST_TMPDIR", "TMPDIR", "TEMP", "TMP"]
+  for name in names {
+    match smoke_temp_env(name) {
+      Some(value) => return value
+      None => ()
+    }
+  }
+  "/tmp"
+}
+
+///|
+fn smoke_temp_path(filename : String) -> String {
+  let dir = smoke_temp_dir()
+  let chars = dir.to_array()
+  if chars.length() == 0 {
+    filename
+  } else if chars[chars.length() - 1] == '/' ||
+    chars[chars.length() - 1] == '\\' {
+    dir + filename
+  } else {
+    dir + "/" + filename
+  }
+}
+
+///|
 fn assert_pixel(
   frame : @skia_renderer.SkiaPixelFrame,
   x : Int,
@@ -158,11 +199,9 @@ fn assert_region_has_redish_pixel(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
 ) -> Unit {
-  if region_has_pixel_matching(
-    frame,
-    rect,
-    (r, g, b, a) => a > 0 && r > 170 && g < 120 && b < 130,
-  ) {
+  if region_has_pixel_matching(frame, rect, (r, g, b, a) => {
+      a > 0 && r > 170 && g < 120 && b < 130
+    }) {
     return ()
   }
   fail_smoke("MoUI Skia smoke region did not contain a red proof pixel")
@@ -173,11 +212,9 @@ fn assert_region_has_blueish_pixel(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
 ) -> Unit {
-  if region_has_pixel_matching(
-    frame,
-    rect,
-    (r, g, b, a) => a > 0 && b > 150 && r < 140 && g < 150,
-  ) {
+  if region_has_pixel_matching(frame, rect, (r, g, b, a) => {
+      a > 0 && b > 150 && r < 140 && g < 150
+    }) {
     return ()
   }
   fail_smoke("MoUI Skia smoke region did not contain a blue proof pixel")
@@ -188,12 +225,9 @@ fn assert_region_has_purpleish_pixel(
   frame : @skia_renderer.SkiaPixelFrame,
   rect : @core.Rect,
 ) -> Unit {
-  if region_has_pixel_matching(
-    frame,
-    rect,
-    (r, g, b, a) =>
-      a > 0 && r > 70 && r < 210 && b > 70 && b < 230 && g < 150,
-  ) {
+  if region_has_pixel_matching(frame, rect, (r, g, b, a) => {
+      a > 0 && r > 70 && r < 210 && b > 70 && b < 230 && g < 150
+    }) {
     return ()
   }
   fail_smoke("MoUI Skia smoke region did not contain a radial mid proof pixel")
@@ -335,7 +369,7 @@ fn remove_local_smoke_file(path : String) -> Unit {
 
 ///|
 fn missing_image_source() -> String {
-  "/private/tmp/moui-skia-renderer-smoke-missing-image.png"
+  smoke_temp_path("moui-skia-renderer-smoke-missing-image.png")
 }
 
 ///|
@@ -954,7 +988,9 @@ fn assert_image_status(
 
 ///|
 fn run_async_image_second_frame_smoke() -> Unit {
-  let local_png_path = "/private/tmp/moui-skia-renderer-smoke-async-image.png"
+  let local_png_path = smoke_temp_path(
+    "moui-skia-renderer-smoke-async-image.png",
+  )
   remove_local_smoke_file(local_png_path)
   write_local_smoke_png(local_png_path)
   let captured : Ref[@skia_renderer.SkiaPixelFrame?] = Ref(None)
@@ -1127,7 +1163,9 @@ fn main {
 
   run_renderer_proof_pixel_smoke()
 
-  let local_png_path = "/private/tmp/moui-skia-renderer-smoke-local-image.png"
+  let local_png_path = smoke_temp_path(
+    "moui-skia-renderer-smoke-local-image.png",
+  )
   remove_local_smoke_file(local_png_path)
   write_local_smoke_png(local_png_path)
 

@@ -2,6 +2,7 @@ import {
   "moonbitlang/core/encoding/base64",
   "moonbitlang/x/fs",
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui_skia",
