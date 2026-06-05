@@ -227,6 +227,24 @@ assertIncludes(
   "scripts/dev-check.sh",
   "node scripts/test-record-native-skia-evidence.mjs",
 );
+assertIncludes("scripts/dev-check.sh", "node --check scripts/validate-renderer-proof-manifest.mjs");
+assertIncludes(
+  "scripts/dev-check.sh",
+  "node scripts/test-validate-renderer-proof-manifest.mjs",
+);
+assertIncludes("scripts/dev-check.sh", "node --check scripts/record-renderer-proof-manifest.mjs");
+assertIncludes(
+  "scripts/dev-check.sh",
+  "node scripts/test-record-renderer-proof-manifest.mjs",
+);
+assertIncludes("scripts/dev-check.sh", "node --check scripts/record-web-renderer-proof-manifest.mjs");
+assertIncludes(
+  "scripts/dev-check.sh",
+  "node scripts/test-record-web-renderer-proof-manifest.mjs",
+);
+assertIncludes("scripts/dev-check.sh", "node --check scripts/ci-renderer-proof-native.mjs");
+assertIncludes("scripts/dev-check.sh", "sh -n scripts/ci-renderer-proof-native.sh");
+assertIncludes("scripts/dev-check.sh", "sh -n scripts/ci-renderer-proof-summary.sh");
 assertIncludes(".github/workflows/ci.yml", "web-runtime-presentation:");
 assertIncludes(".github/workflows/ci.yml", "name: Web runtime presentation");
 assertIncludes(".github/workflows/ci.yml", "runs-on: ubuntu-24.04");
@@ -241,6 +259,15 @@ assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/web-runtime-pr
 assertIncludes(".github/workflows/ci.yml", "artifacts/platform-evidence/web/");
 assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/platform-runtime-evidence.json");
 assertIncludes(".github/workflows/ci.yml", "if-no-files-found: warn");
+assertIncludes(".github/workflows/ci.yml", "renderer-proof-wgpu-native:");
+assertIncludes(".github/workflows/ci.yml", "renderer-proof-skia-native:");
+assertIncludes(".github/workflows/ci.yml", "renderer-proof-summary:");
+assertIncludes(".github/workflows/ci.yml", "node scripts/ci-renderer-proof-native.mjs wgpu-native");
+assertIncludes(".github/workflows/ci.yml", "node scripts/ci-renderer-proof-native.mjs skia-native");
+assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/renderer-proof/");
+assertIncludes(".github/workflows/ci.yml", "artifacts/platform-evidence/${{ matrix.platform }}/");
+assertIncludes(".github/workflows/ci.yml", "sh scripts/ci-renderer-proof-summary.sh artifacts/downloaded-renderer-proof");
+assertIncludes("scripts/ci-renderer-proof-summary.sh", "--artifact-root");
 assertAbsent(".github/workflows/ci.yml", "run_real_skia_smoke");
 assertAbsent(".github/workflows/ci.yml", "real-skia-smoke:");
 assertIncludes(".github/workflows/moui-real-skia-smoke.yml", "name: MoUI Real Skia Smoke");
@@ -264,6 +291,8 @@ assertIncludes("scripts/ci-web-runtime-presentation.sh", "--use-angle=swiftshade
 assertIncludes("scripts/ci-web-runtime-presentation.sh", "node scripts/record-web-runtime-presentation.mjs");
 assertIncludes("scripts/ci-web-runtime-presentation.sh", "--require-passed");
 assertIncludes("scripts/ci-web-runtime-presentation.sh", "node scripts/validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "node scripts/record-web-renderer-proof-manifest.mjs");
+assertIncludes("scripts/ci-web-runtime-presentation.sh", "artifacts/conformance/renderer-proof/webgpu-wasm-web.json");
 assertIncludes("scripts/ci-web-runtime-presentation.sh", "sh scripts/conformance-check.sh --platform-services");
 assertIncludes("scripts/ci-web-runtime-presentation.sh", "node scripts/record-platform-evidence-manifest.mjs");
 assertIncludes("scripts/ci-web-runtime-presentation.sh", "--web-presentation-manifest");
@@ -284,6 +313,16 @@ assertIncludes("docs/testing.md", "test-record-web-runtime-presentation.mjs");
 assertIncludes("docs/testing.md", "CDP browser is unavailable");
 assertIncludes("docs/testing.md", "validate-web-runtime-presentation-manifest.mjs");
 assertIncludes("docs/testing.md", "test-validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("docs/testing.md", "validate-renderer-proof-manifest.mjs");
+assertIncludes("docs/testing.md", "test-validate-renderer-proof-manifest.mjs");
+assertIncludes("docs/testing.md", "record-renderer-proof-manifest.mjs");
+assertIncludes("docs/testing.md", "test-record-renderer-proof-manifest.mjs");
+assertIncludes("docs/testing.md", "record-web-renderer-proof-manifest.mjs");
+assertIncludes("docs/testing.md", "test-record-web-renderer-proof-manifest.mjs");
+assertIncludes("docs/testing.md", "ci-renderer-proof-native.sh");
+assertIncludes("docs/testing.md", "ci-renderer-proof-summary.sh");
+assertIncludes("docs/testing.md", "renderer-proof-summary");
+assertIncludes("docs/testing.md", "skia-text-emoji-smoke.log");
 assertIncludes("docs/testing.md", "resize/input event-bridge");
 assertIncludes("docs/testing.md", "Markdown Editor text input");
 assertIncludes("docs/testing.md", "clean target close");
@@ -448,6 +487,12 @@ assertIncludes("docs/release-readiness.md", "web-runtime-handoff.json");
 assertIncludes("docs/release-readiness.md", "record-web-runtime-presentation.mjs");
 assertIncludes("docs/release-readiness.md", "validate-web-runtime-presentation-manifest.mjs");
 assertIncludes("docs/release-readiness.md", "web-runtime-presentation.json");
+assertIncludes("docs/release-readiness.md", "Renderer proof manifest");
+assertIncludes("docs/release-readiness.md", "validate-renderer-proof-manifest.mjs");
+assertIncludes("docs/release-readiness.md", "artifact root");
+assertIncludes("docs/release-readiness.md", "radialGradient");
+assertIncludes("docs/release-readiness.md", "colorEmojiPixels");
+assertIncludes("docs/release-readiness.md", "asyncImageSecondFrame");
 assertIncludes("docs/release-readiness.md", "resize/input event-bridge");
 assertIncludes("docs/release-readiness.md", "Markdown Editor text input");
 assertIncludes("docs/release-readiness.md", "--web-presentation-manifest");
@@ -747,6 +792,14 @@ assertIncludes("AGENTS.md", "validate-web-runtime-handoff-manifest.mjs");
 assertIncludes("AGENTS.md", "record-web-runtime-presentation.mjs");
 assertIncludes("AGENTS.md", "test-record-web-runtime-presentation.mjs");
 assertIncludes("AGENTS.md", "validate-web-runtime-presentation-manifest.mjs");
+assertIncludes("AGENTS.md", "validate-renderer-proof-manifest.mjs");
+assertIncludes("AGENTS.md", "test-validate-renderer-proof-manifest.mjs");
+assertIncludes("AGENTS.md", "record-renderer-proof-manifest.mjs");
+assertIncludes("AGENTS.md", "test-record-renderer-proof-manifest.mjs");
+assertIncludes("AGENTS.md", "record-web-renderer-proof-manifest.mjs");
+assertIncludes("AGENTS.md", "test-record-web-renderer-proof-manifest.mjs");
+assertIncludes("AGENTS.md", "renderer-proof-summary");
+assertIncludes("AGENTS.md", "colorEmojiPixels");
 assertIncludes("AGENTS.md", "CDP is unavailable");
 assertIncludes("AGENTS.md", "resize/input event-bridge");
 assertIncludes("AGENTS.md", "--web-presentation-manifest");
@@ -775,6 +828,18 @@ assertIncludes(
 assertIncludes(
   "skills/moui-framework-development-skill/SKILL.md",
   "test-record-web-runtime-presentation.mjs",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "validate-renderer-proof-manifest.mjs",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "test-record-renderer-proof-manifest.mjs",
+);
+assertIncludes(
+  "skills/moui-framework-development-skill/SKILL.md",
+  "renderer-proof-summary",
 );
 assertIncludes("AGENTS.md", "test-webgpu-runtime-radial.mjs");
 assertIncludes("docs/testing.md", "test-webgpu-runtime-radial.mjs");

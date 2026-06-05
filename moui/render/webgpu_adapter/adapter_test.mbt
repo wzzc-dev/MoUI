@@ -257,7 +257,7 @@ test "wgpu web command bridge forwards DrawPath to host ABI" {
 }
 
 ///|
-test "wgpu web command bridge preserves radial DrawPath fallback payload" {
+test "wgpu web command bridge preserves radial DrawPath shader payload" {
   let path = @core.PathSpec::new(
     verbs=[
       @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=0.0)),
@@ -288,9 +288,16 @@ test "wgpu web command bridge preserves radial DrawPath fallback payload" {
   let mesh = @render.tessellate_path(forwarded)
   inspect(mesh.vertices.length(), content="3")
   for vertex in mesh.vertices {
+    assert_true(vertex.brush_kind == 1.0)
+    assert_true(vertex.start_x == 4.0)
+    assert_true(vertex.start_y == 4.0)
+    assert_true(vertex.end_x == 8.0)
     assert_true(vertex.r == @core.Color::blue().r)
     assert_true(vertex.g == @core.Color::blue().g)
     assert_true(vertex.b == @core.Color::blue().b)
+    assert_true(vertex.r1 == @core.Color::gray().r)
+    assert_true(vertex.g1 == @core.Color::gray().g)
+    assert_true(vertex.b1 == @core.Color::gray().b)
   }
 }
 
