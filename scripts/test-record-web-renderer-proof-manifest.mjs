@@ -111,7 +111,9 @@ if (
 const missingRequired = runRecorder("missing-required", missingZwjManifest, ["--require-passed"]);
 if (
   missingRequired.result.status === 0 ||
-  !missingRequired.result.stderr.includes("status must be passed")
+  !missingRequired.result.stderr.includes("status must be passed") ||
+  !missingRequired.result.stderr.includes("web renderer proof failed summary:") ||
+  !missingRequired.result.stderr.includes("missingProofs=zwjGrapheme")
 ) {
   console.error("expected --require-passed to reject missing ZWJ web proof");
   console.error(missingRequired.result.stdout);
