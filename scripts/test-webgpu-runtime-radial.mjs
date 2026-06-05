@@ -19,19 +19,41 @@ class FakeCanvas {
 
   getContext(kind) {
     if (kind === "webgpu") return fakeContext;
-    return {
+    const context = {
       font: "",
       textAlign: "left",
       textBaseline: "alphabetic",
+      fillStyle: "white",
+      lastText: "",
+      clearRect() {
+        this.lastText = "";
+      },
+      fillText(text) {
+        this.lastText = `${text ?? ""}`;
+      },
+      getImageData(_x, _y, width, height) {
+        const data = new Uint8ClampedArray(width * height * 4);
+        const color = this.lastText.includes("👩‍💻");
+        for (let i = 0; i < data.length; i += 4) {
+          data[i] = color ? 245 : 255;
+          data[i + 1] = color ? 80 : 255;
+          data[i + 2] = color ? 20 : 255;
+          data[i + 3] = 255;
+        }
+        return { data };
+      },
       measureText(text) {
         return {
-          width: `${text ?? ""}`.length * 8,
+          width: Array.from(`${text ?? ""}`).length * 8,
           actualBoundingBoxLeft: 0,
-          actualBoundingBoxRight: `${text ?? ""}`.length * 8,
+          actualBoundingBoxRight: Array.from(`${text ?? ""}`).length * 8,
           actualBoundingBoxAscent: 12,
           actualBoundingBoxDescent: 4,
         };
       },
+    };
+    return {
+      ...context,
     };
   }
 }
@@ -136,6 +158,13 @@ const assertNear = (actual, expected, message) => {
   );
 };
 
+const evidenceEvents = [];
+globalThis.__mouiWebRuntimeEvidence = {
+  recordEvent(event) {
+    evidenceEvents.push(event);
+  },
+};
+
 const imports = createWebGpuImports({
   device: fakeDevice,
   format: "rgba8unorm",
@@ -161,6 +190,10 @@ assert(
     source.includes("return brush_color(in.local, in.blurStart.zw, in.end, in.color0, in.color1, in.blurStart.y);"),
   ),
   "visual shader must shade path mode through brush_color",
+);
+assert(
+  shaderSources.some(source => source.includes("in.color.r < -0.5")),
+  "text shader must preserve RGBA color glyph atlas payloads",
 );
 
 assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame failed");
@@ -296,6 +329,97 @@ assert(
 assert(
   bindGroupEntryCounts.some(count => count === 3),
   "overlay advanced composite should use a three-entry bind group",
+);
+
+uploadedBuffers.length = 0;
+evidenceEvents.length = 0;
+assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for text proof failed");
+assert(
+  imports.draw_text(
+    renderer,
+    stringHandle("👩‍💻"),
+    2,
+    2,
+    40,
+    24,
+    stringHandle("system-ui"),
+    stringHandle("normal"),
+    18,
+    500,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ) === 0,
+  "draw_text emoji proof failed",
+);
+assert(
+  imports.draw_text(
+    renderer,
+    stringHandle("ABC אבג 123"),
+    2,
+    28,
+    90,
+    18,
+    stringHandle("system-ui"),
+    stringHandle("normal"),
+    14,
+    500,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ) === 0,
+  "draw_text bidi proof failed",
+);
+for (let index = 1; index <= 3; index += 1) {
+  assert(
+    imports.draw_text(
+      renderer,
+      stringHandle(`Proof wrap line ${index}`),
+      2,
+      42 + index * 8,
+      90,
+      14,
+      stringHandle("system-ui"),
+      stringHandle("normal"),
+      12,
+      500,
+      0,
+      0,
+      0,
+      1,
+      0,
+    ) === 0,
+    `draw_text paragraph proof ${index} failed`,
+  );
+}
+assert(imports.present(renderer) === 0, "present text proof failed");
+assert(
+  evidenceEvents.some(event => event.name === "text_color_glyph" && event.format === "rgba"),
+  "text proof must record high-saturation RGBA glyph evidence",
+);
+assert(
+  evidenceEvents.some(event =>
+    event.name === "text_grapheme_layout" &&
+    event.singleGraphemeCluster === true &&
+    event.noInteriorCaret === true
+  ),
+  "text proof must record ZWJ single-grapheme evidence",
+);
+assert(
+  evidenceEvents.some(event => event.name === "text_bidi_layout" && event.visualOrderDiffers === true),
+  "text proof must record bidi visual-order evidence",
+);
+assert(
+  evidenceEvents.filter(event => event.name === "text_paragraph_line").length === 3,
+  "text proof must record paragraph line metrics",
+);
+assert(
+  uploadedBuffers.some(buffer => buffer.some(value => value < -0.5)),
+  "text vertices must include the color-glyph RGBA atlas sentinel",
 );
 
 console.log("webgpu runtime radial brush tests: ok");
