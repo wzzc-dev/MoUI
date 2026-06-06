@@ -9,7 +9,11 @@ import {
 // Values
 pub fn agent_backend_profiles() -> Array[AgentBackendProfile]
 
+pub fn default_agent_connector_states() -> Array[AgentConnectorState]
+
 pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn runtime_with_agent_connectors(PiTransportRuntime, Array[AgentConnectorRuntime], width? : Double, height? : Double) -> @core.AppRuntime
 
 pub fn runtime_with_transport(PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
 
@@ -20,8 +24,32 @@ pub fn view(WorkbenchModel) -> @core.View[WorkbenchMsg]
 // Errors
 
 // Types and methods
+pub(all) struct AgentActivityQueueItem {
+  backend_id : String
+  kind : AgentActivityQueueKind
+  badge_label : String
+  tone : String
+  title : String
+  detail : String
+  primary_label : String
+  primary_message : WorkbenchMsg?
+  secondary_label : String
+  secondary_message : WorkbenchMsg?
+} derive(Eq, @debug.Debug)
+pub fn AgentActivityQueueItem::has_primary_action(Self) -> Bool
+pub fn AgentActivityQueueItem::has_secondary_action(Self) -> Bool
+pub fn AgentActivityQueueItem::new(backend_id~ : String, kind~ : AgentActivityQueueKind, badge_label? : String, tone? : String, title? : String, detail? : String, primary_label? : String, primary_message? : WorkbenchMsg?, secondary_label? : String, secondary_message? : WorkbenchMsg?) -> Self
+
+pub(all) enum AgentActivityQueueKind {
+  ProviderRecovery
+  RuntimeActivity
+  QueuedOperation
+  ActiveTool
+  PlanProgress
+  PendingRequest
+} derive(Eq, @debug.Debug)
+
 pub(all) struct AgentBackendCapabilities {
-  uses_pi_transport : Bool
   supports_session_refresh : Bool
   supports_new_session : Bool
   supports_model_catalog : Bool
@@ -34,15 +62,18 @@ pub(all) struct AgentBackendCapabilities {
   supports_shell_commands : Bool
   supports_session_stats : Bool
 } derive(Eq, @debug.Debug)
-pub fn AgentBackendCapabilities::new(uses_pi_transport? : Bool, supports_session_refresh? : Bool, supports_new_session? : Bool, supports_model_catalog? : Bool, supports_command_catalog? : Bool, supports_fork? : Bool, supports_html_export? : Bool, supports_context_compaction? : Bool, supports_thinking_level? : Bool, supports_input_modes? : Bool, supports_shell_commands? : Bool, supports_session_stats? : Bool) -> Self
+pub fn AgentBackendCapabilities::new(supports_session_refresh? : Bool, supports_new_session? : Bool, supports_model_catalog? : Bool, supports_command_catalog? : Bool, supports_fork? : Bool, supports_html_export? : Bool, supports_context_compaction? : Bool, supports_thinking_level? : Bool, supports_input_modes? : Bool, supports_shell_commands? : Bool, supports_session_stats? : Bool) -> Self
 
 pub(all) struct AgentBackendProfile {
   id : String
   label : String
   description : String
+  transport_kind : AgentBackendTransportKind
   capabilities : AgentBackendCapabilities
 } derive(Eq, @debug.Debug)
-pub fn AgentBackendProfile::new(id~ : String, label~ : String, description~ : String, capabilities~ : AgentBackendCapabilities) -> Self
+pub fn AgentBackendProfile::new(id~ : String, label~ : String, description~ : String, transport_kind? : AgentBackendTransportKind, capabilities~ : AgentBackendCapabilities) -> Self
+pub fn AgentBackendProfile::uses_connector_transport(Self) -> Bool
+pub fn AgentBackendProfile::uses_pi_transport(Self) -> Bool
 
 pub(all) struct AgentBackendStatus {
   backend_id : String
@@ -57,6 +88,21 @@ pub fn AgentBackendStatus::has_sidebar_status(Self) -> Bool
 pub fn AgentBackendStatus::has_top_bar_chip(Self) -> Bool
 pub fn AgentBackendStatus::new(backend_id~ : String, label~ : String, status_label? : String, pending_count? : Int, failed? : Bool, sidebar_visible? : Bool, top_bar_visible? : Bool) -> Self
 
+pub(all) enum AgentBackendTransportKind {
+  PiJsonlRpcTransport
+  AcpConnectorTransport
+  FixtureTransport
+  NoAgentTransport
+} derive(Eq, @debug.Debug)
+pub fn AgentBackendTransportKind::label(Self) -> String
+pub fn AgentBackendTransportKind::uses_connector_transport(Self) -> Bool
+pub fn AgentBackendTransportKind::uses_pi_transport(Self) -> Bool
+
+pub(all) enum AgentCatalogItemKind {
+  ModelCatalogItem
+  CommandCatalogItem
+} derive(Eq, @debug.Debug)
+
 pub(all) struct AgentCommandInfo {
   name : String
   source : String
@@ -65,6 +111,111 @@ pub(all) struct AgentCommandInfo {
   source_path : String
 } derive(Eq, @debug.Debug)
 pub fn AgentCommandInfo::new(name~ : String, source~ : String, description~ : String, source_scope~ : String, source_path~ : String) -> Self
+
+pub(all) struct AgentComposerRequestSummary {
+  backend_id : String
+  badge_label : String
+  title : String
+  detail : String
+  action_label : String
+  action_message : WorkbenchMsg?
+  secondary_label : String
+  secondary_message : WorkbenchMsg?
+  tone : String
+  visible : Bool
+} derive(Eq, @debug.Debug)
+pub fn AgentComposerRequestSummary::has_visible_request(Self) -> Bool
+pub fn AgentComposerRequestSummary::new(backend_id~ : String, badge_label? : String, title? : String, detail? : String, action_label? : String, action_message? : WorkbenchMsg?, secondary_label? : String, secondary_message? : WorkbenchMsg?, tone? : String, visible? : Bool) -> Self
+
+pub(all) struct AgentComposerRouteSummary {
+  backend_id : String
+  label : String
+  session_label : String
+  model_label : String
+  context_label : String
+  focus_label : String
+  input_label : String
+  detail : String
+  tone : String
+  visible : Bool
+  slash_mode : Bool
+} derive(Eq, @debug.Debug)
+pub fn AgentComposerRouteSummary::has_visible_route(Self) -> Bool
+pub fn AgentComposerRouteSummary::new(backend_id~ : String, label~ : String, session_label? : String, model_label? : String, context_label? : String, focus_label? : String, input_label? : String, detail? : String, tone? : String, visible? : Bool, slash_mode? : Bool) -> Self
+
+pub(all) enum AgentConnectorCommand {
+  StartConnectorSession(String, String)
+  RefreshConnectorSession(String)
+  NewConnectorSession(String)
+  SendConnectorMessage(String, String)
+  InvokeConnectorCommand(String, String)
+  CancelConnectorRun(String)
+  ShutdownConnector
+} derive(Eq, @debug.Debug)
+pub fn AgentConnectorCommand::label(Self) -> String
+
+pub(all) enum AgentConnectorEvent {
+  ConnectorProfileLoaded(String, AgentConnectorProfile)
+  ConnectorSessionBound(String, String, String, String)
+  ConnectorCommandSent(String, String)
+  ConnectorAssistantMessage(String, String, String)
+  ConnectorRunCompleted(String)
+  ConnectorTransportFailed(String, String)
+} derive(Eq, @debug.Debug)
+pub fn AgentConnectorEvent::backend_id(Self) -> String
+
+pub(all) struct AgentConnectorProfile {
+  backend_id : String
+  aid : String
+  name : String
+  description : String
+  protocol_label : String
+  endpoint : String
+  capabilities : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn AgentConnectorProfile::acp_demo() -> Self
+pub fn AgentConnectorProfile::new(backend_id~ : String, aid? : String, name~ : String, description? : String, protocol_label? : String, endpoint? : String, capabilities? : Array[String]) -> Self
+
+pub struct AgentConnectorRuntime {
+  // private fields
+}
+pub fn AgentConnectorRuntime::backend_id(Self) -> String
+pub fn AgentConnectorRuntime::dispatch(Self, Array[AgentConnectorCommand], (AgentConnectorEvent) -> Unit) -> Unit
+pub fn[Msg] AgentConnectorRuntime::effect(Self, Array[AgentConnectorCommand], (AgentConnectorEvent) -> Msg) -> @core.Effect[Msg]
+pub fn AgentConnectorRuntime::fixture(backend_id? : String) -> Self
+pub fn AgentConnectorRuntime::is_available(Self) -> Bool
+pub fn AgentConnectorRuntime::new(backend_id~ : String, run~ : (Array[AgentConnectorCommand], (AgentConnectorEvent) -> Unit) -> Unit) -> Self
+pub fn AgentConnectorRuntime::unavailable(backend_id~ : String, reason? : String) -> Self
+
+pub(all) struct AgentConnectorState {
+  backend_id : String
+  profile : AgentConnectorProfile
+  status : AgentConnectorStatus
+  command_queue : Array[AgentConnectorCommand]
+  provider_session_id : String
+  session_name : String
+  model : String
+  last_command : String
+  last_activity : String
+  total_messages : Int
+} derive(Eq, @debug.Debug)
+pub fn AgentConnectorState::acp_demo() -> Self
+pub fn AgentConnectorState::apply_event(Self, AgentConnectorEvent) -> Self
+pub fn AgentConnectorState::enqueue(Self, AgentConnectorCommand) -> Self
+pub fn AgentConnectorState::enqueue_many(Self, Array[AgentConnectorCommand]) -> Self
+pub fn AgentConnectorState::has_active_transport(Self) -> Bool
+pub fn AgentConnectorState::has_session_binding(Self) -> Bool
+pub fn AgentConnectorState::new(backend_id~ : String, profile~ : AgentConnectorProfile) -> Self
+pub fn AgentConnectorState::status_label(Self) -> String
+
+pub(all) enum AgentConnectorStatus {
+  ConnectorDisconnected
+  ConnectorReady
+  ConnectorStarting
+  ConnectorRunning
+  ConnectorFailed(String)
+} derive(Eq, @debug.Debug)
+pub fn AgentConnectorStatus::label(Self) -> String
 
 pub(all) struct AgentEvent {
   phase : String
@@ -100,6 +251,78 @@ pub(all) struct AgentModelInfo {
   label : String
 } derive(Eq, @debug.Debug)
 pub fn AgentModelInfo::new(provider~ : String, id~ : String, name? : String, label? : String) -> Self
+
+pub(all) struct AgentProviderRegistryItem {
+  backend_id : String
+  label : String
+  transport_label : String
+  capability_label : String
+  status_label : String
+  detail : String
+  badge_label : String
+  tone : String
+  active : Bool
+  action_label : String
+  action_message : WorkbenchMsg?
+} derive(Eq, @debug.Debug)
+pub fn AgentProviderRegistryItem::has_action(Self) -> Bool
+pub fn AgentProviderRegistryItem::new(backend_id~ : String, label~ : String, transport_label~ : String, capability_label~ : String, detail~ : String, status_label? : String, badge_label? : String, tone? : String, active? : Bool, action_label? : String, action_message? : WorkbenchMsg?) -> Self
+
+pub(all) struct AgentProviderSwitchSummary {
+  backend_id : String
+  label : String
+  transport_label : String
+  capability_label : String
+  status_label : String
+  detail : String
+  switch_count : Int
+  tone : String
+} derive(Eq, @debug.Debug)
+pub fn AgentProviderSwitchSummary::has_switch_targets(Self) -> Bool
+pub fn AgentProviderSwitchSummary::new(backend_id~ : String, label~ : String, transport_label~ : String, capability_label~ : String, status_label? : String, detail? : String, switch_count? : Int, tone? : String) -> Self
+
+pub(all) enum AgentRequestKind {
+  ApprovalRequest
+  PermissionRequest
+  InputRequest
+  InterventionRequest
+} derive(Eq, @debug.Debug)
+
+pub(all) struct AgentRequestSummary {
+  backend_id : String
+  kind : AgentRequestKind
+  source : String
+  severity : String
+  message : String
+  title : String
+  detail : String
+  action_label : String
+  badge_label : String
+  tone : String
+} derive(Eq, @debug.Debug)
+pub fn AgentRequestSummary::has_visible_request(Self) -> Bool
+pub fn AgentRequestSummary::new(backend_id~ : String, source~ : String, kind? : AgentRequestKind, severity? : String, message? : String, title? : String, detail? : String, action_label? : String, badge_label? : String, tone? : String) -> Self
+
+pub(all) struct AgentRunOverview {
+  backend_id : String
+  title : String
+  detail : String
+  focus_label : String
+  focus_title : String
+  focus_detail : String
+  activity_count : Int
+  request_count : Int
+  operator_action_count : Int
+  shortcut_count : Int
+  tone : String
+  active : Bool
+  primary_label : String
+  primary_message : WorkbenchMsg?
+  secondary_label : String
+  secondary_message : WorkbenchMsg?
+} derive(Eq, @debug.Debug)
+pub fn AgentRunOverview::has_visible_overview(Self) -> Bool
+pub fn AgentRunOverview::new(backend_id~ : String, title? : String, detail? : String, focus_label? : String, focus_title? : String, focus_detail? : String, activity_count? : Int, request_count? : Int, operator_action_count? : Int, shortcut_count? : Int, tone? : String, active? : Bool, primary_label? : String, primary_message? : WorkbenchMsg?, secondary_label? : String, secondary_message? : WorkbenchMsg?) -> Self
 
 pub(all) struct AgentRuntimeSignal {
   backend_id : String
@@ -137,6 +360,31 @@ pub(all) struct AgentSessionMetrics {
 } derive(Eq, @debug.Debug)
 pub fn AgentSessionMetrics::has_visible_metrics(Self) -> Bool
 pub fn AgentSessionMetrics::new(backend_id~ : String, workbench_session_id~ : String, total_messages? : Int, tool_calls? : Int, tool_results? : Int, token_total? : Int, context_percent? : Double?) -> Self
+
+pub(all) struct AgentStatusBarSummary {
+  backend_id : String
+  status_label : String
+  context_label : String
+  queue_label : String
+  diagnostic_label : String
+  activity_label : String
+  tone : String
+} derive(Eq, @debug.Debug)
+pub fn AgentStatusBarSummary::has_visible_metrics(Self) -> Bool
+pub fn AgentStatusBarSummary::new(backend_id~ : String, status_label? : String, context_label? : String, queue_label? : String, diagnostic_label? : String, activity_label? : String, tone? : String) -> Self
+
+pub(all) struct AgentTimelineItem {
+  backend_id : String
+  source_kind : String
+  badge_label : String
+  title : String
+  detail : String
+  tone : String
+  process : Bool
+  visible : Bool
+} derive(Eq, @debug.Debug)
+pub fn AgentTimelineItem::has_visible_timeline_item(Self) -> Bool
+pub fn AgentTimelineItem::new(backend_id~ : String, source_kind~ : String, badge_label~ : String, title~ : String, detail? : String, tone? : String, process? : Bool, visible? : Bool) -> Self
 
 pub(all) struct CommandRun {
   id : Int
@@ -181,6 +429,7 @@ pub struct MoWorkbenchApp {
 }
 pub fn MoWorkbenchApp::new() -> Self
 pub fn MoWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn MoWorkbenchApp::runtime_with_agent_connectors(Self, PiTransportRuntime, Array[AgentConnectorRuntime], width? : Double, height? : Double) -> @core.AppRuntime
 pub fn MoWorkbenchApp::runtime_with_transport(Self, PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
 
 pub(all) struct PiAgentSnapshot {
@@ -389,6 +638,7 @@ pub(all) struct WorkbenchModel {
   commands : Array[CommandRun]
   diagnostics : Array[DiagnosticItem]
   transport : PiTransportState
+  agent_connectors : Array[AgentConnectorState]
   pi_rpc : PiRpcSnapshot
   pi_agent : PiAgentSnapshot
   pi_session_bindings : Array[PiSessionBinding]
@@ -397,6 +647,8 @@ pub(all) struct WorkbenchModel {
 pub fn WorkbenchModel::active_agent_backend_capabilities(Self) -> AgentBackendCapabilities
 pub fn WorkbenchModel::active_agent_backend_profile(Self) -> AgentBackendProfile
 pub fn WorkbenchModel::active_agent_backend_status(Self) -> AgentBackendStatus
+pub fn WorkbenchModel::active_agent_command_catalog(Self) -> Array[AgentCommandInfo]
+pub fn WorkbenchModel::active_agent_connector_state(Self) -> AgentConnectorState
 pub fn WorkbenchModel::active_agent_fork_points_for_transcript_item(Self, TranscriptItem) -> Array[AgentForkPoint]
 pub fn WorkbenchModel::active_agent_input_settings(Self) -> AgentInputSettings
 pub fn WorkbenchModel::active_agent_model_catalog(Self) -> Array[AgentModelInfo]
@@ -405,12 +657,24 @@ pub fn WorkbenchModel::active_agent_session_binding(Self) -> AgentSessionBinding
 pub fn WorkbenchModel::active_agent_session_metrics(Self) -> AgentSessionMetrics
 pub fn WorkbenchModel::active_pi_session_binding(Self) -> PiSessionBinding
 pub fn WorkbenchModel::active_session(Self) -> WorkbenchSession
+pub fn WorkbenchModel::agent_activity_queue(Self) -> Array[AgentActivityQueueItem]
+pub fn WorkbenchModel::agent_composer_request_summary(Self) -> AgentComposerRequestSummary
+pub fn WorkbenchModel::agent_composer_route_summary(Self) -> AgentComposerRouteSummary
+pub fn WorkbenchModel::agent_provider_registry_items(Self) -> Array[AgentProviderRegistryItem]
+pub fn WorkbenchModel::agent_provider_switch_summary(Self) -> AgentProviderSwitchSummary
+pub fn WorkbenchModel::agent_request_summaries(Self) -> Array[AgentRequestSummary]
+pub fn WorkbenchModel::agent_run_overview(Self) -> AgentRunOverview
+pub fn WorkbenchModel::agent_status_bar_summary(Self) -> AgentStatusBarSummary
+pub fn WorkbenchModel::agent_timeline_items(Self) -> Array[AgentTimelineItem]
+pub fn WorkbenchModel::latest_agent_request_summary(Self) -> AgentRequestSummary?
 pub fn WorkbenchModel::new() -> Self
 pub fn WorkbenchModel::open_diagnostic_count(Self) -> Int
 pub fn WorkbenchModel::pending_transport_count(Self) -> Int
 pub fn WorkbenchModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn WorkbenchModel::runtime_with_agent_connectors(Self, PiTransportRuntime, Array[AgentConnectorRuntime], width? : Double, height? : Double) -> @core.AppRuntime
 pub fn WorkbenchModel::runtime_with_transport(Self, PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn WorkbenchModel::update(Self, WorkbenchMsg) -> Self
+pub fn WorkbenchModel::update_with_agent_connectors(Self, WorkbenchMsg, PiTransportRuntime, Array[AgentConnectorRuntime]) -> WorkbenchUpdate
 pub fn WorkbenchModel::update_with_transport(Self, WorkbenchMsg, PiTransportRuntime) -> WorkbenchUpdate
 pub fn WorkbenchModel::view(Self) -> @core.View[WorkbenchMsg]
 
@@ -433,6 +697,7 @@ pub(all) enum WorkbenchMsg {
   ReviewDiff
   RefreshSession
   ReceiveTransport(PiTransportEvent)
+  ReceiveConnector(AgentConnectorEvent)
   NewSession
   RefreshForkMessages
   ForkFromMessage(String)
