@@ -10,8 +10,9 @@ and clear engineering quality gates.
 - Provide a stable platform-neutral app/runtime/view model for MoonBit UI apps.
 - Keep public view constructors simple and typed by returning opaque
   `@core.View[Msg]`.
-- Run the same shared app logic through Web wasm-gc, macOS native, and Windows
-  native entrypoints.
+- Run the same shared app logic through Web wasm-gc/browser WebGPU, and native
+  Skia raster entrypoints on macOS and Windows where those platforms are
+  supported.
 - Make examples useful as runnable documentation, not only smoke tests.
 - Keep renderer capabilities transparent, tested, and documented.
 - Maintain a predictable development loop with bounded checks and focused tests.
@@ -36,12 +37,14 @@ The package boundaries follow that pipeline:
 - `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
   cores that normalize platform events into `HostEvent` and receive concrete
   renderers through platform renderer providers.
-- `backend/<platform>/wgpu` and `backend/<platform>/skia` own native renderer
-  assembly for WGPU and Skia respectively.
+- `backend/<platform>/skia` owns the native Skia raster mainline assembly;
+  `backend/<platform>/wgpu` remains available for explicit native WGPU
+  diagnostics.
 - `backend/linux/` is a minimal Wayland host core with explicit remaining
   service, IME, AT-SPI, and native font-provider gaps.
 - `render/` owns renderer facades and capability reporting.
-- `render/wgpu/` implements the native wgpu renderer.
+- `render/skia/` implements the native Skia raster renderer facade.
+- `render/wgpu/` implements the experimental native wgpu renderer.
 - `render/webgpu_adapter/` bridges wasm-gc apps to browser WebGPU host imports.
 - `examples/*/app/` packages contain shared app logic; platform subpackages are
   entrypoints only.
@@ -143,8 +146,9 @@ update all three files together.
 
 Current priorities:
 
-1. Keep transform behavior explicit and consistent between native wgpu and Web
-   wasm-gc renderers, especially the remaining layer-level transform state.
+1. Keep transform behavior explicit and consistent between the native Skia
+   raster mainline and Web wasm-gc/WebGPU renderer, while keeping native WGPU
+   transform diagnostics available under the explicit experimental path.
 2. Finish text shaping conformance across bidi, line breaking, fallback font
    runs, and native provider behavior.
 3. Keep improving deterministic emoji text coverage; Cosmic now loads platform
@@ -163,10 +167,15 @@ Validation:
 
 ```sh
 moon test moui/render --target native
-moon test moui/render/wgpu --target native
+moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
+sh scripts/conformance-check.sh --render
 moon build examples/showcase/web_wasm --target wasm-gc
 ```
+
+Run `sh scripts/conformance-check.sh --render --wgpu-experimental` or
+`moon test moui/render/wgpu --target native` only when touching the native WGPU
+diagnostic renderer.
 
 ## Workstream 5: Platform Contracts
 
@@ -178,11 +187,13 @@ Focus areas:
   text input, file drag/drop, window event, metrics, and redraw contracts.
 - Keep Web on the single `wasm-gc + window/web + browser WebGPU host imports`
   path.
-- Keep macOS native host documentation aligned with AppKit, CAMetalLayer, and
-  wgpu-native requirements.
+- Keep macOS native host documentation aligned with AppKit and the native Skia
+  provider setup; keep CAMetalLayer/wgpu-native requirements scoped to WGPU
+  diagnostics.
 - Keep Windows native setup reproducible with Visual Studio C++ build tools,
-  vcpkg `zlib:x64-windows`, and `wgpu_mbt` dynamic mode using the official MSVC
-  `wgpu_native.dll` release.
+  vcpkg `zlib:x64-windows`, and renderer-aware build/package helpers. Native
+  Skia packages should not download or bundle `wgpu_native.dll`; explicit WGPU
+  diagnostic packages keep the existing `wgpu_mbt` dynamic route.
 - Keep Linux clearly marked as minimal until the remaining platform service,
   IME, AT-SPI, and native font-provider gaps are implemented.
 - Use `HostServiceBridge` as the typed host-service boundary for clipboard,
@@ -322,9 +333,10 @@ Use this snapshot as the final handoff checklist for the current project shape:
   with platform packages as thin entrypoints; Counter and Todo live inside
   Showcase as built-in interaction patterns.
 - Showcase surfaces renderer capability status for visual review.
-- Daily validation is centralized in `sh scripts/dev-check.sh` and includes core,
-  views, render, native wgpu, backend host/web, example app tests, and Web
-  wasm-gc example builds.
+- Daily validation is centralized in `sh scripts/dev-check.sh` and includes
+  core, views, render facade, native Skia, backend host/Web, example app tests,
+  and Web wasm-gc example builds. Native WGPU diagnostics run only with
+  `--wgpu-experimental`.
 - Platform validation remains opt-in through `--platform-examples-test` and
   `--platform-examples-build` because native executable builds depend on the
   current host setup.

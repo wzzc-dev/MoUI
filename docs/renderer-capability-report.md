@@ -5,7 +5,8 @@ data is codified in `render/capabilities.mbt` and checked by
 `render/capabilities_test.mbt`. Showcase consumes the same backend list, so new
 renderer columns come from structured data instead of hard-coded native/web
 fields. Renderer support claims still come from this report plus
-renderer/provider tests.
+renderer/provider tests. The report order follows the current mainline:
+native Skia raster, WebGPU wasm-gc, then native WGPU diagnostics.
 
 Status meanings:
 
@@ -17,16 +18,16 @@ Status meanings:
 - `unavailable`: the backend has a contract or planned mapping, but cannot be
   claimed ready in the current fallback-safe build.
 
-| Feature | Native wgpu | Skia raster native | Web wasm-gc | Follow-up |
+| Feature | Skia raster native | Web wasm-gc | Native wgpu diagnostic | Follow-up |
 | --- | --- | --- | --- | --- |
 | Rect | ready | ready | ready | Skia rect fill/stroke has real native renderer pixel smoke coverage. |
 | Rounded rect | ready | ready | ready | Skia rounded fill/stroke and solid rounded brushes have real native renderer pixel smoke coverage. |
-| Gradient | partial | ready | partial | Skia now renders linear and radial gradient brushes for rounded rects and paths; native WGPU and browser WebGPU both preserve radial rounded/path brush payloads and shade radial interpolation in the visual shader. WGPU/Web stay partial until GitHub Actions renderer-proof artifacts record real radial center/mid/edge pixels for the matching backend. |
+| Gradient | ready | partial | partial | Skia now renders linear and radial gradient brushes for rounded rects and paths; browser WebGPU and native WGPU diagnostics both preserve radial rounded/path brush payloads and shade radial interpolation in the visual shader. Web stays partial until the Web renderer-proof artifact records real radial center/mid/edge pixels; native WGPU keeps the same requirement only for its diagnostic proof. |
 | Shadow | ready | ready | ready | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
 | Text | ready | ready | ready | Skia `Font` measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interior stabilization for both caret paths, grapheme-safe mixed-run fallback segments, and best-available glyph-run rendering clip to `TextRun.frame` while resolving `FontSpec` family, weight, style, and representative coverage characters through Skia `FontMgr` `FontFallbackRequest`/`Font`; real native renderer smoke covers glyph-run pixels and bounded `TextRun.frame` clipping; broader shaping is tracked separately. |
 | Image | ready | ready | ready | Skia validates PNG/JPEG/BMP data URI decode, local PNG/JPEG/BMP decode, contain/cover/stretch/scale-down/fit-width/fit-height placement geometry, `draw_image_rect` output, ready/failed lifecycle records, failed-image placeholders, immutable-source failed-cache reuse, and local-file failure retry once the file appears; the real native renderer smoke covers ready data URI/local PNG drawing and failed-image placeholders. |
 | Clip | ready | ready | ready | Skia rectangular, rounded, and path clip scopes have representative real native smoke coverage. |
-| Transform | partial | ready | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated, scaled-and-clipped, layer-masked opacity, and filter-scoped pixel proof. |
+| Transform | ready | partial | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated, scaled-and-clipped, layer-masked opacity, and filter-scoped pixel proof. |
 | Opacity | ready | ready | ready | Skia save-layer opacity has blended pixel smoke coverage. |
 | Layer compositing | ready | ready | ready | Skia validates `save_layer` opacity, rectangular masks, rounded masks, blend-mode layers, and nested layer/filter composition through renderer-local pixel tests plus the real native renderer smoke. |
 | Blend mode | ready | ready | ready | Skia maps all MoUI blend modes to Skia paint blend modes and validates multiply through renderer-local pixels, with multiply/screen/overlay/darken/lighten output pixels also covered by the real native renderer smoke. |
@@ -50,17 +51,18 @@ to app code or the internal view tree. Current descriptors are:
 
 `RendererDescriptor` describes static renderer capability identity. Native host
 runtime assembly is handled by platform renderer providers instead:
-`backend/<platform>/wgpu` selects the `NativeWgpu` renderer family and
-`backend/<platform>/skia` selects the `SkiaRasterNative` renderer family. The
+`backend/<platform>/skia` selects the `SkiaRasterNative` native mainline and
+`backend/<platform>/wgpu` selects the `NativeWgpu` diagnostic route. The
 `RendererSelection` helper remains useful for reports and tests that match
 families or backend ids, but it is not a native host-core option or provider
 contract. Web keeps using the WebGPU wasm backend; future Skia Web or Skia GPU
 variants can add new `RendererBackendKind` values without changing the
 capability record shape.
 
-## Current Native Notes
+## Current Native WGPU Diagnostic Notes
 
-Native wgpu now renders rects, rounded geometry, linear gradients, soft shadows,
+Native wgpu remains available as a diagnostic renderer. It now renders rects,
+rounded geometry, linear gradients, soft shadows,
 glyph-atlas text, and images directly. Image commands use a complete pipeline:
 PNG/JPEG/BMP decoding through `mizchi/image`, local file and base64 data URI
 sources, texture caching, GPU sampling, contain/cover/stretch/scale-down/fit-width/fit-height fit

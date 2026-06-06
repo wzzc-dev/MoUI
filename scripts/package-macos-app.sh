@@ -4,7 +4,7 @@ set -eu
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
-PACKAGE="examples/showcase/macos"
+PACKAGE="examples/showcase/macos_skia"
 APP_NAME=""
 BUNDLE_ID="dev.wzzc.moui.app"
 OUTPUT_DIR="dist/macos"
@@ -16,7 +16,7 @@ usage() {
   printf 'Usage: %s [--package <moon-package>] [--name <app-name>] [--bundle-id <id>] [--version <semver>] [--build-version <build>] [--output <dir>] [--no-build]\n' "$0"
   printf '\n'
   printf 'Builds a native macOS example package and wraps the executable in a .app bundle.\n'
-  printf 'Example: %s --package examples/showcase/macos --name "MoUI Showcase" --bundle-id dev.wzzc.moui.showcase --version 0.1.0\n' "$0"
+  printf 'Example: %s --package examples/showcase/macos_skia --name "MoUI Showcase" --bundle-id dev.wzzc.moui.showcase --version 0.1.0\n' "$0"
 }
 
 xml_text() {

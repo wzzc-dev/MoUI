@@ -171,7 +171,7 @@ pub fn RendererPresentationModel::label(
 
 ///|
 pub fn RendererSelection::native_default() -> RendererSelection {
-  RendererSelection::Backend(RendererBackendKind::NativeWgpu)
+  RendererSelection::Backend(RendererBackendKind::SkiaRasterNative)
 }
 
 ///|
