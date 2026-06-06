@@ -31,6 +31,9 @@ pub(all) struct ShowcaseModel {
   selected_section : String
   route_history : @core.RouteHistoryState
   filter : String
+  data_filter_query : String
+  data_filter_active : Bool
+  data_filter_review : Bool
   slider_value : Double
   picker_value : String
   date_value : @core.DateValue
@@ -69,6 +72,10 @@ pub(all) enum ShowcaseMsg {
   TabSelected(String)
   ClearFilter
   FilterChanged(String)
+  DataFilterQueryChanged(String)
+  DataActiveFilterChanged(Bool)
+  DataReviewFilterChanged(Bool)
+  ClearDataFilters
   DraftChanged(String)
   SliderChanged(Double)
   PickerSelected(String)

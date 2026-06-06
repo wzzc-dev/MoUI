@@ -34,7 +34,6 @@ fn ShowcaseModel::data_table_card(
   theme : @core.Theme,
   width : Double,
 ) -> @core.View[ShowcaseMsg] {
-  ignore(self)
   let sort = @views.DataSortState::new(column="status", ascending=false)
   let visibility = @views.ColumnVisibilityState::new(
     visible=["name", "owner"],
@@ -70,24 +69,24 @@ fn ShowcaseModel::data_table_card(
           height=22.0,
         ),
         data_filter_bar(
-          query="atlas",
-          on_query=_value => FilterChanged("atlas"),
+          query=self.data_filter_query,
+          on_query=value => DataFilterQueryChanged(value),
           filters=[
             data_filter(
               id="active",
               label="Active",
-              selected=true,
-              message=ToggleActive,
+              selected=self.data_filter_active,
+              message=DataActiveFilterChanged(!self.data_filter_active),
             ),
             data_filter(
               id="review",
               label="Review",
-              selected=false,
-              message=ToggleActive,
+              selected=self.data_filter_review,
+              message=DataReviewFilterChanged(!self.data_filter_review),
             ),
           ],
-          result_count=3,
-          on_clear=Some(ClearFilter),
+          result_count=self.data_filter_result_count(),
+          on_clear=Some(ClearDataFilters),
           theme~,
           width=392.0,
         ),
@@ -163,6 +162,23 @@ fn ShowcaseModel::data_table_card(
     height=724.0,
     padding=theme.spacing_scale.md,
   )
+}
+
+///|
+fn ShowcaseModel::data_filter_result_count(self : ShowcaseModel) -> Int {
+  if self.data_filter_query == "" &&
+    !self.data_filter_active &&
+    !self.data_filter_review {
+    10
+  } else if self.data_filter_active && self.data_filter_review {
+    5
+  } else if self.data_filter_review {
+    2
+  } else if self.data_filter_active {
+    3
+  } else {
+    4
+  }
 }
 
 ///|
