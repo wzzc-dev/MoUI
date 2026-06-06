@@ -586,7 +586,7 @@ pub fn[Msg] dialog_host(
   if presented {
     match dialog {
       Some(dialog) => {
-        let scrim = modal_scrim(alpha=0.28)
+        let scrim = modal_scrim(alpha=0.22)
         let presented_dialog = dialog
           .semantics_role(@core.SemanticsRole::Dialog)
           .align(alignment=@core.Alignment::center())

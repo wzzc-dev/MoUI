@@ -85,13 +85,12 @@ pub fn[Msg] dialog(
   secondary_action? : StateViewAction[Msg]? = None,
   dismiss_action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
-  width? : Double = 360.0,
-  height? : Double = 240.0,
+  width? : Double = 432.0,
+  height? : Double = 280.0,
 ) -> @core.View[Msg] {
-  let content_width = views_max_double(
-    120.0,
-    width - theme.spacing_scale.md * 2.0,
-  )
+  let panel_padding = theme.spacing_scale.lg
+  let section_spacing = theme.spacing_scale.md
+  let content_width = views_max_double(180.0, width - panel_padding * 2.0)
   let actions : Array[@core.View[Msg]] = []
   match secondary_action {
     Some(action) =>
@@ -121,6 +120,17 @@ pub fn[Msg] dialog(
       )
     None => ()
   }
+  let header_height = if subtitle == "" { 36.0 } else { 62.0 }
+  let footer_height = if actions.length() > 0 { 48.0 } else { 0.0 }
+  let section_count = if actions.length() > 0 { 2.0 } else { 1.0 }
+  let body_height = views_max_double(
+    56.0,
+    height -
+    panel_padding * 2.0 -
+    header_height -
+    footer_height -
+    section_spacing * section_count,
+  )
   let body_rows : Array[@core.View[Msg]] = [
     dialog_header(
       title,
@@ -128,8 +138,9 @@ pub fn[Msg] dialog(
       dismiss_action~,
       theme~,
       width=content_width,
+      height=header_height,
     ),
-    content.frame(width=content_width),
+    content.frame(width=content_width, height=body_height),
   ]
   if actions.length() > 0 {
     body_rows.push(
@@ -138,16 +149,16 @@ pub fn[Msg] dialog(
         spacing=theme.spacing_scale.sm,
         justify=MainAlign::End,
         align=CrossAlign::Center,
-      ).frame(width=content_width, height=40.0),
+      ).frame(width=content_width, height=footer_height),
     )
   }
   surface(
-    column(body_rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
+    column(body_rows, spacing=section_spacing, align=CrossAlign::Start),
     width~,
     height~,
     variant=SurfaceVariant::Raised,
     theme~,
-    padding=theme.spacing_scale.md,
+    padding=panel_padding,
   )
   .border(dialog_border(theme))
   .shadow(theme.shadow_scale.lg)
@@ -162,10 +173,10 @@ fn dialog_border(
   accent? : @core.Color? = None,
 ) -> @core.BorderStyle {
   let color = match accent {
-    Some(color) => color.multiply_alpha(0.84)
-    None => theme.palette.outline
+    Some(color) => color.multiply_alpha(0.72)
+    None => theme.palette.outline.multiply_alpha(0.66)
   }
-  @core.BorderStyle::new(brush=@core.Brush::solid(color), width=1.5)
+  @core.BorderStyle::new(brush=@core.Brush::solid(color), width=1.0)
 }
 
 ///|
@@ -175,12 +186,15 @@ fn[Msg] dialog_header(
   dismiss_action~ : StateViewAction[Msg]?,
   theme~ : @core.Theme,
   width~ : Double,
+  height~ : Double,
 ) -> @core.View[Msg] {
   let title_width = match dismiss_action {
     Some(action) =>
       views_max_double(
         80.0,
-        width - dialog_action_width(action.label) - theme.spacing_scale.sm,
+        width -
+        dialog_dismiss_action_width(action.label) -
+        theme.spacing_scale.md,
       )
     None => width
   }
@@ -207,24 +221,29 @@ fn[Msg] dialog_header(
     Some(action) =>
       row(
         [
-          title_block,
+          title_block.frame(width=title_width, height~),
           button(
             action.label,
             on_click=action.message,
             variant=ButtonVariant::Ghost,
             theme~,
-            width=dialog_action_width(action.label),
-            height=34.0,
+            width=dialog_dismiss_action_width(action.label),
+            height=32.0,
           ).semantics_dismiss_action(),
         ],
-        spacing=theme.spacing_scale.sm,
+        spacing=theme.spacing_scale.md,
         align=CrossAlign::Start,
-      ).frame(width~)
-    None => title_block.frame(width~)
+      ).frame(width~, height~)
+    None => title_block.frame(width~, height~)
   }
 }
 
 ///|
 fn dialog_action_width(label : String) -> Double {
   views_max_double(82.0, label.to_array().length().to_double() * 8.0 + 24.0)
+}
+
+///|
+fn dialog_dismiss_action_width(label : String) -> Double {
+  views_max_double(72.0, label.to_array().length().to_double() * 7.0 + 20.0)
 }

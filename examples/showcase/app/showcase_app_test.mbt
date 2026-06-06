@@ -62,11 +62,52 @@ test "showcase navigation dialog and sheet state are wired" {
   let dialog_commands = dialog_model
     .runtime(width=760.0, height=420.0)
     .draw_commands()
+  let size = @core.Size::new(width=760.0, height=420.0)
   assert_true(has_text(dialog_commands, "Showcase dialog"))
   assert_true(has_text(dialog_commands, "Custom content shell"))
+  assert_true(
+    has_text(
+      dialog_commands, "Dialog hosts custom content, focus, and actions in one modal surface.",
+    ),
+  )
   assert_true(has_text(dialog_commands, "Host"))
   assert_true(has_text(dialog_commands, "view-level"))
+  assert_true(has_text(dialog_commands, "Focus"))
+  assert_true(has_text(dialog_commands, "app-owned"))
+  assert_true(has_text(dialog_commands, "Actions"))
+  assert_true(has_text(dialog_commands, "footer"))
   assert_true(has_text(dialog_commands, "Dismiss"))
+  assert_true(has_text(dialog_commands, "Sheet"))
+  assert_true(has_text(dialog_commands, "Close"))
+  for
+    label in [
+      "Showcase dialog", "Custom content shell", "Dialog hosts custom content, focus, and actions in one modal surface.",
+      "Host", "view-level", "Focus", "app-owned", "Actions", "footer", "Dismiss",
+      "Sheet", "Close",
+    ] {
+    assert_true(text_within(dialog_commands, label, size))
+  }
+  guard text_frame(dialog_commands, "Showcase dialog") is Some(title_frame) else {
+    fail("expected Showcase dialog title")
+  }
+  guard text_frame(dialog_commands, "footer") is Some(body_frame) else {
+    fail("expected Showcase dialog body")
+  }
+  guard last_text_frame(dialog_commands, "Sheet") is Some(sheet_frame) else {
+    fail("expected Showcase dialog secondary action")
+  }
+  guard text_frame(dialog_commands, "Close") is Some(close_frame) else {
+    fail("expected Showcase dialog primary action")
+  }
+  guard smallest_rounded_brush_containing(dialog_commands, title_frame)
+    is Some(dialog_frame) else {
+    fail("expected Showcase dialog surface frame")
+  }
+  assert_true(rect_contains_rect(dialog_frame, body_frame))
+  assert_true(rect_contains_rect(dialog_frame, sheet_frame))
+  assert_true(rect_contains_rect(dialog_frame, close_frame))
+  assert_true(sheet_frame.origin.y > body_frame.origin.y)
+  assert_true(close_frame.origin.x > sheet_frame.origin.x)
   let sheet_model = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::ShowDialog)
     .update(@app.ShowcaseMsg::ShowSheet)

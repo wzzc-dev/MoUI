@@ -738,18 +738,19 @@ fn ShowcaseModel::dialog(
     content=column(
       [
         text(
-          "Dialogs, shortcuts, and semantics share the same view tree.",
-          width=300.0,
-          height=44.0,
+          "Dialog hosts custom content, focus, and actions in one modal surface.",
+          width=392.0,
+          height=48.0,
         ).foreground(theme.palette.foreground),
         description_list(
           [
             description_item("Host", "view-level"),
             description_item("Focus", "app-owned"),
+            description_item("Actions", "footer"),
           ],
           theme~,
-          width=300.0,
-          term_width=72.0,
+          width=392.0,
+          term_width=88.0,
         ),
       ],
       spacing=theme.spacing_scale.sm,
@@ -766,8 +767,8 @@ fn ShowcaseModel::dialog(
       @views.StateViewAction::new(label="Dismiss", message=HideDialog),
     ),
     theme~,
-    width=360.0,
-    height=260.0,
+    width=440.0,
+    height=286.0,
   )
 }
 
