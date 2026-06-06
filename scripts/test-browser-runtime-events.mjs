@@ -342,6 +342,74 @@ withMockClock(tick => {
   expectKinds("mouse events suppress delayed click fallback", events, [23, 24]);
 });
 
+const touch = (identifier, clientX, clientY) => ({
+  identifier,
+  clientX,
+  clientY,
+});
+
+withMockClock(() => {
+  withPointerEventSupport(true, () => {
+    const { canvas, events } = createRuntime();
+    const start = touch(1, 120, 220);
+    const move = touch(1, 112, 160);
+    canvas.dispatch("touchstart", {
+      touches: [start],
+      changedTouches: [start],
+    });
+    const touchMove = canvas.dispatch("touchmove", {
+      touches: [move],
+      changedTouches: [move],
+    });
+    canvas.dispatch("touchend", {
+      touches: [],
+      changedTouches: [move],
+    });
+    expectKinds(
+      "touch drag synthesizes pointer position and wheel scrolling",
+      events,
+      [21, 30],
+    );
+    if (events[1].arg0 !== 8 || events[1].arg1 !== 60) {
+      console.error("touch scroll delta should match browser wheel direction");
+      console.error(JSON.stringify(events, null, 2));
+      process.exit(1);
+    }
+    if (!touchMove.defaultPrevented) {
+      console.error("touch scroll should prevent the browser fallback pan");
+      process.exit(1);
+    }
+  });
+});
+
+withMockClock(() => {
+  withPointerEventSupport(false, () => {
+    const { canvas, events } = createRuntime();
+    const start = touch(2, 80, 120);
+    const move = touch(2, 80, 90);
+    canvas.dispatch("touchstart", {
+      touches: [start],
+      changedTouches: [start],
+    });
+    canvas.dispatch("touchmove", {
+      touches: [move],
+      changedTouches: [move],
+    });
+    canvas.dispatch("touchend", {
+      touches: [],
+      changedTouches: [move],
+    });
+    canvas.dispatch("mousedown", { clientX: 80, clientY: 120 });
+    canvas.dispatch("mouseup", { clientX: 80, clientY: 90 });
+    canvas.dispatch("click", { clientX: 80, clientY: 90 });
+    expectKinds(
+      "touch fallback keeps pointer activation and scroll without PointerEvent",
+      events,
+      [23, 21, 30, 24],
+    );
+  });
+});
+
 withMockClock(() => {
   const { canvas, events } = createRuntime();
   canvas.dispatch("click", { clientX: 72, clientY: 84 });
