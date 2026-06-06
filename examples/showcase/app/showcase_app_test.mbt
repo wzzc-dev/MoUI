@@ -548,23 +548,54 @@ test "showcase covers text media controls and layout sections" {
     .update(@app.ShowcaseMsg::SelectSection("data"))
     .runtime(width=960.0, height=620.0)
   let scheduled = Ref(0)
-  let driver = @host.HostRuntimeDriver::new(
-    runtime=host_runtime,
-    schedule_redraw=() => scheduled.val = scheduled.val + 1,
-  )
+  let driver = @host.HostRuntimeDriver::new(runtime=host_runtime, schedule_redraw=() => {
+    scheduled.val = scheduled.val + 1
+  })
   guard text_frame(driver.draw_commands(), "Active") is Some(active_frame) else {
     fail("expected Active frame")
   }
+  let active_scheduled = scheduled.val
   host_click_frame(driver, active_frame)
-  let after_click = driver.event_result()
-  assert_true(after_click.redraw_requested)
-  assert_true(scheduled.val > 0)
+  let after_active_click = driver.event_result()
+  assert_true(after_active_click.redraw_requested)
+  assert_true(scheduled.val > active_scheduled)
   driver.begin_redraw()
-  ignore(driver.draw_commands())
+  let active_host_commands = driver.draw_commands()
+  assert_true(has_text(active_host_commands, "4 results"))
   driver.finish_redraw()
-  let after_redraw = driver.event_result()
-  assert_false(after_redraw.needs_redraw)
-  assert_false(after_redraw.redraw_requested)
+  let after_active_redraw = driver.event_result()
+  assert_false(after_active_redraw.needs_redraw)
+  assert_false(after_active_redraw.redraw_requested)
+  guard text_frame(driver.draw_commands(), "Review") is Some(review_frame) else {
+    fail("expected Review frame")
+  }
+  let review_scheduled = scheduled.val
+  host_click_frame(driver, review_frame)
+  let after_review_click = driver.event_result()
+  assert_true(after_review_click.redraw_requested)
+  assert_true(scheduled.val > review_scheduled)
+  driver.begin_redraw()
+  let review_host_commands = driver.draw_commands()
+  assert_true(has_text(review_host_commands, "2 results"))
+  driver.finish_redraw()
+  let after_review_redraw = driver.event_result()
+  assert_false(after_review_redraw.needs_redraw)
+  assert_false(after_review_redraw.redraw_requested)
+  guard text_frame(driver.draw_commands(), "Clear") is Some(clear_frame) else {
+    fail("expected Clear frame")
+  }
+  let clear_scheduled = scheduled.val
+  host_click_frame(driver, clear_frame)
+  let after_clear_click = driver.event_result()
+  assert_true(after_clear_click.redraw_requested)
+  assert_true(scheduled.val > clear_scheduled)
+  driver.begin_redraw()
+  let clear_host_commands = driver.draw_commands()
+  assert_true(has_text(clear_host_commands, "10 results"))
+  driver.finish_redraw()
+  let after_clear_redraw = driver.event_result()
+  assert_false(after_clear_redraw.needs_redraw)
+  assert_false(after_clear_redraw.redraw_requested)
   let layout_commands = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("layout"))
     .runtime(width=760.0, height=420.0)
@@ -1231,7 +1262,10 @@ fn click_frame(runtime : @core.AppRuntime, frame : @core.Rect) -> Unit {
 }
 
 ///|
-fn host_click_frame(driver : @host.HostRuntimeDriver, frame : @core.Rect) -> Unit {
+fn host_click_frame(
+  driver : @host.HostRuntimeDriver,
+  frame : @core.Rect,
+) -> Unit {
   let position = @core.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
