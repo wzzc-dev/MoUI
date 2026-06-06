@@ -1234,7 +1234,7 @@ test "dialog composes custom content dismiss and action messages" {
         @views.StateViewAction::new(label="Cancel", message="cancel"),
       ),
       dismiss_action=Some(
-        @views.StateViewAction::new(label="Close", message="close"),
+        @views.StateViewAction::new(label="Dismiss", message="dismiss"),
       ),
       width=420.0,
       height=260.0,
@@ -1249,20 +1249,53 @@ test "dialog composes custom content dismiss and action messages" {
   assert_true(has_text(draw, "Mira"))
   assert_true(has_text(draw, "Save"))
   assert_true(has_text(draw, "Cancel"))
+  guard text_frame(draw, "Edit project") is Some(title_frame) else {
+    fail("expected dialog title")
+  }
+  guard text_frame(draw, "Custom dialog content") is Some(subtitle_frame) else {
+    fail("expected dialog subtitle")
+  }
+  guard text_frame(draw, "Owner") is Some(owner_frame) else {
+    fail("expected dialog body term")
+  }
+  guard text_frame(draw, "Active") is Some(active_frame) else {
+    fail("expected dialog body detail")
+  }
+  guard text_frame(draw, "Cancel") is Some(cancel_frame) else {
+    fail("expected secondary action")
+  }
+  guard text_frame(draw, "Save") is Some(save_frame) else {
+    fail("expected primary action")
+  }
+  guard text_frame(draw, "Dismiss") is Some(dismiss_frame) else {
+    fail("expected dismiss action")
+  }
+  guard smallest_rounded_brush_containing(draw, title_frame)
+    is Some(dialog_frame) else {
+    fail("expected dialog surface frame")
+  }
+  for
+    frame in [
+      title_frame, subtitle_frame, owner_frame, active_frame, cancel_frame, save_frame,
+      dismiss_frame,
+    ] {
+    assert_true(rect_contains_rect(dialog_frame, frame))
+  }
+  assert_true(owner_frame.origin.y > subtitle_frame.origin.y)
+  assert_true(cancel_frame.origin.y > active_frame.origin.y)
+  assert_true(save_frame.origin.x > cancel_frame.origin.x)
+  assert_true(dismiss_frame.origin.x > title_frame.origin.x)
   guard find_semantics_label(runtime.semantics(), "Edit project")
     is Some(dialog) else {
     fail("expected custom dialog semantics")
   }
   assert_true(dialog.role == @core.SemanticsRole::Dialog)
-  guard find_semantics_label(runtime.semantics(), "Close") is Some(close) else {
+  guard find_semantics_label(runtime.semantics(), "Dismiss") is Some(close) else {
     fail("expected dismiss action semantics")
   }
   assert_true(
     close.actions.any(action => action == @core.SemanticsAction::Dismiss),
   )
-  guard text_frame(draw, "Save") is Some(save_frame) else {
-    fail("expected primary action")
-  }
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
@@ -1311,14 +1344,14 @@ test "dialog host uses transparent scrim and keeps modal boundary visible" {
   )
   let draw = runtime.draw_commands()
   inspect(full_frame_solid_fill_count(draw), content="1")
-  assert_true(has_full_frame_solid_fill(draw, alpha=0.28))
+  assert_true(has_full_frame_solid_fill(draw, alpha=0.22))
   assert_true(has_text(draw, "Visible dialog"))
   assert_true(has_text(draw, "Bounded modal content"))
   assert_true(has_text(draw, "Close"))
   assert_true(draw.any(command => command is @core.DrawCommand::DrawShadow(_)))
   assert_true(
     draw.any(command => {
-      command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, 1.5)
+      command is @core.DrawCommand::StrokeRoundedRectBrush(_, _, 1.0)
     }),
   )
 }
