@@ -138,6 +138,13 @@ function Enable-MsvcC11Atomics {
   }
 }
 
+function Enable-MsvcGlobalC11ModeForCOnlyStubs {
+  Enable-MsvcC11Atomics
+  if ($env:CL -notmatch '(^|\s)/std:c11(\s|$)') {
+    $env:CL = "/std:c11 $env:CL".Trim()
+  }
+}
+
 function Resolve-WgpuNativeRoot {
   param([string]$ExplicitRoot)
 
