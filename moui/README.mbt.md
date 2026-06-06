@@ -188,12 +188,12 @@ Build the visual showcase on the Skia mainline:
 moon build examples/showcase/macos_skia --target native
 ```
 
-The `examples/showcase/macos` and `examples/showcase/macos_cosmic` entrypoints
+The `examples/showcase/macos_wgpu` and `examples/showcase/macos_wgpu_cosmic` entrypoints
 remain available as native WGPU diagnostics:
 
 ```sh
-moon build examples/showcase/macos --target native
-moon build examples/showcase/macos_cosmic --target native
+moon build examples/showcase/macos_wgpu --target native
+moon build examples/showcase/macos_wgpu_cosmic --target native
 ```
 
 Build and run the WYSIWYG Markdown editor on the Skia mainline:
@@ -206,8 +206,8 @@ moon build examples/markdown_editor/macos_skia --target native
 The WGPU Markdown editor entrypoint is still available for diagnostics:
 
 ```sh
-moon build examples/markdown_editor/macos --target native
-./_build/native/debug/build/examples/markdown_editor/macos/macos.exe
+moon build examples/markdown_editor/macos_wgpu --target native
+./_build/native/debug/build/examples/markdown_editor/macos_wgpu/macos_wgpu.exe
 ```
 
 Wrap a native example as a local `.app` bundle:
@@ -249,10 +249,10 @@ The Showcase also has Windows WGPU/Cosmic diagnostic entrypoints:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/showcase/windows `
+  -Package examples/showcase/windows_wgpu `
   -BuildOnly
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/showcase/windows_cosmic `
+  -Package examples/showcase/windows_wgpu_cosmic `
   -BuildOnly
 ```
 
@@ -268,7 +268,7 @@ The WGPU Markdown editor entrypoint remains available for diagnostics:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows `
+  -Package examples/markdown_editor/windows_wgpu `
   -BuildOnly
 ```
 
@@ -301,7 +301,7 @@ moon run examples/showcase/linux_skia --target native
 moon run examples/markdown_editor/linux_skia --target native
 ```
 
-The `examples/showcase/linux` and `examples/showcase/linux_cosmic` entrypoints
+The `examples/showcase/linux_wgpu` and `examples/showcase/linux_wgpu_cosmic` entrypoints
 remain available as native WGPU diagnostics when a Vulkan/WGPU stack is
 configured.
 
@@ -309,5 +309,5 @@ For headless validation, use a compositor such as Weston headless and set
 `WAYLAND_DISPLAY` to its socket before running the examples. The WGPU Linux
 text path composes the fontconfig/FreeType provider with Moon Cosmic fallback;
 that provider currently has a narrow native color-emoji path for explicit emoji
-family runs, while general text still falls back to Cosmic. `linux_cosmic`
+family runs, while general text still falls back to Cosmic. `linux_wgpu_cosmic`
 selects Moon Cosmic directly.

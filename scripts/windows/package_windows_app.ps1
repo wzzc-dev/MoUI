@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [string]$Package = "examples/showcase/windows",
+  [string]$Package = "examples/showcase/windows_wgpu",
   [string]$AppName = "",
   [string]$DistDir = "dist\windows",
   [switch]$NoBuild,

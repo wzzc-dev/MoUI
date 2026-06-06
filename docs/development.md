@@ -326,10 +326,10 @@ environment in the same PowerShell process:
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
 ```
 
-Use the plain `windows` entrypoint only for explicit native WGPU diagnostics:
+Use the `windows_wgpu` entrypoint only for explicit native WGPU diagnostics:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_wgpu --target native }"
 ```
 
 Manual manifest validation:

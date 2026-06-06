@@ -152,7 +152,7 @@ assertIncludes("docs/testing.md", "`moui/tests/text_conformance/`");
 assertIncludes("docs/text-system.md", "`moui/tests/text_conformance/`");
 assertIncludes("docs/architecture.md", "moui/tests/text_conformance/");
 assertIncludes("docs/architecture.md", "moui/tests/skia_renderer_smoke/native/");
-assertIncludes("docs/examples.md", "examples/markdown_editor/windows_cosmic");
+assertIncludes("docs/examples.md", "examples/markdown_editor/windows_wgpu_cosmic");
 assertIncludes("docs/examples.md", "moon test examples/counter/app --target native");
 assertIncludes("skills/moui-app-development-skill/SKILL.md", "moon build examples/counter/web_wasm --target wasm-gc");
 assertIncludes(

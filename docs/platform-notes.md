@@ -251,8 +251,8 @@ resolver-backed secondary windows and `exit_after_first_present` for first-frame
 smoke tests. `core` still owns only the neutral `FontSpec`, `TextSystem`
 contract, and deterministic fallback text system; it does not name concrete
 macOS font files.
-The `examples/showcase/macos` and `examples/showcase/macos_cosmic` entrypoints
-remain WGPU diagnostics; `macos_cosmic` selects `MoonCosmic` explicitly for
+The `examples/showcase/macos_wgpu` and `examples/showcase/macos_wgpu_cosmic` entrypoints
+remain WGPU diagnostics; `macos_wgpu_cosmic` selects `MoonCosmic` explicitly for
 comparison with the WGPU CoreText path.
 `backend/macos` also exposes an async pump variant for native app entrypoints
 that must run `moonbitlang/async` side work on the same thread as the AppKit
@@ -420,14 +420,14 @@ DirectWrite integration point while returning no platform layout/raster data,
 so the composed Cosmic fallback handles native text until the real DirectWrite
 engine lands. Choose `MoonCosmic` with
 `WindowsWgpuAppOptions::new(text_engine=...)`.
-The `examples/showcase/windows` and `examples/showcase/windows_cosmic`
-entrypoints remain WGPU diagnostics; `windows_cosmic` selects `MoonCosmic`
+The `examples/showcase/windows_wgpu` and `examples/showcase/windows_wgpu_cosmic`
+entrypoints remain WGPU diagnostics; `windows_wgpu_cosmic` selects `MoonCosmic`
 explicitly for comparison with the WGPU DirectWrite scaffold plus Cosmic
 fallback path. The `examples/showcase/windows_skia` entrypoint selects the
 Windows Skia provider for the mainline Showcase, and
 `examples/markdown_editor/windows_skia` selects it for the mainline editing
 workflow.
-The Markdown Editor also has `examples/markdown_editor/windows_cosmic` for the
+The Markdown Editor also has `examples/markdown_editor/windows_wgpu_cosmic` for the
 same explicit text-provider comparison on the editing workflow.
 
 Select Skia by importing `wzzc-dev/moui/backend/windows/skia` and using
@@ -529,7 +529,7 @@ be corrupted by cross-host reuse.
 The WGPU diagnostic text path in `backend/linux/wgpu` composes the Linux
 `render/wgpu/fontconfig` scaffold provider with the shared Moon Cosmic fallback.
 Choose `MoonCosmic` with `LinuxWgpuAppOptions::new(text_engine=...)`;
-`examples/showcase/linux_cosmic` selects the Moon Cosmic provider explicitly for
+`examples/showcase/linux_wgpu_cosmic` selects the Moon Cosmic provider explicitly for
 comparison.
 
 Select the native mainline Skia provider by importing
@@ -574,7 +574,7 @@ redraw, and clean shutdown. Add `--require-input` or
 input is observed. Record dependency-level facts with
 `.local_repos/window/scripts/record_moui_evidence.sh`; keep the MoUI Showcase
 `linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
-application-level evidence. Keep `linux` and `linux_cosmic` as WGPU diagnostic
+application-level evidence. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic
 evidence when a Vulkan/WGPU stack is configured.
 
 `examples/showcase/linux_skia` and `examples/markdown_editor/linux_skia` select

@@ -1,0 +1,12 @@
+import {
+  "wzzc-dev/moui/backend/linux/wgpu" @linux_wgpu_backend,
+  "examples/counter/app" @counter_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: { "native": { "cc-link-flags": "-lz" } },
+  targets: { "main.mbt": [ "native" ] },
+)
