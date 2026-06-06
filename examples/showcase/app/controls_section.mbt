@@ -153,7 +153,7 @@ fn ShowcaseModel::controls_section(
                   ),
                   @views.picker(
                     [
-                      @views.picker_item("native", "Native WGPU"),
+                      @views.picker_item("native", "Native Skia"),
                       @views.picker_item("web", "WebGPU"),
                       @views.picker_item("test", "Test renderer"),
                     ],

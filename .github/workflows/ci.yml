@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       run_slow_native_examples:
-        description: Build current-platform native examples on macOS and Linux.
+        description: Build current-platform Skia native examples on macOS and Linux.
         required: false
         default: false
         type: boolean
@@ -87,22 +87,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
-            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji \
-            libvulkan1 mesa-vulkan-drivers vulkan-tools
-
-      - name: Configure Linux software Vulkan adapter
-        run: |
-          export LIBGL_ALWAYS_SOFTWARE=1
-          export WGPU_BACKEND=vulkan
-          echo "LIBGL_ALWAYS_SOFTWARE=$LIBGL_ALWAYS_SOFTWARE" >> "$GITHUB_ENV"
-          echo "WGPU_BACKEND=$WGPU_BACKEND" >> "$GITHUB_ENV"
-          LVP_ICD="$(ls /usr/share/vulkan/icd.d/lvp_icd*.json 2>/dev/null | head -n 1 || true)"
-          if [ -n "$LVP_ICD" ]; then
-            echo "VK_ICD_FILENAMES=$LVP_ICD" >> "$GITHUB_ENV"
-          else
-            echo "::warning::lavapipe Vulkan ICD not found under /usr/share/vulkan/icd.d"
-          fi
-          vulkaninfo --summary || true
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji
 
       - name: Set up MoonBit
         run: |
@@ -147,7 +132,7 @@ jobs:
       - name: Package Showcase app bundle
         run: |
           sh scripts/package-macos-app.sh \
-            --package examples/showcase/macos \
+            --package examples/showcase/macos_skia \
             --name "MoUI Showcase" \
             --bundle-id dev.wzzc.moui.showcase \
             --version 0.1.0 \
@@ -156,9 +141,8 @@ jobs:
       - name: Build macOS native examples
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_slow_native_examples }}
         run: |
-          moon build examples/showcase/macos --target native
           moon build examples/showcase/macos_skia --target native
-          moon build examples/markdown_editor/macos --target native
+          moon build examples/markdown_editor/macos_skia --target native
 
       - name: Upload macOS package artifact
         uses: actions/upload-artifact@v4
@@ -224,17 +208,17 @@ jobs:
           . .\scripts\windows\msvc_env.ps1
           moon test moui/backend/windows --target native
           Enable-MsvcC11Atomics
-          moon test moui/backend/windows/wgpu --target native
+          moon test moui/backend/windows/skia --target native
 
-      - name: Build Showcase Windows entrypoint with MSVC
+      - name: Build Showcase Windows Skia entrypoint with MSVC
         shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 -Package examples/showcase/windows -BuildOnly
+        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly
 
-      - name: Package Showcase Windows folder with MSVC
+      - name: Package Showcase Windows Skia folder with MSVC
         shell: pwsh
         run: |
           powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
-            -Package examples/showcase/windows `
+            -Package examples/showcase/windows_skia `
             -AppName MoUIShowcase `
             -Version 0.1.0 `
             -BuildNumber $env:GITHUB_RUN_NUMBER
@@ -247,8 +231,9 @@ jobs:
           if-no-files-found: error
 
   renderer-proof-wgpu-native:
-    name: Native WGPU renderer proof (${{ matrix.platform }})
+    name: Native WGPU renderer diagnostic (${{ matrix.platform }})
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -547,7 +532,6 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ always() }}
     needs:
-      - renderer-proof-wgpu-native
       - renderer-proof-skia-native
       - web-runtime-presentation
     steps:

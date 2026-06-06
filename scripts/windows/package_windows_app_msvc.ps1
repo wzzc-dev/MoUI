@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [string]$Package = "examples/showcase/windows",
+  [string]$Package = "examples/showcase/windows_skia",
   [string]$AppName = "",
   [string]$DistDir = "dist\windows-msvc",
   [switch]$NoBuild,
@@ -82,6 +82,17 @@ function Ensure-WgpuNativeRoot {
   return (Resolve-Path -LiteralPath $extractRoot).Path
 }
 
+function Test-PackageUsesWgpu {
+  param([string]$PackagePath)
+
+  $pkgPath = Join-Path $repoRoot (Join-Path (Convert-PackagePath $PackagePath) "moon.pkg")
+  Require-Path $pkgPath "Missing MoonBit package manifest: $pkgPath"
+  $pkg = Get-Content -LiteralPath $pkgPath -Raw
+  $usesWgpuBackend = $pkg.Contains("wzzc-dev/moui/backend/windows/wgpu")
+  $usesWgpuRenderer = $pkg.Contains("wzzc-dev/moui/render/wgpu")
+  return ($usesWgpuBackend -or $usesWgpuRenderer)
+}
+
 function Find-ZlibRuntimeDll {
   $tripletRoot = $env:MOUI_MSVC_ZLIB_TRIPLET_ROOT
   if ([string]::IsNullOrWhiteSpace($tripletRoot)) {
@@ -120,7 +131,8 @@ if ([string]::IsNullOrWhiteSpace($AppName)) {
   $AppName = $packageParent
 }
 
-$resolvedWgpuRoot = Ensure-WgpuNativeRoot $WgpuNativeRoot
+$usesWgpu = Test-PackageUsesWgpu $Package
+$resolvedWgpuRoot = if ($usesWgpu) { Ensure-WgpuNativeRoot $WgpuNativeRoot } else { "" }
 . (Join-Path $scriptDir "msvc_env.ps1") -VcpkgRoot $VcpkgRoot -WgpuNativeRoot $resolvedWgpuRoot
 Enable-MsvcC11Atomics
 
@@ -143,7 +155,12 @@ Push-Location $repoRoot
 try {
   Write-Host "==> repo root: $repoRoot"
   Write-Host "==> package: $Package"
-  Write-Host "==> WGPU native root: $resolvedWgpuRoot"
+  if ($usesWgpu) {
+    Write-Host "==> renderer route: native WGPU experimental"
+    Write-Host "==> WGPU native root: $resolvedWgpuRoot"
+  } else {
+    Write-Host "==> renderer route: native Skia mainline"
+  }
   if (-not $NoBuild) {
     & moon build $Package --target native
     if ($LASTEXITCODE -ne 0) {
@@ -160,21 +177,45 @@ try {
   New-Item -ItemType Directory -Path $appDir | Out-Null
 
   Copy-Item -LiteralPath $builtExe -Destination $appExe
-  Copy-Item -LiteralPath $resolvedWgpuRoot -Destination $wgpuAppRoot -Recurse
+  if ($usesWgpu) {
+    Copy-Item -LiteralPath $resolvedWgpuRoot -Destination $wgpuAppRoot -Recurse
+  }
 
   $zlibRuntime = Find-ZlibRuntimeDll
   $zlibRuntimeName = Split-Path -Leaf $zlibRuntime
   Copy-Item -LiteralPath $zlibRuntime -Destination (Join-Path $appDir $zlibRuntimeName)
 
-  $runCmd = @(
-    "@echo off",
-    "setlocal",
-    'set "MBT_WGPU_NATIVE_ROOT=%~dp0wgpu-native"',
-    'set "PATH=%~dp0;%~dp0wgpu-native\lib;%PATH%"',
-    '"%~dp0' + $AppName + '.exe" %*',
-    "exit /b %ERRORLEVEL%"
-  )
+  if ($usesWgpu) {
+    $runCmd = @(
+      "@echo off",
+      "setlocal",
+      'set "MBT_WGPU_NATIVE_ROOT=%~dp0wgpu-native"',
+      'set "PATH=%~dp0;%~dp0wgpu-native\lib;%PATH%"',
+      '"%~dp0' + $AppName + '.exe" %*',
+      "exit /b %ERRORLEVEL%"
+    )
+  } else {
+    $runCmd = @(
+      "@echo off",
+      "setlocal",
+      'set "PATH=%~dp0;%PATH%"',
+      '"%~dp0' + $AppName + '.exe" %*',
+      "exit /b %ERRORLEVEL%"
+    )
+  }
   Set-Content -LiteralPath $runCmdPath -Value $runCmd -Encoding ASCII
+
+  $runtimeFiles = @(
+    "run.cmd",
+    $zlibRuntimeName
+  )
+  if ($usesWgpu) {
+    $runtimeFiles = @(
+      "run.cmd",
+      "wgpu-native\lib\wgpu_native.dll",
+      $zlibRuntimeName
+    )
+  }
 
   $manifest = @{
     schemaVersion = 1
@@ -186,11 +227,7 @@ try {
     buildNumber = $BuildNumber
     executable = (Split-Path -Leaf $appExe)
     bundleName = $AppName
-    runtimeFiles = @(
-      "run.cmd",
-      "wgpu-native\lib\wgpu_native.dll",
-      $zlibRuntimeName
-    )
+    runtimeFiles = $runtimeFiles
   } | ConvertTo-Json -Depth 4
   Write-Utf8NoBom $manifestPath $manifest
 

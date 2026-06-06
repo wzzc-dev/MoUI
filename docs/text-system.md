@@ -4,6 +4,9 @@ MoUI keeps text measurement in the platform-neutral runtime while letting
 native and Web hosts install the renderer-backed text system that matches their
 platform. The public boundary is `@core.TextSystem`; measurement-only legacy
 shapes are no longer part of the framework contract.
+Native Skia is the recommended native renderer/text route, Web uses browser
+WebGPU plus browser text integration, and the native WGPU provider stack below
+remains an explicit diagnostic route for comparing provider behavior.
 
 ## Runtime Boundary
 
