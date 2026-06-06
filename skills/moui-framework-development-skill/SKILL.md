@@ -81,9 +81,11 @@ Use this skill when editing or reviewing:
   effect-task dispatch counters, same-key task descriptor-kind changes reported
   with `EffectTaskKindChanged`, ignored program-dispatch counters for late
   callbacks after runtime destruction, and aggregate program-runtime inspector
-  counters; message
-  queue diagnostics stay
-  platform-neutral through enqueue/drain/pending counters; pipeline cost
+  counters; message queue drains are bounded runtime turns so synchronous
+  click/effect/task/subscription self-queues keep FIFO order but leave excess
+  work pending instead of monopolizing the current host callback; message queue
+  diagnostics stay platform-neutral through enqueue/drain/pending counters;
+  pipeline cost
   diagnostics stay platform-neutral through rebuild/layout/paint/draw-command
   pass counters and non-mutating structured dirty-state summaries with dirty
   element ids for pending rebuild/layout/paint/redraw work; subscription
