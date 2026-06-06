@@ -344,8 +344,7 @@ pub fn skia_text_visual_order_proof(
         glyph_count,
         width: layout.width,
         visual_order_differs: !skia_string_arrays_equal(
-          logical_clusters,
-          visual_clusters,
+          logical_clusters, visual_clusters,
         ),
       })
     }
@@ -1805,7 +1804,9 @@ fn skia_resolved_text_segments(
 
 ///|
 fn skia_mixed_text_segments(text : String) -> Array[String] {
-  let clusters = skia_bidi_visual_cluster_texts(skia_grapheme_cluster_texts(text))
+  let clusters = skia_bidi_visual_cluster_texts(
+    skia_grapheme_cluster_texts(text),
+  )
   skia_mixed_text_segments_from_clusters(clusters)
 }
 
@@ -1841,7 +1842,8 @@ fn skia_bidi_visual_cluster_texts(clusters : Array[String]) -> Array[String] {
     let rtl = skia_cluster_is_rtl(clusters[index])
     let start = index
     index = index + 1
-    while index < clusters.length() && skia_cluster_is_rtl(clusters[index]) == rtl {
+    while index < clusters.length() &&
+          skia_cluster_is_rtl(clusters[index]) == rtl {
       index = index + 1
     }
     if rtl {
