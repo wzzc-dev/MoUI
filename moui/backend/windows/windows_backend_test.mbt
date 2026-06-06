@@ -17,9 +17,10 @@ test "windows backend converts resize event" {
 test "windows capability summary exposes native service readiness" {
   let summary = windows_capability_summary()
   inspect(summary.label, content="Windows host")
-  inspect(summary.service_count(), content="5")
+  inspect(summary.service_count(), content="6")
   inspect(summary.input_count(), content="7")
   inspect(summary.services.menus, content="true")
+  inspect(summary.services.file_access, content="true")
   inspect(summary.drag_drop_ready, content="true")
   inspect(summary.multi_window, content="true")
   inspect(summary.native_accessibility_ready, content="false")

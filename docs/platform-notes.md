@@ -85,8 +85,8 @@ do not mutate the element tree directly.
 - Renderers consume `DrawCommand` values and remain separate from view
 constructors and platform event conversion.
 - Typed host services are routed through `HostServiceBridge`, with explicit
-  capability flags for clipboard, menus, file dialogs, URL opening, and system
-  theme. Unsupported services should return `Unavailable` responses instead of
+  capability flags for clipboard, menus, file dialogs, text-file access, URL
+  opening, and system theme. Unsupported services should return `Unavailable` responses instead of
   leaking platform checks into `core` or `views`.
 - App-owned route history lives in `core` as `RouteHistoryState`, where it can
   model deep-link strings, back/forward cursors, and `RouterSnapshot`
@@ -160,12 +160,18 @@ surrounding-text updates. This is browser text-input evidence; it does not make
 browser text shaping deterministic across browsers.
 The active Web runtime now drains pending async service requests into browser
 callbacks. Clipboard reads complete through exported wasm callback functions.
-Open-file and directory dialogs use a hidden browser file input and return
-browser-exposed file names or relative paths, which app-owned handlers can
-receive through typed completion messages from
-`HostAppServices::completion_subscription`. Save dialogs use the File System Access API
-when `showSaveFilePicker` is available and otherwise complete as an unavailable
-service. Canceled file pickers return an empty selection.
+When `showOpenFilePicker` is available, open-file selection keeps the browser
+file handle, reads the chosen `File.text()`, and caches the content under the
+browser-exposed file name so app-owned handlers can follow the file-dialog
+selection with the shared text-file read service. The hidden file input remains
+the fallback open/directory path; fallback open can import text but does not
+produce a writable handle, while directory selection still returns
+browser-exposed relative names. Typed completions are delivered through
+`HostAppServices::completion_subscription`. Save dialogs use the File System
+Access API when `showSaveFilePicker` is available, keep the selected handle,
+and route later Web text-file writes through `createWritable()`; without a
+writable handle, the write completes as unavailable. Canceled file pickers
+return an empty selection.
 The browser host import reads `prefers-color-scheme` at startup and listens for
 media-query changes through `window/web`; MoUI maps those events into runtime
 environment color-scheme updates.
@@ -213,7 +219,8 @@ native host never imports `render/wgpu`, `render/skia`, `wgpu_mbt`, or
 The macOS service bridge routes text clipboard requests through `NSPasteboard`,
 opens URLs through `NSWorkspace`, presents open/save/directory dialogs through
 `NSOpenPanel` and `NSSavePanel`, presents command menus at the current pointer
-position through `NSMenu`, and reports the effective light/dark system
+position through `NSMenu`, reads/writes UTF-8 text files through the shared
+text-file service contract, and reports the effective light/dark system
 appearance through the shared `HostServiceBridge` contract.
 The native app entrypoint applies that reported appearance to the runtime
 environment before creating the host driver, so components see the system color
@@ -379,7 +386,8 @@ clipboard requests are implemented through the Win32
 boundary. The Windows service bridge also opens URLs through `ShellExecuteW`,
 presents basic open/save/directory dialogs through the Win32 common dialog and
 shell APIs, presents command menus at the current cursor position through
-`TrackPopupMenu`, and reports light/dark system theme from the current user's
+`TrackPopupMenu`, reads/writes UTF-8 text files through the shared text-file
+service contract, and reports light/dark system theme from the current user's
 `AppsUseLightTheme` registry value.
 The native app entrypoint applies that reported theme to the runtime environment
 before creating the host driver, matching the macOS startup path. Windows
@@ -571,8 +579,8 @@ text-system follow-up rather than a Linux backend responsibility.
 
 Remaining Linux gaps stay visible in `backend/linux.readiness()`:
 
-- Clipboard, menus, file dialogs, drag/drop, and AT-SPI native bindings are not
-  implemented yet.
+- Clipboard, menus, file dialogs, text-file access, drag/drop, and AT-SPI native
+  bindings are not implemented yet.
 - Basic US-QWERTY keyboard character input is derived from Wayland key events;
   Wayland text-input protocol support and IME/composition requests are still
   reported as unsupported until the window package exposes that protocol

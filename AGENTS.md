@@ -28,7 +28,8 @@ paths, or abstractions that only preserve old shapes.
 - `views/` is a facade over core primitive builders. Public constructors return
   opaque `@core.View[Msg]`; `ViewSpec` and node payloads stay inside `core`.
 - `backend/host/` defines shared host event, surface, input, async
-  host-service, host-event fanout subscription adapters, window-scoped subscription adapters,
+  host-service including clipboard, file-dialog, text-file, URL, menu, and
+  system-theme service contracts, host-event fanout subscription adapters, window-scoped subscription adapters,
   platform event-source bundles for feeding normalized Web/native host and window
   events into app-owned subscriptions,
   scheduler-backed timer subscription adapters, route/deep-link subscription adapters,
@@ -48,7 +49,8 @@ paths, or abstractions that only preserve old shapes.
   and renderer-neutral provider hooks. They must not import `render/wgpu`,
   `render/skia`, `wgpu_mbt`, or `moui_skia`. `backend/web/` is the browser
   wasm-gc host, including the browser history route bridge that feeds
-  `HostRouteSource` and keeps shared app route history app-owned.
+  `HostRouteSource`, browser async file-open/save text completion for shared
+  text-file reads/writes, and shared app route history that stays app-owned.
 - `backend/macos/wgpu`, `backend/windows/wgpu`, and `backend/linux/wgpu`
   provide native WGPU renderer providers, including provider-owned
   `HostAsyncImageLoader` hooks that call renderer-owned source decode helpers

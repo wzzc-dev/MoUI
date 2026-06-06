@@ -1,4 +1,6 @@
 import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/backend/macos/wgpu" @macos_wgpu,
   "examples/markdown_editor/app",
 }
