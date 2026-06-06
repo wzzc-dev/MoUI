@@ -6,20 +6,9 @@ fn ShowcaseModel::catalog_shell(
   offset : Double,
   opacity : Double,
 ) -> @core.View[ShowcaseMsg] {
-  let router = @core.RouterState::new(initial=self.route_history.current())
   split_view(
     primary=self.sidebar(theme, metrics),
-    detail=@views.router_stack(
-      router,
-      self.destinations(theme, metrics, offset, opacity),
-      fallback=self.section_panel(
-        theme,
-        "Missing section",
-        "The selected route is not in the Showcase catalog.",
-        text("Route: " + self.selected_section, width=280.0, height=28.0),
-        metrics~,
-      ),
-    ),
+    detail=self.current_destination(theme, metrics, offset, opacity),
     primary_width=metrics.sidebar_width,
     detail_width=metrics.detail_width,
     height=metrics.panel_height,
@@ -28,75 +17,51 @@ fn ShowcaseModel::catalog_shell(
 }
 
 ///|
-fn ShowcaseModel::destinations(
+fn ShowcaseModel::current_destination(
   self : ShowcaseModel,
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
   offset : Double,
   opacity : Double,
-) -> Array[@views.NavigationDestination[ShowcaseMsg]] {
-  [
-    @views.navigation_destination(
-      route="overview",
-      view=self.overview_section(theme, metrics, offset, opacity),
-    ),
-    @views.navigation_destination(
-      route="text-media",
-      view=self.text_media_section(theme, metrics, opacity),
-    ),
-    @views.navigation_destination(
-      route="controls",
-      view=self.controls_section(theme, metrics),
-    ),
-    @views.navigation_destination(
-      route="forms",
-      view=self.forms_section(theme, metrics),
-    ),
-    @views.navigation_destination(
-      route="data",
-      view=self.data_section(theme, metrics),
-    ),
-    @views.navigation_destination(
-      route="layout",
-      view=self.layout_section(theme, metrics),
-    ),
-    @views.navigation_destination(
-      route="navigation",
-      view=self.navigation_section(theme, metrics),
-    ),
-    @views.navigation_destination(
-      route="feedback",
-      view=self.feedback_section(theme, metrics),
-    ),
-    @views.navigation_destination(
-      route="theme-renderer",
-      view=self.theme_renderer_section(theme, metrics, opacity),
-    ),
-    @views.navigation_destination(
-      route="runtime-renderer",
-      view=self.theme_renderer_section(theme, metrics, opacity),
-    ),
-    @views.navigation_destination(
-      route="diagnostics",
-      view=self.diagnostics_section(theme, metrics),
-    ),
-    @views.navigation_destination(
-      route="examples",
-      view=self.examples_section(theme, metrics),
-    ),
-    @views.navigation_destination(
-      route="advanced-rendering",
-      view=self.advanced_rendering_section(theme, metrics),
-    ),
-    @views.navigation_destination(
-      route="text-diagnostics",
-      view=self.text_diagnostics_section(theme, metrics),
-    ),
-    @views.navigation_destination(
-      route="interaction-lab",
-      view=self.interaction_lab_section(theme, metrics),
-    ),
-  ]
+) -> @core.View[ShowcaseMsg] {
+  let route = self.route_history.current().path
+  if route == "overview" {
+    self.overview_section(theme, metrics, offset, opacity)
+  } else if route == "text-media" {
+    self.text_media_section(theme, metrics, opacity)
+  } else if route == "controls" {
+    self.controls_section(theme, metrics)
+  } else if route == "forms" {
+    self.forms_section(theme, metrics)
+  } else if route == "data" {
+    self.data_section(theme, metrics)
+  } else if route == "layout" {
+    self.layout_section(theme, metrics)
+  } else if route == "navigation" {
+    self.navigation_section(theme, metrics)
+  } else if route == "feedback" {
+    self.feedback_section(theme, metrics)
+  } else if route == "theme-renderer" || route == "runtime-renderer" {
+    self.theme_renderer_section(theme, metrics, opacity)
+  } else if route == "diagnostics" {
+    self.diagnostics_section(theme, metrics)
+  } else if route == "examples" {
+    self.examples_section(theme, metrics)
+  } else if route == "advanced-rendering" {
+    self.advanced_rendering_section(theme, metrics)
+  } else if route == "text-diagnostics" {
+    self.text_diagnostics_section(theme, metrics)
+  } else if route == "interaction-lab" {
+    self.interaction_lab_section(theme, metrics)
+  } else {
+    self.section_panel(
+      theme,
+      "Missing section",
+      "The selected route is not in the Showcase catalog.",
+      text("Route: " + self.selected_section, width=280.0, height=28.0),
+      metrics~,
+    )
+  }
 }
 
 ///|

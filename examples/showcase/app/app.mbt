@@ -16,6 +16,9 @@ pub(all) struct ShowcaseModel {
   selected_section : String
   route_history : @core.RouteHistoryState
   filter : String
+  data_filter_query : String
+  data_filter_active : Bool
+  data_filter_review : Bool
   slider_value : Double
   picker_value : String
   date_value : @core.DateValue
@@ -55,6 +58,10 @@ pub(all) enum ShowcaseMsg {
   TabSelected(String)
   ClearFilter
   FilterChanged(String)
+  DataFilterQueryChanged(String)
+  DataActiveFilterChanged(Bool)
+  DataReviewFilterChanged(Bool)
+  ClearDataFilters
   DraftChanged(String)
   SliderChanged(Double)
   PickerSelected(String)
@@ -132,6 +139,9 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
       source="showcase",
     ),
     filter: "",
+    data_filter_query: "atlas",
+    data_filter_active: true,
+    data_filter_review: false,
     slider_value: 0.64,
     picker_value: "native",
     date_value: @core.DateValue::new(year=2026, month=5, day=21),
@@ -227,6 +237,16 @@ pub fn ShowcaseModel::update(
     TabSelected(route) => { ..self, tab: route }
     ClearFilter => { ..self, filter: "" }
     FilterChanged(value) => { ..self, filter: value }
+    DataFilterQueryChanged(value) => { ..self, data_filter_query: value }
+    DataActiveFilterChanged(value) => { ..self, data_filter_active: value }
+    DataReviewFilterChanged(value) => { ..self, data_filter_review: value }
+    ClearDataFilters =>
+      {
+        ..self,
+        data_filter_query: "",
+        data_filter_active: false,
+        data_filter_review: false,
+      }
     DraftChanged(value) => { ..self, draft: value }
     SliderChanged(value) => { ..self, slider_value: value }
     PickerSelected(value) => { ..self, picker_value: value }
