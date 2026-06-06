@@ -25,11 +25,20 @@ Options:
 EOF
 }
 
+reject_legacy_link_mode_env() {
+  if [[ -n "${MOUI_SKIA_SKIA_LINK_MODE+x}" || -n "${MOUI_SKIA_MACOS_LINK_MODE+x}" ]]; then
+    echo "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto." >&2
+    exit 2
+  fi
+}
+
+reject_legacy_link_mode_env
+
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 platform="auto"
 arch="auto"
 config="Release"
-link_mode="${MOUI_SKIA_SKIA_LINK_MODE:-${MOUI_SKIA_MACOS_LINK_MODE:-static}}"
+link_mode="${MOUI_SKIA_LINK_MODE:-static}"
 tag=""
 cache_dir=".skia-cache/release"
 args=()

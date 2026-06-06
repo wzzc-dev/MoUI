@@ -3,6 +3,8 @@ param(
   [string] $SkiaInclude = $env:MOUI_SKIA_SKIA_INCLUDE,
   [string] $SkiaZip = $env:MOUI_SKIA_SKIA_ZIP,
   [string] $SkiaLibDir = $env:MOUI_SKIA_SKIA_LIB_DIR,
+  [ValidateSet("static", "dynamic", "auto")]
+  [string] $SkiaLinkMode = $(if ($env:MOUI_SKIA_LINK_MODE) { $env:MOUI_SKIA_LINK_MODE } else { "static" }),
   [string] $ExtraCcFlags = $env:MOUI_SKIA_EXTRA_CC_FLAGS,
   [string] $ExtraLinkFlags = $env:MOUI_SKIA_EXTRA_LINK_FLAGS,
   [string] $Output = "native/moon.pkg",
@@ -13,6 +15,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+if ($null -ne [Environment]::GetEnvironmentVariable("MOUI_SKIA_SKIA_LINK_MODE") -or
+    $null -ne [Environment]::GetEnvironmentVariable("MOUI_SKIA_MACOS_LINK_MODE")) {
+  throw "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto."
+}
+
 if ($Write -and $Check) {
   throw "-Write and -Check cannot be used together"
 }
@@ -21,19 +28,42 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "windows-msvc-skia-paths.ps1")
 
 function Resolve-SkiaMsvcLibrary {
-  param([Parameter(Mandatory = $true)][string] $LibDir)
-
-  $candidates = @(
-    (Join-Path $LibDir "skia.lib"),
-    (Join-Path $LibDir "skia.dll.lib")
+  param(
+    [Parameter(Mandatory = $true)][string] $LibDir,
+    [Parameter(Mandatory = $true)][string] $LinkMode
   )
-  foreach ($candidate in $candidates) {
-    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
-      return $candidate
+
+  $staticLib = Join-Path $LibDir "skia.lib"
+  $dynamicImportLib = Join-Path $LibDir "skia.dll.lib"
+  $dynamicDll = Join-Path $LibDir "skia.dll"
+  $resolvedLinkMode = $LinkMode.Trim().ToLowerInvariant()
+  if ($resolvedLinkMode -eq "auto") {
+    if ((Test-Path -LiteralPath $dynamicDll -PathType Leaf) -and
+        (Test-Path -LiteralPath $dynamicImportLib -PathType Leaf)) {
+      $resolvedLinkMode = "dynamic"
+    } else {
+      $resolvedLinkMode = "static"
     }
   }
 
-  throw "Skia MSVC library was not found in $LibDir; expected skia.lib or skia.dll.lib"
+  if ($resolvedLinkMode -eq "dynamic") {
+    if (!(Test-Path -LiteralPath $dynamicDll -PathType Leaf)) {
+      throw "MOUI_SKIA_LINK_MODE=dynamic requested, but skia.dll was not found in $LibDir"
+    }
+    if (Test-Path -LiteralPath $dynamicImportLib -PathType Leaf) {
+      return $dynamicImportLib
+    }
+    if (Test-Path -LiteralPath $staticLib -PathType Leaf) {
+      return $staticLib
+    }
+    throw "MOUI_SKIA_LINK_MODE=dynamic requested, but skia.dll.lib or skia.lib was not found in $LibDir"
+  }
+
+  if (Test-Path -LiteralPath $staticLib -PathType Leaf) {
+    return $staticLib
+  }
+
+  throw "MOUI_SKIA_LINK_MODE=static requested, but skia.lib was not found in $LibDir"
 }
 
 $resolvedPaths = Resolve-MouiSkiaMsvcPaths `
@@ -46,7 +76,7 @@ $resolvedPaths = Resolve-MouiSkiaMsvcPaths `
 $resolvedRoot = $resolvedPaths.Root
 $resolvedIncludeRoot = $resolvedPaths.IncludeRoot
 $resolvedLibDir = $resolvedPaths.LibDir
-$skiaLib = Resolve-SkiaMsvcLibrary -LibDir $resolvedLibDir
+$skiaLib = Resolve-SkiaMsvcLibrary -LibDir $resolvedLibDir -LinkMode $SkiaLinkMode
 
 if ([System.IO.Path]::IsPathRooted($Output)) {
   $resolvedOutput = $Output

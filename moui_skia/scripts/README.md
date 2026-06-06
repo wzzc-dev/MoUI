@@ -74,7 +74,7 @@ real-smoke runs. The locked release lives in `../skia-provider-lock.json` and
 currently points at tag `dev-6d73578a36`, commit
 `6d73578a36506d10bc044e920cc71037982e481d`, config `Release`. Static linking is
 the default; dynamic assets are selected explicitly with
-`MOUI_SKIA_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic`.
+`MOUI_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic`.
 
 Fetch or inspect the selected package with:
 
@@ -423,16 +423,15 @@ executing the smoke binary.
 The macOS helpers accept the same `MOUI_SKIA_*` environment defaults as Linux:
 `MOUI_SKIA_SKIA_INCLUDE`, `MOUI_SKIA_SKIA_LIB_DIR`, `MOUI_SKIA_SKIA_LIB`,
 `MOUI_SKIA_SKIA_REV`, `MOUI_SKIA_EXTRA_GN_ARGS`, `MOUI_SKIA_EXTRA_CC_FLAGS`, and
-`MOUI_SKIA_EXTRA_LINK_FLAGS`. They also accept
-`MOUI_SKIA_SKIA_LINK_MODE=static|dynamic|auto`; `MOUI_SKIA_MACOS_LINK_MODE`
-remains a compatibility alias. Command-line arguments and workflow inputs
+`MOUI_SKIA_EXTRA_LINK_FLAGS`. `MOUI_SKIA_LINK_MODE=static|dynamic|auto`
+controls the Skia library mode. Command-line arguments and workflow inputs
 override environment variables.
 
 The module-level prebuild hook uses the same environment names for direct
 `moon build`, `moon test`, and `moon run` commands. Native real-Skia
 configuration is enabled by default; set `MOUI_SKIA_ENABLE_PREBUILD_SKIA=0` or
 `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` to keep the fallback-unavailable native
-compile. On macOS, `MOUI_SKIA_SKIA_LINK_MODE=auto` selects `libskia.dylib` when
+compile. On macOS, `MOUI_SKIA_LINK_MODE=auto` selects `libskia.dylib` when
 that file exists in `MOUI_SKIA_SKIA_LIB_DIR`, otherwise it selects `libskia.a`.
 
 To generate a persistent `native/moon.pkg` for an existing macOS Skia build,
