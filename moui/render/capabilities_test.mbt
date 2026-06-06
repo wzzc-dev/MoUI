@@ -766,9 +766,9 @@ test "renderer capability follow ups stay focused on incomplete features" {
 test "renderer capability report exposes backend-driven entries" {
   let backends = @render.renderer_capability_backends()
   inspect(backends.length(), content="3")
-  assert_true(backends[0] == @render.RendererBackendKind::NativeWgpu)
-  assert_true(backends[1] == @render.RendererBackendKind::SkiaRasterNative)
-  assert_true(backends[2] == @render.RendererBackendKind::WebGpuWasm)
+  assert_true(backends[0] == @render.RendererBackendKind::SkiaRasterNative)
+  assert_true(backends[1] == @render.RendererBackendKind::WebGpuWasm)
+  assert_true(backends[2] == @render.RendererBackendKind::NativeWgpu)
   let wgpu = @render.renderer_backend_capabilities(
     @render.RendererBackendKind::NativeWgpu,
   )

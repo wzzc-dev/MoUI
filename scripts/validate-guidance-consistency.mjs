@@ -245,6 +245,18 @@ assertIncludes(
 assertIncludes("scripts/dev-check.sh", "node --check scripts/ci-renderer-proof-native.mjs");
 assertIncludes("scripts/dev-check.sh", "sh -n scripts/ci-renderer-proof-native.sh");
 assertIncludes("scripts/dev-check.sh", "sh -n scripts/ci-renderer-proof-summary.sh");
+assertIncludes("scripts/dev-check.sh", "--wgpu-experimental");
+assertIncludes("scripts/dev-check.sh", "Skipping native WGPU renderer diagnostics");
+assertIncludes("scripts/conformance-check.sh", "--wgpu-experimental");
+assertIncludes(
+  "scripts/conformance-check.sh",
+  "Native WGPU entrypoints are retained as experimental diagnostics outside this mainline manifest.",
+);
+assertIncludes("moui/README.mbt.md", "native Skia raster");
+assertIncludes(
+  "moui/render/renderer.mbt",
+  "RendererSelection::Backend(RendererBackendKind::SkiaRasterNative)",
+);
 assertIncludes(".github/workflows/ci.yml", "web-runtime-presentation:");
 assertIncludes(".github/workflows/ci.yml", "name: Web runtime presentation");
 assertIncludes(".github/workflows/ci.yml", "runs-on: ubuntu-24.04");
@@ -260,6 +272,8 @@ assertIncludes(".github/workflows/ci.yml", "artifacts/platform-evidence/web/");
 assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/platform-runtime-evidence.json");
 assertIncludes(".github/workflows/ci.yml", "if-no-files-found: warn");
 assertIncludes(".github/workflows/ci.yml", "renderer-proof-wgpu-native:");
+assertIncludes(".github/workflows/ci.yml", "name: Native WGPU renderer diagnostic");
+assertIncludes(".github/workflows/ci.yml", "continue-on-error: true");
 assertIncludes(".github/workflows/ci.yml", "renderer-proof-skia-native:");
 assertIncludes(".github/workflows/ci.yml", "renderer-proof-summary:");
 assertIncludes(".github/workflows/ci.yml", "node scripts/ci-renderer-proof-native.mjs wgpu-native");
@@ -268,6 +282,13 @@ assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/renderer-proof
 assertIncludes(".github/workflows/ci.yml", "artifacts/platform-evidence/${{ matrix.platform }}/");
 assertIncludes(".github/workflows/ci.yml", "sh scripts/ci-renderer-proof-summary.sh artifacts/downloaded-renderer-proof");
 assertIncludes("scripts/ci-renderer-proof-summary.sh", "--artifact-root");
+assertIncludes("scripts/ci-renderer-proof-summary.sh", "skia-native-macos.json");
+assertIncludes("scripts/ci-renderer-proof-summary.sh", "skia-native-windows.json");
+assertIncludes("scripts/ci-renderer-proof-summary.sh", "skia-native-linux.json");
+assertIncludes("scripts/ci-renderer-proof-summary.sh", "webgpu-wasm-web.json");
+assertAbsent("scripts/ci-renderer-proof-summary.sh", "wgpu-native-macos.json");
+assertAbsent("scripts/ci-renderer-proof-summary.sh", "wgpu-native-windows.json");
+assertAbsent("scripts/ci-renderer-proof-summary.sh", "wgpu-native-linux.json");
 assertAbsent(".github/workflows/ci.yml", "run_real_skia_smoke");
 assertAbsent(".github/workflows/ci.yml", "real-skia-smoke:");
 assertIncludes(".github/workflows/moui-real-skia-smoke.yml", "name: MoUI Real Skia Smoke");
@@ -348,39 +369,39 @@ assertIncludes(
 );
 assertIncludes(
   "scripts/test-validate-platform-evidence-manifest.mjs",
-  "linux evidence requires linux_cosmic runtime command",
+  "linux evidence requires linux_skia runtime command",
 );
 assertIncludes(
   "scripts/test-record-native-skia-evidence.mjs",
-  "moon build examples/showcase/linux_cosmic --target native",
+  "moon build examples/showcase/linux_skia --target native",
 );
 assertIncludes(
   "scripts/test-record-native-skia-evidence.mjs",
-  "moon run examples/showcase/linux_cosmic --target native",
+  "moon run examples/showcase/linux_skia --target native",
 );
 assertIncludes(
   "scripts/conformance-check.sh",
-  "moon build examples/showcase/linux_cosmic --target native",
+  "moon build examples/showcase/linux_skia --target native",
 );
 assertIncludes(
   "scripts/conformance-check.sh",
-  "moon run examples/showcase/linux_cosmic --target native",
+  "moon run examples/showcase/linux_skia --target native",
 );
 assertIncludes(
   "scripts/validate-platform-evidence-manifest.mjs",
-  "moon build examples/showcase/linux_cosmic --target native",
+  "moon build examples/showcase/linux_skia --target native",
 );
 assertIncludes(
   "scripts/validate-platform-evidence-manifest.mjs",
-  "moon run examples/showcase/linux_cosmic --target native",
+  "moon run examples/showcase/linux_skia --target native",
 );
 assertIncludes(
   "scripts/test-record-platform-evidence-manifest.mjs",
-  "moon build examples/showcase/linux_cosmic --target native",
+  "moon build examples/showcase/linux_skia --target native",
 );
 assertIncludes(
   "scripts/test-record-platform-evidence-manifest.mjs",
-  "moon run examples/showcase/linux_cosmic --target native",
+  "moon run examples/showcase/linux_skia --target native",
 );
 assertIncludes("docs/release-readiness.md", "Platform evidence guard refresh");
 assertIncludes("docs/testing.md", "README.md` files under `artifacts/platform-evidence/`");

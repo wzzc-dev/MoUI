@@ -452,7 +452,7 @@ test "showcase covers text media controls and layout sections" {
       control_commands, "Input/A11y | ready | focus_key/FocusScope/semantics | Interaction Lab | native adapters tracked",
     ),
   )
-  assert_true(has_text(control_commands, "Native WGPU"))
+  assert_true(has_text(control_commands, "Native Skia"))
   assert_true(has_text(control_commands, "2026-5-21"))
   let form_commands = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("controls"))

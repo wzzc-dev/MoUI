@@ -14,12 +14,13 @@ RUN_RENDER=false
 RUN_PLATFORM_SERVICES=false
 RUN_TEXT=false
 RUN_TEXT_DIAGNOSTIC=false
+RUN_WGPU_EXPERIMENTAL=false
 CAPTURE_ARTIFACT_DIR="artifacts/conformance"
 
 usage() {
-  printf 'Usage: %s [--input] [--layout] [--render] [--platform-services] [--text] [--text-diagnostic] [--golden] [--bench] [--platform]\n' "$0"
+  printf 'Usage: %s [--input] [--layout] [--render] [--platform-services] [--text] [--text-diagnostic] [--golden] [--bench] [--platform] [--wgpu-experimental]\n' "$0"
   printf '\n'
-  printf 'Runs MoUI conformance-oriented package checks. With no focused flags, runs the default core/host/render/web/showcase suite. Focused flags select smaller suites. Optional modes add screenshot golden scaffolds, performance smoke builds, or current-platform backend checks.\n'
+  printf 'Runs MoUI conformance-oriented package checks. With no focused flags, runs the default core/host/render/web/showcase suite. Focused flags select smaller suites. Optional modes add screenshot golden scaffolds, performance smoke builds, current-platform backend checks, or native WGPU diagnostics.\n'
 }
 
 while [ "$#" -gt 0 ]; do
@@ -56,6 +57,9 @@ while [ "$#" -gt 0 ]; do
     --text-diagnostic)
       RUN_DEFAULT=false
       RUN_TEXT_DIAGNOSTIC=true
+      ;;
+    --wgpu-experimental)
+      RUN_WGPU_EXPERIMENTAL=true
       ;;
     --help|-h)
       usage
@@ -245,21 +249,15 @@ write_platform_evidence_manifest() {
       "host": "macOS Darwin host pending",
       "routineCommands": [
         "sh scripts/dev-check.sh --platform-examples-test",
-        "moon build examples/showcase/macos --target native",
         "moon build examples/showcase/macos_skia --target native",
-        "moon build examples/markdown_editor/macos --target native",
         "moon build examples/markdown_editor/macos_skia --target native"
       ],
       "runtimeEvidenceCommands": [
-        "moon run examples/showcase/macos --target native",
         "moon run examples/showcase/macos_skia --target native",
-        "moon run examples/markdown_editor/macos --target native",
         "moon run examples/markdown_editor/macos_skia --target native"
       ],
       "exampleTargets": [
-        "examples/showcase/macos",
         "examples/showcase/macos_skia",
-        "examples/markdown_editor/macos",
         "examples/markdown_editor/macos_skia"
       ],
       "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
@@ -307,7 +305,7 @@ write_platform_evidence_manifest() {
         "artifacts/platform-evidence/macos/README.md"
       ],
       "notes": [
-        "macOS package tests are host-scoped; native app runtime evidence should name the local or CI host that launched the examples."
+        "macOS package tests are host-scoped; native Skia app runtime evidence should name the local or CI host that launched the Skia examples. Native WGPU entrypoints are retained as experimental diagnostics outside this mainline manifest."
       ]
     },
     {
@@ -316,21 +314,16 @@ write_platform_evidence_manifest() {
       "host": "Windows MSVC host pending",
       "routineCommands": [
         "moon test moui/backend/windows --target native",
-        "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/showcase/windows -BuildOnly",
         "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
         "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
-        "powershell -ExecutionPolicy Bypass -File scripts/windows/package_windows_app_msvc.ps1 -Package examples/showcase/windows"
+        "powershell -ExecutionPolicy Bypass -File scripts/windows/package_windows_app_msvc.ps1 -Package examples/showcase/windows_skia"
       ],
       "runtimeEvidenceCommands": [
-        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows --target native }\"",
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"",
-        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }\"",
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\""
       ],
       "exampleTargets": [
-        "examples/showcase/windows",
         "examples/showcase/windows_skia",
-        "examples/markdown_editor/windows",
         "examples/markdown_editor/windows_skia"
       ],
       "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh windows --status pending",
@@ -381,7 +374,7 @@ write_platform_evidence_manifest() {
         "artifacts/platform-evidence/windows/README.md"
       ],
       "notes": [
-        "Windows runtime evidence must come from an MSVC host after backend tests, Showcase build/package, and direct Showcase or Markdown Editor launch."
+        "Windows runtime evidence must come from an MSVC host after backend tests, Skia Showcase build/package, and direct Skia Showcase or Markdown Editor launch. Native WGPU entrypoints are retained as experimental diagnostics outside this mainline manifest."
       ]
     },
     {
@@ -390,20 +383,14 @@ write_platform_evidence_manifest() {
       "host": "Linux Wayland host pending",
       "routineCommands": [
         "sh scripts/dev-check.sh --platform-examples-test",
-        "moon build examples/showcase/linux --target native",
-        "moon build examples/showcase/linux_cosmic --target native",
         "moon build examples/showcase/linux_skia --target native",
         "moon build examples/markdown_editor/linux_skia --target native"
       ],
       "runtimeEvidenceCommands": [
-        "moon run examples/showcase/linux --target native",
-        "moon run examples/showcase/linux_cosmic --target native",
         "moon run examples/showcase/linux_skia --target native",
         "moon run examples/markdown_editor/linux_skia --target native"
       ],
       "exampleTargets": [
-        "examples/showcase/linux",
-        "examples/showcase/linux_cosmic",
         "examples/showcase/linux_skia",
         "examples/markdown_editor/linux_skia"
       ],
@@ -448,14 +435,14 @@ write_platform_evidence_manifest() {
           "artifacts/platform-evidence/linux/README.md"
         ],
         "notes": [
-          "Linux Skia runtime evidence remains matching-host pending until Wayland/Vulkan first-frame Showcase and Markdown Editor logs are recorded."
+          "Linux Skia runtime evidence remains matching-host pending until Wayland first-frame Showcase and Markdown Editor logs are recorded with configured real Skia link flags."
         ]
       },
       "artifacts": [
         "artifacts/platform-evidence/linux/README.md"
       ],
       "notes": [
-        "Linux runtime evidence requires a matching Wayland compositor and Vulkan stack; keep unsupported service gaps explicit."
+        "Linux runtime evidence requires a matching Wayland compositor and configured real Skia link flags; native WGPU/Vulkan entrypoints are retained as experimental diagnostics outside this mainline manifest. Keep unsupported service gaps explicit."
       ]
     }
   ]
@@ -489,10 +476,14 @@ fi
 
 if "$RUN_RENDER"; then
   run moon test moui/render --target native
-  run moon test moui/render/wgpu --target native
   run moon test moui/render/skia --target native
   run moon test moui/render/webgpu_adapter --target wasm-gc
   run node scripts/test-webgpu-runtime-radial.mjs
+  if "$RUN_WGPU_EXPERIMENTAL"; then
+    run moon test moui/render/wgpu --target native
+  else
+    printf '\nSkipping native WGPU renderer diagnostics. Pass --wgpu-experimental to run them.\n'
+  fi
 fi
 
 if "$RUN_PLATFORM_SERVICES"; then
@@ -513,10 +504,15 @@ fi
 
 if "$RUN_TEXT"; then
   run moon test moui/core --target native
-  run moon test moui/render/wgpu --target native
-  run moon test moui/render/wgpu/cosmic_text --target native
+  run moon test moui/render/skia --target native
   run moon test moui/render/webgpu_adapter --target wasm-gc
   run moon test moui/backend/web --target wasm-gc
+  if "$RUN_WGPU_EXPERIMENTAL"; then
+    run moon test moui/render/wgpu --target native
+    run moon test moui/render/wgpu/cosmic_text --target native
+  else
+    printf '\nSkipping native WGPU text diagnostics. Pass --wgpu-experimental to run them.\n'
+  fi
 fi
 
 if "$RUN_TEXT_DIAGNOSTIC"; then
@@ -541,7 +537,11 @@ if "$RUN_BENCH"; then
 fi
 
 if "$RUN_PLATFORM"; then
-  run sh scripts/dev-check.sh --platform-examples-test
+  if "$RUN_WGPU_EXPERIMENTAL"; then
+    run sh scripts/dev-check.sh --platform-examples-test --wgpu-experimental
+  else
+    run sh scripts/dev-check.sh --platform-examples-test
+  fi
 fi
 
 printf '\nConformance checks passed.\n'
