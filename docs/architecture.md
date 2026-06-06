@@ -44,26 +44,26 @@ moui/tests/tooling/           quickcheck and pixelmatch integration tests
 moui/tests/text_conformance/  opt-in native/Web text diagnostic matrix
 moui/tests/skia_renderer_smoke/native/ opt-in real-Skia renderer pixel smoke
 examples/counter/app/         smallest shared app shape
-examples/counter/{web_wasm,macos,windows,linux}/ platform counter entrypoints
-examples/counter/windows_cosmic/ Windows counter selecting Moon Cosmic text
+examples/counter/{web_wasm,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
+examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
 examples/showcase/app/        shared visual showcase app with Counter/Todo patterns
 examples/showcase/macos_skia/ macOS showcase selecting native Skia raster
-examples/showcase/macos/      macOS native WGPU diagnostic showcase
-examples/showcase/macos_cosmic/ macOS showcase selecting Moon Cosmic text
+examples/showcase/macos_wgpu/      macOS native WGPU diagnostic showcase
+examples/showcase/macos_wgpu_cosmic/ macOS showcase selecting Moon Cosmic text
 examples/showcase/web_wasm/   Web showcase on wasm-gc
 examples/showcase/windows_skia/ Windows showcase selecting native Skia raster
-examples/showcase/windows/    Windows native WGPU diagnostic showcase
-examples/showcase/windows_cosmic/ Windows showcase selecting Moon Cosmic text
+examples/showcase/windows_wgpu/    Windows native WGPU diagnostic showcase
+examples/showcase/windows_wgpu_cosmic/ Windows showcase selecting Moon Cosmic text
 examples/showcase/linux_skia/ Linux showcase selecting native Skia raster
-examples/showcase/linux/      Linux Wayland native WGPU diagnostic showcase
-examples/showcase/linux_cosmic/ Linux showcase selecting Moon Cosmic text
+examples/showcase/linux_wgpu/      Linux Wayland native WGPU diagnostic showcase
+examples/showcase/linux_wgpu_cosmic/ Linux showcase selecting Moon Cosmic text
 examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
 examples/markdown_editor/macos_skia/ macOS Markdown editor selecting native Skia raster
-examples/markdown_editor/macos/ macOS native WGPU diagnostic Markdown editor
+examples/markdown_editor/macos_wgpu/ macOS native WGPU diagnostic Markdown editor
 examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
 examples/markdown_editor/windows_skia/ Windows Markdown editor selecting native Skia raster
-examples/markdown_editor/windows/ Windows native WGPU diagnostic Markdown editor
-examples/markdown_editor/windows_cosmic/ Windows Markdown Editor selecting Moon Cosmic text
+examples/markdown_editor/windows_wgpu/ Windows native WGPU diagnostic Markdown editor
+examples/markdown_editor/windows_wgpu_cosmic/ Windows Markdown Editor selecting Moon Cosmic text
 examples/markdown_editor/linux_skia/ Linux Markdown editor selecting native Skia raster
 examples/{settings,data_table,file_importer,command_palette}/app/ shared app-pattern packages without platform entrypoints
 ```
