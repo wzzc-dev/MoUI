@@ -327,7 +327,7 @@ jobs:
           MOUI_COSMIC_TEXT_DIAGNOSTICS: "1"
         run: |
           . .\scripts\windows\msvc_env.ps1
-          Enable-MsvcC11Atomics
+          Enable-MsvcGlobalC11ModeForCOnlyStubs
           node scripts\ci-renderer-proof-native.mjs wgpu-native windows
 
       - name: Upload native WGPU renderer proof
