@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [string]$Package = "examples/showcase/windows",
+  [string]$Package = "examples/showcase/windows_skia",
   [switch]$BuildOnly,
   [string]$VcpkgRoot = "",
   [string]$WgpuNativeRoot = ""
@@ -33,6 +33,11 @@ function Assert-ChildPath {
   if (-not $resolvedChild.StartsWith($resolvedParent, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Refusing to modify path outside ${resolvedParent}: $resolvedChild"
   }
+}
+
+function Convert-PackagePath {
+  param([string]$Value)
+  return ($Value -replace '/', '\')
 }
 
 function Ensure-WgpuNativeRoot {
@@ -76,7 +81,19 @@ function Ensure-WgpuNativeRoot {
   return (Resolve-Path -LiteralPath $extractRoot).Path
 }
 
-$resolvedWgpuRoot = Ensure-WgpuNativeRoot $WgpuNativeRoot
+function Test-PackageUsesWgpu {
+  param([string]$PackagePath)
+
+  $pkgPath = Join-Path $repoRoot (Join-Path (Convert-PackagePath $PackagePath) "moon.pkg")
+  Require-Path $pkgPath "Missing MoonBit package manifest: $pkgPath"
+  $pkg = Get-Content -LiteralPath $pkgPath -Raw
+  $usesWgpuBackend = $pkg.Contains("wzzc-dev/moui/backend/windows/wgpu")
+  $usesWgpuRenderer = $pkg.Contains("wzzc-dev/moui/render/wgpu")
+  return ($usesWgpuBackend -or $usesWgpuRenderer)
+}
+
+$usesWgpu = Test-PackageUsesWgpu $Package
+$resolvedWgpuRoot = if ($usesWgpu) { Ensure-WgpuNativeRoot $WgpuNativeRoot } else { "" }
 . (Join-Path $scriptDir "msvc_env.ps1") -VcpkgRoot $VcpkgRoot -WgpuNativeRoot $resolvedWgpuRoot
 Enable-MsvcC11Atomics
 
@@ -88,7 +105,12 @@ Push-Location $repoRoot
 try {
   Write-Host "==> repo root: $repoRoot"
   Write-Host "==> package: $Package"
-  Write-Host "==> WGPU native root: $resolvedWgpuRoot"
+  if ($usesWgpu) {
+    Write-Host "==> renderer route: native WGPU experimental"
+    Write-Host "==> WGPU native root: $resolvedWgpuRoot"
+  } else {
+    Write-Host "==> renderer route: native Skia mainline"
+  }
   & moon build $Package --target native
   if ($LASTEXITCODE -ne 0) {
     throw "moon build failed with exit code $LASTEXITCODE"

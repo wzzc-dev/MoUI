@@ -174,9 +174,9 @@ pub fn RendererFeatureCapability::needs_follow_up(
 ///|
 pub fn renderer_capability_backends() -> Array[RendererBackendKind] {
   [
-    RendererBackendKind::NativeWgpu,
     RendererBackendKind::SkiaRasterNative,
     RendererBackendKind::WebGpuWasm,
+    RendererBackendKind::NativeWgpu,
   ]
 }
 

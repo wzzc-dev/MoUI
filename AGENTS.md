@@ -51,37 +51,39 @@ paths, or abstractions that only preserve old shapes.
   wasm-gc host, including the browser history route bridge that feeds
   `HostRouteSource`, browser async file-open/save text completion for shared
   text-file reads/writes, and shared app route history that stays app-owned.
-- `backend/macos/wgpu`, `backend/windows/wgpu`, and `backend/linux/wgpu`
-  provide native WGPU renderer providers, including provider-owned
-  `HostAsyncImageLoader` hooks that call renderer-owned source decode helpers
-  such as `native_image_load_completion`; keep off-main loader/runtime evidence
-  separate from package-level completion wiring. `backend/macos/skia`,
-  `backend/windows/skia`, and `backend/linux/skia` provide native Skia renderer
-  providers, including provider-owned `HostAsyncImageLoader` hooks around
+- `backend/macos/skia`, `backend/windows/skia`, and `backend/linux/skia`
+  provide the native Skia raster mainline renderer providers, including
+  provider-owned `HostAsyncImageLoader` hooks around
   `skia_image_load_completion`; provider-created Skia renderers opt into
   post-present async image loading, but keep this as provider/smoke evidence
   until matching-host off-main runtime artifacts prove real late repaint
-  behavior.
+  behavior. `backend/macos/wgpu`, `backend/windows/wgpu`, and
+  `backend/linux/wgpu` provide native WGPU experimental diagnostic providers,
+  including provider-owned `HostAsyncImageLoader` hooks that call
+  renderer-owned source decode helpers such as `native_image_load_completion`;
+  keep off-main loader/runtime evidence separate from package-level completion
+  wiring and do not make these diagnostics release-blocking by default.
 - `render/` is the renderer facade and shared reporting layer.
-- `render/wgpu/` is the native wgpu renderer. `render/webgpu_adapter/` is the
-  wasm-gc browser WebGPU host-import bridge. `render/skia/` is the native Skia
-  raster renderer facade over the local `wzzc-dev/moui_skia` binding, including
+- `render/skia/` is the native Skia raster mainline renderer facade over the
+  local `wzzc-dev/moui_skia` binding, including
   renderer-local image-resource lifecycle change callbacks and
   `skia_image_load_completion` source decode completion payloads plus opt-in
   post-present async image loading for native providers; host-layer
   completion routing and native provider/platform redraw scheduling from async
   image load/error notifications remain outside `render/skia`.
+  `render/webgpu_adapter/` is the wasm-gc browser WebGPU host-import bridge.
+  `render/wgpu/` is the experimental native wgpu renderer.
 - Native text providers live in `render/wgpu/cosmic_text/`,
   `render/wgpu/coretext/`, `render/wgpu/directwrite/`,
   `render/wgpu/fontconfig/`, and the shared `render/wgpu/text_protocol/`
   package. `core/` owns only the neutral `TextSystem` contract.
 - `examples/*/app/` packages are shared app logic. Platform subpackages are
-  entrypoints only. Showcase also has `macos_cosmic`, `windows_cosmic`, and
-  `linux_cosmic` entrypoints for explicit Moon Cosmic text-provider comparison.
-  Showcase has `macos_skia`, `windows_skia`, and `linux_skia` entrypoints for
-  explicitly selecting the native Skia renderer. Markdown Editor has
-  `macos_skia`, `windows_skia`, and `linux_skia` for explicit native Skia
-  renderer entrypoints.
+  entrypoints only. Showcase has `macos_skia`, `windows_skia`, and
+  `linux_skia` entrypoints for the recommended native Skia renderer mainline.
+  Markdown Editor has `macos_skia`, `windows_skia`, and `linux_skia` for
+  native Skia renderer entrypoints. Showcase also has `macos_cosmic`,
+  `windows_cosmic`, and `linux_cosmic` entrypoints for explicit Moon Cosmic
+  text-provider comparison on the native WGPU diagnostic route.
 - `website/` is the MoUI-built homepage workspace. Keep shared homepage logic
   in `website/app/` and keep `website/web_wasm/` as a thin Web wasm-gc
   entrypoint; it is not an example-platform matrix.
@@ -319,11 +321,12 @@ tokens. Skipped jobs, package-only tests, missing uploaded artifacts, blank
 screenshots, caret-only diagnostics, coverage-only font matching, provider
 preflights, and fallback-safe descriptor audits must remain failed proof. The
 native Skia proof matrix configures the locked release Skia artifact before
-running its real renderer/text smokes; native WGPU proof still requires a
-usable runner WGPU adapter for offscreen readback. The `renderer-proof-summary`
-CI job downloads the proof artifacts and requires all native WGPU, native Skia,
-and WebGPU wasm manifests to validate as passed before any capability promotion
-can cite them.
+running its real renderer/text smokes. Native WGPU proof remains a non-blocking
+diagnostic and still requires a usable runner WGPU adapter for offscreen
+readback. The `renderer-proof-summary` CI job requires the native Skia macOS,
+Windows, Linux, and WebGPU wasm manifests to validate as passed before any
+mainline capability promotion can cite them; native WGPU diagnostic artifacts
+are uploaded separately but do not block the summary.
 Examples demonstrate workflows but should not be the only proof for a
 shared contract.
 If CDP is unavailable during Web presentation startup, the recorder writes a
@@ -402,13 +405,15 @@ name the matching Skia provider package or preflight summary and include a
 passing preflight/test/build marker; generic passing test output is not enough.
 Full platform runtime status still requires the broader platform observations.
 
-Windows native uses the MSVC WGPU toolchain path: Visual Studio C++ build
-tools, vcpkg `zlib:x64-windows`, and `wgpu_mbt` dynamic mode with the official
-MSVC `wgpu_native.dll`. Use `scripts/windows/setup_msvc_deps.ps1`,
+Windows native uses Visual Studio C++ build tools and vcpkg `zlib:x64-windows`.
+Use `scripts/windows/setup_msvc_deps.ps1`,
 `scripts/windows/build_windows_msvc.ps1`, and
 `scripts/windows/package_windows_app_msvc.ps1` for setup, build, and packaging.
-When changing Windows native setup, keep docs, CI, and repo-local skills aligned
-with this MSVC-only route.
+Those helpers are renderer-aware: native Skia packages are the mainline and do
+not download or package `wgpu_native.dll`; explicit native WGPU diagnostic
+packages keep the `wgpu_mbt` dynamic mode with the official MSVC
+`wgpu_native.dll`. When changing Windows native setup, keep docs, CI, and
+repo-local skills aligned with this renderer-aware route.
 
 ## Renderer Capability Tracking
 

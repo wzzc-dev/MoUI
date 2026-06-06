@@ -336,18 +336,18 @@ Open:
 http://127.0.0.1:8080/examples/markdown_editor/web_wasm/index.html
 ```
 
-macOS native:
-
-```sh
-moon build examples/markdown_editor/macos --target native
-./_build/native/debug/build/examples/markdown_editor/macos/macos.exe
-```
-
-macOS native with the Skia renderer:
+macOS native Skia mainline:
 
 ```sh
 moon build examples/markdown_editor/macos_skia --target native
 ./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
+```
+
+The plain macOS WGPU entrypoint remains available for explicit diagnostics:
+
+```sh
+moon build examples/markdown_editor/macos --target native
+./_build/native/debug/build/examples/markdown_editor/macos/macos.exe
 ```
 
 The Skia entrypoint requires the same real native Skia link setup used by
@@ -357,19 +357,25 @@ configure those flags temporarily while running Skia smoke checks. Use
 when you need the renderer pixel smoke plus first-frame Showcase and Markdown
 Editor Skia evidence on macOS.
 
-Windows native uses the shared MSVC helper. It accepts any Windows entrypoint
-package, including the Markdown Editor package:
+Windows native uses the shared renderer-aware MSVC helper. Use the
+`windows_skia` package for the mainline Markdown Editor route:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows `
-  -BuildOnly
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/markdown_editor/windows_skia `
   -BuildOnly
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
+```
+
+The plain `windows` package remains available for explicit native WGPU
+diagnostics:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
 ```
 
 For matching-host Markdown Skia first-frame evidence, set

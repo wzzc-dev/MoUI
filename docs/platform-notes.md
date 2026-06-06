@@ -6,7 +6,7 @@ MoUI expects the modified `wzzc-dev/window` checkout under `.local_repos/window`
 The README shows the setup commands. The local branch currently supplies target
 support that the upstream package does not yet cover for MoUI.
 The main checkout now includes `moui_skia`, which provides the editable Skia
-binding used by the opt-in native Skia raster renderer.
+binding used by the native Skia raster mainline renderer.
 
 ## Shared Host Contract
 
@@ -57,11 +57,12 @@ scene resolver, hosts reject `OpenWindow` with the shared unavailable-resolver
 response.
 
 Native renderer choice is package selection, not a field on host-core app
-options. Use `backend/<platform>/wgpu` for native WGPU or
-`backend/<platform>/skia` for native Skia raster. The Skia provider remains
-explicit and preflights `moui_skia/native` availability before handing control
-to the host app runner. Fallback builds therefore return with a clear diagnostic
-instead of opening a platform window that later fails to attach a renderer.
+options. Use `backend/<platform>/skia` for the native Skia raster mainline.
+Use `backend/<platform>/wgpu` only for native WGPU experimental diagnostics.
+The Skia provider preflights `moui_skia/native` availability before handing
+control to the host app runner. Fallback builds therefore return with a clear
+diagnostic instead of opening a platform window that later fails to attach a
+renderer.
 
 Current-platform provider tests are included by
 `sh scripts/dev-check.sh --platform-examples-test`. Run provider packages
@@ -210,9 +211,10 @@ scroll from mobile swipe gestures while still using the same app-owned
 The macOS host core uses `wzzc-dev/window/macos` for AppKit windows, lifecycle,
 events, services, text-input session synchronization, renderer resize calls, and
 redraw requests. It receives concrete rendering through
-`MacosRendererProvider`; `backend/macos/wgpu` installs a `CAMetalLayer` on the
-window `NSView` for native WGPU, while `backend/macos/skia` presents CPU pixel
-frames through an `NSImageView`.
+`MacosRendererProvider`; `backend/macos/skia` is the recommended native
+mainline and presents CPU pixel frames through an `NSImageView`, while
+`backend/macos/wgpu` installs a `CAMetalLayer` on the window `NSView` for
+native WGPU diagnostics.
 Window events pass through the shared `backend/host` conversion helpers, and the
 native host never imports `render/wgpu`, `render/skia`, `wgpu_mbt`, or
 `moui_skia`.
@@ -231,7 +233,7 @@ selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/macos` backend are normalized
 through `HostEvent::DragDrop` and dispatched to `View::on_file_drop`
 targets.
-Native WGPU text can use either the shared Moon Cosmic provider or a platform
+Native WGPU diagnostics can use either the shared Moon Cosmic provider or a platform
 provider. `backend/macos/wgpu` defaults to the CoreText/CoreGraphics provider
 for runtime measurement and glyph rasterization, explicitly composed with the
 Moon Cosmic provider as fallback; the Objective-C CoreText stub lives in
@@ -249,8 +251,9 @@ resolver-backed secondary windows and `exit_after_first_present` for first-frame
 smoke tests. `core` still owns only the neutral `FontSpec`, `TextSystem`
 contract, and deterministic fallback text system; it does not name concrete
 macOS font files.
-The `examples/showcase/macos_cosmic` entrypoint selects `MoonCosmic`
-explicitly for comparison with the platform-default CoreText path.
+The `examples/showcase/macos` and `examples/showcase/macos_cosmic` entrypoints
+remain WGPU diagnostics; `macos_cosmic` selects `MoonCosmic` explicitly for
+comparison with the WGPU CoreText path.
 `backend/macos` also exposes an async pump variant for native app entrypoints
 that must run `moonbitlang/async` side work on the same thread as the AppKit
 event pump. `backend/macos/skia.run_app_with_options_async_pump` keeps the
@@ -258,8 +261,9 @@ default blocking `run_app_with_options` behavior unchanged, but lets
 `examples/mo_workbench/macos_skia` interleave the Skia window pump with its
 owned Pi JSONL transport worker.
 
-Select Skia by importing `wzzc-dev/moui/backend/macos/skia` and using
-`MacosSkiaAppOptions`. The provider creates `render/skia.SkiaRasterRenderer`,
+Select the native mainline Skia provider by importing
+`wzzc-dev/moui/backend/macos/skia` and using `MacosSkiaAppOptions`. The
+provider creates `render/skia.SkiaRasterRenderer`,
 draws into a CPU raster surface in physical pixels, scales the canvas by the
 host scale factor, reads premultiplied pixels back after each frame, and sends
 them to a macOS presenter. The Objective-C presenter builds a `CGImage` from the
@@ -267,8 +271,9 @@ pixel bytes and installs it on a dedicated `NSImageView` attached to the content
 view. macOS Skia options default to the same system `FontMgr` text path as the
 Windows and Linux Skia providers; the first-frame smoke entrypoints explicitly
 select `EmptyTypeface` only when their exit-after-first-present environment
-flag is set. This path is intentionally separate from `backend/macos/wgpu`;
-Skia is a provider package, not a host-core `NativeRenderer` variant.
+flag is set. This path is intentionally separate from the experimental
+`backend/macos/wgpu`; Skia is a provider package, not a host-core
+`NativeRenderer` variant.
 For local real-Skia configuration, `scripts/macos-skia-renderer-smoke.sh` uses
 dynamic `libskia.dylib` by default when `--write-local-config` is preparing
 direct `moon run` commands, and static `libskia.a` by default for temporary
@@ -331,8 +336,9 @@ README build-and-execute flow while debugging the toolchain/link configuration.
 ## Windows Native
 
 Windows native examples use the MSVC toolchain with Visual Studio C++ build
-tools, vcpkg `zlib:x64-windows`, and `wgpu_mbt` dynamic mode with the official
-`wgpu-windows-x86_64-msvc-release.zip` release.
+tools and vcpkg `zlib:x64-windows`. The Skia entrypoints are the recommended
+native mainline. WGPU diagnostic entrypoints still use `wgpu_mbt` dynamic mode
+with the official `wgpu-windows-x86_64-msvc-release.zip` release.
 
 For MSVC setup and packaging:
 
@@ -340,30 +346,32 @@ For MSVC setup and packaging:
 winget install --id Microsoft.VisualStudio.2022.BuildTools -e
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/showcase/windows `
+  -Package examples/showcase/windows_skia `
   -BuildOnly
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
-  -Package examples/showcase/windows `
+  -Package examples/showcase/windows_skia `
   -AppName MoUIShowcase
 ```
 
 The MSVC helper imports `vcvarsall.bat` through `vswhere`, sets `CC` and `CXX`
 to `scripts\windows\msvc_cl.cmd`, enables MSVC C11 mode and atomics only for
-`.c` native stubs such as `wgpu_mbt`, sets `MBT_WGPU_LINK_MODE=dynamic`, and
-points `MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `moui_skia`
-emits `/std:c++20` stub flags for its Windows Skia C++ bindings, which remain
-separate from the C11-only path. Packaged MSVC apps
-use the vcpkg `zlib:x64-windows` runtime for native image decoding. When the
+`.c` native stubs, and detects whether the selected package imports the WGPU
+provider. Skia packages do not download or package `wgpu_native.dll`; WGPU
+diagnostic packages set `MBT_WGPU_LINK_MODE=dynamic` and point
+`MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `moui_skia` emits
+`/std:c++20` stub flags for its Windows Skia C++ bindings, which remain
+separate from the C11-only path. Packaged MSVC apps use the vcpkg
+`zlib:x64-windows` runtime for native image decoding. When the
 Visual Studio-bundled vcpkg rejects direct classic installs, run
 `setup_msvc_deps.ps1 -InstallZlib` so the dependency is installed with an
 ignored repository-local manifest workspace under `.tools\vcpkg-msvc`. Packaged
-apps should be launched through the generated `run.cmd` so the bundled WGPU
-release metadata is visible to the dynamic loader.
+apps should be launched through the generated `run.cmd`; WGPU diagnostic
+packages use that wrapper so the bundled WGPU release metadata is visible to
+the dynamic loader.
 
 To run an entrypoint directly after setup:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
@@ -380,7 +388,8 @@ macOS, with platform-specific ownership limited to Win32 window handles,
 services, lifecycle, resize handling, text-input session synchronization, and
 redraw requests. Concrete rendering is injected through
 `WindowsRendererProvider`; `backend/windows/wgpu` owns HWND/HINSTANCE WGPU
-surface creation and `backend/windows/skia` owns the GDI pixel presenter. Text
+surface creation for diagnostics and `backend/windows/skia` owns the GDI pixel
+presenter for the native mainline. Text
 clipboard requests are implemented through the Win32
 `CF_UNICODETEXT` clipboard API and normalized to UTF-8 at the host-service
 boundary. The Windows service bridge also opens URLs through `ShellExecuteW`,
@@ -398,7 +407,8 @@ the selected `ActionCommand` back through `HostRuntimeDriver`.
 File drag/drop events emitted by the local `window/windows` backend are
 normalized through `HostEvent::DragDrop` and dispatched to
 `View::on_file_drop` targets, matching the macOS host path.
-`backend/windows/wgpu` installs the sibling `render/wgpu/directwrite` provider
+`backend/windows/wgpu` remains the WGPU diagnostic path and installs the sibling
+`render/wgpu/directwrite` provider
 through the same renderer/runtime boundary used by macOS CoreText and composes
 it with `render/wgpu/cosmic_text` as fallback. That provider is currently an
 explicit scaffold using `render/wgpu/text_protocol` for UTF-32 input encoding,
@@ -410,11 +420,13 @@ DirectWrite integration point while returning no platform layout/raster data,
 so the composed Cosmic fallback handles native text until the real DirectWrite
 engine lands. Choose `MoonCosmic` with
 `WindowsWgpuAppOptions::new(text_engine=...)`.
-The `examples/showcase/windows_cosmic` entrypoint selects `MoonCosmic` explicitly
-for comparison with the platform-default DirectWrite scaffold plus Cosmic fallback
-path. The `examples/showcase/windows_skia` entrypoint selects the Windows Skia
-provider explicitly for Showcase, and
-`examples/markdown_editor/windows_skia` selects it for the editing workflow.
+The `examples/showcase/windows` and `examples/showcase/windows_cosmic`
+entrypoints remain WGPU diagnostics; `windows_cosmic` selects `MoonCosmic`
+explicitly for comparison with the WGPU DirectWrite scaffold plus Cosmic
+fallback path. The `examples/showcase/windows_skia` entrypoint selects the
+Windows Skia provider for the mainline Showcase, and
+`examples/markdown_editor/windows_skia` selects it for the mainline editing
+workflow.
 The Markdown Editor also has `examples/markdown_editor/windows_cosmic` for the
 same explicit text-provider comparison on the editing workflow.
 
@@ -451,10 +463,10 @@ because they require `windows.h`, so a Darwin failure of
 `moui/backend/windows/skia` is a host/toolchain limit rather than Windows
 runtime evidence.
 
-To use a preseeded local `wgpu-native` release instead of the helper-managed
-copy, set `MBT_WGPU_NATIVE_ROOT` to the extracted MSVC release root or pass that
-path as `-WgpuNativeRoot` to the Windows helper script. MSVC dynamic roots
-should contain `lib\wgpu_native.dll` and
+To use a preseeded local `wgpu-native` release for WGPU diagnostics instead of
+the helper-managed copy, set `MBT_WGPU_NATIVE_ROOT` to the extracted MSVC
+release root or pass that path as `-WgpuNativeRoot` to the Windows helper
+script. MSVC dynamic roots should contain `lib\wgpu_native.dll` and
 `wgpu-native-meta\wgpu-native-git-tag`.
 
 ## Linux Native
@@ -464,9 +476,9 @@ should contain `lib\wgpu_native.dll` and
 normalizes window/input events through the shared `HostEvent` contract, and runs
 the Showcase entrypoints through the same renderer/runtime boundary as macOS
 and Windows. Concrete rendering is injected through `LinuxRendererProvider`;
-`backend/linux/wgpu` creates native WGPU surfaces from `wl_display` and
-`wl_surface`, while `backend/linux/skia` reuses the window package's
-`Window::present_rgba_pixels` presenter.
+`backend/linux/skia` is the native mainline and reuses the window package's
+`Window::present_rgba_pixels` presenter, while `backend/linux/wgpu` creates
+native WGPU surfaces from `wl_display` and `wl_surface` for diagnostics.
 
 The Wayland window path requests server-side decorations when the compositor
 exposes `xdg-decoration`. If the compositor falls back to client-side
@@ -483,9 +495,9 @@ Linux runtime requirements are intentionally native:
 
 - A Wayland compositor. For repeatable headless checks, run Weston with the
   headless backend and point `WAYLAND_DISPLAY` at its socket.
-- A usable Vulkan stack for `wgpu-native`. Headless software validation can use
-  Mesa llvmpipe through `vulkan-swrast`/Lavapipe when hardware Vulkan is not
-  available.
+- A usable Vulkan stack only when running WGPU diagnostics. Headless software
+  validation can use Mesa llvmpipe through `vulkan-swrast`/Lavapipe when
+  hardware Vulkan is not available.
 - Wayland development headers and generated xdg-shell protocol sources for the
   local `window/linux` native stub.
 - zlib in the final native link; Linux entrypoints and `backend/linux` include
@@ -495,12 +507,8 @@ Useful focused commands on a configured Linux host:
 
 ```sh
 moon test moui/backend/linux --target native
-moon build examples/showcase/linux --target native
-moon build examples/showcase/linux_cosmic --target native
 moon build examples/showcase/linux_skia --target native
 moon build examples/markdown_editor/linux_skia --target native
-moon run examples/showcase/linux --target native
-moon run examples/showcase/linux_cosmic --target native
 moon run examples/showcase/linux_skia --target native
 moon run examples/markdown_editor/linux_skia --target native
 ```
@@ -518,15 +526,16 @@ switching hosts or copy the checkout to a Linux-local temporary directory
 without `_build`; the native archive and MoonDB files are host-specific and can
 be corrupted by cross-host reuse.
 
-The platform-default text path in `backend/linux/wgpu` composes the Linux
+The WGPU diagnostic text path in `backend/linux/wgpu` composes the Linux
 `render/wgpu/fontconfig` scaffold provider with the shared Moon Cosmic fallback.
 Choose `MoonCosmic` with `LinuxWgpuAppOptions::new(text_engine=...)`;
 `examples/showcase/linux_cosmic` selects the Moon Cosmic provider explicitly for
 comparison.
 
-Select Skia by importing `wzzc-dev/moui/backend/linux/skia` and using
-`LinuxSkiaAppOptions`. The provider creates `render/skia.SkiaRasterRenderer` and
-presents the CPU pixel frame through a narrow API exposed by
+Select the native mainline Skia provider by importing
+`wzzc-dev/moui/backend/linux/skia` and using `LinuxSkiaAppOptions`. The
+provider creates `render/skia.SkiaRasterRenderer` and presents the CPU pixel
+frame through a narrow API exposed by
 `.local_repos/window/linux`. That window fork owns the Wayland objects and
 provides `Window::present_rgba_pixels`, implemented with reusable `wl_shm`
 buffers, buffer-release tracking, `wl_surface_attach`, damage, commit, and
@@ -564,11 +573,12 @@ redraw, and clean shutdown. Add `--require-input` or
 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` only when representative pointer/keyboard
 input is observed. Record dependency-level facts with
 `.local_repos/window/scripts/record_moui_evidence.sh`; keep the MoUI Showcase
-`linux`, `linux_cosmic`, `linux_skia`, and Markdown Editor `linux_skia` runs as
-separate application-level evidence.
+`linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
+application-level evidence. Keep `linux` and `linux_cosmic` as WGPU diagnostic
+evidence when a Vulkan/WGPU stack is configured.
 
 `examples/showcase/linux_skia` and `examples/markdown_editor/linux_skia` select
-this provider explicitly for Showcase and the editing workflow. Configure real
+this provider for the mainline Showcase and editing workflow. Configure real
 Skia link flags before relying on native Skia-rendered pixels.
 The default JetBrains Linux provider links fontconfig, FreeType, and HarfBuzz;
 with those libraries available, `moui_skia` builds a system `FontMgr` through

@@ -37,18 +37,14 @@ const platformEntries = {
       "moon test moui/backend/windows --target native",
       "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
       "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
-      "powershell -ExecutionPolicy Bypass -File scripts/windows/package_windows_app_msvc.ps1 -Package examples/showcase/windows",
+      "powershell -ExecutionPolicy Bypass -File scripts/windows/package_windows_app_msvc.ps1 -Package examples/showcase/windows_skia",
     ],
     runtimeEvidenceCommands: [
-      "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows --target native }\"",
       "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"",
-      "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }\"",
       "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\"",
     ],
     exampleTargets: [
-      "examples/showcase/windows",
       "examples/showcase/windows_skia",
-      "examples/markdown_editor/windows",
       "examples/markdown_editor/windows_skia",
     ],
     windowEvidenceCommand:
@@ -64,20 +60,14 @@ const platformEntries = {
     host: "Linux Wayland host pending",
     routineCommands: [
       "sh scripts/dev-check.sh --platform-examples-test",
-      "moon build examples/showcase/linux --target native",
-      "moon build examples/showcase/linux_cosmic --target native",
       "moon build examples/showcase/linux_skia --target native",
       "moon build examples/markdown_editor/linux_skia --target native",
     ],
     runtimeEvidenceCommands: [
-      "moon run examples/showcase/linux --target native",
-      "moon run examples/showcase/linux_cosmic --target native",
       "moon run examples/showcase/linux_skia --target native",
       "moon run examples/markdown_editor/linux_skia --target native",
     ],
     exampleTargets: [
-      "examples/showcase/linux",
-      "examples/showcase/linux_cosmic",
       "examples/showcase/linux_skia",
       "examples/markdown_editor/linux_skia",
     ],

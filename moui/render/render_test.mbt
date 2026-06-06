@@ -40,6 +40,16 @@ test "renderer descriptor models backend family selection and presentation" {
       @render.RendererBackendKind::SkiaRasterNative,
     ),
   )
+  assert_true(
+    @render.RendererSelection::native_default().matches_backend(
+      @render.RendererBackendKind::SkiaRasterNative,
+    ),
+  )
+  assert_true(
+    @render.RendererSelection::web_default().matches_backend(
+      @render.RendererBackendKind::WebGpuWasm,
+    ),
+  )
   assert_false(
     @render.RendererSelection::Default.matches_backend(
       @render.RendererBackendKind::SkiaRasterNative,

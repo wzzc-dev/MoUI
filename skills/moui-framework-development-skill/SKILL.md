@@ -157,24 +157,24 @@ Use this skill when editing or reviewing:
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
   and HWND WGPU surface creation.
 - `backend/linux/`: minimal Wayland host over `.local_repos/window/linux`, a
-  native WGPU Wayland surface path, shared host event conversion, and explicit
-  unsupported-service reporting.
+  native Skia mainline presenter path plus native WGPU diagnostic surface path,
+  shared host event conversion, and explicit unsupported-service reporting.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
-- `render/wgpu/`: native wgpu renderer, including source decode completion
-  helpers used by provider-owned native image loader hooks.
+- `render/skia/`: native Skia raster mainline renderer over the local
+  `moui_skia` binding, including renderer-local command/reason diagnostics for
+  unsupported Skia fallbacks, renderer-local image-resource lifecycle change
+  callbacks, and `skia_image_load_completion` source decode completion payloads
+  plus opt-in post-present async image loading for native providers.
+  Host-layer completion routing and native provider/platform redraw scheduling
+  from async image load/error notifications remain outside `render/skia`.
+- `render/wgpu/`: experimental native wgpu renderer, including source decode
+  completion helpers used by provider-owned native image loader hooks.
 - `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
 - `render/wgpu/coretext/`: macOS CoreText provider.
 - `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
 - `render/wgpu/fontconfig/`: Linux fontconfig/FreeType provider boundary with
   a narrow native color-emoji path and Cosmic fallback for general text.
 - `render/wgpu/text_protocol/`: shared native text provider payload protocol.
-- `render/skia/`: native Skia raster renderer over the local `moui_skia` binding,
-  including renderer-local command/reason diagnostics for unsupported Skia
-  fallbacks, renderer-local image-resource lifecycle change callbacks, and
-  `skia_image_load_completion` source decode completion payloads plus opt-in
-  post-present async image loading for native providers.
-  Host-layer completion routing and native provider/platform redraw scheduling
-  from async image load/error notifications remain outside `render/skia`.
 - `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
 - `moui/tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
   verifies MoUI draw commands against captured Skia presenter pixels and checks
@@ -188,11 +188,12 @@ Use this skill when editing or reviewing:
 - `examples/*/app`: shared application logic.
 - `examples/*/{web_wasm,macos,windows,linux}`: platform entrypoints where an
   example has a runnable host package.
-- `examples/showcase/{macos_cosmic,windows_cosmic,linux_cosmic}`: explicit Moon
-  Cosmic text provider comparison entrypoints.
 - `examples/showcase/{macos_skia,windows_skia,linux_skia}` and
-  `examples/markdown_editor/{macos_skia,windows_skia,linux_skia}`: explicit
+  `examples/markdown_editor/{macos_skia,windows_skia,linux_skia}`: recommended
   native Skia renderer example entrypoints.
+- `examples/showcase/{macos_cosmic,windows_cosmic,linux_cosmic}`: explicit Moon
+  Cosmic text-provider comparison entrypoints on the native WGPU diagnostic
+  route.
 
 ## Development Workflow
 
@@ -268,10 +269,11 @@ tests, skipped jobs, missing uploaded artifacts, blank screenshots, caret-only
 diagnostics, coverage-only font matching, provider preflights, and fallback-safe
 descriptor audits must stay failed proof. The native Skia proof matrix
 configures the locked release Skia artifact before running real renderer/text
-smokes; native WGPU proof still requires a usable runner WGPU adapter for
-offscreen readback. The `renderer-proof-summary` job downloads the native WGPU,
-native Skia, and WebGPU wasm proof artifacts and requires all seven manifests to
-validate as passed before capability promotion.
+smokes. Native WGPU proof remains a non-blocking diagnostic and still requires a
+usable runner WGPU adapter for offscreen readback. The `renderer-proof-summary`
+job requires the native Skia macOS, Windows, Linux, and WebGPU wasm proof
+artifacts to validate as passed before mainline capability promotion; native
+WGPU diagnostic artifacts are uploaded separately but do not block the summary.
 The platform evidence manifest is schema v2 and records the window fork's
 monitor/cursor probe as `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native entries
@@ -308,10 +310,8 @@ moon test moui/views --target native
 moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
 moon test moui/render --target native
-moon test moui/render/wgpu --target native
 moon test moui/render/skia --target native
 moon check moui/tests/skia_text_emoji_smoke/native --target native
-moon test moui/render/wgpu/cosmic_text --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 node scripts/test-webgpu-runtime-radial.mjs
 sh scripts/conformance-check.sh --input
@@ -362,6 +362,11 @@ sh -n scripts/ci-renderer-proof-summary.sh
 node --check scripts/validate-package-manifest.mjs
 ```
 
+Run `sh scripts/dev-check.sh --wgpu-experimental`,
+`sh scripts/conformance-check.sh --render --wgpu-experimental`, or focused
+`moui/render/wgpu` / WGPU-provider tests only when touching the native WGPU
+diagnostic route.
+
 Platform validation:
 
 ```sh
@@ -370,8 +375,9 @@ sh scripts/dev-check.sh --platform-examples-build
 ```
 
 Use `--platform-examples-test` for normal current-host backend/provider checks.
-Run `moui/backend/<platform>/{wgpu,skia}` tests directly only on the matching
-host/toolchain when investigating that provider.
+Skia providers are the native mainline; run `moui/backend/<platform>/wgpu`
+tests directly only on the matching host/toolchain when investigating the
+native WGPU diagnostic provider.
 macOS/Windows/Linux Skia provider tests cover the public
 `*_skia_provider_preflight_summary()` package-audit surface for renderer
 availability, `moui_skia/native` availability, selected font resolution, and
@@ -391,11 +397,12 @@ claiming Skia presentation. Windows/Linux Skia entrypoints use
 `MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` for matching-host
 auto-exit first-frame logs.
 
-Windows native uses the MSVC dynamic WGPU path. Use
-`scripts/windows/msvc_env.ps1` through the MSVC helpers and validate with
-`scripts/windows/build_windows_msvc.ps1` or
-`scripts/windows/package_windows_app_msvc.ps1` after installing vcpkg
-`zlib:x64-windows`.
+Windows native uses Visual Studio C++ build tools and vcpkg `zlib:x64-windows`.
+Use `scripts/windows/msvc_env.ps1` through the renderer-aware MSVC helpers and
+validate with `scripts/windows/build_windows_msvc.ps1` or
+`scripts/windows/package_windows_app_msvc.ps1`. Native Skia packages are the
+mainline and do not bundle `wgpu_native.dll`; explicit native WGPU diagnostic
+packages keep the MSVC dynamic WGPU path.
 
 Real macOS Skia renderer smoke:
 

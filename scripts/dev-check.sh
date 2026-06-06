@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 RUN_PLATFORM_EXAMPLES_TEST=false
 RUN_PLATFORM_EXAMPLES_BUILD=false
 RUN_SKIA_REAL_SMOKE=false
+RUN_WGPU_EXPERIMENTAL=false
 
 for arg in "$@"; do
   case "$arg" in
@@ -22,21 +23,25 @@ for arg in "$@"; do
     --skia-real-smoke)
       RUN_SKIA_REAL_SMOKE=true
       ;;
+    --wgpu-experimental)
+      RUN_WGPU_EXPERIMENTAL=true
+      ;;
     --help|-h)
-      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke]\n' "$0"
+      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke] [--wgpu-experimental]\n' "$0"
       printf '\n'
       printf 'Runs bounded package-level checks, guidance consistency checks, and Web wasm-gc example builds.\n'
       printf 'Pass --platform-examples-test to also run current-platform backend tests.\n'
       printf 'Pass --platform-examples-build to also build current-platform native examples.\n'
       printf 'Pass --skia-real-smoke to run the opt-in real Skia smoke when local Skia link flags are configured.\n'
+      printf 'Pass --wgpu-experimental to also run native WGPU diagnostic package/provider checks.\n'
       printf 'On macOS, scripts/macos-skia-renderer-smoke.sh can resolve JetBrains/source/existing Skia providers and temporarily configure those flags.\n'
-      printf 'Native example builds link platform stubs and native renderer libraries, so cold builds can be slow.\n'
+      printf 'Native example builds use the Skia mainline by default; WGPU example builds are experimental diagnostics.\n'
       printf 'Deprecated alias: --platform-examples behaves like --platform-examples-test.\n'
       exit 0
       ;;
     *)
       printf 'Unknown argument: %s\n' "$arg" >&2
-      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke]\n' "$0" >&2
+      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke] [--wgpu-experimental]\n' "$0" >&2
       exit 2
       ;;
   esac
@@ -88,7 +93,6 @@ run moon check
 run moon test moui/core --target native
 run moon test moui/views --target native
 run moon test moui/render --target native
-run moon test moui/render/wgpu --target native
 run moon test moui/render/skia --target native
 run moon test moui/backend/host --target native
 
@@ -105,49 +109,67 @@ run moon build examples/markdown_editor/web_wasm --target wasm-gc
 run node scripts/test-validate-web-runtime-handoff.mjs
 run node scripts/validate-web-runtime-handoff.mjs
 
+if "$RUN_WGPU_EXPERIMENTAL"; then
+  run moon test moui/render/wgpu --target native
+else
+  printf '\nSkipping native WGPU renderer diagnostics. Pass --wgpu-experimental to run them.\n'
+fi
+
 if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
   case "$(uname -s)" in
     Darwin)
       if "$RUN_PLATFORM_EXAMPLES_TEST"; then
         run moon test moui/backend/macos --target native
-        run moon test moui/backend/macos/wgpu --target native
         run moon test moui/backend/macos/skia --target native
+        if "$RUN_WGPU_EXPERIMENTAL"; then
+          run moon test moui/backend/macos/wgpu --target native
+        fi
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
-        printf '\nIncluding selected current-platform native example builds. These builds may be slow on a cold cache.\n'
-        run moon build examples/showcase/macos --target native
+        printf '\nIncluding selected current-platform Skia native example builds. These builds may be slow on a cold cache.\n'
         run moon build examples/showcase/macos_skia --target native
-        run moon build examples/markdown_editor/macos --target native
         run moon build examples/markdown_editor/macos_skia --target native
+        if "$RUN_WGPU_EXPERIMENTAL"; then
+          run moon build examples/showcase/macos --target native
+          run moon build examples/markdown_editor/macos --target native
+        fi
       fi
       ;;
     MINGW*|MSYS*|CYGWIN*)
       if "$RUN_PLATFORM_EXAMPLES_TEST"; then
         run moon test moui/backend/windows --target native
-        run moon test moui/backend/windows/wgpu --target native
         run moon test moui/backend/windows/skia --target native
+        if "$RUN_WGPU_EXPERIMENTAL"; then
+          run moon test moui/backend/windows/wgpu --target native
+        fi
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
-        printf '\nIncluding selected current-platform native example builds. These builds may be slow on a cold cache.\n'
-        run moon build examples/showcase/windows --target native
-        run moon build examples/showcase/windows_cosmic --target native
+        printf '\nIncluding selected current-platform Skia native example builds. These builds may be slow on a cold cache.\n'
         run moon build examples/showcase/windows_skia --target native
-        run moon build examples/markdown_editor/windows --target native
         run moon build examples/markdown_editor/windows_skia --target native
+        if "$RUN_WGPU_EXPERIMENTAL"; then
+          run moon build examples/showcase/windows --target native
+          run moon build examples/showcase/windows_cosmic --target native
+          run moon build examples/markdown_editor/windows --target native
+        fi
       fi
       ;;
     Linux)
       if "$RUN_PLATFORM_EXAMPLES_TEST"; then
         run moon test moui/backend/linux --target native
-        run moon test moui/backend/linux/wgpu --target native
         run moon test moui/backend/linux/skia --target native
+        if "$RUN_WGPU_EXPERIMENTAL"; then
+          run moon test moui/backend/linux/wgpu --target native
+        fi
       fi
       if "$RUN_PLATFORM_EXAMPLES_BUILD"; then
-        printf '\nIncluding selected current-platform native example builds. These builds may be slow on a cold cache.\n'
-        run moon build examples/showcase/linux --target native
-        run moon build examples/showcase/linux_cosmic --target native
+        printf '\nIncluding selected current-platform Skia native example builds. These builds may be slow on a cold cache.\n'
         run moon build examples/showcase/linux_skia --target native
         run moon build examples/markdown_editor/linux_skia --target native
+        if "$RUN_WGPU_EXPERIMENTAL"; then
+          run moon build examples/showcase/linux --target native
+          run moon build examples/showcase/linux_cosmic --target native
+        fi
       fi
       ;;
     *)

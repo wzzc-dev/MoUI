@@ -153,7 +153,7 @@ const defaultSkiaEvidence = platform => {
       observations: pendingSkiaObservations(),
       artifacts: ["artifacts/platform-evidence/linux/README.md"],
       notes: [
-        "Linux Skia runtime evidence remains matching-host pending until Wayland/Vulkan first-frame Showcase and Markdown Editor logs are recorded.",
+        "Linux Skia runtime evidence remains matching-host pending until Wayland first-frame Showcase and Markdown Editor logs are recorded with configured real Skia link flags.",
       ],
     };
   }

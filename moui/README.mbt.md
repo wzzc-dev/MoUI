@@ -3,8 +3,10 @@
 MoUI is a multi-platform MoonBit GUI framework prototype for building
 declarative UI apps with shared platform-neutral app logic. Native host cores
 own windows, events, services, and lifecycle, then receive concrete renderers
-through platform WGPU or Skia provider packages. The Web host uses a single
-`wasm-gc + window/web + browser WebGPU host imports` path.
+through platform renderer provider packages. The recommended mainline is native
+Skia raster plus the single Web `wasm-gc + window/web + browser WebGPU host
+imports` path; native WGPU remains available as an experimental diagnostic
+route while the MoonBit WGPU ecosystem matures.
 
 The runtime pipeline is explicit:
 
@@ -56,12 +58,13 @@ is the MoUI-built bilingual homepage and Web demo surface.
 - `views/` exposes public view constructors returning opaque `@core.View[Msg]`.
 - `backend/host/` defines shared host contracts; platform backends normalize
   window and input events into `HostEvent`.
-- `backend/<platform>/wgpu` and `backend/<platform>/skia` select native WGPU or
-  native Skia renderer providers; host-core packages do not import concrete
-  renderer implementations.
-- `render/` provides the renderer facade, with native wgpu, native Skia raster,
-  and WebGPU adapter implementations under `render/wgpu/`, `render/skia/`, and
-  `render/webgpu_adapter/`.
+- `backend/<platform>/skia` selects the native Skia raster mainline provider;
+  `backend/<platform>/wgpu` keeps the native WGPU experimental provider
+  available for diagnostics. Host-core packages do not import concrete renderer
+  implementations.
+- `render/` provides the renderer facade, with native Skia raster, WebGPU
+  adapter, and experimental native wgpu implementations under `render/skia/`,
+  `render/webgpu_adapter/`, and `render/wgpu/`.
 - `examples/*/app/` contains shared app logic, while platform subpackages are
   thin entrypoints.
 - `website/` is a root workspace member for the MoUI homepage, with shared app
@@ -171,34 +174,36 @@ http://127.0.0.1:8080/examples/markdown_editor/web_wasm/index.html
 
 ## macOS Native
 
-Native example builds link the platform window backend and `wgpu-native`.
-Cold builds can be noticeably slower than package tests or Web wasm-gc example
-builds, so they are kept out of the default development check.
+Native macOS examples use the platform window backend; the recommended
+mainline entrypoints select the native Skia raster provider. Cold builds can be
+noticeably slower than package tests or Web wasm-gc example builds, so they are
+kept out of the default development check.
 
 For macOS `moon run` linker errors, see
 [Platform notes](docs/platform-notes.md#macos-native).
 
-Build the visual showcase:
-
-```sh
-moon build examples/showcase/macos --target native
-```
-
-Build the visual showcase with the shared Moon Cosmic text provider selected
-explicitly:
-
-```sh
-moon build examples/showcase/macos_cosmic --target native
-```
-
-Build the visual showcase with the native Skia raster renderer selected
-explicitly:
+Build the visual showcase on the Skia mainline:
 
 ```sh
 moon build examples/showcase/macos_skia --target native
 ```
 
-Build and run the WYSIWYG Markdown editor:
+The `examples/showcase/macos` and `examples/showcase/macos_cosmic` entrypoints
+remain available as native WGPU diagnostics:
+
+```sh
+moon build examples/showcase/macos --target native
+moon build examples/showcase/macos_cosmic --target native
+```
+
+Build and run the WYSIWYG Markdown editor on the Skia mainline:
+
+```sh
+moon build examples/markdown_editor/macos_skia --target native
+./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
+```
+
+The WGPU Markdown editor entrypoint is still available for diagnostics:
 
 ```sh
 moon build examples/markdown_editor/macos --target native
@@ -209,7 +214,7 @@ Wrap a native example as a local `.app` bundle:
 
 ```sh
 sh scripts/package-macos-app.sh \
-  --package examples/showcase/macos \
+  --package examples/showcase/macos_skia \
   --name "MoUI Showcase" \
   --bundle-id dev.wzzc.moui.showcase \
   --version 0.1.0
@@ -220,10 +225,11 @@ manifest under `Contents/Resources`.
 
 ## Windows Native
 
-Windows native examples use the MSVC toolchain, vcpkg `zlib:x64-windows`, and
-`wgpu_mbt` dynamic mode with the official MSVC `wgpu_native.dll` release. These
-builds are useful for platform validation, but they are intentionally treated as
-slow checks rather than routine package-level tests.
+Windows native examples use the MSVC toolchain and vcpkg `zlib:x64-windows`.
+The recommended mainline entrypoints select native Skia raster. Native WGPU
+entrypoints still use `wgpu_mbt` dynamic mode with the official MSVC
+`wgpu_native.dll` release, but they are experimental diagnostics rather than the
+default validation route.
 
 Setup, build, and package the default Showcase:
 
@@ -231,23 +237,22 @@ Setup, build, and package the default Showcase:
 winget install --id Microsoft.VisualStudio.2022.BuildTools -e
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/showcase/windows `
+  -Package examples/showcase/windows_skia `
   -BuildOnly
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
-  -Package examples/showcase/windows `
+  -Package examples/showcase/windows_skia `
   -AppName MoUIShowcase `
   -Version 0.1.0
 ```
 
-The Showcase also has Windows entrypoints for explicit renderer or text-provider
-selection:
+The Showcase also has Windows WGPU/Cosmic diagnostic entrypoints:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/showcase/windows_cosmic `
+  -Package examples/showcase/windows `
   -BuildOnly
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/showcase/windows_skia `
+  -Package examples/showcase/windows_cosmic `
   -BuildOnly
 ```
 
@@ -255,10 +260,15 @@ Build the WYSIWYG Markdown editor with the same MSVC helper:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows `
-  -BuildOnly
-powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
   -Package examples/markdown_editor/windows_skia `
+  -BuildOnly
+```
+
+The WGPU Markdown editor entrypoint remains available for diagnostics:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/markdown_editor/windows `
   -BuildOnly
 ```
 
@@ -267,15 +277,14 @@ PowerShell process. The helper routes `.c` native stubs through C11 atomics and
 keeps Skia `.cpp` stubs on their own C++ standard flags:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
 The MSVC package is written under `dist\windows-msvc\MoUIShowcase` and includes
-`run.cmd`, `wgpu_native.dll`, WGPU release metadata, and the vcpkg zlib runtime
-DLL. Use `run.cmd` so `MBT_WGPU_NATIVE_ROOT` points at the bundled WGPU release.
+`run.cmd` and the vcpkg zlib runtime DLL. WGPU diagnostic packages additionally
+include `wgpu_native.dll`, WGPU release metadata, and a `run.cmd` wrapper that
+sets `MBT_WGPU_NATIVE_ROOT` to the bundled WGPU release.
 When Visual Studio's bundled vcpkg refuses direct classic installs, run the
 setup helper from the repository root; it creates an ignored manifest workspace
 under `.tools\vcpkg-msvc` and installs `zlib:x64-windows` there.
@@ -283,22 +292,22 @@ under `.tools\vcpkg-msvc` and installs `zlib:x64-windows` there.
 ## Linux Native
 
 Linux native examples use the local fork-owned `window/linux` Wayland backend.
-The default and `linux_cosmic` Showcase entrypoints use native `wgpu-native`
-surfaces; `linux_skia` selects the native Skia raster provider and presents CPU
+The recommended mainline entrypoints select native Skia raster and present CPU
 pixel frames through Wayland `wl_shm`. Run them on a Linux host with a Wayland
-compositor and renderer stack:
+compositor and configured real Skia link flags:
 
 ```sh
-moon run examples/showcase/linux --target native
-moon run examples/showcase/linux_cosmic --target native
 moon run examples/showcase/linux_skia --target native
 moon run examples/markdown_editor/linux_skia --target native
 ```
 
+The `examples/showcase/linux` and `examples/showcase/linux_cosmic` entrypoints
+remain available as native WGPU diagnostics when a Vulkan/WGPU stack is
+configured.
+
 For headless validation, use a compositor such as Weston headless and set
-`WAYLAND_DISPLAY` to its socket before running the examples. The default Linux
+`WAYLAND_DISPLAY` to its socket before running the examples. The WGPU Linux
 text path composes the fontconfig/FreeType provider with Moon Cosmic fallback;
 that provider currently has a narrow native color-emoji path for explicit emoji
 family runs, while general text still falls back to Cosmic. `linux_cosmic`
-selects Moon Cosmic directly. Configure real Skia link flags before relying on
-Skia-rendered pixels from `linux_skia` entrypoints.
+selects Moon Cosmic directly.

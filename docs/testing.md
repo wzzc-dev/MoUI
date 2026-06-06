@@ -13,8 +13,9 @@ sh scripts/dev-check.sh
 ```
 
 This keeps feedback fast by running stable package-level tests, native renderer
-contract tests, and Web wasm-gc example builds without invoking every native or
-wasm-gc target.
+contract tests for the Skia mainline, and Web wasm-gc example builds without
+invoking every native or wasm-gc target. Pass `--wgpu-experimental` when you
+want native WGPU diagnostics in the same loop.
 
 ## Focused Package Tests
 
@@ -24,9 +25,9 @@ Use package-level commands while editing implementation code:
 moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/render --target native
-moon test moui/render/wgpu --target native
 moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
+moon test moui/render/wgpu --target native  # WGPU diagnostic path
 moon test moui/tests/tooling --target native
 moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
@@ -54,7 +55,7 @@ mapping is:
 | Menus and commands | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/command_palette/app --target native` |
 | Host services and file import | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native` |
 | Host event, window, timer, and route subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, touched native backend checks such as `moon test moui/backend/macos --target native`, `moon test moui/backend/linux --target native`, or `moon check moui/backend/windows --target native` |
-| Native async image completion | `moon test moui/render --target native`, `moon test moui/render/wgpu --target native`, `moon test moui/render/skia --target native`, `moon test moui/backend/host --target native`, touched native backend/provider package tests such as `moon test moui/backend/macos --target native`, `moon test moui/backend/macos/wgpu --target native`, `moon test moui/backend/macos/skia --target native`, `moon test moui/backend/linux --target native`, `moon test moui/backend/linux/wgpu --target native`, or `moon test moui/backend/linux/skia --target native`; Windows package tests require a Windows/MSVC host, use `moon check moui/backend/windows --target native`, `moon check moui/backend/windows/wgpu --target native`, and `moon check moui/backend/windows/skia --target native` on non-Windows hosts for static API coverage |
+| Native async image completion | `moon test moui/render --target native`, `moon test moui/render/skia --target native`, `moon test moui/backend/host --target native`, touched native backend/provider package tests such as `moon test moui/backend/macos --target native`, `moon test moui/backend/macos/skia --target native`, `moon test moui/backend/linux --target native`, or `moon test moui/backend/linux/skia --target native`; add `moon test moui/render/wgpu --target native` plus the matching `backend/<platform>/wgpu` package only for WGPU diagnostic changes. Windows package tests require a Windows/MSVC host, use `moon check moui/backend/windows --target native` and `moon check moui/backend/windows/skia --target native` on non-Windows hosts for static API coverage |
 | Virtual lists | `moon test moui/views --target native`, `sh scripts/conformance-check.sh --layout` |
 
 ## Platform Validation
@@ -73,12 +74,16 @@ examples:
 sh scripts/dev-check.sh --platform-examples-build
 ```
 
-Native builds link platform stubs and `wgpu-native`, so they are intentionally
-not part of every inner-loop check.
+Native builds link platform stubs and renderer-specific native libraries, so
+they are intentionally not part of every inner-loop check. By default they
+build the Skia native mainline; pass `--wgpu-experimental` to include WGPU
+native diagnostics.
 
 Renderer provider packages are platform-specific. Use the current-host helper
 above for normal backend/provider validation instead of trying to run every
 `moui/backend/<platform>/{wgpu,skia}` test package on every machine.
+For example, `moon test moui/backend/macos/wgpu --target native` is a native
+WGPU diagnostic provider check, not a default mainline requirement.
 The macOS, Windows, and Linux Skia provider packages expose
 `macos_skia_provider_preflight_summary()`,
 `windows_skia_provider_preflight_summary()`, and
@@ -131,17 +136,14 @@ On Linux, the platform example build step covers Showcase native entrypoints
 plus the Markdown Editor Skia entrypoint:
 
 ```sh
-moon build examples/showcase/linux --target native
-moon build examples/showcase/linux_cosmic --target native
 moon build examples/showcase/linux_skia --target native
 moon build examples/markdown_editor/linux_skia --target native
 ```
 
-Runtime validation requires a Wayland compositor and Vulkan stack:
+Runtime validation requires a Wayland compositor and configured real Skia link
+flags:
 
 ```sh
-moon run examples/showcase/linux --target native
-moon run examples/showcase/linux_cosmic --target native
 moon run examples/showcase/linux_skia --target native
 moon run examples/markdown_editor/linux_skia --target native
 ```
@@ -247,7 +249,6 @@ Suggested validation:
 
 ```sh
 moon test moui/render --target native
-moon test moui/render/wgpu --target native
 moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 node scripts/test-webgpu-runtime-radial.mjs
@@ -258,7 +259,11 @@ node scripts/test-record-web-renderer-proof-manifest.mjs
 ```
 
 This renderer slice includes the native Skia raster package at
-`moui/render/skia`; real presenter pixels still require the opt-in Skia smoke.
+`moui/render/skia` plus the browser WebGPU adapter. Add
+`moon test moui/render/wgpu --target native` or
+`sh scripts/conformance-check.sh --render --wgpu-experimental` only when the
+native WGPU diagnostic path is touched. Real presenter pixels still require the
+opt-in Skia smoke.
 On macOS, use `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
 --run-markdown-smoke` when you need renderer pixels plus first-frame Showcase
 and Markdown Editor runtime evidence with temporary real-Skia link flags. Add
@@ -386,11 +391,12 @@ sh scripts/conformance-check.sh --platform
 The base command runs runtime, host, renderer, Web backend, and Showcase app
 contracts. `--input` runs core input/focus semantics and shared host input
 routing. `--layout` runs core layout, baseline, and TextSystem-dependent
-geometry contracts. `--render` runs renderer facade, native WGPU, native Skia,
-Web adapter capability evidence, and the browser WebGPU runtime radial brush
-payload check. `--text` runs the stable text conformance surface
-across core, native renderer, the standalone Cosmic provider, Web adapter, and
-Web backend packages. `--text-diagnostic` runs the opt-in cross-engine text
+geometry contracts. `--render` runs renderer facade, native Skia, Web adapter
+capability evidence, and the browser WebGPU runtime radial brush payload check;
+add `--wgpu-experimental` to include native WGPU diagnostics. `--text` runs the
+stable text conformance surface across core, native Skia, Web adapter, and Web
+backend packages, with WGPU/Cosmic text diagnostics gated by
+`--wgpu-experimental`. `--text-diagnostic` runs the opt-in cross-engine text
 matrix packages.
 `--platform-services` runs host and Web service contracts, runs current-host
 macOS service tests on Darwin, runs Linux service tests only when the local
@@ -497,7 +503,7 @@ node scripts/record-platform-evidence-manifest.mjs \
   --window-evidence-command \
     ".local_repos/window/scripts/record_moui_evidence.sh windows --status passed --host 'Windows MSVC CI'" \
   --consumer-command \
-    "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows --target native }\"" \
+    "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"" \
   --set windowOpened=yes \
   --set resizeRedraw=yes \
   --set representativeInput=yes \
@@ -562,7 +568,8 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
 - `Public API surface` runs `moon info` and fails if generated
   `pkg.generated.mbti` files drift.
 - `Linux platform contracts` installs Wayland development packages and runs the
-  current-platform backend checks on Ubuntu.
+  current-platform Skia/backend checks on Ubuntu. Vulkan/WGPU setup is reserved
+  for the native WGPU diagnostic matrix.
 - `Web runtime presentation` builds Showcase and Markdown Editor Web wasm-gc
   targets, serves the repository root, starts a Chrome DevTools Protocol
   browser session with `fonts-noto-color-emoji` installed, runs
@@ -578,12 +585,11 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   glyph atlas pixels, one-cluster ZWJ layout, bidi visual-order reordering,
   paragraph line metrics with later-line pixels, and placeholder -> image load
   -> repaint -> ready second-frame image ordering.
-- `Native WGPU renderer proof` and `Native Skia renderer proof` run macOS,
-  Windows, and Linux matrices, write renderer-proof manifests under
-  `artifacts/conformance/renderer-proof/`, upload matching
-  `artifacts/platform-evidence/<platform>/` logs such as
+- `Native Skia renderer proof` runs macOS, Windows, and Linux matrices, writes
+  renderer-proof manifests under `artifacts/conformance/renderer-proof/`,
+  uploads matching `artifacts/platform-evidence/<platform>/` logs such as
   `skia-renderer-smoke.log` and `skia-text-emoji-smoke.log`, and intentionally
-  leave manifests failed until true radial/transform pixels, text/emoji glyph
+  leaves manifests failed until true radial/transform pixels, text/emoji glyph
   or raster evidence, and async image second-frame artifacts exist for that
   backend/platform. The Skia proof matrix configures the locked release Skia
   artifact before running the proof helper, then builds and runs
@@ -591,23 +597,23 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   `moui/tests/skia_text_emoji_smoke/native`; those smokes print renderer-proof
   markers only after captured Skia pixels, glyph/layout evidence, and
   text-system evidence prove radial, transform, color emoji, ZWJ grapheme, bidi
-  visual order, paragraph wrapping, and async second-frame observations. Native
-  WGPU proof still requires a usable runner WGPU adapter for its offscreen
-  readback smoke.
+  visual order, paragraph wrapping, and async second-frame observations.
+- `Native WGPU renderer diagnostic` still runs the macOS, Windows, and Linux
+  WGPU matrices and uploads artifacts, but it is `continue-on-error` and does
+  not define the mainline renderer-proof summary.
 - `Renderer proof summary` downloads those artifacts, requires
-  `webgpu-wasm-web.json`, `wgpu-native-{macos,windows,linux}.json`, and
-  `skia-native-{macos,windows,linux}.json`, then runs
+  `webgpu-wasm-web.json` and `skia-native-{macos,windows,linux}.json`, then runs
   `validate-renderer-proof-manifest.mjs --require-passed` on each one. This job
   runs with `always()` so skipped or failed upstream proof jobs produce an
-  explicit missing/failed renderer-proof signal.
+  explicit missing/failed mainline renderer-proof signal.
 - `macOS packaging smoke` packages Showcase as a local `.app`, validates the
   package manifest, and uploads the bundle artifact.
 - `Benchmark scaffold` runs `sh scripts/conformance-check.sh --bench` to keep
   benchmark build targets healthy.
 - `Windows MSVC native smoke` installs vcpkg `zlib:x64-windows`, imports the
-  Visual Studio C++ toolchain, runs Windows backend and WGPU provider tests,
-  builds Showcase with `MBT_WGPU_LINK_MODE=dynamic`, packages it under
-  `dist/windows-msvc`, validates the package manifest, and uploads the portable
+  Visual Studio C++ toolchain, runs Windows backend and Skia provider tests,
+  builds the Skia Showcase, packages it under `dist/windows-msvc`, validates
+  the package manifest, and uploads the portable
   folder artifact.
 
 `moui_skia` binding CI is also rooted in `.github/workflows` so GitHub Actions

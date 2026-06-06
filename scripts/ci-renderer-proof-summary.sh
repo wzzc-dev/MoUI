@@ -5,9 +5,6 @@ ROOT="${1:-artifacts}"
 
 required='
 webgpu-wasm-web.json
-wgpu-native-macos.json
-wgpu-native-windows.json
-wgpu-native-linux.json
 skia-native-macos.json
 skia-native-windows.json
 skia-native-linux.json

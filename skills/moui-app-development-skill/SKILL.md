@@ -113,12 +113,11 @@ separate framework task using `moui-framework-development-skill`.
   composing child features.
 - Keep platform-specific setup in `web_wasm`, `macos`, `windows`, or `linux`
   entrypoints.
-- Showcase also has `macos_cosmic`, `windows_cosmic`, and `linux_cosmic`
-  entrypoints when an app task needs explicit Moon Cosmic text-provider
-  comparison. Showcase has `macos_skia`, `windows_skia`, and `linux_skia`
-  entrypoints when an app task needs explicit native Skia renderer selection.
-  Markdown Editor has `macos_skia`, `windows_skia`, and `linux_skia` for
-  explicit native Skia renderer selection.
+- Showcase and Markdown Editor use `macos_skia`, `windows_skia`, and
+  `linux_skia` for the recommended native Skia renderer entrypoints. Showcase
+  also has `macos_cosmic`, `windows_cosmic`, and `linux_cosmic` entrypoints
+  when an app task needs explicit Moon Cosmic text-provider comparison on the
+  native WGPU diagnostic route.
 - Treat Linux as a scaffold until the framework has a real Linux backend.
 
 ## Development Workflow
@@ -165,22 +164,16 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 Native example builds:
 
 ```sh
-moon build examples/showcase/macos --target native
-moon build examples/showcase/macos_cosmic --target native
 moon build examples/showcase/macos_skia --target native
-moon build examples/showcase/windows --target native
-moon build examples/showcase/windows_cosmic --target native
 moon build examples/showcase/windows_skia --target native
-moon build examples/showcase/linux --target native
-moon build examples/showcase/linux_cosmic --target native
 moon build examples/showcase/linux_skia --target native
-moon build examples/markdown_editor/macos --target native
 moon build examples/markdown_editor/macos_skia --target native
-moon build examples/markdown_editor/windows --target native
-moon build examples/markdown_editor/windows_cosmic --target native
 moon build examples/markdown_editor/windows_skia --target native
 moon build examples/markdown_editor/linux_skia --target native
 ```
+
+Build the plain native WGPU and Cosmic entrypoints only when explicitly
+validating the experimental WGPU diagnostic route.
 
 macOS Skia entrypoints use the renderer's system `FontMgr` path by default.
 First-frame smoke runs select `EmptyTypeface` only while their
@@ -198,7 +191,7 @@ Native packaging helpers:
 
 ```sh
 sh scripts/package-macos-app.sh \
-  --package examples/showcase/macos \
+  --package examples/showcase/macos_skia \
   --name "MoUI Showcase" \
   --bundle-id dev.wzzc.moui.showcase \
   --version 0.1.0
@@ -207,10 +200,10 @@ sh scripts/package-macos-app.sh \
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/showcase/windows `
+  -Package examples/showcase/windows_skia `
   -BuildOnly
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
-  -Package examples/showcase/windows `
+  -Package examples/showcase/windows_skia `
   -AppName MoUIShowcase `
   -Version 0.1.0
 ```

@@ -55,22 +55,16 @@ const platforms = new Map([
     {
       hostPattern: /(macOS|Darwin)/,
       exampleTargets: [
-        "examples/showcase/macos",
         "examples/showcase/macos_skia",
-        "examples/markdown_editor/macos",
         "examples/markdown_editor/macos_skia",
       ],
       routineTokens: [
         "sh scripts/dev-check.sh --platform-examples-test",
-        "moon build examples/showcase/macos --target native",
         "moon build examples/showcase/macos_skia --target native",
-        "moon build examples/markdown_editor/macos --target native",
         "moon build examples/markdown_editor/macos_skia --target native",
       ],
       runtimeTokens: [
-        "moon run examples/showcase/macos --target native",
         "moon run examples/showcase/macos_skia --target native",
-        "moon run examples/markdown_editor/macos --target native",
         "moon run examples/markdown_editor/macos_skia --target native",
       ],
     },
@@ -80,9 +74,7 @@ const platforms = new Map([
     {
       hostPattern: /(Windows|MSVC)/,
       exampleTargets: [
-        "examples/showcase/windows",
         "examples/showcase/windows_skia",
-        "examples/markdown_editor/windows",
         "examples/markdown_editor/windows_skia",
       ],
       routineTokens: [
@@ -93,9 +85,7 @@ const platforms = new Map([
         "examples/markdown_editor/windows_skia",
       ],
       runtimeTokens: [
-        "moon run examples/showcase/windows --target native",
         "moon run examples/showcase/windows_skia --target native",
-        "moon run examples/markdown_editor/windows --target native",
         "moon run examples/markdown_editor/windows_skia --target native",
       ],
     },
@@ -105,21 +95,15 @@ const platforms = new Map([
     {
       hostPattern: /(Linux|Wayland)/,
       exampleTargets: [
-        "examples/showcase/linux",
-        "examples/showcase/linux_cosmic",
         "examples/showcase/linux_skia",
         "examples/markdown_editor/linux_skia",
       ],
       routineTokens: [
         "sh scripts/dev-check.sh --platform-examples-test",
-        "moon build examples/showcase/linux --target native",
-        "moon build examples/showcase/linux_cosmic --target native",
         "moon build examples/showcase/linux_skia --target native",
         "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeTokens: [
-        "moon run examples/showcase/linux --target native",
-        "moon run examples/showcase/linux_cosmic --target native",
         "moon run examples/showcase/linux_skia --target native",
         "moon run examples/markdown_editor/linux_skia --target native",
       ],

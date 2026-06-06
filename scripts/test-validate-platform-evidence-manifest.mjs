@@ -170,21 +170,15 @@ const validManifest = {
       host: "macOS Darwin local host",
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
-        "moon build examples/showcase/macos --target native",
         "moon build examples/showcase/macos_skia --target native",
-        "moon build examples/markdown_editor/macos --target native",
         "moon build examples/markdown_editor/macos_skia --target native",
       ],
       runtimeEvidenceCommands: [
-        "moon run examples/showcase/macos --target native",
         "moon run examples/showcase/macos_skia --target native",
-        "moon run examples/markdown_editor/macos --target native",
         "moon run examples/markdown_editor/macos_skia --target native",
       ],
       exampleTargets: [
-        "examples/showcase/macos",
         "examples/showcase/macos_skia",
-        "examples/markdown_editor/macos",
         "examples/markdown_editor/macos_skia",
       ],
     }),
@@ -193,21 +187,16 @@ const validManifest = {
       host: "Windows MSVC host pending",
       routineCommands: [
         "moon test moui/backend/windows --target native",
-        "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/showcase/windows -BuildOnly",
         "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
         "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
-        "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\package_windows_app_msvc.ps1 -Package examples/showcase/windows",
+        "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\package_windows_app_msvc.ps1 -Package examples/showcase/windows_skia",
       ],
       runtimeEvidenceCommands: [
-        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows --target native }\"",
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"",
-        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }\"",
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\"",
       ],
       exampleTargets: [
-        "examples/showcase/windows",
         "examples/showcase/windows_skia",
-        "examples/markdown_editor/windows",
         "examples/markdown_editor/windows_skia",
       ],
     }),
@@ -216,20 +205,14 @@ const validManifest = {
       host: "Linux Wayland host pending",
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
-        "moon build examples/showcase/linux --target native",
-        "moon build examples/showcase/linux_cosmic --target native",
         "moon build examples/showcase/linux_skia --target native",
         "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeEvidenceCommands: [
-        "moon run examples/showcase/linux --target native",
-        "moon run examples/showcase/linux_cosmic --target native",
         "moon run examples/showcase/linux_skia --target native",
         "moon run examples/markdown_editor/linux_skia --target native",
       ],
       exampleTargets: [
-        "examples/showcase/linux",
-        "examples/showcase/linux_cosmic",
         "examples/showcase/linux_skia",
         "examples/markdown_editor/linux_skia",
       ],
@@ -291,7 +274,7 @@ const windowsPassed = {
           host: "Windows MSVC CI",
           windowEvidenceCommand:
             ".local_repos/window/scripts/record_moui_evidence.sh windows --status passed --host 'Windows MSVC CI'",
-          consumerCommand: "moon run examples/showcase/windows --target native",
+          consumerCommand: "moon run examples/showcase/windows_skia --target native",
           observations: { ...passedObservations },
           skiaEvidence: {
             ...entry.skiaEvidence,
@@ -582,42 +565,42 @@ expectFail(
   "consumerCommand must name the MoUI consumer run",
 );
 
-const linuxMissingCosmicRuntime = {
+const linuxMissingSkiaRuntime = {
   ...validManifest,
   platforms: validManifest.platforms.map(entry =>
     entry.name === "linux"
       ? {
           ...entry,
           runtimeEvidenceCommands: entry.runtimeEvidenceCommands.filter(
-            command => !command.includes("examples/showcase/linux_cosmic"),
+            command => !command.includes("examples/showcase/linux_skia"),
           ),
         }
       : entry,
   ),
 };
 expectFail(
-  "linux evidence requires linux_cosmic runtime command",
-  runValidator(writeFixture("linux-missing-cosmic-runtime.json", linuxMissingCosmicRuntime)),
-  "runtimeEvidenceCommands must contain an entry mentioning 'moon run examples/showcase/linux_cosmic --target native'",
+  "linux evidence requires linux_skia runtime command",
+  runValidator(writeFixture("linux-missing-skia-runtime.json", linuxMissingSkiaRuntime)),
+  "runtimeEvidenceCommands must contain an entry mentioning 'moon run examples/showcase/linux_skia --target native'",
 );
 
-const linuxMissingCosmicBuild = {
+const linuxMissingSkiaBuild = {
   ...validManifest,
   platforms: validManifest.platforms.map(entry =>
     entry.name === "linux"
       ? {
           ...entry,
           routineCommands: entry.routineCommands.filter(
-            command => !command.includes("examples/showcase/linux_cosmic"),
+            command => !command.includes("examples/showcase/linux_skia"),
           ),
         }
       : entry,
   ),
 };
 expectFail(
-  "linux evidence requires linux_cosmic build command",
-  runValidator(writeFixture("linux-missing-cosmic-build.json", linuxMissingCosmicBuild)),
-  "routineCommands must contain an entry mentioning 'moon build examples/showcase/linux_cosmic --target native'",
+  "linux evidence requires linux_skia build command",
+  runValidator(writeFixture("linux-missing-skia-build.json", linuxMissingSkiaBuild)),
+  "routineCommands must contain an entry mentioning 'moon build examples/showcase/linux_skia --target native'",
 );
 
 const escapedArtifact = {

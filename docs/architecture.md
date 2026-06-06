@@ -1,6 +1,6 @@
 # Architecture
 
-MoUI is a multi-platform MoonBit GUI framework prototype. The current architecture keeps the app/runtime/view model platform-neutral. Native hosts own platform windows, events, services, and lifecycle, then receive concrete renderers through platform `RendererProvider` packages; the Web host uses a single `wasm-gc + window/web + browser WebGPU host imports` path. The project roadmap keeps this architecture focused on shared app logic, explicit backend contracts, transparent renderer capabilities, and bounded validation.
+MoUI is a multi-platform MoonBit GUI framework prototype. The current architecture keeps the app/runtime/view model platform-neutral. Native hosts own platform windows, events, services, and lifecycle, then receive concrete renderers through platform `RendererProvider` packages. The recommended mainline is native Skia raster plus the single Web `wasm-gc + window/web + browser WebGPU host imports` path; native WGPU remains an experimental diagnostic route while the MoonBit WGPU ecosystem matures. The project roadmap keeps this architecture focused on shared app logic, explicit backend contracts, transparent renderer capabilities, and bounded validation.
 
 ## Scope
 
@@ -10,7 +10,7 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 - `style` is the MoonBit package boundary for visual tokens and style type aliases during the gradual split from `core`.
 - Spec-first views in `views`, including `text`, `button`, `text_field`, `surface`, row/column layout, and spacer primitives.
 - Unified host boundaries in `backend/host`, with shared window-event mapping and platform hosts normalizing events into `HostEvent`.
-- Native rendering through provider packages over `render/wgpu` or `render/skia`, including GPU text, rounded geometry, gradients, soft shadows, and Skia CPU pixel-frame presentation.
+- Native mainline rendering through provider packages over `render/skia`, with experimental native WGPU diagnostics retained under `render/wgpu`.
 - Web rendering through `render/webgpu_adapter` on `wasm-gc` only, with browser WebGPU host imports for visible drawing. The old JS-target WebGPU path is intentionally removed.
 
 ## Packages
@@ -22,24 +22,24 @@ moui/style/                   visual token and control style compatibility packa
 moui/views/                   public view constructors
 moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
 moui/backend/windows/         Windows native host core
-moui/backend/windows/wgpu/    Windows WGPU renderer provider
-moui/backend/windows/skia/    Windows Skia renderer provider
+moui/backend/windows/skia/    Windows Skia renderer provider mainline
+moui/backend/windows/wgpu/    Windows WGPU renderer provider diagnostic
 moui/backend/macos/           macOS native host core
-moui/backend/macos/wgpu/      macOS WGPU renderer provider
-moui/backend/macos/skia/      macOS Skia renderer provider
+moui/backend/macos/skia/      macOS Skia renderer provider mainline
+moui/backend/macos/wgpu/      macOS WGPU renderer provider diagnostic
 moui/backend/linux/           Linux Wayland native host core
-moui/backend/linux/wgpu/      Linux WGPU renderer provider
-moui/backend/linux/skia/      Linux Skia renderer provider
+moui/backend/linux/skia/      Linux Skia renderer provider mainline
+moui/backend/linux/wgpu/      Linux WGPU renderer provider diagnostic
 moui/backend/web/             canonical Web host on wasm-gc plus browser JS assets
 moui/render/                  renderer facade and shared draw helpers
-moui/render/wgpu/             native wgpu renderer
+moui/render/skia/             native Skia raster renderer facade over moui_skia
+moui/render/webgpu_adapter/   browser WebGPU host-import renderer for wasm-gc
+moui/render/wgpu/             experimental native wgpu renderer
 moui/render/wgpu/cosmic_text/ Moon Cosmic provider for native wgpu text
 moui/render/wgpu/coretext/    macOS CoreText provider for native wgpu text
 moui/render/wgpu/text_protocol/ shared native measure/run/raster/register bytes protocol
 moui/render/wgpu/directwrite/ Windows DirectWrite provider scaffold
 moui/render/wgpu/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffold
-moui/render/skia/             native Skia raster renderer facade over moui_skia
-moui/render/webgpu_adapter/   browser WebGPU host-import renderer for wasm-gc
 moui/tests/tooling/           quickcheck and pixelmatch integration tests
 moui/tests/text_conformance/  opt-in native/Web text diagnostic matrix
 moui/tests/skia_renderer_smoke/native/ opt-in real-Skia renderer pixel smoke
@@ -47,23 +47,23 @@ examples/counter/app/         smallest shared app shape
 examples/counter/{web_wasm,macos,windows,linux}/ platform counter entrypoints
 examples/counter/windows_cosmic/ Windows counter selecting Moon Cosmic text
 examples/showcase/app/        shared visual showcase app with Counter/Todo patterns
-examples/showcase/macos/      macOS native showcase
-examples/showcase/macos_cosmic/ macOS showcase selecting Moon Cosmic text
 examples/showcase/macos_skia/ macOS showcase selecting native Skia raster
+examples/showcase/macos/      macOS native WGPU diagnostic showcase
+examples/showcase/macos_cosmic/ macOS showcase selecting Moon Cosmic text
 examples/showcase/web_wasm/   Web showcase on wasm-gc
-examples/showcase/windows/    Windows native showcase
-examples/showcase/windows_cosmic/ Windows showcase selecting Moon Cosmic text
 examples/showcase/windows_skia/ Windows showcase selecting native Skia raster
-examples/showcase/linux/      Linux Wayland native showcase
-examples/showcase/linux_cosmic/ Linux showcase selecting Moon Cosmic text
+examples/showcase/windows/    Windows native WGPU diagnostic showcase
+examples/showcase/windows_cosmic/ Windows showcase selecting Moon Cosmic text
 examples/showcase/linux_skia/ Linux showcase selecting native Skia raster
+examples/showcase/linux/      Linux Wayland native WGPU diagnostic showcase
+examples/showcase/linux_cosmic/ Linux showcase selecting Moon Cosmic text
 examples/markdown_editor/app/  shared WYSIWYG Markdown editor app
-examples/markdown_editor/macos/ macOS native Markdown editor
 examples/markdown_editor/macos_skia/ macOS Markdown editor selecting native Skia raster
+examples/markdown_editor/macos/ macOS native WGPU diagnostic Markdown editor
 examples/markdown_editor/web_wasm/ Web Markdown editor on wasm-gc
-examples/markdown_editor/windows/ Windows native Markdown editor
-examples/markdown_editor/windows_cosmic/ Windows Markdown editor selecting Moon Cosmic text
 examples/markdown_editor/windows_skia/ Windows Markdown editor selecting native Skia raster
+examples/markdown_editor/windows/ Windows native WGPU diagnostic Markdown editor
+examples/markdown_editor/windows_cosmic/ Windows Markdown Editor selecting Moon Cosmic text
 examples/markdown_editor/linux_skia/ Linux Markdown editor selecting native Skia raster
 examples/{settings,data_table,file_importer,command_palette}/app/ shared app-pattern packages without platform entrypoints
 ```
@@ -383,26 +383,28 @@ The visual system keeps platform-neutral tokens and styles:
   reduced-motion shortcut.
 - `ImageFit::Contain/Cover/Stretch/ScaleDown/FitWidth/FitHeight` records image intent, with
   source, opacity, and rounded clipping preserved in the view spec.
-- Native and WebGPU renderers draw text through glyph-atlas GPU pipelines,
-  evaluate linear gradients in shader code, and render rounded soft shadows as
-  renderer primitives rather than start-color or layered-rectangle fallbacks.
+- Native Skia and WebGPU renderers keep visible draw-command support on the
+  mainline. Skia owns native raster pixels and text diagnostics, while WebGPU
+  owns browser wasm-gc presentation. Experimental native WGPU still validates
+  the GPU path when explicitly requested.
 
 View constructors pass `Brush`, border, and shadow data into `DrawCommand`
 without calling `Brush::fallback_color`; fallback is centralized in renderer
 capability layers.
 
-The native wgpu renderer currently renders rounded fills, gradients, shadows,
-GPU text, opacity, paths tessellated through `Milky2018/moon_zeno`, and decoded
-PNG/JPEG/BMP images directly. Clip and transform commands have visible native
-support with remaining follow-up work tracked in the renderer capability
-report. The WebGPU host-import renderer forwards the full command set to the
-browser runtime. See
+The native Skia renderer is the recommended native baseline for renderer proof
+and platform entrypoint evidence. It presents CPU pixel frames through platform
+Skia providers and uses the local `moui_skia` binding for raster, path, image,
+and text diagnostics. The WebGPU host-import renderer forwards the full command
+set to the browser runtime. Experimental native WGPU continues to exercise the
+GPU surface path and provider text integrations when explicitly requested. See
 [Renderer capability report](renderer-capability-report.md).
 
 Text measurement flows through the runtime `TextSystem` contract. `core/` owns
-the neutral contract and deterministic fallback; native providers live under
-`render/wgpu/*`, and Web installs a browser Canvas-backed system that matches
-its WebGPU glyph path. See [Text system](text-system.md).
+the neutral contract and deterministic fallback; the native Skia mainline
+exposes `skia_text_system()` for renderer/text diagnostics, WGPU diagnostic
+providers live under `render/wgpu/*`, and Web installs a browser Canvas-backed
+system that matches its WebGPU glyph path. See [Text system](text-system.md).
 
 ## Built-In And Custom Views
 
@@ -543,10 +545,11 @@ late-image redraws per open window and expose tracked-window revision plus
 loading/ready/failed/disposed status-count diagnostics, including
 previous/current counts on repaint results. Host cores depend only on
 `core`/`backend/host` plus the platform `window` package; they do not import
-`render/wgpu`, `render/skia`, `wgpu_mbt`, or `moui_skia`. WGPU provider packages
-own GPU surface bridges, `wgpu-native`, and native WGPU text provider
-composition. Skia provider packages own Skia renderer creation, pixel presenter
-bridges, and Skia availability diagnostics.
+`render/wgpu`, `render/skia`, `wgpu_mbt`, or `moui_skia`. Skia provider
+packages own the native mainline renderer creation, pixel presenter bridges,
+and Skia availability diagnostics. WGPU provider packages retain GPU surface
+bridges, `wgpu-native`, and native WGPU text provider composition as
+experimental diagnostics.
 
 `HostImageResourceCompletionSource` is the host-layer boundary for native async
 image loader completions. Native provider/platform loaders publish
