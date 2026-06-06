@@ -156,29 +156,21 @@ JetBrains Skia binary provider from `moui_skia`:
 scripts/macos-skia-renderer-smoke.sh
 ```
 
-The repository default package files intentionally stay fallback-safe and do not
-contain machine-local Skia paths. If you want direct local commands such as
-`moon run examples/showcase/macos_skia --target native` or
-`moon run examples/mo_workbench/macos_skia --target native` to use real Skia,
-first persist the resolved local link configuration:
+The repository default package files intentionally avoid machine-local Skia
+paths. Direct local commands use the `moui_skia` prebuild hook to resolve the
+pinned release provider and link mode at build time:
 
 ```sh
-scripts/macos-skia-renderer-smoke.sh --enable-skshaper --write-local-config
+export MOUI_SKIA_LINK_MODE=dynamic
+moon run examples/showcase/macos_skia --target native
+moon run examples/mo_workbench/macos_skia --target native
 ```
 
-That command writes absolute paths into `moui_skia/native/moon.pkg`,
-`moui/tests/skia_renderer_smoke/native/moon.pkg`, and
-`examples/showcase/macos_skia/moon.pkg`, and
-`examples/markdown_editor/macos_skia/moon.pkg`, and
-`examples/mo_workbench/macos_skia/moon.pkg`; keep those machine-local edits out
-of commits. Re-run the command after changing Skia provider options or after
-restoring those package files. The helper's `auto` link mode defaults this
-persistent direct-run setup to `libskia.dylib` when a dylib is available, so
-`moon run` does not have to relink a large static Skia archive. Temporary smoke
-and build setup defaults to `libskia.a` when a static archive is available. Use
-`MOUI_SKIA_MACOS_LINK_MODE=dynamic|static` or `--link-mode dynamic|static` to
-override those defaults; the explicit environment value wins over the helper's
-auto default, and a command-line `--link-mode` wins over the environment.
+Use `MOUI_SKIA_LINK_MODE=dynamic|static|auto` for direct `moon run`/`moon build`
+commands. The `--link-mode dynamic|static|auto` script option remains available
+for helper-driven smoke runs and overrides the environment for that invocation.
+Use `--write-local-config` only when intentionally writing machine-local
+absolute Skia paths into package files; keep those edits out of commits.
 
 Pass `--enable-skshaper` when the selected Skia library directory includes the
 SkShaper module libraries. The helper then configures `moui_skia/native` with

@@ -13,6 +13,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+if ($null -ne [Environment]::GetEnvironmentVariable("MOUI_SKIA_SKIA_LINK_MODE") -or
+    $null -ne [Environment]::GetEnvironmentVariable("MOUI_SKIA_MACOS_LINK_MODE")) {
+  throw "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto."
+}
+
 if ($DryRunConfig) {
   throw "acceptance requires a real smoke run; use scripts/windows-skia-smoke.ps1 -DryRunConfig for preflight"
 }

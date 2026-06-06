@@ -26,16 +26,25 @@ The cache layout is:
   .skia-cache/release/<tag>/<platform>-<config>-<arch>-<link-mode>/
 
 Output keys include MOUI_SKIA_SKIA_INCLUDE, MOUI_SKIA_SKIA_LIB_DIR,
-MOUI_SKIA_SKIA_LIB, MOUI_SKIA_SKIA_PROVIDER, MOUI_SKIA_SKIA_LINK_MODE,
+MOUI_SKIA_SKIA_LIB, MOUI_SKIA_SKIA_PROVIDER, MOUI_SKIA_LINK_MODE,
 MOUI_SKIA_EXTRA_CC_FLAGS, MOUI_SKIA_EXTRA_LINK_FLAGS, and release metadata used
 by real-smoke logs.
 EOF
 }
 
+reject_legacy_link_mode_env() {
+  if [[ -n "${MOUI_SKIA_SKIA_LINK_MODE+x}" || -n "${MOUI_SKIA_MACOS_LINK_MODE+x}" ]]; then
+    echo "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto." >&2
+    exit 2
+  fi
+}
+
+reject_legacy_link_mode_env
+
 platform="auto"
 arch="auto"
 config="Release"
-link_mode="${MOUI_SKIA_SKIA_LINK_MODE:-static}"
+link_mode="${MOUI_SKIA_LINK_MODE:-static}"
 tag=""
 cache_dir=".skia-cache/release"
 dry_run_config=0
@@ -393,7 +402,7 @@ MOUI_SKIA_SKIA_ROOT=$skia_root
 MOUI_SKIA_SKIA_COMMIT=$commit
 MOUI_SKIA_SKIA_PACKAGE=$asset_name
 MOUI_SKIA_SKIA_PACKAGE_SHA256=$asset_sha256
-MOUI_SKIA_SKIA_LINK_MODE=$resolved_link_mode
+MOUI_SKIA_LINK_MODE=$resolved_link_mode
 MOUI_SKIA_SKIA_INCLUDE=$skia_include
 MOUI_SKIA_SKIA_LIB_DIR=$skia_lib_dir
 MOUI_SKIA_SKIA_LIB=skia

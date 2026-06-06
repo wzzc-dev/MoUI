@@ -274,11 +274,11 @@ select `EmptyTypeface` only when their exit-after-first-present environment
 flag is set. This path is intentionally separate from the experimental
 `backend/macos/wgpu`; Skia is a provider package, not a host-core
 `NativeRenderer` variant.
-For local real-Skia configuration, `scripts/macos-skia-renderer-smoke.sh` uses
-dynamic `libskia.dylib` by default when `--write-local-config` is preparing
-direct `moon run` commands, and static `libskia.a` by default for temporary
-smoke/build rewrites when the archive is available; set
-`MOUI_SKIA_MACOS_LINK_MODE=dynamic|static` or pass `--link-mode` to override.
+For local real-Skia configuration, direct `moon run`/`moon build` commands use
+the `moui_skia` prebuild hook and `MOUI_SKIA_LINK_MODE=dynamic|static|auto` to
+choose the Skia library mode. Helper smoke runs can pass
+`--link-mode dynamic|static|auto` to override the environment for that
+invocation.
 `macos_skia_provider_preflight_summary()` exposes package-level preflight
 evidence for the selected font resolution, renderer availability,
 `moui_skia/native` availability, the `NSImageView` presenter path, inherited

@@ -42,8 +42,8 @@ proves the real backend path reached the end of the test.
 
 Environment defaults:
   MOUI_SKIA_SKIA_INCLUDE, MOUI_SKIA_SKIA_LIB_DIR, MOUI_SKIA_SKIA_LIB,
-  MOUI_SKIA_SKIA_LINK_MODE, MOUI_SKIA_MACOS_LINK_MODE,
-  MOUI_SKIA_SKIA_PROVIDER, MOUI_SKIA_RELEASE_OWNER, MOUI_SKIA_RELEASE_REPO,
+  MOUI_SKIA_LINK_MODE, MOUI_SKIA_SKIA_PROVIDER,
+  MOUI_SKIA_RELEASE_OWNER, MOUI_SKIA_RELEASE_REPO,
   MOUI_SKIA_RELEASE_TAG, MOUI_SKIA_RELEASE_URL, MOUI_SKIA_JETBRAINS_TAG,
   MOUI_SKIA_SKIA_COMMIT, MOUI_SKIA_SKIA_PACKAGE, MOUI_SKIA_SKIA_PACKAGE_SHA256,
   MOUI_SKIA_ENABLE_ASAN, MOUI_SKIA_EXTRA_CC_FLAGS, and
@@ -63,10 +63,19 @@ normalize_bool() {
   esac
 }
 
+reject_legacy_link_mode_env() {
+  if [[ -n "${MOUI_SKIA_SKIA_LINK_MODE+x}" || -n "${MOUI_SKIA_MACOS_LINK_MODE+x}" ]]; then
+    echo "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto." >&2
+    exit 2
+  fi
+}
+
+reject_legacy_link_mode_env
+
 skia_include="${MOUI_SKIA_SKIA_INCLUDE:-}"
 skia_lib_dir="${MOUI_SKIA_SKIA_LIB_DIR:-}"
 skia_lib="${MOUI_SKIA_SKIA_LIB:-skia}"
-skia_link_mode="${MOUI_SKIA_SKIA_LINK_MODE:-${MOUI_SKIA_MACOS_LINK_MODE:-static}}"
+skia_link_mode="${MOUI_SKIA_LINK_MODE:-static}"
 skia_provider="${MOUI_SKIA_SKIA_PROVIDER:-}"
 release_owner="${MOUI_SKIA_RELEASE_OWNER:-}"
 release_repo="${MOUI_SKIA_RELEASE_REPO:-}"
