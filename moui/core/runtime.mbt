@@ -6,6 +6,24 @@ pub struct AppRuntime {
 }
 
 ///|
+fn program_message_drain_limit() -> Int {
+  1024
+}
+
+///|
+fn[Msg] compact_pending_program_messages(
+  pending_messages : Array[Msg],
+  start : Int,
+) -> Unit {
+  let remaining : Array[Msg] = []
+  for index in start..<pending_messages.length() {
+    remaining.push(pending_messages[index])
+  }
+  pending_messages.clear()
+  pending_messages.append(remaining)
+}
+
+///|
 pub fn[Msg] AppRuntime::new_view(
   root~ : View[Msg],
   size~ : Size,
@@ -100,9 +118,12 @@ pub fn[Model, Msg] AppRuntime::new_program(
     if !dispatching.val && !syncing_subscriptions.val {
       program_runtime.record_message_drain_started(pending_count())
       dispatching.val = true
-      while pending_index.val < pending_messages.length() {
+      let mut processed_this_drain = 0
+      while pending_index.val < pending_messages.length() &&
+            processed_this_drain < program_message_drain_limit() {
         let message = pending_messages[pending_index.val]
         pending_index.val = pending_index.val + 1
+        processed_this_drain = processed_this_drain + 1
         program_runtime.record_dispatch()
         let (next_model, effect) = (program.update)(model.get(), message)
         program_runtime.record_update()
@@ -115,9 +136,15 @@ pub fn[Model, Msg] AppRuntime::new_program(
         sync_subscriptions()
         program_runtime.record_message_processed(pending_count())
       }
-      pending_messages.clear()
-      pending_index.val = 0
-      program_runtime.record_message_queue_cleared()
+      if pending_index.val < pending_messages.length() {
+        compact_pending_program_messages(pending_messages, pending_index.val)
+        pending_index.val = 0
+        program_runtime.record_message_processed(pending_count())
+      } else {
+        pending_messages.clear()
+        pending_index.val = 0
+        program_runtime.record_message_queue_cleared()
+      }
       dispatching.val = false
     }
   }

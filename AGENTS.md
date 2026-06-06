@@ -18,7 +18,9 @@ paths, or abstractions that only preserve old shapes.
   descriptor kinds, subscription reuse is keyed by the stable key plus source
   kind, effect-task lifecycle diagnostics may distinguish same-key descriptor
   kind changes from ordinary same-kind task replacement, program diagnostics
-  may count late dispatches ignored after runtime destruction, and runtime dirty
+  may count late dispatches ignored after runtime destruction, program message
+  drains are bounded runtime turns so synchronous click/effect/subscription
+  self-queues cannot monopolize the current host callback, and runtime dirty
   diagnostics may expose structured
   rebuild/layout/paint/redraw summaries, but concrete timer, host, window,
   route, or service adapters remain outside `core`.
