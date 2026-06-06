@@ -86,7 +86,10 @@ separate framework task using `moui-framework-development-skill`.
 - Prefer the TEA runtime helpers: use `@core.Program::simple` for pure
   model/update/view apps, `@core.Program::simple_with_environment` when the
   view needs `ViewEnvironment`, and `@core.Program::new` when `update` returns
-  `@core.Effect[Msg]` follow-up work.
+  `@core.Effect[Msg]` follow-up work. Synchronous clicks, effects, tasks, and
+  subscription callbacks enter the same bounded runtime message queue; avoid
+  relying on an intentional synchronous self-loop to finish all work in one
+  host callback.
 - Use `subscriptions=model => ...` on `Program` when an app has ongoing typed
   event sources such as ticks, route/deep-link streams, or service completions
   that should be reused by stable key and canceled when the model no longer

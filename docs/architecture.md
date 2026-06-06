@@ -138,7 +138,12 @@ none, scheduled leaf count, max depth, structured effect descriptors, and
 duplicate descriptor-key counts/names, without running effect callbacks.
 Program runtime snapshots also report message queue enqueue, drain, pending,
 max-pending, and ignored program-dispatch counters without requiring `Msg`
-values to be serializable. Dispatch closures captured by anonymous
+values to be serializable. Each program-message drain is bounded as a runtime
+turn: messages synchronously queued by clicks, `Effect::send` /
+`Effect::dispatch`, structured runners, effect tasks, or subscriptions keep
+their FIFO order, but work beyond the per-turn bound remains pending for the
+next host/runtime entry instead of keeping the current call stack alive
+forever. Dispatch closures captured by anonymous
 `Effect::dispatch` or structured `Effect::run` callbacks are ignored after
 `AppRuntime::destroy()` so late app-owned callbacks cannot re-enter a destroyed
 program runtime.
@@ -221,7 +226,9 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   subscription dispatch counters for stale callbacks from completed, canceled,
   or destroyed lifetimes, and ignored program-dispatch counters for anonymous or
   structured effect dispatchers that fire after runtime destruction. Program
-  runtime and runtime
+  message drains are bounded runtime turns, so synchronous self-queued work can
+  leave pending messages instead of monopolizing the current host callback.
+  Program runtime and runtime
   inspector snapshots expose active effect-task descriptors, effect-task
   lifecycle entries, active subscription descriptors, active subscription
   kind-count summaries, and subscription lifecycle entries so tooling can

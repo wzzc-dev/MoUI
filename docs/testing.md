@@ -53,6 +53,7 @@ mapping is:
 | Data table | `moon test moui/views --target native`, `moon test examples/data_table/app --target native` |
 | Navigation shell | `moon test moui/views --target native`, `moon test examples/showcase/app --target native` |
 | Menus and commands | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/command_palette/app --target native` |
+| Program effects and subscriptions | `moon test moui/core --target native` covers TEA model dispatch, effect/task/subscription lifecycle diagnostics, stale callback guards, synchronous click/effect/subscription queueing, and the bounded per-turn drain that keeps self-queued messages pending instead of monopolizing the current runtime callback |
 | Host services and file import | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native` |
 | Host event, window, timer, and route subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, touched native backend checks such as `moon test moui/backend/macos --target native`, `moon test moui/backend/linux --target native`, or `moon check moui/backend/windows --target native` |
 | Native async image completion | `moon test moui/render --target native`, `moon test moui/render/skia --target native`, `moon test moui/backend/host --target native`, touched native backend/provider package tests such as `moon test moui/backend/macos --target native`, `moon test moui/backend/macos/skia --target native`, `moon test moui/backend/linux --target native`, or `moon test moui/backend/linux/skia --target native`; add `moon test moui/render/wgpu --target native` plus the matching `backend/<platform>/wgpu` package only for WGPU diagnostic changes. Windows package tests require a Windows/MSVC host, use `moon check moui/backend/windows --target native` and `moon check moui/backend/windows/skia --target native` on non-Windows hosts for static API coverage |
@@ -298,8 +299,9 @@ High-risk framework behavior should be validated through four ownership layers
 instead of one large end-to-end assertion:
 
 1. Contract layer: `core/` defines platform-neutral semantics and invariants.
-   Text, input/focus, layout, selection, undo/redo, draw intent, and runtime
-   state transitions belong here.
+   Text, input/focus, layout, selection, undo/redo, draw intent, Program
+   message queue turns, Effect/Subscription lifecycle, and runtime state
+   transitions belong here.
 2. Host layer: `backend/host` and active platform backends prove that native or
    browser events, services, window lifecycle requests, paste/composition, and
    focused commands drive the runtime through shared contracts. Host-owned
