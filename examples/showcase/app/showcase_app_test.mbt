@@ -526,6 +526,45 @@ test "showcase covers text media controls and layout sections" {
   assert_true(has_text(data_commands, "Workspace"))
   assert_true(has_text(data_commands, "Mira Chen"))
   assert_true(has_text(data_commands, "+1"))
+  let data_runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("data"))
+    .runtime(width=960.0, height=620.0)
+  assert_false(
+    has_text(data_runtime.draw_commands(), "State-driven visuals are active"),
+  )
+  click_text(data_runtime, "Active")
+  let active_commands = data_runtime.draw_commands()
+  assert_false(has_text(active_commands, "State-driven visuals are active"))
+  assert_true(has_text(active_commands, "4 results"))
+  click_text(data_runtime, "Review")
+  let review_commands = data_runtime.draw_commands()
+  assert_false(has_text(review_commands, "State-driven visuals are active"))
+  assert_true(has_text(review_commands, "2 results"))
+  click_text(data_runtime, "Clear")
+  let cleared_commands = data_runtime.draw_commands()
+  assert_false(has_text(cleared_commands, "State-driven visuals are active"))
+  assert_true(has_text(cleared_commands, "10 results"))
+  let host_runtime = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::SelectSection("data"))
+    .runtime(width=960.0, height=620.0)
+  let scheduled = Ref(0)
+  let driver = @host.HostRuntimeDriver::new(
+    runtime=host_runtime,
+    schedule_redraw=() => scheduled.val = scheduled.val + 1,
+  )
+  guard text_frame(driver.draw_commands(), "Active") is Some(active_frame) else {
+    fail("expected Active frame")
+  }
+  host_click_frame(driver, active_frame)
+  let after_click = driver.event_result()
+  assert_true(after_click.redraw_requested)
+  assert_true(scheduled.val > 0)
+  driver.begin_redraw()
+  ignore(driver.draw_commands())
+  driver.finish_redraw()
+  let after_redraw = driver.event_result()
+  assert_false(after_redraw.needs_redraw)
+  assert_false(after_redraw.redraw_requested)
   let layout_commands = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("layout"))
     .runtime(width=760.0, height=420.0)
@@ -1189,6 +1228,28 @@ fn click_frame(runtime : @core.AppRuntime, frame : @core.Rect) -> Unit {
     y=frame.origin.y + frame.size.height / 2.0,
   )
   click_point(runtime, position)
+}
+
+///|
+fn host_click_frame(driver : @host.HostRuntimeDriver, frame : @core.Rect) -> Unit {
+  let position = @core.Point::new(
+    x=frame.origin.x + frame.size.width / 2.0,
+    y=frame.origin.y + frame.size.height / 2.0,
+  )
+  ignore(
+    driver.dispatch(
+      @host.HostEvent::Pointer(
+        @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      @host.HostEvent::Pointer(
+        @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up),
+      ),
+    ),
+  )
 }
 
 ///|
