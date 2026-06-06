@@ -1,6 +1,7 @@
 ///|
 let web_active_route_source : Ref[@host.HostRouteSource?] = Ref(None)
 
+///|
 pub fn web_history_push_route(route : String) -> Unit {
   web_history_push_route_host(web_host_string(route))
 }
