@@ -36,7 +36,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `runtime_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
-| Mo Workbench | Multi-backend agent desktop dogfood app | `examples/mo_workbench/app/` | Codex-style conversation-first coding-agent shell, quiet Agent-branded default UI, signal-only current-agent top-bar chip, expanded-options backend selector, Pi and Local backend capabilities, capability-gated advanced controls, lightweight agent focus routing, composer slash-command suggestions, wide three-panel inspector with context/run/diagnostic tabs, low-noise status bar, current task strip, compact current-turn evidence fallback on narrow layouts, backend-neutral backend-status/runtime-signal/session/model/metrics/fork/input-setting projections, platform-neutral Pi transport command/event model for the Pi provider, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
+| Mo Workbench | Multi-backend agent desktop dogfood app | `examples/mo_workbench/app/` | Codex-style conversation-first coding-agent shell, quiet Agent-branded default UI, signal-only current-agent top-bar chip, expanded-options backend selector, Pi, ACP Demo, and Local backend capabilities, connector runtime fixture, capability-gated advanced controls, lightweight agent focus routing, composer slash-command suggestions, wide three-panel inspector with context/run/diagnostic tabs, low-noise status bar, current task strip, compact current-turn evidence fallback on narrow layouts, backend-neutral backend-status/runtime-signal/session/model/metrics/fork/input-setting/provider-registry/activity/request/composer/timeline/status projections, platform-neutral Pi transport command/event model for the Pi provider, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
 
 Focused Website checks:
 
@@ -212,9 +212,10 @@ Mo Workbench is the real product-shaped dogfood app for the native Skia route.
 It is named `Mo Workbench` with the subtitle `Agent 桌面工作台`, and starts as a
 Codex / Claude Code-style multi-backend coding-agent workbench for project
 sessions, assistant transcripts, command evidence, diff/file context, and
-diagnostics. Pi RPC is the first real backend provider, while Local (`fixture`)
-is the smoke backend used to verify backend switching and keep the product shell
-agent-neutral.
+diagnostics. Pi RPC is the first real backend provider, ACP Demo is a fixture
+connector for Agent Connect Protocol style profile/session/message flow, and
+Local (`fixture`) is the smoke backend used to verify backend switching and
+keep the product shell agent-neutral.
 Its current UI uses a compact Codex-like desktop chrome with a lower-left
 settings entry for light/dark appearance and workbench preferences, and keeps
 the first screen focused on the current task strip, the transcript thread, a
@@ -551,7 +552,7 @@ printf '{"type":"abort_bash"}\n' | \
 ```
 
 See [Mo Workbench](mo-workbench.md) for the app architecture, current slice,
-and transport follow-up notes.
+connector boundary, and transport follow-up notes.
 
 ## Web Wasm-GC
 

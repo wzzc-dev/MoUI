@@ -19,7 +19,10 @@ automation runs, and knowledge organization.
 - `examples/mo_workbench/app` owns the shared TEA model, view composition,
   sample fixtures, agent backend profiles and capabilities, platform-neutral Pi
   transport event model for the Pi provider, and injectable
-  `PiTransportRuntime` effect boundary.
+  `PiTransportRuntime` effect boundary. It also owns the backend-neutral
+  `AgentBackendTransportKind`, agent connector profile/state/command/event
+  model, injectable `AgentConnectorRuntime`, and UI projections that keep the
+  shell from depending on Pi-specific state.
 - `examples/mo_workbench/native_transport` owns the native
   `moonbitlang/async` process driver for JSONL stdin/stdout sessions. It
   imports the shared app package for `PiTransportCommand`,
@@ -31,12 +34,41 @@ automation runs, and knowledge organization.
   dispatch hook. Unexpected process exits end only the child process; the owner
   remains available and restarts the JSONL process for the next command batch.
 - `examples/mo_workbench/macos_skia` is a thin entrypoint that selects
-  `backend/macos/skia`, injects the owned native Pi transport runtime, and runs
-  the shared app runtime with the macOS Skia async pump.
+  `backend/macos/skia`, injects the owned native Pi transport runtime plus the
+  ACP Demo fixture connector runtime, and runs the shared app runtime with the
+  macOS Skia async pump.
 - Future Web or other native entrypoints should reuse the same app package.
   Pi-capable entrypoints feed the same `PiTransportCommand` / `PiTransportEvent`
-  model, while additional providers should plug in through the agent backend
+  model, while additional providers should plug in through the agent connector
   profile/capability boundary instead of making the product shell Pi-only.
+
+## Agent Connector Boundary
+
+Mo Workbench is Pi-first, not Pi-only. The default backend registry exposes
+three profiles:
+
+- `Pi` uses `PiJsonlRpcTransport` and remains the only real provider in this
+  slice.
+- `ACP Demo` uses `AcpConnectorTransport` and a fixture
+  `AgentConnectorRuntime`. It loads `agentprofile`-style metadata, binds a
+  demo provider session, accepts session/message/command requests, and emits
+  JSON-shaped connector events back through the shared TEA loop.
+- `Local` uses `FixtureTransport` and keeps prompt evidence inside the shared
+  model for UI switching smoke tests.
+
+The connector model is intentionally small:
+`AgentConnectorProfile`, `AgentConnectorState`, `AgentConnectorCommand`,
+`AgentConnectorEvent`, and `AgentConnectorRuntime`. The UI consumes the same
+backend-neutral projections for Pi and connector-backed agents: run overview,
+activity queue, request summaries, provider registry, composer routing,
+composer request summary, timeline, status bar, session binding, runtime
+signal, command catalog, and metrics.
+
+ACP v1 is a framework placeholder only. It records the product shape needed by
+Agent Connect Protocol style discovery and messaging, but it does not implement
+HTTPS, WSS, SSE, remote authentication, heartbeat, remote message delivery, or
+network reconnection. Those concerns belong in a later connector-runtime slice,
+outside the Codex-like UI and shared projection work.
 
 ## Current Vertical Slice
 
@@ -61,9 +93,12 @@ packages:
   create a `当前证据` card by themselves.
 - Agent backend capabilities gate advanced UI. Pi exposes session refresh, new
   session, model and command catalogs, fork, HTML export, context compaction,
-  thinking level, input queue modes, shell commands, and session stats. Local
-  keeps the prompt flow local and intentionally hides Pi-only controls, proving
-  the shell can remain useful without looking like an RPC diagnostics panel.
+  thinking level, input queue modes, shell commands, and session stats. ACP Demo
+  exposes connector-backed session refresh, session creation, command catalog,
+  and message/stat fixture signals without pretending to be a network provider.
+  Local keeps the prompt flow local and intentionally hides Pi-only controls,
+  proving the shell can remain useful without looking like an RPC diagnostics
+  panel.
 - Backend chrome consumes a small `AgentBackendStatus` projection. The sidebar
   footer and top-bar backend chip decide from backend-neutral status instead of
   raw Pi transport state, so normal Pi startup/running activity stays in the

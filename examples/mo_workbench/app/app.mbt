@@ -18,8 +18,15 @@ pub(all) struct WorkbenchSession {
 } derive(Eq, Debug)
 
 ///|
+pub(all) enum AgentBackendTransportKind {
+  PiJsonlRpcTransport
+  AcpConnectorTransport
+  FixtureTransport
+  NoAgentTransport
+} derive(Eq, Debug)
+
+///|
 pub(all) struct AgentBackendCapabilities {
-  uses_pi_transport : Bool
   supports_session_refresh : Bool
   supports_new_session : Bool
   supports_model_catalog : Bool
@@ -38,6 +45,7 @@ pub(all) struct AgentBackendProfile {
   id : String
   label : String
   description : String
+  transport_kind : AgentBackendTransportKind
   capabilities : AgentBackendCapabilities
 } derive(Eq, Debug)
 
@@ -305,6 +313,7 @@ pub(all) struct WorkbenchModel {
   commands : Array[CommandRun]
   diagnostics : Array[DiagnosticItem]
   transport : PiTransportState
+  agent_connectors : Array[AgentConnectorState]
   pi_rpc : PiRpcSnapshot
   pi_agent : PiAgentSnapshot
   pi_session_bindings : Array[PiSessionBinding]
@@ -337,6 +346,7 @@ pub(all) enum WorkbenchMsg {
   ReviewDiff
   RefreshSession
   ReceiveTransport(PiTransportEvent)
+  ReceiveConnector(AgentConnectorEvent)
   NewSession
   RefreshForkMessages
   ForkFromMessage(String)
@@ -396,7 +406,6 @@ pub fn WorkbenchSession::new(
 
 ///|
 pub fn AgentBackendCapabilities::new(
-  uses_pi_transport? : Bool = false,
   supports_session_refresh? : Bool = false,
   supports_new_session? : Bool = false,
   supports_model_catalog? : Bool = false,
@@ -410,7 +419,6 @@ pub fn AgentBackendCapabilities::new(
   supports_session_stats? : Bool = false,
 ) -> AgentBackendCapabilities {
   {
-    uses_pi_transport,
     supports_session_refresh,
     supports_new_session,
     supports_model_catalog,
@@ -430,9 +438,50 @@ pub fn AgentBackendProfile::new(
   id~ : String,
   label~ : String,
   description~ : String,
+  transport_kind? : AgentBackendTransportKind = NoAgentTransport,
   capabilities~ : AgentBackendCapabilities,
 ) -> AgentBackendProfile {
-  { id, label, description, capabilities }
+  { id, label, description, transport_kind, capabilities }
+}
+
+///|
+pub fn AgentBackendTransportKind::label(
+  self : AgentBackendTransportKind,
+) -> String {
+  match self {
+    PiJsonlRpcTransport => "pi jsonl rpc"
+    AcpConnectorTransport => "acp connector"
+    FixtureTransport => "fixture"
+    NoAgentTransport => "local"
+  }
+}
+
+///|
+pub fn AgentBackendTransportKind::uses_pi_transport(
+  self : AgentBackendTransportKind,
+) -> Bool {
+  self is PiJsonlRpcTransport
+}
+
+///|
+pub fn AgentBackendTransportKind::uses_connector_transport(
+  self : AgentBackendTransportKind,
+) -> Bool {
+  self is AcpConnectorTransport
+}
+
+///|
+pub fn AgentBackendProfile::uses_pi_transport(
+  self : AgentBackendProfile,
+) -> Bool {
+  self.transport_kind.uses_pi_transport()
+}
+
+///|
+pub fn AgentBackendProfile::uses_connector_transport(
+  self : AgentBackendProfile,
+) -> Bool {
+  self.transport_kind.uses_connector_transport()
 }
 
 ///|
@@ -609,8 +658,8 @@ pub fn agent_backend_profiles() -> Array[AgentBackendProfile] {
       id="pi",
       label="Pi",
       description="真实后端",
+      transport_kind=PiJsonlRpcTransport,
       capabilities=AgentBackendCapabilities::new(
-        uses_pi_transport=true,
         supports_session_refresh=true,
         supports_new_session=true,
         supports_model_catalog=true,
@@ -625,9 +674,22 @@ pub fn agent_backend_profiles() -> Array[AgentBackendProfile] {
       ),
     ),
     AgentBackendProfile::new(
+      id="acp-demo",
+      label="ACP Demo",
+      description="ACP connector fixture",
+      transport_kind=AcpConnectorTransport,
+      capabilities=AgentBackendCapabilities::new(
+        supports_session_refresh=true,
+        supports_new_session=true,
+        supports_command_catalog=true,
+        supports_session_stats=true,
+      ),
+    ),
+    AgentBackendProfile::new(
       id="fixture",
       label="本地",
       description="本地演练",
+      transport_kind=FixtureTransport,
       capabilities=AgentBackendCapabilities::new(),
     ),
   ]
@@ -1126,6 +1188,7 @@ pub fn WorkbenchModel::new() -> WorkbenchModel {
     commands: [],
     diagnostics: [],
     transport: PiTransportState::new(),
+    agent_connectors: default_agent_connector_states(),
     pi_rpc: PiRpcSnapshot::new(),
     pi_agent: PiAgentSnapshot::new(),
     pi_session_bindings: [],
@@ -1160,6 +1223,7 @@ pub fn WorkbenchModel::update(
     ReviewDiff => self.review_diff()
     RefreshSession => self.refresh_session()
     ReceiveTransport(event) => self.receive_transport(event)
+    ReceiveConnector(event) => self.receive_connector(event)
     NewSession => self.new_session()
     RefreshForkMessages => self.refresh_fork_messages()
     ForkFromMessage(entry_id) => self.fork_from_message(entry_id)
@@ -1244,6 +1308,23 @@ pub fn MoWorkbenchApp::runtime_with_transport(
 }
 
 ///|
+pub fn MoWorkbenchApp::runtime_with_agent_connectors(
+  self : MoWorkbenchApp,
+  transport_runtime : PiTransportRuntime,
+  connector_runtimes : Array[AgentConnectorRuntime],
+  width? : Double = 1220.0,
+  height? : Double = 780.0,
+) -> @core.AppRuntime {
+  ignore(self)
+  runtime_with_agent_connectors(
+    transport_runtime,
+    connector_runtimes,
+    width~,
+    height~,
+  )
+}
+
+///|
 pub fn runtime(
   width? : Double = 1220.0,
   height? : Double = 780.0,
@@ -1259,6 +1340,21 @@ pub fn runtime_with_transport(
 ) -> @core.AppRuntime {
   WorkbenchModel::new().runtime_with_transport(
     transport_runtime,
+    width~,
+    height~,
+  )
+}
+
+///|
+pub fn runtime_with_agent_connectors(
+  transport_runtime : PiTransportRuntime,
+  connector_runtimes : Array[AgentConnectorRuntime],
+  width? : Double = 1220.0,
+  height? : Double = 780.0,
+) -> @core.AppRuntime {
+  WorkbenchModel::new().runtime_with_agent_connectors(
+    transport_runtime,
+    connector_runtimes,
     width~,
     height~,
   )
@@ -1284,11 +1380,26 @@ pub fn WorkbenchModel::runtime_with_transport(
   width? : Double = 1220.0,
   height? : Double = 780.0,
 ) -> @core.AppRuntime {
+  self.runtime_with_agent_connectors(transport_runtime, [], width~, height~)
+}
+
+///|
+pub fn WorkbenchModel::runtime_with_agent_connectors(
+  self : WorkbenchModel,
+  transport_runtime : PiTransportRuntime,
+  connector_runtimes : Array[AgentConnectorRuntime],
+  width? : Double = 1220.0,
+  height? : Double = 780.0,
+) -> @core.AppRuntime {
   @core.AppRuntime::new_program(
     program=@core.Program::new_with_environment(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => {
-        model.update_with_transport(message, transport_runtime).as_tuple()
+        model
+        .update_with_agent_connectors(
+          message, transport_runtime, connector_runtimes,
+        )
+        .as_tuple()
       },
       view=(model, env) => model.view_with_environment(env),
     ),
@@ -1358,7 +1469,7 @@ pub fn WorkbenchModel::active_agent_backend_status(
   self : WorkbenchModel,
 ) -> AgentBackendStatus {
   let backend = self.active_agent_backend_profile()
-  if backend.capabilities.uses_pi_transport {
+  if backend.uses_pi_transport() {
     let failed = self.transport.status is Failed(_)
     let pending = self.pending_transport_count()
     let sidebar_visible = match self.transport.status {
@@ -1375,6 +1486,19 @@ pub fn WorkbenchModel::active_agent_backend_status(
       sidebar_visible~,
       top_bar_visible=failed,
     )
+  } else if backend.uses_connector_transport() {
+    let connector = self.active_agent_connector_state()
+    let failed = connector.status is ConnectorFailed(_)
+    let pending = connector.command_queue.length()
+    AgentBackendStatus::new(
+      backend_id=backend.id,
+      label=backend.label,
+      status_label=connector.status_label(),
+      pending_count=pending,
+      failed~,
+      sidebar_visible=pending > 0 || failed,
+      top_bar_visible=true,
+    )
   } else {
     AgentBackendStatus::new(
       backend_id=backend.id,
@@ -1389,10 +1513,21 @@ pub fn WorkbenchModel::active_agent_session_binding(
   self : WorkbenchModel,
 ) -> AgentSessionBinding {
   let backend = self.active_agent_backend_profile()
-  if backend.capabilities.uses_pi_transport {
+  if backend.uses_pi_transport() {
     self
     .active_pi_session_binding()
     .as_agent_session_binding(backend_id=backend.id)
+  } else if backend.uses_connector_transport() {
+    let connector = self.active_agent_connector_state()
+    AgentSessionBinding::new(
+      backend_id=backend.id,
+      workbench_session_id=self.selected_session_id,
+      provider_session_id=connector.provider_session_id,
+      session_name=connector.session_name,
+      model=connector.model,
+      status=if connector.has_session_binding() { "bound" } else { "unbound" },
+      last_command=connector.last_command,
+    )
   } else {
     AgentSessionBinding::new(
       backend_id=backend.id,
@@ -1416,15 +1551,72 @@ pub fn WorkbenchModel::active_agent_model_catalog(
 }
 
 ///|
+pub fn WorkbenchModel::active_agent_command_catalog(
+  self : WorkbenchModel,
+) -> Array[AgentCommandInfo] {
+  let commands : Array[AgentCommandInfo] = []
+  if !self.active_agent_backend_capabilities().supports_command_catalog {
+    return commands
+  }
+  let backend = self.active_agent_backend_profile()
+  if backend.uses_connector_transport() {
+    agent_connector_command_catalog(backend.id)
+  } else if backend.uses_pi_transport() {
+    for command in self.command_catalog {
+      commands.push(command.as_agent_command_info())
+    }
+    commands
+  } else {
+    commands
+  }
+}
+
+///|
+fn agent_connector_command_catalog(
+  backend_id : String,
+) -> Array[AgentCommandInfo] {
+  [
+    AgentCommandInfo::new(
+      name="profile",
+      source="ACP",
+      description="Inspect the connector agentprofile metadata.",
+      source_scope=backend_id,
+      source_path="agentprofile.json",
+    ),
+    AgentCommandInfo::new(
+      name="session",
+      source="ACP",
+      description="Refresh the current connector session binding.",
+      source_scope=backend_id,
+      source_path="session",
+    ),
+    AgentCommandInfo::new(
+      name="message",
+      source="ACP",
+      description="Send a fixture ACP message through the connector.",
+      source_scope=backend_id,
+      source_path="message",
+    ),
+  ]
+}
+
+///|
 pub fn WorkbenchModel::active_agent_session_metrics(
   self : WorkbenchModel,
 ) -> AgentSessionMetrics {
   let backend = self.active_agent_backend_profile()
-  if backend.capabilities.supports_session_stats &&
-    backend.capabilities.uses_pi_transport {
+  if backend.capabilities.supports_session_stats && backend.uses_pi_transport() {
     self.pi_session_stats.as_agent_session_metrics(
       backend_id=backend.id,
       workbench_session_id=self.selected_session_id,
+    )
+  } else if backend.capabilities.supports_session_stats &&
+    backend.uses_connector_transport() {
+    let connector = self.active_agent_connector_state()
+    AgentSessionMetrics::new(
+      backend_id=backend.id,
+      workbench_session_id=self.selected_session_id,
+      total_messages=connector.total_messages,
     )
   } else {
     AgentSessionMetrics::new(
@@ -1439,7 +1631,7 @@ pub fn WorkbenchModel::active_agent_input_settings(
   self : WorkbenchModel,
 ) -> AgentInputSettings {
   let backend = self.active_agent_backend_profile()
-  if backend.capabilities.uses_pi_transport &&
+  if backend.uses_pi_transport() &&
     (
       backend.capabilities.supports_thinking_level ||
       backend.capabilities.supports_input_modes
@@ -1474,8 +1666,36 @@ pub fn WorkbenchModel::active_pi_session_binding(
 }
 
 ///|
+pub fn WorkbenchModel::active_agent_connector_state(
+  self : WorkbenchModel,
+) -> AgentConnectorState {
+  let backend = self.active_agent_backend_profile()
+  for connector in self.agent_connectors {
+    if connector.backend_id == backend.id {
+      return connector
+    }
+  }
+  AgentConnectorState::new(
+    backend_id=backend.id,
+    profile=AgentConnectorProfile::new(
+      backend_id=backend.id,
+      name=backend.label,
+      description=backend.description,
+      protocol_label=backend.transport_kind.label(),
+    ),
+  )
+}
+
+///|
 pub fn WorkbenchModel::pending_transport_count(self : WorkbenchModel) -> Int {
-  self.transport.command_queue.length()
+  let backend = self.active_agent_backend_profile()
+  if backend.uses_pi_transport() {
+    self.transport.command_queue.length()
+  } else if backend.uses_connector_transport() {
+    self.active_agent_connector_state().command_queue.length()
+  } else {
+    0
+  }
 }
 
 ///|
@@ -1489,31 +1709,68 @@ pub fn WorkbenchModel::update_with_transport(
   message : WorkbenchMsg,
   transport_runtime : PiTransportRuntime,
 ) -> WorkbenchUpdate {
+  self.update_with_agent_connectors(message, transport_runtime, [])
+}
+
+///|
+pub fn WorkbenchModel::update_with_agent_connectors(
+  self : WorkbenchModel,
+  message : WorkbenchMsg,
+  transport_runtime : PiTransportRuntime,
+  connector_runtimes : Array[AgentConnectorRuntime],
+) -> WorkbenchUpdate {
   match message {
     SelectSession(id) =>
-      self.select_session_with_transport(id, transport_runtime)
+      self.select_session_with_agent_connectors(
+        id, transport_runtime, connector_runtimes,
+      )
     ReceiveTransport(event) =>
       self.receive_transport_with_transport(event, transport_runtime)
+    ReceiveConnector(event) =>
+      WorkbenchUpdate::new(self.receive_connector(event))
     _ =>
-      WorkbenchUpdate::from_transport_delta(
+      WorkbenchUpdate::from_agent_transport_delta(
         self,
         self.update(message),
         transport_runtime,
+        connector_runtimes,
       )
   }
 }
 
 ///|
-fn WorkbenchUpdate::from_transport_delta(
+fn WorkbenchUpdate::from_agent_transport_delta(
   previous : WorkbenchModel,
   model : WorkbenchModel,
   transport_runtime : PiTransportRuntime,
+  connector_runtimes : Array[AgentConnectorRuntime],
 ) -> WorkbenchUpdate {
+  let effects : Array[@core.Effect[WorkbenchMsg]] = []
   let commands = model.transport_commands_added_after(previous)
-  WorkbenchUpdate::new(
-    model,
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
-  )
+  let pi_effect = transport_runtime.effect(commands, event => {
+    ReceiveTransport(event)
+  })
+  if !(pi_effect is NoEffect) {
+    effects.push(pi_effect)
+  }
+  for runtime in connector_runtimes {
+    let connector_commands = model.connector_commands_added_after(
+      previous,
+      runtime.backend_id(),
+    )
+    let effect = runtime.effect(connector_commands, event => {
+      ReceiveConnector(event)
+    })
+    if !(effect is NoEffect) {
+      effects.push(effect)
+    }
+  }
+  let effect = if effects.is_empty() {
+    @core.Effect::none()
+  } else {
+    @core.Effect::batch(effects)
+  }
+  WorkbenchUpdate::new(model, effect~)
 }
 
 ///|
@@ -1532,6 +1789,63 @@ fn WorkbenchModel::transport_commands_added_after(
     }
   }
   current_queue[previous_queue.length():].to_owned()
+}
+
+///|
+fn WorkbenchModel::connector_commands_added_after(
+  self : WorkbenchModel,
+  previous : WorkbenchModel,
+  backend_id : String,
+) -> Array[AgentConnectorCommand] {
+  let previous_queue = previous.connector_command_queue(backend_id)
+  let current_queue = self.connector_command_queue(backend_id)
+  if current_queue.length() <= previous_queue.length() {
+    return []
+  }
+  for index in 0..<previous_queue.length() {
+    if current_queue[index] != previous_queue[index] {
+      return []
+    }
+  }
+  current_queue[previous_queue.length():].to_owned()
+}
+
+///|
+fn WorkbenchModel::connector_command_queue(
+  self : WorkbenchModel,
+  backend_id : String,
+) -> Array[AgentConnectorCommand] {
+  for connector in self.agent_connectors {
+    if connector.backend_id == backend_id {
+      return connector.command_queue
+    }
+  }
+  []
+}
+
+///|
+fn WorkbenchModel::enqueue_active_connector_commands(
+  self : WorkbenchModel,
+  commands : Array[AgentConnectorCommand],
+) -> Array[AgentConnectorState] {
+  if commands.is_empty() {
+    return self.agent_connectors
+  }
+  let backend_id = self.active_agent_backend_profile().id
+  let connectors : Array[AgentConnectorState] = []
+  let mut updated = false
+  for connector in self.agent_connectors {
+    if connector.backend_id == backend_id {
+      connectors.push(connector.enqueue_many(commands))
+      updated = true
+    } else {
+      connectors.push(connector)
+    }
+  }
+  if !updated {
+    connectors.push(self.active_agent_connector_state().enqueue_many(commands))
+  }
+  connectors
 }
 
 ///|
@@ -1575,6 +1889,7 @@ fn WorkbenchModel::reset_active_session_surface(
     commands: [],
     diagnostics: [],
     transport: PiTransportState::new(),
+    agent_connectors: default_agent_connector_states(),
     pi_rpc: PiRpcSnapshot::new(),
     pi_agent: PiAgentSnapshot::new(),
     pi_session_bindings: [],
@@ -1738,18 +2053,49 @@ fn WorkbenchModel::toggle_workspace_details(
 }
 
 ///|
-fn WorkbenchModel::select_session_with_transport(
+fn WorkbenchModel::select_session_with_agent_connectors(
   self : WorkbenchModel,
   id : String,
   transport_runtime : PiTransportRuntime,
+  connector_runtimes : Array[AgentConnectorRuntime],
 ) -> WorkbenchUpdate {
   let selected = self.select_session(id)
   let session = selected.active_session()
   let commands = selected.commands_for_session_selection(session)
-  WorkbenchUpdate::new(
-    { ..selected, transport: selected.transport.enqueue_many(commands) },
-    effect=transport_runtime.effect(commands, event => ReceiveTransport(event)),
+  let connector_commands = selected.commands_for_connector_session_selection(
+    session,
   )
+  let model = {
+    ..selected,
+    transport: selected.transport.enqueue_many(commands),
+    agent_connectors: selected.enqueue_active_connector_commands(
+      connector_commands,
+    ),
+  }
+  let effects : Array[@core.Effect[WorkbenchMsg]] = []
+  let pi_effect = transport_runtime.effect(commands, event => {
+    ReceiveTransport(event)
+  })
+  if !(pi_effect is NoEffect) {
+    effects.push(pi_effect)
+  }
+  let backend_id = selected.active_agent_backend_profile().id
+  for runtime in connector_runtimes {
+    if runtime.backend_id() == backend_id {
+      let connector_effect = runtime.effect(connector_commands, event => {
+        ReceiveConnector(event)
+      })
+      if !(connector_effect is NoEffect) {
+        effects.push(connector_effect)
+      }
+    }
+  }
+  let effect = if effects.is_empty() {
+    @core.Effect::none()
+  } else {
+    @core.Effect::batch(effects)
+  }
+  WorkbenchUpdate::new(model, effect~)
 }
 
 ///|
@@ -1758,6 +2104,25 @@ fn WorkbenchModel::refresh_session(self : WorkbenchModel) -> WorkbenchModel {
     return { ..self, last_status: "Agent backend does not support refresh" }
   }
   let session = self.active_session()
+  let backend = self.active_agent_backend_profile()
+  if backend.uses_connector_transport() {
+    let commands = self.commands_for_connector_session_selection(session)
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="control",
+        title="Agent connector refresh queued",
+        detail=session.title,
+        tone="info",
+      ),
+    )
+    return {
+      ..self,
+      events,
+      agent_connectors: self.enqueue_active_connector_commands(commands),
+      last_status: "Agent connector refresh queued",
+    }
+  }
   let commands = self.commands_for_session_selection(session)
   let events = self.events.copy()
   events.push(
@@ -1785,6 +2150,25 @@ fn WorkbenchModel::new_session(self : WorkbenchModel) -> WorkbenchModel {
     }
   }
   let session = self.active_session()
+  let backend = self.active_agent_backend_profile()
+  if backend.uses_connector_transport() {
+    let commands = self.commands_for_connector_new_session(session)
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="control",
+        title="Agent connector new session queued",
+        detail=session.title,
+        tone="info",
+      ),
+    )
+    return {
+      ..self,
+      events,
+      agent_connectors: self.enqueue_active_connector_commands(commands),
+      last_status: "Agent connector new session queued",
+    }
+  }
   let commands = self.commands_for_new_session(session)
   let events = self.events.copy()
   events.push(
@@ -1900,7 +2284,7 @@ fn WorkbenchModel::receive_transport_with_transport(
   event : PiTransportEvent,
   transport_runtime : PiTransportRuntime,
 ) -> WorkbenchUpdate {
-  if !self.active_agent_backend_capabilities().uses_pi_transport {
+  if !self.active_agent_backend_profile().uses_pi_transport() {
     return WorkbenchUpdate::new(self)
   }
   let model = self.receive_transport(event)
@@ -1957,7 +2341,13 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
     )
     let command = SendUserInput(session.id, payload)
     let commands = self.commands_with_session_start(session, command)
-    let transcript = if backend.capabilities.uses_pi_transport {
+    let connector_commands = self.connector_commands_with_session_start(
+      session,
+      SendConnectorMessage(session.id, payload),
+    )
+    let transcript = if backend.uses_pi_transport() {
+      self.transcript_with_local_user_message(payload)
+    } else if backend.uses_connector_transport() {
       self.transcript_with_local_user_message(payload)
     } else {
       self.transcript_with_fixture_reply(payload, backend)
@@ -1970,8 +2360,13 @@ fn WorkbenchModel::dispatch_prompt(self : WorkbenchModel) -> WorkbenchModel {
       events,
       transcript,
       transport: self.transport.enqueue_many(commands),
-      last_status: if backend.capabilities.uses_pi_transport {
+      agent_connectors: self.enqueue_active_connector_commands(
+        connector_commands,
+      ),
+      last_status: if backend.uses_pi_transport() {
         "Queued prompt for Pi JSONL RPC"
+      } else if backend.uses_connector_transport() {
+        "Queued prompt for Agent connector"
       } else {
         local_agent_prompt_status(backend)
       },
@@ -2174,23 +2569,42 @@ fn WorkbenchModel::invoke_command(
   } else {
     let prompt = "/" + command_name
     let session = self.active_session()
+    let backend = self.active_agent_backend_profile()
     let events = self.events.copy()
     events.push(
       AgentEvent::new(
         phase="user",
-        title="Pi command queued",
+        title=if backend.uses_connector_transport() {
+          "Agent connector command queued"
+        } else {
+          "Pi command queued"
+        },
         detail=prompt,
         tone="info",
       ),
     )
-    let command = SendUserInput(session.id, prompt)
-    let commands = self.commands_with_session_start(session, command)
-    {
-      ..self,
-      prompt: "",
-      events,
-      transport: self.transport.enqueue_many(commands),
-      last_status: "Queued Pi command for RPC",
+    if backend.uses_connector_transport() {
+      let commands = self.connector_commands_with_session_start(
+        session,
+        InvokeConnectorCommand(session.id, command_name),
+      )
+      {
+        ..self,
+        prompt: "",
+        events,
+        agent_connectors: self.enqueue_active_connector_commands(commands),
+        last_status: "Queued command for Agent connector",
+      }
+    } else {
+      let command = SendUserInput(session.id, prompt)
+      let commands = self.commands_with_session_start(session, command)
+      {
+        ..self,
+        prompt: "",
+        events,
+        transport: self.transport.enqueue_many(commands),
+        last_status: "Queued Pi command for RPC",
+      }
     }
   }
 }
@@ -2210,7 +2624,7 @@ fn WorkbenchModel::queue_agent_prompt_action(
   events.push(
     AgentEvent::new(phase="user", title=event_title, detail=event_detail, tone~),
   )
-  if backend.capabilities.uses_pi_transport {
+  if backend.uses_pi_transport() {
     let command = SendUserInput(session.id, payload)
     let commands = self.commands_with_session_start(session, command)
     {
@@ -2219,6 +2633,17 @@ fn WorkbenchModel::queue_agent_prompt_action(
       events,
       transport: self.transport.enqueue_many(commands),
       last_status: pi_status,
+    }.scroll_main_to_latest()
+  } else if backend.uses_connector_transport() {
+    let command = SendConnectorMessage(session.id, payload)
+    let commands = self.connector_commands_with_session_start(session, command)
+    {
+      ..self,
+      prompt: "",
+      events,
+      transcript: self.transcript_with_local_user_message(payload),
+      agent_connectors: self.enqueue_active_connector_commands(commands),
+      last_status: "Queued prompt for Agent connector",
     }.scroll_main_to_latest()
   } else {
     {
@@ -2470,7 +2895,7 @@ fn WorkbenchModel::receive_transport(
   self : WorkbenchModel,
   event : PiTransportEvent,
 ) -> WorkbenchModel {
-  if !self.active_agent_backend_capabilities().uses_pi_transport {
+  if !self.active_agent_backend_profile().uses_pi_transport() {
     return self
   }
   let events = self.events.copy()
@@ -2716,7 +3141,7 @@ fn WorkbenchModel::mark_command_complete(
 
 ///|
 fn WorkbenchModel::sync_session_name(self : WorkbenchModel) -> WorkbenchModel {
-  if !self.active_agent_backend_capabilities().uses_pi_transport {
+  if !self.active_agent_backend_profile().uses_pi_transport() {
     return {
       ..self,
       last_status: "Agent backend does not support session name sync",
@@ -2969,7 +3394,27 @@ fn next_agent_input_mode(mode : String) -> String {
 
 ///|
 fn WorkbenchModel::cancel_run(self : WorkbenchModel) -> WorkbenchModel {
-  if !self.active_agent_backend_capabilities().uses_pi_transport {
+  if self.active_agent_backend_profile().uses_connector_transport() {
+    let session = self.active_session()
+    let events = self.events.copy()
+    events.push(
+      AgentEvent::new(
+        phase="control",
+        title="Connector run cancellation queued",
+        detail=session.title,
+        tone="warning",
+      ),
+    )
+    return {
+      ..self,
+      events,
+      agent_connectors: self.enqueue_active_connector_commands([
+        CancelConnectorRun(session.id),
+      ]),
+      last_status: "Connector cancellation queued",
+    }
+  }
+  if !self.active_agent_backend_profile().uses_pi_transport() {
     return {
       ..self,
       last_status: "Agent backend does not support cancellation",
@@ -3074,7 +3519,7 @@ fn WorkbenchModel::commands_for_session_selection(
   self : WorkbenchModel,
   session : WorkbenchSession,
 ) -> Array[PiTransportCommand] {
-  if !self.active_agent_backend_capabilities().uses_pi_transport {
+  if !self.active_agent_backend_profile().uses_pi_transport() {
     return []
   }
   if session.pi_session_path == "" {
@@ -3115,7 +3560,7 @@ fn WorkbenchModel::commands_for_session_replacement_refresh(
   self : WorkbenchModel,
   session : WorkbenchSession,
 ) -> Array[PiTransportCommand] {
-  if !self.active_agent_backend_capabilities().uses_pi_transport {
+  if !self.active_agent_backend_profile().uses_pi_transport() {
     return []
   }
   let commands : Array[PiTransportCommand] = []
@@ -3133,7 +3578,7 @@ fn WorkbenchModel::commands_for_conversation_refresh(
   self : WorkbenchModel,
   session : WorkbenchSession,
 ) -> Array[PiTransportCommand] {
-  if !self.active_agent_backend_capabilities().uses_pi_transport {
+  if !self.active_agent_backend_profile().uses_pi_transport() {
     return []
   }
   [
@@ -3167,12 +3612,58 @@ fn WorkbenchModel::commands_with_session_start(
   session : WorkbenchSession,
   command : PiTransportCommand,
 ) -> Array[PiTransportCommand] {
-  if !self.active_agent_backend_capabilities().uses_pi_transport {
+  if !self.active_agent_backend_profile().uses_pi_transport() {
     return []
   }
   let commands : Array[PiTransportCommand] = []
   if self.transport.status is Disconnected {
     commands.push(StartRpc(session.id, session.project_path))
+  }
+  commands.push(command)
+  commands
+}
+
+///|
+fn WorkbenchModel::commands_for_connector_session_selection(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+) -> Array[AgentConnectorCommand] {
+  if !self.active_agent_backend_profile().uses_connector_transport() {
+    return []
+  }
+  [
+    StartConnectorSession(session.id, session.project_path),
+    RefreshConnectorSession(session.id),
+  ]
+}
+
+///|
+fn WorkbenchModel::commands_for_connector_new_session(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+) -> Array[AgentConnectorCommand] {
+  if !self.active_agent_backend_profile().uses_connector_transport() {
+    return []
+  }
+  self.connector_commands_with_session_start(
+    session,
+    NewConnectorSession(session.id),
+  )
+}
+
+///|
+fn WorkbenchModel::connector_commands_with_session_start(
+  self : WorkbenchModel,
+  session : WorkbenchSession,
+  command : AgentConnectorCommand,
+) -> Array[AgentConnectorCommand] {
+  if !self.active_agent_backend_profile().uses_connector_transport() {
+    return []
+  }
+  let commands : Array[AgentConnectorCommand] = []
+  let connector = self.active_agent_connector_state()
+  if !connector.has_session_binding() && !connector.has_active_transport() {
+    commands.push(StartConnectorSession(session.id, session.project_path))
   }
   commands.push(command)
   commands
@@ -3224,6 +3715,141 @@ fn PiTransportEvent::to_agent_event(self : PiTransportEvent) -> AgentEvent {
         tone="danger",
       )
   }
+}
+
+///|
+fn AgentConnectorEvent::to_agent_event(
+  self : AgentConnectorEvent,
+) -> AgentEvent {
+  match self {
+    ConnectorProfileLoaded(backend_id, profile) =>
+      AgentEvent::new(
+        phase="connector",
+        title="Agent connector profile loaded: " + backend_id,
+        detail=profile.name + " · " + profile.protocol_label,
+        tone="success",
+      )
+    ConnectorSessionBound(backend_id, provider_session_id, session_name, model) =>
+      AgentEvent::new(
+        phase="connector",
+        title="Agent connector session bound: " + backend_id,
+        detail=connector_session_bound_detail(
+          provider_session_id, session_name, model,
+        ),
+        tone="success",
+      )
+    ConnectorCommandSent(backend_id, label) =>
+      AgentEvent::new(
+        phase="connector",
+        title="Agent connector command sent: " + backend_id,
+        detail=label,
+        tone="info",
+      )
+    ConnectorAssistantMessage(_backend_id, summary, detail) =>
+      AgentEvent::new(phase="assistant", title=summary, detail~, tone="success")
+    ConnectorRunCompleted(backend_id) =>
+      AgentEvent::new(
+        phase="connector",
+        title="Agent connector run completed",
+        detail=backend_id,
+        tone="success",
+      )
+    ConnectorTransportFailed(backend_id, reason) =>
+      AgentEvent::new(
+        phase="connector",
+        title="Agent connector failed: " + backend_id,
+        detail=reason,
+        tone="danger",
+      )
+  }
+}
+
+///|
+fn connector_session_bound_detail(
+  provider_session_id : String,
+  session_name : String,
+  model : String,
+) -> String {
+  let parts : Array[String] = []
+  if provider_session_id != "" {
+    parts.push(provider_session_id)
+  }
+  if session_name != "" {
+    parts.push(session_name)
+  }
+  if model != "" {
+    parts.push(model)
+  }
+  parts.join(" · ")
+}
+
+///|
+fn WorkbenchModel::receive_connector(
+  self : WorkbenchModel,
+  event : AgentConnectorEvent,
+) -> WorkbenchModel {
+  let backend = self.active_agent_backend_profile()
+  if !backend.uses_connector_transport() || event.backend_id() != backend.id {
+    return self
+  }
+  let events = self.events.copy()
+  events.push(event.to_agent_event())
+  let connectors = self.agent_connectors.map(connector => {
+    if connector.backend_id == event.backend_id() {
+      connector.apply_event(event)
+    } else {
+      connector
+    }
+  })
+  let model = {
+    ..self,
+    events,
+    agent_connectors: connectors,
+    last_status: "Agent connector event received",
+  }
+  match event {
+    ConnectorAssistantMessage(_backend_id, summary, detail) =>
+      model.append_connector_assistant_message(summary, detail)
+    ConnectorTransportFailed(backend_id, reason) =>
+      model.record_connector_failure(backend_id, reason)
+    _ => model
+  }
+}
+
+///|
+fn WorkbenchModel::append_connector_assistant_message(
+  self : WorkbenchModel,
+  summary : String,
+  detail : String,
+) -> WorkbenchModel {
+  let transcript = self.transcript.copy()
+  transcript.push(
+    TranscriptItem::new(
+      id="connector-assistant-" + (transcript.length() + 1).to_string(),
+      role="assistant",
+      summary~,
+      detail~,
+      tone="success",
+    ),
+  )
+  { ..self, transcript, last_status: "Agent connector message received" }.scroll_main_to_latest()
+}
+
+///|
+fn WorkbenchModel::record_connector_failure(
+  self : WorkbenchModel,
+  backend_id : String,
+  reason : String,
+) -> WorkbenchModel {
+  let diagnostics = self.diagnostics.copy()
+  diagnostics.push(
+    DiagnosticItem::new(
+      source="Agent connector " + backend_id,
+      severity="error",
+      message=reason,
+    ),
+  )
+  { ..self, diagnostics, last_status: "Agent connector failed" }
 }
 
 ///|

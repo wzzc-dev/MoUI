@@ -167,19 +167,27 @@ test "workbench agent focus selection toggles and rejects unknown ids" {
 }
 
 ///|
-test "workbench agent backend profiles expose Pi and fixture capabilities" {
+test "workbench agent backend profiles expose Pi ACP and fixture capabilities" {
   let profiles = agent_backend_profiles()
-  inspect(profiles.length(), content="2")
+  inspect(profiles.length(), content="3")
   inspect(profiles[0].id, content="pi")
   inspect(profiles[0].label, content="Pi")
-  inspect(profiles[0].capabilities.uses_pi_transport, content="true")
+  inspect(profiles[0].transport_kind.label(), content="pi jsonl rpc")
+  inspect(profiles[0].uses_pi_transport(), content="true")
   inspect(profiles[0].capabilities.supports_fork, content="true")
   inspect(profiles[0].capabilities.supports_command_catalog, content="true")
-  inspect(profiles[1].id, content="fixture")
-  inspect(profiles[1].label, content="本地")
-  inspect(profiles[1].capabilities.uses_pi_transport, content="false")
-  inspect(profiles[1].capabilities.supports_fork, content="false")
-  inspect(profiles[1].capabilities.supports_input_modes, content="false")
+  inspect(profiles[1].id, content="acp-demo")
+  inspect(profiles[1].label, content="ACP Demo")
+  inspect(profiles[1].transport_kind.label(), content="acp connector")
+  inspect(profiles[1].uses_connector_transport(), content="true")
+  inspect(profiles[1].capabilities.supports_session_refresh, content="true")
+  inspect(profiles[1].capabilities.supports_command_catalog, content="true")
+  inspect(profiles[2].id, content="fixture")
+  inspect(profiles[2].label, content="本地")
+  inspect(profiles[2].transport_kind.label(), content="fixture")
+  inspect(profiles[2].uses_pi_transport(), content="false")
+  inspect(profiles[2].capabilities.supports_fork, content="false")
+  inspect(profiles[2].capabilities.supports_input_modes, content="false")
 }
 
 ///|
@@ -563,6 +571,139 @@ test "workbench fixture backend keeps prompt flow local" {
     content="本地后端会保持会话流转，不启动外部传输。",
   )
   inspect(model.last_status, content="已交给本地后端")
+}
+
+///|
+test "workbench ACP connector backend queues prompt through connector runtime" {
+  let connector = AgentConnectorRuntime::fixture(backend_id="acp-demo")
+  let update = WorkbenchModel::new()
+    .update(SwitchAgentBackend("acp-demo"))
+    .update(PromptChanged("Check ACP connector shape"))
+    .update_with_agent_connectors(
+      DispatchPrompt,
+      PiTransportRuntime::unavailable(),
+      [connector],
+    )
+  inspect(update.model.active_session().backend_id, content="acp-demo")
+  inspect(update.model.pending_transport_count(), content="2")
+  inspect(update.model.transport.command_queue.length(), content="0")
+  inspect(update.model.transcript.length(), content="1")
+  inspect(update.model.transcript[0].role, content="user")
+  inspect(update.model.last_status, content="Queued prompt for Agent connector")
+  let summary = update.effect.plan_summary()
+  inspect(summary.descriptors.length(), content="1")
+  inspect(
+    summary.descriptors[0].key,
+    content="agent-connector:acp-demo:dispatch",
+  )
+  inspect(summary.descriptors[0].kind, content="agent-connector")
+  let model = run_workbench_effect_with_agent_connectors(
+    update,
+    PiTransportRuntime::unavailable(),
+    [connector],
+  )
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.transcript.length(), content="2")
+  inspect(model.transcript[1].summary, content="ACP Demo 已接收任务")
+  let binding = model.active_agent_session_binding()
+  inspect(binding.backend_id, content="acp-demo")
+  inspect(binding.provider_session_id, content="acp-fixture:moui-skia")
+  inspect(binding.session_name, content="ACP Demo session")
+  inspect(binding.model, content="acp-fixture")
+  inspect(model.active_agent_session_metrics().total_messages, content="1")
+}
+
+///|
+test "workbench ACP connector unavailable runtime reports failure without Pi queue" {
+  let connector = AgentConnectorRuntime::unavailable(
+    backend_id="acp-demo",
+    reason="ACP runtime not configured",
+  )
+  let update = WorkbenchModel::new()
+    .update(SwitchAgentBackend("acp-demo"))
+    .update(PromptChanged("Try unavailable connector"))
+    .update_with_agent_connectors(
+      DispatchPrompt,
+      PiTransportRuntime::unavailable(),
+      [connector],
+    )
+  inspect(update.model.pending_transport_count(), content="2")
+  inspect(update.model.transport.command_queue.length(), content="0")
+  inspect(update.effect.plan_summary().descriptors.length(), content="1")
+  let model = run_workbench_effect_with_agent_connectors(
+    update,
+    PiTransportRuntime::unavailable(),
+    [connector],
+  )
+  inspect(model.pending_transport_count(), content="0")
+  inspect(model.last_status, content="Agent connector failed")
+  inspect(model.diagnostics.length(), content="1")
+  inspect(model.diagnostics[0].source, content="Agent connector acp-demo")
+  inspect(model.diagnostics[0].message, content="ACP runtime not configured")
+  let status = model.active_agent_backend_status()
+  inspect(status.failed, content="true")
+  inspect(status.status_label, content="失败：ACP runtime not configured")
+}
+
+///|
+test "workbench ACP connector exposes neutral provider and composer projections" {
+  let model = WorkbenchModel::new()
+    .update(SwitchAgentBackend("acp-demo"))
+    .update(PromptChanged("Use connector context"))
+  let registry = model.agent_provider_registry_items()
+  inspect(registry.length(), content="3")
+  inspect(registry[1].backend_id, content="acp-demo")
+  inspect(registry[1].transport_label, content="acp connector")
+  inspect(registry[1].active, content="true")
+  inspect(model.agent_provider_switch_summary().backend_id, content="acp-demo")
+  inspect(
+    model.agent_provider_switch_summary().capability_label,
+    content="session · commands",
+  )
+  let route = model.agent_composer_route_summary()
+  inspect(route.backend_id, content="acp-demo")
+  inspect(route.visible, content="true")
+  assert_true(route.detail.contains("ACP Demo"))
+  assert_true(route.detail.contains("仓库"))
+  let commands = model.active_agent_command_catalog()
+  inspect(commands.length(), content="3")
+  inspect(commands[0].name, content="profile")
+  inspect(commands[0].source_path, content="agentprofile.json")
+  let status = model.agent_status_bar_summary()
+  inspect(status.backend_id, content="acp-demo")
+  inspect(status.context_label, content="")
+}
+
+///|
+test "workbench ACP connector events project activity request and timeline state" {
+  let model = WorkbenchModel::new()
+    .update(SwitchAgentBackend("acp-demo"))
+    .update(
+      ReceiveConnector(
+        ConnectorProfileLoaded("acp-demo", AgentConnectorProfile::acp_demo()),
+      ),
+    )
+    .update(
+      ReceiveConnector(
+        ConnectorAssistantMessage(
+          "acp-demo", "ACP fixture reply", "Connector message detail",
+        ),
+      ),
+    )
+  inspect(model.transcript.length(), content="1")
+  inspect(model.transcript[0].summary, content="ACP fixture reply")
+  let signal = model.active_agent_runtime_signal()
+  inspect(signal.backend_id, content="acp-demo")
+  inspect(signal.status_label, content="运行中")
+  inspect(signal.message_preview, content="ACP fixture reply")
+  let activity = model.agent_activity_queue()
+  inspect(activity.length(), content="1")
+  assert_true(activity[0].kind is RuntimeActivity)
+  let timeline = model.agent_timeline_items()
+  assert_true(
+    timeline.any(item => item.title.contains("Agent connector profile loaded")),
+  )
+  assert_true(timeline.any(item => item.title == "ACP fixture reply"))
 }
 
 ///|
@@ -5793,6 +5934,44 @@ fn run_workbench_effect_with_transport(
         let next = run_workbench_effect_with_transport(
           WorkbenchUpdate::new(model.get(), effect~),
           transport,
+        )
+        model.set(next)
+      }
+    Send(message) => dispatch(message)
+    Dispatch(run) => run(dispatch)
+    Run(_descriptor, run) => run(dispatch)
+    Task(_descriptor, start) => ignore(start(dispatch))
+  }
+  model.get()
+}
+
+///|
+fn run_workbench_effect_with_agent_connectors(
+  update : WorkbenchUpdate,
+  transport : PiTransportRuntime,
+  connectors : Array[AgentConnectorRuntime],
+) -> WorkbenchModel {
+  let model = @core.State::new(update.model)
+  fn dispatch(message : WorkbenchMsg) -> Unit {
+    let next = model
+      .get()
+      .update_with_agent_connectors(message, transport, connectors)
+    model.set(next.model)
+    let chained = run_workbench_effect_with_agent_connectors(
+      WorkbenchUpdate::new(model.get(), effect=next.effect),
+      transport,
+      connectors,
+    )
+    model.set(chained)
+  }
+  match update.effect {
+    NoEffect => ()
+    Batch(effects) =>
+      for effect in effects {
+        let next = run_workbench_effect_with_agent_connectors(
+          WorkbenchUpdate::new(model.get(), effect~),
+          transport,
+          connectors,
         )
         model.set(next)
       }

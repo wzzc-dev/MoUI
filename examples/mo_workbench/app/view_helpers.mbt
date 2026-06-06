@@ -2386,6 +2386,17 @@ fn transcript_badge_tone(tone : String) -> @views.BadgeTone {
 }
 
 ///|
+fn agent_activity_queue_badge_tone(tone : String) -> @views.BadgeTone {
+  match tone {
+    "success" => Success
+    "warning" => Warning
+    "danger" => Danger
+    "accent" | "info" => Accent
+    _ => Neutral
+  }
+}
+
+///|
 fn transcript_role_label(role : String) -> String {
   match role {
     "user" => "用户"
@@ -3044,7 +3055,24 @@ pub fn WorkbenchModel::active_agent_runtime_signal(
   self : WorkbenchModel,
 ) -> AgentRuntimeSignal {
   let backend = self.active_agent_backend_profile()
-  if !backend.capabilities.uses_pi_transport {
+  if backend.uses_connector_transport() {
+    let connector = self.active_agent_connector_state()
+    return AgentRuntimeSignal::new(
+      backend_id=backend.id,
+      status_label=connector.status_label(),
+      active_tool_name=if connector.has_active_transport() {
+        "connector"
+      } else {
+        ""
+      },
+      message_preview=connector.last_activity,
+      thinking_level=connector.profile.protocol_label,
+      visible=connector.status != ConnectorDisconnected ||
+        connector.last_activity != "",
+      active=connector.has_active_transport(),
+    )
+  }
+  if !backend.uses_pi_transport() {
     return AgentRuntimeSignal::new(backend_id=backend.id)
   }
   if self.pi_agent.has_visible_signal() {
@@ -3259,7 +3287,7 @@ fn WorkbenchModel::should_show_session_name_sync_action(
   self : WorkbenchModel,
 ) -> Bool {
   let binding = self.active_agent_session_binding()
-  self.active_agent_backend_capabilities().uses_pi_transport &&
+  self.active_agent_backend_profile().uses_pi_transport() &&
   binding.has_visible_binding() &&
   (
     binding.session_name == "" ||
@@ -4166,6 +4194,12 @@ fn WorkbenchModel::composer(
       height=42.0,
     ),
   ]
+  if self.should_show_composer_request_row() {
+    content.push(self.composer_request_row(layout, theme))
+  }
+  if self.should_show_composer_route_row() {
+    content.push(self.composer_route_row(layout, theme))
+  }
   if self.should_show_composer_scope_row() {
     content.push(self.composer_scope_row(layout, theme))
   }
@@ -4198,6 +4232,12 @@ fn WorkbenchModel::composer_height(
   if self.should_show_agent_control_row() {
     height = height + 36.0
   }
+  if self.should_show_composer_request_row() {
+    height = height + 36.0
+  }
+  if self.should_show_composer_route_row() {
+    height = height + 36.0
+  }
   if self.should_show_composer_scope_row() {
     height = height + 36.0
   }
@@ -4208,6 +4248,102 @@ fn WorkbenchModel::composer_height(
     height = height + 42.0
   }
   height
+}
+
+///|
+fn WorkbenchModel::should_show_composer_route_row(
+  self : WorkbenchModel,
+) -> Bool {
+  self.agent_composer_route_summary().has_visible_route()
+}
+
+///|
+fn WorkbenchModel::composer_route_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let summary = self.agent_composer_route_summary()
+  let detail_width = workbench_max_double(
+    1.0,
+    layout.composer_input_width - 54.0 - 8.0,
+  )
+  row(
+    [
+      badge(
+        "Agent",
+        tone=agent_activity_queue_badge_tone(summary.tone),
+        theme~,
+        width=54.0,
+      ),
+      text(
+        compact_label(
+          summary.detail,
+          max_chars=readable_line_char_limit(detail_width),
+        ),
+        role=Caption,
+        theme~,
+        width=detail_width,
+        height=30.0,
+      ),
+    ],
+    spacing=8.0,
+    align=Center,
+  )
+}
+
+///|
+fn WorkbenchModel::should_show_composer_request_row(
+  self : WorkbenchModel,
+) -> Bool {
+  self.agent_composer_request_summary().has_visible_request()
+}
+
+///|
+fn WorkbenchModel::composer_request_row(
+  self : WorkbenchModel,
+  layout : WorkbenchLayout,
+  theme : @core.Theme,
+) -> @core.View[WorkbenchMsg] {
+  let summary = self.agent_composer_request_summary()
+  let action_width = if summary.action_message is Some(_) { 64.0 } else { 0.0 }
+  let detail_width = workbench_max_double(
+    1.0,
+    layout.composer_input_width - 54.0 - action_width - 24.0,
+  )
+  let controls : Array[@core.View[WorkbenchMsg]] = [
+    badge(
+      summary.badge_label,
+      tone=agent_activity_queue_badge_tone(summary.tone),
+      theme~,
+      width=54.0,
+    ),
+    text(
+      compact_label(
+        summary.title + " · " + summary.detail,
+        max_chars=readable_line_char_limit(detail_width),
+      ),
+      role=Caption,
+      theme~,
+      width=detail_width,
+      height=30.0,
+    ),
+  ]
+  match summary.action_message {
+    Some(message) =>
+      controls.push(
+        button(
+          summary.action_label,
+          on_click=message,
+          variant=Outline,
+          theme~,
+          width=64.0,
+          height=30.0,
+        ),
+      )
+    None => ()
+  }
+  row(controls, spacing=8.0, align=Center)
 }
 
 ///|
@@ -4487,10 +4623,9 @@ fn WorkbenchModel::composer_command_suggestions(
   }
   match self.composer_slash_query() {
     Some(query) =>
-      for command in self.command_catalog {
-        let agent_command = command.as_agent_command_info()
-        if agent_command.matches_composer_query(query) {
-          suggestions.push(agent_command)
+      for command in self.active_agent_command_catalog() {
+        if command.matches_composer_query(query) {
+          suggestions.push(command)
         }
       }
     None => ()
