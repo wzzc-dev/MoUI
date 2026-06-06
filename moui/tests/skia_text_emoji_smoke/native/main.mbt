@@ -303,7 +303,8 @@ fn bidi_visual_order_evidence_available(
       rect_dark_rows(
         frame,
         @core.Rect::new(x=8.0, y=58.0, width=150.0, height=28.0),
-      ) >= 4
+      ) >=
+      4
     }
     None => false
   }
