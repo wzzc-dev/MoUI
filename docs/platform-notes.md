@@ -194,6 +194,10 @@ use mouse/click fallback with transaction de-duplication, including delayed
 fallback events whose rounded coordinates drift slightly. This keeps a slow app
 rebuild after a button release from replaying the same browser click as a
 second MoUI pointer activation.
+Touch drags on the canvas synthesize wheel-style scroll deltas before browser
+fallback panning, so `scroll_view` surfaces such as the website homepage can
+scroll from mobile swipe gestures while still using the same app-owned
+`on_scroll` path as desktop wheels and trackpads.
 
 ## macOS Native
 
