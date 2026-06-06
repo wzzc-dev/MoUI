@@ -127,6 +127,7 @@ pub fn HostCapabilitySummary::service_count(
   bool_score(self.services.clipboard) +
   bool_score(self.services.menus) +
   bool_score(self.services.file_dialogs) +
+  bool_score(self.services.file_access) +
   bool_score(self.services.open_url) +
   bool_score(self.services.system_theme)
 }
@@ -146,7 +147,7 @@ pub fn HostCapabilitySummary::input_count(self : HostCapabilitySummary) -> Int {
 pub fn HostCapabilitySummary::preflight_fields(
   self : HostCapabilitySummary,
 ) -> String {
-  "host=\{self.label}; host_services=\{host_capability_label_list(self.services.enabled_labels())}; host_input=\{host_capability_label_list(self.input.enabled_labels())}; clipboard=\{host_capability_ready_label(self.services.clipboard)}; menu_service=\{host_capability_ready_label(self.services.menus)}; file_dialogs=\{host_capability_ready_label(self.services.file_dialogs)}; open_url=\{host_capability_ready_label(self.services.open_url)}; system_theme=\{host_capability_ready_label(self.services.system_theme)}; async_services=\{host_capability_ready_label(self.async_services)}; window_lifecycle=\{host_capability_ready_label(self.window_lifecycle)}; multi_window=\{host_capability_ready_label(self.multi_window)}; text_input=\{host_capability_ready_label(self.text_input_ready)}; ime=\{host_capability_ready_label(self.ime_ready)}; drag_drop=\{host_capability_ready_label(self.drag_drop_ready)}; native_context_menu=\{host_capability_ready_label(self.services.menus)}; host_modal=\{host_capability_ready_label(self.services.file_dialogs)}; native_accessibility=\{host_capability_ready_label(self.native_accessibility_ready)}"
+  "host=\{self.label}; host_services=\{host_capability_label_list(self.services.enabled_labels())}; host_input=\{host_capability_label_list(self.input.enabled_labels())}; clipboard=\{host_capability_ready_label(self.services.clipboard)}; menu_service=\{host_capability_ready_label(self.services.menus)}; file_dialogs=\{host_capability_ready_label(self.services.file_dialogs)}; file_access=\{host_capability_ready_label(self.services.file_access)}; open_url=\{host_capability_ready_label(self.services.open_url)}; system_theme=\{host_capability_ready_label(self.services.system_theme)}; async_services=\{host_capability_ready_label(self.async_services)}; window_lifecycle=\{host_capability_ready_label(self.window_lifecycle)}; multi_window=\{host_capability_ready_label(self.multi_window)}; text_input=\{host_capability_ready_label(self.text_input_ready)}; ime=\{host_capability_ready_label(self.ime_ready)}; drag_drop=\{host_capability_ready_label(self.drag_drop_ready)}; native_context_menu=\{host_capability_ready_label(self.services.menus)}; host_modal=\{host_capability_ready_label(self.services.file_dialogs)}; native_accessibility=\{host_capability_ready_label(self.native_accessibility_ready)}"
 }
 
 ///|
@@ -171,6 +172,9 @@ pub fn HostServiceCapabilities::enabled_labels(
   }
   if self.file_dialogs {
     labels.push("file dialogs")
+  }
+  if self.file_access {
+    labels.push("file access")
   }
   if self.open_url {
     labels.push("open URL")

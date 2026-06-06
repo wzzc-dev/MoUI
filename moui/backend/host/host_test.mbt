@@ -2750,6 +2750,14 @@ test "host service bridge gates typed platform requests by capability" {
       inspect(message, content="file dialog service is unavailable")
     _ => fail("expected unavailable file dialog")
   }
+  match
+    bridge.dispatch(
+      HostServiceRequest::TextFile(HostTextFileRequest::ReadText("/tmp/a.md")),
+    ) {
+    HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="text file service is unavailable")
+    _ => fail("expected unavailable text file service")
+  }
 }
 
 ///|
@@ -3183,6 +3191,7 @@ test "host app services facade routes common platform requests" {
       clipboard=true,
       menus=true,
       file_dialogs=true,
+      file_access=true,
       open_url=true,
       system_theme=true,
     ),
@@ -3195,6 +3204,10 @@ test "host app services facade routes common platform requests" {
         Clipboard(ReadText) => HostServiceResponse::ClipboardText("copied")
         FileDialog({ kind: OpenFile, title, .. }) =>
           HostServiceResponse::FileDialogSelection([title + ":open"])
+        TextFile(ReadText(path)) =>
+          HostServiceResponse::TextFileContent(path, "file contents")
+        TextFile(WriteText(path, _text)) =>
+          HostServiceResponse::TextFileWritten(path)
         OpenUrl(url) => {
           opened_url.val = url
           HostServiceResponse::UrlOpened
@@ -3222,6 +3235,18 @@ test "host app services facade routes common platform requests" {
     HostServiceResponse::FileDialogSelection(paths) =>
       inspect(paths[0], content="Document:open")
     _ => fail("expected file dialog selection")
+  }
+  match services.read_text_file("/tmp/note.md") {
+    HostServiceResponse::TextFileContent(path, text) => {
+      inspect(path, content="/tmp/note.md")
+      inspect(text, content="file contents")
+    }
+    _ => fail("expected text file content")
+  }
+  match services.write_text_file("/tmp/note.md", "updated") {
+    HostServiceResponse::TextFileWritten(path) =>
+      inspect(path, content="/tmp/note.md")
+    _ => fail("expected text file write")
   }
   match services.open_url("https://example.test") {
     HostServiceResponse::UrlOpened => ()

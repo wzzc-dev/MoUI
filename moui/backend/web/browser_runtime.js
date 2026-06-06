@@ -11,6 +11,7 @@ export function createWindowWebImports(options = {}) {
   const textInputs = new Map();
   const stringHandles = new Map();
   const eventTexts = new Map();
+  const fileHandles = new Map();
   let nextCanvasId = 1;
   let nextStringHandle = 1;
   let nextEventTextId = 1;
@@ -212,6 +213,30 @@ export function createWindowWebImports(options = {}) {
     emit(3);
   };
 
+  const completeAsyncFileOpenText = (requestId, ok, path = "", text = "") => {
+    const complete = wasmExports?.web_complete_async_file_open_text;
+    if (typeof complete !== "function") {
+      completeAsyncText(
+        "web_complete_async_file_dialog",
+        requestId,
+        ok,
+        ok ? path : text || path,
+      );
+      return;
+    }
+    const pathId = nextEventTextId++;
+    const textId = nextEventTextId++;
+    eventTexts.set(pathId, `${path ?? ""}`);
+    eventTexts.set(textId, `${text ?? ""}`);
+    try {
+      complete(requestId | 0, !!ok, pathId, textId);
+    } finally {
+      eventTexts.delete(pathId);
+      eventTexts.delete(textId);
+    }
+    emit(3);
+  };
+
   const createStringHandle = value => {
     const handle = { value: `${value ?? ""}`, offset: 0 };
     const id = nextStringHandle++;
@@ -284,8 +309,31 @@ export function createWindowWebImports(options = {}) {
       .split(/[\n,]+/)
       .map(part => part.trim())
       .filter(Boolean)
-      .filter(part => part.startsWith(".") || part.includes("/"))
+      .map(part =>
+        part.startsWith(".") || part.includes("/")
+          ? part
+          : `.${part.replace(/^\.+/, "")}`
+      )
       .join(",");
+
+  const filePickerTypes = accept => {
+    const extensions = `${accept ?? ""}`
+      .split(",")
+      .map(part => part.trim())
+      .filter(part => part.startsWith("."));
+    if (extensions.length === 0) {
+      return undefined;
+    }
+    return [{ description: "Markdown files", accept: { "text/markdown": extensions } }];
+  };
+
+  const registerFileHandle = (handle, fallbackName = "") => {
+    const path = handle?.name || fallbackName || "untitled.md";
+    if (handle) {
+      fileHandles.set(path, handle);
+    }
+    return path;
+  };
 
   const asyncFailureMessage = (error, fallback) => {
     if (error?.name === "AbortError") {
@@ -588,12 +636,52 @@ export function createWindowWebImports(options = {}) {
       const dialogKind = kind | 0;
       const accept = filterListToAccept(stringValue(filters));
       const suggestedName = stringValue(defaultName);
-      if (dialogKind === 1 && globalThis.showSaveFilePicker) {
+      if (dialogKind === 0 && globalThis.showOpenFilePicker) {
+        const options = { multiple: false };
+        const types = filePickerTypes(accept);
+        if (types) {
+          options.types = types;
+        }
         globalThis
-          .showSaveFilePicker({
-            suggestedName: suggestedName || undefined,
+          .showOpenFilePicker(options)
+          .then(handles => {
+            const handle = handles?.[0];
+            if (!handle) {
+              complete(true, "");
+              return;
+            }
+            const path = registerFileHandle(handle, handle.name || suggestedName);
+            return handle
+              .getFile()
+              .then(file => file.text())
+              .then(text => completeAsyncFileOpenText(requestId, true, path, text));
           })
-          .then(handle => complete(true, handle?.name || suggestedName || ""))
+          .catch(error => {
+            if (error?.name === "AbortError") {
+              complete(true, "");
+            } else {
+              completeAsyncFileOpenText(
+                requestId,
+                false,
+                "",
+                asyncFailureMessage(error, "file dialog failed"),
+              );
+            }
+          });
+        return;
+      }
+      if (dialogKind === 1 && globalThis.showSaveFilePicker) {
+        const options = { suggestedName: suggestedName || undefined };
+        const types = filePickerTypes(accept);
+        if (types) {
+          options.types = types;
+        }
+        globalThis
+          .showSaveFilePicker(options)
+          .then(handle => {
+            const path = registerFileHandle(handle, suggestedName);
+            complete(true, path);
+          })
           .catch(error => {
             if (error?.name === "AbortError") {
               complete(true, "");
@@ -631,8 +719,32 @@ export function createWindowWebImports(options = {}) {
         input.remove();
         complete(ok, value);
       };
+      const finishOpenFile = file => {
+        if (completed) return;
+        if (!file) {
+          finish(true, "");
+          return;
+        }
+        completed = true;
+        input.remove();
+        const path = file.webkitRelativePath || file.name || suggestedName || "untitled.md";
+        file.text()
+          .then(text => completeAsyncFileOpenText(requestId, true, path, text))
+          .catch(error => {
+            completeAsyncFileOpenText(
+              requestId,
+              false,
+              path,
+              asyncFailureMessage(error, "file read failed"),
+            );
+          });
+      };
       input.addEventListener("change", () => {
-        finish(true, fileListNames(input.files));
+        if (dialogKind === 0) {
+          finishOpenFile(input.files?.[0] ?? null);
+        } else {
+          finish(true, fileListNames(input.files));
+        }
       }, { once: true });
       globalThis.window?.addEventListener?.("focus", () => {
         setTimeout(() => {
@@ -646,6 +758,43 @@ export function createWindowWebImports(options = {}) {
       } catch (error) {
         finish(false, asyncFailureMessage(error, "file dialog failed"));
       }
+    },
+    text_file_write_async(requestId, path, text) {
+      const targetPath = stringValue(path);
+      const value = stringValue(text);
+      const handle = fileHandles.get(targetPath);
+      if (!handle?.createWritable) {
+        completeAsyncText(
+          "web_complete_async_text_file_write",
+          requestId,
+          false,
+          "no writable browser file handle for " + (targetPath || "selected file"),
+        );
+        return;
+      }
+      handle
+        .createWritable()
+        .then(writable =>
+          writable
+            .write(value)
+            .then(() => writable.close())
+        )
+        .then(() => {
+          completeAsyncText(
+            "web_complete_async_text_file_write",
+            requestId,
+            true,
+            targetPath,
+          );
+        })
+        .catch(error => {
+          completeAsyncText(
+            "web_complete_async_text_file_write",
+            requestId,
+            false,
+            asyncFailureMessage(error, "text file write failed"),
+          );
+        });
     },
     open_url(url) {
       const href = stringValue(url);

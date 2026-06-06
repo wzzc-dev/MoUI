@@ -1,8 +1,11 @@
 import {
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views",
   "mizchi/markdown",
 }
+
+supported_targets = "+native+wasm-gc"
 
 options(
   targets: { },

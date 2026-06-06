@@ -3,6 +3,7 @@ package "examples/markdown_editor/app"
 
 import {
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
 }
 
@@ -27,12 +28,21 @@ pub struct MarkdownEditorApp {
   target_kind : @core.State[MarkdownEditorTargetKind]
   block_label : @core.State[String]
   source_preview_visible : @core.State[Bool]
+  outline_visible : @core.State[Bool]
+  find_visible : @core.State[Bool]
+  find_query : @core.State[String]
+  replace_text : @core.State[String]
+  document_path : @core.State[String]
+  saved_document : @core.State[String]
   undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
   redo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
   editor_scroll : @core.ScrollState
+  // private fields
 }
 pub fn MarkdownEditorApp::new() -> Self
 pub fn MarkdownEditorApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn MarkdownEditorApp::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn MarkdownEditorApp::save_document_as(Self, String) -> Unit
 
 type MarkdownEditorAutolinkTarget derive(Eq, @debug.Debug)
 
@@ -50,7 +60,15 @@ type MarkdownEditorOffsetReplacement derive(Eq, @debug.Debug)
 
 type MarkdownEditorOrderedLineInfo derive(Eq, @debug.Debug)
 
+type MarkdownEditorOrderedRenumberContext derive(Eq, @debug.Debug)
+
 type MarkdownEditorOutlineItem derive(Eq, ToJson, @debug.Debug)
+
+type MarkdownEditorPastedMarkdownTable derive(Eq, @debug.Debug)
+
+type MarkdownEditorQuotedCodeBlock derive(Eq, @debug.Debug)
+
+type MarkdownEditorQuotedCodeFence derive(Eq, @debug.Debug)
 
 type MarkdownEditorRenumberResult derive(Eq, @debug.Debug)
 

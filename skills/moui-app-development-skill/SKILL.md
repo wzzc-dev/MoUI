@@ -97,7 +97,7 @@ separate framework task using `moui-framework-development-skill`.
   descriptor categories; use `Subscription::listen` / `Subscription::run` for
   custom kinds. Keep concrete timer or host adapters outside `core`.
 - Keep host-service calls out of pure reducers. For app-owned clipboard, file
-  dialog, URL, theme, or menu work, return `@core.Effect::host_service` with a
+  dialog, text-file, URL, theme, or menu work, return `@core.Effect::host_service` with a
   stable diagnostic key that is unique within the returned effect batch, call
   `@host.HostAppServices` inside the effect runner, and dispatch a typed
   completion message back into the model. Use `@core.Effect::run` for custom
@@ -149,6 +149,10 @@ moon test examples/data_table/app --target native
 moon test examples/file_importer/app --target native
 moon test examples/command_palette/app --target native
 ```
+
+Prefix app-only tests with `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` when the change
+does not need real native Skia and the local Skia release artifact is not
+already cached.
 
 Web app builds:
 

@@ -158,21 +158,13 @@ fn markdown_table_block_at(
     segment_lines.push(lines[next])
     next = next + 1
   }
-  let parsed = @markdown.parse(markdown_join_lines(segment_lines))
-  if parsed.document.children.length() != 1 {
-    return None
-  }
-  match parsed.document.children[0] {
-    Table(header~, rows~, ..) =>
-      Some({
-        block: markdown_table_block(
-          markdown_table_text(header, rows),
-          markdown_table_alignments_for_separator(lines[index + 1]),
-        ),
-        end_index: next - 1,
-      })
-    _ => None
-  }
+  Some({
+    block: markdown_table_block(
+      markdown_table_text_from_source_lines(segment_lines),
+      markdown_table_alignments_for_separator(lines[index + 1]),
+    ),
+    end_index: next - 1,
+  })
 }
 
 ///|
@@ -222,13 +214,16 @@ fn markdown_split_table_cells(line : String) -> Array[String] {
   if start < end && chars[start] == '|' {
     start = start + 1
   }
-  if end > start && chars[end - 1] == '|' {
+  if end > start &&
+    chars[end - 1] == '|' &&
+    markdown_editor_table_pipe_is_separator(chars, end - 1) {
     end = end - 1
   }
   let current : Array[Char] = []
   let mut index = start
   while index < end {
-    if chars[index] == '|' {
+    if chars[index] == '|' &&
+      markdown_editor_table_pipe_is_separator(chars, index) {
       cells.push(String::from_array(current))
       current.clear()
     } else {
@@ -574,6 +569,22 @@ fn markdown_table_text(
     lines.push(markdown_table_row_text(row))
   }
   markdown_join_lines(lines)
+}
+
+///|
+fn markdown_table_text_from_source_lines(lines : Array[String]) -> String {
+  let rows : Array[String] = []
+  for index in 0..<lines.length() {
+    if index == 1 {
+      continue
+    }
+    let cells : Array[String] = []
+    for cell in markdown_split_table_cells(lines[index]) {
+      cells.push(cell.trim().to_owned())
+    }
+    rows.push(cells.join("  |  "))
+  }
+  markdown_join_lines(rows)
 }
 
 ///|
@@ -1389,13 +1400,19 @@ fn markdown_table_cell_ranges_for_line(
   if start < end && chars[start] == '|' {
     start = start + 1
   }
-  if end > start && chars[end - 1] == '|' {
+  if end > start &&
+    chars[end - 1] == '|' &&
+    markdown_editor_table_pipe_is_separator(chars, end - 1) {
     end = end - 1
   }
   let mut segment_start = start
   let mut index = start
   while index <= end {
-    if index == end || chars[index] == '|' {
+    if index == end ||
+      (
+        chars[index] == '|' &&
+        markdown_editor_table_pipe_is_separator(chars, index)
+      ) {
       let range = markdown_table_trimmed_range(chars, segment_start, index)
       cells.push({
         text: String::from_array(chars[range.start:range.end]),

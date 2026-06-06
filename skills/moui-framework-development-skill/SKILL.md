@@ -149,7 +149,9 @@ Use this skill when editing or reviewing:
   window request/completion queue, text-input session, window-event conversion,
   async host-service queue, and redraw driver.
 - `backend/web/`: wasm-gc Web host, canvas constraints, resolver-backed
-  multi-canvas window slots, browser runtime bridge, and accessibility adapter.
+  multi-canvas window slots, browser runtime bridge, async browser
+  file-open/save text completion for shared text-file reads/writes, and
+  accessibility adapter.
 - `backend/macos/`: AppKit/window host, resolver-backed multi-window slots,
   and CAMetalLayer WGPU surface creation.
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,

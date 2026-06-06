@@ -251,12 +251,14 @@ pub fn windows_service_bridge(
   clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_windows_clipboard,
   open_url? : (String) -> Bool = dispatch_windows_open_url,
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_windows_file_dialog,
+  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_windows_text_file,
   menu? : (Array[@core.ActionCommand]) -> Int = dispatch_windows_menu,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
       clipboard=true,
       file_dialogs=true,
+      file_access=true,
       menus=true,
       open_url=true,
       system_theme=true,
@@ -273,6 +275,8 @@ pub fn windows_service_bridge(
           }
         @host.HostServiceRequest::FileDialog(options) =>
           @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
+        @host.HostServiceRequest::TextFile(text_file_request) =>
+          text_file(text_file_request)
         @host.HostServiceRequest::ShowMenu(commands) =>
           menu_command_response(commands, menu(commands))
         @host.HostServiceRequest::QuerySystemTheme =>
@@ -280,6 +284,33 @@ pub fn windows_service_bridge(
       }
     },
   )
+}
+
+///|
+fn dispatch_windows_text_file(
+  request : @host.HostTextFileRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    @host.HostTextFileRequest::ReadText(path) =>
+      if @fs.path_exists(path) {
+        let bytes = @fs.read_file_to_bytes(path) catch {
+          _ => return @host.HostServiceResponse::Unavailable("file read failed")
+        }
+        @host.HostServiceResponse::TextFileContent(
+          path,
+          @utf8.decode_lossy(bytes[:], ignore_bom=true),
+        )
+      } else {
+        @host.HostServiceResponse::Unavailable("file does not exist")
+      }
+    @host.HostTextFileRequest::WriteText(path, text) => {
+      let bytes = @utf8.encode(text[:], bom=false)
+      @fs.write_bytes_to_file(path, bytes) catch {
+        _ => return @host.HostServiceResponse::Unavailable("file write failed")
+      }
+      @host.HostServiceResponse::TextFileWritten(path)
+    }
+  }
 }
 
 ///|

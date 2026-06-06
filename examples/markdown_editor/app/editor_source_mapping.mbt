@@ -497,13 +497,16 @@ fn markdown_editor_split_table_cells(line : String) -> Array[String] {
   if start < end && chars[start] == '|' {
     start = start + 1
   }
-  if end > start && chars[end - 1] == '|' {
+  if end > start &&
+    chars[end - 1] == '|' &&
+    markdown_editor_table_pipe_is_separator(chars, end - 1) {
     end = end - 1
   }
   let current : Array[Char] = []
   let mut index = start
   while index < end {
-    if chars[index] == '|' {
+    if chars[index] == '|' &&
+      markdown_editor_table_pipe_is_separator(chars, index) {
       cells.push(String::from_array(current))
       current.clear()
     } else {

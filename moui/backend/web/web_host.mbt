@@ -13,6 +13,7 @@ enum WebAsyncHostServiceKind {
   FileDialogOpenFile
   FileDialogSaveFile
   FileDialogPickDirectory
+  TextFileWriteText
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -22,7 +23,22 @@ struct WebAsyncHostServiceRequest {
   title : String
   filters : Array[String]
   default_name : String
+  path : String
+  text : String
 } derive(Eq, Debug, ToJson)
+
+///|
+priv struct WebTextFileCacheEntry {
+  path : String
+  text : String
+}
+
+///|
+priv struct WebTextFileWriteEntry {
+  request_id : Int
+  path : String
+  text : String
+}
 
 ///|
 #external
@@ -30,6 +46,15 @@ priv type WebHostString
 
 ///|
 let web_active_async_queue : Ref[@host.HostServiceAsyncQueue?] = Ref(None)
+
+///|
+let web_shared_async_queue : @host.HostServiceAsyncQueue = @host.HostServiceAsyncQueue::new()
+
+///|
+let web_text_file_cache : Ref[Array[WebTextFileCacheEntry]] = Ref([])
+
+///|
+let web_text_file_writes : Ref[Array[WebTextFileWriteEntry]] = Ref([])
 
 ///|
 pub fn canvas_host_constraints() -> CanvasHostConstraints {
@@ -102,6 +127,7 @@ pub fn web_capability_summary(
   services? : @host.HostServiceCapabilities = @host.HostServiceCapabilities::new(
     clipboard=true,
     file_dialogs=true,
+    file_access=true,
     open_url=true,
     system_theme=true,
   ),
@@ -131,12 +157,14 @@ pub fn web_service_bridge(
   clipboard_read? : Bool = false,
   clipboard_write? : (String) -> Bool = _text => false,
   file_dialog? : Bool = false,
+  file_access? : Bool = false,
   async_queue? : @host.HostServiceAsyncQueue? = None,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
     capabilities=@host.HostServiceCapabilities::new(
       clipboard=clipboard || clipboard_read,
       file_dialogs=file_dialog,
+      file_access~,
       open_url=true,
       system_theme=true,
     ),
@@ -182,6 +210,43 @@ pub fn web_service_bridge(
                 "file dialog service is asynchronous on Web",
               )
           }
+        @host.HostServiceRequest::TextFile(
+          @host.HostTextFileRequest::ReadText(path)
+        ) =>
+          match web_cached_text_file(path) {
+            Some(text) => @host.HostServiceResponse::TextFileContent(path, text)
+            None =>
+              @host.HostServiceResponse::Unavailable(
+                "text file content is unavailable on Web until a browser file is selected",
+              )
+          }
+        @host.HostServiceRequest::TextFile(
+          @host.HostTextFileRequest::WriteText(_, _)
+        ) =>
+          match request {
+            @host.HostServiceRequest::TextFile(
+              @host.HostTextFileRequest::WriteText(path, text)
+            ) =>
+              match async_queue {
+                Some(queue) => {
+                  let response = queue.submit(request)
+                  match response {
+                    @host.HostServiceResponse::Pending(id) =>
+                      web_remember_text_file_write(id.value, path, text)
+                    _ => ()
+                  }
+                  response
+                }
+                None =>
+                  @host.HostServiceResponse::Unavailable(
+                    "text file writing is asynchronous on Web",
+                  )
+              }
+            _ =>
+              @host.HostServiceResponse::Unavailable(
+                "text file writing is unavailable on Web",
+              )
+          }
         _ =>
           @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }
@@ -193,8 +258,19 @@ pub fn web_service_bridge(
 pub fn web_app_services(
   system_theme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> @host.HostAppServices {
+  let async_queue = web_async_host_service_queue()
   @host.HostAppServices::new(
-    bridge=web_service_bridge(system_theme~, open_url=dispatch_web_open_url),
+    bridge=web_service_bridge(
+      system_theme~,
+      open_url=dispatch_web_open_url,
+      clipboard=true,
+      clipboard_read=true,
+      clipboard_write=dispatch_web_clipboard_write_text,
+      file_dialog=true,
+      file_access=true,
+      async_queue=Some(async_queue),
+    ),
+    async_queue=Some(async_queue),
   )
 }
 
@@ -205,6 +281,7 @@ fn WebAsyncHostServiceKind::browser_code(self : WebAsyncHostServiceKind) -> Int 
     FileDialogOpenFile => 0
     FileDialogSaveFile => 1
     FileDialogPickDirectory => 2
+    TextFileWriteText => -2
   }
 }
 
@@ -220,6 +297,8 @@ fn WebAsyncHostServiceRequest::from_pending(
         title: "",
         filters: [],
         default_name: "",
+        path: "",
+        text: "",
       })
     @host.HostServiceRequest::FileDialog(options) =>
       Some({
@@ -238,6 +317,20 @@ fn WebAsyncHostServiceRequest::from_pending(
           Some(name) => name
           None => ""
         },
+        path: "",
+        text: "",
+      })
+    @host.HostServiceRequest::TextFile(
+      @host.HostTextFileRequest::WriteText(path, text)
+    ) =>
+      Some({
+        id: pending.id,
+        kind: WebAsyncHostServiceKind::TextFileWriteText,
+        title: "",
+        filters: [],
+        default_name: "",
+        path,
+        text,
       })
     _ => None
   }
@@ -272,6 +365,12 @@ fn dispatch_web_async_host_service_request(
         web_host_string(request.filters.join("\n")),
         web_host_string(request.default_name),
       )
+    TextFileWriteText =>
+      web_async_text_file_write(
+        request.id.value,
+        web_host_string(request.path),
+        web_host_string(request.text),
+      )
   }
 }
 
@@ -280,6 +379,11 @@ fn set_web_async_host_service_queue(
   queue : @host.HostServiceAsyncQueue?,
 ) -> Unit {
   web_active_async_queue.val = queue
+}
+
+///|
+fn web_async_host_service_queue() -> @host.HostServiceAsyncQueue {
+  web_shared_async_queue
 }
 
 ///|
@@ -301,6 +405,59 @@ fn web_complete_async_clipboard_read_text(
       }
     }
     None => false
+  }
+}
+
+///|
+fn web_complete_async_text_file_write_text(
+  request_id : Int,
+  ok : Bool,
+  text : String,
+) -> Bool {
+  match web_active_async_queue.val {
+    Some(queue) => {
+      let id = @host.HostServiceRequestId::new(request_id)
+      if ok {
+        let path = match web_take_text_file_write(request_id) {
+          Some(entry) => {
+            web_cache_text_file(entry.path, entry.text)
+            entry.path
+          }
+          None => text
+        }
+        queue.complete(id, @host.HostServiceResponse::TextFileWritten(path))
+      } else {
+        ignore(web_take_text_file_write(request_id))
+        queue.reject(
+          id,
+          web_async_failure_reason(
+            text, "text file writing is unavailable on Web",
+          ),
+        )
+      }
+    }
+    None => false
+  }
+}
+
+///|
+fn web_complete_async_file_open_text_values(
+  request_id : Int,
+  ok : Bool,
+  path : String,
+  text : String,
+) -> Bool {
+  if ok {
+    if path != "" {
+      web_cache_text_file(path, text)
+    }
+    web_complete_async_file_dialog_selection_text(request_id, true, path)
+  } else {
+    web_complete_async_file_dialog_selection_text(
+      request_id,
+      false,
+      web_async_failure_reason(text, path),
+    )
   }
 }
 
@@ -364,6 +521,38 @@ pub fn web_complete_async_file_dialog(
 }
 
 ///|
+pub fn web_complete_async_file_open_text(
+  request_id : Int,
+  ok : Bool,
+  path_id : Int,
+  text_id : Int,
+) -> Unit {
+  ignore(
+    web_complete_async_file_open_text_values(
+      request_id,
+      ok,
+      web_host_string_from_id(path_id),
+      web_host_string_from_id(text_id),
+    ),
+  )
+}
+
+///|
+pub fn web_complete_async_text_file_write(
+  request_id : Int,
+  ok : Bool,
+  text_id : Int,
+) -> Unit {
+  ignore(
+    web_complete_async_text_file_write_text(
+      request_id,
+      ok,
+      web_host_string_from_id(text_id),
+    ),
+  )
+}
+
+///|
 fn decode_web_file_dialog_selection(text : String) -> Array[String] {
   let paths : Array[String] = []
   if text != "" {
@@ -375,6 +564,59 @@ fn decode_web_file_dialog_selection(text : String) -> Array[String] {
     }
   }
   paths
+}
+
+///|
+fn web_remember_text_file_write(
+  request_id : Int,
+  path : String,
+  text : String,
+) -> Unit {
+  let entries : Array[WebTextFileWriteEntry] = []
+  for entry in web_text_file_writes.val {
+    if entry.request_id != request_id {
+      entries.push(entry)
+    }
+  }
+  entries.push({ request_id, path, text })
+  web_text_file_writes.val = entries
+}
+
+///|
+fn web_take_text_file_write(request_id : Int) -> WebTextFileWriteEntry? {
+  let entries : Array[WebTextFileWriteEntry] = []
+  let mut found : WebTextFileWriteEntry? = None
+  for entry in web_text_file_writes.val {
+    if found is None && entry.request_id == request_id {
+      found = Some(entry)
+    } else {
+      entries.push(entry)
+    }
+  }
+  web_text_file_writes.val = entries
+  found
+}
+
+///|
+fn web_cache_text_file(path : String, text : String) -> Unit {
+  let entries : Array[WebTextFileCacheEntry] = []
+  for entry in web_text_file_cache.val {
+    if entry.path != path {
+      entries.push(entry)
+    }
+  }
+  entries.push({ path, text })
+  web_text_file_cache.val = entries
+}
+
+///|
+fn web_cached_text_file(path : String) -> String? {
+  for entry in web_text_file_cache.val {
+    if entry.path == path {
+      return Some(entry.text)
+    }
+  }
+  None
 }
 
 ///|
@@ -459,6 +701,13 @@ fn web_async_file_dialog_open(
   filters : WebHostString,
   default_name : WebHostString,
 ) -> Unit = "window_web" "file_dialog_open_async"
+
+///|
+fn web_async_text_file_write(
+  request_id : Int,
+  path : WebHostString,
+  text : WebHostString,
+) -> Unit = "window_web" "text_file_write_async"
 
 ///|
 pub fn request_animation_frame_event() -> @host.HostEvent {

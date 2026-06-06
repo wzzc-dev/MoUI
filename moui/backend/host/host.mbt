@@ -52,6 +52,7 @@ pub(all) struct HostServiceCapabilities {
   clipboard : Bool
   menus : Bool
   file_dialogs : Bool
+  file_access : Bool
   open_url : Bool
   system_theme : Bool
 } derive(Eq, Debug, ToJson)
@@ -78,10 +79,17 @@ pub(all) struct HostFileDialogOptions {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum HostTextFileRequest {
+  ReadText(String)
+  WriteText(String, String)
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum HostServiceRequest {
   Clipboard(HostClipboardRequest)
   ShowMenu(Array[@core.ActionCommand])
   FileDialog(HostFileDialogOptions)
+  TextFile(HostTextFileRequest)
   OpenUrl(String)
   QuerySystemTheme
 } derive(Eq, Debug, ToJson)
@@ -94,6 +102,8 @@ pub(all) enum HostServiceResponse {
   ClipboardWritten
   MenuCommand(@core.CommandIntent)
   FileDialogSelection(Array[String])
+  TextFileContent(String, String)
+  TextFileWritten(String)
   UrlOpened
   SystemTheme(@core.ColorScheme)
 } derive(Eq, Debug, ToJson)
@@ -103,6 +113,7 @@ pub(all) enum HostServiceKind {
   ClipboardService
   MenuService
   FileDialogService
+  TextFileService
   OpenUrlService
   SystemThemeService
 } derive(Eq, Debug, ToJson)
@@ -375,6 +386,7 @@ pub fn HostServiceCapabilities::none() -> HostServiceCapabilities {
     clipboard: false,
     menus: false,
     file_dialogs: false,
+    file_access: false,
     open_url: false,
     system_theme: false,
   }
@@ -385,10 +397,11 @@ pub fn HostServiceCapabilities::new(
   clipboard? : Bool = false,
   menus? : Bool = false,
   file_dialogs? : Bool = false,
+  file_access? : Bool = false,
   open_url? : Bool = false,
   system_theme? : Bool = false,
 ) -> HostServiceCapabilities {
-  { clipboard, menus, file_dialogs, open_url, system_theme }
+  { clipboard, menus, file_dialogs, file_access, open_url, system_theme }
 }
 
 ///|
@@ -466,6 +479,7 @@ pub fn HostServiceBridge::can_handle(
     Clipboard(_) => self.capabilities.clipboard
     ShowMenu(_) => self.capabilities.menus
     FileDialog(_) => self.capabilities.file_dialogs
+    TextFile(_) => self.capabilities.file_access
     OpenUrl(_) => self.capabilities.open_url
     QuerySystemTheme => self.capabilities.system_theme
   }
@@ -479,6 +493,7 @@ pub fn HostServiceRequest::unavailable_message(
     Clipboard(_) => "clipboard service is unavailable"
     ShowMenu(_) => "menu service is unavailable"
     FileDialog(_) => "file dialog service is unavailable"
+    TextFile(_) => "text file service is unavailable"
     OpenUrl(_) => "open URL service is unavailable"
     QuerySystemTheme => "system theme service is unavailable"
   }
@@ -490,6 +505,7 @@ pub fn HostServiceRequest::kind(self : HostServiceRequest) -> HostServiceKind {
     Clipboard(_) => ClipboardService
     ShowMenu(_) => MenuService
     FileDialog(_) => FileDialogService
+    TextFile(_) => TextFileService
     OpenUrl(_) => OpenUrlService
     QuerySystemTheme => SystemThemeService
   }

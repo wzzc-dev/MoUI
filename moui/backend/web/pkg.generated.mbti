@@ -43,6 +43,10 @@ pub fn web_complete_async_clipboard_read(Int, Bool, Int) -> Unit
 
 pub fn web_complete_async_file_dialog(Int, Bool, Int) -> Unit
 
+pub fn web_complete_async_file_open_text(Int, Bool, Int, Int) -> Unit
+
+pub fn web_complete_async_text_file_write(Int, Bool, Int) -> Unit
+
 pub fn web_dispatch_event(Int, Int, Int, Int, Double, Int) -> Unit
 
 pub fn web_dispatch_route(Int, Int) -> Unit
@@ -57,7 +61,7 @@ pub fn web_history_replace_route(String) -> Unit
 
 pub fn web_host_info() -> @host.HostAppInfo
 
-pub fn web_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool, clipboard? : Bool, clipboard_read? : Bool, clipboard_write? : (String) -> Bool, file_dialog? : Bool, async_queue? : @host.HostServiceAsyncQueue?) -> @host.HostServiceBridge
+pub fn web_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, open_url? : (String) -> Bool, clipboard? : Bool, clipboard_read? : Bool, clipboard_write? : (String) -> Bool, file_dialog? : Bool, file_access? : Bool, async_queue? : @host.HostServiceAsyncQueue?) -> @host.HostServiceBridge
 
 pub fn webgpu_canvas_surface_contract() -> @render.WgpuSurfaceContract
 

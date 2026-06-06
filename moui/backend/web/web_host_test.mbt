@@ -70,6 +70,7 @@ test "web capability summary exposes known browser host services" {
   inspect(summary.label, content="Web host")
   inspect(summary.services.clipboard, content="true")
   inspect(summary.services.file_dialogs, content="true")
+  inspect(summary.services.file_access, content="true")
   inspect(summary.services.open_url, content="true")
   inspect(summary.services.system_theme, content="true")
   inspect(summary.input.drag_drop, content="true")
@@ -137,18 +138,62 @@ test "web service bridge exposes clipboard write contract" {
       )
     _ => fail("expected Web clipboard read to remain unavailable")
   }
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::TextFile(
+        @host.HostTextFileRequest::ReadText("note.md"),
+      ),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="text file service is unavailable")
+    _ => fail("expected Web text file access to remain unavailable")
+  }
 }
 
 ///|
-test "web service bridge can defer async clipboard read and file dialogs" {
+test "web service bridge exposes browser-selected text-file reads when enabled" {
+  let bridge = web_service_bridge(file_access=true)
+  inspect(bridge.capabilities.file_access, content="true")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::TextFile(
+        @host.HostTextFileRequest::ReadText("missing.md"),
+      ),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(
+        message,
+        content="text file content is unavailable on Web until a browser file is selected",
+      )
+    _ => fail("expected missing Web text file cache to remain unavailable")
+  }
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::TextFile(
+        @host.HostTextFileRequest::WriteText("missing.md", "updated"),
+      ),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="text file writing is asynchronous on Web")
+    _ =>
+      fail(
+        "expected Web text-file writes without a queue to remain unavailable",
+      )
+  }
+}
+
+///|
+test "web service bridge can defer async clipboard read, file dialogs, and writes" {
   let queue = @host.HostServiceAsyncQueue::new()
   let bridge = web_service_bridge(
     clipboard_read=true,
     file_dialog=true,
+    file_access=true,
     async_queue=Some(queue),
   )
   inspect(bridge.capabilities.clipboard, content="true")
   inspect(bridge.capabilities.file_dialogs, content="true")
+  inspect(bridge.capabilities.file_access, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
@@ -168,7 +213,16 @@ test "web service bridge can defer async clipboard read and file dialogs" {
     @host.HostServiceResponse::Pending(id) => inspect(id.value, content="2")
     _ => fail("expected pending file dialog")
   }
-  inspect(queue.pending_count(), content="2")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::TextFile(
+        @host.HostTextFileRequest::WriteText("note.md", "updated"),
+      ),
+    ) {
+    @host.HostServiceResponse::Pending(id) => inspect(id.value, content="3")
+    _ => fail("expected pending text-file write")
+  }
+  inspect(queue.pending_count(), content="3")
   let pending = queue.drain_pending()
   match pending[0].request {
     @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText) =>
@@ -179,6 +233,15 @@ test "web service bridge can defer async clipboard read and file dialogs" {
     @host.HostServiceRequest::FileDialog({ title, .. }) =>
       inspect(title, content="Open note")
     _ => fail("expected file dialog pending request")
+  }
+  match pending[2].request {
+    @host.HostServiceRequest::TextFile(
+      @host.HostTextFileRequest::WriteText(path, text)
+    ) => {
+      inspect(path, content="note.md")
+      inspect(text, content="updated")
+    }
+    _ => fail("expected text-file write pending request")
   }
 }
 

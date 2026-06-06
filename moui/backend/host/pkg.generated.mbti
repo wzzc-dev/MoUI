@@ -99,6 +99,7 @@ pub fn HostAppServices::outstanding_count(Self) -> Int
 pub fn HostAppServices::pending_count(Self) -> Int
 pub fn HostAppServices::pick_directory(Self, title? : String) -> HostServiceResponse
 pub fn HostAppServices::read_clipboard_text(Self) -> HostServiceResponse
+pub fn HostAppServices::read_text_file(Self, String) -> HostServiceResponse
 pub fn HostAppServices::reject(Self, HostServiceRequestId, String) -> Bool
 pub fn HostAppServices::request_system_theme(Self) -> HostServiceResponse
 pub fn HostAppServices::save_file(Self, title? : String, default_name? : String?, filters? : Array[String]) -> HostServiceResponse
@@ -107,6 +108,7 @@ pub fn HostAppServices::system_theme(Self) -> @wzzc-dev/moui/core.ColorScheme?
 pub fn HostAppServices::take_completed(Self, HostServiceRequestId) -> HostCompletedServiceResponse?
 pub fn HostAppServices::unavailable() -> Self
 pub fn HostAppServices::write_clipboard_text(Self, String) -> HostServiceResponse
+pub fn HostAppServices::write_text_file(Self, String, String) -> HostServiceResponse
 
 pub(all) struct HostAsyncImageLoadScheduleResult {
   window_id : HostWindowId
@@ -493,11 +495,12 @@ pub(all) struct HostServiceCapabilities {
   clipboard : Bool
   menus : Bool
   file_dialogs : Bool
+  file_access : Bool
   open_url : Bool
   system_theme : Bool
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostServiceCapabilities::enabled_labels(Self) -> Array[String]
-pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, open_url? : Bool, system_theme? : Bool) -> Self
+pub fn HostServiceCapabilities::new(clipboard? : Bool, menus? : Bool, file_dialogs? : Bool, file_access? : Bool, open_url? : Bool, system_theme? : Bool) -> Self
 pub fn HostServiceCapabilities::none() -> Self
 
 pub(all) struct HostServiceHandler {
@@ -510,6 +513,7 @@ pub(all) enum HostServiceKind {
   ClipboardService
   MenuService
   FileDialogService
+  TextFileService
   OpenUrlService
   SystemThemeService
 } derive(Eq, ToJson, @debug.Debug)
@@ -518,6 +522,7 @@ pub(all) enum HostServiceRequest {
   Clipboard(HostClipboardRequest)
   ShowMenu(Array[@wzzc-dev/moui/core.ActionCommand])
   FileDialog(HostFileDialogOptions)
+  TextFile(HostTextFileRequest)
   OpenUrl(String)
   QuerySystemTheme
 } derive(Eq, ToJson, @debug.Debug)
@@ -536,6 +541,8 @@ pub(all) enum HostServiceResponse {
   ClipboardWritten
   MenuCommand(@wzzc-dev/moui/core.CommandIntent)
   FileDialogSelection(Array[String])
+  TextFileContent(String, String)
+  TextFileWritten(String)
   UrlOpened
   SystemTheme(@wzzc-dev/moui/core.ColorScheme)
 } derive(Eq, ToJson, @debug.Debug)
@@ -548,6 +555,11 @@ pub(all) struct HostSurfaceMetrics {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostSurfaceMetrics::from_logical(size~ : @wzzc-dev/moui/core.Size, scale_factor? : Double) -> Self
 pub fn HostSurfaceMetrics::new(logical_size~ : @wzzc-dev/moui/core.Size, physical_size~ : @wzzc-dev/moui/core.Size, scale_factor? : Double) -> Self
+
+pub(all) enum HostTextFileRequest {
+  ReadText(String)
+  WriteText(String, String)
+} derive(Eq, ToJson, @debug.Debug)
 
 pub struct HostTimerSource {
   // private fields
