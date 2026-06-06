@@ -76,27 +76,16 @@ pub fn[Msg] data_filter_bar(
   ]
   let chips : Array[@core.View[Msg]] = []
   for filter in filters {
-    chips.push(
-      filter_chip(
-        filter.label,
-        selected=filter.selected,
-        on_change=_selected => filter.message,
-        theme~,
-        width=data_filter_chip_width(filter.label),
-      ).disabled(disabled=!filter.enabled),
-    )
+    chips.push(data_filter_button(filter, theme))
   }
   match on_clear {
     Some(message) =>
       chips.push(
-        button(
-          "Clear",
-          on_click=message,
-          variant=ButtonVariant::Ghost,
-          theme~,
-          width=74.0,
-          height=32.0,
-        ).disabled(disabled=query == "" && !data_filter_has_selection(filters)),
+        data_filter_clear_button(
+          message,
+          disabled=query == "" && !data_filter_has_selection(filters),
+          theme,
+        ),
       )
     None => ()
   }
@@ -120,6 +109,48 @@ pub fn[Msg] data_filter_bar(
   )
   .semantics_role(@core.SemanticsRole::Group)
   .accessibility_label("Data filters")
+}
+
+///|
+fn[Msg] data_filter_button(
+  filter : DataFilter[Msg],
+  theme : @core.Theme,
+) -> @core.View[Msg] {
+  button(
+    filter.label,
+    on_click=filter.message,
+    variant=if filter.selected {
+      ButtonVariant::Primary
+    } else {
+      ButtonVariant::Tonal
+    },
+    theme~,
+    width=data_filter_chip_width(filter.label),
+    height=32.0,
+  )
+  .corner_radius(16.0)
+  .semantics_selected(selected=filter.selected)
+  .disabled(disabled=!filter.enabled)
+  .key("data-filter-" + filter.id)
+}
+
+///|
+fn[Msg] data_filter_clear_button(
+  message : Msg,
+  disabled~ : Bool,
+  theme : @core.Theme,
+) -> @core.View[Msg] {
+  button(
+    "Clear",
+    on_click=message,
+    variant=ButtonVariant::Ghost,
+    theme~,
+    width=74.0,
+    height=32.0,
+  )
+  .corner_radius(16.0)
+  .disabled(disabled~)
+  .key("data-filter-clear")
 }
 
 ///|
