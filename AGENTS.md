@@ -373,17 +373,13 @@ artifacts/conformance/platform-runtime-evidence.json` to update the macOS
 `skiaEvidence` block after a successful full smoke; the renderer smoke log must
 also include the async image second-frame marker, and omitted provider/fallback
 observations remain pending until their own artifacts are supplied. That still
-records Skia route evidence only. Pass `--write-local-config` only when you want to persist
-local absolute Skia paths so direct commands such as
-`moon run examples/showcase/macos_skia --target native` or
-`moon run examples/markdown_editor/macos_skia --target native` or
-`moon run examples/mo_workbench/macos_skia --target native` use real Skia;
-keep those machine-local `moon.pkg` edits out of commits. In `auto` link mode,
-the helper writes dynamic `libskia.dylib` flags for persistent direct-run
-configuration and static `libskia.a` flags for temporary smoke/build
-configuration when those libraries exist; use
-`MOUI_SKIA_MACOS_LINK_MODE=dynamic|static` or `--link-mode dynamic|static` to
-override the default. Normal macOS Skia
+records Skia route evidence only. Direct Skia `moon run`/`moon build` commands
+resolve real Skia through the `moui_skia` prebuild hook and choose the library
+mode through `MOUI_SKIA_LINK_MODE=dynamic|static|auto`; helper smoke runs can
+still use `--link-mode dynamic|static|auto` to override the environment for that
+invocation. Pass `--write-local-config` only when intentionally persisting local
+absolute Skia paths, and keep those machine-local `moon.pkg` edits out of
+commits. Normal macOS Skia
 entrypoints default to the system `FontMgr` text path; first-frame smoke
 entrypoints explicitly select `EmptyTypeface` only while their
 exit-after-first-present flag is set.

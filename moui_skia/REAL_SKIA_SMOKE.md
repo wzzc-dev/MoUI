@@ -52,7 +52,7 @@ must record `skia_provider=release`, `skia_link_mode`, `release_owner`,
 `skia_package`, `skia_package_sha256`, include/lib paths, and final compile/link
 flags. `scripts/verify-real-skia-artifact.*` rejects logs whose release
 metadata, link mode, package, or SHA256 does not match the lock file. Use
-`MOUI_SKIA_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic` to select the dynamic
+`MOUI_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic` to select the dynamic
 asset explicitly.
 
 Use `--skia-provider source` for source-built fallback and diagnostic runs, or
@@ -342,9 +342,8 @@ record that in the workflow input or local command line.
 macOS helpers also accept `MOUI_SKIA_SKIA_INCLUDE`, `MOUI_SKIA_SKIA_LIB_DIR`,
 `MOUI_SKIA_SKIA_LIB`, `MOUI_SKIA_SKIA_REV`, `MOUI_SKIA_EXTRA_GN_ARGS`,
 `MOUI_SKIA_EXTRA_CC_FLAGS`, and `MOUI_SKIA_EXTRA_LINK_FLAGS` as environment
-defaults. `MOUI_SKIA_SKIA_LINK_MODE=static|dynamic|auto` controls whether the
-generated macOS native package links `libskia.a` or `libskia.dylib`;
-`MOUI_SKIA_MACOS_LINK_MODE` remains a compatibility alias.
+defaults. `MOUI_SKIA_LINK_MODE=static|dynamic|auto` controls whether the
+generated macOS native package links `libskia.a` or `libskia.dylib`.
 Workflow inputs and command-line options override those environment values.
 When you want a persistent macOS link configuration instead of a temporary
 smoke rewrite, use `scripts/configure-macos-native-pkg.sh` to preview, write, or

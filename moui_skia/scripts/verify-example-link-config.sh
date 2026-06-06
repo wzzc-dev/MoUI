@@ -75,6 +75,16 @@ required_example_vars = {
     "triangle_window_macos/moon.pkg": "MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS",
     "macos_hello_triangle/moon.pkg": "MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS",
 }
+required_moui_link_packages = [
+    "moui/tests/skia_renderer_smoke/native/moon.pkg",
+    "examples/showcase/macos_skia/moon.pkg",
+    "examples/markdown_editor/macos_skia/moon.pkg",
+    "examples/mo_workbench/macos_skia/moon.pkg",
+    "examples/showcase/linux_skia/moon.pkg",
+    "examples/markdown_editor/linux_skia/moon.pkg",
+    "examples/showcase/windows_skia/moon.pkg",
+    "examples/markdown_editor/windows_skia/moon.pkg",
+]
 forbidden_example_patterns = [
     re.compile(r"\.skia-cache"),
     re.compile(r"\bm\d+-[0-9a-f]{8,}\b"),
@@ -124,6 +134,20 @@ for pkg_path in sorted(examples_dir.glob("*/moon.pkg")):
     for pattern in forbidden_example_patterns:
         if pattern.search(pkg_text):
             fail(f"example moon.pkg contains hardcoded Skia provider path text: {pkg_path}")
+
+maybe_moui_root = build_script.parent.parent
+if (maybe_moui_root / "moui").is_dir() and (maybe_moui_root / "examples").is_dir():
+    for relative_pkg in required_moui_link_packages:
+        pkg_path = maybe_moui_root / relative_pkg
+        if not pkg_path.is_file():
+            fail(f"MoUI Skia entry moon.pkg is missing: {pkg_path}")
+        pkg_text = pkg_path.read_text(encoding="utf-8")
+        compact_text = re.sub(r"\s+", "", pkg_text)
+        if "MOUI_SKIA_CC_LINK_FLAGS" not in pkg_text:
+            fail(f"MoUI Skia entry moon.pkg does not use MOUI_SKIA_CC_LINK_FLAGS: {pkg_path}")
+        for pattern in forbidden_example_patterns:
+            if pattern.search(pkg_text):
+                fail(f"MoUI Skia entry moon.pkg contains hardcoded Skia provider path text: {pkg_path}")
 
 print(f"Verified example link configuration in {examples_dir}")
 PY

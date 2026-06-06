@@ -26,8 +26,8 @@ Options:
   --skia-lib NAME        Library name without lib prefix, default: skia.
   --link-mode auto|dynamic|static
                          Select Skia library link mode. Default: auto.
-                         auto uses dynamic for --write-local-config/direct
-                         moon run setup, and static for temporary smoke/build
+                         auto uses dynamic for --write-local-config, and
+                         static for temporary smoke/build
                          setup when libskia.a exists.
   --skia-rev REV         Skia git revision, branch, or tag for source provider.
                          Default: moui_skia/skia-revision.txt.
@@ -82,17 +82,26 @@ Environment defaults:
   MOUI_SKIA_SKIA_LIB_DIR, MOUI_SKIA_SKIA_LIB, MOUI_SKIA_SKIA_REV,
   MOUI_SKIA_JETBRAINS_TAG, MOUI_SKIA_JETBRAINS_CONFIG,
   MOUI_SKIA_JETBRAINS_CACHE_DIR, MOUI_SKIA_EXTRA_GN_ARGS,
-  MOUI_SKIA_MACOS_LINK_MODE, MOUI_SKIA_EXTRA_CC_FLAGS, and
+  MOUI_SKIA_LINK_MODE, MOUI_SKIA_EXTRA_CC_FLAGS, and
   MOUI_SKIA_EXTRA_LINK_FLAGS are used when the matching command-line option is
   omitted. Explicit command-line options still override environment defaults.
 EOF
 }
 
+reject_legacy_link_mode_env() {
+  if [[ -n "${MOUI_SKIA_SKIA_LINK_MODE+x}" || -n "${MOUI_SKIA_MACOS_LINK_MODE+x}" ]]; then
+    echo "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto." >&2
+    exit 2
+  fi
+}
+
+reject_legacy_link_mode_env
+
 work_dir=".skia-cache/macos"
 skia_include="${MOUI_SKIA_SKIA_INCLUDE:-}"
 skia_lib_dir="${MOUI_SKIA_SKIA_LIB_DIR:-}"
 skia_lib="${MOUI_SKIA_SKIA_LIB:-skia}"
-macos_link_mode="${MOUI_SKIA_MACOS_LINK_MODE:-auto}"
+macos_link_mode="${MOUI_SKIA_LINK_MODE:-auto}"
 skia_provider="${MOUI_SKIA_SKIA_PROVIDER:-${MOUI_SKIA_PROVIDER:-}}"
 skia_provider_explicit=0
 if [[ -n "${MOUI_SKIA_SKIA_PROVIDER:-}${MOUI_SKIA_PROVIDER:-}" ]]; then
@@ -477,10 +486,19 @@ else
     echo "--skia-provider jetbrains cannot be combined with --skia-include/--skia-lib-dir" >&2
     exit 2
   fi
+  fetch_link_mode="$macos_link_mode"
+  if [[ "$fetch_link_mode" == "auto" ]]; then
+    if [[ $write_local_config -eq 1 ]]; then
+      fetch_link_mode="dynamic"
+    else
+      fetch_link_mode="static"
+    fi
+  fi
   fetch_args=(
     --platform macos
     --arch auto
     --config "$jetbrains_config"
+    --link-mode "$fetch_link_mode"
     --tag "$jetbrains_tag"
     --cache-dir "$resolved_jetbrains_cache_dir"
     --print-env

@@ -9,7 +9,7 @@ param(
   [string] $Config = "Release",
 
   [ValidateSet("static", "dynamic", "auto")]
-  [string] $LinkMode = $(if ($env:MOUI_SKIA_SKIA_LINK_MODE) { $env:MOUI_SKIA_SKIA_LINK_MODE } else { "static" }),
+  [string] $LinkMode = $(if ($env:MOUI_SKIA_LINK_MODE) { $env:MOUI_SKIA_LINK_MODE } else { "static" }),
 
   [string] $Tag = "",
 
@@ -23,6 +23,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+if ($null -ne [Environment]::GetEnvironmentVariable("MOUI_SKIA_SKIA_LINK_MODE") -or
+    $null -ne [Environment]::GetEnvironmentVariable("MOUI_SKIA_MACOS_LINK_MODE")) {
+  throw "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto."
+}
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $manifestPath = Join-Path $repoRoot "skia-provider-lock.json"
@@ -231,7 +236,7 @@ if ($PrintEnv) {
     "MOUI_SKIA_SKIA_COMMIT=$($provider.commit)"
     "MOUI_SKIA_SKIA_PACKAGE=$assetName"
     "MOUI_SKIA_SKIA_PACKAGE_SHA256=$assetSha256"
-    "MOUI_SKIA_SKIA_LINK_MODE=$resolvedLinkMode"
+    "MOUI_SKIA_LINK_MODE=$resolvedLinkMode"
     "MOUI_SKIA_SKIA_INCLUDE=$skiaInclude"
     "MOUI_SKIA_SKIA_LIB_DIR=$skiaLibDir"
     "MOUI_SKIA_SKIA_LIB=skia"
