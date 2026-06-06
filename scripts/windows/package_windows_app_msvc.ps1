@@ -135,6 +135,9 @@ $usesWgpu = Test-PackageUsesWgpu $Package
 $resolvedWgpuRoot = if ($usesWgpu) { Ensure-WgpuNativeRoot $WgpuNativeRoot } else { "" }
 . (Join-Path $scriptDir "msvc_env.ps1") -VcpkgRoot $VcpkgRoot -WgpuNativeRoot $resolvedWgpuRoot
 Enable-MsvcC11Atomics
+if ($usesWgpu) {
+  Enable-MsvcGlobalC11ModeForCOnlyStubs
+}
 
 if (-not (Get-Command moon -ErrorAction SilentlyContinue)) {
   throw "MoonBit toolchain is not available in PATH. Install moon and try again."
