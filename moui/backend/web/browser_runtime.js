@@ -741,6 +741,7 @@ export function createWindowWebImports(options = {}) {
       let lastButtonEventAt = 0;
       let suppressMouseFallback = null;
       let suppressClickFallback = null;
+      let activeScrollTouch = null;
       const fallbackDedupWindowMs = 250;
       const pointerEventsSupported = typeof globalThis.PointerEvent === "function";
       const add = (target, type, handler, options) => {
@@ -789,6 +790,8 @@ export function createWindowWebImports(options = {}) {
         suppressClickFallback = null;
         return Date.now() - lastButtonEventAt > fallbackDedupWindowMs;
       };
+      const pointerEventIsStale = () =>
+        Date.now() - lastPointerEventAt > fallbackDedupWindowMs;
       const hostHasFocus = () => textInputHostHasFocus(textState);
       const acceptFileDrag = event => {
         preventDefaultIfCancelable(event);
@@ -800,6 +803,30 @@ export function createWindowWebImports(options = {}) {
         acceptFileDrag(event);
         const p = pointerPosition(canvas, event);
         emit(kind, rawId, p.x, p.y, 0, includeFiles ? draggedFileNames(event) : "");
+      };
+      const firstTouch = list => Array.from(list ?? [])[0] ?? null;
+      const touchByIdentifier = (list, identifier) =>
+        Array.from(list ?? []).find(touch => touch.identifier === identifier) ?? null;
+      const eventTouch = event => {
+        if (activeScrollTouch) {
+          return (
+            touchByIdentifier(event.touches, activeScrollTouch.identifier) ??
+            touchByIdentifier(event.changedTouches, activeScrollTouch.identifier)
+          );
+        }
+        return firstTouch(event.touches) ?? firstTouch(event.changedTouches);
+      };
+      const touchSignature = touch => ({
+        identifier: touch?.identifier ?? 0,
+        clientX: Number(touch?.clientX) || 0,
+        clientY: Number(touch?.clientY) || 0,
+      });
+      const emitTouchPointer = (kind, touch, pointerType = "") => {
+        if (pointerType) {
+          markPointerEvent({ type: pointerType });
+        }
+        const p = pointerPosition(canvas, touch);
+        emit(kind, rawId, p.x, p.y, 0);
       };
       const blurTargetIsHost = event =>
         event.relatedTarget === canvas || event.relatedTarget === textInput;
@@ -896,6 +923,50 @@ export function createWindowWebImports(options = {}) {
       add(canvas, "wheel", event => {
         event.preventDefault();
         emit(30, rawId, Math.round(event.deltaX), Math.round(event.deltaY));
+      }, { passive: false });
+      add(canvas, "touchstart", event => {
+        const touch = firstTouch(event.changedTouches) ?? firstTouch(event.touches);
+        if (!touch) return;
+        preventDefaultIfCancelable(event);
+        activeScrollTouch = touchSignature(touch);
+        focusInputTarget();
+        if (!pointerEventsSupported) {
+          markButtonEvent({ type: "pointerdown" });
+          emitTouchPointer(23, touch, "pointerdown");
+        }
+      }, { passive: false });
+      add(canvas, "touchmove", event => {
+        const touch = eventTouch(event);
+        if (!touch || !activeScrollTouch) return;
+        preventDefaultIfCancelable(event);
+        if (!pointerEventsSupported || pointerEventIsStale()) {
+          emitTouchPointer(21, touch, "pointermove");
+        }
+        const dx = activeScrollTouch.clientX - Number(touch.clientX || 0);
+        const dy = activeScrollTouch.clientY - Number(touch.clientY || 0);
+        activeScrollTouch = touchSignature(touch);
+        const roundedX = Math.round(dx);
+        const roundedY = Math.round(dy);
+        if (roundedX !== 0 || roundedY !== 0) {
+          emit(30, rawId, roundedX, roundedY);
+        }
+      }, { passive: false });
+      add(canvas, "touchend", event => {
+        const touch = eventTouch(event);
+        if (!touch) return;
+        preventDefaultIfCancelable(event);
+        if (!pointerEventsSupported) {
+          markButtonEvent({ type: "pointerup" });
+          emitTouchPointer(24, touch, "pointerup");
+        }
+        activeScrollTouch = null;
+      }, { passive: false });
+      add(canvas, "touchcancel", event => {
+        const touch = eventTouch(event);
+        if (touch) {
+          preventDefaultIfCancelable(event);
+        }
+        activeScrollTouch = null;
       }, { passive: false });
       add(canvas, "dragenter", event => emitFileDrag(60, event, true));
       add(canvas, "dragover", event => emitFileDrag(61, event));
