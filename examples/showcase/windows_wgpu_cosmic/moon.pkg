@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui/backend/windows" @windows_backend,
+  "wzzc-dev/moui/backend/windows/wgpu" @windows_wgpu_backend,
+  "examples/showcase/app" @showcase_app,
+  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  targets: { "main.mbt": [ "native" ] },
+)

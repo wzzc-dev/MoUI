@@ -25,7 +25,7 @@ $useExplicitWgpuNativeRoot = -not [string]::IsNullOrWhiteSpace($WgpuNativeRoot)
 $ucrtBin = Join-Path $Msys2Root "ucrt64\bin"
 $vulkanDll = Join-Path $ucrtBin "vulkan-1.dll"
 $winpthreadDll = Join-Path $ucrtBin "libwinpthread-1.dll"
-$exampleExe = Join-Path $repoRoot "_build\native\debug\build\examples\markdown_editor\windows\windows.exe"
+$exampleExe = Join-Path $repoRoot "_build\native\debug\build\examples\markdown_editor\windows_wgpu\windows_wgpu.exe"
 
 Require-Path $ucrtBin "MSYS2 UCRT64 toolchain not found: $ucrtBin"
 if ($useExplicitWgpuNativeRoot) {
@@ -71,9 +71,9 @@ try {
   } else {
     Write-Host "==> WGPU native root: managed by wgpu_mbt prebuild"
   }
-  Write-Host "==> Building examples/markdown_editor/windows for native target"
+  Write-Host "==> Building examples/markdown_editor/windows_wgpu for native target"
 
-  & moon build examples/markdown_editor/windows --target native
+  & moon build examples/markdown_editor/windows_wgpu --target native
   if ($LASTEXITCODE -ne 0) {
     throw "moon build failed with exit code $LASTEXITCODE"
   }
@@ -88,7 +88,7 @@ try {
   Write-Host "==> Launching $exampleExe"
   & $exampleExe
   if ($LASTEXITCODE -ne 0) {
-    throw "windows exited with code $LASTEXITCODE"
+    throw "windows_wgpu exited with code $LASTEXITCODE"
   }
 }
 finally {

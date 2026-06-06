@@ -50,7 +50,7 @@ moon build website/web_wasm --target wasm-gc
 Counter is the smallest recommended app shape. It keeps user code in
 `Model / Msg / update / view`, then lets `Program::simple` connect that pure
 model loop to the runtime. It has Web, macOS, Windows, Linux, and
-`windows_cosmic` entrypoints, so it is also the quickest way to verify a thin
+`windows_wgpu_cosmic` entrypoints, so it is also the quickest way to verify a thin
 platform package without the full Showcase surface:
 
 ```moonbit
@@ -587,8 +587,8 @@ They require the local Skia native link setup that makes `moui_skia/native`
 available at runtime. Normal macOS Skia runs use the renderer's system
 `FontMgr` path; first-frame smoke runs explicitly select the `EmptyTypeface`
 fallback path through their exit-after-first-present environment flag. The
-plain `macos` and `macos_cosmic` packages remain available as native WGPU and
-text-provider diagnostics.
+`macos_wgpu` and `macos_wgpu_cosmic` packages remain available as native WGPU
+and text-provider diagnostics.
 
 After configuring real Skia link flags, run the opt-in real-Skia check to verify
 both the binding smoke and MoUI renderer presenter pixels:
@@ -658,8 +658,8 @@ inspected without parsing `Info.plist`.
 
 Windows native examples use the MSVC toolchain and vcpkg `zlib:x64-windows`.
 The recommended native entrypoints import `backend/windows/skia` through the
-`_skia` packages and select the native Skia raster provider explicitly. Plain
-`windows` and `windows_cosmic` packages remain available as native WGPU
+`_skia` packages and select the native Skia raster provider explicitly.
+`windows_wgpu` and `windows_wgpu_cosmic` packages remain available as native WGPU
 diagnostics; the build/package helpers download and bundle `wgpu_native.dll`
 only for those WGPU packages.
 
@@ -689,7 +689,7 @@ Set `MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` or
 `MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` in the same MSVC
 environment for matching-host first-frame smoke runs; those logs are runtime
 evidence only for the Windows host that produced them.
-Markdown Editor also keeps `examples/markdown_editor/windows_cosmic` for
+Markdown Editor also keeps `examples/markdown_editor/windows_wgpu_cosmic` for
 explicit Moon Cosmic text-provider comparison on the native WGPU diagnostic
 route.
 
@@ -732,8 +732,8 @@ moon build examples/showcase/linux_skia --target native
 moon build examples/markdown_editor/linux_skia --target native
 ```
 
-The plain `linux` and `linux_cosmic` Showcase entrypoints remain available for
-explicit native WGPU diagnostics. `linux_cosmic` selects the shared Moon Cosmic
+The `linux_wgpu` and `linux_wgpu_cosmic` Showcase entrypoints remain available for
+explicit native WGPU diagnostics. `linux_wgpu_cosmic` selects the shared Moon Cosmic
 text provider explicitly, while the platform-default Linux WGPU entrypoint
 composes the fontconfig provider scaffold with the same Cosmic fallback. The
 Showcase and Markdown Editor `linux_skia` entrypoints select the native Skia

@@ -130,8 +130,8 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         run moon build examples/showcase/macos_skia --target native
         run moon build examples/markdown_editor/macos_skia --target native
         if "$RUN_WGPU_EXPERIMENTAL"; then
-          run moon build examples/showcase/macos --target native
-          run moon build examples/markdown_editor/macos --target native
+          run moon build examples/showcase/macos_wgpu --target native
+          run moon build examples/markdown_editor/macos_wgpu --target native
         fi
       fi
       ;;
@@ -148,9 +148,9 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         run moon build examples/showcase/windows_skia --target native
         run moon build examples/markdown_editor/windows_skia --target native
         if "$RUN_WGPU_EXPERIMENTAL"; then
-          run moon build examples/showcase/windows --target native
-          run moon build examples/showcase/windows_cosmic --target native
-          run moon build examples/markdown_editor/windows --target native
+          run moon build examples/showcase/windows_wgpu --target native
+          run moon build examples/showcase/windows_wgpu_cosmic --target native
+          run moon build examples/markdown_editor/windows_wgpu --target native
         fi
       fi
       ;;
@@ -167,8 +167,8 @@ if "$RUN_PLATFORM_EXAMPLES_TEST" || "$RUN_PLATFORM_EXAMPLES_BUILD"; then
         run moon build examples/showcase/linux_skia --target native
         run moon build examples/markdown_editor/linux_skia --target native
         if "$RUN_WGPU_EXPERIMENTAL"; then
-          run moon build examples/showcase/linux --target native
-          run moon build examples/showcase/linux_cosmic --target native
+          run moon build examples/showcase/linux_wgpu --target native
+          run moon build examples/showcase/linux_wgpu_cosmic --target native
         fi
       fi
       ;;

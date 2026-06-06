@@ -73,8 +73,8 @@ the platform host cores. Use
 `LinuxWgpuAppOptions::new(text_engine=...)` through
 `backend/<platform>/wgpu.run_app_with_options`. `PlatformDefault` composes the
 platform provider with Cosmic fallback; `MoonCosmic` selects the Cosmic provider
-directly. Showcase also has explicit `macos_cosmic`, `windows_cosmic`, and
-`linux_cosmic` entrypoints for comparing those paths. The separate Showcase and
+directly. Showcase also has explicit `macos_wgpu_cosmic`, `windows_wgpu_cosmic`, and
+`linux_wgpu_cosmic` entrypoints for comparing those paths. The separate Showcase and
 Markdown Editor `*_skia` entrypoints select Skia provider packages, not WGPU
 text-provider variants. By default, Skia basic text
 measurement and drawing

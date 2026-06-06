@@ -81,8 +81,8 @@ paths, or abstractions that only preserve old shapes.
   entrypoints only. Showcase has `macos_skia`, `windows_skia`, and
   `linux_skia` entrypoints for the recommended native Skia renderer mainline.
   Markdown Editor has `macos_skia`, `windows_skia`, and `linux_skia` for
-  native Skia renderer entrypoints. Showcase also has `macos_cosmic`,
-  `windows_cosmic`, and `linux_cosmic` entrypoints for explicit Moon Cosmic
+  native Skia renderer entrypoints. Showcase also has `macos_wgpu_cosmic`,
+  `windows_wgpu_cosmic`, and `linux_wgpu_cosmic` entrypoints for explicit Moon Cosmic
   text-provider comparison on the native WGPU diagnostic route.
 - `website/` is the MoUI-built homepage workspace. Keep shared homepage logic
   in `website/app/` and keep `website/web_wasm/` as a thin Web wasm-gc

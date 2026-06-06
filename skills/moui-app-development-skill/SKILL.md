@@ -62,8 +62,8 @@ separate framework task using `moui-framework-development-skill`.
   logic in `website/app`.
 - Platform packages stay thin and only wire the shared app to the host.
 - `website/web_wasm` is Web-only and should stay a thin homepage entrypoint.
-- Counter has `web_wasm`, `macos`, `windows`, `linux`, and `windows_cosmic`
-  entrypoints and is the smallest runnable app shape.
+- Counter has `web_wasm`, `macos_wgpu`, `windows_wgpu`, `linux_wgpu`, and
+  `windows_wgpu_cosmic` entrypoints and is the smallest runnable app shape.
 - Some examples are shared-app only. Settings, Data Table, File Importer, and
   Command Palette intentionally exercise app patterns without platform
   entrypoints. Data Table covers operational table state such as filtering,
@@ -111,11 +111,11 @@ separate framework task using `moui-framework-development-skill`.
   typed message loop and is canceled when the model no longer declares it.
   Lift child service-completion subscriptions with `Subscription::map` when
   composing child features.
-- Keep platform-specific setup in `web_wasm`, `macos`, `windows`, or `linux`
-  entrypoints.
+- Keep platform-specific setup in profile entrypoints such as `web_wasm`,
+  `macos_wgpu`, `windows_skia`, or `linux_wgpu_cosmic`.
 - Showcase and Markdown Editor use `macos_skia`, `windows_skia`, and
   `linux_skia` for the recommended native Skia renderer entrypoints. Showcase
-  also has `macos_cosmic`, `windows_cosmic`, and `linux_cosmic` entrypoints
+  also has `macos_wgpu_cosmic`, `windows_wgpu_cosmic`, and `linux_wgpu_cosmic` entrypoints
   when an app task needs explicit Moon Cosmic text-provider comparison on the
   native WGPU diagnostic route.
 - Treat Linux as a scaffold until the framework has a real Linux backend.
@@ -172,8 +172,9 @@ moon build examples/markdown_editor/windows_skia --target native
 moon build examples/markdown_editor/linux_skia --target native
 ```
 
-Build the plain native WGPU and Cosmic entrypoints only when explicitly
-validating the experimental WGPU diagnostic route.
+Build native WGPU profiles such as `macos_wgpu`, `windows_wgpu`, and
+`linux_wgpu_cosmic` only when explicitly validating the experimental WGPU
+diagnostic route.
 
 macOS Skia entrypoints use the renderer's system `FontMgr` path by default.
 First-frame smoke runs select `EmptyTypeface` only while their

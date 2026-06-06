@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "wzzc-dev/moui/examples/showcase/macos_wgpu"
+package "wzzc-dev/moui/examples/markdown_editor/windows_wgpu_cosmic"
 
 // Values
 
@@ -10,4 +10,3 @@ package "wzzc-dev/moui/examples/showcase/macos_wgpu"
 // Type aliases
 
 // Traits
-

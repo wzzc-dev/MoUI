@@ -12,10 +12,10 @@ contextual commands, and editing workflows.
   model, source/visual mapping, command behavior, input transforms, Markdown
   parsing adapter, rich text document mapping, and focused white-box tests.
 - `examples/markdown_editor/web_wasm/`: Web wasm-gc entrypoint.
-- `examples/markdown_editor/macos/`: macOS native entrypoint.
+- `examples/markdown_editor/macos_wgpu/`: macOS native entrypoint.
 - `examples/markdown_editor/macos_skia/`: macOS native entrypoint using the
   Skia renderer provider.
-- `examples/markdown_editor/windows/`: Windows native entrypoint.
+- `examples/markdown_editor/windows_wgpu/`: Windows native entrypoint.
 - `examples/markdown_editor/windows_skia/`: Windows native entrypoint using the
   Skia renderer provider.
 - `examples/markdown_editor/linux_skia/`: Linux native entrypoint using the
@@ -343,11 +343,11 @@ moon build examples/markdown_editor/macos_skia --target native
 ./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
 ```
 
-The plain macOS WGPU entrypoint remains available for explicit diagnostics:
+The `macos_wgpu` entrypoint remains available for explicit WGPU diagnostics:
 
 ```sh
-moon build examples/markdown_editor/macos --target native
-./_build/native/debug/build/examples/markdown_editor/macos/macos.exe
+moon build examples/markdown_editor/macos_wgpu --target native
+./_build/native/debug/build/examples/markdown_editor/macos_wgpu/macos_wgpu.exe
 ```
 
 The Skia entrypoint requires the same real native Skia link setup used by
@@ -368,14 +368,14 @@ powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
-The plain `windows` package remains available for explicit native WGPU
+The `windows_wgpu` package remains available for explicit native WGPU
 diagnostics:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
-  -Package examples/markdown_editor/windows `
+  -Package examples/markdown_editor/windows_wgpu `
   -BuildOnly
-powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_wgpu --target native }"
 ```
 
 For matching-host Markdown Skia first-frame evidence, set
