@@ -102,10 +102,8 @@ fn ShowcaseModel::data_table_card(
           } else {
             None
           },
-          on_row_select=Some(_row => ToggleActive),
           sort_column=sort.column,
           sort_ascending=sort.ascending,
-          on_sort=Some(_id => ToggleActive),
           theme~,
         ),
         column_visibility_panel(
