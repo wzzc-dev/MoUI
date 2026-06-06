@@ -83,7 +83,7 @@ test "windows skia provider preflight records package evidence boundary" {
   assert_true(preflight.contains("host=Windows host"))
   assert_true(
     preflight.contains(
-      "host_services=clipboard,menus,file dialogs,open URL,system theme",
+      "host_services=clipboard,menus,file dialogs,file access,open URL,system theme",
     ),
   )
   assert_true(
@@ -94,6 +94,7 @@ test "windows skia provider preflight records package evidence boundary" {
   assert_true(preflight.contains("clipboard=ready"))
   assert_true(preflight.contains("menu_service=ready"))
   assert_true(preflight.contains("file_dialogs=ready"))
+  assert_true(preflight.contains("file_access=ready"))
   assert_true(preflight.contains("open_url=ready"))
   assert_true(preflight.contains("system_theme=ready"))
   assert_true(preflight.contains("async_services=gap"))
