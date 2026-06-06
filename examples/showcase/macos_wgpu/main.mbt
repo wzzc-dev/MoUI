@@ -4,5 +4,5 @@ fn main {
   let runtime = app.runtime_with_host_summary(
     @macos_backend.macos_capability_summary(),
   )
-  @macos_wgpu.run_app("MoUI Showcase", runtime)
+  @macos_wgpu_backend.run_app("MoUI Showcase", runtime)
 }

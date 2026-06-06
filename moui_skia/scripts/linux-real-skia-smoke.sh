@@ -51,7 +51,7 @@ Options:
 
 Environment defaults:
   MOUI_SKIA_SKIA_INCLUDE, MOUI_SKIA_SKIA_LIB_DIR, MOUI_SKIA_SKIA_LIB,
-  MOUI_SKIA_SKIA_PROVIDER, MOUI_SKIA_PROVIDER, MOUI_SKIA_SKIA_LINK_MODE,
+  MOUI_SKIA_SKIA_PROVIDER, MOUI_SKIA_PROVIDER, MOUI_SKIA_LINK_MODE,
   MOUI_SKIA_SKIA_REV, MOUI_SKIA_RELEASE_TAG, MOUI_SKIA_RELEASE_CONFIG,
   MOUI_SKIA_RELEASE_CACHE_DIR, MOUI_SKIA_JETBRAINS_TAG,
   MOUI_SKIA_JETBRAINS_CONFIG, MOUI_SKIA_JETBRAINS_CACHE_DIR,
@@ -72,6 +72,15 @@ normalize_bool() {
   esac
 }
 
+reject_legacy_link_mode_env() {
+  if [[ -n "${MOUI_SKIA_SKIA_LINK_MODE+x}" || -n "${MOUI_SKIA_MACOS_LINK_MODE+x}" ]]; then
+    echo "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto." >&2
+    exit 2
+  fi
+}
+
+reject_legacy_link_mode_env
+
 work_dir=".skia-cache/linux"
 skia_include="${MOUI_SKIA_SKIA_INCLUDE:-}"
 skia_lib_dir="${MOUI_SKIA_SKIA_LIB_DIR:-}"
@@ -81,7 +90,7 @@ skia_provider_explicit=0
 if [[ -n "${MOUI_SKIA_SKIA_PROVIDER:-}${MOUI_SKIA_PROVIDER:-}" ]]; then
   skia_provider_explicit=1
 fi
-skia_link_mode="${MOUI_SKIA_SKIA_LINK_MODE:-static}"
+skia_link_mode="${MOUI_SKIA_LINK_MODE:-static}"
 skia_rev="${MOUI_SKIA_SKIA_REV:-main}"
 skia_rev_explicit=0
 if [[ -n "${MOUI_SKIA_SKIA_REV:-}" ]]; then
@@ -299,7 +308,7 @@ else
   smoke_include="$(get_fetch_value MOUI_SKIA_SKIA_INCLUDE)"
   smoke_lib_dir="$(get_fetch_value MOUI_SKIA_SKIA_LIB_DIR)"
   skia_lib="$(get_fetch_value MOUI_SKIA_SKIA_LIB)"
-  skia_link_mode="$(get_fetch_value MOUI_SKIA_SKIA_LINK_MODE)"
+  skia_link_mode="$(get_fetch_value MOUI_SKIA_LINK_MODE)"
   release_owner="$(get_fetch_value MOUI_SKIA_RELEASE_OWNER)"
   release_repo="$(get_fetch_value MOUI_SKIA_RELEASE_REPO)"
   release_tag="$(get_fetch_value MOUI_SKIA_RELEASE_TAG)"

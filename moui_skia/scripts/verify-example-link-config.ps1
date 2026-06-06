@@ -34,6 +34,16 @@ $requiredExampleVars = @{
   "triangle_window_macos/moon.pkg" = "MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS"
   "macos_hello_triangle/moon.pkg" = "MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS"
 }
+$requiredMouiLinkPackages = @(
+  "moui/tests/skia_renderer_smoke/native/moon.pkg",
+  "examples/showcase/macos_skia/moon.pkg",
+  "examples/markdown_editor/macos_skia/moon.pkg",
+  "examples/mo_workbench/macos_skia/moon.pkg",
+  "examples/showcase/linux_skia/moon.pkg",
+  "examples/markdown_editor/linux_skia/moon.pkg",
+  "examples/showcase/windows_skia/moon.pkg",
+  "examples/markdown_editor/windows_skia/moon.pkg"
+)
 $forbiddenExamplePatterns = @(
   "\.skia-cache",
   "\bm\d+-[0-9a-f]{8,}\b",
@@ -76,6 +86,26 @@ foreach ($pkg in Get-ChildItem -LiteralPath $resolvedExamplesDir -Filter "moon.p
   foreach ($pattern in $forbiddenExamplePatterns) {
     if ($pkgText -match $pattern) {
       throw "example moon.pkg contains hardcoded Skia provider path text: $($pkg.FullName)"
+    }
+  }
+}
+
+$maybeMouiRoot = Split-Path -Parent $repoRoot
+if ((Test-Path -LiteralPath (Join-Path $maybeMouiRoot "moui") -PathType Container) -and
+    (Test-Path -LiteralPath (Join-Path $maybeMouiRoot "examples") -PathType Container)) {
+  foreach ($relativePkg in $requiredMouiLinkPackages) {
+    $pkgPath = Join-Path $maybeMouiRoot $relativePkg
+    if (!(Test-Path -LiteralPath $pkgPath -PathType Leaf)) {
+      throw "MoUI Skia entry moon.pkg is missing: $pkgPath"
+    }
+    $pkgText = Get-Content -LiteralPath $pkgPath -Raw
+    if ($pkgText -notmatch "MOUI_SKIA_CC_LINK_FLAGS") {
+      throw "MoUI Skia entry moon.pkg does not use MOUI_SKIA_CC_LINK_FLAGS: $pkgPath"
+    }
+    foreach ($pattern in $forbiddenExamplePatterns) {
+      if ($pkgText -match $pattern) {
+        throw "MoUI Skia entry moon.pkg contains hardcoded Skia provider path text: $pkgPath"
+      }
     }
   }
 }

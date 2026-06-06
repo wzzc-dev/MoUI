@@ -26,16 +26,25 @@ Options:
 
 Environment defaults:
   MOUI_SKIA_SKIA_INCLUDE, MOUI_SKIA_SKIA_LIB_DIR, MOUI_SKIA_SKIA_LIB,
-  MOUI_SKIA_SKIA_LINK_MODE, MOUI_SKIA_MACOS_LINK_MODE, MOUI_SKIA_EXTRA_CC_FLAGS,
+  MOUI_SKIA_LINK_MODE, MOUI_SKIA_EXTRA_CC_FLAGS,
   and MOUI_SKIA_EXTRA_LINK_FLAGS are used when the matching command-line option
-  is omitted. MOUI_SKIA_MACOS_LINK_MODE is a compatibility alias.
+  is omitted.
 EOF
 }
+
+reject_legacy_link_mode_env() {
+  if [[ -n "${MOUI_SKIA_SKIA_LINK_MODE+x}" || -n "${MOUI_SKIA_MACOS_LINK_MODE+x}" ]]; then
+    echo "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto." >&2
+    exit 2
+  fi
+}
+
+reject_legacy_link_mode_env
 
 skia_include="${MOUI_SKIA_SKIA_INCLUDE:-}"
 skia_lib_dir="${MOUI_SKIA_SKIA_LIB_DIR:-}"
 skia_lib="${MOUI_SKIA_SKIA_LIB:-skia}"
-link_mode="${MOUI_SKIA_SKIA_LINK_MODE:-${MOUI_SKIA_MACOS_LINK_MODE:-static}}"
+link_mode="${MOUI_SKIA_LINK_MODE:-static}"
 extra_cc_flags="${MOUI_SKIA_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${MOUI_SKIA_EXTRA_LINK_FLAGS:-}"
 output_path="native/moon.pkg"

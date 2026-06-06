@@ -276,7 +276,7 @@ locked by `skia-provider-lock.json` to tag `dev-6d73578a36` and commit
 under `.skia-cache/release` and print the include/lib/flag values consumed by
 the existing native package configurators. The default link mode is static;
 dynamic libraries are selected explicitly with
-`MOUI_SKIA_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic`:
+`MOUI_SKIA_LINK_MODE=dynamic` or `--link-mode dynamic`:
 
 ```bash
 bash scripts/fetch-release-skia.sh --platform auto --arch auto --print-env
@@ -350,9 +350,9 @@ bash scripts/macos-accept-real-skia-smoke.sh --log-dir logs \
 The macOS helper adds common CoreFoundation/CoreGraphics/CoreText/ImageIO
 frameworks by default; pass `--extra-link-flags` for additional Skia build
 dependencies. Use `--link-mode dynamic|static` or
-`MOUI_SKIA_SKIA_LINK_MODE=dynamic|static` when you need to force
-`libskia.dylib` or `libskia.a`; `MOUI_SKIA_MACOS_LINK_MODE` remains a macOS
-compatibility alias. `auto` chooses the mode based on available library files.
+`MOUI_SKIA_LINK_MODE=dynamic|static` when you need to force
+`libskia.dylib` or `libskia.a`; `auto` chooses the mode based on available
+library files.
 
 The package prebuild hook now enables native real-Skia configuration by
 default for native builds. Set `MOUI_SKIA_ENABLE_PREBUILD_SKIA=0` or
@@ -360,8 +360,7 @@ default for native builds. Set `MOUI_SKIA_ENABLE_PREBUILD_SKIA=0` or
 compile path. Environment values for `MOUI_SKIA_SKIA_INCLUDE`,
 `MOUI_SKIA_SKIA_LIB_DIR`, `MOUI_SKIA_SKIA_LIB`,
 `MOUI_SKIA_EXTRA_CC_FLAGS`, `MOUI_SKIA_EXTRA_LINK_FLAGS`, and
-`MOUI_SKIA_SKIA_LINK_MODE` take precedence over the release provider defaults.
-On macOS, `MOUI_SKIA_MACOS_LINK_MODE` remains a compatibility alias.
+`MOUI_SKIA_LINK_MODE` take precedence over the release provider defaults.
 
 To build a small CPU-only Skia from source for the macOS smoke test, run:
 

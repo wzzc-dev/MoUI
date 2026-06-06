@@ -55,6 +55,29 @@ function configEnvValue(config, key) {
   );
 }
 
+function objectHasOwn(object, key) {
+  return Object.prototype.hasOwnProperty.call(object || {}, key);
+}
+
+function configEnvKeyPresent(config, key) {
+  return (
+    objectHasOwn(process.env, key) ||
+    objectHasOwn(config?.env, key) ||
+    objectHasOwn(config?.build?.env, key) ||
+    objectHasOwn(config?.build_info?.env, key)
+  );
+}
+
+function rejectLegacyLinkModeEnv(config) {
+  for (const key of ["MOUI_SKIA_SKIA_LINK_MODE", "MOUI_SKIA_MACOS_LINK_MODE"]) {
+    if (configEnvKeyPresent(config, key)) {
+      throw new Error(
+        `${key} is no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto.`,
+      );
+    }
+  }
+}
+
 function truthy(value) {
   return /^(1|true|yes|on)$/i.test(String(value || "").trim());
 }
@@ -222,8 +245,7 @@ function skiaValues(config) {
     "MOUI_SKIA_SKIA_LIB",
     "MOUI_SKIA_EXTRA_CC_FLAGS",
     "MOUI_SKIA_EXTRA_LINK_FLAGS",
-    "MOUI_SKIA_SKIA_LINK_MODE",
-    "MOUI_SKIA_MACOS_LINK_MODE",
+    "MOUI_SKIA_LINK_MODE",
   ];
   const envValues = overlayEnvValues(config, {}, keys);
   if (envValues.MOUI_SKIA_SKIA_INCLUDE && envValues.MOUI_SKIA_SKIA_LIB_DIR) {
@@ -233,13 +255,11 @@ function skiaValues(config) {
 }
 
 function skiaLinkMode(config) {
-  const mode = (
-    configEnvValue(config, "MOUI_SKIA_SKIA_LINK_MODE") ||
-    configEnvValue(config, "MOUI_SKIA_MACOS_LINK_MODE") ||
-    "static"
-  ).trim().toLowerCase();
+  const mode = (configEnvValue(config, "MOUI_SKIA_LINK_MODE") || "static")
+    .trim()
+    .toLowerCase();
   if (!["auto", "dynamic", "static"].includes(mode)) {
-    throw new Error(`unsupported MOUI_SKIA_SKIA_LINK_MODE: ${mode}`);
+    throw new Error(`unsupported MOUI_SKIA_LINK_MODE: ${mode}`);
   }
   return mode;
 }
@@ -263,7 +283,7 @@ function macosLibraryFlags(config, libPath, skiaLib) {
   if (mode === "dynamic") {
     if (!fs.existsSync(dynamicLib)) {
       throw new Error(
-        `MOUI_SKIA_SKIA_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
+        `MOUI_SKIA_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
       );
     }
     return `${dynamicLib} -Wl,-rpath,${libPath}`;
@@ -271,7 +291,7 @@ function macosLibraryFlags(config, libPath, skiaLib) {
 
   if (!fs.existsSync(staticLib)) {
     throw new Error(
-      `MOUI_SKIA_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
+      `MOUI_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
     );
   }
   return staticLib;
@@ -283,7 +303,7 @@ function platformFlags(config, values) {
   const skiaLib = values.MOUI_SKIA_SKIA_LIB || "skia";
   const extraCcFlags = values.MOUI_SKIA_EXTRA_CC_FLAGS || "";
   const extraLinkFlags = values.MOUI_SKIA_EXTRA_LINK_FLAGS || "";
-  const linkMode = (values.MOUI_SKIA_SKIA_LINK_MODE || skiaLinkMode(config)).trim().toLowerCase();
+  const linkMode = (values.MOUI_SKIA_LINK_MODE || skiaLinkMode(config)).trim().toLowerCase();
 
   let stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -I${includePath}`;
   let linkFlags = `-L${libPath} -l${skiaLib}`;
@@ -303,18 +323,18 @@ function platformFlags(config, values) {
     if (resolvedLinkMode === "dynamic") {
       if (!fs.existsSync(dynamicDll)) {
         throw new Error(
-          `MOUI_SKIA_SKIA_LINK_MODE=dynamic requested, but ${dynamicDll} was not found`,
+          `MOUI_SKIA_LINK_MODE=dynamic requested, but ${dynamicDll} was not found`,
         );
       }
       if (!fs.existsSync(dynamicImportLib) && !fs.existsSync(staticLib)) {
         throw new Error(
-          `MOUI_SKIA_SKIA_LINK_MODE=dynamic requested, but ${dynamicImportLib} or ${staticLib} was not found`,
+          `MOUI_SKIA_LINK_MODE=dynamic requested, but ${dynamicImportLib} or ${staticLib} was not found`,
         );
       }
       skiaLibFlag = fs.existsSync(dynamicImportLib) ? dynamicImportLib : staticLib;
     } else if (!fs.existsSync(staticLib)) {
       throw new Error(
-        `MOUI_SKIA_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
+        `MOUI_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
       );
     }
     const packageLibs = fs.readdirSync(libPath)
@@ -341,14 +361,14 @@ function platformFlags(config, values) {
     if (resolvedLinkMode === "static") {
       if (!fs.existsSync(staticLib)) {
         throw new Error(
-          `MOUI_SKIA_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
+          `MOUI_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
         );
       }
       linkFlags = staticLib;
     } else {
       if (!fs.existsSync(dynamicLib)) {
         throw new Error(
-          `MOUI_SKIA_SKIA_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
+          `MOUI_SKIA_LINK_MODE=dynamic requested, but ${dynamicLib} was not found`,
         );
       }
       linkFlags = `-L${libPath} -l${skiaLib} -Wl,-rpath,${libPath}`;
@@ -369,6 +389,7 @@ function platformFlags(config, values) {
 
 function main() {
   const config = readJsonFromStdin();
+  rejectLegacyLinkModeEnv(config);
   if (!shouldConfigureSkia(config)) {
     const triangleLinkFlags = macosExampleLinkFlags(
       "",

@@ -404,7 +404,7 @@ try {
       -DryRunConfig `
       -PrintEnv
     if (($fetchDryRunEnv -join "`n") -notlike "*MOUI_SKIA_SKIA_PROVIDER=release*" -or
-      ($fetchDryRunEnv -join "`n") -notlike "*MOUI_SKIA_SKIA_LINK_MODE=static*" -or
+      ($fetchDryRunEnv -join "`n") -notlike "*MOUI_SKIA_LINK_MODE=static*" -or
       ($fetchDryRunEnv -join "`n") -notlike "*MOUI_SKIA_SKIA_PACKAGE=Skia-dev-6d73578a36-windows-Release-x64.zip*" -or
       ($fetchDryRunEnv -join "`n") -notlike "*MOUI_SKIA_SKIA_PACKAGE_SHA256=c38ef245dc18dec445b371ed66cf6ae13d11ef804cfd1f11bf5139294f9c80fd*") {
       throw "fetch-release-skia.ps1 did not map Windows x64 Release static to the locked package"
@@ -418,7 +418,7 @@ try {
       -CacheDir (Join-Path $dryRunRoot "release-cache") `
       -DryRunConfig `
       -PrintEnv
-    if (($fetchDynamicDryRunEnv -join "`n") -notlike "*MOUI_SKIA_SKIA_LINK_MODE=dynamic*" -or
+    if (($fetchDynamicDryRunEnv -join "`n") -notlike "*MOUI_SKIA_LINK_MODE=dynamic*" -or
       ($fetchDynamicDryRunEnv -join "`n") -notlike "*MOUI_SKIA_SKIA_PACKAGE=Skia-dev-6d73578a36-windows-Release-x64-shared.zip*" -or
       ($fetchDynamicDryRunEnv -join "`n") -notlike "*MOUI_SKIA_SKIA_PACKAGE_SHA256=2a8a54ae44c0370d8b20000e0bc044bf0da14059b76bcfde00256c37fb0ea41c*") {
       throw "fetch-release-skia.ps1 did not map Windows x64 Release dynamic to the locked package"
@@ -437,6 +437,7 @@ try {
     & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
       -SkiaRoot $fakeMsvcSharedExtract `
       -SkiaZip $fakeMsvcSharedZip `
+      -SkiaLinkMode dynamic `
       -Output $fakeMsvcSharedPkg `
       -Write
     $fakeMsvcSharedConfig = Get-Content -LiteralPath $fakeMsvcSharedPkg -Raw
@@ -447,6 +448,7 @@ try {
     }
     & (Join-Path $repoRoot "scripts/configure-windows-msvc-native-pkg.ps1") `
       -SkiaRoot $fakeMsvcSharedExtract `
+      -SkiaLinkMode dynamic `
       -Output $fakeMsvcSharedPkg `
       -Check
 

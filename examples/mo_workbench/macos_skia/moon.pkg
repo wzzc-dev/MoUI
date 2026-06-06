@@ -13,7 +13,7 @@ options(
   "is-main": true,
   link: {
     "native": {
-      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz",
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz ",
     },
   },
   targets: { "main.mbt": [ "native" ] },

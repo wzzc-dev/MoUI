@@ -610,11 +610,11 @@ Pass `--enable-skshaper` when the selected Skia binary also provides the
 SkShaper module libraries; the helper then verifies the MoUI renderer smoke ran
 with the optional shaped-run path available.
 
-Use `--write-local-config` when you want direct local `moon run` commands to use
-real Skia. In `auto` link mode that persistent setup prefers dynamic
-`libskia.dylib`, while the helper's temporary smoke/build setup prefers static
-`libskia.a` when available. Set `MOUI_SKIA_MACOS_LINK_MODE=dynamic|static` or
-pass `--link-mode dynamic|static` to override the default.
+Direct local `moon run` commands use the `moui_skia` prebuild hook, so the
+checked-in packages do not need machine-local path rewrites. Set
+`MOUI_SKIA_LINK_MODE=dynamic|static|auto` before `moon run` to choose the Skia
+library mode. Helper smoke runs can still use `--link-mode dynamic|static|auto`
+to override the environment for that invocation.
 
 For a fuller local smoke, pass `--run-showcase-smoke`. The helper then launches
 the built Showcase `macos_skia` executable with a first-frame exit flag and

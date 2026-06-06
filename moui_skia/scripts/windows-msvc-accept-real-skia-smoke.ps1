@@ -7,7 +7,7 @@ param(
   [string] $VcVarsAll = $env:VCVARSALL,
   [string] $VcArch = "x64",
   [string] $SkiaProvider = $env:MOUI_SKIA_SKIA_PROVIDER,
-  [string] $SkiaLinkMode = $(if ($env:MOUI_SKIA_SKIA_LINK_MODE) { $env:MOUI_SKIA_SKIA_LINK_MODE } else { "static" }),
+  [string] $SkiaLinkMode = $(if ($env:MOUI_SKIA_LINK_MODE) { $env:MOUI_SKIA_LINK_MODE } else { "static" }),
   [string] $ReleaseOwner = $env:MOUI_SKIA_RELEASE_OWNER,
   [string] $ReleaseRepo = $env:MOUI_SKIA_RELEASE_REPO,
   [string] $ReleaseTag = $env:MOUI_SKIA_RELEASE_TAG,
@@ -23,6 +23,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+if ($null -ne [Environment]::GetEnvironmentVariable("MOUI_SKIA_SKIA_LINK_MODE") -or
+    $null -ne [Environment]::GetEnvironmentVariable("MOUI_SKIA_MACOS_LINK_MODE")) {
+  throw "MOUI_SKIA_SKIA_LINK_MODE and MOUI_SKIA_MACOS_LINK_MODE are no longer supported; use MOUI_SKIA_LINK_MODE=dynamic|static|auto."
+}
 
 if ($DryRunConfig) {
   throw "acceptance requires a real smoke run; use scripts/windows-msvc-skia-smoke.ps1 -DryRunConfig for preflight"
