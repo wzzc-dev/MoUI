@@ -1,0 +1,18 @@
+import {
+  "wzzc-dev/moui/backend/macos" @macos_backend,
+  "wzzc-dev/moui/backend/macos/wgpu" @macos_wgpu_backend,
+  "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
+  "examples/showcase/app",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)

@@ -186,12 +186,12 @@ Use this skill when editing or reviewing:
 - `moui/tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
   packages for comparing supported text systems and documented gaps.
 - `examples/*/app`: shared application logic.
-- `examples/*/{web_wasm,macos,windows,linux}`: platform entrypoints where an
-  example has a runnable host package.
+- `examples/*/{web_wasm,<platform>_<renderer>}`: platform/renderer profile
+  entrypoints where an example has a runnable host package.
 - `examples/showcase/{macos_skia,windows_skia,linux_skia}` and
   `examples/markdown_editor/{macos_skia,windows_skia,linux_skia}`: recommended
   native Skia renderer example entrypoints.
-- `examples/showcase/{macos_cosmic,windows_cosmic,linux_cosmic}`: explicit Moon
+- `examples/showcase/{macos_wgpu_cosmic,windows_wgpu_cosmic,linux_wgpu_cosmic}`: explicit Moon
   Cosmic text-provider comparison entrypoints on the native WGPU diagnostic
   route.
 
