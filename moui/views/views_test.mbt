@@ -1834,6 +1834,95 @@ test "data display components compose tables trees descriptions and avatars" {
 }
 
 ///|
+test "data filter bar dispatches filters and disables unavailable actions" {
+  let selected = Ref("")
+  let runtime = @core.AppRuntime::new_view(
+    root=@views.data_filter_bar(
+      query="atlas",
+      on_query=value => "query:" + value,
+      filters=[
+        @views.data_filter(
+          id="active",
+          label="Active",
+          selected=true,
+          message="active",
+        ),
+        @views.data_filter(
+          id="review",
+          label="Review",
+          selected=false,
+          message="review",
+        ),
+        @views.data_filter(
+          id="paused",
+          label="Paused",
+          selected=false,
+          message="paused",
+          enabled=false,
+        ),
+      ],
+      result_count=2,
+      on_clear=Some("clear"),
+      width=420.0,
+    ),
+    size=@core.Size::new(width=460.0, height=140.0),
+    on_message=Some(message => selected.val = message),
+  )
+  guard find_semantics_label(runtime.semantics(), "Active") is Some(active) else {
+    fail("expected active filter semantics")
+  }
+  assert_true(active.state.selected)
+  assert_false(active.state.disabled)
+  guard find_semantics_label(runtime.semantics(), "Review") is Some(review) else {
+    fail("expected review filter semantics")
+  }
+  assert_false(review.state.selected)
+  assert_false(review.state.disabled)
+  guard find_semantics_label(runtime.semantics(), "Paused") is Some(paused) else {
+    fail("expected disabled paused filter semantics")
+  }
+  assert_true(paused.state.disabled)
+  guard find_semantics_label(runtime.semantics(), "Clear") is Some(clear) else {
+    fail("expected clear filter semantics")
+  }
+  assert_false(clear.state.disabled)
+  click_text(runtime, "Review")
+  inspect(selected.val, content="review")
+  selected.val = ""
+  click_text(runtime, "Paused")
+  inspect(selected.val, content="")
+  click_text(runtime, "Clear")
+  inspect(selected.val, content="clear")
+  selected.val = ""
+  let empty_runtime = @core.AppRuntime::new_view(
+    root=@views.data_filter_bar(
+      query="",
+      on_query=value => "query:" + value,
+      filters=[
+        @views.data_filter(
+          id="active",
+          label="Active",
+          selected=false,
+          message="active",
+        ),
+      ],
+      result_count=10,
+      on_clear=Some("clear"),
+      width=420.0,
+    ),
+    size=@core.Size::new(width=460.0, height=140.0),
+    on_message=Some(message => selected.val = message),
+  )
+  guard find_semantics_label(empty_runtime.semantics(), "Clear")
+    is Some(disabled_clear) else {
+    fail("expected disabled clear filter semantics")
+  }
+  assert_true(disabled_clear.state.disabled)
+  click_text(empty_runtime, "Clear")
+  inspect(selected.val, content="")
+}
+
+///|
 test "column visibility panel dispatches controlled column toggles" {
   let toggled = Ref("")
   let columns = [
@@ -2559,6 +2648,32 @@ fn text_frame(
     }
   }
   None
+}
+
+///|
+fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+  guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
+    fail("expected text frame for \{text}")
+  }
+  click_frame(runtime, frame)
+}
+
+///|
+fn click_frame(runtime : @core.AppRuntime, frame : @core.Rect) -> Unit {
+  let position = @core.Point::new(
+    x=frame.origin.x + frame.size.width / 2.0,
+    y=frame.origin.y + frame.size.height / 2.0,
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up),
+    ),
+  )
 }
 
 ///|
