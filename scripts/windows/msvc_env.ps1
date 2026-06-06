@@ -133,8 +133,8 @@ function Add-PathPrefix {
 }
 
 function Enable-MsvcC11Atomics {
-  if ($env:CL -notmatch '(^|\s)/std:c11(\s|$)') {
-    $env:CL = "/std:c11 $env:CL".Trim()
+  if ($env:CL -notmatch '(^|\s)/experimental:c11atomics(\s|$)') {
+    $env:CL = "/experimental:c11atomics $env:CL".Trim()
   }
 }
 
