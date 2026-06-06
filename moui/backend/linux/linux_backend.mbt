@@ -290,6 +290,10 @@ pub fn linux_service_bridge(
         @host.HostServiceResponse::Unavailable(
           "file dialog service is unavailable",
         )
+      @host.HostServiceRequest::TextFile(_) =>
+        @host.HostServiceResponse::Unavailable(
+          "text file service is unavailable",
+        )
       @host.HostServiceRequest::ShowMenu(_) =>
         @host.HostServiceResponse::Unavailable("menu service is unavailable")
     }

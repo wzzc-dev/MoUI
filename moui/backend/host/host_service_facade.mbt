@@ -90,6 +90,27 @@ pub fn HostAppServices::save_file(
 }
 
 ///|
+pub fn HostAppServices::read_text_file(
+  self : HostAppServices,
+  path : String,
+) -> HostServiceResponse {
+  self.dispatch(
+    HostServiceRequest::TextFile(HostTextFileRequest::ReadText(path)),
+  )
+}
+
+///|
+pub fn HostAppServices::write_text_file(
+  self : HostAppServices,
+  path : String,
+  text : String,
+) -> HostServiceResponse {
+  self.dispatch(
+    HostServiceRequest::TextFile(HostTextFileRequest::WriteText(path, text)),
+  )
+}
+
+///|
 pub fn HostAppServices::pick_directory(
   self : HostAppServices,
   title? : String = "",

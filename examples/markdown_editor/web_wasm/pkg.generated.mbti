@@ -6,6 +6,10 @@ pub fn web_complete_async_clipboard_read(Int, Bool, Int) -> Unit
 
 pub fn web_complete_async_file_dialog(Int, Bool, Int) -> Unit
 
+pub fn web_complete_async_file_open_text(Int, Bool, Int, Int) -> Unit
+
+pub fn web_complete_async_text_file_write(Int, Bool, Int) -> Unit
+
 pub fn web_dispatch_event(Int, Int, Int, Int, Double, Int) -> Unit
 
 pub fn web_dispatch_route(Int, Int) -> Unit

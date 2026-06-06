@@ -110,7 +110,7 @@ pub fn run_app_with_options(
 ) -> Unit {
   let event_loop = @window_web.EventLoop::new()
   event_loop.set_control_flow(@window_core.ControlFlow::Poll)
-  let async_services = @host.HostServiceAsyncQueue::new()
+  let async_services = web_async_host_service_queue()
   set_web_async_host_service_queue(Some(async_services))
   set_web_route_source(options.route_source)
   let services = web_service_bridge(
@@ -123,6 +123,7 @@ pub fn run_app_with_options(
     clipboard_read=true,
     clipboard_write=dispatch_web_clipboard_write_text,
     file_dialog=true,
+    file_access=true,
     async_queue=Some(async_services),
   )
   runtime.set_environment(

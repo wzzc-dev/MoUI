@@ -65,6 +65,9 @@ enum MarkdownEditorCommand {
   CodeBlock
   HorizontalRule
   Table
+  DuplicateBlock
+  MoveBlockUp
+  MoveBlockDown
   InsertTableRow
   InsertTableColumn
   DeleteTableRow

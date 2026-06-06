@@ -1,5 +1,7 @@
 import {
   "moonbitlang/core/env",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "wzzc-dev/moui/render/skia" @skia_renderer,
   "examples/markdown_editor/app",
