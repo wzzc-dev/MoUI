@@ -269,8 +269,9 @@ GitHub Actions provenance plus exactly `radialGradient`, `transformPixels`,
 `colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`, `paragraphWrapping`, and
 `asyncImageSecondFrame` observations with strong marker tokens. Passed
 `colorEmojiPixels` observations must also include `font-metadata` /
-`glyph-metadata` evidence and structured metadata fields. Package-only tests,
-skipped jobs, missing uploaded artifacts, blank screenshots, caret-only
+`glyph-metadata` evidence and structured metadata fields, including a non-empty
+glyph key plus positive glyph width/height. Package-only tests, skipped jobs,
+missing uploaded artifacts, blank screenshots, caret-only
 diagnostics, coverage-only font matching, provider preflights, and fallback-safe
 descriptor audits must stay failed proof. Complete local observations may be
 preserved for debugging, but without GitHub Actions provenance the manifest

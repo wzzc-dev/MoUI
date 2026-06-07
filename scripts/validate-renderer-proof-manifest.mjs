@@ -231,6 +231,13 @@ for (const key of expectedObservationKeys) {
       if (requireNumber(glyph, "clusterCount", "observations.colorEmojiPixels.metadata.glyph") < 1) {
         fail("observations.colorEmojiPixels.metadata.glyph.clusterCount must be at least 1");
       }
+      requireString(glyph, "key", "observations.colorEmojiPixels.metadata.glyph");
+      if (requireNumber(glyph, "width", "observations.colorEmojiPixels.metadata.glyph") <= 0) {
+        fail("observations.colorEmojiPixels.metadata.glyph.width must be greater than 0");
+      }
+      if (requireNumber(glyph, "height", "observations.colorEmojiPixels.metadata.glyph") <= 0) {
+        fail("observations.colorEmojiPixels.metadata.glyph.height must be greater than 0");
+      }
       if (
         requireNumber(
           glyph,

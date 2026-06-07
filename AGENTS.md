@@ -321,8 +321,9 @@ must have GitHub Actions provenance and exactly `radialGradient`,
 `transformPixels`, `colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`,
 `paragraphWrapping`, and `asyncImageSecondFrame` observations with strong marker
 tokens; passed `colorEmojiPixels` observations must also include
-`font-metadata` / `glyph-metadata` evidence and structured metadata fields so
-emoji pixels remain tied to the font/glyph path that produced them. Skipped
+`font-metadata` / `glyph-metadata` evidence and structured metadata fields
+including a non-empty glyph key plus positive glyph width/height, so emoji
+pixels remain tied to the font/glyph path that produced them. Skipped
 jobs, package-only tests, missing uploaded artifacts, blank
 screenshots, caret-only diagnostics, coverage-only font matching, provider
 preflights, and fallback-safe descriptor audits must remain failed proof. The

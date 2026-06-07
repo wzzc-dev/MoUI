@@ -143,6 +143,10 @@ const colorEmojiMetadataReady = metadata => {
     glyph.format === "rgba" &&
     Number(glyph.glyphCount) >= 1 &&
     Number(glyph.clusterCount) >= 1 &&
+    typeof glyph.key === "string" &&
+    glyph.key.trim() !== "" &&
+    Number(glyph.width) > 0 &&
+    Number(glyph.height) > 0 &&
     Number(glyph.highSaturationPixels) >= 8 &&
     Number(glyph.alphaPixels) > 0
   );

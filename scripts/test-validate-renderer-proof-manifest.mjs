@@ -29,6 +29,9 @@ const colorEmojiMetadata = () => ({
     format: "rgba",
     glyphCount: 1,
     clusterCount: 1,
+    key: "1|normal|400|24|system-ui|rgba|emoji",
+    width: 24,
+    height: 24,
     highSaturationPixels: 42,
     alphaPixels: 120,
   },
@@ -186,6 +189,84 @@ expectFail(
     ["--require-passed"],
   ),
   "metadata.glyph.highSaturationPixels must be at least 8",
+);
+
+expectFail(
+  "missing emoji glyph key",
+  run(
+    "missing-emoji-glyph-key.json",
+    manifest({
+      observations: {
+        ...observations(),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: observationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...colorEmojiMetadata(),
+            glyph: {
+              ...colorEmojiMetadata().glyph,
+              key: "",
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.glyph.key must be a non-empty string",
+);
+
+expectFail(
+  "zero emoji glyph width",
+  run(
+    "zero-emoji-glyph-width.json",
+    manifest({
+      observations: {
+        ...observations(),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: observationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...colorEmojiMetadata(),
+            glyph: {
+              ...colorEmojiMetadata().glyph,
+              width: 0,
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.glyph.width must be greater than 0",
+);
+
+expectFail(
+  "zero emoji glyph height",
+  run(
+    "zero-emoji-glyph-height.json",
+    manifest({
+      observations: {
+        ...observations(),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: observationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...colorEmojiMetadata(),
+            glyph: {
+              ...colorEmojiMetadata().glyph,
+              height: 0,
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.glyph.height must be greater than 0",
 );
 
 expectFail(
