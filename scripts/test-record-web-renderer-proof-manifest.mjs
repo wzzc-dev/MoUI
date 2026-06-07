@@ -212,6 +212,22 @@ if (
   console.error("missing emoji metadata should keep web renderer proof failed");
   process.exit(1);
 }
+const missingEmojiMetadataRequired = runRecorder(
+  "missing-emoji-metadata-required",
+  missingEmojiMetadataManifest,
+  ["--require-passed"],
+);
+if (
+  missingEmojiMetadataRequired.result.status === 0 ||
+  !missingEmojiMetadataRequired.result.stderr.includes("status must be passed") ||
+  !missingEmojiMetadataRequired.result.stderr.includes("web renderer proof failed summary:") ||
+  !missingEmojiMetadataRequired.result.stderr.includes("missingProofs=colorEmojiPixels")
+) {
+  console.error("expected --require-passed to reject missing emoji metadata web proof");
+  console.error(missingEmojiMetadataRequired.result.stdout);
+  console.error(missingEmojiMetadataRequired.result.stderr);
+  process.exit(1);
+}
 
 const missingGlyphKeyManifest = writeWebManifest("missing-glyph-key", {
   screenshot: {
