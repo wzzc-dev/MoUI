@@ -129,11 +129,11 @@ jobs:
           bash scripts/check-real-skia-artifact-lock.sh
           bash scripts/fetch-release-skia.sh --platform linux --arch x64 --config Release --link-mode static --cache-dir .skia-dry-run/release-cache --dry-run-config --print-env > logs/fetch-release-linux-static.env
           grep -Fq 'MOUI_SKIA_SKIA_PROVIDER=release' logs/fetch-release-linux-static.env
-          grep -Fq 'MOUI_SKIA_SKIA_LINK_MODE=static' logs/fetch-release-linux-static.env
+          grep -Fq 'MOUI_SKIA_LINK_MODE=static' logs/fetch-release-linux-static.env
           grep -Fq 'MOUI_SKIA_SKIA_PACKAGE=Skia-dev-6d73578a36-linux-Release-x64.zip' logs/fetch-release-linux-static.env
           grep -Fq 'MOUI_SKIA_SKIA_PACKAGE_SHA256=79ef48c0831a5d27740e9da738236df35ac868dba95dff2ad29e91737e252a14' logs/fetch-release-linux-static.env
           bash scripts/fetch-release-skia.sh --platform linux --arch x64 --config Release --link-mode dynamic --cache-dir .skia-dry-run/release-cache --dry-run-config --print-env > logs/fetch-release-linux-dynamic.env
-          grep -Fq 'MOUI_SKIA_SKIA_LINK_MODE=dynamic' logs/fetch-release-linux-dynamic.env
+          grep -Fq 'MOUI_SKIA_LINK_MODE=dynamic' logs/fetch-release-linux-dynamic.env
           grep -Fq 'MOUI_SKIA_SKIA_PACKAGE=Skia-dev-6d73578a36-linux-Release-x64-shared.zip' logs/fetch-release-linux-dynamic.env
           grep -Fq 'MOUI_SKIA_SKIA_PACKAGE_SHA256=8a14e34dc9f3f8fa6108407b2391471a97c1183e62a5c11e3bf5e346fb8014fd' logs/fetch-release-linux-dynamic.env
           python3 - <<'PY'
