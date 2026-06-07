@@ -140,8 +140,9 @@ Renderer-proof color emoji artifacts now have a stronger audit boundary:
 `font-metadata` and `glyph-metadata` tokens, and the manifest validator requires
 structured `metadata.font` / `metadata.glyph` fields. The native Skia
 text/emoji smoke records the requested emoji family, Skia text-system id,
-shaper path, RGBA glyph format, cluster count, and pixel counts; WebGPU wasm
-records the browser canvas font stack plus glyph atlas key and size metadata.
+shaper path, RGBA glyph format, cluster count, pixel counts, stable glyph key,
+and measured glyph size; WebGPU wasm records the browser canvas font stack plus
+glyph atlas key and size metadata.
 These fields make CI artifacts easier to audit, but they are not yet a
 guarantee of exact cross-platform typeface identity or glyph-id determinism.
 
