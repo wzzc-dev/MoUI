@@ -11,7 +11,10 @@ const recorder = "scripts/record-renderer-proof-manifest.mjs";
 const markers = [
   "MoUI renderer proof radialGradient passed center-mid-edge-pixels shader-payload",
   "MoUI renderer proof transformPixels passed pixel-markers",
-  "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster",
+  [
+    "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata",
+    "MoUI renderer proof colorEmojiPixels metadata font_family=emoji font_source=browser-canvas text_system=webgpu-wasm shaper=browser-canvas glyph_format=rgba glyph_count=1 cluster_count=1 high_saturation_pixels=42 alpha_pixels=120 glyph_key=1|normal|400|24|system-ui|rgba|emoji glyph_width=24 glyph_height=24",
+  ].join("\n"),
   "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret",
   "MoUI renderer proof bidiLayout passed visual-order",
   "MoUI renderer proof paragraphWrapping passed line-metrics later-line-pixels",
@@ -71,6 +74,16 @@ if (
   passedManifest.provenance.kind !== "github-actions"
 ) {
   console.error("passed manifest did not preserve passed observations/provenance");
+  process.exit(1);
+}
+if (
+  passedManifest.observations.colorEmojiPixels.metadata.font.family !== "emoji" ||
+  passedManifest.observations.colorEmojiPixels.metadata.glyph.format !== "rgba" ||
+  passedManifest.observations.colorEmojiPixels.metadata.glyph.highSaturationPixels !== 42 ||
+  passedManifest.observations.colorEmojiPixels.metadata.glyph.key !==
+    "1|normal|400|24|system-ui|rgba|emoji"
+) {
+  console.error("passed manifest did not preserve color emoji metadata");
   process.exit(1);
 }
 

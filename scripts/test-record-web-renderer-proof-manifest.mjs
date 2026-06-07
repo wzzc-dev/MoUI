@@ -21,6 +21,29 @@ const proofKeys = [
 const writeWebManifest = (name, overrides = {}) => {
   const path = join(tmp, `${name}.json`);
   const observations = Object.fromEntries(proofKeys.map(key => [key, "yes"]));
+  const screenshot = {
+    colorEmojiPixels: {
+      passed: true,
+      metadata: {
+        font: {
+          family: "system-ui, emoji",
+          source: "browser-canvas",
+          textSystem: "webgpu-wasm",
+          shaper: "browser-canvas",
+        },
+        glyph: {
+          format: "rgba",
+          glyphCount: 1,
+          clusterCount: 1,
+          highSaturationPixels: 42,
+          alphaPixels: 120,
+          key: "1|normal|400|24|system-ui|rgba|👩‍💻",
+          width: 24,
+          height: 24,
+        },
+      },
+    },
+  };
   writeFileSync(
     path,
     `${JSON.stringify(
@@ -31,6 +54,7 @@ const writeWebManifest = (name, overrides = {}) => {
             name: "showcase-web-wasm",
             status: "passed",
             observations,
+            screenshot,
             ...overrides,
           },
         ],
@@ -85,6 +109,15 @@ if (passedManifest.status !== "passed") {
   console.error("expected passed renderer proof manifest");
   process.exit(1);
 }
+if (
+  passedManifest.observations.colorEmojiPixels.metadata.font.textSystem !== "webgpu-wasm" ||
+  passedManifest.observations.colorEmojiPixels.metadata.glyph.highSaturationPixels !== 42 ||
+  passedManifest.observations.colorEmojiPixels.metadata.glyph.key !==
+    "1|normal|400|24|system-ui|rgba|👩‍💻"
+) {
+  console.error("expected web renderer proof to preserve color emoji metadata");
+  process.exit(1);
+}
 
 const missingZwjManifest = writeWebManifest("missing-zwj", {
   observations: {
@@ -118,6 +151,70 @@ if (
   console.error("expected --require-passed to reject missing ZWJ web proof");
   console.error(missingRequired.result.stdout);
   console.error(missingRequired.result.stderr);
+  process.exit(1);
+}
+
+const missingEmojiMetadataManifest = writeWebManifest("missing-emoji-metadata", {
+  screenshot: {
+    colorEmojiPixels: {
+      passed: true,
+    },
+  },
+});
+const missingEmojiMetadata = runRecorder("missing-emoji-metadata", missingEmojiMetadataManifest);
+if (missingEmojiMetadata.result.status !== 0) {
+  console.error("expected missing emoji metadata proof to validate structurally");
+  console.error(missingEmojiMetadata.result.stdout);
+  console.error(missingEmojiMetadata.result.stderr);
+  process.exit(1);
+}
+const missingEmojiMetadataProof = JSON.parse(readFileSync(missingEmojiMetadata.output, "utf8"));
+if (
+  missingEmojiMetadataProof.status !== "failed" ||
+  missingEmojiMetadataProof.observations.colorEmojiPixels.status !== "failed"
+) {
+  console.error("missing emoji metadata should keep web renderer proof failed");
+  process.exit(1);
+}
+
+const missingGlyphKeyManifest = writeWebManifest("missing-glyph-key", {
+  screenshot: {
+    colorEmojiPixels: {
+      passed: true,
+      metadata: {
+        font: {
+          family: "system-ui, emoji",
+          source: "browser-canvas",
+          textSystem: "webgpu-wasm",
+          shaper: "browser-canvas",
+        },
+        glyph: {
+          format: "rgba",
+          glyphCount: 1,
+          clusterCount: 1,
+          highSaturationPixels: 42,
+          alphaPixels: 120,
+          key: "",
+          width: 24,
+          height: 24,
+        },
+      },
+    },
+  },
+});
+const missingGlyphKey = runRecorder("missing-glyph-key", missingGlyphKeyManifest);
+if (missingGlyphKey.result.status !== 0) {
+  console.error("expected missing glyph key proof to validate structurally");
+  console.error(missingGlyphKey.result.stdout);
+  console.error(missingGlyphKey.result.stderr);
+  process.exit(1);
+}
+const missingGlyphKeyProof = JSON.parse(readFileSync(missingGlyphKey.output, "utf8"));
+if (
+  missingGlyphKeyProof.status !== "failed" ||
+  missingGlyphKeyProof.observations.colorEmojiPixels.status !== "failed"
+) {
+  console.error("missing glyph key should keep web renderer proof failed");
   process.exit(1);
 }
 

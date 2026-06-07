@@ -1123,6 +1123,13 @@ export function createWebGpuImports(options = {}) {
         text: cluster,
         codepoints: codepointsFor(cluster).map(codepointHex),
         format: colorGlyph ? "rgba" : "alpha",
+        fontFamily: font.family,
+        fontStyle: font.style,
+        fontWeight: font.weight,
+        fontSize: font.size,
+        glyphKey: key,
+        glyphWidth: glyph.width,
+        glyphHeight: glyph.height,
         highSaturationPixels: pixelSummary.highSaturationPixels,
         alphaPixels: pixelSummary.alphaPixels,
       });

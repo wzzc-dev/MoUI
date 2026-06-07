@@ -793,6 +793,20 @@ const runtimeSignalsFromLog = logText => ({
 
 const hasEvent = (events, names) => events.some(event => names.includes(event?.name));
 
+const colorGlyphEventReady = event =>
+  event?.name === "text_color_glyph" &&
+  `${event.text ?? ""}`.includes("👩‍💻") &&
+  event.format === "rgba" &&
+  typeof event.fontFamily === "string" &&
+  event.fontFamily.trim() !== "" &&
+  Number(event.fontSize) > 0 &&
+  typeof event.glyphKey === "string" &&
+  event.glyphKey.trim() !== "" &&
+  Number(event.glyphWidth) > 0 &&
+  Number(event.glyphHeight) > 0 &&
+  Number(event.highSaturationPixels) >= 8 &&
+  Number(event.alphaPixels) > 0;
+
 const maxPresentFrame = events => {
   const frames = events
     .filter(event => event?.name === "present_frame")
@@ -809,7 +823,7 @@ const rendererProofEventsReady = events => {
       .filter(Number.isFinite),
   );
   return (
-    hasEvent(events, ["text_color_glyph"]) &&
+    events.some(colorGlyphEventReady) &&
     hasEvent(events, ["text_grapheme_layout"]) &&
     hasEvent(events, ["text_bidi_layout"]) &&
     paragraphLines.has(1) &&
@@ -861,12 +875,7 @@ const eventIndexes = (events, predicate) => {
 const deriveRendererProofFromEvents = (screenshot, target, events) => {
   if (!targetRequiresRendererProofPixels(target)) return screenshot;
 
-  const colorGlyph = events.find(event =>
-    event?.name === "text_color_glyph" &&
-    `${event.text ?? ""}`.includes("👩‍💻") &&
-    Number(event.highSaturationPixels) >= 8 &&
-    event.format === "rgba"
-  );
+  const colorGlyph = events.find(colorGlyphEventReady);
   const grapheme = events.find(event =>
     event?.name === "text_grapheme_layout" &&
     event.containsZwj === true &&
@@ -913,16 +922,42 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
     presentFrames.length >= 2 &&
     Math.max(...presentFrames) >= 2 &&
     screenshot.contentPixels >= 500;
+  const colorEmojiMetadata = colorGlyph
+    ? {
+        font: {
+          family: `${colorGlyph.fontFamily}`,
+          source: "browser-canvas",
+          textSystem: "webgpu-wasm",
+          shaper: "browser-canvas",
+          style: `${colorGlyph.fontStyle ?? "normal"}`,
+          weight: Number(colorGlyph.fontWeight ?? 0),
+          size: Number(colorGlyph.fontSize),
+        },
+        glyph: {
+          format: `${colorGlyph.format}`,
+          glyphCount: 1,
+          clusterCount: 1,
+          highSaturationPixels: Number(colorGlyph.highSaturationPixels),
+          alphaPixels: Number(colorGlyph.alphaPixels),
+          width: Number(colorGlyph.glyphWidth),
+          height: Number(colorGlyph.glyphHeight),
+          key: `${colorGlyph.glyphKey}`,
+        },
+      }
+    : undefined;
 
   return {
     ...screenshot,
     colorEmojiPixels: {
       ...(screenshot.colorEmojiPixels ?? emptyRendererProofEvidence(true)),
       passed: !!colorGlyph,
-      evidence: colorGlyph ? ["high-saturation-pixels", "glyph-or-raster"] : [],
+      evidence: colorGlyph
+        ? ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"]
+        : [],
       matchedMarkers: colorGlyph ? 2 : 0,
       glyphHighSaturationPixels: Number(colorGlyph?.highSaturationPixels ?? 0),
       glyphAlphaPixels: Number(colorGlyph?.alphaPixels ?? 0),
+      ...(colorEmojiMetadata ? { metadata: colorEmojiMetadata } : {}),
     },
     zwjGrapheme: {
       ...(screenshot.zwjGrapheme ?? emptyRendererProofEvidence(true)),

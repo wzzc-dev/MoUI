@@ -47,7 +47,7 @@ try {
 const requiredObservationEvidence = {
   radialGradient: ["center-mid-edge-pixels", "shader-payload"],
   transformPixels: ["pixel-markers"],
-  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster"],
+  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
   zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
   bidiLayout: ["visual-order"],
   paragraphWrapping: ["line-metrics", "later-line-pixels"],
@@ -77,6 +77,14 @@ const requireArray = (object, key, label) => {
   const value = object[key];
   if (!Array.isArray(value)) {
     fail(`${label}.${key} must be an array`);
+  }
+  return value;
+};
+
+const requireNumber = (object, key, label) => {
+  const value = object[key];
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    fail(`${label}.${key} must be a finite number`);
   }
   return value;
 };
@@ -197,7 +205,7 @@ for (const key of expectedObservationKeys) {
       fail(`observations.${key}.evidence must not use caret-only or coverage-only proof`);
     }
   }
-  if (status === "passed") {
+  if (status === "passed" || observationStatus === "passed") {
     if (observationStatus !== "passed") {
       fail(`observations.${key}.status must be passed for passed renderer proof`);
     }
@@ -205,6 +213,34 @@ for (const key of expectedObservationKeys) {
       if (!evidence.includes(required)) {
         fail(`observations.${key}.evidence must include '${required}'`);
       }
+    }
+    if (key === "colorEmojiPixels") {
+      const metadata = requireObject(observation.metadata, "observations.colorEmojiPixels.metadata");
+      const font = requireObject(metadata.font, "observations.colorEmojiPixels.metadata.font");
+      requireString(font, "family", "observations.colorEmojiPixels.metadata.font");
+      requireString(font, "source", "observations.colorEmojiPixels.metadata.font");
+      requireString(font, "textSystem", "observations.colorEmojiPixels.metadata.font");
+      const glyph = requireObject(metadata.glyph, "observations.colorEmojiPixels.metadata.glyph");
+      const glyphFormat = requireString(glyph, "format", "observations.colorEmojiPixels.metadata.glyph");
+      if (glyphFormat !== "rgba") {
+        fail("observations.colorEmojiPixels.metadata.glyph.format must be rgba");
+      }
+      if (requireNumber(glyph, "glyphCount", "observations.colorEmojiPixels.metadata.glyph") < 1) {
+        fail("observations.colorEmojiPixels.metadata.glyph.glyphCount must be at least 1");
+      }
+      if (requireNumber(glyph, "clusterCount", "observations.colorEmojiPixels.metadata.glyph") < 1) {
+        fail("observations.colorEmojiPixels.metadata.glyph.clusterCount must be at least 1");
+      }
+      if (
+        requireNumber(
+          glyph,
+          "highSaturationPixels",
+          "observations.colorEmojiPixels.metadata.glyph",
+        ) < 8
+      ) {
+        fail("observations.colorEmojiPixels.metadata.glyph.highSaturationPixels must be at least 8");
+      }
+      requireNumber(glyph, "alphaPixels", "observations.colorEmojiPixels.metadata.glyph");
     }
   }
 }

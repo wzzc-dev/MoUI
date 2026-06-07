@@ -456,6 +456,97 @@ targets.forEach((target, index) => {
       if (glyphHighSaturationPixels < 8) {
         fail(`${label} passed color emoji proof requires high-saturation glyph pixels`);
       }
+      const colorEmojiMetadata = requireObject(
+        colorEmoji,
+        "metadata",
+        `${label}.screenshot.colorEmojiPixels.metadata`,
+      );
+      const colorEmojiFont = requireObject(
+        colorEmojiMetadata,
+        "font",
+        `${label}.screenshot.colorEmojiPixels.metadata.font`,
+      );
+      requireString(
+        colorEmojiFont,
+        "family",
+        `${label}.screenshot.colorEmojiPixels.metadata.font`,
+      );
+      requireString(
+        colorEmojiFont,
+        "source",
+        `${label}.screenshot.colorEmojiPixels.metadata.font`,
+      );
+      requireString(
+        colorEmojiFont,
+        "textSystem",
+        `${label}.screenshot.colorEmojiPixels.metadata.font`,
+      );
+      const colorEmojiGlyph = requireObject(
+        colorEmojiMetadata,
+        "glyph",
+        `${label}.screenshot.colorEmojiPixels.metadata.glyph`,
+      );
+      const glyphFormat = requireString(
+        colorEmojiGlyph,
+        "format",
+        `${label}.screenshot.colorEmojiPixels.metadata.glyph`,
+      );
+      if (glyphFormat !== "rgba") {
+        fail(`${label} passed color emoji proof requires RGBA glyph metadata`);
+      }
+      const metadataGlyphPixels = requireNumber(
+        colorEmojiGlyph,
+        "highSaturationPixels",
+        `${label}.screenshot.colorEmojiPixels.metadata.glyph`,
+      );
+      if (metadataGlyphPixels < 8) {
+        fail(`${label} passed color emoji metadata requires high-saturation glyph pixels`);
+      }
+      const metadataGlyphCount = requireNumber(
+        colorEmojiGlyph,
+        "glyphCount",
+        `${label}.screenshot.colorEmojiPixels.metadata.glyph`,
+      );
+      if (metadataGlyphCount < 1) {
+        fail(`${label} passed color emoji metadata requires at least one glyph`);
+      }
+      const metadataClusterCount = requireNumber(
+        colorEmojiGlyph,
+        "clusterCount",
+        `${label}.screenshot.colorEmojiPixels.metadata.glyph`,
+      );
+      if (metadataClusterCount < 1) {
+        fail(`${label} passed color emoji metadata requires at least one cluster`);
+      }
+      const metadataAlphaPixels = requireNumber(
+        colorEmojiGlyph,
+        "alphaPixels",
+        `${label}.screenshot.colorEmojiPixels.metadata.glyph`,
+      );
+      if (metadataAlphaPixels < 1) {
+        fail(`${label} passed color emoji metadata requires alpha glyph pixels`);
+      }
+      requireString(
+        colorEmojiGlyph,
+        "key",
+        `${label}.screenshot.colorEmojiPixels.metadata.glyph`,
+      );
+      const metadataGlyphWidth = requireNumber(
+        colorEmojiGlyph,
+        "width",
+        `${label}.screenshot.colorEmojiPixels.metadata.glyph`,
+      );
+      if (metadataGlyphWidth <= 0) {
+        fail(`${label} passed color emoji metadata requires positive glyph width`);
+      }
+      const metadataGlyphHeight = requireNumber(
+        colorEmojiGlyph,
+        "height",
+        `${label}.screenshot.colorEmojiPixels.metadata.glyph`,
+      );
+      if (metadataGlyphHeight <= 0) {
+        fail(`${label} passed color emoji metadata requires positive glyph height`);
+      }
       const zwjGrapheme = screenshot.zwjGrapheme;
       const logicalClusters = requireNumber(
         zwjGrapheme,
