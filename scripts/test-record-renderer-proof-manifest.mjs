@@ -82,7 +82,9 @@ if (
   passedManifest.observations.colorEmojiPixels.metadata.glyph.format !== "rgba" ||
   passedManifest.observations.colorEmojiPixels.metadata.glyph.highSaturationPixels !== 42 ||
   passedManifest.observations.colorEmojiPixels.metadata.glyph.key !==
-    "1|normal|400|24|system-ui|rgba|emoji"
+    "1|normal|400|24|system-ui|rgba|emoji" ||
+  passedManifest.observations.colorEmojiPixels.metadata.glyph.width !== 24 ||
+  passedManifest.observations.colorEmojiPixels.metadata.glyph.height !== 24
 ) {
   console.error("passed manifest did not preserve color emoji metadata");
   process.exit(1);
@@ -127,6 +129,84 @@ if (
   missingEmojiMetadataManifest.observations.colorEmojiPixels.status !== "failed"
 ) {
   console.error("missing emoji metadata should keep renderer proof observation failed");
+  process.exit(1);
+}
+
+const missingEmojiGlyphKeyMarkers = markers.map(marker =>
+  marker.includes("MoUI renderer proof colorEmojiPixels metadata")
+    ? marker.replace(/ glyph_key=\S+/, "")
+    : marker,
+);
+const missingEmojiGlyphKey = runRecorder(
+  "missing-emoji-glyph-key",
+  missingEmojiGlyphKeyMarkers.join("\n"),
+);
+if (missingEmojiGlyphKey.result.status !== 0) {
+  console.error("expected missing emoji glyph key proof to validate as failed");
+  console.error(missingEmojiGlyphKey.result.stdout);
+  console.error(missingEmojiGlyphKey.result.stderr);
+  process.exit(1);
+}
+const missingEmojiGlyphKeyManifest = JSON.parse(
+  readFileSync(missingEmojiGlyphKey.outputPath, "utf8"),
+);
+if (
+  missingEmojiGlyphKeyManifest.status !== "failed" ||
+  missingEmojiGlyphKeyManifest.observations.colorEmojiPixels.status !== "failed"
+) {
+  console.error("missing emoji glyph key should keep renderer proof observation failed");
+  process.exit(1);
+}
+
+const zeroEmojiGlyphWidthMarkers = markers.map(marker =>
+  marker.includes("MoUI renderer proof colorEmojiPixels metadata")
+    ? marker.replace("glyph_width=24", "glyph_width=0")
+    : marker,
+);
+const zeroEmojiGlyphWidth = runRecorder(
+  "zero-emoji-glyph-width",
+  zeroEmojiGlyphWidthMarkers.join("\n"),
+);
+if (zeroEmojiGlyphWidth.result.status !== 0) {
+  console.error("expected zero emoji glyph width proof to validate as failed");
+  console.error(zeroEmojiGlyphWidth.result.stdout);
+  console.error(zeroEmojiGlyphWidth.result.stderr);
+  process.exit(1);
+}
+const zeroEmojiGlyphWidthManifest = JSON.parse(
+  readFileSync(zeroEmojiGlyphWidth.outputPath, "utf8"),
+);
+if (
+  zeroEmojiGlyphWidthManifest.status !== "failed" ||
+  zeroEmojiGlyphWidthManifest.observations.colorEmojiPixels.status !== "failed"
+) {
+  console.error("zero emoji glyph width should keep renderer proof observation failed");
+  process.exit(1);
+}
+
+const zeroEmojiGlyphHeightMarkers = markers.map(marker =>
+  marker.includes("MoUI renderer proof colorEmojiPixels metadata")
+    ? marker.replace("glyph_height=24", "glyph_height=0")
+    : marker,
+);
+const zeroEmojiGlyphHeight = runRecorder(
+  "zero-emoji-glyph-height",
+  zeroEmojiGlyphHeightMarkers.join("\n"),
+);
+if (zeroEmojiGlyphHeight.result.status !== 0) {
+  console.error("expected zero emoji glyph height proof to validate as failed");
+  console.error(zeroEmojiGlyphHeight.result.stdout);
+  console.error(zeroEmojiGlyphHeight.result.stderr);
+  process.exit(1);
+}
+const zeroEmojiGlyphHeightManifest = JSON.parse(
+  readFileSync(zeroEmojiGlyphHeight.outputPath, "utf8"),
+);
+if (
+  zeroEmojiGlyphHeightManifest.status !== "failed" ||
+  zeroEmojiGlyphHeightManifest.observations.colorEmojiPixels.status !== "failed"
+) {
+  console.error("zero emoji glyph height should keep renderer proof observation failed");
   process.exit(1);
 }
 
