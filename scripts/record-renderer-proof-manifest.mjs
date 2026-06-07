@@ -143,9 +143,11 @@ const observationFor = ([key, config]) => {
 };
 
 const observations = Object.fromEntries(Object.entries(markerConfig).map(observationFor));
-const status = Object.values(observations).every(observation => observation.status === "passed")
-  ? "passed"
-  : "failed";
+const observationsPassed = Object.values(observations).every(
+  observation => observation.status === "passed",
+);
+const isGithubActions = process.env.GITHUB_ACTIONS === "true";
+const status = observationsPassed && isGithubActions ? "passed" : "failed";
 
 const repository = process.env.GITHUB_REPOSITORY || "unknown/unknown";
 const runId = process.env.GITHUB_RUN_ID || "local";
@@ -158,7 +160,7 @@ const manifest = {
   platform,
   status,
   provenance: {
-    kind: process.env.GITHUB_ACTIONS === "true" ? "github-actions" : "matching-host-artifact",
+    kind: isGithubActions ? "github-actions" : "matching-host-artifact",
     workflow: process.env.GITHUB_WORKFLOW || "local",
     job: process.env.GITHUB_JOB || "local",
     runId,
@@ -168,6 +170,11 @@ const manifest = {
   },
   artifacts: relLogs.concat([artifactPath(output)]),
   observations,
+  notes: observationsPassed && !isGithubActions
+    ? [
+        "All renderer observations passed locally, but renderer-proof manifests require GitHub Actions provenance before status can be passed.",
+      ]
+    : [],
 };
 
 mkdirSync(dirname(output), { recursive: true });
