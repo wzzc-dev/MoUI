@@ -4,6 +4,7 @@ fn ElementNode::dispatch_pointer(
   event : PointerEvent,
   render : RenderNode,
   text_system? : TextSystem = TextSystem::fallback(),
+  capture_lookup? : Bool = true,
 ) -> ElementEventResult {
   match self.spec {
     ButtonSpec(data) =>
@@ -40,13 +41,36 @@ fn ElementNode::dispatch_pointer(
     | ListSpec(_)
     | CustomLayoutSpec(_)
     | ComponentSpec(_) =>
-      self.dispatch_pointer_to_children(event, render, text_system~)
+      self.dispatch_pointer_to_children(
+        event,
+        render,
+        text_system~,
+        capture_lookup~,
+      )
     SheetSpec(data) =>
-      self.dispatch_sheet_pointer(data, event, render, text_system~)
+      self.dispatch_sheet_pointer(
+        data,
+        event,
+        render,
+        text_system~,
+        capture_lookup~,
+      )
     ScrollSpec(data) =>
-      self.dispatch_scroll_pointer(data, event, render, text_system~)
+      self.dispatch_scroll_pointer(
+        data,
+        event,
+        render,
+        text_system~,
+        capture_lookup~,
+      )
     ModifiedSpec(data) =>
-      self.dispatch_modified_pointer(data, event, render, text_system~)
+      self.dispatch_modified_pointer(
+        data,
+        event,
+        render,
+        text_system~,
+        capture_lookup~,
+      )
     EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) | CustomSpec(_) =>
       { changed: false, activated: false, focused: None }
   }
@@ -59,6 +83,7 @@ fn ElementNode::dispatch_scroll_pointer(
   event : PointerEvent,
   render : RenderNode,
   text_system~ : TextSystem,
+  capture_lookup~ : Bool,
 ) -> ElementEventResult {
   if render.frame.contains(event.position) &&
     (event.wheel_delta.x != 0.0 || event.wheel_delta.y != 0.0) {
@@ -67,10 +92,21 @@ fn ElementNode::dispatch_scroll_pointer(
         handler(event.wheel_delta)
         { changed: true, activated: true, focused: None }
       }
-      None => self.dispatch_pointer_to_children(event, render, text_system~)
+      None =>
+        self.dispatch_pointer_to_children(
+          event,
+          render,
+          text_system~,
+          capture_lookup~,
+        )
     }
   } else {
-    self.dispatch_pointer_to_children(event, render, text_system~)
+    self.dispatch_pointer_to_children(
+      event,
+      render,
+      text_system~,
+      capture_lookup~,
+    )
   }
 }
 
@@ -80,18 +116,25 @@ fn ElementNode::dispatch_pointer_to_children(
   event : PointerEvent,
   render : RenderNode,
   text_system~ : TextSystem,
+  capture_lookup~ : Bool,
 ) -> ElementEventResult {
   let popup_result = self.dispatch_pointer_to_popup_children(
     event,
     render,
     text_system~,
+    capture_lookup~,
   )
   if popup_result.changed ||
     popup_result.activated ||
     popup_result.focused is Some(_) {
     return popup_result
   }
-  self.dispatch_pointer_to_child_frames(event, render, text_system~)
+  self.dispatch_pointer_to_child_frames(
+    event,
+    render,
+    text_system~,
+    capture_lookup~,
+  )
 }
 
 ///|
@@ -100,6 +143,7 @@ fn ElementNode::dispatch_pointer_to_popup_children(
   event : PointerEvent,
   render : RenderNode,
   text_system~ : TextSystem,
+  capture_lookup~ : Bool,
 ) -> ElementEventResult {
   let mut changed = false
   let mut activated = false
@@ -109,16 +153,26 @@ fn ElementNode::dispatch_pointer_to_popup_children(
     if index < render.children.length() {
       let child = self.children[index]
       let child_render = render.children[index]
+      let has_capture = capture_lookup &&
+        child.has_active_pointer_capture(event.phase)
       if child.expanded_popup_contains(event.position, child_render.frame) ||
-        child.has_active_pointer_capture(event.phase) {
-        let result = child.dispatch_pointer(event, child_render, text_system~)
+        has_capture {
+        let result = child.dispatch_pointer(
+          event,
+          child_render,
+          text_system~,
+          capture_lookup~,
+        )
         changed = result.changed
         activated = result.activated
         match result.focused {
           Some(_) => focused = result.focused
           None => ()
         }
-        if result.changed || result.activated || result.focused is Some(_) {
+        if has_capture ||
+          result.changed ||
+          result.activated ||
+          result.focused is Some(_) {
           break
         }
       }
@@ -137,6 +191,7 @@ fn ElementNode::dispatch_pointer_to_child_frames(
   event : PointerEvent,
   render : RenderNode,
   text_system~ : TextSystem,
+  capture_lookup~ : Bool,
 ) -> ElementEventResult {
   let mut changed = false
   let mut activated = false
@@ -147,7 +202,12 @@ fn ElementNode::dispatch_pointer_to_child_frames(
       let child = self.children[index]
       let child_render = render.children[index]
       if child_render.frame.contains(event.position) {
-        let result = child.dispatch_pointer(event, child_render, text_system~)
+        let result = child.dispatch_pointer(
+          event,
+          child_render,
+          text_system~,
+          capture_lookup~,
+        )
         changed = result.changed
         activated = result.activated
         match result.focused {
@@ -174,14 +234,79 @@ fn ElementNode::has_active_pointer_capture(
 ) -> Bool {
   if phase == PointerPhase::Down {
     false
-  } else if self.control.button_state == ButtonState::Pressed ||
-    self.control.long_press_gesture.phase == LongPressGesturePhase::Pressing ||
-    self.control.drag_gesture.phase == DragGesturePhase::Pending ||
-    self.control.drag_gesture.phase == DragGesturePhase::Started ||
-    self.control.drag_gesture.phase == DragGesturePhase::Changed {
+  } else if self.has_local_active_pointer_capture() {
     true
   } else {
     self.children.any(child => child.has_active_pointer_capture(phase))
+  }
+}
+
+///|
+fn ElementNode::has_local_active_pointer_capture(self : ElementNode) -> Bool {
+  self.control.button_state == ButtonState::Pressed ||
+  self.control.long_press_gesture.phase == LongPressGesturePhase::Pressing ||
+  self.control.drag_gesture.phase == DragGesturePhase::Pending ||
+  self.control.drag_gesture.phase == DragGesturePhase::Started ||
+  self.control.drag_gesture.phase == DragGesturePhase::Changed
+}
+
+///|
+fn ElementNode::active_pointer_capture_id(
+  self : ElementNode,
+  phase : PointerPhase,
+) -> ElementId? {
+  if phase == PointerPhase::Down {
+    None
+  } else if self.has_local_active_pointer_capture() {
+    Some(self.id)
+  } else {
+    let mut index = self.children.length() - 1
+    while index >= 0 {
+      match self.children[index].active_pointer_capture_id(phase) {
+        Some(id) => return Some(id)
+        None => ()
+      }
+      index = index - 1
+    }
+    None
+  }
+}
+
+///|
+fn ElementNode::dispatch_pointer_to_target(
+  self : ElementNode,
+  target : ElementId,
+  event : PointerEvent,
+  render : RenderNode,
+  text_system~ : TextSystem,
+) -> ElementEventResult? {
+  if self.id == target {
+    Some(
+      self.dispatch_pointer(event, render, text_system~, capture_lookup=false),
+    )
+  } else {
+    let mut index = 0
+    while index < self.children.length() {
+      if index < render.children.length() {
+        match
+          self.children[index].dispatch_pointer_to_target(
+            target,
+            event,
+            render.children[index],
+            text_system~,
+          ) {
+          Some(result) => {
+            if result.changed {
+              self.dirty.mark_paint()
+            }
+            return Some(result)
+          }
+          None => ()
+        }
+      }
+      index = index + 1
+    }
+    None
   }
 }
 
@@ -231,11 +356,13 @@ fn ElementNode::dispatch_sheet_pointer(
   event : PointerEvent,
   render : RenderNode,
   text_system~ : TextSystem,
+  capture_lookup~ : Bool,
 ) -> ElementEventResult {
   let child_result = self.dispatch_pointer_to_children(
     event,
     render,
     text_system~,
+    capture_lookup~,
   )
   if child_result.activated {
     child_result
@@ -272,6 +399,7 @@ fn ElementNode::dispatch_modified_pointer(
   event : PointerEvent,
   render : RenderNode,
   text_system~ : TextSystem,
+  capture_lookup~ : Bool,
 ) -> ElementEventResult {
   match data.modifier {
     DisabledModifier(true) =>
@@ -281,6 +409,7 @@ fn ElementNode::dispatch_modified_pointer(
         event,
         render,
         text_system~,
+        capture_lookup~,
       )
       if child_result.activated {
         child_result
@@ -313,6 +442,7 @@ fn ElementNode::dispatch_modified_pointer(
         event,
         render,
         text_system~,
+        capture_lookup~,
       )
       if child_result.activated {
         child_result
@@ -338,6 +468,7 @@ fn ElementNode::dispatch_modified_pointer(
         event,
         render,
         text_system~,
+        capture_lookup~,
       )
       if child_result.activated {
         child_result
@@ -361,13 +492,28 @@ fn ElementNode::dispatch_modified_pointer(
       }
     }
     OnDragModifier(handler) =>
-      self.dispatch_drag_modifier_pointer(event, render, text_system~, handler=(
-        drag_event,
-        _frame,
-      ) => handler(drag_event))
+      self.dispatch_drag_modifier_pointer(
+        event,
+        render,
+        text_system~,
+        capture_lookup~,
+        handler=(drag_event, _frame) => handler(drag_event),
+      )
     OnDragWithFrameModifier(handler) =>
-      self.dispatch_drag_modifier_pointer(event, render, text_system~, handler~)
-    _ => self.dispatch_pointer_to_children(event, render, text_system~)
+      self.dispatch_drag_modifier_pointer(
+        event,
+        render,
+        text_system~,
+        capture_lookup~,
+        handler~,
+      )
+    _ =>
+      self.dispatch_pointer_to_children(
+        event,
+        render,
+        text_system~,
+        capture_lookup~,
+      )
   }
 }
 
@@ -377,12 +523,14 @@ fn ElementNode::dispatch_drag_modifier_pointer(
   event : PointerEvent,
   render : RenderNode,
   text_system~ : TextSystem,
+  capture_lookup~ : Bool,
   handler~ : (DragGestureEvent, Rect) -> Unit,
 ) -> ElementEventResult {
   let child_result = self.dispatch_pointer_to_children(
     event,
     render,
     text_system~,
+    capture_lookup~,
   )
   if child_result.activated {
     child_result
