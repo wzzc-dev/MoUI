@@ -607,6 +607,168 @@ test "runtime dynamic button activates after press-preserving move inside" {
 }
 
 ///|
+test "active pointer capture handles no-op move without falling through siblings" {
+  let spec = ViewSpec::FlexSpec({
+    key: None,
+    axis: Axis::Vertical,
+    spacing: 4.0,
+    main_axis_alignment: MainStart,
+    cross_axis_alignment: CrossStart,
+    children: [
+      ViewSpec::ButtonSpec({
+        key: None,
+        text: "Bottom",
+        size: Size::new(width=100.0, height=40.0),
+        font: FontSpec::new(size=16.0, weight=600),
+        foreground: Color::black(),
+        background: Brush::solid(Color::gray()),
+        hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
+        pressed_background: Brush::solid(Color::blue()),
+        border: None,
+        shadow: None,
+        corner_radius: 0.0,
+        on_click: None,
+      }),
+      ViewSpec::ButtonSpec({
+        key: None,
+        text: "Top",
+        size: Size::new(width=100.0, height=40.0),
+        font: FontSpec::new(size=16.0, weight=600),
+        foreground: Color::black(),
+        background: Brush::solid(Color::gray()),
+        hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
+        pressed_background: Brush::solid(Color::blue()),
+        border: None,
+        shadow: None,
+        corner_radius: 0.0,
+        on_click: None,
+      }),
+    ],
+  })
+  let element = mount_view_spec(spec)
+  let render = element.render(Rect::new(x=0.0, y=0.0, width=100.0, height=84.0))
+  element.children[0].control.button_state = Pressed
+  element.children[1].control.button_state = Pressed
+  let result = element.dispatch_pointer(
+    PointerEvent::new(position=Point::new(x=10.0, y=50.0), phase=Move),
+    render,
+  )
+  inspect(result.changed, content="false")
+  assert_true(element.children[1].control.button_state == Pressed)
+  assert_true(element.children[0].control.button_state == Pressed)
+}
+
+///|
+test "runtime caches active pointer capture between down and up" {
+  let spec = ViewSpec::FlexSpec({
+    key: None,
+    axis: Axis::Vertical,
+    spacing: 4.0,
+    main_axis_alignment: MainStart,
+    cross_axis_alignment: CrossStart,
+    children: [
+      ViewSpec::ButtonSpec({
+        key: None,
+        text: "Bottom",
+        size: Size::new(width=100.0, height=40.0),
+        font: FontSpec::new(size=16.0, weight=600),
+        foreground: Color::black(),
+        background: Brush::solid(Color::gray()),
+        hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
+        pressed_background: Brush::solid(Color::blue()),
+        border: None,
+        shadow: None,
+        corner_radius: 0.0,
+        on_click: None,
+      }),
+      ViewSpec::ButtonSpec({
+        key: None,
+        text: "Top",
+        size: Size::new(width=100.0, height=40.0),
+        font: FontSpec::new(size=16.0, weight=600),
+        foreground: Color::black(),
+        background: Brush::solid(Color::gray()),
+        hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
+        pressed_background: Brush::solid(Color::blue()),
+        border: None,
+        shadow: None,
+        corner_radius: 0.0,
+        on_click: None,
+      }),
+    ],
+  })
+  let runtime = RuntimeState::new_spec(
+    root=spec,
+    size=Size::new(width=100.0, height=84.0),
+  )
+  let top_id = runtime.element_tree.root.children[1].id
+  runtime.dispatch_event(
+    Pointer(PointerEvent::new(position=Point::new(x=10.0, y=50.0), phase=Down)),
+  )
+  assert_true(runtime.active_pointer_capture == Some(top_id))
+  runtime.dispatch_event(
+    Pointer(PointerEvent::new(position=Point::new(x=10.0, y=50.0), phase=Move)),
+  )
+  assert_true(runtime.active_pointer_capture == Some(top_id))
+  runtime.dispatch_event(
+    Pointer(PointerEvent::new(position=Point::new(x=10.0, y=50.0), phase=Up)),
+  )
+  assert_true(runtime.active_pointer_capture is None)
+}
+
+///|
+test "runtime pointer move without cached capture does not scan stale siblings" {
+  let spec = ViewSpec::FlexSpec({
+    key: None,
+    axis: Axis::Vertical,
+    spacing: 4.0,
+    main_axis_alignment: MainStart,
+    cross_axis_alignment: CrossStart,
+    children: [
+      ViewSpec::ButtonSpec({
+        key: None,
+        text: "Bottom",
+        size: Size::new(width=100.0, height=40.0),
+        font: FontSpec::new(size=16.0, weight=600),
+        foreground: Color::black(),
+        background: Brush::solid(Color::gray()),
+        hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
+        pressed_background: Brush::solid(Color::blue()),
+        border: None,
+        shadow: None,
+        corner_radius: 0.0,
+        on_click: None,
+      }),
+      ViewSpec::ButtonSpec({
+        key: None,
+        text: "Top",
+        size: Size::new(width=100.0, height=40.0),
+        font: FontSpec::new(size=16.0, weight=600),
+        foreground: Color::black(),
+        background: Brush::solid(Color::gray()),
+        hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
+        pressed_background: Brush::solid(Color::blue()),
+        border: None,
+        shadow: None,
+        corner_radius: 0.0,
+        on_click: None,
+      }),
+    ],
+  })
+  let runtime = RuntimeState::new_spec(
+    root=spec,
+    size=Size::new(width=100.0, height=84.0),
+  )
+  runtime.element_tree.root.children[0].control.button_state = Pressed
+  runtime.dispatch_event(
+    Pointer(PointerEvent::new(position=Point::new(x=10.0, y=50.0), phase=Move)),
+  )
+  assert_true(
+    runtime.element_tree.root.children[0].control.button_state == Pressed,
+  )
+}
+
+///|
 test "button pressed paint keeps configured foreground" {
   let runtime = RuntimeState::new_spec(
     root=ViewSpec::ButtonSpec({

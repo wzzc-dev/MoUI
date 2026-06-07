@@ -153,6 +153,7 @@ fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
   self.element_tree = ElementTree::new(mounted.node)
   self.next_element_id = mounted.next_id
   self.focused_element = None
+  self.active_pointer_capture = None
   self.needs_rebuild = false
   self.needs_layout = true
   self.needs_paint = true
