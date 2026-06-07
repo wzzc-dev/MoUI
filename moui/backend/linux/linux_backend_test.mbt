@@ -7,12 +7,20 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
   inspect(info.capabilities.window, content="true")
   inspect(info.capabilities.renderer, content="true")
   inspect(info.capabilities.titlebar, content="true")
-  inspect(info.capabilities.drag_drop, content="false")
+  inspect(info.capabilities.text_input, content="true")
+  inspect(info.capabilities.ime, content="true")
+  inspect(info.capabilities.clipboard, content="true")
+  inspect(info.capabilities.drag_drop, content="true")
+  inspect(info.capabilities.scale_factor, content="true")
   inspect(info.capabilities.accessibility, content="false")
   inspect(info.accessibility.kind.label(), content="at-spi")
   inspect(info.accessibility.contract_ready, content="true")
   inspect(info.accessibility.native_binding_ready, content="false")
-  inspect(info.services.clipboard, content="false")
+  inspect(info.services.clipboard, content="true")
+  inspect(info.services.file_dialogs, content="true")
+  inspect(info.services.file_access, content="true")
+  inspect(info.services.open_url, content="true")
+  inspect(info.services.menus, content="false")
   inspect(info.services.system_theme, content="true")
   inspect(info.readiness.ready, content="true")
   assert_true(info.readiness.blocked_by.length() >= 1)
@@ -163,16 +171,145 @@ test "linux backend uses Wayland button event coordinates" {
 }
 
 ///|
+test "linux backend preserves normalized vertical wheel direction" {
+  let event = window_event_to_host_with_modifiers(
+    @window_core.WindowEvent::MouseWheel(
+      None,
+      @window_core.MouseScrollDelta::PixelDelta(
+        @dpi.PhysicalPositionF64::PhysicalPositionF64(0.0, -120.0),
+      ),
+      @window_core.TouchPhase::Moved,
+    ),
+    @core.Point::new(x=8.0, y=24.0),
+    @core.KeyModifiers::none(),
+  )
+  match event {
+    Some(
+      @host.HostEvent::Scroll(
+        {
+          position: { x: 8.0, y: 24.0 },
+          delta: @host.HostScrollDelta::Pixels({ x: 0.0, y: -120.0 }),
+          ..,
+        }
+      )
+    ) => ()
+    _ => fail("expected normalized Linux wheel delta to stay negative")
+  }
+}
+
+///|
 test "linux capability summary exposes known service gaps" {
   let summary = linux_capability_summary()
   inspect(summary.label, content="Linux host")
   inspect(summary.services.system_theme, content="true")
-  inspect(summary.services.clipboard, content="false")
-  inspect(summary.service_count(), content="1")
-  inspect(summary.input_count(), content="4")
-  inspect(summary.text_input_ready, content="false")
-  inspect(summary.drag_drop_ready, content="false")
+  inspect(summary.services.clipboard, content="true")
+  inspect(summary.services.file_dialogs, content="true")
+  inspect(summary.services.file_access, content="true")
+  inspect(summary.services.open_url, content="true")
+  inspect(summary.services.menus, content="false")
+  inspect(summary.service_count(), content="5")
+  inspect(summary.input_count(), content="7")
+  inspect(summary.text_input_ready, content="true")
+  inspect(summary.ime_ready, content="true")
+  inspect(summary.drag_drop_ready, content="true")
   inspect(summary.has_required_app_basics(), content="true")
+}
+
+///|
+test "linux service bridge routes real service contracts through handlers" {
+  let clipboard_text = Ref("")
+  let opened_url = Ref("")
+  let bridge = linux_service_bridge(
+    system_theme=@core.ColorScheme::Dark,
+    clipboard=request => {
+      match request {
+        @host.HostClipboardRequest::ReadText =>
+          @host.HostServiceResponse::ClipboardText(clipboard_text.val)
+        @host.HostClipboardRequest::WriteText(text) => {
+          clipboard_text.val = text
+          @host.HostServiceResponse::ClipboardWritten
+        }
+      }
+    },
+    open_url=url => {
+      opened_url.val = url
+      true
+    },
+    file_dialog=options => {
+      [
+        match options.kind {
+          @host.HostFileDialogKind::OpenFile => "/tmp/open.txt"
+          @host.HostFileDialogKind::SaveFile => "/tmp/save.txt"
+          @host.HostFileDialogKind::PickDirectory => "/tmp"
+        },
+      ]
+    },
+    text_file=request => {
+      match request {
+        @host.HostTextFileRequest::ReadText(path) =>
+          @host.HostServiceResponse::TextFileContent(path, "Linux text")
+        @host.HostTextFileRequest::WriteText(path, _text) =>
+          @host.HostServiceResponse::TextFileWritten(path)
+      }
+    },
+  )
+  inspect(bridge.capabilities.clipboard, content="true")
+  inspect(bridge.capabilities.file_dialogs, content="true")
+  inspect(bridge.capabilities.file_access, content="true")
+  inspect(bridge.capabilities.open_url, content="true")
+  inspect(bridge.capabilities.menus, content="false")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::Clipboard(
+        @host.HostClipboardRequest::WriteText("copied from Linux"),
+      ),
+    ) {
+    @host.HostServiceResponse::ClipboardWritten => ()
+    _ => fail("expected Linux clipboard write")
+  }
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText),
+    ) {
+    @host.HostServiceResponse::ClipboardText(text) =>
+      inspect(text, content="copied from Linux")
+    _ => fail("expected Linux clipboard read")
+  }
+  match
+    bridge.dispatch(@host.HostServiceRequest::OpenUrl("https://example.test")) {
+    @host.HostServiceResponse::UrlOpened =>
+      inspect(opened_url.val, content="https://example.test")
+    _ => fail("expected Linux URL open")
+  }
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::FileDialog(
+        @host.HostFileDialogOptions::new(
+          kind=@host.HostFileDialogKind::OpenFile,
+        ),
+      ),
+    ) {
+    @host.HostServiceResponse::FileDialogSelection(paths) =>
+      inspect(paths[0], content="/tmp/open.txt")
+    _ => fail("expected Linux file dialog selection")
+  }
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::TextFile(
+        @host.HostTextFileRequest::ReadText("/tmp/note.md"),
+      ),
+    ) {
+    @host.HostServiceResponse::TextFileContent(path, text) => {
+      inspect(path, content="/tmp/note.md")
+      inspect(text, content="Linux text")
+    }
+    _ => fail("expected Linux text-file read")
+  }
+  match bridge.dispatch(@host.HostServiceRequest::ShowMenu([])) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="menu service is unavailable")
+    _ => fail("expected Linux native menu gap")
+  }
 }
 
 ///|

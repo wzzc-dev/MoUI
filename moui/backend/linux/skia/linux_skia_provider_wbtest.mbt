@@ -81,21 +81,30 @@ test "linux skia provider preflight records package evidence boundary" {
   )
   assert_true(preflight.contains("renderer_dispose=SkiaRasterRenderer.dispose"))
   assert_true(preflight.contains("host=Linux host"))
-  assert_true(preflight.contains("host_services=system theme"))
-  assert_true(preflight.contains("host_input=pointer,scroll,keyboard,focus"))
-  assert_true(preflight.contains("clipboard=gap"))
+  assert_true(
+    preflight.contains(
+      "host_services=clipboard,file dialogs,file access,open URL,system theme",
+    ),
+  )
+  assert_true(
+    preflight.contains(
+      "host_input=pointer,scroll,keyboard,focus,text input,IME,clipboard shortcuts,drag/drop",
+    ),
+  )
+  assert_true(preflight.contains("clipboard=ready"))
   assert_true(preflight.contains("menu_service=gap"))
-  assert_true(preflight.contains("file_dialogs=gap"))
-  assert_true(preflight.contains("open_url=gap"))
+  assert_true(preflight.contains("file_dialogs=ready"))
+  assert_true(preflight.contains("file_access=ready"))
+  assert_true(preflight.contains("open_url=ready"))
   assert_true(preflight.contains("system_theme=ready"))
   assert_true(preflight.contains("async_services=gap"))
   assert_true(preflight.contains("window_lifecycle=ready"))
   assert_true(preflight.contains("multi_window=ready"))
-  assert_true(preflight.contains("text_input=gap"))
-  assert_true(preflight.contains("ime=gap"))
-  assert_true(preflight.contains("drag_drop=gap"))
+  assert_true(preflight.contains("text_input=ready"))
+  assert_true(preflight.contains("ime=ready"))
+  assert_true(preflight.contains("drag_drop=ready"))
   assert_true(preflight.contains("native_context_menu=gap"))
-  assert_true(preflight.contains("host_modal=gap"))
+  assert_true(preflight.contains("host_modal=ready"))
   assert_true(preflight.contains("native_accessibility=gap"))
   assert_true(preflight.contains("real Skia link flags"))
   assert_true(preflight.contains("matching-host pending"))
