@@ -140,6 +140,19 @@ fn emoji_proof_font() -> @core.FontSpec {
 }
 
 ///|
+fn emoji_proof_glyph_key(
+  system : @core.TextSystem,
+  shaper_label : String,
+) -> String {
+  "skia-system-fontmgr|\{system.id()}|\{shaper_label}|emoji-zwj-woman-technologist|rgba"
+}
+
+///|
+fn positive_pixel_extent(value : Double) -> Int {
+  value.ceil().to_int().max(1)
+}
+
+///|
 fn measured_text_width(
   system : @core.TextSystem,
   text : String,
@@ -394,11 +407,25 @@ fn main {
         } else {
           "fallback-glyph-run"
         }
+        let emoji_layout = renderer
+          .text_system()
+          .measure_text(
+            @core.TextLayoutInput::new(
+              text=emoji_proof_text(),
+              font=emoji_proof_font(),
+            ),
+          )
+        let emoji_glyph_width = positive_pixel_extent(emoji_layout.size.width)
+        let emoji_glyph_height = positive_pixel_extent(emoji_layout.size.height)
+        let emoji_glyph_key = emoji_proof_glyph_key(
+          renderer.text_system(),
+          shaper_label,
+        )
         println(
           "MoUI Skia text/emoji smoke color emoji high_saturation_pixels=\{emoji_pixels}",
         )
         println(
-          "MoUI renderer proof colorEmojiPixels metadata font_family=emoji font_source=skia-system-fontmgr text_system=\{renderer.text_system().id()} shaper=\{shaper_label} glyph_format=rgba glyph_count=1 cluster_count=1 high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels}",
+          "MoUI renderer proof colorEmojiPixels metadata font_family=emoji font_source=skia-system-fontmgr text_system=\{renderer.text_system().id()} shaper=\{shaper_label} glyph_format=rgba glyph_count=1 cluster_count=1 high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels} glyph_key=\{emoji_glyph_key} glyph_width=\{emoji_glyph_width} glyph_height=\{emoji_glyph_height}",
         )
         println(
           "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata",
