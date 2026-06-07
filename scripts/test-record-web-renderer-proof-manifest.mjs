@@ -7,6 +7,25 @@ import { spawnSync } from "node:child_process";
 
 const tmp = mkdtempSync(join(tmpdir(), "moui-web-renderer-proof-"));
 const recorder = "scripts/record-web-renderer-proof-manifest.mjs";
+const githubEnvKeys = [
+  "GITHUB_ACTIONS",
+  "GITHUB_REPOSITORY",
+  "GITHUB_RUN_ID",
+  "GITHUB_SERVER_URL",
+  "GITHUB_WORKFLOW",
+  "GITHUB_JOB",
+  "RUNNER_NAME",
+  "RUNNER_OS",
+  "RUNNER_ARCH",
+];
+
+const withoutGithubEnv = () => {
+  const env = { ...process.env };
+  for (const key of githubEnvKeys) {
+    delete env[key];
+  }
+  return env;
+};
 
 const proofKeys = [
   "radialGradient",
@@ -111,7 +130,7 @@ const runLocalRecorder = (name, webManifest, extraArgs = []) => {
         output,
         ...extraArgs,
       ],
-      { encoding: "utf8" },
+      { encoding: "utf8", env: withoutGithubEnv() },
     ),
   };
 };

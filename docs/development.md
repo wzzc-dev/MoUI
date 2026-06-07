@@ -39,6 +39,7 @@ members = [
   "./.local_repos/window",
   "./moui_skia",
   "./examples/counter",
+  "./examples/button_freeze_probe",
   "./examples/showcase",
   "./examples/markdown_editor",
   "./examples/settings",
