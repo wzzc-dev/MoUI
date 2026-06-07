@@ -83,8 +83,9 @@ Use this skill when editing or reviewing:
   callbacks after runtime destruction, and aggregate program-runtime inspector
   counters; message queue drains are bounded runtime turns so synchronous
   click/effect/task/subscription self-queues keep FIFO order but leave excess
-  work pending instead of monopolizing the current host callback; message queue
-  diagnostics stay platform-neutral through enqueue/drain/pending counters;
+  work pending instead of monopolizing the current host callback, then resume
+  that pending work FIFO on the next host callback; message queue diagnostics
+  stay platform-neutral through enqueue/drain/pending counters;
   pipeline cost
   diagnostics stay platform-neutral through rebuild/layout/paint/draw-command
   pass counters and non-mutating structured dirty-state summaries with dirty
