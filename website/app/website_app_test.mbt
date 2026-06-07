@@ -130,6 +130,30 @@ test "website shows visible main scrollbar and moves thumb" {
 }
 
 ///|
+test "website positive wheel delta scrolls body downward" {
+  let size = @core.Size::new(width=1180.0, height=760.0)
+  let runtime = runtime(width=size.width, height=size.height)
+  guard website_scrollbar_thumb_frame(runtime.draw_commands(), size)
+    is Some(before) else {
+    fail("expected visible website scrollbar thumb")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=size.width / 2.0, y=120.0),
+        phase=@core.PointerPhase::Move,
+        wheel_delta=@core.Point::new(x=0.0, y=180.0),
+      ),
+    ),
+  )
+  guard website_scrollbar_thumb_frame(runtime.draw_commands(), size)
+    is Some(after) else {
+    fail("expected moved website scrollbar thumb")
+  }
+  assert_true(after.origin.y > before.origin.y)
+}
+
+///|
 test "website feature cards stack supporting copy below the header row" {
   let commands = runtime(width=1180.0, height=760.0).draw_commands()
   assert_feature_card_stacked(

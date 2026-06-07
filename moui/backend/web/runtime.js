@@ -67,6 +67,16 @@ export function createWebGpuImports(options = {}) {
       // Evidence recording is best-effort and must not affect rendering.
     }
   };
+  const textSelectionOptions = options.textSelection ?? {};
+  const textSelectionEnabled = textSelectionOptions.enabled === true;
+  const textSelectionClassName =
+    `${textSelectionOptions.className || "moui-text-selection-layer"}`;
+  const textSelectionClickSlop = Math.max(
+    0,
+    Number.isFinite(Number(textSelectionOptions.clickSlop))
+      ? Number(textSelectionOptions.clickSlop)
+      : 4,
+  );
 
   const createStringHandle = value => {
     const handle = nextStringHandle++;
@@ -108,6 +118,231 @@ export function createWebGpuImports(options = {}) {
     canvas.height = Math.max(1, Math.round(Number(height) * dpr));
     canvas.style.width = `${Math.max(1, Number(width))}px`;
     canvas.style.height = `${Math.max(1, Number(height))}px`;
+  };
+
+  const preventDefaultIfCancelable = event => {
+    if (event?.cancelable) event.preventDefault();
+  };
+
+  const eventSnapshot = event => ({
+    clientX: Number(event?.clientX) || 0,
+    clientY: Number(event?.clientY) || 0,
+    button: Number(event?.button) || 0,
+    buttons: Number(event?.buttons) || 0,
+    ctrlKey: !!event?.ctrlKey,
+    shiftKey: !!event?.shiftKey,
+    altKey: !!event?.altKey,
+    metaKey: !!event?.metaKey,
+    pointerId: Number(event?.pointerId) || 1,
+    pointerType: event?.pointerType || "mouse",
+    deltaX: Number(event?.deltaX) || 0,
+    deltaY: Number(event?.deltaY) || 0,
+    deltaZ: Number(event?.deltaZ) || 0,
+    deltaMode: Number(event?.deltaMode) || 0,
+  });
+
+  const currentSelectionText = () => {
+    try {
+      return `${globalThis.getSelection?.()?.toString?.() ?? ""}`;
+    } catch {
+      return "";
+    }
+  };
+
+  const dispatchCanvasSyntheticActivation = (canvas, snapshot) => {
+    const common = {
+      bubbles: true,
+      cancelable: true,
+      clientX: snapshot.clientX,
+      clientY: snapshot.clientY,
+      button: snapshot.button,
+      ctrlKey: snapshot.ctrlKey,
+      shiftKey: snapshot.shiftKey,
+      altKey: snapshot.altKey,
+      metaKey: snapshot.metaKey,
+    };
+    if (typeof globalThis.PointerEvent === "function") {
+      const pointer = {
+        ...common,
+        pointerId: snapshot.pointerId,
+        pointerType: snapshot.pointerType,
+        isPrimary: true,
+      };
+      canvas.dispatchEvent(new PointerEvent("pointerdown", { ...pointer, buttons: 1 }));
+      canvas.dispatchEvent(new PointerEvent("pointerup", { ...pointer, buttons: 0 }));
+    } else if (typeof globalThis.MouseEvent === "function") {
+      canvas.dispatchEvent(new MouseEvent("mousedown", { ...common, buttons: 1 }));
+      canvas.dispatchEvent(new MouseEvent("mouseup", { ...common, buttons: 0 }));
+    }
+    if (typeof globalThis.MouseEvent === "function") {
+      canvas.dispatchEvent(new MouseEvent("click", { ...common, buttons: 0 }));
+    }
+  };
+
+  const dispatchCanvasSyntheticMove = (canvas, snapshot) => {
+    const common = {
+      bubbles: true,
+      cancelable: true,
+      clientX: snapshot.clientX,
+      clientY: snapshot.clientY,
+      button: snapshot.button,
+      buttons: snapshot.buttons,
+      ctrlKey: snapshot.ctrlKey,
+      shiftKey: snapshot.shiftKey,
+      altKey: snapshot.altKey,
+      metaKey: snapshot.metaKey,
+    };
+    if (typeof globalThis.PointerEvent === "function") {
+      canvas.dispatchEvent(new PointerEvent("pointermove", {
+        ...common,
+        pointerId: snapshot.pointerId,
+        pointerType: snapshot.pointerType,
+        isPrimary: true,
+      }));
+    } else if (typeof globalThis.MouseEvent === "function") {
+      canvas.dispatchEvent(new MouseEvent("mousemove", common));
+    }
+  };
+
+  const dispatchCanvasSyntheticWheel = (canvas, event) => {
+    preventDefaultIfCancelable(event);
+    const snapshot = eventSnapshot(event);
+    dispatchCanvasSyntheticMove(canvas, snapshot);
+    if (typeof globalThis.WheelEvent === "function") {
+      canvas.dispatchEvent(new WheelEvent("wheel", {
+        bubbles: true,
+        cancelable: true,
+        clientX: snapshot.clientX,
+        clientY: snapshot.clientY,
+        deltaX: snapshot.deltaX,
+        deltaY: snapshot.deltaY,
+        deltaZ: snapshot.deltaZ,
+        deltaMode: snapshot.deltaMode,
+        ctrlKey: snapshot.ctrlKey,
+        shiftKey: snapshot.shiftKey,
+        altKey: snapshot.altKey,
+        metaKey: snapshot.metaKey,
+      }));
+    }
+  };
+
+  const syncTextSelectionLayerGeometry = state => {
+    const canvas = state?.canvas;
+    const layer = state?.layer;
+    if (!canvas || !layer) return;
+    const host = layer.parentElement ?? canvas.parentElement;
+    const canvasRect = canvas.getBoundingClientRect?.() ?? {
+      left: 0,
+      top: 0,
+      width: canvas.clientWidth || canvas.width || 1,
+      height: canvas.clientHeight || canvas.height || 1,
+    };
+    const hostRect = host?.getBoundingClientRect?.() ?? { left: 0, top: 0 };
+    layer.style.left = `${canvasRect.left - hostRect.left + (host?.scrollLeft || 0)}px`;
+    layer.style.top = `${canvasRect.top - hostRect.top + (host?.scrollTop || 0)}px`;
+    layer.style.width = `${Math.max(1, canvasRect.width || canvas.clientWidth || 1)}px`;
+    layer.style.height = `${Math.max(1, canvasRect.height || canvas.clientHeight || 1)}px`;
+  };
+
+  const installTextSelectionLayerEvents = state => {
+    const begin = event => {
+      if ((event.button ?? 0) !== 0) return;
+      const snapshot = eventSnapshot(event);
+      state.pendingClick = {
+        ...snapshot,
+        startX: snapshot.clientX,
+        startY: snapshot.clientY,
+        moved: false,
+        selection: currentSelectionText(),
+      };
+    };
+    const move = event => {
+      const snapshot = eventSnapshot(event);
+      const pending = state.pendingClick;
+      if (pending && (
+        Math.abs(snapshot.clientX - pending.startX) > textSelectionClickSlop ||
+        Math.abs(snapshot.clientY - pending.startY) > textSelectionClickSlop
+      )) {
+        pending.moved = true;
+      }
+      dispatchCanvasSyntheticMove(state.canvas, snapshot);
+    };
+    const end = event => {
+      const pending = state.pendingClick;
+      state.pendingClick = null;
+      if (!pending || pending.moved) return;
+      const snapshot = eventSnapshot(event);
+      setTimeout(() => {
+        const selected = currentSelectionText();
+        if (selected && selected !== pending.selection) return;
+        dispatchCanvasSyntheticActivation(state.canvas, {
+          ...pending,
+          clientX: snapshot.clientX,
+          clientY: snapshot.clientY,
+          button: snapshot.button,
+          buttons: snapshot.buttons,
+        });
+      }, 0);
+    };
+    const hasPointerEvents = typeof globalThis.PointerEvent === "function";
+    state.layer.addEventListener("wheel", event => {
+      dispatchCanvasSyntheticWheel(state.canvas, event);
+    }, { passive: false });
+    state.layer.addEventListener("pointerdown", begin, { passive: true });
+    state.layer.addEventListener("pointermove", move, { passive: true });
+    state.layer.addEventListener("pointerup", end, { passive: true });
+    state.layer.addEventListener("mousedown", event => {
+      if (!hasPointerEvents) begin(event);
+    }, { passive: true });
+    state.layer.addEventListener("mousemove", event => {
+      if (!hasPointerEvents) move(event);
+    }, { passive: true });
+    state.layer.addEventListener("mouseup", event => {
+      if (!hasPointerEvents) end(event);
+    }, { passive: true });
+  };
+
+  const createTextSelectionLayer = canvas => {
+    if (!textSelectionEnabled || typeof document === "undefined" || !canvas) {
+      return null;
+    }
+    const host = canvas.parentElement ?? document.body;
+    if (!host) return null;
+    try {
+      if (globalThis.getComputedStyle?.(host)?.position === "static") {
+        host.style.position = "relative";
+      }
+    } catch {
+      // If style inspection is unavailable, the configured page CSS can own it.
+    }
+    const layer = document.createElement("div");
+    layer.className = textSelectionClassName;
+    layer.setAttribute("aria-hidden", "true");
+    Object.assign(layer.style, {
+      position: "absolute",
+      left: "0px",
+      top: "0px",
+      width: "1px",
+      height: "1px",
+      overflow: "hidden",
+      pointerEvents: "none",
+      userSelect: "text",
+      WebkitUserSelect: "text",
+      zIndex: `${textSelectionOptions.zIndex ?? 1}`,
+      contain: "layout style paint",
+    });
+    host.appendChild(layer);
+    const state = { canvas, layer, runs: [], pendingClick: null };
+    installTextSelectionLayerEvents(state);
+    syncTextSelectionLayerGeometry(state);
+    return state;
+  };
+
+  const disposeTextSelectionLayer = state => {
+    if (!state) return;
+    state.runs = [];
+    state.pendingClick = null;
+    state.layer?.remove?.();
   };
 
   const identityTransform = () => ({ a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 });
@@ -169,6 +404,111 @@ export function createWebGpuImports(options = {}) {
     b: color.b,
     a: color.a * opacity,
   });
+
+  const cssPixels = value => `${Number(value) || 0}px`;
+
+  const cssTextAlign = align => {
+    switch (Number(align) || 0) {
+      case 1: return "center";
+      case 2: return "right";
+      default: return "left";
+    }
+  };
+
+  const textSelectionClipPath = run => {
+    const frame = run.frame;
+    const visible = run.visible;
+    if (!visible) return "";
+    const left = Math.max(0, visible.x - frame.x);
+    const top = Math.max(0, visible.y - frame.y);
+    const right = Math.max(0, frame.x + frame.width - (visible.x + visible.width));
+    const bottom = Math.max(0, frame.y + frame.height - (visible.y + visible.height));
+    if (left <= 0 && top <= 0 && right <= 0 && bottom <= 0) return "";
+    return `inset(${top}px ${right}px ${bottom}px ${left}px)`;
+  };
+
+  const recordSelectableTextRun = (renderer, text, frame, font, align, alpha) => {
+    const selection = renderer.textSelection;
+    if (!selection || !text || alpha <= 0.01) return;
+    const state = rendererState(renderer);
+    const logicalFrame = {
+      x: Number(frame.x) || 0,
+      y: Number(frame.y) || 0,
+      width: Math.max(0, Number(frame.width) || 0),
+      height: Math.max(0, Number(frame.height) || 0),
+    };
+    if (logicalFrame.width <= 0 || logicalFrame.height <= 0) return;
+    const transformed = transformRect(state.transform, logicalFrame);
+    const canvasClip = {
+      x: 0,
+      y: 0,
+      width: Math.max(1, Number(renderer.width || renderer.surface.width || 1)),
+      height: Math.max(1, Number(renderer.height || renderer.surface.height || 1)),
+    };
+    const clipped = intersectRects(transformed, state.clip);
+    const visible = intersectRects(clipped, canvasClip);
+    if (!visible || visible.width <= 0 || visible.height <= 0) return;
+    selection.runs.push({
+      text,
+      frame: transformed,
+      visible,
+      font: {
+        family: font.family || WEB_FONT_STACK,
+        style: font.style || "normal",
+        size: Math.max(1, Number(font.size) || 14),
+        weight: Number(font.weight) || 400,
+      },
+      align: Number(align) || 0,
+    });
+  };
+
+  const applySelectableTextStyle = (span, run) => {
+    Object.assign(span.style, {
+      position: "absolute",
+      display: "block",
+      left: cssPixels(run.frame.x),
+      top: cssPixels(run.frame.y),
+      width: cssPixels(run.frame.width),
+      height: cssPixels(run.frame.height),
+      margin: "0",
+      padding: "0",
+      border: "0",
+      overflow: "hidden",
+      whiteSpace: "pre",
+      pointerEvents: "auto",
+      cursor: "text",
+      userSelect: "text",
+      WebkitUserSelect: "text",
+      color: "transparent",
+      WebkitTextFillColor: "transparent",
+      background: "transparent",
+      fontFamily: run.font.family,
+      fontStyle: run.font.style,
+      fontSize: cssPixels(run.font.size),
+      fontWeight: `${run.font.weight}`,
+      lineHeight: cssPixels(Math.max(run.font.size, run.frame.height)),
+      textAlign: cssTextAlign(run.align),
+      letterSpacing: "0",
+    });
+    const clipPath = textSelectionClipPath(run);
+    span.style.clipPath = clipPath;
+    span.style.webkitClipPath = clipPath;
+  };
+
+  const syncTextSelectionLayer = renderer => {
+    const selection = renderer.textSelection;
+    if (!selection || typeof document === "undefined") return;
+    syncTextSelectionLayerGeometry(selection);
+    const fragment = document.createDocumentFragment();
+    for (const run of selection.runs ?? []) {
+      const span = document.createElement("span");
+      span.textContent = run.text;
+      span.draggable = false;
+      applySelectableTextStyle(span, run);
+      fragment.appendChild(span);
+    }
+    selection.layer.replaceChildren(fragment);
+  };
 
   const parseDoubleList = value => `${value ?? ""}`
     .split(",")
@@ -1425,6 +1765,19 @@ export function createWebGpuImports(options = {}) {
     const baseline = Number(y) + Math.max(font.size, (Number(height) + font.size * 0.72) / 2);
     const state = rendererState(renderer);
     const drawColor = multiplyColorAlpha(color, state.opacity);
+    recordSelectableTextRun(
+      renderer,
+      value,
+      {
+        x: Number(x),
+        y: Number(y),
+        width: Number(width),
+        height: Number(height),
+      },
+      font,
+      align,
+      drawColor.a,
+    );
     for (const { glyph } of glyphs) {
       const glyphColor = glyph.colorGlyph
         ? { r: -1, g: 0, b: 0, a: drawColor.a }
@@ -2007,6 +2360,7 @@ export function createWebGpuImports(options = {}) {
         frameResources: [],
         stateStack: [{ opacity: 1, transform: identityTransform(), clip: undefined }],
         presentCount: 0,
+        textSelection: createTextSelectionLayer(surface.canvas),
       };
       const handle = nextRendererHandle++;
       renderers.set(handle, renderer);
@@ -2028,6 +2382,7 @@ export function createWebGpuImports(options = {}) {
       renderer.surface.width = width;
       renderer.surface.height = height;
       renderer.surface.scaleFactor = scaleFactor;
+      syncTextSelectionLayerGeometry(renderer.textSelection);
       return ok();
     },
     begin_frame(rendererHandle, width, height) {
@@ -2042,6 +2397,7 @@ export function createWebGpuImports(options = {}) {
       renderer.scopeStack = [newDrawScope()];
       renderer.layerStack = [];
       renderer.stateStack = [{ opacity: 1, transform: identityTransform(), clip: undefined }];
+      if (renderer.textSelection) renderer.textSelection.runs = [];
       return ok();
     },
     clear(rendererHandle, r, g, b, a) {
@@ -2354,6 +2710,7 @@ export function createWebGpuImports(options = {}) {
         renderTargetSnapshot,
       );
       device.queue.submit([encoder.finish()]);
+      syncTextSelectionLayer(renderer);
       renderer.presentCount += 1;
       recordRuntimeEvidenceEvent({
         kind: 100,
@@ -2372,6 +2729,7 @@ export function createWebGpuImports(options = {}) {
       for (const image of renderer?.images?.values?.() ?? []) {
         image.texture?.destroy?.();
       }
+      disposeTextSelectionLayer(renderer?.textSelection);
       renderers.delete(rendererHandle);
     },
   };
