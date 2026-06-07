@@ -258,6 +258,7 @@ try {
     -SkiaRoot $resolvedRoot `
     -SkiaInclude $resolvedIncludeRoot `
     -SkiaLibDir $resolvedLibDir `
+    -SkiaLinkMode $resolvedSkiaLinkMode `
     -ExtraCcFlags $ExtraCcFlags `
     -ExtraLinkFlags $ExtraLinkFlags `
     -Output $nativePkg `

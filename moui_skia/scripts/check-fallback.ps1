@@ -83,6 +83,14 @@ function Assert-WorkflowUsesHashtableSplatting {
   }
 }
 
+function Assert-WindowsMsvcSmokePassesResolvedLinkMode {
+  $path = Join-Path $repoRoot "scripts/windows-msvc-skia-smoke.ps1"
+  $content = Get-Content -LiteralPath $path -Raw
+  if ($content -notmatch '(?s)configure-windows-msvc-native-pkg\.ps1.*-SkiaLinkMode\s+\$resolvedSkiaLinkMode') {
+    throw "windows-msvc-skia-smoke.ps1 must pass the resolved Skia link mode to configure-windows-msvc-native-pkg.ps1"
+  }
+}
+
 function Resolve-WorkflowPath {
   param(
     [Parameter(Mandatory = $true)]
@@ -336,6 +344,7 @@ try {
   & (Join-Path $repoRoot "scripts/verify-native-capability-contract.ps1")
   Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-windows-real-skia-smoke.yml")
   Assert-WorkflowUsesHashtableSplatting -Path (Resolve-WorkflowPath ".github/workflows/moui-skia-real-skia-acceptance.yml")
+  Assert-WindowsMsvcSmokePassesResolvedLinkMode
 
   Push-Location (Join-Path $repoRoot "scripts/native_smoke")
   try {
