@@ -218,9 +218,12 @@ Remote font loading is intentionally outside the current backend contract.
   select-all commands through host context menus, so keyboard shortcuts and
   native menu selections share the same selection, clipboard, and Unicode paste
   dispatch path.
-- Windows native platform provider work remains scaffolded; Linux native
-  provider work is still partial, with only the explicit FreeType color-emoji
-  path handled natively while composed Cosmic fallback handles general text.
+- Linux native Skia is the Preview Ready text/render route and continues to use
+  the Skia text system described above. The Linux native WGPU
+  fontconfig/HarfBuzz/FreeType provider remains diagnostic and partial, with
+  only the explicit FreeType color-emoji path handled natively while composed
+  Cosmic fallback handles general text. Windows DirectWrite remains a scaffold
+  on the native WGPU diagnostic route.
 - Web can surface browser emoji and font fallback behavior, while stable Web
   adapter tests keep the host-backed `TextSystem` contract deterministic.
 - Text changes that affect renderer feature status must update

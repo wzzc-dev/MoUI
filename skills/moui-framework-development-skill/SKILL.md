@@ -109,8 +109,12 @@ Use this skill when editing or reviewing:
 - Platform example packages should stay thin entrypoints.
 - Web is `wasm-gc + window/web + browser WebGPU host imports`; there is no
   JS-target fallback.
-- Linux has a minimal Wayland/WGPU backend; keep its remaining clipboard,
-  menu, dialog, drag/drop, IME, AT-SPI, and native font provider gaps explicit.
+- Linux has a Wayland backend with Skia as the native preview mainline,
+  host-service wiring for system theme, Wayland clipboard selection, desktop
+  URL/file-dialog/text-file services, text-input/IME request sync, file
+  drag/drop conversion, and scale-factor reporting. Keep native menu, AT-SPI,
+  matching-host runtime evidence, and native WGPU/fontconfig text-provider gaps
+  explicit.
 - Public API changes require `moon info` and review of `pkg.generated.mbti`
   diffs.
 - Renderer capability changes require synchronized updates to code, tests, docs,
@@ -159,9 +163,11 @@ Use this skill when editing or reviewing:
   and CAMetalLayer WGPU surface creation.
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
   and HWND WGPU surface creation.
-- `backend/linux/`: minimal Wayland host over `.local_repos/window/linux`, a
+- `backend/linux/`: Wayland host over `.local_repos/window/linux`, Linux
+  host-service bridge, text-input/IME request sync, drag/drop conversion, a
   native Skia mainline presenter path plus native WGPU diagnostic surface path,
-  shared host event conversion, and explicit unsupported-service reporting.
+  shared host event conversion, and explicit native menu/AT-SPI follow-up
+  reporting.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for
@@ -600,9 +606,9 @@ moon info
 - Returning anything other than `@core.View[Msg]` from public view constructors.
 - Skipping `moon info` after public API changes.
 - Updating renderer support without updating capability docs and tests.
-- Treating the minimal Linux Wayland backend as complete platform support while
-  clipboard, menu, dialog, drag/drop, IME, AT-SPI, and native font provider
-  work remains.
+- Treating Linux Skia Preview Ready as complete platform support while native
+  menu, AT-SPI, matching-host runtime evidence, and native font provider work
+  remain.
 - Moving shared example logic into platform entrypoints.
 - Running broad native checks before focused package validation.
 - Letting `AGENTS.md` or repo-local skills drift after package, docs, example,
