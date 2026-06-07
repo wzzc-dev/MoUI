@@ -97,6 +97,25 @@ const runRecorder = (name, webManifest, extraArgs = []) => {
   };
 };
 
+const runLocalRecorder = (name, webManifest, extraArgs = []) => {
+  const output = join(tmp, "artifacts", "conformance", "renderer-proof", `${name}.json`);
+  return {
+    output,
+    result: spawnSync(
+      process.execPath,
+      [
+        recorder,
+        "--web-presentation-manifest",
+        webManifest,
+        "--output",
+        output,
+        ...extraArgs,
+      ],
+      { encoding: "utf8" },
+    ),
+  };
+};
+
 const passed = runRecorder("passed", writeWebManifest("passed"), ["--require-passed"]);
 if (passed.result.status !== 0) {
   console.error("expected passed web renderer proof");
@@ -116,6 +135,23 @@ if (
     "1|normal|400|24|system-ui|rgba|👩‍💻"
 ) {
   console.error("expected web renderer proof to preserve color emoji metadata");
+  process.exit(1);
+}
+
+const localComplete = runLocalRecorder("local-complete", writeWebManifest("local-complete"));
+if (localComplete.result.status !== 0) {
+  console.error("expected complete local web renderer proof to validate as a failed diagnostic");
+  console.error(localComplete.result.stdout);
+  console.error(localComplete.result.stderr);
+  process.exit(1);
+}
+const localCompleteManifest = JSON.parse(readFileSync(localComplete.output, "utf8"));
+if (
+  localCompleteManifest.status !== "failed" ||
+  localCompleteManifest.provenance.kind !== "matching-host-artifact" ||
+  localCompleteManifest.observations.colorEmojiPixels.status !== "passed"
+) {
+  console.error("complete local web proof should remain a failed renderer-proof diagnostic");
   process.exit(1);
 }
 
