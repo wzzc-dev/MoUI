@@ -126,7 +126,7 @@ if (backend === "wgpu-native") {
 
 log("MoUI renderer proof radialGradient missing: requires true radial center/mid/edge pixel artifact.");
 log("MoUI renderer proof transformPixels missing: requires nested transform/clip/layer/filter pixel artifact.");
-log("MoUI renderer proof colorEmojiPixels missing: requires real high-saturation emoji raster/glyph evidence.");
+log("MoUI renderer proof colorEmojiPixels missing: requires real high-saturation emoji raster/glyph evidence with font/glyph metadata.");
 log("MoUI renderer proof zwjGrapheme missing: requires single grapheme cluster and no interior caret evidence.");
 log("MoUI renderer proof bidiLayout missing: requires visual-order evidence.");
 log("MoUI renderer proof paragraphWrapping missing: requires line metrics and later-line pixels.");
