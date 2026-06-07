@@ -255,16 +255,7 @@ fn append_searchbar_commands(
   } else {
     environment_color(environment, data.foreground)
   }
-  let text_frame = Rect::new(
-    x=frame.origin.x + 32.0,
-    y=frame.origin.y,
-    width=if text != "" {
-      frame.size.width - 64.0
-    } else {
-      frame.size.width - 32.0
-    },
-    height=frame.size.height,
-  ).inset(Insets::symmetric(vertical=0.0))
+  let text_frame = searchbar_text_frame(frame, has_text=text != "")
   if is_focused && element.control.composition is None {
     let layout = environment_measure_text(
       environment,
@@ -329,4 +320,18 @@ fn append_searchbar_commands(
       data.foreground.with_alpha(0.6),
     )
   }
+}
+
+///|
+fn searchbar_text_frame(frame : Rect, has_text~ : Bool) -> Rect {
+  Rect::new(
+    x=frame.origin.x + 32.0,
+    y=frame.origin.y,
+    width=if has_text {
+      frame.size.width - 64.0
+    } else {
+      frame.size.width - 32.0
+    },
+    height=frame.size.height,
+  ).inset(Insets::symmetric(vertical=0.0))
 }

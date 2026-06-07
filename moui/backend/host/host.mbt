@@ -1193,6 +1193,14 @@ pub fn RedrawScheduler::request(self : RedrawScheduler) -> Unit {
 }
 
 ///|
+fn RedrawScheduler::request_dirty(self : RedrawScheduler) -> Unit {
+  if !self.redraw_requested {
+    self.redraw_requested = true
+  }
+  (self.schedule)()
+}
+
+///|
 pub fn RedrawScheduler::begin_redraw(self : RedrawScheduler) -> Unit {
   self.redraw_requested = false
 }
@@ -1439,7 +1447,7 @@ pub fn HostRuntimeDriver::request_redraw_if_needed(
   self : HostRuntimeDriver,
 ) -> Unit {
   if self.runtime.needs_redraw() {
-    self.request_redraw()
+    self.scheduler.request_dirty()
   }
 }
 

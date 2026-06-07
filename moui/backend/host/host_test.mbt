@@ -3669,6 +3669,42 @@ test "host driver dispatches resize and deduplicates redraw requests" {
 }
 
 ///|
+test "host driver retries dirty redraw while previous redraw is pending" {
+  let scheduled = Ref(0)
+  let text = @core.State::new("")
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
+    scheduled.val = scheduled.val + 1
+  })
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  inspect(scheduled.val, content="1")
+  let pending = driver.dispatch(
+    HostEvent::TextInput(@core.TextInputEvent::InsertText("a")),
+  )
+  inspect(text.get(), content="a")
+  inspect(pending.redraw_requested, content="true")
+  inspect(scheduled.val, content="2")
+  driver.begin_redraw()
+  ignore(
+    driver.dispatch(HostEvent::TextInput(@core.TextInputEvent::InsertText("b"))),
+  )
+  inspect(text.get(), content="ab")
+  inspect(scheduled.val, content="3")
+}
+
+///|
 test "host driver maps focused text input through core text input event" {
   let text = @core.State::new("")
   let runtime = host_test_runtime(
@@ -4202,17 +4238,24 @@ test "text input session enables updates and disables ime requests" {
     _ => fail("focused text field should enable ime")
   }
   match session.sync(runtime.focused_text_input()) {
+    NoImeChange => ()
+    _ => fail("unchanged focused text field should not repeat ime updates")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("c")),
+  )
+  match session.sync(runtime.focused_text_input()) {
     UpdateIme(@window_core.ImeRequest::Update(data)) => {
       match data.cursor_area() {
         Some((_, size)) => assert_true(size.to_logical(1.0).height() > 0.0)
         None => fail("expected cursor area")
       }
       match data.surrounding_text() {
-        Some(surrounding) => inspect(surrounding.text(), content="ab")
+        Some(surrounding) => inspect(surrounding.text(), content="abc")
         None => fail("expected surrounding text")
       }
     }
-    _ => fail("focused text field should update active ime")
+    _ => fail("changed focused text field should update active ime")
   }
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
@@ -4225,6 +4268,10 @@ test "text input session enables updates and disables ime requests" {
   match session.sync(runtime.focused_text_input()) {
     DisableIme(@window_core.ImeRequest::Disable) => ()
     _ => fail("blur should disable ime")
+  }
+  match session.sync(runtime.focused_text_input()) {
+    NoImeChange => ()
+    _ => fail("unfocused runtime should stay idle after disabling ime")
   }
 }
 
