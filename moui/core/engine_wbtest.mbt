@@ -1609,6 +1609,45 @@ test "runtime exposes focused text input state for hosts" {
 }
 
 ///|
+test "runtime exposes focused searchbar text input state for hosts" {
+  let query = State::new("abc")
+  let runtime = RuntimeState::new_spec(
+    root=ViewSpec::SearchBarSpec({
+      key: None,
+      query: query.binding(),
+      placeholder: "Search",
+      font: FontSpec::new(size=14.0, weight=400),
+      foreground: Color::black(),
+      placeholder_color: Color::gray(),
+      background: Brush::solid(Color::white()),
+      border: None,
+      focused_border: None,
+      cursor_color: Color::blue(),
+      corner_radius: 8.0,
+      on_submit: None,
+      on_clear: None,
+    }),
+    size=Size::new(width=240.0, height=44.0),
+  )
+  inspect(runtime.focused_text_input().focused, content="false")
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=40.0, y=10.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  let input = runtime.focused_text_input()
+  inspect(input.focused, content="true")
+  inspect(input.text, content="abc")
+  inspect(input.caret, content="3")
+  assert_true(input.frame == Rect::new(x=0.0, y=0.0, width=240.0, height=44.0))
+  assert_true(input.caret_rect.origin.x > input.frame.origin.x + 32.0)
+  assert_true(input.caret_rect.origin.y > input.frame.origin.y)
+}
+
+///|
 test "focused text input caret rect follows ime composition cursor" {
   let state = State::new("")
   let runtime = RuntimeState::new_spec(
