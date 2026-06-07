@@ -183,8 +183,8 @@ Use this skill when editing or reviewing:
   async image second-frame repaint through the host completion route.
 - `moui/tests/skia_text_emoji_smoke/native`: opt-in real-Skia text/emoji proof
   smoke that records renderer-proof markers only after captured Skia pixels and
-  text-system evidence prove color emoji, ZWJ grapheme, paragraph wrapping, and
-  bidi observations.
+  font/glyph metadata plus text-system evidence prove color emoji, ZWJ
+  grapheme, paragraph wrapping, and bidi observations.
 - `moui/tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
   packages for comparing supported text systems and documented gaps.
 - `examples/*/app`: shared application logic.
@@ -266,8 +266,10 @@ Renderer proof is tracked separately in schema v1 manifests under
 with `scripts/validate-renderer-proof-manifest.mjs`; passed entries require
 GitHub Actions provenance plus exactly `radialGradient`, `transformPixels`,
 `colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`, `paragraphWrapping`, and
-`asyncImageSecondFrame` observations with strong marker tokens. Package-only
-tests, skipped jobs, missing uploaded artifacts, blank screenshots, caret-only
+`asyncImageSecondFrame` observations with strong marker tokens. Passed
+`colorEmojiPixels` observations must also include `font-metadata` /
+`glyph-metadata` evidence and structured metadata fields. Package-only tests,
+skipped jobs, missing uploaded artifacts, blank screenshots, caret-only
 diagnostics, coverage-only font matching, provider preflights, and fallback-safe
 descriptor audits must stay failed proof. The native Skia proof matrix
 configures the locked release Skia artifact before running real renderer/text

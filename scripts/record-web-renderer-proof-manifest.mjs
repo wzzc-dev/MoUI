@@ -48,6 +48,30 @@ const addMarker = (condition, line) => {
   if (condition) markerLines.push(line);
 };
 
+const colorEmoji = showcase?.screenshot?.colorEmojiPixels;
+const colorEmojiMetadata = colorEmoji?.metadata;
+const colorEmojiFont = colorEmojiMetadata?.font;
+const colorEmojiGlyph = colorEmojiMetadata?.glyph;
+const colorEmojiMetadataReady =
+  colorEmoji?.passed === true &&
+  typeof colorEmojiFont?.family === "string" &&
+  colorEmojiFont.family.trim() !== "" &&
+  typeof colorEmojiFont?.source === "string" &&
+  colorEmojiFont.source.trim() !== "" &&
+  typeof colorEmojiFont?.textSystem === "string" &&
+  colorEmojiFont.textSystem.trim() !== "" &&
+  colorEmojiGlyph?.format === "rgba" &&
+  Number(colorEmojiGlyph?.glyphCount) >= 1 &&
+  Number(colorEmojiGlyph?.clusterCount) >= 1 &&
+  Number(colorEmojiGlyph?.highSaturationPixels) >= 8 &&
+  Number(colorEmojiGlyph?.alphaPixels ?? colorEmoji.glyphAlphaPixels ?? 0) > 0 &&
+  typeof colorEmojiGlyph?.key === "string" &&
+  colorEmojiGlyph.key.trim() !== "" &&
+  Number(colorEmojiGlyph?.width) > 0 &&
+  Number(colorEmojiGlyph?.height) > 0;
+
+const metadataTokenValue = value => `${value ?? ""}`.replace(/\s+/g, "_");
+
 addMarker(
   showcase?.observations?.radialGradient === "yes",
   "MoUI renderer proof radialGradient passed center-mid-edge-pixels shader-payload",
@@ -57,9 +81,28 @@ addMarker(
   "MoUI renderer proof transformPixels passed pixel-markers",
 );
 addMarker(
-  showcase?.observations?.colorEmojiPixels === "yes",
-  "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster",
+  showcase?.observations?.colorEmojiPixels === "yes" && colorEmojiMetadataReady,
+  "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata",
 );
+if (showcase?.observations?.colorEmojiPixels === "yes" && colorEmojiMetadataReady) {
+  markerLines.push(
+    [
+      "MoUI renderer proof colorEmojiPixels metadata",
+      `font_family=${metadataTokenValue(colorEmojiFont.family)}`,
+      `font_source=${metadataTokenValue(colorEmojiFont.source)}`,
+      `text_system=${metadataTokenValue(colorEmojiFont.textSystem)}`,
+      `shaper=${metadataTokenValue(colorEmojiFont.shaper || "browser-canvas")}`,
+      `glyph_format=${metadataTokenValue(colorEmojiGlyph.format)}`,
+      `glyph_count=${Number(colorEmojiGlyph.glyphCount)}`,
+      `cluster_count=${Number(colorEmojiGlyph.clusterCount)}`,
+      `high_saturation_pixels=${Number(colorEmojiGlyph.highSaturationPixels)}`,
+      `alpha_pixels=${Number(colorEmojiGlyph.alphaPixels ?? colorEmoji.glyphAlphaPixels ?? 0)}`,
+      `glyph_key=${metadataTokenValue(colorEmojiGlyph.key || "")}`,
+      `glyph_width=${Number(colorEmojiGlyph.width ?? 0)}`,
+      `glyph_height=${Number(colorEmojiGlyph.height ?? 0)}`,
+    ].join(" "),
+  );
+}
 addMarker(
   showcase?.observations?.zwjGrapheme === "yes",
   "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret",

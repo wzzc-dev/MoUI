@@ -135,6 +135,16 @@ separately from tracked gaps. SkParagraph-style line breaking, bidi,
 deterministic color emoji, full grapheme parity, and broader typography
 conformance remain follow-up work.
 
+Renderer-proof color emoji artifacts now have a stronger audit boundary:
+`colorEmojiPixels` must carry high-saturation glyph/raster evidence plus
+`font-metadata` and `glyph-metadata` tokens, and the manifest validator requires
+structured `metadata.font` / `metadata.glyph` fields. The native Skia
+text/emoji smoke records the requested emoji family, Skia text-system id,
+shaper path, RGBA glyph format, cluster count, and pixel counts; WebGPU wasm
+records the browser canvas font stack plus glyph atlas key and size metadata.
+These fields make CI artifacts easier to audit, but they are not yet a
+guarantee of exact cross-platform typeface identity or glyph-id determinism.
+
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all
 raster-affecting inputs such as glyph identity, font size, style, weight, and
