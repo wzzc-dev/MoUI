@@ -49,7 +49,11 @@ paths, or abstractions that only preserve old shapes.
   status counts, and repaint-result previous/current lifecycle status counts.
 - `backend/macos/`, `backend/windows/`, and `backend/linux/` are native host
   cores: platform windows, event conversion, services, lifecycle, runtime slots,
-  and renderer-neutral provider hooks. They must not import `render/wgpu`,
+  and renderer-neutral provider hooks. Linux owns host service wiring for
+  system theme, Wayland clipboard selection, desktop URL/file-dialog/text-file
+  services, text-input/IME request sync, file drag/drop conversion, and
+  scale-factor reporting, while native menu and AT-SPI remain documented
+  follow-ups. They must not import `render/wgpu`,
   `render/skia`, `wgpu_mbt`, or `moui_skia`. `backend/web/` is the browser
   wasm-gc host, including the browser history route bridge that feeds
   `HostRouteSource`, browser async file-open/save text completion for shared

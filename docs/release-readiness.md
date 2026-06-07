@@ -339,15 +339,20 @@ documentation evidence.
 ### Platform
 
 1. Linux backend
-   - Current status: minimal Wayland host core plus the native Skia provider
-     path for mainline evidence, with WGPU provider packages retained as
-     experimental diagnostics; tracked service, accessibility, IME, and native
-     font-provider gaps remain explicit. Adapter tests cover
-     dependency-provided key/modifier mapping and current pointer coordinates.
+   - Current status: Wayland host core plus the native Skia provider path for
+     mainline Linux Preview Ready evidence, with WGPU provider packages retained
+     as experimental diagnostics. Linux clipboard selection, file-dialog,
+     text-file, open URL, text-input/IME request, file drag/drop, scale-factor,
+     and Skia provider preflight surfaces are now wired through the host/window
+     contracts; native menu, AT-SPI, matching-host runtime artifacts, and the
+     native fontconfig/HarfBuzz/FreeType provider remain explicit follow-ups.
+     Adapter tests cover dependency-provided key/modifier mapping, current
+     pointer coordinates, service routing, and provider preflight readiness
+     labels.
    - Done when: Showcase `linux_skia` and Markdown Editor `linux_skia` run under
      a real Wayland compositor with configured real Skia link flags, and
-     readiness wording continues to describe the remaining unsupported platform
-     services honestly.
+     readiness wording continues to distinguish Linux Skia Preview Ready from
+     native menu/accessibility/font-provider follow-up work.
    - Evidence: backend tests, platform notes, readiness report wording, and the
      two Linux Skia `moon run` commands.
 
@@ -435,9 +440,10 @@ documentation evidence.
 
 - Do not make compatibility shims for removed APIs unless explicitly requested.
 - Do not move platform or renderer implementation details into `core/`.
-- Do not describe Linux platform support as complete while service, IME,
-  AT-SPI, and native font-provider gaps remain; do not describe DirectWrite or
-  fontconfig providers as complete while their packages are scaffolds.
+- Do not describe Linux platform support as complete while native menu, AT-SPI,
+  matching-host runtime evidence, and native font-provider gaps remain; do not
+  describe DirectWrite or fontconfig providers as complete while their packages
+  are scaffolds.
 - Do not make broad all-target tests the default inner loop.
 - Do not treat a green narrow test as evidence for a broader release claim.
 
