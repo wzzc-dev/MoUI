@@ -109,8 +109,28 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
     colorEmojiPixels: proof(
       name,
       status,
-      ["high-saturation-pixels", "glyph-or-raster"],
-      { glyphHighSaturationPixels: 42, glyphAlphaPixels: 120 },
+      ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
+      {
+        glyphHighSaturationPixels: 42,
+        glyphAlphaPixels: 120,
+        metadata: {
+          font: {
+            family: "system-ui, emoji",
+            source: "browser-canvas",
+            textSystem: "webgpu-wasm",
+          },
+          glyph: {
+            format: "rgba",
+            glyphCount: 1,
+            clusterCount: 1,
+            highSaturationPixels: 42,
+            alphaPixels: 120,
+            key: "1|normal|400|24|system-ui|rgba|👩‍💻",
+            width: 24,
+            height: 24,
+          },
+        },
+      },
     ),
     zwjGrapheme: proof(
       name,
@@ -151,7 +171,21 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
         { kind: 23, name: "pointer_down" },
         { kind: 40, name: "key_down" },
         { kind: 42, name: "ime_commit" },
-        { kind: 94, name: "text_color_glyph", text: "👩‍💻", format: "rgba", highSaturationPixels: 42 },
+        {
+          kind: 94,
+          name: "text_color_glyph",
+          text: "👩‍💻",
+          format: "rgba",
+          fontFamily: "system-ui, emoji",
+          fontStyle: "normal",
+          fontWeight: 400,
+          fontSize: 24,
+          glyphKey: "1|normal|400|24|system-ui|rgba|👩‍💻",
+          glyphWidth: 24,
+          glyphHeight: 24,
+          highSaturationPixels: 42,
+          alphaPixels: 120,
+        },
         { kind: 95, name: "text_grapheme_layout", containsZwj: true, singleGraphemeCluster: true, noInteriorCaret: true },
         { kind: 96, name: "text_bidi_layout", visualOrderDiffers: true },
         { kind: 97, name: "text_paragraph_line", lineIndex: 1 },
@@ -386,6 +420,60 @@ expectFail(
     }),
   ),
   "targets[0].observations.resizeEvent must be yes for passed evidence",
+);
+
+expectFail(
+  "missing color emoji metadata",
+  runValidator(
+    writeFixture("missing-color-emoji-metadata.json", {
+      ...validManifest,
+      targets: validManifest.targets.map(target =>
+        target.name === "showcase-web-wasm"
+          ? {
+              ...target,
+              screenshot: {
+                ...target.screenshot,
+                colorEmojiPixels: {
+                  ...target.screenshot.colorEmojiPixels,
+                  metadata: undefined,
+                },
+              },
+            }
+          : target,
+      ),
+    }),
+  ),
+  "screenshot.colorEmojiPixels.metadata",
+);
+
+expectFail(
+  "missing color emoji glyph key",
+  runValidator(
+    writeFixture("missing-color-emoji-glyph-key.json", {
+      ...validManifest,
+      targets: validManifest.targets.map(target =>
+        target.name === "showcase-web-wasm"
+          ? {
+              ...target,
+              screenshot: {
+                ...target.screenshot,
+                colorEmojiPixels: {
+                  ...target.screenshot.colorEmojiPixels,
+                  metadata: {
+                    ...target.screenshot.colorEmojiPixels.metadata,
+                    glyph: {
+                      ...target.screenshot.colorEmojiPixels.metadata.glyph,
+                      key: "",
+                    },
+                  },
+                },
+              },
+            }
+          : target,
+      ),
+    }),
+  ),
+  "metadata.glyph",
 );
 
 expectFail(

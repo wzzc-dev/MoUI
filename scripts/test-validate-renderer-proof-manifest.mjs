@@ -11,15 +11,31 @@ const validator = "scripts/validate-renderer-proof-manifest.mjs";
 const observationEvidence = {
   radialGradient: ["center-mid-edge-pixels", "shader-payload"],
   transformPixels: ["pixel-markers"],
-  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster"],
+  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
   zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
   bidiLayout: ["visual-order"],
   paragraphWrapping: ["line-metrics", "later-line-pixels"],
   asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
 };
 
-const observations = (status = "passed") =>
-  Object.fromEntries(
+const colorEmojiMetadata = () => ({
+  font: {
+    family: "emoji",
+    source: "browser-canvas",
+    textSystem: "webgpu-wasm",
+    shaper: "browser-canvas",
+  },
+  glyph: {
+    format: "rgba",
+    glyphCount: 1,
+    clusterCount: 1,
+    highSaturationPixels: 42,
+    alphaPixels: 120,
+  },
+});
+
+const observations = (status = "passed") => {
+  const entries = Object.fromEntries(
     Object.entries(observationEvidence).map(([key, evidence]) => [
       key,
       {
@@ -29,6 +45,9 @@ const observations = (status = "passed") =>
       },
     ]),
   );
+  entries.colorEmojiPixels.metadata = colorEmojiMetadata();
+  return entries;
+};
 
 const manifest = overrides => ({
   schemaVersion: 1,
@@ -107,14 +126,66 @@ expectFail(
         ...observations(),
         colorEmojiPixels: {
           status: "passed",
-          evidence: ["caret-only", "high-saturation-pixels", "glyph-or-raster"],
+          evidence: [
+            "caret-only",
+            "high-saturation-pixels",
+            "glyph-or-raster",
+            "font-metadata",
+            "glyph-metadata",
+          ],
           artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: colorEmojiMetadata(),
         },
       },
     }),
     ["--require-passed"],
   ),
   "must not use caret-only or coverage-only proof",
+);
+
+expectFail(
+  "missing emoji metadata",
+  run(
+    "missing-emoji-metadata.json",
+    manifest({
+      observations: {
+        ...observations(),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: observationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "observations.colorEmojiPixels.metadata must be an object",
+);
+
+expectFail(
+  "weak emoji metadata",
+  run(
+    "weak-emoji-metadata.json",
+    manifest({
+      observations: {
+        ...observations(),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: observationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...colorEmojiMetadata(),
+            glyph: {
+              ...colorEmojiMetadata().glyph,
+              highSaturationPixels: 4,
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.glyph.highSaturationPixels must be at least 8",
 );
 
 expectFail(

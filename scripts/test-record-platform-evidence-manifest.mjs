@@ -77,7 +77,7 @@ const webPresentationObservations = value =>
 
 const webRendererProofEvidence = {
   radialGradient: ["center-mid-edge-pixels", "shader-payload"],
-  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster"],
+  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
   zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
   bidiLayout: ["visual-order"],
   paragraphWrapping: ["line-metrics", "later-line-pixels"],
@@ -95,7 +95,28 @@ const webRendererProof = (name, status, key) => {
   };
   if (!passed) return base;
   if (key === "colorEmojiPixels") {
-    return { ...base, glyphHighSaturationPixels: 42, glyphAlphaPixels: 120 };
+    return {
+      ...base,
+      glyphHighSaturationPixels: 42,
+      glyphAlphaPixels: 120,
+      metadata: {
+        font: {
+          family: "system-ui, emoji",
+          source: "browser-canvas",
+          textSystem: "webgpu-wasm",
+        },
+        glyph: {
+          format: "rgba",
+          glyphCount: 1,
+          clusterCount: 1,
+          highSaturationPixels: 42,
+          alphaPixels: 120,
+          key: "1|normal|400|24|system-ui|rgba|👩‍💻",
+          width: 24,
+          height: 24,
+        },
+      },
+    };
   }
   if (key === "zwjGrapheme") {
     return { ...base, logicalClusters: 1, visualClusters: 1 };
@@ -326,7 +347,20 @@ const webPresentationTarget = ({
         { kind: 23, name: "pointer_down" },
         { kind: 40, name: "key_down" },
         { kind: 42, name: "ime_commit" },
-        { kind: 94, name: "text_color_glyph" },
+        {
+          kind: 94,
+          name: "text_color_glyph",
+          format: "rgba",
+          fontFamily: "system-ui, emoji",
+          fontStyle: "normal",
+          fontWeight: 400,
+          fontSize: 24,
+          glyphKey: "1|normal|400|24|system-ui|rgba|👩‍💻",
+          glyphWidth: 24,
+          glyphHeight: 24,
+          highSaturationPixels: 42,
+          alphaPixels: 120,
+        },
         { kind: 95, name: "text_grapheme_layout" },
         { kind: 96, name: "text_bidi_layout" },
         { kind: 97, name: "text_paragraph_line", lineIndex: 1 },

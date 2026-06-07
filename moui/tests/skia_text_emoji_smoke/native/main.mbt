@@ -57,6 +57,26 @@ fn rect_high_saturation_pixels(
 }
 
 ///|
+fn rect_alpha_pixels(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Int {
+  let mut count = 0
+  for y in rect_min_y(rect)..<rect_max_y(frame, rect) {
+    for x in rect_min_x(rect)..<rect_max_x(frame, rect) {
+      let offset = pixel_offset(frame, x, y)
+      if offset + 3 < frame.pixels.length() {
+        let a = frame.pixels[offset + 3].to_int()
+        if a >= 160 {
+          count = count + 1
+        }
+      }
+    }
+  }
+  count
+}
+
+///|
 fn row_seen(rows : Array[Int], row : Int) -> Bool {
   rows.any(value => value == row)
 }
@@ -103,6 +123,20 @@ fn paragraph_words() -> Array[String] {
   [
     "Proof", "wrap", "line", "alpha", "beta", "gamma", "delta", "epsilon", "zeta",
   ]
+}
+
+///|
+fn emoji_proof_text() -> String {
+  "\u{1F469}\u{200D}\u{1F4BB}"
+}
+
+///|
+fn emoji_proof_font() -> @core.FontSpec {
+  @core.FontSpec::new(
+    families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+    size=32.0,
+    weight=400,
+  )
 }
 
 ///|
@@ -169,13 +203,9 @@ fn skia_text_emoji_smoke_commands(
     @core.DrawCommand::Clear(@core.Color::white()),
     @core.DrawCommand::DrawText(
       @core.TextRun::new(
-        text="\u{1F469}\u{200D}\u{1F4BB}",
+        text=emoji_proof_text(),
         frame=@core.Rect::new(x=8.0, y=8.0, width=72.0, height=44.0),
-        font=@core.FontSpec::new(
-          families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
-          size=32.0,
-          weight=400,
-        ),
+        font=emoji_proof_font(),
         color=@core.Color::black(),
         align=@core.TextAlign::TextStart,
       ),
@@ -230,16 +260,9 @@ fn carets_are_monotonic(carets : Array[Double]) -> Bool {
 
 ///|
 fn zwj_has_no_interior_caret(system : @core.TextSystem) -> Bool {
-  let text = "\u{1F469}\u{200D}\u{1F4BB}"
+  let text = emoji_proof_text()
   let layout = system.measure_text(
-    @core.TextLayoutInput::new(
-      text~,
-      font=@core.FontSpec::new(
-        families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
-        size=32.0,
-        weight=400,
-      ),
-    ),
+    @core.TextLayoutInput::new(text~, font=emoji_proof_font()),
   )
   if layout.caret_positions.length() != text.to_array().length() + 1 ||
     !carets_are_monotonic(layout.caret_positions) {
@@ -361,12 +384,24 @@ fn main {
         frame,
         @core.Rect::new(x=8.0, y=8.0, width=72.0, height=44.0),
       )
+      let emoji_alpha_pixels = rect_alpha_pixels(
+        frame,
+        @core.Rect::new(x=8.0, y=8.0, width=72.0, height=44.0),
+      )
       if emoji_pixels >= 8 {
+        let shaper_label = if @skia_native.skia_shaper_available() {
+          "skshaper"
+        } else {
+          "fallback-glyph-run"
+        }
         println(
           "MoUI Skia text/emoji smoke color emoji high_saturation_pixels=\{emoji_pixels}",
         )
         println(
-          "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster",
+          "MoUI renderer proof colorEmojiPixels metadata font_family=emoji font_source=skia-system-fontmgr text_system=\{renderer.text_system().id()} shaper=\{shaper_label} glyph_format=rgba glyph_count=1 cluster_count=1 high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels}",
+        )
+        println(
+          "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata",
         )
       } else {
         failures.push(
