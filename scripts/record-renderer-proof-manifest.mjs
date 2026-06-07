@@ -126,11 +126,36 @@ const colorEmojiMetadata = () => {
   };
 };
 
+const colorEmojiMetadataReady = metadata => {
+  if (!metadata) return false;
+  const font = metadata.font || {};
+  const glyph = metadata.glyph || {};
+  return (
+    typeof font.family === "string" &&
+    font.family.trim() !== "" &&
+    font.family !== "unknown" &&
+    typeof font.source === "string" &&
+    font.source.trim() !== "" &&
+    font.source !== "unknown" &&
+    typeof font.textSystem === "string" &&
+    font.textSystem.trim() !== "" &&
+    font.textSystem !== "unknown" &&
+    glyph.format === "rgba" &&
+    Number(glyph.glyphCount) >= 1 &&
+    Number(glyph.clusterCount) >= 1 &&
+    Number(glyph.highSaturationPixels) >= 8 &&
+    Number(glyph.alphaPixels) > 0
+  );
+};
+
 const observationFor = ([key, config]) => {
   const hasMarker = combinedLog.includes(config.marker);
   const hasEvidence = config.required.every(token => combinedLog.includes(token));
-  const passed = hasMarker && hasEvidence;
   const metadata = key === "colorEmojiPixels" ? colorEmojiMetadata() : null;
+  const passed =
+    hasMarker &&
+    hasEvidence &&
+    (key !== "colorEmojiPixels" || colorEmojiMetadataReady(metadata));
   return [
     key,
     {

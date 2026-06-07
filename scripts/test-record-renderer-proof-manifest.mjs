@@ -104,6 +104,32 @@ if (
   process.exit(1);
 }
 
+const missingEmojiMetadataMarkers = markers.map(marker =>
+  marker.includes("MoUI renderer proof colorEmojiPixels metadata")
+    ? "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata"
+    : marker,
+);
+const missingEmojiMetadata = runRecorder(
+  "missing-emoji-metadata",
+  missingEmojiMetadataMarkers.join("\n"),
+);
+if (missingEmojiMetadata.result.status !== 0) {
+  console.error("expected missing emoji metadata proof to validate as failed");
+  console.error(missingEmojiMetadata.result.stdout);
+  console.error(missingEmojiMetadata.result.stderr);
+  process.exit(1);
+}
+const missingEmojiMetadataManifest = JSON.parse(
+  readFileSync(missingEmojiMetadata.outputPath, "utf8"),
+);
+if (
+  missingEmojiMetadataManifest.status !== "failed" ||
+  missingEmojiMetadataManifest.observations.colorEmojiPixels.status !== "failed"
+) {
+  console.error("missing emoji metadata should keep renderer proof observation failed");
+  process.exit(1);
+}
+
 const localComplete = runRecorder("local-complete", markers.join("\n"), [], {
   GITHUB_ACTIONS: "false",
 });
