@@ -1,0 +1,18 @@
+import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/backend/windows/skia" @windows_skia_backend,
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "examples/button_freeze_probe/app",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)

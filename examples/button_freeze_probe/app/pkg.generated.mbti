@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/button_freeze_probe/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  query : String
+  active : Bool
+  review : Bool
+  blocked : Bool
+  clicks : Int
+  last_action : String
+  previous_action : String
+}
+pub fn Model::new() -> Self
+
+pub(all) enum Msg {
+  QueryChanged(String)
+  ToggleActive
+  ToggleReview
+  ToggleBlocked
+  ClearFilters
+  PrimaryPulse
+  TonalPulse
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits
+
