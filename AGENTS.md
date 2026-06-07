@@ -20,7 +20,8 @@ paths, or abstractions that only preserve old shapes.
   kind changes from ordinary same-kind task replacement, program diagnostics
   may count late dispatches ignored after runtime destruction, program message
   drains are bounded runtime turns so synchronous click/effect/subscription
-  self-queues cannot monopolize the current host callback, and runtime dirty
+  self-queues cannot monopolize the current host callback and remaining
+  messages resume FIFO on the next host callback, and runtime dirty
   diagnostics may expose structured
   rebuild/layout/paint/redraw summaries, but concrete timer, host, window,
   route, or service adapters remain outside `core`.
