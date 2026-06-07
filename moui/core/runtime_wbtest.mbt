@@ -270,6 +270,19 @@ enum ProgramEffectLoopMsg {
 }
 
 ///|
+enum ProgramTurnResumeMsg {
+  ProgramTurnResumePulse
+  ProgramTurnResumeHostCallback
+}
+
+///|
+struct ProgramTurnResumeModel {
+  pulses : Int
+  host_seen_at : Int
+  started : Bool
+}
+
+///|
 test "effect plan summary describes nested effect structure" {
   let effect : Effect[String] = Effect::batch([
     Effect::send("first"),
@@ -587,6 +600,79 @@ test "program bounds synchronous effect self loops in one drain turn" {
   )
   inspect(snapshot.message_drain_count, content="1")
   inspect(snapshot.pending_message_count, content="1")
+}
+
+///|
+test "program resumes pending self-loop messages on next host callback" {
+  let target = program_message_drain_limit() + 6
+  let program = Program::new(
+    init=() => ({ pulses: 0, host_seen_at: -1, started: false }, Effect::none()),
+    update=(model, message) => {
+      match message {
+        ProgramTurnResumePulse => {
+          let next = model.pulses + 1
+          let effect = if next < target {
+            Effect::send(ProgramTurnResumePulse)
+          } else {
+            Effect::none()
+          }
+          ({ ..model, pulses: next, started: true }, effect)
+        }
+        ProgramTurnResumeHostCallback =>
+          ({ ..model, host_seen_at: model.pulses }, Effect::none())
+      }
+    },
+    view=model => {
+      View::button(
+        text="Resume \{model.pulses} host:\{model.host_seen_at}",
+        size=Size::new(width=220.0, height=44.0),
+        font=FontSpec::new(size=16.0),
+        foreground=Color::black(),
+        background=Brush::solid(Color::gray()),
+        hovered_background=Brush::solid(Color::gray()),
+        pressed_background=Brush::solid(Color::blue()),
+        on_click=Some(
+          if model.started {
+            ProgramTurnResumeHostCallback
+          } else {
+            ProgramTurnResumePulse
+          },
+        ),
+      )
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=260.0, height=80.0),
+  )
+  runtime_wbtest_click(runtime, x=20.0, y=20.0)
+  assert_true(
+    has_draw_text(
+      runtime.draw_commands(),
+      "Resume \{program_message_drain_limit()} host:-1",
+    ),
+  )
+  let first_turn = runtime.program_runtime_snapshot()
+  inspect(
+    first_turn.dispatched_count,
+    content="\{program_message_drain_limit()}",
+  )
+  inspect(first_turn.message_drain_count, content="1")
+  inspect(first_turn.pending_message_count, content="1")
+
+  runtime_wbtest_click(runtime, x=20.0, y=20.0)
+  assert_true(
+    has_draw_text(
+      runtime.draw_commands(),
+      "Resume \{target} host:\{program_message_drain_limit() + 1}",
+    ),
+  )
+  let second_turn = runtime.program_runtime_snapshot()
+  inspect(second_turn.dispatched_count, content="\{target + 1}")
+  inspect(second_turn.update_count, content="\{target + 1}")
+  inspect(second_turn.message_enqueue_count, content="\{target + 1}")
+  inspect(second_turn.message_drain_count, content="2")
+  inspect(second_turn.pending_message_count, content="0")
 }
 
 ///|
