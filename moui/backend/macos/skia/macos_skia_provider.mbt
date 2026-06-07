@@ -169,7 +169,7 @@ fn macos_skia_unavailable_message() -> String {
 
 ///|
 fn macos_skia_presenter_description() -> String {
-  "macOS NSImageView Skia pixel presenter"
+  "macOS pass-through NSImageView Skia pixel presenter"
 }
 
 ///|

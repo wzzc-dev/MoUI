@@ -897,6 +897,8 @@ pub fn SurfaceHostState::resize(Self, HostSurfaceMetrics) -> HostEvent
 
 pub(all) struct TextInputSession {
   mut enabled : Bool
+  mut last_request : @wzzc-dev/window/core.ImeRequestData?
+  mut last_capabilities : @wzzc-dev/window/core.ImeCapabilities?
 }
 pub fn TextInputSession::new() -> Self
 pub fn TextInputSession::sync(Self, @wzzc-dev/moui/core.TextInputState) -> TextInputSessionAction
