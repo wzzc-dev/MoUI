@@ -280,6 +280,10 @@ assertIncludes(".github/workflows/ci.yml", "node scripts/ci-renderer-proof-nativ
 assertIncludes(".github/workflows/ci.yml", "node scripts/ci-renderer-proof-native.mjs skia-native");
 assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/renderer-proof/");
 assertIncludes(".github/workflows/ci.yml", "artifacts/platform-evidence/${{ matrix.platform }}/");
+assertIncludes("scripts/ci-renderer-proof-native.mjs", 'if (backend === "skia-native")');
+assertIncludes("scripts/ci-renderer-proof-native.mjs", 'recordArgs.push("--require-passed")');
+assertIncludes("scripts/ci-renderer-proof-native.sh", 'if [ "$backend" = "skia-native" ]; then');
+assertIncludes("scripts/ci-renderer-proof-native.sh", 'set -- "$@" --require-passed');
 assertIncludes(".github/workflows/ci.yml", "sh scripts/ci-renderer-proof-summary.sh artifacts/downloaded-renderer-proof");
 assertIncludes("scripts/ci-renderer-proof-summary.sh", "--artifact-root");
 assertIncludes("scripts/ci-renderer-proof-summary.sh", "skia-native-macos.json");

@@ -142,8 +142,10 @@ const recordArgs = [
   artifactName,
   "--output",
   manifestPath,
-  "--require-passed",
 ];
+if (backend === "skia-native") {
+  recordArgs.push("--require-passed");
+}
 for (const path of logs) {
   recordArgs.push("--log", path);
 }
