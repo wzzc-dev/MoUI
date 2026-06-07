@@ -103,7 +103,7 @@ pub fn Model::view(
         height=metrics.body_height,
         on_scroll=Some(delta => {
           ScrollBodyTo(
-            clamp_website_double(body_scroll_y - delta.y, 0.0, max_scroll),
+            clamp_website_double(body_scroll_y + delta.y, 0.0, max_scroll),
           )
         }),
       ),
