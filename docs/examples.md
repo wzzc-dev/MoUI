@@ -30,6 +30,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | --- | --- | --- | --- |
 | Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, Web-only `website/web_wasm` entrypoint |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
+| Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces, `status_badge` feedback chips, helper-backed table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore evidence, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, app-owned column width/order state, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
@@ -96,6 +97,22 @@ Focused Counter checks:
 ```sh
 moon test examples/counter/app --target native
 moon build examples/counter/web_wasm --target wasm-gc
+```
+
+## Button Freeze Probe
+
+Button Freeze Probe isolates the native Skia click-freeze investigation from
+the full Showcase surface. It keeps only the reusable `data_filter_bar` search
+input, selected filter chips, direct primary/tonal button comparison, and a
+small click/action readout so repeated clicks exercise the same focused-input,
+button dispatch, and redraw path without table, tree, pagination, or renderer
+catalog noise.
+
+Focused Button Freeze Probe checks:
+
+```sh
+moon test examples/button_freeze_probe/app --target native
+moon build examples/button_freeze_probe/macos_skia --target native
 ```
 
 Showcase is organized around the main catalog order:
