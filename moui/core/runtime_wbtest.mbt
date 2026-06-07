@@ -933,6 +933,56 @@ test "program effect tasks complete on first dispatch and ignore stale dispatche
 }
 
 ///|
+test "program effect tasks ignore synchronous second dispatch before first message drains" {
+  let cleanup_count = Ref(0)
+  let program = Program::new(
+    init=() => {
+      (
+        "pending",
+        Effect::task(
+          key="task:sync-double",
+          kind="custom-sync",
+          label="Sync double",
+          start=dispatch => {
+            dispatch(ProgramTaskFinished("first"))
+            dispatch(ProgramTaskFinished("second"))
+            Some(() => cleanup_count.val = cleanup_count.val + 1)
+          },
+        ),
+      )
+    },
+    update=(_model, message) => {
+      match message {
+        ProgramTaskFinished(value) => (value, Effect::none())
+        ProgramTaskReplace => ("replace", Effect::none())
+      }
+    },
+    view=model => runtime_test_label(model),
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=180.0, height=48.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "first"))
+  let snapshot = runtime.program_runtime_snapshot()
+  inspect(snapshot.dispatched_count, content="1")
+  inspect(snapshot.update_count, content="1")
+  inspect(snapshot.message_enqueue_count, content="1")
+  inspect(snapshot.ignored_effect_task_dispatch_count, content="1")
+  inspect(snapshot.active_effect_task_count, content="0")
+  inspect(snapshot.completed_effect_task_count, content="1")
+  inspect(snapshot.cancelled_effect_task_count, content="0")
+  inspect(cleanup_count.val, content="0")
+  assert_true(
+    snapshot.effect_task_lifecycle.any(entry => {
+      entry.key == "task:sync-double" &&
+      entry.kind == "custom-sync" &&
+      entry.status == EffectTaskLifecycleStatus::EffectTaskCompleted
+    }),
+  )
+}
+
+///|
 test "program effect tasks cancel by key change and runtime destroy" {
   let first_dispatch : Ref[((ProgramTaskMsg) -> Unit)?] = Ref(None)
   let second_dispatch : Ref[((ProgramTaskMsg) -> Unit)?] = Ref(None)

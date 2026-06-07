@@ -19,7 +19,7 @@ paths, or abstractions that only preserve old shapes.
   kind, effect-task lifecycle diagnostics may distinguish same-key descriptor
   kind changes from ordinary same-kind task replacement, program diagnostics
   may count late dispatches ignored after runtime destruction, program message
-  drains are bounded runtime turns so synchronous click/effect/subscription
+  drains are bounded runtime turns so synchronous click/effect/task/subscription
   self-queues cannot monopolize the current host callback and remaining
   messages resume FIFO on the next host callback, and runtime dirty
   diagnostics may expose structured
