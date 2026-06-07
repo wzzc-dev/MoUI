@@ -6,6 +6,15 @@
 
 static NSString *const MOUI_MACOS_SKIA_IMAGE_VIEW_ID = @"moui_macos_skia_pixel_image_view";
 
+@interface MOUIMacosSkiaPassthroughImageView : NSImageView
+@end
+
+@implementation MOUIMacosSkiaPassthroughImageView
+- (NSView *)hitTest:(NSPoint)point {
+  return nil;
+}
+@end
+
 enum {
   MOUI_MACOS_SKIA_PRESENT_OK = 0,
   MOUI_MACOS_SKIA_PRESENT_BAD_VIEW = 1,
@@ -92,16 +101,18 @@ int32_t moui_macos_present_skia_pixels_to_view(uint64_t raw_content_view_handle,
     bounds.size.height = 1.0;
   }
 
-  NSImageView *image_view = nil;
+  MOUIMacosSkiaPassthroughImageView *image_view = nil;
   for (NSView *subview in view.subviews) {
-    if ([subview isKindOfClass:[NSImageView class]] &&
-        [subview.identifier isEqualToString:MOUI_MACOS_SKIA_IMAGE_VIEW_ID]) {
-      image_view = (NSImageView *)subview;
-      break;
+    if ([subview.identifier isEqualToString:MOUI_MACOS_SKIA_IMAGE_VIEW_ID]) {
+      if ([subview isKindOfClass:[MOUIMacosSkiaPassthroughImageView class]]) {
+        image_view = (MOUIMacosSkiaPassthroughImageView *)subview;
+        break;
+      }
+      [subview removeFromSuperview];
     }
   }
   if (image_view == nil) {
-    image_view = [[NSImageView alloc] initWithFrame:bounds];
+    image_view = [[MOUIMacosSkiaPassthroughImageView alloc] initWithFrame:bounds];
     if (image_view == nil) {
       CGImageRelease(image);
       return MOUI_MACOS_SKIA_PRESENT_ALLOC_FAILED;

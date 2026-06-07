@@ -72,6 +72,49 @@ fn TextInputState::for_text_field(
 }
 
 ///|
+fn TextInputState::for_searchbar(
+  element : ElementNode,
+  data : SearchBarViewSpec,
+  render : RenderNode,
+  text_system : TextSystem,
+) -> TextInputState {
+  let text = data.query.get()
+  let display_text = text_with_composition(text, element, true)
+  let text_frame = searchbar_text_frame(render.frame, has_text=text != "")
+  let layout = text_system.measure_text(
+    TextLayoutInput::new(
+      text=display_text,
+      font=data.font,
+      max_width=text_frame.size.width,
+    ),
+  )
+  let caret = clamp_int(element.control.caret, 0, text_length(text))
+  let visual_caret = clamp_int(
+    text_field_visual_caret(text, element, true),
+    0,
+    layout.caret_positions.length() - 1,
+  )
+  let cursor_x = text_frame.origin.x + layout.caret_positions[visual_caret]
+  let caret_rect = Rect::new(
+    x=cursor_x,
+    y=text_frame.origin.y + 6.0,
+    width=1.5,
+    height=max_double(8.0, text_frame.size.height - 12.0),
+  )
+  {
+    focused: true,
+    element_id: Some(element.id),
+    text,
+    caret,
+    selection: element.control.selection,
+    composition: element.control.composition,
+    composition_cursor: element.control.composition_cursor,
+    frame: render.frame,
+    caret_rect,
+  }
+}
+
+///|
 fn TextInputState::for_rich_text_editor(
   element : ElementNode,
   data : RichTextEditorViewSpec,
@@ -129,6 +172,8 @@ fn ElementNode::focused_text_input(
     match self.spec {
       TextFieldSpec(data) =>
         Some(TextInputState::for_text_field(self, data, render, text_system))
+      SearchBarSpec(data) =>
+        Some(TextInputState::for_searchbar(self, data, render, text_system))
       RichTextEditorSpec(data) =>
         Some(
           TextInputState::for_rich_text_editor(self, data, render, text_system),

@@ -9,11 +9,13 @@ pub(all) enum TextInputSessionAction {
 ///|
 pub(all) struct TextInputSession {
   mut enabled : Bool
+  mut last_request : @window_core.ImeRequestData?
+  mut last_capabilities : @window_core.ImeCapabilities?
 }
 
 ///|
 pub fn TextInputSession::new() -> TextInputSession {
-  { enabled: false }
+  { enabled: false, last_request: None, last_capabilities: None }
 }
 
 ///|
@@ -24,26 +26,63 @@ pub fn TextInputSession::sync(
   if !state.focused {
     if self.enabled {
       self.enabled = false
+      self.clear_cached_request()
       DisableIme(@window_core.ImeRequest::Disable)
     } else {
+      self.clear_cached_request()
       NoImeChange
     }
   } else {
     let update = text_input_ime_request_data(state)
     let capabilities = text_input_ime_capabilities(update)
     if self.enabled {
-      UpdateIme(update.into_request())
+      if self.has_cached_request(update, capabilities) {
+        NoImeChange
+      } else {
+        self.cache_request(update, capabilities)
+        UpdateIme(update.into_request())
+      }
     } else {
       match
         @window_core.ImeEnableRequest::from_capabilities(capabilities, update) {
         Some(request) => {
           self.enabled = true
+          self.cache_request(update, capabilities)
           EnableIme(request.into_request())
         }
-        None => NoImeChange
+        None => {
+          self.clear_cached_request()
+          NoImeChange
+        }
       }
     }
   }
+}
+
+///|
+fn TextInputSession::has_cached_request(
+  self : TextInputSession,
+  request : @window_core.ImeRequestData,
+  capabilities : @window_core.ImeCapabilities,
+) -> Bool {
+  self.last_request == Some(request) &&
+  self.last_capabilities == Some(capabilities)
+}
+
+///|
+fn TextInputSession::cache_request(
+  self : TextInputSession,
+  request : @window_core.ImeRequestData,
+  capabilities : @window_core.ImeCapabilities,
+) -> Unit {
+  self.last_request = Some(request)
+  self.last_capabilities = Some(capabilities)
+}
+
+///|
+fn TextInputSession::clear_cached_request(self : TextInputSession) -> Unit {
+  self.last_request = None
+  self.last_capabilities = None
 }
 
 ///|

@@ -59,7 +59,9 @@ test "macos skia provider preflight records package evidence boundary" {
     preflight.contains("skia_available=\{@skia_renderer.skia_available()}"),
   )
   assert_true(preflight.contains("font=system-font-mgr"))
-  assert_true(preflight.contains("macOS NSImageView Skia pixel presenter"))
+  assert_true(
+    preflight.contains("macOS pass-through NSImageView Skia pixel presenter"),
+  )
   assert_true(preflight.contains("renderer_bridge=HostWindowRenderer"))
   assert_true(
     preflight.contains("renderer_text_system=SkiaRasterRenderer.text_system"),
