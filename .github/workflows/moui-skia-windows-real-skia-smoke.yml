@@ -170,7 +170,7 @@ jobs:
               $args["SkiaInclude"] = $envMap["MOUI_SKIA_SKIA_INCLUDE"]
               $args["SkiaLibDir"] = $envMap["MOUI_SKIA_SKIA_LIB_DIR"]
               $args["SkiaProvider"] = "release"
-              $args["SkiaLinkMode"] = $envMap["MOUI_SKIA_SKIA_LINK_MODE"]
+              $args["SkiaLinkMode"] = $envMap["MOUI_SKIA_LINK_MODE"]
               $args["ReleaseOwner"] = $envMap["MOUI_SKIA_RELEASE_OWNER"]
               $args["ReleaseRepo"] = $envMap["MOUI_SKIA_RELEASE_REPO"]
               $args["ReleaseTag"] = $envMap["MOUI_SKIA_RELEASE_TAG"]

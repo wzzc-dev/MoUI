@@ -299,7 +299,7 @@ jobs:
             SkiaInclude = $envMap["MOUI_SKIA_SKIA_INCLUDE"]
             SkiaLibDir = $envMap["MOUI_SKIA_SKIA_LIB_DIR"]
             SkiaProvider = "release"
-            SkiaLinkMode = $envMap["MOUI_SKIA_SKIA_LINK_MODE"]
+            SkiaLinkMode = $envMap["MOUI_SKIA_LINK_MODE"]
             ReleaseOwner = $envMap["MOUI_SKIA_RELEASE_OWNER"]
             ReleaseRepo = $envMap["MOUI_SKIA_RELEASE_REPO"]
             ReleaseTag = $envMap["MOUI_SKIA_RELEASE_TAG"]

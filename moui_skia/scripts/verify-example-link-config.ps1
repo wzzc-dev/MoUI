@@ -34,16 +34,42 @@ $requiredExampleVars = @{
   "triangle_window_macos/moon.pkg" = "MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS"
   "macos_hello_triangle/moon.pkg" = "MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS"
 }
-$requiredMouiLinkPackages = @(
-  "moui/tests/skia_renderer_smoke/native/moon.pkg",
-  "examples/showcase/macos_skia/moon.pkg",
-  "examples/markdown_editor/macos_skia/moon.pkg",
-  "examples/mo_workbench/macos_skia/moon.pkg",
-  "examples/showcase/linux_skia/moon.pkg",
-  "examples/markdown_editor/linux_skia/moon.pkg",
-  "examples/showcase/windows_skia/moon.pkg",
-  "examples/markdown_editor/windows_skia/moon.pkg"
-)
+$requiredNativePackageVars = @{
+  "native/moon.pkg" = "MOUI_SKIA_CC_LINK_FLAGS"
+}
+$requiredMouiEntryPackages = @{
+  "moui/tests/skia_renderer_smoke/native/moon.pkg" = @()
+  "examples/showcase/macos_skia/moon.pkg" = @(
+    "-framework AppKit",
+    "-framework QuartzCore",
+    "-framework UniformTypeIdentifiers",
+    "-lz"
+  )
+  "examples/markdown_editor/macos_skia/moon.pkg" = @(
+    "-framework AppKit",
+    "-framework QuartzCore",
+    "-framework UniformTypeIdentifiers",
+    "-lz"
+  )
+  "examples/mo_workbench/macos_skia/moon.pkg" = @(
+    "-framework AppKit",
+    "-framework QuartzCore",
+    "-framework UniformTypeIdentifiers",
+    "-lz"
+  )
+  "examples/button_freeze_probe/macos_skia/moon.pkg" = @(
+    "-framework AppKit",
+    "-framework QuartzCore",
+    "-framework UniformTypeIdentifiers",
+    "-lz"
+  )
+  "examples/showcase/linux_skia/moon.pkg" = @("-lz")
+  "examples/markdown_editor/linux_skia/moon.pkg" = @("-lz")
+  "examples/button_freeze_probe/linux_skia/moon.pkg" = @("-lz")
+  "examples/showcase/windows_skia/moon.pkg" = @()
+  "examples/markdown_editor/windows_skia/moon.pkg" = @()
+  "examples/button_freeze_probe/windows_skia/moon.pkg" = @()
+}
 $forbiddenExamplePatterns = @(
   "\.skia-cache",
   "\bm\d+-[0-9a-f]{8,}\b",
@@ -52,6 +78,12 @@ $forbiddenExamplePatterns = @(
 
 $buildText = Get-Content -LiteralPath $resolvedBuildScript -Raw
 foreach ($variable in $requiredExampleVars.Values) {
+  $count = ([regex]::Matches($buildText, [regex]::Escape($variable))).Count
+  if ($count -lt 2) {
+    throw "build script does not emit $variable in both fallback and configured paths"
+  }
+}
+foreach ($variable in $requiredNativePackageVars.Values) {
   $count = ([regex]::Matches($buildText, [regex]::Escape($variable))).Count
   if ($count -lt 2) {
     throw "build script does not emit $variable in both fallback and configured paths"
@@ -81,6 +113,26 @@ foreach ($relativePkg in $requiredExampleVars.Keys) {
   }
 }
 
+foreach ($relativePkg in $requiredNativePackageVars.Keys) {
+  $variable = $requiredNativePackageVars[$relativePkg]
+  $pkgPath = Join-Path $repoRoot $relativePkg
+  if (!(Test-Path -LiteralPath $pkgPath -PathType Leaf)) {
+    throw "native moon.pkg is missing: $pkgPath"
+  }
+  $expected = '"cc-link-flags": "${build.' + $variable + '}"'
+  $pkgText = Get-Content -LiteralPath $pkgPath -Raw
+  $compactText = $pkgText -replace "\s+", ""
+  $compactExpected = $expected -replace "\s+", ""
+  if (!$compactText.Contains($compactExpected)) {
+    throw "native moon.pkg does not use build variable ${variable}: $pkgPath"
+  }
+  foreach ($pattern in $forbiddenExamplePatterns) {
+    if ($pkgText -match $pattern) {
+      throw "native moon.pkg contains hardcoded Skia provider path text: $pkgPath"
+    }
+  }
+}
+
 foreach ($pkg in Get-ChildItem -LiteralPath $resolvedExamplesDir -Filter "moon.pkg" -Recurse -File) {
   $pkgText = Get-Content -LiteralPath $pkg.FullName -Raw
   foreach ($pattern in $forbiddenExamplePatterns) {
@@ -93,14 +145,19 @@ foreach ($pkg in Get-ChildItem -LiteralPath $resolvedExamplesDir -Filter "moon.p
 $maybeMouiRoot = Split-Path -Parent $repoRoot
 if ((Test-Path -LiteralPath (Join-Path $maybeMouiRoot "moui") -PathType Container) -and
     (Test-Path -LiteralPath (Join-Path $maybeMouiRoot "examples") -PathType Container)) {
-  foreach ($relativePkg in $requiredMouiLinkPackages) {
+  foreach ($relativePkg in $requiredMouiEntryPackages.Keys) {
     $pkgPath = Join-Path $maybeMouiRoot $relativePkg
     if (!(Test-Path -LiteralPath $pkgPath -PathType Leaf)) {
       throw "MoUI Skia entry moon.pkg is missing: $pkgPath"
     }
     $pkgText = Get-Content -LiteralPath $pkgPath -Raw
-    if ($pkgText -notmatch "MOUI_SKIA_CC_LINK_FLAGS") {
-      throw "MoUI Skia entry moon.pkg does not use MOUI_SKIA_CC_LINK_FLAGS: $pkgPath"
+    if ($pkgText -match "MOUI_SKIA_CC_LINK_FLAGS") {
+      throw "MoUI Skia entry moon.pkg uses out-of-scope MOUI_SKIA_CC_LINK_FLAGS: $pkgPath"
+    }
+    foreach ($token in $requiredMouiEntryPackages[$relativePkg]) {
+      if (!$pkgText.Contains($token)) {
+        throw "MoUI Skia entry moon.pkg is missing platform link token ${token}: $pkgPath"
+      }
     }
     foreach ($pattern in $forbiddenExamplePatterns) {
       if ($pkgText -match $pattern) {
