@@ -145,6 +145,10 @@ fallback branch. Browser Canvas measurement and WebGPU glyph drawing share the
 same CSS `system-ui` font stack generated from `FontSpec`; app-registered embedded fonts
 can be surfaced through browser font APIs, but remote font loading is not part
 of the backend contract.
+WebGPU entrypoints may opt into `webgpu.textSelection.enabled` when a canvas
+page needs browser-native selection/copy for drawn static text. That creates a
+transparent DOM text layer from each presented frame's `DrawText` bounds while
+leaving rendering, wheel scrolling, and app interaction on the canvas path.
 The active Web runtime service bridge opens external URLs through the browser
 host import, which calls `window.open(..., "_blank", "noopener,noreferrer")`
 and reports failure when the browser blocks the popup or the API is unavailable.
