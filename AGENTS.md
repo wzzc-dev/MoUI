@@ -325,6 +325,8 @@ emoji pixels remain tied to the font/glyph path that produced them. Skipped
 jobs, package-only tests, missing uploaded artifacts, blank
 screenshots, caret-only diagnostics, coverage-only font matching, provider
 preflights, and fallback-safe descriptor audits must remain failed proof. The
+recorder may preserve complete local observations for debugging, but without
+GitHub Actions provenance the manifest status must stay failed. The
 native Skia proof matrix configures the locked release Skia artifact before
 running its real renderer/text smokes. Native WGPU proof remains a non-blocking
 diagnostic and still requires a usable runner WGPU adapter for offscreen

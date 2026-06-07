@@ -21,7 +21,7 @@ const markers = [
   "MoUI renderer proof asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
 ];
 
-const runRecorder = (name, logText, extraArgs = []) => {
+const runRecorder = (name, logText, extraArgs = [], envOverrides = {}) => {
   const artifactDir = join(tmp, "artifacts", "conformance", "renderer-proof");
   mkdirSync(artifactDir, { recursive: true });
   const logPath = join(artifactDir, `${name}.log`);
@@ -54,6 +54,7 @@ const runRecorder = (name, logText, extraArgs = []) => {
         GITHUB_WORKFLOW: "MoUI CI",
         GITHUB_JOB: "web-runtime-presentation",
         RUNNER_NAME: "ubuntu-24.04",
+        ...envOverrides,
       },
     },
   );
@@ -100,6 +101,26 @@ if (
   failedManifest.observations.asyncImageSecondFrame.status !== "failed"
 ) {
   console.error("missing async proof marker should keep manifest failed");
+  process.exit(1);
+}
+
+const localComplete = runRecorder("local-complete", markers.join("\n"), [], {
+  GITHUB_ACTIONS: "false",
+});
+if (localComplete.result.status !== 0) {
+  console.error("expected complete local proof observations to validate as a failed diagnostic");
+  console.error(localComplete.result.stdout);
+  console.error(localComplete.result.stderr);
+  process.exit(1);
+}
+const localCompleteManifest = JSON.parse(readFileSync(localComplete.outputPath, "utf8"));
+if (
+  localCompleteManifest.status !== "failed" ||
+  localCompleteManifest.provenance.kind !== "matching-host-artifact" ||
+  localCompleteManifest.observations.asyncImageSecondFrame.status !== "passed" ||
+  !localCompleteManifest.notes.some(note => note.includes("GitHub Actions provenance"))
+) {
+  console.error("complete local proof should remain a failed renderer-proof diagnostic");
   process.exit(1);
 }
 

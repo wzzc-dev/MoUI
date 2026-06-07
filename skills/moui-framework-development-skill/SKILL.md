@@ -271,7 +271,9 @@ GitHub Actions provenance plus exactly `radialGradient`, `transformPixels`,
 `glyph-metadata` evidence and structured metadata fields. Package-only tests,
 skipped jobs, missing uploaded artifacts, blank screenshots, caret-only
 diagnostics, coverage-only font matching, provider preflights, and fallback-safe
-descriptor audits must stay failed proof. The native Skia proof matrix
+descriptor audits must stay failed proof. Complete local observations may be
+preserved for debugging, but without GitHub Actions provenance the manifest
+status stays failed. The native Skia proof matrix
 configures the locked release Skia artifact before running real renderer/text
 smokes. Native WGPU proof remains a non-blocking diagnostic and still requires a
 usable runner WGPU adapter for offscreen readback. The `renderer-proof-summary`

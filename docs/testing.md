@@ -794,8 +794,12 @@ jobs, blank screenshots, missing uploaded artifacts, caret-only diagnostics,
 coverage-only font matching, provider preflights, and fallback-safe descriptor
 audits remain failed renderer proof. CI summary validates them with the
 downloaded artifact directory as `--artifact-root`, so a manifest cannot pass
-unless its referenced logs/artifacts were actually uploaded. Use the recorder
-tests before changing the schema or marker vocabulary:
+unless its referenced logs/artifacts were actually uploaded. When the recorder
+runs outside GitHub Actions, complete observation markers are still preserved in
+the manifest, but the manifest-level status remains `failed`; local
+renderer-proof files are diagnostics until the CI proof matrix records them
+with GitHub Actions provenance. Use the recorder tests before changing the
+schema or marker vocabulary:
 
 ```sh
 node scripts/test-validate-renderer-proof-manifest.mjs
