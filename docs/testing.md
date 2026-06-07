@@ -604,7 +604,10 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   second-frame observations.
 - `Native WGPU renderer diagnostic` still runs the macOS, Windows, and Linux
   WGPU matrices and uploads artifacts, but it is `continue-on-error` and does
-  not define the mainline renderer-proof summary.
+  not define the mainline renderer-proof summary. It records renderer-proof
+  manifests without `--require-passed`, so missing experimental proof evidence
+  such as native WGPU color-emoji font/glyph metadata stays visible in the
+  uploaded manifest without turning the diagnostic job into a red CI gate.
 - `Renderer proof summary` downloads those artifacts, requires
   `webgpu-wasm-web.json` and `skia-native-{macos,windows,linux}.json`, then runs
   `validate-renderer-proof-manifest.mjs --require-passed` on each one. This job

@@ -134,8 +134,11 @@ set -- scripts/record-renderer-proof-manifest.mjs \
   --backend "$backend" \
   --platform "$platform" \
   --artifact-name "$artifact_name" \
-  --output "$manifest_path" \
-  --require-passed
+  --output "$manifest_path"
+
+if [ "$backend" = "skia-native" ]; then
+  set -- "$@" --require-passed
+fi
 
 for path in $record_logs; do
   set -- "$@" --log "$path"
