@@ -1,4 +1,6 @@
 import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/x/fs",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/window/core" @window_core,
@@ -10,5 +12,6 @@ supported_targets = "native"
 
 options(
   link: { "native": { "cc-link-flags": "-lz" } },
+  "native-stub": [ "linux_service_host.c" ],
   targets: { },
 )

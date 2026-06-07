@@ -491,7 +491,11 @@ content-origin coordinate space.
 The same adapter consumes the window fork's Wayland key/modifier mapping and
 current pointer coordinates: Linux backend tests cover modifier propagation into
 shared keyboard events and button events using the position carried by the
-window event rather than stale pointer state.
+window event rather than stale pointer state. The fork also exposes Wayland
+data-device clipboard selection and file drag/drop events to MoUI; drag/drop
+paths continue through `HostEvent::DragDrop` before reaching `View::on_file_drop`.
+Text-input focus state and IME requests are synchronized through the shared
+`TextInputSession` path used by other native hosts.
 
 Linux runtime requirements are intentionally native:
 
@@ -502,6 +506,11 @@ Linux runtime requirements are intentionally native:
   hardware Vulkan is not available.
 - Wayland development headers and generated xdg-shell protocol sources for the
   local `window/linux` native stub.
+- `wl_data_device_manager` from the compositor for native clipboard selection
+  and file drag/drop runtime behavior.
+- XDG desktop integration for Linux services: OpenURI goes through
+  xdg-desktop-portal when available and falls back to the desktop opener;
+  file-dialog selections require a desktop dialog helper on the matching host.
 - zlib in the final native link; Linux entrypoints and `backend/linux` include
   `-lz`.
 
@@ -546,12 +555,12 @@ duplicating Wayland registry and buffer ownership in MoUI.
 `linux_skia_provider_preflight_summary()` exposes package-level preflight
 evidence for the selected font resolution, renderer availability,
 `moui_skia/native` availability, the `wl_shm` presenter path, inherited Wayland
-host service/input/window readiness, explicit Linux clipboard/menu/file-dialog/open
-URL/async-service, text-input/IME/drag-drop, and native
-context-menu/host-modal/native accessibility gaps, `HostWindowRenderer` bridge
+host service/input/window readiness, explicit Linux clipboard/file-dialog/text-file/open
+URL/system-theme readiness, native menu/async-service gaps, text-input/IME/drag-drop
+readiness, native context-menu and native accessibility gaps, host-modal
+file-dialog readiness, `HostWindowRenderer` bridge
 forwarding for Skia text-system, image-resource, present-count, and disposal
-diagnostics, plus system-theme readiness
-and the matching-host runtime boundary, including whether the first-frame smoke
+diagnostics, and the matching-host runtime boundary, including whether the first-frame smoke
 option is enabled. The Linux host loop records the renderer image-resource
 revision after each present, routes later observed revision changes through the
 matching Wayland window's `request_redraw`, exposes tracked-window revision
@@ -571,9 +580,11 @@ The local window fork carries a consumer-style Linux smoke for this dependency
 surface. On a matching Wayland host, run
 `.local_repos/window/scripts/check_moui_linux_smoke.sh --run` to exercise
 surface creation, public Wayland handles, `Window::present_rgba_pixels`, resize,
-redraw, and clean shutdown. Add `--require-input` or
+redraw, IME request state, and clean shutdown. Add `--require-input` or
 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` only when representative pointer/keyboard
-input is observed. Record dependency-level facts with
+input is observed; clipboard selection and file drag/drop still need
+matching-host compositor observations before they can be cited as runtime
+evidence. Record dependency-level facts with
 `.local_repos/window/scripts/record_moui_evidence.sh`; keep the MoUI Showcase
 `linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
 application-level evidence. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic
@@ -591,12 +602,12 @@ text-system follow-up rather than a Linux backend responsibility.
 
 Remaining Linux gaps stay visible in `backend/linux.readiness()`:
 
-- Clipboard, menus, file dialogs, text-file access, drag/drop, and AT-SPI native
-  bindings are not implemented yet.
-- Basic US-QWERTY keyboard character input is derived from Wayland key events;
-  Wayland text-input protocol support and IME/composition requests are still
-  reported as unsupported until the window package exposes that protocol
-  surface.
+- Native menu and AT-SPI bindings are not implemented yet; app/view fallbacks
+  remain the Preview Ready path for those behaviors.
+- Linux clipboard, file-dialog, text-file, open URL, text-input/IME request, and
+  file drag/drop host surfaces are implemented, but passed platform status still
+  requires matching-host Wayland/desktop-service evidence rather than package
+  preflight alone.
 - The fontconfig/HarfBuzz/FreeType native provider remains a scaffold and relies
   on the composed Moon Cosmic fallback for actual glyph data.
 

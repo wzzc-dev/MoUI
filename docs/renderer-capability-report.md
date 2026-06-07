@@ -226,7 +226,9 @@ so explicit Skia selection exits with a diagnostic instead of opening a blank
 window. Windows and Linux host options now expose the same renderer-neutral
 first-frame auto-exit hook used by the Skia entrypoints for matching-host
 runtime smoke runs; those logs prove presentation only for the host that
-produced them.
+produced them. Linux Skia is the native Linux Preview Ready route for renderer
+and text evidence; the Linux native WGPU/fontconfig provider remains diagnostic
+and must not be cited as Skia-route readiness.
 
 When real Skia is linked, the renderer creates a CPU `raster_n32_premul` surface
 using physical pixels through `moui_skia`'s `SurfaceTargetDescriptor` and
