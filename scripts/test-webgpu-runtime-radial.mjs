@@ -398,8 +398,18 @@ for (let index = 1; index <= 3; index += 1) {
 }
 assert(imports.present(renderer) === 0, "present text proof failed");
 assert(
-  evidenceEvents.some(event => event.name === "text_color_glyph" && event.format === "rgba"),
-  "text proof must record high-saturation RGBA glyph evidence",
+  evidenceEvents.some(event =>
+    event.name === "text_color_glyph" &&
+    event.format === "rgba" &&
+    typeof event.fontFamily === "string" &&
+    event.fontFamily.length > 0 &&
+    Number(event.fontSize) > 0 &&
+    typeof event.glyphKey === "string" &&
+    event.glyphKey.length > 0 &&
+    Number(event.glyphWidth) > 0 &&
+    Number(event.highSaturationPixels) >= 8
+  ),
+  "text proof must record high-saturation RGBA glyph evidence with font/glyph metadata",
 );
 assert(
   evidenceEvents.some(event =>

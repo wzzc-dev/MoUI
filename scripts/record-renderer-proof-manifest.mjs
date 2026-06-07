@@ -42,7 +42,7 @@ const markerConfig = {
     marker: "MoUI renderer proof transformPixels passed",
   },
   colorEmojiPixels: {
-    required: ["high-saturation-pixels", "glyph-or-raster"],
+    required: ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
     marker: "MoUI renderer proof colorEmojiPixels passed",
   },
   zwjGrapheme: {
@@ -83,16 +83,61 @@ const artifactPath = path => {
 const combinedLog = logs.map(readLog).join("\n");
 const relLogs = logs.map(artifactPath);
 
+const parseMetadataFields = prefix => {
+  const line = combinedLog
+    .split(/\r?\n/)
+    .find(item => item.startsWith(prefix));
+  if (!line) return null;
+  const fields = {};
+  for (const token of line.slice(prefix.length).trim().split(/\s+/)) {
+    const separator = token.indexOf("=");
+    if (separator <= 0) continue;
+    fields[token.slice(0, separator)] = token.slice(separator + 1);
+  }
+  return fields;
+};
+
+const parseNumber = value => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+};
+
+const colorEmojiMetadata = () => {
+  const fields = parseMetadataFields("MoUI renderer proof colorEmojiPixels metadata ");
+  if (!fields) return null;
+  const glyph = {
+    format: fields.glyph_format || "unknown",
+    glyphCount: parseNumber(fields.glyph_count),
+    clusterCount: parseNumber(fields.cluster_count),
+    highSaturationPixels: parseNumber(fields.high_saturation_pixels),
+    alphaPixels: parseNumber(fields.alpha_pixels),
+  };
+  if (fields.glyph_key) glyph.key = fields.glyph_key;
+  if (fields.glyph_width) glyph.width = parseNumber(fields.glyph_width);
+  if (fields.glyph_height) glyph.height = parseNumber(fields.glyph_height);
+  return {
+    font: {
+      family: fields.font_family || "unknown",
+      source: fields.font_source || "unknown",
+      textSystem: fields.text_system || "unknown",
+      shaper: fields.shaper || "unknown",
+    },
+    glyph,
+  };
+};
+
 const observationFor = ([key, config]) => {
   const hasMarker = combinedLog.includes(config.marker);
   const hasEvidence = config.required.every(token => combinedLog.includes(token));
   const passed = hasMarker && hasEvidence;
+  const metadata = key === "colorEmojiPixels" ? colorEmojiMetadata() : null;
   return [
     key,
     {
       status: passed ? "passed" : "failed",
       evidence: passed ? config.required : [],
       artifacts: relLogs,
+      ...(metadata ? { metadata } : {}),
     },
   ];
 };

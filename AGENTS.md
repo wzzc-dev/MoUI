@@ -319,7 +319,10 @@ Renderer proof uses a separate schema v1 manifest under
 must have GitHub Actions provenance and exactly `radialGradient`,
 `transformPixels`, `colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`,
 `paragraphWrapping`, and `asyncImageSecondFrame` observations with strong marker
-tokens. Skipped jobs, package-only tests, missing uploaded artifacts, blank
+tokens; passed `colorEmojiPixels` observations must also include
+`font-metadata` / `glyph-metadata` evidence and structured metadata fields so
+emoji pixels remain tied to the font/glyph path that produced them. Skipped
+jobs, package-only tests, missing uploaded artifacts, blank
 screenshots, caret-only diagnostics, coverage-only font matching, provider
 preflights, and fallback-safe descriptor audits must remain failed proof. The
 native Skia proof matrix configures the locked release Skia artifact before
@@ -358,8 +361,8 @@ after configuring real native Skia link flags; that opt-in path also runs
 against captured Skia presenter pixels.
 For renderer-proof text/emoji work, `moui/tests/skia_text_emoji_smoke/native`
 is the opt-in real-Skia proof entrypoint; it writes proof markers only when
-captured Skia pixels and text-system evidence prove color emoji, ZWJ grapheme,
-paragraph wrapping, and bidi observations, and otherwise keeps the corresponding
+captured Skia pixels, font/glyph metadata, and text-system evidence prove color
+emoji, ZWJ grapheme, paragraph wrapping, and bidi observations, and otherwise keeps the corresponding
 renderer-proof observations failed.
 On macOS, `scripts/macos-skia-renderer-smoke.sh` can resolve Skia from an
 existing build, the pinned JetBrains binary provider, or a source build; it then
