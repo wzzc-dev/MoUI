@@ -128,7 +128,11 @@ const notes = [
 ];
 writeFileSync(logPath, `${notes.concat(markerLines).join("\n")}\n`);
 
-const missingProofs = proofKeys.filter(key => showcase?.observations?.[key] !== "yes");
+const missingProofs = proofKeys.filter(
+  key =>
+    showcase?.observations?.[key] !== "yes" ||
+    (key === "colorEmojiPixels" && !colorEmojiMetadataReady),
+);
 if ((webManifest.overallStatus || "failed") !== "passed" || missingProofs.length > 0) {
   console.error("web renderer proof failed summary:");
   console.error(`  webPresentationStatus=${webManifest.overallStatus || "unknown"}`);
