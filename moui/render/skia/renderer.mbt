@@ -102,16 +102,22 @@ pub(all) struct SkiaEmojiFontFallbackProof {
   font_family : String
   font_source : String
   fallback_language_tags : Array[String]
+  fallback_script_tag : String
+  fallback_language_tag_count : Int
+  fallback_request_language_count : Int
   shaper : String
+  glyph_format : String
   glyph_key : String
   glyph_count : Int
   cluster_count : Int
   glyph_width : Int
   glyph_height : Int
+  resolved_missing_glyph_count : Int
   fallback_character : Int
   emoji_hint : Bool
   emoji_fallback_attempted : Bool
   fallback_request_ready : Bool
+  missing_glyph_recovery_ready : Bool
   deterministic_color_emoji_ready : Bool
 } derive(Eq, Debug, ToJson)
 
@@ -555,12 +561,11 @@ pub fn skia_emoji_font_fallback_proof(
   let emoji_hint = skia_text_contains_emoji_hint(text)
   let fallback_request = skia_font_fallback_request(font, text)
   let fallback_language_tags = skia_font_fallback_language_tags(text)
+  let fallback_script_tag = skia_fallback_script_tag(fallback_language_tags)
+  let fallback_request_language_count = fallback_request.language_count()
   match skia_resolved_text_layout_for_resolution(font, text, font_resolution) {
     Some(layout) => {
-      let mut glyph_count = 0
-      for segment in layout.segments {
-        glyph_count += segment.glyph_run.glyphs.length()
-      }
+      let glyph_count = skia_resolved_text_layout_glyph_count(layout)
       if glyph_count <= 0 || layout.width <= 0.0 || layout.metrics.height <= 0.0 {
         return None
       }
@@ -571,22 +576,36 @@ pub fn skia_emoji_font_fallback_proof(
         "fallback-glyph-run"
       }
       let fallback_character = skia_representative_fallback_codepoint(text)
+      let font_source = skia_emoji_font_source_label(font_resolution)
+      let glyph_format = skia_emoji_glyph_format_label()
+      let resolved_missing_glyph_count = skia_resolved_text_layout_missing_glyph_count(
+        layout,
+      )
       Some({
         text,
         text_system_id: text_system.id(),
         font_family: "emoji",
-        font_source: skia_emoji_font_source_label(font_resolution),
+        font_source,
         fallback_language_tags,
+        fallback_script_tag,
+        fallback_language_tag_count: fallback_language_tags.length(),
+        fallback_request_language_count,
         shaper,
+        glyph_format,
         glyph_key: skia_emoji_glyph_key(
+          font_source,
           text_system.id(),
           shaper,
+          fallback_script_tag,
+          fallback_request_language_count,
           fallback_character,
+          glyph_format,
         ),
         glyph_count,
         cluster_count: skia_grapheme_cluster_texts(text).length(),
         glyph_width: skia_positive_pixel_extent(layout.width),
         glyph_height: skia_positive_pixel_extent(layout.metrics.height),
+        resolved_missing_glyph_count,
         fallback_character,
         emoji_hint,
         emoji_fallback_attempted: font_resolution ==
@@ -594,7 +613,8 @@ pub fn skia_emoji_font_fallback_proof(
         emoji_hint,
         fallback_request_ready: !fallback_request.is_empty() &&
         fallback_request.has_character() &&
-        fallback_request.language_count() == fallback_language_tags.length(),
+        fallback_request_language_count == fallback_language_tags.length(),
+        missing_glyph_recovery_ready: skia_sample_missing_glyph_recovery_ready(),
         deterministic_color_emoji_ready: false,
       })
     }
@@ -611,12 +631,59 @@ fn skia_emoji_font_source_label(resolution : SkiaFontResolution) -> String {
 }
 
 ///|
+fn skia_emoji_glyph_format_label() -> String {
+  "rgba"
+}
+
+///|
+fn skia_fallback_script_tag(tags : Array[String]) -> String {
+  if tags.is_empty() {
+    ""
+  } else {
+    tags[0]
+  }
+}
+
+///|
 fn skia_emoji_glyph_key(
+  font_source : String,
   text_system_id : String,
   shaper : String,
+  fallback_script_tag : String,
+  fallback_request_language_count : Int,
   fallback_character : Int,
+  glyph_format : String,
 ) -> String {
-  "skia-system-fontmgr|\{text_system_id}|\{shaper}|emoji-u+\{fallback_character}|rgba"
+  let script_key = if fallback_script_tag == "" {
+    "script=und"
+  } else {
+    "script=\{fallback_script_tag}"
+  }
+  "\{font_source}|\{text_system_id}|\{shaper}|\{script_key}|langs=\{fallback_request_language_count}|emoji-u+\{fallback_character}|\{glyph_format}"
+}
+
+///|
+fn skia_resolved_text_layout_glyph_count(
+  layout : SkiaResolvedTextLayout,
+) -> Int {
+  let mut glyph_count = 0
+  for segment in layout.segments {
+    glyph_count += segment.glyph_run.glyphs.length()
+  }
+  glyph_count
+}
+
+///|
+fn skia_resolved_text_layout_missing_glyph_count(
+  layout : SkiaResolvedTextLayout,
+) -> Int {
+  let mut missing_glyph_count = 0
+  for segment in layout.segments {
+    missing_glyph_count += skia_glyph_run_missing_glyph_count(
+      segment.glyph_run,
+    )
+  }
+  missing_glyph_count
 }
 
 ///|

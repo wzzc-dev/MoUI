@@ -168,6 +168,24 @@ test "skia font fallback request records script language tags" {
 }
 
 ///|
+test "skia emoji glyph key records source script count and format metadata" {
+  inspect(
+    skia_emoji_glyph_key(
+      "skia-empty-typeface",
+      "skia-raster-empty-typeface-text-system",
+      "fallback-glyph-run",
+      "und-Zsye",
+      2,
+      0x1F469,
+      "rgba",
+    ),
+    content="skia-empty-typeface|skia-raster-empty-typeface-text-system|fallback-glyph-run|script=und-Zsye|langs=2|emoji-u+128105|rgba",
+  )
+  inspect(skia_fallback_script_tag(["und-Zsye", "en"]), content="und-Zsye")
+  inspect(skia_fallback_script_tag([]), content="")
+}
+
+///|
 test "skia text visual order proof records rtl glyph layout evidence" {
   guard skia_available() else { return () }
   guard skia_text_visual_order_proof("ABC \u{05D0}\u{05D1}\u{05D2} 123")
