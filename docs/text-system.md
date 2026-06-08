@@ -10,13 +10,18 @@ remains an explicit diagnostic route for comparing provider behavior.
 
 ## Runtime Boundary
 
-- `core/text_layout.mbt` defines `TextSystem`, `TextSystem::fallback()`, and
-  font data registration. The deterministic fallback keeps per-character caret
-  arrays for stable geometry while folding representative cluster interiors
-  such as variation selectors, combining marks, keycap/emoji modifier/ZWJ
-  emoji, regional-indicator pairs, tag sequences, prepend marks, and Hangul
-  Jamo clusters back to the cluster start. Core text editing uses the same
-  cluster boundaries for basic left/right caret movement and shift-selection.
+- `core/text_layout.mbt` defines `TextSystem`, `TextSystem::fallback()`,
+  `TextSystem::layout_paragraph()`, and font data registration. The
+  deterministic fallback keeps per-character caret arrays for stable geometry
+  while folding representative cluster interiors such as variation selectors,
+  combining marks, keycap/emoji modifier/ZWJ emoji, regional-indicator pairs,
+  tag sequences, prepend marks, and Hangul Jamo clusters back to the cluster
+  start. The paragraph contract returns line metrics, caret rectangles,
+  selection rectangles, hit-test results, and visual-order metadata with
+  explicit readiness flags, so simplified fallback or diagnostic renderer
+  layout can expose geometry without claiming native SkParagraph or bidi
+  parity. Core text editing uses the same cluster boundaries for basic
+  left/right caret movement and shift-selection.
 - `AppRuntime` exposes `text_system()` and `set_text_system()` so hosts can
   install a platform text system before layout, painting, hit testing,
   selection, and IME anchor geometry are produced. The underlying
@@ -104,7 +109,12 @@ text remains visible and text-field caret positions stay aligned with the drawn
 glyphs. Skia drawing aligns the selected glyph run inside `TextRun.frame` and
 clips the canvas to that same frame before rasterization, so bounded text
 controls use the same platform-neutral frame for measurement, caret geometry,
-and native raster output. The macOS, Windows, and Linux Skia providers default
+and native raster output. `skia_text_system()` also inherits the core paragraph
+layout contract, so fallback-safe Skia diagnostics can produce wrapped line
+metrics, paragraph caret rectangles, selection rectangles, and hit-test results
+from the same Skia measurement path while leaving `native_paragraph_ready` and
+`bidi_visual_order_ready` false until real SkParagraph/bidi artifacts promote
+them. The macOS, Windows, and Linux Skia providers default
 to the system `FontMgr` path, so normal native Skia entrypoints exercise
 platform font lookup, emoji retry, and optional SkShaper when linked. The
 renderer package also exposes `skia_text_system()` directly so the Skia
@@ -117,7 +127,7 @@ and they now
 inject `skia_text_system()` into a public `AppRuntime` text field to prove the
 Skia measurement path drives focused text-input composition caret geometry and
 selection highlight drawing. They do not claim visual bidi reordering,
-native-platform IME runtime behavior, or paragraph line-breaking parity. macOS
+native-platform IME runtime behavior, or native SkParagraph parity. macOS
 first-frame smoke entrypoints still explicitly select
 `SkiaFontResolution::EmptyTypeface` when their exit-after-first-present
 environment flag is set; that keeps CLI smoke runs on the safer default-font
@@ -131,7 +141,8 @@ requiring real Skia linkage. `backend_info()` also reports a fallback-safe
 `text maturity audit partial` summary: it counts the audited descriptor,
 fallback-request, representative shaped/fallback caret, emoji-hint, and
 empty-typeface retry boundaries plus the Skia mixed-run fallback segment path
-separately from tracked gaps. SkParagraph-style line breaking, bidi,
+separately from tracked gaps. The paragraph API is now present for line metrics
+and geometry, but true SkParagraph/HarfBuzz-grade line breaking, bidi,
 deterministic color emoji, full grapheme parity, and broader typography
 conformance remain follow-up work.
 
