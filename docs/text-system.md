@@ -287,9 +287,14 @@ Remote font loading is intentionally outside the current backend contract.
   (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples
   plus a vendored Unicode 17.0 default grapheme break fixture generated from
   `moui/core/testdata/GraphemeBreakTest-17.0.0.txt`; `moon test moui/core
-  --target native` runs both. The full Unicode fixture uses distinct generated
-  helper/test names and is checked with
+  --target native` runs both. `moui/render/skia` also generates a Skia
+  white-box fixture from the same file so `moon test moui/render/skia --target
+  native` verifies `skia_grapheme_cluster_texts` against the Unicode 17 default
+  break samples. The full Unicode fixtures use distinct generated helper/test
+  names and are checked with
   `node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check`.
+  For Skia, use
+  `node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/render/skia/skia_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_skia_unicode_17_grapheme_break_fixture --test-name "skia unicode 17 grapheme break fixture samples" --actual-kind skia-clusters --check`.
   The
   scanner now drives core grapheme break classes from generated Unicode 17.0
   property predicates for CR/LF/control, Prepend, Extend, SpacingMark,

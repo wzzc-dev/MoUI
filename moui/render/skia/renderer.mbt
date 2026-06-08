@@ -257,7 +257,7 @@ priv struct SkiaTextMaturityPreflight {
   paragraph_line_breaking_ready : Bool
   mixed_run_font_fallback_ready : Bool
   deterministic_color_emoji_ready : Bool
-  full_grapheme_parity_ready : Bool
+  unicode_17_grapheme_boundary_ready : Bool
   ready_count : Int
   gap_count : Int
 }
@@ -273,24 +273,32 @@ fn SkiaTextMaturityPreflight::summary(
     self.emoji_hint_ready &&
     self.empty_typeface_emoji_retry_disabled &&
     self.missing_glyph_recovery_ready
-  let tracked_gaps_pending = !self.bidi_reordering_ready &&
+  let remaining_gaps_pending = !self.bidi_reordering_ready &&
     !self.paragraph_line_breaking_ready &&
-    !self.deterministic_color_emoji_ready &&
-    !self.full_grapheme_parity_ready
+    !self.deterministic_color_emoji_ready
   let baseline_label = if baseline_ready {
     "baseline ready"
   } else {
     "baseline pending"
   }
-  let gap_label = if tracked_gaps_pending {
-    "tracked gaps pending"
+  let gap_label = if remaining_gaps_pending {
+    "remaining tracked gaps pending"
   } else {
     "tracked gaps changed"
   }
-  let mixed_run_label = if self.mixed_run_font_fallback_ready {
-    "mixed-run fallback ready; missing-glyph recovery ready; bidi, paragraph line breaking, color emoji, and full grapheme parity pending"
+  let grapheme_label = if self.unicode_17_grapheme_boundary_ready {
+    "Unicode 17 grapheme boundary contract ready"
   } else {
-    "bidi, paragraph line breaking, mixed-run fallback, missing-glyph recovery, color emoji, and full grapheme parity pending"
+    "Unicode 17 grapheme boundary contract pending"
+  }
+  let mixed_run_label = if self.mixed_run_font_fallback_ready {
+    "mixed-run fallback ready; missing-glyph recovery ready; " +
+    grapheme_label +
+    "; bidi, paragraph line breaking, and color emoji pending"
+  } else {
+    "mixed-run fallback pending; missing-glyph recovery pending; " +
+    grapheme_label +
+    "; bidi, paragraph line breaking, and color emoji pending"
   }
   "text maturity audit partial: ready=" +
   self.ready_count.to_string() +
@@ -918,6 +926,10 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
   let mixed_run_font_fallback_ready = skia_mixed_text_segments("A你\u{1F642}B").length() ==
     4 &&
     skia_grapheme_cluster_texts("\u{1F469}\u{200D}\u{1F4BB}").length() == 1
+  let unicode_17_grapheme_boundary_ready = skia_unicode_17_grapheme_boundary_contract_ready()
+  let bidi_reordering_ready = false
+  let paragraph_line_breaking_ready = false
+  let deterministic_color_emoji_ready = false
   let ready_count = skia_ready_count([
     descriptor.ready(),
     !fallback_request.is_empty() && fallback_request.has_character(),
@@ -927,9 +939,10 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
     empty_typeface_emoji_retry_disabled,
     missing_glyph_recovery_ready,
     mixed_run_font_fallback_ready,
+    unicode_17_grapheme_boundary_ready,
   ])
   let gap_count = skia_gap_count([
-    false, false, mixed_run_font_fallback_ready, false, false,
+    bidi_reordering_ready, paragraph_line_breaking_ready, deterministic_color_emoji_ready,
   ])
   SkiaTextMaturityPreflight::{
     descriptor_ready: descriptor.ready(),
@@ -940,14 +953,49 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
     emoji_hint_ready,
     empty_typeface_emoji_retry_disabled,
     missing_glyph_recovery_ready,
-    bidi_reordering_ready: false,
-    paragraph_line_breaking_ready: false,
+    bidi_reordering_ready,
+    paragraph_line_breaking_ready,
     mixed_run_font_fallback_ready,
-    deterministic_color_emoji_ready: false,
-    full_grapheme_parity_ready: false,
+    deterministic_color_emoji_ready,
+    unicode_17_grapheme_boundary_ready,
     ready_count,
     gap_count,
   }
+}
+
+///|
+fn skia_unicode_17_grapheme_boundary_contract_ready() -> Bool {
+  skia_grapheme_cluster_boundaries_match("\r\n", [0, 2]) &&
+  skia_grapheme_cluster_boundaries_match("\u{094D}\u{0915}", [0, 1, 2]) &&
+  skia_grapheme_cluster_boundaries_match("a\u{094D}\u{0924}", [0, 2, 3]) &&
+  skia_grapheme_cluster_boundaries_match("\u{1B32}\u{1B44}\u{1B2F}", [0, 3]) &&
+  skia_grapheme_cluster_boundaries_match(
+    "\u{179F}\u{17D2}\u{178F}\u{17D2}\u{179A}\u{17B8}",
+    [0, 6],
+  ) &&
+  skia_grapheme_cluster_boundaries_match("\u{1FC00}\u{200D}\u{1FC01}", [0, 3])
+}
+
+///|
+fn skia_grapheme_cluster_boundaries_match(
+  text : String,
+  expected : Array[Int],
+) -> Bool {
+  let actual = [0]
+  let mut cursor = 0
+  for cluster in skia_grapheme_cluster_texts(text) {
+    cursor += cluster.to_array().length()
+    actual.push(cursor)
+  }
+  if actual.length() != expected.length() {
+    return false
+  }
+  for index in 0..<expected.length() {
+    if actual[index] != expected[index] {
+      return false
+    }
+  }
+  true
 }
 
 ///|
