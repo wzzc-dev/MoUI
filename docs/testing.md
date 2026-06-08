@@ -280,6 +280,12 @@ native SkParagraph boundary into the temporary configuration, and add
 `--require-skparagraph` when a real paragraph/bidi proof run must fail fast if
 the selected Skia headers or libraries do not provide SkParagraph, SkShaper,
 SkUnicode, HarfBuzz, and ICU support. Add
+`--run-text-emoji-smoke` plus `--text-emoji-log
+artifacts/platform-evidence/macos/skia-text-emoji-smoke.log` when the same
+temporary macOS configuration should also run
+`moui/tests/skia_text_emoji_smoke/native` and verify the SkParagraph
+paragraph, bidi, selection/hit-test, grapheme editing, IME anchor, composition
+visual, and emoji/font metadata renderer-proof markers. Add
 explicit log paths and `--record-platform-evidence` when you want the helper to
 update the macOS `skiaEvidence` block in the platform evidence manifest after a
 successful run:

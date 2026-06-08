@@ -51,6 +51,9 @@ Options:
                          paths are resolved from the repository root.
   --smoke-log PATH       Write MoUI renderer smoke output to PATH. Relative
                          paths are resolved from the repository root.
+  --text-emoji-log PATH  Write MoUI Skia text/emoji proof smoke output to
+                         PATH. Relative paths are resolved from the repository
+                         root. Used with --run-text-emoji-smoke.
   --showcase-log PATH    Write macos_skia Showcase smoke output to PATH.
                          Relative paths are resolved from the repository root.
   --markdown-log PATH    Write markdown_editor/macos_skia smoke output to PATH.
@@ -66,6 +69,10 @@ Options:
   --skip-showcase-build  Only run the renderer pixel smoke.
   --run-showcase-smoke   After building macos_skia, run it with a first-frame
                          exit flag and verify the renderer-present marker.
+  --run-text-emoji-smoke After the renderer smoke, build and run
+                         moui/tests/skia_text_emoji_smoke/native with the same
+                         real-Skia link flags and verify the text/emoji proof
+                         success marker.
   --run-markdown-smoke   Build and run markdown_editor/macos_skia with a
                          first-frame exit flag and verify the marker.
   --run-gpu-smoke        Also run the opt-in macOS Metal/Ganesh Skia GPU route
@@ -155,6 +162,7 @@ if [[ -n "${MOUI_SKIA_EXTRA_LINK_FLAGS:-}" ]]; then
 fi
 requested_build_log=""
 requested_smoke_log=""
+requested_text_emoji_log=""
 requested_showcase_log=""
 requested_markdown_log=""
 requested_platform_evidence_manifest=""
@@ -162,6 +170,7 @@ sync_deps=1
 fetch_repo=1
 skip_showcase_build=0
 run_showcase_smoke=0
+run_text_emoji_smoke=0
 run_markdown_smoke=0
 run_gpu_smoke=0
 showcase_timeout=20
@@ -247,6 +256,10 @@ while [[ $# -gt 0 ]]; do
       requested_smoke_log="${2:-}"
       shift 2
       ;;
+    --text-emoji-log)
+      requested_text_emoji_log="${2:-}"
+      shift 2
+      ;;
     --showcase-log)
       requested_showcase_log="${2:-}"
       shift 2
@@ -273,6 +286,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --run-showcase-smoke)
       run_showcase_smoke=1
+      shift
+      ;;
+    --run-text-emoji-smoke)
+      run_text_emoji_smoke=1
       shift
       ;;
     --run-markdown-smoke)
@@ -316,6 +333,10 @@ require_skparagraph="$(normalize_bool MOUI_SKIA_REQUIRE_SKPARAGRAPH "$require_sk
 if [[ $require_skparagraph -eq 1 ]]; then
   enable_skparagraph=1
 fi
+if [[ $run_text_emoji_smoke -eq 1 && $enable_skparagraph -eq 0 ]]; then
+  echo "--run-text-emoji-smoke requires --enable-skparagraph or --require-skparagraph." >&2
+  exit 2
+fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 skia_repo="$repo_root/moui_skia"
@@ -323,6 +344,8 @@ native_pkg="$skia_repo/native/moon.pkg"
 native_pkg_backup="$native_pkg.moui-smoke.bak"
 renderer_pkg="$repo_root/moui/tests/skia_renderer_smoke/native/moon.pkg"
 renderer_pkg_backup="$renderer_pkg.moui-smoke.bak"
+text_emoji_pkg="$repo_root/moui/tests/skia_text_emoji_smoke/native/moon.pkg"
+text_emoji_pkg_backup="$text_emoji_pkg.moui-smoke.bak"
 showcase_pkg="$repo_root/examples/showcase/macos_skia/moon.pkg"
 showcase_pkg_backup="$showcase_pkg.moui-smoke.bak"
 markdown_pkg="$repo_root/examples/markdown_editor/macos_skia/moon.pkg"
@@ -331,10 +354,12 @@ workbench_pkg="$repo_root/examples/mo_workbench/macos_skia/moon.pkg"
 workbench_pkg_backup="$workbench_pkg.moui-smoke.bak"
 build_log=""
 smoke_log=""
+text_emoji_log=""
 showcase_log=""
 markdown_log=""
 platform_evidence_manifest=""
 smoke_log_is_temporary=0
+text_emoji_log_is_temporary=0
 showcase_log_is_temporary=0
 markdown_log_is_temporary=0
 
@@ -374,7 +399,7 @@ get_assignment_value() {
 }
 
 check_package_backups() {
-  for backup in "$native_pkg_backup" "$renderer_pkg_backup" "$showcase_pkg_backup" "$markdown_pkg_backup"; do
+  for backup in "$native_pkg_backup" "$renderer_pkg_backup" "$text_emoji_pkg_backup" "$showcase_pkg_backup" "$markdown_pkg_backup" "$workbench_pkg_backup"; do
     if [[ -f "$backup" ]]; then
       echo "package backup already exists: $backup" >&2
       echo "Resolve the stale backup before running the MoUI Skia renderer smoke." >&2
@@ -420,6 +445,10 @@ fi
 
 if [[ -n "$requested_smoke_log" ]]; then
   smoke_log="$(resolve_path "$requested_smoke_log")"
+fi
+
+if [[ -n "$requested_text_emoji_log" ]]; then
+  text_emoji_log="$(resolve_path "$requested_text_emoji_log")"
 fi
 
 if [[ -n "$requested_showcase_log" ]]; then
@@ -854,6 +883,9 @@ echo "  showcase_link_flags=$showcase_link_flags"
 if [[ -n "$smoke_log" ]]; then
   echo "  smoke_log=$smoke_log"
 fi
+if [[ -n "$text_emoji_log" ]]; then
+  echo "  text_emoji_log=$text_emoji_log"
+fi
 if [[ -n "$showcase_log" ]]; then
   echo "  showcase_log=$showcase_log"
 fi
@@ -865,6 +897,7 @@ if [[ -n "$platform_evidence_manifest" ]]; then
 fi
 echo "  skip_showcase_build=$skip_showcase_build"
 echo "  run_showcase_smoke=$run_showcase_smoke"
+echo "  run_text_emoji_smoke=$run_text_emoji_smoke"
 echo "  run_markdown_smoke=$run_markdown_smoke"
 echo "  run_gpu_smoke=$run_gpu_smoke"
 echo "  write_local_config=$write_local_config"
@@ -909,6 +942,30 @@ import {
   "moonbitlang/core/encoding/base64",
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
+  "wzzc-dev/moui_skia/native" @skia_native,
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "$skia_link_flags",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
+EOF
+}
+
+write_text_emoji_pkg_config() {
+  cat > "$text_emoji_pkg" <<EOF
+import {
   "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
@@ -1009,6 +1066,8 @@ if [[ $write_local_config -eq 1 ]]; then
   echo "Wrote local moui_skia/native/moon.pkg with macOS Skia link flags."
   write_renderer_smoke_pkg_config
   echo "Wrote local MoUI renderer smoke package link flags."
+  write_text_emoji_pkg_config
+  echo "Wrote local MoUI text/emoji smoke package link flags."
   write_showcase_pkg_config
   echo "Wrote local macos_skia showcase package link flags."
   write_markdown_pkg_config
@@ -1016,6 +1075,7 @@ if [[ $write_local_config -eq 1 ]]; then
   write_workbench_pkg_config
   echo "Wrote local mo_workbench/macos_skia package link flags."
   echo "Local macOS Skia configuration is ready. Direct run command:"
+  echo "  moon run moui/tests/skia_text_emoji_smoke/native --target native"
   echo "  moon run examples/showcase/macos_skia --target native"
   echo "  moon run examples/markdown_editor/macos_skia --target native"
   echo "  moon run examples/mo_workbench/macos_skia --target native"
@@ -1026,6 +1086,9 @@ fi
 restore_packages() {
   if [[ $smoke_log_is_temporary -eq 1 && -n "${smoke_log:-}" && -f "$smoke_log" ]]; then
     rm -f "$smoke_log"
+  fi
+  if [[ $text_emoji_log_is_temporary -eq 1 && -n "${text_emoji_log:-}" && -f "$text_emoji_log" ]]; then
+    rm -f "$text_emoji_log"
   fi
   if [[ $showcase_log_is_temporary -eq 1 && -n "${showcase_log:-}" && -f "$showcase_log" ]]; then
     rm -f "$showcase_log"
@@ -1042,6 +1105,11 @@ restore_packages() {
     cp "$renderer_pkg_backup" "$renderer_pkg"
     rm -f "$renderer_pkg_backup"
     echo "Restored moui/tests/skia_renderer_smoke/native/moon.pkg after MoUI Skia renderer smoke."
+  fi
+  if [[ -f "$text_emoji_pkg_backup" ]]; then
+    cp "$text_emoji_pkg_backup" "$text_emoji_pkg"
+    rm -f "$text_emoji_pkg_backup"
+    echo "Restored moui/tests/skia_text_emoji_smoke/native/moon.pkg after MoUI Skia renderer smoke."
   fi
   if [[ -f "$showcase_pkg_backup" ]]; then
     cp "$showcase_pkg_backup" "$showcase_pkg"
@@ -1063,6 +1131,7 @@ trap restore_packages EXIT
 
 cp "$native_pkg" "$native_pkg_backup"
 cp "$renderer_pkg" "$renderer_pkg_backup"
+cp "$text_emoji_pkg" "$text_emoji_pkg_backup"
 cp "$showcase_pkg" "$showcase_pkg_backup"
 cp "$markdown_pkg" "$markdown_pkg_backup"
 cp "$workbench_pkg" "$workbench_pkg_backup"
@@ -1072,6 +1141,9 @@ echo "Wrote temporary moui_skia/native/moon.pkg with macOS Skia link flags."
 
 write_renderer_smoke_pkg_config
 echo "Wrote temporary MoUI renderer smoke package link flags."
+
+write_text_emoji_pkg_config
+echo "Wrote temporary MoUI text/emoji smoke package link flags."
 
 write_showcase_pkg_config
 echo "Wrote temporary macos_skia showcase package link flags."
@@ -1136,6 +1208,57 @@ if [[ $enable_skshaper -eq 1 ]]; then
     exit 1
   fi
   echo "Verified MoUI Skia renderer SkShaper marker."
+fi
+
+if [[ $run_text_emoji_smoke -eq 1 ]]; then
+  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build moui/tests/skia_text_emoji_smoke/native --target native
+  text_emoji_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe"
+  if [[ ! -x "$text_emoji_exe" ]]; then
+    echo "MoUI Skia text/emoji smoke executable was not produced at $text_emoji_exe" >&2
+    exit 1
+  fi
+
+  echo "Running MoUI Skia text/emoji smoke executable: $text_emoji_exe"
+  if [[ -z "$text_emoji_log" ]]; then
+    text_emoji_log="$(mktemp "${TMPDIR:-/tmp}/moui-skia-text-emoji-smoke.XXXXXX.log")"
+    text_emoji_log_is_temporary=1
+  else
+    mkdir -p "$(dirname "$text_emoji_log")"
+    : > "$text_emoji_log"
+  fi
+
+  set +e
+  set -o pipefail
+  "$text_emoji_exe" 2>&1 | tee "$text_emoji_log"
+  text_emoji_status=${PIPESTATUS[0]}
+  set +o pipefail
+  set -e
+  if [[ $text_emoji_status -ne 0 ]]; then
+    exit "$text_emoji_status"
+  fi
+  if ! grep -Fq "MoUI Skia text/emoji smoke passed" "$text_emoji_log"; then
+    echo "MoUI Skia text/emoji smoke did not print the expected success marker" >&2
+    exit 1
+  fi
+  echo "Verified MoUI Skia text/emoji smoke success marker."
+
+  text_emoji_required_markers=(
+    "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key"
+    "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret"
+    "MoUI renderer proof paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels"
+    "MoUI renderer proof bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order"
+    "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range hit-test"
+    "MoUI renderer proof graphemeEditing passed grapheme-boundaries edit-actions"
+    "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text"
+    "MoUI renderer proof imeCompositionVisual passed composition-range preedit-pixels"
+  )
+  for marker in "${text_emoji_required_markers[@]}"; do
+    if ! grep -Fq "$marker" "$text_emoji_log"; then
+      echo "MoUI Skia text/emoji smoke did not print renderer-proof marker: $marker" >&2
+      exit 1
+    fi
+  done
+  echo "Verified MoUI Skia text/emoji renderer-proof markers."
 fi
 
 if [[ $skip_showcase_build -eq 0 ]]; then

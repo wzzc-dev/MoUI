@@ -301,6 +301,9 @@ assertIncludes("scripts/ci-renderer-proof-native.mjs", 'if (backend === "skia-na
 assertIncludes("scripts/ci-renderer-proof-native.mjs", 'recordArgs.push("--require-passed")');
 assertIncludes("scripts/ci-renderer-proof-native.sh", 'if [ "$backend" = "skia-native" ]; then');
 assertIncludes("scripts/ci-renderer-proof-native.sh", 'set -- "$@" --require-passed');
+assertIncludes("scripts/macos-skia-renderer-smoke.sh", "--run-text-emoji-smoke");
+assertIncludes("scripts/macos-skia-renderer-smoke.sh", "MoUI renderer proof selectionRects passed engine=skparagraph");
+assertIncludes("docs/testing.md", "--run-text-emoji-smoke");
 assertIncludes(".github/workflows/ci.yml", "sh scripts/ci-renderer-proof-summary.sh artifacts/downloaded-renderer-proof");
 assertIncludes("scripts/ci-renderer-proof-summary.sh", "--artifact-root");
 assertIncludes("scripts/ci-renderer-proof-summary.sh", "skia-native-macos.json");
