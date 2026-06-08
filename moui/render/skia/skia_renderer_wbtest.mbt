@@ -137,6 +137,37 @@ test "skia font fallback request prefers emoji and non-ascii representative char
 }
 
 ///|
+fn assert_skia_fallback_languages(
+  text : String,
+  expected : Array[Bytes],
+) -> Unit raise {
+  let request = skia_font_fallback_request(@core.FontSpec::new(size=18.0), text)
+  inspect(request.language_count(), content="\{expected.length()}")
+  for index in 0..<expected.length() {
+    assert_true(request.language_at(index) == Some(expected[index]))
+  }
+  assert_true(request.language_at(expected.length()) is None)
+}
+
+///|
+test "skia font fallback request records script language tags" {
+  assert_skia_fallback_languages("", [])
+  assert_skia_fallback_languages("MoUI", [b"en"])
+  assert_skia_fallback_languages("A你B", [b"zh-Hans", b"en"])
+  assert_skia_fallback_languages("A\u{3042}B", [b"ja", b"en"])
+  assert_skia_fallback_languages("A\u{D55C}B", [b"ko", b"en"])
+  assert_skia_fallback_languages("A\u{05D0}B", [b"he", b"en"])
+  assert_skia_fallback_languages("A\u{0628}B", [b"ar", b"en"])
+  assert_skia_fallback_languages("A\u{0915}B", [b"hi", b"en"])
+  assert_skia_fallback_languages("A\u{0E01}B", [b"th", b"en"])
+  assert_skia_fallback_languages("A\u{0E81}B", [b"lo", b"en"])
+  assert_skia_fallback_languages("A\u{0D9A}B", [b"si", b"en"])
+  assert_skia_fallback_languages("A\u{1780}B", [b"km", b"en"])
+  assert_skia_fallback_languages("A\u{1000}B", [b"my", b"en"])
+  assert_skia_fallback_languages("A\u{1F642}B", [b"und-Zsye", b"en"])
+}
+
+///|
 test "skia text visual order proof records rtl glyph layout evidence" {
   guard skia_available() else { return () }
   guard skia_text_visual_order_proof("ABC \u{05D0}\u{05D1}\u{05D2} 123")
@@ -165,6 +196,9 @@ test "skia font fallback request preserves family chain style and coverage chara
   let request = skia_font_fallback_request(font, "A\u{1F642}B")
   inspect(request.character, content="128578")
   assert_true(request.has_character())
+  inspect(request.language_count(), content="2")
+  assert_true(request.language_at(0) == Some(b"und-Zsye"))
+  assert_true(request.language_at(1) == Some(b"en"))
   assert_true(request.families.length() >= 2)
   assert_true(request.families.family_at(0) == Some(b"Helvetica Neue"))
   assert_true(request.families.contains_family(b"Apple Color Emoji"))
