@@ -106,6 +106,31 @@ const runSkiaRecorder = (name, logText, extraArgs = [], envOverrides = {}) => {
 };
 
 const skiaMarkers = markers.map(marker => {
+  if (marker.includes("MoUI renderer proof colorEmojiPixels metadata")) {
+    return [
+      "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key",
+      [
+        "MoUI renderer proof colorEmojiPixels metadata",
+        "font_family=emoji",
+        "font_source=skia-system-fontmgr",
+        "text_system=skia-raster-text-system",
+        "shaper=skshaper",
+        "glyph_format=rgba",
+        "glyph_count=2",
+        "cluster_count=1",
+        "high_saturation_pixels=42",
+        "alpha_pixels=120",
+        "glyph_key=skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|emoji-u+128105|rgba",
+        "glyph_width=28",
+        "glyph_height=32",
+        "fallback_script_tag=und-Zsye",
+        "fallback_language_tag_count=2",
+        "fallback_request_language_count=2",
+        "resolved_missing_glyph_count=0",
+        "missing_glyph_recovery_ready=true",
+      ].join(" "),
+    ].join("\n");
+  }
   if (marker.includes("MoUI renderer proof colorEmojiPixels passed")) {
     return marker.replace(
       "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata",
@@ -165,6 +190,18 @@ if (
   console.error("passed Skia manifest did not preserve SkParagraph/emoji fallback evidence");
   process.exit(1);
 }
+const skiaColorEmojiMetadata =
+  skiaPassedManifest.observations.colorEmojiPixels.metadata;
+if (
+  skiaColorEmojiMetadata.font.fallbackScriptTag !== "und-Zsye" ||
+  skiaColorEmojiMetadata.font.fallbackLanguageTagCount !== 2 ||
+  skiaColorEmojiMetadata.font.fallbackRequestLanguageCount !== 2 ||
+  skiaColorEmojiMetadata.glyph.resolvedMissingGlyphCount !== 0 ||
+  skiaColorEmojiMetadata.glyph.missingGlyphRecoveryReady !== true
+) {
+  console.error("passed Skia manifest did not preserve script/missing-glyph metadata");
+  process.exit(1);
+}
 
 const skiaMissingEmojiFallback = runSkiaRecorder(
   "skia-missing-emoji-fallback",
@@ -184,6 +221,27 @@ if (
   skiaMissingEmojiFallbackManifest.observations.colorEmojiPixels.status !== "failed"
 ) {
   console.error("missing Skia emoji fallback token should keep color emoji proof failed");
+  process.exit(1);
+}
+
+const skiaMissingFallbackScript = runSkiaRecorder(
+  "skia-missing-fallback-script",
+  skiaMarkers.join("\n").replace(" fallback_script_tag=und-Zsye", ""),
+);
+if (skiaMissingFallbackScript.result.status !== 0) {
+  console.error("expected missing Skia fallback script metadata to validate as failed");
+  console.error(skiaMissingFallbackScript.result.stdout);
+  console.error(skiaMissingFallbackScript.result.stderr);
+  process.exit(1);
+}
+const skiaMissingFallbackScriptManifest = JSON.parse(
+  readFileSync(skiaMissingFallbackScript.outputPath, "utf8"),
+);
+if (
+  skiaMissingFallbackScriptManifest.status !== "failed" ||
+  skiaMissingFallbackScriptManifest.observations.colorEmojiPixels.status !== "failed"
+) {
+  console.error("missing Skia fallback script metadata should keep color emoji proof failed");
   process.exit(1);
 }
 

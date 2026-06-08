@@ -134,6 +134,8 @@ const parseNumber = value => {
   return Number.isFinite(number) ? number : 0;
 };
 
+const parseBoolean = value => value === "true";
+
 const colorEmojiMetadata = () => {
   const fields = parseMetadataFields("MoUI renderer proof colorEmojiPixels metadata ");
   if (!fields) return null;
@@ -147,15 +149,43 @@ const colorEmojiMetadata = () => {
   if (fields.glyph_key) glyph.key = fields.glyph_key;
   if (fields.glyph_width) glyph.width = parseNumber(fields.glyph_width);
   if (fields.glyph_height) glyph.height = parseNumber(fields.glyph_height);
+  if (fields.resolved_missing_glyph_count) {
+    glyph.resolvedMissingGlyphCount = parseNumber(fields.resolved_missing_glyph_count);
+  }
+  if (fields.missing_glyph_recovery_ready) {
+    glyph.missingGlyphRecoveryReady = parseBoolean(fields.missing_glyph_recovery_ready);
+  }
+  const font = {
+    family: fields.font_family || "unknown",
+    source: fields.font_source || "unknown",
+    textSystem: fields.text_system || "unknown",
+    shaper: fields.shaper || "unknown",
+  };
+  if (fields.fallback_script_tag) font.fallbackScriptTag = fields.fallback_script_tag;
+  if (fields.fallback_language_tag_count) {
+    font.fallbackLanguageTagCount = parseNumber(fields.fallback_language_tag_count);
+  }
+  if (fields.fallback_request_language_count) {
+    font.fallbackRequestLanguageCount = parseNumber(fields.fallback_request_language_count);
+  }
   return {
-    font: {
-      family: fields.font_family || "unknown",
-      source: fields.font_source || "unknown",
-      textSystem: fields.text_system || "unknown",
-      shaper: fields.shaper || "unknown",
-    },
+    font,
     glyph,
   };
+};
+
+const skiaNativeColorEmojiMetadataReady = metadata => {
+  if (backend !== "skia-native") return true;
+  const font = metadata.font || {};
+  const glyph = metadata.glyph || {};
+  return (
+    typeof font.fallbackScriptTag === "string" &&
+    font.fallbackScriptTag.trim() !== "" &&
+    Number(font.fallbackLanguageTagCount) >= 1 &&
+    Number(font.fallbackRequestLanguageCount) === Number(font.fallbackLanguageTagCount) &&
+    Number(glyph.resolvedMissingGlyphCount) >= 0 &&
+    glyph.missingGlyphRecoveryReady === true
+  );
 };
 
 const colorEmojiMetadataReady = metadata => {
@@ -180,7 +210,8 @@ const colorEmojiMetadataReady = metadata => {
     Number(glyph.width) > 0 &&
     Number(glyph.height) > 0 &&
     Number(glyph.highSaturationPixels) >= 8 &&
-    Number(glyph.alphaPixels) > 0
+    Number(glyph.alphaPixels) > 0 &&
+    skiaNativeColorEmojiMetadataReady(metadata)
   );
 };
 
