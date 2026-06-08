@@ -198,6 +198,14 @@ assertIncludes(
   "Skia route evidence",
 );
 assertIncludes(
+  "scripts/record-native-ime-evidence.mjs",
+  "record-platform-evidence-manifest.mjs",
+);
+assertIncludes(
+  "scripts/record-native-ime-evidence.mjs",
+  "native IME runtime evidence",
+);
+assertIncludes(
   "scripts/conformance-check.sh",
   "validate-web-runtime-handoff.mjs",
 );
@@ -223,6 +231,10 @@ assertIncludes(
   "node scripts/test-validate-web-runtime-presentation-manifest.mjs",
 );
 assertIncludes("scripts/dev-check.sh", "sh -n scripts/ci-web-runtime-presentation.sh");
+assertIncludes(
+  "scripts/dev-check.sh",
+  "node scripts/test-record-native-ime-evidence.mjs",
+);
 assertIncludes(
   "scripts/dev-check.sh",
   "node scripts/test-record-native-skia-evidence.mjs",
@@ -433,6 +445,10 @@ assertIncludes(
 );
 assertIncludes(
   "docs/testing.md",
+  "node scripts/test-record-native-ime-evidence.mjs",
+);
+assertIncludes(
+  "docs/testing.md",
   "node scripts/test-record-native-skia-evidence.mjs",
 );
 assertIncludes(
@@ -505,6 +521,7 @@ assertIncludes("docs/release-readiness.md", "verify-native-capability-contract.s
 assertIncludes("docs/release-readiness.md", "Wayland key/modifier mapping");
 assertIncludes("docs/release-readiness.md", "current button-event coordinates");
 assertIncludes("docs/release-readiness.md", "record-platform-evidence-manifest.mjs");
+assertIncludes("docs/release-readiness.md", "record-native-ime-evidence.mjs");
 assertIncludes("docs/release-readiness.md", "record-native-skia-evidence.mjs");
 assertIncludes("docs/release-readiness.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("docs/release-readiness.md", "validate-web-runtime-handoff-manifest.mjs");
@@ -685,6 +702,9 @@ assertIncludes(
 );
 assertIncludes("scripts/record-platform-evidence-manifest.mjs", "asyncImageSecondFrame");
 assertIncludes("scripts/record-native-skia-evidence.mjs", "--async-image-log");
+assertIncludes("scripts/record-native-ime-evidence.mjs", "--candidate-anchor-log");
+assertIncludes("scripts/record-native-ime-evidence.mjs", "--scale-dpr-anchor-log");
+assertIncludes("scripts/test-record-native-ime-evidence.mjs", "host unit test");
 assertIncludes("docs/testing.md", "asyncImageSecondFrame=yes");
 assertIncludes("docs/testing.md", "selection rectangles");
 assertIncludes("docs/testing.md", "IME candidate anchors");
@@ -813,7 +833,9 @@ assertIncludes("AGENTS.md", "native/capabilities.json");
 assertIncludes("AGENTS.md", "verify-native-capability-contract.sh");
 assertIncludes("AGENTS.md", "platform-runtime-evidence.json");
 assertIncludes("AGENTS.md", "record-platform-evidence-manifest.mjs");
+assertIncludes("AGENTS.md", "record-native-ime-evidence.mjs");
 assertIncludes("AGENTS.md", "record-native-skia-evidence.mjs");
+assertIncludes("skills/moui-framework-development-skill/SKILL.md", "record-native-ime-evidence.mjs");
 assertIncludes("AGENTS.md", "evidenceProvenance");
 assertIncludes("AGENTS.md", "validate-web-runtime-handoff.mjs");
 assertIncludes("AGENTS.md", "test-validate-web-runtime-handoff.mjs");
