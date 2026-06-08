@@ -29,15 +29,7 @@ static bool moonbit_skia_paragraph_line_metrics(
   if (wrapper == nullptr || wrapper->paragraph == nullptr || metric == nullptr || index < 0) {
     return false;
   }
-  std::vector<LineMetrics> metrics;
-  if (!wrapper->paragraph->getLineMetrics(metrics)) {
-    return false;
-  }
-  if (static_cast<size_t>(index) >= metrics.size()) {
-    return false;
-  }
-  *metric = metrics[static_cast<size_t>(index)];
-  return true;
+  return wrapper->paragraph->getLineMetricsAt(index, metric);
 }
 
 static TextDirection moonbit_skia_paragraph_direction(int32_t left_to_right) {
@@ -103,7 +95,8 @@ moonbit_skia_paragraph_layout_utf8(
 
   std::unique_ptr<ParagraphBuilder> builder = ParagraphBuilder::make(
     paragraph_style,
-    font_collection
+    font_collection,
+    SkUnicodes::ICU::Make()
   );
   if (builder == nullptr) {
     return moonbit_skia_make_paragraph_wrapper(nullptr);
@@ -167,9 +160,7 @@ moonbit_skia_paragraph_line_count(MoonbitSkiaParagraph* wrapper) {
     return 0;
   }
   std::vector<LineMetrics> metrics;
-  if (!wrapper->paragraph->getLineMetrics(metrics)) {
-    return 0;
-  }
+  wrapper->paragraph->getLineMetrics(metrics);
   return moonbit_skia_clamp_text_index(metrics.size());
 #else
   (void)wrapper;
@@ -382,8 +373,8 @@ moonbit_skia_paragraph_text_boxes_utf8(
       reinterpret_cast<MoonbitSkiaRect**>(moonbit_empty_ref_array)
     );
   }
-  MoonbitSkiaRect** buffer = reinterpret_cast<MoonbitSkiaRect**>(
-    moonbit_make_ref_array_raw(static_cast<int32_t>(boxes.size()))
+  MoonbitSkiaRect** buffer = moonbit_skia_make_rect_array_storage(
+    static_cast<int32_t>(boxes.size())
   );
   for (size_t i = 0; i < boxes.size(); ++i) {
     const SkRect& rect = boxes[i].rect;
