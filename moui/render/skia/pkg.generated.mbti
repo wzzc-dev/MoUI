@@ -19,6 +19,8 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor
 
 pub fn skia_available() -> Bool
 
+pub fn skia_emoji_font_fallback_proof(text? : String, font? : @core.FontSpec, font_resolution? : SkiaFontResolution) -> SkiaEmojiFontFallbackProof?
+
 pub fn skia_gpu_metal_preflight_summary() -> String
 
 pub fn skia_image_load_completion(String) -> @render.ImageResourceLoadCompletion
@@ -43,6 +45,24 @@ pub(all) suberror SkiaRendererError {
 pub fn SkiaRendererError::message(Self) -> String
 
 // Types and methods
+pub(all) struct SkiaEmojiFontFallbackProof {
+  text : String
+  text_system_id : String
+  font_family : String
+  font_source : String
+  shaper : String
+  glyph_key : String
+  glyph_count : Int
+  cluster_count : Int
+  glyph_width : Int
+  glyph_height : Int
+  fallback_character : Int
+  emoji_hint : Bool
+  emoji_fallback_attempted : Bool
+  fallback_request_ready : Bool
+  deterministic_color_emoji_ready : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum SkiaFontResolution {
   SystemFontMgr
   EmptyTypeface

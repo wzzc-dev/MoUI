@@ -152,11 +152,13 @@ Renderer-proof color emoji artifacts now have a stronger audit boundary:
 structured `metadata.font` / `metadata.glyph` fields. The native Skia
 text/emoji smoke records the requested emoji family, Skia text-system id,
 shaper path, RGBA glyph format, cluster count, pixel counts, stable glyph key,
-and measured glyph size; it now also records paragraph selection rectangles,
-line-range geometry, hit-test diagnostics, and the existing heuristic visual
-bidi-order proof through `skia_text_selection_geometry_proof()` /
-`skia_text_visual_order_proof()`. WebGPU wasm records the browser canvas font stack plus
-glyph atlas key and size metadata. Renderer proof also reserves separate
+measured glyph size, fallback request character, and emoji-hint/fallback-request
+status through `skia_emoji_font_fallback_proof()`; it also records paragraph
+selection rectangles, line-range geometry, hit-test diagnostics, and the
+existing heuristic visual bidi-order proof through
+`skia_text_selection_geometry_proof()` / `skia_text_visual_order_proof()`.
+WebGPU wasm records the browser canvas font stack plus glyph atlas key and size
+metadata. Renderer proof also reserves separate
 contract keys for `selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,
 and `imeCompositionVisual`; those keys must be backed by selection rectangle,
 line-range, grapheme-boundary, edit-action, candidate-anchor, surrounding-text,

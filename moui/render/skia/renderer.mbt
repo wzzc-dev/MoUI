@@ -89,6 +89,25 @@ pub(all) struct SkiaTextSelectionGeometryProof {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct SkiaEmojiFontFallbackProof {
+  text : String
+  text_system_id : String
+  font_family : String
+  font_source : String
+  shaper : String
+  glyph_key : String
+  glyph_count : Int
+  cluster_count : Int
+  glyph_width : Int
+  glyph_height : Int
+  fallback_character : Int
+  emoji_hint : Bool
+  emoji_fallback_attempted : Bool
+  fallback_request_ready : Bool
+  deterministic_color_emoji_ready : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
 priv struct SkiaRasterSurfacePreflight {
   physical_width : Int
   physical_height : Int
@@ -500,6 +519,88 @@ pub fn skia_text_selection_geometry_proof(
     visual_segment_count,
     bidi_visual_order_evidence,
   })
+}
+
+///|
+pub fn skia_emoji_font_fallback_proof(
+  text? : String = "\u{1F469}\u{200D}\u{1F4BB}",
+  font? : @core.FontSpec = @core.FontSpec::new(
+    families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
+    size=32.0,
+    weight=400,
+  ),
+  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+) -> SkiaEmojiFontFallbackProof? {
+  if text == "" {
+    return None
+  }
+  let emoji_hint = skia_text_contains_emoji_hint(text)
+  let fallback_request = skia_font_fallback_request(font, text)
+  match skia_resolved_text_layout_for_resolution(font, text, font_resolution) {
+    Some(layout) => {
+      let mut glyph_count = 0
+      for segment in layout.segments {
+        glyph_count += segment.glyph_run.glyphs.length()
+      }
+      if glyph_count <= 0 || layout.width <= 0.0 || layout.metrics.height <= 0.0 {
+        return None
+      }
+      let text_system = skia_text_system(resolution=font_resolution)
+      let shaper = if @skia_native.skia_shaper_available() {
+        "skshaper"
+      } else {
+        "fallback-glyph-run"
+      }
+      let fallback_character = skia_representative_fallback_codepoint(text)
+      Some({
+        text,
+        text_system_id: text_system.id(),
+        font_family: "emoji",
+        font_source: skia_emoji_font_source_label(font_resolution),
+        shaper,
+        glyph_key: skia_emoji_glyph_key(
+          text_system.id(),
+          shaper,
+          fallback_character,
+        ),
+        glyph_count,
+        cluster_count: skia_grapheme_cluster_texts(text).length(),
+        glyph_width: skia_positive_pixel_extent(layout.width),
+        glyph_height: skia_positive_pixel_extent(layout.metrics.height),
+        fallback_character,
+        emoji_hint,
+        emoji_fallback_attempted: font_resolution ==
+        SkiaFontResolution::SystemFontMgr &&
+        emoji_hint,
+        fallback_request_ready: !fallback_request.is_empty() &&
+        fallback_request.has_character(),
+        deterministic_color_emoji_ready: false,
+      })
+    }
+    None => None
+  }
+}
+
+///|
+fn skia_emoji_font_source_label(resolution : SkiaFontResolution) -> String {
+  match resolution {
+    SkiaFontResolution::SystemFontMgr => "skia-system-fontmgr"
+    SkiaFontResolution::EmptyTypeface => "skia-empty-typeface"
+  }
+}
+
+///|
+fn skia_emoji_glyph_key(
+  text_system_id : String,
+  shaper : String,
+  fallback_character : Int,
+) -> String {
+  "skia-system-fontmgr|\{text_system_id}|\{shaper}|emoji-u+\{fallback_character}|rgba"
+}
+
+///|
+fn skia_positive_pixel_extent(value : Double) -> Int {
+  value.ceil().to_int().max(1)
 }
 
 ///|

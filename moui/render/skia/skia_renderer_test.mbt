@@ -204,6 +204,29 @@ test "skia selection geometry proof covers line ranges hit testing and bidi evid
 }
 
 ///|
+test "skia emoji font fallback proof records glyph metadata without readiness promotion" {
+  match skia_emoji_font_fallback_proof() {
+    Some(proof) => {
+      inspect(proof.font_family, content="emoji")
+      inspect(proof.font_source, content="skia-system-fontmgr")
+      assert_true(proof.text_system_id == "skia-raster-text-system")
+      assert_true(proof.emoji_hint)
+      assert_true(proof.emoji_fallback_attempted)
+      assert_true(proof.fallback_request_ready)
+      assert_false(proof.deterministic_color_emoji_ready)
+      assert_true(proof.glyph_key.contains("emoji-u+"))
+      assert_true(proof.glyph_key.contains("rgba"))
+      assert_true(proof.glyph_count >= 1)
+      assert_true(proof.cluster_count == 1)
+      assert_true(proof.glyph_width > 0)
+      assert_true(proof.glyph_height > 0)
+      assert_true(proof.fallback_character == 0x1F469)
+    }
+    None => assert_true(!skia_available())
+  }
+}
+
+///|
 test "skia empty typeface text system remains opt-in and fallback-safe" {
   let system = skia_text_system(resolution=SkiaFontResolution::EmptyTypeface)
   if skia_available() {
