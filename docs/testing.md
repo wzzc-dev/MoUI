@@ -541,8 +541,12 @@ must contain common runtime markers: `MoUI native IME runtime`,
 `matching-host`, `native-app`, and the platform protocol marker
 `platform-protocol=macos-marked-text`, `platform-protocol=windows-ime`, or
 `platform-protocol=wayland-text-input` (the helper also accepts documented
-platform aliases). The log must also contain the strong marker tokens for its
-observation. For example, candidate-anchor logs must include
+platform aliases). `--consumer-command` must name either the platform's
+`examples/showcase/<platform>_skia` entrypoint or its
+`examples/markdown_editor/<platform>_skia` entrypoint; `--markdown-log` is
+accepted only with the Markdown Editor native Skia entrypoint. The log must
+also contain the strong marker tokens for its observation. For example,
+candidate-anchor logs must include
 `candidate-anchor`, `candidate-window`, `caret-rect`, and `surrounding-text`;
 surrounding-text logs must include `selection-anchor`, `utf8-offsets`, and
 `grapheme`; composition-visual logs must include `composition-range`,
