@@ -186,21 +186,31 @@ extern "C" fn native_shaped_text_run_advance_y(
 
 ///|
 #borrow(run)
-extern "C" fn native_shaped_text_run_glyphs(
+extern "C" fn native_shaped_text_run_glyph_value(
   run : ShapedTextRunHandle,
-) -> Array[GlyphId] = "moonbit_skia_shaped_text_run_glyphs"
+  index : Int,
+) -> Int = "moonbit_skia_shaped_text_run_glyph_value"
 
 ///|
 #borrow(run)
-extern "C" fn native_shaped_text_run_positions(
+extern "C" fn native_shaped_text_run_position_x(
   run : ShapedTextRunHandle,
-) -> Array[@skia.Point] = "moonbit_skia_shaped_text_run_positions"
+  index : Int,
+) -> Float = "moonbit_skia_shaped_text_run_position_x"
 
 ///|
 #borrow(run)
-extern "C" fn native_shaped_text_run_clusters(
+extern "C" fn native_shaped_text_run_position_y(
   run : ShapedTextRunHandle,
-) -> Array[Int] = "moonbit_skia_shaped_text_run_clusters"
+  index : Int,
+) -> Float = "moonbit_skia_shaped_text_run_position_y"
+
+///|
+#borrow(run)
+extern "C" fn native_shaped_text_run_cluster_value(
+  run : ShapedTextRunHandle,
+  index : Int,
+) -> Int = "moonbit_skia_shaped_text_run_cluster_value"
 
 ///|
 extern "C" fn native_typeface_default() -> TypefaceHandle = "moonbit_skia_typeface_default"
@@ -596,8 +606,15 @@ pub fn Font::shape_text_run_utf8(
         }
         let positions = run.positions()
         let clusters = run.clusters()
+        let glyph_count = run.glyph_count()
+        if glyph_count <= 0 ||
+          glyphs.length() != glyph_count ||
+          positions.length() != glyph_count ||
+          clusters.length() != glyph_count {
+          return None
+        }
         let shaped_run = shaping.shaped_run_descriptor(
-          glyph_count=run.glyph_count(),
+          glyph_count~,
           cluster_count=clusters.length(),
           advance=run.advance(),
         )
@@ -636,17 +653,45 @@ pub fn ShapedTextRun::advance(self : ShapedTextRun) -> @skia.Point {
 
 ///|
 pub fn ShapedTextRun::glyphs(self : ShapedTextRun) -> Array[GlyphId] {
-  native_shaped_text_run_glyphs(self.handle)
+  let count = self.glyph_count()
+  let glyphs : Array[GlyphId] = Array::new(capacity=count)
+  for index in 0..<count {
+    glyphs.push(
+      GlyphId::new(
+        native_shaped_text_run_glyph_value(self.handle, index)
+        .clamp(min=0, max=65535)
+        .to_uint16(),
+      ),
+    )
+  }
+  glyphs
 }
 
 ///|
 pub fn ShapedTextRun::positions(self : ShapedTextRun) -> Array[@skia.Point] {
-  native_shaped_text_run_positions(self.handle)
+  let count = self.glyph_count()
+  let positions : Array[@skia.Point] = Array::new(capacity=count)
+  for index in 0..<count {
+    positions.push(
+      @skia.Point::new(
+        native_shaped_text_run_position_x(self.handle, index),
+        native_shaped_text_run_position_y(self.handle, index),
+      ),
+    )
+  }
+  positions
 }
 
 ///|
 pub fn ShapedTextRun::clusters(self : ShapedTextRun) -> Array[Int] {
-  native_shaped_text_run_clusters(self.handle)
+  let count = self.glyph_count()
+  let clusters : Array[Int] = Array::new(capacity=count)
+  for index in 0..<count {
+    clusters.push(
+      Int::max(0, native_shaped_text_run_cluster_value(self.handle, index)),
+    )
+  }
+  clusters
 }
 
 ///|

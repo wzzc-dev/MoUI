@@ -68,12 +68,14 @@ class GrDirectContext;
   __has_include("modules/skparagraph/include/ParagraphBuilder.h") && \
   __has_include("modules/skparagraph/include/ParagraphStyle.h") && \
   __has_include("modules/skparagraph/include/TextStyle.h") && \
-  __has_include("modules/skparagraph/include/FontCollection.h")
+  __has_include("modules/skparagraph/include/FontCollection.h") && \
+  __has_include("modules/skunicode/include/SkUnicode_icu.h")
 #include "modules/skparagraph/include/Paragraph.h"
 #include "modules/skparagraph/include/ParagraphBuilder.h"
 #include "modules/skparagraph/include/ParagraphStyle.h"
 #include "modules/skparagraph/include/TextStyle.h"
 #include "modules/skparagraph/include/FontCollection.h"
+#include "modules/skunicode/include/SkUnicode_icu.h"
 #define MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS 1
 #endif
 #include "include/codec/SkCodec.h"
@@ -265,16 +267,6 @@ struct MoonbitSkiaBitmap {
 #endif
 };
 
-struct MoonbitSkiaFloatArray {
-  int32_t length;
-  float* buffer;
-};
-
-struct MoonbitSkiaGlyphIdArray {
-  int32_t length;
-  uint16_t* buffer;
-};
-
 struct MoonbitSkiaPoint {
   float x;
   float y;
@@ -285,6 +277,16 @@ struct MoonbitSkiaRect {
   float top;
   float right;
   float bottom;
+};
+
+struct MoonbitSkiaFloatArray {
+  int32_t length;
+  float* buffer;
+};
+
+struct MoonbitSkiaGlyphIdArray {
+  int32_t length;
+  uint16_t* buffer;
 };
 
 struct MoonbitSkiaPointArray {
@@ -327,6 +329,9 @@ MoonbitSkiaGlyphIdArray* moonbit_skia_make_glyph_id_array(
   int32_t length,
   uint16_t* buffer
 );
+uint16_t* moonbit_skia_make_glyph_id_array_storage(
+  int32_t length
+);
 MoonbitSkiaPoint* moonbit_skia_make_point(float x, float y);
 MoonbitSkiaRect* moonbit_skia_make_rect(
   float left,
@@ -338,9 +343,15 @@ MoonbitSkiaPointArray* moonbit_skia_make_point_array(
   int32_t length,
   MoonbitSkiaPoint** buffer
 );
+MoonbitSkiaPoint** moonbit_skia_make_point_array_storage(
+  int32_t length
+);
 MoonbitSkiaRectArray* moonbit_skia_make_rect_array(
   int32_t length,
   MoonbitSkiaRect** buffer
+);
+MoonbitSkiaRect** moonbit_skia_make_rect_array_storage(
+  int32_t length
 );
 MoonbitSkiaInt32Array* moonbit_skia_make_int32_array(
   int32_t length,

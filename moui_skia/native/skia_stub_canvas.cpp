@@ -304,9 +304,11 @@ extern "C" MOONBIT_FFI_EXPORT void moonbit_skia_canvas_draw_glyphs(
     return;
   }
 #if defined(MOUI_SKIA_HAS_SKIA)
-  std::vector<SkGlyphID> sk_glyphs(static_cast<size_t>(glyphs->length));
-  std::vector<SkPoint> sk_positions(static_cast<size_t>(positions->length));
-  for (int32_t i = 0; i < glyphs->length; ++i) {
+  int32_t glyph_count = glyphs->length;
+  int32_t position_count = positions->length;
+  std::vector<SkGlyphID> sk_glyphs(static_cast<size_t>(glyph_count));
+  std::vector<SkPoint> sk_positions(static_cast<size_t>(position_count));
+  for (int32_t i = 0; i < glyph_count; ++i) {
     MoonbitSkiaPoint* point = positions->buffer[i];
     if (point == nullptr) {
       return;
