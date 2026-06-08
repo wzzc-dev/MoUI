@@ -291,36 +291,24 @@ fn text_next_grapheme_caret_boundary(text : String, caret : Int) -> Int {
 
 ///|
 fn fallback_codepoint_is_cr(codepoint : Int) -> Bool {
-  codepoint == 0x000D
+  unicode_grapheme_is_cr_17_0(codepoint)
 }
 
 ///|
 fn fallback_codepoint_is_lf(codepoint : Int) -> Bool {
-  codepoint == 0x000A
+  unicode_grapheme_is_lf_17_0(codepoint)
 }
 
 ///|
 fn fallback_codepoint_is_grapheme_break_control(codepoint : Int) -> Bool {
   fallback_codepoint_is_cr(codepoint) ||
   fallback_codepoint_is_lf(codepoint) ||
-  (codepoint >= 0x0000 && codepoint <= 0x0009) ||
-  (codepoint >= 0x000B && codepoint <= 0x000C) ||
-  (codepoint >= 0x000E && codepoint <= 0x001F) ||
-  (codepoint >= 0x007F && codepoint <= 0x009F) ||
-  codepoint == 0x00AD ||
-  codepoint == 0x061C ||
-  codepoint == 0x180E ||
-  codepoint == 0x200B ||
-  (codepoint >= 0x200E && codepoint <= 0x200F) ||
-  (codepoint >= 0x2028 && codepoint <= 0x202E) ||
-  (codepoint >= 0x2060 && codepoint <= 0x206F) ||
-  codepoint == 0xFEFF ||
-  (codepoint >= 0xFFF9 && codepoint <= 0xFFFB)
+  unicode_grapheme_is_control_17_0(codepoint)
 }
 
 ///|
 fn fallback_codepoint_is_zwj(codepoint : Int) -> Bool {
-  codepoint == 0x200D
+  unicode_grapheme_is_zwj_17_0(codepoint)
 }
 
 ///|
@@ -438,133 +426,18 @@ fn fallback_regional_indicator_count_before(
 }
 
 ///|
-fn fallback_codepoint_is_variation_selector(codepoint : Int) -> Bool {
-  (codepoint >= 0xFE00 && codepoint <= 0xFE0F) ||
-  (codepoint >= 0xE0100 && codepoint <= 0xE01EF)
-}
-
-///|
 fn fallback_codepoint_is_grapheme_extend(codepoint : Int) -> Bool {
-  codepoint == 0x200C ||
-  fallback_codepoint_is_variation_selector(codepoint) ||
-  fallback_codepoint_is_combining_mark(codepoint) ||
-  fallback_codepoint_is_spacing_mark(codepoint) ||
-  fallback_codepoint_is_emoji_modifier(codepoint) ||
-  fallback_codepoint_is_emoji_tag(codepoint)
+  unicode_grapheme_is_extend_17_0(codepoint)
 }
 
 ///|
 fn fallback_codepoint_is_grapheme_prepend(codepoint : Int) -> Bool {
-  (codepoint >= 0x0600 && codepoint <= 0x0605) ||
-  codepoint == 0x06DD ||
-  codepoint == 0x070F ||
-  codepoint == 0x0890 ||
-  codepoint == 0x0891 ||
-  codepoint == 0x08E2 ||
-  codepoint == 0x110BD ||
-  codepoint == 0x110CD
-}
-
-///|
-fn fallback_codepoint_is_combining_mark(codepoint : Int) -> Bool {
-  (codepoint >= 0x0300 && codepoint <= 0x036F) ||
-  (codepoint >= 0x0591 && codepoint <= 0x05BD) ||
-  codepoint == 0x05BF ||
-  (codepoint >= 0x05C1 && codepoint <= 0x05C2) ||
-  (codepoint >= 0x05C4 && codepoint <= 0x05C5) ||
-  codepoint == 0x05C7 ||
-  (codepoint >= 0x0610 && codepoint <= 0x061A) ||
-  (codepoint >= 0x064B && codepoint <= 0x065F) ||
-  codepoint == 0x0670 ||
-  (codepoint >= 0x06D6 && codepoint <= 0x06DC) ||
-  (codepoint >= 0x06DF && codepoint <= 0x06E4) ||
-  (codepoint >= 0x06E7 && codepoint <= 0x06E8) ||
-  (codepoint >= 0x06EA && codepoint <= 0x06ED) ||
-  codepoint == 0x0711 ||
-  (codepoint >= 0x0730 && codepoint <= 0x074A) ||
-  (codepoint >= 0x07A6 && codepoint <= 0x07B0) ||
-  (codepoint >= 0x07EB && codepoint <= 0x07F3) ||
-  (codepoint >= 0x0816 && codepoint <= 0x0819) ||
-  (codepoint >= 0x081B && codepoint <= 0x0823) ||
-  (codepoint >= 0x0825 && codepoint <= 0x0827) ||
-  (codepoint >= 0x0829 && codepoint <= 0x082D) ||
-  (codepoint >= 0x0859 && codepoint <= 0x085B) ||
-  (codepoint >= 0x08D3 && codepoint <= 0x08FF) ||
-  (codepoint >= 0x1AB0 && codepoint <= 0x1AFF) ||
-  (codepoint >= 0x1DC0 && codepoint <= 0x1DFF) ||
-  (codepoint >= 0x20D0 && codepoint <= 0x20FF) ||
-  (codepoint >= 0x1D165 && codepoint <= 0x1D169) ||
-  (codepoint >= 0x1D16D && codepoint <= 0x1D172) ||
-  (codepoint >= 0x1D17B && codepoint <= 0x1D182) ||
-  (codepoint >= 0x1D185 && codepoint <= 0x1D18B) ||
-  (codepoint >= 0x1D1AA && codepoint <= 0x1D1AD) ||
-  (codepoint >= 0x1D242 && codepoint <= 0x1D244) ||
-  (codepoint >= 0x102B && codepoint <= 0x103E) ||
-  (codepoint >= 0x1056 && codepoint <= 0x1059) ||
-  (codepoint >= 0x105E && codepoint <= 0x1060) ||
-  (codepoint >= 0x1062 && codepoint <= 0x1064) ||
-  (codepoint >= 0x1067 && codepoint <= 0x106D) ||
-  (codepoint >= 0x1071 && codepoint <= 0x1074) ||
-  (codepoint >= 0x1082 && codepoint <= 0x108D) ||
-  codepoint == 0x108F ||
-  (codepoint >= 0x109A && codepoint <= 0x109D) ||
-  (codepoint >= 0x3099 && codepoint <= 0x309A) ||
-  (codepoint >= 0xFE20 && codepoint <= 0xFE2F)
+  unicode_grapheme_is_prepend_17_0(codepoint)
 }
 
 ///|
 fn fallback_codepoint_is_spacing_mark(codepoint : Int) -> Bool {
-  (codepoint >= 0x0900 && codepoint <= 0x0903) ||
-  (codepoint >= 0x093A && codepoint <= 0x093C) ||
-  (codepoint >= 0x093E && codepoint <= 0x094F) ||
-  (codepoint >= 0x0951 && codepoint <= 0x0957) ||
-  (codepoint >= 0x0962 && codepoint <= 0x0963) ||
-  (codepoint >= 0x0981 && codepoint <= 0x0983) ||
-  codepoint == 0x09BC ||
-  (codepoint >= 0x09BE && codepoint <= 0x09C4) ||
-  (codepoint >= 0x09C7 && codepoint <= 0x09C8) ||
-  (codepoint >= 0x09CB && codepoint <= 0x09CD) ||
-  codepoint == 0x09D7 ||
-  (codepoint >= 0x09E2 && codepoint <= 0x09E3) ||
-  (codepoint >= 0x0A01 && codepoint <= 0x0A03) ||
-  codepoint == 0x0A3C ||
-  (codepoint >= 0x0A3E && codepoint <= 0x0A42) ||
-  (codepoint >= 0x0A47 && codepoint <= 0x0A48) ||
-  (codepoint >= 0x0A4B && codepoint <= 0x0A4D) ||
-  codepoint == 0x0A51 ||
-  (codepoint >= 0x0A70 && codepoint <= 0x0A71) ||
-  codepoint == 0x0A75 ||
-  (codepoint >= 0x0B01 && codepoint <= 0x0B03) ||
-  codepoint == 0x0B3C ||
-  (codepoint >= 0x0B3E && codepoint <= 0x0B44) ||
-  (codepoint >= 0x0B47 && codepoint <= 0x0B48) ||
-  (codepoint >= 0x0B4B && codepoint <= 0x0B4D) ||
-  (codepoint >= 0x0B55 && codepoint <= 0x0B57) ||
-  (codepoint >= 0x0B62 && codepoint <= 0x0B63) ||
-  (codepoint >= 0x0C00 && codepoint <= 0x0C04) ||
-  (codepoint >= 0x0C3E && codepoint <= 0x0C44) ||
-  (codepoint >= 0x0C46 && codepoint <= 0x0C48) ||
-  (codepoint >= 0x0C4A && codepoint <= 0x0C4D) ||
-  (codepoint >= 0x0C55 && codepoint <= 0x0C56) ||
-  (codepoint >= 0x0C62 && codepoint <= 0x0C63) ||
-  (codepoint >= 0x0D00 && codepoint <= 0x0D03) ||
-  (codepoint >= 0x0D3B && codepoint <= 0x0D44) ||
-  (codepoint >= 0x0D46 && codepoint <= 0x0D48) ||
-  codepoint == 0x0DCA ||
-  (codepoint >= 0x0D4A && codepoint <= 0x0D4D) ||
-  (codepoint >= 0x0DCF && codepoint <= 0x0DD4) ||
-  codepoint == 0x0DD6 ||
-  (codepoint >= 0x0DD8 && codepoint <= 0x0DDF) ||
-  codepoint == 0x0D57 ||
-  (codepoint >= 0x0D62 && codepoint <= 0x0D63) ||
-  codepoint == 0x0E31 ||
-  (codepoint >= 0x0E34 && codepoint <= 0x0E3A) ||
-  (codepoint >= 0x0E47 && codepoint <= 0x0E4E) ||
-  codepoint == 0x0EB1 ||
-  (codepoint >= 0x0EB4 && codepoint <= 0x0EBC) ||
-  (codepoint >= 0x0EC8 && codepoint <= 0x0ECD) ||
-  (codepoint >= 0x17B4 && codepoint <= 0x17D3) ||
-  codepoint == 0x17DD
+  unicode_grapheme_is_spacing_mark_17_0(codepoint)
 }
 
 ///|
@@ -641,46 +514,11 @@ fn fallback_codepoint_is_hangul_syllable(codepoint : Int) -> Bool {
 }
 
 ///|
-fn fallback_codepoint_is_emoji_modifier(codepoint : Int) -> Bool {
-  codepoint >= 0x1F3FB && codepoint <= 0x1F3FF
-}
-
-///|
 fn fallback_codepoint_is_extended_pictographic(codepoint : Int) -> Bool {
-  codepoint == 0x00A9 ||
-  codepoint == 0x00AE ||
-  codepoint == 0x203C ||
-  codepoint == 0x2049 ||
-  codepoint == 0x2122 ||
-  codepoint == 0x2139 ||
-  (codepoint >= 0x2194 && codepoint <= 0x21AA) ||
-  (codepoint >= 0x231A && codepoint <= 0x231B) ||
-  codepoint == 0x2328 ||
-  codepoint == 0x2388 ||
-  codepoint == 0x23CF ||
-  (codepoint >= 0x23E9 && codepoint <= 0x23F3) ||
-  (codepoint >= 0x23F8 && codepoint <= 0x23FA) ||
-  codepoint == 0x24C2 ||
-  (codepoint >= 0x25AA && codepoint <= 0x25AB) ||
-  codepoint == 0x25B6 ||
-  codepoint == 0x25C0 ||
-  (codepoint >= 0x25FB && codepoint <= 0x25FE) ||
-  (codepoint >= 0x2600 && codepoint <= 0x27BF) ||
-  (codepoint >= 0x2934 && codepoint <= 0x2935) ||
-  (codepoint >= 0x2B05 && codepoint <= 0x2B55) ||
-  codepoint == 0x3030 ||
-  codepoint == 0x303D ||
-  codepoint == 0x3297 ||
-  codepoint == 0x3299 ||
-  (codepoint >= 0x1F000 && codepoint <= 0x1FAFF)
-}
-
-///|
-fn fallback_codepoint_is_emoji_tag(codepoint : Int) -> Bool {
-  (codepoint >= 0xE0020 && codepoint <= 0xE007E) || codepoint == 0xE007F
+  unicode_emoji_is_extended_pictographic_17_0(codepoint)
 }
 
 ///|
 fn fallback_codepoint_is_regional_indicator(codepoint : Int) -> Bool {
-  codepoint >= 0x1F1E6 && codepoint <= 0x1F1FF
+  unicode_grapheme_is_regional_indicator_17_0(codepoint)
 }
