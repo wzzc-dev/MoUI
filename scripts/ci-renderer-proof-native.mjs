@@ -126,13 +126,13 @@ if (backend === "wgpu-native") {
 
 log("MoUI renderer proof radialGradient missing: requires true radial center/mid/edge pixel artifact.");
 log("MoUI renderer proof transformPixels missing: requires nested transform/clip/layer/filter pixel artifact.");
-log("MoUI renderer proof colorEmojiPixels missing: requires real high-saturation emoji raster/glyph evidence with font/glyph metadata.");
+log("MoUI renderer proof colorEmojiPixels missing: requires real high-saturation emoji raster/glyph evidence with font/glyph metadata, fallback request character metadata, and matching stable glyph key.");
 log("MoUI renderer proof zwjGrapheme missing: requires single grapheme cluster and no interior caret evidence.");
 log("MoUI renderer proof bidiLayout missing: requires visual-order evidence.");
 log("MoUI renderer proof paragraphWrapping missing: requires line metrics and later-line pixels.");
 log("MoUI renderer proof selectionRects missing: requires selection rectangles, line-range, and hit-test evidence.");
 log("MoUI renderer proof graphemeEditing missing: requires grapheme boundaries and edit-action evidence.");
-log("MoUI renderer proof imeCandidateAnchor missing: requires candidate anchor and surrounding-text evidence.");
+log("MoUI renderer proof imeCandidateAnchor missing: requires candidate anchor, surrounding-text, grapheme-boundary, and utf8-offsets evidence.");
 log("MoUI renderer proof imeCompositionVisual missing: requires composition range, composition cursor, and preedit pixel evidence.");
 log("MoUI renderer proof asyncImageSecondFrame missing: requires late completion, repaint request, and second-frame pixels.");
 
