@@ -65,6 +65,59 @@ const runRecorder = (name, logText, extraArgs = [], envOverrides = {}) => {
   return { result, outputPath };
 };
 
+const runSkiaRecorder = (name, logText, extraArgs = [], envOverrides = {}) => {
+  const artifactDir = join(tmp, "artifacts", "conformance", "renderer-proof");
+  mkdirSync(artifactDir, { recursive: true });
+  const logPath = join(artifactDir, `${name}.log`);
+  const outputPath = join(artifactDir, `${name}.json`);
+  writeFileSync(logPath, `${logText}\n`);
+  const result = spawnSync(
+    process.execPath,
+    [
+      recorder,
+      "--backend",
+      "skia-native",
+      "--platform",
+      "macos",
+      "--artifact-name",
+      "moui-renderer-proof-skia-native-macos",
+      "--output",
+      outputPath,
+      "--log",
+      logPath,
+      ...extraArgs,
+    ],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        GITHUB_ACTIONS: "true",
+        GITHUB_REPOSITORY: "wzzc-dev/moui",
+        GITHUB_RUN_ID: "43",
+        GITHUB_SERVER_URL: "https://github.com",
+        GITHUB_WORKFLOW: "MoUI CI",
+        GITHUB_JOB: "renderer-proof-native-skia-macos",
+        RUNNER_NAME: "macos-15",
+        ...envOverrides,
+      },
+    },
+  );
+  return { result, outputPath };
+};
+
+const skiaMarkers = markers.map(marker => {
+  if (marker.startsWith("MoUI renderer proof bidiLayout passed")) {
+    return "MoUI renderer proof bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order";
+  }
+  if (marker.startsWith("MoUI renderer proof paragraphWrapping passed")) {
+    return "MoUI renderer proof paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels";
+  }
+  if (marker.startsWith("MoUI renderer proof selectionRects passed")) {
+    return "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range";
+  }
+  return marker;
+});
+
 const passed = runRecorder("passed", markers.join("\n"), ["--require-passed"]);
 if (passed.result.status !== 0) {
   console.error("expected passed proof recording");
@@ -79,6 +132,47 @@ if (
   passedManifest.provenance.kind !== "github-actions"
 ) {
   console.error("passed manifest did not preserve passed observations/provenance");
+  process.exit(1);
+}
+
+const skiaPassed = runSkiaRecorder(
+  "skia-passed",
+  skiaMarkers.join("\n"),
+  ["--require-passed"],
+);
+if (skiaPassed.result.status !== 0) {
+  console.error("expected passed Skia native SkParagraph proof recording");
+  console.error(skiaPassed.result.stdout);
+  console.error(skiaPassed.result.stderr);
+  process.exit(1);
+}
+const skiaPassedManifest = JSON.parse(readFileSync(skiaPassed.outputPath, "utf8"));
+if (
+  skiaPassedManifest.status !== "passed" ||
+  skiaPassedManifest.observations.paragraphWrapping.status !== "passed" ||
+  !skiaPassedManifest.observations.paragraphWrapping.evidence.includes("engine=skparagraph") ||
+  !skiaPassedManifest.observations.bidiLayout.evidence.includes("bidi_visual_order_ready=true")
+) {
+  console.error("passed Skia manifest did not preserve SkParagraph evidence");
+  process.exit(1);
+}
+
+const skiaMissingEngine = runSkiaRecorder("skia-missing-engine", markers.join("\n"));
+if (skiaMissingEngine.result.status !== 0) {
+  console.error("expected missing SkParagraph engine proof to validate as failed");
+  console.error(skiaMissingEngine.result.stdout);
+  console.error(skiaMissingEngine.result.stderr);
+  process.exit(1);
+}
+const skiaMissingEngineManifest = JSON.parse(
+  readFileSync(skiaMissingEngine.outputPath, "utf8"),
+);
+if (
+  skiaMissingEngineManifest.status !== "failed" ||
+  skiaMissingEngineManifest.observations.paragraphWrapping.status !== "failed" ||
+  skiaMissingEngineManifest.observations.bidiLayout.status !== "failed"
+) {
+  console.error("missing SkParagraph engine token should keep Skia proof failed");
   process.exit(1);
 }
 if (
