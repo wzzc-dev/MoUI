@@ -283,9 +283,12 @@ Remote font loading is intentionally outside the current backend contract.
   for later IME handoff. This keeps deterministic text-field, selection, and
   IME-anchor geometry on one path. The repo now has an offline
   `GraphemeBreakTest.txt`-style fixture and generator guard
-  (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples,
-  while full generated Unicode data import and complete grapheme-cluster parity
-  remain release follow-up work. The
+  (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples
+  covering CR/LF/control, Prepend, combining and spacing marks, keycap and tag
+  emoji, regional-indicator pairs, Hangul Jamo, Indic virama/linker, and
+  representative Arabic/Thai/Lao/Sinhala/Khmer/Myanmar clusters, while full
+  generated Unicode data import and complete grapheme-cluster parity remain
+  release follow-up work. The
   scanner now treats ZWNJ as an Extend code point, covers representative
   supplementary musical combining marks, and narrows Indic virama linking to
   ZWJ or Indic consonant targets, so deletion and IME offsets no longer merge

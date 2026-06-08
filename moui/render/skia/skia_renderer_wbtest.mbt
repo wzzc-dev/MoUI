@@ -2147,19 +2147,39 @@ test "skia grapheme clustering follows core IME boundary contract" {
     "A\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}B",
     [0, 1, 5, 6],
   )
+  assert_skia_grapheme_clusters_match_core("A1\u{FE0F}\u{20E3}B", [
+    0, 1, 4, 5,
+  ])
   assert_skia_grapheme_clusters_match_core("\u{1F1FA}\u{1F1F8}\u{1F1E8}", [
     0, 2, 3,
   ])
   assert_skia_grapheme_clusters_match_core("A\u{0600}B", [0, 1, 3])
+  assert_skia_grapheme_clusters_match_core("A\u{0600}\u{0628}\u{0651}B", [
+    0, 1, 4, 5,
+  ])
   assert_skia_grapheme_clusters_match_core("A\u{1100}\u{1161}\u{11A8}B", [
+    0, 1, 4, 5,
+  ])
+  assert_skia_grapheme_clusters_match_core("A\u{A960}\u{D7B0}\u{D7CB}B", [
     0, 1, 4, 5,
   ])
   assert_skia_grapheme_clusters_match_core("Aक्‍षB", [0, 1, 5, 6])
   assert_skia_grapheme_clusters_match_core("Aक़्षB", [0, 1, 5, 6])
   assert_skia_grapheme_clusters_match_core("Aक्‌षB", [0, 1, 4, 5, 6])
+  assert_skia_grapheme_clusters_match_core("A\u{1000}\u{1039}\u{1001}B", [
+    0, 1, 4, 5,
+  ])
   assert_skia_grapheme_utf8_offsets("A\u{1F469}\u{200D}\u{1F4BB}B", [
     0, 1, 4, 5,
   ], [0, 1, 12, 13])
+  assert_skia_grapheme_utf8_offsets("A1\u{FE0F}\u{20E3}B", [0, 1, 4, 5], [
+    0, 1, 8, 9,
+  ])
+  assert_skia_grapheme_utf8_offsets(
+    "A\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}B",
+    [0, 1, 5, 6],
+    [0, 1, 17, 18],
+  )
   assert_skia_grapheme_utf8_offsets("Aक्‍षB", [0, 1, 5, 6], [
     0, 1, 13, 14,
   ])

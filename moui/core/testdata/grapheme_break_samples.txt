@@ -13,6 +13,20 @@
 ÷ 1F1FA × 1F1F8 ÷ 1F1E8 × 1F1E6 ÷ # GB12/GB13 RI pairs
 ÷ 1F468 × 1F3FE × 200D × 1F680 ÷ # GB11 emoji modifier ZWJ sequence
 ÷ 1F468 × 200D ÷ 0041 ÷ # GB11 rejects ZWJ before non-ExtPict
+÷ 2615 × FE0F ÷ 0041 ÷ # GB9 variation selector emoji presentation
+÷ 0031 × FE0F × 20E3 ÷ # GB9 keycap sequence
+÷ 1F3F4 × E0067 × E0062 × E007F ÷ # GB9 emoji tag sequence
+÷ 0065 × 0301 × 034F ÷ 0041 ÷ # GB9 combining mark and grapheme joiner chain
+÷ 0600 × 0628 × 0651 ÷ 0041 ÷ # GB9/GB9b Arabic prepend and mark cluster
+÷ 0E01 × 0E34 ÷ 0041 ÷ # GB9 Thai mark
+÷ 0E81 × 0EB4 ÷ 0041 ÷ # GB9 Lao mark
+÷ 0D9A × 0DCF ÷ 0041 ÷ # GB9a Sinhala spacing vowel
+÷ 0D9A × 0DCA × 0DBB ÷ # Indic virama Sinhala conjunct
+÷ 1780 × 17B6 ÷ 0041 ÷ # GB9a Khmer vowel
+÷ 1780 × 17D2 × 179A ÷ # Indic virama Khmer coeng conjunct
+÷ 1000 × 1039 × 1001 ÷ # Indic virama Myanmar conjunct
+÷ A960 × D7B0 × D7CB ÷ # GB6/GB7/GB8 extended Hangul Jamo sequence
+÷ AC00 × 11A8 ÷ 0041 ÷ # GB8 Hangul LV x T
 ÷ 0915 × 094D × 200D × 0937 ÷ # Indic virama ZWJ consonant conjunct
 ÷ 0915 × 094D × 200D ÷ 0041 ÷ # Indic virama ZWJ before Latin breaks
 ÷ 0915 × 094D × 093C × 0937 ÷ # Indic virama Extend consonant conjunct
