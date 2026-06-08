@@ -1,0 +1,13 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/stdio",
+  "examples/pdf_workbench/pdflite_adapter",
+  "examples/pdf_workbench/pdflite_service_protocol" @protocol,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  targets: { "main.mbt": [ "native" ] },
+)

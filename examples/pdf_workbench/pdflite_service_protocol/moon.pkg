@@ -1,0 +1,11 @@
+import {
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/core/json",
+  "examples/pdf_workbench/app",
+}
+
+supported_targets = "+native+wasm-gc"
+
+options(
+  targets: { },
+)

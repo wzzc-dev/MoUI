@@ -2950,15 +2950,16 @@ pub fn skia_text_system(
 fn skia_empty_typeface_text_system() -> @core.TextSystem {
   @core.TextSystem::new(
     id="skia-raster-empty-typeface-text-system",
-    measure=input =>
-      skia_measure_text_for_resolution(input, SkiaFontResolution::EmptyTypeface),
-    paragraph_layout=Some(input =>
+    measure=input => {
+      skia_measure_text_for_resolution(input, SkiaFontResolution::EmptyTypeface)
+    },
+    paragraph_layout=Some(input => {
       skia_fallback_paragraph_layout_result(
         input,
         SkiaFontResolution::EmptyTypeface,
         "skia-raster-empty-typeface-text-system",
-      ),
-    ),
+      )
+    }),
   )
 }
 
@@ -2966,9 +2967,10 @@ fn skia_empty_typeface_text_system() -> @core.TextSystem {
 fn skia_system_font_mgr_text_system() -> @core.TextSystem {
   @core.TextSystem::new(
     id="skia-raster-text-system",
-    measure=input =>
-      skia_measure_text_for_resolution(input, SkiaFontResolution::SystemFontMgr),
-    paragraph_layout=Some(input =>
+    measure=input => {
+      skia_measure_text_for_resolution(input, SkiaFontResolution::SystemFontMgr)
+    },
+    paragraph_layout=Some(input => {
       match skia_native_paragraph_layout_result(input) {
         Some(layout) => layout
         None =>
@@ -2977,8 +2979,8 @@ fn skia_system_font_mgr_text_system() -> @core.TextSystem {
             SkiaFontResolution::SystemFontMgr,
             "skia-raster-text-system",
           )
-      },
-    ),
+      }
+    }),
   )
 }
 
@@ -2988,7 +2990,8 @@ fn skia_measure_text_for_resolution(
   resolution : SkiaFontResolution,
 ) -> @core.TextLayoutResult {
   let fallback = @core.TextSystem::fallback().measure_text(input)
-  match skia_resolved_text_layout_for_resolution(input.font, input.text, resolution) {
+  match
+    skia_resolved_text_layout_for_resolution(input.font, input.text, resolution) {
     Some(layout) => skia_resolved_text_layout_result(input, fallback, layout~)
     None => fallback
   }
@@ -3000,14 +3003,9 @@ fn skia_fallback_paragraph_layout_result(
   resolution : SkiaFontResolution,
   id : String,
 ) -> @core.TextParagraphLayoutResult {
-  @core.TextSystem::new(
-    id~,
-    measure=measure_input => skia_measure_text_for_resolution(
-      measure_input,
-      resolution,
-    ),
-  )
-  .layout_paragraph(input)
+  @core.TextSystem::new(id~, measure=measure_input => {
+    skia_measure_text_for_resolution(measure_input, resolution)
+  }).layout_paragraph(input)
 }
 
 ///|
@@ -3038,7 +3036,12 @@ fn skia_native_paragraph_layout_result(
       if lines.is_empty() {
         return None
       }
-      let caret_rects = skia_paragraph_caret_rects(input.text, paragraph, lines, offsets)
+      let caret_rects = skia_paragraph_caret_rects(
+        input.text,
+        paragraph,
+        lines,
+        offsets,
+      )
       if caret_rects.length() != input.text.to_array().length() + 1 {
         return None
       }
@@ -3108,14 +3111,19 @@ fn skia_paragraph_line_metrics(
   let lines : Array[@core.TextParagraphLineMetrics] = []
   for metric in paragraph.line_metrics() {
     match
-      (skia_char_index_for_utf8_offset(offsets, metric.start),
-       skia_char_index_for_utf8_offset(offsets, metric.end)) {
+      (
+        skia_char_index_for_utf8_offset(offsets, metric.start),
+        skia_char_index_for_utf8_offset(offsets, metric.end),
+      ) {
       (Some(start), Some(end)) => {
         let start = start.clamp(min=0, max=chars.length())
         let end = end.clamp(min=start, max=chars.length())
         let ascent = metric.ascent.to_double().abs()
         let descent = metric.descent.to_double().abs()
-        let metric_height = metric.height.to_double().max(ascent + descent).max(1.0)
+        let metric_height = metric.height
+          .to_double()
+          .max(ascent + descent)
+          .max(1.0)
         let top = metric.baseline.to_double() - ascent
         lines.push({
           line_index: lines.length(),
@@ -3293,11 +3301,13 @@ fn skia_insert_visual_cluster_box(
   let mut insert_at = ordered.length()
   for index, existing in ordered {
     if insert_at == ordered.length() &&
-      (box.line_index < existing.line_index ||
+      (
+        box.line_index < existing.line_index ||
         (
           box.line_index == existing.line_index &&
           box.center_x < existing.center_x
-        )) {
+        )
+      ) {
       insert_at = index
     }
   }
