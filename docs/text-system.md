@@ -210,11 +210,13 @@ and `imeCompositionVisual`; those keys must be backed by selection rectangle,
 line-range, grapheme-boundary, edit-action, candidate-anchor, surrounding-text,
 composition-range, and preedit-pixel evidence before text or IME readiness can
 be promoted. Native Skia `imeCandidateAnchor` also requires `utf8-offsets`
-evidence for grapheme-normalized cursor and anchor offsets.
+evidence for grapheme-normalized cursor and anchor offsets, and native Skia
+`imeCompositionVisual` also requires `composition-cursor` evidence.
 The native Skia text/emoji smoke records `graphemeEditing`,
 `imeCandidateAnchor`, and `imeCompositionVisual` from the shared
 `TextGraphemeBoundaries`, host IME diagnostics including UTF-8 cursor and anchor
-offsets, Skia text-system geometry, and captured text-field composition pixels.
+offsets plus composition cursor geometry, Skia text-system geometry, and
+captured text-field composition pixels.
 These are renderer/text-system proof
 markers, not matching-host native IME runtime evidence.
 Platform runtime evidence splits native IME readiness further: native

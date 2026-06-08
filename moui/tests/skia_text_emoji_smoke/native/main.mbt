@@ -757,7 +757,7 @@ fn main {
           renderer.text_system(),
         ) {
         println(
-          "MoUI renderer proof imeCompositionVisual passed composition-range preedit-pixels",
+          "MoUI renderer proof imeCompositionVisual passed composition-range composition-cursor preedit-pixels",
         )
       } else {
         failures.push(

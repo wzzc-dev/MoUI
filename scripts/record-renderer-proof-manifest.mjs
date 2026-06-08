@@ -88,7 +88,9 @@ const markerConfig = {
     marker: "MoUI renderer proof imeCandidateAnchor passed",
   },
   imeCompositionVisual: {
-    required: ["composition-range", "preedit-pixels"],
+    required: backend === "skia-native"
+      ? ["composition-range", "composition-cursor", "preedit-pixels"]
+      : ["composition-range", "preedit-pixels"],
     marker: "MoUI renderer proof imeCompositionVisual passed",
   },
   asyncImageSecondFrame: {
