@@ -196,10 +196,13 @@ Remote font loading is intentionally outside the current backend contract.
 
 - Full bidi, line breaking, typography conformance, native emoji font fallback,
   ZWJ/color emoji conformance, and full grapheme-cluster parity remain follow-up
-  work. Core fallback carets now stabilize representative cluster interiors for
-  deterministic text-field, selection, and IME-anchor geometry, and left/right
-  caret movement skips those representative cluster interiors without claiming
-  full Unicode segmentation. Native WGPU can preserve RGBA color glyph payloads
+  work. Core now exposes `TextGraphemeBoundaries` as the single representative
+  cluster-boundary contract used by fallback caret stabilization, left/right
+  caret movement, selection/range normalization, surrounding delete ranges,
+  composition cursor offsets, rich text hit testing, and UTF-8 offset conversion
+  for later IME handoff. This keeps deterministic text-field, selection, and
+  IME-anchor geometry on one path without claiming full Unicode segmentation.
+  Native WGPU can preserve RGBA color glyph payloads
   through the provider protocol and glyph atlas path, with Cosmic platform
   emoji fallback candidate loading, Cosmic color swash preservation,
   provider-safe emoji layout mapping, and a CoreText AppleColorEmoji RGBA path

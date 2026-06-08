@@ -31,9 +31,10 @@ fn handle_searchbar_input(
       }
       match update.cursor {
         Some(cursor) => {
-          let normalized = cursor.normalized()
-          let start = clamp_int(normalized.start, 0, text_length(update.text))
-          let end = clamp_int(normalized.end, 0, text_length(update.text))
+          let normalized = normalize_text_range_to_grapheme(update.text, cursor)
+          let length = text_length(update.text)
+          let start = clamp_int(normalized.start, 0, length)
+          let end = clamp_int(normalized.end, 0, length)
           element.control.composition_cursor = Some(
             TextRange::new(start~, end~),
           )
@@ -111,9 +112,10 @@ fn handle_text_field_input(
       }
       match update.cursor {
         Some(cursor) => {
-          let normalized = cursor.normalized()
-          let start = clamp_int(normalized.start, 0, text_length(update.text))
-          let end = clamp_int(normalized.end, 0, text_length(update.text))
+          let normalized = normalize_text_range_to_grapheme(update.text, cursor)
+          let length = text_length(update.text)
+          let start = clamp_int(normalized.start, 0, length)
+          let end = clamp_int(normalized.end, 0, length)
           element.control.composition_cursor = Some(
             TextRange::new(start~, end~),
           )

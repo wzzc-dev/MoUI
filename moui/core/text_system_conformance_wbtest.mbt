@@ -237,6 +237,75 @@ test "text caret movement skips representative cluster interiors" {
 }
 
 ///|
+test "grapheme boundary contract covers ranges deletes and utf8 offsets" {
+  let text = "A👩‍💻B"
+  let boundaries = TextGraphemeBoundaries::new(text~)
+  inspect(boundaries.length(), content="5")
+  inspect(boundaries.cluster_count(), content="3")
+  inspect(boundaries.is_boundary(1), content="true")
+  inspect(boundaries.is_boundary(2), content="false")
+  inspect(boundaries.previous_boundary(4), content="1")
+  inspect(boundaries.next_boundary(1), content="4")
+  inspect(boundaries.floor_boundary(3), content="1")
+  inspect(boundaries.ceil_boundary(2), content="4")
+  inspect(boundaries.nearest_boundary(2), content="1")
+  inspect(boundaries.nearest_boundary(3), content="4")
+  let expanded = boundaries.normalize_range(TextRange::new(start=2, end=3))
+  inspect(expanded.start, content="1")
+  inspect(expanded.end, content="4")
+  let collapsed = boundaries.normalize_range(TextRange::collapsed(3))
+  inspect(collapsed.start, content="4")
+  inspect(collapsed.end, content="4")
+  let delete = boundaries.delete_range(4, 1, 0)
+  inspect(delete.start, content="1")
+  inspect(delete.end, content="4")
+  inspect(boundaries.utf8_offset(4), content="12")
+  inspect(boundaries.utf8_offset(5), content="13")
+}
+
+///|
+test "text field deletion respects grapheme boundaries" {
+  let backward = State::new("A👩‍💻B")
+  let backward_runtime = RuntimeState::new_spec(
+    root=test_text_field(backward.binding()),
+    size=Size::new(width=220.0, height=60.0),
+  )
+  focus_text_conformance_field(backward_runtime)
+  backward_runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="ArrowLeft")))
+  inspect(backward_runtime.focused_text_input().caret, content="4")
+  backward_runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Backspace")))
+  inspect(backward.get(), content="AB")
+  inspect(backward_runtime.focused_text_input().caret, content="1")
+
+  let forward = State::new("A👩‍💻B")
+  let forward_runtime = RuntimeState::new_spec(
+    root=test_text_field(forward.binding()),
+    size=Size::new(width=220.0, height=60.0),
+  )
+  focus_text_conformance_field(forward_runtime)
+  forward_runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Home")))
+  forward_runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="ArrowRight")))
+  inspect(forward_runtime.focused_text_input().caret, content="1")
+  forward_runtime.dispatch_event(Keyboard(KeyboardEvent::new(key="Delete")))
+  inspect(forward.get(), content="AB")
+  inspect(forward_runtime.focused_text_input().caret, content="1")
+}
+
+///|
+test "rich text hit testing snaps grapheme cluster interiors" {
+  let font = FontSpec::new(size=16.0, weight=400)
+  let system = fixed_advance_text_system(10.0)
+  inspect(
+    rich_text_run_visual_offset_at_x("A👩‍💻B", font, 22.0, 0.0, system),
+    content="1",
+  )
+  inspect(
+    rich_text_run_visual_offset_at_x("A👩‍💻B", font, 33.0, 0.0, system),
+    content="4",
+  )
+}
+
+///|
 test "text field conformance covers cjk emoji replacement and deletion" {
   let state = State::new("")
   let runtime = RuntimeState::new_spec(

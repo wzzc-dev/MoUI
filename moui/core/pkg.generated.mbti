@@ -1811,6 +1811,25 @@ pub(all) struct TextFieldStyle {
 pub fn TextFieldStyle::filled(theme? : Theme) -> Self
 pub fn TextFieldStyle::outline(theme? : Theme) -> Self
 
+pub(all) struct TextGraphemeBoundaries {
+  // private fields
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextGraphemeBoundaries::boundaries(Self) -> Array[Int]
+pub fn TextGraphemeBoundaries::ceil_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::clamp_index(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::cluster_count(Self) -> Int
+pub fn TextGraphemeBoundaries::delete_range(Self, Int, Int, Int) -> TextRange
+pub fn TextGraphemeBoundaries::floor_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::is_boundary(Self, Int) -> Bool
+pub fn TextGraphemeBoundaries::length(Self) -> Int
+pub fn TextGraphemeBoundaries::nearest_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::new(text~ : String) -> Self
+pub fn TextGraphemeBoundaries::next_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::normalize_range(Self, TextRange) -> TextRange
+pub fn TextGraphemeBoundaries::previous_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::text(Self) -> String
+pub fn TextGraphemeBoundaries::utf8_offset(Self, Int) -> Int
+
 type TextHistoryEntry derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum TextInputEvent {
