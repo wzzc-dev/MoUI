@@ -4293,8 +4293,63 @@ test "text input session enables ime when surrounding text is too long" {
     EnableIme(@window_core.ImeRequest::Enable(request)) => {
       assert_true(!request.capabilities().surrounding_text())
       assert_true(!request.request_data().has_surrounding_text())
+      match session.last_diagnostics() {
+        Some(diagnostics) => {
+          assert_false(diagnostics.has_surrounding_text)
+          assert_true(
+            diagnostics.surrounding_text_utf8_length >
+            @window_core.ImeSurroundingText::max_text_bytes(),
+          )
+        }
+        None => fail("expected ime diagnostics")
+      }
     }
     _ => fail("focused text field should still enable ime")
+  }
+}
+
+///|
+test "text input ime diagnostics normalize grapheme cursor and candidate anchor" {
+  let state = @core.TextInputState::{
+    focused: true,
+    element_id: None,
+    text: "A👩‍💻B",
+    caret: 2,
+    selection: None,
+    composition: None,
+    composition_cursor: None,
+    frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
+    caret_rect: @core.Rect::new(x=12.0, y=18.0, width=0.0, height=-4.0),
+  }
+  let diagnostics = text_input_ime_request_diagnostics(state)
+  inspect(diagnostics.cursor, content="1")
+  inspect(diagnostics.anchor, content="1")
+  inspect(diagnostics.cursor_utf8, content="1")
+  inspect(diagnostics.anchor_utf8, content="1")
+  inspect(diagnostics.text_length, content="5")
+  inspect(diagnostics.text_utf8_length, content="13")
+  assert_true(diagnostics.cursor_is_grapheme_boundary)
+  assert_true(diagnostics.anchor_is_grapheme_boundary)
+  inspect(diagnostics.candidate_anchor.origin.x, content="12")
+  inspect(diagnostics.candidate_anchor.origin.y, content="18")
+  inspect(diagnostics.candidate_anchor.size.width, content="1")
+  inspect(diagnostics.candidate_anchor.size.height, content="1")
+  let request = text_input_ime_request_data(state)
+  match request.surrounding_text() {
+    Some(surrounding) => {
+      inspect(surrounding.cursor(), content="1")
+      inspect(surrounding.anchor(), content="1")
+    }
+    None => fail("expected surrounding text")
+  }
+  match request.cursor_area() {
+    Some((position, size)) => {
+      inspect(position.to_logical(1.0).x(), content="12")
+      inspect(position.to_logical(1.0).y(), content="18")
+      inspect(size.to_logical(1.0).width(), content="1")
+      inspect(size.to_logical(1.0).height(), content="1")
+    }
+    None => fail("expected cursor area")
   }
 }
 
@@ -4318,6 +4373,15 @@ test "text input session preserves selection anchor in ime surrounding text" {
         Some(surrounding) => {
           inspect(surrounding.cursor(), content="5")
           inspect(surrounding.anchor(), content="3")
+          match session.last_diagnostics() {
+            Some(diagnostics) => {
+              inspect(diagnostics.cursor, content="3")
+              inspect(diagnostics.anchor, content="1")
+              inspect(diagnostics.cursor_utf8, content="5")
+              inspect(diagnostics.anchor_utf8, content="3")
+            }
+            None => fail("expected ime diagnostics")
+          }
         }
         None => fail("expected surrounding text")
       }
