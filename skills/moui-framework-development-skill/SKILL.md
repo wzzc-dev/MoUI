@@ -292,8 +292,8 @@ glyph key that contains the recorded
 source/text-system/shaper/script/language-tags/language-count/fallback-request-character/format metadata. Native Skia `paragraphWrapping`,
 `bidiLayout`, and `selectionRects` observations must include SkParagraph
 markers such as `native_paragraph_ready=true`, `bidi_visual_order_ready=true`,
-`line-metrics`, `later-line-pixels`, `visual-order`, `selection-rects`, and
-`line-range` plus `hit-test` as appropriate. Package-only tests, skipped jobs,
+`line-metrics`, `later-line-pixels`, `visual-order`, `selection-rects`,
+`line-range`, `rect-geometry`, and `hit-test` as appropriate. Package-only tests, skipped jobs,
 missing uploaded artifacts, blank screenshots, caret-only
 diagnostics, heuristic visual-order logs, fallback paragraph geometry,
 coverage-only font matching, provider preflights,

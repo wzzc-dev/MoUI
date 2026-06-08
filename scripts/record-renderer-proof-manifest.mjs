@@ -73,7 +73,7 @@ const markerConfig = {
   },
   selectionRects: {
     required: backend === "skia-native"
-      ? ["engine=skparagraph", "selection-rects", "line-range", "hit-test"]
+      ? ["engine=skparagraph", "selection-rects", "line-range", "rect-geometry", "hit-test"]
       : ["selection-rects", "line-range"],
     marker: "MoUI renderer proof selectionRects passed",
   },
