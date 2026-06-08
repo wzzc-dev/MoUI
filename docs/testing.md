@@ -549,7 +549,9 @@ must contain common runtime markers: `MoUI native IME runtime`,
 consumer command (`app=showcase` or `app=markdown-editor`), and the platform protocol marker
 `platform-protocol=macos-marked-text`, `platform-protocol=windows-ime`, or
 `platform-protocol=wayland-text-input` (the helper also accepts documented
-platform aliases). `--consumer-command` must name either the platform's
+platform aliases). The `renderer=skia`, `app=...`, and `platform-protocol=...`
+markers are matched as exact whitespace-delimited tokens, so suffixed labels do
+not satisfy matching-host IME evidence. `--consumer-command` must name either the platform's
 `examples/showcase/<platform>_skia` entrypoint or its
 `examples/markdown_editor/<platform>_skia` entrypoint; `--markdown-log` is
 accepted only with the Markdown Editor native Skia entrypoint. The log must

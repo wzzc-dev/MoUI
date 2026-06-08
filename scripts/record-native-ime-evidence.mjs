@@ -48,7 +48,11 @@ const platforms = new Map([
     "macos",
     {
       hostPattern: /(macOS|Darwin)/i,
-      protocolMarker: /platform-protocol=(macos-marked-text|marked-text|nstextinputclient)/i,
+      protocolMarkers: [
+        "platform-protocol=macos-marked-text",
+        "platform-protocol=marked-text",
+        "platform-protocol=NSTextInputClient",
+      ],
       protocolDescription:
         "platform-protocol=macos-marked-text, platform-protocol=marked-text, or platform-protocol=NSTextInputClient",
     },
@@ -57,7 +61,11 @@ const platforms = new Map([
     "windows",
     {
       hostPattern: /(Windows|MSVC)/i,
-      protocolMarker: /platform-protocol=(windows-ime|imm|tsf)/i,
+      protocolMarkers: [
+        "platform-protocol=windows-ime",
+        "platform-protocol=imm",
+        "platform-protocol=tsf",
+      ],
       protocolDescription:
         "platform-protocol=windows-ime, platform-protocol=imm, or platform-protocol=tsf",
     },
@@ -66,7 +74,10 @@ const platforms = new Map([
     "linux",
     {
       hostPattern: /(Linux|Wayland)/i,
-      protocolMarker: /platform-protocol=(wayland-text-input|wayland-ime)/i,
+      protocolMarkers: [
+        "platform-protocol=wayland-text-input",
+        "platform-protocol=wayland-ime",
+      ],
       protocolDescription:
         "platform-protocol=wayland-text-input or platform-protocol=wayland-ime",
     },
@@ -305,11 +316,11 @@ if (
 }
 const expectedConsumerApp = normalizedConsumerCommand.includes(markdownTarget)
   ? {
-      marker: /app=markdown-editor/i,
+      marker: "app=markdown-editor",
       description: "app=markdown-editor",
     }
   : {
-      marker: /app=showcase/i,
+      marker: "app=showcase",
       description: "app=showcase",
     };
 if (suppliedLogs.size === 0) {
@@ -345,12 +356,21 @@ const normalizeArtifactPath = path => {
   return { absolute, rel };
 };
 
+const escapedRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const tokenMarker = value => new RegExp(`(^|\\s)${escapedRegExp(value)}(?=\\s|$)`, "i");
+
+const anyTokenMarker = values => values.map(value => tokenMarker(value));
+
 const matcherMatches = (content, matcher) => {
   if (typeof matcher === "string") {
     return content.includes(matcher);
   }
   if (Array.isArray(matcher)) {
     return matcher.every(item => matcherMatches(content, item));
+  }
+  if (matcher && matcher.any) {
+    return matcher.any.some(item => matcherMatches(content, item));
   }
   return matcher.test(content);
 };
@@ -369,9 +389,9 @@ const assertRuntimeMarkers = (content, label) => {
       /MoUI native IME runtime/i,
       /matching-host/i,
       /native-app/i,
-      /renderer=skia/i,
-      expectedConsumerApp.marker,
-      platform.protocolMarker,
+      tokenMarker("renderer=skia"),
+      tokenMarker(expectedConsumerApp.marker),
+      { any: anyTokenMarker(platform.protocolMarkers) },
     ],
     label,
     `MoUI native IME runtime, matching-host, native-app, renderer=skia, ${expectedConsumerApp.description}, and ${platform.protocolDescription} markers`,
