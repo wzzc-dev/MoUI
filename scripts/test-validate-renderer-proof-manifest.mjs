@@ -41,6 +41,12 @@ const skiaNativeObservationEvidence = {
     "later-line-pixels",
   ],
   selectionRects: ["engine=skparagraph", "selection-rects", "line-range", "hit-test"],
+  imeCandidateAnchor: [
+    "candidate-anchor",
+    "surrounding-text",
+    "grapheme-boundary",
+    "utf8-offsets",
+  ],
 };
 
 const colorEmojiMetadata = () => ({
@@ -423,6 +429,52 @@ expectFail(
     ["--require-passed"],
   ),
   "must include 'hit-test'",
+);
+
+expectFail(
+  "skia native ime candidate proof rejects missing utf8 offsets token",
+  run(
+    "skia-native-missing-ime-utf8-offsets.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        imeCandidateAnchor: {
+          status: "passed",
+          evidence: ["candidate-anchor", "surrounding-text", "grapheme-boundary"],
+          artifacts: ["artifacts/conformance/renderer-proof/ime-anchor.log"],
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "must include 'utf8-offsets'",
+);
+
+expectFail(
+  "skia native ime candidate proof rejects missing grapheme boundary token",
+  run(
+    "skia-native-missing-ime-grapheme-boundary.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        imeCandidateAnchor: {
+          status: "passed",
+          evidence: ["candidate-anchor", "surrounding-text", "utf8-offsets"],
+          artifacts: ["artifacts/conformance/renderer-proof/ime-anchor.log"],
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "must include 'grapheme-boundary'",
 );
 
 expectFail(

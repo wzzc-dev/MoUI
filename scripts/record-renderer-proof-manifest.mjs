@@ -82,7 +82,9 @@ const markerConfig = {
     marker: "MoUI renderer proof graphemeEditing passed",
   },
   imeCandidateAnchor: {
-    required: ["candidate-anchor", "surrounding-text"],
+    required: backend === "skia-native"
+      ? ["candidate-anchor", "surrounding-text", "grapheme-boundary", "utf8-offsets"]
+      : ["candidate-anchor", "surrounding-text"],
     marker: "MoUI renderer proof imeCandidateAnchor passed",
   },
   imeCompositionVisual: {

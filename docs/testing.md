@@ -892,7 +892,9 @@ the color emoji observation can pass.
 The text/IME observations
 must prove selection rectangles with line ranges and hit testing, grapheme edit
 boundaries with edit actions, IME candidate anchors with surrounding text, and
-composition ranges with preedit pixels. Native Skia `paragraphWrapping`,
+composition ranges with preedit pixels. Native Skia `imeCandidateAnchor`
+observations must also include grapheme-boundary cursor/anchor evidence and
+UTF-8 offset evidence from host IME diagnostics. Native Skia `paragraphWrapping`,
 `bidiLayout`, and `selectionRects` must be SkParagraph observations with
 `engine=skparagraph` markers, not fallback paragraph geometry or heuristic
 visual-order logs; the
@@ -900,8 +902,9 @@ native Skia CI proof job configures `moui_skia` with required SkParagraph
 support before running these smokes.
 Native Skia `graphemeEditing`, `imeCandidateAnchor`, and
 `imeCompositionVisual` markers come from the text/emoji smoke's shared
-grapheme-boundary contract, host IME request diagnostics, Skia caret geometry,
-and captured text-field composition pixels. They are renderer-proof
+grapheme-boundary contract, host IME request diagnostics including UTF-8 cursor
+and anchor offsets, Skia caret geometry, and captured text-field composition
+pixels. They are renderer-proof
 observations only; matching-host platform IME evidence is still recorded in the
 platform runtime manifest through `record-native-ime-evidence.mjs`.
 Package tests, skipped jobs, blank screenshots,
