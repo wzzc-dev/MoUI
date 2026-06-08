@@ -376,7 +376,7 @@ fn ime_candidate_anchor_evidence_available(
   let input = runtime.focused_text_input()
   let diagnostics = @host.text_input_ime_request_diagnostics(input)
   println(
-    "MoUI Skia text/emoji smoke ime anchor cursor=\{diagnostics.cursor} cursor_utf8=\{diagnostics.cursor_utf8} anchor_utf8=\{diagnostics.anchor_utf8} candidate_x=\{diagnostics.candidate_anchor.origin.x} candidate_y=\{diagnostics.candidate_anchor.origin.y} surrounding_utf8=\{diagnostics.surrounding_text_utf8_length}",
+    "MoUI Skia text/emoji smoke ime anchor cursor=\{diagnostics.cursor} cursor_utf8=\{diagnostics.cursor_utf8} anchor_utf8=\{diagnostics.anchor_utf8} cursor_grapheme_boundary=\{diagnostics.cursor_is_grapheme_boundary} anchor_grapheme_boundary=\{diagnostics.anchor_is_grapheme_boundary} candidate_x=\{diagnostics.candidate_anchor.origin.x} candidate_y=\{diagnostics.candidate_anchor.origin.y} surrounding_utf8=\{diagnostics.surrounding_text_utf8_length}",
   )
   input.focused &&
   diagnostics.cursor_is_grapheme_boundary &&
@@ -744,7 +744,7 @@ fn main {
 
       if ime_candidate_anchor_evidence_available(renderer.text_system()) {
         println(
-          "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text",
+          "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets",
         )
       } else {
         failures.push(

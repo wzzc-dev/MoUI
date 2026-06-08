@@ -146,6 +146,9 @@ const skiaMarkers = markers.map(marker => {
   if (marker.startsWith("MoUI renderer proof selectionRects passed")) {
     return "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range hit-test";
   }
+  if (marker.startsWith("MoUI renderer proof imeCandidateAnchor passed")) {
+    return "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets";
+  }
   return marker;
 });
 
@@ -185,9 +188,11 @@ if (
   !skiaPassedManifest.observations.colorEmojiPixels.evidence.includes("stable-glyph-key") ||
   !skiaPassedManifest.observations.paragraphWrapping.evidence.includes("engine=skparagraph") ||
   !skiaPassedManifest.observations.bidiLayout.evidence.includes("bidi_visual_order_ready=true") ||
-  !skiaPassedManifest.observations.selectionRects.evidence.includes("hit-test")
+  !skiaPassedManifest.observations.selectionRects.evidence.includes("hit-test") ||
+  !skiaPassedManifest.observations.imeCandidateAnchor.evidence.includes("grapheme-boundary") ||
+  !skiaPassedManifest.observations.imeCandidateAnchor.evidence.includes("utf8-offsets")
 ) {
-  console.error("passed Skia manifest did not preserve SkParagraph/emoji fallback evidence");
+  console.error("passed Skia manifest did not preserve SkParagraph/emoji/IME evidence");
   process.exit(1);
 }
 const skiaColorEmojiMetadata =
@@ -282,6 +287,48 @@ if (
   skiaMissingHitTestManifest.observations.selectionRects.status !== "failed"
 ) {
   console.error("missing SkParagraph hit-test token should keep selection rect proof failed");
+  process.exit(1);
+}
+
+const skiaMissingImeUtf8Offsets = runSkiaRecorder(
+  "skia-missing-ime-utf8-offsets",
+  skiaMarkers.join("\n").replace(" utf8-offsets", ""),
+);
+if (skiaMissingImeUtf8Offsets.result.status !== 0) {
+  console.error("expected missing native Skia IME UTF-8 offset proof to validate as failed");
+  console.error(skiaMissingImeUtf8Offsets.result.stdout);
+  console.error(skiaMissingImeUtf8Offsets.result.stderr);
+  process.exit(1);
+}
+const skiaMissingImeUtf8OffsetsManifest = JSON.parse(
+  readFileSync(skiaMissingImeUtf8Offsets.outputPath, "utf8"),
+);
+if (
+  skiaMissingImeUtf8OffsetsManifest.status !== "failed" ||
+  skiaMissingImeUtf8OffsetsManifest.observations.imeCandidateAnchor.status !== "failed"
+) {
+  console.error("missing native Skia IME UTF-8 offset token should keep candidate anchor proof failed");
+  process.exit(1);
+}
+
+const skiaMissingImeGraphemeBoundary = runSkiaRecorder(
+  "skia-missing-ime-grapheme-boundary",
+  skiaMarkers.join("\n").replace(" grapheme-boundary", ""),
+);
+if (skiaMissingImeGraphemeBoundary.result.status !== 0) {
+  console.error("expected missing native Skia IME grapheme boundary proof to validate as failed");
+  console.error(skiaMissingImeGraphemeBoundary.result.stdout);
+  console.error(skiaMissingImeGraphemeBoundary.result.stderr);
+  process.exit(1);
+}
+const skiaMissingImeGraphemeBoundaryManifest = JSON.parse(
+  readFileSync(skiaMissingImeGraphemeBoundary.outputPath, "utf8"),
+);
+if (
+  skiaMissingImeGraphemeBoundaryManifest.status !== "failed" ||
+  skiaMissingImeGraphemeBoundaryManifest.observations.imeCandidateAnchor.status !== "failed"
+) {
+  console.error("missing native Skia IME grapheme boundary token should keep candidate anchor proof failed");
   process.exit(1);
 }
 if (

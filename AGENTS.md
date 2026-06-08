@@ -363,9 +363,9 @@ native Skia proof matrix configures the locked release Skia artifact with
 required SkParagraph support before running its real renderer/text smokes.
 Native Skia `graphemeEditing`, `imeCandidateAnchor`, and
 `imeCompositionVisual` renderer-proof markers come from the text/emoji smoke's
-shared grapheme-boundary contract, host IME request diagnostics, Skia caret
-geometry, and captured text-field composition pixels; they do not replace
-matching-host native IME runtime evidence.
+shared grapheme-boundary contract, host IME request diagnostics including UTF-8
+cursor/anchor offsets, Skia caret geometry, and captured text-field composition
+pixels; they do not replace matching-host native IME runtime evidence.
 Native WGPU proof remains a non-blocking
 diagnostic and still requires a usable runner WGPU adapter for offscreen
 readback. The `renderer-proof-summary` CI job requires the native Skia macOS,
