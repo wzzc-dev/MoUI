@@ -200,6 +200,8 @@ node --check scripts/record-native-ime-evidence.mjs
 node scripts/test-record-native-ime-evidence.mjs
 node --check scripts/record-native-skia-evidence.mjs
 node scripts/test-record-native-skia-evidence.mjs
+node --check scripts/generate-grapheme-break-fixtures.mjs
+node scripts/generate-grapheme-break-fixtures.mjs --check
 node --check scripts/validate-web-runtime-handoff.mjs
 node scripts/test-validate-web-runtime-handoff.mjs
 node --check scripts/test-browser-runtime-events.mjs
