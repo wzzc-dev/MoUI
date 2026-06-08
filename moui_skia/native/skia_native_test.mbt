@@ -1350,6 +1350,40 @@ test "font api typechecks" {
       ignore(metrics.has_bounds)
     }
   }
+  assert_true(
+    @native.Paragraph::layout_utf8(b"", max_width=120.0, size=16.0) is None,
+  )
+  assert_true(
+    @native.Paragraph::layout_utf8(
+      b"MoonBit SkParagraph",
+      max_width=0.0,
+      size=16.0,
+    )
+    is None,
+  )
+  match
+    @native.Paragraph::layout_utf8(
+      b"alpha beta gamma delta",
+      family_name=b"Arial",
+      max_width=70.0,
+      size=16.0,
+    ) {
+    None => assert_true(!@native.skia_paragraph_available())
+    Some(paragraph) => {
+      assert_true(@native.skia_paragraph_available())
+      assert_true(paragraph.is_available())
+      assert_true(paragraph.width() > 0.0)
+      assert_true(paragraph.height() > 0.0)
+      let metrics = paragraph.line_metrics()
+      assert_true(metrics.length() > 0)
+      assert_true(metrics[0].is_valid())
+      let boxes = paragraph.text_boxes_utf8(0, b"alpha beta".length())
+      assert_true(boxes.length() > 0)
+      assert_true(boxes[0].width() > 0.0)
+      let hit = paragraph.hit_test_utf8(8.0, metrics[0].baseline)
+      assert_true(hit.offset >= 0)
+    }
+  }
   match @native.Typeface::default() {
     None => ()
     Some(typeface) => {

@@ -26,6 +26,9 @@ priv type FontHandle
 priv type ShapedTextRunHandle
 
 ///|
+priv type ParagraphHandle
+
+///|
 priv type TypefaceHandle
 
 ///|

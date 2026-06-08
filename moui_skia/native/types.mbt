@@ -41,6 +41,51 @@ pub(all) struct ShapedTextRun {
 }
 
 ///|
+/// Native SkParagraph layout.
+#warnings("-struct_never_constructed-unused_field")
+pub(all) struct Paragraph {
+  priv handle : ParagraphHandle
+}
+
+///|
+/// SkParagraph line metrics exposed with UTF-8 byte ranges.
+pub(all) struct ParagraphLineMetric {
+  start : Int
+  end : Int
+  end_excluding_whitespace : Int
+  end_including_newline : Int
+  line_number : Int
+  hard_break : Bool
+  left : Float
+  width : Float
+  baseline : Float
+  ascent : Float
+  descent : Float
+  height : Float
+} derive(Debug, Eq)
+
+///|
+pub fn ParagraphLineMetric::right(self : ParagraphLineMetric) -> Float {
+  self.left + self.width
+}
+
+///|
+pub fn ParagraphLineMetric::is_valid(self : ParagraphLineMetric) -> Bool {
+  self.start >= 0 &&
+  self.end >= self.start &&
+  self.line_number >= 0 &&
+  self.width >= 0.0 &&
+  self.height > 0.0
+}
+
+///|
+/// SkParagraph hit-test result exposed as a UTF-8 byte offset.
+pub(all) struct ParagraphHitTestResult {
+  offset : Int
+  downstream : Bool
+} derive(Debug, Eq)
+
+///|
 /// Native Skia glyph identifier.
 pub(all) struct GlyphId(UInt16) derive(Debug, Eq)
 
