@@ -444,6 +444,13 @@ first-frame logs under `artifacts/platform-evidence/<platform>/`, use
 update only the platform's `skiaEvidence` block. Provider preflight logs must
 name the matching Skia provider package or preflight summary and include a
 passing preflight/test/build marker; generic passing test output is not enough.
+After a matching host writes native IME Showcase or Markdown Editor logs under
+the same artifact root, use `node scripts/record-native-ime-evidence.mjs` to
+validate candidate-anchor, surrounding-text, composition-visual, commit/delete,
+cursor-update, scroll-anchor, scale/DPR-anchor, resize-anchor, and Markdown
+Editor dogfood markers and update only the native IME observations. The helper
+does not promote full platform status, and generic host unit-test or package
+logs are not runtime IME proof.
 Full platform runtime status still requires the broader platform observations.
 
 Windows native uses Visual Studio C++ build tools and vcpkg `zlib:x64-windows`.
