@@ -761,7 +761,7 @@ fn main {
         )
       } else {
         failures.push(
-          "imeCompositionVisual missing composition range and preedit pixel evidence",
+          "imeCompositionVisual missing composition range, composition cursor, and preedit pixel evidence",
         )
       }
     }
