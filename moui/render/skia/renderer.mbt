@@ -101,6 +101,7 @@ pub(all) struct SkiaEmojiFontFallbackProof {
   text_system_id : String
   font_family : String
   font_source : String
+  fallback_language_tags : Array[String]
   shaper : String
   glyph_key : String
   glyph_count : Int
@@ -543,6 +544,7 @@ pub fn skia_emoji_font_fallback_proof(
   }
   let emoji_hint = skia_text_contains_emoji_hint(text)
   let fallback_request = skia_font_fallback_request(font, text)
+  let fallback_language_tags = skia_font_fallback_language_tags(text)
   match skia_resolved_text_layout_for_resolution(font, text, font_resolution) {
     Some(layout) => {
       let mut glyph_count = 0
@@ -564,6 +566,7 @@ pub fn skia_emoji_font_fallback_proof(
         text_system_id: text_system.id(),
         font_family: "emoji",
         font_source: skia_emoji_font_source_label(font_resolution),
+        fallback_language_tags,
         shaper,
         glyph_key: skia_emoji_glyph_key(
           text_system.id(),
@@ -580,7 +583,8 @@ pub fn skia_emoji_font_fallback_proof(
         SkiaFontResolution::SystemFontMgr &&
         emoji_hint,
         fallback_request_ready: !fallback_request.is_empty() &&
-        fallback_request.has_character(),
+        fallback_request.has_character() &&
+        fallback_request.language_count() == fallback_language_tags.length(),
         deterministic_color_emoji_ready: false,
       })
     }
@@ -2337,10 +2341,19 @@ fn skia_text_segment_class(text : String) -> Int {
 
 ///|
 fn skia_codepoint_is_cjk(codepoint : Int) -> Bool {
+  skia_codepoint_is_cjk_ideograph(codepoint) || skia_codepoint_is_kana(codepoint)
+}
+
+///|
+fn skia_codepoint_is_cjk_ideograph(codepoint : Int) -> Bool {
   (codepoint >= 0x3400 && codepoint <= 0x4DBF) ||
   (codepoint >= 0x4E00 && codepoint <= 0x9FFF) ||
   (codepoint >= 0xF900 && codepoint <= 0xFAFF) ||
-  (codepoint >= 0x20000 && codepoint <= 0x2FA1F) ||
+  (codepoint >= 0x20000 && codepoint <= 0x2FA1F)
+}
+
+///|
+fn skia_codepoint_is_kana(codepoint : Int) -> Bool {
   (codepoint >= 0x3040 && codepoint <= 0x30FF)
 }
 
@@ -3639,6 +3652,61 @@ fn skia_codepoint_is_hangul_syllable(codepoint : Int) -> Bool {
 }
 
 ///|
+fn skia_codepoint_is_hangul_compatibility_jamo(codepoint : Int) -> Bool {
+  codepoint >= 0x3130 && codepoint <= 0x318F
+}
+
+///|
+fn skia_codepoint_is_hebrew_script(codepoint : Int) -> Bool {
+  codepoint >= 0x0590 && codepoint <= 0x05FF
+}
+
+///|
+fn skia_codepoint_is_arabic_script(codepoint : Int) -> Bool {
+  (codepoint >= 0x0600 && codepoint <= 0x08FF) ||
+  (codepoint >= 0xFB50 && codepoint <= 0xFDFF) ||
+  (codepoint >= 0xFE70 && codepoint <= 0xFEFF)
+}
+
+///|
+fn skia_codepoint_is_devanagari_script(codepoint : Int) -> Bool {
+  codepoint >= 0x0900 && codepoint <= 0x097F
+}
+
+///|
+fn skia_codepoint_is_thai_script(codepoint : Int) -> Bool {
+  codepoint >= 0x0E00 && codepoint <= 0x0E7F
+}
+
+///|
+fn skia_codepoint_is_lao_script(codepoint : Int) -> Bool {
+  codepoint >= 0x0E80 && codepoint <= 0x0EFF
+}
+
+///|
+fn skia_codepoint_is_sinhala_script(codepoint : Int) -> Bool {
+  codepoint >= 0x0D80 && codepoint <= 0x0DFF
+}
+
+///|
+fn skia_codepoint_is_khmer_script(codepoint : Int) -> Bool {
+  codepoint >= 0x1780 && codepoint <= 0x17FF
+}
+
+///|
+fn skia_codepoint_is_myanmar_script(codepoint : Int) -> Bool {
+  codepoint >= 0x1000 && codepoint <= 0x109F
+}
+
+///|
+fn skia_codepoint_is_latin_script(codepoint : Int) -> Bool {
+  (codepoint >= 0x0041 && codepoint <= 0x005A) ||
+  (codepoint >= 0x0061 && codepoint <= 0x007A) ||
+  (codepoint >= 0x00C0 && codepoint <= 0x024F) ||
+  (codepoint >= 0x1E00 && codepoint <= 0x1EFF)
+}
+
+///|
 fn skia_font_with_resolution_for_text(
   font : @core.FontSpec,
   text : String,
@@ -3715,9 +3783,77 @@ fn skia_font_fallback_request(
 ) -> @moui_skia.FontFallbackRequest {
   @moui_skia.FontFallbackRequest::new(
     families=skia_font_fallback_chain(font),
+    bcp47=skia_font_fallback_language_bytes(text),
     character=skia_representative_fallback_codepoint(text),
     style=skia_font_style_request(font),
   )
+}
+
+///|
+fn skia_font_fallback_language_bytes(text : String) -> Array[Bytes] {
+  let tags = skia_font_fallback_language_tags(text)
+  let bytes : Array[Bytes] = []
+  for tag in tags {
+    bytes.push(@utf8.encode(tag[:], bom=false))
+  }
+  bytes
+}
+
+///|
+fn skia_font_fallback_language_tags(text : String) -> Array[String] {
+  let tags : Array[String] = []
+  let representative = skia_representative_fallback_codepoint(text)
+  match skia_script_language_tag_for_codepoint(representative) {
+    Some(tag) => skia_push_language_tag(tags, tag)
+    None => ()
+  }
+  if representative > 0 {
+    skia_push_language_tag(tags, "en")
+  }
+  tags
+}
+
+///|
+fn skia_push_language_tag(tags : Array[String], tag : String) -> Unit {
+  if tag != "" && !tags.contains(tag) {
+    tags.push(tag)
+  }
+}
+
+///|
+fn skia_script_language_tag_for_codepoint(codepoint : Int) -> String? {
+  if codepoint <= 0 {
+    None
+  } else if skia_codepoint_is_emoji_hint(codepoint) {
+    Some("und-Zsye")
+  } else if skia_codepoint_is_kana(codepoint) {
+    Some("ja")
+  } else if skia_codepoint_is_cjk_ideograph(codepoint) {
+    Some("zh-Hans")
+  } else if skia_codepoint_is_hangul_cluster_codepoint(codepoint) ||
+    skia_codepoint_is_hangul_compatibility_jamo(codepoint) {
+    Some("ko")
+  } else if skia_codepoint_is_hebrew_script(codepoint) {
+    Some("he")
+  } else if skia_codepoint_is_arabic_script(codepoint) {
+    Some("ar")
+  } else if skia_codepoint_is_devanagari_script(codepoint) {
+    Some("hi")
+  } else if skia_codepoint_is_thai_script(codepoint) {
+    Some("th")
+  } else if skia_codepoint_is_lao_script(codepoint) {
+    Some("lo")
+  } else if skia_codepoint_is_sinhala_script(codepoint) {
+    Some("si")
+  } else if skia_codepoint_is_khmer_script(codepoint) {
+    Some("km")
+  } else if skia_codepoint_is_myanmar_script(codepoint) {
+    Some("my")
+  } else if skia_codepoint_is_latin_script(codepoint) {
+    Some("en")
+  } else {
+    None
+  }
 }
 
 ///|
