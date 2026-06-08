@@ -105,6 +105,11 @@ same optional SkShaper shaped glyph runs when linked, and otherwise falls back
 to positioned glyph runs. The mixed-run fallback segmenter follows the same
 Indic virama/linker boundary, including virama plus Extend marks before an
 Indic consonant, so per-run font fallback does not split that edit cluster.
+Skia segmentation and fallback caret stabilization now route through core
+`TextGraphemeBoundaries` directly, with Skia white-box tests comparing cluster
+slices and IME-facing UTF-8 offsets against the core scanner so renderer text
+proof, editor movement, selection geometry, hit testing, and host IME requests
+share one boundary source.
 Linux Skia resolves its default `FontMgr` through fontconfig/FreeType
 when those Skia port headers are available, with a directory font manager
 fallback over common system font directories. If the selected Skia font produces
