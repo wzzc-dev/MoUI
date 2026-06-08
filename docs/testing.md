@@ -853,7 +853,10 @@ Passed manifests must carry GitHub Actions provenance and strong marker tokens;
 `colorEmojiPixels` also
 requires `font-metadata` / `glyph-metadata` evidence plus structured
 `metadata.font` and `metadata.glyph` fields so high-saturation emoji pixels can
-be traced to the font/glyph path that produced them. The text/IME observations
+be traced to the font/glyph path that produced them. Native Skia
+`colorEmojiPixels` additionally requires `fallback-request`, `emoji-hint`, and
+`stable-glyph-key` tokens, tying the proof to the FontMgr fallback request and
+the stable glyph metadata path. The text/IME observations
 must prove selection rectangles with line ranges, grapheme edit boundaries with
 edit actions, IME candidate anchors with surrounding text, and composition
 ranges with preedit pixels. Native Skia `paragraphWrapping`, `bidiLayout`, and

@@ -106,6 +106,12 @@ const runSkiaRecorder = (name, logText, extraArgs = [], envOverrides = {}) => {
 };
 
 const skiaMarkers = markers.map(marker => {
+  if (marker.includes("MoUI renderer proof colorEmojiPixels passed")) {
+    return marker.replace(
+      "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata",
+      "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key",
+    );
+  }
   if (marker.startsWith("MoUI renderer proof bidiLayout passed")) {
     return "MoUI renderer proof bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order";
   }
@@ -150,10 +156,33 @@ const skiaPassedManifest = JSON.parse(readFileSync(skiaPassed.outputPath, "utf8"
 if (
   skiaPassedManifest.status !== "passed" ||
   skiaPassedManifest.observations.paragraphWrapping.status !== "passed" ||
+  !skiaPassedManifest.observations.colorEmojiPixels.evidence.includes("fallback-request") ||
+  !skiaPassedManifest.observations.colorEmojiPixels.evidence.includes("stable-glyph-key") ||
   !skiaPassedManifest.observations.paragraphWrapping.evidence.includes("engine=skparagraph") ||
   !skiaPassedManifest.observations.bidiLayout.evidence.includes("bidi_visual_order_ready=true")
 ) {
-  console.error("passed Skia manifest did not preserve SkParagraph evidence");
+  console.error("passed Skia manifest did not preserve SkParagraph/emoji fallback evidence");
+  process.exit(1);
+}
+
+const skiaMissingEmojiFallback = runSkiaRecorder(
+  "skia-missing-emoji-fallback",
+  skiaMarkers.join("\n").replace(" fallback-request", ""),
+);
+if (skiaMissingEmojiFallback.result.status !== 0) {
+  console.error("expected missing Skia emoji fallback token proof to validate as failed");
+  console.error(skiaMissingEmojiFallback.result.stdout);
+  console.error(skiaMissingEmojiFallback.result.stderr);
+  process.exit(1);
+}
+const skiaMissingEmojiFallbackManifest = JSON.parse(
+  readFileSync(skiaMissingEmojiFallback.outputPath, "utf8"),
+);
+if (
+  skiaMissingEmojiFallbackManifest.status !== "failed" ||
+  skiaMissingEmojiFallbackManifest.observations.colorEmojiPixels.status !== "failed"
+) {
+  console.error("missing Skia emoji fallback token should keep color emoji proof failed");
   process.exit(1);
 }
 

@@ -24,6 +24,15 @@ const observationEvidence = {
 
 const skiaNativeObservationEvidence = {
   ...observationEvidence,
+  colorEmojiPixels: [
+    "high-saturation-pixels",
+    "glyph-or-raster",
+    "font-metadata",
+    "glyph-metadata",
+    "fallback-request",
+    "emoji-hint",
+    "stable-glyph-key",
+  ],
   bidiLayout: ["engine=skparagraph", "bidi_visual_order_ready=true", "visual-order"],
   paragraphWrapping: [
     "engine=skparagraph",
@@ -211,6 +220,26 @@ expectFail(
     ["--require-passed"],
   ),
   "must include 'engine=skparagraph'",
+);
+
+expectFail(
+  "skia native color emoji proof rejects missing fallback request token",
+  run(
+    "skia-native-missing-emoji-fallback-request.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations("passed", skiaNativeObservationEvidence),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: observationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: colorEmojiMetadata(),
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "must include 'fallback-request'",
 );
 
 expectFail(
