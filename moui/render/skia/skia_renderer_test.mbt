@@ -10,7 +10,10 @@ test "skia renderer backend info reflects native availability" {
   assert_true(info.description.contains("text fallback/shaping descriptor"))
   assert_true(info.description.contains("text maturity audit partial"))
   assert_true(info.description.contains("mixed-run fallback ready"))
-  assert_true(info.description.contains("full grapheme parity pending"))
+  assert_true(
+    info.description.contains("Unicode 17 grapheme boundary contract ready"),
+  )
+  assert_true(info.description.contains("bidi, paragraph line breaking"))
   assert_true(info.description.contains("flush-and-submit finalization"))
   if skia_available() {
     assert_true(info.status == @render.RendererCapabilityStatus::Ready)
