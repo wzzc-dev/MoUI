@@ -40,6 +40,11 @@ Options:
   --enable-skshaper      Enable the optional moui_skia SkShaper boundary.
                          Requires libskshaper and its dependent module
                          libraries in --skia-lib-dir.
+  --enable-skparagraph   Enable the optional moui_skia SkParagraph boundary.
+                         Requires libskparagraph, libskshaper, and SkUnicode
+                         libraries in --skia-lib-dir.
+  --require-skparagraph  Enable SkParagraph and fail when required headers or
+                         libraries are missing.
   --extra-cc-flags STR   Extra C/C++ flags appended to moui_skia stub flags.
   --extra-link-flags STR Extra linker flags appended to executable link flags.
   --build-log PATH       Write source-built Skia build output to PATH. Relative
@@ -87,10 +92,24 @@ Environment defaults:
   MOUI_SKIA_SKIA_LIB_DIR, MOUI_SKIA_SKIA_LIB, MOUI_SKIA_SKIA_REV,
   MOUI_SKIA_JETBRAINS_TAG, MOUI_SKIA_JETBRAINS_CONFIG,
   MOUI_SKIA_JETBRAINS_CACHE_DIR, MOUI_SKIA_EXTRA_GN_ARGS,
-  MOUI_SKIA_LINK_MODE, MOUI_SKIA_EXTRA_CC_FLAGS, and
+  MOUI_SKIA_LINK_MODE, MOUI_SKIA_ENABLE_SKPARAGRAPH,
+  MOUI_SKIA_REQUIRE_SKPARAGRAPH, MOUI_SKIA_EXTRA_CC_FLAGS, and
   MOUI_SKIA_EXTRA_LINK_FLAGS are used when the matching command-line option is
   omitted. Explicit command-line options still override environment defaults.
 EOF
+}
+
+normalize_bool() {
+  local name="$1"
+  local value="$2"
+  case "$value" in
+    1|true|TRUE|yes|YES|on|ON) printf '1\n' ;;
+    ""|0|false|FALSE|no|NO|off|OFF) printf '0\n' ;;
+    *)
+      echo "unsupported boolean value for $name: $value" >&2
+      exit 2
+      ;;
+  esac
 }
 
 reject_legacy_link_mode_env() {
@@ -124,6 +143,8 @@ extra_gn_args="${MOUI_SKIA_EXTRA_GN_ARGS:-}"
 extra_cc_flags="${MOUI_SKIA_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${MOUI_SKIA_EXTRA_LINK_FLAGS:-}"
 enable_skshaper=0
+enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
+require_skparagraph="${MOUI_SKIA_REQUIRE_SKPARAGRAPH:-0}"
 extra_cc_flags_explicit=0
 extra_link_flags_explicit=0
 if [[ -n "${MOUI_SKIA_EXTRA_CC_FLAGS:-}" ]]; then
@@ -198,6 +219,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --enable-skshaper)
       enable_skshaper=1
+      shift
+      ;;
+    --enable-skparagraph)
+      enable_skparagraph=1
+      shift
+      ;;
+    --require-skparagraph)
+      require_skparagraph=1
       shift
       ;;
     --extra-cc-flags)
@@ -281,6 +310,12 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+enable_skparagraph="$(normalize_bool MOUI_SKIA_ENABLE_SKPARAGRAPH "$enable_skparagraph")"
+require_skparagraph="$(normalize_bool MOUI_SKIA_REQUIRE_SKPARAGRAPH "$require_skparagraph")"
+if [[ $require_skparagraph -eq 1 ]]; then
+  enable_skparagraph=1
+fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 skia_repo="$repo_root/moui_skia"
@@ -487,6 +522,9 @@ elif [[ "$skia_provider" == "source" ]]; then
   include_path="$resolved_work_dir/skia"
   lib_path="$resolved_work_dir/skia/out/moonbit-smoke"
   source_build_args=(--work-dir "$resolved_work_dir" --skia-rev "$skia_rev")
+  if [[ $enable_skparagraph -eq 1 ]]; then
+    source_build_args+=(--enable-skparagraph)
+  fi
   if [[ -n "$extra_gn_args" ]]; then
     source_build_args+=(--extra-gn-args "$extra_gn_args")
   fi
@@ -594,6 +632,39 @@ if [[ $dry_run_config -eq 0 ]]; then
   fi
 fi
 
+paragraph_headers=(
+  "$include_path/modules/skparagraph/include/Paragraph.h"
+  "$include_path/modules/skparagraph/include/ParagraphBuilder.h"
+  "$include_path/modules/skparagraph/include/ParagraphStyle.h"
+  "$include_path/modules/skparagraph/include/TextStyle.h"
+  "$include_path/modules/skparagraph/include/FontCollection.h"
+)
+paragraph_libs=(skparagraph skshaper skunicode_core skunicode_icu harfbuzz icu)
+paragraph_headers_status="unchecked"
+paragraph_libraries_status="unchecked"
+if [[ $enable_skparagraph -eq 1 ]]; then
+  paragraph_headers_status="available"
+  for paragraph_header in "${paragraph_headers[@]}"; do
+    if [[ ! -f "$paragraph_header" ]]; then
+      paragraph_headers_status="missing"
+    fi
+  done
+  paragraph_libraries_status="available"
+  for paragraph_lib in "${paragraph_libs[@]}"; do
+    if [[ ! -f "$lib_path/lib$paragraph_lib.a" && ! -f "$lib_path/lib$paragraph_lib.dylib" ]]; then
+      paragraph_libraries_status="missing"
+    fi
+  done
+  if [[ $require_skparagraph -eq 1 && "$paragraph_headers_status" != "available" ]]; then
+    echo "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but one or more SkParagraph headers are missing under $include_path/modules/skparagraph/include" >&2
+    exit 1
+  fi
+  if [[ $require_skparagraph -eq 1 && "$paragraph_libraries_status" != "available" ]]; then
+    echo "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but one or more SkParagraph libraries are missing in $lib_path" >&2
+    exit 1
+  fi
+fi
+
 resolved_link_mode="$macos_link_mode"
 if [[ "$resolved_link_mode" == "auto" ]]; then
   if [[ $write_local_config -eq 1 ]]; then
@@ -666,6 +737,29 @@ if [[ $enable_skshaper -eq 1 ]]; then
   done
   native_extra_link_flags="${shaper_link_flags# }${native_extra_link_flags:+ $native_extra_link_flags}"
 fi
+paragraph_link_flags=""
+if [[ $enable_skparagraph -eq 1 ]]; then
+  for paragraph_lib in "${paragraph_libs[@]}"; do
+    paragraph_static_lib="$lib_path/lib$paragraph_lib.a"
+    paragraph_dynamic_lib="$lib_path/lib$paragraph_lib.dylib"
+    case "$resolved_link_mode" in
+      dynamic)
+        if [[ $dry_run_config -eq 0 && ! -f "$paragraph_dynamic_lib" ]]; then
+          echo "Requested dynamic SkParagraph link mode, but $paragraph_dynamic_lib was not found" >&2
+          exit 1
+        fi
+        paragraph_link_flags="$paragraph_link_flags $paragraph_dynamic_lib"
+        ;;
+      static)
+        if [[ $dry_run_config -eq 0 && ! -f "$paragraph_static_lib" ]]; then
+          echo "Requested static SkParagraph link mode, but $paragraph_static_lib was not found" >&2
+          exit 1
+        fi
+        paragraph_link_flags="$paragraph_link_flags $paragraph_static_lib"
+        ;;
+    esac
+  done
+fi
 if [[ $run_gpu_smoke -eq 1 ]]; then
   native_extra_cc_flags="-DMOUI_SKIA_ENABLE_GPU_METAL${native_extra_cc_flags:+ $native_extra_cc_flags}"
   if [[ -n "$ganesh_link_flags" ]]; then
@@ -677,6 +771,9 @@ fi
 cc_flags="-DMOUI_SKIA_HAS_SKIA -std=c++17 -I$include_path"
 if [[ $enable_skshaper -eq 1 ]]; then
   cc_flags="$cc_flags -DMOUI_SKIA_HAS_SKSHAPER"
+fi
+if [[ $enable_skparagraph -eq 1 ]]; then
+  cc_flags="$cc_flags -DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER"
 fi
 if [[ $run_gpu_smoke -eq 1 ]]; then
   cc_flags="$cc_flags -DMOUI_SKIA_ENABLE_GPU_METAL"
@@ -694,6 +791,9 @@ if [[ $run_gpu_smoke -eq 1 ]]; then
 fi
 if [[ $enable_skshaper -eq 1 ]]; then
   skia_link_flags="$skia_link_flags $shaper_link_flags"
+fi
+if [[ $enable_skparagraph -eq 1 ]]; then
+  skia_link_flags="$skia_link_flags $paragraph_link_flags"
 fi
 if [[ -n "$skia_runtime_link_flags" ]]; then
   skia_link_flags="$skia_link_flags $skia_runtime_link_flags"
@@ -737,6 +837,17 @@ echo "  resolved_link_mode=$resolved_link_mode"
 if [[ $enable_skshaper -eq 1 ]]; then
   echo "  skshaper=enabled"
 fi
+if [[ $require_skparagraph -eq 1 ]]; then
+  echo "  skparagraph=required"
+elif [[ $enable_skparagraph -eq 1 ]]; then
+  echo "  skparagraph=enabled"
+else
+  echo "  skparagraph=disabled"
+fi
+if [[ $enable_skparagraph -eq 1 ]]; then
+  echo "  skparagraph_headers=$paragraph_headers_status"
+  echo "  skparagraph_libraries=$paragraph_libraries_status"
+fi
 echo "  skia_stub_cc_flags=$cc_flags"
 echo "  skia_link_flags=$skia_link_flags"
 echo "  showcase_link_flags=$showcase_link_flags"
@@ -773,7 +884,7 @@ if [[ $dry_run_config -eq 1 ]]; then
 fi
 
 write_native_pkg_config() {
-  bash "$skia_repo/scripts/configure-macos-native-pkg.sh" \
+  configure_args=(
     --skia-include "$include_path" \
     --skia-lib-dir "$lib_path" \
     --skia-lib "$skia_lib" \
@@ -781,7 +892,15 @@ write_native_pkg_config() {
     --extra-cc-flags "$native_extra_cc_flags" \
     --extra-link-flags "$native_extra_link_flags" \
     --output "$native_pkg" \
-    --write >/dev/null
+    --write
+  )
+  if [[ $enable_skparagraph -eq 1 ]]; then
+    configure_args+=(--enable-skparagraph)
+  fi
+  if [[ $require_skparagraph -eq 1 ]]; then
+    configure_args+=(--require-skparagraph)
+  fi
+  bash "$skia_repo/scripts/configure-macos-native-pkg.sh" "${configure_args[@]}" >/dev/null
 }
 
 write_renderer_smoke_pkg_config() {
