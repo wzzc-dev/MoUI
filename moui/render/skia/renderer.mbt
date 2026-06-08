@@ -514,7 +514,10 @@ pub fn skia_text_selection_geometry_proof(
     layout.lines[0]
   }
   let hit = layout.hit_test(
-    @core.Point::new(x=max_width + 100.0, y=hit_line.origin.y + 1.0),
+    @core.Point::new(
+      x=(hit_line.origin.x + hit_line.size.width * 0.5).min(max_width),
+      y=hit_line.origin.y + hit_line.size.height * 0.5,
+    ),
   )
   let visual = skia_text_visual_order_proof(text, font~, font_resolution~)
   let (visual_order_differs, visual_segment_count, bidi_visual_order_evidence) = match
