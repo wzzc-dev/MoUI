@@ -140,6 +140,11 @@ const parseNumber = value => {
 
 const parseBoolean = value => value === "true";
 
+const parseLanguageTags = value =>
+  typeof value === "string" && value.trim() !== ""
+    ? value.split("+").filter(tag => tag.trim() !== "")
+    : [];
+
 const colorEmojiMetadata = () => {
   const fields = parseMetadataFields("MoUI renderer proof colorEmojiPixels metadata ");
   if (!fields) return null;
@@ -169,6 +174,9 @@ const colorEmojiMetadata = () => {
     shaper: fields.shaper || "unknown",
   };
   if (fields.fallback_script_tag) font.fallbackScriptTag = fields.fallback_script_tag;
+  if (fields.fallback_language_tags) {
+    font.fallbackLanguageTags = parseLanguageTags(fields.fallback_language_tags);
+  }
   if (fields.fallback_language_tag_count) {
     font.fallbackLanguageTagCount = parseNumber(fields.fallback_language_tag_count);
   }
@@ -185,14 +193,33 @@ const skiaNativeColorEmojiMetadataReady = metadata => {
   if (backend !== "skia-native") return true;
   const font = metadata.font || {};
   const glyph = metadata.glyph || {};
+  const fallbackLanguageTags = Array.isArray(font.fallbackLanguageTags)
+    ? font.fallbackLanguageTags
+    : [];
+  const glyphKey = typeof glyph.key === "string" ? glyph.key : "";
+  const expectedGlyphKeyParts = [
+    font.source,
+    font.textSystem,
+    font.shaper,
+    `script=${font.fallbackScriptTag}`,
+    `langs=${font.fallbackRequestLanguageCount}`,
+    `lang-tags=${fallbackLanguageTags.join("+")}`,
+    `emoji-u+${glyph.fallbackRequestCharacter}`,
+    glyph.format,
+  ];
   return (
     typeof font.fallbackScriptTag === "string" &&
     font.fallbackScriptTag.trim() !== "" &&
+    fallbackLanguageTags.length >= 1 &&
+    fallbackLanguageTags.every(tag => typeof tag === "string" && tag.trim() !== "") &&
+    fallbackLanguageTags[0] === font.fallbackScriptTag &&
     Number(font.fallbackLanguageTagCount) >= 1 &&
+    Number(font.fallbackLanguageTagCount) === fallbackLanguageTags.length &&
     Number(font.fallbackRequestLanguageCount) === Number(font.fallbackLanguageTagCount) &&
     Number(glyph.resolvedMissingGlyphCount) >= 0 &&
     Number(glyph.fallbackRequestCharacter) > 0 &&
-    glyph.missingGlyphRecoveryReady === true
+    glyph.missingGlyphRecoveryReady === true &&
+    expectedGlyphKeyParts.every(part => typeof part === "string" && part !== "" && glyphKey.includes(part))
   );
 };
 

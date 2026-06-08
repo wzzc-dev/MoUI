@@ -349,10 +349,10 @@ must also include
 including a non-empty glyph key plus positive glyph width/height, so emoji
 pixels remain tied to the font/glyph path that produced them; native Skia color
 emoji proof must also include `fallback-request`, `emoji-hint`, and
-`stable-glyph-key` tokens plus fallback script/language-count metadata,
+`stable-glyph-key` tokens plus fallback script/language tag-list/count metadata,
 fallback request character metadata, resolved missing-glyph count,
 missing-glyph recovery readiness, and a glyph key that contains the recorded
-source/text-system/shaper/script/language-count/fallback-request-character/format
+source/text-system/shaper/script/language-tags/language-count/fallback-request-character/format
 metadata. Skipped
 jobs, package-only tests, missing uploaded artifacts, blank
 screenshots, caret-only diagnostics, coverage-only font matching,
