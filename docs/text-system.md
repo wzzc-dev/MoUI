@@ -13,10 +13,11 @@ remains an explicit diagnostic route for comparing provider behavior.
 - `core/text_layout.mbt` defines `TextSystem`, `TextSystem::fallback()`,
   `TextSystem::layout_paragraph()`, and font data registration. The
   deterministic fallback keeps per-character caret arrays for stable geometry
-  while folding representative cluster interiors such as variation selectors,
-  combining marks, keycap/emoji modifier/ZWJ emoji, regional-indicator pairs,
-  tag sequences, prepend marks, and Hangul Jamo clusters back to the cluster
-  start. The paragraph contract returns line metrics, caret rectangles,
+  while a UAX #29-style `TextGraphemeBoundaries` scanner folds cluster
+  interiors back to the cluster start. It covers CRLF/control breaks, Hangul
+  L/V/T sequences, Extend/ZWJ/SpacingMark, Prepend, regional-indicator pairs,
+  emoji ZWJ sequences, emoji tags, and Indic virama/linker conjuncts. The
+  paragraph contract returns line metrics, caret rectangles,
   selection rectangles, hit-test results, and visual-order metadata with
   explicit readiness flags, so simplified fallback or diagnostic renderer
   layout can expose geometry without claiming native SkParagraph or bidi
@@ -237,21 +238,24 @@ Remote font loading is intentionally outside the current backend contract.
   macOS, Windows, and Linux real-Skia renderer-proof manifests pass with
   SkParagraph line metrics, later-line pixels, selection rectangles, line
   ranges, hit tests, and mixed-direction visual-order evidence. Core now
-  exposes `TextGraphemeBoundaries` as the single representative
+  exposes `TextGraphemeBoundaries` as the single UAX-style
   cluster-boundary contract used by fallback caret stabilization, left/right
   caret movement, selection/range normalization, surrounding delete ranges,
   composition cursor offsets, rich text hit testing, and UTF-8 offset conversion
   for later IME handoff. This keeps deterministic text-field, selection, and
-  IME-anchor geometry on one path without claiming full Unicode segmentation.
+  IME-anchor geometry on one path while still leaving generated Unicode data
+  conformance and full grapheme-cluster parity as release follow-up work.
   Native WGPU can preserve RGBA color glyph payloads
   through the provider protocol and glyph atlas path, with Cosmic platform
   emoji fallback candidate loading, Cosmic color swash preservation,
   provider-safe emoji layout mapping, and a CoreText AppleColorEmoji RGBA path
   covered by focused tests. Stable and diagnostic tests assert caret counts,
   monotonicity, clamping, editor selection behavior, IME anchor geometry, core
-  fallback cluster stabilization and movement, and provider fallback safety
-  across mixed bidi, CJK, single-codepoint emoji, variation-selector emoji, and
-  ZWJ emoji samples; Cosmic run-layout tests additionally assert glyph output
+  fallback cluster stabilization and movement, CRLF/control segmentation,
+  emoji ZWJ restrictions, regional-indicator pairing, Indic conjuncts, and
+  provider fallback safety across mixed bidi, CJK, single-codepoint emoji,
+  variation-selector emoji, and ZWJ emoji samples; Cosmic run-layout tests
+  additionally assert glyph output
   plus caret coverage through the safe-mapped layout path. Skia renderer tests
   cover the same representative emoji caret coverage, shaped-run and fallback caret
   stabilization for combining-mark, Indic matra/virama, Arabic mark, Thai mark,
