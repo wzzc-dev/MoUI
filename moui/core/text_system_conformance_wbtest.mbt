@@ -163,6 +163,24 @@ fn assert_grapheme_utf8_offsets(
 }
 
 ///|
+fn assert_grapheme_nearest_utf8_offsets(
+  text : String,
+  indexes : Array[Int],
+  expected : Array[Int],
+) -> Unit raise {
+  if indexes.length() != expected.length() {
+    fail("expected matching index and normalized utf8-offset fixture lengths")
+  }
+  let boundaries = TextGraphemeBoundaries::new(text~)
+  for index in 0..<indexes.length() {
+    inspect(
+      boundaries.nearest_boundary_utf8_offset(indexes[index]),
+      content="\{expected[index]}",
+    )
+  }
+}
+
+///|
 fn fixed_advance_text_system(advance : Double) -> TextSystem {
   TextSystem::new(id="test-fixed-advance-conformance", measure=input => {
     let carets : Array[Double] = [0.0]
@@ -365,6 +383,8 @@ test "grapheme boundary contract covers ranges deletes and utf8 offsets" {
   inspect(delete.end, content="4")
   inspect(boundaries.utf8_offset(4), content="12")
   inspect(boundaries.utf8_offset(5), content="13")
+  inspect(boundaries.nearest_boundary_utf8_offset(2), content="1")
+  inspect(boundaries.nearest_boundary_utf8_offset(3), content="12")
   assert_grapheme_delete_range(
     "A👨🏾‍🚀B",
     5,
@@ -427,10 +447,16 @@ test "grapheme boundary contract covers ranges deletes and utf8 offsets" {
   assert_grapheme_utf8_offsets("A\u{0D4E}B", [0, 1, 3], [0, 1, 5])
   assert_grapheme_utf8_offsets("A\u{1D165}B", [0, 2, 3], [0, 5, 6])
   assert_grapheme_utf8_offsets("A1\u{FE0F}\u{20E3}B", [0, 1, 4, 5], [0, 1, 8, 9])
+  assert_grapheme_nearest_utf8_offsets("A1\u{FE0F}\u{20E3}B", [2, 3], [1, 8])
   assert_grapheme_utf8_offsets(
     "A\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}B",
     [0, 1, 5, 6],
     [0, 1, 17, 18],
+  )
+  assert_grapheme_nearest_utf8_offsets(
+    "Aक्‍षB",
+    [2, 3, 4],
+    [1, 1, 13],
   )
   assert_grapheme_utf8_offsets("A\u{1000}\u{1039}\u{1001}B", [0, 1, 4, 5], [
     0, 1, 10, 11,

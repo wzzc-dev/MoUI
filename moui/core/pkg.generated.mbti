@@ -1823,6 +1823,7 @@ pub fn TextGraphemeBoundaries::floor_boundary(Self, Int) -> Int
 pub fn TextGraphemeBoundaries::is_boundary(Self, Int) -> Bool
 pub fn TextGraphemeBoundaries::length(Self) -> Int
 pub fn TextGraphemeBoundaries::nearest_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::nearest_boundary_utf8_offset(Self, Int) -> Int
 pub fn TextGraphemeBoundaries::new(text~ : String) -> Self
 pub fn TextGraphemeBoundaries::next_boundary(Self, Int) -> Int
 pub fn TextGraphemeBoundaries::normalize_range(Self, TextRange) -> TextRange

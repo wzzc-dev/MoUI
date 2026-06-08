@@ -111,9 +111,9 @@ Indic virama/linker boundary, including virama plus Extend marks before an
 Indic consonant, so per-run font fallback does not split that edit cluster.
 Skia segmentation and fallback caret stabilization now route through core
 `TextGraphemeBoundaries` directly, with Skia white-box tests comparing cluster
-slices and IME-facing UTF-8 offsets against the core scanner so renderer text
-proof, editor movement, selection geometry, hit testing, and host IME requests
-share one boundary source.
+slices and IME-facing `nearest_boundary_utf8_offset` conversion against the
+core scanner so renderer text proof, editor movement, selection geometry, hit
+testing, and host IME requests share one boundary source.
 Linux Skia resolves its default `FontMgr` through fontconfig/FreeType
 when those Skia port headers are available, with a directory font manager
 fallback over common system font directories. If the selected Skia font produces
@@ -287,9 +287,10 @@ Remote font loading is intentionally outside the current backend contract.
   exposes `TextGraphemeBoundaries` as the single UAX-style
   cluster-boundary contract used by fallback caret stabilization, left/right
   caret movement, selection/range normalization, surrounding delete ranges,
-  composition cursor offsets, rich text hit testing, and UTF-8 offset conversion
-  for later IME handoff. This keeps deterministic text-field, selection, and
-  IME-anchor geometry on one path. The repo now has an offline
+  composition cursor offsets, rich text hit testing, raw UTF-8 offset
+  conversion, and `nearest_boundary_utf8_offset` conversion for later IME
+  handoff. This keeps deterministic text-field, selection, and IME-anchor
+  geometry on one path. The repo now has an offline
   `GraphemeBreakTest.txt`-style fixture and generator guard
   (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples
   plus a vendored Unicode 17.0 default grapheme break fixture generated from
@@ -297,8 +298,9 @@ Remote font loading is intentionally outside the current backend contract.
   --target native` runs the curated fixture, full boundary fixture, and a full
   editing fixture that checks `is_boundary`, floor/ceil/nearest boundary
   snapping, collapsed and expanded range normalization, surrounding delete
-  ranges, and boundary-to-UTF-8 offset conversion across every Unicode 17
-  sample. A separate full layout fixture checks fallback paragraph caret
+  ranges, boundary-to-UTF-8 offset conversion across every Unicode 17 sample,
+  and representative interior-index `nearest_boundary_utf8_offset` snapping. A
+  separate full layout fixture checks fallback paragraph caret
   rectangles, collapsed selection rectangles, and hit-test offsets snap to the
   same Unicode 17 boundaries. `moui/render/skia` also generates a Skia
   white-box fixture from the

@@ -194,6 +194,14 @@ pub fn TextGraphemeBoundaries::utf8_offset(
 }
 
 ///|
+pub fn TextGraphemeBoundaries::nearest_boundary_utf8_offset(
+  self : TextGraphemeBoundaries,
+  index : Int,
+) -> Int {
+  self.utf8_offset(self.nearest_boundary(index))
+}
+
+///|
 fn fallback_stabilize_grapheme_cluster_carets(
   text : String,
   carets : Array[Double],
