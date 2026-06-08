@@ -27,8 +27,8 @@ MoonbitSkiaFloatArray* moonbit_skia_make_float_array(
     1,
     0
   );
-  array->length = length;
-  array->buffer = buffer;
+  array->length = std::max(0, length);
+  array->buffer = buffer == nullptr ? moonbit_empty_float_array : buffer;
   return array;
 }
 
@@ -44,9 +44,18 @@ MoonbitSkiaGlyphIdArray* moonbit_skia_make_glyph_id_array(
     1,
     0
   );
-  array->length = length;
-  array->buffer = buffer;
+  array->length = std::max(0, length);
+  array->buffer = buffer == nullptr ? moonbit_empty_int16_array : buffer;
   return array;
+}
+
+uint16_t* moonbit_skia_make_glyph_id_array_storage(
+  int32_t length
+) {
+  if (length <= 0) {
+    return moonbit_empty_int16_array;
+  }
+  return moonbit_make_string_raw(length);
 }
 
 MoonbitSkiaPoint* moonbit_skia_make_point(float x, float y) {
@@ -96,9 +105,20 @@ MoonbitSkiaPointArray* moonbit_skia_make_point_array(
     1,
     0
   );
-  array->length = length;
-  array->buffer = buffer;
+  array->length = std::max(0, length);
+  array->buffer = buffer == nullptr
+    ? reinterpret_cast<MoonbitSkiaPoint**>(moonbit_empty_ref_array)
+    : buffer;
   return array;
+}
+
+MoonbitSkiaPoint** moonbit_skia_make_point_array_storage(
+  int32_t length
+) {
+  if (length <= 0) {
+    return reinterpret_cast<MoonbitSkiaPoint**>(moonbit_empty_ref_array);
+  }
+  return reinterpret_cast<MoonbitSkiaPoint**>(moonbit_make_ref_array_raw(length));
 }
 
 MoonbitSkiaRectArray* moonbit_skia_make_rect_array(
@@ -113,9 +133,20 @@ MoonbitSkiaRectArray* moonbit_skia_make_rect_array(
     1,
     0
   );
-  array->length = length;
-  array->buffer = buffer;
+  array->length = std::max(0, length);
+  array->buffer = buffer == nullptr
+    ? reinterpret_cast<MoonbitSkiaRect**>(moonbit_empty_ref_array)
+    : buffer;
   return array;
+}
+
+MoonbitSkiaRect** moonbit_skia_make_rect_array_storage(
+  int32_t length
+) {
+  if (length <= 0) {
+    return reinterpret_cast<MoonbitSkiaRect**>(moonbit_empty_ref_array);
+  }
+  return reinterpret_cast<MoonbitSkiaRect**>(moonbit_make_ref_array_raw(length));
 }
 
 MoonbitSkiaInt32Array* moonbit_skia_make_int32_array(
@@ -130,8 +161,8 @@ MoonbitSkiaInt32Array* moonbit_skia_make_int32_array(
     1,
     0
   );
-  array->length = length;
-  array->buffer = buffer;
+  array->length = std::max(0, length);
+  array->buffer = buffer == nullptr ? moonbit_empty_int32_array : buffer;
   return array;
 }
 

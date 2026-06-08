@@ -204,11 +204,30 @@ fn run_text_font_smoke(canvas : @native.Canvas, font : @native.Font) -> Unit {
     let shaped_smoke_bridge_plan = shaped_smoke_bridge.resource_plan(
       smoke_text_bytes(),
     )
+    println("native smoke shaped glyph descriptor bridge valid")
+    println(if shaped_smoke_bridge.is_valid() { 1 } else { 0 })
+    println("native smoke shaped glyph descriptor bridge glyph count")
+    println(shaped_smoke_bridge.glyph_count())
+    println("native smoke shaped glyph descriptor bridge cluster count")
+    println(shaped_smoke_bridge.cluster_count())
+    println("native smoke shaped glyph descriptor bridge plan count")
+    println(shaped_smoke_bridge_plan.length())
+    println("native smoke shaped glyph descriptor bridge text resources")
+    println(shaped_smoke_bridge_plan.count_kind(@skia.TextRunResource))
+    println("native smoke shaped glyph descriptor bridge font resources")
+    println(shaped_smoke_bridge_plan.count_kind(@skia.FontResource))
+    println("native smoke shaped glyph descriptor bridge key equality")
+    println(
+      if shaped_smoke_bridge.resource_key(smoke_text_bytes()) ==
+        shaped_smoke_glyph_run.resource_key(smoke_text_bytes()) {
+        1
+      } else {
+        0
+      },
+    )
     if !shaped_smoke_bridge.is_valid() ||
       shaped_smoke_bridge.glyph_count() != shaped_glyph_count ||
       shaped_smoke_bridge.cluster_count() != shaped_clusters.length() ||
-      shaped_smoke_bridge.resource_key(smoke_text_bytes()) !=
-      shaped_smoke_glyph_run.resource_key(smoke_text_bytes()) ||
       shaped_smoke_bridge_plan.length() != shaped_smoke_glyph_run_plan.length() ||
       shaped_smoke_bridge_plan.count_kind(@skia.TextRunResource) != 4 ||
       shaped_smoke_bridge_plan.count_kind(@skia.FontResource) != 1 {
