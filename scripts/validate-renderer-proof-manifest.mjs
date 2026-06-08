@@ -151,6 +151,15 @@ if (manifest.mode !== "renderer-proof") fail("mode must be 'renderer-proof'");
 const backend = requireString(manifest, "backend", "manifest");
 if (!allowedBackends.has(backend)) fail(`backend '${backend}' is not recognized`);
 if (backend === "skia-native") {
+  requiredObservationEvidence.colorEmojiPixels = [
+    "high-saturation-pixels",
+    "glyph-or-raster",
+    "font-metadata",
+    "glyph-metadata",
+    "fallback-request",
+    "emoji-hint",
+    "stable-glyph-key",
+  ];
   requiredObservationEvidence.bidiLayout = [
     "engine=skparagraph",
     "bidi_visual_order_ready=true",
