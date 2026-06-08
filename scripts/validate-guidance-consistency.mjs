@@ -783,6 +783,8 @@ assertIncludes("docs/testing.md", "IME candidate anchors");
 assertIncludes("docs/testing.md", "examples/markdown_editor/<platform>_skia");
 assertIncludes("docs/testing.md", "platform-protocol=windows-ime");
 assertIncludes("AGENTS.md", "platform-protocol=wayland-text-input");
+assertIncludes("AGENTS.md", "whitespace-delimited tokens");
+assertIncludes("skills/moui-framework-development-skill/SKILL.md", "whitespace-delimited tokens");
 for (const platform of ["macos", "windows", "linux"]) {
   assertIncludes(
     `moui/backend/${platform}/skia/${platform}_skia_provider.mbt`,

@@ -343,7 +343,9 @@ broader platform runtime status unchanged and rejects generic host unit-test or
 package logs without matching-host runtime, native-app, `renderer=skia`,
 matching app, platform-protocol,
 candidate-anchor, surrounding-text, composition, commit/delete, cursor, scroll,
-scale/DPR, resize, and Markdown Editor markers.
+scale/DPR, resize, and Markdown Editor markers. The `renderer=skia`, app, and
+platform-protocol markers are exact whitespace-delimited tokens; suffixed
+labels are not matching-host runtime IME evidence.
 Use
 `record-native-skia-evidence.mjs` for matching-host Skia logs when you only
 want to validate and update `skiaEvidence`; it deliberately leaves the broader
