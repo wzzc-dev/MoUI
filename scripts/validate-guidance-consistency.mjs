@@ -239,6 +239,9 @@ assertIncludes(
   "scripts/dev-check.sh",
   "node scripts/test-record-native-skia-evidence.mjs",
 );
+assertIncludes("scripts/dev-check.sh", "node --check scripts/generate-grapheme-break-fixtures.mjs");
+assertIncludes("scripts/dev-check.sh", "node scripts/generate-grapheme-break-fixtures.mjs --check");
+assertIncludes("docs/testing.md", "generate-grapheme-break-fixtures.mjs --check");
 assertIncludes("scripts/dev-check.sh", "node --check scripts/validate-renderer-proof-manifest.mjs");
 assertIncludes(
   "scripts/dev-check.sh",
@@ -860,6 +863,8 @@ assertIncludes("AGENTS.md", "record-renderer-proof-manifest.mjs");
 assertIncludes("AGENTS.md", "test-record-renderer-proof-manifest.mjs");
 assertIncludes("AGENTS.md", "record-web-renderer-proof-manifest.mjs");
 assertIncludes("AGENTS.md", "test-record-web-renderer-proof-manifest.mjs");
+assertIncludes("AGENTS.md", "generate-grapheme-break-fixtures.mjs --check");
+assertIncludes("skills/moui-framework-development-skill/SKILL.md", "generate-grapheme-break-fixtures.mjs --check");
 assertIncludes("AGENTS.md", "renderer-proof-summary");
 assertIncludes("AGENTS.md", "colorEmojiPixels");
 assertIncludes("AGENTS.md", "stable-glyph-key");
