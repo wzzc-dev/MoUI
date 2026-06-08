@@ -248,6 +248,26 @@ fn ElementNode::accepts_tab_input(
 }
 
 ///|
+fn ElementNode::is_text_input_target(
+  self : ElementNode,
+  target : ElementId,
+) -> Bool {
+  if self.id == target {
+    match self.spec {
+      TextFieldSpec(_) | SearchBarSpec(_) | RichTextEditorSpec(_) => true
+      _ => false
+    }
+  } else {
+    for child in self.children {
+      if child.is_text_input_target(target) {
+        return true
+      }
+    }
+    false
+  }
+}
+
+///|
 fn ElementNode::next_focus_in_scope(
   self : ElementNode,
   current~ : ElementId?,
