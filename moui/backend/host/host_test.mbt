@@ -3669,7 +3669,7 @@ test "host driver dispatches resize and deduplicates redraw requests" {
 }
 
 ///|
-test "host driver retries dirty redraw while previous redraw is pending" {
+test "host driver coalesces dirty redraw while previous redraw is pending" {
   let scheduled = Ref(0)
   let text = @core.State::new("")
   let runtime = host_test_runtime(
@@ -3695,13 +3695,13 @@ test "host driver retries dirty redraw while previous redraw is pending" {
   )
   inspect(text.get(), content="a")
   inspect(pending.redraw_requested, content="true")
-  inspect(scheduled.val, content="2")
+  inspect(scheduled.val, content="1")
   driver.begin_redraw()
   ignore(
     driver.dispatch(HostEvent::TextInput(@core.TextInputEvent::InsertText("b"))),
   )
   inspect(text.get(), content="ab")
-  inspect(scheduled.val, content="3")
+  inspect(scheduled.val, content="2")
 }
 
 ///|

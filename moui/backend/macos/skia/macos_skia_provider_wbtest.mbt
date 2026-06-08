@@ -4,6 +4,9 @@ test "macos skia options default to system font resolution and host resolver" {
   assert_true(
     options.font_resolution == @skia_renderer.SkiaFontResolution::SystemFontMgr,
   )
+  assert_true(
+    options.surface_route == @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
+  )
   inspect(options.exit_after_first_present, content="true")
   let request = @host.HostWindowOpenRequest::new(
     title="Inspector",
@@ -59,9 +62,12 @@ test "macos skia provider preflight records package evidence boundary" {
     preflight.contains("skia_available=\{@skia_renderer.skia_available()}"),
   )
   assert_true(preflight.contains("font=system-font-mgr"))
+  assert_true(preflight.contains("surface_route=raster"))
   assert_true(
     preflight.contains("macOS pass-through NSImageView Skia pixel presenter"),
   )
+  assert_true(preflight.contains("gpu_route=Metal GPU opt-in preflight"))
+  assert_true(preflight.contains("window-present=pending"))
   assert_true(preflight.contains("renderer_bridge=HostWindowRenderer"))
   assert_true(
     preflight.contains("renderer_text_system=SkiaRasterRenderer.text_system"),
@@ -123,10 +129,12 @@ test "macos skia provider preflight records package evidence boundary" {
   let empty = macos_skia_provider_preflight_summary(
     options=MacosSkiaAppOptions::new(
       font_resolution=@skia_renderer.SkiaFontResolution::EmptyTypeface,
+      surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
       exit_after_first_present=true,
     ),
   )
   assert_true(empty.contains("font=empty-typeface"))
+  assert_true(empty.contains("surface_route=metal-gpu"))
 }
 
 ///|

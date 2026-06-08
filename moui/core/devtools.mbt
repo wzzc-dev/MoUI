@@ -3,6 +3,12 @@ pub(all) struct RuntimeInspectorSnapshot {
   size : Size
   dirty_count : Int
   dirty_element_ids : Array[ElementId]
+  dirty_build_count : Int
+  dirty_build_element_ids : Array[ElementId]
+  dirty_layout_count : Int
+  dirty_layout_element_ids : Array[ElementId]
+  dirty_paint_count : Int
+  dirty_paint_element_ids : Array[ElementId]
   dirty_state : RuntimeDirtyStateSummary
   needs_rebuild : Bool
   needs_layout : Bool
@@ -59,6 +65,12 @@ pub(all) struct RuntimeInspectorSnapshot {
 pub(all) struct RuntimeDirtyStateSummary {
   dirty_count : Int
   dirty_element_ids : Array[ElementId]
+  dirty_build_count : Int
+  dirty_build_element_ids : Array[ElementId]
+  dirty_layout_count : Int
+  dirty_layout_element_ids : Array[ElementId]
+  dirty_paint_count : Int
+  dirty_paint_element_ids : Array[ElementId]
   needs_rebuild : Bool
   needs_layout : Bool
   needs_paint : Bool
@@ -177,6 +189,12 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
 ) -> RuntimeInspectorSnapshot {
   let dirty_count = runtime.dirty_count()
   let dirty_element_ids = runtime.dirty_element_ids()
+  let dirty_build_element_ids = runtime.state.dirty_build_elements.copy()
+  let dirty_layout_element_ids = runtime.state.dirty_layout_elements.copy()
+  let dirty_paint_element_ids = runtime.state.dirty_paint_elements.copy()
+  let dirty_build_count = dirty_build_element_ids.length()
+  let dirty_layout_count = dirty_layout_element_ids.length()
+  let dirty_paint_count = dirty_paint_element_ids.length()
   let needs_rebuild = runtime.needs_rebuild()
   let needs_layout = runtime.needs_layout()
   let needs_paint = runtime.needs_paint()
@@ -186,6 +204,12 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
   let dirty_state = RuntimeDirtyStateSummary::{
     dirty_count,
     dirty_element_ids: dirty_element_ids.copy(),
+    dirty_build_count,
+    dirty_build_element_ids: dirty_build_element_ids.copy(),
+    dirty_layout_count,
+    dirty_layout_element_ids: dirty_layout_element_ids.copy(),
+    dirty_paint_count,
+    dirty_paint_element_ids: dirty_paint_element_ids.copy(),
     needs_rebuild,
     needs_layout,
     needs_paint,
@@ -204,6 +228,12 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     size: runtime.size(),
     dirty_count,
     dirty_element_ids,
+    dirty_build_count,
+    dirty_build_element_ids,
+    dirty_layout_count,
+    dirty_layout_element_ids,
+    dirty_paint_count,
+    dirty_paint_element_ids,
     dirty_state,
     needs_rebuild,
     needs_layout,

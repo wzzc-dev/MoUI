@@ -187,7 +187,8 @@ fn modified_intrinsic_size(
     | LayoutPriorityModifier(_)
     | AlignModifier(_)
     | IntrinsicWidthModifier
-    | IntrinsicHeightModifier => child_size
+    | IntrinsicHeightModifier
+    | RepaintBoundaryModifier => child_size
     AspectRatioModifier(ratio) => aspect_ratio_size(child_size, ratio)
   }
 }

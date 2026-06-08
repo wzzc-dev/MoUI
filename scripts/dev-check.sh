@@ -34,7 +34,7 @@ for arg in "$@"; do
       printf 'Pass --platform-examples-build to also build current-platform native examples.\n'
       printf 'Pass --skia-real-smoke to run the opt-in real Skia smoke when local Skia link flags are configured.\n'
       printf 'Pass --wgpu-experimental to also run native WGPU diagnostic package/provider checks.\n'
-      printf 'On macOS, scripts/macos-skia-renderer-smoke.sh can resolve JetBrains/source/existing Skia providers and temporarily configure those flags.\n'
+      printf 'On macOS, scripts/macos-skia-renderer-smoke.sh can resolve JetBrains/source/existing Skia providers and temporarily configure those flags; pass that helper --run-gpu-smoke for the explicit Metal GPU route marker.\n'
       printf 'Native example builds use the Skia mainline by default; WGPU example builds are experimental diagnostics.\n'
       printf 'Deprecated alias: --platform-examples behaves like --platform-examples-test.\n'
       exit 0

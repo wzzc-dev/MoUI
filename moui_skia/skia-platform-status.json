@@ -119,6 +119,21 @@
       "marker": "native smoke surface target support diagnostics"
     },
     {
+      "id": "gpu.metal-context-support-status",
+      "area": "GPU",
+      "marker": "native smoke gpu metal context support status"
+    },
+    {
+      "id": "gpu.metal-surface-allocation",
+      "area": "GPU",
+      "marker": "native smoke gpu metal surface allocation"
+    },
+    {
+      "id": "gpu.metal-surface-frame-finalized",
+      "area": "GPU",
+      "marker": "native smoke gpu metal surface frame finalized"
+    },
+    {
       "id": "canvas.state",
       "area": "Canvas",
       "marker": "native smoke canvas state restored"

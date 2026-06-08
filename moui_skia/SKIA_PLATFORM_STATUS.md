@@ -86,6 +86,8 @@ these facts recorded in logs:
   image encode parameter sanitization, PNG encode/decode dimensions, codec dimensions, decoded
   bitmap readback dimensions, surface descriptor reporting, target-based raster
   surface construction, predictable unsupported window/GPU surface targets,
+  opt-in Metal GPU context support diagnostics, opt-in Metal GPU surface
+  allocation, opt-in Metal GPU frame finalization,
   canvas state restore, canvas clipping, canvas color/paint fill replay,
   undecodable/empty image replay skip and cache-safety proof,
   non-finite direct Canvas geometry skip proof, non-finite Canvas paint/layer
