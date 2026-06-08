@@ -1,4 +1,199 @@
 ///|
+pub(all) struct TextGraphemeBoundaries {
+  priv text : String
+  priv boundaries : Array[Int]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn TextGraphemeBoundaries::new(text~ : String) -> TextGraphemeBoundaries {
+  let chars = text.to_array()
+  let boundaries : Array[Int] = [0]
+  let mut index = 0
+  while index < chars.length() {
+    let next = fallback_grapheme_cluster_end_safe(chars, index)
+    if next > index {
+      boundaries.push(next)
+      index = next
+    } else {
+      let fallback_next = min_int(index + 1, chars.length())
+      boundaries.push(fallback_next)
+      index = fallback_next
+    }
+  }
+  { text, boundaries }
+}
+
+///|
+pub fn TextGraphemeBoundaries::text(self : TextGraphemeBoundaries) -> String {
+  self.text
+}
+
+///|
+pub fn TextGraphemeBoundaries::boundaries(
+  self : TextGraphemeBoundaries,
+) -> Array[Int] {
+  self.boundaries.copy()
+}
+
+///|
+pub fn TextGraphemeBoundaries::length(self : TextGraphemeBoundaries) -> Int {
+  match self.boundaries.last() {
+    Some(length) => length
+    None => 0
+  }
+}
+
+///|
+pub fn TextGraphemeBoundaries::cluster_count(
+  self : TextGraphemeBoundaries,
+) -> Int {
+  max_int(0, self.boundaries.length() - 1)
+}
+
+///|
+pub fn TextGraphemeBoundaries::is_boundary(
+  self : TextGraphemeBoundaries,
+  index : Int,
+) -> Bool {
+  let index = self.clamp_index(index)
+  self.boundaries.any(boundary => boundary == index)
+}
+
+///|
+pub fn TextGraphemeBoundaries::clamp_index(
+  self : TextGraphemeBoundaries,
+  index : Int,
+) -> Int {
+  clamp_int(index, 0, self.length())
+}
+
+///|
+pub fn TextGraphemeBoundaries::previous_boundary(
+  self : TextGraphemeBoundaries,
+  caret : Int,
+) -> Int {
+  let caret = self.clamp_index(caret)
+  if caret <= 0 {
+    return 0
+  }
+  let mut previous = 0
+  for boundary in self.boundaries {
+    if boundary >= caret {
+      return previous
+    }
+    previous = boundary
+  }
+  previous
+}
+
+///|
+pub fn TextGraphemeBoundaries::next_boundary(
+  self : TextGraphemeBoundaries,
+  caret : Int,
+) -> Int {
+  let caret = self.clamp_index(caret)
+  let length = self.length()
+  if caret >= length {
+    return length
+  }
+  for boundary in self.boundaries {
+    if boundary > caret {
+      return boundary
+    }
+  }
+  length
+}
+
+///|
+pub fn TextGraphemeBoundaries::floor_boundary(
+  self : TextGraphemeBoundaries,
+  index : Int,
+) -> Int {
+  let index = self.clamp_index(index)
+  let mut floor = 0
+  for boundary in self.boundaries {
+    if boundary > index {
+      return floor
+    }
+    floor = boundary
+  }
+  floor
+}
+
+///|
+pub fn TextGraphemeBoundaries::ceil_boundary(
+  self : TextGraphemeBoundaries,
+  index : Int,
+) -> Int {
+  let index = self.clamp_index(index)
+  for boundary in self.boundaries {
+    if boundary >= index {
+      return boundary
+    }
+  }
+  self.length()
+}
+
+///|
+pub fn TextGraphemeBoundaries::nearest_boundary(
+  self : TextGraphemeBoundaries,
+  index : Int,
+) -> Int {
+  let index = self.clamp_index(index)
+  let floor = self.floor_boundary(index)
+  let ceil = self.ceil_boundary(index)
+  if index - floor <= ceil - index {
+    floor
+  } else {
+    ceil
+  }
+}
+
+///|
+pub fn TextGraphemeBoundaries::normalize_range(
+  self : TextGraphemeBoundaries,
+  range : TextRange,
+) -> TextRange {
+  let normalized = range.normalized()
+  if normalized.is_collapsed() {
+    TextRange::collapsed(self.nearest_boundary(normalized.start))
+  } else {
+    TextRange::new(
+      start=self.floor_boundary(normalized.start),
+      end=self.ceil_boundary(normalized.end),
+    )
+  }
+}
+
+///|
+pub fn TextGraphemeBoundaries::delete_range(
+  self : TextGraphemeBoundaries,
+  caret : Int,
+  before : Int,
+  after : Int,
+) -> TextRange {
+  let mut start = self.nearest_boundary(caret)
+  let mut end = start
+  for _ in 0..<max_int(0, before) {
+    start = self.previous_boundary(start)
+  }
+  for _ in 0..<max_int(0, after) {
+    end = self.next_boundary(end)
+  }
+  TextRange::new(start~, end~)
+}
+
+///|
+pub fn TextGraphemeBoundaries::utf8_offset(
+  self : TextGraphemeBoundaries,
+  index : Int,
+) -> Int {
+  let chars = self.text.to_array()
+  let index = self.clamp_index(index)
+  @utf8.encode(String::from_array(chars[:index])[:], bom=false).length()
+}
+
+///|
 fn fallback_stabilize_grapheme_cluster_carets(
   text : String,
   carets : Array[Double],
@@ -193,38 +388,12 @@ fn fallback_stabilize_caret_cluster(
 
 ///|
 fn text_previous_grapheme_caret_boundary(text : String, caret : Int) -> Int {
-  let chars = text.to_array()
-  let caret = clamp_int(caret, 0, chars.length())
-  if caret <= 0 {
-    return 0
-  }
-  let mut index = 0
-  while index < chars.length() {
-    let end = fallback_grapheme_cluster_end_safe(chars, index)
-    if caret > index && caret <= end {
-      return index
-    }
-    index = end
-  }
-  clamp_int(caret - 1, 0, chars.length())
+  TextGraphemeBoundaries::new(text~).previous_boundary(caret)
 }
 
 ///|
 fn text_next_grapheme_caret_boundary(text : String, caret : Int) -> Int {
-  let chars = text.to_array()
-  let caret = clamp_int(caret, 0, chars.length())
-  if caret >= chars.length() {
-    return chars.length()
-  }
-  let mut index = 0
-  while index < chars.length() {
-    let end = fallback_grapheme_cluster_end_safe(chars, index)
-    if caret < end {
-      return end
-    }
-    index = end
-  }
-  chars.length()
+  TextGraphemeBoundaries::new(text~).next_boundary(caret)
 }
 
 ///|

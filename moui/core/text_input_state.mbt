@@ -34,6 +34,7 @@ fn TextInputState::for_text_field(
   text_system : TextSystem,
 ) -> TextInputState {
   let text = data.value.get()
+  let boundaries = TextGraphemeBoundaries::new(text~)
   let display_text = text_with_composition(text, element, true)
   let text_frame = render.frame.inset(
     Insets::symmetric(horizontal=10.0, vertical=4.0),
@@ -45,7 +46,7 @@ fn TextInputState::for_text_field(
       max_width=text_frame.size.width,
     ),
   )
-  let caret = clamp_int(element.control.caret, 0, text_length(text))
+  let caret = boundaries.nearest_boundary(element.control.caret)
   let visual_caret = clamp_int(
     text_field_visual_caret(text, element, true),
     0,
@@ -63,7 +64,10 @@ fn TextInputState::for_text_field(
     element_id: Some(element.id),
     text,
     caret,
-    selection: element.control.selection,
+    selection: text_input_grapheme_selection(
+      boundaries,
+      element.control.selection,
+    ),
     composition: element.control.composition,
     composition_cursor: element.control.composition_cursor,
     frame: render.frame,
@@ -79,6 +83,7 @@ fn TextInputState::for_searchbar(
   text_system : TextSystem,
 ) -> TextInputState {
   let text = data.query.get()
+  let boundaries = TextGraphemeBoundaries::new(text~)
   let display_text = text_with_composition(text, element, true)
   let text_frame = searchbar_text_frame(render.frame, has_text=text != "")
   let layout = text_system.measure_text(
@@ -88,7 +93,7 @@ fn TextInputState::for_searchbar(
       max_width=text_frame.size.width,
     ),
   )
-  let caret = clamp_int(element.control.caret, 0, text_length(text))
+  let caret = boundaries.nearest_boundary(element.control.caret)
   let visual_caret = clamp_int(
     text_field_visual_caret(text, element, true),
     0,
@@ -106,7 +111,10 @@ fn TextInputState::for_searchbar(
     element_id: Some(element.id),
     text,
     caret,
-    selection: element.control.selection,
+    selection: text_input_grapheme_selection(
+      boundaries,
+      element.control.selection,
+    ),
     composition: element.control.composition,
     composition_cursor: element.control.composition_cursor,
     frame: render.frame,
@@ -122,11 +130,12 @@ fn TextInputState::for_rich_text_editor(
   text_system : TextSystem,
 ) -> TextInputState {
   let text = data.value.get()
+  let boundaries = TextGraphemeBoundaries::new(text~)
   let display_text = text_with_composition(text, element, true)
   let content = render.frame.inset(
     Insets::symmetric(horizontal=14.0, vertical=12.0),
   )
-  let caret = clamp_int(element.control.caret, 0, text_length(text))
+  let caret = boundaries.nearest_boundary(element.control.caret)
   let visual_caret = clamp_int(
     text_field_visual_caret(text, element, true),
     0,
@@ -153,11 +162,33 @@ fn TextInputState::for_rich_text_editor(
     element_id: Some(element.id),
     text,
     caret,
-    selection: element.control.selection,
+    selection: text_input_grapheme_selection(
+      boundaries,
+      element.control.selection,
+    ),
     composition: element.control.composition,
     composition_cursor: element.control.composition_cursor,
     frame: render.frame,
     caret_rect,
+  }
+}
+
+///|
+fn text_input_grapheme_selection(
+  boundaries : TextGraphemeBoundaries,
+  selection : TextRange?,
+) -> TextRange? {
+  match selection {
+    Some(selection) => {
+      let start = boundaries.nearest_boundary(selection.start)
+      let end = boundaries.nearest_boundary(selection.end)
+      if start == end {
+        None
+      } else {
+        Some(TextRange::new(start~, end~))
+      }
+    }
+    None => None
   }
 }
 
