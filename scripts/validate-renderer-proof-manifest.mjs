@@ -177,6 +177,12 @@ if (backend === "skia-native") {
     "line-range",
     "hit-test",
   ];
+  requiredObservationEvidence.imeCandidateAnchor = [
+    "candidate-anchor",
+    "surrounding-text",
+    "grapheme-boundary",
+    "utf8-offsets",
+  ];
 }
 
 const platform = requireString(manifest, "platform", "manifest");
