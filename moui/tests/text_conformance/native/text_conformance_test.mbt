@@ -60,6 +60,13 @@ fn assert_diagnostic_native_skia_maturity_gap(gap : String) -> Unit raise {
 }
 
 ///|
+fn assert_diagnostic_native_skia_maturity_ready(signal : String) -> Unit raise {
+  let description = @skia_renderer.backend_info().description
+  assert_true(description.contains("text maturity audit partial"))
+  assert_true(description.contains(signal))
+}
+
+///|
 fn assert_diagnostic_native_cluster_carets(
   system : @core.TextSystem,
   text : String,
@@ -251,7 +258,9 @@ test "diagnostic native skia zwj and color emoji samples keep caret coverage wit
   assert_diagnostic_native_cluster_carets(system, "A☕️B", 1, 3)
   assert_diagnostic_native_text_layout(system, "A🙂B")
   assert_diagnostic_native_skia_maturity_gap("color emoji")
-  assert_diagnostic_native_skia_maturity_gap("full grapheme parity")
+  assert_diagnostic_native_skia_maturity_ready(
+    "Unicode 17 grapheme boundary contract ready",
+  )
 }
 
 ///|
