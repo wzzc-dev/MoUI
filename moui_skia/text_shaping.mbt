@@ -232,12 +232,19 @@ fn normalized_shaped_glyph_run_count(
   positions : Array[Point],
   clusters : Array[Int],
 ) -> Int {
-  let mut count = glyph_ids.length()
-  if positions.length() < count {
-    count = positions.length()
+  let mut max_count = glyph_ids.length()
+  if positions.length() < max_count {
+    max_count = positions.length()
   }
-  if clusters.length() < count {
-    count = clusters.length()
+  if clusters.length() < max_count {
+    max_count = clusters.length()
+  }
+  let mut count = 0
+  for index in 0..<max_count {
+    match (glyph_ids.get(index), positions.get(index), clusters.get(index)) {
+      (Some(_), Some(_), Some(_)) => count = count + 1
+      _ => return count
+    }
   }
   count
 }
@@ -249,7 +256,10 @@ fn normalized_shaped_glyph_ids(
 ) -> Array[Int] {
   let result : Array[Int] = Array::new(capacity=count)
   for index in 0..<count {
-    result.push(Int::max(0, glyph_ids[index]))
+    match glyph_ids.get(index) {
+      Some(glyph_id) => result.push(Int::max(0, glyph_id))
+      None => return result
+    }
   }
   result
 }
@@ -261,8 +271,11 @@ fn normalized_shaped_glyph_positions(
 ) -> Array[Point] {
   let result : Array[Point] = Array::new(capacity=count)
   for index in 0..<count {
-    let position = positions[index]
-    result.push(if position.is_finite() { position } else { Point::zero() })
+    match positions.get(index) {
+      Some(position) =>
+        result.push(if position.is_finite() { position } else { Point::zero() })
+      None => return result
+    }
   }
   result
 }
@@ -274,7 +287,10 @@ fn normalized_shaped_glyph_clusters(
 ) -> Array[Int] {
   let result : Array[Int] = Array::new(capacity=count)
   for index in 0..<count {
-    result.push(Int::max(0, clusters[index]))
+    match clusters.get(index) {
+      Some(cluster) => result.push(Int::max(0, cluster))
+      None => return result
+    }
   }
   result
 }
