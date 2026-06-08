@@ -126,6 +126,7 @@ const skiaMarkers = markers.map(marker => {
         "fallback_script_tag=und-Zsye",
         "fallback_language_tag_count=2",
         "fallback_request_language_count=2",
+        "fallback_request_character=128105",
         "resolved_missing_glyph_count=0",
         "missing_glyph_recovery_ready=true",
       ].join(" "),
@@ -205,10 +206,11 @@ if (
   skiaColorEmojiMetadata.font.fallbackScriptTag !== "und-Zsye" ||
   skiaColorEmojiMetadata.font.fallbackLanguageTagCount !== 2 ||
   skiaColorEmojiMetadata.font.fallbackRequestLanguageCount !== 2 ||
+  skiaColorEmojiMetadata.glyph.fallbackRequestCharacter !== 128105 ||
   skiaColorEmojiMetadata.glyph.resolvedMissingGlyphCount !== 0 ||
   skiaColorEmojiMetadata.glyph.missingGlyphRecoveryReady !== true
 ) {
-  console.error("passed Skia manifest did not preserve script/missing-glyph metadata");
+  console.error("passed Skia manifest did not preserve script/request/missing-glyph metadata");
   process.exit(1);
 }
 
@@ -251,6 +253,27 @@ if (
   skiaMissingFallbackScriptManifest.observations.colorEmojiPixels.status !== "failed"
 ) {
   console.error("missing Skia fallback script metadata should keep color emoji proof failed");
+  process.exit(1);
+}
+
+const skiaMissingFallbackRequestCharacter = runSkiaRecorder(
+  "skia-missing-fallback-request-character",
+  skiaMarkers.join("\n").replace(" fallback_request_character=128105", ""),
+);
+if (skiaMissingFallbackRequestCharacter.result.status !== 0) {
+  console.error("expected missing Skia fallback request character metadata to validate as failed");
+  console.error(skiaMissingFallbackRequestCharacter.result.stdout);
+  console.error(skiaMissingFallbackRequestCharacter.result.stderr);
+  process.exit(1);
+}
+const skiaMissingFallbackRequestCharacterManifest = JSON.parse(
+  readFileSync(skiaMissingFallbackRequestCharacter.outputPath, "utf8"),
+);
+if (
+  skiaMissingFallbackRequestCharacterManifest.status !== "failed" ||
+  skiaMissingFallbackRequestCharacterManifest.observations.colorEmojiPixels.status !== "failed"
+) {
+  console.error("missing Skia fallback request character metadata should keep color emoji proof failed");
   process.exit(1);
 }
 

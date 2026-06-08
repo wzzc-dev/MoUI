@@ -159,6 +159,9 @@ const colorEmojiMetadata = () => {
   if (fields.missing_glyph_recovery_ready) {
     glyph.missingGlyphRecoveryReady = parseBoolean(fields.missing_glyph_recovery_ready);
   }
+  if (fields.fallback_request_character) {
+    glyph.fallbackRequestCharacter = parseNumber(fields.fallback_request_character);
+  }
   const font = {
     family: fields.font_family || "unknown",
     source: fields.font_source || "unknown",
@@ -188,6 +191,7 @@ const skiaNativeColorEmojiMetadataReady = metadata => {
     Number(font.fallbackLanguageTagCount) >= 1 &&
     Number(font.fallbackRequestLanguageCount) === Number(font.fallbackLanguageTagCount) &&
     Number(glyph.resolvedMissingGlyphCount) >= 0 &&
+    Number(glyph.fallbackRequestCharacter) > 0 &&
     glyph.missingGlyphRecoveryReady === true
   );
 };

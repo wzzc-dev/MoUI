@@ -184,8 +184,8 @@ Renderer-proof color emoji artifacts now have a stronger audit boundary:
 structured `metadata.font` / `metadata.glyph` fields. The native Skia
 text/emoji smoke records the requested emoji family, Skia text-system id,
 shaper path, RGBA glyph format, cluster count, pixel counts, stable glyph key,
-measured glyph size, inferred fallback script/language-tag counts, resolved
-missing-glyph count, fallback request character, and
+measured glyph size, inferred fallback script/language-tag counts, fallback
+request character, resolved missing-glyph count, and
 emoji-hint/fallback-request/missing-glyph-recovery status through
 `skia_emoji_font_fallback_proof()`; it also records paragraph
 selection rectangles, line-range geometry, hit-test diagnostics, and visual
@@ -202,7 +202,10 @@ For native Skia, `colorEmojiPixels` also requires `fallback-request`,
 tied to the FontMgr fallback request and glyph metadata path rather than a
 generic raster-only observation. The Skia emoji/font fallback proof payload now
 also records the inferred fallback language tags, primary script tag, request
-language count, and missing-glyph recovery audit fields used by that request.
+language count, fallback request character, and missing-glyph recovery audit
+fields used by that request. Passed native Skia manifests require the glyph key
+to include the same source, text-system, shaper, script, request language count,
+`emoji-u+<fallback request character>` segment, and format values.
 WebGPU wasm records the browser canvas font stack plus glyph atlas key and size
 metadata. Renderer proof also reserves separate
 contract keys for `selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,

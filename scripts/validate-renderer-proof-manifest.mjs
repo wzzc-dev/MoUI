@@ -337,12 +337,21 @@ for (const key of expectedObservationKeys) {
         if (glyph.missingGlyphRecoveryReady !== true) {
           fail("observations.colorEmojiPixels.metadata.glyph.missingGlyphRecoveryReady must be true");
         }
+        const fallbackRequestCharacter = requireNumber(
+          glyph,
+          "fallbackRequestCharacter",
+          "observations.colorEmojiPixels.metadata.glyph",
+        );
+        if (fallbackRequestCharacter <= 0) {
+          fail("observations.colorEmojiPixels.metadata.glyph.fallbackRequestCharacter must be greater than 0");
+        }
         const expectedGlyphKeyParts = [
           font.source,
           font.textSystem,
           font.shaper,
           `script=${fallbackScriptTag}`,
           `langs=${fallbackRequestLanguageCount}`,
+          `emoji-u+${fallbackRequestCharacter}`,
           glyphFormat,
         ];
         for (const part of expectedGlyphKeyParts) {
