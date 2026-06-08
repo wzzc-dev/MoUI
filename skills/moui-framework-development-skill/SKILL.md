@@ -335,7 +335,8 @@ entries cannot be marked `passed` unless their Skia evidence is also `passed`.
 Use `record-native-ime-evidence.mjs` for matching-host IME logs when you only
 want to validate and update native IME observations; it deliberately leaves the
 broader platform runtime status unchanged and rejects generic host unit-test or
-package logs without matching-host runtime, native-app, platform-protocol,
+package logs without matching-host runtime, native-app, `renderer=skia`,
+matching app, platform-protocol,
 candidate-anchor, surrounding-text, composition, commit/delete, cursor, scroll,
 scale/DPR, resize, and Markdown Editor markers.
 Use

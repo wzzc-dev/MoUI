@@ -538,7 +538,8 @@ node scripts/record-native-ime-evidence.mjs \
 
 Each supplied log must stay under `artifacts/platform-evidence/<platform>/` and
 must contain common runtime markers: `MoUI native IME runtime`,
-`matching-host`, `native-app`, and the platform protocol marker
+`matching-host`, `native-app`, `renderer=skia`, an app marker matching the
+consumer command (`app=showcase` or `app=markdown-editor`), and the platform protocol marker
 `platform-protocol=macos-marked-text`, `platform-protocol=windows-ime`, or
 `platform-protocol=wayland-text-input` (the helper also accepts documented
 platform aliases). `--consumer-command` must name either the platform's

@@ -155,7 +155,7 @@ try {
     "linux",
     "ime-candidate-anchor.log",
     [
-      "MoUI native IME runtime matching-host native-app platform-protocol=wayland-text-input app=showcase",
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=wayland-text-input app=showcase",
       "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text source=showcase",
     ].join("\n"),
   );
@@ -195,7 +195,7 @@ try {
     "windows",
     "ime-complete.log",
     [
-      "MoUI native IME runtime matching-host native-app platform-protocol=windows-ime app=markdown-editor",
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=windows-ime app=markdown-editor",
       "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
       "MoUI native IME surrounding text passed surrounding-text selection-anchor utf8-offsets grapheme",
       "MoUI native IME composition visual passed composition-range composition-cursor preedit-underline preedit-pixels selection-highlight",
@@ -260,7 +260,7 @@ try {
     "linux",
     "bad-ime-candidate-anchor.log",
     [
-      "MoUI native IME runtime matching-host native-app platform-protocol=wayland-text-input",
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=wayland-text-input app=showcase",
       "host unit test says textInput passed, but no runtime anchor marker",
     ].join("\n"),
   );
@@ -341,6 +341,52 @@ try {
       linuxCandidateLog,
     ]),
     "markdown-log requires --consumer-command to name examples/markdown_editor/linux_skia",
+  );
+
+  const wrongAppLog = writeArtifact(
+    "linux",
+    "wrong-app-ime-candidate-anchor.log",
+    [
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=wayland-text-input app=markdown-editor",
+      "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
+    ].join("\n"),
+  );
+  expectFail(
+    "reject IME log from a different native app",
+    runRecorder([
+      writeManifest("wrong-app-ime-marker.json", "linux"),
+      "linux",
+      "--host",
+      "Linux Wayland CI",
+      "--consumer-command",
+      linuxConsumerCommand,
+      "--candidate-anchor-log",
+      wrongAppLog,
+    ]),
+    "candidate anchor log is missing expected marker: MoUI native IME runtime",
+  );
+
+  const wrongRendererLog = writeArtifact(
+    "linux",
+    "wrong-renderer-ime-candidate-anchor.log",
+    [
+      "MoUI native IME runtime matching-host native-app renderer=wgpu platform-protocol=wayland-text-input app=showcase",
+      "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
+    ].join("\n"),
+  );
+  expectFail(
+    "reject IME log from a non-Skia renderer",
+    runRecorder([
+      writeManifest("wrong-renderer-ime-marker.json", "linux"),
+      "linux",
+      "--host",
+      "Linux Wayland CI",
+      "--consumer-command",
+      linuxConsumerCommand,
+      "--candidate-anchor-log",
+      wrongRendererLog,
+    ]),
+    "candidate anchor log is missing expected marker: MoUI native IME runtime",
   );
 
   expectFail(
