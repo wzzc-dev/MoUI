@@ -130,7 +130,7 @@ MoUI renderer proof paragraphWrapping missing: requires line metrics and later-l
 MoUI renderer proof selectionRects missing: requires selection rectangles, line-range, and hit-test evidence.
 MoUI renderer proof graphemeEditing missing: requires grapheme boundaries and edit-action evidence.
 MoUI renderer proof imeCandidateAnchor missing: requires candidate anchor and surrounding-text evidence.
-MoUI renderer proof imeCompositionVisual missing: requires composition range and preedit pixel evidence.
+MoUI renderer proof imeCompositionVisual missing: requires composition range, composition cursor, and preedit pixel evidence.
 MoUI renderer proof asyncImageSecondFrame missing: requires late completion, repaint request, and second-frame pixels.
 EOF
 
