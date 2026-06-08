@@ -271,7 +271,11 @@ and Markdown Editor runtime evidence with temporary real-Skia link flags. Add
 `--link-mode dynamic|static|auto` or set `MOUI_SKIA_LINK_MODE` when the
 default auto mode is not what you want. Direct `moon run`/`moon build`
 commands use `MOUI_SKIA_LINK_MODE=dynamic|static|auto` through the
-`moui_skia` prebuild hook. Add
+`moui_skia` prebuild hook. Add `--enable-skparagraph` to wire the optional
+native SkParagraph boundary into the temporary configuration, and add
+`--require-skparagraph` when a real paragraph/bidi proof run must fail fast if
+the selected Skia headers or libraries do not provide SkParagraph, SkShaper,
+SkUnicode, HarfBuzz, and ICU support. Add
 explicit log paths and `--record-platform-evidence` when you want the helper to
 update the macOS `skiaEvidence` block in the platform evidence manifest after a
 successful run:
@@ -604,7 +608,12 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   evidence, and color emoji font/glyph metadata prove radial, transform, color
   emoji, ZWJ grapheme, bidi visual order, paragraph wrapping, selection
   rectangles, grapheme editing, IME candidate anchors, composition visuals, and
-  async second-frame observations.
+  async second-frame observations. Native Skia paragraph wrapping, bidi layout,
+  and selection-rectangle observations must use the real SkParagraph path:
+  `paragraphWrapping` needs `engine=skparagraph native_paragraph_ready=true
+  line-metrics later-line-pixels`, `bidiLayout` needs `engine=skparagraph
+  bidi_visual_order_ready=true visual-order`, and `selectionRects` needs
+  `engine=skparagraph selection-rects line-range`.
 - `Native WGPU renderer diagnostic` still runs the macOS, Windows, and Linux
   WGPU matrices and uploads artifacts, but it is `continue-on-error` and does
   not define the mainline renderer-proof summary. It records renderer-proof
@@ -800,7 +809,10 @@ requires `font-metadata` / `glyph-metadata` evidence plus structured
 be traced to the font/glyph path that produced them. The text/IME observations
 must prove selection rectangles with line ranges, grapheme edit boundaries with
 edit actions, IME candidate anchors with surrounding text, and composition
-ranges with preedit pixels. Package tests, skipped jobs, blank screenshots,
+ranges with preedit pixels. Native Skia `paragraphWrapping`, `bidiLayout`, and
+`selectionRects` must be SkParagraph observations with `engine=skparagraph`
+markers, not fallback paragraph geometry or heuristic visual-order logs.
+Package tests, skipped jobs, blank screenshots,
 missing uploaded artifacts, caret-only diagnostics, coverage-only font
 matching, package-only checks, provider preflights, preflight-only checks, and
 fallback-safe descriptor audits remain failed renderer proof. CI summary

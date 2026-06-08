@@ -110,11 +110,20 @@ glyphs. Skia drawing aligns the selected glyph run inside `TextRun.frame` and
 clips the canvas to that same frame before rasterization, so bounded text
 controls use the same platform-neutral frame for measurement, caret geometry,
 and native raster output. `skia_text_system()` also inherits the core paragraph
-layout contract, so fallback-safe Skia diagnostics can produce wrapped line
+layout contract. In fallback-safe builds it can still produce wrapped line
 metrics, paragraph caret rectangles, selection rectangles, and hit-test results
-from the same Skia measurement path while leaving `native_paragraph_ready` and
-`bidi_visual_order_ready` false until real SkParagraph/bidi artifacts promote
-them. The macOS, Windows, and Linux Skia providers default
+from the existing Skia measurement path while keeping `native_paragraph_ready`
+and `bidi_visual_order_ready` false. When `moui_skia/native` is compiled with
+`MOUI_SKIA_ENABLE_SKPARAGRAPH=1` and `skia_paragraph_available()` is true, the
+Skia text system routes paragraph layout through the native `Paragraph`
+wrapper, consumes SkParagraph line metrics, selection boxes, and hit-test
+offsets through the binding, and sets readiness metadata only when line
+metrics, caret geometry, selection rectangles, hit testing, and
+mixed-direction visual-order metadata are all valid. The default
+selection-box policy is the SkParagraph equivalent of
+`RectHeightStyle::kMax` plus `RectWidthStyle::kTight`. Invalid or unavailable
+SkParagraph geometry falls back to the existing core paragraph result without
+promoting those readiness flags. The macOS, Windows, and Linux Skia providers default
 to the system `FontMgr` path, so normal native Skia entrypoints exercise
 platform font lookup, emoji retry, and optional SkShaper when linked. The
 renderer package also exposes `skia_text_system()` directly so the Skia
@@ -126,8 +135,10 @@ Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo, and bidi samples,
 and they now
 inject `skia_text_system()` into a public `AppRuntime` text field to prove the
 Skia measurement path drives focused text-input composition caret geometry and
-selection highlight drawing. They do not claim visual bidi reordering,
-native-platform IME runtime behavior, or native SkParagraph parity. macOS
+selection highlight drawing. Fallback-safe diagnostics do not claim visual bidi
+reordering, native-platform IME runtime behavior, or native SkParagraph parity;
+only the opt-in real-Skia SkParagraph smoke and renderer-proof artifacts may
+claim those observations. macOS
 first-frame smoke entrypoints still explicitly select
 `SkiaFontResolution::EmptyTypeface` when their exit-after-first-present
 environment flag is set; that keeps CLI smoke runs on the safer default-font
@@ -142,9 +153,11 @@ requiring real Skia linkage. `backend_info()` also reports a fallback-safe
 fallback-request, representative shaped/fallback caret, emoji-hint, and
 empty-typeface retry boundaries plus the Skia mixed-run fallback segment path
 separately from tracked gaps. The paragraph API is now present for line metrics
-and geometry, but true SkParagraph/HarfBuzz-grade line breaking, bidi,
-deterministic color emoji, full grapheme parity, and broader typography
-conformance remain follow-up work.
+and geometry, and the optional SkParagraph route is wired through the native
+binding. Native paragraph and bidi readiness remain release gates until the
+macOS, Windows, and Linux Skia mainline renderer-proof manifests pass with real
+SkParagraph evidence. Deterministic color emoji, full grapheme parity, and
+broader typography conformance remain follow-up work.
 
 Renderer-proof color emoji artifacts now have a stronger audit boundary:
 `colorEmojiPixels` must carry high-saturation glyph/raster evidence plus
@@ -154,9 +167,15 @@ text/emoji smoke records the requested emoji family, Skia text-system id,
 shaper path, RGBA glyph format, cluster count, pixel counts, stable glyph key,
 measured glyph size, fallback request character, and emoji-hint/fallback-request
 status through `skia_emoji_font_fallback_proof()`; it also records paragraph
-selection rectangles, line-range geometry, hit-test diagnostics, and the
-existing heuristic visual bidi-order proof through
-`skia_text_selection_geometry_proof()` / `skia_text_visual_order_proof()`.
+selection rectangles, line-range geometry, hit-test diagnostics, and visual
+bidi-order diagnostics through `skia_text_selection_geometry_proof()` /
+`skia_text_visual_order_proof()`. Passed native proof now requires the
+SkParagraph markers `engine=skparagraph native_paragraph_ready=true
+line-metrics later-line-pixels` for `paragraphWrapping`,
+`engine=skparagraph bidi_visual_order_ready=true visual-order` for
+`bidiLayout`, and `engine=skparagraph selection-rects line-range` for
+`selectionRects`; fallback geometry, caret-only diagnostics, and heuristic
+visual-order logs are rejected by the renderer-proof validator.
 WebGPU wasm records the browser canvas font stack plus glyph atlas key and size
 metadata. Renderer proof also reserves separate
 contract keys for `selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,
@@ -211,9 +230,14 @@ Remote font loading is intentionally outside the current backend contract.
 
 ## Current Gaps
 
-- Full bidi, line breaking, typography conformance, native emoji font fallback,
-  ZWJ/color emoji conformance, and full grapheme-cluster parity remain follow-up
-  work. Core now exposes `TextGraphemeBoundaries` as the single representative
+- Full typography conformance, native emoji font fallback, ZWJ/color emoji
+  conformance, and full grapheme-cluster parity remain follow-up work. Native
+  Skia paragraph layout and bidi visual-order promotion now have an opt-in
+  SkParagraph implementation path, but the release claim remains pending until
+  macOS, Windows, and Linux real-Skia renderer-proof manifests pass with
+  SkParagraph line metrics, later-line pixels, selection rectangles, line
+  ranges, hit tests, and mixed-direction visual-order evidence. Core now
+  exposes `TextGraphemeBoundaries` as the single representative
   cluster-boundary contract used by fallback caret stabilization, left/right
   caret movement, selection/range normalization, surrounding delete ranges,
   composition cursor offsets, rich text hit testing, and UTF-8 offset conversion
