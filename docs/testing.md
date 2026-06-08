@@ -894,7 +894,8 @@ must prove selection rectangles with line ranges and hit testing, grapheme edit
 boundaries with edit actions, IME candidate anchors with surrounding text, and
 composition ranges with preedit pixels. Native Skia `imeCandidateAnchor`
 observations must also include grapheme-boundary cursor/anchor evidence and
-UTF-8 offset evidence from host IME diagnostics. Native Skia
+UTF-8 offset evidence from host IME diagnostics, including normalized
+`nearest_boundary_utf8_offset` conversion. Native Skia
 `imeCompositionVisual` observations must also include `composition-cursor`
 evidence. Native Skia `paragraphWrapping`,
 `bidiLayout`, and `selectionRects` must be SkParagraph observations with

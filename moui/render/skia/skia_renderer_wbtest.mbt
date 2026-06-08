@@ -2159,6 +2159,24 @@ fn assert_skia_grapheme_utf8_offsets(
 }
 
 ///|
+fn assert_skia_grapheme_nearest_utf8_offsets(
+  text : String,
+  indexes : Array[Int],
+  expected : Array[Int],
+) -> Unit raise {
+  if indexes.length() != expected.length() {
+    fail("expected matching index and normalized utf8-offset fixture lengths")
+  }
+  let boundaries = @core.TextGraphemeBoundaries::new(text~)
+  for index in 0..<indexes.length() {
+    inspect(
+      boundaries.nearest_boundary_utf8_offset(indexes[index]),
+      content="\{expected[index]}",
+    )
+  }
+}
+
+///|
 test "skia grapheme clustering follows core IME boundary contract" {
   assert_skia_grapheme_clusters_match_core("A\u{1F469}\u{200D}\u{1F4BB}B", [
     0, 1, 4, 5,
@@ -2211,6 +2229,7 @@ test "skia grapheme clustering follows core IME boundary contract" {
   assert_skia_grapheme_utf8_offsets("A1\u{FE0F}\u{20E3}B", [0, 1, 4, 5], [
     0, 1, 8, 9,
   ])
+  assert_skia_grapheme_nearest_utf8_offsets("A1\u{FE0F}\u{20E3}B", [2, 3], [1, 8])
   assert_skia_grapheme_utf8_offsets(
     "A\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}B",
     [0, 1, 5, 6],
@@ -2219,6 +2238,7 @@ test "skia grapheme clustering follows core IME boundary contract" {
   assert_skia_grapheme_utf8_offsets("Aक्‍षB", [0, 1, 5, 6], [
     0, 1, 13, 14,
   ])
+  assert_skia_grapheme_nearest_utf8_offsets("Aक्‍षB", [2, 3, 4], [1, 1, 13])
   assert_skia_grapheme_utf8_offsets("Aक्‌षB", [0, 1, 4, 5, 6], [
     0, 1, 10, 13, 14,
   ])
