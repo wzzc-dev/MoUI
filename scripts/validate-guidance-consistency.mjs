@@ -740,6 +740,7 @@ assertIncludes("scripts/record-native-ime-evidence.mjs", "renderer=skia");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "app=showcase");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "app=markdown-editor");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "candidate-window");
+assertIncludes("scripts/record-native-ime-evidence.mjs", "composition range, cursor");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "preedit-underline");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "examples/showcase/${platformName}_skia");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "examples/markdown_editor/${platformName}_skia");
