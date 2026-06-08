@@ -43,7 +43,7 @@ test "generated grapheme break fixture samples" {
   assert_generated_grapheme_break_fixture("\u{E01}\u{E34}\u{41}", [0, 2, 3], "GB9 Thai mark")
   assert_generated_grapheme_break_fixture("\u{E81}\u{EB4}\u{41}", [0, 2, 3], "GB9 Lao mark")
   assert_generated_grapheme_break_fixture("\u{D9A}\u{DCF}\u{41}", [0, 2, 3], "GB9a Sinhala spacing vowel")
-  assert_generated_grapheme_break_fixture("\u{D9A}\u{DCA}\u{DBB}", [0, 3], "Indic virama Sinhala conjunct")
+  assert_generated_grapheme_break_fixture("\u{D9A}\u{DCA}\u{DBB}", [0, 2, 3], "Unicode 17 Sinhala virama is not InCB Linker")
   assert_generated_grapheme_break_fixture("\u{1780}\u{17B6}\u{41}", [0, 2, 3], "GB9a Khmer vowel")
   assert_generated_grapheme_break_fixture("\u{1780}\u{17D2}\u{179A}", [0, 3], "Indic virama Khmer coeng conjunct")
   assert_generated_grapheme_break_fixture("\u{1000}\u{1039}\u{1001}", [0, 3], "Indic virama Myanmar conjunct")
@@ -53,5 +53,9 @@ test "generated grapheme break fixture samples" {
   assert_generated_grapheme_break_fixture("\u{915}\u{94D}\u{200D}\u{41}", [0, 3, 4], "Indic virama ZWJ before Latin breaks")
   assert_generated_grapheme_break_fixture("\u{915}\u{94D}\u{93C}\u{937}", [0, 4], "Indic virama Extend consonant conjunct")
   assert_generated_grapheme_break_fixture("\u{915}\u{94D}\u{93C}\u{41}", [0, 3, 4], "Indic virama Extend before Latin breaks")
+  assert_generated_grapheme_break_fixture("\u{94D}\u{915}", [0, 1, 2], "Unicode 17 standalone InCB Linker breaks before consonant")
+  assert_generated_grapheme_break_fixture("\u{61}\u{94D}\u{924}", [0, 2, 3], "Unicode 17 Latin plus InCB Linker breaks before consonant")
   assert_generated_grapheme_break_fixture("\u{915}\u{94D}\u{200C}\u{937}", [0, 3, 4], "Indic virama ZWNJ breaks before consonant")
+  assert_generated_grapheme_break_fixture("\u{1B32}\u{1B44}\u{1B2F}", [0, 3], "Unicode 17 Balinese InCB linker conjunct")
+  assert_generated_grapheme_break_fixture("\u{179F}\u{17D2}\u{178F}\u{17D2}\u{179A}\u{17B8}", [0, 6], "Unicode 17 Khmer InCB linker chain")
 }

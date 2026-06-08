@@ -408,8 +408,9 @@ node --check scripts/record-web-renderer-proof-manifest.mjs
 node scripts/test-record-web-renderer-proof-manifest.mjs
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check
+node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check
 node --check scripts/generate-grapheme-property-data.mjs
-node scripts/generate-grapheme-property-data.mjs --grapheme-property <Unicode-17.0.0-GraphemeBreakProperty.txt> --emoji-data <Unicode-17.0.0-emoji-data.txt> --check
+node scripts/generate-grapheme-property-data.mjs --grapheme-property <Unicode-17.0.0-GraphemeBreakProperty.txt> --emoji-data <Unicode-17.0.0-emoji-data.txt> --derived-core-properties <Unicode-17.0.0-DerivedCoreProperties.txt> --check
 node --check scripts/ci-renderer-proof-native.mjs
 sh -n scripts/ci-renderer-proof-native.sh
 sh -n scripts/ci-renderer-proof-summary.sh

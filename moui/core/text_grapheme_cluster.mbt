@@ -245,7 +245,7 @@ fn fallback_grapheme_should_break(
   if fallback_codepoint_is_grapheme_prepend(left) {
     return false
   }
-  if fallback_indic_virama_allows_no_break(chars, index) {
+  if fallback_indic_conjunct_allows_no_break(chars, index) {
     return false
   }
   if fallback_emoji_zwj_allows_no_break(chars, index) {
@@ -312,11 +312,6 @@ fn fallback_codepoint_is_zwj(codepoint : Int) -> Bool {
 }
 
 ///|
-fn fallback_codepoint_is_zwnj(codepoint : Int) -> Bool {
-  codepoint == 0x200C
-}
-
-///|
 fn fallback_hangul_allows_no_break(left : Int, right : Int) -> Bool {
   if fallback_codepoint_is_hangul_l(left) {
     return fallback_codepoint_is_hangul_l(right) ||
@@ -337,52 +332,52 @@ fn fallback_hangul_allows_no_break(left : Int, right : Int) -> Bool {
 }
 
 ///|
-fn fallback_indic_virama_allows_no_break(
+fn fallback_indic_conjunct_allows_no_break(
   chars : Array[Char],
   index : Int,
 ) -> Bool {
-  let left = chars[index - 1].to_int()
   let right = chars[index].to_int()
-  if fallback_codepoint_is_virama(left) {
-    return fallback_codepoint_is_zwj(right) ||
-      fallback_codepoint_is_indic_consonant(right)
-  }
-  if !fallback_codepoint_is_indic_consonant(right) || index < 2 {
+  if !fallback_codepoint_is_indic_conjunct_consonant(right) {
     return false
   }
-  if fallback_codepoint_is_zwj(left) {
-    return fallback_indic_virama_before_extend_run(chars, index - 2)
-  }
-  if fallback_codepoint_is_grapheme_extend(left) &&
-    !fallback_codepoint_is_zwnj(left) {
-    return fallback_indic_virama_before_extend_run(chars, index - 1)
-  }
-  false
-}
-
-///|
-fn fallback_indic_virama_before_extend_run(
-  chars : Array[Char],
-  start : Int,
-) -> Bool {
-  let mut cursor = start
+  let mut cursor = index - 1
+  let mut saw_linker = false
   while cursor >= 0 {
     let codepoint = chars[cursor].to_int()
-    if fallback_codepoint_is_virama(codepoint) {
-      return true
-    }
-    if fallback_codepoint_is_grapheme_extend(codepoint) &&
-      !fallback_codepoint_is_zwj(codepoint) &&
-      !fallback_codepoint_is_zwnj(codepoint) {
+    if fallback_codepoint_is_indic_conjunct_linker(codepoint) {
+      saw_linker = true
       if cursor == 0 {
         return false
       }
       cursor = cursor - 1
       continue
     }
-    return false
+    if fallback_codepoint_is_indic_conjunct_extend(codepoint) {
+      if cursor == 0 {
+        return false
+      }
+      cursor = cursor - 1
+      continue
+    }
+    return saw_linker &&
+      fallback_codepoint_is_indic_conjunct_consonant(codepoint)
   }
   false
+}
+
+///|
+fn fallback_codepoint_is_indic_conjunct_linker(codepoint : Int) -> Bool {
+  unicode_indic_conjunct_is_linker_17_0(codepoint)
+}
+
+///|
+fn fallback_codepoint_is_indic_conjunct_consonant(codepoint : Int) -> Bool {
+  unicode_indic_conjunct_is_consonant_17_0(codepoint)
+}
+
+///|
+fn fallback_codepoint_is_indic_conjunct_extend(codepoint : Int) -> Bool {
+  unicode_indic_conjunct_is_extend_17_0(codepoint)
 }
 
 ///|
@@ -438,44 +433,6 @@ fn fallback_codepoint_is_grapheme_prepend(codepoint : Int) -> Bool {
 ///|
 fn fallback_codepoint_is_spacing_mark(codepoint : Int) -> Bool {
   unicode_grapheme_is_spacing_mark_17_0(codepoint)
-}
-
-///|
-fn fallback_codepoint_is_virama(codepoint : Int) -> Bool {
-  codepoint == 0x094D ||
-  codepoint == 0x09CD ||
-  codepoint == 0x0A4D ||
-  codepoint == 0x0ACD ||
-  codepoint == 0x0B4D ||
-  codepoint == 0x0BCD ||
-  codepoint == 0x0C4D ||
-  codepoint == 0x0CCD ||
-  codepoint == 0x0D4D ||
-  codepoint == 0x0DCA ||
-  codepoint == 0x1039 ||
-  codepoint == 0x17D2
-}
-
-///|
-fn fallback_codepoint_is_indic_consonant(codepoint : Int) -> Bool {
-  (codepoint >= 0x0915 && codepoint <= 0x0939) ||
-  (codepoint >= 0x0958 && codepoint <= 0x095F) ||
-  (codepoint >= 0x0978 && codepoint <= 0x097F) ||
-  (codepoint >= 0x0995 && codepoint <= 0x09B9) ||
-  (codepoint >= 0x09DC && codepoint <= 0x09DF) ||
-  (codepoint >= 0x0A15 && codepoint <= 0x0A39) ||
-  (codepoint >= 0x0A59 && codepoint <= 0x0A5E) ||
-  (codepoint >= 0x0A95 && codepoint <= 0x0AB9) ||
-  (codepoint >= 0x0B15 && codepoint <= 0x0B39) ||
-  (codepoint >= 0x0B5C && codepoint <= 0x0B5F) ||
-  (codepoint >= 0x0B95 && codepoint <= 0x0BB9) ||
-  (codepoint >= 0x0C15 && codepoint <= 0x0C39) ||
-  (codepoint >= 0x0C95 && codepoint <= 0x0CB9) ||
-  (codepoint >= 0x0D15 && codepoint <= 0x0D3A) ||
-  (codepoint >= 0x0D9A && codepoint <= 0x0DC6) ||
-  (codepoint >= 0x1000 && codepoint <= 0x102A) ||
-  (codepoint >= 0x1050 && codepoint <= 0x1055) ||
-  (codepoint >= 0x1780 && codepoint <= 0x17A2)
 }
 
 ///|

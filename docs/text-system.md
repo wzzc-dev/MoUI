@@ -175,8 +175,8 @@ mixed-run fallback segment path separately from tracked gaps. The paragraph API 
 and geometry, and the optional SkParagraph route is wired through the native
 binding. Native paragraph and bidi readiness remain release gates until the
 macOS, Windows, and Linux Skia mainline renderer-proof manifests pass with real
-SkParagraph evidence. Deterministic color emoji, full grapheme parity, and
-broader typography conformance remain follow-up work.
+SkParagraph evidence. Deterministic color emoji, future Unicode grapheme data
+refreshes, and broader typography conformance remain follow-up work.
 
 Renderer-proof color emoji artifacts now have a stronger audit boundary:
 `colorEmojiPixels` must carry high-saturation glyph/raster evidence plus
@@ -270,7 +270,8 @@ Remote font loading is intentionally outside the current backend contract.
 ## Current Gaps
 
 - Full typography conformance, native emoji font fallback, ZWJ/color emoji
-  conformance, and full grapheme-cluster parity remain follow-up work. Native
+  conformance, future Unicode grapheme data refreshes, and provider shaping
+  parity remain follow-up work. Native
   Skia paragraph layout and bidi visual-order promotion now have an opt-in
   SkParagraph implementation path, but the release claim remains pending until
   macOS, Windows, and Linux real-Skia renderer-proof manifests pass with
@@ -284,23 +285,25 @@ Remote font loading is intentionally outside the current backend contract.
   IME-anchor geometry on one path. The repo now has an offline
   `GraphemeBreakTest.txt`-style fixture and generator guard
   (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples
-  covering CR/LF/control, Prepend, combining and spacing marks, keycap and tag
-  emoji, regional-indicator pairs, Hangul Jamo, Indic virama/linker, and
-  representative Arabic/Thai/Lao/Sinhala/Khmer/Myanmar clusters, while full
-  generated Unicode data import and complete grapheme-cluster parity remain
-  release follow-up work. The
+  plus a vendored Unicode 17.0 default grapheme break fixture generated from
+  `moui/core/testdata/GraphemeBreakTest-17.0.0.txt`; `moon test moui/core
+  --target native` runs both. The full Unicode fixture uses distinct generated
+  helper/test names and is checked with
+  `node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check`.
+  The
   scanner now drives core grapheme break classes from generated Unicode 17.0
   property predicates for CR/LF/control, Prepend, Extend, SpacingMark,
-  Regional_Indicator, ZWJ, and Extended_Pictographic. Regenerate those
-  predicates with
-  `node scripts/generate-grapheme-property-data.mjs --grapheme-property <Unicode-17.0.0-GraphemeBreakProperty.txt> --emoji-data <Unicode-17.0.0-emoji-data.txt> --check`
+  Regional_Indicator, ZWJ, Extended_Pictographic, and Indic_Conjunct_Break
+  Linker/Consonant/Extend. Regenerate those predicates with
+  `node scripts/generate-grapheme-property-data.mjs --grapheme-property <Unicode-17.0.0-GraphemeBreakProperty.txt> --emoji-data <Unicode-17.0.0-emoji-data.txt> --derived-core-properties <Unicode-17.0.0-DerivedCoreProperties.txt> --check`
   after downloading the pinned Unicode files from
   `https://www.unicode.org/Public/17.0.0/ucd/auxiliary/GraphemeBreakProperty.txt`
-  and `https://www.unicode.org/Public/17.0.0/ucd/emoji/emoji-data.txt`. It
-  treats ZWNJ as an Extend code point, covers representative supplementary
-  musical combining marks, and narrows Indic virama linking to ZWJ or Indic
-  consonant targets, so deletion and IME offsets no longer merge
-  virama-plus-Latin or virama-plus-space spans into one cluster.
+  `https://www.unicode.org/Public/17.0.0/ucd/emoji/emoji-data.txt`, and
+  `https://www.unicode.org/Public/17.0.0/ucd/DerivedCoreProperties.txt`.
+  It treats ZWNJ as an Extend code point for GB9, applies the Unicode 17
+  Indic_Conjunct_Break linker rule instead of the earlier hand-written virama
+  shortcut, and keeps deletion and IME offsets aligned with the full default
+  grapheme break fixture.
   Native IME runtime readiness is also still pending: macOS, Windows, and Linux
   must each record matching-host Showcase or Markdown Editor artifacts for
   candidate anchors, surrounding text, composition visuals, commit/delete
