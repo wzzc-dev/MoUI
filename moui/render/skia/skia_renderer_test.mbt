@@ -234,6 +234,7 @@ test "skia emoji font fallback proof records glyph metadata without readiness pr
       assert_true(proof.glyph_key.contains("skia-raster-text-system"))
       assert_true(proof.glyph_key.contains("script=und-Zsye"))
       assert_true(proof.glyph_key.contains("langs=2"))
+      assert_true(proof.glyph_key.contains("lang-tags=und-Zsye+en"))
       assert_true(proof.glyph_key.contains("emoji-u+\{proof.fallback_character}"))
       assert_true(proof.glyph_key.contains("rgba"))
       assert_true(proof.glyph_count >= 1)

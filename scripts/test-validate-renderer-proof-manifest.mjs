@@ -80,6 +80,7 @@ const skiaColorEmojiMetadata = () => ({
     textSystem: "skia-raster-text-system",
     shaper: "skshaper",
     fallbackScriptTag: "und-Zsye",
+    fallbackLanguageTags: ["und-Zsye", "en"],
     fallbackLanguageTagCount: 2,
     fallbackRequestLanguageCount: 2,
   },
@@ -87,7 +88,7 @@ const skiaColorEmojiMetadata = () => ({
     format: "rgba",
     glyphCount: 2,
     clusterCount: 1,
-    key: "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|emoji-u+128105|rgba",
+    key: "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|lang-tags=und-Zsye+en|emoji-u+128105|rgba",
     width: 28,
     height: 32,
     highSaturationPixels: 42,
@@ -355,6 +356,66 @@ expectFail(
 );
 
 expectFail(
+  "skia native color emoji proof rejects missing fallback language tags",
+  run(
+    "skia-native-missing-fallback-language-tags.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: skiaNativeObservationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...skiaColorEmojiMetadata(),
+            font: {
+              ...skiaColorEmojiMetadata().font,
+              fallbackLanguageTags: [],
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.font.fallbackLanguageTags must include at least one tag",
+);
+
+expectFail(
+  "skia native color emoji proof rejects glyph key without fallback language tags",
+  run(
+    "skia-native-glyph-key-missing-language-tags.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: skiaNativeObservationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...skiaColorEmojiMetadata(),
+            glyph: {
+              ...skiaColorEmojiMetadata().glyph,
+              key: "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|emoji-u+128105|rgba",
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.glyph.key must include 'lang-tags=und-Zsye+en'",
+);
+
+expectFail(
   "skia native color emoji proof rejects missing glyph recovery audit",
   run(
     "skia-native-missing-glyph-recovery.json",
@@ -403,7 +464,7 @@ expectFail(
             ...skiaColorEmojiMetadata(),
             glyph: {
               ...skiaColorEmojiMetadata().glyph,
-              key: "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und|langs=2|emoji-u+128105|rgba",
+              key: "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und|langs=2|lang-tags=und-Zsye+en|emoji-u+128105|rgba",
             },
           },
         },
@@ -464,7 +525,7 @@ expectFail(
             glyph: {
               ...skiaColorEmojiMetadata().glyph,
               fallbackRequestCharacter: 128105,
-              key: "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|emoji-u+128104|rgba",
+              key: "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|lang-tags=und-Zsye+en|emoji-u+128104|rgba",
             },
           },
         },
