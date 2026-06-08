@@ -16,7 +16,9 @@ remains an explicit diagnostic route for comparing provider behavior.
   while a UAX #29-style `TextGraphemeBoundaries` scanner folds cluster
   interiors back to the cluster start. It covers CRLF/control breaks, Hangul
   L/V/T sequences, Extend/ZWJ/SpacingMark, Prepend, regional-indicator pairs,
-  emoji ZWJ sequences, emoji tags, and Indic virama/linker conjuncts. The
+  emoji ZWJ sequences, emoji tags, ZWNJ as an Extend boundary, and Indic
+  virama/linker conjuncts without swallowing virama followed by Latin text or
+  whitespace. The
   paragraph contract returns line metrics, caret rectangles,
   selection rectangles, hit-test results, and visual-order metadata with
   explicit readiness flags, so simplified fallback or diagnostic renderer
@@ -255,7 +257,10 @@ Remote font loading is intentionally outside the current backend contract.
   composition cursor offsets, rich text hit testing, and UTF-8 offset conversion
   for later IME handoff. This keeps deterministic text-field, selection, and
   IME-anchor geometry on one path while still leaving generated Unicode data
-  conformance and full grapheme-cluster parity as release follow-up work.
+  conformance and full grapheme-cluster parity as release follow-up work. The
+  scanner now treats ZWNJ as an Extend code point and narrows Indic virama
+  linking to ZWJ or Indic consonant targets, so deletion and IME offsets no
+  longer merge virama-plus-Latin or virama-plus-space spans into one cluster.
   Native IME runtime readiness is also still pending: macOS, Windows, and Linux
   must each record matching-host Showcase or Markdown Editor artifacts for
   candidate anchors, surrounding text, composition visuals, commit/delete
