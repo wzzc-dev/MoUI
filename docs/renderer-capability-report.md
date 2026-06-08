@@ -305,8 +305,9 @@ style selection, `FontFallbackRequest` matching over representative
 coverage characters before regular family matching, grapheme-safe mixed-run
 fallback segments for per-run `FontMgr` resolution, Skia font
 metrics for baseline/height, shaped-run cluster carets when SkShaper is linked
-or Skia-measured prefix carets otherwise, shared UAX-style grapheme boundary
-stabilization for both caret paths, SystemFontMgr-only emoji font retry for
+or Skia-measured prefix carets otherwise, shared UAX-style
+`TextGraphemeBoundaries` cluster splitting and caret stabilization for both
+caret paths, SystemFontMgr-only emoji font retry for
 emoji-hint text, optional SkShaper shaped glyph runs for rendering when linked,
 and fallback-safe descriptor preflight coverage for the Skia fallback,
 measurement, shaping, shaped-run, and shaped-glyph resource plans. The renderer

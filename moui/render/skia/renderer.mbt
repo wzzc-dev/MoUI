@@ -2302,13 +2302,17 @@ fn skia_string_arrays_equal(
 ///|
 fn skia_grapheme_cluster_texts(text : String) -> Array[String] {
   let chars = text.to_array()
+  let boundaries = @core.TextGraphemeBoundaries::new(text~).boundaries()
   let clusters : Array[String] = []
-  let mut index = 0
-  while index < chars.length() {
-    let end = skia_grapheme_cluster_end(chars, index)
-    let safe_end = if end <= index { index + 1 } else { end }
-    clusters.push(String::from_array(chars[index:safe_end]))
-    index = safe_end
+  if boundaries.length() < 2 {
+    return clusters
+  }
+  for boundary_index in 0..<(boundaries.length() - 1) {
+    let start = boundaries[boundary_index]
+    let end = boundaries[boundary_index + 1]
+    if end > start {
+      clusters.push(String::from_array(chars[start:end]))
+    }
   }
   clusters
 }
@@ -3354,194 +3358,15 @@ fn skia_stabilize_grapheme_cluster_carets(
     return carets
   }
   let adjusted = carets.copy()
-  let mut index = 0
-  while index < chars.length() {
-    let cluster_end = skia_grapheme_cluster_end(chars, index)
-    if cluster_end > index + 1 {
-      skia_stabilize_caret_cluster(adjusted, index, cluster_end)
-      index = cluster_end
-    } else {
-      index = index + 1
+  let boundaries = @core.TextGraphemeBoundaries::new(text~).boundaries()
+  for boundary_index in 0..<(boundaries.length() - 1) {
+    let start = boundaries[boundary_index]
+    let end = boundaries[boundary_index + 1]
+    if end > start + 1 {
+      skia_stabilize_caret_cluster(adjusted, start, end)
     }
   }
   adjusted
-}
-
-///|
-fn skia_grapheme_cluster_end(chars : Array[Char], start : Int) -> Int {
-  if start < 0 || start >= chars.length() {
-    return start
-  }
-  if skia_codepoint_is_regional_indicator(chars[start].to_int()) {
-    return skia_regional_indicator_cluster_end(chars, start)
-  }
-  if skia_codepoint_is_grapheme_prepend(chars[start].to_int()) {
-    return skia_prepend_cluster_end(chars, start)
-  }
-  if skia_codepoint_is_hangul_cluster_codepoint(chars[start].to_int()) {
-    return skia_hangul_cluster_end(chars, start)
-  }
-  if skia_codepoint_can_start_emoji_tag_sequence(chars[start].to_int()) {
-    let tag_end = skia_emoji_tag_sequence_end(chars, start)
-    if tag_end > start + 1 {
-      return tag_end
-    }
-  }
-  let mut end = skia_grapheme_extend_end(chars, start + 1)
-  let mut advanced = true
-  while advanced {
-    advanced = false
-    if end < chars.length() &&
-      chars[end].to_int() == 0x200D &&
-      end + 1 < chars.length() {
-      end = skia_grapheme_extend_end(chars, end + 2)
-      advanced = true
-    } else if end < chars.length() &&
-      end > start &&
-      skia_codepoint_is_virama(chars[end - 1].to_int()) {
-      end = skia_grapheme_extend_end(chars, end + 1)
-      advanced = true
-    } else if skia_indic_virama_extend_allows_no_break(chars, start, end) {
-      end = skia_grapheme_extend_end(chars, end + 1)
-      advanced = true
-    }
-  }
-  end
-}
-
-///|
-fn skia_indic_virama_extend_allows_no_break(
-  chars : Array[Char],
-  start : Int,
-  end : Int,
-) -> Bool {
-  if end <= start || end >= chars.length() ||
-    !skia_codepoint_is_indic_consonant(chars[end].to_int()) {
-    return false
-  }
-  let mut cursor = end - 1
-  while cursor >= start {
-    let codepoint = chars[cursor].to_int()
-    if skia_codepoint_is_virama(codepoint) {
-      return true
-    }
-    if skia_codepoint_is_grapheme_extend(codepoint) &&
-      codepoint != 0x200D &&
-      codepoint != 0x200C {
-      if cursor == start {
-        return false
-      }
-      cursor = cursor - 1
-      continue
-    }
-    return false
-  }
-  false
-}
-
-///|
-fn skia_regional_indicator_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start
-  while end < chars.length() &&
-        skia_codepoint_is_regional_indicator(chars[end].to_int()) &&
-        end - start < 2 {
-    end = end + 1
-  }
-  end
-}
-
-///|
-fn skia_emoji_tag_sequence_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start + 1
-  let mut saw_tag = false
-  while end < chars.length() && skia_codepoint_is_emoji_tag(chars[end].to_int()) {
-    saw_tag = true
-    end = end + 1
-    if chars[end - 1].to_int() == 0xE007F {
-      return end
-    }
-  }
-  if saw_tag {
-    end
-  } else {
-    start
-  }
-}
-
-///|
-fn skia_prepend_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let mut base = start + 1
-  while base < chars.length() &&
-        skia_codepoint_is_grapheme_prepend(chars[base].to_int()) {
-    base = base + 1
-  }
-  if base >= chars.length() {
-    return base
-  }
-  skia_grapheme_cluster_end(chars, base)
-}
-
-///|
-fn skia_hangul_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let codepoint = chars[start].to_int()
-  if skia_codepoint_is_hangul_l(codepoint) {
-    return skia_hangul_l_cluster_end(chars, start)
-  }
-  if skia_codepoint_is_hangul_v(codepoint) ||
-    skia_codepoint_is_hangul_lv(codepoint) {
-    return skia_hangul_v_cluster_end(chars, start + 1)
-  }
-  if skia_codepoint_is_hangul_t(codepoint) ||
-    skia_codepoint_is_hangul_lvt(codepoint) {
-    return skia_hangul_t_cluster_end(chars, start + 1)
-  }
-  start
-}
-
-///|
-fn skia_hangul_l_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start + 1
-  while end < chars.length() && skia_codepoint_is_hangul_l(chars[end].to_int()) {
-    end = end + 1
-  }
-  if end < chars.length() {
-    let codepoint = chars[end].to_int()
-    if skia_codepoint_is_hangul_v(codepoint) ||
-      skia_codepoint_is_hangul_lv(codepoint) {
-      end = skia_hangul_v_cluster_end(chars, end + 1)
-    } else if skia_codepoint_is_hangul_lvt(codepoint) {
-      end = skia_hangul_t_cluster_end(chars, end + 1)
-    }
-  }
-  skia_grapheme_extend_end(chars, end)
-}
-
-///|
-fn skia_hangul_v_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start
-  while end < chars.length() && skia_codepoint_is_hangul_v(chars[end].to_int()) {
-    end = end + 1
-  }
-  skia_hangul_t_cluster_end(chars, end)
-}
-
-///|
-fn skia_hangul_t_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start
-  while end < chars.length() && skia_codepoint_is_hangul_t(chars[end].to_int()) {
-    end = end + 1
-  }
-  skia_grapheme_extend_end(chars, end)
-}
-
-///|
-fn skia_grapheme_extend_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start
-  while end < chars.length() &&
-        skia_codepoint_is_grapheme_extend(chars[end].to_int()) {
-    end = end + 1
-  }
-  end
 }
 
 ///|
@@ -3772,173 +3597,6 @@ fn skia_codepoint_is_emoji_hint(codepoint : Int) -> Bool {
 }
 
 ///|
-fn skia_codepoint_is_variation_selector(codepoint : Int) -> Bool {
-  (codepoint >= 0xFE00 && codepoint <= 0xFE0F) ||
-  (codepoint >= 0xE0100 && codepoint <= 0xE01EF)
-}
-
-///|
-fn skia_codepoint_is_grapheme_extend(codepoint : Int) -> Bool {
-  skia_codepoint_is_variation_selector(codepoint) ||
-  skia_codepoint_is_combining_mark(codepoint) ||
-  skia_codepoint_is_spacing_mark(codepoint) ||
-  skia_codepoint_is_emoji_modifier(codepoint) ||
-  skia_codepoint_is_emoji_tag(codepoint)
-}
-
-///|
-fn skia_codepoint_is_grapheme_prepend(codepoint : Int) -> Bool {
-  (codepoint >= 0x0600 && codepoint <= 0x0605) ||
-  codepoint == 0x06DD ||
-  codepoint == 0x070F ||
-  codepoint == 0x0890 ||
-  codepoint == 0x0891 ||
-  codepoint == 0x08E2 ||
-  codepoint == 0x110BD ||
-  codepoint == 0x110CD
-}
-
-///|
-fn skia_codepoint_is_combining_mark(codepoint : Int) -> Bool {
-  (codepoint >= 0x0300 && codepoint <= 0x036F) ||
-  (codepoint >= 0x0591 && codepoint <= 0x05BD) ||
-  codepoint == 0x05BF ||
-  (codepoint >= 0x05C1 && codepoint <= 0x05C2) ||
-  (codepoint >= 0x05C4 && codepoint <= 0x05C5) ||
-  codepoint == 0x05C7 ||
-  (codepoint >= 0x0610 && codepoint <= 0x061A) ||
-  (codepoint >= 0x064B && codepoint <= 0x065F) ||
-  codepoint == 0x0670 ||
-  (codepoint >= 0x06D6 && codepoint <= 0x06DC) ||
-  (codepoint >= 0x06DF && codepoint <= 0x06E4) ||
-  (codepoint >= 0x06E7 && codepoint <= 0x06E8) ||
-  (codepoint >= 0x06EA && codepoint <= 0x06ED) ||
-  codepoint == 0x0711 ||
-  (codepoint >= 0x0730 && codepoint <= 0x074A) ||
-  (codepoint >= 0x07A6 && codepoint <= 0x07B0) ||
-  (codepoint >= 0x07EB && codepoint <= 0x07F3) ||
-  (codepoint >= 0x0816 && codepoint <= 0x0819) ||
-  (codepoint >= 0x081B && codepoint <= 0x0823) ||
-  (codepoint >= 0x0825 && codepoint <= 0x0827) ||
-  (codepoint >= 0x0829 && codepoint <= 0x082D) ||
-  (codepoint >= 0x0859 && codepoint <= 0x085B) ||
-  (codepoint >= 0x08D3 && codepoint <= 0x08FF) ||
-  (codepoint >= 0x1AB0 && codepoint <= 0x1AFF) ||
-  (codepoint >= 0x1DC0 && codepoint <= 0x1DFF) ||
-  (codepoint >= 0x20D0 && codepoint <= 0x20FF) ||
-  (codepoint >= 0x1D165 && codepoint <= 0x1D169) ||
-  (codepoint >= 0x1D16D && codepoint <= 0x1D172) ||
-  (codepoint >= 0x1D17B && codepoint <= 0x1D182) ||
-  (codepoint >= 0x1D185 && codepoint <= 0x1D18B) ||
-  (codepoint >= 0x1D1AA && codepoint <= 0x1D1AD) ||
-  (codepoint >= 0x1D242 && codepoint <= 0x1D244) ||
-  (codepoint >= 0x102B && codepoint <= 0x103E) ||
-  (codepoint >= 0x1056 && codepoint <= 0x1059) ||
-  (codepoint >= 0x105E && codepoint <= 0x1060) ||
-  (codepoint >= 0x1062 && codepoint <= 0x1064) ||
-  (codepoint >= 0x1067 && codepoint <= 0x106D) ||
-  (codepoint >= 0x1071 && codepoint <= 0x1074) ||
-  (codepoint >= 0x1082 && codepoint <= 0x108D) ||
-  codepoint == 0x108F ||
-  (codepoint >= 0x109A && codepoint <= 0x109D) ||
-  (codepoint >= 0x3099 && codepoint <= 0x309A) ||
-  (codepoint >= 0xFE20 && codepoint <= 0xFE2F)
-}
-
-///|
-fn skia_codepoint_is_spacing_mark(codepoint : Int) -> Bool {
-  (codepoint >= 0x0900 && codepoint <= 0x0903) ||
-  (codepoint >= 0x093A && codepoint <= 0x093C) ||
-  (codepoint >= 0x093E && codepoint <= 0x094F) ||
-  (codepoint >= 0x0951 && codepoint <= 0x0957) ||
-  (codepoint >= 0x0962 && codepoint <= 0x0963) ||
-  (codepoint >= 0x0981 && codepoint <= 0x0983) ||
-  codepoint == 0x09BC ||
-  (codepoint >= 0x09BE && codepoint <= 0x09C4) ||
-  (codepoint >= 0x09C7 && codepoint <= 0x09C8) ||
-  (codepoint >= 0x09CB && codepoint <= 0x09CD) ||
-  codepoint == 0x09D7 ||
-  (codepoint >= 0x09E2 && codepoint <= 0x09E3) ||
-  (codepoint >= 0x0A01 && codepoint <= 0x0A03) ||
-  codepoint == 0x0A3C ||
-  (codepoint >= 0x0A3E && codepoint <= 0x0A42) ||
-  (codepoint >= 0x0A47 && codepoint <= 0x0A48) ||
-  (codepoint >= 0x0A4B && codepoint <= 0x0A4D) ||
-  codepoint == 0x0A51 ||
-  (codepoint >= 0x0A70 && codepoint <= 0x0A71) ||
-  codepoint == 0x0A75 ||
-  (codepoint >= 0x0B01 && codepoint <= 0x0B03) ||
-  codepoint == 0x0B3C ||
-  (codepoint >= 0x0B3E && codepoint <= 0x0B44) ||
-  (codepoint >= 0x0B47 && codepoint <= 0x0B48) ||
-  (codepoint >= 0x0B4B && codepoint <= 0x0B4D) ||
-  (codepoint >= 0x0B55 && codepoint <= 0x0B57) ||
-  (codepoint >= 0x0B62 && codepoint <= 0x0B63) ||
-  (codepoint >= 0x0C00 && codepoint <= 0x0C04) ||
-  (codepoint >= 0x0C3E && codepoint <= 0x0C44) ||
-  (codepoint >= 0x0C46 && codepoint <= 0x0C48) ||
-  (codepoint >= 0x0C4A && codepoint <= 0x0C4D) ||
-  (codepoint >= 0x0C55 && codepoint <= 0x0C56) ||
-  (codepoint >= 0x0C62 && codepoint <= 0x0C63) ||
-  (codepoint >= 0x0D00 && codepoint <= 0x0D03) ||
-  (codepoint >= 0x0D3B && codepoint <= 0x0D44) ||
-  (codepoint >= 0x0D46 && codepoint <= 0x0D48) ||
-  codepoint == 0x0DCA ||
-  (codepoint >= 0x0D4A && codepoint <= 0x0D4D) ||
-  (codepoint >= 0x0DCF && codepoint <= 0x0DD4) ||
-  codepoint == 0x0DD6 ||
-  (codepoint >= 0x0DD8 && codepoint <= 0x0DDF) ||
-  codepoint == 0x0D57 ||
-  (codepoint >= 0x0D62 && codepoint <= 0x0D63) ||
-  codepoint == 0x0E31 ||
-  (codepoint >= 0x0E34 && codepoint <= 0x0E3A) ||
-  (codepoint >= 0x0E47 && codepoint <= 0x0E4E) ||
-  codepoint == 0x0EB1 ||
-  (codepoint >= 0x0EB4 && codepoint <= 0x0EBC) ||
-  (codepoint >= 0x0EC8 && codepoint <= 0x0ECD) ||
-  (codepoint >= 0x17B4 && codepoint <= 0x17D3) ||
-  codepoint == 0x17DD
-}
-
-///|
-fn skia_codepoint_is_virama(codepoint : Int) -> Bool {
-  codepoint == 0x094D ||
-  codepoint == 0x09CD ||
-  codepoint == 0x0A4D ||
-  codepoint == 0x0ACD ||
-  codepoint == 0x0B4D ||
-  codepoint == 0x0BCD ||
-  codepoint == 0x0C4D ||
-  codepoint == 0x0CCD ||
-  codepoint == 0x0D4D ||
-  codepoint == 0x0DCA ||
-  codepoint == 0x1039 ||
-  codepoint == 0x17D2
-}
-
-///|
-fn skia_codepoint_is_indic_consonant(codepoint : Int) -> Bool {
-  (codepoint >= 0x0915 && codepoint <= 0x0939) ||
-  (codepoint >= 0x0958 && codepoint <= 0x095F) ||
-  (codepoint >= 0x0978 && codepoint <= 0x097F) ||
-  (codepoint >= 0x0995 && codepoint <= 0x09B9) ||
-  (codepoint >= 0x09DC && codepoint <= 0x09DF) ||
-  (codepoint >= 0x0A15 && codepoint <= 0x0A39) ||
-  (codepoint >= 0x0A59 && codepoint <= 0x0A5E) ||
-  (codepoint >= 0x0A95 && codepoint <= 0x0AB9) ||
-  (codepoint >= 0x0B15 && codepoint <= 0x0B39) ||
-  (codepoint >= 0x0B5C && codepoint <= 0x0B5F) ||
-  (codepoint >= 0x0B95 && codepoint <= 0x0BB9) ||
-  (codepoint >= 0x0C15 && codepoint <= 0x0C39) ||
-  (codepoint >= 0x0C95 && codepoint <= 0x0CB9) ||
-  (codepoint >= 0x0D15 && codepoint <= 0x0D3A) ||
-  (codepoint >= 0x0D9A && codepoint <= 0x0DC6) ||
-  (codepoint >= 0x1000 && codepoint <= 0x102A) ||
-  (codepoint >= 0x1050 && codepoint <= 0x1055) ||
-  (codepoint >= 0x1780 && codepoint <= 0x17A2)
-}
-
-///|
 fn skia_codepoint_is_hangul_cluster_codepoint(codepoint : Int) -> Bool {
   skia_codepoint_is_hangul_l(codepoint) ||
   skia_codepoint_is_hangul_v(codepoint) ||
@@ -3978,26 +3636,6 @@ fn skia_codepoint_is_hangul_lvt(codepoint : Int) -> Bool {
 ///|
 fn skia_codepoint_is_hangul_syllable(codepoint : Int) -> Bool {
   codepoint >= 0xAC00 && codepoint <= 0xD7A3
-}
-
-///|
-fn skia_codepoint_is_emoji_modifier(codepoint : Int) -> Bool {
-  codepoint >= 0x1F3FB && codepoint <= 0x1F3FF
-}
-
-///|
-fn skia_codepoint_is_emoji_tag(codepoint : Int) -> Bool {
-  (codepoint >= 0xE0020 && codepoint <= 0xE007E) || codepoint == 0xE007F
-}
-
-///|
-fn skia_codepoint_can_start_emoji_tag_sequence(codepoint : Int) -> Bool {
-  codepoint == 0x1F3F4
-}
-
-///|
-fn skia_codepoint_is_regional_indicator(codepoint : Int) -> Bool {
-  codepoint >= 0x1F1E6 && codepoint <= 0x1F1FF
 }
 
 ///|
