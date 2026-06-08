@@ -133,7 +133,7 @@ log("MoUI renderer proof paragraphWrapping missing: requires line metrics and la
 log("MoUI renderer proof selectionRects missing: requires selection rectangles, line-range, and hit-test evidence.");
 log("MoUI renderer proof graphemeEditing missing: requires grapheme boundaries and edit-action evidence.");
 log("MoUI renderer proof imeCandidateAnchor missing: requires candidate anchor and surrounding-text evidence.");
-log("MoUI renderer proof imeCompositionVisual missing: requires composition range and preedit pixel evidence.");
+log("MoUI renderer proof imeCompositionVisual missing: requires composition range, composition cursor, and preedit pixel evidence.");
 log("MoUI renderer proof asyncImageSecondFrame missing: requires late completion, repaint request, and second-frame pixels.");
 
 const recordArgs = [
