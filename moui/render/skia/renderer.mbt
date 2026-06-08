@@ -74,6 +74,21 @@ pub(all) struct SkiaTextVisualOrderProof {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct SkiaTextSelectionGeometryProof {
+  text : String
+  selection_range : @core.TextRange
+  selection_rect_count : Int
+  selected_line_count : Int
+  line_count : Int
+  hit_test_offset : Int
+  hit_test_line_index : Int
+  hit_test_inside : Bool
+  visual_order_differs : Bool
+  visual_segment_count : Int
+  bidi_visual_order_evidence : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
 priv struct SkiaRasterSurfacePreflight {
   physical_width : Int
   physical_height : Int
@@ -422,6 +437,101 @@ pub fn skia_text_visual_order_proof(
     }
     None => None
   }
+}
+
+///|
+pub fn skia_text_selection_geometry_proof(
+  text : String,
+  selection? : @core.TextRange? = None,
+  font? : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
+  max_width? : Double = 96.0,
+  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+) -> SkiaTextSelectionGeometryProof? {
+  if text == "" {
+    return None
+  }
+  let system = skia_text_system(resolution=font_resolution)
+  let layout = system.layout_paragraph(
+    @core.TextLayoutInput::new(text~, font~, max_width~),
+  )
+  if layout.lines.is_empty() {
+    return None
+  }
+  let selection_range = match selection {
+    Some(range) => range
+    None => skia_default_selection_geometry_range(layout)
+  }
+  let normalized = @core.TextGraphemeBoundaries::new(text~).normalize_range(
+    selection_range,
+  )
+  let selection_rects = layout.selection_rects(normalized)
+  let hit_line = if layout.lines.length() > 1 {
+    layout.lines[1]
+  } else {
+    layout.lines[0]
+  }
+  let hit = layout.hit_test(
+    @core.Point::new(x=max_width + 100.0, y=hit_line.origin.y + 1.0),
+  )
+  let visual = skia_text_visual_order_proof(text, font~, font_resolution~)
+  let (visual_order_differs, visual_segment_count, bidi_visual_order_evidence) = match
+    visual {
+    Some(proof) =>
+      (
+        proof.visual_order_differs,
+        proof.segment_count,
+        proof.visual_order_differs &&
+        proof.logical_cluster_count == proof.visual_cluster_count &&
+        proof.segment_count >= 3 &&
+        proof.glyph_count >= 1,
+      )
+    None => (false, 0, false)
+  }
+  Some({
+    text,
+    selection_range: normalized,
+    selection_rect_count: selection_rects.length(),
+    selected_line_count: skia_selected_line_count(layout, normalized),
+    line_count: layout.line_count(),
+    hit_test_offset: hit.offset,
+    hit_test_line_index: hit.line_index,
+    hit_test_inside: hit.is_inside,
+    visual_order_differs,
+    visual_segment_count,
+    bidi_visual_order_evidence,
+  })
+}
+
+///|
+fn skia_default_selection_geometry_range(
+  layout : @core.TextParagraphLayoutResult,
+) -> @core.TextRange {
+  if layout.lines.length() > 1 {
+    @core.TextRange::new(
+      start=layout.lines[0].text_range.start,
+      end=layout.lines[1].text_range.end,
+    )
+  } else {
+    @core.TextRange::new(start=0, end=layout.text.to_array().length())
+  }
+}
+
+///|
+fn skia_selected_line_count(
+  layout : @core.TextParagraphLayoutResult,
+  range : @core.TextRange,
+) -> Int {
+  let range = range.normalized()
+  if range.is_collapsed() {
+    return 1
+  }
+  let mut count = 0
+  for line in layout.lines {
+    if range.start < line.text_range.end && range.end > line.text_range.start {
+      count += 1
+    }
+  }
+  count
 }
 
 ///|
