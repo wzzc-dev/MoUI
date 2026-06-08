@@ -19,8 +19,8 @@ Options:
                                         geometry plus surrounding text.
   --surrounding-text-log <path>         Log proving grapheme-aware UTF-8
                                         surrounding text offsets.
-  --composition-visual-log <path>       Log proving composition range/preedit
-                                        visual pixels.
+  --composition-visual-log <path>       Log proving composition range, cursor,
+                                        underline, and preedit visual pixels.
   --commit-delete-log <path>            Log proving IME commit and delete flows.
   --cursor-update-log <path>            Log proving IME cursor-area updates.
   --scroll-anchor-log <path>            Log proving candidate anchor after
