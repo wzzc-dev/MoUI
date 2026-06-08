@@ -884,8 +884,8 @@ requires `font-metadata` / `glyph-metadata` evidence plus structured
 be traced to the font/glyph path that produced them. Native Skia
 `colorEmojiPixels` additionally requires `fallback-request`, `emoji-hint`, and
 `stable-glyph-key` tokens, tying the proof to the FontMgr fallback request and
-the stable glyph metadata path. New native Skia recordings also preserve and
-require fallback script/language-count metadata plus resolved missing-glyph and
+the stable glyph metadata path. Passed native Skia manifests must also preserve
+fallback script/language-count metadata plus resolved missing-glyph and
 missing-glyph recovery metadata before the color emoji observation can pass.
 The text/IME observations
 must prove selection rectangles with line ranges and hit testing, grapheme edit
