@@ -268,6 +268,63 @@ function skiaMetalGpuEnabled(config) {
   return truthy(configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_METAL"));
 }
 
+function skiaParagraphEnabled(config) {
+  return truthy(configEnvValue(config, "MOUI_SKIA_ENABLE_SKPARAGRAPH"));
+}
+
+function skiaParagraphRequired(config) {
+  return truthy(configEnvValue(config, "MOUI_SKIA_REQUIRE_SKPARAGRAPH"));
+}
+
+function skiaParagraphHeaderPaths(includePath) {
+  return [
+    "modules/skparagraph/include/Paragraph.h",
+    "modules/skparagraph/include/ParagraphBuilder.h",
+    "modules/skparagraph/include/ParagraphStyle.h",
+    "modules/skparagraph/include/TextStyle.h",
+    "modules/skparagraph/include/FontCollection.h",
+  ].map(candidate => path.join(includePath, candidate));
+}
+
+function skiaParagraphLibraryCandidates(libPath, name) {
+  if (process.platform === "win32") {
+    return [
+      path.join(libPath, `${name}.lib`),
+      path.join(libPath, `${name}.dll.lib`),
+    ];
+  }
+  if (process.platform === "darwin") {
+    return [
+      path.join(libPath, `lib${name}.a`),
+      path.join(libPath, `lib${name}.dylib`),
+    ];
+  }
+  return [
+    path.join(libPath, `lib${name}.a`),
+    path.join(libPath, `lib${name}.so`),
+  ];
+}
+
+function requireSkiaParagraphArtifacts(config, includePath, libPath) {
+  if (!skiaParagraphRequired(config)) {
+    return;
+  }
+  const missingHeaders = skiaParagraphHeaderPaths(includePath)
+    .filter(candidate => !fs.existsSync(candidate));
+  if (missingHeaders.length > 0) {
+    throw new Error(
+      `MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but headers were missing: ${missingHeaders.join(", ")}`,
+    );
+  }
+  const missingLibs = ["skparagraph", "skshaper", "skunicode_core", "skunicode_icu"]
+    .filter(name => !skiaParagraphLibraryCandidates(libPath, name).some(fs.existsSync));
+  if (missingLibs.length > 0) {
+    throw new Error(
+      `MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but libraries were missing in ${libPath}: ${missingLibs.join(", ")}`,
+    );
+  }
+}
+
 function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false) {
   const staticLib = path.join(libPath, `lib${skiaLib}.a`);
   const dynamicLib = path.join(libPath, `lib${skiaLib}.dylib`);
@@ -317,6 +374,9 @@ function platformFlags(config, values) {
   const extraCcFlags = values.MOUI_SKIA_EXTRA_CC_FLAGS || "";
   const extraLinkFlags = values.MOUI_SKIA_EXTRA_LINK_FLAGS || "";
   const linkMode = (values.MOUI_SKIA_LINK_MODE || skiaLinkMode(config)).trim().toLowerCase();
+  const paragraphEnabled = skiaParagraphEnabled(config) || skiaParagraphRequired(config);
+
+  requireSkiaParagraphArtifacts(config, includePath, libPath);
 
   let stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -I${includePath}`;
   let linkFlags = `-L${libPath} -l${skiaLib}`;
@@ -359,10 +419,23 @@ function platformFlags(config, values) {
       ...packageLibs.filter(candidate => candidate !== skiaLibFlag),
     ].map(candidate => candidate.replace(/\\/g, "/"));
     linkFlags = `${orderedPackageLibs.join(" ")} user32.lib gdi32.lib ole32.lib opengl32.lib usp10.lib fontsub.lib imm32.lib winmm.lib version.lib dwrite.lib d2d1.lib dxgi.lib advapi32.lib shell32.lib`;
+    if (paragraphEnabled) {
+      stubCcFlags = appendFlags(stubCcFlags, "/DMOUI_SKIA_HAS_SKPARAGRAPH /DMOUI_SKIA_HAS_SKSHAPER");
+    }
   } else if (process.platform === "darwin") {
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
     linkFlags = macosLibraryFlags(config, libPath, skiaLib, skiaMetalGpuEnabled(config)) +
       " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices";
+    if (paragraphEnabled) {
+      stubCcFlags = appendFlags(
+        stubCcFlags,
+        "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      );
+      linkFlags = appendFlags(
+        linkFlags,
+        "-lskparagraph -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu",
+      );
+    }
     if (skiaMetalGpuEnabled(config)) {
       stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_METAL");
       linkFlags = appendFlags(
@@ -399,6 +472,19 @@ function platformFlags(config, values) {
       "-lfreetype",
       "-lharfbuzz",
     ]);
+    if (paragraphEnabled) {
+      stubCcFlags = appendFlags(
+        stubCcFlags,
+        "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      );
+      linkFlags = appendMissingFlags(linkFlags, [
+        "-lskparagraph",
+        "-lskshaper",
+        "-lskunicode_core",
+        "-lskunicode_icu",
+        "-licu",
+      ]);
+    }
   }
 
   return {
