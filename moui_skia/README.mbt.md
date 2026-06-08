@@ -104,6 +104,11 @@ The `native` subpackage contains the first opt-in native boundary:
   Skia headers and libraries;
 - `@native.skia_shaper_available()` reports whether the optional SkShaper
   boundary was compiled and linked;
+- `@native.skia_paragraph_available()` reports whether the optional
+  SkParagraph boundary was compiled and linked; enable it with
+  `MOUI_SKIA_ENABLE_SKPARAGRAPH=1`, and use
+  `MOUI_SKIA_REQUIRE_SKPARAGRAPH=1` for smoke/proof runs that should fail when
+  SkParagraph, SkShaper, SkUnicode, HarfBuzz, or ICU support is missing;
 - `@native.Surface::raster_n32_premul(size)` is the first raster surface entry;
 - `@native.Surface::gpu_context_support_status(context)` reports the native
   GPU-context readiness gate for a value-layer context descriptor. macOS Metal
@@ -217,6 +222,8 @@ The `native` subpackage contains the first opt-in native boundary:
   shaped-run metadata through `TextShapingDescriptor` and
   `ShapedTextRunDescriptor`, detailed shaped glyph-run metadata through
   `ShapedGlyphRunDescriptor`,
+  optional paragraph layout through `Paragraph::layout_utf8` with line metrics,
+  UTF-8 range text boxes, and UTF-8 hit-test offsets when SkParagraph is linked,
   font measurement through `Font::measure_text_utf8`, glyph IDs through
   `Font::count_text_utf8` / `Font::text_to_glyphs_utf8`, glyph advances through
   `Font::glyph_width` / `Font::glyph_widths`, glyph positions through
