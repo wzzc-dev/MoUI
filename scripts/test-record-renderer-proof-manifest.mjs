@@ -120,10 +120,11 @@ const skiaMarkers = markers.map(marker => {
         "cluster_count=1",
         "high_saturation_pixels=42",
         "alpha_pixels=120",
-        "glyph_key=skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|emoji-u+128105|rgba",
+        "glyph_key=skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|lang-tags=und-Zsye+en|emoji-u+128105|rgba",
         "glyph_width=28",
         "glyph_height=32",
         "fallback_script_tag=und-Zsye",
+        "fallback_language_tags=und-Zsye+en",
         "fallback_language_tag_count=2",
         "fallback_request_language_count=2",
         "fallback_request_character=128105",
@@ -204,6 +205,8 @@ const skiaColorEmojiMetadata =
   skiaPassedManifest.observations.colorEmojiPixels.metadata;
 if (
   skiaColorEmojiMetadata.font.fallbackScriptTag !== "und-Zsye" ||
+  !Array.isArray(skiaColorEmojiMetadata.font.fallbackLanguageTags) ||
+  skiaColorEmojiMetadata.font.fallbackLanguageTags.join("+") !== "und-Zsye+en" ||
   skiaColorEmojiMetadata.font.fallbackLanguageTagCount !== 2 ||
   skiaColorEmojiMetadata.font.fallbackRequestLanguageCount !== 2 ||
   skiaColorEmojiMetadata.glyph.fallbackRequestCharacter !== 128105 ||
@@ -253,6 +256,27 @@ if (
   skiaMissingFallbackScriptManifest.observations.colorEmojiPixels.status !== "failed"
 ) {
   console.error("missing Skia fallback script metadata should keep color emoji proof failed");
+  process.exit(1);
+}
+
+const skiaMissingFallbackLanguageTags = runSkiaRecorder(
+  "skia-missing-fallback-language-tags",
+  skiaMarkers.join("\n").replace(" fallback_language_tags=und-Zsye+en", ""),
+);
+if (skiaMissingFallbackLanguageTags.result.status !== 0) {
+  console.error("expected missing Skia fallback language tag metadata to validate as failed");
+  console.error(skiaMissingFallbackLanguageTags.result.stdout);
+  console.error(skiaMissingFallbackLanguageTags.result.stderr);
+  process.exit(1);
+}
+const skiaMissingFallbackLanguageTagsManifest = JSON.parse(
+  readFileSync(skiaMissingFallbackLanguageTags.outputPath, "utf8"),
+);
+if (
+  skiaMissingFallbackLanguageTagsManifest.status !== "failed" ||
+  skiaMissingFallbackLanguageTagsManifest.observations.colorEmojiPixels.status !== "failed"
+) {
+  console.error("missing Skia fallback language tag metadata should keep color emoji proof failed");
   process.exit(1);
 }
 

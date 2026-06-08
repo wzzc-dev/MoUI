@@ -600,6 +600,7 @@ pub fn skia_emoji_font_fallback_proof(
           text_system.id(),
           shaper,
           fallback_script_tag,
+          fallback_language_tags,
           fallback_request_language_count,
           fallback_character,
           glyph_format,
@@ -653,6 +654,7 @@ fn skia_emoji_glyph_key(
   text_system_id : String,
   shaper : String,
   fallback_script_tag : String,
+  fallback_language_tags : Array[String],
   fallback_request_language_count : Int,
   fallback_character : Int,
   glyph_format : String,
@@ -662,7 +664,12 @@ fn skia_emoji_glyph_key(
   } else {
     "script=\{fallback_script_tag}"
   }
-  "\{font_source}|\{text_system_id}|\{shaper}|\{script_key}|langs=\{fallback_request_language_count}|emoji-u+\{fallback_character}|\{glyph_format}"
+  let language_key = if fallback_language_tags.is_empty() {
+    "lang-tags=none"
+  } else {
+    "lang-tags=\{fallback_language_tags.join("+")}"
+  }
+  "\{font_source}|\{text_system_id}|\{shaper}|\{script_key}|langs=\{fallback_request_language_count}|\{language_key}|emoji-u+\{fallback_character}|\{glyph_format}"
 }
 
 ///|

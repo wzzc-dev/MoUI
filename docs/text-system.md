@@ -204,8 +204,9 @@ generic raster-only observation. The Skia emoji/font fallback proof payload now
 also records the inferred fallback language tags, primary script tag, request
 language count, fallback request character, and missing-glyph recovery audit
 fields used by that request. Passed native Skia manifests require the glyph key
-to include the same source, text-system, shaper, script, request language count,
-`emoji-u+<fallback request character>` segment, and format values.
+to include the same source, text-system, shaper, script, fallback language tag
+payload, request language count, `emoji-u+<fallback request character>`
+segment, and format values.
 WebGPU wasm records the browser canvas font stack plus glyph atlas key and size
 metadata. Renderer proof also reserves separate
 contract keys for `selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,

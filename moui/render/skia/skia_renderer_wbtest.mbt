@@ -175,11 +175,12 @@ test "skia emoji glyph key records source script count and format metadata" {
       "skia-raster-empty-typeface-text-system",
       "fallback-glyph-run",
       "und-Zsye",
+      ["und-Zsye", "en"],
       2,
       0x1F469,
       "rgba",
     ),
-    content="skia-empty-typeface|skia-raster-empty-typeface-text-system|fallback-glyph-run|script=und-Zsye|langs=2|emoji-u+128105|rgba",
+    content="skia-empty-typeface|skia-raster-empty-typeface-text-system|fallback-glyph-run|script=und-Zsye|langs=2|lang-tags=und-Zsye+en|emoji-u+128105|rgba",
   )
   inspect(skia_fallback_script_tag(["und-Zsye", "en"]), content="und-Zsye")
   inspect(skia_fallback_script_tag([]), content="")

@@ -1265,11 +1265,15 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
     exit 1
   fi
   fallback_request_character=""
+  fallback_language_tags=""
   glyph_key=""
   for token in $color_emoji_metadata_line; do
     case "$token" in
       fallback_request_character=*)
         fallback_request_character="${token#fallback_request_character=}"
+        ;;
+      fallback_language_tags=*)
+        fallback_language_tags="${token#fallback_language_tags=}"
         ;;
       glyph_key=*)
         glyph_key="${token#glyph_key=}"
@@ -1284,9 +1288,18 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
     echo "MoUI Skia text/emoji smoke metadata missing glyph_key" >&2
     exit 1
   fi
+  if [[ -z "$fallback_language_tags" ]]; then
+    echo "MoUI Skia text/emoji smoke metadata missing fallback_language_tags" >&2
+    exit 1
+  fi
   expected_fallback_glyph_segment="emoji-u+${fallback_request_character}"
   if [[ "$glyph_key" != *"$expected_fallback_glyph_segment"* ]]; then
     echo "MoUI Skia text/emoji smoke glyph_key does not include $expected_fallback_glyph_segment" >&2
+    exit 1
+  fi
+  expected_fallback_language_segment="lang-tags=${fallback_language_tags}"
+  if [[ "$glyph_key" != *"$expected_fallback_language_segment"* ]]; then
+    echo "MoUI Skia text/emoji smoke glyph_key does not include $expected_fallback_language_segment" >&2
     exit 1
   fi
   echo "Verified MoUI Skia text/emoji color emoji fallback request metadata."
