@@ -36,11 +36,11 @@ Options:
 The helper validates supplied matching-host log markers, updates native IME
 observations in the selected platform entry, and leaves the broader platform
 status unchanged. Every supplied log must also include common runtime markers:
-MoUI native IME runtime, matching-host, native-app, and a platform-protocol
-marker such as platform-protocol=macos-marked-text,
-platform-protocol=windows-ime, or platform-protocol=wayland-text-input. Use
-record-platform-evidence-manifest.mjs for full platform runtime evidence
-promotion.`);
+MoUI native IME runtime, matching-host, native-app, renderer=skia, an app
+marker matching the consumer command, and a platform-protocol marker such as
+platform-protocol=macos-marked-text, platform-protocol=windows-ime, or
+platform-protocol=wayland-text-input. Use record-platform-evidence-manifest.mjs
+for full platform runtime evidence promotion.`);
 };
 
 const platforms = new Map([
@@ -303,6 +303,15 @@ if (
   console.error(`--markdown-log requires --consumer-command to name ${markdownTarget}`);
   process.exit(2);
 }
+const expectedConsumerApp = normalizedConsumerCommand.includes(markdownTarget)
+  ? {
+      marker: /app=markdown-editor/i,
+      description: "app=markdown-editor",
+    }
+  : {
+      marker: /app=showcase/i,
+      description: "app=showcase",
+    };
 if (suppliedLogs.size === 0) {
   console.error("At least one native IME evidence log option is required");
   process.exit(2);
@@ -360,10 +369,12 @@ const assertRuntimeMarkers = (content, label) => {
       /MoUI native IME runtime/i,
       /matching-host/i,
       /native-app/i,
+      /renderer=skia/i,
+      expectedConsumerApp.marker,
       platform.protocolMarker,
     ],
     label,
-    `MoUI native IME runtime, matching-host, native-app, and ${platform.protocolDescription} markers`,
+    `MoUI native IME runtime, matching-host, native-app, renderer=skia, ${expectedConsumerApp.description}, and ${platform.protocolDescription} markers`,
   );
 };
 
