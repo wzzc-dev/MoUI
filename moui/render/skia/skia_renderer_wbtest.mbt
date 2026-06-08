@@ -2154,6 +2154,15 @@ test "skia grapheme clustering follows core IME boundary contract" {
     0, 2, 3,
   ])
   assert_skia_grapheme_clusters_match_core("A\u{0600}B", [0, 1, 3])
+  assert_skia_grapheme_clusters_match_core("A\u{0D4E}\u{0D15}B", [
+    0, 1, 3, 4,
+  ])
+  assert_skia_grapheme_clusters_match_core("A\u{13430}\u{0301}B", [
+    0, 1, 2, 3, 4,
+  ])
+  assert_skia_grapheme_clusters_match_core("A\u{1FC00}\u{200D}\u{1FC01}B", [
+    0, 1, 4, 5,
+  ])
   assert_skia_grapheme_clusters_match_core("A\u{0600}\u{0628}\u{0651}B", [
     0, 1, 4, 5,
   ])
