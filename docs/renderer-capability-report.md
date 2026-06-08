@@ -258,7 +258,10 @@ Skia raster target contract even when real native Skia is not linked. The
 fallback-safe `skia_text_descriptor_preflight` similarly consumes the
 `FontFallbackRequest`, `TextMeasurementDescriptor`, `TextShapingDescriptor`,
 `ShapedTextRunDescriptor`, and `ShapedGlyphRunDescriptor` resource plans as
-cache-key evidence for the current Skia text path. The companion
+cache-key evidence for the current Skia text path. Skia missing-glyph recovery
+now accepts complete fallback runs immediately and accepts partial default-font
+fallback only when it reduces missing glyph ids or recovers visible text from a
+blank primary run. The companion
 `text maturity audit partial` backend-info summary keeps audited Skia text
 baseline checks separate from tracked gaps for bidi, paragraph line breaking,
 deterministic color emoji, and full grapheme parity; neither
@@ -313,8 +316,9 @@ emoji-hint text, optional SkShaper shaped glyph runs for rendering when linked,
 and fallback-safe descriptor preflight coverage for the Skia fallback,
 measurement, shaping, shaped-run, and shaped-glyph resource plans. The renderer
 also exposes a fallback-safe text maturity audit in backend info, counting the
-audited baseline and mixed-run fallback separately from the remaining bidi,
-paragraph, color emoji, and full-grapheme gaps. `TextSystem::layout_paragraph()`
+audited baseline, missing-glyph recovery rule, and mixed-run fallback
+separately from the remaining bidi, paragraph, color emoji, and full-grapheme
+gaps. `TextSystem::layout_paragraph()`
 now gives Skia diagnostics wrapped line metrics, caret rectangles, selection
 rectangles, and hit-test geometry. When the binding is built with
 `MOUI_SKIA_ENABLE_SKPARAGRAPH=1`, `skia_paragraph_available()` lets the Skia

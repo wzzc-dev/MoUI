@@ -119,9 +119,13 @@ when those Skia port headers are available, with a directory font manager
 fallback over common system font directories. If the selected Skia font produces
 a blank or incomplete glyph run, the renderer retries measurement and drawing;
 the system `FontMgr` path first tries platform emoji font candidates for
-emoji-hint text and then falls back to Skia's default font, so startup Showcase
-text remains visible and text-field caret positions stay aligned with the drawn
-glyphs. Skia drawing aligns the selected glyph run inside `TextRun.frame` and
+emoji-hint text and then falls back to Skia's default font. Complete fallback
+runs are accepted immediately, while partial default-font fallback is accepted
+only when it reduces missing glyph ids or recovers visible text from a blank
+primary run, so startup Showcase text remains visible and text-field caret
+positions stay aligned with the drawn glyphs without silently treating an
+equally incomplete fallback run as recovered. Skia drawing aligns the selected
+glyph run inside `TextRun.frame` and
 clips the canvas to that same frame before rasterization, so bounded text
 controls use the same platform-neutral frame for measurement, caret geometry,
 and native raster output. `skia_text_system()` also inherits the core paragraph
@@ -166,8 +170,8 @@ preflight so font fallback and shaped-run cache keys stay auditable without
 requiring real Skia linkage. `backend_info()` also reports a fallback-safe
 `text maturity audit partial` summary: it counts the audited descriptor,
 fallback-request, representative shaped/fallback caret, emoji-hint, and
-empty-typeface retry boundaries plus the Skia mixed-run fallback segment path
-separately from tracked gaps. The paragraph API is now present for line metrics
+empty-typeface retry boundaries, missing-glyph recovery rule, and the Skia
+mixed-run fallback segment path separately from tracked gaps. The paragraph API is now present for line metrics
 and geometry, and the optional SkParagraph route is wired through the native
 binding. Native paragraph and bidi readiness remain release gates until the
 macOS, Windows, and Linux Skia mainline renderer-proof manifests pass with real
