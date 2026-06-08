@@ -305,6 +305,21 @@ function skiaParagraphLibraryCandidates(libPath, name) {
   ];
 }
 
+function skiaParagraphRequiredLibraryNames(platform = process.platform) {
+  const names = ["skparagraph", "skshaper", "skunicode_core", "skunicode_icu"];
+  if (platform === "darwin") {
+    return [...names, "harfbuzz", "icu"];
+  }
+  return names;
+}
+
+function skiaParagraphLinkLibraryNames(platform = process.platform) {
+  if (platform === "win32") {
+    return skiaParagraphRequiredLibraryNames(platform);
+  }
+  return [...new Set([...skiaParagraphRequiredLibraryNames(platform), "harfbuzz", "icu"])];
+}
+
 function requireSkiaParagraphArtifacts(config, includePath, libPath) {
   if (!skiaParagraphRequired(config)) {
     return;
@@ -316,7 +331,7 @@ function requireSkiaParagraphArtifacts(config, includePath, libPath) {
       `MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but headers were missing: ${missingHeaders.join(", ")}`,
     );
   }
-  const missingLibs = ["skparagraph", "skshaper", "skunicode_core", "skunicode_icu"]
+  const missingLibs = skiaParagraphRequiredLibraryNames()
     .filter(name => !skiaParagraphLibraryCandidates(libPath, name).some(fs.existsSync));
   if (missingLibs.length > 0) {
     throw new Error(
@@ -325,11 +340,14 @@ function requireSkiaParagraphArtifacts(config, includePath, libPath) {
   }
 }
 
-function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false) {
+function unixDynamicLibrarySuffix(platform = process.platform) {
+  return platform === "darwin" ? ".dylib" : ".so";
+}
+
+function resolveUnixLibraryMode(requestedMode, libPath, skiaLib, dynamicSuffix) {
   const staticLib = path.join(libPath, `lib${skiaLib}.a`);
-  const dynamicLib = path.join(libPath, `lib${skiaLib}.dylib`);
-  const ganeshExtStaticLib = path.join(libPath, "libskia_ganesh_ext.a");
-  let mode = skiaLinkMode(config);
+  const dynamicLib = path.join(libPath, `lib${skiaLib}${dynamicSuffix}`);
+  let mode = requestedMode;
   if (mode === "auto") {
     if (fs.existsSync(dynamicLib)) {
       mode = "dynamic";
@@ -337,10 +355,37 @@ function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false) {
       mode = "static";
     } else {
       throw new Error(
-        `Skia library lib${skiaLib}.dylib or lib${skiaLib}.a was not found in ${libPath}`,
+        `Skia library lib${skiaLib}${dynamicSuffix} or lib${skiaLib}.a was not found in ${libPath}`,
       );
     }
   }
+  return mode;
+}
+
+function unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix) {
+  const staticLib = path.join(libPath, `lib${name}.a`);
+  const dynamicLib = path.join(libPath, `lib${name}${dynamicSuffix}`);
+  const candidates = resolvedLinkMode === "dynamic"
+    ? [dynamicLib, staticLib]
+    : [staticLib, dynamicLib];
+  const existing = candidates.find(fs.existsSync);
+  return existing || `-l${name}`;
+}
+
+function skiaParagraphLinkFlags(libPath, resolvedLinkMode, platform = process.platform) {
+  const dynamicSuffix = unixDynamicLibrarySuffix(platform);
+  return [
+    `-L${libPath}`,
+    ...skiaParagraphLinkLibraryNames(platform)
+      .map(name => unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix)),
+  ].join(" ");
+}
+
+function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false, requestedMode = skiaLinkMode(config)) {
+  const staticLib = path.join(libPath, `lib${skiaLib}.a`);
+  const dynamicLib = path.join(libPath, `lib${skiaLib}.dylib`);
+  const ganeshExtStaticLib = path.join(libPath, "libskia_ganesh_ext.a");
+  const mode = resolveUnixLibraryMode(requestedMode, libPath, skiaLib, ".dylib");
 
   if (mode === "dynamic") {
     if (!fs.existsSync(dynamicLib)) {
@@ -423,8 +468,9 @@ function platformFlags(config, values) {
       stubCcFlags = appendFlags(stubCcFlags, "/DMOUI_SKIA_HAS_SKPARAGRAPH /DMOUI_SKIA_HAS_SKSHAPER");
     }
   } else if (process.platform === "darwin") {
+    const resolvedLinkMode = resolveUnixLibraryMode(linkMode, libPath, skiaLib, ".dylib");
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
-    linkFlags = macosLibraryFlags(config, libPath, skiaLib, skiaMetalGpuEnabled(config)) +
+    linkFlags = macosLibraryFlags(config, libPath, skiaLib, skiaMetalGpuEnabled(config), linkMode) +
       " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices";
     if (paragraphEnabled) {
       stubCcFlags = appendFlags(
@@ -433,7 +479,7 @@ function platformFlags(config, values) {
       );
       linkFlags = appendFlags(
         linkFlags,
-        `-L${libPath} -lskparagraph -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu`,
+        skiaParagraphLinkFlags(libPath, resolvedLinkMode, "darwin"),
       );
     }
     if (skiaMetalGpuEnabled(config)) {
@@ -447,10 +493,7 @@ function platformFlags(config, values) {
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
     const staticLib = path.join(libPath, `lib${skiaLib}.a`);
     const dynamicLib = path.join(libPath, `lib${skiaLib}.so`);
-    let resolvedLinkMode = linkMode;
-    if (resolvedLinkMode === "auto") {
-      resolvedLinkMode = fs.existsSync(dynamicLib) ? "dynamic" : "static";
-    }
+    const resolvedLinkMode = resolveUnixLibraryMode(linkMode, libPath, skiaLib, ".so");
     if (resolvedLinkMode === "static") {
       if (!fs.existsSync(staticLib)) {
         throw new Error(
@@ -477,14 +520,7 @@ function platformFlags(config, values) {
         stubCcFlags,
         "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
       );
-      linkFlags = appendMissingFlags(linkFlags, [
-        `-L${libPath}`,
-        "-lskparagraph",
-        "-lskshaper",
-        "-lskunicode_core",
-        "-lskunicode_icu",
-        "-licu",
-      ]);
+      linkFlags = appendFlags(linkFlags, skiaParagraphLinkFlags(libPath, resolvedLinkMode, "linux"));
     }
   }
 
