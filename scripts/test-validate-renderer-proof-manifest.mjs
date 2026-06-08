@@ -47,6 +47,11 @@ const skiaNativeObservationEvidence = {
     "grapheme-boundary",
     "utf8-offsets",
   ],
+  imeCompositionVisual: [
+    "composition-range",
+    "composition-cursor",
+    "preedit-pixels",
+  ],
 };
 
 const colorEmojiMetadata = () => ({
@@ -636,6 +641,29 @@ expectFail(
     ["--require-passed"],
   ),
   "must include 'preedit-pixels'",
+);
+
+expectFail(
+  "skia native ime composition proof rejects missing composition cursor token",
+  run(
+    "skia-native-missing-composition-cursor.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        imeCompositionVisual: {
+          status: "passed",
+          evidence: ["composition-range", "preedit-pixels"],
+          artifacts: ["artifacts/conformance/renderer-proof/ime-composition.log"],
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "must include 'composition-cursor'",
 );
 
 expectFail(
