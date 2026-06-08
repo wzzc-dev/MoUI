@@ -2011,12 +2011,26 @@ test "skia mixed text segmentation preserves grapheme clusters" {
   inspect(clusters[2], content="B")
   inspect(clusters[3].to_array().length(), content="2")
 
+  let indic_clusters = skia_grapheme_cluster_texts("क़्ष")
+  inspect(indic_clusters.length(), content="1")
+  inspect(indic_clusters[0].to_array().length(), content="4")
+  let indic_latin_clusters = skia_grapheme_cluster_texts("क़्A")
+  inspect(indic_latin_clusters.length(), content="2")
+  inspect(indic_latin_clusters[0].to_array().length(), content="3")
+  inspect(indic_latin_clusters[1], content="A")
+
   let segments = skia_mixed_text_segments("AB你好\u{1F642}CD")
   inspect(segments.length(), content="4")
   inspect(segments[0], content="AB")
   inspect(segments[1], content="你好")
   inspect(segments[2], content="\u{1F642}")
   inspect(segments[3], content="CD")
+
+  let indic_segments = skia_mixed_text_segments("Aक़्षB")
+  inspect(indic_segments.length(), content="3")
+  inspect(indic_segments[0], content="A")
+  inspect(indic_segments[1], content="क़्ष")
+  inspect(indic_segments[2], content="B")
 }
 
 ///|
