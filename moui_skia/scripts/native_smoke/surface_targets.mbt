@@ -108,7 +108,6 @@ fn make_smoke_surface(size : @skia.ISize) -> @native.Surface? {
         )
         is Some(gpu_surface) else {
         fail_smoke("failed to allocate Metal GPU-backed surface")
-        None
       }
       if !gpu_surface.descriptor().is_gpu() ||
         gpu_surface.descriptor() != metal_gpu_target.surface ||
