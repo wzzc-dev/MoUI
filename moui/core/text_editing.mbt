@@ -196,8 +196,9 @@ fn selected_text(text : String, selection : TextRange?) -> String {
   match active_text_selection(selection) {
     Some(selection) => {
       let chars = text.to_array()
-      let start = clamp_int(selection.start, 0, chars.length())
-      let end = clamp_int(selection.end, start, chars.length())
+      let range = TextGraphemeBoundaries::new(text~).normalize_range(selection)
+      let start = clamp_int(range.start, 0, chars.length())
+      let end = clamp_int(range.end, start, chars.length())
       String::from_array(chars[start:end])
     }
     None => ""
@@ -287,8 +288,11 @@ fn selected_rich_text_runs_text(
 ///|
 fn rich_text_run_slice(text : String, start : Int, end : Int) -> String {
   let chars = text.to_array()
-  let start = clamp_int(start, 0, chars.length())
-  let end = clamp_int(end, start, chars.length())
+  let range = TextGraphemeBoundaries::new(text~).normalize_range(
+    TextRange::new(start~, end~),
+  )
+  let start = clamp_int(range.start, 0, chars.length())
+  let end = clamp_int(range.end, start, chars.length())
   String::from_array(chars[start:end])
 }
 
@@ -359,8 +363,9 @@ fn replace_text_range(
 ) -> TextEditResult {
   let chars = text.to_array()
   let normalized = range.normalized()
-  let start = clamp_int(normalized.start, 0, chars.length())
-  let end = clamp_int(normalized.end, start, chars.length())
+  let range = TextGraphemeBoundaries::new(text~).normalize_range(normalized)
+  let start = clamp_int(range.start, 0, chars.length())
+  let end = clamp_int(range.end, start, chars.length())
   let replacement_chars = replacement.to_array()
   {
     text: String::from_array(chars[:start] + replacement_chars + chars[end:]),
@@ -385,6 +390,14 @@ fn active_text_selection(selection : TextRange?) -> TextRange? {
 }
 
 ///|
+fn normalize_text_range_to_grapheme(
+  text : String,
+  range : TextRange,
+) -> TextRange {
+  TextGraphemeBoundaries::new(text~).normalize_range(range)
+}
+
+///|
 fn text_selection_anchor(caret : Int, selection : TextRange?) -> Int {
   match selection {
     Some(selection) =>
@@ -405,10 +418,13 @@ fn move_text_caret(
   direction : TextCaretDirection,
   extend~ : Bool,
 ) -> TextCaretMoveResult {
-  let length = text_length(text)
-  let caret = clamp_int(caret, 0, length)
+  let boundaries = TextGraphemeBoundaries::new(text~)
+  let length = boundaries.length()
+  let caret = boundaries.clamp_index(caret)
   if extend {
-    let anchor = clamp_int(text_selection_anchor(caret, selection), 0, length)
+    let anchor = boundaries.nearest_boundary(
+      text_selection_anchor(caret, selection),
+    )
     let next = move_text_caret_index(text, caret, direction)
     {
       caret: next,
@@ -420,13 +436,15 @@ fn move_text_caret(
     }
   } else {
     match active_text_selection(selection) {
-      Some(selection) =>
+      Some(selection) => {
+        let selection = boundaries.normalize_range(selection)
         match direction {
           MoveLeft => { caret: selection.start, selection: None }
           MoveRight => { caret: selection.end, selection: None }
           MoveStart => { caret: 0, selection: None }
           MoveEnd => { caret: length, selection: None }
         }
+      }
       None =>
         {
           caret: move_text_caret_index(text, caret, direction),
@@ -460,12 +478,13 @@ fn surrounding_delete_range(
   after : Int,
 ) -> TextRange {
   let length = text_length(text)
-  let caret = clamp_int(caret, 0, length)
   let before = max_int(0, before)
   let after = max_int(0, after)
+  let boundaries = TextGraphemeBoundaries::new(text~)
+  let range = boundaries.delete_range(caret, before, after)
   TextRange::new(
-    start=max_int(0, caret - before),
-    end=min_int(length, caret + after),
+    start=clamp_int(range.start, 0, length),
+    end=clamp_int(range.end, 0, length),
   )
 }
 
@@ -521,8 +540,9 @@ fn composition_start_index(
   selection : TextRange?,
 ) -> Int {
   match active_text_selection(selection) {
-    Some(selection) => selection.start
-    None => clamp_int(caret, 0, text_length(text))
+    Some(selection) =>
+      TextGraphemeBoundaries::new(text~).normalize_range(selection).start
+    None => TextGraphemeBoundaries::new(text~).nearest_boundary(caret)
   }
 }
 
@@ -535,7 +555,9 @@ fn composition_cursor_offset(
   match element.control.composition_cursor {
     Some(cursor) => {
       let normalized = cursor.normalized()
-      clamp_int(normalized.end, 0, length)
+      TextGraphemeBoundaries::new(text=composition).nearest_boundary(
+        clamp_int(normalized.end, 0, length),
+      )
     }
     None => length
   }
@@ -592,7 +614,9 @@ fn move_multiline_caret_vertical(
     next_start = current_end + 1
     next_end = multiline_line_end(text, next_start)
   }
-  element.control.caret = min_int(next_start + column, next_end)
+  element.control.caret = TextGraphemeBoundaries::new(text~).nearest_boundary(
+    min_int(next_start + column, next_end),
+  )
   element.control.selection = None
   element.control.composition = None
   element.control.composition_cursor = None
@@ -663,9 +687,10 @@ fn handle_rich_text_editor_input(
       }
       match update.cursor {
         Some(cursor) => {
-          let normalized = cursor.normalized()
-          let start = clamp_int(normalized.start, 0, text_length(update.text))
-          let end = clamp_int(normalized.end, 0, text_length(update.text))
+          let normalized = normalize_text_range_to_grapheme(update.text, cursor)
+          let length = text_length(update.text)
+          let start = clamp_int(normalized.start, 0, length)
+          let end = clamp_int(normalized.end, 0, length)
           element.control.composition_cursor = Some(
             TextRange::new(start~, end~),
           )

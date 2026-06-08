@@ -1,12 +1,16 @@
 ///|
 fn append_text_field_selection_commands(
   commands : Array[DrawCommand],
+  text : String,
   text_frame : Rect,
   layout : TextLayoutResult,
   selection : TextRange?,
 ) -> Unit {
   match active_text_selection(selection) {
     Some(selection) => {
+      let selection = TextGraphemeBoundaries::new(text~).normalize_range(
+        selection,
+      )
       let start = clamp_int(
         selection.start,
         0,
@@ -170,6 +174,7 @@ fn append_text_field_commands(
     )
     append_text_field_selection_commands(
       commands,
+      display_text,
       text_frame,
       layout,
       element.control.selection,
@@ -267,6 +272,7 @@ fn append_searchbar_commands(
     )
     append_text_field_selection_commands(
       commands,
+      display_text,
       text_frame,
       layout,
       element.control.selection,

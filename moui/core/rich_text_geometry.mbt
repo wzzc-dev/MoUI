@@ -29,7 +29,8 @@ fn rich_text_block_run_visual_offset_from_source(
 ) -> Int? {
   let mut visual = 0
   for run in block.runs {
-    let visual_length = text_length(rich_text_run_visual_text(run))
+    let visual_text = rich_text_run_visual_text(run)
+    let visual_length = text_length(visual_text)
     match run.source_range {
       Some(range) =>
         if source_offset <= range.end {
@@ -37,8 +38,8 @@ fn rich_text_block_run_visual_offset_from_source(
             visual +
             rich_text_run_visual_offset_from_source_offset(
               source_offset - range.start,
-              text_length(run.text),
-              visual_length,
+              run.text,
+              visual_text,
             ),
           )
         }
@@ -214,8 +215,8 @@ fn rich_text_block_run_source_offset_from_visual(
     None => None
   }
   for run in block.runs {
-    let length = text_length(run.text)
-    let visual_length = text_length(rich_text_run_visual_text(run))
+    let visual_text = rich_text_run_visual_text(run)
+    let visual_length = text_length(visual_text)
     if remaining <= visual_length {
       match run.source_range {
         Some(range) =>
@@ -223,7 +224,9 @@ fn rich_text_block_run_source_offset_from_visual(
             clamp_int(
               range.start +
               rich_text_run_source_offset_from_visual_offset(
-                remaining, visual_length, length,
+                remaining,
+                visual_text,
+                run.text,
               ),
               range.start,
               range.end,
@@ -311,9 +314,14 @@ fn rich_text_run_visual_text(run : RichTextRun) -> String {
 ///|
 fn rich_text_run_visual_offset_from_source_offset(
   source_offset : Int,
-  source_length : Int,
-  visual_length : Int,
+  source_text : String,
+  visual_text : String,
 ) -> Int {
+  let source_boundaries = TextGraphemeBoundaries::new(text=source_text)
+  let visual_boundaries = TextGraphemeBoundaries::new(text=visual_text)
+  let source_length = source_boundaries.length()
+  let visual_length = visual_boundaries.length()
+  let source_offset = source_boundaries.nearest_boundary(source_offset)
   if source_length <= 0 || visual_length <= 0 {
     0
   } else if source_offset <= 0 {
@@ -321,20 +329,27 @@ fn rich_text_run_visual_offset_from_source_offset(
   } else if source_offset >= source_length {
     visual_length
   } else {
-    (source_offset.to_double() *
-    visual_length.to_double() /
-    source_length.to_double())
-    .round()
-    .to_int()
+    visual_boundaries.nearest_boundary(
+      (source_offset.to_double() *
+      visual_length.to_double() /
+      source_length.to_double())
+      .round()
+      .to_int(),
+    )
   }
 }
 
 ///|
 fn rich_text_run_source_offset_from_visual_offset(
   visual_offset : Int,
-  visual_length : Int,
-  source_length : Int,
+  visual_text : String,
+  source_text : String,
 ) -> Int {
+  let visual_boundaries = TextGraphemeBoundaries::new(text=visual_text)
+  let source_boundaries = TextGraphemeBoundaries::new(text=source_text)
+  let visual_length = visual_boundaries.length()
+  let source_length = source_boundaries.length()
+  let visual_offset = visual_boundaries.nearest_boundary(visual_offset)
   if visual_length <= 0 || source_length <= 0 {
     0
   } else if visual_offset <= 0 {
@@ -342,18 +357,20 @@ fn rich_text_run_source_offset_from_visual_offset(
   } else if visual_offset >= visual_length {
     source_length
   } else {
-    (visual_offset.to_double() *
-    source_length.to_double() /
-    visual_length.to_double())
-    .round()
-    .to_int()
+    source_boundaries.nearest_boundary(
+      (visual_offset.to_double() *
+      source_length.to_double() /
+      visual_length.to_double())
+      .round()
+      .to_int(),
+    )
   }
 }
 
 ///|
 fn rich_text_prefix(text : String, length : Int) -> String {
   let chars = text.to_array()
-  let end = clamp_int(length, 0, chars.length())
+  let end = TextGraphemeBoundaries::new(text~).nearest_boundary(length)
   String::from_array(chars[0:end])
 }
 
@@ -627,6 +644,7 @@ fn rich_text_run_visual_offset_at_x(
   width? : Double? = None,
 ) -> Int {
   let chars = text.to_array()
+  let boundaries = TextGraphemeBoundaries::new(text~)
   if x <= origin_x {
     return 0
   }
@@ -640,7 +658,9 @@ fn rich_text_run_visual_offset_at_x(
         }
       } else {
         let relative = clamp_double((x - origin_x) / width, 0.0, 1.0)
-        return (relative * chars.length().to_double()).round().to_int()
+        return boundaries.nearest_boundary(
+          (relative * chars.length().to_double()).round().to_int(),
+        )
       }
     None => ()
   }
@@ -656,7 +676,7 @@ fn rich_text_run_visual_offset_at_x(
       text_system,
     )
     if x < origin_x + (before + after) / 2.0 {
-      return index
+      return boundaries.nearest_boundary(index)
     }
   }
   chars.length()
@@ -785,7 +805,7 @@ fn rich_text_caret_rect(
   text_system : TextSystem,
 ) -> Rect {
   let chars = text.to_array()
-  let caret = clamp_int(caret, 0, chars.length())
+  let caret = TextGraphemeBoundaries::new(text~).nearest_boundary(caret)
   let mut line = 0
   let mut column_start = 0
   for index in 0..<caret {
