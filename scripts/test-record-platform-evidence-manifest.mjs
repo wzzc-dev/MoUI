@@ -40,7 +40,28 @@ const pendingObservations = {
   rendererHandle: "pending",
   monitorCursor: "pending",
   cleanShutdown: "pending",
+  imeCandidateAnchor: "pending",
+  imeSurroundingText: "pending",
+  imeCompositionVisual: "pending",
+  imeCommitDelete: "pending",
+  imeCursorUpdate: "pending",
+  imeScrollAnchor: "pending",
+  imeScaleDprAnchor: "pending",
+  imeResizeAnchor: "pending",
+  imeMarkdownEditor: "pending",
 };
+
+const nativeImeObservationKeys = [
+  "imeCandidateAnchor",
+  "imeSurroundingText",
+  "imeCompositionVisual",
+  "imeCommitDelete",
+  "imeCursorUpdate",
+  "imeScrollAnchor",
+  "imeScaleDprAnchor",
+  "imeResizeAnchor",
+  "imeMarkdownEditor",
+];
 
 const webPresentationObservationKeys = [
   "pageLoaded",
@@ -73,7 +94,7 @@ const webPresentationObservationKeys = [
 ];
 
 const webPlatformObservationKeys = Object.keys(pendingObservations).filter(
-  key => key !== "monitorCursor",
+  key => key !== "monitorCursor" && !nativeImeObservationKeys.includes(key),
 );
 
 const webPresentationObservations = value =>
@@ -547,6 +568,7 @@ const windowsEntry = windowsManifest.platforms.find(entry => entry.name === "win
 if (
   windowsEntry.status !== "passed" ||
   windowsEntry.observations.textInput !== "yes" ||
+  windowsEntry.observations.imeCandidateAnchor !== "yes" ||
   windowsEntry.observations.monitorCursor !== "yes" ||
   windowsEntry.evidenceProvenance?.kind !== "github-actions" ||
   windowsEntry.skiaEvidence.status !== "passed" ||
@@ -657,6 +679,7 @@ const legacyLinuxEntry = legacyManifest.platforms.find(entry => entry.name === "
 if (
   legacyManifest.schemaVersion !== 2 ||
   legacyLinuxEntry.observations.monitorCursor !== "pending" ||
+  legacyLinuxEntry.observations.imeCandidateAnchor !== "pending" ||
   legacyLinuxEntry.skiaEvidence.status !== "pending" ||
   legacyLinuxEntry.skiaEvidence.observations.asyncImageSecondFrame !== "pending" ||
   legacyLinuxEntry.skiaEvidence.observations.showcaseFirstFrame !== "pending"

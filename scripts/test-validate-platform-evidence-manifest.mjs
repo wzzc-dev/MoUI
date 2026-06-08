@@ -21,6 +21,15 @@ const pendingObservations = {
   rendererHandle: "pending",
   monitorCursor: "pending",
   cleanShutdown: "pending",
+  imeCandidateAnchor: "pending",
+  imeSurroundingText: "pending",
+  imeCompositionVisual: "pending",
+  imeCommitDelete: "pending",
+  imeCursorUpdate: "pending",
+  imeScrollAnchor: "pending",
+  imeScaleDprAnchor: "pending",
+  imeResizeAnchor: "pending",
+  imeMarkdownEditor: "pending",
 };
 
 const passedObservations = Object.fromEntries(
@@ -507,6 +516,66 @@ expectFail(
   "passed evidence requires all observations",
   runValidator(writeFixture("incomplete-passed.json", incompletePassed)),
   "observations.textInput must be yes when status is passed",
+);
+
+const incompleteNativeImePassed = {
+  ...windowsPassed,
+  platforms: windowsPassed.platforms.map(entry =>
+    entry.name === "windows"
+      ? {
+          ...entry,
+          observations: { ...entry.observations, imeCandidateAnchor: "pending" },
+        }
+      : entry,
+  ),
+};
+expectFail(
+  "passed native evidence requires IME candidate anchor",
+  runValidator(writeFixture("incomplete-native-ime-passed.json", incompleteNativeImePassed)),
+  "observations.imeCandidateAnchor must be yes when status is passed",
+);
+
+const webPassedWithNativeImePending = {
+  ...validManifest,
+  platforms: validManifest.platforms.map(entry =>
+    entry.name === "web"
+      ? {
+          ...entry,
+          status: "passed",
+          host: "Web wasm-gc browser host (Chrome/149.0.7827.54)",
+          consumerCommand:
+            "node scripts/record-web-runtime-presentation.mjs --base-url http://127.0.0.1:18080 --cdp-url http://127.0.0.1:9223 --manifest artifacts/conformance/web-runtime-presentation.json --require-passed",
+          observations: {
+            ...passedObservations,
+            monitorCursor: "pending",
+            imeCandidateAnchor: "pending",
+            imeSurroundingText: "pending",
+            imeCompositionVisual: "pending",
+            imeCommitDelete: "pending",
+            imeCursorUpdate: "pending",
+            imeScrollAnchor: "pending",
+            imeScaleDprAnchor: "pending",
+            imeResizeAnchor: "pending",
+            imeMarkdownEditor: "pending",
+          },
+          artifacts: [
+            "artifacts/platform-evidence/web/web-runtime-presentation.json",
+            "artifacts/platform-evidence/web/showcase-web-wasm.png",
+            "artifacts/platform-evidence/web/markdown-editor-web-wasm.png",
+          ],
+          evidenceProvenance: matchingHostProvenance("web", "Web wasm-gc browser host (Chrome/149.0.7827.54)", [
+            "artifacts/platform-evidence/web/web-runtime-presentation.json",
+            "artifacts/platform-evidence/web/showcase-web-wasm.png",
+            "artifacts/platform-evidence/web/markdown-editor-web-wasm.png",
+          ]),
+          notes: ["Web browser-session platform evidence observed"],
+        }
+      : entry,
+  ),
+};
+expectPass(
+  "web passed evidence allows native IME observations to stay pending",
+  runValidator(writeFixture("web-passed-native-ime-pending.json", webPassedWithNativeImePending)),
 );
 
 const missingSkiaEvidence = {

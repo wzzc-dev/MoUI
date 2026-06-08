@@ -58,6 +58,17 @@ const platforms = new Set(["web", "macos", "windows", "linux"]);
 const nativeSkiaPlatforms = new Set(["macos", "windows", "linux"]);
 const statuses = new Set(["passed", "failed", "pending"]);
 const provenanceKinds = new Set(["github-actions", "matching-host-artifact"]);
+const nativeImeObservationKeys = [
+  "imeCandidateAnchor",
+  "imeSurroundingText",
+  "imeCompositionVisual",
+  "imeCommitDelete",
+  "imeCursorUpdate",
+  "imeScrollAnchor",
+  "imeScaleDprAnchor",
+  "imeResizeAnchor",
+  "imeMarkdownEditor",
+];
 const observationKeys = new Set([
   "windowOpened",
   "resizeRedraw",
@@ -71,6 +82,7 @@ const observationKeys = new Set([
   "rendererHandle",
   "monitorCursor",
   "cleanShutdown",
+  ...nativeImeObservationKeys,
 ]);
 const skiaObservationKeys = new Set([
   "providerPreflight",
@@ -90,6 +102,9 @@ const pendingSkiaObservations = () => ({
   showcaseFirstFrame: "pending",
   markdownFirstFrame: "pending",
 });
+
+const pendingNativeImeObservations = () =>
+  Object.fromEntries(nativeImeObservationKeys.map(key => [key, "pending"]));
 
 const defaultSkiaEvidence = platform => {
   if (platform === "macos") {
@@ -655,6 +670,11 @@ for (const platformEntry of manifest.platforms) {
   }
   if (platformEntry.observations.monitorCursor === undefined) {
     platformEntry.observations.monitorCursor = "pending";
+  }
+  for (const [key, value] of Object.entries(pendingNativeImeObservations())) {
+    if (platformEntry.observations[key] === undefined) {
+      platformEntry.observations[key] = value;
+    }
   }
   if (nativeSkiaPlatforms.has(platformEntry.name)) {
     if (!platformEntry.skiaEvidence || typeof platformEntry.skiaEvidence !== "object" || Array.isArray(platformEntry.skiaEvidence)) {

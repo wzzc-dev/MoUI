@@ -304,7 +304,13 @@ artifacts to validate as passed before mainline capability promotion; native
 WGPU diagnostic artifacts are uploaded separately but do not block the summary.
 The platform evidence manifest is schema v2 and records the window fork's
 monitor/cursor probe as `monitorCursor`; native passed entries must set it to
-`yes`, while Web browser-session evidence may leave it pending. Native entries
+`yes`, while Web browser-session evidence may leave it pending. Native passed
+entries must also set `imeCandidateAnchor`, `imeSurroundingText`,
+`imeCompositionVisual`, `imeCommitDelete`, `imeCursorUpdate`,
+`imeScrollAnchor`, `imeScaleDprAnchor`, `imeResizeAnchor`, and
+`imeMarkdownEditor` to `yes` from matching-host Showcase or Markdown Editor
+runtime artifacts; host-core unit tests, package logs, provider preflights, and
+coarse `textInput` observations are not enough. Native entries
 also record a `skiaEvidence` block for Skia provider/preflight commands,
 fallback-unavailable checks, real-renderer smoke, async image second-frame
 smoke, and Showcase/Markdown first-frame status. Any `status=passed` platform

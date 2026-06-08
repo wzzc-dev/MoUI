@@ -457,7 +457,13 @@ set mirrors the local window fork's recorder fields, including native
 monitor/cursor evidence as `monitorCursor`. For native passed entries,
 `monitorCursor` must be `yes`; the Web browser-session path may keep it
 `pending` because CDP evidence does not prove native monitor/current-monitor or
-cursor probes. Native platform entries also carry `skiaEvidence`; use
+cursor probes. Native passed entries must also set the explicit IME runtime
+observations to `yes`: `imeCandidateAnchor`, `imeSurroundingText`,
+`imeCompositionVisual`, `imeCommitDelete`, `imeCursorUpdate`,
+`imeScrollAnchor`, `imeScaleDprAnchor`, `imeResizeAnchor`, and
+`imeMarkdownEditor`. These observations must come from matching-host Showcase
+or Markdown Editor runtime artifacts; host-core unit tests, package logs,
+provider preflights, and coarse `textInput` evidence do not satisfy them. Native platform entries also carry `skiaEvidence`; use
 `--skia-status`, repeated `--skia-set`, `--skia-artifact`, and `--skia-note`
 when recording first-frame Skia smoke results. Keep the overall platform
 `status` pending when only the Skia first-frame route passed and broader
@@ -522,6 +528,15 @@ node scripts/record-platform-evidence-manifest.mjs \
   --set rendererHandle=yes \
   --set monitorCursor=yes \
   --set cleanShutdown=yes \
+  --set imeCandidateAnchor=yes \
+  --set imeSurroundingText=yes \
+  --set imeCompositionVisual=yes \
+  --set imeCommitDelete=yes \
+  --set imeCursorUpdate=yes \
+  --set imeScrollAnchor=yes \
+  --set imeScaleDprAnchor=yes \
+  --set imeResizeAnchor=yes \
+  --set imeMarkdownEditor=yes \
   --artifact artifacts/platform-evidence/windows/window-smoke.md \
   --artifact artifacts/platform-evidence/windows/showcase-run.log \
   --note "matching-host Windows evidence observed" \

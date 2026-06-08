@@ -126,6 +126,20 @@ const observationKeys = [
   "cleanShutdown",
 ];
 
+const nativeImeObservationKeys = [
+  "imeCandidateAnchor",
+  "imeSurroundingText",
+  "imeCompositionVisual",
+  "imeCommitDelete",
+  "imeCursorUpdate",
+  "imeScrollAnchor",
+  "imeScaleDprAnchor",
+  "imeResizeAnchor",
+  "imeMarkdownEditor",
+];
+
+observationKeys.push(...nativeImeObservationKeys);
+
 const skiaObservationKeys = [
   "providerPreflight",
   "fallbackUnavailable",
@@ -276,6 +290,7 @@ const consumerObservationKeys = [
   "rendererHandle",
   "monitorCursor",
   "cleanShutdown",
+  ...nativeImeObservationKeys,
 ];
 
 const validateSkiaEvidence = (entry, label, name, platformStatus) => {
@@ -576,7 +591,9 @@ entries.forEach((entry, index) => {
 
   if (status === "passed") {
     const requiredPassedObservationKeys = name === "web"
-      ? observationKeys.filter(key => key !== "monitorCursor")
+      ? observationKeys.filter(
+          key => key !== "monitorCursor" && !nativeImeObservationKeys.includes(key),
+        )
       : observationKeys;
     const incompleteObservation = requiredPassedObservationKeys.find(
       key => entry.observations[key] !== "yes",

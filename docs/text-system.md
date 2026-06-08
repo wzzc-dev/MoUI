@@ -184,6 +184,13 @@ and `imeCompositionVisual`; those keys must be backed by selection rectangle,
 line-range, grapheme-boundary, edit-action, candidate-anchor, surrounding-text,
 composition-range, and preedit-pixel evidence before text or IME readiness can
 be promoted.
+Platform runtime evidence splits native IME readiness further: native
+`status=passed` entries must also record `imeSurroundingText`,
+`imeCommitDelete`, `imeCursorUpdate`, `imeScrollAnchor`,
+`imeScaleDprAnchor`, `imeResizeAnchor`, and `imeMarkdownEditor` observations
+from matching-host Showcase or Markdown Editor artifacts, so package-only
+composition tests and coarse `textInput` observations cannot promote native IME
+readiness by themselves.
 These fields make CI artifacts easier to audit, but they are not yet a
 guarantee of exact cross-platform typeface identity, glyph-id determinism,
 native IME behavior, or full Unicode bidi layout parity.
@@ -245,6 +252,11 @@ Remote font loading is intentionally outside the current backend contract.
   for later IME handoff. This keeps deterministic text-field, selection, and
   IME-anchor geometry on one path while still leaving generated Unicode data
   conformance and full grapheme-cluster parity as release follow-up work.
+  Native IME runtime readiness is also still pending: macOS, Windows, and Linux
+  must each record matching-host Showcase or Markdown Editor artifacts for
+  candidate anchors, surrounding text, composition visuals, commit/delete
+  behavior, cursor updates, scroll anchors, scale/DPR anchors, resize anchors,
+  and Markdown Editor IME dogfood before native IME can be called ready.
   Native WGPU can preserve RGBA color glyph payloads
   through the provider protocol and glyph atlas path, with Cosmic platform
   emoji fallback candidate loading, Cosmic color swash preservation,
