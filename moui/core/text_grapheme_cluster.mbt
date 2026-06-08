@@ -8,17 +8,17 @@ pub(all) struct TextGraphemeBoundaries {
 pub fn TextGraphemeBoundaries::new(text~ : String) -> TextGraphemeBoundaries {
   let chars = text.to_array()
   let boundaries : Array[Int] = [0]
-  let mut index = 0
+  let mut index = 1
+  let mut last_boundary = 0
   while index < chars.length() {
-    let next = fallback_grapheme_cluster_end_safe(chars, index)
-    if next > index {
-      boundaries.push(next)
-      index = next
-    } else {
-      let fallback_next = min_int(index + 1, chars.length())
-      boundaries.push(fallback_next)
-      index = fallback_next
+    if fallback_grapheme_should_break(chars, last_boundary, index) {
+      boundaries.push(index)
+      last_boundary = index
     }
+    index = index + 1
+  }
+  if chars.length() > 0 {
+    boundaries.push(chars.length())
   }
   { text, boundaries }
 }
@@ -203,169 +203,62 @@ fn fallback_stabilize_grapheme_cluster_carets(
     return carets
   }
   let adjusted = carets.copy()
-  let mut index = 0
-  while index < chars.length() {
-    let cluster_end = fallback_grapheme_cluster_end(chars, index)
-    if cluster_end > index + 1 {
-      fallback_stabilize_caret_cluster(adjusted, index, cluster_end)
-      index = cluster_end
-    } else {
-      index = index + 1
+  let boundaries = TextGraphemeBoundaries::new(text~).boundaries()
+  for boundary_index in 0..<(boundaries.length() - 1) {
+    let start = boundaries[boundary_index]
+    let end = boundaries[boundary_index + 1]
+    if end > start + 1 {
+      fallback_stabilize_caret_cluster(adjusted, start, end)
     }
   }
   adjusted
 }
 
 ///|
-fn fallback_grapheme_cluster_end(chars : Array[Char], start : Int) -> Int {
-  if start < 0 || start >= chars.length() {
-    return start
-  }
-  let codepoint = chars[start].to_int()
-  if fallback_codepoint_is_regional_indicator(codepoint) {
-    return fallback_regional_indicator_cluster_end(chars, start)
-  }
-  if fallback_codepoint_is_grapheme_prepend(codepoint) {
-    return fallback_prepend_cluster_end(chars, start)
-  }
-  if fallback_codepoint_is_hangul_cluster_codepoint(codepoint) {
-    return fallback_hangul_cluster_end(chars, start)
-  }
-  if fallback_codepoint_can_start_emoji_tag_sequence(codepoint) {
-    let tag_end = fallback_emoji_tag_sequence_end(chars, start)
-    if tag_end > start + 1 {
-      return tag_end
-    }
-  }
-  let mut end = fallback_grapheme_extend_end(chars, start + 1)
-  let mut advanced = true
-  while advanced {
-    advanced = false
-    if end < chars.length() &&
-      chars[end].to_int() == 0x200D &&
-      end + 1 < chars.length() {
-      end = fallback_grapheme_extend_end(chars, end + 2)
-      advanced = true
-    } else if end < chars.length() &&
-      end > start &&
-      fallback_codepoint_is_virama(chars[end - 1].to_int()) {
-      end = fallback_grapheme_extend_end(chars, end + 1)
-      advanced = true
-    }
-  }
-  end
-}
-
-///|
-fn fallback_regional_indicator_cluster_end(
+fn fallback_grapheme_should_break(
   chars : Array[Char],
-  start : Int,
-) -> Int {
-  let mut end = start
-  while end < chars.length() &&
-        fallback_codepoint_is_regional_indicator(chars[end].to_int()) &&
-        end - start < 2 {
-    end = end + 1
+  last_boundary : Int,
+  index : Int,
+) -> Bool {
+  if index <= 0 || index >= chars.length() {
+    return true
   }
-  end
-}
-
-///|
-fn fallback_emoji_tag_sequence_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start + 1
-  let mut saw_tag = false
-  while end < chars.length() &&
-        fallback_codepoint_is_emoji_tag(chars[end].to_int()) {
-    saw_tag = true
-    end = end + 1
-    if chars[end - 1].to_int() == 0xE007F {
-      return end
-    }
+  let left = chars[index - 1].to_int()
+  let right = chars[index].to_int()
+  if fallback_codepoint_is_cr(left) && fallback_codepoint_is_lf(right) {
+    return false
   }
-  if saw_tag {
-    end
-  } else {
-    start
+  if fallback_codepoint_is_grapheme_break_control(left) ||
+    fallback_codepoint_is_grapheme_break_control(right) {
+    return true
   }
-}
-
-///|
-fn fallback_prepend_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let mut base = start + 1
-  while base < chars.length() &&
-        fallback_codepoint_is_grapheme_prepend(chars[base].to_int()) {
-    base = base + 1
+  if fallback_hangul_allows_no_break(left, right) {
+    return false
   }
-  if base >= chars.length() {
-    return base
+  if fallback_codepoint_is_grapheme_extend(right) ||
+    fallback_codepoint_is_zwj(right) {
+    return false
   }
-  fallback_grapheme_cluster_end(chars, base)
-}
-
-///|
-fn fallback_hangul_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let codepoint = chars[start].to_int()
-  if fallback_codepoint_is_hangul_l(codepoint) {
-    return fallback_hangul_l_cluster_end(chars, start)
+  if fallback_codepoint_is_spacing_mark(right) {
+    return false
   }
-  if fallback_codepoint_is_hangul_v(codepoint) ||
-    fallback_codepoint_is_hangul_lv(codepoint) {
-    return fallback_hangul_v_cluster_end(chars, start + 1)
+  if fallback_codepoint_is_grapheme_prepend(left) {
+    return false
   }
-  if fallback_codepoint_is_hangul_t(codepoint) ||
-    fallback_codepoint_is_hangul_lvt(codepoint) {
-    return fallback_hangul_t_cluster_end(chars, start + 1)
+  if fallback_indic_virama_allows_no_break(chars, index) {
+    return false
   }
-  start
-}
-
-///|
-fn fallback_hangul_l_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start + 1
-  while end < chars.length() &&
-        fallback_codepoint_is_hangul_l(chars[end].to_int()) {
-    end = end + 1
+  if fallback_emoji_zwj_allows_no_break(chars, index) {
+    return false
   }
-  if end < chars.length() {
-    let codepoint = chars[end].to_int()
-    if fallback_codepoint_is_hangul_v(codepoint) ||
-      fallback_codepoint_is_hangul_lv(codepoint) {
-      end = fallback_hangul_v_cluster_end(chars, end + 1)
-    } else if fallback_codepoint_is_hangul_lvt(codepoint) {
-      end = fallback_hangul_t_cluster_end(chars, end + 1)
-    }
+  if fallback_codepoint_is_regional_indicator(left) &&
+    fallback_codepoint_is_regional_indicator(right) {
+    let ri_count = fallback_regional_indicator_count_before(
+      chars, last_boundary, index,
+    )
+    return ri_count % 2 == 0
   }
-  fallback_grapheme_extend_end(chars, end)
-}
-
-///|
-fn fallback_hangul_v_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start
-  while end < chars.length() &&
-        fallback_codepoint_is_hangul_v(chars[end].to_int()) {
-    end = end + 1
-  }
-  fallback_hangul_t_cluster_end(chars, end)
-}
-
-///|
-fn fallback_hangul_t_cluster_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start
-  while end < chars.length() &&
-        fallback_codepoint_is_hangul_t(chars[end].to_int()) {
-    end = end + 1
-  }
-  fallback_grapheme_extend_end(chars, end)
-}
-
-///|
-fn fallback_grapheme_extend_end(chars : Array[Char], start : Int) -> Int {
-  let mut end = start
-  while end < chars.length() &&
-        fallback_codepoint_is_grapheme_extend(chars[end].to_int()) {
-    end = end + 1
-  }
-  end
+  true
 }
 
 ///|
@@ -397,13 +290,122 @@ fn text_next_grapheme_caret_boundary(text : String, caret : Int) -> Int {
 }
 
 ///|
-fn fallback_grapheme_cluster_end_safe(chars : Array[Char], start : Int) -> Int {
-  let end = fallback_grapheme_cluster_end(chars, start)
-  if end <= start {
-    min_int(start + 1, chars.length())
-  } else {
-    min_int(end, chars.length())
+fn fallback_codepoint_is_cr(codepoint : Int) -> Bool {
+  codepoint == 0x000D
+}
+
+///|
+fn fallback_codepoint_is_lf(codepoint : Int) -> Bool {
+  codepoint == 0x000A
+}
+
+///|
+fn fallback_codepoint_is_grapheme_break_control(codepoint : Int) -> Bool {
+  fallback_codepoint_is_cr(codepoint) ||
+  fallback_codepoint_is_lf(codepoint) ||
+  (codepoint >= 0x0000 && codepoint <= 0x0009) ||
+  (codepoint >= 0x000B && codepoint <= 0x000C) ||
+  (codepoint >= 0x000E && codepoint <= 0x001F) ||
+  (codepoint >= 0x007F && codepoint <= 0x009F) ||
+  codepoint == 0x00AD ||
+  codepoint == 0x061C ||
+  codepoint == 0x180E ||
+  codepoint == 0x200B ||
+  (codepoint >= 0x200E && codepoint <= 0x200F) ||
+  (codepoint >= 0x2028 && codepoint <= 0x202E) ||
+  (codepoint >= 0x2060 && codepoint <= 0x206F) ||
+  codepoint == 0xFEFF ||
+  (codepoint >= 0xFFF9 && codepoint <= 0xFFFB)
+}
+
+///|
+fn fallback_codepoint_is_zwj(codepoint : Int) -> Bool {
+  codepoint == 0x200D
+}
+
+///|
+fn fallback_hangul_allows_no_break(left : Int, right : Int) -> Bool {
+  if fallback_codepoint_is_hangul_l(left) {
+    return fallback_codepoint_is_hangul_l(right) ||
+      fallback_codepoint_is_hangul_v(right) ||
+      fallback_codepoint_is_hangul_lv(right) ||
+      fallback_codepoint_is_hangul_lvt(right)
   }
+  if fallback_codepoint_is_hangul_lv(left) ||
+    fallback_codepoint_is_hangul_v(left) {
+    return fallback_codepoint_is_hangul_v(right) ||
+      fallback_codepoint_is_hangul_t(right)
+  }
+  if fallback_codepoint_is_hangul_lvt(left) ||
+    fallback_codepoint_is_hangul_t(left) {
+    return fallback_codepoint_is_hangul_t(right)
+  }
+  false
+}
+
+///|
+fn fallback_indic_virama_allows_no_break(
+  chars : Array[Char],
+  index : Int,
+) -> Bool {
+  let left = chars[index - 1].to_int()
+  if fallback_codepoint_is_virama(left) {
+    return true
+  }
+  if !fallback_codepoint_is_zwj(left) || index < 2 {
+    return false
+  }
+  let mut cursor = index - 2
+  while cursor >= 0 &&
+        fallback_codepoint_is_grapheme_extend(chars[cursor].to_int()) &&
+        !fallback_codepoint_is_zwj(chars[cursor].to_int()) &&
+        !fallback_codepoint_is_virama(chars[cursor].to_int()) {
+    if cursor == 0 {
+      return false
+    }
+    cursor = cursor - 1
+  }
+  fallback_codepoint_is_virama(chars[cursor].to_int())
+}
+
+///|
+fn fallback_emoji_zwj_allows_no_break(chars : Array[Char], index : Int) -> Bool {
+  if index <= 0 || !fallback_codepoint_is_zwj(chars[index - 1].to_int()) {
+    return false
+  }
+  if !fallback_codepoint_is_extended_pictographic(chars[index].to_int()) {
+    return false
+  }
+  let mut cursor = index - 2
+  while cursor >= 0 &&
+        fallback_codepoint_is_grapheme_extend(chars[cursor].to_int()) &&
+        !fallback_codepoint_is_zwj(chars[cursor].to_int()) {
+    if cursor == 0 {
+      return fallback_codepoint_is_extended_pictographic(chars[cursor].to_int())
+    }
+    cursor = cursor - 1
+  }
+  cursor >= 0 &&
+  fallback_codepoint_is_extended_pictographic(chars[cursor].to_int())
+}
+
+///|
+fn fallback_regional_indicator_count_before(
+  chars : Array[Char],
+  last_boundary : Int,
+  index : Int,
+) -> Int {
+  let mut count = 0
+  let mut cursor = index - 1
+  while cursor >= last_boundary &&
+        fallback_codepoint_is_regional_indicator(chars[cursor].to_int()) {
+    count = count + 1
+    if cursor == 0 {
+      return count
+    }
+    cursor = cursor - 1
+  }
+  count
 }
 
 ///|
@@ -546,15 +548,6 @@ fn fallback_codepoint_is_virama(codepoint : Int) -> Bool {
 }
 
 ///|
-fn fallback_codepoint_is_hangul_cluster_codepoint(codepoint : Int) -> Bool {
-  fallback_codepoint_is_hangul_l(codepoint) ||
-  fallback_codepoint_is_hangul_v(codepoint) ||
-  fallback_codepoint_is_hangul_t(codepoint) ||
-  fallback_codepoint_is_hangul_lv(codepoint) ||
-  fallback_codepoint_is_hangul_lvt(codepoint)
-}
-
-///|
 fn fallback_codepoint_is_hangul_l(codepoint : Int) -> Bool {
   (codepoint >= 0x1100 && codepoint <= 0x115F) ||
   (codepoint >= 0xA960 && codepoint <= 0xA97C)
@@ -595,13 +588,38 @@ fn fallback_codepoint_is_emoji_modifier(codepoint : Int) -> Bool {
 }
 
 ///|
-fn fallback_codepoint_is_emoji_tag(codepoint : Int) -> Bool {
-  (codepoint >= 0xE0020 && codepoint <= 0xE007E) || codepoint == 0xE007F
+fn fallback_codepoint_is_extended_pictographic(codepoint : Int) -> Bool {
+  codepoint == 0x00A9 ||
+  codepoint == 0x00AE ||
+  codepoint == 0x203C ||
+  codepoint == 0x2049 ||
+  codepoint == 0x2122 ||
+  codepoint == 0x2139 ||
+  (codepoint >= 0x2194 && codepoint <= 0x21AA) ||
+  (codepoint >= 0x231A && codepoint <= 0x231B) ||
+  codepoint == 0x2328 ||
+  codepoint == 0x2388 ||
+  codepoint == 0x23CF ||
+  (codepoint >= 0x23E9 && codepoint <= 0x23F3) ||
+  (codepoint >= 0x23F8 && codepoint <= 0x23FA) ||
+  codepoint == 0x24C2 ||
+  (codepoint >= 0x25AA && codepoint <= 0x25AB) ||
+  codepoint == 0x25B6 ||
+  codepoint == 0x25C0 ||
+  (codepoint >= 0x25FB && codepoint <= 0x25FE) ||
+  (codepoint >= 0x2600 && codepoint <= 0x27BF) ||
+  (codepoint >= 0x2934 && codepoint <= 0x2935) ||
+  (codepoint >= 0x2B05 && codepoint <= 0x2B55) ||
+  codepoint == 0x3030 ||
+  codepoint == 0x303D ||
+  codepoint == 0x3297 ||
+  codepoint == 0x3299 ||
+  (codepoint >= 0x1F000 && codepoint <= 0x1FAFF)
 }
 
 ///|
-fn fallback_codepoint_can_start_emoji_tag_sequence(codepoint : Int) -> Bool {
-  codepoint == 0x1F3F4
+fn fallback_codepoint_is_emoji_tag(codepoint : Int) -> Bool {
+  (codepoint >= 0xE0020 && codepoint <= 0xE007E) || codepoint == 0xE007F
 }
 
 ///|
