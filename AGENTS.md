@@ -348,8 +348,9 @@ package-only checks, provider preflights, preflight-only checks, and
 fallback-safe descriptor audits must remain failed proof. The
 recorder may preserve complete local observations for debugging, but without
 GitHub Actions provenance the manifest status must stay failed. The
-native Skia proof matrix configures the locked release Skia artifact before
-running its real renderer/text smokes. Native WGPU proof remains a non-blocking
+native Skia proof matrix configures the locked release Skia artifact with
+required SkParagraph support before running its real renderer/text smokes.
+Native WGPU proof remains a non-blocking
 diagnostic and still requires a usable runner WGPU adapter for offscreen
 readback. The `renderer-proof-summary` CI job requires the native Skia macOS,
 Windows, Linux, and WebGPU wasm manifests to validate as passed before any

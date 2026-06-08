@@ -648,7 +648,9 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   leaves manifests failed until true radial/transform pixels, text/emoji glyph
   or raster evidence, and async image second-frame artifacts exist for that
   backend/platform. The Skia proof matrix configures the locked release Skia
-  artifact before running the proof helper, then builds and runs
+  artifact with `--enable-skparagraph --require-skparagraph` before running the
+  proof helper, so missing SkParagraph headers or libraries fail before any
+  fallback paragraph geometry can be recorded. It then builds and runs
   `moui/tests/skia_renderer_smoke/native` plus
   `moui/tests/skia_text_emoji_smoke/native`; those smokes print renderer-proof
   markers only after captured Skia pixels, glyph/layout evidence, text-system
@@ -861,7 +863,9 @@ must prove selection rectangles with line ranges, grapheme edit boundaries with
 edit actions, IME candidate anchors with surrounding text, and composition
 ranges with preedit pixels. Native Skia `paragraphWrapping`, `bidiLayout`, and
 `selectionRects` must be SkParagraph observations with `engine=skparagraph`
-markers, not fallback paragraph geometry or heuristic visual-order logs.
+markers, not fallback paragraph geometry or heuristic visual-order logs; the
+native Skia CI proof job configures `moui_skia` with required SkParagraph
+support before running these smokes.
 Package tests, skipped jobs, blank screenshots,
 missing uploaded artifacts, caret-only diagnostics, coverage-only font
 matching, package-only checks, provider preflights, preflight-only checks, and
