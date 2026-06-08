@@ -205,6 +205,8 @@ pub fn TextParagraphLayoutResult::hit_test(
       best_offset = offset
     }
   }
+  let boundaries = TextGraphemeBoundaries::new(text=self.text)
+  best_offset = boundaries.nearest_boundary(best_offset)
   let caret_rect = self.caret_rect_at(best_offset)
   {
     offset: best_offset,
