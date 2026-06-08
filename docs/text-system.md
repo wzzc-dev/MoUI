@@ -177,6 +177,10 @@ line-metrics later-line-pixels` for `paragraphWrapping`,
 `bidiLayout`, and `engine=skparagraph selection-rects line-range` for
 `selectionRects`; fallback geometry, caret-only diagnostics, and heuristic
 visual-order logs are rejected by the renderer-proof validator.
+For native Skia, `colorEmojiPixels` also requires `fallback-request`,
+`emoji-hint`, and `stable-glyph-key` proof tokens so high-saturation pixels are
+tied to the FontMgr fallback request and glyph metadata path rather than a
+generic raster-only observation.
 WebGPU wasm records the browser canvas font stack plus glyph atlas key and size
 metadata. Renderer proof also reserves separate
 contract keys for `selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,

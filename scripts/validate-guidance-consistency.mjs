@@ -534,6 +534,9 @@ assertIncludes("docs/release-readiness.md", "validate-renderer-proof-manifest.mj
 assertIncludes("docs/release-readiness.md", "artifact root");
 assertIncludes("docs/release-readiness.md", "radialGradient");
 assertIncludes("docs/release-readiness.md", "colorEmojiPixels");
+assertIncludes("docs/release-readiness.md", "stable-glyph-key");
+assertIncludes("scripts/validate-renderer-proof-manifest.mjs", "stable-glyph-key");
+assertIncludes("scripts/record-renderer-proof-manifest.mjs", "fallback-request");
 assertIncludes("docs/release-readiness.md", "selectionRects");
 assertIncludes("docs/release-readiness.md", "imeCompositionVisual");
 assertIncludes("docs/release-readiness.md", "asyncImageSecondFrame");
@@ -851,6 +854,7 @@ assertIncludes("AGENTS.md", "record-web-renderer-proof-manifest.mjs");
 assertIncludes("AGENTS.md", "test-record-web-renderer-proof-manifest.mjs");
 assertIncludes("AGENTS.md", "renderer-proof-summary");
 assertIncludes("AGENTS.md", "colorEmojiPixels");
+assertIncludes("AGENTS.md", "stable-glyph-key");
 assertIncludes("AGENTS.md", "selectionRects");
 assertIncludes("AGENTS.md", "imeCompositionVisual");
 assertIncludes("AGENTS.md", "CDP is unavailable");
