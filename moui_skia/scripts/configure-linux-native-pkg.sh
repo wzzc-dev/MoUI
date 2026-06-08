@@ -17,6 +17,11 @@ Options:
   --link-mode MODE       static|dynamic|auto. Default: static.
                          auto prefers libskia.so when present and falls back to
                          libskia.a.
+  --enable-skparagraph   Enable the optional SkParagraph FFI boundary. Requires
+                         libskparagraph, libskshaper, and SkUnicode libraries
+                         to be linkable from --skia-lib-dir.
+  --require-skparagraph  Enable SkParagraph and fail immediately when required
+                         headers or libraries are missing.
   --extra-cc-flags STR   Extra C/C++ flags appended to stub-cc-flags.
   --extra-link-flags STR Extra linker flags appended to cc-link-flags.
   --output PATH          Package file to write/check. Default: native/moon.pkg.
@@ -26,10 +31,24 @@ Options:
 
 Environment defaults:
   MOUI_SKIA_SKIA_INCLUDE, MOUI_SKIA_SKIA_LIB_DIR, MOUI_SKIA_SKIA_LIB,
-  MOUI_SKIA_LINK_MODE, MOUI_SKIA_EXTRA_CC_FLAGS, and
+  MOUI_SKIA_LINK_MODE, MOUI_SKIA_ENABLE_SKPARAGRAPH,
+  MOUI_SKIA_REQUIRE_SKPARAGRAPH, MOUI_SKIA_EXTRA_CC_FLAGS, and
   MOUI_SKIA_EXTRA_LINK_FLAGS are used when the matching command-line option is
   omitted.
 EOF
+}
+
+normalize_bool() {
+  local name="$1"
+  local value="$2"
+  case "$value" in
+    1|true|TRUE|yes|YES|on|ON) printf '1\n' ;;
+    ""|0|false|FALSE|no|NO|off|OFF) printf '0\n' ;;
+    *)
+      echo "unsupported boolean value for $name: $value" >&2
+      exit 2
+      ;;
+  esac
 }
 
 reject_legacy_link_mode_env() {
@@ -45,6 +64,8 @@ skia_include="${MOUI_SKIA_SKIA_INCLUDE:-}"
 skia_lib_dir="${MOUI_SKIA_SKIA_LIB_DIR:-}"
 skia_lib="${MOUI_SKIA_SKIA_LIB:-skia}"
 link_mode="${MOUI_SKIA_LINK_MODE:-static}"
+enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
+require_skparagraph="${MOUI_SKIA_REQUIRE_SKPARAGRAPH:-0}"
 extra_cc_flags="${MOUI_SKIA_EXTRA_CC_FLAGS:-}"
 extra_link_flags="${MOUI_SKIA_EXTRA_LINK_FLAGS:--lfontconfig -lfreetype -lharfbuzz -lpthread -ldl -lm}"
 output_path="native/moon.pkg"
@@ -68,6 +89,14 @@ while [[ $# -gt 0 ]]; do
     --link-mode)
       link_mode="${2:-}"
       shift 2
+      ;;
+    --enable-skparagraph)
+      enable_skparagraph=1
+      shift
+      ;;
+    --require-skparagraph)
+      require_skparagraph=1
+      shift
       ;;
     --extra-cc-flags)
       extra_cc_flags="${2:-}"
@@ -109,6 +138,11 @@ case "$link_mode" in
   static|dynamic|auto) ;;
   *) echo "unsupported --link-mode: $link_mode" >&2; usage >&2; exit 2 ;;
 esac
+enable_skparagraph="$(normalize_bool MOUI_SKIA_ENABLE_SKPARAGRAPH "$enable_skparagraph")"
+require_skparagraph="$(normalize_bool MOUI_SKIA_REQUIRE_SKPARAGRAPH "$require_skparagraph")"
+if [[ $require_skparagraph -eq 1 ]]; then
+  enable_skparagraph=1
+fi
 if [[ -z "$skia_include" || -z "$skia_lib_dir" ]]; then
   usage >&2
   exit 2
@@ -126,6 +160,29 @@ lib_path="$(cd "$skia_lib_dir" && pwd)"
 if [[ ! -f "$include_path/include/core/SkSurface.h" ]]; then
   echo "Skia include path does not look like a Skia checkout/root: $include_path" >&2
   exit 1
+fi
+
+paragraph_headers=(
+  "$include_path/modules/skparagraph/include/Paragraph.h"
+  "$include_path/modules/skparagraph/include/ParagraphBuilder.h"
+  "$include_path/modules/skparagraph/include/ParagraphStyle.h"
+  "$include_path/modules/skparagraph/include/TextStyle.h"
+  "$include_path/modules/skparagraph/include/FontCollection.h"
+)
+paragraph_libs=(skparagraph skshaper skunicode_core skunicode_icu)
+if [[ $require_skparagraph -eq 1 ]]; then
+  for paragraph_header in "${paragraph_headers[@]}"; do
+    if [[ ! -f "$paragraph_header" ]]; then
+      echo "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but header was missing: $paragraph_header" >&2
+      exit 1
+    fi
+  done
+  for paragraph_lib in "${paragraph_libs[@]}"; do
+    if [[ ! -f "$lib_path/lib$paragraph_lib.a" && ! -f "$lib_path/lib$paragraph_lib.so" ]]; then
+      echo "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but lib$paragraph_lib.a or lib$paragraph_lib.so was not found in $lib_path" >&2
+      exit 1
+    fi
+  done
 fi
 
 static_lib="$lib_path/lib$skia_lib.a"
@@ -163,11 +220,17 @@ case "$resolved_link_mode" in
 esac
 
 cc_flags="-DMOUI_SKIA_HAS_SKIA -std=c++17 -I$include_path"
+if [[ $enable_skparagraph -eq 1 ]]; then
+  cc_flags="$cc_flags -DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER"
+fi
 if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
 link_flags="$skia_library_link_flags -lstdc++"
+if [[ $enable_skparagraph -eq 1 ]]; then
+  link_flags="$link_flags -L$lib_path -lskparagraph -lskshaper -lskunicode_core -lskunicode_icu -licu"
+fi
 if [[ -n "$extra_link_flags" ]]; then
   link_flags="$link_flags $extra_link_flags"
 fi
@@ -185,6 +248,7 @@ options(
     "skia_stub_canvas.cpp",
     "skia_stub_path.cpp",
     "skia_stub_text_font.cpp",
+    "skia_stub_paragraph.cpp",
     "skia_stub_shader_filter.cpp",
   ],
   link: {
@@ -195,18 +259,23 @@ options(
   },
   targets: {
     "handles_native.mbt": [ "native", "llvm" ],
+    "skia_native.mbt": [ "native", "llvm" ],
     "availability_native.mbt": [ "native", "llvm" ],
     "surface_image_data_native.mbt": [ "native", "llvm" ],
     "canvas_native.mbt": [ "native", "llvm" ],
     "path_native.mbt": [ "native", "llvm" ],
     "text_font_native.mbt": [ "native", "llvm" ],
+    "paragraph_native.mbt": [ "native", "llvm" ],
     "shader_filter_native.mbt": [ "native", "llvm" ],
+    "shader_filter_ffi_wbtest.mbt": [ "native", "llvm" ],
     "handles_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "skia_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "availability_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "surface_image_data_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "canvas_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "path_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "text_font_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "paragraph_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "shader_filter_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
   },
 )

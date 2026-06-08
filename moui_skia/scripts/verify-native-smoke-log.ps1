@@ -244,6 +244,7 @@ $defaultStageMarkers = @(
   "native smoke first glyph bounds width",
   "native smoke measured text bounds width",
   "native smoke shaper availability",
+  "native smoke paragraph availability",
   "native smoke default typeface availability",
   "native smoke font family count",
   "native smoke first font family bytes",
@@ -1113,6 +1114,26 @@ $defaultConditionalStageMarkers = @(
   [pscustomobject]@{
     Marker = "native smoke shaped glyph descriptor bridge cache resources"
     WhenMarker = "native smoke shaper availability"
+    WhenValue = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke paragraph available"
+    WhenMarker = "native smoke paragraph availability"
+    WhenValue = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke paragraph line metrics"
+    WhenMarker = "native smoke paragraph availability"
+    WhenValue = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke paragraph selection boxes"
+    WhenMarker = "native smoke paragraph availability"
+    WhenValue = "1"
+  }
+  [pscustomobject]@{
+    Marker = "native smoke paragraph hit test"
+    WhenMarker = "native smoke paragraph availability"
     WhenValue = "1"
   }
 )

@@ -15,6 +15,8 @@ param(
   [string] $SkiaCommit = $env:MOUI_SKIA_SKIA_COMMIT,
   [string] $SkiaPackage = $env:MOUI_SKIA_SKIA_PACKAGE,
   [string] $SkiaPackageSha256 = $env:MOUI_SKIA_SKIA_PACKAGE_SHA256,
+  [switch] $EnableSkParagraph,
+  [switch] $RequireSkParagraph,
   [string] $ExtraCcFlags = $env:MOUI_SKIA_EXTRA_CC_FLAGS,
   [string] $ExtraLinkFlags = $env:MOUI_SKIA_EXTRA_LINK_FLAGS,
   [string] $SmokeLog = "",
@@ -40,6 +42,15 @@ $backupPkg = "$nativePkg.smoke.bak"
 $smokePkg = Join-Path $repoRoot "scripts/native_smoke/moon.pkg"
 $smokeBackupPkg = "$smokePkg.smoke.bak"
 . (Join-Path $PSScriptRoot "windows-msvc-skia-paths.ps1")
+
+function Test-TruthyEnv {
+  param([string] $Value)
+
+  if ([string]::IsNullOrWhiteSpace($Value)) {
+    return $false
+  }
+  return $Value.Trim().ToLowerInvariant() -in @("1", "true", "yes", "on")
+}
 
 function Resolve-StaticSkiaLib {
   param([Parameter(Mandatory = $true)][string] $LibDir)
@@ -132,6 +143,52 @@ $skiaLib = if ($resolvedSkiaLinkMode -eq "dynamic") {
 } else {
   Resolve-StaticSkiaLib -LibDir $resolvedLibDir
 }
+$skparagraphEnabled = $EnableSkParagraph.IsPresent -or
+  $RequireSkParagraph.IsPresent -or
+  (Test-TruthyEnv -Value $env:MOUI_SKIA_ENABLE_SKPARAGRAPH) -or
+  (Test-TruthyEnv -Value $env:MOUI_SKIA_REQUIRE_SKPARAGRAPH)
+$skparagraphRequired = $RequireSkParagraph.IsPresent -or
+  (Test-TruthyEnv -Value $env:MOUI_SKIA_REQUIRE_SKPARAGRAPH)
+$paragraphHeaders = @(
+  (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/Paragraph.h"),
+  (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/ParagraphBuilder.h"),
+  (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/ParagraphStyle.h"),
+  (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/TextStyle.h"),
+  (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/FontCollection.h")
+)
+$paragraphLibs = @("skparagraph", "skshaper", "skunicode_core", "skunicode_icu")
+$paragraphHeadersStatus = "unchecked"
+$paragraphLibrariesStatus = "unchecked"
+if ($skparagraphEnabled) {
+  $paragraphHeadersStatus = "available"
+  foreach ($paragraphHeader in $paragraphHeaders) {
+    if (!(Test-Path -LiteralPath $paragraphHeader -PathType Leaf)) {
+      $paragraphHeadersStatus = "missing"
+    }
+  }
+  $paragraphLibrariesStatus = "available"
+  foreach ($paragraphLib in $paragraphLibs) {
+    $candidates = @(
+      (Join-Path $resolvedLibDir "$paragraphLib.lib"),
+      (Join-Path $resolvedLibDir "$paragraphLib.dll.lib")
+    )
+    $found = $false
+    foreach ($candidate in $candidates) {
+      if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+        $found = $true
+      }
+    }
+    if (!$found) {
+      $paragraphLibrariesStatus = "missing"
+    }
+  }
+  if ($skparagraphRequired -and $paragraphHeadersStatus -ne "available") {
+    throw "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but one or more SkParagraph headers are missing under $resolvedIncludeRoot"
+  }
+  if ($skparagraphRequired -and $paragraphLibrariesStatus -ne "available") {
+    throw "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but one or more SkParagraph libraries are missing in $resolvedLibDir"
+  }
+}
 
 if (Test-Path -LiteralPath $backupPkg) {
   throw "native/moon.pkg smoke backup already exists: $backupPkg. Resolve the stale backup before running smoke."
@@ -152,6 +209,9 @@ if ($SmokeLog.Trim().Length -gt 0) {
 $includePath = $resolvedIncludeRoot -replace "\\", "/"
 $libPath = $resolvedLibDir -replace "\\", "/"
 $ccFlags = "/DMOUI_SKIA_HAS_SKIA /std:c++20 /EHsc /I$includePath"
+if ($skparagraphEnabled) {
+  $ccFlags = "$ccFlags /DMOUI_SKIA_HAS_SKPARAGRAPH /DMOUI_SKIA_HAS_SKSHAPER"
+}
 if (![string]::IsNullOrWhiteSpace($ExtraCcFlags)) {
   $ccFlags = "$ccFlags $ExtraCcFlags"
 }
@@ -196,6 +256,17 @@ Write-Output "  skia_include=$includePath"
 Write-Output "  skia_lib_dir=$libPath"
 Write-Output "  skia_lib=skia"
 Write-Output "  skia_link_mode=$resolvedSkiaLinkMode"
+if ($skparagraphRequired) {
+  Write-Output "  skparagraph=required"
+} elseif ($skparagraphEnabled) {
+  Write-Output "  skparagraph=enabled"
+} else {
+  Write-Output "  skparagraph=disabled"
+}
+if ($skparagraphEnabled) {
+  Write-Output "  skparagraph_headers=$paragraphHeadersStatus"
+  Write-Output "  skparagraph_libraries=$paragraphLibrariesStatus"
+}
 if (![string]::IsNullOrWhiteSpace($SkiaProvider)) {
   Write-Output "  skia_provider=$SkiaProvider"
 }
@@ -259,6 +330,8 @@ try {
     -SkiaInclude $resolvedIncludeRoot `
     -SkiaLibDir $resolvedLibDir `
     -SkiaLinkMode $resolvedSkiaLinkMode `
+    -EnableSkParagraph:$skparagraphEnabled `
+    -RequireSkParagraph:$skparagraphRequired `
     -ExtraCcFlags $ExtraCcFlags `
     -ExtraLinkFlags $ExtraLinkFlags `
     -Output $nativePkg `
@@ -338,6 +411,12 @@ exit /b %SMOKE_STATUS%
       throw "native smoke executable did not print the expected success marker"
     }
     Write-Host "Verified native smoke success marker."
+    if ($skparagraphRequired) {
+      if (!(Select-String -LiteralPath $resolvedSmokeLog -SimpleMatch "native smoke paragraph available" -Quiet)) {
+        throw "native smoke executable did not prove the required SkParagraph path"
+      }
+      Write-Host "Verified native SkParagraph smoke marker."
+    }
   } finally {
     Pop-Location
   }

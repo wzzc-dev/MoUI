@@ -112,6 +112,16 @@
       "ownership": "sk_refcnt"
     },
     {
+      "name": "Paragraph",
+      "moonbit_handle": "ParagraphHandle",
+      "moonbit_type": "Paragraph",
+      "wrapper_struct": "MoonbitSkiaParagraph",
+      "field": "paragraph",
+      "factory": "moonbit_skia_make_paragraph_wrapper",
+      "finalizer": "moonbit_skia_paragraph_finalize",
+      "ownership": "owned_delete"
+    },
+    {
       "name": "Shader",
       "moonbit_handle": "ShaderHandle",
       "moonbit_type": "Shader",

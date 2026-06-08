@@ -1159,6 +1159,11 @@
       "marker": "native smoke shaper availability"
     },
     {
+      "id": "text.paragraph-availability",
+      "area": "Text",
+      "marker": "native smoke paragraph availability"
+    },
+    {
       "id": "text.default-typeface-availability",
       "area": "Text",
       "marker": "native smoke default typeface availability"
@@ -1283,6 +1288,34 @@
       "area": "Text",
       "marker": "native smoke shaped glyph descriptor bridge cache resources",
       "when_marker": "native smoke shaper availability",
+      "when_value": "1"
+    },
+    {
+      "id": "text.paragraph-available",
+      "area": "Text",
+      "marker": "native smoke paragraph available",
+      "when_marker": "native smoke paragraph availability",
+      "when_value": "1"
+    },
+    {
+      "id": "text.paragraph-line-metrics",
+      "area": "Text",
+      "marker": "native smoke paragraph line metrics",
+      "when_marker": "native smoke paragraph availability",
+      "when_value": "1"
+    },
+    {
+      "id": "text.paragraph-selection-boxes",
+      "area": "Text",
+      "marker": "native smoke paragraph selection boxes",
+      "when_marker": "native smoke paragraph availability",
+      "when_value": "1"
+    },
+    {
+      "id": "text.paragraph-hit-test",
+      "area": "Text",
+      "marker": "native smoke paragraph hit test",
+      "when_marker": "native smoke paragraph availability",
       "when_value": "1"
     }
   ],

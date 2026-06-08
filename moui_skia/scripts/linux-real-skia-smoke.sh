@@ -31,6 +31,10 @@ Options:
   --jetbrains-cache-dir PATH
                         Compatibility alias for --release-cache-dir.
   --extra-gn-args STR   Extra GN args appended to the smoke-test Skia build.
+  --enable-skparagraph  Enable SkParagraph in source builds and native smoke
+                        configuration.
+  --require-skparagraph Enable SkParagraph and fail when required headers,
+                        libraries, or runtime smoke markers are missing.
   --extra-cc-flags STR  Extra C/C++ flags appended when linking the MoonBit stub.
   --extra-link-flags STR
                         Extra linker flags appended when linking the smoke binary.
@@ -55,18 +59,21 @@ Environment defaults:
   MOUI_SKIA_SKIA_REV, MOUI_SKIA_RELEASE_TAG, MOUI_SKIA_RELEASE_CONFIG,
   MOUI_SKIA_RELEASE_CACHE_DIR, MOUI_SKIA_JETBRAINS_TAG,
   MOUI_SKIA_JETBRAINS_CONFIG, MOUI_SKIA_JETBRAINS_CACHE_DIR,
-  MOUI_SKIA_EXTRA_GN_ARGS, MOUI_SKIA_ENABLE_ASAN, MOUI_SKIA_EXTRA_CC_FLAGS, and
-  MOUI_SKIA_EXTRA_LINK_FLAGS are used when the matching command-line option is
-  omitted.
+  MOUI_SKIA_EXTRA_GN_ARGS, MOUI_SKIA_ENABLE_SKPARAGRAPH,
+  MOUI_SKIA_REQUIRE_SKPARAGRAPH, MOUI_SKIA_ENABLE_ASAN,
+  MOUI_SKIA_EXTRA_CC_FLAGS, and MOUI_SKIA_EXTRA_LINK_FLAGS are used when the
+  matching command-line option is omitted.
 EOF
 }
 
 normalize_bool() {
-  case "$1" in
+  local name="$1"
+  local value="$2"
+  case "$value" in
     1|true|TRUE|yes|YES|on|ON) printf '1\n' ;;
     ""|0|false|FALSE|no|NO|off|OFF) printf '0\n' ;;
     *)
-      echo "unsupported boolean value for MOUI_SKIA_ENABLE_ASAN: $1" >&2
+      echo "unsupported boolean value for $name: $value" >&2
       exit 2
       ;;
   esac
@@ -111,6 +118,8 @@ if [[ -n "${MOUI_SKIA_EXTRA_LINK_FLAGS:-}" ]]; then
   extra_link_flags_explicit=1
 fi
 enable_asan="${MOUI_SKIA_ENABLE_ASAN:-0}"
+enable_skparagraph="${MOUI_SKIA_ENABLE_SKPARAGRAPH:-0}"
+require_skparagraph="${MOUI_SKIA_REQUIRE_SKPARAGRAPH:-0}"
 build_log=""
 smoke_log=""
 sync_deps=1
@@ -168,6 +177,14 @@ while [[ $# -gt 0 ]]; do
       extra_gn_args="${2:-}"
       shift 2
       ;;
+    --enable-skparagraph)
+      enable_skparagraph=1
+      shift
+      ;;
+    --require-skparagraph)
+      require_skparagraph=1
+      shift
+      ;;
     --extra-cc-flags)
       extra_cc_flags="${2:-}"
       extra_cc_flags_explicit=1
@@ -214,7 +231,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-enable_asan="$(normalize_bool "$enable_asan")"
+enable_asan="$(normalize_bool MOUI_SKIA_ENABLE_ASAN "$enable_asan")"
+enable_skparagraph="$(normalize_bool MOUI_SKIA_ENABLE_SKPARAGRAPH "$enable_skparagraph")"
+require_skparagraph="$(normalize_bool MOUI_SKIA_REQUIRE_SKPARAGRAPH "$require_skparagraph")"
+if [[ $require_skparagraph -eq 1 ]]; then
+  enable_skparagraph=1
+fi
 case "$skia_link_mode" in
   static|dynamic|auto) ;;
   *) echo "unsupported --link-mode: $skia_link_mode" >&2; usage >&2; exit 2 ;;
@@ -347,6 +369,13 @@ fi
 if [[ $enable_asan -eq 1 ]]; then
   echo "  asan=enabled"
 fi
+if [[ $require_skparagraph -eq 1 ]]; then
+  echo "  skparagraph=required"
+elif [[ $enable_skparagraph -eq 1 ]]; then
+  echo "  skparagraph=enabled"
+else
+  echo "  skparagraph=disabled"
+fi
 
 resolved_build_log=""
 if [[ -n "$build_log" ]]; then
@@ -358,6 +387,9 @@ fi
 
 if [[ "$smoke_mode" == "source-built Skia" ]]; then
   build_args=(--work-dir "$resolved_work_dir" --skia-rev "$skia_rev")
+  if [[ $enable_skparagraph -eq 1 ]]; then
+    build_args+=(--enable-skparagraph)
+  fi
   if [[ -n "$extra_gn_args" ]]; then
     build_args+=(--extra-gn-args "$extra_gn_args")
   fi
@@ -437,6 +469,12 @@ if [[ -n "$extra_link_flags" ]]; then
 fi
 if [[ $enable_asan -eq 1 ]]; then
   smoke_args+=(--enable-asan)
+fi
+if [[ $enable_skparagraph -eq 1 ]]; then
+  smoke_args+=(--enable-skparagraph)
+fi
+if [[ $require_skparagraph -eq 1 ]]; then
+  smoke_args+=(--require-skparagraph)
 fi
 if [[ -n "$smoke_log" ]]; then
   smoke_args+=(--smoke-log "$smoke_log")

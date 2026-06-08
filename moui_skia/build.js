@@ -433,7 +433,7 @@ function platformFlags(config, values) {
       );
       linkFlags = appendFlags(
         linkFlags,
-        "-lskparagraph -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu",
+        `-L${libPath} -lskparagraph -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu`,
       );
     }
     if (skiaMetalGpuEnabled(config)) {
@@ -478,6 +478,7 @@ function platformFlags(config, values) {
         "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
       );
       linkFlags = appendMissingFlags(linkFlags, [
+        `-L${libPath}`,
         "-lskparagraph",
         "-lskshaper",
         "-lskunicode_core",
