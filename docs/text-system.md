@@ -289,9 +289,17 @@ Remote font loading is intentionally outside the current backend contract.
   representative Arabic/Thai/Lao/Sinhala/Khmer/Myanmar clusters, while full
   generated Unicode data import and complete grapheme-cluster parity remain
   release follow-up work. The
-  scanner now treats ZWNJ as an Extend code point, covers representative
-  supplementary musical combining marks, and narrows Indic virama linking to
-  ZWJ or Indic consonant targets, so deletion and IME offsets no longer merge
+  scanner now drives core grapheme break classes from generated Unicode 17.0
+  property predicates for CR/LF/control, Prepend, Extend, SpacingMark,
+  Regional_Indicator, ZWJ, and Extended_Pictographic. Regenerate those
+  predicates with
+  `node scripts/generate-grapheme-property-data.mjs --grapheme-property <Unicode-17.0.0-GraphemeBreakProperty.txt> --emoji-data <Unicode-17.0.0-emoji-data.txt> --check`
+  after downloading the pinned Unicode files from
+  `https://www.unicode.org/Public/17.0.0/ucd/auxiliary/GraphemeBreakProperty.txt`
+  and `https://www.unicode.org/Public/17.0.0/ucd/emoji/emoji-data.txt`. It
+  treats ZWNJ as an Extend code point, covers representative supplementary
+  musical combining marks, and narrows Indic virama linking to ZWJ or Indic
+  consonant targets, so deletion and IME offsets no longer merge
   virama-plus-Latin or virama-plus-space spans into one cluster.
   Native IME runtime readiness is also still pending: macOS, Windows, and Linux
   must each record matching-host Showcase or Markdown Editor artifacts for
