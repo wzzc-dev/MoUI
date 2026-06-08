@@ -774,6 +774,7 @@ assertIncludes("scripts/record-native-ime-evidence.mjs", "examples/markdown_edit
 assertIncludes("scripts/test-record-native-ime-evidence.mjs", "platform-protocol=wayland-text-input");
 assertIncludes("scripts/test-record-native-ime-evidence.mjs", "renderer marker suffix");
 assertIncludes("scripts/test-record-native-ime-evidence.mjs", "platform protocol marker suffix");
+assertIncludes("scripts/test-record-native-ime-evidence.mjs", "common runtime marker suffixes");
 assertIncludes("scripts/test-record-native-ime-evidence.mjs", "host unit test");
 assertIncludes("scripts/test-record-native-ime-evidence.mjs", "reject non Skia app consumer command");
 assertIncludes("scripts/test-record-native-ime-evidence.mjs", "reject IME log from a non-Skia renderer");
