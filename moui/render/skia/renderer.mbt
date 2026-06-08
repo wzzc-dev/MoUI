@@ -3401,9 +3401,42 @@ fn skia_grapheme_cluster_end(chars : Array[Char], start : Int) -> Int {
       skia_codepoint_is_virama(chars[end - 1].to_int()) {
       end = skia_grapheme_extend_end(chars, end + 1)
       advanced = true
+    } else if skia_indic_virama_extend_allows_no_break(chars, start, end) {
+      end = skia_grapheme_extend_end(chars, end + 1)
+      advanced = true
     }
   }
   end
+}
+
+///|
+fn skia_indic_virama_extend_allows_no_break(
+  chars : Array[Char],
+  start : Int,
+  end : Int,
+) -> Bool {
+  if end <= start || end >= chars.length() ||
+    !skia_codepoint_is_indic_consonant(chars[end].to_int()) {
+    return false
+  }
+  let mut cursor = end - 1
+  while cursor >= start {
+    let codepoint = chars[cursor].to_int()
+    if skia_codepoint_is_virama(codepoint) {
+      return true
+    }
+    if skia_codepoint_is_grapheme_extend(codepoint) &&
+      codepoint != 0x200D &&
+      codepoint != 0x200C {
+      if cursor == start {
+        return false
+      }
+      cursor = cursor - 1
+      continue
+    }
+    return false
+  }
+  false
 }
 
 ///|
@@ -3875,6 +3908,28 @@ fn skia_codepoint_is_virama(codepoint : Int) -> Bool {
   codepoint == 0x0DCA ||
   codepoint == 0x1039 ||
   codepoint == 0x17D2
+}
+
+///|
+fn skia_codepoint_is_indic_consonant(codepoint : Int) -> Bool {
+  (codepoint >= 0x0915 && codepoint <= 0x0939) ||
+  (codepoint >= 0x0958 && codepoint <= 0x095F) ||
+  (codepoint >= 0x0978 && codepoint <= 0x097F) ||
+  (codepoint >= 0x0995 && codepoint <= 0x09B9) ||
+  (codepoint >= 0x09DC && codepoint <= 0x09DF) ||
+  (codepoint >= 0x0A15 && codepoint <= 0x0A39) ||
+  (codepoint >= 0x0A59 && codepoint <= 0x0A5E) ||
+  (codepoint >= 0x0A95 && codepoint <= 0x0AB9) ||
+  (codepoint >= 0x0B15 && codepoint <= 0x0B39) ||
+  (codepoint >= 0x0B5C && codepoint <= 0x0B5F) ||
+  (codepoint >= 0x0B95 && codepoint <= 0x0BB9) ||
+  (codepoint >= 0x0C15 && codepoint <= 0x0C39) ||
+  (codepoint >= 0x0C95 && codepoint <= 0x0CB9) ||
+  (codepoint >= 0x0D15 && codepoint <= 0x0D3A) ||
+  (codepoint >= 0x0D9A && codepoint <= 0x0DC6) ||
+  (codepoint >= 0x1000 && codepoint <= 0x102A) ||
+  (codepoint >= 0x1050 && codepoint <= 0x1055) ||
+  (codepoint >= 0x1780 && codepoint <= 0x17A2)
 }
 
 ///|

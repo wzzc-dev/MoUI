@@ -102,7 +102,10 @@ emoji-modifier, variation-selector,
 regional-indicator pairs, emoji tag-sequence flags, Unicode prepend marks, and
 ZWJ cluster interior stabilization. Rendering uses the
 same optional SkShaper shaped glyph runs when linked, and otherwise falls back
-to positioned glyph runs. Linux Skia resolves its default `FontMgr` through fontconfig/FreeType
+to positioned glyph runs. The mixed-run fallback segmenter follows the same
+Indic virama/linker boundary, including virama plus Extend marks before an
+Indic consonant, so per-run font fallback does not split that edit cluster.
+Linux Skia resolves its default `FontMgr` through fontconfig/FreeType
 when those Skia port headers are available, with a directory font manager
 fallback over common system font directories. If the selected Skia font produces
 a blank or incomplete glyph run, the renderer retries measurement and drawing;

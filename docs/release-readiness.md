@@ -318,7 +318,9 @@ documentation evidence.
      UTF-8 offset conversion share those boundaries. Skia tests now cover the same
      representative emoji caret coverage, verify shaped-run and fallback caret stabilization
      for representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator cluster interiors, check that emoji font retry stays
-     on the system FontMgr path before default-font fallback, inject the Skia
+     on the system FontMgr path before default-font fallback, keep mixed-run
+     fallback font segments from splitting Indic virama plus Extend plus
+     consonant clusters, inject the Skia
      text system into a public text field runtime for composition caret geometry
      and selection highlight evidence, and consume `moui_skia` fallback/shaping descriptor resource plans through an internal
      preflight, but they document invariants and known gaps rather than claiming
