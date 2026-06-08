@@ -259,8 +259,11 @@ Remote font loading is intentionally outside the current backend contract.
   caret movement, selection/range normalization, surrounding delete ranges,
   composition cursor offsets, rich text hit testing, and UTF-8 offset conversion
   for later IME handoff. This keeps deterministic text-field, selection, and
-  IME-anchor geometry on one path while still leaving generated Unicode data
-  conformance and full grapheme-cluster parity as release follow-up work. The
+  IME-anchor geometry on one path. The repo now has an offline
+  `GraphemeBreakTest.txt`-style fixture and generator guard
+  (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples,
+  while full generated Unicode data import and complete grapheme-cluster parity
+  remain release follow-up work. The
   scanner now treats ZWNJ as an Extend code point and narrows Indic virama
   linking to ZWJ or Indic consonant targets, so deletion and IME offsets no
   longer merge virama-plus-Latin or virama-plus-space spans into one cluster.
