@@ -289,7 +289,13 @@ artifacts. The
 manifest is schema v2 and mirrors the local window recorder's monitor/cursor
 field as `monitorCursor`; native passed evidence must set it to `yes`, while
 Web browser evidence may leave it pending because CDP does not prove native
-monitor/current-monitor or cursor behavior. Native platform entries also carry
+monitor/current-monitor or cursor behavior. Native passed evidence must also
+set `imeCandidateAnchor`, `imeSurroundingText`, `imeCompositionVisual`,
+`imeCommitDelete`, `imeCursorUpdate`, `imeScrollAnchor`,
+`imeScaleDprAnchor`, `imeResizeAnchor`, and `imeMarkdownEditor` to `yes` from
+matching-host Showcase or Markdown Editor runtime artifacts; host-core unit
+tests, package logs, provider preflights, and coarse `textInput` observations
+are not enough. Native platform entries also carry
 `skiaEvidence`, which separately records Skia provider/preflight commands,
 fallback-unavailable checks, real-renderer smoke, async image second-frame
 smoke, and Showcase/Markdown first-frame status. A native platform entry cannot
