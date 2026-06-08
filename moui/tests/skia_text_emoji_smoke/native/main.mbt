@@ -145,7 +145,7 @@ fn skia_paragraph_proof_lines(
   let start_x = 8.0
   let start_y = 94.0
   println(
-    "MoUI Skia text/emoji smoke paragraph layout text_system=\{layout.metadata.text_system_id} lines=\{layout.line_count()} native_paragraph_ready=\{layout.metadata.native_paragraph_ready} bidi_ready=\{layout.metadata.bidi_visual_order_ready}",
+    "MoUI Skia text/emoji smoke paragraph layout text_system=\{layout.metadata.text_system_id} engine=\{if layout.metadata.native_paragraph_ready { "skparagraph" } else { "fallback" }} lines=\{layout.line_count()} native_paragraph_ready=\{layout.metadata.native_paragraph_ready} bidi_visual_order_ready=\{layout.metadata.bidi_visual_order_ready}",
   )
   let lines : Array[SkiaParagraphProofLine] = []
   let chars = paragraph_text().to_array()
@@ -188,7 +188,7 @@ fn skia_paragraph_layout(
 fn selection_rect_evidence_available(
   layout : @core.TextParagraphLayoutResult,
 ) -> Bool {
-  if layout.lines.length() < 2 {
+  if !layout.metadata.native_paragraph_ready || layout.lines.length() < 2 {
     return false
   }
   let selection = @core.TextRange::new(
@@ -203,7 +203,7 @@ fn selection_rect_evidence_available(
     ),
   )
   println(
-    "MoUI Skia text/emoji smoke selection rect_count=\{rects.length()} line_range=\{layout.lines[0].line_index}..\{layout.lines[1].line_index} hit_line=\{hit.line_index} hit_offset=\{hit.offset}",
+    "MoUI Skia text/emoji smoke selection engine=skparagraph rect_count=\{rects.length()} line_range=\{layout.lines[0].line_index}..\{layout.lines[1].line_index} hit_line=\{hit.line_index} hit_offset=\{hit.offset}",
   )
   rects.length() >= 2 &&
   hit.line_index == layout.lines[1].line_index &&
@@ -324,29 +324,30 @@ fn paragraph_later_line_pixels(
 ///|
 fn bidi_visual_order_evidence_available(
   frame : @skia_renderer.SkiaPixelFrame,
+  text_system : @core.TextSystem,
 ) -> Bool {
   let sample = "ABC \u{05D0}\u{05D1}\u{05D2} 123"
-  match
-    @skia_renderer.skia_text_visual_order_proof(
-      sample,
+  let layout = text_system.layout_paragraph(
+    @core.TextLayoutInput::new(
+      text=sample,
       font=@core.FontSpec::new(size=20.0, weight=500),
-    ) {
-    Some(proof) => {
-      println(
-        "MoUI Skia text/emoji smoke bidi logical=\{proof.logical_text} visual=\{proof.visual_text} segments=\{proof.segment_count} glyphs=\{proof.glyph_count} width=\{proof.width}",
-      )
-      proof.visual_order_differs &&
-      proof.logical_cluster_count == proof.visual_cluster_count &&
-      proof.segment_count >= 3 &&
-      proof.glyph_count >= 6 &&
-      rect_dark_rows(
-        frame,
-        @core.Rect::new(x=8.0, y=58.0, width=150.0, height=28.0),
-      ) >=
-      4
-    }
-    None => false
-  }
+      max_width=220.0,
+    ),
+  )
+  println(
+    "MoUI Skia text/emoji smoke bidi engine=\{if layout.metadata.native_paragraph_ready { "skparagraph" } else { "fallback" }} logical=\{layout.visual_order.logical_text} visual=\{layout.visual_order.visual_text} segments=\{layout.visual_order.segment_count} glyphs=\{layout.visual_order.glyph_count} native_paragraph_ready=\{layout.metadata.native_paragraph_ready} bidi_visual_order_ready=\{layout.metadata.bidi_visual_order_ready}",
+  )
+  layout.metadata.native_paragraph_ready &&
+  layout.metadata.bidi_visual_order_ready &&
+  layout.visual_order.visual_order_differs &&
+  layout.visual_order.logical_cluster_count == layout.visual_order.visual_cluster_count &&
+  layout.visual_order.segment_count >= 3 &&
+  layout.visual_order.glyph_count >= 6 &&
+  rect_dark_rows(
+    frame,
+    @core.Rect::new(x=8.0, y=58.0, width=150.0, height=28.0),
+  ) >=
+  4
 }
 
 ///|
@@ -447,14 +448,15 @@ fn main {
         frame,
         @core.Rect::new(x=8.0, y=94.0, width=96.0, height=94.0),
       )
-      if paragraph_wraps(paragraph_lines) &&
+      if paragraph_layout.metadata.native_paragraph_ready &&
+        paragraph_wraps(paragraph_lines) &&
         paragraph_later_line_pixels(frame, paragraph_lines) &&
         paragraph_rows >= 12 {
         println(
           "MoUI Skia text/emoji smoke paragraph dark_rows=\{paragraph_rows}",
         )
         println(
-          "MoUI renderer proof paragraphWrapping passed line-metrics later-line-pixels",
+          "MoUI renderer proof paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels",
         )
       } else {
         failures.push(
@@ -462,8 +464,10 @@ fn main {
         )
       }
 
-      if bidi_visual_order_evidence_available(frame) {
-        println("MoUI renderer proof bidiLayout passed visual-order")
+      if bidi_visual_order_evidence_available(frame, renderer.text_system()) {
+        println(
+          "MoUI renderer proof bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order",
+        )
       } else {
         failures.push(
           "bidiLayout missing Skia visual-order glyph/paragraph evidence",
@@ -472,7 +476,7 @@ fn main {
 
       if selection_rect_evidence_available(paragraph_layout) {
         println(
-          "MoUI renderer proof selectionRects passed selection-rects line-range",
+          "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range",
         )
       } else {
         failures.push(
