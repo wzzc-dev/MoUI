@@ -2,6 +2,48 @@
 ///| Source fixture: moui/core/testdata/GraphemeBreakTest-17.0.0.txt
 
 ///|
+fn assert_skia_unicode_17_grapheme_break_fixture_expected_floor(index : Int, expected : Array[Int]) -> Int {
+  let mut floor = 0
+  for boundary in expected {
+    if boundary > index {
+      return floor
+    }
+    floor = boundary
+  }
+  floor
+}
+
+///|
+fn assert_skia_unicode_17_grapheme_break_fixture_expected_ceil(index : Int, expected : Array[Int]) -> Int {
+  for boundary in expected {
+    if boundary >= index {
+      return boundary
+    }
+  }
+  match expected.last() {
+    Some(length) => length
+    None => 0
+  }
+}
+
+///|
+fn assert_skia_unicode_17_grapheme_break_fixture_expected_nearest(index : Int, expected : Array[Int]) -> Int {
+  let floor = assert_skia_unicode_17_grapheme_break_fixture_expected_floor(index, expected)
+  let ceil = assert_skia_unicode_17_grapheme_break_fixture_expected_ceil(index, expected)
+  if index - floor <= ceil - index {
+    floor
+  } else {
+    ceil
+  }
+}
+
+///|
+fn assert_skia_unicode_17_grapheme_break_fixture_utf8_offset(text : String, boundary : Int) -> Int {
+  let chars = text.to_array()
+  @utf8.encode(String::from_array(chars[:boundary])[:], bom=false).length()
+}
+
+///|
 fn assert_skia_unicode_17_grapheme_break_fixture(
   text : String,
   expected : Array[Int],
@@ -20,6 +62,16 @@ fn assert_skia_unicode_17_grapheme_break_fixture(
   }
   for index in 0..<expected.length() {
     inspect(actual[index], content="\{expected[index]}")
+  }
+  let boundaries = @core.TextGraphemeBoundaries::new(text~)
+  let length = text.to_array().length()
+  for index in 0..<(length + 1) {
+    let nearest = assert_skia_unicode_17_grapheme_break_fixture_expected_nearest(index, actual)
+    inspect(boundaries.nearest_boundary(index), content="\{nearest}")
+    inspect(
+      boundaries.nearest_boundary_utf8_offset(index),
+      content="\{assert_skia_unicode_17_grapheme_break_fixture_utf8_offset(text, nearest)}",
+    )
   }
 }
 

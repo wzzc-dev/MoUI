@@ -303,9 +303,10 @@ Remote font loading is intentionally outside the current backend contract.
   separate full layout fixture checks fallback paragraph caret
   rectangles, collapsed selection rectangles, and hit-test offsets snap to the
   same Unicode 17 boundaries. `moui/render/skia` also generates a Skia
-  white-box fixture from the
-  same file so `moon test moui/render/skia --target native` verifies
-  `skia_grapheme_cluster_texts` against the Unicode 17 default break samples.
+  white-box fixture from the same file so `moon test moui/render/skia --target native`
+  verifies `skia_grapheme_cluster_texts` against the Unicode 17 default break
+  samples and checks every-index `nearest_boundary_utf8_offset` snapping against
+  the Skia-produced cluster boundaries.
   The full Unicode fixtures use distinct generated helper/test names and are
   checked with
   `node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check`.
