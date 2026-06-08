@@ -300,8 +300,14 @@ status stays failed. The native Skia proof matrix
 configures the locked release Skia artifact with required SkParagraph support
 before running real renderer/text smokes. Native WGPU proof remains a
 non-blocking diagnostic and still requires a
-usable runner WGPU adapter for offscreen readback. The `renderer-proof-summary`
-job requires the native Skia macOS, Windows, Linux, and WebGPU wasm proof
+usable runner WGPU adapter for offscreen readback.
+Native Skia `graphemeEditing`, `imeCandidateAnchor`, and
+`imeCompositionVisual` renderer-proof markers come from the text/emoji smoke's
+shared grapheme-boundary contract, host IME request diagnostics, Skia caret
+geometry, and captured text-field composition pixels; they do not replace
+matching-host native IME runtime evidence.
+The `renderer-proof-summary` job requires the native Skia macOS, Windows,
+Linux, and WebGPU wasm proof
 artifacts to validate as passed before mainline capability promotion; native
 WGPU diagnostic artifacts are uploaded separately but do not block the summary.
 The platform evidence manifest is schema v2 and records the window fork's

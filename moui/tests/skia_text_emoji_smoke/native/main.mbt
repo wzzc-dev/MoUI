@@ -105,6 +105,42 @@ fn rect_dark_rows(
 }
 
 ///|
+fn rect_blue_pixels(
+  frame : @skia_renderer.SkiaPixelFrame,
+  rect : @core.Rect,
+) -> Int {
+  let mut count = 0
+  for y in rect_min_y(rect)..<rect_max_y(frame, rect) {
+    for x in rect_min_x(rect)..<rect_max_x(frame, rect) {
+      let offset = pixel_offset(frame, x, y)
+      if offset + 3 < frame.pixels.length() {
+        let r = frame.pixels[offset].to_int()
+        let g = frame.pixels[offset + 1].to_int()
+        let b = frame.pixels[offset + 2].to_int()
+        let a = frame.pixels[offset + 3].to_int()
+        if a >= 160 && b >= 120 && b - r >= 48 && b - g >= 48 {
+          count = count + 1
+        }
+      }
+    }
+  }
+  count
+}
+
+///|
+fn int_array_equals(left : Array[Int], right : Array[Int]) -> Bool {
+  if left.length() != right.length() {
+    return false
+  }
+  for index in 0..<left.length() {
+    if left[index] != right[index] {
+      return false
+    }
+  }
+  true
+}
+
+///|
 struct SkiaParagraphProofLine {
   text : String
   frame : @core.Rect
@@ -135,6 +171,46 @@ fn emoji_proof_font() -> @core.FontSpec {
     size=32.0,
     weight=400,
   )
+}
+
+///|
+fn smoke_text_field_view(value : @core.Binding[String]) -> @core.View[Unit] {
+  @core.View::text_field(
+    value~,
+    placeholder="Input",
+    size=@core.Size::new(width=168.0, height=44.0),
+    font=@core.FontSpec::new(size=18.0, weight=500),
+    foreground=@core.Color::black(),
+    placeholder_color=@core.Color::gray(),
+    background=@core.Brush::solid(@core.Color::white()),
+    cursor_color=@core.Color::blue(),
+    corner_radius=4.0,
+  )
+}
+
+///|
+fn focus_smoke_text_field(runtime : @core.AppRuntime) -> Unit {
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=12.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+}
+
+///|
+fn commands_with_clear(
+  commands : Array[@core.DrawCommand],
+) -> Array[@core.DrawCommand] {
+  let result : Array[@core.DrawCommand] = [
+    @core.DrawCommand::Clear(@core.Color::white()),
+  ]
+  for command in commands {
+    result.push(command)
+  }
+  result
 }
 
 ///|
@@ -209,6 +285,118 @@ fn selection_rect_evidence_available(
   hit.line_index == layout.lines[1].line_index &&
   hit.offset >= layout.lines[1].text_range.start &&
   hit.offset <= layout.lines[1].text_range.end
+}
+
+///|
+fn grapheme_editing_evidence_available() -> Bool {
+  let text = "A\u{1F469}\u{200D}\u{1F4BB}B"
+  let boundaries = @core.TextGraphemeBoundaries::new(text~)
+  let boundary_indexes = boundaries.boundaries()
+  let delete_previous = boundaries.delete_range(4, 1, 0)
+  let normalized_selection = boundaries.normalize_range(
+    @core.TextRange::new(start=2, end=3),
+  )
+  let utf8_offset = boundaries.utf8_offset(4)
+  println(
+    "MoUI Skia text/emoji smoke grapheme boundaries=\{boundary_indexes.length()} clusters=\{boundaries.cluster_count()} delete=\{delete_previous.start}..\{delete_previous.end} normalized=\{normalized_selection.start}..\{normalized_selection.end} utf8_offset=\{utf8_offset}",
+  )
+  int_array_equals(boundary_indexes, [0, 1, 4, 5]) &&
+  boundaries.previous_boundary(4) == 1 &&
+  boundaries.next_boundary(1) == 4 &&
+  delete_previous.start == 1 &&
+  delete_previous.end == 4 &&
+  normalized_selection.start == 1 &&
+  normalized_selection.end == 4 &&
+  utf8_offset == 12
+}
+
+///|
+fn ime_candidate_anchor_evidence_available(
+  text_system : @core.TextSystem,
+) -> Bool {
+  let value = @core.State::new("A\u{1F469}\u{200D}\u{1F4BB}B")
+  let runtime = @core.AppRuntime::new_view(
+    root=smoke_text_field_view(value.binding()),
+    size=@core.Size::new(width=176.0, height=64.0),
+  )
+  runtime.set_text_system(text_system)
+  focus_smoke_text_field(runtime)
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
+  )
+  let input = runtime.focused_text_input()
+  let diagnostics = @host.text_input_ime_request_diagnostics(input)
+  println(
+    "MoUI Skia text/emoji smoke ime anchor cursor=\{diagnostics.cursor} cursor_utf8=\{diagnostics.cursor_utf8} anchor_utf8=\{diagnostics.anchor_utf8} candidate_x=\{diagnostics.candidate_anchor.origin.x} candidate_y=\{diagnostics.candidate_anchor.origin.y} surrounding_utf8=\{diagnostics.surrounding_text_utf8_length}",
+  )
+  input.focused &&
+  diagnostics.cursor_is_grapheme_boundary &&
+  diagnostics.anchor_is_grapheme_boundary &&
+  diagnostics.has_surrounding_text &&
+  diagnostics.cursor == 5 &&
+  diagnostics.cursor_utf8 == 13 &&
+  diagnostics.anchor_utf8 == 13 &&
+  diagnostics.candidate_anchor.size.width >= 1.0 &&
+  diagnostics.candidate_anchor.size.height >= 1.0 &&
+  diagnostics.candidate_anchor.origin.x > input.frame.origin.x
+}
+
+///|
+fn ime_composition_visual_evidence_available(
+  renderer : @skia_renderer.SkiaRasterRenderer,
+  text_system : @core.TextSystem,
+) -> Bool {
+  let value = @core.State::new("x")
+  let runtime = @core.AppRuntime::new_view(
+    root=smoke_text_field_view(value.binding()),
+    size=@core.Size::new(width=176.0, height=64.0),
+  )
+  runtime.set_text_system(text_system)
+  focus_smoke_text_field(runtime)
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="End")),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::CompositionStart),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(
+      @core.TextInputEvent::CompositionUpdate(
+        @core.CompositionUpdate::new(
+          text="你🙂a",
+          cursor=Some(@core.TextRange::new(start=2, end=2)),
+        ),
+      ),
+    ),
+  )
+  let input = runtime.focused_text_input()
+  guard input.composition is Some(composition) else { return false }
+  guard input.composition_cursor is Some(composition_cursor) else {
+    return false
+  }
+  renderer.render(commands_with_clear(runtime.draw_commands())) catch {
+    err => {
+      println(
+        "MoUI Skia text/emoji smoke composition render failed: \{err.message()}",
+      )
+      return false
+    }
+  }
+  match renderer.last_frame() {
+    Some(frame) => {
+      let text_rows = rect_dark_rows(frame, input.frame)
+      let cursor_pixels = rect_blue_pixels(frame, input.caret_rect)
+      println(
+        "MoUI Skia text/emoji smoke composition text=\{composition} cursor=\{composition_cursor.start}..\{composition_cursor.end} dark_rows=\{text_rows} cursor_pixels=\{cursor_pixels}",
+      )
+      composition == "你🙂a" &&
+      composition_cursor.start == 2 &&
+      composition_cursor.end == 2 &&
+      text_rows >= 4 &&
+      cursor_pixels >= 4
+    }
+    None => false
+  }
 }
 
 ///|
@@ -482,6 +670,39 @@ fn main {
       } else {
         failures.push(
           "selectionRects missing Skia selection rectangles, line-range, and hit-test evidence",
+        )
+      }
+
+      if grapheme_editing_evidence_available() {
+        println(
+          "MoUI renderer proof graphemeEditing passed grapheme-boundaries edit-actions",
+        )
+      } else {
+        failures.push(
+          "graphemeEditing missing grapheme boundary edit-action evidence",
+        )
+      }
+
+      if ime_candidate_anchor_evidence_available(renderer.text_system()) {
+        println(
+          "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text",
+        )
+      } else {
+        failures.push(
+          "imeCandidateAnchor missing candidate anchor and surrounding-text evidence",
+        )
+      }
+
+      if ime_composition_visual_evidence_available(
+          renderer,
+          renderer.text_system(),
+        ) {
+        println(
+          "MoUI renderer proof imeCompositionVisual passed composition-range preedit-pixels",
+        )
+      } else {
+        failures.push(
+          "imeCompositionVisual missing composition range and preedit pixel evidence",
         )
       }
     }

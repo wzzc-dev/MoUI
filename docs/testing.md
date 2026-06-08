@@ -878,6 +878,12 @@ composition ranges with preedit pixels. Native Skia `paragraphWrapping`,
 visual-order logs; the
 native Skia CI proof job configures `moui_skia` with required SkParagraph
 support before running these smokes.
+Native Skia `graphemeEditing`, `imeCandidateAnchor`, and
+`imeCompositionVisual` markers come from the text/emoji smoke's shared
+grapheme-boundary contract, host IME request diagnostics, Skia caret geometry,
+and captured text-field composition pixels. They are renderer-proof
+observations only; matching-host platform IME evidence is still recorded in the
+platform runtime manifest through `record-native-ime-evidence.mjs`.
 Package tests, skipped jobs, blank screenshots,
 missing uploaded artifacts, caret-only diagnostics, coverage-only font
 matching, package-only checks, provider preflights, preflight-only checks, and

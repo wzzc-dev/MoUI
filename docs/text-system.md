@@ -190,6 +190,11 @@ and `imeCompositionVisual`; those keys must be backed by selection rectangle,
 line-range, grapheme-boundary, edit-action, candidate-anchor, surrounding-text,
 composition-range, and preedit-pixel evidence before text or IME readiness can
 be promoted.
+The native Skia text/emoji smoke records `graphemeEditing`,
+`imeCandidateAnchor`, and `imeCompositionVisual` from the shared
+`TextGraphemeBoundaries`, host IME diagnostics, Skia text-system geometry, and
+captured text-field composition pixels. These are renderer/text-system proof
+markers, not matching-host native IME runtime evidence.
 Platform runtime evidence splits native IME readiness further: native
 `status=passed` entries must also record `imeSurroundingText`,
 `imeCommitDelete`, `imeCursorUpdate`, `imeScrollAnchor`,
