@@ -16,6 +16,7 @@ struct RuntimeState {
   mut next_element_id : Int
   dirty_elements : Array[ElementId]
   mut focused_element : ElementId?
+  mut active_pointer_capture : ElementId?
   mut environment : Environment
   mut text_system : TextSystem
   mut redraw_callback : (() -> Unit)?
@@ -49,6 +50,7 @@ fn RuntimeState::new_spec(
     next_element_id: initial.next_id,
     dirty_elements: [],
     focused_element: None,
+    active_pointer_capture: None,
     environment,
     text_system: TextSystem::fallback(),
     redraw_callback: None,
@@ -90,6 +92,7 @@ fn RuntimeState::new_component(
     next_element_id: mounted.next_id,
     dirty_elements: [],
     focused_element: None,
+    active_pointer_capture: None,
     environment,
     text_system: TextSystem::fallback(),
     redraw_callback: None,
@@ -171,6 +174,7 @@ pub fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.next_element_id = 1
   self.dirty_elements.clear()
   self.focused_element = None
+  self.active_pointer_capture = None
   self.needs_rebuild = false
   self.needs_layout = false
   self.needs_paint = false
@@ -192,6 +196,7 @@ pub fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
   )
   self.element_tree = ElementTree::new(result.node)
   self.next_element_id = result.next_id
+  self.clear_stale_pointer_capture()
   self.needs_rebuild = false
   self.needs_layout = true
   self.needs_paint = true
@@ -328,11 +333,51 @@ pub fn RuntimeState::dispatch_event(
           self.mark_dirty(self.element_tree.id())
         }
       }
-      let result = self.element_tree.root.dispatch_pointer(
-        event,
-        self.render_tree.root,
-        text_system=self.text_system,
-      )
+      let result = match self.active_pointer_capture {
+        Some(target) =>
+          if event.phase == PointerPhase::Down {
+            self.element_tree.root.dispatch_pointer(
+              event,
+              self.render_tree.root,
+              text_system=self.text_system,
+              capture_lookup=false,
+            )
+          } else {
+            match
+              self.element_tree.root.dispatch_pointer_to_target(
+                target,
+                event,
+                self.render_tree.root,
+                text_system=self.text_system,
+              ) {
+              Some(result) => result
+              None => {
+                self.active_pointer_capture = None
+                self.element_tree.root.dispatch_pointer(
+                  event,
+                  self.render_tree.root,
+                  text_system=self.text_system,
+                  capture_lookup=false,
+                )
+              }
+            }
+          }
+        None =>
+          self.element_tree.root.dispatch_pointer(
+            event,
+            self.render_tree.root,
+            text_system=self.text_system,
+            capture_lookup=false,
+          )
+      }
+      if event.phase == PointerPhase::Down {
+        self.active_pointer_capture = self.element_tree.root.active_pointer_capture_id(
+          PointerPhase::Move,
+        )
+      } else if event.phase == PointerPhase::Up ||
+        event.phase == PointerPhase::Cancel {
+        self.active_pointer_capture = None
+      }
       self.needs_redraw = self.needs_redraw || result.changed
       self.needs_rebuild = self.needs_rebuild || result.activated
       self.needs_paint = self.needs_paint || result.changed
@@ -621,6 +666,7 @@ pub fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
       )
       self.element_tree = ElementTree::new(result.node)
       self.next_element_id = result.next_id
+      self.clear_stale_pointer_capture()
       self.needs_rebuild = self.element_tree.root.has_dirty_build()
       self.needs_layout = self.needs_layout ||
         self.element_tree.root.has_dirty_layout()
@@ -682,6 +728,17 @@ fn RuntimeState::tick_animations(self : RuntimeState, frame : Frame) -> Unit {
 ///|
 fn RuntimeState::has_active_animations(self : RuntimeState) -> Bool {
   self.animations.any(controller => controller.is_active())
+}
+
+///|
+fn RuntimeState::clear_stale_pointer_capture(self : RuntimeState) -> Unit {
+  match self.active_pointer_capture {
+    Some(target) =>
+      if !self.element_tree.root.contains_element_id(target) {
+        self.active_pointer_capture = None
+      }
+    None => ()
+  }
 }
 
 ///|
