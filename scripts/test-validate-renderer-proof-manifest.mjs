@@ -62,7 +62,35 @@ const colorEmojiMetadata = () => ({
   },
 });
 
-const observations = (status = "passed", evidenceMap = observationEvidence) => {
+const skiaColorEmojiMetadata = () => ({
+  font: {
+    family: "emoji",
+    source: "skia-system-fontmgr",
+    textSystem: "skia-raster-text-system",
+    shaper: "skshaper",
+    fallbackScriptTag: "und-Zsye",
+    fallbackLanguageTagCount: 2,
+    fallbackRequestLanguageCount: 2,
+  },
+  glyph: {
+    format: "rgba",
+    glyphCount: 2,
+    clusterCount: 1,
+    key: "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|emoji-u+128105|rgba",
+    width: 28,
+    height: 32,
+    highSaturationPixels: 42,
+    alphaPixels: 120,
+    resolvedMissingGlyphCount: 0,
+    missingGlyphRecoveryReady: true,
+  },
+});
+
+const observations = (
+  status = "passed",
+  evidenceMap = observationEvidence,
+  metadata = colorEmojiMetadata(),
+) => {
   const entries = Object.fromEntries(
     Object.entries(evidenceMap).map(([key, evidence]) => [
       key,
@@ -73,7 +101,7 @@ const observations = (status = "passed", evidenceMap = observationEvidence) => {
       },
     ]),
   );
-  entries.colorEmojiPixels.metadata = colorEmojiMetadata();
+  entries.colorEmojiPixels.metadata = metadata;
   return entries;
 };
 
@@ -101,7 +129,11 @@ const skiaNativeManifest = overrides => manifest({
   backend: "skia-native",
   platform: "macos",
   artifacts: ["artifacts/conformance/renderer-proof/skia-native-macos.json"],
-  observations: observations("passed", skiaNativeObservationEvidence),
+  observations: observations(
+    "passed",
+    skiaNativeObservationEvidence,
+    skiaColorEmojiMetadata(),
+  ),
   ...overrides,
 });
 
@@ -209,7 +241,11 @@ expectFail(
     "skia-native-missing-engine.json",
     skiaNativeManifest({
       observations: {
-        ...observations("passed", skiaNativeObservationEvidence),
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
         paragraphWrapping: {
           status: "passed",
           evidence: ["line-metrics", "later-line-pixels"],
@@ -228,12 +264,16 @@ expectFail(
     "skia-native-missing-emoji-fallback-request.json",
     skiaNativeManifest({
       observations: {
-        ...observations("passed", skiaNativeObservationEvidence),
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
         colorEmojiPixels: {
           status: "passed",
           evidence: observationEvidence.colorEmojiPixels,
           artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
-          metadata: colorEmojiMetadata(),
+          metadata: skiaColorEmojiMetadata(),
         },
       },
     }),
@@ -243,12 +283,106 @@ expectFail(
 );
 
 expectFail(
+  "skia native color emoji proof rejects missing fallback script metadata",
+  run(
+    "skia-native-missing-fallback-script.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: skiaNativeObservationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...skiaColorEmojiMetadata(),
+            font: {
+              ...skiaColorEmojiMetadata().font,
+              fallbackScriptTag: "",
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.font.fallbackScriptTag must be a non-empty string",
+);
+
+expectFail(
+  "skia native color emoji proof rejects mismatched fallback language counts",
+  run(
+    "skia-native-mismatched-language-count.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: skiaNativeObservationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...skiaColorEmojiMetadata(),
+            font: {
+              ...skiaColorEmojiMetadata().font,
+              fallbackRequestLanguageCount: 1,
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.font.fallbackRequestLanguageCount must match fallbackLanguageTagCount",
+);
+
+expectFail(
+  "skia native color emoji proof rejects missing glyph recovery audit",
+  run(
+    "skia-native-missing-glyph-recovery.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: skiaNativeObservationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...skiaColorEmojiMetadata(),
+            glyph: {
+              ...skiaColorEmojiMetadata().glyph,
+              missingGlyphRecoveryReady: false,
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.glyph.missingGlyphRecoveryReady must be true",
+);
+
+expectFail(
   "skia native selection proof rejects missing hit-test token",
   run(
     "skia-native-missing-hit-test.json",
     skiaNativeManifest({
       observations: {
-        ...observations("passed", skiaNativeObservationEvidence),
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
         selectionRects: {
           status: "passed",
           evidence: ["engine=skparagraph", "selection-rects", "line-range"],

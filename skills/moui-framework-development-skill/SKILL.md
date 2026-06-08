@@ -285,7 +285,9 @@ marker tokens. Passed
 `colorEmojiPixels` observations must also include `font-metadata` /
 `glyph-metadata` evidence and structured metadata fields, including a non-empty
 glyph key plus positive glyph width/height; native Skia color emoji proof must
-also include `fallback-request`, `emoji-hint`, and `stable-glyph-key` tokens. Native Skia `paragraphWrapping`,
+also include `fallback-request`, `emoji-hint`, and `stable-glyph-key` tokens
+plus fallback script/language-count metadata, resolved missing-glyph count, and
+missing-glyph recovery readiness. Native Skia `paragraphWrapping`,
 `bidiLayout`, and `selectionRects` observations must include SkParagraph
 markers such as `native_paragraph_ready=true`, `bidi_visual_order_ready=true`,
 `line-metrics`, `later-line-pixels`, `visual-order`, `selection-rects`, and

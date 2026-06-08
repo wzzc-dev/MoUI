@@ -288,6 +288,45 @@ for (const key of expectedObservationKeys) {
         fail("observations.colorEmojiPixels.metadata.glyph.highSaturationPixels must be at least 8");
       }
       requireNumber(glyph, "alphaPixels", "observations.colorEmojiPixels.metadata.glyph");
+      if (backend === "skia-native") {
+        requireString(
+          font,
+          "fallbackScriptTag",
+          "observations.colorEmojiPixels.metadata.font",
+        );
+        const fallbackLanguageTagCount = requireNumber(
+          font,
+          "fallbackLanguageTagCount",
+          "observations.colorEmojiPixels.metadata.font",
+        );
+        if (fallbackLanguageTagCount < 1) {
+          fail(
+            "observations.colorEmojiPixels.metadata.font.fallbackLanguageTagCount must be at least 1",
+          );
+        }
+        const fallbackRequestLanguageCount = requireNumber(
+          font,
+          "fallbackRequestLanguageCount",
+          "observations.colorEmojiPixels.metadata.font",
+        );
+        if (fallbackRequestLanguageCount !== fallbackLanguageTagCount) {
+          fail(
+            "observations.colorEmojiPixels.metadata.font.fallbackRequestLanguageCount must match fallbackLanguageTagCount",
+          );
+        }
+        if (
+          requireNumber(
+            glyph,
+            "resolvedMissingGlyphCount",
+            "observations.colorEmojiPixels.metadata.glyph",
+          ) < 0
+        ) {
+          fail("observations.colorEmojiPixels.metadata.glyph.resolvedMissingGlyphCount must be non-negative");
+        }
+        if (glyph.missingGlyphRecoveryReady !== true) {
+          fail("observations.colorEmojiPixels.metadata.glyph.missingGlyphRecoveryReady must be true");
+        }
+      }
     }
   }
 }
