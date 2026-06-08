@@ -264,6 +264,48 @@ test "grapheme boundary contract covers ranges deletes and utf8 offsets" {
 }
 
 ///|
+test "paragraph layout contract exposes line metrics selection rects and hit testing" {
+  let text = "alpha beta gamma"
+  let font = FontSpec::new(size=16.0, weight=400)
+  let system = fixed_advance_text_system(10.0)
+  let layout = system.layout_paragraph(
+    TextLayoutInput::new(text~, font~, max_width=60.0),
+  )
+  assert_true(layout.metadata.paragraph_layout_available)
+  assert_true(layout.metadata.line_metrics_available)
+  assert_true(layout.metadata.selection_rects_available)
+  assert_true(layout.metadata.hit_test_available)
+  assert_false(layout.metadata.native_paragraph_ready)
+  assert_false(layout.metadata.bidi_visual_order_ready)
+  inspect(layout.line_count(), content="3")
+  inspect(
+    layout.caret_rects.length(),
+    content="\{text.to_array().length() + 1}",
+  )
+  assert_true(layout.size.height > font.size * 2.0)
+  assert_true(layout.lines[0].text_range.start == 0)
+  assert_true(layout.lines[0].text_range.end < text.to_array().length())
+  assert_true(layout.lines[1].origin.y > layout.lines[0].origin.y)
+  assert_true(layout.lines[1].baseline > layout.lines[0].baseline)
+
+  let rects = layout.selection_rects(
+    TextRange::new(start=0, end=text.to_array().length()),
+  )
+  assert_true(rects.length() >= 3)
+  for rect in rects {
+    assert_true(rect.size.width > 0.0)
+    assert_true(rect.size.height > 0.0)
+  }
+  let second_line_y = layout.lines[1].origin.y + 1.0
+  let hit = layout.hit_test(Point::new(x=999.0, y=second_line_y))
+  inspect(hit.line_index, content="1")
+  assert_true(hit.offset >= layout.lines[1].text_range.start)
+  assert_true(hit.offset <= layout.lines[1].text_range.end)
+  let collapsed = layout.selection_rects(TextRange::collapsed(hit.offset))
+  inspect(collapsed.length(), content="1")
+}
+
+///|
 test "text field deletion respects grapheme boundaries" {
   let backward = State::new("A👩‍💻B")
   let backward_runtime = RuntimeState::new_spec(

@@ -506,8 +506,8 @@ moon info
 
 ### Change Text System Or Provider
 
-- Keep `core/` limited to `TextSystem`, `FontSpec`, fallback measurement, and
-  platform-neutral text geometry.
+- Keep `core/` limited to `TextSystem`, `FontSpec`, fallback measurement,
+  paragraph layout geometry, and platform-neutral text geometry.
 - Put native provider work in the relevant `render/wgpu/*` package.
 - Put Skia-backed measurement, glyph-run, font fallback, and diagnostic text
   system work in `render/skia`.

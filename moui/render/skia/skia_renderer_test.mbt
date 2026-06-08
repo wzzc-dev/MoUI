@@ -152,6 +152,32 @@ test "skia text system is directly available for diagnostic conformance" {
   for caret in clamped.caret_positions {
     assert_true(caret <= 32.0)
   }
+  let paragraph_text = "alpha beta gamma delta"
+  let paragraph = system.layout_paragraph(
+    @core.TextLayoutInput::new(
+      text=paragraph_text,
+      font=input.font,
+      max_width=72.0,
+    ),
+  )
+  assert_true(paragraph.metadata.paragraph_layout_available)
+  assert_true(paragraph.metadata.line_metrics_available)
+  assert_true(paragraph.metadata.selection_rects_available)
+  assert_true(paragraph.metadata.hit_test_available)
+  assert_false(paragraph.metadata.native_paragraph_ready)
+  assert_true(paragraph.line_count() >= 2)
+  inspect(
+    paragraph.caret_rects.length(),
+    content="\{paragraph_text.to_array().length() + 1}",
+  )
+  assert_true(
+    paragraph
+    .selection_rects(
+      @core.TextRange::new(start=0, end=paragraph_text.to_array().length()),
+    )
+    .length() >=
+    2,
+  )
 }
 
 ///|

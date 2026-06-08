@@ -175,14 +175,14 @@ test "diagnostic native skia bidi sample keeps logical carets and marks reorderi
 }
 
 ///|
-test "diagnostic native skia paragraph sample clamps instead of claiming line breaking" {
+test "diagnostic native skia paragraph layout exposes line metrics without readiness promotion" {
   let system = @skia_renderer.skia_text_system()
   let sample = "alpha beta gamma delta epsilon"
   let font = diagnostic_native_text_font()
   let unbounded = system.measure_text(
     @core.TextLayoutInput::new(text=sample, font~),
   )
-  let max_width = 48.0
+  let max_width = 72.0
   let clamped = system.measure_text(
     @core.TextLayoutInput::new(text=sample, font~, max_width~),
   )
@@ -201,6 +201,38 @@ test "diagnostic native skia paragraph sample clamps instead of claiming line br
   for caret in clamped.caret_positions {
     assert_true(caret <= max_width)
   }
+
+  let paragraph = system.layout_paragraph(
+    @core.TextLayoutInput::new(text=sample, font~, max_width~),
+  )
+  assert_true(paragraph.metadata.paragraph_layout_available)
+  assert_true(paragraph.metadata.line_metrics_available)
+  assert_true(paragraph.metadata.selection_rects_available)
+  assert_true(paragraph.metadata.hit_test_available)
+  assert_false(paragraph.metadata.native_paragraph_ready)
+  assert_false(paragraph.metadata.bidi_visual_order_ready)
+  assert_true(paragraph.line_count() >= 2)
+  assert_true(paragraph.size.height > clamped.size.height)
+  inspect(
+    paragraph.caret_rects.length(),
+    content="\{sample.to_array().length() + 1}",
+  )
+  for line in paragraph.lines {
+    assert_true(line.size.height > 0.0)
+    assert_true(line.baseline > line.origin.y)
+    assert_true(line.size.width <= max_width + 0.01)
+  }
+  let selection_rects = paragraph.selection_rects(
+    @core.TextRange::new(start=0, end=sample.to_array().length()),
+  )
+  assert_true(selection_rects.length() >= 2)
+  let second_line_y = paragraph.lines[1].origin.y + 1.0
+  let hit = paragraph.hit_test(
+    @core.Point::new(x=max_width + 100.0, y=second_line_y),
+  )
+  inspect(hit.line_index, content="1")
+  assert_true(hit.offset >= paragraph.lines[1].text_range.start)
+  assert_true(hit.offset <= paragraph.lines[1].text_range.end)
   assert_diagnostic_native_skia_maturity_gap("paragraph line breaking")
 }
 
