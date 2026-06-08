@@ -2147,16 +2147,12 @@ test "skia grapheme clustering follows core IME boundary contract" {
     "A\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}B",
     [0, 1, 5, 6],
   )
-  assert_skia_grapheme_clusters_match_core("A1\u{FE0F}\u{20E3}B", [
-    0, 1, 4, 5,
-  ])
+  assert_skia_grapheme_clusters_match_core("A1\u{FE0F}\u{20E3}B", [0, 1, 4, 5])
   assert_skia_grapheme_clusters_match_core("\u{1F1FA}\u{1F1F8}\u{1F1E8}", [
     0, 2, 3,
   ])
   assert_skia_grapheme_clusters_match_core("A\u{0600}B", [0, 1, 3])
-  assert_skia_grapheme_clusters_match_core("A\u{0D4E}\u{0D15}B", [
-    0, 1, 3, 4,
-  ])
+  assert_skia_grapheme_clusters_match_core("A\u{0D4E}\u{0D15}B", [0, 1, 3, 4])
   assert_skia_grapheme_clusters_match_core("A\u{13430}\u{0301}B", [
     0, 1, 2, 3, 4,
   ])
@@ -2175,12 +2171,23 @@ test "skia grapheme clustering follows core IME boundary contract" {
   assert_skia_grapheme_clusters_match_core("Aक्‍षB", [0, 1, 5, 6])
   assert_skia_grapheme_clusters_match_core("Aक़्षB", [0, 1, 5, 6])
   assert_skia_grapheme_clusters_match_core("Aक्‌षB", [0, 1, 4, 5, 6])
+  assert_skia_grapheme_clusters_match_core("\u{094D}\u{0915}", [0, 1, 2])
+  assert_skia_grapheme_clusters_match_core("a\u{094D}\u{0924}", [0, 2, 3])
+  assert_skia_grapheme_clusters_match_core("A\u{1B32}\u{1B44}\u{1B2F}B", [
+    0, 1, 4, 5,
+  ])
+  assert_skia_grapheme_clusters_match_core(
+    "A\u{179F}\u{17D2}\u{178F}\u{17D2}\u{179A}\u{17B8}B",
+    [0, 1, 7, 8],
+  )
   assert_skia_grapheme_clusters_match_core("A\u{1000}\u{1039}\u{1001}B", [
     0, 1, 4, 5,
   ])
-  assert_skia_grapheme_utf8_offsets("A\u{1F469}\u{200D}\u{1F4BB}B", [
-    0, 1, 4, 5,
-  ], [0, 1, 12, 13])
+  assert_skia_grapheme_utf8_offsets(
+    "A\u{1F469}\u{200D}\u{1F4BB}B",
+    [0, 1, 4, 5],
+    [0, 1, 12, 13],
+  )
   assert_skia_grapheme_utf8_offsets("A1\u{FE0F}\u{20E3}B", [0, 1, 4, 5], [
     0, 1, 8, 9,
   ])
@@ -2916,7 +2923,7 @@ test "skia fallback caret stabilization keeps Southeast and South Asian marks st
   inspect(sinhala_virama[0], content="0")
   inspect(sinhala_virama[1], content="9")
   inspect(sinhala_virama[2], content="9")
-  inspect(sinhala_virama[3], content="9")
+  inspect(sinhala_virama[3], content="18")
   inspect(sinhala_virama[4], content="25")
   inspect(sinhala_virama[5], content="32")
   assert_true(skia_test_carets_are_monotonic(sinhala_virama))
