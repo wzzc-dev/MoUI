@@ -174,6 +174,49 @@ fn emoji_proof_font() -> @core.FontSpec {
 }
 
 ///|
+fn skia_color_emoji_glyph_key_metadata_ready(
+  proof : @skia_renderer.SkiaEmojiFontFallbackProof,
+) -> Bool {
+  proof.glyph_key.contains(proof.font_source) &&
+  proof.glyph_key.contains(proof.text_system_id) &&
+  proof.glyph_key.contains(proof.shaper) &&
+  proof.glyph_key.contains("script=\{proof.fallback_script_tag}") &&
+  proof.glyph_key.contains("langs=\{proof.fallback_request_language_count}") &&
+  proof.glyph_key.contains(proof.glyph_format)
+}
+
+///|
+fn skia_color_emoji_proof_metadata_ready(
+  proof : @skia_renderer.SkiaEmojiFontFallbackProof,
+  high_saturation_pixels : Int,
+  alpha_pixels : Int,
+) -> Bool {
+  proof.font_family != "" &&
+  proof.font_family != "unknown" &&
+  proof.font_source != "" &&
+  proof.font_source != "unknown" &&
+  proof.text_system_id != "" &&
+  proof.text_system_id != "unknown" &&
+  proof.shaper != "" &&
+  proof.shaper != "unknown" &&
+  proof.emoji_hint &&
+  proof.fallback_request_ready &&
+  proof.missing_glyph_recovery_ready &&
+  proof.fallback_script_tag != "" &&
+  proof.fallback_language_tag_count >= 1 &&
+  proof.fallback_request_language_count == proof.fallback_language_tag_count &&
+  proof.glyph_format == "rgba" &&
+  proof.glyph_count >= 1 &&
+  proof.cluster_count >= 1 &&
+  proof.glyph_width > 0 &&
+  proof.glyph_height > 0 &&
+  proof.resolved_missing_glyph_count >= 0 &&
+  high_saturation_pixels >= 8 &&
+  alpha_pixels > 0 &&
+  skia_color_emoji_glyph_key_metadata_ready(proof)
+}
+
+///|
 fn smoke_text_field_view(value : @core.Binding[String]) -> @core.View[Unit] {
   @core.View::text_field(
     value~,
@@ -608,9 +651,19 @@ fn main {
             println(
               "MoUI renderer proof colorEmojiPixels metadata font_family=\{proof.font_family} font_source=\{proof.font_source} text_system=\{proof.text_system_id} shaper=\{proof.shaper} glyph_format=\{proof.glyph_format} glyph_count=\{proof.glyph_count} cluster_count=\{proof.cluster_count} high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels} glyph_key=\{proof.glyph_key} glyph_width=\{proof.glyph_width} glyph_height=\{proof.glyph_height} fallback_script_tag=\{proof.fallback_script_tag} fallback_language_tag_count=\{proof.fallback_language_tag_count} fallback_request_language_count=\{proof.fallback_request_language_count} resolved_missing_glyph_count=\{proof.resolved_missing_glyph_count} missing_glyph_recovery_ready=\{proof.missing_glyph_recovery_ready}",
             )
-            println(
-              "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key",
-            )
+            if skia_color_emoji_proof_metadata_ready(
+              proof,
+              emoji_pixels,
+              emoji_alpha_pixels,
+            ) {
+              println(
+                "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key",
+              )
+            } else {
+              failures.push(
+                "colorEmojiPixels missing Skia emoji fallback request/glyph metadata readiness",
+              )
+            }
           }
           None =>
             failures.push(
