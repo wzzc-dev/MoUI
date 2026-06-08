@@ -314,6 +314,36 @@ try {
   );
 
   expectFail(
+    "reject non Skia app consumer command",
+    runRecorder([
+      writeManifest("bad-consumer-command.json", "windows"),
+      "windows",
+      "--host",
+      "Windows MSVC CI",
+      "--consumer-command",
+      "moon test moui/backend/windows --target native",
+      "--candidate-anchor-log",
+      windowsAllLog,
+    ]),
+    "consumer-command must name examples/showcase/windows_skia or examples/markdown_editor/windows_skia",
+  );
+
+  expectFail(
+    "reject markdown log with Showcase consumer command",
+    runRecorder([
+      writeManifest("markdown-log-showcase-consumer.json", "linux"),
+      "linux",
+      "--host",
+      "Linux Wayland CI",
+      "--consumer-command",
+      linuxConsumerCommand,
+      "--markdown-log",
+      linuxCandidateLog,
+    ]),
+    "markdown-log requires --consumer-command to name examples/markdown_editor/linux_skia",
+  );
+
+  expectFail(
     "reject mismatched native host",
     runRecorder([
       writeManifest("bad-host.json", "windows"),

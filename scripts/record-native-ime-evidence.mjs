@@ -284,6 +284,25 @@ if (!consumerCommand.trim()) {
   console.error("--consumer-command is required so IME observations name the native app run");
   process.exit(2);
 }
+const normalizedConsumerCommand = consumerCommand.replace(/\\/g, "/");
+const showcaseTarget = `examples/showcase/${platformName}_skia`;
+const markdownTarget = `examples/markdown_editor/${platformName}_skia`;
+const consumerNamesNativeSkiaApp =
+  normalizedConsumerCommand.includes(showcaseTarget) ||
+  normalizedConsumerCommand.includes(markdownTarget);
+if (!consumerNamesNativeSkiaApp) {
+  console.error(
+    `--consumer-command must name ${showcaseTarget} or ${markdownTarget}; got '${consumerCommand}'`,
+  );
+  process.exit(2);
+}
+if (
+  suppliedLogs.has("--markdown-log") &&
+  !normalizedConsumerCommand.includes(markdownTarget)
+) {
+  console.error(`--markdown-log requires --consumer-command to name ${markdownTarget}`);
+  process.exit(2);
+}
 if (suppliedLogs.size === 0) {
   console.error("At least one native IME evidence log option is required");
   process.exit(2);
