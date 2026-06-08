@@ -366,6 +366,29 @@ try {
     "candidate anchor log is missing expected marker: MoUI native IME runtime",
   );
 
+  const appSuffixLog = writeArtifact(
+    "linux",
+    "app-suffix-ime-candidate-anchor.log",
+    [
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=wayland-text-input app=showcase-debug",
+      "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
+    ].join("\n"),
+  );
+  expectFail(
+    "reject IME log with app marker suffix",
+    runRecorder([
+      writeManifest("app-suffix-ime-marker.json", "linux"),
+      "linux",
+      "--host",
+      "Linux Wayland CI",
+      "--consumer-command",
+      linuxConsumerCommand,
+      "--candidate-anchor-log",
+      appSuffixLog,
+    ]),
+    "candidate anchor log is missing expected marker: MoUI native IME runtime",
+  );
+
   const wrongRendererLog = writeArtifact(
     "linux",
     "wrong-renderer-ime-candidate-anchor.log",
@@ -385,6 +408,52 @@ try {
       linuxConsumerCommand,
       "--candidate-anchor-log",
       wrongRendererLog,
+    ]),
+    "candidate anchor log is missing expected marker: MoUI native IME runtime",
+  );
+
+  const rendererSuffixLog = writeArtifact(
+    "linux",
+    "renderer-suffix-ime-candidate-anchor.log",
+    [
+      "MoUI native IME runtime matching-host native-app renderer=skia-preview platform-protocol=wayland-text-input app=showcase",
+      "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
+    ].join("\n"),
+  );
+  expectFail(
+    "reject IME log with renderer marker suffix",
+    runRecorder([
+      writeManifest("renderer-suffix-ime-marker.json", "linux"),
+      "linux",
+      "--host",
+      "Linux Wayland CI",
+      "--consumer-command",
+      linuxConsumerCommand,
+      "--candidate-anchor-log",
+      rendererSuffixLog,
+    ]),
+    "candidate anchor log is missing expected marker: MoUI native IME runtime",
+  );
+
+  const protocolSuffixLog = writeArtifact(
+    "linux",
+    "protocol-suffix-ime-candidate-anchor.log",
+    [
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=wayland-text-input-v3 app=showcase",
+      "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
+    ].join("\n"),
+  );
+  expectFail(
+    "reject IME log with platform protocol marker suffix",
+    runRecorder([
+      writeManifest("protocol-suffix-ime-marker.json", "linux"),
+      "linux",
+      "--host",
+      "Linux Wayland CI",
+      "--consumer-command",
+      linuxConsumerCommand,
+      "--candidate-anchor-log",
+      protocolSuffixLog,
     ]),
     "candidate anchor log is missing expected marker: MoUI native IME runtime",
   );
