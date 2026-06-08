@@ -50,16 +50,23 @@ pub(all) struct SkiaEmojiFontFallbackProof {
   text_system_id : String
   font_family : String
   font_source : String
+  fallback_language_tags : Array[String]
+  fallback_script_tag : String
+  fallback_language_tag_count : Int
+  fallback_request_language_count : Int
   shaper : String
+  glyph_format : String
   glyph_key : String
   glyph_count : Int
   cluster_count : Int
   glyph_width : Int
   glyph_height : Int
+  resolved_missing_glyph_count : Int
   fallback_character : Int
   emoji_hint : Bool
   emoji_fallback_attempted : Bool
   fallback_request_ready : Bool
+  missing_glyph_recovery_ready : Bool
   deterministic_color_emoji_ready : Bool
 } derive(Eq, ToJson, @debug.Debug)
 
