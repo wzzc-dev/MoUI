@@ -152,15 +152,11 @@ fn positive_pixel_extent(value : Double) -> Int {
 
 ///|
 fn skia_paragraph_proof_lines(
-  system : @core.TextSystem,
+  layout : @core.TextParagraphLayoutResult,
 ) -> Array[SkiaParagraphProofLine] {
-  let font = paragraph_font()
   let max_width = 96.0
   let start_x = 8.0
   let start_y = 94.0
-  let layout = system.layout_paragraph(
-    @core.TextLayoutInput::new(text=paragraph_text(), font~, max_width~),
-  )
   println(
     "MoUI Skia text/emoji smoke paragraph layout text_system=\{layout.metadata.text_system_id} lines=\{layout.line_count()} native_paragraph_ready=\{layout.metadata.native_paragraph_ready} bidi_ready=\{layout.metadata.bidi_visual_order_ready}",
   )
@@ -186,6 +182,46 @@ fn skia_paragraph_proof_lines(
     })
   }
   lines
+}
+
+///|
+fn skia_paragraph_layout(
+  system : @core.TextSystem,
+) -> @core.TextParagraphLayoutResult {
+  system.layout_paragraph(
+    @core.TextLayoutInput::new(
+      text=paragraph_text(),
+      font=paragraph_font(),
+      max_width=96.0,
+    ),
+  )
+}
+
+///|
+fn selection_rect_evidence_available(
+  layout : @core.TextParagraphLayoutResult,
+) -> Bool {
+  if layout.lines.length() < 2 {
+    return false
+  }
+  let selection = @core.TextRange::new(
+    start=layout.lines[0].text_range.start,
+    end=layout.lines[1].text_range.end,
+  )
+  let rects = layout.selection_rects(selection)
+  let hit = layout.hit_test(
+    @core.Point::new(
+      x=layout.size.width + 80.0,
+      y=layout.lines[1].origin.y + 1.0,
+    ),
+  )
+  println(
+    "MoUI Skia text/emoji smoke selection rect_count=\{rects.length()} line_range=\{layout.lines[0].line_index}..\{layout.lines[1].line_index} hit_line=\{hit.line_index} hit_offset=\{hit.offset}",
+  )
+  rects.length() >= 2 &&
+  hit.line_index == layout.lines[1].line_index &&
+  hit.offset >= layout.lines[1].text_range.start &&
+  hit.offset <= layout.lines[1].text_range.end
 }
 
 ///|
@@ -356,7 +392,8 @@ fn main {
     fail_smoke("failed to create MoUI Skia text/emoji proof renderer")
   }
 
-  let paragraph_lines = skia_paragraph_proof_lines(renderer.text_system())
+  let paragraph_layout = skia_paragraph_layout(renderer.text_system())
+  let paragraph_lines = skia_paragraph_proof_lines(paragraph_layout)
   for line in paragraph_lines {
     println(
       "MoUI Skia text/emoji smoke paragraph line=\{line.line_index} text=\{line.text} baseline=\{line.baseline} measured_width=\{line.measured_width}",
@@ -450,6 +487,16 @@ fn main {
       } else {
         failures.push(
           "bidiLayout missing Skia visual-order glyph/paragraph evidence",
+        )
+      }
+
+      if selection_rect_evidence_available(paragraph_layout) {
+        println(
+          "MoUI renderer proof selectionRects passed selection-rects line-range",
+        )
+      } else {
+        failures.push(
+          "selectionRects missing Skia selection rectangles and line-range evidence",
         )
       }
     }

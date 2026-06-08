@@ -25,7 +25,11 @@ pub fn skia_image_load_completion(String) -> @render.ImageResourceLoadCompletion
 
 pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor
 
+pub fn skia_text_selection_geometry_proof(String, selection? : @core.TextRange?, font? : @core.FontSpec, max_width? : Double, font_resolution? : SkiaFontResolution) -> SkiaTextSelectionGeometryProof?
+
 pub fn skia_text_system(resolution? : SkiaFontResolution) -> @core.TextSystem
+
+pub fn skia_text_visual_order_proof(String, font? : @core.FontSpec, font_resolution? : SkiaFontResolution) -> SkiaTextVisualOrderProof?
 
 // Errors
 pub(all) suberror SkiaRendererError {
@@ -43,13 +47,6 @@ pub(all) enum SkiaFontResolution {
   SystemFontMgr
   EmptyTypeface
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum SkiaSurfaceRoute {
-  RasterSurfaceRoute
-  MetalGpuSurfaceRoute
-} derive(Eq, ToJson, @debug.Debug)
-pub fn SkiaSurfaceRoute::is_gpu(Self) -> Bool
-pub fn SkiaSurfaceRoute::label(Self) -> String
 
 pub(all) struct SkiaPixelFrame {
   width : Int
@@ -99,6 +96,38 @@ pub fn SkiaRasterRenderer::surface_route(Self) -> SkiaSurfaceRoute
 pub fn SkiaRasterRenderer::text_system(Self) -> @core.TextSystem
 pub fn SkiaRasterRenderer::unsupported_command_count(Self) -> Int
 pub fn SkiaRasterRenderer::unsupported_command_diagnostics(Self) -> Array[SkiaUnsupportedCommandDiagnostic]
+
+pub(all) enum SkiaSurfaceRoute {
+  RasterSurfaceRoute
+  MetalGpuSurfaceRoute
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SkiaSurfaceRoute::is_gpu(Self) -> Bool
+pub fn SkiaSurfaceRoute::label(Self) -> String
+
+pub(all) struct SkiaTextSelectionGeometryProof {
+  text : String
+  selection_range : @core.TextRange
+  selection_rect_count : Int
+  selected_line_count : Int
+  line_count : Int
+  hit_test_offset : Int
+  hit_test_line_index : Int
+  hit_test_inside : Bool
+  visual_order_differs : Bool
+  visual_segment_count : Int
+  bidi_visual_order_evidence : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SkiaTextVisualOrderProof {
+  logical_text : String
+  visual_text : String
+  logical_cluster_count : Int
+  visual_cluster_count : Int
+  segment_count : Int
+  glyph_count : Int
+  width : Double
+  visual_order_differs : Bool
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SkiaUnsupportedCommandDiagnostic {
   command : String
