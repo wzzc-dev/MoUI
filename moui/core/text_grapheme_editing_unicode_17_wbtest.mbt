@@ -38,6 +38,20 @@ fn assert_unicode_17_grapheme_editing_fixture_expected_nearest(index : Int, expe
 }
 
 ///|
+fn assert_unicode_17_grapheme_editing_fixture_expected_boundary_index(
+  boundary : Int,
+  expected : Array[Int],
+  label : String,
+) -> Int raise {
+  for index in 0..<expected.length() {
+    if expected[index] == boundary {
+      return index
+    }
+  }
+  fail("\{label}: expected nearest boundary \{boundary} to be in fixture")
+}
+
+///|
 fn assert_unicode_17_grapheme_editing_fixture(
   text : String,
   expected : Array[Int],
@@ -65,9 +79,14 @@ fn assert_unicode_17_grapheme_editing_fixture(
     let floor = assert_unicode_17_grapheme_editing_fixture_expected_floor(index, expected)
     let ceil = assert_unicode_17_grapheme_editing_fixture_expected_ceil(index, expected)
     let nearest = assert_unicode_17_grapheme_editing_fixture_expected_nearest(index, expected)
+    let nearest_utf8_index = assert_unicode_17_grapheme_editing_fixture_expected_boundary_index(nearest, expected, label)
     inspect(boundaries.floor_boundary(index), content="\{floor}")
     inspect(boundaries.ceil_boundary(index), content="\{ceil}")
     inspect(boundaries.nearest_boundary(index), content="\{nearest}")
+    inspect(
+      boundaries.nearest_boundary_utf8_offset(index),
+      content="\{expected_utf8_offsets[nearest_utf8_index]}",
+    )
     let collapsed = boundaries.normalize_range(TextRange::collapsed(index))
     inspect(collapsed.start, content="\{nearest}")
     inspect(collapsed.end, content="\{nearest}")
