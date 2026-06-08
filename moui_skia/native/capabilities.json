@@ -15,6 +15,7 @@
         "Path",
         "Font",
         "ShapedTextRun",
+        "Paragraph",
         "Typeface",
         "FontMgr",
         "Shader",
@@ -249,6 +250,23 @@
         "native smoke font fallback resolution bridge",
         "native smoke font fallback resolution bridge cache resources",
         "native smoke font fallback width"
+      ],
+      "non_smoke_rationale": ""
+    },
+    {
+      "id": "native.paragraph",
+      "area": "Text",
+      "native_file": "paragraph_native.mbt",
+      "unavailable_file": "paragraph_unavailable.mbt",
+      "handles": [
+        "Paragraph"
+      ],
+      "smoke_markers": [
+        "native smoke paragraph availability",
+        "native smoke paragraph available",
+        "native smoke paragraph line metrics",
+        "native smoke paragraph selection boxes",
+        "native smoke paragraph hit test"
       ],
       "non_smoke_rationale": ""
     },
