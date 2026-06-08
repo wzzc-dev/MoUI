@@ -202,6 +202,7 @@ test "skia selection geometry proof covers line ranges hit testing and bidi evid
   assert_true(proof.selected_line_count >= 2)
   assert_true(proof.line_count >= 2)
   inspect(proof.hit_test_line_index, content="1")
+  assert_true(proof.hit_test_inside)
   assert_true(proof.hit_test_offset >= proof.selection_range.start)
   if skia_available() {
     assert_true(proof.visual_order_differs)

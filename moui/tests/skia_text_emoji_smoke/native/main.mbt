@@ -320,14 +320,17 @@ fn selection_rect_evidence_available(
   let rects = layout.selection_rects(selection)
   let hit = layout.hit_test(
     @core.Point::new(
-      x=layout.size.width + 80.0,
-      y=layout.lines[1].origin.y + 1.0,
+      x=(layout.lines[1].origin.x + layout.lines[1].size.width * 0.5).min(
+        layout.size.width,
+      ),
+      y=layout.lines[1].origin.y + layout.lines[1].size.height * 0.5,
     ),
   )
   println(
-    "MoUI Skia text/emoji smoke selection engine=skparagraph selection_rects_available=\{layout.metadata.selection_rects_available} hit_test_available=\{layout.metadata.hit_test_available} rect_count=\{rects.length()} line_range=\{layout.lines[0].line_index}..\{layout.lines[1].line_index} hit_line=\{hit.line_index} hit_offset=\{hit.offset}",
+    "MoUI Skia text/emoji smoke selection engine=skparagraph selection_rects_available=\{layout.metadata.selection_rects_available} hit_test_available=\{layout.metadata.hit_test_available} hit_inside=\{hit.is_inside} rect_count=\{rects.length()} line_range=\{layout.lines[0].line_index}..\{layout.lines[1].line_index} hit_line=\{hit.line_index} hit_offset=\{hit.offset}",
   )
   rects.length() >= 2 &&
+  hit.is_inside &&
   hit.line_index == layout.lines[1].line_index &&
   hit.offset >= layout.lines[1].text_range.start &&
   hit.offset <= layout.lines[1].text_range.end
