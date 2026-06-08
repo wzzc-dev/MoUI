@@ -555,6 +555,8 @@ assertIncludes("docs/testing.md", "nearest_boundary_utf8_offset");
 assertIncludes("docs/text-system.md", "nearest_boundary_utf8_offset");
 assertIncludes("docs/release-readiness.md", "nearest_boundary_utf8_offset");
 assertIncludes("docs/release-readiness.md", "every-index `nearest_boundary_utf8_offset`");
+assertIncludes("docs/release-readiness.md", "Skia-produced boundaries");
+assertIncludes("docs/text-system.md", "Skia-produced cluster boundaries");
 assertIncludes("moui/core/pkg.generated.mbti", "nearest_boundary_utf8_offset");
 assertIncludes("docs/text-system.md", "Native Skia `imeCandidateAnchor` also requires `utf8-offsets`");
 assertIncludes("scripts/validate-renderer-proof-manifest.mjs", "utf8-offsets");
