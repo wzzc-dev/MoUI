@@ -35,14 +35,42 @@ Options:
 
 The helper validates supplied matching-host log markers, updates native IME
 observations in the selected platform entry, and leaves the broader platform
-status unchanged. Use record-platform-evidence-manifest.mjs for full platform
-runtime evidence promotion.`);
+status unchanged. Every supplied log must also include common runtime markers:
+MoUI native IME runtime, matching-host, native-app, and a platform-protocol
+marker such as platform-protocol=macos-marked-text,
+platform-protocol=windows-ime, or platform-protocol=wayland-text-input. Use
+record-platform-evidence-manifest.mjs for full platform runtime evidence
+promotion.`);
 };
 
 const platforms = new Map([
-  ["macos", { hostPattern: /(macOS|Darwin)/i }],
-  ["windows", { hostPattern: /(Windows|MSVC)/i }],
-  ["linux", { hostPattern: /(Linux|Wayland)/i }],
+  [
+    "macos",
+    {
+      hostPattern: /(macOS|Darwin)/i,
+      protocolMarker: /platform-protocol=(macos-marked-text|marked-text|nstextinputclient)/i,
+      protocolDescription:
+        "platform-protocol=macos-marked-text, platform-protocol=marked-text, or platform-protocol=NSTextInputClient",
+    },
+  ],
+  [
+    "windows",
+    {
+      hostPattern: /(Windows|MSVC)/i,
+      protocolMarker: /platform-protocol=(windows-ime|imm|tsf)/i,
+      protocolDescription:
+        "platform-protocol=windows-ime, platform-protocol=imm, or platform-protocol=tsf",
+    },
+  ],
+  [
+    "linux",
+    {
+      hostPattern: /(Linux|Wayland)/i,
+      protocolMarker: /platform-protocol=(wayland-text-input|wayland-ime)/i,
+      protocolDescription:
+        "platform-protocol=wayland-text-input or platform-protocol=wayland-ime",
+    },
+  ],
 ]);
 
 const imeObservationKeys = [
@@ -66,11 +94,12 @@ const logOptions = new Map([
       marker: [
         /MoUI native IME candidate anchor passed/i,
         /candidate-anchor/i,
+        /candidate-window/i,
         /caret-rect/i,
         /surrounding-text/i,
       ],
       markerDescription:
-        "MoUI native IME candidate anchor passed with candidate-anchor, caret-rect, and surrounding-text markers",
+        "MoUI native IME candidate anchor passed with candidate-anchor, candidate-window, caret-rect, and surrounding-text markers",
     },
   ],
   [
@@ -81,11 +110,12 @@ const logOptions = new Map([
       marker: [
         /MoUI native IME surrounding text passed/i,
         /surrounding-text/i,
+        /selection-anchor/i,
         /utf-?8-offsets/i,
         /grapheme/i,
       ],
       markerDescription:
-        "MoUI native IME surrounding text passed with surrounding-text, UTF-8 offsets, and grapheme markers",
+        "MoUI native IME surrounding text passed with surrounding-text, selection-anchor, UTF-8 offsets, and grapheme markers",
     },
   ],
   [
@@ -96,10 +126,13 @@ const logOptions = new Map([
       marker: [
         /MoUI native IME composition visual passed/i,
         /composition-range/i,
+        /composition-cursor/i,
+        /preedit-underline/i,
         /preedit-pixels/i,
+        /selection-highlight/i,
       ],
       markerDescription:
-        "MoUI native IME composition visual passed with composition-range and preedit-pixels markers",
+        "MoUI native IME composition visual passed with composition-range, composition-cursor, preedit-underline, preedit-pixels, and selection-highlight markers",
     },
   ],
   [
@@ -111,9 +144,10 @@ const logOptions = new Map([
         /MoUI native IME commit delete passed/i,
         /commit/i,
         /delete/i,
+        /selection-replacement/i,
       ],
       markerDescription:
-        "MoUI native IME commit delete passed with commit and delete markers",
+        "MoUI native IME commit delete passed with commit, delete, and selection-replacement markers",
     },
   ],
   [
@@ -123,11 +157,12 @@ const logOptions = new Map([
       label: "cursor update log",
       marker: [
         /MoUI native IME cursor update passed/i,
+        /cursor-area/i,
         /cursor-update/i,
         /caret-rect/i,
       ],
       markerDescription:
-        "MoUI native IME cursor update passed with cursor-update and caret-rect markers",
+        "MoUI native IME cursor update passed with cursor-area, cursor-update, and caret-rect markers",
     },
   ],
   [
@@ -139,9 +174,10 @@ const logOptions = new Map([
         /MoUI native IME scroll anchor passed/i,
         /scroll/i,
         /candidate-anchor/i,
+        /candidate-window/i,
       ],
       markerDescription:
-        "MoUI native IME scroll anchor passed with scroll and candidate-anchor markers",
+        "MoUI native IME scroll anchor passed with scroll, candidate-anchor, and candidate-window markers",
     },
   ],
   [
@@ -154,9 +190,10 @@ const logOptions = new Map([
         /scale/i,
         /dpr/i,
         /candidate-anchor/i,
+        /candidate-window/i,
       ],
       markerDescription:
-        "MoUI native IME scale DPR anchor passed with scale, DPR, and candidate-anchor markers",
+        "MoUI native IME scale DPR anchor passed with scale, DPR, candidate-anchor, and candidate-window markers",
     },
   ],
   [
@@ -168,9 +205,10 @@ const logOptions = new Map([
         /MoUI native IME resize anchor passed/i,
         /resize/i,
         /candidate-anchor/i,
+        /candidate-window/i,
       ],
       markerDescription:
-        "MoUI native IME resize anchor passed with resize and candidate-anchor markers",
+        "MoUI native IME resize anchor passed with resize, candidate-anchor, and candidate-window markers",
     },
   ],
   [
@@ -183,9 +221,12 @@ const logOptions = new Map([
         /markdown-editor/i,
         /composition/i,
         /candidate-anchor/i,
+        /candidate-window/i,
+        /selection-replacement/i,
+        /source-mapping/i,
       ],
       markerDescription:
-        "MoUI native IME Markdown Editor passed with markdown-editor, composition, and candidate-anchor markers",
+        "MoUI native IME Markdown Editor passed with markdown-editor, composition, candidate-anchor, candidate-window, selection-replacement, and source-mapping markers",
     },
   ],
 ]);
@@ -293,6 +334,20 @@ const assertMarker = (content, matcher, label, description) => {
   }
 };
 
+const assertRuntimeMarkers = (content, label) => {
+  assertMarker(
+    content,
+    [
+      /MoUI native IME runtime/i,
+      /matching-host/i,
+      /native-app/i,
+      platform.protocolMarker,
+    ],
+    label,
+    `MoUI native IME runtime, matching-host, native-app, and ${platform.protocolDescription} markers`,
+  );
+};
+
 const manifest = readJson(manifestPath);
 const entry = Array.isArray(manifest.platforms)
   ? manifest.platforms.find(item => item && item.name === platformName)
@@ -323,6 +378,7 @@ for (const [option, rawPath] of suppliedLogs) {
     console.error(`${config.label} is empty: ${rawPath}`);
     process.exit(1);
   }
+  assertRuntimeMarkers(content, config.label);
   assertMarker(content, config.marker, config.label, config.markerDescription);
   finalObservations[config.observation] = "yes";
   artifacts.add(rel);
