@@ -271,7 +271,7 @@ for (const key of expectedObservationKeys) {
       if (requireNumber(glyph, "clusterCount", "observations.colorEmojiPixels.metadata.glyph") < 1) {
         fail("observations.colorEmojiPixels.metadata.glyph.clusterCount must be at least 1");
       }
-      requireString(glyph, "key", "observations.colorEmojiPixels.metadata.glyph");
+      const glyphKey = requireString(glyph, "key", "observations.colorEmojiPixels.metadata.glyph");
       if (requireNumber(glyph, "width", "observations.colorEmojiPixels.metadata.glyph") <= 0) {
         fail("observations.colorEmojiPixels.metadata.glyph.width must be greater than 0");
       }
@@ -289,7 +289,7 @@ for (const key of expectedObservationKeys) {
       }
       requireNumber(glyph, "alphaPixels", "observations.colorEmojiPixels.metadata.glyph");
       if (backend === "skia-native") {
-        requireString(
+        const fallbackScriptTag = requireString(
           font,
           "fallbackScriptTag",
           "observations.colorEmojiPixels.metadata.font",
@@ -325,6 +325,21 @@ for (const key of expectedObservationKeys) {
         }
         if (glyph.missingGlyphRecoveryReady !== true) {
           fail("observations.colorEmojiPixels.metadata.glyph.missingGlyphRecoveryReady must be true");
+        }
+        const expectedGlyphKeyParts = [
+          font.source,
+          font.textSystem,
+          font.shaper,
+          `script=${fallbackScriptTag}`,
+          `langs=${fallbackRequestLanguageCount}`,
+          glyphFormat,
+        ];
+        for (const part of expectedGlyphKeyParts) {
+          if (!glyphKey.includes(part)) {
+            fail(
+              `observations.colorEmojiPixels.metadata.glyph.key must include '${part}'`,
+            );
+          }
         }
       }
     }
