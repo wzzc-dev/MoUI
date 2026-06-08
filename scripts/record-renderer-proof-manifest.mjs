@@ -50,15 +50,21 @@ const markerConfig = {
     marker: "MoUI renderer proof zwjGrapheme passed",
   },
   bidiLayout: {
-    required: ["visual-order"],
+    required: backend === "skia-native"
+      ? ["engine=skparagraph", "bidi_visual_order_ready=true", "visual-order"]
+      : ["visual-order"],
     marker: "MoUI renderer proof bidiLayout passed",
   },
   paragraphWrapping: {
-    required: ["line-metrics", "later-line-pixels"],
+    required: backend === "skia-native"
+      ? ["engine=skparagraph", "native_paragraph_ready=true", "line-metrics", "later-line-pixels"]
+      : ["line-metrics", "later-line-pixels"],
     marker: "MoUI renderer proof paragraphWrapping passed",
   },
   selectionRects: {
-    required: ["selection-rects", "line-range"],
+    required: backend === "skia-native"
+      ? ["engine=skparagraph", "selection-rects", "line-range"]
+      : ["selection-rects", "line-range"],
     marker: "MoUI renderer proof selectionRects passed",
   },
   graphemeEditing: {
