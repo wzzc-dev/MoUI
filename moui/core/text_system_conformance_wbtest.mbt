@@ -263,6 +263,10 @@ test "grapheme boundary scanner covers uax control emoji ri and indic rules" {
     0, 1, 3, 4, 5,
   ])
   assert_grapheme_boundary_indexes("क्‍ष", [0, 4])
+  assert_grapheme_boundary_indexes("क्A", [0, 2, 3])
+  assert_grapheme_boundary_indexes("क् A", [0, 2, 3, 4])
+  assert_grapheme_boundary_indexes("क्‌ष", [0, 3, 4])
+  assert_grapheme_boundary_indexes("A\u{200C}B", [0, 2, 3])
   assert_cluster_caret_movement("A👨🏾‍🚀B", 1, 5)
 }
 

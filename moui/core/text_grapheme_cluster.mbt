@@ -349,8 +349,10 @@ fn fallback_indic_virama_allows_no_break(
   index : Int,
 ) -> Bool {
   let left = chars[index - 1].to_int()
+  let right = chars[index].to_int()
   if fallback_codepoint_is_virama(left) {
-    return true
+    return fallback_codepoint_is_zwj(right) ||
+      fallback_codepoint_is_indic_consonant(right)
   }
   if !fallback_codepoint_is_zwj(left) || index < 2 {
     return false
@@ -365,7 +367,8 @@ fn fallback_indic_virama_allows_no_break(
     }
     cursor = cursor - 1
   }
-  fallback_codepoint_is_virama(chars[cursor].to_int())
+  fallback_codepoint_is_virama(chars[cursor].to_int()) &&
+  fallback_codepoint_is_indic_consonant(right)
 }
 
 ///|
@@ -416,6 +419,7 @@ fn fallback_codepoint_is_variation_selector(codepoint : Int) -> Bool {
 
 ///|
 fn fallback_codepoint_is_grapheme_extend(codepoint : Int) -> Bool {
+  codepoint == 0x200C ||
   fallback_codepoint_is_variation_selector(codepoint) ||
   fallback_codepoint_is_combining_mark(codepoint) ||
   fallback_codepoint_is_spacing_mark(codepoint) ||
@@ -545,6 +549,28 @@ fn fallback_codepoint_is_virama(codepoint : Int) -> Bool {
   codepoint == 0x0DCA ||
   codepoint == 0x1039 ||
   codepoint == 0x17D2
+}
+
+///|
+fn fallback_codepoint_is_indic_consonant(codepoint : Int) -> Bool {
+  (codepoint >= 0x0915 && codepoint <= 0x0939) ||
+  (codepoint >= 0x0958 && codepoint <= 0x095F) ||
+  (codepoint >= 0x0978 && codepoint <= 0x097F) ||
+  (codepoint >= 0x0995 && codepoint <= 0x09B9) ||
+  (codepoint >= 0x09DC && codepoint <= 0x09DF) ||
+  (codepoint >= 0x0A15 && codepoint <= 0x0A39) ||
+  (codepoint >= 0x0A59 && codepoint <= 0x0A5E) ||
+  (codepoint >= 0x0A95 && codepoint <= 0x0AB9) ||
+  (codepoint >= 0x0B15 && codepoint <= 0x0B39) ||
+  (codepoint >= 0x0B5C && codepoint <= 0x0B5F) ||
+  (codepoint >= 0x0B95 && codepoint <= 0x0BB9) ||
+  (codepoint >= 0x0C15 && codepoint <= 0x0C39) ||
+  (codepoint >= 0x0C95 && codepoint <= 0x0CB9) ||
+  (codepoint >= 0x0D15 && codepoint <= 0x0D3A) ||
+  (codepoint >= 0x0D9A && codepoint <= 0x0DC6) ||
+  (codepoint >= 0x1000 && codepoint <= 0x102A) ||
+  (codepoint >= 0x1050 && codepoint <= 0x1055) ||
+  (codepoint >= 0x1780 && codepoint <= 0x17A2)
 }
 
 ///|
