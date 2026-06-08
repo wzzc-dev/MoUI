@@ -234,7 +234,16 @@ write_platform_evidence_manifest() {
         "textInput": "pending",
         "rendererHandle": "pending",
         "monitorCursor": "pending",
-        "cleanShutdown": "pending"
+        "cleanShutdown": "pending",
+        "imeCandidateAnchor": "pending",
+        "imeSurroundingText": "pending",
+        "imeCompositionVisual": "pending",
+        "imeCommitDelete": "pending",
+        "imeCursorUpdate": "pending",
+        "imeScrollAnchor": "pending",
+        "imeScaleDprAnchor": "pending",
+        "imeResizeAnchor": "pending",
+        "imeMarkdownEditor": "pending"
       },
       "artifacts": [
         "artifacts/platform-evidence/web/README.md"
@@ -274,7 +283,16 @@ write_platform_evidence_manifest() {
         "textInput": "pending",
         "rendererHandle": "pending",
         "monitorCursor": "pending",
-        "cleanShutdown": "pending"
+        "cleanShutdown": "pending",
+        "imeCandidateAnchor": "pending",
+        "imeSurroundingText": "pending",
+        "imeCompositionVisual": "pending",
+        "imeCommitDelete": "pending",
+        "imeCursorUpdate": "pending",
+        "imeScrollAnchor": "pending",
+        "imeScaleDprAnchor": "pending",
+        "imeResizeAnchor": "pending",
+        "imeMarkdownEditor": "pending"
       },
       "skiaEvidence": {
         "status": "pending",
@@ -340,7 +358,16 @@ write_platform_evidence_manifest() {
         "textInput": "pending",
         "rendererHandle": "pending",
         "monitorCursor": "pending",
-        "cleanShutdown": "pending"
+        "cleanShutdown": "pending",
+        "imeCandidateAnchor": "pending",
+        "imeSurroundingText": "pending",
+        "imeCompositionVisual": "pending",
+        "imeCommitDelete": "pending",
+        "imeCursorUpdate": "pending",
+        "imeScrollAnchor": "pending",
+        "imeScaleDprAnchor": "pending",
+        "imeResizeAnchor": "pending",
+        "imeMarkdownEditor": "pending"
       },
       "skiaEvidence": {
         "status": "pending",
@@ -408,7 +435,16 @@ write_platform_evidence_manifest() {
         "textInput": "pending",
         "rendererHandle": "pending",
         "monitorCursor": "pending",
-        "cleanShutdown": "pending"
+        "cleanShutdown": "pending",
+        "imeCandidateAnchor": "pending",
+        "imeSurroundingText": "pending",
+        "imeCompositionVisual": "pending",
+        "imeCommitDelete": "pending",
+        "imeCursorUpdate": "pending",
+        "imeScrollAnchor": "pending",
+        "imeScaleDprAnchor": "pending",
+        "imeResizeAnchor": "pending",
+        "imeMarkdownEditor": "pending"
       },
       "skiaEvidence": {
         "status": "pending",
