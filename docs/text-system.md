@@ -298,8 +298,8 @@ Remote font loading is intentionally outside the current backend contract.
   --target native` runs the curated fixture, full boundary fixture, and a full
   editing fixture that checks `is_boundary`, floor/ceil/nearest boundary
   snapping, collapsed and expanded range normalization, surrounding delete
-  ranges, boundary-to-UTF-8 offset conversion across every Unicode 17 sample,
-  and representative interior-index `nearest_boundary_utf8_offset` snapping. A
+  ranges, raw boundary-to-UTF-8 offset conversion, and every-index
+  `nearest_boundary_utf8_offset` snapping across every Unicode 17 sample. A
   separate full layout fixture checks fallback paragraph caret
   rectangles, collapsed selection rectangles, and hit-test offsets snap to the
   same Unicode 17 boundaries. `moui/render/skia` also generates a Skia
