@@ -1,0 +1,222 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/pdf_workbench/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn pdf_workbench_minimum_pdf_bytes() -> Bytes
+
+pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn view(PdfWorkbenchModel) -> @core.View[PdfWorkbenchMsg]
+
+// Errors
+
+// Types and methods
+pub struct PdfWorkbenchApp {
+  unit : Unit
+}
+pub fn PdfWorkbenchApp::new() -> Self
+pub fn PdfWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn PdfWorkbenchApp::runtime_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int, width? : Double, height? : Double) -> @core.AppRuntime
+
+pub(all) struct PdfWorkbenchCropBox {
+  left : Double
+  bottom : Double
+  right : Double
+  top : Double
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct PdfWorkbenchDocument {
+  path : String
+  original_bytes : Bytes
+  page_count : Int
+  selected_page : Int
+  extracted_text : String
+  dirty : Bool
+  writeback_available : Bool
+  edits : Array[PdfWorkbenchEdit]
+  unsupported_entries : Array[String]
+  page_summaries : Array[PdfWorkbenchPageSummary]
+  metadata_summary : String
+  metadata_title : String
+  outline_summary : String
+  annotation_summary : String
+  clean_unsupported_entries : Array[String]
+  clean_page_summaries : Array[PdfWorkbenchPageSummary]
+  clean_metadata_title : String
+  clean_annotation_summary : String
+}
+pub fn PdfWorkbenchDocument::discard_edits(Self) -> Self
+pub fn PdfWorkbenchDocument::from_bytes(path~ : String, bytes~ : Bytes) -> PdfWorkbenchLoadResult
+pub fn PdfWorkbenchDocument::from_engine_summary(path~ : String, original_bytes~ : Bytes, page_count~ : Int, selected_page~ : Int, extracted_text~ : String, dirty~ : Bool, writeback_available? : Bool, edits? : Array[PdfWorkbenchEdit], unsupported_entries? : Array[String], page_summaries? : Array[PdfWorkbenchPageSummary], metadata_summary? : String, metadata_title? : String, outline_summary? : String, annotation_summary? : String) -> PdfWorkbenchLoadResult
+pub fn PdfWorkbenchDocument::next_search_page(Self, String) -> Int?
+pub fn PdfWorkbenchDocument::previous_search_page(Self, String) -> Int?
+pub fn PdfWorkbenchDocument::search_count(Self, String) -> Int
+pub fn PdfWorkbenchDocument::search_match_pages(Self, String) -> Array[Int]
+pub fn PdfWorkbenchDocument::search_match_position(Self, String, Int) -> Int?
+pub fn PdfWorkbenchDocument::selected_summary(Self) -> PdfWorkbenchPageSummary
+pub fn PdfWorkbenchDocument::undo_last_edit(Self) -> Self?
+pub fn PdfWorkbenchDocument::with_edit(Self, PdfWorkbenchEdit) -> Self
+pub fn PdfWorkbenchDocument::with_page_count_from_raster(Self, Int) -> Self
+
+pub struct PdfWorkbenchDocumentServices {
+  load : (String, Bytes) -> PdfWorkbenchLoadResult
+  writeback : (PdfWorkbenchDocument) -> PdfWorkbenchDocumentWritebackResult
+}
+pub fn PdfWorkbenchDocumentServices::lightweight() -> Self
+pub fn PdfWorkbenchDocumentServices::load_document(Self, String, Bytes) -> PdfWorkbenchLoadResult
+pub fn PdfWorkbenchDocumentServices::new(load~ : (String, Bytes) -> PdfWorkbenchLoadResult, writeback? : (PdfWorkbenchDocument) -> PdfWorkbenchDocumentWritebackResult) -> Self
+pub fn PdfWorkbenchDocumentServices::writeback_document(Self, PdfWorkbenchDocument) -> PdfWorkbenchDocumentWritebackResult
+
+pub(all) enum PdfWorkbenchDocumentWritebackResult {
+  WritebackReady(Bytes, Array[String])
+  WritebackFailed(String)
+}
+
+pub(all) enum PdfWorkbenchEdit {
+  RotatePage(Int, Int)
+  CropPage(Int, PdfWorkbenchCropBox)
+  StampText(Int, String)
+  SetMetadataTitle(String)
+  AddBookmark(Int, String)
+  AddTextAnnotation(Int, String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum PdfWorkbenchLoadResult {
+  Loaded(PdfWorkbenchDocument)
+  Failed(String)
+}
+
+pub(all) struct PdfWorkbenchModel {
+  document : PdfWorkbenchDocument?
+  status : PdfWorkbenchStatus
+  raster_status : PdfWorkbenchRasterStatus
+  raster_page : PdfWorkbenchRasterPage?
+  raster_cache : Array[PdfWorkbenchRasterPage]
+  sidebar_scroll : @core.ScrollState
+  inspector_scroll : @core.ScrollState
+  preview_scroll_offset : @core.Point
+  reader_fullscreen : Bool
+  query : String
+  metadata_title_draft : String
+  bookmark_title_draft : String
+  annotation_text_draft : String
+  page_number_draft : String
+  startup_page_after_load : Int?
+  zoom : Double
+  last_event : String
+}
+pub fn PdfWorkbenchModel::new() -> Self
+pub fn PdfWorkbenchModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn PdfWorkbenchModel::runtime_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn PdfWorkbenchModel::subscriptions(Self, @host.HostAppServices) -> @core.Subscription[PdfWorkbenchMsg]
+pub fn PdfWorkbenchModel::update(Self, PdfWorkbenchMsg) -> Self
+pub fn PdfWorkbenchModel::update_with_services(Self, PdfWorkbenchMsg, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices) -> PdfWorkbenchUpdate
+
+pub(all) enum PdfWorkbenchMsg {
+  OpenRequested
+  SaveRequested
+  SaveAsRequested
+  HostCompleted(@host.HostCompletedServiceResponse)
+  SaveCompleted(String, Bytes, Array[String], @host.HostServiceResponse)
+  SaveFailed(String)
+  RasterCompleted(PdfWorkbenchRasterRequest, PdfWorkbenchRasterResponse)
+  PreviousPage
+  NextPage
+  SelectPage(Int)
+  SearchChanged(String)
+  SearchPrevious
+  SearchNext
+  PageNumberChanged(String)
+  GoToPage
+  MetadataTitleChanged(String)
+  ApplyMetadataTitle
+  BookmarkTitleChanged(String)
+  AddBookmarkForCurrentPage
+  AnnotationTextChanged(String)
+  AddAnnotationForCurrentPage
+  PreviewScrolled(@core.Point)
+  ToggleReaderFullscreen
+  ZoomIn
+  ZoomOut
+  ZoomFitWidth
+  RotateCurrentPage
+  CropCurrentPage
+  StampCurrentPage
+  UndoLastEdit
+  DiscardEdits
+  ClearFailure
+}
+
+pub(all) struct PdfWorkbenchPageSummary {
+  page_number : Int
+  text_preview : String
+  content_diagnostic : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct PdfWorkbenchRasterPage {
+  cache_key : String
+  page_number : Int
+  zoom : Double
+  page_count : Int
+  width_px : Int
+  height_px : Int
+  image_source : String
+  diagnostic : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct PdfWorkbenchRasterRequest {
+  path : String
+  bytes : Bytes
+  page_number : Int
+  zoom : Double
+  dpi : Int
+  max_pixel_edge : Int
+  cache_key : String
+}
+
+pub(all) enum PdfWorkbenchRasterResponse {
+  RasterPageReady(PdfWorkbenchRasterPage)
+  RasterPageUnavailable(String)
+  RasterPageFailed(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct PdfWorkbenchRasterServices {
+  render : (PdfWorkbenchRasterRequest) -> PdfWorkbenchRasterResponse
+}
+pub fn PdfWorkbenchRasterServices::new(render~ : (PdfWorkbenchRasterRequest) -> PdfWorkbenchRasterResponse) -> Self
+pub fn PdfWorkbenchRasterServices::render_page(Self, PdfWorkbenchRasterRequest) -> PdfWorkbenchRasterResponse
+pub fn PdfWorkbenchRasterServices::unavailable() -> Self
+
+pub(all) enum PdfWorkbenchRasterStatus {
+  RasterIdle
+  RasterRendering(String)
+  RasterReady
+  RasterUnavailable(String)
+  RasterFailed(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum PdfWorkbenchStatus {
+  Empty
+  Requesting(String)
+  Pending(@host.HostServiceRequestId, String)
+  Ready
+  Failed(String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct PdfWorkbenchUpdate {
+  model : PdfWorkbenchModel
+  effect : @core.Effect[PdfWorkbenchMsg]
+}
+pub fn PdfWorkbenchUpdate::as_tuple(Self) -> (PdfWorkbenchModel, @core.Effect[PdfWorkbenchMsg])
+pub fn PdfWorkbenchUpdate::new(PdfWorkbenchModel, effect? : @core.Effect[PdfWorkbenchMsg]) -> Self
+
+// Type aliases
+
+// Traits
+

@@ -35,6 +35,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, app-owned column width/order state, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
+| PDF Workbench | PDF reading and light editing prototype | `examples/pdf_workbench/app/` | Clean native PDF reader/editor shell, host binary file service open/save flow, PDFium page bitmap preview, fit-width responsive reading canvas, scrollable page/inspector panels, reader fullscreen toggle, page navigation/direct page jump/search/metadata summaries, undoable/discardable preview rotate/crop/stamp/title/bookmark/note edit state, separate `pdflite_adapter` package for real parsing/writeback checks, JSONL pdflite helper protocol plus native process transport, native-only `pdfium_adapter` package for page rasterization, macOS/Windows/Linux Skia native entrypoints |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `runtime_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
 | Mo Workbench | Multi-backend agent desktop dogfood app | `examples/mo_workbench/app/` | Codex-style conversation-first coding-agent shell, quiet Agent-branded default UI, signal-only current-agent top-bar chip, expanded-options backend selector, Pi, ACP Demo, and Local backend capabilities, connector runtime fixture, capability-gated advanced controls, lightweight agent focus routing, composer slash-command suggestions, wide three-panel inspector with context/run/diagnostic tabs, low-noise status bar, current task strip, compact current-turn evidence fallback on narrow layouts, backend-neutral backend-status/runtime-signal/session/model/metrics/fork/input-setting/provider-registry/activity/request/composer/timeline/status projections, platform-neutral Pi transport command/event model for the Pi provider, Workbench-to-Pi session binding, manual RPC session refresh, fresh Pi session creation, RPC model/message transcript refresh, explicit model selection, fork candidate discovery and fork refresh, HTML export evidence, manual context compaction, RPC command catalog invocation and session stats refresh, thinking-level and input queue mode controls, RPC bash command evidence, failed-command fix prompts, RPC response plus streaming agent/tool/plan event ingestion, command/file/diff/plan transcript evidence, stderr/nonzero-exit diagnostics, macOS Skia native entrypoint |
@@ -217,6 +218,132 @@ Browser hosts commonly expose file
 names while native hosts can expose filesystem paths, so production apps should
 treat these strings as host-provided display or import handles rather than
 assuming one platform shape.
+
+## PDF Workbench
+
+PDF Workbench is a MoUI example-level PDF reader and light editor. Its shared
+app package is intentionally a lightweight UI shell so the native Skia
+entrypoint does not pull the full PDF parser into one huge generated C
+translation unit. The app keeps host interaction in TEA effects: open uses a
+file dialog followed by `HostAppServices::read_binary_file`, while save and
+save-as write through `HostAppServices::write_binary_file`; save-as defaults
+the dialog name to the current PDF file name and appends `.pdf` when the source
+path has no `.pdf` suffix. Clean documents write unchanged original bytes, while
+dirty documents ask the injected
+`PdfWorkbenchDocumentServices` writeback hook for new PDF bytes before writing.
+After a dirty save succeeds, the app reloads the written bytes through the same
+document service so the clean snapshot, metadata, page summaries, and queued
+diagnostics reflect the actual saved PDF rather than stale preview state.
+Preview edits are tracked as an app-owned edit log with a clean snapshot so the
+user can undo the last queued edit or discard queued changes before saving. The
+right inspector keeps those controls grouped as Page, Queue, Document, and
+Diagnostics sections: page operations stay near undo/discard, queued edits show
+as compact rows, the saved/unsaved badge and zoom percentage stay visible, and
+parser/raster/writeback diagnostics are separated from primary editing actions.
+The current pdflite adapter applies rotate/crop edits, writes stamp text back as
+a standard-font overlay, updates the PDF Info dictionary title, adds
+current-page bookmarks, and writes current-page text annotations when saving
+dirty documents.
+The reader shell is responsive: wide windows show thumbnails, the page canvas,
+and the inspector side by side, while narrower windows hide side panels so the
+PDF bitmap remains the primary readable surface. The page toolbar can also
+switch the reader into a fullscreen window-filling mode that hides the app
+chrome and side panels until the user exits it. The page toolbar includes
+previous/next, direct page jump, zoom in/out, and a `Fit` action that returns to
+the fit-width `100%` baseline while reusing the raster cache when available.
+The search field exposes previous/next hit controls and a compact active
+match-position label such as `Find: 2/5`; opening a new PDF clears stale search
+state so results always refer to the current document.
+When the inspector is hidden, the page surface keeps a compact edit strip for
+rotate, crop, stamp, undo, and discard so light editing stays available in the
+reader-first layout.
+
+`examples/pdf_workbench/pdflite_adapter` owns the direct
+`bobzhang/pdflite` dependency for real PDF parse/text/outline/annotation
+summary and rotate/crop/stamp/title/bookmark/note writeback checks. It is kept
+outside the default native Skia entrypoints for now because directly importing
+pdflite into the app executable triggers the same large native compile path the
+prototype is trying to avoid. The
+`examples/pdf_workbench/pdflite_service_protocol` package defines that boundary
+as typed load/writeback requests plus JSONL-safe responses. Request/writeback
+PDF bytes use base64 payload fields, while document-loaded responses carry
+reconstructable metadata, outline, annotation, page-summary, diagnostic, and
+page-count fields without echoing the original PDF bytes. The
+`examples/pdf_workbench/pdflite_service_native_transport` package turns that
+JSONL protocol into `PdfWorkbenchDocumentServices` by spawning a helper process
+per load/writeback request, so native Skia entrypoints can stay thin and avoid
+direct pdflite imports. The helper executable itself can still have a slow first
+native compile because it intentionally contains pdflite; that cost is isolated
+from the PDF Workbench UI binary.
+`examples/pdf_workbench/pdfium_adapter` owns the native-only PDFium C FFI for
+existing-page rasterization. The shared app depends only on injected
+document/raster service interfaces, so Web and app-package tests still build
+without pdflite or PDFium while native Skia entrypoints pass the PDFium raster
+service. Its focused native test covers both fallback-unavailable behavior and,
+when PDFium is linked, real BMP output with expected page dimensions, 32-bit
+pixel metadata, file-size consistency, and rendering page 2 of a generated
+multi-page PDF.
+
+When PDFium is linked, opening, paging, direct page jumps, or zooming a PDF
+requests a bitmap raster and the preview draws it through MoUI `DrawImage` with
+a local BMP source path. The shared app keeps a small most-recently-used raster
+cache for page/zoom combinations so backtracking stays fast without unbounded
+bitmap growth, and the Pages sidebar reuses cached page bitmaps as real
+thumbnails for pages the reader has already visited. If PDFium is disabled or
+rendering fails, the app keeps the loaded document, falls back to the
+structural MoUI preview with diagnostics, and shows a dismissible failure
+banner. The Skia PDF backend is reserved for a future export/generation route
+that writes MoUI draw commands to PDF; it is not used to rasterize existing PDF
+pages.
+For first-frame smoke, set `MOUI_PDF_WORKBENCH_STARTUP_PDF` to a PDF path such
+as `examples/pdf_workbench/fixtures/minimum.pdf` alongside the platform
+`MOUI_PDF_WORKBENCH_*_SKIA_EXIT_AFTER_FIRST_PRESENT=1` flag; the startup path
+uses the same binary-read, document-load, and PDFium raster request flow as the
+Open button.
+Set `MOUI_PDF_WORKBENCH_PDFLITE_HELPER` to an already-built
+`pdflite_service_cli` executable when you want native Skia runs to use the real
+pdflite document model. Use `MOUI_PDF_WORKBENCH_PDFLITE_HELPER=auto` from the
+repository root to target the conventional native debug helper path under
+`_build/native/debug/build/examples/pdf_workbench/pdflite_service_cli/`.
+`MOUI_PDF_WORKBENCH_PDFLITE_HELPER_ARGS` may be a whitespace-separated argument
+string or a JSON string array, and
+`MOUI_PDF_WORKBENCH_PDFLITE_HELPER_CWD` sets the helper working directory for
+fixture or packaged-app smoke runs. When the helper variable is absent, the
+entrypoints keep the lightweight document summary fallback but still use PDFium
+for page bitmaps.
+
+Focused PDF Workbench checks:
+
+```sh
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/app --target native
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/app --target native --filter 'pdf workbench lightweight smoke covers startup raster navigation search and cache'
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/app --target wasm-gc
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdflite_service_protocol --target native
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdflite_service_protocol --target wasm-gc
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdflite_service_native_transport --target native
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdflite_adapter --target native
+moon test examples/pdf_workbench/pdfium_adapter --target native
+moon test moui/backend/host --target native
+moon build examples/pdf_workbench/macos_skia --target native
+node scripts/pdf-workbench-native-smoke.mjs
+scripts/pdf-workbench-macos-smoke.sh
+MOUI_PDF_WORKBENCH_STARTUP_PDF=examples/pdf_workbench/fixtures/minimum.pdf MOUI_PDF_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/pdf_workbench/macos_skia --target native
+moon build examples/pdf_workbench/windows_skia --target native
+moon build examples/pdf_workbench/linux_skia --target native
+```
+
+Because the PDFium provider is a module-level prebuild hook, disable it for
+app-only, protocol, native-transport, or `pdflite_adapter` checks when the
+raster adapter is not under test.
+The named lightweight smoke uses fake document and raster services to exercise
+startup open, bitmap drawing, multi-page navigation, search, zoom, and raster
+cache reuse without compiling the pdflite helper executable.
+`node scripts/pdf-workbench-native-smoke.mjs` is the matching-host real-raster
+smoke. It runs the PDFium adapter tests, launches the current host's native
+Skia entrypoint with the fixture PDF and first-frame exit flag, then verifies
+the log contains the PDFium bitmap path and platform first-frame marker.
+`scripts/pdf-workbench-macos-smoke.sh` is a macOS convenience wrapper for the
+same runner.
 
 ## Command Palette
 
@@ -605,6 +732,9 @@ provider packages. The recommended native entrypoints import
 ```sh
 moon build examples/showcase/macos_skia --target native
 moon build examples/markdown_editor/macos_skia --target native
+moon build examples/pdf_workbench/macos_skia --target native
+moon build examples/pdf_workbench/windows_skia --target native
+moon build examples/pdf_workbench/linux_skia --target native
 moon build examples/mo_workbench/macos_skia --target native
 ```
 
@@ -777,6 +907,10 @@ moon test examples/counter/app --target native
 moon test examples/settings/app --target native
 moon test examples/data_table/app --target native
 moon test examples/file_importer/app --target native
+moon test examples/pdf_workbench/app --target native
+moon test examples/pdf_workbench/pdflite_service_protocol --target native
+moon test examples/pdf_workbench/pdflite_adapter --target native
+moon test examples/pdf_workbench/pdfium_adapter --target native
 moon test examples/command_palette/app --target native
 moon test examples/markdown_editor/app --target native
 moon test website/app --target native
