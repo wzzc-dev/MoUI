@@ -164,7 +164,11 @@ test "skia text system is directly available for diagnostic conformance" {
   assert_true(paragraph.metadata.line_metrics_available)
   assert_true(paragraph.metadata.selection_rects_available)
   assert_true(paragraph.metadata.hit_test_available)
-  assert_false(paragraph.metadata.native_paragraph_ready)
+  if @skia_native.skia_paragraph_available() {
+    assert_true(paragraph.metadata.native_paragraph_ready)
+  } else {
+    assert_false(paragraph.metadata.native_paragraph_ready)
+  }
   assert_true(paragraph.line_count() >= 2)
   inspect(
     paragraph.caret_rects.length(),
