@@ -307,7 +307,10 @@ fn skia_paragraph_layout(
 fn selection_rect_evidence_available(
   layout : @core.TextParagraphLayoutResult,
 ) -> Bool {
-  if !layout.metadata.native_paragraph_ready || layout.lines.length() < 2 {
+  if !layout.metadata.native_paragraph_ready ||
+    !layout.metadata.selection_rects_available ||
+    !layout.metadata.hit_test_available ||
+    layout.lines.length() < 2 {
     return false
   }
   let selection = @core.TextRange::new(
@@ -322,7 +325,7 @@ fn selection_rect_evidence_available(
     ),
   )
   println(
-    "MoUI Skia text/emoji smoke selection engine=skparagraph rect_count=\{rects.length()} line_range=\{layout.lines[0].line_index}..\{layout.lines[1].line_index} hit_line=\{hit.line_index} hit_offset=\{hit.offset}",
+    "MoUI Skia text/emoji smoke selection engine=skparagraph selection_rects_available=\{layout.metadata.selection_rects_available} hit_test_available=\{layout.metadata.hit_test_available} rect_count=\{rects.length()} line_range=\{layout.lines[0].line_index}..\{layout.lines[1].line_index} hit_line=\{hit.line_index} hit_offset=\{hit.offset}",
   )
   rects.length() >= 2 &&
   hit.line_index == layout.lines[1].line_index &&
