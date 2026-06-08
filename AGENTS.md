@@ -327,14 +327,17 @@ Renderer proof uses a separate schema v1 manifest under
 `scripts/validate-renderer-proof-manifest.mjs`. A passed renderer-proof entry
 must have GitHub Actions provenance and exactly `radialGradient`,
 `transformPixels`, `colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`,
-`paragraphWrapping`, and `asyncImageSecondFrame` observations with strong marker
-tokens; passed `colorEmojiPixels` observations must also include
+`paragraphWrapping`, `selectionRects`, `graphemeEditing`,
+`imeCandidateAnchor`, `imeCompositionVisual`, and `asyncImageSecondFrame`
+observations with strong marker tokens; passed `colorEmojiPixels` observations
+must also include
 `font-metadata` / `glyph-metadata` evidence and structured metadata fields
 including a non-empty glyph key plus positive glyph width/height, so emoji
 pixels remain tied to the font/glyph path that produced them. Skipped
 jobs, package-only tests, missing uploaded artifacts, blank
-screenshots, caret-only diagnostics, coverage-only font matching, provider
-preflights, and fallback-safe descriptor audits must remain failed proof. The
+screenshots, caret-only diagnostics, coverage-only font matching,
+package-only checks, provider preflights, preflight-only checks, and
+fallback-safe descriptor audits must remain failed proof. The
 recorder may preserve complete local observations for debugging, but without
 GitHub Actions provenance the manifest status must stay failed. The
 native Skia proof matrix configures the locked release Skia artifact before

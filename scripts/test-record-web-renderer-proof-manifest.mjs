@@ -34,14 +34,40 @@ const proofKeys = [
   "zwjGrapheme",
   "bidiLayout",
   "paragraphWrapping",
+  "selectionRects",
+  "graphemeEditing",
+  "imeCandidateAnchor",
+  "imeCompositionVisual",
   "asyncImageSecondFrame",
 ];
+
+const proofEvidence = {
+  radialGradient: ["center-mid-edge-pixels", "shader-payload"],
+  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
+  zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
+  bidiLayout: ["visual-order"],
+  paragraphWrapping: ["line-metrics", "later-line-pixels"],
+  selectionRects: ["selection-rects", "line-range"],
+  graphemeEditing: ["grapheme-boundaries", "edit-actions"],
+  imeCandidateAnchor: ["candidate-anchor", "surrounding-text"],
+  imeCompositionVisual: ["composition-range", "preedit-pixels"],
+  asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
+};
+
+const proof = key => ({
+  required: true,
+  passed: true,
+  evidence: proofEvidence[key],
+  matchedMarkers: proofEvidence[key].length,
+});
 
 const writeWebManifest = (name, overrides = {}) => {
   const path = join(tmp, `${name}.json`);
   const observations = Object.fromEntries(proofKeys.map(key => [key, "yes"]));
   const screenshot = {
+    radialGradient: proof("radialGradient"),
     colorEmojiPixels: {
+      ...proof("colorEmojiPixels"),
       passed: true,
       metadata: {
         font: {
@@ -62,7 +88,16 @@ const writeWebManifest = (name, overrides = {}) => {
         },
       },
     },
+    zwjGrapheme: proof("zwjGrapheme"),
+    bidiLayout: proof("bidiLayout"),
+    paragraphWrapping: proof("paragraphWrapping"),
+    selectionRects: proof("selectionRects"),
+    graphemeEditing: proof("graphemeEditing"),
+    imeCandidateAnchor: proof("imeCandidateAnchor"),
+    imeCompositionVisual: proof("imeCompositionVisual"),
+    asyncImageSecondFrame: proof("asyncImageSecondFrame"),
   };
+  const { screenshot: screenshotOverride, ...targetOverrides } = overrides;
   writeFileSync(
     path,
     `${JSON.stringify(
@@ -73,8 +108,11 @@ const writeWebManifest = (name, overrides = {}) => {
             name: "showcase-web-wasm",
             status: "passed",
             observations,
-            screenshot,
-            ...overrides,
+            screenshot: {
+              ...screenshot,
+              ...(screenshotOverride ?? {}),
+            },
+            ...targetOverrides,
           },
         ],
       },
@@ -212,6 +250,7 @@ if (
 const missingEmojiMetadataManifest = writeWebManifest("missing-emoji-metadata", {
   screenshot: {
     colorEmojiPixels: {
+      ...proof("colorEmojiPixels"),
       passed: true,
     },
   },
@@ -251,6 +290,7 @@ if (
 const missingGlyphKeyManifest = writeWebManifest("missing-glyph-key", {
   screenshot: {
     colorEmojiPixels: {
+      ...proof("colorEmojiPixels"),
       passed: true,
       metadata: {
         font: {

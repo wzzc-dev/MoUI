@@ -30,6 +30,10 @@ const observationKeys = [
   "zwjGrapheme",
   "bidiLayout",
   "paragraphWrapping",
+  "selectionRects",
+  "graphemeEditing",
+  "imeCandidateAnchor",
+  "imeCompositionVisual",
   "asyncImageSecondFrame",
   "targetClosed",
 ];
@@ -150,6 +154,10 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
       ["line-metrics", "later-line-pixels"],
       { paragraphLineCount: 3, paragraphRows: 3, darkRows: 8 },
     ),
+    selectionRects: proof(name, status, ["selection-rects", "line-range"]),
+    graphemeEditing: proof(name, status, ["grapheme-boundaries", "edit-actions"]),
+    imeCandidateAnchor: proof(name, status, ["candidate-anchor", "surrounding-text"]),
+    imeCompositionVisual: proof(name, status, ["composition-range", "preedit-pixels"]),
     asyncImageSecondFrame: proof(name, status, [
       "late-completion",
       "repaint-request",
@@ -209,6 +217,10 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
     zwjGrapheme: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     bidiLayout: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     paragraphWrapping: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    selectionRects: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    graphemeEditing: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    imeCandidateAnchor: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    imeCompositionVisual: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     asyncImageSecondFrame: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
   },
   consoleErrors: status === "passed" ? [] : ["Browser WebGPU is required"],
@@ -474,6 +486,30 @@ expectFail(
     }),
   ),
   "metadata.glyph",
+);
+
+expectFail(
+  "passed selection proof with weak evidence",
+  runValidator(
+    writeFixture("weak-selection-proof.json", {
+      ...validManifest,
+      targets: validManifest.targets.map(target =>
+        target.name === "showcase-web-wasm"
+          ? {
+              ...target,
+              screenshot: {
+                ...target.screenshot,
+                selectionRects: {
+                  ...target.screenshot.selectionRects,
+                  evidence: ["selection-rects"],
+                },
+              },
+            }
+          : target,
+      ),
+    }),
+  ),
+  "screenshot.selectionRects.evidence must include 'line-range'",
 );
 
 expectFail(

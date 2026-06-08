@@ -15,6 +15,10 @@ const observationEvidence = {
   zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
   bidiLayout: ["visual-order"],
   paragraphWrapping: ["line-metrics", "later-line-pixels"],
+  selectionRects: ["selection-rects", "line-range"],
+  graphemeEditing: ["grapheme-boundaries", "edit-actions"],
+  imeCandidateAnchor: ["candidate-anchor", "surrounding-text"],
+  imeCompositionVisual: ["composition-range", "preedit-pixels"],
   asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
 };
 
@@ -143,7 +147,26 @@ expectFail(
     }),
     ["--require-passed"],
   ),
-  "must not use caret-only or coverage-only proof",
+  "must not use caret-only, coverage-only, package-only, or preflight-only proof",
+);
+
+expectFail(
+  "package-only ime proof",
+  run(
+    "package-only-ime.json",
+    manifest({
+      observations: {
+        ...observations(),
+        imeCandidateAnchor: {
+          status: "passed",
+          evidence: ["package-only", "candidate-anchor", "surrounding-text"],
+          artifacts: ["artifacts/conformance/renderer-proof/ime-anchor.log"],
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "must not use caret-only, coverage-only, package-only, or preflight-only proof",
 );
 
 expectFail(
@@ -286,6 +309,25 @@ expectFail(
     ["--require-passed"],
   ),
   "must include 'second-frame-pixels'",
+);
+
+expectFail(
+  "missing ime composition visual proof",
+  run(
+    "missing-ime-composition-token.json",
+    manifest({
+      observations: {
+        ...observations(),
+        imeCompositionVisual: {
+          status: "passed",
+          evidence: ["composition-range"],
+          artifacts: ["artifacts/conformance/renderer-proof/ime-composition.log"],
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "must include 'preedit-pixels'",
 );
 
 expectFail(

@@ -56,6 +56,10 @@ if (
     target.observations.zwjGrapheme === "no" &&
     target.observations.bidiLayout === "no" &&
     target.observations.paragraphWrapping === "no" &&
+    target.observations.selectionRects === "no" &&
+    target.observations.graphemeEditing === "no" &&
+    target.observations.imeCandidateAnchor === "no" &&
+    target.observations.imeCompositionVisual === "no" &&
     target.observations.asyncImageSecondFrame === "no" &&
     target.screenshot.transformPixels.required === (target.name === "showcase-web-wasm") &&
     target.screenshot.radialGradient.required === (target.name === "showcase-web-wasm") &&

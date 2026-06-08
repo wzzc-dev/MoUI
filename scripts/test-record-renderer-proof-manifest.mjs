@@ -18,6 +18,10 @@ const markers = [
   "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret",
   "MoUI renderer proof bidiLayout passed visual-order",
   "MoUI renderer proof paragraphWrapping passed line-metrics later-line-pixels",
+  "MoUI renderer proof selectionRects passed selection-rects line-range",
+  "MoUI renderer proof graphemeEditing passed grapheme-boundaries edit-actions",
+  "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text",
+  "MoUI renderer proof imeCompositionVisual passed composition-range preedit-pixels",
   "MoUI renderer proof asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
 ];
 
