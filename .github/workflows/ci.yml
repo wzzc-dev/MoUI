@@ -425,6 +425,10 @@ jobs:
               printf '%s=%s\n' "$key" "$value" >> "$GITHUB_ENV"
             fi
           done < "$env_file"
+          export MOUI_SKIA_ENABLE_SKPARAGRAPH=1
+          export MOUI_SKIA_REQUIRE_SKPARAGRAPH=1
+          printf 'MOUI_SKIA_ENABLE_SKPARAGRAPH=1\n' >> "$GITHUB_ENV"
+          printf 'MOUI_SKIA_REQUIRE_SKPARAGRAPH=1\n' >> "$GITHUB_ENV"
           case "${{ matrix.platform }}" in
             macos) bash moui_skia/scripts/configure-macos-native-pkg.sh --enable-skparagraph --require-skparagraph --write ;;
             linux) bash moui_skia/scripts/configure-linux-native-pkg.sh --enable-skparagraph --require-skparagraph --write ;;
@@ -448,6 +452,10 @@ jobs:
               Add-Content -Path $env:GITHUB_ENV -Value "$key=$value"
             }
           }
+          $env:MOUI_SKIA_ENABLE_SKPARAGRAPH = "1"
+          $env:MOUI_SKIA_REQUIRE_SKPARAGRAPH = "1"
+          Add-Content -Path $env:GITHUB_ENV -Value "MOUI_SKIA_ENABLE_SKPARAGRAPH=1"
+          Add-Content -Path $env:GITHUB_ENV -Value "MOUI_SKIA_REQUIRE_SKPARAGRAPH=1"
           .\moui_skia\scripts\configure-windows-msvc-native-pkg.ps1 -EnableSkParagraph -RequireSkParagraph -Write
 
       - name: Record native Skia renderer proof

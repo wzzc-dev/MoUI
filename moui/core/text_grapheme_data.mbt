@@ -57,6 +57,18 @@ fn unicode_grapheme_is_prepend_17_0(codepoint : Int) -> Bool {
 
 ///|
 fn unicode_grapheme_is_extend_17_0(codepoint : Int) -> Bool {
+  unicode_grapheme_is_extend_17_0_chunk_0(codepoint) ||
+  unicode_grapheme_is_extend_17_0_chunk_1(codepoint) ||
+  unicode_grapheme_is_extend_17_0_chunk_2(codepoint) ||
+  unicode_grapheme_is_extend_17_0_chunk_3(codepoint) ||
+  unicode_grapheme_is_extend_17_0_chunk_4(codepoint) ||
+  unicode_grapheme_is_extend_17_0_chunk_5(codepoint) ||
+  unicode_grapheme_is_extend_17_0_chunk_6(codepoint) ||
+  unicode_grapheme_is_extend_17_0_chunk_7(codepoint)
+}
+
+///|
+fn unicode_grapheme_is_extend_17_0_chunk_0(codepoint : Int) -> Bool {
   (codepoint >= 0x0300 && codepoint <= 0x036F) ||
   (codepoint >= 0x0483 && codepoint <= 0x0489) ||
   (codepoint >= 0x0591 && codepoint <= 0x05BD) ||
@@ -104,7 +116,11 @@ fn unicode_grapheme_is_extend_17_0(codepoint : Int) -> Bool {
   (codepoint >= 0x0A47 && codepoint <= 0x0A48) ||
   (codepoint >= 0x0A4B && codepoint <= 0x0A4D) ||
   codepoint == 0x0A51 ||
-  (codepoint >= 0x0A70 && codepoint <= 0x0A71) ||
+  (codepoint >= 0x0A70 && codepoint <= 0x0A71)
+}
+
+///|
+fn unicode_grapheme_is_extend_17_0_chunk_1(codepoint : Int) -> Bool {
   codepoint == 0x0A75 ||
   (codepoint >= 0x0A81 && codepoint <= 0x0A82) ||
   codepoint == 0x0ABC ||
@@ -152,7 +168,11 @@ fn unicode_grapheme_is_extend_17_0(codepoint : Int) -> Bool {
   codepoint == 0x0DCA ||
   codepoint == 0x0DCF ||
   (codepoint >= 0x0DD2 && codepoint <= 0x0DD4) ||
-  codepoint == 0x0DD6 ||
+  codepoint == 0x0DD6
+}
+
+///|
+fn unicode_grapheme_is_extend_17_0_chunk_2(codepoint : Int) -> Bool {
   codepoint == 0x0DDF ||
   codepoint == 0x0E31 ||
   (codepoint >= 0x0E34 && codepoint <= 0x0E3A) ||
@@ -200,7 +220,11 @@ fn unicode_grapheme_is_extend_17_0(codepoint : Int) -> Bool {
   codepoint == 0x1932 ||
   (codepoint >= 0x1939 && codepoint <= 0x193B) ||
   (codepoint >= 0x1A17 && codepoint <= 0x1A18) ||
-  codepoint == 0x1A1B ||
+  codepoint == 0x1A1B
+}
+
+///|
+fn unicode_grapheme_is_extend_17_0_chunk_3(codepoint : Int) -> Bool {
   codepoint == 0x1A56 ||
   (codepoint >= 0x1A58 && codepoint <= 0x1A5E) ||
   codepoint == 0x1A60 ||
@@ -248,7 +272,11 @@ fn unicode_grapheme_is_extend_17_0(codepoint : Int) -> Bool {
   codepoint == 0xA82C ||
   (codepoint >= 0xA8C4 && codepoint <= 0xA8C5) ||
   (codepoint >= 0xA8E0 && codepoint <= 0xA8F1) ||
-  codepoint == 0xA8FF ||
+  codepoint == 0xA8FF
+}
+
+///|
+fn unicode_grapheme_is_extend_17_0_chunk_4(codepoint : Int) -> Bool {
   (codepoint >= 0xA926 && codepoint <= 0xA92D) ||
   (codepoint >= 0xA947 && codepoint <= 0xA951) ||
   codepoint == 0xA953 ||
@@ -296,7 +324,11 @@ fn unicode_grapheme_is_extend_17_0(codepoint : Int) -> Bool {
   codepoint == 0x11001 ||
   (codepoint >= 0x11038 && codepoint <= 0x11046) ||
   codepoint == 0x11070 ||
-  (codepoint >= 0x11073 && codepoint <= 0x11074) ||
+  (codepoint >= 0x11073 && codepoint <= 0x11074)
+}
+
+///|
+fn unicode_grapheme_is_extend_17_0_chunk_5(codepoint : Int) -> Bool {
   (codepoint >= 0x1107F && codepoint <= 0x11081) ||
   (codepoint >= 0x110B3 && codepoint <= 0x110B6) ||
   (codepoint >= 0x110B9 && codepoint <= 0x110BA) ||
@@ -344,7 +376,11 @@ fn unicode_grapheme_is_extend_17_0(codepoint : Int) -> Bool {
   (codepoint >= 0x114C2 && codepoint <= 0x114C3) ||
   codepoint == 0x115AF ||
   (codepoint >= 0x115B2 && codepoint <= 0x115B5) ||
-  (codepoint >= 0x115BC && codepoint <= 0x115BD) ||
+  (codepoint >= 0x115BC && codepoint <= 0x115BD)
+}
+
+///|
+fn unicode_grapheme_is_extend_17_0_chunk_6(codepoint : Int) -> Bool {
   (codepoint >= 0x115BF && codepoint <= 0x115C0) ||
   (codepoint >= 0x115DC && codepoint <= 0x115DD) ||
   (codepoint >= 0x11633 && codepoint <= 0x1163A) ||
@@ -392,7 +428,11 @@ fn unicode_grapheme_is_extend_17_0(codepoint : Int) -> Bool {
   codepoint == 0x11D95 ||
   codepoint == 0x11D97 ||
   (codepoint >= 0x11EF3 && codepoint <= 0x11EF4) ||
-  (codepoint >= 0x11F00 && codepoint <= 0x11F01) ||
+  (codepoint >= 0x11F00 && codepoint <= 0x11F01)
+}
+
+///|
+fn unicode_grapheme_is_extend_17_0_chunk_7(codepoint : Int) -> Bool {
   (codepoint >= 0x11F36 && codepoint <= 0x11F3A) ||
   (codepoint >= 0x11F40 && codepoint <= 0x11F42) ||
   codepoint == 0x11F5A ||
@@ -445,6 +485,14 @@ fn unicode_grapheme_is_extend_17_0(codepoint : Int) -> Bool {
 
 ///|
 fn unicode_grapheme_is_spacing_mark_17_0(codepoint : Int) -> Bool {
+  unicode_grapheme_is_spacing_mark_17_0_chunk_0(codepoint) ||
+  unicode_grapheme_is_spacing_mark_17_0_chunk_1(codepoint) ||
+  unicode_grapheme_is_spacing_mark_17_0_chunk_2(codepoint) ||
+  unicode_grapheme_is_spacing_mark_17_0_chunk_3(codepoint)
+}
+
+///|
+fn unicode_grapheme_is_spacing_mark_17_0_chunk_0(codepoint : Int) -> Bool {
   codepoint == 0x0903 ||
   codepoint == 0x093B ||
   (codepoint >= 0x093E && codepoint <= 0x0940) ||
@@ -492,7 +540,11 @@ fn unicode_grapheme_is_spacing_mark_17_0(codepoint : Int) -> Bool {
   (codepoint >= 0x1056 && codepoint <= 0x1057) ||
   codepoint == 0x1084 ||
   codepoint == 0x17B6 ||
-  (codepoint >= 0x17BE && codepoint <= 0x17C5) ||
+  (codepoint >= 0x17BE && codepoint <= 0x17C5)
+}
+
+///|
+fn unicode_grapheme_is_spacing_mark_17_0_chunk_1(codepoint : Int) -> Bool {
   (codepoint >= 0x17C7 && codepoint <= 0x17C8) ||
   (codepoint >= 0x1923 && codepoint <= 0x1926) ||
   (codepoint >= 0x1929 && codepoint <= 0x192B) ||
@@ -540,7 +592,11 @@ fn unicode_grapheme_is_spacing_mark_17_0(codepoint : Int) -> Bool {
   (codepoint >= 0x110B7 && codepoint <= 0x110B8) ||
   codepoint == 0x1112C ||
   (codepoint >= 0x11145 && codepoint <= 0x11146) ||
-  codepoint == 0x11182 ||
+  codepoint == 0x11182
+}
+
+///|
+fn unicode_grapheme_is_spacing_mark_17_0_chunk_2(codepoint : Int) -> Bool {
   (codepoint >= 0x111B3 && codepoint <= 0x111B5) ||
   codepoint == 0x111BF ||
   codepoint == 0x111CE ||
@@ -588,7 +644,11 @@ fn unicode_grapheme_is_spacing_mark_17_0(codepoint : Int) -> Bool {
   codepoint == 0x11A97 ||
   codepoint == 0x11B61 ||
   codepoint == 0x11B65 ||
-  codepoint == 0x11B67 ||
+  codepoint == 0x11B67
+}
+
+///|
+fn unicode_grapheme_is_spacing_mark_17_0_chunk_3(codepoint : Int) -> Bool {
   codepoint == 0x11C2F ||
   codepoint == 0x11C3E ||
   codepoint == 0x11CA9 ||
@@ -617,6 +677,14 @@ fn unicode_grapheme_is_zwj_17_0(codepoint : Int) -> Bool {
 
 ///|
 fn unicode_emoji_is_extended_pictographic_17_0(codepoint : Int) -> Bool {
+  unicode_emoji_is_extended_pictographic_17_0_chunk_0(codepoint) ||
+  unicode_emoji_is_extended_pictographic_17_0_chunk_1(codepoint) ||
+  unicode_emoji_is_extended_pictographic_17_0_chunk_2(codepoint) ||
+  unicode_emoji_is_extended_pictographic_17_0_chunk_3(codepoint)
+}
+
+///|
+fn unicode_emoji_is_extended_pictographic_17_0_chunk_0(codepoint : Int) -> Bool {
   codepoint == 0x00A9 ||
   codepoint == 0x00AE ||
   codepoint == 0x203C ||
@@ -664,7 +732,11 @@ fn unicode_emoji_is_extended_pictographic_17_0(codepoint : Int) -> Bool {
   (codepoint >= 0x26AA && codepoint <= 0x26AB) ||
   (codepoint >= 0x26B0 && codepoint <= 0x26B1) ||
   (codepoint >= 0x26BD && codepoint <= 0x26BE) ||
-  (codepoint >= 0x26C4 && codepoint <= 0x26C5) ||
+  (codepoint >= 0x26C4 && codepoint <= 0x26C5)
+}
+
+///|
+fn unicode_emoji_is_extended_pictographic_17_0_chunk_1(codepoint : Int) -> Bool {
   codepoint == 0x26C8 ||
   (codepoint >= 0x26CE && codepoint <= 0x26CF) ||
   codepoint == 0x26D1 ||
@@ -712,7 +784,11 @@ fn unicode_emoji_is_extended_pictographic_17_0(codepoint : Int) -> Bool {
   (codepoint >= 0x1F0CF && codepoint <= 0x1F0D0) ||
   (codepoint >= 0x1F0F6 && codepoint <= 0x1F0FF) ||
   (codepoint >= 0x1F170 && codepoint <= 0x1F171) ||
-  (codepoint >= 0x1F17E && codepoint <= 0x1F17F) ||
+  (codepoint >= 0x1F17E && codepoint <= 0x1F17F)
+}
+
+///|
+fn unicode_emoji_is_extended_pictographic_17_0_chunk_2(codepoint : Int) -> Bool {
   codepoint == 0x1F18E ||
   (codepoint >= 0x1F191 && codepoint <= 0x1F19A) ||
   (codepoint >= 0x1F1AE && codepoint <= 0x1F1E5) ||
@@ -760,7 +836,11 @@ fn unicode_emoji_is_extended_pictographic_17_0(codepoint : Int) -> Bool {
   (codepoint >= 0x1F6F3 && codepoint <= 0x1F6FF) ||
   (codepoint >= 0x1F7DA && codepoint <= 0x1F7FF) ||
   (codepoint >= 0x1F80C && codepoint <= 0x1F80F) ||
-  (codepoint >= 0x1F848 && codepoint <= 0x1F84F) ||
+  (codepoint >= 0x1F848 && codepoint <= 0x1F84F)
+}
+
+///|
+fn unicode_emoji_is_extended_pictographic_17_0_chunk_3(codepoint : Int) -> Bool {
   (codepoint >= 0x1F85A && codepoint <= 0x1F85F) ||
   (codepoint >= 0x1F888 && codepoint <= 0x1F88F) ||
   (codepoint >= 0x1F8AE && codepoint <= 0x1F8AF) ||
@@ -801,6 +881,12 @@ fn unicode_indic_conjunct_is_linker_17_0(codepoint : Int) -> Bool {
 
 ///|
 fn unicode_indic_conjunct_is_consonant_17_0(codepoint : Int) -> Bool {
+  unicode_indic_conjunct_is_consonant_17_0_chunk_0(codepoint) ||
+  unicode_indic_conjunct_is_consonant_17_0_chunk_1(codepoint)
+}
+
+///|
+fn unicode_indic_conjunct_is_consonant_17_0_chunk_0(codepoint : Int) -> Bool {
   (codepoint >= 0x0915 && codepoint <= 0x0939) ||
   (codepoint >= 0x0958 && codepoint <= 0x095F) ||
   (codepoint >= 0x0978 && codepoint <= 0x097F) ||
@@ -848,7 +934,11 @@ fn unicode_indic_conjunct_is_consonant_17_0(codepoint : Int) -> Bool {
   (codepoint >= 0xA98F && codepoint <= 0xA9B2) ||
   (codepoint >= 0xA9E0 && codepoint <= 0xA9E4) ||
   (codepoint >= 0xA9E7 && codepoint <= 0xA9EF) ||
-  (codepoint >= 0xA9FA && codepoint <= 0xA9FE) ||
+  (codepoint >= 0xA9FA && codepoint <= 0xA9FE)
+}
+
+///|
+fn unicode_indic_conjunct_is_consonant_17_0_chunk_1(codepoint : Int) -> Bool {
   (codepoint >= 0xAA60 && codepoint <= 0xAA6F) ||
   (codepoint >= 0xAA71 && codepoint <= 0xAA73) ||
   codepoint == 0xAA7A ||
@@ -881,6 +971,18 @@ fn unicode_indic_conjunct_is_consonant_17_0(codepoint : Int) -> Bool {
 
 ///|
 fn unicode_indic_conjunct_is_extend_17_0(codepoint : Int) -> Bool {
+  unicode_indic_conjunct_is_extend_17_0_chunk_0(codepoint) ||
+  unicode_indic_conjunct_is_extend_17_0_chunk_1(codepoint) ||
+  unicode_indic_conjunct_is_extend_17_0_chunk_2(codepoint) ||
+  unicode_indic_conjunct_is_extend_17_0_chunk_3(codepoint) ||
+  unicode_indic_conjunct_is_extend_17_0_chunk_4(codepoint) ||
+  unicode_indic_conjunct_is_extend_17_0_chunk_5(codepoint) ||
+  unicode_indic_conjunct_is_extend_17_0_chunk_6(codepoint) ||
+  unicode_indic_conjunct_is_extend_17_0_chunk_7(codepoint)
+}
+
+///|
+fn unicode_indic_conjunct_is_extend_17_0_chunk_0(codepoint : Int) -> Bool {
   (codepoint >= 0x0300 && codepoint <= 0x036F) ||
   (codepoint >= 0x0483 && codepoint <= 0x0489) ||
   (codepoint >= 0x0591 && codepoint <= 0x05BD) ||
@@ -928,7 +1030,11 @@ fn unicode_indic_conjunct_is_extend_17_0(codepoint : Int) -> Bool {
   codepoint == 0x0A51 ||
   (codepoint >= 0x0A70 && codepoint <= 0x0A71) ||
   codepoint == 0x0A75 ||
-  (codepoint >= 0x0A81 && codepoint <= 0x0A82) ||
+  (codepoint >= 0x0A81 && codepoint <= 0x0A82)
+}
+
+///|
+fn unicode_indic_conjunct_is_extend_17_0_chunk_1(codepoint : Int) -> Bool {
   codepoint == 0x0ABC ||
   (codepoint >= 0x0AC1 && codepoint <= 0x0AC5) ||
   (codepoint >= 0x0AC7 && codepoint <= 0x0AC8) ||
@@ -976,7 +1082,11 @@ fn unicode_indic_conjunct_is_extend_17_0(codepoint : Int) -> Bool {
   codepoint == 0x0E31 ||
   (codepoint >= 0x0E34 && codepoint <= 0x0E3A) ||
   (codepoint >= 0x0E47 && codepoint <= 0x0E4E) ||
-  codepoint == 0x0EB1 ||
+  codepoint == 0x0EB1
+}
+
+///|
+fn unicode_indic_conjunct_is_extend_17_0_chunk_2(codepoint : Int) -> Bool {
   (codepoint >= 0x0EB4 && codepoint <= 0x0EBC) ||
   (codepoint >= 0x0EC8 && codepoint <= 0x0ECE) ||
   (codepoint >= 0x0F18 && codepoint <= 0x0F19) ||
@@ -1024,7 +1134,11 @@ fn unicode_indic_conjunct_is_extend_17_0(codepoint : Int) -> Bool {
   codepoint == 0x1A56 ||
   (codepoint >= 0x1A58 && codepoint <= 0x1A5E) ||
   codepoint == 0x1A62 ||
-  (codepoint >= 0x1A65 && codepoint <= 0x1A6C) ||
+  (codepoint >= 0x1A65 && codepoint <= 0x1A6C)
+}
+
+///|
+fn unicode_indic_conjunct_is_extend_17_0_chunk_3(codepoint : Int) -> Bool {
   (codepoint >= 0x1A73 && codepoint <= 0x1A7C) ||
   codepoint == 0x1A7F ||
   (codepoint >= 0x1AB0 && codepoint <= 0x1ADD) ||
@@ -1072,7 +1186,11 @@ fn unicode_indic_conjunct_is_extend_17_0(codepoint : Int) -> Bool {
   (codepoint >= 0xA926 && codepoint <= 0xA92D) ||
   (codepoint >= 0xA947 && codepoint <= 0xA951) ||
   codepoint == 0xA953 ||
-  (codepoint >= 0xA980 && codepoint <= 0xA982) ||
+  (codepoint >= 0xA980 && codepoint <= 0xA982)
+}
+
+///|
+fn unicode_indic_conjunct_is_extend_17_0_chunk_4(codepoint : Int) -> Bool {
   codepoint == 0xA9B3 ||
   (codepoint >= 0xA9B6 && codepoint <= 0xA9B9) ||
   (codepoint >= 0xA9BC && codepoint <= 0xA9BD) ||
@@ -1120,7 +1238,11 @@ fn unicode_indic_conjunct_is_extend_17_0(codepoint : Int) -> Bool {
   codepoint == 0x110C2 ||
   (codepoint >= 0x11100 && codepoint <= 0x11102) ||
   (codepoint >= 0x11127 && codepoint <= 0x1112B) ||
-  (codepoint >= 0x1112D && codepoint <= 0x11132) ||
+  (codepoint >= 0x1112D && codepoint <= 0x11132)
+}
+
+///|
+fn unicode_indic_conjunct_is_extend_17_0_chunk_5(codepoint : Int) -> Bool {
   codepoint == 0x11134 ||
   codepoint == 0x11173 ||
   (codepoint >= 0x11180 && codepoint <= 0x11181) ||
@@ -1168,7 +1290,11 @@ fn unicode_indic_conjunct_is_extend_17_0(codepoint : Int) -> Bool {
   (codepoint >= 0x11633 && codepoint <= 0x1163A) ||
   codepoint == 0x1163D ||
   (codepoint >= 0x1163F && codepoint <= 0x11640) ||
-  codepoint == 0x116AB ||
+  codepoint == 0x116AB
+}
+
+///|
+fn unicode_indic_conjunct_is_extend_17_0_chunk_6(codepoint : Int) -> Bool {
   codepoint == 0x116AD ||
   (codepoint >= 0x116B0 && codepoint <= 0x116B7) ||
   codepoint == 0x1171D ||
@@ -1216,7 +1342,11 @@ fn unicode_indic_conjunct_is_extend_17_0(codepoint : Int) -> Bool {
   codepoint == 0x13440 ||
   (codepoint >= 0x13447 && codepoint <= 0x13455) ||
   (codepoint >= 0x1611E && codepoint <= 0x16129) ||
-  (codepoint >= 0x1612D && codepoint <= 0x1612F) ||
+  (codepoint >= 0x1612D && codepoint <= 0x1612F)
+}
+
+///|
+fn unicode_indic_conjunct_is_extend_17_0_chunk_7(codepoint : Int) -> Bool {
   (codepoint >= 0x16AF0 && codepoint <= 0x16AF4) ||
   (codepoint >= 0x16B30 && codepoint <= 0x16B36) ||
   codepoint == 0x16F4F ||

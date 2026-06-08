@@ -126,12 +126,12 @@ const mergeRanges = ranges => {
 };
 
 const moonHex = value => `0x${value.toString(16).toUpperCase().padStart(4, "0")}`;
+const rangeChunkSize = 48;
 
 const expressionForRanges = ranges => {
-  const merged = mergeRanges(ranges);
-  if (merged.length === 0) return ["  false"];
-  return merged.map((range, index) => {
-    const suffix = index === merged.length - 1 ? "" : " ||";
+  if (ranges.length === 0) return ["  false"];
+  return ranges.map((range, index) => {
+    const suffix = index === ranges.length - 1 ? "" : " ||";
     if (range.start === range.end) {
       return `  codepoint == ${moonHex(range.start)}${suffix}`;
     }
@@ -139,11 +139,41 @@ const expressionForRanges = ranges => {
   });
 };
 
-const functionForRanges = (name, ranges) => `///|
+const functionBodyForRanges = ranges => expressionForRanges(ranges).join("\n");
+
+const functionForRanges = (name, ranges) => {
+  const merged = mergeRanges(ranges);
+  if (merged.length <= rangeChunkSize) {
+    return `///|
 fn ${name}(codepoint : Int) -> Bool {
-${expressionForRanges(ranges).join("\n")}
+${functionBodyForRanges(merged)}
 }
 `;
+  }
+  const chunks = [];
+  for (let start = 0; start < merged.length; start += rangeChunkSize) {
+    chunks.push(merged.slice(start, start + rangeChunkSize));
+  }
+  const dispatch = chunks
+    .map((_, index) => {
+      const suffix = index === chunks.length - 1 ? "" : " ||";
+      return `  ${name}_chunk_${index}(codepoint)${suffix}`;
+    })
+    .join("\n");
+  const helpers = chunks
+    .map((chunk, index) => `///|
+fn ${name}_chunk_${index}(codepoint : Int) -> Bool {
+${functionBodyForRanges(chunk)}
+}
+`)
+    .join("\n");
+  return `///|
+fn ${name}(codepoint : Int) -> Bool {
+${dispatch}
+}
+
+${helpers}`;
+};
 
 const graphemePropertyNames = [
   "CR",
