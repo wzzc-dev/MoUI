@@ -709,10 +709,16 @@ assertIncludes("scripts/record-platform-evidence-manifest.mjs", "asyncImageSecon
 assertIncludes("scripts/record-native-skia-evidence.mjs", "--async-image-log");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "--candidate-anchor-log");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "--scale-dpr-anchor-log");
+assertIncludes("scripts/record-native-ime-evidence.mjs", "platform-protocol=windows-ime");
+assertIncludes("scripts/record-native-ime-evidence.mjs", "candidate-window");
+assertIncludes("scripts/record-native-ime-evidence.mjs", "preedit-underline");
+assertIncludes("scripts/test-record-native-ime-evidence.mjs", "platform-protocol=wayland-text-input");
 assertIncludes("scripts/test-record-native-ime-evidence.mjs", "host unit test");
 assertIncludes("docs/testing.md", "asyncImageSecondFrame=yes");
 assertIncludes("docs/testing.md", "selection rectangles");
 assertIncludes("docs/testing.md", "IME candidate anchors");
+assertIncludes("docs/testing.md", "platform-protocol=windows-ime");
+assertIncludes("AGENTS.md", "platform-protocol=wayland-text-input");
 for (const platform of ["macos", "windows", "linux"]) {
   assertIncludes(
     `moui/backend/${platform}/skia/${platform}_skia_provider.mbt`,

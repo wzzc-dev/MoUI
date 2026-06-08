@@ -154,7 +154,10 @@ try {
   const linuxCandidateLog = writeArtifact(
     "linux",
     "ime-candidate-anchor.log",
-    "MoUI native IME candidate anchor passed candidate-anchor caret-rect surrounding-text source=showcase\n",
+    [
+      "MoUI native IME runtime matching-host native-app platform-protocol=wayland-text-input app=showcase",
+      "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text source=showcase",
+    ].join("\n"),
   );
   const linuxConsumerCommand =
     "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/linux_skia --target native";
@@ -192,15 +195,16 @@ try {
     "windows",
     "ime-complete.log",
     [
-      "MoUI native IME candidate anchor passed candidate-anchor caret-rect surrounding-text",
-      "MoUI native IME surrounding text passed surrounding-text utf8-offsets grapheme",
-      "MoUI native IME composition visual passed composition-range preedit-pixels",
-      "MoUI native IME commit delete passed commit delete",
-      "MoUI native IME cursor update passed cursor-update caret-rect",
-      "MoUI native IME scroll anchor passed scroll candidate-anchor",
-      "MoUI native IME scale DPR anchor passed scale dpr candidate-anchor",
-      "MoUI native IME resize anchor passed resize candidate-anchor",
-      "MoUI native IME Markdown Editor passed markdown-editor composition candidate-anchor",
+      "MoUI native IME runtime matching-host native-app platform-protocol=windows-ime app=markdown-editor",
+      "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
+      "MoUI native IME surrounding text passed surrounding-text selection-anchor utf8-offsets grapheme",
+      "MoUI native IME composition visual passed composition-range composition-cursor preedit-underline preedit-pixels selection-highlight",
+      "MoUI native IME commit delete passed commit delete selection-replacement",
+      "MoUI native IME cursor update passed cursor-area cursor-update caret-rect",
+      "MoUI native IME scroll anchor passed scroll candidate-anchor candidate-window",
+      "MoUI native IME scale DPR anchor passed scale dpr candidate-anchor candidate-window",
+      "MoUI native IME resize anchor passed resize candidate-anchor candidate-window",
+      "MoUI native IME Markdown Editor passed markdown-editor composition candidate-anchor candidate-window selection-replacement source-mapping",
     ].join("\n"),
   );
   const windowsConsumerCommand =
@@ -255,7 +259,10 @@ try {
   const badMarkerLog = writeArtifact(
     "linux",
     "bad-ime-candidate-anchor.log",
-    "host unit test says textInput passed, but no runtime anchor marker\n",
+    [
+      "MoUI native IME runtime matching-host native-app platform-protocol=wayland-text-input",
+      "host unit test says textInput passed, but no runtime anchor marker",
+    ].join("\n"),
   );
   expectFail(
     "reject candidate anchor log without marker",
@@ -270,6 +277,27 @@ try {
       badMarkerLog,
     ]),
     "candidate anchor log is missing expected marker",
+  );
+
+  const packageOnlyPath = writeManifest("package-only-ime-marker.json", "linux");
+  const packageOnlyLog = writeArtifact(
+    "linux",
+    "package-only-ime-candidate-anchor.log",
+    "host unit test MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text\n",
+  );
+  expectFail(
+    "reject candidate anchor log without runtime markers",
+    runRecorder([
+      packageOnlyPath,
+      "linux",
+      "--host",
+      "Linux Wayland CI",
+      "--consumer-command",
+      linuxConsumerCommand,
+      "--candidate-anchor-log",
+      packageOnlyLog,
+    ]),
+    "candidate anchor log is missing expected marker: MoUI native IME runtime",
   );
 
   expectFail(

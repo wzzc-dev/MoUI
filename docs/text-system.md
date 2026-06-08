@@ -194,7 +194,10 @@ Platform runtime evidence splits native IME readiness further: native
 `status=passed` entries must also record `imeSurroundingText`,
 `imeCommitDelete`, `imeCursorUpdate`, `imeScrollAnchor`,
 `imeScaleDprAnchor`, `imeResizeAnchor`, and `imeMarkdownEditor` observations
-from matching-host Showcase or Markdown Editor artifacts, so package-only
+from matching-host Showcase or Markdown Editor artifacts. Those logs must carry
+matching-host runtime, native-app, platform-protocol, candidate-window,
+surrounding-text, composition-visual, commit/delete, cursor-update, scroll,
+scale/DPR, resize, and Markdown Editor dogfood markers, so package-only
 composition tests and coarse `textInput` observations cannot promote native IME
 readiness by themselves.
 These fields make CI artifacts easier to audit, but they are not yet a

@@ -529,11 +529,19 @@ node scripts/record-native-ime-evidence.mjs \
 ```
 
 Each supplied log must stay under `artifacts/platform-evidence/<platform>/` and
-must contain the strong marker tokens for its observation. For example,
-candidate-anchor logs must include `candidate-anchor`, `caret-rect`, and
-`surrounding-text`; composition-visual logs must include `composition-range`
-and `preedit-pixels`; scale/DPR logs must include `scale`, `dpr`, and
-`candidate-anchor`. Generic host unit-test output or package logs are rejected.
+must contain common runtime markers: `MoUI native IME runtime`,
+`matching-host`, `native-app`, and the platform protocol marker
+`platform-protocol=macos-marked-text`, `platform-protocol=windows-ime`, or
+`platform-protocol=wayland-text-input` (the helper also accepts documented
+platform aliases). The log must also contain the strong marker tokens for its
+observation. For example, candidate-anchor logs must include
+`candidate-anchor`, `candidate-window`, `caret-rect`, and `surrounding-text`;
+surrounding-text logs must include `selection-anchor`, `utf8-offsets`, and
+`grapheme`; composition-visual logs must include `composition-range`,
+`composition-cursor`, `preedit-underline`, `preedit-pixels`, and
+`selection-highlight`; scale/DPR logs must include `scale`, `dpr`,
+`candidate-anchor`, and `candidate-window`. Generic host unit-test output or
+package logs are rejected.
 
 When collecting release evidence on a configured host, update or regenerate the
 platform runtime evidence manifest with that host's results and validate it:
