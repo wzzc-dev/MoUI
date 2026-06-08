@@ -796,6 +796,67 @@ export function createWindowWebImports(options = {}) {
           );
         });
     },
+    text_file_read_async(requestId, path) {
+      const targetPath = stringValue(path);
+      if (!targetPath) {
+        completeAsyncText(
+          "web_complete_async_text_file_read",
+          requestId,
+          false,
+          "text file path is empty",
+        );
+        return;
+      }
+      let url;
+      try {
+        url = new URL(
+          targetPath,
+          document?.baseURI || globalThis.location?.href || "http://localhost/",
+        );
+      } catch (error) {
+        completeAsyncText(
+          "web_complete_async_text_file_read",
+          requestId,
+          false,
+          asyncFailureMessage(error, "invalid text file URL"),
+        );
+        return;
+      }
+      if (globalThis.location?.origin && url.origin !== globalThis.location.origin) {
+        completeAsyncText(
+          "web_complete_async_text_file_read",
+          requestId,
+          false,
+          "text file fetch must stay on the current origin",
+        );
+        return;
+      }
+      fetch(url, { credentials: "same-origin" })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(
+              `failed to fetch text file ${targetPath}: ${response.status} ${response.statusText}`,
+            );
+          }
+          return response.text();
+        })
+        .then(text => {
+          completeAsyncText(
+            "web_complete_async_text_file_read",
+            requestId,
+            true,
+            text,
+          );
+        })
+        .catch(error => {
+          completeAsyncText(
+            "web_complete_async_text_file_read",
+            requestId,
+            false,
+            asyncFailureMessage(error, "text file fetch failed"),
+          );
+        });
+    },
     open_url(url) {
       const href = stringValue(url);
       if (!href || !globalThis.window?.open) {

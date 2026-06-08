@@ -13,6 +13,7 @@ options(
         "web_dispatch_event",
         "web_complete_async_clipboard_read",
         "web_complete_async_file_dialog",
+        "web_complete_async_text_file_read",
       ],
     },
   },

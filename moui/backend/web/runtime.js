@@ -77,7 +77,6 @@ export function createWebGpuImports(options = {}) {
       ? Number(textSelectionOptions.clickSlop)
       : 4,
   );
-
   const createStringHandle = value => {
     const handle = nextStringHandle++;
     strings.set(handle, { value: `${value ?? ""}` });
@@ -242,6 +241,22 @@ export function createWebGpuImports(options = {}) {
     layer.style.top = `${canvasRect.top - hostRect.top + (host?.scrollTop || 0)}px`;
     layer.style.width = `${Math.max(1, canvasRect.width || canvas.clientWidth || 1)}px`;
     layer.style.height = `${Math.max(1, canvasRect.height || canvas.clientHeight || 1)}px`;
+    syncTextSelectionLayerCursor(state);
+  };
+
+  const canvasCursorValue = canvas => {
+    try {
+      const explicit = `${canvas?.style?.cursor ?? ""}`.trim();
+      const computed = explicit || `${globalThis.getComputedStyle?.(canvas)?.cursor ?? ""}`.trim();
+      return !computed || computed === "auto" ? "default" : computed;
+    } catch {
+      return "default";
+    }
+  };
+
+  const syncTextSelectionLayerCursor = state => {
+    if (!state?.layer) return;
+    state.layer.style.cursor = canvasCursorValue(state.canvas);
   };
 
   const installTextSelectionLayerEvents = state => {
@@ -266,6 +281,7 @@ export function createWebGpuImports(options = {}) {
         pending.moved = true;
       }
       dispatchCanvasSyntheticMove(state.canvas, snapshot);
+      syncTextSelectionLayerCursor(state);
     };
     const end = event => {
       const pending = state.pendingClick;
@@ -287,6 +303,7 @@ export function createWebGpuImports(options = {}) {
     const hasPointerEvents = typeof globalThis.PointerEvent === "function";
     state.layer.addEventListener("wheel", event => {
       dispatchCanvasSyntheticWheel(state.canvas, event);
+      syncTextSelectionLayerCursor(state);
     }, { passive: false });
     state.layer.addEventListener("pointerdown", begin, { passive: true });
     state.layer.addEventListener("pointermove", move, { passive: true });
@@ -326,6 +343,7 @@ export function createWebGpuImports(options = {}) {
       height: "1px",
       overflow: "hidden",
       pointerEvents: "none",
+      cursor: canvasCursorValue(canvas),
       userSelect: "text",
       WebkitUserSelect: "text",
       zIndex: `${textSelectionOptions.zIndex ?? 1}`,
@@ -427,18 +445,9 @@ export function createWebGpuImports(options = {}) {
     return `inset(${top}px ${right}px ${bottom}px ${left}px)`;
   };
 
-  const recordSelectableTextRun = (renderer, text, frame, font, align, alpha) => {
-    const selection = renderer.textSelection;
-    if (!selection || !text || alpha <= 0.01) return;
-    const state = rendererState(renderer);
-    const logicalFrame = {
-      x: Number(frame.x) || 0,
-      y: Number(frame.y) || 0,
-      width: Math.max(0, Number(frame.width) || 0),
-      height: Math.max(0, Number(frame.height) || 0),
-    };
-    if (logicalFrame.width <= 0 || logicalFrame.height <= 0) return;
-    const transformed = transformRect(state.transform, logicalFrame);
+  const pushSelectableRun = (selection, state, renderer, text, frame, font, align) => {
+    if (!text) return;
+    const transformed = transformRect(state.transform, frame);
     const canvasClip = {
       x: 0,
       y: 0,
@@ -462,6 +471,66 @@ export function createWebGpuImports(options = {}) {
     });
   };
 
+  const recordSelectableTextRun = (renderer, text, frame, font, align, alpha, segments) => {
+    const selection = renderer.textSelection;
+    if (!selection || !text || alpha <= 0.01) return;
+    const state = rendererState(renderer);
+    const logicalFrame = {
+      x: Number(frame.x) || 0,
+      y: Number(frame.y) || 0,
+      width: Math.max(0, Number(frame.width) || 0),
+      height: Math.max(0, Number(frame.height) || 0),
+    };
+    if (logicalFrame.width <= 0 || logicalFrame.height <= 0) return;
+    if (segments?.length > 0) {
+      for (const segment of segments) {
+        pushSelectableRun(
+          selection,
+          state,
+          renderer,
+          segment.text,
+          {
+            x: Number(segment.x) || 0,
+            y: logicalFrame.y,
+            width: Math.max(0, Number(segment.width) || 0),
+            height: logicalFrame.height,
+          },
+          font,
+          0,
+        );
+      }
+      return;
+    }
+    pushSelectableRun(selection, state, renderer, text, logicalFrame, font, align);
+  };
+
+  const selectableClusterKind = cluster => /^\s+$/.test(`${cluster ?? ""}`) ? "space" : "text";
+
+  const buildSelectableTextSegments = (glyphs, startX) => {
+    const segments = [];
+    let current = null;
+    let cursor = startX;
+    const flush = () => {
+      if (current && current.text.length > 0 && current.width > 0) {
+        segments.push(current);
+      }
+      current = null;
+    };
+    for (const { cluster, glyph } of glyphs) {
+      const width = Math.max(0, Number(glyph?.advance) || 0);
+      const kind = selectableClusterKind(cluster);
+      if (!current || current.kind !== kind) {
+        flush();
+        current = { kind, text: "", x: cursor, width: 0 };
+      }
+      current.text += cluster;
+      current.width += width;
+      cursor += width;
+    }
+    flush();
+    return segments;
+  };
+
   const applySelectableTextStyle = (span, run) => {
     Object.assign(span.style, {
       position: "absolute",
@@ -476,7 +545,7 @@ export function createWebGpuImports(options = {}) {
       overflow: "hidden",
       whiteSpace: "pre",
       pointerEvents: "auto",
-      cursor: "text",
+      cursor: "inherit",
       userSelect: "text",
       WebkitUserSelect: "text",
       color: "transparent",
@@ -486,6 +555,10 @@ export function createWebGpuImports(options = {}) {
       fontStyle: run.font.style,
       fontSize: cssPixels(run.font.size),
       fontWeight: `${run.font.weight}`,
+      fontKerning: "none",
+      fontVariantLigatures: "none",
+      fontFeatureSettings: '"kern" 0, "liga" 0, "clig" 0, "calt" 0',
+      textRendering: "geometricPrecision",
       lineHeight: cssPixels(Math.max(run.font.size, run.frame.height)),
       textAlign: cssTextAlign(run.align),
       letterSpacing: "0",
@@ -1762,6 +1835,7 @@ export function createWebGpuImports(options = {}) {
     const scope = rendererScope(renderer);
     const startIndex = scope.textVertices.length / TEXT_STRIDE_FLOATS;
     let cursor = Number(x) + textAlignExtra(align, width, total);
+    const selectableSegments = buildSelectableTextSegments(glyphs, cursor);
     const baseline = Number(y) + Math.max(font.size, (Number(height) + font.size * 0.72) / 2);
     const state = rendererState(renderer);
     const drawColor = multiplyColorAlpha(color, state.opacity);
@@ -1777,6 +1851,7 @@ export function createWebGpuImports(options = {}) {
       font,
       align,
       drawColor.a,
+      selectableSegments,
     );
     for (const { glyph } of glyphs) {
       const glyphColor = glyph.colorGlyph

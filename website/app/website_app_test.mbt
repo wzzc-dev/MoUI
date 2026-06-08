@@ -70,6 +70,103 @@ test "website hero CTA buttons open repository URL" {
 }
 
 ///|
+test "website docs portal loads runtime markdown through host text service" {
+  let requested_paths : Array[String] = []
+  let bridge = @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(file_access=true),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::TextFile(
+          @host.HostTextFileRequest::ReadText(path)
+        ) => {
+          requested_paths.push(path)
+          @host.HostServiceResponse::TextFileContent(
+            path, "# Runtime Docs\n\nMoUI fetches **Markdown** at runtime.\n\n- One source file\n\n```moonbit\nfn main {}\n```",
+          )
+        }
+        _ => @host.HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  let runtime = Model::new().runtime_with_services(
+    @host.HostAppServices::new(bridge~),
+    width=1180.0,
+    height=760.0,
+  )
+  click_text(runtime, "Docs")
+  let commands = runtime.draw_commands()
+  inspect(requested_paths.length(), content="1")
+  inspect(requested_paths[0], content="../../docs/architecture.md")
+  assert_true(has_text(commands, "MoUI Markdown Docs"))
+  assert_true(has_text(commands, "Runtime Docs"))
+  assert_true(has_text(commands, "MoUI fetches Markdown at runtime."))
+  assert_true(has_text(commands, "fn main {}"))
+  assert_true(
+    has_text_align(commands, "MoUI Markdown Docs", @core.TextAlign::TextStart),
+  )
+  assert_true(
+    has_text_align(commands, "Runtime Docs", @core.TextAlign::TextStart),
+  )
+  assert_true(
+    has_text_align(
+      commands,
+      "MoUI fetches Markdown at runtime.",
+      @core.TextAlign::TextStart,
+    ),
+  )
+  assert_true(
+    has_text_align(commands, "fn main {}", @core.TextAlign::TextStart),
+  )
+  click_text(runtime, "Development")
+  inspect(requested_paths.length(), content="2")
+  inspect(requested_paths[1], content="../../docs/development.md")
+}
+
+///|
+test "website docs completion ignores stale request id for selected markdown" {
+  let path = "../../docs/architecture.md"
+  let current_id = @host.HostServiceRequestId::new(2)
+  let model = {
+    ..Model::new(),
+    page: WebsiteDocs,
+    doc_state: DocLoading(current_id, path),
+  }
+  let stale : @host.HostCompletedServiceResponse = {
+    id: @host.HostServiceRequestId::new(1),
+    request: @host.HostServiceRequest::TextFile(
+      @host.HostTextFileRequest::ReadText(path),
+    ),
+    response: @host.HostServiceResponse::TextFileContent(
+      path, "# Stale\n\nOld response",
+    ),
+  }
+  let unchanged = model.update(HostDocsCompleted(stale))
+  match unchanged.doc_state {
+    DocLoading(id, loading_path) => {
+      inspect(id.value, content="2")
+      inspect(loading_path, content="../../docs/architecture.md")
+    }
+    _ => fail("expected stale completion to keep current loading state")
+  }
+  let fresh : @host.HostCompletedServiceResponse = {
+    id: current_id,
+    request: @host.HostServiceRequest::TextFile(
+      @host.HostTextFileRequest::ReadText(path),
+    ),
+    response: @host.HostServiceResponse::TextFileContent(
+      path, "# Fresh\n\nLatest response",
+    ),
+  }
+  match unchanged.update(HostDocsCompleted(fresh)).doc_state {
+    DocLoaded(loaded_path, document) => {
+      inspect(loaded_path, content="../../docs/architecture.md")
+      inspect(document.title, content="Fresh")
+    }
+    _ => fail("expected current completion to load markdown")
+  }
+}
+
+///|
 test "website hero code snippet is compact and visible" {
   let runtime = runtime(width=1180.0, height=760.0)
   let commands = runtime.draw_commands()
@@ -293,6 +390,20 @@ fn last_text_frame(
 fn has_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
   commands.any(command => {
     command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
+  })
+}
+
+///|
+fn has_text_align(
+  commands : Array[@core.DrawCommand],
+  text : String,
+  align : @core.TextAlign,
+) -> Bool {
+  commands.any(command => {
+    command
+    is @core.DrawCommand::DrawText({ text: value, align: actual_align, .. }) &&
+    value == text &&
+    actual_align == align
   })
 }
 
