@@ -252,6 +252,7 @@ priv struct SkiaTextMaturityPreflight {
   fallback_cluster_caret_ready : Bool
   emoji_hint_ready : Bool
   empty_typeface_emoji_retry_disabled : Bool
+  missing_glyph_recovery_ready : Bool
   bidi_reordering_ready : Bool
   paragraph_line_breaking_ready : Bool
   mixed_run_font_fallback_ready : Bool
@@ -270,7 +271,8 @@ fn SkiaTextMaturityPreflight::summary(
     self.shaped_cluster_caret_ready &&
     self.fallback_cluster_caret_ready &&
     self.emoji_hint_ready &&
-    self.empty_typeface_emoji_retry_disabled
+    self.empty_typeface_emoji_retry_disabled &&
+    self.missing_glyph_recovery_ready
   let tracked_gaps_pending = !self.bidi_reordering_ready &&
     !self.paragraph_line_breaking_ready &&
     !self.deterministic_color_emoji_ready &&
@@ -286,9 +288,9 @@ fn SkiaTextMaturityPreflight::summary(
     "tracked gaps changed"
   }
   let mixed_run_label = if self.mixed_run_font_fallback_ready {
-    "mixed-run fallback ready; bidi, paragraph line breaking, color emoji, and full grapheme parity pending"
+    "mixed-run fallback ready; missing-glyph recovery ready; bidi, paragraph line breaking, color emoji, and full grapheme parity pending"
   } else {
-    "bidi, paragraph line breaking, mixed-run fallback, color emoji, and full grapheme parity pending"
+    "bidi, paragraph line breaking, mixed-run fallback, missing-glyph recovery, color emoji, and full grapheme parity pending"
   }
   "text maturity audit partial: ready=" +
   self.ready_count.to_string() +
@@ -912,6 +914,7 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
       SkiaFontResolution::EmptyTypeface,
     )
     is None
+  let missing_glyph_recovery_ready = skia_sample_missing_glyph_recovery_ready()
   let mixed_run_font_fallback_ready = skia_mixed_text_segments("A你\u{1F642}B").length() ==
     4 &&
     skia_grapheme_cluster_texts("\u{1F469}\u{200D}\u{1F4BB}").length() == 1
@@ -922,6 +925,7 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
     fallback_cluster_caret_ready,
     emoji_hint_ready,
     empty_typeface_emoji_retry_disabled,
+    missing_glyph_recovery_ready,
     mixed_run_font_fallback_ready,
   ])
   let gap_count = skia_gap_count([
@@ -935,6 +939,7 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
     fallback_cluster_caret_ready,
     emoji_hint_ready,
     empty_typeface_emoji_retry_disabled,
+    missing_glyph_recovery_ready,
     bidi_reordering_ready: false,
     paragraph_line_breaking_ready: false,
     mixed_run_font_fallback_ready,
@@ -1075,6 +1080,72 @@ fn skia_sample_fallback_cluster_caret_ready() -> Bool {
   hangul_jamo[1] == hangul_jamo[2] &&
   hangul_jamo[2] == hangul_jamo[3] &&
   hangul_jamo[5] == 34.0
+}
+
+///|
+fn skia_sample_missing_glyph_recovery_ready() -> Bool {
+  let blank_primary = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(0),
+      @skia_native.GlyphId::new(0),
+      @skia_native.GlyphId::new(0),
+    ],
+    positions: [
+      @moui_skia.Point::zero(),
+      @moui_skia.Point::new(8.0, 0.0),
+      @moui_skia.Point::new(16.0, 0.0),
+    ],
+    clusters: [],
+    width: 24.0,
+  }
+  let partial_primary = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(18),
+      @skia_native.GlyphId::new(0),
+      @skia_native.GlyphId::new(0),
+    ],
+    positions: [
+      @moui_skia.Point::zero(),
+      @moui_skia.Point::new(8.0, 0.0),
+      @moui_skia.Point::new(16.0, 0.0),
+    ],
+    clusters: [],
+    width: 24.0,
+  }
+  let improved = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(18),
+      @skia_native.GlyphId::new(19),
+      @skia_native.GlyphId::new(0),
+    ],
+    positions: [
+      @moui_skia.Point::zero(),
+      @moui_skia.Point::new(8.0, 0.0),
+      @moui_skia.Point::new(16.0, 0.0),
+    ],
+    clusters: [],
+    width: 24.0,
+  }
+  let complete = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(18),
+      @skia_native.GlyphId::new(19),
+      @skia_native.GlyphId::new(20),
+    ],
+    positions: [
+      @moui_skia.Point::zero(),
+      @moui_skia.Point::new(8.0, 0.0),
+      @moui_skia.Point::new(16.0, 0.0),
+    ],
+    clusters: [],
+    width: 24.0,
+  }
+  skia_glyph_run_missing_glyph_count(partial_primary) == 2 &&
+  !skia_glyph_run_can_draw_text(partial_primary) &&
+  skia_glyph_run_improves_missing_glyphs(partial_primary, improved) &&
+  skia_glyph_run_improves_missing_glyphs(blank_primary, improved) &&
+  skia_glyph_run_can_draw_text(complete) &&
+  !skia_glyph_run_improves_missing_glyphs(improved, partial_primary)
 }
 
 ///|
@@ -2138,7 +2209,7 @@ fn skia_draw_text_payload_for_resolution(
       if skia_glyph_run_can_draw_text(glyph_run) {
         Some((font, glyph_run))
       } else {
-        skia_fallback_draw_payload(font_spec, text, resolution)
+        skia_fallback_draw_payload(font_spec, text, resolution, glyph_run)
       }
     }
     None => None
@@ -3495,9 +3566,35 @@ fn skia_glyph_run_has_visible_glyphs(run : SkiaGlyphRun) -> Bool {
 }
 
 ///|
+fn skia_glyph_run_missing_glyph_count(run : SkiaGlyphRun) -> Int {
+  let mut count = 0
+  for glyph in run.glyphs {
+    if glyph.to_int() == 0 {
+      count = count + 1
+    }
+  }
+  count
+}
+
+///|
 fn skia_glyph_run_can_draw_text(run : SkiaGlyphRun) -> Bool {
   skia_glyph_run_has_visible_glyphs(run) &&
-  run.glyphs.all(glyph => glyph.to_int() != 0)
+  skia_glyph_run_missing_glyph_count(run) == 0
+}
+
+///|
+fn skia_glyph_run_improves_missing_glyphs(
+  primary_run : SkiaGlyphRun,
+  fallback_run : SkiaGlyphRun,
+) -> Bool {
+  if !skia_glyph_run_has_visible_glyphs(fallback_run) {
+    return false
+  }
+  if !skia_glyph_run_has_visible_glyphs(primary_run) {
+    return true
+  }
+  skia_glyph_run_missing_glyph_count(fallback_run) <
+  skia_glyph_run_missing_glyph_count(primary_run)
 }
 
 ///|
@@ -3505,6 +3602,7 @@ fn skia_fallback_draw_payload(
   font : @core.FontSpec,
   text : String,
   resolution : SkiaFontResolution,
+  primary_run : SkiaGlyphRun,
 ) -> (@skia_native.Font, SkiaGlyphRun)? {
   match skia_emoji_fallback_draw_font(font, text, resolution) {
     Some(emoji_font) =>
@@ -3515,7 +3613,8 @@ fn skia_fallback_draw_payload(
     None => ()
   }
   match skia_default_fallback_draw_font(font) {
-    Some(fallback_font) => skia_visible_fallback_payload(fallback_font, text)
+    Some(fallback_font) =>
+      skia_recovering_fallback_payload(fallback_font, text, primary_run)
     None => None
   }
 }
@@ -3534,12 +3633,14 @@ fn skia_complete_fallback_payload(
 }
 
 ///|
-fn skia_visible_fallback_payload(
+fn skia_recovering_fallback_payload(
   font : @skia_native.Font,
   text : String,
+  primary_run : SkiaGlyphRun,
 ) -> (@skia_native.Font, SkiaGlyphRun)? {
   let fallback_run = skia_glyph_run(font, text)
-  if skia_glyph_run_has_visible_glyphs(fallback_run) {
+  if skia_glyph_run_can_draw_text(fallback_run) ||
+    skia_glyph_run_improves_missing_glyphs(primary_run, fallback_run) {
     Some((font, fallback_run))
   } else {
     None

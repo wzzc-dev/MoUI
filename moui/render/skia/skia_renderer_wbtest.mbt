@@ -234,15 +234,17 @@ test "skia text maturity preflight separates covered baseline from gaps" {
   assert_true(preflight.fallback_cluster_caret_ready)
   assert_true(preflight.emoji_hint_ready)
   assert_true(preflight.empty_typeface_emoji_retry_disabled)
+  assert_true(preflight.missing_glyph_recovery_ready)
   assert_false(preflight.bidi_reordering_ready)
   assert_false(preflight.paragraph_line_breaking_ready)
   assert_true(preflight.mixed_run_font_fallback_ready)
   assert_false(preflight.deterministic_color_emoji_ready)
   assert_false(preflight.full_grapheme_parity_ready)
-  inspect(preflight.ready_count, content="7")
+  inspect(preflight.ready_count, content="8")
   inspect(preflight.gap_count, content="4")
   assert_true(preflight.summary().contains("text maturity audit partial"))
   assert_true(preflight.summary().contains("mixed-run fallback ready"))
+  assert_true(preflight.summary().contains("missing-glyph recovery ready"))
   assert_true(preflight.summary().contains("bidi"))
   assert_true(preflight.summary().contains("full grapheme parity"))
 }
@@ -2235,6 +2237,74 @@ test "skia text drawing builds best available glyph runs" {
     }
     None => assert_true(!skia_available())
   }
+}
+
+///|
+test "skia missing glyph recovery requires improved fallback coverage" {
+  let partial = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(12),
+      @skia_native.GlyphId::new(0),
+      @skia_native.GlyphId::new(0),
+    ],
+    positions: [
+      @moui_skia.Point::zero(),
+      @moui_skia.Point::new(8.0, 0.0),
+      @moui_skia.Point::new(16.0, 0.0),
+    ],
+    clusters: [],
+    width: 24.0,
+  }
+  let improved = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(12),
+      @skia_native.GlyphId::new(13),
+      @skia_native.GlyphId::new(0),
+    ],
+    positions: [
+      @moui_skia.Point::zero(),
+      @moui_skia.Point::new(8.0, 0.0),
+      @moui_skia.Point::new(16.0, 0.0),
+    ],
+    clusters: [],
+    width: 24.0,
+  }
+  let same = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(14),
+      @skia_native.GlyphId::new(0),
+      @skia_native.GlyphId::new(0),
+    ],
+    positions: [
+      @moui_skia.Point::zero(),
+      @moui_skia.Point::new(8.0, 0.0),
+      @moui_skia.Point::new(16.0, 0.0),
+    ],
+    clusters: [],
+    width: 24.0,
+  }
+  let complete = SkiaGlyphRun::{
+    glyphs: [
+      @skia_native.GlyphId::new(12),
+      @skia_native.GlyphId::new(13),
+      @skia_native.GlyphId::new(14),
+    ],
+    positions: [
+      @moui_skia.Point::zero(),
+      @moui_skia.Point::new(8.0, 0.0),
+      @moui_skia.Point::new(16.0, 0.0),
+    ],
+    clusters: [],
+    width: 24.0,
+  }
+  inspect(skia_glyph_run_missing_glyph_count(partial), content="2")
+  inspect(skia_glyph_run_missing_glyph_count(improved), content="1")
+  assert_false(skia_glyph_run_can_draw_text(partial))
+  assert_true(skia_glyph_run_can_draw_text(complete))
+  assert_true(skia_glyph_run_improves_missing_glyphs(partial, improved))
+  assert_false(skia_glyph_run_improves_missing_glyphs(partial, same))
+  assert_false(skia_glyph_run_improves_missing_glyphs(improved, partial))
+  assert_true(skia_sample_missing_glyph_recovery_ready())
 }
 
 ///|
