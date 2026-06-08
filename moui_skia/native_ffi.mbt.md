@@ -16,6 +16,10 @@ type NativeCanvas
 
 ///|
 #external
+type NativeGpuContext
+
+///|
+#external
 type NativeData
 
 ///|
@@ -64,6 +68,36 @@ priv extern "C" fn native_surface_raster_n32_premul(
   width : Int,
   height : Int,
 ) -> NativeSurface = "moonbit_skia_surface_raster_n32_premul"
+
+///|
+priv extern "C" fn native_gpu_context_metal() -> NativeGpuContext = "moonbit_skia_gpu_context_metal"
+
+///|
+#borrow(context)
+priv extern "C" fn native_gpu_context_is_null(
+  context : NativeGpuContext,
+) -> Bool = "moonbit_skia_gpu_context_is_null"
+
+///|
+#borrow(context)
+priv extern "C" fn native_surface_gpu_n32_premul(
+  context : NativeGpuContext,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+  budgeted : Bool,
+) -> NativeSurface = "moonbit_skia_surface_gpu_n32_premul"
+
+///|
+priv extern "C" fn native_surface_gpu_metal_opt_in_enabled() -> Bool = "moonbit_skia_surface_gpu_metal_opt_in_enabled"
+
+///|
+priv extern "C" fn native_surface_gpu_metal_headers_available() -> Bool = "moonbit_skia_surface_gpu_metal_headers_available"
+
+///|
+priv extern "C" fn native_surface_gpu_metal_runtime_available() -> Bool = "moonbit_skia_surface_gpu_metal_runtime_available"
 
 ///|
 #borrow(surface)

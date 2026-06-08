@@ -376,6 +376,7 @@ priv enum ViewModifier {
   AspectRatioModifier(Double)
   IntrinsicWidthModifier
   IntrinsicHeightModifier
+  RepaintBoundaryModifier
 }
 
 ///|

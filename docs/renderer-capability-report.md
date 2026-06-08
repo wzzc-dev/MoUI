@@ -59,6 +59,22 @@ contract. Web keeps using the WebGPU wasm backend; future Skia Web or Skia GPU
 variants can add new `RendererBackendKind` values without changing the
 capability record shape.
 
+The Skia binding now has an explicit opt-in macOS Metal/Ganesh context and
+offscreen GPU surface boundary behind `MOUI_SKIA_ENABLE_GPU_METAL=1`, and
+`render/skia` reports that route through preflight diagnostics. The macOS real
+Skia helper can add `--run-gpu-smoke`, which requires the renderer smoke log to
+include `MoUI Skia GPU Metal renderer smoke passed route=metal-gpu
+surface_gpu=true present_count=1 pixel-markers`; that marker proves explicit
+GPU route creation, GPU-backed offscreen surface rendering, readback, and the
+existing pixel-present callback. In the same helper, `--run-gpu-smoke` also
+sets `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for Showcase and Markdown Editor
+first-frame runs, and their logs must include `surface_route=metal-gpu;
+surface_gpu=true` provider diagnostics before the normal first-frame marker.
+This is not yet a renderer descriptor promotion: `SkiaRasterNative` still
+presents copied CPU pixel frames through platform presenters, and a Skia GPU
+backend kind should only be added after matching-host window presentation and
+pixel/screenshot evidence prove the GPU path.
+
 ## Current Native WGPU Diagnostic Notes
 
 Native wgpu remains available as a diagnostic renderer. It now renders rects,

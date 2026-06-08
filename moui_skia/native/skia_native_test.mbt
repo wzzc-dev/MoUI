@@ -582,6 +582,119 @@ test "surface factory follows target descriptor support" {
   assert_eq(gpu_plan.count_kind(GpuSurfaceResource), 1)
   assert_eq(gpu_plan.count_kind(GpuContextResource), 1)
   assert_eq(gpu_plan.length(), 2)
+
+  let metal_context_descriptor = @skia.GpuContextDescriptor::metal(
+    b"native-test-real-metal-gpu-context",
+  )
+  match @native.GpuContext::metal(metal_context_descriptor) {
+    None => ()
+    Some(metal_context) => {
+      assert_true(metal_context.is_available())
+      assert_true(metal_context.support_status().is_available())
+
+      let missing_context_target = @skia.SurfaceTargetDescriptor::gpu_n32_premul(
+        size,
+      )
+      assert_true(
+        @native.Surface::target_support_status_with_gpu_context(
+          missing_context_target, metal_context,
+        ) ==
+        SurfaceTargetMissingGpuContext,
+      )
+
+      let mismatched_context = @skia.GpuContextDescriptor::metal(
+        b"native-test-other-metal-gpu-context",
+      )
+      let mismatched_target = @skia.SurfaceTargetDescriptor::gpu_n32_premul(
+        size,
+        gpu_context_key=Some(mismatched_context.resource_key()),
+      )
+      assert_true(
+        @native.Surface::target_support_status_with_gpu_context(
+          mismatched_target, metal_context,
+        ) ==
+        SurfaceTargetGpuContextMismatch,
+      )
+
+      let metal_target = @skia.SurfaceTargetDescriptor::gpu_n32_premul(
+        size,
+        gpu_context_key=Some(metal_context.resource_key()),
+      )
+      assert_true(
+        @native.Surface::target_support_status_with_gpu_context(
+          metal_target, metal_context,
+        ) ==
+        SurfaceTargetSupported,
+      )
+      match
+        @native.Surface::for_target_with_gpu_context(
+          metal_target, metal_context,
+        ) {
+        None => fail("real Metal GPU context should allocate a GPU surface")
+        Some(surface) => {
+          assert_true(surface.dimensions() == size)
+          assert_true(surface.descriptor() == metal_target.surface)
+          assert_true(surface.descriptor().is_gpu())
+          assert_true(surface.flush_and_submit())
+          let frame = @skia.RenderFrameDescriptor::empty(metal_target)
+          let stats = surface.render_frame(frame, frame_index=1)
+          assert_true(stats.is_complete())
+        }
+      }
+    }
+  }
+}
+
+///|
+test "gpu context support diagnostics follow native Metal probe gates" {
+  let mock_context = @skia.GpuContextDescriptor::mock(
+    id=b"native-test-gpu-context-diagnostics",
+  )
+  let metal_context = @skia.GpuContextDescriptor::metal(
+    b"native-test-metal-gpu-context-diagnostics",
+  )
+  let anonymous_context = @skia.GpuContextDescriptor::new(
+    backend=@skia.MetalGpuContext,
+  )
+  assert_true(@native.GpuContext::metal(mock_context) is None)
+  assert_true(@native.GpuContext::metal(anonymous_context) is None)
+  if !@native.skia_available() {
+    assert_true(
+      @native.Surface::gpu_context_support_status(mock_context) ==
+      SkiaGpuContextSkiaUnavailable,
+    )
+    assert_true(
+      @native.Surface::gpu_context_support_status(metal_context) ==
+      SkiaGpuContextSkiaUnavailable,
+    )
+  } else {
+    assert_true(
+      @native.Surface::gpu_context_support_status(mock_context) ==
+      SkiaGpuContextMockUnsupported,
+    )
+    assert_true(
+      @native.Surface::gpu_context_support_status(anonymous_context) ==
+      SkiaGpuContextAnonymous,
+    )
+    let metal_status = @native.Surface::gpu_context_support_status(
+      metal_context,
+    )
+    if @native.Surface::metal_gpu_context_runtime_available() {
+      assert_true(@native.Surface::metal_gpu_context_opt_in_enabled())
+      assert_true(@native.Surface::metal_gpu_context_headers_available())
+      assert_true(metal_status == SkiaGpuContextAvailable)
+      assert_true(metal_status.is_available())
+    } else if !@native.Surface::metal_gpu_context_opt_in_enabled() {
+      assert_true(metal_status == SkiaGpuContextMetalOptInDisabled)
+      assert_true(!metal_status.is_available())
+    } else if !@native.Surface::metal_gpu_context_headers_available() {
+      assert_true(metal_status == SkiaGpuContextMetalHeadersUnavailable)
+      assert_true(!metal_status.is_available())
+    } else {
+      assert_true(metal_status == SkiaGpuContextMetalRuntimeUnavailable)
+      assert_true(!metal_status.is_available())
+    }
+  }
 }
 
 ///|

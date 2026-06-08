@@ -112,6 +112,34 @@ extern "C" fn native_surface_raster_n32_premul(
 ) -> SurfaceHandle = "moonbit_skia_surface_raster_n32_premul"
 
 ///|
+extern "C" fn native_gpu_context_metal() -> GpuContextHandle = "moonbit_skia_gpu_context_metal"
+
+///|
+#borrow(context)
+extern "C" fn native_gpu_context_is_null(context : GpuContextHandle) -> Bool = "moonbit_skia_gpu_context_is_null"
+
+///|
+#borrow(context)
+extern "C" fn native_surface_gpu_n32_premul(
+  context : GpuContextHandle,
+  width : Int,
+  height : Int,
+  origin : Int,
+  sample_count : Int,
+  stencil_bits : Int,
+  budgeted : Bool,
+) -> SurfaceHandle = "moonbit_skia_surface_gpu_n32_premul"
+
+///|
+extern "C" fn native_surface_gpu_metal_opt_in_enabled() -> Bool = "moonbit_skia_surface_gpu_metal_opt_in_enabled"
+
+///|
+extern "C" fn native_surface_gpu_metal_headers_available() -> Bool = "moonbit_skia_surface_gpu_metal_headers_available"
+
+///|
+extern "C" fn native_surface_gpu_metal_runtime_available() -> Bool = "moonbit_skia_surface_gpu_metal_runtime_available"
+
+///|
 #borrow(surface)
 extern "C" fn native_surface_is_null(surface : SurfaceHandle) -> Bool = "moonbit_skia_surface_is_null"
 
@@ -406,11 +434,55 @@ pub fn Bitmap::to_pixmap(self : Bitmap) -> @skia.Pixmap? {
 }
 
 ///|
-fn Surface::from_handle(handle : SurfaceHandle) -> Surface? {
+fn GpuContext::from_handle(
+  handle : GpuContextHandle,
+  descriptor : @skia.GpuContextDescriptor,
+) -> GpuContext? {
+  if native_gpu_context_is_null(handle) {
+    None
+  } else {
+    Some({ handle, descriptor })
+  }
+}
+
+///|
+pub fn GpuContext::is_available(self : GpuContext) -> Bool {
+  !native_gpu_context_is_null(self.handle)
+}
+
+///|
+pub fn GpuContext::resource_key(self : GpuContext) -> @skia.RendererResourceKey {
+  self.descriptor.resource_key()
+}
+
+///|
+pub fn GpuContext::support_status(
+  self : GpuContext,
+) -> SkiaGpuContextSupportStatus {
+  Surface::gpu_context_support_status(self.descriptor)
+}
+
+///|
+pub fn GpuContext::metal(
+  descriptor : @skia.GpuContextDescriptor,
+) -> GpuContext? {
+  if !Surface::gpu_context_support_status(descriptor).is_available() ||
+    descriptor.backend != @skia.MetalGpuContext {
+    None
+  } else {
+    GpuContext::from_handle(native_gpu_context_metal(), descriptor)
+  }
+}
+
+///|
+fn Surface::from_handle(
+  handle : SurfaceHandle,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
   if native_surface_is_null(handle) {
     None
   } else {
-    Some({ handle, })
+    Some({ handle, descriptor })
   }
 }
 
@@ -429,7 +501,85 @@ pub fn Surface::raster_n32_premul(size : @skia.ISize) -> Surface? {
   } else {
     Surface::from_handle(
       native_surface_raster_n32_premul(size.width, size.height),
+      @skia.SurfaceDescriptor::raster_n32_premul(size),
     )
+  }
+}
+
+///|
+fn native_surface_origin_ordinal(origin : @skia.SurfaceOrigin) -> Int {
+  match origin {
+    @skia.TopLeft => 0
+    @skia.BottomLeft => 1
+  }
+}
+
+///|
+/// Allocate an offscreen GPU-backed N32 premultiplied surface from an explicit GPU context.
+pub fn Surface::gpu_n32_premul(
+  context : GpuContext,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  if descriptor.is_empty() || !descriptor.is_gpu() || !context.is_available() {
+    None
+  } else {
+    Surface::from_handle(
+      native_surface_gpu_n32_premul(
+        context.handle,
+        descriptor.width(),
+        descriptor.height(),
+        native_surface_origin_ordinal(descriptor.origin),
+        descriptor.sample_count,
+        descriptor.stencil_bits,
+        descriptor.budget.is_budgeted(),
+      ),
+      descriptor,
+    )
+  }
+}
+
+///|
+/// Report whether the macOS Metal Skia GPU-context probe is enabled for this native build.
+pub fn Surface::metal_gpu_context_opt_in_enabled() -> Bool {
+  native_surface_gpu_metal_opt_in_enabled()
+}
+
+///|
+/// Report whether this native build can see the Skia Ganesh Metal headers.
+pub fn Surface::metal_gpu_context_headers_available() -> Bool {
+  native_surface_gpu_metal_headers_available()
+}
+
+///|
+/// Report whether the opt-in Metal GPU-context probe can create a Metal device and queue.
+pub fn Surface::metal_gpu_context_runtime_available() -> Bool {
+  native_surface_gpu_metal_runtime_available()
+}
+
+///|
+/// Classify native support for a value-layer GPU context descriptor.
+pub fn Surface::gpu_context_support_status(
+  context : @skia.GpuContextDescriptor,
+) -> SkiaGpuContextSupportStatus {
+  if !skia_available() {
+    SkiaGpuContextSkiaUnavailable
+  } else if context.is_anonymous() {
+    SkiaGpuContextAnonymous
+  } else {
+    match context.backend {
+      @skia.MockGpuContext => SkiaGpuContextMockUnsupported
+      @skia.MetalGpuContext =>
+        if !Surface::metal_gpu_context_opt_in_enabled() {
+          SkiaGpuContextMetalOptInDisabled
+        } else if !Surface::metal_gpu_context_headers_available() {
+          SkiaGpuContextMetalHeadersUnavailable
+        } else if !Surface::metal_gpu_context_runtime_available() {
+          SkiaGpuContextMetalRuntimeUnavailable
+        } else {
+          SkiaGpuContextAvailable
+        }
+      _ => SkiaGpuContextBackendUnsupported
+    }
   }
 }
 
@@ -448,6 +598,52 @@ pub fn Surface::target_support_status(
     SurfaceTargetWindowUnsupported
   } else {
     SurfaceTargetGpuUnsupported
+  }
+}
+
+///|
+/// Report whether a value-layer render target can be allocated with a concrete GPU context.
+pub fn Surface::target_support_status_with_gpu_context(
+  target : @skia.SurfaceTargetDescriptor,
+  context : GpuContext,
+) -> SurfaceTargetSupportStatus {
+  if target.surface.is_empty() {
+    SurfaceTargetEmpty
+  } else if !skia_available() {
+    SurfaceTargetSkiaUnavailable
+  } else if target.surface.is_raster() {
+    SurfaceTargetSupported
+  } else if target.surface.is_window() {
+    SurfaceTargetWindowUnsupported
+  } else if !context.is_available() {
+    SurfaceTargetGpuContextUnsupported
+  } else {
+    match target.gpu_context_key {
+      None => SurfaceTargetMissingGpuContext
+      Some(key) =>
+        if key != context.resource_key() {
+          SurfaceTargetGpuContextMismatch
+        } else if !context.support_status().is_available() {
+          SurfaceTargetGpuContextUnsupported
+        } else {
+          SurfaceTargetSupported
+        }
+    }
+  }
+}
+
+///|
+/// Allocate a native surface for a value-layer render target and explicit GPU context.
+pub fn Surface::for_target_with_gpu_context(
+  target : @skia.SurfaceTargetDescriptor,
+  context : GpuContext,
+) -> Surface? {
+  if !Surface::target_support_status_with_gpu_context(target, context).is_supported() {
+    None
+  } else if target.surface.is_gpu() {
+    Surface::gpu_n32_premul(context, target.surface)
+  } else {
+    Surface::raster_n32_premul(target.dimensions())
   }
 }
 
@@ -486,7 +682,7 @@ pub fn Surface::image_info(self : Surface) -> @skia.ImageInfo {
 
 ///|
 pub fn Surface::descriptor(self : Surface) -> @skia.SurfaceDescriptor {
-  @skia.SurfaceDescriptor::raster_n32_premul(self.dimensions())
+  self.descriptor
 }
 
 ///|

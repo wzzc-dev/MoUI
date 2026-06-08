@@ -19,10 +19,18 @@ Options:
                                         the explicit moui_skia/native unavailable
                                         diagnostic instead of presenting.
   --renderer-smoke-log <path>           Real MoUI Skia renderer pixel smoke log.
+  --gpu-renderer-smoke-log <path>       Real MoUI Skia GPU route smoke log.
+                                        This proves the opt-in GPU route marker
+                                        in addition to the raster smoke markers.
   --async-image-log <path>              Real MoUI Skia async image second-frame
                                         smoke log.
   --showcase-log <path>                 Showcase *_skia first-frame log.
+  --gpu-showcase-log <path>             Showcase macOS Skia first-frame log with
+                                        explicit Metal GPU route diagnostics.
   --markdown-log <path>                 Markdown Editor *_skia first-frame log.
+  --gpu-markdown-log <path>             Markdown Editor macOS Skia first-frame
+                                        log with explicit Metal GPU route
+                                        diagnostics.
   --note <text>                         Additional Skia evidence note; may repeat.
 
 The helper validates supplied log markers, updates only the native skiaEvidence
@@ -152,6 +160,9 @@ if (!platform) {
 
 let host = "";
 const suppliedLogs = new Map();
+const suppliedGpuRendererSmokeLogs = [];
+const suppliedGpuShowcaseLogs = [];
+const suppliedGpuMarkdownLogs = [];
 const notes = [];
 
 for (let i = 2; i < args.length; i += 1) {
@@ -164,6 +175,15 @@ for (let i = 2; i < args.length; i += 1) {
     i += 1;
   } else if (logOptions.has(arg)) {
     suppliedLogs.set(arg, args[i + 1] ?? "");
+    i += 1;
+  } else if (arg === "--gpu-renderer-smoke-log") {
+    suppliedGpuRendererSmokeLogs.push(args[i + 1] ?? "");
+    i += 1;
+  } else if (arg === "--gpu-showcase-log") {
+    suppliedGpuShowcaseLogs.push(args[i + 1] ?? "");
+    i += 1;
+  } else if (arg === "--gpu-markdown-log") {
+    suppliedGpuMarkdownLogs.push(args[i + 1] ?? "");
     i += 1;
   } else {
     console.error(`Unknown argument: ${arg}`);
@@ -180,8 +200,22 @@ if (!platform.hostPattern.test(host)) {
   console.error(`--host must name a matching ${platformName} host; got '${host}'`);
   process.exit(2);
 }
-if (suppliedLogs.size === 0) {
+if (
+  suppliedLogs.size === 0 &&
+  suppliedGpuRendererSmokeLogs.length === 0 &&
+  suppliedGpuShowcaseLogs.length === 0 &&
+  suppliedGpuMarkdownLogs.length === 0
+) {
   console.error("At least one Skia evidence log option is required");
+  process.exit(2);
+}
+if (
+  platformName !== "macos" &&
+  (suppliedGpuRendererSmokeLogs.length > 0 ||
+    suppliedGpuShowcaseLogs.length > 0 ||
+    suppliedGpuMarkdownLogs.length > 0)
+) {
+  console.error("Skia GPU route log options currently require the macos platform");
   process.exit(2);
 }
 
@@ -269,6 +303,69 @@ for (const [option, rawPath] of suppliedLogs) {
   assertMarker(content, config.marker(platform), config.label, config.markerDescription);
   finalObservations[config.observation] = "yes";
   artifacts.add(rel);
+}
+
+for (const rawPath of suppliedGpuRendererSmokeLogs) {
+  if (!rawPath.trim()) {
+    console.error("--gpu-renderer-smoke-log requires a non-empty path");
+    process.exit(2);
+  }
+  const { absolute, rel } = normalizeArtifactPath(rawPath);
+  const content = readFileSync(absolute, "utf8");
+  if (!content.trim()) {
+    console.error(`GPU renderer smoke log is empty: ${rawPath}`);
+    process.exit(1);
+  }
+  assertMarker(
+    content,
+    /MoUI Skia GPU Metal renderer smoke passed.*route=metal-gpu.*surface_gpu=true.*present_count=1.*pixel-markers/,
+    "GPU renderer smoke log",
+    "MoUI Skia GPU Metal renderer smoke passed with route=metal-gpu, surface_gpu=true, present_count=1, and pixel-markers",
+  );
+  artifacts.add(rel);
+  notes.push(
+    "macOS Metal GPU route smoke proved route=metal-gpu, surface_gpu=true, frame presentation, and pixel markers.",
+  );
+}
+
+const validateGpuFirstFrameLog = (rawPath, label) => {
+  if (!rawPath.trim()) {
+    console.error(`${label} requires a non-empty path`);
+    process.exit(2);
+  }
+  const { absolute, rel } = normalizeArtifactPath(rawPath);
+  const content = readFileSync(absolute, "utf8");
+  if (!content.trim()) {
+    console.error(`${label} is empty: ${rawPath}`);
+    process.exit(1);
+  }
+  assertMarker(
+    content,
+    platform.firstFrameMarker,
+    label,
+    "the platform first-frame marker",
+  );
+  assertMarker(
+    content,
+    /macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true/,
+    label,
+    "macOS Skia renderer route diagnostics with surface_route=metal-gpu and surface_gpu=true",
+  );
+  artifacts.add(rel);
+};
+
+for (const rawPath of suppliedGpuShowcaseLogs) {
+  validateGpuFirstFrameLog(rawPath, "GPU Showcase first-frame log");
+  notes.push(
+    "macOS Showcase first-frame smoke proved route=metal-gpu and surface_gpu=true before presentation.",
+  );
+}
+
+for (const rawPath of suppliedGpuMarkdownLogs) {
+  validateGpuFirstFrameLog(rawPath, "GPU Markdown Editor first-frame log");
+  notes.push(
+    "macOS Markdown Editor first-frame smoke proved route=metal-gpu and surface_gpu=true before presentation.",
+  );
 }
 
 const skiaStatus = skiaObservationKeys.every(key => finalObservations[key] === "yes")

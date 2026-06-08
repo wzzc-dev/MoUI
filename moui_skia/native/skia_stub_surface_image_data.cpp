@@ -1,5 +1,145 @@
 #include "skia_stub_common.h"
 
+#ifndef __has_include
+#define __has_include(x) 0
+#endif
+
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(__APPLE__) && \
+  __has_include("include/gpu/ganesh/GrDirectContext.h") && \
+  __has_include("include/gpu/ganesh/mtl/GrMtlBackendContext.h") && \
+  __has_include("include/gpu/ganesh/mtl/GrMtlDirectContext.h") && \
+  __has_include("include/gpu/ganesh/mtl/GrMtlTypes.h") && \
+  __has_include("include/gpu/ganesh/SkSurfaceGanesh.h")
+#define MOUI_SKIA_HAS_GANESH_METAL_HEADERS 1
+#endif
+
+#if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
+  defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
+#include "include/gpu/ganesh/mtl/GrMtlBackendContext.h"
+#include "include/gpu/ganesh/mtl/GrMtlDirectContext.h"
+#include "include/gpu/ganesh/mtl/GrMtlTypes.h"
+#include "include/gpu/ganesh/SkSurfaceGanesh.h"
+#include <objc/message.h>
+#include <objc/runtime.h>
+
+extern "C" void* MTLCreateSystemDefaultDevice(void);
+
+static void moonbit_skia_objc_release(void* object) {
+  if (object == nullptr) {
+    return;
+  }
+  using ObjcSendVoidNoArg = void (*)(void*, SEL);
+  reinterpret_cast<ObjcSendVoidNoArg>(objc_msgSend)(
+    object,
+    sel_registerName("release")
+  );
+}
+
+static GrDirectContext* moonbit_skia_make_metal_direct_context(void) {
+  void* device = MTLCreateSystemDefaultDevice();
+  if (device == nullptr) {
+    return nullptr;
+  }
+  using ObjcSendNoArg = void* (*)(void*, SEL);
+  void* queue = reinterpret_cast<ObjcSendNoArg>(objc_msgSend)(
+    device,
+    sel_registerName("newCommandQueue")
+  );
+  if (queue == nullptr) {
+    moonbit_skia_objc_release(device);
+    return nullptr;
+  }
+
+  GrMtlBackendContext backend_context;
+  backend_context.fDevice.retain(static_cast<GrMTLHandle>(device));
+  backend_context.fQueue.retain(static_cast<GrMTLHandle>(queue));
+  sk_sp<GrDirectContext> context = GrDirectContexts::MakeMetal(backend_context);
+
+  moonbit_skia_objc_release(queue);
+  moonbit_skia_objc_release(device);
+
+  return context.release();
+}
+#endif
+
+static const int32_t MOONBIT_SKIA_GPU_BACKEND_METAL = 1;
+
+static MoonbitSkiaSurface* moonbit_skia_surface_wrapper_with_gpu_context(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkSurface* surface,
+  GrDirectContext* gpu_context_owner
+#else
+  void* surface,
+  void* gpu_context_owner
+#endif
+) {
+  MoonbitSkiaSurface* wrapper = moonbit_skia_make_surface_wrapper(surface);
+  wrapper->gpu_context_owner = gpu_context_owner;
+#if defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
+  if (wrapper->gpu_context_owner != nullptr) {
+    wrapper->gpu_context_owner->ref();
+  }
+#endif
+  return wrapper;
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_gpu_metal_opt_in_enabled(void) {
+#if defined(MOUI_SKIA_ENABLE_GPU_METAL) && defined(__APPLE__)
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_gpu_metal_headers_available(void) {
+#if defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_surface_gpu_metal_runtime_available(void) {
+#if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
+  defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
+  GrDirectContext* context = moonbit_skia_make_metal_direct_context();
+  if (context == nullptr) {
+    return 0;
+  }
+  context->unref();
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t
+moonbit_skia_gpu_context_is_null(MoonbitSkiaGpuContext* wrapper) {
+  return wrapper == nullptr || wrapper->context == nullptr;
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaGpuContext*
+moonbit_skia_gpu_context_metal(void) {
+#if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
+  defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
+  GrDirectContext* context = moonbit_skia_make_metal_direct_context();
+  if (context == nullptr) {
+    return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
+  }
+  return moonbit_skia_make_gpu_context_wrapper(
+    context,
+    nullptr,
+    nullptr,
+    MOONBIT_SKIA_GPU_BACKEND_METAL
+  );
+#else
+  return moonbit_skia_make_gpu_context_wrapper(nullptr, nullptr, nullptr, 0);
+#endif
+}
+
 extern "C" MOONBIT_FFI_EXPORT int32_t
 moonbit_skia_data_is_null(MoonbitSkiaData* wrapper) {
   return wrapper == nullptr || wrapper->data == nullptr;
@@ -380,6 +520,7 @@ moonbit_skia_image_encode_to_data(
     break;
   }
   case SkEncodedImageFormat::kWEBP: {
+#if defined(MOUI_SKIA_HAS_WEBP_ENCODER)
     SkWebpEncoder::Options options;
     if (quality < 0) {
       quality = 0;
@@ -388,6 +529,9 @@ moonbit_skia_image_encode_to_data(
     }
     options.fQuality = static_cast<float>(quality);
     data = SkWebpEncoder::Encode(nullptr, wrapper->image, options);
+#else
+    data = nullptr;
+#endif
     break;
   }
   default:
@@ -426,6 +570,63 @@ moonbit_skia_surface_raster_n32_premul(int32_t width, int32_t height) {
 #endif
 }
 
+#if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
+  defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
+static GrSurfaceOrigin moonbit_skia_surface_origin(int32_t origin) {
+  return origin == 1 ? kBottomLeft_GrSurfaceOrigin : kTopLeft_GrSurfaceOrigin;
+}
+#endif
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaSurface*
+moonbit_skia_surface_gpu_n32_premul(
+  MoonbitSkiaGpuContext* context,
+  int32_t width,
+  int32_t height,
+  int32_t origin,
+  int32_t sample_count,
+  int32_t stencil_bits,
+  int32_t budgeted
+) {
+  if (
+    width <= 0 ||
+    height <= 0 ||
+    context == nullptr ||
+    context->context == nullptr ||
+    context->backend != MOONBIT_SKIA_GPU_BACKEND_METAL
+  ) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
+  defined(MOUI_SKIA_HAS_GANESH_METAL_HEADERS)
+  SkImageInfo info = moonbit_skia_make_rgba8888_premul_info(width, height);
+  sk_sp<SkSurface> surface = SkSurfaces::RenderTarget(
+    context->context,
+    budgeted ? skgpu::Budgeted::kYes : skgpu::Budgeted::kNo,
+    info,
+    std::max(1, sample_count),
+    moonbit_skia_surface_origin(origin),
+    nullptr,
+    false
+  );
+  (void)stencil_bits;
+  if (!surface) {
+    return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+  }
+  return moonbit_skia_surface_wrapper_with_gpu_context(
+    surface.release(),
+    context->context
+  );
+#else
+  (void)width;
+  (void)height;
+  (void)origin;
+  (void)sample_count;
+  (void)stencil_bits;
+  (void)budgeted;
+  return moonbit_skia_surface_wrapper_with_gpu_context(nullptr, nullptr);
+#endif
+}
+
 
 
 extern "C" MOONBIT_FFI_EXPORT int32_t
@@ -434,9 +635,16 @@ moonbit_skia_surface_flush_and_submit(MoonbitSkiaSurface* wrapper) {
     return 0;
   }
 #if defined(MOUI_SKIA_HAS_SKIA)
-  // The current public native constructor is raster-only. Future GPU surfaces
-  // must wire a real context submit path before this returns true for them.
-  return wrapper->surface->recordingContext() == nullptr;
+  if (wrapper->gpu_context_owner == nullptr) {
+    return wrapper->surface->recordingContext() == nullptr;
+  }
+#if defined(MOUI_SKIA_ENABLE_GPU_METAL) && \
+  defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
+  wrapper->gpu_context_owner->flushAndSubmit(wrapper->surface);
+  return 1;
+#else
+  return 0;
+#endif
 #else
   return 0;
 #endif

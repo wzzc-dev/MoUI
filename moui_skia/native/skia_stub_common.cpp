@@ -338,6 +338,29 @@ static void moonbit_skia_surface_finalize(void* ptr) {
 #else
   wrapper->surface = nullptr;
 #endif
+#if defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
+  if (wrapper->gpu_context_owner != nullptr) {
+    wrapper->gpu_context_owner->unref();
+    wrapper->gpu_context_owner = nullptr;
+  }
+#else
+  wrapper->gpu_context_owner = nullptr;
+#endif
+}
+
+static void moonbit_skia_gpu_context_finalize(void* ptr) {
+  MoonbitSkiaGpuContext* wrapper = static_cast<MoonbitSkiaGpuContext*>(ptr);
+#if defined(MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT)
+  if (wrapper->context != nullptr) {
+    wrapper->context->unref();
+    wrapper->context = nullptr;
+  }
+#else
+  wrapper->context = nullptr;
+#endif
+  wrapper->device = nullptr;
+  wrapper->queue = nullptr;
+  wrapper->backend = 0;
 }
 
 static void moonbit_skia_canvas_finalize(void* ptr) {
@@ -1170,6 +1193,30 @@ MoonbitSkiaSurface* moonbit_skia_make_surface_wrapper(
     )
   );
   wrapper->surface = surface;
+  wrapper->gpu_context_owner = nullptr;
+  return wrapper;
+}
+
+MoonbitSkiaGpuContext* moonbit_skia_make_gpu_context_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  GrDirectContext* context,
+#else
+  void* context,
+#endif
+  void* device,
+  void* queue,
+  int32_t backend
+) {
+  MoonbitSkiaGpuContext* wrapper = static_cast<MoonbitSkiaGpuContext*>(
+    moonbit_make_external_object(
+      moonbit_skia_gpu_context_finalize,
+      sizeof(MoonbitSkiaGpuContext)
+    )
+  );
+  wrapper->context = context;
+  wrapper->device = device;
+  wrapper->queue = queue;
+  wrapper->backend = backend;
   return wrapper;
 }
 

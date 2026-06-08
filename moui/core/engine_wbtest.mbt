@@ -803,7 +803,7 @@ test "button pressed paint keeps configured foreground" {
 }
 
 ///|
-test "runtime dynamic builder rebuilds after activated pointer" {
+test "runtime dynamic builder rebuilds on draw frame flush after activated pointer" {
   let clicks = Ref(0)
   let runtime = RuntimeState::new_component(
     root=Component::new(_ctx => {
@@ -841,10 +841,11 @@ test "runtime dynamic builder rebuilds after activated pointer" {
     ),
   )
   inspect(clicks.val, content="1")
-  inspect(runtime.needs_rebuild, content="false")
+  inspect(runtime.needs_rebuild, content="true")
   guard runtime.build_draw_commands() is [_, _, DrawText({ text: "Tap 1", .. })] else {
     fail("expected rebuilt button label")
   }
+  inspect(runtime.needs_rebuild, content="false")
 }
 
 ///|

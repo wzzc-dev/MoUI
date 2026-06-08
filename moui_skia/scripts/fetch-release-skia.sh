@@ -304,7 +304,32 @@ download_file() {
     exit 1
   fi
   mkdir -p "$(dirname "$output")"
-  curl -fL --retry 3 --retry-delay 2 -o "$output" "$url"
+  if [[ -s "$output" ]]; then
+    curl \
+      --fail \
+      --location \
+      --http1.1 \
+      --connect-timeout 30 \
+      --retry 5 \
+      --retry-delay 2 \
+      --speed-limit 1024 \
+      --speed-time 60 \
+      --continue-at - \
+      -o "$output" \
+      "$url"
+    return
+  fi
+  curl \
+    --fail \
+    --location \
+    --http1.1 \
+    --connect-timeout 30 \
+    --retry 5 \
+    --retry-delay 2 \
+    --speed-limit 1024 \
+    --speed-time 60 \
+    -o "$output" \
+    "$url"
 }
 
 extract_zip() {
@@ -324,11 +349,29 @@ ensure_package_extracted() {
   fi
   if [[ $force -eq 1 || ! -d "$package_dir" ]]; then
     mkdir -p "$entry_dir"
+    if [[ $force -eq 1 && -f "$package_zip" ]]; then
+      rm -f "$package_zip"
+    fi
     if [[ $force -eq 1 || ! -f "$package_zip" ]]; then
       echo "Downloading Skia release asset: $asset_name" >&2
       download_file "$asset_url" "$package_zip"
     fi
     actual_sha256="$(compute_sha256 "$package_zip" | tr '[:upper:]' '[:lower:]')"
+    if [[ "$actual_sha256" != "$asset_sha256" ]]; then
+      echo "Skia release asset SHA256 mismatch after initial check; retrying download: $package_zip" >&2
+      echo "  expected=$asset_sha256" >&2
+      echo "  actual=$actual_sha256" >&2
+      download_file "$asset_url" "$package_zip"
+      actual_sha256="$(compute_sha256 "$package_zip" | tr '[:upper:]' '[:lower:]')"
+    fi
+    if [[ "$actual_sha256" != "$asset_sha256" ]]; then
+      echo "Skia release asset SHA256 mismatch after resumed retry; downloading a fresh copy: $package_zip" >&2
+      echo "  expected=$asset_sha256" >&2
+      echo "  actual=$actual_sha256" >&2
+      rm -f "$package_zip"
+      download_file "$asset_url" "$package_zip"
+      actual_sha256="$(compute_sha256 "$package_zip" | tr '[:upper:]' '[:lower:]')"
+    fi
     if [[ "$actual_sha256" != "$asset_sha256" ]]; then
       echo "Skia release asset SHA256 mismatch: $package_zip" >&2
       echo "  expected=$asset_sha256" >&2
