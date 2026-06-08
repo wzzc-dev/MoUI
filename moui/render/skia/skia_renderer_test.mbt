@@ -213,6 +213,9 @@ test "skia emoji font fallback proof records glyph metadata without readiness pr
     Some(proof) => {
       inspect(proof.font_family, content="emoji")
       inspect(proof.font_source, content="skia-system-fontmgr")
+      inspect(proof.fallback_language_tags.length(), content="2")
+      inspect(proof.fallback_language_tags[0], content="und-Zsye")
+      inspect(proof.fallback_language_tags[1], content="en")
       assert_true(proof.text_system_id == "skia-raster-text-system")
       assert_true(proof.emoji_hint)
       assert_true(proof.emoji_fallback_attempted)
