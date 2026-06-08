@@ -373,6 +373,36 @@ expectFail(
 );
 
 expectFail(
+  "skia native color emoji proof rejects glyph key without fallback script",
+  run(
+    "skia-native-glyph-key-missing-script.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: skiaNativeObservationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...skiaColorEmojiMetadata(),
+            glyph: {
+              ...skiaColorEmojiMetadata().glyph,
+              key: "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und|langs=2|emoji-u+128105|rgba",
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.glyph.key must include 'script=und-Zsye'",
+);
+
+expectFail(
   "skia native selection proof rejects missing hit-test token",
   run(
     "skia-native-missing-hit-test.json",
