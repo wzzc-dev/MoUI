@@ -719,6 +719,9 @@ assertIncludes("scripts/record-native-skia-evidence.mjs", "--async-image-log");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "--candidate-anchor-log");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "--scale-dpr-anchor-log");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "platform-protocol=windows-ime");
+assertIncludes("scripts/record-native-ime-evidence.mjs", "renderer=skia");
+assertIncludes("scripts/record-native-ime-evidence.mjs", "app=showcase");
+assertIncludes("scripts/record-native-ime-evidence.mjs", "app=markdown-editor");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "candidate-window");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "preedit-underline");
 assertIncludes("scripts/record-native-ime-evidence.mjs", "examples/showcase/${platformName}_skia");
@@ -726,6 +729,7 @@ assertIncludes("scripts/record-native-ime-evidence.mjs", "examples/markdown_edit
 assertIncludes("scripts/test-record-native-ime-evidence.mjs", "platform-protocol=wayland-text-input");
 assertIncludes("scripts/test-record-native-ime-evidence.mjs", "host unit test");
 assertIncludes("scripts/test-record-native-ime-evidence.mjs", "reject non Skia app consumer command");
+assertIncludes("scripts/test-record-native-ime-evidence.mjs", "reject IME log from a non-Skia renderer");
 assertIncludes("docs/testing.md", "asyncImageSecondFrame=yes");
 assertIncludes("docs/testing.md", "selection rectangles");
 assertIncludes("docs/testing.md", "IME candidate anchors");

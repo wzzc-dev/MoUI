@@ -459,7 +459,8 @@ the same artifact root, use `node scripts/record-native-ime-evidence.mjs` to
 validate candidate-anchor, surrounding-text, composition-visual, commit/delete,
 cursor-update, scroll-anchor, scale/DPR-anchor, resize-anchor, and Markdown
 Editor dogfood markers and update only the native IME observations. Supplied
-logs must also identify matching-host runtime, native app, and platform protocol
+logs must also identify matching-host runtime, native app, `renderer=skia`, the
+matching app marker (`app=showcase` or `app=markdown-editor`), and platform protocol
 markers such as `platform-protocol=macos-marked-text`,
 `platform-protocol=windows-ime`, or `platform-protocol=wayland-text-input`. The
 helper does not promote full platform status, and generic host unit-test or

@@ -203,11 +203,11 @@ Platform runtime evidence splits native IME readiness further: native
 `imeCommitDelete`, `imeCursorUpdate`, `imeScrollAnchor`,
 `imeScaleDprAnchor`, `imeResizeAnchor`, and `imeMarkdownEditor` observations
 from matching-host Showcase or Markdown Editor artifacts. Those logs must carry
-matching-host runtime, native-app, platform-protocol, candidate-window,
-surrounding-text, composition-visual, commit/delete, cursor-update, scroll,
-scale/DPR, resize, and Markdown Editor dogfood markers, so package-only
-composition tests and coarse `textInput` observations cannot promote native IME
-readiness by themselves.
+matching-host runtime, native-app, `renderer=skia`, the matching app marker,
+platform-protocol, candidate-window, surrounding-text, composition-visual,
+commit/delete, cursor-update, scroll, scale/DPR, resize, and Markdown Editor
+dogfood markers, so package-only composition tests and coarse `textInput`
+observations cannot promote native IME readiness by themselves.
 These fields make CI artifacts easier to audit, but they are not yet a
 guarantee of exact cross-platform typeface identity, glyph-id determinism,
 native IME behavior, or full Unicode bidi layout parity.
