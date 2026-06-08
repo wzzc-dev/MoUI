@@ -666,13 +666,14 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   markers only after captured Skia pixels, glyph/layout evidence, text-system
   evidence, and color emoji font/glyph metadata prove radial, transform, color
   emoji, ZWJ grapheme, bidi visual order, paragraph wrapping, selection
-  rectangles, grapheme editing, IME candidate anchors, composition visuals, and
-  async second-frame observations. Native Skia paragraph wrapping, bidi layout,
-  and selection-rectangle observations must use the real SkParagraph path:
+  rectangles plus hit testing, grapheme editing, IME candidate anchors,
+  composition visuals, and async second-frame observations. Native Skia
+  paragraph wrapping, bidi layout, and selection/hit-test observations must use
+  the real SkParagraph path:
   `paragraphWrapping` needs `engine=skparagraph native_paragraph_ready=true
   line-metrics later-line-pixels`, `bidiLayout` needs `engine=skparagraph
   bidi_visual_order_ready=true visual-order`, and `selectionRects` needs
-  `engine=skparagraph selection-rects line-range`.
+  `engine=skparagraph selection-rects line-range hit-test`.
 - `Native WGPU renderer diagnostic` still runs the macOS, Windows, and Linux
   WGPU matrices and uploads artifacts, but it is `continue-on-error` and does
   not define the mainline renderer-proof summary. It records renderer-proof
@@ -869,11 +870,12 @@ be traced to the font/glyph path that produced them. Native Skia
 `colorEmojiPixels` additionally requires `fallback-request`, `emoji-hint`, and
 `stable-glyph-key` tokens, tying the proof to the FontMgr fallback request and
 the stable glyph metadata path. The text/IME observations
-must prove selection rectangles with line ranges, grapheme edit boundaries with
-edit actions, IME candidate anchors with surrounding text, and composition
-ranges with preedit pixels. Native Skia `paragraphWrapping`, `bidiLayout`, and
-`selectionRects` must be SkParagraph observations with `engine=skparagraph`
-markers, not fallback paragraph geometry or heuristic visual-order logs; the
+must prove selection rectangles with line ranges and hit testing, grapheme edit
+boundaries with edit actions, IME candidate anchors with surrounding text, and
+composition ranges with preedit pixels. Native Skia `paragraphWrapping`,
+`bidiLayout`, and `selectionRects` must be SkParagraph observations with
+`engine=skparagraph` markers, not fallback paragraph geometry or heuristic
+visual-order logs; the
 native Skia CI proof job configures `moui_skia` with required SkParagraph
 support before running these smokes.
 Package tests, skipped jobs, blank screenshots,

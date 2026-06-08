@@ -340,7 +340,8 @@ fn bidi_visual_order_evidence_available(
   layout.metadata.native_paragraph_ready &&
   layout.metadata.bidi_visual_order_ready &&
   layout.visual_order.visual_order_differs &&
-  layout.visual_order.logical_cluster_count == layout.visual_order.visual_cluster_count &&
+  layout.visual_order.logical_cluster_count ==
+  layout.visual_order.visual_cluster_count &&
   layout.visual_order.segment_count >= 3 &&
   layout.visual_order.glyph_count >= 6 &&
   rect_dark_rows(
@@ -476,11 +477,11 @@ fn main {
 
       if selection_rect_evidence_available(paragraph_layout) {
         println(
-          "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range",
+          "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range hit-test",
         )
       } else {
         failures.push(
-          "selectionRects missing Skia selection rectangles and line-range evidence",
+          "selectionRects missing Skia selection rectangles, line-range, and hit-test evidence",
         )
       }
     }

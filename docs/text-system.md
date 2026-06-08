@@ -176,7 +176,7 @@ bidi-order diagnostics through `skia_text_selection_geometry_proof()` /
 SkParagraph markers `engine=skparagraph native_paragraph_ready=true
 line-metrics later-line-pixels` for `paragraphWrapping`,
 `engine=skparagraph bidi_visual_order_ready=true visual-order` for
-`bidiLayout`, and `engine=skparagraph selection-rects line-range` for
+`bidiLayout`, and `engine=skparagraph selection-rects line-range hit-test` for
 `selectionRects`; fallback geometry, caret-only diagnostics, and heuristic
 visual-order logs are rejected by the renderer-proof validator.
 For native Skia, `colorEmojiPixels` also requires `fallback-request`,

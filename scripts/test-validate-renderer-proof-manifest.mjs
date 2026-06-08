@@ -40,7 +40,7 @@ const skiaNativeObservationEvidence = {
     "line-metrics",
     "later-line-pixels",
   ],
-  selectionRects: ["engine=skparagraph", "selection-rects", "line-range"],
+  selectionRects: ["engine=skparagraph", "selection-rects", "line-range", "hit-test"],
 };
 
 const colorEmojiMetadata = () => ({
@@ -240,6 +240,25 @@ expectFail(
     ["--require-passed"],
   ),
   "must include 'fallback-request'",
+);
+
+expectFail(
+  "skia native selection proof rejects missing hit-test token",
+  run(
+    "skia-native-missing-hit-test.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations("passed", skiaNativeObservationEvidence),
+        selectionRects: {
+          status: "passed",
+          evidence: ["engine=skparagraph", "selection-rects", "line-range"],
+          artifacts: ["artifacts/conformance/renderer-proof/selection.log"],
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "must include 'hit-test'",
 );
 
 expectFail(

@@ -394,7 +394,7 @@ requires the SkParagraph path: `paragraphWrapping` markers must include
 `engine=skparagraph native_paragraph_ready=true line-metrics
 later-line-pixels`, `bidiLayout` markers must include `engine=skparagraph
 bidi_visual_order_ready=true visual-order`, and `selectionRects` markers must
-include `engine=skparagraph selection-rects line-range`. Fallback geometry,
+include `engine=skparagraph selection-rects line-range hit-test`. Fallback geometry,
 caret-only diagnostics, heuristic visual-order logs, package-only tests, and
 provider preflights are not passed proof for those observations.
 On macOS, `scripts/macos-skia-renderer-smoke.sh` can resolve Skia from an

@@ -289,7 +289,7 @@ also include `fallback-request`, `emoji-hint`, and `stable-glyph-key` tokens. Na
 `bidiLayout`, and `selectionRects` observations must include SkParagraph
 markers such as `native_paragraph_ready=true`, `bidi_visual_order_ready=true`,
 `line-metrics`, `later-line-pixels`, `visual-order`, `selection-rects`, and
-`line-range` as appropriate. Package-only tests, skipped jobs,
+`line-range` plus `hit-test` as appropriate. Package-only tests, skipped jobs,
 missing uploaded artifacts, blank screenshots, caret-only
 diagnostics, heuristic visual-order logs, fallback paragraph geometry,
 coverage-only font matching, provider preflights,
