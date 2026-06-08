@@ -886,7 +886,9 @@ be traced to the font/glyph path that produced them. Native Skia
 `stable-glyph-key` tokens, tying the proof to the FontMgr fallback request and
 the stable glyph metadata path. Passed native Skia manifests must also preserve
 fallback script/language-count metadata plus resolved missing-glyph and
-missing-glyph recovery metadata before the color emoji observation can pass.
+missing-glyph recovery metadata, and the glyph key must include the recorded
+source, text-system, shaper, script, language-count, and format fields before
+the color emoji observation can pass.
 The text/IME observations
 must prove selection rectangles with line ranges and hit testing, grapheme edit
 boundaries with edit actions, IME candidate anchors with surrounding text, and
