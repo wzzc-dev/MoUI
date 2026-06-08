@@ -287,8 +287,9 @@ marker tokens. Passed
 glyph key plus positive glyph width/height; native Skia color emoji proof must
 also include `fallback-request`, `emoji-hint`, and `stable-glyph-key` tokens
 plus fallback script/language-count metadata, resolved missing-glyph count,
-missing-glyph recovery readiness, and a glyph key that contains the recorded
-source/text-system/shaper/script/language-count/format metadata. Native Skia `paragraphWrapping`,
+fallback request character metadata, missing-glyph recovery readiness, and a
+glyph key that contains the recorded
+source/text-system/shaper/script/language-count/fallback-request-character/format metadata. Native Skia `paragraphWrapping`,
 `bidiLayout`, and `selectionRects` observations must include SkParagraph
 markers such as `native_paragraph_ready=true`, `bidi_visual_order_ready=true`,
 `line-metrics`, `later-line-pixels`, `visual-order`, `selection-rects`, and

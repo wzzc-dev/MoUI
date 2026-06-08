@@ -94,6 +94,7 @@ const skiaColorEmojiMetadata = () => ({
     alphaPixels: 120,
     resolvedMissingGlyphCount: 0,
     missingGlyphRecoveryReady: true,
+    fallbackRequestCharacter: 128105,
   },
 });
 
@@ -411,6 +412,67 @@ expectFail(
     ["--require-passed"],
   ),
   "metadata.glyph.key must include 'script=und-Zsye'",
+);
+
+expectFail(
+  "skia native color emoji proof rejects missing fallback request character metadata",
+  run(
+    "skia-native-missing-fallback-request-character.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: skiaNativeObservationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...skiaColorEmojiMetadata(),
+            glyph: {
+              ...skiaColorEmojiMetadata().glyph,
+              fallbackRequestCharacter: undefined,
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.glyph.fallbackRequestCharacter must be a finite number",
+);
+
+expectFail(
+  "skia native color emoji proof rejects glyph key without fallback request character",
+  run(
+    "skia-native-glyph-key-missing-request-character.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        colorEmojiPixels: {
+          status: "passed",
+          evidence: skiaNativeObservationEvidence.colorEmojiPixels,
+          artifacts: ["artifacts/conformance/renderer-proof/emoji.log"],
+          metadata: {
+            ...skiaColorEmojiMetadata(),
+            glyph: {
+              ...skiaColorEmojiMetadata().glyph,
+              fallbackRequestCharacter: 128105,
+              key: "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|emoji-u+128104|rgba",
+            },
+          },
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "metadata.glyph.key must include 'emoji-u+128105'",
 );
 
 expectFail(
