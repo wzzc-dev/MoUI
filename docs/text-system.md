@@ -152,7 +152,10 @@ Renderer-proof color emoji artifacts now have a stronger audit boundary:
 structured `metadata.font` / `metadata.glyph` fields. The native Skia
 text/emoji smoke records the requested emoji family, Skia text-system id,
 shaper path, RGBA glyph format, cluster count, pixel counts, stable glyph key,
-and measured glyph size; WebGPU wasm records the browser canvas font stack plus
+and measured glyph size; it now also records paragraph selection rectangles,
+line-range geometry, hit-test diagnostics, and the existing heuristic visual
+bidi-order proof through `skia_text_selection_geometry_proof()` /
+`skia_text_visual_order_proof()`. WebGPU wasm records the browser canvas font stack plus
 glyph atlas key and size metadata. Renderer proof also reserves separate
 contract keys for `selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,
 and `imeCompositionVisual`; those keys must be backed by selection rectangle,
@@ -160,7 +163,8 @@ line-range, grapheme-boundary, edit-action, candidate-anchor, surrounding-text,
 composition-range, and preedit-pixel evidence before text or IME readiness can
 be promoted.
 These fields make CI artifacts easier to audit, but they are not yet a
-guarantee of exact cross-platform typeface identity or glyph-id determinism.
+guarantee of exact cross-platform typeface identity, glyph-id determinism,
+native IME behavior, or full Unicode bidi layout parity.
 
 Native provider responses must report valid metrics, monotonic caret positions
 covering the input text, and raster glyph payloads whose cache keys include all

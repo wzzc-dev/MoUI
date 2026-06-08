@@ -181,6 +181,29 @@ test "skia text system is directly available for diagnostic conformance" {
 }
 
 ///|
+test "skia selection geometry proof covers line ranges hit testing and bidi evidence" {
+  let text = "ABC \u{05D0}\u{05D1}\u{05D2} 123 alpha beta gamma"
+  guard skia_text_selection_geometry_proof(
+      text,
+      font=@core.FontSpec::new(size=18.0, weight=500),
+      max_width=96.0,
+    )
+    is Some(proof) else {
+    fail("expected Skia selection geometry proof")
+  }
+  assert_true(proof.selection_rect_count >= 2)
+  assert_true(proof.selected_line_count >= 2)
+  assert_true(proof.line_count >= 2)
+  inspect(proof.hit_test_line_index, content="1")
+  assert_true(proof.hit_test_offset >= proof.selection_range.start)
+  if skia_available() {
+    assert_true(proof.visual_order_differs)
+    assert_true(proof.visual_segment_count >= 3)
+    assert_true(proof.bidi_visual_order_evidence)
+  }
+}
+
+///|
 test "skia empty typeface text system remains opt-in and fallback-safe" {
   let system = skia_text_system(resolution=SkiaFontResolution::EmptyTypeface)
   if skia_available() {
