@@ -39,6 +39,7 @@ fn main {
     fail_smoke("failed to create default native font")
   }
   run_text_font_smoke(canvas, font)
+  run_paragraph_smoke()
 
   smoke_mark(b"done")
   println("moui_skia native smoke test passed")
