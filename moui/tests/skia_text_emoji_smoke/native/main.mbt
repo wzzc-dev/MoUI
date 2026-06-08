@@ -119,10 +119,8 @@ fn paragraph_font() -> @core.FontSpec {
 }
 
 ///|
-fn paragraph_words() -> Array[String] {
-  [
-    "Proof", "wrap", "line", "alpha", "beta", "gamma", "delta", "epsilon", "zeta",
-  ]
+fn paragraph_text() -> String {
+  "Proof wrap line alpha beta gamma delta epsilon zeta"
 }
 
 ///|
@@ -153,15 +151,6 @@ fn positive_pixel_extent(value : Double) -> Int {
 }
 
 ///|
-fn measured_text_width(
-  system : @core.TextSystem,
-  text : String,
-  font : @core.FontSpec,
-) -> Double {
-  system.measure_text(@core.TextLayoutInput::new(text~, font~)).size.width
-}
-
-///|
 fn skia_paragraph_proof_lines(
   system : @core.TextSystem,
 ) -> Array[SkiaParagraphProofLine] {
@@ -169,40 +158,31 @@ fn skia_paragraph_proof_lines(
   let max_width = 96.0
   let start_x = 8.0
   let start_y = 94.0
-  let metrics = system.measure_text(
-    @core.TextLayoutInput::new(text="Ag", font~),
+  let layout = system.layout_paragraph(
+    @core.TextLayoutInput::new(text=paragraph_text(), font~, max_width~),
   )
-  let line_height = metrics.size.height.max(font.size * 1.25)
-  let line_texts : Array[String] = []
-  let mut current = ""
-  for word in paragraph_words() {
-    let candidate = if current == "" { word } else { current + " " + word }
-    if current == "" ||
-      measured_text_width(system, candidate, font) <= max_width {
-      current = candidate
-    } else {
-      line_texts.push(current)
-      current = word
-    }
-  }
-  if current != "" {
-    line_texts.push(current)
-  }
+  println(
+    "MoUI Skia text/emoji smoke paragraph layout text_system=\{layout.metadata.text_system_id} lines=\{layout.line_count()} native_paragraph_ready=\{layout.metadata.native_paragraph_ready} bidi_ready=\{layout.metadata.bidi_visual_order_ready}",
+  )
   let lines : Array[SkiaParagraphProofLine] = []
-  for index, line_text in line_texts {
-    let y = start_y + index.to_double() * line_height
+  let chars = paragraph_text().to_array()
+  for line in layout.lines {
+    let line_text = String::from_array(
+      chars[line.text_range.start:line.text_range.end],
+    )
+    let y = start_y + line.origin.y
     let frame = @core.Rect::new(
       x=start_x,
       y~,
       width=max_width,
-      height=line_height,
+      height=line.size.height,
     )
     lines.push({
       text: line_text,
       frame,
-      line_index: index,
-      baseline: y + metrics.baseline,
-      measured_width: measured_text_width(system, line_text, font),
+      line_index: line.line_index,
+      baseline: start_y + line.baseline,
+      measured_width: line.size.width,
     })
   }
   lines

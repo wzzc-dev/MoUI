@@ -1867,6 +1867,56 @@ pub(all) struct TextLayoutResult {
   caret_positions : Array[Double]
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct TextParagraphHitTestResult {
+  offset : Int
+  line_index : Int
+  caret_rect : Rect
+  is_inside : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextParagraphLayoutMetadata {
+  text_system_id : String
+  paragraph_layout_available : Bool
+  line_metrics_available : Bool
+  selection_rects_available : Bool
+  hit_test_available : Bool
+  native_paragraph_ready : Bool
+  bidi_visual_order_ready : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextParagraphLayoutResult {
+  text : String
+  size : Size
+  baseline : Double
+  lines : Array[TextParagraphLineMetrics]
+  caret_rects : Array[Rect]
+  visual_order : TextParagraphVisualOrderMetadata
+  metadata : TextParagraphLayoutMetadata
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextParagraphLayoutResult::caret_rect_at(Self, Int) -> Rect
+pub fn TextParagraphLayoutResult::hit_test(Self, Point) -> TextParagraphHitTestResult
+pub fn TextParagraphLayoutResult::line_count(Self) -> Int
+pub fn TextParagraphLayoutResult::selection_rects(Self, TextRange) -> Array[Rect]
+
+pub(all) struct TextParagraphLineMetrics {
+  line_index : Int
+  text_range : TextRange
+  origin : Point
+  size : Size
+  baseline : Double
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextParagraphVisualOrderMetadata {
+  logical_text : String
+  visual_text : String
+  logical_cluster_count : Int
+  visual_cluster_count : Int
+  segment_count : Int
+  glyph_count : Int
+  visual_order_differs : Bool
+  bidi_visual_order_ready : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct TextRange {
   start : Int
   end : Int
@@ -1895,12 +1945,14 @@ pub fn TextStyle::title(theme? : Theme) -> Self
 pub struct TextSystem {
   id : String
   measure : (TextLayoutInput) -> TextLayoutResult
+  paragraph_layout : (TextLayoutInput) -> TextParagraphLayoutResult
   register_font_data : (FontFamily, Bytes) -> Unit
 }
 pub fn TextSystem::fallback() -> Self
 pub fn TextSystem::id(Self) -> String
+pub fn TextSystem::layout_paragraph(Self, TextLayoutInput) -> TextParagraphLayoutResult
 pub fn TextSystem::measure_text(Self, TextLayoutInput) -> TextLayoutResult
-pub fn TextSystem::new(id~ : String, measure~ : (TextLayoutInput) -> TextLayoutResult, register_font_data? : (FontFamily, Bytes) -> Unit) -> Self
+pub fn TextSystem::new(id~ : String, measure~ : (TextLayoutInput) -> TextLayoutResult, paragraph_layout? : ((TextLayoutInput) -> TextParagraphLayoutResult)?, register_font_data? : (FontFamily, Bytes) -> Unit) -> Self
 pub fn TextSystem::register_font_data(Self, FontFamily, Bytes) -> Unit
 
 pub(all) struct Theme {
