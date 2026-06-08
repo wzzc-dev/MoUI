@@ -697,7 +697,7 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   `paragraphWrapping` needs `engine=skparagraph native_paragraph_ready=true
   line-metrics later-line-pixels`, `bidiLayout` needs `engine=skparagraph
   bidi_visual_order_ready=true visual-order`, and `selectionRects` needs
-  `engine=skparagraph selection-rects line-range hit-test`.
+  `engine=skparagraph selection-rects line-range rect-geometry hit-test`.
 - `Native WGPU renderer diagnostic` still runs the macOS, Windows, and Linux
   WGPU matrices and uploads artifacts, but it is `continue-on-error` and does
   not define the mainline renderer-proof summary. It records renderer-proof
@@ -900,7 +900,7 @@ glyph key must include the recorded source, text-system, shaper, script,
 language tags, language-count, fallback request character, and format fields before the color
 emoji observation can pass.
 The text/IME observations
-must prove selection rectangles with line ranges and hit testing, grapheme edit
+must prove selection rectangles with line ranges, positive geometry, and hit testing, grapheme edit
 boundaries with edit actions, IME candidate anchors with surrounding text, and
 composition ranges with preedit pixels. Native Skia `imeCandidateAnchor`
 observations must also include grapheme-boundary cursor/anchor evidence and
