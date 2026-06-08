@@ -2018,6 +2018,10 @@ test "skia mixed text segmentation preserves grapheme clusters" {
   inspect(indic_latin_clusters.length(), content="2")
   inspect(indic_latin_clusters[0].to_array().length(), content="3")
   inspect(indic_latin_clusters[1], content="A")
+  let musical_clusters = skia_grapheme_cluster_texts("A\u{1D165}B")
+  inspect(musical_clusters.length(), content="2")
+  inspect(musical_clusters[0].to_array().length(), content="2")
+  inspect(musical_clusters[1], content="B")
 
   let segments = skia_mixed_text_segments("AB你好\u{1F642}CD")
   inspect(segments.length(), content="4")
@@ -2031,6 +2035,11 @@ test "skia mixed text segmentation preserves grapheme clusters" {
   inspect(indic_segments[0], content="A")
   inspect(indic_segments[1], content="क़्ष")
   inspect(indic_segments[2], content="B")
+
+  let musical_segments = skia_mixed_text_segments("A\u{1D165}B")
+  inspect(musical_segments.length(), content="2")
+  inspect(musical_segments[0].to_array().length(), content="2")
+  inspect(musical_segments[1], content="B")
 }
 
 ///|

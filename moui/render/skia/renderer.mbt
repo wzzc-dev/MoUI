@@ -3826,6 +3826,12 @@ fn skia_codepoint_is_combining_mark(codepoint : Int) -> Bool {
   (codepoint >= 0x1AB0 && codepoint <= 0x1AFF) ||
   (codepoint >= 0x1DC0 && codepoint <= 0x1DFF) ||
   (codepoint >= 0x20D0 && codepoint <= 0x20FF) ||
+  (codepoint >= 0x1D165 && codepoint <= 0x1D169) ||
+  (codepoint >= 0x1D16D && codepoint <= 0x1D172) ||
+  (codepoint >= 0x1D17B && codepoint <= 0x1D182) ||
+  (codepoint >= 0x1D185 && codepoint <= 0x1D18B) ||
+  (codepoint >= 0x1D1AA && codepoint <= 0x1D1AD) ||
+  (codepoint >= 0x1D242 && codepoint <= 0x1D244) ||
   (codepoint >= 0x102B && codepoint <= 0x103E) ||
   (codepoint >= 0x1056 && codepoint <= 0x1059) ||
   (codepoint >= 0x105E && codepoint <= 0x1060) ||
