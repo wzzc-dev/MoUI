@@ -95,9 +95,11 @@ paths, or abstractions that only preserve old shapes.
   native Skia renderer entrypoints. Showcase also has `macos_wgpu_cosmic`,
   `windows_wgpu_cosmic`, and `linux_wgpu_cosmic` entrypoints for explicit Moon Cosmic
   text-provider comparison on the native WGPU diagnostic route.
-- `website/` is the MoUI-built homepage workspace. Keep shared homepage logic
-  in `website/app/` and keep `website/web_wasm/` as a thin Web wasm-gc
-  entrypoint; it is not an example-platform matrix.
+- `website/` is the MoUI-built homepage and runtime docs workspace. Keep
+  shared homepage/docs logic in `website/app/` and keep `website/web_wasm/` as
+  a thin Web wasm-gc entrypoint; it is not an example-platform matrix. The
+  Docs page reads Markdown from same-origin static `docs/*.md` files at
+  runtime rather than compiling those files into wasm.
 
 ## Local Dependencies
 

@@ -17,7 +17,11 @@ pub fn runtime_with_services(@host.HostAppServices, width? : Double, height? : D
 pub(all) struct Model {
   dark : Bool
   body_scroll_y : Double
+  docs_scroll_y : Double
   hero_count : Int
+  page : WebsitePage
+  selected_doc_slug : String
+  doc_state : WebsiteDocLoadState
 }
 pub fn Model::new() -> Self
 pub fn Model::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
@@ -29,9 +33,51 @@ pub fn Model::view(Self, @core.ViewEnvironment) -> @core.View[Msg]
 pub(all) enum Msg {
   ToggleDark
   ScrollBodyTo(Double)
+  ScrollDocsTo(Double)
   CounterIncrement
   CounterReset
   OpenRepository
+  OpenHome
+  OpenHomeAt(Double)
+  OpenDocs
+  SelectDoc(String)
+  RetryDoc
+  HostDocsCompleted(@host.HostCompletedServiceResponse)
+}
+
+pub(all) enum WebsiteDocBlock {
+  DocHeading(Int, String)
+  DocParagraph(String)
+  DocListItem(String, String)
+  DocQuote(String)
+  DocCodeBlock(String, String)
+  DocTable(Array[String])
+  DocRule
+}
+
+pub(all) struct WebsiteDocDocument {
+  path : String
+  title : String
+  blocks : Array[WebsiteDocBlock]
+}
+
+pub(all) struct WebsiteDocEntry {
+  slug : String
+  title : String
+  path : String
+  summary : String
+}
+
+pub(all) enum WebsiteDocLoadState {
+  DocNotLoaded
+  DocLoading(@host.HostServiceRequestId, String)
+  DocLoaded(String, WebsiteDocDocument)
+  DocFailed(String, String)
+}
+
+pub(all) enum WebsitePage {
+  WebsiteHome
+  WebsiteDocs
 }
 
 // Type aliases

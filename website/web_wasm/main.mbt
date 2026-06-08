@@ -35,3 +35,12 @@ pub fn web_complete_async_file_dialog(
 ) -> Unit {
   @web.web_complete_async_file_dialog(id, ok, text_id)
 }
+
+///|
+pub fn web_complete_async_text_file_read(
+  id : Int,
+  ok : Bool,
+  text_id : Int,
+) -> Unit {
+  @web.web_complete_async_text_file_read(id, ok, text_id)
+}

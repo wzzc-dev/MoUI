@@ -173,3 +173,62 @@ test "web async file open caches browser text for text-file reads" {
   }
   set_web_async_host_service_queue(None)
 }
+
+///|
+test "web async text-file read fetches and caches static text" {
+  let queue = @host.HostServiceAsyncQueue::new()
+  let bridge = web_service_bridge(file_access=true, async_queue=Some(queue))
+  let read_id = match
+    bridge.dispatch(
+      @host.HostServiceRequest::TextFile(
+        @host.HostTextFileRequest::ReadText("../../docs/architecture.md"),
+      ),
+    ) {
+    @host.HostServiceResponse::Pending(id) => {
+      inspect(id.value, content="1")
+      id
+    }
+    _ => fail("expected pending Web text-file read")
+  }
+  let requests = drain_web_async_host_service_requests(queue)
+  inspect(requests.length(), content="1")
+  assert_true(requests[0].kind == WebAsyncHostServiceKind::TextFileReadText)
+  inspect(requests[0].kind.browser_code(), content="-3")
+  inspect(requests[0].path, content="../../docs/architecture.md")
+  let read_completion : Ref[@host.HostCompletedServiceResponse?] = Ref(None)
+  assert_true(
+    queue.on_completed(read_id, completion => {
+      read_completion.val = Some(completion)
+    }),
+  )
+  set_web_async_host_service_queue(Some(queue))
+  assert_true(
+    web_complete_async_text_file_read_text(
+      read_id.value,
+      true,
+      "# Architecture\n\nFetched by browser fetch().",
+    ),
+  )
+  match read_completion.val {
+    Some(
+      { response: @host.HostServiceResponse::TextFileContent(path, text), .. }
+    ) => {
+      inspect(path, content="../../docs/architecture.md")
+      inspect(text, content="# Architecture\n\nFetched by browser fetch().")
+    }
+    _ => fail("expected fetched text-file content")
+  }
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::TextFile(
+        @host.HostTextFileRequest::ReadText("../../docs/architecture.md"),
+      ),
+    ) {
+    @host.HostServiceResponse::TextFileContent(path, text) => {
+      inspect(path, content="../../docs/architecture.md")
+      inspect(text, content="# Architecture\n\nFetched by browser fetch().")
+    }
+    _ => fail("expected cached static text content")
+  }
+  set_web_async_host_service_queue(None)
+}

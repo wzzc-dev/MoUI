@@ -2,16 +2,27 @@
 pub(all) struct Model {
   dark : Bool
   body_scroll_y : Double
+  docs_scroll_y : Double
   hero_count : Int
+  page : WebsitePage
+  selected_doc_slug : String
+  doc_state : WebsiteDocLoadState
 }
 
 ///|
 pub(all) enum Msg {
   ToggleDark
   ScrollBodyTo(Double)
+  ScrollDocsTo(Double)
   CounterIncrement
   CounterReset
   OpenRepository
+  OpenHome
+  OpenHomeAt(Double)
+  OpenDocs
+  SelectDoc(String)
+  RetryDoc
+  HostDocsCompleted(@host.HostCompletedServiceResponse)
 }
 
 ///|
@@ -27,6 +38,7 @@ priv struct Metrics {
   top_bar_height : Double
   section_top : Double
   section_bottom : Double
+  docs_sidebar_width : Double
   hero_copy_width : Double
   hero_scene_width : Double
   hero_scene_height : Double
@@ -36,7 +48,16 @@ priv struct Metrics {
 
 ///|
 pub fn Model::new() -> Model {
-  { dark: false, body_scroll_y: 0.0, hero_count: 0 }
+  let doc = website_default_doc_entry()
+  {
+    dark: false,
+    body_scroll_y: 0.0,
+    docs_scroll_y: 0.0,
+    hero_count: 0,
+    page: WebsiteHome,
+    selected_doc_slug: doc.slug,
+    doc_state: DocNotLoaded,
+  }
 }
 
 ///|
@@ -45,9 +66,31 @@ pub fn Model::update(self : Model, message : Msg) -> Model {
     ToggleDark => { ..self, dark: !self.dark }
     ScrollBodyTo(offset_y) =>
       { ..self, body_scroll_y: max_website_double(0.0, offset_y) }
+    ScrollDocsTo(offset_y) =>
+      { ..self, docs_scroll_y: max_website_double(0.0, offset_y) }
     CounterIncrement => { ..self, hero_count: self.hero_count + 1 }
     CounterReset => { ..self, hero_count: 0 }
     OpenRepository => self
+    OpenHome => { ..self, page: WebsiteHome }
+    OpenHomeAt(offset_y) =>
+      {
+        ..self,
+        page: WebsiteHome,
+        body_scroll_y: max_website_double(0.0, offset_y),
+      }
+    OpenDocs => { ..self, page: WebsiteDocs }
+    SelectDoc(slug) => {
+      let entry = website_doc_entry_by_slug(slug)
+      {
+        ..self,
+        page: WebsiteDocs,
+        selected_doc_slug: entry.slug,
+        docs_scroll_y: 0.0,
+        doc_state: DocNotLoaded,
+      }
+    }
+    RetryDoc => { ..self, doc_state: DocNotLoaded }
+    HostDocsCompleted(completion) => self.apply_docs_completion(completion)
   }
 }
 
@@ -67,6 +110,27 @@ pub fn Model::update_with_services(
           run=_dispatch => ignore(services.open_url(moui_repository_url())),
         ),
       )
+    OpenDocs => {
+      let model = { ..self, page: WebsiteDocs }
+      model.request_selected_doc(services)
+    }
+    SelectDoc(slug) => {
+      let entry = website_doc_entry_by_slug(slug)
+      let model = {
+        ..self,
+        page: WebsiteDocs,
+        selected_doc_slug: entry.slug,
+        docs_scroll_y: 0.0,
+        doc_state: DocNotLoaded,
+      }
+      model.request_selected_doc(services)
+    }
+    RetryDoc => {
+      let model = { ..self, doc_state: DocNotLoaded, docs_scroll_y: 0.0 }
+      model.request_selected_doc(services)
+    }
+    HostDocsCompleted(completion) =>
+      (self.apply_docs_completion(completion), @core.Effect::none())
     _ => (self.update(message), @core.Effect::none())
   }
 }
@@ -78,22 +142,17 @@ pub fn Model::view(
 ) -> @core.View[Msg] {
   let theme = website_theme(self.dark)
   let metrics = website_metrics(env.viewport_size())
-  let max_scroll = max_website_double(
-    0.0,
-    metrics.body_content_height - metrics.body_height,
-  )
-  let body_scroll_y = clamp_website_double(self.body_scroll_y, 0.0, max_scroll)
-  let body_content = column(
-    [
-      self.hero(theme, metrics),
-      self.capability_strip(theme, metrics),
-      self.foundation_section(theme, metrics),
-      self.platform_section(theme, metrics),
-      self.quick_start_section(theme, metrics),
-    ],
-    spacing=0.0,
-    align=@views.CrossAlign::Start,
-  )
+  let content_height = self.website_current_content_height(metrics)
+  let scroll_y = match self.page {
+    WebsiteHome => self.body_scroll_y
+    WebsiteDocs => self.docs_scroll_y
+  }
+  let max_scroll = max_website_double(0.0, content_height - metrics.body_height)
+  let body_scroll_y = clamp_website_double(scroll_y, 0.0, max_scroll)
+  let body_content = match self.page {
+    WebsiteHome => self.home_content(theme, metrics)
+    WebsiteDocs => self.docs_content(theme, metrics)
+  }
   let body = row(
     [
       scroll_view(
@@ -102,15 +161,21 @@ pub fn Model::view(
         width=metrics.body_scroll_width,
         height=metrics.body_height,
         on_scroll=Some(delta => {
-          ScrollBodyTo(
-            clamp_website_double(body_scroll_y + delta.y, 0.0, max_scroll),
+          let next = clamp_website_double(
+            body_scroll_y + delta.y,
+            0.0,
+            max_scroll,
           )
+          match self.page {
+            WebsiteHome => ScrollBodyTo(next)
+            WebsiteDocs => ScrollDocsTo(next)
+          }
         }),
       ),
       website_scrollbar(
         theme,
         viewport_height=metrics.body_height,
-        content_height=metrics.body_content_height,
+        content_height~,
         offset_y=body_scroll_y,
       ).frame(width=metrics.scrollbar_width, height=metrics.body_height),
     ],
@@ -156,9 +221,164 @@ pub fn Model::runtime_with_services(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => model.update_with_services(message, services),
       view=(model, env) => model.view(env),
+      subscriptions=model => model.subscriptions(services),
     ),
     size=@core.Size::new(width~, height~),
   )
+}
+
+///|
+fn Model::home_content(
+  self : Model,
+  theme : @core.Theme,
+  metrics : Metrics,
+) -> @core.View[Msg] {
+  column(
+    [
+      self.hero(theme, metrics),
+      self.capability_strip(theme, metrics),
+      self.foundation_section(theme, metrics),
+      self.platform_section(theme, metrics),
+      self.quick_start_section(theme, metrics),
+    ],
+    spacing=0.0,
+    align=@views.CrossAlign::Start,
+  )
+}
+
+///|
+fn Model::subscriptions(
+  self : Model,
+  services : @host.HostAppServices,
+) -> @core.Subscription[Msg] {
+  match self.doc_state.pending_id() {
+    Some(id) =>
+      if id.value <= 0 {
+        @core.Subscription::none()
+      } else {
+        services.completion_subscription(
+          id,
+          map=completion => HostDocsCompleted(completion),
+          key="website:docs:" + id.value.to_string(),
+          label="Website docs markdown completion",
+        )
+      }
+    None => @core.Subscription::none()
+  }
+}
+
+///|
+fn Model::request_selected_doc(
+  self : Model,
+  services : @host.HostAppServices,
+) -> (Model, @core.Effect[Msg]) {
+  let entry = self.website_doc_selected_entry()
+  (
+    {
+      ..self,
+      page: WebsiteDocs,
+      selected_doc_slug: entry.slug,
+      doc_state: DocLoading(@host.HostServiceRequestId::new(0), entry.path),
+    },
+    @core.Effect::host_service(
+      key="website:load-doc:" + entry.slug,
+      label="Load website markdown doc",
+      run=dispatch => {
+        let response = services.read_text_file(entry.path)
+        dispatch(
+          HostDocsCompleted(website_doc_completion(entry.path, response)),
+        )
+      },
+    ),
+  )
+}
+
+///|
+fn Model::apply_docs_completion(
+  self : Model,
+  completion : @host.HostCompletedServiceResponse,
+) -> Model {
+  let path = match completion.request {
+    @host.HostServiceRequest::TextFile(
+      @host.HostTextFileRequest::ReadText(path)
+    ) => path
+    _ => self.website_doc_loading_path()
+  }
+  if path != self.website_doc_loading_path() {
+    return self
+  }
+  if !self.docs_completion_matches_current(completion, path) {
+    return self
+  }
+  match completion.response {
+    @host.HostServiceResponse::Pending(id) =>
+      { ..self, doc_state: DocLoading(id, path) }
+    @host.HostServiceResponse::TextFileContent(_, text) =>
+      {
+        ..self,
+        doc_state: DocLoaded(path, website_parse_markdown_document(path, text)),
+      }
+    @host.HostServiceResponse::Unavailable(reason) =>
+      { ..self, doc_state: DocFailed(path, reason) }
+    _ =>
+      {
+        ..self,
+        doc_state: DocFailed(
+          path, "unexpected host response while loading docs",
+        ),
+      }
+  }
+}
+
+///|
+fn Model::docs_completion_matches_current(
+  self : Model,
+  completion : @host.HostCompletedServiceResponse,
+  path : String,
+) -> Bool {
+  match self.doc_state {
+    DocLoading(id, loading_path) =>
+      if path != loading_path {
+        false
+      } else if id.value == 0 {
+        match completion.response {
+          @host.HostServiceResponse::Pending(_) => true
+          _ => completion.id == id
+        }
+      } else {
+        completion.id == id
+      }
+    _ => false
+  }
+}
+
+///|
+fn website_doc_completion(
+  path : String,
+  response : @host.HostServiceResponse,
+) -> @host.HostCompletedServiceResponse {
+  let id = match response {
+    @host.HostServiceResponse::Pending(id) => id
+    _ => @host.HostServiceRequestId::new(0)
+  }
+  {
+    id,
+    request: @host.HostServiceRequest::TextFile(
+      @host.HostTextFileRequest::ReadText(path),
+    ),
+    response,
+  }
+}
+
+///|
+fn Model::website_current_content_height(
+  self : Model,
+  metrics : Metrics,
+) -> Double {
+  match self.page {
+    WebsiteHome => metrics.body_content_height
+    WebsiteDocs => self.website_docs_content_height(metrics)
+  }
 }
 
 ///|
@@ -216,6 +436,7 @@ fn website_metrics(viewport : @core.Size) -> Metrics {
   } else {
     clamp_website_double((content_width - 36.0) / 4.0, 240.0, 280.0)
   }
+  let docs_sidebar_width = if compact { content_width } else { 270.0 }
   {
     viewport,
     compact,
@@ -228,6 +449,7 @@ fn website_metrics(viewport : @core.Size) -> Metrics {
     top_bar_height,
     section_top,
     section_bottom,
+    docs_sidebar_width,
     hero_copy_width,
     hero_scene_width,
     hero_scene_height,
