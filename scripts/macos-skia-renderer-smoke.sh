@@ -1258,6 +1258,38 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
       exit 1
     fi
   done
+
+  color_emoji_metadata_line="$(grep -F "MoUI renderer proof colorEmojiPixels metadata " "$text_emoji_log" | tail -n 1 || true)"
+  if [[ -z "$color_emoji_metadata_line" ]]; then
+    echo "MoUI Skia text/emoji smoke did not print colorEmojiPixels metadata" >&2
+    exit 1
+  fi
+  fallback_request_character=""
+  glyph_key=""
+  for token in $color_emoji_metadata_line; do
+    case "$token" in
+      fallback_request_character=*)
+        fallback_request_character="${token#fallback_request_character=}"
+        ;;
+      glyph_key=*)
+        glyph_key="${token#glyph_key=}"
+        ;;
+    esac
+  done
+  if [[ ! "$fallback_request_character" =~ ^[1-9][0-9]*$ ]]; then
+    echo "MoUI Skia text/emoji smoke metadata missing positive fallback_request_character" >&2
+    exit 1
+  fi
+  if [[ -z "$glyph_key" ]]; then
+    echo "MoUI Skia text/emoji smoke metadata missing glyph_key" >&2
+    exit 1
+  fi
+  expected_fallback_glyph_segment="emoji-u+${fallback_request_character}"
+  if [[ "$glyph_key" != *"$expected_fallback_glyph_segment"* ]]; then
+    echo "MoUI Skia text/emoji smoke glyph_key does not include $expected_fallback_glyph_segment" >&2
+    exit 1
+  fi
+  echo "Verified MoUI Skia text/emoji color emoji fallback request metadata."
   echo "Verified MoUI Skia text/emoji renderer-proof markers."
 fi
 
