@@ -378,7 +378,14 @@ For renderer-proof text/emoji work, `moui/tests/skia_text_emoji_smoke/native`
 is the opt-in real-Skia proof entrypoint; it writes proof markers only when
 captured Skia pixels, font/glyph metadata, and text-system evidence prove color
 emoji, ZWJ grapheme, paragraph wrapping, and bidi observations, and otherwise keeps the corresponding
-renderer-proof observations failed.
+renderer-proof observations failed. Native Skia paragraph and bidi readiness
+requires the SkParagraph path: `paragraphWrapping` markers must include
+`engine=skparagraph native_paragraph_ready=true line-metrics
+later-line-pixels`, `bidiLayout` markers must include `engine=skparagraph
+bidi_visual_order_ready=true visual-order`, and `selectionRects` markers must
+include `engine=skparagraph selection-rects line-range`. Fallback geometry,
+caret-only diagnostics, heuristic visual-order logs, package-only tests, and
+provider preflights are not passed proof for those observations.
 On macOS, `scripts/macos-skia-renderer-smoke.sh` can resolve Skia from an
 existing build, the pinned JetBrains binary provider, or a source build; it then
 temporarily wires the resolved link flags into the local `moui_skia` and MoUI
@@ -394,7 +401,11 @@ sets `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for the Showcase/Markdown
 first-frame runs, and requires those first-frame logs to include
 `surface_route=metal-gpu; surface_gpu=true` provider diagnostics. This proves
 GPU surface rendering/readback through the existing pixel presenter plus app
-first-frame presentation, but not direct platform-window GPU presentation. With explicit
+first-frame presentation, but not direct platform-window GPU presentation. Pass
+`--enable-skparagraph` to wire optional SkParagraph into the temporary real-Skia
+configuration, and pass `--require-skparagraph` for paragraph/bidi proof runs
+that must fail when the selected Skia headers or libraries do not provide
+SkParagraph, SkShaper, SkUnicode, HarfBuzz, and ICU. With explicit
 `--smoke-log`, `--showcase-log`, and `--markdown-log` paths under
 `artifacts/platform-evidence/macos/`, pass `--record-platform-evidence
 artifacts/conformance/platform-runtime-evidence.json` to update the macOS

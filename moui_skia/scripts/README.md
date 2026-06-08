@@ -16,7 +16,8 @@ verification commands that must stay wired into CI. `verify-native-smoke-log.*` 
 `native_smoke_capabilities` and `native_smoke_conditional_capabilities` lists so
 artifact verification checks the same Surface, Canvas, Pipeline, GPU, Shader,
 Filter, Path, Image, Codec, Bitmap, Text, and FontMgr boundaries that the
-platform status file claims, including optional SkShaper-only markers.
+platform status file claims, including optional SkShaper and SkParagraph
+markers.
 `verify-platform-status.*` also reads `ci_gate_evidence_files` and rejects a
 status file when any `ci_gates` verifier script or MoonBit command fragment is
 not present in the checked-in workflow/fallback-helper evidence corpus. The same
@@ -238,7 +239,9 @@ manager is available. It also
 exercises native typeface family
 metadata and FontMgr character fallback through the value-layer
 `FontFallbackRequest`, native fallback resolution descriptor bridging, and
-optional native shaped glyph descriptor bridging when SkShaper is available.
+optional native shaped glyph descriptor bridging when SkShaper is available,
+and optional paragraph availability, line metrics, selection boxes, and hit
+testing when SkParagraph is available.
 Pixel assertions are reserved for deterministic
 geometry and color operations so minimal CPU-only Skia builds do not fail only
 because their font manager differs. GPU, shader, and filter coverage also
@@ -388,6 +391,13 @@ compile flags and `-fsanitize=address` to executable link flags. Linux defaults
 `detect_leaks=0:fast_unwind_on_malloc=0` unless the runner already set
 `ASAN_OPTIONS`. Windows MSVC smoke remains artifact verification only until an
 ASan mode is proven separately for that toolchain.
+
+For text proof runs, pass `--enable-skparagraph` or set
+`MOUI_SKIA_ENABLE_SKPARAGRAPH=1` to compile the optional SkParagraph boundary.
+Pass `--require-skparagraph` or set `MOUI_SKIA_REQUIRE_SKPARAGRAPH=1` when the
+run should fail before smoke execution if the selected Skia build lacks the
+SkParagraph headers or the required SkParagraph, SkShaper, SkUnicode, HarfBuzz,
+and ICU libraries.
 
 ## macOS real Skia smoke
 

@@ -14,6 +14,9 @@ matrix and the exact evidence still missing per platform.
   original contents after the temporary link rewrite.
 - The wrapper log records the Skia include path, library path, native flags,
   library file, and resolved `skia_commit` when the Skia checkout is available.
+- When SkParagraph is enabled, the wrapper log records the requested
+  SkParagraph mode plus header/library availability before the native smoke is
+  run.
 - The acceptance log records `smoke_status=0`, `native_smoke_marker=passed`,
   and `native_pkg_restore=passed`.
 - Artifact verification rejects wrapper, native-smoke, or acceptance logs that
@@ -66,6 +69,12 @@ records `asan=enabled` in the wrapper logs, and sets conservative default
 for a real smoke run, not a substitute for the required native-smoke,
 acceptance-log, and artifact verifiers. Windows MSVC remains artifact
 verification only until its sanitizer mode is proven separately.
+
+Text proof runs can enable optional SkParagraph support with
+`--enable-skparagraph` or `MOUI_SKIA_ENABLE_SKPARAGRAPH=1`. Use
+`--require-skparagraph` or `MOUI_SKIA_REQUIRE_SKPARAGRAPH=1` when missing
+SkParagraph headers or required SkParagraph, SkShaper, SkUnicode, HarfBuzz, and
+ICU libraries should fail the run before any proof marker is emitted.
 
 ## Linux Source Acceptance
 
@@ -143,8 +152,9 @@ native shaped glyph descriptor bridging, UTF-8 text
 measurement, glyph count, glyph ID mapping, glyph advances, glyph positions,
 glyph bounds, text bounds measurement, font metrics, and font manager family
 enumeration, character fallback, fallback family metadata, resolved fallback
-match resource planning, fallback resolution metadata planning, and native
-fallback resolution bridging.
+match resource planning, fallback resolution metadata planning, native fallback
+resolution bridging, and optional SkParagraph availability, paragraph line
+metrics, selection boxes, and hit testing.
 
 The `--require-commit` checks are mandatory for the first source-built Linux
 acceptance because that run establishes the revision to pin. Existing-build

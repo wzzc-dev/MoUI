@@ -195,7 +195,9 @@ Use this skill when editing or reviewing:
 - `moui/tests/skia_text_emoji_smoke/native`: opt-in real-Skia text/emoji proof
   smoke that records renderer-proof markers only after captured Skia pixels and
   font/glyph metadata plus text-system evidence prove color emoji, ZWJ
-  grapheme, paragraph wrapping, and bidi observations.
+  grapheme, paragraph wrapping, and bidi observations. Native paragraph
+  wrapping, bidi layout, and selection-rectangle proof must use the real
+  SkParagraph path and include `engine=skparagraph` markers.
 - `moui/tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
   packages for comparing supported text systems and documented gaps.
 - `examples/*/app`: shared application logic.
@@ -282,9 +284,14 @@ GitHub Actions provenance plus exactly `radialGradient`, `transformPixels`,
 marker tokens. Passed
 `colorEmojiPixels` observations must also include `font-metadata` /
 `glyph-metadata` evidence and structured metadata fields, including a non-empty
-glyph key plus positive glyph width/height. Package-only tests, skipped jobs,
+glyph key plus positive glyph width/height. Native Skia `paragraphWrapping`,
+`bidiLayout`, and `selectionRects` observations must include SkParagraph
+markers such as `native_paragraph_ready=true`, `bidi_visual_order_ready=true`,
+`line-metrics`, `later-line-pixels`, `visual-order`, `selection-rects`, and
+`line-range` as appropriate. Package-only tests, skipped jobs,
 missing uploaded artifacts, blank screenshots, caret-only
-diagnostics, coverage-only font matching, provider preflights,
+diagnostics, heuristic visual-order logs, fallback paragraph geometry,
+coverage-only font matching, provider preflights,
 preflight-only checks, and fallback-safe descriptor audits must stay failed
 proof. Complete local observations may be
 preserved for debugging, but without GitHub Actions provenance the manifest
@@ -467,7 +474,9 @@ platform-window GPU presentation evidence. Direct Skia
 `moui_skia` prebuild hook for real Skia and choose the library mode through
 `MOUI_SKIA_LINK_MODE=dynamic|static|auto`; helper smoke runs can pass
 `--link-mode dynamic|static|auto` to override the environment for that
-invocation. With explicit artifact log paths,
+invocation. For paragraph/bidi proof runs, pass `--enable-skparagraph` and
+`--require-skparagraph` so missing SkParagraph, SkShaper, SkUnicode, HarfBuzz,
+or ICU headers/libraries fail before proof markers are recorded. With explicit artifact log paths,
 `--record-platform-evidence` updates only the macOS `skiaEvidence` block after a
 successful full smoke; the renderer smoke log must include the async image
 second-frame marker, and omitted provider/fallback observations remain pending
