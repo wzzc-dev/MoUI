@@ -290,8 +290,9 @@ temporary macOS configuration should also run
 `moui/tests/skia_text_emoji_smoke/native` and verify the SkParagraph
 paragraph, bidi, selection/hit-test, grapheme editing, IME anchor, composition
 visual, and emoji/font metadata renderer-proof markers, including the
-`fallback_request_character` metadata and matching `emoji-u+...` glyph-key
-segment. Add
+`grapheme-boundary` / `utf8-offsets` IME anchor evidence,
+`composition-cursor` visual evidence, `fallback_request_character` metadata,
+and matching `emoji-u+...` glyph-key segment. Add
 explicit log paths and `--record-platform-evidence` when you want the helper to
 update the macOS `skiaEvidence` block in the platform evidence manifest after a
 successful run:
