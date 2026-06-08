@@ -291,6 +291,7 @@ test "grapheme boundary scanner covers uax control emoji ri and indic rules" {
   assert_grapheme_boundary_indexes("A\u{0007}\u{0301}B", [0, 1, 2, 3, 4])
   assert_grapheme_boundary_indexes("\u{0600}A", [0, 2])
   assert_grapheme_boundary_indexes("A\u{200D}B", [0, 2, 3])
+  assert_grapheme_boundary_indexes("A\u{1D165}B", [0, 2, 3])
   assert_grapheme_boundary_indexes("A\u{0915}\u{093E}B", [0, 1, 3, 4])
   assert_grapheme_boundary_indexes("\u{1100}\u{1161}\u{11A8}", [0, 3])
   assert_grapheme_boundary_indexes("👨🏾‍🚀", [0, 4])
@@ -366,9 +367,17 @@ test "grapheme boundary contract covers ranges deletes and utf8 offsets" {
     0,
     TextRange::new(start=1, end=5),
   )
+  assert_grapheme_delete_range(
+    "A\u{1D165}B",
+    2,
+    1,
+    0,
+    TextRange::new(start=0, end=2),
+  )
   assert_grapheme_utf8_offsets("Aक्‍षB", [0, 1, 5, 6], [0, 1, 13, 14])
   assert_grapheme_utf8_offsets("Aक़्षB", [0, 1, 5, 6], [0, 1, 13, 14])
   assert_grapheme_utf8_offsets("A\u{0600}B", [0, 2, 3], [0, 3, 4])
+  assert_grapheme_utf8_offsets("A\u{1D165}B", [0, 2, 3], [0, 5, 6])
 }
 
 ///|

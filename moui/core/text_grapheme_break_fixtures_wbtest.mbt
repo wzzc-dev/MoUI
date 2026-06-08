@@ -25,6 +25,7 @@ test "generated grapheme break fixture samples" {
   assert_generated_grapheme_break_fixture("\u{600}\u{41}", [0, 2], "GB9b Prepend x Any")
   assert_generated_grapheme_break_fixture("\u{41}\u{308}\u{301}\u{42}", [0, 3, 4], "GB9 Extend chain")
   assert_generated_grapheme_break_fixture("\u{41}\u{915}\u{93E}\u{42}", [0, 1, 3, 4], "GB9a SpacingMark")
+  assert_generated_grapheme_break_fixture("\u{41}\u{1D165}\u{42}", [0, 2, 3], "GB9 supplementary musical Extend")
   assert_generated_grapheme_break_fixture("\u{1100}\u{1161}\u{11A8}", [0, 3], "GB6/GB7/GB8 Hangul LVT sequence")
   assert_generated_grapheme_break_fixture("\u{1F1FA}\u{1F1F8}\u{1F1E8}\u{1F1E6}", [0, 2, 4], "GB12/GB13 RI pairs")
   assert_generated_grapheme_break_fixture("\u{1F468}\u{1F3FE}\u{200D}\u{1F680}", [0, 4], "GB11 emoji modifier ZWJ sequence")
