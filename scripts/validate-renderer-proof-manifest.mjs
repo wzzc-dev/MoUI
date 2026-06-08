@@ -150,6 +150,24 @@ if (manifest.mode !== "renderer-proof") fail("mode must be 'renderer-proof'");
 
 const backend = requireString(manifest, "backend", "manifest");
 if (!allowedBackends.has(backend)) fail(`backend '${backend}' is not recognized`);
+if (backend === "skia-native") {
+  requiredObservationEvidence.bidiLayout = [
+    "engine=skparagraph",
+    "bidi_visual_order_ready=true",
+    "visual-order",
+  ];
+  requiredObservationEvidence.paragraphWrapping = [
+    "engine=skparagraph",
+    "native_paragraph_ready=true",
+    "line-metrics",
+    "later-line-pixels",
+  ];
+  requiredObservationEvidence.selectionRects = [
+    "engine=skparagraph",
+    "selection-rects",
+    "line-range",
+  ];
+}
 
 const platform = requireString(manifest, "platform", "manifest");
 if (!allowedPlatforms.has(platform)) fail(`platform '${platform}' is not recognized`);
@@ -209,10 +227,11 @@ for (const key of expectedObservationKeys) {
       item.includes("caret-only") ||
       item.includes("coverage-only") ||
       item.includes("package-only") ||
-      item.includes("preflight-only")
+      item.includes("preflight-only") ||
+      item.includes("heuristic")
     ) {
       fail(
-        `observations.${key}.evidence must not use caret-only, coverage-only, package-only, or preflight-only proof`,
+        `observations.${key}.evidence must not use caret-only, coverage-only, package-only, preflight-only, or heuristic proof`,
       );
     }
   }

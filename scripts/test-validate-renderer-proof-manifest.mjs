@@ -22,6 +22,18 @@ const observationEvidence = {
   asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
 };
 
+const skiaNativeObservationEvidence = {
+  ...observationEvidence,
+  bidiLayout: ["engine=skparagraph", "bidi_visual_order_ready=true", "visual-order"],
+  paragraphWrapping: [
+    "engine=skparagraph",
+    "native_paragraph_ready=true",
+    "line-metrics",
+    "later-line-pixels",
+  ],
+  selectionRects: ["engine=skparagraph", "selection-rects", "line-range"],
+};
+
 const colorEmojiMetadata = () => ({
   font: {
     family: "emoji",
@@ -41,9 +53,9 @@ const colorEmojiMetadata = () => ({
   },
 });
 
-const observations = (status = "passed") => {
+const observations = (status = "passed", evidenceMap = observationEvidence) => {
   const entries = Object.fromEntries(
-    Object.entries(observationEvidence).map(([key, evidence]) => [
+    Object.entries(evidenceMap).map(([key, evidence]) => [
       key,
       {
         status,
@@ -73,6 +85,14 @@ const manifest = overrides => ({
   },
   artifacts: ["artifacts/conformance/renderer-proof/webgpu-wasm-web.json"],
   observations: observations(),
+  ...overrides,
+});
+
+const skiaNativeManifest = overrides => manifest({
+  backend: "skia-native",
+  platform: "macos",
+  artifacts: ["artifacts/conformance/renderer-proof/skia-native-macos.json"],
+  observations: observations("passed", skiaNativeObservationEvidence),
   ...overrides,
 });
 
@@ -147,7 +167,7 @@ expectFail(
     }),
     ["--require-passed"],
   ),
-  "must not use caret-only, coverage-only, package-only, or preflight-only proof",
+  "must not use caret-only, coverage-only, package-only, preflight-only, or heuristic proof",
 );
 
 expectFail(
@@ -166,7 +186,31 @@ expectFail(
     }),
     ["--require-passed"],
   ),
-  "must not use caret-only, coverage-only, package-only, or preflight-only proof",
+  "must not use caret-only, coverage-only, package-only, preflight-only, or heuristic proof",
+);
+
+expectPass(
+  "valid skia native SkParagraph proof",
+  run("valid-skia-native.json", skiaNativeManifest(), ["--require-passed"]),
+);
+
+expectFail(
+  "skia native paragraph proof rejects missing SkParagraph engine token",
+  run(
+    "skia-native-missing-engine.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations("passed", skiaNativeObservationEvidence),
+        paragraphWrapping: {
+          status: "passed",
+          evidence: ["line-metrics", "later-line-pixels"],
+          artifacts: ["artifacts/conformance/renderer-proof/paragraph.log"],
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "must include 'engine=skparagraph'",
 );
 
 expectFail(
