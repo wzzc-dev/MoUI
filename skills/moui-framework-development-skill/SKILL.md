@@ -307,8 +307,9 @@ usable runner WGPU adapter for offscreen readback.
 Native Skia `graphemeEditing`, `imeCandidateAnchor`, and
 `imeCompositionVisual` renderer-proof markers come from the text/emoji smoke's
 shared grapheme-boundary contract, host IME request diagnostics including UTF-8
-cursor/anchor offsets, Skia caret geometry, and captured text-field composition
-pixels; they do not replace matching-host native IME runtime evidence.
+cursor/anchor offsets plus composition cursor evidence, Skia caret geometry,
+and captured text-field composition pixels; they do not replace matching-host
+native IME runtime evidence.
 The `renderer-proof-summary` job requires the native Skia macOS, Windows,
 Linux, and WebGPU wasm proof
 artifacts to validate as passed before mainline capability promotion; native
