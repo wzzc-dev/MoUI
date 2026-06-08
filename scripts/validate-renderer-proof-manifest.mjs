@@ -175,6 +175,7 @@ if (backend === "skia-native") {
     "engine=skparagraph",
     "selection-rects",
     "line-range",
+    "hit-test",
   ];
 }
 

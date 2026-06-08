@@ -119,7 +119,7 @@ const skiaMarkers = markers.map(marker => {
     return "MoUI renderer proof paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels";
   }
   if (marker.startsWith("MoUI renderer proof selectionRects passed")) {
-    return "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range";
+    return "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range hit-test";
   }
   return marker;
 });
@@ -159,7 +159,8 @@ if (
   !skiaPassedManifest.observations.colorEmojiPixels.evidence.includes("fallback-request") ||
   !skiaPassedManifest.observations.colorEmojiPixels.evidence.includes("stable-glyph-key") ||
   !skiaPassedManifest.observations.paragraphWrapping.evidence.includes("engine=skparagraph") ||
-  !skiaPassedManifest.observations.bidiLayout.evidence.includes("bidi_visual_order_ready=true")
+  !skiaPassedManifest.observations.bidiLayout.evidence.includes("bidi_visual_order_ready=true") ||
+  !skiaPassedManifest.observations.selectionRects.evidence.includes("hit-test")
 ) {
   console.error("passed Skia manifest did not preserve SkParagraph/emoji fallback evidence");
   process.exit(1);
@@ -202,6 +203,27 @@ if (
   skiaMissingEngineManifest.observations.bidiLayout.status !== "failed"
 ) {
   console.error("missing SkParagraph engine token should keep Skia proof failed");
+  process.exit(1);
+}
+
+const skiaMissingHitTest = runSkiaRecorder(
+  "skia-missing-hit-test",
+  skiaMarkers.join("\n").replace(" hit-test", ""),
+);
+if (skiaMissingHitTest.result.status !== 0) {
+  console.error("expected missing SkParagraph hit-test proof to validate as failed");
+  console.error(skiaMissingHitTest.result.stdout);
+  console.error(skiaMissingHitTest.result.stderr);
+  process.exit(1);
+}
+const skiaMissingHitTestManifest = JSON.parse(
+  readFileSync(skiaMissingHitTest.outputPath, "utf8"),
+);
+if (
+  skiaMissingHitTestManifest.status !== "failed" ||
+  skiaMissingHitTestManifest.observations.selectionRects.status !== "failed"
+) {
+  console.error("missing SkParagraph hit-test token should keep selection rect proof failed");
   process.exit(1);
 }
 if (
