@@ -175,7 +175,7 @@ test "diagnostic native skia bidi sample keeps logical carets and marks reorderi
 }
 
 ///|
-test "diagnostic native skia paragraph layout exposes line metrics without readiness promotion" {
+test "diagnostic native skia paragraph layout exposes line metrics and gates readiness" {
   let system = @skia_renderer.skia_text_system()
   let sample = "alpha beta gamma delta epsilon"
   let font = diagnostic_native_text_font()
@@ -209,8 +209,12 @@ test "diagnostic native skia paragraph layout exposes line metrics without readi
   assert_true(paragraph.metadata.line_metrics_available)
   assert_true(paragraph.metadata.selection_rects_available)
   assert_true(paragraph.metadata.hit_test_available)
-  assert_false(paragraph.metadata.native_paragraph_ready)
-  assert_false(paragraph.metadata.bidi_visual_order_ready)
+  if @skia_native.skia_paragraph_available() {
+    assert_true(paragraph.metadata.native_paragraph_ready)
+  } else {
+    assert_false(paragraph.metadata.native_paragraph_ready)
+    assert_false(paragraph.metadata.bidi_visual_order_ready)
+  }
   assert_true(paragraph.line_count() >= 2)
   assert_true(paragraph.size.height > clamped.size.height)
   inspect(
@@ -233,7 +237,9 @@ test "diagnostic native skia paragraph layout exposes line metrics without readi
   inspect(hit.line_index, content="1")
   assert_true(hit.offset >= paragraph.lines[1].text_range.start)
   assert_true(hit.offset <= paragraph.lines[1].text_range.end)
-  assert_diagnostic_native_skia_maturity_gap("paragraph line breaking")
+  if !@skia_native.skia_paragraph_available() {
+    assert_diagnostic_native_skia_maturity_gap("paragraph line breaking")
+  }
 }
 
 ///|
