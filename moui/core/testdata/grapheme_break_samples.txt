@@ -26,7 +26,7 @@
 ÷ 0E01 × 0E34 ÷ 0041 ÷ # GB9 Thai mark
 ÷ 0E81 × 0EB4 ÷ 0041 ÷ # GB9 Lao mark
 ÷ 0D9A × 0DCF ÷ 0041 ÷ # GB9a Sinhala spacing vowel
-÷ 0D9A × 0DCA × 0DBB ÷ # Indic virama Sinhala conjunct
+÷ 0D9A × 0DCA ÷ 0DBB ÷ # Unicode 17 Sinhala virama is not InCB Linker
 ÷ 1780 × 17B6 ÷ 0041 ÷ # GB9a Khmer vowel
 ÷ 1780 × 17D2 × 179A ÷ # Indic virama Khmer coeng conjunct
 ÷ 1000 × 1039 × 1001 ÷ # Indic virama Myanmar conjunct
@@ -36,4 +36,8 @@
 ÷ 0915 × 094D × 200D ÷ 0041 ÷ # Indic virama ZWJ before Latin breaks
 ÷ 0915 × 094D × 093C × 0937 ÷ # Indic virama Extend consonant conjunct
 ÷ 0915 × 094D × 093C ÷ 0041 ÷ # Indic virama Extend before Latin breaks
+÷ 094D ÷ 0915 ÷ # Unicode 17 standalone InCB Linker breaks before consonant
+÷ 0061 × 094D ÷ 0924 ÷ # Unicode 17 Latin plus InCB Linker breaks before consonant
 ÷ 0915 × 094D × 200C ÷ 0937 ÷ # Indic virama ZWNJ breaks before consonant
+÷ 1B32 × 1B44 × 1B2F ÷ # Unicode 17 Balinese InCB linker conjunct
+÷ 179F × 17D2 × 178F × 17D2 × 179A × 17B8 ÷ # Unicode 17 Khmer InCB linker chain
