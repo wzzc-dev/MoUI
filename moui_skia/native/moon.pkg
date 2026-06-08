@@ -10,6 +10,7 @@ options(
     "skia_stub_canvas.cpp",
     "skia_stub_path.cpp",
     "skia_stub_text_font.cpp",
+    "skia_stub_paragraph.cpp",
     "skia_stub_shader_filter.cpp",
   ],
   link: {
@@ -26,6 +27,7 @@ options(
     "canvas_native.mbt": [ "native", "llvm" ],
     "path_native.mbt": [ "native", "llvm" ],
     "text_font_native.mbt": [ "native", "llvm" ],
+    "paragraph_native.mbt": [ "native", "llvm" ],
     "shader_filter_native.mbt": [ "native", "llvm" ],
     "shader_filter_ffi_wbtest.mbt": [ "native", "llvm" ],
     "handles_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
@@ -35,6 +37,7 @@ options(
     "canvas_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "path_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "text_font_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "paragraph_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "shader_filter_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
   },
 )

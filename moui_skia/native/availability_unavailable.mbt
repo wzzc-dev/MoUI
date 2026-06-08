@@ -9,3 +9,9 @@ pub fn skia_available() -> Bool {
 pub fn skia_shaper_available() -> Bool {
   false
 }
+
+///|
+/// Runtime availability of the optional linked SkParagraph backend.
+pub fn skia_paragraph_available() -> Bool {
+  false
+}

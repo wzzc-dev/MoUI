@@ -9,6 +9,8 @@ import {
 // Values
 pub fn skia_available() -> Bool
 
+pub fn skia_paragraph_available() -> Bool
+
 pub fn skia_shaper_available() -> Bool
 
 // Errors
@@ -266,6 +268,40 @@ pub(all) enum NativeReplayTextRun {
   DirectTextRun(@moui_skia.TextRunDescriptor)
   ShapedTextRun(@moui_skia.ShapedGlyphRunDescriptor)
 }
+
+pub(all) struct Paragraph {
+  // private fields
+}
+pub fn Paragraph::height(Self) -> Float
+pub fn Paragraph::hit_test_utf8(Self, Float, Float) -> ParagraphHitTestResult
+pub fn Paragraph::is_available(Self) -> Bool
+pub fn Paragraph::layout_utf8(Bytes, family_name? : Bytes, size? : Float, weight? : Int, width? : Int, slant? : Int, max_width? : Float, left_to_right? : Bool) -> Self?
+pub fn Paragraph::line_count(Self) -> Int
+pub fn Paragraph::line_metrics(Self) -> Array[ParagraphLineMetric]
+pub fn Paragraph::text_boxes_utf8(Self, Int, Int) -> Array[@moui_skia.Rect]
+pub fn Paragraph::width(Self) -> Float
+
+pub(all) struct ParagraphHitTestResult {
+  offset : Int
+  downstream : Bool
+} derive(Eq, @debug.Debug)
+
+pub(all) struct ParagraphLineMetric {
+  start : Int
+  end : Int
+  end_excluding_whitespace : Int
+  end_including_newline : Int
+  line_number : Int
+  hard_break : Bool
+  left : Float
+  width : Float
+  baseline : Float
+  ascent : Float
+  descent : Float
+  height : Float
+} derive(Eq, @debug.Debug)
+pub fn ParagraphLineMetric::is_valid(Self) -> Bool
+pub fn ParagraphLineMetric::right(Self) -> Float
 
 pub(all) struct Path {
   // private fields
