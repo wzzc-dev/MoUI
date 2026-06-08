@@ -138,9 +138,7 @@ fn assert_grapheme_delete_range(
   expected : TextRange,
 ) -> Unit raise {
   let actual = TextGraphemeBoundaries::new(text~).delete_range(
-    caret,
-    before,
-    after,
+    caret, before, after,
   )
   inspect(actual.start, content="\{expected.start}")
   inspect(actual.end, content="\{expected.end}")
@@ -157,7 +155,10 @@ fn assert_grapheme_utf8_offsets(
   }
   let boundaries = TextGraphemeBoundaries::new(text~)
   for index in 0..<indexes.length() {
-    inspect(boundaries.utf8_offset(indexes[index]), content="\{expected[index]}")
+    inspect(
+      boundaries.utf8_offset(indexes[index]),
+      content="\{expected[index]}",
+    )
   }
 }
 
@@ -295,15 +296,16 @@ test "grapheme boundary scanner covers uax control emoji ri and indic rules" {
   assert_grapheme_boundary_indexes("👨🏾‍🚀", [0, 4])
   assert_grapheme_boundary_indexes("👨‍A", [0, 2, 3])
   assert_grapheme_boundary_indexes("\u{1F1FA}\u{1F1F8}\u{1F1E8}", [0, 2, 3])
-  assert_grapheme_boundary_indexes(
-    "\u{1F1FA}\u{1F1F8}\u{1F1E8}\u{1F1E6}",
-    [0, 2, 4],
-  )
+  assert_grapheme_boundary_indexes("\u{1F1FA}\u{1F1F8}\u{1F1E8}\u{1F1E6}", [
+    0, 2, 4,
+  ])
   assert_grapheme_boundary_indexes("A\u{1F1FA}\u{1F1F8}\u{1F1E8}B", [
     0, 1, 3, 4, 5,
   ])
   assert_grapheme_boundary_indexes("क्‍ष", [0, 4])
   assert_grapheme_boundary_indexes("क्‍A", [0, 3, 4])
+  assert_grapheme_boundary_indexes("क़्ष", [0, 4])
+  assert_grapheme_boundary_indexes("क़्A", [0, 3, 4])
   assert_grapheme_boundary_indexes("क्A", [0, 2, 3])
   assert_grapheme_boundary_indexes("क् A", [0, 2, 3, 4])
   assert_grapheme_boundary_indexes("क्‌ष", [0, 3, 4])
@@ -357,7 +359,15 @@ test "grapheme boundary contract covers ranges deletes and utf8 offsets" {
     0,
     TextRange::new(start=1, end=4),
   )
+  assert_grapheme_delete_range(
+    "Aक़्षB",
+    5,
+    1,
+    0,
+    TextRange::new(start=1, end=5),
+  )
   assert_grapheme_utf8_offsets("Aक्‍षB", [0, 1, 5, 6], [0, 1, 13, 14])
+  assert_grapheme_utf8_offsets("Aक़्षB", [0, 1, 5, 6], [0, 1, 13, 14])
   assert_grapheme_utf8_offsets("A\u{0600}B", [0, 2, 3], [0, 3, 4])
 }
 
