@@ -104,6 +104,10 @@ const failedObservations = () => ({
   zwjGrapheme: "no",
   bidiLayout: "no",
   paragraphWrapping: "no",
+  selectionRects: "no",
+  graphemeEditing: "no",
+  imeCandidateAnchor: "no",
+  imeCompositionVisual: "no",
   asyncImageSecondFrame: "no",
   targetClosed: "no",
 });
@@ -191,6 +195,10 @@ const printFailureSummary = manifest => {
         "zwjGrapheme",
         "bidiLayout",
         "paragraphWrapping",
+        "selectionRects",
+        "graphemeEditing",
+        "imeCandidateAnchor",
+        "imeCompositionVisual",
         "asyncImageSecondFrame",
       ]) {
         const proof = screenshot[key];
@@ -261,6 +269,10 @@ const writePreflightFailureManifest = error => {
       zwjGrapheme: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
       bidiLayout: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
       paragraphWrapping: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      selectionRects: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      graphemeEditing: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      imeCandidateAnchor: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      imeCompositionVisual: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
       asyncImageSecondFrame: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
     },
     observations: failedObservations(),
@@ -547,6 +559,10 @@ const summarizeRendererProofPixels = (png, target) => {
       zwjGrapheme: emptyRendererProofEvidence(false),
       bidiLayout: emptyRendererProofEvidence(false),
       paragraphWrapping: emptyRendererProofEvidence(false),
+      selectionRects: emptyRendererProofEvidence(false),
+      graphemeEditing: emptyRendererProofEvidence(false),
+      imeCandidateAnchor: emptyRendererProofEvidence(false),
+      imeCompositionVisual: emptyRendererProofEvidence(false),
       asyncImageSecondFrame: emptyRendererProofEvidence(false),
     };
   }
@@ -628,6 +644,10 @@ const summarizeRendererProofPixels = (png, target) => {
       darkTextPixels,
       darkRows: darkRows.size,
     },
+    selectionRects: emptyRendererProofEvidence(true),
+    graphemeEditing: emptyRendererProofEvidence(true),
+    imeCandidateAnchor: emptyRendererProofEvidence(true),
+    imeCompositionVisual: emptyRendererProofEvidence(true),
     asyncImageSecondFrame: emptyRendererProofEvidence(true),
   };
 };
@@ -983,6 +1003,30 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
       paragraphLineCount: paragraphLineIndexes.size,
       paragraphRows: paragraphYs.size,
     },
+    selectionRects: {
+      ...(screenshot.selectionRects ?? emptyRendererProofEvidence(true)),
+      passed: false,
+      evidence: [],
+      matchedMarkers: 0,
+    },
+    graphemeEditing: {
+      ...(screenshot.graphemeEditing ?? emptyRendererProofEvidence(true)),
+      passed: false,
+      evidence: [],
+      matchedMarkers: 0,
+    },
+    imeCandidateAnchor: {
+      ...(screenshot.imeCandidateAnchor ?? emptyRendererProofEvidence(true)),
+      passed: false,
+      evidence: [],
+      matchedMarkers: 0,
+    },
+    imeCompositionVisual: {
+      ...(screenshot.imeCompositionVisual ?? emptyRendererProofEvidence(true)),
+      passed: false,
+      evidence: [],
+      matchedMarkers: 0,
+    },
     asyncImageSecondFrame: {
       required: true,
       passed: asyncPassed,
@@ -1026,6 +1070,10 @@ const deriveTargetStatus = (target, observations) => {
       "zwjGrapheme",
       "bidiLayout",
       "paragraphWrapping",
+      "selectionRects",
+      "graphemeEditing",
+      "imeCandidateAnchor",
+      "imeCompositionVisual",
       "asyncImageSecondFrame",
     );
   }
@@ -1120,6 +1168,10 @@ const probeTarget = async target => {
       zwjGrapheme: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
       bidiLayout: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
       paragraphWrapping: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      selectionRects: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      graphemeEditing: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      imeCandidateAnchor: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      imeCompositionVisual: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
       asyncImageSecondFrame: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
     };
     try {
@@ -1184,6 +1236,10 @@ const probeTarget = async target => {
       zwjGrapheme: screenshot.zwjGrapheme?.passed ? "yes" : "no",
       bidiLayout: screenshot.bidiLayout?.passed ? "yes" : "no",
       paragraphWrapping: screenshot.paragraphWrapping?.passed ? "yes" : "no",
+      selectionRects: screenshot.selectionRects?.passed ? "yes" : "no",
+      graphemeEditing: screenshot.graphemeEditing?.passed ? "yes" : "no",
+      imeCandidateAnchor: screenshot.imeCandidateAnchor?.passed ? "yes" : "no",
+      imeCompositionVisual: screenshot.imeCompositionVisual?.passed ? "yes" : "no",
       asyncImageSecondFrame: screenshot.asyncImageSecondFrame?.passed ? "yes" : "no",
       targetClosed: targetClosed ? "yes" : "no",
     };
@@ -1206,6 +1262,10 @@ const probeTarget = async target => {
         ["zwjGrapheme", "ZWJ grapheme cluster"],
         ["bidiLayout", "bidi visual order"],
         ["paragraphWrapping", "paragraph wrapping"],
+        ["selectionRects", "selection rect"],
+        ["graphemeEditing", "grapheme editing"],
+        ["imeCandidateAnchor", "IME candidate anchor"],
+        ["imeCompositionVisual", "IME composition visual"],
         ["asyncImageSecondFrame", "async image second-frame"],
       ]) {
         if (observations[key] !== "yes") {
@@ -1250,6 +1310,10 @@ const probeTarget = async target => {
       zwjGrapheme: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
       bidiLayout: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
       paragraphWrapping: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      selectionRects: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      graphemeEditing: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      imeCandidateAnchor: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      imeCompositionVisual: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
       asyncImageSecondFrame: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
     };
     return {

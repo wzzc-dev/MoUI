@@ -64,6 +64,10 @@ const webPresentationObservationKeys = [
   "zwjGrapheme",
   "bidiLayout",
   "paragraphWrapping",
+  "selectionRects",
+  "graphemeEditing",
+  "imeCandidateAnchor",
+  "imeCompositionVisual",
   "asyncImageSecondFrame",
   "targetClosed",
 ];
@@ -81,6 +85,10 @@ const webRendererProofEvidence = {
   zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
   bidiLayout: ["visual-order"],
   paragraphWrapping: ["line-metrics", "later-line-pixels"],
+  selectionRects: ["selection-rects", "line-range"],
+  graphemeEditing: ["grapheme-boundaries", "edit-actions"],
+  imeCandidateAnchor: ["candidate-anchor", "surrounding-text"],
+  imeCompositionVisual: ["composition-range", "preedit-pixels"],
   asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
 };
 
@@ -339,6 +347,10 @@ const webPresentationTarget = ({
     zwjGrapheme: webRendererProof(name, status, "zwjGrapheme"),
     bidiLayout: webRendererProof(name, status, "bidiLayout"),
     paragraphWrapping: webRendererProof(name, status, "paragraphWrapping"),
+    selectionRects: webRendererProof(name, status, "selectionRects"),
+    graphemeEditing: webRendererProof(name, status, "graphemeEditing"),
+    imeCandidateAnchor: webRendererProof(name, status, "imeCandidateAnchor"),
+    imeCompositionVisual: webRendererProof(name, status, "imeCompositionVisual"),
     asyncImageSecondFrame: webRendererProof(name, status, "asyncImageSecondFrame"),
   },
   evidenceEvents: status === "passed"
@@ -384,6 +396,10 @@ const webPresentationTarget = ({
     zwjGrapheme: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     bidiLayout: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     paragraphWrapping: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    selectionRects: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    graphemeEditing: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    imeCandidateAnchor: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
+    imeCompositionVisual: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     asyncImageSecondFrame: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
   },
   consoleErrors: status === "passed" ? [] : ["No WebGPU adapter is available"],
