@@ -8,6 +8,7 @@
 ÷ 0600 × 0041 ÷ # GB9b Prepend x Any
 ÷ 0041 × 0308 × 0301 ÷ 0042 ÷ # GB9 Extend chain
 ÷ 0041 ÷ 0915 × 093E ÷ 0042 ÷ # GB9a SpacingMark
+÷ 0041 × 1D165 ÷ 0042 ÷ # GB9 supplementary musical Extend
 ÷ 1100 × 1161 × 11A8 ÷ # GB6/GB7/GB8 Hangul LVT sequence
 ÷ 1F1FA × 1F1F8 ÷ 1F1E8 × 1F1E6 ÷ # GB12/GB13 RI pairs
 ÷ 1F468 × 1F3FE × 200D × 1F680 ÷ # GB11 emoji modifier ZWJ sequence

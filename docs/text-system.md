@@ -272,9 +272,10 @@ Remote font loading is intentionally outside the current backend contract.
   (`scripts/generate-grapheme-break-fixtures.mjs --check`) for curated samples,
   while full generated Unicode data import and complete grapheme-cluster parity
   remain release follow-up work. The
-  scanner now treats ZWNJ as an Extend code point and narrows Indic virama
-  linking to ZWJ or Indic consonant targets, so deletion and IME offsets no
-  longer merge virama-plus-Latin or virama-plus-space spans into one cluster.
+  scanner now treats ZWNJ as an Extend code point, covers representative
+  supplementary musical combining marks, and narrows Indic virama linking to
+  ZWJ or Indic consonant targets, so deletion and IME offsets no longer merge
+  virama-plus-Latin or virama-plus-space spans into one cluster.
   Native IME runtime readiness is also still pending: macOS, Windows, and Linux
   must each record matching-host Showcase or Markdown Editor artifacts for
   candidate anchors, surrounding text, composition visuals, commit/delete
