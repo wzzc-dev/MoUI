@@ -387,8 +387,8 @@ const assertRuntimeMarkers = (content, label) => {
     content,
     [
       /MoUI native IME runtime/i,
-      /matching-host/i,
-      /native-app/i,
+      tokenMarker("matching-host"),
+      tokenMarker("native-app"),
       tokenMarker("renderer=skia"),
       tokenMarker(expectedConsumerApp.marker),
       { any: anyTokenMarker(platform.protocolMarkers) },

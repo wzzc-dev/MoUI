@@ -300,6 +300,29 @@ try {
     "candidate anchor log is missing expected marker: MoUI native IME runtime",
   );
 
+  const runtimeSuffixLog = writeArtifact(
+    "linux",
+    "runtime-suffix-ime-candidate-anchor.log",
+    [
+      "MoUI native IME runtime matching-hosted native-app-test renderer=skia platform-protocol=wayland-text-input app=showcase",
+      "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
+    ].join("\n"),
+  );
+  expectFail(
+    "reject IME log with common runtime marker suffixes",
+    runRecorder([
+      writeManifest("runtime-suffix-ime-marker.json", "linux"),
+      "linux",
+      "--host",
+      "Linux Wayland CI",
+      "--consumer-command",
+      linuxConsumerCommand,
+      "--candidate-anchor-log",
+      runtimeSuffixLog,
+    ]),
+    "candidate anchor log is missing expected marker: MoUI native IME runtime",
+  );
+
   expectFail(
     "reject missing consumer command",
     runRecorder([
