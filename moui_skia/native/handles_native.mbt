@@ -35,6 +35,10 @@ priv type FontHandle
 priv type ShapedTextRunHandle
 
 ///|
+/// Opaque native SkParagraph layout handle.
+priv type ParagraphHandle
+
+///|
 /// Opaque native Skia typeface handle.
 priv type TypefaceHandle
 

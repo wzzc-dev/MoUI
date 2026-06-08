@@ -63,6 +63,19 @@ class GrDirectContext;
 #define MOUI_SKIA_HAS_SKSHAPER_CORETEXT 1
 #endif
 #endif
+#if defined(MOUI_SKIA_HAS_SKPARAGRAPH) && \
+  __has_include("modules/skparagraph/include/Paragraph.h") && \
+  __has_include("modules/skparagraph/include/ParagraphBuilder.h") && \
+  __has_include("modules/skparagraph/include/ParagraphStyle.h") && \
+  __has_include("modules/skparagraph/include/TextStyle.h") && \
+  __has_include("modules/skparagraph/include/FontCollection.h")
+#include "modules/skparagraph/include/Paragraph.h"
+#include "modules/skparagraph/include/ParagraphBuilder.h"
+#include "modules/skparagraph/include/ParagraphStyle.h"
+#include "modules/skparagraph/include/TextStyle.h"
+#include "modules/skparagraph/include/FontCollection.h"
+#define MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS 1
+#endif
 #include "include/codec/SkCodec.h"
 #include "include/codec/SkEncodedImageFormat.h"
 #include "include/encode/SkJpegEncoder.h"
@@ -298,6 +311,13 @@ struct MoonbitSkiaShapedTextRun {
   MoonbitSkiaInt32Array* clusters;
 };
 
+struct MoonbitSkiaParagraph {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  skia::textlayout::Paragraph* paragraph;
+#else
+  void* paragraph;
+#endif
+};
 
 MoonbitSkiaFloatArray* moonbit_skia_make_float_array(
   int32_t length,
@@ -335,6 +355,13 @@ MoonbitSkiaShapedTextRun* moonbit_skia_make_shaped_text_run(
   MoonbitSkiaInt32Array* clusters
 );
 MoonbitSkiaShapedTextRun* moonbit_skia_make_empty_shaped_text_run();
+MoonbitSkiaParagraph* moonbit_skia_make_paragraph_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  skia::textlayout::Paragraph* paragraph
+#else
+  void* paragraph
+#endif
+);
 
 #if defined(MOUI_SKIA_HAS_SKIA)
 moonbit_bytes_t moonbit_skia_make_bytes_from_sk_string(

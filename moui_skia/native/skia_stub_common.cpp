@@ -235,6 +235,16 @@ static void moonbit_skia_font_mgr_finalize(void* ptr) {
 #endif
 }
 
+static void moonbit_skia_paragraph_finalize(void* ptr) {
+  MoonbitSkiaParagraph* wrapper = static_cast<MoonbitSkiaParagraph*>(ptr);
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  delete wrapper->paragraph;
+  wrapper->paragraph = nullptr;
+#else
+  wrapper->paragraph = nullptr;
+#endif
+}
+
 static void moonbit_skia_shader_finalize(void* ptr) {
   MoonbitSkiaShader* wrapper = static_cast<MoonbitSkiaShader*>(ptr);
 #if defined(MOUI_SKIA_HAS_SKIA)
@@ -424,6 +434,23 @@ MoonbitSkiaFontMgr* moonbit_skia_make_font_mgr_wrapper(
     )
   );
   wrapper->font_mgr = font_mgr;
+  return wrapper;
+}
+
+MoonbitSkiaParagraph* moonbit_skia_make_paragraph_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  skia::textlayout::Paragraph* paragraph
+#else
+  void* paragraph
+#endif
+) {
+  MoonbitSkiaParagraph* wrapper = static_cast<MoonbitSkiaParagraph*>(
+    moonbit_make_external_object(
+      moonbit_skia_paragraph_finalize,
+      sizeof(MoonbitSkiaParagraph)
+    )
+  );
+  wrapper->paragraph = paragraph;
   return wrapper;
 }
 
@@ -1416,6 +1443,14 @@ extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_shaper_available(void) {
 #if defined(MOUI_SKIA_HAS_SKIA) && \
   defined(MOUI_SKIA_HAS_SKSHAPER_HEADERS) && \
   defined(MOUI_SKIA_HAS_SKSHAPER_LEGACY)
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_paragraph_available(void) {
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
   return 1;
 #else
   return 0;
