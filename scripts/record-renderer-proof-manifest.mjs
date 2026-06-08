@@ -57,6 +57,22 @@ const markerConfig = {
     required: ["line-metrics", "later-line-pixels"],
     marker: "MoUI renderer proof paragraphWrapping passed",
   },
+  selectionRects: {
+    required: ["selection-rects", "line-range"],
+    marker: "MoUI renderer proof selectionRects passed",
+  },
+  graphemeEditing: {
+    required: ["grapheme-boundaries", "edit-actions"],
+    marker: "MoUI renderer proof graphemeEditing passed",
+  },
+  imeCandidateAnchor: {
+    required: ["candidate-anchor", "surrounding-text"],
+    marker: "MoUI renderer proof imeCandidateAnchor passed",
+  },
+  imeCompositionVisual: {
+    required: ["composition-range", "preedit-pixels"],
+    marker: "MoUI renderer proof imeCompositionVisual passed",
+  },
   asyncImageSecondFrame: {
     required: ["late-completion", "repaint-request", "second-frame-pixels"],
     marker: "MoUI renderer proof asyncImageSecondFrame passed",

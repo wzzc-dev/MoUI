@@ -586,8 +586,10 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   requires screenshot markers plus runtime evidence events for RGBA color emoji
   glyph atlas pixels with font metadata plus glyph key/size metadata,
   one-cluster ZWJ layout, bidi visual-order reordering, paragraph line metrics
-  with later-line pixels, and placeholder -> image load -> repaint -> ready
-  second-frame image ordering.
+  with later-line pixels, selection rectangles with line ranges, grapheme edit
+  boundaries with edit actions, IME candidate anchors with surrounding text,
+  composition ranges with preedit pixels, and placeholder -> image load ->
+  repaint -> ready second-frame image ordering.
 - `Native Skia renderer proof` runs macOS, Windows, and Linux matrices, writes
   renderer-proof manifests under `artifacts/conformance/renderer-proof/`,
   uploads matching `artifacts/platform-evidence/<platform>/` logs such as
@@ -600,8 +602,9 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   `moui/tests/skia_text_emoji_smoke/native`; those smokes print renderer-proof
   markers only after captured Skia pixels, glyph/layout evidence, text-system
   evidence, and color emoji font/glyph metadata prove radial, transform, color
-  emoji, ZWJ grapheme, bidi visual order, paragraph wrapping, and async
-  second-frame observations.
+  emoji, ZWJ grapheme, bidi visual order, paragraph wrapping, selection
+  rectangles, grapheme editing, IME candidate anchors, composition visuals, and
+  async second-frame observations.
 - `Native WGPU renderer diagnostic` still runs the macOS, Windows, and Linux
   WGPU matrices and uploads artifacts, but it is `continue-on-error` and does
   not define the mainline renderer-proof summary. It records renderer-proof
@@ -788,14 +791,20 @@ Renderer-proof manifests are separate from the platform runtime manifest. They
 live under `artifacts/conformance/renderer-proof/<backend>-<platform>.json` and
 use schema v1 with exactly these observations: `radialGradient`,
 `transformPixels`, `colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`,
-`paragraphWrapping`, and `asyncImageSecondFrame`. Passed manifests must carry
-GitHub Actions provenance and strong marker tokens; `colorEmojiPixels` also
+`paragraphWrapping`, `selectionRects`, `graphemeEditing`,
+`imeCandidateAnchor`, `imeCompositionVisual`, and `asyncImageSecondFrame`.
+Passed manifests must carry GitHub Actions provenance and strong marker tokens;
+`colorEmojiPixels` also
 requires `font-metadata` / `glyph-metadata` evidence plus structured
 `metadata.font` and `metadata.glyph` fields so high-saturation emoji pixels can
-be traced to the font/glyph path that produced them. Package tests, skipped
-jobs, blank screenshots, missing uploaded artifacts, caret-only diagnostics,
-coverage-only font matching, provider preflights, and fallback-safe descriptor
-audits remain failed renderer proof. CI summary validates them with the
+be traced to the font/glyph path that produced them. The text/IME observations
+must prove selection rectangles with line ranges, grapheme edit boundaries with
+edit actions, IME candidate anchors with surrounding text, and composition
+ranges with preedit pixels. Package tests, skipped jobs, blank screenshots,
+missing uploaded artifacts, caret-only diagnostics, coverage-only font
+matching, package-only checks, provider preflights, preflight-only checks, and
+fallback-safe descriptor audits remain failed renderer proof. CI summary
+validates them with the
 downloaded artifact directory as `--artifact-root`, so a manifest cannot pass
 unless its referenced logs/artifacts were actually uploaded. When the recorder
 runs outside GitHub Actions, complete observation markers are still preserved in

@@ -134,6 +134,10 @@ const observationKeys = [
   "zwjGrapheme",
   "bidiLayout",
   "paragraphWrapping",
+  "selectionRects",
+  "graphemeEditing",
+  "imeCandidateAnchor",
+  "imeCompositionVisual",
   "asyncImageSecondFrame",
   "targetClosed",
 ];
@@ -347,8 +351,24 @@ targets.forEach((target, index) => {
     "zwjGrapheme",
     "bidiLayout",
     "paragraphWrapping",
+    "selectionRects",
+    "graphemeEditing",
+    "imeCandidateAnchor",
+    "imeCompositionVisual",
     "asyncImageSecondFrame",
   ];
+  const rendererProofEvidenceRequirements = {
+    radialGradient: ["center-mid-edge-pixels", "shader-payload"],
+    colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
+    zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
+    bidiLayout: ["visual-order"],
+    paragraphWrapping: ["line-metrics", "later-line-pixels"],
+    selectionRects: ["selection-rects", "line-range"],
+    graphemeEditing: ["grapheme-boundaries", "edit-actions"],
+    imeCandidateAnchor: ["candidate-anchor", "surrounding-text"],
+    imeCompositionVisual: ["composition-range", "preedit-pixels"],
+    asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
+  };
   for (const proofKey of rendererProofKeys) {
     const proof = requireObject(
       screenshot,
@@ -376,6 +396,13 @@ targets.forEach((target, index) => {
     }
     if (passed && proofEvidence.length === 0) {
       fail(`${label}.screenshot.${proofKey}.passed requires evidence tokens`);
+    }
+    if (passed) {
+      for (const requiredToken of rendererProofEvidenceRequirements[proofKey]) {
+        if (!proofEvidence.includes(requiredToken)) {
+          fail(`${label}.screenshot.${proofKey}.evidence must include '${requiredToken}'`);
+        }
+      }
     }
     if (proofMarkers < 0) {
       fail(`${label}.screenshot.${proofKey}.matchedMarkers must be nonnegative`);
@@ -428,6 +455,10 @@ targets.forEach((target, index) => {
           "zwjGrapheme",
           "bidiLayout",
           "paragraphWrapping",
+          "selectionRects",
+          "graphemeEditing",
+          "imeCandidateAnchor",
+          "imeCompositionVisual",
           "asyncImageSecondFrame",
         ].includes(key) &&
         name !== "showcase-web-wasm"

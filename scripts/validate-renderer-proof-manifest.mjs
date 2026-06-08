@@ -51,6 +51,10 @@ const requiredObservationEvidence = {
   zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
   bidiLayout: ["visual-order"],
   paragraphWrapping: ["line-metrics", "later-line-pixels"],
+  selectionRects: ["selection-rects", "line-range"],
+  graphemeEditing: ["grapheme-boundaries", "edit-actions"],
+  imeCandidateAnchor: ["candidate-anchor", "surrounding-text"],
+  imeCompositionVisual: ["composition-range", "preedit-pixels"],
   asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
 };
 
@@ -201,8 +205,15 @@ for (const key of expectedObservationKeys) {
     if (typeof item !== "string" || item.trim() === "") {
       fail(`observations.${key}.evidence[${index}] must be a non-empty string`);
     }
-    if (item.includes("caret-only") || item.includes("coverage-only")) {
-      fail(`observations.${key}.evidence must not use caret-only or coverage-only proof`);
+    if (
+      item.includes("caret-only") ||
+      item.includes("coverage-only") ||
+      item.includes("package-only") ||
+      item.includes("preflight-only")
+    ) {
+      fail(
+        `observations.${key}.evidence must not use caret-only, coverage-only, package-only, or preflight-only proof`,
+      );
     }
   }
   if (status === "passed" || observationStatus === "passed") {

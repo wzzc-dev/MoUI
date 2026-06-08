@@ -517,6 +517,8 @@ assertIncludes("docs/release-readiness.md", "validate-renderer-proof-manifest.mj
 assertIncludes("docs/release-readiness.md", "artifact root");
 assertIncludes("docs/release-readiness.md", "radialGradient");
 assertIncludes("docs/release-readiness.md", "colorEmojiPixels");
+assertIncludes("docs/release-readiness.md", "selectionRects");
+assertIncludes("docs/release-readiness.md", "imeCompositionVisual");
 assertIncludes("docs/release-readiness.md", "asyncImageSecondFrame");
 assertIncludes("docs/release-readiness.md", "resize/input event-bridge");
 assertIncludes("docs/release-readiness.md", "Markdown Editor text input");
@@ -684,6 +686,8 @@ assertIncludes(
 assertIncludes("scripts/record-platform-evidence-manifest.mjs", "asyncImageSecondFrame");
 assertIncludes("scripts/record-native-skia-evidence.mjs", "--async-image-log");
 assertIncludes("docs/testing.md", "asyncImageSecondFrame=yes");
+assertIncludes("docs/testing.md", "selection rectangles");
+assertIncludes("docs/testing.md", "IME candidate anchors");
 for (const platform of ["macos", "windows", "linux"]) {
   assertIncludes(
     `moui/backend/${platform}/skia/${platform}_skia_provider.mbt`,
@@ -825,6 +829,8 @@ assertIncludes("AGENTS.md", "record-web-renderer-proof-manifest.mjs");
 assertIncludes("AGENTS.md", "test-record-web-renderer-proof-manifest.mjs");
 assertIncludes("AGENTS.md", "renderer-proof-summary");
 assertIncludes("AGENTS.md", "colorEmojiPixels");
+assertIncludes("AGENTS.md", "selectionRects");
+assertIncludes("AGENTS.md", "imeCompositionVisual");
 assertIncludes("AGENTS.md", "CDP is unavailable");
 assertIncludes("AGENTS.md", "resize/input event-bridge");
 assertIncludes("AGENTS.md", "--web-presentation-manifest");
