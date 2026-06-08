@@ -409,6 +409,7 @@ node scripts/test-record-web-renderer-proof-manifest.mjs
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check
 node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check
+node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_editing_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_editing_fixture --test-name "unicode 17 grapheme editing fixture samples" --actual-kind core-editing --check
 node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/render/skia/skia_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_skia_unicode_17_grapheme_break_fixture --test-name "skia unicode 17 grapheme break fixture samples" --actual-kind skia-clusters --check
 node --check scripts/generate-grapheme-property-data.mjs
 node scripts/generate-grapheme-property-data.mjs --grapheme-property <Unicode-17.0.0-GraphemeBreakProperty.txt> --emoji-data <Unicode-17.0.0-emoji-data.txt> --derived-core-properties <Unicode-17.0.0-DerivedCoreProperties.txt> --check
