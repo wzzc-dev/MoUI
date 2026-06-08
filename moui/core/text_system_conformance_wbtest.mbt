@@ -130,6 +130,38 @@ fn assert_grapheme_boundary_indexes(
 }
 
 ///|
+fn assert_grapheme_delete_range(
+  text : String,
+  caret : Int,
+  before : Int,
+  after : Int,
+  expected : TextRange,
+) -> Unit raise {
+  let actual = TextGraphemeBoundaries::new(text~).delete_range(
+    caret,
+    before,
+    after,
+  )
+  inspect(actual.start, content="\{expected.start}")
+  inspect(actual.end, content="\{expected.end}")
+}
+
+///|
+fn assert_grapheme_utf8_offsets(
+  text : String,
+  indexes : Array[Int],
+  expected : Array[Int],
+) -> Unit raise {
+  if indexes.length() != expected.length() {
+    fail("expected matching index and utf8-offset fixture lengths")
+  }
+  let boundaries = TextGraphemeBoundaries::new(text~)
+  for index in 0..<indexes.length() {
+    inspect(boundaries.utf8_offset(indexes[index]), content="\{expected[index]}")
+  }
+}
+
+///|
 fn fixed_advance_text_system(advance : Double) -> TextSystem {
   TextSystem::new(id="test-fixed-advance-conformance", measure=input => {
     let carets : Array[Double] = [0.0]
@@ -256,13 +288,22 @@ test "text caret movement skips representative cluster interiors" {
 test "grapheme boundary scanner covers uax control emoji ri and indic rules" {
   assert_grapheme_boundary_indexes("A\r\nB", [0, 1, 3, 4])
   assert_grapheme_boundary_indexes("A\u{0007}\u{0301}B", [0, 1, 2, 3, 4])
+  assert_grapheme_boundary_indexes("\u{0600}A", [0, 2])
   assert_grapheme_boundary_indexes("A\u{200D}B", [0, 2, 3])
+  assert_grapheme_boundary_indexes("A\u{0915}\u{093E}B", [0, 1, 3, 4])
+  assert_grapheme_boundary_indexes("\u{1100}\u{1161}\u{11A8}", [0, 3])
   assert_grapheme_boundary_indexes("👨🏾‍🚀", [0, 4])
+  assert_grapheme_boundary_indexes("👨‍A", [0, 2, 3])
   assert_grapheme_boundary_indexes("\u{1F1FA}\u{1F1F8}\u{1F1E8}", [0, 2, 3])
+  assert_grapheme_boundary_indexes(
+    "\u{1F1FA}\u{1F1F8}\u{1F1E8}\u{1F1E6}",
+    [0, 2, 4],
+  )
   assert_grapheme_boundary_indexes("A\u{1F1FA}\u{1F1F8}\u{1F1E8}B", [
     0, 1, 3, 4, 5,
   ])
   assert_grapheme_boundary_indexes("क्‍ष", [0, 4])
+  assert_grapheme_boundary_indexes("क्‍A", [0, 3, 4])
   assert_grapheme_boundary_indexes("क्A", [0, 2, 3])
   assert_grapheme_boundary_indexes("क् A", [0, 2, 3, 4])
   assert_grapheme_boundary_indexes("क्‌ष", [0, 3, 4])
@@ -295,6 +336,29 @@ test "grapheme boundary contract covers ranges deletes and utf8 offsets" {
   inspect(delete.end, content="4")
   inspect(boundaries.utf8_offset(4), content="12")
   inspect(boundaries.utf8_offset(5), content="13")
+  assert_grapheme_delete_range(
+    "A👨🏾‍🚀B",
+    5,
+    1,
+    0,
+    TextRange::new(start=1, end=5),
+  )
+  assert_grapheme_delete_range(
+    "Aक्‍षB",
+    5,
+    1,
+    0,
+    TextRange::new(start=1, end=5),
+  )
+  assert_grapheme_delete_range(
+    "Aक्‍AB",
+    4,
+    1,
+    0,
+    TextRange::new(start=1, end=4),
+  )
+  assert_grapheme_utf8_offsets("Aक्‍षB", [0, 1, 5, 6], [0, 1, 13, 14])
+  assert_grapheme_utf8_offsets("A\u{0600}B", [0, 2, 3], [0, 3, 4])
 }
 
 ///|
