@@ -183,6 +183,11 @@ if (backend === "skia-native") {
     "grapheme-boundary",
     "utf8-offsets",
   ];
+  requiredObservationEvidence.imeCompositionVisual = [
+    "composition-range",
+    "composition-cursor",
+    "preedit-pixels",
+  ];
 }
 
 const platform = requireString(manifest, "platform", "manifest");

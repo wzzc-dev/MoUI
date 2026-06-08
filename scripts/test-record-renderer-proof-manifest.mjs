@@ -149,6 +149,9 @@ const skiaMarkers = markers.map(marker => {
   if (marker.startsWith("MoUI renderer proof imeCandidateAnchor passed")) {
     return "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets";
   }
+  if (marker.startsWith("MoUI renderer proof imeCompositionVisual passed")) {
+    return "MoUI renderer proof imeCompositionVisual passed composition-range composition-cursor preedit-pixels";
+  }
   return marker;
 });
 
@@ -190,7 +193,8 @@ if (
   !skiaPassedManifest.observations.bidiLayout.evidence.includes("bidi_visual_order_ready=true") ||
   !skiaPassedManifest.observations.selectionRects.evidence.includes("hit-test") ||
   !skiaPassedManifest.observations.imeCandidateAnchor.evidence.includes("grapheme-boundary") ||
-  !skiaPassedManifest.observations.imeCandidateAnchor.evidence.includes("utf8-offsets")
+  !skiaPassedManifest.observations.imeCandidateAnchor.evidence.includes("utf8-offsets") ||
+  !skiaPassedManifest.observations.imeCompositionVisual.evidence.includes("composition-cursor")
 ) {
   console.error("passed Skia manifest did not preserve SkParagraph/emoji/IME evidence");
   process.exit(1);
@@ -329,6 +333,27 @@ if (
   skiaMissingImeGraphemeBoundaryManifest.observations.imeCandidateAnchor.status !== "failed"
 ) {
   console.error("missing native Skia IME grapheme boundary token should keep candidate anchor proof failed");
+  process.exit(1);
+}
+
+const skiaMissingCompositionCursor = runSkiaRecorder(
+  "skia-missing-composition-cursor",
+  skiaMarkers.join("\n").replace(" composition-cursor", ""),
+);
+if (skiaMissingCompositionCursor.result.status !== 0) {
+  console.error("expected missing native Skia composition cursor proof to validate as failed");
+  console.error(skiaMissingCompositionCursor.result.stdout);
+  console.error(skiaMissingCompositionCursor.result.stderr);
+  process.exit(1);
+}
+const skiaMissingCompositionCursorManifest = JSON.parse(
+  readFileSync(skiaMissingCompositionCursor.outputPath, "utf8"),
+);
+if (
+  skiaMissingCompositionCursorManifest.status !== "failed" ||
+  skiaMissingCompositionCursorManifest.observations.imeCompositionVisual.status !== "failed"
+) {
+  console.error("missing native Skia composition cursor token should keep composition visual proof failed");
   process.exit(1);
 }
 if (
