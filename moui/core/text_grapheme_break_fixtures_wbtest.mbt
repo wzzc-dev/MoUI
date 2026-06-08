@@ -31,5 +31,7 @@ test "generated grapheme break fixture samples" {
   assert_generated_grapheme_break_fixture("\u{1F468}\u{200D}\u{41}", [0, 2, 3], "GB11 rejects ZWJ before non-ExtPict")
   assert_generated_grapheme_break_fixture("\u{915}\u{94D}\u{200D}\u{937}", [0, 4], "Indic virama ZWJ consonant conjunct")
   assert_generated_grapheme_break_fixture("\u{915}\u{94D}\u{200D}\u{41}", [0, 3, 4], "Indic virama ZWJ before Latin breaks")
+  assert_generated_grapheme_break_fixture("\u{915}\u{94D}\u{93C}\u{937}", [0, 4], "Indic virama Extend consonant conjunct")
+  assert_generated_grapheme_break_fixture("\u{915}\u{94D}\u{93C}\u{41}", [0, 3, 4], "Indic virama Extend before Latin breaks")
   assert_generated_grapheme_break_fixture("\u{915}\u{94D}\u{200C}\u{937}", [0, 3, 4], "Indic virama ZWNJ breaks before consonant")
 }

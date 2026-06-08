@@ -14,4 +14,6 @@
 ÷ 1F468 × 200D ÷ 0041 ÷ # GB11 rejects ZWJ before non-ExtPict
 ÷ 0915 × 094D × 200D × 0937 ÷ # Indic virama ZWJ consonant conjunct
 ÷ 0915 × 094D × 200D ÷ 0041 ÷ # Indic virama ZWJ before Latin breaks
+÷ 0915 × 094D × 093C × 0937 ÷ # Indic virama Extend consonant conjunct
+÷ 0915 × 094D × 093C ÷ 0041 ÷ # Indic virama Extend before Latin breaks
 ÷ 0915 × 094D × 200C ÷ 0937 ÷ # Indic virama ZWNJ breaks before consonant

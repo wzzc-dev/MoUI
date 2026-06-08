@@ -324,6 +324,11 @@ fn fallback_codepoint_is_zwj(codepoint : Int) -> Bool {
 }
 
 ///|
+fn fallback_codepoint_is_zwnj(codepoint : Int) -> Bool {
+  codepoint == 0x200C
+}
+
+///|
 fn fallback_hangul_allows_no_break(left : Int, right : Int) -> Bool {
   if fallback_codepoint_is_hangul_l(left) {
     return fallback_codepoint_is_hangul_l(right) ||
@@ -354,21 +359,42 @@ fn fallback_indic_virama_allows_no_break(
     return fallback_codepoint_is_zwj(right) ||
       fallback_codepoint_is_indic_consonant(right)
   }
-  if !fallback_codepoint_is_zwj(left) || index < 2 {
+  if !fallback_codepoint_is_indic_consonant(right) || index < 2 {
     return false
   }
-  let mut cursor = index - 2
-  while cursor >= 0 &&
-        fallback_codepoint_is_grapheme_extend(chars[cursor].to_int()) &&
-        !fallback_codepoint_is_zwj(chars[cursor].to_int()) &&
-        !fallback_codepoint_is_virama(chars[cursor].to_int()) {
-    if cursor == 0 {
-      return false
-    }
-    cursor = cursor - 1
+  if fallback_codepoint_is_zwj(left) {
+    return fallback_indic_virama_before_extend_run(chars, index - 2)
   }
-  fallback_codepoint_is_virama(chars[cursor].to_int()) &&
-  fallback_codepoint_is_indic_consonant(right)
+  if fallback_codepoint_is_grapheme_extend(left) &&
+    !fallback_codepoint_is_zwnj(left) {
+    return fallback_indic_virama_before_extend_run(chars, index - 1)
+  }
+  false
+}
+
+///|
+fn fallback_indic_virama_before_extend_run(
+  chars : Array[Char],
+  start : Int,
+) -> Bool {
+  let mut cursor = start
+  while cursor >= 0 {
+    let codepoint = chars[cursor].to_int()
+    if fallback_codepoint_is_virama(codepoint) {
+      return true
+    }
+    if fallback_codepoint_is_grapheme_extend(codepoint) &&
+      !fallback_codepoint_is_zwj(codepoint) &&
+      !fallback_codepoint_is_zwnj(codepoint) {
+      if cursor == 0 {
+        return false
+      }
+      cursor = cursor - 1
+      continue
+    }
+    return false
+  }
+  false
 }
 
 ///|
