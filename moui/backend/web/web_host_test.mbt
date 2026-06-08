@@ -216,13 +216,22 @@ test "web service bridge can defer async clipboard read, file dialogs, and write
   match
     bridge.dispatch(
       @host.HostServiceRequest::TextFile(
-        @host.HostTextFileRequest::WriteText("note.md", "updated"),
+        @host.HostTextFileRequest::ReadText("docs/architecture.md"),
       ),
     ) {
     @host.HostServiceResponse::Pending(id) => inspect(id.value, content="3")
+    _ => fail("expected pending text-file read")
+  }
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::TextFile(
+        @host.HostTextFileRequest::WriteText("note.md", "updated"),
+      ),
+    ) {
+    @host.HostServiceResponse::Pending(id) => inspect(id.value, content="4")
     _ => fail("expected pending text-file write")
   }
-  inspect(queue.pending_count(), content="3")
+  inspect(queue.pending_count(), content="4")
   let pending = queue.drain_pending()
   match pending[0].request {
     @host.HostServiceRequest::Clipboard(@host.HostClipboardRequest::ReadText) =>
@@ -235,6 +244,12 @@ test "web service bridge can defer async clipboard read, file dialogs, and write
     _ => fail("expected file dialog pending request")
   }
   match pending[2].request {
+    @host.HostServiceRequest::TextFile(
+      @host.HostTextFileRequest::ReadText(path)
+    ) => inspect(path, content="docs/architecture.md")
+    _ => fail("expected text-file read pending request")
+  }
+  match pending[3].request {
     @host.HostServiceRequest::TextFile(
       @host.HostTextFileRequest::WriteText(path, text)
     ) => {
