@@ -499,7 +499,11 @@ window event rather than stale pointer state. The fork also exposes Wayland
 data-device clipboard selection and file drag/drop events to MoUI; drag/drop
 paths continue through `HostEvent::DragDrop` before reaching `View::on_file_drop`.
 Text-input focus state and IME requests are synchronized through the shared
-`TextInputSession` path used by other native hosts.
+`TextInputSession` path used by other native hosts. That session now records
+`TextInputImeRequestDiagnostics` for each enabled/update request, including
+grapheme-normalized cursor/anchor character positions, UTF-8 offsets for
+surrounding text, the logical candidate-anchor caret rectangle, and whether
+surrounding-text payloads fit the window fork's IME contract.
 
 Linux runtime requirements are intentionally native:
 

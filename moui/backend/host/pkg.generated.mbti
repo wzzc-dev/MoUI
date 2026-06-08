@@ -51,6 +51,8 @@ pub fn surface_metrics_from_physical(@dpi.PhysicalSize, scale_factor? : Double) 
 
 pub fn text_input_ime_request_data(@wzzc-dev/moui/core.TextInputState) -> @wzzc-dev/window/core.ImeRequestData
 
+pub fn text_input_ime_request_diagnostics(@wzzc-dev/moui/core.TextInputState) -> TextInputImeRequestDiagnostics
+
 pub fn touch_phase_to_host(@wzzc-dev/window/core.TouchPhase) -> HostScrollPhase
 
 pub fn window_event_is_context_menu_button(@wzzc-dev/window/core.WindowEvent) -> Bool
@@ -895,11 +897,28 @@ pub fn SurfaceHostState::logical_size(Self) -> @wzzc-dev/moui/core.Size
 pub fn SurfaceHostState::new(metrics~ : HostSurfaceMetrics, owns_surface? : Bool, can_reconfigure? : Bool) -> Self
 pub fn SurfaceHostState::resize(Self, HostSurfaceMetrics) -> HostEvent
 
+pub(all) struct TextInputImeRequestDiagnostics {
+  focused : Bool
+  text_length : Int
+  text_utf8_length : Int
+  cursor : Int
+  anchor : Int
+  cursor_utf8 : Int
+  anchor_utf8 : Int
+  cursor_is_grapheme_boundary : Bool
+  anchor_is_grapheme_boundary : Bool
+  candidate_anchor : @wzzc-dev/moui/core.Rect
+  has_surrounding_text : Bool
+  surrounding_text_utf8_length : Int
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct TextInputSession {
   mut enabled : Bool
   mut last_request : @wzzc-dev/window/core.ImeRequestData?
   mut last_capabilities : @wzzc-dev/window/core.ImeCapabilities?
+  mut last_diagnostics : TextInputImeRequestDiagnostics?
 }
+pub fn TextInputSession::last_diagnostics(Self) -> TextInputImeRequestDiagnostics?
 pub fn TextInputSession::new() -> Self
 pub fn TextInputSession::sync(Self, @wzzc-dev/moui/core.TextInputState) -> TextInputSessionAction
 
