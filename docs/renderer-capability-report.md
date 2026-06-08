@@ -337,8 +337,7 @@ Native SkParagraph and bidi readiness remain partial until the
 `skia-native-linux.json` renderer-proof manifests pass with `engine=skparagraph`
 markers for paragraph wrapping, bidi layout, selection rectangles, and hit
 testing. Broader
-typography, deterministic color emoji, generated Unicode grapheme data
-conformance, and cross-platform
+typography, deterministic color emoji, future Unicode data refreshes, and cross-platform
 emoji fallback conformance remain partial and separate from the WGPU Moon
 Cosmic provider stack. The macOS Skia
 provider now matches Windows and Linux by defaulting to
