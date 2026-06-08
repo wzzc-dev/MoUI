@@ -42,7 +42,17 @@ const markerConfig = {
     marker: "MoUI renderer proof transformPixels passed",
   },
   colorEmojiPixels: {
-    required: ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
+    required: backend === "skia-native"
+      ? [
+          "high-saturation-pixels",
+          "glyph-or-raster",
+          "font-metadata",
+          "glyph-metadata",
+          "fallback-request",
+          "emoji-hint",
+          "stable-glyph-key",
+        ]
+      : ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
     marker: "MoUI renderer proof colorEmojiPixels passed",
   },
   zwjGrapheme: {

@@ -339,7 +339,9 @@ observations with strong marker tokens; passed `colorEmojiPixels` observations
 must also include
 `font-metadata` / `glyph-metadata` evidence and structured metadata fields
 including a non-empty glyph key plus positive glyph width/height, so emoji
-pixels remain tied to the font/glyph path that produced them. Skipped
+pixels remain tied to the font/glyph path that produced them; native Skia color
+emoji proof must also include `fallback-request`, `emoji-hint`, and
+`stable-glyph-key` tokens. Skipped
 jobs, package-only tests, missing uploaded artifacts, blank
 screenshots, caret-only diagnostics, coverage-only font matching,
 package-only checks, provider preflights, preflight-only checks, and

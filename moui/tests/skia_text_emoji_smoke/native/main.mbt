@@ -420,7 +420,7 @@ fn main {
               "MoUI renderer proof colorEmojiPixels metadata font_family=\{proof.font_family} font_source=\{proof.font_source} text_system=\{proof.text_system_id} shaper=\{proof.shaper} glyph_format=rgba glyph_count=\{proof.glyph_count} cluster_count=\{proof.cluster_count} high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels} glyph_key=\{proof.glyph_key} glyph_width=\{proof.glyph_width} glyph_height=\{proof.glyph_height}",
             )
             println(
-              "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata",
+              "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key",
             )
           }
           None =>
