@@ -559,6 +559,8 @@ assertIncludes("scripts/validate-renderer-proof-manifest.mjs", "fallbackRequestC
 assertIncludes("scripts/validate-renderer-proof-manifest.mjs", "emoji-u+");
 assertIncludes("scripts/record-renderer-proof-manifest.mjs", "fallback-request");
 assertIncludes("scripts/record-renderer-proof-manifest.mjs", "fallback_request_character");
+assertIncludes("scripts/ci-renderer-proof-native.mjs", "fallback request character metadata");
+assertIncludes("scripts/ci-renderer-proof-native.sh", "fallback request character metadata");
 assertIncludes("docs/release-readiness.md", "selectionRects");
 assertIncludes("docs/release-readiness.md", "selection-rects line-range hit-test");
 assertIncludes("scripts/validate-renderer-proof-manifest.mjs", "hit-test");
@@ -575,6 +577,8 @@ assertIncludes("moui/core/pkg.generated.mbti", "nearest_boundary_utf8_offset");
 assertIncludes("docs/text-system.md", "Native Skia `imeCandidateAnchor` also requires `utf8-offsets`");
 assertIncludes("scripts/validate-renderer-proof-manifest.mjs", "utf8-offsets");
 assertIncludes("scripts/record-renderer-proof-manifest.mjs", "utf8-offsets");
+assertIncludes("scripts/ci-renderer-proof-native.mjs", "grapheme-boundary, and utf8-offsets evidence");
+assertIncludes("scripts/ci-renderer-proof-native.sh", "grapheme-boundary, and utf8-offsets evidence");
 assertIncludes("AGENTS.md", "host IME request diagnostics including UTF-8");
 assertIncludes("skills/moui-framework-development-skill/SKILL.md", "host IME request diagnostics including UTF-8");
 assertIncludes("docs/release-readiness.md", "imeCompositionVisual");

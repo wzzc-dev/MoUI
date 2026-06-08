@@ -123,13 +123,13 @@ fi
 cat >> "$log_path" <<'EOF'
 MoUI renderer proof radialGradient missing: requires true radial center/mid/edge pixel artifact.
 MoUI renderer proof transformPixels missing: requires nested transform/clip/layer/filter pixel artifact.
-MoUI renderer proof colorEmojiPixels missing: requires real high-saturation emoji raster/glyph evidence with font/glyph metadata.
+MoUI renderer proof colorEmojiPixels missing: requires real high-saturation emoji raster/glyph evidence with font/glyph metadata, fallback request character metadata, and matching stable glyph key.
 MoUI renderer proof zwjGrapheme missing: requires single grapheme cluster and no interior caret evidence.
 MoUI renderer proof bidiLayout missing: requires visual-order evidence.
 MoUI renderer proof paragraphWrapping missing: requires line metrics and later-line pixels.
 MoUI renderer proof selectionRects missing: requires selection rectangles, line-range, and hit-test evidence.
 MoUI renderer proof graphemeEditing missing: requires grapheme boundaries and edit-action evidence.
-MoUI renderer proof imeCandidateAnchor missing: requires candidate anchor and surrounding-text evidence.
+MoUI renderer proof imeCandidateAnchor missing: requires candidate anchor, surrounding-text, grapheme-boundary, and utf8-offsets evidence.
 MoUI renderer proof imeCompositionVisual missing: requires composition range, composition cursor, and preedit pixel evidence.
 MoUI renderer proof asyncImageSecondFrame missing: requires late completion, repaint request, and second-frame pixels.
 EOF
