@@ -1247,7 +1247,7 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
     "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret"
     "MoUI renderer proof paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels"
     "MoUI renderer proof bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order"
-    "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range hit-test"
+    "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test"
     "MoUI renderer proof graphemeEditing passed grapheme-boundaries edit-actions"
     "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets"
     "MoUI renderer proof imeCompositionVisual passed composition-range composition-cursor preedit-pixels"

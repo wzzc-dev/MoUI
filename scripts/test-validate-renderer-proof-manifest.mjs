@@ -40,7 +40,13 @@ const skiaNativeObservationEvidence = {
     "line-metrics",
     "later-line-pixels",
   ],
-  selectionRects: ["engine=skparagraph", "selection-rects", "line-range", "hit-test"],
+  selectionRects: [
+    "engine=skparagraph",
+    "selection-rects",
+    "line-range",
+    "rect-geometry",
+    "hit-test",
+  ],
   imeCandidateAnchor: [
     "candidate-anchor",
     "surrounding-text",
@@ -549,7 +555,12 @@ expectFail(
         ),
         selectionRects: {
           status: "passed",
-          evidence: ["engine=skparagraph", "selection-rects", "line-range"],
+          evidence: [
+            "engine=skparagraph",
+            "selection-rects",
+            "line-range",
+            "rect-geometry",
+          ],
           artifacts: ["artifacts/conformance/renderer-proof/selection.log"],
         },
       },
@@ -557,6 +568,34 @@ expectFail(
     ["--require-passed"],
   ),
   "must include 'hit-test'",
+);
+
+expectFail(
+  "skia native selection proof rejects missing rect geometry token",
+  run(
+    "skia-native-missing-rect-geometry.json",
+    skiaNativeManifest({
+      observations: {
+        ...observations(
+          "passed",
+          skiaNativeObservationEvidence,
+          skiaColorEmojiMetadata(),
+        ),
+        selectionRects: {
+          status: "passed",
+          evidence: [
+            "engine=skparagraph",
+            "selection-rects",
+            "line-range",
+            "hit-test",
+          ],
+          artifacts: ["artifacts/conformance/renderer-proof/selection.log"],
+        },
+      },
+    }),
+    ["--require-passed"],
+  ),
+  "must include 'rect-geometry'",
 );
 
 expectFail(

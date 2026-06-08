@@ -127,7 +127,7 @@ MoUI renderer proof colorEmojiPixels missing: requires real high-saturation emoj
 MoUI renderer proof zwjGrapheme missing: requires single grapheme cluster and no interior caret evidence.
 MoUI renderer proof bidiLayout missing: requires visual-order evidence.
 MoUI renderer proof paragraphWrapping missing: requires line metrics and later-line pixels.
-MoUI renderer proof selectionRects missing: requires selection rectangles, line-range, and hit-test evidence.
+MoUI renderer proof selectionRects missing: requires selection rectangles, line-range, rect geometry, and hit-test evidence.
 MoUI renderer proof graphemeEditing missing: requires grapheme boundaries and edit-action evidence.
 MoUI renderer proof imeCandidateAnchor missing: requires candidate anchor, surrounding-text, grapheme-boundary, and utf8-offsets evidence.
 MoUI renderer proof imeCompositionVisual missing: requires composition range, composition cursor, and preedit pixel evidence.

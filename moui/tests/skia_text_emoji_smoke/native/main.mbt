@@ -316,6 +316,46 @@ fn skia_paragraph_layout(
 }
 
 ///|
+fn selection_rect_has_geometry(rect : @core.Rect) -> Bool {
+  rect.size.width > 0.0 && rect.size.height > 0.0
+}
+
+///|
+fn selection_rect_overlaps_line(
+  rect : @core.Rect,
+  line : @core.TextParagraphLineMetrics,
+) -> Bool {
+  let rect_bottom = rect.origin.y + rect.size.height
+  let line_bottom = line.origin.y + line.size.height
+  rect.origin.y < line_bottom && rect_bottom > line.origin.y
+}
+
+///|
+fn selection_rect_geometry_evidence_available(
+  rects : Array[@core.Rect],
+  first_line : @core.TextParagraphLineMetrics,
+  second_line : @core.TextParagraphLineMetrics,
+) -> Bool {
+  if rects.length() < 2 {
+    return false
+  }
+  let mut covers_first_line = false
+  let mut covers_second_line = false
+  for rect in rects {
+    if !selection_rect_has_geometry(rect) {
+      return false
+    }
+    if selection_rect_overlaps_line(rect, first_line) {
+      covers_first_line = true
+    }
+    if selection_rect_overlaps_line(rect, second_line) {
+      covers_second_line = true
+    }
+  }
+  covers_first_line && covers_second_line
+}
+
+///|
 fn selection_rect_evidence_available(
   layout : @core.TextParagraphLayoutResult,
 ) -> Bool {
@@ -338,10 +378,16 @@ fn selection_rect_evidence_available(
       y=layout.lines[1].origin.y + layout.lines[1].size.height * 0.5,
     ),
   )
+  let rect_geometry = selection_rect_geometry_evidence_available(
+    rects,
+    layout.lines[0],
+    layout.lines[1],
+  )
   println(
-    "MoUI Skia text/emoji smoke selection engine=skparagraph selection_rects_available=\{layout.metadata.selection_rects_available} hit_test_available=\{layout.metadata.hit_test_available} hit_inside=\{hit.is_inside} rect_count=\{rects.length()} line_range=\{layout.lines[0].line_index}..\{layout.lines[1].line_index} hit_line=\{hit.line_index} hit_offset=\{hit.offset}",
+    "MoUI Skia text/emoji smoke selection engine=skparagraph selection_rects_available=\{layout.metadata.selection_rects_available} hit_test_available=\{layout.metadata.hit_test_available} hit_inside=\{hit.is_inside} rect_count=\{rects.length()} rect_geometry=\{rect_geometry} line_range=\{layout.lines[0].line_index}..\{layout.lines[1].line_index} hit_line=\{hit.line_index} hit_offset=\{hit.offset}",
   )
   rects.length() >= 2 &&
+  rect_geometry &&
   hit.is_inside &&
   hit.line_index == layout.lines[1].line_index &&
   hit.offset >= layout.lines[1].text_range.start &&
@@ -736,11 +782,11 @@ fn main {
 
       if selection_rect_evidence_available(paragraph_layout) {
         println(
-          "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range hit-test",
+          "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test",
         )
       } else {
         failures.push(
-          "selectionRects missing Skia selection rectangles, line-range, and hit-test evidence",
+          "selectionRects missing Skia selection rectangles, line-range, rect geometry, and hit-test evidence",
         )
       }
 
