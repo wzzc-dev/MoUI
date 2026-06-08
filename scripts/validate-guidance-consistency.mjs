@@ -290,6 +290,8 @@ assertIncludes(".github/workflows/ci.yml", "renderer-proof-skia-native:");
 assertIncludes(".github/workflows/ci.yml", "renderer-proof-summary:");
 assertIncludes(".github/workflows/ci.yml", "node scripts/ci-renderer-proof-native.mjs wgpu-native");
 assertIncludes(".github/workflows/ci.yml", "node scripts/ci-renderer-proof-native.mjs skia-native");
+assertIncludes(".github/workflows/ci.yml", "--enable-skparagraph --require-skparagraph --write");
+assertIncludes(".github/workflows/ci.yml", "-EnableSkParagraph -RequireSkParagraph -Write");
 assertIncludes(".github/workflows/ci.yml", "artifacts/conformance/renderer-proof/");
 assertIncludes(".github/workflows/ci.yml", "artifacts/platform-evidence/${{ matrix.platform }}/");
 assertIncludes("scripts/ci-renderer-proof-native.mjs", 'if (backend === "skia-native")');
