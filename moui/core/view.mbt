@@ -1203,6 +1203,11 @@ pub fn[Msg] View::intrinsic_height(self : View[Msg]) -> View[Msg] {
 }
 
 ///|
+pub fn[Msg] View::repaint_boundary(self : View[Msg]) -> View[Msg] {
+  modify_view(self, PlainModifier(RepaintBoundaryModifier))
+}
+
+///|
 pub fn[Msg] View::padding(self : View[Msg], value : Double) -> View[Msg] {
   modify_view(self, PlainModifier(PaddingModifier(Insets::all(value))))
 }

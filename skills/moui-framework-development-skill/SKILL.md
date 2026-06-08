@@ -173,9 +173,13 @@ Use this skill when editing or reviewing:
   `moui_skia` binding, including renderer-local command/reason diagnostics for
   unsupported Skia fallbacks, renderer-local image-resource lifecycle change
   callbacks, and `skia_image_load_completion` source decode completion payloads
-  plus opt-in post-present async image loading for native providers.
-  Host-layer completion routing and native provider/platform redraw scheduling
-  from async image load/error notifications remain outside `render/skia`.
+  plus opt-in post-present async image loading for native providers. The
+  binding/renderer may expose an explicit macOS Metal/Ganesh GPU context and
+  offscreen GPU surface preflight, but provider/window GPU presentation remains
+  separate matching-host evidence and must not replace the raster mainline
+  without real smoke proof. Host-layer completion routing and native
+  provider/platform redraw scheduling from async image load/error notifications
+  remain outside `render/skia`.
 - `render/wgpu/`: experimental native wgpu renderer, including source decode
   completion helpers used by provider-owned native image loader hooks.
 - `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
@@ -423,6 +427,7 @@ Real macOS Skia renderer smoke:
 ```sh
 scripts/macos-skia-renderer-smoke.sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
+scripts/macos-skia-renderer-smoke.sh --run-gpu-smoke
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke \
   --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
@@ -444,8 +449,18 @@ The helper resolves JetBrains, existing, or source-built Skia providers,
 temporarily configures the local `moui_skia` and MoUI Skia smoke packages, runs
 the renderer pixel smoke, optionally launches `examples/showcase/macos_skia` to
 verify its first presented frame, optionally launches
-`examples/markdown_editor/macos_skia` with `--run-markdown-smoke`, and restores
-touched `moon.pkg` files. Direct Skia `moon run`/`moon build` commands use the
+`examples/markdown_editor/macos_skia` with `--run-markdown-smoke`, optionally
+runs the explicit macOS Metal/Ganesh route smoke with `--run-gpu-smoke`, and
+restores touched `moon.pkg` files. The GPU route smoke enables
+`MOUI_SKIA_ENABLE_GPU_METAL`, requires the
+`MoUI Skia GPU Metal renderer smoke passed` marker, sets
+`MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for Showcase/Markdown first-frame
+runs, and requires their logs to include
+`surface_route=metal-gpu; surface_gpu=true` provider diagnostics. That proves
+offscreen GPU surface rendering/readback through the existing pixel presenter
+plus app first-frame presentation; it is still separate from direct
+platform-window GPU presentation evidence. Direct Skia
+`moon run`/`moon build` commands use the
 `moui_skia` prebuild hook for real Skia and choose the library mode through
 `MOUI_SKIA_LINK_MODE=dynamic|static|auto`; helper smoke runs can pass
 `--link-mode dynamic|static|auto` to override the environment for that

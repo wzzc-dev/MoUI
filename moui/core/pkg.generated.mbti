@@ -1373,6 +1373,12 @@ pub fn RouterState::stack(Self) -> Array[RouteLocation]
 pub(all) struct RuntimeDirtyStateSummary {
   dirty_count : Int
   dirty_element_ids : Array[ElementId]
+  dirty_build_count : Int
+  dirty_build_element_ids : Array[ElementId]
+  dirty_layout_count : Int
+  dirty_layout_element_ids : Array[ElementId]
+  dirty_paint_count : Int
+  dirty_paint_element_ids : Array[ElementId]
   needs_rebuild : Bool
   needs_layout : Bool
   needs_paint : Bool
@@ -1386,6 +1392,12 @@ pub(all) struct RuntimeInspectorSnapshot {
   size : Size
   dirty_count : Int
   dirty_element_ids : Array[ElementId]
+  dirty_build_count : Int
+  dirty_build_element_ids : Array[ElementId]
+  dirty_layout_count : Int
+  dirty_layout_element_ids : Array[ElementId]
+  dirty_paint_count : Int
+  dirty_paint_element_ids : Array[ElementId]
   dirty_state : RuntimeDirtyStateSummary
   needs_rebuild : Bool
   needs_layout : Bool
@@ -2029,6 +2041,7 @@ pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::padding_insets(child~ : Self[Msg], insets~ : Insets) -> Self[Msg]
 pub fn[Msg] View::picker(items~ : Array[PickerItem], selected~ : Binding[String], placeholder~ : String, font~ : FontSpec, foreground~ : Color, background~ : Brush, corner_radius~ : Double, max_height~ : Double) -> Self[Msg]
 pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
+pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::rich_text_editor(value~ : Binding[String], placeholder~ : String, size~ : Size, format~ : (String) -> RichTextDocument, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius? : Double, on_selection_change? : ((Int, TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool) -> Self[Msg]
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
 pub fn[Msg] View::scroll(child~ : Self[Msg], offset? : Point, viewport? : Size?, state? : ScrollState?, on_scroll? : ((Point) -> Msg)?) -> Self[Msg]

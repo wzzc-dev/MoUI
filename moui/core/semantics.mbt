@@ -359,7 +359,8 @@ fn modified_semantics_info(modifier : ViewModifier) -> SemanticsInfo {
     | AlignModifier(_)
     | AspectRatioModifier(_)
     | IntrinsicWidthModifier
-    | IntrinsicHeightModifier =>
+    | IntrinsicHeightModifier
+    | RepaintBoundaryModifier =>
       { role: Group, label: "", value: "", description: "", actions: [] }
   }
 }

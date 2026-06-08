@@ -204,6 +204,15 @@ pub fn GlyphId::new(UInt16) -> Self
 pub fn GlyphId::to_int(Self) -> Int
 pub fn GlyphId::to_uint16(Self) -> UInt16
 
+pub(all) struct GpuContext {
+  descriptor : @moui_skia.GpuContextDescriptor
+  // private fields
+}
+pub fn GpuContext::is_available(Self) -> Bool
+pub fn GpuContext::metal(@moui_skia.GpuContextDescriptor) -> Self?
+pub fn GpuContext::resource_key(Self) -> @moui_skia.RendererResourceKey
+pub fn GpuContext::support_status(Self) -> SkiaGpuContextSupportStatus
+
 pub(all) struct Image {
   // private fields
 }
@@ -326,7 +335,20 @@ pub fn ShapedTextRun::glyphs(Self) -> Array[GlyphId]
 pub fn ShapedTextRun::is_available(Self) -> Bool
 pub fn ShapedTextRun::positions(Self) -> Array[@moui_skia.Point]
 
+pub(all) enum SkiaGpuContextSupportStatus {
+  SkiaGpuContextAvailable
+  SkiaGpuContextSkiaUnavailable
+  SkiaGpuContextAnonymous
+  SkiaGpuContextMockUnsupported
+  SkiaGpuContextBackendUnsupported
+  SkiaGpuContextMetalOptInDisabled
+  SkiaGpuContextMetalHeadersUnavailable
+  SkiaGpuContextMetalRuntimeUnavailable
+} derive(Eq, @debug.Debug)
+pub fn SkiaGpuContextSupportStatus::is_available(Self) -> Bool
+
 pub(all) struct Surface {
+  descriptor : @moui_skia.SurfaceDescriptor
   // private fields
 }
 pub fn Surface::canvas(Self) -> Canvas?
@@ -334,15 +356,22 @@ pub fn Surface::descriptor(Self) -> @moui_skia.SurfaceDescriptor
 pub fn Surface::dimensions(Self) -> @moui_skia.ISize
 pub fn Surface::flush_and_submit(Self) -> Bool
 pub fn Surface::for_target(@moui_skia.SurfaceTargetDescriptor) -> Self?
+pub fn Surface::for_target_with_gpu_context(@moui_skia.SurfaceTargetDescriptor, GpuContext) -> Self?
+pub fn Surface::gpu_context_support_status(@moui_skia.GpuContextDescriptor) -> SkiaGpuContextSupportStatus
+pub fn Surface::gpu_n32_premul(GpuContext, @moui_skia.SurfaceDescriptor) -> Self?
 pub fn Surface::height(Self) -> Int
 pub fn Surface::image_info(Self) -> @moui_skia.ImageInfo
 pub fn Surface::image_snapshot(Self) -> Image?
 pub fn Surface::image_snapshot_with_bounds(Self, @moui_skia.IRect) -> Image?
+pub fn Surface::metal_gpu_context_headers_available() -> Bool
+pub fn Surface::metal_gpu_context_opt_in_enabled() -> Bool
+pub fn Surface::metal_gpu_context_runtime_available() -> Bool
 pub fn Surface::raster_n32_premul(@moui_skia.ISize) -> Self?
 pub fn Surface::read_pixels(Self, bounds? : @moui_skia.IRect) -> @moui_skia.Pixmap?
 pub fn Surface::render_frame(Self, @moui_skia.RenderFrameDescriptor, font? : Font?, frame_index? : Int) -> SurfaceFrameReplayStats
 pub fn Surface::render_frame_with_resources(Self, @moui_skia.RenderFrameDescriptor, NativeReplayResources, font? : Font?, frame_index? : Int) -> SurfaceFrameReplayStats
 pub fn Surface::target_support_status(@moui_skia.SurfaceTargetDescriptor) -> SurfaceTargetSupportStatus
+pub fn Surface::target_support_status_with_gpu_context(@moui_skia.SurfaceTargetDescriptor, GpuContext) -> SurfaceTargetSupportStatus
 pub fn Surface::width(Self) -> Int
 
 pub(all) struct SurfaceFrameReplayStats {
@@ -372,6 +401,9 @@ pub(all) enum SurfaceTargetSupportStatus {
   SurfaceTargetSkiaUnavailable
   SurfaceTargetWindowUnsupported
   SurfaceTargetGpuUnsupported
+  SurfaceTargetMissingGpuContext
+  SurfaceTargetGpuContextMismatch
+  SurfaceTargetGpuContextUnsupported
 } derive(Eq, @debug.Debug)
 pub fn SurfaceTargetSupportStatus::is_supported(Self) -> Bool
 

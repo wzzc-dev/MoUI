@@ -3,6 +3,10 @@
 priv type SurfaceHandle
 
 ///|
+/// Opaque native Skia GPU context handle.
+priv type GpuContextHandle
+
+///|
 /// Opaque native Skia canvas handle borrowed from a surface.
 priv type CanvasHandle
 

@@ -38,9 +38,13 @@ Current implemented milestone:
 - `NativeData` opaque handle for immutable encoded bytes;
 - `NativeImage` opaque handle from `Surface::image_snapshot`;
 - `NativePath` opaque handle with path construction calls;
+- `NativeGpuContext` opaque handle for opt-in Metal/Ganesh GPU contexts;
 - `skia_available`;
 - raster N32 premul surface constructor API;
 - surface width, height, dimensions, image info, and canvas borrow;
+- opt-in macOS Metal GPU context support diagnostics that create a real Ganesh
+  `GrDirectContext`, plus offscreen GPU-backed N32 premul surface allocation,
+  target/context admission checks, and GPU flush/submit;
 - immutable full-surface and bounded image snapshots with width, height,
   dimensions, and image info;
 - reading surface pixels into copied value-layer `Pixmap` snapshots;
@@ -87,7 +91,8 @@ Current implemented milestone:
 - primitive paint conversion for color, anti-aliasing, dither, style, stroke
   width, stroke miter, stroke cap, stroke join, and blend mode;
 - value-layer `SurfaceDescriptor` contracts for raster, window, and future GPU
-  surfaces, with native raster surfaces reporting the descriptor they satisfy;
+  surfaces, with native raster/GPU surfaces reporting the descriptor they
+  satisfy;
 - value-layer `ResourceCache` contracts for byte-budgeted LRU resource reuse
   and renderer-cache hit/miss/eviction accounting without taking native handle
   ownership;

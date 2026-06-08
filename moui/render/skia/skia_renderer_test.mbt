@@ -5,6 +5,8 @@ test "skia renderer backend info reflects native availability" {
   assert_true(info.owns_surface)
   assert_true(info.description.contains("SurfaceTargetDescriptor"))
   assert_true(info.description.contains("finalization preflight"))
+  assert_true(info.description.contains("Metal GPU opt-in preflight"))
+  assert_true(info.description.contains("window-present=pending"))
   assert_true(info.description.contains("text fallback/shaping descriptor"))
   assert_true(info.description.contains("text maturity audit partial"))
   assert_true(info.description.contains("mixed-run fallback ready"))
@@ -16,6 +18,66 @@ test "skia renderer backend info reflects native availability" {
   } else {
     assert_true(info.status == @render.RendererCapabilityStatus::Unavailable)
     assert_false(info.can_render)
+  }
+}
+
+///|
+test "skia gpu metal preflight reports explicit opt-in route" {
+  let summary = skia_gpu_metal_preflight_summary()
+  assert_true(summary.contains("Metal GPU opt-in preflight"))
+  assert_true(summary.contains("target-plan-ready"))
+  assert_true(summary.contains("explicit-offscreen-surface-api-"))
+  assert_true(summary.contains("window-present=pending"))
+}
+
+///|
+test "skia surface routes keep raster default and gate metal gpu explicitly" {
+  assert_false(SkiaSurfaceRoute::RasterSurfaceRoute.is_gpu())
+  assert_true(SkiaSurfaceRoute::MetalGpuSurfaceRoute.is_gpu())
+  assert_true(SkiaSurfaceRoute::RasterSurfaceRoute.label() == "raster")
+  assert_true(SkiaSurfaceRoute::MetalGpuSurfaceRoute.label() == "metal-gpu")
+
+  let target = SkiaPresentTarget::new(description="test", present=_frame => true)
+  let metrics = @render.RendererSurfaceMetrics::from_logical(
+    size=@core.Size::new(width=16.0, height=16.0),
+  )
+  let gpu_result = try? create_with_present_target_and_route(
+    metrics,
+    target,
+    surface_route=SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+  )
+  if !skia_available() {
+    match gpu_result {
+      Err(SkiaRendererError::SkiaUnavailable) => ()
+      _ => fail("expected unavailable Skia before GPU route creation")
+    }
+  } else {
+    let descriptor = @moui_skia.GpuContextDescriptor::metal(
+      b"moui-render-skia-metal-gpu",
+    )
+    let status = @skia_native.Surface::gpu_context_support_status(descriptor)
+    if status.is_available() {
+      match gpu_result {
+        Ok(renderer) => {
+          assert_true(renderer.surface_route().is_gpu())
+          assert_true(renderer.surface_is_gpu())
+          assert_true(
+            renderer
+            .surface_diagnostic_summary()
+            .contains("surface_route=metal-gpu"),
+          )
+          assert_true(
+            renderer.surface_diagnostic_summary().contains("surface_gpu=true"),
+          )
+        }
+        Err(err) => fail("expected GPU renderer route, got \{err.message()}")
+      }
+    } else {
+      match gpu_result {
+        Err(SkiaRendererError::GpuContextUnavailable(_)) => ()
+        _ => fail("expected explicit GPU context unavailable error")
+      }
+    }
   }
 }
 

@@ -21,7 +21,8 @@
         "ColorFilter",
         "ImageFilter",
         "MaskFilter",
-        "Bitmap"
+        "Bitmap",
+        "GpuContext"
       ],
       "smoke_markers": [],
       "non_smoke_rationale": "Private handle declarations are proven through native ownership and fallback parity gates rather than runtime smoke markers."
@@ -64,6 +65,9 @@
         "native smoke surface target factory raster",
         "native smoke surface target factory unsupported",
         "native smoke surface target support diagnostics",
+        "native smoke gpu metal context support status",
+        "native smoke gpu metal surface allocation",
+        "native smoke gpu metal surface frame finalized",
         "native smoke surface target cache resources",
         "native smoke surface flush-and-submit",
         "native smoke surface render frame commands",

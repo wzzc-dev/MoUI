@@ -19,6 +19,16 @@
       "ownership": "sk_refcnt"
     },
     {
+      "name": "GpuContext",
+      "moonbit_handle": "GpuContextHandle",
+      "moonbit_type": "GpuContext",
+      "wrapper_struct": "MoonbitSkiaGpuContext",
+      "field": "context",
+      "factory": "moonbit_skia_make_gpu_context_wrapper",
+      "finalizer": "moonbit_skia_gpu_context_finalize",
+      "ownership": "sk_refcnt"
+    },
+    {
       "name": "Data",
       "moonbit_handle": "DataHandle",
       "moonbit_type": "Data",

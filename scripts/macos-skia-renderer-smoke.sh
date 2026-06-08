@@ -63,6 +63,11 @@ Options:
                          exit flag and verify the renderer-present marker.
   --run-markdown-smoke   Build and run markdown_editor/macos_skia with a
                          first-frame exit flag and verify the marker.
+  --run-gpu-smoke        Also run the opt-in macOS Metal/Ganesh Skia GPU route
+                         smoke. This adds MOUI_SKIA_ENABLE_GPU_METAL and the
+                         Metal-related frameworks for the temporary build,
+                         and selects MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu
+                         for Showcase/Markdown first-frame runs.
   --showcase-timeout SECONDS
                          Seconds to wait for --run-showcase-smoke. Default: 20.
   --markdown-timeout SECONDS
@@ -137,6 +142,7 @@ fetch_repo=1
 skip_showcase_build=0
 run_showcase_smoke=0
 run_markdown_smoke=0
+run_gpu_smoke=0
 showcase_timeout=20
 markdown_timeout=20
 dry_run_config=0
@@ -242,6 +248,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --run-markdown-smoke)
       run_markdown_smoke=1
+      shift
+      ;;
+    --run-gpu-smoke)
+      run_gpu_smoke=1
       shift
       ;;
     --showcase-timeout)
@@ -439,6 +449,11 @@ if [[ $run_markdown_smoke -eq 1 && $write_local_config -eq 1 ]]; then
   exit 2
 fi
 
+if [[ $run_gpu_smoke -eq 1 && $write_local_config -eq 1 ]]; then
+  echo "--write-local-config writes package files and exits; run the GPU smoke afterwards" >&2
+  exit 2
+fi
+
 if ! [[ "$showcase_timeout" =~ ^[0-9]+$ ]] || [[ "$showcase_timeout" -lt 1 ]]; then
   echo "--showcase-timeout must be a positive integer number of seconds" >&2
   exit 2
@@ -530,6 +545,7 @@ fi
 
 static_lib="$lib_path/lib$skia_lib.a"
 dynamic_lib="$lib_path/lib$skia_lib.dylib"
+ganesh_ext_static_lib="$lib_path/libskia_ganesh_ext.a"
 
 if [[ $dry_run_config -eq 0 ]]; then
   if [[ "$skia_provider" == "source" ]]; then
@@ -554,6 +570,7 @@ if [[ $dry_run_config -eq 0 ]]; then
   lib_path="$(resolve_existing_dir "Skia library path" "$lib_path")"
   static_lib="$lib_path/lib$skia_lib.a"
   dynamic_lib="$lib_path/lib$skia_lib.dylib"
+  ganesh_ext_static_lib="$lib_path/libskia_ganesh_ext.a"
   if [[ ! -f "$include_path/include/core/SkSurface.h" ]]; then
     echo "Skia include path does not look like a Skia checkout/root: $include_path" >&2
     exit 1
@@ -613,6 +630,15 @@ case "$resolved_link_mode" in
     ;;
 esac
 
+ganesh_link_flags=""
+if [[ $run_gpu_smoke -eq 1 && "$resolved_link_mode" == "static" ]]; then
+  if [[ $dry_run_config -eq 0 && ! -f "$ganesh_ext_static_lib" ]]; then
+    echo "Requested Metal GPU Skia smoke, but $ganesh_ext_static_lib was not found" >&2
+    exit 1
+  fi
+  ganesh_link_flags="$ganesh_ext_static_lib"
+fi
+
 native_extra_cc_flags="$extra_cc_flags"
 native_extra_link_flags="$extra_link_flags"
 if [[ $enable_skshaper -eq 1 ]]; then
@@ -640,16 +666,32 @@ if [[ $enable_skshaper -eq 1 ]]; then
   done
   native_extra_link_flags="${shaper_link_flags# }${native_extra_link_flags:+ $native_extra_link_flags}"
 fi
+if [[ $run_gpu_smoke -eq 1 ]]; then
+  native_extra_cc_flags="-DMOUI_SKIA_ENABLE_GPU_METAL${native_extra_cc_flags:+ $native_extra_cc_flags}"
+  if [[ -n "$ganesh_link_flags" ]]; then
+    native_extra_link_flags="$ganesh_link_flags $static_lib${native_extra_link_flags:+ $native_extra_link_flags}"
+  fi
+  native_extra_link_flags="-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit -lobjc${native_extra_link_flags:+ $native_extra_link_flags}"
+fi
 
 cc_flags="-DMOUI_SKIA_HAS_SKIA -std=c++17 -I$include_path"
 if [[ $enable_skshaper -eq 1 ]]; then
   cc_flags="$cc_flags -DMOUI_SKIA_HAS_SKSHAPER"
+fi
+if [[ $run_gpu_smoke -eq 1 ]]; then
+  cc_flags="$cc_flags -DMOUI_SKIA_ENABLE_GPU_METAL"
 fi
 if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
 skia_link_flags="$skia_library_link_flag -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices"
+if [[ -n "$ganesh_link_flags" ]]; then
+  skia_link_flags="$ganesh_link_flags $skia_link_flags"
+fi
+if [[ $run_gpu_smoke -eq 1 ]]; then
+  skia_link_flags="$skia_link_flags -framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit"
+fi
 if [[ $enable_skshaper -eq 1 ]]; then
   skia_link_flags="$skia_link_flags $shaper_link_flags"
 fi
@@ -713,6 +755,7 @@ fi
 echo "  skip_showcase_build=$skip_showcase_build"
 echo "  run_showcase_smoke=$run_showcase_smoke"
 echo "  run_markdown_smoke=$run_markdown_smoke"
+echo "  run_gpu_smoke=$run_gpu_smoke"
 echo "  write_local_config=$write_local_config"
 if [[ $run_showcase_smoke -eq 1 ]]; then
   echo "  showcase_timeout=$showcase_timeout"
@@ -745,6 +788,7 @@ write_renderer_smoke_pkg_config() {
   cat > "$renderer_pkg" <<EOF
 import {
   "moonbitlang/core/encoding/base64",
+  "moonbitlang/core/env",
   "moonbitlang/x/fs",
   "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/moui/backend/host",
@@ -795,6 +839,8 @@ write_markdown_pkg_config() {
   cat > "$markdown_pkg" <<EOF
 import {
   "moonbitlang/core/env",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/macos" @macos_host,
   "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   "wzzc-dev/moui/render/skia" @skia_renderer,
   "examples/markdown_editor/app",
@@ -918,7 +964,7 @@ write_workbench_pkg_config
 echo "Wrote temporary mo_workbench/macos_skia package link flags."
 
 cd "$repo_root"
-moon build moui/tests/skia_renderer_smoke/native --target native
+MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build moui/tests/skia_renderer_smoke/native --target native
 renderer_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
 if [[ ! -x "$renderer_exe" ]]; then
   echo "MoUI Skia renderer smoke executable was not produced at $renderer_exe" >&2
@@ -937,7 +983,11 @@ fi
 
 set +e
 set -o pipefail
-"$renderer_exe" 2>&1 | tee "$smoke_log"
+if [[ $run_gpu_smoke -eq 1 ]]; then
+  MOUI_SKIA_RUN_GPU_METAL_SMOKE=1 "$renderer_exe" 2>&1 | tee "$smoke_log"
+else
+  "$renderer_exe" 2>&1 | tee "$smoke_log"
+fi
 renderer_status=${PIPESTATUS[0]}
 set +o pipefail
 set -e
@@ -954,6 +1004,13 @@ if ! grep -Fq "MoUI Skia async image second-frame smoke passed" "$smoke_log"; th
   exit 1
 fi
 echo "Verified MoUI Skia async image second-frame marker."
+if [[ $run_gpu_smoke -eq 1 ]]; then
+  if ! grep -Fq "MoUI Skia GPU Metal renderer smoke passed route=metal-gpu surface_gpu=true present_count=1 pixel-markers" "$smoke_log"; then
+    echo "MoUI Skia renderer smoke did not prove the Metal GPU route" >&2
+    exit 1
+  fi
+  echo "Verified MoUI Skia GPU Metal route marker."
+fi
 if [[ $enable_skshaper -eq 1 ]]; then
   if ! grep -Fq "MoUI Skia renderer smoke shaper available" "$smoke_log"; then
     echo "MoUI Skia renderer smoke did not prove the enabled SkShaper path" >&2
@@ -963,7 +1020,7 @@ if [[ $enable_skshaper -eq 1 ]]; then
 fi
 
 if [[ $skip_showcase_build -eq 0 ]]; then
-  moon build examples/showcase/macos_skia --target native
+  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build examples/showcase/macos_skia --target native
   showcase_exe="$repo_root/_build/native/debug/build/examples/showcase/macos_skia/macos_skia.exe"
   if [[ -x "$showcase_exe" ]]; then
     echo "Built macos_skia showcase executable: $showcase_exe"
@@ -983,7 +1040,13 @@ if [[ $skip_showcase_build -eq 0 ]]; then
     fi
 
     set +e
-    MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 "$showcase_exe" >"$showcase_log" 2>&1 &
+    if [[ $run_gpu_smoke -eq 1 ]]; then
+      MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+        MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu \
+        "$showcase_exe" >"$showcase_log" 2>&1 &
+    else
+      MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 "$showcase_exe" >"$showcase_log" 2>&1 &
+    fi
     showcase_pid=$!
     (
       sleep "$showcase_timeout"
@@ -1006,12 +1069,19 @@ if [[ $skip_showcase_build -eq 0 ]]; then
       echo "macos_skia Showcase smoke did not print the expected first-frame marker" >&2
       exit 1
     fi
+    if [[ $run_gpu_smoke -eq 1 ]]; then
+      if ! grep -Fq "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" "$showcase_log"; then
+        echo "macos_skia Showcase smoke did not prove the Metal GPU route" >&2
+        exit 1
+      fi
+      echo "Verified macos_skia Showcase GPU route marker."
+    fi
     echo "Verified macos_skia Showcase first-frame smoke marker."
   fi
 fi
 
 if [[ $run_markdown_smoke -eq 1 ]]; then
-  moon build examples/markdown_editor/macos_skia --target native
+  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build examples/markdown_editor/macos_skia --target native
   markdown_exe="$repo_root/_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe"
   if [[ -x "$markdown_exe" ]]; then
     echo "Built markdown_editor/macos_skia executable: $markdown_exe"
@@ -1030,7 +1100,13 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
   fi
 
   set +e
-  MOUI_MARKDOWN_EDITOR_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 "$markdown_exe" >"$markdown_log" 2>&1 &
+  if [[ $run_gpu_smoke -eq 1 ]]; then
+    MOUI_MARKDOWN_EDITOR_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+      MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu \
+      "$markdown_exe" >"$markdown_log" 2>&1 &
+  else
+    MOUI_MARKDOWN_EDITOR_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 "$markdown_exe" >"$markdown_log" 2>&1 &
+  fi
   markdown_pid=$!
   (
     sleep "$markdown_timeout"
@@ -1053,12 +1129,19 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
     echo "markdown_editor/macos_skia smoke did not print the expected first-frame marker" >&2
     exit 1
   fi
+  if [[ $run_gpu_smoke -eq 1 ]]; then
+    if ! grep -Fq "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true" "$markdown_log"; then
+      echo "markdown_editor/macos_skia smoke did not prove the Metal GPU route" >&2
+      exit 1
+    fi
+    echo "Verified markdown_editor/macos_skia GPU route marker."
+  fi
   echo "Verified markdown_editor/macos_skia first-frame smoke marker."
 fi
 
 if [[ -n "$platform_evidence_manifest" ]]; then
   record_host="$(uname -s 2>/dev/null || echo Darwin) $(uname -m 2>/dev/null || true) local Skia smoke"
-  node scripts/record-native-skia-evidence.mjs \
+  record_args=(
     "$(relative_to_repo "$platform_evidence_manifest")" \
     macos \
     --host "$record_host" \
@@ -1067,6 +1150,13 @@ if [[ -n "$platform_evidence_manifest" ]]; then
     --showcase-log "$(relative_to_repo "$showcase_log")" \
     --markdown-log "$(relative_to_repo "$markdown_log")" \
     --note "macOS real-Skia renderer, async image second-frame, and Showcase/Markdown Editor first-frame markers passed on the local Darwin host; provider preflight and fallback-unavailable observations require their own artifacts before Skia route evidence is passed."
+  )
+  if [[ $run_gpu_smoke -eq 1 ]]; then
+    record_args+=(--gpu-renderer-smoke-log "$(relative_to_repo "$smoke_log")")
+    record_args+=(--gpu-showcase-log "$(relative_to_repo "$showcase_log")")
+    record_args+=(--gpu-markdown-log "$(relative_to_repo "$markdown_log")")
+  fi
+  node scripts/record-native-skia-evidence.mjs "${record_args[@]}"
 fi
 
 echo "MoUI macOS Skia renderer smoke passed."

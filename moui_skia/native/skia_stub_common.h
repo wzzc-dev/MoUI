@@ -46,6 +46,12 @@
 #include "include/core/SkSurface.h"
 #include "include/core/SkTypeface.h"
 #include "include/core/SkTypes.h"
+#if __has_include("include/gpu/ganesh/GrDirectContext.h")
+#include "include/gpu/ganesh/GrDirectContext.h"
+#define MOUI_SKIA_HAS_GANESH_DIRECT_CONTEXT 1
+#else
+class GrDirectContext;
+#endif
 #if defined(MOUI_SKIA_HAS_SKSHAPER) && __has_include("modules/skshaper/include/SkShaper.h")
 #include "modules/skshaper/include/SkShaper.h"
 #define MOUI_SKIA_HAS_SKSHAPER_HEADERS 1
@@ -61,7 +67,9 @@
 #include "include/codec/SkEncodedImageFormat.h"
 #include "include/encode/SkJpegEncoder.h"
 #include "include/encode/SkPngEncoder.h"
+#if defined(MOUI_SKIA_HAS_WEBP_ENCODER) && __has_include("include/encode/SkWebpEncoder.h")
 #include "include/encode/SkWebpEncoder.h"
+#endif
 #if __has_include("include/effects/SkColorFilter.h")
 #include "include/effects/SkColorFilter.h"
 #define MOUI_SKIA_HAS_LEGACY_COLOR_FILTER 1
@@ -119,9 +127,22 @@
 struct MoonbitSkiaSurface {
 #if defined(MOUI_SKIA_HAS_SKIA)
   SkSurface* surface;
+  GrDirectContext* gpu_context_owner;
 #else
   void* surface;
+  void* gpu_context_owner;
 #endif
+};
+
+struct MoonbitSkiaGpuContext {
+#if defined(MOUI_SKIA_HAS_SKIA)
+  GrDirectContext* context;
+#else
+  void* context;
+#endif
+  void* device;
+  void* queue;
+  int32_t backend;
 };
 
 struct MoonbitSkiaData {
@@ -485,6 +506,16 @@ MoonbitSkiaSurface* moonbit_skia_make_surface_wrapper(
 #else
   void* surface
 #endif
+);
+MoonbitSkiaGpuContext* moonbit_skia_make_gpu_context_wrapper(
+#if defined(MOUI_SKIA_HAS_SKIA)
+  GrDirectContext* context,
+#else
+  void* context,
+#endif
+  void* device,
+  void* queue,
+  int32_t backend
 );
 MoonbitSkiaCanvas* moonbit_skia_make_canvas_wrapper(
 #if defined(MOUI_SKIA_HAS_SKIA)

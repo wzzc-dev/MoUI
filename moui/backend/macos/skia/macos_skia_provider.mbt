@@ -13,6 +13,7 @@ extern "C" fn macos_present_skia_pixels_to_view(
 pub struct MacosSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
+  priv surface_route : @skia_renderer.SkiaSurfaceRoute
   priv exit_after_first_present : Bool
 }
 
@@ -20,9 +21,10 @@ pub struct MacosSkiaAppOptions {
 pub fn MacosSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
+  surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
   exit_after_first_present? : Bool = false,
 ) -> MacosSkiaAppOptions {
-  { scene_resolver, font_resolution, exit_after_first_present }
+  { scene_resolver, font_resolution, surface_route, exit_after_first_present }
 }
 
 ///|
@@ -117,8 +119,9 @@ pub fn macos_skia_provider_preflight_summary(
     @skia_renderer.SkiaFontResolution::SystemFontMgr => "system-font-mgr"
     @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
   }
+  let surface_route = options.surface_route.label()
   let host_preflight = @macos_host.macos_capability_summary().preflight_fields()
-  "macOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{macos_skia_presenter_description()}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=first-frame smoke required; unavailable=\"\{macos_skia_unavailable_message()}\""
+  "macOS Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; surface_route=\{surface_route}; presenter=\{macos_skia_presenter_description()}; gpu_route=\{@skia_renderer.skia_gpu_metal_preflight_summary()}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=first-frame smoke required; unavailable=\"\{macos_skia_unavailable_message()}\""
 }
 
 ///|
@@ -138,16 +141,21 @@ fn create_renderer(
   }
   match content_view_handle(window) {
     Some(raw_content_view_handle) =>
-      Some(
-        host_renderer_from_skia(
-          @skia_renderer.create_with_present_target(
-            renderer_metrics_from_host(metrics),
-            macos_skia_present_target(raw_content_view_handle),
-            font_resolution=options.font_resolution,
-            async_image_loading=true,
-          ),
-        ),
-      ) catch {
+      try {
+        let renderer = @skia_renderer.create_with_present_target_and_route(
+          renderer_metrics_from_host(metrics),
+          macos_skia_present_target(raw_content_view_handle),
+          surface_route=options.surface_route,
+          font_resolution=options.font_resolution,
+          async_image_loading=true,
+        )
+        if options.surface_route.is_gpu() {
+          println(
+            "macOS Skia renderer route diagnostics: \{renderer.surface_diagnostic_summary()}",
+          )
+        }
+        Some(host_renderer_from_skia(renderer))
+      } catch {
         err => {
           println("error creating macOS Skia renderer: \{err.message()}")
           None

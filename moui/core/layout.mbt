@@ -451,7 +451,8 @@ fn modified_measured_size(
     | LayoutPriorityModifier(_)
     | AlignModifier(_)
     | IntrinsicWidthModifier
-    | IntrinsicHeightModifier => child_size
+    | IntrinsicHeightModifier
+    | RepaintBoundaryModifier => child_size
     AspectRatioModifier(ratio) => aspect_ratio_size(child_size, ratio)
   }
 }
@@ -500,7 +501,8 @@ fn modified_child_constraints(
     | AlignModifier(_)
     | AspectRatioModifier(_)
     | IntrinsicWidthModifier
-    | IntrinsicHeightModifier => constraints.loosen()
+    | IntrinsicHeightModifier
+    | RepaintBoundaryModifier => constraints.loosen()
   }
 }
 
@@ -545,7 +547,8 @@ fn modified_child_frames(
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)
     | IntrinsicWidthModifier
-    | IntrinsicHeightModifier => [frame]
+    | IntrinsicHeightModifier
+    | RepaintBoundaryModifier => [frame]
     AlignModifier(alignment) =>
       if children.length() > 0 {
         [aligned_rect(frame, children[0].intrinsic_size(), alignment)]

@@ -175,10 +175,20 @@ pub(all) struct Bitmap {
 }
 
 ///|
-/// Native raster surface. The handle owns a Skia `SkSurface` when Skia is linked.
+/// Native Skia GPU context. The handle owns a Ganesh direct context when a GPU
+/// backend is linked.
+#warnings("-struct_never_constructed-unused_field")
+pub(all) struct GpuContext {
+  priv handle : GpuContextHandle
+  descriptor : @skia.GpuContextDescriptor
+}
+
+///|
+/// Native raster or GPU surface. The handle owns a Skia `SkSurface` when Skia is linked.
 #warnings("-struct_never_constructed-unused_field")
 pub(all) struct Surface {
   priv handle : SurfaceHandle
+  descriptor : @skia.SurfaceDescriptor
 }
 
 ///|
@@ -189,6 +199,9 @@ pub(all) enum SurfaceTargetSupportStatus {
   SurfaceTargetSkiaUnavailable
   SurfaceTargetWindowUnsupported
   SurfaceTargetGpuUnsupported
+  SurfaceTargetMissingGpuContext
+  SurfaceTargetGpuContextMismatch
+  SurfaceTargetGpuContextUnsupported
 } derive(Debug, Eq)
 
 ///|
@@ -196,6 +209,26 @@ pub fn SurfaceTargetSupportStatus::is_supported(
   self : SurfaceTargetSupportStatus,
 ) -> Bool {
   self is SurfaceTargetSupported
+}
+
+///|
+/// Native diagnostic status for a value-layer GPU context descriptor.
+pub(all) enum SkiaGpuContextSupportStatus {
+  SkiaGpuContextAvailable
+  SkiaGpuContextSkiaUnavailable
+  SkiaGpuContextAnonymous
+  SkiaGpuContextMockUnsupported
+  SkiaGpuContextBackendUnsupported
+  SkiaGpuContextMetalOptInDisabled
+  SkiaGpuContextMetalHeadersUnavailable
+  SkiaGpuContextMetalRuntimeUnavailable
+} derive(Debug, Eq)
+
+///|
+pub fn SkiaGpuContextSupportStatus::is_available(
+  self : SkiaGpuContextSupportStatus,
+) -> Bool {
+  self is SkiaGpuContextAvailable
 }
 
 ///|

@@ -4,6 +4,7 @@ pub(all) suberror SkiaRendererError {
   SurfaceUnavailable
   CanvasUnavailable
   ReadPixelsUnavailable
+  GpuContextUnavailable(String)
   PresentFailed(String)
 } derive(Eq, Debug, ToJson)
 
@@ -11,9 +12,11 @@ pub(all) suberror SkiaRendererError {
 pub fn SkiaRendererError::message(self : SkiaRendererError) -> String {
   match self {
     SkiaUnavailable => "moui_skia/native is unavailable"
-    SurfaceUnavailable => "failed to create Skia raster surface"
+    SurfaceUnavailable => "failed to create Skia surface"
     CanvasUnavailable => "failed to acquire Skia canvas"
     ReadPixelsUnavailable => "failed to read Skia surface pixels"
+    GpuContextUnavailable(description) =>
+      "failed to create Skia GPU context: \{description}"
     PresentFailed(description) => "Skia presenter failed: \{description}"
   }
 }
@@ -31,6 +34,25 @@ pub(all) struct SkiaPixelFrame {
 pub(all) struct SkiaPresentTarget {
   description : String
   present : (SkiaPixelFrame) -> Bool
+}
+
+///|
+pub(all) enum SkiaSurfaceRoute {
+  RasterSurfaceRoute
+  MetalGpuSurfaceRoute
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn SkiaSurfaceRoute::is_gpu(self : SkiaSurfaceRoute) -> Bool {
+  self is MetalGpuSurfaceRoute
+}
+
+///|
+pub fn SkiaSurfaceRoute::label(self : SkiaSurfaceRoute) -> String {
+  match self {
+    RasterSurfaceRoute => "raster"
+    MetalGpuSurfaceRoute => "metal-gpu"
+  }
 }
 
 ///|
@@ -87,6 +109,52 @@ fn SkiaRasterSurfacePreflight::summary(
   } else {
     "SurfaceTargetDescriptor finalization preflight pending"
   }
+}
+
+///|
+fn skia_gpu_context_status_label(
+  status : @skia_native.SkiaGpuContextSupportStatus,
+) -> String {
+  match status {
+    @skia_native.SkiaGpuContextAvailable => "available"
+    @skia_native.SkiaGpuContextSkiaUnavailable => "skia-unavailable"
+    @skia_native.SkiaGpuContextAnonymous => "anonymous"
+    @skia_native.SkiaGpuContextMockUnsupported => "mock-unsupported"
+    @skia_native.SkiaGpuContextBackendUnsupported => "backend-unsupported"
+    @skia_native.SkiaGpuContextMetalOptInDisabled => "metal-opt-in-disabled"
+    @skia_native.SkiaGpuContextMetalHeadersUnavailable =>
+      "metal-headers-unavailable"
+    @skia_native.SkiaGpuContextMetalRuntimeUnavailable =>
+      "metal-runtime-unavailable"
+  }
+}
+
+///|
+pub fn skia_gpu_metal_preflight_summary() -> String {
+  let context = @moui_skia.GpuContextDescriptor::metal(
+    b"moui-render-skia-metal-preflight",
+  )
+  let target = @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
+    @moui_skia.ISize::new(1, 1),
+    gpu_context_key=Some(context.resource_key()),
+  )
+  let plan = target.resource_plan()
+  let target_plan_ready = target.has_gpu_context() &&
+    plan.count_kind(@moui_skia.GpuSurfaceResource) == 1 &&
+    plan.count_kind(@moui_skia.GpuContextResource) == 1 &&
+    plan.gpu_backed_count == 2
+  let status = @skia_native.Surface::gpu_context_support_status(context)
+  let target_label = if target_plan_ready {
+    "target-plan-ready"
+  } else {
+    "target-plan-pending"
+  }
+  let surface_label = if status.is_available() {
+    "explicit-offscreen-surface-api-ready"
+  } else {
+    "explicit-offscreen-surface-api-pending"
+  }
+  "Metal GPU opt-in preflight: context=\{skia_gpu_context_status_label(status)}; \{target_label}; \{surface_label}; window-present=pending"
 }
 
 ///|
@@ -204,6 +272,8 @@ pub(all) struct SkiaRasterRenderer {
   mut metrics : @render.RendererSurfaceMetrics
   target : SkiaPresentTarget
   font_resolution : SkiaFontResolution
+  surface_route : SkiaSurfaceRoute
+  gpu_context : @skia_native.GpuContext?
   mut surface : @skia_native.Surface
   image_cache : Map[String, @skia_native.Image]
   failed_images : Map[String, String]
@@ -292,6 +362,8 @@ pub fn backend_info() -> @render.RendererBackendInfo {
     description="Native Skia raster renderer using moui_skia/native CPU surfaces, " +
       surface_preflight.summary() +
       ", " +
+      skia_gpu_metal_preflight_summary() +
+      ", " +
       text_preflight.summary() +
       ", " +
       text_maturity.summary() +
@@ -368,14 +440,36 @@ pub fn create_with_present_target(
   async_image_loading? : Bool = false,
   on_image_resource_change? : ((@render.ImageResourceSnapshot) -> Unit)? = None,
 ) -> SkiaRasterRenderer raise SkiaRendererError {
+  create_with_present_target_and_route(
+    metrics,
+    target,
+    surface_route=RasterSurfaceRoute,
+    font_resolution~,
+    async_image_loading~,
+    on_image_resource_change~,
+  )
+}
+
+///|
+pub fn create_with_present_target_and_route(
+  metrics : @render.RendererSurfaceMetrics,
+  target : SkiaPresentTarget,
+  surface_route? : SkiaSurfaceRoute = RasterSurfaceRoute,
+  font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
+  async_image_loading? : Bool = false,
+  on_image_resource_change? : ((@render.ImageResourceSnapshot) -> Unit)? = None,
+) -> SkiaRasterRenderer raise SkiaRendererError {
   if !skia_available() {
     raise SkiaRendererError::SkiaUnavailable
   }
-  let surface = create_surface(metrics)
+  let gpu_context = create_gpu_context(surface_route)
+  let surface = create_surface(metrics, surface_route, gpu_context)
   {
     metrics,
     target,
     font_resolution,
+    surface_route,
+    gpu_context,
     surface,
     image_cache: {},
     failed_images: {},
@@ -390,13 +484,82 @@ pub fn create_with_present_target(
 }
 
 ///|
+fn create_gpu_context(
+  surface_route : SkiaSurfaceRoute,
+) -> @skia_native.GpuContext? raise SkiaRendererError {
+  match surface_route {
+    RasterSurfaceRoute => None
+    MetalGpuSurfaceRoute => {
+      let descriptor = @moui_skia.GpuContextDescriptor::metal(
+        b"moui-render-skia-metal-gpu",
+      )
+      match @skia_native.GpuContext::metal(descriptor) {
+        Some(context) => Some(context)
+        None => {
+          let status = @skia_native.Surface::gpu_context_support_status(
+            descriptor,
+          )
+          raise SkiaRendererError::GpuContextUnavailable(
+            skia_gpu_context_status_label(status),
+          )
+        }
+      }
+    }
+  }
+}
+
+///|
 fn create_surface(
   metrics : @render.RendererSurfaceMetrics,
+  surface_route : SkiaSurfaceRoute,
+  gpu_context : @skia_native.GpuContext?,
 ) -> @skia_native.Surface raise SkiaRendererError {
-  let target = skia_raster_surface_target(metrics)
-  match @skia_native.Surface::for_target(target) {
-    Some(surface) => surface
-    None => raise SkiaRendererError::SurfaceUnavailable
+  let target = skia_surface_target(metrics, surface_route, gpu_context)
+  match surface_route {
+    RasterSurfaceRoute =>
+      match @skia_native.Surface::for_target(target) {
+        Some(surface) => surface
+        None => raise SkiaRendererError::SurfaceUnavailable
+      }
+    MetalGpuSurfaceRoute =>
+      match gpu_context {
+        None =>
+          raise SkiaRendererError::GpuContextUnavailable(
+            "missing-metal-gpu-context",
+          )
+        Some(gpu_context) =>
+          match
+            @skia_native.Surface::for_target_with_gpu_context(
+              target, gpu_context,
+            ) {
+            Some(surface) => surface
+            None => raise SkiaRendererError::SurfaceUnavailable
+          }
+      }
+  }
+}
+
+///|
+fn skia_surface_target(
+  metrics : @render.RendererSurfaceMetrics,
+  surface_route : SkiaSurfaceRoute,
+  gpu_context : @skia_native.GpuContext?,
+) -> @moui_skia.SurfaceTargetDescriptor {
+  let size = @moui_skia.ISize::new(
+    skia_dim_to_int(metrics.physical_size.width),
+    skia_dim_to_int(metrics.physical_size.height),
+  )
+  match surface_route {
+    RasterSurfaceRoute =>
+      @moui_skia.SurfaceTargetDescriptor::raster_n32_premul(size)
+    MetalGpuSurfaceRoute =>
+      @moui_skia.SurfaceTargetDescriptor::gpu_n32_premul(
+        size,
+        gpu_context_key=match gpu_context {
+          Some(gpu_context) => Some(gpu_context.resource_key())
+          None => None
+        },
+      )
   }
 }
 
@@ -789,7 +952,32 @@ pub fn SkiaRasterRenderer::resize(
   metrics : @render.RendererSurfaceMetrics,
 ) -> Unit raise SkiaRendererError {
   self.metrics = metrics
-  self.surface = create_surface(metrics)
+  self.surface = create_surface(metrics, self.surface_route, self.gpu_context)
+}
+
+///|
+pub fn SkiaRasterRenderer::surface_route(
+  self : SkiaRasterRenderer,
+) -> SkiaSurfaceRoute {
+  self.surface_route
+}
+
+///|
+pub fn SkiaRasterRenderer::surface_is_gpu(self : SkiaRasterRenderer) -> Bool {
+  self.surface.descriptor().is_gpu()
+}
+
+///|
+pub fn SkiaRasterRenderer::surface_diagnostic_summary(
+  self : SkiaRasterRenderer,
+) -> String {
+  let context = match self.gpu_context {
+    Some(gpu_context) =>
+      skia_gpu_context_status_label(gpu_context.support_status())
+    None => "none"
+  }
+  let gpu_surface = if self.surface_is_gpu() { "true" } else { "false" }
+  "surface_route=\{self.surface_route.label()}; surface_gpu=\{gpu_surface}; gpu_context=\{context}; dimensions=\{self.surface.width()}x\{self.surface.height()}"
 }
 
 ///|

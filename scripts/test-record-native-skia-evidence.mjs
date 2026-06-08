@@ -29,6 +29,31 @@ const pendingObservations = {
 };
 
 const platformEntries = {
+  macos: {
+    name: "macos",
+    status: "pending",
+    host: "macOS host pending",
+    routineCommands: [
+      "sh scripts/dev-check.sh --platform-examples-test",
+      "moon test moui/backend/macos/skia --target native",
+      "moon build examples/showcase/macos_skia --target native",
+      "moon build examples/markdown_editor/macos_skia --target native",
+    ],
+    runtimeEvidenceCommands: [
+      "moon run examples/showcase/macos_skia --target native",
+      "moon run examples/markdown_editor/macos_skia --target native",
+    ],
+    exampleTargets: [
+      "examples/showcase/macos_skia",
+      "examples/markdown_editor/macos_skia",
+    ],
+    windowEvidenceCommand:
+      ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
+    consumerCommand: "pending",
+    observations: { ...pendingObservations },
+    artifacts: ["artifacts/platform-evidence/macos/README.md"],
+    notes: ["matching-host macOS runtime evidence pending"],
+  },
   windows: {
     name: "windows",
     status: "pending",
@@ -157,6 +182,88 @@ try {
     console.error("record partial Linux Skia evidence: manifest boundary changed incorrectly");
     process.exit(1);
   }
+
+  const macosGpuPath = writeManifest("macos-gpu-route.json", "macos");
+  const macosGpuLog = writeArtifact(
+    "macos",
+    "skia-gpu-renderer-smoke.log",
+    "MoUI Skia GPU Metal renderer smoke passed route=metal-gpu surface_gpu=true present_count=1 pixel-markers\n",
+  );
+  const macosGpuShowcaseLog = writeArtifact(
+    "macos",
+    "showcase-skia-gpu-first-frame.log",
+    "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true; gpu_context=available; dimensions=1280x720\nmacOS renderer presented first frame; exiting by request\n",
+  );
+  const macosGpuMarkdownLog = writeArtifact(
+    "macos",
+    "markdown-skia-gpu-first-frame.log",
+    "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true; gpu_context=available; dimensions=980x640\nmacOS renderer presented first frame; exiting by request\n",
+  );
+  expectPass(
+    "record partial macOS Skia GPU route evidence",
+    runRecorder([
+      macosGpuPath,
+      "macos",
+      "--host",
+      "macOS arm64 CI",
+      "--gpu-renderer-smoke-log",
+      macosGpuLog,
+      "--gpu-showcase-log",
+      macosGpuShowcaseLog,
+      "--gpu-markdown-log",
+      macosGpuMarkdownLog,
+    ]),
+  );
+  const macosGpu = JSON.parse(readFileSync(macosGpuPath, "utf8"));
+  const macosGpuEntry = macosGpu.platforms[0];
+  if (
+    macosGpuEntry.skiaEvidence.status !== "pending" ||
+    !macosGpuEntry.skiaEvidence.artifacts.includes(macosGpuLog) ||
+    !macosGpuEntry.skiaEvidence.artifacts.includes(macosGpuShowcaseLog) ||
+    !macosGpuEntry.skiaEvidence.artifacts.includes(macosGpuMarkdownLog) ||
+    !macosGpuEntry.skiaEvidence.notes.some(note => note.includes("Metal GPU route smoke"))
+  ) {
+    console.error("record partial macOS Skia GPU route evidence: manifest was not updated correctly");
+    process.exit(1);
+  }
+
+  const badGpuPath = writeManifest("bad-macos-gpu-route.json", "macos");
+  const badGpuLog = writeArtifact(
+    "macos",
+    "bad-skia-gpu-renderer-smoke.log",
+    "MoUI Skia renderer smoke passed\n",
+  );
+  expectFail(
+    "reject GPU renderer log without GPU marker",
+    runRecorder([
+      badGpuPath,
+      "macos",
+      "--host",
+      "macOS arm64 CI",
+      "--gpu-renderer-smoke-log",
+      badGpuLog,
+    ]),
+    "GPU renderer smoke log is missing expected marker",
+  );
+
+  const badGpuFirstFramePath = writeManifest("bad-macos-gpu-first-frame.json", "macos");
+  const badGpuFirstFrameLog = writeArtifact(
+    "macos",
+    "bad-skia-gpu-first-frame.log",
+    "macOS renderer presented first frame; exiting by request\n",
+  );
+  expectFail(
+    "reject GPU first-frame log without route diagnostics",
+    runRecorder([
+      badGpuFirstFramePath,
+      "macos",
+      "--host",
+      "macOS arm64 CI",
+      "--gpu-showcase-log",
+      badGpuFirstFrameLog,
+    ]),
+    "GPU Showcase first-frame log is missing expected marker",
+  );
 
   const windowsPath = writeManifest("windows-skia-passed.json", "windows");
   const providerLog = writeArtifact(
@@ -313,6 +420,10 @@ try {
     "--host must name a matching linux host",
   );
 } finally {
+  rmSync(join(artifactRoot, "macos", "test-record-native-skia-evidence"), {
+    recursive: true,
+    force: true,
+  });
   rmSync(join(artifactRoot, "linux", "test-record-native-skia-evidence"), {
     recursive: true,
     force: true,

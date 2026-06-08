@@ -20,6 +20,21 @@ fn smoke_temp_env(name : String) -> String? {
 }
 
 ///|
+fn smoke_env_flag_enabled(name : String) -> Bool {
+  match smoke_temp_env(name) {
+    Some(value) =>
+      value == "1" ||
+      value == "true" ||
+      value == "TRUE" ||
+      value == "yes" ||
+      value == "YES" ||
+      value == "on" ||
+      value == "ON"
+    None => false
+  }
+}
+
+///|
 fn smoke_temp_dir() -> String {
   let names = ["MOUI_TEST_TMPDIR", "TMPDIR", "TEMP", "TMP"]
   for name in names {
@@ -949,6 +964,83 @@ fn run_renderer_proof_pixel_smoke() -> Unit {
 }
 
 ///|
+fn run_gpu_metal_renderer_smoke() -> Unit {
+  println(@skia_renderer.skia_gpu_metal_preflight_summary())
+  let captured : Ref[@skia_renderer.SkiaPixelFrame?] = Ref(None)
+  let target = @skia_renderer.SkiaPresentTarget::new(
+    description="MoUI Skia GPU Metal smoke presenter",
+    present=frame => {
+      captured.val = Some(frame)
+      true
+    },
+  )
+  let result = try? @skia_renderer.create_with_present_target_and_route(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=128.0, height=64.0),
+      scale_factor=1.0,
+    ),
+    target,
+    surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+  )
+  match result {
+    Ok(renderer) => {
+      if !renderer.surface_route().is_gpu() {
+        fail_smoke("MoUI Skia GPU Metal smoke did not select the GPU route")
+      }
+      if !renderer.surface_is_gpu() {
+        fail_smoke("MoUI Skia GPU Metal smoke did not create a GPU surface")
+      }
+      renderer.render(renderer_proof_pixel_commands()) catch {
+        err =>
+          fail_smoke(
+            "failed to render MoUI Skia GPU Metal smoke frame: \{err.message()}",
+          )
+      }
+      if renderer.present_count() != 1 {
+        fail_smoke("MoUI Skia GPU Metal smoke did not present one frame")
+      }
+      if renderer.unsupported_command_count() != 0 {
+        fail_smoke("MoUI Skia GPU Metal smoke hit unsupported commands")
+      }
+      match captured.val {
+        Some(frame) => {
+          assert_region_has_redish_pixel(
+            frame,
+            @core.Rect::new(x=28.0, y=28.0, width=8.0, height=8.0),
+          )
+          assert_region_has_purpleish_pixel(
+            frame,
+            @core.Rect::new(x=42.0, y=28.0, width=6.0, height=8.0),
+          )
+          assert_region_has_blueish_pixel(
+            frame,
+            @core.Rect::new(x=52.0, y=28.0, width=4.0, height=8.0),
+          )
+          assert_region_has_dark_pixel(
+            frame,
+            @core.Rect::new(x=104.0, y=30.0, width=20.0, height=24.0),
+          )
+        }
+        None =>
+          fail_smoke(
+            "MoUI Skia GPU Metal smoke presenter did not receive a frame",
+          )
+      }
+      let diagnostic = renderer.surface_diagnostic_summary()
+      println("MoUI Skia GPU Metal route diagnostics: \{diagnostic}")
+      renderer.dispose()
+      println(
+        "MoUI Skia GPU Metal renderer smoke passed route=metal-gpu surface_gpu=true present_count=1 pixel-markers",
+      )
+    }
+    Err(err) =>
+      fail_smoke(
+        "failed to create MoUI Skia GPU Metal renderer: \{err.message()}",
+      )
+  }
+}
+
+///|
 fn async_image_smoke_commands(
   local_png_path : String,
 ) -> Array[@core.DrawCommand] {
@@ -1159,6 +1251,9 @@ fn main {
   }
   if @skia_native.skia_shaper_available() {
     println("MoUI Skia renderer smoke shaper available")
+  }
+  if smoke_env_flag_enabled("MOUI_SKIA_RUN_GPU_METAL_SMOKE") {
+    run_gpu_metal_renderer_smoke()
   }
 
   run_renderer_proof_pixel_smoke()

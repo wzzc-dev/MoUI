@@ -401,6 +401,13 @@ fn ElementNode::render_with_environment(
     paint_commands: commands,
     post_paint_commands: post_commands,
     overlay_paint_commands: overlay_commands,
+    cached_draw_commands: None,
+    cached_overlay_draw_commands: None,
+  }
+  let render = match self.spec {
+    ModifiedSpec({ modifier: RepaintBoundaryModifier, .. }) =>
+      render.with_repaint_boundary_cache()
+    _ => render
   }
   if environment.matches_default_cache_key() {
     self.render_cache.cached_render_frame = Some(bounds)

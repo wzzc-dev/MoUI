@@ -75,9 +75,13 @@ paths, or abstractions that only preserve old shapes.
   local `wzzc-dev/moui_skia` binding, including
   renderer-local image-resource lifecycle change callbacks and
   `skia_image_load_completion` source decode completion payloads plus opt-in
-  post-present async image loading for native providers; host-layer
-  completion routing and native provider/platform redraw scheduling from async
-  image load/error notifications remain outside `render/skia`.
+  post-present async image loading for native providers. The binding and
+  renderer diagnostics may expose an explicit opt-in macOS Metal/Ganesh GPU
+  context plus offscreen GPU surface boundary, but platform-window GPU
+  presentation remains separate evidence and must not replace the Skia raster
+  mainline until matching-host smoke proves it; host-layer completion routing
+  and native provider/platform redraw scheduling from async image load/error
+  notifications remain outside `render/skia`.
   `render/webgpu_adapter/` is the wasm-gc browser WebGPU host-import bridge.
   `render/wgpu/` is the experimental native wgpu renderer.
 - Native text providers live in `render/wgpu/cosmic_text/`,
@@ -379,7 +383,15 @@ packages, runs the renderer pixel smoke, builds `examples/showcase/macos_skia`,
 and restores the package files. Pass `--run-showcase-smoke` to also launch the
 Showcase entrypoint, verify that the macOS Skia renderer presents its first
 frame, and exit automatically. Pass `--run-markdown-smoke` to add the same
-first-frame check for `examples/markdown_editor/macos_skia`. With explicit
+first-frame check for `examples/markdown_editor/macos_skia`. Pass
+`--run-gpu-smoke` to add the explicit macOS Metal/Ganesh GPU route smoke; that
+temporary build enables `MOUI_SKIA_ENABLE_GPU_METAL`, requires the renderer
+smoke log to include the `MoUI Skia GPU Metal renderer smoke passed` marker,
+sets `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for the Showcase/Markdown
+first-frame runs, and requires those first-frame logs to include
+`surface_route=metal-gpu; surface_gpu=true` provider diagnostics. This proves
+GPU surface rendering/readback through the existing pixel presenter plus app
+first-frame presentation, but not direct platform-window GPU presentation. With explicit
 `--smoke-log`, `--showcase-log`, and `--markdown-log` paths under
 `artifacts/platform-evidence/macos/`, pass `--record-platform-evidence
 artifacts/conformance/platform-runtime-evidence.json` to update the macOS

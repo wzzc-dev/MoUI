@@ -212,7 +212,8 @@ fn render_modified_node(
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)
     | IntrinsicWidthModifier
-    | IntrinsicHeightModifier =>
+    | IntrinsicHeightModifier
+    | RepaintBoundaryModifier =>
       if element.children.length() > 0 && placed.children.length() > 0 {
         children.push(
           element.children[0].render_with_environment(

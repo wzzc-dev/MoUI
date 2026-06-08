@@ -85,6 +85,8 @@ struct RenderNode {
   paint_commands : Array[DrawCommand]
   post_paint_commands : Array[DrawCommand]
   overlay_paint_commands : Array[DrawCommand]
+  cached_draw_commands : Array[DrawCommand]?
+  cached_overlay_draw_commands : Array[DrawCommand]?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -102,6 +104,8 @@ fn RenderNode::empty() -> RenderNode {
     paint_commands: [],
     post_paint_commands: [],
     overlay_paint_commands: [],
+    cached_draw_commands: None,
+    cached_overlay_draw_commands: None,
   }
 }
 

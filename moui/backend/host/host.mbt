@@ -1196,8 +1196,8 @@ pub fn RedrawScheduler::request(self : RedrawScheduler) -> Unit {
 fn RedrawScheduler::request_dirty(self : RedrawScheduler) -> Unit {
   if !self.redraw_requested {
     self.redraw_requested = true
+    (self.schedule)()
   }
-  (self.schedule)()
 }
 
 ///|

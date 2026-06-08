@@ -2,6 +2,9 @@
 priv type SurfaceHandle
 
 ///|
+priv type GpuContextHandle
+
+///|
 priv type CanvasHandle
 
 ///|

@@ -16,6 +16,31 @@ fn RenderNode::collect_draw_commands_with_overlays(
   commands : Array[DrawCommand],
   overlays : Array[DrawCommand],
 ) -> Unit {
+  match self.cached_draw_commands {
+    Some(cached) => {
+      for command in cached {
+        commands.push(command)
+      }
+      match self.cached_overlay_draw_commands {
+        Some(cached_overlays) =>
+          for command in cached_overlays {
+            overlays.push(command)
+          }
+        None => ()
+      }
+      return
+    }
+    None => ()
+  }
+  self.collect_uncached_draw_commands_with_overlays(commands, overlays)
+}
+
+///|
+fn RenderNode::collect_uncached_draw_commands_with_overlays(
+  self : RenderNode,
+  commands : Array[DrawCommand],
+  overlays : Array[DrawCommand],
+) -> Unit {
   for command in self.paint_commands {
     commands.push(command)
   }
@@ -27,6 +52,18 @@ fn RenderNode::collect_draw_commands_with_overlays(
   }
   for command in self.overlay_paint_commands {
     overlays.push(command)
+  }
+}
+
+///|
+fn RenderNode::with_repaint_boundary_cache(self : RenderNode) -> RenderNode {
+  let commands : Array[DrawCommand] = []
+  let overlays : Array[DrawCommand] = []
+  self.collect_uncached_draw_commands_with_overlays(commands, overlays)
+  {
+    ..self,
+    cached_draw_commands: Some(commands),
+    cached_overlay_draw_commands: Some(overlays),
   }
 }
 

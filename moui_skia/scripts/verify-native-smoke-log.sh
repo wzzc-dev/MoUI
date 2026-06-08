@@ -51,6 +51,9 @@ default_stage_markers=(
   "native smoke surface target factory raster" \
   "native smoke surface target factory unsupported" \
   "native smoke surface target support diagnostics" \
+  "native smoke gpu metal context support status" \
+  "native smoke gpu metal surface allocation" \
+  "native smoke gpu metal surface frame finalized" \
   "native smoke canvas state restored" \
   "native smoke canvas clip device width" \
   "native smoke non-finite canvas direct geometry skipped" \

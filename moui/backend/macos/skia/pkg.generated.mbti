@@ -24,7 +24,7 @@ pub async fn run_app_with_options_async_pump(String, @core.AppRuntime, options~ 
 pub struct MacosSkiaAppOptions {
   // private fields
 }
-pub fn MacosSkiaAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, exit_after_first_present? : Bool) -> Self
+pub fn MacosSkiaAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @wzzc-dev/moui/render/skia.SkiaSurfaceRoute, exit_after_first_present? : Bool) -> Self
 
 // Type aliases
 

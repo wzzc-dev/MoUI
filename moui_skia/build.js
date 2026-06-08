@@ -264,9 +264,14 @@ function skiaLinkMode(config) {
   return mode;
 }
 
-function macosLibraryFlags(config, libPath, skiaLib) {
+function skiaMetalGpuEnabled(config) {
+  return truthy(configEnvValue(config, "MOUI_SKIA_ENABLE_GPU_METAL"));
+}
+
+function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false) {
   const staticLib = path.join(libPath, `lib${skiaLib}.a`);
   const dynamicLib = path.join(libPath, `lib${skiaLib}.dylib`);
+  const ganeshExtStaticLib = path.join(libPath, "libskia_ganesh_ext.a");
   let mode = skiaLinkMode(config);
   if (mode === "auto") {
     if (fs.existsSync(dynamicLib)) {
@@ -293,6 +298,14 @@ function macosLibraryFlags(config, libPath, skiaLib) {
     throw new Error(
       `MOUI_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
     );
+  }
+  if (includeGaneshExt) {
+    if (!fs.existsSync(ganeshExtStaticLib)) {
+      throw new Error(
+        `MOUI_SKIA_ENABLE_GPU_METAL requested, but ${ganeshExtStaticLib} was not found`,
+      );
+    }
+    return `${ganeshExtStaticLib} ${staticLib}`;
   }
   return staticLib;
 }
@@ -348,8 +361,15 @@ function platformFlags(config, values) {
     linkFlags = `${orderedPackageLibs.join(" ")} user32.lib gdi32.lib ole32.lib opengl32.lib usp10.lib fontsub.lib imm32.lib winmm.lib version.lib dwrite.lib d2d1.lib dxgi.lib advapi32.lib shell32.lib`;
   } else if (process.platform === "darwin") {
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
-    linkFlags = macosLibraryFlags(config, libPath, skiaLib) +
+    linkFlags = macosLibraryFlags(config, libPath, skiaLib, skiaMetalGpuEnabled(config)) +
       " -lc++ -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework ImageIO -framework ApplicationServices";
+    if (skiaMetalGpuEnabled(config)) {
+      stubCcFlags = appendFlags(stubCcFlags, "-DMOUI_SKIA_ENABLE_GPU_METAL");
+      linkFlags = appendFlags(
+        linkFlags,
+        "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit -lobjc",
+      );
+    }
   } else if (process.platform === "linux") {
     stubCcFlags = `-DMOUI_SKIA_HAS_SKIA -std=c++17 -I${includePath}`;
     const staticLib = path.join(libPath, `lib${skiaLib}.a`);

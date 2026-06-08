@@ -233,6 +233,111 @@ test "program simple updates model and rebuilds view" {
 }
 
 ///|
+test "button press batches paint without build or layout flush" {
+  let runtime = AppRuntime::new_spec(
+    root=ViewSpec::ButtonSpec({
+      key: None,
+      text: "Press",
+      size: Size::new(width=100.0, height=44.0),
+      font: FontSpec::new(size=16.0),
+      foreground: Color::black(),
+      background: Brush::solid(Color::gray()),
+      hovered_background: Brush::solid(Color::gray()),
+      pressed_background: Brush::solid(Color::blue()),
+      border: None,
+      shadow: None,
+      corner_radius: 0.0,
+      on_click: None,
+    }),
+    size=Size::new(width=120.0, height=60.0),
+  )
+  inspect(runtime.state.rebuild_pass_count, content="0")
+  inspect(runtime.state.layout_pass_count, content="1")
+  inspect(runtime.state.paint_pass_count, content="1")
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=12.0, y=12.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  inspect(runtime.needs_rebuild(), content="false")
+  inspect(runtime.needs_layout(), content="false")
+  inspect(runtime.needs_paint(), content="true")
+  inspect(runtime.state.dirty_build_elements.length(), content="0")
+  inspect(runtime.state.dirty_layout_elements.length(), content="0")
+  inspect(runtime.state.dirty_paint_elements.length(), content="1")
+  inspect(runtime.state.rebuild_pass_count, content="0")
+  inspect(runtime.state.layout_pass_count, content="1")
+  inspect(runtime.state.paint_pass_count, content="1")
+  ignore(runtime.draw_commands())
+  inspect(runtime.state.rebuild_pass_count, content="0")
+  inspect(runtime.state.layout_pass_count, content="1")
+  inspect(runtime.state.paint_pass_count, content="2")
+  inspect(runtime.state.dirty_paint_elements.length(), content="0")
+}
+
+///|
+test "program button update waits for draw frame flush" {
+  let program = Program::simple(
+    init=0,
+    update=(model, message) => {
+      match message {
+        ProgramSimpleIncrement => model + 1
+      }
+    },
+    view=model => {
+      View::button(
+        text="Count \{model}",
+        size=Size::new(width=120.0, height=44.0),
+        font=FontSpec::new(size=16.0),
+        foreground=Color::black(),
+        background=Brush::solid(Color::gray()),
+        hovered_background=Brush::solid(Color::gray()),
+        pressed_background=Brush::solid(Color::blue()),
+        on_click=Some(ProgramSimpleIncrement),
+      )
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=160.0, height=80.0),
+  )
+  assert_true(has_draw_text(runtime.draw_commands(), "Count 0"))
+  let rebuild_passes = runtime.state.rebuild_pass_count
+  let layout_passes = runtime.state.layout_pass_count
+  let paint_passes = runtime.state.paint_pass_count
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=20.0, y=20.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=20.0, y=20.0),
+        phase=PointerPhase::Up,
+      ),
+    ),
+  )
+  inspect(runtime.needs_rebuild(), content="true")
+  inspect(runtime.state.rebuild_pass_count, content="\{rebuild_passes}")
+  inspect(runtime.state.layout_pass_count, content="\{layout_passes}")
+  inspect(runtime.state.paint_pass_count, content="\{paint_passes}")
+  inspect(runtime.state.dirty_build_elements.length(), content="1")
+  inspect(runtime.state.dirty_layout_elements.length(), content="1")
+  inspect(runtime.state.dirty_paint_elements.length(), content="1")
+  assert_true(has_draw_text(runtime.draw_commands(), "Count 1"))
+  assert_true(runtime.state.rebuild_pass_count > rebuild_passes)
+  assert_true(runtime.state.layout_pass_count > layout_passes)
+  assert_true(runtime.state.paint_pass_count > paint_passes)
+}
+
+///|
 test "program simple with environment rebuilds from viewport and environment" {
   let program : Program[Int, Unit] = Program::simple_with_environment(
     init=0,

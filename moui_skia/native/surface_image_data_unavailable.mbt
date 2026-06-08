@@ -202,9 +202,69 @@ pub fn Bitmap::to_pixmap(self : Bitmap) -> @skia.Pixmap? {
 }
 
 ///|
+pub fn GpuContext::is_available(self : GpuContext) -> Bool {
+  ignore(self)
+  false
+}
+
+///|
+pub fn GpuContext::resource_key(self : GpuContext) -> @skia.RendererResourceKey {
+  self.descriptor.resource_key()
+}
+
+///|
+pub fn GpuContext::support_status(
+  self : GpuContext,
+) -> SkiaGpuContextSupportStatus {
+  ignore(self)
+  SkiaGpuContextSkiaUnavailable
+}
+
+///|
+pub fn GpuContext::metal(
+  descriptor : @skia.GpuContextDescriptor,
+) -> GpuContext? {
+  ignore(descriptor)
+  None
+}
+
+///|
 pub fn Surface::raster_n32_premul(size : @skia.ISize) -> Surface? {
   ignore(size)
   None
+}
+
+///|
+pub fn Surface::gpu_n32_premul(
+  context : GpuContext,
+  descriptor : @skia.SurfaceDescriptor,
+) -> Surface? {
+  ignore(context)
+  ignore(descriptor)
+  None
+}
+
+///|
+pub fn Surface::metal_gpu_context_opt_in_enabled() -> Bool {
+  false
+}
+
+///|
+pub fn Surface::metal_gpu_context_headers_available() -> Bool {
+  false
+}
+
+///|
+pub fn Surface::metal_gpu_context_runtime_available() -> Bool {
+  false
+}
+
+///|
+pub fn Surface::gpu_context_support_status(
+  context : @skia.GpuContextDescriptor,
+) -> SkiaGpuContextSupportStatus {
+  ignore(context)
+  SkiaGpuContextSkiaUnavailable
 }
 
 ///|
@@ -217,6 +277,25 @@ pub fn Surface::target_support_status(
   } else {
     SurfaceTargetSkiaUnavailable
   }
+}
+
+///|
+pub fn Surface::target_support_status_with_gpu_context(
+  target : @skia.SurfaceTargetDescriptor,
+  context : GpuContext,
+) -> SurfaceTargetSupportStatus {
+  ignore(context)
+  Surface::target_support_status(target)
+}
+
+///|
+pub fn Surface::for_target_with_gpu_context(
+  target : @skia.SurfaceTargetDescriptor,
+  context : GpuContext,
+) -> Surface? {
+  ignore(target)
+  ignore(context)
+  None
 }
 
 ///|
@@ -249,7 +328,7 @@ pub fn Surface::image_info(self : Surface) -> @skia.ImageInfo {
 
 ///|
 pub fn Surface::descriptor(self : Surface) -> @skia.SurfaceDescriptor {
-  @skia.SurfaceDescriptor::raster_n32_premul(self.dimensions())
+  self.descriptor
 }
 
 ///|
