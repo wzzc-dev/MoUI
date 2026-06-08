@@ -111,6 +111,29 @@ pub fn HostAppServices::write_text_file(
 }
 
 ///|
+pub fn HostAppServices::read_binary_file(
+  self : HostAppServices,
+  path : String,
+) -> HostServiceResponse {
+  self.dispatch(
+    HostServiceRequest::BinaryFile(HostBinaryFileRequest::ReadBytes(path)),
+  )
+}
+
+///|
+pub fn HostAppServices::write_binary_file(
+  self : HostAppServices,
+  path : String,
+  bytes : Bytes,
+) -> HostServiceResponse {
+  self.dispatch(
+    HostServiceRequest::BinaryFile(
+      HostBinaryFileRequest::WriteBytes(path, bytes),
+    ),
+  )
+}
+
+///|
 pub fn HostAppServices::pick_directory(
   self : HostAppServices,
   title? : String = "",

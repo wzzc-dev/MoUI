@@ -206,6 +206,9 @@ Use this skill when editing or reviewing:
 - `examples/showcase/{macos_skia,windows_skia,linux_skia}` and
   `examples/markdown_editor/{macos_skia,windows_skia,linux_skia}`: recommended
   native Skia renderer example entrypoints.
+- `examples/pdf_workbench/app`, `examples/pdf_workbench/pdflite_adapter`, and
+  `examples/pdf_workbench/macos_skia`: lightweight PDF UI shell, separate
+  `pdflite` adapter checks, and native Skia mainline entrypoint.
 - `examples/showcase/{macos_wgpu_cosmic,windows_wgpu_cosmic,linux_wgpu_cosmic}`: explicit Moon
   Cosmic text-provider comparison entrypoints on the native WGPU diagnostic
   route.
@@ -388,10 +391,16 @@ node scripts/test-validate-skia-entrypoints.mjs
 moon test examples/showcase/app --target native
 moon test examples/counter/app --target native
 moon test examples/markdown_editor/app --target native
+moon test examples/pdf_workbench/app --target native
+moon test examples/pdf_workbench/pdflite_adapter --target native
+moon test examples/pdf_workbench/pdfium_adapter --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 moon build examples/markdown_editor/macos_skia --target native
+moon build examples/pdf_workbench/macos_skia --target native
+moon build examples/pdf_workbench/windows_skia --target native
+moon build examples/pdf_workbench/linux_skia --target native
 moon build examples/markdown_editor/windows_skia --target native
 moon build examples/markdown_editor/linux_skia --target native
 node --check scripts/validate-conformance-capture-manifest.mjs
@@ -429,6 +438,10 @@ sh -n scripts/ci-renderer-proof-native.sh
 sh -n scripts/ci-renderer-proof-summary.sh
 node --check scripts/validate-package-manifest.mjs
 ```
+
+For PDF Workbench app-only or `pdflite_adapter` checks, set
+`MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1` unless the native PDFium raster adapter
+is under test.
 
 Run `sh scripts/dev-check.sh --wgpu-experimental`,
 `sh scripts/conformance-check.sh --render --wgpu-experimental`, or focused

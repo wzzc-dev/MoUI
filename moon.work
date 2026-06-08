@@ -6,6 +6,7 @@ members = [
   "./examples/button_freeze_probe",
   "./examples/showcase",
   "./examples/markdown_editor",
+  "./examples/pdf_workbench",
   "./examples/settings",
   "./examples/data_table",
   "./examples/file_importer",

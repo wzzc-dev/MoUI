@@ -85,11 +85,25 @@ pub(all) enum HostTextFileRequest {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum HostBinaryFileRequest {
+  ReadBytes(String)
+  WriteBytes(String, Bytes)
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostBinaryFileDiagnostic {
+  path : String
+  byte_length : Int
+  operation : String
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum HostServiceRequest {
   Clipboard(HostClipboardRequest)
   ShowMenu(Array[@core.ActionCommand])
   FileDialog(HostFileDialogOptions)
   TextFile(HostTextFileRequest)
+  BinaryFile(HostBinaryFileRequest)
   OpenUrl(String)
   QuerySystemTheme
 } derive(Eq, Debug, ToJson)
@@ -104,6 +118,8 @@ pub(all) enum HostServiceResponse {
   FileDialogSelection(Array[String])
   TextFileContent(String, String)
   TextFileWritten(String)
+  BinaryFileContent(String, Bytes)
+  BinaryFileWritten(String)
   UrlOpened
   SystemTheme(@core.ColorScheme)
 } derive(Eq, Debug, ToJson)
@@ -114,6 +130,7 @@ pub(all) enum HostServiceKind {
   MenuService
   FileDialogService
   TextFileService
+  BinaryFileService
   OpenUrlService
   SystemThemeService
 } derive(Eq, Debug, ToJson)
@@ -415,6 +432,30 @@ pub fn HostFileDialogOptions::new(
 }
 
 ///|
+pub fn HostBinaryFileRequest::diagnostic(
+  self : HostBinaryFileRequest,
+) -> HostBinaryFileDiagnostic {
+  match self {
+    ReadBytes(path) => { path, byte_length: 0, operation: "read-bytes" }
+    WriteBytes(path, bytes) =>
+      { path, byte_length: bytes.length(), operation: "write-bytes" }
+  }
+}
+
+///|
+pub fn HostServiceResponse::binary_file_diagnostic(
+  self : HostServiceResponse,
+) -> HostBinaryFileDiagnostic? {
+  match self {
+    BinaryFileContent(path, bytes) =>
+      Some({ path, byte_length: bytes.length(), operation: "read-bytes" })
+    BinaryFileWritten(path) =>
+      Some({ path, byte_length: 0, operation: "write-bytes" })
+    _ => None
+  }
+}
+
+///|
 pub fn HostServiceBridge::new(
   capabilities~ : HostServiceCapabilities,
   handle~ : (HostServiceRequest) -> HostServiceResponse,
@@ -480,6 +521,7 @@ pub fn HostServiceBridge::can_handle(
     ShowMenu(_) => self.capabilities.menus
     FileDialog(_) => self.capabilities.file_dialogs
     TextFile(_) => self.capabilities.file_access
+    BinaryFile(_) => self.capabilities.file_access
     OpenUrl(_) => self.capabilities.open_url
     QuerySystemTheme => self.capabilities.system_theme
   }
@@ -494,6 +536,7 @@ pub fn HostServiceRequest::unavailable_message(
     ShowMenu(_) => "menu service is unavailable"
     FileDialog(_) => "file dialog service is unavailable"
     TextFile(_) => "text file service is unavailable"
+    BinaryFile(_) => "binary file service is unavailable"
     OpenUrl(_) => "open URL service is unavailable"
     QuerySystemTheme => "system theme service is unavailable"
   }
@@ -506,6 +549,7 @@ pub fn HostServiceRequest::kind(self : HostServiceRequest) -> HostServiceKind {
     ShowMenu(_) => MenuService
     FileDialog(_) => FileDialogService
     TextFile(_) => TextFileService
+    BinaryFile(_) => BinaryFileService
     OpenUrl(_) => OpenUrlService
     QuerySystemTheme => SystemThemeService
   }

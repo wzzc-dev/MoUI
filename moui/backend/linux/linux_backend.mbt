@@ -298,6 +298,7 @@ pub fn linux_service_bridge(
   open_url? : (String) -> Bool = dispatch_linux_open_url,
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_linux_file_dialog,
   text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_linux_text_file,
+  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_linux_binary_file,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(capabilities=service_capabilities(), handle=request => {
     match request {
@@ -315,6 +316,8 @@ pub fn linux_service_bridge(
         @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
       @host.HostServiceRequest::TextFile(text_file_request) =>
         text_file(text_file_request)
+      @host.HostServiceRequest::BinaryFile(binary_file_request) =>
+        binary_file(binary_file_request)
       @host.HostServiceRequest::ShowMenu(_) =>
         @host.HostServiceResponse::Unavailable("menu service is unavailable")
     }
@@ -394,6 +397,29 @@ fn dispatch_linux_text_file(
         _ => return @host.HostServiceResponse::Unavailable("file write failed")
       }
       @host.HostServiceResponse::TextFileWritten(path)
+    }
+  }
+}
+
+///|
+fn dispatch_linux_binary_file(
+  request : @host.HostBinaryFileRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    @host.HostBinaryFileRequest::ReadBytes(path) =>
+      if @fs.path_exists(path) {
+        let bytes = @fs.read_file_to_bytes(path) catch {
+          _ => return @host.HostServiceResponse::Unavailable("file read failed")
+        }
+        @host.HostServiceResponse::BinaryFileContent(path, bytes)
+      } else {
+        @host.HostServiceResponse::Unavailable("file does not exist")
+      }
+    @host.HostBinaryFileRequest::WriteBytes(path, bytes) => {
+      @fs.write_bytes_to_file(path, bytes) catch {
+        _ => return @host.HostServiceResponse::Unavailable("file write failed")
+      }
+      @host.HostServiceResponse::BinaryFileWritten(path)
     }
   }
 }

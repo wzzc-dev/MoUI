@@ -1,0 +1,14 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/io",
+  "moonbitlang/async/process",
+  "moonbitlang/core/json",
+  "examples/pdf_workbench/app",
+  "examples/pdf_workbench/pdflite_service_protocol" @protocol,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

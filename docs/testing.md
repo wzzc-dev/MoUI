@@ -34,9 +34,16 @@ moon test moui/backend/web --target wasm-gc
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
+moon test examples/pdf_workbench/app --target native
+moon test examples/pdf_workbench/pdflite_adapter --target native
+moon test examples/pdf_workbench/pdfium_adapter --target native
 ```
 
 Run `moon fmt` before handoff so MoonBit source stays normalized.
+
+For PDF Workbench app-only or `pdflite_adapter` checks, set
+`MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1` unless the native PDFium raster adapter
+is the thing being validated.
 
 Use `moon check --warn-list +unnecessary_annotation` as a cleanup audit before
 or during public API reviews. Treat new unnecessary annotations as cleanup work,
@@ -54,7 +61,7 @@ mapping is:
 | Navigation shell | `moon test moui/views --target native`, `moon test examples/showcase/app --target native` |
 | Menus and commands | `moon test moui/core --target native`, `moon test moui/views --target native`, `moon test examples/command_palette/app --target native` |
 | Program effects and subscriptions | `moon test moui/core --target native` covers TEA model dispatch, effect/task/subscription lifecycle diagnostics, stale callback guards, synchronous click/effect/task/subscription queueing, and the bounded per-turn drain that keeps self-queued messages pending instead of monopolizing the current runtime callback |
-| Host services and file import | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native` |
+| Host services and file workflows | `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, `moon test examples/file_importer/app --target native`, `moon test examples/pdf_workbench/app --target native`, `moon test examples/pdf_workbench/pdflite_adapter --target native`, `moon test examples/pdf_workbench/pdfium_adapter --target native` |
 | Host event, window, timer, and route subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, touched native backend checks such as `moon test moui/backend/macos --target native`, `moon test moui/backend/linux --target native`, or `moon check moui/backend/windows --target native` |
 | Native async image completion | `moon test moui/render --target native`, `moon test moui/render/skia --target native`, `moon test moui/backend/host --target native`, touched native backend/provider package tests such as `moon test moui/backend/macos --target native`, `moon test moui/backend/macos/skia --target native`, `moon test moui/backend/linux --target native`, or `moon test moui/backend/linux/skia --target native`; add `moon test moui/render/wgpu --target native` plus the matching `backend/<platform>/wgpu` package only for WGPU diagnostic changes. Windows package tests require a Windows/MSVC host, use `moon check moui/backend/windows --target native` and `moon check moui/backend/windows/skia --target native` on non-Windows hosts for static API coverage |
 | Virtual lists | `moon test moui/views --target native`, `sh scripts/conformance-check.sh --layout` |

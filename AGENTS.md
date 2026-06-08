@@ -31,7 +31,7 @@ paths, or abstractions that only preserve old shapes.
 - `views/` is a facade over core primitive builders. Public constructors return
   opaque `@core.View[Msg]`; `ViewSpec` and node payloads stay inside `core`.
 - `backend/host/` defines shared host event, surface, input, async
-  host-service including clipboard, file-dialog, text-file, URL, menu, and
+  host-service including clipboard, file-dialog, text-file, binary-file, URL, menu, and
   system-theme service contracts, host-event fanout subscription adapters, window-scoped subscription adapters,
   platform event-source bundles for feeding normalized Web/native host and window
   events into app-owned subscriptions,
@@ -92,7 +92,15 @@ paths, or abstractions that only preserve old shapes.
   entrypoints only. Showcase has `macos_skia`, `windows_skia`, and
   `linux_skia` entrypoints for the recommended native Skia renderer mainline.
   Markdown Editor has `macos_skia`, `windows_skia`, and `linux_skia` for
-  native Skia renderer entrypoints. Showcase also has `macos_wgpu_cosmic`,
+  native Skia renderer entrypoints. PDF Workbench has a lightweight shared
+  `examples/pdf_workbench/app` package, a separate
+  `examples/pdf_workbench/pdflite_adapter` package for real PDF engine checks,
+  `examples/pdf_workbench/pdflite_service_protocol` and
+  `examples/pdf_workbench/pdflite_service_native_transport` packages for
+  helper-process document service isolation,
+  a native-only `examples/pdf_workbench/pdfium_adapter` package for PDFium page
+  rasterization, and `macos_skia`, `windows_skia`, and `linux_skia`
+  entrypoints. Showcase also has `macos_wgpu_cosmic`,
   `windows_wgpu_cosmic`, and `linux_wgpu_cosmic` entrypoints for explicit Moon Cosmic
   text-provider comparison on the native WGPU diagnostic route.
 - `website/` is the MoUI-built homepage and runtime docs workspace. Keep

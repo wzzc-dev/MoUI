@@ -152,12 +152,22 @@ moon test examples/markdown_editor/app --target native
 moon test examples/settings/app --target native
 moon test examples/data_table/app --target native
 moon test examples/file_importer/app --target native
+moon test examples/pdf_workbench/app --target native
+moon test examples/pdf_workbench/pdflite_service_protocol --target native
+moon test examples/pdf_workbench/pdflite_service_native_transport --target native
+moon test examples/pdf_workbench/pdflite_adapter --target native
+moon test examples/pdf_workbench/pdfium_adapter --target native
+node scripts/pdf-workbench-native-smoke.mjs
+scripts/pdf-workbench-macos-smoke.sh
 moon test examples/command_palette/app --target native
 ```
 
 Prefix app-only tests with `MOUI_SKIA_DISABLE_PREBUILD_SKIA=1` when the change
 does not need real native Skia and the local Skia release artifact is not
-already cached.
+already cached. For PDF Workbench app-only, protocol,
+`pdflite_service_native_transport`, or `pdflite_adapter` checks, also set
+`MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1` unless the native PDFium raster adapter
+is under test.
 
 Web app builds:
 
@@ -174,6 +184,9 @@ moon build examples/showcase/macos_skia --target native
 moon build examples/showcase/windows_skia --target native
 moon build examples/showcase/linux_skia --target native
 moon build examples/markdown_editor/macos_skia --target native
+moon build examples/pdf_workbench/macos_skia --target native
+moon build examples/pdf_workbench/windows_skia --target native
+moon build examples/pdf_workbench/linux_skia --target native
 moon build examples/markdown_editor/windows_skia --target native
 moon build examples/markdown_editor/linux_skia --target native
 ```

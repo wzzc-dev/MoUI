@@ -45,6 +45,7 @@ members = [
   "./examples/settings",
   "./examples/data_table",
   "./examples/file_importer",
+  "./examples/pdf_workbench",
   "./examples/command_palette",
   "./examples/mo_workbench",
   "./website",
@@ -359,16 +360,26 @@ sh scripts/dev-check.sh --platform-examples-test
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
+moon test examples/pdf_workbench/app --target native
+moon test examples/pdf_workbench/pdflite_adapter --target native
+moon test examples/pdf_workbench/pdfium_adapter --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 sh scripts/dev-check.sh --platform-examples-build
 moon build examples/showcase/macos_skia --target native
 moon build examples/showcase/windows_skia --target native
+moon build examples/pdf_workbench/macos_skia --target native
+moon build examples/pdf_workbench/windows_skia --target native
+moon build examples/pdf_workbench/linux_skia --target native
 moon build examples/markdown_editor/windows_skia --target native
 moon build examples/showcase/linux_skia --target native
 moon build examples/markdown_editor/linux_skia --target native
 ```
+
+For PDF Workbench app-only or `pdflite_adapter` checks, set
+`MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1` unless the native PDFium raster adapter
+is the thing being validated.
 
 Use the direct native example builds only on a matching configured host. The
 helper flags keep current-platform backend/provider checks separate from slow

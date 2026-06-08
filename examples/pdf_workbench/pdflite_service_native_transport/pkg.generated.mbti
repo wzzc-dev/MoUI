@@ -1,0 +1,40 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/pdf_workbench/pdflite_service_native_transport"
+
+import {
+  "examples/pdf_workbench/app",
+}
+
+// Values
+pub fn pdf_workbench_pdflite_default_helper_path() -> String
+
+pub fn pdf_workbench_pdflite_helper_args(String) -> Array[String]
+
+// Errors
+
+// Types and methods
+pub(all) struct PdfWorkbenchPdfliteNativeTransportConfig {
+  command : String
+  args : Array[String]
+  cwd : String
+}
+pub fn PdfWorkbenchPdfliteNativeTransportConfig::command_label(Self) -> String
+pub fn PdfWorkbenchPdfliteNativeTransportConfig::document_services(Self) -> @app.PdfWorkbenchDocumentServices
+pub fn PdfWorkbenchPdfliteNativeTransportConfig::executable(path~ : String, args? : Array[String], cwd? : String) -> Self
+pub fn PdfWorkbenchPdfliteNativeTransportConfig::from_env_values(String?, args_value? : String, cwd? : String) -> Self?
+pub fn PdfWorkbenchPdfliteNativeTransportConfig::new(command~ : String, args? : Array[String], cwd? : String) -> Self
+pub fn PdfWorkbenchPdfliteNativeTransportConfig::shell(script~ : String, cwd? : String) -> Self
+
+pub(all) struct PdfWorkbenchPdfliteNativeTransportEnvConfig {
+  helper_path : String
+  helper_args : String
+  helper_cwd : String
+}
+pub fn PdfWorkbenchPdfliteNativeTransportEnvConfig::document_services(Self) -> @app.PdfWorkbenchDocumentServices
+pub fn PdfWorkbenchPdfliteNativeTransportEnvConfig::new(helper_path? : String, helper_args? : String, helper_cwd? : String) -> Self
+pub fn PdfWorkbenchPdfliteNativeTransportEnvConfig::transport_config(Self) -> PdfWorkbenchPdfliteNativeTransportConfig?
+
+// Type aliases
+
+// Traits
+

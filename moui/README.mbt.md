@@ -39,9 +39,13 @@ Detailed notes live in:
 - [Release readiness](docs/release-readiness.md)
 
 The example suite is intentionally small: Showcase is the visual catalog and now
-contains the Counter and Todo interaction patterns, while the WYSIWYG Markdown
-editor remains a separate practical editing demo. The root `website/` workspace
-is the MoUI-built bilingual homepage and Web demo surface.
+contains the Counter and Todo interaction patterns, the WYSIWYG Markdown editor
+remains a separate practical editing demo, and PDF Workbench exercises
+document reading/light editing on the native Skia route with a lightweight UI
+shell, a separate `pdflite` adapter package for real PDF model/writeback checks,
+and a native-only PDFium adapter for real page bitmap rasterization. The
+root `website/` workspace is the MoUI-built bilingual homepage and Web demo
+surface.
 
 ## Screenshots
 
@@ -201,6 +205,16 @@ Build and run the WYSIWYG Markdown editor on the Skia mainline:
 ```sh
 moon build examples/markdown_editor/macos_skia --target native
 ./_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe
+```
+
+Build and run PDF Workbench on the Skia mainline:
+
+```sh
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/app --target native
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test examples/pdf_workbench/pdflite_adapter --target native
+moon test examples/pdf_workbench/pdfium_adapter --target native
+moon build examples/pdf_workbench/macos_skia --target native
+./_build/native/debug/build/examples/pdf_workbench/macos_skia/macos_skia.exe
 ```
 
 The WGPU Markdown editor entrypoint is still available for diagnostics:

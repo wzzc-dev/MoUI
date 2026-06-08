@@ -1,0 +1,52 @@
+{
+  "provider": "bblanchon/pdfium-binaries",
+  "release": {
+    "name": "PDFium 150.0.7869.0",
+    "tag": "chromium/7869"
+  },
+  "variant": "non-v8",
+  "assets": {
+    "linux-arm64": {
+      "name": "pdfium-linux-arm64.tgz",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7869/pdfium-linux-arm64.tgz",
+      "size": 3614477,
+      "sha256": "26213696d0457ba07469cc23b8b112a2f0d316ceea0866a20b42d5216d603a93"
+    },
+    "linux-x64": {
+      "name": "pdfium-linux-x64.tgz",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7869/pdfium-linux-x64.tgz",
+      "size": 3674482,
+      "sha256": "6aeb4be0f790bf309c6b1e665552351845fe921a78d21697a1a9cb8ce427bb23"
+    },
+    "mac-arm64": {
+      "name": "pdfium-mac-arm64.tgz",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7869/pdfium-mac-arm64.tgz",
+      "size": 3434404,
+      "sha256": "935a50329d5f72466b2058f92f2c4a8f9e541abc8f3149b1994d078dec4190e1"
+    },
+    "mac-univ": {
+      "name": "pdfium-mac-univ.tgz",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7869/pdfium-mac-univ.tgz",
+      "size": 6938294,
+      "sha256": "315b76ff51f8b87a6ced7be2aee7c2d04e1b22b506d31abee54ebd3a86d87412"
+    },
+    "mac-x64": {
+      "name": "pdfium-mac-x64.tgz",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7869/pdfium-mac-x64.tgz",
+      "size": 3618184,
+      "sha256": "00de12ca1b9729119e7fd4901cee1f0e591367f20cf98e221a446bbf55c155d2"
+    },
+    "win-arm64": {
+      "name": "pdfium-win-arm64.tgz",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7869/pdfium-win-arm64.tgz",
+      "size": 3546780,
+      "sha256": "9f1b42f841d99dc1a592bf2c14419166476f4074321e5c6aef5ee92c217cdfaf"
+    },
+    "win-x64": {
+      "name": "pdfium-win-x64.tgz",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium/7869/pdfium-win-x64.tgz",
+      "size": 3761699,
+      "sha256": "d1a2b39c300f62daeec94f3a648a31d83d18605707bfdc5504d818d42cab13ce"
+    }
+  }
+}

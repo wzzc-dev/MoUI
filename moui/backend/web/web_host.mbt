@@ -273,6 +273,18 @@ pub fn web_service_bridge(
                 "text file writing is unavailable on Web",
               )
           }
+        @host.HostServiceRequest::BinaryFile(
+          @host.HostBinaryFileRequest::ReadBytes(_)
+        ) =>
+          @host.HostServiceResponse::Unavailable(
+            "binary file content is unavailable on Web until binary browser file reads are wired",
+          )
+        @host.HostServiceRequest::BinaryFile(
+          @host.HostBinaryFileRequest::WriteBytes(_, _)
+        ) =>
+          @host.HostServiceResponse::Unavailable(
+            "binary file writing is unavailable on Web until binary browser downloads are wired",
+          )
         _ =>
           @host.HostServiceResponse::Unavailable(request.unavailable_message())
       }

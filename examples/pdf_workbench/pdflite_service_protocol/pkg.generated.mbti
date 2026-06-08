@@ -1,0 +1,42 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/pdf_workbench/pdflite_service_protocol"
+
+import {
+  "examples/pdf_workbench/app",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn pdf_workbench_pdflite_protocol_decode_bytes(String) -> Bytes?
+
+pub fn pdf_workbench_pdflite_protocol_encode_bytes(Bytes) -> String
+
+// Errors
+
+// Types and methods
+pub struct PdfWorkbenchPdfliteServiceHandler {
+  handle : (PdfWorkbenchPdfliteServiceRequest) -> PdfWorkbenchPdfliteServiceResponse
+}
+pub fn PdfWorkbenchPdfliteServiceHandler::document_services(Self) -> @app.PdfWorkbenchDocumentServices
+pub fn PdfWorkbenchPdfliteServiceHandler::handle_request(Self, PdfWorkbenchPdfliteServiceRequest) -> PdfWorkbenchPdfliteServiceResponse
+pub fn PdfWorkbenchPdfliteServiceHandler::new(handle~ : (PdfWorkbenchPdfliteServiceRequest) -> PdfWorkbenchPdfliteServiceResponse) -> Self
+
+pub(all) enum PdfWorkbenchPdfliteServiceRequest {
+  LoadDocument(String, Bytes)
+  WritebackDocument(String, Bytes, Array[@app.PdfWorkbenchEdit])
+} derive(Eq, @debug.Debug)
+pub fn PdfWorkbenchPdfliteServiceRequest::from_json_line(String) -> Self?
+pub fn PdfWorkbenchPdfliteServiceRequest::to_json_line(Self) -> String
+
+pub(all) enum PdfWorkbenchPdfliteServiceResponse {
+  DocumentLoaded(@app.PdfWorkbenchDocument)
+  WritebackReady(Bytes, Array[String])
+  ServiceFailed(String)
+}
+pub fn PdfWorkbenchPdfliteServiceResponse::from_json_line(String, original_bytes~ : Bytes) -> Self?
+pub fn PdfWorkbenchPdfliteServiceResponse::to_json_line(Self) -> String
+
+// Type aliases
+
+// Traits
+
