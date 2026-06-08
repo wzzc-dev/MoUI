@@ -20,6 +20,12 @@ fn main {
   } else {
     @skia_renderer.SkiaFontResolution::SystemFontMgr
   }
+  let surface_route = if @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") ==
+    Some("metal-gpu") {
+    @skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute
+  } else {
+    @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute
+  }
   @async.run_async_main(() => {
     @async.with_task_group(group => {
       group.spawn_bg(allow_failure=true, () => transport_owner.run())
@@ -28,6 +34,7 @@ fn main {
         runtime,
         options=@macos_skia_backend.MacosSkiaAppOptions::new(
           font_resolution~,
+          surface_route~,
           exit_after_first_present~,
         ),
       )

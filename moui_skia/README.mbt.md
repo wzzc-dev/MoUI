@@ -105,11 +105,21 @@ The `native` subpackage contains the first opt-in native boundary:
 - `@native.skia_shaper_available()` reports whether the optional SkShaper
   boundary was compiled and linked;
 - `@native.Surface::raster_n32_premul(size)` is the first raster surface entry;
+- `@native.Surface::gpu_context_support_status(context)` reports the native
+  GPU-context readiness gate for a value-layer context descriptor. macOS Metal
+  probing is opt-in with `MOUI_SKIA_ENABLE_GPU_METAL=1`; it checks the Skia
+  Ganesh Metal headers plus real `GrDirectContext` creation;
+- `@native.GpuContext::metal(context)` creates an explicit native Metal/Ganesh
+  context when the opt-in readiness gate is available;
+- `@native.Surface::gpu_n32_premul(context, descriptor)` and
+  `@native.Surface::for_target_with_gpu_context(target, context)` allocate
+  offscreen GPU-backed Skia surfaces for matching GPU target/context pairs;
 - `@native.Surface::target_support_status(target)` reports whether a target can
   be allocated as a native surface, including empty, unavailable Skia,
   window-unsupported, and GPU-unsupported decisions;
 - `@native.Surface::for_target(target)` allocates supported raster targets from
-  value-layer `SurfaceTargetDescriptor` values;
+  value-layer `SurfaceTargetDescriptor` values. This default path remains
+  raster-only; GPU targets must use the explicit target+context API;
 - `@native.Surface::descriptor()` reports the value-layer surface contract
   satisfied by the native raster surface;
 - `@native.Surface::image_snapshot()` returns an immutable `@native.Image`
@@ -117,7 +127,8 @@ The `native` subpackage contains the first opt-in native boundary:
 - `@native.Surface::image_snapshot_with_bounds(bounds)` snapshots a bounded
   surface rectangle and rejects rectangles outside the surface bounds;
 - `@native.Surface::flush_and_submit()` establishes an explicit finalization
-  boundary for native surfaces; current raster surfaces treat it as a no-op;
+  boundary for native surfaces; raster surfaces treat it as a no-op, while
+  GPU-backed surfaces flush through their owning direct context;
 - `@native.Surface::render_frame(frame)` and `render_frame_with_resources(...)`
   return `SurfaceFrameReplayStats`, whose `status()` classifies validation,
   surface mismatch, replay skip, finalization failure, and complete outcomes;
@@ -130,8 +141,9 @@ The `native` subpackage contains the first opt-in native boundary:
   into an owned `@moui_skia.Pixmap`, rejecting rectangles outside the surface
   bounds;
 - `@native.Image::encode_to_data(format, quality)` returns immutable
-  `@native.Data` bytes for PNG/JPEG/WEBP output, rejecting unsupported native
-  encode formats and clamping quality to Skia's `0..100` range;
+  `@native.Data` bytes for PNG/JPEG output, with WEBP enabled only when the
+  linked native Skia build exposes the encoder capability, rejecting unsupported
+  native encode formats and clamping quality to Skia's `0..100` range;
 - `@native.Image::from_bitmap(bitmap)` snapshots a native bitmap into an
   immutable image;
 - `@native.Data::from_bytes(bytes)` and `@native.Image::from_encoded_bytes(bytes)`

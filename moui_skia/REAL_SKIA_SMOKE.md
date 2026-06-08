@@ -122,7 +122,8 @@ stage markers for readback, bounded readback, snapshot/image drawing, PNG
 encode/decode, codec creation, decoded bitmap readback, render resource
 planning, target-based raster surface construction, predictable unsupported
 window/GPU target handling, target identity/resource binding, present descriptor
-validation,
+validation, opt-in Metal GPU context support diagnostics, opt-in Metal GPU
+surface allocation/finalization markers,
 shaped glyph-run command replay, cacheable/uncacheable render-frame resource
 subplans, render-frame submission resource planning,
 cacheable/uncacheable submission resource subplans, render-frame submission
