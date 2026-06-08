@@ -1,0 +1,17 @@
+# GraphemeBreakTest-style samples for MoUI's core TextGraphemeBoundaries.
+# Format mirrors Unicode GraphemeBreakTest.txt: ÷ marks a boundary and × marks
+# no boundary. This curated subset is intentionally small; it establishes the
+# offline generator/validation route before importing a full Unicode data file.
+
+÷ 000D × 000A ÷ 0041 ÷ # GB3 CR x LF
+÷ 0041 ÷ 0007 ÷ 0301 ÷ 0042 ÷ # GB4/GB5 controls break before Extend
+÷ 0600 × 0041 ÷ # GB9b Prepend x Any
+÷ 0041 × 0308 × 0301 ÷ 0042 ÷ # GB9 Extend chain
+÷ 0041 ÷ 0915 × 093E ÷ 0042 ÷ # GB9a SpacingMark
+÷ 1100 × 1161 × 11A8 ÷ # GB6/GB7/GB8 Hangul LVT sequence
+÷ 1F1FA × 1F1F8 ÷ 1F1E8 × 1F1E6 ÷ # GB12/GB13 RI pairs
+÷ 1F468 × 1F3FE × 200D × 1F680 ÷ # GB11 emoji modifier ZWJ sequence
+÷ 1F468 × 200D ÷ 0041 ÷ # GB11 rejects ZWJ before non-ExtPict
+÷ 0915 × 094D × 200D × 0937 ÷ # Indic virama ZWJ consonant conjunct
+÷ 0915 × 094D × 200D ÷ 0041 ÷ # Indic virama ZWJ before Latin breaks
+÷ 0915 × 094D × 200C ÷ 0937 ÷ # Indic virama ZWNJ breaks before consonant

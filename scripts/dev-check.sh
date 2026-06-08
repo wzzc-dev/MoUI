@@ -76,6 +76,8 @@ run node scripts/test-record-platform-evidence-manifest.mjs
 run node --check scripts/record-native-ime-evidence.mjs
 run node scripts/test-record-native-ime-evidence.mjs
 run node scripts/test-record-native-skia-evidence.mjs
+run node --check scripts/generate-grapheme-break-fixtures.mjs
+run node scripts/generate-grapheme-break-fixtures.mjs --check
 run node --check scripts/validate-renderer-proof-manifest.mjs
 run node scripts/test-validate-renderer-proof-manifest.mjs
 run node --check scripts/record-renderer-proof-manifest.mjs

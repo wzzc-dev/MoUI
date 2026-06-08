@@ -264,6 +264,8 @@ node --check scripts/record-renderer-proof-manifest.mjs
 node scripts/test-record-renderer-proof-manifest.mjs
 node --check scripts/record-web-renderer-proof-manifest.mjs
 node scripts/test-record-web-renderer-proof-manifest.mjs
+node --check scripts/generate-grapheme-break-fixtures.mjs
+node scripts/generate-grapheme-break-fixtures.mjs --check
 node --check scripts/ci-renderer-proof-native.mjs
 sh -n scripts/ci-renderer-proof-native.sh
 sh -n scripts/ci-renderer-proof-summary.sh
