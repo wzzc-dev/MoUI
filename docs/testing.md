@@ -196,6 +196,8 @@ node --check scripts/validate-platform-evidence-manifest.mjs
 node scripts/test-validate-platform-evidence-manifest.mjs
 node --check scripts/record-platform-evidence-manifest.mjs
 node scripts/test-record-platform-evidence-manifest.mjs
+node --check scripts/record-native-ime-evidence.mjs
+node scripts/test-record-native-ime-evidence.mjs
 node --check scripts/record-native-skia-evidence.mjs
 node scripts/test-record-native-skia-evidence.mjs
 node --check scripts/validate-web-runtime-handoff.mjs
@@ -502,6 +504,36 @@ Use `linux` plus the Linux artifact directory on a Wayland host. Supplying only
 some logs records a partial `skiaEvidence` block and leaves omitted Skia
 observations pending. The provider-preflight log still has to name the matching
 Skia provider package or preflight summary as well as a passing marker.
+
+For native IME runtime evidence, use the IME helper after a matching host has
+recorded Showcase or Markdown Editor logs with the required marker tokens. It
+updates only native IME observations and leaves the broader platform `status`
+unchanged:
+
+```sh
+node scripts/record-native-ime-evidence.mjs \
+  artifacts/conformance/platform-runtime-evidence.json \
+  windows \
+  --host "Windows MSVC CI" \
+  --consumer-command \
+    "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\"" \
+  --candidate-anchor-log artifacts/platform-evidence/windows/ime-candidate-anchor.log \
+  --surrounding-text-log artifacts/platform-evidence/windows/ime-surrounding-text.log \
+  --composition-visual-log artifacts/platform-evidence/windows/ime-composition-visual.log \
+  --commit-delete-log artifacts/platform-evidence/windows/ime-commit-delete.log \
+  --cursor-update-log artifacts/platform-evidence/windows/ime-cursor-update.log \
+  --scroll-anchor-log artifacts/platform-evidence/windows/ime-scroll-anchor.log \
+  --scale-dpr-anchor-log artifacts/platform-evidence/windows/ime-scale-dpr-anchor.log \
+  --resize-anchor-log artifacts/platform-evidence/windows/ime-resize-anchor.log \
+  --markdown-log artifacts/platform-evidence/windows/ime-markdown-editor.log
+```
+
+Each supplied log must stay under `artifacts/platform-evidence/<platform>/` and
+must contain the strong marker tokens for its observation. For example,
+candidate-anchor logs must include `candidate-anchor`, `caret-rect`, and
+`surrounding-text`; composition-visual logs must include `composition-range`
+and `preedit-pixels`; scale/DPR logs must include `scale`, `dpr`, and
+`candidate-anchor`. Generic host unit-test output or package logs are rejected.
 
 When collecting release evidence on a configured host, update or regenerate the
 platform runtime evidence manifest with that host's results and validate it:

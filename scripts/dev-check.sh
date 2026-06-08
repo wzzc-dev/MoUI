@@ -73,6 +73,8 @@ run node scripts/test-validate-skia-entrypoints.mjs
 run node scripts/test-validate-conformance-capture-manifest.mjs
 run node scripts/test-validate-platform-evidence-manifest.mjs
 run node scripts/test-record-platform-evidence-manifest.mjs
+run node --check scripts/record-native-ime-evidence.mjs
+run node scripts/test-record-native-ime-evidence.mjs
 run node scripts/test-record-native-skia-evidence.mjs
 run node --check scripts/validate-renderer-proof-manifest.mjs
 run node scripts/test-validate-renderer-proof-manifest.mjs

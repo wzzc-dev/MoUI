@@ -324,6 +324,11 @@ are placeholder documentation and must not be used as passed platform, Skia, or
 provenance artifacts. `skiaEvidence.status=passed` is Skia-route
 evidence, not a complete platform-services claim by itself, but native platform
 entries cannot be marked `passed` unless their Skia evidence is also `passed`.
+Use `record-native-ime-evidence.mjs` for matching-host IME logs when you only
+want to validate and update native IME observations; it deliberately leaves the
+broader platform runtime status unchanged and rejects generic host unit-test or
+package logs without candidate-anchor, surrounding-text, composition, commit/delete,
+cursor, scroll, scale/DPR, resize, and Markdown Editor markers.
 Use
 `record-native-skia-evidence.mjs` for matching-host Skia logs when you only
 want to validate and update `skiaEvidence`; it deliberately leaves the broader
@@ -356,6 +361,7 @@ sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
 node scripts/validate-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json
 node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json <platform> ...
+node scripts/record-native-ime-evidence.mjs artifacts/conformance/platform-runtime-evidence.json <platform> ...
 node scripts/record-native-skia-evidence.mjs artifacts/conformance/platform-runtime-evidence.json <platform> ...
 node scripts/validate-skia-entrypoints.mjs
 node scripts/test-validate-skia-entrypoints.mjs
