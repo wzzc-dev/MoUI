@@ -2043,6 +2043,96 @@ test "skia mixed text segmentation preserves grapheme clusters" {
 }
 
 ///|
+fn skia_test_core_grapheme_cluster_texts(text : String) -> Array[String] {
+  let chars = text.to_array()
+  let boundaries = @core.TextGraphemeBoundaries::new(text~).boundaries()
+  let clusters : Array[String] = []
+  if boundaries.length() < 2 {
+    return clusters
+  }
+  for boundary_index in 0..<(boundaries.length() - 1) {
+    let start = boundaries[boundary_index]
+    let end = boundaries[boundary_index + 1]
+    clusters.push(String::from_array(chars[start:end]))
+  }
+  clusters
+}
+
+///|
+fn assert_skia_grapheme_clusters_match_core(
+  text : String,
+  expected_boundaries : Array[Int],
+) -> Unit raise {
+  let boundaries = @core.TextGraphemeBoundaries::new(text~).boundaries()
+  if boundaries.length() != expected_boundaries.length() {
+    fail(
+      "expected \{expected_boundaries.length()} core grapheme boundaries, got \{boundaries.length()}",
+    )
+  }
+  for index in 0..<expected_boundaries.length() {
+    inspect(boundaries[index], content="\{expected_boundaries[index]}")
+  }
+  let expected = skia_test_core_grapheme_cluster_texts(text)
+  let actual = skia_grapheme_cluster_texts(text)
+  if actual.length() != expected.length() {
+    fail(
+      "expected \{expected.length()} Skia grapheme clusters, got \{actual.length()}",
+    )
+  }
+  for index in 0..<expected.length() {
+    inspect(actual[index], content=expected[index])
+  }
+}
+
+///|
+fn assert_skia_grapheme_utf8_offsets(
+  text : String,
+  indexes : Array[Int],
+  expected : Array[Int],
+) -> Unit raise {
+  if indexes.length() != expected.length() {
+    fail("expected matching index and utf8-offset fixture lengths")
+  }
+  let boundaries = @core.TextGraphemeBoundaries::new(text~)
+  for index in 0..<indexes.length() {
+    inspect(
+      boundaries.utf8_offset(indexes[index]),
+      content="\{expected[index]}",
+    )
+  }
+}
+
+///|
+test "skia grapheme clustering follows core IME boundary contract" {
+  assert_skia_grapheme_clusters_match_core("A\u{1F469}\u{200D}\u{1F4BB}B", [
+    0, 1, 4, 5,
+  ])
+  assert_skia_grapheme_clusters_match_core(
+    "A\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}B",
+    [0, 1, 5, 6],
+  )
+  assert_skia_grapheme_clusters_match_core("\u{1F1FA}\u{1F1F8}\u{1F1E8}", [
+    0, 2, 3,
+  ])
+  assert_skia_grapheme_clusters_match_core("A\u{0600}B", [0, 1, 3])
+  assert_skia_grapheme_clusters_match_core("A\u{1100}\u{1161}\u{11A8}B", [
+    0, 1, 4, 5,
+  ])
+  assert_skia_grapheme_clusters_match_core("Aक्‍षB", [0, 1, 5, 6])
+  assert_skia_grapheme_clusters_match_core("Aक़्षB", [0, 1, 5, 6])
+  assert_skia_grapheme_clusters_match_core("Aक्‌षB", [0, 1, 4, 5, 6])
+  assert_skia_grapheme_utf8_offsets("A\u{1F469}\u{200D}\u{1F4BB}B", [
+    0, 1, 4, 5,
+  ], [0, 1, 12, 13])
+  assert_skia_grapheme_utf8_offsets("Aक्‍षB", [0, 1, 5, 6], [
+    0, 1, 13, 14,
+  ])
+  assert_skia_grapheme_utf8_offsets("Aक्‌षB", [0, 1, 4, 5, 6], [
+    0, 1, 10, 13, 14,
+  ])
+}
+
+///|
 test "skia resolved mixed text layout accumulates segment carets" {
   guard skia_available() else { return () }
   let text = "A你\u{1F642}B"
@@ -2583,15 +2673,6 @@ test "skia fallback caret stabilization keeps representative cluster interiors s
 
 ///|
 test "skia fallback caret stabilization keeps Indic and Arabic marks stable" {
-  assert_true(skia_codepoint_is_grapheme_prepend(0x0600))
-  assert_true(skia_codepoint_is_grapheme_prepend(0x070F))
-  assert_false(skia_codepoint_is_grapheme_prepend(0x0628))
-  assert_false(skia_codepoint_is_grapheme_extend(0x0915))
-  assert_true(skia_codepoint_is_grapheme_extend(0x093F))
-  assert_true(skia_codepoint_is_grapheme_extend(0x094D))
-  assert_true(skia_codepoint_is_virama(0x094D))
-  assert_false(skia_codepoint_is_grapheme_extend(0x0937))
-
   let devanagari_matra = skia_stabilize_grapheme_cluster_carets(
     "A\u{0915}\u{093F}B",
     [0.0, 8.0, 14.0, 22.0, 30.0],
@@ -2660,18 +2741,6 @@ test "skia fallback caret stabilization keeps Indic and Arabic marks stable" {
 
 ///|
 test "skia fallback caret stabilization keeps Southeast and South Asian marks stable" {
-  assert_true(skia_codepoint_is_grapheme_extend(0x0E34))
-  assert_true(skia_codepoint_is_grapheme_extend(0x0EB4))
-  assert_true(skia_codepoint_is_grapheme_extend(0x0DCF))
-  assert_true(skia_codepoint_is_grapheme_extend(0x0DCA))
-  assert_true(skia_codepoint_is_grapheme_extend(0x17B6))
-  assert_true(skia_codepoint_is_grapheme_extend(0x17D2))
-  assert_true(skia_codepoint_is_grapheme_extend(0x1039))
-  assert_true(skia_codepoint_is_grapheme_extend(0x103A))
-  assert_true(skia_codepoint_is_virama(0x0DCA))
-  assert_true(skia_codepoint_is_virama(0x17D2))
-  assert_true(skia_codepoint_is_virama(0x1039))
-
   let thai_mark = skia_stabilize_grapheme_cluster_carets("A\u{0E01}\u{0E34}B", [
     0.0, 8.0, 13.0, 21.0, 29.0,
   ])
