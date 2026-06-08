@@ -182,6 +182,7 @@ fn skia_color_emoji_glyph_key_metadata_ready(
   proof.glyph_key.contains(proof.shaper) &&
   proof.glyph_key.contains("script=\{proof.fallback_script_tag}") &&
   proof.glyph_key.contains("langs=\{proof.fallback_request_language_count}") &&
+  proof.glyph_key.contains("emoji-u+\{proof.fallback_character}") &&
   proof.glyph_key.contains(proof.glyph_format)
 }
 
