@@ -473,7 +473,10 @@ Editor dogfood markers and update only the native IME observations. Supplied
 logs must also identify matching-host runtime, native app, `renderer=skia`, the
 matching app marker (`app=showcase` or `app=markdown-editor`), and platform protocol
 markers such as `platform-protocol=macos-marked-text`,
-`platform-protocol=windows-ime`, or `platform-protocol=wayland-text-input`. The
+`platform-protocol=windows-ime`, or `platform-protocol=wayland-text-input`.
+The `renderer=skia`, app, and platform-protocol markers are exact
+whitespace-delimited tokens; suffixed labels such as `renderer=skia-preview` or
+`app=showcase-debug` are not runtime IME evidence. The
 helper does not promote full platform status, and generic host unit-test or
 package logs are not runtime IME proof.
 Full platform runtime status still requires the broader platform observations.
