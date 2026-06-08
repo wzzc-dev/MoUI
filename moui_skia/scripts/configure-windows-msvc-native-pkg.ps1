@@ -5,6 +5,8 @@ param(
   [string] $SkiaLibDir = $env:MOUI_SKIA_SKIA_LIB_DIR,
   [ValidateSet("static", "dynamic", "auto")]
   [string] $SkiaLinkMode = $(if ($env:MOUI_SKIA_LINK_MODE) { $env:MOUI_SKIA_LINK_MODE } else { "static" }),
+  [switch] $EnableSkParagraph,
+  [switch] $RequireSkParagraph,
   [string] $ExtraCcFlags = $env:MOUI_SKIA_EXTRA_CC_FLAGS,
   [string] $ExtraLinkFlags = $env:MOUI_SKIA_EXTRA_LINK_FLAGS,
   [string] $Output = "native/moon.pkg",
@@ -26,6 +28,15 @@ if ($Write -and $Check) {
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "windows-msvc-skia-paths.ps1")
+
+function Test-TruthyEnv {
+  param([string] $Value)
+
+  if ([string]::IsNullOrWhiteSpace($Value)) {
+    return $false
+  }
+  return $Value.Trim().ToLowerInvariant() -in @("1", "true", "yes", "on")
+}
 
 function Resolve-SkiaMsvcLibrary {
   param(
@@ -77,6 +88,43 @@ $resolvedRoot = $resolvedPaths.Root
 $resolvedIncludeRoot = $resolvedPaths.IncludeRoot
 $resolvedLibDir = $resolvedPaths.LibDir
 $skiaLib = Resolve-SkiaMsvcLibrary -LibDir $resolvedLibDir -LinkMode $SkiaLinkMode
+$skparagraphEnabled = $EnableSkParagraph.IsPresent -or
+  $RequireSkParagraph.IsPresent -or
+  (Test-TruthyEnv -Value $env:MOUI_SKIA_ENABLE_SKPARAGRAPH) -or
+  (Test-TruthyEnv -Value $env:MOUI_SKIA_REQUIRE_SKPARAGRAPH)
+$skparagraphRequired = $RequireSkParagraph.IsPresent -or
+  (Test-TruthyEnv -Value $env:MOUI_SKIA_REQUIRE_SKPARAGRAPH)
+
+$paragraphHeaders = @(
+  (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/Paragraph.h"),
+  (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/ParagraphBuilder.h"),
+  (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/ParagraphStyle.h"),
+  (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/TextStyle.h"),
+  (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/FontCollection.h")
+)
+$paragraphLibs = @("skparagraph", "skshaper", "skunicode_core", "skunicode_icu")
+if ($skparagraphRequired) {
+  foreach ($paragraphHeader in $paragraphHeaders) {
+    if (!(Test-Path -LiteralPath $paragraphHeader -PathType Leaf)) {
+      throw "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but header was missing: $paragraphHeader"
+    }
+  }
+  foreach ($paragraphLib in $paragraphLibs) {
+    $candidates = @(
+      (Join-Path $resolvedLibDir "$paragraphLib.lib"),
+      (Join-Path $resolvedLibDir "$paragraphLib.dll.lib")
+    )
+    $found = $false
+    foreach ($candidate in $candidates) {
+      if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+        $found = $true
+      }
+    }
+    if (!$found) {
+      throw "MOUI_SKIA_REQUIRE_SKPARAGRAPH requested, but $paragraphLib.lib or $paragraphLib.dll.lib was not found in $resolvedLibDir"
+    }
+  }
+}
 
 if ([System.IO.Path]::IsPathRooted($Output)) {
   $resolvedOutput = $Output
@@ -88,6 +136,9 @@ $includePath = $resolvedIncludeRoot -replace "\\", "/"
 $libPath = $resolvedLibDir -replace "\\", "/"
 
 $ccFlags = "/DMOUI_SKIA_HAS_SKIA /std:c++20 /EHsc /I$includePath"
+if ($skparagraphEnabled) {
+  $ccFlags = "$ccFlags /DMOUI_SKIA_HAS_SKPARAGRAPH /DMOUI_SKIA_HAS_SKSHAPER"
+}
 if (![string]::IsNullOrWhiteSpace($ExtraCcFlags)) {
   $ccFlags = "$ccFlags $ExtraCcFlags"
 }
@@ -133,6 +184,7 @@ options(
     "skia_stub_canvas.cpp",
     "skia_stub_path.cpp",
     "skia_stub_text_font.cpp",
+    "skia_stub_paragraph.cpp",
     "skia_stub_shader_filter.cpp",
   ],
   link: {
@@ -143,18 +195,23 @@ options(
   },
   targets: {
     "handles_native.mbt": [ "native", "llvm" ],
+    "skia_native.mbt": [ "native", "llvm" ],
     "availability_native.mbt": [ "native", "llvm" ],
     "surface_image_data_native.mbt": [ "native", "llvm" ],
     "canvas_native.mbt": [ "native", "llvm" ],
     "path_native.mbt": [ "native", "llvm" ],
     "text_font_native.mbt": [ "native", "llvm" ],
+    "paragraph_native.mbt": [ "native", "llvm" ],
     "shader_filter_native.mbt": [ "native", "llvm" ],
+    "shader_filter_ffi_wbtest.mbt": [ "native", "llvm" ],
     "handles_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "skia_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "availability_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "surface_image_data_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "canvas_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "path_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "text_font_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
+    "paragraph_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
     "shader_filter_unavailable.mbt": [ "wasm", "wasm-gc", "js" ],
   },
 )

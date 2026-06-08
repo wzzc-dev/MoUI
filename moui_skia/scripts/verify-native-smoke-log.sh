@@ -259,6 +259,7 @@ default_stage_markers=(
   "native smoke first glyph bounds width" \
   "native smoke measured text bounds width" \
   "native smoke shaper availability" \
+  "native smoke paragraph availability" \
   "native smoke default typeface availability" \
   "native smoke font family count" \
   "native smoke first font family bytes" \
@@ -498,6 +499,10 @@ default_conditional_stage_markers=(
   $'native smoke shaped glyph run native resource plan count\tnative smoke shaper availability\t1'
   $'native smoke shaped glyph descriptor bridge\tnative smoke shaper availability\t1'
   $'native smoke shaped glyph descriptor bridge cache resources\tnative smoke shaper availability\t1'
+  $'native smoke paragraph available\tnative smoke paragraph availability\t1'
+  $'native smoke paragraph line metrics\tnative smoke paragraph availability\t1'
+  $'native smoke paragraph selection boxes\tnative smoke paragraph availability\t1'
+  $'native smoke paragraph hit test\tnative smoke paragraph availability\t1'
 )
 conditional_stage_markers=("${default_conditional_stage_markers[@]}")
 if [[ -f "$status_file" ]]; then
