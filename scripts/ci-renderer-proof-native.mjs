@@ -130,6 +130,10 @@ log("MoUI renderer proof colorEmojiPixels missing: requires real high-saturation
 log("MoUI renderer proof zwjGrapheme missing: requires single grapheme cluster and no interior caret evidence.");
 log("MoUI renderer proof bidiLayout missing: requires visual-order evidence.");
 log("MoUI renderer proof paragraphWrapping missing: requires line metrics and later-line pixels.");
+log("MoUI renderer proof selectionRects missing: requires selection rectangles and line-range evidence.");
+log("MoUI renderer proof graphemeEditing missing: requires grapheme boundaries and edit-action evidence.");
+log("MoUI renderer proof imeCandidateAnchor missing: requires candidate anchor and surrounding-text evidence.");
+log("MoUI renderer proof imeCompositionVisual missing: requires composition range and preedit pixel evidence.");
 log("MoUI renderer proof asyncImageSecondFrame missing: requires late completion, repaint request, and second-frame pixels.");
 
 const recordArgs = [

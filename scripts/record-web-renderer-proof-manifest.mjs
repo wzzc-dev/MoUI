@@ -40,12 +40,39 @@ const proofKeys = [
   "zwjGrapheme",
   "bidiLayout",
   "paragraphWrapping",
+  "selectionRects",
+  "graphemeEditing",
+  "imeCandidateAnchor",
+  "imeCompositionVisual",
   "asyncImageSecondFrame",
 ];
 
 const markerLines = [];
 const addMarker = (condition, line) => {
   if (condition) markerLines.push(line);
+};
+
+const proofEvidenceRequirements = {
+  radialGradient: ["center-mid-edge-pixels", "shader-payload"],
+  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
+  zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
+  bidiLayout: ["visual-order"],
+  paragraphWrapping: ["line-metrics", "later-line-pixels"],
+  selectionRects: ["selection-rects", "line-range"],
+  graphemeEditing: ["grapheme-boundaries", "edit-actions"],
+  imeCandidateAnchor: ["candidate-anchor", "surrounding-text"],
+  imeCompositionVisual: ["composition-range", "preedit-pixels"],
+  asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
+};
+
+const proofReady = key => {
+  const proof = showcase?.screenshot?.[key];
+  const evidence = Array.isArray(proof?.evidence) ? proof.evidence : [];
+  return (
+    showcase?.observations?.[key] === "yes" &&
+    proof?.passed === true &&
+    proofEvidenceRequirements[key].every(token => evidence.includes(token))
+  );
 };
 
 const colorEmoji = showcase?.screenshot?.colorEmojiPixels;
@@ -73,7 +100,7 @@ const colorEmojiMetadataReady =
 const metadataTokenValue = value => `${value ?? ""}`.replace(/\s+/g, "_");
 
 addMarker(
-  showcase?.observations?.radialGradient === "yes",
+  proofReady("radialGradient"),
   "MoUI renderer proof radialGradient passed center-mid-edge-pixels shader-payload",
 );
 addMarker(
@@ -81,10 +108,10 @@ addMarker(
   "MoUI renderer proof transformPixels passed pixel-markers",
 );
 addMarker(
-  showcase?.observations?.colorEmojiPixels === "yes" && colorEmojiMetadataReady,
+  proofReady("colorEmojiPixels") && colorEmojiMetadataReady,
   "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata",
 );
-if (showcase?.observations?.colorEmojiPixels === "yes" && colorEmojiMetadataReady) {
+if (proofReady("colorEmojiPixels") && colorEmojiMetadataReady) {
   markerLines.push(
     [
       "MoUI renderer proof colorEmojiPixels metadata",
@@ -104,19 +131,35 @@ if (showcase?.observations?.colorEmojiPixels === "yes" && colorEmojiMetadataRead
   );
 }
 addMarker(
-  showcase?.observations?.zwjGrapheme === "yes",
+  proofReady("zwjGrapheme"),
   "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret",
 );
 addMarker(
-  showcase?.observations?.bidiLayout === "yes",
+  proofReady("bidiLayout"),
   "MoUI renderer proof bidiLayout passed visual-order",
 );
 addMarker(
-  showcase?.observations?.paragraphWrapping === "yes",
+  proofReady("paragraphWrapping"),
   "MoUI renderer proof paragraphWrapping passed line-metrics later-line-pixels",
 );
 addMarker(
-  showcase?.observations?.asyncImageSecondFrame === "yes",
+  proofReady("selectionRects"),
+  "MoUI renderer proof selectionRects passed selection-rects line-range",
+);
+addMarker(
+  proofReady("graphemeEditing"),
+  "MoUI renderer proof graphemeEditing passed grapheme-boundaries edit-actions",
+);
+addMarker(
+  proofReady("imeCandidateAnchor"),
+  "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text",
+);
+addMarker(
+  proofReady("imeCompositionVisual"),
+  "MoUI renderer proof imeCompositionVisual passed composition-range preedit-pixels",
+);
+addMarker(
+  proofReady("asyncImageSecondFrame"),
   "MoUI renderer proof asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
 );
 
@@ -131,6 +174,7 @@ writeFileSync(logPath, `${notes.concat(markerLines).join("\n")}\n`);
 const missingProofs = proofKeys.filter(
   key =>
     showcase?.observations?.[key] !== "yes" ||
+    (key !== "transformPixels" && !proofReady(key)) ||
     (key === "colorEmojiPixels" && !colorEmojiMetadataReady),
 );
 if ((webManifest.overallStatus || "failed") !== "passed" || missingProofs.length > 0) {
