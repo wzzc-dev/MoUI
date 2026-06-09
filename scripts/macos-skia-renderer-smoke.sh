@@ -1339,8 +1339,8 @@ if [[ $skip_showcase_build -eq 0 ]]; then
     if [[ $showcase_status -ne 0 ]]; then
       exit "$showcase_status"
     fi
-    if ! grep -Fq "macOS renderer presented first frame; exiting by request" "$showcase_log"; then
-      echo "macos_skia Showcase smoke did not print the expected first-frame marker" >&2
+    if ! grep -Fq "macOS renderer presented first frame; exiting by request; title=MoUI Showcase" "$showcase_log"; then
+      echo "macos_skia Showcase smoke did not print the expected first-frame marker with title=MoUI Showcase" >&2
       exit 1
     fi
     if [[ $run_gpu_smoke -eq 1 ]]; then
@@ -1399,8 +1399,8 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
   if [[ $markdown_status -ne 0 ]]; then
     exit "$markdown_status"
   fi
-  if ! grep -Fq "macOS renderer presented first frame; exiting by request" "$markdown_log"; then
-    echo "markdown_editor/macos_skia smoke did not print the expected first-frame marker" >&2
+  if ! grep -Fq "macOS renderer presented first frame; exiting by request; title=MoUI Markdown Editor" "$markdown_log"; then
+    echo "markdown_editor/macos_skia smoke did not print the expected first-frame marker with title=MoUI Markdown Editor" >&2
     exit 1
   fi
   if [[ $run_gpu_smoke -eq 1 ]]; then
