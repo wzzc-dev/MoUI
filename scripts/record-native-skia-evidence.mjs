@@ -77,6 +77,16 @@ const platforms = new Map([
   ],
 ]);
 
+const showcaseFirstFrameTitle = "MoUI Showcase";
+const markdownFirstFrameTitle = "MoUI Markdown Editor";
+
+const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const firstFrameMarkerForTitle = expectedTitle => platform =>
+  new RegExp(
+    `${escapeRegExp(platform.firstFrameMarker)}[^\\r\\n]*title=${escapeRegExp(expectedTitle)}(?:\\r?\\n|$)`,
+  );
+
 const skiaObservationKeys = [
   "providerPreflight",
   "fallbackUnavailable",
@@ -128,8 +138,8 @@ const logOptions = new Map([
     {
       observation: "showcaseFirstFrame",
       label: "Showcase first-frame log",
-      marker: platform => platform.firstFrameMarker,
-      markerDescription: "the platform first-frame marker",
+      marker: firstFrameMarkerForTitle(showcaseFirstFrameTitle),
+      markerDescription: `the platform first-frame marker with title=${showcaseFirstFrameTitle}`,
     },
   ],
   [
@@ -137,8 +147,8 @@ const logOptions = new Map([
     {
       observation: "markdownFirstFrame",
       label: "Markdown Editor first-frame log",
-      marker: platform => platform.firstFrameMarker,
-      markerDescription: "the platform first-frame marker",
+      marker: firstFrameMarkerForTitle(markdownFirstFrameTitle),
+      markerDescription: `the platform first-frame marker with title=${markdownFirstFrameTitle}`,
     },
   ],
 ]);
@@ -328,7 +338,7 @@ for (const rawPath of suppliedGpuRendererSmokeLogs) {
   );
 }
 
-const validateGpuFirstFrameLog = (rawPath, label) => {
+const validateGpuFirstFrameLog = (rawPath, label, expectedTitle) => {
   if (!rawPath.trim()) {
     console.error(`${label} requires a non-empty path`);
     process.exit(2);
@@ -341,9 +351,9 @@ const validateGpuFirstFrameLog = (rawPath, label) => {
   }
   assertMarker(
     content,
-    platform.firstFrameMarker,
+    firstFrameMarkerForTitle(expectedTitle)(platform),
     label,
-    "the platform first-frame marker",
+    `the platform first-frame marker with title=${expectedTitle}`,
   );
   assertMarker(
     content,
@@ -355,14 +365,14 @@ const validateGpuFirstFrameLog = (rawPath, label) => {
 };
 
 for (const rawPath of suppliedGpuShowcaseLogs) {
-  validateGpuFirstFrameLog(rawPath, "GPU Showcase first-frame log");
+  validateGpuFirstFrameLog(rawPath, "GPU Showcase first-frame log", showcaseFirstFrameTitle);
   notes.push(
     "macOS Showcase first-frame smoke proved route=metal-gpu and surface_gpu=true before presentation.",
   );
 }
 
 for (const rawPath of suppliedGpuMarkdownLogs) {
-  validateGpuFirstFrameLog(rawPath, "GPU Markdown Editor first-frame log");
+  validateGpuFirstFrameLog(rawPath, "GPU Markdown Editor first-frame log", markdownFirstFrameTitle);
   notes.push(
     "macOS Markdown Editor first-frame smoke proved route=metal-gpu and surface_gpu=true before presentation.",
   );

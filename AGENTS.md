@@ -465,6 +465,10 @@ first-frame logs under `artifacts/platform-evidence/<platform>/`, use
 update only the platform's `skiaEvidence` block. Provider preflight logs must
 name the matching Skia provider package or preflight summary and include a
 passing preflight/test/build marker; generic passing test output is not enough.
+Showcase first-frame logs must include the platform first-frame marker with
+`title=MoUI Showcase`, and Markdown Editor first-frame logs must include the
+same marker with `title=MoUI Markdown Editor`; app-swapped first-frame logs are
+not valid for the opposite observation.
 After a matching host writes native IME Showcase or Markdown Editor logs under
 the same artifact root, use `node scripts/record-native-ime-evidence.mjs` to
 validate candidate-anchor, surrounding-text, composition-visual, commit/delete,
