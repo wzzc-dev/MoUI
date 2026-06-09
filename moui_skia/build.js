@@ -375,16 +375,26 @@ function unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix) {
 function skiaParagraphLinkFlags(libPath, resolvedLinkMode, platform = process.platform) {
   const dynamicSuffix = unixDynamicLibrarySuffix(platform);
   const libraryFlags = skiaParagraphLinkLibraryNames(platform)
-    .map(name => unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix));
+    .map(name => ({
+      name,
+      flag: unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix),
+    }));
   if (platform === "linux" && resolvedLinkMode === "static") {
+    const icuFlags = libraryFlags
+      .filter(library => library.name === "icu")
+      .flatMap(library => ["-Wl,--whole-archive", library.flag, "-Wl,--no-whole-archive"]);
+    const groupedFlags = libraryFlags
+      .filter(library => library.name !== "icu")
+      .map(library => library.flag);
     return [
       `-L${libPath}`,
+      ...icuFlags,
       "-Wl,--start-group",
-      ...libraryFlags,
+      ...groupedFlags,
       "-Wl,--end-group",
     ].join(" ");
   }
-  return [`-L${libPath}`, ...libraryFlags].join(" ");
+  return [`-L${libPath}`, ...libraryFlags.map(library => library.flag)].join(" ");
 }
 
 function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false, requestedMode = skiaLinkMode(config)) {
