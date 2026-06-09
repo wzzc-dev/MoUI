@@ -227,10 +227,11 @@ if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
 fi
 
-link_flags="$skia_library_link_flags -lstdc++"
+link_flags="$skia_library_link_flags"
 if [[ $enable_skparagraph -eq 1 ]]; then
   link_flags="$link_flags -L$lib_path -Wl,--whole-archive -licu -Wl,--no-whole-archive -Wl,--start-group -lskparagraph -lskshaper -lskunicode_icu -lskunicode_core -lharfbuzz -Wl,--end-group"
 fi
+link_flags="$link_flags -lstdc++"
 if [[ -n "$extra_link_flags" ]]; then
   link_flags="$link_flags $extra_link_flags"
 fi
