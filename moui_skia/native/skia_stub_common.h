@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -379,6 +380,7 @@ MoonbitSkiaParagraph* moonbit_skia_make_paragraph_wrapper(
 moonbit_bytes_t moonbit_skia_make_bytes_from_sk_string(
   const SkString& value
 );
+std::string moonbit_skia_bytes_to_string(moonbit_bytes_t value);
 sk_sp<SkTypeface> moonbit_skia_default_typeface(void);
 sk_sp<SkTypeface> moonbit_skia_typeface_from_family(
   const char* family_name,

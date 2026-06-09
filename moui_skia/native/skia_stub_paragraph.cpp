@@ -88,8 +88,9 @@ moonbit_skia_paragraph_layout_utf8(
     moonbit_skia_paragraph_slant(slant)
   ));
   if (moonbit_skia_paragraph_has_family(family_name)) {
+    std::string family = moonbit_skia_bytes_to_string(family_name);
     std::vector<SkString> families;
-    families.emplace_back(reinterpret_cast<const char*>(family_name));
+    families.emplace_back(family.data(), family.size());
     text_style.setFontFamilies(families);
   }
 
