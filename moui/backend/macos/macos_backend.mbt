@@ -1248,8 +1248,9 @@ fn MacosApp::native_ime_request_matches_window(
       ).into_size()
       let scale = platform_slot.window.scale_factor()
       let cursor_area_ok = platform_slot.window.ime_cursor_area_position() ==
-        position.to_physical(scale) &&
-        platform_slot.window.ime_cursor_area_size() == size.to_physical(scale)
+        macos_native_ime_expected_cursor_position(position, scale) &&
+        platform_slot.window.ime_cursor_area_size() ==
+        macos_native_ime_expected_cursor_size(size, scale)
       let surrounding_ok = match platform_slot.window.ime_surrounding_text() {
         Some(surrounding) => surrounding.text() == expected_text
         None => false
@@ -1264,6 +1265,40 @@ fn MacosApp::native_ime_request_matches_window(
     }
     None => false
   }
+}
+
+///|
+fn macos_native_ime_expected_cursor_position(
+  position : @dpi.Position,
+  scale : Double,
+) -> @dpi.PhysicalPosition {
+  let logical = position.to_logical(scale)
+  @dpi.LogicalPosition::LogicalPosition(
+    logical.x().to_int().to_double(),
+    logical.y().to_int().to_double(),
+  ).to_physical(scale)
+}
+
+///|
+fn macos_native_ime_expected_cursor_size(
+  size : @dpi.Size,
+  scale : Double,
+) -> @dpi.PhysicalSize {
+  let logical = size.to_logical(scale)
+  let width = if logical.width().to_int() > 0 {
+    logical.width().to_int()
+  } else {
+    1
+  }
+  let height = if logical.height().to_int() > 0 {
+    logical.height().to_int()
+  } else {
+    1
+  }
+  @dpi.LogicalSize::LogicalSize(
+    width.to_double(),
+    height.to_double(),
+  ).to_physical(scale)
 }
 
 ///|
