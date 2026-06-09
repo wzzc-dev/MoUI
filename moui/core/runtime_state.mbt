@@ -273,6 +273,7 @@ pub fn RuntimeState::dispatch_focused_text_command(
         self.needs_rebuild = true
         self.needs_paint = true
         self.mark_build_dirty(self.element_tree.id())
+        self.rebuild_if_possible()
       }
       result
     }
@@ -432,6 +433,9 @@ pub fn RuntimeState::dispatch_event(
               if result.activated {
                 self.request_activation_rebuild()
               }
+              if result.changed {
+                self.rebuild_if_possible()
+              }
             } else {
               ignore(self.move_focus(reverse=event.modifiers.shift))
             }
@@ -441,6 +445,9 @@ pub fn RuntimeState::dispatch_event(
       } else {
         match self.focused_element {
           Some(target) => {
+            let is_text_input = self.element_tree.root.is_text_input_target(
+              target,
+            )
             let result = self.element_tree.root.dispatch_keyboard(target, event)
             self.needs_redraw = self.needs_redraw || result.changed
             self.needs_rebuild = self.needs_rebuild || result.activated
@@ -450,6 +457,9 @@ pub fn RuntimeState::dispatch_event(
             }
             if result.activated {
               self.request_activation_rebuild()
+            }
+            if is_text_input && result.changed {
+              self.rebuild_if_possible()
             }
           }
           None => ()
@@ -468,6 +478,9 @@ pub fn RuntimeState::dispatch_event(
           }
           if result.activated {
             self.request_activation_rebuild()
+          }
+          if result.changed {
+            self.rebuild_if_possible()
           }
         }
         None => ()
