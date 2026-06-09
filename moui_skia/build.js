@@ -246,6 +246,9 @@ function skiaValues(config) {
     "MOUI_SKIA_EXTRA_CC_FLAGS",
     "MOUI_SKIA_EXTRA_LINK_FLAGS",
     "MOUI_SKIA_LINK_MODE",
+    "MOUI_SKIA_PROVIDER",
+    "MOUI_SKIA_SKIA_PROVIDER",
+    "MOUI_SKIA_RELEASE_TAG",
   ];
   const envValues = overlayEnvValues(config, {}, keys);
   if (envValues.MOUI_SKIA_SKIA_INCLUDE && envValues.MOUI_SKIA_SKIA_LIB_DIR) {
@@ -407,6 +410,19 @@ function linuxStaticSkiaParagraphLinkFlags(libPath, skiaLib) {
   ].join(" ");
 }
 
+function linuxReleaseSkParagraphAbiFlags(values) {
+  // The locked Linux release SkParagraph archive exports old libstdc++ ABI symbols.
+  const provider = (
+    values.MOUI_SKIA_SKIA_PROVIDER ||
+    values.MOUI_SKIA_PROVIDER ||
+    ""
+  ).trim().toLowerCase();
+  if (provider !== "release" && !values.MOUI_SKIA_RELEASE_TAG) {
+    return [];
+  }
+  return ["-D_GLIBCXX_USE_CXX11_ABI=0"];
+}
+
 function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false, requestedMode = skiaLinkMode(config)) {
   const staticLib = path.join(libPath, `lib${skiaLib}.a`);
   const dynamicLib = path.join(libPath, `lib${skiaLib}.dylib`);
@@ -442,7 +458,7 @@ function platformFlags(config, values) {
   const includePath = requireValue(values, "MOUI_SKIA_SKIA_INCLUDE");
   const libPath = requireValue(values, "MOUI_SKIA_SKIA_LIB_DIR");
   const skiaLib = values.MOUI_SKIA_SKIA_LIB || "skia";
-  const extraCcFlags = values.MOUI_SKIA_EXTRA_CC_FLAGS || "";
+  let extraCcFlags = values.MOUI_SKIA_EXTRA_CC_FLAGS || "";
   const extraLinkFlags = values.MOUI_SKIA_EXTRA_LINK_FLAGS || "";
   const linkMode = (values.MOUI_SKIA_LINK_MODE || skiaLinkMode(config)).trim().toLowerCase();
   const paragraphEnabled = skiaParagraphEnabled(config) || skiaParagraphRequired(config);
@@ -546,6 +562,10 @@ function platformFlags(config, values) {
       stubCcFlags = appendFlags(
         stubCcFlags,
         "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
+      );
+      extraCcFlags = appendMissingFlags(
+        extraCcFlags,
+        linuxReleaseSkParagraphAbiFlags(values),
       );
       if (resolvedLinkMode !== "static") {
         linkFlags = appendFlags(linkFlags, skiaParagraphLinkFlags(libPath, resolvedLinkMode, "linux"));
