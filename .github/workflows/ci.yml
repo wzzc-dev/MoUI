@@ -519,6 +519,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          command -v rg >/dev/null 2>&1 || brew install ripgrep
           moon version --all
           moon update
 
