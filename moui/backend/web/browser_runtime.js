@@ -1341,10 +1341,24 @@ export function createWindowWebImports(options = {}) {
     set_ime_cursor_area(rawId, x, y, width, height) {
       const state = textInputs.get(rawId);
       if (!state) return;
-      state.input.style.left = `${Number.isFinite(x) ? x : 0}px`;
-      state.input.style.top = `${Number.isFinite(y) ? y : 0}px`;
-      state.input.style.width = `${Math.max(1, Math.round(width || 1))}px`;
-      state.input.style.height = `${Math.max(1, Math.round(height || 1))}px`;
+      const left = Number.isFinite(x) ? x : 0;
+      const top = Number.isFinite(y) ? y : 0;
+      const resolvedWidth = Math.max(1, Math.round(width || 1));
+      const resolvedHeight = Math.max(1, Math.round(height || 1));
+      state.input.style.left = `${left}px`;
+      state.input.style.top = `${top}px`;
+      state.input.style.width = `${resolvedWidth}px`;
+      state.input.style.height = `${resolvedHeight}px`;
+      observeEvent({
+        kind: 46,
+        name: "ime_candidate_anchor",
+        rawId: rawId | 0,
+        x: left,
+        y: top,
+        width: resolvedWidth,
+        height: resolvedHeight,
+        at: Number(globalThis.performance?.now?.() ?? Date.now()),
+      });
     },
     set_ime_surrounding_text(rawId, text, cursor, anchor) {
       const state = textInputs.get(rawId);
@@ -1352,6 +1366,15 @@ export function createWindowWebImports(options = {}) {
       state.surroundingText = stringValue(text);
       state.surroundingCursor = cursor | 0;
       state.surroundingAnchor = anchor | 0;
+      observeEvent({
+        kind: 47,
+        name: "ime_surrounding_text",
+        rawId: rawId | 0,
+        text: state.surroundingText,
+        cursor: state.surroundingCursor,
+        anchor: state.surroundingAnchor,
+        at: Number(globalThis.performance?.now?.() ?? Date.now()),
+      });
     },
     system_theme() {
       return globalThis.window?.matchMedia?.("(prefers-color-scheme: dark)")

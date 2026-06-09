@@ -1380,6 +1380,11 @@ test "font api typechecks" {
       let boxes = paragraph.text_boxes_utf8(0, b"alpha beta".length())
       assert_true(boxes.length() > 0)
       assert_true(boxes[0].width() > 0.0)
+      let directions = paragraph.text_box_directions_utf8(
+        0,
+        b"alpha beta".length(),
+      )
+      assert_true(directions.length() == boxes.length())
       let hit = paragraph.hit_test_utf8(8.0, metrics[0].baseline)
       assert_true(hit.offset >= 0)
     }
