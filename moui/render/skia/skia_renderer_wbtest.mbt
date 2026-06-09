@@ -2043,7 +2043,12 @@ test "skia text system exposes measured caret positions" {
       inspect(layout.caret_positions.length(), content="5")
       inspect(layout.caret_positions[0], content="0")
       if skia_test_font_has_visible_text(font, "Slim") {
-        assert_true(layout.size.width == skia_measure_text_width(font, "Slim"))
+        let measured_width = skia_measure_text_width(font, "Slim")
+        if @skia_native.skia_shaper_available() && glyph_run.width > 0.0 {
+          assert_true(layout.size.width == glyph_run.width)
+        } else {
+          assert_true(layout.size.width == measured_width)
+        }
         assert_true(layout.caret_positions[4] == layout.size.width)
         assert_true(layout.baseline > 0.0)
         assert_true(layout.size.height >= layout.baseline)

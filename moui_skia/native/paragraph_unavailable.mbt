@@ -63,6 +63,18 @@ pub fn Paragraph::text_boxes_utf8(
 }
 
 ///|
+pub fn Paragraph::text_box_directions_utf8(
+  self : Paragraph,
+  start : Int,
+  end : Int,
+) -> Array[Int] {
+  ignore(self)
+  ignore(start)
+  ignore(end)
+  []
+}
+
+///|
 pub fn Paragraph::hit_test_utf8(
   self : Paragraph,
   x : Float,
