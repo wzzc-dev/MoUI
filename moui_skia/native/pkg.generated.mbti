@@ -278,6 +278,7 @@ pub fn Paragraph::is_available(Self) -> Bool
 pub fn Paragraph::layout_utf8(Bytes, family_name? : Bytes, size? : Float, weight? : Int, width? : Int, slant? : Int, max_width? : Float, left_to_right? : Bool) -> Self?
 pub fn Paragraph::line_count(Self) -> Int
 pub fn Paragraph::line_metrics(Self) -> Array[ParagraphLineMetric]
+pub fn Paragraph::text_box_directions_utf8(Self, Int, Int) -> Array[Int]
 pub fn Paragraph::text_boxes_utf8(Self, Int, Int) -> Array[@moui_skia.Rect]
 pub fn Paragraph::width(Self) -> Float
 
