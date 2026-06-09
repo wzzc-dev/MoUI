@@ -93,6 +93,16 @@ const requireNumber = (object, key, label) => {
   return value;
 };
 
+const requireStringArray = (object, key, label) => {
+  const value = requireArray(object, key, label);
+  for (const [index, item] of value.entries()) {
+    if (typeof item !== "string" || item.trim() === "") {
+      fail(`${label}.${key}[${index}] must be a non-empty string`);
+    }
+  }
+  return value;
+};
+
 const requireArtifactPaths = (paths, label) => {
   if (paths.length === 0) fail(`${label} must include at least one artifact path`);
   for (const [index, artifact] of paths.entries()) {
@@ -315,6 +325,26 @@ for (const key of expectedObservationKeys) {
             "observations.colorEmojiPixels.metadata.font.fallbackLanguageTagCount must be at least 1",
           );
         }
+        const fallbackLanguageTags = requireStringArray(
+          font,
+          "fallbackLanguageTags",
+          "observations.colorEmojiPixels.metadata.font",
+        );
+        if (fallbackLanguageTags.length < 1) {
+          fail(
+            "observations.colorEmojiPixels.metadata.font.fallbackLanguageTags must include at least one tag",
+          );
+        }
+        if (fallbackLanguageTags[0] !== fallbackScriptTag) {
+          fail(
+            "observations.colorEmojiPixels.metadata.font.fallbackLanguageTags[0] must match fallbackScriptTag",
+          );
+        }
+        if (fallbackLanguageTags.length !== fallbackLanguageTagCount) {
+          fail(
+            "observations.colorEmojiPixels.metadata.font.fallbackLanguageTags length must match fallbackLanguageTagCount",
+          );
+        }
         const fallbackRequestLanguageCount = requireNumber(
           font,
           "fallbackRequestLanguageCount",
@@ -351,6 +381,7 @@ for (const key of expectedObservationKeys) {
           font.shaper,
           `script=${fallbackScriptTag}`,
           `langs=${fallbackRequestLanguageCount}`,
+          `lang-tags=${fallbackLanguageTags.join("+")}`,
           `emoji-u+${fallbackRequestCharacter}`,
           glyphFormat,
         ];
