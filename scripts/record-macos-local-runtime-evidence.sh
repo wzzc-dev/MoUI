@@ -130,7 +130,6 @@ node scripts/record-macos-platform-runtime-evidence.mjs \
   "$manifest" \
   --host "$host" \
   --consumer-command "$consumer_command" \
-  --window-evidence-command "WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=$window_log bash scripts/check_moui_macos_smoke.sh --run" \
   --runtime-log "$ime_log" \
   --window-smoke-log "$window_log" \
   --app-runtime-log "$markdown_log" \
