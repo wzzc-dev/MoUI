@@ -47,7 +47,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 snapshot_inputs() {
-  find moui examples docs resource skills scripts README.md AGENTS.md moon.work -type f \
+  find moui moui_skia examples website docs resource skills scripts README.md AGENTS.md moon.work -type f \
     \( -name '*.mbt' -o -name '*.mbti' -o -name '*.json' -o -name '*.md' -o -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.sh' -o -name '*.mjs' -o -name 'moon.work' \) \
     -print0 2>/dev/null | {
       case "$(uname -s)" in
@@ -62,6 +62,10 @@ snapshot_inputs() {
 }
 
 build_preview() {
+  if [ "$PACKAGE" = "website/web_wasm" ]; then
+    printf '\n==> node scripts/sync-website-docs.mjs\n'
+    node scripts/sync-website-docs.mjs
+  fi
   printf '\n==> moon build %s --target %s\n' "$PACKAGE" "$TARGET"
   moon build "$PACKAGE" --target "$TARGET"
   printf 'Preview build ready: %s (%s)\n' "$PACKAGE" "$TARGET"
