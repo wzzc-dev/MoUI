@@ -28,7 +28,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 
 | Example | Purpose | Shared app package | Main coverage |
 | --- | --- | --- | --- |
-| Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, runtime Docs portal that fetches same-origin `docs/*.md` Markdown, Web-only `website/web_wasm` entrypoint |
+| Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, runtime Docs portal that fetches packaged same-origin `docs/*.md` Markdown plus MoUI and `moui_skia` README copies, Web-only `website/web_wasm` entrypoint |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
 | Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces, `status_badge` feedback chips, helper-backed table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore evidence, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, theme, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring |
@@ -50,8 +50,10 @@ moon build website/web_wasm --target wasm-gc
 The Website Docs page is part of the same MoUI app state as the homepage. It
 does not precompile Markdown into wasm; the Web host text-file service fetches
 the selected same-origin Markdown file from `docs/` at runtime. For local
-preview, serve the repository root so paths such as `../../docs/architecture.md`
-resolve from `website/web_wasm/index.html`.
+preview, run `node scripts/sync-website-docs.mjs` so `website/web_wasm/docs/`
+contains the root docs plus `moui-readme.md` and `moui-skia-readme.md`. The
+GitHub Pages workflow copies those Markdown sources directly into
+`dist/pages/docs/` while staging the deployment artifact.
 
 ## Counter
 

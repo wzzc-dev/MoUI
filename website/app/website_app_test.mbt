@@ -96,7 +96,7 @@ test "website docs portal loads runtime markdown through host text service" {
   click_text(runtime, "Docs")
   let commands = runtime.draw_commands()
   inspect(requested_paths.length(), content="1")
-  inspect(requested_paths[0], content="../../docs/architecture.md")
+  inspect(requested_paths[0], content="docs/moui-readme.md")
   assert_true(has_text(commands, "MoUI Markdown Docs"))
   assert_true(has_text(commands, "Runtime Docs"))
   assert_true(has_text(commands, "MoUI fetches Markdown at runtime."))
@@ -119,16 +119,17 @@ test "website docs portal loads runtime markdown through host text service" {
   )
   click_text(runtime, "Development")
   inspect(requested_paths.length(), content="2")
-  inspect(requested_paths[1], content="../../docs/development.md")
+  inspect(requested_paths[1], content="docs/development.md")
 }
 
 ///|
 test "website docs completion ignores stale request id for selected markdown" {
-  let path = "../../docs/architecture.md"
+  let path = "docs/architecture.md"
   let current_id = @host.HostServiceRequestId::new(2)
   let model = {
     ..Model::new(),
     page: WebsiteDocs,
+    selected_doc_slug: "architecture",
     doc_state: DocLoading(current_id, path),
   }
   let stale : @host.HostCompletedServiceResponse = {
@@ -144,7 +145,7 @@ test "website docs completion ignores stale request id for selected markdown" {
   match unchanged.doc_state {
     DocLoading(id, loading_path) => {
       inspect(id.value, content="2")
-      inspect(loading_path, content="../../docs/architecture.md")
+      inspect(loading_path, content="docs/architecture.md")
     }
     _ => fail("expected stale completion to keep current loading state")
   }
@@ -159,7 +160,7 @@ test "website docs completion ignores stale request id for selected markdown" {
   }
   match unchanged.update(HostDocsCompleted(fresh)).doc_state {
     DocLoaded(loaded_path, document) => {
-      inspect(loaded_path, content="../../docs/architecture.md")
+      inspect(loaded_path, content="docs/architecture.md")
       inspect(document.title, content="Fresh")
     }
     _ => fail("expected current completion to load markdown")
