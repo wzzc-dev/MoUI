@@ -306,7 +306,7 @@ function skiaParagraphLibraryCandidates(libPath, name) {
 }
 
 function skiaParagraphRequiredLibraryNames(platform = process.platform) {
-  const names = ["skparagraph", "skshaper", "skunicode_core", "skunicode_icu"];
+  const names = ["skparagraph", "skshaper", "skunicode_icu", "skunicode_core"];
   if (platform === "darwin") {
     return [...names, "harfbuzz", "icu"];
   }
@@ -374,11 +374,17 @@ function unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix) {
 
 function skiaParagraphLinkFlags(libPath, resolvedLinkMode, platform = process.platform) {
   const dynamicSuffix = unixDynamicLibrarySuffix(platform);
-  return [
-    `-L${libPath}`,
-    ...skiaParagraphLinkLibraryNames(platform)
-      .map(name => unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix)),
-  ].join(" ");
+  const libraryFlags = skiaParagraphLinkLibraryNames(platform)
+    .map(name => unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix));
+  if (platform === "linux" && resolvedLinkMode === "static") {
+    return [
+      `-L${libPath}`,
+      "-Wl,--start-group",
+      ...libraryFlags,
+      "-Wl,--end-group",
+    ].join(" ");
+  }
+  return [`-L${libPath}`, ...libraryFlags].join(" ");
 }
 
 function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false, requestedMode = skiaLinkMode(config)) {

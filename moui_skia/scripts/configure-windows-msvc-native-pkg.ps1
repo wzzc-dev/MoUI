@@ -102,7 +102,7 @@ $paragraphHeaders = @(
   (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/TextStyle.h"),
   (Join-Path $resolvedIncludeRoot "modules/skparagraph/include/FontCollection.h")
 )
-$paragraphLibs = @("skparagraph", "skshaper", "skunicode_core", "skunicode_icu")
+$paragraphLibs = @("skparagraph", "skshaper", "skunicode_icu", "skunicode_core")
 if ($skparagraphRequired) {
   foreach ($paragraphHeader in $paragraphHeaders) {
     if (!(Test-Path -LiteralPath $paragraphHeader -PathType Leaf)) {

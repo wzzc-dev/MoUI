@@ -129,6 +129,14 @@ extern "C" fn native_paragraph_text_boxes_utf8(
 
 ///|
 #borrow(paragraph)
+extern "C" fn native_paragraph_text_box_directions_utf8(
+  paragraph : ParagraphHandle,
+  start : Int,
+  end : Int,
+) -> Array[Int] = "moonbit_skia_paragraph_text_box_directions_utf8"
+
+///|
+#borrow(paragraph)
 extern "C" fn native_paragraph_hit_test_utf8_offset(
   paragraph : ParagraphHandle,
   x : Float,
@@ -238,6 +246,23 @@ pub fn Paragraph::text_boxes_utf8(
     []
   } else {
     native_paragraph_text_boxes_utf8(self.handle, start.max(0), end.max(start))
+  }
+}
+
+///|
+pub fn Paragraph::text_box_directions_utf8(
+  self : Paragraph,
+  start : Int,
+  end : Int,
+) -> Array[Int] {
+  if end <= start {
+    []
+  } else {
+    native_paragraph_text_box_directions_utf8(
+      self.handle,
+      start.max(0),
+      end.max(start),
+    )
   }
 }
 

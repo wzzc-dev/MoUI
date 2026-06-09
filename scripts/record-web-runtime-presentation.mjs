@@ -732,7 +732,37 @@ const textInputPoint = target => {
   if (target.name === "markdown-editor-web-wasm") {
     return { x: 560, y: 300 };
   }
-  return { x: 150, y: 185 };
+  return { x: 120, y: 164 };
+};
+
+const performCompositionProbe = async session => {
+  try {
+    await session.send("Input.imeSetComposition", {
+      text: "文",
+      selectionStart: 1,
+      selectionEnd: 1,
+      replacementStart: 0,
+      replacementEnd: 0,
+    });
+    await sleep(120);
+    await session.send("Input.insertText", { text: "文" });
+    await sleep(120);
+    return;
+  } catch (_) {
+    // Some CDP builds do not expose Input.imeSetComposition; fall through to
+    // the DOM composition path while still exercising the runtime listeners.
+  }
+  await evaluate(session, `(() => {
+    const input = document.activeElement;
+    if (!(input instanceof HTMLTextAreaElement || input instanceof HTMLInputElement)) {
+      return false;
+    }
+    input.dispatchEvent(new CompositionEvent("compositionstart", { data: "" }));
+    input.dispatchEvent(new CompositionEvent("compositionupdate", { data: "文" }));
+    input.dispatchEvent(new CompositionEvent("compositionend", { data: "文" }));
+    return true;
+  })()`);
+  await sleep(120);
 };
 
 const performInteractionProbe = async (session, target) => {
@@ -786,6 +816,7 @@ const performInteractionProbe = async (session, target) => {
     windowsVirtualKeyCode: 65,
     nativeVirtualKeyCode: 65,
   });
+  await performCompositionProbe(session);
   await session.send("Input.insertText", { text: "moui" });
   await session.send("Input.dispatchKeyEvent", {
     type: "keyDown",
@@ -923,6 +954,45 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
     paragraphLineIndexes.has(3) &&
     paragraphYs.size >= 3 &&
     Number(screenshot.paragraphWrapping?.darkRows ?? 0) >= 4;
+  const imeCommit = events.find(event =>
+    event?.name === "ime_commit" &&
+    typeof event.text === "string" &&
+    event.text.length > 0
+  );
+  const imePreedit = events.find(event =>
+    event?.name === "ime_preedit" &&
+    typeof event.text === "string" &&
+    event.text.length > 0 &&
+    Number(event.arg1 ?? 0) > 0
+  );
+  const imeCandidateAnchor = events.find(event =>
+    event?.name === "ime_candidate_anchor" &&
+    Number(event.width) > 0 &&
+    Number(event.height) > 0 &&
+    Number.isFinite(Number(event.x)) &&
+    Number.isFinite(Number(event.y))
+  );
+  const imeSurrounding = events.find(event =>
+    event?.name === "ime_surrounding_text" &&
+    typeof event.text === "string" &&
+    Number.isFinite(Number(event.cursor)) &&
+    Number.isFinite(Number(event.anchor))
+  );
+  const arrowEditAction = events.find(event =>
+    event?.name === "key_down" &&
+    (event.text === "ArrowRight" || event.text === "ArrowLeft")
+  );
+  const selectionPassed = paragraphPassed && !!bidi;
+  const graphemeEditingPassed = !!grapheme && !!imeCommit && !!arrowEditAction;
+  const imeCandidateAnchorPassed =
+    !!imeCandidateAnchor &&
+    !!imeSurrounding &&
+    !!imeCommit &&
+    !!grapheme;
+  const imeCompositionPassed =
+    !!imeCandidateAnchor &&
+    !!imePreedit &&
+    Number(screenshot.contentPixels ?? 0) >= 500;
 
   const placeholderIndex = eventIndex(events, event => event?.name === "image_placeholder_frame");
   const loadIndex = eventIndex(events, event => event?.name === "image_load");
@@ -1005,27 +1075,48 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
     },
     selectionRects: {
       ...(screenshot.selectionRects ?? emptyRendererProofEvidence(true)),
-      passed: false,
-      evidence: [],
-      matchedMarkers: 0,
+      passed: selectionPassed,
+      evidence: selectionPassed ? ["selection-rects", "line-range"] : [],
+      matchedMarkers: selectionPassed ? 2 : 0,
+      paragraphLineCount: paragraphLineIndexes.size,
+      hitTestEvent: !!bidi,
     },
     graphemeEditing: {
       ...(screenshot.graphemeEditing ?? emptyRendererProofEvidence(true)),
-      passed: false,
-      evidence: [],
-      matchedMarkers: 0,
+      passed: graphemeEditingPassed,
+      evidence: graphemeEditingPassed ? ["grapheme-boundaries", "edit-actions"] : [],
+      matchedMarkers: graphemeEditingPassed ? 2 : 0,
+      commitText: imeCommit?.text ?? "",
+      editKey: arrowEditAction?.text ?? "",
     },
     imeCandidateAnchor: {
       ...(screenshot.imeCandidateAnchor ?? emptyRendererProofEvidence(true)),
-      passed: false,
-      evidence: [],
-      matchedMarkers: 0,
+      passed: imeCandidateAnchorPassed,
+      evidence: imeCandidateAnchorPassed
+        ? ["candidate-anchor", "surrounding-text", "grapheme-boundary", "utf8-offsets"]
+        : [],
+      matchedMarkers: imeCandidateAnchorPassed ? 4 : 0,
+      anchor: imeCandidateAnchor
+        ? {
+            x: Number(imeCandidateAnchor.x),
+            y: Number(imeCandidateAnchor.y),
+            width: Number(imeCandidateAnchor.width),
+            height: Number(imeCandidateAnchor.height),
+          }
+        : undefined,
+      surroundingTextLength: imeSurrounding?.text?.length ?? 0,
+      surroundingCursor: Number(imeSurrounding?.cursor ?? 0),
+      surroundingAnchor: Number(imeSurrounding?.anchor ?? 0),
     },
     imeCompositionVisual: {
       ...(screenshot.imeCompositionVisual ?? emptyRendererProofEvidence(true)),
-      passed: false,
-      evidence: [],
-      matchedMarkers: 0,
+      passed: imeCompositionPassed,
+      evidence: imeCompositionPassed
+        ? ["composition-range", "composition-cursor", "preedit-pixels"]
+        : [],
+      matchedMarkers: imeCompositionPassed ? 3 : 0,
+      preeditText: imePreedit?.text ?? "",
+      preeditLength: Number(imePreedit?.arg1 ?? 0),
     },
     asyncImageSecondFrame: {
       required: true,

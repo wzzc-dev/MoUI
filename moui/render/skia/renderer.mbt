@@ -90,9 +90,8 @@ pub(all) struct SkiaTextSelectionGeometryProof {
 
 ///|
 priv struct SkiaParagraphClusterBox {
-  text : String
-  line_index : Int
-  center_x : Double
+  has_rect : Bool
+  rtl : Bool
 }
 
 ///|
@@ -3224,11 +3223,15 @@ fn skia_paragraph_visual_order_metadata(
 ) -> @core.TextParagraphVisualOrderMetadata {
   let logical_clusters = skia_grapheme_cluster_texts(text)
   let boxes = skia_paragraph_cluster_boxes(logical_clusters, paragraph, offsets)
-  let visual_clusters = if boxes.length() == logical_clusters.length() {
-    skia_paragraph_visual_clusters_from_boxes(boxes)
+  let paragraph_bidi_evidence = skia_paragraph_has_bidi_evidence(boxes)
+  let visual_clusters = if paragraph_bidi_evidence {
+    skia_bidi_visual_cluster_texts(logical_clusters)
   } else {
     logical_clusters
   }
+  let visual_order_differs = !skia_string_arrays_equal(
+    logical_clusters, visual_clusters,
+  )
   {
     logical_text: skia_join_clusters(logical_clusters),
     visual_text: skia_join_clusters(visual_clusters),
@@ -3236,10 +3239,10 @@ fn skia_paragraph_visual_order_metadata(
     visual_cluster_count: visual_clusters.length(),
     segment_count: boxes.length().max(1),
     glyph_count: logical_clusters.length(),
-    visual_order_differs: !skia_string_arrays_equal(
-      logical_clusters, visual_clusters,
-    ),
-    bidi_visual_order_ready: bidi_ready,
+    visual_order_differs,
+    bidi_visual_order_ready: bidi_ready &&
+      paragraph_bidi_evidence &&
+      visual_order_differs,
   }
 }
 
@@ -3259,14 +3262,24 @@ fn skia_paragraph_cluster_boxes(
         offsets[char_index],
         offsets[end_index],
       )
-      if !text_boxes.is_empty() {
-        let rect = text_boxes[0]
-        boxes.push({
-          text: cluster,
-          line_index: skia_paragraph_visual_line_index(rect.top.to_double()),
-          center_x: (rect.left.to_double() + rect.right.to_double()) / 2.0,
-        })
+      let has_rect = !text_boxes.is_empty()
+      let native_rtl = if has_rect {
+        let directions = paragraph.text_box_directions_utf8(
+          offsets[char_index],
+          offsets[end_index],
+        )
+        if directions.is_empty() {
+          false
+        } else {
+          directions[0] == 0
+        }
+      } else {
+        false
       }
+      boxes.push({
+        has_rect,
+        rtl: native_rtl || skia_cluster_is_rtl(cluster),
+      })
     }
     char_index = end_index
   }
@@ -3274,44 +3287,20 @@ fn skia_paragraph_cluster_boxes(
 }
 
 ///|
-fn skia_paragraph_visual_line_index(top : Double) -> Int {
-  Int::max(0, top.to_int())
-}
-
-///|
-fn skia_paragraph_visual_clusters_from_boxes(
+fn skia_paragraph_has_bidi_evidence(
   boxes : Array[SkiaParagraphClusterBox],
-) -> Array[String] {
-  let ordered : Array[SkiaParagraphClusterBox] = []
+) -> Bool {
+  let mut rect_count = 0
+  let mut rtl_count = 0
   for box in boxes {
-    skia_insert_visual_cluster_box(ordered, box)
-  }
-  let clusters : Array[String] = []
-  for box in ordered {
-    clusters.push(box.text)
-  }
-  clusters
-}
-
-///|
-fn skia_insert_visual_cluster_box(
-  ordered : Array[SkiaParagraphClusterBox],
-  box : SkiaParagraphClusterBox,
-) -> Unit {
-  let mut insert_at = ordered.length()
-  for index, existing in ordered {
-    if insert_at == ordered.length() &&
-      (
-        box.line_index < existing.line_index ||
-        (
-          box.line_index == existing.line_index &&
-          box.center_x < existing.center_x
-        )
-      ) {
-      insert_at = index
+    if box.has_rect {
+      rect_count = rect_count + 1
+    }
+    if box.rtl {
+      rtl_count = rtl_count + 1
     }
   }
-  ordered.insert(insert_at, box)
+  rect_count > 0 && rtl_count > 0
 }
 
 ///|
@@ -3342,6 +3331,7 @@ fn skia_paragraph_bidi_probe_ready(font : @core.FontSpec) -> Bool {
         bidi_ready=true,
       )
       visual.visual_order_differs &&
+      visual.bidi_visual_order_ready &&
       visual.logical_cluster_count == logical.length() &&
       visual.visual_cluster_count == logical.length()
     }
@@ -3498,7 +3488,10 @@ fn skia_caret_positions(
   match glyph_run {
     Some(run) =>
       match skia_shaped_caret_positions(text, run) {
-        Some(carets) => return carets
+        Some(carets) =>
+          if skia_shaped_caret_positions_are_usable(text, carets) {
+            return carets
+          }
         None => ()
       }
     None => ()
@@ -3510,6 +3503,27 @@ fn skia_caret_positions(
     carets.push(skia_measure_text_width(font, prefix))
   }
   skia_stabilize_grapheme_cluster_carets(text, carets)
+}
+
+///|
+fn skia_shaped_caret_positions_are_usable(
+  text : String,
+  carets : Array[Double],
+) -> Bool {
+  let chars = text.to_array()
+  if carets.length() != chars.length() + 1 {
+    return false
+  }
+  let clusters = skia_grapheme_cluster_texts(text)
+  if clusters.length() != chars.length() || chars.length() <= 2 {
+    return true
+  }
+  for index in 1..<(carets.length() - 1) {
+    if carets[index] > carets[index - 1] {
+      return true
+    }
+  }
+  false
 }
 
 ///|

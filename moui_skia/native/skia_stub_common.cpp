@@ -1482,7 +1482,7 @@ extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_shaper_available(void) {
 
 extern "C" MOONBIT_FFI_EXPORT int32_t moonbit_skia_paragraph_available(void) {
 #if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
-  return 1;
+  return SkUnicodes::ICU::Make() != nullptr ? 1 : 0;
 #else
   return 0;
 #endif

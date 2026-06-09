@@ -169,7 +169,7 @@ paragraph_headers=(
   "$include_path/modules/skparagraph/include/TextStyle.h"
   "$include_path/modules/skparagraph/include/FontCollection.h"
 )
-paragraph_libs=(skparagraph skshaper skunicode_core skunicode_icu)
+paragraph_libs=(skparagraph skshaper skunicode_icu skunicode_core)
 if [[ $require_skparagraph -eq 1 ]]; then
   for paragraph_header in "${paragraph_headers[@]}"; do
     if [[ ! -f "$paragraph_header" ]]; then
@@ -234,7 +234,7 @@ if [[ -n "$skia_runtime_link_flags" ]]; then
   link_flags="$link_flags $skia_runtime_link_flags"
 fi
 if [[ $enable_skparagraph -eq 1 ]]; then
-  link_flags="$link_flags -L$lib_path -lskparagraph -lskshaper -lskunicode_core -lskunicode_icu -lharfbuzz -licu"
+  link_flags="$link_flags -L$lib_path -lskparagraph -lskshaper -lskunicode_icu -lskunicode_core -lharfbuzz -licu"
 fi
 if [[ -n "$extra_link_flags" ]]; then
   link_flags="$link_flags $extra_link_flags"

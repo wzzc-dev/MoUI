@@ -93,10 +93,14 @@ moonbit_skia_paragraph_layout_utf8(
     text_style.setFontFamilies(families);
   }
 
+  sk_sp<SkUnicode> unicode = SkUnicodes::ICU::Make();
+  if (unicode == nullptr) {
+    return moonbit_skia_make_paragraph_wrapper(nullptr);
+  }
   std::unique_ptr<ParagraphBuilder> builder = ParagraphBuilder::make(
     paragraph_style,
     font_collection,
-    SkUnicodes::ICU::Make()
+    std::move(unicode)
   );
   if (builder == nullptr) {
     return moonbit_skia_make_paragraph_wrapper(nullptr);
@@ -392,6 +396,44 @@ moonbit_skia_paragraph_text_boxes_utf8(
     0,
     reinterpret_cast<MoonbitSkiaRect**>(moonbit_empty_ref_array)
   );
+#endif
+}
+
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaInt32Array*
+moonbit_skia_paragraph_text_box_directions_utf8(
+  MoonbitSkiaParagraph* wrapper,
+  int32_t start,
+  int32_t end
+) {
+  if (start < 0 || end <= start) {
+    return moonbit_skia_make_int32_array(0, moonbit_empty_int32_array);
+  }
+#if defined(MOUI_SKIA_HAS_SKIA) && defined(MOUI_SKIA_HAS_SKPARAGRAPH_HEADERS)
+  if (wrapper == nullptr || wrapper->paragraph == nullptr) {
+    return moonbit_skia_make_int32_array(0, moonbit_empty_int32_array);
+  }
+  std::vector<TextBox> boxes = wrapper->paragraph->getRectsForRange(
+    static_cast<unsigned>(start),
+    static_cast<unsigned>(end),
+    RectHeightStyle::kMax,
+    RectWidthStyle::kTight
+  );
+  if (boxes.empty() || boxes.size() > static_cast<size_t>(INT32_MAX)) {
+    return moonbit_skia_make_int32_array(0, moonbit_empty_int32_array);
+  }
+  int32_t* buffer = moonbit_make_int32_array_raw(
+    static_cast<int32_t>(boxes.size())
+  );
+  for (size_t i = 0; i < boxes.size(); ++i) {
+    buffer[i] = boxes[i].direction == TextDirection::kRtl ? 0 : 1;
+  }
+  return moonbit_skia_make_int32_array(
+    static_cast<int32_t>(boxes.size()),
+    buffer
+  );
+#else
+  (void)wrapper;
+  return moonbit_skia_make_int32_array(0, moonbit_empty_int32_array);
 #endif
 }
 
