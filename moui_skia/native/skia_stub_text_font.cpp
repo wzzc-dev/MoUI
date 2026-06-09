@@ -1258,10 +1258,10 @@ moonbit_skia_font_mgr_match_family_style(
     return moonbit_skia_make_typeface_wrapper(nullptr);
   }
 #if defined(MOUI_SKIA_HAS_SKIA)
-  const char* family = nullptr;
-  if (family_name != nullptr && Moonbit_array_length(family_name) > 0) {
-    family = reinterpret_cast<const char*>(family_name);
-  }
+  std::string family_name_text = moonbit_skia_bytes_to_string(family_name);
+  const char* family = family_name_text.empty()
+    ? nullptr
+    : family_name_text.c_str();
   sk_sp<SkTypeface> typeface = wrapper->font_mgr->matchFamilyStyle(
     family,
     moonbit_skia_font_style(weight, width, slant)
@@ -1297,14 +1297,15 @@ moonbit_skia_font_mgr_match_family_style_character(
     return moonbit_skia_make_typeface_wrapper(nullptr);
   }
 #if defined(MOUI_SKIA_HAS_SKIA)
-  const char* family = nullptr;
-  if (family_name != nullptr && Moonbit_array_length(family_name) > 0) {
-    family = reinterpret_cast<const char*>(family_name);
-  }
+  std::string family_name_text = moonbit_skia_bytes_to_string(family_name);
+  const char* family = family_name_text.empty()
+    ? nullptr
+    : family_name_text.c_str();
+  std::string language_tag_text = moonbit_skia_bytes_to_string(language_tag);
   const char* languages[1] = {nullptr};
   int language_count = 0;
-  if (language_tag != nullptr && Moonbit_array_length(language_tag) > 0) {
-    languages[0] = reinterpret_cast<const char*>(language_tag);
+  if (!language_tag_text.empty()) {
+    languages[0] = language_tag_text.c_str();
     language_count = 1;
   }
   const char** language_data = language_count == 0 ? nullptr : languages;
@@ -1354,8 +1355,9 @@ moonbit_skia_typeface_from_name(
     return moonbit_skia_make_typeface_wrapper(nullptr);
   }
 #if defined(MOUI_SKIA_HAS_SKIA)
+  std::string family_name_text = moonbit_skia_bytes_to_string(family_name);
   sk_sp<SkTypeface> typeface = moonbit_skia_typeface_from_family(
-    reinterpret_cast<const char*>(family_name),
+    family_name_text.c_str(),
     moonbit_skia_font_style(weight, width, slant)
   );
   if (!typeface) {
