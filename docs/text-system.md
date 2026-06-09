@@ -334,11 +334,14 @@ Remote font loading is intentionally outside the current backend contract.
   Indic_Conjunct_Break linker rule instead of the earlier hand-written virama
   shortcut, and keeps deletion and IME offsets aligned with the full default
   grapheme break fixture.
-  Native IME runtime readiness is also still pending: macOS, Windows, and Linux
-  must each record matching-host Showcase or Markdown Editor artifacts for
-  candidate anchors, surrounding text, composition visuals, commit/delete
-  behavior, cursor updates, scroll anchors, scale/DPR anchors, resize anchors,
-  and Markdown Editor IME dogfood before native IME can be called ready.
+  Native IME runtime readiness is platform-scoped: macOS has recorded
+  matching-host Markdown Editor/AppKit artifacts for candidate anchors,
+  surrounding text, composition visuals, commit/delete behavior, cursor
+  updates, scroll anchors, scale/DPR anchors, resize anchors, and Markdown
+  Editor IME dogfood, so the macOS platform evidence entry can set those
+  observations to `yes`. Windows and Linux still need equivalent
+  matching-host Showcase or Markdown Editor artifacts before their native IME
+  runtime paths can be called ready.
   Native WGPU can preserve RGBA color glyph payloads
   through the provider protocol and glyph atlas path, with Cosmic platform
   emoji fallback candidate loading, Cosmic color swash preservation,
