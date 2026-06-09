@@ -381,7 +381,19 @@ fi
 
 link_flags="$skia_library_link_flags"
 if [[ $enable_skparagraph -eq 1 ]]; then
-  link_flags="$link_flags -L$lib_path -Wl,--whole-archive -licu -Wl,--no-whole-archive -Wl,--start-group -lskparagraph -lskshaper -lskunicode_core -lskunicode_icu -Wl,--end-group"
+  if [[ "$resolved_link_mode" == "static" ]]; then
+    paragraph_link_flags=()
+    for paragraph_lib in skparagraph skshaper skunicode_icu skunicode_core harfbuzz icu; do
+      if [[ -f "$lib_path/lib$paragraph_lib.a" ]]; then
+        paragraph_link_flags+=("$lib_path/lib$paragraph_lib.a")
+      else
+        paragraph_link_flags+=("-l$paragraph_lib")
+      fi
+    done
+    link_flags="-L$lib_path -Wl,--start-group $static_lib ${paragraph_link_flags[*]} -Wl,--end-group"
+  else
+    link_flags="$link_flags -L$lib_path -lskparagraph -lskshaper -lskunicode_icu -lskunicode_core -lharfbuzz -licu"
+  fi
 fi
 link_flags="$link_flags -lstdc++"
 if [[ -n "$extra_link_flags" ]]; then

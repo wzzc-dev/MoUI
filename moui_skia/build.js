@@ -375,26 +375,36 @@ function unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix) {
 function skiaParagraphLinkFlags(libPath, resolvedLinkMode, platform = process.platform) {
   const dynamicSuffix = unixDynamicLibrarySuffix(platform);
   const libraryFlags = skiaParagraphLinkLibraryNames(platform)
-    .map(name => ({
-      name,
-      flag: unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix),
-    }));
+    .map(name => unixLibraryFlag(libPath, name, resolvedLinkMode, dynamicSuffix));
   if (platform === "linux" && resolvedLinkMode === "static") {
-    const icuFlags = libraryFlags
-      .filter(library => library.name === "icu")
-      .flatMap(library => ["-Wl,--whole-archive", library.flag, "-Wl,--no-whole-archive"]);
-    const groupedFlags = libraryFlags
-      .filter(library => library.name !== "icu")
-      .map(library => library.flag);
     return [
       `-L${libPath}`,
-      ...icuFlags,
       "-Wl,--start-group",
-      ...groupedFlags,
+      ...libraryFlags,
       "-Wl,--end-group",
     ].join(" ");
   }
-  return [`-L${libPath}`, ...libraryFlags.map(library => library.flag)].join(" ");
+  return [`-L${libPath}`, ...libraryFlags].join(" ");
+}
+
+function linuxStaticSkiaParagraphLinkFlags(libPath, skiaLib) {
+  const skiaFlag = path.join(libPath, `lib${skiaLib}.a`);
+  const paragraphFlags = [
+    "skparagraph",
+    "skshaper",
+    "skunicode_icu",
+    "skunicode_core",
+    "harfbuzz",
+    "icu",
+  ]
+    .map(name => unixLibraryFlag(libPath, name, "static", ".so"));
+  return [
+    `-L${libPath}`,
+    "-Wl,--start-group",
+    skiaFlag,
+    ...paragraphFlags,
+    "-Wl,--end-group",
+  ].join(" ");
 }
 
 function macosLibraryFlags(config, libPath, skiaLib, includeGaneshExt = false, requestedMode = skiaLinkMode(config)) {
@@ -516,7 +526,9 @@ function platformFlags(config, values) {
           `MOUI_SKIA_LINK_MODE=static requested, but ${staticLib} was not found`,
         );
       }
-      linkFlags = staticLib;
+      linkFlags = paragraphEnabled
+        ? linuxStaticSkiaParagraphLinkFlags(libPath, skiaLib)
+        : staticLib;
     } else {
       if (!fs.existsSync(dynamicLib)) {
         throw new Error(
@@ -535,7 +547,9 @@ function platformFlags(config, values) {
         stubCcFlags,
         "-DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER",
       );
-      linkFlags = appendFlags(linkFlags, skiaParagraphLinkFlags(libPath, resolvedLinkMode, "linux"));
+      if (resolvedLinkMode !== "static") {
+        linkFlags = appendFlags(linkFlags, skiaParagraphLinkFlags(libPath, resolvedLinkMode, "linux"));
+      }
     }
     linkFlags = appendMissingFlags(linkFlags, ["-lstdc++"]);
   }
