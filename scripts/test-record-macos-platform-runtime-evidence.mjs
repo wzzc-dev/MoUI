@@ -169,7 +169,12 @@ const writeArtifact = (name, content = runtimeLogText) => {
   return relative(repoRoot, path);
 };
 
-const runRecorder = (args, env = process.env) =>
+const localRecorderEnv = {
+  ...process.env,
+  GITHUB_ACTIONS: "",
+};
+
+const runRecorder = (args, env = localRecorderEnv) =>
   spawnSync(process.execPath, [recorder, ...args], {
     cwd: repoRoot,
     encoding: "utf8",
@@ -194,6 +199,23 @@ const expectFail = (label, result, expectedMessage) => {
     console.error(result.stderr);
     process.exit(1);
   }
+};
+
+const dumpEntry = entry => {
+  console.error(
+    JSON.stringify(
+      {
+        status: entry?.status,
+        observations: entry?.observations,
+        skiaEvidenceStatus: entry?.skiaEvidence?.status,
+        evidenceProvenance: entry?.evidenceProvenance,
+        artifacts: entry?.artifacts,
+        notes: entry?.notes,
+      },
+      null,
+      2,
+    ),
+  );
 };
 
 try {
@@ -229,6 +251,7 @@ try {
     !localEntry.notes.some(note => note.includes("helper test"))
   ) {
     console.error("record local macOS platform runtime evidence: manifest was not updated correctly");
+    dumpEntry(localEntry);
     process.exit(1);
   }
 
@@ -258,6 +281,7 @@ try {
     !sourceEntry.artifacts.includes(markdownAppLog)
   ) {
     console.error("record macOS platform runtime evidence from source logs: manifest was not updated correctly");
+    dumpEntry(sourceEntry);
     process.exit(1);
   }
 
@@ -299,6 +323,7 @@ try {
     !ciEntry.evidenceProvenance.artifacts.includes(runtimeLog)
   ) {
     console.error("record CI macOS platform runtime evidence: provenance was not derived correctly");
+    dumpEntry(ciEntry);
     process.exit(1);
   }
 
