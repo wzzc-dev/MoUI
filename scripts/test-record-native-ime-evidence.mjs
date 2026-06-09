@@ -255,6 +255,114 @@ try {
     process.exit(1);
   }
 
+  const macosPath = writeManifest("macos-ime-complete.json", "macos");
+  const macosAllLog = writeArtifact(
+    "macos",
+    "ime-complete.log",
+    [
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=macos-marked-text NSTextInputClient app=markdown-editor",
+      "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text appkit-setMarkedText appkit-firstRectForCharacterRange",
+      "MoUI native IME surrounding text passed surrounding-text selection-anchor utf8-offsets grapheme appkit-setMarkedText appkit-firstRectForCharacterRange",
+      "MoUI native IME composition visual passed composition-range composition-cursor preedit-underline preedit-pixels selection-highlight appkit-setMarkedText appkit-firstRectForCharacterRange",
+      "MoUI native IME commit delete passed commit delete selection-replacement appkit-insertText",
+      "MoUI native IME cursor update passed cursor-area cursor-update caret-rect appkit-insertText",
+      "MoUI native IME scroll anchor passed scroll candidate-anchor candidate-window appkit-insertText",
+      "MoUI native IME scale DPR anchor passed scale dpr candidate-anchor candidate-window appkit-insertText",
+      "MoUI native IME resize anchor passed resize candidate-anchor candidate-window appkit-insertText",
+      "MoUI native IME Markdown Editor passed markdown-editor composition candidate-anchor candidate-window selection-replacement source-mapping appkit-insertText NSTextInputClient",
+    ].join("\n"),
+  );
+  const macosConsumerCommand =
+    "MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/markdown_editor/macos_skia --target native";
+  expectPass(
+    "record complete macOS IME evidence with AppKit markers",
+    runRecorder([
+      macosPath,
+      "macos",
+      "--host",
+      "macOS Darwin CI",
+      "--consumer-command",
+      macosConsumerCommand,
+      "--candidate-anchor-log",
+      macosAllLog,
+      "--surrounding-text-log",
+      macosAllLog,
+      "--composition-visual-log",
+      macosAllLog,
+      "--commit-delete-log",
+      macosAllLog,
+      "--cursor-update-log",
+      macosAllLog,
+      "--scroll-anchor-log",
+      macosAllLog,
+      "--scale-dpr-anchor-log",
+      macosAllLog,
+      "--resize-anchor-log",
+      macosAllLog,
+      "--markdown-log",
+      macosAllLog,
+    ]),
+  );
+  const macos = JSON.parse(readFileSync(macosPath, "utf8"));
+  const macosEntry = macos.platforms[0];
+  if (
+    macosEntry.status !== "pending" ||
+    macosEntry.host !== "macOS Darwin CI" ||
+    macosEntry.observations.imeCandidateAnchor !== "yes" ||
+    macosEntry.observations.imeMarkdownEditor !== "yes" ||
+    macosEntry.evidenceProvenance?.kind !== "matching-host-artifact" ||
+    !macosEntry.evidenceProvenance.artifacts.includes(macosAllLog)
+  ) {
+    console.error("record complete macOS IME evidence: manifest was not updated correctly");
+    process.exit(1);
+  }
+
+  const macosWeakLog = writeArtifact(
+    "macos",
+    "weak-ime-candidate-anchor.log",
+    [
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=macos-marked-text app=markdown-editor",
+      "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
+    ].join("\n"),
+  );
+  expectFail(
+    "reject macOS IME log without AppKit markers",
+    runRecorder([
+      writeManifest("weak-macos-ime-marker.json", "macos"),
+      "macos",
+      "--host",
+      "macOS Darwin CI",
+      "--consumer-command",
+      macosConsumerCommand,
+      "--candidate-anchor-log",
+      macosWeakLog,
+    ]),
+    "candidate anchor log is missing expected marker: NSTextInputClient",
+  );
+
+  const macosWeakCursorLog = writeArtifact(
+    "macos",
+    "weak-ime-cursor-update.log",
+    [
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=macos-marked-text NSTextInputClient app=markdown-editor",
+      "MoUI native IME cursor update passed cursor-area cursor-update caret-rect",
+    ].join("\n"),
+  );
+  expectFail(
+    "reject macOS cursor update log without AppKit insert marker",
+    runRecorder([
+      writeManifest("weak-macos-cursor-ime-marker.json", "macos"),
+      "macos",
+      "--host",
+      "macOS Darwin CI",
+      "--consumer-command",
+      macosConsumerCommand,
+      "--cursor-update-log",
+      macosWeakCursorLog,
+    ]),
+    "cursor update log is missing expected marker: NSTextInputClient and appkit-insertText markers",
+  );
+
   const badMarkerPath = writeManifest("bad-linux-ime-marker.json", "linux");
   const badMarkerLog = writeArtifact(
     "linux",
@@ -501,6 +609,10 @@ try {
     force: true,
   });
   rmSync(join(artifactRoot, "windows", "test-record-native-ime-evidence"), {
+    recursive: true,
+    force: true,
+  });
+  rmSync(join(artifactRoot, "macos", "test-record-native-ime-evidence"), {
     recursive: true,
     force: true,
   });

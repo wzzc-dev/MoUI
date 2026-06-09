@@ -488,11 +488,41 @@ logs must also identify matching-host runtime, native app, `renderer=skia`, the
 matching app marker (`app=showcase` or `app=markdown-editor`), and platform protocol
 markers such as `platform-protocol=macos-marked-text`,
 `platform-protocol=windows-ime`, or `platform-protocol=wayland-text-input`.
+On macOS, collect the first-party Markdown Editor runtime log with
+`MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/markdown_editor/macos_skia --target native`
+and store it as `artifacts/platform-evidence/macos/ime-markdown-runtime.log`;
+that single log may be supplied to each macOS native IME recorder option because
+the opt-in run prints every required native IME observation marker before
+exiting. The macOS recorder also requires the log to prove the AppKit
+`NSTextInputClient` route: candidate/surrounding/composition observations must
+include `appkit-setMarkedText` and `appkit-firstRectForCharacterRange`, while
+post-commit observations, including commit/delete, cursor, scroll, scale/DPR,
+resize, and Markdown Editor dogfood markers, must include `appkit-insertText`.
 The `renderer=skia`, app, and platform-protocol markers are exact
 whitespace-delimited tokens; suffixed labels such as `renderer=skia-preview` or
 `app=showcase-debug` are not runtime IME evidence. The
 helper does not promote full platform status, and generic host unit-test or
 package logs are not runtime IME proof.
+For macOS platform promotion, use
+`node scripts/record-macos-platform-runtime-evidence.mjs` only after macOS
+`skiaEvidence` is passed and the native IME helper has already set every macOS
+IME observation to `yes`. The macOS helper validates the local window fork
+runtime smoke transcript through `--window-smoke-log` for
+window/open/resize/redraw/input/monitor/cursor/shutdown source observations
+and validates a Showcase or Markdown Editor `macos_skia` first-frame source log
+through `--app-runtime-log`; it then delegates to the generic platform
+manifest recorder. Collect the window-fork transcript with
+`WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=... bash scripts/check_moui_macos_smoke.sh --run`
+from `.local_repos/window` so the AppKit smoke app writes the artifact marker
+stream itself; outer shell redirection must not be used as the source artifact
+for monitor/current-monitor evidence. Renderer-proof IME markers, provider
+preflights, and the window fork smoke alone are not macOS platform-passed evidence.
+For local matching-host collection, prefer
+`scripts/record-macos-local-runtime-evidence.sh` after macOS Skia evidence has
+already passed; it runs the AppKit window smoke, runs the Markdown Editor IME
+producer, folds native IME observations, promotes the macOS platform entry with
+`matching-host-artifact` provenance, and validates the macOS entry without
+changing Windows, Linux, or global Skia claims.
 Full platform runtime status still requires the broader platform observations.
 
 Windows native uses Visual Studio C++ build tools and vcpkg `zlib:x64-windows`.

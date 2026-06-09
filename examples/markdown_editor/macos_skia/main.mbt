@@ -20,6 +20,10 @@ fn main {
   } else {
     @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute
   }
+  let native_ime_runtime_evidence = @env.get_env_var(
+      "MOUI_MACOS_NATIVE_IME_EVIDENCE",
+    ) ==
+    Some("1")
   @macos_skia_backend.run_app_with_options(
     "MoUI Markdown Editor",
     runtime,
@@ -27,6 +31,7 @@ fn main {
       font_resolution~,
       surface_route~,
       exit_after_first_present~,
+      native_ime_runtime_evidence~,
     ),
   )
 }

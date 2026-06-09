@@ -349,6 +349,17 @@ candidate-anchor, surrounding-text, composition, commit/delete, cursor, scroll,
 scale/DPR, resize, and Markdown Editor markers. The `renderer=skia`, app, and
 platform-protocol markers are exact whitespace-delimited tokens; suffixed
 labels are not matching-host runtime IME evidence.
+For macOS, the first-party producer is the Markdown Editor native Skia
+entrypoint with
+`MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/markdown_editor/macos_skia --target native`;
+store that run as
+`artifacts/platform-evidence/macos/ime-markdown-runtime.log` and pass it to
+each macOS native IME recorder log option after confirming it prints the
+Markdown Editor marker. The macOS recorder also requires AppKit
+`NSTextInputClient` markers: candidate/surrounding/composition logs must include
+`appkit-setMarkedText` and `appkit-firstRectForCharacterRange`, and
+post-commit logs, including commit/delete, cursor, scroll, scale/DPR, resize,
+and Markdown Editor dogfood markers, must include `appkit-insertText`.
 Use
 `record-native-skia-evidence.mjs` for matching-host Skia logs when you only
 want to validate and update `skiaEvidence`; it deliberately leaves the broader
@@ -358,6 +369,26 @@ marker; do not use generic passing test output as provider evidence. Its
 Showcase and Markdown Editor first-frame checks require app-identifying
 `title=MoUI Showcase` and `title=MoUI Markdown Editor` markers on the platform
 first-frame line, respectively.
+Use `record-macos-platform-runtime-evidence.mjs` only for macOS platform
+promotion after macOS `skiaEvidence` is passed and every native IME observation
+has already been recorded by `record-native-ime-evidence.mjs`. The macOS helper
+validates the local window fork runtime smoke transcript through
+`--window-smoke-log` for window/open/resize/redraw/input/monitor/cursor/shutdown
+source observations, and validates a Showcase or Markdown Editor `macos_skia`
+first-frame source log through `--app-runtime-log` before delegating to the
+generic platform manifest recorder. Collect the macOS window-fork transcript
+with `WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=... bash scripts/check_moui_macos_smoke.sh --run`
+from `.local_repos/window` so the AppKit smoke app writes the marker artifact
+itself; do not use outer shell redirection as the source artifact for
+monitor/current-monitor evidence. Do not use renderer-proof IME markers,
+provider preflights, or the window fork smoke alone as macOS platform-passed
+evidence.
+For local macOS matching-host collection after Skia evidence is already passed,
+prefer `scripts/record-macos-local-runtime-evidence.sh`; it runs the AppKit
+window smoke, runs the Markdown Editor IME producer, folds native IME
+observations, promotes the macOS platform entry with `matching-host-artifact`
+provenance, and validates the macOS entry without changing Windows, Linux, or
+global Skia claims.
 A passed presentation manifest must include WebGPU startup, wasm startup,
 canvas sizing, resize/input event-bridge delivery, Markdown Editor text input,
 clean target close, clean console, nonblank screenshots, and Showcase
