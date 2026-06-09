@@ -338,7 +338,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
-            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji \
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-cjk fonts-noto-color-emoji \
             gdb
 
       - name: Set up vcpkg zlib
