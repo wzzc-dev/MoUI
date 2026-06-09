@@ -26,9 +26,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up MoonBit
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+        uses: ./.github/actions/setup-moonbit
 
       - name: Restore local dependencies
         run: sh scripts/setup-local-deps.sh

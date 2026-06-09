@@ -90,6 +90,12 @@ The binding's GitHub Actions workflows are maintained at the repository root as
 in the root `.github/workflows` directory so GitHub discovers them in this
 monorepo layout.
 
+GitHub Actions installs MoonBit through the repository-local
+`.github/actions/setup-moonbit` action. The pinned compiler version lives in
+the root `.moonbit-toolchain` file; update that file when moving CI to a new
+MoonBit toolchain version instead of hard-coding installer arguments in each
+workflow.
+
 `scripts/setup-local-deps.sh` configures the fork as `origin`, upstream as
 `upstream`, and fast-forwards the `moui-support` branch from `origin` when the
 checkout is clean. When merging new upstream commits into the fork, fetch
