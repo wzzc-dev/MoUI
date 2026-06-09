@@ -654,7 +654,10 @@ fn WindowsApp::redraw_window(
       self.sync_text_input_session()
       if self.exit_after_first_present &&
         platform_slot.renderer.present_count() > 0 {
-        println("Windows renderer presented first frame; exiting by request")
+        println(
+          "Windows renderer presented first frame; exiting by request; title=" +
+          runtime_slot.record.title,
+        )
         self.exit_after_first_present = false
         self.dispose_window(window_id)
         true

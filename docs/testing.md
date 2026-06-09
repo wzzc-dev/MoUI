@@ -124,7 +124,11 @@ smoke, Showcase first-frame, and Markdown Editor first-frame logs under
 `node scripts/record-native-skia-evidence.mjs` to validate those log markers and
 update only that platform's `skiaEvidence` block. Provider preflight logs must
 include both a platform Skia provider identity and a passing preflight, test, or
-build marker; a generic passing test summary is not enough. The helper
+build marker; a generic passing test summary is not enough. Showcase
+first-frame logs must include the platform first-frame marker with
+`title=MoUI Showcase`, and Markdown Editor first-frame logs must include the
+same marker with `title=MoUI Markdown Editor`, so app-swapped artifacts cannot
+fill the wrong observation. The helper
 intentionally leaves the broader platform runtime `status` unchanged; use the
 full platform recorder below only after service/input/window observations have
 also been collected.

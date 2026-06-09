@@ -158,7 +158,7 @@ try {
   const linuxShowcaseLog = writeArtifact(
     "linux",
     "showcase-skia-first-frame.log",
-    "Linux renderer presented first frame; exiting by request\n",
+    "Linux renderer presented first frame; exiting by request; title=MoUI Showcase\n",
   );
   expectPass(
     "record partial Linux Skia evidence",
@@ -192,12 +192,12 @@ try {
   const macosGpuShowcaseLog = writeArtifact(
     "macos",
     "showcase-skia-gpu-first-frame.log",
-    "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true; gpu_context=available; dimensions=1280x720\nmacOS renderer presented first frame; exiting by request\n",
+    "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true; gpu_context=available; dimensions=1280x720\nmacOS renderer presented first frame; exiting by request; title=MoUI Showcase\n",
   );
   const macosGpuMarkdownLog = writeArtifact(
     "macos",
     "markdown-skia-gpu-first-frame.log",
-    "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true; gpu_context=available; dimensions=980x640\nmacOS renderer presented first frame; exiting by request\n",
+    "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true; gpu_context=available; dimensions=980x640\nmacOS renderer presented first frame; exiting by request; title=MoUI Markdown Editor\n",
   );
   expectPass(
     "record partial macOS Skia GPU route evidence",
@@ -284,12 +284,12 @@ try {
   const showcaseLog = writeArtifact(
     "windows",
     "showcase-skia-first-frame.log",
-    "Windows renderer presented first frame; exiting by request\n",
+    "Windows renderer presented first frame; exiting by request; title=MoUI Showcase\n",
   );
   const markdownLog = writeArtifact(
     "windows",
     "markdown-skia-first-frame.log",
-    "Windows renderer presented first frame; exiting by request\n",
+    "Windows renderer presented first frame; exiting by request; title=MoUI Markdown Editor\n",
   );
   expectPass(
     "record passed Windows Skia evidence",
@@ -346,6 +346,25 @@ try {
       "Windows MSVC CI",
       "--showcase-log",
       badShowcaseLog,
+    ]),
+    "Showcase first-frame log is missing expected marker",
+  );
+
+  const wrongAppPath = writeManifest("wrong-app-first-frame.json", "windows");
+  const wrongAppShowcaseLog = writeArtifact(
+    "windows",
+    "wrong-app-showcase-skia-first-frame.log",
+    "Windows renderer presented first frame; exiting by request; title=MoUI Markdown Editor\n",
+  );
+  expectFail(
+    "reject Showcase first-frame log with Markdown title",
+    runRecorder([
+      wrongAppPath,
+      "windows",
+      "--host",
+      "Windows MSVC CI",
+      "--showcase-log",
+      wrongAppShowcaseLog,
     ]),
     "Showcase first-frame log is missing expected marker",
   );
