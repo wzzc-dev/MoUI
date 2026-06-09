@@ -295,7 +295,9 @@ const finalObservations = Object.fromEntries(
   skiaObservationKeys.map(key => [key, existingObservations[key] ?? "pending"]),
 );
 const artifacts = new Set(Array.isArray(existingSkiaEvidence.artifacts)
-  ? existingSkiaEvidence.artifacts
+  ? existingSkiaEvidence.artifacts.filter(
+      artifact => typeof artifact === "string" && !/\/README\.md$/i.test(artifact),
+    )
   : []);
 
 for (const [option, rawPath] of suppliedLogs) {

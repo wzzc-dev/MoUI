@@ -12,6 +12,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_macos_platform_runtime_evidence:
+        description: Record macOS platform runtime evidence with matching-host artifacts.
+        required: false
+        default: false
+        type: boolean
 
 env:
   MOUI_WINDOW_REMOTE: https://github.com/wzzc-dev/window.git
@@ -496,6 +501,142 @@ jobs:
             artifacts/conformance/renderer-proof/
             artifacts/platform-evidence/web/
             artifacts/conformance/platform-runtime-evidence.json
+          if-no-files-found: warn
+
+  macos-platform-runtime-evidence:
+    name: macOS platform runtime evidence
+    runs-on: macos-14
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_macos_platform_runtime_evidence }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
+      - name: Restore local dependencies
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Record macOS provider, fallback, and window runtime evidence inputs
+        run: |
+          mkdir -p artifacts/platform-evidence/macos artifacts/conformance/renderer-proof
+          {
+            echo "moon test moui/render/skia --target native"
+            MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test moui/render/skia --target native
+            echo "moon test moui/backend/macos/skia --target native"
+            MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 moon test moui/backend/macos/skia --target native
+          } > artifacts/platform-evidence/macos/skia-provider-preflight.log 2>&1
+          {
+            echo "MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon run examples/showcase/macos_skia --target native"
+            MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+              MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+              moon run examples/showcase/macos_skia --target native
+          } > artifacts/platform-evidence/macos/skia-fallback-unavailable.log 2>&1
+          grep -Fq "macOS Skia renderer selected, but moui_skia/native is unavailable" \
+            artifacts/platform-evidence/macos/skia-fallback-unavailable.log
+          (
+            cd .local_repos/window
+            WINDOW_MOUI_MACOS_SMOKE_LOG_PATH="$GITHUB_WORKSPACE/artifacts/platform-evidence/macos/window-macos-runtime-smoke.log" \
+              bash scripts/check_moui_macos_smoke.sh --run
+          )
+          grep -Fq "MoUI macOS runtime smoke passed" \
+            artifacts/platform-evidence/macos/window-macos-runtime-smoke.log
+          grep -Fq "primary=true current=true" \
+            artifacts/platform-evidence/macos/window-macos-runtime-smoke.log
+
+      - name: Record macOS Skia route and renderer proof evidence
+        run: |
+          scripts/macos-skia-renderer-smoke.sh \
+            --enable-skparagraph \
+            --require-skparagraph \
+            --run-showcase-smoke \
+            --run-markdown-smoke \
+            --run-text-emoji-smoke \
+            --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
+            --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log \
+            --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
+            --text-emoji-log artifacts/platform-evidence/macos/skia-text-emoji-smoke.log \
+            --record-platform-evidence artifacts/conformance/platform-runtime-evidence.json
+
+      - name: Fold complete macOS Skia route evidence
+        run: |
+          node scripts/record-native-skia-evidence.mjs \
+            artifacts/conformance/platform-runtime-evidence.json \
+            macos \
+            --host "macOS Darwin GitHub Actions" \
+            --provider-preflight-log artifacts/platform-evidence/macos/skia-provider-preflight.log \
+            --fallback-unavailable-log artifacts/platform-evidence/macos/skia-fallback-unavailable.log \
+            --renderer-smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
+            --async-image-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
+            --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log \
+            --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
+            --note "macOS CI folded provider, fallback-unavailable, renderer, async-image, Showcase, and Markdown Editor Skia route artifacts before platform promotion."
+
+      - name: Validate macOS renderer proof
+        run: |
+          node scripts/record-renderer-proof-manifest.mjs \
+            --backend skia-native \
+            --platform macos \
+            --artifact-name moui-renderer-proof-skia-native-macos \
+            --output artifacts/conformance/renderer-proof/skia-native-macos.json \
+            --require-passed \
+            --log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
+            --log artifacts/platform-evidence/macos/skia-text-emoji-smoke.log
+          node scripts/validate-renderer-proof-manifest.mjs \
+            artifacts/conformance/renderer-proof/skia-native-macos.json \
+            --require-passed
+
+      - name: Record macOS platform runtime evidence
+        run: |
+          MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+            MOUI_MACOS_NATIVE_IME_EVIDENCE=1 \
+            moon run examples/markdown_editor/macos_skia --target native \
+            > artifacts/platform-evidence/macos/ime-markdown-runtime.log 2>&1
+          grep -Fq "MoUI native IME Markdown Editor passed" \
+            artifacts/platform-evidence/macos/ime-markdown-runtime.log
+          node scripts/record-native-ime-evidence.mjs \
+            artifacts/conformance/platform-runtime-evidence.json \
+            macos \
+            --host "macOS Darwin GitHub Actions" \
+            --consumer-command "moon run examples/markdown_editor/macos_skia --target native" \
+            --candidate-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --surrounding-text-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --composition-visual-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --commit-delete-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --cursor-update-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --scroll-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --scale-dpr-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --resize-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --markdown-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --note "macOS CI folded matching-host Markdown Editor IME runtime artifacts before platform promotion."
+          node scripts/record-macos-platform-runtime-evidence.mjs \
+            artifacts/conformance/platform-runtime-evidence.json \
+            --host "macOS Darwin GitHub Actions" \
+            --consumer-command "moon run examples/markdown_editor/macos_skia --target native" \
+            --window-smoke-log artifacts/platform-evidence/macos/window-macos-runtime-smoke.log \
+            --app-runtime-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
+            --provenance-kind github-actions \
+            --provenance-artifact artifacts/platform-evidence/macos/window-macos-runtime-smoke.log \
+            --provenance-artifact artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
+            --provenance-artifact artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --provenance-artifact artifacts/platform-evidence/macos/skia-renderer-smoke.log \
+            --provenance-artifact artifacts/platform-evidence/macos/skia-text-emoji-smoke.log \
+            --provenance-note "macOS platform runtime evidence came from the macOS platform runtime evidence job"
+
+      - name: Upload macOS platform runtime evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: moui-macos-platform-runtime-evidence
+          path: |
+            artifacts/conformance/platform-runtime-evidence.json
+            artifacts/conformance/renderer-proof/skia-native-macos.json
+            artifacts/platform-evidence/macos/
           if-no-files-found: warn
 
   renderer-proof-summary:

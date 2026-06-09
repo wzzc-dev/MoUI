@@ -15,6 +15,7 @@ pub struct MacosSkiaAppOptions {
   priv font_resolution : @skia_renderer.SkiaFontResolution
   priv surface_route : @skia_renderer.SkiaSurfaceRoute
   priv exit_after_first_present : Bool
+  priv native_ime_runtime_evidence : Bool
 }
 
 ///|
@@ -23,8 +24,15 @@ pub fn MacosSkiaAppOptions::new(
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
   exit_after_first_present? : Bool = false,
+  native_ime_runtime_evidence? : Bool = false,
 ) -> MacosSkiaAppOptions {
-  { scene_resolver, font_resolution, surface_route, exit_after_first_present }
+  {
+    scene_resolver,
+    font_resolution,
+    surface_route,
+    exit_after_first_present,
+    native_ime_runtime_evidence,
+  }
 }
 
 ///|
@@ -55,6 +63,7 @@ pub fn run_app_with_options(
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
       exit_after_first_present=options.exit_after_first_present,
+      native_ime_runtime_evidence=options.native_ime_runtime_evidence,
     ),
     window_requests~,
   )
@@ -79,6 +88,7 @@ pub async fn run_app_with_options_async_pump(
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
       exit_after_first_present=options.exit_after_first_present,
+      native_ime_runtime_evidence=options.native_ime_runtime_evidence,
     ),
     window_requests~,
     frame_interval_ms~,

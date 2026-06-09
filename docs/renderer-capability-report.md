@@ -7,6 +7,12 @@ renderer columns come from structured data instead of hard-coded native/web
 fields. Renderer support claims still come from this report plus
 renderer/provider tests. The report order follows the current mainline:
 native Skia raster, WebGPU wasm-gc, then native WGPU diagnostics.
+Platform readiness is tracked separately from renderer capability. A passed
+macOS Skia renderer proof or a passed macOS `skiaEvidence` route can support a
+macOS-only runtime claim after the platform evidence manifest is promoted, but
+it does not upgrade Windows/Linux platform status and does not promote global
+Skia typography or native paragraph/bidi readiness without the matching
+Windows and Linux renderer-proof manifests.
 
 Status meanings:
 

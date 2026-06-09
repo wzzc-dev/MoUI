@@ -76,6 +76,9 @@ run node scripts/test-record-platform-evidence-manifest.mjs
 run node --check scripts/record-native-ime-evidence.mjs
 run node scripts/test-record-native-ime-evidence.mjs
 run node scripts/test-record-native-skia-evidence.mjs
+run node --check scripts/record-macos-platform-runtime-evidence.mjs
+run node scripts/test-record-macos-platform-runtime-evidence.mjs
+run sh -n scripts/record-macos-local-runtime-evidence.sh
 run node --check scripts/generate-grapheme-break-fixtures.mjs
 run node scripts/generate-grapheme-break-fixtures.mjs --check
 run node --check scripts/validate-renderer-proof-manifest.mjs
