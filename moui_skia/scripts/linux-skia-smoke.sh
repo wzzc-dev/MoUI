@@ -381,7 +381,7 @@ fi
 
 link_flags="$skia_library_link_flags -lstdc++"
 if [[ $enable_skparagraph -eq 1 ]]; then
-  link_flags="$link_flags -L$lib_path -lskparagraph -lskshaper -lskunicode_core -lskunicode_icu -licu"
+  link_flags="$link_flags -L$lib_path -Wl,--whole-archive -licu -Wl,--no-whole-archive -Wl,--start-group -lskparagraph -lskshaper -lskunicode_core -lskunicode_icu -Wl,--end-group"
 fi
 if [[ -n "$extra_link_flags" ]]; then
   link_flags="$link_flags $extra_link_flags"
