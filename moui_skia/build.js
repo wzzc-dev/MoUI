@@ -526,7 +526,6 @@ function platformFlags(config, values) {
       linkFlags = `-L${libPath} -l${skiaLib} -Wl,-rpath,${libPath}`;
     }
     linkFlags = appendMissingFlags(linkFlags, [
-      "-lstdc++",
       "-lfontconfig",
       "-lfreetype",
       "-lharfbuzz",
@@ -538,6 +537,7 @@ function platformFlags(config, values) {
       );
       linkFlags = appendFlags(linkFlags, skiaParagraphLinkFlags(libPath, resolvedLinkMode, "linux"));
     }
+    linkFlags = appendMissingFlags(linkFlags, ["-lstdc++"]);
   }
 
   return {
