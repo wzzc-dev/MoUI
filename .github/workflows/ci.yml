@@ -338,7 +338,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
-            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji
+            libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji \
+            gdb
 
       - name: Set up vcpkg zlib
         if: ${{ matrix.platform == 'windows' }}
@@ -477,7 +478,7 @@ jobs:
       - name: Install dependencies
         run: |
           moon version --all
-          moon update
+          moon update || { sleep 10; moon update; }
 
       - name: Record Web runtime presentation evidence
         env:

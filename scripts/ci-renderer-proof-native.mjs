@@ -36,12 +36,34 @@ const skiaRendererSmokePackage = "moui/tests/skia_renderer_smoke/native";
 const skiaRendererSmokeExe = process.platform === "win32"
   ? ".\\_build\\native\\debug\\build\\wzzc-dev\\moui\\tests\\skia_renderer_smoke\\native\\native.exe"
   : "./_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe";
+const skiaRendererBlackboxExe = process.platform === "win32"
+  ? ".\\_build\\native\\debug\\test\\wzzc-dev\\moui\\render\\skia\\skia.blackbox_test.exe"
+  : "./_build/native/debug/test/wzzc-dev/moui/render/skia/skia.blackbox_test.exe";
 const skiaTextEmojiSmokePackage = "moui/tests/skia_text_emoji_smoke/native";
 const skiaTextEmojiSmokeExe = process.platform === "win32"
   ? ".\\_build\\native\\debug\\build\\wzzc-dev\\moui\\tests\\skia_text_emoji_smoke\\native\\native.exe"
   : "./_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe";
+const skiaRendererDiagnosticFilters = [
+  "skia renderer backend info reflects native availability",
+  "skia gpu metal preflight reports explicit opt-in route",
+  "skia surface routes keep raster default and gate metal gpu explicitly",
+  "skia renderer descriptor is a skia cpu pixel backend",
+  "skia renderer fails explicitly when real skia is unavailable",
+  "skia text system is directly available for diagnostic conformance",
+  "skia selection geometry proof covers line ranges hit testing and bidi evidence",
+  "skia emoji font fallback proof records glyph metadata without readiness promotion",
+  "skia empty typeface text system remains opt-in and fallback-safe",
+  "skia pixel frame carries presenter payload",
+  "skia renderer descriptor exposes evidence-gated backend capabilities",
+  "skia filter bindings stay fallback-safe",
+];
 
 const log = text => appendFileSync(logPath, `${text}\n`);
+
+const exitDescription = result => {
+  if (result.signal) return `signal ${result.signal}`;
+  return `status ${result.status ?? 1}`;
+};
 
 const uniqueExistingDirs = dirs => {
   const seen = new Set();
@@ -131,10 +153,77 @@ const run = args => {
     if (result.stdout) process.stdout.write(result.stdout);
     if (result.stderr) process.stderr.write(result.stderr);
     failureStatus ||= result.status ?? 1;
-    log(`command failed with status ${result.status ?? 1}: ${args.join(" ")}`);
+    log(`command failed with ${exitDescription(result)}: ${args.join(" ")}`);
     return false;
   }
   return true;
+};
+
+const runDiagnostic = args => {
+  log(`\n==> diagnostic ${args.join(" ")}`);
+  const result = spawnSync(args[0], args.slice(1), {
+    encoding: "utf8",
+    env: process.env,
+  });
+  if (result.stdout) appendFileSync(logPath, result.stdout);
+  if (result.stderr) appendFileSync(logPath, result.stderr);
+  if (result.error) {
+    log(`diagnostic command could not start: ${result.error.message}`);
+    return false;
+  }
+  if (result.status !== 0) {
+    log(`diagnostic command failed with ${exitDescription(result)}: ${args.join(" ")}`);
+    return false;
+  }
+  return true;
+};
+
+const commandExists = command => {
+  const result = spawnSync(command, ["--version"], {
+    encoding: "utf8",
+    stdio: ["ignore", "ignore", "ignore"],
+  });
+  return !result.error && result.status === 0;
+};
+
+const runSkiaRendererDiagnostics = () => {
+  log("\n==> collecting native Skia renderer test diagnostics");
+  runDiagnostic([
+    "moon",
+    "test",
+    "moui_skia/native",
+    "--target",
+    "native",
+    "--filter",
+    "font api typechecks",
+  ]);
+  for (const filter of skiaRendererDiagnosticFilters) {
+    runDiagnostic([
+      "moon",
+      "test",
+      "moui/render/skia",
+      "--target",
+      "native",
+      "--filter",
+      filter,
+    ]);
+  }
+  if (process.platform !== "win32" && existsSync(skiaRendererBlackboxExe)) {
+    if (commandExists("gdb")) {
+      runDiagnostic([
+        "gdb",
+        "-batch",
+        "-ex",
+        "run",
+        "-ex",
+        "bt",
+        "--args",
+        skiaRendererBlackboxExe,
+      ]);
+    } else {
+      log("gdb was not available for native Skia renderer crash diagnostics.");
+    }
+  }
 };
 
 const runToLog = (args, outputPath) => {
@@ -156,7 +245,7 @@ const runToLog = (args, outputPath) => {
     if (result.stdout) process.stdout.write(result.stdout);
     if (result.stderr) process.stderr.write(result.stderr);
     failureStatus ||= result.status ?? 1;
-    const message = `command failed with status ${result.status ?? 1}: ${args.join(" ")}`;
+    const message = `command failed with ${exitDescription(result)}: ${args.join(" ")}`;
     log(message);
     appendFileSync(outputPath, `${message}\nstatus=failed\n`);
     return false;
@@ -202,7 +291,10 @@ if (backend === "wgpu-native") {
   );
   let skiaProofOk = true;
   stageSkiaIcuData(skiaPackageIcuDirs);
-  if (!run(["moon", "test", "moui/render/skia", "--target", "native"])) skiaProofOk = false;
+  if (!run(["moon", "test", "moui/render/skia", "--target", "native"])) {
+    skiaProofOk = false;
+    runSkiaRendererDiagnostics();
+  }
   if (!run(["moon", "test", `moui/backend/${platform}/skia`, "--target", "native"])) skiaProofOk = false;
   if (!runToLog(["moon", "build", skiaRendererSmokePackage, "--target", "native"], skiaRendererLogPath)) skiaProofOk = false;
   stageSkiaIcuData(skiaSmokeIcuDirs);
