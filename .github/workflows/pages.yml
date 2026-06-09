@@ -57,6 +57,10 @@ jobs:
           if [ -d website/web_wasm/assets ]; then
             cp -R website/web_wasm/assets dist/pages/assets
           fi
+          mkdir -p dist/pages/docs
+          cp docs/*.md dist/pages/docs/
+          cp moui/README.mbt.md dist/pages/docs/moui-readme.md
+          cp moui_skia/README.mbt.md dist/pages/docs/moui-skia-readme.md
 
           mkdir -p dist/pages/moui/backend/web
           cp moui/backend/web/runtime.js dist/pages/moui/backend/web/runtime.js
@@ -72,6 +76,9 @@ jobs:
           sed -i 's#../../_build/wasm-gc/debug/build/website/web_wasm/web_wasm.wasm#./_build/wasm-gc/debug/build/website/web_wasm/web_wasm.wasm#' dist/pages/index.html
 
           test -f dist/pages/index.html
+          test -f dist/pages/docs/architecture.md
+          test -f dist/pages/docs/moui-readme.md
+          test -f dist/pages/docs/moui-skia-readme.md
           test -f dist/pages/moui/backend/web/runtime.js
           test -f dist/pages/moui/backend/web/browser_runtime.js
           test -f dist/pages/_build/wasm-gc/debug/build/website/web_wasm/web_wasm.wasm

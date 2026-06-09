@@ -249,9 +249,9 @@ The loop rebuilds the selected package with `moon build` and watches MoonBit,
 docs, and browser asset inputs by modification time. It is intentionally a
 hot-reload-like developer loop rather than VM state preservation: app state is
 rebuilt with the package, while the command gives fast feedback and keeps the
-preview target explicit. When previewing Website Docs, keep the local static
-server rooted at the repository root so runtime Markdown fetches can read
-`docs/*.md`.
+preview target explicit. When previewing Website Docs, `scripts/preview-loop.sh`
+runs `node scripts/sync-website-docs.mjs` before building so runtime Markdown
+fetches can read same-origin files from `website/web_wasm/docs/*.md`.
 
 Implementation skeletons live in `docs/tutorials.md`, and reusable package,
 host-service, renderer, and Showcase checklists live in `docs/templates.md`.
