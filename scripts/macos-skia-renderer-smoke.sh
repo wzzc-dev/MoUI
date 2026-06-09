@@ -1155,7 +1155,9 @@ write_workbench_pkg_config
 echo "Wrote temporary mo_workbench/macos_skia package link flags."
 
 cd "$repo_root"
-MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build moui/tests/skia_renderer_smoke/native --target native
+MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+  moon build moui/tests/skia_renderer_smoke/native --target native
 renderer_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_renderer_smoke/native/native.exe"
 if [[ ! -x "$renderer_exe" ]]; then
   echo "MoUI Skia renderer smoke executable was not produced at $renderer_exe" >&2
@@ -1211,7 +1213,9 @@ if [[ $enable_skshaper -eq 1 ]]; then
 fi
 
 if [[ $run_text_emoji_smoke -eq 1 ]]; then
-  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build moui/tests/skia_text_emoji_smoke/native --target native
+  MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+    moon build moui/tests/skia_text_emoji_smoke/native --target native
   text_emoji_exe="$repo_root/_build/native/debug/build/wzzc-dev/moui/tests/skia_text_emoji_smoke/native/native.exe"
   if [[ ! -x "$text_emoji_exe" ]]; then
     echo "MoUI Skia text/emoji smoke executable was not produced at $text_emoji_exe" >&2
@@ -1307,7 +1311,9 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
 fi
 
 if [[ $skip_showcase_build -eq 0 ]]; then
-  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build examples/showcase/macos_skia --target native
+  MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+    moon build examples/showcase/macos_skia --target native
   showcase_exe="$repo_root/_build/native/debug/build/examples/showcase/macos_skia/macos_skia.exe"
   if [[ -x "$showcase_exe" ]]; then
     echo "Built macos_skia showcase executable: $showcase_exe"
@@ -1368,7 +1374,9 @@ if [[ $skip_showcase_build -eq 0 ]]; then
 fi
 
 if [[ $run_markdown_smoke -eq 1 ]]; then
-  MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 moon build examples/markdown_editor/macos_skia --target native
+  MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
+    MOUI_SKIA_DISABLE_PREBUILD_SKIA=1 \
+    moon build examples/markdown_editor/macos_skia --target native
   markdown_exe="$repo_root/_build/native/debug/build/examples/markdown_editor/macos_skia/macos_skia.exe"
   if [[ -x "$markdown_exe" ]]; then
     echo "Built markdown_editor/macos_skia executable: $markdown_exe"

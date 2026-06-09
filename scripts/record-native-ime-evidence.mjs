@@ -111,6 +111,9 @@ const logOptions = new Map([
       ],
       markerDescription:
         "MoUI native IME candidate anchor passed with candidate-anchor, candidate-window, caret-rect, and surrounding-text markers",
+      macosMarker: [/NSTextInputClient/i, /appkit-setMarkedText/i, /appkit-firstRectForCharacterRange/i],
+      macosMarkerDescription:
+        "NSTextInputClient, appkit-setMarkedText, and appkit-firstRectForCharacterRange markers",
     },
   ],
   [
@@ -127,6 +130,9 @@ const logOptions = new Map([
       ],
       markerDescription:
         "MoUI native IME surrounding text passed with surrounding-text, selection-anchor, UTF-8 offsets, and grapheme markers",
+      macosMarker: [/NSTextInputClient/i, /appkit-setMarkedText/i, /appkit-firstRectForCharacterRange/i],
+      macosMarkerDescription:
+        "NSTextInputClient, appkit-setMarkedText, and appkit-firstRectForCharacterRange markers",
     },
   ],
   [
@@ -144,6 +150,9 @@ const logOptions = new Map([
       ],
       markerDescription:
         "MoUI native IME composition visual passed with composition-range, composition-cursor, preedit-underline, preedit-pixels, and selection-highlight markers",
+      macosMarker: [/NSTextInputClient/i, /appkit-setMarkedText/i, /appkit-firstRectForCharacterRange/i],
+      macosMarkerDescription:
+        "NSTextInputClient, appkit-setMarkedText, and appkit-firstRectForCharacterRange markers",
     },
   ],
   [
@@ -159,6 +168,8 @@ const logOptions = new Map([
       ],
       markerDescription:
         "MoUI native IME commit delete passed with commit, delete, and selection-replacement markers",
+      macosMarker: [/NSTextInputClient/i, /appkit-insertText/i],
+      macosMarkerDescription: "NSTextInputClient and appkit-insertText markers",
     },
   ],
   [
@@ -174,6 +185,8 @@ const logOptions = new Map([
       ],
       markerDescription:
         "MoUI native IME cursor update passed with cursor-area, cursor-update, and caret-rect markers",
+      macosMarker: [/NSTextInputClient/i, /appkit-insertText/i],
+      macosMarkerDescription: "NSTextInputClient and appkit-insertText markers",
     },
   ],
   [
@@ -189,6 +202,8 @@ const logOptions = new Map([
       ],
       markerDescription:
         "MoUI native IME scroll anchor passed with scroll, candidate-anchor, and candidate-window markers",
+      macosMarker: [/NSTextInputClient/i, /appkit-insertText/i],
+      macosMarkerDescription: "NSTextInputClient and appkit-insertText markers",
     },
   ],
   [
@@ -205,6 +220,8 @@ const logOptions = new Map([
       ],
       markerDescription:
         "MoUI native IME scale DPR anchor passed with scale, DPR, candidate-anchor, and candidate-window markers",
+      macosMarker: [/NSTextInputClient/i, /appkit-insertText/i],
+      macosMarkerDescription: "NSTextInputClient and appkit-insertText markers",
     },
   ],
   [
@@ -220,6 +237,8 @@ const logOptions = new Map([
       ],
       markerDescription:
         "MoUI native IME resize anchor passed with resize, candidate-anchor, and candidate-window markers",
+      macosMarker: [/NSTextInputClient/i, /appkit-insertText/i],
+      macosMarkerDescription: "NSTextInputClient and appkit-insertText markers",
     },
   ],
   [
@@ -238,6 +257,8 @@ const logOptions = new Map([
       ],
       markerDescription:
         "MoUI native IME Markdown Editor passed with markdown-editor, composition, candidate-anchor, candidate-window, selection-replacement, and source-mapping markers",
+      macosMarker: [/NSTextInputClient/i, /appkit-insertText/i],
+      macosMarkerDescription: "NSTextInputClient and appkit-insertText markers",
     },
   ],
 ]);
@@ -430,6 +451,14 @@ for (const [option, rawPath] of suppliedLogs) {
   }
   assertRuntimeMarkers(content, config.label);
   assertMarker(content, config.marker, config.label, config.markerDescription);
+  if (platformName === "macos" && config.macosMarker) {
+    assertMarker(
+      content,
+      config.macosMarker,
+      config.label,
+      config.macosMarkerDescription,
+    );
+  }
   finalObservations[config.observation] = "yes";
   artifacts.add(rel);
   provenanceArtifacts.add(rel);

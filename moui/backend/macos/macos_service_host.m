@@ -52,6 +52,23 @@ static moonbit_bytes_t moui_macos_bytes_from_string(NSString *string) {
   return bytes;
 }
 
+static id<NSTextInputClient> moui_macos_native_ime_text_input_client(uint64_t raw_content_view_handle) {
+  if (raw_content_view_handle == 0 || ![NSThread isMainThread]) {
+    return nil;
+  }
+  id view = (__bridge id)(void *)raw_content_view_handle;
+  if (view == nil || ![view conformsToProtocol:@protocol(NSTextInputClient)]) {
+    return nil;
+  }
+  return (id<NSTextInputClient>)view;
+}
+
+static NSRange moui_macos_range_from_i32(int32_t location, int32_t length) {
+  NSUInteger safe_location = location < 0 ? 0 : (NSUInteger)location;
+  NSUInteger safe_length = length < 0 ? 0 : (NSUInteger)length;
+  return NSMakeRange(safe_location, safe_length);
+}
+
 static NSArray<NSString *> *moui_macos_filter_extensions(moonbit_bytes_t filters) {
   NSString *filter_string = moui_macos_string_from_bytes(filters);
   if ([filter_string length] == 0) {
@@ -213,6 +230,59 @@ int32_t moui_macos_system_theme_is_dark(void) {
     NSAppearanceNameDarkAqua,
   ]];
   return [match isEqualToString:NSAppearanceNameDarkAqua] ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_native_ime_evidence_set_marked_text(uint64_t raw_content_view_handle,
+                                                       moonbit_bytes_t text,
+                                                       int32_t selected_location,
+                                                       int32_t selected_length) {
+  id<NSTextInputClient> client =
+      moui_macos_native_ime_text_input_client(raw_content_view_handle);
+  if (client == nil ||
+      ![(id)client respondsToSelector:@selector(setMarkedText:selectedRange:replacementRange:)]) {
+    return 0;
+  }
+  NSString *string = moui_macos_string_from_bytes(text);
+  if ([string length] == 0 && Moonbit_array_length(text) > 0) {
+    return 0;
+  }
+  [client setMarkedText:string
+          selectedRange:moui_macos_range_from_i32(selected_location, selected_length)
+       replacementRange:NSMakeRange(NSNotFound, 0)];
+  return 1;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_native_ime_evidence_first_rect(uint64_t raw_content_view_handle,
+                                                 int32_t location,
+                                                 int32_t length) {
+  id<NSTextInputClient> client =
+      moui_macos_native_ime_text_input_client(raw_content_view_handle);
+  if (client == nil ||
+      ![(id)client respondsToSelector:@selector(firstRectForCharacterRange:actualRange:)]) {
+    return 0;
+  }
+  NSRange actual_range = NSMakeRange(NSNotFound, 0);
+  NSRect rect = [client firstRectForCharacterRange:moui_macos_range_from_i32(location, length)
+                                      actualRange:&actual_range];
+  return rect.size.width > 0.0 && rect.size.height > 0.0 ? 1 : 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_macos_native_ime_evidence_insert_text(uint64_t raw_content_view_handle,
+                                                  moonbit_bytes_t text) {
+  id<NSTextInputClient> client =
+      moui_macos_native_ime_text_input_client(raw_content_view_handle);
+  if (client == nil || ![(id)client respondsToSelector:@selector(insertText:replacementRange:)]) {
+    return 0;
+  }
+  NSString *string = moui_macos_string_from_bytes(text);
+  if ([string length] == 0 && Moonbit_array_length(text) > 0) {
+    return 0;
+  }
+  [client insertText:string replacementRange:NSMakeRange(NSNotFound, 0)];
+  return 1;
 }
 
 MOONBIT_FFI_EXPORT
