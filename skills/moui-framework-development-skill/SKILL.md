@@ -351,7 +351,10 @@ Use
 want to validate and update `skiaEvidence`; it deliberately leaves the broader
 platform runtime status unchanged. Its provider-preflight log check requires
 both the matching Skia provider identity and a passing preflight, test, or build
-marker; do not use generic passing test output as provider evidence.
+marker; do not use generic passing test output as provider evidence. Its
+Showcase and Markdown Editor first-frame checks require app-identifying
+`title=MoUI Showcase` and `title=MoUI Markdown Editor` markers on the platform
+first-frame line, respectively.
 A passed presentation manifest must include WebGPU startup, wasm startup,
 canvas sizing, resize/input event-bridge delivery, Markdown Editor text input,
 clean target close, clean console, nonblank screenshots, and Showcase
