@@ -47,13 +47,14 @@ runs:
           throw "MoonBit toolchain file is empty: $toolchainFile"
         }
         $version = $version.Trim()
-        Write-Host "Installing MoonBit toolchain $version"
-        $env:MOONBIT_INSTALL_VERSION = $version
+        $expectedVersion = $version
+        Write-Host "Installing MoonBit toolchain $expectedVersion"
+        $env:MOONBIT_INSTALL_VERSION = $expectedVersion
         Invoke-RestMethod https://cli.moonbitlang.com/install/powershell.ps1 | Invoke-Expression
         $moon = Join-Path $env:USERPROFILE ".moon\bin\moon.exe"
         $versionOutput = & $moon version --all | Out-String
         Write-Host $versionOutput
-        if (!$versionOutput.Contains($version)) {
-          throw "Installed MoonBit toolchain does not match $version"
+        if (!$versionOutput.Contains($expectedVersion)) {
+          throw "Installed MoonBit toolchain does not match $expectedVersion"
         }
         "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
