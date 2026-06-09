@@ -16,7 +16,7 @@
         "url": "https://github.com/wzzc-dev/skia/archive/refs/tags/dev-6d73578a36.zip"
       },
       "default_extra_cc_flags": {
-        "linux": "",
+        "linux": "-D_GLIBCXX_USE_CXX11_ABI=0",
         "macos": "",
         "windows": "",
         "android": "",

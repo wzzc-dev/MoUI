@@ -222,6 +222,14 @@ esac
 cc_flags="-DMOUI_SKIA_HAS_SKIA -std=c++17 -I$include_path"
 if [[ $enable_skparagraph -eq 1 ]]; then
   cc_flags="$cc_flags -DMOUI_SKIA_HAS_SKPARAGRAPH -DMOUI_SKIA_HAS_SKSHAPER"
+  provider="${MOUI_SKIA_SKIA_PROVIDER:-${MOUI_SKIA_PROVIDER:-}}"
+  if [[ "$provider" == "release" || -n "${MOUI_SKIA_RELEASE_TAG:-}" ]]; then
+    # The locked Linux release SkParagraph archive exports old libstdc++ ABI symbols.
+    case " $cc_flags $extra_cc_flags " in
+      *" -D_GLIBCXX_USE_CXX11_ABI=0 "*) ;;
+      *) cc_flags="$cc_flags -D_GLIBCXX_USE_CXX11_ABI=0" ;;
+    esac
+  fi
 fi
 if [[ -n "$extra_cc_flags" ]]; then
   cc_flags="$cc_flags $extra_cc_flags"
