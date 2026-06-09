@@ -4,6 +4,7 @@ import {
   appendFileSync,
   copyFileSync,
   existsSync,
+  readFileSync,
   mkdirSync,
   readdirSync,
   statSync,
@@ -186,6 +187,48 @@ const commandExists = command => {
   return !result.error && result.status === 0;
 };
 
+const testDriverSelectionForFilter = (infoPath, filter) => {
+  if (!existsSync(infoPath)) return "";
+  let info;
+  try {
+    info = JSON.parse(readFileSync(infoPath, "utf8"));
+  } catch (error) {
+    log(`could not parse ${infoPath} for gdb diagnostics: ${error.message}`);
+    return "";
+  }
+  for (const [file, tests] of Object.entries(info.tests ?? {})) {
+    if (!Array.isArray(tests)) continue;
+    for (const test of tests) {
+      if (test?.name === filter && Number.isInteger(test.index)) {
+        return `${file}:${test.index}-${test.index + 1}`;
+      }
+    }
+  }
+  log(`could not find test filter in ${infoPath} for gdb diagnostics: ${filter}`);
+  return "";
+};
+
+const runGdbForMoonBitTest = (exePath, infoPath, filter) => {
+  if (process.platform === "win32" || !existsSync(exePath)) return;
+  if (!commandExists("gdb")) {
+    log("gdb was not available for native Skia renderer crash diagnostics.");
+    return;
+  }
+  const selection = testDriverSelectionForFilter(infoPath, filter);
+  if (!selection) return;
+  runDiagnostic([
+    "gdb",
+    "-batch",
+    "-ex",
+    "run",
+    "-ex",
+    "bt",
+    "--args",
+    exePath,
+    selection,
+  ]);
+};
+
 const runSkiaRendererDiagnostics = () => {
   log("\n==> collecting native Skia renderer test diagnostics");
   runDiagnostic([
@@ -208,22 +251,23 @@ const runSkiaRendererDiagnostics = () => {
       filter,
     ]);
   }
-  if (process.platform !== "win32" && existsSync(skiaRendererBlackboxExe)) {
-    if (commandExists("gdb")) {
-      runDiagnostic([
-        "gdb",
-        "-batch",
-        "-ex",
-        "run",
-        "-ex",
-        "bt",
-        "--args",
-        skiaRendererBlackboxExe,
-      ]);
-    } else {
-      log("gdb was not available for native Skia renderer crash diagnostics.");
-    }
-  }
+  runGdbForMoonBitTest(
+    process.platform === "win32"
+      ? ".\\_build\\native\\debug\\test\\wzzc-dev\\moui_skia\\native\\native.blackbox_test.exe"
+      : "./_build/native/debug/test/wzzc-dev/moui_skia/native/native.blackbox_test.exe",
+    "_build/native/debug/test/wzzc-dev/moui_skia/native/__blackbox_test_info.json",
+    "font api typechecks",
+  );
+  runGdbForMoonBitTest(
+    skiaRendererBlackboxExe,
+    "_build/native/debug/test/wzzc-dev/moui/render/skia/__blackbox_test_info.json",
+    "skia text system is directly available for diagnostic conformance",
+  );
+  runGdbForMoonBitTest(
+    skiaRendererBlackboxExe,
+    "_build/native/debug/test/wzzc-dev/moui/render/skia/__blackbox_test_info.json",
+    "skia selection geometry proof covers line ranges hit testing and bidi evidence",
+  );
 };
 
 const runToLog = (args, outputPath) => {
