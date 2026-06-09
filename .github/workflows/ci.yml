@@ -523,6 +523,9 @@ jobs:
           moon version --all
           moon update
 
+      - name: Initialize platform runtime evidence manifest
+        run: sh scripts/conformance-check.sh --platform-services-manifest-only
+
       - name: Record macOS provider, fallback, and window runtime evidence inputs
         run: |
           mkdir -p artifacts/platform-evidence/macos artifacts/conformance/renderer-proof

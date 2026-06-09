@@ -12,13 +12,14 @@ RUN_INPUT=false
 RUN_LAYOUT=false
 RUN_RENDER=false
 RUN_PLATFORM_SERVICES=false
+RUN_PLATFORM_SERVICES_MANIFEST_ONLY=false
 RUN_TEXT=false
 RUN_TEXT_DIAGNOSTIC=false
 RUN_WGPU_EXPERIMENTAL=false
 CAPTURE_ARTIFACT_DIR="artifacts/conformance"
 
 usage() {
-  printf 'Usage: %s [--input] [--layout] [--render] [--platform-services] [--text] [--text-diagnostic] [--golden] [--bench] [--platform] [--wgpu-experimental]\n' "$0"
+  printf 'Usage: %s [--input] [--layout] [--render] [--platform-services] [--platform-services-manifest-only] [--text] [--text-diagnostic] [--golden] [--bench] [--platform] [--wgpu-experimental]\n' "$0"
   printf '\n'
   printf 'Runs MoUI conformance-oriented package checks. With no focused flags, runs the default core/host/render/web/showcase suite. Focused flags select smaller suites. Optional modes add screenshot golden scaffolds, performance smoke builds, current-platform backend checks, or native WGPU diagnostics.\n'
 }
@@ -49,6 +50,10 @@ while [ "$#" -gt 0 ]; do
     --platform-services)
       RUN_DEFAULT=false
       RUN_PLATFORM_SERVICES=true
+      ;;
+    --platform-services-manifest-only)
+      RUN_DEFAULT=false
+      RUN_PLATFORM_SERVICES_MANIFEST_ONLY=true
       ;;
     --text)
       RUN_DEFAULT=false
@@ -534,6 +539,11 @@ if "$RUN_PLATFORM_SERVICES"; then
   if [ "$(uname -s)" = "Darwin" ]; then
     run moon test moui/backend/macos --target native
   fi
+  write_platform_evidence_manifest "$CAPTURE_ARTIFACT_DIR/platform-runtime-evidence.json"
+  validate_platform_evidence_manifest "$CAPTURE_ARTIFACT_DIR/platform-runtime-evidence.json"
+fi
+
+if "$RUN_PLATFORM_SERVICES_MANIFEST_ONLY"; then
   write_platform_evidence_manifest "$CAPTURE_ARTIFACT_DIR/platform-runtime-evidence.json"
   validate_platform_evidence_manifest "$CAPTURE_ARTIFACT_DIR/platform-runtime-evidence.json"
 fi
