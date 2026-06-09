@@ -764,6 +764,17 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   boundaries with edit actions, IME candidate anchors with surrounding text,
   composition ranges with preedit pixels, and placeholder -> image load ->
   repaint -> ready second-frame image ordering.
+- `macOS platform runtime evidence` is a manual `workflow_dispatch` job enabled
+  by `run_macos_platform_runtime_evidence=true`. It initializes the platform
+  evidence manifest, runs the AppKit/window fork smoke, records macOS Skia
+  provider/fallback/renderer/Showcase/Markdown first-frame evidence, records the
+  Markdown Editor native IME runtime markers, folds the macOS platform entry with
+  `github-actions` provenance, validates the macOS entry, records and validates
+  `skia-native-macos.json` with `--require-passed`, and uploads
+  `moui-macos-platform-runtime-evidence`. A successful non-skipped job proves
+  macOS-only platform runtime readiness for that run's head SHA; it does not
+  prove Windows/Linux native behavior or make the whole workflow green when
+  unrelated renderer-proof summary jobs fail.
 - `Native Skia renderer proof` runs macOS, Windows, and Linux matrices, writes
   renderer-proof manifests under `artifacts/conformance/renderer-proof/`,
   uploads matching `artifacts/platform-evidence/<platform>/` logs such as
