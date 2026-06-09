@@ -345,6 +345,13 @@ else
     extra_link_flags="$(get_fetch_value MOUI_SKIA_EXTRA_LINK_FLAGS)"
   fi
 fi
+if [[ "$skia_provider" == "release" && $enable_skparagraph -eq 1 ]]; then
+  # The locked Linux release SkParagraph archive exports old libstdc++ ABI symbols.
+  case " $extra_cc_flags " in
+    *" -D_GLIBCXX_USE_CXX11_ABI=0 "*) ;;
+    *) extra_cc_flags="${extra_cc_flags:+$extra_cc_flags }-D_GLIBCXX_USE_CXX11_ABI=0" ;;
+  esac
+fi
 
 echo "Linux real Skia smoke mode: $smoke_mode"
 echo "  skia_provider=$skia_provider"
