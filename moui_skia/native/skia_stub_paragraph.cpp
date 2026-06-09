@@ -75,11 +75,6 @@ moonbit_skia_paragraph_layout_utf8(
   sk_sp<FontCollection> font_collection = sk_make_sp<FontCollection>();
   font_collection->setDefaultFontManager(moonbit_skia_default_font_mgr());
 
-  ParagraphStyle paragraph_style;
-  paragraph_style.setTextDirection(
-    moonbit_skia_paragraph_direction(left_to_right)
-  );
-
   TextStyle text_style;
   text_style.setFontSize(size);
   text_style.setFontStyle(SkFontStyle(
@@ -87,12 +82,24 @@ moonbit_skia_paragraph_layout_utf8(
     std::max(1, std::min(9, width)),
     moonbit_skia_paragraph_slant(slant)
   ));
+#if !defined(__linux__)
   if (moonbit_skia_paragraph_has_family(family_name)) {
     std::string family = moonbit_skia_bytes_to_string(family_name);
     std::vector<SkString> families;
     families.emplace_back(family.data(), family.size());
     text_style.setFontFamilies(families);
   }
+#else
+  (void)family_name;
+#endif
+
+  ParagraphStyle paragraph_style;
+  paragraph_style.setTextDirection(
+    moonbit_skia_paragraph_direction(left_to_right)
+  );
+  paragraph_style.setMaxLines(std::numeric_limits<size_t>::max());
+  paragraph_style.setEllipsis(SkString());
+  paragraph_style.setTextStyle(text_style);
 
   sk_sp<SkUnicode> unicode = SkUnicodes::ICU::Make();
   if (unicode == nullptr) {
