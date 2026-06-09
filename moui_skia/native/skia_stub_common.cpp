@@ -220,6 +220,20 @@ moonbit_bytes_t moonbit_skia_make_bytes_from_sk_string(
   }
   return bytes;
 }
+
+std::string moonbit_skia_bytes_to_string(moonbit_bytes_t value) {
+  if (value == nullptr) {
+    return std::string();
+  }
+  int32_t length = Moonbit_array_length(value);
+  if (length <= 0) {
+    return std::string();
+  }
+  return std::string(
+    reinterpret_cast<const char*>(value),
+    static_cast<size_t>(length)
+  );
+}
 #endif
 
 static void moonbit_skia_path_finalize(void* ptr) {
