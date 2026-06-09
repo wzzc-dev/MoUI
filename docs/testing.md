@@ -139,6 +139,9 @@ fill the wrong observation. The helper
 intentionally leaves the broader platform runtime `status` unchanged; use the
 full platform recorder below only after service/input/window observations have
 also been collected.
+On macOS, the real-Skia helper sets `MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1`
+around its focused builds so unrelated PDFium prebuild downloads do not block
+Skia renderer evidence collection.
 The Skia renderer package also exposes `skia_text_system()` for diagnostic text
 contract checks; `moon test moui/tests/text_conformance/native --target native`
 includes that path as measurement evidence, not as platform-window runtime
@@ -531,10 +534,84 @@ some logs records a partial `skiaEvidence` block and leaves omitted Skia
 observations pending. The provider-preflight log still has to name the matching
 Skia provider package or preflight summary as well as a passing marker.
 
+macOS has an additional strict platform-promotion wrapper. After Skia evidence
+is passed and after the native IME helper below has recorded every macOS IME
+observation, use `record-macos-platform-runtime-evidence.mjs` to validate the
+source runtime artifacts before promoting the macOS platform entry:
+
+```sh
+scripts/record-macos-local-runtime-evidence.sh
+```
+
+The local wrapper runs the window-fork smoke with process-written AppKit
+artifacts, runs the Markdown Editor native IME producer, folds native IME
+observations, promotes the macOS platform entry with
+`matching-host-artifact` provenance, and validates the macOS platform entry.
+If you need to inspect or replay the individual steps, they are:
+
+```sh
+mkdir -p artifacts/platform-evidence/macos
+(
+  cd .local_repos/window
+  WINDOW_MOUI_MACOS_SMOKE_LOG_PATH="$PWD/../../artifacts/platform-evidence/macos/window-macos-runtime-smoke.log" \
+    bash scripts/check_moui_macos_smoke.sh --run
+)
+
+node scripts/record-macos-platform-runtime-evidence.mjs \
+  artifacts/conformance/platform-runtime-evidence.json \
+  --host "macOS Darwin local host" \
+  --consumer-command "moon run examples/markdown_editor/macos_skia --target native" \
+  --window-smoke-log artifacts/platform-evidence/macos/window-macos-runtime-smoke.log \
+  --app-runtime-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
+  --provenance-kind matching-host-artifact \
+  --provenance-artifact artifacts/platform-evidence/macos/window-macos-runtime-smoke.log \
+  --provenance-artifact artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log
+```
+
+The wrapper accepts the local window fork's macOS runtime smoke transcript only
+after it observes non-zero window/content-view handles, surface scale, resize,
+redraw, pointer input, keyboard text input, monitor/current-monitor, cursor,
+ready, destroyed, and finished sentinels. It also requires a real MoUI
+Showcase or Markdown Editor `macos_skia` first-frame log with the matching
+`title=MoUI Showcase` or `title=MoUI Markdown Editor` marker. The wrapper
+does not generate IME evidence and refuses to promote macOS while any native
+IME observation or any Skia route observation is still pending.
+Use `WINDOW_MOUI_MACOS_SMOKE_LOG_PATH` when collecting the window-fork smoke
+artifact so the AppKit app writes the marker transcript itself; do not rely on
+outer shell redirection as the source artifact for monitor/current-monitor
+evidence.
+
 For native IME runtime evidence, use the IME helper after a matching host has
 recorded Showcase or Markdown Editor logs with the required marker tokens. It
 updates only native IME observations and leaves the broader platform `status`
 unchanged:
+
+On macOS, the Markdown Editor Skia entrypoint has an opt-in producer for those
+runtime markers. It opens the native AppKit/Skia app, drives the focused editor
+through the AppKit `NSTextInputClient` marked-text path, syncs
+`TextInputSession` requests into the native window, prints the
+marker-validated observations, and exits:
+
+```sh
+MOUI_MACOS_NATIVE_IME_EVIDENCE=1 \
+  moon run examples/markdown_editor/macos_skia --target native \
+  > artifacts/platform-evidence/macos/ime-markdown-runtime.log 2>&1
+
+node scripts/record-native-ime-evidence.mjs \
+  artifacts/conformance/platform-runtime-evidence.json \
+  macos \
+  --host "macOS Darwin local host" \
+  --consumer-command "moon run examples/markdown_editor/macos_skia --target native" \
+  --candidate-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+  --surrounding-text-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+  --composition-visual-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+  --commit-delete-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+  --cursor-update-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+  --scroll-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+  --scale-dpr-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+  --resize-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+  --markdown-log artifacts/platform-evidence/macos/ime-markdown-runtime.log
+```
 
 ```sh
 node scripts/record-native-ime-evidence.mjs \
@@ -574,7 +651,12 @@ surrounding-text logs must include `selection-anchor`, `utf8-offsets`, and
 `composition-cursor`, `preedit-underline`, `preedit-pixels`, and
 `selection-highlight`; scale/DPR logs must include `scale`, `dpr`,
 `candidate-anchor`, and `candidate-window`. Generic host unit-test output or
-package logs are rejected.
+package logs are rejected. macOS logs have an extra AppKit boundary:
+candidate-anchor, surrounding-text, and composition-visual logs must include
+`NSTextInputClient`, `appkit-setMarkedText`, and
+`appkit-firstRectForCharacterRange`; commit/delete, cursor-update,
+scroll-anchor, scale/DPR-anchor, resize-anchor, and Markdown Editor logs must
+include `NSTextInputClient` and `appkit-insertText`.
 
 When collecting release evidence on a configured host, update or regenerate the
 platform runtime evidence manifest with that host's results and validate it:
