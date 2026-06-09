@@ -12,11 +12,30 @@ fn Model::top_bar(
   }
   let items : Array[@core.View[Msg]] = [brand_mark(theme)]
   if !metrics.compact {
-    items.push(nav_button(theme, "Home", true, ScrollBodyTo(0.0)))
-    items.push(nav_button(theme, "Tour", false, ScrollBodyTo(700.0)))
-    items.push(nav_button(theme, "Examples", false, ScrollBodyTo(1840.0)))
-    items.push(nav_button(theme, "Docs", false, ScrollBodyTo(2420.0)))
+    items.push(
+      nav_button(theme, "Home", self.page is WebsiteHome, OpenHomeAt(0.0)),
+    )
+    items.push(nav_button(theme, "Tour", false, OpenHomeAt(700.0)))
+    items.push(nav_button(theme, "Examples", false, OpenHomeAt(1840.0)))
+    items.push(nav_button(theme, "Docs", self.page is WebsiteDocs, OpenDocs))
     items.push(nav_button(theme, "GitHub", false, OpenRepository))
+  } else {
+    items.push(
+      nav_button(
+        theme,
+        if self.page is WebsiteDocs {
+          "Home"
+        } else {
+          "Docs"
+        },
+        false,
+        if self.page is WebsiteDocs {
+          OpenHome
+        } else {
+          OpenDocs
+        },
+      ),
+    )
   }
   items.push(spacer(min_length=12.0, weight=1.0))
   items.push(

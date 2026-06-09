@@ -13,6 +13,7 @@ enum WebAsyncHostServiceKind {
   FileDialogOpenFile
   FileDialogSaveFile
   FileDialogPickDirectory
+  TextFileReadText
   TextFileWriteText
 } derive(Eq, Debug, ToJson)
 
@@ -41,6 +42,12 @@ priv struct WebTextFileWriteEntry {
 }
 
 ///|
+priv struct WebTextFileReadEntry {
+  request_id : Int
+  path : String
+}
+
+///|
 #external
 priv type WebHostString
 
@@ -55,6 +62,9 @@ let web_text_file_cache : Ref[Array[WebTextFileCacheEntry]] = Ref([])
 
 ///|
 let web_text_file_writes : Ref[Array[WebTextFileWriteEntry]] = Ref([])
+
+///|
+let web_text_file_reads : Ref[Array[WebTextFileReadEntry]] = Ref([])
 
 ///|
 pub fn canvas_host_constraints() -> CanvasHostConstraints {
@@ -216,9 +226,25 @@ pub fn web_service_bridge(
           match web_cached_text_file(path) {
             Some(text) => @host.HostServiceResponse::TextFileContent(path, text)
             None =>
-              @host.HostServiceResponse::Unavailable(
-                "text file content is unavailable on Web until a browser file is selected",
-              )
+              match async_queue {
+                Some(queue) => {
+                  let response = queue.submit(
+                    @host.HostServiceRequest::TextFile(
+                      @host.HostTextFileRequest::ReadText(path),
+                    ),
+                  )
+                  match response {
+                    @host.HostServiceResponse::Pending(id) =>
+                      web_remember_text_file_read(id.value, path)
+                    _ => ()
+                  }
+                  response
+                }
+                None =>
+                  @host.HostServiceResponse::Unavailable(
+                    "text file content is unavailable on Web until a browser file is selected",
+                  )
+              }
           }
         @host.HostServiceRequest::TextFile(
           @host.HostTextFileRequest::WriteText(_, _)
@@ -281,6 +307,7 @@ fn WebAsyncHostServiceKind::browser_code(self : WebAsyncHostServiceKind) -> Int 
     FileDialogOpenFile => 0
     FileDialogSaveFile => 1
     FileDialogPickDirectory => 2
+    TextFileReadText => -3
     TextFileWriteText => -2
   }
 }
@@ -318,6 +345,18 @@ fn WebAsyncHostServiceRequest::from_pending(
           None => ""
         },
         path: "",
+        text: "",
+      })
+    @host.HostServiceRequest::TextFile(
+      @host.HostTextFileRequest::ReadText(path)
+    ) =>
+      Some({
+        id: pending.id,
+        kind: WebAsyncHostServiceKind::TextFileReadText,
+        title: "",
+        filters: [],
+        default_name: "",
+        path,
         text: "",
       })
     @host.HostServiceRequest::TextFile(
@@ -365,6 +404,8 @@ fn dispatch_web_async_host_service_request(
         web_host_string(request.filters.join("\n")),
         web_host_string(request.default_name),
       )
+    TextFileReadText =>
+      web_async_text_file_read(request.id.value, web_host_string(request.path))
     TextFileWriteText =>
       web_async_text_file_write(
         request.id.value,
@@ -401,6 +442,43 @@ fn web_complete_async_clipboard_read_text(
         queue.reject(
           id,
           web_async_failure_reason(text, "clipboard read is unavailable on Web"),
+        )
+      }
+    }
+    None => false
+  }
+}
+
+///|
+fn web_complete_async_text_file_read_text(
+  request_id : Int,
+  ok : Bool,
+  text : String,
+) -> Bool {
+  match web_active_async_queue.val {
+    Some(queue) => {
+      let id = @host.HostServiceRequestId::new(request_id)
+      if ok {
+        match web_take_text_file_read(request_id) {
+          Some(entry) => {
+            web_cache_text_file(entry.path, text)
+            queue.complete(
+              id,
+              @host.HostServiceResponse::TextFileContent(entry.path, text),
+            )
+          }
+          None =>
+            queue.reject(
+              id, "text file read request is no longer pending on Web",
+            )
+        }
+      } else {
+        ignore(web_take_text_file_read(request_id))
+        queue.reject(
+          id,
+          web_async_failure_reason(
+            text, "text file reading is unavailable on Web",
+          ),
         )
       }
     }
@@ -538,6 +616,21 @@ pub fn web_complete_async_file_open_text(
 }
 
 ///|
+pub fn web_complete_async_text_file_read(
+  request_id : Int,
+  ok : Bool,
+  text_id : Int,
+) -> Unit {
+  ignore(
+    web_complete_async_text_file_read_text(
+      request_id,
+      ok,
+      web_host_string_from_id(text_id),
+    ),
+  )
+}
+
+///|
 pub fn web_complete_async_text_file_write(
   request_id : Int,
   ok : Bool,
@@ -564,6 +657,33 @@ fn decode_web_file_dialog_selection(text : String) -> Array[String] {
     }
   }
   paths
+}
+
+///|
+fn web_remember_text_file_read(request_id : Int, path : String) -> Unit {
+  let entries : Array[WebTextFileReadEntry] = []
+  for entry in web_text_file_reads.val {
+    if entry.request_id != request_id {
+      entries.push(entry)
+    }
+  }
+  entries.push({ request_id, path })
+  web_text_file_reads.val = entries
+}
+
+///|
+fn web_take_text_file_read(request_id : Int) -> WebTextFileReadEntry? {
+  let entries : Array[WebTextFileReadEntry] = []
+  let mut found : WebTextFileReadEntry? = None
+  for entry in web_text_file_reads.val {
+    if found is None && entry.request_id == request_id {
+      found = Some(entry)
+    } else {
+      entries.push(entry)
+    }
+  }
+  web_text_file_reads.val = entries
+  found
 }
 
 ///|
@@ -692,6 +812,9 @@ fn web_clipboard_write_text(text : WebHostString) -> Bool = "window_web" "clipbo
 
 ///|
 fn web_async_clipboard_read_text(request_id : Int) -> Unit = "window_web" "clipboard_read_text_async"
+
+///|
+fn web_async_text_file_read(request_id : Int, path : WebHostString) -> Unit = "window_web" "text_file_read_async"
 
 ///|
 fn web_async_file_dialog_open(
