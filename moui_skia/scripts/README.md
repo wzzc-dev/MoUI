@@ -125,7 +125,8 @@ bash scripts/linux-accept-real-skia-smoke.sh --skia-provider source --work-dir .
 On Ubuntu, `scripts/install-linux-smoke-deps.sh` installs the apt packages used
 by the workflow: `build-essential`, `git`, `python3`, `ninja-build`, `clang`,
 `curl`, `ca-certificates`, `libfontconfig1-dev`, `libfreetype-dev`,
-`libharfbuzz-dev`, `libwayland-dev`, `libwayland-bin`, and `wayland-protocols`.
+`libharfbuzz-dev`, `fonts-noto-cjk`, `libwayland-dev`, `libwayland-bin`, and
+`wayland-protocols`.
 The Wayland packages provide the protocol XML, headers, and `wayland-scanner`
 used by the `wzzc-dev/window` native prebuild. Use `--check` to verify an
 already prepared runner, or `--print-packages` to audit the package list without

@@ -28,6 +28,7 @@ packages=(
   libfontconfig1-dev
   libfreetype-dev
   libharfbuzz-dev
+  fonts-noto-cjk
   libwayland-dev
   libwayland-bin
   wayland-protocols
