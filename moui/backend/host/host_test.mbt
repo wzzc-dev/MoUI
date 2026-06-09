@@ -2758,6 +2758,16 @@ test "host service bridge gates typed platform requests by capability" {
       inspect(message, content="text file service is unavailable")
     _ => fail("expected unavailable text file service")
   }
+  match
+    bridge.dispatch(
+      HostServiceRequest::BinaryFile(
+        HostBinaryFileRequest::ReadBytes("/tmp/a.pdf"),
+      ),
+    ) {
+    HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="binary file service is unavailable")
+    _ => fail("expected unavailable binary file service")
+  }
 }
 
 ///|
@@ -3208,6 +3218,10 @@ test "host app services facade routes common platform requests" {
           HostServiceResponse::TextFileContent(path, "file contents")
         TextFile(WriteText(path, _text)) =>
           HostServiceResponse::TextFileWritten(path)
+        BinaryFile(ReadBytes(path)) =>
+          HostServiceResponse::BinaryFileContent(path, b"%PDF")
+        BinaryFile(WriteBytes(path, _bytes)) =>
+          HostServiceResponse::BinaryFileWritten(path)
         OpenUrl(url) => {
           opened_url.val = url
           HostServiceResponse::UrlOpened
@@ -3248,6 +3262,18 @@ test "host app services facade routes common platform requests" {
       inspect(path, content="/tmp/note.md")
     _ => fail("expected text file write")
   }
+  match services.read_binary_file("/tmp/note.pdf") {
+    HostServiceResponse::BinaryFileContent(path, bytes) => {
+      inspect(path, content="/tmp/note.pdf")
+      inspect(bytes.length(), content="4")
+    }
+    _ => fail("expected binary file content")
+  }
+  match services.write_binary_file("/tmp/note.pdf", b"%PDF") {
+    HostServiceResponse::BinaryFileWritten(path) =>
+      inspect(path, content="/tmp/note.pdf")
+    _ => fail("expected binary file write")
+  }
   match services.open_url("https://example.test") {
     HostServiceResponse::UrlOpened => ()
     _ => fail("expected URL open")
@@ -3280,12 +3306,39 @@ test "host app services facade reports unavailable service responses" {
       inspect(message, content="file dialog service is unavailable")
     _ => fail("expected unavailable file-dialog response")
   }
+  match services.read_binary_file("/tmp/missing.pdf") {
+    HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="binary file service is unavailable")
+    _ => fail("expected unavailable binary-file response")
+  }
   inspect(services.pending_count(), content="0")
   inspect(services.drain_pending().length(), content="0")
   inspect(
     services.reject(HostServiceRequestId::new(404), "missing request"),
     content="false",
   )
+}
+
+///|
+test "host binary file diagnostics summarize bytes without dumping payloads" {
+  let request = HostBinaryFileRequest::WriteBytes("/tmp/report.pdf", b"%PDF")
+  let diagnostic = request.diagnostic()
+  inspect(diagnostic.path, content="/tmp/report.pdf")
+  inspect(diagnostic.operation, content="write-bytes")
+  inspect(diagnostic.byte_length, content="4")
+
+  match
+    HostServiceResponse::BinaryFileContent(
+      "/tmp/report.pdf",
+      Bytes::make(32, b'\xff'),
+    ).binary_file_diagnostic() {
+    Some(summary) => {
+      inspect(summary.path, content="/tmp/report.pdf")
+      inspect(summary.operation, content="read-bytes")
+      inspect(summary.byte_length, content="32")
+    }
+    None => fail("expected binary content diagnostic summary")
+  }
 }
 
 ///|

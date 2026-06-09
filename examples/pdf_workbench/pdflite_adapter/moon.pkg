@@ -1,0 +1,22 @@
+import {
+  "moonbitlang/core/encoding/ascii",
+  "moonbitlang/core/encoding/utf8",
+  "bobzhang/pdflite" @pdf,
+  "bobzhang/pdflite/addtext",
+  "bobzhang/pdflite/annotation",
+  "bobzhang/pdflite/bookmark",
+  "bobzhang/pdflite/content/colour",
+  "bobzhang/pdflite/core" @pdfcore,
+  "bobzhang/pdflite/date",
+  "bobzhang/pdflite/geometry",
+  "bobzhang/pdflite/page",
+  "bobzhang/pdflite/syntax",
+  "examples/pdf_workbench/app",
+  "examples/pdf_workbench/pdflite_service_protocol" @protocol,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

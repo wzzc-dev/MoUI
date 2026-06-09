@@ -252,6 +252,7 @@ pub fn windows_service_bridge(
   open_url? : (String) -> Bool = dispatch_windows_open_url,
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_windows_file_dialog,
   text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_windows_text_file,
+  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_windows_binary_file,
   menu? : (Array[@core.ActionCommand]) -> Int = dispatch_windows_menu,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(
@@ -277,6 +278,8 @@ pub fn windows_service_bridge(
           @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
         @host.HostServiceRequest::TextFile(text_file_request) =>
           text_file(text_file_request)
+        @host.HostServiceRequest::BinaryFile(binary_file_request) =>
+          binary_file(binary_file_request)
         @host.HostServiceRequest::ShowMenu(commands) =>
           menu_command_response(commands, menu(commands))
         @host.HostServiceRequest::QuerySystemTheme =>
@@ -309,6 +312,29 @@ fn dispatch_windows_text_file(
         _ => return @host.HostServiceResponse::Unavailable("file write failed")
       }
       @host.HostServiceResponse::TextFileWritten(path)
+    }
+  }
+}
+
+///|
+fn dispatch_windows_binary_file(
+  request : @host.HostBinaryFileRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    @host.HostBinaryFileRequest::ReadBytes(path) =>
+      if @fs.path_exists(path) {
+        let bytes = @fs.read_file_to_bytes(path) catch {
+          _ => return @host.HostServiceResponse::Unavailable("file read failed")
+        }
+        @host.HostServiceResponse::BinaryFileContent(path, bytes)
+      } else {
+        @host.HostServiceResponse::Unavailable("file does not exist")
+      }
+    @host.HostBinaryFileRequest::WriteBytes(path, bytes) => {
+      @fs.write_bytes_to_file(path, bytes) catch {
+        _ => return @host.HostServiceResponse::Unavailable("file write failed")
+      }
+      @host.HostServiceResponse::BinaryFileWritten(path)
     }
   }
 }

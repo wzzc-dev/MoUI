@@ -100,6 +100,7 @@ pub fn HostAppServices::open_url(Self, String) -> HostServiceResponse
 pub fn HostAppServices::outstanding_count(Self) -> Int
 pub fn HostAppServices::pending_count(Self) -> Int
 pub fn HostAppServices::pick_directory(Self, title? : String) -> HostServiceResponse
+pub fn HostAppServices::read_binary_file(Self, String) -> HostServiceResponse
 pub fn HostAppServices::read_clipboard_text(Self) -> HostServiceResponse
 pub fn HostAppServices::read_text_file(Self, String) -> HostServiceResponse
 pub fn HostAppServices::reject(Self, HostServiceRequestId, String) -> Bool
@@ -109,6 +110,7 @@ pub fn HostAppServices::show_context_menu(Self, Array[@wzzc-dev/moui/core.Action
 pub fn HostAppServices::system_theme(Self) -> @wzzc-dev/moui/core.ColorScheme?
 pub fn HostAppServices::take_completed(Self, HostServiceRequestId) -> HostCompletedServiceResponse?
 pub fn HostAppServices::unavailable() -> Self
+pub fn HostAppServices::write_binary_file(Self, String, Bytes) -> HostServiceResponse
 pub fn HostAppServices::write_clipboard_text(Self, String) -> HostServiceResponse
 pub fn HostAppServices::write_text_file(Self, String, String) -> HostServiceResponse
 
@@ -143,6 +145,18 @@ pub(all) enum HostBackendKind {
   Test
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostBackendKind::label(Self) -> String
+
+pub(all) struct HostBinaryFileDiagnostic {
+  path : String
+  byte_length : Int
+  operation : String
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum HostBinaryFileRequest {
+  ReadBytes(String)
+  WriteBytes(String, Bytes)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostBinaryFileRequest::diagnostic(Self) -> HostBinaryFileDiagnostic
 
 pub(all) struct HostCapabilitySummary {
   backend : HostBackendKind
@@ -516,6 +530,7 @@ pub(all) enum HostServiceKind {
   MenuService
   FileDialogService
   TextFileService
+  BinaryFileService
   OpenUrlService
   SystemThemeService
 } derive(Eq, ToJson, @debug.Debug)
@@ -525,6 +540,7 @@ pub(all) enum HostServiceRequest {
   ShowMenu(Array[@wzzc-dev/moui/core.ActionCommand])
   FileDialog(HostFileDialogOptions)
   TextFile(HostTextFileRequest)
+  BinaryFile(HostBinaryFileRequest)
   OpenUrl(String)
   QuerySystemTheme
 } derive(Eq, ToJson, @debug.Debug)
@@ -545,9 +561,12 @@ pub(all) enum HostServiceResponse {
   FileDialogSelection(Array[String])
   TextFileContent(String, String)
   TextFileWritten(String)
+  BinaryFileContent(String, Bytes)
+  BinaryFileWritten(String)
   UrlOpened
   SystemTheme(@wzzc-dev/moui/core.ColorScheme)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn HostServiceResponse::binary_file_diagnostic(Self) -> HostBinaryFileDiagnostic?
 pub fn HostServiceResponse::is_pending(Self) -> Bool
 
 pub(all) struct HostSurfaceMetrics {

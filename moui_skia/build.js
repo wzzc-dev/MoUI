@@ -495,6 +495,27 @@ function platformFlags(config, values) {
 }
 
 function main() {
+  if (truthy(process.env.MOUI_SKIA_DISABLE_PREBUILD_SKIA)) {
+    const triangleLinkFlags = macosExampleLinkFlags(
+      "",
+      "-framework QuartzCore -framework AppKit",
+    );
+    const metalWindowLinkFlags = macosExampleLinkFlags(
+      "",
+      "-framework Metal -framework QuartzCore -framework CoreVideo -framework IOSurface -framework AppKit",
+    );
+    console.log(
+      JSON.stringify({
+        vars: {
+          MOUI_SKIA_STUB_CC_FLAGS: "",
+          MOUI_SKIA_CC_LINK_FLAGS: "",
+          MOUI_SKIA_EXAMPLE_MACOS_WINDOW_LINK_FLAGS: triangleLinkFlags,
+          MOUI_SKIA_EXAMPLE_MACOS_METAL_WINDOW_LINK_FLAGS: metalWindowLinkFlags,
+        },
+      }),
+    );
+    return;
+  }
   const config = readJsonFromStdin();
   rejectLegacyLinkModeEnv(config);
   if (!shouldConfigureSkia(config)) {

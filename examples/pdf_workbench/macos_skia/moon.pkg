@@ -1,0 +1,22 @@
+import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/macos" @macos_host,
+  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
+  "wzzc-dev/moui/render/skia" @skia_renderer,
+  "examples/pdf_workbench/app",
+  "examples/pdf_workbench/pdflite_service_native_transport" @pdflite_transport,
+  "examples/pdf_workbench/pdfium_adapter",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz ${build.MOUI_PDFIUM_CC_LINK_FLAGS}",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)
