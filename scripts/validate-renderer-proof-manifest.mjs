@@ -185,6 +185,7 @@ if (backend === "skia-native") {
     "engine=skparagraph",
     "selection-rects",
     "line-range",
+    "rect-geometry",
     "hit-test",
   ];
   requiredObservationEvidence.imeCandidateAnchor = [

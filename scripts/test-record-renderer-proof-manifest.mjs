@@ -146,7 +146,7 @@ const skiaMarkers = markers.map(marker => {
     return "MoUI renderer proof paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels";
   }
   if (marker.startsWith("MoUI renderer proof selectionRects passed")) {
-    return "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range hit-test";
+    return "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test";
   }
   if (marker.startsWith("MoUI renderer proof imeCandidateAnchor passed")) {
     return "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets";
@@ -193,6 +193,7 @@ if (
   !skiaPassedManifest.observations.colorEmojiPixels.evidence.includes("stable-glyph-key") ||
   !skiaPassedManifest.observations.paragraphWrapping.evidence.includes("engine=skparagraph") ||
   !skiaPassedManifest.observations.bidiLayout.evidence.includes("bidi_visual_order_ready=true") ||
+  !skiaPassedManifest.observations.selectionRects.evidence.includes("rect-geometry") ||
   !skiaPassedManifest.observations.selectionRects.evidence.includes("hit-test") ||
   !skiaPassedManifest.observations.imeCandidateAnchor.evidence.includes("grapheme-boundary") ||
   !skiaPassedManifest.observations.imeCandidateAnchor.evidence.includes("utf8-offsets") ||
@@ -338,6 +339,27 @@ if (
   skiaMissingHitTestManifest.observations.selectionRects.status !== "failed"
 ) {
   console.error("missing SkParagraph hit-test token should keep selection rect proof failed");
+  process.exit(1);
+}
+
+const skiaMissingRectGeometry = runSkiaRecorder(
+  "skia-missing-rect-geometry",
+  skiaMarkers.join("\n").replace(" rect-geometry", ""),
+);
+if (skiaMissingRectGeometry.result.status !== 0) {
+  console.error("expected missing SkParagraph rect geometry proof to validate as failed");
+  console.error(skiaMissingRectGeometry.result.stdout);
+  console.error(skiaMissingRectGeometry.result.stderr);
+  process.exit(1);
+}
+const skiaMissingRectGeometryManifest = JSON.parse(
+  readFileSync(skiaMissingRectGeometry.outputPath, "utf8"),
+);
+if (
+  skiaMissingRectGeometryManifest.status !== "failed" ||
+  skiaMissingRectGeometryManifest.observations.selectionRects.status !== "failed"
+) {
+  console.error("missing SkParagraph rect geometry token should keep selection rect proof failed");
   process.exit(1);
 }
 
