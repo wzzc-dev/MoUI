@@ -133,10 +133,7 @@ jobs:
 
       - name: Set up MoonBit
         if: ${{ !inputs.dry_run_config }}
-        shell: pwsh
-        run: |
-          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
-          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+        uses: ./.github/actions/setup-moonbit
 
       - name: Update MoonBit registry
         if: ${{ !inputs.dry_run_config }}

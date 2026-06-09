@@ -126,10 +126,7 @@ jobs:
 
       - name: Set up MoonBit
         if: ${{ !inputs.dry_run_config }}
-        shell: bash
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+        uses: ./.github/actions/setup-moonbit
 
       - name: Update MoonBit registry
         if: ${{ !inputs.dry_run_config }}

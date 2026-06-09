@@ -8,6 +8,8 @@ on:
       - "moui_skia/**"
       - "moon.work"
       - "moui/moon.mod"
+      - ".moonbit-toolchain"
+      - ".github/actions/setup-moonbit/action.yml"
       - "scripts/check-local-deps.sh"
       - ".github/workflows/moui-skia-fallback.yml"
   pull_request:
@@ -15,6 +17,8 @@ on:
       - "moui_skia/**"
       - "moon.work"
       - "moui/moon.mod"
+      - ".moonbit-toolchain"
+      - ".github/actions/setup-moonbit/action.yml"
       - "scripts/check-local-deps.sh"
       - ".github/workflows/moui-skia-fallback.yml"
 
@@ -34,19 +38,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Set up MoonBit on Unix
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-
-      - name: Set up MoonBit on Windows
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
-          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
 
       - name: Show MoonBit version
         run: moon version --all
