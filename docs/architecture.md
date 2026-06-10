@@ -245,7 +245,10 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   inspecting `Msg` values; duplicate descriptor-key counts/names make planned
   key conflicts visible before execution. Runtime
   inspector snapshots also expose platform-neutral pipeline pass counters for
-  rebuild, layout, paint, and draw-command building. It keeps
+  rebuild, layout, paint, and draw-command building. Dirty summaries also carry
+  the latest damage kind, dirty-rect count, full-surface reason, cache epoch,
+  and cached-layer count so tools can distinguish retained boundary updates
+  from full redraws without parsing command streams. It keeps
   the latest effect summary, latest scheduled effect summary, and latest
   subscription plan summary, including planned subscription descriptors, for
   inspector tooling. This is separate from
@@ -256,14 +259,24 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
 - Layout uses constraints down, measured size up, then parent placement, and
   writes the result into `LayoutTree`.
 - Paint consumes `LayoutTree` frames to build `RenderTree` and emits
-  platform-neutral `DrawCommand` values. Renderers may degrade
-  based on capability, but view constructors preserve brush, border, shadow,
-  clip, image, and text intent.
+  platform-neutral `DrawCommand` values. `RenderNode` entries retain paint
+  bounds, content revisions, and repaint-boundary cache keys. The normal host
+  path asks `AppRuntime::draw_frame()` for commands plus a `DamageRegion` and
+  cache epoch; legacy tests can still call `draw_commands()` for a full command
+  stream. Renderers may degrade based on capability, but view constructors
+  preserve brush, border, shadow, clip, image, and text intent.
 - Backends normalize platform events into `HostEvent`; they do not own UI
   state or mutate element/render trees directly.
 - `HostRuntimeDriver` owns redraw scheduling at the host boundary, dispatches
-  normalized events into `AppRuntime`, and exposes platform-neutral draw
-  commands for renderers.
+  normalized events into `AppRuntime`, and exposes platform-neutral draw frames
+  for renderers. The redraw scheduler tracks `idle`, `scheduled`, `in-frame`,
+  and `follow-up` states so repeated host callbacks coalesce and redraw
+  requests made during presentation become the next frame.
+  `HostWindowRenderer::render_frame()` expands retained cached-layer commands
+  through a renderer-neutral command cache and reports cache hit/miss/update
+  diagnostics; platform renderers still receive ordinary `DrawCommand` streams,
+  so OS-level partial present and renderer-specific texture cache promotion can
+  evolve independently.
 - `AppRuntime::focus_next` and `AppRuntime::focus_previous` expose explicit
   focus traversal entry points on top of the shared tab-order model.
 

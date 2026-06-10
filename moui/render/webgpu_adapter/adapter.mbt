@@ -124,6 +124,34 @@ pub(all) struct WebGpuWasmRenderer {
   mut last_calls : Array[WebGpuHostCall]
   mut last_fallback_plan : @render.RendererCommandPlan
   image_lifecycle : @render.ImageResourceLifecycle
+  priv layer_cache : WebGpuLayerCommandCache
+}
+
+///|
+priv struct WebGpuLayerCommandCacheEntry {
+  key : String
+  commands : Array[@core.DrawCommand]
+}
+
+///|
+priv struct WebGpuLayerCommandCache {
+  entries : Array[WebGpuLayerCommandCacheEntry]
+  mut tick : Int
+}
+
+///|
+priv struct WebGpuLayerCommandExpansion {
+  commands : Array[@core.DrawCommand]
+  cache_hit_count : Int
+  cache_miss_count : Int
+  cache_update_count : Int
+  missing_layer_keys : Array[String]
+}
+
+///|
+priv struct WebGpuLayerCommandCapture {
+  spec : @core.CachedLayerSpec
+  commands : Array[@core.DrawCommand]
 }
 
 ///|
@@ -333,6 +361,7 @@ pub fn create_renderer(
     last_calls: [],
     last_fallback_plan: @render.plan_renderer_command_fallbacks([]),
     image_lifecycle: @render.ImageResourceLifecycle::new(),
+    layer_cache: WebGpuLayerCommandCache::new(),
   }
 }
 
@@ -374,6 +403,23 @@ pub fn WebGpuWasmRenderer::render(
   self.refresh_web_image_commands(commands)
   self.last_calls = calls
   self.present_count = self.present_count + 1
+}
+
+///|
+pub fn WebGpuWasmRenderer::render_frame(
+  self : WebGpuWasmRenderer,
+  frame : @core.DrawFrame,
+) -> @render.RenderFrameResult {
+  let expanded = self.layer_cache.expand_frame_commands(frame.commands)
+  self.render(expanded.commands) catch {
+    _ => ()
+  }
+  @render.RenderFrameResult::new(
+    cache_hit_count=expanded.cache_hit_count,
+    cache_miss_count=expanded.cache_miss_count,
+    cache_update_count=expanded.cache_update_count,
+    missing_layer_keys=expanded.missing_layer_keys,
+  )
 }
 
 ///|
@@ -425,6 +471,116 @@ pub fn WebGpuWasmRenderer::image_resource_snapshot(
   self : WebGpuWasmRenderer,
 ) -> @render.ImageResourceSnapshot {
   self.image_lifecycle.snapshot_with_revision()
+}
+
+///|
+fn WebGpuLayerCommandCache::new() -> WebGpuLayerCommandCache {
+  { entries: [], tick: 0 }
+}
+
+///|
+fn WebGpuLayerCommandCache::expand_frame_commands(
+  self : WebGpuLayerCommandCache,
+  commands : Array[@core.DrawCommand],
+) -> WebGpuLayerCommandExpansion {
+  self.tick = self.tick + 1
+  let output : Array[@core.DrawCommand] = []
+  let captures : Array[WebGpuLayerCommandCapture] = []
+  let missing : Array[String] = []
+  let mut hits = 0
+  let mut misses = 0
+  let mut updates = 0
+  for command in commands {
+    match command {
+      @core.DrawCommand::BeginCachedLayer(spec) => {
+        let layer = @core.DrawCommand::PushLayer(
+          @core.LayerSpec::new(
+            mask=@core.LayerMask::RectMask(spec.frame),
+            offscreen=true,
+          ),
+        )
+        append_webgpu_layer_cache_command(output, captures, layer)
+        captures.push({ spec, commands: [layer] })
+      }
+      @core.DrawCommand::EndCachedLayer(key) => {
+        append_webgpu_layer_cache_command(
+          output,
+          captures,
+          @core.DrawCommand::PopLayer,
+        )
+        match captures.pop() {
+          Some(capture) =>
+            if capture.spec.key == key {
+              self.store(capture.spec.key, capture.commands)
+              updates = updates + 1
+            }
+          None => ()
+        }
+      }
+      @core.DrawCommand::DrawCachedLayer(spec) =>
+        match self.lookup(spec.key) {
+          Some(cached) => {
+            hits = hits + 1
+            for cached_command in cached {
+              append_webgpu_layer_cache_command(output, captures, cached_command)
+            }
+          }
+          None => {
+            misses = misses + 1
+            missing.push(spec.key)
+          }
+        }
+      _ => append_webgpu_layer_cache_command(output, captures, command)
+    }
+  }
+  {
+    commands: output,
+    cache_hit_count: hits,
+    cache_miss_count: misses,
+    cache_update_count: updates,
+    missing_layer_keys: missing,
+  }
+}
+
+///|
+fn append_webgpu_layer_cache_command(
+  output : Array[@core.DrawCommand],
+  captures : Array[WebGpuLayerCommandCapture],
+  command : @core.DrawCommand,
+) -> Unit {
+  output.push(command)
+  for capture in captures {
+    capture.commands.push(command)
+  }
+}
+
+///|
+fn WebGpuLayerCommandCache::lookup(
+  self : WebGpuLayerCommandCache,
+  key : String,
+) -> Array[@core.DrawCommand]? {
+  for entry in self.entries {
+    if entry.key == key {
+      return Some(entry.commands)
+    }
+  }
+  None
+}
+
+///|
+fn WebGpuLayerCommandCache::store(
+  self : WebGpuLayerCommandCache,
+  key : String,
+  commands : Array[@core.DrawCommand],
+) -> Unit {
+  for entry in self.entries {
+    if entry.key == key {
+      entry.commands.clear()
+      entry.commands.append(commands)
+      return ()
+    }
+  }
+  self.entries.push({ key, commands })
 }
 
 ///|
@@ -528,6 +684,18 @@ pub fn draw_commands_to_host_calls(
       @core.DrawCommand::PushLayer(layer) =>
         calls.push(WebGpuHostCall::PushLayer(layer))
       @core.DrawCommand::PopLayer => calls.push(WebGpuHostCall::PopLayer)
+      @core.DrawCommand::BeginCachedLayer(spec) =>
+        calls.push(
+          WebGpuHostCall::PushLayer(
+            @core.LayerSpec::new(
+              mask=@core.LayerMask::RectMask(spec.frame),
+              offscreen=true,
+            ),
+          ),
+        )
+      @core.DrawCommand::EndCachedLayer(_) =>
+        calls.push(WebGpuHostCall::PopLayer)
+      @core.DrawCommand::DrawCachedLayer(_) => ()
       @core.DrawCommand::PushFilter(filter) =>
         calls.push(WebGpuHostCall::PushFilter(filter))
       @core.DrawCommand::PopFilter => calls.push(WebGpuHostCall::PopFilter)

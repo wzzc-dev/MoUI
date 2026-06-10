@@ -149,6 +149,73 @@ pub fn Rect::contains(self : Rect, point : Point) -> Bool {
 }
 
 ///|
+pub fn Rect::is_empty(self : Rect) -> Bool {
+  self.size.width <= 0.0 || self.size.height <= 0.0
+}
+
+///|
+pub fn Rect::area(self : Rect) -> Double {
+  if self.is_empty() {
+    0.0
+  } else {
+    self.size.width * self.size.height
+  }
+}
+
+///|
+pub fn Rect::max_x(self : Rect) -> Double {
+  self.origin.x + self.size.width
+}
+
+///|
+pub fn Rect::max_y(self : Rect) -> Double {
+  self.origin.y + self.size.height
+}
+
+///|
+pub fn Rect::union(self : Rect, other : Rect) -> Rect {
+  if self.is_empty() {
+    other
+  } else if other.is_empty() {
+    self
+  } else {
+    let min_x = self.origin.x.min(other.origin.x)
+    let min_y = self.origin.y.min(other.origin.y)
+    let max_x = self.max_x().max(other.max_x())
+    let max_y = self.max_y().max(other.max_y())
+    Rect::new(x=min_x, y=min_y, width=max_x - min_x, height=max_y - min_y)
+  }
+}
+
+///|
+pub fn Rect::intersection(self : Rect, other : Rect) -> Rect? {
+  let min_x = self.origin.x.max(other.origin.x)
+  let min_y = self.origin.y.max(other.origin.y)
+  let max_x = self.max_x().min(other.max_x())
+  let max_y = self.max_y().min(other.max_y())
+  if max_x <= min_x || max_y <= min_y {
+    None
+  } else {
+    Some(Rect::new(x=min_x, y=min_y, width=max_x - min_x, height=max_y - min_y))
+  }
+}
+
+///|
+pub fn Rect::inflate(self : Rect, value : Double) -> Rect {
+  Rect::new(
+    x=self.origin.x - value,
+    y=self.origin.y - value,
+    width=self.size.width + value * 2.0,
+    height=self.size.height + value * 2.0,
+  )
+}
+
+///|
+pub fn Rect::clamp_to(self : Rect, bounds : Rect) -> Rect? {
+  self.intersection(bounds)
+}
+
+///|
 pub fn Rect::inset(self : Rect, insets : Insets) -> Rect {
   Rect::new(
     x=self.origin.x + insets.left,

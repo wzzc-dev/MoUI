@@ -59,6 +59,7 @@ priv struct ElementRenderCache {
   mut cached_render_frame : Rect?
   mut cached_render_focused : ElementId?
   mut cached_render : RenderNode?
+  mut content_revision : Int
 }
 
 ///|
@@ -82,6 +83,10 @@ struct RenderNode {
   frame : Rect
   children : Array[RenderNode]
   hit_testable : Bool
+  paint_bounds : Rect
+  content_revision : Int
+  is_repaint_boundary : Bool
+  layer_cache_key : String?
   paint_commands : Array[DrawCommand]
   post_paint_commands : Array[DrawCommand]
   overlay_paint_commands : Array[DrawCommand]
@@ -101,6 +106,10 @@ fn RenderNode::empty() -> RenderNode {
     frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
     children: [],
     hit_testable: false,
+    paint_bounds: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+    content_revision: 0,
+    is_repaint_boundary: false,
+    layer_cache_key: None,
     paint_commands: [],
     post_paint_commands: [],
     overlay_paint_commands: [],
@@ -194,6 +203,7 @@ fn ElementRenderCache::empty() -> ElementRenderCache {
     cached_render_frame: None,
     cached_render_focused: None,
     cached_render: None,
+    content_revision: 0,
   }
 }
 
@@ -671,6 +681,21 @@ fn ElementNode::mark_paint_dirty_by_id(
       self.render_cache.clear()
     }
     found
+  }
+}
+
+///|
+fn ElementNode::collect_dirty_element_ids(
+  self : ElementNode,
+  ids : Array[ElementId],
+) -> Unit {
+  if self.dirty.needs_build ||
+    self.dirty.needs_layout ||
+    self.dirty.needs_paint {
+    push_unique_element_id(ids, self.id)
+  }
+  for child in self.children {
+    child.collect_dirty_element_ids(ids)
   }
 }
 

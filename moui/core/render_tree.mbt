@@ -11,6 +11,43 @@ fn RenderNode::collect_draw_commands(
 }
 
 ///|
+fn RenderNode::collect_frame_commands(
+  self : RenderNode,
+  commands : Array[DrawCommand],
+  known_layer_keys : Array[String],
+) -> Unit {
+  let overlays : Array[DrawCommand] = []
+  self.collect_frame_commands_with_overlays(commands, overlays, known_layer_keys)
+  for command in overlays {
+    commands.push(command)
+  }
+}
+
+///|
+fn RenderNode::collect_frame_commands_with_overlays(
+  self : RenderNode,
+  commands : Array[DrawCommand],
+  overlays : Array[DrawCommand],
+  known_layer_keys : Array[String],
+) -> Unit {
+  if self.is_repaint_boundary {
+    match self.cached_layer_spec() {
+      Some(spec) =>
+        if known_layer_keys.any(key => key == spec.key) {
+          commands.push(DrawCachedLayer(spec))
+        } else {
+          commands.push(BeginCachedLayer(spec))
+          self.collect_uncached_draw_commands_with_overlays(commands, overlays)
+          commands.push(EndCachedLayer(spec.key))
+        }
+      None => self.collect_uncached_draw_commands_with_overlays(commands, overlays)
+    }
+  } else {
+    self.collect_uncached_draw_commands_with_overlays(commands, overlays)
+  }
+}
+
+///|
 fn RenderNode::collect_draw_commands_with_overlays(
   self : RenderNode,
   commands : Array[DrawCommand],
@@ -62,10 +99,51 @@ fn RenderNode::with_repaint_boundary_cache(self : RenderNode) -> RenderNode {
   self.collect_uncached_draw_commands_with_overlays(commands, overlays)
   {
     ..self,
+    is_repaint_boundary: true,
+    layer_cache_key: Some(self.repaint_boundary_cache_key()),
     cached_draw_commands: Some(commands),
     cached_overlay_draw_commands: Some(overlays),
   }
 }
+
+///|
+fn RenderNode::cached_layer_spec(self : RenderNode) -> CachedLayerSpec? {
+  match self.layer_cache_key {
+    Some(key) =>
+      Some(
+        CachedLayerSpec::new(
+          key~,
+          frame=self.paint_bounds,
+          content_revision=self.content_revision,
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn RenderNode::repaint_boundary_cache_key(self : RenderNode) -> String {
+  "element=\{self.element_id.value};x=\{self.frame.origin.x};y=\{self.frame.origin.y};w=\{self.frame.size.width};h=\{self.frame.size.height};rev=\{self.content_revision}"
+}
+
+///|
+fn RenderNode::find_paint_bounds(
+  self : RenderNode,
+  id : ElementId,
+) -> Rect? {
+  if self.element_id == id {
+    Some(self.paint_bounds)
+  } else {
+    for child in self.children {
+      match child.find_paint_bounds(id) {
+        Some(bounds) => return Some(bounds)
+        None => ()
+      }
+    }
+    None
+  }
+}
+
 
 ///|
 fn ElementNode::render_focused_with_text_system(

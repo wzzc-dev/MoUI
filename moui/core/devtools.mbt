@@ -78,6 +78,11 @@ pub(all) struct RuntimeDirtyStateSummary {
   has_pending_work : Bool
   reason : String
   reasons : Array[String]
+  damage_kind : String
+  damage_rect_count : Int
+  damage_full_reason : String
+  cache_epoch : Int
+  cached_layer_count : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -221,6 +226,11 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
     dirty_count > 0,
     reason: rebuild_reason,
     reasons: dirty_reasons.copy(),
+    damage_kind: runtime.state.last_damage_region.kind(),
+    damage_rect_count: runtime.state.last_damage_region.rect_count(),
+    damage_full_reason: runtime.state.last_damage_region.full_reason(),
+    cache_epoch: runtime.state.cache_epoch,
+    cached_layer_count: runtime.state.known_layer_cache_keys.length(),
   }
   let program = runtime.program_runtime_snapshot()
   let draw_commands = runtime.state.cached_draw_commands()
@@ -438,16 +448,17 @@ fn render_inspector_from_commands(
         } else {
           clip_depth = clip_depth - 1
         }
-      PushLayer(_) => {
+      PushLayer(_) | BeginCachedLayer(_) => {
         layer_depth = layer_depth + 1
         max_layer_depth = devtools_max_int(max_layer_depth, layer_depth)
       }
-      PopLayer =>
+      PopLayer | EndCachedLayer(_) =>
         if layer_depth == 0 {
           unbalanced_pop_count = unbalanced_pop_count + 1
         } else {
           layer_depth = layer_depth - 1
         }
+      DrawCachedLayer(_) => ()
       PushFilter(_) => {
         filter_depth = filter_depth + 1
         max_filter_depth = devtools_max_int(max_filter_depth, filter_depth)

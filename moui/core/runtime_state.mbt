@@ -13,6 +13,9 @@ struct RuntimeState {
   mut layout_pass_count : Int
   mut paint_pass_count : Int
   mut draw_command_build_count : Int
+  mut cache_epoch : Int
+  mut last_damage_region : DamageRegion
+  known_layer_cache_keys : Array[String]
   mut next_element_id : Int
   dirty_elements : Array[ElementId]
   dirty_build_elements : Array[ElementId]
@@ -50,6 +53,9 @@ fn RuntimeState::new_spec(
     layout_pass_count: 0,
     paint_pass_count: 0,
     draw_command_build_count: 0,
+    cache_epoch: 0,
+    last_damage_region: DamageRegion::full("initial frame"),
+    known_layer_cache_keys: [],
     next_element_id: initial.next_id,
     dirty_elements: [],
     dirty_build_elements: [],
@@ -95,6 +101,9 @@ fn RuntimeState::new_component(
     layout_pass_count: 0,
     paint_pass_count: 0,
     draw_command_build_count: 0,
+    cache_epoch: 0,
+    last_damage_region: DamageRegion::full("initial frame"),
+    known_layer_cache_keys: [],
     next_element_id: mounted.next_id,
     dirty_elements: [],
     dirty_build_elements: [],
@@ -195,6 +204,9 @@ pub fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.layout_pass_count = 0
   self.paint_pass_count = 0
   self.draw_command_build_count = 0
+  self.cache_epoch = 0
+  self.last_damage_region = DamageRegion::empty()
+  self.known_layer_cache_keys.clear()
 }
 
 ///|
@@ -393,7 +405,7 @@ pub fn RuntimeState::dispatch_event(
       self.needs_rebuild = self.needs_rebuild || result.activated
       self.needs_paint = self.needs_paint || result.changed
       if result.changed || result.activated {
-        self.mark_dirty(self.element_tree.id())
+        self.mark_current_dirty_elements()
       }
       if result.activated {
         self.request_activation_rebuild()
@@ -405,7 +417,7 @@ pub fn RuntimeState::dispatch_event(
         self.needs_redraw = self.needs_redraw || shortcut.changed
         self.needs_rebuild = self.needs_rebuild || shortcut.activated
         self.needs_paint = self.needs_paint || shortcut.changed
-        self.mark_dirty(self.element_tree.id())
+        self.mark_current_dirty_elements()
         if shortcut.activated {
           self.request_activation_rebuild()
         }
@@ -428,7 +440,7 @@ pub fn RuntimeState::dispatch_event(
               self.needs_rebuild = self.needs_rebuild || result.activated
               self.needs_paint = self.needs_paint || result.changed
               if result.changed || result.activated {
-                self.mark_dirty(self.element_tree.id())
+                self.mark_current_dirty_elements()
               }
               if result.activated {
                 self.request_activation_rebuild()
@@ -453,7 +465,7 @@ pub fn RuntimeState::dispatch_event(
             self.needs_rebuild = self.needs_rebuild || result.activated
             self.needs_paint = self.needs_paint || result.changed
             if result.changed || result.activated {
-              self.mark_dirty(self.element_tree.id())
+              self.mark_current_dirty_elements()
             }
             if result.activated {
               self.request_activation_rebuild()
@@ -474,7 +486,7 @@ pub fn RuntimeState::dispatch_event(
           self.needs_rebuild = self.needs_rebuild || result.activated
           self.needs_paint = self.needs_paint || result.changed
           if result.changed || result.activated {
-            self.mark_dirty(self.element_tree.id())
+            self.mark_current_dirty_elements()
           }
           if result.activated {
             self.request_activation_rebuild()
@@ -494,7 +506,7 @@ pub fn RuntimeState::dispatch_event(
       self.needs_rebuild = self.needs_rebuild || result.activated
       self.needs_paint = self.needs_paint || result.changed
       if result.changed || result.activated {
-        self.mark_dirty(self.element_tree.id())
+        self.mark_current_dirty_elements()
       }
       if result.activated {
         self.request_activation_rebuild()
@@ -662,6 +674,25 @@ pub fn RuntimeState::build_draw_commands(
 }
 
 ///|
+pub fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
+  self.draw_command_build_count = self.draw_command_build_count + 1
+  let commands : Array[DrawCommand] = [Clear(Color::white())]
+  self.rebuild_if_possible()
+  self.ensure_render_tree()
+  self.render_tree.root.collect_frame_commands(
+    commands,
+    self.known_layer_cache_keys,
+  )
+  self.record_cached_layer_updates(commands)
+  DrawFrame::new(
+    commands~,
+    damage=self.last_damage_region,
+    clear_color=Color::white(),
+    cache_epoch=self.cache_epoch,
+  )
+}
+
+///|
 fn RuntimeState::cached_draw_commands(
   self : RuntimeState,
 ) -> Array[DrawCommand] {
@@ -796,6 +827,17 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
 
 ///|
 fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
+  let previous_render = self.render_tree
+  let dirty_ids = self.dirty_elements.copy()
+  let force_full_reason = if self.needs_rebuild {
+    Some("rebuild requested")
+  } else if self.needs_layout {
+    Some("layout requested")
+  } else if previous_render.root.element_id.value == 0 {
+    Some("initial frame")
+  } else {
+    None
+  }
   self.ensure_layout_tree()
   self.paint_pass_count = self.paint_pass_count + 1
   self.render_tree = {
@@ -806,10 +848,89 @@ fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
       text_system=self.text_system,
     ),
   }
+  self.last_damage_region = self.compute_damage_region(
+    previous_render,
+    self.render_tree,
+    dirty_ids,
+    force_full_reason~,
+  )
   self.needs_rebuild = false
   self.needs_layout = false
   self.needs_paint = false
   self.clear_dirty_queue()
+}
+
+///|
+fn RuntimeState::compute_damage_region(
+  self : RuntimeState,
+  previous : RenderTree,
+  current : RenderTree,
+  dirty_ids : Array[ElementId],
+  force_full_reason~ : String?,
+) -> DamageRegion {
+  match force_full_reason {
+    Some(reason) => DamageRegion::full(reason)
+    None => {
+      let surface = Rect::new(
+        x=0.0,
+        y=0.0,
+        width=self.size.width,
+        height=self.size.height,
+      )
+      let rects : Array[Rect] = []
+      for id in dirty_ids {
+        match previous.root.find_paint_bounds(id) {
+          Some(bounds) => rects.push(bounds)
+          None => ()
+        }
+        match current.root.find_paint_bounds(id) {
+          Some(bounds) => rects.push(bounds)
+          None => ()
+        }
+      }
+      DamageRegion::from_rects(rects, surface)
+    }
+  }
+}
+
+///|
+fn RuntimeState::record_cached_layer_updates(
+  self : RuntimeState,
+  commands : Array[DrawCommand],
+) -> Unit {
+  let mut updated = false
+  for command in commands {
+    match command {
+      BeginCachedLayer(spec) =>
+        if !self.known_layer_cache_keys.any(key => key == spec.key) {
+          self.known_layer_cache_keys.push(spec.key)
+          updated = true
+        }
+      _ => ()
+    }
+  }
+  if updated {
+    self.cache_epoch = self.cache_epoch + 1
+  }
+}
+
+///|
+fn RuntimeState::invalidate_cached_layer_key(
+  self : RuntimeState,
+  key : String,
+) -> Unit {
+  let retained : Array[String] = []
+  for existing in self.known_layer_cache_keys {
+    if existing != key {
+      retained.push(existing)
+    }
+  }
+  if retained.length() != self.known_layer_cache_keys.length() {
+    self.known_layer_cache_keys.clear()
+    self.known_layer_cache_keys.append(retained)
+    self.cache_epoch = self.cache_epoch + 1
+    self.request_redraw()
+  }
 }
 
 ///|
@@ -874,6 +995,21 @@ pub fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
   ignore(self.element_tree.root.mark_paint_dirty_by_id(id))
   self.needs_paint = true
   self.needs_redraw = true
+}
+
+///|
+fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
+  let ids : Array[ElementId] = []
+  self.element_tree.root.collect_dirty_element_ids(ids)
+  if ids.is_empty() {
+    self.mark_dirty(self.element_tree.id())
+  } else {
+    for id in ids {
+      self.queue_paint_dirty(id)
+    }
+    self.needs_paint = true
+    self.needs_redraw = true
+  }
 }
 
 ///|

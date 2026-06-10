@@ -1,0 +1,211 @@
+///|
+pub(all) enum DamageRegion {
+  Empty
+  FullSurface(String)
+  Rects(Array[Rect])
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct DrawFrame {
+  commands : Array[DrawCommand]
+  damage : DamageRegion
+  clear_color : Color
+  cache_epoch : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+fn damage_region_max_rects() -> Int {
+  8
+}
+
+///|
+fn damage_region_full_threshold() -> Double {
+  0.6
+}
+
+///|
+pub fn DamageRegion::empty() -> DamageRegion {
+  DamageRegion::Empty
+}
+
+///|
+pub fn DamageRegion::full(reason : String) -> DamageRegion {
+  DamageRegion::FullSurface(reason)
+}
+
+///|
+pub fn DamageRegion::from_rects(
+  rects : Array[Rect],
+  surface : Rect,
+) -> DamageRegion {
+  let clipped : Array[Rect] = []
+  for rect in rects {
+    match rect.clamp_to(surface) {
+      Some(clamped) =>
+        if !clamped.is_empty() {
+          clipped.push(clamped)
+        }
+      None => ()
+    }
+  }
+  if clipped.is_empty() {
+    DamageRegion::Empty
+  } else if clipped.length() > damage_region_max_rects() {
+    DamageRegion::FullSurface("too many dirty rects")
+  } else {
+    let mut union_rect = clipped[0]
+    for index in 1..<clipped.length() {
+      union_rect = union_rect.union(clipped[index])
+    }
+    let surface_area = surface.area()
+    if surface_area > 0.0 &&
+      union_rect.area() / surface_area > damage_region_full_threshold() {
+      DamageRegion::FullSurface("dirty region covers most of the surface")
+    } else {
+      DamageRegion::Rects(clipped)
+    }
+  }
+}
+
+///|
+pub fn DamageRegion::rect_count(self : DamageRegion) -> Int {
+  match self {
+    Empty => 0
+    FullSurface(_) => 0
+    Rects(rects) => rects.length()
+  }
+}
+
+///|
+pub fn DamageRegion::kind(self : DamageRegion) -> String {
+  match self {
+    Empty => "empty"
+    FullSurface(_) => "full"
+    Rects(_) => "rects"
+  }
+}
+
+///|
+pub fn DamageRegion::full_reason(self : DamageRegion) -> String {
+  match self {
+    FullSurface(reason) => reason
+    _ => ""
+  }
+}
+
+///|
+pub fn DrawFrame::new(
+  commands~ : Array[DrawCommand],
+  damage~ : DamageRegion,
+  clear_color? : Color = Color::white(),
+  cache_epoch? : Int = 0,
+) -> DrawFrame {
+  { commands, damage, clear_color, cache_epoch }
+}
+
+///|
+fn optional_rect_union(left : Rect?, right : Rect?) -> Rect? {
+  match (left, right) {
+    (Some(a), Some(b)) => Some(a.union(b))
+    (Some(a), None) => Some(a)
+    (None, Some(b)) => Some(b)
+    (None, None) => None
+  }
+}
+
+///|
+pub fn DrawCommand::bounds(self : DrawCommand) -> Rect? {
+  match self {
+    Clear(_) => None
+    FillRect(rect, _) => Some(rect.inflate(1.0))
+    StrokeRect(rect, _, width) => Some(rect.inflate(width.max(1.0)))
+    FillRoundedRect(rounded, _) => Some(rounded.rect.inflate(1.0))
+    StrokeRoundedRect(rounded, _, width) =>
+      Some(rounded.rect.inflate(width.max(1.0)))
+    FillRoundedRectBrush(rounded, _) => Some(rounded.rect.inflate(1.0))
+    StrokeRoundedRectBrush(rounded, _, width) =>
+      Some(rounded.rect.inflate(width.max(1.0)))
+    DrawShadow(shadow) =>
+      Some(
+        shadow
+        .rect
+        .rect
+        .inflate(shadow.blur_radius + shadow.spread.abs() + 2.0)
+        .offset(dx=shadow.offset.x, dy=shadow.offset.y),
+      )
+    DrawText(run) => Some(run.frame.inflate(1.0))
+    DrawImage(run) => Some(run.frame.inflate(1.0))
+    PushClip(rect) => Some(rect)
+    PopClip => None
+    PushRoundedClip(rounded) => Some(rounded.rect)
+    PopRoundedClip => None
+    PushTransform(_) => None
+    PopTransform => None
+    PushOpacity(_) => None
+    PopOpacity => None
+    PushLayer(layer) =>
+      match layer.mask {
+        NoMask => None
+        RectMask(rect) => Some(rect)
+        RoundedMask(rounded) => Some(rounded.rect)
+      }
+    PopLayer => None
+    BeginCachedLayer(spec) => Some(spec.frame)
+    EndCachedLayer(_) => None
+    DrawCachedLayer(spec) => Some(spec.frame)
+    PushFilter(filter) =>
+      match filter {
+        Blur(radius) => Some(Rect::new(x=0.0, y=0.0, width=0.0, height=0.0).inflate(radius))
+        _ => None
+      }
+    PopFilter => None
+    DrawPath(path) => path.bounds()
+    DrawShaderEffect(spec) => Some(spec.frame.inflate(1.0))
+  }
+}
+
+///|
+pub fn PathSpec::bounds(self : PathSpec) -> Rect? {
+  let mut has_point = false
+  let mut min_x = 0.0
+  let mut min_y = 0.0
+  let mut max_x = 0.0
+  let mut max_y = 0.0
+  let add_point = (point : Point) => {
+    if !has_point {
+      min_x = point.x
+      min_y = point.y
+      max_x = point.x
+      max_y = point.y
+      has_point = true
+    } else {
+      min_x = min_x.min(point.x)
+      min_y = min_y.min(point.y)
+      max_x = max_x.max(point.x)
+      max_y = max_y.max(point.y)
+    }
+  }
+  for verb in self.verbs {
+    match verb {
+      MoveTo(point) | LineTo(point) => add_point(point)
+      QuadTo(a, b) => {
+        add_point(a)
+        add_point(b)
+      }
+      CubicTo(a, b, c) => {
+        add_point(a)
+        add_point(b)
+        add_point(c)
+      }
+      Close => ()
+    }
+  }
+  if has_point {
+    Some(
+      Rect::new(x=min_x, y=min_y, width=max_x - min_x, height=max_y - min_y)
+      .inflate(self.stroke_width.max(1.0)),
+    )
+  } else {
+    None
+  }
+}

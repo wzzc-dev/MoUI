@@ -143,9 +143,21 @@ pub(all) struct RectVertex {
 pub(all) struct RenderFrameInput {
   metrics : RendererSurfaceMetrics
   commands : Array[@core.DrawCommand]
+  damage : @core.DamageRegion
   clear_color : @core.Color?
+  cache_epoch : Int
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RenderFrameInput::new(metrics~ : RendererSurfaceMetrics, commands~ : Array[@core.DrawCommand], clear_color? : @core.Color?) -> Self
+pub fn RenderFrameInput::new(metrics~ : RendererSurfaceMetrics, commands~ : Array[@core.DrawCommand], damage? : @core.DamageRegion, clear_color? : @core.Color?, cache_epoch? : Int) -> Self
+
+pub(all) struct RenderFrameResult {
+  presented : Bool
+  cache_hit_count : Int
+  cache_miss_count : Int
+  cache_update_count : Int
+  cache_evict_count : Int
+  missing_layer_keys : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RenderFrameResult::new(presented? : Bool, cache_hit_count? : Int, cache_miss_count? : Int, cache_update_count? : Int, cache_evict_count? : Int, missing_layer_keys? : Array[String]) -> Self
 
 pub(all) struct RendererBackendFeatureCapability {
   feature : RendererFeature

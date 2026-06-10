@@ -798,7 +798,10 @@ fn MacosApp::redraw_window(
     (Some(platform_slot), Some(runtime_slot)) => {
       platform_slot.window.pre_present_notify()
       runtime_slot.driver.begin_redraw()
-      platform_slot.renderer.render(runtime_slot.driver.draw_commands())
+      let result = platform_slot.renderer.render_frame(
+        runtime_slot.driver.draw_frame(),
+      )
+      runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
       ignore(
         self.image_repaint_tracker.record_presented(
@@ -1329,7 +1332,8 @@ fn MacosApp::present_native_ime_evidence_frame(
   let before = platform_slot.renderer.present_count()
   platform_slot.window.pre_present_notify()
   runtime_slot.driver.begin_redraw()
-  platform_slot.renderer.render(runtime_slot.driver.draw_commands())
+  let result = platform_slot.renderer.render_frame(runtime_slot.driver.draw_frame())
+  runtime_slot.driver.apply_render_frame_result(result)
   runtime_slot.driver.finish_redraw()
   self.sync_text_input_session()
   platform_slot.renderer.present_count() > before

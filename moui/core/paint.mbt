@@ -138,6 +138,14 @@ pub(all) struct LayerSpec {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct CachedLayerSpec {
+  key : String
+  frame : Rect
+  content_revision : Int
+  scale_factor : Double
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) enum FilterEffect {
   Blur(Double)
   Saturate(Double)
@@ -193,6 +201,9 @@ pub(all) enum DrawCommand {
   PopOpacity
   PushLayer(LayerSpec)
   PopLayer
+  BeginCachedLayer(CachedLayerSpec)
+  EndCachedLayer(String)
+  DrawCachedLayer(CachedLayerSpec)
   PushFilter(FilterEffect)
   PopFilter
   DrawPath(PathSpec)
@@ -477,6 +488,16 @@ pub fn LayerSpec::new(
   offscreen? : Bool = false,
 ) -> LayerSpec {
   { opacity: clamp_double(opacity, 0.0, 1.0), blend_mode, mask, offscreen }
+}
+
+///|
+pub fn CachedLayerSpec::new(
+  key~ : String,
+  frame~ : Rect,
+  content_revision~ : Int,
+  scale_factor? : Double = 1.0,
+) -> CachedLayerSpec {
+  { key, frame, content_revision, scale_factor }
 }
 
 ///|

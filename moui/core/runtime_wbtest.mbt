@@ -330,7 +330,7 @@ test "program button update waits for draw frame flush" {
   inspect(runtime.state.paint_pass_count, content="\{paint_passes}")
   inspect(runtime.state.dirty_build_elements.length(), content="1")
   inspect(runtime.state.dirty_layout_elements.length(), content="1")
-  inspect(runtime.state.dirty_paint_elements.length(), content="1")
+  inspect(runtime.state.dirty_paint_elements.length(), content="2")
   assert_true(has_draw_text(runtime.draw_commands(), "Count 1"))
   assert_true(runtime.state.rebuild_pass_count > rebuild_passes)
   assert_true(runtime.state.layout_pass_count > layout_passes)

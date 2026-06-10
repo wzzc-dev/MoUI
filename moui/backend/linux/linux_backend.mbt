@@ -1186,13 +1186,23 @@ fn LinuxApp::redraw_window(
       platform_slot.window.pre_present_notify()
       runtime_slot.driver.begin_redraw()
       let surface_metrics = linux_window_surface_metrics(platform_slot.window)
+      let frame = runtime_slot.driver.draw_frame()
       let commands = linux_client_decorated_commands(
-        runtime_slot.driver.draw_commands(),
+        frame.commands,
         title=runtime_slot.record.title,
         metrics=surface_metrics,
         decorations=platform_slot.decorations,
       )
-      platform_slot.renderer.render(commands)
+      let result = platform_slot.renderer.render_frame({
+        ..frame,
+        commands,
+        damage: if platform_slot.decorations.active {
+          @core.DamageRegion::full("linux client decorations")
+        } else {
+          frame.damage
+        },
+      })
+      runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
       ignore(
         self.image_repaint_tracker.record_presented(

@@ -21,12 +21,13 @@ pub fn WebRenderer::create(
   canvas_id~ : String,
   metrics~ : @host.HostSurfaceMetrics,
 ) -> WebRenderer raise WebRendererError {
+  let renderer = @webgpu.create_webgpu_renderer(
+    canvas_id~,
+    logical_size=metrics.logical_size,
+    scale_factor=metrics.scale_factor,
+  )
   {
-    renderer: @webgpu.create_webgpu_renderer(
-      canvas_id~,
-      logical_size=metrics.logical_size,
-      scale_factor=metrics.scale_factor,
-    ),
+    renderer,
   }
 }
 
@@ -50,6 +51,14 @@ pub fn WebRenderer::render(
   commands : Array[@core.DrawCommand],
 ) -> Unit raise WebRendererError {
   self.renderer.render(commands)
+}
+
+///|
+pub fn WebRenderer::render_frame(
+  self : WebRenderer,
+  frame : @core.DrawFrame,
+) -> @render.RenderFrameResult {
+  self.renderer.render_frame(frame)
 }
 
 ///|

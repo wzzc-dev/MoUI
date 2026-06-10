@@ -89,7 +89,8 @@ Use this skill when editing or reviewing:
   pipeline cost
   diagnostics stay platform-neutral through rebuild/layout/paint/draw-command
   pass counters and non-mutating structured dirty-state summaries with dirty
-  element ids for pending rebuild/layout/paint/redraw work; subscription
+  element ids, damage kind/rect/full-reason summaries, cache epoch, and
+  cached-layer counts for pending rebuild/layout/paint/redraw work; subscription
   diagnostics stay
   platform-neutral through
   `Subscription::plan_summary`, planned and active subscription descriptors,
@@ -142,7 +143,7 @@ Use this skill when editing or reviewing:
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
   window lifecycle registry, window scene resolver, per-window runtime slot
   collection, platform-window id map, renderer-neutral `HostWindowRenderer`
-  diagnostics and image-resource change callback bridge, image-resource repaint
+  diagnostics, render-frame cached-layer command replay, image-resource change callback bridge, image-resource repaint
   routing and tracked-window revision/status diagnostics plus repaint-result
   previous/current status counts,
   image-resource load completion apply bridge,
@@ -154,7 +155,8 @@ Use this skill when editing or reviewing:
   events into app-owned subscriptions,
   scheduler-backed timer subscription source, route/deep-link subscription source,
   window request/completion queue, text-input session, window-event conversion,
-  async host-service queue, and redraw driver.
+  async host-service queue, and frame-aware redraw driver with
+  idle/scheduled/in-frame/follow-up coalescing.
 - `backend/web/`: wasm-gc Web host, canvas constraints, resolver-backed
   multi-canvas window slots, browser runtime bridge, async browser
   file-open/save text completion for shared text-file reads/writes, and

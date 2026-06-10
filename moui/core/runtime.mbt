@@ -308,6 +308,19 @@ pub fn AppRuntime::draw_commands(self : AppRuntime) -> Array[DrawCommand] {
 }
 
 ///|
+pub fn AppRuntime::draw_frame(self : AppRuntime) -> DrawFrame {
+  self.state.build_draw_frame()
+}
+
+///|
+pub fn AppRuntime::invalidate_cached_layer_key(
+  self : AppRuntime,
+  key : String,
+) -> Unit {
+  self.state.invalidate_cached_layer_key(key)
+}
+
+///|
 pub fn AppRuntime::size(self : AppRuntime) -> Size {
   self.state.size
 }

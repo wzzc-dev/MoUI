@@ -1568,6 +1568,23 @@ fn SkiaRasterRenderer::render_command(
     }
     @core.DrawCommand::PopLayer =>
       self.pop_canvas_scope(canvas, canvas_scopes, SkiaCanvasScopeKind::Layer)
+    @core.DrawCommand::BeginCachedLayer(spec) => {
+      self.push_layer(
+        canvas,
+        @core.LayerSpec::new(
+          mask=@core.LayerMask::RectMask(spec.frame),
+          offscreen=true,
+        ),
+      )
+      canvas_scopes.push(SkiaCanvasScopeKind::Layer)
+    }
+    @core.DrawCommand::EndCachedLayer(_) =>
+      self.pop_canvas_scope(canvas, canvas_scopes, SkiaCanvasScopeKind::Layer)
+    @core.DrawCommand::DrawCachedLayer(spec) =>
+      self.record_unsupported_command(
+        "DrawCachedLayer",
+        "renderer-local cached layer was requested without a host-expanded cache entry: \{spec.key}",
+      )
     @core.DrawCommand::PushFilter(filter) => {
       self.push_filter(canvas, filter)
       canvas_scopes.push(SkiaCanvasScopeKind::Filter)

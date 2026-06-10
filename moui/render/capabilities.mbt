@@ -493,8 +493,10 @@ pub fn plan_renderer_command_fallbacks(
         } else {
           opacity_depth = opacity_depth - 1
         }
-      @core.DrawCommand::PushLayer(_) => layer_depth = layer_depth + 1
-      @core.DrawCommand::PopLayer =>
+      @core.DrawCommand::PushLayer(_)
+      | @core.DrawCommand::BeginCachedLayer(_) =>
+        layer_depth = layer_depth + 1
+      @core.DrawCommand::PopLayer | @core.DrawCommand::EndCachedLayer(_) =>
         if layer_depth <= 0 {
           fallbacks.push(
             renderer_command_fallback(
@@ -508,6 +510,7 @@ pub fn plan_renderer_command_fallbacks(
         } else {
           layer_depth = layer_depth - 1
         }
+      @core.DrawCommand::DrawCachedLayer(_) => ()
       @core.DrawCommand::PushFilter(_) => filter_depth = filter_depth + 1
       @core.DrawCommand::PopFilter =>
         if filter_depth <= 0 {

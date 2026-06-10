@@ -21,9 +21,11 @@ paths, or abstractions that only preserve old shapes.
   may count late dispatches ignored after runtime destruction, program message
   drains are bounded runtime turns so synchronous click/effect/task/subscription
   self-queues cannot monopolize the current host callback and remaining
-  messages resume FIFO on the next host callback, and runtime dirty
+  messages resume FIFO on the next host callback, runtime dirty
   diagnostics may expose structured
-  rebuild/layout/paint/redraw summaries, but concrete timer, host, window,
+  rebuild/layout/paint/redraw summaries plus damage/cache summaries, and
+  retained redraw may expose `DrawFrame`, `DamageRegion`, repaint-boundary
+  cache keys, and cached-layer draw commands, but concrete timer, host, window,
   route, or service adapters remain outside `core`.
   It remains one MoonBit package; internal files are grouped by responsibility
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
@@ -38,8 +40,10 @@ paths, or abstractions that only preserve old shapes.
   scheduler-backed timer subscription adapters, route/deep-link subscription adapters,
   app-owned service completion subscription adapters, window lifecycle, window scene resolution, per-window runtime slot collection,
   platform-window id mapping,
-  request/completion, window event conversion, and renderer-neutral
-  `HostWindowRenderer` diagnostics and image-resource change callback bridge,
+  request/completion, window event conversion, renderer-neutral frame redraw
+  scheduling with idle/scheduled/in-frame/follow-up states, and renderer-neutral
+  `HostWindowRenderer` diagnostics, render-frame cached-layer command replay,
+  and image-resource change callback bridge,
   image-resource load completion apply bridge,
   image-resource repaint routing contracts,
   native async image loading-record scheduler,
