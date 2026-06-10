@@ -898,6 +898,20 @@ render-inspector metrics to collect. The canonical metrics paths are
 `artifacts/benchmarks/showcase-web-wasm.json` and
 `artifacts/benchmarks/markdown-editor-web-wasm.json`.
 
+Native Skia cached-layer work also has a focused opt-in renderer benchmark:
+
+```sh
+moon run moui/tests/skia_cached_layer_benchmark/native --target native
+```
+
+It renders a fixed complex static repaint boundary plus a small animated
+overlay, then compares measured `DrawCachedLayer` hit frames against full
+static-content repaint frames. The benchmark prints both a readable summary and
+a JSON line with frame count, average frame time, cache hit/miss/update/evict
+counts, present counts, and full-repaint-to-cached speedup. Override
+`MOUI_SKIA_CACHED_LAYER_BENCH_FRAMES` and
+`MOUI_SKIA_CACHED_LAYER_BENCH_WARMUP` for longer local runs.
+
 The Web runtime handoff validator checks that both Web wasm-gc examples have
 HTML boot pages, browser runtime assets, wasm artifacts, and expected compiled
 WebAssembly event/completion exports after build:
