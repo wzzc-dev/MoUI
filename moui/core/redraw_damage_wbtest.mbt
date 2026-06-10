@@ -326,3 +326,69 @@ test "paint only sibling boundary hover reports local damage rect" {
     _ => fail("expected local repaint boundary damage")
   }
 }
+
+///|
+test "layout dirty scroll reports local damage rect" {
+  let scroll = ScrollState::new()
+  let root : View[Unit] = View::flex(
+    axis=Axis::Horizontal,
+    spacing=8.0,
+    children=[
+      View::scroll(
+        child=View::text(
+          text="Scrolled",
+          size=Size::new(width=120.0, height=80.0),
+          font=FontSpec::new(size=12.0),
+          color=Color::black(),
+        ),
+        viewport=Some(Size::new(width=80.0, height=40.0)),
+        state=Some(scroll),
+      ),
+      View::text(
+        text="Still",
+        size=Size::new(width=80.0, height=32.0),
+        font=FontSpec::new(size=12.0),
+        color=Color::black(),
+      ).repaint_boundary(),
+    ],
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=Size::new(width=220.0, height=100.0),
+  )
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=12.0, y=12.0),
+        phase=PointerPhase::Move,
+        wheel_delta=Point::new(x=0.0, y=-12.0),
+      ),
+    ),
+  )
+  match runtime.draw_frame().damage {
+    Rects(rects) => {
+      assert_true(rects.length() > 0)
+      assert_true(rects[0].size.width < 220.0)
+    }
+    FullSurface(reason) =>
+      fail("expected local layout damage, got full damage: \{reason}")
+    Empty => fail("expected local layout damage")
+  }
+}
+
+///|
+test "dirty redraw without bounds falls back to full damage" {
+  let runtime = AppRuntime::new_view(
+    root=retained_redraw_label("Fallback"),
+    size=Size::new(width=120.0, height=60.0),
+  )
+  ignore(runtime.draw_frame())
+  runtime.state.needs_paint = true
+  runtime.state.needs_redraw = true
+  runtime.state.clear_dirty_queue()
+  match runtime.draw_frame().damage {
+    FullSurface(reason) => inspect(reason, content="dirty bounds unavailable")
+    _ => fail("expected full damage when dirty bounds are unavailable")
+  }
+}
