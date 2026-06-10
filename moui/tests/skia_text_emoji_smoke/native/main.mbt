@@ -716,10 +716,8 @@ fn main {
               "MoUI renderer proof colorEmojiPixels metadata font_family=\{proof.font_family} font_source=\{proof.font_source} text_system=\{proof.text_system_id} shaper=\{proof.shaper} glyph_format=\{proof.glyph_format} glyph_count=\{proof.glyph_count} cluster_count=\{proof.cluster_count} high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels} glyph_key=\{proof.glyph_key} glyph_width=\{proof.glyph_width} glyph_height=\{proof.glyph_height} fallback_script_tag=\{proof.fallback_script_tag} fallback_language_tags=\{proof.fallback_language_tags.join("+")} fallback_language_tag_count=\{proof.fallback_language_tag_count} fallback_request_language_count=\{proof.fallback_request_language_count} fallback_request_character=\{proof.fallback_character} resolved_missing_glyph_count=\{proof.resolved_missing_glyph_count} missing_glyph_recovery_ready=\{proof.missing_glyph_recovery_ready}",
             )
             if skia_color_emoji_proof_metadata_ready(
-              proof,
-              emoji_pixels,
-              emoji_alpha_pixels,
-            ) {
+                proof, emoji_pixels, emoji_alpha_pixels,
+              ) {
               println(
                 "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key",
               )

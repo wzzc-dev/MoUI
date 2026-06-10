@@ -28,11 +28,20 @@ pub struct MarkdownEditorApp {
   target_kind : @core.State[MarkdownEditorTargetKind]
   block_label : @core.State[String]
   source_preview_visible : @core.State[Bool]
+  source_mode_enabled : @core.State[Bool]
   outline_visible : @core.State[Bool]
+  file_sidebar_visible : @core.State[Bool]
+  document_info_visible : @core.State[Bool]
+  focus_mode_enabled : @core.State[Bool]
+  typewriter_mode_enabled : @core.State[Bool]
+  zen_mode_enabled : @core.State[Bool]
+  format_palette_visible : @core.State[Bool]
+  format_palette_query : @core.State[String]
   find_visible : @core.State[Bool]
   find_query : @core.State[String]
   replace_text : @core.State[String]
   document_path : @core.State[String]
+  recent_document_paths : @core.State[Array[String]]
   saved_document : @core.State[String]
   undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
   redo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
@@ -51,6 +60,8 @@ type MarkdownEditorBlock derive(Eq, ToJson, @debug.Debug)
 type MarkdownEditorCommand derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownEditorEditResult derive(Eq, ToJson, @debug.Debug)
+
+type MarkdownEditorFrontMatterParseResult derive(Eq, @debug.Debug)
 
 type MarkdownEditorHistoryEntry derive(Eq, ToJson, @debug.Debug)
 
@@ -81,6 +92,8 @@ type MarkdownEditorTableCellRange derive(Eq, @debug.Debug)
 type MarkdownEditorTableParseResult derive(Eq, @debug.Debug)
 
 type MarkdownEditorTargetKind derive(Eq, ToJson, @debug.Debug)
+
+type MarkdownFrontMatterParseResult derive(Eq, @debug.Debug)
 
 type MarkdownInline derive(Eq, ToJson, @debug.Debug)
 

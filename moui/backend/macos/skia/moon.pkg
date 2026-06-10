@@ -12,7 +12,7 @@ supported_targets = "native"
 options(
   link: {
     "native": {
-      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreGraphics -framework CoreFoundation -lz",
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -framework CoreGraphics -framework CoreFoundation -lz",
     },
   },
   "native-stub": [ "macos_skia_presenter.m" ],

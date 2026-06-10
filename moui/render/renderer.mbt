@@ -237,7 +237,9 @@ pub fn RendererDescriptor::new(
 pub fn RenderFrameInput::new(
   metrics~ : RendererSurfaceMetrics,
   commands~ : Array[@core.DrawCommand],
-  damage? : @core.DamageRegion = @core.DamageRegion::full("legacy render frame input"),
+  damage? : @core.DamageRegion = @core.DamageRegion::full(
+    "legacy render frame input",
+  ),
   clear_color? : @core.Color? = None,
   cache_epoch? : Int = 0,
 ) -> RenderFrameInput {

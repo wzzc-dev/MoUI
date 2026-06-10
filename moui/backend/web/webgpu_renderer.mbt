@@ -26,9 +26,7 @@ pub fn WebRenderer::create(
     logical_size=metrics.logical_size,
     scale_factor=metrics.scale_factor,
   )
-  {
-    renderer,
-  }
+  { renderer, }
 }
 
 ///|

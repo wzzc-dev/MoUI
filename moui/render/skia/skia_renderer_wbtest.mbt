@@ -1877,7 +1877,7 @@ test "skia render_frame skips churny cached layer admission" {
   ) catch {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
-  for revision in 1..=3 {
+  for revision in 1..<=3 {
     let spec = @core.CachedLayerSpec::new(
       key="churn-layer",
       frame=@core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
@@ -1901,7 +1901,10 @@ test "skia render_frame skips churny cached layer admission" {
     } else {
       inspect(result.cache_update_count, content="0")
       inspect(renderer.layer_cache.length(), content="0")
-      inspect(renderer.layer_cache_admissions[0].skip_reason, content="churn-without-hit")
+      inspect(
+        renderer.layer_cache_admissions[0].skip_reason,
+        content="churn-without-hit",
+      )
     }
   }
   inspect(renderer.unsupported_command_count(), content="0")
@@ -1944,7 +1947,7 @@ test "skia render_frame keeps hot cached layer admitted across revisions" {
     ]),
   )
   inspect(hit.cache_hit_count, content="1")
-  for revision in 2..=4 {
+  for revision in 2..<=4 {
     let spec = @core.CachedLayerSpec::new(
       key="hot-layer",
       frame=@core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
@@ -2627,7 +2630,9 @@ test "skia grapheme clustering follows core IME boundary contract" {
   assert_skia_grapheme_utf8_offsets("A1\u{FE0F}\u{20E3}B", [0, 1, 4, 5], [
     0, 1, 8, 9,
   ])
-  assert_skia_grapheme_nearest_utf8_offsets("A1\u{FE0F}\u{20E3}B", [2, 3], [1, 8])
+  assert_skia_grapheme_nearest_utf8_offsets("A1\u{FE0F}\u{20E3}B", [2, 3], [
+    1, 8,
+  ])
   assert_skia_grapheme_utf8_offsets(
     "A\u{1F3F4}\u{E0067}\u{E0062}\u{E007F}B",
     [0, 1, 5, 6],
@@ -2636,7 +2641,9 @@ test "skia grapheme clustering follows core IME boundary contract" {
   assert_skia_grapheme_utf8_offsets("Aक्‍षB", [0, 1, 5, 6], [
     0, 1, 13, 14,
   ])
-  assert_skia_grapheme_nearest_utf8_offsets("Aक्‍षB", [2, 3, 4], [1, 1, 13])
+  assert_skia_grapheme_nearest_utf8_offsets("Aक्‍षB", [2, 3, 4], [
+    1, 1, 13,
+  ])
   assert_skia_grapheme_utf8_offsets("Aक्‌षB", [0, 1, 4, 5, 6], [
     0, 1, 10, 13, 14,
   ])

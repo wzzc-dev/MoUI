@@ -3808,9 +3808,9 @@ test "host renderer expands cached layer updates and replays cached hits" {
   inspect(second.cache_miss_count, content="0")
   inspect(rendered.length(), content="2")
   assert_true(
-    rendered[1].any(command =>
+    rendered[1].any(command => {
       command is @core.DrawCommand::DrawText({ text: "cached", .. })
-    ),
+    }),
   )
 }
 

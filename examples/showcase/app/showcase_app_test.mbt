@@ -370,8 +370,9 @@ test "showcase sidebar catalog scrolls to lower sections" {
 ///|
 test "showcase detail panel scrolls long section content" {
   let size = @core.Size::new(width=760.0, height=420.0)
-  let model = @app.ShowcaseModel::new()
-    .update(@app.ShowcaseMsg::SelectSection("layout"))
+  let model = @app.ShowcaseModel::new().update(
+    @app.ShowcaseMsg::SelectSection("layout"),
+  )
   let runtime = model.runtime(width=760.0, height=420.0)
   let initial_commands = runtime.draw_commands()
   assert_true(text_within(initial_commands, "Layout", size))

@@ -38,42 +38,7 @@ fn MarkdownEditorApp::apply_action(
   self : MarkdownEditorApp,
   action : String,
 ) -> Unit {
-  if action == "source-preview" {
-    self.toggle_source_preview()
-  } else if action == "outline" {
-    self.toggle_outline()
-  } else if action == "find" {
-    self.toggle_find()
-  } else if action == "new-document" {
-    self.new_document()
-  } else if action == "open-document" {
-    ignore(self.update(OpenDocument))
-  } else if action == "save" {
-    ignore(self.update(SaveDocument))
-  } else if action == "save-as" {
-    ignore(self.update(SaveDocumentAs))
-  } else if action == "clipboard-import" {
-    ignore(self.update(ImportFromClipboard))
-  } else if action == "clipboard-export" {
-    ignore(self.update(ExportToClipboard))
-  } else if action == "toggle-task" {
-    ignore(self.update(ToggleCurrentTask))
-  } else if action == "indent-lines" {
-    ignore(self.update(IndentLines))
-  } else if action == "outdent-lines" {
-    ignore(self.update(OutdentLines))
-  } else if action == "open-target" {
-    ignore(self.update(OpenTarget))
-  } else if action == "next-heading" {
-    ignore(self.update(JumpToNextHeading))
-  } else if action == "previous-heading" {
-    ignore(self.update(JumpToPreviousHeading))
-  } else {
-    match markdown_command_from_action(action) {
-      Some(command) => self.apply_command_to_selection(command)
-      None => ()
-    }
-  }
+  ignore(self.apply_named_editor_action(action))
 }
 
 ///|
@@ -82,8 +47,69 @@ fn MarkdownEditorApp::source_preview_visible(self : MarkdownEditorApp) -> Bool {
 }
 
 ///|
+fn MarkdownEditorApp::source_mode_enabled(self : MarkdownEditorApp) -> Bool {
+  self.source_mode_enabled.get()
+}
+
+///|
 fn MarkdownEditorApp::outline_visible(self : MarkdownEditorApp) -> Bool {
   self.outline_visible.get()
+}
+
+///|
+fn MarkdownEditorApp::file_sidebar_visible(self : MarkdownEditorApp) -> Bool {
+  self.file_sidebar_visible.get()
+}
+
+///|
+fn MarkdownEditorApp::document_info_visible(self : MarkdownEditorApp) -> Bool {
+  self.document_info_visible.get()
+}
+
+///|
+fn MarkdownEditorApp::focus_mode_enabled(self : MarkdownEditorApp) -> Bool {
+  self.focus_mode_enabled.get()
+}
+
+///|
+fn MarkdownEditorApp::typewriter_mode_enabled(self : MarkdownEditorApp) -> Bool {
+  self.typewriter_mode_enabled.get()
+}
+
+///|
+fn MarkdownEditorApp::zen_mode_enabled(self : MarkdownEditorApp) -> Bool {
+  self.zen_mode_enabled.get()
+}
+
+///|
+fn MarkdownEditorApp::format_palette_visible(self : MarkdownEditorApp) -> Bool {
+  self.format_palette_visible.get()
+}
+
+///|
+fn MarkdownEditorApp::format_palette_query(self : MarkdownEditorApp) -> String {
+  self.format_palette_query.get()
+}
+
+///|
+fn MarkdownEditorApp::appearance_label_for_test(
+  self : MarkdownEditorApp,
+) -> String {
+  self.appearance_label()
+}
+
+///|
+fn MarkdownEditorApp::editor_font_size_for_test(
+  self : MarkdownEditorApp,
+) -> Double {
+  self.appearance_spec().editor_font_size
+}
+
+///|
+fn MarkdownEditorApp::editor_page_width_for_test(
+  self : MarkdownEditorApp,
+) -> Double {
+  self.appearance_spec().page_width
 }
 
 ///|
@@ -125,6 +151,19 @@ fn MarkdownEditorApp::export_clipboard_for_test(
 }
 
 ///|
+fn MarkdownEditorApp::export_html_for_test(
+  self : MarkdownEditorApp,
+  services : @host.HostAppServices,
+) -> Unit {
+  self.perform_html_export(services)
+}
+
+///|
+fn MarkdownEditorApp::html_export_for_test(self : MarkdownEditorApp) -> String {
+  self.html_export_document()
+}
+
+///|
 fn MarkdownEditorApp::save_as_dialog_for_test(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
@@ -138,6 +177,15 @@ fn MarkdownEditorApp::open_target_for_test(
   services : @host.HostAppServices,
 ) -> Unit {
   self.perform_open_target(services)
+}
+
+///|
+fn MarkdownEditorApp::open_recent_for_test(
+  self : MarkdownEditorApp,
+  path : String,
+  services : @host.HostAppServices,
+) -> Unit {
+  self.perform_text_file_read(path, services)
 }
 
 ///|
@@ -197,11 +245,52 @@ fn MarkdownEditorApp::set_outline_visible(
 }
 
 ///|
+fn MarkdownEditorApp::set_file_sidebar_visible(
+  self : MarkdownEditorApp,
+  visible : Bool,
+) -> Unit {
+  self.file_sidebar_visible.set(visible)
+}
+
+///|
+fn MarkdownEditorApp::set_document_info_visible(
+  self : MarkdownEditorApp,
+  visible : Bool,
+) -> Unit {
+  self.document_info_visible.set(visible)
+}
+
+///|
+fn MarkdownEditorApp::set_format_palette_visible(
+  self : MarkdownEditorApp,
+  visible : Bool,
+) -> Unit {
+  self.format_palette_visible.set(visible)
+}
+
+///|
+fn MarkdownEditorApp::set_format_palette_query(
+  self : MarkdownEditorApp,
+  query : String,
+) -> Unit {
+  self.format_palette_query.set(query)
+}
+
+///|
 fn MarkdownEditorApp::set_source_preview_visible(
   self : MarkdownEditorApp,
   visible : Bool,
 ) -> Unit {
   self.source_preview_visible.set(visible)
+}
+
+///|
+fn MarkdownEditorApp::document_info_for_test(
+  self : MarkdownEditorApp,
+) -> MarkdownEditorDocumentInfo {
+  markdown_editor_document_info(
+    MarkdownEditorSnapshot::parse(self.document.get()),
+  )
 }
 
 ///|
@@ -294,6 +383,13 @@ fn MarkdownEditorApp::document_path(self : MarkdownEditorApp) -> String {
 }
 
 ///|
+fn MarkdownEditorApp::recent_document_paths(
+  self : MarkdownEditorApp,
+) -> Array[String] {
+  self.recent_document_paths.get()
+}
+
+///|
 fn MarkdownEditorApp::saved_document(self : MarkdownEditorApp) -> String {
   self.saved_document.get()
 }
@@ -352,79 +448,4 @@ fn markdown_to_rich_text(text : String) -> @core.RichTextDocument {
     blocks.push(markdown_block_to_rich_text(block, base))
   }
   @core.RichTextDocument::new(blocks~)
-}
-
-///|
-fn markdown_command_from_action(action : String) -> MarkdownEditorCommand? {
-  if action == "bold" {
-    Some(Bold)
-  } else if action == "italic" {
-    Some(Italic)
-  } else if action == "code" {
-    Some(Code)
-  } else if action == "strike" {
-    Some(Strikethrough)
-  } else if action == "link" {
-    Some(Link)
-  } else if action == "link-target" {
-    Some(SetLinkTarget("https://moui.dev"))
-  } else if action == "image" {
-    Some(Image)
-  } else if action == "image-target" {
-    Some(SetImageTarget("assets/image.png"))
-  } else if action == "code-language" {
-    Some(SetCodeLanguage("moonbit"))
-  } else if action == "paragraph" {
-    Some(Paragraph)
-  } else if action == "h1" {
-    Some(Heading(1))
-  } else if action == "h2" {
-    Some(Heading(2))
-  } else if action == "h3" {
-    Some(Heading(3))
-  } else if action == "h4" {
-    Some(Heading(4))
-  } else if action == "h5" {
-    Some(Heading(5))
-  } else if action == "h6" {
-    Some(Heading(6))
-  } else if action == "ul" {
-    Some(BulletList)
-  } else if action == "task" {
-    Some(TaskList)
-  } else if action == "ol" {
-    Some(OrderedList)
-  } else if action == "quote" {
-    Some(Quote)
-  } else if action == "rule" {
-    Some(HorizontalRule)
-  } else if action == "table" {
-    Some(Table)
-  } else if action == "table-row" {
-    Some(InsertTableRow)
-  } else if action == "table-column" {
-    Some(InsertTableColumn)
-  } else if action == "table-row-delete" {
-    Some(DeleteTableRow)
-  } else if action == "table-column-delete" {
-    Some(DeleteTableColumn)
-  } else if action == "table-align-left" {
-    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextStart)))
-  } else if action == "table-align-center" {
-    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)))
-  } else if action == "table-align-right" {
-    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)))
-  } else if action == "table-align-auto" {
-    Some(SetTableColumnAlignment(None))
-  } else if action == "codeblock" {
-    Some(CodeBlock)
-  } else if action == "duplicate-block" {
-    Some(DuplicateBlock)
-  } else if action == "move-block-up" {
-    Some(MoveBlockUp)
-  } else if action == "move-block-down" {
-    Some(MoveBlockDown)
-  } else {
-    None
-  }
 }

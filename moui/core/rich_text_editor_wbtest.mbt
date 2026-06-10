@@ -30,22 +30,26 @@ fn cached_block_rich_text_editor(text : String) -> ViewSpec {
 
 ///|
 fn rich_text_cached_block_begin_count(commands : Array[DrawCommand]) -> Int {
-  commands.filter(command => {
+  commands
+  .filter(command => {
     match command {
       BeginCachedLayer(spec) => spec.key.contains("rich-text-block")
       _ => false
     }
-  }).length()
+  })
+  .length()
 }
 
 ///|
 fn rich_text_cached_block_draw_count(commands : Array[DrawCommand]) -> Int {
-  commands.filter(command => {
+  commands
+  .filter(command => {
     match command {
       DrawCachedLayer(spec) => spec.key.contains("rich-text-block")
       _ => false
     }
-  }).length()
+  })
+  .length()
 }
 
 ///|

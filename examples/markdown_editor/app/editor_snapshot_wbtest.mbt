@@ -58,6 +58,31 @@ test "markdown editor snapshot tracks tilde fenced code blocks" {
 }
 
 ///|
+test "markdown editor snapshot tracks yaml front matter" {
+  let snapshot = MarkdownEditorSnapshot::parse(
+    "---\ntitle: Draft\ntags: [moui]\n---\n\n# Body",
+  )
+  inspect(snapshot.active_heading, content="Body")
+  inspect(snapshot.blocks.length(), content="3")
+  guard snapshot.blocks[0]
+    is {
+      block: { kind: FrontMatter, text: "title: Draft\ntags: [moui]", .. },
+      source_range: { start: 0, end: 33 },
+      content_range: { start: 4, end: 30 },
+    } else {
+    fail("expected front matter source mapping")
+  }
+  guard snapshot.blocks[2]
+    is { block: { kind: Heading(1), text: "Body", .. }, .. } else {
+    fail("expected heading after front matter")
+  }
+  inspect(
+    snapshot.rich_text.blocks[0].runs[0].text,
+    content="title: Draft\ntags: [moui]",
+  )
+}
+
+///|
 test "markdown editor snapshot resolves reference links and images" {
   let snapshot = MarkdownEditorSnapshot::parse(
     "See [MoUI][site] and ![Logo][logo]\n\n[site]: https://moui.dev\n[logo]: assets/logo.png",
@@ -934,6 +959,34 @@ fn markdown_editor_is_selection_highlight(command : @core.DrawCommand) -> Bool {
 }
 
 ///|
+test "markdown editor focus mode dims inactive rich text blocks" {
+  let source = "# Title\n\nBody"
+  let normal = markdown_editor_format_for_writing_mode(
+    source,
+    { caret: 3, selection: None },
+    focus_mode=false,
+  )
+  assert_false(normal.blocks.any(block => block.color is Some(_)))
+
+  let focused = markdown_editor_format_for_writing_mode(
+    source,
+    { caret: 3, selection: None },
+    focus_mode=true,
+  )
+  guard focused.blocks[0].color is None else {
+    fail("expected active block to keep normal foreground")
+  }
+  assert_true(
+    focused.blocks.any(block => {
+      match block.color {
+        Some(color) => color.a == 0.38
+        None => false
+      }
+    }),
+  )
+}
+
+///|
 test "markdown parser recognizes supported block and inline subset" {
   let blocks = parse_markdown(
     "# Title\n## Section\n### Detail\n#### Fine\n##### Small\n###### Caption\nText with **bold** and *italic* and `code` and [link](https://moui.dev) and ![alt](image.png) and ~~old~~\n- bullet\n- [ ] todo\n- [x] done\n1. one\n> quote\n---\n```\ncode\n```",
@@ -1247,6 +1300,22 @@ test "markdown formatter renders html blocks as structured rich text" {
     fail("expected styled html block")
   }
   inspect(families.families.length() > 0, content="true")
+}
+
+///|
+test "markdown formatter renders yaml front matter as metadata block" {
+  let document = markdown_to_rich_text("---\ntitle: Draft\n---\n\n# Body")
+  inspect(document.blocks.length(), content="2")
+  guard document.blocks[0]
+    is {
+      background: Some(_),
+      runs: [{ text: "title: Draft", font: Some({ families, .. }), .. }],
+      ..,
+    } else {
+    fail("expected styled front matter block")
+  }
+  inspect(families.families.length() > 0, content="true")
+  inspect(document.blocks[1].runs[0].text, content="Body")
 }
 
 ///|

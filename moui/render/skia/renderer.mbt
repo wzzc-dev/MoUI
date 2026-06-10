@@ -1812,8 +1812,7 @@ fn SkiaRasterRenderer::update_cached_layer(
           match layer_surface.image_snapshot() {
             Some(image) => {
               let identity_key = self.skia_layer_cache_identity_key(
-                spec,
-                physical_size,
+                spec, physical_size,
               )
               let admission = self.layer_cache_admission_record(identity_key)
               admission.record_update(spec.content_revision)
@@ -1834,23 +1833,20 @@ fn SkiaRasterRenderer::update_cached_layer(
                 last_admitted_frame: admission.last_admitted_frame,
                 last_used: 0,
               }
-              match self.cached_layer_admission_skip_reason(
-                admission,
-                byte_size,
-                budget,
-              ) {
+              match
+                self.cached_layer_admission_skip_reason(
+                  admission, byte_size, budget,
+                ) {
                 Some(reason) => {
                   admission.skip_reason = reason
                   self.remove_cached_layers_by_identity(entry.identity_key)
                 }
-                None => {
+                None =>
                   if self.store_cached_layer(entry, admission) {
                     admission.skip_reason = ""
                     stats.cache_update_count = stats.cache_update_count + 1
-                    stats.cache_evict_count += self
-                      .evict_cached_layers_if_needed()
+                    stats.cache_evict_count += self.evict_cached_layers_if_needed()
                   }
-                }
               }
               self.draw_cached_layer_image(
                 canvas,
@@ -1974,10 +1970,7 @@ fn SkiaRasterRenderer::draw_cached_layer(
       }
       entry.last_used = self.next_layer_cache_tick()
       entry.hit_count = entry.hit_count + 1
-      let identity_key = self.skia_layer_cache_identity_key(
-        spec,
-        physical_size,
-      )
+      let identity_key = self.skia_layer_cache_identity_key(spec, physical_size)
       let admission = self.layer_cache_admission_record(identity_key)
       admission.hit_count = admission.hit_count + 1
       stats.cache_hit_count = stats.cache_hit_count + 1
@@ -2225,8 +2218,10 @@ fn SkiaRasterRenderer::cached_layer_eviction_index(
     if large_cold || churny_cold {
       if candidate < 0 ||
         entry.byte_size > candidate_bytes ||
-        (entry.byte_size == candidate_bytes &&
-        entry_last_used < candidate_last_used) {
+        (
+          entry.byte_size == candidate_bytes &&
+          entry_last_used < candidate_last_used
+        ) {
         candidate = index
         candidate_bytes = entry.byte_size
         candidate_last_used = entry_last_used
@@ -3376,7 +3371,8 @@ fn skia_text_segment_class(text : String) -> Int {
 
 ///|
 fn skia_codepoint_is_cjk(codepoint : Int) -> Bool {
-  skia_codepoint_is_cjk_ideograph(codepoint) || skia_codepoint_is_kana(codepoint)
+  skia_codepoint_is_cjk_ideograph(codepoint) ||
+  skia_codepoint_is_kana(codepoint)
 }
 
 ///|
@@ -3389,7 +3385,7 @@ fn skia_codepoint_is_cjk_ideograph(codepoint : Int) -> Bool {
 
 ///|
 fn skia_codepoint_is_kana(codepoint : Int) -> Bool {
-  (codepoint >= 0x3040 && codepoint <= 0x30FF)
+  codepoint >= 0x3040 && codepoint <= 0x30FF
 }
 
 ///|
@@ -4082,8 +4078,8 @@ fn skia_paragraph_visual_order_metadata(
     glyph_count: logical_clusters.length(),
     visual_order_differs,
     bidi_visual_order_ready: bidi_ready &&
-      paragraph_bidi_evidence &&
-      visual_order_differs,
+    paragraph_bidi_evidence &&
+    visual_order_differs,
   }
 }
 
@@ -4117,10 +4113,7 @@ fn skia_paragraph_cluster_boxes(
       } else {
         false
       }
-      boxes.push({
-        has_rect,
-        rtl: native_rtl || skia_cluster_is_rtl(cluster),
-      })
+      boxes.push({ has_rect, rtl: native_rtl || skia_cluster_is_rtl(cluster) })
     }
     char_index = end_index
   }

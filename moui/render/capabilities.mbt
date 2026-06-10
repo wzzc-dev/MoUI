@@ -494,8 +494,7 @@ pub fn plan_renderer_command_fallbacks(
           opacity_depth = opacity_depth - 1
         }
       @core.DrawCommand::PushLayer(_)
-      | @core.DrawCommand::BeginCachedLayer(_) =>
-        layer_depth = layer_depth + 1
+      | @core.DrawCommand::BeginCachedLayer(_) => layer_depth = layer_depth + 1
       @core.DrawCommand::PopLayer | @core.DrawCommand::EndCachedLayer(_) =>
         if layer_depth <= 0 {
           fallbacks.push(

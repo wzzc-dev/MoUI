@@ -50,10 +50,8 @@ pub fn update(model : Model, msg : Msg) -> Model {
   match msg {
     QueryChanged(query) =>
       model.record("query=" + query, query=Some(query), count_click=false)
-    ToggleActive =>
-      model.record("toggle active", active=Some(!model.active))
-    ToggleReview =>
-      model.record("toggle review", review=Some(!model.review))
+    ToggleActive => model.record("toggle active", active=Some(!model.active))
+    ToggleReview => model.record("toggle review", review=Some(!model.review))
     ToggleBlocked =>
       model.record("toggle blocked", blocked=Some(!model.blocked))
     ClearFilters =>
@@ -84,7 +82,11 @@ fn Model::record(
     active: active.unwrap_or(self.active),
     review: review.unwrap_or(self.review),
     blocked: blocked.unwrap_or(self.blocked),
-    clicks: if count_click { self.clicks + 1 } else { self.clicks },
+    clicks: if count_click {
+      self.clicks + 1
+    } else {
+      self.clicks
+    },
     last_action: action,
     previous_action: self.last_action,
   }

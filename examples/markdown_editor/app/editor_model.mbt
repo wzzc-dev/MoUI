@@ -20,6 +20,8 @@ struct MarkdownEditorSnapshot {
   word_count : Int
   reading_minutes : Int
   active_heading : String
+  metadata_title : String
+  metadata_tags : Array[String]
   outline : Array[MarkdownEditorOutlineItem]
 } derive(Eq, Debug, ToJson)
 
@@ -65,6 +67,8 @@ enum MarkdownEditorCommand {
   CodeBlock
   HorizontalRule
   Table
+  InsertTableOfContents
+  InsertFrontMatter
   DuplicateBlock
   MoveBlockUp
   MoveBlockDown

@@ -453,11 +453,7 @@ test "grapheme boundary contract covers ranges deletes and utf8 offsets" {
     [0, 1, 5, 6],
     [0, 1, 17, 18],
   )
-  assert_grapheme_nearest_utf8_offsets(
-    "Aक्‍षB",
-    [2, 3, 4],
-    [1, 1, 13],
-  )
+  assert_grapheme_nearest_utf8_offsets("Aक्‍षB", [2, 3, 4], [1, 1, 13])
   assert_grapheme_utf8_offsets("A\u{1000}\u{1039}\u{1001}B", [0, 1, 4, 5], [
     0, 1, 10, 11,
   ])
