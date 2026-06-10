@@ -307,6 +307,8 @@ priv struct ScrollViewSpec {
   offset : Point
   viewport : Size?
   on_scroll : ((Point) -> Unit)?
+  scroll_state : ScrollState?
+  scroll_activates : Bool
   child : ViewSpec
 }
 
