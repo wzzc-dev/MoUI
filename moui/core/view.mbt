@@ -745,7 +745,15 @@ pub fn[Msg] View::scroll(
 ) -> View[Msg] {
   view_from_node(
     ScrollNode(
-      { key: None, offset, viewport, on_scroll: None, child: EmptySpec },
+      {
+        key: None,
+        offset,
+        viewport,
+        on_scroll: None,
+        scroll_state: None,
+        scroll_activates: false,
+        child: EmptySpec,
+      },
       child.node,
       state,
       on_scroll,
@@ -1472,7 +1480,13 @@ fn[Msg] realize_view_node(
     ScrollNode(data, child, state, scroll) =>
       ScrollSpec({
         ..data,
+        offset: match state {
+          Some(state) => state.offset()
+          None => data.offset
+        },
         child: realize_view_node(child, emit),
+        scroll_state: state,
+        scroll_activates: scroll is Some(_),
         on_scroll: match (state, scroll) {
           (Some(state), Some(handler)) =>
             Some(delta => {

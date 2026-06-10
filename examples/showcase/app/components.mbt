@@ -6,6 +6,7 @@ fn section_panel(
   body : @core.View[ShowcaseMsg],
   metrics~ : ShowcaseMetrics,
   scroll_offset? : @core.Point = @core.Point::new(x=0.0, y=0.0),
+  scroll_state? : @core.ScrollState? = None,
   on_scroll? : ((@core.Point) -> ShowcaseMsg)? = None,
 ) -> @core.View[ShowcaseMsg] {
   let scroll_body = match on_scroll {
@@ -15,6 +16,7 @@ fn section_panel(
         offset=scroll_offset,
         width=metrics.body_width,
         height=metrics.body_height,
+        state=scroll_state,
         on_scroll=Some(handler),
       )
     None =>
@@ -23,6 +25,7 @@ fn section_panel(
         offset=scroll_offset,
         width=metrics.body_width,
         height=metrics.body_height,
+        state=scroll_state,
       )
   }
   surface(
@@ -66,7 +69,7 @@ fn ShowcaseModel::section_panel(
 ) -> @core.View[ShowcaseMsg] {
   let offset = @core.Point::new(
     x=0.0,
-    y=max_showcase_double(0.0, self.detail_scroll_offset.y),
+    y=max_showcase_double(0.0, self.detail_scroll.offset().y),
   )
   section_panel(
     theme,
@@ -75,9 +78,7 @@ fn ShowcaseModel::section_panel(
     body,
     metrics~,
     scroll_offset=offset,
-    on_scroll=Some(delta => {
-      DetailScrollTo(max_showcase_double(0.0, offset.y - delta.y))
-    }),
+    scroll_state=Some(self.detail_scroll),
   )
 }
 

@@ -90,7 +90,14 @@ fn ElementNode::dispatch_scroll_pointer(
     match data.on_scroll {
       Some(handler) => {
         handler(event.wheel_delta)
-        { changed: true, activated: true, focused: None }
+        match data.scroll_state {
+          Some(state) =>
+            self.spec = ScrollSpec({ ..data, offset: state.offset() })
+          None => ()
+        }
+        self.dirty.mark_layout()
+        self.clear_cached_layout_and_paint()
+        { changed: true, activated: data.scroll_activates, focused: None }
       }
       None =>
         self.dispatch_pointer_to_children(
@@ -148,6 +155,7 @@ fn ElementNode::dispatch_pointer_to_popup_children(
   let mut changed = false
   let mut activated = false
   let mut focused : ElementId? = None
+  let mut layout_changed = false
   let mut index = self.children.length() - 1
   while index >= 0 {
     if index < render.children.length() {
@@ -165,6 +173,7 @@ fn ElementNode::dispatch_pointer_to_popup_children(
         )
         changed = result.changed
         activated = result.activated
+        layout_changed = result.changed && child.has_dirty_layout()
         match result.focused {
           Some(_) => focused = result.focused
           None => ()
@@ -180,7 +189,12 @@ fn ElementNode::dispatch_pointer_to_popup_children(
     index = index - 1
   }
   if changed {
-    self.dirty.mark_paint()
+    if layout_changed {
+      self.dirty.mark_layout()
+      self.clear_cached_layout_and_paint()
+    } else {
+      self.dirty.mark_paint()
+    }
   }
   { changed, activated, focused }
 }
@@ -196,6 +210,7 @@ fn ElementNode::dispatch_pointer_to_child_frames(
   let mut changed = false
   let mut activated = false
   let mut focused : ElementId? = None
+  let mut layout_changed = false
   let mut index = self.children.length() - 1
   while index >= 0 {
     if index < render.children.length() {
@@ -210,6 +225,7 @@ fn ElementNode::dispatch_pointer_to_child_frames(
         )
         changed = result.changed
         activated = result.activated
+        layout_changed = result.changed && child.has_dirty_layout()
         match result.focused {
           Some(_) => focused = result.focused
           None => ()
@@ -222,7 +238,12 @@ fn ElementNode::dispatch_pointer_to_child_frames(
     index = index - 1
   }
   if changed {
-    self.dirty.mark_paint()
+    if layout_changed {
+      self.dirty.mark_layout()
+      self.clear_cached_layout_and_paint()
+    } else {
+      self.dirty.mark_paint()
+    }
   }
   { changed, activated, focused }
 }
