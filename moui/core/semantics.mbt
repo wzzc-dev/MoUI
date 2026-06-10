@@ -23,6 +23,7 @@ pub(all) enum SemanticsRole {
   Tree
   TreeItem
   Group
+  WebView
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -214,6 +215,14 @@ fn ElementNode::semantics_info(
         value: data.query.get(),
         description: "",
         actions: [Focus, SetText, Submit],
+      }
+    WebViewHostSpec(data) =>
+      {
+        role: WebView,
+        label: data.title,
+        value: data.url,
+        description: "",
+        actions: [Focus],
       }
     SheetSpec(_data) =>
       { role: Dialog, label: "", value: "", description: "", actions: [] }

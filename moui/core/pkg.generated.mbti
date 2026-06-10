@@ -135,6 +135,7 @@ pub(all) enum AppEvent {
   Keyboard(KeyboardEvent)
   TextInput(TextInputEvent)
   DragDrop(DragDropEvent)
+  WebView(String, WebViewEvent)
   Resize(Size)
   Redraw(RedrawReason)
   CloseRequested
@@ -608,11 +609,12 @@ pub fn DrawCommand::bounds(Self) -> Rect?
 
 pub(all) struct DrawFrame {
   commands : Array[DrawCommand]
+  platform_views : Array[PlatformViewPlacement]
   damage : DamageRegion
   clear_color : Color
   cache_epoch : Int
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DrawFrame::new(commands~ : Array[DrawCommand], damage~ : DamageRegion, clear_color? : Color, cache_epoch? : Int) -> Self
+pub fn DrawFrame::new(commands~ : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement], damage~ : DamageRegion, clear_color? : Color, cache_epoch? : Int) -> Self
 
 pub(all) enum Easing {
   Linear
@@ -1110,6 +1112,17 @@ pub(all) struct PlacedNode {
   children : Array[PlacedNode]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PlacedNode::to_layout_result(Self) -> LayoutResult
+
+pub(all) struct PlatformViewPlacement {
+  id : String
+  kind : String
+  frame : Rect
+  clip : Rect?
+  url : String
+  title : String
+  policy : WebViewNavigationPolicy
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PlatformViewPlacement::web_view(spec~ : WebViewSpec, frame~ : Rect, clip? : Rect?) -> Self
 
 pub(all) struct Point {
   x : Double
@@ -1640,6 +1653,7 @@ pub(all) enum SemanticsRole {
   Tree
   TreeItem
   Group
+  WebView
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SemanticsState {
@@ -2187,6 +2201,7 @@ pub fn[Msg] View::text_field(value~ : Binding[String], placeholder~ : String, si
 pub fn[Msg] View::theme(Self[Msg], Theme) -> Self[Msg]
 pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
+pub fn[Msg] View::web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Msg)?) -> Self[Msg]
 
 pub(all) struct ViewEnvironment {
   viewport_size : Size
@@ -2240,6 +2255,48 @@ pub(all) struct VisualStyle {
   opacity : Double?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn VisualStyle::empty() -> Self
+
+pub(all) enum WebViewCommand {
+  LoadUrl(String)
+  Reload
+  Stop
+  GoBack
+  GoForward
+  EvaluateJavaScript(String, String)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WebViewCommand::evaluate_javascript(script~ : String, request_id? : String) -> Self
+pub fn WebViewCommand::load_url(String) -> Self
+
+pub(all) enum WebViewEvent {
+  NavigationRequested(String)
+  NavigationStarted(String)
+  NavigationCommitted(String)
+  NavigationFinished(String)
+  NavigationFailed(String, String)
+  TitleChanged(String)
+  CanGoBackChanged(Bool)
+  CanGoForwardChanged(Bool)
+  JavaScriptResult(String, String)
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum WebViewNavigationPolicy {
+  AllowHttpHttpsFile
+  AllowHttpHttps
+  AllowAll
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WebViewSpec {
+  key : Key?
+  id : String
+  url : String
+  width : Double?
+  height : Double?
+  title : String
+  policy : WebViewNavigationPolicy
+  on_event : ((WebViewEvent) -> Unit)?
+}
+pub fn WebViewSpec::allows_url(Self, String) -> Bool
+pub fn WebViewSpec::new(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Unit)?) -> Self
 
 // Type aliases
 pub type RichTextFormatter = (String) -> RichTextDocument

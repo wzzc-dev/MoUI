@@ -17,11 +17,22 @@ fn RenderNode::collect_frame_commands(
   known_layers : Array[CachedLayerState],
 ) -> Unit {
   let overlays : Array[DrawCommand] = []
-  self.collect_frame_commands_with_overlays(
-    commands, overlays, known_layers,
-  )
+  self.collect_frame_commands_with_overlays(commands, overlays, known_layers)
   for command in overlays {
     commands.push(command)
+  }
+}
+
+///|
+fn RenderNode::collect_platform_views(
+  self : RenderNode,
+  placements : Array[PlatformViewPlacement],
+) -> Unit {
+  for placement in self.platform_views {
+    placements.push(placement)
+  }
+  for child in self.children {
+    child.collect_platform_views(placements)
   }
 }
 
@@ -127,9 +138,7 @@ fn RenderNode::collect_uncached_frame_commands_with_overlays(
     commands.push(command)
   }
   for child in self.children {
-    child.collect_frame_commands_with_overlays(
-      commands, overlays, known_layers,
-    )
+    child.collect_frame_commands_with_overlays(commands, overlays, known_layers)
   }
   for command in self.post_paint_commands {
     commands.push(command)
@@ -178,11 +187,9 @@ fn Array::has_current_cached_layer(
   self : Array[CachedLayerState],
   spec : CachedLayerSpec,
 ) -> Bool {
-  self.any(
-    layer =>
-      layer.key == spec.key &&
-      layer.content_revision == spec.content_revision,
-  )
+  self.any(layer => {
+    layer.key == spec.key && layer.content_revision == spec.content_revision
+  })
 }
 
 ///|
@@ -230,7 +237,10 @@ fn RenderNode::has_dirty_descendant(
 }
 
 ///|
-fn RenderNode::find_render_node(self : RenderNode, id : ElementId) -> RenderNode? {
+fn RenderNode::find_render_node(
+  self : RenderNode,
+  id : ElementId,
+) -> RenderNode? {
   if self.element_id == id {
     Some(self)
   } else {
@@ -245,10 +255,7 @@ fn RenderNode::find_render_node(self : RenderNode, id : ElementId) -> RenderNode
 }
 
 ///|
-fn RenderNode::contains_any(
-  self : RenderNode,
-  ids : Array[ElementId],
-) -> Bool {
+fn RenderNode::contains_any(self : RenderNode, ids : Array[ElementId]) -> Bool {
   if ids.any(id => id == self.element_id) {
     true
   } else {

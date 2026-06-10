@@ -255,6 +255,7 @@ fn rich_text_block_render_node(
     paint_commands: commands,
     post_paint_commands: [],
     overlay_paint_commands: [],
+    platform_views: [],
     cached_draw_commands: Some(commands),
     cached_overlay_draw_commands: None,
   }

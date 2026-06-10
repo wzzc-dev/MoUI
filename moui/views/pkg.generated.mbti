@@ -323,6 +323,8 @@ pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : St
 
 pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
 
+pub fn[Msg] web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : @core.WebViewNavigationPolicy, on_event? : ((@core.WebViewEvent) -> Msg)?) -> @core.View[Msg]
+
 pub fn[Msg] wizard(Array[WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] wizard_step(WizardStep[Msg]) -> @core.View[Msg]

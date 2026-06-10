@@ -85,6 +85,12 @@ Backends should keep platform details at the edge:
 do not mutate the element tree directly.
 - Renderers consume `DrawCommand` values and remain separate from view
 constructors and platform event conversion.
+- Native `web_view` is a platform-view contract rather than a renderer command.
+  `core` lays out `WebViewSpec` nodes and exposes `DrawFrame.platform_views`;
+  native hosts sync those rectangles to real platform WebView objects after
+  rendering the MoUI frame. Navigation is controlled: page/user navigation emits
+  `WebViewEvent::NavigationRequested`, and the app commits by updating the view
+  `url` or sending `WebViewCommand::LoadUrl` through the host command queue.
 - Typed host services are routed through `HostServiceBridge`, with explicit
   capability flags for clipboard, menus, file dialogs, text-file access, URL
   opening, and system theme. Unsupported services should return `Unavailable` responses instead of
@@ -99,9 +105,10 @@ constructors and platform event conversion.
   dispatch, and app history mutation remain separate platform/app
   integrations.
 - `HostCapabilitySummary` is the app-facing diagnostics rollup over service,
-  input, window, text-input, IME, drag/drop, async-service, and accessibility
-  readiness. Web, macOS, Windows, and Linux expose package-local summary
-  helpers, and Showcase displays the injected summary in its Runtime section.
+  input, window, text-input, IME, drag/drop, async-service, accessibility, and
+  native WebView readiness. Web, macOS, Windows, and Linux expose package-local
+  summary helpers, and Showcase displays the injected summary in its Runtime
+  section.
   `HostCapabilitySummary::preflight_fields()` provides the renderer-neutral
   ready/gap field string used by native Skia provider preflight summaries, so
   provider packages can expose audit logs without duplicating host capability
@@ -184,6 +191,9 @@ Browser file drag/drop events on the canvas are normalized through
 `HostEvent::DragDrop` and dispatched to `View::on_file_drop` targets. The
 Web platform receives browser-exposed file names or relative names rather than
 native filesystem paths.
+The Web backend intentionally does not implement `web_view` with an iframe
+overlay. Browser wasm-gc hosts report native WebView unavailable, and examples
+that share WebView app logic should render a fallback surface on Web.
 The Web browser runtime normalizes the initial route from `?route=`,
 `?section=`, or the hash, listens for `popstate`, and dispatches those route
 events through the optional `HostRouteSource` passed in `WebAppOptions`.
@@ -219,6 +229,12 @@ redraw requests. It receives concrete rendering through
 mainline and presents CPU pixel frames through an `NSImageView`, while
 `backend/macos/wgpu` installs a `CAMetalLayer` on the window `NSView` for
 native WGPU diagnostics.
+macOS native WebView support uses `WKWebView` as a host platform view attached
+to the window content view. `backend/macos` reports native WebView available
+when the WebKit-backed stub is linked, syncs placements from
+`DrawFrame.platform_views`, forwards WebView navigation/title/history/script
+events through `HostEvent::WebView`, and drains `HostWebViewCommandQueue`
+commands after frame rendering.
 Window events pass through the shared `backend/host` conversion helpers, and the
 native host never imports `render/wgpu`, `render/skia`, `wgpu_mbt`, or
 `moui_skia`.
@@ -345,6 +361,20 @@ Windows native examples use the MSVC toolchain with Visual Studio C++ build
 tools and vcpkg `zlib:x64-windows`. The Skia entrypoints are the recommended
 native mainline. WGPU diagnostic entrypoints still use `wgpu_mbt` dynamic mode
 with the official `wgpu-windows-x86_64-msvc-release.zip` release.
+Windows native WebView support is gated behind
+`MOUI_WINDOWS_ENABLE_WEBVIEW2`. Fallback builds compile without the WebView2 SDK
+and report `HostWebViewCapabilities.available=false`; builds with the flag use
+WebView2 controllers parented to the app HWND, sync `DrawFrame.platform_views`,
+forward controlled navigation and title/history/script events, and drain
+`HostWebViewCommandQueue` commands after renderer presentation. The `moui`
+module prebuild leaves WebView2 flags empty by default; enable the real bridge
+by setting environment variables such as
+`MOUI_WINDOWS_ENABLE_WEBVIEW2=1`,
+`MOUI_WINDOWS_WEBVIEW2_INCLUDE=<webview2-sdk-include>`, and
+`MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS="<WebView2Loader link flags>"`, or by setting
+the explicit `MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS` /
+`MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS` pair. The prebuild adds
+`-DMOUI_WINDOWS_ENABLE_WEBVIEW2` when explicit WebView2 flags are provided.
 
 For MSVC setup and packaging:
 
@@ -523,6 +553,15 @@ Linux runtime requirements are intentionally native:
   file-dialog selections require a desktop dialog helper on the matching host.
 - zlib in the final native link; Linux entrypoints and `backend/linux` include
   `-lz`.
+- Optional WebKitGTK development packages when building with
+  `MOUI_LINUX_ENABLE_WEBKITGTK` for native WebView support. Fallback builds do
+  not link WebKitGTK and report WebView unavailable. A configured host should
+  set `MOUI_LINUX_ENABLE_WEBKITGTK=1`; the `moui` prebuild resolves
+  `gtk+-3.0` with `webkit2gtk-4.1` or `webkit2gtk-4.0` through `pkg-config`.
+  Distro-specific setups can override that with
+  `MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` and
+  `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS`; the prebuild adds
+  `-DMOUI_LINUX_ENABLE_WEBKITGTK` when explicit WebKitGTK flags are provided.
 
 Useful focused commands on a configured Linux host:
 
@@ -562,6 +601,14 @@ provides `Window::present_rgba_pixels`, implemented with reusable `wl_shm`
 buffers, buffer-release tracking, `wl_surface_attach`, damage, commit, and
 display flush. Keeping the `wl_shm` presenter in the window backend avoids
 duplicating Wayland registry and buffer ownership in MoUI.
+Linux native WebView support is WebKitGTK-gated. The host syncs placements from
+`DrawFrame.platform_views` using the Wayland surface handle, offsets placement
+below client decorations when needed, forwards WebView events through
+`HostEvent::WebView`, and drains `HostWebViewCommandQueue` commands after frame
+rendering. macOS, Windows, and Linux native bridges enforce the shared
+`WebViewNavigationPolicy` before committing a navigation; blocked URLs produce a
+`NavigationFailed` event. Matching-host smoke is still required before
+promoting Linux WebView runtime evidence beyond package-level compile coverage.
 `linux_skia_provider_preflight_summary()` exposes package-level preflight
 evidence for the selected font resolution, renderer availability,
 `moui_skia/native` availability, the `wl_shm` presenter path, inherited Wayland

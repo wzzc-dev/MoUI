@@ -11,6 +11,7 @@ pub(all) struct HostCapabilitySummary {
   drag_drop_ready : Bool
   async_services : Bool
   native_accessibility_ready : Bool
+  web_view : HostWebViewCapabilities
   description : String
 } derive(Eq, Debug, ToJson)
 
@@ -27,6 +28,7 @@ pub fn HostCapabilitySummary::new(
   drag_drop_ready? : Bool = input.drag_drop,
   async_services? : Bool = false,
   native_accessibility_ready? : Bool = false,
+  web_view? : HostWebViewCapabilities = HostWebViewCapabilities::unavailable(),
   description? : String = "",
 ) -> HostCapabilitySummary {
   {
@@ -41,6 +43,7 @@ pub fn HostCapabilitySummary::new(
     drag_drop_ready,
     async_services,
     native_accessibility_ready,
+    web_view,
     description,
   }
 }
@@ -58,6 +61,7 @@ pub fn HostCapabilitySummary::from_contracts(
   drag_drop_ready? : Bool = input.drag_drop,
   async_services? : Bool = false,
   native_accessibility_ready? : Bool = false,
+  web_view? : HostWebViewCapabilities = HostWebViewCapabilities::unavailable(),
   description? : String = info.description,
 ) -> HostCapabilitySummary {
   HostCapabilitySummary::new(
@@ -72,6 +76,7 @@ pub fn HostCapabilitySummary::from_contracts(
     drag_drop_ready~,
     async_services~,
     native_accessibility_ready~,
+    web_view~,
     description~,
   )
 }
@@ -147,7 +152,7 @@ pub fn HostCapabilitySummary::input_count(self : HostCapabilitySummary) -> Int {
 pub fn HostCapabilitySummary::preflight_fields(
   self : HostCapabilitySummary,
 ) -> String {
-  "host=\{self.label}; host_services=\{host_capability_label_list(self.services.enabled_labels())}; host_input=\{host_capability_label_list(self.input.enabled_labels())}; clipboard=\{host_capability_ready_label(self.services.clipboard)}; menu_service=\{host_capability_ready_label(self.services.menus)}; file_dialogs=\{host_capability_ready_label(self.services.file_dialogs)}; file_access=\{host_capability_ready_label(self.services.file_access)}; open_url=\{host_capability_ready_label(self.services.open_url)}; system_theme=\{host_capability_ready_label(self.services.system_theme)}; async_services=\{host_capability_ready_label(self.async_services)}; window_lifecycle=\{host_capability_ready_label(self.window_lifecycle)}; multi_window=\{host_capability_ready_label(self.multi_window)}; text_input=\{host_capability_ready_label(self.text_input_ready)}; ime=\{host_capability_ready_label(self.ime_ready)}; drag_drop=\{host_capability_ready_label(self.drag_drop_ready)}; native_context_menu=\{host_capability_ready_label(self.services.menus)}; host_modal=\{host_capability_ready_label(self.services.file_dialogs)}; native_accessibility=\{host_capability_ready_label(self.native_accessibility_ready)}"
+  "host=\{self.label}; host_services=\{host_capability_label_list(self.services.enabled_labels())}; host_input=\{host_capability_label_list(self.input.enabled_labels())}; clipboard=\{host_capability_ready_label(self.services.clipboard)}; menu_service=\{host_capability_ready_label(self.services.menus)}; file_dialogs=\{host_capability_ready_label(self.services.file_dialogs)}; file_access=\{host_capability_ready_label(self.services.file_access)}; open_url=\{host_capability_ready_label(self.services.open_url)}; system_theme=\{host_capability_ready_label(self.services.system_theme)}; async_services=\{host_capability_ready_label(self.async_services)}; window_lifecycle=\{host_capability_ready_label(self.window_lifecycle)}; multi_window=\{host_capability_ready_label(self.multi_window)}; text_input=\{host_capability_ready_label(self.text_input_ready)}; ime=\{host_capability_ready_label(self.ime_ready)}; drag_drop=\{host_capability_ready_label(self.drag_drop_ready)}; native_context_menu=\{host_capability_ready_label(self.services.menus)}; host_modal=\{host_capability_ready_label(self.services.file_dialogs)}; native_accessibility=\{host_capability_ready_label(self.native_accessibility_ready)}; web_view=\{host_capability_ready_label(self.web_view.available)}"
 }
 
 ///|

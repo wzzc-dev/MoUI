@@ -25,8 +25,9 @@ paths, or abstractions that only preserve old shapes.
   diagnostics may expose structured
   rebuild/layout/paint/redraw summaries plus damage/cache summaries, and
   retained redraw may expose `DrawFrame`, `DamageRegion`, repaint-boundary
-  cache keys, and cached-layer draw commands, but concrete timer, host, window,
-  route, or service adapters remain outside `core`.
+  cache keys, cached-layer draw commands, and platform-view placements such as
+  WebView rectangles, but concrete timer, host, window, route, platform
+  WebView, or service adapters remain outside `core`.
   It remains one MoonBit package; internal files are grouped by responsibility
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
   etc.) rather than by additional package boundaries.
@@ -40,6 +41,7 @@ paths, or abstractions that only preserve old shapes.
   scheduler-backed timer subscription adapters, route/deep-link subscription adapters,
   app-owned service completion subscription adapters, window lifecycle, window scene resolution, per-window runtime slot collection,
   platform-window id mapping,
+  native WebView capability/command/event contracts,
   request/completion, window event conversion, renderer-neutral frame redraw
   scheduling with idle/scheduled/in-frame/follow-up states, and renderer-neutral
   `HostWindowRenderer` diagnostics, render-frame cached-layer fallback command replay,
@@ -58,10 +60,13 @@ paths, or abstractions that only preserve old shapes.
   services, text-input/IME request sync, file drag/drop conversion, and
   scale-factor reporting, while native menu and AT-SPI remain documented
   follow-ups. They must not import `render/wgpu`,
-  `render/skia`, `wgpu_mbt`, or `moui_skia`. `backend/web/` is the browser
+  `render/skia`, `wgpu_mbt`, or `moui_skia`. Native WebView support is a host
+  platform-view overlay synced from `DrawFrame.platform_views`; it must not
+  become a renderer capability or `DrawCommand`. `backend/web/` is the browser
   wasm-gc host, including the browser history route bridge that feeds
   `HostRouteSource`, browser async file-open/save text completion for shared
-  text-file reads/writes, and shared app route history that stays app-owned.
+  text-file reads/writes, and shared app route history that stays app-owned;
+  it reports WebView unavailable instead of using an iframe overlay.
 - `backend/macos/skia`, `backend/windows/skia`, and `backend/linux/skia`
   provide the native Skia raster mainline renderer providers, including
   provider-owned `HostAsyncImageLoader` hooks around
@@ -107,6 +112,9 @@ paths, or abstractions that only preserve old shapes.
   entrypoints. Showcase also has `macos_wgpu_cosmic`,
   `windows_wgpu_cosmic`, and `linux_wgpu_cosmic` entrypoints for explicit Moon Cosmic
   text-provider comparison on the native WGPU diagnostic route.
+  WebView Demo has a shared `examples/webview_demo/app` package plus
+  `macos_skia`, `windows_skia`, `linux_skia`, and Web fallback entrypoints for
+  the native WebView host contract.
 - `website/` is the MoUI-built homepage and runtime docs workspace. Keep
   shared homepage/docs logic in `website/app/` and keep `website/web_wasm/` as
   a thin Web wasm-gc entrypoint; it is not an example-platform matrix. The

@@ -1,0 +1,48 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/webview_demo/app"
+
+import {
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub let default_url : String
+
+pub fn runtime(commands~ : @host.HostWebViewCommandQueue, capabilities~ : @host.HostWebViewCapabilities, width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn update(Model, Msg) -> Model
+
+pub fn view(Model) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+pub struct Model {
+  url : String
+  address : String
+  title : String
+  status : String
+  can_go_back : Bool
+  can_go_forward : Bool
+  js_result : String
+  logs : Array[String]
+  commands : @host.HostWebViewCommandQueue
+  capabilities : @host.HostWebViewCapabilities
+}
+pub fn Model::new(commands~ : @host.HostWebViewCommandQueue, capabilities~ : @host.HostWebViewCapabilities, url? : String) -> Self
+
+pub(all) enum Msg {
+  AddressChanged(String)
+  LoadAddress
+  Reload
+  Stop
+  GoBack
+  GoForward
+  EvaluateLocation
+  WebViewEvent(@core.WebViewEvent)
+}
+
+// Type aliases
+
+// Traits

@@ -25,6 +25,7 @@ enum ViewNode[Msg] {
   ControlledDatePickerNode(ControlledDatePickerViewData[Msg])
   SearchBarNode(SearchBarViewSpec, Msg?, Msg?)
   ControlledSearchBarNode(ControlledSearchBarViewData[Msg])
+  WebViewNode(WebViewSpec, ((WebViewEvent) -> Msg)?)
   SheetNode(SheetViewSpec, ViewNode[Msg], Msg?)
   FlexNode(FlexViewSpec, Array[ViewNode[Msg]])
   PaddingNode(PaddingViewSpec, ViewNode[Msg])
@@ -234,6 +235,24 @@ pub fn[Msg] View::image(
 ) -> View[Msg] {
   view_from_node(
     ImageNode({ key: None, source, size, opacity, corner_radius, fit }),
+  )
+}
+
+///|
+pub fn[Msg] View::web_view(
+  id~ : String,
+  url~ : String,
+  width? : Double? = None,
+  height? : Double? = None,
+  title? : String = "",
+  policy? : WebViewNavigationPolicy = WebViewNavigationPolicy::AllowHttpHttpsFile,
+  on_event? : ((WebViewEvent) -> Msg)? = None,
+) -> View[Msg] {
+  view_from_node(
+    WebViewNode(
+      WebViewSpec::new(id~, url~, width~, height~, title~, policy~),
+      on_event,
+    ),
   )
 }
 
@@ -1445,6 +1464,14 @@ fn[Msg] realize_view_node(
           None => None
         },
       })
+    WebViewNode(data, event_handler) =>
+      WebViewHostSpec({
+        ..data,
+        on_event: match event_handler {
+          Some(handler) => Some(event => emit(handler(event)))
+          None => None
+        },
+      })
     SheetNode(data, content, dismiss) =>
       SheetSpec({
         ..data,
@@ -1671,6 +1698,8 @@ fn[Msg, NextMsg] map_view_node(
         on_submit: option_map_message(data.on_submit, map),
         on_clear: option_map_message(data.on_clear, map),
       })
+    WebViewNode(data, event_handler) =>
+      WebViewNode(data, option_map_web_view_event_handler(event_handler, map))
     SheetNode(data, content, dismiss) =>
       SheetNode(
         data,
@@ -1769,6 +1798,17 @@ fn[Msg, NextMsg] option_map_prefix_handler(
 ) -> ((Int) -> NextMsg)? {
   match handler {
     Some(handler) => Some(offset => map(handler(offset)))
+    None => None
+  }
+}
+
+///|
+fn[Msg, NextMsg] option_map_web_view_event_handler(
+  handler : ((WebViewEvent) -> Msg)?,
+  map : (Msg) -> NextMsg,
+) -> ((WebViewEvent) -> NextMsg)? {
+  match handler {
+    Some(handler) => Some(event => map(handler(event)))
     None => None
   }
 }

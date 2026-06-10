@@ -16,6 +16,8 @@ pub struct MacosSkiaAppOptions {
   priv surface_route : @skia_renderer.SkiaSurfaceRoute
   priv exit_after_first_present : Bool
   priv native_ime_runtime_evidence : Bool
+  priv web_view_commands : @host.HostWebViewCommandQueue?
+  priv web_view_events : @host.HostWebViewEventSource?
 }
 
 ///|
@@ -25,6 +27,8 @@ pub fn MacosSkiaAppOptions::new(
   surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
   exit_after_first_present? : Bool = false,
   native_ime_runtime_evidence? : Bool = false,
+  web_view_commands? : @host.HostWebViewCommandQueue? = None,
+  web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> MacosSkiaAppOptions {
   {
     scene_resolver,
@@ -32,6 +36,8 @@ pub fn MacosSkiaAppOptions::new(
     surface_route,
     exit_after_first_present,
     native_ime_runtime_evidence,
+    web_view_commands,
+    web_view_events,
   }
 }
 
@@ -64,6 +70,8 @@ pub fn run_app_with_options(
       scene_resolver=options.scene_resolver,
       exit_after_first_present=options.exit_after_first_present,
       native_ime_runtime_evidence=options.native_ime_runtime_evidence,
+      web_view_commands=options.web_view_commands,
+      web_view_events=options.web_view_events,
     ),
     window_requests~,
   )
@@ -89,6 +97,8 @@ pub async fn run_app_with_options_async_pump(
       scene_resolver=options.scene_resolver,
       exit_after_first_present=options.exit_after_first_present,
       native_ime_runtime_evidence=options.native_ime_runtime_evidence,
+      web_view_commands=options.web_view_commands,
+      web_view_events=options.web_view_events,
     ),
     window_requests~,
     frame_interval_ms~,

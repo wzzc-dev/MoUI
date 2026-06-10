@@ -35,6 +35,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, app-owned column width/order state, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
+| WebView Demo | Native platform WebView pattern | `examples/webview_demo/app/` | Controlled `web_view` primitive, native host capability fallback, address bar, navigation commands, JavaScript evaluation command, macOS/Windows/Linux Skia native entrypoints, Web wasm unavailable fallback without iframe |
 | PDF Workbench | PDF reading and light editing prototype | `examples/pdf_workbench/app/` | Clean native PDF reader/editor shell, host binary file service open/save flow, PDFium page bitmap preview, fit-width responsive reading canvas, scrollable page/inspector panels, reader fullscreen toggle, page navigation/direct page jump/search/metadata summaries, undoable/discardable preview rotate/crop/stamp/title/bookmark/note edit state, separate `pdflite_adapter` package for real parsing/writeback checks, JSONL pdflite helper protocol plus native process transport, native-only `pdfium_adapter` package for page rasterization, macOS/Windows/Linux Skia native entrypoints |
 | Command Palette | Command metadata and menu pattern | `examples/command_palette/app/` | Command palette rows, shortcut labels, enabled/disabled dispatch, command menu, context menu fallback, `runtime_with_services`, and `HostAppServices::show_context_menu` native menu preview |
 | Markdown Editor | Typora-style editing prototype | `examples/markdown_editor/app/` | Editor snapshot core, `mizchi/markdown` parsing, source-range mapping, primary rich text editor, optional source preview |
@@ -122,6 +123,34 @@ Focused Button Freeze Probe checks:
 ```sh
 moon test examples/button_freeze_probe/app --target native
 moon build examples/button_freeze_probe/macos_skia --target native
+```
+
+## WebView Demo
+
+WebView Demo shows the native platform-view path without involving renderer
+draw commands. The shared app owns controlled navigation state: a page link
+emits `NavigationRequested`, the model updates `url`, and the host commits the
+real native WebView to the next `DrawFrame.platform_views` rectangle. Buttons
+exercise the host command queue for load, reload, stop, back, forward, and
+JavaScript evaluation.
+
+Native entrypoints pass the same `HostWebViewCommandQueue` to the Skia provider
+options so macOS `WKWebView`, Windows WebView2 builds, and Linux WebKitGTK
+builds can drain commands after rendering. Web wasm passes an unavailable
+capability and renders fallback UI; it does not create an iframe overlay.
+Windows/Linux real WebView builds are opt-in: set the matching
+`MOUI_WINDOWS_WEBVIEW2_*` or `MOUI_LINUX_WEBKITGTK_*` environment variables so
+the `moui` prebuild can add native dependency flags; otherwise those
+entrypoints compile as unavailable fallbacks.
+
+Focused WebView Demo checks:
+
+```sh
+moon test examples/webview_demo/app --target native
+moon check examples/webview_demo/macos_skia --target native
+moon check examples/webview_demo/windows_skia --target native
+moon check examples/webview_demo/linux_skia --target native
+moon check examples/webview_demo/web_wasm --target wasm-gc
 ```
 
 Showcase is organized around the main catalog order:

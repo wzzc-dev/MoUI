@@ -52,7 +52,7 @@ Use this skill when editing or reviewing:
 - Runtime pipeline:
 
   ```text
-  View[Msg] -> internal view tree -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawCommand -> renderer
+  View[Msg] -> internal view tree -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawFrame(commands + platform_views) -> renderer + host platform views
   ```
 
 - `core/` stays platform-neutral.
@@ -105,7 +105,9 @@ Use this skill when editing or reviewing:
   `core`.
 - Platform packages normalize native events into `@host.HostEvent`.
 - Backends do not mutate element or render trees directly.
-- Renderers consume platform-neutral `@core.DrawCommand` values.
+- Renderers consume platform-neutral `@core.DrawCommand` values. Native
+  platform views such as `web_view` travel through `DrawFrame.platform_views`
+  and are synced by host backends, not by renderer packages or `DrawCommand`.
 - `examples/*/app` packages own shared app logic.
 - Platform example packages should stay thin entrypoints.
 - Web is `wasm-gc + window/web + browser WebGPU host imports`; there is no
@@ -156,20 +158,22 @@ Use this skill when editing or reviewing:
   scheduler-backed timer subscription source, route/deep-link subscription source,
   window request/completion queue, text-input session, window-event conversion,
   async host-service queue, and frame-aware redraw driver with
-  idle/scheduled/in-frame/follow-up coalescing.
+  idle/scheduled/in-frame/follow-up coalescing, and native WebView
+  capability/command/event contracts.
 - `backend/web/`: wasm-gc Web host, canvas constraints, resolver-backed
   multi-canvas window slots, browser runtime bridge, async browser
   file-open/save text completion for shared text-file reads/writes, and
-  accessibility adapter.
+  accessibility adapter. Web reports `web_view` unavailable and must not use an
+  iframe overlay as a substitute for native WebView.
 - `backend/macos/`: AppKit/window host, resolver-backed multi-window slots,
-  and CAMetalLayer WGPU surface creation.
+  native WKWebView platform-view sync, and CAMetalLayer WGPU surface creation.
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
-  and HWND WGPU surface creation.
+  optional WebView2 platform-view sync, and HWND WGPU surface creation.
 - `backend/linux/`: Wayland host over `.local_repos/window/linux`, Linux
   host-service bridge, text-input/IME request sync, drag/drop conversion, a
   native Skia mainline presenter path plus native WGPU diagnostic surface path,
-  shared host event conversion, and explicit native menu/AT-SPI follow-up
-  reporting.
+  optional WebKitGTK platform-view sync, shared host event conversion, and
+  explicit native menu/AT-SPI follow-up reporting.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for
@@ -205,6 +209,9 @@ Use this skill when editing or reviewing:
 - `examples/*/app`: shared application logic.
 - `examples/*/{web_wasm,<platform>_<renderer>}`: platform/renderer profile
   entrypoints where an example has a runnable host package.
+- `examples/webview_demo/{app,macos_skia,windows_skia,linux_skia,web_wasm}`:
+  native WebView host-contract demo; Web wasm is an unavailable fallback and
+  not an iframe implementation.
 - `examples/showcase/{macos_skia,windows_skia,linux_skia}` and
   `examples/markdown_editor/{macos_skia,windows_skia,linux_skia}`: recommended
   native Skia renderer example entrypoints.

@@ -135,6 +135,11 @@ fn ElementNode::measured_size_from_children(
     PickerSpec(_) => Size::new(width=200.0, height=40.0)
     DatePickerSpec(_) => Size::new(width=200.0, height=40.0)
     SearchBarSpec(_) => Size::new(width=240.0, height=40.0)
+    WebViewHostSpec(data) =>
+      Size::new(
+        width=data.width.unwrap_or(640.0),
+        height=data.height.unwrap_or(360.0),
+      )
     SheetSpec(_) =>
       if children.length() > 0 {
         children[0].size.inflate(

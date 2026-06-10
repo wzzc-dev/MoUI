@@ -25,6 +25,7 @@ fn element_hit_testable(spec : ViewSpec) -> Bool {
     PickerSpec(_) => true
     DatePickerSpec(_) => true
     SearchBarSpec(_) => true
+    WebViewHostSpec(_) => true
     SheetSpec(_) => true
     ContainerSpec(data) => data.background is Some(_)
     ModifiedSpec(data) =>
@@ -66,6 +67,7 @@ fn ElementNode::render_with_environment(
   let commands : Array[DrawCommand] = []
   let post_commands : Array[DrawCommand] = []
   let overlay_commands : Array[DrawCommand] = []
+  let platform_views : Array[PlatformViewPlacement] = []
   match self.spec {
     EmptySpec => ()
     SpacerSpec(_) => ()
@@ -181,6 +183,12 @@ fn ElementNode::render_with_environment(
       append_searchbar_commands(
         commands, overlay_commands, self, data, bounds, environment, focused,
       )
+    WebViewHostSpec(data) =>
+      if !bounds.is_empty() {
+        platform_views.push(
+          PlatformViewPlacement::web_view(spec=data, frame=bounds),
+        )
+      }
     SheetSpec(data) => {
       // Sheet background and shadow
       let rounded = RoundedRect::new(rect=bounds, radius=data.corner_radius)
@@ -334,9 +342,7 @@ fn ElementNode::render_with_environment(
         )
         children.push(
           self.children[0].render_with_environment(
-            child_placed,
-            focused,
-            environment,
+            child_placed, focused, environment,
           ),
         )
       }
@@ -404,11 +410,7 @@ fn ElementNode::render_with_environment(
   self.dirty.clear()
   self.render_cache.content_revision = self.render_cache.content_revision + 1
   let paint_bounds = render_node_paint_bounds(
-    bounds,
-    commands,
-    children,
-    post_commands,
-    overlay_commands,
+    bounds, commands, children, post_commands, overlay_commands,
   )
   let render = {
     element_id: self.id,
@@ -422,6 +424,7 @@ fn ElementNode::render_with_environment(
     paint_commands: commands,
     post_paint_commands: post_commands,
     overlay_paint_commands: overlay_commands,
+    platform_views,
     cached_draw_commands: None,
     cached_overlay_draw_commands: None,
   }

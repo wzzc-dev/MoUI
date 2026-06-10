@@ -56,6 +56,7 @@ fn aria_role(role : @core.SemanticsRole) -> String {
     @core.SemanticsRole::Dialog => "dialog"
     @core.SemanticsRole::Tooltip => "tooltip"
     @core.SemanticsRole::Menu => "menu"
+    @core.SemanticsRole::WebView => "document"
     @core.SemanticsRole::ButtonGroup => "group"
     @core.SemanticsRole::Form => "form"
     @core.SemanticsRole::FormField => "group"

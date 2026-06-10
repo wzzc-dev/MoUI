@@ -65,6 +65,8 @@ examples/markdown_editor/windows_skia/ Windows Markdown editor selecting native 
 examples/markdown_editor/windows_wgpu/ Windows native WGPU diagnostic Markdown editor
 examples/markdown_editor/windows_wgpu_cosmic/ Windows Markdown Editor selecting Moon Cosmic text
 examples/markdown_editor/linux_skia/ Linux Markdown editor selecting native Skia raster
+examples/webview_demo/app/ shared native WebView demo app
+examples/webview_demo/{macos_skia,windows_skia,linux_skia,web_wasm}/ platform WebView demo entrypoints
 examples/{settings,data_table,file_importer,command_palette}/app/ shared app-pattern packages without platform entrypoints
 ```
 
@@ -262,9 +264,11 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   platform-neutral `DrawCommand` values. `RenderNode` entries retain paint
   bounds, content revisions, and repaint-boundary cache keys. The normal host
   path asks `AppRuntime::draw_frame()` for commands plus a `DamageRegion` and
-  cache epoch; legacy tests can still call `draw_commands()` for a full command
-  stream. Renderers may degrade based on capability, but view constructors
-  preserve brush, border, shadow, clip, image, and text intent.
+  cache epoch; `DrawFrame.platform_views` carries native platform-view
+  placements such as `web_view` without adding them to `DrawCommand`. Legacy
+  tests can still call `draw_commands()` for a full command stream. Renderers
+  may degrade based on capability, but view constructors preserve brush, border,
+  shadow, clip, image, and text intent.
 - Backends normalize platform events into `HostEvent`; they do not own UI
   state or mutate element/render trees directly.
 - `HostRuntimeDriver` owns redraw scheduling at the host boundary, dispatches
@@ -529,6 +533,13 @@ host lifecycle events while keeping the slot record aligned.
 `HostPlatformWindowMap` binds platform window ids from `wzzc-dev/window` to
 MoUI `HostWindowId` values so event dispatch can route through the host registry
 instead of assuming one global window.
+`HostWebViewCapabilities`, `HostWebViewCommandQueue`, and
+`HostWebViewEventSource` are the host-side contract for native platform
+WebViews. Hosts report whether native embedding is available, sync
+`DrawFrame.platform_views` to concrete WebView objects, dispatch
+`HostEvent::WebView` back into the runtime, and drain queued commands at the
+platform edge. Browser Web wasm reports unavailable instead of creating an
+iframe overlay.
 Web, macOS, Windows, and Linux should convert their native window events into
 `HostEvent` and then let `AppRuntime` update state, rebuild, and emit
 `DrawCommand` values.

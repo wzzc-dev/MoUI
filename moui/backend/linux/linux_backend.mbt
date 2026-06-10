@@ -62,6 +62,8 @@ pub struct LinuxHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv exit_after_first_present : Bool
   priv event_sources : @host.HostPlatformEventSources?
+  priv web_view_commands : @host.HostWebViewCommandQueue?
+  priv web_view_events : @host.HostWebViewEventSource?
 }
 
 ///|
@@ -93,6 +95,8 @@ struct LinuxApp {
   platform_slots : LinuxWindowPlatformSlots
   image_repaint_tracker : @host.HostImageResourceRepaintTracker
   event_sources : @host.HostPlatformEventSources?
+  web_view_commands : @host.HostWebViewCommandQueue?
+  web_view_events : @host.HostWebViewEventSource?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut exit_after_first_present : Bool
@@ -117,8 +121,16 @@ pub fn LinuxHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   exit_after_first_present? : Bool = false,
   event_sources? : @host.HostPlatformEventSources? = None,
+  web_view_commands? : @host.HostWebViewCommandQueue? = None,
+  web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> LinuxHostAppOptions {
-  { scene_resolver, exit_after_first_present, event_sources }
+  {
+    scene_resolver,
+    exit_after_first_present,
+    event_sources,
+    web_view_commands,
+    web_view_events,
+  }
 }
 
 ///|
@@ -231,6 +243,7 @@ pub fn linux_capability_summary(
     drag_drop_ready=true,
     async_services=false,
     native_accessibility_ready=backend_info().accessibility.native_binding_ready,
+    web_view=linux_webview_capabilities(),
     description="Wayland host summary with renderer/window readiness, Linux clipboard/file dialog/text-file/open URL services, text-input/IME requests, file drag/drop, and explicit menu/AT-SPI gaps.",
   )
 }
@@ -756,11 +769,16 @@ pub fn run_app_with_renderer_provider(
     platform_slots: LinuxWindowPlatformSlots::new(),
     image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
     event_sources: options.event_sources,
+    web_view_commands: options.web_view_commands,
+    web_view_events: options.web_view_events,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     exit_after_first_present: options.exit_after_first_present,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
+  install_linux_webview_event_dispatcher((native_surface, id, event) => {
+    app.dispatch_web_view_event(native_surface, id, event)
+  })
   event_loop.run_app(app)
 }
 
@@ -1202,6 +1220,12 @@ fn LinuxApp::redraw_window(
           frame.damage
         },
       })
+      sync_linux_platform_views(
+        platform_slot.window,
+        frame,
+        content_offset_y=platform_slot.decorations.titlebar_height,
+      )
+      self.drain_web_view_commands(platform_slot)
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
       if result.presented {
@@ -1234,6 +1258,60 @@ fn LinuxApp::redraw_window(
       }
     }
     _ => false
+  }
+}
+
+///|
+fn LinuxApp::dispatch_web_view_event(
+  self : LinuxApp,
+  native_surface : UInt64,
+  id : String,
+  event : @core.WebViewEvent,
+) -> Unit {
+  match self.web_view_host_id(native_surface) {
+    Some(window_id) => {
+      let host_event = @host.HostEvent::WebView(id, event)
+      match self.runtime_slots.lookup(window_id) {
+        Some(slot) => ignore(slot.driver.dispatch(host_event))
+        None => ()
+      }
+      ignore(self.publish_subscription_event(window_id, host_event))
+      match self.web_view_events {
+        Some(source) =>
+          ignore(
+            source.publish(@host.HostWebViewEvent::new(window_id~, id~, event~)),
+          )
+        None => ()
+      }
+      self.sync_text_input_session()
+      self.request_redraw_window_if_needed(window_id)
+    }
+    None => ()
+  }
+}
+
+///|
+fn LinuxApp::web_view_host_id(
+  self : LinuxApp,
+  native_surface : UInt64,
+) -> @host.HostWindowId? {
+  for slot in self.platform_slots.slots {
+    if slot.window.wl_surface() == native_surface {
+      return Some(slot.host_id)
+    }
+  }
+  None
+}
+
+///|
+fn LinuxApp::drain_web_view_commands(
+  self : LinuxApp,
+  platform_slot : LinuxWindowPlatformSlot,
+) -> Unit {
+  match self.web_view_commands {
+    Some(queue) =>
+      ignore(drain_linux_webview_commands(platform_slot.window, queue))
+    None => ()
   }
 }
 
@@ -1757,6 +1835,7 @@ fn LinuxApp::dispose_window(
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
+      dispose_linux_platform_views(slot.window)
       slot.renderer.set_image_resource_change_callback(None)
       slot.renderer.dispose()
       slot.window.drop()
