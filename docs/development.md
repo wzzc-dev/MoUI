@@ -48,6 +48,7 @@ members = [
   "./examples/pdf_workbench",
   "./examples/command_palette",
   "./examples/mo_workbench",
+  "./benchmarks/app_cached_layer",
   "./website",
 ]
 ```
