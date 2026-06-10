@@ -231,6 +231,38 @@ priv struct MountResult {
 priv struct ReconcileResult {
   node : ElementNode
   next_id : Int
+  dirty_kind : ReconcileDirtyKind
+}
+
+///|
+priv struct ChildrenReconcileResult {
+  children : Array[ElementNode]
+  next_id : Int
+  dirty_kind : ReconcileDirtyKind
+}
+
+///|
+priv enum ReconcileDirtyKind {
+  ReconcileClean
+  ReconcilePaint
+  ReconcileLayout
+}
+
+///|
+fn ReconcileDirtyKind::rank(self : ReconcileDirtyKind) -> Int {
+  match self {
+    ReconcileClean => 0
+    ReconcilePaint => 1
+    ReconcileLayout => 2
+  }
+}
+
+///|
+fn ReconcileDirtyKind::combine(
+  self : ReconcileDirtyKind,
+  other : ReconcileDirtyKind,
+) -> ReconcileDirtyKind {
+  if self.rank() >= other.rank() { self } else { other }
 }
 
 ///|
@@ -366,34 +398,25 @@ fn reconcile_element_for_runtime(
   if !old.spec.same_identity(next_spec) {
     old.cancel_component_tree_subscriptions()
     let mounted = mount_view_spec_for_runtime(next_spec, runtime, next_id)
-    { node: mounted.node, next_id: mounted.next_id }
+    { node: mounted.node, next_id: mounted.next_id, dirty_kind: ReconcileLayout }
   } else {
+    let own_dirty = old.spec.reconcile_dirty_kind(next_spec)
     old.spec = next_spec
     old.key = old.spec.identity_key()
     let children_result = if old.spec is ComponentSpec(_) {
-      { children: old.children, next_id }
+      {
+        children: old.children,
+        next_id,
+        dirty_kind: ReconcileDirtyKind::ReconcileClean,
+      }
     } else {
       reconcile_children_for_runtime(old.children, old.spec, runtime, next_id)
     }
     old.children = children_result.children
-    match old.spec {
-      ComponentSpec(_) => {
-        old.dirty.mark_build()
-        old.clear_cached_layout_and_paint()
-      }
-      _ => {
-        old.dirty.mark_layout()
-        old.clear_cached_layout_and_paint()
-      }
-    }
-    { node: old, next_id: children_result.next_id }
+    let dirty_kind = own_dirty.combine(children_result.dirty_kind)
+    old.apply_reconcile_dirty(dirty_kind)
+    { node: old, next_id: children_result.next_id, dirty_kind }
   }
-}
-
-///|
-priv struct ChildrenReconcileResult {
-  children : Array[ElementNode]
-  next_id : Int
 }
 
 ///|
@@ -410,6 +433,7 @@ fn reconcile_children_for_runtime(
     used.push(false)
   }
   let mut next = next_id
+  let mut dirty = ReconcileDirtyKind::ReconcileClean
   for index, child_spec in next_specs {
     let old_index = find_reusable_child(old_children, used, child_spec, index)
     match old_index {
@@ -423,20 +447,393 @@ fn reconcile_children_for_runtime(
         )
         children.push(result.node)
         next = result.next_id
+        dirty = dirty.combine(result.dirty_kind)
       }
       None => {
         let mounted = mount_view_spec_for_runtime(child_spec, runtime, next)
         children.push(mounted.node)
         next = mounted.next_id
+        dirty = dirty.combine(ReconcileDirtyKind::ReconcileLayout)
       }
     }
   }
   for index, old_child in old_children {
     if !used[index] {
       old_child.cancel_component_tree_subscriptions()
+      dirty = dirty.combine(ReconcileDirtyKind::ReconcileLayout)
     }
   }
-  { children, next_id: next }
+  { children, next_id: next, dirty_kind: dirty }
+}
+
+///|
+fn ElementNode::apply_reconcile_dirty(
+  self : ElementNode,
+  dirty : ReconcileDirtyKind,
+) -> Unit {
+  match dirty {
+    ReconcileClean => ()
+    ReconcilePaint => {
+      self.dirty.mark_paint()
+      self.render_cache.clear()
+    }
+    ReconcileLayout => {
+      self.dirty.mark_layout()
+      self.clear_cached_layout_and_paint()
+    }
+  }
+}
+
+///|
+fn bool_dirty(
+  changed : Bool,
+  dirty : ReconcileDirtyKind,
+) -> ReconcileDirtyKind {
+  if changed { dirty } else { ReconcileDirtyKind::ReconcileClean }
+}
+
+///|
+fn combine_dirty(
+  first : ReconcileDirtyKind,
+  second : ReconcileDirtyKind,
+) -> ReconcileDirtyKind {
+  first.combine(second)
+}
+
+///|
+fn ViewSpec::reconcile_dirty_kind(
+  self : ViewSpec,
+  next : ViewSpec,
+) -> ReconcileDirtyKind {
+  match (self, next) {
+    (EmptySpec, EmptySpec) => ReconcileClean
+    (TextSpec(old), TextSpec(new)) => {
+      let layout_changed = old.text != new.text ||
+        old.size != new.size ||
+        old.font != new.font
+      let paint_changed = old.color != new.color
+      combine_dirty(
+        bool_dirty(layout_changed, ReconcileLayout),
+        bool_dirty(paint_changed, ReconcilePaint),
+      )
+    }
+    (ButtonSpec(old), ButtonSpec(new)) => {
+      let layout_changed = old.text != new.text ||
+        old.size != new.size ||
+        old.font != new.font
+      let paint_changed = old.foreground != new.foreground ||
+        old.background != new.background ||
+        old.hovered_background != new.hovered_background ||
+        old.pressed_background != new.pressed_background ||
+        old.border != new.border ||
+        old.shadow != new.shadow ||
+        old.corner_radius != new.corner_radius
+      combine_dirty(
+        bool_dirty(layout_changed, ReconcileLayout),
+        bool_dirty(paint_changed, ReconcilePaint),
+      )
+    }
+    (TextFieldSpec(old), TextFieldSpec(new)) =>
+      reconcile_text_field_dirty(old, new)
+    (RichTextEditorSpec(old), RichTextEditorSpec(new)) =>
+      reconcile_rich_text_editor_dirty(old, new)
+    (ImageSpec(old), ImageSpec(new)) => {
+      let layout_changed = old.size != new.size
+      let paint_changed = old.source != new.source ||
+        old.opacity != new.opacity ||
+        old.corner_radius != new.corner_radius ||
+        old.fit != new.fit
+      combine_dirty(
+        bool_dirty(layout_changed, ReconcileLayout),
+        bool_dirty(paint_changed, ReconcilePaint),
+      )
+    }
+    (CheckboxSpec(old), CheckboxSpec(new)) => {
+      let layout_changed = old.label != new.label ||
+        old.font != new.font ||
+        old.size != new.size
+      let paint_changed = old.checked.get() != new.checked.get() ||
+        old.foreground != new.foreground ||
+        old.check_color != new.check_color
+      combine_dirty(
+        bool_dirty(layout_changed, ReconcileLayout),
+        bool_dirty(paint_changed, ReconcilePaint),
+      )
+    }
+    (PickerSpec(old), PickerSpec(new)) => {
+      let layout_changed = !picker_items_equal(old.items, new.items) ||
+        old.placeholder != new.placeholder ||
+        old.font != new.font ||
+        old.maxHeight != new.maxHeight
+      let paint_changed = old.selected.get() != new.selected.get() ||
+        old.foreground != new.foreground ||
+        old.background != new.background ||
+        old.cornerRadius != new.cornerRadius
+      combine_dirty(
+        bool_dirty(layout_changed, ReconcileLayout),
+        bool_dirty(paint_changed, ReconcilePaint),
+      )
+    }
+    (DatePickerSpec(old), DatePickerSpec(new)) => {
+      let layout_changed = old.mode != new.mode ||
+        old.placeholder != new.placeholder ||
+        old.font != new.font ||
+        old.min_date != new.min_date ||
+        old.max_date != new.max_date
+      let paint_changed = old.selected.get() != new.selected.get() ||
+        old.foreground != new.foreground ||
+        old.background != new.background ||
+        old.corner_radius != new.corner_radius
+      combine_dirty(
+        bool_dirty(layout_changed, ReconcileLayout),
+        bool_dirty(paint_changed, ReconcilePaint),
+      )
+    }
+    (SearchBarSpec(old), SearchBarSpec(new)) =>
+      reconcile_searchbar_dirty(old, new)
+    (SheetSpec(old), SheetSpec(new)) => {
+      let layout_changed = old.presentation_mode != new.presentation_mode
+      let paint_changed = old.background != new.background ||
+        old.corner_radius != new.corner_radius ||
+        old.shadow != new.shadow
+      combine_dirty(
+        bool_dirty(layout_changed, ReconcileLayout),
+        bool_dirty(paint_changed, ReconcilePaint),
+      )
+    }
+    (FlexSpec(old), FlexSpec(new)) =>
+      bool_dirty(
+        old.axis != new.axis ||
+        old.spacing != new.spacing ||
+        old.main_axis_alignment != new.main_axis_alignment ||
+        old.cross_axis_alignment != new.cross_axis_alignment,
+        ReconcileLayout,
+      )
+    (PaddingSpec(old), PaddingSpec(new)) =>
+      bool_dirty(old.insets != new.insets, ReconcileLayout)
+    (ContainerSpec(old), ContainerSpec(new)) => {
+      let layout_changed = old.size != new.size
+      let paint_changed = old.background != new.background ||
+        old.border != new.border ||
+        old.corner_radius != new.corner_radius ||
+        old.shadow != new.shadow
+      combine_dirty(
+        bool_dirty(layout_changed, ReconcileLayout),
+        bool_dirty(paint_changed, ReconcilePaint),
+      )
+    }
+    (SpacerSpec(old), SpacerSpec(new)) =>
+      bool_dirty(
+        old.min_length != new.min_length || old.weight != new.weight,
+        ReconcileLayout,
+      )
+    (FrameSpec(old), FrameSpec(new)) =>
+      bool_dirty(
+        old.width != new.width ||
+        old.height != new.height ||
+        old.min_width != new.min_width ||
+        old.min_height != new.min_height ||
+        old.max_width != new.max_width ||
+        old.max_height != new.max_height,
+        ReconcileLayout,
+      )
+    (StackSpec(_), StackSpec(_)) => ReconcileClean
+    (ScrollSpec(old), ScrollSpec(new)) =>
+      bool_dirty(
+        old.offset != new.offset || old.viewport != new.viewport,
+        ReconcileLayout,
+      )
+    (GridSpec(old), GridSpec(new)) =>
+      bool_dirty(
+        old.columns != new.columns ||
+        old.row_spacing != new.row_spacing ||
+        old.column_spacing != new.column_spacing,
+        ReconcileLayout,
+      )
+    (ListSpec(old), ListSpec(new)) =>
+      bool_dirty(old.spacing != new.spacing, ReconcileLayout)
+    (ModifiedSpec(old), ModifiedSpec(new)) =>
+      old.modifier.reconcile_dirty_kind(new.modifier)
+    (CustomSpec(_), CustomSpec(_)) => ReconcileLayout
+    (CustomLayoutSpec(_), CustomLayoutSpec(_)) => ReconcileLayout
+    (ComponentSpec(_), ComponentSpec(_)) => ReconcileClean
+    _ => ReconcileLayout
+  }
+}
+
+///|
+fn reconcile_text_field_dirty(
+  old : TextFieldViewSpec,
+  new : TextFieldViewSpec,
+) -> ReconcileDirtyKind {
+  let layout_changed = old.value.get() != new.value.get() ||
+    old.placeholder != new.placeholder ||
+    old.size != new.size ||
+    old.font != new.font
+  let paint_changed = old.foreground != new.foreground ||
+    old.placeholder_color != new.placeholder_color ||
+    old.background != new.background ||
+    old.border != new.border ||
+    old.focused_border != new.focused_border ||
+    old.cursor_color != new.cursor_color ||
+    old.corner_radius != new.corner_radius
+  combine_dirty(
+    bool_dirty(layout_changed, ReconcileLayout),
+    bool_dirty(paint_changed, ReconcilePaint),
+  )
+}
+
+///|
+fn reconcile_rich_text_editor_dirty(
+  old : RichTextEditorViewSpec,
+  new : RichTextEditorViewSpec,
+) -> ReconcileDirtyKind {
+  let layout_changed = old.value.get() != new.value.get() ||
+    old.placeholder != new.placeholder ||
+    old.size != new.size ||
+    old.font != new.font ||
+    old.accepts_tab_input != new.accepts_tab_input
+  let paint_changed = old.foreground != new.foreground ||
+    old.placeholder_color != new.placeholder_color ||
+    old.background != new.background ||
+    old.border != new.border ||
+    old.focused_border != new.focused_border ||
+    old.cursor_color != new.cursor_color ||
+    old.corner_radius != new.corner_radius
+  combine_dirty(
+    bool_dirty(layout_changed, ReconcileLayout),
+    bool_dirty(paint_changed, ReconcilePaint),
+  )
+}
+
+///|
+fn reconcile_searchbar_dirty(
+  old : SearchBarViewSpec,
+  new : SearchBarViewSpec,
+) -> ReconcileDirtyKind {
+  let layout_changed = old.query.get() != new.query.get() ||
+    old.placeholder != new.placeholder ||
+    old.font != new.font
+  let paint_changed = old.foreground != new.foreground ||
+    old.placeholder_color != new.placeholder_color ||
+    old.background != new.background ||
+    old.border != new.border ||
+    old.focused_border != new.focused_border ||
+    old.cursor_color != new.cursor_color ||
+    old.corner_radius != new.corner_radius
+  combine_dirty(
+    bool_dirty(layout_changed, ReconcileLayout),
+    bool_dirty(paint_changed, ReconcilePaint),
+  )
+}
+
+///|
+fn picker_items_equal(
+  old : Array[PickerItem],
+  new : Array[PickerItem],
+) -> Bool {
+  if old.length() != new.length() {
+    false
+  } else {
+    for index, item in old {
+      let next = new[index]
+      if item.id != next.id || item.label != next.label {
+        return false
+      }
+    }
+    true
+  }
+}
+
+///|
+fn frame_modifier_equal(
+  old : FrameModifierSpec,
+  new : FrameModifierSpec,
+) -> Bool {
+  old.width == new.width &&
+  old.height == new.height &&
+  old.min_width == new.min_width &&
+  old.min_height == new.min_height &&
+  old.max_width == new.max_width &&
+  old.max_height == new.max_height
+}
+
+///|
+fn ViewModifier::reconcile_dirty_kind(
+  self : ViewModifier,
+  next : ViewModifier,
+) -> ReconcileDirtyKind {
+  match (self, next) {
+    (PaddingModifier(old), PaddingModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
+    (FrameModifier(old), FrameModifier(new)) =>
+      bool_dirty(!frame_modifier_equal(old, new), ReconcileLayout)
+    (BackgroundModifier(old), BackgroundModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (ForegroundModifier(old), ForegroundModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (FontModifier(old), FontModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
+    (CornerRadiusModifier(old), CornerRadiusModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (OpacityModifier(old), OpacityModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (ShadowModifier(old), ShadowModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (BorderModifier(old), BorderModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (OffsetModifier(old_x, old_y), OffsetModifier(new_x, new_y)) =>
+      bool_dirty(old_x != new_x || old_y != new_y, ReconcileLayout)
+    (ClipModifier, ClipModifier) => ReconcileClean
+    (ScaleModifier(old_x, old_y), ScaleModifier(new_x, new_y)) =>
+      bool_dirty(old_x != new_x || old_y != new_y, ReconcilePaint)
+    (DisabledModifier(old), DisabledModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (AccessibilityLabelModifier(old), AccessibilityLabelModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (SemanticsRoleModifier(old), SemanticsRoleModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (SemanticsSelectedModifier(old), SemanticsSelectedModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (SemanticsPressedModifier(old), SemanticsPressedModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (SemanticsCheckedModifier(old), SemanticsCheckedModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (SemanticsExpandedModifier(old), SemanticsExpandedModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (SemanticsInvalidModifier(old), SemanticsInvalidModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (SemanticsRequiredModifier(old), SemanticsRequiredModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (SemanticsDescriptionModifier(old), SemanticsDescriptionModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (SemanticsActionModifier(old), SemanticsActionModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (FocusableModifier(old), FocusableModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (FocusTrapModifier(old), FocusTrapModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (OnTapModifier(_), OnTapModifier(_)) => ReconcileClean
+    (OnLongPressModifier(_), OnLongPressModifier(_)) => ReconcileClean
+    (OnDoubleTapModifier(_), OnDoubleTapModifier(_)) => ReconcileClean
+    (OnDragModifier(_), OnDragModifier(_)) => ReconcileClean
+    (OnDragWithFrameModifier(_), OnDragWithFrameModifier(_)) => ReconcileClean
+    (OnFileDropModifier(_), OnFileDropModifier(_)) => ReconcileClean
+    (KeyboardShortcutModifier(old), KeyboardShortcutModifier(new)) =>
+      bool_dirty(old != new, ReconcilePaint)
+    (FlexibleModifier(old), FlexibleModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
+    (LayoutPriorityModifier(old), LayoutPriorityModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
+    (AlignModifier(old), AlignModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
+    (AspectRatioModifier(old), AspectRatioModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
+    (IntrinsicWidthModifier, IntrinsicWidthModifier) => ReconcileClean
+    (IntrinsicHeightModifier, IntrinsicHeightModifier) => ReconcileClean
+    (RepaintBoundaryModifier, RepaintBoundaryModifier) => ReconcileClean
+    _ => ReconcileLayout
+  }
 }
 
 ///|
@@ -499,6 +896,7 @@ fn ElementNode::rebuild_dirty_components(
   next_id : Int,
 ) -> ReconcileResult {
   let mut next = next_id
+  let mut dirty_kind = ReconcileDirtyKind::ReconcileClean
   if self.dirty.needs_build {
     match self.spec {
       ComponentSpec(data) => {
@@ -524,25 +922,30 @@ fn ElementNode::rebuild_dirty_components(
             Some(runtime),
             next,
           )
-          { node: mounted.node, next_id: mounted.next_id }
+          {
+            node: mounted.node,
+            next_id: mounted.next_id,
+            dirty_kind: ReconcileDirtyKind::ReconcileLayout,
+          }
         }
         self.children = [result.node]
         next = result.next_id
+        dirty_kind = dirty_kind.combine(result.dirty_kind)
       }
       _ => ()
     }
     self.dirty.needs_build = false
-    self.dirty.mark_layout()
-    self.clear_cached_layout_and_paint()
+    self.apply_reconcile_dirty(dirty_kind)
   }
   let children : Array[ElementNode] = []
   for child in self.children {
     let result = child.rebuild_dirty_components(runtime, next)
     children.push(result.node)
     next = result.next_id
+    dirty_kind = dirty_kind.combine(result.dirty_kind)
   }
   self.children = children
-  { node: self, next_id: next }
+  { node: self, next_id: next, dirty_kind }
 }
 
 ///|
@@ -685,17 +1088,34 @@ fn ElementNode::mark_paint_dirty_by_id(
 }
 
 ///|
-fn ElementNode::collect_dirty_element_ids(
+fn ElementNode::collect_dirty_element_ids_by_kind(
   self : ElementNode,
-  ids : Array[ElementId],
+  all_ids : Array[ElementId],
+  build_ids : Array[ElementId],
+  layout_ids : Array[ElementId],
+  paint_ids : Array[ElementId],
 ) -> Unit {
   if self.dirty.needs_build ||
     self.dirty.needs_layout ||
     self.dirty.needs_paint {
-    push_unique_element_id(ids, self.id)
+    push_unique_element_id(all_ids, self.id)
+  }
+  if self.dirty.needs_build {
+    push_unique_element_id(build_ids, self.id)
+  }
+  if self.dirty.needs_layout {
+    push_unique_element_id(layout_ids, self.id)
+  }
+  if self.dirty.needs_paint {
+    push_unique_element_id(paint_ids, self.id)
   }
   for child in self.children {
-    child.collect_dirty_element_ids(ids)
+    child.collect_dirty_element_ids_by_kind(
+      all_ids,
+      build_ids,
+      layout_ids,
+      paint_ids,
+    )
   }
 }
 
