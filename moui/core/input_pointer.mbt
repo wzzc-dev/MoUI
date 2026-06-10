@@ -77,6 +77,12 @@ fn ElementNode::dispatch_pointer(
 }
 
 ///|
+fn ElementNode::mark_pointer_paint_dirty(self : ElementNode) -> Unit {
+  self.dirty.mark_paint()
+  self.render_cache.clear()
+}
+
+///|
 fn ElementNode::dispatch_scroll_pointer(
   self : ElementNode,
   data : ScrollViewSpec,
@@ -91,12 +97,18 @@ fn ElementNode::dispatch_scroll_pointer(
       Some(handler) => {
         handler(event.wheel_delta)
         match data.scroll_state {
-          Some(state) =>
+          Some(state) => {
+            clamp_scroll_state_to_render(state, data, render)
             self.spec = ScrollSpec({ ..data, offset: state.offset() })
+          }
           None => ()
         }
-        self.dirty.mark_layout()
-        self.clear_cached_layout_and_paint()
+        if data.scroll_state is Some(_) && !data.scroll_activates {
+          self.mark_pointer_paint_dirty()
+        } else {
+          self.dirty.mark_layout()
+          self.clear_cached_layout_and_paint()
+        }
         { changed: true, activated: data.scroll_activates, focused: None }
       }
       None =>
@@ -115,6 +127,42 @@ fn ElementNode::dispatch_scroll_pointer(
       capture_lookup~,
     )
   }
+}
+
+///|
+fn clamp_scroll_state_to_render(
+  state : ScrollState,
+  data : ScrollViewSpec,
+  render : RenderNode,
+) -> Unit {
+  let viewport = data.viewport.unwrap_or(render.frame.size)
+  let content = if render.children.length() > 0 {
+    Size::new(
+      width=max_double(
+        render.children[0].frame.size.width,
+        render.children[0].paint_bounds.size.width,
+      ),
+      height=max_double(
+        render.children[0].frame.size.height,
+        render.children[0].paint_bounds.size.height,
+      ),
+    )
+  } else {
+    viewport
+  }
+  let current = state.offset()
+  state.scroll_to(
+    x=clamp_double(
+      current.x,
+      0.0,
+      max_double(0.0, content.width - viewport.width),
+    ),
+    y=clamp_double(
+      current.y,
+      0.0,
+      max_double(0.0, content.height - viewport.height),
+    ),
+  )
 }
 
 ///|
@@ -193,7 +241,7 @@ fn ElementNode::dispatch_pointer_to_popup_children(
       self.dirty.mark_layout()
       self.clear_cached_layout_and_paint()
     } else {
-      self.dirty.mark_paint()
+      self.mark_pointer_paint_dirty()
     }
   }
   { changed, activated, focused }
@@ -242,7 +290,7 @@ fn ElementNode::dispatch_pointer_to_child_frames(
       self.dirty.mark_layout()
       self.clear_cached_layout_and_paint()
     } else {
-      self.dirty.mark_paint()
+      self.mark_pointer_paint_dirty()
     }
   }
   { changed, activated, focused }
@@ -318,7 +366,7 @@ fn ElementNode::dispatch_pointer_to_target(
           ) {
           Some(result) => {
             if result.changed {
-              self.dirty.mark_paint()
+              self.mark_pointer_paint_dirty()
             }
             return Some(result)
           }
@@ -449,7 +497,7 @@ fn ElementNode::dispatch_modified_pointer(
           tap.activated
         self.control.button_state = tap.next_state
         if changed {
-          self.dirty.mark_paint()
+          self.mark_pointer_paint_dirty()
         }
         {
           changed,
@@ -475,7 +523,7 @@ fn ElementNode::dispatch_modified_pointer(
         self.control.long_press_gesture = result.state
         if result.recognized {
           handler()
-          self.dirty.mark_paint()
+          self.mark_pointer_paint_dirty()
         }
         {
           changed: child_result.changed || result.recognized || result.cancelled,
@@ -501,7 +549,7 @@ fn ElementNode::dispatch_modified_pointer(
         self.control.double_tap_gesture = result.state
         if result.recognized {
           handler()
-          self.dirty.mark_paint()
+          self.mark_pointer_paint_dirty()
         }
         {
           changed: child_result.changed ||
@@ -572,7 +620,7 @@ fn ElementNode::dispatch_drag_modifier_pointer(
     }
     let activated = result.event is Some(_)
     if activated {
-      self.dirty.mark_paint()
+      self.mark_pointer_paint_dirty()
     }
     {
       changed: child_result.changed ||
@@ -654,7 +702,7 @@ fn handle_rich_text_editor_pointer(
           element.control.selection = next_selection
           if changed {
             notify_rich_text_selection_change(data, element)
-            element.dirty.mark_paint()
+            element.mark_pointer_paint_dirty()
           }
           { changed, activated: false, focused: None }
         }
@@ -689,7 +737,7 @@ fn handle_button_element_pointer(
   let changed = tap.next_state != element.control.button_state || tap.activated
   element.control.button_state = tap.next_state
   if changed {
-    element.dirty.mark_paint()
+    element.mark_pointer_paint_dirty()
   }
   { changed, activated: tap.activated, focused: None }
 }
@@ -703,7 +751,7 @@ fn handle_checkbox_element_pointer(
 ) -> ElementEventResult {
   if event.phase == PointerPhase::Up && frame.contains(event.position) {
     data.checked.set(!data.checked.get())
-    element.dirty.mark_paint()
+    element.mark_pointer_paint_dirty()
     { changed: true, activated: true, focused: None }
   } else {
     { changed: false, activated: false, focused: None }
@@ -731,7 +779,7 @@ fn handle_picker_element_pointer(
     )
     if main_button_clicked && !list_frame.contains(event.position) {
       element.control.picker_expanded = false
-      element.dirty.mark_paint()
+      element.mark_pointer_paint_dirty()
       { changed: true, activated: false, focused: None }
     } else if event.phase == PointerPhase::Up &&
       list_frame.contains(event.position) {
@@ -741,7 +789,7 @@ fn handle_picker_element_pointer(
         let clicked_item = data.items[clicked_index]
         data.selected.set(clicked_item.id)
         element.control.picker_expanded = false
-        element.dirty.mark_paint()
+        element.mark_pointer_paint_dirty()
         { changed: true, activated: true, focused: None }
       } else {
         { changed: false, activated: false, focused: None }
@@ -751,7 +799,7 @@ fn handle_picker_element_pointer(
     }
   } else if main_button_clicked {
     element.control.picker_expanded = true
-    element.dirty.mark_paint()
+    element.mark_pointer_paint_dirty()
     { changed: true, activated: false, focused: None }
   } else {
     { changed: false, activated: false, focused: None }
@@ -779,7 +827,7 @@ fn handle_datepicker_element_pointer(
     if main_button_clicked && !panel_frame.contains(event.position) {
       // 点击了外部区域，收起面板
       element.control.datepicker_expanded = false
-      element.dirty.mark_paint()
+      element.mark_pointer_paint_dirty()
       { changed: true, activated: false, focused: None }
     } else if event.phase == PointerPhase::Up &&
       panel_frame.contains(event.position) {
@@ -812,7 +860,7 @@ fn handle_datepicker_element_pointer(
           { ..view_date, month: view_date.month - 1 }
         }
         element.control.datepicker_view = new_view_date
-        element.dirty.mark_paint()
+        element.mark_pointer_paint_dirty()
         { changed: true, activated: false, focused: None }
       } else if right_button_frame.contains(event.position) {
         // 右导航按钮：下一个月
@@ -823,7 +871,7 @@ fn handle_datepicker_element_pointer(
           { ..view_date, month: view_date.month + 1 }
         }
         element.control.datepicker_view = new_view_date
-        element.dirty.mark_paint()
+        element.mark_pointer_paint_dirty()
         { changed: true, activated: false, focused: None }
       } else if event.position.y >= start_y {
         // 点击了日期单元格
@@ -846,7 +894,7 @@ fn handle_datepicker_element_pointer(
           if date_value_in_range(new_selected, data.min_date, data.max_date) {
             data.selected.set(new_selected)
             element.control.datepicker_expanded = false
-            element.dirty.mark_paint()
+            element.mark_pointer_paint_dirty()
             { changed: true, activated: true, focused: None }
           } else {
             { changed: false, activated: false, focused: None }
@@ -864,7 +912,7 @@ fn handle_datepicker_element_pointer(
     // 打开日期选择器
     element.control.datepicker_expanded = true
     element.control.datepicker_view = data.selected.get()
-    element.dirty.mark_paint()
+    element.mark_pointer_paint_dirty()
     { changed: true, activated: false, focused: None }
   } else {
     { changed: false, activated: false, focused: None }
@@ -893,7 +941,7 @@ fn handle_searchbar_element_pointer(
         Some(on_clear) => on_clear()
         None => ()
       }
-      element.dirty.mark_paint()
+      element.mark_pointer_paint_dirty()
       return { changed: true, activated: true, focused: Some(element.id) }
     }
   }

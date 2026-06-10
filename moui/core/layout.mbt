@@ -374,12 +374,21 @@ fn scroll_child_frame(
 ) -> Rect {
   let viewport = data.viewport.unwrap_or(frame.size)
   let child_size = child.intrinsic_size()
+  let offset = scroll_view_offset(data)
   Rect::new(
-    x=frame.origin.x - data.offset.x,
-    y=frame.origin.y - data.offset.y,
+    x=frame.origin.x - offset.x,
+    y=frame.origin.y - offset.y,
     width=max_double(viewport.width, child_size.width),
     height=max_double(viewport.height, child_size.height),
   )
+}
+
+///|
+fn scroll_view_offset(data : ScrollViewSpec) -> Point {
+  match data.scroll_state {
+    Some(state) => state.offset()
+    None => data.offset
+  }
 }
 
 ///|
