@@ -119,6 +119,7 @@ fn ElementNode::render_with_environment(
     TextFieldSpec(data) =>
       append_text_field_commands(
         commands,
+        overlay_commands,
         self,
         data,
         bounds,
@@ -130,6 +131,7 @@ fn ElementNode::render_with_environment(
         commands,
         children,
         post_commands,
+        overlay_commands,
         self,
         data,
         bounds,
@@ -177,7 +179,7 @@ fn ElementNode::render_with_environment(
       )
     SearchBarSpec(data) =>
       append_searchbar_commands(
-        commands, self, data, bounds, environment, focused,
+        commands, overlay_commands, self, data, bounds, environment, focused,
       )
     SheetSpec(data) => {
       // Sheet background and shadow
