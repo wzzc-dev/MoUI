@@ -1,70 +1,49 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-usage() {
-  cat <<'EOF'
-Usage: scripts/verify-acceptance-log.sh LOG_PATH [options]
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+workspace_root="$(cd "$repo_root/.." && pwd)"
+tool_package="tools/moui_skia/verify_acceptance_log"
+tool_dir="$workspace_root/$tool_package"
 
-Checks a real Skia acceptance summary log for the required pass fields:
-  smoke_status=0
-  native_smoke_marker=passed
-  native_pkg_restore=passed
-
-Options:
-  --require-commit   Also require skia_commit=<40 hex chars>.
-  -h, --help         Show this help.
-EOF
-}
-
-if [[ $# -lt 1 ]]; then
-  usage >&2
-  exit 2
+if [[ ! -d "$tool_dir" && -d "$repo_root/$tool_package" ]]; then
+  workspace_root="$repo_root"
+  tool_dir="$workspace_root/$tool_package"
 fi
 
-log_path="$1"
-shift
-require_commit=0
-
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --require-commit)
-      require_commit=1
-      shift
-      ;;
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    *)
-      echo "unknown argument: $1" >&2
-      usage >&2
-      exit 2
-      ;;
-  esac
-done
-
-if [[ ! -f "$log_path" ]]; then
-  echo "acceptance log is missing: $log_path" >&2
+if [[ ! -d "$tool_dir" ]]; then
+  echo "MoonBit acceptance log tool is missing: $tool_dir" >&2
   exit 1
 fi
 
-require_field() {
-  local expected="$1"
-  if ! grep -Eq "^[[:space:]]*${expected}[[:space:]]*$" "$log_path"; then
-    echo "acceptance log is missing required field: $expected" >&2
-    exit 1
-  fi
-}
-
-require_field "smoke_status=0"
-require_field "native_smoke_marker=passed"
-require_field "native_pkg_restore=passed"
-
-if [[ $require_commit -eq 1 ]]; then
-  if ! grep -Eq '^[[:space:]]*skia_commit=[0-9a-fA-F]{40}[[:space:]]*$' "$log_path"; then
-    echo "acceptance log is missing a full 40-character skia_commit hash" >&2
-    exit 1
-  fi
+args=()
+if [[ $# -gt 0 ]]; then
+  case "$1" in
+    -h|--help|--repo-root)
+      ;;
+    *)
+      log_path="$1"
+      shift
+      case "$log_path" in
+        /*) args+=("$log_path") ;;
+        *)
+          log_dir="$(dirname "$log_path")"
+          log_base="$(basename "$log_path")"
+          if [[ -d "$log_dir" ]]; then
+            args+=("$(cd "$log_dir" && pwd)/$log_base")
+          else
+            args+=("$(pwd)/$log_path")
+          fi
+          ;;
+      esac
+      ;;
+  esac
 fi
+args+=("$@")
 
-echo "Verified real Skia acceptance log in $log_path."
+cd "$workspace_root"
+moon build "$tool_package" --target native
+tool_exe="$workspace_root/_build/native/debug/build/wzzc-dev/moui_tools/moui_skia/verify_acceptance_log/verify_acceptance_log.exe"
+"$tool_exe" \
+  --repo-root "$repo_root" \
+  "${args[@]}"

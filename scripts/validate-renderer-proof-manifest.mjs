@@ -1,401 +1,52 @@
 #!/usr/bin/env node
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, join } from "node:path";
+import { spawnSync } from "node:child_process";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const usage = () => {
-  console.error(
-    "Usage: node scripts/validate-renderer-proof-manifest.mjs <renderer-proof.json> [--require-passed] [--artifact-root <dir>]",
-  );
-  process.exit(2);
-};
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const invocationRoot = process.cwd();
+const toolPackage = "tools/moui/validate_renderer_proof_manifest";
+const toolExe = join(
+  repoRoot,
+  "_build/native/debug/build/wzzc-dev/moui_tools/moui/validate_renderer_proof_manifest/validate_renderer_proof_manifest.exe",
+);
 
-const args = process.argv.slice(2);
-if (args.length < 1) usage();
-
-let manifestPath = "";
-let requirePassed = false;
-let artifactRoot = "";
-
-for (let index = 0; index < args.length; index += 1) {
-  const arg = args[index];
-  if (arg === "--require-passed") {
-    requirePassed = true;
-  } else if (arg === "--artifact-root") {
-    artifactRoot = args[++index] ?? "";
-  } else if (!manifestPath) {
-    manifestPath = arg;
-  } else {
-    usage();
-  }
+const originalArgs = process.argv.slice(2);
+const toolArgs = [ ...originalArgs ];
+if (
+  toolArgs.length > 0 &&
+  toolArgs[0] !== "-h" &&
+  toolArgs[0] !== "--help" &&
+  !toolArgs[0].startsWith("--")
+) {
+  const displayPath = toolArgs[0];
+  toolArgs[0] = resolve(invocationRoot, displayPath);
+  toolArgs.push("--display-path", displayPath);
 }
 
-if (!manifestPath) usage();
-
-const fail = message => {
-  console.error(`${manifestPath}: ${message}`);
-  process.exit(1);
-};
-
-let manifest;
-try {
-  manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-} catch (error) {
-  fail(`failed to read JSON: ${error.message}`);
-}
-
-const requiredObservationEvidence = {
-  radialGradient: ["center-mid-edge-pixels", "shader-payload"],
-  transformPixels: ["pixel-markers"],
-  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
-  zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
-  bidiLayout: ["visual-order"],
-  paragraphWrapping: ["line-metrics", "later-line-pixels"],
-  selectionRects: ["selection-rects", "line-range"],
-  graphemeEditing: ["grapheme-boundaries", "edit-actions"],
-  imeCandidateAnchor: ["candidate-anchor", "surrounding-text"],
-  imeCompositionVisual: ["composition-range", "preedit-pixels"],
-  asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
-};
-
-const allowedBackends = new Set(["wgpu-native", "skia-native", "webgpu-wasm"]);
-const allowedPlatforms = new Set(["macos", "windows", "linux", "web"]);
-const allowedStatus = new Set(["passed", "failed", "pending"]);
-
-const requireObject = (value, label) => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    fail(`${label} must be an object`);
+const run = (command, args, options = {}) => {
+  const result = spawnSync(command, args, {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
+  if (result.stdout && !(options.failureStdoutToStderr && result.status !== 0)) {
+    process.stdout.write(result.stdout);
   }
-  return value;
-};
-
-const requireString = (object, key, label) => {
-  const value = object[key];
-  if (typeof value !== "string" || value.trim() === "") {
-    fail(`${label}.${key} must be a non-empty string`);
+  if (result.stdout && options.failureStdoutToStderr && result.status !== 0) {
+    process.stderr.write(result.stdout);
   }
-  return value;
-};
-
-const requireArray = (object, key, label) => {
-  const value = object[key];
-  if (!Array.isArray(value)) {
-    fail(`${label}.${key} must be an array`);
+  if (result.stderr) {
+    process.stderr.write(result.stderr);
   }
-  return value;
-};
-
-const requireNumber = (object, key, label) => {
-  const value = object[key];
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    fail(`${label}.${key} must be a finite number`);
+  if (result.error) {
+    console.error(result.error.message);
+    process.exit(1);
   }
-  return value;
-};
-
-const requireStringArray = (object, key, label) => {
-  const value = requireArray(object, key, label);
-  for (const [index, item] of value.entries()) {
-    if (typeof item !== "string" || item.trim() === "") {
-      fail(`${label}.${key}[${index}] must be a non-empty string`);
-    }
-  }
-  return value;
-};
-
-const requireArtifactPaths = (paths, label) => {
-  if (paths.length === 0) fail(`${label} must include at least one artifact path`);
-  for (const [index, artifact] of paths.entries()) {
-    if (typeof artifact !== "string" || artifact.trim() === "") {
-      fail(`${label}[${index}] must be a non-empty string`);
-    }
-    if (!artifact.startsWith("artifacts/")) {
-      fail(`${label}[${index}] must stay under artifacts/`);
-    }
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
   }
 };
 
-const listFiles = root => {
-  const out = [];
-  const visit = dir => {
-    for (const entry of readdirSync(dir)) {
-      const path = join(dir, entry);
-      const stat = statSync(path);
-      if (stat.isDirectory()) {
-        visit(path);
-      } else if (stat.isFile()) {
-        out.push(path.replace(/\\/g, "/"));
-      }
-    }
-  };
-  visit(root);
-  return out;
-};
-
-let artifactFiles;
-const artifactFileExists = artifact => {
-  if (!artifactRoot) return true;
-  if (!existsSync(artifactRoot)) {
-    fail(`artifact root does not exist: ${artifactRoot}`);
-  }
-  const normalized = artifact.replace(/\\/g, "/");
-  if (existsSync(join(artifactRoot, normalized))) return true;
-  artifactFiles ??= listFiles(artifactRoot);
-  return artifactFiles.some(path => path.endsWith(`/${normalized}`)) ||
-    artifactFiles.some(path => basename(path) === basename(normalized));
-};
-
-const requireArtifactFilesExist = (paths, label) => {
-  if (!artifactRoot) return;
-  for (const artifact of paths) {
-    if (!artifactFileExists(artifact)) {
-      fail(`${label} missing uploaded artifact file: ${artifact}`);
-    }
-  }
-};
-
-const schemaVersion = manifest.schemaVersion;
-if (schemaVersion !== 1) fail("schemaVersion must be 1");
-if (manifest.mode !== "renderer-proof") fail("mode must be 'renderer-proof'");
-
-const backend = requireString(manifest, "backend", "manifest");
-if (!allowedBackends.has(backend)) fail(`backend '${backend}' is not recognized`);
-if (backend === "skia-native") {
-  requiredObservationEvidence.colorEmojiPixels = [
-    "high-saturation-pixels",
-    "glyph-or-raster",
-    "font-metadata",
-    "glyph-metadata",
-    "fallback-request",
-    "emoji-hint",
-    "stable-glyph-key",
-  ];
-  requiredObservationEvidence.bidiLayout = [
-    "engine=skparagraph",
-    "bidi_visual_order_ready=true",
-    "visual-order",
-  ];
-  requiredObservationEvidence.paragraphWrapping = [
-    "engine=skparagraph",
-    "native_paragraph_ready=true",
-    "line-metrics",
-    "later-line-pixels",
-  ];
-  requiredObservationEvidence.selectionRects = [
-    "engine=skparagraph",
-    "selection-rects",
-    "line-range",
-    "rect-geometry",
-    "hit-test",
-  ];
-  requiredObservationEvidence.imeCandidateAnchor = [
-    "candidate-anchor",
-    "surrounding-text",
-    "grapheme-boundary",
-    "utf8-offsets",
-  ];
-  requiredObservationEvidence.imeCompositionVisual = [
-    "composition-range",
-    "composition-cursor",
-    "preedit-pixels",
-  ];
-}
-
-const platform = requireString(manifest, "platform", "manifest");
-if (!allowedPlatforms.has(platform)) fail(`platform '${platform}' is not recognized`);
-if (backend === "webgpu-wasm" && platform !== "web") {
-  fail("webgpu-wasm renderer proof must use platform 'web'");
-}
-if (backend !== "webgpu-wasm" && platform === "web") {
-  fail(`${backend} renderer proof must use a native platform`);
-}
-
-const status = requireString(manifest, "status", "manifest");
-if (!allowedStatus.has(status)) fail(`status '${status}' is not recognized`);
-if (requirePassed && status !== "passed") {
-  fail("status must be passed when --require-passed is set");
-}
-
-const provenance = requireObject(manifest.provenance, "provenance");
-const provenanceKind = requireString(provenance, "kind", "provenance");
-if (status === "passed" && provenanceKind !== "github-actions") {
-  fail("passed renderer proof requires github-actions provenance");
-}
-for (const key of ["workflow", "job", "runId", "runUrl", "runner", "artifactName"]) {
-  requireString(provenance, key, "provenance");
-}
-if (provenance.runUrl && !provenance.runUrl.startsWith("https://github.com/")) {
-  fail("provenance.runUrl must be a GitHub Actions URL");
-}
-
-const artifacts = requireArray(manifest, "artifacts", "manifest");
-requireArtifactPaths(artifacts, "manifest.artifacts");
-if (status === "passed") requireArtifactFilesExist(artifacts, "manifest.artifacts");
-
-const observations = requireObject(manifest.observations, "observations");
-const actualObservationKeys = Object.keys(observations).sort();
-const expectedObservationKeys = Object.keys(requiredObservationEvidence).sort();
-if (JSON.stringify(actualObservationKeys) !== JSON.stringify(expectedObservationKeys)) {
-  fail(`observations must contain exactly: ${expectedObservationKeys.join(", ")}`);
-}
-
-for (const key of expectedObservationKeys) {
-  const observation = requireObject(observations[key], `observations.${key}`);
-  const observationStatus = requireString(observation, "status", `observations.${key}`);
-  if (!allowedStatus.has(observationStatus)) {
-    fail(`observations.${key}.status '${observationStatus}' is not recognized`);
-  }
-  const evidence = requireArray(observation, "evidence", `observations.${key}`);
-  const observationArtifacts = requireArray(observation, "artifacts", `observations.${key}`);
-  requireArtifactPaths(observationArtifacts, `observations.${key}.artifacts`);
-  if (status === "passed" || observationStatus === "passed") {
-    requireArtifactFilesExist(observationArtifacts, `observations.${key}.artifacts`);
-  }
-  for (const [index, item] of evidence.entries()) {
-    if (typeof item !== "string" || item.trim() === "") {
-      fail(`observations.${key}.evidence[${index}] must be a non-empty string`);
-    }
-    if (
-      item.includes("caret-only") ||
-      item.includes("coverage-only") ||
-      item.includes("package-only") ||
-      item.includes("preflight-only") ||
-      item.includes("heuristic")
-    ) {
-      fail(
-        `observations.${key}.evidence must not use caret-only, coverage-only, package-only, preflight-only, or heuristic proof`,
-      );
-    }
-  }
-  if (status === "passed" || observationStatus === "passed") {
-    if (observationStatus !== "passed") {
-      fail(`observations.${key}.status must be passed for passed renderer proof`);
-    }
-    for (const required of requiredObservationEvidence[key]) {
-      if (!evidence.includes(required)) {
-        fail(`observations.${key}.evidence must include '${required}'`);
-      }
-    }
-    if (key === "colorEmojiPixels") {
-      const metadata = requireObject(observation.metadata, "observations.colorEmojiPixels.metadata");
-      const font = requireObject(metadata.font, "observations.colorEmojiPixels.metadata.font");
-      requireString(font, "family", "observations.colorEmojiPixels.metadata.font");
-      requireString(font, "source", "observations.colorEmojiPixels.metadata.font");
-      requireString(font, "textSystem", "observations.colorEmojiPixels.metadata.font");
-      const glyph = requireObject(metadata.glyph, "observations.colorEmojiPixels.metadata.glyph");
-      const glyphFormat = requireString(glyph, "format", "observations.colorEmojiPixels.metadata.glyph");
-      if (glyphFormat !== "rgba") {
-        fail("observations.colorEmojiPixels.metadata.glyph.format must be rgba");
-      }
-      if (requireNumber(glyph, "glyphCount", "observations.colorEmojiPixels.metadata.glyph") < 1) {
-        fail("observations.colorEmojiPixels.metadata.glyph.glyphCount must be at least 1");
-      }
-      if (requireNumber(glyph, "clusterCount", "observations.colorEmojiPixels.metadata.glyph") < 1) {
-        fail("observations.colorEmojiPixels.metadata.glyph.clusterCount must be at least 1");
-      }
-      const glyphKey = requireString(glyph, "key", "observations.colorEmojiPixels.metadata.glyph");
-      if (requireNumber(glyph, "width", "observations.colorEmojiPixels.metadata.glyph") <= 0) {
-        fail("observations.colorEmojiPixels.metadata.glyph.width must be greater than 0");
-      }
-      if (requireNumber(glyph, "height", "observations.colorEmojiPixels.metadata.glyph") <= 0) {
-        fail("observations.colorEmojiPixels.metadata.glyph.height must be greater than 0");
-      }
-      if (
-        requireNumber(
-          glyph,
-          "highSaturationPixels",
-          "observations.colorEmojiPixels.metadata.glyph",
-        ) < 8
-      ) {
-        fail("observations.colorEmojiPixels.metadata.glyph.highSaturationPixels must be at least 8");
-      }
-      requireNumber(glyph, "alphaPixels", "observations.colorEmojiPixels.metadata.glyph");
-      if (backend === "skia-native") {
-        const fallbackScriptTag = requireString(
-          font,
-          "fallbackScriptTag",
-          "observations.colorEmojiPixels.metadata.font",
-        );
-        const fallbackLanguageTagCount = requireNumber(
-          font,
-          "fallbackLanguageTagCount",
-          "observations.colorEmojiPixels.metadata.font",
-        );
-        if (fallbackLanguageTagCount < 1) {
-          fail(
-            "observations.colorEmojiPixels.metadata.font.fallbackLanguageTagCount must be at least 1",
-          );
-        }
-        const fallbackLanguageTags = requireStringArray(
-          font,
-          "fallbackLanguageTags",
-          "observations.colorEmojiPixels.metadata.font",
-        );
-        if (fallbackLanguageTags.length < 1) {
-          fail(
-            "observations.colorEmojiPixels.metadata.font.fallbackLanguageTags must include at least one tag",
-          );
-        }
-        if (fallbackLanguageTags[0] !== fallbackScriptTag) {
-          fail(
-            "observations.colorEmojiPixels.metadata.font.fallbackLanguageTags[0] must match fallbackScriptTag",
-          );
-        }
-        if (fallbackLanguageTags.length !== fallbackLanguageTagCount) {
-          fail(
-            "observations.colorEmojiPixels.metadata.font.fallbackLanguageTags length must match fallbackLanguageTagCount",
-          );
-        }
-        const fallbackRequestLanguageCount = requireNumber(
-          font,
-          "fallbackRequestLanguageCount",
-          "observations.colorEmojiPixels.metadata.font",
-        );
-        if (fallbackRequestLanguageCount !== fallbackLanguageTagCount) {
-          fail(
-            "observations.colorEmojiPixels.metadata.font.fallbackRequestLanguageCount must match fallbackLanguageTagCount",
-          );
-        }
-        if (
-          requireNumber(
-            glyph,
-            "resolvedMissingGlyphCount",
-            "observations.colorEmojiPixels.metadata.glyph",
-          ) < 0
-        ) {
-          fail("observations.colorEmojiPixels.metadata.glyph.resolvedMissingGlyphCount must be non-negative");
-        }
-        if (glyph.missingGlyphRecoveryReady !== true) {
-          fail("observations.colorEmojiPixels.metadata.glyph.missingGlyphRecoveryReady must be true");
-        }
-        const fallbackRequestCharacter = requireNumber(
-          glyph,
-          "fallbackRequestCharacter",
-          "observations.colorEmojiPixels.metadata.glyph",
-        );
-        if (fallbackRequestCharacter <= 0) {
-          fail("observations.colorEmojiPixels.metadata.glyph.fallbackRequestCharacter must be greater than 0");
-        }
-        const expectedGlyphKeyParts = [
-          font.source,
-          font.textSystem,
-          font.shaper,
-          `script=${fallbackScriptTag}`,
-          `langs=${fallbackRequestLanguageCount}`,
-          `lang-tags=${fallbackLanguageTags.join("+")}`,
-          `emoji-u+${fallbackRequestCharacter}`,
-          glyphFormat,
-        ];
-        for (const part of expectedGlyphKeyParts) {
-          if (!glyphKey.includes(part)) {
-            fail(
-              `observations.colorEmojiPixels.metadata.glyph.key must include '${part}'`,
-            );
-          }
-        }
-      }
-    }
-  }
-}
-
-console.log(`${manifestPath}: ok (renderer proof manifest)`);
+run("moon", [ "build", toolPackage, "--target", "native" ]);
+run(toolExe, toolArgs, { failureStdoutToStderr: true });
