@@ -53,8 +53,8 @@ fn ElementNode::render_with_environment(
 ) -> RenderNode {
   let bounds = placed.frame
   if environment.matches_default_cache_key() &&
-    !self.dirty.needs_paint &&
-    !self.dirty.needs_layout &&
+    !self.has_dirty_paint() &&
+    !self.has_dirty_layout() &&
     self.render_cache.cached_render_frame == Some(bounds) &&
     self.render_cache.cached_render_focused == focused {
     match self.render_cache.cached_render {
@@ -323,9 +323,14 @@ fn ElementNode::render_with_environment(
       )
       commands.push(PushClip(clip))
       if self.children.length() > 0 && placed.children.length() > 0 {
+        let child_placed = scroll_child_render_node(
+          bounds,
+          data,
+          placed.children[0],
+        )
         children.push(
           self.children[0].render_with_environment(
-            placed.children[0],
+            child_placed,
             focused,
             environment,
           ),
@@ -427,6 +432,51 @@ fn ElementNode::render_with_environment(
     self.render_cache.cached_render = Some(render)
   }
   render
+}
+
+///|
+fn scroll_child_render_frame(
+  frame : Rect,
+  data : ScrollViewSpec,
+  placed_child : PlacedNode,
+) -> Rect {
+  let offset = scroll_view_offset(data)
+  Rect::new(
+    x=frame.origin.x - offset.x,
+    y=frame.origin.y - offset.y,
+    width=placed_child.frame.size.width,
+    height=placed_child.frame.size.height,
+  )
+}
+
+///|
+fn scroll_child_render_node(
+  frame : Rect,
+  data : ScrollViewSpec,
+  placed_child : PlacedNode,
+) -> PlacedNode {
+  let target = scroll_child_render_frame(frame, data, placed_child)
+  let dx = target.origin.x - placed_child.frame.origin.x
+  let dy = target.origin.y - placed_child.frame.origin.y
+  translate_placed_node(placed_child, dx~, dy~)
+}
+
+///|
+fn translate_placed_node(
+  node : PlacedNode,
+  dx~ : Double,
+  dy~ : Double,
+) -> PlacedNode {
+  {
+    ..node,
+    frame: Rect::new(
+      x=node.frame.origin.x + dx,
+      y=node.frame.origin.y + dy,
+      width=node.frame.size.width,
+      height=node.frame.size.height,
+    ),
+    children: node.children.map(child => translate_placed_node(child, dx~, dy~)),
+  }
 }
 
 ///|

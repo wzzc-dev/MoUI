@@ -94,7 +94,7 @@ test "scroll view handles wheel delta through callback" {
 }
 
 ///|
-test "state backed scroll updates layout without activation rebuild" {
+test "state backed scroll repaints without activation rebuild or layout pass" {
   let scroll = ScrollState::new()
   let root : View[Unit] = View::scroll(
     child=View::text(
@@ -110,7 +110,12 @@ test "state backed scroll updates layout without activation rebuild" {
     root~,
     size=Size::new(width=80.0, height=40.0),
   )
-  ignore(runtime.draw_commands())
+  let first_commands = runtime.draw_commands()
+  match draw_text_frame(first_commands, "Scrolled") {
+    Some(frame) => inspect(frame.origin.y, content="0")
+    None => inspect("missing", content="0")
+  }
+  let layout_passes = runtime.state.layout_pass_count
   runtime.dispatch_event(
     Pointer(
       PointerEvent::new(
@@ -122,8 +127,50 @@ test "state backed scroll updates layout without activation rebuild" {
   )
   inspect(scroll.offset().y, content="12")
   inspect(runtime.needs_rebuild(), content="false")
-  inspect(runtime.needs_layout(), content="true")
+  inspect(runtime.needs_layout(), content="false")
   inspect(runtime.needs_paint(), content="true")
+  ignore(runtime.draw_frame())
+  match draw_text_frame(runtime.draw_commands(), "Scrolled") {
+    Some(frame) => inspect(frame.origin.y, content="-12")
+    None => inspect("missing", content="-12")
+  }
+  inspect(runtime.state.layout_pass_count, content="\{layout_passes}")
+}
+
+///|
+test "state backed scroll repositions repaint boundary child without layout" {
+  let scroll = ScrollState::new()
+  let root : View[Unit] = View::scroll(
+    child=View::text(
+      text="Cached child",
+      size=Size::new(width=120.0, height=80.0),
+      font=FontSpec::new(),
+      color=Color::black(),
+    ).repaint_boundary(),
+    viewport=Some(Size::new(width=80.0, height=40.0)),
+    state=Some(scroll),
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=Size::new(width=80.0, height=40.0),
+  )
+  ignore(runtime.draw_commands())
+  let layout_passes = runtime.state.layout_pass_count
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Move,
+        wheel_delta=Point::new(x=0.0, y=-12.0),
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  match draw_text_frame(runtime.draw_commands(), "Cached child") {
+    Some(frame) => inspect(frame.origin.y, content="-12")
+    None => inspect("missing", content="-12")
+  }
+  inspect(runtime.state.layout_pass_count, content="\{layout_passes}")
 }
 
 ///|

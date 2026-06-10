@@ -370,9 +370,9 @@ test "showcase sidebar catalog scrolls to lower sections" {
 ///|
 test "showcase detail panel scrolls long section content" {
   let size = @core.Size::new(width=760.0, height=420.0)
-  let runtime = @app.ShowcaseModel::new()
+  let model = @app.ShowcaseModel::new()
     .update(@app.ShowcaseMsg::SelectSection("layout"))
-    .runtime(width=760.0, height=420.0)
+  let runtime = model.runtime(width=760.0, height=420.0)
   let initial_commands = runtime.draw_commands()
   assert_true(text_within(initial_commands, "Layout", size))
   assert_false(text_within(initial_commands, "Resizable Panel", size))
@@ -385,6 +385,7 @@ test "showcase detail panel scrolls long section content" {
       ),
     ),
   )
+  assert_true(model.detail_scroll.offset().y > 0.0)
   runtime.dispatch_event(@core.AppEvent::Redraw(@core.RedrawReason::Explicit))
   let scrolled_commands = runtime.draw_commands()
   assert_true(text_within(scrolled_commands, "Resizable Panel", size))

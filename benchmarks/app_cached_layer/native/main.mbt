@@ -320,13 +320,15 @@ fn app_bench_cached_frame(
     pipeline_before,
     app_bench_pipeline_counters(runtime),
   )
-  if !result.presented {
-    if result.cache_miss_count == 0 || result.missing_layer_keys.length() == 0 {
+  let mut pending_result = result
+  while !pending_result.presented && followup_count < 6 {
+    if pending_result.cache_miss_count == 0 ||
+      pending_result.missing_layer_keys.length() == 0 {
       fail_bench(
         "\{label} produced an unpresented frame without cache-miss keys",
       )
     }
-    for key in result.missing_layer_keys {
+    for key in pending_result.missing_layer_keys {
       runtime.invalidate_cached_layer_key(key)
     }
     followup_count = followup_count + 1
@@ -363,9 +365,6 @@ fn app_bench_cached_frame(
     cache_miss_count = cache_miss_count + follow_result.cache_miss_count
     cache_update_count = cache_update_count + follow_result.cache_update_count
     cache_evict_count = cache_evict_count + follow_result.cache_evict_count
-    if !follow_result.presented {
-      fail_bench("\{label} cache-miss follow-up frame was not presented")
-    }
     pipeline = app_bench_pipeline_plus(
       pipeline,
       app_bench_pipeline_delta(
@@ -373,7 +372,13 @@ fn app_bench_cached_frame(
         app_bench_pipeline_counters(runtime),
       ),
     )
-    present_count = present_count + 1
+    if follow_result.presented {
+      present_count = present_count + 1
+    }
+    pending_result = follow_result
+  }
+  if !pending_result.presented {
+    fail_bench("\{label} cache-miss follow-up frame was not presented")
   }
   {
     submitted_frames,

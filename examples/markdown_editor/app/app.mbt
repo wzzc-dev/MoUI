@@ -121,7 +121,6 @@ priv enum MarkdownEditorMsg {
   IndentLines
   OutdentLines
   ToggleTaskAt(Int)
-  EditorScrollTo(Double)
 }
 
 ///|
@@ -1492,7 +1491,6 @@ fn MarkdownEditorApp::update(
     IndentLines => self.shift_current_lines(indent=true)
     OutdentLines => self.shift_current_lines(indent=false)
     ToggleTaskAt(offset) => self.toggle_task_at(offset)
-    EditorScrollTo(y) => self.editor_scroll.scroll_to(x=0.0, y~)
   }
   self
 }
@@ -3374,7 +3372,7 @@ fn markdown_editor_active_outline_index(
 
 ///|
 fn editor_source_layout(
-  _app : MarkdownEditorApp,
+  app : MarkdownEditorApp,
   source : String,
   snapshot : MarkdownEditorSnapshot,
   editor_font : @core.FontSpec,
@@ -3428,15 +3426,7 @@ fn editor_source_layout(
     offset=normalized_offset,
     width=editor_width,
     height=viewport_height,
-    on_scroll=Some(delta => {
-      EditorScrollTo(
-        markdown_editor_clamp_double(
-          normalized_offset.y - delta.y,
-          0.0,
-          max_scroll,
-        ),
-      )
-    }),
+    state=Some(app.editor_scroll),
   )
   let editor_view = if !show_source {
     floating_target_palette(
