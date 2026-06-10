@@ -385,11 +385,13 @@ layer.
 The SwiftUI/Flutter/Compose parity work should grow focused conformance tests
 before it grows broad platform claims:
 
-- Runtime: dirty component rebuilds, keyed effect reuse/cancellation, unmount
-  cleanup, and saveable state restore.
+- Runtime: dirty component rebuilds, retained `DamageRegion` calculation,
+  repaint-boundary cache-key/revision behavior, keyed effect reuse/cancellation,
+  unmount cleanup, and saveable state restore.
 - Layout/render: custom child layout delegates, baseline/alignment follow-ups,
   lazy viewport behavior, clip/transform/opacity/image/text command stability,
-  and renderer capability report synchronization.
+  cached-layer command expansion/replay, and renderer capability report
+  synchronization.
 - Input/accessibility: gesture arbitration, action-command matching and
   dispatch, explicit focus traversal helpers, shortcut dispatch, IME/text
   selection, clipboard service routing, file drop dispatch, and semantics action
@@ -401,7 +403,8 @@ before it grows broad platform claims:
   behavior, native async image completion source schedule/publish/apply/redraw/cleanup,
   native provider async-image hook wiring,
   app-owned route history/deep-link state, devtool snapshots, render
-  inspector scope diagnostics, frame-profile counters,
+  inspector scope diagnostics, frame-profile counters, redraw scheduler
+  coalescing/follow-up behavior, render-frame damage/cache metadata,
   guidance freshness, and example builds. Showcase app tests also assert that
   the Navigation Shell surfaces route history state and app-sampled route
   transition state, and that the Diagnostics route surfaces render command and

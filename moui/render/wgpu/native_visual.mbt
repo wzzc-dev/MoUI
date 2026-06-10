@@ -360,6 +360,48 @@ fn build_native_draw_plan_range(
                 next_index: index + 1,
               }
             }
+          @core.DrawCommand::BeginCachedLayer(spec) => {
+            let mask = native_layer_mask_for_state(
+              state,
+              @core.LayerMask::RectMask(spec.frame),
+            )
+            let child = build_native_draw_plan_range(
+              cache,
+              atlas,
+              commands,
+              start_index=index + 1,
+              stop_at_layer=true,
+              stop_at_filter=false,
+              initial_state=native_scoped_child_paint_state(state),
+              size,
+              scale_factor,
+            )
+            items.push(
+              NativeDrawItem::NativeLayer({
+                plan: child.plan,
+                opacity: state.opacity,
+                blend_mode: @core.BlendMode::SourceOver,
+                mask,
+                filter: None,
+                scissor: native_layer_scissor(state, size, scale_factor, mask),
+              }),
+            )
+            index = child.next_index - 1
+          }
+          @core.DrawCommand::EndCachedLayer(_) =>
+            if stop_at_layer {
+              return {
+                plan: {
+                  visual_vertices,
+                  text_vertices,
+                  image_vertices,
+                  items,
+                  atlas_dirty: was_dirty || atlas.dirty,
+                },
+                next_index: index + 1,
+              }
+            }
+          @core.DrawCommand::DrawCachedLayer(_) => ()
           @core.DrawCommand::PushFilter(filter) => {
             let child = build_native_draw_plan_range(
               cache,

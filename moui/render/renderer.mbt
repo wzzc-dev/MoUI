@@ -73,7 +73,19 @@ pub(all) struct RendererDescriptor {
 pub(all) struct RenderFrameInput {
   metrics : RendererSurfaceMetrics
   commands : Array[@core.DrawCommand]
+  damage : @core.DamageRegion
   clear_color : @core.Color?
+  cache_epoch : Int
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct RenderFrameResult {
+  presented : Bool
+  cache_hit_count : Int
+  cache_miss_count : Int
+  cache_update_count : Int
+  cache_evict_count : Int
+  missing_layer_keys : Array[String]
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -225,9 +237,30 @@ pub fn RendererDescriptor::new(
 pub fn RenderFrameInput::new(
   metrics~ : RendererSurfaceMetrics,
   commands~ : Array[@core.DrawCommand],
+  damage? : @core.DamageRegion = @core.DamageRegion::full("legacy render frame input"),
   clear_color? : @core.Color? = None,
+  cache_epoch? : Int = 0,
 ) -> RenderFrameInput {
-  { metrics, commands, clear_color }
+  { metrics, commands, damage, clear_color, cache_epoch }
+}
+
+///|
+pub fn RenderFrameResult::new(
+  presented? : Bool = true,
+  cache_hit_count? : Int = 0,
+  cache_miss_count? : Int = 0,
+  cache_update_count? : Int = 0,
+  cache_evict_count? : Int = 0,
+  missing_layer_keys? : Array[String] = [],
+) -> RenderFrameResult {
+  {
+    presented,
+    cache_hit_count,
+    cache_miss_count,
+    cache_update_count,
+    cache_evict_count,
+    missing_layer_keys,
+  }
 }
 
 ///|
@@ -294,6 +327,9 @@ pub fn collect_rect_batches(
       | @core.DrawCommand::PopOpacity
       | @core.DrawCommand::PushLayer(_)
       | @core.DrawCommand::PopLayer
+      | @core.DrawCommand::BeginCachedLayer(_)
+      | @core.DrawCommand::EndCachedLayer(_)
+      | @core.DrawCommand::DrawCachedLayer(_)
       | @core.DrawCommand::PushFilter(_)
       | @core.DrawCommand::PopFilter
       | @core.DrawCommand::DrawPath(_)

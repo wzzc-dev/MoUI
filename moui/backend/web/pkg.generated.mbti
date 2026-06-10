@@ -133,6 +133,7 @@ pub fn WebRenderer::dispose(Self) -> Unit
 pub fn WebRenderer::image_resource_snapshot(Self) -> @render.ImageResourceSnapshot
 pub fn WebRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
 pub fn WebRenderer::render(Self, Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit raise @webgpu_adapter.WebGpuHostError
+pub fn WebRenderer::render_frame(Self, @wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult
 pub fn WebRenderer::resize(Self, @host.HostSurfaceMetrics) -> Unit raise @webgpu_adapter.WebGpuHostError
 pub fn WebRenderer::text_system(Self) -> @wzzc-dev/moui/core.TextSystem
 
