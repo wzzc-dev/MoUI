@@ -406,6 +406,7 @@ moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
 moon test moui/render --target native
 moon test moui/render/skia --target native
+moon run moui/tests/skia_cached_layer_benchmark/native --target native
 moon check moui/tests/skia_text_emoji_smoke/native --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 node scripts/test-webgpu-runtime-radial.mjs

@@ -244,6 +244,7 @@ moon test moui/views --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/web --target wasm-gc
 moon test moui/render/skia --target native
+moon run moui/tests/skia_cached_layer_benchmark/native --target native
 moon check moui/tests/skia_text_emoji_smoke/native --target native
 moon test moui_skia --target native
 moon test moui/render/wgpu/cosmic_text --target native
