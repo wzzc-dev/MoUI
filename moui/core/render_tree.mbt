@@ -14,11 +14,11 @@ fn RenderNode::collect_draw_commands(
 fn RenderNode::collect_frame_commands(
   self : RenderNode,
   commands : Array[DrawCommand],
-  known_layer_keys : Array[String],
+  known_layers : Array[CachedLayerState],
 ) -> Unit {
   let overlays : Array[DrawCommand] = []
   self.collect_frame_commands_with_overlays(
-    commands, overlays, known_layer_keys,
+    commands, overlays, known_layers,
   )
   for command in overlays {
     commands.push(command)
@@ -30,28 +30,28 @@ fn RenderNode::collect_frame_commands_with_overlays(
   self : RenderNode,
   commands : Array[DrawCommand],
   overlays : Array[DrawCommand],
-  known_layer_keys : Array[String],
+  known_layers : Array[CachedLayerState],
 ) -> Unit {
   if self.is_repaint_boundary {
     match self.cached_layer_spec() {
       Some(spec) =>
-        if known_layer_keys.any(key => key == spec.key) {
+        if known_layers.has_current_cached_layer(spec) {
           commands.push(DrawCachedLayer(spec))
         } else {
           commands.push(BeginCachedLayer(spec))
           self.collect_uncached_frame_commands_with_overlays(
-            commands, overlays, known_layer_keys,
+            commands, overlays, known_layers,
           )
           commands.push(EndCachedLayer(spec.key))
         }
       None =>
         self.collect_uncached_frame_commands_with_overlays(
-          commands, overlays, known_layer_keys,
+          commands, overlays, known_layers,
         )
     }
   } else {
     self.collect_uncached_frame_commands_with_overlays(
-      commands, overlays, known_layer_keys,
+      commands, overlays, known_layers,
     )
   }
 }
@@ -106,14 +106,14 @@ fn RenderNode::collect_uncached_frame_commands_with_overlays(
   self : RenderNode,
   commands : Array[DrawCommand],
   overlays : Array[DrawCommand],
-  known_layer_keys : Array[String],
+  known_layers : Array[CachedLayerState],
 ) -> Unit {
   for command in self.paint_commands {
     commands.push(command)
   }
   for child in self.children {
     child.collect_frame_commands_with_overlays(
-      commands, overlays, known_layer_keys,
+      commands, overlays, known_layers,
     )
   }
   for command in self.post_paint_commands {
@@ -155,7 +155,19 @@ fn RenderNode::cached_layer_spec(self : RenderNode) -> CachedLayerSpec? {
 
 ///|
 fn RenderNode::repaint_boundary_cache_key(self : RenderNode) -> String {
-  "element=\{self.element_id.value};x=\{self.frame.origin.x};y=\{self.frame.origin.y};w=\{self.frame.size.width};h=\{self.frame.size.height};rev=\{self.content_revision}"
+  "element=\{self.element_id.value};x=\{self.frame.origin.x};y=\{self.frame.origin.y};w=\{self.frame.size.width};h=\{self.frame.size.height}"
+}
+
+///|
+fn Array::has_current_cached_layer(
+  self : Array[CachedLayerState],
+  spec : CachedLayerSpec,
+) -> Bool {
+  self.any(
+    layer =>
+      layer.key == spec.key &&
+      layer.content_revision == spec.content_revision,
+  )
 }
 
 ///|
