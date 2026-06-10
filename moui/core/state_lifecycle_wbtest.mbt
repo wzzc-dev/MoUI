@@ -231,12 +231,12 @@ test "keyed component reorder preserves subscriptions" {
   ignore(runtime.build_draw_commands())
   inspect(first.slot.listeners.length(), content="1")
   inspect(second.slot.listeners.length(), content="1")
-  inspect(first_builds.val, content="2")
-  inspect(second_builds.val, content="2")
+  inspect(first_builds.val, content="1")
+  inspect(second_builds.val, content="1")
   first.set(7)
   ignore(runtime.build_draw_commands())
-  inspect(first_builds.val, content="3")
-  inspect(second_builds.val, content="2")
+  inspect(first_builds.val, content="2")
+  inspect(second_builds.val, content="1")
 }
 
 ///|

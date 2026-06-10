@@ -112,3 +112,99 @@ test "program draw frame emits repaint boundary update then cached layer draw" {
     second.commands.any(command => command is DrawCommand::DrawCachedLayer(_)),
   )
 }
+
+///|
+enum RetainedRedrawProgramMsg {
+  RetainedRedrawIncrement
+}
+
+///|
+fn count_begin_cached_layers(commands : Array[DrawCommand]) -> Int {
+  commands.filter(command => command is DrawCommand::BeginCachedLayer(_)).length()
+}
+
+///|
+fn count_draw_cached_layers(commands : Array[DrawCommand]) -> Int {
+  commands.filter(command => command is DrawCommand::DrawCachedLayer(_)).length()
+}
+
+///|
+fn retained_redraw_button(text : String) -> View[RetainedRedrawProgramMsg] {
+  View::button(
+    text~,
+    size=Size::new(width=80.0, height=32.0),
+    font=FontSpec::new(size=12.0),
+    foreground=Color::black(),
+    background=Brush::solid(Color::gray()),
+    hovered_background=Brush::solid(Color::gray()),
+    pressed_background=Brush::solid(Color::blue()),
+    on_click=Some(RetainedRedrawIncrement),
+  )
+}
+
+///|
+fn retained_redraw_label(text : String) -> View[RetainedRedrawProgramMsg] {
+  View::text(
+    text~,
+    size=Size::new(width=80.0, height=32.0),
+    font=FontSpec::new(size=12.0),
+    color=Color::black(),
+  )
+}
+
+///|
+fn dispatch_retained_redraw_click(runtime : AppRuntime) -> Unit {
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=12.0, y=12.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=12.0, y=12.0),
+        phase=PointerPhase::Up,
+      ),
+    ),
+  )
+}
+
+///|
+test "program update preserves clean sibling repaint boundary cache" {
+  let program : Program[Int, RetainedRedrawProgramMsg] = Program::simple(
+    init=0,
+    update=(model, message) => {
+      match message {
+        RetainedRedrawIncrement => model + 1
+      }
+    },
+    view=model => {
+      View::flex(
+        axis=Axis::Horizontal,
+        spacing=8.0,
+        children=[
+          retained_redraw_button("Left \{model}")
+          .key("left")
+          .repaint_boundary(),
+          retained_redraw_label("Right").key("right").repaint_boundary(),
+        ],
+      )
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=200.0, height=60.0),
+  )
+  inspect(count_begin_cached_layers(runtime.draw_frame().commands), content="2")
+  inspect(count_draw_cached_layers(runtime.draw_frame().commands), content="2")
+  dispatch_retained_redraw_click(runtime)
+  ignore(runtime.draw_frame())
+  inspect(count_draw_cached_layers(runtime.draw_frame().commands), content="2")
+  dispatch_retained_redraw_click(runtime)
+  let updated = runtime.draw_frame()
+  inspect(count_begin_cached_layers(updated.commands), content="1")
+  inspect(count_draw_cached_layers(updated.commands), content="1")
+}

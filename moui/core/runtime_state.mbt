@@ -222,10 +222,14 @@ pub fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
   self.next_element_id = result.next_id
   self.clear_stale_pointer_capture()
   self.needs_rebuild = false
-  self.needs_layout = true
-  self.needs_paint = true
-  self.mark_layout_dirty(self.element_tree.id())
-  self.layout_pass()
+  self.needs_layout = self.element_tree.root.has_dirty_layout()
+  self.needs_paint = self.element_tree.root.has_dirty_paint()
+  if self.needs_layout || self.needs_paint {
+    self.mark_current_dirty_elements()
+  }
+  if self.needs_layout {
+    self.layout_pass()
+  }
 }
 
 ///|
@@ -1000,12 +1004,35 @@ pub fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
 ///|
 fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
   let ids : Array[ElementId] = []
-  self.element_tree.root.collect_dirty_element_ids(ids)
+  let build_ids : Array[ElementId] = []
+  let layout_ids : Array[ElementId] = []
+  let paint_ids : Array[ElementId] = []
+  self.element_tree.root.collect_dirty_element_ids_by_kind(
+    ids,
+    build_ids,
+    layout_ids,
+    paint_ids,
+  )
   if ids.is_empty() {
     self.mark_dirty(self.element_tree.id())
   } else {
     for id in ids {
-      self.queue_paint_dirty(id)
+      self.queue_dirty_element(id)
+    }
+    if !build_ids.is_empty() {
+      for id in build_ids {
+        push_unique_element_id(self.dirty_build_elements, id)
+      }
+      self.needs_rebuild = true
+    }
+    if !layout_ids.is_empty() {
+      for id in layout_ids {
+        push_unique_element_id(self.dirty_layout_elements, id)
+      }
+      self.needs_layout = true
+    }
+    for id in paint_ids {
+      push_unique_element_id(self.dirty_paint_elements, id)
     }
     self.needs_paint = true
     self.needs_redraw = true
