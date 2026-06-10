@@ -71,8 +71,12 @@ fn ElementNode::dispatch_pointer(
         text_system~,
         capture_lookup~,
       )
-    EmptySpec | TextSpec(_) | ImageSpec(_) | SpacerSpec(_) | CustomSpec(_) =>
-      { changed: false, activated: false, focused: None }
+    EmptySpec
+    | TextSpec(_)
+    | ImageSpec(_)
+    | WebViewHostSpec(_)
+    | SpacerSpec(_)
+    | CustomSpec(_) => { changed: false, activated: false, focused: None }
   }
 }
 

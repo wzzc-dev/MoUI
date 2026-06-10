@@ -80,6 +80,8 @@ pub struct MacosHostAppOptions {
   priv exit_after_first_present : Bool
   priv native_ime_runtime_evidence : Bool
   priv event_sources : @host.HostPlatformEventSources?
+  priv web_view_commands : @host.HostWebViewCommandQueue?
+  priv web_view_events : @host.HostWebViewEventSource?
 }
 
 ///|
@@ -105,6 +107,8 @@ struct MacosApp {
   platform_slots : MacosWindowPlatformSlots
   image_repaint_tracker : @host.HostImageResourceRepaintTracker
   event_sources : @host.HostPlatformEventSources?
+  web_view_commands : @host.HostWebViewCommandQueue?
+  web_view_events : @host.HostWebViewEventSource?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut exit_after_first_present : Bool
@@ -134,12 +138,16 @@ pub fn MacosHostAppOptions::new(
   exit_after_first_present? : Bool = false,
   native_ime_runtime_evidence? : Bool = false,
   event_sources? : @host.HostPlatformEventSources? = None,
+  web_view_commands? : @host.HostWebViewCommandQueue? = None,
+  web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> MacosHostAppOptions {
   {
     scene_resolver,
     exit_after_first_present,
     native_ime_runtime_evidence,
     event_sources,
+    web_view_commands,
+    web_view_events,
   }
 }
 
@@ -221,6 +229,7 @@ pub fn macos_capability_summary(
     drag_drop_ready=true,
     async_services=false,
     native_accessibility_ready=backend_info().accessibility.native_binding_ready,
+    web_view=macos_webview_capabilities(),
     description="AppKit host with clipboard, file dialog, URL, system theme, native context menu, text input, and file-drop contracts.",
   )
 }
@@ -461,6 +470,8 @@ fn create_macos_app(
     platform_slots: MacosWindowPlatformSlots::new(),
     image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
     event_sources: options.event_sources,
+    web_view_commands: options.web_view_commands,
+    web_view_events: options.web_view_events,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     exit_after_first_present: options.exit_after_first_present,
@@ -471,6 +482,9 @@ fn create_macos_app(
     native_ime_runtime_evidence_before_commit_text: "",
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
+  install_macos_webview_event_dispatcher((native_view, id, event) => {
+    app.dispatch_web_view_event(native_view, id, event)
+  })
   (event_loop, app)
 }
 
@@ -798,9 +812,10 @@ fn MacosApp::redraw_window(
     (Some(platform_slot), Some(runtime_slot)) => {
       platform_slot.window.pre_present_notify()
       runtime_slot.driver.begin_redraw()
-      let result = platform_slot.renderer.render_frame(
-        runtime_slot.driver.draw_frame(),
-      )
+      let frame = runtime_slot.driver.draw_frame()
+      let result = platform_slot.renderer.render_frame(frame)
+      sync_macos_platform_views(platform_slot.window, frame)
+      self.drain_web_view_commands(platform_slot)
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
       if result.presented {
@@ -835,6 +850,64 @@ fn MacosApp::redraw_window(
       }
     }
     _ => false
+  }
+}
+
+///|
+fn MacosApp::dispatch_web_view_event(
+  self : MacosApp,
+  raw_content_view_handle : UInt64,
+  id : String,
+  event : @core.WebViewEvent,
+) -> Unit {
+  match self.web_view_host_id(raw_content_view_handle) {
+    Some(window_id) => {
+      let host_event = @host.HostEvent::WebView(id, event)
+      match self.runtime_slots.lookup(window_id) {
+        Some(slot) => ignore(slot.driver.dispatch(host_event))
+        None => ()
+      }
+      ignore(self.publish_subscription_event(window_id, host_event))
+      match self.web_view_events {
+        Some(source) =>
+          ignore(
+            source.publish(@host.HostWebViewEvent::new(window_id~, id~, event~)),
+          )
+        None => ()
+      }
+      self.sync_text_input_session()
+      self.request_redraw_window_if_needed(window_id)
+    }
+    None => ()
+  }
+}
+
+///|
+fn MacosApp::web_view_host_id(
+  self : MacosApp,
+  raw_content_view_handle : UInt64,
+) -> @host.HostWindowId? {
+  for slot in self.platform_slots.slots {
+    match macos_content_view_handle(slot.window) {
+      Some(handle) =>
+        if handle == raw_content_view_handle {
+          return Some(slot.host_id)
+        }
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+fn MacosApp::drain_web_view_commands(
+  self : MacosApp,
+  platform_slot : MacosWindowPlatformSlot,
+) -> Unit {
+  match self.web_view_commands {
+    Some(queue) =>
+      ignore(drain_macos_webview_commands(platform_slot.window, queue))
+    None => ()
   }
 }
 
@@ -1300,10 +1373,9 @@ fn macos_native_ime_expected_cursor_size(
   } else {
     1
   }
-  @dpi.LogicalSize::LogicalSize(
-    width.to_double(),
-    height.to_double(),
-  ).to_physical(scale)
+  @dpi.LogicalSize::LogicalSize(width.to_double(), height.to_double()).to_physical(
+    scale,
+  )
 }
 
 ///|
@@ -1334,7 +1406,9 @@ fn MacosApp::present_native_ime_evidence_frame(
   let before = platform_slot.renderer.present_count()
   platform_slot.window.pre_present_notify()
   runtime_slot.driver.begin_redraw()
-  let result = platform_slot.renderer.render_frame(runtime_slot.driver.draw_frame())
+  let result = platform_slot.renderer.render_frame(
+    runtime_slot.driver.draw_frame(),
+  )
   runtime_slot.driver.apply_render_frame_result(result)
   runtime_slot.driver.finish_redraw()
   self.sync_text_input_session()
@@ -1845,6 +1919,7 @@ fn MacosApp::dispose_window(
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
+      dispose_macos_platform_views(slot.window)
       slot.renderer.set_image_resource_change_callback(None)
       slot.renderer.dispose()
       slot.window.drop()

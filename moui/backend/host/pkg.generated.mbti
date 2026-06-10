@@ -170,12 +170,13 @@ pub(all) struct HostCapabilitySummary {
   drag_drop_ready : Bool
   async_services : Bool
   native_accessibility_ready : Bool
+  web_view : HostWebViewCapabilities
   description : String
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostCapabilitySummary::from_contracts(info~ : HostAppInfo, services~ : HostServiceCapabilities, input~ : HostInputCapabilities, label? : String, window_lifecycle? : Bool, multi_window? : Bool, text_input_ready? : Bool, ime_ready? : Bool, drag_drop_ready? : Bool, async_services? : Bool, native_accessibility_ready? : Bool, description? : String) -> Self
+pub fn HostCapabilitySummary::from_contracts(info~ : HostAppInfo, services~ : HostServiceCapabilities, input~ : HostInputCapabilities, label? : String, window_lifecycle? : Bool, multi_window? : Bool, text_input_ready? : Bool, ime_ready? : Bool, drag_drop_ready? : Bool, async_services? : Bool, native_accessibility_ready? : Bool, web_view? : HostWebViewCapabilities, description? : String) -> Self
 pub fn HostCapabilitySummary::has_required_app_basics(Self) -> Bool
 pub fn HostCapabilitySummary::input_count(Self) -> Int
-pub fn HostCapabilitySummary::new(backend~ : HostBackendKind, label? : String, services? : HostServiceCapabilities, input? : HostInputCapabilities, window_lifecycle? : Bool, multi_window? : Bool, text_input_ready? : Bool, ime_ready? : Bool, drag_drop_ready? : Bool, async_services? : Bool, native_accessibility_ready? : Bool, description? : String) -> Self
+pub fn HostCapabilitySummary::new(backend~ : HostBackendKind, label? : String, services? : HostServiceCapabilities, input? : HostInputCapabilities, window_lifecycle? : Bool, multi_window? : Bool, text_input_ready? : Bool, ime_ready? : Bool, drag_drop_ready? : Bool, async_services? : Bool, native_accessibility_ready? : Bool, web_view? : HostWebViewCapabilities, description? : String) -> Self
 pub fn HostCapabilitySummary::preflight_fields(Self) -> String
 pub fn HostCapabilitySummary::service_count(Self) -> Int
 pub fn HostCapabilitySummary::test_host(label? : String) -> Self
@@ -214,6 +215,7 @@ pub(all) enum HostEvent {
   Keyboard(@wzzc-dev/moui/core.KeyboardEvent)
   TextInput(@wzzc-dev/moui/core.TextInputEvent)
   DragDrop(@wzzc-dev/moui/core.DragDropEvent)
+  WebView(String, @wzzc-dev/moui/core.WebViewEvent)
   ThemeChanged(@wzzc-dev/moui/core.ColorScheme)
   Command(@wzzc-dev/moui/core.CommandIntent)
   RedrawRequested
@@ -590,6 +592,51 @@ pub struct HostTimerSource {
 }
 pub fn HostTimerSource::new(start_timer~ : (Double, (@wzzc-dev/moui/core.Frame) -> Unit) -> (() -> Unit)?) -> Self
 pub fn[Msg] HostTimerSource::subscription(Self, interval_ms~ : Double, key? : String, label? : String, map~ : (@wzzc-dev/moui/core.Frame) -> Msg) -> @wzzc-dev/moui/core.Subscription[Msg]
+
+pub(all) struct HostWebViewCapabilities {
+  available : Bool
+  controlled_navigation : Bool
+  commands : Bool
+  javascript_evaluation : Bool
+  native_embedding : Bool
+  description : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostWebViewCapabilities::native_available(javascript_evaluation? : Bool, description? : String) -> Self
+pub fn HostWebViewCapabilities::unavailable(description? : String) -> Self
+
+pub struct HostWebViewCommandQueue {
+  // private fields
+}
+pub fn HostWebViewCommandQueue::drain_with_handler(Self, (HostWebViewQueuedCommand) -> Unit) -> Int
+pub fn HostWebViewCommandQueue::enqueue(Self, id~ : String, command~ : @wzzc-dev/moui/core.WebViewCommand) -> Unit
+pub fn HostWebViewCommandQueue::evaluate_javascript(Self, id~ : String, script~ : String, request_id? : String) -> Unit
+pub fn HostWebViewCommandQueue::go_back(Self, id~ : String) -> Unit
+pub fn HostWebViewCommandQueue::go_forward(Self, id~ : String) -> Unit
+pub fn HostWebViewCommandQueue::load_url(Self, id~ : String, url~ : String) -> Unit
+pub fn HostWebViewCommandQueue::new() -> Self
+pub fn HostWebViewCommandQueue::pending_count(Self) -> Int
+pub fn HostWebViewCommandQueue::reload(Self, id~ : String) -> Unit
+pub fn HostWebViewCommandQueue::stop(Self, id~ : String) -> Unit
+
+pub(all) struct HostWebViewEvent {
+  window_id : HostWindowId
+  id : String
+  event : @wzzc-dev/moui/core.WebViewEvent
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostWebViewEvent::new(window_id~ : HostWindowId, id~ : String, event~ : @wzzc-dev/moui/core.WebViewEvent) -> Self
+
+pub struct HostWebViewEventSource {
+  // private fields
+}
+pub fn HostWebViewEventSource::active_handler_count(Self) -> Int
+pub fn HostWebViewEventSource::new() -> Self
+pub fn HostWebViewEventSource::publish(Self, HostWebViewEvent) -> Int
+pub fn[Msg] HostWebViewEventSource::subscription(Self, key? : String, label? : String, map~ : (HostWebViewEvent) -> Msg?) -> @wzzc-dev/moui/core.Subscription[Msg]
+
+pub(all) struct HostWebViewQueuedCommand {
+  id : String
+  command : @wzzc-dev/moui/core.WebViewCommand
+} derive(Eq, ToJson, @debug.Debug)
 
 pub struct HostWindowCommands {
   queue : HostWindowRequestQueue
