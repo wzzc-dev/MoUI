@@ -36,6 +36,7 @@ import {
 ```toml
 members = [
   "./moui",
+  "./tools",
   "./.local_repos/window",
   "./moui_skia",
   "./examples/counter",

@@ -1,0 +1,17 @@
+import {
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/x/sys",
+  "wzzc-dev/moui_tools" @tools,
+}
+
+import {
+  "moonbitlang/core/test",
+} for "wbtest"
+
+supported_targets = "+native"
+
+options(
+  "is-main": true,
+  "native-stub": [ "readlink_native.c" ],
+)
