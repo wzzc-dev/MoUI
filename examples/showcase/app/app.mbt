@@ -24,6 +24,8 @@ pub(all) struct ShowcaseModel {
   date_value : @core.DateValue
   detail_scroll_offset : @core.Point
   sidebar_scroll_offset : @core.Point
+  detail_scroll : @core.ScrollState
+  sidebar_scroll : @core.ScrollState
   list_scroll : @core.ScrollState
   grid_scroll : @core.ScrollState
   counter_count : Int
@@ -147,6 +149,8 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     date_value: @core.DateValue::new(year=2026, month=5, day=21),
     detail_scroll_offset: @core.Point::new(x=0.0, y=0.0),
     sidebar_scroll_offset: @core.Point::new(x=0.0, y=0.0),
+    detail_scroll: @core.ScrollState::new(),
+    sidebar_scroll: @core.ScrollState::new(),
     list_scroll: @core.ScrollState::new(),
     grid_scroll: @core.ScrollState::new(),
     counter_count: 0,
@@ -278,15 +282,8 @@ pub fn ShowcaseModel::update(
     RecordGesture(label) => { ..self, gesture_label: label }
     ResizePanel(size) => { ..self, slider_value: size / 520.0 }
     DetailScrollTo(y) =>
-      {
-        ..self,
-        detail_scroll_offset: @core.Point::new(
-          x=0.0,
-          y=max_showcase_double(0.0, y),
-        ),
-      }
-    SidebarScrollTo(y) =>
-      { ..self, sidebar_scroll_offset: @core.Point::new(x=0.0, y~) }
+      self.with_detail_scroll_to(y)
+    SidebarScrollTo(y) => self.with_sidebar_scroll_to(y)
   }
 }
 
@@ -417,7 +414,27 @@ fn ShowcaseModel::with_route_history(
 fn ShowcaseModel::with_detail_scroll_reset(
   self : ShowcaseModel,
 ) -> ShowcaseModel {
-  { ..self, detail_scroll_offset: @core.Point::new(x=0.0, y=0.0) }
+  self.with_detail_scroll_to(0.0)
+}
+
+///|
+fn ShowcaseModel::with_detail_scroll_to(
+  self : ShowcaseModel,
+  y : Double,
+) -> ShowcaseModel {
+  let offset = @core.Point::new(x=0.0, y=max_showcase_double(0.0, y))
+  self.detail_scroll.set_offset(offset)
+  { ..self, detail_scroll_offset: offset }
+}
+
+///|
+fn ShowcaseModel::with_sidebar_scroll_to(
+  self : ShowcaseModel,
+  y : Double,
+) -> ShowcaseModel {
+  let offset = @core.Point::new(x=0.0, y~)
+  self.sidebar_scroll.set_offset(offset)
+  { ..self, sidebar_scroll_offset: offset }
 }
 
 ///|
