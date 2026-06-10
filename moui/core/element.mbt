@@ -95,6 +95,12 @@ struct RenderNode {
 } derive(Eq, Debug, ToJson)
 
 ///|
+priv struct CachedLayerState {
+  key : String
+  content_revision : Int
+}
+
+///|
 priv struct RenderTree {
   root : RenderNode
 }

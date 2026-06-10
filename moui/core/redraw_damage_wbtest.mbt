@@ -129,6 +129,52 @@ fn count_draw_cached_layers(commands : Array[DrawCommand]) -> Int {
 }
 
 ///|
+fn first_begin_cached_layer_spec(
+  commands : Array[DrawCommand],
+) -> CachedLayerSpec? {
+  for command in commands {
+    match command {
+      DrawCommand::BeginCachedLayer(spec) => return Some(spec)
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+fn retained_redraw_text_spec(text : String) -> ViewSpec {
+  ModifiedSpec({
+    key: None,
+    modifier: RepaintBoundaryModifier,
+    child: TextSpec({
+      key: None,
+      text,
+      size: Size::new(width=80.0, height=24.0),
+      font: FontSpec::new(size=12.0),
+      color: Color::black(),
+    }),
+  })
+}
+
+///|
+test "repaint boundary cache key stays stable across content revisions" {
+  let runtime = AppRuntime::new_spec(
+    root=retained_redraw_text_spec("One"),
+    size=Size::new(width=120.0, height=60.0),
+  )
+  let first = first_begin_cached_layer_spec(runtime.draw_frame().commands)
+  runtime.set_root_spec(retained_redraw_text_spec("Two"))
+  let updated = first_begin_cached_layer_spec(runtime.draw_frame().commands)
+  match (first, updated) {
+    (Some(first), Some(updated)) => {
+      inspect(updated.key, content=first.key)
+      assert_true(updated.content_revision > first.content_revision)
+    }
+    _ => fail("expected cached layer updates")
+  }
+}
+
+///|
 fn retained_redraw_button(text : String) -> View[RetainedRedrawProgramMsg] {
   View::button(
     text~,
