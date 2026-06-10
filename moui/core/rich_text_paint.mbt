@@ -3,6 +3,7 @@ fn append_rich_text_editor_commands(
   commands : Array[DrawCommand],
   children : Array[RenderNode],
   post_commands : Array[DrawCommand],
+  overlay_commands : Array[DrawCommand],
   element : ElementNode,
   data : RichTextEditorViewSpec,
   frame : Rect,
@@ -25,6 +26,9 @@ fn append_rich_text_editor_commands(
   let display_text = text_with_composition(text, element, focused)
   let content = rich_text_editor_content_rect(frame)
   commands.push(PushClip(content))
+  if focused {
+    overlay_commands.push(PushClip(content))
+  }
   if display_text == "" {
     commands.push(
       DrawText(
@@ -41,12 +45,25 @@ fn append_rich_text_editor_commands(
     let document = (data.format)(display_text)
     if focused && element.control.composition is None {
       append_rich_text_selection_commands(
-        commands,
+        overlay_commands,
         document,
         content,
         environment.font.unwrap_or(data.font),
         environment.text_system,
         element.control.selection,
+      )
+    }
+    if focused {
+      append_rich_text_composition_underline(
+        overlay_commands,
+        document,
+        element,
+        text,
+        display_text,
+        content,
+        data.font,
+        environment.text_system,
+        data.cursor_color,
       )
     }
     append_rich_text_block_layers(
@@ -61,7 +78,7 @@ fn append_rich_text_editor_commands(
   }
   if focused {
     append_rich_text_editor_cursor(
-      post_commands,
+      overlay_commands,
       element,
       data,
       text,
@@ -69,6 +86,7 @@ fn append_rich_text_editor_commands(
       content,
       environment.text_system,
     )
+    overlay_commands.push(PopClip)
   }
   post_commands.push(PopClip)
 }
@@ -839,4 +857,61 @@ fn append_rich_text_editor_cursor(
       Brush::solid(data.cursor_color),
     ),
   )
+}
+
+///|
+fn append_rich_text_composition_underline(
+  commands : Array[DrawCommand],
+  document : RichTextDocument,
+  element : ElementNode,
+  text : String,
+  display_text : String,
+  content : Rect,
+  font : FontSpec,
+  text_system : TextSystem,
+  cursor_color : Color,
+) -> Unit {
+  match element.control.composition {
+    Some(composition) =>
+      if composition != "" {
+        let start = composition_start_index(
+          text,
+          element.control.caret,
+          element.control.selection,
+        )
+        let end = start + text_length(composition)
+        let start_rect = rich_text_document_caret_rect(
+          document,
+          start,
+          content,
+          font,
+          text_system,
+        ).unwrap_or(
+          rich_text_caret_rect(display_text, start, content, font, text_system),
+        )
+        let end_rect = rich_text_document_caret_rect(
+          document,
+          end,
+          content,
+          font,
+          text_system,
+        ).unwrap_or(
+          rich_text_caret_rect(display_text, end, content, font, text_system),
+        )
+        if end_rect.origin.x > start_rect.origin.x {
+          commands.push(
+            FillRect(
+              Rect::new(
+                x=start_rect.origin.x,
+                y=start_rect.origin.y + start_rect.size.height - 5.0,
+                width=end_rect.origin.x - start_rect.origin.x,
+                height=1.5,
+              ),
+              cursor_color.with_alpha(0.72),
+            ),
+          )
+        }
+      }
+    None => ()
+  }
 }

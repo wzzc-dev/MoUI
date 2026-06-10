@@ -42,6 +42,97 @@ fn append_text_field_selection_commands(
 }
 
 ///|
+fn append_text_field_editing_overlay(
+  commands : Array[DrawCommand],
+  text : String,
+  display_text : String,
+  text_frame : Rect,
+  layout : TextLayoutResult,
+  element : ElementNode,
+  cursor_color : Color,
+) -> Unit {
+  commands.push(PushClip(text_frame))
+  if element.control.composition is None {
+    append_text_field_selection_commands(
+      commands,
+      display_text,
+      text_frame,
+      layout,
+      element.control.selection,
+    )
+  } else {
+    append_text_field_composition_underline(
+      commands,
+      text,
+      text_frame,
+      layout,
+      element,
+      cursor_color,
+    )
+  }
+  let caret = clamp_int(
+    text_field_visual_caret(text, element, true),
+    0,
+    layout.caret_positions.length() - 1,
+  )
+  let cursor_x = text_frame.origin.x + layout.caret_positions[caret]
+  let cursor = Rect::new(
+    x=cursor_x,
+    y=text_frame.origin.y + 6.0,
+    width=1.5,
+    height=max_double(8.0, text_frame.size.height - 12.0),
+  )
+  commands.push(FillRect(cursor, cursor_color))
+  commands.push(PopClip)
+}
+
+///|
+fn append_text_field_composition_underline(
+  commands : Array[DrawCommand],
+  text : String,
+  text_frame : Rect,
+  layout : TextLayoutResult,
+  element : ElementNode,
+  cursor_color : Color,
+) -> Unit {
+  match element.control.composition {
+    Some(composition) =>
+      if composition != "" {
+        let start = clamp_int(
+          composition_start_index(
+            text,
+            element.control.caret,
+            element.control.selection,
+          ),
+          0,
+          layout.caret_positions.length() - 1,
+        )
+        let end = clamp_int(
+          start + text_length(composition),
+          start,
+          layout.caret_positions.length() - 1,
+        )
+        let x0 = text_frame.origin.x + layout.caret_positions[start]
+        let x1 = text_frame.origin.x + layout.caret_positions[end]
+        if x1 > x0 {
+          commands.push(
+            FillRect(
+              Rect::new(
+                x=x0,
+                y=text_frame.origin.y + text_frame.size.height - 7.0,
+                width=x1 - x0,
+                height=1.5,
+              ),
+              cursor_color.with_alpha(0.72),
+            ),
+          )
+        }
+      }
+    None => ()
+  }
+}
+
+///|
 fn append_searchbar_search_icon(
   commands : Array[DrawCommand],
   frame : Rect,
@@ -131,6 +222,7 @@ fn append_searchbar_clear_icon(
 ///|
 fn append_text_field_commands(
   commands : Array[DrawCommand],
+  overlay_commands : Array[DrawCommand],
   element : ElementNode,
   data : TextFieldViewSpec,
   frame : Rect,
@@ -163,23 +255,6 @@ fn append_text_field_commands(
     environment_color(environment, data.foreground)
   }
   let text_frame = frame.inset(Insets::symmetric(horizontal=10.0, vertical=4.0))
-  if focused && element.control.composition is None {
-    let layout = environment_measure_text(
-      environment,
-      TextLayoutInput::new(
-        text=display_text,
-        font~,
-        max_width=text_frame.size.width,
-      ),
-    )
-    append_text_field_selection_commands(
-      commands,
-      display_text,
-      text_frame,
-      layout,
-      element.control.selection,
-    )
-  }
   commands.push(
     DrawText(
       TextRun::new(
@@ -200,25 +275,22 @@ fn append_text_field_commands(
         max_width=text_frame.size.width,
       ),
     )
-    let caret = clamp_int(
-      text_field_visual_caret(text, element, focused),
-      0,
-      layout.caret_positions.length() - 1,
+    append_text_field_editing_overlay(
+      overlay_commands,
+      text,
+      display_text,
+      text_frame,
+      layout,
+      element,
+      data.cursor_color,
     )
-    let cursor_x = text_frame.origin.x + layout.caret_positions[caret]
-    let cursor = Rect::new(
-      x=cursor_x,
-      y=text_frame.origin.y + 6.0,
-      width=1.5,
-      height=max_double(8.0, text_frame.size.height - 12.0),
-    )
-    commands.push(FillRect(cursor, data.cursor_color))
   }
 }
 
 ///|
 fn append_searchbar_commands(
   commands : Array[DrawCommand],
+  overlay_commands : Array[DrawCommand],
   element : ElementNode,
   data : SearchBarViewSpec,
   frame : Rect,
@@ -261,23 +333,6 @@ fn append_searchbar_commands(
     environment_color(environment, data.foreground)
   }
   let text_frame = searchbar_text_frame(frame, has_text=text != "")
-  if is_focused && element.control.composition is None {
-    let layout = environment_measure_text(
-      environment,
-      TextLayoutInput::new(
-        text=display_text,
-        font~,
-        max_width=text_frame.size.width,
-      ),
-    )
-    append_text_field_selection_commands(
-      commands,
-      display_text,
-      text_frame,
-      layout,
-      element.control.selection,
-    )
-  }
   commands.push(
     DrawText(
       TextRun::new(
@@ -298,19 +353,15 @@ fn append_searchbar_commands(
         max_width=text_frame.size.width,
       ),
     )
-    let caret = clamp_int(
-      text_field_visual_caret(text, element, is_focused),
-      0,
-      layout.caret_positions.length() - 1,
+    append_text_field_editing_overlay(
+      overlay_commands,
+      text,
+      display_text,
+      text_frame,
+      layout,
+      element,
+      data.cursor_color,
     )
-    let cursor_x = text_frame.origin.x + layout.caret_positions[caret]
-    let cursor = Rect::new(
-      x=cursor_x,
-      y=text_frame.origin.y + 6.0,
-      width=1.5,
-      height=max_double(8.0, text_frame.size.height - 12.0),
-    )
-    commands.push(FillRect(cursor, data.cursor_color))
   }
 
   if text != "" {

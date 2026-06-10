@@ -37,6 +37,7 @@ fn RenderNode::collect_frame_commands_with_overlays(
       Some(spec) =>
         if known_layers.has_current_cached_layer(spec) {
           commands.push(DrawCachedLayer(spec))
+          self.collect_cached_overlay_commands(overlays)
         } else {
           commands.push(BeginCachedLayer(spec))
           self.collect_uncached_frame_commands_with_overlays(
@@ -53,6 +54,20 @@ fn RenderNode::collect_frame_commands_with_overlays(
     self.collect_uncached_frame_commands_with_overlays(
       commands, overlays, known_layers,
     )
+  }
+}
+
+///|
+fn RenderNode::collect_cached_overlay_commands(
+  self : RenderNode,
+  overlays : Array[DrawCommand],
+) -> Unit {
+  match self.cached_overlay_draw_commands {
+    Some(cached_overlays) =>
+      for command in cached_overlays {
+        overlays.push(command)
+      }
+    None => ()
   }
 }
 
