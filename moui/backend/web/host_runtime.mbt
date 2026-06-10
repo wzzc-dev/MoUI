@@ -465,11 +465,10 @@ fn WebApp::redraw_window(self : WebApp, window_id : @host.HostWindowId) -> Unit 
     ) {
     (Some(platform_slot), Some(runtime_slot)) => {
       runtime_slot.driver.begin_redraw()
-      platform_slot.renderer.render(runtime_slot.driver.draw_commands()) catch {
-        err => {
-          let _ = err
-        }
-      }
+      let result = platform_slot.renderer.render_frame(
+        runtime_slot.driver.draw_frame(),
+      )
+      runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
     }
     _ => ()

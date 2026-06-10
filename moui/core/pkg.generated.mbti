@@ -155,12 +155,14 @@ pub fn AppRuntime::dispatch_command(Self, CommandIntent) -> Bool
 pub fn AppRuntime::dispatch_event(Self, AppEvent) -> Unit
 pub fn AppRuntime::dispatch_focused_text_command(Self, CommandIntent, paste_text? : String?) -> TextCommandResult
 pub fn AppRuntime::draw_commands(Self) -> Array[DrawCommand]
+pub fn AppRuntime::draw_frame(Self) -> DrawFrame
 pub fn AppRuntime::environment(Self) -> Environment
 pub fn AppRuntime::focus_key(Self, String) -> Bool
 pub fn AppRuntime::focus_next(Self) -> Bool
 pub fn AppRuntime::focus_previous(Self) -> Bool
 pub fn AppRuntime::focused_text_input(Self) -> TextInputState
 pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot
+pub fn AppRuntime::invalidate_cached_layer_key(Self, String) -> Unit
 pub fn AppRuntime::layout(Self) -> LayoutResult
 pub fn AppRuntime::layout_pass(Self) -> Unit
 pub fn AppRuntime::needs_layout(Self) -> Bool
@@ -285,6 +287,14 @@ pub fn ButtonStyle::filled(theme? : Theme) -> Self
 pub fn ButtonStyle::ghost(theme? : Theme) -> Self
 pub fn ButtonStyle::outline(theme? : Theme) -> Self
 pub fn ButtonStyle::tonal(theme? : Theme) -> Self
+
+pub(all) struct CachedLayerSpec {
+  key : String
+  frame : Rect
+  content_revision : Int
+  scale_factor : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn CachedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
 
 pub(all) struct Clock {
   mut last_time_ms : Double?
@@ -451,6 +461,18 @@ pub(all) struct CustomPlacementContext {
 }
 pub fn CustomPlacementContext::mirror_x(Self, x~ : Double, width~ : Double) -> Double
 
+pub(all) enum DamageRegion {
+  Empty
+  FullSurface(String)
+  Rects(Array[Rect])
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DamageRegion::empty() -> Self
+pub fn DamageRegion::from_rects(Array[Rect], Rect) -> Self
+pub fn DamageRegion::full(String) -> Self
+pub fn DamageRegion::full_reason(Self) -> String
+pub fn DamageRegion::kind(Self) -> String
+pub fn DamageRegion::rect_count(Self) -> Int
+
 pub(all) enum DatePickerMode {
   Date
   DateAndTime
@@ -574,11 +596,23 @@ pub(all) enum DrawCommand {
   PopOpacity
   PushLayer(LayerSpec)
   PopLayer
+  BeginCachedLayer(CachedLayerSpec)
+  EndCachedLayer(String)
+  DrawCachedLayer(CachedLayerSpec)
   PushFilter(FilterEffect)
   PopFilter
   DrawPath(PathSpec)
   DrawShaderEffect(ShaderEffectSpec)
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DrawCommand::bounds(Self) -> Rect?
+
+pub(all) struct DrawFrame {
+  commands : Array[DrawCommand]
+  damage : DamageRegion
+  clear_color : Color
+  cache_epoch : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DrawFrame::new(commands~ : Array[DrawCommand], damage~ : DamageRegion, clear_color? : Color, cache_epoch? : Int) -> Self
 
 pub(all) enum Easing {
   Linear
@@ -1054,6 +1088,7 @@ pub(all) struct PathSpec {
   stroke : Brush?
   stroke_width : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn PathSpec::bounds(Self) -> Rect?
 pub fn PathSpec::new(verbs~ : Array[PathVerb], fill? : Brush?, stroke? : Brush?, stroke_width? : Double) -> Self
 
 pub(all) enum PathVerb {
@@ -1170,10 +1205,18 @@ pub(all) struct Rect {
   origin : Point
   size : Size
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Rect::area(Self) -> Double
+pub fn Rect::clamp_to(Self, Self) -> Self?
 pub fn Rect::contains(Self, Point) -> Bool
+pub fn Rect::inflate(Self, Double) -> Self
 pub fn Rect::inset(Self, Insets) -> Self
+pub fn Rect::intersection(Self, Self) -> Self?
+pub fn Rect::is_empty(Self) -> Bool
+pub fn Rect::max_x(Self) -> Double
+pub fn Rect::max_y(Self) -> Double
 pub fn Rect::new(x~ : Double, y~ : Double, width~ : Double, height~ : Double) -> Self
 pub fn Rect::offset(Self, dx? : Double, dy? : Double) -> Self
+pub fn Rect::union(Self, Self) -> Self
 
 pub(all) enum RedrawReason {
   Initial
@@ -1386,6 +1429,11 @@ pub(all) struct RuntimeDirtyStateSummary {
   has_pending_work : Bool
   reason : String
   reasons : Array[String]
+  damage_kind : String
+  damage_rect_count : Int
+  damage_full_reason : String
+  cache_epoch : Int
+  cached_layer_count : Int
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RuntimeInspectorSnapshot {
@@ -1457,6 +1505,7 @@ pub fn RuntimeState::add_animation(Self, AnimationController) -> Unit
 pub fn RuntimeState::advance_time(Self, Double) -> Unit
 pub fn RuntimeState::animation_count(Self) -> Int
 pub fn RuntimeState::build_draw_commands(Self) -> Array[DrawCommand]
+pub fn RuntimeState::build_draw_frame(Self) -> DrawFrame
 pub fn RuntimeState::clear_dirty_queue(Self) -> Unit
 pub fn RuntimeState::destroy(Self) -> Unit
 pub fn RuntimeState::dirty_count(Self) -> Int

@@ -292,8 +292,16 @@ pub(all) struct HostEventResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) enum RedrawSchedulerState {
+  RedrawIdle
+  RedrawScheduled
+  RedrawInFrame
+  RedrawFollowUpScheduled
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct RedrawScheduler {
-  mut redraw_requested : Bool
+  mut state : RedrawSchedulerState
   mut schedule : () -> Unit
 }
 
@@ -302,6 +310,7 @@ pub(all) struct HostRuntimeDriver {
   runtime : @core.AppRuntime
   scheduler : RedrawScheduler
   mut close_requested : Bool
+  mut frame_time_ms : Double
 }
 
 ///|
@@ -1225,28 +1234,41 @@ pub fn SurfaceHostState::logical_size(self : SurfaceHostState) -> @core.Size {
 
 ///|
 pub fn RedrawScheduler::new(schedule~ : () -> Unit) -> RedrawScheduler {
-  { redraw_requested: false, schedule }
+  { state: RedrawSchedulerState::RedrawIdle, schedule }
 }
 
 ///|
 pub fn RedrawScheduler::request(self : RedrawScheduler) -> Unit {
-  if !self.redraw_requested {
-    self.redraw_requested = true
-    (self.schedule)()
+  match self.state {
+    RedrawIdle => {
+      self.state = RedrawSchedulerState::RedrawScheduled
+      (self.schedule)()
+    }
+    RedrawScheduled | RedrawFollowUpScheduled => ()
+    RedrawInFrame =>
+      self.state = RedrawSchedulerState::RedrawFollowUpScheduled
   }
 }
 
 ///|
 fn RedrawScheduler::request_dirty(self : RedrawScheduler) -> Unit {
-  if !self.redraw_requested {
-    self.redraw_requested = true
-    (self.schedule)()
-  }
+  self.request()
 }
 
 ///|
 pub fn RedrawScheduler::begin_redraw(self : RedrawScheduler) -> Unit {
-  self.redraw_requested = false
+  self.state = RedrawSchedulerState::RedrawInFrame
+}
+
+///|
+pub fn RedrawScheduler::finish_redraw(self : RedrawScheduler) -> Unit {
+  match self.state {
+    RedrawFollowUpScheduled => {
+      self.state = RedrawSchedulerState::RedrawScheduled
+      (self.schedule)()
+    }
+    _ => self.state = RedrawSchedulerState::RedrawIdle
+  }
 }
 
 ///|
@@ -1259,7 +1281,13 @@ pub fn RedrawScheduler::set_schedule(
 
 ///|
 pub fn RedrawScheduler::is_redraw_requested(self : RedrawScheduler) -> Bool {
-  self.redraw_requested
+  self.state == RedrawSchedulerState::RedrawScheduled ||
+  self.state == RedrawSchedulerState::RedrawFollowUpScheduled
+}
+
+///|
+pub fn RedrawScheduler::state(self : RedrawScheduler) -> RedrawSchedulerState {
+  self.state
 }
 
 ///|
@@ -1271,6 +1299,7 @@ pub fn HostRuntimeDriver::new(
     runtime,
     scheduler: RedrawScheduler::new(schedule=schedule_redraw),
     close_requested: false,
+    frame_time_ms: 0.0,
   }
   runtime.set_redraw_callback(() => driver.request_redraw())
   driver
@@ -1498,6 +1527,12 @@ pub fn HostRuntimeDriver::request_redraw_if_needed(
 ///|
 pub fn HostRuntimeDriver::begin_redraw(self : HostRuntimeDriver) -> Unit {
   self.scheduler.begin_redraw()
+  self.frame_time_ms = self.frame_time_ms + 16.0
+  self.runtime.dispatch_event(
+    @core.AppEvent::FrameTick(
+      @core.Frame::new(time_ms=self.frame_time_ms, delta_ms=16.0),
+    ),
+  )
 }
 
 ///|
@@ -1505,6 +1540,7 @@ pub fn HostRuntimeDriver::finish_redraw(self : HostRuntimeDriver) -> Unit {
   self.runtime.dispatch_event(
     @core.AppEvent::Redraw(@core.RedrawReason::Explicit),
   )
+  self.scheduler.finish_redraw()
 }
 
 ///|
@@ -1512,6 +1548,24 @@ pub fn HostRuntimeDriver::draw_commands(
   self : HostRuntimeDriver,
 ) -> Array[@core.DrawCommand] {
   self.runtime.draw_commands()
+}
+
+///|
+pub fn HostRuntimeDriver::draw_frame(self : HostRuntimeDriver) -> @core.DrawFrame {
+  self.runtime.draw_frame()
+}
+
+///|
+pub fn HostRuntimeDriver::apply_render_frame_result(
+  self : HostRuntimeDriver,
+  result : @render.RenderFrameResult,
+) -> Unit {
+  if result.cache_miss_count > 0 {
+    for key in result.missing_layer_keys {
+      self.runtime.invalidate_cached_layer_key(key)
+    }
+    self.request_redraw_if_needed()
+  }
 }
 
 ///|
