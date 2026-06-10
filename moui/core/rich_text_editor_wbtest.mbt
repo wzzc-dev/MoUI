@@ -67,6 +67,27 @@ test "rich text editor caches unchanged sibling blocks" {
 }
 
 ///|
+test "rich text editor caret redraw keeps block layers cached" {
+  let runtime = RuntimeState::new_spec(
+    root=cached_block_rich_text_editor("alpha\nbeta"),
+    size=Size::new(width=320.0, height=220.0),
+  )
+  ignore(runtime.build_draw_frame())
+  ignore(runtime.build_draw_frame())
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=24.0, y=28.0),
+        phase=PointerPhase::Down,
+      ),
+    ),
+  )
+  let focused = runtime.build_draw_frame()
+  inspect(rich_text_cached_block_begin_count(focused.commands), content="0")
+  inspect(rich_text_cached_block_draw_count(focused.commands), content="2")
+}
+
+///|
 fn styled_rich_text_editor(value : Binding[String]) -> ViewSpec {
   ViewSpec::RichTextEditorSpec({
     key: None,
