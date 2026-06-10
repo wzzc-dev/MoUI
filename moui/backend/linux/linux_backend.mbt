@@ -1204,12 +1204,14 @@ fn LinuxApp::redraw_window(
       })
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
-      ignore(
-        self.image_repaint_tracker.record_presented(
-          window_id,
-          platform_slot.renderer,
-        ),
-      )
+      if result.presented {
+        ignore(
+          self.image_repaint_tracker.record_presented(
+            window_id,
+            platform_slot.renderer,
+          ),
+        )
+      }
       ignore(
         self.renderer_provider.schedule_image_resource_loads(
           window_id,
