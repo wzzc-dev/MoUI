@@ -39,6 +39,8 @@ pub(all) struct ShowcaseModel {
   date_value : @core.DateValue
   detail_scroll_offset : @core.Point
   sidebar_scroll_offset : @core.Point
+  detail_scroll : @core.ScrollState
+  sidebar_scroll : @core.ScrollState
   list_scroll : @core.ScrollState
   grid_scroll : @core.ScrollState
   counter_count : Int
