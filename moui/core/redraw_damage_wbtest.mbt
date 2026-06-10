@@ -25,6 +25,44 @@ test "damage region clips rects and promotes large coverage" {
 }
 
 ///|
+test "damage region coalesces adjacent rects before full promotion" {
+  let surface = Rect::new(x=0.0, y=0.0, width=200.0, height=80.0)
+  let adjacent : Array[Rect] = []
+  for index in 0..<9 {
+    adjacent.push(
+      Rect::new(
+        x=index.to_double() * 10.0,
+        y=8.0,
+        width=10.0,
+        height=12.0,
+      ),
+    )
+  }
+  match DamageRegion::from_rects(adjacent, surface) {
+    Rects(rects) => {
+      inspect(rects.length(), content="1")
+      inspect(rects[0].size.width, content="90")
+    }
+    _ => fail("expected coalesced rect damage")
+  }
+  let separated : Array[Rect] = []
+  for index in 0..<9 {
+    separated.push(
+      Rect::new(
+        x=index.to_double() * 20.0,
+        y=40.0,
+        width=4.0,
+        height=4.0,
+      ),
+    )
+  }
+  match DamageRegion::from_rects(separated, surface) {
+    FullSurface(reason) => inspect(reason, content="too many dirty rects")
+    _ => fail("expected full promotion for separated rects")
+  }
+}
+
+///|
 test "draw command bounds cover common paint commands" {
   match
     DrawCommand::DrawText(
@@ -253,4 +291,38 @@ test "program update preserves clean sibling repaint boundary cache" {
   let updated = runtime.draw_frame()
   inspect(count_begin_cached_layers(updated.commands), content="1")
   inspect(count_draw_cached_layers(updated.commands), content="1")
+}
+
+///|
+test "paint only sibling boundary hover reports local damage rect" {
+  let root = View::flex(
+    axis=Axis::Horizontal,
+    spacing=8.0,
+    children=[
+      retained_redraw_button("Left").key("left").repaint_boundary(),
+      retained_redraw_label("Right").key("right").repaint_boundary(),
+    ],
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=Size::new(width=200.0, height=60.0),
+  )
+  ignore(runtime.draw_frame())
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    AppEvent::Pointer(
+      PointerEvent::new(
+        position=Point::new(x=12.0, y=12.0),
+        phase=PointerPhase::Move,
+      ),
+    ),
+  )
+  match runtime.draw_frame().damage {
+    Rects(rects) => {
+      assert_true(rects.length() > 0)
+      assert_true(rects.length() <= 2)
+      assert_true(rects[0].size.width <= 90.0)
+    }
+    _ => fail("expected local repaint boundary damage")
+  }
 }

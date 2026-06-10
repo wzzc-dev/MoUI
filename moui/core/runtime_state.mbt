@@ -883,13 +883,16 @@ fn RuntimeState::compute_damage_region(
       )
       let rects : Array[Rect] = []
       for id in dirty_ids {
-        match previous.root.find_paint_bounds(id) {
-          Some(bounds) => rects.push(bounds)
-          None => ()
-        }
-        match current.root.find_paint_bounds(id) {
-          Some(bounds) => rects.push(bounds)
-          None => ()
+        if !previous.root.has_dirty_descendant(id, dirty_ids) &&
+          !current.root.has_dirty_descendant(id, dirty_ids) {
+          match previous.root.find_damage_bounds(id) {
+            Some(bounds) => rects.push(bounds)
+            None => ()
+          }
+          match current.root.find_damage_bounds(id) {
+            Some(bounds) => rects.push(bounds)
+            None => ()
+          }
         }
       }
       DamageRegion::from_rects(rects, surface)

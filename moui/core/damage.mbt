@@ -50,21 +50,69 @@ pub fn DamageRegion::from_rects(
   }
   if clipped.is_empty() {
     DamageRegion::Empty
-  } else if clipped.length() > damage_region_max_rects() {
-    DamageRegion::FullSurface("too many dirty rects")
   } else {
-    let mut union_rect = clipped[0]
-    for index in 1..<clipped.length() {
-      union_rect = union_rect.union(clipped[index])
-    }
-    let surface_area = surface.area()
-    if surface_area > 0.0 &&
-      union_rect.area() / surface_area > damage_region_full_threshold() {
-      DamageRegion::FullSurface("dirty region covers most of the surface")
+    let coalesced = coalesce_damage_rects(clipped)
+    if coalesced.length() > damage_region_max_rects() {
+      DamageRegion::FullSurface("too many dirty rects")
     } else {
-      DamageRegion::Rects(clipped)
+      let mut union_rect = coalesced[0]
+      for index in 1..<coalesced.length() {
+        union_rect = union_rect.union(coalesced[index])
+      }
+      let surface_area = surface.area()
+      if surface_area > 0.0 &&
+        union_rect.area() / surface_area > damage_region_full_threshold() {
+        DamageRegion::FullSurface("dirty region covers most of the surface")
+      } else {
+        DamageRegion::Rects(coalesced)
+      }
     }
   }
+}
+
+///|
+fn coalesce_damage_rects(rects : Array[Rect]) -> Array[Rect] {
+  let mut merged = rects.copy()
+  let mut changed = true
+  while changed {
+    changed = false
+    let used : Array[Bool] = []
+    for _ in merged {
+      used.push(false)
+    }
+    let next : Array[Rect] = []
+    for index, rect in merged {
+      if !used[index] {
+        let mut current = rect
+        used[index] = true
+        let mut expanded = true
+        while expanded {
+          expanded = false
+          for other_index, other in merged {
+            if !used[other_index] && current.touches_or_overlaps(other) {
+              current = current.union(other)
+              used[other_index] = true
+              expanded = true
+              changed = true
+            }
+          }
+        }
+        next.push(current)
+      }
+    }
+    merged = next
+  }
+  merged
+}
+
+///|
+fn Rect::touches_or_overlaps(self : Rect, other : Rect) -> Bool {
+  !self.is_empty() &&
+  !other.is_empty() &&
+  self.origin.x <= other.max_x() &&
+  other.origin.x <= self.max_x() &&
+  self.origin.y <= other.max_y() &&
+  other.origin.y <= self.max_y()
 }
 
 ///|

@@ -171,17 +171,73 @@ fn Array::has_current_cached_layer(
 }
 
 ///|
-fn RenderNode::find_paint_bounds(self : RenderNode, id : ElementId) -> Rect? {
-  if self.element_id == id {
+fn RenderNode::find_damage_bounds(self : RenderNode, id : ElementId) -> Rect? {
+  self.find_damage_bounds_with_boundary(id, None)
+}
+
+///|
+fn RenderNode::find_damage_bounds_with_boundary(
+  self : RenderNode,
+  id : ElementId,
+  boundary : Rect?,
+) -> Rect? {
+  let active_boundary = if self.is_repaint_boundary {
     Some(self.paint_bounds)
   } else {
+    boundary
+  }
+  if self.element_id == id {
+    match active_boundary {
+      Some(bounds) => Some(bounds)
+      None => Some(self.paint_bounds)
+    }
+  } else {
     for child in self.children {
-      match child.find_paint_bounds(id) {
+      match child.find_damage_bounds_with_boundary(id, active_boundary) {
         Some(bounds) => return Some(bounds)
         None => ()
       }
     }
     None
+  }
+}
+
+///|
+fn RenderNode::has_dirty_descendant(
+  self : RenderNode,
+  id : ElementId,
+  dirty_ids : Array[ElementId],
+) -> Bool {
+  match self.find_render_node(id) {
+    Some(node) => node.children.any(child => child.contains_any(dirty_ids))
+    None => false
+  }
+}
+
+///|
+fn RenderNode::find_render_node(self : RenderNode, id : ElementId) -> RenderNode? {
+  if self.element_id == id {
+    Some(self)
+  } else {
+    for child in self.children {
+      match child.find_render_node(id) {
+        Some(node) => return Some(node)
+        None => ()
+      }
+    }
+    None
+  }
+}
+
+///|
+fn RenderNode::contains_any(
+  self : RenderNode,
+  ids : Array[ElementId],
+) -> Bool {
+  if ids.any(id => id == self.element_id) {
+    true
+  } else {
+    self.children.any(child => child.contains_any(ids))
   }
 }
 
