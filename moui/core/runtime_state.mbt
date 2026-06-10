@@ -516,6 +516,14 @@ pub fn RuntimeState::dispatch_event(
         self.request_activation_rebuild()
       }
     }
+    AppEvent::WebView(id, event) =>
+      if self.element_tree.root.dispatch_web_view_event(id, event) {
+        self.needs_rebuild = true
+        self.needs_redraw = true
+        self.needs_paint = true
+        self.mark_current_dirty_elements()
+        self.request_activation_rebuild()
+      }
     CloseRequested => ()
   }
 }
@@ -687,9 +695,12 @@ pub fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
     commands,
     self.known_layer_cache_keys,
   )
+  let platform_views : Array[PlatformViewPlacement] = []
+  self.render_tree.root.collect_platform_views(platform_views)
   self.record_cached_layer_updates(commands)
   DrawFrame::new(
     commands~,
+    platform_views~,
     damage=self.last_damage_region,
     clear_color=Color::white(),
     cache_epoch=self.cache_epoch,
@@ -950,19 +961,13 @@ fn RuntimeState::record_cached_layer_update(
       if existing.content_revision != spec.content_revision {
         changed = true
       }
-      retained.push({
-        key: spec.key,
-        content_revision: spec.content_revision,
-      })
+      retained.push({ key: spec.key, content_revision: spec.content_revision })
     } else {
       retained.push(existing)
     }
   }
   if !found {
-    retained.push({
-      key: spec.key,
-      content_revision: spec.content_revision,
-    })
+    retained.push({ key: spec.key, content_revision: spec.content_revision })
     changed = true
   }
   if changed {
@@ -1062,10 +1067,7 @@ fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
   let layout_ids : Array[ElementId] = []
   let paint_ids : Array[ElementId] = []
   self.element_tree.root.collect_dirty_element_ids_by_kind(
-    ids,
-    build_ids,
-    layout_ids,
-    paint_ids,
+    ids, build_ids, layout_ids, paint_ids,
   )
   if ids.is_empty() {
     self.mark_dirty(self.element_tree.id())

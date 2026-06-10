@@ -8,6 +8,7 @@ pub(all) enum DamageRegion {
 ///|
 pub(all) struct DrawFrame {
   commands : Array[DrawCommand]
+  platform_views : Array[PlatformViewPlacement]
   damage : DamageRegion
   clear_color : Color
   cache_epoch : Int
@@ -41,10 +42,7 @@ pub fn DamageRegion::from_rects(
   let clipped : Array[Rect] = []
   for rect in rects {
     match rect.clamp_to(surface) {
-      Some(clamped) =>
-        if !clamped.is_empty() {
-          clipped.push(clamped)
-        }
+      Some(clamped) => if !clamped.is_empty() { clipped.push(clamped) }
       None => ()
     }
   }
@@ -144,11 +142,12 @@ pub fn DamageRegion::full_reason(self : DamageRegion) -> String {
 ///|
 pub fn DrawFrame::new(
   commands~ : Array[DrawCommand],
+  platform_views? : Array[PlatformViewPlacement] = [],
   damage~ : DamageRegion,
   clear_color? : Color = Color::white(),
   cache_epoch? : Int = 0,
 ) -> DrawFrame {
-  { commands, damage, clear_color, cache_epoch }
+  { commands, platform_views, damage, clear_color, cache_epoch }
 }
 
 ///|
@@ -175,9 +174,7 @@ pub fn DrawCommand::bounds(self : DrawCommand) -> Rect? {
       Some(rounded.rect.inflate(width.max(1.0)))
     DrawShadow(shadow) =>
       Some(
-        shadow
-        .rect
-        .rect
+        shadow.rect.rect
         .inflate(shadow.blur_radius + shadow.spread.abs() + 2.0)
         .offset(dx=shadow.offset.x, dy=shadow.offset.y),
       )
@@ -203,7 +200,8 @@ pub fn DrawCommand::bounds(self : DrawCommand) -> Rect? {
     DrawCachedLayer(spec) => Some(spec.frame)
     PushFilter(filter) =>
       match filter {
-        Blur(radius) => Some(Rect::new(x=0.0, y=0.0, width=0.0, height=0.0).inflate(radius))
+        Blur(radius) =>
+          Some(Rect::new(x=0.0, y=0.0, width=0.0, height=0.0).inflate(radius))
         _ => None
       }
     PopFilter => None
@@ -250,8 +248,9 @@ pub fn PathSpec::bounds(self : PathSpec) -> Rect? {
   }
   if has_point {
     Some(
-      Rect::new(x=min_x, y=min_y, width=max_x - min_x, height=max_y - min_y)
-      .inflate(self.stroke_width.max(1.0)),
+      Rect::new(x=min_x, y=min_y, width=max_x - min_x, height=max_y - min_y).inflate(
+        self.stroke_width.max(1.0),
+      ),
     )
   } else {
     None

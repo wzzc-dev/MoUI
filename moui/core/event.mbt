@@ -84,6 +84,7 @@ pub(all) enum AppEvent {
   Keyboard(KeyboardEvent)
   TextInput(TextInputEvent)
   DragDrop(DragDropEvent)
+  WebView(String, WebViewEvent)
   Resize(Size)
   Redraw(RedrawReason)
   CloseRequested

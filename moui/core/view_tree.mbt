@@ -559,6 +559,7 @@ priv enum ViewSpec {
   PickerSpec(PickerViewSpec)
   DatePickerSpec(DatePickerViewSpec)
   SearchBarSpec(SearchBarViewSpec)
+  WebViewHostSpec(WebViewSpec)
   SheetSpec(SheetViewSpec)
   FlexSpec(FlexViewSpec)
   PaddingSpec(PaddingViewSpec)
@@ -786,6 +787,7 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     PickerSpec(data) => data.key
     DatePickerSpec(data) => data.key
     SearchBarSpec(data) => data.key
+    WebViewHostSpec(data) => data.key
     SheetSpec(data) => data.key
     FlexSpec(data) => data.key
     PaddingSpec(data) => data.key
@@ -816,6 +818,7 @@ fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     PickerSpec(data) => PickerSpec({ ..data, key: Some(key) })
     DatePickerSpec(data) => DatePickerSpec({ ..data, key: Some(key) })
     SearchBarSpec(data) => SearchBarSpec({ ..data, key: Some(key) })
+    WebViewHostSpec(data) => WebViewHostSpec({ ..data, key: Some(key) })
     SheetSpec(data) => SheetSpec({ ..data, key: Some(key) })
     FlexSpec(data) => FlexSpec({ ..data, key: Some(key) })
     PaddingSpec(data) => PaddingSpec({ ..data, key: Some(key) })
@@ -845,21 +848,22 @@ fn ViewSpec::kind(self : ViewSpec) -> Int {
     PickerSpec(_) => 6
     DatePickerSpec(_) => 7
     SearchBarSpec(_) => 8
-    SheetSpec(_) => 9
-    FlexSpec(_) => 10
-    PaddingSpec(_) => 11
-    ContainerSpec(_) => 12
-    SpacerSpec(_) => 13
-    FrameSpec(_) => 14
-    StackSpec(_) => 15
-    ScrollSpec(_) => 16
-    GridSpec(_) => 17
-    ListSpec(_) => 18
-    ModifiedSpec(_) => 19
-    CustomSpec(_) => 20
-    ComponentSpec(_) => 21
-    RichTextEditorSpec(_) => 22
-    CustomLayoutSpec(_) => 23
+    WebViewHostSpec(_) => 9
+    SheetSpec(_) => 10
+    FlexSpec(_) => 11
+    PaddingSpec(_) => 12
+    ContainerSpec(_) => 13
+    SpacerSpec(_) => 14
+    FrameSpec(_) => 15
+    StackSpec(_) => 16
+    ScrollSpec(_) => 17
+    GridSpec(_) => 18
+    ListSpec(_) => 19
+    ModifiedSpec(_) => 20
+    CustomSpec(_) => 21
+    ComponentSpec(_) => 22
+    RichTextEditorSpec(_) => 23
+    CustomLayoutSpec(_) => 24
   }
 }
 
@@ -876,6 +880,7 @@ fn ViewSpec::inspector_kind_label(self : ViewSpec) -> String {
     PickerSpec(_) => "Picker"
     DatePickerSpec(_) => "DatePicker"
     SearchBarSpec(_) => "SearchBar"
+    WebViewHostSpec(_) => "WebView"
     SheetSpec(_) => "Sheet"
     FlexSpec(_) => "Flex"
     PaddingSpec(_) => "Padding"
@@ -902,7 +907,8 @@ fn ViewSpec::inspector_is_control(self : ViewSpec) -> Bool {
     | CheckboxSpec(_)
     | PickerSpec(_)
     | DatePickerSpec(_)
-    | SearchBarSpec(_) => true
+    | SearchBarSpec(_)
+    | WebViewHostSpec(_) => true
     _ => false
   }
 }

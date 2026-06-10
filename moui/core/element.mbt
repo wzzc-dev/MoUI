@@ -90,6 +90,7 @@ struct RenderNode {
   paint_commands : Array[DrawCommand]
   post_paint_commands : Array[DrawCommand]
   overlay_paint_commands : Array[DrawCommand]
+  platform_views : Array[PlatformViewPlacement]
   cached_draw_commands : Array[DrawCommand]?
   cached_overlay_draw_commands : Array[DrawCommand]?
 } derive(Eq, Debug, ToJson)
@@ -119,6 +120,7 @@ fn RenderNode::empty() -> RenderNode {
     paint_commands: [],
     post_paint_commands: [],
     overlay_paint_commands: [],
+    platform_views: [],
     cached_draw_commands: None,
     cached_overlay_draw_commands: None,
   }
@@ -268,7 +270,11 @@ fn ReconcileDirtyKind::combine(
   self : ReconcileDirtyKind,
   other : ReconcileDirtyKind,
 ) -> ReconcileDirtyKind {
-  if self.rank() >= other.rank() { self } else { other }
+  if self.rank() >= other.rank() {
+    self
+  } else {
+    other
+  }
 }
 
 ///|
@@ -404,7 +410,11 @@ fn reconcile_element_for_runtime(
   if !old.spec.same_identity(next_spec) {
     old.cancel_component_tree_subscriptions()
     let mounted = mount_view_spec_for_runtime(next_spec, runtime, next_id)
-    { node: mounted.node, next_id: mounted.next_id, dirty_kind: ReconcileLayout }
+    {
+      node: mounted.node,
+      next_id: mounted.next_id,
+      dirty_kind: ReconcileLayout,
+    }
   } else {
     let own_dirty = old.spec.reconcile_dirty_kind(next_spec)
     old.spec = next_spec
@@ -491,11 +501,12 @@ fn ElementNode::apply_reconcile_dirty(
 }
 
 ///|
-fn bool_dirty(
-  changed : Bool,
-  dirty : ReconcileDirtyKind,
-) -> ReconcileDirtyKind {
-  if changed { dirty } else { ReconcileDirtyKind::ReconcileClean }
+fn bool_dirty(changed : Bool, dirty : ReconcileDirtyKind) -> ReconcileDirtyKind {
+  if changed {
+    dirty
+  } else {
+    ReconcileDirtyKind::ReconcileClean
+  }
 }
 
 ///|
@@ -734,10 +745,7 @@ fn reconcile_searchbar_dirty(
 }
 
 ///|
-fn picker_items_equal(
-  old : Array[PickerItem],
-  new : Array[PickerItem],
-) -> Bool {
+fn picker_items_equal(old : Array[PickerItem], new : Array[PickerItem]) -> Bool {
   if old.length() != new.length() {
     false
   } else {
@@ -1101,9 +1109,7 @@ fn ElementNode::collect_dirty_element_ids_by_kind(
   layout_ids : Array[ElementId],
   paint_ids : Array[ElementId],
 ) -> Unit {
-  if self.dirty.needs_build ||
-    self.dirty.needs_layout ||
-    self.dirty.needs_paint {
+  if self.dirty.needs_build || self.dirty.needs_layout || self.dirty.needs_paint {
     push_unique_element_id(all_ids, self.id)
   }
   if self.dirty.needs_build {
@@ -1117,10 +1123,7 @@ fn ElementNode::collect_dirty_element_ids_by_kind(
   }
   for child in self.children {
     child.collect_dirty_element_ids_by_kind(
-      all_ids,
-      build_ids,
-      layout_ids,
-      paint_ids,
+      all_ids, build_ids, layout_ids, paint_ids,
     )
   }
 }
