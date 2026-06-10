@@ -183,6 +183,7 @@ fn host_renderer_from_skia(
         err => println("error rendering Windows Skia frame: \{err.message()}")
       }
     },
+    render_frame=Some(frame => renderer.render_frame(frame)),
     text_system=() => renderer.text_system(),
     image_resources=() => renderer.image_resources(),
     image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),

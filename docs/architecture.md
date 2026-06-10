@@ -272,11 +272,12 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   for renderers. The redraw scheduler tracks `idle`, `scheduled`, `in-frame`,
   and `follow-up` states so repeated host callbacks coalesce and redraw
   requests made during presentation become the next frame.
-  `HostWindowRenderer::render_frame()` expands retained cached-layer commands
-  through a renderer-neutral command cache and reports cache hit/miss/update
-  diagnostics; platform renderers still receive ordinary `DrawCommand` streams,
-  so OS-level partial present and renderer-specific texture cache promotion can
-  evolve independently.
+  `HostWindowRenderer::render_frame()` forwards retained cached-layer commands
+  to renderers that implement frame rendering, while its renderer-neutral
+  command cache remains the fallback for simpler backends. Native Skia now owns
+  a renderer-local offscreen surface/image cache for repaint boundaries and
+  reports cache hit/miss/update/evict diagnostics; OS-level partial present
+  still remains a separate platform capability.
 - `AppRuntime::focus_next` and `AppRuntime::focus_previous` expose explicit
   focus traversal entry points on top of the shared tab-order model.
 

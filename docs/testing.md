@@ -390,8 +390,8 @@ before it grows broad platform claims:
   unmount cleanup, and saveable state restore.
 - Layout/render: custom child layout delegates, baseline/alignment follow-ups,
   lazy viewport behavior, clip/transform/opacity/image/text command stability,
-  cached-layer command expansion/replay, and renderer capability report
-  synchronization.
+  cached-layer command expansion/replay, native Skia offscreen image-cache
+  hit/miss/update/evict behavior, and renderer capability report synchronization.
 - Input/accessibility: gesture arbitration, action-command matching and
   dispatch, explicit focus traversal helpers, shortcut dispatch, IME/text
   selection, clipboard service routing, file drop dispatch, and semantics action
