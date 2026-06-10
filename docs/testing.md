@@ -912,6 +912,22 @@ counts, present counts, and full-repaint-to-cached speedup. Override
 `MOUI_SKIA_CACHED_LAYER_BENCH_FRAMES` and
 `MOUI_SKIA_CACHED_LAYER_BENCH_WARMUP` for longer local runs.
 
+The renderer-local cache is also wired into reproducible real app scenarios:
+
+```sh
+moon run benchmarks/app_cached_layer/native --target native
+```
+
+This runs Showcase runtime scrolling, Showcase sidebar hover, and Markdown
+Editor text input against both `draw_frame`/Skia cached-layer rendering and a
+full-repaint `draw_commands` baseline. It records cache hit/miss/update/evict
+counts, `BeginCachedLayer`/`DrawCachedLayer` command counts, draw/render time,
+damage kind/dirty-rect counts, draw command counts, present counts, and a
+cached-vs-full speedup. Scroll and text-input paths are expected to show
+update-heavy behavior while the hover path demonstrates sibling boundary cache
+hits in a real UI. Override `MOUI_APP_CACHED_LAYER_BENCH_FRAMES` and
+`MOUI_APP_CACHED_LAYER_BENCH_WARMUP` for longer local runs.
+
 The Web runtime handoff validator checks that both Web wasm-gc examples have
 HTML boot pages, browser runtime assets, wasm artifacts, and expected compiled
 WebAssembly event/completion exports after build:

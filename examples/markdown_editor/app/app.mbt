@@ -1693,6 +1693,23 @@ fn MarkdownEditorApp::chrome(
   selection : MarkdownEditorSelection,
   width : Double,
 ) -> @core.View[MarkdownEditorMsg] {
+  let toolbar = row(
+    [
+      editor_chrome_button("New", NewDocument, theme),
+      editor_chrome_button("Open", OpenDocument, theme),
+      editor_chrome_button("Save", SaveDocument, theme),
+      editor_chrome_button("Save As", SaveDocumentAs, theme),
+      editor_chrome_button("Import", ImportFromClipboard, theme),
+      editor_chrome_button("Export", ExportToClipboard, theme),
+      editor_chrome_button("Undo", Undo, theme),
+      editor_chrome_button("Redo", Redo, theme),
+      editor_chrome_button("Find", ToggleFind, theme),
+      editor_chrome_button("Nav", ToggleOutline, theme),
+      editor_chrome_button("Src", ToggleSourcePreview, theme),
+    ],
+    spacing=theme.spacing_scale.sm,
+    align=@views.CrossAlign::Center,
+  ).repaint_boundary()
   frame(
     row(
       [
@@ -1705,17 +1722,7 @@ fn MarkdownEditorApp::chrome(
         .font(theme.typography.caption)
         .foreground(@core.Color::black().multiply_alpha(0.42)),
         spacer(),
-        editor_chrome_button("New", NewDocument, theme),
-        editor_chrome_button("Open", OpenDocument, theme),
-        editor_chrome_button("Save", SaveDocument, theme),
-        editor_chrome_button("Save As", SaveDocumentAs, theme),
-        editor_chrome_button("Import", ImportFromClipboard, theme),
-        editor_chrome_button("Export", ExportToClipboard, theme),
-        editor_chrome_button("Undo", Undo, theme),
-        editor_chrome_button("Redo", Redo, theme),
-        editor_chrome_button("Find", ToggleFind, theme),
-        editor_chrome_button("Nav", ToggleOutline, theme),
-        editor_chrome_button("Src", ToggleSourcePreview, theme),
+        toolbar,
       ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Center,
@@ -3484,6 +3491,7 @@ fn editor_page(
     ),
   )
   .corner_radius(theme.radius_scale.sm)
+  .repaint_boundary()
 }
 
 ///|
