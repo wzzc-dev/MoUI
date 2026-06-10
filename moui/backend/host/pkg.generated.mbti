@@ -429,13 +429,16 @@ pub(all) struct HostRuntimeDriver {
   runtime : @wzzc-dev/moui/core.AppRuntime
   scheduler : RedrawScheduler
   mut close_requested : Bool
+  mut frame_time_ms : Double
 }
+pub fn HostRuntimeDriver::apply_render_frame_result(Self, @render.RenderFrameResult) -> Unit
 pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::dispatch(Self, HostEvent) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @wzzc-dev/moui/core.CommandIntent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @wzzc-dev/moui/core.KeyboardEvent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_service_completion(Self, HostCompletedServiceResponse, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@wzzc-dev/moui/core.DrawCommand]
+pub fn HostRuntimeDriver::draw_frame(Self) -> @wzzc-dev/moui/core.DrawFrame
 pub fn HostRuntimeDriver::environment(Self) -> @wzzc-dev/moui/core.Environment
 pub fn HostRuntimeDriver::event_result(Self) -> HostEventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
@@ -692,9 +695,10 @@ pub fn HostWindowRenderer::apply_image_resource_load_completion(Self, @render.Im
 pub fn HostWindowRenderer::dispose(Self) -> Unit
 pub fn HostWindowRenderer::image_resource_snapshot(Self) -> @render.ImageResourceSnapshot
 pub fn HostWindowRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
-pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, image_resources? : () -> Array[@render.ImageResourceRecord], image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)?, apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)?, set_image_resource_change_callback? : (((@render.ImageResourceSnapshot) -> Unit)?) -> Unit, present_count? : () -> Int, dispose? : () -> Unit) -> Self
+pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, render_frame? : ((@wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult)?, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, image_resources? : () -> Array[@render.ImageResourceRecord], image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)?, apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)?, set_image_resource_change_callback? : (((@render.ImageResourceSnapshot) -> Unit)?) -> Unit, present_count? : () -> Int, dispose? : () -> Unit) -> Self
 pub fn HostWindowRenderer::present_count(Self) -> Int
 pub fn HostWindowRenderer::render(Self, Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit
+pub fn HostWindowRenderer::render_frame(Self, @wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult
 pub fn HostWindowRenderer::resize(Self, HostSurfaceMetrics) -> Unit
 pub fn HostWindowRenderer::set_image_resource_change_callback(Self, ((@render.ImageResourceSnapshot) -> Unit)?) -> Unit
 pub fn HostWindowRenderer::text_system(Self) -> @wzzc-dev/moui/core.TextSystem
@@ -898,14 +902,23 @@ pub(all) enum PlatformChannelResponse {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RedrawScheduler {
-  mut redraw_requested : Bool
+  mut state : RedrawSchedulerState
   mut schedule : () -> Unit
 }
 pub fn RedrawScheduler::begin_redraw(Self) -> Unit
+pub fn RedrawScheduler::finish_redraw(Self) -> Unit
 pub fn RedrawScheduler::is_redraw_requested(Self) -> Bool
 pub fn RedrawScheduler::new(schedule~ : () -> Unit) -> Self
 pub fn RedrawScheduler::request(Self) -> Unit
 pub fn RedrawScheduler::set_schedule(Self, () -> Unit) -> Unit
+pub fn RedrawScheduler::state(Self) -> RedrawSchedulerState
+
+pub(all) enum RedrawSchedulerState {
+  RedrawIdle
+  RedrawScheduled
+  RedrawInFrame
+  RedrawFollowUpScheduled
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SurfaceHostState {
   mut metrics : HostSurfaceMetrics

@@ -393,11 +393,23 @@ fn ElementNode::render_with_environment(
       }
   }
   self.dirty.clear()
+  self.render_cache.content_revision = self.render_cache.content_revision + 1
+  let paint_bounds = render_node_paint_bounds(
+    bounds,
+    commands,
+    children,
+    post_commands,
+    overlay_commands,
+  )
   let render = {
     element_id: self.id,
     frame: bounds,
     children,
     hit_testable: element_hit_testable(self.spec),
+    paint_bounds,
+    content_revision: self.render_cache.content_revision,
+    is_repaint_boundary: false,
+    layer_cache_key: None,
     paint_commands: commands,
     post_paint_commands: post_commands,
     overlay_paint_commands: overlay_commands,
@@ -415,4 +427,31 @@ fn ElementNode::render_with_environment(
     self.render_cache.cached_render = Some(render)
   }
   render
+}
+
+///|
+fn render_node_paint_bounds(
+  frame : Rect,
+  commands : Array[DrawCommand],
+  children : Array[RenderNode],
+  post_commands : Array[DrawCommand],
+  overlay_commands : Array[DrawCommand],
+) -> Rect {
+  let mut bounds : Rect? = Some(frame)
+  for command in commands {
+    bounds = optional_rect_union(bounds, command.bounds())
+  }
+  for child in children {
+    bounds = optional_rect_union(bounds, Some(child.paint_bounds))
+  }
+  for command in post_commands {
+    bounds = optional_rect_union(bounds, command.bounds())
+  }
+  for command in overlay_commands {
+    bounds = optional_rect_union(bounds, command.bounds())
+  }
+  match bounds {
+    Some(rect) => rect
+    None => frame
+  }
 }
