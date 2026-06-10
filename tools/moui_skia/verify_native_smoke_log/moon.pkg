@@ -1,0 +1,12 @@
+import {
+  "moonbitlang/core/env",
+  "moonbitlang/x/sys",
+  "wzzc-dev/moui_tools/moui_skia/native_smoke_log_contract" @smoke_contract,
+  "wzzc-dev/moui_tools" @tools,
+}
+
+supported_targets = "+native"
+
+options(
+  "is-main": true,
+)

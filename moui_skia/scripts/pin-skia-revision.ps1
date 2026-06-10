@@ -1,37 +1,51 @@
 param(
   [string] $AcceptanceLog = "logs/linux-real-skia-smoke/linux-real-skia-acceptance.log",
 
-  [string] $RevisionFile = "skia-revision.txt"
+  [string] $RevisionFile = "skia-revision.txt",
+
+  [switch] $Help
 )
 
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-if ([System.IO.Path]::IsPathRooted($AcceptanceLog)) {
-  $resolvedAcceptanceLog = $AcceptanceLog
+$workspaceRoot = Split-Path -Parent $repoRoot
+$toolPackage = "tools/moui_skia/pin_skia_revision"
+$toolDir = Join-Path $workspaceRoot $toolPackage
+
+if (!(Test-Path -LiteralPath $toolDir -PathType Container)) {
+  $splitRepoToolDir = Join-Path $repoRoot $toolPackage
+  if (Test-Path -LiteralPath $splitRepoToolDir -PathType Container) {
+    $workspaceRoot = $repoRoot
+    $toolDir = $splitRepoToolDir
+  }
+}
+
+if (!(Test-Path -LiteralPath $toolDir -PathType Container)) {
+  throw "MoonBit Skia revision pin writer tool is missing: $toolDir"
+}
+
+$toolArgs = @("--repo-root", $repoRoot)
+if ($Help) {
+  $toolArgs += "--help"
 } else {
-  $resolvedAcceptanceLog = Join-Path $repoRoot $AcceptanceLog
-}
-if ([System.IO.Path]::IsPathRooted($RevisionFile)) {
-  $resolvedRevisionFile = $RevisionFile
-} else {
-  $resolvedRevisionFile = Join-Path $repoRoot $RevisionFile
+  $toolArgs += $AcceptanceLog
+  $toolArgs += @("--revision-file", $RevisionFile)
 }
 
-if (!(Test-Path -LiteralPath $resolvedAcceptanceLog -PathType Leaf)) {
-  throw "acceptance log was not found: $resolvedAcceptanceLog"
+$exitCode = 0
+Push-Location $workspaceRoot
+try {
+  moon build $toolPackage --target native
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+  $toolExe = Join-Path $workspaceRoot "_build/native/debug/build/wzzc-dev/moui_tools/moui_skia/pin_skia_revision/pin_skia_revision.exe"
+  & $toolExe @toolArgs
+  $exitCode = $LASTEXITCODE
+} finally {
+  Pop-Location
 }
-
-& (Join-Path $PSScriptRoot "verify-acceptance-log.ps1") `
-  -LogPath $resolvedAcceptanceLog `
-  -RequireCommit
-
-$acceptanceContent = Get-Content -LiteralPath $resolvedAcceptanceLog -Raw
-$matches = [regex]::Matches($acceptanceContent, '(?m)^\s*skia_commit=([0-9a-fA-F]{40})\s*$')
-if ($matches.Count -eq 0) {
-  throw "no full 40-character skia_commit=<hash> entry was found in $resolvedAcceptanceLog"
+if ($exitCode -ne 0) {
+  exit $exitCode
 }
-
-$skiaCommit = $matches[$matches.Count - 1].Groups[1].Value.ToLowerInvariant()
-Set-Content -LiteralPath $resolvedRevisionFile -Value $skiaCommit
-Write-Host "Pinned $resolvedRevisionFile to $skiaCommit"

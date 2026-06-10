@@ -1,0 +1,17 @@
+import {
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "moonbitlang/x/sys",
+  "wzzc-dev/moui_tools" @tools,
+}
+
+import {
+  "moonbitlang/core/test",
+  "wzzc-dev/moui_tools" @tools,
+} for "wbtest"
+
+supported_targets = "+native"
+
+options(
+  "is-main": true,
+)

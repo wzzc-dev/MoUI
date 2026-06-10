@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_tools/moui_skia/skia_acceptance"
+
+// Values
+pub fn accepted_commit_from_log_text(String) -> Result[String, String]
+
+pub fn display_revision(String) -> String
+
+pub fn first_pinned_revision(String) -> String
+
+pub fn full_hex_hash(String) -> Bool
+
+pub fn lowercase_hex(String) -> String
+
+pub fn verify_acceptance_log_text(String, Bool) -> Result[Unit, String]
+
+pub fn verify_revision_texts(String, String, Bool) -> Result[String, String]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

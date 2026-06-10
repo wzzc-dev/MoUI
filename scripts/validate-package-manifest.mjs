@@ -1,95 +1,43 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const usage = () => {
-  console.error(
-    "Usage: node scripts/validate-package-manifest.mjs <moui-package.json> [--platform macos|windows]",
-  );
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const invocationRoot = process.cwd();
+const toolPackage = "tools/moui/validate_package_manifest";
+const toolExe = join(
+  repoRoot,
+  "_build/native/debug/build/wzzc-dev/moui_tools/moui/validate_package_manifest/validate_package_manifest.exe",
+);
+
+const originalArgs = process.argv.slice(2);
+const toolArgs = [ ...originalArgs ];
+if (
+  toolArgs.length > 0 &&
+  toolArgs[0] !== "-h" &&
+  toolArgs[0] !== "--help" &&
+  !toolArgs[0].startsWith("--")
+) {
+  const displayPath = toolArgs[0];
+  toolArgs[0] = resolve(invocationRoot, displayPath);
+  toolArgs.push("--display-path", displayPath);
+}
+
+const run = (command, args) => {
+  const result = spawnSync(command, args, {
+    cwd: repoRoot,
+    stdio: "inherit",
+  });
+  if (result.error) {
+    console.error(result.error.message);
+    process.exit(1);
+  }
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
+  }
 };
 
-const args = process.argv.slice(2);
-if (args.length < 1 || args.includes("--help") || args.includes("-h")) {
-  usage();
-  process.exit(args.length < 1 ? 2 : 0);
-}
-
-const manifestPath = args[0];
-let expectedPlatform = "";
-for (let i = 1; i < args.length; i += 1) {
-  if (args[i] === "--platform") {
-    expectedPlatform = args[i + 1] ?? "";
-    i += 1;
-  } else {
-    console.error(`Unknown argument: ${args[i]}`);
-    usage();
-    process.exit(2);
-  }
-}
-
-const fail = message => {
-  console.error(`${manifestPath}: ${message}`);
-  process.exitCode = 1;
-};
-
-let manifest;
-try {
-  manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-} catch (error) {
-  console.error(`${manifestPath}: failed to read JSON: ${error.message}`);
-  process.exit(1);
-}
-
-const requireString = field => {
-  if (typeof manifest[field] !== "string" || manifest[field].trim() === "") {
-    fail(`missing non-empty string field '${field}'`);
-    return "";
-  }
-  return manifest[field];
-};
-
-if (manifest.schemaVersion !== 1) {
-  fail("schemaVersion must be 1");
-}
-
-const platform = requireString("platform");
-if (expectedPlatform && platform !== expectedPlatform) {
-  fail(`platform must be '${expectedPlatform}'`);
-}
-
-const outputKind = requireString("outputKind");
-requireString("appName");
-requireString("moonPackage");
-requireString("version");
-requireString("buildNumber");
-const executable = requireString("executable");
-requireString("bundleName");
-
-if (!Array.isArray(manifest.runtimeFiles)) {
-  fail("runtimeFiles must be an array");
-}
-
-if (platform === "macos") {
-  if (outputKind !== "app-bundle") {
-    fail("macOS outputKind must be 'app-bundle'");
-  }
-  requireString("bundleIdentifier");
-  if (!manifest.bundleName.endsWith(".app")) {
-    fail("macOS bundleName must end with .app");
-  }
-} else if (platform === "windows") {
-  if (outputKind !== "portable-folder") {
-    fail("Windows outputKind must be 'portable-folder'");
-  }
-  if (!executable.toLowerCase().endsWith(".exe")) {
-    fail("Windows executable must end with .exe");
-  }
-} else {
-  fail("platform must be 'macos' or 'windows'");
-}
-
-if (process.exitCode) {
-  process.exit(process.exitCode);
-}
-
-console.log(`${manifestPath}: ok (${platform} ${outputKind})`);
+run("moon", [ "build", toolPackage, "--target", "native" ]);
+run(toolExe, toolArgs);

@@ -1,9 +1,16 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { dirname } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const invocationRoot = process.cwd();
+const toolPackage = "tools/moui/validate_web_runtime_handoff";
+const toolExe = join(
+  repoRoot,
+  "_build/native/debug/build/wzzc-dev/moui_tools/moui/validate_web_runtime_handoff/validate_web_runtime_handoff.exe",
+);
 
 const usage = () => {
   console.error(
@@ -14,19 +21,31 @@ const usage = () => {
 let baseUrl = "";
 let manifestPath = "";
 const rootDir = process.env.MOUI_WEB_RUNTIME_HANDOFF_ROOT || ".";
-const args = process.argv.slice(2);
-for (let i = 0; i < args.length; i += 1) {
-  if (args[i] === "--base-url") {
-    baseUrl = args[i + 1] ?? "";
+const originalArgs = process.argv.slice(2);
+
+for (let i = 0; i < originalArgs.length; i += 1) {
+  const arg = originalArgs[i];
+  if (arg === "--base-url") {
+    if (i + 1 >= originalArgs.length) {
+      console.error("Missing value for --base-url");
+      usage();
+      process.exit(2);
+    }
+    baseUrl = originalArgs[i + 1];
     i += 1;
-  } else if (args[i] === "--manifest") {
-    manifestPath = args[i + 1] ?? "";
+  } else if (arg === "--manifest") {
+    if (i + 1 >= originalArgs.length) {
+      console.error("Missing value for --manifest");
+      usage();
+      process.exit(2);
+    }
+    manifestPath = originalArgs[i + 1];
     i += 1;
-  } else if (args[i] === "--help" || args[i] === "-h") {
+  } else if (arg === "--help" || arg === "-h") {
     usage();
     process.exit(0);
   } else {
-    console.error(`Unknown argument: ${args[i]}`);
+    console.error(`Unknown argument: ${arg}`);
     usage();
     process.exit(2);
   }
@@ -36,192 +55,145 @@ const targets = [
   {
     name: "showcase-web-wasm",
     packagePath: "examples/showcase/web_wasm",
-    htmlPath: "examples/showcase/web_wasm/index.html",
     wasmPath: "_build/wasm-gc/debug/build/examples/showcase/web_wasm/web_wasm.wasm",
   },
   {
     name: "markdown-editor-web-wasm",
     packagePath: "examples/markdown_editor/web_wasm",
-    htmlPath: "examples/markdown_editor/web_wasm/index.html",
     wasmPath:
       "_build/wasm-gc/debug/build/examples/markdown_editor/web_wasm/web_wasm.wasm",
   },
 ];
 
-let failed = false;
-const checks = [];
-
-const fail = message => {
-  console.error(`web runtime handoff: ${message}`);
-  failed = true;
-};
-
-const recordCheck = check => {
-  checks.push(check);
-};
-
-const readText = path => {
-  try {
-    return readFileSync(join(rootDir, path), "utf8");
-  } catch (error) {
-    fail(`${path}: failed to read: ${error.message}`);
-    return "";
+const run = (command, args, options = {}) => {
+  const result = spawnSync(command, args, {
+    cwd: options.cwd ?? repoRoot,
+    encoding: "utf8",
+  });
+  const failed = result.status !== 0 || result.error;
+  const redirectStdout =
+    options.failureStdoutToStderr && failed && result.stdout;
+  const suppressStdout =
+    options.suppressSuccessStdout && !failed && result.stdout;
+  if (result.stdout && !redirectStdout && !suppressStdout) {
+    process.stdout.write(result.stdout);
   }
-};
-
-const requireFile = path => {
-  try {
-    const stats = statSync(join(rootDir, path));
-    if (!stats.isFile()) {
-      fail(`${path}: must be a file`);
-      return 0;
+  if (redirectStdout) {
+    process.stderr.write(result.stdout);
+  }
+  if (result.stderr) {
+    process.stderr.write(result.stderr);
+  }
+  if (result.error) {
+    console.error(result.error.message);
+    if (options.exitOnFailure !== false) {
+      process.exit(1);
     }
-    const size = stats.size;
-    recordCheck({ kind: "file", path, bytes: size });
-    return size;
-  } catch (error) {
-    fail(`${path}: missing file`);
-    return 0;
+    return { status: 1 };
   }
-};
-
-const assertIncludes = (content, needle, label) => {
-  if (!content.includes(needle)) {
-    fail(`${label} must include '${needle}'`);
+  if (result.status !== 0 && options.exitOnFailure !== false) {
+    process.exit(result.status ?? 1);
   }
-};
-
-const requiredWasmExports = [
-  "web_dispatch_event",
-  "web_complete_async_clipboard_read",
-  "web_complete_async_file_dialog",
-];
-
-const validateWasmExports = async (path, bytes) => {
-  let module;
-  try {
-    module = await WebAssembly.compile(bytes);
-  } catch (error) {
-    fail(`${path}: failed to compile wasm module for export audit: ${error.message}`);
-    return;
-  }
-  const exports = WebAssembly.Module.exports(module).map(entry => entry.name);
-  const exportSet = new Set(exports);
-  for (const exportName of requiredWasmExports) {
-    if (!exportSet.has(exportName)) {
-      fail(`${path}: missing required wasm export '${exportName}'`);
-    }
-  }
-  return exports;
+  return result;
 };
 
 const normalizeBaseUrl = url => url.replace(/\/+$/, "");
 
-const checkHttp = async (path, label) => {
-  if (!baseUrl) return;
+const checkHttp = async (path, label, httpChecks, httpFailures) => {
   const url = `${normalizeBaseUrl(baseUrl)}/${path}`;
   let response;
   try {
     response = await fetch(url, { method: "GET" });
   } catch (error) {
-    fail(`${label}: failed to fetch ${url}: ${error.message}`);
+    httpFailures.push(`${label}: failed to fetch ${url}: ${error.message}`);
     return;
   }
   if (!response.ok) {
-    fail(`${label}: ${url} returned ${response.status} ${response.statusText}`);
+    httpFailures.push(`${label}: ${url} returned ${response.status} ${response.statusText}`);
     return;
   }
   const bytes = (await response.arrayBuffer()).byteLength;
   if (bytes === 0) {
-    fail(`${label}: ${url} returned an empty body`);
+    httpFailures.push(`${label}: ${url} returned an empty body`);
+    return;
   }
-  recordCheck({ kind: "http", label, path, url, bytes });
+  httpChecks.push({ label, path, url, bytes });
 };
 
-requireFile("moui/backend/web/runtime.js");
-requireFile("moui/backend/web/browser_runtime.js");
-
-const runtimeJs = readText("moui/backend/web/runtime.js");
-assertIncludes(runtimeJs, "Browser WebGPU is required", "moui/backend/web/runtime.js");
-assertIncludes(runtimeJs, "bootMouiWasmGcApp", "moui/backend/web/runtime.js");
-
-const browserRuntimeJs = readText("moui/backend/web/browser_runtime.js");
-assertIncludes(browserRuntimeJs, "install_canvas_events", "moui/backend/web/browser_runtime.js");
-assertIncludes(browserRuntimeJs, "create_canvas", "moui/backend/web/browser_runtime.js");
-
-const targetManifests = [];
-
-for (const target of targets) {
-  const html = readText(target.htmlPath);
-  assertIncludes(html, "bootMouiWasmGcApp", `${target.htmlPath}`);
-  assertIncludes(html, "../../../moui/backend/web/runtime.js", `${target.htmlPath}`);
-  assertIncludes(html, "#canvas-host", `${target.htmlPath}`);
-  assertIncludes(html, "Loading wasm-gc", `${target.htmlPath}`);
-  assertIncludes(html, "Running", `${target.htmlPath}`);
-  assertIncludes(html, target.wasmPath.replace("_build", "../../../_build"), `${target.htmlPath}`);
-
-  const targetManifest = {
-    name: target.name,
-    packagePath: target.packagePath,
-    htmlPath: target.htmlPath,
-    wasmPath: target.wasmPath,
-    requiredWasmExports,
-    compiledWasmExports: [],
-    htmlRuntimeImport: "../../../moui/backend/web/runtime.js",
-    canvasHostSelector: "#canvas-host",
-  };
-
-  const wasmSize = requireFile(target.wasmPath);
-  if (wasmSize > 0 && wasmSize < 1024) {
-    fail(`${target.wasmPath}: wasm artifact is unexpectedly small (${wasmSize} bytes)`);
+const collectHttpChecks = async () => {
+  const httpChecks = [];
+  const httpFailures = [];
+  if (!baseUrl) {
+    return { httpChecks, httpFailures };
   }
-  const wasmBytes = wasmSize ? readFileSync(join(rootDir, target.wasmPath)) : Buffer.alloc(0);
-  if (wasmBytes.length > 0) {
-    targetManifest.compiledWasmExports = await validateWasmExports(target.wasmPath, wasmBytes) ?? [];
+  if (typeof fetch !== "function") {
+    return {
+      httpChecks,
+      httpFailures: ["Node fetch API is unavailable; cannot run --base-url checks"],
+    };
   }
-  targetManifest.wasmBytes = wasmSize;
+  for (const target of targets) {
+    await checkHttp(
+      `${target.packagePath}/index.html`,
+      `${target.name} html`,
+      httpChecks,
+      httpFailures,
+    );
+    await checkHttp(target.wasmPath, `${target.name} wasm`, httpChecks, httpFailures);
+  }
+  await checkHttp("moui/backend/web/runtime.js", "web runtime.js", httpChecks, httpFailures);
+  await checkHttp(
+    "moui/backend/web/browser_runtime.js",
+    "browser_runtime.js",
+    httpChecks,
+    httpFailures,
+  );
+  return { httpChecks, httpFailures };
+};
 
-  await checkHttp(`${target.packagePath}/index.html`, `${target.name} html`);
-  await checkHttp(target.wasmPath, `${target.name} wasm`);
-  targetManifests.push(targetManifest);
+const { httpChecks, httpFailures } = await collectHttpChecks();
+
+run("moon", ["build", toolPackage, "--target", "native"]);
+
+const toolArgs = ["--root", rootDir];
+if (baseUrl) {
+  toolArgs.push("--base-url", baseUrl);
+}
+if (manifestPath && httpFailures.length === 0) {
+  toolArgs.push("--manifest", manifestPath);
+}
+for (const check of httpChecks) {
+  toolArgs.push(
+    "--http-check",
+    check.label,
+    check.path,
+    check.url,
+    String(check.bytes),
+  );
 }
 
-await checkHttp("moui/backend/web/runtime.js", "web runtime.js");
-await checkHttp("moui/backend/web/browser_runtime.js", "browser_runtime.js");
+const toolResult = run(toolExe, toolArgs, {
+  cwd: invocationRoot,
+  exitOnFailure: false,
+  failureStdoutToStderr: true,
+  suppressSuccessStdout: httpFailures.length > 0,
+});
 
-if (failed) {
-  process.exit(1);
+let exitStatus = toolResult.status ?? 1;
+for (const failure of httpFailures) {
+  console.error(`web runtime handoff: ${failure}`);
+}
+if (httpFailures.length > 0 && exitStatus === 0) {
+  exitStatus = 1;
+}
+if (exitStatus !== 0) {
+  process.exit(exitStatus);
 }
 
 if (manifestPath) {
-  const manifest = {
-    schemaVersion: 1,
-    mode: "web-runtime-handoff",
-    generatedBy: "scripts/validate-web-runtime-handoff.mjs",
-    root: rootDir,
-    baseUrl: baseUrl || "",
-    evidenceBoundary:
-      "Static HTML/runtime/wasm delivery and compiled WebAssembly export audit only; not browser WebGPU device, wasm instantiation, canvas presentation, or pixel evidence.",
-    runtimeAssets: [
-      "moui/backend/web/runtime.js",
-      "moui/backend/web/browser_runtime.js",
-    ],
-    targets: targetManifests,
-    checks,
-  };
-  mkdirSync(dirname(manifestPath), { recursive: true });
-  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  console.log(`web runtime handoff manifest: ${manifestPath}`);
-  const validation = spawnSync(
+  run(
     process.execPath,
-    ["scripts/validate-web-runtime-handoff-manifest.mjs", manifestPath],
-    { encoding: "utf8" },
+    [join(repoRoot, "scripts/validate-web-runtime-handoff-manifest.mjs"), manifestPath],
+    { cwd: invocationRoot },
   );
-  if (validation.stdout) process.stdout.write(validation.stdout);
-  if (validation.stderr) process.stderr.write(validation.stderr);
-  if (validation.status !== 0) {
-    process.exit(validation.status ?? 1);
-  }
 }
-
-console.log("web runtime handoff: ok");

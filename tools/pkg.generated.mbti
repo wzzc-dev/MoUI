@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_tools"
+
+// Values
+pub fn args_without_program(Array[String]) -> Array[String]
+
+pub fn comma_join(Array[String]) -> String
+
+pub fn directory_exists(String) -> Bool
+
+pub fn file_exists(String) -> Bool
+
+pub fn file_names_with_suffix(String, String) -> Result[Array[String], String]
+
+pub fn join_path(String, String) -> String
+
+pub fn path_is_rooted(String) -> Bool
+
+pub fn read_file_or_directory_text(String, String, String, String) -> Result[String, String]
+
+pub fn read_required_text(String, String) -> Result[String, String]
+
+pub fn resolve_path(String, String) -> String
+
+pub fn[V] sorted_map_keys(Map[String, V]) -> Array[String]
+
+pub fn strip_suffix(String, String) -> String?
+
+pub fn write_text_file(String, String, String) -> Result[Unit, String]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

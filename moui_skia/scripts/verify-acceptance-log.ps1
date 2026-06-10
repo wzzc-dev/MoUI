@@ -1,26 +1,60 @@
 param(
-  [Parameter(Mandatory = $true)]
-  [string] $LogPath,
+  [string] $LogPath = "",
 
-  [switch] $RequireCommit
+  [switch] $RequireCommit,
+
+  [switch] $Help
 )
 
 $ErrorActionPreference = "Stop"
 
-if (!(Test-Path -LiteralPath $LogPath)) {
-  throw "acceptance log is missing: $LogPath"
-}
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$workspaceRoot = Split-Path -Parent $repoRoot
+$toolPackage = "tools/moui_skia/verify_acceptance_log"
+$toolDir = Join-Path $workspaceRoot $toolPackage
 
-$content = Get-Content -LiteralPath $LogPath -Raw
-
-foreach ($field in @("smoke_status=0", "native_smoke_marker=passed", "native_pkg_restore=passed")) {
-  if ($content -notmatch "(?m)^\s*$([regex]::Escape($field))\s*$") {
-    throw "acceptance log is missing required field: $field"
+if (!(Test-Path -LiteralPath $toolDir -PathType Container)) {
+  $splitRepoToolDir = Join-Path $repoRoot $toolPackage
+  if (Test-Path -LiteralPath $splitRepoToolDir -PathType Container) {
+    $workspaceRoot = $repoRoot
+    $toolDir = $splitRepoToolDir
   }
 }
 
-if ($RequireCommit -and $content -notmatch '(?m)^\s*skia_commit=[0-9a-fA-F]{40}\s*$') {
-  throw "acceptance log is missing a full 40-character skia_commit hash"
+if (!(Test-Path -LiteralPath $toolDir -PathType Container)) {
+  throw "MoonBit acceptance log tool is missing: $toolDir"
 }
 
-Write-Host "Verified real Skia acceptance log in $LogPath."
+$toolArgs = @("--repo-root", $repoRoot)
+if ($Help) {
+  $toolArgs += "--help"
+} elseif (![string]::IsNullOrWhiteSpace($LogPath)) {
+  if ([System.IO.Path]::IsPathRooted($LogPath)) {
+    $resolvedLogPath = $LogPath
+  } else {
+    $resolvedLogPath = Join-Path (Get-Location) $LogPath
+  }
+  $toolArgs += $resolvedLogPath
+  if ($RequireCommit) {
+    $toolArgs += "--require-commit"
+  }
+} elseif ($RequireCommit) {
+  $toolArgs += "--require-commit"
+}
+
+$exitCode = 0
+Push-Location $workspaceRoot
+try {
+  moon build $toolPackage --target native
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+  $toolExe = Join-Path $workspaceRoot "_build/native/debug/build/wzzc-dev/moui_tools/moui_skia/verify_acceptance_log/verify_acceptance_log.exe"
+  & $toolExe @toolArgs
+  $exitCode = $LASTEXITCODE
+} finally {
+  Pop-Location
+}
+if ($exitCode -ne 0) {
+  exit $exitCode
+}

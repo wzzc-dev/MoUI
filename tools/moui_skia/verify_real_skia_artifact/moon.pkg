@@ -1,0 +1,18 @@
+import {
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/x/sys",
+  "wzzc-dev/moui_tools/moui_skia/native_smoke_log_contract" @smoke_contract,
+  "wzzc-dev/moui_tools/moui_skia/skia_acceptance",
+  "wzzc-dev/moui_tools" @tools,
+}
+
+import {
+  "moonbitlang/core/test",
+} for "wbtest"
+
+supported_targets = "+native"
+
+options(
+  "is-main": true,
+)
