@@ -41,6 +41,7 @@ enum MarkdownBlockKind {
   Table
   FootnoteDefinition(String)
   HtmlBlock
+  FrontMatter
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -60,10 +61,53 @@ struct MarkdownReferenceDefinition {
 } derive(Eq, Debug)
 
 ///|
+struct MarkdownFrontMatterParseResult {
+  block : MarkdownBlock
+  next_index : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_front_matter_block_at(
+  lines : Array[String],
+) -> MarkdownFrontMatterParseResult? {
+  if lines.length() < 2 || lines[0].trim().to_owned() != "---" {
+    return None
+  }
+  let content : Array[String] = []
+  let mut index = 1
+  while index < lines.length() {
+    if lines[index].trim().to_owned() == "---" {
+      return Some({
+        block: markdown_block(FrontMatter, markdown_join_lines(content)),
+        next_index: index + 1,
+      })
+    }
+    content.push(lines[index])
+    index = index + 1
+  }
+  None
+}
+
+///|
 fn parse_markdown(text : String) -> Array[MarkdownBlock] {
   let blocks : Array[MarkdownBlock] = []
   let definitions = markdown_reference_definitions(text)
   let lines = markdown_split_lines(text)
+  match markdown_front_matter_block_at(lines) {
+    Some(front_matter) => {
+      blocks.push(front_matter.block)
+      let remaining_lines : Array[String] = []
+      for index in front_matter.next_index..<lines.length() {
+        remaining_lines.push(lines[index])
+      }
+      let remaining = markdown_join_lines(remaining_lines)
+      if remaining != "" {
+        blocks.append(parse_markdown(remaining))
+      }
+      return blocks
+    }
+    None => ()
+  }
   let code_lines : Array[String] = []
   let mut code_language : String? = None
   let mut code_fence = ""
@@ -512,7 +556,7 @@ fn markdown_trim_single_trailing_newline(text : String) -> String {
 ///|
 fn markdown_block(kind : MarkdownBlockKind, text : String) -> MarkdownBlock {
   let inlines = match kind {
-    CodeBlock | HorizontalRule | Table => []
+    CodeBlock | HorizontalRule | Table | FrontMatter => []
     _ => parse_markdown_inlines(text)
   }
   { kind, text, inlines, table_alignments: [], code_language: None }
@@ -1270,6 +1314,26 @@ fn markdown_block_to_rich_text(
           @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.12, b=0.12, a=0.06)),
         ),
         inset={ top: 4.0, right: 10.0, bottom: 4.0, left: 10.0 },
+        line_height=Some(base.size * 1.25),
+        corner_radius=6.0,
+      )
+    FrontMatter =>
+      @core.RichTextBlock::new(
+        runs=[
+          @core.RichTextRun::new(
+            text=block.text,
+            font=Some({
+              ..base,
+              families: @core.FontFamilyStack::monospace(),
+              size: base.size * 0.9,
+            }),
+            color=Some(@core.Color::black().multiply_alpha(0.74)),
+          ),
+        ],
+        background=Some(
+          @core.Brush::solid(@core.Color::rgba(r=0.20, g=0.28, b=0.36, a=0.07)),
+        ),
+        inset={ top: 6.0, right: 10.0, bottom: 6.0, left: 10.0 },
         line_height=Some(base.size * 1.25),
         corner_radius=6.0,
       )

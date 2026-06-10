@@ -112,6 +112,34 @@ The editor supports formatted editing for common block and inline structures:
   caret-aware current section, current inline format/reference feedback, and a
   minimal source toggle available from chrome or `Cmd+/`/`Ctrl+/` while keeping
   the formatted page as the primary surface.
+- A Typora-like Source Mode is available from the `Raw` chrome button,
+  `Cmd+Shift+/` / `Ctrl+Shift+/`, or `Quick Format`. It keeps the same
+  canonical Markdown document active but renders the primary editor as raw
+  monospace Markdown with visible markers, while the existing `Src` source
+  preview remains a separate side inspector.
+- Typora-like Focus and Typewriter writing modes are available from the chrome
+  and through `Cmd+Shift+F` / `Ctrl+Shift+F` and `Cmd+Shift+T` /
+  `Ctrl+Shift+T`. Focus mode dims inactive rich-text blocks while preserving
+  the active block's normal editing presentation. Typewriter mode centers the
+  current caret when it is enabled and keeps document input or ordinary
+  selection changes near the middle of the writing viewport. The status strip
+  reports the active writing modes so the default surface can stay quiet.
+- A distraction-free `Zen` mode is available from the chrome,
+  `Cmd+Alt+Z` / `Ctrl+Alt+Z`, or `Quick Format`. Entering Zen closes auxiliary
+  panels and hides the chrome so the primary editor remains live on its own;
+  `Escape` exits Zen before falling back to normal panel/selection dismissal.
+- A `Quick Format` command panel is available from the chrome or with
+  `Cmd+Shift+P` / `Ctrl+Shift+P`. It filters common inline, block, table,
+  document-structure, and writing-mode commands, then dispatches through the
+  same shared editor action path as toolbar buttons and shortcuts. Submitting
+  the filter runs the first matching command, and commands participate in
+  normal undo/redo and app state updates.
+- Writing appearance profiles are available from the `Look` chrome button,
+  `Cmd+Alt+L` / `Ctrl+Alt+L`, and direct `Quick Format` commands. `Paper`
+  keeps the default clean page, `Warm` narrows the page with a slightly larger
+  warm reading font and paper tone, and `Wide` widens the page with a tighter
+  review font and cooler background. Non-default looks are reported in the
+  status strip.
 - An optional `Nav` outline sidebar built from parsed headings. It shows the
   heading hierarchy as compact indented rows, can sit beside the formatted
   editor without opening the source inspector, and clicking a heading moves the
@@ -119,6 +147,28 @@ The editor supports formatted editing for common block and inline structures:
   the sidebar, while `Cmd+Alt+ArrowDown` / `Ctrl+Alt+ArrowDown` and
   `Cmd+Alt+ArrowUp` / `Ctrl+Alt+ArrowUp` jump through next/previous headings
   with wraparound.
+- A document-structure `Table of Contents` command is available from `Quick
+  Format` and `Cmd+Alt+T` / `Ctrl+Alt+T`. It reads the current heading outline
+  and inserts an editable Markdown TOC block with nested links and stable
+  heading slugs at the current caret or selection, participating in normal
+  undo/redo.
+- YAML front matter is recognized at the top of the document and rendered as a
+  distinct metadata block instead of a horizontal rule plus paragraphs. `Quick
+  Format` and `Cmd+Alt+Y` / `Ctrl+Alt+Y` insert a default front matter block at
+  the top of documents that do not have one, or select the existing metadata
+  content when the block is already present.
+- An optional `Files` sidebar is available from the chrome or with
+  `Cmd+Alt+P` / `Ctrl+Alt+P`. This first Typora-style file panel shows the
+  current document, saved/unsaved state, an Open action, and the session's
+  recently opened or saved Markdown paths. Clicking a recent entry reopens it
+  through the same shared host text-file service used by the normal Open flow.
+  It is intentionally not a full directory tree yet.
+- An optional `Info` document panel is available from the chrome, `Quick
+  Format`, or with `Cmd+Alt+D` / `Ctrl+Alt+D`. It keeps Typora-style document
+  insight close to the writing surface by showing words, characters, lines,
+  reading time, headings, non-empty paragraphs, list/task progress, quotes,
+  code blocks, tables, links, images, and footnote references/definitions from
+  the same parsed Markdown snapshot used by the editor.
 - A document-level Find/Replace bar, toggled from the chrome and opened from
   `Cmd+F`/`Ctrl+F`, with `Cmd+Alt+F`/`Ctrl+H` opening the replace-ready bar.
   Keyboard openings keep the bar visible instead of toggling it closed. The bar
@@ -159,7 +209,11 @@ The editor supports formatted editing for common block and inline structures:
   host-service runtime path. `Import`/`Cmd+Alt+I` or `Ctrl+Alt+I` reads
   Markdown text from the host clipboard as a clean document, while
   `Export`/`Cmd+Alt+S` or `Ctrl+Alt+S` writes the canonical Markdown source to
-  the clipboard. The app exposes `MarkdownEditorApp::runtime_with_services`
+  the clipboard. `HTML`/`Cmd+Alt+E` or `Ctrl+Alt+E` copies a complete HTML
+  document generated from the same parsed Markdown snapshot, including
+  headings, paragraphs, lists and task items, tables, code blocks, links,
+  images, raw HTML blocks/inlines, footnotes, and escaped text/attributes.
+  The app exposes `MarkdownEditorApp::runtime_with_services`
   for hosts/tests that inject `HostAppServices`. The macOS and Windows native
   entrypoints pass their platform service bridges so file-dialog, text-file,
   clipboard, and target-opening transfer works in those hosts; the Web wasm-gc

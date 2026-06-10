@@ -13,27 +13,19 @@ extern "C" fn native_paragraph_layout_utf8(
 
 ///|
 #borrow(paragraph)
-extern "C" fn native_paragraph_is_null(
-  paragraph : ParagraphHandle,
-) -> Bool = "moonbit_skia_paragraph_is_null"
+extern "C" fn native_paragraph_is_null(paragraph : ParagraphHandle) -> Bool = "moonbit_skia_paragraph_is_null"
 
 ///|
 #borrow(paragraph)
-extern "C" fn native_paragraph_width(
-  paragraph : ParagraphHandle,
-) -> Float = "moonbit_skia_paragraph_width"
+extern "C" fn native_paragraph_width(paragraph : ParagraphHandle) -> Float = "moonbit_skia_paragraph_width"
 
 ///|
 #borrow(paragraph)
-extern "C" fn native_paragraph_height(
-  paragraph : ParagraphHandle,
-) -> Float = "moonbit_skia_paragraph_height"
+extern "C" fn native_paragraph_height(paragraph : ParagraphHandle) -> Float = "moonbit_skia_paragraph_height"
 
 ///|
 #borrow(paragraph)
-extern "C" fn native_paragraph_line_count(
-  paragraph : ParagraphHandle,
-) -> Int = "moonbit_skia_paragraph_line_count"
+extern "C" fn native_paragraph_line_count(paragraph : ParagraphHandle) -> Int = "moonbit_skia_paragraph_line_count"
 
 ///|
 #borrow(paragraph)

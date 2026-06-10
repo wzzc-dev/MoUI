@@ -59,17 +59,18 @@ pub fn HostWindowRenderer::new(
   let layer_cache = HostLayerCommandCache::new()
   let render_frame_fn = match render_frame {
     Some(render_frame) => render_frame
-    None => frame => {
-      let expanded = layer_cache.expand_frame_commands(frame.commands)
-      render(expanded.commands)
-      @render.RenderFrameResult::new(
-        cache_hit_count=expanded.cache_hit_count,
-        cache_miss_count=expanded.cache_miss_count,
-        cache_update_count=expanded.cache_update_count,
-        cache_evict_count=expanded.cache_evict_count,
-        missing_layer_keys=expanded.missing_layer_keys,
-      )
-    }
+    None =>
+      frame => {
+        let expanded = layer_cache.expand_frame_commands(frame.commands)
+        render(expanded.commands)
+        @render.RenderFrameResult::new(
+          cache_hit_count=expanded.cache_hit_count,
+          cache_miss_count=expanded.cache_miss_count,
+          cache_update_count=expanded.cache_update_count,
+          cache_evict_count=expanded.cache_evict_count,
+          missing_layer_keys=expanded.missing_layer_keys,
+        )
+      }
   }
   {
     resize_fn: resize,
@@ -209,7 +210,11 @@ fn HostLayerCommandCache::expand_frame_commands(
         captures.push({ spec, commands: [layer] })
       }
       @core.DrawCommand::EndCachedLayer(key) => {
-        append_layer_cache_command(output, captures, @core.DrawCommand::PopLayer)
+        append_layer_cache_command(
+          output,
+          captures,
+          @core.DrawCommand::PopLayer,
+        )
         match captures.pop() {
           Some(capture) =>
             if capture.spec.key == key {
@@ -295,9 +300,7 @@ fn HostLayerCommandCache::store(
 }
 
 ///|
-fn HostLayerCommandCache::evict_if_needed(
-  self : HostLayerCommandCache,
-) -> Int {
+fn HostLayerCommandCache::evict_if_needed(self : HostLayerCommandCache) -> Int {
   let mut bytes = 0
   for entry in self.entries {
     bytes = bytes + entry.bytes
