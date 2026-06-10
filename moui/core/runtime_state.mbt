@@ -835,8 +835,6 @@ fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
   let dirty_ids = self.dirty_elements.copy()
   let force_full_reason = if self.needs_rebuild {
     Some("rebuild requested")
-  } else if self.needs_layout {
-    Some("layout requested")
   } else if previous_render.root.element_id.value == 0 {
     Some("initial frame")
   } else {
@@ -875,6 +873,9 @@ fn RuntimeState::compute_damage_region(
   match force_full_reason {
     Some(reason) => DamageRegion::full(reason)
     None => {
+      if dirty_ids.is_empty() {
+        return DamageRegion::full("dirty bounds unavailable")
+      }
       let surface = Rect::new(
         x=0.0,
         y=0.0,
@@ -882,20 +883,35 @@ fn RuntimeState::compute_damage_region(
         height=self.size.height,
       )
       let rects : Array[Rect] = []
+      let mut missing_bounds = false
       for id in dirty_ids {
         if !previous.root.has_dirty_descendant(id, dirty_ids) &&
           !current.root.has_dirty_descendant(id, dirty_ids) {
+          let mut found_bounds = false
           match previous.root.find_damage_bounds(id) {
-            Some(bounds) => rects.push(bounds)
+            Some(bounds) => {
+              rects.push(bounds)
+              found_bounds = true
+            }
             None => ()
           }
           match current.root.find_damage_bounds(id) {
-            Some(bounds) => rects.push(bounds)
+            Some(bounds) => {
+              rects.push(bounds)
+              found_bounds = true
+            }
             None => ()
+          }
+          if !found_bounds {
+            missing_bounds = true
           }
         }
       }
-      DamageRegion::from_rects(rects, surface)
+      if missing_bounds || rects.is_empty() {
+        DamageRegion::full("dirty bounds unavailable")
+      } else {
+        DamageRegion::from_rects(rects, surface)
+      }
     }
   }
 }
