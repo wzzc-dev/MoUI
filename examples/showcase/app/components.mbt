@@ -11,7 +11,7 @@ fn section_panel(
   let scroll_body = match on_scroll {
     Some(handler) =>
       scroll_view(
-        body,
+        body.repaint_boundary(),
         offset=scroll_offset,
         width=metrics.body_width,
         height=metrics.body_height,
@@ -19,7 +19,7 @@ fn section_panel(
       )
     None =>
       scroll_view(
-        body,
+        body.repaint_boundary(),
         offset=scroll_offset,
         width=metrics.body_width,
         height=metrics.body_height,
@@ -50,7 +50,9 @@ fn section_panel(
     variant=@views.SurfaceVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
-  ).border(showcase_panel_border(theme))
+  )
+  .border(showcase_panel_border(theme))
+  .repaint_boundary()
 }
 
 ///|

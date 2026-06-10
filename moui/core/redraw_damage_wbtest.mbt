@@ -84,3 +84,31 @@ test "draw frame emits repaint boundary update then cached layer draw" {
     second.commands.any(command => command is DrawCommand::DrawCachedLayer(_)),
   )
 }
+
+///|
+test "program draw frame emits repaint boundary update then cached layer draw" {
+  let program : Program[Unit, Unit] = Program::simple(
+    init=(),
+    update=(_model, _message) => (),
+    view=_model => {
+      View::text(
+        text="Cached",
+        size=Size::new(width=80.0, height=24.0),
+        font=FontSpec::new(size=12.0),
+        color=Color::black(),
+      ).repaint_boundary()
+    },
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
+    size=Size::new(width=120.0, height=60.0),
+  )
+  let first = runtime.draw_frame()
+  assert_true(
+    first.commands.any(command => command is DrawCommand::BeginCachedLayer(_)),
+  )
+  let second = runtime.draw_frame()
+  assert_true(
+    second.commands.any(command => command is DrawCommand::DrawCachedLayer(_)),
+  )
+}

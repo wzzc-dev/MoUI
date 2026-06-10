@@ -199,7 +199,7 @@ fn ShowcaseModel::sidebar(
                 list_rows,
                 spacing=theme.spacing_scale.sm,
                 align=@views.CrossAlign::Start,
-              ),
+              ).repaint_boundary(),
               offset=normalized_offset,
               width=list_width,
               height=list_viewport_height,
@@ -229,7 +229,9 @@ fn ShowcaseModel::sidebar(
     variant=@views.SurfaceVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
-  ).border(showcase_panel_border(theme))
+  )
+  .border(showcase_panel_border(theme))
+  .repaint_boundary()
 }
 
 ///|
