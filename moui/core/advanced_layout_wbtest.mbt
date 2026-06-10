@@ -35,6 +35,8 @@ test "scroll view emits clip and offsets child frame" {
     offset: Point::new(x=0.0, y=12.0),
     viewport: Some(Size::new(width=80.0, height=40.0)),
     on_scroll: None,
+    scroll_state: None,
+    scroll_activates: false,
     child: ViewSpec::TextSpec({
       key: None,
       text: "Scrolled",
@@ -65,6 +67,8 @@ test "scroll view handles wheel delta through callback" {
     on_scroll: Some(delta => {
       offset.set(Point::new(x=0.0, y=offset.get().y - delta.y))
     }),
+    scroll_state: None,
+    scroll_activates: true,
     child: ViewSpec::TextSpec({
       key: None,
       text: "Scrolled",
@@ -90,12 +94,47 @@ test "scroll view handles wheel delta through callback" {
 }
 
 ///|
+test "state backed scroll updates layout without activation rebuild" {
+  let scroll = ScrollState::new()
+  let root : View[Unit] = View::scroll(
+    child=View::text(
+      text="Scrolled",
+      size=Size::new(width=120.0, height=80.0),
+      font=FontSpec::new(),
+      color=Color::black(),
+    ),
+    viewport=Some(Size::new(width=80.0, height=40.0)),
+    state=Some(scroll),
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=Size::new(width=80.0, height=40.0),
+  )
+  ignore(runtime.draw_commands())
+  runtime.dispatch_event(
+    Pointer(
+      PointerEvent::new(
+        position=Point::new(x=10.0, y=10.0),
+        phase=PointerPhase::Move,
+        wheel_delta=Point::new(x=0.0, y=-12.0),
+      ),
+    ),
+  )
+  inspect(scroll.offset().y, content="12")
+  inspect(runtime.needs_rebuild(), content="false")
+  inspect(runtime.needs_layout(), content="true")
+  inspect(runtime.needs_paint(), content="true")
+}
+
+///|
 test "scroll clip wraps child draw commands in collected paint order" {
   let scroll = ViewSpec::ScrollSpec({
     key: None,
     offset: Point::new(x=0.0, y=0.0),
     viewport: Some(Size::new(width=80.0, height=40.0)),
     on_scroll: None,
+    scroll_state: None,
+    scroll_activates: false,
     child: ViewSpec::ModifiedSpec({
       key: None,
       modifier: ClipModifier,
@@ -142,6 +181,8 @@ test "scroll hit testing reaches offset children" {
     offset: Point::new(x=0.0, y=34.0),
     viewport: Some(Size::new(width=80.0, height=40.0)),
     on_scroll: None,
+    scroll_state: None,
+    scroll_activates: false,
     child: ViewSpec::FlexSpec({
       key: None,
       axis: Axis::Vertical,
@@ -546,6 +587,8 @@ test "scroll measure allows child to exceed viewport constraints" {
     offset: Point::new(x=0.0, y=0.0),
     viewport: Some(Size::new(width=40.0, height=30.0)),
     on_scroll: None,
+    scroll_state: None,
+    scroll_activates: false,
     child: ViewSpec::TextSpec({
       key: None,
       text: "Large",
