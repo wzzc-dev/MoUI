@@ -42,7 +42,7 @@ paths, or abstractions that only preserve old shapes.
   platform-window id mapping,
   request/completion, window event conversion, renderer-neutral frame redraw
   scheduling with idle/scheduled/in-frame/follow-up states, and renderer-neutral
-  `HostWindowRenderer` diagnostics, render-frame cached-layer command replay,
+  `HostWindowRenderer` diagnostics, render-frame cached-layer fallback command replay,
   and image-resource change callback bridge,
   image-resource load completion apply bridge,
   image-resource repaint routing contracts,

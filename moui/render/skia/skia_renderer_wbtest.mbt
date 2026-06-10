@@ -436,6 +436,14 @@ fn skia_test_region_has_matching_pixel(
 }
 
 ///|
+fn skia_test_draw_frame(commands : Array[@core.DrawCommand]) -> @core.DrawFrame {
+  @core.DrawFrame::new(
+    commands~,
+    damage=@core.DamageRegion::full("skia renderer test"),
+  )
+}
+
+///|
 fn skia_test_font(font : @core.FontSpec) -> @skia_native.Font? {
   skia_font_with_resolution_for_text(
     font,
@@ -1573,6 +1581,288 @@ test "skia renderer composites masked opacity layer pixels" {
       @core.Rect::new(x=0.0, y=0.0, width=3.0, height=3.0),
     ),
   )
+}
+
+///|
+test "skia render_frame updates and reuses renderer-local cached layers" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let spec = @core.CachedLayerSpec::new(
+    key="skia-layer-a",
+    frame=@core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
+    content_revision=1,
+  )
+  let first = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::BeginCachedLayer(spec),
+      @core.DrawCommand::FillRect(
+        @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
+        @core.Color::black(),
+      ),
+      @core.DrawCommand::EndCachedLayer(spec.key),
+    ]),
+  )
+  inspect(first.presented, content="true")
+  inspect(first.cache_update_count, content="1")
+  inspect(first.cache_hit_count, content="0")
+  inspect(first.cache_miss_count, content="0")
+  inspect(renderer.unsupported_command_count(), content="0")
+  guard renderer.last_frame() is Some(first_frame) else {
+    fail("expected first cached-layer frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      first_frame,
+      @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
+    ),
+  )
+  let second = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::DrawCachedLayer(spec),
+    ]),
+  )
+  inspect(second.presented, content="true")
+  inspect(second.cache_hit_count, content="1")
+  inspect(second.cache_update_count, content="0")
+  inspect(second.cache_miss_count, content="0")
+  inspect(renderer.present_count(), content="2")
+  guard renderer.last_frame() is Some(second_frame) else {
+    fail("expected second cached-layer frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      second_frame,
+      @core.Rect::new(x=4.0, y=4.0, width=4.0, height=4.0),
+    ),
+  )
+}
+
+///|
+test "skia render_frame snapshots nested cached layers into parent cache" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=20.0, height=20.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let outer = @core.CachedLayerSpec::new(
+    key="outer-layer",
+    frame=@core.Rect::new(x=2.0, y=2.0, width=14.0, height=14.0),
+    content_revision=1,
+  )
+  let inner = @core.CachedLayerSpec::new(
+    key="inner-layer",
+    frame=@core.Rect::new(x=6.0, y=6.0, width=6.0, height=6.0),
+    content_revision=1,
+  )
+  let first = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::BeginCachedLayer(outer),
+      @core.DrawCommand::FillRect(
+        @core.Rect::new(x=2.0, y=2.0, width=14.0, height=14.0),
+        @core.Color::gray(),
+      ),
+      @core.DrawCommand::BeginCachedLayer(inner),
+      @core.DrawCommand::FillRect(
+        @core.Rect::new(x=6.0, y=6.0, width=6.0, height=6.0),
+        @core.Color::black(),
+      ),
+      @core.DrawCommand::EndCachedLayer(inner.key),
+      @core.DrawCommand::EndCachedLayer(outer.key),
+    ]),
+  )
+  inspect(first.presented, content="true")
+  inspect(first.cache_update_count, content="2")
+  guard renderer.last_frame() is Some(first_frame) else {
+    fail("expected nested cached-layer frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      first_frame,
+      @core.Rect::new(x=7.0, y=7.0, width=4.0, height=4.0),
+    ),
+  )
+  let second = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::DrawCachedLayer(outer),
+    ]),
+  )
+  inspect(second.presented, content="true")
+  inspect(second.cache_hit_count, content="1")
+  inspect(second.cache_miss_count, content="0")
+  guard renderer.last_frame() is Some(second_frame) else {
+    fail("expected nested cached-layer hit frame")
+  }
+  assert_true(
+    skia_test_region_has_dark_pixel(
+      second_frame,
+      @core.Rect::new(x=7.0, y=7.0, width=4.0, height=4.0),
+    ),
+  )
+}
+
+///|
+test "skia render_frame cache miss does not present or replace last frame" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=8.0, height=8.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let baseline = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::FillRect(
+        @core.Rect::new(x=1.0, y=1.0, width=2.0, height=2.0),
+        @core.Color::black(),
+      ),
+    ]),
+  )
+  inspect(baseline.presented, content="true")
+  guard renderer.last_frame() is Some(before_miss) else {
+    fail("expected baseline frame")
+  }
+  let missing = @core.CachedLayerSpec::new(
+    key="missing-layer",
+    frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+    content_revision=1,
+  )
+  let miss = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::DrawCachedLayer(missing),
+    ]),
+  )
+  inspect(miss.presented, content="false")
+  inspect(miss.cache_miss_count, content="1")
+  inspect(miss.missing_layer_keys.length(), content="1")
+  inspect(miss.missing_layer_keys[0], content="missing-layer")
+  inspect(renderer.present_count(), content="1")
+  assert_true(renderer.last_frame() == Some(before_miss))
+}
+
+///|
+test "skia render_frame resize clears renderer-local cached layers" {
+  guard skia_available() else { return () }
+  let metrics = @render.RendererSurfaceMetrics::from_logical(
+    size=@core.Size::new(width=12.0, height=12.0),
+  )
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(metrics, target) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let spec = @core.CachedLayerSpec::new(
+    key="resize-layer",
+    frame=@core.Rect::new(x=2.0, y=2.0, width=6.0, height=6.0),
+    content_revision=1,
+  )
+  let update = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::BeginCachedLayer(spec),
+      @core.DrawCommand::FillRect(
+        @core.Rect::new(x=2.0, y=2.0, width=6.0, height=6.0),
+        @core.Color::black(),
+      ),
+      @core.DrawCommand::EndCachedLayer(spec.key),
+    ]),
+  )
+  inspect(update.cache_update_count, content="1")
+  renderer.resize(metrics) catch {
+    err => fail("expected Skia renderer resize: \{err.message()}")
+  }
+  let miss = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::DrawCachedLayer(spec),
+    ]),
+  )
+  inspect(miss.presented, content="false")
+  inspect(miss.cache_miss_count, content="1")
+}
+
+///|
+test "skia render_frame treats empty cached layer draws as no-op" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=8.0, height=8.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let spec = @core.CachedLayerSpec::new(
+    key="empty-layer",
+    frame=@core.Rect::new(x=2.0, y=2.0, width=0.0, height=4.0),
+    content_revision=1,
+  )
+  let result = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::DrawCachedLayer(spec),
+    ]),
+  )
+  inspect(result.presented, content="true")
+  inspect(result.cache_miss_count, content="0")
+  inspect(result.cache_hit_count, content="0")
+}
+
+///|
+test "skia render_frame evicts cached layers by surface budget" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=4.0, height=4.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let commands : Array[@core.DrawCommand] = [
+    @core.DrawCommand::Clear(@core.Color::white()),
+  ]
+  for index in 0..<4 {
+    let spec = @core.CachedLayerSpec::new(
+      key="evict-layer-\{index}",
+      frame=@core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+      content_revision=1,
+    )
+    commands.push(@core.DrawCommand::BeginCachedLayer(spec))
+    commands.push(
+      @core.DrawCommand::FillRect(
+        @core.Rect::new(x=0.0, y=0.0, width=4.0, height=4.0),
+        @core.Color::black(),
+      ),
+    )
+    commands.push(@core.DrawCommand::EndCachedLayer(spec.key))
+  }
+  let result = renderer.render_frame(skia_test_draw_frame(commands))
+  inspect(result.presented, content="true")
+  inspect(result.cache_update_count, content="4")
+  inspect(result.cache_evict_count, content="1")
 }
 
 ///|

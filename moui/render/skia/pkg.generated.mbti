@@ -105,6 +105,7 @@ pub(all) struct SkiaRasterRenderer {
   mut unsupported_command_count : Int
   unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
   mut last_frame : SkiaPixelFrame?
+  // private fields
 }
 pub fn SkiaRasterRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
 pub fn SkiaRasterRenderer::backend_info(Self) -> @render.RendererBackendInfo
@@ -115,6 +116,7 @@ pub fn SkiaRasterRenderer::image_resources(Self) -> Array[@render.ImageResourceR
 pub fn SkiaRasterRenderer::last_frame(Self) -> SkiaPixelFrame?
 pub fn SkiaRasterRenderer::present_count(Self) -> Int
 pub fn SkiaRasterRenderer::render(Self, Array[@core.DrawCommand]) -> Unit raise SkiaRendererError
+pub fn SkiaRasterRenderer::render_frame(Self, @core.DrawFrame) -> @render.RenderFrameResult
 pub fn SkiaRasterRenderer::resize(Self, @render.RendererSurfaceMetrics) -> Unit raise SkiaRendererError
 pub fn SkiaRasterRenderer::set_image_resource_change_callback(Self, ((@render.ImageResourceSnapshot) -> Unit)?) -> Unit
 pub fn SkiaRasterRenderer::surface_diagnostic_summary(Self) -> String
