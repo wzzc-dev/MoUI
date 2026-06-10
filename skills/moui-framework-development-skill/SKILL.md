@@ -143,7 +143,7 @@ Use this skill when editing or reviewing:
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
   window lifecycle registry, window scene resolver, per-window runtime slot
   collection, platform-window id map, renderer-neutral `HostWindowRenderer`
-  diagnostics, render-frame cached-layer command replay, image-resource change callback bridge, image-resource repaint
+  diagnostics, render-frame cached-layer fallback command replay, image-resource change callback bridge, image-resource repaint
   routing and tracked-window revision/status diagnostics plus repaint-result
   previous/current status counts,
   image-resource load completion apply bridge,
