@@ -1866,6 +1866,108 @@ test "skia render_frame evicts cached layers by surface budget" {
 }
 
 ///|
+test "skia render_frame skips churny cached layer admission" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  for revision in 1..=3 {
+    let spec = @core.CachedLayerSpec::new(
+      key="churn-layer",
+      frame=@core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
+      content_revision=revision,
+    )
+    let result = renderer.render_frame(
+      skia_test_draw_frame([
+        @core.DrawCommand::Clear(@core.Color::white()),
+        @core.DrawCommand::BeginCachedLayer(spec),
+        @core.DrawCommand::FillRect(
+          @core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
+          @core.Color::black(),
+        ),
+        @core.DrawCommand::EndCachedLayer(spec.key),
+      ]),
+    )
+    inspect(result.presented, content="true")
+    if revision < 3 {
+      inspect(result.cache_update_count, content="1")
+      inspect(renderer.layer_cache.length(), content="1")
+    } else {
+      inspect(result.cache_update_count, content="0")
+      inspect(renderer.layer_cache.length(), content="0")
+      inspect(renderer.layer_cache_admissions[0].skip_reason, content="churn-without-hit")
+    }
+  }
+  inspect(renderer.unsupported_command_count(), content="0")
+}
+
+///|
+test "skia render_frame keeps hot cached layer admitted across revisions" {
+  guard skia_available() else { return () }
+  let target = SkiaPresentTarget::new(description="test", present=_ => true)
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=16.0, height=16.0),
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  let first_spec = @core.CachedLayerSpec::new(
+    key="hot-layer",
+    frame=@core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
+    content_revision=1,
+  )
+  ignore(
+    renderer.render_frame(
+      skia_test_draw_frame([
+        @core.DrawCommand::Clear(@core.Color::white()),
+        @core.DrawCommand::BeginCachedLayer(first_spec),
+        @core.DrawCommand::FillRect(
+          @core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
+          @core.Color::black(),
+        ),
+        @core.DrawCommand::EndCachedLayer(first_spec.key),
+      ]),
+    ),
+  )
+  let hit = renderer.render_frame(
+    skia_test_draw_frame([
+      @core.DrawCommand::Clear(@core.Color::white()),
+      @core.DrawCommand::DrawCachedLayer(first_spec),
+    ]),
+  )
+  inspect(hit.cache_hit_count, content="1")
+  for revision in 2..=4 {
+    let spec = @core.CachedLayerSpec::new(
+      key="hot-layer",
+      frame=@core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
+      content_revision=revision,
+    )
+    let update = renderer.render_frame(
+      skia_test_draw_frame([
+        @core.DrawCommand::Clear(@core.Color::white()),
+        @core.DrawCommand::BeginCachedLayer(spec),
+        @core.DrawCommand::FillRect(
+          @core.Rect::new(x=2.0, y=2.0, width=8.0, height=8.0),
+          @core.Color::black(),
+        ),
+        @core.DrawCommand::EndCachedLayer(spec.key),
+      ]),
+    )
+    inspect(update.cache_update_count, content="1")
+  }
+  inspect(renderer.layer_cache.length(), content="1")
+  inspect(renderer.layer_cache_admissions[0].hit_count, content="1")
+}
+
+///|
 test "skia renderer paints blend and saturation filter pixels" {
   guard skia_available() else { return () }
   let target = SkiaPresentTarget::new(description="test", present=_ => true)

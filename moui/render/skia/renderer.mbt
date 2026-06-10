@@ -342,11 +342,13 @@ pub(all) struct SkiaRasterRenderer {
   unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
   mut last_frame : SkiaPixelFrame?
   priv layer_cache : Array[SkiaCachedLayerImageEntry]
+  priv layer_cache_admissions : Array[SkiaCachedLayerAdmissionRecord]
   priv mut layer_cache_tick : Int
 }
 
 ///|
 priv struct SkiaCachedLayerImageEntry {
+  identity_key : String
   key : String
   runtime_key : String
   image : @skia_native.Image
@@ -356,7 +358,21 @@ priv struct SkiaCachedLayerImageEntry {
   surface_route : SkiaSurfaceRoute
   content_revision : Int
   byte_size : Int64
+  update_streak : Int
+  mut hit_count : Int
+  skip_reason : String
+  last_admitted_frame : Int
   mut last_used : Int
+}
+
+///|
+priv struct SkiaCachedLayerAdmissionRecord {
+  identity_key : String
+  mut update_streak : Int
+  mut hit_count : Int
+  mut skip_reason : String
+  mut last_admitted_frame : Int
+  mut last_revision : Int
 }
 
 ///|
@@ -812,6 +828,7 @@ pub fn create_with_present_target_and_route(
     unsupported_command_diagnostics: [],
     last_frame: None,
     layer_cache: [],
+    layer_cache_admissions: [],
     layer_cache_tick: 0,
   }
 }
@@ -1794,7 +1811,14 @@ fn SkiaRasterRenderer::update_cached_layer(
           }
           match layer_surface.image_snapshot() {
             Some(image) => {
+              let identity_key = self.skia_layer_cache_identity_key(
+                spec,
+                physical_size,
+              )
+              let admission = self.layer_cache_admission_record(identity_key)
+              admission.record_update(spec.content_revision)
               let entry = SkiaCachedLayerImageEntry::{
+                identity_key,
                 key: self.skia_layer_cache_key(spec, physical_size),
                 runtime_key: spec.key,
                 image,
@@ -1804,11 +1828,29 @@ fn SkiaRasterRenderer::update_cached_layer(
                 surface_route: self.surface_route,
                 content_revision: spec.content_revision,
                 byte_size,
-                last_used: self.next_layer_cache_tick(),
+                update_streak: admission.update_streak,
+                hit_count: admission.hit_count,
+                skip_reason: admission.skip_reason,
+                last_admitted_frame: admission.last_admitted_frame,
+                last_used: 0,
               }
-              if self.store_cached_layer(entry) {
-                stats.cache_update_count = stats.cache_update_count + 1
-                stats.cache_evict_count += self.evict_cached_layers_if_needed()
+              match self.cached_layer_admission_skip_reason(
+                admission,
+                byte_size,
+                budget,
+              ) {
+                Some(reason) => {
+                  admission.skip_reason = reason
+                  self.remove_cached_layers_by_identity(entry.identity_key)
+                }
+                None => {
+                  if self.store_cached_layer(entry, admission) {
+                    admission.skip_reason = ""
+                    stats.cache_update_count = stats.cache_update_count + 1
+                    stats.cache_evict_count += self
+                      .evict_cached_layers_if_needed()
+                  }
+                }
               }
               self.draw_cached_layer_image(
                 canvas,
@@ -1931,6 +1973,13 @@ fn SkiaRasterRenderer::draw_cached_layer(
         return false
       }
       entry.last_used = self.next_layer_cache_tick()
+      entry.hit_count = entry.hit_count + 1
+      let identity_key = self.skia_layer_cache_identity_key(
+        spec,
+        physical_size,
+      )
+      let admission = self.layer_cache_admission_record(identity_key)
+      admission.hit_count = admission.hit_count + 1
       stats.cache_hit_count = stats.cache_hit_count + 1
       self.draw_cached_layer_image(
         canvas,
@@ -2000,6 +2049,65 @@ fn SkiaRasterRenderer::skia_layer_cache_key(
 }
 
 ///|
+fn SkiaRasterRenderer::skia_layer_cache_identity_key(
+  self : SkiaRasterRenderer,
+  spec : @core.CachedLayerSpec,
+  physical_size : @moui_skia.ISize,
+) -> String {
+  "\{spec.key}|route=\{self.surface_route.label()}|scale=\{self.metrics.scale_factor}|pw=\{physical_size.width}|ph=\{physical_size.height}"
+}
+
+///|
+fn SkiaRasterRenderer::layer_cache_admission_record(
+  self : SkiaRasterRenderer,
+  identity_key : String,
+) -> SkiaCachedLayerAdmissionRecord {
+  for record in self.layer_cache_admissions {
+    if record.identity_key == identity_key {
+      return record
+    }
+  }
+  let record = SkiaCachedLayerAdmissionRecord::{
+    identity_key,
+    update_streak: 0,
+    hit_count: 0,
+    skip_reason: "",
+    last_admitted_frame: 0,
+    last_revision: -1,
+  }
+  self.layer_cache_admissions.push(record)
+  record
+}
+
+///|
+fn SkiaCachedLayerAdmissionRecord::record_update(
+  self : SkiaCachedLayerAdmissionRecord,
+  revision : Int,
+) -> Unit {
+  if self.last_revision != revision {
+    self.update_streak = self.update_streak + 1
+    self.last_revision = revision
+  }
+}
+
+///|
+fn SkiaRasterRenderer::cached_layer_admission_skip_reason(
+  self : SkiaRasterRenderer,
+  admission : SkiaCachedLayerAdmissionRecord,
+  byte_size : Int64,
+  budget : Int64,
+) -> String? {
+  let _ = self
+  if budget > 0L && byte_size * 10L > budget * 4L {
+    Some("large-layer")
+  } else if admission.update_streak > 2 && admission.hit_count == 0 {
+    Some("churn-without-hit")
+  } else {
+    None
+  }
+}
+
+///|
 fn SkiaRasterRenderer::lookup_cached_layer(
   self : SkiaRasterRenderer,
   key : String,
@@ -2016,18 +2124,65 @@ fn SkiaRasterRenderer::lookup_cached_layer(
 fn SkiaRasterRenderer::store_cached_layer(
   self : SkiaRasterRenderer,
   entry : SkiaCachedLayerImageEntry,
+  admission : SkiaCachedLayerAdmissionRecord,
 ) -> Bool {
   if entry.byte_size > self.layer_cache_budget_bytes() {
     return false
   }
+  self.remove_stale_cached_layers_for_entry(entry)
+  let admitted_frame = self.next_layer_cache_tick()
+  admission.last_admitted_frame = admitted_frame
   for index in 0..<self.layer_cache.length() {
     if self.layer_cache[index].key == entry.key {
-      self.layer_cache[index] = entry
+      self.layer_cache[index] = {
+        ..entry,
+        hit_count: admission.hit_count,
+        skip_reason: admission.skip_reason,
+        last_admitted_frame: admitted_frame,
+        last_used: admitted_frame,
+      }
       return true
     }
   }
-  self.layer_cache.push(entry)
+  self.layer_cache.push({
+    ..entry,
+    hit_count: admission.hit_count,
+    skip_reason: admission.skip_reason,
+    last_admitted_frame: admitted_frame,
+    last_used: admitted_frame,
+  })
   true
+}
+
+///|
+fn SkiaRasterRenderer::remove_stale_cached_layers_for_entry(
+  self : SkiaRasterRenderer,
+  entry : SkiaCachedLayerImageEntry,
+) -> Unit {
+  let mut index = 0
+  while index < self.layer_cache.length() {
+    let current = self.layer_cache[index]
+    if current.identity_key == entry.identity_key && current.key != entry.key {
+      ignore(self.layer_cache.remove(index))
+    } else {
+      index = index + 1
+    }
+  }
+}
+
+///|
+fn SkiaRasterRenderer::remove_cached_layers_by_identity(
+  self : SkiaRasterRenderer,
+  identity_key : String,
+) -> Unit {
+  let mut index = 0
+  while index < self.layer_cache.length() {
+    if self.layer_cache[index].identity_key == identity_key {
+      ignore(self.layer_cache.remove(index))
+    } else {
+      index = index + 1
+    }
+  }
 }
 
 ///|
@@ -2038,13 +2193,51 @@ fn SkiaRasterRenderer::evict_cached_layers_if_needed(
   let mut bytes = self.layer_cache_byte_size()
   let mut evicted = 0
   while budget > 0L && bytes > budget && self.layer_cache.length() > 0 {
-    let index = self.oldest_cached_layer_index()
+    let index = self.cached_layer_eviction_index(budget)
     let entry = self.layer_cache[index]
     bytes -= entry.byte_size
     ignore(self.layer_cache.remove(index))
     evicted = evicted + 1
   }
   evicted
+}
+
+///|
+fn SkiaRasterRenderer::cached_layer_eviction_index(
+  self : SkiaRasterRenderer,
+  budget : Int64,
+) -> Int {
+  let mut candidate = -1
+  let mut candidate_bytes = 0L
+  let mut candidate_last_used = 0
+  for index in 0..<self.layer_cache.length() {
+    let entry = self.layer_cache[index]
+    let large_cold = entry.hit_count == 0 &&
+      entry.byte_size * 10L >= budget * 2L
+    let churny_cold = entry.hit_count == 0 &&
+      entry.update_streak > 1 &&
+      entry.skip_reason == ""
+    let entry_last_used = if entry.last_admitted_frame > 0 {
+      entry.last_admitted_frame
+    } else {
+      entry.last_used
+    }
+    if large_cold || churny_cold {
+      if candidate < 0 ||
+        entry.byte_size > candidate_bytes ||
+        (entry.byte_size == candidate_bytes &&
+        entry_last_used < candidate_last_used) {
+        candidate = index
+        candidate_bytes = entry.byte_size
+        candidate_last_used = entry_last_used
+      }
+    }
+  }
+  if candidate >= 0 {
+    candidate
+  } else {
+    self.oldest_cached_layer_index()
+  }
 }
 
 ///|
@@ -2098,6 +2291,7 @@ fn SkiaRasterRenderer::next_layer_cache_tick(self : SkiaRasterRenderer) -> Int {
 ///|
 fn SkiaRasterRenderer::clear_layer_cache(self : SkiaRasterRenderer) -> Unit {
   self.layer_cache.clear()
+  self.layer_cache_admissions.clear()
   self.layer_cache_tick = 0
 }
 
