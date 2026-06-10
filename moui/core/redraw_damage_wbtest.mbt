@@ -328,7 +328,7 @@ test "paint only sibling boundary hover reports local damage rect" {
 }
 
 ///|
-test "layout dirty scroll reports local damage rect" {
+test "state backed scroll reports local damage rect" {
   let scroll = ScrollState::new()
   let root : View[Unit] = View::flex(
     axis=Axis::Horizontal,
@@ -366,6 +366,50 @@ test "layout dirty scroll reports local damage rect" {
       ),
     ),
   )
+  match runtime.draw_frame().damage {
+    Rects(rects) => {
+      assert_true(rects.length() > 0)
+      assert_true(rects[0].size.width < 220.0)
+    }
+    FullSurface(reason) =>
+      fail("expected local layout damage, got full damage: \{reason}")
+    Empty => fail("expected local layout damage")
+  }
+}
+
+///|
+test "layout dirty child reports local damage rect" {
+  let root : View[Unit] = View::flex(
+    axis=Axis::Horizontal,
+    spacing=8.0,
+    children=[
+      View::frame(
+        View::text(
+          text="Layout",
+          size=Size::new(width=80.0, height=24.0),
+          font=FontSpec::new(size=12.0),
+          color=Color::black(),
+        ),
+        width=90.0,
+        height=40.0,
+      ),
+      View::text(
+        text="Still",
+        size=Size::new(width=80.0, height=32.0),
+        font=FontSpec::new(size=12.0),
+        color=Color::black(),
+      ).repaint_boundary(),
+    ],
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=Size::new(width=220.0, height=100.0),
+  )
+  ignore(runtime.draw_frame())
+  let child = runtime.state.element_tree.root.children[0]
+  child.dirty.mark_layout()
+  child.clear_cached_layout_and_paint()
+  runtime.state.mark_layout_dirty(child.id)
   match runtime.draw_frame().damage {
     Rects(rects) => {
       assert_true(rects.length() > 0)
