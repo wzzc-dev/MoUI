@@ -108,19 +108,21 @@ claims. Entries start as pending until a matching host records passed or failed
 observations before a preview handoff. The checked-in manifest currently marks
 macOS `status=passed` from local matching-host AppKit/Skia artifacts with every
 runtime and native IME observation set to `yes` plus
-`skiaEvidence.status=passed`; Windows and Linux remain pending until their
-matching hosts record equivalent artifacts. Native passed entries include the
-window fork's monitor/cursor probe as `monitorCursor=yes`; Web browser-session
-evidence may leave that field pending because CDP does not prove native
-monitor/current-monitor or cursor behavior. A passed entry must carry
-provenance from either a non-skipped successful GitHub Actions job/run,
-including run URL, workflow, job, runner, and uploaded artifacts, or a local
-matching-host artifact bundle. For Web, the fold derives this from the
-browser-session presentation manifest and the environment that performed the
-fold. Skipped CI jobs, build-only/package-only jobs, and provider/preflight
-checks cannot be used as passed runtime evidence. See
+`skiaEvidence.status=passed`; a non-skipped manual GitHub Actions dispatch also
+recorded the macOS platform runtime evidence with `github-actions` provenance
+and uploaded the matching artifact bundle. Windows and Linux remain pending
+until their matching hosts record equivalent platform-runtime artifacts. Native
+passed entries include the window fork's monitor/cursor probe as
+`monitorCursor=yes`; Web browser-session evidence may leave that field pending
+because CDP does not prove native monitor/current-monitor or cursor behavior. A
+passed entry must carry provenance from either a non-skipped successful GitHub
+Actions job/run, including run URL, workflow, job, runner, and uploaded
+artifacts, or a local matching-host artifact bundle. For Web, the fold derives
+this from the browser-session presentation manifest and the environment that
+performed the fold. Skipped CI jobs, build-only/package-only jobs, and
+provider/preflight checks cannot be used as passed runtime evidence. See
 `docs/release-readiness.md` for the recorded GitHub Actions macOS-only evidence
-run and its head-SHA boundary.
+run, the latest all-green `MoUI CI` run, and their head-SHA boundaries.
 
 For release-oriented screenshot and benchmark handoffs, use
 `sh scripts/conformance-check.sh --golden` and

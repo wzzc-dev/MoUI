@@ -181,7 +181,7 @@ test "web async text-file read fetches and caches static text" {
   let read_id = match
     bridge.dispatch(
       @host.HostServiceRequest::TextFile(
-        @host.HostTextFileRequest::ReadText("../../docs/architecture.md"),
+        @host.HostTextFileRequest::ReadText("docs/architecture.md"),
       ),
     ) {
     @host.HostServiceResponse::Pending(id) => {
@@ -194,7 +194,7 @@ test "web async text-file read fetches and caches static text" {
   inspect(requests.length(), content="1")
   assert_true(requests[0].kind == WebAsyncHostServiceKind::TextFileReadText)
   inspect(requests[0].kind.browser_code(), content="-3")
-  inspect(requests[0].path, content="../../docs/architecture.md")
+  inspect(requests[0].path, content="docs/architecture.md")
   let read_completion : Ref[@host.HostCompletedServiceResponse?] = Ref(None)
   assert_true(
     queue.on_completed(read_id, completion => {
@@ -213,7 +213,7 @@ test "web async text-file read fetches and caches static text" {
     Some(
       { response: @host.HostServiceResponse::TextFileContent(path, text), .. }
     ) => {
-      inspect(path, content="../../docs/architecture.md")
+      inspect(path, content="docs/architecture.md")
       inspect(text, content="# Architecture\n\nFetched by browser fetch().")
     }
     _ => fail("expected fetched text-file content")
@@ -221,11 +221,11 @@ test "web async text-file read fetches and caches static text" {
   match
     bridge.dispatch(
       @host.HostServiceRequest::TextFile(
-        @host.HostTextFileRequest::ReadText("../../docs/architecture.md"),
+        @host.HostTextFileRequest::ReadText("docs/architecture.md"),
       ),
     ) {
     @host.HostServiceResponse::TextFileContent(path, text) => {
-      inspect(path, content="../../docs/architecture.md")
+      inspect(path, content="docs/architecture.md")
       inspect(text, content="# Architecture\n\nFetched by browser fetch().")
     }
     _ => fail("expected cached static text content")
