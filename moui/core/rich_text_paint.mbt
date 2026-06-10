@@ -1,6 +1,8 @@
 ///|
 fn append_rich_text_editor_commands(
   commands : Array[DrawCommand],
+  children : Array[RenderNode],
+  post_commands : Array[DrawCommand],
   element : ElementNode,
   data : RichTextEditorViewSpec,
   frame : Rect,
@@ -47,8 +49,9 @@ fn append_rich_text_editor_commands(
         element.control.selection,
       )
     }
-    append_rich_text_blocks(
-      commands,
+    append_rich_text_block_layers(
+      children,
+      element,
       document,
       content,
       environment.font.unwrap_or(data.font),
@@ -58,7 +61,7 @@ fn append_rich_text_editor_commands(
   }
   if focused {
     append_rich_text_editor_cursor(
-      commands,
+      post_commands,
       element,
       data,
       text,
@@ -67,12 +70,13 @@ fn append_rich_text_editor_commands(
       environment.text_system,
     )
   }
-  commands.push(PopClip)
+  post_commands.push(PopClip)
 }
 
 ///|
-fn append_rich_text_blocks(
-  commands : Array[DrawCommand],
+fn append_rich_text_block_layers(
+  children : Array[RenderNode],
+  element : ElementNode,
   document : RichTextDocument,
   content : Rect,
   base_font : FontSpec,
@@ -80,7 +84,7 @@ fn append_rich_text_blocks(
   text_system : TextSystem,
 ) -> Unit {
   let mut y = content.origin.y
-  for block in document.blocks {
+  for index, block in document.blocks {
     let line_height = rich_text_block_line_height(block, base_font)
     let block_height = line_height + block.inset.top + block.inset.bottom
     if y > content.origin.y + content.size.height {
@@ -92,6 +96,41 @@ fn append_rich_text_blocks(
       width=content.size.width,
       height=block_height,
     )
+    let block_commands : Array[DrawCommand] = []
+    append_rich_text_block_commands(
+      block_commands,
+      block,
+      block_frame,
+      line_height,
+      base_font,
+      foreground,
+      text_system,
+    )
+    children.push(
+      rich_text_block_render_node(
+        element.id,
+        index,
+        block,
+        block_frame,
+        block_commands,
+        base_font,
+        foreground,
+      ),
+    )
+    y = y + block_height
+  }
+}
+
+///|
+fn append_rich_text_block_commands(
+  commands : Array[DrawCommand],
+  block : RichTextBlock,
+  block_frame : Rect,
+  line_height : Double,
+  base_font : FontSpec,
+  foreground : Color,
+  text_system : TextSystem,
+) -> Unit {
     match block.background {
       Some(background) =>
         commands.push(
@@ -127,7 +166,7 @@ fn append_rich_text_blocks(
         FillRect(
           Rect::new(
             x=block_frame.origin.x + block.inset.left,
-            y=block_frame.origin.y + block_height / 2.0,
+            y=block_frame.origin.y + block_frame.size.height / 2.0,
             width=max_double(
               0.0,
               block_frame.size.width - block.inset.left - block.inset.right,
@@ -170,9 +209,241 @@ fn append_rich_text_blocks(
         foreground,
         text_system,
       )
-    }
-    y = y + block_height
   }
+}
+
+///|
+fn rich_text_block_render_node(
+  editor_id : ElementId,
+  index : Int,
+  block : RichTextBlock,
+  frame : Rect,
+  commands : Array[DrawCommand],
+  base_font : FontSpec,
+  foreground : Color,
+) -> RenderNode {
+  let paint_bounds = render_node_paint_bounds(frame, commands, [], [], [])
+  {
+    element_id: editor_id,
+    frame,
+    children: [],
+    hit_testable: false,
+    paint_bounds,
+    content_revision: rich_text_block_content_revision(
+      block, index, frame, base_font, foreground,
+    ),
+    is_repaint_boundary: true,
+    layer_cache_key: Some(rich_text_block_cache_key(editor_id, index, block, frame)),
+    paint_commands: commands,
+    post_paint_commands: [],
+    overlay_paint_commands: [],
+    cached_draw_commands: Some(commands),
+    cached_overlay_draw_commands: None,
+  }
+}
+
+///|
+fn rich_text_block_cache_key(
+  editor_id : ElementId,
+  index : Int,
+  block : RichTextBlock,
+  frame : Rect,
+) -> String {
+  "rich-text-block;element=\{editor_id.value};range=\{rich_text_source_range_key(block.source_range)};index=\{index};w=\{frame.size.width};h=\{frame.size.height}"
+}
+
+///|
+fn rich_text_block_content_revision(
+  block : RichTextBlock,
+  index : Int,
+  frame : Rect,
+  base_font : FontSpec,
+  foreground : Color,
+) -> Int {
+  let mut hash = rich_text_hash_mix_int(5381, index)
+  hash = rich_text_hash_mix_string(hash, rich_text_source_range_key(block.source_range))
+  hash = rich_text_hash_mix_string(hash, rich_text_source_range_key(block.content_range))
+  hash = rich_text_hash_mix_string(hash, block.prefix)
+  hash = rich_text_hash_mix_string(hash, rich_text_font_key(block.font.unwrap_or(base_font)))
+  hash = rich_text_hash_mix_string(hash, rich_text_color_key(block.color.unwrap_or(foreground)))
+  hash = rich_text_hash_mix_string(hash, rich_text_brush_optional_key(block.background))
+  hash = rich_text_hash_mix_string(hash, rich_text_border_optional_key(block.border_left))
+  hash = rich_text_hash_mix_string(hash, rich_text_insets_key(block.inset))
+  hash = rich_text_hash_mix_string(hash, rich_text_double_optional_key(block.line_height))
+  hash = rich_text_hash_mix_string(hash, "\{block.corner_radius}")
+  hash = rich_text_hash_mix_int(hash, if block.rule { 1 } else { 0 })
+  hash = rich_text_hash_mix_string(hash, "\{frame.size.width}x\{frame.size.height}")
+  for run in block.runs {
+    hash = rich_text_hash_mix_string(hash, run.text)
+    hash = rich_text_hash_mix_string(hash, rich_text_optional_string_key(run.visual_text))
+    hash = rich_text_hash_mix_string(hash, rich_text_optional_string_key(run.image_source))
+    hash = rich_text_hash_mix_string(hash, rich_text_size_optional_key(run.image_size))
+    hash = rich_text_hash_mix_string(hash, rich_text_image_fit_key(run.image_fit))
+    hash = rich_text_hash_mix_string(hash, rich_text_font_optional_key(run.font))
+    hash = rich_text_hash_mix_string(hash, rich_text_color_optional_key(run.color))
+    hash = rich_text_hash_mix_string(hash, rich_text_brush_optional_key(run.background))
+    hash = rich_text_hash_mix_string(hash, "\{run.background_radius}")
+    hash = rich_text_hash_mix_string(hash, rich_text_decoration_key(run.decoration))
+    hash = rich_text_hash_mix_string(hash, rich_text_source_range_key(run.source_range))
+  }
+  match block.table {
+    Some(table) => {
+      hash = rich_text_hash_mix_string(hash, "\{table.row_height}")
+      hash = rich_text_hash_mix_string(hash, rich_text_insets_key(table.cell_padding))
+      hash = rich_text_hash_mix_string(hash, rich_text_color_key(table.border))
+      hash = rich_text_hash_mix_string(hash, rich_text_brush_optional_key(table.header_background))
+      for row in table.rows {
+        for cell in row {
+          hash = rich_text_hash_mix_string(hash, cell.text)
+          hash = rich_text_hash_mix_int(hash, if cell.header { 1 } else { 0 })
+          hash = rich_text_hash_mix_string(hash, rich_text_align_optional_key(cell.align))
+          hash = rich_text_hash_mix_string(hash, rich_text_source_range_key(cell.source_range))
+        }
+      }
+    }
+    None => ()
+  }
+  if hash < 0 {
+    -hash
+  } else {
+    hash
+  }
+}
+
+///|
+fn rich_text_source_range_key(range : RichTextSourceRange?) -> String {
+  match range {
+    Some(range) => "len=\{max_int(0, range.end - range.start)}"
+    None => "none"
+  }
+}
+
+///|
+fn rich_text_optional_string_key(value : String?) -> String {
+  value.unwrap_or("none")
+}
+
+///|
+fn rich_text_size_optional_key(value : Size?) -> String {
+  match value {
+    Some(size) => "\{size.width}x\{size.height}"
+    None => "none"
+  }
+}
+
+///|
+fn rich_text_double_optional_key(value : Double?) -> String {
+  match value {
+    Some(value) => "\{value}"
+    None => "none"
+  }
+}
+
+///|
+fn rich_text_font_optional_key(value : FontSpec?) -> String {
+  match value {
+    Some(font) => rich_text_font_key(font)
+    None => "none"
+  }
+}
+
+///|
+fn rich_text_font_key(font : FontSpec) -> String {
+  "\{font.css_family()}|\{font.size}|\{font.weight}|\{font.css_style()}"
+}
+
+///|
+fn rich_text_color_optional_key(value : Color?) -> String {
+  match value {
+    Some(color) => rich_text_color_key(color)
+    None => "none"
+  }
+}
+
+///|
+fn rich_text_color_key(color : Color) -> String {
+  "\{color.r},\{color.g},\{color.b},\{color.a}"
+}
+
+///|
+fn rich_text_brush_optional_key(value : Brush?) -> String {
+  match value {
+    Some(brush) => rich_text_brush_key(brush)
+    None => "none"
+  }
+}
+
+///|
+fn rich_text_brush_key(brush : Brush) -> String {
+  match brush {
+    Solid(color) => "solid:\{rich_text_color_key(color)}"
+    LinearGradient(spec) =>
+      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{rich_text_color_key(spec.start_color)},\{rich_text_color_key(spec.end_color)}"
+    RadialGradient(spec) =>
+      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{rich_text_color_key(spec.center_color)},\{rich_text_color_key(spec.edge_color)}"
+  }
+}
+
+///|
+fn rich_text_border_optional_key(value : BorderStyle?) -> String {
+  match value {
+    Some(border) => "\{rich_text_brush_key(border.brush)}|\{border.width}"
+    None => "none"
+  }
+}
+
+///|
+fn rich_text_insets_key(insets : Insets) -> String {
+  "\{insets.top},\{insets.right},\{insets.bottom},\{insets.left}"
+}
+
+///|
+fn rich_text_image_fit_key(fit : ImageFit) -> String {
+  match fit {
+    Contain => "contain"
+    Cover => "cover"
+    Stretch => "stretch"
+    ScaleDown => "scale-down"
+    FitWidth => "fit-width"
+    FitHeight => "fit-height"
+  }
+}
+
+///|
+fn rich_text_decoration_key(value : RichTextDecoration?) -> String {
+  match value {
+    Some(Strikethrough) => "strikethrough"
+    None => "none"
+  }
+}
+
+///|
+fn rich_text_align_optional_key(value : TextAlign?) -> String {
+  match value {
+    Some(TextStart) => "start"
+    Some(TextCenter) => "center"
+    Some(TextEnd) => "end"
+    None => "none"
+  }
+}
+
+///|
+fn rich_text_string_hash(value : String) -> Int {
+  let mut hash = 5381
+  for ch in value.to_array() {
+    hash = hash * 33 + ch.to_int()
+  }
+  hash
+}
+
+///|
+fn rich_text_hash_mix_int(hash : Int, value : Int) -> Int {
+  hash * 33 + value
+}
+
+///|
+fn rich_text_hash_mix_string(hash : Int, value : String) -> Int {
+  hash * 33 + rich_text_string_hash(value)
 }
 
 ///|

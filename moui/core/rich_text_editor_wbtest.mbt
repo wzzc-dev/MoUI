@@ -24,6 +24,49 @@ fn test_rich_text_editor(value : Binding[String]) -> ViewSpec {
 }
 
 ///|
+fn cached_block_rich_text_editor(text : String) -> ViewSpec {
+  test_rich_text_editor(Binding::new(get=() => text, set=_value => ()))
+}
+
+///|
+fn rich_text_cached_block_begin_count(commands : Array[DrawCommand]) -> Int {
+  commands.filter(command => {
+    match command {
+      BeginCachedLayer(spec) => spec.key.contains("rich-text-block")
+      _ => false
+    }
+  }).length()
+}
+
+///|
+fn rich_text_cached_block_draw_count(commands : Array[DrawCommand]) -> Int {
+  commands.filter(command => {
+    match command {
+      DrawCachedLayer(spec) => spec.key.contains("rich-text-block")
+      _ => false
+    }
+  }).length()
+}
+
+///|
+test "rich text editor caches unchanged sibling blocks" {
+  let runtime = RuntimeState::new_spec(
+    root=cached_block_rich_text_editor("alpha\nbeta"),
+    size=Size::new(width=320.0, height=220.0),
+  )
+  let first = runtime.build_draw_frame()
+  inspect(rich_text_cached_block_begin_count(first.commands), content="2")
+  inspect(rich_text_cached_block_draw_count(first.commands), content="0")
+  let cached = runtime.build_draw_frame()
+  inspect(rich_text_cached_block_begin_count(cached.commands), content="0")
+  inspect(rich_text_cached_block_draw_count(cached.commands), content="2")
+  runtime.set_root_spec(cached_block_rich_text_editor("alpha\nBETA"))
+  let updated = runtime.build_draw_frame()
+  inspect(rich_text_cached_block_begin_count(updated.commands), content="1")
+  inspect(rich_text_cached_block_draw_count(updated.commands), content="1")
+}
+
+///|
 fn styled_rich_text_editor(value : Binding[String]) -> ViewSpec {
   ViewSpec::RichTextEditorSpec({
     key: None,
@@ -510,10 +553,18 @@ test "rich text block draws embedded visual newlines on separate rows" {
       line_height=Some(20.0),
     ),
   ])
-  append_rich_text_blocks(
+  let block = document.blocks[0]
+  let line_height = rich_text_block_line_height(block, font)
+  append_rich_text_block_commands(
     commands,
-    document,
-    Rect::new(x=10.0, y=20.0, width=260.0, height=120.0),
+    block,
+    Rect::new(
+      x=10.0,
+      y=20.0,
+      width=260.0,
+      height=line_height + block.inset.top + block.inset.bottom,
+    ),
+    line_height,
     font,
     Color::black(),
     TextSystem::fallback(),
@@ -578,10 +629,18 @@ test "rich text block left border stays outside inset text" {
       line_height=Some(24.0),
     ),
   ])
-  append_rich_text_blocks(
+  let block = document.blocks[0]
+  let line_height = rich_text_block_line_height(block, font)
+  append_rich_text_block_commands(
     commands,
-    document,
-    Rect::new(x=20.0, y=30.0, width=220.0, height=120.0),
+    block,
+    Rect::new(
+      x=20.0,
+      y=30.0,
+      width=220.0,
+      height=line_height + block.inset.top + block.inset.bottom,
+    ),
+    line_height,
     font,
     Color::black(),
     TextSystem::fallback(),

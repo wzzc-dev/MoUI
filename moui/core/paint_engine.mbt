@@ -128,6 +128,8 @@ fn ElementNode::render_with_environment(
     RichTextEditorSpec(data) =>
       append_rich_text_editor_commands(
         commands,
+        children,
+        post_commands,
         self,
         data,
         bounds,
