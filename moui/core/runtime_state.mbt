@@ -15,7 +15,7 @@ struct RuntimeState {
   mut draw_command_build_count : Int
   mut cache_epoch : Int
   mut last_damage_region : DamageRegion
-  known_layer_cache_keys : Array[String]
+  known_layer_cache_keys : Array[CachedLayerState]
   mut next_element_id : Int
   dirty_elements : Array[ElementId]
   dirty_build_elements : Array[ElementId]
@@ -906,8 +906,7 @@ fn RuntimeState::record_cached_layer_updates(
   for command in commands {
     match command {
       BeginCachedLayer(spec) =>
-        if !self.known_layer_cache_keys.any(key => key == spec.key) {
-          self.known_layer_cache_keys.push(spec.key)
+        if self.record_cached_layer_update(spec) {
           updated = true
         }
       _ => ()
@@ -919,13 +918,49 @@ fn RuntimeState::record_cached_layer_updates(
 }
 
 ///|
+fn RuntimeState::record_cached_layer_update(
+  self : RuntimeState,
+  spec : CachedLayerSpec,
+) -> Bool {
+  let retained : Array[CachedLayerState] = []
+  let mut found = false
+  let mut changed = false
+  for existing in self.known_layer_cache_keys {
+    if existing.key == spec.key {
+      found = true
+      if existing.content_revision != spec.content_revision {
+        changed = true
+      }
+      retained.push({
+        key: spec.key,
+        content_revision: spec.content_revision,
+      })
+    } else {
+      retained.push(existing)
+    }
+  }
+  if !found {
+    retained.push({
+      key: spec.key,
+      content_revision: spec.content_revision,
+    })
+    changed = true
+  }
+  if changed {
+    self.known_layer_cache_keys.clear()
+    self.known_layer_cache_keys.append(retained)
+  }
+  changed
+}
+
+///|
 fn RuntimeState::invalidate_cached_layer_key(
   self : RuntimeState,
   key : String,
 ) -> Unit {
-  let retained : Array[String] = []
+  let retained : Array[CachedLayerState] = []
   for existing in self.known_layer_cache_keys {
-    if existing != key {
+    if existing.key != key {
       retained.push(existing)
     }
   }
