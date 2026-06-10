@@ -918,18 +918,22 @@ The renderer-local cache is also wired into reproducible real app scenarios:
 moon run benchmarks/app_cached_layer/native --target native
 ```
 
-This runs Showcase runtime scrolling, Showcase sidebar hover, and Markdown
-Editor text input against both `draw_frame`/Skia cached-layer rendering and a
+This runs Showcase runtime scrolling, Showcase sidebar hover, Markdown Editor
+text input, Markdown Editor scrolling, and Markdown Editor caret-overlay
+interactions against both `draw_frame`/Skia cached-layer rendering and a
 full-repaint `draw_commands` baseline. It records cache hit/miss/update/evict
-counts, `BeginCachedLayer`/`DrawCachedLayer` command counts, draw/render time,
-damage kind/dirty-rect counts, draw command counts, rebuild/layout/paint and
-draw-command-build pass counters, present counts, and a cached-vs-full speedup.
-Treat timing as diagnostic only. The structural expectation is that
-Showcase sidebar hover stays in sibling-boundary cached draws with local damage,
-Showcase runtime scrolling records stable cache hits while still exposing any
-layout/full-damage work, and Markdown Editor text input updates the editing
-surface while keeping toolbar/sidebar/outer chrome boundaries cached. Override
-`MOUI_APP_CACHED_LAYER_BENCH_FRAMES` and
+counts, `BeginCachedLayer`/`DrawCachedLayer` command counts, overlay-only frame
+counts, draw/render time, damage kind/dirty-rect counts, draw command counts,
+rebuild/layout/paint and draw-command-build pass counters, present counts, and
+a cached-vs-full speedup. Treat timing as diagnostic only. The structural
+expectation is that Showcase sidebar hover stays in sibling-boundary cached
+draws with local damage, Showcase runtime scrolling records stable cache hits,
+Markdown Editor text input updates only the active editing content while
+keeping toolbar/sidebar/outer chrome and unchanged rich-text blocks cached,
+Markdown Editor scrolling reuses cached content layers, and caret/selection
+overlay changes do not update the body layer. Remaining full-damage causes such
+as broad dirty regions or unavailable dirty bounds should stay visible in the
+printed diagnostics. Override `MOUI_APP_CACHED_LAYER_BENCH_FRAMES` and
 `MOUI_APP_CACHED_LAYER_BENCH_WARMUP` for longer local runs.
 
 The Web runtime handoff validator checks that both Web wasm-gc examples have

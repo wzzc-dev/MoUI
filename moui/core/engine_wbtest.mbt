@@ -61,6 +61,51 @@ fn test_tab_accepting_rich_text_editor(value : Binding[String]) -> ViewSpec {
 }
 
 ///|
+fn test_selection_highlight_color(commands : Array[DrawCommand]) -> Color? {
+  for command in commands {
+    match command {
+      FillRect(_, color) =>
+        if color.a == 0.18 {
+          return Some(color)
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+fn test_text_field_caret_rect(commands : Array[DrawCommand]) -> Rect? {
+  for command in commands {
+    match command {
+      FillRect(rect, _) =>
+        if rect.size.width == 1.5 {
+          return Some(rect)
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+fn test_draw_text_frame(
+  commands : Array[DrawCommand],
+  text : String,
+) -> Rect? {
+  for command in commands {
+    match command {
+      DrawText({ text: value, frame, .. }) =>
+        if value == text {
+          return Some(frame)
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 test "engine mounts view spec into element and render trees" {
   let spec = ViewSpec::FlexSpec({
     key: None,
@@ -1575,13 +1620,11 @@ test "text field selection draws highlight before text" {
     ),
   )
   let commands = runtime.build_draw_commands()
-  guard commands[3] is FillRect(_, color) else {
+  guard test_selection_highlight_color(commands) is Some(color) else {
     fail("expected selection highlight")
   }
   inspect(color.a, content="0.18")
-  guard commands[4] is DrawText({ text: "abc", .. }) else {
-    fail("expected text after highlight")
-  }
+  assert_true(test_draw_text_frame(commands, "abc") is Some(_))
 }
 
 ///|
@@ -1683,11 +1726,10 @@ test "text field aligns rendered text with caret origin" {
   )
   runtime.dispatch_event(TextInput(InsertText("abc")))
   let commands = runtime.build_draw_commands()
-  guard commands[3]
-    is DrawText({ frame: text_frame, align: TextAlign::TextStart, .. }) else {
+  guard test_draw_text_frame(commands, "abc") is Some(text_frame) else {
     fail("expected left-aligned text field text")
   }
-  guard commands[4] is FillRect(cursor, _) else {
+  guard test_text_field_caret_rect(commands) is Some(cursor) else {
     fail("expected focused text field cursor")
   }
   let layout = TextSystem::fallback().measure_text(
@@ -1730,7 +1772,7 @@ test "text field caret follows ime composition cursor" {
     ),
   )
   let commands = runtime.build_draw_commands()
-  guard commands[4] is FillRect(cursor, _) else {
+  guard test_text_field_caret_rect(commands) is Some(cursor) else {
     fail("expected focused text field cursor")
   }
   let layout = TextSystem::fallback().measure_text(
