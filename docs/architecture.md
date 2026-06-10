@@ -276,8 +276,11 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   to renderers that implement frame rendering, while its renderer-neutral
   command cache remains the fallback for simpler backends. Native Skia now owns
   a renderer-local offscreen surface/image cache for repaint boundaries and
-  reports cache hit/miss/update/evict diagnostics; OS-level partial present
-  still remains a separate platform capability.
+  reports cache hit/miss/update/evict diagnostics. The real-app cached-layer
+  benchmark uses Showcase hover/scroll and Markdown Editor text input to verify
+  sibling-boundary reuse, command-count changes, and remaining rebuild, layout,
+  and damage bottlenecks; OS-level partial present still remains a separate
+  platform capability.
 - `AppRuntime::focus_next` and `AppRuntime::focus_previous` expose explicit
   focus traversal entry points on top of the shared tab-order model.
 
