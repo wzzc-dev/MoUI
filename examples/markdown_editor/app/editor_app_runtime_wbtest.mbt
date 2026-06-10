@@ -79,18 +79,18 @@ test "markdown editor controlled runtime rebuilds after input" {
 fn markdown_editor_begin_cached_layer_count(
   commands : Array[@core.DrawCommand],
 ) -> Int {
-  commands.filter(command => {
-    command is @core.DrawCommand::BeginCachedLayer(_)
-  }).length()
+  commands
+  .filter(command => command is @core.DrawCommand::BeginCachedLayer(_))
+  .length()
 }
 
 ///|
 fn markdown_editor_draw_cached_layer_count(
   commands : Array[@core.DrawCommand],
 ) -> Int {
-  commands.filter(command => {
-    command is @core.DrawCommand::DrawCachedLayer(_)
-  }).length()
+  commands
+  .filter(command => command is @core.DrawCommand::DrawCachedLayer(_))
+  .length()
 }
 
 ///|
@@ -99,8 +99,7 @@ fn markdown_editor_has_cached_chrome_layer(
 ) -> Bool {
   commands.any(command => {
     match command {
-      @core.DrawCommand::DrawCachedLayer(spec) =>
-        spec.frame.size.height <= 48.0
+      @core.DrawCommand::DrawCachedLayer(spec) => spec.frame.size.height <= 48.0
       _ => false
     }
   })
@@ -192,6 +191,9 @@ test "markdown editor load and save as set document identity" {
   assert_false(app.find_visible())
   inspect(app.find_query(), content="")
   inspect(app.replace_text(), content="")
+  let first_recent = app.recent_document_paths()
+  inspect(first_recent.length(), content="1")
+  inspect(first_recent[0], content="/tmp/writing/notes.md")
   assert_true(app.document_status_label_for_test().contains("notes.md / Saved"))
 
   app.edit_document("# Title\n\nUpdated")
@@ -200,6 +202,10 @@ test "markdown editor load and save as set document identity" {
   assert_false(app.dirty())
   inspect(app.document_path(), content="C:\\Users\\writer\\paper.md")
   inspect(app.saved_document(), content="# Title\n\nUpdated")
+  let next_recent = app.recent_document_paths()
+  inspect(next_recent.length(), content="2")
+  inspect(next_recent[0], content="C:\\Users\\writer\\paper.md")
+  inspect(next_recent[1], content="/tmp/writing/notes.md")
   assert_true(app.document_status_label_for_test().contains("paper.md / Saved"))
 }
 
@@ -229,6 +235,205 @@ test "markdown editor file save as dialog sets path and saved baseline" {
   inspect(
     app.transfer_status_label_for_test(),
     content="Saved as save-target.md",
+  )
+}
+
+///|
+test "markdown editor opens recent files through text file services" {
+  let seen_kind = Ref(@host.HostFileDialogKind::OpenFile)
+  let seen_title = Ref("")
+  let seen_default_name = Ref("")
+  let app = MarkdownEditorApp::new()
+  app.load_document_for_test("# Old", path="/tmp/old.md")
+  app.load_document_for_test("# Current", path="/tmp/current.md")
+  let services = markdown_editor_document_services(
+    read_text="# Old reopened",
+    selected_path="/tmp/unused.md",
+    seen_kind~,
+    seen_title~,
+    seen_default_name~,
+  )
+
+  app.open_recent_for_test("/tmp/old.md", services)
+  inspect(app.document(), content="# Old reopened")
+  inspect(app.document_path(), content="/tmp/old.md")
+  inspect(app.transfer_status_label_for_test(), content="Opened old.md")
+  let recent = app.recent_document_paths()
+  inspect(recent[0], content="/tmp/old.md")
+  inspect(recent[1], content="/tmp/current.md")
+}
+
+///|
+test "markdown editor files sidebar shows current and recent documents" {
+  let app = MarkdownEditorApp::new()
+  app.load_document_for_test("# Notes", path="/tmp/writing/notes.md")
+  app.load_document_for_test("# Draft", path="/tmp/writing/draft.md")
+  assert_false(app.file_sidebar_visible())
+  app.apply_action("files")
+  assert_true(app.file_sidebar_visible())
+
+  let commands = app.runtime(width=1180.0, height=640.0).draw_commands()
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Files", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Recent", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "draft.md / Saved", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "notes.md", .. })
+    }),
+  )
+}
+
+///|
+test "markdown editor runtime files shortcuts toggle sidebar" {
+  let meta_app = MarkdownEditorApp::new()
+  let meta_runtime = meta_app.runtime(width=1180.0, height=640.0)
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="p",
+        modifiers=@core.KeyModifiers::new(meta=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(meta_app.file_sidebar_visible())
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="p",
+        modifiers=@core.KeyModifiers::new(meta=true, alt=true),
+      ),
+    ),
+  )
+  assert_false(meta_app.file_sidebar_visible())
+
+  let control_app = MarkdownEditorApp::new()
+  let control_runtime = control_app.runtime(width=1180.0, height=640.0)
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="p",
+        modifiers=@core.KeyModifiers::new(control=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(control_app.file_sidebar_visible())
+}
+
+///|
+test "markdown editor document info panel shows structural stats" {
+  let app = MarkdownEditorApp::new()
+  app.set_document(
+    "# Title\n\nParagraph with [link](https://moui.dev), ![alt](img.png), and footnote[^1].\n\n- [x] Done\n- [ ] Todo\n- Bullet\n\n> Quote\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\n```mbt\nlet x = 1\n```\n\n[^1]: note",
+  )
+  assert_false(app.document_info_visible())
+  app.apply_action("document-info")
+  assert_true(app.document_info_visible())
+  let info = app.document_info_for_test()
+  inspect(info.heading_count, content="1")
+  inspect(info.paragraph_count, content="1")
+  inspect(info.list_item_count, content="3")
+  inspect(info.task_count, content="2")
+  inspect(info.checked_task_count, content="1")
+  inspect(info.quote_count, content="1")
+  inspect(info.code_block_count, content="1")
+  inspect(info.table_count, content="1")
+  inspect(info.link_count, content="1")
+  inspect(info.image_count, content="1")
+  inspect(info.footnote_reference_count, content="1")
+  inspect(info.footnote_definition_count, content="1")
+
+  let commands = app.runtime(width=1180.0, height=640.0).draw_commands()
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Info", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Headings", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Tasks", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Footnotes", .. })
+    }),
+  )
+}
+
+///|
+test "markdown editor runtime document info shortcuts toggle panel" {
+  let meta_app = MarkdownEditorApp::new()
+  let meta_runtime = meta_app.runtime(width=1180.0, height=640.0)
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="d",
+        modifiers=@core.KeyModifiers::new(meta=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(meta_app.document_info_visible())
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="d",
+        modifiers=@core.KeyModifiers::new(meta=true, alt=true),
+      ),
+    ),
+  )
+  assert_false(meta_app.document_info_visible())
+
+  let control_app = MarkdownEditorApp::new()
+  let control_runtime = control_app.runtime(width=1180.0, height=640.0)
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="d",
+        modifiers=@core.KeyModifiers::new(control=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(control_app.document_info_visible())
+}
+
+///|
+test "markdown editor quick format can toggle document info" {
+  let app = MarkdownEditorApp::new()
+  app.apply_action("format-palette")
+  app.set_format_palette_query("document info")
+  ignore(app.update(ApplyFirstFormatPaletteAction))
+  assert_true(app.document_info_visible())
+  assert_false(app.format_palette_visible())
+}
+
+///|
+test "markdown editor quick format can request html export" {
+  let app = MarkdownEditorApp::new()
+  app.apply_action("format-palette")
+  app.set_format_palette_query("export html")
+  ignore(app.update(ApplyFirstFormatPaletteAction))
+  assert_false(app.format_palette_visible())
+  assert_true(
+    app
+    .transfer_status_label_for_test()
+    .contains("html export requires host services"),
   )
 }
 
@@ -406,6 +611,53 @@ test "markdown editor clipboard export writes canonical markdown source" {
 }
 
 ///|
+test "markdown editor html export renders document structure" {
+  let app = MarkdownEditorApp::new()
+  app.set_document(
+    "# Draft\n\nParagraph with **bold** and [MoUI](https://moui.dev?a=1&b=2).\n\n![Alt & logo](assets/logo.png)\n\n- [x] Done\n- [ ] Todo\n\n| Name | Value |\n| :--- | ---: |\n| A | 1 |\n\n```mbt\nlet x = 1 < 2\n```\n\nAT&T > 1",
+  )
+  let html = app.html_export_for_test()
+  assert_true(html.contains("<!doctype html>"))
+  assert_true(html.contains("<title>Draft</title>"))
+  assert_true(html.contains("<h1>Draft</h1>"))
+  assert_true(html.contains("<strong>bold</strong>"))
+  assert_true(
+    html.contains("<a href=\"https://moui.dev?a=1&amp;b=2\">MoUI</a>"),
+  )
+  assert_true(
+    html.contains("<img src=\"assets/logo.png\" alt=\"Alt &amp; logo\">"),
+  )
+  assert_true(
+    html.contains(
+      "<li class=\"task-list-item\"><input type=\"checkbox\" disabled checked> Done</li>",
+    ),
+  )
+  assert_true(html.contains("<table>"))
+  assert_true(html.contains("<th>Name</th>"))
+  assert_true(html.contains("<td style=\"text-align:right\">1</td>"))
+  assert_true(
+    html.contains(
+      "<pre><code class=\"language-mbt\">let x = 1 &lt; 2</code></pre>",
+    ),
+  )
+  assert_true(html.contains("<p>AT&amp;T &gt; 1</p>"))
+}
+
+///|
+test "markdown editor html export writes clipboard html" {
+  let written = Ref("")
+  let app = MarkdownEditorApp::new()
+  app.set_document("# Export\n\nText")
+  let services = markdown_editor_clipboard_services(read_text="", written~)
+
+  app.export_html_for_test(services)
+  assert_true(written.val.contains("<title>Export</title>"))
+  assert_true(written.val.contains("<h1>Export</h1>"))
+  assert_true(written.val.contains("<p>Text</p>"))
+  inspect(app.transfer_status_label_for_test(), content="HTML copied")
+}
+
+///|
 test "markdown editor clipboard import loads markdown as clean document" {
   let written = Ref("")
   let app = MarkdownEditorApp::new()
@@ -445,6 +697,12 @@ test "markdown editor clipboard transfer reports unavailable fallback" {
     app
     .transfer_status_label_for_test()
     .contains("clipboard export requires host services"),
+  )
+  app.apply_action("html-export")
+  assert_true(
+    app
+    .transfer_status_label_for_test()
+    .contains("html export requires host services"),
   )
   app.apply_action("save-as")
   assert_true(
@@ -641,6 +899,49 @@ test "markdown editor runtime export shortcut writes clipboard markdown" {
 }
 
 ///|
+test "markdown editor runtime html export shortcut writes clipboard html" {
+  let written = Ref("")
+  let app = MarkdownEditorApp::new()
+  app.set_document("# Shortcut HTML")
+  let services = markdown_editor_clipboard_services(read_text="", written~)
+  let runtime = app.runtime_with_services(services, width=980.0, height=640.0)
+
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="e",
+        modifiers=@core.KeyModifiers::new(meta=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(written.val.contains("<h1>Shortcut HTML</h1>"))
+  inspect(app.transfer_status_label_for_test(), content="HTML copied")
+
+  let control_written = Ref("")
+  let control_app = MarkdownEditorApp::new()
+  control_app.set_document("# Control HTML")
+  let control_services = markdown_editor_clipboard_services(
+    read_text="",
+    written=control_written,
+  )
+  let control_runtime = control_app.runtime_with_services(
+    control_services,
+    width=980.0,
+    height=640.0,
+  )
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="e",
+        modifiers=@core.KeyModifiers::new(control=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(control_written.val.contains("<h1>Control HTML</h1>"))
+  inspect(control_app.transfer_status_label_for_test(), content="HTML copied")
+}
+
+///|
 test "markdown editor runtime receives async clipboard import completion" {
   let queue = @host.HostServiceAsyncQueue::new()
   let services = markdown_editor_async_clipboard_read_services(queue)
@@ -821,6 +1122,621 @@ test "markdown editor runtime source preview shortcuts toggle inspector" {
     ),
   )
   assert_true(control_app.source_preview_visible())
+}
+
+///|
+test "markdown editor toggles source mode from action" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Text **bold** and `code`")
+  assert_false(app.source_mode_enabled())
+  let formatted = app.runtime(width=980.0, height=640.0).draw_commands()
+  assert_false(
+    formatted.any(command => {
+      command
+      is @core.DrawCommand::DrawText({ text: "Text **bold** and `code`", .. })
+    }),
+  )
+
+  app.apply_action("source-mode")
+  assert_true(app.source_mode_enabled())
+  assert_true(app.document_status_label_for_test().contains("Source Mode"))
+  let raw = app.runtime(width=980.0, height=640.0).draw_commands()
+  assert_true(
+    raw.any(command => {
+      command
+      is @core.DrawCommand::DrawText({ text: "Text **bold** and `code`", .. })
+    }),
+  )
+  assert_false(
+    raw.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Link target", .. })
+    }),
+  )
+}
+
+///|
+test "markdown editor runtime source mode shortcuts toggle raw editing" {
+  let meta_app = MarkdownEditorApp::new()
+  let meta_runtime = meta_app.runtime(width=980.0, height=640.0)
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="/",
+        modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+      ),
+    ),
+  )
+  assert_true(meta_app.source_mode_enabled())
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="/",
+        modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+      ),
+    ),
+  )
+  assert_false(meta_app.source_mode_enabled())
+
+  let control_app = MarkdownEditorApp::new()
+  let control_runtime = control_app.runtime(width=980.0, height=640.0)
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="/",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  assert_true(control_app.source_mode_enabled())
+}
+
+///|
+test "markdown editor quick format can toggle source mode" {
+  let app = MarkdownEditorApp::new()
+  app.apply_action("format-palette")
+  app.set_format_palette_query("source mode")
+  ignore(app.update(ApplyFirstFormatPaletteAction))
+  assert_true(app.source_mode_enabled())
+  assert_false(app.format_palette_visible())
+}
+
+///|
+test "markdown editor source mode keeps text input canonical" {
+  let app = MarkdownEditorApp::new()
+  app.clear()
+  app.apply_action("source-mode")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=28.0, y=84.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("# Raw")),
+  )
+  inspect(app.document(), content="# Raw")
+  let commands = runtime.draw_commands()
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "# Raw", .. })
+    }),
+  )
+}
+
+///|
+test "markdown editor toggles quick format palette from action" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Text")
+  assert_false(app.format_palette_visible())
+  app.apply_action("format-palette")
+  assert_true(app.format_palette_visible())
+
+  let commands = app.runtime(width=980.0, height=640.0).draw_commands()
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Quick Format", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Heading 1", .. })
+    }),
+  )
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Bold", .. })
+    }),
+  )
+
+  app.set_format_palette_query("code")
+  inspect(app.format_palette_query(), content="code")
+  let filtered = app.runtime(width=980.0, height=640.0).draw_commands()
+  assert_true(
+    filtered.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Code Block", .. })
+    }),
+  )
+  assert_false(
+    filtered.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Bold", .. })
+    }),
+  )
+}
+
+///|
+test "markdown editor runtime quick format shortcuts toggle palette" {
+  let meta_app = MarkdownEditorApp::new()
+  let meta_runtime = meta_app.runtime(width=980.0, height=640.0)
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="p",
+        modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+      ),
+    ),
+  )
+  assert_true(meta_app.format_palette_visible())
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="p",
+        modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+      ),
+    ),
+  )
+  assert_false(meta_app.format_palette_visible())
+
+  let control_app = MarkdownEditorApp::new()
+  let control_runtime = control_app.runtime(width=980.0, height=640.0)
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="p",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  assert_true(control_app.format_palette_visible())
+}
+
+///|
+test "markdown editor runtime quick format row applies command" {
+  let app = MarkdownEditorApp::new()
+  app.clear()
+  app.apply_action("format-palette")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  guard markdown_editor_text_frame(runtime.draw_commands(), "Heading 1")
+    is Some(frame) else {
+    fail("expected quick format heading row")
+  }
+  let point = @core.Point::new(x=frame.origin.x + 4.0, y=frame.origin.y + 4.0)
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Down),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(position=point, phase=@core.PointerPhase::Up),
+    ),
+  )
+  inspect(app.document(), content="# Heading")
+  assert_false(app.format_palette_visible())
+}
+
+///|
+test "markdown editor quick format submit applies first filtered command" {
+  let app = MarkdownEditorApp::new()
+  app.clear()
+  app.apply_action("format-palette")
+  app.set_format_palette_query("heading 2")
+  ignore(app.update(ApplyFirstFormatPaletteAction))
+  inspect(app.document(), content="## Section")
+  assert_false(app.format_palette_visible())
+}
+
+///|
+test "markdown editor inserts table of contents from outline" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("# Title\n\n## Section\n\n### Detail")
+  app.set_selection(markdown_editor_text_length(app.document()), None)
+  app.apply_action("toc")
+  inspect(
+    app.document(),
+    content="# Title\n\n## Section\n\n### Detail\n\n## Contents\n- [Title](#title)\n  - [Section](#section)\n    - [Detail](#detail)",
+  )
+  assert_true(app.can_undo())
+}
+
+///|
+test "markdown editor quick format can insert table of contents" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("# Title\n\n## Section")
+  app.apply_action("format-palette")
+  app.set_format_palette_query("contents")
+  ignore(app.update(ApplyFirstFormatPaletteAction))
+  inspect(
+    app.document(),
+    content="## Contents\n- [Title](#title)\n  - [Section](#section)\n\n# Title\n\n## Section",
+  )
+  assert_false(app.format_palette_visible())
+}
+
+///|
+test "markdown editor runtime table of contents shortcuts insert outline" {
+  let meta_app = MarkdownEditorApp::new()
+  meta_app.set_document("# Meta\n\n## Child")
+  let meta_runtime = meta_app.runtime(width=980.0, height=640.0)
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="t",
+        modifiers=@core.KeyModifiers::new(meta=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(meta_app.document().contains("- [Meta](#meta)"))
+  assert_true(meta_app.document().contains("  - [Child](#child)"))
+
+  let control_app = MarkdownEditorApp::new()
+  control_app.set_document("# Control")
+  let control_runtime = control_app.runtime(width=980.0, height=640.0)
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="t",
+        modifiers=@core.KeyModifiers::new(control=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(control_app.document().contains("- [Control](#control)"))
+}
+
+///|
+test "markdown editor inserts yaml front matter at document top" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("# Draft")
+  app.apply_action("front-matter")
+  inspect(
+    app.document(),
+    content="---\ntitle: Untitled\ntags: []\n---\n\n# Draft",
+  )
+  assert_true(app.can_undo())
+}
+
+///|
+test "markdown editor front matter command selects existing metadata" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("---\ntitle: Existing\n---\n\n# Draft")
+  app.apply_action("front-matter")
+  inspect(app.document(), content="---\ntitle: Existing\n---\n\n# Draft")
+  guard app.selection.get().selection is Some(range) else {
+    fail("expected existing front matter content selection")
+  }
+  inspect(range.start, content="4")
+  inspect(range.end, content="20")
+  inspect(app.selection_caret(), content="20")
+}
+
+///|
+test "markdown editor quick format can insert yaml front matter" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("# Draft")
+  app.apply_action("format-palette")
+  app.set_format_palette_query("front matter")
+  ignore(app.update(ApplyFirstFormatPaletteAction))
+  assert_true(app.document().has_prefix("---\ntitle: Untitled"))
+  assert_false(app.format_palette_visible())
+}
+
+///|
+test "markdown editor runtime front matter shortcuts insert metadata" {
+  let meta_app = MarkdownEditorApp::new()
+  meta_app.set_document("# Meta")
+  let meta_runtime = meta_app.runtime(width=980.0, height=640.0)
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="y",
+        modifiers=@core.KeyModifiers::new(meta=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(meta_app.document().has_prefix("---\ntitle: Untitled"))
+
+  let control_app = MarkdownEditorApp::new()
+  control_app.set_document("# Control")
+  let control_runtime = control_app.runtime(width=980.0, height=640.0)
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="y",
+        modifiers=@core.KeyModifiers::new(control=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(control_app.document().has_prefix("---\ntitle: Untitled"))
+}
+
+///|
+test "markdown editor cycles writing appearance from action" {
+  let app = MarkdownEditorApp::new()
+  inspect(app.appearance_label_for_test(), content="Paper")
+  assert_false(app.document_status_label_for_test().contains("Look:"))
+  let paper_width = app.editor_page_width_for_test()
+  let paper_size = app.editor_font_size_for_test()
+
+  app.apply_action("look")
+  inspect(app.appearance_label_for_test(), content="Warm")
+  assert_true(app.document_status_label_for_test().contains("Look: Warm"))
+  assert_true(app.editor_font_size_for_test() > paper_size)
+  assert_true(app.editor_page_width_for_test() < paper_width)
+
+  app.apply_action("look")
+  inspect(app.appearance_label_for_test(), content="Wide")
+  assert_true(app.document_status_label_for_test().contains("Look: Wide"))
+  assert_true(app.editor_page_width_for_test() > paper_width)
+
+  app.apply_action("look")
+  inspect(app.appearance_label_for_test(), content="Paper")
+  assert_false(app.document_status_label_for_test().contains("Look:"))
+}
+
+///|
+test "markdown editor runtime writing appearance shortcuts cycle look" {
+  let meta_app = MarkdownEditorApp::new()
+  let meta_runtime = meta_app.runtime(width=980.0, height=640.0)
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="l",
+        modifiers=@core.KeyModifiers::new(meta=true, alt=true),
+      ),
+    ),
+  )
+  inspect(meta_app.appearance_label_for_test(), content="Warm")
+
+  let control_app = MarkdownEditorApp::new()
+  let control_runtime = control_app.runtime(width=980.0, height=640.0)
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="l",
+        modifiers=@core.KeyModifiers::new(control=true, alt=true),
+      ),
+    ),
+  )
+  inspect(control_app.appearance_label_for_test(), content="Warm")
+}
+
+///|
+test "markdown editor quick format can set writing appearance directly" {
+  let app = MarkdownEditorApp::new()
+  app.apply_action("format-palette")
+  app.set_format_palette_query("wide look")
+  ignore(app.update(ApplyFirstFormatPaletteAction))
+  inspect(app.appearance_label_for_test(), content="Wide")
+  assert_false(app.format_palette_visible())
+}
+
+///|
+test "markdown editor writing appearance changes rendered typography" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Plain text")
+  let paper_commands = app.runtime(width=980.0, height=640.0).draw_commands()
+  guard markdown_editor_text_font_size(paper_commands, "Plain text")
+    is Some(paper_size) else {
+    fail("expected rendered paper text")
+  }
+
+  app.apply_action("look")
+  let warm_commands = app.runtime(width=980.0, height=640.0).draw_commands()
+  guard markdown_editor_text_font_size(warm_commands, "Plain text")
+    is Some(warm_size) else {
+    fail("expected rendered warm text")
+  }
+  assert_true(warm_size > paper_size)
+}
+
+///|
+test "markdown editor writing mode actions update status strip" {
+  let app = MarkdownEditorApp::new()
+  assert_false(app.focus_mode_enabled())
+  assert_false(app.typewriter_mode_enabled())
+  assert_false(app.zen_mode_enabled())
+  app.apply_action("focus-mode")
+  app.apply_action("typewriter-mode")
+  app.apply_action("zen-mode")
+  assert_true(app.focus_mode_enabled())
+  assert_true(app.typewriter_mode_enabled())
+  assert_true(app.zen_mode_enabled())
+  assert_true(
+    app.document_status_label_for_test().contains("Focus + Typewriter + Zen"),
+  )
+}
+
+///|
+test "markdown editor zen mode hides chrome and auxiliary panels" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("# Zen\n\nBody")
+  app.set_source_preview_visible(true)
+  app.set_outline_visible(true)
+  app.set_file_sidebar_visible(true)
+  app.set_document_info_visible(true)
+  app.apply_action("find")
+  app.apply_action("format-palette")
+  app.apply_action("zen-mode")
+  assert_true(app.zen_mode_enabled())
+  assert_false(app.find_visible())
+  assert_false(app.format_palette_visible())
+  assert_false(app.source_preview_visible())
+  assert_false(app.outline_visible())
+  assert_false(app.file_sidebar_visible())
+  assert_false(app.document_info_visible())
+
+  let commands = app.runtime(width=980.0, height=640.0).draw_commands()
+  assert_true(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Zen", .. })
+    }),
+  )
+  assert_false(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "New", .. })
+    }),
+  )
+  assert_false(
+    commands.any(command => {
+      command is @core.DrawCommand::DrawText({ text: "Markdown source", .. })
+    }),
+  )
+}
+
+///|
+test "markdown editor runtime writing mode shortcuts toggle modes" {
+  let meta_app = MarkdownEditorApp::new()
+  let meta_runtime = meta_app.runtime(width=980.0, height=640.0)
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="f",
+        modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+      ),
+    ),
+  )
+  assert_true(meta_app.focus_mode_enabled())
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="t",
+        modifiers=@core.KeyModifiers::new(meta=true, shift=true),
+      ),
+    ),
+  )
+  assert_true(meta_app.typewriter_mode_enabled())
+
+  meta_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="z",
+        modifiers=@core.KeyModifiers::new(meta=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(meta_app.zen_mode_enabled())
+
+  let control_app = MarkdownEditorApp::new()
+  let control_runtime = control_app.runtime(width=980.0, height=640.0)
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="f",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  assert_true(control_app.focus_mode_enabled())
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="t",
+        modifiers=@core.KeyModifiers::new(control=true, shift=true),
+      ),
+    ),
+  )
+  assert_true(control_app.typewriter_mode_enabled())
+  control_runtime.dispatch_event(
+    @core.AppEvent::Keyboard(
+      @core.KeyboardEvent::new(
+        key="z",
+        modifiers=@core.KeyModifiers::new(control=true, alt=true),
+      ),
+    ),
+  )
+  assert_true(control_app.zen_mode_enabled())
+}
+
+///|
+test "markdown editor escape exits zen mode" {
+  let app = MarkdownEditorApp::new()
+  app.apply_action("zen-mode")
+  assert_true(app.zen_mode_enabled())
+  let runtime = app.runtime(width=980.0, height=640.0)
+  runtime.dispatch_event(
+    @core.AppEvent::Keyboard(@core.KeyboardEvent::new(key="Escape")),
+  )
+  assert_false(app.zen_mode_enabled())
+}
+
+///|
+test "markdown editor quick format can enable zen mode" {
+  let app = MarkdownEditorApp::new()
+  app.apply_action("format-palette")
+  app.set_format_palette_query("zen")
+  ignore(app.update(ApplyFirstFormatPaletteAction))
+  assert_true(app.zen_mode_enabled())
+  assert_false(app.format_palette_visible())
+}
+
+///|
+test "markdown editor zen mode keeps editing live" {
+  let app = MarkdownEditorApp::new()
+  app.clear()
+  app.apply_action("zen-mode")
+  let runtime = app.runtime(width=980.0, height=640.0)
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=28.0, y=48.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("quiet")),
+  )
+  inspect(app.document(), content="quiet")
+}
+
+///|
+test "markdown editor typewriter mode centers current caret" {
+  let lead = "# First\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\n"
+  let target = markdown_editor_text_length(lead)
+  let source = lead + "Tail\n\n" + lead
+
+  let plain = MarkdownEditorApp::new()
+  plain.set_document(source)
+  plain.set_selection(target, None)
+  assert_true(plain.editor_scroll_y() == 0.0)
+
+  let typewriter = MarkdownEditorApp::new()
+  typewriter.set_document(source)
+  typewriter.set_selection(target, None)
+  typewriter.apply_action("typewriter-mode")
+  let centered = typewriter.editor_scroll_y()
+  assert_true(centered > 0.0)
+
+  let top_aligned = MarkdownEditorApp::new()
+  top_aligned.set_document(source)
+  top_aligned.scroll_to_source(target)
+  assert_true(centered < top_aligned.editor_scroll_y())
+}
+
+///|
+test "markdown editor typewriter mode recenters after document input" {
+  let lead = "# First\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\nParagraph\n\n"
+  let target = markdown_editor_text_length(lead)
+  let source = lead + "Tail\n\n" + lead
+  let app = MarkdownEditorApp::new()
+  app.set_document(source)
+  app.apply_action("typewriter-mode")
+  app.set_selection(target, None)
+  app.editor_scroll.scroll_to(x=0.0, y=0.0)
+  app.edit_document(source + " updated")
+  assert_true(app.editor_scroll_y() > 0.0)
 }
 
 ///|
@@ -1555,11 +2471,17 @@ test "markdown editor runtime escape dismisses auxiliary panels after find" {
   let app = MarkdownEditorApp::new()
   app.set_source_preview_visible(true)
   app.set_outline_visible(true)
+  app.set_file_sidebar_visible(true)
+  app.set_document_info_visible(true)
+  app.set_format_palette_visible(true)
   app.set_selection(8, Some(@core.TextRange::new(start=0, end=8)))
   app.apply_action("find")
   assert_true(app.find_visible())
   assert_true(app.source_preview_visible())
   assert_true(app.outline_visible())
+  assert_true(app.file_sidebar_visible())
+  assert_true(app.document_info_visible())
+  assert_true(app.format_palette_visible())
   let runtime = app.runtime(width=1180.0, height=680.0)
 
   runtime.dispatch_event(
@@ -1568,6 +2490,9 @@ test "markdown editor runtime escape dismisses auxiliary panels after find" {
   assert_false(app.find_visible())
   assert_true(app.source_preview_visible())
   assert_true(app.outline_visible())
+  assert_true(app.file_sidebar_visible())
+  assert_true(app.document_info_visible())
+  assert_true(app.format_palette_visible())
   guard app.selection.get().selection is Some(find_range) else {
     fail("expected selection to survive find dismissal")
   }
@@ -1579,6 +2504,9 @@ test "markdown editor runtime escape dismisses auxiliary panels after find" {
   )
   assert_false(app.source_preview_visible())
   assert_false(app.outline_visible())
+  assert_false(app.file_sidebar_visible())
+  assert_false(app.document_info_visible())
+  assert_false(app.format_palette_visible())
   guard app.selection.get().selection is Some(panel_range) else {
     fail("expected selection to survive panel dismissal")
   }
@@ -4068,6 +4996,23 @@ fn markdown_editor_text_frame(
       @core.DrawCommand::DrawText({ text: value, frame, .. }) =>
         if value == text {
           return Some(frame)
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+fn markdown_editor_text_font_size(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> Double? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, font: { size, .. }, .. }) =>
+        if value == text {
+          return Some(size)
         }
       _ => ()
     }

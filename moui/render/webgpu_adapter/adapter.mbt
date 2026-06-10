@@ -522,7 +522,9 @@ fn WebGpuLayerCommandCache::expand_frame_commands(
           Some(cached) => {
             hits = hits + 1
             for cached_command in cached {
-              append_webgpu_layer_cache_command(output, captures, cached_command)
+              append_webgpu_layer_cache_command(
+                output, captures, cached_command,
+              )
             }
           }
           None => {

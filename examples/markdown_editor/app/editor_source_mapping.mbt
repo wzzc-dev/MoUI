@@ -1,30 +1,45 @@
 ///|
 fn MarkdownEditorSnapshot::parse(source : String) -> MarkdownEditorSnapshot {
+  MarkdownEditorSnapshot::parse_with_font(source, @core.FontSpec::new())
+}
+
+///|
+fn MarkdownEditorSnapshot::parse_with_font(
+  source : String,
+  base : @core.FontSpec,
+) -> MarkdownEditorSnapshot {
   let blocks = parse_markdown_editor_blocks(source)
   let word_count = markdown_editor_word_count(source)
+  let metadata = markdown_editor_front_matter_metadata(blocks)
   {
     source,
     blocks,
-    rich_text: markdown_editor_blocks_to_rich_text(source, blocks),
+    rich_text: markdown_editor_blocks_to_rich_text(source, blocks, base),
     line_count: markdown_editor_line_count(source),
     word_count,
     reading_minutes: markdown_editor_reading_minutes(word_count),
     active_heading: markdown_editor_active_heading(blocks),
+    metadata_title: metadata.title,
+    metadata_tags: metadata.tags,
     outline: markdown_editor_outline(blocks),
   }
 }
 
 ///|
-fn markdown_editor_format(source : String) -> @core.RichTextDocument {
-  MarkdownEditorSnapshot::parse(source).rich_text
+fn markdown_editor_format(
+  source : String,
+  base? : @core.FontSpec = @core.FontSpec::new(),
+) -> @core.RichTextDocument {
+  MarkdownEditorSnapshot::parse_with_font(source, base).rich_text
 }
 
 ///|
 fn markdown_editor_format_for_selection(
   source : String,
   selection : MarkdownEditorSelection,
+  base? : @core.FontSpec = @core.FontSpec::new(),
 ) -> @core.RichTextDocument {
-  let document = markdown_editor_format(source)
+  let document = markdown_editor_format(source, base~)
   let blocks : Array[@core.RichTextBlock] = []
   for block in document.blocks {
     let runs : Array[@core.RichTextRun] = []
@@ -41,6 +56,124 @@ fn markdown_editor_format_for_selection(
     )
   }
   @core.RichTextDocument::new(blocks~)
+}
+
+///|
+fn markdown_editor_format_for_writing_mode(
+  source : String,
+  selection : MarkdownEditorSelection,
+  base? : @core.FontSpec = @core.FontSpec::new(),
+  focus_mode~ : Bool,
+) -> @core.RichTextDocument {
+  let document = markdown_editor_format_for_selection(source, selection, base~)
+  if focus_mode {
+    markdown_editor_dim_inactive_blocks(document, selection)
+  } else {
+    document
+  }
+}
+
+///|
+fn markdown_editor_format_source_mode(
+  source : String,
+  base : @core.FontSpec,
+) -> @core.RichTextDocument {
+  let length = markdown_editor_text_length(source)
+  let font = {
+    ..base,
+    families: @core.FontFamilyStack::monospace(),
+    size: base.size * 0.92,
+  }
+  @core.RichTextDocument::new(blocks=[
+    @core.RichTextBlock::new(
+      runs=[
+        @core.RichTextRun::new(
+          text=source,
+          font=Some(font),
+          source_range=Some({ start: 0, end: length }),
+        ),
+      ],
+      font=Some(font),
+      source_range=Some({ start: 0, end: length }),
+      content_range=Some({ start: 0, end: length }),
+      line_height=Some(base.size * 1.42),
+    ),
+  ])
+}
+
+///|
+fn markdown_editor_dim_inactive_blocks(
+  document : @core.RichTextDocument,
+  selection : MarkdownEditorSelection,
+) -> @core.RichTextDocument {
+  let blocks : Array[@core.RichTextBlock] = []
+  for block in document.blocks {
+    if markdown_editor_focus_block_active(block, selection) {
+      blocks.push(block)
+    } else {
+      blocks.push(markdown_editor_dim_rich_text_block(block))
+    }
+  }
+  @core.RichTextDocument::new(blocks~)
+}
+
+///|
+fn markdown_editor_focus_block_active(
+  block : @core.RichTextBlock,
+  selection : MarkdownEditorSelection,
+) -> Bool {
+  match block.source_range {
+    Some(range) => markdown_editor_selection_touches_range(selection, range)
+    None => true
+  }
+}
+
+///|
+fn markdown_editor_dim_rich_text_block(
+  block : @core.RichTextBlock,
+) -> @core.RichTextBlock {
+  let runs : Array[@core.RichTextRun] = []
+  for run in block.runs {
+    runs.push(markdown_editor_dim_rich_text_run(run))
+  }
+  {
+    ..block,
+    runs,
+    color: Some(
+      block.color
+      .unwrap_or(markdown_editor_default_text_color())
+      .multiply_alpha(0.38),
+    ),
+    border_left: markdown_editor_dim_border(block.border_left),
+  }
+}
+
+///|
+fn markdown_editor_dim_rich_text_run(
+  run : @core.RichTextRun,
+) -> @core.RichTextRun {
+  {
+    ..run,
+    color: match run.color {
+      Some(color) => Some(color.multiply_alpha(0.38))
+      None => None
+    },
+  }
+}
+
+///|
+fn markdown_editor_dim_border(
+  border : @core.BorderStyle?,
+) -> @core.BorderStyle? {
+  match border {
+    Some(border) => Some({ ..border, brush: border.brush.multiply_alpha(0.38) })
+    None => None
+  }
+}
+
+///|
+fn markdown_editor_default_text_color() -> @core.Color {
+  @core.Color::rgba(r=0.12, g=0.12, b=0.12)
 }
 
 ///|
@@ -279,6 +412,44 @@ fn parse_markdown_editor_blocks(source : String) -> Array[MarkdownEditorBlock] {
   }
   let definitions = markdown_reference_definitions(source)
   let lines = markdown_editor_lines(source)
+  match markdown_editor_front_matter_block_at(lines) {
+    Some(front_matter) => {
+      blocks.push(front_matter.block)
+      let mut index = front_matter.next_index
+      while index < lines.length() {
+        let line = lines[index]
+        if line.text.trim().to_owned() == "" {
+          blocks.push(markdown_editor_blank_line_block(line))
+          index = index + 1
+        } else {
+          break
+        }
+      }
+      if index < lines.length() {
+        let rest_start = lines[index].start
+        let rest = markdown_editor_substring(
+          source,
+          rest_start,
+          markdown_editor_text_length(source),
+        )
+        for block in parse_markdown_editor_blocks(rest) {
+          blocks.push({
+            ..block,
+            source_range: {
+              start: block.source_range.start + rest_start,
+              end: block.source_range.end + rest_start,
+            },
+            content_range: {
+              start: block.content_range.start + rest_start,
+              end: block.content_range.end + rest_start,
+            },
+          })
+        }
+      }
+      return blocks
+    }
+    None => ()
+  }
   let code_lines : Array[String] = []
   let mut code_start = 0
   let mut code_content_start = 0
@@ -392,12 +563,44 @@ fn markdown_editor_blank_line_block(line : MarkdownLine) -> MarkdownEditorBlock 
 }
 
 ///|
+struct MarkdownEditorFrontMatterParseResult {
+  block : MarkdownEditorBlock
+  next_index : Int
+} derive(Eq, Debug)
+
+///|
+fn markdown_editor_front_matter_block_at(
+  lines : Array[MarkdownLine],
+) -> MarkdownEditorFrontMatterParseResult? {
+  if lines.length() < 2 || lines[0].text.trim().to_owned() != "---" {
+    return None
+  }
+  let content : Array[String] = []
+  let mut index = 1
+  while index < lines.length() {
+    if lines[index].text.trim().to_owned() == "---" {
+      return Some({
+        block: {
+          block: markdown_block(FrontMatter, markdown_join_lines(content)),
+          source_range: { start: lines[0].start, end: lines[index].end },
+          content_range: { start: lines[0].end + 1, end: lines[index].start },
+        },
+        next_index: index + 1,
+      })
+    }
+    content.push(lines[index].text)
+    index = index + 1
+  }
+  None
+}
+
+///|
 fn markdown_editor_block_with_references(
   block : MarkdownBlock,
   definitions : Array[MarkdownReferenceDefinition],
 ) -> MarkdownBlock {
   match block.kind {
-    CodeBlock | HorizontalRule | Table | HtmlBlock => block
+    CodeBlock | HorizontalRule | Table | HtmlBlock | FrontMatter => block
     _ =>
       {
         ..block,
@@ -593,9 +796,9 @@ fn markdown_editor_closing_code_fence(line : String, fence : String) -> Bool {
 fn markdown_editor_blocks_to_rich_text(
   source : String,
   blocks : Array[MarkdownEditorBlock],
+  base : @core.FontSpec,
 ) -> @core.RichTextDocument {
   let rich_blocks : Array[@core.RichTextBlock] = []
-  let base = @core.FontSpec::new()
   for block in blocks {
     rich_blocks.push(markdown_editor_block_to_rich_text(source, block, base))
   }
@@ -795,6 +998,7 @@ fn markdown_editor_block_source_text(
       label +
       "]: " +
       markdown_editor_inline_source(editor_block.block.inlines)
+    FrontMatter => "---\n" + editor_block.block.text + "\n---"
     CodeBlock | HorizontalRule | Table | HtmlBlock => editor_block.block.text
   }
 }
@@ -811,7 +1015,8 @@ fn markdown_editor_block_source_prefix_padding(
     Blockquote => 2
     FootnoteDefinition(label) =>
       markdown_editor_text_length("[^" + label + "]: ")
-    Paragraph | CodeBlock | HorizontalRule | Table | HtmlBlock => 0
+    Paragraph | CodeBlock | HorizontalRule | Table | HtmlBlock | FrontMatter =>
+      0
   }
   let padding_length = markdown_editor_max_int(
     0,
@@ -943,6 +1148,141 @@ fn markdown_editor_active_heading(
 }
 
 ///|
+priv struct MarkdownEditorFrontMatterMetadata {
+  title : String
+  tags : Array[String]
+}
+
+///|
+fn markdown_editor_front_matter_metadata(
+  blocks : Array[MarkdownEditorBlock],
+) -> MarkdownEditorFrontMatterMetadata {
+  if blocks.length() == 0 {
+    return { title: "", tags: [] }
+  }
+  match blocks[0].block.kind {
+    FrontMatter => markdown_editor_parse_front_matter_metadata(blocks[0].block.text)
+    _ => { title: "", tags: [] }
+  }
+}
+
+///|
+fn markdown_editor_parse_front_matter_metadata(
+  source : String,
+) -> MarkdownEditorFrontMatterMetadata {
+  let tags : Array[String] = []
+  let mut title = ""
+  let mut collecting_tags = false
+  for line in markdown_editor_lines(source) {
+    let text = line.text.trim().to_owned()
+    if text.has_prefix("title:") {
+      let value = markdown_editor_substring(
+        text,
+        6,
+        markdown_editor_text_length(text),
+      ).trim().to_owned()
+      title = markdown_editor_front_matter_scalar(value)
+      collecting_tags = false
+    } else if text.has_prefix("tags:") {
+      tags.clear()
+      let value = markdown_editor_substring(
+        text,
+        5,
+        markdown_editor_text_length(text),
+      ).trim().to_owned()
+      if value == "" {
+        collecting_tags = true
+      } else {
+        tags.append(markdown_editor_front_matter_tags(value))
+        collecting_tags = false
+      }
+    } else if collecting_tags && text.has_prefix("- ") {
+      let value = markdown_editor_substring(
+        text,
+        2,
+        markdown_editor_text_length(text),
+      ).trim().to_owned()
+      let tag = markdown_editor_front_matter_scalar(value)
+      if tag != "" {
+        tags.push(tag)
+      }
+    } else if text != "" {
+      collecting_tags = false
+    }
+  }
+  { title, tags }
+}
+
+///|
+fn markdown_editor_front_matter_tags(source : String) -> Array[String] {
+  let text = source.trim().to_owned()
+  if text == "" {
+    []
+  } else if text.has_prefix("[") && text.has_suffix("]") {
+    let length = markdown_editor_text_length(text)
+    markdown_editor_split_front_matter_tag_list(
+      markdown_editor_substring(text, 1, length - 1),
+    )
+  } else {
+    let tag = markdown_editor_front_matter_scalar(text)
+    if tag == "" { [] } else { [tag] }
+  }
+}
+
+///|
+fn markdown_editor_split_front_matter_tag_list(source : String) -> Array[String] {
+  let tags : Array[String] = []
+  let current : Array[Char] = []
+  let mut quoted = false
+  let mut quote = '"'
+  for ch in source {
+    if quoted {
+      current.push(ch)
+      if ch == quote {
+        quoted = false
+      }
+    } else if ch == '"' || ch == '\'' {
+      quoted = true
+      quote = ch
+      current.push(ch)
+    } else if ch == ',' {
+      markdown_editor_push_front_matter_tag(tags, String::from_array(current))
+      current.clear()
+    } else {
+      current.push(ch)
+    }
+  }
+  markdown_editor_push_front_matter_tag(tags, String::from_array(current))
+  tags
+}
+
+///|
+fn markdown_editor_push_front_matter_tag(
+  tags : Array[String],
+  source : String,
+) -> Unit {
+  let tag = markdown_editor_front_matter_scalar(source.trim().to_owned())
+  if tag != "" {
+    tags.push(tag)
+  }
+}
+
+///|
+fn markdown_editor_front_matter_scalar(source : String) -> String {
+  let text = source.trim().to_owned()
+  let chars = text.to_array()
+  if chars.length() >= 2 &&
+    (
+      (chars[0] == '"' && chars[chars.length() - 1] == '"') ||
+      (chars[0] == '\'' && chars[chars.length() - 1] == '\'')
+    ) {
+    String::from_array(chars[1:chars.length() - 1]).trim().to_owned()
+  } else {
+    text
+  }
+}
+
+///|
 fn markdown_editor_reading_minutes(word_count : Int) -> Int {
   if word_count <= 0 {
     0
@@ -983,6 +1323,7 @@ fn markdown_editor_block_kind_label(kind : MarkdownBlockKind) -> String {
     Table => "Table"
     FootnoteDefinition(label) => "Footnote " + label
     HtmlBlock => "HTML"
+    FrontMatter => "Front matter"
     Paragraph => "Paragraph"
   }
 }
@@ -1000,7 +1341,8 @@ fn markdown_editor_content_range(
     | Blockquote => markdown_editor_marker_prefix_length(line.text)
     FootnoteDefinition(_) =>
       markdown_editor_footnote_marker_prefix_length(line.text)
-    Paragraph | CodeBlock | HorizontalRule | Table | HtmlBlock => 0
+    Paragraph | CodeBlock | HorizontalRule | Table | HtmlBlock | FrontMatter =>
+      0
   }
   {
     start: markdown_editor_min_int(line.start + offset, line.end),

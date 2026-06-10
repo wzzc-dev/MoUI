@@ -24,11 +24,21 @@ pub struct MarkdownEditorApp {
   target_kind : @core.State[MarkdownEditorTargetKind]
   block_label : @core.State[String]
   source_preview_visible : @core.State[Bool]
+  source_mode_enabled : @core.State[Bool]
   outline_visible : @core.State[Bool]
+  file_sidebar_visible : @core.State[Bool]
+  document_info_visible : @core.State[Bool]
+  focus_mode_enabled : @core.State[Bool]
+  typewriter_mode_enabled : @core.State[Bool]
+  zen_mode_enabled : @core.State[Bool]
+  format_palette_visible : @core.State[Bool]
+  format_palette_query : @core.State[String]
+  priv writing_appearance : @core.State[MarkdownEditorAppearance]
   find_visible : @core.State[Bool]
   find_query : @core.State[String]
   replace_text : @core.State[String]
   document_path : @core.State[String]
+  recent_document_paths : @core.State[Array[String]]
   saved_document : @core.State[String]
   priv transfer_status : @core.State[MarkdownEditorTransferStatus]
   undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
@@ -41,6 +51,51 @@ struct MarkdownEditorHistoryEntry {
   source : String
   selection : MarkdownEditorSelection
 } derive(Eq, Debug, ToJson)
+
+///|
+priv struct MarkdownEditorFormatPaletteItem {
+  action : String
+  label : String
+  group : String
+  shortcut : String
+}
+
+///|
+priv struct MarkdownEditorDocumentInfo {
+  character_count : Int
+  heading_count : Int
+  paragraph_count : Int
+  list_item_count : Int
+  task_count : Int
+  checked_task_count : Int
+  quote_count : Int
+  code_block_count : Int
+  table_count : Int
+  link_count : Int
+  image_count : Int
+  footnote_reference_count : Int
+  footnote_definition_count : Int
+}
+
+///|
+priv struct MarkdownEditorAppearanceSpec {
+  label : String
+  editor_font_size : Double
+  page_width : Double
+  side_editor_width : Double
+  foreground : @core.Color
+  placeholder : @core.Color
+  page_background : @core.Color
+  window_background : @core.Color
+  page_border : @core.Color
+}
+
+///|
+priv enum MarkdownEditorAppearance {
+  PaperAppearance
+  WarmAppearance
+  WideAppearance
+}
 
 ///|
 enum MarkdownEditorTargetKind {
@@ -56,6 +111,7 @@ enum MarkdownEditorTargetKind {
 priv enum MarkdownEditorTransferKind {
   ClipboardImport
   ClipboardExport
+  ClipboardHtmlExport
   FileOpen
   FileSaveAs
   FileSave
@@ -70,6 +126,7 @@ priv enum MarkdownEditorTransferStatus {
   TransferUnavailable(String)
   TransferCancelled(MarkdownEditorTransferKind)
   TransferCopied
+  TransferHtmlCopied
   TransferImported
   TransferOpened(String)
   TransferSaved(String)
@@ -85,16 +142,28 @@ priv enum MarkdownEditorMsg {
   OpenDocument
   ImportFromClipboard
   ExportToClipboard
+  ExportHtmlToClipboard
   HostTransferCompleted(@host.HostCompletedServiceResponse)
   Undo
   Redo
   ToggleOutline
+  ToggleFileSidebar
+  ToggleDocumentInfo
   ToggleFind
+  ToggleFocusMode
+  ToggleTypewriterMode
+  ToggleZenMode
+  ToggleFormatPalette
+  UpdateFormatPaletteQuery(String)
+  ApplyFirstFormatPaletteAction
+  ApplyFormatPaletteAction(String)
+  CycleWritingAppearance
   OpenFind
   OpenFindReplace
   CloseFind
   DismissAuxiliaryPanels
   ToggleSourcePreview
+  ToggleSourceMode
   UpdateDocument(String)
   UpdateFindQuery(String)
   UpdateReplaceText(String)
@@ -113,6 +182,7 @@ priv enum MarkdownEditorMsg {
   ReplaceFindAll
   ApplyCommand(MarkdownEditorCommand)
   SetSelection(Int, @core.TextRange?)
+  OpenRecentDocument(String)
   JumpToOutline(Int)
   JumpToNextHeading
   JumpToPreviousHeading
@@ -136,11 +206,21 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     target_kind: @core.State::new(PlainSelection),
     block_label: @core.State::new("Paragraph"),
     source_preview_visible: @core.State::new(false),
+    source_mode_enabled: @core.State::new(false),
     outline_visible: @core.State::new(false),
+    file_sidebar_visible: @core.State::new(false),
+    document_info_visible: @core.State::new(false),
+    focus_mode_enabled: @core.State::new(false),
+    typewriter_mode_enabled: @core.State::new(false),
+    zen_mode_enabled: @core.State::new(false),
+    format_palette_visible: @core.State::new(false),
+    format_palette_query: @core.State::new(""),
+    writing_appearance: @core.State::new(PaperAppearance),
     find_visible: @core.State::new(false),
     find_query: @core.State::new(""),
     replace_text: @core.State::new(""),
     document_path: @core.State::new(""),
+    recent_document_paths: @core.State::new([]),
     saved_document: @core.State::new(document),
     transfer_status: @core.State::new(TransferReady),
     undo_stack: @core.State::new([]),
@@ -155,8 +235,79 @@ fn MarkdownEditorApp::toggle_source_preview(self : MarkdownEditorApp) -> Unit {
 }
 
 ///|
+fn MarkdownEditorApp::toggle_source_mode(self : MarkdownEditorApp) -> Unit {
+  self.source_mode_enabled.set(!self.source_mode_enabled.get())
+}
+
+///|
 fn MarkdownEditorApp::toggle_outline(self : MarkdownEditorApp) -> Unit {
   self.outline_visible.set(!self.outline_visible.get())
+}
+
+///|
+fn MarkdownEditorApp::toggle_file_sidebar(self : MarkdownEditorApp) -> Unit {
+  self.file_sidebar_visible.set(!self.file_sidebar_visible.get())
+}
+
+///|
+fn MarkdownEditorApp::toggle_document_info(self : MarkdownEditorApp) -> Unit {
+  self.document_info_visible.set(!self.document_info_visible.get())
+}
+
+///|
+fn MarkdownEditorApp::toggle_focus_mode(self : MarkdownEditorApp) -> Unit {
+  self.focus_mode_enabled.set(!self.focus_mode_enabled.get())
+}
+
+///|
+fn MarkdownEditorApp::toggle_typewriter_mode(self : MarkdownEditorApp) -> Unit {
+  self.typewriter_mode_enabled.set(!self.typewriter_mode_enabled.get())
+  self.maybe_center_typewriter_selection()
+}
+
+///|
+fn MarkdownEditorApp::toggle_zen_mode(self : MarkdownEditorApp) -> Unit {
+  if self.zen_mode_enabled.get() {
+    self.zen_mode_enabled.set(false)
+  } else {
+    self.zen_mode_enabled.set(true)
+    self.close_find()
+    self.reset_format_palette()
+    self.file_sidebar_visible.set(false)
+    self.document_info_visible.set(false)
+    self.outline_visible.set(false)
+    self.source_preview_visible.set(false)
+  }
+}
+
+///|
+fn MarkdownEditorApp::toggle_format_palette(self : MarkdownEditorApp) -> Unit {
+  if self.format_palette_visible.get() {
+    self.reset_format_palette()
+  } else {
+    self.format_palette_visible.set(true)
+  }
+}
+
+///|
+fn MarkdownEditorApp::reset_format_palette(self : MarkdownEditorApp) -> Unit {
+  self.format_palette_visible.set(false)
+  self.format_palette_query.set("")
+}
+
+///|
+fn MarkdownEditorApp::cycle_writing_appearance(
+  self : MarkdownEditorApp,
+) -> Unit {
+  self.writing_appearance.set(self.writing_appearance.get().next())
+}
+
+///|
+fn MarkdownEditorApp::set_writing_appearance(
+  self : MarkdownEditorApp,
+  appearance : MarkdownEditorAppearance,
+) -> Unit {
+  self.writing_appearance.set(appearance)
 }
 
 ///|
@@ -208,9 +359,18 @@ fn MarkdownEditorApp::reset_find_session(self : MarkdownEditorApp) -> Unit {
 fn MarkdownEditorApp::dismiss_auxiliary_panels(
   self : MarkdownEditorApp,
 ) -> Unit {
-  if self.find_visible.get() {
+  if self.zen_mode_enabled.get() {
+    self.zen_mode_enabled.set(false)
+  } else if self.find_visible.get() {
     self.close_find()
-  } else if self.outline_visible.get() || self.source_preview_visible.get() {
+  } else if self.format_palette_visible.get() ||
+    self.file_sidebar_visible.get() ||
+    self.document_info_visible.get() ||
+    self.outline_visible.get() ||
+    self.source_preview_visible.get() {
+    self.reset_format_palette()
+    self.file_sidebar_visible.set(false)
+    self.document_info_visible.set(false)
     self.outline_visible.set(false)
     self.source_preview_visible.set(false)
   } else {
@@ -235,9 +395,11 @@ fn MarkdownEditorApp::load_document(
 ) -> Unit {
   self.document.set(source)
   self.document_path.set(path)
+  self.record_recent_document_path(path)
   self.saved_document.set(source)
   self.selection.set({ caret: 0, selection: None })
   self.reset_find_session()
+  self.reset_format_palette()
   self.transfer_status.set(TransferReady)
   self.clear_history()
   self.sync_target_inputs()
@@ -254,7 +416,26 @@ pub fn MarkdownEditorApp::save_document_as(
   path : String,
 ) -> Unit {
   self.document_path.set(path)
+  self.record_recent_document_path(path)
   self.mark_document_saved()
+}
+
+///|
+fn MarkdownEditorApp::record_recent_document_path(
+  self : MarkdownEditorApp,
+  path : String,
+) -> Unit {
+  if path.trim().to_owned() == "" {
+    return
+  }
+  let existing = self.recent_document_paths.get()
+  let next : Array[String] = [path]
+  for candidate in existing {
+    if candidate != path && next.length() < 8 {
+      next.push(candidate)
+    }
+  }
+  self.recent_document_paths.set(next)
 }
 
 ///|
@@ -418,6 +599,34 @@ fn MarkdownEditorApp::perform_text_file_read(
       markdown_editor_host_completion_for_response(request, response),
       services,
     ),
+  )
+}
+
+///|
+fn MarkdownEditorApp::request_text_file_read(
+  self : MarkdownEditorApp,
+  path : String,
+  services : @host.HostAppServices,
+) -> @core.Effect[MarkdownEditorMsg] {
+  if path.trim().to_owned() == "" {
+    self.transfer_status.set(TransferUnavailable("recent file path is empty"))
+    return @core.Effect::none()
+  }
+  self.transfer_status.set(TransferRequesting(FileOpen))
+  @core.Effect::host_service(
+    key="markdown-editor:file-open-recent",
+    label="Open recent Markdown file",
+    run=dispatch => {
+      let request = @host.HostServiceRequest::TextFile(
+        @host.HostTextFileRequest::ReadText(path),
+      )
+      let response = services.read_text_file(path)
+      dispatch(
+        HostTransferCompleted(
+          markdown_editor_host_completion_for_response(request, response),
+        ),
+      )
+    },
   )
 }
 
@@ -601,6 +810,55 @@ fn MarkdownEditorApp::perform_clipboard_export(
 }
 
 ///|
+fn MarkdownEditorApp::request_html_export(
+  self : MarkdownEditorApp,
+  services : @host.HostAppServices,
+) -> @core.Effect[MarkdownEditorMsg] {
+  let html = self.html_export_document()
+  self.transfer_status.set(TransferRequesting(ClipboardHtmlExport))
+  @core.Effect::host_service(
+    key="markdown-editor:html-export",
+    label="Export HTML to clipboard",
+    run=dispatch => {
+      let request = @host.HostServiceRequest::Clipboard(
+        @host.HostClipboardRequest::WriteText(html),
+      )
+      let response = services.write_clipboard_text(html)
+      dispatch(
+        HostTransferCompleted(
+          markdown_editor_host_completion_for_response(request, response),
+        ),
+      )
+    },
+  )
+}
+
+///|
+fn MarkdownEditorApp::perform_html_export(
+  self : MarkdownEditorApp,
+  services : @host.HostAppServices,
+) -> Unit {
+  let html = self.html_export_document()
+  self.transfer_status.set(TransferRequesting(ClipboardHtmlExport))
+  let request = @host.HostServiceRequest::Clipboard(
+    @host.HostClipboardRequest::WriteText(html),
+  )
+  let response = services.write_clipboard_text(html)
+  match response {
+    @host.HostServiceResponse::Pending(id) =>
+      ignore(
+        services.on_completed(id, completion => {
+          self.apply_transfer_completion(completion)
+        }),
+      )
+    _ => ()
+  }
+  self.apply_transfer_completion(
+    markdown_editor_host_completion_for_response(request, response),
+  )
+}
+
+///|
 fn MarkdownEditorApp::request_open_target(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
@@ -731,7 +989,11 @@ fn MarkdownEditorApp::apply_transfer_completion(
       self.transfer_status.set(TransferImported)
     }
     @host.HostServiceResponse::ClipboardWritten =>
-      self.transfer_status.set(TransferCopied)
+      match markdown_editor_active_transfer_kind(self.transfer_status.get()) {
+        Some(ClipboardHtmlExport) =>
+          self.transfer_status.set(TransferHtmlCopied)
+        _ => self.transfer_status.set(TransferCopied)
+      }
     @host.HostServiceResponse::FileDialogSelection(paths) =>
       self.apply_file_dialog_selection(completion.request, paths)
     @host.HostServiceResponse::TextFileContent(path, text) => {
@@ -901,6 +1163,7 @@ fn MarkdownEditorApp::apply_command_to_selection(
   self.document.set(result.source)
   self.selection.set({ caret: result.caret, selection: result.selection })
   self.sync_target_inputs()
+  self.maybe_center_typewriter_selection()
 }
 
 ///|
@@ -919,6 +1182,7 @@ fn MarkdownEditorApp::apply_text_transform(
   self.document.set(transform.text)
   self.selection.set({ caret: transform.caret, selection: transform.selection })
   self.sync_target_inputs()
+  self.maybe_center_typewriter_selection()
 }
 
 ///|
@@ -980,6 +1244,7 @@ fn MarkdownEditorApp::set_selection(
 ) -> Unit {
   self.selection.set({ caret, selection })
   self.sync_target_inputs()
+  self.maybe_center_typewriter_selection()
 }
 
 ///|
@@ -995,6 +1260,20 @@ fn MarkdownEditorApp::jump_to_outline(
   self.selection.set({ caret, selection: None })
   self.sync_target_inputs()
   self.scroll_to_source(caret)
+}
+
+///|
+fn MarkdownEditorApp::maybe_center_typewriter_selection(
+  self : MarkdownEditorApp,
+) -> Unit {
+  if self.typewriter_mode_enabled.get() {
+    let selection = self.selection.get()
+    let anchor = match selection.selection {
+      Some(range) => range.normalized().start
+      None => selection.caret
+    }
+    self.center_typewriter_source(anchor)
+  }
 }
 
 ///|
@@ -1066,11 +1345,35 @@ fn MarkdownEditorApp::scroll_to_source(
   self : MarkdownEditorApp,
   source_start : Int,
 ) -> Unit {
-  let snapshot = MarkdownEditorSnapshot::parse(self.document.get())
-  let editor_font = @core.FontSpec::new(size=17.0)
+  self.scroll_to_source_with_anchor(source_start, center=false)
+}
+
+///|
+fn MarkdownEditorApp::center_typewriter_source(
+  self : MarkdownEditorApp,
+  source_start : Int,
+) -> Unit {
+  self.scroll_to_source_with_anchor(source_start, center=true)
+}
+
+///|
+fn MarkdownEditorApp::scroll_to_source_with_anchor(
+  self : MarkdownEditorApp,
+  source_start : Int,
+  center~ : Bool,
+) -> Unit {
+  let appearance = self.appearance_spec()
+  let editor_font = markdown_editor_appearance_font(appearance)
+  let snapshot = MarkdownEditorSnapshot::parse_with_font(
+    self.document.get(),
+    editor_font,
+  )
   let editor_width = markdown_editor_primary_editor_width(
     self.source_preview_visible.get(),
     self.outline_visible.get(),
+    self.file_sidebar_visible.get(),
+    self.document_info_visible.get(),
+    appearance,
   )
   let viewport_height = markdown_editor_viewport_height()
   let content_height = markdown_editor_max_double(
@@ -1098,9 +1401,26 @@ fn MarkdownEditorApp::scroll_to_source(
     Some(rect) =>
       self.editor_scroll.scroll_to(
         x=0.0,
-        y=markdown_editor_clamp_double(rect.origin.y - 48.0, 0.0, max_scroll),
+        y=markdown_editor_clamp_double(
+          markdown_editor_scroll_anchor_y(rect, viewport_height, center~),
+          0.0,
+          max_scroll,
+        ),
       )
     None => self.editor_scroll.scroll_to(x=0.0, y=0.0)
+  }
+}
+
+///|
+fn markdown_editor_scroll_anchor_y(
+  rect : @core.Rect,
+  viewport_height : Double,
+  center~ : Bool,
+) -> Double {
+  if center {
+    rect.origin.y + rect.size.height / 2.0 - viewport_height / 2.0
+  } else {
+    rect.origin.y - 48.0
   }
 }
 
@@ -1259,6 +1579,7 @@ fn MarkdownEditorApp::set_document_from_input(
 ) -> Unit {
   self.document.set(value)
   self.sync_target_inputs()
+  self.maybe_center_typewriter_selection()
 }
 
 ///|
@@ -1279,6 +1600,125 @@ fn MarkdownEditorApp::apply_footnote_text(self : MarkdownEditorApp) -> Unit {
 ///|
 fn MarkdownEditorApp::apply_html_block_text(self : MarkdownEditorApp) -> Unit {
   self.apply_command_to_selection(SetHtmlBlockText(self.html_block_text.get()))
+}
+
+///|
+fn MarkdownEditorApp::apply_format_palette_action(
+  self : MarkdownEditorApp,
+  action : String,
+) -> Unit {
+  if self.apply_named_editor_action(action) {
+    self.reset_format_palette()
+  }
+}
+
+///|
+fn MarkdownEditorApp::apply_first_format_palette_action(
+  self : MarkdownEditorApp,
+) -> Unit {
+  let items = markdown_editor_format_palette_filtered_items(
+    self.format_palette_query.get(),
+  )
+  if items.length() > 0 {
+    self.apply_format_palette_action(items[0].action)
+  }
+}
+
+///|
+fn MarkdownEditorApp::apply_named_editor_action(
+  self : MarkdownEditorApp,
+  action : String,
+) -> Bool {
+  if action == "source-preview" {
+    self.toggle_source_preview()
+    true
+  } else if action == "source-mode" {
+    self.toggle_source_mode()
+    true
+  } else if action == "outline" {
+    self.toggle_outline()
+    true
+  } else if action == "files" {
+    self.toggle_file_sidebar()
+    true
+  } else if action == "document-info" {
+    self.toggle_document_info()
+    true
+  } else if action == "focus-mode" {
+    self.toggle_focus_mode()
+    true
+  } else if action == "typewriter-mode" {
+    self.toggle_typewriter_mode()
+    true
+  } else if action == "zen-mode" {
+    self.toggle_zen_mode()
+    true
+  } else if action == "format-palette" {
+    self.toggle_format_palette()
+    true
+  } else if action == "look" {
+    self.cycle_writing_appearance()
+    true
+  } else if action == "look-paper" {
+    self.set_writing_appearance(PaperAppearance)
+    true
+  } else if action == "look-warm" {
+    self.set_writing_appearance(WarmAppearance)
+    true
+  } else if action == "look-wide" {
+    self.set_writing_appearance(WideAppearance)
+    true
+  } else if action == "find" {
+    self.toggle_find()
+    true
+  } else if action == "new-document" {
+    self.new_document()
+    true
+  } else if action == "open-document" {
+    ignore(self.update(OpenDocument))
+    true
+  } else if action == "save" {
+    ignore(self.update(SaveDocument))
+    true
+  } else if action == "save-as" {
+    ignore(self.update(SaveDocumentAs))
+    true
+  } else if action == "clipboard-import" {
+    ignore(self.update(ImportFromClipboard))
+    true
+  } else if action == "clipboard-export" {
+    ignore(self.update(ExportToClipboard))
+    true
+  } else if action == "html-export" {
+    ignore(self.update(ExportHtmlToClipboard))
+    true
+  } else if action == "toggle-task" {
+    ignore(self.update(ToggleCurrentTask))
+    true
+  } else if action == "indent-lines" {
+    ignore(self.update(IndentLines))
+    true
+  } else if action == "outdent-lines" {
+    ignore(self.update(OutdentLines))
+    true
+  } else if action == "open-target" {
+    ignore(self.update(OpenTarget))
+    true
+  } else if action == "next-heading" {
+    ignore(self.update(JumpToNextHeading))
+    true
+  } else if action == "previous-heading" {
+    ignore(self.update(JumpToPreviousHeading))
+    true
+  } else {
+    match markdown_editor_command_from_action(action) {
+      Some(command) => {
+        self.apply_command_to_selection(command)
+        true
+      }
+      None => false
+    }
+  }
 }
 
 ///|
@@ -1329,6 +1769,7 @@ fn MarkdownEditorApp::restore_history(
   self.document.set(entry.source)
   self.selection.set(entry.selection)
   self.sync_target_inputs()
+  self.maybe_center_typewriter_selection()
   true
 }
 
@@ -1393,6 +1834,7 @@ fn MarkdownEditorApp::toggle_task_at(
       self.document.set(result.source)
       self.selection.set({ caret: result.caret, selection: result.selection })
       self.sync_target_inputs()
+      self.maybe_center_typewriter_selection()
     }
     None => ()
   }
@@ -1411,6 +1853,7 @@ fn MarkdownEditorApp::toggle_current_task(self : MarkdownEditorApp) -> Unit {
       self.document.set(result.source)
       self.selection.set({ caret: result.caret, selection: result.selection })
       self.sync_target_inputs()
+      self.maybe_center_typewriter_selection()
     }
     None => ()
   }
@@ -1451,17 +1894,32 @@ fn MarkdownEditorApp::update(
       self.transfer_status.set(
         TransferUnavailable("clipboard export requires host services"),
       )
+    ExportHtmlToClipboard =>
+      self.transfer_status.set(
+        TransferUnavailable("html export requires host services"),
+      )
     HostTransferCompleted(completion) =>
       self.apply_transfer_completion(completion)
     Undo => ignore(self.undo())
     Redo => ignore(self.redo())
     ToggleOutline => self.toggle_outline()
+    ToggleFileSidebar => self.toggle_file_sidebar()
+    ToggleDocumentInfo => self.toggle_document_info()
     ToggleFind => self.toggle_find()
+    ToggleFocusMode => self.toggle_focus_mode()
+    ToggleTypewriterMode => self.toggle_typewriter_mode()
+    ToggleZenMode => self.toggle_zen_mode()
+    ToggleFormatPalette => self.toggle_format_palette()
+    UpdateFormatPaletteQuery(value) => self.format_palette_query.set(value)
+    ApplyFirstFormatPaletteAction => self.apply_first_format_palette_action()
+    ApplyFormatPaletteAction(action) => self.apply_format_palette_action(action)
+    CycleWritingAppearance => self.cycle_writing_appearance()
     OpenFind => self.open_find()
     OpenFindReplace => self.open_find()
     CloseFind => self.close_find()
     DismissAuxiliaryPanels => self.dismiss_auxiliary_panels()
     ToggleSourcePreview => self.toggle_source_preview()
+    ToggleSourceMode => self.toggle_source_mode()
     UpdateDocument(value) => self.set_document_from_input(value)
     UpdateFindQuery(value) => self.update_find_query(value)
     UpdateReplaceText(value) => self.replace_text.set(value)
@@ -1483,6 +1941,14 @@ fn MarkdownEditorApp::update(
     ReplaceFindAll => self.replace_all_find_matches()
     ApplyCommand(command) => self.apply_command_to_selection(command)
     SetSelection(caret, selection) => self.set_selection(caret, selection)
+    OpenRecentDocument(path) =>
+      self.transfer_status.set(
+        TransferUnavailable(
+          "opening " +
+          markdown_editor_file_name(path) +
+          " requires host text file services",
+        ),
+      )
     JumpToOutline(source_start) => self.jump_to_outline(source_start)
     JumpToNextHeading => self.jump_to_next_heading()
     JumpToPreviousHeading => self.jump_to_previous_heading()
@@ -1507,7 +1973,10 @@ fn MarkdownEditorApp::update_with_services(
     OpenDocument => (self, self.request_file_open(services))
     ImportFromClipboard => (self, self.request_clipboard_import(services))
     ExportToClipboard => (self, self.request_clipboard_export(services))
+    ExportHtmlToClipboard => (self, self.request_html_export(services))
     OpenTarget => (self, self.request_open_target(services))
+    OpenRecentDocument(path) =>
+      (self, self.request_text_file_read(path, services))
     HostTransferCompleted(completion) => {
       self.apply_transfer_completion_with_services(completion, services)
       (self, @core.Effect::none())
@@ -1542,25 +2011,35 @@ fn MarkdownEditorApp::root(
 ) -> @core.View[MarkdownEditorMsg] {
   let theme = @core.Theme::light()
   let document = self.document.get()
-  let snapshot = MarkdownEditorSnapshot::parse(document)
-  let editor_font = @core.FontSpec::new(size=17.0)
-  let show_source = self.source_preview_visible.get()
-  let show_outline = self.outline_visible.get()
+  let appearance = self.appearance_spec()
+  let editor_font = markdown_editor_appearance_font(appearance)
+  let snapshot = MarkdownEditorSnapshot::parse_with_font(document, editor_font)
+  let zen = self.zen_mode_enabled.get()
+  let show_source = if zen { false } else { self.source_preview_visible.get() }
+  let show_outline = if zen { false } else { self.outline_visible.get() }
+  let show_files = if zen { false } else { self.file_sidebar_visible.get() }
+  let show_info = if zen { false } else { self.document_info_visible.get() }
   let workspace_width = markdown_editor_workspace_width(
-    show_source, show_outline,
+    show_source, show_outline, show_files, show_info, appearance,
   )
   let target_bar = self.target_bar(theme)
   let selection = self.selection.get()
   let target_kind = self.target_kind.get()
   let block_label = self.block_label.get()
   let scroll_offset = self.editor_scroll.offset()
-  let children : Array[@core.View[MarkdownEditorMsg]] = [
-    self.chrome(
-      theme, snapshot, block_label, document, selection, workspace_width,
-    ),
-  ]
-  if self.find_visible.get() {
+  let children : Array[@core.View[MarkdownEditorMsg]] = []
+  if !zen {
+    children.push(
+      self.chrome(
+        theme, snapshot, block_label, document, selection, workspace_width,
+      ),
+    )
+  }
+  if !zen && self.find_visible.get() {
     children.push(self.find_bar(theme, document, selection, workspace_width))
+  }
+  if !zen && self.format_palette_visible.get() {
+    children.push(self.format_palette(theme, workspace_width))
   }
   children.push(
     row(
@@ -1570,9 +2049,12 @@ fn MarkdownEditorApp::root(
           document,
           snapshot,
           editor_font,
+          appearance,
           theme,
           show_source,
           show_outline,
+          show_files,
+          show_info,
           target_bar,
           selection,
           target_kind,
@@ -1591,6 +2073,7 @@ fn MarkdownEditorApp::root(
     align=@views.CrossAlign::Start,
   )
   markdown_editor_centered_workspace(
+    appearance,
     padding_edges(
       workspace,
       top=theme.spacing_scale.md,
@@ -1615,11 +2098,21 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.target_kind))
   ignore(ctx.watch(self.block_label))
   ignore(ctx.watch(self.source_preview_visible))
+  ignore(ctx.watch(self.source_mode_enabled))
   ignore(ctx.watch(self.outline_visible))
+  ignore(ctx.watch(self.file_sidebar_visible))
+  ignore(ctx.watch(self.document_info_visible))
+  ignore(ctx.watch(self.focus_mode_enabled))
+  ignore(ctx.watch(self.typewriter_mode_enabled))
+  ignore(ctx.watch(self.zen_mode_enabled))
+  ignore(ctx.watch(self.format_palette_visible))
+  ignore(ctx.watch(self.format_palette_query))
+  ignore(ctx.watch(self.writing_appearance))
   ignore(ctx.watch(self.find_visible))
   ignore(ctx.watch(self.find_query))
   ignore(ctx.watch(self.replace_text))
   ignore(ctx.watch(self.document_path))
+  ignore(ctx.watch(self.recent_document_paths))
   ignore(ctx.watch(self.saved_document))
   ignore(ctx.watch(self.transfer_status))
   ignore(ctx.watch_scroll(self.editor_scroll))
@@ -1630,11 +2123,22 @@ fn MarkdownEditorApp::reactive_root(
 fn markdown_editor_workspace_width(
   show_source : Bool,
   show_outline : Bool,
+  show_files : Bool,
+  show_info : Bool,
+  appearance : MarkdownEditorAppearanceSpec,
 ) -> Double {
   let mut width = markdown_editor_primary_editor_width(
-    show_source, show_outline,
+    show_source, show_outline, show_files, show_info, appearance,
   )
   let mut gaps = 0
+  if show_files {
+    width = width + markdown_editor_file_sidebar_width()
+    gaps = gaps + 1
+  }
+  if show_info {
+    width = width + markdown_editor_info_inspector_width()
+    gaps = gaps + 1
+  }
   if show_outline {
     width = width + markdown_editor_outline_inspector_width()
     gaps = gaps + 1
@@ -1648,6 +2152,7 @@ fn markdown_editor_workspace_width(
 
 ///|
 fn markdown_editor_centered_workspace(
+  appearance : MarkdownEditorAppearanceSpec,
   child : @core.View[MarkdownEditorMsg],
 ) -> @core.View[MarkdownEditorMsg] {
   @views.custom_children_layout(
@@ -1675,7 +2180,7 @@ fn markdown_editor_centered_workspace(
       ]
     },
     paint=bounds => {
-      [@core.DrawCommand::FillRect(bounds, markdown_editor_window_background())]
+      [@core.DrawCommand::FillRect(bounds, appearance.window_background)]
     },
     semantics_label="Markdown editor workspace",
   )
@@ -1699,10 +2204,19 @@ fn MarkdownEditorApp::chrome(
       editor_chrome_button("Save As", SaveDocumentAs, theme),
       editor_chrome_button("Import", ImportFromClipboard, theme),
       editor_chrome_button("Export", ExportToClipboard, theme),
+      editor_chrome_button("HTML", ExportHtmlToClipboard, theme),
       editor_chrome_button("Undo", Undo, theme),
       editor_chrome_button("Redo", Redo, theme),
       editor_chrome_button("Find", ToggleFind, theme),
+      editor_chrome_button("Cmd", ToggleFormatPalette, theme),
+      editor_chrome_button("Look", CycleWritingAppearance, theme),
+      editor_chrome_button("Files", ToggleFileSidebar, theme),
+      editor_chrome_button("Info", ToggleDocumentInfo, theme),
       editor_chrome_button("Nav", ToggleOutline, theme),
+      editor_chrome_button("Focus", ToggleFocusMode, theme),
+      editor_chrome_button("Type", ToggleTypewriterMode, theme),
+      editor_chrome_button("Zen", ToggleZenMode, theme),
+      editor_chrome_button("Raw", ToggleSourceMode, theme),
       editor_chrome_button("Src", ToggleSourcePreview, theme),
     ],
     spacing=theme.spacing_scale.sm,
@@ -1796,6 +2310,285 @@ fn MarkdownEditorApp::find_bar(
 }
 
 ///|
+fn MarkdownEditorApp::format_palette(
+  self : MarkdownEditorApp,
+  theme : @core.Theme,
+  width : Double,
+) -> @core.View[MarkdownEditorMsg] {
+  let panel_width = markdown_editor_min_double(540.0, width)
+  let content_width = markdown_editor_max_double(
+    120.0,
+    panel_width - theme.spacing_scale.md * 2.0,
+  )
+  let query = self.format_palette_query.get()
+  let rows : Array[@core.View[MarkdownEditorMsg]] = []
+  for item in markdown_editor_format_palette_filtered_items(query) {
+    rows.push(
+      markdown_editor_format_palette_row(item, theme, width=content_width),
+    )
+  }
+  if rows.length() == 0 {
+    rows.push(
+      text("No commands", width=content_width, height=30.0)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted),
+    )
+  }
+  surface(
+    padding_edges(
+      column(
+        [
+          row(
+            [
+              text("Quick Format", width=112.0, height=34.0)
+              .font(theme.typography.caption)
+              .foreground(theme.palette.muted),
+              text_field(
+                query,
+                on_input=value => UpdateFormatPaletteQuery(value),
+                on_submit=Some(ApplyFirstFormatPaletteAction),
+                placeholder="Filter",
+                variant=@views.TextFieldVariant::Outline,
+                theme~,
+                width=markdown_editor_max_double(120.0, content_width - 190.0),
+                height=34.0,
+              ).key("markdown-format-palette-query"),
+              editor_button(
+                "Done",
+                ToggleFormatPalette,
+                @views.ButtonVariant::Ghost,
+                theme,
+              ),
+            ],
+            spacing=theme.spacing_scale.xs,
+            align=@views.CrossAlign::Center,
+          ),
+          scroll_view(
+            column(
+              rows,
+              spacing=theme.spacing_scale.xs,
+              align=@views.CrossAlign::Start,
+            ),
+            width=content_width,
+            height=176.0,
+          ),
+        ],
+        spacing=theme.spacing_scale.sm,
+        align=@views.CrossAlign::Start,
+      ),
+      top=theme.spacing_scale.sm,
+      right=theme.spacing_scale.md,
+      bottom=theme.spacing_scale.sm,
+      left=theme.spacing_scale.md,
+    ),
+    width=panel_width,
+    height=240.0,
+    variant=@views.SurfaceVariant::Overlay,
+    theme~,
+    padding=0.0,
+  )
+}
+
+///|
+fn markdown_editor_format_palette_row(
+  item : MarkdownEditorFormatPaletteItem,
+  theme : @core.Theme,
+  width~ : Double,
+) -> @core.View[MarkdownEditorMsg] {
+  let label_width = markdown_editor_max_double(120.0, width - 250.0)
+  row(
+    [
+      button(
+        item.label,
+        on_click=ApplyFormatPaletteAction(item.action),
+        variant=@views.ButtonVariant::Ghost,
+        theme~,
+        width=label_width,
+        height=32.0,
+      ),
+      text(item.group, width=82.0, height=32.0)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted),
+      text(item.shortcut, width=152.0, height=32.0)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted),
+    ],
+    spacing=theme.spacing_scale.xs,
+    align=@views.CrossAlign::Center,
+  )
+}
+
+///|
+fn markdown_editor_format_palette_filtered_items(
+  query : String,
+) -> Array[MarkdownEditorFormatPaletteItem] {
+  let items = markdown_editor_format_palette_items()
+  let needle = query.trim().to_owned().to_lower()
+  if needle == "" {
+    items
+  } else {
+    items.filter(item => markdown_editor_format_palette_matches(item, needle))
+  }
+}
+
+///|
+fn markdown_editor_format_palette_matches(
+  item : MarkdownEditorFormatPaletteItem,
+  needle : String,
+) -> Bool {
+  item.label.to_lower().contains(needle) ||
+  item.group.to_lower().contains(needle) ||
+  item.shortcut.to_lower().contains(needle)
+}
+
+///|
+fn markdown_editor_format_palette_items() -> Array[
+  MarkdownEditorFormatPaletteItem,
+] {
+  [
+    {
+      action: "paragraph",
+      label: "Paragraph",
+      group: "Block",
+      shortcut: "Meta+0 / Ctrl+0",
+    },
+    {
+      action: "h1",
+      label: "Heading 1",
+      group: "Block",
+      shortcut: "Meta+1 / Ctrl+1",
+    },
+    {
+      action: "h2",
+      label: "Heading 2",
+      group: "Block",
+      shortcut: "Meta+2 / Ctrl+2",
+    },
+    {
+      action: "h3",
+      label: "Heading 3",
+      group: "Block",
+      shortcut: "Meta+3 / Ctrl+3",
+    },
+    {
+      action: "bold",
+      label: "Bold",
+      group: "Inline",
+      shortcut: "Meta+B / Ctrl+B",
+    },
+    {
+      action: "italic",
+      label: "Italic",
+      group: "Inline",
+      shortcut: "Meta+I / Ctrl+I",
+    },
+    {
+      action: "code",
+      label: "Inline Code",
+      group: "Inline",
+      shortcut: "Meta+E / Ctrl+E",
+    },
+    {
+      action: "strike",
+      label: "Strikethrough",
+      group: "Inline",
+      shortcut: "Meta+Shift+X",
+    },
+    {
+      action: "link",
+      label: "Link",
+      group: "Inline",
+      shortcut: "Meta+L / Ctrl+K",
+    },
+    {
+      action: "image",
+      label: "Image",
+      group: "Inline",
+      shortcut: "Meta+Shift+I",
+    },
+    { action: "ul", label: "Bullet List", group: "Block", shortcut: "Meta+U" },
+    { action: "task", label: "Task List", group: "Block", shortcut: "Meta+T" },
+    { action: "ol", label: "Ordered List", group: "Block", shortcut: "Meta+O" },
+    { action: "quote", label: "Quote", group: "Block", shortcut: "Meta+Q" },
+    {
+      action: "codeblock",
+      label: "Code Block",
+      group: "Block",
+      shortcut: "Meta+K",
+    },
+    { action: "table", label: "Table", group: "Block", shortcut: "" },
+    {
+      action: "toc",
+      label: "Table of Contents",
+      group: "Document",
+      shortcut: "Meta+Alt+T",
+    },
+    {
+      action: "front-matter",
+      label: "YAML Front Matter",
+      group: "Document",
+      shortcut: "Meta+Alt+Y",
+    },
+    { action: "rule", label: "Horizontal Rule", group: "Block", shortcut: "" },
+    {
+      action: "duplicate-block",
+      label: "Duplicate Block",
+      group: "Block",
+      shortcut: "Meta+Shift+D",
+    },
+    {
+      action: "focus-mode",
+      label: "Focus Mode",
+      group: "View",
+      shortcut: "Meta+Shift+F",
+    },
+    {
+      action: "typewriter-mode",
+      label: "Typewriter Mode",
+      group: "View",
+      shortcut: "Meta+Shift+T",
+    },
+    {
+      action: "zen-mode",
+      label: "Zen Mode",
+      group: "View",
+      shortcut: "Meta+Alt+Z",
+    },
+    {
+      action: "source-mode",
+      label: "Source Mode",
+      group: "View",
+      shortcut: "Meta+Shift+/",
+    },
+    {
+      action: "html-export",
+      label: "Export HTML",
+      group: "Document",
+      shortcut: "Meta+Alt+E",
+    },
+    {
+      action: "document-info",
+      label: "Document Info",
+      group: "View",
+      shortcut: "Meta+Alt+D",
+    },
+    { action: "look-paper", label: "Paper Look", group: "View", shortcut: "" },
+    {
+      action: "look-warm",
+      label: "Warm Look",
+      group: "View",
+      shortcut: "Meta+Alt+L",
+    },
+    {
+      action: "look-wide",
+      label: "Wide Look",
+      group: "View",
+      shortcut: "Meta+Alt+L",
+    },
+  ]
+}
+
+///|
 fn MarkdownEditorApp::document_status_label(
   self : MarkdownEditorApp,
   snapshot : MarkdownEditorSnapshot,
@@ -1809,12 +2602,143 @@ fn MarkdownEditorApp::document_status_label(
   let save_state = if self.is_dirty() { "Unsaved" } else { "Saved" }
   let transfer = self.transfer_status_label()
   let transfer_suffix = if transfer == "" { "" } else { " / " + transfer }
+  let mode_suffix = self.writing_mode_status_suffix()
+  let look_suffix = self.appearance_status_suffix()
+  let source_suffix = self.source_mode_status_suffix()
   title +
   " / " +
   save_state +
   " / " +
   markdown_editor_status_label(block_label, snapshot, selection) +
+  mode_suffix +
+  source_suffix +
+  look_suffix +
   transfer_suffix
+}
+
+///|
+fn MarkdownEditorApp::source_mode_status_suffix(
+  self : MarkdownEditorApp,
+) -> String {
+  if self.source_mode_enabled.get() {
+    " / Source Mode"
+  } else {
+    ""
+  }
+}
+
+///|
+fn MarkdownEditorApp::appearance_status_suffix(
+  self : MarkdownEditorApp,
+) -> String {
+  let label = self.appearance_label()
+  if label == "Paper" {
+    ""
+  } else {
+    " / Look: " + label
+  }
+}
+
+///|
+fn MarkdownEditorApp::writing_mode_status_suffix(
+  self : MarkdownEditorApp,
+) -> String {
+  let modes : Array[String] = []
+  if self.focus_mode_enabled.get() {
+    modes.push("Focus")
+  }
+  if self.typewriter_mode_enabled.get() {
+    modes.push("Typewriter")
+  }
+  if self.zen_mode_enabled.get() {
+    modes.push("Zen")
+  }
+  if modes.length() == 0 {
+    ""
+  } else {
+    " / " + markdown_join_strings_with_separator(modes, " + ")
+  }
+}
+
+///|
+fn markdown_join_strings_with_separator(
+  parts : Array[String],
+  separator : String,
+) -> String {
+  let chars : Array[Char] = []
+  for index, part in parts {
+    if index > 0 {
+      chars.append(separator.to_array())
+    }
+    chars.append(part.to_array())
+  }
+  String::from_array(chars)
+}
+
+///|
+fn markdown_editor_document_info(
+  snapshot : MarkdownEditorSnapshot,
+) -> MarkdownEditorDocumentInfo {
+  let mut heading_count = 0
+  let mut paragraph_count = 0
+  let mut list_item_count = 0
+  let mut task_count = 0
+  let mut checked_task_count = 0
+  let mut quote_count = 0
+  let mut code_block_count = 0
+  let mut table_count = 0
+  let mut link_count = 0
+  let mut image_count = 0
+  let mut footnote_reference_count = 0
+  let mut footnote_definition_count = 0
+  for editor_block in snapshot.blocks {
+    match editor_block.block.kind {
+      Heading(_) => heading_count = heading_count + 1
+      Paragraph =>
+        if editor_block.block.text.trim().to_owned() != "" {
+          paragraph_count = paragraph_count + 1
+        }
+      UnorderedListItem | OrderedListItem(_) =>
+        list_item_count = list_item_count + 1
+      TaskListItem(checked) => {
+        task_count = task_count + 1
+        list_item_count = list_item_count + 1
+        if checked {
+          checked_task_count = checked_task_count + 1
+        }
+      }
+      Blockquote => quote_count = quote_count + 1
+      CodeBlock => code_block_count = code_block_count + 1
+      Table => table_count = table_count + 1
+      FootnoteDefinition(_) =>
+        footnote_definition_count = footnote_definition_count + 1
+      HorizontalRule | HtmlBlock | FrontMatter => ()
+    }
+    for inline in editor_block.block.inlines {
+      match inline.kind {
+        Link | Autolink => link_count = link_count + 1
+        Image => image_count = image_count + 1
+        FootnoteReference =>
+          footnote_reference_count = footnote_reference_count + 1
+        Plain | Bold | Italic | Code | Strikethrough | HtmlInline => ()
+      }
+    }
+  }
+  {
+    character_count: markdown_editor_text_length(snapshot.source),
+    heading_count,
+    paragraph_count,
+    list_item_count,
+    task_count,
+    checked_task_count,
+    quote_count,
+    code_block_count,
+    table_count,
+    link_count,
+    image_count,
+    footnote_reference_count,
+    footnote_definition_count,
+  }
 }
 
 ///|
@@ -1825,12 +2749,14 @@ fn markdown_editor_transfer_status_label(
     TransferReady => ""
     TransferRequesting(ClipboardImport) => "Importing clipboard"
     TransferRequesting(ClipboardExport) => "Exporting Markdown"
+    TransferRequesting(ClipboardHtmlExport) => "Exporting HTML"
     TransferRequesting(FileOpen) => "Opening file"
     TransferRequesting(FileSaveAs) => "Choosing save location"
     TransferRequesting(FileSave) => "Saving file"
     TransferRequesting(OpenTarget) => "Opening target"
     TransferPending(_, ClipboardImport) => "Waiting for clipboard"
     TransferPending(_, ClipboardExport) => "Waiting for export"
+    TransferPending(_, ClipboardHtmlExport) => "Waiting for HTML export"
     TransferPending(_, FileOpen) => "Waiting for file"
     TransferPending(_, FileSaveAs) => "Waiting for save location"
     TransferPending(_, FileSave) => "Waiting for save"
@@ -1838,11 +2764,13 @@ fn markdown_editor_transfer_status_label(
     TransferUnavailable(reason) => "Transfer unavailable: " + reason
     TransferCancelled(ClipboardImport) => "Import cancelled"
     TransferCancelled(ClipboardExport) => "Export cancelled"
+    TransferCancelled(ClipboardHtmlExport) => "HTML export cancelled"
     TransferCancelled(FileOpen) => "Open cancelled"
     TransferCancelled(FileSaveAs) => "Save cancelled"
     TransferCancelled(FileSave) => "Save cancelled"
     TransferCancelled(OpenTarget) => "Open target cancelled"
     TransferCopied => "Markdown copied"
+    TransferHtmlCopied => "HTML copied"
     TransferImported => "Clipboard imported"
     TransferOpened(path) => "Opened " + markdown_editor_file_name(path)
     TransferSaved(path) => "Saved " + markdown_editor_file_name(path)
@@ -1884,6 +2812,7 @@ fn markdown_editor_transfer_kind_key(
   match kind {
     ClipboardImport => "clipboard-import"
     ClipboardExport => "clipboard-export"
+    ClipboardHtmlExport => "html-export"
     FileOpen => "file-open"
     FileSaveAs => "file-save-as"
     FileSave => "file-save"
@@ -2176,6 +3105,87 @@ fn MarkdownEditorApp::target_bar(
 }
 
 ///|
+fn markdown_editor_command_from_action(
+  action : String,
+) -> MarkdownEditorCommand? {
+  if action == "bold" {
+    Some(Bold)
+  } else if action == "italic" {
+    Some(Italic)
+  } else if action == "code" {
+    Some(Code)
+  } else if action == "strike" {
+    Some(Strikethrough)
+  } else if action == "link" {
+    Some(Link)
+  } else if action == "link-target" {
+    Some(SetLinkTarget("https://moui.dev"))
+  } else if action == "image" {
+    Some(Image)
+  } else if action == "image-target" {
+    Some(SetImageTarget("assets/image.png"))
+  } else if action == "code-language" {
+    Some(SetCodeLanguage("moonbit"))
+  } else if action == "paragraph" {
+    Some(Paragraph)
+  } else if action == "h1" {
+    Some(Heading(1))
+  } else if action == "h2" {
+    Some(Heading(2))
+  } else if action == "h3" {
+    Some(Heading(3))
+  } else if action == "h4" {
+    Some(Heading(4))
+  } else if action == "h5" {
+    Some(Heading(5))
+  } else if action == "h6" {
+    Some(Heading(6))
+  } else if action == "ul" {
+    Some(BulletList)
+  } else if action == "task" {
+    Some(TaskList)
+  } else if action == "ol" {
+    Some(OrderedList)
+  } else if action == "quote" {
+    Some(Quote)
+  } else if action == "rule" {
+    Some(HorizontalRule)
+  } else if action == "table" {
+    Some(Table)
+  } else if action == "toc" {
+    Some(InsertTableOfContents)
+  } else if action == "front-matter" {
+    Some(InsertFrontMatter)
+  } else if action == "table-row" {
+    Some(InsertTableRow)
+  } else if action == "table-column" {
+    Some(InsertTableColumn)
+  } else if action == "table-row-delete" {
+    Some(DeleteTableRow)
+  } else if action == "table-column-delete" {
+    Some(DeleteTableColumn)
+  } else if action == "table-align-left" {
+    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextStart)))
+  } else if action == "table-align-center" {
+    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextCenter)))
+  } else if action == "table-align-right" {
+    Some(SetTableColumnAlignment(Some(@core.TextAlign::TextEnd)))
+  } else if action == "table-align-auto" {
+    Some(SetTableColumnAlignment(None))
+  } else if action == "codeblock" {
+    Some(CodeBlock)
+  } else if action == "duplicate-block" {
+    Some(DuplicateBlock)
+  } else if action == "move-block-up" {
+    Some(MoveBlockUp)
+  } else if action == "move-block-down" {
+    Some(MoveBlockDown)
+  } else {
+    None
+  }
+}
+
+///|
 fn markdown_editor_command_active(
   source : String,
   selection : MarkdownEditorSelection,
@@ -2448,8 +3458,16 @@ fn editor_chrome_button(
   message : MarkdownEditorMsg,
   theme : @core.Theme,
 ) -> @core.View[MarkdownEditorMsg] {
-  let width = if label == "Src" || label == "Nav" {
+  let width = if label == "Src" ||
+    label == "Nav" ||
+    label == "Cmd" ||
+    label == "Raw" ||
+    label == "Zen" {
     42.0
+  } else if label == "Type" {
+    48.0
+  } else if label == "Focus" {
+    58.0
   } else if label == "Save As" {
     76.0
   } else if label == "Open" {
@@ -2474,6 +3492,80 @@ fn editor_chrome_button(
 }
 
 ///|
+fn MarkdownEditorApp::appearance_spec(
+  self : MarkdownEditorApp,
+) -> MarkdownEditorAppearanceSpec {
+  self.writing_appearance.get().spec()
+}
+
+///|
+fn MarkdownEditorApp::appearance_label(self : MarkdownEditorApp) -> String {
+  self.appearance_spec().label
+}
+
+///|
+fn MarkdownEditorAppearance::next(
+  self : MarkdownEditorAppearance,
+) -> MarkdownEditorAppearance {
+  match self {
+    PaperAppearance => WarmAppearance
+    WarmAppearance => WideAppearance
+    WideAppearance => PaperAppearance
+  }
+}
+
+///|
+fn MarkdownEditorAppearance::spec(
+  self : MarkdownEditorAppearance,
+) -> MarkdownEditorAppearanceSpec {
+  match self {
+    PaperAppearance =>
+      {
+        label: "Paper",
+        editor_font_size: 17.0,
+        page_width: markdown_editor_page_width(),
+        side_editor_width: markdown_editor_source_editor_width(),
+        foreground: @core.Color::rgba(r=0.12, g=0.12, b=0.12),
+        placeholder: @core.Color::black().multiply_alpha(0.35),
+        page_background: @core.Color::white(),
+        window_background: @core.Color::rgba(r=0.992, g=0.992, b=0.99),
+        page_border: @core.Color::black().multiply_alpha(0.10),
+      }
+    WarmAppearance =>
+      {
+        label: "Warm",
+        editor_font_size: 18.0,
+        page_width: 724.0,
+        side_editor_width: 604.0,
+        foreground: @core.Color::rgba(r=0.18, g=0.14, b=0.10),
+        placeholder: @core.Color::rgba(r=0.38, g=0.28, b=0.18, a=0.46),
+        page_background: @core.Color::rgba(r=1.0, g=0.984, b=0.936),
+        window_background: @core.Color::rgba(r=0.968, g=0.944, b=0.890),
+        page_border: @core.Color::rgba(r=0.48, g=0.34, b=0.18, a=0.18),
+      }
+    WideAppearance =>
+      {
+        label: "Wide",
+        editor_font_size: 16.5,
+        page_width: 920.0,
+        side_editor_width: 720.0,
+        foreground: @core.Color::rgba(r=0.10, g=0.12, b=0.15),
+        placeholder: @core.Color::rgba(r=0.16, g=0.20, b=0.26, a=0.36),
+        page_background: @core.Color::rgba(r=0.986, g=0.990, b=0.994),
+        window_background: @core.Color::rgba(r=0.936, g=0.946, b=0.958),
+        page_border: @core.Color::rgba(r=0.18, g=0.24, b=0.32, a=0.16),
+      }
+  }
+}
+
+///|
+fn markdown_editor_appearance_font(
+  appearance : MarkdownEditorAppearanceSpec,
+) -> @core.FontSpec {
+  @core.FontSpec::new(size=appearance.editor_font_size)
+}
+
+///|
 fn markdown_editor_page_width() -> Double {
   780.0
 }
@@ -2482,11 +3574,14 @@ fn markdown_editor_page_width() -> Double {
 fn markdown_editor_primary_editor_width(
   show_source : Bool,
   show_outline : Bool,
+  show_files : Bool,
+  show_info : Bool,
+  appearance : MarkdownEditorAppearanceSpec,
 ) -> Double {
-  if show_source || show_outline {
-    markdown_editor_source_editor_width()
+  if show_source || show_outline || show_files || show_info {
+    appearance.side_editor_width
   } else {
-    markdown_editor_page_width()
+    appearance.page_width
   }
 }
 
@@ -2501,7 +3596,27 @@ fn markdown_editor_outline_inspector_width() -> Double {
 }
 
 ///|
+fn markdown_editor_file_sidebar_width() -> Double {
+  240.0
+}
+
+///|
+fn markdown_editor_info_inspector_width() -> Double {
+  240.0
+}
+
+///|
 fn markdown_editor_outline_content_width() -> Double {
+  212.0
+}
+
+///|
+fn markdown_editor_file_sidebar_content_width() -> Double {
+  212.0
+}
+
+///|
+fn markdown_editor_info_content_width() -> Double {
   212.0
 }
 
@@ -2513,11 +3628,6 @@ fn markdown_editor_source_inspector_width() -> Double {
 ///|
 fn markdown_editor_viewport_height() -> Double {
   520.0
-}
-
-///|
-fn markdown_editor_window_background() -> @core.Color {
-  @core.Color::rgba(r=0.992, g=0.992, b=0.99)
 }
 
 ///|
@@ -2710,6 +3820,16 @@ fn MarkdownEditorApp::action_commands(
       markdown_editor_control_alt_shortcut("s"),
       () => self.perform_clipboard_export(services),
     ),
+    markdown_editor_command_binding(
+      "Export HTML",
+      markdown_editor_meta_alt_shortcut("e"),
+      () => self.perform_html_export(services),
+    ),
+    markdown_editor_command_binding(
+      "Export HTML",
+      markdown_editor_control_alt_shortcut("e"),
+      () => self.perform_html_export(services),
+    ),
     markdown_editor_command_binding("Find", markdown_editor_shortcut("f"), () => {
       ignore(self.update(OpenFind))
     }),
@@ -2764,6 +3884,56 @@ fn MarkdownEditorApp::action_commands(
       () => ignore(self.update(ToggleSourcePreview)),
     ),
     markdown_editor_command_binding(
+      "Toggle Source Mode",
+      markdown_editor_shift_shortcut("/"),
+      () => ignore(self.update(ToggleSourceMode)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Source Mode",
+      markdown_editor_control_shift_shortcut("/"),
+      () => ignore(self.update(ToggleSourceMode)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Quick Format",
+      markdown_editor_shift_shortcut("p"),
+      () => ignore(self.update(ToggleFormatPalette)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Quick Format",
+      markdown_editor_control_shift_shortcut("p"),
+      () => ignore(self.update(ToggleFormatPalette)),
+    ),
+    markdown_editor_command_binding(
+      "Cycle Writing Look",
+      markdown_editor_meta_alt_shortcut("l"),
+      () => ignore(self.update(CycleWritingAppearance)),
+    ),
+    markdown_editor_command_binding(
+      "Cycle Writing Look",
+      markdown_editor_control_alt_shortcut("l"),
+      () => ignore(self.update(CycleWritingAppearance)),
+    ),
+    markdown_editor_command_binding(
+      "Insert Table of Contents",
+      markdown_editor_meta_alt_shortcut("t"),
+      () => ignore(self.update(ApplyCommand(InsertTableOfContents))),
+    ),
+    markdown_editor_command_binding(
+      "Insert Table of Contents",
+      markdown_editor_control_alt_shortcut("t"),
+      () => ignore(self.update(ApplyCommand(InsertTableOfContents))),
+    ),
+    markdown_editor_command_binding(
+      "Insert YAML Front Matter",
+      markdown_editor_meta_alt_shortcut("y"),
+      () => ignore(self.update(ApplyCommand(InsertFrontMatter))),
+    ),
+    markdown_editor_command_binding(
+      "Insert YAML Front Matter",
+      markdown_editor_control_alt_shortcut("y"),
+      () => ignore(self.update(ApplyCommand(InsertFrontMatter))),
+    ),
+    markdown_editor_command_binding(
       "Indent Lines",
       markdown_editor_shortcut("]"),
       () => ignore(self.update(IndentLines)),
@@ -2792,6 +3962,56 @@ fn MarkdownEditorApp::action_commands(
       "Toggle Outline",
       markdown_editor_control_alt_shortcut("o"),
       () => ignore(self.update(ToggleOutline)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Files",
+      markdown_editor_meta_alt_shortcut("p"),
+      () => ignore(self.update(ToggleFileSidebar)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Files",
+      markdown_editor_control_alt_shortcut("p"),
+      () => ignore(self.update(ToggleFileSidebar)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Document Info",
+      markdown_editor_meta_alt_shortcut("d"),
+      () => ignore(self.update(ToggleDocumentInfo)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Document Info",
+      markdown_editor_control_alt_shortcut("d"),
+      () => ignore(self.update(ToggleDocumentInfo)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Focus Mode",
+      markdown_editor_shift_shortcut("f"),
+      () => ignore(self.update(ToggleFocusMode)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Focus Mode",
+      markdown_editor_control_shift_shortcut("f"),
+      () => ignore(self.update(ToggleFocusMode)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Typewriter Mode",
+      markdown_editor_shift_shortcut("t"),
+      () => ignore(self.update(ToggleTypewriterMode)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Typewriter Mode",
+      markdown_editor_control_shift_shortcut("t"),
+      () => ignore(self.update(ToggleTypewriterMode)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Zen Mode",
+      markdown_editor_meta_alt_shortcut("z"),
+      () => ignore(self.update(ToggleZenMode)),
+    ),
+    markdown_editor_command_binding(
+      "Toggle Zen Mode",
+      markdown_editor_control_alt_shortcut("z"),
+      () => ignore(self.update(ToggleZenMode)),
     ),
     markdown_editor_command_binding(
       "Next Heading",
@@ -3194,6 +4414,269 @@ fn markdown_editor_reading_label(snapshot : MarkdownEditorSnapshot) -> String {
 }
 
 ///|
+fn files_inspector(
+  app : MarkdownEditorApp,
+  snapshot : MarkdownEditorSnapshot,
+  theme : @core.Theme,
+  height~ : Double,
+) -> @core.View[MarkdownEditorMsg] {
+  let content_width = markdown_editor_file_sidebar_content_width()
+  let recent_paths = app.recent_document_paths.get()
+  let recent_content = if recent_paths.length() == 0 {
+    text("No recent files", width=content_width, height=28.0)
+    .font(theme.typography.caption)
+    .foreground(theme.palette.muted)
+  } else {
+    scroll_view(
+      file_sidebar_recent_rows(
+        recent_paths,
+        current_path=app.document_path.get(),
+        theme,
+      ),
+      width=content_width,
+      height=markdown_editor_max_double(0.0, height - 124.0),
+    )
+  }
+  surface(
+    padding_edges(
+      column(
+        [
+          text("Files", width=content_width, height=24.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.muted),
+          text(
+            markdown_editor_file_sidebar_current_label(
+              path=app.document_path.get(),
+              fallback=snapshot.active_heading,
+              dirty=app.is_dirty(),
+            ),
+            width=content_width,
+            height=30.0,
+          )
+          .font(theme.typography.caption)
+          .foreground(theme.palette.foreground),
+          editor_button(
+            "Open",
+            OpenDocument,
+            @views.ButtonVariant::Ghost,
+            theme,
+          ),
+          text("Recent", width=content_width, height=24.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.muted),
+          recent_content,
+        ],
+        spacing=theme.spacing_scale.xs,
+        align=@views.CrossAlign::Start,
+      ),
+      top=theme.spacing_scale.md,
+      right=theme.spacing_scale.sm,
+      bottom=theme.spacing_scale.md,
+      left=theme.spacing_scale.sm,
+    ),
+    width=markdown_editor_file_sidebar_width(),
+    height~,
+    variant=@views.SurfaceVariant::Base,
+    theme~,
+    background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
+    corner_radius=theme.radius_scale.sm,
+    padding=0.0,
+  )
+}
+
+///|
+fn document_info_inspector(
+  snapshot : MarkdownEditorSnapshot,
+  theme : @core.Theme,
+  height~ : Double,
+) -> @core.View[MarkdownEditorMsg] {
+  let info = markdown_editor_document_info(snapshot)
+  let content_width = markdown_editor_info_content_width()
+  let rows = column(
+    [
+      markdown_editor_info_row("Words", snapshot.word_count.to_string(), theme),
+      markdown_editor_info_row(
+        "Characters",
+        info.character_count.to_string(),
+        theme,
+      ),
+      markdown_editor_info_row("Lines", snapshot.line_count.to_string(), theme),
+      markdown_editor_info_row(
+        "Reading",
+        markdown_editor_reading_time_short_label(snapshot),
+        theme,
+      ),
+      markdown_editor_info_divider(theme),
+      markdown_editor_info_row(
+        "Headings",
+        info.heading_count.to_string(),
+        theme,
+      ),
+      markdown_editor_info_row(
+        "Paragraphs",
+        info.paragraph_count.to_string(),
+        theme,
+      ),
+      markdown_editor_info_row(
+        "List items",
+        info.list_item_count.to_string(),
+        theme,
+      ),
+      markdown_editor_info_row(
+        "Tasks",
+        info.checked_task_count.to_string() + "/" + info.task_count.to_string(),
+        theme,
+      ),
+      markdown_editor_info_row("Quotes", info.quote_count.to_string(), theme),
+      markdown_editor_info_divider(theme),
+      markdown_editor_info_row(
+        "Code blocks",
+        info.code_block_count.to_string(),
+        theme,
+      ),
+      markdown_editor_info_row("Tables", info.table_count.to_string(), theme),
+      markdown_editor_info_row("Links", info.link_count.to_string(), theme),
+      markdown_editor_info_row("Images", info.image_count.to_string(), theme),
+      markdown_editor_info_row(
+        "Footnotes",
+        info.footnote_reference_count.to_string() +
+        "/" +
+        info.footnote_definition_count.to_string(),
+        theme,
+      ),
+    ],
+    spacing=theme.spacing_scale.xs,
+    align=@views.CrossAlign::Start,
+  )
+  surface(
+    padding_edges(
+      column(
+        [
+          text("Info", width=content_width, height=24.0)
+          .font(theme.typography.caption)
+          .foreground(theme.palette.muted),
+          scroll_view(
+            rows,
+            width=content_width,
+            height=markdown_editor_max_double(0.0, height - 52.0),
+          ),
+        ],
+        spacing=theme.spacing_scale.sm,
+        align=@views.CrossAlign::Start,
+      ),
+      top=theme.spacing_scale.md,
+      right=theme.spacing_scale.sm,
+      bottom=theme.spacing_scale.md,
+      left=theme.spacing_scale.sm,
+    ),
+    width=markdown_editor_info_inspector_width(),
+    height~,
+    variant=@views.SurfaceVariant::Base,
+    theme~,
+    background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
+    corner_radius=theme.radius_scale.sm,
+    padding=0.0,
+  )
+}
+
+///|
+fn markdown_editor_info_row(
+  label : String,
+  value : String,
+  theme : @core.Theme,
+) -> @core.View[MarkdownEditorMsg] {
+  row(
+    [
+      text(label, width=126.0, height=24.0)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.muted),
+      text(value, width=80.0, height=24.0)
+      .font(theme.typography.caption)
+      .foreground(theme.palette.foreground),
+    ],
+    spacing=theme.spacing_scale.xs,
+    align=@views.CrossAlign::Center,
+  )
+}
+
+///|
+fn markdown_editor_info_divider(
+  theme : @core.Theme,
+) -> @core.View[MarkdownEditorMsg] {
+  frame(empty(), width=markdown_editor_info_content_width(), height=1.0).background(
+    theme.palette.muted.multiply_alpha(0.24),
+  )
+}
+
+///|
+fn markdown_editor_reading_time_short_label(
+  snapshot : MarkdownEditorSnapshot,
+) -> String {
+  if snapshot.reading_minutes == 0 {
+    "<1 min"
+  } else if snapshot.reading_minutes == 1 {
+    "1 min"
+  } else {
+    snapshot.reading_minutes.to_string() + " min"
+  }
+}
+
+///|
+fn file_sidebar_recent_rows(
+  paths : Array[String],
+  current_path~ : String,
+  theme : @core.Theme,
+) -> @core.View[MarkdownEditorMsg] {
+  let rows : Array[@core.View[MarkdownEditorMsg]] = []
+  for path in paths {
+    rows.push(
+      file_sidebar_recent_row(path, current=path == current_path, theme),
+    )
+  }
+  column(rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start)
+}
+
+///|
+fn file_sidebar_recent_row(
+  path : String,
+  current~ : Bool,
+  theme : @core.Theme,
+) -> @core.View[MarkdownEditorMsg] {
+  button(
+    markdown_editor_file_sidebar_recent_label(path),
+    on_click=OpenRecentDocument(path),
+    variant=if current {
+      @views.ButtonVariant::Tonal
+    } else {
+      @views.ButtonVariant::Ghost
+    },
+    theme~,
+    width=markdown_editor_file_sidebar_content_width(),
+    height=30.0,
+  )
+}
+
+///|
+fn markdown_editor_file_sidebar_current_label(
+  path~ : String,
+  fallback~ : String,
+  dirty~ : Bool,
+) -> String {
+  let suffix = if dirty { " / Unsaved" } else { " / Saved" }
+  markdown_editor_document_title(path~, fallback~) + suffix
+}
+
+///|
+fn markdown_editor_file_sidebar_recent_label(path : String) -> String {
+  let file = markdown_editor_file_name(path)
+  if file == "" {
+    "Untitled"
+  } else {
+    markdown_editor_outline_title(file)
+  }
+}
+
+///|
 fn source_preview(
   text : String,
   theme : @core.Theme,
@@ -3376,9 +4859,12 @@ fn editor_source_layout(
   source : String,
   snapshot : MarkdownEditorSnapshot,
   editor_font : @core.FontSpec,
+  appearance : MarkdownEditorAppearanceSpec,
   theme : @core.Theme,
   show_source : Bool,
   show_outline : Bool,
+  show_files : Bool,
+  show_info : Bool,
   target_bar : @core.View[MarkdownEditorMsg],
   selection : MarkdownEditorSelection,
   target_kind : MarkdownEditorTargetKind,
@@ -3387,7 +4873,7 @@ fn editor_source_layout(
   on_prefix_click : (Int) -> MarkdownEditorMsg,
 ) -> @core.View[MarkdownEditorMsg] {
   let editor_width = markdown_editor_primary_editor_width(
-    show_source, show_outline,
+    show_source, show_outline, show_files, show_info, appearance,
   )
   let viewport_height = markdown_editor_viewport_height()
   let content_height = markdown_editor_max_double(
@@ -3407,11 +4893,22 @@ fn editor_source_layout(
     on_input=value => UpdateDocument(value),
     placeholder="Start writing Markdown",
     size=@core.Size::new(width=editor_width, height=content_height),
-    format=source => markdown_editor_format_for_selection(source, selection),
+    format=source => {
+      if app.source_mode_enabled.get() {
+        markdown_editor_format_source_mode(source, editor_font)
+      } else {
+        markdown_editor_format_for_writing_mode(
+          source,
+          selection,
+          base=editor_font,
+          focus_mode=app.focus_mode_enabled.get(),
+        )
+      }
+    },
     font=editor_font,
-    foreground=@core.Color::rgba(r=0.12, g=0.12, b=0.12),
-    placeholder_color=@core.Color::black().multiply_alpha(0.35),
-    background=@core.Brush::solid(@core.Color::white()),
+    foreground=appearance.foreground,
+    placeholder_color=appearance.placeholder,
+    background=@core.Brush::solid(appearance.page_background),
     border=None,
     focused_border=None,
     cursor_color=theme.palette.primary,
@@ -3422,13 +4919,13 @@ fn editor_source_layout(
     accepts_tab_input=true,
   ).key("markdown-editor")
   let editor = scroll_view(
-    editor_page(editor_control, theme),
+    editor_page(editor_control, theme, appearance),
     offset=normalized_offset,
     width=editor_width,
     height=viewport_height,
     state=Some(app.editor_scroll),
   )
-  let editor_view = if !show_source {
+  let editor_view = if !show_source && !app.source_mode_enabled.get() {
     floating_target_palette(
       editor, target_bar, snapshot, selection, target_kind, editor_font, theme, normalized_offset,
       editor_width, viewport_height,
@@ -3436,10 +4933,21 @@ fn editor_source_layout(
   } else {
     editor
   }
-  if !show_source && !show_outline {
+  if !show_source && !show_outline && !show_files && !show_info {
     editor_view
   } else {
-    let side_children : Array[@core.View[MarkdownEditorMsg]] = [editor_view]
+    let side_children : Array[@core.View[MarkdownEditorMsg]] = []
+    if show_files {
+      side_children.push(
+        files_inspector(app, snapshot, theme, height=viewport_height),
+      )
+    }
+    side_children.push(editor_view)
+    if show_info {
+      side_children.push(
+        document_info_inspector(snapshot, theme, height=viewport_height),
+      )
+    }
     if show_outline {
       side_children.push(
         outline_inspector(snapshot, selection, theme, height=viewport_height),
@@ -3471,12 +4979,13 @@ fn editor_source_layout(
 fn editor_page(
   editor : @core.View[MarkdownEditorMsg],
   theme : @core.Theme,
+  appearance : MarkdownEditorAppearanceSpec,
 ) -> @core.View[MarkdownEditorMsg] {
   editor
   .shadow(markdown_editor_page_shadow())
   .border(
     @core.BorderStyle::new(
-      brush=@core.Brush::solid(@core.Color::black().multiply_alpha(0.10)),
+      brush=@core.Brush::solid(appearance.page_border),
       width=1.0,
     ),
   )
