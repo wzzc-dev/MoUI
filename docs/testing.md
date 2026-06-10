@@ -922,10 +922,14 @@ This runs Showcase runtime scrolling, Showcase sidebar hover, and Markdown
 Editor text input against both `draw_frame`/Skia cached-layer rendering and a
 full-repaint `draw_commands` baseline. It records cache hit/miss/update/evict
 counts, `BeginCachedLayer`/`DrawCachedLayer` command counts, draw/render time,
-damage kind/dirty-rect counts, draw command counts, present counts, and a
-cached-vs-full speedup. Scroll and text-input paths are expected to show
-update-heavy behavior while the hover path demonstrates sibling boundary cache
-hits in a real UI. Override `MOUI_APP_CACHED_LAYER_BENCH_FRAMES` and
+damage kind/dirty-rect counts, draw command counts, rebuild/layout/paint and
+draw-command-build pass counters, present counts, and a cached-vs-full speedup.
+Treat timing as diagnostic only. The structural expectation is that
+Showcase sidebar hover stays in sibling-boundary cached draws with local damage,
+Showcase runtime scrolling records stable cache hits while still exposing any
+layout/full-damage work, and Markdown Editor text input updates the editing
+surface while keeping toolbar/sidebar/outer chrome boundaries cached. Override
+`MOUI_APP_CACHED_LAYER_BENCH_FRAMES` and
 `MOUI_APP_CACHED_LAYER_BENCH_WARMUP` for longer local runs.
 
 The Web runtime handoff validator checks that both Web wasm-gc examples have
