@@ -50,3 +50,13 @@ test "release readiness quality tokens summarize current daily gates" {
   assert_true(tokens.contains("dedicated checked-artifact validators"))
   assert_true(tokens.contains("examples/design_systems/web_wasm"))
 }
+
+///|
+test "agent quality gate tokens cover AGENTS sync points" {
+  let tokens = agent_quality_gate_tokens()
+  assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
+  assert_true(tokens.contains("node scripts/validate-checked-conformance-artifacts.mjs"))
+  assert_true(
+    tokens.contains("moon build examples/design_systems/web_wasm --target wasm-gc"),
+  )
+}

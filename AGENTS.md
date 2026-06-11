@@ -265,6 +265,10 @@ example builds for daily work. Use
 current-platform backend tests too. Use
 `sh scripts/dev-check.sh --platform-examples-build` only when you explicitly
 need slow current-platform native example builds.
+The daily check also runs the MoonBit-backed API surface guard, checked
+conformance artifact guard, dedicated checked-artifact validators for
+capture/Web/platform/renderer-proof manifests, and app/Web validation for
+Showcase, Markdown Editor, and Design Systems.
 
 Useful focused checks:
 
@@ -283,6 +287,8 @@ moon test moui_skia --target native
 moon test moui/render/wgpu/cosmic_text --target native
 node scripts/test-webgpu-runtime-radial.mjs
 node scripts/validate-renderer-provider-manifests.mjs
+node scripts/validate-api-surface.mjs
+node scripts/validate-checked-conformance-artifacts.mjs
 sh scripts/conformance-check.sh --input
 sh scripts/conformance-check.sh --layout
 sh scripts/conformance-check.sh --render
@@ -290,6 +296,8 @@ sh scripts/conformance-check.sh --platform-services
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
 moon build examples/showcase/web_wasm --target wasm-gc
+moon build examples/markdown_editor/web_wasm --target wasm-gc
+moon build examples/design_systems/web_wasm --target wasm-gc
 node --check scripts/validate-conformance-capture-manifest.mjs
 node scripts/test-validate-conformance-capture-manifest.mjs
 node --check scripts/validate-platform-evidence-manifest.mjs
