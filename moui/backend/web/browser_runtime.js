@@ -2,8 +2,8 @@
 //
 // This file is the stable browser asset boundary for `backend/web`.
 // It provides the `window_web` import object expected by the MoonBit
-// `wzzc-dev/window/web` package without exposing the dependency checkout path
-// such as `.local_repos/window/web/runtime.js` to the browser.
+// `wzzc-dev/window/web` package without exposing registry cache paths to the
+// browser.
 
 export function createWindowWebImports(options = {}) {
   const canvases = new Map();

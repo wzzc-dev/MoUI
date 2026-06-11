@@ -5,30 +5,32 @@ for MoUI development.
 
 ## Local Dependencies
 
-The upstream `moonbit-community/window` package does not currently cover the targets
-MoUI needs, so use the `wzzc-dev/window` fork checkout instead.
-MoUI also carries `wzzc-dev/moui_skia` as a repo-local editable workspace member
-while the Skia renderer backend and binding surface evolve together.
+MoUI resolves the window host dependency from the MoonBit registry as
+`wzzc-dev/window@0.5.1-fork.3`. A repo-local `.local_repos/window` workspace
+member is no longer part of the normal setup. MoUI still carries
+`wzzc-dev/moui_skia` as a repo-local editable workspace member while the Skia
+renderer backend and binding surface evolve together.
 
 From the repository root:
 
 ```sh
-sh scripts/setup-local-deps.sh
+moon update
 sh scripts/check-local-deps.sh
 ```
 
-`scripts/setup-local-deps.sh` creates the missing window checkout and safely
-fast-forwards the existing clean window checkout to the expected branch. If the
-window dependency has local changes, commit or stash them before rerunning
-setup; the helper will not overwrite work in `.local_repos/`. The Skia binding
-is part of the main checkout at `moui_skia`.
+`moon update` refreshes registry packages, including the `window` fork package.
+`scripts/check-local-deps.sh` verifies the expected package versions, confirms
+that `moon.work` does not reintroduce a local window checkout, and checks the
+repo-local `moui_skia` acceptance surface. The Skia binding is part of the main
+checkout at `moui_skia`.
 
 This keeps `wzzc-dev/window` and `wzzc-dev/moui_skia` declared in
-`moui/moon.mod` and resolved through local workspace members in `moon.work`:
+`moui/moon.mod`, while only `moui_skia` is resolved through `moon.work` as a
+repo-local workspace member:
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.1",
+  "wzzc-dev/window@0.5.1-fork.3",
   "wzzc-dev/moui_skia@0.1.2",
 }
 ```
@@ -37,7 +39,6 @@ import {
 members = [
   "./moui",
   "./tools",
-  "./.local_repos/window",
   "./moui_skia",
   "./examples/counter",
   "./examples/button_freeze_probe",
@@ -55,23 +56,22 @@ members = [
 ]
 ```
 
-The window checkout is intentionally a normal editable Git repository, not a
-submodule.
-MoUI uses the `wzzc-dev/window` fork on the `moui-support` branch because the
-current upstream package is macOS-only.
+The MoonBit package ecosystem is still not as mature as older language
+ecosystems. A failing build can come from registry cache state, package
+publication mistakes, or dependency regressions as well as from MoUI code. When
+dependency-related failures appear, first run `moon update`, inspect the
+resolved package versions, and check whether `wzzc-dev/window@0.5.1-fork.3` or
+another package changed behavior.
 
-- Upstream: `https://github.com/moonbit-community/window.git`
-- MoUI fork: `git@github.com:wzzc-dev/window.git`
-- Fork branch: `moui-support`
+The `window` package still carries MoUI smoke helpers and evidence docs. Use
+`scripts/run-window-package-smoke.sh <platform>` to extract the resolved
+registry package into a temporary directory and run those helpers without
+creating a local checkout. For example, on macOS:
 
-The local `window` checkout must declare `name = wzzc-dev/window` in `moon.mod`
-or `moon.mod.json`; otherwise MoUI imports resolve to the published package
-rather than the editable fork. `scripts/check-local-deps.sh` verifies this
-because the Linux Skia presenter lives behind the local `window/linux` API. The
-same check also validates the fork's MoUI smoke contract: macOS smoke remains
-on the `moon run examples/moui_macos_smoke --target native` path, and the Web
-smoke pages/scripts point at module-qualified `wzzc-dev/window/examples/...`
-wasm-gc artifacts with the expected MoUI consumer sentinel lines.
+```sh
+WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=artifacts/platform-evidence/macos/window-macos-runtime-smoke.log \
+  scripts/run-window-package-smoke.sh macos --run
+```
 
 The Skia binding is editable in the main repository at `moui_skia`. The default
 daily check validates fallback-safe Skia package tests and the binding
@@ -99,19 +99,11 @@ the root `.moonbit-toolchain` file; update that file when moving CI to a new
 MoonBit toolchain version instead of hard-coding installer arguments in each
 workflow.
 
-`scripts/setup-local-deps.sh` configures the fork as `origin`, upstream as
-`upstream`, and fast-forwards the `moui-support` branch from `origin` when the
-checkout is clean. When merging new upstream commits into the fork, fetch
-`upstream` inside `.local_repos/window` and merge into `moui-support`. Keep
-fork changes focused on the Web, Windows, and Linux platform packages when
-possible. Avoid touching macOS or shared window logic unless a task explicitly
-requires that broader change.
-
 When updating this repository, update all Git checkouts that participate in the
-workspace, not just the root checkout. That includes the main MoUI repository,
-Git submodules such as `.agents/skills/moonbit-skills`, and every editable
-repository under `.local_repos/` such as `.local_repos/window`. `moui_skia`
-updates with the main MoUI checkout.
+workspace, not just the root checkout. That includes the main MoUI repository
+and Git submodules such as `.agents/skills/moonbit-skills`. Then run
+`moon update` so registry dependencies such as `wzzc-dev/window@0.5.1-fork.3`
+are refreshed. `moui_skia` updates with the main MoUI checkout.
 
 On Windows, use the repository update helper:
 
@@ -119,12 +111,8 @@ On Windows, use the repository update helper:
 powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1
 ```
 
-That helper also creates or updates `.local_repos/window` on the `moui-support`
-branch. The `moui_skia` workspace member is updated by the root repository pull.
-
-Local window setup defaults to the SSH fork URL. CI defaults to the HTTPS fork URL so
-GitHub Actions can clone the dependency without a deploy key. Set
-`MOUI_WINDOW_REMOTE` when you need to force a specific fork URL.
+The `moui_skia` workspace member is updated by the root repository pull; the
+window dependency is refreshed by `moon update`.
 
 ## Validation
 

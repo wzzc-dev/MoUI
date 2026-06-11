@@ -42,11 +42,6 @@ jobs:
         shell: bash
         run: moon version --all
 
-      - name: Restore local dependencies
-        working-directory: .
-        shell: bash
-        run: sh scripts/setup-local-deps.sh
-
       - name: Update MoonBit registry
         shell: bash
         run: moon update
@@ -143,11 +138,6 @@ jobs:
         shell: bash
         run: moon version --all
 
-      - name: Restore local dependencies
-        working-directory: .
-        shell: bash
-        run: sh scripts/setup-local-deps.sh
-
       - name: Update MoonBit registry
         shell: bash
         run: moon update
@@ -233,11 +223,6 @@ jobs:
       - name: Show MoonBit version
         shell: pwsh
         run: moon version --all
-
-      - name: Restore local dependencies
-        working-directory: .
-        shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1 -SkipRoot -SkipSubmodules
 
       - name: Update MoonBit registry
         shell: pwsh

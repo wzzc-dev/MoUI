@@ -6,7 +6,6 @@ fn guidance_include_rules() -> Array[TextRule] {
   [
     { path: "docs/development.md", token: "./moui" },
     { path: "docs/development.md", token: "./tools" },
-    { path: "docs/development.md", token: "./.local_repos/window" },
     { path: "docs/development.md", token: "./moui_skia" },
     { path: "docs/development.md", token: "./examples/counter" },
     { path: "docs/examples.md", token: "examples/counter/app/" },
@@ -419,7 +418,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "WINDOW_MOUI_MACOS_SMOKE_LOG_PATH",
     },
     {
-      path: ".local_repos/window/scripts/check_moui_macos_smoke.sh",
+      path: "scripts/run-window-package-smoke.sh",
       token: "WINDOW_MOUI_MACOS_SMOKE_LOG_PATH",
     },
     {
@@ -771,29 +770,16 @@ fn guidance_include_rules() -> Array[TextRule] {
     },
     {
       path: "scripts/check-local-deps.sh",
-      token: "docs/moui-integration-smoke.md",
+      token: "wzzc-dev/window@$WINDOW_VERSION",
     },
     {
       path: "scripts/check-local-deps.sh",
-      token: "scripts/record_moui_evidence.sh",
+      token: "moon.work must not include .local_repos/window",
     },
     { path: "scripts/check-local-deps.sh", token: "xdg-shell-protocol.c" },
-    { path: "scripts/check-local-deps.sh", token: "check_web_assets.sh" },
     {
-      path: "scripts/check-local-deps.sh",
-      token: "moon run \"$pkg\" --target native",
-    },
-    {
-      path: "scripts/check-local-deps.sh",
-      token: "wzzc-dev/window/examples/window_web/window_web.wasm",
-    },
-    {
-      path: "scripts/check-local-deps.sh",
-      token: "wzzc-dev/window/examples/moui_web_smoke/moui_web_smoke.wasm",
-    },
-    {
-      path: "scripts/check-local-deps.sh",
-      token: "MOUISmoke: surface canvas_id=moui-web-smoke-canvas size=640x360",
+      path: "scripts/run-window-package-smoke.sh",
+      token: "scripts/check_moui_macos_smoke.sh",
     },
     { path: "scripts/check-local-deps.sh", token: "skia-platform-status.json" },
     { path: "scripts/check-local-deps.sh", token: "skia-provider-lock.json" },
@@ -804,14 +790,13 @@ fn guidance_include_rules() -> Array[TextRule] {
       path: "scripts/check-local-deps.sh",
       token: "verify-native-capability-contract.sh",
     },
-    { path: "scripts/setup-local-deps.sh", token: "merge --ff-only" },
     {
       path: "docs/development.md",
-      token: "fast-forwards the existing clean window checkout",
+      token: "wzzc-dev/window@0.5.1-fork.3",
     },
     {
       path: "docs/development.md",
-      token: "module-qualified `wzzc-dev/window/examples/...`",
+      token: "scripts/run-window-package-smoke.sh <platform>",
     },
     { path: "docs/development.md", token: "skia-platform-status.json" },
     { path: "docs/development.md", token: "verify-platform-status.sh" },
@@ -852,7 +837,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "../../../moui/backend/web/runtime.js",
     },
     { path: "docs/testing.md", token: "scripts/record_moui_evidence.sh" },
-    { path: "docs/testing.md", token: "generated Wayland protocol C sources" },
+    { path: "docs/testing.md", token: "generated Wayland" },
     {
       path: "docs/testing.md",
       token: "the macOS helper still executes the AppKit smoke through `moon run`",
@@ -863,7 +848,10 @@ fn guidance_include_rules() -> Array[TextRule] {
     { path: "docs/testing.md", token: "verify-platform-status.sh" },
     { path: "docs/testing.md", token: "native/capabilities.json" },
     { path: "docs/testing.md", token: "verify-native-capability-contract.sh" },
-    { path: "docs/platform-notes.md", token: "check_moui_linux_smoke.sh" },
+    {
+      path: "docs/platform-notes.md",
+      token: "scripts/run-window-package-smoke.sh linux --run",
+    },
     { path: "docs/platform-notes.md", token: "Wayland key/modifier mapping" },
     { path: "docs/platform-notes.md", token: "current pointer coordinates" },
     {
@@ -1994,25 +1982,25 @@ fn guidance_include_rules() -> Array[TextRule] {
     },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
-      token: "fast-forwards the clean local window dependency checkout",
+      token: "wzzc-dev/window@0.5.1-fork.3",
     },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
-      token: "`moon run examples/moui_macos_smoke --target native`",
+      token: "scripts/run-window-package-smoke.sh <platform>",
     },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
-      token: "module-qualified `wzzc-dev/window/examples/...`",
+      token: "dependency resolution, registry cache state",
     },
     { path: "AGENTS.md", token: "scripts/record_moui_evidence.sh" },
-    { path: "AGENTS.md", token: "fast-forwards the existing clean window" },
+    { path: "AGENTS.md", token: "wzzc-dev/window@0.5.1-fork.3" },
     {
       path: "AGENTS.md",
-      token: "`moon run examples/moui_macos_smoke --target native`",
+      token: "scripts/run-window-package-smoke.sh <platform>",
     },
     {
       path: "AGENTS.md",
-      token: "module-qualified `wzzc-dev/window/examples/...`",
+      token: "package-version regressions as plausible causes",
     },
     { path: "AGENTS.md", token: "skia-platform-status.json" },
     { path: "AGENTS.md", token: "verify-platform-status.sh" },

@@ -2,14 +2,18 @@
 set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
-WINDOW_DIR="$ROOT_DIR/.local_repos/window"
-WINDOW_BRANCH="moui-support"
+WINDOW_VERSION="0.5.1-fork.3"
+WINDOW_PACKAGE="wzzc-dev/window@$WINDOW_VERSION"
 MOUI_SKIA_DIR="$ROOT_DIR/moui_skia"
 MOUI_SKIA_VERSION="0.1.2"
 
 fail() {
-  printf 'local dependency check failed: %s\n' "$1" >&2
+  printf 'dependency check failed: %s\n' "$1" >&2
   exit 1
+}
+
+warn() {
+  printf 'dependency check warning: %s\n' "$1" >&2
 }
 
 require_text() {
@@ -19,108 +23,61 @@ require_text() {
     fail "$path must contain expected text: $text"
 }
 
-[ -d "$WINDOW_DIR/.git" ] || fail "missing .local_repos/window checkout; run sh scripts/setup-local-deps.sh"
+require_zip_entry() {
+  zip_path="$1"
+  entry="$2"
+  unzip -l "$zip_path" "$entry" >/dev/null ||
+    fail "$WINDOW_PACKAGE package cache is missing $entry"
+}
 
-case "$(git -C "$WINDOW_DIR" remote get-url origin 2>/dev/null || true)" in
-  *wzzc-dev/window.git|*wzzc-dev/window)
-    ;;
-  *)
-    fail ".local_repos/window origin must be the wzzc-dev/window fork over SSH or HTTPS"
-    ;;
-esac
+require_text "$ROOT_DIR/moui/moon.mod" "\"$WINDOW_PACKAGE\""
+require_text "$ROOT_DIR/moui_skia/moon.mod" "\"$WINDOW_PACKAGE\""
 
-case "$(git -C "$WINDOW_DIR" remote get-url upstream 2>/dev/null || true)" in
-  *moonbit-community/window.git|*moonbit-community/window)
-    ;;
-  *)
-    fail ".local_repos/window upstream remote must point at moonbit-community/window; run sh scripts/setup-local-deps.sh"
-    ;;
-esac
-
-[ "$(git -C "$WINDOW_DIR" branch --show-current)" = "$WINDOW_BRANCH" ] ||
-  fail ".local_repos/window must be on branch $WINDOW_BRANCH"
-
-grep -q '"wzzc-dev/window@0.5.1"' "$ROOT_DIR/moui/moon.mod" ||
-  fail "moui/moon.mod must import wzzc-dev/window@0.5.1"
-
-if [ -f "$WINDOW_DIR/moon.mod" ]; then
-  grep -q 'name = "wzzc-dev/window"' "$WINDOW_DIR/moon.mod" ||
-    fail ".local_repos/window/moon.mod must declare name wzzc-dev/window"
-elif [ -f "$WINDOW_DIR/moon.mod.json" ]; then
-  grep -q '"name": "wzzc-dev/window"' "$WINDOW_DIR/moon.mod.json" ||
-    fail ".local_repos/window/moon.mod.json must declare name wzzc-dev/window"
-else
-  fail ".local_repos/window must contain moon.mod or moon.mod.json"
+if grep -Eq '"(\./)?\.local_repos/window"' "$ROOT_DIR/moon.work"; then
+  fail "moon.work must not include .local_repos/window; window resolves from $WINDOW_PACKAGE"
 fi
-
-grep -q "\"wzzc-dev/moui_skia@$MOUI_SKIA_VERSION\"" "$ROOT_DIR/moui/moon.mod" ||
-  fail "moui/moon.mod must import wzzc-dev/moui_skia@$MOUI_SKIA_VERSION"
-
-grep -Eq '"(\./)?\.local_repos/window"' "$ROOT_DIR/moon.work" ||
-  fail "moon.work must include .local_repos/window"
 
 grep -Eq '"(\./)?moui_skia"' "$ROOT_DIR/moon.work" ||
   fail "moon.work must include moui_skia"
 
-for pkg in core dpi web windows linux macos; do
-  [ -f "$WINDOW_DIR/$pkg/moon.pkg" ] || fail "missing .local_repos/window/$pkg/moon.pkg"
-done
+require_text "$ROOT_DIR/moui/moon.mod" "\"wzzc-dev/moui_skia@$MOUI_SKIA_VERSION\""
 
-for generated_file in \
-  linux/generated/xdg-decoration-protocol.c \
-  linux/generated/xdg-shell-protocol.c
-do
-  [ -f "$WINDOW_DIR/$generated_file" ] || fail "missing .local_repos/window/$generated_file"
-done
-
-for evidence_file in \
-  docs/moui-integration-smoke.md \
-  docs/platform-gaps.md \
-  scripts/check_moui_readiness.sh \
-  scripts/check_moui_evidence.sh \
-  scripts/record_moui_evidence.sh \
-  scripts/check_moui_macos_smoke.sh \
-  scripts/check_moui_web_smoke.sh \
-  scripts/check_moui_linux_smoke.sh \
-  scripts/check_moui_windows_smoke.sh \
-  scripts/check_web_assets.sh \
-  scripts/smoke_runtime.sh
-do
-  [ -f "$WINDOW_DIR/$evidence_file" ] || fail "missing .local_repos/window/$evidence_file"
-done
-
-for evidence_file in \
-  examples/window_web/index.html \
-  examples/moui_web_smoke/index.html
-do
-  [ -f "$WINDOW_DIR/$evidence_file" ] || fail "missing .local_repos/window/$evidence_file"
-done
-
-require_text "$WINDOW_DIR/scripts/smoke_runtime.sh" \
-  'run_or_print macOS scripts/check_moui_macos_smoke.sh --run'
-require_text "$WINDOW_DIR/scripts/check_moui_macos_smoke.sh" \
-  'moon run "$pkg" --target native'
-require_text "$WINDOW_DIR/scripts/check_web_assets.sh" \
-  'moon --target-dir "$ROOT/_build" build examples/window_web --target wasm-gc'
-require_text "$WINDOW_DIR/scripts/check_web_assets.sh" \
-  'wzzc-dev/window/examples/window_web/window_web.wasm'
-require_text "$WINDOW_DIR/scripts/check_moui_web_smoke.sh" \
-  'moon --target-dir "$ROOT/_build" build examples/moui_web_smoke --target wasm-gc'
-require_text "$WINDOW_DIR/scripts/check_moui_web_smoke.sh" \
-  'wzzc-dev/window/examples/moui_web_smoke/moui_web_smoke.wasm'
-require_text "$WINDOW_DIR/examples/window_web/index.html" \
-  'wzzc-dev/window/examples/window_web/window_web.wasm'
-require_text "$WINDOW_DIR/examples/moui_web_smoke/index.html" \
-  'wzzc-dev/window/examples/moui_web_smoke/moui_web_smoke.wasm'
-require_text "$WINDOW_DIR/examples/moui_web_smoke/index.html" \
-  'MOUISmoke: surface canvas_id=moui-web-smoke-canvas size=640x360'
+window_zip="${MOUI_WINDOW_PACKAGE_ZIP:-$HOME/.moon/registry/cache/wzzc-dev/window/$WINDOW_VERSION.zip}"
+if [ -f "$window_zip" ]; then
+  for entry in \
+    moon.mod \
+    core/moon.pkg \
+    dpi/moon.pkg \
+    web/moon.pkg \
+    windows/moon.pkg \
+    linux/moon.pkg \
+    macos/moon.pkg \
+    linux/generated/xdg-decoration-protocol.c \
+    linux/generated/xdg-shell-protocol.c \
+    docs/moui-integration-smoke.md \
+    docs/platform-gaps.md \
+    scripts/check_moui_readiness.sh \
+    scripts/check_moui_evidence.sh \
+    scripts/record_moui_evidence.sh \
+    scripts/check_moui_macos_smoke.sh \
+    scripts/check_moui_web_smoke.sh \
+    scripts/check_moui_linux_smoke.sh \
+    scripts/check_moui_windows_smoke.sh \
+    scripts/check_web_assets.sh \
+    scripts/smoke_runtime.sh \
+    examples/window_web/index.html \
+    examples/moui_web_smoke/index.html
+  do
+    require_zip_entry "$window_zip" "$entry"
+  done
+else
+  warn "$WINDOW_PACKAGE is not present in the local MoonBit registry cache; run moon update before package-level window smoke checks"
+fi
 
 [ -d "$MOUI_SKIA_DIR" ] || fail "missing moui_skia workspace member; update the main checkout"
 
-grep -q 'name = "wzzc-dev/moui_skia"' "$MOUI_SKIA_DIR/moon.mod" ||
-  fail "moui_skia/moon.mod must declare name wzzc-dev/moui_skia"
-grep -q "version = \"$MOUI_SKIA_VERSION\"" "$MOUI_SKIA_DIR/moon.mod" ||
-  fail "moui_skia/moon.mod must declare version $MOUI_SKIA_VERSION"
+require_text "$MOUI_SKIA_DIR/moon.mod" 'name = "wzzc-dev/moui_skia"'
+require_text "$MOUI_SKIA_DIR/moon.mod" "version = \"$MOUI_SKIA_VERSION\""
 
 for pkg_file in \
   moon.pkg \
@@ -165,4 +122,4 @@ bash "$MOUI_SKIA_DIR/scripts/verify-platform-status.sh" ||
 bash "$MOUI_SKIA_DIR/scripts/verify-native-capability-contract.sh" ||
   fail "moui_skia native capability contract did not validate"
 
-printf 'Local dependency check passed.\n'
+printf 'Dependency check passed.\n'

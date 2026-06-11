@@ -76,7 +76,7 @@ const baseManifest = ({ imePassed = true, skiaPassed = true } = {}) => ({
   schemaVersion: 2,
   mode: "platform-runtime-evidence",
   generatedBy: "scripts/test-record-macos-platform-runtime-evidence.mjs",
-  windowEvidenceSource: ".local_repos/window/scripts/record_moui_evidence.sh",
+  windowEvidenceSource: "wzzc-dev/window@0.5.1-fork.3",
   platforms: [
     {
       name: "macos",
@@ -93,7 +93,7 @@ const baseManifest = ({ imePassed = true, skiaPassed = true } = {}) => ({
         "examples/showcase/macos_skia",
       ],
       windowEvidenceCommand:
-        ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
+        "wzzc-dev/window@0.5.1-fork.3 package evidence macos --status pending",
       consumerCommand: "pending",
       observations: {
         ...pendingObservations,
