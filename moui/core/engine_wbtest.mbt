@@ -64,10 +64,7 @@ fn test_tab_accepting_rich_text_editor(value : Binding[String]) -> ViewSpec {
 fn test_selection_highlight_color(commands : Array[DrawCommand]) -> Color? {
   for command in commands {
     match command {
-      FillRect(_, color) =>
-        if color.a == 0.18 {
-          return Some(color)
-        }
+      FillRect(_, color) => if color.a == 0.18 { return Some(color) }
       _ => ()
     }
   }
@@ -78,10 +75,7 @@ fn test_selection_highlight_color(commands : Array[DrawCommand]) -> Color? {
 fn test_text_field_caret_rect(commands : Array[DrawCommand]) -> Rect? {
   for command in commands {
     match command {
-      FillRect(rect, _) =>
-        if rect.size.width == 1.5 {
-          return Some(rect)
-        }
+      FillRect(rect, _) => if rect.size.width == 1.5 { return Some(rect) }
       _ => ()
     }
   }
@@ -89,10 +83,7 @@ fn test_text_field_caret_rect(commands : Array[DrawCommand]) -> Rect? {
 }
 
 ///|
-fn test_draw_text_frame(
-  commands : Array[DrawCommand],
-  text : String,
-) -> Rect? {
+fn test_draw_text_frame(commands : Array[DrawCommand], text : String) -> Rect? {
   for command in commands {
     match command {
       DrawText({ text: value, frame, .. }) =>

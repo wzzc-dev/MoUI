@@ -62,12 +62,7 @@ fn append_text_field_editing_overlay(
     )
   } else {
     append_text_field_composition_underline(
-      commands,
-      text,
-      text_frame,
-      layout,
-      element,
-      cursor_color,
+      commands, text, text_frame, layout, element, cursor_color,
     )
   }
   let caret = clamp_int(

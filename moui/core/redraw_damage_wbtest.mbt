@@ -30,12 +30,7 @@ test "damage region coalesces adjacent rects before full promotion" {
   let adjacent : Array[Rect] = []
   for index in 0..<9 {
     adjacent.push(
-      Rect::new(
-        x=index.to_double() * 10.0,
-        y=8.0,
-        width=10.0,
-        height=12.0,
-      ),
+      Rect::new(x=index.to_double() * 10.0, y=8.0, width=10.0, height=12.0),
     )
   }
   match DamageRegion::from_rects(adjacent, surface) {
@@ -48,12 +43,7 @@ test "damage region coalesces adjacent rects before full promotion" {
   let separated : Array[Rect] = []
   for index in 0..<9 {
     separated.push(
-      Rect::new(
-        x=index.to_double() * 20.0,
-        y=40.0,
-        width=4.0,
-        height=4.0,
-      ),
+      Rect::new(x=index.to_double() * 20.0, y=40.0, width=4.0, height=4.0),
     )
   }
   match DamageRegion::from_rects(separated, surface) {
@@ -72,8 +62,7 @@ test "draw command bounds cover common paint commands" {
         font=FontSpec::new(size=12.0),
         color=Color::black(),
       ),
-    )
-    .bounds() {
+    ).bounds() {
     Some(bounds) => {
       inspect(bounds.origin.x, content="9")
       inspect(bounds.origin.y, content="11")
@@ -87,8 +76,7 @@ test "draw command bounds cover common paint commands" {
       Rect::new(x=4.0, y=5.0, width=6.0, height=7.0),
       Color::black(),
       2.0,
-    )
-    .bounds() {
+    ).bounds() {
     Some(bounds) => {
       inspect(bounds.origin.x, content="2")
       inspect(bounds.origin.y, content="3")
@@ -106,8 +94,7 @@ test "draw frame emits repaint boundary update then cached layer draw" {
     size=Size::new(width=80.0, height=24.0),
     font=FontSpec::new(size=12.0),
     color=Color::black(),
-  )
-  .repaint_boundary()
+  ).repaint_boundary()
   let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=120.0, height=60.0),
@@ -158,12 +145,16 @@ enum RetainedRedrawProgramMsg {
 
 ///|
 fn count_begin_cached_layers(commands : Array[DrawCommand]) -> Int {
-  commands.filter(command => command is DrawCommand::BeginCachedLayer(_)).length()
+  commands
+  .filter(command => command is DrawCommand::BeginCachedLayer(_))
+  .length()
 }
 
 ///|
 fn count_draw_cached_layers(commands : Array[DrawCommand]) -> Int {
-  commands.filter(command => command is DrawCommand::DrawCachedLayer(_)).length()
+  commands
+  .filter(command => command is DrawCommand::DrawCachedLayer(_))
+  .length()
 }
 
 ///|
@@ -266,16 +257,10 @@ test "program update preserves clean sibling repaint boundary cache" {
       }
     },
     view=model => {
-      View::flex(
-        axis=Axis::Horizontal,
-        spacing=8.0,
-        children=[
-          retained_redraw_button("Left \{model}")
-          .key("left")
-          .repaint_boundary(),
-          retained_redraw_label("Right").key("right").repaint_boundary(),
-        ],
-      )
+      View::flex(axis=Axis::Horizontal, spacing=8.0, children=[
+        retained_redraw_button("Left \{model}").key("left").repaint_boundary(),
+        retained_redraw_label("Right").key("right").repaint_boundary(),
+      ])
     },
   )
   let runtime = AppRuntime::new_program(
@@ -295,14 +280,10 @@ test "program update preserves clean sibling repaint boundary cache" {
 
 ///|
 test "paint only sibling boundary hover reports local damage rect" {
-  let root = View::flex(
-    axis=Axis::Horizontal,
-    spacing=8.0,
-    children=[
-      retained_redraw_button("Left").key("left").repaint_boundary(),
-      retained_redraw_label("Right").key("right").repaint_boundary(),
-    ],
-  )
+  let root = View::flex(axis=Axis::Horizontal, spacing=8.0, children=[
+    retained_redraw_button("Left").key("left").repaint_boundary(),
+    retained_redraw_label("Right").key("right").repaint_boundary(),
+  ])
   let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=200.0, height=60.0),
@@ -330,28 +311,24 @@ test "paint only sibling boundary hover reports local damage rect" {
 ///|
 test "state backed scroll reports local damage rect" {
   let scroll = ScrollState::new()
-  let root : View[Unit] = View::flex(
-    axis=Axis::Horizontal,
-    spacing=8.0,
-    children=[
-      View::scroll(
-        child=View::text(
-          text="Scrolled",
-          size=Size::new(width=120.0, height=80.0),
-          font=FontSpec::new(size=12.0),
-          color=Color::black(),
-        ),
-        viewport=Some(Size::new(width=80.0, height=40.0)),
-        state=Some(scroll),
-      ),
-      View::text(
-        text="Still",
-        size=Size::new(width=80.0, height=32.0),
+  let root : View[Unit] = View::flex(axis=Axis::Horizontal, spacing=8.0, children=[
+    View::scroll(
+      child=View::text(
+        text="Scrolled",
+        size=Size::new(width=120.0, height=80.0),
         font=FontSpec::new(size=12.0),
         color=Color::black(),
-      ).repaint_boundary(),
-    ],
-  )
+      ),
+      viewport=Some(Size::new(width=80.0, height=40.0)),
+      state=Some(scroll),
+    ),
+    View::text(
+      text="Still",
+      size=Size::new(width=80.0, height=32.0),
+      font=FontSpec::new(size=12.0),
+      color=Color::black(),
+    ).repaint_boundary(),
+  ])
   let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=220.0, height=100.0),
@@ -379,28 +356,24 @@ test "state backed scroll reports local damage rect" {
 
 ///|
 test "layout dirty child reports local damage rect" {
-  let root : View[Unit] = View::flex(
-    axis=Axis::Horizontal,
-    spacing=8.0,
-    children=[
-      View::frame(
-        View::text(
-          text="Layout",
-          size=Size::new(width=80.0, height=24.0),
-          font=FontSpec::new(size=12.0),
-          color=Color::black(),
-        ),
-        width=90.0,
-        height=40.0,
-      ),
+  let root : View[Unit] = View::flex(axis=Axis::Horizontal, spacing=8.0, children=[
+    View::frame(
       View::text(
-        text="Still",
-        size=Size::new(width=80.0, height=32.0),
+        text="Layout",
+        size=Size::new(width=80.0, height=24.0),
         font=FontSpec::new(size=12.0),
         color=Color::black(),
-      ).repaint_boundary(),
-    ],
-  )
+      ),
+      width=90.0,
+      height=40.0,
+    ),
+    View::text(
+      text="Still",
+      size=Size::new(width=80.0, height=32.0),
+      font=FontSpec::new(size=12.0),
+      color=Color::black(),
+    ).repaint_boundary(),
+  ])
   let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=220.0, height=100.0),

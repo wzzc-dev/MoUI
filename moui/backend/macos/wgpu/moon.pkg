@@ -16,7 +16,7 @@ supported_targets = "native"
 options(
   link: {
     "native": {
-      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz",
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz",
     },
   },
   "native-stub": [ "macos_wgpu_surface_host.m" ],

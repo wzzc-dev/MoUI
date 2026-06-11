@@ -281,8 +281,7 @@ pub fn ShowcaseModel::update(
       { ..self, last_drop_label: "Dropped \{paths.length()} file(s)" }
     RecordGesture(label) => { ..self, gesture_label: label }
     ResizePanel(size) => { ..self, slider_value: size / 520.0 }
-    DetailScrollTo(y) =>
-      self.with_detail_scroll_to(y)
+    DetailScrollTo(y) => self.with_detail_scroll_to(y)
     SidebarScrollTo(y) => self.with_sidebar_scroll_to(y)
   }
 }
