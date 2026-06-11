@@ -93,6 +93,14 @@ run node --check scripts/ci-renderer-proof-native.mjs
 run node scripts/test-validate-web-runtime-handoff-manifest.mjs
 run node scripts/test-record-web-runtime-presentation.mjs
 run node scripts/test-validate-web-runtime-presentation-manifest.mjs
+run node scripts/validate-conformance-capture-manifest.mjs artifacts/conformance/showcase-golden-capture.json
+run node scripts/validate-conformance-capture-manifest.mjs artifacts/conformance/showcase-benchmark-capture.json
+run node scripts/validate-web-runtime-handoff-manifest.mjs artifacts/conformance/web-runtime-handoff.json
+run node scripts/validate-web-runtime-presentation-manifest.mjs artifacts/conformance/web-runtime-presentation.json
+run node scripts/validate-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json
+run node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/webgpu-wasm-web.json
+run node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/skia-native-macos.json
+run node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/wgpu-native-macos.json
 run node --check scripts/validate-checked-conformance-artifacts.mjs
 run node scripts/validate-checked-conformance-artifacts.mjs
 run sh -n scripts/ci-moon-update.sh

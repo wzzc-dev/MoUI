@@ -253,6 +253,14 @@ node --check scripts/record-web-runtime-presentation.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
+node scripts/validate-conformance-capture-manifest.mjs artifacts/conformance/showcase-golden-capture.json
+node scripts/validate-conformance-capture-manifest.mjs artifacts/conformance/showcase-benchmark-capture.json
+node scripts/validate-web-runtime-handoff-manifest.mjs artifacts/conformance/web-runtime-handoff.json
+node scripts/validate-web-runtime-presentation-manifest.mjs artifacts/conformance/web-runtime-presentation.json
+node scripts/validate-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json
+node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/webgpu-wasm-web.json
+node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/skia-native-macos.json
+node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/wgpu-native-macos.json
 node --check scripts/validate-checked-conformance-artifacts.mjs
 node scripts/validate-checked-conformance-artifacts.mjs
 node --check scripts/validate-renderer-proof-manifest.mjs
