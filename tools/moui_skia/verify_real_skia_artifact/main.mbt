@@ -174,15 +174,13 @@ fn compact_whitespace(text : String) -> String {
 
 ///|
 fn path_basename(path : String) -> String {
-  let normalized = path.replace(old="\\", new="/")
-  let chars = normalized.to_array()
   let start = Ref(0)
-  for index in 0..<chars.length() {
-    if chars[index] == '/' {
+  for index in 0..<path.length() {
+    if path[index] == '/' || path[index] == '\\' {
       start.val = index + 1
     }
   }
-  normalized[start.val:].to_owned()
+  path[start.val:].to_owned()
 }
 
 ///|

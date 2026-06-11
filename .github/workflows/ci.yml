@@ -648,6 +648,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Set up MoonBit
+        uses: ./.github/actions/setup-moonbit
+
       - name: Download renderer proof artifacts
         uses: actions/download-artifact@v4
         with:

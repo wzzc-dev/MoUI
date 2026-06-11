@@ -721,7 +721,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "must not be used as passed platform, Skia, or",
     },
     {
-      path: "scripts/record-platform-evidence-manifest.mjs",
+      path: "tools/moui/record_platform_evidence_manifest/main.mbt",
       token: "monitorCursor",
     },
     {
@@ -729,8 +729,8 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "provenance-kind",
     },
     {
-      path: "scripts/record-platform-evidence-manifest.mjs",
-      token: "browserObservablePlatformObservationsPassed",
+      path: "tools/moui/record_platform_evidence_manifest/main.mbt",
+      token: "browser_observable_passed",
     },
     { path: "scripts/conformance-check.sh", token: "\"schemaVersion\": 2" },
     {
@@ -1530,7 +1530,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "MoUI Skia async image second-frame smoke passed",
     },
     {
-      path: "scripts/record-platform-evidence-manifest.mjs",
+      path: "tools/moui/record_platform_evidence_manifest/main.mbt",
       token: "asyncImageSecondFrame",
     },
     {
@@ -2228,8 +2228,8 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "platformObservations",
     },
     {
-      path: "scripts/record-platform-evidence-manifest.mjs",
-      token: "webPlatformObservations",
+      path: "tools/moui/record_platform_evidence_manifest/main.mbt",
+      token: "platformObservations",
     },
     {
       path: "moui/backend/web/browser_runtime.js",
