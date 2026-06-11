@@ -149,6 +149,7 @@ App package tests:
 moon test examples/showcase/app --target native
 moon test examples/counter/app --target native
 moon test examples/markdown_editor/app --target native
+moon test examples/design_systems/app --target native
 moon test examples/settings/app --target native
 moon test examples/data_table/app --target native
 moon test examples/file_importer/app --target native
@@ -175,6 +176,7 @@ Web app builds:
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+moon build examples/design_systems/web_wasm --target wasm-gc
 ```
 
 Native example builds:
