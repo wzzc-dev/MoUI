@@ -19,6 +19,20 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
+function Invoke-CheckedScript {
+  param(
+    [Parameter(Mandatory = $true)]
+    [scriptblock] $Command
+  )
+
+  $global:LASTEXITCODE = 0
+  & $Command
+  $exitCode = $LASTEXITCODE
+  if ($exitCode -ne 0) {
+    exit $exitCode
+  }
+}
+
 function Resolve-RepoPath {
   param(
     [Parameter(Mandatory = $true)]
@@ -83,19 +97,23 @@ if ([string]::IsNullOrWhiteSpace($detectedProvider) -or $detectedProvider -eq "u
 
 $effectiveRequireCommit = $detectedProvider -eq "source" -and ($RequireCommit -or $Platform -eq "linux")
 
-& (Join-Path $PSScriptRoot "verify-real-skia-artifact.ps1") `
-  -Platform $Platform `
-  -LogDir $resolvedLogDir `
-  -RequireCommit:$effectiveRequireCommit
+Invoke-CheckedScript {
+  & (Join-Path $PSScriptRoot "verify-real-skia-artifact.ps1") `
+    -Platform $Platform `
+    -LogDir $resolvedLogDir `
+    -RequireCommit:$effectiveRequireCommit
+}
 
 if (!(Test-Path -LiteralPath $acceptanceLog -PathType Leaf)) {
   throw "platform acceptance log is missing after artifact verification: $acceptanceLog"
 }
 
 if ($detectedProvider -eq "source") {
-  & (Join-Path $PSScriptRoot "verify-skia-revision-pin.ps1") `
-    -AcceptanceLog $acceptanceLog `
-    -RevisionFile $resolvedRevisionFile
+  Invoke-CheckedScript {
+    & (Join-Path $PSScriptRoot "verify-skia-revision-pin.ps1") `
+      -AcceptanceLog $acceptanceLog `
+      -RevisionFile $resolvedRevisionFile
+  }
 }
 
 $status = Get-Content -LiteralPath $resolvedStatusFile -Raw | ConvertFrom-Json
@@ -168,8 +186,10 @@ $entry.next_step = "Keep running real Skia smoke for this platform and verify ea
 $json = $status | ConvertTo-Json -Depth 16 -Compress
 Set-Content -LiteralPath $resolvedStatusFile -Value $json
 
-& (Join-Path $PSScriptRoot "verify-platform-status.ps1") `
-  -StatusFile $resolvedStatusFile `
-  -RevisionFile $resolvedRevisionFile
+Invoke-CheckedScript {
+  & (Join-Path $PSScriptRoot "verify-platform-status.ps1") `
+    -StatusFile $resolvedStatusFile `
+    -RevisionFile $resolvedRevisionFile
+}
 
 Write-Host "Marked $Platform accepted in $resolvedStatusFile using artifact $ArtifactLabel."

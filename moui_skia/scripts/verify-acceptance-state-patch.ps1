@@ -54,6 +54,20 @@ function Invoke-AcceptanceStatePatchTool {
   }
 }
 
+function Invoke-CheckedScript {
+  param(
+    [Parameter(Mandatory = $true)]
+    [scriptblock] $Command
+  )
+
+  $global:LASTEXITCODE = 0
+  & $Command
+  $exitCode = $LASTEXITCODE
+  if ($exitCode -ne 0) {
+    exit $exitCode
+  }
+}
+
 function Resolve-RepoPath {
   param(
     [Parameter(Mandatory = $true)]
@@ -109,9 +123,11 @@ try {
 
   $patchedStatusFile = Join-Path $tempDir "skia-platform-status.json"
   $patchedRevisionFile = Join-Path $tempDir "skia-revision.txt"
-  & (Join-Path $PSScriptRoot "verify-platform-status.ps1") `
-    -StatusFile $patchedStatusFile `
-    -RevisionFile $patchedRevisionFile
+  Invoke-CheckedScript {
+    & (Join-Path $PSScriptRoot "verify-platform-status.ps1") `
+      -StatusFile $patchedStatusFile `
+      -RevisionFile $patchedRevisionFile
+  }
 
   Invoke-AcceptanceStatePatchTool -ToolArgs @(
     "--repo-root", $repoRoot,
