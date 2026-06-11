@@ -25,7 +25,13 @@ cleanup() {
     wait "$SERVER_PID" >/dev/null 2>&1 || true
   fi
   if [ -n "$USER_DATA_DIR" ]; then
-    rm -rf "$USER_DATA_DIR"
+    for _attempt in 1 2 3; do
+      if rm -rf "$USER_DATA_DIR" 2>/dev/null; then
+        break
+      fi
+      sleep 1
+    done
+    rm -rf "$USER_DATA_DIR" 2>/dev/null || true
   fi
 }
 trap cleanup EXIT INT TERM
