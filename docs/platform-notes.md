@@ -2,7 +2,7 @@
 
 ## Window Package Dependency
 
-MoUI resolves the modified window host as `wzzc-dev/window@0.5.1-fork.3` from
+MoUI resolves the modified window host as `wzzc-dev/window@0.5.1-0.1.4` from
 the MoonBit registry. A repo-local window checkout is no longer part of normal
 development. The fork package currently supplies target support that the
 upstream package does not yet cover for MoUI.
@@ -511,7 +511,7 @@ script. MSVC dynamic roots should contain `lib\wgpu_native.dll` and
 ## Linux Native
 
 `backend/linux` is a minimal native Wayland host core. It uses the
-`wzzc-dev/window@0.5.1-fork.3` Linux package for Wayland event-loop and window handles,
+`wzzc-dev/window@0.5.1-0.1.4` Linux package for Wayland event-loop and window handles,
 normalizes window/input events through the shared `HostEvent` contract, and runs
 the Showcase entrypoints through the same renderer/runtime boundary as macOS
 and Windows. Concrete rendering is injected through `LinuxRendererProvider`;
@@ -546,7 +546,7 @@ Linux runtime requirements are intentionally native:
   validation can use Mesa llvmpipe through `vulkan-swrast`/Lavapipe when
   hardware Vulkan is not available.
 - Wayland development headers and generated xdg-shell protocol sources for the
-  `wzzc-dev/window@0.5.1-fork.3` native stub.
+  `wzzc-dev/window@0.5.1-0.1.4` native stub.
 - `wl_data_device_manager` from the compositor for native clipboard selection
   and file drag/drop runtime behavior.
 - XDG desktop integration for Linux services: OpenURI goes through
@@ -642,7 +642,7 @@ redraw, IME request state, and clean shutdown. Add `--require-input` or
 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` only when representative pointer/keyboard
 input is observed; clipboard selection and file drag/drop still need
 matching-host compositor observations before they can be cited as runtime
-evidence. Record dependency-level facts from the `wzzc-dev/window@0.5.1-fork.3`
+evidence. Record dependency-level facts from the `wzzc-dev/window@0.5.1-0.1.4`
 package smoke artifacts; keep the MoUI Showcase
 `linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
 application-level evidence. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic

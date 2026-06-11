@@ -112,7 +112,7 @@ if (-not $SkipSubmodules) {
 }
 
 if (-not $SkipLocalRepos) {
-  Write-Host "==> No local dependency repositories are updated; run moon update for registry packages such as wzzc-dev/window@0.5.1-fork.3."
+  Write-Host "==> No local dependency repositories are updated; run moon update for registry packages such as wzzc-dev/window@0.5.1-0.1.4."
 }
 
 Write-Host "==> Repository update complete."

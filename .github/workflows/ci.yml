@@ -286,7 +286,8 @@ jobs:
         with:
           name: moui-renderer-proof-wgpu-native-${{ matrix.platform }}
           path: |
-            artifacts/conformance/renderer-proof/
+            artifacts/conformance/renderer-proof/wgpu-native-${{ matrix.platform }}.json
+            artifacts/conformance/renderer-proof/wgpu-native-${{ matrix.platform }}.log
             artifacts/platform-evidence/${{ matrix.platform }}/
           if-no-files-found: warn
 
@@ -407,7 +408,8 @@ jobs:
         with:
           name: moui-renderer-proof-skia-native-${{ matrix.platform }}
           path: |
-            artifacts/conformance/renderer-proof/
+            artifacts/conformance/renderer-proof/skia-native-${{ matrix.platform }}.json
+            artifacts/conformance/renderer-proof/skia-native-${{ matrix.platform }}.log
             artifacts/platform-evidence/${{ matrix.platform }}/
           if-no-files-found: warn
 
@@ -457,7 +459,8 @@ jobs:
           path: |
             artifacts/conformance/web-runtime-presentation.json
             artifacts/conformance/web-runtime-presentation/
-            artifacts/conformance/renderer-proof/
+            artifacts/conformance/renderer-proof/webgpu-wasm-web.json
+            artifacts/conformance/renderer-proof/webgpu-wasm-web.log
             artifacts/platform-evidence/web/
             artifacts/conformance/platform-runtime-evidence.json
           if-no-files-found: warn

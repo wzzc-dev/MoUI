@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "mode": "web-runtime-handoff",
+  "generatedBy": "scripts/validate-web-runtime-handoff.mjs",
+  "root": ".",
+  "baseUrl": "",
+  "evidenceBoundary": "Static HTML/runtime/wasm delivery and compiled WebAssembly export audit only; not browser WebGPU device, wasm instantiation, canvas presentation, or pixel evidence.",
+  "runtimeAssets": [
+    "moui/backend/web/runtime.js",
+    "moui/backend/web/browser_runtime.js"
+  ],
+  "targets": [
+    {
+      "name": "showcase-web-wasm",
+      "packagePath": "examples/showcase/web_wasm",
+      "htmlPath": "examples/showcase/web_wasm/index.html",
+      "wasmPath": "_build/wasm-gc/debug/build/examples/showcase/web_wasm/web_wasm.wasm",
+      "requiredWasmExports": [
+        "web_dispatch_event",
+        "web_complete_async_clipboard_read",
+        "web_complete_async_file_dialog"
+      ],
+      "compiledWasmExports": [
+        "web_complete_async_file_dialog",
+        "web_complete_async_clipboard_read",
+        "web_dispatch_event",
+        "_start"
+      ],
+      "htmlRuntimeImport": "../../../moui/backend/web/runtime.js",
+      "canvasHostSelector": "#canvas-host",
+      "wasmBytes": 1363242
+    },
+    {
+      "name": "markdown-editor-web-wasm",
+      "packagePath": "examples/markdown_editor/web_wasm",
+      "htmlPath": "examples/markdown_editor/web_wasm/index.html",
+      "wasmPath": "_build/wasm-gc/debug/build/examples/markdown_editor/web_wasm/web_wasm.wasm",
+      "requiredWasmExports": [
+        "web_dispatch_event",
+        "web_complete_async_clipboard_read",
+        "web_complete_async_file_dialog"
+      ],
+      "compiledWasmExports": [
+        "web_complete_async_file_dialog",
+        "web_complete_async_clipboard_read",
+        "web_dispatch_event",
+        "_start"
+      ],
+      "htmlRuntimeImport": "../../../moui/backend/web/runtime.js",
+      "canvasHostSelector": "#canvas-host",
+      "wasmBytes": 1334752
+    }
+  ],
+  "checks": [
+    {
+      "kind": "file",
+      "path": "moui/backend/web/runtime.js",
+      "bytes": 78656
+    },
+    {
+      "kind": "file",
+      "path": "moui/backend/web/browser_runtime.js",
+      "bytes": 29740
+    },
+    {
+      "kind": "file",
+      "path": "_build/wasm-gc/debug/build/examples/showcase/web_wasm/web_wasm.wasm",
+      "bytes": 1363242
+    },
+    {
+      "kind": "file",
+      "path": "_build/wasm-gc/debug/build/examples/markdown_editor/web_wasm/web_wasm.wasm",
+      "bytes": 1334752
+    }
+  ]
+}

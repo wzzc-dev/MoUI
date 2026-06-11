@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "mode": "golden",
+  "showcaseTarget": "examples/showcase/web_wasm",
+  "url": "http://127.0.0.1:18080/examples/showcase/web_wasm/",
+
+  "renderInspectorSource": "Showcase Diagnostics inspector snapshot card backed by @core.RenderInspectorSnapshot",
+  "renderInspectorCounters": [
+    "command_count",
+    "text_count",
+    "image_count",
+    "clip_depth",
+    "open_clip_depth",
+    "layer_depth",
+    "open_layer_depth",
+    "filter_depth",
+    "open_filter_depth",
+    "path_count",
+    "shader_count",
+    "unbalanced_pop_count"
+  ],
+  "screenshotArtifacts": [
+    {
+      "name": "desktop",
+      "viewport": "1440x900",
+      "path": "artifacts/golden/showcase-web-wasm/desktop.png"
+    },
+    {
+      "name": "tablet",
+      "viewport": "1024x768",
+      "path": "artifacts/golden/showcase-web-wasm/tablet.png"
+    },
+    {
+      "name": "mobile",
+      "viewport": "390x844",
+      "path": "artifacts/golden/showcase-web-wasm/mobile.png"
+    }
+  ],
+  "benchmarkMetrics": [
+    "startup_ms",
+    "frame_time_ms",
+    "dirty_count",
+    "draw_command_count",
+    "memory_bytes",
+    "render_inspector_counters"
+  ],
+  "notes": [
+    "This manifest connects the build scaffold to the manual capture artifacts.",
+    "It does not contain captured measurements or screenshots by itself."
+  ]
+}

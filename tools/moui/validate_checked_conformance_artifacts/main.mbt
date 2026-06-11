@@ -477,7 +477,7 @@ fn validate_platform_evidence_manifest(
     manifest, "mode", "platform-runtime-evidence", "platform evidence.mode", failures,
   )
   assert_string_field(
-    manifest, "windowEvidenceSource", "wzzc-dev/window@0.5.1-fork.3", "platform evidence.windowEvidenceSource",
+    manifest, "windowEvidenceSource", "wzzc-dev/window@0.5.1-0.1.4", "platform evidence.windowEvidenceSource",
     failures,
   )
   let platforms = require_array(
@@ -492,13 +492,13 @@ fn validate_platform_evidence_manifest(
           failures,
         )
         let command = string_field(platform, "windowEvidenceCommand")
-        if !command.contains("wzzc-dev/window@0.5.1-fork.3") ||
+        if !command.contains("wzzc-dev/window@0.5.1-0.1.4") ||
           !command.contains("package evidence") ||
           !command.contains(name) {
           failures.push(
             "platform evidence." +
             name +
-            ".windowEvidenceCommand must name wzzc-dev/window@0.5.1-fork.3 package evidence",
+            ".windowEvidenceCommand must name wzzc-dev/window@0.5.1-0.1.4 package evidence",
           )
         }
         let observations = require_object(

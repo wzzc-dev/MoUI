@@ -44,14 +44,20 @@ test "skia surface routes keep raster default and gate metal gpu explicitly" {
   let metrics = @render.RendererSurfaceMetrics::from_logical(
     size=@core.Size::new(width=16.0, height=16.0),
   )
-  let gpu_result = try? create_with_present_target_and_route(
-    metrics,
-    target,
-    surface_route=SkiaSurfaceRoute::MetalGpuSurfaceRoute,
-  )
   if !skia_available() {
-    match gpu_result {
-      Err(SkiaRendererError::SkiaUnavailable) => ()
+    try
+      create_with_present_target_and_route(
+        metrics,
+        target,
+        surface_route=SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+      )
+    catch {
+      err =>
+        match err {
+          SkiaRendererError::SkiaUnavailable => ()
+          _ => fail("expected unavailable Skia before GPU route creation")
+        }
+    } noraise {
       _ => fail("expected unavailable Skia before GPU route creation")
     }
   } else {
@@ -60,24 +66,37 @@ test "skia surface routes keep raster default and gate metal gpu explicitly" {
     )
     let status = @skia_native.Surface::gpu_context_support_status(descriptor)
     if status.is_available() {
-      match gpu_result {
-        Ok(renderer) => {
-          assert_true(renderer.surface_route().is_gpu())
-          assert_true(renderer.surface_is_gpu())
-          assert_true(
-            renderer
-            .surface_diagnostic_summary()
-            .contains("surface_route=metal-gpu"),
-          )
-          assert_true(
-            renderer.surface_diagnostic_summary().contains("surface_gpu=true"),
-          )
-        }
-        Err(err) => fail("expected GPU renderer route, got \{err.message()}")
+      let renderer = create_with_present_target_and_route(
+        metrics,
+        target,
+        surface_route=SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+      ) catch {
+        err => fail("expected GPU renderer route, got \{err.message()}")
       }
+      assert_true(renderer.surface_route().is_gpu())
+      assert_true(renderer.surface_is_gpu())
+      assert_true(
+        renderer
+        .surface_diagnostic_summary()
+        .contains("surface_route=metal-gpu"),
+      )
+      assert_true(
+        renderer.surface_diagnostic_summary().contains("surface_gpu=true"),
+      )
     } else {
-      match gpu_result {
-        Err(SkiaRendererError::GpuContextUnavailable(_)) => ()
+      try
+        create_with_present_target_and_route(
+          metrics,
+          target,
+          surface_route=SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+        )
+      catch {
+        err =>
+          match err {
+            SkiaRendererError::GpuContextUnavailable(_) => ()
+            _ => fail("expected explicit GPU context unavailable error")
+          }
+      } noraise {
         _ => fail("expected explicit GPU context unavailable error")
       }
     }
@@ -103,25 +122,37 @@ test "skia renderer fails explicitly when real skia is unavailable" {
     let target = SkiaPresentTarget::new(description="test", present=_frame => {
       true
     })
-    let result = try? create_with_present_target(
-      @render.RendererSurfaceMetrics::from_logical(
-        size=@core.Size::new(width=16.0, height=16.0),
-      ),
-      target,
-    )
-    match result {
-      Err(SkiaRendererError::SkiaUnavailable) => ()
+    try
+      create_with_present_target(
+        @render.RendererSurfaceMetrics::from_logical(
+          size=@core.Size::new(width=16.0, height=16.0),
+        ),
+        target,
+      )
+    catch {
+      err =>
+        match err {
+          SkiaRendererError::SkiaUnavailable => ()
+          _ => fail("expected explicit unavailable error")
+        }
+    } noraise {
       _ => fail("expected explicit unavailable error")
     }
-    let empty_font_result = try? create_with_present_target(
-      @render.RendererSurfaceMetrics::from_logical(
-        size=@core.Size::new(width=16.0, height=16.0),
-      ),
-      target,
-      font_resolution=SkiaFontResolution::EmptyTypeface,
-    )
-    match empty_font_result {
-      Err(SkiaRendererError::SkiaUnavailable) => ()
+    try
+      create_with_present_target(
+        @render.RendererSurfaceMetrics::from_logical(
+          size=@core.Size::new(width=16.0, height=16.0),
+        ),
+        target,
+        font_resolution=SkiaFontResolution::EmptyTypeface,
+      )
+    catch {
+      err =>
+        match err {
+          SkiaRendererError::SkiaUnavailable => ()
+          _ => fail("expected explicit unavailable error")
+        }
+    } noraise {
       _ => fail("expected explicit unavailable error")
     }
   }

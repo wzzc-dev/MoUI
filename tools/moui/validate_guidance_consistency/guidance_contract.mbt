@@ -792,7 +792,7 @@ fn guidance_include_rules() -> Array[TextRule] {
     },
     {
       path: "docs/development.md",
-      token: "wzzc-dev/window@0.5.1-fork.3",
+      token: "wzzc-dev/window@0.5.1-0.1.4",
     },
     {
       path: "docs/development.md",
@@ -1982,7 +1982,7 @@ fn guidance_include_rules() -> Array[TextRule] {
     },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
-      token: "wzzc-dev/window@0.5.1-fork.3",
+      token: "wzzc-dev/window@0.5.1-0.1.4",
     },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
@@ -1993,7 +1993,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "dependency resolution, registry cache state",
     },
     { path: "AGENTS.md", token: "scripts/record_moui_evidence.sh" },
-    { path: "AGENTS.md", token: "wzzc-dev/window@0.5.1-fork.3" },
+    { path: "AGENTS.md", token: "wzzc-dev/window@0.5.1-0.1.4" },
     {
       path: "AGENTS.md",
       token: "scripts/run-window-package-smoke.sh <platform>",

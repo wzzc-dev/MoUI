@@ -90,18 +90,30 @@ test "wgpu web renderer forwards resize render and dispose to host port" {
 
 ///|
 test "wgpu web renderer fails startup when host lacks capabilities" {
-  let result = try? create_renderer(
-    canvas_id="moui-web-wasm",
-    logical_size=@core.Size::new(width=100.0, height=50.0),
-    port=test_port(created=Ref(0), capabilities={
-      webgpu_available: false,
-      adapter_ready: true,
-      can_render: true,
-    }),
-  )
+  let result = try
+    create_renderer(
+      canvas_id="moui-web-wasm",
+      logical_size=@core.Size::new(width=100.0, height=50.0),
+      port=test_port(created=Ref(0), capabilities={
+        webgpu_available: false,
+        adapter_ready: true,
+        can_render: true,
+      }),
+    )
+  catch {
+    e =>
+      match e {
+        WebGpuHostError::Unavailable => Some(e)
+        _ => fail("unexpected error type")
+      }
+  } noraise {
+    _ => None
+  }
+
   match result {
-    Err(WebGpuHostError::Unavailable) => ()
-    _ => fail("expected unavailable host error")
+    Some(WebGpuHostError::Unavailable) => ()
+    None => fail("expected unavailable host error")
+    _ => fail("unexpected error type")
   }
 }
 

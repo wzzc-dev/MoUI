@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "mode": "renderer-proof",
+  "generatedBy": "scripts/record-renderer-proof-manifest.mjs",
+  "backend": "webgpu-wasm",
+  "platform": "web",
+  "status": "passed",
+  "provenance": {
+    "kind": "github-actions",
+    "workflow": "local",
+    "job": "local",
+    "runId": "local-test",
+    "runUrl": "https://github.com/local/MoUI/actions/runs/local-test",
+    "runner": "local",
+    "artifactName": "moui-web-runtime-presentation"
+  },
+  "artifacts": [
+    "artifacts/conformance/renderer-proof/webgpu-wasm-web.log",
+    "artifacts/conformance/renderer-proof/webgpu-wasm-web.json"
+  ],
+  "observations": {
+    "radialGradient": {
+      "status": "passed",
+      "evidence": [
+        "center-mid-edge-pixels",
+        "shader-payload"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ]
+    },
+    "transformPixels": {
+      "status": "passed",
+      "evidence": [
+        "pixel-markers"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ]
+    },
+    "colorEmojiPixels": {
+      "status": "passed",
+      "evidence": [
+        "high-saturation-pixels",
+        "glyph-or-raster",
+        "font-metadata",
+        "glyph-metadata"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ],
+      "metadata": {
+        "font": {
+          "family": "emoji,_system-ui",
+          "source": "browser-canvas",
+          "textSystem": "webgpu-wasm",
+          "shaper": "browser-canvas"
+        },
+        "glyph": {
+          "format": "rgba",
+          "glyphCount": 1,
+          "clusterCount": 1,
+          "highSaturationPixels": 254,
+          "alphaPixels": 518,
+          "key": "1|normal|500|28|emoji,_system-ui|rgba|👩‍💻",
+          "width": 35,
+          "height": 37
+        }
+      }
+    },
+    "zwjGrapheme": {
+      "status": "passed",
+      "evidence": [
+        "single-grapheme-cluster",
+        "no-interior-caret"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ]
+    },
+    "bidiLayout": {
+      "status": "passed",
+      "evidence": [
+        "visual-order"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ]
+    },
+    "paragraphWrapping": {
+      "status": "passed",
+      "evidence": [
+        "line-metrics",
+        "later-line-pixels"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ]
+    },
+    "selectionRects": {
+      "status": "passed",
+      "evidence": [
+        "selection-rects",
+        "line-range"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ]
+    },
+    "graphemeEditing": {
+      "status": "passed",
+      "evidence": [
+        "grapheme-boundaries",
+        "edit-actions"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ]
+    },
+    "imeCandidateAnchor": {
+      "status": "passed",
+      "evidence": [
+        "candidate-anchor",
+        "surrounding-text"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ]
+    },
+    "imeCompositionVisual": {
+      "status": "passed",
+      "evidence": [
+        "composition-range",
+        "preedit-pixels"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ]
+    },
+    "asyncImageSecondFrame": {
+      "status": "passed",
+      "evidence": [
+        "late-completion",
+        "repaint-request",
+        "second-frame-pixels"
+      ],
+      "artifacts": [
+        "artifacts/conformance/renderer-proof/webgpu-wasm-web.log"
+      ]
+    }
+  },
+  "notes": []
+}

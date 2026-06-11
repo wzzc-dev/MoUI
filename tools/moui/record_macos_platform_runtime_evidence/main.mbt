@@ -85,7 +85,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
   let host = Ref("")
   let consumer_command = Ref("")
   let window_evidence_command = Ref(
-    "wzzc-dev/window@0.5.1-fork.3 package evidence macos --status passed",
+    "wzzc-dev/window@0.5.1-0.1.4 package evidence macos --status passed",
   )
   let runtime_logs : Array[String] = []
   let window_smoke_logs : Array[String] = []

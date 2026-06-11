@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "mode": "renderer-proof",
+  "generatedBy": "scripts/record-renderer-proof-manifest.mjs",
+  "backend": "skia-native",
+  "platform": "macos",
+  "status": "failed",
+  "provenance": {
+    "kind": "matching-host-artifact",
+    "workflow": "local",
+    "job": "local",
+    "runId": "local",
+    "runUrl": "https://github.com/unknown/unknown/actions/runs/local",
+    "runner": "local",
+    "artifactName": "moui-renderer-proof-skia-native-macos"
+  },
+  "artifacts": [
+    "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+    "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log",
+    "artifacts/conformance/renderer-proof/skia-native-macos.json"
+  ],
+  "observations": {
+    "radialGradient": {
+      "status": "passed",
+      "evidence": [
+        "center-mid-edge-pixels",
+        "shader-payload"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ]
+    },
+    "transformPixels": {
+      "status": "passed",
+      "evidence": [
+        "pixel-markers"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ]
+    },
+    "colorEmojiPixels": {
+      "status": "passed",
+      "evidence": [
+        "high-saturation-pixels",
+        "glyph-or-raster",
+        "font-metadata",
+        "glyph-metadata",
+        "fallback-request",
+        "emoji-hint",
+        "stable-glyph-key"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ],
+      "metadata": {
+        "font": {
+          "family": "emoji",
+          "source": "skia-system-fontmgr",
+          "textSystem": "skia-raster-text-system",
+          "shaper": "skshaper",
+          "fallbackScriptTag": "und-Zsye",
+          "fallbackLanguageTags": [
+            "und-Zsye",
+            "en"
+          ],
+          "fallbackLanguageTagCount": 2,
+          "fallbackRequestLanguageCount": 2
+        },
+        "glyph": {
+          "format": "rgba",
+          "glyphCount": 1,
+          "clusterCount": 1,
+          "highSaturationPixels": 282,
+          "alphaPixels": 3168,
+          "key": "skia-system-fontmgr|skia-raster-text-system|skshaper|script=und-Zsye|langs=2|lang-tags=und-Zsye+en|emoji-u+128105|rgba",
+          "width": 32,
+          "height": 43,
+          "resolvedMissingGlyphCount": 0,
+          "missingGlyphRecoveryReady": true,
+          "fallbackRequestCharacter": 128105
+        }
+      }
+    },
+    "zwjGrapheme": {
+      "status": "passed",
+      "evidence": [
+        "single-grapheme-cluster",
+        "no-interior-caret"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ]
+    },
+    "bidiLayout": {
+      "status": "passed",
+      "evidence": [
+        "engine=skparagraph",
+        "bidi_visual_order_ready=true",
+        "visual-order"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ]
+    },
+    "paragraphWrapping": {
+      "status": "passed",
+      "evidence": [
+        "engine=skparagraph",
+        "native_paragraph_ready=true",
+        "line-metrics",
+        "later-line-pixels"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ]
+    },
+    "selectionRects": {
+      "status": "passed",
+      "evidence": [
+        "engine=skparagraph",
+        "selection-rects",
+        "line-range",
+        "rect-geometry",
+        "hit-test"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ]
+    },
+    "graphemeEditing": {
+      "status": "passed",
+      "evidence": [
+        "grapheme-boundaries",
+        "edit-actions"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ]
+    },
+    "imeCandidateAnchor": {
+      "status": "passed",
+      "evidence": [
+        "candidate-anchor",
+        "surrounding-text",
+        "grapheme-boundary",
+        "utf8-offsets"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ]
+    },
+    "imeCompositionVisual": {
+      "status": "passed",
+      "evidence": [
+        "composition-range",
+        "composition-cursor",
+        "preedit-pixels"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ]
+    },
+    "asyncImageSecondFrame": {
+      "status": "passed",
+      "evidence": [
+        "late-completion",
+        "repaint-request",
+        "second-frame-pixels"
+      ],
+      "artifacts": [
+        "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
+        "artifacts/platform-evidence/macos/skia-text-emoji-smoke.log"
+      ]
+    }
+  },
+  "notes": [
+    "All renderer observations passed locally, but renderer-proof manifests require GitHub Actions provenance before status can be passed."
+  ]
+}

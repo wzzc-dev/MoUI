@@ -136,7 +136,7 @@ const baseEntry = ({
   routineCommands,
   runtimeEvidenceCommands,
   exampleTargets,
-  windowEvidenceCommand: `wzzc-dev/window@0.5.1-fork.3 package evidence ${name} --status pending`,
+  windowEvidenceCommand: `wzzc-dev/window@0.5.1-0.1.4 package evidence ${name} --status pending`,
   consumerCommand: "pending",
   observations: { ...pendingObservations },
   ...(skiaEvidence(name) ? { skiaEvidence: skiaEvidence(name) } : {}),
@@ -148,7 +148,7 @@ const validManifest = {
   schemaVersion: 2,
   mode: "platform-runtime-evidence",
   generatedBy: "scripts/conformance-check.sh --platform-services",
-  windowEvidenceSource: "wzzc-dev/window@0.5.1-fork.3",
+  windowEvidenceSource: "wzzc-dev/window@0.5.1-0.1.4",
   platforms: [
     baseEntry({
       name: "web",
@@ -265,7 +265,7 @@ const windowsPassed = {
           status: "passed",
           host: "Windows MSVC CI",
           windowEvidenceCommand:
-            "wzzc-dev/window@0.5.1-fork.3 package evidence windows --status passed --host 'Windows MSVC CI'",
+            "wzzc-dev/window@0.5.1-0.1.4 package evidence windows --status passed --host 'Windows MSVC CI'",
           consumerCommand: "moon run examples/showcase/windows_skia --target native",
           observations: { ...passedObservations },
           skiaEvidence: {

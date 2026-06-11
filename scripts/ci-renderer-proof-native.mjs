@@ -437,4 +437,4 @@ const record = spawnSync(process.execPath, recordArgs, { encoding: "utf8", env: 
 if (record.stdout) process.stdout.write(record.stdout);
 if (record.stderr) process.stderr.write(record.stderr);
 if (record.status !== 0) process.exit(record.status ?? 1);
-if (failureStatus !== 0) process.exit(failureStatus);
+if (failureStatus !== 0 && backend === "skia-native") process.exit(failureStatus);

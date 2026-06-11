@@ -1,9 +1,18 @@
 #ifndef MOUI_SKIA_STUB_COMMON_H
 #define MOUI_SKIA_STUB_COMMON_H
 
-#include <moonbit.h>
-
+#if defined(__cplusplus) && defined(__linux__)
 #include <string.h>
+#define MOUI_SKIA_SKIP_MOONBIT_MEMCPY_DECL 1
+#define memcpy memcpy
+#endif
+#include <moonbit.h>
+#if defined(MOUI_SKIA_SKIP_MOONBIT_MEMCPY_DECL)
+#undef memcpy
+#undef MOUI_SKIA_SKIP_MOONBIT_MEMCPY_DECL
+#else
+#include <string.h>
+#endif
 #include <stdint.h>
 #include <stddef.h>
 #include <algorithm>
