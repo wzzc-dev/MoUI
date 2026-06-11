@@ -45,9 +45,10 @@ const manifest = JSON.parse(readFileSync(failedManifestPath, "utf8"));
 if (
   manifest.overallStatus !== "failed" ||
   manifest.browser.product !== "unavailable" ||
-  manifest.targets.length !== 2 ||
+  manifest.targets.length !== 1 ||
   manifest.platformObservations.surface !== "no" ||
   !manifest.targets.every(target =>
+    target.name === "showcase-web-wasm" &&
     target.status === "failed" &&
     target.observations.pageLoaded === "no" &&
     target.observations.transformPixels === "no" &&

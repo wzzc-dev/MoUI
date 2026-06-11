@@ -1,194 +1,67 @@
 #!/usr/bin/env node
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const invocationRoot = process.cwd();
+const toolPackage = "tools/moui/record_web_renderer_proof_manifest";
+const toolExe = join(
+  repoRoot,
+  "_build/native/debug/build/wzzc-dev/moui_tools/moui/record_web_renderer_proof_manifest/record_web_renderer_proof_manifest.exe",
+);
 
 const usage = () => {
   console.error(
     "Usage: node scripts/record-web-renderer-proof-manifest.mjs --web-presentation-manifest <web-runtime-presentation.json> --output <renderer-proof.json> [--require-passed]",
   );
-  process.exit(2);
 };
 
 const args = process.argv.slice(2);
-let webManifestPath = "";
+if (args.includes("--help") || args.includes("-h")) {
+  usage();
+  process.exit(0);
+}
+
 let output = "artifacts/conformance/renderer-proof/webgpu-wasm-web.json";
 let requirePassed = false;
-
 for (let index = 0; index < args.length; index += 1) {
   const arg = args[index];
-  if (arg === "--web-presentation-manifest") webManifestPath = args[++index] ?? "";
-  else if (arg === "--output") output = args[++index] ?? "";
-  else if (arg === "--require-passed") requirePassed = true;
-  else usage();
+  if (arg === "--web-presentation-manifest") {
+    index += 1;
+  } else if (arg === "--output") {
+    output = args[++index] ?? "";
+  } else if (arg === "--require-passed") {
+    requirePassed = true;
+  } else {
+    usage();
+    process.exit(2);
+  }
 }
 
-if (!webManifestPath || !output) usage();
-
-const readJson = path => JSON.parse(readFileSync(path, "utf8"));
-const webManifest = readJson(webManifestPath);
-const showcase = (webManifest.targets || []).find(target => target.name === "showcase-web-wasm");
-const artifactDir = dirname(output);
-const logPath = join(artifactDir, "webgpu-wasm-web.log");
-mkdirSync(artifactDir, { recursive: true });
-
-const proofKeys = [
-  "radialGradient",
-  "transformPixels",
-  "colorEmojiPixels",
-  "zwjGrapheme",
-  "bidiLayout",
-  "paragraphWrapping",
-  "selectionRects",
-  "graphemeEditing",
-  "imeCandidateAnchor",
-  "imeCompositionVisual",
-  "asyncImageSecondFrame",
-];
-
-const markerLines = [];
-const addMarker = (condition, line) => {
-  if (condition) markerLines.push(line);
+const run = (command, commandArgs, options = {}) => {
+  const result = spawnSync(command, commandArgs, {
+    cwd: options.cwd ?? repoRoot,
+    encoding: "utf8",
+  });
+  if (result.stdout) {
+    (options.stdoutToStderr ? process.stderr : process.stdout).write(result.stdout);
+  }
+  if (result.stderr) process.stderr.write(result.stderr);
+  if (result.error) {
+    console.error(result.error.message);
+    process.exit(1);
+  }
+  if (result.status !== 0) process.exit(result.status ?? 1);
 };
 
-const proofEvidenceRequirements = {
-  radialGradient: ["center-mid-edge-pixels", "shader-payload"],
-  colorEmojiPixels: ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
-  zwjGrapheme: ["single-grapheme-cluster", "no-interior-caret"],
-  bidiLayout: ["visual-order"],
-  paragraphWrapping: ["line-metrics", "later-line-pixels"],
-  selectionRects: ["selection-rects", "line-range"],
-  graphemeEditing: ["grapheme-boundaries", "edit-actions"],
-  imeCandidateAnchor: ["candidate-anchor", "surrounding-text"],
-  imeCompositionVisual: ["composition-range", "preedit-pixels"],
-  asyncImageSecondFrame: ["late-completion", "repaint-request", "second-frame-pixels"],
-};
+run("moon", ["build", toolPackage, "--target", "native"]);
+run(toolExe, args, { cwd: invocationRoot, stdoutToStderr: true });
 
-const proofReady = key => {
-  const proof = showcase?.screenshot?.[key];
-  const evidence = Array.isArray(proof?.evidence) ? proof.evidence : [];
-  return (
-    showcase?.observations?.[key] === "yes" &&
-    proof?.passed === true &&
-    proofEvidenceRequirements[key].every(token => evidence.includes(token))
-  );
-};
-
-const colorEmoji = showcase?.screenshot?.colorEmojiPixels;
-const colorEmojiMetadata = colorEmoji?.metadata;
-const colorEmojiFont = colorEmojiMetadata?.font;
-const colorEmojiGlyph = colorEmojiMetadata?.glyph;
-const colorEmojiMetadataReady =
-  colorEmoji?.passed === true &&
-  typeof colorEmojiFont?.family === "string" &&
-  colorEmojiFont.family.trim() !== "" &&
-  typeof colorEmojiFont?.source === "string" &&
-  colorEmojiFont.source.trim() !== "" &&
-  typeof colorEmojiFont?.textSystem === "string" &&
-  colorEmojiFont.textSystem.trim() !== "" &&
-  colorEmojiGlyph?.format === "rgba" &&
-  Number(colorEmojiGlyph?.glyphCount) >= 1 &&
-  Number(colorEmojiGlyph?.clusterCount) >= 1 &&
-  Number(colorEmojiGlyph?.highSaturationPixels) >= 8 &&
-  Number(colorEmojiGlyph?.alphaPixels ?? colorEmoji.glyphAlphaPixels ?? 0) > 0 &&
-  typeof colorEmojiGlyph?.key === "string" &&
-  colorEmojiGlyph.key.trim() !== "" &&
-  Number(colorEmojiGlyph?.width) > 0 &&
-  Number(colorEmojiGlyph?.height) > 0;
-
-const metadataTokenValue = value => `${value ?? ""}`.replace(/\s+/g, "_");
-
-addMarker(
-  proofReady("radialGradient"),
-  "MoUI renderer proof radialGradient passed center-mid-edge-pixels shader-payload",
-);
-addMarker(
-  showcase?.observations?.transformPixels === "yes",
-  "MoUI renderer proof transformPixels passed pixel-markers",
-);
-addMarker(
-  proofReady("colorEmojiPixels") && colorEmojiMetadataReady,
-  "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata",
-);
-if (proofReady("colorEmojiPixels") && colorEmojiMetadataReady) {
-  markerLines.push(
-    [
-      "MoUI renderer proof colorEmojiPixels metadata",
-      `font_family=${metadataTokenValue(colorEmojiFont.family)}`,
-      `font_source=${metadataTokenValue(colorEmojiFont.source)}`,
-      `text_system=${metadataTokenValue(colorEmojiFont.textSystem)}`,
-      `shaper=${metadataTokenValue(colorEmojiFont.shaper || "browser-canvas")}`,
-      `glyph_format=${metadataTokenValue(colorEmojiGlyph.format)}`,
-      `glyph_count=${Number(colorEmojiGlyph.glyphCount)}`,
-      `cluster_count=${Number(colorEmojiGlyph.clusterCount)}`,
-      `high_saturation_pixels=${Number(colorEmojiGlyph.highSaturationPixels)}`,
-      `alpha_pixels=${Number(colorEmojiGlyph.alphaPixels ?? colorEmoji.glyphAlphaPixels ?? 0)}`,
-      `glyph_key=${metadataTokenValue(colorEmojiGlyph.key || "")}`,
-      `glyph_width=${Number(colorEmojiGlyph.width ?? 0)}`,
-      `glyph_height=${Number(colorEmojiGlyph.height ?? 0)}`,
-    ].join(" "),
-  );
-}
-addMarker(
-  proofReady("zwjGrapheme"),
-  "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret",
-);
-addMarker(
-  proofReady("bidiLayout"),
-  "MoUI renderer proof bidiLayout passed visual-order",
-);
-addMarker(
-  proofReady("paragraphWrapping"),
-  "MoUI renderer proof paragraphWrapping passed line-metrics later-line-pixels",
-);
-addMarker(
-  proofReady("selectionRects"),
-  "MoUI renderer proof selectionRects passed selection-rects line-range",
-);
-addMarker(
-  proofReady("graphemeEditing"),
-  "MoUI renderer proof graphemeEditing passed grapheme-boundaries edit-actions",
-);
-addMarker(
-  proofReady("imeCandidateAnchor"),
-  "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text",
-);
-addMarker(
-  proofReady("imeCompositionVisual"),
-  "MoUI renderer proof imeCompositionVisual passed composition-range preedit-pixels",
-);
-addMarker(
-  proofReady("asyncImageSecondFrame"),
-  "MoUI renderer proof asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
-);
-
-const notes = [
-  `webPresentationManifest=${webManifestPath}`,
-  `webPresentationStatus=${webManifest.overallStatus || "unknown"}`,
-  `showcaseStatus=${showcase?.status || "missing"}`,
-  `showcaseObservations=${JSON.stringify(showcase?.observations || {})}`,
-];
-writeFileSync(logPath, `${notes.concat(markerLines).join("\n")}\n`);
-
-const missingProofs = proofKeys.filter(
-  key =>
-    showcase?.observations?.[key] !== "yes" ||
-    (key !== "transformPixels" && !proofReady(key)) ||
-    (key === "colorEmojiPixels" && !colorEmojiMetadataReady),
-);
-if ((webManifest.overallStatus || "failed") !== "passed" || missingProofs.length > 0) {
-  console.error("web renderer proof failed summary:");
-  console.error(`  webPresentationStatus=${webManifest.overallStatus || "unknown"}`);
-  console.error(`  showcaseStatus=${showcase?.status || "missing"}`);
-  console.error(
-    `  missingProofs=${missingProofs.length > 0 ? missingProofs.join(",") : "(none)"}`,
-  );
-  console.error(`  log=${logPath}`);
-}
-
+const logPath = join(dirname(output), "webgpu-wasm-web.log");
 const recorderArgs = [
-  "scripts/record-renderer-proof-manifest.mjs",
+  join(repoRoot, "scripts/record-renderer-proof-manifest.mjs"),
   "--backend",
   "webgpu-wasm",
   "--platform",
@@ -202,7 +75,4 @@ const recorderArgs = [
 ];
 if (requirePassed) recorderArgs.push("--require-passed");
 
-const result = spawnSync(process.execPath, recorderArgs, { encoding: "utf8" });
-if (result.stdout) process.stdout.write(result.stdout);
-if (result.stderr) process.stderr.write(result.stderr);
-if (result.status !== 0) process.exit(result.status ?? 1);
+run(process.execPath, recorderArgs, { cwd: invocationRoot });

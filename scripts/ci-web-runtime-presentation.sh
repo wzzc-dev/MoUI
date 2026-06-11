@@ -76,7 +76,6 @@ find_chrome() {
 mkdir -p artifacts/conformance/web-runtime-presentation artifacts/platform-evidence/web
 
 run moon build examples/showcase/web_wasm --target wasm-gc
-run moon build examples/markdown_editor/web_wasm --target wasm-gc
 
 printf '\n==> python3 -m http.server %s --bind 127.0.0.1\n' "$WEB_RUNTIME_HTTP_PORT"
 python3 -m http.server "$WEB_RUNTIME_HTTP_PORT" --bind 127.0.0.1 \

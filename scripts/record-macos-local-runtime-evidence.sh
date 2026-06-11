@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 manifest="artifacts/conformance/platform-runtime-evidence.json"
 artifact_dir="artifacts/platform-evidence/macos"
 host="macOS Darwin local host"
-consumer_command="moon run examples/markdown_editor/macos_skia --target native"
+consumer_command="moon run examples/showcase/macos_skia --target native"
 run_window_smoke=1
 run_ime_smoke=1
 
@@ -28,12 +28,12 @@ Options:
   --host TEXT            Matching-host label for provenance.
                          Default: macOS Darwin local host
   --skip-window-smoke    Reuse an existing window-macos-runtime-smoke.log.
-  --skip-ime-smoke       Reuse an existing ime-markdown-runtime.log.
+  --skip-ime-smoke       Reuse an existing ime-showcase-runtime.log.
   -h, --help             Show this help.
 
 Prerequisite: macos.skiaEvidence must already be passed, normally via
-scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
-with --record-platform-evidence.
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke with
+--record-platform-evidence.
 EOF
 }
 
@@ -83,9 +83,9 @@ esac
 artifact_abs="$ROOT_DIR/$artifact_dir"
 window_log="$artifact_dir/window-macos-runtime-smoke.log"
 window_log_abs="$ROOT_DIR/$window_log"
-ime_log="$artifact_dir/ime-markdown-runtime.log"
+ime_log="$artifact_dir/ime-showcase-runtime.log"
 ime_log_abs="$ROOT_DIR/$ime_log"
-markdown_log="$artifact_dir/markdown-macos-skia-first-frame.log"
+showcase_log="$artifact_dir/showcase-macos-skia-first-frame.log"
 
 mkdir -p "$artifact_abs"
 
@@ -104,11 +104,9 @@ grep -Fq "MoUI macOS runtime smoke passed" "$window_log_abs"
 if [ "$run_ime_smoke" -eq 1 ]; then
   MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
     MOUI_MACOS_NATIVE_IME_EVIDENCE=1 \
-    moon run examples/markdown_editor/macos_skia --target native \
+    moon run examples/showcase/macos_skia --target native \
     > "$ime_log_abs" 2>&1
 fi
-
-grep -Fq "MoUI native IME Markdown Editor passed" "$ime_log_abs"
 
 node scripts/record-native-ime-evidence.mjs \
   "$manifest" \
@@ -123,8 +121,7 @@ node scripts/record-native-ime-evidence.mjs \
   --scroll-anchor-log "$ime_log" \
   --scale-dpr-anchor-log "$ime_log" \
   --resize-anchor-log "$ime_log" \
-  --markdown-log "$ime_log" \
-  --note "macOS local matching-host Markdown Editor IME runtime artifact was folded before platform promotion."
+  --note "macOS local matching-host Showcase IME runtime artifact was folded before platform promotion."
 
 node scripts/record-macos-platform-runtime-evidence.mjs \
   "$manifest" \
@@ -132,13 +129,13 @@ node scripts/record-macos-platform-runtime-evidence.mjs \
   --consumer-command "$consumer_command" \
   --runtime-log "$ime_log" \
   --window-smoke-log "$window_log" \
-  --app-runtime-log "$markdown_log" \
+  --app-runtime-log "$showcase_log" \
   --provenance-kind matching-host-artifact \
   --provenance-artifact "$window_log" \
   --provenance-artifact "$ime_log" \
-  --provenance-artifact "$markdown_log" \
+  --provenance-artifact "$showcase_log" \
   --provenance-note "macOS platform runtime evidence came from local matching-host AppKit/Skia artifacts." \
-  --note "macOS local matching-host platform evidence folded window smoke, Markdown Editor IME, and Markdown Editor Skia first-frame artifacts."
+  --note "macOS local matching-host platform evidence folded window smoke, Showcase IME, and Showcase Skia first-frame artifacts."
 
 node scripts/validate-platform-evidence-manifest.mjs "$manifest" --platform macos
 

@@ -165,7 +165,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "record-platform-evidence-manifest.mjs",
     },
     {
-      path: "scripts/record-native-skia-evidence.mjs",
+      path: "tools/moui/record_native_skia_evidence/main.mbt",
       token: "Skia route evidence",
     },
     {
@@ -173,7 +173,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "record-platform-evidence-manifest.mjs",
     },
     {
-      path: "scripts/record-native-ime-evidence.mjs",
+      path: "tools/moui/record_native_ime_evidence/main.mbt",
       token: "native IME runtime evidence",
     },
     {
@@ -520,10 +520,6 @@ fn guidance_include_rules() -> Array[TextRule] {
     {
       path: "scripts/ci-web-runtime-presentation.sh",
       token: "moon build examples/showcase/web_wasm --target wasm-gc",
-    },
-    {
-      path: "scripts/ci-web-runtime-presentation.sh",
-      token: "moon build examples/markdown_editor/web_wasm --target wasm-gc",
     },
     {
       path: "scripts/ci-web-runtime-presentation.sh",
@@ -1065,7 +1061,7 @@ fn guidance_include_rules() -> Array[TextRule] {
     },
     { path: "docs/release-readiness.md", token: "asyncImageSecondFrame" },
     { path: "docs/release-readiness.md", token: "resize/input event-bridge" },
-    { path: "docs/release-readiness.md", token: "Markdown Editor text input" },
+    { path: "docs/release-readiness.md", token: "Showcase runtime artifacts" },
     { path: "docs/release-readiness.md", token: "--web-presentation-manifest" },
     { path: "docs/release-readiness.md", token: "monitor/cursor" },
     { path: "docs/release-readiness.md", token: "evidenceProvenance" },
@@ -1550,7 +1546,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "--app-runtime-log",
     },
     {
-      path: "scripts/record-macos-platform-runtime-evidence.mjs",
+      path: "tools/moui/record_macos_platform_runtime_evidence/main.mbt",
       token: "examples/showcase/macos_skia",
     },
     {
@@ -1558,7 +1554,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "native_ime_runtime_evidence",
     },
     {
-      path: "examples/markdown_editor/macos_skia/main.mbt",
+      path: "examples/showcase/macos_skia/main.mbt",
       token: "MOUI_MACOS_NATIVE_IME_EVIDENCE",
     },
     {
@@ -1567,10 +1563,10 @@ fn guidance_include_rules() -> Array[TextRule] {
     },
     {
       path: ".github/workflows/ci.yml",
-      token: "artifacts/platform-evidence/macos/ime-markdown-runtime.log",
+      token: "artifacts/platform-evidence/macos/ime-showcase-runtime.log",
     },
     {
-      path: "scripts/record-macos-platform-runtime-evidence.mjs",
+      path: "tools/moui/record_macos_platform_runtime_evidence/main.mbt",
       token: "macos.skiaEvidence.status must already be passed",
     },
     {
@@ -1635,47 +1631,42 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "--scale-dpr-anchor-log",
     },
     {
-      path: "scripts/record-native-ime-evidence.mjs",
+      path: "tools/moui/record_native_ime_evidence/main.mbt",
       token: "appkit-setMarkedText",
     },
     {
-      path: "scripts/record-native-ime-evidence.mjs",
+      path: "tools/moui/record_native_ime_evidence/main.mbt",
       token: "appkit-firstRectForCharacterRange",
     },
     {
-      path: "scripts/record-native-ime-evidence.mjs",
+      path: "tools/moui/record_native_ime_evidence/main.mbt",
       token: "appkit-insertText",
     },
     {
-      path: "scripts/record-native-ime-evidence.mjs",
+      path: "tools/moui/record_native_ime_evidence/main.mbt",
       token: "platform-protocol=windows-ime",
     },
-    { path: "scripts/record-native-ime-evidence.mjs", token: "renderer=skia" },
-    { path: "scripts/record-native-ime-evidence.mjs", token: "tokenMarker" },
-    { path: "scripts/record-native-ime-evidence.mjs", token: "app=showcase" },
+    { path: "tools/moui/record_native_ime_evidence/main.mbt", token: "renderer=skia" },
     {
-      path: "scripts/record-native-ime-evidence.mjs",
-      token: "app=markdown-editor",
+      path: "tools/moui/record_native_ime_evidence/main.mbt",
+      token: "has_whitespace_delimited_token",
     },
+    { path: "tools/moui/record_native_ime_evidence/main.mbt", token: "app=showcase" },
     {
-      path: "scripts/record-native-ime-evidence.mjs",
+      path: "tools/moui/record_native_ime_evidence/main.mbt",
       token: "candidate-window",
     },
     {
-      path: "scripts/record-native-ime-evidence.mjs",
-      token: "composition range, cursor",
+      path: "tools/moui/record_native_ime_evidence/main.mbt",
+      token: "composition-range",
     },
     {
-      path: "scripts/record-native-ime-evidence.mjs",
+      path: "tools/moui/record_native_ime_evidence/main.mbt",
       token: "preedit-underline",
     },
     {
-      path: "scripts/record-native-ime-evidence.mjs",
-      token: "examples/showcase/${platformName}_skia",
-    },
-    {
-      path: "scripts/record-native-ime-evidence.mjs",
-      token: "examples/markdown_editor/${platformName}_skia",
+      path: "tools/moui/record_native_ime_evidence/main.mbt",
+      token: "\"examples/showcase/\" + options.platform + \"_skia\"",
     },
     {
       path: "scripts/test-record-native-ime-evidence.mjs",
@@ -1718,7 +1709,7 @@ fn guidance_include_rules() -> Array[TextRule] {
     { path: "docs/testing.md", token: "IME candidate anchors" },
     {
       path: "docs/testing.md",
-      token: "examples/markdown_editor/<platform>_skia",
+      token: "examples/showcase/<platform>_skia",
     },
     { path: "docs/testing.md", token: "platform-protocol=windows-ime" },
     { path: "docs/testing.md", token: "appkit-firstRectForCharacterRange" },

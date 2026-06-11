@@ -48,7 +48,6 @@ const pendingObservations = {
   imeScrollAnchor: "pending",
   imeScaleDprAnchor: "pending",
   imeResizeAnchor: "pending",
-  imeMarkdownEditor: "pending",
 };
 
 const nativeImeObservationKeys = [
@@ -60,7 +59,6 @@ const nativeImeObservationKeys = [
   "imeScrollAnchor",
   "imeScaleDprAnchor",
   "imeResizeAnchor",
-  "imeMarkdownEditor",
 ];
 
 const webPresentationObservationKeys = [
@@ -185,7 +183,6 @@ const skiaObservationKeys = [
   "realRendererSmoke",
   "asyncImageSecondFrame",
   "showcaseFirstFrame",
-  "markdownFirstFrame",
 ];
 
 const passedSkiaObservationArgs = skiaObservationKeys.flatMap(key => [
@@ -225,16 +222,14 @@ const validManifest = {
       routineCommands: [
         "moon test moui/backend/web --target wasm-gc",
         "moon build examples/showcase/web_wasm --target wasm-gc",
-        "moon build examples/markdown_editor/web_wasm --target wasm-gc",
       ],
       runtimeEvidenceCommands: [
         "python3 -m http.server 18080 --bind 127.0.0.1",
-        "node scripts/record-web-runtime-presentation.mjs --base-url http://127.0.0.1:18080 --cdp-url http://127.0.0.1:9223 --manifest artifacts/conformance/web-runtime-presentation.json --require-passed # opens examples/showcase/web_wasm and examples/markdown_editor/web_wasm",
+        "node scripts/record-web-runtime-presentation.mjs --base-url http://127.0.0.1:18080 --cdp-url http://127.0.0.1:9223 --manifest artifacts/conformance/web-runtime-presentation.json --require-passed # opens examples/showcase/web_wasm",
         "node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json web --web-presentation-manifest artifacts/conformance/web-runtime-presentation.json",
       ],
       exampleTargets: [
         "examples/showcase/web_wasm",
-        "examples/markdown_editor/web_wasm",
       ],
     }),
     baseEntry({
@@ -243,15 +238,12 @@ const validManifest = {
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/macos_skia --target native",
-        "moon build examples/markdown_editor/macos_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/macos_skia --target native",
-        "moon run examples/markdown_editor/macos_skia --target native",
       ],
       exampleTargets: [
         "examples/showcase/macos_skia",
-        "examples/markdown_editor/macos_skia",
       ],
     }),
     baseEntry({
@@ -260,16 +252,13 @@ const validManifest = {
       routineCommands: [
         "moon test moui/backend/windows --target native",
         "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
-        "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
         "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\package_windows_app_msvc.ps1 -Package examples/showcase/windows_skia",
       ],
       runtimeEvidenceCommands: [
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"",
-        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\"",
       ],
       exampleTargets: [
         "examples/showcase/windows_skia",
-        "examples/markdown_editor/windows_skia",
       ],
     }),
     baseEntry({
@@ -278,15 +267,12 @@ const validManifest = {
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/linux_skia --target native",
-        "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/linux_skia --target native",
-        "moon run examples/markdown_editor/linux_skia --target native",
       ],
       exampleTargets: [
         "examples/showcase/linux_skia",
-        "examples/markdown_editor/linux_skia",
       ],
     }),
   ],
@@ -327,9 +313,7 @@ const webPresentationTarget = ({
     ? `http://127.0.0.1:18080/${path}?debug=1&section=advanced-rendering`
     : `http://127.0.0.1:18080/${path}?debug=1`,
   status,
-  title: name === "showcase-web-wasm"
-    ? "MoUI Showcase Wasm GC"
-    : "MoUI Markdown Editor Wasm GC",
+  title: "MoUI Showcase Wasm GC",
   statusText: status === "passed" ? "Running" : "Failed",
   bodyFailed: status !== "passed",
   navigatorGpu: status === "passed",
@@ -410,7 +394,7 @@ const webPresentationTarget = ({
     : [],
   observations: {
     ...webPresentationObservations(status === "passed" ? "yes" : "no"),
-    textInput: name === "markdown-editor-web-wasm" && status === "passed" ? "yes" : "no",
+    textInput: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     radialGradient: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     transformPixels: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     colorEmojiPixels: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
@@ -452,12 +436,6 @@ const writeWebPresentationManifest = (name, overallStatus) => {
         name: "showcase-web-wasm",
         packagePath: "examples/showcase/web_wasm",
         path: "examples/showcase/web_wasm/index.html",
-        status: targetStatus,
-      }),
-      webPresentationTarget({
-        name: "markdown-editor-web-wasm",
-        packagePath: "examples/markdown_editor/web_wasm",
-        path: "examples/markdown_editor/web_wasm/index.html",
         status: targetStatus,
       }),
     ],
@@ -545,8 +523,6 @@ expectPass(
     "artifacts/platform-evidence/windows/skia-provider.log",
     "--skia-artifact",
     "artifacts/platform-evidence/windows/showcase-skia-first-frame.log",
-    "--skia-artifact",
-    "artifacts/platform-evidence/windows/markdown-skia-first-frame.log",
     "--skia-note",
     "matching-host Windows Skia first-frame evidence observed",
     "--skia-provenance-kind",
@@ -557,8 +533,6 @@ expectPass(
     "artifacts/platform-evidence/windows/skia-provider.log",
     "--skia-provenance-artifact",
     "artifacts/platform-evidence/windows/showcase-skia-first-frame.log",
-    "--skia-provenance-artifact",
-    "artifacts/platform-evidence/windows/markdown-skia-first-frame.log",
     "--skia-provenance-note",
     "Windows Skia evidence came from matching-host first-frame artifacts",
   ]),

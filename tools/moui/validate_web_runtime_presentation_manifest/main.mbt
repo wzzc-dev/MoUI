@@ -78,11 +78,6 @@ fn expected_targets() -> Array[ExpectedTarget] {
       package_path: "examples/showcase/web_wasm",
       path: "examples/showcase/web_wasm/index.html",
     },
-    {
-      name: "markdown-editor-web-wasm",
-      package_path: "examples/markdown_editor/web_wasm",
-      path: "examples/markdown_editor/web_wasm/index.html",
-    },
   ]
 }
 
@@ -746,9 +741,6 @@ fn validate_showcase_text_and_image_proofs(
 
 ///|
 fn observation_required_for_passed_target(key : String, name : String) -> Bool {
-  if key == "textInput" && name != "markdown-editor-web-wasm" {
-    return false
-  }
   if key == "transformPixels" && name != "showcase-web-wasm" {
     return false
   }

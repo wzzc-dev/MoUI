@@ -226,12 +226,12 @@ markers, not matching-host native IME runtime evidence.
 Platform runtime evidence splits native IME readiness further: native
 `status=passed` entries must also record `imeSurroundingText`,
 `imeCommitDelete`, `imeCursorUpdate`, `imeScrollAnchor`,
-`imeScaleDprAnchor`, `imeResizeAnchor`, and `imeMarkdownEditor` observations
-from matching-host Showcase or Markdown Editor artifacts. Those logs must carry
+`imeScaleDprAnchor`, and `imeResizeAnchor` observations from matching-host
+Showcase artifacts. Those logs must carry
 matching-host runtime, native-app, `renderer=skia`, the matching app marker,
 platform-protocol, candidate-window, surrounding-text, composition-visual,
-commit/delete, cursor-update, scroll, scale/DPR, resize, and Markdown Editor
-dogfood markers, so package-only composition tests and coarse `textInput`
+commit/delete, cursor-update, scroll, scale/DPR, and resize markers, so
+package-only composition tests and coarse `textInput`
 observations cannot promote native IME readiness by themselves.
 These fields make CI artifacts easier to audit, but they are not yet a
 guarantee of exact cross-platform typeface identity, glyph-id determinism,

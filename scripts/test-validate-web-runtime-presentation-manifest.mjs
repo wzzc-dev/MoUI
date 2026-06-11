@@ -69,13 +69,9 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
   name,
   packagePath,
   path,
-  url: name === "showcase-web-wasm"
-    ? `http://127.0.0.1:18080/${path}?debug=1&section=advanced-rendering`
-    : `http://127.0.0.1:18080/${path}?debug=1`,
+  url: `http://127.0.0.1:18080/${path}?debug=1&section=advanced-rendering`,
   status,
-  title: name === "showcase-web-wasm"
-    ? "MoUI Showcase Wasm GC"
-    : "MoUI Markdown Editor Wasm GC",
+  title: "MoUI Showcase Wasm GC",
   statusText: status === "passed" ? "Running" : "Failed",
   bodyFailed: status !== "passed",
   navigatorGpu: status === "passed",
@@ -210,7 +206,7 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
     : [],
   observations: {
     ...observations(status === "passed" ? "yes" : "no"),
-    textInput: name === "markdown-editor-web-wasm" && status === "passed" ? "yes" : "no",
+    textInput: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     transformPixels: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     radialGradient: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
     colorEmojiPixels: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
@@ -247,11 +243,6 @@ const validManifest = {
       name: "showcase-web-wasm",
       packagePath: "examples/showcase/web_wasm",
       path: "examples/showcase/web_wasm/index.html",
-    }),
-    target({
-      name: "markdown-editor-web-wasm",
-      packagePath: "examples/markdown_editor/web_wasm",
-      path: "examples/markdown_editor/web_wasm/index.html",
     }),
   ],
 };
@@ -296,14 +287,14 @@ expectPass(
 );
 
 expectFail(
-  "missing markdown target",
+  "missing showcase target",
   runValidator(
-    writeFixture("missing-markdown.json", {
+    writeFixture("missing-showcase.json", {
       ...validManifest,
-      targets: validManifest.targets.filter(target => target.name !== "markdown-editor-web-wasm"),
+      targets: [],
     }),
   ),
-  "targets must include 'markdown-editor-web-wasm'",
+  "targets must include 'showcase-web-wasm'",
 );
 
 expectFail(

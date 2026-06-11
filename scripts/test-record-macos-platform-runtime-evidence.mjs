@@ -19,7 +19,6 @@ const nativeImeObservationKeys = [
   "imeScrollAnchor",
   "imeScaleDprAnchor",
   "imeResizeAnchor",
-  "imeMarkdownEditor",
 ];
 const skiaObservationKeys = [
   "providerPreflight",
@@ -27,7 +26,6 @@ const skiaObservationKeys = [
   "realRendererSmoke",
   "asyncImageSecondFrame",
   "showcaseFirstFrame",
-  "markdownFirstFrame",
 ];
 
 const pendingObservations = {
@@ -55,13 +53,12 @@ const passedSkiaEvidence = {
     "moon test moui/backend/macos/skia --target native",
   ],
   runtimeSmokeCommands: [
-    "scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke",
+    "scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke",
   ],
   observations: Object.fromEntries(skiaObservationKeys.map(key => [key, "yes"])),
   artifacts: [
     "artifacts/platform-evidence/macos/skia-renderer-smoke.log",
     "artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log",
-    "artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log",
   ],
   notes: ["matching-host macOS Skia route evidence passed"],
   evidenceProvenance: {
@@ -88,15 +85,12 @@ const baseManifest = ({ imePassed = true, skiaPassed = true } = {}) => ({
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/macos_skia --target native",
-        "moon build examples/markdown_editor/macos_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/macos_skia --target native",
-        "moon run examples/markdown_editor/macos_skia --target native",
       ],
       exampleTargets: [
         "examples/showcase/macos_skia",
-        "examples/markdown_editor/macos_skia",
       ],
       windowEvidenceCommand:
         ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
@@ -156,10 +150,6 @@ const windowSmokeLogText = [
 
 const showcaseAppLogText = [
   "macOS renderer presented first frame; exiting by request; title=MoUI Showcase",
-].join("\n");
-
-const markdownAppLogText = [
-  "macOS renderer presented first frame; exiting by request; title=MoUI Markdown Editor",
 ].join("\n");
 
 const writeArtifact = (name, content = runtimeLogText) => {
@@ -222,7 +212,6 @@ try {
   const runtimeLog = writeArtifact("runtime.log");
   const windowSmokeLog = writeArtifact("window-smoke.log", windowSmokeLogText);
   const showcaseAppLog = writeArtifact("showcase-app.log", showcaseAppLogText);
-  const markdownAppLog = writeArtifact("markdown-app.log", markdownAppLogText);
   const localPath = writeManifest("macos-local.json");
   expectPass(
     "record local macOS platform runtime evidence",
@@ -244,7 +233,6 @@ try {
     localEntry.status !== "passed" ||
     localEntry.observations.windowOpened !== "yes" ||
     localEntry.observations.monitorCursor !== "yes" ||
-    localEntry.observations.imeMarkdownEditor !== "yes" ||
     localEntry.skiaEvidence.status !== "passed" ||
     localEntry.evidenceProvenance?.kind !== "matching-host-artifact" ||
     !localEntry.artifacts.includes(runtimeLog) ||
@@ -263,11 +251,11 @@ try {
       "--host",
       "macOS Darwin local host",
       "--consumer-command",
-      "moon run examples/markdown_editor/macos_skia --target native",
+      "moon run examples/showcase/macos_skia --target native",
       "--window-smoke-log",
       windowSmokeLog,
       "--app-runtime-log",
-      markdownAppLog,
+      showcaseAppLog,
     ]),
   );
   const source = JSON.parse(readFileSync(sourcePath, "utf8"));
@@ -278,7 +266,7 @@ try {
     sourceEntry.observations.consumerInput !== "yes" ||
     sourceEntry.observations.cleanShutdown !== "yes" ||
     !sourceEntry.artifacts.includes(windowSmokeLog) ||
-    !sourceEntry.artifacts.includes(markdownAppLog)
+    !sourceEntry.artifacts.includes(showcaseAppLog)
   ) {
     console.error("record macOS platform runtime evidence from source logs: manifest was not updated correctly");
     dumpEntry(sourceEntry);
@@ -379,11 +367,11 @@ try {
       "--host",
       "macOS Darwin local host",
       "--consumer-command",
-      "moon run examples/markdown_editor/macos_skia --target native",
+      "moon run examples/showcase/macos_skia --target native",
       "--window-smoke-log",
       missingImeProbeLog,
       "--app-runtime-log",
-      markdownAppLog,
+      showcaseAppLog,
     ]),
     "macOS window smoke log is missing expected marker",
   );
