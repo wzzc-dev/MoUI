@@ -123,9 +123,11 @@ run moon test moui/backend/web --target wasm-gc
 
 run moon test examples/showcase/app --target native
 run moon test examples/markdown_editor/app --target native
+run moon test examples/design_systems/app --target native
 
 run moon build examples/showcase/web_wasm --target wasm-gc
 run moon build examples/markdown_editor/web_wasm --target wasm-gc
+run moon build examples/design_systems/web_wasm --target wasm-gc
 run node scripts/test-validate-web-runtime-handoff.mjs
 run node scripts/validate-web-runtime-handoff.mjs
 
