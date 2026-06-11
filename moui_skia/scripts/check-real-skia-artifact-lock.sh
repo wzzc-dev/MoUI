@@ -219,9 +219,9 @@ write_release_artifact "$bad_package_dir" \
   "$release_tag" \
   "$release_url" \
   "$release_commit" \
-  "Skia-dev-6d73578a36-linux-Release-ppc64.zip"
+  "Skia-dev-6d73578a36-linux-Release-not-locked.zip"
 assert_fails_with \
-  "release package is not locked" \
+  "release package SHA256 mismatch" \
   bash "$repo_root/scripts/verify-real-skia-artifact.sh" --platform linux --log-dir "$bad_package_dir"
 
 bad_sha_dir="$tmp_root/bad-sha"
@@ -265,7 +265,7 @@ write_release_artifact "$bad_link_mode_dir" \
   "$release_sha256" \
   "dynamic"
 assert_fails_with \
-  "release package is not locked" \
+  "release package SHA256 mismatch" \
   bash "$repo_root/scripts/verify-real-skia-artifact.sh" --platform linux --log-dir "$bad_link_mode_dir"
 
 echo "Verified release real Skia artifact lock rejection paths."
