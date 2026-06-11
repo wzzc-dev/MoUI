@@ -303,6 +303,14 @@ pub fn ButtonStyle::ghost(theme? : Theme) -> Self
 pub fn ButtonStyle::outline(theme? : Theme) -> Self
 pub fn ButtonStyle::tonal(theme? : Theme) -> Self
 
+pub(all) struct CachedLayerSpec {
+  key : String
+  frame : Rect
+  content_revision : Int
+  scale_factor : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn CachedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
+
 pub(all) struct ChoiceControlStyle {
   foreground : Color
   selected_color : Color
@@ -311,14 +319,6 @@ pub(all) struct ChoiceControlStyle {
   control_size : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ChoiceControlStyle::default(theme? : Theme) -> Self
-
-pub(all) struct CachedLayerSpec {
-  key : String
-  frame : Rect
-  content_revision : Int
-  scale_factor : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn CachedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
 
 pub(all) struct Clock {
   mut last_time_ms : Double?
