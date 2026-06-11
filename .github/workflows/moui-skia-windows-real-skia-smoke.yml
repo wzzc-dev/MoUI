@@ -137,8 +137,8 @@ jobs:
 
       - name: Update MoonBit registry
         if: ${{ !inputs.dry_run_config }}
-        shell: pwsh
-        run: moon update
+        shell: bash
+        run: ../scripts/ci-moon-update.sh
 
       - name: Run native smoke test
         shell: pwsh
