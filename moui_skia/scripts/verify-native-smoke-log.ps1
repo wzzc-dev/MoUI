@@ -28,6 +28,7 @@ if (!(Test-Path -LiteralPath $toolDir -PathType Container)) {
 }
 
 $exitCode = 0
+$errorMessage = ""
 Push-Location $workspaceRoot
 try {
   $toolArgs = @("--repo-root", $repoRoot)
@@ -47,11 +48,30 @@ try {
     exit $LASTEXITCODE
   }
   $toolExe = Join-Path $workspaceRoot "_build/native/debug/build/wzzc-dev/moui_tools/moui_skia/verify_native_smoke_log/verify_native_smoke_log.exe"
-  & $toolExe @toolArgs
+  $toolOutput = & $toolExe @toolArgs 2>&1
   $exitCode = $LASTEXITCODE
+  $toolOutput | ForEach-Object { Write-Host $_ }
+  if ($exitCode -ne 0) {
+    $errorMessage = ($toolOutput -join [Environment]::NewLine)
+  } elseif (!$Help) {
+    $verified = $false
+    foreach ($line in @($toolOutput)) {
+      if ("$line".StartsWith("Verified native smoke stage markers and success marker in ")) {
+        $verified = $true
+        break
+      }
+    }
+    if (!$verified) {
+      $exitCode = 1
+      $errorMessage = ($toolOutput -join [Environment]::NewLine)
+      if (!$errorMessage) {
+        $errorMessage = "native smoke log verifier did not print a verification marker"
+      }
+    }
+  }
 } finally {
   Pop-Location
 }
 if ($exitCode -ne 0) {
-  exit $exitCode
+  throw $errorMessage
 }

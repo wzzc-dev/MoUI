@@ -830,7 +830,7 @@ fi
 if [[ -n "$extra_link_flags" ]]; then
   skia_link_flags="$skia_link_flags $extra_link_flags"
 fi
-showcase_link_flags="-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz $skia_link_flags"
+showcase_link_flags="-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -lz $skia_link_flags"
 
 echo "MoUI macOS Skia renderer smoke environment:"
 echo "  moon=$(moon version 2>/dev/null | head -n 1 || true)"
