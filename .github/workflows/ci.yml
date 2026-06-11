@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           moon version --all
-          moon update
+          sh scripts/ci-moon-update.sh
 
       - name: Check dependency wiring
         run: sh scripts/check-local-deps.sh
@@ -59,7 +59,7 @@ jobs:
       - name: Install dependencies
         run: |
           moon version --all
-          moon update
+          sh scripts/ci-moon-update.sh
 
       - name: Generate public API interfaces
         run: moon info
@@ -87,7 +87,7 @@ jobs:
       - name: Install dependencies
         run: |
           moon version --all
-          moon update
+          sh scripts/ci-moon-update.sh
 
       - name: Run Linux backend tests
         run: sh scripts/dev-check.sh --platform-examples-test
@@ -109,7 +109,7 @@ jobs:
       - name: Install dependencies
         run: |
           moon version --all
-          moon update
+          sh scripts/ci-moon-update.sh
 
       - name: Package Showcase app bundle
         run: |
@@ -146,7 +146,7 @@ jobs:
       - name: Install dependencies
         run: |
           moon version --all
-          moon update
+          sh scripts/ci-moon-update.sh
 
       - name: Build benchmark targets
         run: sh scripts/conformance-check.sh --bench
@@ -166,10 +166,10 @@ jobs:
         uses: ./.github/actions/setup-moonbit
 
       - name: Install dependencies
-        shell: pwsh
+        shell: bash
         run: |
           moon version --all
-          moon update
+          sh scripts/ci-moon-update.sh
 
       - name: Run Windows backend tests
         shell: pwsh
@@ -259,9 +259,10 @@ jobs:
         run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_wgpu_native.ps1
 
       - name: Install dependencies
+        shell: bash
         run: |
           moon version --all
-          moon update
+          sh scripts/ci-moon-update.sh
 
       - name: Record native WGPU renderer proof
         if: ${{ matrix.platform != 'windows' }}
@@ -324,9 +325,10 @@ jobs:
         uses: ./.github/actions/setup-moonbit
 
       - name: Install dependencies
+        shell: bash
         run: |
           moon version --all
-          moon update
+          sh scripts/ci-moon-update.sh
 
       - name: Cache release Skia
         uses: actions/cache@v4
@@ -440,7 +442,7 @@ jobs:
       - name: Install dependencies
         run: |
           moon version --all
-          moon update || { sleep 10; moon update; }
+          sh scripts/ci-moon-update.sh
 
       - name: Record Web runtime presentation evidence
         env:
@@ -475,7 +477,7 @@ jobs:
         run: |
           command -v rg >/dev/null 2>&1 || brew install ripgrep
           moon version --all
-          moon update
+          sh scripts/ci-moon-update.sh
 
       - name: Initialize platform runtime evidence manifest
         run: sh scripts/conformance-check.sh --platform-services-manifest-only
@@ -611,7 +613,7 @@ jobs:
       - name: Install dependencies
         run: |
           moon version --all
-          moon update
+          sh scripts/ci-moon-update.sh
 
       - name: Download renderer proof artifacts
         uses: actions/download-artifact@v4

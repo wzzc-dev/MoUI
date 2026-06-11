@@ -42,4 +42,4 @@ jobs:
         working-directory: moui_skia
         run: |
           moon version --all
-          moon update
+          ../scripts/ci-moon-update.sh

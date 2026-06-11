@@ -44,7 +44,7 @@ jobs:
 
       - name: Update MoonBit registry
         shell: bash
-        run: moon update
+        run: ../scripts/ci-moon-update.sh
 
       - name: Install build dependencies
         shell: bash
@@ -140,7 +140,7 @@ jobs:
 
       - name: Update MoonBit registry
         shell: bash
-        run: moon update
+        run: ../scripts/ci-moon-update.sh
 
       - name: Install build dependencies
         shell: bash
@@ -225,8 +225,8 @@ jobs:
         run: moon version --all
 
       - name: Update MoonBit registry
-        shell: pwsh
-        run: moon update
+        shell: bash
+        run: ../scripts/ci-moon-update.sh
 
       - name: Resolve Visual Studio environment
         shell: pwsh

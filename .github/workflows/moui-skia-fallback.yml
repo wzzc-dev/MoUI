@@ -45,7 +45,8 @@ jobs:
         run: moon version --all
 
       - name: Update MoonBit registry
-        run: moon update
+        shell: bash
+        run: ../scripts/ci-moon-update.sh
 
       - name: Install Linux smoke dependencies
         if: runner.os != 'Windows'
