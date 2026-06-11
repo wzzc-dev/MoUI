@@ -1296,9 +1296,9 @@ fn macos_native_ime_focus_points(title : String) -> Array[@core.Point] {
     ]
   } else {
     [
-      @core.Point::new(x=34.0, y=360.0),
-      @core.Point::new(x=64.0, y=360.0),
-      @core.Point::new(x=120.0, y=360.0),
+      @core.Point::new(x=48.0, y=148.0),
+      @core.Point::new(x=120.0, y=148.0),
+      @core.Point::new(x=200.0, y=148.0),
     ]
   }
 }

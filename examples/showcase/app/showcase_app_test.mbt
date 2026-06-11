@@ -368,6 +368,19 @@ test "showcase sidebar catalog scrolls to lower sections" {
 }
 
 ///|
+test "showcase native ime evidence points focus sidebar search" {
+  let runtime = @app.ShowcaseApp::new().runtime(width=960.0, height=560.0)
+  click_point(runtime, @core.Point::new(x=120.0, y=148.0))
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("moui")),
+  )
+  let input = runtime.focused_text_input()
+  assert_true(input.focused)
+  inspect(input.text, content="moui")
+  assert_true(input.caret_rect.size.height > 0.0)
+}
+
+///|
 test "showcase detail panel scrolls long section content" {
   let size = @core.Size::new(width=760.0, height=420.0)
   let model = @app.ShowcaseModel::new().update(
