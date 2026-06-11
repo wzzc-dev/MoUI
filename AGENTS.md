@@ -123,31 +123,31 @@ paths, or abstractions that only preserve old shapes.
 
 ## Local Dependencies
 
-The project expects the modified local `wzzc-dev/window` checkout at
-`.local_repos/window` and the repo-local editable `wzzc-dev/moui_skia`
-workspace member at `moui_skia`, as described in `docs/development.md`. Local
-`moon.mod`, `moon.work`, and `moon.pkg` files are the source of truth for
-imports, workspace members, and supported targets.
+The project now resolves `wzzc-dev/window` from the MoonBit registry as
+`wzzc-dev/window@0.5.1-fork.3`; `moon.work` must not include an editable
+`.local_repos/window` member. The repo-local editable dependency is
+`wzzc-dev/moui_skia` at `moui_skia`, as described in `docs/development.md`.
+Local `moon.mod`, `moon.work`, and `moon.pkg` files remain the source of truth
+for imports, workspace members, and supported targets.
 
-Use `sh scripts/setup-local-deps.sh` to create or repair the local window checkout and
-`sh scripts/check-local-deps.sh` to verify that `window` points at the
-`wzzc-dev/window` fork on the `moui-support` branch and `moui_skia` is present as
-the repo-local `wzzc-dev/moui_skia` workspace member. The upstream window remote is
-`https://github.com/moonbit-community/window.git`; the MoUI window fork remote
-is `git@github.com:wzzc-dev/window.git`.
-`scripts/setup-local-deps.sh` also fast-forwards the existing clean window
-checkout to its expected origin branch; it stops before overwriting local
-changes in `.local_repos/`.
-The local-dependency check also verifies the window fork's MoUI-oriented smoke
-and evidence files such as `docs/moui-integration-smoke.md`,
-`scripts/check_moui_*_smoke.sh`, and `scripts/record_moui_evidence.sh` are
-present and still wired to the expected smoke contract: macOS through
-`moon run examples/moui_macos_smoke --target native`, Web wasm-gc artifacts
-under module-qualified `wzzc-dev/window/examples/...` paths, and MoUI Web smoke
-consumer sentinel lines. Treat those as dependency-level matching-host evidence
-entrypoints; they do not replace MoUI Showcase or Markdown Editor platform
-validation.
-It also verifies the Skia binding acceptance surface, including
+Use `moon update` to refresh registry dependencies and
+`sh scripts/check-local-deps.sh` to verify that `moui/moon.mod` and
+`moui_skia/moon.mod` both import `wzzc-dev/window@0.5.1-fork.3`, `moon.work`
+does not reintroduce `.local_repos/window`, and `moui_skia` is present as the
+repo-local `wzzc-dev/moui_skia` workspace member. The MoonBit ecosystem and
+package registry are still maturing; if a build or smoke starts failing without
+a local code change, treat dependency resolution, registry cache state, and
+package-version regressions as plausible causes before assuming the MoUI code is
+wrong.
+
+The window package still carries MoUI-oriented smoke and evidence files such as
+`docs/moui-integration-smoke.md`, `scripts/check_moui_*_smoke.sh`, and
+`scripts/record_moui_evidence.sh`. Use
+`scripts/run-window-package-smoke.sh <platform>` to run those helpers from the
+resolved registry package without creating a local checkout. Treat those as
+dependency-level matching-host evidence entrypoints; they do not replace MoUI
+Showcase platform validation.
+The dependency check also verifies the Skia binding acceptance surface, including
 `skia-platform-status.json`, `skia-provider-lock.json`,
 `SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
 `moui_skia/scripts/verify-platform-status.sh`, and
@@ -165,24 +165,13 @@ main repository.
 
 When asked to update the repository, treat it as a multi-checkout update:
 update the main MoUI checkout, initialize/update any Git submodules such as
-`.agents/skills/moonbit-skills`, and update every editable checkout under
-`.local_repos/`. `moui_skia` now updates with the main checkout rather than as a
-nested repository. Do not assume updating the root repository also updates
-remaining nested repositories. On Windows, use
+`.agents/skills/moonbit-skills`, run `moon update` for registry packages, and
+remember that `moui_skia` updates with the main checkout rather than as a
+nested repository. On Windows, use
 `powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1`
-from the repository root for this routine; it also creates or updates
-`.local_repos/window` on `moui-support`.
-
-`.local_repos/window` is an editable local dependency, not a vendored snapshot
-or submodule. It exists because upstream `moonbit-community/window` currently
-only covers macOS, while MoUI needs Web, Windows, and Linux support. Changes in
-that checkout should stay limited to the `web/`, `windows/`, and `linux/`
-platform packages and their package-local tests/docs when possible. Avoid
-changing `macos/`, shared packages such as `core/` and `dpi/`, or common
-behavior unless the task explicitly requires it; keeping the fork narrow makes
-future upstreaming safer. The local checkout must declare
-`name = wzzc-dev/window` in `moon.mod` or `moon.mod.json` so workspace imports
-bind to the editable fork.
+from the repository root when you need the Windows helper for root/submodule
+updates; it no longer needs to create a local window checkout for normal MoUI
+builds.
 
 `moui_skia` is also an editable local dependency, now stored as a repo-local
 workspace member rather than a submodule or nested Git checkout.
@@ -201,11 +190,10 @@ validated by `scripts/verify-platform-status.sh`/`.ps1` and
 dependency evidence for the Skia binding, provider artifact lock, and FFI
 surface coverage, not as MoUI Showcase runtime evidence.
 
-When asked to merge upstream `window` changes, work inside `.local_repos/window`
-on `moui-support`, fetch `upstream`, and merge the upstream branch into the fork
-branch. Preserve upstream macOS and shared behavior where possible; resolve
-conflicts by keeping MoUI-specific additions scoped to Web, Windows, and Linux
-unless the user explicitly approves broader fork changes.
+When asked to change the `window` dependency itself, work in the separate
+`wzzc-dev/window` repository, publish a new fork package version, then update
+MoUI's `moon.mod` imports and package-smoke expectations. Do not reintroduce a
+repo-local window workspace member for routine MoUI development.
 
 ## MoonBit Package Rules
 
@@ -318,8 +306,8 @@ preflight, or dependency smoke is not enough for `status=passed` runtime
 evidence. `artifacts/platform-evidence/*/README.md` files are placeholder
 documentation and must not be used as passed platform, Skia, or provenance
 artifacts. The
-manifest is schema v2 and mirrors the local window recorder's monitor/cursor
-field as `monitorCursor`; native passed evidence must set it to `yes`, while
+manifest is schema v2 and mirrors the `wzzc-dev/window@0.5.1-fork.3` package
+monitor/cursor field as `monitorCursor`; native passed evidence must set it to `yes`, while
 Web browser evidence may leave it pending because CDP does not prove native
 monitor/current-monitor or cursor behavior. Native passed evidence must also
 set `imeCandidateAnchor`, `imeSurroundingText`, `imeCompositionVisual`,
@@ -517,17 +505,17 @@ package logs are not runtime IME proof.
 For macOS platform promotion, use
 `node scripts/record-macos-platform-runtime-evidence.mjs` only after macOS
 `skiaEvidence` is passed and the native IME helper has already set every macOS
-IME observation to `yes`. The macOS helper validates the local window fork
+IME observation to `yes`. The macOS helper validates the window package
 runtime smoke transcript through `--window-smoke-log` for
 window/open/resize/redraw/input/monitor/cursor/shutdown source observations
 and validates a Showcase `macos_skia` first-frame source log
 through `--app-runtime-log`; it then delegates to the generic platform
-manifest recorder. Collect the window-fork transcript with
-`WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=... bash scripts/check_moui_macos_smoke.sh --run`
-from `.local_repos/window` so the AppKit smoke app writes the artifact marker
-stream itself; outer shell redirection must not be used as the source artifact
-for monitor/current-monitor evidence. Renderer-proof IME markers, provider
-preflights, and the window fork smoke alone are not macOS platform-passed evidence.
+manifest recorder. Collect the window package transcript with
+`WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=... scripts/run-window-package-smoke.sh macos --run`
+so the AppKit smoke app writes the artifact marker stream itself; outer shell
+redirection must not be used as the source artifact for monitor/current-monitor
+evidence. Renderer-proof IME markers, provider preflights, and the window
+package smoke alone are not macOS platform-passed evidence.
 For local matching-host collection, prefer
 `scripts/record-macos-local-runtime-evidence.sh` after macOS Skia evidence has
 already passed; it runs the AppKit window smoke, runs the Showcase IME

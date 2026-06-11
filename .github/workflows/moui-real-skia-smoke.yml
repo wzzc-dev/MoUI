@@ -14,9 +14,6 @@ on:
         default: false
         type: boolean
 
-env:
-  MOUI_WINDOW_REMOTE: https://github.com/wzzc-dev/window.git
-
 jobs:
   macos-real-skia-smoke:
     name: macOS real Skia smoke
@@ -27,9 +24,6 @@ jobs:
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
-
-      - name: Restore local dependencies
-        run: sh scripts/setup-local-deps.sh
 
       - name: Install dependencies
         run: |

@@ -169,7 +169,7 @@ Use this skill when editing or reviewing:
   native WKWebView platform-view sync, and CAMetalLayer WGPU surface creation.
 - `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
   optional WebView2 platform-view sync, and HWND WGPU surface creation.
-- `backend/linux/`: Wayland host over `.local_repos/window/linux`, Linux
+- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.1-fork.3`, Linux
   host-service bridge, text-input/IME request sync, drag/drop conversion, a
   native Skia mainline presenter path plus native WGPU diagnostic surface path,
   optional WebKitGTK platform-view sync, shared host event conversion, and
@@ -245,16 +245,16 @@ Daily check:
 sh scripts/dev-check.sh
 ```
 
-The daily check runs `sh scripts/check-local-deps.sh`, which verifies the local
-`window` fork, repo-local `moui_skia` workspace, and the `window` fork's MoUI-oriented smoke
-and evidence files are present, including `scripts/record_moui_evidence.sh`.
-It also checks that the fork's current MoUI smoke contract still uses the
-`moon run examples/moui_macos_smoke --target native` macOS path, the
-module-qualified `wzzc-dev/window/examples/...` Web wasm-gc artifact paths, and
-the MoUI Web smoke consumer sentinel lines.
-Run `sh scripts/setup-local-deps.sh` first when the window checkout is missing or stale;
-it fast-forwards the clean local window dependency checkout and refuses to overwrite
-local `.local_repos/` edits.
+The daily check runs `sh scripts/check-local-deps.sh`, which verifies
+`wzzc-dev/window@0.5.1-fork.3`, confirms `moon.work` does not include a local
+window checkout, verifies the repo-local `moui_skia` workspace, and checks the
+window package's MoUI-oriented smoke/evidence files when the package is present
+in the MoonBit registry cache, including `scripts/record_moui_evidence.sh`.
+Use `scripts/run-window-package-smoke.sh <platform>` for matching-host smoke
+runs from the resolved package instead of creating a local window checkout. Run
+`moon update` if the package cache is stale or missing. The MoonBit package
+ecosystem is still maturing, so dependency resolution, registry cache state, and
+package regressions are plausible causes for otherwise surprising failures.
 Treat those window smoke helpers as dependency-level matching-host evidence,
 not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
 validation.
@@ -327,8 +327,9 @@ The `renderer-proof-summary` job requires the native Skia macOS, Windows,
 Linux, and WebGPU wasm proof
 artifacts to validate as passed before mainline capability promotion; native
 WGPU diagnostic artifacts are uploaded separately but do not block the summary.
-The platform evidence manifest is schema v2 and records the window fork's
-monitor/cursor probe as `monitorCursor`; native passed entries must set it to
+The platform evidence manifest is schema v2 and records the
+`wzzc-dev/window@0.5.1-fork.3` package monitor/cursor probe as
+`monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native passed
 entries must also set `imeCandidateAnchor`, `imeSurroundingText`,
 `imeCompositionVisual`, `imeCommitDelete`, `imeCursorUpdate`,
@@ -381,17 +382,16 @@ first-frame line, respectively.
 Use `record-macos-platform-runtime-evidence.mjs` only for macOS platform
 promotion after macOS `skiaEvidence` is passed and every native IME observation
 has already been recorded by `record-native-ime-evidence.mjs`. The macOS helper
-validates the local window fork runtime smoke transcript through
-`--window-smoke-log` for window/open/resize/redraw/input/monitor/cursor/shutdown
+validates the `wzzc-dev/window@0.5.1-fork.3` package runtime smoke transcript
+through `--window-smoke-log` for window/open/resize/redraw/input/monitor/cursor/shutdown
 source observations, and validates a Showcase or Markdown Editor `macos_skia`
 first-frame source log through `--app-runtime-log` before delegating to the
-generic platform manifest recorder. Collect the macOS window-fork transcript
-with `WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=... bash scripts/check_moui_macos_smoke.sh --run`
-from `.local_repos/window` so the AppKit smoke app writes the marker artifact
-itself; do not use outer shell redirection as the source artifact for
-monitor/current-monitor evidence. Do not use renderer-proof IME markers,
-provider preflights, or the window fork smoke alone as macOS platform-passed
-evidence.
+generic platform manifest recorder. Collect the macOS window package transcript
+with `WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=... scripts/run-window-package-smoke.sh macos --run`
+so the AppKit smoke app writes the marker artifact itself; do not use outer
+shell redirection as the source artifact for monitor/current-monitor evidence.
+Do not use renderer-proof IME markers, provider preflights, or the window
+package smoke alone as macOS platform-passed evidence.
 For local macOS matching-host collection after Skia evidence is already passed,
 prefer `scripts/record-macos-local-runtime-evidence.sh`; it runs the AppKit
 window smoke, runs the Markdown Editor IME producer, folds native IME

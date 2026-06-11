@@ -41,7 +41,7 @@ const platformEntries = {
       "examples/showcase/macos_skia",
     ],
     windowEvidenceCommand:
-      ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
+      "wzzc-dev/window@0.5.1-fork.3 package evidence macos --status pending",
     consumerCommand: "pending",
     observations: { ...pendingObservations },
     artifacts: ["artifacts/platform-evidence/macos/README.md"],
@@ -63,7 +63,7 @@ const platformEntries = {
       "examples/showcase/windows_skia",
     ],
     windowEvidenceCommand:
-      ".local_repos/window/scripts/record_moui_evidence.sh windows --status pending",
+      "wzzc-dev/window@0.5.1-fork.3 package evidence windows --status pending",
     consumerCommand: "pending",
     observations: { ...pendingObservations },
     artifacts: ["artifacts/platform-evidence/windows/README.md"],
@@ -84,7 +84,7 @@ const platformEntries = {
       "examples/showcase/linux_skia",
     ],
     windowEvidenceCommand:
-      ".local_repos/window/scripts/record_moui_evidence.sh linux --status pending",
+      "wzzc-dev/window@0.5.1-fork.3 package evidence linux --status pending",
     consumerCommand: "pending",
     observations: { ...pendingObservations },
     artifacts: ["artifacts/platform-evidence/linux/README.md"],
@@ -96,7 +96,7 @@ const manifestFor = platform => ({
   schemaVersion: 2,
   mode: "platform-runtime-evidence",
   generatedBy: "scripts/test-record-native-ime-evidence.mjs",
-  windowEvidenceSource: ".local_repos/window/scripts/record_moui_evidence.sh",
+  windowEvidenceSource: "wzzc-dev/window@0.5.1-fork.3",
   platforms: [platformEntries[platform]],
 });
 

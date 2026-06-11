@@ -4,7 +4,7 @@ let valid_manifest =
   #|  "schemaVersion": 2,
   #|  "mode": "platform-runtime-evidence",
   #|  "generatedBy": "scripts/conformance-check.sh --platform-services",
-  #|  "windowEvidenceSource": ".local_repos/window/scripts/record_moui_evidence.sh",
+  #|  "windowEvidenceSource": "wzzc-dev/window@0.5.1-fork.3",
   #|  "platforms": [
   #|    {
   #|      "name": "web",
@@ -22,7 +22,7 @@ let valid_manifest =
   #|      "exampleTargets": [
   #|        "examples/showcase/web_wasm"
   #|      ],
-  #|      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh web --status pending",
+  #|      "windowEvidenceCommand": "wzzc-dev/window@0.5.1-fork.3 package evidence web --status pending",
   #|      "consumerCommand": "pending",
   #|      "observations": {
   #|        "windowOpened": "pending",
@@ -63,7 +63,7 @@ let valid_manifest =
   #|      "exampleTargets": [
   #|        "examples/showcase/macos_skia"
   #|      ],
-  #|      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
+  #|      "windowEvidenceCommand": "wzzc-dev/window@0.5.1-fork.3 package evidence macos --status pending",
   #|      "consumerCommand": "pending",
   #|      "observations": {
   #|        "windowOpened": "pending",
@@ -125,7 +125,7 @@ let valid_manifest =
   #|      "exampleTargets": [
   #|        "examples/showcase/windows_skia"
   #|      ],
-  #|      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh windows --status pending",
+  #|      "windowEvidenceCommand": "wzzc-dev/window@0.5.1-fork.3 package evidence windows --status pending",
   #|      "consumerCommand": "pending",
   #|      "observations": {
   #|        "windowOpened": "pending",
@@ -187,7 +187,7 @@ let valid_manifest =
   #|      "exampleTargets": [
   #|        "examples/showcase/linux_skia"
   #|      ],
-  #|      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh linux --status pending",
+  #|      "windowEvidenceCommand": "wzzc-dev/window@0.5.1-fork.3 package evidence linux --status pending",
   #|      "consumerCommand": "pending",
   #|      "observations": {
   #|        "windowOpened": "pending",

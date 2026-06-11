@@ -188,8 +188,8 @@ sh scripts/dev-check.sh --help
 sh scripts/conformance-check.sh --help
 sh -n scripts/dev-check.sh
 sh -n scripts/conformance-check.sh
-sh -n scripts/setup-local-deps.sh
 sh -n scripts/check-local-deps.sh
+bash -n scripts/run-window-package-smoke.sh
 bash moui_skia/scripts/verify-platform-status.sh
 bash moui_skia/scripts/verify-native-capability-contract.sh
 sh -n scripts/preview-loop.sh
@@ -435,8 +435,9 @@ backend packages, with WGPU/Cosmic text diagnostics gated by
 matrix packages.
 `--platform-services` runs host and Web service contracts, runs current-host
 macOS service tests on Darwin, runs Linux service tests only when the local
-window checkout has generated Wayland protocol sources available, and writes a
-validated platform runtime evidence manifest at
+`wzzc-dev/window@0.5.1-fork.3` registry package cache has generated Wayland
+protocol sources available, and writes a validated platform runtime evidence
+manifest at
 `artifacts/conformance/platform-runtime-evidence.json`. That manifest is a
 matching-host evidence contract for Showcase targets,
 including the native Skia entrypoints: pending entries are not runtime proof,
@@ -457,9 +458,12 @@ current-platform backend checks through `scripts/dev-check.sh
 --platform-examples-test`.
 
 `sh scripts/check-local-deps.sh`, which is part of `dev-check`, also verifies
-that `.local_repos/window` contains the generated Wayland protocol C sources
-needed by Linux backend package tests and its MoUI-oriented smoke/evidence
-surface: `docs/moui-integration-smoke.md`, `docs/platform-gaps.md`,
+that `moui/moon.mod` and `moui_skia/moon.mod` resolve
+`wzzc-dev/window@0.5.1-fork.3`, that `moon.work` does not include a local
+window checkout, and that the resolved package cache carries generated Wayland
+protocol C sources. In other words, the cache must contain the generated
+Wayland protocol C sources plus its MoUI-oriented smoke/evidence surface:
+`docs/moui-integration-smoke.md`, `docs/platform-gaps.md`,
 `scripts/check_moui_readiness.sh`, `scripts/check_moui_evidence.sh`,
 `scripts/record_moui_evidence.sh`, and the macOS/Web/Linux/Windows
 `check_moui_*_smoke.sh` helpers. It also checks the current smoke contract:
@@ -467,8 +471,10 @@ the macOS helper still executes the AppKit smoke through `moon run`, the Web
 helpers build wasm-gc artifacts under the module-qualified
 `wzzc-dev/window/examples/...` paths, and the MoUI Web smoke page still emits
 the public consumer sentinel lines. This is a dependency-readiness guard only;
-run the window smoke helpers on matching hosts before claiming runtime platform
-evidence.
+run the window package smoke helpers on matching hosts before claiming runtime
+platform evidence. The MoonBit registry/package ecosystem is still maturing, so
+if these checks fail unexpectedly, verify `moon update`, cache contents, and
+package-version behavior before assuming a MoUI runtime regression.
 The same local-dependency check requires the repo-local `moui_skia` workspace to expose its
 binding-level platform acceptance surface: `skia-platform-status.json`,
 `skia-provider-lock.json`, `SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`,
@@ -482,8 +488,8 @@ evidence; it does not replace MoUI's opt-in real-Skia renderer smoke or
 matching-host Showcase runtime evidence.
 
 The platform runtime evidence manifest uses schema version 2. Its observation
-set mirrors the local window fork's recorder fields, including native
-monitor/cursor evidence as `monitorCursor`. For native passed entries,
+set mirrors the `wzzc-dev/window@0.5.1-fork.3` package evidence fields,
+including native monitor/cursor evidence as `monitorCursor`. For native passed entries,
 `monitorCursor` must be `yes`; the Web browser-session path may keep it
 `pending` because CDP evidence does not prove native monitor/current-monitor or
 cursor probes. Native passed entries must also set the explicit IME runtime
@@ -539,7 +545,7 @@ source runtime artifacts before promoting the macOS platform entry:
 scripts/record-macos-local-runtime-evidence.sh
 ```
 
-The local wrapper runs the window-fork smoke with process-written AppKit
+The local wrapper runs the window package smoke with process-written AppKit
 artifacts, runs the Showcase native IME producer, folds native IME
 observations, promotes the macOS platform entry with
 `matching-host-artifact` provenance, and validates the macOS platform entry.
@@ -547,11 +553,8 @@ If you need to inspect or replay the individual steps, they are:
 
 ```sh
 mkdir -p artifacts/platform-evidence/macos
-(
-  cd .local_repos/window
-  WINDOW_MOUI_MACOS_SMOKE_LOG_PATH="$PWD/../../artifacts/platform-evidence/macos/window-macos-runtime-smoke.log" \
-    bash scripts/check_moui_macos_smoke.sh --run
-)
+WINDOW_MOUI_MACOS_SMOKE_LOG_PATH="$PWD/artifacts/platform-evidence/macos/window-macos-runtime-smoke.log" \
+  scripts/run-window-package-smoke.sh macos --run
 
 node scripts/record-macos-platform-runtime-evidence.mjs \
   artifacts/conformance/platform-runtime-evidence.json \
@@ -564,7 +567,7 @@ node scripts/record-macos-platform-runtime-evidence.mjs \
   --provenance-artifact artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log
 ```
 
-The wrapper accepts the local window fork's macOS runtime smoke transcript only
+The wrapper accepts the window package's macOS runtime smoke transcript only
 after it observes non-zero window/content-view handles, surface scale, resize,
 redraw, pointer input, keyboard text input, monitor/current-monitor, cursor,
 ready, destroyed, and finished sentinels. It also requires a real MoUI
@@ -572,7 +575,7 @@ Showcase `macos_skia` first-frame log with the matching
 `title=MoUI Showcase` marker. The wrapper
 does not generate IME evidence and refuses to promote macOS while any native
 IME observation or any Skia route observation is still pending.
-Use `WINDOW_MOUI_MACOS_SMOKE_LOG_PATH` when collecting the window-fork smoke
+Use `WINDOW_MOUI_MACOS_SMOKE_LOG_PATH` when collecting the window package smoke
 artifact so the AppKit app writes the marker transcript itself; do not rely on
 outer shell redirection as the source artifact for monitor/current-monitor
 evidence.
@@ -660,7 +663,7 @@ node scripts/record-platform-evidence-manifest.mjs \
   --status passed \
   --host "Windows MSVC CI" \
   --window-evidence-command \
-    ".local_repos/window/scripts/record_moui_evidence.sh windows --status passed --host 'Windows MSVC CI'" \
+    "wzzc-dev/window@0.5.1-fork.3 package evidence windows --status passed --host 'Windows MSVC CI'" \
   --consumer-command \
     "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"" \
   --set windowOpened=yes \
@@ -716,11 +719,11 @@ node scripts/validate-platform-evidence-manifest.mjs \
   --platform windows
 ```
 
-The manifest complements the Markdown snippets generated by the local window
-fork's `.local_repos/window/scripts/record_moui_evidence.sh`. Keep both scoped:
-window-fork smoke proves dependency behavior, while MoUI platform evidence must
-also name the Showcase consumer run that exercised the
-framework entrypoint.
+The manifest complements Markdown snippets generated from the
+`wzzc-dev/window@0.5.1-fork.3` package smoke artifacts. Keep both scoped:
+window package smoke proves dependency behavior, while MoUI platform evidence
+must also name the Showcase consumer run that exercised the framework
+entrypoint.
 Use `--status failed` with at least one `--set <observation>=no` to record a
 matching-host failure without weakening the release claim; the validator keeps
 failed and pending entries distinct from passed runtime evidence.
@@ -752,9 +755,9 @@ CI runs several bounded jobs from `.github/workflows/ci.yml`:
   boundaries with edit actions, IME candidate anchors with surrounding text,
   composition ranges with preedit pixels, and placeholder -> image load ->
   repaint -> ready second-frame image ordering.
-- `macOS platform runtime evidence` is a manual `workflow_dispatch` job enabled
-  by `run_macos_platform_runtime_evidence=true`. It initializes the platform
-  evidence manifest, runs the AppKit/window fork smoke, records macOS Skia
+- `macOS platform runtime evidence` runs automatically on `push` and can also
+  be invoked manually with `run_macos_platform_runtime_evidence=true`. It initializes the platform
+  evidence manifest, runs the AppKit/window package smoke, records macOS Skia
   provider/fallback/renderer/Showcase first-frame evidence, records the
   Showcase native IME runtime markers, folds the macOS platform entry with
   `github-actions` provenance, validates the macOS entry, records and validates

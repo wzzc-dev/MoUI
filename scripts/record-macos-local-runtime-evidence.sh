@@ -31,6 +31,10 @@ Options:
   --skip-ime-smoke       Reuse an existing ime-showcase-runtime.log.
   -h, --help             Show this help.
 
+The window smoke is collected from the resolved wzzc-dev/window@0.5.1-fork.3
+registry package through scripts/run-window-package-smoke.sh; no editable
+window checkout is required.
+
 Prerequisite: macos.skiaEvidence must already be passed, normally via
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke with
 --record-platform-evidence.
@@ -90,11 +94,8 @@ showcase_log="$artifact_dir/showcase-macos-skia-first-frame.log"
 mkdir -p "$artifact_abs"
 
 if [ "$run_window_smoke" -eq 1 ]; then
-  (
-    cd "$ROOT_DIR/.local_repos/window"
-    WINDOW_MOUI_MACOS_SMOKE_LOG_PATH="$window_log_abs" \
-      bash scripts/check_moui_macos_smoke.sh --run
-  )
+  WINDOW_MOUI_MACOS_SMOKE_LOG_PATH="$window_log_abs" \
+    bash scripts/run-window-package-smoke.sh macos --run
 fi
 
 grep -Fq "MOUIMacSmoke: ready" "$window_log_abs"

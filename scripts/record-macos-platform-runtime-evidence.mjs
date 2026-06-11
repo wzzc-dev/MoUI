@@ -21,9 +21,9 @@ Options:
   --host <description>                  Matching macOS host that produced logs.
   --consumer-command <command>          Showcase macOS Skia command that
                                         produced runtime logs.
-  --window-evidence-command <command>   Window recorder command to store.
+  --window-evidence-command <command>   Window package evidence command to store.
   --runtime-log <path>                  macOS runtime log; may repeat.
-  --window-smoke-log <path>             macOS window-fork runtime smoke log;
+  --window-smoke-log <path>             macOS window package runtime smoke log;
                                         may repeat.
   --app-runtime-log <path>              Showcase macOS Skia first-frame runtime
                                         log; may repeat.

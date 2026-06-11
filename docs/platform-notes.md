@@ -1,10 +1,11 @@
 # Platform Notes
 
-## Local Window Dependency
+## Window Package Dependency
 
-MoUI expects the modified `wzzc-dev/window` checkout under `.local_repos/window`.
-The README shows the setup commands. The local branch currently supplies target
-support that the upstream package does not yet cover for MoUI.
+MoUI resolves the modified window host as `wzzc-dev/window@0.5.1-fork.3` from
+the MoonBit registry. A repo-local window checkout is no longer part of normal
+development. The fork package currently supplies target support that the
+upstream package does not yet cover for MoUI.
 The main checkout now includes `moui_skia`, which provides the editable Skia
 binding used by the native Skia raster mainline renderer.
 
@@ -509,8 +510,8 @@ script. MSVC dynamic roots should contain `lib\wgpu_native.dll` and
 
 ## Linux Native
 
-`backend/linux` is a minimal native Wayland host core. It uses the fork-owned
-`.local_repos/window/linux` package for Wayland event-loop and window handles,
+`backend/linux` is a minimal native Wayland host core. It uses the
+`wzzc-dev/window@0.5.1-fork.3` Linux package for Wayland event-loop and window handles,
 normalizes window/input events through the shared `HostEvent` contract, and runs
 the Showcase entrypoints through the same renderer/runtime boundary as macOS
 and Windows. Concrete rendering is injected through `LinuxRendererProvider`;
@@ -524,7 +525,7 @@ decorations, `backend/linux` reserves a small titlebar band above the MoUI
 content, draws the window title and basic controls into the renderer command
 stream, and translates input coordinates so application views still receive a
 content-origin coordinate space.
-The same adapter consumes the window fork's Wayland key/modifier mapping and
+The same adapter consumes the window package's Wayland key/modifier mapping and
 current pointer coordinates: Linux backend tests cover modifier propagation into
 shared keyboard events and button events using the position carried by the
 window event rather than stale pointer state. The fork also exposes Wayland
@@ -535,7 +536,7 @@ Text-input focus state and IME requests are synchronized through the shared
 `TextInputImeRequestDiagnostics` for each enabled/update request, including
 grapheme-normalized cursor/anchor character positions, UTF-8 offsets for
 surrounding text, the logical candidate-anchor caret rectangle, and whether
-surrounding-text payloads fit the window fork's IME contract.
+surrounding-text payloads fit the window package's IME contract.
 
 Linux runtime requirements are intentionally native:
 
@@ -545,7 +546,7 @@ Linux runtime requirements are intentionally native:
   validation can use Mesa llvmpipe through `vulkan-swrast`/Lavapipe when
   hardware Vulkan is not available.
 - Wayland development headers and generated xdg-shell protocol sources for the
-  local `window/linux` native stub.
+  `wzzc-dev/window@0.5.1-fork.3` native stub.
 - `wl_data_device_manager` from the compositor for native clipboard selection
   and file drag/drop runtime behavior.
 - XDG desktop integration for Linux services: OpenURI goes through
@@ -596,7 +597,7 @@ Select the native mainline Skia provider by importing
 `wzzc-dev/moui/backend/linux/skia` and using `LinuxSkiaAppOptions`. The
 provider creates `render/skia.SkiaRasterRenderer` and presents the CPU pixel
 frame through a narrow API exposed by
-`.local_repos/window/linux`. That window fork owns the Wayland objects and
+`wzzc-dev/window/linux`. That window package owns the Wayland objects and
 provides `Window::present_rgba_pixels`, implemented with reusable `wl_shm`
 buffers, buffer-release tracking, `wl_surface_attach`, damage, commit, and
 display flush. Keeping the `wl_shm` presenter in the window backend avoids
@@ -633,16 +634,16 @@ Markdown Editor frames;
 those claims still require matching-host runtime runs and platform evidence
 manifest entries.
 
-The local window fork carries a consumer-style Linux smoke for this dependency
+The window package carries a consumer-style Linux smoke for this dependency
 surface. On a matching Wayland host, run
-`.local_repos/window/scripts/check_moui_linux_smoke.sh --run` to exercise
+`scripts/run-window-package-smoke.sh linux --run` to exercise
 surface creation, public Wayland handles, `Window::present_rgba_pixels`, resize,
 redraw, IME request state, and clean shutdown. Add `--require-input` or
 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` only when representative pointer/keyboard
 input is observed; clipboard selection and file drag/drop still need
 matching-host compositor observations before they can be cited as runtime
-evidence. Record dependency-level facts with
-`.local_repos/window/scripts/record_moui_evidence.sh`; keep the MoUI Showcase
+evidence. Record dependency-level facts from the `wzzc-dev/window@0.5.1-fork.3`
+package smoke artifacts; keep the MoUI Showcase
 `linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
 application-level evidence. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic
 evidence when a Vulkan/WGPU stack is configured.
