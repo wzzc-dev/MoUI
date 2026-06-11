@@ -163,6 +163,34 @@ fn push_moon_work_member_checks(
 }
 
 ///|
+fn daily_quality_gate_tokens() -> Array[String] {
+  [
+    "node scripts/validate-guidance-consistency.mjs", "node --check scripts/validate-api-surface.mjs",
+    "node scripts/validate-api-surface.mjs", "node scripts/validate-renderer-provider-manifests.mjs",
+    "node scripts/validate-skia-entrypoints.mjs", "node scripts/test-validate-skia-entrypoints.mjs",
+    "node scripts/test-validate-renderer-proof-manifest.mjs", "node scripts/test-record-web-runtime-presentation.mjs",
+    "node scripts/test-validate-web-runtime-presentation-manifest.mjs", "node --check scripts/validate-checked-conformance-artifacts.mjs",
+    "node scripts/validate-checked-conformance-artifacts.mjs", "moon check", "moon test moui/core --target native",
+    "moon test moui/views --target native", "moon test moui/render/skia --target native",
+    "moon test moui/backend/host --target native", "moon test moui/backend/web --target wasm-gc",
+    "moon test examples/showcase/app --target native", "moon test examples/markdown_editor/app --target native",
+    "moon build examples/showcase/web_wasm --target wasm-gc", "moon build examples/markdown_editor/web_wasm --target wasm-gc",
+    "node scripts/validate-web-runtime-handoff.mjs",
+  ]
+}
+
+///|
+fn push_daily_quality_gate_checks(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  for token in daily_quality_gate_tokens() {
+    push_include_check(repo_root, "scripts/dev-check.sh", token, failures)
+    push_include_check(repo_root, "docs/testing.md", token, failures)
+  }
+}
+
+///|
 fn push_file_exists_check(
   repo_root : String,
   path : String,
@@ -261,6 +289,7 @@ fn push_symlink_target_check(
 fn validate_guidance_consistency(repo_root : String) -> Array[String] {
   let failures : Array[String] = []
   push_moon_work_member_checks(repo_root, failures)
+  push_daily_quality_gate_checks(repo_root, failures)
   for rule in guidance_include_rules() {
     push_include_check(repo_root, rule.path, rule.token, failures)
   }
