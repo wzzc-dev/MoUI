@@ -7,6 +7,9 @@ Do not place `moui_skia` binding checks here; keep those under
 
 Current tools:
 
+- `validate_api_surface/` audits generated `pkg.generated.mbti` files for
+  package-size budgets, root facade boundaries, and app-facing view constructor
+  return types.
 - `validate_package_manifest/` validates schema version 1 packaging manifests
   emitted by macOS app-bundle and Windows portable-folder packaging helpers.
 - `validate_renderer_provider_manifests/` keeps native platform backend,
