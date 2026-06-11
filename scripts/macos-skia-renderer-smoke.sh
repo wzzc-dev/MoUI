@@ -59,10 +59,10 @@ Options:
   --markdown-log PATH    Write markdown_editor/macos_skia smoke output to PATH.
                          Relative paths are resolved from the repository root.
   --record-platform-evidence PATH
-                         After a successful renderer, Showcase, and Markdown
-                         smoke, update the macOS skiaEvidence block in the
-                         platform runtime evidence manifest at PATH. Requires
-                         --smoke-log, --showcase-log, and --markdown-log under
+                         After a successful renderer and Showcase smoke, update
+                         the macOS skiaEvidence block in the platform runtime
+                         evidence manifest at PATH. Requires --smoke-log and
+                         --showcase-log under
                          artifacts/platform-evidence/macos/.
   --no-sync-deps         Skip python3 tools/git-sync-deps for source provider.
   --no-fetch             Reuse an existing Skia checkout for source provider.
@@ -79,7 +79,8 @@ Options:
                          smoke. This adds MOUI_SKIA_ENABLE_GPU_METAL and the
                          Metal-related frameworks for the temporary build,
                          and selects MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu
-                         for Showcase/Markdown first-frame runs.
+                         for the Showcase first-frame run and optional
+                         Markdown Editor first-frame run.
   --showcase-timeout SECONDS
                          Seconds to wait for --run-showcase-smoke. Default: 20.
   --markdown-timeout SECONDS
@@ -480,13 +481,12 @@ ensure_platform_evidence_log_path() {
 }
 
 if [[ -n "$platform_evidence_manifest" ]]; then
-  if [[ $run_showcase_smoke -ne 1 || $run_markdown_smoke -ne 1 ]]; then
-    echo "--record-platform-evidence requires --run-showcase-smoke and --run-markdown-smoke" >&2
+  if [[ $run_showcase_smoke -ne 1 ]]; then
+    echo "--record-platform-evidence requires --run-showcase-smoke" >&2
     exit 2
   fi
   ensure_platform_evidence_log_path "smoke" "$smoke_log"
   ensure_platform_evidence_log_path "showcase" "$showcase_log"
-  ensure_platform_evidence_log_path "markdown" "$markdown_log"
 fi
 
 if [[ $run_showcase_smoke -eq 1 && $skip_showcase_build -eq 1 ]]; then
@@ -1443,13 +1443,11 @@ if [[ -n "$platform_evidence_manifest" ]]; then
     --renderer-smoke-log "$(relative_to_repo "$smoke_log")" \
     --async-image-log "$(relative_to_repo "$smoke_log")" \
     --showcase-log "$(relative_to_repo "$showcase_log")" \
-    --markdown-log "$(relative_to_repo "$markdown_log")" \
-    --note "macOS real-Skia renderer, async image second-frame, and Showcase/Markdown Editor first-frame markers passed on the local Darwin host; provider preflight and fallback-unavailable observations require their own artifacts before Skia route evidence is passed."
+    --note "macOS real-Skia renderer, async image second-frame, and Showcase first-frame markers passed on the local Darwin host; provider preflight and fallback-unavailable observations require their own artifacts before Skia route evidence is passed."
   )
   if [[ $run_gpu_smoke -eq 1 ]]; then
     record_args+=(--gpu-renderer-smoke-log "$(relative_to_repo "$smoke_log")")
     record_args+=(--gpu-showcase-log "$(relative_to_repo "$showcase_log")")
-    record_args+=(--gpu-markdown-log "$(relative_to_repo "$markdown_log")")
   fi
   node scripts/record-native-skia-evidence.mjs "${record_args[@]}"
 fi

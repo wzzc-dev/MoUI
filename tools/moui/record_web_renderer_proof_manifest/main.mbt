@@ -137,7 +137,10 @@ fn json_object(value : Json?) -> Map[String, Json]? {
 }
 
 ///|
-fn optional_object(object : Map[String, Json], field : String) -> Map[String, Json]? {
+fn optional_object(
+  object : Map[String, Json],
+  field : String,
+) -> Map[String, Json]? {
   match object.get(field) {
     Some(Json::Object(fields)) => Some(fields)
     _ => None
@@ -177,7 +180,11 @@ fn optional_number(object : Map[String, Json], field : String) -> Double? {
 }
 
 ///|
-fn number_or(object : Map[String, Json], field : String, fallback : Double) -> Double {
+fn number_or(
+  object : Map[String, Json],
+  field : String,
+  fallback : Double,
+) -> Double {
   match optional_number(object, field) {
     Some(number) => number
     None => fallback
@@ -196,7 +203,10 @@ fn json_string_array_contains(values : Array[Json], expected : String) -> Bool {
 }
 
 ///|
-fn observations_value(observations : Map[String, Json]?, key : String) -> String {
+fn observations_value(
+  observations : Map[String, Json]?,
+  key : String,
+) -> String {
   match observations {
     Some(fields) => optional_string(fields, key)
     None => ""
@@ -207,8 +217,8 @@ fn observations_value(observations : Map[String, Json]?, key : String) -> String
 fn find_showcase_target(manifest : Map[String, Json]) -> Map[String, Json]? {
   for target_json in optional_array(manifest, "targets") {
     match target_json {
-      Json::Object(target) if optional_string(target, "name") == "showcase-web-wasm" =>
-        return Some(target)
+      Json::Object(target) if optional_string(target, "name") ==
+        "showcase-web-wasm" => return Some(target)
       _ => ()
     }
   }
@@ -409,7 +419,10 @@ fn marker_lines(showcase : Map[String, Json]?) -> Array[String] {
   }
   match showcase {
     Some(target) =>
-      if observations_value(optional_object(target, "observations"), "transformPixels") ==
+      if observations_value(
+          optional_object(target, "observations"),
+          "transformPixels",
+        ) ==
         "yes" {
         lines.push("MoUI renderer proof transformPixels passed pixel-markers")
       }
@@ -468,7 +481,8 @@ fn missing_proofs(showcase : Map[String, Json]?) -> Array[String] {
   let missing : Array[String] = []
   for key in proof_keys() {
     let observed = match showcase {
-      Some(target) => observations_value(optional_object(target, "observations"), key)
+      Some(target) =>
+        observations_value(optional_object(target, "observations"), key)
       None => ""
     }
     let ready = if key == "transformPixels" {
@@ -476,7 +490,8 @@ fn missing_proofs(showcase : Map[String, Json]?) -> Array[String] {
     } else {
       proof_ready(showcase, key)
     }
-    let metadata_ready = key != "colorEmojiPixels" || color_emoji_metadata_ready(showcase)
+    let metadata_ready = key != "colorEmojiPixels" ||
+      color_emoji_metadata_ready(showcase)
     if observed != "yes" || !ready || !metadata_ready {
       missing.push(key)
     }
@@ -629,10 +644,11 @@ fn mkdir_p(path : String) -> Result[Unit, String] {
 fn record_web_renderer_proof_manifest(
   options : CliOptions,
 ) -> Result[RecordResult, Array[String]] {
-  let text = match @tools.read_required_text(
-    options.web_presentation_manifest,
-    options.web_presentation_manifest,
-  ) {
+  let text = match
+    @tools.read_required_text(
+      options.web_presentation_manifest,
+      options.web_presentation_manifest,
+    ) {
     Ok(value) => value
     Err(message) => return Err([message])
   }
@@ -675,7 +691,11 @@ fn record_web_renderer_proof_manifest(
     Some(Json::String(value)) => value
     _ => "failed"
   }
-  let missing_text = if missing.is_empty() { "(none)" } else { missing.join(",") }
+  let missing_text = if missing.is_empty() {
+    "(none)"
+  } else {
+    missing.join(",")
+  }
   let summary = if overall_status != "passed" || !missing.is_empty() {
     [
       "web renderer proof failed summary:",
@@ -683,7 +703,8 @@ fn record_web_renderer_proof_manifest(
       "  showcaseStatus=" + target_status,
       "  missingProofs=" + missing_text,
       "  log=" + log_path,
-    ].join("\n") + "\n"
+    ].join("\n") +
+    "\n"
   } else {
     ""
   }

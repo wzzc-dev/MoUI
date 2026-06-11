@@ -325,13 +325,13 @@ monitor/cursor probe as `monitorCursor`; native passed entries must set it to
 `yes`, while Web browser-session evidence may leave it pending. Native passed
 entries must also set `imeCandidateAnchor`, `imeSurroundingText`,
 `imeCompositionVisual`, `imeCommitDelete`, `imeCursorUpdate`,
-`imeScrollAnchor`, `imeScaleDprAnchor`, `imeResizeAnchor`, and
-`imeMarkdownEditor` to `yes` from matching-host Showcase or Markdown Editor
+`imeScrollAnchor`, `imeScaleDprAnchor`, and `imeResizeAnchor` to `yes` from
+matching-host Showcase
 runtime artifacts; host-core unit tests, package logs, provider preflights, and
 coarse `textInput` observations are not enough. Native entries
 also record a `skiaEvidence` block for Skia provider/preflight commands,
 fallback-unavailable checks, real-renderer smoke, async image second-frame
-smoke, and Showcase/Markdown first-frame status. Any `status=passed` platform
+smoke, and Showcase first-frame status. Any `status=passed` platform
 entry, and any
 `skiaEvidence.status=passed` route, must include `evidenceProvenance` that
 traces the claim to a non-skipped successful GitHub Actions job/run or to a
@@ -348,20 +348,20 @@ broader platform runtime status unchanged and rejects generic host unit-test or
 package logs without matching-host runtime, native-app, `renderer=skia`,
 matching app, platform-protocol,
 candidate-anchor, surrounding-text, composition, commit/delete, cursor, scroll,
-scale/DPR, resize, and Markdown Editor markers. The `renderer=skia`, app, and
+scale/DPR, resize, and Showcase markers. The `renderer=skia`, app, and
 platform-protocol markers are exact whitespace-delimited tokens; suffixed
 labels are not matching-host runtime IME evidence.
-For macOS, the first-party producer is the Markdown Editor native Skia
+For macOS, the first-party producer is the Showcase native Skia
 entrypoint with
-`MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/markdown_editor/macos_skia --target native`;
+`MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/showcase/macos_skia --target native`;
 store that run as
-`artifacts/platform-evidence/macos/ime-markdown-runtime.log` and pass it to
+`artifacts/platform-evidence/macos/ime-showcase-runtime.log` and pass it to
 each macOS native IME recorder log option after confirming it prints the
-Markdown Editor marker. The macOS recorder also requires AppKit
+Showcase marker. The macOS recorder also requires AppKit
 `NSTextInputClient` markers: candidate/surrounding/composition logs must include
 `appkit-setMarkedText` and `appkit-firstRectForCharacterRange`, and
 post-commit logs, including commit/delete, cursor, scroll, scale/DPR, resize,
-and Markdown Editor dogfood markers, must include `appkit-insertText`.
+and Showcase runtime markers, must include `appkit-insertText`.
 Use
 `record-native-skia-evidence.mjs` for matching-host Skia logs when you only
 want to validate and update `skiaEvidence`; it deliberately leaves the broader
@@ -527,11 +527,12 @@ scripts/macos-skia-renderer-smoke.sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
 scripts/macos-skia-renderer-smoke.sh --run-gpu-smoke
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
-scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke \
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke \
   --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
   --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log \
-  --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
   --record-platform-evidence artifacts/conformance/platform-runtime-evidence.json
+scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke \
+  --markdown-log artifacts/example-smoke/macos/markdown-macos-skia-first-frame.log
 scripts/macos-skia-renderer-smoke.sh --skia-provider existing \
   --skia-include /path/to/skia \
   --skia-lib-dir /path/to/skia/out/Static
@@ -552,8 +553,8 @@ runs the explicit macOS Metal/Ganesh route smoke with `--run-gpu-smoke`, and
 restores touched `moon.pkg` files. The GPU route smoke enables
 `MOUI_SKIA_ENABLE_GPU_METAL`, requires the
 `MoUI Skia GPU Metal renderer smoke passed` marker, sets
-`MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for Showcase/Markdown first-frame
-runs, and requires their logs to include
+`MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for the Showcase first-frame run and
+optional Markdown Editor first-frame run, and requires those logs to include
 `surface_route=metal-gpu; surface_gpu=true` provider diagnostics. That proves
 offscreen GPU surface rendering/readback through the existing pixel presenter
 plus app first-frame presentation; it is still separate from direct

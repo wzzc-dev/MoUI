@@ -294,7 +294,9 @@ native context-menu and host-modal file-dialog readiness, native accessibility
 status, and the runtime evidence boundary. Treat that summary as
 provider/package evidence
 only; MoUI macOS Skia runtime proof still comes from the real-Skia renderer
-pixel smoke plus Showcase or Markdown Editor first-frame smoke markers.
+pixel smoke plus the Showcase first-frame smoke marker. Markdown Editor
+first-frame smoke remains optional example coverage and is not a platform
+runtime evidence gate.
 The macOS host loop records the renderer image-resource revision after each
 present, routes later observed revision changes through the matching window's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
