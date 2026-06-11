@@ -17,6 +17,13 @@ contract tests for the Skia mainline, and Web wasm-gc example builds without
 invoking every native or wasm-gc target. Pass `--wgpu-experimental` when you
 want native WGPU diagnostics in the same loop.
 
+The daily check also runs
+`node scripts/validate-checked-conformance-artifacts.mjs`, which validates the
+checked-in conformance capture, Web handoff, Web presentation, platform
+runtime evidence, and renderer-proof manifests with the current validators. This
+keeps committed evidence artifacts from drifting behind the schema and evidence
+rules that release handoffs cite.
+
 ## Focused Package Tests
 
 Use package-level commands while editing implementation code:
@@ -226,6 +233,8 @@ node --check scripts/record-web-runtime-presentation.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
+node --check scripts/validate-checked-conformance-artifacts.mjs
+node scripts/validate-checked-conformance-artifacts.mjs
 node --check scripts/validate-renderer-proof-manifest.mjs
 node scripts/test-validate-renderer-proof-manifest.mjs
 node --check scripts/record-renderer-proof-manifest.mjs
