@@ -1168,7 +1168,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "event_sources : @host.HostPlatformEventSources?",
     },
     {
-      path: "moui/backend/macos/macos_backend.mbt",
+      path: "moui/backend/macos/macos_window_requests.mbt",
       token: "publish_subscription_event",
     },
     {
@@ -1184,7 +1184,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "event_sources : @host.HostPlatformEventSources?",
     },
     {
-      path: "moui/backend/linux/linux_backend.mbt",
+      path: "moui/backend/linux/linux_window_requests.mbt",
       token: "publish_subscription_event",
     },
     {
@@ -1434,11 +1434,11 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "image_loader? : @host.HostAsyncImageLoader? = None",
     },
     {
-      path: "moui/backend/macos/macos_backend.mbt",
+      path: "moui/backend/macos/macos_window_requests.mbt",
       token: "MacosRendererProvider::schedule_image_resource_loads",
     },
     {
-      path: "moui/backend/macos/macos_backend.mbt",
+      path: "moui/backend/macos/macos_window_requests.mbt",
       token: "cancel_image_resource_loads",
     },
     {
@@ -1490,7 +1490,7 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "image_loader=Some(wgpu_native_image_loader())",
     },
     {
-      path: "moui/render/skia/renderer.mbt",
+      path: "moui/render/skia/renderer_image.mbt",
       token: "pub fn skia_image_load_completion",
     },
     {
@@ -1816,11 +1816,11 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "WgpuRenderer::apply_image_resource_load_completion",
     },
     {
-      path: "moui/render/skia/renderer.mbt",
+      path: "moui/render/skia/renderer_image.mbt",
       token: "SkiaRasterRenderer::apply_image_resource_load_completion",
     },
     {
-      path: "moui/render/webgpu_adapter/adapter.mbt",
+      path: "moui/render/webgpu_adapter/adapter_image_resources.mbt",
       token: "WebGpuWasmRenderer::apply_image_resource_load_completion",
     },
     {
