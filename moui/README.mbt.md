@@ -39,13 +39,13 @@ Detailed notes live in:
 - [Release readiness](docs/release-readiness.md)
 
 The example suite is intentionally small: Showcase is the visual catalog and now
-contains the Counter and Todo interaction patterns, the WYSIWYG Markdown editor
-remains a separate practical editing demo, and PDF Workbench exercises
-document reading/light editing on the native Skia route with a lightweight UI
-shell, a separate `pdflite` adapter package for real PDF model/writeback checks,
-and a native-only PDFium adapter for real page bitmap rasterization. The
-root `website/` workspace is the MoUI-built bilingual homepage and Web demo
-surface.
+contains the Counter and Todo interaction patterns, Design Systems is the
+separate `moui_theme` preview/parity sampler, the WYSIWYG Markdown editor
+remains a practical editing demo, and PDF Workbench exercises document
+reading/light editing on the native Skia route with a lightweight UI shell, a
+separate `pdflite` adapter package for real PDF model/writeback checks, and a
+native-only PDFium adapter for real page bitmap rasterization. The root
+`website/` workspace is the MoUI-built bilingual homepage and Web demo surface.
 
 ## Screenshots
 
@@ -58,8 +58,13 @@ surface.
 
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,
   draw command model, typed events, `Program`, `Effect`, and `Subscription`.
-- `style/` owns visual tokens and style aliases during the split from `core`.
+- The root `moui` facade exposes common core types plus neutral
+  default/light/dark/custom theme builders directly; there is no separate
+  `style` package.
 - `views/` exposes public view constructors returning opaque `@core.View[Msg]`.
+- `moui_theme/` is an optional repo-local addon workspace member for shared
+  source-mapped design-system models, package-local Material/Carbon/Primer/Fluent
+  entrypoints, and custom theme builders; core MoUI apps do not need it.
 - `backend/host/` defines shared host contracts; platform backends normalize
   window and input events into `HostEvent`.
 - `backend/<platform>/skia` selects the native Skia raster mainline provider;
@@ -70,7 +75,10 @@ surface.
   adapter, and experimental native wgpu implementations under `render/skia/`,
   `render/webgpu_adapter/`, and `render/wgpu/`.
 - `examples/*/app/` contains shared app logic, while platform subpackages are
-  thin entrypoints.
+  thin entrypoints. `examples/showcase` stays independent of `moui_theme`;
+  `examples/design_systems` is the dedicated addon example that exercises the
+  official-system entrypoint packages on Web wasm-gc plus macOS, Windows, and
+  Linux Skia entrypoints.
 - `website/` is a root workspace member for the MoUI homepage, with shared app
   logic in `website/app/` and a Web wasm-gc entrypoint in `website/web_wasm/`.
 

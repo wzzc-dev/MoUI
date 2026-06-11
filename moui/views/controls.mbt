@@ -3,10 +3,11 @@ pub fn[Msg] toggle(
   label : String,
   checked : Bool,
   on_change~ : (Bool) -> Msg,
-  foreground? : @core.Color = @core.Theme::default().palette.foreground,
-  check_color? : @core.Color = @core.Theme::default().palette.primary,
+  theme? : @core.Theme = @core.Theme::default(),
+  foreground? : @core.Color,
+  check_color? : @core.Color,
 ) -> @core.View[Msg] {
-  checkbox(label, checked~, on_change~, foreground~, check_color~).semantics_role(
+  checkbox(label, checked~, on_change~, theme~, foreground?, check_color?).semantics_role(
     @core.SemanticsRole::Switch,
   )
 }
@@ -16,10 +17,11 @@ pub fn[Msg] toggle_switch(
   label : String,
   checked : Bool,
   on_change~ : (Bool) -> Msg,
-  foreground? : @core.Color = @core.Theme::default().palette.foreground,
-  check_color? : @core.Color = @core.Theme::default().palette.primary,
+  theme? : @core.Theme = @core.Theme::default(),
+  foreground? : @core.Color,
+  check_color? : @core.Color,
 ) -> @core.View[Msg] {
-  toggle(label, checked, on_change~, foreground~, check_color~)
+  toggle(label, checked, on_change~, theme~, foreground?, check_color?)
 }
 
 ///|
@@ -27,22 +29,29 @@ pub fn[Msg] radio(
   label : String,
   selected : Bool,
   on_change~ : (Bool) -> Msg,
-  foreground? : @core.Color = @core.Theme::default().palette.foreground,
-  check_color? : @core.Color = @core.Theme::default().palette.primary,
+  theme? : @core.Theme = @core.Theme::default(),
+  foreground? : @core.Color,
+  check_color? : @core.Color,
 ) -> @core.View[Msg] {
-  checkbox(label, checked=selected, on_change~, foreground~, check_color~).semantics_role(
-    @core.SemanticsRole::Radio,
-  )
+  checkbox(
+    label,
+    checked=selected,
+    on_change~,
+    theme~,
+    foreground?,
+    check_color?,
+  ).semantics_role(@core.SemanticsRole::Radio)
 }
 
 ///|
 pub fn[Msg] toggle_binding(
   label : String,
   checked : @core.Binding[Bool],
-  foreground? : @core.Color = @core.Theme::default().palette.foreground,
-  check_color? : @core.Color = @core.Theme::default().palette.primary,
+  theme? : @core.Theme = @core.Theme::default(),
+  foreground? : @core.Color,
+  check_color? : @core.Color,
 ) -> @core.View[Msg] {
-  checkbox_binding(label, checked~, foreground~, check_color~).semantics_role(
+  checkbox_binding(label, checked~, theme~, foreground?, check_color?).semantics_role(
     @core.SemanticsRole::Switch,
   )
 }
@@ -51,22 +60,35 @@ pub fn[Msg] toggle_binding(
 pub fn[Msg] toggle_switch_binding(
   label : String,
   checked : @core.Binding[Bool],
-  foreground? : @core.Color = @core.Theme::default().palette.foreground,
-  check_color? : @core.Color = @core.Theme::default().palette.primary,
+  theme? : @core.Theme = @core.Theme::default(),
+  foreground? : @core.Color,
+  check_color? : @core.Color,
 ) -> @core.View[Msg] {
-  toggle_binding(label, checked, foreground~, check_color~)
+  toggle_binding(label, checked, theme~, foreground?, check_color?)
 }
 
 ///|
 pub fn[Msg] radio_binding(
   label : String,
   selected : @core.Binding[Bool],
-  foreground? : @core.Color = @core.Theme::default().palette.foreground,
-  check_color? : @core.Color = @core.Theme::default().palette.primary,
+  theme? : @core.Theme = @core.Theme::default(),
+  foreground? : @core.Color,
+  check_color? : @core.Color,
 ) -> @core.View[Msg] {
-  checkbox_binding(label, checked=selected, foreground~, check_color~).semantics_role(
+  checkbox_binding(label, checked=selected, theme~, foreground?, check_color?).semantics_role(
     @core.SemanticsRole::Radio,
   )
+}
+
+///|
+fn resolve_control_color(
+  color : @core.Color?,
+  fallback : @core.Color,
+) -> @core.Color {
+  match color {
+    Some(value) => value
+    None => fallback
+  }
 }
 
 ///|
@@ -74,16 +96,24 @@ pub fn[Msg] progress(
   value : Double,
   width? : Double = 180.0,
   height? : Double = 8.0,
-  foreground? : @core.Color = @core.Theme::default().palette.primary,
-  background? : @core.Color = @core.Theme::default().palette.surface_variant,
+  theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.ProgressStyle,
+  foreground? : @core.Color,
+  background? : @core.Color,
 ) -> @core.View[Msg] {
   let value = clamp_view_double(value, 0.0, 1.0)
+  let resolved_style = match style {
+    Some(value) => value
+    None => @core.ProgressStyle::default(theme~)
+  }
+  let foreground = resolve_control_color(foreground, resolved_style.foreground)
+  let background = resolve_control_color(background, resolved_style.background)
   @core.View::custom_view(
     measure=constraints => {
       constraints.constrain(@core.Size::new(width~, height~))
     },
     paint=frame => {
-      let radius = height / 2.0
+      let radius = min_view_double(height / 2.0, resolved_style.radius)
       [
         @core.DrawCommand::FillRoundedRectBrush(
           @core.RoundedRect::new(rect=frame, radius~),
@@ -115,19 +145,36 @@ pub fn[Msg] slider(
   max? : Double = 1.0,
   width? : Double = 180.0,
   height? : Double = 28.0,
-  foreground? : @core.Color = @core.Theme::default().palette.primary,
-  background? : @core.Color = @core.Theme::default().palette.surface_variant,
+  theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.SliderStyle,
+  foreground? : @core.Color,
+  background? : @core.Color,
   on_change? : ((Double) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let range = if max <= min { 1.0 } else { max - min }
   let normalized = clamp_view_double((value - min) / range, 0.0, 1.0)
-  let knob = height * 0.72
+  let resolved_style = match style {
+    Some(value) => value
+    None => @core.SliderStyle::default(theme~)
+  }
+  let knob = min_view_double(height, resolved_style.thumb_size)
+  let track_height = min_view_double(height, resolved_style.track_height)
+  let track_radius = min_view_double(track_height / 2.0, resolved_style.radius)
+  let thumb_radius = min_view_double(knob / 2.0, resolved_style.radius)
+  let foreground_color = resolve_control_color(
+    foreground,
+    resolved_style.foreground,
+  )
+  let background = resolve_control_color(background, resolved_style.background)
+  let thumb_color = resolve_control_color(
+    foreground,
+    resolved_style.thumb_color,
+  )
   let base = @core.View::custom_view(
     measure=constraints => {
       constraints.constrain(@core.Size::new(width~, height~))
     },
     paint=frame => {
-      let track_height = 6.0
       let track = @core.Rect::new(
         x=frame.origin.x,
         y=frame.origin.y + (frame.size.height - track_height) / 2.0,
@@ -138,7 +185,7 @@ pub fn[Msg] slider(
         normalized * max_view_double(0.0, frame.size.width - knob)
       [
         @core.DrawCommand::FillRoundedRectBrush(
-          @core.RoundedRect::new(rect=track, radius=track_height / 2.0),
+          @core.RoundedRect::new(rect=track, radius=track_radius),
           @core.Brush::solid(background),
         ),
         @core.DrawCommand::FillRoundedRectBrush(
@@ -149,9 +196,9 @@ pub fn[Msg] slider(
               width=track.size.width * normalized,
               height=track.size.height,
             ),
-            radius=track_height / 2.0,
+            radius=track_radius,
           ),
-          @core.Brush::solid(foreground),
+          @core.Brush::solid(foreground_color),
         ),
         @core.DrawCommand::FillRoundedRectBrush(
           @core.RoundedRect::new(
@@ -161,9 +208,9 @@ pub fn[Msg] slider(
               width=knob,
               height=knob,
             ),
-            radius=knob / 2.0,
+            radius=thumb_radius,
           ),
-          @core.Brush::solid(foreground),
+          @core.Brush::solid(thumb_color),
         ),
       ]
     },
@@ -193,10 +240,22 @@ pub fn[Msg] slider_binding(
   max? : Double = 1.0,
   width? : Double = 180.0,
   height? : Double = 28.0,
-  foreground? : @core.Color = @core.Theme::default().palette.primary,
-  background? : @core.Color = @core.Theme::default().palette.surface_variant,
+  theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.SliderStyle,
+  foreground? : @core.Color,
+  background? : @core.Color,
 ) -> @core.View[Msg] {
-  slider(value.get(), min~, max~, width~, height~, foreground~, background~)
+  slider(
+    value.get(),
+    min~,
+    max~,
+    width~,
+    height~,
+    theme~,
+    style?,
+    foreground?,
+    background?,
+  )
 }
 
 ///|
@@ -289,6 +348,15 @@ fn clamp_view_double(value : Double, min : Double, max : Double) -> Double {
 ///|
 fn max_view_double(a : Double, b : Double) -> Double {
   if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn min_view_double(a : Double, b : Double) -> Double {
+  if a < b {
     a
   } else {
     b

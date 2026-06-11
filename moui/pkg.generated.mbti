@@ -6,6 +6,13 @@ import {
 }
 
 // Values
+pub fn dark_theme() -> @core.Theme
+
+pub fn default_theme() -> @core.Theme
+
+pub fn light_theme() -> @core.Theme
+
+pub fn theme(base? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, semantic_colors? : @core.SemanticColorScale, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
 
 // Errors
 
@@ -30,6 +37,8 @@ pub using @core {type ButtonStyle}
 
 pub using @core {type Color}
 
+pub using @core {type ColorPalette}
+
 pub using @core {type ColorScheme}
 
 pub using @core {type DrawCommand}
@@ -44,15 +53,25 @@ pub using @core {type FontSpec}
 
 pub using @core {type Insets}
 
+pub using @core {type MotionScale}
+
 pub using @core {type Point}
 
 pub using @core {type Program}
 
 pub using @core {type ProgramRuntimeSnapshot}
 
+pub using @core {type RadiusScale}
+
 pub using @core {type Rect}
 
+pub using @core {type SemanticColorScale}
+
+pub using @core {type ShadowScale}
+
 pub using @core {type Size}
+
+pub using @core {type SpacingScale}
 
 pub using @core {type State}
 
@@ -66,11 +85,15 @@ pub using @core {type SubscriptionLifecycleSnapshot}
 
 pub using @core {type SubscriptionLifecycleStatus}
 
+pub using @core {type SurfaceScale}
+
 pub using @core {type SurfaceStyle}
 
 pub using @core {type TextFieldStyle}
 
 pub using @core {type Theme}
+
+pub using @core {type TypographyScale}
 
 pub using @core {type View}
 

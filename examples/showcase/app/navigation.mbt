@@ -319,10 +319,10 @@ fn ShowcaseModel::header(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
-  let overview_width = if metrics.compact { 86.0 } else { 100.0 }
-  let examples_width = if metrics.compact { 88.0 } else { 100.0 }
-  let scheme_width = if metrics.compact { 72.0 } else { 86.0 }
-  let dialog_width = if metrics.compact { 82.0 } else { 96.0 }
+  let overview_width = if metrics.compact { 78.0 } else { 82.0 }
+  let examples_width = if metrics.compact { 80.0 } else { 82.0 }
+  let scheme_width = if metrics.compact { 64.0 } else { 70.0 }
+  let dialog_width = if metrics.compact { 74.0 } else { 76.0 }
   let title_width = if metrics.compact { 260.0 } else { 330.0 }
   let subtitle_width = if metrics.compact {
     280.0
@@ -338,7 +338,7 @@ fn ShowcaseModel::header(
         if self.active {
           "State-driven visuals are active"
         } else {
-          "A complete catalog built from reusable example code"
+          "Theme: " + showcase_scheme_label(self.scheme)
         },
         width=subtitle_width,
         height=28.0,
@@ -377,7 +377,7 @@ fn ShowcaseModel::header(
           height=38.0,
         ),
         button(
-          if self.dark {
+          if self.scheme == @core.ColorScheme::Dark {
             "Light"
           } else {
             "Dark"
@@ -420,5 +420,13 @@ fn ShowcaseModel::header(
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Center,
     )
+  }
+}
+
+///|
+fn showcase_scheme_label(scheme : @core.ColorScheme) -> String {
+  match scheme {
+    @core.ColorScheme::Light => "Light"
+    @core.ColorScheme::Dark => "Dark"
   }
 }
