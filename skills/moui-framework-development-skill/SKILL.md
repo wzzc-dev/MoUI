@@ -119,7 +119,9 @@ Use this skill when editing or reviewing:
   matching-host runtime evidence, and native WGPU/fontconfig text-provider gaps
   explicit.
 - Public API changes require `moon info` and review of `pkg.generated.mbti`
-  diffs.
+  diffs, followed by `node scripts/validate-api-surface.mjs` so the root
+  facade, `views`, `core`, host contracts, and renderer packages stay within
+  their documented tiers.
 - Renderer capability changes require synchronized updates to code, tests, docs,
   and Showcase when visible.
 - Conformance work uses four layers: `core` contract tests, `backend/host` and
@@ -307,6 +309,12 @@ as `.github/workflows/moui-skia-*.yml`, and Copilot setup lives at root
 `.github/workflows/copilot-setup-steps.yml`. Keep workflow files there while
 `moui_skia` is a workspace member; nested workflow files are not discovered by
 GitHub Actions in the monorepo.
+Daily `dev-check` also runs the MoonBit-backed API surface guard, checked
+conformance artifact guard, dedicated checked-artifact validators for platform
+runtime evidence, Web runtime handoff/presentation, conformance capture, and
+renderer proof manifests, plus app/Web checks for Showcase, Markdown Editor,
+and Design Systems. Keep `docs/testing.md` and repo-local skills synchronized
+when adding or removing daily quality gates.
 For Web runtime evidence, use `record-web-runtime-presentation.mjs` to collect
 the browser-session artifact, then fold it into
 `platform-runtime-evidence.json` with
@@ -468,12 +476,14 @@ node scripts/test-validate-skia-entrypoints.mjs
 moon test examples/showcase/app --target native
 moon test examples/counter/app --target native
 moon test examples/markdown_editor/app --target native
+moon test examples/design_systems/app --target native
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+moon build examples/design_systems/web_wasm --target wasm-gc
 moon build examples/markdown_editor/macos_skia --target native
 moon build examples/pdf_workbench/macos_skia --target native
 moon build examples/pdf_workbench/windows_skia --target native
@@ -621,6 +631,7 @@ Public API review:
 
 ```sh
 moon info
+node scripts/validate-api-surface.mjs
 ```
 
 ## Playbooks
