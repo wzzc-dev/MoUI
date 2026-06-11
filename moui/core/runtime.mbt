@@ -402,6 +402,14 @@ pub fn AppRuntime::dispatch_command(
 }
 
 ///|
+pub fn AppRuntime::dispatch_action_command(
+  self : AppRuntime,
+  command : ActionCommand,
+) -> Bool {
+  self.state.dispatch_action_command(command)
+}
+
+///|
 pub fn AppRuntime::dispatch_focused_text_command(
   self : AppRuntime,
   intent : CommandIntent,

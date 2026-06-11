@@ -272,6 +272,19 @@ pub fn RuntimeState::dispatch_command(
 }
 
 ///|
+pub fn RuntimeState::dispatch_action_command(
+  self : RuntimeState,
+  command : ActionCommand,
+) -> Bool {
+  if self.action_commands.dispatch_command(command) {
+    self.request_activation_rebuild()
+    true
+  } else {
+    false
+  }
+}
+
+///|
 pub fn RuntimeState::dispatch_focused_text_command(
   self : RuntimeState,
   intent : CommandIntent,

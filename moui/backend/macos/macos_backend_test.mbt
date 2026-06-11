@@ -175,7 +175,10 @@ test "macos service bridge exposes menu contract" {
         ),
       ]),
     ) {
-    @host.HostServiceResponse::MenuCommand(@core.CommandIntent::Paste) => ()
+    @host.HostServiceResponse::MenuAction(command) => {
+      assert_true(command.intent == @core.CommandIntent::Paste)
+      inspect(command.label, content="Paste")
+    }
     _ => fail("expected selected menu command")
   }
   inspect(seen_count.val, content="2")
