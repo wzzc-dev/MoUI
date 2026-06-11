@@ -14,6 +14,8 @@ pub struct WindowsSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
   priv exit_after_first_present : Bool
+  priv web_view_commands : @host.HostWebViewCommandQueue?
+  priv web_view_events : @host.HostWebViewEventSource?
 }
 
 ///|
@@ -21,8 +23,16 @@ pub fn WindowsSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   exit_after_first_present? : Bool = false,
+  web_view_commands? : @host.HostWebViewCommandQueue? = None,
+  web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> WindowsSkiaAppOptions {
-  { scene_resolver, font_resolution, exit_after_first_present }
+  {
+    scene_resolver,
+    font_resolution,
+    exit_after_first_present,
+    web_view_commands,
+    web_view_events,
+  }
 }
 
 ///|
@@ -53,6 +63,8 @@ pub fn run_app_with_options(
     options=@windows_host.WindowsHostAppOptions::new(
       scene_resolver=options.scene_resolver,
       exit_after_first_present=options.exit_after_first_present,
+      web_view_commands=options.web_view_commands,
+      web_view_events=options.web_view_events,
     ),
     window_requests~,
   )

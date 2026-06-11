@@ -277,6 +277,7 @@ pub(all) enum HostEvent {
   Keyboard(@core.KeyboardEvent)
   TextInput(@core.TextInputEvent)
   DragDrop(@core.DragDropEvent)
+  WebView(String, @core.WebViewEvent)
   ThemeChanged(@core.ColorScheme)
   Command(@core.CommandIntent)
   RedrawRequested
@@ -741,6 +742,7 @@ pub fn accesskit_role_from_semantics(
     @core.SemanticsRole::Dialog => @accesskit.Role::Dialog
     @core.SemanticsRole::Tooltip => @accesskit.Role::Tooltip
     @core.SemanticsRole::Menu => @accesskit.Role::Menu
+    @core.SemanticsRole::WebView => @accesskit.Role::GenericContainer
     @core.SemanticsRole::ButtonGroup => @accesskit.Role::Group
     @core.SemanticsRole::Form => @accesskit.Role::Form
     @core.SemanticsRole::FormField => @accesskit.Role::GenericContainer
@@ -1037,6 +1039,7 @@ fn native_accessibility_role(role : @core.SemanticsRole) -> String {
     @core.SemanticsRole::Dialog => "dialog"
     @core.SemanticsRole::Tooltip => "tooltip"
     @core.SemanticsRole::Menu => "menu"
+    @core.SemanticsRole::WebView => "webView"
     @core.SemanticsRole::ButtonGroup => "buttonGroup"
     @core.SemanticsRole::Form => "form"
     @core.SemanticsRole::FormField => "formField"
@@ -1245,8 +1248,7 @@ pub fn RedrawScheduler::request(self : RedrawScheduler) -> Unit {
       (self.schedule)()
     }
     RedrawScheduled | RedrawFollowUpScheduled => ()
-    RedrawInFrame =>
-      self.state = RedrawSchedulerState::RedrawFollowUpScheduled
+    RedrawInFrame => self.state = RedrawSchedulerState::RedrawFollowUpScheduled
   }
 }
 
@@ -1343,6 +1345,10 @@ pub fn HostRuntimeDriver::dispatch(
     }
     DragDrop(event) => {
       self.runtime.dispatch_event(@core.AppEvent::DragDrop(event))
+      self.request_redraw_if_needed()
+    }
+    WebView(id, event) => {
+      self.runtime.dispatch_event(@core.AppEvent::WebView(id, event))
       self.request_redraw_if_needed()
     }
     ThemeChanged(scheme) => {
@@ -1551,7 +1557,9 @@ pub fn HostRuntimeDriver::draw_commands(
 }
 
 ///|
-pub fn HostRuntimeDriver::draw_frame(self : HostRuntimeDriver) -> @core.DrawFrame {
+pub fn HostRuntimeDriver::draw_frame(
+  self : HostRuntimeDriver,
+) -> @core.DrawFrame {
   self.runtime.draw_frame()
 }
 
@@ -1625,6 +1633,7 @@ pub fn HostEvent::to_core(self : HostEvent) -> @core.AppEvent? {
     Keyboard(event) => Some(@core.AppEvent::Keyboard(event))
     TextInput(event) => Some(@core.AppEvent::TextInput(event))
     DragDrop(event) => Some(@core.AppEvent::DragDrop(event))
+    WebView(id, event) => Some(@core.AppEvent::WebView(id, event))
     ThemeChanged(_) => None
     Command(_) => None
     RedrawRequested =>

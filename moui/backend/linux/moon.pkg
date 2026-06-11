@@ -11,7 +11,12 @@ import {
 supported_targets = "native"
 
 options(
-  link: { "native": { "cc-link-flags": "-lz" } },
-  "native-stub": [ "linux_service_host.c" ],
+  link: {
+    "native": {
+      "stub-cc-flags": "${build.MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS}",
+      "cc-link-flags": "-lz ${build.MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS}",
+    },
+  },
+  "native-stub": [ "linux_service_host.c", "linux_webview_host.c" ],
   targets: { },
 )
