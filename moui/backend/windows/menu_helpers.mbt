@@ -19,7 +19,7 @@ fn menu_command_response(
   } else {
     let command = commands[selected_index]
     if command.enabled {
-      @host.HostServiceResponse::MenuCommand(command.intent)
+      @host.HostServiceResponse::MenuAction(command)
     } else {
       @host.HostServiceResponse::Unavailable("menu command is disabled")
     }
