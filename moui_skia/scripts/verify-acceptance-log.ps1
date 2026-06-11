@@ -43,6 +43,7 @@ if ($Help) {
 }
 
 $exitCode = 0
+$errorMessage = ""
 Push-Location $workspaceRoot
 try {
   moon build $toolPackage --target native
@@ -50,11 +51,30 @@ try {
     exit $LASTEXITCODE
   }
   $toolExe = Join-Path $workspaceRoot "_build/native/debug/build/wzzc-dev/moui_tools/moui_skia/verify_acceptance_log/verify_acceptance_log.exe"
-  & $toolExe @toolArgs
+  $toolOutput = & $toolExe @toolArgs 2>&1
   $exitCode = $LASTEXITCODE
+  $toolOutput | ForEach-Object { Write-Host $_ }
+  if ($exitCode -ne 0) {
+    $errorMessage = ($toolOutput -join [Environment]::NewLine)
+  } elseif (!$Help) {
+    $verified = $false
+    foreach ($line in @($toolOutput)) {
+      if ("$line".StartsWith("Verified real Skia acceptance log in ")) {
+        $verified = $true
+        break
+      }
+    }
+    if (!$verified) {
+      $exitCode = 1
+      $errorMessage = ($toolOutput -join [Environment]::NewLine)
+      if (!$errorMessage) {
+        $errorMessage = "acceptance log verifier did not print a verification marker"
+      }
+    }
+  }
 } finally {
   Pop-Location
 }
 if ($exitCode -ne 0) {
-  exit $exitCode
+  throw $errorMessage
 }
