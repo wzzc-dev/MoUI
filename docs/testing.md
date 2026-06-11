@@ -223,6 +223,9 @@ node --check scripts/validate-guidance-consistency.mjs
 node scripts/validate-guidance-consistency.mjs
 node --check scripts/validate-api-surface.mjs
 node scripts/validate-api-surface.mjs
+node scripts/validate-renderer-provider-manifests.mjs
+node scripts/validate-skia-entrypoints.mjs
+node scripts/test-validate-skia-entrypoints.mjs
 node --check scripts/validate-package-manifest.mjs
 node --check scripts/validate-conformance-capture-manifest.mjs
 node scripts/test-validate-conformance-capture-manifest.mjs
