@@ -3745,12 +3745,14 @@ fn markdown_editor_command_binding(
   label : String,
   shortcut : @core.KeyboardShortcut,
   action : () -> Unit,
+  context_menu? : Bool = true,
 ) -> @core.CommandBinding {
   @core.CommandBinding::new(
     command=@core.ActionCommand::new(
       intent=@core.CommandIntent::Activate,
       label~,
       shortcut=Some(shortcut),
+      context_menu~,
     ),
     handle=action,
   )
@@ -3766,6 +3768,7 @@ fn MarkdownEditorApp::action_commands(
       "New Document",
       markdown_editor_shortcut("n"),
       () => ignore(self.update(NewDocument)),
+      context_menu=true,
     ),
     markdown_editor_command_binding(
       "New Document",
@@ -3776,15 +3779,19 @@ fn MarkdownEditorApp::action_commands(
       "Open Document",
       markdown_editor_shortcut("o"),
       () => self.perform_file_open(services),
+      context_menu=true,
     ),
     markdown_editor_command_binding(
       "Open Document",
       markdown_editor_control_shortcut("o"),
       () => self.perform_file_open(services),
     ),
-    markdown_editor_command_binding("Save", markdown_editor_shortcut("s"), () => {
-      self.perform_document_save(services)
-    }),
+    markdown_editor_command_binding(
+      "Save",
+      markdown_editor_shortcut("s"),
+      () => self.perform_document_save(services),
+      context_menu=true,
+    ),
     markdown_editor_command_binding(
       "Save",
       markdown_editor_control_shortcut("s"),
@@ -3794,6 +3801,7 @@ fn MarkdownEditorApp::action_commands(
       "Save As",
       markdown_editor_shift_shortcut("s"),
       () => self.perform_file_save_as(services),
+      context_menu=true,
     ),
     markdown_editor_command_binding(
       "Save As",
@@ -3804,6 +3812,7 @@ fn MarkdownEditorApp::action_commands(
       "Import Markdown from Clipboard",
       markdown_editor_meta_alt_shortcut("i"),
       () => self.perform_clipboard_import(services),
+      context_menu=true,
     ),
     markdown_editor_command_binding(
       "Import Markdown from Clipboard",
@@ -3814,6 +3823,7 @@ fn MarkdownEditorApp::action_commands(
       "Export Markdown",
       markdown_editor_meta_alt_shortcut("s"),
       () => self.perform_clipboard_export(services),
+      context_menu=true,
     ),
     markdown_editor_command_binding(
       "Export Markdown",
@@ -3824,15 +3834,19 @@ fn MarkdownEditorApp::action_commands(
       "Export HTML",
       markdown_editor_meta_alt_shortcut("e"),
       () => self.perform_html_export(services),
+      context_menu=true,
     ),
     markdown_editor_command_binding(
       "Export HTML",
       markdown_editor_control_alt_shortcut("e"),
       () => self.perform_html_export(services),
     ),
-    markdown_editor_command_binding("Find", markdown_editor_shortcut("f"), () => {
-      ignore(self.update(OpenFind))
-    }),
+    markdown_editor_command_binding(
+      "Find",
+      markdown_editor_shortcut("f"),
+      () => ignore(self.update(OpenFind)),
+      context_menu=true,
+    ),
     markdown_editor_command_binding(
       "Find",
       markdown_editor_control_shortcut("f"),
@@ -3842,6 +3856,7 @@ fn MarkdownEditorApp::action_commands(
       "Find/Replace",
       markdown_editor_meta_alt_shortcut("f"),
       () => ignore(self.update(OpenFindReplace)),
+      context_menu=true,
     ),
     markdown_editor_command_binding(
       "Find/Replace",

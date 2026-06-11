@@ -140,6 +140,7 @@ pub(all) struct ActionCommand {
   enabled : Bool
   group : String
   description : String
+  context_menu : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -548,8 +549,9 @@ pub fn ActionCommand::new(
   enabled? : Bool = true,
   group? : String = "",
   description? : String = "",
+  context_menu? : Bool = false,
 ) -> ActionCommand {
-  { intent, shortcut, label, enabled, group, description }
+  { intent, shortcut, label, enabled, group, description, context_menu }
 }
 
 ///|
@@ -688,6 +690,20 @@ pub fn ActionCommandMap::dispatch_intent(
 ) -> Bool {
   for binding in self.bindings {
     if binding.command.enabled && binding.command.intent == intent {
+      (binding.handle)()
+      return true
+    }
+  }
+  false
+}
+
+///|
+pub fn ActionCommandMap::dispatch_command(
+  self : ActionCommandMap,
+  command : ActionCommand,
+) -> Bool {
+  for binding in self.bindings {
+    if binding.command.enabled && binding.command == command {
       (binding.handle)()
       return true
     }

@@ -4851,6 +4851,24 @@ test "markdown editor actions apply actions at current caret context" {
 }
 
 ///|
+test "markdown editor document context menu includes app commands" {
+  let app = MarkdownEditorApp::new()
+  let commands = app
+    .action_commands()
+    .commands()
+    .filter(command => command.context_menu)
+  for
+    label in [
+      "Toggle Source Mode", "Toggle Quick Format", "Cycle Writing Look", "Insert Table of Contents",
+      "Insert YAML Front Matter", "Toggle Outline", "Toggle Files", "Toggle Document Info",
+      "Toggle Focus Mode", "Next Heading", "Open Target", "Bold", "Italic", "Paragraph",
+      "Heading 1", "Bullet List", "Insert Table Row", "Table Align Center",
+    ] {
+    assert_true(commands.any(command => command.display_label() == label))
+  }
+}
+
+///|
 fn markdown_action_from_seed(expected : String) -> String {
   if expected == "**bold text**" {
     "bold"
