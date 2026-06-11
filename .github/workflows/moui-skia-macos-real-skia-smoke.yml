@@ -123,7 +123,7 @@ jobs:
       - name: Update MoonBit registry
         if: ${{ !inputs.dry_run_config }}
         shell: bash
-        run: moon update
+        run: ../scripts/ci-moon-update.sh
 
       - name: Install build dependencies
         if: ${{ !inputs.dry_run_config }}
