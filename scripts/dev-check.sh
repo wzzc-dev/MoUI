@@ -67,6 +67,8 @@ run_built_executable() {
 
 run sh scripts/check-local-deps.sh
 run node scripts/validate-guidance-consistency.mjs
+run node --check scripts/validate-api-surface.mjs
+run node scripts/validate-api-surface.mjs
 run node scripts/validate-renderer-provider-manifests.mjs
 run node scripts/validate-skia-entrypoints.mjs
 run node scripts/test-validate-skia-entrypoints.mjs
