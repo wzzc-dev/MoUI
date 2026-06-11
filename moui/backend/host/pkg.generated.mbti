@@ -436,6 +436,7 @@ pub(all) struct HostRuntimeDriver {
 pub fn HostRuntimeDriver::apply_render_frame_result(Self, @render.RenderFrameResult) -> Unit
 pub fn HostRuntimeDriver::begin_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::dispatch(Self, HostEvent) -> HostEventResult
+pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @wzzc-dev/moui/core.ActionCommand, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @wzzc-dev/moui/core.CommandIntent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @wzzc-dev/moui/core.KeyboardEvent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_service_completion(Self, HostCompletedServiceResponse, HostServiceBridge) -> HostEventResult
@@ -562,6 +563,7 @@ pub(all) enum HostServiceResponse {
   Pending(HostServiceRequestId)
   ClipboardText(String)
   ClipboardWritten
+  MenuAction(@wzzc-dev/moui/core.ActionCommand)
   MenuCommand(@wzzc-dev/moui/core.CommandIntent)
   FileDialogSelection(Array[String])
   TextFileContent(String, String)

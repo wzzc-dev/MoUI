@@ -155,6 +155,8 @@ fn CommandPaletteModel::apply_host_menu_response(
   response : @host.HostServiceResponse,
 ) -> CommandPaletteModel {
   match response {
+    @host.HostServiceResponse::MenuAction(command) =>
+      self.dispatch_intent(command.intent)
     @host.HostServiceResponse::MenuCommand(intent) =>
       self.dispatch_intent(intent)
     @host.HostServiceResponse::Unavailable(reason) =>

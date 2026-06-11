@@ -294,6 +294,8 @@ pub fn HostRuntimeDriver::dispatch_service_completion(
         self.request_redraw_if_needed()
       }
     }
+    (HostServiceRequest::ShowMenu(_), HostServiceResponse::MenuAction(command)) =>
+      ignore(self.dispatch_action_command_with_services(command, services))
     (HostServiceRequest::ShowMenu(_), HostServiceResponse::MenuCommand(intent)) =>
       ignore(self.dispatch_command_with_services(intent, services))
     (

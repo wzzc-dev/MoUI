@@ -114,6 +114,7 @@ pub(all) enum HostServiceResponse {
   Pending(HostServiceRequestId)
   ClipboardText(String)
   ClipboardWritten
+  MenuAction(@core.ActionCommand)
   MenuCommand(@core.CommandIntent)
   FileDialogSelection(Array[String])
   TextFileContent(String, String)
@@ -1431,6 +1432,28 @@ pub fn HostRuntimeDriver::dispatch_command_with_services(
 }
 
 ///|
+pub fn HostRuntimeDriver::dispatch_action_command_with_services(
+  self : HostRuntimeDriver,
+  command : @core.ActionCommand,
+  services : HostServiceBridge,
+) -> HostEventResult {
+  match command.intent {
+    @core.CommandIntent::Copy
+    | @core.CommandIntent::Cut
+    | @core.CommandIntent::Paste =>
+      self.dispatch_command_with_services(command.intent, services)
+    _ => {
+      if self.runtime.dispatch_action_command(command) {
+        self.request_redraw_if_needed()
+      } else if command.intent != @core.CommandIntent::Activate {
+        ignore(self.dispatch_command_with_services(command.intent, services))
+      }
+      self.event_result()
+    }
+  }
+}
+
+///|
 pub fn HostRuntimeDriver::dispatch_keyboard_with_services(
   self : HostRuntimeDriver,
   event : @core.KeyboardEvent,
@@ -1447,10 +1470,13 @@ pub fn HostRuntimeDriver::show_context_menu(
   self : HostRuntimeDriver,
   services : HostServiceBridge,
 ) -> HostEventResult {
-  match
-    services.dispatch(
-      HostServiceRequest::ShowMenu(self.context_menu_commands()),
-    ) {
+  let commands = self.context_menu_commands()
+  if commands.length() == 0 {
+    return self.event_result()
+  }
+  match services.dispatch(HostServiceRequest::ShowMenu(commands)) {
+    HostServiceResponse::MenuAction(command) =>
+      ignore(self.dispatch_action_command_with_services(command, services))
     HostServiceResponse::MenuCommand(intent) =>
       ignore(self.dispatch_command_with_services(intent, services))
     _ => ()
@@ -1462,29 +1488,75 @@ pub fn HostRuntimeDriver::show_context_menu(
 fn HostRuntimeDriver::context_menu_commands(
   self : HostRuntimeDriver,
 ) -> Array[@core.ActionCommand] {
-  let commands = self.runtime.action_commands()
-  if self.runtime.focused_text_input().focused {
-    merge_context_menu_commands(@core.default_text_commands(), commands)
+  let input = self.runtime.focused_text_input()
+  if input.focused && text_input_state_has_active_selection(input) {
+    focused_text_context_menu_commands(input)
   } else {
-    commands
+    let commands = self.document_context_menu_commands()
+    if commands.length() > 0 || !input.focused {
+      commands
+    } else {
+      focused_text_context_menu_commands(input)
+    }
   }
 }
 
 ///|
-fn merge_context_menu_commands(
-  primary : Array[@core.ActionCommand],
-  secondary : Array[@core.ActionCommand],
+fn HostRuntimeDriver::document_context_menu_commands(
+  self : HostRuntimeDriver,
+) -> Array[@core.ActionCommand] {
+  self.runtime
+  .action_commands()
+  .filter(command => command.context_menu)
+  .dedupe_context_menu_commands()
+}
+
+///|
+fn focused_text_context_menu_commands(
+  input : @core.TextInputState,
+) -> Array[@core.ActionCommand] {
+  let has_selection = text_input_state_has_active_selection(input)
+  @core.default_text_commands().map(command => {
+    match command.intent {
+      @core.CommandIntent::Copy | @core.CommandIntent::Cut =>
+        { ..command, enabled: has_selection }
+      _ => command
+    }
+  })
+}
+
+///|
+fn text_input_state_has_active_selection(input : @core.TextInputState) -> Bool {
+  match input.selection {
+    Some(selection) => !selection.normalized().is_collapsed()
+    None => false
+  }
+}
+
+///|
+fn Array::dedupe_context_menu_commands(
+  self : Array[@core.ActionCommand],
 ) -> Array[@core.ActionCommand] {
   let commands : Array[@core.ActionCommand] = []
-  for command in primary {
-    commands.push(command)
-  }
-  for command in secondary {
-    if !commands.any(existing => existing.intent == command.intent) {
+  for command in self {
+    if !commands.any(existing => same_context_menu_command(existing, command)) {
       commands.push(command)
     }
   }
   commands
+}
+
+///|
+fn same_context_menu_command(
+  left : @core.ActionCommand,
+  right : @core.ActionCommand,
+) -> Bool {
+  left.intent == right.intent &&
+  left.label == right.label &&
+  left.enabled == right.enabled &&
+  left.group == right.group &&
+  left.description == right.description &&
+  left.context_menu == right.context_menu
 }
 
 ///|
