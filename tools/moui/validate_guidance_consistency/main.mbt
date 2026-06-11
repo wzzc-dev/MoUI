@@ -182,8 +182,9 @@ fn daily_quality_gate_tokens() -> Array[String] {
     "moon test moui/core --target native", "moon test moui/views --target native",
     "moon test moui/render/skia --target native", "moon test moui/backend/host --target native",
     "moon test moui/backend/web --target wasm-gc", "moon test examples/showcase/app --target native",
-    "moon test examples/markdown_editor/app --target native", "moon build examples/showcase/web_wasm --target wasm-gc",
-    "moon build examples/markdown_editor/web_wasm --target wasm-gc", "node scripts/validate-web-runtime-handoff.mjs",
+    "moon test examples/markdown_editor/app --target native", "moon test examples/design_systems/app --target native",
+    "moon build examples/showcase/web_wasm --target wasm-gc", "moon build examples/markdown_editor/web_wasm --target wasm-gc",
+    "moon build examples/design_systems/web_wasm --target wasm-gc", "node scripts/validate-web-runtime-handoff.mjs",
   ]
 }
 
