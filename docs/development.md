@@ -47,6 +47,7 @@ members = [
   "./examples/data_table",
   "./examples/file_importer",
   "./examples/pdf_workbench",
+  "./examples/webview_demo",
   "./examples/command_palette",
   "./examples/mo_workbench",
   "./benchmarks/app_cached_layer",

@@ -785,10 +785,10 @@ try {
     $fakeReleaseBadPackageDir = Join-Path $dryRunRoot "fake-release-artifact-bad-package"
     New-FakeReleaseArtifact `
       -Directory $fakeReleaseBadPackageDir `
-      -Package "Skia-dev-6d73578a36-windows-Release-ppc64.zip"
+      -Package "Skia-dev-6d73578a36-windows-Release-not-locked.zip"
     Assert-CommandFailsWith `
       -Command { & (Join-Path $repoRoot "scripts/verify-real-skia-artifact.ps1") -Platform windows -LogDir $fakeReleaseBadPackageDir } `
-      -ExpectedMessage "not locked"
+      -ExpectedMessage "SHA256 mismatch"
 
     $fakeReleaseMismatchedAcceptanceDir = Join-Path $dryRunRoot "fake-release-artifact-mismatched-acceptance"
     New-FakeReleaseArtifact `
