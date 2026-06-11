@@ -309,12 +309,19 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
       self.driver.set_redraw_scheduler(() => {
         self.request_redraw_window_if_needed(window_id)
       })
-      let renderer_result = try? WebRenderer::create(
-        canvas_id=window_web_default_canvas_id(window.id().into_raw()),
-        metrics~,
-      )
-      match renderer_result {
-        Ok(renderer) => {
+      try
+        WebRenderer::create(
+          canvas_id=window_web_default_canvas_id(window.id().into_raw()),
+          metrics~,
+        )
+      catch {
+        err => {
+          let _ = err
+          window.drop()
+          event_loop.exit()
+        }
+      } noraise {
+        renderer => {
           self.driver.set_text_system(renderer.text_system())
           match self.runtime_slots.lookup(window_id) {
             Some(slot) =>
@@ -330,11 +337,6 @@ pub impl @window_web.ApplicationHandler for WebApp with fn can_create_surfaces(
             }),
           )
           window.request_redraw()
-        }
-        Err(err) => {
-          let _ = err
-          window.drop()
-          event_loop.exit()
         }
       }
     }
@@ -658,12 +660,21 @@ fn WebApp::attach_resolved_window(
     window.surface_size(),
     window.scale_factor(),
   )
-  let renderer_result = try? WebRenderer::create(
-    canvas_id=window_web_default_canvas_id(window.id().into_raw()),
-    metrics~,
-  )
-  match renderer_result {
-    Ok(renderer) => {
+  try
+    WebRenderer::create(
+      canvas_id=window_web_default_canvas_id(window.id().into_raw()),
+      metrics~,
+    )
+  catch {
+    _ => {
+      window.drop()
+      self.rollback_resolved_window(resolved.id)
+      @host.HostWindowRequestResult::WindowRejected(
+        "failed to create Web renderer",
+      )
+    }
+  } noraise {
+    renderer => {
       ignore(self.windows.resize(resolved.id, metrics))
       ignore(self.runtime_slots.sync_open_from_registry(self.windows))
       let record = match self.windows.lookup(resolved.id) {
@@ -700,13 +711,6 @@ fn WebApp::attach_resolved_window(
       )
       self.request_platform_redraw(resolved.id)
       @host.HostWindowRequestResult::WindowOpened(resolved.id)
-    }
-    Err(_) => {
-      window.drop()
-      self.rollback_resolved_window(resolved.id)
-      @host.HostWindowRequestResult::WindowRejected(
-        "failed to create Web renderer",
-      )
     }
   }
 }

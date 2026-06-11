@@ -95,7 +95,7 @@ sh scripts/dev-check.sh
 ```
 
 MoUI resolves `wzzc-dev/window` from the MoonBit registry as
-`wzzc-dev/window@0.5.1-fork.3`; `moon.work` does not include a local window
+`wzzc-dev/window@0.5.1-0.1.4`; `moon.work` does not include a local window
 checkout. The dependency check verifies that package version, the absence of a
 repo-local window workspace member, and the `moui_skia` binding workspace's
 platform status and native capability contracts via
@@ -128,7 +128,7 @@ runtime and native IME observation set to `yes` plus
 recorded the macOS platform runtime evidence with `github-actions` provenance
 and uploaded the matching artifact bundle. Windows and Linux remain pending
 until their matching hosts record equivalent platform-runtime artifacts. Native
-passed entries include the `wzzc-dev/window@0.5.1-fork.3` package smoke
+passed entries include the `wzzc-dev/window@0.5.1-0.1.4` package smoke
 monitor/cursor probe as `monitorCursor=yes`; Web browser-session evidence may
 leave that field pending because CDP does not prove native
 monitor/current-monitor or cursor behavior. A
@@ -330,7 +330,7 @@ under `.tools\vcpkg-msvc` and installs `zlib:x64-windows` there.
 
 ## Linux Native
 
-Linux native examples use the `wzzc-dev/window@0.5.1-fork.3` Wayland backend.
+Linux native examples use the `wzzc-dev/window@0.5.1-0.1.4` Wayland backend.
 The recommended mainline entrypoints select native Skia raster and present CPU
 pixel frames through Wayland `wl_shm`. Run them on a Linux host with a Wayland
 compositor and configured real Skia link flags:

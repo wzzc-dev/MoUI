@@ -1287,12 +1287,14 @@ test "skia renderer reports presenter failure without counting present" {
   ) catch {
     err => fail("expected Skia renderer creation: \{err.message()}")
   }
-  let result = try? renderer.render([
-    @core.DrawCommand::Clear(@core.Color::white()),
-  ])
-  match result {
-    Err(SkiaRendererError::PresentFailed(description)) =>
-      inspect(description, content="failing-presenter")
+  try renderer.render([@core.DrawCommand::Clear(@core.Color::white())]) catch {
+    err =>
+      match err {
+        SkiaRendererError::PresentFailed(description) =>
+          inspect(description, content="failing-presenter")
+        _ => fail("expected Skia presenter failure")
+      }
+  } noraise {
     _ => fail("expected Skia presenter failure")
   }
   inspect(renderer.present_count(), content="0")

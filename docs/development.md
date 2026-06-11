@@ -7,7 +7,7 @@ for MoUI development.
 
 The upstream `moonbit-community/window` package does not currently cover the targets 
 MoUI needs, so use the `wzzc-dev/window` fork checkout instead. 
-MoUI resolves the window host dependency from the MoonBit registry as `wzzc-dev/window@0.5.1-fork.3`.
+MoUI resolves the window host dependency from the MoonBit registry as `wzzc-dev/window@0.5.1-0.1.4`.
 MoUI also carries `wzzc-dev/moui_skia` as a repo-local editable workspace member
 while the Skia renderer backend and binding surface evolve together. The
 optional `wzzc-dev/moui_theme` addon is another repo-local workspace member for
@@ -32,8 +32,8 @@ the local workspace members in `moon.work`:
 
 ```moonbit
 import {
-  "wzzc-dev/window@0.5.1-fork.3",
-  "wzzc-dev/moui_skia@0.1.3",
+  "wzzc-dev/window@0.5.1-0.1.4",
+  "wzzc-dev/moui_skia@0.1.4",
 }
 ```
 
@@ -64,7 +64,7 @@ The MoonBit package ecosystem is still not as mature as older language
 ecosystems. A failing build can come from registry cache state, package
 publication mistakes, or dependency regressions as well as from MoUI code. When
 dependency-related failures appear, first run `moon update`, inspect the
-resolved package versions, and check whether `wzzc-dev/window@0.5.1-fork.3` or
+resolved package versions, and check whether `wzzc-dev/window@0.5.1-0.1.4` or
 another package changed behavior.
 
 The `window` package still carries MoUI smoke helpers and evidence docs. Use
@@ -106,7 +106,7 @@ workflow.
 When updating this repository, update all Git checkouts that participate in the
 workspace, not just the root checkout. That includes the main MoUI repository
 and Git submodules such as `.agents/skills/moonbit-skills`. Then run
-`moon update` so registry dependencies such as `wzzc-dev/window@0.5.1-fork.3`
+`moon update` so registry dependencies such as `wzzc-dev/window@0.5.1-0.1.4`
 are refreshed. `moui_skia` updates with the main MoUI checkout.
 
 On Windows, use the repository update helper:

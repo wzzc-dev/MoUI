@@ -859,11 +859,11 @@ fn validate_platform_entry(
     label + ".windowEvidenceCommand",
     failures,
   )
-  if !window_evidence_command.contains("wzzc-dev/window@0.5.1-fork.3") ||
+  if !window_evidence_command.contains("wzzc-dev/window@0.5.1-0.1.4") ||
     !window_evidence_command.contains(name) {
     failures.push(
       label +
-      ".windowEvidenceCommand must name wzzc-dev/window@0.5.1-fork.3 package evidence for " +
+      ".windowEvidenceCommand must name wzzc-dev/window@0.5.1-0.1.4 package evidence for " +
       name,
     )
   }
@@ -974,9 +974,9 @@ fn validate_manifest_fields(
   let window_evidence_source = require_string(
     manifest, "windowEvidenceSource", "windowEvidenceSource", failures,
   )
-  if window_evidence_source != "wzzc-dev/window@0.5.1-fork.3" {
+  if window_evidence_source != "wzzc-dev/window@0.5.1-0.1.4" {
     failures.push(
-      "windowEvidenceSource must be wzzc-dev/window@0.5.1-fork.3",
+      "windowEvidenceSource must be wzzc-dev/window@0.5.1-0.1.4",
     )
   }
   let entries = require_array(manifest, "platforms", "platforms", failures)

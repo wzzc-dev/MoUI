@@ -89,7 +89,7 @@ pub fn accesskit_node_id_for_element(
 
 ///|
 pub fn accesskit_rect_from_core(rect : @core.Rect) -> @accesskit.Rect {
-  @accesskit.Rect::new(
+  @accesskit.Rect(
     rect.origin.x,
     rect.origin.y,
     rect.origin.x + rect.size.width,
@@ -150,9 +150,7 @@ pub fn accesskit_action_from_semantics(
 pub fn accesskit_node_from_semantics(
   node : @core.SemanticsNode,
 ) -> @accesskit.Node {
-  let access_node = @accesskit.Node::new(
-    accesskit_role_from_semantics(node.role),
-  )
+  let access_node = @accesskit.Node(accesskit_role_from_semantics(node.role))
   access_node.set_bounds(accesskit_rect_from_core(node.frame))
   if node.label != "" {
     access_node.set_label(node.label)
@@ -195,8 +193,8 @@ pub fn accesskit_tree_update_from_semantics(
   node : @core.SemanticsNode,
 ) -> @accesskit.TreeUpdate {
   let root_id = accesskit_node_id_for_element(node.element_id)
-  let update = @accesskit.TreeUpdate::new(@accesskit.TreeId::root(), root_id)
-  update.set_tree(@accesskit.Tree::new(root_id))
+  let update = @accesskit.TreeUpdate(@accesskit.TreeId::root(), root_id)
+  update.set_tree(@accesskit.Tree(root_id))
   push_accesskit_semantics_node(update, node)
   update
 }
