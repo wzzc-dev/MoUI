@@ -378,6 +378,34 @@ test "showcase native ime evidence points focus sidebar search" {
   assert_true(input.focused)
   inspect(input.text, content="moui")
   assert_true(input.caret_rect.size.height > 0.0)
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::CompositionStart),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(
+      @core.TextInputEvent::CompositionUpdate(
+        @core.CompositionUpdate::new(
+          text="ni",
+          cursor=Some(@core.TextRange::new(start=0, end=2)),
+        ),
+      ),
+    ),
+  )
+  let composing = runtime.focused_text_input()
+  guard composing.composition is Some(composition) else {
+    fail("expected sidebar search composition")
+  }
+  guard composing.composition_cursor is Some(cursor) else {
+    fail("expected sidebar search composition cursor")
+  }
+  inspect(composition, content="ni")
+  inspect(cursor.end, content="2")
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd("你")),
+  )
+  let committed = runtime.focused_text_input()
+  inspect(committed.text, content="moui你")
+  assert_true(committed.composition is None)
 }
 
 ///|

@@ -1047,6 +1047,19 @@ fn MacosApp::start_native_ime_runtime_evidence(
       "appkit-setMarkedText=\{set_marked_text_ok} appkit-firstRectForCharacterRange=\{first_rect_ok}",
     )
   }
+  self.dispatch_window_event(
+    window_id,
+    @window_core.WindowEvent::Ime(@window_core.Ime::Enabled),
+  )
+  self.dispatch_window_event(
+    window_id,
+    @window_core.WindowEvent::Ime(
+      @window_core.Ime::Preedit(
+        "ni",
+        Some(@window_core.ImeCursorRange::ImeCursorRange(0, 2)),
+      ),
+    ),
+  )
   println(
     prefix +
     " MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text appkit-setMarkedText appkit-firstRectForCharacterRange",
@@ -1103,6 +1116,14 @@ fn MacosApp::record_native_ime_composition_evidence(
       window_id, prefix, "appkit-insertText=false",
     )
   }
+  self.dispatch_window_event(
+    window_id,
+    @window_core.WindowEvent::Ime(@window_core.Ime::Preedit("", None)),
+  )
+  self.dispatch_window_event(
+    window_id,
+    @window_core.WindowEvent::Ime(@window_core.Ime::Commit("你")),
+  )
   self.native_ime_runtime_evidence_phase = 2
   self.native_ime_runtime_evidence_wait_redraws = 0
   self.request_platform_redraw(window_id)
