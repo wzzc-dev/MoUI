@@ -899,14 +899,20 @@ fn run_renderer_proof_pixel_smoke() -> Unit {
       true
     },
   )
-  guard (try? @skia_renderer.create_with_present_target(
+  let renderer_result = try
+    @skia_renderer.create_with_present_target(
       @render.RendererSurfaceMetrics::from_logical(
         size=@core.Size::new(width=128.0, height=64.0),
         scale_factor=1.0,
       ),
       target,
-    ))
-    is Ok(renderer) else {
+    )
+  catch {
+    err => Err(err.message())
+  } noraise {
+    renderer => Ok(renderer)
+  }
+  guard renderer_result is Ok(renderer) else {
     fail_smoke("failed to create MoUI Skia renderer proof pixel renderer")
   }
   renderer.render(renderer_proof_pixel_commands()) catch {
@@ -974,14 +980,20 @@ fn run_gpu_metal_renderer_smoke() -> Unit {
       true
     },
   )
-  let result = try? @skia_renderer.create_with_present_target_and_route(
-    @render.RendererSurfaceMetrics::from_logical(
-      size=@core.Size::new(width=128.0, height=64.0),
-      scale_factor=1.0,
-    ),
-    target,
-    surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
-  )
+  let result = try
+    @skia_renderer.create_with_present_target_and_route(
+      @render.RendererSurfaceMetrics::from_logical(
+        size=@core.Size::new(width=128.0, height=64.0),
+        scale_factor=1.0,
+      ),
+      target,
+      surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
+    )
+  catch {
+    err => Err(err)
+  } noraise {
+    renderer => Ok(renderer)
+  }
   match result {
     Ok(renderer) => {
       if !renderer.surface_route().is_gpu() {
@@ -1093,15 +1105,21 @@ fn run_async_image_second_frame_smoke() -> Unit {
       true
     },
   )
-  guard (try? @skia_renderer.create_with_present_target(
+  let renderer_result = try
+    @skia_renderer.create_with_present_target(
       @render.RendererSurfaceMetrics::from_logical(
         size=@core.Size::new(width=24.0, height=10.0),
         scale_factor=1.0,
       ),
       target,
       async_image_loading=true,
-    ))
-    is Ok(renderer) else {
+    )
+  catch {
+    err => Err(err.message())
+  } noraise {
+    renderer => Ok(renderer)
+  }
+  guard renderer_result is Ok(renderer) else {
     remove_local_smoke_file(local_png_path)
     fail_smoke("failed to create MoUI Skia async image smoke renderer")
   }
@@ -1272,14 +1290,20 @@ fn main {
       true
     },
   )
-  guard (try? @skia_renderer.create_with_present_target(
+  let renderer_result = try
+    @skia_renderer.create_with_present_target(
       @render.RendererSurfaceMetrics::from_logical(
         size=@core.Size::new(width=216.0, height=152.0),
         scale_factor=1.0,
       ),
       target,
-    ))
-    is Ok(renderer) else {
+    )
+  catch {
+    err => Err(err.message())
+  } noraise {
+    renderer => Ok(renderer)
+  }
+  guard renderer_result is Ok(renderer) else {
     fail_smoke("failed to create MoUI Skia renderer")
   }
 

@@ -45,7 +45,7 @@ const platformEntries = {
       "examples/showcase/macos_skia",
     ],
     windowEvidenceCommand:
-      "wzzc-dev/window@0.5.1-fork.3 package evidence macos --status pending",
+      "wzzc-dev/window@0.5.1-0.1.4 package evidence macos --status pending",
     consumerCommand: "pending",
     observations: { ...pendingObservations },
     artifacts: ["artifacts/platform-evidence/macos/README.md"],
@@ -67,7 +67,7 @@ const platformEntries = {
       "examples/showcase/windows_skia",
     ],
     windowEvidenceCommand:
-      "wzzc-dev/window@0.5.1-fork.3 package evidence windows --status pending",
+      "wzzc-dev/window@0.5.1-0.1.4 package evidence windows --status pending",
     consumerCommand: "pending",
     observations: { ...pendingObservations },
     artifacts: ["artifacts/platform-evidence/windows/README.md"],
@@ -88,7 +88,7 @@ const platformEntries = {
       "examples/showcase/linux_skia",
     ],
     windowEvidenceCommand:
-      "wzzc-dev/window@0.5.1-fork.3 package evidence linux --status pending",
+      "wzzc-dev/window@0.5.1-0.1.4 package evidence linux --status pending",
     consumerCommand: "pending",
     observations: { ...pendingObservations },
     artifacts: ["artifacts/platform-evidence/linux/README.md"],
@@ -100,7 +100,7 @@ const manifestFor = platform => ({
   schemaVersion: 2,
   mode: "platform-runtime-evidence",
   generatedBy: "scripts/test-record-native-skia-evidence.mjs",
-  windowEvidenceSource: "wzzc-dev/window@0.5.1-fork.3",
+  windowEvidenceSource: "wzzc-dev/window@0.5.1-0.1.4",
   platforms: [platformEntries[platform]],
 });
 

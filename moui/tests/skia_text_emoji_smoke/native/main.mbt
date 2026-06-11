@@ -665,14 +665,20 @@ fn main {
       true
     },
   )
-  guard (try? @skia_renderer.create_with_present_target(
+  let renderer_result = try
+    @skia_renderer.create_with_present_target(
       @render.RendererSurfaceMetrics::from_logical(
         size=@core.Size::new(width=176.0, height=188.0),
         scale_factor=1.0,
       ),
       target,
-    ))
-    is Ok(renderer) else {
+    )
+  catch {
+    err => Err(err.message())
+  } noraise {
+    renderer => Ok(renderer)
+  }
+  guard renderer_result is Ok(renderer) else {
     fail_smoke("failed to create MoUI Skia text/emoji proof renderer")
   }
 
