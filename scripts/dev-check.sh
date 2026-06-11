@@ -91,6 +91,8 @@ run node --check scripts/ci-renderer-proof-native.mjs
 run node scripts/test-validate-web-runtime-handoff-manifest.mjs
 run node scripts/test-record-web-runtime-presentation.mjs
 run node scripts/test-validate-web-runtime-presentation-manifest.mjs
+run node --check scripts/validate-checked-conformance-artifacts.mjs
+run node scripts/validate-checked-conformance-artifacts.mjs
 run sh -n scripts/ci-moon-update.sh
 run sh -n scripts/ci-web-runtime-presentation.sh
 run sh -n scripts/ci-renderer-proof-native.sh
