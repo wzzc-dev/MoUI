@@ -19,6 +19,16 @@ pub(all) struct ColorPalette {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct SemanticColorScale {
+  success : Color
+  warning : Color
+  danger : Color
+  info : Color
+  focus : Color
+  scrim : Color
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct SpacingScale {
   xs : Double
   sm : Double
@@ -97,6 +107,7 @@ pub(all) enum ContentSizeCategory {
 pub(all) struct Theme {
   scheme : ColorScheme
   palette : ColorPalette
+  semantic_colors : SemanticColorScale
   spacing_scale : SpacingScale
   radius_scale : RadiusScale
   typography : TypographyScale
@@ -150,6 +161,33 @@ pub fn ColorPalette::dark() -> ColorPalette {
     primary_foreground: Color::white(),
     outline: Color::rgba(r=0.34, g=0.38, b=0.45),
     muted: Color::rgba(r=0.64, g=0.67, b=0.72),
+  }
+}
+
+///|
+pub fn SemanticColorScale::default(
+  palette : ColorPalette,
+  scheme : ColorScheme,
+) -> SemanticColorScale {
+  match scheme {
+    Light =>
+      {
+        success: Color::rgba(r=0.08, g=0.48, b=0.28),
+        warning: Color::rgba(r=0.76, g=0.44, b=0.06),
+        danger: Color::rgba(r=0.74, g=0.12, b=0.16),
+        info: palette.primary,
+        focus: palette.primary,
+        scrim: Color::rgba(r=0.0, g=0.0, b=0.0, a=0.42),
+      }
+    Dark =>
+      {
+        success: Color::rgba(r=0.36, g=0.78, b=0.48),
+        warning: Color::rgba(r=1.0, g=0.76, b=0.34),
+        danger: Color::rgba(r=1.0, g=0.48, b=0.52),
+        info: palette.primary,
+        focus: palette.primary,
+        scrim: Color::rgba(r=0.0, g=0.0, b=0.0, a=0.62),
+      }
   }
 }
 
@@ -242,6 +280,7 @@ pub fn SurfaceScale::default(
 ///|
 pub fn Theme::light() -> Theme {
   let palette = ColorPalette::light()
+  let semantic_colors = SemanticColorScale::default(palette, ColorScheme::Light)
   let spacing_scale = SpacingScale::default()
   let radius_scale = RadiusScale::default()
   let typography = TypographyScale::default()
@@ -251,6 +290,7 @@ pub fn Theme::light() -> Theme {
   {
     scheme: ColorScheme::Light,
     palette,
+    semantic_colors,
     spacing_scale,
     radius_scale,
     typography,
@@ -269,6 +309,7 @@ pub fn Theme::light() -> Theme {
 ///|
 pub fn Theme::dark() -> Theme {
   let palette = ColorPalette::dark()
+  let semantic_colors = SemanticColorScale::default(palette, ColorScheme::Dark)
   let spacing_scale = SpacingScale::default()
   let radius_scale = RadiusScale::default()
   let typography = TypographyScale::default()
@@ -278,6 +319,7 @@ pub fn Theme::dark() -> Theme {
   {
     scheme: ColorScheme::Dark,
     palette,
+    semantic_colors,
     spacing_scale,
     radius_scale,
     typography,
@@ -315,7 +357,12 @@ pub fn Theme::with_background(self : Theme, color : Color) -> Theme {
 
 ///|
 pub fn Theme::with_accent(self : Theme, color : Color) -> Theme {
-  { ..self, accent: color, palette: { ..self.palette, primary: color } }
+  {
+    ..self,
+    accent: color,
+    palette: { ..self.palette, primary: color },
+    semantic_colors: { ..self.semantic_colors, info: color, focus: color },
+  }
 }
 
 ///|
@@ -335,14 +382,28 @@ pub fn Theme::with_corner_radius(self : Theme, radius : Double) -> Theme {
 ///|
 pub fn Theme::with_palette(self : Theme, palette : ColorPalette) -> Theme {
   let surfaces = SurfaceScale::default(palette, self.scheme)
+  let semantic_colors = {
+    ..self.semantic_colors,
+    info: palette.primary,
+    focus: palette.primary,
+  }
   {
     ..self,
     palette,
+    semantic_colors,
     surfaces,
     foreground: palette.foreground,
     background: palette.background,
     accent: palette.primary,
   }
+}
+
+///|
+pub fn Theme::with_semantic_colors(
+  self : Theme,
+  semantic_colors : SemanticColorScale,
+) -> Theme {
+  { ..self, semantic_colors, }
 }
 
 ///|

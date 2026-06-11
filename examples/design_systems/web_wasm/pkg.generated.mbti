@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/design_systems/web_wasm"
+
+// Values
+pub fn web_complete_async_clipboard_read(Int, Bool, Int) -> Unit
+
+pub fn web_complete_async_file_dialog(Int, Bool, Int) -> Unit
+
+pub fn web_dispatch_event(Int, Int, Int, Int, Double, Int) -> Unit
+
+pub fn web_dispatch_route(Int, Int) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

@@ -184,16 +184,24 @@ pub fn[Msg] form_validation_summary(
   valid_message? : String = "",
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   if summary.valid {
     if valid_message == "" {
       empty()
     } else {
-      form_validation_success(valid_message, action~, theme~, width~)
+      form_validation_success(valid_message, action~, theme~, style?, width~)
     }
   } else {
-    form_validation_error_summary(summary, title~, action~, theme~, width~)
+    form_validation_error_summary(
+      summary,
+      title~,
+      action~,
+      theme~,
+      style=resolve_form_validation_style(style, theme),
+      width~,
+    )
   }
 }
 
@@ -272,6 +280,7 @@ pub fn[Msg] form_workflow_bar(
   invalid_title? : String = "Review required",
   status? : String = "",
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []
@@ -283,6 +292,7 @@ pub fn[Msg] form_workflow_bar(
         valid_message~,
         action=if summary.valid { None } else { focus_invalid },
         theme~,
+        style?,
         width~,
       ),
     )
@@ -311,12 +321,10 @@ fn[Msg] form_validation_error_summary(
   title~ : String,
   action~ : StateViewAction[Msg]?,
   theme~ : @core.Theme,
+  style~ : @core.FormValidationStyle,
   width~ : Double,
 ) -> @core.View[Msg] {
-  let content_width = views_max_double(
-    120.0,
-    width - theme.spacing_scale.md * 2.0,
-  )
+  let content_width = views_max_double(120.0, width - style.padding * 2.0)
   let rows : Array[@core.View[Msg]] = [
     text(
       title,
@@ -324,7 +332,7 @@ fn[Msg] form_validation_error_summary(
       theme~,
       width=content_width,
       height=26.0,
-    ).foreground(form_error_color(theme)),
+    ).foreground(style.foreground),
   ]
   match summary.first_invalid_id {
     Some(id) =>
@@ -347,7 +355,7 @@ fn[Msg] form_validation_error_summary(
         theme~,
         width=content_width,
         height=24.0,
-      ).foreground(form_error_color(theme)),
+      ).foreground(style.foreground),
     )
   }
   match action {
@@ -368,16 +376,13 @@ fn[Msg] form_validation_error_summary(
     column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
     width~,
     height=form_validation_summary_height(summary, action, base=70.0),
-    background=form_error_color(theme).multiply_alpha(0.12),
-    corner_radius=theme.radius_scale.md,
+    background=style.background,
+    corner_radius=style.radius,
     theme~,
-    padding=theme.spacing_scale.md,
+    padding=style.padding,
   )
   .border(
-    @core.BorderStyle::new(
-      brush=@core.Brush::solid(form_error_color(theme).multiply_alpha(0.72)),
-      width=1.0,
-    ),
+    @core.BorderStyle::new(brush=@core.Brush::solid(style.border), width=1.0),
   )
   .semantics_role(@core.SemanticsRole::Group)
   .semantics_invalid()
@@ -389,16 +394,25 @@ fn[Msg] form_validation_success(
   message : String,
   action~ : StateViewAction[Msg]?,
   theme~ : @core.Theme,
+  style? : @core.FormValidationStyle,
   width~ : Double,
 ) -> @core.View[Msg] {
+  let content_width = match style {
+    Some(value) => views_max_double(120.0, width - value.padding * 2.0)
+    None => width - 24.0
+  }
+  let message_view = text(
+    message,
+    role=TextRole::Caption,
+    theme~,
+    width=content_width,
+    height=28.0,
+  )
   let rows : Array[@core.View[Msg]] = [
-    text(
-      message,
-      role=TextRole::Caption,
-      theme~,
-      width=width - 24.0,
-      height=28.0,
-    ),
+    match style {
+      Some(value) => message_view.foreground(value.foreground)
+      None => message_view
+    },
   ]
   match action {
     Some(action) =>
@@ -414,14 +428,33 @@ fn[Msg] form_validation_success(
       )
     None => ()
   }
-  surface(
-    column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
-    width~,
-    height=if action is Some(_) { 82.0 } else { 48.0 },
-    variant=SurfaceVariant::Base,
-    theme~,
-    padding=theme.spacing_scale.sm,
-  )
+  let summary_view : @core.View[Msg] = match style {
+    Some(value) =>
+      surface(
+        column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
+        width~,
+        height=if action is Some(_) { 82.0 } else { 48.0 },
+        background=value.background,
+        corner_radius=value.radius,
+        theme~,
+        padding=value.padding,
+      ).border(
+        @core.BorderStyle::new(
+          brush=@core.Brush::solid(value.border),
+          width=1.0,
+        ),
+      )
+    None =>
+      surface(
+        column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
+        width~,
+        height=if action is Some(_) { 82.0 } else { 48.0 },
+        variant=SurfaceVariant::Base,
+        theme~,
+        padding=theme.spacing_scale.sm,
+      )
+  }
+  summary_view
   .semantics_role(@core.SemanticsRole::Group)
   .accessibility_label("Validation summary")
 }
@@ -520,10 +553,11 @@ fn[Msg] form_validation_summary_height(
 pub fn[Msg] form_error(
   message : String,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   text(message, role=TextRole::Caption, theme~, width~, height=24.0)
-  .foreground(form_error_color(theme))
+  .foreground(resolve_form_validation_style(style, theme).foreground)
   .semantics_role(@core.SemanticsRole::Text)
   .accessibility_label("Error: " + message)
 }
@@ -654,9 +688,17 @@ fn form_field_semantics_description(
 
 ///|
 fn form_error_color(theme : @core.Theme) -> @core.Color {
-  match theme.scheme {
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.74, g=0.12, b=0.16)
-    @core.ColorScheme::Dark => @core.Color::rgba(r=1.0, g=0.48, b=0.52)
+  @core.FormValidationStyle::default(theme~).foreground
+}
+
+///|
+fn resolve_form_validation_style(
+  style : @core.FormValidationStyle?,
+  theme : @core.Theme,
+) -> @core.FormValidationStyle {
+  match style {
+    Some(value) => value
+    None => @core.FormValidationStyle::default(theme~)
   }
 }
 

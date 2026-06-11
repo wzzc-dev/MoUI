@@ -10,17 +10,22 @@ pub fn[Msg] picker(
   on_select~ : (String) -> Msg,
   placeholder? : String = "Select...",
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.PickerStyle,
   max_height? : Double = 200.0,
 ) -> @core.View[Msg] {
+  let resolved_style = match style {
+    Some(value) => value
+    None => @core.PickerStyle::default(theme~)
+  }
   @core.View::controlled_picker(
     items~,
     selected~,
     on_select~,
     placeholder~,
-    font=theme.typography.control,
-    foreground=theme.foreground,
-    background=@core.Brush::solid(theme.palette.surface),
-    corner_radius=theme.radius_scale.md,
+    font=resolved_style.font,
+    foreground=resolved_style.foreground,
+    background=resolved_style.background,
+    corner_radius=resolved_style.radius,
     max_height~,
   )
 }
@@ -31,16 +36,21 @@ pub fn[Msg] picker_binding(
   selected~ : @core.Binding[String],
   placeholder? : String = "Select...",
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.PickerStyle,
   max_height? : Double = 200.0,
 ) -> @core.View[Msg] {
+  let resolved_style = match style {
+    Some(value) => value
+    None => @core.PickerStyle::default(theme~)
+  }
   @core.View::picker(
     items~,
     selected~,
     placeholder~,
-    font=theme.typography.control,
-    foreground=theme.foreground,
-    background=@core.Brush::solid(theme.palette.surface),
-    corner_radius=theme.radius_scale.md,
+    font=resolved_style.font,
+    foreground=resolved_style.foreground,
+    background=resolved_style.background,
+    corner_radius=resolved_style.radius,
     max_height~,
   )
 }

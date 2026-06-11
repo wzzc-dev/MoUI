@@ -4,13 +4,16 @@ pub fn[Msg] toast(
   tone? : FeedbackTone = FeedbackTone::Neutral,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
+  let style = resolve_feedback_style(style, theme)
   feedback_surface(
     message,
     tone~,
     action~,
     theme~,
+    style~,
     width~,
     title="",
     height=52.0,
@@ -21,15 +24,17 @@ pub fn[Msg] toast(
 pub fn[Msg] toast_stack(
   items : Array[ToastStackItem[Msg]],
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
   width? : Double = 360.0,
   spacing? : Double = @core.Theme::default().spacing_scale.sm,
 ) -> @core.View[Msg] {
   if items.length() == 0 {
     empty()
   } else {
+    let style = resolve_feedback_style(style, theme)
     let rows : Array[@core.View[Msg]] = []
     for item in items {
-      rows.push(toast_stack_row(item, theme~, width~, spacing~))
+      rows.push(toast_stack_row(item, theme~, style~, width~, spacing~))
     }
     column(rows, spacing~, align=CrossAlign::Stretch)
     .semantics_role(@core.SemanticsRole::Group)
@@ -42,13 +47,16 @@ pub fn[Msg] snackbar(
   message : String,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
+  let style = resolve_feedback_style(style, theme)
   feedback_surface(
     message,
     tone=FeedbackTone::Neutral,
     action~,
     theme~,
+    style~,
     width~,
     title="",
     height=56.0,
@@ -62,9 +70,20 @@ pub fn[Msg] banner(
   tone? : FeedbackTone = FeedbackTone::Info,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
-  feedback_surface(message, tone~, action~, theme~, width~, title~, height=92.0)
+  let style = resolve_feedback_style(style, theme)
+  feedback_surface(
+    message,
+    tone~,
+    action~,
+    theme~,
+    style~,
+    width~,
+    title~,
+    height=92.0,
+  )
 }
 
 ///|
@@ -73,13 +92,16 @@ pub fn[Msg] callout(
   message : String,
   tone? : FeedbackTone = FeedbackTone::Info,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
+  let style = resolve_feedback_style(style, theme)
   feedback_surface(
     message,
     tone~,
     action=None,
     theme~,
+    style~,
     width~,
     title~,
     height=86.0,
@@ -92,13 +114,16 @@ pub fn[Msg] empty_state(
   message : String,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
+  let style = resolve_feedback_style(style, theme)
   state_panel(
     title,
     message,
     action~,
     theme~,
+    style~,
     width~,
     tone=FeedbackTone::Neutral,
   )
@@ -109,13 +134,16 @@ pub fn[Msg] loading_state(
   title? : String = "Loading",
   message? : String = "Please wait while content is prepared.",
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
+  let style = resolve_feedback_style(style, theme)
   state_panel(
     title,
     message,
     action=None,
     theme~,
+    style~,
     width~,
     tone=FeedbackTone::Info,
   )
@@ -127,13 +155,16 @@ pub fn[Msg] error_state(
   message : String,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
+  let style = resolve_feedback_style(style, theme)
   state_panel(
     title,
     message,
     action~,
     theme~,
+    style~,
     width~,
     tone=FeedbackTone::Danger,
   )
@@ -144,8 +175,12 @@ pub fn[Msg] inline_error(
   message : String,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
+  badge_style? : @core.BadgeStyle,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
+  let style = resolve_feedback_style(style, theme)
+  let badge_style = resolve_badge_style(badge_style, theme)
   let action_width = match action {
     Some(_) => 86.0
     None => 0.0
@@ -155,14 +190,20 @@ pub fn[Msg] inline_error(
     width - 72.0 - action_width - theme.spacing_scale.sm,
   )
   let body : Array[@core.View[Msg]] = [
-    badge("Error", tone=BadgeTone::Danger, theme~, width=64.0),
+    badge(
+      "Error",
+      tone=BadgeTone::Danger,
+      theme~,
+      style=badge_style,
+      width=64.0,
+    ),
     text(
       message,
       role=TextRole::Caption,
       theme~,
       width=message_width,
       height=28.0,
-    ).foreground(feedback_accent(FeedbackTone::Danger, theme)),
+    ).foreground(feedback_accent(FeedbackTone::Danger, style)),
   ]
   match action {
     Some(action) =>
@@ -182,16 +223,14 @@ pub fn[Msg] inline_error(
     row(body, spacing=theme.spacing_scale.sm, align=CrossAlign::Center),
     width~,
     height=44.0,
-    background=feedback_background(FeedbackTone::Danger, theme),
-    corner_radius=theme.radius_scale.sm,
+    background=feedback_background(FeedbackTone::Danger, style),
+    corner_radius=style.radius,
     theme~,
-    padding=theme.spacing_scale.xs,
+    padding=style.padding,
   )
   .border(
     @core.BorderStyle::new(
-      brush=@core.Brush::solid(
-        feedback_accent(FeedbackTone::Danger, theme).multiply_alpha(0.72),
-      ),
+      brush=@core.Brush::solid(feedback_border(FeedbackTone::Danger, style)),
       width=1.0,
     ),
   )
@@ -209,8 +248,17 @@ pub fn[Msg] progress_status(
   tone? : FeedbackTone = FeedbackTone::Info,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
+  badge_style? : @core.BadgeStyle,
+  progress_style? : @core.ProgressStyle,
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
+  let style = resolve_feedback_style(style, theme)
+  let badge_style = resolve_badge_style(badge_style, theme)
+  let progress_style = match progress_style {
+    Some(value) => value
+    None => @core.ProgressStyle::default(theme~)
+  }
   let inner_width = views_max_double(
     120.0,
     width - theme.spacing_scale.md * 2.0,
@@ -240,6 +288,7 @@ pub fn[Msg] progress_status(
           tone=progress_status_badge_tone(tone),
           detail="Progress status for " + title,
           theme~,
+          style=badge_style,
           width=status_width,
         ),
       ],
@@ -259,13 +308,10 @@ pub fn[Msg] progress_status(
     )
   }
   rows.push(
-    progress(
-      value,
-      width=inner_width,
-      height=8.0,
-      foreground=feedback_accent(tone, theme),
-      background=theme.palette.surface_variant,
-    ),
+    progress(value, width=inner_width, height=8.0, style={
+      ..progress_style,
+      foreground: feedback_accent(tone, style),
+    }),
   )
   match action {
     Some(action) =>
@@ -285,15 +331,15 @@ pub fn[Msg] progress_status(
     column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
     width~,
     height=progress_status_height(message != "", action is Some(_)),
-    background=feedback_background(tone, theme),
-    corner_radius=theme.radius_scale.md,
+    background=feedback_background(tone, style),
+    corner_radius=style.radius,
     theme~,
-    padding=theme.spacing_scale.md,
+    padding=style.padding,
   )
   .border(
     @core.BorderStyle::new(
       brush=@core.Brush::solid(
-        feedback_accent(tone, theme).multiply_alpha(0.64),
+        feedback_accent(tone, style).multiply_alpha(0.64),
       ),
       width=1.0,
     ),
@@ -308,22 +354,24 @@ pub fn[Msg] badge(
   label : String,
   tone? : BadgeTone = BadgeTone::Neutral,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.BadgeStyle,
   width? : Double = 72.0,
   height? : Double = 24.0,
 ) -> @core.View[Msg] {
+  let style = resolve_badge_style(style, theme)
   surface(
     text(
       label,
       role=TextRole::Caption,
       theme~,
-      width=width - 12.0,
-      height=height - 6.0,
-    ).foreground(badge_foreground(tone, theme)),
+      width=width - style.padding * 2.0,
+      height=height - style.padding * 2.0,
+    ).foreground(badge_foreground(tone, style)),
     width~,
     height~,
-    background=badge_background(tone, theme),
-    corner_radius=height / 2.0,
-    padding=3.0,
+    background=badge_background(tone, style),
+    corner_radius=min_view_double(height / 2.0, style.radius),
+    padding=style.padding,
   ).semantics_role(@core.SemanticsRole::Text)
 }
 
@@ -333,10 +381,11 @@ pub fn[Msg] status_badge(
   tone? : BadgeTone = BadgeTone::Neutral,
   detail? : String = "",
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.BadgeStyle,
   width? : Double = 72.0,
   height? : Double = 24.0,
 ) -> @core.View[Msg] {
-  let base = badge(label, tone~, theme~, width~, height~).accessibility_label(
+  let base = badge(label, tone~, theme~, style?, width~, height~).accessibility_label(
     "Status: " + label,
   )
   if detail == "" {
@@ -353,13 +402,15 @@ pub fn[Msg] stat_card(
   caption? : String = "",
   tone? : FeedbackTone = FeedbackTone::Neutral,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FeedbackStyle,
   width? : Double = 180.0,
   height? : Double = 116.0,
 ) -> @core.View[Msg] {
+  let style = resolve_feedback_style(style, theme)
   let rows : Array[@core.View[Msg]] = [
     text(label, role=TextRole::Caption, theme~, width=width - 24.0, height=22.0),
     text(value, role=TextRole::Title, theme~, width=width - 24.0, height=34.0).foreground(
-      feedback_accent(tone, theme),
+      feedback_accent(tone, style),
     ),
   ]
   if caption != "" {
@@ -387,6 +438,7 @@ pub fn[Msg] stat_card(
 fn[Msg] toast_stack_row(
   item : ToastStackItem[Msg],
   theme~ : @core.Theme,
+  style~ : @core.FeedbackStyle,
   width~ : Double,
   spacing~ : Double,
 ) -> @core.View[Msg] {
@@ -400,6 +452,7 @@ fn[Msg] toast_stack_row(
             tone=item.tone,
             action=item.action,
             theme~,
+            style~,
             width=views_max_double(120.0, width - dismiss_width - spacing),
           ),
           button(
@@ -416,7 +469,14 @@ fn[Msg] toast_stack_row(
       ).frame(width~, height=52.0)
     }
     None =>
-      toast(item.message, tone=item.tone, action=item.action, theme~, width~)
+      toast(
+        item.message,
+        tone=item.tone,
+        action=item.action,
+        theme~,
+        style~,
+        width~,
+      )
   }
 }
 
@@ -426,6 +486,7 @@ fn[Msg] feedback_surface(
   tone~ : FeedbackTone,
   action~ : StateViewAction[Msg]?,
   theme~ : @core.Theme,
+  style~ : @core.FeedbackStyle,
   width~ : Double,
   title~ : String,
   height~ : Double,
@@ -471,15 +532,13 @@ fn[Msg] feedback_surface(
     content,
     width~,
     height~,
-    background=feedback_background(tone, theme),
-    corner_radius=theme.radius_scale.md,
+    background=feedback_background(tone, style),
+    corner_radius=style.radius,
     theme~,
-    padding=theme.spacing_scale.sm,
+    padding=style.padding,
   ).border(
     @core.BorderStyle::new(
-      brush=@core.Brush::solid(
-        feedback_accent(tone, theme).multiply_alpha(0.72),
-      ),
+      brush=@core.Brush::solid(feedback_border(tone, style)),
       width=1.0,
     ),
   )
@@ -491,6 +550,7 @@ fn[Msg] state_panel(
   message : String,
   action~ : StateViewAction[Msg]?,
   theme~ : @core.Theme,
+  style~ : @core.FeedbackStyle,
   width~ : Double,
   tone~ : FeedbackTone,
 ) -> @core.View[Msg] {
@@ -521,10 +581,10 @@ fn[Msg] state_panel(
     column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
     width~,
     height=148.0,
-    background=feedback_background(tone, theme),
-    corner_radius=theme.radius_scale.md,
+    background=feedback_background(tone, style),
+    corner_radius=style.radius,
     theme~,
-    padding=theme.spacing_scale.md,
+    padding=style.padding,
   ).semantics_role(@core.SemanticsRole::Group)
 }
 
@@ -558,41 +618,85 @@ fn progress_status_height(has_message : Bool, has_action : Bool) -> Double {
 }
 
 ///|
-fn feedback_accent(tone : FeedbackTone, theme : @core.Theme) -> @core.Color {
-  match tone {
-    Neutral => theme.palette.muted
-    Info => theme.palette.primary
-    Success => @core.Color::rgba(r=0.08, g=0.48, b=0.28)
-    Warning => @core.Color::rgba(r=0.76, g=0.44, b=0.06)
-    Danger => form_error_color(theme)
+fn resolve_feedback_style(
+  style : @core.FeedbackStyle?,
+  theme : @core.Theme,
+) -> @core.FeedbackStyle {
+  match style {
+    Some(value) => value
+    None => @core.FeedbackStyle::default(theme~)
   }
 }
 
 ///|
-fn feedback_background(tone : FeedbackTone, theme : @core.Theme) -> @core.Color {
-  feedback_accent(tone, theme).multiply_alpha(
-    match theme.scheme {
-      @core.ColorScheme::Light => 0.12
-      @core.ColorScheme::Dark => 0.22
-    },
-  )
-}
-
-///|
-fn badge_background(tone : BadgeTone, theme : @core.Theme) -> @core.Color {
-  match tone {
-    Neutral => theme.palette.surface_variant
-    Accent => theme.palette.primary
-    Success => @core.Color::rgba(r=0.08, g=0.48, b=0.28)
-    Warning => @core.Color::rgba(r=0.76, g=0.44, b=0.06)
-    Danger => form_error_color(theme)
+fn resolve_badge_style(
+  style : @core.BadgeStyle?,
+  theme : @core.Theme,
+) -> @core.BadgeStyle {
+  match style {
+    Some(value) => value
+    None => @core.BadgeStyle::default(theme~)
   }
 }
 
 ///|
-fn badge_foreground(tone : BadgeTone, theme : @core.Theme) -> @core.Color {
+fn feedback_accent(
+  tone : FeedbackTone,
+  style : @core.FeedbackStyle,
+) -> @core.Color {
+  feedback_tone_style(tone, style).foreground
+}
+
+///|
+fn feedback_background(
+  tone : FeedbackTone,
+  style : @core.FeedbackStyle,
+) -> @core.Color {
+  feedback_tone_style(tone, style).background
+}
+
+///|
+fn feedback_border(
+  tone : FeedbackTone,
+  style : @core.FeedbackStyle,
+) -> @core.Color {
+  feedback_tone_style(tone, style).border
+}
+
+///|
+fn badge_background(tone : BadgeTone, style : @core.BadgeStyle) -> @core.Color {
+  badge_tone_style(tone, style).background
+}
+
+///|
+fn badge_foreground(tone : BadgeTone, style : @core.BadgeStyle) -> @core.Color {
+  badge_tone_style(tone, style).foreground
+}
+
+///|
+fn feedback_tone_style(
+  tone : FeedbackTone,
+  style : @core.FeedbackStyle,
+) -> @core.ToneStyle {
   match tone {
-    Neutral => theme.palette.foreground
-    Accent | Success | Warning | Danger => @core.Color::white()
+    Neutral => style.neutral
+    Info => style.info
+    Success => style.success
+    Warning => style.warning
+    Danger => style.danger
+  }
+}
+
+///|
+fn badge_tone_style(
+  tone : BadgeTone,
+  style : @core.BadgeStyle,
+) -> @core.ToneStyle {
+  match tone {
+    Neutral => style.neutral
+    Accent => style.accent
+    Success => style.success
+    Warning => style.warning
+    Danger => style.danger
   }
 }

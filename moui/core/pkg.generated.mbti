@@ -192,6 +192,17 @@ pub(all) enum Axis {
   Vertical
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct BadgeStyle {
+  neutral : ToneStyle
+  accent : ToneStyle
+  success : ToneStyle
+  warning : ToneStyle
+  danger : ToneStyle
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn BadgeStyle::default(theme? : Theme) -> Self
+
 pub(all) struct Binding[T] {
   get_value : () -> T
   set_value : (T) -> Unit
@@ -291,6 +302,15 @@ pub fn ButtonStyle::filled(theme? : Theme) -> Self
 pub fn ButtonStyle::ghost(theme? : Theme) -> Self
 pub fn ButtonStyle::outline(theme? : Theme) -> Self
 pub fn ButtonStyle::tonal(theme? : Theme) -> Self
+
+pub(all) struct ChoiceControlStyle {
+  foreground : Color
+  selected_color : Color
+  disabled_foreground : Color
+  disabled_selected_color : Color
+  control_size : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ChoiceControlStyle::default(theme? : Theme) -> Self
 
 pub(all) struct CachedLayerSpec {
   key : String
@@ -728,6 +748,17 @@ pub fn Environment::with_scale_factor(Self, Double) -> Self
 pub fn Environment::with_text_scale(Self, Double) -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
 
+pub(all) struct FeedbackStyle {
+  neutral : ToneStyle
+  info : ToneStyle
+  success : ToneStyle
+  warning : ToneStyle
+  danger : ToneStyle
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FeedbackStyle::default(theme? : Theme) -> Self
+
 pub(all) enum FilterEffect {
   Blur(Double)
   Saturate(Double)
@@ -852,6 +883,15 @@ pub(all) struct FormValidationRule {
 pub fn FormValidationRule::from_validator((String) -> String?) -> Self
 pub fn FormValidationRule::new(message~ : String, validate~ : (String) -> Bool) -> Self
 pub fn FormValidationRule::required(message? : String) -> Self
+
+pub(all) struct FormValidationStyle {
+  foreground : Color
+  background : Color
+  border : Color
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationStyle::default(theme? : Theme) -> Self
 
 pub(all) struct FormValidationSummary {
   valid : Bool
@@ -1109,6 +1149,15 @@ pub(all) struct PickerItem {
   label : String
 }
 
+pub(all) struct PickerStyle {
+  font : FontSpec
+  foreground : Color
+  background : Brush
+  radius : Double
+  popup_max_height : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PickerStyle::default(theme? : Theme) -> Self
+
 pub(all) struct PlacedNode {
   element_id : ElementId
   frame : Rect
@@ -1200,6 +1249,13 @@ pub(all) struct ProgramRuntimeSnapshot {
   active_subscription_kind_counts : Array[SubscriptionKindCount]
   subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ProgressStyle {
+  foreground : Color
+  background : Color
+  radius : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ProgressStyle::default(theme? : Theme) -> Self
 
 pub(all) struct RadialGradientSpec {
   center : Point
@@ -1593,6 +1649,16 @@ pub fn ScrollState::offset(Self) -> Point
 pub fn ScrollState::scroll_to(Self, x~ : Double, y~ : Double) -> Unit
 pub fn ScrollState::set_offset(Self, Point) -> Unit
 
+pub(all) struct SemanticColorScale {
+  success : Color
+  warning : Color
+  danger : Color
+  info : Color
+  focus : Color
+  scrim : Color
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SemanticColorScale::default(ColorPalette, ColorScheme) -> Self
+
 pub(all) enum SemanticsAction {
   Activate
   Focus
@@ -1716,6 +1782,16 @@ pub(all) struct Size {
 pub fn Size::clamp(Self, Constraints) -> Self
 pub fn Size::inflate(Self, Insets) -> Self
 pub fn Size::new(width~ : Double, height~ : Double) -> Self
+
+pub(all) struct SliderStyle {
+  foreground : Color
+  background : Color
+  thumb_color : Color
+  track_height : Double
+  thumb_size : Double
+  radius : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SliderStyle::default(theme? : Theme) -> Self
 
 pub(all) struct SpacingScale {
   xs : Double
@@ -2026,6 +2102,7 @@ pub fn TextSystem::register_font_data(Self, FontFamily, Bytes) -> Unit
 pub(all) struct Theme {
   scheme : ColorScheme
   palette : ColorPalette
+  semantic_colors : SemanticColorScale
   spacing_scale : SpacingScale
   radius_scale : RadiusScale
   typography : TypographyScale
@@ -2051,11 +2128,18 @@ pub fn Theme::with_foreground(Self, Color) -> Self
 pub fn Theme::with_motion(Self, MotionScale) -> Self
 pub fn Theme::with_palette(Self, ColorPalette) -> Self
 pub fn Theme::with_radius_scale(Self, RadiusScale) -> Self
+pub fn Theme::with_semantic_colors(Self, SemanticColorScale) -> Self
 pub fn Theme::with_shadow_scale(Self, ShadowScale) -> Self
 pub fn Theme::with_spacing(Self, Double) -> Self
 pub fn Theme::with_spacing_scale(Self, SpacingScale) -> Self
 pub fn Theme::with_surfaces(Self, SurfaceScale) -> Self
 pub fn Theme::with_typography(Self, TypographyScale) -> Self
+
+pub(all) struct ToneStyle {
+  foreground : Color
+  background : Color
+  border : Color
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Transform2D {
   a : Double

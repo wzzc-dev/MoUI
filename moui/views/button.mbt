@@ -4,13 +4,17 @@ pub fn[Msg] button(
   on_click? : Msg,
   variant? : ButtonVariant = ButtonVariant::Primary,
   theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.ButtonStyle,
   width? : Double = 100.0,
   height? : Double = 44.0,
 ) -> @core.View[Msg] {
-  let style = variant.style(theme)
-  let normal = style.normal
-  let hovered = style.hovered
-  let pressed = style.pressed
+  let resolved_style = match style {
+    Some(value) => value
+    None => variant.style(theme)
+  }
+  let normal = resolved_style.normal
+  let hovered = resolved_style.hovered
+  let pressed = resolved_style.pressed
   @core.View::button(
     text~,
     size=@core.Size::new(width~, height~),
