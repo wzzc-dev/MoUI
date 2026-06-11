@@ -171,9 +171,13 @@ fn basename(path : String) -> String {
 
 ///|
 fn path_is_default_status(options : CliOptions) -> Bool {
-  let normalized = normalize_slashes(options.status_file)
-  normalized == "skia-platform-status.json" ||
-  normalized.has_suffix("/skia-platform-status.json")
+  let normalized = normalize_slashes(
+    @tools.resolve_path(options.repo_root, options.status_file),
+  )
+  let default_path = normalize_slashes(
+    @tools.resolve_path(options.repo_root, "skia-platform-status.json"),
+  )
+  normalized == default_path
 }
 
 ///|

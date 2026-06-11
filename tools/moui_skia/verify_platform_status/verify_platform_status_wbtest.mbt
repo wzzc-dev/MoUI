@@ -82,6 +82,34 @@ let valid_doc =
   #|
 
 ///|
+fn test_options(
+  repo_root~ : String = "/repo/moui_skia",
+  status_file~ : String = "skia-platform-status.json",
+) -> CliOptions {
+  {
+    repo_root,
+    status_file,
+    revision_file: "skia-revision.txt",
+    provider_lock: "skia-provider-lock.json",
+    status_doc: "SKIA_PLATFORM_STATUS.md",
+    status_doc_explicit: false,
+    quiet: false,
+    help: false,
+  }
+}
+
+///|
+test "default status doc check only follows repo status file" {
+  inspect(path_is_default_status(test_options()), content="true")
+  inspect(
+    path_is_default_status(
+      test_options(status_file="/tmp/fake/skia-platform-status.json"),
+    ),
+    content="false",
+  )
+}
+
+///|
 fn verify_valid(status : String) -> Result[String, String] {
   verify_platform_status_texts(
     status,
