@@ -7,6 +7,8 @@ test "theme exposes light and dark token palettes" {
   assert_true(light.palette.background != dark.palette.background)
   assert_true(light.foreground == light.palette.foreground)
   assert_true(dark.background == dark.palette.background)
+  assert_true(light.semantic_colors.info == light.palette.primary)
+  assert_true(dark.semantic_colors.danger != light.semantic_colors.danger)
 }
 
 ///|
@@ -21,6 +23,23 @@ test "theme token builders preserve compatibility fields" {
   inspect(theme.corner_radius, content="7")
   assert_true(theme.accent == Color::gray())
   assert_true(theme.palette.primary == Color::gray())
+  assert_true(theme.semantic_colors.info == Color::gray())
+  assert_true(theme.semantic_colors.focus == Color::gray())
+}
+
+///|
+test "theme semantic colors can be overridden independently" {
+  let semantic_colors = SemanticColorScale::{
+    success: Color::rgba(r=0.11, g=0.72, b=0.36),
+    warning: Color::rgba(r=0.92, g=0.62, b=0.18),
+    danger: Color::rgba(r=0.92, g=0.18, b=0.28),
+    info: Color::rgba(r=0.22, g=0.46, b=0.94),
+    focus: Color::rgba(r=0.52, g=0.24, b=0.92),
+    scrim: Color::rgba(r=0.0, g=0.0, b=0.0, a=0.58),
+  }
+  let theme = Theme::light().with_semantic_colors(semantic_colors)
+  assert_true(theme.semantic_colors == semantic_colors)
+  assert_true(theme.palette.primary == Theme::light().palette.primary)
 }
 
 ///|

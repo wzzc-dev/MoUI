@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui_theme/carbon",
+  "wzzc-dev/moui_theme/common",
+  "wzzc-dev/moui_theme/fluent",
+  "wzzc-dev/moui_theme/material",
+  "wzzc-dev/moui_theme/primer",
+}
+
+options(
+  targets: { },
+)

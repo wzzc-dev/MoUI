@@ -1,0 +1,62 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "examples/design_systems/app"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_theme/common",
+}
+
+// Values
+pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+
+pub fn update(DesignSystemsModel, DesignSystemsMsg) -> DesignSystemsModel
+
+pub fn view(DesignSystemsModel) -> @core.View[DesignSystemsMsg]
+
+// Errors
+
+// Types and methods
+pub(all) enum DesignSystemChoice {
+  Material
+  Carbon
+  Primer
+  Fluent
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct DesignSystemsApp {
+  unit : Unit
+}
+pub fn DesignSystemsApp::new() -> Self
+pub fn DesignSystemsApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+
+pub(all) struct DesignSystemsModel {
+  preset : DesignSystemChoice
+  scheme : @core.ColorScheme
+  variant : @common.DesignSchemeVariant
+  density : @common.DesignDensity
+  custom_enabled : Bool
+  selected_component : String
+  draft : String
+}
+pub fn DesignSystemsModel::new() -> Self
+pub fn DesignSystemsModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn DesignSystemsModel::theme(Self) -> @core.Theme
+pub fn DesignSystemsModel::tokens(Self) -> @common.DesignSystemTokens
+pub fn DesignSystemsModel::update(Self, DesignSystemsMsg) -> Self
+pub fn DesignSystemsModel::view(Self) -> @core.View[DesignSystemsMsg]
+
+pub(all) enum DesignSystemsMsg {
+  SelectPreset(String)
+  SelectScheme(String)
+  SelectVariant(String)
+  SelectDensity(String)
+  SelectComponent(String)
+  ToggleCustom
+  DraftChanged(String)
+}
+
+// Type aliases
+
+// Traits
+

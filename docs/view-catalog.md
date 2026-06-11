@@ -15,8 +15,9 @@ to assemble forms, data tables, navigation shells, menus, host-service flows,
 and virtual lists without changing the renderer surface.
 
 Showcase exposes the current user-facing catalog in this order:
-`Overview -> Text & Media -> Controls -> Forms -> Data -> Layout -> Navigation
-Shell -> Feedback -> Runtime/Renderer -> Diagnostics`. Deeper routes for
+`Overview -> Text & Media -> Controls -> Forms -> Data ->
+Layout -> Navigation Shell -> Feedback -> Runtime/Renderer -> Diagnostics`.
+Deeper routes for
 advanced rendering, text diagnostics, interaction diagnostics, and reusable
 examples are kept as focused diagnostic destinations rather than top-level
 catalog rows.
@@ -100,21 +101,21 @@ fn view(draft : String) -> @core.View[Msg] {
 | `button` | `views/button.mbt` | ButtonStyle | Button | `views/views_test.mbt` | All examples | Main activation primitive. |
 | `shortcut_button` | `views/button.mbt` | ButtonStyle/surface/text | Button with shortcut description | `views/views_test.mbt` | Showcase Interaction Lab | Composes a regular button, visible shortcut label, `View::keyboard_shortcut`, and shortcut semantics so app-owned keyboard shortcuts stay discoverable and dispatch through the typed message loop. |
 | `menu_button` | `views/controls.mbt` | ButtonStyle | Menu | `views/views_test.mbt` | Showcase | Button wrapper with menu semantics. |
-| `checkbox` | `views/checkbox.mbt` | Color/font params | Checkbox | `views/views_test.mbt` | Showcase Todo pattern | TEA-first boolean control; use `checkbox_binding` for component-local state. |
-| `toggle` | `views/controls.mbt` | Color params | Switch | `views/views_test.mbt` | Showcase | TEA-first switch control; binding alias available. |
-| `toggle_switch` | `views/controls.mbt` | Color params | Switch | `views/views_test.mbt` | Showcase | Alias-style switch entry point. |
-| `radio` | `views/controls.mbt` | Color params | Radio | `views/views_test.mbt` | Showcase | TEA-first single-option primitive; use `radio_binding` for component-local state. |
+| `checkbox` | `views/checkbox.mbt` | ChoiceControlStyle with direct font/color/size overrides | Checkbox | `views/views_test.mbt` | Showcase Todo pattern | TEA-first boolean control; use `checkbox_binding` for component-local state. |
+| `toggle` | `views/controls.mbt` | ChoiceControlStyle with direct color overrides | Switch | `views/views_test.mbt` | Showcase | TEA-first switch control; binding alias available. |
+| `toggle_switch` | `views/controls.mbt` | ChoiceControlStyle with direct color overrides | Switch | `views/views_test.mbt` | Showcase | Alias-style switch entry point. |
+| `radio` | `views/controls.mbt` | ChoiceControlStyle with direct color overrides | Radio | `views/views_test.mbt` | Showcase | TEA-first single-option primitive; use `radio_binding` for component-local state. |
 | `text_field` | `views/text_field.mbt` | TextFieldStyle | Text field | `views/views_test.mbt`, core input tests | Showcase, Markdown Editor | TEA-first text input; use `text_field_binding` for component-local state. |
-| `searchbar` | `views/searchbar.mbt` | Color/font params | Search field | `views/views_test.mbt` | Showcase | TEA-first text input specialized for filtering and clear actions; `searchbar_binding` remains for advanced state. |
-| `picker` | `views/picker.mbt` | Color/font params | Picker | `core/runtime_wbtest.mbt`, `views/views_test.mbt` | Showcase | TEA-first option picker with renderer-neutral popup stacking above later siblings; `picker_binding` remains for advanced state. |
-| `datepicker` | `views/datepicker.mbt` | Color/font params | Date picker | `core/runtime_wbtest.mbt`, `views/views_test.mbt` | Showcase | TEA-first date picker with Sunday-first calendar popup rendering and min/max range enforcement; `datepicker_binding` remains for advanced state. |
+| `searchbar` | `views/searchbar.mbt` | TextFieldStyle | Search field | `views/views_test.mbt` | Showcase | TEA-first text input specialized for filtering and clear actions; `searchbar_binding` remains for advanced state. |
+| `picker` | `views/picker.mbt` | PickerStyle | Picker | `core/runtime_wbtest.mbt`, `views/views_test.mbt` | Showcase | TEA-first option picker with renderer-neutral popup stacking above later siblings; `picker_binding` remains for advanced state. |
+| `datepicker` | `views/datepicker.mbt` | PickerStyle | Date picker | `core/runtime_wbtest.mbt`, `views/views_test.mbt` | Showcase | TEA-first date picker with Sunday-first calendar popup rendering and min/max range enforcement; `datepicker_binding` remains for advanced state. |
 | `dropdown` / `combobox` / `autocomplete` | `views/popover.mbt` | ButtonStyle/TextFieldStyle/SurfaceStyle | Expanded menu anchors with selected/disabled option state | `views/views_test.mbt` | Showcase Interaction Lab | Controlled floating menus built from overlays, scroll views, buttons, and text fields. Expansion, selected option, disabled option, and toggle actions are exposed through semantics, while state and filtering remain app-owned. |
 | `menu_bar` / `command_menu` / `context_menu_region` | `views/menu_commands.mbt` | ButtonStyle/text/surface | Menu/group with selected, disabled, and expanded fallback state | `views/views_test.mbt` | Showcase Navigation Shell | TEA-first menu surfaces over `MenuItem` and `@core.ActionCommand` metadata. Disabled commands render but do not dispatch, fallback view menus expose expanded/collapse semantics, and native context menus stay in host services. |
-| `radio_group` / `checkbox_group` | `views/choice_controls.mbt` | Color/font params | Group with radio/checkbox children | `views/views_test.mbt` | Showcase Controls | TEA-first grouped selection built from `ChoiceItem` descriptors. |
+| `radio_group` / `checkbox_group` | `views/choice_controls.mbt` | ChoiceControlStyle | Group with radio/checkbox children | `views/views_test.mbt` | Showcase Controls | TEA-first grouped selection built from `ChoiceItem` descriptors. |
 | `segmented_control` | `views/choice_controls.mbt` | ButtonStyle/SurfaceStyle | Tab-like group | `views/views_test.mbt` | Showcase Controls | Controlled single-selection segmented buttons. |
 | `chip` / `tag` / `filter_chip` / `choice_chip` | `views/choice_controls.mbt` | SurfaceStyle/ButtonStyle | Button or text roles | `views/views_test.mbt` | Showcase Controls | Compact selection and labeling controls. |
-| `slider` | `views/controls.mbt` | Color params, optional `on_change` | Slider | `views/views_test.mbt` | Showcase | Custom painted scalar control with TEA-controlled drag updates through `on_change`; drag mapping uses the declared control width so model rebuilds during a drag do not compound translation. |
-| `progress` | `views/controls.mbt` | Color params | Progress | `views/views_test.mbt` | Showcase | Custom painted progress indicator. |
+| `slider` | `views/controls.mbt` | SliderStyle with direct color overrides, optional `on_change` | Slider | `views/views_test.mbt` | Showcase | Custom painted scalar control with TEA-controlled drag updates through `on_change`; drag mapping uses the declared control width so model rebuilds during a drag do not compound translation. |
+| `progress` | `views/controls.mbt` | ProgressStyle with direct color overrides | Progress | `views/views_test.mbt` | Showcase | Custom painted progress indicator. |
 | `focus_ring` | `views/controls.mbt` | Border/theme | Focusable group with selected state | `views/views_test.mbt` | Showcase Interaction Lab | Visual wrapper for app-owned focus ids. It exposes a focus action plus selected/unselected semantics; use `View::focus_trap` when runtime Tab traversal must stay inside a dialog or popover subtree. |
 | `tooltip` | `views/controls.mbt` | SurfaceStyle | Tooltip when visible | `views/views_test.mbt` | Showcase Interaction Lab | Wraps a child with an optional overlay. |
 | `View::on_long_press` / `View::on_double_tap` / `View::on_drag` / `View::on_drag_with_frame` | `core/view.mbt` | N/A | Button-like activation metadata | `core/gesture_action_wbtest.mbt`, `core/state_holder_wbtest.mbt`, `views/views_test.mbt` | Showcase Interaction Lab | High-level gesture wrappers over pointer events; recognizer state stays in core/runtime and disabled ancestors suppress activation. `View::on_drag_with_frame` additionally passes the laid-out content frame for frame-relative controlled widgets. |
@@ -125,12 +126,12 @@ fn view(draft : String) -> @core.View[Msg] {
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `ToastQueue` / `ToastQueueItem` | `views/style_api.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase Feedback | Pure app-owned state helper for transient notifications. Apps push, dismiss, expire, and convert queued items into `ToastStackItem` rows while timers and host notifications remain outside `views`. |
-| `toast` / `toast_stack` / `snackbar` | `views/feedback.mbt` | Tone colors/surface | Group with optional dismiss action | `views/views_test.mbt` | Showcase Feedback | App-owned transient/status surfaces. `toast_stack` renders an app-owned notification queue with optional per-item action and dismiss messages; `ToastQueue` can supply those rows, while timers stay in the app model. |
-| `banner` / `callout` | `views/feedback.mbt` | Tone colors/surface | Group | `views/views_test.mbt` | Showcase Feedback | Inline status and guidance surfaces with optional action. |
-| `progress_status` | `views/feedback.mbt` | Progress/ButtonStyle/BadgeTone/surface | Group with nested progress and status badge | `views/views_test.mbt` | Showcase Feedback | App-owned task progress card with title, `status_badge`, message, progress bar, and optional action. The task lifecycle and progress value stay in the app model. |
-| `inline_error` | `views/feedback.mbt` | Danger tone surface/ButtonStyle | Invalid group | `views/views_test.mbt` | Showcase Feedback | Compact inline error row for app-owned validation or workflow failures outside full state panels. |
-| `empty_state` / `loading_state` / `error_state` | `views/feedback.mbt` | Tone colors/surface | Group | `views/views_test.mbt` | Showcase Feedback | Reusable workflow state panels using optional `StateViewAction`. |
-| `status_badge` / `badge` / `stat_card` | `views/feedback.mbt` | Tone colors/surface | Text/group with explicit status labels | `views/views_test.mbt` | Showcase Feedback | `status_badge` wraps compact status text with `Status: ...` accessibility labels and optional detail descriptions. `badge` remains the generic metadata chip, and `stat_card` covers compact metrics. |
+| `toast` / `toast_stack` / `snackbar` | `views/feedback.mbt` | FeedbackStyle | Group with optional dismiss action | `views/views_test.mbt` | Showcase Feedback | App-owned transient/status surfaces. `toast_stack` renders an app-owned notification queue with optional per-item action and dismiss messages; `ToastQueue` can supply those rows, while timers stay in the app model. |
+| `banner` / `callout` | `views/feedback.mbt` | FeedbackStyle | Group | `views/views_test.mbt` | Showcase Feedback | Inline status and guidance surfaces with optional action. |
+| `progress_status` | `views/feedback.mbt` | FeedbackStyle/ProgressStyle/ButtonStyle/BadgeStyle | Group with nested progress and status badge | `views/views_test.mbt` | Showcase Feedback | App-owned task progress card with title, `status_badge`, message, progress bar, and optional action. The task lifecycle and progress value stay in the app model. |
+| `inline_error` | `views/feedback.mbt` | FeedbackStyle/BadgeStyle/ButtonStyle | Invalid group | `views/views_test.mbt` | Showcase Feedback | Compact inline error row for app-owned validation or workflow failures outside full state panels. |
+| `empty_state` / `loading_state` / `error_state` | `views/feedback.mbt` | FeedbackStyle | Group | `views/views_test.mbt` | Showcase Feedback | Reusable workflow state panels using optional `StateViewAction`. |
+| `status_badge` / `badge` / `stat_card` | `views/feedback.mbt` | BadgeStyle/FeedbackStyle | Text/group with explicit status labels | `views/views_test.mbt` | Showcase Feedback | `status_badge` wraps compact status text with `Status: ...` accessibility labels and optional detail descriptions. `badge` remains the generic metadata chip, and `stat_card` covers compact metrics. |
 | `drop_zone` / `file_import_panel` | `views/file_import.mbt` | Surface/button/text | Button-like drop target/group | `views/views_test.mbt` | Showcase Interaction Lab | Drag/drop maps through `View::on_file_drop`; browse buttons emit app messages so effect-capable apps can call `HostAppServices::open_file` from `Effect::host_service` and declare `HostAppServices::completion_subscription` for pending responses without making `views` depend on backend packages. Web hosts may surface browser file names or handles while native hosts can surface filesystem paths. |
 
 ## Data Display
@@ -156,10 +157,10 @@ fn view(draft : String) -> @core.View[Msg] {
 | `form` / `form_section` | `views/form.mbt` | Theme spacing/surface | Group | `views/views_test.mbt` | Showcase Forms | Layout shells for grouped TEA-controlled fields. |
 | `form_field` | `views/form.mbt` | Theme typography/colors | Group with accessibility label | `views/views_test.mbt` | Showcase Forms | Composes label, required marker, helper text, validation message, validating, disabled, and read-only states without renderer changes. `FormFieldStatus::Validating` announces checking state while async validation remains app-owned. |
 | `form_field_state` | `views/form.mbt` | Theme typography/colors | Group with accessibility label | `views/views_test.mbt`, `core/app_framework_wbtest.mbt` | Showcase Forms | Bridges `@core.FormFieldState` validation into the view helper while preserving direct string-error constructors. |
-| `form_validation_summary` | `views/form.mbt` | Surface/text/ButtonStyle | Invalid group | `views/views_test.mbt` | Showcase Forms | Renders an app/core-owned `FormValidationSummary` with first-invalid evidence, field errors, and optional focus/review action. Validation rules and focus orchestration stay outside the view helper. |
+| `form_validation_summary` | `views/form.mbt` | FormValidationStyle/text/ButtonStyle | Invalid group | `views/views_test.mbt` | Showcase Forms | Renders an app/core-owned `FormValidationSummary` with first-invalid evidence, field errors, and optional focus/review action. Validation rules and focus orchestration stay outside the view helper. |
 | `form_actions` | `views/form.mbt` | ButtonStyle/surface/text | Group with disabled action state | `views/views_test.mbt` | Showcase Forms | Reusable save/cancel action row with optional status text and app-controlled disabled submit state. Validation and submit policy remain in the app model. |
-| `form_workflow_bar` | `views/form.mbt` | Surface/text/ButtonStyle | Group with invalid state | `views/views_test.mbt` | Showcase Forms | Composes validation summary, first-invalid focus action, `FocusScope` Enter/Escape target status, and a submit-guarded action row into one reusable form footer. Actual focus movement remains app/runtime-owned. |
-| `form_error` / `form_helper_text` | `views/form.mbt` | Theme typography/colors | Text | `views/views_test.mbt` | Showcase Forms | Reusable support text helpers for app-local form layouts. |
+| `form_workflow_bar` | `views/form.mbt` | FormValidationStyle/surface/text/ButtonStyle | Group with invalid state | `views/views_test.mbt` | Showcase Forms | Composes validation summary, first-invalid focus action, `FocusScope` Enter/Escape target status, and a submit-guarded action row into one reusable form footer. Actual focus movement remains app/runtime-owned. |
+| `form_error` / `form_helper_text` | `views/form.mbt` | FormValidationStyle/theme typography/colors | Text | `views/views_test.mbt` | Showcase Forms | Reusable support text helpers for app-local form layouts. `form_error` can consume a neutral validation style while `form_helper_text` stays muted-theme text. |
 | `input_group` | `views/input_group.mbt` | Theme surface/border | Child semantics | `views/views_test.mbt` | Showcase Forms | Prefix/suffix shell for app-owned inputs. |
 | `clearable_text_field` / `password_field` | `views/input_group.mbt` | TextFieldStyle/ButtonStyle | Text field plus button semantics | `views/views_test.mbt` | Showcase Forms | Controlled wrappers; password reveal state remains app-owned. |
 | `number_field` / `stepper` | `views/input_group.mbt` | TextFieldStyle/ButtonStyle | Text field and button semantics | `views/views_test.mbt` | Showcase Forms | Keeps parsing and numeric state in the app model. |
@@ -212,9 +213,47 @@ fn view(draft : String) -> @core.View[Msg] {
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `theme` | `views/theme.mbt` | Creates Theme | N/A | `views/views_test.mbt` | Showcase | Convenience constructor for theme tokens. |
+| `theme` | `views/theme.mbt` | Creates Theme | N/A | `views/views_test.mbt` | Showcase | Convenience constructor for custom `@core.Theme` tokens, including palette, spacing, radius, typography, shadow, motion, and surface overrides over an optional base theme. |
 | `environment` | `views/theme.mbt` | Creates Environment | N/A | `views/views_test.mbt` | Showcase | Runtime environment helper. Showcase Runtime also displays the injected `@host.HostCapabilitySummary` so apps can compare service, input, window, text-input, IME, drag/drop, async-service, and accessibility readiness without depending on renderer packages. |
 | `light_theme` / `dark_theme` | `views/theme.mbt` | Creates Theme | N/A | `views/views_test.mbt` | Showcase | Convenience theme presets. |
+| `@material.light_theme` / `@carbon.light_theme` / `@primer.light_theme` / `@fluent.light_theme` / package `dark_theme` / `high_contrast_theme` / `system_theme` / package `tokens` / `tokens_for_variant` / `report` / `manifest` / `component_token_matrix` / shared `@common.custom` / `@common.custom_tokens` / `DesignPreset::*_report` shared resolver APIs | `moui_theme/common/*.mbt`, `moui_theme/material/theme.mbt`, `moui_theme/carbon/theme.mbt`, `moui_theme/primer/theme.mbt`, `moui_theme/fluent/theme.mbt` | Creates source-mapped official-system preview Theme values through package entrypoints and exposes shared semantic/component token and report models | N/A | `moui_theme/common/theme_test.mbt`, official-system entrypoint package tests, Design Systems tests | Design Systems example | Optional design-system addon for MoUI. Material, Carbon, Primer, and Fluent are requested through their package-local entrypoints; `moui_theme/common` owns shared token structs, source/golden/coverage/report models, resolver helpers, and generic customization helpers. Current external systems remain source-mapped previews until tests prove full official source import, stable source locks, official-token anchor coverage, token taxonomy parity, semantic palette parity, typography parity, density/variant parity, component-token matrix coverage, runtime token alignment, customization parity, adaptation closure, and golden/source-import integrity. Views still consume only `@core.Theme` or neutral style contracts. |
+
+`DesignPreset::semantic_palette_role_report` lives in
+`moui_theme/common/design_system_semantic_palette.mbt` and breaks the semantic palette down
+into foreground/background/surface/primary/status/focus/scrim role rows. The
+rows tie each `DesignSemanticPalette` field to a neutral `@core.ColorPalette`
+or `@core.SemanticColorScale` destination, direct official token/source-import
+evidence when one exists, and explicit role-level parity gaps when a preset only
+has a broader token-group adapter.
+
+`DesignPreset::typography_role_report` lives in
+`moui_theme/common/design_system_typography.mbt` and breaks typography down into
+body/title/caption/control role rows. The rows tie each
+`DesignTypographyTokens` font slot to a neutral `@core.TypographyScale`
+destination, direct official token/source-import alignment when one exists,
+and explicit destination gaps for imported source properties such as
+line-height that do not have a neutral `FontSpec` field yet.
+
+`DesignPreset::component_token_matrix` rows expose per-component mapped and
+required token counts plus related pinned source-import and runtime-aligned
+evidence counts. Those evidence counts are intentionally separate from the
+mapped/required matrix so source-import progress can be shown without claiming
+the complete official component matrix is closed.
+
+`DesignSystemTokens::core_component_styles`,
+`DesignButtonTokens::core_styles`, `DesignTextFieldTokens::core_styles`,
+`DesignSurfaceComponentTokens::core_styles`,
+`DesignChoiceControlTokens::core_style`, `DesignProgressTokens::core_style`,
+`DesignSliderTokens::core_style`, `DesignPickerTokens::core_style`,
+`DesignFeedbackTokens::core_style`, `DesignBadgeTokens::core_style`, and
+`DesignFormValidationTokens::core_style` expose component-token overrides as
+neutral `@core` style contracts; text-field tokens include the resolved font so
+custom design-system token bundles can carry typography into text-field style
+conversion without adding design-system names to `core` or `views`. Common
+`views` controls, feedback/status surfaces, badges, and validation helpers can
+consume those neutral style contracts through optional `style`,
+`badge_style`, or `progress_style` parameters while still defaulting to plain
+`@core.Theme`.
 
 ## Advanced Helpers
 

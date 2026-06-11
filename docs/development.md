@@ -5,11 +5,13 @@ for MoUI development.
 
 ## Local Dependencies
 
-MoUI resolves the window host dependency from the MoonBit registry as
-`wzzc-dev/window@0.5.1-fork.3`. A repo-local `.local_repos/window` workspace
-member is no longer part of the normal setup. MoUI still carries
-`wzzc-dev/moui_skia` as a repo-local editable workspace member while the Skia
-renderer backend and binding surface evolve together.
+The upstream `moonbit-community/window` package does not currently cover the targets 
+MoUI needs, so use the `wzzc-dev/window` fork checkout instead. 
+MoUI resolves the window host dependency from the MoonBit registry as `wzzc-dev/window@0.5.1-fork.3`.
+MoUI also carries `wzzc-dev/moui_skia` as a repo-local editable workspace member
+while the Skia renderer backend and binding surface evolve together. The
+optional `wzzc-dev/moui_theme` addon is another repo-local workspace member for
+source-mapped design-system preview packages.
 
 From the repository root:
 
@@ -25,8 +27,8 @@ repo-local `moui_skia` acceptance surface. The Skia binding is part of the main
 checkout at `moui_skia`.
 
 This keeps `wzzc-dev/window` and `wzzc-dev/moui_skia` declared in
-`moui/moon.mod`, while only `moui_skia` is resolved through `moon.work` as a
-repo-local workspace member:
+`moui/moon.mod`, keeps `wzzc-dev/moui_theme` as an addon module, and resolves
+the local workspace members in `moon.work`:
 
 ```moonbit
 import {
@@ -40,9 +42,11 @@ members = [
   "./moui",
   "./tools",
   "./moui_skia",
+  "./moui_theme",
   "./examples/counter",
   "./examples/button_freeze_probe",
   "./examples/showcase",
+  "./examples/design_systems",
   "./examples/markdown_editor",
   "./examples/settings",
   "./examples/data_table",
@@ -348,6 +352,12 @@ Useful focused commands:
 moon test moui/render/wgpu --target native
 moon test moui/render/skia --target native
 moon test moui_skia --target native
+moon test moui_theme/common --target native
+moon test moui_theme/common --target wasm-gc
+moon test moui_theme/material --target native
+moon test moui_theme/carbon --target native
+moon test moui_theme/primer --target native
+moon test moui_theme/fluent --target native
 moon build moui/tests/skia_renderer_smoke/native --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native
@@ -356,6 +366,8 @@ node scripts/validate-renderer-provider-manifests.mjs
 sh scripts/dev-check.sh --platform-examples-test
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
+moon test examples/design_systems/app --target native
+moon build examples/design_systems/web_wasm --target wasm-gc
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
@@ -365,7 +377,10 @@ moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 sh scripts/dev-check.sh --platform-examples-build
 moon build examples/showcase/macos_skia --target native
+moon build examples/design_systems/macos_skia --target native
 moon build examples/showcase/windows_skia --target native
+moon build examples/design_systems/windows_skia --target native
+moon build examples/design_systems/linux_skia --target native
 moon build examples/pdf_workbench/macos_skia --target native
 moon build examples/pdf_workbench/windows_skia --target native
 moon build examples/pdf_workbench/linux_skia --target native

@@ -42,6 +42,79 @@ pub(all) struct TextFieldStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct ChoiceControlStyle {
+  foreground : Color
+  selected_color : Color
+  disabled_foreground : Color
+  disabled_selected_color : Color
+  control_size : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ProgressStyle {
+  foreground : Color
+  background : Color
+  radius : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct SliderStyle {
+  foreground : Color
+  background : Color
+  thumb_color : Color
+  track_height : Double
+  thumb_size : Double
+  radius : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct PickerStyle {
+  font : FontSpec
+  foreground : Color
+  background : Brush
+  radius : Double
+  popup_max_height : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct ToneStyle {
+  foreground : Color
+  background : Color
+  border : Color
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct FeedbackStyle {
+  neutral : ToneStyle
+  info : ToneStyle
+  success : ToneStyle
+  warning : ToneStyle
+  danger : ToneStyle
+  radius : Double
+  padding : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct BadgeStyle {
+  neutral : ToneStyle
+  accent : ToneStyle
+  success : ToneStyle
+  warning : ToneStyle
+  danger : ToneStyle
+  radius : Double
+  padding : Double
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct FormValidationStyle {
+  foreground : Color
+  background : Color
+  border : Color
+  radius : Double
+  padding : Double
+} derive(Eq, Debug, ToJson)
+
+///|
 pub fn TextStyle::body(theme? : Theme = Theme::default()) -> TextStyle {
   { font: theme.typography.body, color: theme.foreground }
 }
@@ -184,4 +257,139 @@ pub fn TextFieldStyle::outline(
   theme? : Theme = Theme::default(),
 ) -> TextFieldStyle {
   TextFieldStyle::filled(theme~)
+}
+
+///|
+pub fn ChoiceControlStyle::default(
+  theme? : Theme = Theme::default(),
+) -> ChoiceControlStyle {
+  {
+    foreground: theme.palette.foreground,
+    selected_color: theme.palette.primary,
+    disabled_foreground: theme.palette.muted,
+    disabled_selected_color: theme.palette.primary.multiply_alpha(0.42),
+    control_size: 20.0,
+  }
+}
+
+///|
+pub fn ProgressStyle::default(
+  theme? : Theme = Theme::default(),
+) -> ProgressStyle {
+  {
+    foreground: theme.palette.primary,
+    background: theme.palette.surface_variant,
+    radius: theme.radius_scale.pill,
+  }
+}
+
+///|
+pub fn SliderStyle::default(theme? : Theme = Theme::default()) -> SliderStyle {
+  {
+    foreground: theme.palette.primary,
+    background: theme.palette.surface_variant,
+    thumb_color: theme.palette.primary,
+    track_height: 6.0,
+    thumb_size: 20.0,
+    radius: theme.radius_scale.pill,
+  }
+}
+
+///|
+pub fn PickerStyle::default(theme? : Theme = Theme::default()) -> PickerStyle {
+  {
+    font: theme.typography.control,
+    foreground: theme.foreground,
+    background: Brush::solid(theme.palette.surface),
+    radius: theme.radius_scale.md,
+    popup_max_height: 200.0,
+  }
+}
+
+///|
+pub fn FeedbackStyle::default(
+  theme? : Theme = Theme::default(),
+) -> FeedbackStyle {
+  let background_alpha = match theme.scheme {
+    ColorScheme::Light => 0.12
+    ColorScheme::Dark => 0.22
+  }
+  {
+    neutral: tone_style(
+      foreground=theme.palette.muted,
+      background_alpha~,
+      border_alpha=0.72,
+    ),
+    info: tone_style(
+      foreground=theme.semantic_colors.info,
+      background_alpha~,
+      border_alpha=0.72,
+    ),
+    success: tone_style(
+      foreground=theme.semantic_colors.success,
+      background_alpha~,
+      border_alpha=0.72,
+    ),
+    warning: tone_style(
+      foreground=theme.semantic_colors.warning,
+      background_alpha~,
+      border_alpha=0.72,
+    ),
+    danger: tone_style(
+      foreground=theme.semantic_colors.danger,
+      background_alpha~,
+      border_alpha=0.72,
+    ),
+    radius: theme.radius_scale.md,
+    padding: theme.spacing_scale.sm,
+  }
+}
+
+///|
+pub fn BadgeStyle::default(theme? : Theme = Theme::default()) -> BadgeStyle {
+  {
+    neutral: {
+      foreground: theme.palette.foreground,
+      background: theme.palette.surface_variant,
+      border: theme.palette.outline.multiply_alpha(0.42),
+    },
+    accent: badge_tone(theme.semantic_colors.info),
+    success: badge_tone(theme.semantic_colors.success),
+    warning: badge_tone(theme.semantic_colors.warning),
+    danger: badge_tone(theme.semantic_colors.danger),
+    radius: theme.radius_scale.pill,
+    padding: 3.0,
+  }
+}
+
+///|
+pub fn FormValidationStyle::default(
+  theme? : Theme = Theme::default(),
+) -> FormValidationStyle {
+  let color = theme.semantic_colors.danger
+  {
+    foreground: color,
+    background: color.multiply_alpha(0.12),
+    border: color.multiply_alpha(0.72),
+    radius: theme.radius_scale.md,
+    padding: theme.spacing_scale.md,
+  }
+}
+
+///|
+fn tone_style(
+  foreground~ : Color,
+  background_alpha~ : Double,
+  border_alpha~ : Double,
+) -> ToneStyle {
+  {
+    foreground,
+    background: foreground.multiply_alpha(background_alpha),
+    border: foreground.multiply_alpha(border_alpha),
+  }
+}
+
+///|
+fn badge_tone(background : Color) -> ToneStyle {
+  { foreground: Color::white(), background, border: background }
 }

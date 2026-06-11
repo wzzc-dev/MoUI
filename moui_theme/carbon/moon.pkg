@@ -1,0 +1,8 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_theme/common",
+}
+
+options(
+  targets: { },
+)

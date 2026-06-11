@@ -8,6 +8,7 @@ pub fn[Msg] alert(
   theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
+  let feedback_style = @core.FeedbackStyle::default(theme~)
   let content_width = views_max_double(
     120.0,
     width - theme.spacing_scale.md * 2.0,
@@ -46,7 +47,7 @@ pub fn[Msg] alert(
           theme~,
           width=content_width,
           height=28.0,
-        ).foreground(feedback_accent(tone, theme)),
+        ).foreground(feedback_accent(tone, feedback_style)),
         text(
           message,
           role=TextRole::Caption,
@@ -70,7 +71,9 @@ pub fn[Msg] alert(
     theme~,
     padding=theme.spacing_scale.md,
   )
-  .border(dialog_border(theme, accent=Some(feedback_accent(tone, theme))))
+  .border(
+    dialog_border(theme, accent=Some(feedback_accent(tone, feedback_style))),
+  )
   .shadow(theme.shadow_scale.lg)
   .semantics_role(@core.SemanticsRole::Dialog)
   .accessibility_label(title)

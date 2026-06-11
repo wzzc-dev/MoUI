@@ -50,7 +50,7 @@ test "showcase state toggles theme and active copy" {
   let runtime = model.runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "State-driven visuals are active"))
-  assert_true(model.dark)
+  assert_true(model.scheme == @core.ColorScheme::Dark)
   assert_true(model.active)
 }
 

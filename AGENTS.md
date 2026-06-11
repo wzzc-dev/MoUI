@@ -33,6 +33,37 @@ paths, or abstractions that only preserve old shapes.
   etc.) rather than by additional package boundaries.
 - `views/` is a facade over core primitive builders. Public constructors return
   opaque `@core.View[Msg]`; `ViewSpec` and node payloads stay inside `core`.
+- `moui_theme/common/` owns the repo-local addon design-system common surface:
+  shared source-mapped design-system
+  manifests, golden token mappings, golden source-usage audits,
+  source-lock quality reports, source-package inventories,
+  source-imported token records with pinned file shas, raw source expressions,
+  official-anchor coverage gaps, manifest/golden integrity reports, runtime
+  token alignment reports for resolved source values,
+  official-token/source-lock coverage, adaptation-difference reports,
+  token taxonomy reports, semantic palette role reports, typography role reports,
+  component-token matrices, semantic/component token models, density and
+  variant adapters, coverage metadata, and custom token/theme helpers that return
+  platform-neutral
+  `@core.Theme` values. `moui_theme` may depend on `wzzc-dev/moui/core`, but
+  `moui/core`, `moui/views`, and the root `wzzc-dev/moui` workspace member must
+  not depend on `moui_theme`. `moui_theme/material`, `moui_theme/carbon`,
+  `moui_theme/primer`, and `moui_theme/fluent` expose package-local
+  `light_theme`/`dark_theme`/`high_contrast_theme`/`system_theme`,
+  token, manifest, report, and component-matrix entrypoints over the shared
+  common model; keep concrete design-language names such as
+  Material, Carbon, Primer, and Fluent out of `core` and `views`; views should
+  keep consuming plain `@core.Theme` or neutral style contracts. Do not promote
+  an external preset from source-mapped preview to official-complete status
+  without tests tying
+  token, variant, component, customization, official-token golden mapping
+  coverage, source usage coverage, stable source version locks,
+  source-package import coverage, source-imported token source-lock coverage,
+  source-imported token official-anchor coverage, source-imported token
+  manifest/golden integrity, runtime token alignment, token taxonomy parity,
+  semantic palette role parity, typography role parity,
+  component-token matrix coverage, and
+  adaptation-difference closure to official source anchors.
 - `backend/host/` defines shared host event, surface, input, async
   host-service including clipboard, file-dialog, text-file, binary-file, URL, menu, and
   system-theme service contracts, host-event fanout subscription adapters, window-scoped subscription adapters,
@@ -100,6 +131,11 @@ paths, or abstractions that only preserve old shapes.
 - `examples/*/app/` packages are shared app logic. Platform subpackages are
   entrypoints only. Showcase has `macos_skia`, `windows_skia`, and
   `linux_skia` entrypoints for the recommended native Skia renderer mainline.
+  Showcase is the MoUI framework capability catalog and must not import
+  `moui_theme`. `examples/design_systems/app` is the dedicated design-system
+  preview/parity example and may import both `wzzc-dev/moui` and
+  `wzzc-dev/moui_theme`; `examples/design_systems` has `macos_skia`,
+  `windows_skia`, `linux_skia`, and `web_wasm` entrypoints.
   Markdown Editor has `macos_skia`, `windows_skia`, and `linux_skia` for
   native Skia renderer entrypoints. PDF Workbench has a lightweight shared
   `examples/pdf_workbench/app` package, a separate

@@ -18,6 +18,53 @@ test "text field styles expose focus colors" {
 }
 
 ///|
+test "scalar control styles derive from theme tokens" {
+  let accent = Color::rgba(r=0.86, g=0.18, b=0.42)
+  let track = Color::rgba(r=0.12, g=0.16, b=0.22)
+  let base = Theme::light()
+  let palette = {
+    ..base.palette,
+    primary: accent,
+    surface: track,
+    surface_variant: track,
+  }
+  let radius_scale = { ..base.radius_scale, md: 14.0, pill: 42.0 }
+  let danger = Color::rgba(r=0.92, g=0.18, b=0.28)
+  let success = Color::rgba(r=0.16, g=0.72, b=0.38)
+  let semantic_colors = { ..base.semantic_colors, danger, success }
+  let theme = { ..base, palette, semantic_colors, radius_scale }
+  let choice = ChoiceControlStyle::default(theme~)
+  let progress = ProgressStyle::default(theme~)
+  let slider = SliderStyle::default(theme~)
+  assert_true(choice.selected_color == accent)
+  assert_true(choice.foreground == palette.foreground)
+  inspect(choice.control_size, content="20")
+  assert_true(progress.foreground == accent)
+  assert_true(progress.background == track)
+  inspect(progress.radius, content="42")
+  assert_true(slider.foreground == accent)
+  assert_true(slider.thumb_color == accent)
+  assert_true(slider.background == track)
+  inspect(slider.track_height, content="6")
+  let picker = PickerStyle::default(theme~)
+  assert_true(picker.foreground == theme.foreground)
+  assert_true(picker.background == Brush::solid(track))
+  inspect(picker.radius, content="14")
+  inspect(picker.popup_max_height, content="200")
+  let feedback = FeedbackStyle::default(theme~)
+  assert_true(feedback.success.foreground == success)
+  assert_true(feedback.danger.border == danger.multiply_alpha(0.72))
+  inspect(feedback.radius, content="14")
+  let badge = BadgeStyle::default(theme~)
+  assert_true(badge.success.background == success)
+  inspect(badge.radius, content="42")
+  let validation = FormValidationStyle::default(theme~)
+  assert_true(validation.foreground == danger)
+  assert_true(validation.background == danger.multiply_alpha(0.12))
+  inspect(validation.radius, content="14")
+}
+
+///|
 test "button paint preserves brush border and shadow commands" {
   let gradient = Brush::linear_gradient(
     start=Point::new(x=0.0, y=0.0),

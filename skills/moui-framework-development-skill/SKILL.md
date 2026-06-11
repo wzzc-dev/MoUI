@@ -140,7 +140,39 @@ Use this skill when editing or reviewing:
   (`runtime_state`,
   `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
   subpackages.
-- `style/`: visual token and style compatibility aliases.
+- root `moui`: public facade over core/views plus neutral default/light/dark
+  theme helpers and custom `@core.Theme` builder APIs. It does not import
+  `moui_theme`.
+- `moui_theme/common/`: repo-local addon common package for shared
+  source-mapped design-system
+  manifests, golden token mappings, golden source-usage audits,
+  source-lock quality reports, source-package inventories,
+  source-imported token records with pinned file shas, raw source expressions,
+  official-anchor coverage gaps, manifest/golden integrity reports, runtime
+  token alignment reports for resolved source values,
+  official-token/source-lock coverage, adaptation-difference reports,
+  token taxonomy reports, semantic palette role reports, typography role reports,
+  component-token matrices, semantic/component token models, density and
+  variant adapters, coverage metadata, and custom token/theme helpers that return
+  platform-neutral
+  `@core.Theme` values; it may depend on `wzzc-dev/moui/core`, while
+  `moui/core`, `moui/views`, and the root `wzzc-dev/moui` workspace member must
+  not depend on `moui_theme`. `moui_theme/material`, `moui_theme/carbon`,
+  `moui_theme/primer`, and `moui_theme/fluent` expose package-local
+  official-system entrypoints over the common model for light/dark/high-contrast
+  and system themes, tokens, manifests, reports, and component matrices.
+  Concrete design-language names stay here rather than in `core` or `views`.
+  External presets stay source-mapped previews until
+  tests prove
+  official source, token category, variant, component-token, customization,
+  official-token golden mapping coverage, golden mapping source usage, stable
+  source version locks, source-package import coverage,
+  source-imported token source-lock coverage, source-imported token
+  official-anchor coverage, source-imported token manifest/golden integrity,
+  runtime token alignment, token taxonomy parity, semantic palette role parity,
+  typography role parity,
+  component-token matrix coverage plus
+  adaptation-difference closure.
 - `views/`: public view constructors returning opaque `@core.View[Msg]`.
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
   window lifecycle registry, window scene resolver, per-window runtime slot
@@ -215,6 +247,9 @@ Use this skill when editing or reviewing:
 - `examples/showcase/{macos_skia,windows_skia,linux_skia}` and
   `examples/markdown_editor/{macos_skia,windows_skia,linux_skia}`: recommended
   native Skia renderer example entrypoints.
+- `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}`:
+  dedicated design-system addon sampler entrypoints over the shared
+  `examples/design_systems/app` logic.
 - `examples/pdf_workbench/app`, `examples/pdf_workbench/pdflite_adapter`, and
   `examples/pdf_workbench/macos_skia`: lightweight PDF UI shell, separate
   `pdflite` adapter checks, and native Skia mainline entrypoint.
