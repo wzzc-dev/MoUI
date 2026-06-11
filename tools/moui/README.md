@@ -31,6 +31,10 @@ Current tools:
   browser-session Web runtime presentation manifests, including WebGPU, wasm
   startup, canvas, resize/input, screenshot, renderer proof, and clean target
   close evidence boundaries.
+- `validate_checked_conformance_artifacts/` validates the checked-in
+  conformance capture, Web handoff, Web presentation, platform-runtime
+  evidence, and renderer-proof artifact set so committed evidence does not
+  drift behind current schema and boundary rules.
 - `record_renderer_proof_manifest/` folds renderer proof smoke logs into schema
   version 1 renderer proof manifests while preserving the original
   `scripts/record-renderer-proof-manifest.mjs` command path.

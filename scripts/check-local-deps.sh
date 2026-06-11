@@ -5,7 +5,7 @@ ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 WINDOW_VERSION="0.5.1-fork.3"
 WINDOW_PACKAGE="wzzc-dev/window@$WINDOW_VERSION"
 MOUI_SKIA_DIR="$ROOT_DIR/moui_skia"
-MOUI_SKIA_VERSION="0.1.2"
+MOUI_SKIA_VERSION="0.1.3"
 
 fail() {
   printf 'dependency check failed: %s\n' "$1" >&2
