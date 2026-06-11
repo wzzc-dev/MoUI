@@ -651,6 +651,14 @@ jobs:
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
+      - name: Restore local dependencies
+        run: sh scripts/setup-local-deps.sh
+
+      - name: Install dependencies
+        run: |
+          moon version --all
+          moon update
+
       - name: Download renderer proof artifacts
         uses: actions/download-artifact@v4
         with:
