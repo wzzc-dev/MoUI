@@ -34,7 +34,11 @@ test "daily quality gate tokens include moonbit-backed api surface guard" {
   let tokens = daily_quality_gate_tokens()
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
   assert_true(tokens.contains("moon test moui/core --target native"))
+  assert_true(tokens.contains("moon test examples/design_systems/app --target native"))
   assert_true(
     tokens.contains("moon build examples/showcase/web_wasm --target wasm-gc"),
+  )
+  assert_true(
+    tokens.contains("moon build examples/design_systems/web_wasm --target wasm-gc"),
   )
 }

@@ -45,6 +45,7 @@ moon test moui/backend/web --target wasm-gc
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
+moon test examples/design_systems/app --target native
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
@@ -962,13 +963,14 @@ as broad dirty regions or unavailable dirty bounds should stay visible in the
 printed diagnostics. Override `MOUI_APP_CACHED_LAYER_BENCH_FRAMES` and
 `MOUI_APP_CACHED_LAYER_BENCH_WARMUP` for longer local runs.
 
-The Web runtime handoff validator checks that both Web wasm-gc examples have
-HTML boot pages, browser runtime assets, wasm artifacts, and expected compiled
-WebAssembly event/completion exports after build:
+The Web runtime handoff validator checks that selected Web wasm-gc examples
+have HTML boot pages, browser runtime assets, wasm artifacts, and expected
+compiled WebAssembly event/completion exports after build:
 
 ```sh
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
+moon build examples/design_systems/web_wasm --target wasm-gc
 node scripts/validate-web-runtime-handoff.mjs \
   --manifest artifacts/conformance/web-runtime-handoff.json
 node scripts/validate-web-runtime-handoff-manifest.mjs \
