@@ -31,6 +31,7 @@ Detailed notes live in:
 - [View catalog](docs/view-catalog.md)
 - [Non-render component cookbook](docs/non-render-component-cookbook.md)
 - [App templates](docs/app-templates.md)
+- [API surface](docs/api-surface.md)
 - [Examples](docs/examples.md)
 - [Markdown Editor](docs/markdown-editor.md)
 - [Testing](docs/testing.md)

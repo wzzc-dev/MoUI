@@ -24,6 +24,10 @@ runtime evidence, and renderer-proof manifests with the current validators. This
 keeps committed evidence artifacts from drifting behind the schema and evidence
 rules that release handoffs cite.
 
+It also runs `node scripts/validate-api-surface.mjs`, a thin wrapper around the
+MoonBit tool in `tools/moui/validate_api_surface/`, so generated public
+interfaces stay inside the documented app/core/host/render package boundaries.
+
 ## Focused Package Tests
 
 Use package-level commands while editing implementation code:
@@ -185,6 +189,17 @@ implementation structure. Use `*_tree.mbt`, `*_descriptor.mbt`, `*_input.mbt`,
 `*_protocol.mbt`, and `*_capabilities.mbt` for package-local source
 organization when those names match the responsibility.
 
+Run the API surface guard after `moon info` when public shape may have changed:
+
+```sh
+node scripts/validate-api-surface.mjs
+```
+
+See [API surface](api-surface.md) for the current app-facing, core,
+integration, and addon API tiers. The guard locks current package budgets and
+boundary tokens; deliberate API expansion should update the budget and explain
+the tradeoff in the same change.
+
 ## Documentation And Guidance Checks
 
 For docs-only changes, keep validation lightweight and focused on the edited
@@ -206,6 +221,8 @@ sh -n scripts/ci-renderer-proof-native.sh
 sh -n scripts/ci-renderer-proof-summary.sh
 node --check scripts/validate-guidance-consistency.mjs
 node scripts/validate-guidance-consistency.mjs
+node --check scripts/validate-api-surface.mjs
+node scripts/validate-api-surface.mjs
 node --check scripts/validate-package-manifest.mjs
 node --check scripts/validate-conformance-capture-manifest.mjs
 node scripts/test-validate-conformance-capture-manifest.mjs
