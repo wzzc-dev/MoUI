@@ -29,7 +29,6 @@ const pendingObservations = {
   imeScrollAnchor: "pending",
   imeScaleDprAnchor: "pending",
   imeResizeAnchor: "pending",
-  imeMarkdownEditor: "pending",
 };
 
 const passedObservations = Object.fromEntries(
@@ -42,7 +41,6 @@ const pendingSkiaObservations = {
   realRendererSmoke: "pending",
   asyncImageSecondFrame: "pending",
   showcaseFirstFrame: "pending",
-  markdownFirstFrame: "pending",
 };
 
 const passedSkiaObservations = Object.fromEntries(
@@ -79,7 +77,7 @@ const skiaEvidence = name => {
         "moon test moui/backend/macos/skia --target native",
       ],
       runtimeSmokeCommands: [
-        "scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke",
+        "scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke",
       ],
       observations: { ...pendingSkiaObservations },
       artifacts: ["artifacts/platform-evidence/macos/README.md"],
@@ -95,11 +93,9 @@ const skiaEvidence = name => {
         "moon test moui/render/skia --target native",
         "moon test moui/backend/windows/skia --target native",
         "build_windows_msvc.ps1 -Package examples/showcase/windows_skia",
-        "build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia",
       ],
       runtimeSmokeCommands: [
         "MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/windows_skia --target native",
-        "MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/markdown_editor/windows_skia --target native",
       ],
       observations: { ...pendingSkiaObservations },
       artifacts: ["artifacts/platform-evidence/windows/README.md"],
@@ -115,11 +111,9 @@ const skiaEvidence = name => {
         "moon test moui/render/skia --target native",
         "moon test moui/backend/linux/skia --target native",
         "moon build examples/showcase/linux_skia --target native",
-        "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeSmokeCommands: [
         "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/showcase/linux_skia --target native",
-        "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/markdown_editor/linux_skia --target native",
       ],
       observations: { ...pendingSkiaObservations },
       artifacts: ["artifacts/platform-evidence/linux/README.md"],
@@ -162,16 +156,14 @@ const validManifest = {
       routineCommands: [
         "moon test moui/backend/web --target wasm-gc",
         "moon build examples/showcase/web_wasm --target wasm-gc",
-        "moon build examples/markdown_editor/web_wasm --target wasm-gc",
       ],
       runtimeEvidenceCommands: [
         "python3 -m http.server 18080 --bind 127.0.0.1",
-        "node scripts/record-web-runtime-presentation.mjs --base-url http://127.0.0.1:18080 --cdp-url http://127.0.0.1:9223 --manifest artifacts/conformance/web-runtime-presentation.json --require-passed # opens examples/showcase/web_wasm and examples/markdown_editor/web_wasm",
+        "node scripts/record-web-runtime-presentation.mjs --base-url http://127.0.0.1:18080 --cdp-url http://127.0.0.1:9223 --manifest artifacts/conformance/web-runtime-presentation.json --require-passed # opens examples/showcase/web_wasm",
         "node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json web --web-presentation-manifest artifacts/conformance/web-runtime-presentation.json",
       ],
       exampleTargets: [
         "examples/showcase/web_wasm",
-        "examples/markdown_editor/web_wasm",
       ],
     }),
     baseEntry({
@@ -180,15 +172,12 @@ const validManifest = {
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/macos_skia --target native",
-        "moon build examples/markdown_editor/macos_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/macos_skia --target native",
-        "moon run examples/markdown_editor/macos_skia --target native",
       ],
       exampleTargets: [
         "examples/showcase/macos_skia",
-        "examples/markdown_editor/macos_skia",
       ],
     }),
     baseEntry({
@@ -197,16 +186,13 @@ const validManifest = {
       routineCommands: [
         "moon test moui/backend/windows --target native",
         "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
-        "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
         "powershell -ExecutionPolicy Bypass -File .\\scripts\\windows\\package_windows_app_msvc.ps1 -Package examples/showcase/windows_skia",
       ],
       runtimeEvidenceCommands: [
         "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"",
-        "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\"",
       ],
       exampleTargets: [
         "examples/showcase/windows_skia",
-        "examples/markdown_editor/windows_skia",
       ],
     }),
     baseEntry({
@@ -215,15 +201,12 @@ const validManifest = {
       routineCommands: [
         "sh scripts/dev-check.sh --platform-examples-test",
         "moon build examples/showcase/linux_skia --target native",
-        "moon build examples/markdown_editor/linux_skia --target native",
       ],
       runtimeEvidenceCommands: [
         "moon run examples/showcase/linux_skia --target native",
-        "moon run examples/markdown_editor/linux_skia --target native",
       ],
       exampleTargets: [
         "examples/showcase/linux_skia",
-        "examples/markdown_editor/linux_skia",
       ],
     }),
   ],
@@ -292,12 +275,10 @@ const windowsPassed = {
             artifacts: [
               "artifacts/platform-evidence/windows/skia-provider.log",
               "artifacts/platform-evidence/windows/showcase-skia-first-frame.log",
-              "artifacts/platform-evidence/windows/markdown-skia-first-frame.log",
             ],
             evidenceProvenance: matchingHostProvenance("windows", "Windows MSVC CI", [
               "artifacts/platform-evidence/windows/skia-provider.log",
               "artifacts/platform-evidence/windows/showcase-skia-first-frame.log",
-              "artifacts/platform-evidence/windows/markdown-skia-first-frame.log",
             ]),
             notes: ["matching-host Windows Skia first-frame evidence observed"],
           },
@@ -556,17 +537,14 @@ const webPassedWithNativeImePending = {
             imeScrollAnchor: "pending",
             imeScaleDprAnchor: "pending",
             imeResizeAnchor: "pending",
-            imeMarkdownEditor: "pending",
           },
           artifacts: [
             "artifacts/platform-evidence/web/web-runtime-presentation.json",
             "artifacts/platform-evidence/web/showcase-web-wasm.png",
-            "artifacts/platform-evidence/web/markdown-editor-web-wasm.png",
           ],
           evidenceProvenance: matchingHostProvenance("web", "Web wasm-gc browser host (Chrome/149.0.7827.54)", [
             "artifacts/platform-evidence/web/web-runtime-presentation.json",
             "artifacts/platform-evidence/web/showcase-web-wasm.png",
-            "artifacts/platform-evidence/web/markdown-editor-web-wasm.png",
           ]),
           notes: ["Web browser-session platform evidence observed"],
         }

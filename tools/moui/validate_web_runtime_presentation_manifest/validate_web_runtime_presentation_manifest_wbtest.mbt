@@ -192,7 +192,7 @@ let valid_manifest =
   #|        "resizedCanvas": "yes",
   #|        "pointerInput": "yes",
   #|        "keyboardInput": "yes",
-  #|        "textInput": "no",
+  #|        "textInput": "yes",
   #|        "radialGradient": "yes",
   #|        "transformPixels": "yes",
   #|        "colorEmojiPixels": "yes",
@@ -204,144 +204,6 @@ let valid_manifest =
   #|        "imeCandidateAnchor": "yes",
   #|        "imeCompositionVisual": "yes",
   #|        "asyncImageSecondFrame": "yes",
-  #|        "targetClosed": "yes"
-  #|      },
-  #|      "consoleErrors": [],
-  #|      "notes": ["browser evidence captured"]
-  #|    },
-  #|    {
-  #|      "name": "markdown-editor-web-wasm",
-  #|      "packagePath": "examples/markdown_editor/web_wasm",
-  #|      "path": "examples/markdown_editor/web_wasm/index.html",
-  #|      "url": "http://127.0.0.1:18080/examples/markdown_editor/web_wasm/index.html?debug=1",
-  #|      "status": "passed",
-  #|      "title": "MoUI Markdown Editor Wasm GC",
-  #|      "statusText": "Running",
-  #|      "bodyFailed": false,
-  #|      "navigatorGpu": true,
-  #|      "canvas": {
-  #|        "count": 1,
-  #|        "hostWidth": 1280,
-  #|        "hostHeight": 800,
-  #|        "canvasWidth": 1280,
-  #|        "canvasHeight": 800
-  #|      },
-  #|      "runtimeSignals": {
-  #|        "adapterRequested": true,
-  #|        "deviceRequested": true,
-  #|        "wasmStarted": true,
-  #|        "running": true
-  #|      },
-  #|      "screenshot": {
-  #|        "artifact": "artifacts/conformance/web-runtime-presentation/markdown-editor-web-wasm.png",
-  #|        "width": 1280,
-  #|        "height": 800,
-  #|        "totalPixels": 1024000,
-  #|        "contentPixels": 50000,
-  #|        "distinctColorBuckets": 18,
-  #|        "transformPixels": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "hotPinkPixels": 0,
-  #|          "cyanPixels": 0,
-  #|          "goldPixels": 0,
-  #|          "matchedMarkers": 0
-  #|        },
-  #|        "radialGradient": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "evidence": [],
-  #|          "matchedMarkers": 0
-  #|        },
-  #|        "colorEmojiPixels": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "evidence": [],
-  #|          "matchedMarkers": 0
-  #|        },
-  #|        "zwjGrapheme": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "evidence": [],
-  #|          "matchedMarkers": 0
-  #|        },
-  #|        "bidiLayout": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "evidence": [],
-  #|          "matchedMarkers": 0
-  #|        },
-  #|        "paragraphWrapping": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "evidence": [],
-  #|          "matchedMarkers": 0
-  #|        },
-  #|        "selectionRects": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "evidence": [],
-  #|          "matchedMarkers": 0
-  #|        },
-  #|        "graphemeEditing": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "evidence": [],
-  #|          "matchedMarkers": 0
-  #|        },
-  #|        "imeCandidateAnchor": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "evidence": [],
-  #|          "matchedMarkers": 0
-  #|        },
-  #|        "imeCompositionVisual": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "evidence": [],
-  #|          "matchedMarkers": 0
-  #|        },
-  #|        "asyncImageSecondFrame": {
-  #|          "required": false,
-  #|          "passed": false,
-  #|          "evidence": [],
-  #|          "matchedMarkers": 0
-  #|        }
-  #|      },
-  #|      "evidenceEvents": [
-  #|        { "kind": 10, "name": "resize" },
-  #|        { "kind": 23, "name": "pointer_down" },
-  #|        { "kind": 40, "name": "key_down" },
-  #|        { "kind": 42, "name": "ime_commit" },
-  #|        { "kind": 100, "name": "present_frame" }
-  #|      ],
-  #|      "observations": {
-  #|        "pageLoaded": "yes",
-  #|        "webGpuAvailable": "yes",
-  #|        "adapterRequested": "yes",
-  #|        "deviceRequested": "yes",
-  #|        "wasmStarted": "yes",
-  #|        "statusRunning": "yes",
-  #|        "canvasCreated": "yes",
-  #|        "canvasSized": "yes",
-  #|        "nonblankScreenshot": "yes",
-  #|        "cleanConsole": "yes",
-  #|        "resizeEvent": "yes",
-  #|        "resizedCanvas": "yes",
-  #|        "pointerInput": "yes",
-  #|        "keyboardInput": "yes",
-  #|        "textInput": "yes",
-  #|        "radialGradient": "no",
-  #|        "transformPixels": "no",
-  #|        "colorEmojiPixels": "no",
-  #|        "zwjGrapheme": "no",
-  #|        "bidiLayout": "no",
-  #|        "paragraphWrapping": "no",
-  #|        "selectionRects": "no",
-  #|        "graphemeEditing": "no",
-  #|        "imeCandidateAnchor": "no",
-  #|        "imeCompositionVisual": "no",
-  #|        "asyncImageSecondFrame": "no",
   #|        "targetClosed": "yes"
   #|      },
   #|      "consoleErrors": [],
@@ -362,12 +224,12 @@ test "accepts valid web runtime presentation manifest" {
 ///|
 test "rejects missing expected target" {
   let manifest = valid_manifest.replace(
-    old="\"name\": \"markdown-editor-web-wasm\"",
+    old="\"name\": \"showcase-web-wasm\"",
     new="\"name\": \"other-web-wasm\"",
   )
   inspect(
     validate_manifest_text(manifest).contains(
-      "targets must include 'markdown-editor-web-wasm'",
+      "targets must include 'showcase-web-wasm'",
     ),
     content="true",
   )

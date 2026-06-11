@@ -33,15 +33,12 @@ const platformEntries = {
     routineCommands: [
       "sh scripts/dev-check.sh --platform-examples-test",
       "moon build examples/showcase/macos_skia --target native",
-      "moon build examples/markdown_editor/macos_skia --target native",
     ],
     runtimeEvidenceCommands: [
       "moon run examples/showcase/macos_skia --target native",
-      "moon run examples/markdown_editor/macos_skia --target native",
     ],
     exampleTargets: [
       "examples/showcase/macos_skia",
-      "examples/markdown_editor/macos_skia",
     ],
     windowEvidenceCommand:
       ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
@@ -57,16 +54,13 @@ const platformEntries = {
     routineCommands: [
       "moon test moui/backend/windows --target native",
       "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
-      "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
       "powershell -ExecutionPolicy Bypass -File scripts/windows/package_windows_app_msvc.ps1 -Package examples/showcase/windows_skia",
     ],
     runtimeEvidenceCommands: [
       "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"",
-      "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\"",
     ],
     exampleTargets: [
       "examples/showcase/windows_skia",
-      "examples/markdown_editor/windows_skia",
     ],
     windowEvidenceCommand:
       ".local_repos/window/scripts/record_moui_evidence.sh windows --status pending",
@@ -82,15 +76,12 @@ const platformEntries = {
     routineCommands: [
       "sh scripts/dev-check.sh --platform-examples-test",
       "moon build examples/showcase/linux_skia --target native",
-      "moon build examples/markdown_editor/linux_skia --target native",
     ],
     runtimeEvidenceCommands: [
       "moon run examples/showcase/linux_skia --target native",
-      "moon run examples/markdown_editor/linux_skia --target native",
     ],
     exampleTargets: [
       "examples/showcase/linux_skia",
-      "examples/markdown_editor/linux_skia",
     ],
     windowEvidenceCommand:
       ".local_repos/window/scripts/record_moui_evidence.sh linux --status pending",
@@ -195,7 +186,7 @@ try {
     "windows",
     "ime-complete.log",
     [
-      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=windows-ime app=markdown-editor",
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=windows-ime app=showcase",
       "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
       "MoUI native IME surrounding text passed surrounding-text selection-anchor utf8-offsets grapheme",
       "MoUI native IME composition visual passed composition-range composition-cursor preedit-underline preedit-pixels selection-highlight",
@@ -204,11 +195,10 @@ try {
       "MoUI native IME scroll anchor passed scroll candidate-anchor candidate-window",
       "MoUI native IME scale DPR anchor passed scale dpr candidate-anchor candidate-window",
       "MoUI native IME resize anchor passed resize candidate-anchor candidate-window",
-      "MoUI native IME Markdown Editor passed markdown-editor composition candidate-anchor candidate-window selection-replacement source-mapping",
     ].join("\n"),
   );
   const windowsConsumerCommand =
-    "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\"";
+    "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"";
   expectPass(
     "record complete Windows IME evidence without platform promotion",
     runRecorder([
@@ -234,8 +224,6 @@ try {
       windowsAllLog,
       "--resize-anchor-log",
       windowsAllLog,
-      "--markdown-log",
-      windowsAllLog,
       "--note",
       "matching-host Windows IME helper test",
     ]),
@@ -245,7 +233,6 @@ try {
   if (
     windowsEntry.status !== "pending" ||
     windowsEntry.observations.imeCandidateAnchor !== "yes" ||
-    windowsEntry.observations.imeMarkdownEditor !== "yes" ||
     windowsEntry.observations.windowOpened !== "pending" ||
     windowsEntry.evidenceProvenance?.host !== "Windows MSVC CI" ||
     !windowsEntry.evidenceProvenance.artifacts.includes(windowsAllLog) ||
@@ -260,7 +247,7 @@ try {
     "macos",
     "ime-complete.log",
     [
-      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=macos-marked-text NSTextInputClient app=markdown-editor",
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=macos-marked-text NSTextInputClient app=showcase",
       "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text appkit-setMarkedText appkit-firstRectForCharacterRange",
       "MoUI native IME surrounding text passed surrounding-text selection-anchor utf8-offsets grapheme appkit-setMarkedText appkit-firstRectForCharacterRange",
       "MoUI native IME composition visual passed composition-range composition-cursor preedit-underline preedit-pixels selection-highlight appkit-setMarkedText appkit-firstRectForCharacterRange",
@@ -269,11 +256,10 @@ try {
       "MoUI native IME scroll anchor passed scroll candidate-anchor candidate-window appkit-insertText",
       "MoUI native IME scale DPR anchor passed scale dpr candidate-anchor candidate-window appkit-insertText",
       "MoUI native IME resize anchor passed resize candidate-anchor candidate-window appkit-insertText",
-      "MoUI native IME Markdown Editor passed markdown-editor composition candidate-anchor candidate-window selection-replacement source-mapping appkit-insertText NSTextInputClient",
     ].join("\n"),
   );
   const macosConsumerCommand =
-    "MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/markdown_editor/macos_skia --target native";
+    "MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/showcase/macos_skia --target native";
   expectPass(
     "record complete macOS IME evidence with AppKit markers",
     runRecorder([
@@ -299,8 +285,6 @@ try {
       macosAllLog,
       "--resize-anchor-log",
       macosAllLog,
-      "--markdown-log",
-      macosAllLog,
     ]),
   );
   const macos = JSON.parse(readFileSync(macosPath, "utf8"));
@@ -309,7 +293,6 @@ try {
     macosEntry.status !== "pending" ||
     macosEntry.host !== "macOS Darwin CI" ||
     macosEntry.observations.imeCandidateAnchor !== "yes" ||
-    macosEntry.observations.imeMarkdownEditor !== "yes" ||
     macosEntry.evidenceProvenance?.kind !== "matching-host-artifact" ||
     !macosEntry.evidenceProvenance.artifacts.includes(macosAllLog)
   ) {
@@ -321,7 +304,7 @@ try {
     "macos",
     "weak-ime-candidate-anchor.log",
     [
-      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=macos-marked-text app=markdown-editor",
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=macos-marked-text app=showcase",
       "MoUI native IME candidate anchor passed candidate-anchor candidate-window caret-rect surrounding-text",
     ].join("\n"),
   );
@@ -344,7 +327,7 @@ try {
     "macos",
     "weak-ime-cursor-update.log",
     [
-      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=macos-marked-text NSTextInputClient app=markdown-editor",
+      "MoUI native IME runtime matching-host native-app renderer=skia platform-protocol=macos-marked-text NSTextInputClient app=showcase",
       "MoUI native IME cursor update passed cursor-area cursor-update caret-rect",
     ].join("\n"),
   );
@@ -456,22 +439,7 @@ try {
       "--candidate-anchor-log",
       windowsAllLog,
     ]),
-    "consumer-command must name examples/showcase/windows_skia or examples/markdown_editor/windows_skia",
-  );
-
-  expectFail(
-    "reject markdown log with Showcase consumer command",
-    runRecorder([
-      writeManifest("markdown-log-showcase-consumer.json", "linux"),
-      "linux",
-      "--host",
-      "Linux Wayland CI",
-      "--consumer-command",
-      linuxConsumerCommand,
-      "--markdown-log",
-      linuxCandidateLog,
-    ]),
-    "markdown-log requires --consumer-command to name examples/markdown_editor/linux_skia",
+    "consumer-command must name examples/showcase/windows_skia",
   );
 
   const wrongAppLog = writeArtifact(

@@ -191,7 +191,7 @@ capability contract in `native/capabilities.json` and `native/ownership.json`,
 validated by `scripts/verify-platform-status.sh`/`.ps1` and
 `scripts/verify-native-capability-contract.sh`/`.ps1`. Treat those files as
 dependency evidence for the Skia binding, provider artifact lock, and FFI
-surface coverage, not as MoUI Showcase/Markdown Editor runtime evidence.
+surface coverage, not as MoUI Showcase runtime evidence.
 
 When asked to merge upstream `window` changes, work inside `.local_repos/window`
 on `moui-support`, fetch `upstream`, and merge the upstream branch into the fork
@@ -316,13 +316,13 @@ Web browser evidence may leave it pending because CDP does not prove native
 monitor/current-monitor or cursor behavior. Native passed evidence must also
 set `imeCandidateAnchor`, `imeSurroundingText`, `imeCompositionVisual`,
 `imeCommitDelete`, `imeCursorUpdate`, `imeScrollAnchor`,
-`imeScaleDprAnchor`, `imeResizeAnchor`, and `imeMarkdownEditor` to `yes` from
-matching-host Showcase or Markdown Editor runtime artifacts; host-core unit
+`imeScaleDprAnchor`, and `imeResizeAnchor` to `yes` from
+matching-host Showcase runtime artifacts; host-core unit
 tests, package logs, provider preflights, and coarse `textInput` observations
 are not enough. Native platform entries also carry
 `skiaEvidence`, which separately records Skia provider/preflight commands,
 fallback-unavailable checks, real-renderer smoke, async image second-frame
-smoke, and Showcase/Markdown first-frame status. A native platform entry cannot
+smoke, and Showcase first-frame status. A native platform entry cannot
 be marked `passed` unless
 that native Skia evidence is also `passed`; a passed `skiaEvidence` block is
 still Skia-route evidence, not full platform service/runtime proof by itself.
@@ -332,13 +332,13 @@ image-resource change callback, present-count, and disposal diagnostics. Treat t
 provider/package evidence, not as proof that a matching platform window
 presented a frame.
 The Web runtime handoff validator
-checks static HTML/runtime/wasm delivery for Showcase and Markdown Editor, not
+checks static HTML/runtime/wasm delivery for Showcase, not
 browser WebGPU presentation. Use
 `scripts/record-web-runtime-presentation.mjs` and
 `scripts/validate-web-runtime-presentation-manifest.mjs` to collect passed
 browser-session WebGPU, wasm startup, canvas, resize/input event-bridge,
-Markdown Editor text input, clean target close, console, nonblank screenshots,
-and Showcase transform-scene pixel marker evidence; fold that artifact into
+Showcase text input, clean target close, console, nonblank screenshots, and
+Showcase transform-scene pixel marker evidence; fold that artifact into
 `artifacts/conformance/platform-runtime-evidence.json` with
 `scripts/record-platform-evidence-manifest.mjs ... web
 --web-presentation-manifest ...`. Failed or missing presentation manifests must
@@ -348,8 +348,8 @@ folds record `github-actions` provenance with run URL/run id/workflow/job/runner
 and uploaded artifact paths, while local folds record `matching-host-artifact`
 provenance with the host label and artifact bundle.
 The repository CI job `web-runtime-presentation` is the canonical GitHub
-Actions path for Web browser-session evidence: it builds Showcase and Markdown
-Editor Web wasm-gc targets, starts local HTTP plus Chrome CDP, records and
+Actions path for Web browser-session evidence: it builds the Showcase Web
+wasm-gc target, starts local HTTP plus Chrome CDP, records and
 folds the presentation manifest, validates the Web platform evidence entry, and
 uploads the `moui-web-runtime-presentation` artifact bundle.
 Renderer proof uses a separate schema v1 manifest under
@@ -440,8 +440,9 @@ first-frame check for `examples/markdown_editor/macos_skia`. Pass
 `--run-gpu-smoke` to add the explicit macOS Metal/Ganesh GPU route smoke; that
 temporary build enables `MOUI_SKIA_ENABLE_GPU_METAL`, requires the renderer
 smoke log to include the `MoUI Skia GPU Metal renderer smoke passed` marker,
-sets `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for the Showcase/Markdown
-first-frame runs, and requires those first-frame logs to include
+sets `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for the Showcase first-frame
+run plus the optional Markdown Editor first-frame run when requested, and
+requires those first-frame logs to include
 `surface_route=metal-gpu; surface_gpu=true` provider diagnostics. This proves
 GPU surface rendering/readback through the existing pixel presenter plus app
 first-frame presentation, but not direct platform-window GPU presentation. Pass
@@ -449,7 +450,7 @@ first-frame presentation, but not direct platform-window GPU presentation. Pass
 configuration, and pass `--require-skparagraph` for paragraph/bidi proof runs
 that must fail when the selected Skia headers or libraries do not provide
 SkParagraph, SkShaper, SkUnicode, HarfBuzz, and ICU. With explicit
-`--smoke-log`, `--showcase-log`, and `--markdown-log` paths under
+`--smoke-log` and `--showcase-log` paths under
 `artifacts/platform-evidence/macos/`, pass `--record-platform-evidence
 artifacts/conformance/platform-runtime-evidence.json` to update the macOS
 `skiaEvidence` block after a successful full smoke; the renderer smoke log must
@@ -470,40 +471,36 @@ The GitHub Actions wrapper for this MoUI-level macOS real-Skia smoke lives in
 as a skipped job in the required `MoUI CI` workflow.
 Windows/Linux Skia entrypoints expose matching-host first-frame flags
 (`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
-`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
-`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT`, and
-`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT`) and follow the same
+`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT`) and follow the same
 smoke-only `EmptyTypeface` switch; passed artifacts still belong to the
 matching host that produced them. After a matching host writes provider,
-fallback-unavailable, renderer-smoke, Showcase first-frame, and Markdown Editor
-first-frame logs under `artifacts/platform-evidence/<platform>/`, use
+fallback-unavailable, renderer-smoke, and Showcase first-frame logs under
+`artifacts/platform-evidence/<platform>/`, use
 `node scripts/record-native-skia-evidence.mjs` to validate those markers and
 update only the platform's `skiaEvidence` block. Provider preflight logs must
 name the matching Skia provider package or preflight summary and include a
 passing preflight/test/build marker; generic passing test output is not enough.
 Showcase first-frame logs must include the platform first-frame marker with
-`title=MoUI Showcase`, and Markdown Editor first-frame logs must include the
-same marker with `title=MoUI Markdown Editor`; app-swapped first-frame logs are
-not valid for the opposite observation.
-After a matching host writes native IME Showcase or Markdown Editor logs under
+`title=MoUI Showcase`; app-swapped first-frame logs are not valid.
+After a matching host writes native IME Showcase logs under
 the same artifact root, use `node scripts/record-native-ime-evidence.mjs` to
 validate candidate-anchor, surrounding-text, composition-visual, commit/delete,
-cursor-update, scroll-anchor, scale/DPR-anchor, resize-anchor, and Markdown
-Editor dogfood markers and update only the native IME observations. Supplied
+cursor-update, scroll-anchor, scale/DPR-anchor, and resize-anchor markers and
+update only the native IME observations. Supplied
 logs must also identify matching-host runtime, native app, `renderer=skia`, the
-matching app marker (`app=showcase` or `app=markdown-editor`), and platform protocol
+matching app marker (`app=showcase`), and platform protocol
 markers such as `platform-protocol=macos-marked-text`,
 `platform-protocol=windows-ime`, or `platform-protocol=wayland-text-input`.
-On macOS, collect the first-party Markdown Editor runtime log with
-`MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/markdown_editor/macos_skia --target native`
-and store it as `artifacts/platform-evidence/macos/ime-markdown-runtime.log`;
+On macOS, collect the first-party Showcase runtime log with
+`MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/showcase/macos_skia --target native`
+and store it as `artifacts/platform-evidence/macos/ime-showcase-runtime.log`;
 that single log may be supplied to each macOS native IME recorder option because
 the opt-in run prints every required native IME observation marker before
 exiting. The macOS recorder also requires the log to prove the AppKit
 `NSTextInputClient` route: candidate/surrounding/composition observations must
 include `appkit-setMarkedText` and `appkit-firstRectForCharacterRange`, while
 post-commit observations, including commit/delete, cursor, scroll, scale/DPR,
-resize, and Markdown Editor dogfood markers, must include `appkit-insertText`.
+and resize markers, must include `appkit-insertText`.
 The `renderer=skia`, app, and platform-protocol markers are exact
 whitespace-delimited tokens; suffixed labels such as `renderer=skia-preview` or
 `app=showcase-debug` are not runtime IME evidence. The
@@ -515,7 +512,7 @@ For macOS platform promotion, use
 IME observation to `yes`. The macOS helper validates the local window fork
 runtime smoke transcript through `--window-smoke-log` for
 window/open/resize/redraw/input/monitor/cursor/shutdown source observations
-and validates a Showcase or Markdown Editor `macos_skia` first-frame source log
+and validates a Showcase `macos_skia` first-frame source log
 through `--app-runtime-log`; it then delegates to the generic platform
 manifest recorder. Collect the window-fork transcript with
 `WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=... bash scripts/check_moui_macos_smoke.sh --run`
@@ -525,7 +522,7 @@ for monitor/current-monitor evidence. Renderer-proof IME markers, provider
 preflights, and the window fork smoke alone are not macOS platform-passed evidence.
 For local matching-host collection, prefer
 `scripts/record-macos-local-runtime-evidence.sh` after macOS Skia evidence has
-already passed; it runs the AppKit window smoke, runs the Markdown Editor IME
+already passed; it runs the AppKit window smoke, runs the Showcase IME
 producer, folds native IME observations, promotes the macOS platform entry with
 `matching-host-artifact` provenance, and validates the macOS entry without
 changing Windows, Linux, or global Skia claims.
