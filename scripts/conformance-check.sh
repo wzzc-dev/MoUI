@@ -205,7 +205,7 @@ write_platform_evidence_manifest() {
   "schemaVersion": 2,
   "mode": "platform-runtime-evidence",
   "generatedBy": "scripts/conformance-check.sh --platform-services",
-  "windowEvidenceSource": ".local_repos/window/scripts/record_moui_evidence.sh",
+  "windowEvidenceSource": "wzzc-dev/window@0.5.1-fork.3",
   "platforms": [
     {
       "name": "web",
@@ -223,7 +223,7 @@ write_platform_evidence_manifest() {
       "exampleTargets": [
         "examples/showcase/web_wasm"
       ],
-      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh web --status pending",
+      "windowEvidenceCommand": "wzzc-dev/window@0.5.1-fork.3 package evidence web --status pending",
       "consumerCommand": "pending",
       "observations": {
         "windowOpened": "pending",
@@ -268,7 +268,7 @@ write_platform_evidence_manifest() {
       "exampleTargets": [
         "examples/showcase/macos_skia"
       ],
-      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
+      "windowEvidenceCommand": "wzzc-dev/window@0.5.1-fork.3 package evidence macos --status pending",
       "consumerCommand": "pending",
       "observations": {
         "windowOpened": "pending",
@@ -338,7 +338,7 @@ write_platform_evidence_manifest() {
       "exampleTargets": [
         "examples/showcase/windows_skia"
       ],
-      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh windows --status pending",
+      "windowEvidenceCommand": "wzzc-dev/window@0.5.1-fork.3 package evidence windows --status pending",
       "consumerCommand": "pending",
       "observations": {
         "windowOpened": "pending",
@@ -408,7 +408,7 @@ write_platform_evidence_manifest() {
       "exampleTargets": [
         "examples/showcase/linux_skia"
       ],
-      "windowEvidenceCommand": ".local_repos/window/scripts/record_moui_evidence.sh linux --status pending",
+      "windowEvidenceCommand": "wzzc-dev/window@0.5.1-fork.3 package evidence linux --status pending",
       "consumerCommand": "pending",
       "observations": {
         "windowOpened": "pending",
@@ -508,11 +508,13 @@ fi
 if "$RUN_PLATFORM_SERVICES"; then
   run moon test moui/backend/host --target native
   run moon test moui/backend/web --target wasm-gc
-  if [ -f ".local_repos/window/linux/generated/xdg-decoration-protocol.c" ] &&
-    [ -f ".local_repos/window/linux/generated/xdg-shell-protocol.c" ]; then
+  window_zip="${MOUI_WINDOW_PACKAGE_ZIP:-$HOME/.moon/registry/cache/wzzc-dev/window/0.5.1-fork.3.zip}"
+  if [ -f "$window_zip" ] &&
+    unzip -l "$window_zip" linux/generated/xdg-decoration-protocol.c >/dev/null &&
+    unzip -l "$window_zip" linux/generated/xdg-shell-protocol.c >/dev/null; then
     run moon test moui/backend/linux --target native
   else
-    printf '\nSkipping backend/linux platform-service tests because .local_repos/window/linux/generated Wayland protocol sources are missing.\n'
+    printf '\nSkipping backend/linux platform-service tests because wzzc-dev/window@0.5.1-fork.3 package Wayland generated sources are missing from the local registry cache.\n'
   fi
   if [ "$(uname -s)" = "Darwin" ]; then
     run moon test moui/backend/macos --target native

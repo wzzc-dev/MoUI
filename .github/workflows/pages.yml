@@ -15,7 +15,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  MOUI_WINDOW_REMOTE: https://github.com/wzzc-dev/window.git
   MOUI_SKIA_MBT_REMOTE: https://github.com/wzzc-dev/skia_mbt.git
 
 jobs:
@@ -35,9 +34,6 @@ jobs:
           sudo apt-get install -y \
             libwayland-dev libwayland-bin wayland-protocols pkg-config unzip \
             libfontconfig1-dev libfreetype-dev libharfbuzz-dev fonts-noto-color-emoji
-
-      - name: Restore local dependencies
-        run: sh scripts/setup-local-deps.sh
 
       - name: Install dependencies
         run: |
