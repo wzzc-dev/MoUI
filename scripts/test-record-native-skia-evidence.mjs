@@ -37,15 +37,12 @@ const platformEntries = {
       "sh scripts/dev-check.sh --platform-examples-test",
       "moon test moui/backend/macos/skia --target native",
       "moon build examples/showcase/macos_skia --target native",
-      "moon build examples/markdown_editor/macos_skia --target native",
     ],
     runtimeEvidenceCommands: [
       "moon run examples/showcase/macos_skia --target native",
-      "moon run examples/markdown_editor/macos_skia --target native",
     ],
     exampleTargets: [
       "examples/showcase/macos_skia",
-      "examples/markdown_editor/macos_skia",
     ],
     windowEvidenceCommand:
       ".local_repos/window/scripts/record_moui_evidence.sh macos --status pending",
@@ -61,16 +58,13 @@ const platformEntries = {
     routineCommands: [
       "moon test moui/backend/windows --target native",
       "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/showcase/windows_skia -BuildOnly",
-      "powershell -ExecutionPolicy Bypass -File scripts/windows/build_windows_msvc.ps1 -Package examples/markdown_editor/windows_skia -BuildOnly",
       "powershell -ExecutionPolicy Bypass -File scripts/windows/package_windows_app_msvc.ps1 -Package examples/showcase/windows_skia",
     ],
     runtimeEvidenceCommands: [
       "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"",
-      "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }\"",
     ],
     exampleTargets: [
       "examples/showcase/windows_skia",
-      "examples/markdown_editor/windows_skia",
     ],
     windowEvidenceCommand:
       ".local_repos/window/scripts/record_moui_evidence.sh windows --status pending",
@@ -86,15 +80,12 @@ const platformEntries = {
     routineCommands: [
       "sh scripts/dev-check.sh --platform-examples-test",
       "moon build examples/showcase/linux_skia --target native",
-      "moon build examples/markdown_editor/linux_skia --target native",
     ],
     runtimeEvidenceCommands: [
       "moon run examples/showcase/linux_skia --target native",
-      "moon run examples/markdown_editor/linux_skia --target native",
     ],
     exampleTargets: [
       "examples/showcase/linux_skia",
-      "examples/markdown_editor/linux_skia",
     ],
     windowEvidenceCommand:
       ".local_repos/window/scripts/record_moui_evidence.sh linux --status pending",
@@ -176,8 +167,7 @@ try {
   if (
     partialLinuxEntry.status !== "pending" ||
     partialLinuxEntry.skiaEvidence.status !== "pending" ||
-    partialLinuxEntry.skiaEvidence.observations.showcaseFirstFrame !== "yes" ||
-    partialLinuxEntry.skiaEvidence.observations.markdownFirstFrame !== "pending"
+    partialLinuxEntry.skiaEvidence.observations.showcaseFirstFrame !== "yes"
   ) {
     console.error("record partial Linux Skia evidence: manifest boundary changed incorrectly");
     process.exit(1);
@@ -194,11 +184,6 @@ try {
     "showcase-skia-gpu-first-frame.log",
     "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true; gpu_context=available; dimensions=1280x720\nmacOS renderer presented first frame; exiting by request; title=MoUI Showcase\n",
   );
-  const macosGpuMarkdownLog = writeArtifact(
-    "macos",
-    "markdown-skia-gpu-first-frame.log",
-    "macOS Skia renderer route diagnostics: surface_route=metal-gpu; surface_gpu=true; gpu_context=available; dimensions=980x640\nmacOS renderer presented first frame; exiting by request; title=MoUI Markdown Editor\n",
-  );
   expectPass(
     "record partial macOS Skia GPU route evidence",
     runRecorder([
@@ -210,8 +195,6 @@ try {
       macosGpuLog,
       "--gpu-showcase-log",
       macosGpuShowcaseLog,
-      "--gpu-markdown-log",
-      macosGpuMarkdownLog,
     ]),
   );
   const macosGpu = JSON.parse(readFileSync(macosGpuPath, "utf8"));
@@ -220,7 +203,6 @@ try {
     macosGpuEntry.skiaEvidence.status !== "pending" ||
     !macosGpuEntry.skiaEvidence.artifacts.includes(macosGpuLog) ||
     !macosGpuEntry.skiaEvidence.artifacts.includes(macosGpuShowcaseLog) ||
-    !macosGpuEntry.skiaEvidence.artifacts.includes(macosGpuMarkdownLog) ||
     !macosGpuEntry.skiaEvidence.notes.some(note => note.includes("Metal GPU route smoke"))
   ) {
     console.error("record partial macOS Skia GPU route evidence: manifest was not updated correctly");
@@ -286,11 +268,6 @@ try {
     "showcase-skia-first-frame.log",
     "Windows renderer presented first frame; exiting by request; title=MoUI Showcase\n",
   );
-  const markdownLog = writeArtifact(
-    "windows",
-    "markdown-skia-first-frame.log",
-    "Windows renderer presented first frame; exiting by request; title=MoUI Markdown Editor\n",
-  );
   expectPass(
     "record passed Windows Skia evidence",
     runRecorder([
@@ -308,8 +285,6 @@ try {
       rendererLog,
       "--showcase-log",
       showcaseLog,
-      "--markdown-log",
-      markdownLog,
       "--note",
       "matching-host Windows Skia helper test",
     ]),
@@ -354,10 +329,10 @@ try {
   const wrongAppShowcaseLog = writeArtifact(
     "windows",
     "wrong-app-showcase-skia-first-frame.log",
-    "Windows renderer presented first frame; exiting by request; title=MoUI Markdown Editor\n",
+    "Windows renderer presented first frame; exiting by request; title=MoUI PDF Workbench\n",
   );
   expectFail(
-    "reject Showcase first-frame log with Markdown title",
+    "reject Showcase first-frame log with another app title",
     runRecorder([
       wrongAppPath,
       "windows",

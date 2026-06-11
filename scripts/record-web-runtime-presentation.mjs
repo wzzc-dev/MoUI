@@ -68,12 +68,6 @@ const targets = [
     path: "examples/showcase/web_wasm/index.html",
     query: "debug=1&section=advanced-rendering",
   },
-  {
-    name: "markdown-editor-web-wasm",
-    packagePath: "examples/markdown_editor/web_wasm",
-    path: "examples/markdown_editor/web_wasm/index.html",
-    query: "debug=1",
-  },
 ];
 
 const normalizeBaseUrl = url => url.replace(/\/+$/, "");
@@ -729,9 +723,6 @@ const canvasRectForInput = async session => {
 };
 
 const textInputPoint = target => {
-  if (target.name === "markdown-editor-web-wasm") {
-    return { x: 560, y: 300 };
-  }
   return { x: 120, y: 164 };
 };
 
@@ -880,6 +871,7 @@ const rendererProofEventsReady = events => {
     paragraphLines.has(1) &&
     paragraphLines.has(2) &&
     paragraphLines.has(3) &&
+    hasEvent(events, ["ime_commit"]) &&
     hasEvent(events, ["image_placeholder_frame"]) &&
     hasEvent(events, ["image_load"]) &&
     hasEvent(events, ["image_resource_change"]) &&
@@ -893,9 +885,6 @@ const presentationEvidenceReady = (target, state, events) => {
   if (state.bodyFailed || state.statusText !== "Running") return false;
   if (targetRequiresRendererProofPixels(target)) {
     return rendererProofEventsReady(events);
-  }
-  if (target.name === "markdown-editor-web-wasm") {
-    return hasEvent(events, ["ime_commit"]);
   }
   return maxPresentFrame(events) >= 1;
 };
@@ -1155,6 +1144,7 @@ const deriveTargetStatus = (target, observations) => {
   ];
   if (target.name === "showcase-web-wasm") {
     required.push(
+      "textInput",
       "radialGradient",
       "transformPixels",
       "colorEmojiPixels",
@@ -1167,9 +1157,6 @@ const deriveTargetStatus = (target, observations) => {
       "imeCompositionVisual",
       "asyncImageSecondFrame",
     );
-  }
-  if (target.name === "markdown-editor-web-wasm") {
-    required.push("textInput");
   }
   return required.every(key => observations[key] === "yes") ? "passed" : "failed";
 };
@@ -1447,12 +1434,6 @@ const probeTarget = async target => {
 const allTargetsObserved = (targets, key) =>
   targets.length > 0 && targets.every(target => target?.observations?.[key] === "yes");
 
-const markdownTextInputObserved = targets =>
-  targets.some(target =>
-    target?.name === "markdown-editor-web-wasm" &&
-    target?.observations?.textInput === "yes"
-  );
-
 const derivePlatformObservations = targetResults => ({
   windowOpened: allTargetsObserved(targetResults, "pageLoaded") ? "yes" : "no",
   resizeRedraw:
@@ -1490,7 +1471,7 @@ const derivePlatformObservations = targetResults => ({
     allTargetsObserved(targetResults, "keyboardInput")
       ? "yes"
       : "no",
-  textInput: markdownTextInputObserved(targetResults) ? "yes" : "no",
+  textInput: allTargetsObserved(targetResults, "textInput") ? "yes" : "no",
   rendererHandle:
     allTargetsObserved(targetResults, "deviceRequested") &&
     allTargetsObserved(targetResults, "wasmStarted") &&

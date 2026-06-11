@@ -90,54 +90,50 @@ fn platform_spec(name : String) -> PlatformSpec? {
     "web" =>
       Some({
         example_targets: [
-          "examples/showcase/web_wasm", "examples/markdown_editor/web_wasm",
+          "examples/showcase/web_wasm",
         ],
         routine_tokens: [
           "moon test moui/backend/web --target wasm-gc", "moon build examples/showcase/web_wasm --target wasm-gc",
-          "moon build examples/markdown_editor/web_wasm --target wasm-gc",
         ],
         runtime_tokens: [
-          "record-web-runtime-presentation.mjs", "examples/showcase/web_wasm", "examples/markdown_editor/web_wasm",
-          "--web-presentation-manifest",
+          "record-web-runtime-presentation.mjs", "examples/showcase/web_wasm", "--web-presentation-manifest",
         ],
       })
     "macos" =>
       Some({
         example_targets: [
-          "examples/showcase/macos_skia", "examples/markdown_editor/macos_skia",
+          "examples/showcase/macos_skia",
         ],
         routine_tokens: [
           "sh scripts/dev-check.sh --platform-examples-test", "moon build examples/showcase/macos_skia --target native",
-          "moon build examples/markdown_editor/macos_skia --target native",
         ],
         runtime_tokens: [
-          "moon run examples/showcase/macos_skia --target native", "moon run examples/markdown_editor/macos_skia --target native",
+          "moon run examples/showcase/macos_skia --target native",
         ],
       })
     "windows" =>
       Some({
         example_targets: [
-          "examples/showcase/windows_skia", "examples/markdown_editor/windows_skia",
+          "examples/showcase/windows_skia",
         ],
         routine_tokens: [
           "moon test moui/backend/windows --target native", "build_windows_msvc.ps1",
-          "package_windows_app_msvc.ps1", "examples/showcase/windows_skia", "examples/markdown_editor/windows_skia",
+          "package_windows_app_msvc.ps1", "examples/showcase/windows_skia",
         ],
         runtime_tokens: [
-          "moon run examples/showcase/windows_skia --target native", "moon run examples/markdown_editor/windows_skia --target native",
+          "moon run examples/showcase/windows_skia --target native",
         ],
       })
     "linux" =>
       Some({
         example_targets: [
-          "examples/showcase/linux_skia", "examples/markdown_editor/linux_skia",
+          "examples/showcase/linux_skia",
         ],
         routine_tokens: [
           "sh scripts/dev-check.sh --platform-examples-test", "moon build examples/showcase/linux_skia --target native",
-          "moon build examples/markdown_editor/linux_skia --target native",
         ],
         runtime_tokens: [
-          "moon run examples/showcase/linux_skia --target native", "moon run examples/markdown_editor/linux_skia --target native",
+          "moon run examples/showcase/linux_skia --target native",
         ],
       })
     _ => None
@@ -153,29 +149,27 @@ fn native_skia_spec(name : String) -> NativeSkiaSpec? {
           "moon test moui/render/skia --target native", "moon test moui/backend/macos/skia --target native",
         ],
         runtime_tokens: [
-          "scripts/macos-skia-renderer-smoke.sh", "--run-showcase-smoke", "--run-markdown-smoke",
+          "scripts/macos-skia-renderer-smoke.sh", "--run-showcase-smoke",
         ],
       })
     "windows" =>
       Some({
         provider_tokens: [
           "moon test moui/render/skia --target native", "moon test moui/backend/windows/skia --target native",
-          "build_windows_msvc.ps1", "examples/showcase/windows_skia", "examples/markdown_editor/windows_skia",
+          "build_windows_msvc.ps1", "examples/showcase/windows_skia",
         ],
         runtime_tokens: [
-          "MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT", "MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT",
-          "examples/showcase/windows_skia", "examples/markdown_editor/windows_skia",
+          "MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT", "examples/showcase/windows_skia",
         ],
       })
     "linux" =>
       Some({
         provider_tokens: [
           "moon test moui/render/skia --target native", "moon test moui/backend/linux/skia --target native",
-          "examples/showcase/linux_skia", "examples/markdown_editor/linux_skia",
+          "examples/showcase/linux_skia",
         ],
         runtime_tokens: [
-          "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT", "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
-          "examples/showcase/linux_skia", "examples/markdown_editor/linux_skia",
+          "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT", "examples/showcase/linux_skia",
         ],
       })
     _ => None
@@ -187,7 +181,6 @@ fn native_ime_observation_keys() -> Array[String] {
   [
     "imeCandidateAnchor", "imeSurroundingText", "imeCompositionVisual", "imeCommitDelete",
     "imeCursorUpdate", "imeScrollAnchor", "imeScaleDprAnchor", "imeResizeAnchor",
-    "imeMarkdownEditor",
   ]
 }
 
@@ -198,7 +191,7 @@ fn observation_keys() -> Array[String] {
     "redraw", "resizeScale", "consumerInput", "textInput", "rendererHandle", "monitorCursor",
     "cleanShutdown", "imeCandidateAnchor", "imeSurroundingText", "imeCompositionVisual",
     "imeCommitDelete", "imeCursorUpdate", "imeScrollAnchor", "imeScaleDprAnchor",
-    "imeResizeAnchor", "imeMarkdownEditor",
+    "imeResizeAnchor",
   ]
 }
 
@@ -208,7 +201,7 @@ fn consumer_observation_keys() -> Array[String] {
     "surface", "redraw", "resizeScale", "consumerInput", "textInput", "rendererHandle",
     "monitorCursor", "cleanShutdown", "imeCandidateAnchor", "imeSurroundingText",
     "imeCompositionVisual", "imeCommitDelete", "imeCursorUpdate", "imeScrollAnchor",
-    "imeScaleDprAnchor", "imeResizeAnchor", "imeMarkdownEditor",
+    "imeScaleDprAnchor", "imeResizeAnchor",
   ]
 }
 
@@ -216,7 +209,7 @@ fn consumer_observation_keys() -> Array[String] {
 fn skia_observation_keys() -> Array[String] {
   [
     "providerPreflight", "fallbackUnavailable", "realRendererSmoke", "asyncImageSecondFrame",
-    "showcaseFirstFrame", "markdownFirstFrame",
+    "showcaseFirstFrame",
   ]
 }
 

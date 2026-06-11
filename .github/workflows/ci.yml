@@ -559,11 +559,9 @@ jobs:
             --enable-skparagraph \
             --require-skparagraph \
             --run-showcase-smoke \
-            --run-markdown-smoke \
             --run-text-emoji-smoke \
             --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
             --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log \
-            --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
             --text-emoji-log artifacts/platform-evidence/macos/skia-text-emoji-smoke.log \
             --record-platform-evidence artifacts/conformance/platform-runtime-evidence.json
 
@@ -578,8 +576,7 @@ jobs:
             --renderer-smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
             --async-image-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
             --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log \
-            --markdown-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
-            --note "macOS CI folded provider, fallback-unavailable, renderer, async-image, Showcase, and Markdown Editor Skia route artifacts before platform promotion."
+            --note "macOS CI folded provider, fallback-unavailable, renderer, async-image, and Showcase Skia route artifacts before platform promotion."
 
       - name: Validate macOS renderer proof
         run: |
@@ -599,35 +596,32 @@ jobs:
         run: |
           MOUI_PDFIUM_DISABLE_PREBUILD_PDFIUM=1 \
             MOUI_MACOS_NATIVE_IME_EVIDENCE=1 \
-            moon run examples/markdown_editor/macos_skia --target native \
-            > artifacts/platform-evidence/macos/ime-markdown-runtime.log 2>&1
-          grep -Fq "MoUI native IME Markdown Editor passed" \
-            artifacts/platform-evidence/macos/ime-markdown-runtime.log
+            moon run examples/showcase/macos_skia --target native \
+            > artifacts/platform-evidence/macos/ime-showcase-runtime.log 2>&1
           node scripts/record-native-ime-evidence.mjs \
             artifacts/conformance/platform-runtime-evidence.json \
             macos \
             --host "macOS Darwin GitHub Actions" \
-            --consumer-command "moon run examples/markdown_editor/macos_skia --target native" \
-            --candidate-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
-            --surrounding-text-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
-            --composition-visual-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
-            --commit-delete-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
-            --cursor-update-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
-            --scroll-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
-            --scale-dpr-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
-            --resize-anchor-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
-            --markdown-log artifacts/platform-evidence/macos/ime-markdown-runtime.log \
-            --note "macOS CI folded matching-host Markdown Editor IME runtime artifacts before platform promotion."
+            --consumer-command "moon run examples/showcase/macos_skia --target native" \
+            --candidate-anchor-log artifacts/platform-evidence/macos/ime-showcase-runtime.log \
+            --surrounding-text-log artifacts/platform-evidence/macos/ime-showcase-runtime.log \
+            --composition-visual-log artifacts/platform-evidence/macos/ime-showcase-runtime.log \
+            --commit-delete-log artifacts/platform-evidence/macos/ime-showcase-runtime.log \
+            --cursor-update-log artifacts/platform-evidence/macos/ime-showcase-runtime.log \
+            --scroll-anchor-log artifacts/platform-evidence/macos/ime-showcase-runtime.log \
+            --scale-dpr-anchor-log artifacts/platform-evidence/macos/ime-showcase-runtime.log \
+            --resize-anchor-log artifacts/platform-evidence/macos/ime-showcase-runtime.log \
+            --note "macOS CI folded matching-host Showcase IME runtime artifacts before platform promotion."
           node scripts/record-macos-platform-runtime-evidence.mjs \
             artifacts/conformance/platform-runtime-evidence.json \
             --host "macOS Darwin GitHub Actions" \
-            --consumer-command "moon run examples/markdown_editor/macos_skia --target native" \
+            --consumer-command "moon run examples/showcase/macos_skia --target native" \
             --window-smoke-log artifacts/platform-evidence/macos/window-macos-runtime-smoke.log \
-            --app-runtime-log artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
+            --app-runtime-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log \
             --provenance-kind github-actions \
             --provenance-artifact artifacts/platform-evidence/macos/window-macos-runtime-smoke.log \
-            --provenance-artifact artifacts/platform-evidence/macos/markdown-macos-skia-first-frame.log \
-            --provenance-artifact artifacts/platform-evidence/macos/ime-markdown-runtime.log \
+            --provenance-artifact artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log \
+            --provenance-artifact artifacts/platform-evidence/macos/ime-showcase-runtime.log \
             --provenance-artifact artifacts/platform-evidence/macos/skia-renderer-smoke.log \
             --provenance-artifact artifacts/platform-evidence/macos/skia-text-emoji-smoke.log \
             --provenance-note "macOS platform runtime evidence came from the macOS platform runtime evidence job"
