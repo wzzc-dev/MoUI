@@ -42,3 +42,11 @@ test "daily quality gate tokens include moonbit-backed api surface guard" {
     tokens.contains("moon build examples/design_systems/web_wasm --target wasm-gc"),
   )
 }
+
+///|
+test "release readiness quality tokens summarize current daily gates" {
+  let tokens = release_readiness_quality_tokens()
+  assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
+  assert_true(tokens.contains("dedicated checked-artifact validators"))
+  assert_true(tokens.contains("examples/design_systems/web_wasm"))
+}

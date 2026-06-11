@@ -200,6 +200,27 @@ fn push_daily_quality_gate_checks(
 }
 
 ///|
+fn release_readiness_quality_tokens() -> Array[String] {
+  [
+    "node scripts/validate-api-surface.mjs",
+    "checked conformance artifact guard",
+    "dedicated checked-artifact validators",
+    "examples/design_systems/app",
+    "examples/design_systems/web_wasm",
+  ]
+}
+
+///|
+fn push_release_readiness_quality_checks(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  for token in release_readiness_quality_tokens() {
+    push_include_check(repo_root, "docs/release-readiness.md", token, failures)
+  }
+}
+
+///|
 fn push_file_exists_check(
   repo_root : String,
   path : String,
@@ -299,6 +320,7 @@ fn validate_guidance_consistency(repo_root : String) -> Array[String] {
   let failures : Array[String] = []
   push_moon_work_member_checks(repo_root, failures)
   push_daily_quality_gate_checks(repo_root, failures)
+  push_release_readiness_quality_checks(repo_root, failures)
   for rule in guidance_include_rules() {
     push_include_check(repo_root, rule.path, rule.token, failures)
   }
