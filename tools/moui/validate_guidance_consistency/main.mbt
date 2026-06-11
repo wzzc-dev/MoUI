@@ -221,6 +221,26 @@ fn push_release_readiness_quality_checks(
 }
 
 ///|
+fn agent_quality_gate_tokens() -> Array[String] {
+  [
+    "node scripts/validate-api-surface.mjs",
+    "node scripts/validate-checked-conformance-artifacts.mjs",
+    "moon build examples/design_systems/web_wasm --target wasm-gc",
+    "dedicated checked-artifact validators",
+  ]
+}
+
+///|
+fn push_agent_quality_gate_checks(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  for token in agent_quality_gate_tokens() {
+    push_include_check(repo_root, "AGENTS.md", token, failures)
+  }
+}
+
+///|
 fn push_file_exists_check(
   repo_root : String,
   path : String,
@@ -321,6 +341,7 @@ fn validate_guidance_consistency(repo_root : String) -> Array[String] {
   push_moon_work_member_checks(repo_root, failures)
   push_daily_quality_gate_checks(repo_root, failures)
   push_release_readiness_quality_checks(repo_root, failures)
+  push_agent_quality_gate_checks(repo_root, failures)
   for rule in guidance_include_rules() {
     push_include_check(repo_root, rule.path, rule.token, failures)
   }
