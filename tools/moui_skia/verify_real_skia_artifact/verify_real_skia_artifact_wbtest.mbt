@@ -137,6 +137,35 @@ test "accepts valid release artifact logs" {
 }
 
 ///|
+test "accepts Windows-style acceptance log references" {
+  let texts = sample_texts()
+  let acceptance_text = sample_acceptance_text()
+    .replace(
+      old="/artifact/linux-real-skia-smoke-preflight.log",
+      new="D:\\a\\MoUI\\MoUI\\moui_skia\\logs\\linux-real-skia-smoke-preflight.log",
+    )
+    .replace(
+      old="/artifact/linux-real-skia-smoke.log",
+      new="D:\\a\\MoUI\\MoUI\\moui_skia\\logs\\linux-real-skia-smoke.log",
+    )
+    .replace(
+      old="/artifact/linux-native-smoke-output.log",
+      new="D:\\a\\MoUI\\MoUI\\moui_skia\\logs\\linux-native-smoke-output.log",
+    )
+    .replace(
+      old="/artifact/linux-real-skia-acceptance.log",
+      new="D:\\a\\MoUI\\MoUI\\moui_skia\\logs\\linux-real-skia-acceptance.log",
+    )
+  match verify_artifact_texts("linux", true, sample_paths(), {
+    ..texts,
+    acceptance_text,
+  }) {
+    Ok(_) => ()
+    Err(message) => fail(message)
+  }
+}
+
+///|
 test "rejects dry-run wrapper logs" {
   let texts = sample_texts()
   let result = verify_artifact_texts("linux", true, sample_paths(), {
