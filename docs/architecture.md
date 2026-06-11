@@ -6,8 +6,25 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 
 - Platform-neutral `core` runtime, view specs, Taffy-backed layout placement,
   hit testing, and draw commands.
-- Public root package aliases the most common core/style types for `@wzzc-dev/moui` consumers.
-- `style` is the MoonBit package boundary for visual tokens and style type aliases during the gradual split from `core`.
+- Public root package aliases common core view/runtime/theme types for
+  `@wzzc-dev/moui` consumers and exposes neutral default/light/dark/custom
+  theme builders directly over `@core.Theme`.
+- `moui_theme/common` is a repo-local addon workspace member for shared
+  source-mapped design-system
+  manifests, source-usage audits for golden mappings, official-token/source-lock
+  coverage, source-lock quality reports, source-package inventories,
+  source-imported token records with pinned file shas and raw source
+  expressions plus official-anchor coverage, manifest/golden integrity gaps, runtime token
+  alignment reports for resolved source values, adaptation-difference reports,
+  token taxonomy reports, semantic palette role reports, typography role reports, token-group resolver reports, component-token matrices, density resolver reports, variant resolver reports, customization capability reports,
+  semantic/component token models, density and variant adapters, and custom theme builders over the
+  platform-neutral `@core.Theme` token surface. It may import
+  `wzzc-dev/moui/core`, but `moui/core`, `moui/views`, and the root
+  `wzzc-dev/moui` package do not depend on `moui_theme`. Concrete Material,
+  Carbon, Primer, and Fluent names stay in this addon through the
+  `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and
+  `moui_theme/fluent` package entrypoints; `core` remains a neutral token
+  runtime.
 - Spec-first views in `views`, including `text`, `button`, `text_field`, `surface`, row/column layout, and spacer primitives.
 - Unified host boundaries in `backend/host`, with shared window-event mapping and platform hosts normalizing events into `HostEvent`.
 - Native mainline rendering through provider packages over `render/skia`, with experimental native WGPU diagnostics retained under `render/wgpu`.
@@ -18,8 +35,9 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 ```text
 moui/                         root public facade workspace member
 moui/core/                    one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
-moui/style/                   visual token and control style compatibility package
 moui/views/                   public view constructors
+moui_theme/common/            addon common source-mapped design-system model, aggregate design-system reports, token taxonomy reports, semantic palette role reports, typography role reports, golden mappings, source usage audits, source-lock quality reports, source-package inventories, source-imported token records, coverage gaps, integrity reports, runtime token alignment, official-token/source-lock coverage, token-group resolver reports, density resolver reports, variant resolver reports, customization capability reports, component-token matrices, adaptation reports, semantic/component tokens, coverage manifests, and custom Theme builders
+moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints over common tokens, manifests, reports, component matrices, and light/dark/high-contrast/system Theme helpers
 moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
 moui/backend/windows/         Windows native host core
 moui/backend/windows/skia/    Windows Skia renderer provider mainline
@@ -46,7 +64,9 @@ moui/tests/skia_renderer_smoke/native/ opt-in real-Skia renderer pixel smoke
 examples/counter/app/         smallest shared app shape
 examples/counter/{web_wasm,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
 examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
-examples/showcase/app/        shared visual showcase app with Counter/Todo patterns
+examples/showcase/app/        shared MoUI framework showcase app with Counter/Todo patterns, no moui_theme dependency
+examples/design_systems/app/  dedicated source-mapped design-system preview/parity example using moui_theme
+examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/ Design Systems host entrypoints
 examples/showcase/macos_skia/ macOS showcase selecting native Skia raster
 examples/showcase/macos_wgpu/      macOS native WGPU diagnostic showcase
 examples/showcase/macos_wgpu_cosmic/ macOS showcase selecting Moon Cosmic text

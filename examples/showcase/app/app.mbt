@@ -5,7 +5,7 @@ pub struct ShowcaseApp {
 
 ///|
 pub(all) struct ShowcaseModel {
-  dark : Bool
+  scheme : @core.ColorScheme
   active : Bool
   dialog_visible : Bool
   sheet_visible : Bool
@@ -126,7 +126,7 @@ pub fn ShowcaseApp::new() -> ShowcaseApp {
 ///|
 pub fn ShowcaseModel::new() -> ShowcaseModel {
   {
-    dark: false,
+    scheme: @core.ColorScheme::Light,
     active: false,
     dialog_visible: false,
     sheet_visible: false,
@@ -210,7 +210,7 @@ pub fn ShowcaseModel::update(
   message : ShowcaseMsg,
 ) -> ShowcaseModel {
   match message {
-    ToggleScheme => { ..self, dark: !self.dark }
+    ToggleScheme => { ..self, scheme: toggle_color_scheme(self.scheme) }
     ToggleActive => { ..self, active: !self.active }
     ShowDialog => { ..self, dialog_visible: true }
     HideDialog => { ..self, dialog_visible: false }
@@ -451,7 +451,10 @@ pub fn ShowcaseModel::view(
   self : ShowcaseModel,
   env : @core.ViewEnvironment,
 ) -> @core.View[ShowcaseMsg] {
-  let theme = if self.dark { @views.dark_theme() } else { @views.light_theme() }
+  let theme = match self.scheme {
+    @core.ColorScheme::Light => @core.Theme::light()
+    @core.ColorScheme::Dark => @core.Theme::dark()
+  }
   let metrics = showcase_metrics(env.viewport_size(), theme)
   let offset = if self.active { 18.0 } else { 0.0 }
   let opacity = if self.active { 1.0 } else { 0.68 }
@@ -481,6 +484,14 @@ pub fn ShowcaseModel::view(
     dialog=Some(self.dialog(theme)),
     presented=self.dialog_visible,
   )
+}
+
+///|
+fn toggle_color_scheme(scheme : @core.ColorScheme) -> @core.ColorScheme {
+  match scheme {
+    @core.ColorScheme::Light => @core.ColorScheme::Dark
+    @core.ColorScheme::Dark => @core.ColorScheme::Light
+  }
 }
 
 ///|

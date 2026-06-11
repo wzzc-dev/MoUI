@@ -18,8 +18,7 @@ pub fn[Msg] radio_group(
         item.label,
         item.id == selected,
         on_change=_value => on_select(item.id),
-        foreground=theme.palette.foreground,
-        check_color=theme.palette.primary,
+        theme~,
       ).semantics_selected(selected=item.id == selected),
     )
   }
@@ -44,8 +43,7 @@ pub fn[Msg] checkbox_group(
         item.label,
         checked~,
         on_change=value => on_change(item.id, value),
-        foreground=theme.palette.foreground,
-        check_color=theme.palette.primary,
+        theme~,
       ).semantics_checked(checked~),
     )
   }

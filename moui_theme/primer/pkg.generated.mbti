@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_theme/primer"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_theme/common",
+}
+
+// Values
+pub fn component_token_matrix() -> Array[@common.DesignComponentTokenMatrixRecord]
+
+pub fn dark_theme(density? : @common.DesignDensity) -> @core.Theme
+
+pub fn high_contrast_theme(system_scheme? : @core.ColorScheme, density? : @common.DesignDensity) -> @core.Theme
+
+pub fn light_theme(density? : @common.DesignDensity) -> @core.Theme
+
+pub fn manifest() -> @common.DesignSystemManifest
+
+pub fn preset() -> @common.DesignPreset
+
+pub fn report(scheme? : @core.ColorScheme, system_scheme? : @core.ColorScheme, density? : @common.DesignDensity) -> @common.DesignSystemReport
+
+pub fn system_theme(system_scheme? : @core.ColorScheme, density? : @common.DesignDensity) -> @core.Theme
+
+pub fn theme(scheme? : @core.ColorScheme, density? : @common.DesignDensity) -> @core.Theme
+
+pub fn tokens(scheme? : @core.ColorScheme, density? : @common.DesignDensity) -> @common.DesignSystemTokens
+
+pub fn tokens_for_variant(variant? : @common.DesignSchemeVariant, system_scheme? : @core.ColorScheme, density? : @common.DesignDensity) -> @common.DesignSystemTokens
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

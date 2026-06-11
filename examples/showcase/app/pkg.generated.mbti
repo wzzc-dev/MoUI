@@ -20,7 +20,7 @@ pub fn ShowcaseApp::runtime(Self, width? : Double, height? : Double) -> @core.Ap
 pub fn ShowcaseApp::runtime_with_host_summary(Self, @host.HostCapabilitySummary, width? : Double, height? : Double) -> @core.AppRuntime
 
 pub(all) struct ShowcaseModel {
-  dark : Bool
+  scheme : @core.ColorScheme
   active : Bool
   dialog_visible : Bool
   sheet_visible : Bool

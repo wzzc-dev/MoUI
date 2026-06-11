@@ -21,27 +21,27 @@ pub fn[Msg] avatar(String, image? : String?, theme? : @core.Theme, size? : Doubl
 
 pub fn[Msg] avatar_group(Array[String], theme? : @core.Theme, size? : Double, max_visible? : Int) -> @core.View[Msg]
 
-pub fn[Msg] badge(String, tone? : BadgeTone, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] badge(String, tone? : BadgeTone, theme? : @core.Theme, style? : @core.BadgeStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] baseline_form_rows(Array[BaselineFormRow[Msg]], width? : Double, label_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, style? : @core.ButtonStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] button_group(Array[MenuItem[Msg]], selected? : String, theme? : @core.Theme, button_width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] callout(String, String, tone? : FeedbackTone, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] callout(String, String, tone? : FeedbackTone, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] card(@core.View[Msg], width? : Double, height? : Double, padding? : Double, theme? : @core.Theme) -> @core.View[Msg]
 
 pub fn[Msg] center(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, theme? : @core.Theme) -> @core.View[Msg]
 
-pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] checkbox_binding(String, checked~ : @core.Binding[Bool], font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] checkbox_binding(String, checked~ : @core.Binding[Bool], theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] checkbox_group(Array[ChoiceItem], selected~ : Array[String], on_change~ : (String, Bool) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
@@ -81,9 +81,9 @@ pub fn[Msg] data_filter(id~ : String, label~ : String, selected~ : Bool, message
 
 pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[DataFilter[Msg]], result_count? : Int, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : @core.PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
-pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : @core.PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
 pub fn description_item(String, String) -> DescriptionItem
 
@@ -103,11 +103,11 @@ pub fn[Msg] dropdown(String, Array[MenuItem[Msg]], state~ : DropdownState, on_to
 
 pub fn[Msg] empty() -> @core.View[Msg]
 
-pub fn[Msg] empty_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] empty_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn environment(theme? : @core.Theme) -> @core.Environment
 
-pub fn[Msg] error_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] error_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] expanded(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
@@ -125,7 +125,7 @@ pub fn[Msg] form(Array[@core.View[Msg]], spacing? : Double, theme? : @core.Theme
 
 pub fn[Msg] form_actions(primary~ : StateViewAction[Msg], secondary? : StateViewAction[Msg]?, status? : String, primary_enabled? : Bool, secondary_enabled? : Bool, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] form_error(String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] form_error(String, theme? : @core.Theme, style? : @core.FormValidationStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] form_field(label~ : String, child~ : @core.View[Msg], helper? : String, error? : String, status? : FormFieldStatus, layout? : FormFieldLayout, validation_display? : FormValidationDisplay, required? : Bool, disabled? : Bool, read_only? : Bool, theme? : @core.Theme, width? : Double, label_width? : Double) -> @core.View[Msg]
 
@@ -135,9 +135,9 @@ pub fn[Msg] form_helper_text(String, theme? : @core.Theme, width? : Double) -> @
 
 pub fn[Msg] form_section(title? : String, Array[@core.View[Msg]], summary? : String, spacing? : Double, theme? : @core.Theme, width? : Double, padding? : Double) -> @core.View[Msg]
 
-pub fn[Msg] form_validation_summary(summary~ : @core.FormValidationSummary, title? : String, valid_message? : String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] form_validation_summary(summary~ : @core.FormValidationSummary, title? : String, valid_message? : String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FormValidationStyle, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] form_workflow_bar(summary~ : @core.FormValidationSummary, primary~ : StateViewAction[Msg], secondary? : StateViewAction[Msg]?, focus_scope? : @core.FocusScope?, focus_invalid? : StateViewAction[Msg]?, valid_message? : String, invalid_title? : String, status? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] form_workflow_bar(summary~ : @core.FormValidationSummary, primary~ : StateViewAction[Msg], secondary? : StateViewAction[Msg]?, focus_scope? : @core.FocusScope?, focus_invalid? : StateViewAction[Msg]?, valid_message? : String, invalid_title? : String, status? : String, theme? : @core.Theme, style? : @core.FormValidationStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] frame(@core.View[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.View[Msg]
 
@@ -145,7 +145,7 @@ pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, 
 
 pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.View[Msg]
 
-pub fn[Msg] inline_error(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] inline_error(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, badge_style? : @core.BadgeStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] input_group(child~ : @core.View[Msg], prefix? : @core.View[Msg]?, suffix? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double) -> @core.View[Msg]
 
@@ -163,7 +163,7 @@ pub fn light_theme() -> @core.Theme
 
 pub fn[Msg] list(Array[@core.View[Msg]], spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] loading_state(title? : String, message? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] loading_state(title? : String, message? : String, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] markdown_editor(String, (String) -> @core.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
@@ -199,21 +199,21 @@ pub fn[Msg] pagination(page~ : Int, page_count~ : Int, on_previous~ : Msg, on_ne
 
 pub fn[Msg] password_field(String, on_input~ : (String) -> Msg, revealed~ : Bool, on_toggle_reveal~ : Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] picker(Array[@core.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, max_height? : Double) -> @core.View[Msg]
+pub fn[Msg] picker(Array[@core.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, style? : @core.PickerStyle, max_height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] picker_binding(Array[@core.PickerItem], selected~ : @core.Binding[String], placeholder? : String, theme? : @core.Theme, max_height? : Double) -> @core.View[Msg]
+pub fn[Msg] picker_binding(Array[@core.PickerItem], selected~ : @core.Binding[String], placeholder? : String, theme? : @core.Theme, style? : @core.PickerStyle, max_height? : Double) -> @core.View[Msg]
 
 pub fn picker_item(String, String) -> @core.PickerItem
 
 pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expanded~ : Bool, placement? : PopoverPlacement, theme? : @core.Theme, width? : Double, height? : Double, trap_focus? : Bool) -> @core.View[Msg]
 
-pub fn[Msg] progress(Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] progress(Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @core.ProgressStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] progress_status(String, value~ : Double, message? : String, status? : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] progress_status(String, value~ : Double, message? : String, status? : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, badge_style? : @core.BadgeStyle, progress_style? : @core.ProgressStyle, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] radio(String, Bool, on_change~ : (Bool) -> Msg, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] radio(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] radio_binding(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] radio_binding(String, @core.Binding[Bool], theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] radio_group(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
@@ -259,11 +259,11 @@ pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardS
 
 pub fn[Msg] sidebar(String, Array[SidebarItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
+pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @core.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
 
-pub fn[Msg] slider_binding(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] slider_binding(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @core.SliderStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] snackbar(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] snackbar(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] spacer(min_length? : Double, weight? : Double) -> @core.View[Msg]
 
@@ -271,9 +271,9 @@ pub fn[Msg] split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], pr
 
 pub fn[Msg] stack(Array[@core.View[Msg]]) -> @core.View[Msg]
 
-pub fn[Msg] stat_card(String, String, caption? : String, tone? : FeedbackTone, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] stat_card(String, String, caption? : String, tone? : FeedbackTone, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] status_badge(String, tone? : BadgeTone, detail? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] status_badge(String, tone? : BadgeTone, detail? : String, theme? : @core.Theme, style? : @core.BadgeStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] status_bar(Array[String], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -295,23 +295,23 @@ pub fn[Msg] tag(String, theme? : @core.Theme, width? : Double, height? : Double)
 
 pub fn[Msg] text(String, role? : TextRole, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : @core.TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] text_field_binding(@core.Binding[String], on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] text_field_binding(@core.Binding[String], on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : @core.TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn theme(font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale) -> @core.Theme
+pub fn theme(base? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, semantic_colors? : @core.SemanticColorScale, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
 
-pub fn[Msg] toast(String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] toast(String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] toast_stack(Array[ToastStackItem[Msg]], theme? : @core.Theme, width? : Double, spacing? : Double) -> @core.View[Msg]
+pub fn[Msg] toast_stack(Array[ToastStackItem[Msg]], theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double, spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] toggle(String, Bool, on_change~ : (Bool) -> Msg, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] toggle(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] toggle_binding(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] toggle_binding(String, @core.Binding[Bool], theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] toggle_switch(String, Bool, on_change~ : (Bool) -> Msg, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] toggle_switch(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] toggle_switch_binding(String, @core.Binding[Bool], foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] toggle_switch_binding(String, @core.Binding[Bool], theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] toolbar(Array[@core.View[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
