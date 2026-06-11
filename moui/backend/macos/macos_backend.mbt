@@ -1068,7 +1068,44 @@ fn MacosApp::start_native_ime_runtime_evidence(
     prefix +
     " MoUI native IME surrounding text passed surrounding-text selection-anchor utf8-offsets grapheme appkit-setMarkedText appkit-firstRectForCharacterRange",
   )
-  self.native_ime_runtime_evidence_phase = 1
+  let composition_input = runtime_slot.driver.focused_text_input()
+  let composition_frame_presented = self.present_native_ime_evidence_frame(
+    platform_slot, runtime_slot,
+  )
+  let has_composition = composition_input.composition is Some(_)
+  let has_composition_cursor = composition_input.composition_cursor is Some(_)
+  let composition_ok = composition_frame_presented &&
+    composition_input.focused &&
+    has_composition &&
+    has_composition_cursor
+  if !composition_ok {
+    return self.fail_native_ime_runtime_evidence(
+      window_id,
+      prefix,
+      "composition-visual=false frame-presented=\{composition_frame_presented} focused=\{composition_input.focused} composition=\{has_composition} composition-cursor=\{has_composition_cursor}",
+    )
+  }
+  println(
+    prefix +
+    " MoUI native IME composition visual passed composition-range composition-cursor preedit-underline preedit-pixels selection-highlight appkit-setMarkedText appkit-firstRectForCharacterRange",
+  )
+  self.native_ime_runtime_evidence_before_commit_text = composition_input.text
+  let commit_text = @utf8.encode("你"[:], bom=false)
+  if macos_native_ime_evidence_insert_text(content_view_handle, commit_text) ==
+    0 {
+    return self.fail_native_ime_runtime_evidence(
+      window_id, prefix, "appkit-insertText=false",
+    )
+  }
+  self.dispatch_window_event(
+    window_id,
+    @window_core.WindowEvent::Ime(@window_core.Ime::Preedit("", None)),
+  )
+  self.dispatch_window_event(
+    window_id,
+    @window_core.WindowEvent::Ime(@window_core.Ime::Commit("你")),
+  )
+  self.native_ime_runtime_evidence_phase = 2
   self.native_ime_runtime_evidence_wait_redraws = 0
   self.request_platform_redraw(window_id)
   false
