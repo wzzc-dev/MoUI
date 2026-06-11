@@ -60,8 +60,17 @@ function Assert-CommandFailsWith {
   )
 
   try {
-    & $Command
-    throw "command unexpectedly succeeded"
+    $global:LASTEXITCODE = 0
+    $output = & $Command 2>&1
+    $exitCode = $LASTEXITCODE
+    $output | ForEach-Object { Write-Host $_ }
+    if ($exitCode -eq 0) {
+      throw "command unexpectedly succeeded"
+    }
+    $message = ($output -join [Environment]::NewLine)
+    if ($message -notlike "*$ExpectedMessage*") {
+      throw "command failed with exit code $exitCode but did not include expected message: $ExpectedMessage"
+    }
   } catch {
     if ($_.Exception.Message -notlike "*$ExpectedMessage*") {
       throw
