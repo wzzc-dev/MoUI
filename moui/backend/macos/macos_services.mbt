@@ -1,0 +1,259 @@
+///|
+extern "C" fn macos_clipboard_has_text() -> Int = "moui_macos_clipboard_has_text"
+
+///|
+extern "C" fn macos_clipboard_read_text_bytes() -> Bytes = "moui_macos_clipboard_read_text"
+
+///|
+#borrow(text)
+extern "C" fn macos_clipboard_write_text_bytes(text : Bytes) -> Int = "moui_macos_clipboard_write_text"
+
+///|
+#borrow(url)
+extern "C" fn macos_open_url_bytes(url : Bytes) -> Int = "moui_macos_open_url"
+
+///|
+extern "C" fn macos_system_theme_is_dark() -> Int = "moui_macos_system_theme_is_dark"
+
+///|
+#borrow(title, filters, default_name)
+extern "C" fn macos_file_dialog_bytes(
+  kind : Int,
+  title : Bytes,
+  filters : Bytes,
+  default_name : Bytes,
+) -> Bytes = "moui_macos_file_dialog"
+
+///|
+#borrow(commands)
+extern "C" fn macos_show_menu_bytes(commands : Bytes) -> Int = "moui_macos_show_menu"
+
+///|
+
+///|
+pub fn backend_info() -> MacosBackendInfo {
+  {
+    host_info: @host.HostAppInfo::new(
+      backend=@host.HostBackendKind::Native,
+      description="macOS AppKit window host with renderer providers",
+    ),
+    renderer_ready: true,
+    accessibility: macos_accessibility_bridge_info(),
+    description: "macOS backend uses wzzc-dev/window/macos for AppKit events and delegates concrete rendering to platform renderer provider packages.",
+  }
+}
+
+///|
+pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
+  {
+    kind: @host.NativeAccessibilityBridgeKind::AppKit,
+    contract_ready: true,
+    native_binding_ready: false,
+    action_roundtrip_ready: true,
+    description: "macOS exposes an AppKit accessibility bridge contract over the shared semantics tree; real NSAccessibility object binding is still a backend follow-up.",
+  }
+}
+
+///|
+pub fn macos_accessibility_bridge(
+  root~ : @core.SemanticsNode,
+  dispatch~ : (@core.ElementId, @core.SemanticsAction, String?) -> Bool,
+) -> @host.NativeAccessibilityBridge {
+  @host.NativeAccessibilityBridge::semantics_action_bridge(
+    kind=@host.NativeAccessibilityBridgeKind::AppKit,
+    root~,
+    dispatch~,
+  )
+}
+
+///|
+pub fn macos_input_capabilities() -> @host.HostInputCapabilities {
+  @host.HostInputCapabilities::new(
+    pointer=true,
+    scroll=true,
+    keyboard=true,
+    focus=true,
+    text_input=true,
+    ime=true,
+    clipboard=true,
+    drag_drop=true,
+  )
+}
+
+///|
+pub fn macos_capability_summary(
+  services? : @host.HostServiceCapabilities = macos_service_bridge().capabilities,
+) -> @host.HostCapabilitySummary {
+  @host.HostCapabilitySummary::from_contracts(
+    info=backend_info().host_info,
+    services~,
+    input=macos_input_capabilities(),
+    label="macOS host",
+    window_lifecycle=true,
+    multi_window=true,
+    text_input_ready=true,
+    ime_ready=true,
+    drag_drop_ready=true,
+    async_services=false,
+    native_accessibility_ready=backend_info().accessibility.native_binding_ready,
+    web_view=macos_webview_capabilities(),
+    description="AppKit host with clipboard, file dialog, URL, system theme, native context menu, text input, and file-drop contracts.",
+  )
+}
+
+///|
+pub fn macos_system_theme() -> @core.ColorScheme {
+  if macos_system_theme_is_dark() != 0 {
+    @core.ColorScheme::Dark
+  } else {
+    @core.ColorScheme::Light
+  }
+}
+
+///|
+pub fn macos_service_bridge(
+  system_theme? : @core.ColorScheme = macos_system_theme(),
+  clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse = dispatch_macos_clipboard,
+  open_url? : (String) -> Bool = dispatch_macos_open_url,
+  file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_macos_file_dialog,
+  text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_macos_text_file,
+  binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_macos_binary_file,
+  menu? : (Array[@core.ActionCommand]) -> Int = dispatch_macos_menu,
+) -> @host.HostServiceBridge {
+  @host.HostServiceBridge::new(
+    capabilities=@host.HostServiceCapabilities::new(
+      clipboard=true,
+      file_dialogs=true,
+      file_access=true,
+      menus=true,
+      open_url=true,
+      system_theme=true,
+    ),
+    handle=request => {
+      match request {
+        @host.HostServiceRequest::Clipboard(clipboard_request) =>
+          clipboard(clipboard_request)
+        @host.HostServiceRequest::OpenUrl(url) =>
+          if open_url(url) {
+            @host.HostServiceResponse::UrlOpened
+          } else {
+            @host.HostServiceResponse::Unavailable("open URL failed")
+          }
+        @host.HostServiceRequest::FileDialog(options) =>
+          @host.HostServiceResponse::FileDialogSelection(file_dialog(options))
+        @host.HostServiceRequest::TextFile(text_file_request) =>
+          text_file(text_file_request)
+        @host.HostServiceRequest::BinaryFile(binary_file_request) =>
+          binary_file(binary_file_request)
+        @host.HostServiceRequest::ShowMenu(commands) =>
+          menu_command_response(commands, menu(commands))
+        @host.HostServiceRequest::QuerySystemTheme =>
+          @host.HostServiceResponse::SystemTheme(system_theme)
+      }
+    },
+  )
+}
+
+///|
+fn dispatch_macos_text_file(
+  request : @host.HostTextFileRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    @host.HostTextFileRequest::ReadText(path) =>
+      if @fs.path_exists(path) {
+        let bytes = @fs.read_file_to_bytes(path) catch {
+          _ => return @host.HostServiceResponse::Unavailable("file read failed")
+        }
+        @host.HostServiceResponse::TextFileContent(
+          path,
+          @utf8.decode_lossy(bytes[:], ignore_bom=true),
+        )
+      } else {
+        @host.HostServiceResponse::Unavailable("file does not exist")
+      }
+    @host.HostTextFileRequest::WriteText(path, text) => {
+      let bytes = @utf8.encode(text[:], bom=false)
+      @fs.write_bytes_to_file(path, bytes) catch {
+        _ => return @host.HostServiceResponse::Unavailable("file write failed")
+      }
+      @host.HostServiceResponse::TextFileWritten(path)
+    }
+  }
+}
+
+///|
+fn dispatch_macos_binary_file(
+  request : @host.HostBinaryFileRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    @host.HostBinaryFileRequest::ReadBytes(path) =>
+      if @fs.path_exists(path) {
+        let bytes = @fs.read_file_to_bytes(path) catch {
+          _ => return @host.HostServiceResponse::Unavailable("file read failed")
+        }
+        @host.HostServiceResponse::BinaryFileContent(path, bytes)
+      } else {
+        @host.HostServiceResponse::Unavailable("file does not exist")
+      }
+    @host.HostBinaryFileRequest::WriteBytes(path, bytes) => {
+      @fs.write_bytes_to_file(path, bytes) catch {
+        _ => return @host.HostServiceResponse::Unavailable("file write failed")
+      }
+      @host.HostServiceResponse::BinaryFileWritten(path)
+    }
+  }
+}
+
+///|
+fn dispatch_macos_menu(commands : Array[@core.ActionCommand]) -> Int {
+  macos_show_menu_bytes(encode_menu_commands(commands))
+}
+
+///|
+fn dispatch_macos_file_dialog(
+  options : @host.HostFileDialogOptions,
+) -> Array[String] {
+  decode_file_dialog_selection(
+    macos_file_dialog_bytes(
+      host_file_dialog_kind_code(options.kind),
+      encode_host_string(options.title),
+      encode_host_filter_list(options.filters),
+      encode_host_string(options.default_name.unwrap_or("")),
+    ),
+  )
+}
+
+///|
+fn dispatch_macos_open_url(url : String) -> Bool {
+  let bytes = @utf8.encode(url[:], bom=false)
+  macos_open_url_bytes(bytes) != 0
+}
+
+///|
+fn dispatch_macos_clipboard(
+  request : @host.HostClipboardRequest,
+) -> @host.HostServiceResponse {
+  match request {
+    @host.HostClipboardRequest::ReadText =>
+      if macos_clipboard_has_text() != 0 {
+        @host.HostServiceResponse::ClipboardText(
+          @utf8.decode_lossy(
+            macos_clipboard_read_text_bytes()[:],
+            ignore_bom=false,
+          ),
+        )
+      } else {
+        @host.HostServiceResponse::Unavailable(
+          "clipboard does not contain text",
+        )
+      }
+    @host.HostClipboardRequest::WriteText(text) => {
+      let bytes = @utf8.encode(text[:], bom=false)
+      if macos_clipboard_write_text_bytes(bytes) != 0 {
+        @host.HostServiceResponse::ClipboardWritten
+      } else {
+        @host.HostServiceResponse::Unavailable("clipboard write failed")
+      }
+    }
+  }
+}
