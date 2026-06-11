@@ -76,19 +76,26 @@ surface.
 
 ## Quick Start
 
-Set up the local `wzzc-dev/window` and `wzzc-dev/moui_skia` checkouts, then run
-the bounded development check:
+Refresh registry packages, verify the repo-local `moui_skia` workspace, then
+run the bounded development check:
 
 ```sh
-sh scripts/setup-local-deps.sh
+moon update
 sh scripts/check-local-deps.sh
 sh scripts/dev-check.sh
 ```
 
-The local dependency check verifies the `window` fork's MoUI smoke/evidence
-surface and the `moui_skia` binding workspace's platform status and native
-capability contracts via `moui_skia/scripts/verify-platform-status.sh`
-and `moui_skia/scripts/verify-native-capability-contract.sh`. Those
+MoUI resolves `wzzc-dev/window` from the MoonBit registry as
+`wzzc-dev/window@0.5.1-fork.3`; `moon.work` does not include a local window
+checkout. The dependency check verifies that package version, the absence of a
+repo-local window workspace member, and the `moui_skia` binding workspace's
+platform status and native capability contracts via
+`moui_skia/scripts/verify-platform-status.sh` and
+`moui_skia/scripts/verify-native-capability-contract.sh`. The MoonBit package
+ecosystem is still maturing, so unexplained build or smoke failures may come
+from registry cache state or dependency package regressions; include
+`moon update` and package-version inspection in the first pass of debugging.
+Those
 Skia guards prove the provider lock, fallback parity, FFI ownership/borrow
 metadata, native smoke marker coverage, and binding-level evidence wiring are
 present; renderer pixels and platform runtime behavior still come from the
@@ -112,9 +119,10 @@ runtime and native IME observation set to `yes` plus
 recorded the macOS platform runtime evidence with `github-actions` provenance
 and uploaded the matching artifact bundle. Windows and Linux remain pending
 until their matching hosts record equivalent platform-runtime artifacts. Native
-passed entries include the window fork's monitor/cursor probe as
-`monitorCursor=yes`; Web browser-session evidence may leave that field pending
-because CDP does not prove native monitor/current-monitor or cursor behavior. A
+passed entries include the `wzzc-dev/window@0.5.1-fork.3` package smoke
+monitor/cursor probe as `monitorCursor=yes`; Web browser-session evidence may
+leave that field pending because CDP does not prove native
+monitor/current-monitor or cursor behavior. A
 passed entry must carry provenance from either a non-skipped successful GitHub
 Actions job/run, including run URL, workflow, job, runner, and uploaded
 artifacts, or a local matching-host artifact bundle. For Web, the fold derives
@@ -313,7 +321,7 @@ under `.tools\vcpkg-msvc` and installs `zlib:x64-windows` there.
 
 ## Linux Native
 
-Linux native examples use the local fork-owned `window/linux` Wayland backend.
+Linux native examples use the `wzzc-dev/window@0.5.1-fork.3` Wayland backend.
 The recommended mainline entrypoints select native Skia raster and present CPU
 pixel frames through Wayland `wl_shm`. Run them on a Linux host with a Wayland
 compositor and configured real Skia link flags:

@@ -897,7 +897,7 @@ through `run.cmd`.
 
 ## Linux Native
 
-Linux examples use the local fork-owned `window/linux` Wayland host core. The
+Linux examples use the `wzzc-dev/window@0.5.1-fork.3` Wayland host core. The
 recommended native entrypoints use `backend/linux/skia` and present Skia CPU
 pixel frames through the Wayland `wl_shm` path. Run them on a configured Linux
 host with a Wayland compositor and real Skia link flags:
@@ -910,7 +910,7 @@ moon run examples/markdown_editor/linux_skia --target native
 Set `MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` or
 `MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` before the Skia
 `moon run` command to collect matching-host first-frame logs on Wayland. Keep
-those logs separate from the `.local_repos/window` dependency smoke evidence.
+those logs separate from the window package dependency smoke evidence.
 
 For build-only validation, use:
 

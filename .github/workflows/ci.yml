@@ -18,9 +18,6 @@ on:
         default: false
         type: boolean
 
-env:
-  MOUI_WINDOW_REMOTE: https://github.com/wzzc-dev/window.git
-
 jobs:
   conformance:
     name: Core conformance
@@ -32,15 +29,12 @@ jobs:
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
-      - name: Restore local window dependency
-        run: sh scripts/setup-local-deps.sh
-
       - name: Install dependencies
         run: |
           moon version --all
           moon update
 
-      - name: Check local dependency wiring
+      - name: Check dependency wiring
         run: sh scripts/check-local-deps.sh
 
       - name: Run daily development and guidance checks
@@ -61,9 +55,6 @@ jobs:
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
-
-      - name: Restore local dependencies
-        run: sh scripts/setup-local-deps.sh
 
       - name: Install dependencies
         run: |
@@ -93,9 +84,6 @@ jobs:
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
-      - name: Restore local dependencies
-        run: sh scripts/setup-local-deps.sh
-
       - name: Install dependencies
         run: |
           moon version --all
@@ -117,9 +105,6 @@ jobs:
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
-
-      - name: Restore local dependencies
-        run: sh scripts/setup-local-deps.sh
 
       - name: Install dependencies
         run: |
@@ -158,9 +143,6 @@ jobs:
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
-      - name: Restore local dependencies
-        run: sh scripts/setup-local-deps.sh
-
       - name: Install dependencies
         run: |
           moon version --all
@@ -182,10 +164,6 @@ jobs:
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
-
-      - name: Restore local dependencies
-        shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1 -SkipRoot -SkipSubmodules
 
       - name: Install dependencies
         shell: pwsh
@@ -275,15 +253,6 @@ jobs:
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
-      - name: Restore local dependencies
-        if: ${{ matrix.platform != 'windows' }}
-        run: sh scripts/setup-local-deps.sh
-
-      - name: Restore local dependencies (Windows)
-        if: ${{ matrix.platform == 'windows' }}
-        shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1 -SkipRoot -SkipSubmodules
-
       - name: Set up WGPU native release (Windows)
         if: ${{ matrix.platform == 'windows' }}
         shell: pwsh
@@ -353,15 +322,6 @@ jobs:
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
-
-      - name: Restore local dependencies
-        if: ${{ matrix.platform != 'windows' }}
-        run: sh scripts/setup-local-deps.sh
-
-      - name: Restore local dependencies (Windows)
-        if: ${{ matrix.platform == 'windows' }}
-        shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1 -SkipRoot -SkipSubmodules
 
       - name: Install dependencies
         run: |
@@ -477,9 +437,6 @@ jobs:
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
-      - name: Restore local dependencies
-        run: sh scripts/setup-local-deps.sh
-
       - name: Install dependencies
         run: |
           moon version --all
@@ -514,9 +471,6 @@ jobs:
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
 
-      - name: Restore local dependencies
-        run: sh scripts/setup-local-deps.sh
-
       - name: Install dependencies
         run: |
           command -v rg >/dev/null 2>&1 || brew install ripgrep
@@ -543,11 +497,8 @@ jobs:
           } > artifacts/platform-evidence/macos/skia-fallback-unavailable.log 2>&1
           grep -Fq "macOS Skia renderer selected, but moui_skia/native is unavailable" \
             artifacts/platform-evidence/macos/skia-fallback-unavailable.log
-          (
-            cd .local_repos/window
-            WINDOW_MOUI_MACOS_SMOKE_LOG_PATH="$GITHUB_WORKSPACE/artifacts/platform-evidence/macos/window-macos-runtime-smoke.log" \
-              bash scripts/check_moui_macos_smoke.sh --run
-          )
+          WINDOW_MOUI_MACOS_SMOKE_LOG_PATH="$GITHUB_WORKSPACE/artifacts/platform-evidence/macos/window-macos-runtime-smoke.log" \
+            bash scripts/run-window-package-smoke.sh macos --run
           grep -Fq "MoUI macOS runtime smoke passed" \
             artifacts/platform-evidence/macos/window-macos-runtime-smoke.log
           grep -Fq "primary=true current=true" \
@@ -656,9 +607,6 @@ jobs:
 
       - name: Set up MoonBit
         uses: ./.github/actions/setup-moonbit
-
-      - name: Restore local dependencies
-        run: sh scripts/setup-local-deps.sh
 
       - name: Install dependencies
         run: |

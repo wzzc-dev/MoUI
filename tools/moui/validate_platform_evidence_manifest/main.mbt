@@ -859,12 +859,11 @@ fn validate_platform_entry(
     label + ".windowEvidenceCommand",
     failures,
   )
-  if !window_evidence_command.contains(
-      ".local_repos/window/scripts/record_moui_evidence.sh " + name,
-    ) {
+  if !window_evidence_command.contains("wzzc-dev/window@0.5.1-fork.3") ||
+    !window_evidence_command.contains(name) {
     failures.push(
       label +
-      ".windowEvidenceCommand must use the window fork recorder for " +
+      ".windowEvidenceCommand must name wzzc-dev/window@0.5.1-fork.3 package evidence for " +
       name,
     )
   }
@@ -975,10 +974,9 @@ fn validate_manifest_fields(
   let window_evidence_source = require_string(
     manifest, "windowEvidenceSource", "windowEvidenceSource", failures,
   )
-  if window_evidence_source !=
-    ".local_repos/window/scripts/record_moui_evidence.sh" {
+  if window_evidence_source != "wzzc-dev/window@0.5.1-fork.3" {
     failures.push(
-      "windowEvidenceSource must point at .local_repos/window/scripts/record_moui_evidence.sh",
+      "windowEvidenceSource must be wzzc-dev/window@0.5.1-fork.3",
     )
   }
   let entries = require_array(manifest, "platforms", "platforms", failures)

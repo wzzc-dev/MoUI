@@ -44,18 +44,6 @@ jobs:
       - name: Show MoonBit version
         run: moon version --all
 
-      - name: Restore local dependencies on Unix
-        if: runner.os != 'Windows'
-        working-directory: .
-        shell: bash
-        run: sh scripts/setup-local-deps.sh
-
-      - name: Restore local dependencies on Windows
-        if: runner.os == 'Windows'
-        working-directory: .
-        shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File .\scripts\windows\update_repositories.ps1 -SkipRoot -SkipSubmodules
-
       - name: Update MoonBit registry
         run: moon update
 
