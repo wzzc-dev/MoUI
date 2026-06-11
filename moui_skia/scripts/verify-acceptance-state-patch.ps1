@@ -7,6 +7,52 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$workspaceRoot = Split-Path -Parent $repoRoot
+$toolPackage = "tools/moui_skia/verify_acceptance_state_patch"
+$toolDir = Join-Path $workspaceRoot $toolPackage
+
+if (!(Test-Path -LiteralPath $toolDir -PathType Container)) {
+  $splitRepoToolDir = Join-Path $repoRoot $toolPackage
+  if (Test-Path -LiteralPath $splitRepoToolDir -PathType Container) {
+    $workspaceRoot = $repoRoot
+    $toolDir = $splitRepoToolDir
+  }
+}
+
+if (!(Test-Path -LiteralPath $toolDir -PathType Container)) {
+  throw "MoonBit acceptance state patch tool is missing: $toolDir"
+}
+
+$toolExe = Join-Path $workspaceRoot "_build/native/debug/build/wzzc-dev/moui_tools/moui_skia/verify_acceptance_state_patch/verify_acceptance_state_patch.exe"
+
+Push-Location $workspaceRoot
+try {
+  moon build $toolPackage --target native
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+} finally {
+  Pop-Location
+}
+
+function Invoke-AcceptanceStatePatchTool {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string[]] $ToolArgs
+  )
+
+  $exitCode = 0
+  Push-Location $workspaceRoot
+  try {
+    & $toolExe @ToolArgs
+    $exitCode = $LASTEXITCODE
+  } finally {
+    Pop-Location
+  }
+  if ($exitCode -ne 0) {
+    exit $exitCode
+  }
+}
 
 function Resolve-RepoPath {
   param(
@@ -35,41 +81,12 @@ $resolvedPatchFile = Resolve-RepoPath $PatchFile
 $resolvedStatusFile = Resolve-RepoPath $StatusFile
 $resolvedRevisionFile = Resolve-RepoPath $RevisionFile
 
-if (!(Test-Path -LiteralPath $resolvedPatchFile -PathType Leaf)) {
-  throw "acceptance state patch is missing: $resolvedPatchFile"
-}
-if (!(Test-Path -LiteralPath $resolvedStatusFile -PathType Leaf)) {
-  throw "Skia platform status file is missing: $resolvedStatusFile"
-}
-if (!(Test-Path -LiteralPath $resolvedRevisionFile -PathType Leaf)) {
-  throw "Skia revision file is missing: $resolvedRevisionFile"
-}
-if ((Get-Item -LiteralPath $resolvedPatchFile).Length -eq 0) {
-  throw "acceptance state patch is empty: $resolvedPatchFile"
-}
-
-$allowedFiles = @("skia-revision.txt", "skia-platform-status.json")
-$diffFiles = New-Object System.Collections.Generic.HashSet[string]
-foreach ($line in Get-Content -LiteralPath $resolvedPatchFile) {
-  if ($line -match '^diff --git a/(.+) b/(.+)$') {
-    $oldPath = $Matches[1]
-    $newPath = $Matches[2]
-    if ($oldPath -ne $newPath) {
-      throw "acceptance state patch must not rename files: $oldPath -> $newPath"
-    }
-    if ($allowedFiles -notcontains $oldPath) {
-      throw "acceptance state patch touches unexpected file: $oldPath"
-    }
-    [void] $diffFiles.Add($oldPath)
-  }
-}
-
-if ($diffFiles.Count -eq 0) {
-  throw "acceptance state patch does not contain git file diffs: $resolvedPatchFile"
-}
-if (!$diffFiles.Contains("skia-platform-status.json")) {
-  throw "acceptance state patch must update skia-platform-status.json"
-}
+Invoke-AcceptanceStatePatchTool -ToolArgs @(
+  "--repo-root", $repoRoot,
+  "--patch-file", $PatchFile,
+  "--status-file", $StatusFile,
+  "--revision-file", $RevisionFile
+)
 
 $tempRoot = [System.IO.Path]::GetTempPath()
 $tempDir = Join-Path $tempRoot ("skia-acceptance-state-" + [Guid]::NewGuid().ToString("N"))
@@ -96,13 +113,11 @@ try {
     -StatusFile $patchedStatusFile `
     -RevisionFile $patchedRevisionFile
 
-  $status = Get-Content -LiteralPath $patchedStatusFile -Raw | ConvertFrom-Json
-  if (!$status.platforms.linux.accepted) {
-    throw "acceptance state patch does not mark Linux accepted"
-  }
-  if ($status.platforms.linux.accepted_commit -notmatch '^[0-9a-fA-F]{40}$') {
-    throw "acceptance state patch does not record a Linux accepted_commit"
-  }
+  Invoke-AcceptanceStatePatchTool -ToolArgs @(
+    "--repo-root", $repoRoot,
+    "--skip-input-state",
+    "--patched-status-file", $patchedStatusFile
+  )
 } finally {
   $resolvedTempDir = Resolve-Path -LiteralPath $tempDir -ErrorAction SilentlyContinue
   if ($resolvedTempDir) {

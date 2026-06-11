@@ -2,137 +2,54 @@ param(
   [string] $StatusFile = "skia-platform-status.json",
   [string] $SmokeSource = "scripts/native_smoke",
   [string] $UnixLogVerifier = "scripts/verify-native-smoke-log.sh",
-  [string] $PowershellLogVerifier = "scripts/verify-native-smoke-log.ps1"
+  [string] $PowershellLogVerifier = "scripts/verify-native-smoke-log.ps1",
+  [switch] $Help
 )
 
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$workspaceRoot = Split-Path -Parent $repoRoot
+$toolPackage = "tools/moui_skia/verify_native_smoke_capabilities"
+$toolDir = Join-Path $workspaceRoot $toolPackage
 
-function Resolve-RepoPath {
-  param(
-    [Parameter(Mandatory = $true)]
-    [string] $Path
-  )
-
-  if ([System.IO.Path]::IsPathRooted($Path)) {
-    return $Path
-  }
-
-  return Join-Path $repoRoot $Path
-}
-
-$resolvedStatusFile = Resolve-RepoPath $StatusFile
-$resolvedSmokeSource = Resolve-RepoPath $SmokeSource
-$resolvedUnixLogVerifier = Resolve-RepoPath $UnixLogVerifier
-$resolvedPowershellLogVerifier = Resolve-RepoPath $PowershellLogVerifier
-
-foreach ($path in @(
-    $resolvedStatusFile,
-    $resolvedUnixLogVerifier,
-    $resolvedPowershellLogVerifier
-  )) {
-  if (!(Test-Path -LiteralPath $path -PathType Leaf)) {
-    throw "required capability proof input is missing: $path"
-  }
-}
-if (Test-Path -LiteralPath $resolvedSmokeSource -PathType Leaf) {
-  $smokeSourceFiles = @($resolvedSmokeSource)
-} elseif (Test-Path -LiteralPath $resolvedSmokeSource -PathType Container) {
-  $smokeSourceFiles = @(
-    Get-ChildItem -LiteralPath $resolvedSmokeSource -Filter "*.mbt" -File |
-      Sort-Object Name |
-      ForEach-Object { $_.FullName }
-  )
-  if ($smokeSourceFiles.Count -eq 0) {
-    throw "native smoke source directory has no .mbt files: $resolvedSmokeSource"
-  }
-} else {
-  throw "required capability proof input is missing: $resolvedSmokeSource"
-}
-
-$status = Get-Content -LiteralPath $resolvedStatusFile -Raw | ConvertFrom-Json
-$capabilities = @($status.native_smoke_capabilities)
-if ($capabilities.Count -eq 0) {
-  throw "platform status is missing native_smoke_capabilities"
-}
-$conditionalCapabilities = @()
-if ($null -ne $status.native_smoke_conditional_capabilities) {
-  $conditionalCapabilities = @($status.native_smoke_conditional_capabilities)
-}
-
-$smokeSourceContent = ($smokeSourceFiles | ForEach-Object {
-    Get-Content -LiteralPath $_ -Raw
-  }) -join "`n"
-$unixLogVerifierContent = Get-Content -LiteralPath $resolvedUnixLogVerifier -Raw
-$powershellLogVerifierContent = Get-Content -LiteralPath $resolvedPowershellLogVerifier -Raw
-
-$seenMarkers = @{}
-$missingFromSource = @()
-$missingFromUnixLogVerifier = @()
-$missingFromPowershellLogVerifier = @()
-
-foreach ($capability in $capabilities) {
-  $capabilityId = "$($capability.id)".Trim()
-  $marker = "$($capability.marker)".Trim()
-  if ([string]::IsNullOrWhiteSpace($marker)) {
-    throw "native smoke capability is missing marker: $capabilityId"
-  }
-  if ($seenMarkers.ContainsKey($marker)) {
-    throw "duplicate native smoke capability marker: $marker"
-  }
-  $seenMarkers[$marker] = $true
-  if (!$smokeSourceContent.Contains($marker)) {
-    $missingFromSource += $marker
-  }
-  if (!$unixLogVerifierContent.Contains($marker)) {
-    $missingFromUnixLogVerifier += $marker
-  }
-  if (!$powershellLogVerifierContent.Contains($marker)) {
-    $missingFromPowershellLogVerifier += $marker
+if (!(Test-Path -LiteralPath $toolDir -PathType Container)) {
+  $splitRepoToolDir = Join-Path $repoRoot $toolPackage
+  if (Test-Path -LiteralPath $splitRepoToolDir -PathType Container) {
+    $workspaceRoot = $repoRoot
+    $toolDir = $splitRepoToolDir
   }
 }
 
-foreach ($capability in $conditionalCapabilities) {
-  $capabilityId = "$($capability.id)".Trim()
-  $marker = "$($capability.marker)".Trim()
-  $whenMarker = "$($capability.when_marker)".Trim()
-  $whenValue = "$($capability.when_value)".Trim()
-  if ([string]::IsNullOrWhiteSpace($marker)) {
-    throw "native smoke conditional capability is missing marker: $capabilityId"
-  }
-  if ([string]::IsNullOrWhiteSpace($whenMarker)) {
-    throw "native smoke conditional capability is missing when_marker: $capabilityId"
-  }
-  if ([string]::IsNullOrWhiteSpace($whenValue)) {
-    throw "native smoke conditional capability is missing when_value: $capabilityId"
-  }
-  if ($seenMarkers.ContainsKey($marker)) {
-    throw "duplicate native smoke capability marker: $marker"
-  }
-  if (!$seenMarkers.ContainsKey($whenMarker)) {
-    throw "native smoke conditional capability references an unknown condition marker: ${capabilityId}: $whenMarker"
-  }
-  $seenMarkers[$marker] = $true
-  if (!$smokeSourceContent.Contains($marker)) {
-    $missingFromSource += $marker
-  }
-  if (!$unixLogVerifierContent.Contains($marker)) {
-    $missingFromUnixLogVerifier += $marker
-  }
-  if (!$powershellLogVerifierContent.Contains($marker)) {
-    $missingFromPowershellLogVerifier += $marker
-  }
+if (!(Test-Path -LiteralPath $toolDir -PathType Container)) {
+  throw "MoonBit native smoke capability tool is missing: $toolDir"
 }
 
-if ($missingFromSource.Count -gt 0) {
-  throw "native smoke capabilities are not emitted by ${resolvedSmokeSource}: $($missingFromSource -join ', ')"
+$exitCode = 0
+Push-Location $workspaceRoot
+try {
+  $logVerifierSource = Join-Path $workspaceRoot "tools/moui_skia/native_smoke_log_contract"
+  $toolArgs = @("--repo-root", $repoRoot, "--log-verifier-source", $logVerifierSource)
+  if ($Help) {
+    $toolArgs += "--help"
+  } else {
+    $toolArgs += @(
+      "--status-file", $StatusFile,
+      "--smoke-source", $SmokeSource,
+      "--unix-log-verifier", $UnixLogVerifier,
+      "--powershell-log-verifier", $PowershellLogVerifier
+    )
+  }
+  moon build $toolPackage --target native
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+  $toolExe = Join-Path $workspaceRoot "_build/native/debug/build/wzzc-dev/moui_tools/moui_skia/verify_native_smoke_capabilities/verify_native_smoke_capabilities.exe"
+  & $toolExe @toolArgs
+  $exitCode = $LASTEXITCODE
+} finally {
+  Pop-Location
 }
-if ($missingFromUnixLogVerifier.Count -gt 0) {
-  throw "native smoke capabilities are missing from Unix log verifier fallback markers: $($missingFromUnixLogVerifier -join ', ')"
+if ($exitCode -ne 0) {
+  exit $exitCode
 }
-if ($missingFromPowershellLogVerifier.Count -gt 0) {
-  throw "native smoke capabilities are missing from PowerShell log verifier fallback markers: $($missingFromPowershellLogVerifier -join ', ')"
-}
-
-Write-Host "Verified native smoke capability markers across $resolvedStatusFile, $resolvedSmokeSource, $resolvedUnixLogVerifier, and $resolvedPowershellLogVerifier."
