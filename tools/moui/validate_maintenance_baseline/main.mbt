@@ -72,9 +72,9 @@ fn file_budgets() -> Array[FileBudget] {
   [
     {
       path: "examples/mo_workbench/app/mo_workbench_app_test.mbt",
-      max_lines: 5984,
-      target_lines: 1800,
-      reason: "split Mo Workbench scenario tests by transcript, transport, and UI state",
+      max_lines: 1166,
+      target_lines: 1100,
+      reason: "keep Mo Workbench baseline, backend projection, and shared test helpers compact",
     },
     {
       path: "examples/markdown_editor/app/editor_app_runtime_wbtest.mbt",
