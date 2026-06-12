@@ -624,10 +624,12 @@ matching Wayland window's `request_redraw`, exposes tracked-window revision
 snapshots for diagnostics, calls the optional provider-owned
 `HostAsyncImageLoader` after the presented revision is baselined, and removes
 tracked image revisions plus in-flight image loads when a host window is
-disposed. The Linux Skia provider creates renderers with post-present async
-image loading, but the required async second-frame artifact remains
-matching-host pending until a Wayland run records it from the Skia entrypoints
-or provider smoke. The summary is useful for provider/package
+disposed. The Linux Skia provider package now covers the host route from a
+loading first-frame image record through deferred `skia_image_load_completion`,
+repaint request, and second presented-frame status recording. The required
+async second-frame runtime artifact remains matching-host pending until a
+Wayland run records it from the Skia entrypoints or provider smoke. The summary
+is useful for provider/package
 audits, but it does not prove a real Wayland compositor presented Showcase or
 Markdown Editor frames;
 those claims still require matching-host runtime runs and smoke logs
