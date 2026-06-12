@@ -1,0 +1,526 @@
+///|
+struct CliOptions {
+  repo_root : String
+  help : Bool
+}
+
+///|
+struct FileBudget {
+  path : String
+  max_lines : Int
+  target_lines : Int
+  reason : String
+}
+
+///|
+struct PubAllBudget {
+  label : String
+  path : String
+  max_pub_all_lines : Int
+  target_pub_all_lines : Int
+}
+
+///|
+fn usage() -> String {
+  let text =
+    #|Usage: tools/moui/validate_maintenance_baseline [--repo-root PATH]
+    #|
+    #|Audits source-maintenance guardrails for MoUI:
+    #|oversized file ratchets, source pub(all) budgets, and root facade
+    #|type-forwarding budgets. The current max values lock in today's debt so
+    #|future refactors can ratchet them down after splitting files or shrinking
+    #|public surface area.
+    #|
+    #|Options:
+    #|  --repo-root PATH   Repository root used to resolve paths. Defaults to cwd.
+    #|  -h, --help         Show this help.
+    #|
+  text
+}
+
+///|
+fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
+  let repo_root = Ref(@env.current_dir().unwrap_or(""))
+  let help = Ref(false)
+  let mut index = 0
+  while index < args.length() {
+    match args[index] {
+      "--repo-root" => {
+        if index + 1 >= args.length() {
+          return Err("missing value for --repo-root")
+        }
+        repo_root.val = args[index + 1]
+        index += 2
+      }
+      "-h" | "--help" => {
+        help.val = true
+        index += 1
+      }
+      other => return Err("unknown argument: " + other)
+    }
+  }
+  Ok({ repo_root: repo_root.val, help: help.val })
+}
+
+///|
+fn oversized_file_threshold() -> Int {
+  1800
+}
+
+///|
+fn file_budgets() -> Array[FileBudget] {
+  [
+    {
+      path: "examples/mo_workbench/app/mo_workbench_app_test.mbt",
+      max_lines: 5984,
+      target_lines: 1800,
+      reason: "split Mo Workbench scenario tests by transcript, transport, and UI state",
+    },
+    {
+      path: "examples/markdown_editor/app/editor_app_runtime_wbtest.mbt",
+      max_lines: 5210,
+      target_lines: 1800,
+      reason: "split Markdown Editor runtime tests by focus, services, commands, and persistence",
+    },
+    {
+      path: "moui/backend/host/host_test.mbt",
+      max_lines: 4881,
+      target_lines: 1800,
+      reason: "split host tests by windows, services, subscriptions, input, and text",
+    },
+    {
+      path: "examples/pdf_workbench/app/app.mbt",
+      max_lines: 3609,
+      target_lines: 1800,
+      reason: "split PDF Workbench app model, service, command, and view responsibilities",
+    },
+    {
+      path: "moui/render/skia/skia_renderer_wbtest.mbt",
+      max_lines: 3548,
+      target_lines: 1800,
+      reason: "split Skia renderer tests by command family and image/text behavior",
+    },
+    {
+      path: "moui/views/views_test.mbt",
+      max_lines: 3179,
+      target_lines: 1800,
+      reason: "split views tests by controls, navigation, layout, data display, and platform views",
+    },
+    {
+      path: "moui/core/runtime_wbtest.mbt",
+      max_lines: 2676,
+      target_lines: 1800,
+      reason: "split runtime tests by message queue, effects, subscriptions, and control dispatch",
+    },
+    {
+      path: "examples/pdf_workbench/app/pdf_workbench_app_test.mbt",
+      max_lines: 2330,
+      target_lines: 1800,
+      reason: "split PDF Workbench tests by model, service, and command behavior",
+    },
+    {
+      path: "examples/markdown_editor/app/editor_input_wbtest.mbt",
+      max_lines: 2233,
+      target_lines: 1800,
+      reason: "split Markdown Editor input tests by block editing and IME/source mapping",
+    },
+    {
+      path: "examples/markdown_editor/app/editor_commands_wbtest.mbt",
+      max_lines: 2208,
+      target_lines: 1800,
+      reason: "split Markdown Editor command tests by formatting, documents, and undo/redo",
+    },
+    {
+      path: "moui/render/skia/renderer_text.mbt",
+      max_lines: 1970,
+      target_lines: 1800,
+      reason: "split Skia text measurement, fallback, paragraph, and diagnostic helpers",
+    },
+    {
+      path: "moui/core/engine_wbtest.mbt",
+      max_lines: 1938,
+      target_lines: 1800,
+      reason: "split engine tests by layout, semantics, input, and render-tree behavior",
+    },
+    {
+      path: "moui/core/view.mbt",
+      max_lines: 1834,
+      target_lines: 1800,
+      reason: "move widget-level public constructors toward moui/views and keep core view contracts lean",
+    },
+  ]
+}
+
+///|
+fn pub_all_budgets() -> Array[PubAllBudget] {
+  [
+    {
+      label: "core source",
+      path: "moui/core",
+      max_pub_all_lines: 211,
+      target_pub_all_lines: 120,
+    },
+    {
+      label: "views source",
+      path: "moui/views",
+      max_pub_all_lines: 44,
+      target_pub_all_lines: 20,
+    },
+    {
+      label: "host source",
+      path: "moui/backend/host",
+      max_pub_all_lines: 79,
+      target_pub_all_lines: 45,
+    },
+    {
+      label: "render facade source",
+      path: "moui/render",
+      max_pub_all_lines: 33,
+      target_pub_all_lines: 25,
+    },
+    {
+      label: "skia renderer source",
+      path: "moui/render/skia",
+      max_pub_all_lines: 10,
+      target_pub_all_lines: 8,
+    },
+    {
+      label: "showcase app source",
+      path: "examples/showcase/app",
+      max_pub_all_lines: 4,
+      target_pub_all_lines: 4,
+    },
+    {
+      label: "markdown editor app source",
+      path: "examples/markdown_editor/app",
+      max_pub_all_lines: 0,
+      target_pub_all_lines: 0,
+    },
+    {
+      label: "pdf workbench app source",
+      path: "examples/pdf_workbench/app",
+      max_pub_all_lines: 14,
+      target_pub_all_lines: 10,
+    },
+    {
+      label: "mo workbench app source",
+      path: "examples/mo_workbench/app",
+      max_pub_all_lines: 51,
+      target_pub_all_lines: 30,
+    },
+    {
+      label: "website app source",
+      path: "website/app",
+      max_pub_all_lines: 7,
+      target_pub_all_lines: 5,
+    },
+  ]
+}
+
+///|
+fn monitored_roots() -> Array[String] {
+  ["moui", "examples", "website"]
+}
+
+///|
+fn generated_fixture_path(path : String) -> Bool {
+  path.has_suffix("_unicode_17_wbtest.mbt")
+}
+
+///|
+fn skipped_directory_name(name : String) -> Bool {
+  name == ".git" ||
+  name == ".mooncakes" ||
+  name == "_build" ||
+  name == "artifacts"
+}
+
+///|
+fn line_count(text : String) -> Int {
+  let mut count = 0
+  for index in 0..<text.length() {
+    if text[index] == '\n' {
+      count += 1
+    }
+  }
+  if text != "" && !text.has_suffix("\n") {
+    count += 1
+  }
+  count
+}
+
+///|
+fn count_lines_with_prefix(text : String, prefix : String) -> Int {
+  let mut count = 0
+  for line_view in text.split("\n") {
+    if line_view.to_owned().has_prefix(prefix) {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+fn read_repo_text(repo_root : String, path : String) -> Result[String, String] {
+  @tools.read_required_text(@tools.resolve_path(repo_root, path), path)
+}
+
+///|
+fn push_max_check(
+  failures : Array[String],
+  label : String,
+  actual : Int,
+  max : Int,
+) -> Unit {
+  if actual > max {
+    failures.push(label + " is \{actual}, above ratchet budget \{max}")
+  }
+}
+
+///|
+fn read_dir_names(
+  path : String,
+  label : String,
+) -> Result[Array[String], String] {
+  if !@tools.directory_exists(path) {
+    return Err(label + " is missing: " + path)
+  }
+  let entries : Array[String] = @fs.read_dir(path) catch {
+    _ => return Err(label + " could not be read: " + path)
+  }
+  entries.sort()
+  Ok(entries)
+}
+
+///|
+fn collect_mbt_files(
+  repo_root : String,
+  relative_dir : String,
+  files : Array[String],
+  failures : Array[String],
+) -> Unit {
+  let absolute_dir = @tools.resolve_path(repo_root, relative_dir)
+  let entries = match read_dir_names(absolute_dir, relative_dir) {
+    Ok(values) => values
+    Err(message) => {
+      failures.push(message)
+      return
+    }
+  }
+  for entry in entries {
+    let relative = relative_dir + "/" + entry
+    let absolute = @tools.resolve_path(repo_root, relative)
+    if @tools.directory_exists(absolute) {
+      if !skipped_directory_name(entry) {
+        collect_mbt_files(repo_root, relative, files, failures)
+      }
+    } else if @tools.file_exists(absolute) &&
+      relative.has_suffix(".mbt") &&
+      !relative.has_suffix("pkg.generated.mbti") {
+      files.push(relative)
+    }
+  }
+}
+
+///|
+fn collect_direct_mbt_files(
+  repo_root : String,
+  relative_dir : String,
+  failures : Array[String],
+) -> Array[String] {
+  let files : Array[String] = []
+  let absolute_dir = @tools.resolve_path(repo_root, relative_dir)
+  let entries = match read_dir_names(absolute_dir, relative_dir) {
+    Ok(values) => values
+    Err(message) => {
+      failures.push(message)
+      return files
+    }
+  }
+  for entry in entries {
+    let relative = relative_dir + "/" + entry
+    let absolute = @tools.resolve_path(repo_root, relative)
+    if @tools.file_exists(absolute) &&
+      relative.has_suffix(".mbt") &&
+      !relative.has_suffix("pkg.generated.mbti") {
+      files.push(relative)
+    }
+  }
+  files
+}
+
+///|
+fn array_contains(values : Array[String], value : String) -> Bool {
+  for item in values {
+    if item == value {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn tracked_budget_paths() -> Array[String] {
+  let paths : Array[String] = []
+  for budget in file_budgets() {
+    paths.push(budget.path)
+  }
+  paths
+}
+
+///|
+fn validate_file_budget(
+  repo_root : String,
+  budget : FileBudget,
+  failures : Array[String],
+) -> Unit {
+  let text = match read_repo_text(repo_root, budget.path) {
+    Ok(value) => value
+    Err(message) => {
+      failures.push(message)
+      return
+    }
+  }
+  let lines = line_count(text)
+  println(
+    "maintenance: " +
+    budget.path +
+    " lines=\{lines} max=\{budget.max_lines} target=\{budget.target_lines} reason=" +
+    budget.reason,
+  )
+  push_max_check(failures, budget.path + " line count", lines, budget.max_lines)
+}
+
+///|
+fn validate_untracked_oversized_files(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = []
+  for root in monitored_roots() {
+    collect_mbt_files(repo_root, root, files, failures)
+  }
+  let tracked_paths = tracked_budget_paths()
+  for path in files {
+    if !generated_fixture_path(path) && !array_contains(tracked_paths, path) {
+      let text = match read_repo_text(repo_root, path) {
+        Ok(value) => value
+        Err(message) => {
+          failures.push(message)
+          continue
+        }
+      }
+      let lines = line_count(text)
+      if lines > oversized_file_threshold() {
+        failures.push(
+          path +
+          " has \{lines} lines, above untracked oversized-file threshold \{oversized_file_threshold()}; split it or add a ratchet budget with a target",
+        )
+      }
+    }
+  }
+}
+
+///|
+fn validate_pub_all_budget(
+  repo_root : String,
+  budget : PubAllBudget,
+  failures : Array[String],
+) -> Unit {
+  let mut count = 0
+  for path in collect_direct_mbt_files(repo_root, budget.path, failures) {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    count += count_lines_with_prefix(text, "pub(all)")
+  }
+  println(
+    "maintenance: " +
+    budget.label +
+    " pub(all)=\{count} max=\{budget.max_pub_all_lines} target=\{budget.target_pub_all_lines}",
+  )
+  push_max_check(
+    failures,
+    budget.label + " pub(all) declaration count",
+    count,
+    budget.max_pub_all_lines,
+  )
+}
+
+///|
+fn validate_root_facade_budget(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let path = "moui/moui.mbt"
+  let text = match read_repo_text(repo_root, path) {
+    Ok(value) => value
+    Err(message) => {
+      failures.push(message)
+      return
+    }
+  }
+  let type_aliases = count_lines_with_prefix(text, "pub type ")
+  println(
+    "maintenance: root facade type aliases=\{type_aliases} max=39 target=20",
+  )
+  push_max_check(
+    failures,
+    path + " root facade type-alias forwarding count",
+    type_aliases,
+    39,
+  )
+}
+
+///|
+fn run_checks(repo_root : String) -> Array[String] {
+  let failures : Array[String] = []
+  for budget in file_budgets() {
+    validate_file_budget(repo_root, budget, failures)
+  }
+  validate_untracked_oversized_files(repo_root, failures)
+  for budget in pub_all_budgets() {
+    validate_pub_all_budget(repo_root, budget, failures)
+  }
+  validate_root_facade_budget(repo_root, failures)
+  failures
+}
+
+///|
+fn run(args : Array[String]) -> Int {
+  match parse_cli(args) {
+    Ok(options) if options.help => {
+      println(usage())
+      0
+    }
+    Ok(options) => {
+      let failures = run_checks(options.repo_root)
+      if failures.is_empty() {
+        println("maintenance baseline guardrails: ok")
+        0
+      } else {
+        for failure in failures {
+          println(failure)
+        }
+        1
+      }
+    }
+    Err(message) => {
+      println(message)
+      println(usage())
+      2
+    }
+  }
+}
+
+///|
+fn main {
+  let code = run(@tools.args_without_program(@env.args()))
+  if code != 0 {
+    @sys.exit(code)
+  }
+}

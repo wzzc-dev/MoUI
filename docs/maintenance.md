@@ -24,9 +24,34 @@ The default daily baseline covers:
 - Showcase app/Web wasm-gc validation
 - Markdown Editor app/Web wasm-gc validation
 - renderer/provider static checks and lightweight Web handoff validation
+- maintenance baseline ratchets for oversized source files, source-level
+  `pub(all)` counts, and root facade type-forwarding counts
 
 Complete platform runtime smoke is a release or matching-host gate, not a
 default daily gate. Daily checks do not require fresh matching-host promotion.
+
+## Engineering Baseline Ratchets
+
+`node scripts/validate-maintenance-baseline.mjs` is part of the default
+`dev-check` path. It scans MoUI-owned MoonBit source under `moui/`, `examples/`,
+and `website/`, excluding generated `pkg.generated.mbti` files, vendored
+`.mooncakes/` trees, build output, and generated Unicode fixture tests.
+
+The guard tracks three budgets:
+
+- oversized file ratchets for current hotspots such as `moui/core/view.mbt`,
+  `moui/core/runtime_wbtest.mbt`, `moui/views/views_test.mbt`,
+  `moui/backend/host/host_test.mbt`, Skia renderer text/tests, and large
+  example app files;
+- direct package source `pub(all)` counts for core, views, host, render,
+  Skia, mainline examples, Mo Workbench, PDF Workbench, and Website;
+- root facade `pub type` forwarding count in `moui/moui.mbt`.
+
+Current `max` values intentionally match today's debt so unrelated changes do
+not need to solve the whole backlog. The printed `target` values are the next
+long-term maintenance line. When a refactor splits a file, moves widget-level
+entrypoints into `views`, shrinks public surface area, or removes root facade
+forwards, lower the corresponding budget in the same commit.
 
 ## Diagnostic Routes
 
