@@ -6,7 +6,7 @@ pub fn fontconfig_text_engine() -> @wgpu_renderer.NativeTextEngine {
 ///|
 pub fn fontconfig_text_provider() -> @wgpu_renderer.NativePlatformTextProvider {
   @wgpu_renderer.NativePlatformTextProvider::new(
-    id="native-wgpu-fontconfig-freetype-emoji",
+    id="native-wgpu-fontconfig-freetype",
     measure=fontconfig_measure_layout,
     layout_run=fontconfig_layout_run,
     raster_glyph=fontconfig_raster_glyph,

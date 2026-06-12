@@ -582,8 +582,13 @@ without `_build`; the native archive and MoonDB files are host-specific and can
 be corrupted by cross-host reuse.
 
 The WGPU diagnostic text path in `backend/linux/wgpu` composes the Linux
-`render/wgpu/fontconfig` scaffold provider with the shared Moon Cosmic fallback.
-Choose `MoonCosmic` with `LinuxWgpuAppOptions::new(text_engine=...)`;
+`render/wgpu/fontconfig` provider with the shared Moon Cosmic fallback.
+The fontconfig provider includes real fontconfig family resolution, FreeType
+rasterization (loaded via dlopen), HarfBuzz shaping, embedded-font registration,
+and a narrow color-emoji path; MoonBit tests verify protocol versioning and
+native payload parsing on all platforms, while the full shaping/measurement/raster
+path runs on Linux with the required C libraries. Choose `MoonCosmic` with
+`LinuxWgpuAppOptions::new(text_engine=...)`;
 `examples/showcase/linux_wgpu_cosmic` selects the Moon Cosmic provider explicitly for
 comparison.
 
@@ -712,8 +717,6 @@ Remaining Linux gaps stay visible in `backend/linux.readiness()`:
   file drag/drop host surfaces are implemented, but passed platform status still
   requires matching-host Wayland/desktop-service observation rather than package
   preflight alone.
-- The fontconfig/HarfBuzz/FreeType native provider remains a scaffold and relies
-  on the composed Moon Cosmic fallback for actual glyph data.
 
 ## Platform Validation
 
