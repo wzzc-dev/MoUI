@@ -108,8 +108,8 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/runtime_wbtest.mbt",
-      max_lines: 399,
-      target_lines: 380,
+      max_lines: 262,
+      target_lines: 240,
       reason: "keep shared runtime helpers and basic app/program runtime tests compact",
     },
     {
