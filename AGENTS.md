@@ -267,12 +267,16 @@ current-platform backend tests too. Use
 need slow current-platform native example builds.
 Use `sh scripts/dev-check.sh --theme-diagnostics` when changing `moui_theme`
 or the Design Systems addon diagnostic example; Design Systems is addon diagnostic coverage, not part of the default daily baseline.
-The daily check also runs the MoonBit-backed API surface guard, guidance
-consistency, renderer/provider and native Skia entrypoint static checks, and
-app/Web validation for Showcase and Markdown Editor. It does not validate
-checked-in conformance artifacts, because `artifacts/` is now ignored by
-default. Do not commit artifacts/ JSON as capability claims; use manual smoke
-logs, CI runs, or uploaded artifacts when a release note needs runtime context.
+The daily check also runs the MoonBit-backed maintenance baseline ratchets,
+API surface guard, guidance consistency, renderer/provider and native Skia
+entrypoint static checks, and app/Web validation for Showcase and Markdown
+Editor. The maintenance baseline locks current oversized file, source-level
+`pub(all)`, and root facade forwarding budgets; when a refactor splits files or
+shrinks public surface area, lower the relevant budget in the same change. It
+does not validate checked-in conformance artifacts, because `artifacts/` is now
+ignored by default. Do not commit artifacts/ JSON as capability claims; use
+manual smoke logs, CI runs, or uploaded artifacts when a release note needs
+runtime context.
 
 Useful focused checks:
 
@@ -290,6 +294,7 @@ moon check moui/tests/skia_text_emoji_smoke/native --target native
 moon test moui_skia --target native
 moon test moui/render/wgpu/cosmic_text --target native
 node scripts/test-webgpu-runtime-radial.mjs
+node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-api-surface.mjs
 sh scripts/conformance-check.sh --input

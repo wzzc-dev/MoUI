@@ -22,7 +22,8 @@ MoUI is ready for a preview handoff when the repository can demonstrate:
 
 | Gate | Required Observation | Command |
 | --- | --- | --- |
-| daily baseline | Bounded package checks, guidance consistency, API surface guardrails, renderer/provider static checks, Showcase and Markdown Editor app tests, and Web wasm-gc builds pass. Design Systems is addon diagnostic coverage through `--theme-diagnostics`. | `sh scripts/dev-check.sh` |
+| daily baseline | Bounded package checks, guidance consistency, maintenance baseline ratchets, API surface guardrails, renderer/provider static checks, Showcase and Markdown Editor app tests, and Web wasm-gc builds pass. Design Systems is addon diagnostic coverage through `--theme-diagnostics`. | `sh scripts/dev-check.sh` |
+| maintenance ratchets | Oversized source/test files, source-level `pub(all)`, and root facade forwarding counts do not grow; completed refactors ratchet their budgets down. | `node scripts/validate-maintenance-baseline.mjs` |
 | Public API audit | Generated interfaces reviewed after public API changes and package budgets/boundary tokens still pass. | `moon info`, then `node scripts/validate-api-surface.mjs` |
 | Focused conformance | Input/focus, layout, render, platform service, and text slices pass at their owning layer. | `sh scripts/conformance-check.sh --input`, `--layout`, `--render`, `--platform-services`, `--text`, `--text-diagnostic` |
 | Renderer sync | Native Skia and WebGPU mainline capability docs, tests, and visible Showcase coverage agree. Native WGPU remains explicit diagnostic coverage. | `moon test moui/render --target native`, `moon test moui/render/skia --target native`, `moon test moui/render/webgpu_adapter --target wasm-gc`, plus Showcase Web build |

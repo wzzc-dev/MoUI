@@ -165,7 +165,8 @@ fn push_moon_work_member_checks(
 ///|
 fn daily_quality_gate_tokens() -> Array[String] {
   [
-    "node scripts/validate-guidance-consistency.mjs", "node --check scripts/validate-api-surface.mjs",
+    "node scripts/validate-guidance-consistency.mjs", "node --check scripts/validate-maintenance-baseline.mjs",
+    "node scripts/validate-maintenance-baseline.mjs", "node --check scripts/validate-api-surface.mjs",
     "node scripts/validate-api-surface.mjs", "node scripts/validate-renderer-provider-manifests.mjs",
     "node scripts/validate-skia-entrypoints.mjs", "node scripts/test-validate-skia-entrypoints.mjs",
     "node scripts/test-record-web-runtime-presentation.mjs", "node scripts/test-validate-web-runtime-presentation-manifest.mjs",
@@ -193,7 +194,8 @@ fn push_daily_quality_gate_checks(
 ///|
 fn release_readiness_quality_tokens() -> Array[String] {
   [
-    "node scripts/validate-api-surface.mjs", "daily baseline", "manual smoke", "CI run or smoke log",
+    "node scripts/validate-maintenance-baseline.mjs", "node scripts/validate-api-surface.mjs",
+    "daily baseline", "maintenance ratchets", "manual smoke", "CI run or smoke log",
     "--theme-diagnostics", "Design Systems is addon diagnostic coverage",
   ]
 }
@@ -211,8 +213,9 @@ fn push_release_readiness_quality_checks(
 ///|
 fn agent_quality_gate_tokens() -> Array[String] {
   [
-    "node scripts/validate-api-surface.mjs", "daily validation script", "manual smoke",
-    "Do not commit artifacts/", "--theme-diagnostics", "Design Systems is addon diagnostic coverage",
+    "node scripts/validate-maintenance-baseline.mjs", "node scripts/validate-api-surface.mjs",
+    "daily validation script", "maintenance baseline", "manual smoke", "Do not commit artifacts/",
+    "--theme-diagnostics", "Design Systems is addon diagnostic coverage",
   ]
 }
 

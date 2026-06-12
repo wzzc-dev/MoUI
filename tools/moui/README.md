@@ -7,6 +7,9 @@ Do not place `moui_skia` binding checks here; keep those under
 
 Current tools:
 
+- `validate_maintenance_baseline/` audits source-maintenance ratchets for
+  oversized implementation/test files, source-level `pub(all)` counts, and root
+  facade type-forwarding counts.
 - `validate_api_surface/` audits generated `pkg.generated.mbti` files for
   package-size budgets, root facade boundaries, and app-facing view constructor
   return types.

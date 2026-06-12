@@ -12,3 +12,6 @@ Keep the split aligned with future repository boundaries:
 
 Existing `scripts/` and `moui_skia/scripts/` entrypoints should remain as thin
 compatibility wrappers when CI, documentation, or users call those paths.
+For MoUI framework guardrails, keep wrappers such as
+`scripts/validate-maintenance-baseline.mjs` as thin build/run entrypoints over
+the MoonBit tool packages.
