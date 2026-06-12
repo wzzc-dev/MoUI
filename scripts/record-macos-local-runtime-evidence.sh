@@ -31,7 +31,7 @@ Options:
   --skip-ime-smoke       Reuse an existing ime-showcase-runtime.log.
   -h, --help             Show this help.
 
-The window smoke is collected from the resolved wzzc-dev/window@0.5.1-fork.3
+The window smoke is collected from the resolved wzzc-dev/window@0.5.1-0.1.4
 registry package through scripts/run-window-package-smoke.sh; no editable
 window checkout is required.
 

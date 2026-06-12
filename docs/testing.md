@@ -473,7 +473,7 @@ backend packages, with WGPU/Cosmic text diagnostics gated by
 matrix packages.
 `--platform-services` runs host and Web service contracts, runs current-host
 macOS service tests on Darwin, runs Linux service tests only when the local
-`wzzc-dev/window@0.5.1-fork.3` registry package cache has generated Wayland
+`wzzc-dev/window@0.5.1-0.1.4` registry package cache has generated Wayland
 protocol sources available, and writes a validated platform runtime evidence
 manifest at
 `artifacts/conformance/platform-runtime-evidence.json`. That manifest is a
@@ -497,7 +497,7 @@ current-platform backend checks through `scripts/dev-check.sh
 
 `sh scripts/check-local-deps.sh`, which is part of `dev-check`, also verifies
 that `moui/moon.mod` and `moui_skia/moon.mod` resolve
-`wzzc-dev/window@0.5.1-fork.3`, that `moon.work` does not include a local
+`wzzc-dev/window@0.5.1-0.1.4`, that `moon.work` does not include a local
 window checkout, and that the resolved package cache carries generated Wayland
 protocol C sources. In other words, the cache must contain the generated
 Wayland protocol C sources plus its MoUI-oriented smoke/evidence surface:
@@ -526,7 +526,7 @@ evidence; it does not replace MoUI's opt-in real-Skia renderer smoke or
 matching-host Showcase runtime evidence.
 
 The platform runtime evidence manifest uses schema version 2. Its observation
-set mirrors the `wzzc-dev/window@0.5.1-fork.3` package evidence fields,
+set mirrors the `wzzc-dev/window@0.5.1-0.1.4` package evidence fields,
 including native monitor/cursor evidence as `monitorCursor`. For native passed entries,
 `monitorCursor` must be `yes`; the Web browser-session path may keep it
 `pending` because CDP evidence does not prove native monitor/current-monitor or
@@ -701,7 +701,7 @@ node scripts/record-platform-evidence-manifest.mjs \
   --status passed \
   --host "Windows MSVC CI" \
   --window-evidence-command \
-    "wzzc-dev/window@0.5.1-fork.3 package evidence windows --status passed --host 'Windows MSVC CI'" \
+    "wzzc-dev/window@0.5.1-0.1.4 package evidence windows --status passed --host 'Windows MSVC CI'" \
   --consumer-command \
     "powershell -ExecutionPolicy Bypass -Command \"& { . .\\scripts\\windows\\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }\"" \
   --set windowOpened=yes \
@@ -758,7 +758,7 @@ node scripts/validate-platform-evidence-manifest.mjs \
 ```
 
 The manifest complements Markdown snippets generated from the
-`wzzc-dev/window@0.5.1-fork.3` package smoke artifacts. Keep both scoped:
+`wzzc-dev/window@0.5.1-0.1.4` package smoke artifacts. Keep both scoped:
 window package smoke proves dependency behavior, while MoUI platform evidence
 must also name the Showcase consumer run that exercised the framework
 entrypoint.

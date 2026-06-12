@@ -160,7 +160,7 @@ paths, or abstractions that only preserve old shapes.
 ## Local Dependencies
 
 The project now resolves `wzzc-dev/window` from the MoonBit registry as
-`wzzc-dev/window@0.5.1-fork.3`; `moon.work` must not include an editable
+`wzzc-dev/window@0.5.1-0.1.4`; `moon.work` must not include an editable
 `.local_repos/window` member. The repo-local editable dependency is
 `wzzc-dev/moui_skia` at `moui_skia`, as described in `docs/development.md`.
 Local `moon.mod`, `moon.work`, and `moon.pkg` files remain the source of truth
@@ -168,7 +168,7 @@ for imports, workspace members, and supported targets.
 
 Use `moon update` to refresh registry dependencies and
 `sh scripts/check-local-deps.sh` to verify that `moui/moon.mod` and
-`moui_skia/moon.mod` both import `wzzc-dev/window@0.5.1-fork.3`, `moon.work`
+`moui_skia/moon.mod` both import `wzzc-dev/window@0.5.1-0.1.4`, `moon.work`
 does not reintroduce `.local_repos/window`, and `moui_skia` is present as the
 repo-local `wzzc-dev/moui_skia` workspace member. The MoonBit ecosystem and
 package registry are still maturing; if a build or smoke starts failing without
@@ -350,7 +350,7 @@ preflight, or dependency smoke is not enough for `status=passed` runtime
 evidence. `artifacts/platform-evidence/*/README.md` files are placeholder
 documentation and must not be used as passed platform, Skia, or provenance
 artifacts. The
-manifest is schema v2 and mirrors the `wzzc-dev/window@0.5.1-fork.3` package
+manifest is schema v2 and mirrors the `wzzc-dev/window@0.5.1-0.1.4` package
 monitor/cursor field as `monitorCursor`; native passed evidence must set it to `yes`, while
 Web browser evidence may leave it pending because CDP does not prove native
 monitor/current-monitor or cursor behavior. Native passed evidence must also
