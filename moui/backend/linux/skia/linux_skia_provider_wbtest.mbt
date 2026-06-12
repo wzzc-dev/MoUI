@@ -104,7 +104,7 @@ test "linux skia provider preflight records package observation boundary" {
   assert_true(preflight.contains("drag_drop=ready"))
   assert_true(preflight.contains("native_context_menu=available"))
   assert_true(preflight.contains("host_modal=ready"))
-  assert_true(preflight.contains("native_accessibility=gap"))
+  assert_true(preflight.contains("native_accessibility=ready"))
   assert_true(preflight.contains("real Skia link flags"))
   assert_true(preflight.contains("smoke log required"))
 

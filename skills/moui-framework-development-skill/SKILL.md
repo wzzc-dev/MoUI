@@ -115,8 +115,9 @@ Use this skill when editing or reviewing:
 - Linux has a Wayland backend with Skia as the native preview mainline,
   host-service wiring for system theme, Wayland clipboard selection, desktop
   URL/file-dialog/text-file/menu services, text-input/IME request sync, file
-  drag/drop conversion, and scale-factor reporting. Keep AT-SPI, matching-host
-  runtime observation, and native WGPU/fontconfig text-provider gaps explicit.
+  drag/drop conversion, AT-SPI accessibility binding, and scale-factor
+  reporting. Keep matching-host runtime observation and native WGPU/fontconfig
+  text-provider gaps explicit.
 - Public API changes require `moon info` and review of `pkg.generated.mbti`
   diffs, followed by `node scripts/validate-api-surface.mjs` so the root
   facade, `views`, `core`, host contracts, and renderer packages stay within
@@ -206,7 +207,7 @@ Use this skill when editing or reviewing:
   host-service bridge, text-input/IME request sync, drag/drop conversion, a
   native Skia mainline presenter path plus native WGPU diagnostic surface path,
   optional WebKitGTK platform-view sync, shared host event conversion, and
-  explicit AT-SPI follow-up reporting.
+  AT-SPI accessibility binding.
 - `render/`: renderer facade, shared draw helpers, and capability report API.
 - `render/skia/`: native Skia raster mainline renderer over the local
   `moui_skia` binding, including renderer-local command/reason diagnostics for
@@ -625,8 +626,8 @@ node scripts/validate-api-surface.mjs
 - Returning anything other than `@core.View[Msg]` from public view constructors.
 - Skipping `moon info` after public API changes.
 - Updating renderer support without updating capability docs and tests.
-- Treating Linux Skia Preview Ready as complete platform support while AT-SPI,
-  matching-host runtime observation, and native font provider work remain.
+- Treating Linux Skia Preview Ready as complete platform support while
+  matching-host runtime observation and native font provider work remain.
 - Moving shared example logic into platform entrypoints.
 - Running broad native checks before focused package validation.
 - Letting `AGENTS.md` or repo-local skills drift after package, docs, example,
