@@ -42,20 +42,6 @@ enum ViewNode[Msg] {
   ComponentNode((BuildContext) -> View[Msg])
 }
 
-///|
-priv enum ViewModifierNode[Msg] {
-  KeyModifierNode(Key)
-  PlainModifier(ViewModifier)
-  RealizedModifier((ViewSpec) -> ViewSpec)
-  TapModifier(Msg)
-  LongPressModifier(Msg)
-  DoubleTapModifier(Msg)
-  DragModifier((DragGestureEvent) -> Msg)
-  DragWithFrameModifier((DragGestureEvent, Rect) -> Msg)
-  FileDropModifier((Array[String], Point) -> Msg)
-}
-
-///|
 fn[Msg] view_from_node(node : ViewNode[Msg]) -> View[Msg] {
   { node, }
 }
