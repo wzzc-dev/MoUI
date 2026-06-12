@@ -1,5 +1,5 @@
 ///|
-test "linux host options carry optional scene resolver and first-frame smoke" {
+test "linux host options carry optional scene resolver and smoke options stay separate" {
   let request = @host.HostWindowOpenRequest::new(
     title="Inspector",
     scene=@host.HostWindowScene::new(scene_id="inspector"),
@@ -12,7 +12,7 @@ test "linux host options carry optional scene resolver and first-frame smoke" {
       inspect(message, content="window scene resolver is unavailable")
     _ => fail("expected default Linux scene resolver rejection")
   }
-  assert_false(LinuxHostAppOptions::new().exit_after_first_present)
+  assert_false(LinuxHostSmokeOptions::new().first_frame_smoke_auto_exit)
   let resolver = @host.HostWindowSceneResolver::new(resolve=request => {
     @host.HostWindowSceneResolution::SceneResolved(
       @host.HostWindowSceneInstance::new(
@@ -26,10 +26,10 @@ test "linux host options carry optional scene resolver and first-frame smoke" {
   })
   let options = LinuxHostAppOptions::new(
     scene_resolver=resolver,
-    exit_after_first_present=true,
     event_sources=Some(@host.HostPlatformEventSources::new()),
   )
-  assert_true(options.exit_after_first_present)
+  let smoke_options = LinuxHostSmokeOptions::new(first_frame_smoke_auto_exit=true)
+  assert_true(smoke_options.first_frame_smoke_auto_exit)
   match options.event_sources {
     Some(sources) => {
       inspect(sources.host_events().active_handler_count(), content="0")

@@ -7,7 +7,7 @@ growing without turning every diagnostic route into daily release pressure.
 
 - `mainline`: covered by the default `sh scripts/dev-check.sh` path. Mainline
   work must stay green before ordinary handoff.
-- `diagnostic`: runnable, testable, and allowed to record evidence, but not a
+- `diagnostic`: runnable, testable, and allowed to record observation, but not a
   default daily gate. Run the matching opt-in flag or focused command when the
   diagnostic route changes.
 - `pending`: documented scaffold or capability note exists, but the route must

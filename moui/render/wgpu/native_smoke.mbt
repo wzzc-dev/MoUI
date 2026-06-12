@@ -1,5 +1,5 @@
 ///|
-pub(all) struct NativeRendererProofFrame {
+pub(all) struct NativeRendererSmokeFrame {
   width : Int
   height : Int
   row_bytes : Int
@@ -8,20 +8,20 @@ pub(all) struct NativeRendererProofFrame {
 }
 
 ///|
-fn native_proof_fail(message : String) -> Unit {
+fn native_smoke_fail(message : String) -> Unit {
   println(message)
   abort("MoUI native WGPU renderer smoke failed")
 }
 
 ///|
-pub fn native_renderer_proof_smoke(
+pub fn native_renderer_smoke(
   platform_label~ : String,
   text_engine~ : NativeTextEngine,
 ) -> Unit raise @wgpu_mbt.WgpuError {
   println(
     "MoUI native WGPU renderer smoke platform=\{platform_label} provider=\{text_engine.provider_id()} fallback=\{text_engine.fallback_provider_id()}",
   )
-  let async_source = native_proof_async_png_path(platform_label)
+  let async_source = native_smoke_async_png_path(platform_label)
   @fs.remove_file(async_source) catch {
     _ => ()
   }
@@ -32,12 +32,12 @@ pub fn native_renderer_proof_smoke(
     ),
     text_engine,
   )
-  let proof_commands = native_proof_commands(async_source)
+  let proof_commands = native_smoke_commands(async_source)
   let first_frame = renderer.render_offscreen_proof_frame(proof_commands)
-  assert_native_proof_radial(first_frame)
-  assert_native_proof_transform(first_frame)
-  assert_native_proof_text_evidence(renderer, text_engine)
-  assert_native_proof_async_second_frame(renderer, proof_commands, async_source)
+  assert_native_smoke_radial(first_frame)
+  assert_native_smoke_transform(first_frame)
+  assert_native_smoke_text_diagnostic(renderer, text_engine)
+  assert_native_smoke_async_second_frame(renderer, proof_commands, async_source)
   renderer.dispose()
   println(
     "MoUI renderer smoke radialGradient passed center-mid-edge-pixels shader-payload",
@@ -232,7 +232,7 @@ fn create_headless_proof_renderer(
 fn RendererHandle::render_offscreen_proof_frame(
   self : RendererHandle,
   commands : Array[@core.DrawCommand],
-) -> NativeRendererProofFrame {
+) -> NativeRendererSmokeFrame {
   self.last_batches = @render.collect_rect_batches(commands)
   self.record_native_image_commands(commands)
   let plan = build_native_draw_plan(
@@ -262,7 +262,7 @@ fn RendererHandle::render_offscreen_proof_frame(
       Some(visual_pipeline),
       Some(atlas_texture),
     ) else {
-    println("native WGPU proof renderer is missing GPU resources")
+    println("native WGPU smoke renderer is missing GPU resources")
     abort("MoUI native WGPU renderer smoke failed")
   }
   if self.text_atlas_dirty {
@@ -315,7 +315,7 @@ fn RendererHandle::render_offscreen_proof_frame(
     frame_backdrops,
     frame_buffers,
   )
-  let row_bytes = align_native_proof_row_bytes(width.reinterpret_as_int() * 4)
+  let row_bytes = align_native_smoke_row_bytes(width.reinterpret_as_int() * 4)
   let readback_size = (row_bytes * height.reinterpret_as_int()).to_uint64()
   let readback_usage = @wgpu_mbt.BufferUsage::from_u64(
     @wgpu_mbt.BUFFER_USAGE_MAP_READ | @wgpu_mbt.BUFFER_USAGE_COPY_DST,
@@ -335,7 +335,7 @@ fn RendererHandle::render_offscreen_proof_frame(
   view.release()
   texture.destroy()
   texture.release()
-  detect_native_proof_frame_orientation({
+  detect_native_smoke_frame_orientation({
     width: width.reinterpret_as_int(),
     height: height.reinterpret_as_int(),
     row_bytes,
@@ -345,7 +345,7 @@ fn RendererHandle::render_offscreen_proof_frame(
 }
 
 ///|
-fn align_native_proof_row_bytes(value : Int) -> Int {
+fn align_native_smoke_row_bytes(value : Int) -> Int {
   let rem = value % 256
   if rem == 0 {
     value
@@ -355,7 +355,7 @@ fn align_native_proof_row_bytes(value : Int) -> Int {
 }
 
 ///|
-fn native_proof_commands(async_source : String) -> Array[@core.DrawCommand] {
+fn native_smoke_commands(async_source : String) -> Array[@core.DrawCommand] {
   [
     @core.DrawCommand::Clear(@core.Color::white()),
     @core.DrawCommand::FillRoundedRectBrush(
@@ -477,7 +477,7 @@ fn native_proof_commands(async_source : String) -> Array[@core.DrawCommand] {
 }
 
 ///|
-fn native_proof_png_bytes() -> Bytes {
+fn native_smoke_png_bytes() -> Bytes {
   @base64.decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==",
     ignore_whitespace=true,
@@ -487,54 +487,54 @@ fn native_proof_png_bytes() -> Bytes {
 }
 
 ///|
-fn native_proof_async_png_path(platform_label : String) -> String {
-  "moui-native-wgpu-proof-async-\{platform_label}.png"
+fn native_smoke_async_png_path(platform_label : String) -> String {
+  "moui-native-wgpu-smoke-async-\{platform_label}.png"
 }
 
 ///|
-fn assert_native_proof_radial(frame : NativeRendererProofFrame) -> Unit {
+fn assert_native_smoke_radial(frame : NativeRendererSmokeFrame) -> Unit {
   let center_region = @core.Rect::new(x=28.0, y=28.0, width=9.0, height=9.0)
   let mid_region = @core.Rect::new(x=40.0, y=28.0, width=9.0, height=9.0)
   let edge_region = @core.Rect::new(x=52.0, y=28.0, width=7.0, height=9.0)
   if !region_has_redish_pixel(frame, center_region) {
-    native_proof_fail(
-      "native WGPU proof radial center pixels were not red; " +
+    native_smoke_fail(
+      "native WGPU smoke radial center pixels were not red; " +
       region_red_debug(frame, center_region, "radial_center"),
     )
   }
   if !region_has_purpleish_pixel(frame, mid_region) {
-    native_proof_fail(
-      "native WGPU proof radial mid pixels were not interpolated; " +
+    native_smoke_fail(
+      "native WGPU smoke radial mid pixels were not interpolated; " +
       region_purple_debug(frame, mid_region, "radial_mid"),
     )
   }
   if !region_has_blueish_pixel(frame, edge_region) {
-    native_proof_fail(
-      "native WGPU proof radial edge pixels were not blue; " +
+    native_smoke_fail(
+      "native WGPU smoke radial edge pixels were not blue; " +
       region_blue_debug(frame, edge_region, "radial_edge"),
     )
   }
   if !visual_shader_wgsl().contains("radial_gradient_color") {
-    native_proof_fail(
-      "native WGPU proof shader payload is missing radial shader",
+    native_smoke_fail(
+      "native WGPU smoke shader payload is missing radial shader",
     )
   }
 }
 
 ///|
-fn assert_native_proof_transform(frame : NativeRendererProofFrame) -> Unit {
+fn assert_native_smoke_transform(frame : NativeRendererSmokeFrame) -> Unit {
   if !region_has_dark_magenta_pixel(
       frame,
       @core.Rect::new(x=76.0, y=12.0, width=10.0, height=10.0),
     ) {
-    native_proof_fail("native WGPU proof transform/filter marker missing")
+    native_smoke_fail("native WGPU smoke transform/filter marker missing")
   }
   if !region_has_cyanish_pixel(
       frame,
       @core.Rect::new(x=88.0, y=8.0, width=32.0, height=32.0),
     ) {
-    native_proof_fail(
-      "native WGPU proof transform/path marker missing; " +
+    native_smoke_fail(
+      "native WGPU smoke transform/path marker missing; " +
       region_cyan_debug(
         frame,
         @core.Rect::new(x=88.0, y=8.0, width=32.0, height=32.0),
@@ -557,34 +557,34 @@ fn assert_native_proof_transform(frame : NativeRendererProofFrame) -> Unit {
       frame,
       @core.Rect::new(x=112.0, y=8.0, width=28.0, height=32.0),
     ) {
-    native_proof_fail("native WGPU proof transform/text marker missing")
+    native_smoke_fail("native WGPU smoke transform/text marker missing")
   }
 }
 
 ///|
-fn assert_native_proof_text_evidence(
+fn assert_native_smoke_text_diagnostic(
   renderer : RendererHandle,
   text_engine : NativeTextEngine,
 ) -> Unit {
   if text_engine.provider_id().contains("planned") {
-    native_proof_fail(
-      "native WGPU proof platform text provider is still planned; fallback glyphs cannot prove native provider text/emoji readiness",
+    native_smoke_fail(
+      "native WGPU smoke platform text provider is still planned; fallback glyphs cannot prove native provider text/emoji readiness",
     )
   }
-  assert_native_proof_color_emoji(renderer, text_engine)
+  assert_native_smoke_color_emoji(renderer, text_engine)
 
   let emoji_text = "\u{1F469}\u{200D}\u{1F4BB}"
-  let emoji_run = native_proof_emoji_run(emoji_text)
+  let emoji_run = native_smoke_emoji_run(emoji_text)
   let measured = text_engine.measure(
     renderer.font_cache,
     @core.TextLayoutInput::new(text=emoji_text, font=emoji_run.font),
   )
   if measured.caret_positions.length() < emoji_text.to_array().length() + 1 ||
     !carets_hold_zwj_interior(measured.caret_positions) {
-    native_proof_fail("native WGPU proof ZWJ carets allow an interior break")
+    native_smoke_fail("native WGPU smoke ZWJ carets allow an interior break")
   }
   println(
-    "native WGPU proof zwj carets=\{measured.caret_positions.length()} single-grapheme-cluster no-interior-caret",
+    "native WGPU smoke zwj carets=\{measured.caret_positions.length()} single-grapheme-cluster no-interior-caret",
   )
 
   let bidi = @core.TextRun::new(
@@ -597,13 +597,13 @@ fn assert_native_proof_text_evidence(
   match text_engine.layout_run(renderer.font_cache, bidi, 1.0) {
     Some(layout) =>
       if !glyph_positions_show_visual_order(layout.glyphs) {
-        native_proof_fail(
-          "native WGPU proof bidi visual order was not observable",
+        native_smoke_fail(
+          "native WGPU smoke bidi visual order was not observable",
         )
       }
-    None => native_proof_fail("native WGPU proof bidi layout unavailable")
+    None => native_smoke_fail("native WGPU smoke bidi layout unavailable")
   }
-  println("native WGPU proof bidi visual-order glyph positions recorded")
+  println("native WGPU smoke bidi visual-order glyph positions recorded")
 
   let paragraph = text_engine.measure(
     renderer.font_cache,
@@ -614,15 +614,15 @@ fn assert_native_proof_text_evidence(
     ),
   )
   if paragraph.size.width > 64.0 || paragraph.baseline <= 0.0 {
-    native_proof_fail("native WGPU proof paragraph metrics invalid")
+    native_smoke_fail("native WGPU smoke paragraph metrics invalid")
   }
   println(
-    "native WGPU proof paragraph line-metrics later-line-pixels width=\{paragraph.size.width} baseline=\{paragraph.baseline}",
+    "native WGPU smoke paragraph line-metrics later-line-pixels width=\{paragraph.size.width} baseline=\{paragraph.baseline}",
   )
 }
 
 ///|
-fn native_proof_emoji_run(text : String) -> @core.TextRun {
+fn native_smoke_emoji_run(text : String) -> @core.TextRun {
   @core.TextRun::new(
     text~,
     frame=@core.Rect::new(x=0.0, y=0.0, width=64.0, height=40.0),
@@ -637,7 +637,7 @@ fn native_proof_emoji_run(text : String) -> @core.TextRun {
 }
 
 ///|
-fn assert_native_proof_color_emoji(
+fn assert_native_smoke_color_emoji(
   renderer : RendererHandle,
   text_engine : NativeTextEngine,
 ) -> Unit {
@@ -645,7 +645,7 @@ fn assert_native_proof_color_emoji(
   let mut total_color_glyphs = 0
   let mut total_high_saturation_pixels = 0
   for sample in samples {
-    let run = native_proof_emoji_run(sample)
+    let run = native_smoke_emoji_run(sample)
     match text_engine.layout_run(renderer.font_cache, run, 1.0) {
       Some(layout) => {
         if layout.glyphs.length() < 1 {
@@ -669,7 +669,7 @@ fn assert_native_proof_color_emoji(
         total_high_saturation_pixels += high_saturation_pixels
         if color_glyphs >= 1 && high_saturation_pixels >= 8 {
           println(
-            "native WGPU proof color emoji sample=\{sample} glyphs=\{color_glyphs} high_saturation_pixels=\{high_saturation_pixels}",
+            "native WGPU smoke color emoji sample=\{sample} glyphs=\{color_glyphs} high_saturation_pixels=\{high_saturation_pixels}",
           )
           return
         }
@@ -677,33 +677,33 @@ fn assert_native_proof_color_emoji(
       None => ()
     }
   }
-  native_proof_fail(
-    "native WGPU proof emoji glyph was not a high-saturation RGBA glyph; color_glyphs=\{total_color_glyphs} high_saturation_pixels=\{total_high_saturation_pixels}",
+  native_smoke_fail(
+    "native WGPU smoke emoji glyph was not a high-saturation RGBA glyph; color_glyphs=\{total_color_glyphs} high_saturation_pixels=\{total_high_saturation_pixels}",
   )
 }
 
 ///|
-fn assert_native_proof_async_second_frame(
+fn assert_native_smoke_async_second_frame(
   renderer : RendererHandle,
   commands : Array[@core.DrawCommand],
   source : String,
 ) -> Unit {
-  assert_native_proof_image_status(
+  assert_native_smoke_image_status(
     renderer,
     source,
     @render.ImageResourceStatus::ImageLoading,
   )
-  @fs.write_bytes_to_file(source, native_proof_png_bytes()) catch {
+  @fs.write_bytes_to_file(source, native_smoke_png_bytes()) catch {
     _ =>
-      native_proof_fail(
-        "native WGPU proof async image fixture could not be written",
+      native_smoke_fail(
+        "native WGPU smoke async image fixture could not be written",
       )
   }
   let completion = native_image_load_completion(source)
   let previous_revision = renderer.image_lifecycle.revision()
   let snapshot = renderer.image_lifecycle.apply_load_completion(completion)
   if snapshot.revision <= previous_revision {
-    native_proof_fail("native WGPU proof async image completion was not late")
+    native_smoke_fail("native WGPU smoke async image completion was not late")
   }
   match completion.status {
     @render.ImageResourceLoadCompletionStatus::ImageLoadReady =>
@@ -711,32 +711,32 @@ fn assert_native_proof_async_second_frame(
     @render.ImageResourceLoadCompletionStatus::ImageLoadFailed =>
       renderer.failed_images[completion.source] = true
   }
-  assert_native_proof_image_status(
+  assert_native_smoke_image_status(
     renderer,
     source,
     @render.ImageResourceStatus::ImageReady,
   )
   let second_frame = renderer.render_offscreen_proof_frame(commands)
   if renderer.present_count < 2 {
-    native_proof_fail(
-      "native WGPU proof async image did not present second frame",
+    native_smoke_fail(
+      "native WGPU smoke async image did not present second frame",
     )
   }
   if !pixel_is_redish(second_frame.pixel(141, 93)) {
-    native_proof_fail(
-      "native WGPU proof async second-frame image pixel missing",
+    native_smoke_fail(
+      "native WGPU smoke async second-frame image pixel missing",
     )
   }
   @fs.remove_file(source) catch {
     _ => ()
   }
   println(
-    "native WGPU proof async image late-completion second-frame-pixels renderer-lifecycle",
+    "native WGPU smoke async image late-completion second-frame-pixels renderer-lifecycle",
   )
 }
 
 ///|
-fn assert_native_proof_image_status(
+fn assert_native_smoke_image_status(
   renderer : RendererHandle,
   source : String,
   status : @render.ImageResourceStatus,
@@ -744,17 +744,17 @@ fn assert_native_proof_image_status(
   for record in renderer.image_lifecycle.snapshot() {
     if record.source == source {
       if record.status != status {
-        native_proof_fail("native WGPU proof image resource status mismatch")
+        native_smoke_fail("native WGPU smoke image resource status mismatch")
       }
       return ()
     }
   }
-  native_proof_fail("native WGPU proof image resource was not tracked")
+  native_smoke_fail("native WGPU smoke image resource was not tracked")
 }
 
 ///|
-fn NativeRendererProofFrame::pixel(
-  self : NativeRendererProofFrame,
+fn NativeRendererSmokeFrame::pixel(
+  self : NativeRendererSmokeFrame,
   x : Int,
   y : Int,
 ) -> (Int, Int, Int, Int) {
@@ -775,10 +775,10 @@ fn NativeRendererProofFrame::pixel(
 }
 
 ///|
-fn NativeRendererProofFrame::with_y_orientation(
-  self : NativeRendererProofFrame,
+fn NativeRendererSmokeFrame::with_y_orientation(
+  self : NativeRendererSmokeFrame,
   flip_y : Bool,
-) -> NativeRendererProofFrame {
+) -> NativeRendererSmokeFrame {
   {
     width: self.width,
     height: self.height,
@@ -789,14 +789,14 @@ fn NativeRendererProofFrame::with_y_orientation(
 }
 
 ///|
-fn detect_native_proof_frame_orientation(
-  frame : NativeRendererProofFrame,
-) -> NativeRendererProofFrame {
-  let upright_score = native_proof_orientation_score(frame, flip_y=false)
-  let flipped_score = native_proof_orientation_score(frame, flip_y=true)
+fn detect_native_smoke_frame_orientation(
+  frame : NativeRendererSmokeFrame,
+) -> NativeRendererSmokeFrame {
+  let upright_score = native_smoke_orientation_score(frame, flip_y=false)
+  let flipped_score = native_smoke_orientation_score(frame, flip_y=true)
   if flipped_score >= 3 && flipped_score > upright_score {
     println(
-      "native WGPU proof readback rows use bottom-left origin; normalizing logical pixel checks",
+      "native WGPU smoke readback rows use bottom-left origin; normalizing logical pixel checks",
     )
     frame.with_y_orientation(true)
   } else {
@@ -805,8 +805,8 @@ fn detect_native_proof_frame_orientation(
 }
 
 ///|
-fn native_proof_orientation_score(
-  frame : NativeRendererProofFrame,
+fn native_smoke_orientation_score(
+  frame : NativeRendererSmokeFrame,
   flip_y~ : Bool,
 ) -> Int {
   let candidate = frame.with_y_orientation(flip_y)
@@ -876,7 +876,7 @@ fn pixel_is_cyanish(pixel : (Int, Int, Int, Int)) -> Bool {
 
 ///|
 fn region_has_redish_pixel(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
@@ -898,7 +898,7 @@ fn region_has_redish_pixel(
 
 ///|
 fn region_has_purpleish_pixel(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
@@ -920,7 +920,7 @@ fn region_has_purpleish_pixel(
 
 ///|
 fn region_has_blueish_pixel(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
@@ -942,7 +942,7 @@ fn region_has_blueish_pixel(
 
 ///|
 fn region_has_dark_magenta_pixel(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
@@ -964,7 +964,7 @@ fn region_has_dark_magenta_pixel(
 
 ///|
 fn region_has_cyanish_pixel(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)
@@ -986,7 +986,7 @@ fn region_has_cyanish_pixel(
 
 ///|
 fn region_cyan_debug(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
   label : String,
 ) -> String {
@@ -1039,33 +1039,33 @@ fn region_cyan_debug(
 
 ///|
 fn region_red_debug(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
   label : String,
 ) -> String {
-  region_best_pixel_debug(frame, rect, label, NativeProofDebugColor::Red)
+  region_best_pixel_debug(frame, rect, label, NativeSmokeDebugColor::Red)
 }
 
 ///|
 fn region_purple_debug(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
   label : String,
 ) -> String {
-  region_best_pixel_debug(frame, rect, label, NativeProofDebugColor::Purple)
+  region_best_pixel_debug(frame, rect, label, NativeSmokeDebugColor::Purple)
 }
 
 ///|
 fn region_blue_debug(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
   label : String,
 ) -> String {
-  region_best_pixel_debug(frame, rect, label, NativeProofDebugColor::Blue)
+  region_best_pixel_debug(frame, rect, label, NativeSmokeDebugColor::Blue)
 }
 
 ///|
-priv enum NativeProofDebugColor {
+priv enum NativeSmokeDebugColor {
   Red
   Purple
   Blue
@@ -1073,10 +1073,10 @@ priv enum NativeProofDebugColor {
 
 ///|
 fn region_best_pixel_debug(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
   label : String,
-  color : NativeProofDebugColor,
+  color : NativeSmokeDebugColor,
 ) -> String {
   let min_x = rect.origin.x.floor().to_int().max(0)
   let min_y = rect.origin.y.floor().to_int().max(0)
@@ -1131,7 +1131,7 @@ fn region_best_pixel_debug(
 
 ///|
 fn region_has_dark_pixel(
-  frame : NativeRendererProofFrame,
+  frame : NativeRendererSmokeFrame,
   rect : @core.Rect,
 ) -> Bool {
   let min_x = rect.origin.x.floor().to_int().max(0)

@@ -2,6 +2,7 @@
 package "wzzc-dev/moui/backend/macos/wgpu"
 
 import {
+  "Milky2018/wgpu_mbt",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos",
   "wzzc-dev/moui/core",
@@ -14,14 +15,24 @@ pub fn run_app(String, @core.AppRuntime) -> Unit
 
 pub fn run_app_with_options(String, @core.AppRuntime, options~ : MacosWgpuAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
+pub fn run_renderer_smoke() -> Unit raise @wgpu_mbt.WgpuError
+
+pub fn run_smoke_app_with_options(String, @core.AppRuntime, options~ : MacosWgpuAppOptions, smoke_options? : MacosWgpuSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
 // Errors
 
 // Types and methods
 pub struct MacosWgpuAppOptions {
   // private fields
 }
-pub fn MacosWgpuAppOptions::new(text_engine? : @wzzc-dev/moui/render/wgpu.NativeTextEngineSetting, scene_resolver? : @host.HostWindowSceneResolver, exit_after_first_present? : Bool) -> Self
+pub fn MacosWgpuAppOptions::new(text_engine? : @wzzc-dev/moui/render/wgpu.NativeTextEngineSetting, scene_resolver? : @host.HostWindowSceneResolver) -> Self
+
+pub struct MacosWgpuSmokeOptions {
+  // private fields
+}
+pub fn MacosWgpuSmokeOptions::new(first_frame_smoke_auto_exit? : Bool) -> Self
 
 // Type aliases
 
 // Traits
+

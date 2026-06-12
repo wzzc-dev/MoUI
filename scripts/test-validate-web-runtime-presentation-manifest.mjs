@@ -57,11 +57,11 @@ const observations = value => Object.fromEntries(observationKeys.map(key => [key
 const platformObservations = value =>
   Object.fromEntries(platformObservationKeys.map(key => [key, value]));
 
-const smoke = (name, status, evidence, extra = {}) => ({
+const smoke = (name, status, observation, extra = {}) => ({
   required: name === "showcase-web-wasm",
   passed: name === "showcase-web-wasm" && status === "passed",
-  evidence: name === "showcase-web-wasm" && status === "passed" ? evidence : [],
-  matchedMarkers: name === "showcase-web-wasm" && status === "passed" ? evidence.length : 0,
+  markers: name === "showcase-web-wasm" && status === "passed" ? observation : [],
+  matchedMarkers: name === "showcase-web-wasm" && status === "passed" ? observation.length : 0,
   ...(name === "showcase-web-wasm" && status === "passed" ? extra : {}),
 });
 
@@ -169,7 +169,7 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
       },
     }),
   },
-  evidenceEvents: status === "passed"
+  observationEvents: status === "passed"
     ? [
         { kind: 10, name: "resize" },
         { kind: 23, name: "pointer_down" },
@@ -220,7 +220,7 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
     asyncImageSecondFrame: name === "showcase-web-wasm" && status === "passed" ? "yes" : "no",
   },
   consoleErrors: status === "passed" ? [] : ["Browser WebGPU is required"],
-  notes: status === "passed" ? ["browser evidence captured"] : ["navigator.gpu unavailable"],
+  notes: status === "passed" ? ["browser observation captured"] : ["navigator.gpu unavailable"],
 });
 
 const validManifest = {
@@ -230,8 +230,8 @@ const validManifest = {
   baseUrl: "http://127.0.0.1:18080",
   cdpUrl: "http://127.0.0.1:9223",
   overallStatus: "passed",
-  evidenceBoundary:
-    "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
+  observationBoundary:
+    "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot observation for the named browser session; this does not claim cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
   browser: {
     product: "Chrome/148.0.7778.216",
     userAgent: "Mozilla/5.0 HeadlessChrome/148.0.0.0",
@@ -309,7 +309,7 @@ expectFail(
       ),
     }),
   ),
-  "passed evidence must not contain console errors",
+  "passed observation must not contain console errors",
 );
 
 expectFail(
@@ -331,7 +331,7 @@ expectFail(
       ),
     }),
   ),
-  "passed evidence requires a nonblank screenshot",
+  "passed observation requires a nonblank screenshot",
 );
 
 expectFail(
@@ -357,7 +357,7 @@ expectFail(
       ),
     }),
   ),
-  "targets[0].observations.transformPixels must be yes for passed evidence",
+  "targets[0].observations.transformPixels must be yes for passed observation",
 );
 
 expectFail(
@@ -386,18 +386,18 @@ expectFail(
 );
 
 expectFail(
-  "weak evidence boundary",
+  "weak observation boundary",
   runValidator(
     writeFixture("weak-boundary.json", {
       ...validManifest,
-      evidenceBoundary: "Browser smoke.",
+      observationBoundary: "Browser smoke.",
     }),
   ),
-  "evidenceBoundary must include 'WebGPU'",
+  "observationBoundary must include 'WebGPU'",
 );
 
 expectFail(
-  "passed manifest with failed platform resize evidence",
+  "passed manifest with failed platform resize observation",
   runValidator(
     writeFixture("failed-platform-resize.json", {
       ...validManifest,
@@ -411,7 +411,7 @@ expectFail(
 );
 
 expectFail(
-  "missing event bridge evidence",
+  "missing event bridge observation",
   runValidator(
     writeFixture("missing-event-bridge.json", {
       ...validManifest,
@@ -422,7 +422,7 @@ expectFail(
       ),
     }),
   ),
-  "targets[0].observations.resizeEvent must be yes for passed evidence",
+  "targets[0].observations.resizeEvent must be yes for passed observation",
 );
 
 expectFail(
@@ -480,7 +480,7 @@ expectFail(
 );
 
 expectFail(
-  "passed selection smoke with weak evidence",
+  "passed selection smoke with weak observation",
   runValidator(
     writeFixture("weak-selection-smoke.json", {
       ...validManifest,
@@ -492,7 +492,7 @@ expectFail(
                 ...target.screenshot,
                 selectionRects: {
                   ...target.screenshot.selectionRects,
-                  evidence: ["selection-rects"],
+                  markers: ["selection-rects"],
                 },
               },
             }
@@ -500,7 +500,7 @@ expectFail(
       ),
     }),
   ),
-  "screenshot.selectionRects.evidence must include 'line-range'",
+  "screenshot.selectionRects.markers must include 'line-range'",
 );
 
 expectFail(

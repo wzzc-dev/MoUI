@@ -65,11 +65,11 @@ if (
     target.screenshot.transformPixels.required === (target.name === "showcase-web-wasm") &&
     target.screenshot.radialGradient.required === (target.name === "showcase-web-wasm") &&
     target.screenshot.asyncImageSecondFrame.required === (target.name === "showcase-web-wasm") &&
-    target.evidenceEvents.length === 0 &&
+    target.observationEvents.length === 0 &&
     target.consoleErrors.length > 0
   )
 ) {
-  console.error("CDP preflight failure manifest did not record structured failed evidence");
+  console.error("CDP preflight failure manifest did not record structured failed observation");
   process.exit(1);
 }
 

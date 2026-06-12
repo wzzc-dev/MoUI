@@ -120,10 +120,10 @@ const failedPlatformObservations = () => ({
   cleanShutdown: "no",
 });
 
-const evidenceBoundary =
-  "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, Showcase transform-scene pixel markers, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels beyond the recorded marker thresholds, or native platform runtime behavior.";
+const observationBoundary =
+  "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, Showcase transform-scene pixel markers, and screenshot observations for the named browser session; this does not claim cross-browser compatibility, deterministic pixels beyond the recorded marker thresholds, or native platform runtime behavior.";
 
-const emptyTransformPixelEvidence = required => ({
+const emptyTransformPixelMarkers = required => ({
   required,
   passed: false,
   hotPinkPixels: 0,
@@ -132,10 +132,10 @@ const emptyTransformPixelEvidence = required => ({
   matchedMarkers: 0,
 });
 
-const emptyRendererSmokeEvidence = required => ({
+const emptyRendererSmokeMarkers = required => ({
   required,
   passed: false,
-  evidence: [],
+  markers: [],
   matchedMarkers: 0,
 });
 
@@ -207,7 +207,7 @@ const printFailureSummary = manifest => {
     if ((target?.consoleErrors ?? []).length > 0) {
       console.error(`    consoleErrors=${target.consoleErrors.join(" | ")}`);
     }
-    console.error(`    evidenceEvents=${summarizeEventNames(target?.evidenceEvents)}`);
+    console.error(`    observationEvents=${summarizeEventNames(target?.observationEvents)}`);
   }
 };
 
@@ -249,7 +249,7 @@ const writePreflightFailureManifest = error => {
       wasmStarted: false,
       running: false,
     },
-    evidenceEvents: [],
+    observationEvents: [],
     screenshot: {
       artifact: join("artifacts/conformance/web-runtime-presentation", `${target.name}.png`),
       width: 0,
@@ -257,21 +257,21 @@ const writePreflightFailureManifest = error => {
       totalPixels: 0,
       contentPixels: 0,
       distinctColorBuckets: 0,
-      transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
-      radialGradient: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      colorEmojiPixels: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      zwjGrapheme: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      bidiLayout: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      paragraphWrapping: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      selectionRects: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      graphemeEditing: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      imeCandidateAnchor: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      imeCompositionVisual: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      asyncImageSecondFrame: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      transformPixels: emptyTransformPixelMarkers(targetRequiresTransformPixels(target)),
+      radialGradient: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      colorEmojiPixels: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      zwjGrapheme: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      bidiLayout: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      paragraphWrapping: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      selectionRects: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      graphemeEditing: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      imeCandidateAnchor: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      imeCompositionVisual: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      asyncImageSecondFrame: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
     },
     observations: failedObservations(),
     consoleErrors: [message],
-    notes: ["Browser/CDP preflight failed before page evidence could be collected"],
+    notes: ["Browser/CDP preflight failed before page observations could be collected"],
   }));
   const manifest = {
     schemaVersion: 1,
@@ -280,7 +280,7 @@ const writePreflightFailureManifest = error => {
     baseUrl: normalizeBaseUrl(baseUrl),
     cdpUrl: normalizeBaseUrl(cdpUrl),
     overallStatus: "failed",
-    evidenceBoundary,
+    observationBoundary,
     browser: {
       product: "unavailable",
       userAgent: "unavailable",
@@ -548,16 +548,16 @@ const summarizeRendererSmokePixels = (png, target) => {
   const required = targetRequiresRendererSmokePixels(target);
   if (!required) {
     return {
-      radialGradient: emptyRendererSmokeEvidence(false),
-      colorEmojiPixels: emptyRendererSmokeEvidence(false),
-      zwjGrapheme: emptyRendererSmokeEvidence(false),
-      bidiLayout: emptyRendererSmokeEvidence(false),
-      paragraphWrapping: emptyRendererSmokeEvidence(false),
-      selectionRects: emptyRendererSmokeEvidence(false),
-      graphemeEditing: emptyRendererSmokeEvidence(false),
-      imeCandidateAnchor: emptyRendererSmokeEvidence(false),
-      imeCompositionVisual: emptyRendererSmokeEvidence(false),
-      asyncImageSecondFrame: emptyRendererSmokeEvidence(false),
+      radialGradient: emptyRendererSmokeMarkers(false),
+      colorEmojiPixels: emptyRendererSmokeMarkers(false),
+      zwjGrapheme: emptyRendererSmokeMarkers(false),
+      bidiLayout: emptyRendererSmokeMarkers(false),
+      paragraphWrapping: emptyRendererSmokeMarkers(false),
+      selectionRects: emptyRendererSmokeMarkers(false),
+      graphemeEditing: emptyRendererSmokeMarkers(false),
+      imeCandidateAnchor: emptyRendererSmokeMarkers(false),
+      imeCompositionVisual: emptyRendererSmokeMarkers(false),
+      asyncImageSecondFrame: emptyRendererSmokeMarkers(false),
     };
   }
 
@@ -603,7 +603,7 @@ const summarizeRendererSmokePixels = (png, target) => {
     radialGradient: {
       required: true,
       passed: radialPassed,
-      evidence: radialPassed ? ["center-mid-edge-pixels", "shader-payload"] : [],
+      markers: radialPassed ? ["center-mid-edge-pixels", "shader-payload"] : [],
       matchedMarkers: [redPixels >= 24, bluePixels >= 24, midGradientPixels >= 8].filter(Boolean).length,
       redPixels,
       bluePixels,
@@ -612,20 +612,20 @@ const summarizeRendererSmokePixels = (png, target) => {
     colorEmojiPixels: {
       required: true,
       passed: false,
-      evidence: [],
+      markers: [],
       matchedMarkers: 0,
       highSaturationPixels,
     },
     zwjGrapheme: {
       required: true,
       passed: false,
-      evidence: [],
+      markers: [],
       matchedMarkers: 0,
     },
     bidiLayout: {
       required: true,
       passed: bidiPassed,
-      evidence: bidiPassed ? ["visual-order"] : [],
+      markers: bidiPassed ? ["visual-order"] : [],
       matchedMarkers: bidiPassed ? 1 : 0,
       darkTextPixels,
       darkRows: darkRows.size,
@@ -633,16 +633,16 @@ const summarizeRendererSmokePixels = (png, target) => {
     paragraphWrapping: {
       required: true,
       passed: paragraphPassed,
-      evidence: paragraphPassed ? ["line-metrics", "later-line-pixels"] : [],
+      markers: paragraphPassed ? ["line-metrics", "later-line-pixels"] : [],
       matchedMarkers: paragraphPassed ? 2 : 0,
       darkTextPixels,
       darkRows: darkRows.size,
     },
-    selectionRects: emptyRendererSmokeEvidence(true),
-    graphemeEditing: emptyRendererSmokeEvidence(true),
-    imeCandidateAnchor: emptyRendererSmokeEvidence(true),
-    imeCompositionVisual: emptyRendererSmokeEvidence(true),
-    asyncImageSecondFrame: emptyRendererSmokeEvidence(true),
+    selectionRects: emptyRendererSmokeMarkers(true),
+    graphemeEditing: emptyRendererSmokeMarkers(true),
+    imeCandidateAnchor: emptyRendererSmokeMarkers(true),
+    imeCompositionVisual: emptyRendererSmokeMarkers(true),
+    asyncImageSecondFrame: emptyRendererSmokeMarkers(true),
   };
 };
 
@@ -663,7 +663,7 @@ const summarizeTargetScreenshot = (base64, target) => {
   }
   const transformPixels = targetRequiresTransformPixels(target)
     ? summarizeTransformPixels(png)
-    : emptyTransformPixelEvidence(false);
+    : emptyTransformPixelMarkers(false);
   const rendererSmokePixels = summarizeRendererSmokePixels(png, target);
   return {
     width: png.width,
@@ -702,9 +702,9 @@ const collectPageState = async session => {
   })()`);
 };
 
-const collectEvidenceEvents = async session => {
+const collectObservationEvents = async session => {
   return await evaluate(session, `(() => {
-    const events = globalThis.__mouiWebRuntimeEvidence?.events;
+    const events = globalThis.__mouiWebRuntimeObservation?.events;
     return Array.isArray(events) ? events : [];
   })()`);
 };
@@ -881,7 +881,7 @@ const rendererSmokeEventsReady = events => {
   );
 };
 
-const presentationEvidenceReady = (target, state, events) => {
+const presentationObservationReady = (target, state, events) => {
   if (state.bodyFailed || state.statusText !== "Running") return false;
   if (targetRequiresRendererSmokePixels(target)) {
     return rendererSmokeEventsReady(events);
@@ -889,15 +889,15 @@ const presentationEvidenceReady = (target, state, events) => {
   return maxPresentFrame(events) >= 1;
 };
 
-const waitForPresentationEvidence = async (session, target, initialState) => {
+const waitForPresentationObservation = async (session, target, initialState) => {
   let state = initialState;
-  let events = await collectEvidenceEvents(session);
+  let events = await collectObservationEvents(session);
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (presentationEvidenceReady(target, state, events)) break;
+    if (presentationObservationReady(target, state, events)) break;
     await sleep(250);
     state = await collectPageState(session);
-    events = await collectEvidenceEvents(session);
+    events = await collectObservationEvents(session);
   }
   return { state, events };
 };
@@ -1028,9 +1028,9 @@ const deriveRendererSmokeFromEvents = (screenshot, target, events) => {
   return {
     ...screenshot,
     colorEmojiPixels: {
-      ...(screenshot.colorEmojiPixels ?? emptyRendererSmokeEvidence(true)),
+      ...(screenshot.colorEmojiPixels ?? emptyRendererSmokeMarkers(true)),
       passed: !!colorGlyph,
-      evidence: colorGlyph
+      markers: colorGlyph
         ? ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"]
         : [],
       matchedMarkers: colorGlyph ? 2 : 0,
@@ -1039,49 +1039,49 @@ const deriveRendererSmokeFromEvents = (screenshot, target, events) => {
       ...(colorEmojiMetadata ? { metadata: colorEmojiMetadata } : {}),
     },
     zwjGrapheme: {
-      ...(screenshot.zwjGrapheme ?? emptyRendererSmokeEvidence(true)),
+      ...(screenshot.zwjGrapheme ?? emptyRendererSmokeMarkers(true)),
       passed: !!grapheme,
-      evidence: grapheme ? ["single-grapheme-cluster", "no-interior-caret"] : [],
+      markers: grapheme ? ["single-grapheme-cluster", "no-interior-caret"] : [],
       matchedMarkers: grapheme ? 2 : 0,
       logicalClusters: Number(grapheme?.logicalClusters ?? 0),
       visualClusters: Number(grapheme?.visualClusters ?? 0),
     },
     bidiLayout: {
-      ...(screenshot.bidiLayout ?? emptyRendererSmokeEvidence(true)),
+      ...(screenshot.bidiLayout ?? emptyRendererSmokeMarkers(true)),
       passed: !!bidi,
-      evidence: bidi ? ["visual-order"] : [],
+      markers: bidi ? ["visual-order"] : [],
       matchedMarkers: bidi ? 1 : 0,
       logicalClusters: bidi?.logicalClusters ?? [],
       visualClusters: bidi?.visualClusters ?? [],
     },
     paragraphWrapping: {
-      ...(screenshot.paragraphWrapping ?? emptyRendererSmokeEvidence(true)),
+      ...(screenshot.paragraphWrapping ?? emptyRendererSmokeMarkers(true)),
       passed: paragraphPassed,
-      evidence: paragraphPassed ? ["line-metrics", "later-line-pixels"] : [],
+      markers: paragraphPassed ? ["line-metrics", "later-line-pixels"] : [],
       matchedMarkers: paragraphPassed ? 2 : 0,
       paragraphLineCount: paragraphLineIndexes.size,
       paragraphRows: paragraphYs.size,
     },
     selectionRects: {
-      ...(screenshot.selectionRects ?? emptyRendererSmokeEvidence(true)),
+      ...(screenshot.selectionRects ?? emptyRendererSmokeMarkers(true)),
       passed: selectionPassed,
-      evidence: selectionPassed ? ["selection-rects", "line-range"] : [],
+      markers: selectionPassed ? ["selection-rects", "line-range"] : [],
       matchedMarkers: selectionPassed ? 2 : 0,
       paragraphLineCount: paragraphLineIndexes.size,
       hitTestEvent: !!bidi,
     },
     graphemeEditing: {
-      ...(screenshot.graphemeEditing ?? emptyRendererSmokeEvidence(true)),
+      ...(screenshot.graphemeEditing ?? emptyRendererSmokeMarkers(true)),
       passed: graphemeEditingPassed,
-      evidence: graphemeEditingPassed ? ["grapheme-boundaries", "edit-actions"] : [],
+      markers: graphemeEditingPassed ? ["grapheme-boundaries", "edit-actions"] : [],
       matchedMarkers: graphemeEditingPassed ? 2 : 0,
       commitText: imeCommit?.text ?? "",
       editKey: arrowEditAction?.text ?? "",
     },
     imeCandidateAnchor: {
-      ...(screenshot.imeCandidateAnchor ?? emptyRendererSmokeEvidence(true)),
+      ...(screenshot.imeCandidateAnchor ?? emptyRendererSmokeMarkers(true)),
       passed: imeCandidateAnchorPassed,
-      evidence: imeCandidateAnchorPassed
+      markers: imeCandidateAnchorPassed
         ? ["candidate-anchor", "surrounding-text", "grapheme-boundary", "utf8-offsets"]
         : [],
       matchedMarkers: imeCandidateAnchorPassed ? 4 : 0,
@@ -1098,9 +1098,9 @@ const deriveRendererSmokeFromEvents = (screenshot, target, events) => {
       surroundingAnchor: Number(imeSurrounding?.anchor ?? 0),
     },
     imeCompositionVisual: {
-      ...(screenshot.imeCompositionVisual ?? emptyRendererSmokeEvidence(true)),
+      ...(screenshot.imeCompositionVisual ?? emptyRendererSmokeMarkers(true)),
       passed: imeCompositionPassed,
-      evidence: imeCompositionPassed
+      markers: imeCompositionPassed
         ? ["composition-range", "composition-cursor", "preedit-pixels"]
         : [],
       matchedMarkers: imeCompositionPassed ? 3 : 0,
@@ -1110,7 +1110,7 @@ const deriveRendererSmokeFromEvents = (screenshot, target, events) => {
     asyncImageSecondFrame: {
       required: true,
       passed: asyncPassed,
-      evidence: asyncPassed ? ["late-completion", "repaint-request", "second-frame-pixels"] : [],
+      markers: asyncPassed ? ["late-completion", "repaint-request", "second-frame-pixels"] : [],
       matchedMarkers: asyncPassed ? 3 : 0,
       eventIndexes: {
         placeholder: placeholderIndex,
@@ -1190,7 +1190,7 @@ const consoleErrorsFor = events => {
 const probeTarget = async target => {
   const pageTarget = await createPageTarget();
   const session = new CdpSession(pageTarget.webSocketDebuggerUrl);
-  const url = `${targetUrl(target)}&evidence=${Date.now()}`;
+  const url = `${targetUrl(target)}&observation=${Date.now()}`;
   const artifact = join(
     "artifacts/conformance/web-runtime-presentation",
     `${target.name}.png`,
@@ -1205,7 +1205,7 @@ const probeTarget = async target => {
     await session.send("Runtime.enable");
     await session.send("Log.enable");
     await session.send("Page.addScriptToEvaluateOnNewDocument", {
-      source: `globalThis.__mouiWebRuntimeEvidence = {
+      source: `globalThis.__mouiWebRuntimeObservation = {
         events: [],
         recordEvent(event) { this.events.push(event); }
       };`,
@@ -1228,9 +1228,9 @@ const probeTarget = async target => {
     await sleep(500);
     await performInteractionProbe(session, target);
     state = await collectPageState(session);
-    const evidence = await waitForPresentationEvidence(session, target, state);
-    state = evidence.state;
-    const evidenceEvents = evidence.events;
+    const observation = await waitForPresentationObservation(session, target, state);
+    state = observation.state;
+    const observationEvents = observation.events;
 
     let screenshotError = "";
     let screenshot = {
@@ -1240,17 +1240,17 @@ const probeTarget = async target => {
       totalPixels: 0,
       contentPixels: 0,
       distinctColorBuckets: 0,
-      transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
-      radialGradient: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      colorEmojiPixels: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      zwjGrapheme: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      bidiLayout: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      paragraphWrapping: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      selectionRects: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      graphemeEditing: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      imeCandidateAnchor: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      imeCompositionVisual: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      asyncImageSecondFrame: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      transformPixels: emptyTransformPixelMarkers(targetRequiresTransformPixels(target)),
+      radialGradient: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      colorEmojiPixels: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      zwjGrapheme: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      bidiLayout: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      paragraphWrapping: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      selectionRects: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      graphemeEditing: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      imeCandidateAnchor: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      imeCompositionVisual: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      asyncImageSecondFrame: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
     };
     try {
       const screenshotResult = await session.send("Page.captureScreenshot", {
@@ -1267,7 +1267,7 @@ const probeTarget = async target => {
       screenshotError = `Screenshot capture failed: ${error.message}`;
     }
     const runtimeSignals = runtimeSignalsFromLog(state.logText);
-    screenshot = deriveRendererSmokeFromEvents(screenshot, target, evidenceEvents);
+    screenshot = deriveRendererSmokeFromEvents(screenshot, target, observationEvents);
     const errors = consoleErrorsFor(session.events);
     if (screenshotError) {
       errors.push(screenshotError);
@@ -1303,11 +1303,11 @@ const probeTarget = async target => {
       canvasSized: state.canvas.canvasWidth > 0 && state.canvas.canvasHeight > 0 ? "yes" : "no",
       nonblankScreenshot: screenshot.contentPixels >= 500 && screenshot.distinctColorBuckets >= 6 ? "yes" : "no",
       cleanConsole: errors.length === 0 ? "yes" : "no",
-      resizeEvent: hasEvent(evidenceEvents, ["resize"]) ? "yes" : "no",
+      resizeEvent: hasEvent(observationEvents, ["resize"]) ? "yes" : "no",
       resizedCanvas: state.canvas.clientWidth === 1120 && state.canvas.clientHeight === 720 ? "yes" : "no",
-      pointerInput: hasEvent(evidenceEvents, ["pointer_down", "pointer_up", "pointer_move"]) ? "yes" : "no",
-      keyboardInput: hasEvent(evidenceEvents, ["key_down", "key_up"]) ? "yes" : "no",
-      textInput: hasEvent(evidenceEvents, ["ime_commit"]) ? "yes" : "no",
+      pointerInput: hasEvent(observationEvents, ["pointer_down", "pointer_up", "pointer_move"]) ? "yes" : "no",
+      keyboardInput: hasEvent(observationEvents, ["key_down", "key_up"]) ? "yes" : "no",
+      textInput: hasEvent(observationEvents, ["ime_commit"]) ? "yes" : "no",
       radialGradient: screenshot.radialGradient?.passed ? "yes" : "no",
       transformPixels: screenshot.transformPixels?.passed ? "yes" : "no",
       colorEmojiPixels: screenshot.colorEmojiPixels?.passed ? "yes" : "no",
@@ -1322,10 +1322,10 @@ const probeTarget = async target => {
       targetClosed: targetClosed ? "yes" : "no",
     };
     if (observations.resizeEvent !== "yes" || observations.resizedCanvas !== "yes") {
-      notes.push("resize evidence did not reach the wasm event bridge and resized canvas state");
+      notes.push("resize observation did not reach the wasm event bridge and resized canvas state");
     }
     if (observations.pointerInput !== "yes" || observations.keyboardInput !== "yes") {
-      notes.push("representative input evidence did not reach the wasm event bridge");
+      notes.push("representative input observation did not reach the wasm event bridge");
     }
     if (observations.textInput !== "yes") {
       notes.push("text input commit was not observed for this target");
@@ -1347,12 +1347,12 @@ const probeTarget = async target => {
         ["asyncImageSecondFrame", "async image second-frame"],
       ]) {
         if (observations[key] !== "yes") {
-          notes.push(`Showcase ${label} evidence was not observed`);
+          notes.push(`Showcase ${label} marker was not observed`);
         }
       }
     }
     if (observations.targetClosed !== "yes") {
-      notes.push("CDP target did not close cleanly after evidence collection");
+      notes.push("CDP target did not close cleanly after observation collection");
     }
     const status = deriveTargetStatus(target, observations);
 
@@ -1368,7 +1368,7 @@ const probeTarget = async target => {
       navigatorGpu: state.navigatorGpu,
       canvas: state.canvas,
       runtimeSignals,
-      evidenceEvents,
+      observationEvents,
       screenshot,
       observations,
       consoleErrors: errors,
@@ -1382,17 +1382,17 @@ const probeTarget = async target => {
       totalPixels: 0,
       contentPixels: 0,
       distinctColorBuckets: 0,
-      transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
-      radialGradient: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      colorEmojiPixels: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      zwjGrapheme: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      bidiLayout: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      paragraphWrapping: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      selectionRects: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      graphemeEditing: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      imeCandidateAnchor: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      imeCompositionVisual: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
-      asyncImageSecondFrame: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      transformPixels: emptyTransformPixelMarkers(targetRequiresTransformPixels(target)),
+      radialGradient: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      colorEmojiPixels: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      zwjGrapheme: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      bidiLayout: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      paragraphWrapping: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      selectionRects: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      graphemeEditing: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      imeCandidateAnchor: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      imeCompositionVisual: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
+      asyncImageSecondFrame: emptyRendererSmokeMarkers(targetRequiresRendererSmokePixels(target)),
     };
     return {
       name: target.name,
@@ -1420,10 +1420,10 @@ const probeTarget = async target => {
         running: false,
       },
       screenshot: fallbackScreenshot,
-      evidenceEvents: [],
+      observationEvents: [],
       observations: failedObservations(),
       consoleErrors: [error.message],
-      notes: ["CDP probe failed before page evidence was complete"],
+      notes: ["CDP probe failed before page observation was complete"],
     };
   } finally {
     session.close();
@@ -1507,7 +1507,7 @@ const manifest = {
   baseUrl: normalizeBaseUrl(baseUrl),
   cdpUrl: normalizeBaseUrl(cdpUrl),
   overallStatus,
-  evidenceBoundary,
+  observationBoundary,
   browser: {
     product: browserVersion.Browser ?? "unknown",
     userAgent: browserVersion["User-Agent"] ?? "unknown",

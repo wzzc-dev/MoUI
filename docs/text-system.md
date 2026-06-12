@@ -147,7 +147,7 @@ to the system `FontMgr` path, so normal native Skia entrypoints exercise
 platform font lookup, emoji retry, and optional SkShaper when linked. The
 renderer package also exposes `skia_text_system()` directly so the Skia
 measurement path can be included in native diagnostic text conformance without
-requiring a platform window or treating provider checks as runtime evidence.
+requiring a platform window or treating provider checks as runtime observation.
 Those diagnostics assert monotonic caret coverage and max-width clamping for
 mixed CJK, emoji, ZWJ emoji, Indic mark, Arabic mark, Thai mark, Lao mark,
 Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo, and bidi samples,
@@ -157,11 +157,9 @@ Skia measurement path drives focused text-input composition caret geometry and
 selection highlight drawing. Fallback-safe diagnostics do not claim visual bidi
 reordering, native-platform IME runtime behavior, or native SkParagraph parity;
 only matching-host real-Skia SkParagraph smoke logs may claim those
-observations. macOS
-first-frame smoke entrypoints still explicitly select
-`SkiaFontResolution::EmptyTypeface` when their exit-after-first-present
-environment flag is set; that keeps CLI smoke runs on the safer default-font
-retry path without changing the normal app default. The fallback-safe Skia
+observations. macOS tester-owned first-frame smoke entrypoints still explicitly
+select `SkiaFontResolution::EmptyTypeface`; that keeps CLI smoke runs on the
+safer default-font retry path without changing the normal app default. The fallback-safe Skia
 renderer tests also consume the
 new `moui_skia` `FontFallbackRequest`, `TextMeasurementDescriptor`,
 `TextShapingDescriptor`, `ShapedTextRunDescriptor`, and
@@ -175,21 +173,21 @@ mixed-run fallback segment path separately from tracked gaps. The paragraph API 
 and geometry, and the optional SkParagraph route is wired through the native
 binding. Native paragraph and bidi readiness remain release gates until
 matching-host macOS, Windows, and Linux Skia mainline smoke logs include real
-SkParagraph evidence. Deterministic color emoji, future Unicode grapheme data
+SkParagraph observation. Deterministic color emoji, future Unicode grapheme data
 refreshes, and broader typography conformance remain follow-up work.
 
 Renderer text/emoji smoke now has a stronger audit boundary:
-`colorEmojiPixels` must carry high-saturation glyph/raster evidence plus
+`colorEmojiPixels` must carry high-saturation glyph/raster observation plus
 `font-metadata` and `glyph-metadata` tokens. The native Skia
 text/emoji smoke records the requested emoji family, Skia text-system id,
 shaper path, RGBA glyph format, cluster count, pixel counts, stable glyph key,
 measured glyph size, inferred fallback script/language-tag counts, fallback
 request character, resolved missing-glyph count, and
 emoji-hint/fallback-request/missing-glyph-recovery status through
-`skia_emoji_font_fallback_proof()`; it also records paragraph
+`skia_emoji_font_fallback_diagnostic()`; it also records paragraph
 selection rectangles, line-range geometry, hit-test diagnostics, and visual
-bidi-order diagnostics through `skia_text_selection_geometry_proof()` /
-`skia_text_visual_order_proof()`. Passing native smoke now requires the
+bidi-order diagnostics through `skia_text_selection_geometry_diagnostic()` /
+`skia_text_visual_order_diagnostic()`. Passing native smoke now requires the
 SkParagraph markers `engine=skparagraph native_paragraph_ready=true
 line-metrics later-line-pixels` for `paragraphWrapping`,
 `engine=skparagraph bidi_visual_order_ready=true visual-order` for
@@ -208,18 +206,18 @@ metadata. Renderer smoke also reserves separate
 marker keys for `selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,
 and `imeCompositionVisual`; those keys must be backed by selection rectangle,
 line-range, grapheme-boundary, edit-action, candidate-anchor, surrounding-text,
-composition-range, and preedit-pixel evidence before text or IME readiness is
+composition-range, and preedit-pixel observation before text or IME readiness is
 mentioned in release notes. Native Skia `imeCandidateAnchor` also requires `utf8-offsets`
-evidence for grapheme-normalized cursor and anchor offsets, and native Skia
-`imeCompositionVisual` also requires `composition-cursor` evidence.
+observation for grapheme-normalized cursor and anchor offsets, and native Skia
+`imeCompositionVisual` also requires `composition-cursor` observation.
 The native Skia text/emoji smoke records `graphemeEditing`,
 `imeCandidateAnchor`, and `imeCompositionVisual` from the shared
 `TextGraphemeBoundaries`, host IME diagnostics including UTF-8 cursor and anchor
 offsets plus composition cursor geometry, Skia text-system geometry, and
 captured text-field composition pixels.
 These are renderer/text-system smoke markers, not matching-host native IME
-runtime evidence.
-Platform runtime evidence splits native IME readiness further: native
+runtime observation.
+Platform runtime observation splits native IME readiness further: native
 `status=passed` entries must also record `imeSurroundingText`,
 `imeCommitDelete`, `imeCursorUpdate`, `imeScrollAnchor`,
 `imeScaleDprAnchor`, and `imeResizeAnchor` observations from matching-host
@@ -283,7 +281,7 @@ Remote font loading is intentionally outside the current backend contract.
   SkParagraph implementation path, but the release claim remains pending until
   macOS, Windows, and Linux real-Skia smoke logs include SkParagraph line
   metrics, later-line pixels, selection rectangles, line
-  ranges, hit tests, and mixed-direction visual-order evidence. Core now
+  ranges, hit tests, and mixed-direction visual-order observation. Core now
   exposes `TextGraphemeBoundaries` as the single UAX-style
   cluster-boundary contract used by fallback caret stabilization, left/right
   caret movement, selection/range normalization, surrounding delete ranges,
@@ -334,7 +332,7 @@ Remote font loading is intentionally outside the current backend contract.
   matching-host Markdown Editor/AppKit artifacts for candidate anchors,
   surrounding text, composition visuals, commit/delete behavior, cursor
   updates, scroll anchors, scale/DPR anchors, resize anchors, and Markdown
-  Editor IME dogfood, so the macOS platform evidence entry can set those
+  Editor IME dogfood, so the macOS platform observation entry can set those
   observations to `yes`. Windows and Linux still need equivalent
   matching-host Showcase or Markdown Editor artifacts before their native IME
   runtime paths can be called ready.

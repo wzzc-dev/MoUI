@@ -187,19 +187,19 @@ test "skia emoji glyph key records source script count and format metadata" {
 }
 
 ///|
-test "skia text visual order proof records rtl glyph layout evidence" {
+test "skia text visual order diagnostic records rtl glyph layout observation" {
   guard skia_available() else { return () }
-  guard skia_text_visual_order_proof("ABC \u{05D0}\u{05D1}\u{05D2} 123")
-    is Some(proof) else {
-    fail("expected Skia visual order proof")
+  guard skia_text_visual_order_diagnostic("ABC \u{05D0}\u{05D1}\u{05D2} 123")
+    is Some(diagnostic) else {
+    fail("expected Skia visual order diagnostic")
   }
-  inspect(proof.logical_text, content="ABC \u{05D0}\u{05D1}\u{05D2} 123")
-  inspect(proof.visual_text, content="ABC \u{05D2}\u{05D1}\u{05D0} 123")
-  assert_true(proof.visual_order_differs)
-  assert_true(proof.logical_cluster_count == proof.visual_cluster_count)
-  assert_true(proof.segment_count >= 3)
-  assert_true(proof.glyph_count >= 6)
-  assert_true(proof.width > 0.0)
+  inspect(diagnostic.logical_text, content="ABC \u{05D0}\u{05D1}\u{05D2} 123")
+  inspect(diagnostic.visual_text, content="ABC \u{05D2}\u{05D1}\u{05D0} 123")
+  assert_true(diagnostic.visual_order_differs)
+  assert_true(diagnostic.logical_cluster_count == diagnostic.visual_cluster_count)
+  assert_true(diagnostic.segment_count >= 3)
+  assert_true(diagnostic.glyph_count >= 6)
+  assert_true(diagnostic.width > 0.0)
 }
 
 ///|

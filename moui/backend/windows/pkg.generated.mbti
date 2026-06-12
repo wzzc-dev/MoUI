@@ -7,7 +7,17 @@ import {
 }
 
 // Values
+pub fn dispose_windows_platform_views(@wzzc-dev/window/windows.Window) -> Unit
+
+pub fn drain_windows_webview_commands(@wzzc-dev/window/windows.Window, @host.HostWebViewCommandQueue) -> Int
+
+pub fn install_windows_webview_event_dispatcher((UInt64, String, @wzzc-dev/moui/core.WebViewEvent) -> Unit) -> Unit
+
 pub fn run_app_with_renderer_provider(String, @wzzc-dev/moui/core.AppRuntime, provider~ : WindowsRendererProvider, options? : WindowsHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
+pub fn run_app_with_renderer_provider_smoke(String, @wzzc-dev/moui/core.AppRuntime, provider~ : WindowsRendererProvider, options? : WindowsHostAppOptions, smoke_options? : WindowsHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
+pub fn sync_windows_platform_views(@wzzc-dev/window/windows.Window, @wzzc-dev/moui/core.DrawFrame) -> Unit
 
 pub fn window_event_to_core(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
 
@@ -27,18 +37,20 @@ pub fn windows_host_info() -> @host.HostAppInfo
 
 pub fn windows_input_capabilities() -> @host.HostInputCapabilities
 
-pub fn windows_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
+pub fn windows_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
 
 pub fn windows_system_theme() -> @wzzc-dev/moui/core.ColorScheme
+
+pub fn windows_webview_capabilities() -> @host.HostWebViewCapabilities
 
 // Errors
 
 // Types and methods
 pub(all) struct WindowsAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
-  contract_ready : Bool
-  native_binding_ready : Bool
-  action_roundtrip_ready : Bool
+  semantics_bridge_available : Bool
+  native_platform_bridge_available : Bool
+  action_dispatch_available : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -48,13 +60,19 @@ pub impl @wzzc-dev/window/windows.ApplicationHandler for WindowsApp
 pub struct WindowsHostAppOptions {
   // private fields
 }
-pub fn WindowsHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, exit_after_first_present? : Bool) -> Self
+pub fn WindowsHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, web_view_commands? : @host.HostWebViewCommandQueue?, web_view_events? : @host.HostWebViewEventSource?) -> Self
+
+pub struct WindowsHostSmokeOptions {
+  // private fields
+}
+pub fn WindowsHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool) -> Self
 
 pub struct WindowsRendererProvider {
   // private fields
 }
-pub fn WindowsRendererProvider::new(create_renderer~ : (@wzzc-dev/window/windows.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/windows.Window, @host.HostSurfaceMetrics) -> Unit) -> Self
+pub fn WindowsRendererProvider::new(create_renderer~ : (@wzzc-dev/window/windows.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/windows.Window, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
 
 // Type aliases
 
 // Traits
+

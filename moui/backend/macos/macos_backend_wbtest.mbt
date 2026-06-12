@@ -24,7 +24,7 @@ test "macos menu command payload records utf8 byte lengths" {
 }
 
 ///|
-test "macos host options carry optional scene resolver and smoke flag" {
+test "macos host options carry optional scene resolver and smoke options stay separate" {
   let request = @host.HostWindowOpenRequest::new(
     title="Inspector",
     scene=@host.HostWindowScene::new(scene_id="inspector"),
@@ -50,10 +50,14 @@ test "macos host options carry optional scene resolver and smoke flag" {
   })
   let options = MacosHostAppOptions::new(
     scene_resolver=resolver,
-    exit_after_first_present=true,
     event_sources=Some(@host.HostPlatformEventSources::new()),
   )
-  assert_true(options.exit_after_first_present)
+  let smoke_options = MacosHostSmokeOptions::new(
+    first_frame_smoke_auto_exit=true,
+    native_ime_runtime_smoke=true,
+  )
+  assert_true(smoke_options.first_frame_smoke_auto_exit)
+  assert_true(smoke_options.native_ime_runtime_smoke)
   match options.event_sources {
     Some(sources) => {
       inspect(sources.host_events().active_handler_count(), content="0")

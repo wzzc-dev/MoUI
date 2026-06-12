@@ -1,23 +1,23 @@
 ///|
-pub fn run_renderer_proof_smoke() -> Unit raise @wgpu_mbt.WgpuError {
-  @wgpu_renderer.native_renderer_proof_smoke(
-    platform_label="windows",
-    text_engine=windows_text_engine(
-      @wgpu_renderer.NativeTextEngineSetting::MoonCosmic,
+pub fn run_renderer_smoke() -> Unit raise @wgpu_mbt.WgpuError {
+  @wgpu_renderer.native_renderer_smoke(
+    platform_label="linux",
+    text_engine=linux_text_engine(
+      @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
     ),
   )
-  assert_windows_wgpu_async_repaint_proof()
+  assert_linux_wgpu_async_repaint_proof()
   println(
     "MoUI renderer smoke asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
   )
 }
 
 ///|
-fn assert_windows_wgpu_async_repaint_proof() -> Unit {
+fn assert_linux_wgpu_async_repaint_proof() -> Unit {
   let loader = wgpu_native_image_loader()
   let window_id = @host.HostWindowId::new(710)
   let lifecycle = @render.ImageResourceLifecycle::new()
-  let source = windows_wgpu_proof_png_data_uri()
+  let source = linux_wgpu_proof_png_data_uri()
   ignore(lifecycle.mark_loading(source))
   let renderer = @host.HostWindowRenderer::new(
     resize=_ => (),
@@ -40,23 +40,23 @@ fn assert_windows_wgpu_async_repaint_proof() -> Unit {
     window_id, renderer, completion_source,
   )
   if scheduled.loading_count < 1 || scheduled.scheduled_count < 1 {
-    abort("Windows WGPU proof async image was not scheduled")
+    abort("Linux WGPU smoke async image was not scheduled")
   }
   if completion_source.diagnostics().redraw_requested_count < 1 ||
     redraws.length() < 1 {
-    abort("Windows WGPU proof async image did not request repaint")
+    abort("Linux WGPU smoke async image did not request repaint")
   }
   match lifecycle.lookup(source) {
     Some(record) =>
       if record.status != @render.ImageResourceStatus::ImageReady {
-        abort("Windows WGPU proof async image did not become ready")
+        abort("Linux WGPU smoke async image did not become ready")
       }
-    None => abort("Windows WGPU proof async image record missing")
+    None => abort("Linux WGPU smoke async image record missing")
   }
 }
 
 ///|
-fn windows_wgpu_proof_png_data_uri() -> String {
+fn linux_wgpu_proof_png_data_uri() -> String {
   "data:image/png;base64," +
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=="
 }

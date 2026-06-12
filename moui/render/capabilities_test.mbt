@@ -8,15 +8,15 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     image.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     image.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     image.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     image
@@ -61,7 +61,7 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     rect.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::RoundedRect,
@@ -71,7 +71,7 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     rounded.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::Gradient)
     is Some(gradient) else {
@@ -87,7 +87,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     gradient.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     gradient
@@ -125,7 +125,7 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     shadow.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     shadow
@@ -138,7 +138,7 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     text.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     text
@@ -169,7 +169,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     transform.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     transform
@@ -242,15 +242,15 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     clip.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     clip.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     clip.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     clip
@@ -263,15 +263,15 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     opacity.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     opacity.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     opacity.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::LayerCompositing,
@@ -281,15 +281,15 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     layer.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     layer.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     layer.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     layer
@@ -312,15 +312,15 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     blend.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     blend.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     blend.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     blend
@@ -345,15 +345,15 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     filter.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     filter.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     filter.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     filter
@@ -383,15 +383,15 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     shader.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     shader.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     shader.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     shader
@@ -419,15 +419,15 @@ test "renderer capability report tracks draw command support" {
   }
   assert_true(
     path.status_for_backend(@render.RendererBackendKind::NativeWgpu) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     path.status_for_backend(@render.RendererBackendKind::WebGpuWasm) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     path.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     path

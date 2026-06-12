@@ -233,7 +233,7 @@ int32_t moui_macos_system_theme_is_dark(void) {
 }
 
 MOONBIT_FFI_EXPORT
-int32_t moui_macos_native_ime_evidence_set_marked_text(uint64_t raw_content_view_handle,
+int32_t moui_macos_native_ime_smoke_set_marked_text(uint64_t raw_content_view_handle,
                                                        moonbit_bytes_t text,
                                                        int32_t selected_location,
                                                        int32_t selected_length) {
@@ -254,7 +254,7 @@ int32_t moui_macos_native_ime_evidence_set_marked_text(uint64_t raw_content_view
 }
 
 MOONBIT_FFI_EXPORT
-int32_t moui_macos_native_ime_evidence_first_rect(uint64_t raw_content_view_handle,
+int32_t moui_macos_native_ime_smoke_first_rect(uint64_t raw_content_view_handle,
                                                  int32_t location,
                                                  int32_t length) {
   id<NSTextInputClient> client =
@@ -270,7 +270,7 @@ int32_t moui_macos_native_ime_evidence_first_rect(uint64_t raw_content_view_hand
 }
 
 MOONBIT_FFI_EXPORT
-int32_t moui_macos_native_ime_evidence_insert_text(uint64_t raw_content_view_handle,
+int32_t moui_macos_native_ime_smoke_insert_text(uint64_t raw_content_view_handle,
                                                   moonbit_bytes_t text) {
   id<NSTextInputClient> client =
       moui_macos_native_ime_text_input_client(raw_content_view_handle);

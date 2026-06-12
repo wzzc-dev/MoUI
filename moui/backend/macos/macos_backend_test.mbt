@@ -2,9 +2,9 @@
 test "macos backend is native renderer ready" {
   let info = backend_info()
   assert_true(info.host_info.backend == @host.HostBackendKind::Native)
-  inspect(info.renderer_ready, content="true")
+  inspect(info.renderer_available, content="true")
   inspect(info.accessibility.kind.label(), content="appkit")
-  inspect(info.accessibility.contract_ready, content="true")
+  inspect(info.accessibility.semantics_bridge_available, content="true")
 }
 
 ///|
@@ -15,16 +15,18 @@ test "macos capability summary exposes native service readiness" {
   inspect(summary.input_count(), content="7")
   inspect(summary.services.menus, content="true")
   inspect(summary.services.file_access, content="true")
-  inspect(summary.drag_drop_ready, content="true")
+  inspect(summary.drag_drop_available, content="true")
   inspect(summary.multi_window, content="true")
-  inspect(summary.native_accessibility_ready, content="false")
+  inspect(summary.native_accessibility_available, content="false")
 }
 
 ///|
 test "macos backend host options are constructed through provider runner API" {
-  let options = MacosHostAppOptions::new(exit_after_first_present=true)
+  let options = MacosHostAppOptions::new()
+  let smoke_options = MacosHostSmokeOptions::new(first_frame_smoke_auto_exit=true)
   let _ = options
-  assert_true(backend_info().renderer_ready)
+  let _ = smoke_options
+  assert_true(backend_info().renderer_available)
 }
 
 ///|

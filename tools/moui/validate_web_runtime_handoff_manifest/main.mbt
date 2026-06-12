@@ -431,14 +431,14 @@ fn validate_manifest_fields(manifest : Map[String, Json]) -> Array[String] {
     Some(Json::String(_)) => ()
     _ => failures.push("baseUrl must be a string")
   }
-  let evidence_boundary = require_string(
-    manifest, "evidenceBoundary", "evidenceBoundary", failures,
+  let observation_boundary = require_string(
+    manifest, "observationBoundary", "observationBoundary", failures,
   )
-  if !evidence_boundary.contains("not browser WebGPU device") ||
-    !evidence_boundary.contains("wasm instantiation") ||
-    !evidence_boundary.contains("pixel evidence") {
+  if !observation_boundary.contains("not browser WebGPU device") ||
+    !observation_boundary.contains("wasm instantiation") ||
+    !observation_boundary.contains("pixel observations") {
     failures.push(
-      "evidenceBoundary must explicitly exclude browser WebGPU device, wasm instantiation, and pixel evidence",
+      "observationBoundary must explicitly exclude browser WebGPU device, wasm instantiation, and pixel observations",
     )
   }
   let runtime_assets = require_array(

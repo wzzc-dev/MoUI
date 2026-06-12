@@ -37,7 +37,7 @@ pub fn backend_info() -> MacosBackendInfo {
       backend=@host.HostBackendKind::Native,
       description="macOS AppKit window host with renderer providers",
     ),
-    renderer_ready: true,
+    renderer_available: true,
     accessibility: macos_accessibility_bridge_info(),
     description: "macOS backend uses wzzc-dev/window/macos for AppKit events and delegates concrete rendering to platform renderer provider packages.",
   }
@@ -47,9 +47,9 @@ pub fn backend_info() -> MacosBackendInfo {
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo {
   {
     kind: @host.NativeAccessibilityBridgeKind::AppKit,
-    contract_ready: true,
-    native_binding_ready: false,
-    action_roundtrip_ready: true,
+    semantics_bridge_available: true,
+    native_platform_bridge_available: false,
+    action_dispatch_available: true,
     description: "macOS exposes an AppKit accessibility bridge contract over the shared semantics tree; real NSAccessibility object binding is still a backend follow-up.",
   }
 }
@@ -91,11 +91,11 @@ pub fn macos_capability_summary(
     label="macOS host",
     window_lifecycle=true,
     multi_window=true,
-    text_input_ready=true,
-    ime_ready=true,
-    drag_drop_ready=true,
+    text_input_available=true,
+    ime_available=true,
+    drag_drop_available=true,
     async_services=false,
-    native_accessibility_ready=backend_info().accessibility.native_binding_ready,
+    native_accessibility_available=backend_info().accessibility.native_platform_bridge_available,
     web_view=macos_webview_capabilities(),
     description="AppKit host with clipboard, file dialog, URL, system theme, native context menu, text input, and file-drop contracts.",
   )
