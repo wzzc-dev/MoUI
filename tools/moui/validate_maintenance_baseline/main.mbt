@@ -102,8 +102,8 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/views_test.mbt",
-      max_lines: 210,
-      target_lines: 190,
+      max_lines: 125,
+      target_lines: 110,
       reason: "keep views facade coverage grouped by responsibility",
     },
     {
