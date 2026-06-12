@@ -1,0 +1,852 @@
+///|
+test "host driver maps focused text input through core text input event" {
+  let text = @core.State::new("")
+  let runtime = host_test_runtime(
+    root=host_test_text_field(
+      text.binding(),
+      width=240.0,
+      height=40.0,
+      outlined=true,
+    ),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  ignore(
+    driver.dispatch(HostEvent::TextInput(@core.TextInputEvent::InsertText("a"))),
+  )
+  inspect(text.get(), content="")
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  let result = driver.dispatch(
+    HostEvent::TextInput(@core.TextInputEvent::InsertText("a")),
+  )
+  inspect(text.get(), content="a")
+  inspect(result.redraw_requested, content="true")
+}
+
+///|
+test "host driver routes text clipboard commands through service bridge" {
+  let text = @core.State::new("")
+  let clipboard = Ref("")
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true),
+    handle=request => {
+      match request {
+        Clipboard(WriteText(value)) => {
+          clipboard.val = value
+          HostServiceResponse::ClipboardWritten
+        }
+        Clipboard(ReadText) => HostServiceResponse::ClipboardText(clipboard.val)
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::InsertText("hello")),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Keyboard(
+        @core.KeyboardEvent::new(
+          key="a",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch_command_with_services(@core.CommandIntent::Copy, bridge),
+  )
+  inspect(clipboard.val, content="hello")
+  ignore(
+    driver.dispatch_command_with_services(@core.CommandIntent::Cut, bridge),
+  )
+  inspect(text.get(), content="")
+  clipboard.val = "world"
+  ignore(
+    driver.dispatch_command_with_services(@core.CommandIntent::Paste, bridge),
+  )
+  inspect(text.get(), content="world")
+}
+
+///|
+test "host driver routes clipboard keyboard shortcuts through service bridge" {
+  let text = @core.State::new("")
+  let clipboard = Ref("")
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true),
+    handle=request => {
+      match request {
+        Clipboard(WriteText(value)) => {
+          clipboard.val = value
+          HostServiceResponse::ClipboardWritten
+        }
+        Clipboard(ReadText) => HostServiceResponse::ClipboardText(clipboard.val)
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::InsertText("hello")),
+    ),
+  )
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="a",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+      bridge,
+    ),
+  )
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="c",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+      bridge,
+    ),
+  )
+  inspect(clipboard.val, content="hello")
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="x",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+      bridge,
+    ),
+  )
+  inspect(text.get(), content="")
+  clipboard.val = "world"
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="v",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+      bridge,
+    ),
+  )
+  inspect(text.get(), content="world")
+}
+
+///|
+test "host driver includes focused text commands in context menu" {
+  let text = @core.State::new("")
+  let clipboard = Ref("")
+  let saw_copy_command = Ref(false)
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true, menus=true),
+    handle=request => {
+      match request {
+        Clipboard(WriteText(value)) => {
+          clipboard.val = value
+          HostServiceResponse::ClipboardWritten
+        }
+        Clipboard(ReadText) => HostServiceResponse::ClipboardText(clipboard.val)
+        ShowMenu(commands) => {
+          saw_copy_command.val = commands.any(command => {
+            command.intent == @core.CommandIntent::Copy
+          })
+          HostServiceResponse::MenuCommand(@core.CommandIntent::Copy)
+        }
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::InsertText("hello")),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Keyboard(
+        @core.KeyboardEvent::new(
+          key="a",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
+    ),
+  )
+  ignore(driver.show_context_menu(bridge))
+  inspect(saw_copy_command.val, content="true")
+  inspect(clipboard.val, content="hello")
+}
+
+///|
+test "host driver disables copy and cut context menu commands without selection" {
+  let text = @core.State::new("")
+  let copy_enabled = Ref(true)
+  let cut_enabled = Ref(true)
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(menus=true),
+    handle=request => {
+      match request {
+        ShowMenu(commands) => {
+          for command in commands {
+            if command.intent == @core.CommandIntent::Copy {
+              copy_enabled.val = command.enabled
+            } else if command.intent == @core.CommandIntent::Cut {
+              cut_enabled.val = command.enabled
+            }
+          }
+          HostServiceResponse::Unavailable("cancelled")
+        }
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(driver.show_context_menu(bridge))
+  inspect(copy_enabled.val, content="false")
+  inspect(cut_enabled.val, content="false")
+}
+
+///|
+test "host driver enables copy and cut context menu commands with selection" {
+  let text = @core.State::new("")
+  let copy_enabled = Ref(false)
+  let cut_enabled = Ref(false)
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(menus=true),
+    handle=request => {
+      match request {
+        ShowMenu(commands) => {
+          for command in commands {
+            if command.intent == @core.CommandIntent::Copy {
+              copy_enabled.val = command.enabled
+            } else if command.intent == @core.CommandIntent::Cut {
+              cut_enabled.val = command.enabled
+            }
+          }
+          HostServiceResponse::Unavailable("cancelled")
+        }
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::InsertText("hello")),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Keyboard(
+        @core.KeyboardEvent::new(
+          key="a",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
+    ),
+  )
+  ignore(driver.show_context_menu(bridge))
+  inspect(copy_enabled.val, content="true")
+  inspect(cut_enabled.val, content="true")
+}
+
+///|
+test "host driver context menu pastes unicode into focused text input" {
+  let text = @core.State::new("")
+  let clipboard = Ref("你🙂")
+  let saw_paste_command = Ref(false)
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true, menus=true),
+    handle=request => {
+      match request {
+        Clipboard(ReadText) => HostServiceResponse::ClipboardText(clipboard.val)
+        Clipboard(WriteText(value)) => {
+          clipboard.val = value
+          HostServiceResponse::ClipboardWritten
+        }
+        ShowMenu(commands) => {
+          saw_paste_command.val = commands.any(command => {
+            command.intent == @core.CommandIntent::Paste
+          })
+          HostServiceResponse::MenuCommand(@core.CommandIntent::Paste)
+        }
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(driver.show_context_menu(bridge))
+  inspect(saw_paste_command.val, content="true")
+  inspect(text.get(), content="你🙂")
+  inspect(driver.focused_text_input().caret, content="2")
+}
+
+///|
+test "host driver keyboard paste replaces selection with extended emoji" {
+  let text = @core.State::new("")
+  let clipboard = Ref("☕️👩‍💻")
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true),
+    handle=request => {
+      match request {
+        Clipboard(ReadText) => HostServiceResponse::ClipboardText(clipboard.val)
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::InsertText("replace")),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::Keyboard(
+        @core.KeyboardEvent::new(
+          key="a",
+          modifiers=@core.KeyModifiers::new(meta=true),
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="v",
+        modifiers=@core.KeyModifiers::new(meta=true),
+      ),
+      bridge,
+    ),
+  )
+  inspect(text.get(), content="☕️👩‍💻")
+  inspect(driver.focused_text_input().caret, content="5")
+}
+
+///|
+test "host driver falls back clipboard shortcuts to action commands" {
+  let copied = Ref(0)
+  let runtime = host_test_runtime(
+    root=@core.View::empty(),
+    size=@core.Size::new(width=10.0, height=10.0),
+  )
+  runtime.set_action_commands(
+    @core.ActionCommandMap::new(bindings=[
+      @core.CommandBinding::new(
+        command=@core.ActionCommand::new(intent=@core.CommandIntent::Copy),
+        handle=() => copied.val = copied.val + 1,
+      ),
+    ]),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true),
+    handle=_request => HostServiceResponse::ClipboardWritten,
+  )
+  ignore(
+    driver.dispatch_keyboard_with_services(
+      @core.KeyboardEvent::new(
+        key="c",
+        modifiers=@core.KeyModifiers::new(control=true),
+      ),
+      bridge,
+    ),
+  )
+  inspect(copied.val, content="1")
+}
+
+///|
+test "host driver defers paste action command while clipboard read is pending" {
+  let pasted = Ref(0)
+  let queue = HostServiceAsyncQueue::new()
+  let runtime = host_test_runtime(
+    root=@core.View::empty(),
+    size=@core.Size::new(width=10.0, height=10.0),
+  )
+  runtime.set_action_commands(
+    @core.ActionCommandMap::new(bindings=[
+      @core.CommandBinding::new(
+        command=@core.ActionCommand::new(intent=@core.CommandIntent::Paste),
+        handle=() => pasted.val = pasted.val + 1,
+      ),
+    ]),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  let bridge = HostServiceBridge::new(
+    capabilities=HostServiceCapabilities::new(clipboard=true),
+    handle=request => {
+      match request {
+        Clipboard(ReadText) => queue.submit(request)
+        _ => HostServiceResponse::Unavailable("unexpected request")
+      }
+    },
+  )
+  ignore(
+    driver.dispatch_command_with_services(@core.CommandIntent::Paste, bridge),
+  )
+  inspect(pasted.val, content="0")
+  let pending = queue.drain_pending()
+  inspect(pending.length(), content="1")
+  assert_true(
+    queue.complete(pending[0].id, HostServiceResponse::ClipboardText("delayed")),
+  )
+  for completion in queue.drain_completed() {
+    ignore(driver.dispatch_service_completion(completion, bridge))
+  }
+  inspect(pasted.val, content="1")
+}
+
+///|
+test "host driver dispatches ime composition text input events" {
+  let text = @core.State::new("")
+  let runtime = host_test_runtime(
+    root=host_test_text_field(
+      text.binding(),
+      width=240.0,
+      height=40.0,
+      outlined=true,
+    ),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::CompositionStart),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::CompositionEnd("你")),
+    ),
+  )
+  inspect(text.get(), content="你")
+}
+
+///|
+test "host driver keeps unicode composition update in focused text state" {
+  let text = @core.State::new("")
+  let runtime = host_test_runtime(
+    root=host_test_text_field(text.binding(), width=240.0, height=40.0),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
+  ignore(
+    driver.dispatch(
+      HostEvent::Pointer(
+        @core.PointerEvent::new(
+          position=@core.Point::new(x=10.0, y=10.0),
+          phase=@core.PointerPhase::Down,
+        ),
+      ),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::InsertText("ab")),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::CompositionStart),
+    ),
+  )
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(
+        @core.TextInputEvent::CompositionUpdate(
+          @core.CompositionUpdate::new(
+            text="你☕️",
+            cursor=Some(@core.TextRange::new(start=3, end=3)),
+          ),
+        ),
+      ),
+    ),
+  )
+  let composing = driver.focused_text_input()
+  guard composing.composition is Some(composition) else {
+    fail("expected host-routed composition text")
+  }
+  inspect(composition, content="你☕️")
+  guard composing.composition_cursor is Some(cursor) else {
+    fail("expected host-routed composition cursor")
+  }
+  inspect(cursor.start, content="3")
+  inspect(cursor.end, content="3")
+  ignore(
+    driver.dispatch(
+      HostEvent::TextInput(@core.TextInputEvent::CompositionEnd("你☕️")),
+    ),
+  )
+  inspect(text.get(), content="ab你☕️")
+  inspect(driver.focused_text_input().caret, content="5")
+}
+
+///|
+test "text input session enables updates and disables ime requests" {
+  let text = @core.State::new("ab")
+  let runtime = host_test_runtime(
+    root=@core.View::flex(
+      children=[host_test_text_field(text.binding(), width=120.0, height=40.0)],
+      axis=@core.Axis::Vertical,
+      spacing=4.0,
+      main_axis_alignment=@core.MainAxisAlignment::MainStart,
+      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+    ),
+    size=@core.Size::new(width=240.0, height=60.0),
+  )
+  let session = TextInputSession::new()
+  match session.sync(runtime.focused_text_input()) {
+    NoImeChange => ()
+    _ => fail("unfocused runtime should not change ime")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  match session.sync(runtime.focused_text_input()) {
+    EnableIme(@window_core.ImeRequest::Enable(_)) => ()
+    _ => fail("focused text field should enable ime")
+  }
+  match session.sync(runtime.focused_text_input()) {
+    NoImeChange => ()
+    _ => fail("unchanged focused text field should not repeat ime updates")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("c")),
+  )
+  match session.sync(runtime.focused_text_input()) {
+    UpdateIme(@window_core.ImeRequest::Update(data)) => {
+      match data.cursor_area() {
+        Some((_, size)) => assert_true(size.to_logical(1.0).height() > 0.0)
+        None => fail("expected cursor area")
+      }
+      match data.surrounding_text() {
+        Some(surrounding) => inspect(surrounding.text(), content="abc")
+        None => fail("expected surrounding text")
+      }
+    }
+    _ => fail("changed focused text field should update active ime")
+  }
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=230.0, y=55.0),
+        phase=@core.PointerPhase::Down,
+      ),
+    ),
+  )
+  match session.sync(runtime.focused_text_input()) {
+    DisableIme(@window_core.ImeRequest::Disable) => ()
+    _ => fail("blur should disable ime")
+  }
+  match session.sync(runtime.focused_text_input()) {
+    NoImeChange => ()
+    _ => fail("unfocused runtime should stay idle after disabling ime")
+  }
+}
+
+///|
+test "text input session enables ime when surrounding text is too long" {
+  let session = TextInputSession::new()
+  let state = @core.TextInputState::{
+    focused: true,
+    element_id: None,
+    text: "a".repeat(@window_core.ImeSurroundingText::max_text_bytes() + 1),
+    caret: 0,
+    selection: None,
+    composition: None,
+    composition_cursor: None,
+    frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
+    caret_rect: @core.Rect::new(x=8.0, y=8.0, width=1.0, height=20.0),
+  }
+  match session.sync(state) {
+    EnableIme(@window_core.ImeRequest::Enable(request)) => {
+      assert_true(!request.capabilities().surrounding_text())
+      assert_true(!request.request_data().has_surrounding_text())
+      match session.last_diagnostics() {
+        Some(diagnostics) => {
+          assert_false(diagnostics.has_surrounding_text)
+          assert_true(
+            diagnostics.surrounding_text_utf8_length >
+            @window_core.ImeSurroundingText::max_text_bytes(),
+          )
+        }
+        None => fail("expected ime diagnostics")
+      }
+    }
+    _ => fail("focused text field should still enable ime")
+  }
+}
+
+///|
+test "text input ime diagnostics normalize grapheme cursor and candidate anchor" {
+  let state = @core.TextInputState::{
+    focused: true,
+    element_id: None,
+    text: "A👩‍💻B",
+    caret: 2,
+    selection: None,
+    composition: None,
+    composition_cursor: None,
+    frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
+    caret_rect: @core.Rect::new(x=12.0, y=18.0, width=0.0, height=-4.0),
+  }
+  let diagnostics = text_input_ime_request_diagnostics(state)
+  inspect(diagnostics.cursor, content="1")
+  inspect(diagnostics.anchor, content="1")
+  inspect(diagnostics.cursor_utf8, content="1")
+  inspect(diagnostics.anchor_utf8, content="1")
+  inspect(diagnostics.text_length, content="5")
+  inspect(diagnostics.text_utf8_length, content="13")
+  assert_true(diagnostics.cursor_is_grapheme_boundary)
+  assert_true(diagnostics.anchor_is_grapheme_boundary)
+  inspect(diagnostics.candidate_anchor.origin.x, content="12")
+  inspect(diagnostics.candidate_anchor.origin.y, content="18")
+  inspect(diagnostics.candidate_anchor.size.width, content="1")
+  inspect(diagnostics.candidate_anchor.size.height, content="1")
+  let request = text_input_ime_request_data(state)
+  match request.surrounding_text() {
+    Some(surrounding) => {
+      inspect(surrounding.cursor(), content="1")
+      inspect(surrounding.anchor(), content="1")
+    }
+    None => fail("expected surrounding text")
+  }
+  match request.cursor_area() {
+    Some((position, size)) => {
+      inspect(position.to_logical(1.0).x(), content="12")
+      inspect(position.to_logical(1.0).y(), content="18")
+      inspect(size.to_logical(1.0).width(), content="1")
+      inspect(size.to_logical(1.0).height(), content="1")
+    }
+    None => fail("expected cursor area")
+  }
+}
+
+///|
+test "text input session preserves selection anchor in ime surrounding text" {
+  let session = TextInputSession::new()
+  let state = @core.TextInputState::{
+    focused: true,
+    element_id: None,
+    text: "你ab好",
+    caret: 3,
+    selection: Some(@core.TextRange::new(start=1, end=3)),
+    composition: None,
+    composition_cursor: None,
+    frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
+    caret_rect: @core.Rect::new(x=8.0, y=8.0, width=1.0, height=20.0),
+  }
+  match session.sync(state) {
+    EnableIme(@window_core.ImeRequest::Enable(request)) =>
+      match request.request_data().surrounding_text() {
+        Some(surrounding) => {
+          inspect(surrounding.cursor(), content="5")
+          inspect(surrounding.anchor(), content="3")
+          match session.last_diagnostics() {
+            Some(diagnostics) => {
+              inspect(diagnostics.cursor, content="3")
+              inspect(diagnostics.anchor, content="1")
+              inspect(diagnostics.cursor_utf8, content="5")
+              inspect(diagnostics.anchor_utf8, content="3")
+            }
+            None => fail("expected ime diagnostics")
+          }
+        }
+        None => fail("expected surrounding text")
+      }
+    _ => fail("focused text field should enable ime")
+  }
+}
+
+///|
+test "text input session preserves reverse selection anchor in ime surrounding text" {
+  let session = TextInputSession::new()
+  let state = @core.TextInputState::{
+    focused: true,
+    element_id: None,
+    text: "你ab好",
+    caret: 1,
+    selection: Some(@core.TextRange::new(start=3, end=1)),
+    composition: None,
+    composition_cursor: None,
+    frame: @core.Rect::new(x=0.0, y=0.0, width=200.0, height=40.0),
+    caret_rect: @core.Rect::new(x=8.0, y=8.0, width=1.0, height=20.0),
+  }
+  match session.sync(state) {
+    EnableIme(@window_core.ImeRequest::Enable(request)) =>
+      match request.request_data().surrounding_text() {
+        Some(surrounding) => {
+          inspect(surrounding.cursor(), content="3")
+          inspect(surrounding.anchor(), content="5")
+        }
+        None => fail("expected surrounding text")
+      }
+    _ => fail("focused text field should enable ime")
+  }
+}
+
+///|
+test "host event converts to current core event model" {
+  let event = HostEvent::TextInput(@core.TextInputEvent::InsertText("x")).to_core()
+  match event {
+    Some(@core.AppEvent::TextInput(@core.TextInputEvent::InsertText(text))) =>
+      inspect(text, content="x")
+    _ => fail("expected text input event")
+  }
+  let composition = HostEvent::TextInput(
+    @core.TextInputEvent::CompositionEnd("你"),
+  ).to_core()
+  match composition {
+    Some(@core.AppEvent::TextInput(@core.TextInputEvent::CompositionEnd(text))) =>
+      inspect(text, content="你")
+    _ => fail("expected composition text input event")
+  }
+  let scroll = HostEvent::Scroll(
+    HostScrollEvent::new(
+      position=@core.Point::new(x=8.0, y=9.0),
+      delta=HostScrollDelta::Lines(@core.Point::new(x=1.0, y=-2.0)),
+    ),
+  ).to_core()
+  match scroll {
+    Some(@core.AppEvent::Pointer({ wheel_delta: { x: 40.0, y: -80.0 }, .. })) =>
+      ()
+    _ => fail("expected scroll pointer event")
+  }
+  let blur = HostEvent::Focus(
+    HostFocusEvent::new(
+      focused=false,
+      pointer_cancel_position=Some(@core.Point::new(x=2.0, y=3.0)),
+    ),
+  ).to_core()
+  match blur {
+    Some(@core.AppEvent::Pointer({ phase: @core.PointerPhase::Cancel, .. })) =>
+      ()
+    _ => fail("expected blur cancel pointer event")
+  }
+}
