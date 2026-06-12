@@ -1,11 +1,11 @@
 ///|
-pub(all) enum WebsitePage {
+priv enum WebsitePage {
   WebsiteHome
   WebsiteDocs
 }
 
 ///|
-pub(all) struct WebsiteDocEntry {
+priv struct WebsiteDocEntry {
   slug : String
   title : String
   path : String
@@ -13,7 +13,7 @@ pub(all) struct WebsiteDocEntry {
 }
 
 ///|
-pub(all) enum WebsiteDocBlock {
+priv enum WebsiteDocBlock {
   DocHeading(Int, String)
   DocParagraph(String)
   DocListItem(String, String)
@@ -24,14 +24,13 @@ pub(all) enum WebsiteDocBlock {
 }
 
 ///|
-pub(all) struct WebsiteDocDocument {
-  path : String
+priv struct WebsiteDocDocument {
   title : String
   blocks : Array[WebsiteDocBlock]
 }
 
 ///|
-pub(all) enum WebsiteDocLoadState {
+priv enum WebsiteDocLoadState {
   DocNotLoaded
   DocLoading(@host.HostServiceRequestId, String)
   DocLoaded(String, WebsiteDocDocument)

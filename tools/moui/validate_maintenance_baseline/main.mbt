@@ -211,8 +211,8 @@ fn pub_all_budgets() -> Array[PubAllBudget] {
     {
       label: "website app source",
       path: "website/app",
-      max_pub_all_lines: 7,
-      target_pub_all_lines: 5,
+      max_pub_all_lines: 0,
+      target_pub_all_lines: 0,
     },
   ]
 }
