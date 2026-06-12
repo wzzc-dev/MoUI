@@ -34,12 +34,8 @@ test "daily quality gate tokens include moonbit-backed api surface guard" {
   let tokens = daily_quality_gate_tokens()
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
   assert_true(tokens.contains("moon test moui/core --target native"))
-  assert_true(tokens.contains("moon test examples/design_systems/app --target native"))
   assert_true(
     tokens.contains("moon build examples/showcase/web_wasm --target wasm-gc"),
-  )
-  assert_true(
-    tokens.contains("moon build examples/design_systems/web_wasm --target wasm-gc"),
   )
 }
 
@@ -48,7 +44,8 @@ test "release readiness quality tokens summarize current daily gates" {
   let tokens = release_readiness_quality_tokens()
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
   assert_true(tokens.contains("dedicated checked-artifact validators"))
-  assert_true(tokens.contains("examples/design_systems/web_wasm"))
+  assert_true(tokens.contains("--theme-diagnostics"))
+  assert_true(tokens.contains("Design Systems is addon diagnostic coverage"))
 }
 
 ///|
@@ -56,7 +53,17 @@ test "agent quality gate tokens cover AGENTS sync points" {
   let tokens = agent_quality_gate_tokens()
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
   assert_true(tokens.contains("node scripts/validate-checked-conformance-artifacts.mjs"))
-  assert_true(
-    tokens.contains("moon build examples/design_systems/web_wasm --target wasm-gc"),
-  )
+  assert_true(tokens.contains("--theme-diagnostics"))
+  assert_true(tokens.contains("Design Systems is addon diagnostic coverage"))
+}
+
+///|
+test "theme diagnostic rules cover opt-in addon checks" {
+  let rules = theme_diagnostic_rules()
+  assert_true(rules.any(rule => rule.path == "scripts/dev-check.sh" &&
+    rule.token == "--theme-diagnostics"))
+  assert_true(rules.any(rule => rule.path == "scripts/dev-check.sh" &&
+    rule.token == "moon test moui_theme/common --target native"))
+  assert_true(rules.any(rule => rule.path == "docs/testing.md" &&
+    rule.token == "Design Systems is addon diagnostic coverage"))
 }

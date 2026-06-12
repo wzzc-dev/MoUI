@@ -132,8 +132,8 @@ paths, or abstractions that only preserve old shapes.
   entrypoints only. Showcase has `macos_skia`, `windows_skia`, and
   `linux_skia` entrypoints for the recommended native Skia renderer mainline.
   Showcase is the MoUI framework capability catalog and must not import
-  `moui_theme`. `examples/design_systems/app` is the dedicated design-system
-  preview/parity example and may import both `wzzc-dev/moui` and
+  `moui_theme`. `examples/design_systems/app` is the dedicated addon diagnostic
+  design-system preview/parity example and may import both `wzzc-dev/moui` and
   `wzzc-dev/moui_theme`; `examples/design_systems` has `macos_skia`,
   `windows_skia`, `linux_skia`, and `web_wasm` entrypoints.
   Markdown Editor has `macos_skia`, `windows_skia`, and `linux_skia` for
@@ -265,10 +265,12 @@ example builds for daily work. Use
 current-platform backend tests too. Use
 `sh scripts/dev-check.sh --platform-examples-build` only when you explicitly
 need slow current-platform native example builds.
+Use `sh scripts/dev-check.sh --theme-diagnostics` when changing `moui_theme`
+or the Design Systems addon diagnostic example; Design Systems is addon diagnostic coverage, not part of the default daily baseline.
 The daily check also runs the MoonBit-backed API surface guard, checked
 conformance artifact guard, dedicated checked-artifact validators for
 capture/Web/platform/renderer-proof manifests, and app/Web validation for
-Showcase, Markdown Editor, and Design Systems.
+Showcase and Markdown Editor.
 
 Useful focused checks:
 

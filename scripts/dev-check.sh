@@ -8,6 +8,7 @@ RUN_PLATFORM_EXAMPLES_TEST=false
 RUN_PLATFORM_EXAMPLES_BUILD=false
 RUN_SKIA_REAL_SMOKE=false
 RUN_WGPU_EXPERIMENTAL=false
+RUN_THEME_DIAGNOSTICS=false
 
 for arg in "$@"; do
   case "$arg" in
@@ -26,22 +27,27 @@ for arg in "$@"; do
     --wgpu-experimental)
       RUN_WGPU_EXPERIMENTAL=true
       ;;
+    --theme-diagnostics)
+      RUN_THEME_DIAGNOSTICS=true
+      ;;
     --help|-h)
-      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke] [--wgpu-experimental]\n' "$0"
+      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke] [--wgpu-experimental] [--theme-diagnostics]\n' "$0"
       printf '\n'
-      printf 'Runs bounded package-level checks, guidance consistency checks, and Web wasm-gc example builds.\n'
+      printf 'Runs bounded mainline package checks, guidance consistency checks, Showcase and Markdown Editor app/Web checks, and checked evidence manifest schema validation.\n'
       printf 'Pass --platform-examples-test to also run current-platform backend tests.\n'
       printf 'Pass --platform-examples-build to also build current-platform native examples.\n'
       printf 'Pass --skia-real-smoke to run the opt-in real Skia smoke when local Skia link flags are configured.\n'
       printf 'Pass --wgpu-experimental to also run native WGPU diagnostic package/provider checks.\n'
+      printf 'Pass --theme-diagnostics to run moui_theme and Design Systems addon diagnostic checks.\n'
       printf 'On macOS, scripts/macos-skia-renderer-smoke.sh can resolve JetBrains/source/existing Skia providers and temporarily configure those flags; pass that helper --run-gpu-smoke for the explicit Metal GPU route marker.\n'
       printf 'Native example builds use the Skia mainline by default; WGPU example builds are experimental diagnostics.\n'
+      printf 'Design Systems is addon diagnostic coverage and is not part of the default daily baseline.\n'
       printf 'Deprecated alias: --platform-examples behaves like --platform-examples-test.\n'
       exit 0
       ;;
     *)
       printf 'Unknown argument: %s\n' "$arg" >&2
-      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke] [--wgpu-experimental]\n' "$0" >&2
+      printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke] [--wgpu-experimental] [--theme-diagnostics]\n' "$0" >&2
       exit 2
       ;;
   esac
@@ -123,13 +129,24 @@ run moon test moui/backend/web --target wasm-gc
 
 run moon test examples/showcase/app --target native
 run moon test examples/markdown_editor/app --target native
-run moon test examples/design_systems/app --target native
 
 run moon build examples/showcase/web_wasm --target wasm-gc
 run moon build examples/markdown_editor/web_wasm --target wasm-gc
-run moon build examples/design_systems/web_wasm --target wasm-gc
 run node scripts/test-validate-web-runtime-handoff.mjs
 run node scripts/validate-web-runtime-handoff.mjs
+
+if "$RUN_THEME_DIAGNOSTICS"; then
+  run moon test moui_theme/common --target native
+  run moon test moui_theme/common --target wasm-gc
+  run moon test moui_theme/material --target native
+  run moon test moui_theme/carbon --target native
+  run moon test moui_theme/primer --target native
+  run moon test moui_theme/fluent --target native
+  run moon test examples/design_systems/app --target native
+  run moon build examples/design_systems/web_wasm --target wasm-gc
+else
+  printf '\nSkipping Design Systems addon diagnostics. Pass --theme-diagnostics to run moui_theme and Design Systems checks.\n'
+fi
 
 if "$RUN_WGPU_EXPERIMENTAL"; then
   run moon test moui/render/wgpu --target native

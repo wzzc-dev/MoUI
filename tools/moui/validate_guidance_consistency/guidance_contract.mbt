@@ -82,6 +82,10 @@ fn guidance_include_rules() -> Array[TextRule] {
       token: "`README.md`",
     },
     { path: "moui/README.mbt.md", token: "render/skia" },
+    { path: "moui/README.mbt.md", token: "docs/maintenance.md" },
+    { path: "docs/maintenance.md", token: "mainline" },
+    { path: "docs/maintenance.md", token: "diagnostic" },
+    { path: "docs/maintenance.md", token: "pending" },
     { path: "docs/architecture.md", token: "render/skia" },
     { path: "docs/platform-notes.md", token: "render/skia" },
     { path: "docs/testing.md", token: "render/skia" },
@@ -2324,7 +2328,7 @@ fn guidance_file_exists_rules() -> Array[String] {
     ".github/workflows/moui-skia-fallback.yml", ".github/workflows/moui-skia-linux-real-skia-smoke.yml",
     ".github/workflows/moui-skia-macos-real-skia-smoke.yml", ".github/workflows/moui-skia-windows-real-skia-smoke.yml",
     ".github/workflows/moui-skia-real-skia-acceptance.yml", ".github/workflows/copilot-setup-steps.yml",
-    ".github/workflows/moui-real-skia-smoke.yml",
+    ".github/workflows/moui-real-skia-smoke.yml", "docs/maintenance.md",
   ]
 }
 
