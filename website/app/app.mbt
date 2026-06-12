@@ -1,5 +1,5 @@
 ///|
-pub(all) struct Model {
+priv struct Model {
   dark : Bool
   body_scroll_y : Double
   docs_scroll_y : Double
@@ -10,7 +10,7 @@ pub(all) struct Model {
 }
 
 ///|
-pub(all) enum Msg {
+priv enum Msg {
   ToggleDark
   ScrollBodyTo(Double)
   ScrollDocsTo(Double)
@@ -47,7 +47,7 @@ priv struct Metrics {
 }
 
 ///|
-pub fn Model::new() -> Model {
+fn Model::new() -> Model {
   let doc = website_default_doc_entry()
   {
     dark: false,
@@ -61,7 +61,7 @@ pub fn Model::new() -> Model {
 }
 
 ///|
-pub fn Model::update(self : Model, message : Msg) -> Model {
+fn Model::update(self : Model, message : Msg) -> Model {
   match message {
     ToggleDark => { ..self, dark: !self.dark }
     ScrollBodyTo(offset_y) =>
@@ -95,7 +95,7 @@ pub fn Model::update(self : Model, message : Msg) -> Model {
 }
 
 ///|
-pub fn Model::update_with_services(
+fn Model::update_with_services(
   self : Model,
   message : Msg,
   services : @host.HostAppServices,
@@ -136,7 +136,7 @@ pub fn Model::update_with_services(
 }
 
 ///|
-pub fn Model::view(
+fn Model::view(
   self : Model,
   env : @core.ViewEnvironment,
 ) -> @core.View[Msg] {
@@ -197,7 +197,7 @@ pub fn Model::view(
 }
 
 ///|
-pub fn Model::runtime(
+fn Model::runtime(
   self : Model,
   width? : Double = 1180.0,
   height? : Double = 760.0,
@@ -210,7 +210,7 @@ pub fn Model::runtime(
 }
 
 ///|
-pub fn Model::runtime_with_services(
+fn Model::runtime_with_services(
   self : Model,
   services : @host.HostAppServices,
   width? : Double = 1180.0,
