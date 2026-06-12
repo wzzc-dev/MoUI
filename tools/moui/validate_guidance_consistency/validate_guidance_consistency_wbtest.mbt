@@ -43,7 +43,9 @@ test "daily quality gate tokens include moonbit-backed api surface guard" {
 test "release readiness quality tokens summarize current daily gates" {
   let tokens = release_readiness_quality_tokens()
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
-  assert_true(tokens.contains("dedicated checked-artifact validators"))
+  assert_true(tokens.contains("daily baseline"))
+  assert_true(tokens.contains("manual smoke"))
+  assert_true(tokens.contains("CI run or smoke log"))
   assert_true(tokens.contains("--theme-diagnostics"))
   assert_true(tokens.contains("Design Systems is addon diagnostic coverage"))
 }
@@ -52,7 +54,9 @@ test "release readiness quality tokens summarize current daily gates" {
 test "agent quality gate tokens cover AGENTS sync points" {
   let tokens = agent_quality_gate_tokens()
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
-  assert_true(tokens.contains("node scripts/validate-checked-conformance-artifacts.mjs"))
+  assert_true(tokens.contains("daily validation script"))
+  assert_true(tokens.contains("manual smoke"))
+  assert_true(tokens.contains("Do not commit artifacts/"))
   assert_true(tokens.contains("--theme-diagnostics"))
   assert_true(tokens.contains("Design Systems is addon diagnostic coverage"))
 }
@@ -60,10 +64,21 @@ test "agent quality gate tokens cover AGENTS sync points" {
 ///|
 test "theme diagnostic rules cover opt-in addon checks" {
   let rules = theme_diagnostic_rules()
-  assert_true(rules.any(rule => rule.path == "scripts/dev-check.sh" &&
-    rule.token == "--theme-diagnostics"))
-  assert_true(rules.any(rule => rule.path == "scripts/dev-check.sh" &&
-    rule.token == "moon test moui_theme/common --target native"))
-  assert_true(rules.any(rule => rule.path == "docs/testing.md" &&
-    rule.token == "Design Systems is addon diagnostic coverage"))
+  assert_true(
+    rules.any(rule => {
+      rule.path == "scripts/dev-check.sh" && rule.token == "--theme-diagnostics"
+    }),
+  )
+  assert_true(
+    rules.any(rule => {
+      rule.path == "scripts/dev-check.sh" &&
+      rule.token == "moon test moui_theme/common --target native"
+    }),
+  )
+  assert_true(
+    rules.any(rule => {
+      rule.path == "docs/testing.md" &&
+      rule.token == "Design Systems is addon diagnostic coverage"
+    }),
+  )
 }

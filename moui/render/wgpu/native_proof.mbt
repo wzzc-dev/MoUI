@@ -10,7 +10,7 @@ pub(all) struct NativeRendererProofFrame {
 ///|
 fn native_proof_fail(message : String) -> Unit {
   println(message)
-  abort("MoUI native WGPU renderer proof failed")
+  abort("MoUI native WGPU renderer smoke failed")
 }
 
 ///|
@@ -19,7 +19,7 @@ pub fn native_renderer_proof_smoke(
   text_engine~ : NativeTextEngine,
 ) -> Unit raise @wgpu_mbt.WgpuError {
   println(
-    "MoUI native WGPU renderer proof platform=\{platform_label} provider=\{text_engine.provider_id()} fallback=\{text_engine.fallback_provider_id()}",
+    "MoUI native WGPU renderer smoke platform=\{platform_label} provider=\{text_engine.provider_id()} fallback=\{text_engine.fallback_provider_id()}",
   )
   let async_source = native_proof_async_png_path(platform_label)
   @fs.remove_file(async_source) catch {
@@ -40,18 +40,18 @@ pub fn native_renderer_proof_smoke(
   assert_native_proof_async_second_frame(renderer, proof_commands, async_source)
   renderer.dispose()
   println(
-    "MoUI renderer proof radialGradient passed center-mid-edge-pixels shader-payload",
+    "MoUI renderer smoke radialGradient passed center-mid-edge-pixels shader-payload",
   )
-  println("MoUI renderer proof transformPixels passed pixel-markers")
+  println("MoUI renderer smoke transformPixels passed pixel-markers")
   println(
-    "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster",
+    "MoUI renderer smoke colorEmojiPixels passed high-saturation-pixels glyph-or-raster",
   )
   println(
-    "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret",
+    "MoUI renderer smoke zwjGrapheme passed single-grapheme-cluster no-interior-caret",
   )
-  println("MoUI renderer proof bidiLayout passed visual-order")
+  println("MoUI renderer smoke bidiLayout passed visual-order")
   println(
-    "MoUI renderer proof paragraphWrapping passed line-metrics later-line-pixels",
+    "MoUI renderer smoke paragraphWrapping passed line-metrics later-line-pixels",
   )
 }
 
@@ -263,7 +263,7 @@ fn RendererHandle::render_offscreen_proof_frame(
       Some(atlas_texture),
     ) else {
     println("native WGPU proof renderer is missing GPU resources")
-    abort("MoUI native WGPU renderer proof failed")
+    abort("MoUI native WGPU renderer smoke failed")
   }
   if self.text_atlas_dirty {
     queue.write_texture_rgba8_2d(

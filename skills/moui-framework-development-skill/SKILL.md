@@ -216,8 +216,8 @@ Use this skill when editing or reviewing:
   plus opt-in post-present async image loading for native providers. The
   binding/renderer may expose an explicit macOS Metal/Ganesh GPU context and
   offscreen GPU surface preflight, but provider/window GPU presentation remains
-  separate matching-host evidence and must not replace the raster mainline
-  without real smoke proof. Host-layer completion routing and native
+  separate matching-host smoke and must not replace the raster mainline without
+  real smoke logs. Host-layer completion routing and native
   provider/platform redraw scheduling from async image load/error notifications
   remain outside `render/skia`.
 - `render/wgpu/`: experimental native wgpu renderer, including source decode
@@ -232,11 +232,11 @@ Use this skill when editing or reviewing:
 - `moui/tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
   verifies MoUI draw commands against captured Skia presenter pixels and checks
   async image second-frame repaint through the host completion route.
-- `moui/tests/skia_text_emoji_smoke/native`: opt-in real-Skia text/emoji proof
-  smoke that records renderer-proof markers only after captured Skia pixels and
-  font/glyph metadata plus text-system evidence prove color emoji, ZWJ
-  grapheme, paragraph wrapping, and bidi observations. Native paragraph
-  wrapping, bidi layout, and selection-rectangle proof must use the real
+- `moui/tests/skia_text_emoji_smoke/native`: opt-in real-Skia text/emoji smoke
+  that reports captured Skia pixels, font/glyph metadata, color emoji, ZWJ
+  grapheme, paragraph wrapping, bidi layout, selection rectangles, grapheme
+  editing, IME geometry, and async image second-frame markers. Native paragraph
+  wrapping, bidi layout, and selection-rectangle smoke should use the real
   SkParagraph path and include `engine=skparagraph` markers.
 - `moui/tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
   packages for comparing supported text systems and documented gaps.
@@ -309,144 +309,20 @@ as `.github/workflows/moui-skia-*.yml`, and Copilot setup lives at root
 `.github/workflows/copilot-setup-steps.yml`. Keep workflow files there while
 `moui_skia` is a workspace member; nested workflow files are not discovered by
 GitHub Actions in the monorepo.
-Daily `dev-check` also runs the MoonBit-backed API surface guard, checked
-conformance artifact guard, dedicated checked-artifact validators for platform
-runtime evidence, Web runtime handoff/presentation, conformance capture, and
-renderer proof manifests, plus app/Web checks for Showcase and Markdown Editor.
-Use `sh scripts/dev-check.sh --theme-diagnostics` for `moui_theme` and Design
+Daily `dev-check` also runs the MoonBit-backed API surface guard, guidance
+consistency, renderer/provider and native Skia entrypoint static checks, and
+app/Web checks for Showcase and Markdown Editor. Use
+`sh scripts/dev-check.sh --theme-diagnostics` for `moui_theme` and Design
 Systems addon diagnostic coverage. Keep `docs/testing.md` and repo-local skills
 synchronized when adding or removing daily quality gates.
-For Web runtime evidence, use `record-web-runtime-presentation.mjs` to collect
-the browser-session artifact, then fold it into
-`platform-runtime-evidence.json` with
-`record-platform-evidence-manifest.mjs ... web --web-presentation-manifest ...`.
-When Web folding runs in GitHub Actions, expect `github-actions` provenance
-from the successful non-skipped job/run. When it runs locally, expect
-`matching-host-artifact` provenance for the browser-session manifest and
-screenshots. Do not invent CI run URL, runner, or job fields for local
-artifacts.
-The canonical Actions job for Web browser-session evidence is
-`web-runtime-presentation`; it runs `scripts/ci-web-runtime-presentation.sh` to
-build Showcase and Markdown Editor Web wasm-gc targets, serve the repository,
-start Chrome CDP, record and fold the presentation manifest, validate the Web
-platform entry, and upload `moui-web-runtime-presentation` artifacts.
-Renderer proof is tracked separately in schema v1 manifests under
-`artifacts/conformance/renderer-proof/<backend>-<platform>.json`. Validate them
-with `scripts/validate-renderer-proof-manifest.mjs`; passed entries require
-GitHub Actions provenance plus exactly `radialGradient`, `transformPixels`,
-`colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`, `paragraphWrapping`,
-`selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,
-`imeCompositionVisual`, and `asyncImageSecondFrame` observations with strong
-marker tokens. Passed
-`colorEmojiPixels` observations must also include `font-metadata` /
-`glyph-metadata` evidence and structured metadata fields, including a non-empty
-glyph key plus positive glyph width/height; native Skia color emoji proof must
-also include `fallback-request`, `emoji-hint`, and `stable-glyph-key` tokens
-plus fallback script/language tag-list/count metadata, resolved missing-glyph count,
-fallback request character metadata, missing-glyph recovery readiness, and a
-glyph key that contains the recorded
-source/text-system/shaper/script/language-tags/language-count/fallback-request-character/format metadata. Native Skia `paragraphWrapping`,
-`bidiLayout`, and `selectionRects` observations must include SkParagraph
-markers such as `native_paragraph_ready=true`, `bidi_visual_order_ready=true`,
-`line-metrics`, `later-line-pixels`, `visual-order`, `selection-rects`,
-`line-range`, `rect-geometry`, and `hit-test` as appropriate. Package-only tests, skipped jobs,
-missing uploaded artifacts, blank screenshots, caret-only
-diagnostics, heuristic visual-order logs, fallback paragraph geometry,
-coverage-only font matching, provider preflights,
-preflight-only checks, and fallback-safe descriptor audits must stay failed
-proof. Complete local observations may be
-preserved for debugging, but without GitHub Actions provenance the manifest
-status stays failed. The native Skia proof matrix
-configures the locked release Skia artifact with required SkParagraph support
-before running real renderer/text smokes. Native WGPU proof remains a
-non-blocking diagnostic and still requires a
-usable runner WGPU adapter for offscreen readback.
-Native Skia `graphemeEditing`, `imeCandidateAnchor`, and
-`imeCompositionVisual` renderer-proof markers come from the text/emoji smoke's
-shared grapheme-boundary contract, host IME request diagnostics including UTF-8
-cursor/anchor offsets plus composition cursor evidence, Skia caret geometry,
-and captured text-field composition pixels; they do not replace matching-host
-native IME runtime evidence.
-The `renderer-proof-summary` job requires the native Skia macOS, Windows,
-Linux, and WebGPU wasm proof
-artifacts to validate as passed before mainline capability promotion; native
-WGPU diagnostic artifacts are uploaded separately but do not block the summary.
-The platform evidence manifest is schema v2 and records the
-`wzzc-dev/window@0.5.1-0.1.4` package monitor/cursor probe as
-`monitorCursor`; native passed entries must set it to
-`yes`, while Web browser-session evidence may leave it pending. Native passed
-entries must also set `imeCandidateAnchor`, `imeSurroundingText`,
-`imeCompositionVisual`, `imeCommitDelete`, `imeCursorUpdate`,
-`imeScrollAnchor`, `imeScaleDprAnchor`, and `imeResizeAnchor` to `yes` from
-matching-host Showcase
-runtime artifacts; host-core unit tests, package logs, provider preflights, and
-coarse `textInput` observations are not enough. Native entries
-also record a `skiaEvidence` block for Skia provider/preflight commands,
-fallback-unavailable checks, real-renderer smoke, async image second-frame
-smoke, and Showcase first-frame status. Any `status=passed` platform
-entry, and any
-`skiaEvidence.status=passed` route, must include `evidenceProvenance` that
-traces the claim to a non-skipped successful GitHub Actions job/run or to a
-matching-host artifact bundle. Build-only jobs, package-only jobs,
-provider/preflight summaries, dependency smokes, and skipped workflow-dispatch
-paths are not runtime proof. `artifacts/platform-evidence/*/README.md` files
-are placeholder documentation and must not be used as passed platform, Skia, or
-provenance artifacts. `skiaEvidence.status=passed` is Skia-route
-evidence, not a complete platform-services claim by itself, but native platform
-entries cannot be marked `passed` unless their Skia evidence is also `passed`.
-Use `record-native-ime-evidence.mjs` for matching-host IME logs when you only
-want to validate and update native IME observations; it deliberately leaves the
-broader platform runtime status unchanged and rejects generic host unit-test or
-package logs without matching-host runtime, native-app, `renderer=skia`,
-matching app, platform-protocol,
-candidate-anchor, surrounding-text, composition, commit/delete, cursor, scroll,
-scale/DPR, resize, and Showcase markers. The `renderer=skia`, app, and
-platform-protocol markers are exact whitespace-delimited tokens; suffixed
-labels are not matching-host runtime IME evidence.
-For macOS, the first-party producer is the Showcase native Skia
-entrypoint with
-`MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/showcase/macos_skia --target native`;
-store that run as
-`artifacts/platform-evidence/macos/ime-showcase-runtime.log` and pass it to
-each macOS native IME recorder log option after confirming it prints the
-Showcase marker. The macOS recorder also requires AppKit
-`NSTextInputClient` markers: candidate/surrounding/composition logs must include
-`appkit-setMarkedText` and `appkit-firstRectForCharacterRange`, and
-post-commit logs, including commit/delete, cursor, scroll, scale/DPR, resize,
-and Showcase runtime markers, must include `appkit-insertText`.
-Use
-`record-native-skia-evidence.mjs` for matching-host Skia logs when you only
-want to validate and update `skiaEvidence`; it deliberately leaves the broader
-platform runtime status unchanged. Its provider-preflight log check requires
-both the matching Skia provider identity and a passing preflight, test, or build
-marker; do not use generic passing test output as provider evidence. Its
-Showcase and Markdown Editor first-frame checks require app-identifying
-`title=MoUI Showcase` and `title=MoUI Markdown Editor` markers on the platform
-first-frame line, respectively.
-Use `record-macos-platform-runtime-evidence.mjs` only for macOS platform
-promotion after macOS `skiaEvidence` is passed and every native IME observation
-has already been recorded by `record-native-ime-evidence.mjs`. The macOS helper
-validates the `wzzc-dev/window@0.5.1-0.1.4` package runtime smoke transcript
-through `--window-smoke-log` for window/open/resize/redraw/input/monitor/cursor/shutdown
-source observations, and validates a Showcase or Markdown Editor `macos_skia`
-first-frame source log through `--app-runtime-log` before delegating to the
-generic platform manifest recorder. Collect the macOS window package transcript
-with `WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=... scripts/run-window-package-smoke.sh macos --run`
-so the AppKit smoke app writes the marker artifact itself; do not use outer
-shell redirection as the source artifact for monitor/current-monitor evidence.
-Do not use renderer-proof IME markers, provider preflights, or the window
-package smoke alone as macOS platform-passed evidence.
-For local macOS matching-host collection after Skia evidence is already passed,
-prefer `scripts/record-macos-local-runtime-evidence.sh`; it runs the AppKit
-window smoke, runs the Markdown Editor IME producer, folds native IME
-observations, promotes the macOS platform entry with `matching-host-artifact`
-provenance, and validates the macOS entry without changing Windows, Linux, or
-global Skia claims.
-A passed presentation manifest must include WebGPU startup, wasm startup,
-canvas sizing, resize/input event-bridge delivery, Markdown Editor text input,
-clean target close, clean console, nonblank screenshots, and Showcase
-transform-scene pixel markers for the named browser session before the Web
-platform entry can be marked passed.
+
+Manual smoke is opt-in. Browser-session smoke uses
+`scripts/ci-web-runtime-presentation.sh`, which builds Showcase, starts a local
+HTTP server and Chrome CDP, records a local manifest under
+`artifacts/smoke/web-runtime-presentation/`, and validates that browser
+session. Native renderer/platform smoke should cite the CI run, uploaded
+artifact, or local smoke log that was actually inspected. Do not commit
+generated `artifacts/` JSON as the long-term capability source of truth.
 
 Focused checks:
 
@@ -468,10 +344,6 @@ sh scripts/conformance-check.sh --render
 sh scripts/conformance-check.sh --platform-services
 sh scripts/conformance-check.sh --text
 sh scripts/conformance-check.sh --text-diagnostic
-node scripts/validate-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json
-node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json <platform> ...
-node scripts/record-native-ime-evidence.mjs artifacts/conformance/platform-runtime-evidence.json <platform> ...
-node scripts/record-native-skia-evidence.mjs artifacts/conformance/platform-runtime-evidence.json <platform> ...
 node scripts/validate-skia-entrypoints.mjs
 node scripts/test-validate-skia-entrypoints.mjs
 moon test examples/showcase/app --target native
@@ -493,10 +365,6 @@ moon build examples/markdown_editor/windows_skia --target native
 moon build examples/markdown_editor/linux_skia --target native
 node --check scripts/validate-conformance-capture-manifest.mjs
 node scripts/test-validate-conformance-capture-manifest.mjs
-node --check scripts/validate-platform-evidence-manifest.mjs
-node scripts/test-validate-platform-evidence-manifest.mjs
-node --check scripts/record-platform-evidence-manifest.mjs
-node scripts/test-record-platform-evidence-manifest.mjs
 node --check scripts/validate-web-runtime-handoff.mjs
 node scripts/test-validate-web-runtime-handoff.mjs
 node --check scripts/test-browser-runtime-events.mjs
@@ -507,12 +375,6 @@ node --check scripts/record-web-runtime-presentation.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
-node --check scripts/validate-renderer-proof-manifest.mjs
-node scripts/test-validate-renderer-proof-manifest.mjs
-node --check scripts/record-renderer-proof-manifest.mjs
-node scripts/test-record-renderer-proof-manifest.mjs
-node --check scripts/record-web-renderer-proof-manifest.mjs
-node scripts/test-record-web-renderer-proof-manifest.mjs
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check
 node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check
@@ -521,9 +383,7 @@ node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/Gra
 node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/render/skia/skia_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_skia_unicode_17_grapheme_break_fixture --test-name "skia unicode 17 grapheme break fixture samples" --actual-kind skia-clusters --check
 node --check scripts/generate-grapheme-property-data.mjs
 node scripts/generate-grapheme-property-data.mjs --grapheme-property <Unicode-17.0.0-GraphemeBreakProperty.txt> --emoji-data <Unicode-17.0.0-emoji-data.txt> --derived-core-properties <Unicode-17.0.0-DerivedCoreProperties.txt> --check
-node --check scripts/ci-renderer-proof-native.mjs
-sh -n scripts/ci-renderer-proof-native.sh
-sh -n scripts/ci-renderer-proof-summary.sh
+sh -n scripts/ci-web-runtime-presentation.sh
 node --check scripts/validate-package-manifest.mjs
 ```
 
@@ -580,10 +440,6 @@ scripts/macos-skia-renderer-smoke.sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
 scripts/macos-skia-renderer-smoke.sh --run-gpu-smoke
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
-scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke \
-  --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log \
-  --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log \
-  --record-platform-evidence artifacts/conformance/platform-runtime-evidence.json
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke \
   --markdown-log artifacts/example-smoke/macos/markdown-macos-skia-first-frame.log
 scripts/macos-skia-renderer-smoke.sh --skia-provider existing \
@@ -616,14 +472,10 @@ platform-window GPU presentation evidence. Direct Skia
 `moui_skia` prebuild hook for real Skia and choose the library mode through
 `MOUI_SKIA_LINK_MODE=dynamic|static|auto`; helper smoke runs can pass
 `--link-mode dynamic|static|auto` to override the environment for that
-invocation. For paragraph/bidi proof runs, pass `--enable-skparagraph` and
+invocation. For paragraph/bidi smoke runs, pass `--enable-skparagraph` and
 `--require-skparagraph` so missing SkParagraph, SkShaper, SkUnicode, HarfBuzz,
-or ICU headers/libraries fail before proof markers are recorded. With explicit artifact log paths,
-`--record-platform-evidence` updates only the macOS `skiaEvidence` block after a
-successful full smoke; the renderer smoke log must include the async image
-second-frame marker, and omitted provider/fallback observations remain pending
-until their own artifacts are supplied. It does not mark the broader
-platform-service entry passed. Normal macOS Skia entrypoints default to the system
+or ICU headers/libraries fail before the smoke can pass. Normal macOS Skia
+entrypoints default to the system
 `FontMgr` text path; first-frame smoke entrypoints explicitly select
 `EmptyTypeface` only while their exit-after-first-present flag is set. Windows
 and Linux Skia entrypoints follow the same smoke-only font-resolution switch.
