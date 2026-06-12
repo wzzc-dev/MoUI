@@ -12,10 +12,12 @@ Run the bounded development check for routine work:
 sh scripts/dev-check.sh
 ```
 
-This keeps feedback fast by running stable package-level tests, native renderer
-contract tests for the Skia mainline, and Web wasm-gc example builds without
-invoking every native or wasm-gc target. Pass `--wgpu-experimental` when you
-want native WGPU diagnostics in the same loop.
+This keeps feedback fast by running stable package-level tests for `core`,
+`views`, `backend/host`, `backend/web`, the native Skia mainline, the Web
+wasm-gc adapter, Showcase, and Markdown Editor without invoking every native or
+wasm-gc target. Pass `--wgpu-experimental` when you want native WGPU
+diagnostics in the same loop. Pass `--theme-diagnostics` when you want
+`moui_theme` and Design Systems addon diagnostic coverage in the same loop.
 
 The daily check also runs
 `node scripts/validate-checked-conformance-artifacts.mjs`, which validates the
@@ -27,6 +29,8 @@ rules that release handoffs cite.
 It also runs `node scripts/validate-api-surface.mjs`, a thin wrapper around the
 MoonBit tool in `tools/moui/validate_api_surface/`, so generated public
 interfaces stay inside the documented app/core/host/render package boundaries.
+See [Maintenance mainline](maintenance.md) for the `mainline`, `diagnostic`,
+and `pending` validation categories.
 
 ## Focused Package Tests
 
@@ -45,7 +49,7 @@ moon test moui/backend/web --target wasm-gc
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
-moon test examples/design_systems/app --target native
+moon test examples/design_systems/app --target native  # addon diagnostic
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
@@ -77,6 +81,22 @@ mapping is:
 | Host event, window, timer, and route subscriptions | `moon test moui/core --target native`, `moon test moui/backend/host --target native`, `moon test moui/backend/web --target wasm-gc`, touched native backend checks such as `moon test moui/backend/macos --target native`, `moon test moui/backend/linux --target native`, or `moon check moui/backend/windows --target native` |
 | Native async image completion | `moon test moui/render --target native`, `moon test moui/render/skia --target native`, `moon test moui/backend/host --target native`, touched native backend/provider package tests such as `moon test moui/backend/macos --target native`, `moon test moui/backend/macos/skia --target native`, `moon test moui/backend/linux --target native`, or `moon test moui/backend/linux/skia --target native`; add `moon test moui/render/wgpu --target native` plus the matching `backend/<platform>/wgpu` package only for WGPU diagnostic changes. Windows package tests require a Windows/MSVC host, use `moon check moui/backend/windows --target native` and `moon check moui/backend/windows/skia --target native` on non-Windows hosts for static API coverage |
 | Virtual lists | `moon test moui/views --target native`, `sh scripts/conformance-check.sh --layout` |
+
+## Theme Diagnostics
+
+Design Systems is addon diagnostic coverage, not part of the default daily
+baseline. Run the opt-in theme diagnostics when changing `moui_theme`,
+design-system source mappings, token reports, or the dedicated Design Systems
+example:
+
+```sh
+sh scripts/dev-check.sh --theme-diagnostics
+```
+
+That opt-in path runs the `moui_theme` package checks plus
+`examples/design_systems/app` and `examples/design_systems/web_wasm`.
+Showcase remains the MoUI framework catalog and must stay independent of
+`moui_theme`.
 
 ## Platform Validation
 
@@ -970,7 +990,6 @@ compiled WebAssembly event/completion exports after build:
 ```sh
 moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
-moon build examples/design_systems/web_wasm --target wasm-gc
 node scripts/validate-web-runtime-handoff.mjs \
   --manifest artifacts/conformance/web-runtime-handoff.json
 node scripts/validate-web-runtime-handoff-manifest.mjs \
@@ -983,6 +1002,9 @@ This is still a static delivery and HTTP availability check. It does not claim
 that Browser WebGPU device creation, wasm instantiation, canvas presentation, or
 pixel output succeeded; collect those with browser automation or manual browser
 evidence before changing Web runtime entries from pending to passed.
+Run `sh scripts/dev-check.sh --theme-diagnostics` first when you need the
+Design Systems addon Web target included in local validation.
+
 The optional manifest records the checked runtime assets, target HTML/wasm
 paths, compiled WebAssembly exports, file/HTTP checks, and the same evidence
 boundary so release handoffs can cite a structured artifact rather than console
