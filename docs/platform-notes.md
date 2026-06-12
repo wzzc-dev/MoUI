@@ -310,7 +310,7 @@ clipboard/menu/file-dialog/open URL/system-theme/async-service readiness,
 native context-menu and host-modal file-dialog readiness, native accessibility
 status, and the runtime evidence boundary. Treat that summary as
 provider/package evidence
-only; MoUI macOS Skia runtime proof still comes from the real-Skia renderer
+only; MoUI macOS Skia runtime smoke still comes from the real-Skia renderer
 pixel smoke plus the Showcase first-frame smoke marker. Markdown Editor
 first-frame smoke remains optional example coverage and is not a platform
 runtime evidence gate.
@@ -631,7 +631,7 @@ matching-host pending until a Wayland run records it from the Skia entrypoints
 or provider smoke. The summary is useful for provider/package
 audits, but it does not prove a real Wayland compositor presented Showcase or
 Markdown Editor frames;
-those claims still require matching-host runtime runs and platform evidence
+those claims still require matching-host runtime runs and smoke logs
 manifest entries.
 
 The window package carries a consumer-style Linux smoke for this dependency

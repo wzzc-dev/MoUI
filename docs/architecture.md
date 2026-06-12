@@ -441,8 +441,8 @@ View constructors pass `Brush`, border, and shadow data into `DrawCommand`
 without calling `Brush::fallback_color`; fallback is centralized in renderer
 capability layers.
 
-The native Skia renderer is the recommended native baseline for renderer proof
-and platform entrypoint evidence. It presents CPU pixel frames through platform
+The native Skia renderer is the recommended native baseline for renderer smoke
+and platform entrypoint validation. It presents CPU pixel frames through platform
 Skia providers and uses the local `moui_skia` binding for raster, path, image,
 and text diagnostics. The WebGPU host-import renderer forwards the full command
 set to the browser runtime. Experimental native WGPU continues to exercise the
@@ -628,7 +628,7 @@ the presented image-resource revision has been baselined, then cancel in-flight
 window loads during disposal. Native WGPU provider packages now supply a
 provider-owned loader that turns renderer-owned PNG/JPEG/BMP source decode
 results into `ImageResourceLoadCompletion` payloads; matching-host off-main
-async runtime evidence is still required before treating the route as fully
+async runtime smoke is still required before treating the route as fully
 ready. Native Skia provider packages now install the same provider-owned loader
 boundary around `skia_image_load_completion`, and provider-created Skia
 renderers opt into post-present async image loading so the first presented
@@ -636,7 +636,7 @@ snapshot can contain loading records before the host routes ready/failed
 completions into a repaint. The helper converts Skia encoded-image decode
 results into ready/failed completion payloads without pre-populating renderer
 caches. This is provider completion and smoke evidence, not matching-host
-off-main runtime proof. The host source and scheduler do not decode images,
+off-main runtime smoke. The host source and scheduler do not decode images,
 mutate renderer caches, or live in `core`;
 renderer/provider packages still own concrete loading and lifecycle records.
 

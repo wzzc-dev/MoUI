@@ -219,7 +219,7 @@ fn assert_region_has_redish_pixel(
     }) {
     return ()
   }
-  fail_smoke("MoUI Skia smoke region did not contain a red proof pixel")
+  fail_smoke("MoUI Skia smoke region did not contain a red marker pixel")
 }
 
 ///|
@@ -232,7 +232,7 @@ fn assert_region_has_blueish_pixel(
     }) {
     return ()
   }
-  fail_smoke("MoUI Skia smoke region did not contain a blue proof pixel")
+  fail_smoke("MoUI Skia smoke region did not contain a blue marker pixel")
 }
 
 ///|
@@ -245,7 +245,7 @@ fn assert_region_has_purpleish_pixel(
     }) {
     return ()
   }
-  fail_smoke("MoUI Skia smoke region did not contain a radial mid proof pixel")
+  fail_smoke("MoUI Skia smoke region did not contain a radial mid marker pixel")
 }
 
 ///|
@@ -893,7 +893,7 @@ fn renderer_proof_pixel_commands() -> Array[@core.DrawCommand] {
 fn run_renderer_proof_pixel_smoke() -> Unit {
   let captured : Ref[@skia_renderer.SkiaPixelFrame?] = Ref(None)
   let target = @skia_renderer.SkiaPresentTarget::new(
-    description="MoUI Skia renderer proof pixel presenter",
+    description="MoUI Skia renderer smoke pixel presenter",
     present=frame => {
       captured.val = Some(frame)
       true
@@ -913,16 +913,16 @@ fn run_renderer_proof_pixel_smoke() -> Unit {
     renderer => Ok(renderer)
   }
   guard renderer_result is Ok(renderer) else {
-    fail_smoke("failed to create MoUI Skia renderer proof pixel renderer")
+    fail_smoke("failed to create MoUI Skia renderer smoke pixel renderer")
   }
   renderer.render(renderer_proof_pixel_commands()) catch {
     err =>
       fail_smoke(
-        "failed to render MoUI Skia renderer proof pixels: \{err.message()}",
+        "failed to render MoUI Skia renderer smoke pixels: \{err.message()}",
       )
   }
   if renderer.unsupported_command_count() != 0 {
-    fail_smoke("MoUI Skia renderer proof hit unsupported commands")
+    fail_smoke("MoUI Skia renderer smoke hit unsupported commands")
   }
   match captured.val {
     Some(frame) => {
@@ -960,13 +960,13 @@ fn run_renderer_proof_pixel_smoke() -> Unit {
         @core.Rect::new(x=104.0, y=30.0, width=20.0, height=24.0),
       )
     }
-    None => fail_smoke("Skia renderer proof presenter did not receive a frame")
+    None => fail_smoke("Skia renderer smoke presenter did not receive a frame")
   }
   renderer.dispose()
   println(
-    "MoUI renderer proof radialGradient passed center-mid-edge-pixels shader-payload",
+    "MoUI renderer smoke radialGradient passed center-mid-edge-pixels shader-payload",
   )
-  println("MoUI renderer proof transformPixels passed pixel-markers")
+  println("MoUI renderer smoke transformPixels passed pixel-markers")
 }
 
 ///|
@@ -1256,7 +1256,7 @@ fn run_async_image_second_frame_smoke() -> Unit {
   }
   println("MoUI Skia async image second-frame smoke passed")
   println(
-    "MoUI renderer proof asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
+    "MoUI renderer smoke asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
   )
 }
 

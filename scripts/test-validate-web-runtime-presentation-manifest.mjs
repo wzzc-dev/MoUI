@@ -57,7 +57,7 @@ const observations = value => Object.fromEntries(observationKeys.map(key => [key
 const platformObservations = value =>
   Object.fromEntries(platformObservationKeys.map(key => [key, value]));
 
-const proof = (name, status, evidence, extra = {}) => ({
+const smoke = (name, status, evidence, extra = {}) => ({
   required: name === "showcase-web-wasm",
   passed: name === "showcase-web-wasm" && status === "passed",
   evidence: name === "showcase-web-wasm" && status === "passed" ? evidence : [],
@@ -105,8 +105,8 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
       goldPixels: name === "showcase-web-wasm" && status === "passed" ? 18 : 0,
       matchedMarkers: name === "showcase-web-wasm" && status === "passed" ? 3 : 0,
     },
-    radialGradient: proof(name, status, ["center-mid-edge-pixels", "shader-payload"]),
-    colorEmojiPixels: proof(
+    radialGradient: smoke(name, status, ["center-mid-edge-pixels", "shader-payload"]),
+    colorEmojiPixels: smoke(
       name,
       status,
       ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
@@ -132,29 +132,29 @@ const target = ({ name, packagePath, path, status = "passed" }) => ({
         },
       },
     ),
-    zwjGrapheme: proof(
+    zwjGrapheme: smoke(
       name,
       status,
       ["single-grapheme-cluster", "no-interior-caret"],
       { logicalClusters: 1, visualClusters: 1 },
     ),
-    bidiLayout: proof(
+    bidiLayout: smoke(
       name,
       status,
       ["visual-order"],
       { logicalClusters: ["A", "B", "C", " ", "א", "ב", "ג"], visualClusters: ["A", "B", "C", " ", "ג", "ב", "א"] },
     ),
-    paragraphWrapping: proof(
+    paragraphWrapping: smoke(
       name,
       status,
       ["line-metrics", "later-line-pixels"],
       { paragraphLineCount: 3, paragraphRows: 3, darkRows: 8 },
     ),
-    selectionRects: proof(name, status, ["selection-rects", "line-range"]),
-    graphemeEditing: proof(name, status, ["grapheme-boundaries", "edit-actions"]),
-    imeCandidateAnchor: proof(name, status, ["candidate-anchor", "surrounding-text"]),
-    imeCompositionVisual: proof(name, status, ["composition-range", "preedit-pixels"]),
-    asyncImageSecondFrame: proof(name, status, [
+    selectionRects: smoke(name, status, ["selection-rects", "line-range"]),
+    graphemeEditing: smoke(name, status, ["grapheme-boundaries", "edit-actions"]),
+    imeCandidateAnchor: smoke(name, status, ["candidate-anchor", "surrounding-text"]),
+    imeCompositionVisual: smoke(name, status, ["composition-range", "preedit-pixels"]),
+    asyncImageSecondFrame: smoke(name, status, [
       "late-completion",
       "repaint-request",
       "second-frame-pixels",
@@ -480,9 +480,9 @@ expectFail(
 );
 
 expectFail(
-  "passed selection proof with weak evidence",
+  "passed selection smoke with weak evidence",
   runValidator(
-    writeFixture("weak-selection-proof.json", {
+    writeFixture("weak-selection-smoke.json", {
       ...validManifest,
       targets: validManifest.targets.map(target =>
         target.name === "showcase-web-wasm"
@@ -531,7 +531,7 @@ expectFail(
       ),
     }),
   ),
-  "passed async image proof requires placeholder, late load, repaint, ready second-frame order",
+  "passed async image smoke requires placeholder, late load, repaint, ready second-frame order",
 );
 
 expectFail(

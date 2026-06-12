@@ -8,7 +8,7 @@ WEB_RUNTIME_HTTP_PORT="${WEB_RUNTIME_HTTP_PORT:-18080}"
 WEB_RUNTIME_CDP_PORT="${WEB_RUNTIME_CDP_PORT:-9223}"
 WEB_RUNTIME_BASE_URL="${WEB_RUNTIME_BASE_URL:-http://127.0.0.1:${WEB_RUNTIME_HTTP_PORT}}"
 WEB_RUNTIME_CDP_URL="${WEB_RUNTIME_CDP_URL:-http://127.0.0.1:${WEB_RUNTIME_CDP_PORT}}"
-WEB_RUNTIME_PRESENTATION_MANIFEST="${WEB_RUNTIME_PRESENTATION_MANIFEST:-artifacts/conformance/web-runtime-presentation.json}"
+WEB_RUNTIME_PRESENTATION_MANIFEST="${WEB_RUNTIME_PRESENTATION_MANIFEST:-artifacts/smoke/web-runtime-presentation/presentation-smoke.json}"
 WEB_RUNTIME_PRESENTATION_TIMEOUT_MS="${WEB_RUNTIME_PRESENTATION_TIMEOUT_MS:-20000}"
 
 SERVER_PID=""
@@ -75,17 +75,17 @@ find_chrome() {
       return 0
     fi
   done
-  printf 'No Chrome or Chromium binary found for Web runtime presentation evidence.\n' >&2
+  printf 'No Chrome or Chromium binary found for Web runtime presentation smoke.\n' >&2
   return 1
 }
 
-mkdir -p artifacts/conformance/web-runtime-presentation artifacts/platform-evidence/web
+mkdir -p artifacts/smoke/web-runtime-presentation
 
 run moon build examples/showcase/web_wasm --target wasm-gc
 
 printf '\n==> python3 -m http.server %s --bind 127.0.0.1\n' "$WEB_RUNTIME_HTTP_PORT"
 python3 -m http.server "$WEB_RUNTIME_HTTP_PORT" --bind 127.0.0.1 \
-  > artifacts/conformance/web-runtime-presentation/http-server.log 2>&1 &
+  > artifacts/smoke/web-runtime-presentation/http-server.log 2>&1 &
 SERVER_PID="$!"
 wait_for_url "${WEB_RUNTIME_BASE_URL}/" "static server" 30
 
@@ -105,7 +105,7 @@ printf '\n==> %s --headless=new --remote-debugging-port=%s\n' "$CHROME_BIN" "$WE
   --disable-dev-shm-usage \
   --user-data-dir="$USER_DATA_DIR" \
   about:blank \
-  > artifacts/conformance/web-runtime-presentation/chrome.log 2>&1 &
+  > artifacts/smoke/web-runtime-presentation/chrome.log 2>&1 &
 CHROME_PID="$!"
 wait_for_url "${WEB_RUNTIME_CDP_URL}/json/version" "Chrome CDP" 60
 
@@ -117,17 +117,6 @@ run node scripts/record-web-runtime-presentation.mjs \
   --timeout-ms "$WEB_RUNTIME_PRESENTATION_TIMEOUT_MS" \
   --require-passed || presentation_status="$?"
 
-if [ -f "$WEB_RUNTIME_PRESENTATION_MANIFEST" ]; then
-  proof_status=0
-  run node scripts/record-web-renderer-proof-manifest.mjs \
-    --web-presentation-manifest "$WEB_RUNTIME_PRESENTATION_MANIFEST" \
-    --output artifacts/conformance/renderer-proof/webgpu-wasm-web.json ||
-    proof_status="$?"
-  if [ "$proof_status" -ne 0 ]; then
-    printf 'web renderer proof diagnostic manifest failed to record; status=%s\n' "$proof_status" >&2
-  fi
-fi
-
 if [ "$presentation_status" -ne 0 ]; then
   exit "$presentation_status"
 fi
@@ -135,19 +124,3 @@ fi
 run node scripts/validate-web-runtime-presentation-manifest.mjs \
   "$WEB_RUNTIME_PRESENTATION_MANIFEST" \
   --require-passed
-
-run node scripts/record-web-renderer-proof-manifest.mjs \
-  --web-presentation-manifest "$WEB_RUNTIME_PRESENTATION_MANIFEST" \
-  --output artifacts/conformance/renderer-proof/webgpu-wasm-web.json \
-  --require-passed
-
-run sh scripts/conformance-check.sh --platform-services
-
-run node scripts/record-platform-evidence-manifest.mjs \
-  artifacts/conformance/platform-runtime-evidence.json \
-  web \
-  --web-presentation-manifest "$WEB_RUNTIME_PRESENTATION_MANIFEST"
-
-run node scripts/validate-platform-evidence-manifest.mjs \
-  artifacts/conformance/platform-runtime-evidence.json \
-  --platform web

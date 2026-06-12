@@ -15,12 +15,6 @@ Current tools:
 - `validate_renderer_provider_manifests/` keeps native platform backend,
   Skia-provider, and WGPU-provider package manifests from depending on the
   wrong renderer or binding packages.
-- `validate_renderer_proof_manifest/` validates schema version 1 renderer proof
-  manifests, including required proof tokens, provenance, emoji metadata, and
-  optional uploaded artifact existence checks.
-- `validate_platform_evidence_manifest/` validates schema version 2 platform
-  runtime evidence manifests, including matching-host provenance, native IME
-  observations, and native Skia evidence boundaries.
 - `validate_skia_entrypoints/` statically checks native Skia example
   entrypoint packages and `main.mbt` files for the expected renderer,
   platform-backend, first-frame, and font-resolution wiring.
@@ -29,15 +23,8 @@ Current tools:
   capture handoffs.
 - `validate_web_runtime_handoff_manifest/` validates schema version 1 static
   Web runtime handoff evidence manifests without broadening them into browser
-  WebGPU, wasm-instantiation, canvas, or pixel proof.
+  WebGPU, wasm-instantiation, canvas, or pixel smoke.
 - `validate_web_runtime_presentation_manifest/` validates schema version 1
   browser-session Web runtime presentation manifests, including WebGPU, wasm
-  startup, canvas, resize/input, screenshot, renderer proof, and clean target
-  close evidence boundaries.
-- `validate_checked_conformance_artifacts/` validates the checked-in
-  conformance capture, Web handoff, Web presentation, platform-runtime
-  evidence, and renderer-proof artifact set so committed evidence does not
-  drift behind current schema and boundary rules.
-- `record_renderer_proof_manifest/` folds renderer proof smoke logs into schema
-  version 1 renderer proof manifests while preserving the original
-  `scripts/record-renderer-proof-manifest.mjs` command path.
+  startup, canvas, resize/input, screenshot markers, and clean target close
+  boundaries for local smoke runs.

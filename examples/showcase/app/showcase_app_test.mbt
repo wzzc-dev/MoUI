@@ -787,12 +787,12 @@ test "showcase navigates to system gallery sections" {
   assert_true(has_text(advanced_commands, "Shader"))
   assert_true(has_text(advanced_commands, "Path + Transform"))
   assert_true(has_text(advanced_commands, "Transform Pixel"))
-  assert_true(has_text(advanced_commands, "Renderer Proof"))
+  assert_true(has_text(advanced_commands, "Renderer Smoke"))
   assert_true(has_text(advanced_commands, "👩‍💻"))
   assert_true(has_text(advanced_commands, "ABC אבג 123"))
-  assert_true(has_text(advanced_commands, "Proof wrap line 1"))
-  assert_true(has_text(advanced_commands, "Proof wrap line 2"))
-  assert_true(has_text(advanced_commands, "Proof wrap line 3"))
+  assert_true(has_text(advanced_commands, "Smoke wrap line 1"))
+  assert_true(has_text(advanced_commands, "Smoke wrap line 2"))
+  assert_true(has_text(advanced_commands, "Smoke wrap line 3"))
   assert_true(
     advanced_commands.any(command => {
       command

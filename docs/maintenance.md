@@ -10,8 +10,8 @@ growing without turning every diagnostic route into daily release pressure.
 - `diagnostic`: runnable, testable, and allowed to record evidence, but not a
   default daily gate. Run the matching opt-in flag or focused command when the
   diagnostic route changes.
-- `pending`: documented schema, scaffold, or evidence contract exists, but the
-  route must not be described as ready until matching proof is recorded.
+- `pending`: documented scaffold or capability note exists, but the route must
+  not be described as ready until matching smoke has run.
 
 ## Default Baseline
 
@@ -23,11 +23,10 @@ The default daily baseline covers:
 - fallback-safe `moui_skia` checks
 - Showcase app/Web wasm-gc validation
 - Markdown Editor app/Web wasm-gc validation
-- checked conformance artifact schema validation for committed manifests
+- renderer/provider static checks and lightweight Web handoff validation
 
-Complete platform runtime evidence is a release or matching-host gate, not a
-default daily gate. Daily checks may validate checked-in evidence schemas to
-prevent drift, but they must not require fresh matching-host promotion.
+Complete platform runtime smoke is a release or matching-host gate, not a
+default daily gate. Daily checks do not require fresh matching-host promotion.
 
 ## Diagnostic Routes
 
@@ -42,5 +41,5 @@ surfaces, but they are not part of the core MoUI framework baseline. Run
 the Design Systems example.
 
 Slow native example builds and matching-host platform runtime collection remain
-opt-in through `--platform-examples-build`, real-Skia smoke helpers, and the
-platform evidence recorders.
+opt-in through `--platform-examples-build`, real-Skia smoke helpers, and direct
+runtime logs.

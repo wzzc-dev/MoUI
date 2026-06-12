@@ -285,7 +285,7 @@ test "rejects weak async image ordering" {
   )
   inspect(
     validate_manifest_text(manifest).contains(
-      "targets[0] passed async image proof requires placeholder, late load, repaint, ready second-frame order",
+      "targets[0] passed async image smoke requires placeholder, late load, repaint, ready second-frame order",
     ),
     content="true",
   )
