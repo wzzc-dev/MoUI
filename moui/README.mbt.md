@@ -32,6 +32,7 @@ Detailed notes live in:
 - [Non-render component cookbook](docs/non-render-component-cookbook.md)
 - [App templates](docs/app-templates.md)
 - [API surface](docs/api-surface.md)
+- [Maintenance mainline](docs/maintenance.md)
 - [Examples](docs/examples.md)
 - [Markdown Editor](docs/markdown-editor.md)
 - [Testing](docs/testing.md)
@@ -41,8 +42,8 @@ Detailed notes live in:
 
 The example suite is intentionally small: Showcase is the visual catalog and now
 contains the Counter and Todo interaction patterns, Design Systems is the
-separate `moui_theme` preview/parity sampler, the WYSIWYG Markdown editor
-remains a practical editing demo, and PDF Workbench exercises document
+separate `moui_theme` addon diagnostic preview/parity sampler, the WYSIWYG
+Markdown editor remains a practical editing demo, and PDF Workbench exercises document
 reading/light editing on the native Skia route with a lightweight UI shell, a
 separate `pdflite` adapter package for real PDF model/writeback checks, and a
 native-only PDFium adapter for real page bitmap rasterization. The root
@@ -77,9 +78,9 @@ native-only PDFium adapter for real page bitmap rasterization. The root
   `render/webgpu_adapter/`, and `render/wgpu/`.
 - `examples/*/app/` contains shared app logic, while platform subpackages are
   thin entrypoints. `examples/showcase` stays independent of `moui_theme`;
-  `examples/design_systems` is the dedicated addon example that exercises the
-  official-system entrypoint packages on Web wasm-gc plus macOS, Windows, and
-  Linux Skia entrypoints.
+  `examples/design_systems` is the dedicated addon diagnostic example that
+  exercises the official-system entrypoint packages on Web wasm-gc plus macOS,
+  Windows, and Linux Skia entrypoints.
 - `website/` is a root workspace member for the MoUI homepage, with shared app
   logic in `website/app/` and a Web wasm-gc entrypoint in `website/web_wasm/`.
 
@@ -93,6 +94,11 @@ moon update
 sh scripts/check-local-deps.sh
 sh scripts/dev-check.sh
 ```
+
+The default daily baseline covers the core framework, Web wasm-gc, native Skia
+mainline contracts, Showcase, and Markdown Editor. Design Systems is addon
+diagnostic coverage; run `sh scripts/dev-check.sh --theme-diagnostics` when
+changing `moui_theme` or `examples/design_systems`.
 
 MoUI resolves `wzzc-dev/window` from the MoonBit registry as
 `wzzc-dev/window@0.5.1-0.1.4`; `moon.work` does not include a local window
