@@ -5,7 +5,6 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
-  "wzzc-dev/moui_skia/native",
 }
 
 // Values
@@ -89,22 +88,7 @@ pub(all) struct SkiaPresentTarget {
 }
 pub fn SkiaPresentTarget::new(description~ : String, present~ : (SkiaPixelFrame) -> Bool) -> Self
 
-pub(all) struct SkiaRasterRenderer {
-  mut metrics : @render.RendererSurfaceMetrics
-  target : SkiaPresentTarget
-  font_resolution : SkiaFontResolution
-  surface_route : SkiaSurfaceRoute
-  gpu_context : @native.GpuContext?
-  mut surface : @native.Surface
-  image_cache : Map[String, @native.Image]
-  failed_images : Map[String, String]
-  image_lifecycle : @render.ImageResourceLifecycle
-  async_image_loading : Bool
-  mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
-  mut present_count : Int
-  mut unsupported_command_count : Int
-  unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
-  mut last_frame : SkiaPixelFrame?
+pub struct SkiaRasterRenderer {
   // private fields
 }
 pub fn SkiaRasterRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
@@ -144,7 +128,7 @@ pub(all) struct SkiaTextSelectionGeometryDiagnostic {
   hit_test_inside : Bool
   visual_order_differs : Bool
   visual_segment_count : Int
-  bidi_visual_order_evidence : Bool
+  bidi_visual_order_observed : Bool
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SkiaTextVisualOrderDiagnostic {

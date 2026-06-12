@@ -181,7 +181,7 @@ fn pub_all_budgets() -> Array[PubAllBudget] {
     {
       label: "skia renderer source",
       path: "moui/render/skia",
-      max_pub_all_lines: 10,
+      max_pub_all_lines: 9,
       target_pub_all_lines: 8,
     },
     {

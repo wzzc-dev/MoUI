@@ -34,22 +34,22 @@ pub(all) enum SkiaFontResolution {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct SkiaRasterRenderer {
-  mut metrics : @render.RendererSurfaceMetrics
-  target : SkiaPresentTarget
-  font_resolution : SkiaFontResolution
-  surface_route : SkiaSurfaceRoute
-  gpu_context : @skia_native.GpuContext?
-  mut surface : @skia_native.Surface
-  image_cache : Map[String, @skia_native.Image]
-  failed_images : Map[String, String]
-  image_lifecycle : @render.ImageResourceLifecycle
-  async_image_loading : Bool
-  mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
-  mut present_count : Int
-  mut unsupported_command_count : Int
-  unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
-  mut last_frame : SkiaPixelFrame?
+pub struct SkiaRasterRenderer {
+  priv mut metrics : @render.RendererSurfaceMetrics
+  priv target : SkiaPresentTarget
+  priv font_resolution : SkiaFontResolution
+  priv surface_route : SkiaSurfaceRoute
+  priv gpu_context : @skia_native.GpuContext?
+  priv mut surface : @skia_native.Surface
+  priv image_cache : Map[String, @skia_native.Image]
+  priv failed_images : Map[String, String]
+  priv image_lifecycle : @render.ImageResourceLifecycle
+  priv async_image_loading : Bool
+  priv mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
+  priv mut present_count : Int
+  priv mut unsupported_command_count : Int
+  priv unsupported_command_diagnostics : Array[SkiaUnsupportedCommandDiagnostic]
+  priv mut last_frame : SkiaPixelFrame?
   priv layer_cache : Array[SkiaCachedLayerImageEntry]
   priv layer_cache_admissions : Array[SkiaCachedLayerAdmissionRecord]
   priv mut layer_cache_tick : Int
