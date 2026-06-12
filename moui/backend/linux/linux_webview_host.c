@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
 #include <gtk/gtk.h>
@@ -62,6 +63,7 @@ typedef struct MOUILinuxWebView {
   GtkWidget *window;
   WebKitWebView *webview;
   int seen;
+  int visible;
   int allow_next_navigation;
   int navigation_pending;
   struct MOUILinuxWebView *next;
@@ -103,13 +105,16 @@ static int webview_policy_allows(int32_t policy, const char *url) {
   return policy == 0 && starts_with_scheme(url, "file:");
 }
 
-static void ensure_gtk(void) {
+static int ensure_gtk(void) {
   if (!g_gtk_initialized) {
     int argc = 0;
     char **argv = NULL;
-    gtk_init(&argc, &argv);
+    if (!gtk_init_check(&argc, &argv)) {
+      return 0;
+    }
     g_gtk_initialized = 1;
   }
+  return 1;
 }
 
 static MOUILinuxWebView *find_view(uint64_t surface, const char *id) {
@@ -218,12 +223,81 @@ static void on_title_changed(GObject *object, GParamSpec *pspec,
   moui_linux_webview_emit(view->parent_surface, 5, view->id, "", title, 0);
 }
 
+static void on_history_changed(GObject *object, GParamSpec *pspec,
+                               gpointer user_data) {
+  (void)pspec;
+  MOUILinuxWebView *view = (MOUILinuxWebView *)user_data;
+  WebKitWebView *webview = WEBKIT_WEB_VIEW(object);
+  moui_linux_webview_emit(view->parent_surface, 6, view->id, "", "",
+                          webkit_web_view_can_go_back(webview) ? 1 : 0);
+  moui_linux_webview_emit(view->parent_surface, 7, view->id, "", "",
+                          webkit_web_view_can_go_forward(webview) ? 1 : 0);
+}
+
+typedef struct MOUILinuxJavaScriptRequest {
+  uint64_t parent_surface;
+  char *id;
+  char *request_id;
+} MOUILinuxJavaScriptRequest;
+
+static void javascript_request_free(MOUILinuxJavaScriptRequest *request) {
+  if (request == NULL) {
+    return;
+  }
+  free(request->id);
+  free(request->request_id);
+  free(request);
+}
+
+static void on_javascript_finished(GObject *object, GAsyncResult *result,
+                                   gpointer user_data) {
+  MOUILinuxJavaScriptRequest *request =
+      (MOUILinuxJavaScriptRequest *)user_data;
+  GError *error = NULL;
+#if WEBKIT_CHECK_VERSION(2, 40, 0)
+  JSCValue *js_value = webkit_web_view_evaluate_javascript_finish(
+      WEBKIT_WEB_VIEW(object), result, &error);
+#else
+  WebKitJavascriptResult *js_result = webkit_web_view_run_javascript_finish(
+      WEBKIT_WEB_VIEW(object), result, &error);
+#endif
+  if (error != NULL) {
+    moui_linux_webview_emit(request->parent_surface, 8, request->id,
+                            request->request_id, error->message,
+                            error->code);
+    g_error_free(error);
+    javascript_request_free(request);
+    return;
+  }
+  char *value = NULL;
+#if WEBKIT_CHECK_VERSION(2, 40, 0)
+  if (js_value != NULL) {
+    value = jsc_value_to_string(js_value);
+    g_object_unref(js_value);
+  }
+#else
+  if (js_result != NULL) {
+    JSCValue *js_value = webkit_javascript_result_get_js_value(js_result);
+    if (js_value != NULL) {
+      value = jsc_value_to_string(js_value);
+    }
+    webkit_javascript_result_unref(js_result);
+  }
+#endif
+  moui_linux_webview_emit(request->parent_surface, 8, request->id,
+                          request->request_id, value ? value : "", 0);
+  g_free(value);
+  javascript_request_free(request);
+}
+
 static MOUILinuxWebView *ensure_view(uint64_t surface, const char *id) {
   MOUILinuxWebView *view = find_view(surface, id);
   if (view != NULL) {
     return view;
   }
-  ensure_gtk();
+  if (!ensure_gtk()) {
+    return NULL;
+  }
   view = (MOUILinuxWebView *)calloc(1, sizeof(MOUILinuxWebView));
   if (view == NULL) {
     return NULL;
@@ -242,6 +316,10 @@ static MOUILinuxWebView *ensure_view(uint64_t surface, const char *id) {
                    view);
   g_signal_connect(view->webview, "notify::title", G_CALLBACK(on_title_changed),
                    view);
+  g_signal_connect(view->webview, "notify::can-go-back",
+                   G_CALLBACK(on_history_changed), view);
+  g_signal_connect(view->webview, "notify::can-go-forward",
+                   G_CALLBACK(on_history_changed), view);
   view->next = g_views;
   g_views = view;
   return view;
@@ -261,10 +339,59 @@ void moui_linux_webview_install_event_callback(
 MOONBIT_FFI_EXPORT
 int32_t moui_linux_webview_available(void) {
 #if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
-  return 1;
+  return ensure_gtk() ? 1 : 0;
 #else
   return 0;
 #endif
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_webview_pump(int32_t max_iterations) {
+#if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
+  if (!g_gtk_initialized && !ensure_gtk()) {
+    return 0;
+  }
+  int32_t iterations = 0;
+  int32_t limit = max_iterations <= 0 ? 1 : max_iterations;
+  while (iterations < limit && g_main_context_pending(NULL)) {
+    g_main_context_iteration(NULL, FALSE);
+    iterations++;
+  }
+  return iterations;
+#else
+  (void)max_iterations;
+  return 0;
+#endif
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_webview_has_active_work(void) {
+#if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
+  if (g_gtk_initialized && g_main_context_pending(NULL)) {
+    return 1;
+  }
+  for (MOUILinuxWebView *view = g_views; view != NULL; view = view->next) {
+    if (view->visible || view->navigation_pending) {
+      return 1;
+    }
+  }
+  return 0;
+#else
+  return 0;
+#endif
+}
+
+MOONBIT_FFI_EXPORT
+int64_t moui_linux_webview_next_tick_ms(int32_t delay_ms) {
+#if defined(CLOCK_MONOTONIC)
+  struct timespec ts;
+  if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+    int64_t now_ms =
+        ((int64_t)ts.tv_sec * 1000) + ((int64_t)ts.tv_nsec / 1000000);
+    return now_ms + (delay_ms <= 0 ? 1 : delay_ms);
+  }
+#endif
+  return delay_ms <= 0 ? 1 : delay_ms;
 }
 
 MOONBIT_FFI_EXPORT
@@ -300,10 +427,14 @@ void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
   if (view != NULL) {
     view->seen = 1;
     view->policy = policy;
+    view->visible = width > 0.0 && height > 0.0;
     gtk_window_move(GTK_WINDOW(view->window), (int)x, (int)y);
     gtk_window_resize(GTK_WINDOW(view->window), (int)width, (int)height);
-    gtk_widget_set_visible(view->window, width > 0.0 && height > 0.0);
-    gtk_widget_show_all(view->window);
+    gtk_widget_set_visible(view->window, view->visible);
+    if (view->visible) {
+      gtk_widget_show_all(view->window);
+      gtk_window_present(GTK_WINDOW(view->window));
+    }
     linux_webview_load_controlled(view, url_text);
   }
   free(id_text);
@@ -327,6 +458,7 @@ void moui_linux_webview_platform_views_end(uint64_t wl_surface) {
 #if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
   for (MOUILinuxWebView *view = g_views; view != NULL; view = view->next) {
     if (view->parent_surface == wl_surface && !view->seen && view->window) {
+      view->visible = 0;
       gtk_widget_hide(view->window);
     }
   }
@@ -392,10 +524,25 @@ void moui_linux_webview_command(uint64_t wl_surface, moonbit_bytes_t id,
   case 5: {
     char *script = moui_linux_webview_bytes_to_cstr(text);
     char *request_id = moui_linux_webview_bytes_to_cstr(detail);
-    webkit_web_view_run_javascript(
-        view->webview, script, NULL, NULL, NULL);
-    moui_linux_webview_emit(view->parent_surface, 8, view->id, request_id, "",
-                            0);
+    MOUILinuxJavaScriptRequest *request =
+        (MOUILinuxJavaScriptRequest *)calloc(1, sizeof(MOUILinuxJavaScriptRequest));
+    if (request != NULL) {
+      request->parent_surface = view->parent_surface;
+      request->id = strdup(view->id ? view->id : "");
+      request->request_id = strdup(request_id ? request_id : "");
+#if WEBKIT_CHECK_VERSION(2, 40, 0)
+      webkit_web_view_evaluate_javascript(view->webview, script ? script : "",
+                                          -1, NULL, NULL, NULL,
+                                          on_javascript_finished, request);
+#else
+      webkit_web_view_run_javascript(view->webview, script, NULL,
+                                     on_javascript_finished, request);
+#endif
+    } else {
+      moui_linux_webview_emit(view->parent_surface, 8, view->id,
+                              request_id ? request_id : "",
+                              "JavaScript request allocation failed", 1);
+    }
     free(script);
     free(request_id);
     break;

@@ -148,6 +148,11 @@ Windows/Linux real WebView builds are opt-in: set the matching
 `MOUI_WINDOWS_WEBVIEW2_*` or `MOUI_LINUX_WEBKITGTK_*` environment variables so
 the `moui` prebuild can add native dependency flags; otherwise those
 entrypoints compile as unavailable fallbacks.
+Linux WebKitGTK builds also require a matching-host smoke before claiming
+runtime evidence: the backend pumps the GTK main context, syncs
+`DrawFrame.platform_views` placements, forwards navigation/title/history/script
+events, and drains queued commands after each rendered frame, but package checks
+only prove the contract mapping and fallback path.
 
 Focused WebView Demo checks:
 
@@ -157,6 +162,13 @@ moon check examples/webview_demo/macos_skia --target native
 moon check examples/webview_demo/windows_skia --target native
 moon check examples/webview_demo/linux_skia --target native
 moon check examples/webview_demo/web_wasm --target wasm-gc
+```
+
+Configured Linux WebKitGTK check:
+
+```sh
+MOUI_LINUX_ENABLE_WEBKITGTK=1 \
+  moon check examples/webview_demo/linux_skia --target native
 ```
 
 Showcase is organized around the main catalog order:

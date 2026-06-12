@@ -596,13 +596,17 @@ provides `Window::present_rgba_pixels`, implemented with reusable `wl_shm`
 buffers, buffer-release tracking, `wl_surface_attach`, damage, commit, and
 display flush. Keeping the `wl_shm` presenter in the window backend avoids
 duplicating Wayland registry and buffer ownership in MoUI.
-Linux native WebView support is WebKitGTK-gated. The host syncs placements from
+Linux native WebView support is WebKitGTK-gated. Fallback builds do not link
+GTK/WebKitGTK, report `HostWebViewCapabilities.available=false`, and still
+compile the WebView Demo as unavailable UI. With `MOUI_LINUX_ENABLE_WEBKITGTK=1`
+and matching native dependencies, the host syncs placements from
 `DrawFrame.platform_views` using the Wayland surface handle, offsets placement
-below client decorations when needed, forwards WebView events through
-`HostEvent::WebView`, and drains `HostWebViewCommandQueue` commands after frame
-rendering. macOS, Windows, and Linux native bridges enforce the shared
-`WebViewNavigationPolicy` before committing a navigation; blocked URLs produce a
-`NavigationFailed` event. Matching-host smoke is still required before
+below client decorations when needed, pumps the GTK main context from the Linux
+event-loop wait path, forwards navigation/title/history/JavaScript events
+through `HostEvent::WebView`, and drains `HostWebViewCommandQueue` commands
+after frame rendering. macOS, Windows, and Linux native bridges enforce the
+shared `WebViewNavigationPolicy` before committing a navigation; blocked URLs
+produce a `NavigationFailed` event. Matching-host smoke is still required before
 promoting Linux WebView runtime observation beyond package-level compile coverage.
 `linux_skia_provider_preflight_summary()` exposes package-level preflight
 observation for the selected font resolution, renderer availability,
@@ -662,6 +666,22 @@ package smoke artifacts; keep the MoUI Showcase
 `linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
 application-level observation. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic
 observation when a Vulkan/WGPU stack is configured.
+
+For Linux WebView runtime evidence on a configured host, build or run the demo
+with WebKitGTK enabled and cite the smoke log separately from Skia first-frame
+evidence:
+
+```sh
+MOUI_LINUX_ENABLE_WEBKITGTK=1 \
+  moon check examples/webview_demo/linux_skia --target native
+MOUI_LINUX_ENABLE_WEBKITGTK=1 \
+  moon run examples/webview_demo/linux_skia --target native
+```
+
+That smoke should exercise placement, controlled navigation policy failures,
+title/history notifications, JavaScript result callbacks, and command queue
+draining. Package tests cover the pure event/command mapping and fallback
+capability path, but they do not prove a real WebKitGTK widget presented.
 
 `examples/showcase/linux_skia` and `examples/markdown_editor/linux_skia` select
 this provider for the mainline Showcase and editing workflow. Configure real

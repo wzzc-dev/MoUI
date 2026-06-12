@@ -20,6 +20,15 @@ extern "C" fn linux_webview_install_event_callback(
 extern "C" fn linux_webview_native_available() -> Int = "moui_linux_webview_available"
 
 ///|
+extern "C" fn linux_webview_pump(max_iterations : Int) -> Int = "moui_linux_webview_pump"
+
+///|
+extern "C" fn linux_webview_has_active_work() -> Int = "moui_linux_webview_has_active_work"
+
+///|
+extern "C" fn linux_webview_next_tick_ms(delay_ms : Int) -> Int64 = "moui_linux_webview_next_tick_ms"
+
+///|
 extern "C" fn linux_webview_platform_views_begin(wl_surface : UInt64) -> Unit = "moui_linux_webview_platform_views_begin"
 
 ///|
@@ -67,6 +76,17 @@ pub fn linux_webview_capabilities() -> @host.HostWebViewCapabilities {
 }
 
 ///|
+fn pump_linux_webview_runtime(max_iterations? : Int = 64) -> Bool {
+  let pumped = linux_webview_pump(max_iterations)
+  pumped > 0 || linux_webview_has_active_work() != 0
+}
+
+///|
+fn linux_webview_runtime_next_tick_ms(delay_ms? : Int = 16) -> Int64 {
+  linux_webview_next_tick_ms(delay_ms)
+}
+
+///|
 pub fn install_linux_webview_event_dispatcher(
   dispatch : (UInt64, String, @core.WebViewEvent) -> Unit,
 ) -> Unit {
@@ -95,6 +115,10 @@ pub fn sync_linux_platform_views(
   linux_webview_platform_views_begin(wl_surface)
   for placement in frame.platform_views {
     if placement.kind == "web_view" {
+      let platform_frame = linux_webview_platform_frame(
+        placement,
+        content_offset_y,
+      )
       linux_webview_sync(
         wl_display,
         wl_surface,
@@ -102,14 +126,27 @@ pub fn sync_linux_platform_views(
         encode_webview_string(placement.url),
         encode_webview_string(placement.title),
         webview_policy_code(placement.policy),
-        placement.frame.origin.x,
-        placement.frame.origin.y + content_offset_y,
-        placement.frame.size.width,
-        placement.frame.size.height,
+        platform_frame.origin.x,
+        platform_frame.origin.y,
+        platform_frame.size.width,
+        platform_frame.size.height,
       )
     }
   }
   linux_webview_platform_views_end(wl_surface)
+}
+
+///|
+fn linux_webview_platform_frame(
+  placement : @core.PlatformViewPlacement,
+  content_offset_y : Double,
+) -> @core.Rect {
+  @core.Rect::new(
+    x=placement.frame.origin.x,
+    y=placement.frame.origin.y + content_offset_y,
+    width=placement.frame.size.width,
+    height=placement.frame.size.height,
+  )
 }
 
 ///|
