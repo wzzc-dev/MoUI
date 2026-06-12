@@ -90,7 +90,7 @@ fn website_parse_markdown_document(
       }
     }
   }
-  { path, title: website_document_title(path, blocks), blocks }
+  { title: website_document_title(path, blocks), blocks }
 }
 
 ///|
