@@ -118,6 +118,17 @@ behavior, optional SkParagraph text behavior, and tester-owned first-frame or
 IME observations. They are direct pass/fail runtime logs, not a repository
 manifest gate.
 
+For Linux Skia first-frame evidence, use the matching Wayland host and keep
+Showcase, Markdown Editor, and window-package smoke logs separate:
+
+```sh
+MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+  moon run examples/showcase/linux_skia --target native
+MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+  moon run examples/markdown_editor/linux_skia --target native
+scripts/run-window-package-smoke.sh linux --run
+```
+
 ## Release Notes
 
 Release readiness should cite the relevant CI run, uploaded artifact, or smoke
