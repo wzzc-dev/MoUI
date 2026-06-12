@@ -90,9 +90,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/pdf_workbench/app/app.mbt",
-      max_lines: 3609,
-      target_lines: 1800,
-      reason: "split PDF Workbench app model, service, command, and view responsibilities",
+      max_lines: 1335,
+      target_lines: 1250,
+      reason: "keep PDF Workbench app runtime, service, and edit command flow compact",
     },
     {
       path: "moui/render/skia/skia_renderer_wbtest.mbt",
