@@ -97,7 +97,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     gradient
     .note_for_backend(@render.RendererBackendKind::NativeWgpu)
-    .contains("renderer-proof CI"),
+    .contains("renderer smoke"),
   )
   assert_true(
     gradient
@@ -117,7 +117,7 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     gradient
     .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
-    .contains("renderer-proof presentation artifact"),
+    .contains("Web renderer smoke"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::Shadow)
     is Some(shadow) else {

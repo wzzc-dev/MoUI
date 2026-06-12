@@ -1739,11 +1739,11 @@ export function createWebGpuImports(options = {}) {
     return `rgba(${r}, ${g}, ${b}, ${a})`;
   };
 
-  const proofRoleForText = text => {
+  const smokeRoleForText = text => {
     const value = `${text ?? ""}`;
     if (value.includes("👩‍💻")) return "emoji-zwj";
     if (value.includes("אבג")) return "bidi";
-    if (value.startsWith("Proof wrap line ")) return "paragraph-line";
+    if (value.startsWith("Smoke wrap line ")) return "paragraph-line";
     return "";
   };
 
@@ -1823,7 +1823,7 @@ export function createWebGpuImports(options = {}) {
     const value = `${text ?? ""}`;
     const logicalClusters = segmentTextClusters(value);
     const visualClusters = visualTextClusters(logicalClusters);
-    const proofRole = proofRoleForText(value);
+    const smokeRole = smokeRoleForText(value);
     const glyphs = [];
     let total = 0;
     for (const cluster of visualClusters) {
@@ -1862,7 +1862,7 @@ export function createWebGpuImports(options = {}) {
     }
     const count = scope.textVertices.length / TEXT_STRIDE_FLOATS - startIndex;
     if (count > 0) pushRendererItem(renderer, { type: "text", start: startIndex, count });
-    if (proofRole === "emoji-zwj") {
+    if (smokeRole === "emoji-zwj") {
       recordRuntimeEvidenceEvent({
         kind: 95,
         name: "text_grapheme_layout",
@@ -1874,7 +1874,7 @@ export function createWebGpuImports(options = {}) {
         noInteriorCaret: logicalClusters.length === 1 && value.includes("\u200d"),
         codepoints: codepointsFor(value).map(codepointHex),
       });
-    } else if (proofRole === "bidi") {
+    } else if (smokeRole === "bidi") {
       recordRuntimeEvidenceEvent({
         kind: 96,
         name: "text_bidi_layout",
@@ -1883,8 +1883,8 @@ export function createWebGpuImports(options = {}) {
         visualClusters,
         visualOrderDiffers: logicalClusters.join("\u0000") !== visualClusters.join("\u0000"),
       });
-    } else if (proofRole === "paragraph-line") {
-      const match = value.match(/^Proof wrap line (\d+)/);
+    } else if (smokeRole === "paragraph-line") {
+      const match = value.match(/^Smoke wrap line (\d+)/);
       recordRuntimeEvidenceEvent({
         kind: 97,
         name: "text_paragraph_line",

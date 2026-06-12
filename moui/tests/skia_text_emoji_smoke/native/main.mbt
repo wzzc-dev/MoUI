@@ -141,7 +141,7 @@ fn int_array_equals(left : Array[Int], right : Array[Int]) -> Bool {
 }
 
 ///|
-struct SkiaParagraphProofLine {
+struct SkiaParagraphSmokeLine {
   text : String
   frame : @core.Rect
   line_index : Int
@@ -156,7 +156,7 @@ fn paragraph_font() -> @core.FontSpec {
 
 ///|
 fn paragraph_text() -> String {
-  "Proof wrap line alpha beta gamma delta epsilon zeta"
+  "Smoke wrap line alpha beta gamma delta epsilon zeta"
 }
 
 ///|
@@ -175,57 +175,57 @@ fn emoji_proof_font() -> @core.FontSpec {
 
 ///|
 fn skia_color_emoji_glyph_key_metadata_ready(
-  proof : @skia_renderer.SkiaEmojiFontFallbackProof,
+  fallback : @skia_renderer.SkiaEmojiFontFallbackProof,
 ) -> Bool {
-  let language_tags_key = proof.fallback_language_tags.join("+")
-  proof.glyph_key.contains(proof.font_source) &&
-  proof.glyph_key.contains(proof.text_system_id) &&
-  proof.glyph_key.contains(proof.shaper) &&
-  proof.glyph_key.contains("script=\{proof.fallback_script_tag}") &&
-  proof.glyph_key.contains("langs=\{proof.fallback_request_language_count}") &&
-  proof.glyph_key.contains("lang-tags=\{language_tags_key}") &&
-  proof.glyph_key.contains("emoji-u+\{proof.fallback_character}") &&
-  proof.glyph_key.contains(proof.glyph_format)
+  let language_tags_key = fallback.fallback_language_tags.join("+")
+  fallback.glyph_key.contains(fallback.font_source) &&
+  fallback.glyph_key.contains(fallback.text_system_id) &&
+  fallback.glyph_key.contains(fallback.shaper) &&
+  fallback.glyph_key.contains("script=\{fallback.fallback_script_tag}") &&
+  fallback.glyph_key.contains("langs=\{fallback.fallback_request_language_count}") &&
+  fallback.glyph_key.contains("lang-tags=\{language_tags_key}") &&
+  fallback.glyph_key.contains("emoji-u+\{fallback.fallback_character}") &&
+  fallback.glyph_key.contains(fallback.glyph_format)
 }
 
 ///|
 fn skia_color_emoji_fallback_language_metadata_ready(
-  proof : @skia_renderer.SkiaEmojiFontFallbackProof,
+  fallback : @skia_renderer.SkiaEmojiFontFallbackProof,
 ) -> Bool {
-  proof.fallback_language_tags.length() == proof.fallback_language_tag_count &&
-  proof.fallback_language_tag_count >= 1 &&
-  proof.fallback_request_language_count == proof.fallback_language_tag_count &&
-  proof.fallback_language_tags[0] == proof.fallback_script_tag
+  fallback.fallback_language_tags.length() == fallback.fallback_language_tag_count &&
+  fallback.fallback_language_tag_count >= 1 &&
+  fallback.fallback_request_language_count == fallback.fallback_language_tag_count &&
+  fallback.fallback_language_tags[0] == fallback.fallback_script_tag
 }
 
 ///|
 fn skia_color_emoji_proof_metadata_ready(
-  proof : @skia_renderer.SkiaEmojiFontFallbackProof,
+  fallback : @skia_renderer.SkiaEmojiFontFallbackProof,
   high_saturation_pixels : Int,
   alpha_pixels : Int,
 ) -> Bool {
-  proof.font_family != "" &&
-  proof.font_family != "unknown" &&
-  proof.font_source != "" &&
-  proof.font_source != "unknown" &&
-  proof.text_system_id != "" &&
-  proof.text_system_id != "unknown" &&
-  proof.shaper != "" &&
-  proof.shaper != "unknown" &&
-  proof.emoji_hint &&
-  proof.fallback_request_ready &&
-  proof.missing_glyph_recovery_ready &&
-  proof.fallback_script_tag != "" &&
-  skia_color_emoji_fallback_language_metadata_ready(proof) &&
-  proof.glyph_format == "rgba" &&
-  proof.glyph_count >= 1 &&
-  proof.cluster_count >= 1 &&
-  proof.glyph_width > 0 &&
-  proof.glyph_height > 0 &&
-  proof.resolved_missing_glyph_count >= 0 &&
+  fallback.font_family != "" &&
+  fallback.font_family != "unknown" &&
+  fallback.font_source != "" &&
+  fallback.font_source != "unknown" &&
+  fallback.text_system_id != "" &&
+  fallback.text_system_id != "unknown" &&
+  fallback.shaper != "" &&
+  fallback.shaper != "unknown" &&
+  fallback.emoji_hint &&
+  fallback.fallback_request_ready &&
+  fallback.missing_glyph_recovery_ready &&
+  fallback.fallback_script_tag != "" &&
+  skia_color_emoji_fallback_language_metadata_ready(fallback) &&
+  fallback.glyph_format == "rgba" &&
+  fallback.glyph_count >= 1 &&
+  fallback.cluster_count >= 1 &&
+  fallback.glyph_width > 0 &&
+  fallback.glyph_height > 0 &&
+  fallback.resolved_missing_glyph_count >= 0 &&
   high_saturation_pixels >= 8 &&
   alpha_pixels > 0 &&
-  skia_color_emoji_glyph_key_metadata_ready(proof)
+  skia_color_emoji_glyph_key_metadata_ready(fallback)
 }
 
 ///|
@@ -271,14 +271,14 @@ fn commands_with_clear(
 ///|
 fn skia_paragraph_proof_lines(
   layout : @core.TextParagraphLayoutResult,
-) -> Array[SkiaParagraphProofLine] {
+) -> Array[SkiaParagraphSmokeLine] {
   let max_width = 96.0
   let start_x = 8.0
   let start_y = 94.0
   println(
     "MoUI Skia text/emoji smoke paragraph layout text_system=\{layout.metadata.text_system_id} engine=\{if layout.metadata.native_paragraph_ready { "skparagraph" } else { "fallback" }} lines=\{layout.line_count()} native_paragraph_ready=\{layout.metadata.native_paragraph_ready} bidi_visual_order_ready=\{layout.metadata.bidi_visual_order_ready}",
   )
-  let lines : Array[SkiaParagraphProofLine] = []
+  let lines : Array[SkiaParagraphSmokeLine] = []
   let chars = paragraph_text().to_array()
   for line in layout.lines {
     let line_text = String::from_array(
@@ -508,7 +508,7 @@ fn ime_composition_visual_evidence_available(
 
 ///|
 fn skia_text_emoji_smoke_commands(
-  paragraph_lines : Array[SkiaParagraphProofLine],
+  paragraph_lines : Array[SkiaParagraphSmokeLine],
 ) -> Array[@core.DrawCommand] {
   let commands : Array[@core.DrawCommand] = [
     @core.DrawCommand::Clear(@core.Color::white()),
@@ -589,7 +589,7 @@ fn zwj_has_no_interior_caret(system : @core.TextSystem) -> Bool {
 }
 
 ///|
-fn paragraph_wraps(lines : Array[SkiaParagraphProofLine]) -> Bool {
+fn paragraph_wraps(lines : Array[SkiaParagraphSmokeLine]) -> Bool {
   if lines.length() < 3 {
     return false
   }
@@ -606,7 +606,7 @@ fn paragraph_wraps(lines : Array[SkiaParagraphProofLine]) -> Bool {
 ///|
 fn paragraph_later_line_pixels(
   frame : @skia_renderer.SkiaPixelFrame,
-  lines : Array[SkiaParagraphProofLine],
+  lines : Array[SkiaParagraphSmokeLine],
 ) -> Bool {
   if lines.length() < 3 {
     return false
@@ -650,7 +650,7 @@ fn bidi_visual_order_evidence_available(
 fn main {
   if !@skia_renderer.skia_available() {
     fail_smoke(
-      "real Skia backend is unavailable; configure moui_skia/native before running text/emoji proof",
+      "real Skia backend is unavailable; configure moui_skia/native before running text/emoji smoke",
     )
   }
   println(
@@ -659,7 +659,7 @@ fn main {
 
   let captured : Ref[@skia_renderer.SkiaPixelFrame?] = Ref(None)
   let target = @skia_renderer.SkiaPresentTarget::new(
-    description="MoUI Skia text/emoji proof presenter",
+    description="MoUI Skia text/emoji smoke presenter",
     present=frame => {
       captured.val = Some(frame)
       true
@@ -679,7 +679,7 @@ fn main {
     renderer => Ok(renderer)
   }
   guard renderer_result is Ok(renderer) else {
-    fail_smoke("failed to create MoUI Skia text/emoji proof renderer")
+    fail_smoke("failed to create MoUI Skia text/emoji smoke renderer")
   }
 
   let paragraph_layout = skia_paragraph_layout(renderer.text_system())
@@ -693,7 +693,7 @@ fn main {
   renderer.render(skia_text_emoji_smoke_commands(paragraph_lines)) catch {
     err =>
       fail_smoke(
-        "failed to render MoUI Skia text/emoji proof frame: \{err.message()}",
+        "failed to render MoUI Skia text/emoji smoke frame: \{err.message()}",
       )
   }
 
@@ -714,18 +714,18 @@ fn main {
             text=emoji_proof_text(),
             font=emoji_proof_font(),
           ) {
-          Some(proof) => {
+          Some(fallback) => {
             println(
-              "MoUI Skia text/emoji smoke color emoji high_saturation_pixels=\{emoji_pixels} fallback_character=\{proof.fallback_character} emoji_hint=\{proof.emoji_hint} fallback_request_ready=\{proof.fallback_request_ready}",
+              "MoUI Skia text/emoji smoke color emoji high_saturation_pixels=\{emoji_pixels} fallback_character=\{fallback.fallback_character} emoji_hint=\{fallback.emoji_hint} fallback_request_ready=\{fallback.fallback_request_ready}",
             )
             println(
-              "MoUI renderer proof colorEmojiPixels metadata font_family=\{proof.font_family} font_source=\{proof.font_source} text_system=\{proof.text_system_id} shaper=\{proof.shaper} glyph_format=\{proof.glyph_format} glyph_count=\{proof.glyph_count} cluster_count=\{proof.cluster_count} high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels} glyph_key=\{proof.glyph_key} glyph_width=\{proof.glyph_width} glyph_height=\{proof.glyph_height} fallback_script_tag=\{proof.fallback_script_tag} fallback_language_tags=\{proof.fallback_language_tags.join("+")} fallback_language_tag_count=\{proof.fallback_language_tag_count} fallback_request_language_count=\{proof.fallback_request_language_count} fallback_request_character=\{proof.fallback_character} resolved_missing_glyph_count=\{proof.resolved_missing_glyph_count} missing_glyph_recovery_ready=\{proof.missing_glyph_recovery_ready}",
+              "MoUI renderer smoke colorEmojiPixels metadata font_family=\{fallback.font_family} font_source=\{fallback.font_source} text_system=\{fallback.text_system_id} shaper=\{fallback.shaper} glyph_format=\{fallback.glyph_format} glyph_count=\{fallback.glyph_count} cluster_count=\{fallback.cluster_count} high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels} glyph_key=\{fallback.glyph_key} glyph_width=\{fallback.glyph_width} glyph_height=\{fallback.glyph_height} fallback_script_tag=\{fallback.fallback_script_tag} fallback_language_tags=\{fallback.fallback_language_tags.join("+")} fallback_language_tag_count=\{fallback.fallback_language_tag_count} fallback_request_language_count=\{fallback.fallback_request_language_count} fallback_request_character=\{fallback.fallback_character} resolved_missing_glyph_count=\{fallback.resolved_missing_glyph_count} missing_glyph_recovery_ready=\{fallback.missing_glyph_recovery_ready}",
             )
             if skia_color_emoji_proof_metadata_ready(
-                proof, emoji_pixels, emoji_alpha_pixels,
+                fallback, emoji_pixels, emoji_alpha_pixels,
               ) {
               println(
-                "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key",
+                "MoUI renderer smoke colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key",
               )
             } else {
               failures.push(
@@ -746,7 +746,7 @@ fn main {
 
       if zwj_has_no_interior_caret(renderer.text_system()) && emoji_pixels >= 8 {
         println(
-          "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret",
+          "MoUI renderer smoke zwjGrapheme passed single-grapheme-cluster no-interior-caret",
         )
       } else {
         failures.push(
@@ -766,7 +766,7 @@ fn main {
           "MoUI Skia text/emoji smoke paragraph dark_rows=\{paragraph_rows}",
         )
         println(
-          "MoUI renderer proof paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels",
+          "MoUI renderer smoke paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels",
         )
       } else {
         failures.push(
@@ -776,7 +776,7 @@ fn main {
 
       if bidi_visual_order_evidence_available(frame, renderer.text_system()) {
         println(
-          "MoUI renderer proof bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order",
+          "MoUI renderer smoke bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order",
         )
       } else {
         failures.push(
@@ -786,7 +786,7 @@ fn main {
 
       if selection_rect_evidence_available(paragraph_layout) {
         println(
-          "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test",
+          "MoUI renderer smoke selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test",
         )
       } else {
         failures.push(
@@ -796,7 +796,7 @@ fn main {
 
       if grapheme_editing_evidence_available() {
         println(
-          "MoUI renderer proof graphemeEditing passed grapheme-boundaries edit-actions",
+          "MoUI renderer smoke graphemeEditing passed grapheme-boundaries edit-actions",
         )
       } else {
         failures.push(
@@ -806,7 +806,7 @@ fn main {
 
       if ime_candidate_anchor_evidence_available(renderer.text_system()) {
         println(
-          "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets",
+          "MoUI renderer smoke imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets",
         )
       } else {
         failures.push(
@@ -819,7 +819,7 @@ fn main {
           renderer.text_system(),
         ) {
         println(
-          "MoUI renderer proof imeCompositionVisual passed composition-range composition-cursor preedit-pixels",
+          "MoUI renderer smoke imeCompositionVisual passed composition-range composition-cursor preedit-pixels",
         )
       } else {
         failures.push(
@@ -828,7 +828,7 @@ fn main {
       }
     }
     None =>
-      failures.push("Skia text/emoji proof presenter did not receive pixels")
+      failures.push("Skia text/emoji smoke presenter did not receive pixels")
   }
 
   renderer.dispose()
@@ -836,7 +836,7 @@ fn main {
     for failure in failures {
       println(failure)
     }
-    fail_smoke("MoUI Skia text/emoji proof observations are incomplete")
+    fail_smoke("MoUI Skia text/emoji smoke observations are incomplete")
   }
   println("MoUI Skia text/emoji smoke passed")
 }

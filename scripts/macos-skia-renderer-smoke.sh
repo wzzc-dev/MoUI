@@ -51,19 +51,13 @@ Options:
                          paths are resolved from the repository root.
   --smoke-log PATH       Write MoUI renderer smoke output to PATH. Relative
                          paths are resolved from the repository root.
-  --text-emoji-log PATH  Write MoUI Skia text/emoji proof smoke output to
+  --text-emoji-log PATH  Write MoUI Skia text/emoji smoke output to
                          PATH. Relative paths are resolved from the repository
                          root. Used with --run-text-emoji-smoke.
   --showcase-log PATH    Write macos_skia Showcase smoke output to PATH.
                          Relative paths are resolved from the repository root.
   --markdown-log PATH    Write markdown_editor/macos_skia smoke output to PATH.
                          Relative paths are resolved from the repository root.
-  --record-platform-evidence PATH
-                         After a successful renderer and Showcase smoke, update
-                         the macOS skiaEvidence block in the platform runtime
-                         evidence manifest at PATH. Requires --smoke-log and
-                         --showcase-log under
-                         artifacts/platform-evidence/macos/.
   --no-sync-deps         Skip python3 tools/git-sync-deps for source provider.
   --no-fetch             Reuse an existing Skia checkout for source provider.
   --skip-showcase-build  Only run the renderer pixel smoke.
@@ -71,7 +65,7 @@ Options:
                          exit flag and verify the renderer-present marker.
   --run-text-emoji-smoke After the renderer smoke, build and run
                          moui/tests/skia_text_emoji_smoke/native with the same
-                         real-Skia link flags and verify the text/emoji proof
+                         real-Skia link flags and verify the text/emoji smoke
                          success marker.
   --run-markdown-smoke   Build and run markdown_editor/macos_skia with a
                          first-frame exit flag and verify the marker.
@@ -166,7 +160,6 @@ requested_smoke_log=""
 requested_text_emoji_log=""
 requested_showcase_log=""
 requested_markdown_log=""
-requested_platform_evidence_manifest=""
 sync_deps=1
 fetch_repo=1
 skip_showcase_build=0
@@ -269,10 +262,6 @@ while [[ $# -gt 0 ]]; do
       requested_markdown_log="${2:-}"
       shift 2
       ;;
-    --record-platform-evidence)
-      requested_platform_evidence_manifest="${2:-}"
-      shift 2
-      ;;
     --no-sync-deps)
       sync_deps=0
       shift
@@ -358,7 +347,6 @@ smoke_log=""
 text_emoji_log=""
 showcase_log=""
 markdown_log=""
-platform_evidence_manifest=""
 smoke_log_is_temporary=0
 text_emoji_log_is_temporary=0
 showcase_log_is_temporary=0
@@ -458,35 +446,6 @@ fi
 
 if [[ -n "$requested_markdown_log" ]]; then
   markdown_log="$(resolve_path "$requested_markdown_log")"
-fi
-
-if [[ -n "$requested_platform_evidence_manifest" ]]; then
-  platform_evidence_manifest="$(resolve_path "$requested_platform_evidence_manifest")"
-fi
-
-ensure_platform_evidence_log_path() {
-  local label="$1"
-  local path="$2"
-  if [[ -z "$path" ]]; then
-    echo "--record-platform-evidence requires --${label}-log" >&2
-    exit 2
-  fi
-  case "$path" in
-    "$repo_root"/artifacts/platform-evidence/macos/*) ;;
-    *)
-      echo "--record-platform-evidence requires --${label}-log under artifacts/platform-evidence/macos/: $path" >&2
-      exit 2
-      ;;
-  esac
-}
-
-if [[ -n "$platform_evidence_manifest" ]]; then
-  if [[ $run_showcase_smoke -ne 1 ]]; then
-    echo "--record-platform-evidence requires --run-showcase-smoke" >&2
-    exit 2
-  fi
-  ensure_platform_evidence_log_path "smoke" "$smoke_log"
-  ensure_platform_evidence_log_path "showcase" "$showcase_log"
 fi
 
 if [[ $run_showcase_smoke -eq 1 && $skip_showcase_build -eq 1 ]]; then
@@ -892,9 +851,6 @@ fi
 if [[ -n "$markdown_log" ]]; then
   echo "  markdown_log=$markdown_log"
 fi
-if [[ -n "$platform_evidence_manifest" ]]; then
-  echo "  platform_evidence_manifest=$platform_evidence_manifest"
-fi
 echo "  skip_showcase_build=$skip_showcase_build"
 echo "  run_showcase_smoke=$run_showcase_smoke"
 echo "  run_text_emoji_smoke=$run_text_emoji_smoke"
@@ -1247,23 +1203,23 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
   echo "Verified MoUI Skia text/emoji smoke success marker."
 
   text_emoji_required_markers=(
-    "MoUI renderer proof colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key"
-    "MoUI renderer proof zwjGrapheme passed single-grapheme-cluster no-interior-caret"
-    "MoUI renderer proof paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels"
-    "MoUI renderer proof bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order"
-    "MoUI renderer proof selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test"
-    "MoUI renderer proof graphemeEditing passed grapheme-boundaries edit-actions"
-    "MoUI renderer proof imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets"
-    "MoUI renderer proof imeCompositionVisual passed composition-range composition-cursor preedit-pixels"
+    "MoUI renderer smoke colorEmojiPixels passed high-saturation-pixels glyph-or-raster font-metadata glyph-metadata fallback-request emoji-hint stable-glyph-key"
+    "MoUI renderer smoke zwjGrapheme passed single-grapheme-cluster no-interior-caret"
+    "MoUI renderer smoke paragraphWrapping passed engine=skparagraph native_paragraph_ready=true line-metrics later-line-pixels"
+    "MoUI renderer smoke bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order"
+    "MoUI renderer smoke selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test"
+    "MoUI renderer smoke graphemeEditing passed grapheme-boundaries edit-actions"
+    "MoUI renderer smoke imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets"
+    "MoUI renderer smoke imeCompositionVisual passed composition-range composition-cursor preedit-pixels"
   )
   for marker in "${text_emoji_required_markers[@]}"; do
     if ! grep -Fq "$marker" "$text_emoji_log"; then
-      echo "MoUI Skia text/emoji smoke did not print renderer-proof marker: $marker" >&2
+      echo "MoUI Skia text/emoji smoke did not print renderer capability marker: $marker" >&2
       exit 1
     fi
   done
 
-  color_emoji_metadata_line="$(grep -F "MoUI renderer proof colorEmojiPixels metadata " "$text_emoji_log" | tail -n 1 || true)"
+  color_emoji_metadata_line="$(grep -F "MoUI renderer smoke colorEmojiPixels metadata " "$text_emoji_log" | tail -n 1 || true)"
   if [[ -z "$color_emoji_metadata_line" ]]; then
     echo "MoUI Skia text/emoji smoke did not print colorEmojiPixels metadata" >&2
     exit 1
@@ -1307,7 +1263,7 @@ if [[ $run_text_emoji_smoke -eq 1 ]]; then
     exit 1
   fi
   echo "Verified MoUI Skia text/emoji color emoji fallback request metadata."
-  echo "Verified MoUI Skia text/emoji renderer-proof markers."
+  echo "Verified MoUI Skia text/emoji renderer capability markers."
 fi
 
 if [[ $skip_showcase_build -eq 0 ]]; then
@@ -1432,24 +1388,6 @@ if [[ $run_markdown_smoke -eq 1 ]]; then
     echo "Verified markdown_editor/macos_skia GPU route marker."
   fi
   echo "Verified markdown_editor/macos_skia first-frame smoke marker."
-fi
-
-if [[ -n "$platform_evidence_manifest" ]]; then
-  record_host="$(uname -s 2>/dev/null || echo Darwin) $(uname -m 2>/dev/null || true) local Skia smoke"
-  record_args=(
-    "$(relative_to_repo "$platform_evidence_manifest")" \
-    macos \
-    --host "$record_host" \
-    --renderer-smoke-log "$(relative_to_repo "$smoke_log")" \
-    --async-image-log "$(relative_to_repo "$smoke_log")" \
-    --showcase-log "$(relative_to_repo "$showcase_log")" \
-    --note "macOS real-Skia renderer, async image second-frame, and Showcase first-frame markers passed on the local Darwin host; provider preflight and fallback-unavailable observations require their own artifacts before Skia route evidence is passed."
-  )
-  if [[ $run_gpu_smoke -eq 1 ]]; then
-    record_args+=(--gpu-renderer-smoke-log "$(relative_to_repo "$smoke_log")")
-    record_args+=(--gpu-showcase-log "$(relative_to_repo "$showcase_log")")
-  fi
-  node scripts/record-native-skia-evidence.mjs "${record_args[@]}"
 fi
 
 echo "MoUI macOS Skia renderer smoke passed."

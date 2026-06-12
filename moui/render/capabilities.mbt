@@ -246,11 +246,11 @@ pub fn renderer_feature_capability_report() -> Array[RendererFeatureCapability] 
     renderer_feature_capability_entry(
       RendererFeature::Gradient,
       RendererFeatureStatus::Partial,
-      "Native wgpu evaluates linear and radial rounded/path brushes in the visual shader using a radial brush payload; status stays partial until renderer-proof CI captures center/mid/edge pixel artifacts across native platforms.",
+      "Native wgpu evaluates linear and radial rounded/path brushes in the visual shader using a radial brush payload; status stays partial until renderer smoke captures center/mid/edge pixel artifacts across native platforms.",
       RendererFeatureStatus::Ready,
       "Skia raster renders linear-gradient and radial-gradient fills and strokes for rounded rects and paths; linear gradients have real native renderer pixel smoke coverage and radial brushes have renderer-local guarded pixel coverage.",
       RendererFeatureStatus::Partial,
-      "The browser WebGPU host evaluates solid, linear-gradient, and true radial rounded/path brush payloads in the visual shader; status stays partial until the Web renderer-proof presentation artifact records radial center/mid/edge pixels.",
+      "The browser WebGPU host evaluates solid, linear-gradient, and true radial rounded/path brush payloads in the visual shader; status stays partial until a Web renderer smoke records radial center/mid/edge pixels.",
     ),
     renderer_feature_capability_entry(
       RendererFeature::Shadow,

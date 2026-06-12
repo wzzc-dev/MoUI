@@ -333,7 +333,7 @@ assert(
 
 uploadedBuffers.length = 0;
 evidenceEvents.length = 0;
-assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for text proof failed");
+assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for text smoke failed");
 assert(
   imports.draw_text(
     renderer,
@@ -352,7 +352,7 @@ assert(
     1,
     0,
   ) === 0,
-  "draw_text emoji proof failed",
+  "draw_text emoji smoke failed",
 );
 assert(
   imports.draw_text(
@@ -372,13 +372,13 @@ assert(
     1,
     0,
   ) === 0,
-  "draw_text bidi proof failed",
+  "draw_text bidi smoke failed",
 );
 for (let index = 1; index <= 3; index += 1) {
   assert(
     imports.draw_text(
       renderer,
-      stringHandle(`Proof wrap line ${index}`),
+      stringHandle(`Smoke wrap line ${index}`),
       2,
       42 + index * 8,
       90,
@@ -393,10 +393,10 @@ for (let index = 1; index <= 3; index += 1) {
       1,
       0,
     ) === 0,
-    `draw_text paragraph proof ${index} failed`,
+    `draw_text paragraph smoke ${index} failed`,
   );
 }
-assert(imports.present(renderer) === 0, "present text proof failed");
+assert(imports.present(renderer) === 0, "present text smoke failed");
 assert(
   evidenceEvents.some(event =>
     event.name === "text_color_glyph" &&
@@ -409,7 +409,7 @@ assert(
     Number(event.glyphWidth) > 0 &&
     Number(event.highSaturationPixels) >= 8
   ),
-  "text proof must record high-saturation RGBA glyph evidence with font/glyph metadata",
+  "text smoke must record high-saturation RGBA glyph evidence with font/glyph metadata",
 );
 assert(
   evidenceEvents.some(event =>
@@ -417,15 +417,15 @@ assert(
     event.singleGraphemeCluster === true &&
     event.noInteriorCaret === true
   ),
-  "text proof must record ZWJ single-grapheme evidence",
+  "text smoke must record ZWJ single-grapheme evidence",
 );
 assert(
   evidenceEvents.some(event => event.name === "text_bidi_layout" && event.visualOrderDiffers === true),
-  "text proof must record bidi visual-order evidence",
+  "text smoke must record bidi visual-order evidence",
 );
 assert(
   evidenceEvents.filter(event => event.name === "text_paragraph_line").length === 3,
-  "text proof must record paragraph line metrics",
+  "text smoke must record paragraph line metrics",
 );
 assert(
   uploadedBuffers.some(buffer => buffer.some(value => value < -0.5)),

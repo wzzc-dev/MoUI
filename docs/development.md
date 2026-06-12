@@ -89,7 +89,7 @@ proves the editable binding workspace still has a pinned real-Skia
 artifact/status contract, CI evidence wiring, fallback parity, FFI
 ownership/borrow coverage, and native smoke marker coverage. It does not prove
 a MoUI platform entrypoint has rendered with real Skia; use `--skia-real-smoke`
-after configuring real Skia native link flags for that renderer-level proof.
+after configuring real Skia native link flags for that renderer-level smoke.
 The binding's GitHub Actions workflows are maintained at the repository root as
 `.github/workflows/moui-skia-*.yml`; the root
 `.github/workflows/copilot-setup-steps.yml` sets up MoonBit from the

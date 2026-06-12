@@ -8,7 +8,7 @@ pub fn run_renderer_proof_smoke() -> Unit raise @wgpu_mbt.WgpuError {
   )
   assert_windows_wgpu_async_repaint_proof()
   println(
-    "MoUI renderer proof asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
+    "MoUI renderer smoke asyncImageSecondFrame passed late-completion repaint-request second-frame-pixels",
   )
 }
 

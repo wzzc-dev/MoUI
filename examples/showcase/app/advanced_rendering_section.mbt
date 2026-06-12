@@ -8,7 +8,7 @@ fn ShowcaseModel::advanced_rendering_section(
   let card_width = if metrics.compact { 260.0 } else { 300.0 }
   let cards = [
     advanced_rendering_card(
-      theme, "Renderer Proof", card_width, "renderer-proof",
+      theme, "Renderer Smoke", card_width, "renderer-smoke",
     ),
     advanced_rendering_card(
       theme, "Transform Pixel", card_width, "transform-pixel",
@@ -328,8 +328,8 @@ fn advanced_rendering_canvas(
           commands.push(@core.DrawCommand::PopLayer)
           commands.push(@core.DrawCommand::PopClip)
         }
-        "renderer-proof" => {
-          let proof_font = @core.FontSpec::new(
+        "renderer-smoke" => {
+          let smoke_font = @core.FontSpec::new(
             families=@core.FontFamilyStack::new([
               @core.FontFamily::Emoji,
               @core.FontFamily::SystemUi,
@@ -379,7 +379,7 @@ fn advanced_rendering_canvas(
                   width=56.0,
                   height=36.0,
                 ),
-                font=proof_font,
+                font=smoke_font,
                 color=@core.Color::black(),
               ),
             ),
@@ -404,7 +404,7 @@ fn advanced_rendering_canvas(
             commands.push(
               @core.DrawCommand::DrawText(
                 @core.TextRun::new(
-                  text="Proof wrap line " + (index + 1).to_string(),
+                  text="Smoke wrap line " + (index + 1).to_string(),
                   frame=@core.Rect::new(
                     x=left + 92.0,
                     y=top + 64.0 + index.to_double() * 16.0,

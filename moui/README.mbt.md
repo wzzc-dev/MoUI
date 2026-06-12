@@ -110,61 +110,33 @@ platform status and native capability contracts via
 ecosystem is still maturing, so unexplained build or smoke failures may come
 from registry cache state or dependency package regressions; include
 `moon update` and package-version inspection in the first pass of debugging.
-Those
-Skia guards prove the provider lock, fallback parity, FFI ownership/borrow
-metadata, native smoke marker coverage, and binding-level evidence wiring are
-present; renderer pixels and platform runtime behavior still come from the
-opt-in Skia smoke or matching-host example runs.
+Those Skia guards prove the provider lock, fallback parity, FFI
+ownership/borrow metadata, native smoke marker coverage, and binding-level
+wiring are present; renderer pixels and platform runtime behavior still come
+from manual smoke runs or matching-host example launches.
 
-For current-host backend/provider evidence, run:
+For current-host backend/provider checks, run:
 
 ```sh
 sh scripts/dev-check.sh --platform-examples-test
 sh scripts/conformance-check.sh --platform-services
 ```
 
-`--platform-services` also writes and validates
-`artifacts/conformance/platform-runtime-evidence.json`, the schema v2
-matching-host evidence contract for Web, macOS, Windows, and Linux runtime
-claims. Entries start as pending until a matching host records passed or failed
-observations before a preview handoff. The checked-in manifest currently marks
-macOS `status=passed` from local matching-host AppKit/Skia artifacts with every
-runtime and native IME observation set to `yes` plus
-`skiaEvidence.status=passed`; a non-skipped manual GitHub Actions dispatch also
-recorded the macOS platform runtime evidence with `github-actions` provenance
-and uploaded the matching artifact bundle. Windows and Linux remain pending
-until their matching hosts record equivalent platform-runtime artifacts. Native
-passed entries include the `wzzc-dev/window@0.5.1-0.1.4` package smoke
-monitor/cursor probe as `monitorCursor=yes`; Web browser-session evidence may
-leave that field pending because CDP does not prove native
-monitor/current-monitor or cursor behavior. A
-passed entry must carry provenance from either a non-skipped successful GitHub
-Actions job/run, including run URL, workflow, job, runner, and uploaded
-artifacts, or a local matching-host artifact bundle. For Web, the fold derives
-this from the browser-session presentation manifest and the environment that
-performed the fold. Skipped CI jobs, build-only/package-only jobs, and
-provider/preflight checks cannot be used as passed runtime evidence. See
-`docs/release-readiness.md` for the recorded GitHub Actions macOS-only evidence
-run, the latest all-green `MoUI CI` run, and their head-SHA boundaries.
-
 For release-oriented screenshot and benchmark handoffs, use
 `sh scripts/conformance-check.sh --golden` and
-`sh scripts/conformance-check.sh --bench`; these write validated capture
-manifests under `artifacts/conformance/`. The benchmark handoff also validates
-the static Web runtime delivery chain for Showcase and Markdown Editor with
-`node scripts/validate-web-runtime-handoff.mjs`, while browser WebGPU/canvas
-presentation evidence is collected separately with
-`node scripts/record-web-runtime-presentation.mjs` and validated with
-`node scripts/validate-web-runtime-presentation-manifest.mjs`. A passed
-`artifacts/conformance/web-runtime-presentation.json` proves the named browser
-session reached WebGPU startup, wasm app startup, sized canvas, resize/input
-event-bridge delivery, Markdown Editor text input, clean target close, clean
-console, and nonblank screenshot thresholds. Fold the browser artifact into
-`artifacts/conformance/platform-runtime-evidence.json` with
-`node scripts/record-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json web --web-presentation-manifest artifacts/conformance/web-runtime-presentation.json`
-so Web platform claims cite one validated evidence manifest and browser-session
-artifact provenance. A failed browser manifest records failed Web platform
-evidence; a missing browser manifest keeps the Web platform entry pending.
+`sh scripts/conformance-check.sh --bench`. These generate local scaffold
+manifests and logs under `artifacts/`, but those files are not checked in and
+are not capability declarations. `artifacts/ is ignored` so release notes should
+cite a CI run, uploaded artifact, or local smoke log directly.
+
+Browser runtime checks are also smoke-level. Use
+`sh scripts/ci-web-runtime-presentation.sh` or run
+`node scripts/record-web-runtime-presentation.mjs` with a local static server
+and Chrome DevTools Protocol, then validate the generated local manifest with
+`node scripts/validate-web-runtime-presentation-manifest.mjs`. The result says
+whether that named browser session started WebGPU/wasm, produced a nonblank
+canvas, delivered representative input, and closed cleanly; it is not a
+checked-in platform claim.
 
 ## Web Wasm-GC
 
