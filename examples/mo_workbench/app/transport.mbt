@@ -1,12 +1,12 @@
 ///|
-pub(all) enum PiTransportKind {
+enum PiTransportKind {
   NativeProcessJsonl
   WebBridge
   Fixture
 } derive(Eq, Debug)
 
 ///|
-pub(all) enum PiTransportStatus {
+enum PiTransportStatus {
   Disconnected
   Starting
   Running
@@ -57,7 +57,7 @@ pub(all) enum PiTransportEvent {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct PiTransportState {
+struct PiTransportState {
   kind : PiTransportKind
   status : PiTransportStatus
   command_queue : Array[PiTransportCommand]
@@ -65,7 +65,7 @@ pub(all) struct PiTransportState {
 } derive(Eq, Debug)
 
 ///|
-pub fn PiTransportState::new() -> PiTransportState {
+fn PiTransportState::new() -> PiTransportState {
   {
     kind: NativeProcessJsonl,
     status: Disconnected,
@@ -75,7 +75,7 @@ pub fn PiTransportState::new() -> PiTransportState {
 }
 
 ///|
-pub fn PiTransportState::enqueue(
+fn PiTransportState::enqueue(
   self : PiTransportState,
   command : PiTransportCommand,
 ) -> PiTransportState {
@@ -83,7 +83,7 @@ pub fn PiTransportState::enqueue(
 }
 
 ///|
-pub fn PiTransportState::enqueue_many(
+fn PiTransportState::enqueue_many(
   self : PiTransportState,
   commands : Array[PiTransportCommand],
 ) -> PiTransportState {
@@ -98,7 +98,7 @@ pub fn PiTransportState::enqueue_many(
 }
 
 ///|
-pub fn PiTransportState::apply_event(
+fn PiTransportState::apply_event(
   self : PiTransportState,
   event : PiTransportEvent,
 ) -> PiTransportState {
@@ -132,12 +132,12 @@ pub fn PiTransportState::apply_event(
 }
 
 ///|
-pub fn PiTransportState::status_label(self : PiTransportState) -> String {
+fn PiTransportState::status_label(self : PiTransportState) -> String {
   self.status.label()
 }
 
 ///|
-pub fn PiTransportStatus::label(self : PiTransportStatus) -> String {
+fn PiTransportStatus::label(self : PiTransportStatus) -> String {
   match self {
     Disconnected => "Disconnected"
     Starting => "Starting"
@@ -147,7 +147,7 @@ pub fn PiTransportStatus::label(self : PiTransportStatus) -> String {
 }
 
 ///|
-pub fn PiTransportKind::label(self : PiTransportKind) -> String {
+fn PiTransportKind::label(self : PiTransportKind) -> String {
   match self {
     NativeProcessJsonl => "native pi --mode rpc JSONL"
     WebBridge => "web bridge"

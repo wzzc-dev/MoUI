@@ -1,4 +1,4 @@
-pub(all) struct WorkbenchSession {
+struct WorkbenchSession {
   id : String
   title : String
   project_path : String
@@ -12,7 +12,7 @@ pub(all) struct WorkbenchSession {
 } derive(Eq, Debug)
 
 ///|
-pub(all) enum AgentBackendTransportKind {
+enum AgentBackendTransportKind {
   PiJsonlRpcTransport
   AcpConnectorTransport
   FixtureTransport
@@ -20,7 +20,7 @@ pub(all) enum AgentBackendTransportKind {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentBackendCapabilities {
+struct AgentBackendCapabilities {
   supports_session_refresh : Bool
   supports_new_session : Bool
   supports_model_catalog : Bool
@@ -35,7 +35,7 @@ pub(all) struct AgentBackendCapabilities {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentBackendProfile {
+struct AgentBackendProfile {
   id : String
   label : String
   description : String
@@ -44,7 +44,7 @@ pub(all) struct AgentBackendProfile {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentBackendStatus {
+struct AgentBackendStatus {
   backend_id : String
   label : String
   status_label : String
@@ -55,7 +55,7 @@ pub(all) struct AgentBackendStatus {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentSessionBinding {
+struct AgentSessionBinding {
   backend_id : String
   workbench_session_id : String
   provider_session_id : String
@@ -67,7 +67,7 @@ pub(all) struct AgentSessionBinding {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentSessionMetrics {
+struct AgentSessionMetrics {
   backend_id : String
   workbench_session_id : String
   total_messages : Int
@@ -78,7 +78,7 @@ pub(all) struct AgentSessionMetrics {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentRuntimeSignal {
+struct AgentRuntimeSignal {
   backend_id : String
   status_label : String
   active_tool_name : String
@@ -89,7 +89,7 @@ pub(all) struct AgentRuntimeSignal {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentInputSettings {
+struct AgentInputSettings {
   backend_id : String
   thinking_level : String
   steering_mode : String
@@ -99,7 +99,7 @@ pub(all) struct AgentInputSettings {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct PlanStep {
+struct PlanStep {
   id : String
   title : String
   status : String
@@ -108,7 +108,7 @@ pub(all) struct PlanStep {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentEvent {
+struct AgentEvent {
   phase : String
   title : String
   detail : String
@@ -116,7 +116,7 @@ pub(all) struct AgentEvent {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct TranscriptItem {
+struct TranscriptItem {
   id : String
   role : String
   summary : String
@@ -125,7 +125,7 @@ pub(all) struct TranscriptItem {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentCommandInfo {
+struct AgentCommandInfo {
   name : String
   source : String
   description : String
@@ -134,7 +134,7 @@ pub(all) struct AgentCommandInfo {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentModelInfo {
+struct AgentModelInfo {
   provider : String
   id : String
   name : String
@@ -142,13 +142,13 @@ pub(all) struct AgentModelInfo {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentForkPoint {
+struct AgentForkPoint {
   entry_id : String
   text : String
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct PiCommandInfo {
+struct PiCommandInfo {
   name : String
   source : String
   description : String
@@ -157,7 +157,7 @@ pub(all) struct PiCommandInfo {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct PiModelInfo {
+struct PiModelInfo {
   provider : String
   id : String
   name : String
@@ -165,13 +165,13 @@ pub(all) struct PiModelInfo {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct PiForkMessage {
+struct PiForkMessage {
   entry_id : String
   text : String
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct PiSessionStatsSnapshot {
+struct PiSessionStatsSnapshot {
   session_file : String
   session_id : String
   user_messages : Int
@@ -191,7 +191,7 @@ pub(all) struct PiSessionStatsSnapshot {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct FileContext {
+struct FileContext {
   id : String
   path : String
   summary : String
@@ -200,7 +200,7 @@ pub(all) struct FileContext {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct CommandRun {
+struct CommandRun {
   id : Int
   command : String
   cwd : String
@@ -214,14 +214,14 @@ pub(all) struct CommandRun {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct DiagnosticItem {
+struct DiagnosticItem {
   source : String
   severity : String
   message : String
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct DiffOverview {
+struct DiffOverview {
   changed_files : Int
   additions : Int
   deletions : Int
@@ -229,7 +229,7 @@ pub(all) struct DiffOverview {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct PiRpcSnapshot {
+struct PiRpcSnapshot {
   command : String
   success : Bool
   session_id : String
@@ -245,7 +245,7 @@ pub(all) struct PiRpcSnapshot {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct PiAgentSnapshot {
+struct PiAgentSnapshot {
   phase : String
   turn_index : Int
   message_role : String
@@ -260,7 +260,7 @@ pub(all) struct PiAgentSnapshot {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct PiSessionBinding {
+struct PiSessionBinding {
   workbench_session_id : String
   rpc_session_id : String
   session_file : String
@@ -284,7 +284,7 @@ priv struct WorkbenchCheckPreset {
 }
 
 ///|
-pub(all) struct WorkbenchModel {
+priv struct WorkbenchModel {
   selected_session_id : String
   selected_panel : String
   selected_agent_id : String
@@ -315,13 +315,13 @@ pub(all) struct WorkbenchModel {
 }
 
 ///|
-pub(all) struct WorkbenchUpdate {
+priv struct WorkbenchUpdate {
   model : WorkbenchModel
   effect : @core.Effect[WorkbenchMsg]
 }
 
 ///|
-pub(all) enum WorkbenchMsg {
+enum WorkbenchMsg {
   SelectSession(String)
   SelectPanel(String)
   SetAppearanceMode(String)
@@ -368,7 +368,7 @@ pub(all) enum WorkbenchMsg {
 
 ///|
 
-pub fn WorkbenchSession::new(
+fn WorkbenchSession::new(
   id~ : String,
   title~ : String,
   project_path~ : String,
@@ -395,7 +395,7 @@ pub fn WorkbenchSession::new(
 }
 
 ///|
-pub fn AgentBackendCapabilities::new(
+fn AgentBackendCapabilities::new(
   supports_session_refresh? : Bool = false,
   supports_new_session? : Bool = false,
   supports_model_catalog? : Bool = false,
@@ -424,7 +424,7 @@ pub fn AgentBackendCapabilities::new(
 }
 
 ///|
-pub fn AgentBackendProfile::new(
+fn AgentBackendProfile::new(
   id~ : String,
   label~ : String,
   description~ : String,
@@ -435,7 +435,7 @@ pub fn AgentBackendProfile::new(
 }
 
 ///|
-pub fn AgentBackendTransportKind::label(
+fn AgentBackendTransportKind::label(
   self : AgentBackendTransportKind,
 ) -> String {
   match self {
@@ -447,35 +447,35 @@ pub fn AgentBackendTransportKind::label(
 }
 
 ///|
-pub fn AgentBackendTransportKind::uses_pi_transport(
+fn AgentBackendTransportKind::uses_pi_transport(
   self : AgentBackendTransportKind,
 ) -> Bool {
   self is PiJsonlRpcTransport
 }
 
 ///|
-pub fn AgentBackendTransportKind::uses_connector_transport(
+fn AgentBackendTransportKind::uses_connector_transport(
   self : AgentBackendTransportKind,
 ) -> Bool {
   self is AcpConnectorTransport
 }
 
 ///|
-pub fn AgentBackendProfile::uses_pi_transport(
+fn AgentBackendProfile::uses_pi_transport(
   self : AgentBackendProfile,
 ) -> Bool {
   self.transport_kind.uses_pi_transport()
 }
 
 ///|
-pub fn AgentBackendProfile::uses_connector_transport(
+fn AgentBackendProfile::uses_connector_transport(
   self : AgentBackendProfile,
 ) -> Bool {
   self.transport_kind.uses_connector_transport()
 }
 
 ///|
-pub fn AgentBackendStatus::new(
+fn AgentBackendStatus::new(
   backend_id~ : String,
   label~ : String,
   status_label? : String = "",
@@ -496,19 +496,19 @@ pub fn AgentBackendStatus::new(
 }
 
 ///|
-pub fn AgentBackendStatus::has_sidebar_status(
+fn AgentBackendStatus::has_sidebar_status(
   self : AgentBackendStatus,
 ) -> Bool {
   self.sidebar_visible
 }
 
 ///|
-pub fn AgentBackendStatus::has_top_bar_chip(self : AgentBackendStatus) -> Bool {
+fn AgentBackendStatus::has_top_bar_chip(self : AgentBackendStatus) -> Bool {
   self.top_bar_visible
 }
 
 ///|
-pub fn AgentSessionBinding::new(
+fn AgentSessionBinding::new(
   backend_id~ : String,
   workbench_session_id~ : String,
   provider_session_id? : String = "",
@@ -531,7 +531,7 @@ pub fn AgentSessionBinding::new(
 }
 
 ///|
-pub fn AgentSessionMetrics::new(
+fn AgentSessionMetrics::new(
   backend_id~ : String,
   workbench_session_id~ : String,
   total_messages? : Int = 0,
@@ -552,7 +552,7 @@ pub fn AgentSessionMetrics::new(
 }
 
 ///|
-pub fn AgentSessionMetrics::has_visible_metrics(
+fn AgentSessionMetrics::has_visible_metrics(
   self : AgentSessionMetrics,
 ) -> Bool {
   if self.total_messages > 0 ||
@@ -569,7 +569,7 @@ pub fn AgentSessionMetrics::has_visible_metrics(
 }
 
 ///|
-pub fn AgentRuntimeSignal::new(
+fn AgentRuntimeSignal::new(
   backend_id~ : String,
   status_label? : String = "",
   active_tool_name? : String = "",
@@ -590,19 +590,19 @@ pub fn AgentRuntimeSignal::new(
 }
 
 ///|
-pub fn AgentRuntimeSignal::has_visible_signal(
+fn AgentRuntimeSignal::has_visible_signal(
   self : AgentRuntimeSignal,
 ) -> Bool {
   self.visible
 }
 
 ///|
-pub fn AgentRuntimeSignal::has_active_signal(self : AgentRuntimeSignal) -> Bool {
+fn AgentRuntimeSignal::has_active_signal(self : AgentRuntimeSignal) -> Bool {
   self.active
 }
 
 ///|
-pub fn AgentInputSettings::new(
+fn AgentInputSettings::new(
   backend_id~ : String,
   thinking_level? : String = "",
   steering_mode? : String = "one-at-a-time",
@@ -621,19 +621,19 @@ pub fn AgentInputSettings::new(
 }
 
 ///|
-pub fn AgentInputSettings::has_visible_thinking_level(
+fn AgentInputSettings::has_visible_thinking_level(
   self : AgentInputSettings,
 ) -> Bool {
   self.thinking_level != ""
 }
 
 ///|
-pub fn AgentInputSettings::queued_input_count(self : AgentInputSettings) -> Int {
+fn AgentInputSettings::queued_input_count(self : AgentInputSettings) -> Int {
   self.queued_steering + self.queued_follow_up
 }
 
 ///|
-pub fn AgentInputSettings::has_visible_input_modes(
+fn AgentInputSettings::has_visible_input_modes(
   self : AgentInputSettings,
 ) -> Bool {
   self.steering_mode != "one-at-a-time" ||
@@ -642,7 +642,7 @@ pub fn AgentInputSettings::has_visible_input_modes(
 }
 
 ///|
-pub fn agent_backend_profiles() -> Array[AgentBackendProfile] {
+fn agent_backend_profiles() -> Array[AgentBackendProfile] {
   [
     AgentBackendProfile::new(
       id="pi",
@@ -686,7 +686,7 @@ pub fn agent_backend_profiles() -> Array[AgentBackendProfile] {
 }
 
 ///|
-pub fn PlanStep::new(
+fn PlanStep::new(
   id~ : String,
   title~ : String,
   status~ : String,
@@ -697,7 +697,7 @@ pub fn PlanStep::new(
 }
 
 ///|
-pub fn AgentEvent::new(
+fn AgentEvent::new(
   phase~ : String,
   title~ : String,
   detail~ : String,
@@ -707,7 +707,7 @@ pub fn AgentEvent::new(
 }
 
 ///|
-pub fn TranscriptItem::new(
+fn TranscriptItem::new(
   id~ : String,
   role~ : String,
   summary~ : String,
@@ -718,7 +718,7 @@ pub fn TranscriptItem::new(
 }
 
 ///|
-pub fn AgentCommandInfo::new(
+fn AgentCommandInfo::new(
   name~ : String,
   source~ : String,
   description~ : String,
@@ -729,7 +729,7 @@ pub fn AgentCommandInfo::new(
 }
 
 ///|
-pub fn AgentModelInfo::new(
+fn AgentModelInfo::new(
   provider~ : String,
   id~ : String,
   name? : String = "",
@@ -744,7 +744,7 @@ pub fn AgentModelInfo::new(
 }
 
 ///|
-pub fn AgentForkPoint::new(
+fn AgentForkPoint::new(
   entry_id~ : String,
   text? : String = "",
 ) -> AgentForkPoint {
@@ -752,7 +752,7 @@ pub fn AgentForkPoint::new(
 }
 
 ///|
-pub fn PiCommandInfo::new(
+fn PiCommandInfo::new(
   name~ : String,
   source~ : String,
   description~ : String,
@@ -763,7 +763,7 @@ pub fn PiCommandInfo::new(
 }
 
 ///|
-pub fn PiCommandInfo::as_agent_command_info(
+fn PiCommandInfo::as_agent_command_info(
   self : PiCommandInfo,
 ) -> AgentCommandInfo {
   AgentCommandInfo::new(
@@ -776,7 +776,7 @@ pub fn PiCommandInfo::as_agent_command_info(
 }
 
 ///|
-pub fn PiModelInfo::new(
+fn PiModelInfo::new(
   provider~ : String,
   id~ : String,
   name? : String = "",
@@ -791,7 +791,7 @@ pub fn PiModelInfo::new(
 }
 
 ///|
-pub fn PiModelInfo::as_agent_model_info(self : PiModelInfo) -> AgentModelInfo {
+fn PiModelInfo::as_agent_model_info(self : PiModelInfo) -> AgentModelInfo {
   AgentModelInfo::new(
     provider=self.provider,
     id=self.id,
@@ -821,19 +821,19 @@ fn agent_model_label(provider : String, id : String, name : String) -> String {
 }
 
 ///|
-pub fn PiForkMessage::new(entry_id~ : String, text~ : String) -> PiForkMessage {
+fn PiForkMessage::new(entry_id~ : String, text~ : String) -> PiForkMessage {
   { entry_id, text }
 }
 
 ///|
-pub fn PiForkMessage::as_agent_fork_point(
+fn PiForkMessage::as_agent_fork_point(
   self : PiForkMessage,
 ) -> AgentForkPoint {
   AgentForkPoint::new(entry_id=self.entry_id, text=self.text)
 }
 
 ///|
-pub fn PiSessionStatsSnapshot::new(
+fn PiSessionStatsSnapshot::new(
   session_file? : String = "",
   session_id? : String = "",
   user_messages? : Int = 0,
@@ -872,7 +872,7 @@ pub fn PiSessionStatsSnapshot::new(
 }
 
 ///|
-pub fn PiSessionStatsSnapshot::as_agent_session_metrics(
+fn PiSessionStatsSnapshot::as_agent_session_metrics(
   self : PiSessionStatsSnapshot,
   backend_id? : String = "pi",
   workbench_session_id~ : String,
@@ -889,7 +889,7 @@ pub fn PiSessionStatsSnapshot::as_agent_session_metrics(
 }
 
 ///|
-pub fn FileContext::new(
+fn FileContext::new(
   id~ : String,
   path~ : String,
   summary~ : String,
@@ -900,7 +900,7 @@ pub fn FileContext::new(
 }
 
 ///|
-pub fn CommandRun::new(
+fn CommandRun::new(
   id~ : Int,
   command~ : String,
   cwd~ : String,
@@ -927,7 +927,7 @@ pub fn CommandRun::new(
 }
 
 ///|
-pub fn DiagnosticItem::new(
+fn DiagnosticItem::new(
   source~ : String,
   severity~ : String,
   message~ : String,
@@ -936,7 +936,7 @@ pub fn DiagnosticItem::new(
 }
 
 ///|
-pub fn DiffOverview::new(
+fn DiffOverview::new(
   changed_files~ : Int,
   additions~ : Int,
   deletions~ : Int,
@@ -946,7 +946,7 @@ pub fn DiffOverview::new(
 }
 
 ///|
-pub fn PiRpcSnapshot::new(
+fn PiRpcSnapshot::new(
   command? : String = "",
   success? : Bool = false,
   session_id? : String = "",
@@ -977,7 +977,7 @@ pub fn PiRpcSnapshot::new(
 }
 
 ///|
-pub fn PiSessionBinding::new(
+fn PiSessionBinding::new(
   workbench_session_id~ : String,
   rpc_session_id? : String = "",
   session_file? : String = "",
@@ -998,7 +998,7 @@ pub fn PiSessionBinding::new(
 }
 
 ///|
-pub fn PiSessionBinding::status_label(self : PiSessionBinding) -> String {
+fn PiSessionBinding::status_label(self : PiSessionBinding) -> String {
   if self.status == "unbound" {
     "unbound"
   } else {
@@ -1016,7 +1016,7 @@ pub fn PiSessionBinding::status_label(self : PiSessionBinding) -> String {
 }
 
 ///|
-pub fn PiSessionBinding::as_agent_session_binding(
+fn PiSessionBinding::as_agent_session_binding(
   self : PiSessionBinding,
   backend_id? : String = "pi",
 ) -> AgentSessionBinding {
@@ -1105,7 +1105,7 @@ fn WorkbenchModel::active_agent_profile(
 }
 
 ///|
-pub fn PiAgentSnapshot::new(
+fn PiAgentSnapshot::new(
   phase? : String = "idle",
   turn_index? : Int = 0,
   message_role? : String = "",
@@ -1134,7 +1134,7 @@ pub fn PiAgentSnapshot::new(
 }
 
 ///|
-pub fn PiAgentSnapshot::status_label(self : PiAgentSnapshot) -> String {
+fn PiAgentSnapshot::status_label(self : PiAgentSnapshot) -> String {
   let tool = if self.active_tool_name == "" {
     ""
   } else {
@@ -1149,7 +1149,7 @@ pub fn PiAgentSnapshot::status_label(self : PiAgentSnapshot) -> String {
 }
 
 ///|
-pub fn WorkbenchModel::new() -> WorkbenchModel {
+fn WorkbenchModel::new() -> WorkbenchModel {
   {
     selected_session_id: "moui-skia",
     selected_panel: "agent",

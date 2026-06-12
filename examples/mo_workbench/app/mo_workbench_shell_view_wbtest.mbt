@@ -1,13 +1,13 @@
 ///|
 test "workbench compact shell keeps workflow rail collapsed" {
-  let commands = @app.runtime(width=960.0, height=640.0).draw_commands()
+  let commands = runtime(width=960.0, height=640.0).draw_commands()
   assert_false(has_text(commands, "进度"))
   assert_false(has_text(commands, "工作文件夹"))
 }
 
 ///|
 test "workbench runtime draws agent desktop shell" {
-  let commands = @app.runtime(width=1220.0, height=780.0).draw_commands()
+  let commands = runtime(width=1220.0, height=780.0).draw_commands()
   assert_true(has_text(commands, "Mo Workbench"))
   assert_true(has_text(commands, "Agent 桌面工作台"))
   assert_false(has_text(commands, "Pi agent 桌面工作台"))
@@ -788,7 +788,7 @@ test "workbench composer remains visible after scroll and resize" {
 
 ///|
 test "workbench shell adapts to runtime viewport resize" {
-  let runtime = @app.runtime(width=960.0, height=640.0)
+  let runtime = runtime(width=960.0, height=640.0)
   guard first_surface_frame(runtime.draw_commands()) is Some(compact_frame) else {
     fail("expected root surface frame before resize")
   }

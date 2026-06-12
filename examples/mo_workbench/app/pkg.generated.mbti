@@ -7,141 +7,34 @@ import {
 }
 
 // Values
-pub fn agent_backend_profiles() -> Array[AgentBackendProfile]
-
-pub fn default_agent_connector_states() -> Array[AgentConnectorState]
-
 pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
 
 pub fn runtime_with_agent_connectors(PiTransportRuntime, Array[AgentConnectorRuntime], width? : Double, height? : Double) -> @core.AppRuntime
 
 pub fn runtime_with_transport(PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
 
-pub fn update(WorkbenchModel, WorkbenchMsg) -> WorkbenchModel
-
-pub fn view(WorkbenchModel) -> @core.View[WorkbenchMsg]
-
 // Errors
 
 // Types and methods
-pub(all) struct AgentActivityQueueItem {
-  backend_id : String
-  kind : AgentActivityQueueKind
-  badge_label : String
-  tone : String
-  title : String
-  detail : String
-  primary_label : String
-  primary_message : WorkbenchMsg?
-  secondary_label : String
-  secondary_message : WorkbenchMsg?
-} derive(Eq, @debug.Debug)
-pub fn AgentActivityQueueItem::has_primary_action(Self) -> Bool
-pub fn AgentActivityQueueItem::has_secondary_action(Self) -> Bool
-pub fn AgentActivityQueueItem::new(backend_id~ : String, kind~ : AgentActivityQueueKind, badge_label? : String, tone? : String, title? : String, detail? : String, primary_label? : String, primary_message? : WorkbenchMsg?, secondary_label? : String, secondary_message? : WorkbenchMsg?) -> Self
+type AgentActivityQueueItem derive(Eq, @debug.Debug)
 
-pub(all) enum AgentActivityQueueKind {
-  ProviderRecovery
-  RuntimeActivity
-  QueuedOperation
-  ActiveTool
-  PlanProgress
-  PendingRequest
-} derive(Eq, @debug.Debug)
+type AgentActivityQueueKind derive(Eq, @debug.Debug)
 
-pub(all) struct AgentBackendCapabilities {
-  supports_session_refresh : Bool
-  supports_new_session : Bool
-  supports_model_catalog : Bool
-  supports_command_catalog : Bool
-  supports_fork : Bool
-  supports_html_export : Bool
-  supports_context_compaction : Bool
-  supports_thinking_level : Bool
-  supports_input_modes : Bool
-  supports_shell_commands : Bool
-  supports_session_stats : Bool
-} derive(Eq, @debug.Debug)
-pub fn AgentBackendCapabilities::new(supports_session_refresh? : Bool, supports_new_session? : Bool, supports_model_catalog? : Bool, supports_command_catalog? : Bool, supports_fork? : Bool, supports_html_export? : Bool, supports_context_compaction? : Bool, supports_thinking_level? : Bool, supports_input_modes? : Bool, supports_shell_commands? : Bool, supports_session_stats? : Bool) -> Self
+type AgentBackendCapabilities derive(Eq, @debug.Debug)
 
-pub(all) struct AgentBackendProfile {
-  id : String
-  label : String
-  description : String
-  transport_kind : AgentBackendTransportKind
-  capabilities : AgentBackendCapabilities
-} derive(Eq, @debug.Debug)
-pub fn AgentBackendProfile::new(id~ : String, label~ : String, description~ : String, transport_kind? : AgentBackendTransportKind, capabilities~ : AgentBackendCapabilities) -> Self
-pub fn AgentBackendProfile::uses_connector_transport(Self) -> Bool
-pub fn AgentBackendProfile::uses_pi_transport(Self) -> Bool
+type AgentBackendProfile derive(Eq, @debug.Debug)
 
-pub(all) struct AgentBackendStatus {
-  backend_id : String
-  label : String
-  status_label : String
-  pending_count : Int
-  failed : Bool
-  sidebar_visible : Bool
-  top_bar_visible : Bool
-} derive(Eq, @debug.Debug)
-pub fn AgentBackendStatus::has_sidebar_status(Self) -> Bool
-pub fn AgentBackendStatus::has_top_bar_chip(Self) -> Bool
-pub fn AgentBackendStatus::new(backend_id~ : String, label~ : String, status_label? : String, pending_count? : Int, failed? : Bool, sidebar_visible? : Bool, top_bar_visible? : Bool) -> Self
+type AgentBackendStatus derive(Eq, @debug.Debug)
 
-pub(all) enum AgentBackendTransportKind {
-  PiJsonlRpcTransport
-  AcpConnectorTransport
-  FixtureTransport
-  NoAgentTransport
-} derive(Eq, @debug.Debug)
-pub fn AgentBackendTransportKind::label(Self) -> String
-pub fn AgentBackendTransportKind::uses_connector_transport(Self) -> Bool
-pub fn AgentBackendTransportKind::uses_pi_transport(Self) -> Bool
+type AgentBackendTransportKind derive(Eq, @debug.Debug)
 
-pub(all) enum AgentCatalogItemKind {
-  ModelCatalogItem
-  CommandCatalogItem
-} derive(Eq, @debug.Debug)
+type AgentCatalogItemKind derive(Eq, @debug.Debug)
 
-pub(all) struct AgentCommandInfo {
-  name : String
-  source : String
-  description : String
-  source_scope : String
-  source_path : String
-} derive(Eq, @debug.Debug)
-pub fn AgentCommandInfo::new(name~ : String, source~ : String, description~ : String, source_scope~ : String, source_path~ : String) -> Self
+type AgentCommandInfo derive(Eq, @debug.Debug)
 
-pub(all) struct AgentComposerRequestSummary {
-  backend_id : String
-  badge_label : String
-  title : String
-  detail : String
-  action_label : String
-  action_message : WorkbenchMsg?
-  secondary_label : String
-  secondary_message : WorkbenchMsg?
-  tone : String
-  visible : Bool
-} derive(Eq, @debug.Debug)
-pub fn AgentComposerRequestSummary::has_visible_request(Self) -> Bool
-pub fn AgentComposerRequestSummary::new(backend_id~ : String, badge_label? : String, title? : String, detail? : String, action_label? : String, action_message? : WorkbenchMsg?, secondary_label? : String, secondary_message? : WorkbenchMsg?, tone? : String, visible? : Bool) -> Self
+type AgentComposerRequestSummary derive(Eq, @debug.Debug)
 
-pub(all) struct AgentComposerRouteSummary {
-  backend_id : String
-  label : String
-  session_label : String
-  model_label : String
-  context_label : String
-  focus_label : String
-  input_label : String
-  detail : String
-  tone : String
-  visible : Bool
-  slash_mode : Bool
-} derive(Eq, @debug.Debug)
-pub fn AgentComposerRouteSummary::has_visible_route(Self) -> Bool
-pub fn AgentComposerRouteSummary::new(backend_id~ : String, label~ : String, session_label? : String, model_label? : String, context_label? : String, focus_label? : String, input_label? : String, detail? : String, tone? : String, visible? : Bool, slash_mode? : Bool) -> Self
+type AgentComposerRouteSummary derive(Eq, @debug.Debug)
 
 pub(all) enum AgentConnectorCommand {
   StartConnectorSession(String, String)
@@ -187,242 +80,45 @@ pub fn AgentConnectorRuntime::is_available(Self) -> Bool
 pub fn AgentConnectorRuntime::new(backend_id~ : String, run~ : (Array[AgentConnectorCommand], (AgentConnectorEvent) -> Unit) -> Unit) -> Self
 pub fn AgentConnectorRuntime::unavailable(backend_id~ : String, reason? : String) -> Self
 
-pub(all) struct AgentConnectorState {
-  backend_id : String
-  profile : AgentConnectorProfile
-  status : AgentConnectorStatus
-  command_queue : Array[AgentConnectorCommand]
-  provider_session_id : String
-  session_name : String
-  model : String
-  last_command : String
-  last_activity : String
-  total_messages : Int
-} derive(Eq, @debug.Debug)
-pub fn AgentConnectorState::acp_demo() -> Self
-pub fn AgentConnectorState::apply_event(Self, AgentConnectorEvent) -> Self
-pub fn AgentConnectorState::enqueue(Self, AgentConnectorCommand) -> Self
-pub fn AgentConnectorState::enqueue_many(Self, Array[AgentConnectorCommand]) -> Self
-pub fn AgentConnectorState::has_active_transport(Self) -> Bool
-pub fn AgentConnectorState::has_session_binding(Self) -> Bool
-pub fn AgentConnectorState::new(backend_id~ : String, profile~ : AgentConnectorProfile) -> Self
-pub fn AgentConnectorState::status_label(Self) -> String
+type AgentConnectorState derive(Eq, @debug.Debug)
 
-pub(all) enum AgentConnectorStatus {
-  ConnectorDisconnected
-  ConnectorReady
-  ConnectorStarting
-  ConnectorRunning
-  ConnectorFailed(String)
-} derive(Eq, @debug.Debug)
-pub fn AgentConnectorStatus::label(Self) -> String
+type AgentConnectorStatus derive(Eq, @debug.Debug)
 
-pub(all) struct AgentEvent {
-  phase : String
-  title : String
-  detail : String
-  tone : String
-} derive(Eq, @debug.Debug)
-pub fn AgentEvent::new(phase~ : String, title~ : String, detail~ : String, tone~ : String) -> Self
+type AgentEvent derive(Eq, @debug.Debug)
 
-pub(all) struct AgentForkPoint {
-  entry_id : String
-  text : String
-} derive(Eq, @debug.Debug)
-pub fn AgentForkPoint::new(entry_id~ : String, text? : String) -> Self
+type AgentForkPoint derive(Eq, @debug.Debug)
 
-pub(all) struct AgentInputSettings {
-  backend_id : String
-  thinking_level : String
-  steering_mode : String
-  follow_up_mode : String
-  queued_steering : Int
-  queued_follow_up : Int
-} derive(Eq, @debug.Debug)
-pub fn AgentInputSettings::has_visible_input_modes(Self) -> Bool
-pub fn AgentInputSettings::has_visible_thinking_level(Self) -> Bool
-pub fn AgentInputSettings::new(backend_id~ : String, thinking_level? : String, steering_mode? : String, follow_up_mode? : String, queued_steering? : Int, queued_follow_up? : Int) -> Self
-pub fn AgentInputSettings::queued_input_count(Self) -> Int
+type AgentInputSettings derive(Eq, @debug.Debug)
 
-pub(all) struct AgentModelInfo {
-  provider : String
-  id : String
-  name : String
-  label : String
-} derive(Eq, @debug.Debug)
-pub fn AgentModelInfo::new(provider~ : String, id~ : String, name? : String, label? : String) -> Self
+type AgentModelInfo derive(Eq, @debug.Debug)
 
-pub(all) struct AgentProviderRegistryItem {
-  backend_id : String
-  label : String
-  transport_label : String
-  capability_label : String
-  status_label : String
-  detail : String
-  badge_label : String
-  tone : String
-  active : Bool
-  action_label : String
-  action_message : WorkbenchMsg?
-} derive(Eq, @debug.Debug)
-pub fn AgentProviderRegistryItem::has_action(Self) -> Bool
-pub fn AgentProviderRegistryItem::new(backend_id~ : String, label~ : String, transport_label~ : String, capability_label~ : String, detail~ : String, status_label? : String, badge_label? : String, tone? : String, active? : Bool, action_label? : String, action_message? : WorkbenchMsg?) -> Self
+type AgentProviderRegistryItem derive(Eq, @debug.Debug)
 
-pub(all) struct AgentProviderSwitchSummary {
-  backend_id : String
-  label : String
-  transport_label : String
-  capability_label : String
-  status_label : String
-  detail : String
-  switch_count : Int
-  tone : String
-} derive(Eq, @debug.Debug)
-pub fn AgentProviderSwitchSummary::has_switch_targets(Self) -> Bool
-pub fn AgentProviderSwitchSummary::new(backend_id~ : String, label~ : String, transport_label~ : String, capability_label~ : String, status_label? : String, detail? : String, switch_count? : Int, tone? : String) -> Self
+type AgentProviderSwitchSummary derive(Eq, @debug.Debug)
 
-pub(all) enum AgentRequestKind {
-  ApprovalRequest
-  PermissionRequest
-  InputRequest
-  InterventionRequest
-} derive(Eq, @debug.Debug)
+type AgentRequestKind derive(Eq, @debug.Debug)
 
-pub(all) struct AgentRequestSummary {
-  backend_id : String
-  kind : AgentRequestKind
-  source : String
-  severity : String
-  message : String
-  title : String
-  detail : String
-  action_label : String
-  badge_label : String
-  tone : String
-} derive(Eq, @debug.Debug)
-pub fn AgentRequestSummary::has_visible_request(Self) -> Bool
-pub fn AgentRequestSummary::new(backend_id~ : String, source~ : String, kind? : AgentRequestKind, severity? : String, message? : String, title? : String, detail? : String, action_label? : String, badge_label? : String, tone? : String) -> Self
+type AgentRequestSummary derive(Eq, @debug.Debug)
 
-pub(all) struct AgentRunOverview {
-  backend_id : String
-  title : String
-  detail : String
-  focus_label : String
-  focus_title : String
-  focus_detail : String
-  activity_count : Int
-  request_count : Int
-  operator_action_count : Int
-  shortcut_count : Int
-  tone : String
-  active : Bool
-  primary_label : String
-  primary_message : WorkbenchMsg?
-  secondary_label : String
-  secondary_message : WorkbenchMsg?
-} derive(Eq, @debug.Debug)
-pub fn AgentRunOverview::has_visible_overview(Self) -> Bool
-pub fn AgentRunOverview::new(backend_id~ : String, title? : String, detail? : String, focus_label? : String, focus_title? : String, focus_detail? : String, activity_count? : Int, request_count? : Int, operator_action_count? : Int, shortcut_count? : Int, tone? : String, active? : Bool, primary_label? : String, primary_message? : WorkbenchMsg?, secondary_label? : String, secondary_message? : WorkbenchMsg?) -> Self
+type AgentRunOverview derive(Eq, @debug.Debug)
 
-pub(all) struct AgentRuntimeSignal {
-  backend_id : String
-  status_label : String
-  active_tool_name : String
-  message_preview : String
-  thinking_level : String
-  visible : Bool
-  active : Bool
-} derive(Eq, @debug.Debug)
-pub fn AgentRuntimeSignal::has_active_signal(Self) -> Bool
-pub fn AgentRuntimeSignal::has_visible_signal(Self) -> Bool
-pub fn AgentRuntimeSignal::new(backend_id~ : String, status_label? : String, active_tool_name? : String, message_preview? : String, thinking_level? : String, visible? : Bool, active? : Bool) -> Self
+type AgentRuntimeSignal derive(Eq, @debug.Debug)
 
-pub(all) struct AgentSessionBinding {
-  backend_id : String
-  workbench_session_id : String
-  provider_session_id : String
-  session_file : String
-  session_name : String
-  model : String
-  status : String
-  last_command : String
-} derive(Eq, @debug.Debug)
-pub fn AgentSessionBinding::new(backend_id~ : String, workbench_session_id~ : String, provider_session_id? : String, session_file? : String, session_name? : String, model? : String, status? : String, last_command? : String) -> Self
+type AgentSessionBinding derive(Eq, @debug.Debug)
 
-pub(all) struct AgentSessionMetrics {
-  backend_id : String
-  workbench_session_id : String
-  total_messages : Int
-  tool_calls : Int
-  tool_results : Int
-  token_total : Int
-  context_percent : Double?
-} derive(Eq, @debug.Debug)
-pub fn AgentSessionMetrics::has_visible_metrics(Self) -> Bool
-pub fn AgentSessionMetrics::new(backend_id~ : String, workbench_session_id~ : String, total_messages? : Int, tool_calls? : Int, tool_results? : Int, token_total? : Int, context_percent? : Double?) -> Self
+type AgentSessionMetrics derive(Eq, @debug.Debug)
 
-pub(all) struct AgentStatusBarSummary {
-  backend_id : String
-  status_label : String
-  context_label : String
-  queue_label : String
-  diagnostic_label : String
-  activity_label : String
-  tone : String
-} derive(Eq, @debug.Debug)
-pub fn AgentStatusBarSummary::has_visible_metrics(Self) -> Bool
-pub fn AgentStatusBarSummary::new(backend_id~ : String, status_label? : String, context_label? : String, queue_label? : String, diagnostic_label? : String, activity_label? : String, tone? : String) -> Self
+type AgentStatusBarSummary derive(Eq, @debug.Debug)
 
-pub(all) struct AgentTimelineItem {
-  backend_id : String
-  source_kind : String
-  badge_label : String
-  title : String
-  detail : String
-  tone : String
-  process : Bool
-  visible : Bool
-} derive(Eq, @debug.Debug)
-pub fn AgentTimelineItem::has_visible_timeline_item(Self) -> Bool
-pub fn AgentTimelineItem::new(backend_id~ : String, source_kind~ : String, badge_label~ : String, title~ : String, detail? : String, tone? : String, process? : Bool, visible? : Bool) -> Self
+type AgentTimelineItem derive(Eq, @debug.Debug)
 
-pub(all) struct CommandRun {
-  id : Int
-  command : String
-  cwd : String
-  status : String
-  exit_code : Int?
-  tool_call_id : String
-  output_path : String
-  output : String
-  output_truncated : Bool
-  details_expanded : Bool
-} derive(Eq, @debug.Debug)
-pub fn CommandRun::new(id~ : Int, command~ : String, cwd~ : String, status~ : String, exit_code? : Int?, tool_call_id? : String, output_path? : String, output? : String, output_truncated? : Bool, details_expanded? : Bool) -> Self
+type CommandRun derive(Eq, @debug.Debug)
 
-pub(all) struct DiagnosticItem {
-  source : String
-  severity : String
-  message : String
-} derive(Eq, @debug.Debug)
-pub fn DiagnosticItem::new(source~ : String, severity~ : String, message~ : String) -> Self
+type DiagnosticItem derive(Eq, @debug.Debug)
 
-pub(all) struct DiffOverview {
-  changed_files : Int
-  additions : Int
-  deletions : Int
-  status : String
-} derive(Eq, @debug.Debug)
-pub fn DiffOverview::new(changed_files~ : Int, additions~ : Int, deletions~ : Int, status~ : String) -> Self
+type DiffOverview derive(Eq, @debug.Debug)
 
-pub(all) struct FileContext {
-  id : String
-  path : String
-  summary : String
-  change_kind : String
-  lines_changed : Int
-} derive(Eq, @debug.Debug)
-pub fn FileContext::new(id~ : String, path~ : String, summary~ : String, change_kind~ : String, lines_changed~ : Int) -> Self
+type FileContext derive(Eq, @debug.Debug)
 
 pub struct MoWorkbenchApp {
   unit : Unit
@@ -432,97 +128,19 @@ pub fn MoWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @core
 pub fn MoWorkbenchApp::runtime_with_agent_connectors(Self, PiTransportRuntime, Array[AgentConnectorRuntime], width? : Double, height? : Double) -> @core.AppRuntime
 pub fn MoWorkbenchApp::runtime_with_transport(Self, PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
 
-pub(all) struct PiAgentSnapshot {
-  phase : String
-  turn_index : Int
-  message_role : String
-  message_preview : String
-  active_tool_call_id : String
-  active_tool_name : String
-  queued_steering : Int
-  queued_follow_up : Int
-  thinking_level : String
-  steering_mode : String
-  follow_up_mode : String
-} derive(Eq, @debug.Debug)
-pub fn PiAgentSnapshot::new(phase? : String, turn_index? : Int, message_role? : String, message_preview? : String, active_tool_call_id? : String, active_tool_name? : String, queued_steering? : Int, queued_follow_up? : Int, thinking_level? : String, steering_mode? : String, follow_up_mode? : String) -> Self
-pub fn PiAgentSnapshot::status_label(Self) -> String
+type PiAgentSnapshot derive(Eq, @debug.Debug)
 
-pub(all) struct PiCommandInfo {
-  name : String
-  source : String
-  description : String
-  source_scope : String
-  source_path : String
-} derive(Eq, @debug.Debug)
-pub fn PiCommandInfo::as_agent_command_info(Self) -> AgentCommandInfo
-pub fn PiCommandInfo::new(name~ : String, source~ : String, description~ : String, source_scope~ : String, source_path~ : String) -> Self
+type PiCommandInfo derive(Eq, @debug.Debug)
 
-pub(all) struct PiForkMessage {
-  entry_id : String
-  text : String
-} derive(Eq, @debug.Debug)
-pub fn PiForkMessage::as_agent_fork_point(Self) -> AgentForkPoint
-pub fn PiForkMessage::new(entry_id~ : String, text~ : String) -> Self
+type PiForkMessage derive(Eq, @debug.Debug)
 
-pub(all) struct PiModelInfo {
-  provider : String
-  id : String
-  name : String
-  label : String
-} derive(Eq, @debug.Debug)
-pub fn PiModelInfo::as_agent_model_info(Self) -> AgentModelInfo
-pub fn PiModelInfo::new(provider~ : String, id~ : String, name? : String, label? : String) -> Self
+type PiModelInfo derive(Eq, @debug.Debug)
 
-pub(all) struct PiRpcSnapshot {
-  command : String
-  success : Bool
-  session_id : String
-  session_file : String
-  session_name : String
-  model : String
-  thinking_level : String
-  steering_mode : String
-  follow_up_mode : String
-  pending_message_count : Int
-  message_count : Int
-  error : String
-} derive(Eq, @debug.Debug)
-pub fn PiRpcSnapshot::new(command? : String, success? : Bool, session_id? : String, session_file? : String, session_name? : String, model? : String, thinking_level? : String, steering_mode? : String, follow_up_mode? : String, pending_message_count? : Int, message_count? : Int, error? : String) -> Self
+type PiRpcSnapshot derive(Eq, @debug.Debug)
 
-pub(all) struct PiSessionBinding {
-  workbench_session_id : String
-  rpc_session_id : String
-  session_file : String
-  session_name : String
-  model : String
-  status : String
-  last_command : String
-} derive(Eq, @debug.Debug)
-pub fn PiSessionBinding::as_agent_session_binding(Self, backend_id? : String) -> AgentSessionBinding
-pub fn PiSessionBinding::new(workbench_session_id~ : String, rpc_session_id? : String, session_file? : String, session_name? : String, model? : String, status? : String, last_command? : String) -> Self
-pub fn PiSessionBinding::status_label(Self) -> String
+type PiSessionBinding derive(Eq, @debug.Debug)
 
-pub(all) struct PiSessionStatsSnapshot {
-  session_file : String
-  session_id : String
-  user_messages : Int
-  assistant_messages : Int
-  tool_calls : Int
-  tool_results : Int
-  total_messages : Int
-  token_input : Int
-  token_output : Int
-  token_cache_read : Int
-  token_cache_write : Int
-  token_total : Int
-  cost : Double
-  context_tokens : Int?
-  context_window : Int
-  context_percent : Double?
-} derive(Eq, @debug.Debug)
-pub fn PiSessionStatsSnapshot::as_agent_session_metrics(Self, backend_id? : String, workbench_session_id~ : String) -> AgentSessionMetrics
-pub fn PiSessionStatsSnapshot::new(session_file? : String, session_id? : String, user_messages? : Int, assistant_messages? : Int, tool_calls? : Int, tool_results? : Int, total_messages? : Int, token_input? : Int, token_output? : Int, token_cache_read? : Int, token_cache_write? : Int, token_total? : Int, cost? : Double, context_tokens? : Int?, context_window? : Int, context_percent? : Double?) -> Self
+type PiSessionStatsSnapshot derive(Eq, @debug.Debug)
 
 pub(all) enum PiTransportCommand {
   StartRpc(String, String)
@@ -561,12 +179,7 @@ pub(all) enum PiTransportEvent {
   TransportFailed(String)
 } derive(Eq, @debug.Debug)
 
-pub(all) enum PiTransportKind {
-  NativeProcessJsonl
-  WebBridge
-  Fixture
-} derive(Eq, @debug.Debug)
-pub fn PiTransportKind::label(Self) -> String
+type PiTransportKind derive(Eq, @debug.Debug)
 
 pub struct PiTransportRuntime {
   // private fields
@@ -577,172 +190,17 @@ pub fn PiTransportRuntime::fixture(events~ : (Array[PiTransportCommand]) -> Arra
 pub fn PiTransportRuntime::new(run~ : (Array[PiTransportCommand], (PiTransportEvent) -> Unit) -> Unit) -> Self
 pub fn PiTransportRuntime::unavailable(reason? : String) -> Self
 
-pub(all) struct PiTransportState {
-  kind : PiTransportKind
-  status : PiTransportStatus
-  command_queue : Array[PiTransportCommand]
-  last_json_line : String
-} derive(Eq, @debug.Debug)
-pub fn PiTransportState::apply_event(Self, PiTransportEvent) -> Self
-pub fn PiTransportState::enqueue(Self, PiTransportCommand) -> Self
-pub fn PiTransportState::enqueue_many(Self, Array[PiTransportCommand]) -> Self
-pub fn PiTransportState::new() -> Self
-pub fn PiTransportState::status_label(Self) -> String
+type PiTransportState derive(Eq, @debug.Debug)
 
-pub(all) enum PiTransportStatus {
-  Disconnected
-  Starting
-  Running
-  Failed(String)
-} derive(Eq, @debug.Debug)
-pub fn PiTransportStatus::label(Self) -> String
+type PiTransportStatus derive(Eq, @debug.Debug)
 
-pub(all) struct PlanStep {
-  id : String
-  title : String
-  status : String
-  owner : String
-  detail : String
-} derive(Eq, @debug.Debug)
-pub fn PlanStep::new(id~ : String, title~ : String, status~ : String, owner~ : String, detail~ : String) -> Self
+type PlanStep derive(Eq, @debug.Debug)
 
-pub(all) struct TranscriptItem {
-  id : String
-  role : String
-  summary : String
-  detail : String
-  tone : String
-} derive(Eq, @debug.Debug)
-pub fn TranscriptItem::new(id~ : String, role~ : String, summary~ : String, detail~ : String, tone~ : String) -> Self
+type TranscriptItem derive(Eq, @debug.Debug)
 
-pub(all) struct WorkbenchModel {
-  selected_session_id : String
-  selected_panel : String
-  selected_agent_id : String
-  appearance_mode : String
-  main_scroll_offset_y : Double
-  prompt : String
-  composer_controls_expanded : Bool
-  expanded_context : Array[String]
-  workspace_details_expanded : Bool
-  sessions : Array[WorkbenchSession]
-  plan : Array[PlanStep]
-  events : Array[AgentEvent]
-  transcript : Array[TranscriptItem]
-  command_catalog : Array[PiCommandInfo]
-  model_catalog : Array[PiModelInfo]
-  fork_messages : Array[PiForkMessage]
-  pi_session_stats : PiSessionStatsSnapshot
-  files : Array[FileContext]
-  diff : DiffOverview
-  commands : Array[CommandRun]
-  diagnostics : Array[DiagnosticItem]
-  transport : PiTransportState
-  agent_connectors : Array[AgentConnectorState]
-  pi_rpc : PiRpcSnapshot
-  pi_agent : PiAgentSnapshot
-  pi_session_bindings : Array[PiSessionBinding]
-  last_status : String
-}
-pub fn WorkbenchModel::active_agent_backend_capabilities(Self) -> AgentBackendCapabilities
-pub fn WorkbenchModel::active_agent_backend_profile(Self) -> AgentBackendProfile
-pub fn WorkbenchModel::active_agent_backend_status(Self) -> AgentBackendStatus
-pub fn WorkbenchModel::active_agent_command_catalog(Self) -> Array[AgentCommandInfo]
-pub fn WorkbenchModel::active_agent_connector_state(Self) -> AgentConnectorState
-pub fn WorkbenchModel::active_agent_fork_points_for_transcript_item(Self, TranscriptItem) -> Array[AgentForkPoint]
-pub fn WorkbenchModel::active_agent_input_settings(Self) -> AgentInputSettings
-pub fn WorkbenchModel::active_agent_model_catalog(Self) -> Array[AgentModelInfo]
-pub fn WorkbenchModel::active_agent_runtime_signal(Self) -> AgentRuntimeSignal
-pub fn WorkbenchModel::active_agent_session_binding(Self) -> AgentSessionBinding
-pub fn WorkbenchModel::active_agent_session_metrics(Self) -> AgentSessionMetrics
-pub fn WorkbenchModel::active_pi_session_binding(Self) -> PiSessionBinding
-pub fn WorkbenchModel::active_session(Self) -> WorkbenchSession
-pub fn WorkbenchModel::agent_activity_queue(Self) -> Array[AgentActivityQueueItem]
-pub fn WorkbenchModel::agent_composer_request_summary(Self) -> AgentComposerRequestSummary
-pub fn WorkbenchModel::agent_composer_route_summary(Self) -> AgentComposerRouteSummary
-pub fn WorkbenchModel::agent_provider_registry_items(Self) -> Array[AgentProviderRegistryItem]
-pub fn WorkbenchModel::agent_provider_switch_summary(Self) -> AgentProviderSwitchSummary
-pub fn WorkbenchModel::agent_request_summaries(Self) -> Array[AgentRequestSummary]
-pub fn WorkbenchModel::agent_run_overview(Self) -> AgentRunOverview
-pub fn WorkbenchModel::agent_status_bar_summary(Self) -> AgentStatusBarSummary
-pub fn WorkbenchModel::agent_timeline_items(Self) -> Array[AgentTimelineItem]
-pub fn WorkbenchModel::latest_agent_request_summary(Self) -> AgentRequestSummary?
-pub fn WorkbenchModel::new() -> Self
-pub fn WorkbenchModel::open_diagnostic_count(Self) -> Int
-pub fn WorkbenchModel::pending_transport_count(Self) -> Int
-pub fn WorkbenchModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn WorkbenchModel::runtime_with_agent_connectors(Self, PiTransportRuntime, Array[AgentConnectorRuntime], width? : Double, height? : Double) -> @core.AppRuntime
-pub fn WorkbenchModel::runtime_with_transport(Self, PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn WorkbenchModel::update(Self, WorkbenchMsg) -> Self
-pub fn WorkbenchModel::update_with_agent_connectors(Self, WorkbenchMsg, PiTransportRuntime, Array[AgentConnectorRuntime]) -> WorkbenchUpdate
-pub fn WorkbenchModel::update_with_transport(Self, WorkbenchMsg, PiTransportRuntime) -> WorkbenchUpdate
-pub fn WorkbenchModel::view(Self) -> @core.View[WorkbenchMsg]
+type WorkbenchMsg derive(Eq, @debug.Debug)
 
-pub(all) enum WorkbenchMsg {
-  SelectSession(String)
-  SelectPanel(String)
-  SetAppearanceMode(String)
-  SwitchAgentBackend(String)
-  CreateConversation
-  SelectAgent(String)
-  PromptChanged(String)
-  ToggleComposerControls
-  DispatchPrompt
-  DispatchSteering
-  DispatchFollowUp
-  InvokeCommand(String)
-  FollowTranscript(String, String, String)
-  FollowActivity(String, String, String)
-  InspectFile(String)
-  ReviewDiff
-  RefreshSession
-  ReceiveTransport(PiTransportEvent)
-  ReceiveConnector(AgentConnectorEvent)
-  NewSession
-  RefreshForkMessages
-  ForkFromMessage(String)
-  ExportSessionHtml
-  QueueCommand(String)
-  QueueFocusedChecks
-  ToggleCommandDetails(Int)
-  ToggleWorkspaceDetails
-  InspectCommandRun(String, String, String, String)
-  FixCommandRun(String, String, String, String)
-  MarkCommandComplete(Int, Int)
-  FixDiagnostic(String, String, String)
-  SyncSessionName
-  SetModel(String, String, String)
-  CycleModel
-  CompactSession
-  CycleThinkingLevel
-  ToggleSteeringMode
-  ToggleFollowUpMode
-  CancelRun
-  ClearDiagnostics
-  ToggleContext(String)
-  MainScrollTo(Double)
-} derive(Eq, @debug.Debug)
-
-pub(all) struct WorkbenchSession {
-  id : String
-  title : String
-  project_path : String
-  backend_id : String
-  pi_session_path : String
-  branch : String
-  status : String
-  summary : String
-  active_task : String
-  unread_events : Int
-} derive(Eq, @debug.Debug)
-pub fn WorkbenchSession::new(id~ : String, title~ : String, project_path~ : String, backend_id? : String, pi_session_path? : String, branch~ : String, status~ : String, summary~ : String, active_task~ : String, unread_events~ : Int) -> Self
-
-pub(all) struct WorkbenchUpdate {
-  model : WorkbenchModel
-  effect : @core.Effect[WorkbenchMsg]
-}
-pub fn WorkbenchUpdate::as_tuple(Self) -> (WorkbenchModel, @core.Effect[WorkbenchMsg])
-pub fn WorkbenchUpdate::new(WorkbenchModel, effect? : @core.Effect[WorkbenchMsg]) -> Self
+type WorkbenchSession derive(Eq, @debug.Debug)
 
 // Type aliases
 

@@ -999,7 +999,7 @@ fn WorkbenchModel::assistant_transcript_item_id_for_fork_point(
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_fork_points_for_transcript_item(
+fn WorkbenchModel::active_agent_fork_points_for_transcript_item(
   self : WorkbenchModel,
   item : TranscriptItem,
 ) -> Array[AgentForkPoint] {

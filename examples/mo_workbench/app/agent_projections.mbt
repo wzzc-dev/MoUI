@@ -1,5 +1,5 @@
 ///|
-pub(all) enum AgentRequestKind {
+enum AgentRequestKind {
   ApprovalRequest
   PermissionRequest
   InputRequest
@@ -7,7 +7,7 @@ pub(all) enum AgentRequestKind {
 } derive(Eq, Debug)
 
 ///|
-pub(all) enum AgentActivityQueueKind {
+enum AgentActivityQueueKind {
   ProviderRecovery
   RuntimeActivity
   QueuedOperation
@@ -17,13 +17,13 @@ pub(all) enum AgentActivityQueueKind {
 } derive(Eq, Debug)
 
 ///|
-pub(all) enum AgentCatalogItemKind {
+enum AgentCatalogItemKind {
   ModelCatalogItem
   CommandCatalogItem
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentRequestSummary {
+struct AgentRequestSummary {
   backend_id : String
   kind : AgentRequestKind
   source : String
@@ -37,7 +37,7 @@ pub(all) struct AgentRequestSummary {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentActivityQueueItem {
+struct AgentActivityQueueItem {
   backend_id : String
   kind : AgentActivityQueueKind
   badge_label : String
@@ -51,7 +51,7 @@ pub(all) struct AgentActivityQueueItem {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentRunOverview {
+struct AgentRunOverview {
   backend_id : String
   title : String
   detail : String
@@ -71,7 +71,7 @@ pub(all) struct AgentRunOverview {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentProviderRegistryItem {
+struct AgentProviderRegistryItem {
   backend_id : String
   label : String
   transport_label : String
@@ -86,7 +86,7 @@ pub(all) struct AgentProviderRegistryItem {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentProviderSwitchSummary {
+struct AgentProviderSwitchSummary {
   backend_id : String
   label : String
   transport_label : String
@@ -98,7 +98,7 @@ pub(all) struct AgentProviderSwitchSummary {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentComposerRouteSummary {
+struct AgentComposerRouteSummary {
   backend_id : String
   label : String
   session_label : String
@@ -113,7 +113,7 @@ pub(all) struct AgentComposerRouteSummary {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentComposerRequestSummary {
+struct AgentComposerRequestSummary {
   backend_id : String
   badge_label : String
   title : String
@@ -127,7 +127,7 @@ pub(all) struct AgentComposerRequestSummary {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentStatusBarSummary {
+struct AgentStatusBarSummary {
   backend_id : String
   status_label : String
   context_label : String
@@ -138,7 +138,7 @@ pub(all) struct AgentStatusBarSummary {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentTimelineItem {
+struct AgentTimelineItem {
   backend_id : String
   source_kind : String
   badge_label : String
@@ -150,7 +150,7 @@ pub(all) struct AgentTimelineItem {
 } derive(Eq, Debug)
 
 ///|
-pub fn AgentRequestSummary::new(
+fn AgentRequestSummary::new(
   backend_id~ : String,
   source~ : String,
   kind? : AgentRequestKind = agent_request_kind_for_source(source),
@@ -197,14 +197,14 @@ pub fn AgentRequestSummary::new(
 }
 
 ///|
-pub fn AgentRequestSummary::has_visible_request(
+fn AgentRequestSummary::has_visible_request(
   self : AgentRequestSummary,
 ) -> Bool {
   self.source != "" || self.message != ""
 }
 
 ///|
-pub fn AgentActivityQueueItem::new(
+fn AgentActivityQueueItem::new(
   backend_id~ : String,
   kind~ : AgentActivityQueueKind,
   badge_label? : String = "",
@@ -231,21 +231,21 @@ pub fn AgentActivityQueueItem::new(
 }
 
 ///|
-pub fn AgentActivityQueueItem::has_primary_action(
+fn AgentActivityQueueItem::has_primary_action(
   self : AgentActivityQueueItem,
 ) -> Bool {
   self.primary_message is Some(_)
 }
 
 ///|
-pub fn AgentActivityQueueItem::has_secondary_action(
+fn AgentActivityQueueItem::has_secondary_action(
   self : AgentActivityQueueItem,
 ) -> Bool {
   self.secondary_message is Some(_)
 }
 
 ///|
-pub fn AgentRunOverview::new(
+fn AgentRunOverview::new(
   backend_id~ : String,
   title? : String = "",
   detail? : String = "",
@@ -284,7 +284,7 @@ pub fn AgentRunOverview::new(
 }
 
 ///|
-pub fn AgentRunOverview::has_visible_overview(self : AgentRunOverview) -> Bool {
+fn AgentRunOverview::has_visible_overview(self : AgentRunOverview) -> Bool {
   self.title != "" ||
   self.detail != "" ||
   self.activity_count > 0 ||
@@ -293,7 +293,7 @@ pub fn AgentRunOverview::has_visible_overview(self : AgentRunOverview) -> Bool {
 }
 
 ///|
-pub fn AgentProviderRegistryItem::new(
+fn AgentProviderRegistryItem::new(
   backend_id~ : String,
   label~ : String,
   transport_label~ : String,
@@ -322,14 +322,14 @@ pub fn AgentProviderRegistryItem::new(
 }
 
 ///|
-pub fn AgentProviderRegistryItem::has_action(
+fn AgentProviderRegistryItem::has_action(
   self : AgentProviderRegistryItem,
 ) -> Bool {
   self.action_message is Some(_)
 }
 
 ///|
-pub fn AgentProviderSwitchSummary::new(
+fn AgentProviderSwitchSummary::new(
   backend_id~ : String,
   label~ : String,
   transport_label~ : String,
@@ -352,14 +352,14 @@ pub fn AgentProviderSwitchSummary::new(
 }
 
 ///|
-pub fn AgentProviderSwitchSummary::has_switch_targets(
+fn AgentProviderSwitchSummary::has_switch_targets(
   self : AgentProviderSwitchSummary,
 ) -> Bool {
   self.switch_count > 1
 }
 
 ///|
-pub fn AgentComposerRouteSummary::new(
+fn AgentComposerRouteSummary::new(
   backend_id~ : String,
   label~ : String,
   session_label? : String = "",
@@ -388,14 +388,14 @@ pub fn AgentComposerRouteSummary::new(
 }
 
 ///|
-pub fn AgentComposerRouteSummary::has_visible_route(
+fn AgentComposerRouteSummary::has_visible_route(
   self : AgentComposerRouteSummary,
 ) -> Bool {
   self.visible
 }
 
 ///|
-pub fn AgentComposerRequestSummary::new(
+fn AgentComposerRequestSummary::new(
   backend_id~ : String,
   badge_label? : String = "",
   title? : String = "",
@@ -422,14 +422,14 @@ pub fn AgentComposerRequestSummary::new(
 }
 
 ///|
-pub fn AgentComposerRequestSummary::has_visible_request(
+fn AgentComposerRequestSummary::has_visible_request(
   self : AgentComposerRequestSummary,
 ) -> Bool {
   self.visible
 }
 
 ///|
-pub fn AgentStatusBarSummary::new(
+fn AgentStatusBarSummary::new(
   backend_id~ : String,
   status_label? : String = "",
   context_label? : String = "",
@@ -450,7 +450,7 @@ pub fn AgentStatusBarSummary::new(
 }
 
 ///|
-pub fn AgentStatusBarSummary::has_visible_metrics(
+fn AgentStatusBarSummary::has_visible_metrics(
   self : AgentStatusBarSummary,
 ) -> Bool {
   self.status_label != "" ||
@@ -460,7 +460,7 @@ pub fn AgentStatusBarSummary::has_visible_metrics(
 }
 
 ///|
-pub fn AgentTimelineItem::new(
+fn AgentTimelineItem::new(
   backend_id~ : String,
   source_kind~ : String,
   badge_label~ : String,
@@ -483,14 +483,14 @@ pub fn AgentTimelineItem::new(
 }
 
 ///|
-pub fn AgentTimelineItem::has_visible_timeline_item(
+fn AgentTimelineItem::has_visible_timeline_item(
   self : AgentTimelineItem,
 ) -> Bool {
   self.visible && (self.title != "" || self.detail != "")
 }
 
 ///|
-pub fn WorkbenchModel::agent_request_summaries(
+fn WorkbenchModel::agent_request_summaries(
   self : WorkbenchModel,
 ) -> Array[AgentRequestSummary] {
   let backend = self.active_agent_backend_profile()
@@ -511,7 +511,7 @@ pub fn WorkbenchModel::agent_request_summaries(
 }
 
 ///|
-pub fn WorkbenchModel::latest_agent_request_summary(
+fn WorkbenchModel::latest_agent_request_summary(
   self : WorkbenchModel,
 ) -> AgentRequestSummary? {
   let requests = self.agent_request_summaries()
@@ -523,7 +523,7 @@ pub fn WorkbenchModel::latest_agent_request_summary(
 }
 
 ///|
-pub fn WorkbenchModel::agent_activity_queue(
+fn WorkbenchModel::agent_activity_queue(
   self : WorkbenchModel,
 ) -> Array[AgentActivityQueueItem] {
   let backend = self.active_agent_backend_profile()
@@ -600,7 +600,7 @@ pub fn WorkbenchModel::agent_activity_queue(
 }
 
 ///|
-pub fn WorkbenchModel::agent_run_overview(
+fn WorkbenchModel::agent_run_overview(
   self : WorkbenchModel,
 ) -> AgentRunOverview {
   let backend = self.active_agent_backend_profile()
@@ -631,7 +631,7 @@ pub fn WorkbenchModel::agent_run_overview(
 }
 
 ///|
-pub fn WorkbenchModel::agent_provider_registry_items(
+fn WorkbenchModel::agent_provider_registry_items(
   self : WorkbenchModel,
 ) -> Array[AgentProviderRegistryItem] {
   let active = self.active_agent_backend_profile()
@@ -666,7 +666,7 @@ pub fn WorkbenchModel::agent_provider_registry_items(
 }
 
 ///|
-pub fn WorkbenchModel::agent_provider_switch_summary(
+fn WorkbenchModel::agent_provider_switch_summary(
   self : WorkbenchModel,
 ) -> AgentProviderSwitchSummary {
   let backend = self.active_agent_backend_profile()
@@ -687,7 +687,7 @@ pub fn WorkbenchModel::agent_provider_switch_summary(
 }
 
 ///|
-pub fn WorkbenchModel::agent_composer_route_summary(
+fn WorkbenchModel::agent_composer_route_summary(
   self : WorkbenchModel,
 ) -> AgentComposerRouteSummary {
   let backend = self.active_agent_backend_profile()
@@ -734,7 +734,7 @@ pub fn WorkbenchModel::agent_composer_route_summary(
 }
 
 ///|
-pub fn WorkbenchModel::agent_composer_request_summary(
+fn WorkbenchModel::agent_composer_request_summary(
   self : WorkbenchModel,
 ) -> AgentComposerRequestSummary {
   let backend = self.active_agent_backend_profile()
@@ -758,7 +758,7 @@ pub fn WorkbenchModel::agent_composer_request_summary(
 }
 
 ///|
-pub fn WorkbenchModel::agent_status_bar_summary(
+fn WorkbenchModel::agent_status_bar_summary(
   self : WorkbenchModel,
 ) -> AgentStatusBarSummary {
   let backend = self.active_agent_backend_profile()
@@ -774,7 +774,7 @@ pub fn WorkbenchModel::agent_status_bar_summary(
 }
 
 ///|
-pub fn WorkbenchModel::agent_timeline_items(
+fn WorkbenchModel::agent_timeline_items(
   self : WorkbenchModel,
 ) -> Array[AgentTimelineItem] {
   let backend = self.active_agent_backend_profile()
