@@ -82,9 +82,8 @@ pub(all) struct SkiaPixelFrame {
   pixels : Bytes
 } derive(Eq, @debug.Debug)
 
-pub(all) struct SkiaPresentTarget {
-  description : String
-  present : (SkiaPixelFrame) -> Bool
+pub struct SkiaPresentTarget {
+  // private fields
 }
 pub fn SkiaPresentTarget::new(description~ : String, present~ : (SkiaPixelFrame) -> Bool) -> Self
 
