@@ -138,9 +138,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/engine_wbtest.mbt",
-      max_lines: 1938,
-      target_lines: 1800,
-      reason: "split engine tests by layout, semantics, input, and render-tree behavior",
+      max_lines: 578,
+      target_lines: 520,
+      reason: "keep engine mount, layout, state, dirty, and paint tests compact",
     },
     {
       path: "moui/core/view.mbt",
