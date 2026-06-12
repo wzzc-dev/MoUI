@@ -147,7 +147,7 @@ fn package_budgets() -> Array[PackageBudget] {
       package_token: "package \"wzzc-dev/moui/render/skia\"",
       max_lines: 220,
       max_pub_lines: 50,
-      max_pub_all_lines: 20,
+      max_pub_all_lines: 8,
       required_tokens: [
         "SkiaRasterRenderer", "skia_available", "skia_image_load_completion",
       ],
