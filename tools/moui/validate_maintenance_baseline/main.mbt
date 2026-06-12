@@ -84,9 +84,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/host/host_test.mbt",
-      max_lines: 74,
-      target_lines: 70,
-      reason: "keep host shared test helpers and surface metrics compact",
+      max_lines: 61,
+      target_lines: 55,
+      reason: "keep host shared test helpers compact",
     },
     {
       path: "examples/pdf_workbench/app/app.mbt",
