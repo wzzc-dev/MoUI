@@ -95,10 +95,11 @@ sh scripts/check-local-deps.sh
 sh scripts/dev-check.sh
 ```
 
-The default daily baseline covers the core framework, Web wasm-gc, native Skia
-mainline contracts, Showcase, and Markdown Editor. Design Systems is addon
-diagnostic coverage; run `sh scripts/dev-check.sh --theme-diagnostics` when
-changing `moui_theme` or `examples/design_systems`.
+The default daily baseline covers the core framework, maintenance baseline
+ratchets, Web wasm-gc, native Skia mainline contracts, Showcase, and Markdown
+Editor. Design Systems is addon diagnostic coverage; run
+`sh scripts/dev-check.sh --theme-diagnostics` when changing `moui_theme` or
+`examples/design_systems`.
 
 MoUI resolves `wzzc-dev/window` from the MoonBit registry as
 `wzzc-dev/window@0.5.1-0.1.4`; `moon.work` does not include a local window
