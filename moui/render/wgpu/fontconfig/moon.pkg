@@ -10,8 +10,8 @@ supported_targets = "native"
 options(
   link: {
     "native": {
-      "stub-cc-flags": "-I/usr/include/freetype2",
-      "cc-link-flags": "-lz",
+      "stub-cc-flags": "-I/usr/include/freetype2 -I/usr/include/harfbuzz",
+      "cc-link-flags": "-lfontconfig -lharfbuzz -lfreetype -lz",
     },
   },
   "native-stub": [ "linux_fontconfig_text.c" ],

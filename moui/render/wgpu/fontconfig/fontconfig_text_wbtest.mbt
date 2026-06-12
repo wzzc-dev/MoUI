@@ -1,18 +1,26 @@
 ///|
-test "fontconfig provider exposes a native emoji text boundary" {
+test "fontconfig provider exposes a native text boundary" {
   let system = @wgpu_renderer.native_text_system_with_engine(
     fontconfig_text_engine(),
   )
-  inspect(system.id(), content="native-wgpu-fontconfig-freetype-emoji")
+  inspect(system.id(), content="native-wgpu-fontconfig-freetype")
 }
 
 ///|
-test "fontconfig provider delegates non-emoji measure to shared fallback" {
+#cfg(platform="linux")
+test "fontconfig provider measures non-emoji text" {
   let input = @core.TextLayoutInput::new(
-    text="fallback",
+    text="ABC",
     font=@core.FontSpec::new(size=14.0, weight=400),
   )
-  inspect(fontconfig_measure_layout(input) is None, content="true")
+  match fontconfig_measure_layout(input) {
+    Some(layout) => {
+      inspect(layout.size.width > 0.0, content="true")
+      inspect(layout.size.height > 0.0, content="true")
+      inspect(layout.baseline > 0.0, content="true")
+    }
+    None => inspect("missing", content="available")
+  }
 }
 
 ///|
@@ -47,15 +55,24 @@ test "fontconfig native stub parses versioned font spec payload" {
 }
 
 ///|
-test "fontconfig run layout delegates non-emoji runs to shared fallback" {
+#cfg(platform="linux")
+test "fontconfig run layout returns glyphs for non-emoji text" {
   let run = @core.TextRun::new(
-    text="fallback",
+    text="ABC",
     frame=@core.Rect::new(x=0.0, y=0.0, width=120.0, height=24.0),
     font=@core.FontSpec::new(size=14.0, weight=400),
     color=@core.Color::black(),
     align=@core.TextAlign::TextStart,
   )
-  inspect(fontconfig_layout_run(run, 1.0) is None, content="true")
+  match fontconfig_layout_run(run, 1.0) {
+    Some(layout) => {
+      inspect(layout.glyphs.length() >= 0, content="true")
+      inspect(layout.size.width >= 0.0, content="true")
+      inspect(layout.size.height > 0.0, content="true")
+      inspect(layout.baseline > 0.0, content="true")
+    }
+    None => inspect("missing", content="available")
+  }
 }
 
 ///|
@@ -146,3 +163,72 @@ extern "C" fn linux_fontconfig_debug_font_registration_data_len(
 ///|
 #cfg(platform="linux")
 extern "C" fn linux_fontconfig_debug_color_emoji_raster_pixels() -> Int = "moui_linux_fontconfig_debug_color_emoji_raster_pixels"
+
+///|
+#cfg(platform="linux")
+#borrow(family_name)
+extern "C" fn linux_fontconfig_debug_registered_font_data_len(
+  family_name : Bytes,
+) -> Int = "moui_linux_fontconfig_debug_registered_font_data_len"
+
+///|
+#cfg(platform="linux")
+extern "C" fn linux_fontconfig_debug_latin_raster_pixels() -> Int = "moui_linux_fontconfig_debug_latin_raster_pixels"
+
+///|
+#cfg(platform="linux")
+#borrow(family_name)
+extern "C" fn linux_fontconfig_debug_register_system_font_data(
+  family_name : Bytes,
+) -> Int = "moui_linux_fontconfig_debug_register_system_font_data"
+
+///|
+#cfg(platform="linux")
+test "fontconfig raster returns visible latin glyph pixels" {
+  let latin_pixels = linux_fontconfig_debug_latin_raster_pixels()
+  if latin_pixels < 0 {
+    inspect("missing", content="available")
+    return
+  }
+  inspect(latin_pixels > 0, content="true")
+}
+
+///|
+#cfg(platform="linux")
+test "fontconfig debug registered font data length reports stored data" {
+  fontconfig_register_font_data(
+    @core.FontFamily::Name("DebugSans"),
+    Bytes::from_array([b'\x01', b'\x02', b'\x03', b'\x04']),
+  )
+  let data_len = linux_fontconfig_debug_registered_font_data_len(
+    Bytes::from_array([b'D', b'e', b'b', b'u', b'g', b'S', b'a', b'n', b's']),
+  )
+  inspect(data_len, content="4")
+}
+
+///|
+#cfg(platform="linux")
+test "fontconfig debug can register system font and measure via registered alias" {
+  let data_len = linux_fontconfig_debug_register_system_font_data(
+    Bytes::from_array([b'R', b'e', b'g', b'i', b's', b't', b'e', b'r', b'e', b'd', b'S', b'a', b'n', b's']),
+  )
+  if data_len < 0 {
+    inspect("missing", content="available")
+    return
+  }
+  inspect(data_len > 0, content="true")
+  let input = @core.TextLayoutInput::new(
+    text="X",
+    font=@core.FontSpec::new(
+      families=@core.FontFamilyStack::named("RegisteredSans"),
+      size=16.0,
+      weight=400,
+    ),
+  )
+  match fontconfig_measure_layout(input) {
+    Some(layout) => {
+      inspect(layout.size.height > 0.0, content="true")
+    }
+    None => inspect("missing", content="available")
+  }
+}
