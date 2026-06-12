@@ -120,9 +120,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_input_wbtest.mbt",
-      max_lines: 2233,
-      target_lines: 1800,
-      reason: "split Markdown Editor input tests by block editing and IME/source mapping",
+      max_lines: 710,
+      target_lines: 650,
+      reason: "keep Markdown Editor delimiter and continuation input tests compact",
     },
     {
       path: "examples/markdown_editor/app/editor_commands_wbtest.mbt",
