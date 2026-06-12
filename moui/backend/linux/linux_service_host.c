@@ -1,5 +1,6 @@
 #ifdef __linux__
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -222,6 +223,242 @@ static char *append_line(char *text, size_t *len, size_t *capacity,
   *len += line_len;
   text[*len] = '\0';
   return text;
+}
+
+static char *append_text(char *text, size_t *len, size_t *capacity,
+                         const char *chunk) {
+  if (!chunk) {
+    return text;
+  }
+  size_t chunk_len = strlen(chunk);
+  size_t needed = *len + chunk_len + 1;
+  if (needed > *capacity) {
+    size_t next_capacity = *capacity ? *capacity * 2 : 256;
+    while (needed > next_capacity) {
+      next_capacity *= 2;
+    }
+    char *next = (char *)realloc(text, next_capacity);
+    if (!next) {
+      free(text);
+      return NULL;
+    }
+    text = next;
+    *capacity = next_capacity;
+  }
+  memcpy(text + *len, chunk, chunk_len);
+  *len += chunk_len;
+  text[*len] = '\0';
+  return text;
+}
+
+typedef struct MouiLinuxMenuCommand {
+  int enabled;
+  char *label;
+} MouiLinuxMenuCommand;
+
+static void free_menu_commands(MouiLinuxMenuCommand *commands, int32_t count) {
+  if (!commands) {
+    return;
+  }
+  for (int32_t i = 0; i < count; ++i) {
+    free(commands[i].label);
+  }
+  free(commands);
+}
+
+static int parse_menu_command(const char *bytes, int32_t length,
+                              int32_t *offset,
+                              MouiLinuxMenuCommand *command) {
+  if (*offset >= length) {
+    return 0;
+  }
+  char enabled_char = bytes[*offset];
+  if (enabled_char != '0' && enabled_char != '1') {
+    return 0;
+  }
+  command->enabled = enabled_char == '1';
+  *offset += 1;
+  if (*offset >= length || bytes[*offset] != ':') {
+    return 0;
+  }
+  *offset += 1;
+  int32_t label_length = 0;
+  while (*offset < length && bytes[*offset] >= '0' && bytes[*offset] <= '9') {
+    int32_t digit = bytes[*offset] - '0';
+    if (label_length > (INT32_MAX - digit) / 10) {
+      return 0;
+    }
+    label_length = label_length * 10 + digit;
+    *offset += 1;
+  }
+  if (*offset >= length || bytes[*offset] != ':') {
+    return 0;
+  }
+  *offset += 1;
+  if (label_length < 0 || label_length > length - *offset) {
+    return 0;
+  }
+  command->label = (char *)malloc((size_t)label_length + 1);
+  if (!command->label) {
+    return 0;
+  }
+  memcpy(command->label, bytes + *offset, (size_t)label_length);
+  command->label[label_length] = '\0';
+  *offset += label_length;
+  if (*offset < length && bytes[*offset] == '\n') {
+    *offset += 1;
+  }
+  return 1;
+}
+
+static MouiLinuxMenuCommand *parse_menu_commands(const char *bytes,
+                                                 int32_t length,
+                                                 int32_t *count_out) {
+  int32_t count = 1;
+  for (int32_t i = 0; i < length; ++i) {
+    if (bytes[i] == '\n') {
+      count += 1;
+    }
+  }
+  MouiLinuxMenuCommand *commands =
+      (MouiLinuxMenuCommand *)calloc((size_t)count, sizeof(MouiLinuxMenuCommand));
+  if (!commands) {
+    return NULL;
+  }
+  int32_t offset = 0;
+  int32_t parsed = 0;
+  while (offset < length) {
+    if (!parse_menu_command(bytes, length, &offset, &commands[parsed])) {
+      free_menu_commands(commands, parsed + 1);
+      return NULL;
+    }
+    parsed += 1;
+  }
+  *count_out = parsed;
+  return commands;
+}
+
+static int command_exists(const char *name) {
+  size_t command_len = strlen(name) + 32;
+  char *command = (char *)malloc(command_len);
+  if (!command) {
+    return 0;
+  }
+  snprintf(command, command_len, "command -v %s >/dev/null 2>&1", name);
+  int ok = run_command(command);
+  free(command);
+  return ok;
+}
+
+static char *menu_display_label(const MouiLinuxMenuCommand *command) {
+  if (command->enabled) {
+    return strdup(command->label ? command->label : "");
+  }
+  const char *label = command->label ? command->label : "";
+  size_t len = strlen(label) + 12;
+  char *display = (char *)malloc(len);
+  if (!display) {
+    return NULL;
+  }
+  snprintf(display, len, "%s (disabled)", label);
+  return display;
+}
+
+static char *build_zenity_menu_command(MouiLinuxMenuCommand *commands,
+                                       int32_t count) {
+  size_t len = 0;
+  size_t capacity = 0;
+  char *command = NULL;
+  command = append_text(command, &len, &capacity,
+                        "zenity --list --title='MoUI Menu' --hide-header "
+                        "--hide-column=1 --print-column=1 "
+                        "--column='Index' --column='Command'");
+  for (int32_t i = 0; i < count && command; ++i) {
+    char index[32];
+    snprintf(index, sizeof(index), "%d", i);
+    char *display = menu_display_label(&commands[i]);
+    char *quoted_index = shell_quote(index);
+    char *quoted_label = shell_quote(display ? display : "");
+    free(display);
+    if (!quoted_index || !quoted_label) {
+      free(quoted_index);
+      free(quoted_label);
+      free(command);
+      return NULL;
+    }
+    command = append_text(command, &len, &capacity, " ");
+    command = append_text(command, &len, &capacity, quoted_index);
+    command = append_text(command, &len, &capacity, " ");
+    command = append_text(command, &len, &capacity, quoted_label);
+    free(quoted_index);
+    free(quoted_label);
+  }
+  if (command) {
+    command = append_text(command, &len, &capacity, " 2>/dev/null");
+  }
+  return command;
+}
+
+static char *build_kdialog_menu_command(MouiLinuxMenuCommand *commands,
+                                        int32_t count) {
+  size_t len = 0;
+  size_t capacity = 0;
+  char *command = NULL;
+  command = append_text(command, &len, &capacity, "kdialog --menu 'MoUI Menu'");
+  for (int32_t i = 0; i < count && command; ++i) {
+    char index[32];
+    snprintf(index, sizeof(index), "%d", i);
+    char *display = menu_display_label(&commands[i]);
+    char *quoted_index = shell_quote(index);
+    char *quoted_label = shell_quote(display ? display : "");
+    free(display);
+    if (!quoted_index || !quoted_label) {
+      free(quoted_index);
+      free(quoted_label);
+      free(command);
+      return NULL;
+    }
+    command = append_text(command, &len, &capacity, " ");
+    command = append_text(command, &len, &capacity, quoted_index);
+    command = append_text(command, &len, &capacity, " ");
+    command = append_text(command, &len, &capacity, quoted_label);
+    free(quoted_index);
+    free(quoted_label);
+  }
+  if (command) {
+    command = append_text(command, &len, &capacity, " 2>/dev/null");
+  }
+  return command;
+}
+
+static int32_t parse_selected_menu_index(const char *selection, int32_t count) {
+  if (!selection || !selection[0]) {
+    return -1;
+  }
+  errno = 0;
+  char *end = NULL;
+  long value = strtol(selection, &end, 10);
+  if (errno != 0 || end == selection || value < 0 || value >= count) {
+    return -1;
+  }
+  while (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r') {
+    end++;
+  }
+  if (*end != '\0') {
+    return -1;
+  }
+  return (int32_t)value;
+}
+
+static int32_t show_menu_with_command(char *command, int32_t count) {
+  if (!command) {
+    return -2;
+  }
+  char *selection = capture_command(command);
+  free(command);
+  int32_t selected = parse_selected_menu_index(selection, count);
+  free(selection);
+  return selected;
 }
 
 static char *extract_file_uris_as_paths(const char *response) {
@@ -460,6 +697,33 @@ moonbit_bytes_t moui_linux_file_dialog(int32_t kind, const uint8_t *title,
   return bytes;
 }
 
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_show_menu(moonbit_bytes_t commands_bytes) {
+  int32_t length = (int32_t)Moonbit_array_length(commands_bytes);
+  if (length <= 0) {
+    return -1;
+  }
+  int32_t count = 0;
+  MouiLinuxMenuCommand *commands =
+      parse_menu_commands((const char *)commands_bytes, length, &count);
+  if (!commands || count <= 0) {
+    free_menu_commands(commands, count);
+    return -2;
+  }
+
+  int32_t selected = -2;
+  if (command_exists("zenity")) {
+    selected = show_menu_with_command(build_zenity_menu_command(commands, count),
+                                      count);
+  }
+  if (selected == -2 && command_exists("kdialog")) {
+    selected = show_menu_with_command(build_kdialog_menu_command(commands, count),
+                                      count);
+  }
+  free_menu_commands(commands, count);
+  return selected;
+}
+
 #else
 
 #include <stdint.h>
@@ -487,6 +751,12 @@ moonbit_bytes_t moui_linux_file_dialog(int32_t kind, const uint8_t *title,
   (void)default_name;
   (void)default_name_len;
   return moonbit_make_bytes(0, 0);
+}
+
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_show_menu(moonbit_bytes_t commands) {
+  (void)commands;
+  return -2;
 }
 
 #endif

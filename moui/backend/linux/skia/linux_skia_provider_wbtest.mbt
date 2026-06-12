@@ -82,7 +82,7 @@ test "linux skia provider preflight records package observation boundary" {
   assert_true(preflight.contains("host=Linux host"))
   assert_true(
     preflight.contains(
-      "host_services=clipboard,file dialogs,file access,open URL,system theme",
+      "host_services=clipboard,menus,file dialogs,file access,open URL,system theme",
     ),
   )
   assert_true(
@@ -91,19 +91,19 @@ test "linux skia provider preflight records package observation boundary" {
     ),
   )
   assert_true(preflight.contains("clipboard=available"))
-  assert_true(preflight.contains("menu_service=gap"))
+  assert_true(preflight.contains("menu_service=available"))
   assert_true(preflight.contains("file_dialogs=available"))
   assert_true(preflight.contains("file_access=available"))
   assert_true(preflight.contains("open_url=available"))
   assert_true(preflight.contains("system_theme=available"))
   assert_true(preflight.contains("async_services=gap"))
-  assert_true(preflight.contains("window_lifecycle=available"))
-  assert_true(preflight.contains("multi_window=available"))
-  assert_true(preflight.contains("text_input=available"))
-  assert_true(preflight.contains("ime=available"))
-  assert_true(preflight.contains("drag_drop=available"))
-  assert_true(preflight.contains("native_context_menu=gap"))
-  assert_true(preflight.contains("host_modal=available"))
+  assert_true(preflight.contains("window_lifecycle=ready"))
+  assert_true(preflight.contains("multi_window=ready"))
+  assert_true(preflight.contains("text_input=ready"))
+  assert_true(preflight.contains("ime=ready"))
+  assert_true(preflight.contains("drag_drop=ready"))
+  assert_true(preflight.contains("native_context_menu=available"))
+  assert_true(preflight.contains("host_modal=ready"))
   assert_true(preflight.contains("native_accessibility=gap"))
   assert_true(preflight.contains("real Skia link flags"))
   assert_true(preflight.contains("smoke log required"))

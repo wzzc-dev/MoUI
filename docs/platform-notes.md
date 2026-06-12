@@ -136,9 +136,10 @@ constructors and platform event conversion.
   are treated as handled until the async completion arrives, so paste commands
   are not dispatched twice.
 - Secondary mouse-button presses are treated as context-menu requests at the
-  host edge. Web, macOS, and Windows skip normal pointer dispatch for those
-  events so right-click does not activate regular controls; macOS and Windows
-  then route the runtime action command menu through their native menu service.
+  host edge. Web, macOS, Windows, and Linux skip normal pointer dispatch for
+  those events so right-click does not activate regular controls; macOS,
+  Windows, and Linux then route the runtime action command menu through their
+  native menu service.
   When a text input is focused, the host driver prepends MoUI's default text
   commands to that menu so native context menus can copy, cut, paste, undo,
   redo, and select text through the same clipboard and command path as keyboard
@@ -607,8 +608,8 @@ promoting Linux WebView runtime observation beyond package-level compile coverag
 observation for the selected font resolution, renderer availability,
 `moui_skia/native` availability, the `wl_shm` presenter path, inherited Wayland
 host service/input/window readiness, explicit Linux clipboard/file-dialog/text-file/open
-URL/system-theme readiness, native menu/async-service gaps, text-input/IME/drag-drop
-readiness, native context-menu and native accessibility gaps, host-modal
+URL/menu/system-theme readiness, native menu readiness, async-service gap,
+text-input/IME/drag-drop readiness, native context-menu readiness and native accessibility gap, host-modal
 file-dialog readiness, `HostWindowRenderer` bridge
 forwarding for Skia text-system, image-resource, present-count, and disposal
 diagnostics, and the matching-host runtime boundary, including whether the first-frame smoke
@@ -651,10 +652,15 @@ when fontconfig reports no families. Missing CJK or emoji glyph coverage still
 depends on installed system fonts, and full mixed-script fallback runs remain a
 text-system follow-up rather than a Linux backend responsibility.
 
+Linux native context menus use the shared `HostServiceBridge::ShowMenu`
+contract. The backend encodes enabled command rows for a desktop menu picker,
+dispatches the selected `ActionCommand` through `HostRuntimeDriver`, and reports
+an unavailable response when the configured desktop menu tool is absent.
+
 Remaining Linux gaps stay visible in `backend/linux.readiness()`:
 
-- Native menu and AT-SPI bindings are not implemented yet; app/view fallbacks
-  remain the Preview Ready path for those behaviors.
+- AT-SPI binding is not implemented yet; app/view fallbacks remain the Preview
+  Ready path for accessibility adapter behavior.
 - Linux clipboard, file-dialog, text-file, open URL, text-input/IME request, and
   file drag/drop host surfaces are implemented, but passed platform status still
   requires matching-host Wayland/desktop-service observation rather than package

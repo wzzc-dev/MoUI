@@ -88,9 +88,9 @@ paths, or abstractions that only preserve old shapes.
   cores: platform windows, event conversion, services, lifecycle, runtime slots,
   and renderer-neutral provider hooks. Linux owns host service wiring for
   system theme, Wayland clipboard selection, desktop URL/file-dialog/text-file
-  services, text-input/IME request sync, file drag/drop conversion, and
-  scale-factor reporting, while native menu and AT-SPI remain documented
-  follow-ups. They must not import `render/wgpu`,
+  services, desktop native menu selection, text-input/IME request sync, file
+  drag/drop conversion, and scale-factor reporting, while AT-SPI remains a
+  documented follow-up. They must not import `render/wgpu`,
   `render/skia`, `wgpu_mbt`, or `moui_skia`. Native WebView support is a host
   platform-view overlay synced from `DrawFrame.platform_views`; it must not
   become a renderer capability or `DrawCommand`. `backend/web/` is the browser
