@@ -11,7 +11,7 @@ pub fn MoWorkbenchApp::new() -> MoWorkbenchApp {
 
 ///|
 
-pub fn WorkbenchModel::update(
+fn WorkbenchModel::update(
   self : WorkbenchModel,
   message : WorkbenchMsg,
 ) -> WorkbenchModel {
@@ -74,7 +74,7 @@ pub fn WorkbenchModel::update(
 }
 
 ///|
-pub fn update(model : WorkbenchModel, message : WorkbenchMsg) -> WorkbenchModel {
+fn update(model : WorkbenchModel, message : WorkbenchMsg) -> WorkbenchModel {
   model.update(message)
 }
 
@@ -96,7 +96,7 @@ fn WorkbenchModel::set_appearance_mode(
 }
 
 ///|
-pub fn view(model : WorkbenchModel) -> @core.View[WorkbenchMsg] {
+fn view(model : WorkbenchModel) -> @core.View[WorkbenchMsg] {
   model.view()
 }
 
@@ -175,7 +175,7 @@ pub fn runtime_with_agent_connectors(
 }
 
 ///|
-pub fn WorkbenchModel::runtime(
+fn WorkbenchModel::runtime(
   self : WorkbenchModel,
   width? : Double = 1220.0,
   height? : Double = 780.0,
@@ -188,7 +188,7 @@ pub fn WorkbenchModel::runtime(
 }
 
 ///|
-pub fn WorkbenchModel::runtime_with_transport(
+fn WorkbenchModel::runtime_with_transport(
   self : WorkbenchModel,
   transport_runtime : PiTransportRuntime,
   width? : Double = 1220.0,
@@ -198,7 +198,7 @@ pub fn WorkbenchModel::runtime_with_transport(
 }
 
 ///|
-pub fn WorkbenchModel::runtime_with_agent_connectors(
+fn WorkbenchModel::runtime_with_agent_connectors(
   self : WorkbenchModel,
   transport_runtime : PiTransportRuntime,
   connector_runtimes : Array[AgentConnectorRuntime],
@@ -222,7 +222,7 @@ pub fn WorkbenchModel::runtime_with_agent_connectors(
 }
 
 ///|
-pub fn WorkbenchUpdate::new(
+fn WorkbenchUpdate::new(
   model : WorkbenchModel,
   effect? : @core.Effect[WorkbenchMsg] = @core.Effect::none(),
 ) -> WorkbenchUpdate {
@@ -230,7 +230,7 @@ pub fn WorkbenchUpdate::new(
 }
 
 ///|
-pub fn WorkbenchUpdate::as_tuple(
+fn WorkbenchUpdate::as_tuple(
   self : WorkbenchUpdate,
 ) -> (WorkbenchModel, @core.Effect[WorkbenchMsg]) {
   (self.model, self.effect)

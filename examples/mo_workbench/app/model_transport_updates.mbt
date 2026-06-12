@@ -1,5 +1,5 @@
 ///|
-pub fn WorkbenchModel::update_with_transport(
+fn WorkbenchModel::update_with_transport(
   self : WorkbenchModel,
   message : WorkbenchMsg,
   transport_runtime : PiTransportRuntime,
@@ -8,7 +8,7 @@ pub fn WorkbenchModel::update_with_transport(
 }
 
 ///|
-pub fn WorkbenchModel::update_with_agent_connectors(
+fn WorkbenchModel::update_with_agent_connectors(
   self : WorkbenchModel,
   message : WorkbenchMsg,
   transport_runtime : PiTransportRuntime,
