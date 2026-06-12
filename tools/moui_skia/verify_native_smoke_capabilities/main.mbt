@@ -338,28 +338,28 @@ fn verify_native_smoke_capabilities(
 
   let status_text = match
     @tools.read_required_text(
-      resolved_status_file, "required capability proof input",
+      resolved_status_file, "required capability smoke input",
     ) {
     Ok(text) => text
     Err(message) => return Err(message)
   }
   let unix_log_verifier = match
     @tools.read_required_text(
-      resolved_unix_log_verifier, "required capability proof input",
+      resolved_unix_log_verifier, "required capability smoke input",
     ) {
     Ok(text) => text
     Err(message) => return Err(message)
   }
   let powershell_log_verifier = match
     @tools.read_required_text(
-      resolved_powershell_log_verifier, "required capability proof input",
+      resolved_powershell_log_verifier, "required capability smoke input",
     ) {
     Ok(text) => text
     Err(message) => return Err(message)
   }
   let smoke_source = match
     @tools.read_file_or_directory_text(
-      resolved_smoke_source, ".mbt", "required capability proof input is missing: ",
+      resolved_smoke_source, ".mbt", "required capability smoke input is missing: ",
       "native smoke source directory has no .mbt files: ",
     ) {
     Ok(text) => text
@@ -367,7 +367,7 @@ fn verify_native_smoke_capabilities(
   }
   let log_verifier_source = match
     @tools.read_file_or_directory_text(
-      resolved_log_verifier_source, ".mbt", "required capability proof input is missing: ",
+      resolved_log_verifier_source, ".mbt", "required capability smoke input is missing: ",
       "native smoke log verifier source directory has no .mbt files: ",
     ) {
     Ok(text) => text

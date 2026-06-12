@@ -1065,8 +1065,8 @@ fn workbench_check_presets() -> Array[WorkbenchCheckPreset] {
       command="moon build examples/mo_workbench/macos_skia --target native",
     ),
     WorkbenchCheckPreset::new(
-      label="首帧",
-      command="MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
+      label="首帧 smoke",
+      command="moon build moui_tester/macos_skia_first_frame_smoke --target native",
     ),
   ]
 }

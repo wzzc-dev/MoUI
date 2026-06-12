@@ -1,11 +1,12 @@
 ///|
 test "macos wgpu options default to platform text and host resolver" {
-  let options = MacosWgpuAppOptions::new(exit_after_first_present=true)
+  let options = MacosWgpuAppOptions::new()
   assert_true(
     options.text_engine ==
     @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
   )
-  inspect(options.exit_after_first_present, content="true")
+  let smoke_options = MacosWgpuSmokeOptions::new(first_frame_smoke_auto_exit=true)
+  inspect(smoke_options.first_frame_smoke_auto_exit, content="true")
   let request = @host.HostWindowOpenRequest::new(
     title="Inspector",
     scene=@host.HostWindowScene::new(scene_id="inspector"),

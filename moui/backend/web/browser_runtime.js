@@ -22,14 +22,14 @@ export function createWindowWebImports(options = {}) {
   const eventObserver =
     typeof options.onEvent === "function"
       ? options.onEvent
-      : globalThis.__mouiWebRuntimeEvidence?.recordEvent?.bind(
-          globalThis.__mouiWebRuntimeEvidence,
+      : globalThis.__mouiWebRuntimeObservation?.recordEvent?.bind(
+          globalThis.__mouiWebRuntimeObservation,
         );
   const routeObserver =
     typeof options.onRoute === "function"
       ? options.onRoute
-      : globalThis.__mouiWebRuntimeEvidence?.recordRoute?.bind(
-          globalThis.__mouiWebRuntimeEvidence,
+      : globalThis.__mouiWebRuntimeObservation?.recordRoute?.bind(
+          globalThis.__mouiWebRuntimeObservation,
         );
 
   const eventName = kind => {
@@ -66,7 +66,7 @@ export function createWindowWebImports(options = {}) {
     try {
       eventObserver(event);
     } catch (error) {
-      globalThis.console?.error?.("MoUI Web runtime evidence observer failed", error);
+      globalThis.console?.error?.("MoUI Web runtime observation observer failed", error);
     }
   };
 
@@ -75,7 +75,7 @@ export function createWindowWebImports(options = {}) {
     try {
       routeObserver(event);
     } catch (error) {
-      globalThis.console?.error?.("MoUI Web route evidence observer failed", error);
+      globalThis.console?.error?.("MoUI Web route observation observer failed", error);
     }
   };
 

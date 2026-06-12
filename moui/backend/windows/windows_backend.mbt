@@ -31,19 +31,23 @@ extern "C" fn windows_show_menu_bytes(commands : Bytes) -> Int = "moui_windows_s
 ///|
 pub(all) struct WindowsAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
-  contract_ready : Bool
-  native_binding_ready : Bool
-  action_roundtrip_ready : Bool
+  semantics_bridge_available : Bool
+  native_platform_bridge_available : Bool
+  action_dispatch_available : Bool
   description : String
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub struct WindowsHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
-  priv exit_after_first_present : Bool
   priv event_sources : @host.HostPlatformEventSources?
   priv web_view_commands : @host.HostWebViewCommandQueue?
   priv web_view_events : @host.HostWebViewEventSource?
+}
+
+///|
+pub struct WindowsHostSmokeOptions {
+  priv first_frame_smoke_auto_exit : Bool
 }
 
 ///|
@@ -73,7 +77,7 @@ struct WindowsApp {
   web_view_events : @host.HostWebViewEventSource?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
-  mut exit_after_first_present : Bool
+  mut first_frame_smoke_auto_exit : Bool
 }
 
 ///|
@@ -92,18 +96,23 @@ priv struct WindowsWindowPlatformSlots {
 ///|
 pub fn WindowsHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  exit_after_first_present? : Bool = false,
   event_sources? : @host.HostPlatformEventSources? = None,
   web_view_commands? : @host.HostWebViewCommandQueue? = None,
   web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> WindowsHostAppOptions {
   {
     scene_resolver,
-    exit_after_first_present,
     event_sources,
     web_view_commands,
     web_view_events,
   }
+}
+
+///|
+pub fn WindowsHostSmokeOptions::new(
+  first_frame_smoke_auto_exit? : Bool = false,
+) -> WindowsHostSmokeOptions {
+  { first_frame_smoke_auto_exit, }
 }
 
 ///|
@@ -155,6 +164,44 @@ pub fn run_app_with_renderer_provider(
   options? : WindowsHostAppOptions = WindowsHostAppOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
+  run_app_with_renderer_provider_internal(
+    title,
+    runtime,
+    provider~,
+    options~,
+    smoke_options=WindowsHostSmokeOptions::new(),
+    window_requests~,
+  )
+}
+
+///|
+pub fn run_app_with_renderer_provider_smoke(
+  title : String,
+  runtime : @core.AppRuntime,
+  provider~ : WindowsRendererProvider,
+  options? : WindowsHostAppOptions = WindowsHostAppOptions::new(),
+  smoke_options? : WindowsHostSmokeOptions = WindowsHostSmokeOptions::new(),
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+) -> Unit {
+  run_app_with_renderer_provider_internal(
+    title,
+    runtime,
+    provider~,
+    options~,
+    smoke_options~,
+    window_requests~,
+  )
+}
+
+///|
+fn run_app_with_renderer_provider_internal(
+  title : String,
+  runtime : @core.AppRuntime,
+  provider~ : WindowsRendererProvider,
+  options~ : WindowsHostAppOptions,
+  smoke_options~ : WindowsHostSmokeOptions,
+  window_requests~ : @host.HostWindowRequestQueue,
+) -> Unit {
   let event_loop = @win.EventLoop::new()
   let services = windows_service_bridge()
   runtime.set_environment(
@@ -179,7 +226,7 @@ pub fn run_app_with_renderer_provider(
     web_view_events: options.web_view_events,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
-    exit_after_first_present: options.exit_after_first_present,
+    first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   install_windows_webview_event_dispatcher((native_window, id, event) => {
@@ -192,9 +239,9 @@ pub fn run_app_with_renderer_provider(
 pub fn windows_accessibility_bridge_info() -> WindowsAccessibilityBridgeInfo {
   {
     kind: @host.NativeAccessibilityBridgeKind::UIAutomation,
-    contract_ready: true,
-    native_binding_ready: false,
-    action_roundtrip_ready: true,
+    semantics_bridge_available: true,
+    native_platform_bridge_available: false,
+    action_dispatch_available: true,
     description: "Windows exposes a UI Automation accessibility bridge contract over the shared semantics tree; real UIA provider binding is still a backend follow-up.",
   }
 }
@@ -244,11 +291,11 @@ pub fn windows_capability_summary(
     label="Windows host",
     window_lifecycle=true,
     multi_window=true,
-    text_input_ready=true,
-    ime_ready=true,
-    drag_drop_ready=true,
+    text_input_available=true,
+    ime_available=true,
+    drag_drop_available=true,
     async_services=false,
-    native_accessibility_ready=windows_accessibility_bridge_info().native_binding_ready,
+    native_accessibility_available=windows_accessibility_bridge_info().native_platform_bridge_available,
     web_view=windows_webview_capabilities(),
     description="Win32 host with clipboard, file dialog, URL, system theme, native context menu, text input, and file-drop contracts.",
   )
@@ -702,13 +749,13 @@ fn WindowsApp::redraw_window(
         ),
       )
       self.sync_text_input_session()
-      if self.exit_after_first_present &&
+      if self.first_frame_smoke_auto_exit &&
         platform_slot.renderer.present_count() > 0 {
         println(
           "Windows renderer presented first frame; exiting by request; title=" +
           runtime_slot.record.title,
         )
-        self.exit_after_first_present = false
+        self.first_frame_smoke_auto_exit = false
         self.dispose_window(window_id)
         true
       } else {

@@ -11,7 +11,9 @@ MoUI resolves the window host dependency from the MoonBit registry as `wzzc-dev/
 MoUI also carries `wzzc-dev/moui_skia` as a repo-local editable workspace member
 while the Skia renderer backend and binding surface evolve together. The
 optional `wzzc-dev/moui_theme` addon is another repo-local workspace member for
-source-mapped design-system preview packages.
+source-mapped design-system preview packages. `wzzc-dev/moui_tester` carries
+repo-local harnesses/fixtures/smoke entrypoints, and `wzzc-dev/moui_devtools`
+contains inspector snapshot summaries and debug helpers.
 
 From the repository root:
 
@@ -43,6 +45,8 @@ members = [
   "./tools",
   "./moui_skia",
   "./moui_theme",
+  "./moui_tester",
+  "./moui_devtools",
   "./examples/counter",
   "./examples/button_freeze_probe",
   "./examples/showcase",
@@ -67,13 +71,13 @@ dependency-related failures appear, first run `moon update`, inspect the
 resolved package versions, and check whether `wzzc-dev/window@0.5.1-0.1.4` or
 another package changed behavior.
 
-The `window` package still carries MoUI smoke helpers and evidence docs. Use
+The `window` package still carries MoUI smoke helpers and observation docs. Use
 `scripts/run-window-package-smoke.sh <platform>` to extract the resolved
 registry package into a temporary directory and run those helpers without
 creating a local checkout. For example, on macOS:
 
 ```sh
-WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=artifacts/platform-evidence/macos/window-macos-runtime-smoke.log \
+WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=artifacts/platform-observation/macos/window-macos-runtime-smoke.log \
   scripts/run-window-package-smoke.sh macos --run
 ```
 
@@ -85,8 +89,8 @@ workspace's platform status contract. `scripts/check-local-deps.sh` requires
 and the verifier scripts, then runs
 `moui_skia/scripts/verify-platform-status.sh` and
 `moui_skia/scripts/verify-native-capability-contract.sh`. That
-proves the editable binding workspace still has a pinned real-Skia
-artifact/status contract, CI evidence wiring, fallback parity, FFI
+checks the editable binding workspace still has a pinned real-Skia
+artifact/status contract, CI smoke wiring, fallback parity, FFI
 ownership/borrow coverage, and native smoke marker coverage. It does not prove
 a MoUI platform entrypoint has rendered with real Skia; use `--skia-real-smoke`
 after configuring real Skia native link flags for that renderer-level smoke.
@@ -185,10 +189,9 @@ the SkShaper define, links `libskshaper`, `libskunicode_core`,
 `libskunicode_icu`, `libharfbuzz`, and `libicu`, and verifies the MoUI renderer
 smoke log proves the optional shaped-run path was available.
 
-Add `--run-showcase-smoke` when you want the helper to launch the built
-`examples/showcase/macos_skia` executable, wait for the first Skia-presented
-frame, and then exit automatically. Add `--run-markdown-smoke` to do the same
-for `examples/markdown_editor/macos_skia`:
+Add `--run-showcase-smoke` when you want the helper to build Showcase and then
+run the `moui_tester` first-frame smoke. Add `--run-markdown-smoke` to build
+Markdown Editor and run the same tester-owned first-frame check:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
@@ -196,13 +199,10 @@ scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 ```
 
 The renderer smoke and normal macOS Skia app entrypoints use the default
-system-FontMgr text path, including optional SkShaper when enabled. The
-first-frame Showcase and Markdown Editor smokes set each entrypoint's
-exit-after-first-present flag, and those entrypoints explicitly select
-`EmptyTypeface` only for the smoke run. This keeps first-frame AppKit
-presentation evidence on the safer default-font retry path while preserving the
-normal app default that exercises platform font lookup, emoji retry, and
-optional SkShaper when linked.
+system-FontMgr text path, including optional SkShaper when enabled.
+Tester-owned first-frame smoke entrypoints explicitly select `EmptyTypeface`,
+keeping the smoke text-resolution intent separate from normal app defaults that
+exercise platform font lookup, emoji retry, and optional SkShaper when linked.
 
 Use `--skia-provider existing` when you already have a Skia checkout or binary
 package:

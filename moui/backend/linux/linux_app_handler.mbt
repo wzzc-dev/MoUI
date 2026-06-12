@@ -341,13 +341,13 @@ fn LinuxApp::redraw_window(
         ),
       )
       self.sync_text_input_session()
-      if self.exit_after_first_present &&
+      if self.first_frame_smoke_auto_exit &&
         platform_slot.renderer.present_count() > 0 {
         println(
           "Linux renderer presented first frame; exiting by request; title=" +
           runtime_slot.record.title,
         )
-        self.exit_after_first_present = false
+        self.first_frame_smoke_auto_exit = false
         self.dispose_window(window_id)
         true
       } else {

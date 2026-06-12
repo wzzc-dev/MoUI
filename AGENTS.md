@@ -102,13 +102,13 @@ paths, or abstractions that only preserve old shapes.
   provide the native Skia raster mainline renderer providers, including
   provider-owned `HostAsyncImageLoader` hooks around
   `skia_image_load_completion`; provider-created Skia renderers opt into
-  post-present async image loading, but keep this as provider/smoke evidence
+  post-present async image loading, but keep this as provider/smoke log
   until matching-host off-main runtime artifacts prove real late repaint
   behavior. `backend/macos/wgpu`, `backend/windows/wgpu`, and
   `backend/linux/wgpu` provide native WGPU experimental diagnostic providers,
   including provider-owned `HostAsyncImageLoader` hooks that call
   renderer-owned source decode helpers such as `native_image_load_completion`;
-  keep off-main loader/runtime evidence separate from package-level completion
+  keep off-main loader/runtime observation separate from package-level completion
   wiring and do not make these diagnostics release-blocking by default.
 - `render/` is the renderer facade and shared reporting layer.
 - `render/skia/` is the native Skia raster mainline renderer facade over the
@@ -118,7 +118,7 @@ paths, or abstractions that only preserve old shapes.
   post-present async image loading for native providers. The binding and
   renderer diagnostics may expose an explicit opt-in macOS Metal/Ganesh GPU
   context plus offscreen GPU surface boundary, but platform-window GPU
-  presentation remains separate evidence and must not replace the Skia raster
+  presentation remains separate observation and must not replace the Skia raster
   mainline until matching-host smoke proves it; host-layer completion routing
   and native provider/platform redraw scheduling from async image load/error
   notifications remain outside `render/skia`.
@@ -176,12 +176,12 @@ a local code change, treat dependency resolution, registry cache state, and
 package-version regressions as plausible causes before assuming the MoUI code is
 wrong.
 
-The window package still carries MoUI-oriented smoke and evidence files such as
+The window package still carries MoUI-oriented smoke and observation files such as
 `docs/moui-integration-smoke.md`, `scripts/check_moui_*_smoke.sh`, and
 `scripts/record_moui_evidence.sh`. Use
 `scripts/run-window-package-smoke.sh <platform>` to run those helpers from the
 resolved registry package without creating a local checkout. Treat those as
-dependency-level matching-host evidence entrypoints; they do not replace MoUI
+dependency-level matching-host observation entrypoints; they do not replace MoUI
 Showcase platform validation.
 The dependency check also verifies the Skia binding acceptance surface, including
 `skia-platform-status.json`, `skia-provider-lock.json`,
@@ -189,9 +189,9 @@ The dependency check also verifies the Skia binding acceptance surface, includin
 `moui_skia/scripts/verify-platform-status.sh`, and
 `moui_skia/scripts/verify-native-capability-contract.sh`. That
 status and native capability contract prove the editable binding workspace has a
-pinned platform-status contract, CI evidence wiring, fallback parity, FFI
+pinned platform-status contract, CI smoke wiring, fallback parity, FFI
 ownership/borrow checks, and native smoke marker coverage; they do not replace
-MoUI real-Skia smoke or platform runtime evidence.
+MoUI real-Skia smoke or platform runtime observation.
 The runnable GitHub Actions workflows for this binding live at the repository
 root under `.github/workflows/moui-skia-*.yml`, with
 `.github/workflows/copilot-setup-steps.yml` preparing GitHub Copilot coding
@@ -223,8 +223,8 @@ The checkout owns its binding-level platform acceptance status in
 capability contract in `native/capabilities.json` and `native/ownership.json`,
 validated by `scripts/verify-platform-status.sh`/`.ps1` and
 `scripts/verify-native-capability-contract.sh`/`.ps1`. Treat those files as
-dependency evidence for the Skia binding, provider artifact lock, and FFI
-surface coverage, not as MoUI Showcase runtime evidence.
+dependency observation for the Skia binding, provider artifact lock, and FFI
+surface coverage, not as MoUI Showcase runtime observation.
 
 When asked to change the `window` dependency itself, work in the separate
 `wzzc-dev/window` repository, publish a new fork package version, then update
@@ -370,19 +370,20 @@ On macOS, `scripts/macos-skia-renderer-smoke.sh` can resolve Skia from an
 existing build, the pinned JetBrains binary provider, or a source build; it then
 temporarily wires the resolved link flags into the local `moui_skia` and MoUI
 packages, runs the renderer pixel smoke, builds `examples/showcase/macos_skia`,
-and restores the package files. Pass `--run-showcase-smoke` to also launch the
-Showcase entrypoint, verify that the macOS Skia renderer presents its first
-frame, and exit automatically. Pass `--run-markdown-smoke` to add the same
-first-frame check for `examples/markdown_editor/macos_skia`. Pass
+and restores the package files. Pass `--run-showcase-smoke` to also build and
+run the `moui_tester` first-frame smoke after the Showcase build. Pass
+`--run-markdown-smoke` to build Markdown Editor and run the same tester-owned
+first-frame check. Pass
 `--run-gpu-smoke` to add the explicit macOS Metal/Ganesh GPU route smoke; that
 temporary build enables `MOUI_SKIA_ENABLE_GPU_METAL`, requires the renderer
 smoke log to include the `MoUI Skia GPU Metal renderer smoke passed` marker,
-sets `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for the Showcase first-frame
-run plus the optional Markdown Editor first-frame run when requested, and
+sets `MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for the tester-owned
+first-frame run and optional tester IME run, and
 requires those first-frame logs to include
-`surface_route=metal-gpu; surface_gpu=true` provider diagnostics. This proves
-GPU surface rendering/readback through the existing pixel presenter plus app
-first-frame presentation, but not direct platform-window GPU presentation. Pass
+`surface_route=metal-gpu; surface_gpu=true` provider diagnostics. This records
+GPU surface rendering/readback through the existing pixel presenter plus a
+tester first-frame presentation, but not direct platform-window GPU
+presentation. Pass
 `--enable-skparagraph` to wire optional SkParagraph into the temporary real-Skia
 configuration, and pass `--require-skparagraph` for paragraph/bidi smoke runs
 that must fail when the selected Skia headers or libraries do not provide
@@ -394,17 +395,17 @@ prebuild hook and choose the library mode through
 invocation. Pass `--write-local-config` only when intentionally persisting
 local absolute Skia paths, and keep those machine-local `moon.pkg` edits out of
 commits. Normal macOS Skia entrypoints default to the system `FontMgr` text
-path; first-frame smoke entrypoints explicitly select `EmptyTypeface` only
-while their exit-after-first-present flag is set.
+path; tester-owned first-frame smoke entrypoints explicitly select
+`EmptyTypeface`.
 The GitHub Actions wrapper for this MoUI-level macOS real-Skia smoke lives in
 `.github/workflows/moui-real-skia-smoke.yml` as a separate manual workflow, not
 as a skipped job in the required `MoUI CI` workflow.
-Windows/Linux Skia entrypoints expose matching-host first-frame flags
-(`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
-`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT`) and follow the same
-smoke-only `EmptyTypeface` switch; logs belong to the matching host that
-produced them. When recording platform behavior for a release note, keep logs
-under ignored `artifacts/` paths and cite the CI run or smoke log directly.
+Windows/Linux ordinary Skia entrypoints do not carry auto-exit smoke flags.
+When matching-host smoke runners are added for those platforms, keep the
+smoke-only `EmptyTypeface` switch in tester/backend smoke paths; logs belong to
+the matching host that produced them. When recording platform behavior for a
+release note, keep logs under ignored `artifacts/` paths and cite the CI run or
+smoke log directly.
 
 Windows native uses Visual Studio C++ build tools and vcpkg `zlib:x64-windows`.
 Use `scripts/windows/setup_msvc_deps.ps1`,
@@ -428,7 +429,7 @@ provider packages; `core`, `ViewSpec`, `Program`, and host cores must not depend
 on concrete renderer choices.
 
 Use `pkg.generated.mbti` as the public API contract baseline and focused
-contract/conformance tests as behavior evidence. Do not add long-lived
+contract/conformance tests as behavior observation. Do not add long-lived
 `*_spec.mbt` files for ordinary implementation structure; prefer responsibility
 names such as `*_tree.mbt`, `*_descriptor.mbt`, `*_input.mbt`, `*_protocol.mbt`,
 or `*_capabilities.mbt` when organizing package-local source.
@@ -454,7 +455,7 @@ Current focused docs:
   Web text measurement/drawing, embedded fonts, and shaping gaps.
 - `docs/markdown-editor.md` covers the WYSIWYG Markdown Editor model,
   source/visual mapping, commands, platform entrypoints, and validation.
-- `docs/release-readiness.md` tracks preview-release gates, current evidence,
+- `docs/release-readiness.md` tracks preview-release gates, current observation,
   known gaps, and next implementation slices.
 
 ## Editing Notes

@@ -160,12 +160,12 @@ fn paragraph_text() -> String {
 }
 
 ///|
-fn emoji_proof_text() -> String {
+fn emoji_diagnostic_text() -> String {
   "\u{1F469}\u{200D}\u{1F4BB}"
 }
 
 ///|
-fn emoji_proof_font() -> @core.FontSpec {
+fn emoji_diagnostic_font() -> @core.FontSpec {
   @core.FontSpec::new(
     families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
     size=32.0,
@@ -175,7 +175,7 @@ fn emoji_proof_font() -> @core.FontSpec {
 
 ///|
 fn skia_color_emoji_glyph_key_metadata_ready(
-  fallback : @skia_renderer.SkiaEmojiFontFallbackProof,
+  fallback : @skia_renderer.SkiaEmojiFontFallbackDiagnostic,
 ) -> Bool {
   let language_tags_key = fallback.fallback_language_tags.join("+")
   fallback.glyph_key.contains(fallback.font_source) &&
@@ -190,7 +190,7 @@ fn skia_color_emoji_glyph_key_metadata_ready(
 
 ///|
 fn skia_color_emoji_fallback_language_metadata_ready(
-  fallback : @skia_renderer.SkiaEmojiFontFallbackProof,
+  fallback : @skia_renderer.SkiaEmojiFontFallbackDiagnostic,
 ) -> Bool {
   fallback.fallback_language_tags.length() == fallback.fallback_language_tag_count &&
   fallback.fallback_language_tag_count >= 1 &&
@@ -199,8 +199,8 @@ fn skia_color_emoji_fallback_language_metadata_ready(
 }
 
 ///|
-fn skia_color_emoji_proof_metadata_ready(
-  fallback : @skia_renderer.SkiaEmojiFontFallbackProof,
+fn skia_color_emoji_diagnostic_metadata_ready(
+  fallback : @skia_renderer.SkiaEmojiFontFallbackDiagnostic,
   high_saturation_pixels : Int,
   alpha_pixels : Int,
 ) -> Bool {
@@ -269,7 +269,7 @@ fn commands_with_clear(
 }
 
 ///|
-fn skia_paragraph_proof_lines(
+fn skia_paragraph_diagnostic_lines(
   layout : @core.TextParagraphLayoutResult,
 ) -> Array[SkiaParagraphSmokeLine] {
   let max_width = 96.0
@@ -331,7 +331,7 @@ fn selection_rect_overlaps_line(
 }
 
 ///|
-fn selection_rect_geometry_evidence_available(
+fn selection_rect_geometry_observation_available(
   rects : Array[@core.Rect],
   first_line : @core.TextParagraphLineMetrics,
   second_line : @core.TextParagraphLineMetrics,
@@ -356,7 +356,7 @@ fn selection_rect_geometry_evidence_available(
 }
 
 ///|
-fn selection_rect_evidence_available(
+fn selection_rect_observation_available(
   layout : @core.TextParagraphLayoutResult,
 ) -> Bool {
   if !layout.metadata.native_paragraph_ready ||
@@ -378,7 +378,7 @@ fn selection_rect_evidence_available(
       y=layout.lines[1].origin.y + layout.lines[1].size.height * 0.5,
     ),
   )
-  let rect_geometry = selection_rect_geometry_evidence_available(
+  let rect_geometry = selection_rect_geometry_observation_available(
     rects,
     layout.lines[0],
     layout.lines[1],
@@ -395,7 +395,7 @@ fn selection_rect_evidence_available(
 }
 
 ///|
-fn grapheme_editing_evidence_available() -> Bool {
+fn grapheme_editing_observation_available() -> Bool {
   let text = "A\u{1F469}\u{200D}\u{1F4BB}B"
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let boundary_indexes = boundaries.boundaries()
@@ -418,7 +418,7 @@ fn grapheme_editing_evidence_available() -> Bool {
 }
 
 ///|
-fn ime_candidate_anchor_evidence_available(
+fn ime_candidate_anchor_observation_available(
   text_system : @core.TextSystem,
 ) -> Bool {
   let value = @core.State::new("A\u{1F469}\u{200D}\u{1F4BB}B")
@@ -449,7 +449,7 @@ fn ime_candidate_anchor_evidence_available(
 }
 
 ///|
-fn ime_composition_visual_evidence_available(
+fn ime_composition_visual_observation_available(
   renderer : @skia_renderer.SkiaRasterRenderer,
   text_system : @core.TextSystem,
 ) -> Bool {
@@ -514,9 +514,9 @@ fn skia_text_emoji_smoke_commands(
     @core.DrawCommand::Clear(@core.Color::white()),
     @core.DrawCommand::DrawText(
       @core.TextRun::new(
-        text=emoji_proof_text(),
+        text=emoji_diagnostic_text(),
         frame=@core.Rect::new(x=8.0, y=8.0, width=72.0, height=44.0),
-        font=emoji_proof_font(),
+        font=emoji_diagnostic_font(),
         color=@core.Color::black(),
         align=@core.TextAlign::TextStart,
       ),
@@ -571,9 +571,9 @@ fn carets_are_monotonic(carets : Array[Double]) -> Bool {
 
 ///|
 fn zwj_has_no_interior_caret(system : @core.TextSystem) -> Bool {
-  let text = emoji_proof_text()
+  let text = emoji_diagnostic_text()
   let layout = system.measure_text(
-    @core.TextLayoutInput::new(text~, font=emoji_proof_font()),
+    @core.TextLayoutInput::new(text~, font=emoji_diagnostic_font()),
   )
   if layout.caret_positions.length() != text.to_array().length() + 1 ||
     !carets_are_monotonic(layout.caret_positions) {
@@ -617,7 +617,7 @@ fn paragraph_later_line_pixels(
 }
 
 ///|
-fn bidi_visual_order_evidence_available(
+fn bidi_visual_order_observed_available(
   frame : @skia_renderer.SkiaPixelFrame,
   text_system : @core.TextSystem,
 ) -> Bool {
@@ -683,7 +683,7 @@ fn main {
   }
 
   let paragraph_layout = skia_paragraph_layout(renderer.text_system())
-  let paragraph_lines = skia_paragraph_proof_lines(paragraph_layout)
+  let paragraph_lines = skia_paragraph_diagnostic_lines(paragraph_layout)
   for line in paragraph_lines {
     println(
       "MoUI Skia text/emoji smoke paragraph line=\{line.line_index} text=\{line.text} baseline=\{line.baseline} measured_width=\{line.measured_width}",
@@ -710,9 +710,9 @@ fn main {
       )
       if emoji_pixels >= 8 {
         match
-          @skia_renderer.skia_emoji_font_fallback_proof(
-            text=emoji_proof_text(),
-            font=emoji_proof_font(),
+          @skia_renderer.skia_emoji_font_fallback_diagnostic(
+            text=emoji_diagnostic_text(),
+            font=emoji_diagnostic_font(),
           ) {
           Some(fallback) => {
             println(
@@ -721,7 +721,7 @@ fn main {
             println(
               "MoUI renderer smoke colorEmojiPixels metadata font_family=\{fallback.font_family} font_source=\{fallback.font_source} text_system=\{fallback.text_system_id} shaper=\{fallback.shaper} glyph_format=\{fallback.glyph_format} glyph_count=\{fallback.glyph_count} cluster_count=\{fallback.cluster_count} high_saturation_pixels=\{emoji_pixels} alpha_pixels=\{emoji_alpha_pixels} glyph_key=\{fallback.glyph_key} glyph_width=\{fallback.glyph_width} glyph_height=\{fallback.glyph_height} fallback_script_tag=\{fallback.fallback_script_tag} fallback_language_tags=\{fallback.fallback_language_tags.join("+")} fallback_language_tag_count=\{fallback.fallback_language_tag_count} fallback_request_language_count=\{fallback.fallback_request_language_count} fallback_request_character=\{fallback.fallback_character} resolved_missing_glyph_count=\{fallback.resolved_missing_glyph_count} missing_glyph_recovery_ready=\{fallback.missing_glyph_recovery_ready}",
             )
-            if skia_color_emoji_proof_metadata_ready(
+            if skia_color_emoji_diagnostic_metadata_ready(
                 fallback, emoji_pixels, emoji_alpha_pixels,
               ) {
               println(
@@ -750,7 +750,7 @@ fn main {
         )
       } else {
         failures.push(
-          "zwjGrapheme missing no-interior-caret plus emoji pixel evidence",
+          "zwjGrapheme missing no-interior-caret plus emoji pixel observation",
         )
       }
 
@@ -774,47 +774,47 @@ fn main {
         )
       }
 
-      if bidi_visual_order_evidence_available(frame, renderer.text_system()) {
+      if bidi_visual_order_observed_available(frame, renderer.text_system()) {
         println(
           "MoUI renderer smoke bidiLayout passed engine=skparagraph bidi_visual_order_ready=true visual-order",
         )
       } else {
         failures.push(
-          "bidiLayout missing Skia visual-order glyph/paragraph evidence",
+          "bidiLayout missing Skia visual-order glyph/paragraph observation",
         )
       }
 
-      if selection_rect_evidence_available(paragraph_layout) {
+      if selection_rect_observation_available(paragraph_layout) {
         println(
           "MoUI renderer smoke selectionRects passed engine=skparagraph selection-rects line-range rect-geometry hit-test",
         )
       } else {
         failures.push(
-          "selectionRects missing Skia selection rectangles, line-range, rect geometry, and hit-test evidence",
+          "selectionRects missing Skia selection rectangles, line-range, rect geometry, and hit-test observation",
         )
       }
 
-      if grapheme_editing_evidence_available() {
+      if grapheme_editing_observation_available() {
         println(
           "MoUI renderer smoke graphemeEditing passed grapheme-boundaries edit-actions",
         )
       } else {
         failures.push(
-          "graphemeEditing missing grapheme boundary edit-action evidence",
+          "graphemeEditing missing grapheme boundary edit-action observation",
         )
       }
 
-      if ime_candidate_anchor_evidence_available(renderer.text_system()) {
+      if ime_candidate_anchor_observation_available(renderer.text_system()) {
         println(
           "MoUI renderer smoke imeCandidateAnchor passed candidate-anchor surrounding-text grapheme-boundary utf8-offsets",
         )
       } else {
         failures.push(
-          "imeCandidateAnchor missing candidate anchor and surrounding-text evidence",
+          "imeCandidateAnchor missing candidate anchor and surrounding-text observation",
         )
       }
 
-      if ime_composition_visual_evidence_available(
+      if ime_composition_visual_observation_available(
           renderer,
           renderer.text_system(),
         ) {
@@ -823,7 +823,7 @@ fn main {
         )
       } else {
         failures.push(
-          "imeCompositionVisual missing composition range, composition cursor, and preedit pixel evidence",
+          "imeCompositionVisual missing composition range, composition cursor, and preedit pixel observation",
         )
       }
     }

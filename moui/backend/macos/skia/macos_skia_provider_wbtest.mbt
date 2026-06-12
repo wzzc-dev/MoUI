@@ -1,13 +1,18 @@
 ///|
 test "macos skia options default to system font resolution and host resolver" {
-  let options = MacosSkiaAppOptions::new(exit_after_first_present=true)
+  let options = MacosSkiaAppOptions::new()
   assert_true(
     options.font_resolution == @skia_renderer.SkiaFontResolution::SystemFontMgr,
   )
   assert_true(
     options.surface_route == @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
   )
-  inspect(options.exit_after_first_present, content="true")
+  let smoke_options = MacosSkiaSmokeOptions::new(
+    first_frame_smoke_auto_exit=true,
+    native_ime_runtime_smoke=true,
+  )
+  inspect(smoke_options.first_frame_smoke_auto_exit, content="true")
+  inspect(smoke_options.native_ime_runtime_smoke, content="true")
   let request = @host.HostWindowOpenRequest::new(
     title="Inspector",
     scene=@host.HostWindowScene::new(scene_id="inspector"),
@@ -51,7 +56,7 @@ test "macos skia preflight diagnostic describes unavailable renderer setup" {
 }
 
 ///|
-test "macos skia provider preflight records package evidence boundary" {
+test "macos skia provider preflight records package observation boundary" {
   let preflight = macos_skia_provider_preflight_summary()
   assert_true(preflight.contains("macOS Skia provider preflight"))
   assert_true(preflight.contains("renderer="))
@@ -108,20 +113,20 @@ test "macos skia provider preflight records package evidence boundary" {
       "host_input=pointer,scroll,keyboard,focus,text input,IME,clipboard shortcuts,drag/drop",
     ),
   )
-  assert_true(preflight.contains("clipboard=ready"))
-  assert_true(preflight.contains("menu_service=ready"))
-  assert_true(preflight.contains("file_dialogs=ready"))
-  assert_true(preflight.contains("file_access=ready"))
-  assert_true(preflight.contains("open_url=ready"))
-  assert_true(preflight.contains("system_theme=ready"))
+  assert_true(preflight.contains("clipboard=available"))
+  assert_true(preflight.contains("menu_service=available"))
+  assert_true(preflight.contains("file_dialogs=available"))
+  assert_true(preflight.contains("file_access=available"))
+  assert_true(preflight.contains("open_url=available"))
+  assert_true(preflight.contains("system_theme=available"))
   assert_true(preflight.contains("async_services=gap"))
-  assert_true(preflight.contains("window_lifecycle=ready"))
-  assert_true(preflight.contains("multi_window=ready"))
-  assert_true(preflight.contains("text_input=ready"))
-  assert_true(preflight.contains("ime=ready"))
-  assert_true(preflight.contains("drag_drop=ready"))
-  assert_true(preflight.contains("native_context_menu=ready"))
-  assert_true(preflight.contains("host_modal=ready"))
+  assert_true(preflight.contains("window_lifecycle=available"))
+  assert_true(preflight.contains("multi_window=available"))
+  assert_true(preflight.contains("text_input=available"))
+  assert_true(preflight.contains("ime=available"))
+  assert_true(preflight.contains("drag_drop=available"))
+  assert_true(preflight.contains("native_context_menu=available"))
+  assert_true(preflight.contains("host_modal=available"))
   assert_true(preflight.contains("native_accessibility=gap"))
   assert_true(preflight.contains("real Skia link flags"))
   assert_true(preflight.contains("first-frame smoke required"))
@@ -130,7 +135,6 @@ test "macos skia provider preflight records package evidence boundary" {
     options=MacosSkiaAppOptions::new(
       font_resolution=@skia_renderer.SkiaFontResolution::EmptyTypeface,
       surface_route=@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute,
-      exit_after_first_present=true,
     ),
   )
   assert_true(empty.contains("font=empty-typeface"))

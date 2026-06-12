@@ -48,7 +48,7 @@ expectPass("valid Skia entrypoints", runValidator(tmp));
 
 const badImportRoot = mkdtempSync(join(tmpdir(), "moui-skia-entrypoints-bad-import-"));
 cpSync(tmp, badImportRoot, { recursive: true });
-const badPkg = join(badImportRoot, "examples/showcase/windows_skia/moon.pkg");
+const badPkg = join(badImportRoot, "examples/showcase/macos_skia/moon.pkg");
 writeFileSync(
   badPkg,
   readFileSync(badPkg, "utf8").replace(
@@ -64,18 +64,18 @@ expectFail(
 
 const badEnvRoot = mkdtempSync(join(tmpdir(), "moui-skia-entrypoints-bad-env-"));
 cpSync(tmp, badEnvRoot, { recursive: true });
-const badMain = join(badEnvRoot, "examples/markdown_editor/linux_skia/main.mbt");
+const badMain = join(badEnvRoot, "examples/showcase/macos_skia/main.mbt");
 writeFileSync(
   badMain,
   readFileSync(badMain, "utf8").replace(
-    "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
-    "MOUI_MARKDOWN_EDITOR_LINUX_EXIT_AFTER_FIRST_PRESENT",
+    "surface_route~,",
+    "surface_route~,\n      first_frame_smoke_auto_exit=true,",
   ),
 );
 expectFail(
-  "reject missing Markdown Linux Skia first-frame env flag",
+  "reject example first-frame smoke option",
   badEnvRoot,
-  "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
+  "first_frame_smoke_auto_exit",
 );
 
 const badHostSummaryRoot = mkdtempSync(join(tmpdir(), "moui-skia-entrypoints-bad-host-summary-"));

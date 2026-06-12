@@ -94,6 +94,8 @@ run moon test moui/views --target native
 run moon test moui/render --target native
 run moon test moui/render/skia --target native
 run moon test moui/backend/host --target native
+run moon test moui_tester --target native
+run moon test moui_devtools --target native
 
 run moon test moui_skia --target native
 

@@ -189,7 +189,7 @@ pub fn RendererBackendKind::label(Self) -> String
 pub fn RendererBackendKind::short_label(Self) -> String
 
 pub(all) enum RendererCapabilityStatus {
-  Ready
+  Supported
   Unavailable
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -264,7 +264,7 @@ pub fn RendererFeatureCapability::note_for_backend(Self, RendererBackendKind) ->
 pub fn RendererFeatureCapability::status_for_backend(Self, RendererBackendKind) -> RendererFeatureStatus
 
 pub(all) enum RendererFeatureStatus {
-  Ready
+  Supported
   Partial
   Gap
   HostForwarded

@@ -14,9 +14,30 @@ pub fn run_app_with_renderer_provider(
     runtime,
     provider~,
     options~,
+    smoke_options=MacosHostSmokeOptions::new(),
     window_requests~,
   )
-  if options.exit_after_first_present {
+  event_loop.run_app(app)
+}
+
+///|
+pub fn run_app_with_renderer_provider_smoke(
+  title : String,
+  runtime : @core.AppRuntime,
+  provider~ : MacosRendererProvider,
+  options? : MacosHostAppOptions = MacosHostAppOptions::new(),
+  smoke_options? : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+) -> Unit {
+  let (event_loop, app) = create_macos_app(
+    title,
+    runtime,
+    provider~,
+    options~,
+    smoke_options~,
+    window_requests~,
+  )
+  if smoke_options.first_frame_smoke_auto_exit {
     run_app_until_first_present(event_loop, app)
   } else {
     event_loop.run_app(app)
@@ -37,18 +58,15 @@ pub async fn run_app_with_renderer_provider_async_pump(
     runtime,
     provider~,
     options~,
+    smoke_options=MacosHostSmokeOptions::new(),
     window_requests~,
   )
-  if options.exit_after_first_present {
-    run_app_until_first_present(event_loop, app)
-  } else {
-    while !event_loop.exiting() {
-      match event_loop.pump_app_events(Some(0), app) {
-        @window_core.PumpStatus::Exit(_) => return ()
-        @window_core.PumpStatus::Continue => ()
-      }
-      @async.sleep(frame_interval_ms)
+  while !event_loop.exiting() {
+    match event_loop.pump_app_events(Some(0), app) {
+      @window_core.PumpStatus::Exit(_) => return ()
+      @window_core.PumpStatus::Continue => ()
     }
+    @async.sleep(frame_interval_ms)
   }
 }
 
@@ -58,6 +76,7 @@ fn create_macos_app(
   runtime : @core.AppRuntime,
   provider~ : MacosRendererProvider,
   options~ : MacosHostAppOptions,
+  smoke_options~ : MacosHostSmokeOptions,
   window_requests~ : @host.HostWindowRequestQueue,
 ) -> (@window_macos.EventLoop, MacosApp) {
   let event_loop = @window_macos.EventLoop::EventLoop()
@@ -84,12 +103,12 @@ fn create_macos_app(
     web_view_events: options.web_view_events,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
-    exit_after_first_present: options.exit_after_first_present,
-    native_ime_runtime_evidence: options.native_ime_runtime_evidence,
-    native_ime_runtime_evidence_done: false,
-    native_ime_runtime_evidence_phase: 0,
-    native_ime_runtime_evidence_wait_redraws: 0,
-    native_ime_runtime_evidence_before_commit_text: "",
+    first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
+    native_ime_runtime_smoke: smoke_options.native_ime_runtime_smoke,
+    native_ime_runtime_smoke_done: false,
+    native_ime_runtime_smoke_phase: 0,
+    native_ime_runtime_smoke_wait_redraws: 0,
+    native_ime_runtime_smoke_before_commit_text: "",
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   install_macos_webview_event_dispatcher((native_view, id, event) => {
@@ -111,7 +130,7 @@ fn run_app_until_first_present(
     }
     remaining = remaining - 1
   }
-  if app.exit_after_first_present {
+  if app.first_frame_smoke_auto_exit {
     println(
       "macOS renderer first-frame smoke did not present before pump limit",
     )

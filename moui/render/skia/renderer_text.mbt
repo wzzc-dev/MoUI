@@ -1,5 +1,5 @@
 ///|
-pub(all) struct SkiaTextVisualOrderProof {
+pub(all) struct SkiaTextVisualOrderDiagnostic {
   logical_text : String
   visual_text : String
   logical_cluster_count : Int
@@ -11,7 +11,7 @@ pub(all) struct SkiaTextVisualOrderProof {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct SkiaTextSelectionGeometryProof {
+pub(all) struct SkiaTextSelectionGeometryDiagnostic {
   text : String
   selection_range : @core.TextRange
   selection_rect_count : Int
@@ -22,7 +22,7 @@ pub(all) struct SkiaTextSelectionGeometryProof {
   hit_test_inside : Bool
   visual_order_differs : Bool
   visual_segment_count : Int
-  bidi_visual_order_evidence : Bool
+  bidi_visual_order_observed : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -32,7 +32,7 @@ priv struct SkiaParagraphClusterBox {
 }
 
 ///|
-pub(all) struct SkiaEmojiFontFallbackProof {
+pub(all) struct SkiaEmojiFontFallbackDiagnostic {
   text : String
   text_system_id : String
   font_family : String
@@ -93,11 +93,11 @@ priv struct SkiaResolvedTextLayout {
 }
 
 ///|
-pub fn skia_text_visual_order_proof(
+pub fn skia_text_visual_order_diagnostic(
   text : String,
   font? : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
-) -> SkiaTextVisualOrderProof? {
+) -> SkiaTextVisualOrderDiagnostic? {
   if text == "" {
     return None
   }
@@ -127,13 +127,13 @@ pub fn skia_text_visual_order_proof(
 }
 
 ///|
-pub fn skia_text_selection_geometry_proof(
+pub fn skia_text_selection_geometry_diagnostic(
   text : String,
   selection? : @core.TextRange? = None,
   font? : @core.FontSpec = @core.FontSpec::new(size=20.0, weight=500),
   max_width? : Double = 96.0,
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
-) -> SkiaTextSelectionGeometryProof? {
+) -> SkiaTextSelectionGeometryDiagnostic? {
   if text == "" {
     return None
   }
@@ -163,17 +163,17 @@ pub fn skia_text_selection_geometry_proof(
       y=hit_line.origin.y + hit_line.size.height * 0.5,
     ),
   )
-  let visual = skia_text_visual_order_proof(text, font~, font_resolution~)
-  let (visual_order_differs, visual_segment_count, bidi_visual_order_evidence) = match
+  let visual = skia_text_visual_order_diagnostic(text, font~, font_resolution~)
+  let (visual_order_differs, visual_segment_count, bidi_visual_order_observed) = match
     visual {
-    Some(proof) =>
+    Some(diagnostic) =>
       (
-        proof.visual_order_differs,
-        proof.segment_count,
-        proof.visual_order_differs &&
-        proof.logical_cluster_count == proof.visual_cluster_count &&
-        proof.segment_count >= 3 &&
-        proof.glyph_count >= 1,
+        diagnostic.visual_order_differs,
+        diagnostic.segment_count,
+        diagnostic.visual_order_differs &&
+        diagnostic.logical_cluster_count == diagnostic.visual_cluster_count &&
+        diagnostic.segment_count >= 3 &&
+        diagnostic.glyph_count >= 1,
       )
     None => (false, 0, false)
   }
@@ -188,12 +188,12 @@ pub fn skia_text_selection_geometry_proof(
     hit_test_inside: hit.is_inside,
     visual_order_differs,
     visual_segment_count,
-    bidi_visual_order_evidence,
+    bidi_visual_order_observed,
   })
 }
 
 ///|
-pub fn skia_emoji_font_fallback_proof(
+pub fn skia_emoji_font_fallback_diagnostic(
   text? : String = "\u{1F469}\u{200D}\u{1F4BB}",
   font? : @core.FontSpec = @core.FontSpec::new(
     families=@core.FontFamilyStack::new([@core.FontFamily::Emoji]),
@@ -201,7 +201,7 @@ pub fn skia_emoji_font_fallback_proof(
     weight=400,
   ),
   font_resolution? : SkiaFontResolution = SkiaFontResolution::SystemFontMgr,
-) -> SkiaEmojiFontFallbackProof? {
+) -> SkiaEmojiFontFallbackDiagnostic? {
   if text == "" {
     return None
   }
@@ -1007,8 +1007,8 @@ fn skia_paragraph_visual_order_metadata(
 ) -> @core.TextParagraphVisualOrderMetadata {
   let logical_clusters = skia_grapheme_cluster_texts(text)
   let boxes = skia_paragraph_cluster_boxes(logical_clusters, paragraph, offsets)
-  let paragraph_bidi_evidence = skia_paragraph_has_bidi_evidence(boxes)
-  let visual_clusters = if paragraph_bidi_evidence {
+  let paragraph_bidi_observed = skia_paragraph_has_bidi_observation(boxes)
+  let visual_clusters = if paragraph_bidi_observed {
     skia_bidi_visual_cluster_texts(logical_clusters)
   } else {
     logical_clusters
@@ -1025,7 +1025,7 @@ fn skia_paragraph_visual_order_metadata(
     glyph_count: logical_clusters.length(),
     visual_order_differs,
     bidi_visual_order_ready: bidi_ready &&
-    paragraph_bidi_evidence &&
+    paragraph_bidi_observed &&
     visual_order_differs,
   }
 }
@@ -1068,7 +1068,7 @@ fn skia_paragraph_cluster_boxes(
 }
 
 ///|
-fn skia_paragraph_has_bidi_evidence(
+fn skia_paragraph_has_bidi_observation(
   boxes : Array[SkiaParagraphClusterBox],
 ) -> Bool {
   let mut rect_count = 0

@@ -18,7 +18,7 @@ Current P0/P1 foundations include component state subscriptions, keyed
 component-scoped effects with cleanup, scoped saveable string/bool/int state, an
 advanced custom child layout delegate, environment accessibility signals,
 gesture/action command primitives, a typed host-service bridge, Linux backend
-readiness tracking, and app-framework helpers for routing, forms, and devtool
+availability tracking, and app-framework helpers for routing, forms, and devtool
 snapshots.
 
 Detailed notes live in:
@@ -110,10 +110,10 @@ platform status and native capability contracts via
 ecosystem is still maturing, so unexplained build or smoke failures may come
 from registry cache state or dependency package regressions; include
 `moon update` and package-version inspection in the first pass of debugging.
-Those Skia guards prove the provider lock, fallback parity, FFI
-ownership/borrow metadata, native smoke marker coverage, and binding-level
-wiring are present; renderer pixels and platform runtime behavior still come
-from manual smoke runs or matching-host example launches.
+Those Skia guards check the provider lock, fallback parity, FFI ownership/borrow
+metadata, native smoke marker coverage, and binding-level wiring; renderer
+pixels and platform runtime behavior still come from manual smoke runs or
+matching-host logs.
 
 For current-host backend/provider checks, run:
 

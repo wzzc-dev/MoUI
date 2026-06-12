@@ -5,6 +5,44 @@ pub fn run_app_with_renderer_provider(
   options? : LinuxHostAppOptions = LinuxHostAppOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
+  run_app_with_renderer_provider_internal(
+    title,
+    runtime,
+    provider~,
+    options~,
+    smoke_options=LinuxHostSmokeOptions::new(),
+    window_requests~,
+  )
+}
+
+///|
+pub fn run_app_with_renderer_provider_smoke(
+  title : String,
+  runtime : @core.AppRuntime,
+  provider~ : LinuxRendererProvider,
+  options? : LinuxHostAppOptions = LinuxHostAppOptions::new(),
+  smoke_options? : LinuxHostSmokeOptions = LinuxHostSmokeOptions::new(),
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+) -> Unit {
+  run_app_with_renderer_provider_internal(
+    title,
+    runtime,
+    provider~,
+    options~,
+    smoke_options~,
+    window_requests~,
+  )
+}
+
+///|
+fn run_app_with_renderer_provider_internal(
+  title : String,
+  runtime : @core.AppRuntime,
+  provider~ : LinuxRendererProvider,
+  options~ : LinuxHostAppOptions,
+  smoke_options~ : LinuxHostSmokeOptions,
+  window_requests~ : @host.HostWindowRequestQueue,
+) -> Unit {
   let event_loop = @window_linux.EventLoop::new()
   let services = linux_service_bridge(
     system_theme=linux_color_scheme_from_theme(event_loop.system_theme()),
@@ -31,7 +69,7 @@ pub fn run_app_with_renderer_provider(
     web_view_events: options.web_view_events,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
-    exit_after_first_present: options.exit_after_first_present,
+    first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
   install_linux_webview_event_dispatcher((native_surface, id, event) => {

@@ -116,7 +116,7 @@ Use this skill when editing or reviewing:
   host-service wiring for system theme, Wayland clipboard selection, desktop
   URL/file-dialog/text-file services, text-input/IME request sync, file
   drag/drop conversion, and scale-factor reporting. Keep native menu, AT-SPI,
-  matching-host runtime evidence, and native WGPU/fontconfig text-provider gaps
+  matching-host runtime observation, and native WGPU/fontconfig text-provider gaps
   explicit.
 - Public API changes require `moon info` and review of `pkg.generated.mbti`
   diffs, followed by `node scripts/validate-api-surface.mjs` so the root
@@ -285,14 +285,14 @@ sh scripts/dev-check.sh
 The daily check runs `sh scripts/check-local-deps.sh`, which verifies
 `wzzc-dev/window@0.5.1-0.1.4`, confirms `moon.work` does not include a local
 window checkout, verifies the repo-local `moui_skia` workspace, and checks the
-window package's MoUI-oriented smoke/evidence files when the package is present
+window package's MoUI-oriented smoke/observation files when the package is present
 in the MoonBit registry cache, including `scripts/record_moui_evidence.sh`.
 Use `scripts/run-window-package-smoke.sh <platform>` for matching-host smoke
 runs from the resolved package instead of creating a local window checkout. Run
 `moon update` if the package cache is stale or missing. The MoonBit package
 ecosystem is still maturing, so dependency resolution, registry cache state, and
 package regressions are plausible causes for otherwise surprising failures.
-Treat those window smoke helpers as dependency-level matching-host evidence,
+Treat those window smoke helpers as dependency-level matching-host observation,
 not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
 validation.
 The same local-dependency check also requires the `moui_skia` binding workspace's
@@ -301,7 +301,7 @@ The same local-dependency check also requires the `moui_skia` binding workspace'
 and verifier scripts, then runs
 `moui_skia/scripts/verify-platform-status.sh` and
 `moui_skia/scripts/verify-native-capability-contract.sh`. Treat
-that as binding-level Skia provider/status and native capability evidence; MoUI
+that as binding-level Skia provider/status and native capability observation; MoUI
 renderer pixels and platform runtime behavior still need the opt-in real-Skia
 smoke or matching-host example runs.
 The runnable `moui_skia` GitHub Actions workflows live in the repository root
@@ -417,14 +417,11 @@ clipboard/menu/file-dialog/open URL/system-theme/async-service readiness,
 text-input/IME/drag-drop readiness, native context-menu readiness, host-modal
 file-dialog readiness, native accessibility status, and the
 first-frame smoke option state. Treat those
-summaries as preflight evidence only; the macOS first-frame smoke and matching
-Windows/Linux Showcase or Markdown Editor runtime runs are still required before
-claiming Skia presentation. Windows/Linux Skia entrypoints use
-`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`,
-`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`,
-`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1`, or
-`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` for matching-host
-auto-exit first-frame logs.
+summaries as preflight diagnostics only; macOS first-frame and IME smoke now
+run through `moui_tester`, while ordinary Showcase and Markdown Editor
+entrypoints stay as direct app entrypoints. Windows/Linux ordinary Skia
+entrypoints do not carry auto-exit smoke flags; add matching tester/backend
+smoke runners when platform first-frame logs are needed.
 
 Windows native uses Visual Studio C++ build tools and vcpkg `zlib:x64-windows`.
 Use `scripts/windows/msvc_env.ps1` through the renderer-aware MSVC helpers and
@@ -455,19 +452,19 @@ request checks do not report a skipped real-Skia job.
 
 The helper resolves JetBrains, existing, or source-built Skia providers,
 temporarily configures the local `moui_skia` and MoUI Skia smoke packages, runs
-the renderer pixel smoke, optionally launches `examples/showcase/macos_skia` to
-verify its first presented frame, optionally launches
-`examples/markdown_editor/macos_skia` with `--run-markdown-smoke`, optionally
+the renderer pixel smoke, optionally builds Showcase and runs the
+`moui_tester` first-frame smoke, optionally builds Markdown Editor with
+`--run-markdown-smoke` and runs the same tester-owned marker, optionally
 runs the explicit macOS Metal/Ganesh route smoke with `--run-gpu-smoke`, and
 restores touched `moon.pkg` files. The GPU route smoke enables
 `MOUI_SKIA_ENABLE_GPU_METAL`, requires the
 `MoUI Skia GPU Metal renderer smoke passed` marker, sets
-`MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for the Showcase first-frame run and
-optional Markdown Editor first-frame run, and requires those logs to include
+`MOUI_MACOS_SKIA_SURFACE_ROUTE=metal-gpu` for tester-owned first-frame/IME
+smoke runs, and requires those logs to include
 `surface_route=metal-gpu; surface_gpu=true` provider diagnostics. That proves
 offscreen GPU surface rendering/readback through the existing pixel presenter
 plus app first-frame presentation; it is still separate from direct
-platform-window GPU presentation evidence. Direct Skia
+platform-window GPU presentation observations. Direct Skia
 `moon run`/`moon build` commands use the
 `moui_skia` prebuild hook for real Skia and choose the library mode through
 `MOUI_SKIA_LINK_MODE=dynamic|static|auto`; helper smoke runs can pass
@@ -477,8 +474,9 @@ invocation. For paragraph/bidi smoke runs, pass `--enable-skparagraph` and
 or ICU headers/libraries fail before the smoke can pass. Normal macOS Skia
 entrypoints default to the system
 `FontMgr` text path; first-frame smoke entrypoints explicitly select
-`EmptyTypeface` only while their exit-after-first-present flag is set. Windows
-and Linux Skia entrypoints follow the same smoke-only font-resolution switch.
+`EmptyTypeface`. Windows and Linux should keep the same smoke-only
+font-resolution switch in tester/backend smoke runners rather than ordinary
+example entrypoints.
 
 Public API review:
 
@@ -583,12 +581,12 @@ node scripts/validate-api-surface.mjs
   Native WGPU providers may use renderer-owned helpers such as
   `native_image_load_completion` to convert PNG/JPEG/BMP data URI and local-file
   decode results into completion payloads, but matching-host off-main runtime
-  evidence is still required before claiming full native async image readiness.
+  observation is still required before claiming full native async image readiness.
   Native Skia providers may use `skia_image_load_completion` for provider-owned
   completion payloads from Skia encoded-image source decode, and provider-created
   Skia renderers opt into post-present async image loading so a matching smoke
   can prove second-frame repaint after completion. This remains provider/smoke
-  evidence until a matching host records true off-main late repaint behavior.
+  observation until a matching host records true off-main late repaint behavior.
   Native macOS, Windows, and Linux host cores should invoke optional
   provider-owned image loaders only after the image-resource presented revision
   has been baselined, and cancel in-flight window loads during disposal.
@@ -629,7 +627,7 @@ node scripts/validate-api-surface.mjs
 - Skipping `moon info` after public API changes.
 - Updating renderer support without updating capability docs and tests.
 - Treating Linux Skia Preview Ready as complete platform support while native
-  menu, AT-SPI, matching-host runtime evidence, and native font provider work
+  menu, AT-SPI, matching-host runtime observation, and native font provider work
   remain.
 - Moving shared example logic into platform entrypoints.
 - Running broad native checks before focused package validation.

@@ -198,12 +198,11 @@ Build native WGPU profiles such as `macos_wgpu`, `windows_wgpu`, and
 diagnostic route.
 
 macOS Skia entrypoints use the renderer's system `FontMgr` path by default.
-First-frame smoke runs select `EmptyTypeface` only while their
-exit-after-first-present environment flag is set, so app runs and smoke evidence
-keep distinct text-resolution intent. Use
+Tester-owned first-frame smoke runs select `EmptyTypeface`, so app runs and
+smoke logs keep distinct text-resolution intent. Use
 `scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke`
-for a local real-Skia renderer smoke plus first-frame Showcase and Markdown
-Editor check. Direct local `moon run` commands use the `moui_skia` prebuild hook
+for a local real-Skia renderer smoke plus tester-owned first-frame checks.
+Direct local `moon run` commands use the `moui_skia` prebuild hook
 for real Skia; set `MOUI_SKIA_LINK_MODE=dynamic|static|auto` to choose the
 library mode. Helper smoke runs can pass `--link-mode dynamic|static|auto` to
 override the environment for that invocation.
