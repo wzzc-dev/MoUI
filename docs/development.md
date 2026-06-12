@@ -127,8 +127,9 @@ sh scripts/dev-check.sh
 ```
 
 It runs stable package-level tests, native renderer contract tests, native Skia
-fallback-safe checks, guidance consistency checks, and Web wasm-gc example
-builds without invoking all-repository native or wasm-gc test targets.
+fallback-safe checks, guidance consistency checks, and Showcase/Markdown Editor
+Web wasm-gc example builds without invoking all-repository native or wasm-gc
+test targets.
 Fallback-safe Skia checks prove API shape and unavailable diagnostics; they do
 not mean a real Skia renderer is ready. The local dependency check also runs
 `moui_skia/scripts/verify-platform-status.sh` and
@@ -136,6 +137,9 @@ not mean a real Skia renderer is ready. The local dependency check also runs
 validate the binding workspace's `skia-platform-status.json`, provider lock,
 native capability manifest, fallback parity, ownership, FFI borrow annotations,
 and native smoke marker coverage before the MoUI daily baseline can pass.
+Design Systems is addon diagnostic coverage; run
+`sh scripts/dev-check.sh --theme-diagnostics` when changing `moui_theme` or the
+Design Systems example.
 
 Run the real Skia native smoke only after configuring local Skia link flags:
 
@@ -352,12 +356,7 @@ Useful focused commands:
 moon test moui/render/wgpu --target native
 moon test moui/render/skia --target native
 moon test moui_skia --target native
-moon test moui_theme/common --target native
-moon test moui_theme/common --target wasm-gc
-moon test moui_theme/material --target native
-moon test moui_theme/carbon --target native
-moon test moui_theme/primer --target native
-moon test moui_theme/fluent --target native
+sh scripts/dev-check.sh --theme-diagnostics
 moon build moui/tests/skia_renderer_smoke/native --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native
@@ -366,8 +365,6 @@ node scripts/validate-renderer-provider-manifests.mjs
 sh scripts/dev-check.sh --platform-examples-test
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
-moon test examples/design_systems/app --target native
-moon build examples/design_systems/web_wasm --target wasm-gc
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native

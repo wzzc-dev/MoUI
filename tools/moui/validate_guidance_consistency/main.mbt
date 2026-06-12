@@ -182,9 +182,9 @@ fn daily_quality_gate_tokens() -> Array[String] {
     "moon test moui/core --target native", "moon test moui/views --target native",
     "moon test moui/render/skia --target native", "moon test moui/backend/host --target native",
     "moon test moui/backend/web --target wasm-gc", "moon test examples/showcase/app --target native",
-    "moon test examples/markdown_editor/app --target native", "moon test examples/design_systems/app --target native",
+    "moon test examples/markdown_editor/app --target native",
     "moon build examples/showcase/web_wasm --target wasm-gc", "moon build examples/markdown_editor/web_wasm --target wasm-gc",
-    "moon build examples/design_systems/web_wasm --target wasm-gc", "node scripts/validate-web-runtime-handoff.mjs",
+    "node scripts/validate-web-runtime-handoff.mjs",
   ]
 }
 
@@ -205,8 +205,8 @@ fn release_readiness_quality_tokens() -> Array[String] {
     "node scripts/validate-api-surface.mjs",
     "checked conformance artifact guard",
     "dedicated checked-artifact validators",
-    "examples/design_systems/app",
-    "examples/design_systems/web_wasm",
+    "--theme-diagnostics",
+    "Design Systems is addon diagnostic coverage",
   ]
 }
 
@@ -225,7 +225,8 @@ fn agent_quality_gate_tokens() -> Array[String] {
   [
     "node scripts/validate-api-surface.mjs",
     "node scripts/validate-checked-conformance-artifacts.mjs",
-    "moon build examples/design_systems/web_wasm --target wasm-gc",
+    "--theme-diagnostics",
+    "Design Systems is addon diagnostic coverage",
     "dedicated checked-artifact validators",
   ]
 }
@@ -237,6 +238,51 @@ fn push_agent_quality_gate_checks(
 ) -> Unit {
   for token in agent_quality_gate_tokens() {
     push_include_check(repo_root, "AGENTS.md", token, failures)
+  }
+}
+
+///|
+fn theme_diagnostic_rules() -> Array[TextRule] {
+  [
+    { path: "scripts/dev-check.sh", token: "--theme-diagnostics" },
+    {
+      path: "scripts/dev-check.sh",
+      token: "moon test moui_theme/common --target native",
+    },
+    {
+      path: "scripts/dev-check.sh",
+      token: "moon build examples/design_systems/web_wasm --target wasm-gc",
+    },
+    { path: "docs/testing.md", token: "--theme-diagnostics" },
+    {
+      path: "docs/testing.md",
+      token: "Design Systems is addon diagnostic coverage",
+    },
+    { path: "docs/release-readiness.md", token: "--theme-diagnostics" },
+    {
+      path: "docs/release-readiness.md",
+      token: "Design Systems is addon diagnostic coverage",
+    },
+    { path: "AGENTS.md", token: "--theme-diagnostics" },
+    {
+      path: "AGENTS.md",
+      token: "Design Systems is addon diagnostic coverage",
+    },
+    { path: "moui/README.mbt.md", token: "--theme-diagnostics" },
+    {
+      path: "docs/maintenance.md",
+      token: "Design Systems is addon diagnostic coverage",
+    },
+  ]
+}
+
+///|
+fn push_theme_diagnostic_checks(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  for rule in theme_diagnostic_rules() {
+    push_include_check(repo_root, rule.path, rule.token, failures)
   }
 }
 
@@ -342,6 +388,7 @@ fn validate_guidance_consistency(repo_root : String) -> Array[String] {
   push_daily_quality_gate_checks(repo_root, failures)
   push_release_readiness_quality_checks(repo_root, failures)
   push_agent_quality_gate_checks(repo_root, failures)
+  push_theme_diagnostic_checks(repo_root, failures)
   for rule in guidance_include_rules() {
     push_include_check(repo_root, rule.path, rule.token, failures)
   }
