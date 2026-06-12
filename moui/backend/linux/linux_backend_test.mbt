@@ -20,7 +20,7 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
   inspect(info.services.file_dialogs, content="true")
   inspect(info.services.file_access, content="true")
   inspect(info.services.open_url, content="true")
-  inspect(info.services.menus, content="false")
+  inspect(info.services.menus, content="true")
   inspect(info.services.system_theme, content="true")
   inspect(info.readiness.ready, content="true")
   assert_true(info.readiness.blocked_by.length() >= 1)
@@ -206,8 +206,8 @@ test "linux capability summary exposes known service gaps" {
   inspect(summary.services.file_dialogs, content="true")
   inspect(summary.services.file_access, content="true")
   inspect(summary.services.open_url, content="true")
-  inspect(summary.services.menus, content="false")
-  inspect(summary.service_count(), content="5")
+  inspect(summary.services.menus, content="true")
+  inspect(summary.service_count(), content="6")
   inspect(summary.input_count(), content="7")
   inspect(summary.text_input_available, content="true")
   inspect(summary.ime_available, content="true")
@@ -252,12 +252,13 @@ test "linux service bridge routes real service contracts through handlers" {
           @host.HostServiceResponse::TextFileWritten(path)
       }
     },
+    menu=_commands => -2,
   )
   inspect(bridge.capabilities.clipboard, content="true")
   inspect(bridge.capabilities.file_dialogs, content="true")
   inspect(bridge.capabilities.file_access, content="true")
   inspect(bridge.capabilities.open_url, content="true")
-  inspect(bridge.capabilities.menus, content="false")
+  inspect(bridge.capabilities.menus, content="true")
   match
     bridge.dispatch(
       @host.HostServiceRequest::Clipboard(
@@ -308,7 +309,75 @@ test "linux service bridge routes real service contracts through handlers" {
   match bridge.dispatch(@host.HostServiceRequest::ShowMenu([])) {
     @host.HostServiceResponse::Unavailable(message) =>
       inspect(message, content="menu service is unavailable")
-    _ => fail("expected Linux native menu gap")
+    _ => fail("expected Linux native menu fallback")
+  }
+}
+
+///|
+test "linux service bridge exposes menu selection dispatch" {
+  let seen_count = Ref(0)
+  let bridge = linux_service_bridge(menu=commands => {
+    seen_count.val = commands.length()
+    1
+  })
+  inspect(bridge.capabilities.menus, content="true")
+  match
+    bridge.dispatch(
+      @host.HostServiceRequest::ShowMenu([
+        @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
+        @core.ActionCommand::new(
+          intent=@core.CommandIntent::Paste,
+          label="Paste",
+        ),
+      ]),
+    ) {
+    @host.HostServiceResponse::MenuAction(command) => {
+      assert_true(command.intent == @core.CommandIntent::Paste)
+      inspect(command.label, content="Paste")
+    }
+    _ => fail("expected selected Linux menu command")
+  }
+  inspect(seen_count.val, content="2")
+}
+
+///|
+test "linux service bridge reports cancelled disabled and unavailable menu selections" {
+  let cancelled = linux_service_bridge(menu=_commands => -1)
+  match
+    cancelled.dispatch(
+      @host.HostServiceRequest::ShowMenu([
+        @core.ActionCommand::new(intent=@core.CommandIntent::Copy, label="Copy"),
+      ]),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="menu selection cancelled")
+    _ => fail("expected cancelled Linux menu response")
+  }
+  let disabled = linux_service_bridge(menu=_commands => 0)
+  match
+    disabled.dispatch(
+      @host.HostServiceRequest::ShowMenu([
+        @core.ActionCommand::new(
+          intent=@core.CommandIntent::Paste,
+          label="Paste",
+          enabled=false,
+        ),
+      ]),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="menu command is disabled")
+    _ => fail("expected disabled Linux menu response")
+  }
+  let unavailable = linux_service_bridge(menu=_commands => -2)
+  match
+    unavailable.dispatch(
+      @host.HostServiceRequest::ShowMenu([
+        @core.ActionCommand::new(intent=@core.CommandIntent::Undo, label="Undo"),
+      ]),
+    ) {
+    @host.HostServiceResponse::Unavailable(message) =>
+      inspect(message, content="menu service is unavailable")
+    _ => fail("expected unavailable Linux menu response")
   }
 }
 
