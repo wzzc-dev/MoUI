@@ -122,6 +122,10 @@ Use this skill when editing or reviewing:
   diffs, followed by `node scripts/validate-api-surface.mjs` so the root
   facade, `views`, `core`, host contracts, and renderer packages stay within
   their documented tiers.
+- Maintenance baseline changes require `node scripts/validate-maintenance-baseline.mjs`;
+  when splitting oversized files, reducing source-level `pub(all)`, moving
+  widget-level entrypoints from `core` to `views`, or shrinking root facade
+  forwards, lower the matching ratchet budget in the same change.
 - Renderer capability changes require synchronized updates to code, tests, docs,
   and Showcase when visible.
 - Conformance work uses four layers: `core` contract tests, `backend/host` and
@@ -309,9 +313,9 @@ as `.github/workflows/moui-skia-*.yml`, and Copilot setup lives at root
 `.github/workflows/copilot-setup-steps.yml`. Keep workflow files there while
 `moui_skia` is a workspace member; nested workflow files are not discovered by
 GitHub Actions in the monorepo.
-Daily `dev-check` also runs the MoonBit-backed API surface guard, guidance
-consistency, renderer/provider and native Skia entrypoint static checks, and
-app/Web checks for Showcase and Markdown Editor. Use
+Daily `dev-check` also runs the MoonBit-backed maintenance baseline ratchets,
+API surface guard, guidance consistency, renderer/provider and native Skia
+entrypoint static checks, and app/Web checks for Showcase and Markdown Editor. Use
 `sh scripts/dev-check.sh --theme-diagnostics` for `moui_theme` and Design
 Systems addon diagnostic coverage. Keep `docs/testing.md` and repo-local skills
 synchronized when adding or removing daily quality gates.
@@ -490,6 +494,7 @@ Public API review:
 
 ```sh
 moon info
+node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-api-surface.mjs
 ```
 

@@ -131,9 +131,9 @@ sh scripts/dev-check.sh
 ```
 
 It runs stable package-level tests, native renderer contract tests, native Skia
-fallback-safe checks, guidance consistency checks, and Showcase/Markdown Editor
-Web wasm-gc example builds without invoking all-repository native or wasm-gc
-test targets.
+fallback-safe checks, maintenance baseline ratchets, guidance consistency
+checks, and Showcase/Markdown Editor Web wasm-gc example builds without
+invoking all-repository native or wasm-gc test targets.
 Fallback-safe Skia checks prove API shape and unavailable diagnostics; they do
 not mean a real Skia renderer is ready. The local dependency check also runs
 `moui_skia/scripts/verify-platform-status.sh` and
@@ -362,6 +362,7 @@ moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native
 moon test moui/backend/web --target wasm-gc
 node scripts/validate-renderer-provider-manifests.mjs
+node scripts/validate-maintenance-baseline.mjs
 sh scripts/dev-check.sh --platform-examples-test
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native

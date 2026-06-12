@@ -32,6 +32,7 @@ test "absent failure names stale token" {
 ///|
 test "daily quality gate tokens include moonbit-backed api surface guard" {
   let tokens = daily_quality_gate_tokens()
+  assert_true(tokens.contains("node scripts/validate-maintenance-baseline.mjs"))
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
   assert_true(tokens.contains("moon test moui/core --target native"))
   assert_true(
@@ -42,8 +43,10 @@ test "daily quality gate tokens include moonbit-backed api surface guard" {
 ///|
 test "release readiness quality tokens summarize current daily gates" {
   let tokens = release_readiness_quality_tokens()
+  assert_true(tokens.contains("node scripts/validate-maintenance-baseline.mjs"))
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
   assert_true(tokens.contains("daily baseline"))
+  assert_true(tokens.contains("maintenance ratchets"))
   assert_true(tokens.contains("manual smoke"))
   assert_true(tokens.contains("CI run or smoke log"))
   assert_true(tokens.contains("--theme-diagnostics"))
@@ -53,8 +56,10 @@ test "release readiness quality tokens summarize current daily gates" {
 ///|
 test "agent quality gate tokens cover AGENTS sync points" {
   let tokens = agent_quality_gate_tokens()
+  assert_true(tokens.contains("node scripts/validate-maintenance-baseline.mjs"))
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
   assert_true(tokens.contains("daily validation script"))
+  assert_true(tokens.contains("maintenance baseline"))
   assert_true(tokens.contains("manual smoke"))
   assert_true(tokens.contains("Do not commit artifacts/"))
   assert_true(tokens.contains("--theme-diagnostics"))

@@ -39,6 +39,10 @@ fn guidance_include_rules() -> Array[TextRule] {
     },
     {
       path: "scripts/dev-check.sh",
+      token: "node scripts/validate-maintenance-baseline.mjs",
+    },
+    {
+      path: "scripts/dev-check.sh",
       token: "node scripts/validate-api-surface.mjs",
     },
     { path: "scripts/dev-check.sh", token: "moon check" },

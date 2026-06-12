@@ -13,14 +13,17 @@ Run the bounded daily check for routine framework work:
 sh scripts/dev-check.sh
 ```
 
-This runs local dependency guards, guidance consistency, API surface checks,
-renderer provider and native Skia entrypoint static checks, `moon check`, core
-package tests, Web wasm-gc package tests, native Skia mainline package tests,
-`moui_tester` harness tests, `moui_devtools` snapshot/debug tests, Showcase and
-Markdown Editor app tests, and Web builds:
+This runs local dependency guards, guidance consistency, maintenance baseline
+ratchets, API surface checks, renderer provider and native Skia entrypoint
+static checks, `moon check`, core package tests, Web wasm-gc package tests,
+native Skia mainline package tests, `moui_tester` harness tests,
+`moui_devtools` snapshot/debug tests, Showcase and Markdown Editor app tests,
+and Web builds:
 
 ```sh
 node scripts/validate-guidance-consistency.mjs
+node --check scripts/validate-maintenance-baseline.mjs
+node scripts/validate-maintenance-baseline.mjs
 node --check scripts/validate-api-surface.mjs
 node scripts/validate-api-surface.mjs
 node scripts/validate-renderer-provider-manifests.mjs
@@ -76,6 +79,10 @@ moon test examples/pdf_workbench/pdflite_service_protocol --target native
 Use `moon test moui/render/wgpu --target native` only for the native WGPU
 diagnostic route. Use `moon fmt` before handoff. Run `moon info` and review
 `pkg.generated.mbti` diffs after public API changes.
+When splitting oversized implementation or test files, reducing source-level
+`pub(all)`, or shrinking the root facade, run
+`node scripts/validate-maintenance-baseline.mjs` and ratchet the relevant
+budget downward in the same change.
 
 ## Conformance Slices
 
