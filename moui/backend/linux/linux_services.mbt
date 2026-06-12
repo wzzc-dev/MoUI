@@ -15,6 +15,10 @@ extern "C" fn linux_file_dialog_bytes(
 ) -> Bytes = "moui_linux_file_dialog"
 
 ///|
+#borrow(commands)
+extern "C" fn linux_show_menu_bytes(commands : Bytes) -> Int = "moui_linux_show_menu"
+
+///|
 pub fn capability_matrix() -> LinuxBackendCapabilities {
   {
     window: true,
@@ -37,6 +41,7 @@ pub fn service_capabilities() -> @host.HostServiceCapabilities {
     clipboard=true,
     file_dialogs=true,
     file_access=true,
+    menus=true,
     open_url=true,
     system_theme=true,
   )
@@ -73,7 +78,7 @@ pub fn linux_capability_summary(
     async_services=false,
     native_accessibility_available=backend_info().accessibility.native_platform_bridge_available,
     web_view=linux_webview_capabilities(),
-    description="Wayland host summary with renderer/window readiness, Linux clipboard/file dialog/text-file/open URL services, text-input/IME requests, file drag/drop, and explicit menu/AT-SPI gaps.",
+    description="Wayland host summary with renderer/window readiness, Linux clipboard/file dialog/text-file/open URL/menu services, text-input/IME requests, file drag/drop, and explicit AT-SPI gap.",
   )
 }
 
@@ -82,12 +87,12 @@ pub fn readiness() -> LinuxBackendReadiness {
   {
     ready: true,
     blocked_by: [
-      "Linux native menu and AT-SPI bindings are not Preview Ready yet", "Linux native fontconfig/HarfBuzz/FreeType provider remains a scaffold and composes with Moon Cosmic fallback",
+      "Linux AT-SPI binding is not Preview Ready yet", "Linux native fontconfig/HarfBuzz/FreeType provider remains a scaffold and composes with Moon Cosmic fallback",
       "Linux Preview Ready runtime status still requires matching-host Wayland/Skia observation artifacts",
     ],
     next_steps: [
       "record matching-host Linux Showcase and Markdown Editor Skia first-frame observation",
-      "keep native menu and AT-SPI as documented follow-up work with app/view fallbacks",
+      "keep AT-SPI as documented follow-up work with app/view fallbacks",
       "replace the fontconfig native text stub with a real fontconfig + HarfBuzz + FreeType provider",
     ],
   }
@@ -141,6 +146,7 @@ pub fn linux_service_bridge(
   file_dialog? : (@host.HostFileDialogOptions) -> Array[String] = dispatch_linux_file_dialog,
   text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse = dispatch_linux_text_file,
   binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse = dispatch_linux_binary_file,
+  menu? : (Array[@core.ActionCommand]) -> Int = dispatch_linux_menu,
 ) -> @host.HostServiceBridge {
   @host.HostServiceBridge::new(capabilities=service_capabilities(), handle=request => {
     match request {
@@ -160,10 +166,15 @@ pub fn linux_service_bridge(
         text_file(text_file_request)
       @host.HostServiceRequest::BinaryFile(binary_file_request) =>
         binary_file(binary_file_request)
-      @host.HostServiceRequest::ShowMenu(_) =>
-        @host.HostServiceResponse::Unavailable("menu service is unavailable")
+      @host.HostServiceRequest::ShowMenu(commands) =>
+        linux_menu_command_response(commands, menu(commands))
     }
   })
+}
+
+///|
+fn dispatch_linux_menu(commands : Array[@core.ActionCommand]) -> Int {
+  linux_show_menu_bytes(encode_menu_commands(commands))
 }
 
 ///|
