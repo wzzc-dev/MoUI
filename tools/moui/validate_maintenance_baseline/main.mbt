@@ -102,8 +102,8 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/views_test.mbt",
-      max_lines: 1086,
-      target_lines: 900,
+      max_lines: 878,
+      target_lines: 840,
       reason: "keep shared views test helpers and basic facade coverage compact",
     },
     {
