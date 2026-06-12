@@ -184,6 +184,88 @@ test "linux skia native image loader completes loading resources" {
 }
 
 ///|
+test "linux skia async image path records loading then second-frame completion" {
+  let native_source = @host.HostNativeAsyncImageSource::new()
+  let loader = native_source.loader()
+  let window_id = @host.HostWindowId::new(3)
+  let lifecycle = @render.ImageResourceLifecycle::new()
+  let source = skia_test_png_data_uri()
+  ignore(lifecycle.mark_loading(source))
+  let renderer = @host.HostWindowRenderer::new(
+    resize=_ => (),
+    render=_ => (),
+    text_system=() => @core.TextSystem::fallback(),
+    image_resource_snapshot=Some(() => lifecycle.snapshot_with_revision()),
+    apply_image_resource_load_completion=Some(completion => {
+      lifecycle.apply_load_completion(completion)
+    }),
+  )
+  let tracker = @host.HostImageResourceRepaintTracker::new()
+  let first_frame = tracker.record_presented(window_id, renderer)
+  assert_true(
+    first_frame.status ==
+    @host.HostImageResourceRepaintStatus::ImageRepaintRecorded,
+  )
+  inspect(first_frame.current_status_counts.loading_count, content="1")
+  inspect(first_frame.current_status_counts.ready_count, content="0")
+  let redraws : Array[@host.HostWindowId] = []
+  let completion_source = @host.HostImageResourceCompletionSource::new(
+    tracker~,
+    window_open=id => id == window_id,
+    request_redraw=id => redraws.push(id),
+  )
+  let scheduled = loader.schedule_loading_resources(
+    window_id, renderer, completion_source,
+  )
+  inspect(scheduled.loading_count, content="1")
+  inspect(scheduled.scheduled_count, content="1")
+  inspect(native_source.pending_requests().length(), content="1")
+  inspect(redraws.length(), content="0")
+  let tracked_loading = tracker.snapshot()
+  inspect(tracked_loading.tracked_window_count, content="1")
+  inspect(tracked_loading.tracked_windows[0].revision, content="1")
+  inspect(
+    tracked_loading.tracked_windows[0].status_counts.loading_count,
+    content="1",
+  )
+  let delivered = native_source.complete(
+    window_id,
+    @skia_renderer.skia_image_load_completion(source),
+  )
+  assert_true(
+    delivered.status ==
+    @host.HostNativeAsyncImageCompletionStatus::NativeAsyncImageCompletionDelivered,
+  )
+  inspect(redraws.length(), content="1")
+  assert_true(redraws[0] == window_id)
+  let tracked_completed = tracker.snapshot()
+  inspect(tracked_completed.tracked_window_count, content="1")
+  inspect(tracked_completed.tracked_windows[0].revision, content="2")
+  let second_frame = tracker.record_presented(window_id, renderer)
+  assert_true(
+    second_frame.status ==
+    @host.HostImageResourceRepaintStatus::ImageRepaintRecorded,
+  )
+  if @skia_renderer.skia_available() {
+    inspect(
+      tracked_completed.tracked_windows[0].status_counts.ready_count,
+      content="1",
+    )
+    inspect(second_frame.current_status_counts.ready_count, content="1")
+    inspect(second_frame.current_status_counts.failed_count, content="0")
+  } else {
+    inspect(
+      tracked_completed.tracked_windows[0].status_counts.failed_count,
+      content="1",
+    )
+    inspect(second_frame.current_status_counts.ready_count, content="0")
+    inspect(second_frame.current_status_counts.failed_count, content="1")
+  }
+  inspect(loader.diagnostics().completed_count, content="1")
+  inspect(native_source.diagnostics().pending_count, content="0")
+}
+
+///|
 test "linux skia deferred native source completes through decode helper" {
   let native_source = @host.HostNativeAsyncImageSource::new()
   let loader = native_source.loader()
