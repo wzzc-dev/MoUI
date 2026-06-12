@@ -12,10 +12,10 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
   inspect(info.capabilities.clipboard, content="true")
   inspect(info.capabilities.drag_drop, content="true")
   inspect(info.capabilities.scale_factor, content="true")
-  inspect(info.capabilities.accessibility, content="false")
+  inspect(info.capabilities.accessibility, content="true")
   inspect(info.accessibility.kind.label(), content="at-spi")
   inspect(info.accessibility.semantics_bridge_available, content="true")
-  inspect(info.accessibility.native_platform_bridge_available, content="false")
+  inspect(info.accessibility.native_platform_bridge_available, content="true")
   inspect(info.services.clipboard, content="true")
   inspect(info.services.file_dialogs, content="true")
   inspect(info.services.file_access, content="true")
@@ -451,6 +451,10 @@ test "linux accessibility bridge dispatches semantics actions" {
   })
   inspect(bridge.kind.label(), content="at-spi")
   inspect(bridge.available, content="true")
+  match bridge.snapshot_semantics(node) {
+    Some(_) => ()
+    None => fail("expected Linux AT-SPI semantics snapshot")
+  }
   match
     bridge.perform_action(
       @host.NativeAccessibilityActionRequest::new(

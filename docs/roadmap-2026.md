@@ -40,8 +40,8 @@ The package boundaries follow that pipeline:
 - `backend/<platform>/skia` owns the native Skia raster mainline assembly;
   `backend/<platform>/wgpu` remains available for explicit native WGPU
   diagnostics.
-- `backend/linux/` is a minimal Wayland host core with explicit remaining
-  service, IME, AT-SPI, and native font-provider gaps.
+- `backend/linux/` is a Wayland host core with explicit remaining matching-host
+  runtime-evidence and native font-provider gaps.
 - `render/` owns renderer facades and capability reporting.
 - `render/skia/` implements the native Skia raster renderer facade.
 - `render/wgpu/` implements the experimental native wgpu renderer.
@@ -194,8 +194,8 @@ Focus areas:
   vcpkg `zlib:x64-windows`, and renderer-aware build/package helpers. Native
   Skia packages should not download or bundle `wgpu_native.dll`; explicit WGPU
   diagnostic packages keep the existing `wgpu_mbt` dynamic route.
-- Keep Linux clearly marked as minimal until the remaining platform service,
-  IME, AT-SPI, and native font-provider gaps are implemented.
+- Keep Linux clearly marked as preview until matching-host runtime evidence and
+  native font-provider gaps are closed.
 - Use `HostServiceBridge` as the typed host-service boundary for clipboard,
   menus, file dialogs, URL opening, and system-theme queries.
 - Use `HostServiceAsyncQueue` for browser or platform services that require
@@ -239,8 +239,7 @@ Focus areas:
   platform slots, and per-window drivers before routing redraw/event/
   context-menu/IME/dispose paths through `HostWindowId`.
 - Keep Linux readiness explicit through its backend readiness report until
-  clipboard, menus, dialogs, drag/drop, IME, AT-SPI, and native font provider
-  support are available.
+  matching-host runtime evidence and native font provider support are available.
 
 Validation:
 
