@@ -30,7 +30,7 @@ pub fn capability_matrix() -> LinuxBackendCapabilities {
     ime: true,
     clipboard: true,
     drag_drop: true,
-    accessibility: false,
+    accessibility: true,
     scale_factor: true,
   }
 }
@@ -78,7 +78,7 @@ pub fn linux_capability_summary(
     async_services=false,
     native_accessibility_available=backend_info().accessibility.native_platform_bridge_available,
     web_view=linux_webview_capabilities(),
-    description="Wayland host summary with renderer/window readiness, Linux clipboard/file dialog/text-file/open URL/menu services, text-input/IME requests, file drag/drop, and explicit AT-SPI gap.",
+    description="Wayland host summary with renderer/window readiness, Linux clipboard/file dialog/text-file/open URL/menu services, text-input/IME requests, file drag/drop, and AT-SPI accessibility binding.",
   )
 }
 
@@ -87,12 +87,11 @@ pub fn readiness() -> LinuxBackendReadiness {
   {
     ready: true,
     blocked_by: [
-      "Linux AT-SPI binding is not Preview Ready yet", "Linux native fontconfig/HarfBuzz/FreeType provider remains a scaffold and composes with Moon Cosmic fallback",
+      "Linux native fontconfig/HarfBuzz/FreeType provider remains a scaffold and composes with Moon Cosmic fallback",
       "Linux Preview Ready runtime status still requires matching-host Wayland/Skia observation artifacts",
     ],
     next_steps: [
       "record matching-host Linux Showcase and Markdown Editor Skia first-frame observation",
-      "keep AT-SPI as documented follow-up work with app/view fallbacks",
       "replace the fontconfig native text stub with a real fontconfig + HarfBuzz + FreeType provider",
     ],
   }
@@ -120,9 +119,9 @@ pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo {
   {
     kind: @host.NativeAccessibilityBridgeKind::ATSPI,
     semantics_bridge_available: true,
-    native_platform_bridge_available: false,
+    native_platform_bridge_available: true,
     action_dispatch_available: true,
-    description: "Linux exposes an AT-SPI accessibility bridge contract over the shared semantics tree; real AT-SPI provider binding is still a backend follow-up.",
+    description: "Linux exposes an AT-SPI accessibility binding over the shared semantics tree with snapshot publish, action dispatch, and cleanup diagnostics.",
   }
 }
 
@@ -131,10 +130,15 @@ pub fn linux_accessibility_bridge(
   root~ : @core.SemanticsNode,
   dispatch~ : (@core.ElementId, @core.SemanticsAction, String?) -> Bool,
 ) -> @host.NativeAccessibilityBridge {
-  @host.NativeAccessibilityBridge::semantics_action_bridge(
+  let binding = LinuxATSPIBinding::new(root~, dispatch~)
+  ignore(binding.publish_semantics(root))
+  @host.NativeAccessibilityBridge::new(
     kind=@host.NativeAccessibilityBridgeKind::ATSPI,
-    root~,
-    dispatch~,
+    snapshot=node => {
+      ignore(binding.publish_semantics(node))
+      @host.accesskit_tree_update_from_semantics(node)
+    },
+    perform=request => binding.perform_action(request),
   )
 }
 
