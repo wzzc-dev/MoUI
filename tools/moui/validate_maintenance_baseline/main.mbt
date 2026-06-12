@@ -78,9 +78,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_app_runtime_wbtest.mbt",
-      max_lines: 281,
-      target_lines: 260,
-      reason: "keep Markdown Editor app runtime smoke tests and shared service helpers compact",
+      max_lines: 110,
+      target_lines: 95,
+      reason: "keep Markdown Editor app runtime smoke tests and draw helpers compact",
     },
     {
       path: "moui/backend/host/host_test.mbt",
