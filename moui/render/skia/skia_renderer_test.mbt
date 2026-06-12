@@ -293,20 +293,35 @@ test "skia empty typeface text system remains opt-in and fallback-safe" {
 
 ///|
 test "skia pixel frame carries presenter payload" {
-  let frame = SkiaPixelFrame::{
-    width: 1,
-    height: 1,
-    row_bytes: 4,
-    scale_factor: 2.0,
-    pixels: b"\x00\x00\x00\xff",
-  }
-  let presented = Ref(false)
+  let captured : Ref[SkiaPixelFrame?] = Ref(None)
   let target = SkiaPresentTarget::new(description="test", present=next => {
-    presented.val = next == frame
+    captured.val = Some(next)
     true
   })
-  assert_true((target.present)(frame))
-  assert_true(presented.val)
+  guard skia_available() else {
+    assert_true(captured.val is None)
+    return ()
+  }
+  let renderer = create_with_present_target(
+    @render.RendererSurfaceMetrics::from_logical(
+      size=@core.Size::new(width=1.0, height=1.0),
+      scale_factor=2.0,
+    ),
+    target,
+  ) catch {
+    err => fail("expected Skia renderer creation: \{err.message()}")
+  }
+  renderer.render([@core.DrawCommand::Clear(@core.Color::white())]) catch {
+    err => fail("expected Skia renderer render: \{err.message()}")
+  }
+  guard captured.val is Some(frame) else {
+    fail("expected presenter callback to receive pixel frame")
+  }
+  inspect(frame.width, content="2")
+  inspect(frame.height, content="2")
+  inspect(frame.scale_factor, content="2")
+  inspect(frame.row_bytes, content="8")
+  inspect(frame.pixels.length(), content="16")
 }
 
 ///|

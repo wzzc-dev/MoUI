@@ -8,9 +8,9 @@ pub(all) struct SkiaPixelFrame {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct SkiaPresentTarget {
-  description : String
-  present : (SkiaPixelFrame) -> Bool
+pub struct SkiaPresentTarget {
+  priv description : String
+  priv present : (SkiaPixelFrame) -> Bool
 }
 
 ///|
