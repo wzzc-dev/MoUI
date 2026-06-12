@@ -147,40 +147,6 @@ test "app runtime updates root and environment through public API" {
 }
 
 ///|
-fn has_draw_text(commands : Array[DrawCommand], text : String) -> Bool {
-  commands.any(command => {
-    command is DrawCommand::DrawText({ text: value, .. }) && value == text
-  })
-}
-
-///|
-fn draw_text_frame(commands : Array[DrawCommand], text : String) -> Rect? {
-  for command in commands {
-    match command {
-      DrawCommand::DrawText({ text: value, frame, .. }) =>
-        if value == text {
-          return Some(frame)
-        }
-      _ => ()
-    }
-  }
-  None
-}
-
-///|
-fn draw_text_index(commands : Array[DrawCommand], text : String) -> Int {
-  for index, command in commands {
-    match command {
-      DrawCommand::DrawText({ text: value, .. }) =>
-        if value == text {
-          return index
-        }
-      _ => ()
-    }
-  }
-  -1
-}
-
 test "button press batches paint without build or layout flush" {
   let runtime = AppRuntime::new_spec(
     root=ViewSpec::ButtonSpec({
@@ -224,39 +190,4 @@ test "button press batches paint without build or layout flush" {
   inspect(runtime.state.layout_pass_count, content="1")
   inspect(runtime.state.paint_pass_count, content="2")
   inspect(runtime.state.dirty_paint_elements.length(), content="0")
-}
-
-fn[Msg] runtime_test_label(text : String) -> View[Msg] {
-  View::text(
-    text~,
-    size=Size::new(width=320.0, height=24.0),
-    font=FontSpec::new(size=14.0),
-    color=Color::black(),
-  )
-}
-
-///|
-fn runtime_wbtest_click(runtime : AppRuntime, x~ : Double, y~ : Double) -> Unit {
-  let position = Point::new(x~, y~)
-  runtime.dispatch_event(
-    AppEvent::Pointer(PointerEvent::new(position~, phase=PointerPhase::Down)),
-  )
-  runtime.dispatch_event(
-    AppEvent::Pointer(PointerEvent::new(position~, phase=PointerPhase::Up)),
-  )
-}
-
-///|
-fn runtime_wbtest_click_draw_text(
-  runtime : AppRuntime,
-  text : String,
-) -> Unit raise {
-  guard draw_text_frame(runtime.draw_commands(), text) is Some(frame) else {
-    fail("expected text frame for \{text}")
-  }
-  runtime_wbtest_click(
-    runtime,
-    x=frame.origin.x + frame.size.width / 2.0,
-    y=frame.origin.y + frame.size.height / 2.0,
-  )
 }
