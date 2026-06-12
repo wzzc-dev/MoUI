@@ -87,12 +87,10 @@ pub fn readiness() -> LinuxBackendReadiness {
   {
     ready: true,
     blocked_by: [
-      "Linux native fontconfig/HarfBuzz/FreeType provider remains a scaffold and composes with Moon Cosmic fallback",
       "Linux Preview Ready runtime status still requires matching-host Wayland/Skia observation artifacts",
     ],
     next_steps: [
       "record matching-host Linux Showcase and Markdown Editor Skia first-frame observation",
-      "replace the fontconfig native text stub with a real fontconfig + HarfBuzz + FreeType provider",
     ],
   }
 }
