@@ -114,9 +114,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/pdf_workbench/app/pdf_workbench_app_test.mbt",
-      max_lines: 2330,
-      target_lines: 1800,
-      reason: "split PDF Workbench tests by model, service, and command behavior",
+      max_lines: 721,
+      target_lines: 650,
+      reason: "keep PDF Workbench model/edit tests and shared app-test helpers compact",
     },
     {
       path: "examples/markdown_editor/app/editor_input_wbtest.mbt",
