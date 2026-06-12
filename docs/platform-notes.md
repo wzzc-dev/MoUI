@@ -609,7 +609,8 @@ observation for the selected font resolution, renderer availability,
 `moui_skia/native` availability, the `wl_shm` presenter path, inherited Wayland
 host service/input/window readiness, explicit Linux clipboard/file-dialog/text-file/open
 URL/menu/system-theme readiness, native menu readiness, async-service gap,
-text-input/IME/drag-drop readiness, native context-menu readiness and native accessibility gap, host-modal
+text-input/IME/drag-drop readiness, native context-menu readiness and native
+accessibility readiness, host-modal
 file-dialog readiness, `HostWindowRenderer` bridge
 forwarding for Skia text-system, image-resource, present-count, and disposal
 diagnostics, and the matching-host runtime boundary, including whether the first-frame smoke
@@ -657,10 +658,14 @@ contract. The backend encodes enabled command rows for a desktop menu picker,
 dispatches the selected `ActionCommand` through `HostRuntimeDriver`, and reports
 an unavailable response when the configured desktop menu tool is absent.
 
+Linux AT-SPI accessibility binding stays behind `backend/linux`: it publishes
+AccessKit-shaped snapshots from the shared semantics tree, dispatches action
+callbacks through the shared semantics action bridge, and reports cleanup
+diagnostics when disposed. Matching-host assistive-technology smoke is still
+runtime evidence, not package-level proof.
+
 Remaining Linux gaps stay visible in `backend/linux.readiness()`:
 
-- AT-SPI binding is not implemented yet; app/view fallbacks remain the Preview
-  Ready path for accessibility adapter behavior.
 - Linux clipboard, file-dialog, text-file, open URL, text-input/IME request, and
   file drag/drop host surfaces are implemented, but passed platform status still
   requires matching-host Wayland/desktop-service observation rather than package

@@ -35,9 +35,8 @@ workflow for agents and maintainers.
 - Renderers consume `DrawCommand` values and do not depend on view constructors.
 - `examples/*/app/` packages contain shared app logic; platform subpackages stay
   thin.
-- Linux has a minimal Wayland host core plus WGPU provider path; keep its
-  remaining platform service, IME, AT-SPI, and native font-provider gaps
-  explicit.
+- Linux has a Wayland host core plus WGPU provider path; keep remaining
+  matching-host runtime evidence and native font-provider gaps explicit.
 
 ## Recommended Agent Workflow
 
