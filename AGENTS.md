@@ -400,12 +400,17 @@ path; tester-owned first-frame smoke entrypoints explicitly select
 The GitHub Actions wrapper for this MoUI-level macOS real-Skia smoke lives in
 `.github/workflows/moui-real-skia-smoke.yml` as a separate manual workflow, not
 as a skipped job in the required `MoUI CI` workflow.
-Windows/Linux ordinary Skia entrypoints do not carry auto-exit smoke flags.
-When matching-host smoke runners are added for those platforms, keep the
-smoke-only `EmptyTypeface` switch in tester/backend smoke paths; logs belong to
-the matching host that produced them. When recording platform behavior for a
-release note, keep logs under ignored `artifacts/` paths and cite the CI run or
-smoke log directly.
+Windows/Linux Skia entrypoints expose matching-host first-frame flags
+(`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
+`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT`,
+`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT`, and
+`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT`) and follow the same
+smoke-only `EmptyTypeface` switch; logs belong to the matching host that
+produced them. For Linux, keep Showcase, Markdown Editor, and
+`scripts/run-window-package-smoke.sh linux --run` logs separate so app-level and
+dependency-level evidence are not conflated. When recording platform behavior
+for a release note, keep logs under ignored `artifacts/` paths and cite the CI
+run or smoke log directly.
 
 Windows native uses Visual Studio C++ build tools and vcpkg `zlib:x64-windows`.
 Use `scripts/windows/setup_msvc_deps.ps1`,
