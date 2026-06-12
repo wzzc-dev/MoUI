@@ -12,8 +12,6 @@ pub fn pdf_workbench_minimum_pdf_bytes() -> Bytes
 
 pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
 
-pub fn view(PdfWorkbenchModel) -> @core.View[PdfWorkbenchMsg]
-
 // Errors
 
 // Types and methods
@@ -92,7 +90,7 @@ pub(all) enum PdfWorkbenchLoadResult {
   Failed(String)
 }
 
-pub(all) struct PdfWorkbenchModel {
+pub struct PdfWorkbenchModel {
   document : PdfWorkbenchDocument?
   status : PdfWorkbenchStatus
   raster_status : PdfWorkbenchRasterStatus
@@ -114,44 +112,6 @@ pub(all) struct PdfWorkbenchModel {
 pub fn PdfWorkbenchModel::new() -> Self
 pub fn PdfWorkbenchModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
 pub fn PdfWorkbenchModel::runtime_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn PdfWorkbenchModel::subscriptions(Self, @host.HostAppServices) -> @core.Subscription[PdfWorkbenchMsg]
-pub fn PdfWorkbenchModel::update(Self, PdfWorkbenchMsg) -> Self
-pub fn PdfWorkbenchModel::update_with_services(Self, PdfWorkbenchMsg, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices) -> PdfWorkbenchUpdate
-
-pub(all) enum PdfWorkbenchMsg {
-  OpenRequested
-  SaveRequested
-  SaveAsRequested
-  HostCompleted(@host.HostCompletedServiceResponse)
-  SaveCompleted(String, Bytes, Array[String], @host.HostServiceResponse)
-  SaveFailed(String)
-  RasterCompleted(PdfWorkbenchRasterRequest, PdfWorkbenchRasterResponse)
-  PreviousPage
-  NextPage
-  SelectPage(Int)
-  SearchChanged(String)
-  SearchPrevious
-  SearchNext
-  PageNumberChanged(String)
-  GoToPage
-  MetadataTitleChanged(String)
-  ApplyMetadataTitle
-  BookmarkTitleChanged(String)
-  AddBookmarkForCurrentPage
-  AnnotationTextChanged(String)
-  AddAnnotationForCurrentPage
-  PreviewScrolled(@core.Point)
-  ToggleReaderFullscreen
-  ZoomIn
-  ZoomOut
-  ZoomFitWidth
-  RotateCurrentPage
-  CropCurrentPage
-  StampCurrentPage
-  UndoLastEdit
-  DiscardEdits
-  ClearFailure
-}
 
 pub(all) struct PdfWorkbenchPageSummary {
   page_number : Int
@@ -201,20 +161,13 @@ pub(all) enum PdfWorkbenchRasterStatus {
   RasterFailed(String)
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) enum PdfWorkbenchStatus {
+pub enum PdfWorkbenchStatus {
   Empty
   Requesting(String)
   Pending(@host.HostServiceRequestId, String)
   Ready
   Failed(String)
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct PdfWorkbenchUpdate {
-  model : PdfWorkbenchModel
-  effect : @core.Effect[PdfWorkbenchMsg]
-}
-pub fn PdfWorkbenchUpdate::as_tuple(Self) -> (PdfWorkbenchModel, @core.Effect[PdfWorkbenchMsg])
-pub fn PdfWorkbenchUpdate::new(PdfWorkbenchModel, effect? : @core.Effect[PdfWorkbenchMsg]) -> Self
 
 // Type aliases
 
