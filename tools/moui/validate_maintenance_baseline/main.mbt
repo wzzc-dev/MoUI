@@ -108,9 +108,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/runtime_wbtest.mbt",
-      max_lines: 2676,
-      target_lines: 1800,
-      reason: "split runtime tests by message queue, effects, subscriptions, and control dispatch",
+      max_lines: 399,
+      target_lines: 380,
+      reason: "keep shared runtime helpers and basic app/program runtime tests compact",
     },
     {
       path: "examples/pdf_workbench/app/pdf_workbench_app_test.mbt",
