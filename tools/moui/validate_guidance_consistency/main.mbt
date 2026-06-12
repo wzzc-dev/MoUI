@@ -168,21 +168,12 @@ fn daily_quality_gate_tokens() -> Array[String] {
     "node scripts/validate-guidance-consistency.mjs", "node --check scripts/validate-api-surface.mjs",
     "node scripts/validate-api-surface.mjs", "node scripts/validate-renderer-provider-manifests.mjs",
     "node scripts/validate-skia-entrypoints.mjs", "node scripts/test-validate-skia-entrypoints.mjs",
-    "node scripts/test-validate-renderer-proof-manifest.mjs", "node scripts/test-record-web-runtime-presentation.mjs",
-    "node scripts/test-validate-web-runtime-presentation-manifest.mjs", "node --check scripts/validate-checked-conformance-artifacts.mjs",
-    "node scripts/validate-conformance-capture-manifest.mjs artifacts/conformance/showcase-golden-capture.json",
-    "node scripts/validate-conformance-capture-manifest.mjs artifacts/conformance/showcase-benchmark-capture.json",
-    "node scripts/validate-web-runtime-handoff-manifest.mjs artifacts/conformance/web-runtime-handoff.json",
-    "node scripts/validate-web-runtime-presentation-manifest.mjs artifacts/conformance/web-runtime-presentation.json",
-    "node scripts/validate-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json",
-    "node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/webgpu-wasm-web.json",
-    "node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/skia-native-macos.json",
-    "node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/wgpu-native-macos.json",
-    "node scripts/validate-checked-conformance-artifacts.mjs", "moon check",
-    "moon test moui/core --target native", "moon test moui/views --target native",
-    "moon test moui/render/skia --target native", "moon test moui/backend/host --target native",
-    "moon test moui/backend/web --target wasm-gc", "moon test examples/showcase/app --target native",
-    "moon test examples/markdown_editor/app --target native",
+    "node scripts/test-record-web-runtime-presentation.mjs", "node scripts/test-validate-web-runtime-presentation-manifest.mjs",
+    "node scripts/test-validate-conformance-capture-manifest.mjs", "node scripts/test-validate-web-runtime-handoff-manifest.mjs",
+    "sh -n scripts/ci-web-runtime-presentation.sh", "moon check", "moon test moui/core --target native",
+    "moon test moui/views --target native", "moon test moui/render/skia --target native",
+    "moon test moui/backend/host --target native", "moon test moui/backend/web --target wasm-gc",
+    "moon test examples/showcase/app --target native", "moon test examples/markdown_editor/app --target native",
     "moon build examples/showcase/web_wasm --target wasm-gc", "moon build examples/markdown_editor/web_wasm --target wasm-gc",
     "node scripts/validate-web-runtime-handoff.mjs",
   ]
@@ -202,11 +193,8 @@ fn push_daily_quality_gate_checks(
 ///|
 fn release_readiness_quality_tokens() -> Array[String] {
   [
-    "node scripts/validate-api-surface.mjs",
-    "checked conformance artifact guard",
-    "dedicated checked-artifact validators",
-    "--theme-diagnostics",
-    "Design Systems is addon diagnostic coverage",
+    "node scripts/validate-api-surface.mjs", "daily baseline", "manual smoke", "CI run or smoke log",
+    "--theme-diagnostics", "Design Systems is addon diagnostic coverage",
   ]
 }
 
@@ -223,11 +211,8 @@ fn push_release_readiness_quality_checks(
 ///|
 fn agent_quality_gate_tokens() -> Array[String] {
   [
-    "node scripts/validate-api-surface.mjs",
-    "node scripts/validate-checked-conformance-artifacts.mjs",
-    "--theme-diagnostics",
-    "Design Systems is addon diagnostic coverage",
-    "dedicated checked-artifact validators",
+    "node scripts/validate-api-surface.mjs", "daily validation script", "manual smoke",
+    "Do not commit artifacts/", "--theme-diagnostics", "Design Systems is addon diagnostic coverage",
   ]
 }
 
@@ -264,10 +249,7 @@ fn theme_diagnostic_rules() -> Array[TextRule] {
       token: "Design Systems is addon diagnostic coverage",
     },
     { path: "AGENTS.md", token: "--theme-diagnostics" },
-    {
-      path: "AGENTS.md",
-      token: "Design Systems is addon diagnostic coverage",
-    },
+    { path: "AGENTS.md", token: "Design Systems is addon diagnostic coverage" },
     { path: "moui/README.mbt.md", token: "--theme-diagnostics" },
     {
       path: "docs/maintenance.md",

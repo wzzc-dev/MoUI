@@ -7,13 +7,13 @@ import { inflateSync } from "node:zlib";
 
 const usage = () => {
   console.error(
-    "Usage: node scripts/record-web-runtime-presentation.mjs --base-url http://127.0.0.1:18080 --cdp-url http://127.0.0.1:9223 [--manifest artifacts/conformance/web-runtime-presentation.json] [--timeout-ms 12000] [--require-passed]",
+    "Usage: node scripts/record-web-runtime-presentation.mjs --base-url http://127.0.0.1:18080 --cdp-url http://127.0.0.1:9223 [--manifest artifacts/smoke/web-runtime-presentation/presentation-smoke.json] [--timeout-ms 12000] [--require-passed]",
   );
 };
 
 let baseUrl = "";
 let cdpUrl = "";
-let manifestPath = "artifacts/conformance/web-runtime-presentation.json";
+let manifestPath = "artifacts/smoke/web-runtime-presentation/presentation-smoke.json";
 let timeoutMs = 12000;
 let requirePassed = false;
 
@@ -73,7 +73,7 @@ const targets = [
 const normalizeBaseUrl = url => url.replace(/\/+$/, "");
 const targetUrl = target => `${normalizeBaseUrl(baseUrl)}/${target.path}?${target.query}`;
 const targetRequiresTransformPixels = target => target.name === "showcase-web-wasm";
-const targetRequiresRendererProofPixels = target => target.name === "showcase-web-wasm";
+const targetRequiresRendererSmokePixels = target => target.name === "showcase-web-wasm";
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const failedObservations = () => ({
@@ -132,7 +132,7 @@ const emptyTransformPixelEvidence = required => ({
   matchedMarkers: 0,
 });
 
-const emptyRendererProofEvidence = required => ({
+const emptyRendererSmokeEvidence = required => ({
   required,
   passed: false,
   evidence: [],
@@ -195,9 +195,9 @@ const printFailureSummary = manifest => {
         "imeCompositionVisual",
         "asyncImageSecondFrame",
       ]) {
-        const proof = screenshot[key];
-        if (proof?.required === true && proof?.passed !== true) {
-          console.error(`    ${key}=${JSON.stringify(proof)}`);
+        const observation = screenshot[key];
+        if (observation?.required === true && observation?.passed !== true) {
+          console.error(`    ${key}=${JSON.stringify(observation)}`);
         }
       }
     }
@@ -258,16 +258,16 @@ const writePreflightFailureManifest = error => {
       contentPixels: 0,
       distinctColorBuckets: 0,
       transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
-      radialGradient: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      colorEmojiPixels: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      zwjGrapheme: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      bidiLayout: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      paragraphWrapping: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      selectionRects: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      graphemeEditing: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      imeCandidateAnchor: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      imeCompositionVisual: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      asyncImageSecondFrame: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      radialGradient: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      colorEmojiPixels: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      zwjGrapheme: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      bidiLayout: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      paragraphWrapping: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      selectionRects: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      graphemeEditing: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      imeCandidateAnchor: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      imeCompositionVisual: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      asyncImageSecondFrame: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
     },
     observations: failedObservations(),
     consoleErrors: [message],
@@ -544,20 +544,20 @@ const summarizeTransformPixels = png => {
   };
 };
 
-const summarizeRendererProofPixels = (png, target) => {
-  const required = targetRequiresRendererProofPixels(target);
+const summarizeRendererSmokePixels = (png, target) => {
+  const required = targetRequiresRendererSmokePixels(target);
   if (!required) {
     return {
-      radialGradient: emptyRendererProofEvidence(false),
-      colorEmojiPixels: emptyRendererProofEvidence(false),
-      zwjGrapheme: emptyRendererProofEvidence(false),
-      bidiLayout: emptyRendererProofEvidence(false),
-      paragraphWrapping: emptyRendererProofEvidence(false),
-      selectionRects: emptyRendererProofEvidence(false),
-      graphemeEditing: emptyRendererProofEvidence(false),
-      imeCandidateAnchor: emptyRendererProofEvidence(false),
-      imeCompositionVisual: emptyRendererProofEvidence(false),
-      asyncImageSecondFrame: emptyRendererProofEvidence(false),
+      radialGradient: emptyRendererSmokeEvidence(false),
+      colorEmojiPixels: emptyRendererSmokeEvidence(false),
+      zwjGrapheme: emptyRendererSmokeEvidence(false),
+      bidiLayout: emptyRendererSmokeEvidence(false),
+      paragraphWrapping: emptyRendererSmokeEvidence(false),
+      selectionRects: emptyRendererSmokeEvidence(false),
+      graphemeEditing: emptyRendererSmokeEvidence(false),
+      imeCandidateAnchor: emptyRendererSmokeEvidence(false),
+      imeCompositionVisual: emptyRendererSmokeEvidence(false),
+      asyncImageSecondFrame: emptyRendererSmokeEvidence(false),
     };
   }
 
@@ -638,11 +638,11 @@ const summarizeRendererProofPixels = (png, target) => {
       darkTextPixels,
       darkRows: darkRows.size,
     },
-    selectionRects: emptyRendererProofEvidence(true),
-    graphemeEditing: emptyRendererProofEvidence(true),
-    imeCandidateAnchor: emptyRendererProofEvidence(true),
-    imeCompositionVisual: emptyRendererProofEvidence(true),
-    asyncImageSecondFrame: emptyRendererProofEvidence(true),
+    selectionRects: emptyRendererSmokeEvidence(true),
+    graphemeEditing: emptyRendererSmokeEvidence(true),
+    imeCandidateAnchor: emptyRendererSmokeEvidence(true),
+    imeCompositionVisual: emptyRendererSmokeEvidence(true),
+    asyncImageSecondFrame: emptyRendererSmokeEvidence(true),
   };
 };
 
@@ -664,7 +664,7 @@ const summarizeTargetScreenshot = (base64, target) => {
   const transformPixels = targetRequiresTransformPixels(target)
     ? summarizeTransformPixels(png)
     : emptyTransformPixelEvidence(false);
-  const rendererProofPixels = summarizeRendererProofPixels(png, target);
+  const rendererSmokePixels = summarizeRendererSmokePixels(png, target);
   return {
     width: png.width,
     height: png.height,
@@ -672,7 +672,7 @@ const summarizeTargetScreenshot = (base64, target) => {
     contentPixels,
     distinctColorBuckets: buckets.size,
     transformPixels,
-    ...rendererProofPixels,
+    ...rendererSmokePixels,
   };
 };
 
@@ -857,7 +857,7 @@ const maxPresentFrame = events => {
   return frames.length > 0 ? Math.max(...frames) : 0;
 };
 
-const rendererProofEventsReady = events => {
+const rendererSmokeEventsReady = events => {
   const paragraphLines = new Set(
     events
       .filter(event => event?.name === "text_paragraph_line")
@@ -883,8 +883,8 @@ const rendererProofEventsReady = events => {
 
 const presentationEvidenceReady = (target, state, events) => {
   if (state.bodyFailed || state.statusText !== "Running") return false;
-  if (targetRequiresRendererProofPixels(target)) {
-    return rendererProofEventsReady(events);
+  if (targetRequiresRendererSmokePixels(target)) {
+    return rendererSmokeEventsReady(events);
   }
   return maxPresentFrame(events) >= 1;
 };
@@ -912,8 +912,8 @@ const eventIndexes = (events, predicate) => {
   return indexes;
 };
 
-const deriveRendererProofFromEvents = (screenshot, target, events) => {
-  if (!targetRequiresRendererProofPixels(target)) return screenshot;
+const deriveRendererSmokeFromEvents = (screenshot, target, events) => {
+  if (!targetRequiresRendererSmokePixels(target)) return screenshot;
 
   const colorGlyph = events.find(colorGlyphEventReady);
   const grapheme = events.find(event =>
@@ -1028,7 +1028,7 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
   return {
     ...screenshot,
     colorEmojiPixels: {
-      ...(screenshot.colorEmojiPixels ?? emptyRendererProofEvidence(true)),
+      ...(screenshot.colorEmojiPixels ?? emptyRendererSmokeEvidence(true)),
       passed: !!colorGlyph,
       evidence: colorGlyph
         ? ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"]
@@ -1039,7 +1039,7 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
       ...(colorEmojiMetadata ? { metadata: colorEmojiMetadata } : {}),
     },
     zwjGrapheme: {
-      ...(screenshot.zwjGrapheme ?? emptyRendererProofEvidence(true)),
+      ...(screenshot.zwjGrapheme ?? emptyRendererSmokeEvidence(true)),
       passed: !!grapheme,
       evidence: grapheme ? ["single-grapheme-cluster", "no-interior-caret"] : [],
       matchedMarkers: grapheme ? 2 : 0,
@@ -1047,7 +1047,7 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
       visualClusters: Number(grapheme?.visualClusters ?? 0),
     },
     bidiLayout: {
-      ...(screenshot.bidiLayout ?? emptyRendererProofEvidence(true)),
+      ...(screenshot.bidiLayout ?? emptyRendererSmokeEvidence(true)),
       passed: !!bidi,
       evidence: bidi ? ["visual-order"] : [],
       matchedMarkers: bidi ? 1 : 0,
@@ -1055,7 +1055,7 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
       visualClusters: bidi?.visualClusters ?? [],
     },
     paragraphWrapping: {
-      ...(screenshot.paragraphWrapping ?? emptyRendererProofEvidence(true)),
+      ...(screenshot.paragraphWrapping ?? emptyRendererSmokeEvidence(true)),
       passed: paragraphPassed,
       evidence: paragraphPassed ? ["line-metrics", "later-line-pixels"] : [],
       matchedMarkers: paragraphPassed ? 2 : 0,
@@ -1063,7 +1063,7 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
       paragraphRows: paragraphYs.size,
     },
     selectionRects: {
-      ...(screenshot.selectionRects ?? emptyRendererProofEvidence(true)),
+      ...(screenshot.selectionRects ?? emptyRendererSmokeEvidence(true)),
       passed: selectionPassed,
       evidence: selectionPassed ? ["selection-rects", "line-range"] : [],
       matchedMarkers: selectionPassed ? 2 : 0,
@@ -1071,7 +1071,7 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
       hitTestEvent: !!bidi,
     },
     graphemeEditing: {
-      ...(screenshot.graphemeEditing ?? emptyRendererProofEvidence(true)),
+      ...(screenshot.graphemeEditing ?? emptyRendererSmokeEvidence(true)),
       passed: graphemeEditingPassed,
       evidence: graphemeEditingPassed ? ["grapheme-boundaries", "edit-actions"] : [],
       matchedMarkers: graphemeEditingPassed ? 2 : 0,
@@ -1079,7 +1079,7 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
       editKey: arrowEditAction?.text ?? "",
     },
     imeCandidateAnchor: {
-      ...(screenshot.imeCandidateAnchor ?? emptyRendererProofEvidence(true)),
+      ...(screenshot.imeCandidateAnchor ?? emptyRendererSmokeEvidence(true)),
       passed: imeCandidateAnchorPassed,
       evidence: imeCandidateAnchorPassed
         ? ["candidate-anchor", "surrounding-text", "grapheme-boundary", "utf8-offsets"]
@@ -1098,7 +1098,7 @@ const deriveRendererProofFromEvents = (screenshot, target, events) => {
       surroundingAnchor: Number(imeSurrounding?.anchor ?? 0),
     },
     imeCompositionVisual: {
-      ...(screenshot.imeCompositionVisual ?? emptyRendererProofEvidence(true)),
+      ...(screenshot.imeCompositionVisual ?? emptyRendererSmokeEvidence(true)),
       passed: imeCompositionPassed,
       evidence: imeCompositionPassed
         ? ["composition-range", "composition-cursor", "preedit-pixels"]
@@ -1241,16 +1241,16 @@ const probeTarget = async target => {
       contentPixels: 0,
       distinctColorBuckets: 0,
       transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
-      radialGradient: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      colorEmojiPixels: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      zwjGrapheme: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      bidiLayout: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      paragraphWrapping: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      selectionRects: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      graphemeEditing: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      imeCandidateAnchor: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      imeCompositionVisual: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      asyncImageSecondFrame: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      radialGradient: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      colorEmojiPixels: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      zwjGrapheme: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      bidiLayout: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      paragraphWrapping: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      selectionRects: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      graphemeEditing: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      imeCandidateAnchor: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      imeCompositionVisual: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      asyncImageSecondFrame: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
     };
     try {
       const screenshotResult = await session.send("Page.captureScreenshot", {
@@ -1267,7 +1267,7 @@ const probeTarget = async target => {
       screenshotError = `Screenshot capture failed: ${error.message}`;
     }
     const runtimeSignals = runtimeSignalsFromLog(state.logText);
-    screenshot = deriveRendererProofFromEvents(screenshot, target, evidenceEvents);
+    screenshot = deriveRendererSmokeFromEvents(screenshot, target, evidenceEvents);
     const errors = consoleErrorsFor(session.events);
     if (screenshotError) {
       errors.push(screenshotError);
@@ -1333,7 +1333,7 @@ const probeTarget = async target => {
     if (targetRequiresTransformPixels(target) && observations.transformPixels !== "yes") {
       notes.push("Showcase transform-scene pixel markers were not observed in the screenshot");
     }
-    if (targetRequiresRendererProofPixels(target)) {
+    if (targetRequiresRendererSmokePixels(target)) {
       for (const [key, label] of [
         ["radialGradient", "radial gradient center/mid/edge pixel"],
         ["colorEmojiPixels", "color emoji high-saturation pixel"],
@@ -1383,16 +1383,16 @@ const probeTarget = async target => {
       contentPixels: 0,
       distinctColorBuckets: 0,
       transformPixels: emptyTransformPixelEvidence(targetRequiresTransformPixels(target)),
-      radialGradient: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      colorEmojiPixels: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      zwjGrapheme: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      bidiLayout: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      paragraphWrapping: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      selectionRects: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      graphemeEditing: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      imeCandidateAnchor: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      imeCompositionVisual: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
-      asyncImageSecondFrame: emptyRendererProofEvidence(targetRequiresRendererProofPixels(target)),
+      radialGradient: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      colorEmojiPixels: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      zwjGrapheme: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      bidiLayout: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      paragraphWrapping: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      selectionRects: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      graphemeEditing: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      imeCandidateAnchor: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      imeCompositionVisual: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
+      asyncImageSecondFrame: emptyRendererSmokeEvidence(targetRequiresRendererSmokePixels(target)),
     };
     return {
       name: target.name,

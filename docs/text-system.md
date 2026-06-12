@@ -112,7 +112,7 @@ Indic consonant, so per-run font fallback does not split that edit cluster.
 Skia segmentation and fallback caret stabilization now route through core
 `TextGraphemeBoundaries` directly, with Skia white-box tests comparing cluster
 slices and IME-facing `nearest_boundary_utf8_offset` conversion against the
-core scanner so renderer text proof, editor movement, selection geometry, hit
+core scanner so renderer text smoke, editor movement, selection geometry, hit
 testing, and host IME requests share one boundary source.
 Linux Skia resolves its default `FontMgr` through fontconfig/FreeType
 when those Skia port headers are available, with a directory font manager
@@ -156,8 +156,8 @@ inject `skia_text_system()` into a public `AppRuntime` text field to prove the
 Skia measurement path drives focused text-input composition caret geometry and
 selection highlight drawing. Fallback-safe diagnostics do not claim visual bidi
 reordering, native-platform IME runtime behavior, or native SkParagraph parity;
-only the opt-in real-Skia SkParagraph smoke and renderer-proof artifacts may
-claim those observations. macOS
+only matching-host real-Skia SkParagraph smoke logs may claim those
+observations. macOS
 first-frame smoke entrypoints still explicitly select
 `SkiaFontResolution::EmptyTypeface` when their exit-after-first-present
 environment flag is set; that keeps CLI smoke runs on the safer default-font
@@ -173,15 +173,14 @@ fallback-request, representative shaped/fallback caret, emoji-hint, and
 empty-typeface retry boundaries, missing-glyph recovery rule, and the Skia
 mixed-run fallback segment path separately from tracked gaps. The paragraph API is now present for line metrics
 and geometry, and the optional SkParagraph route is wired through the native
-binding. Native paragraph and bidi readiness remain release gates until the
-macOS, Windows, and Linux Skia mainline renderer-proof manifests pass with real
+binding. Native paragraph and bidi readiness remain release gates until
+matching-host macOS, Windows, and Linux Skia mainline smoke logs include real
 SkParagraph evidence. Deterministic color emoji, future Unicode grapheme data
 refreshes, and broader typography conformance remain follow-up work.
 
-Renderer-proof color emoji artifacts now have a stronger audit boundary:
+Renderer text/emoji smoke now has a stronger audit boundary:
 `colorEmojiPixels` must carry high-saturation glyph/raster evidence plus
-`font-metadata` and `glyph-metadata` tokens, and the manifest validator requires
-structured `metadata.font` / `metadata.glyph` fields. The native Skia
+`font-metadata` and `glyph-metadata` tokens. The native Skia
 text/emoji smoke records the requested emoji family, Skia text-system id,
 shaper path, RGBA glyph format, cluster count, pixel counts, stable glyph key,
 measured glyph size, inferred fallback script/language-tag counts, fallback
@@ -190,30 +189,27 @@ emoji-hint/fallback-request/missing-glyph-recovery status through
 `skia_emoji_font_fallback_proof()`; it also records paragraph
 selection rectangles, line-range geometry, hit-test diagnostics, and visual
 bidi-order diagnostics through `skia_text_selection_geometry_proof()` /
-`skia_text_visual_order_proof()`. Passed native proof now requires the
+`skia_text_visual_order_proof()`. Passing native smoke now requires the
 SkParagraph markers `engine=skparagraph native_paragraph_ready=true
 line-metrics later-line-pixels` for `paragraphWrapping`,
 `engine=skparagraph bidi_visual_order_ready=true visual-order` for
 `bidiLayout`, and `engine=skparagraph selection-rects line-range rect-geometry hit-test` for
 `selectionRects`; fallback geometry, caret-only diagnostics, and heuristic
-visual-order logs are rejected by the renderer-proof validator.
+visual-order logs are not enough for the smoke marker.
 For native Skia, `colorEmojiPixels` also requires `fallback-request`,
-`emoji-hint`, and `stable-glyph-key` proof tokens so high-saturation pixels are
+`emoji-hint`, and `stable-glyph-key` smoke tokens so high-saturation pixels are
 tied to the FontMgr fallback request and glyph metadata path rather than a
-generic raster-only observation. The Skia emoji/font fallback proof payload now
+generic raster-only observation. The Skia emoji/font fallback diagnostic payload
 also records the inferred fallback language tags, primary script tag, request
 language count, fallback request character, and missing-glyph recovery audit
-fields used by that request. Passed native Skia manifests require the glyph key
-to include the same source, text-system, shaper, script, fallback language tag
-payload, request language count, `emoji-u+<fallback request character>`
-segment, and format values.
+fields used by that request.
 WebGPU wasm records the browser canvas font stack plus glyph atlas key and size
-metadata. Renderer proof also reserves separate
-contract keys for `selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,
+metadata. Renderer smoke also reserves separate
+marker keys for `selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,
 and `imeCompositionVisual`; those keys must be backed by selection rectangle,
 line-range, grapheme-boundary, edit-action, candidate-anchor, surrounding-text,
-composition-range, and preedit-pixel evidence before text or IME readiness can
-be promoted. Native Skia `imeCandidateAnchor` also requires `utf8-offsets`
+composition-range, and preedit-pixel evidence before text or IME readiness is
+mentioned in release notes. Native Skia `imeCandidateAnchor` also requires `utf8-offsets`
 evidence for grapheme-normalized cursor and anchor offsets, and native Skia
 `imeCompositionVisual` also requires `composition-cursor` evidence.
 The native Skia text/emoji smoke records `graphemeEditing`,
@@ -221,8 +217,8 @@ The native Skia text/emoji smoke records `graphemeEditing`,
 `TextGraphemeBoundaries`, host IME diagnostics including UTF-8 cursor and anchor
 offsets plus composition cursor geometry, Skia text-system geometry, and
 captured text-field composition pixels.
-These are renderer/text-system proof
-markers, not matching-host native IME runtime evidence.
+These are renderer/text-system smoke markers, not matching-host native IME
+runtime evidence.
 Platform runtime evidence splits native IME readiness further: native
 `status=passed` entries must also record `imeSurroundingText`,
 `imeCommitDelete`, `imeCursorUpdate`, `imeScrollAnchor`,
@@ -285,8 +281,8 @@ Remote font loading is intentionally outside the current backend contract.
   parity remain follow-up work. Native
   Skia paragraph layout and bidi visual-order promotion now have an opt-in
   SkParagraph implementation path, but the release claim remains pending until
-  macOS, Windows, and Linux real-Skia renderer-proof manifests pass with
-  SkParagraph line metrics, later-line pixels, selection rectangles, line
+  macOS, Windows, and Linux real-Skia smoke logs include SkParagraph line
+  metrics, later-line pixels, selection rectangles, line
   ranges, hit tests, and mixed-direction visual-order evidence. Core now
   exposes `TextGraphemeBoundaries` as the single UAX-style
   cluster-boundary contract used by fallback caret stabilization, left/right

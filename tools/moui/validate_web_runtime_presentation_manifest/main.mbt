@@ -15,7 +15,7 @@ struct ExpectedTarget {
 
 ///|
 fn usage() -> String {
-  "Usage: tools/moui/validate_web_runtime_presentation_manifest <web-runtime-presentation.json> [--require-passed]"
+  "Usage: tools/moui/validate_web_runtime_presentation_manifest <presentation-smoke.json> [--require-passed]"
 }
 
 ///|
@@ -55,7 +55,7 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
     }
   }
   if !help.val && manifest_path.val == "" {
-    return Err("missing web-runtime-presentation.json path")
+    return Err("missing presentation smoke manifest path")
   }
   let display = if display_path.val == "" {
     manifest_path.val
@@ -121,7 +121,7 @@ fn platform_observation_keys() -> Array[String] {
 }
 
 ///|
-fn renderer_proof_keys() -> Array[String] {
+fn renderer_smoke_keys() -> Array[String] {
   [
     "radialGradient", "colorEmojiPixels", "zwjGrapheme", "bidiLayout", "paragraphWrapping",
     "selectionRects", "graphemeEditing", "imeCandidateAnchor", "imeCompositionVisual",
@@ -130,7 +130,7 @@ fn renderer_proof_keys() -> Array[String] {
 }
 
 ///|
-fn renderer_proof_evidence_requirements(key : String) -> Array[String] {
+fn renderer_smoke_evidence_requirements(key : String) -> Array[String] {
   match key {
     "radialGradient" => ["center-mid-edge-pixels", "shader-payload"]
     "colorEmojiPixels" =>
@@ -151,8 +151,8 @@ fn renderer_proof_evidence_requirements(key : String) -> Array[String] {
 }
 
 ///|
-fn renderer_proof_observation_key(key : String) -> Bool {
-  renderer_proof_keys().any(value => value == key)
+fn renderer_smoke_observation_key(key : String) -> Bool {
+  renderer_smoke_keys().any(value => value == key)
 }
 
 ///|
@@ -338,75 +338,75 @@ fn validate_target_expected_field(
 }
 
 ///|
-fn validate_renderer_proof(
+fn validate_renderer_smoke(
   screenshot : Map[String, Json],
-  proof_key : String,
+  smoke_key : String,
   label : String,
   target_name : String,
-  proof_passed : Map[String, Bool],
+  smoke_passed : Map[String, Bool],
   failures : Array[String],
 ) -> Unit {
-  let proof = require_object(
+  let smoke = require_object(
     screenshot,
-    proof_key,
-    label + ".screenshot." + proof_key,
+    smoke_key,
+    label + ".screenshot." + smoke_key,
     failures,
   )
   let required = require_boolean(
-    proof,
+    smoke,
     "required",
-    label + ".screenshot." + proof_key + ".required",
+    label + ".screenshot." + smoke_key + ".required",
     failures,
   )
   let passed = require_boolean(
-    proof,
+    smoke,
     "passed",
-    label + ".screenshot." + proof_key + ".passed",
+    label + ".screenshot." + smoke_key + ".passed",
     failures,
   )
-  proof_passed[proof_key] = passed
-  let proof_evidence = require_array(
-    proof,
+  smoke_passed[smoke_key] = passed
+  let smoke_evidence = require_array(
+    smoke,
     "evidence",
-    label + ".screenshot." + proof_key + ".evidence",
+    label + ".screenshot." + smoke_key + ".evidence",
     failures,
   )
   assert_string_array(
-    proof_evidence,
-    label + ".screenshot." + proof_key + ".evidence",
+    smoke_evidence,
+    label + ".screenshot." + smoke_key + ".evidence",
     failures,
   )
-  let proof_markers = require_number(
-    proof,
+  let smoke_markers = require_number(
+    smoke,
     "matchedMarkers",
-    label + ".screenshot." + proof_key + ".matchedMarkers",
+    label + ".screenshot." + smoke_key + ".matchedMarkers",
     failures,
   )
   if target_name == "showcase-web-wasm" && required != true {
     failures.push(
-      label + ".screenshot." + proof_key + ".required must be true for Showcase",
+      label + ".screenshot." + smoke_key + ".required must be true for Showcase",
     )
   }
   if target_name != "showcase-web-wasm" && required != false {
     failures.push(
       label +
       ".screenshot." +
-      proof_key +
+      smoke_key +
       ".required must be false for non-Showcase targets",
     )
   }
-  if passed && proof_evidence.is_empty() {
+  if passed && smoke_evidence.is_empty() {
     failures.push(
-      label + ".screenshot." + proof_key + ".passed requires evidence tokens",
+      label + ".screenshot." + smoke_key + ".passed requires evidence tokens",
     )
   }
   if passed {
-    for required_token in renderer_proof_evidence_requirements(proof_key) {
-      if !json_string_array_contains(proof_evidence, required_token) {
+    for required_token in renderer_smoke_evidence_requirements(smoke_key) {
+      if !json_string_array_contains(smoke_evidence, required_token) {
         failures.push(
           label +
           ".screenshot." +
-          proof_key +
+          smoke_key +
           ".evidence must include '" +
           required_token +
           "'",
@@ -414,9 +414,9 @@ fn validate_renderer_proof(
       }
     }
   }
-  if proof_markers < 0.0 {
+  if smoke_markers < 0.0 {
     failures.push(
-      label + ".screenshot." + proof_key + ".matchedMarkers must be nonnegative",
+      label + ".screenshot." + smoke_key + ".matchedMarkers must be nonnegative",
     )
   }
 }
@@ -442,7 +442,7 @@ fn json_string_arrays_same_order(
 }
 
 ///|
-fn validate_showcase_color_emoji_proof(
+fn validate_showcase_color_emoji_smoke(
   screenshot : Map[String, Json],
   label : String,
   failures : Array[String],
@@ -461,7 +461,7 @@ fn validate_showcase_color_emoji_proof(
   )
   if glyph_high_saturation_pixels < 8.0 {
     failures.push(
-      label + " passed color emoji proof requires high-saturation glyph pixels",
+      label + " passed color emoji smoke requires high-saturation glyph pixels",
     )
   }
   let color_emoji_metadata = require_object(
@@ -514,7 +514,7 @@ fn validate_showcase_color_emoji_proof(
   )
   if glyph_format != "rgba" {
     failures.push(
-      label + " passed color emoji proof requires RGBA glyph metadata",
+      label + " passed color emoji smoke requires RGBA glyph metadata",
     )
   }
   let metadata_glyph_pixels = require_number(
@@ -595,7 +595,7 @@ fn validate_showcase_color_emoji_proof(
 }
 
 ///|
-fn validate_showcase_text_and_image_proofs(
+fn validate_showcase_text_and_image_smokes(
   screenshot : Map[String, Json],
   label : String,
   failures : Array[String],
@@ -621,7 +621,7 @@ fn validate_showcase_text_and_image_proofs(
   if logical_clusters != 1.0 || visual_clusters != 1.0 {
     failures.push(
       label +
-      " passed ZWJ proof requires one logical and visual grapheme cluster",
+      " passed ZWJ smoke requires one logical and visual grapheme cluster",
     )
   }
   let bidi_layout = require_object(
@@ -647,7 +647,7 @@ fn validate_showcase_text_and_image_proofs(
     json_string_arrays_same_order(logical_bidi, visual_bidi) {
     failures.push(
       label +
-      " passed bidi proof requires differing logical and visual cluster order",
+      " passed bidi smoke requires differing logical and visual cluster order",
     )
   }
   let paragraph = require_object(
@@ -670,7 +670,7 @@ fn validate_showcase_text_and_image_proofs(
   )
   if paragraph_line_count < 3.0 || paragraph_rows < 3.0 {
     failures.push(
-      label + " passed paragraph proof requires multiple line metrics",
+      label + " passed paragraph smoke requires multiple line metrics",
     )
   }
   let async_image = require_object(
@@ -734,7 +734,7 @@ fn validate_showcase_text_and_image_proofs(
     present_indexes.length() < 2 {
     failures.push(
       label +
-      " passed async image proof requires placeholder, late load, repaint, ready second-frame order",
+      " passed async image smoke requires placeholder, late load, repaint, ready second-frame order",
     )
   }
 }
@@ -744,7 +744,7 @@ fn observation_required_for_passed_target(key : String, name : String) -> Bool {
   if key == "transformPixels" && name != "showcase-web-wasm" {
     return false
   }
-  if renderer_proof_observation_key(key) && name != "showcase-web-wasm" {
+  if renderer_smoke_observation_key(key) && name != "showcase-web-wasm" {
     return false
   }
   true
@@ -1017,10 +1017,10 @@ fn validate_target(
       label + ".screenshot.transformPixels counts must be nonnegative",
     )
   }
-  let proof_passed : Map[String, Bool] = {}
-  for proof_key in renderer_proof_keys() {
-    validate_renderer_proof(
-      screenshot, proof_key, label, name, proof_passed, failures,
+  let smoke_passed : Map[String, Bool] = {}
+  for smoke_key in renderer_smoke_keys() {
+    validate_renderer_smoke(
+      screenshot, smoke_key, label, name, smoke_passed, failures,
     )
   }
   let observations = require_object(
@@ -1086,20 +1086,20 @@ fn validate_target(
       )
     }
     if name == "showcase-web-wasm" {
-      for proof_key in renderer_proof_keys() {
-        match proof_passed.get(proof_key) {
+      for smoke_key in renderer_smoke_keys() {
+        match smoke_passed.get(smoke_key) {
           Some(true) => ()
           _ =>
             failures.push(
               label +
               " passed evidence requires Showcase " +
-              proof_key +
-              " proof markers",
+              smoke_key +
+              " smoke markers",
             )
         }
       }
-      validate_showcase_color_emoji_proof(screenshot, label, failures)
-      validate_showcase_text_and_image_proofs(screenshot, label, failures)
+      validate_showcase_color_emoji_smoke(screenshot, label, failures)
+      validate_showcase_text_and_image_smokes(screenshot, label, failures)
     }
   } else {
     let any_no = observation_keys().any(key => {

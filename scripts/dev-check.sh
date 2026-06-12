@@ -33,7 +33,7 @@ for arg in "$@"; do
     --help|-h)
       printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke] [--wgpu-experimental] [--theme-diagnostics]\n' "$0"
       printf '\n'
-      printf 'Runs bounded mainline package checks, guidance consistency checks, Showcase and Markdown Editor app/Web checks, and checked evidence manifest schema validation.\n'
+      printf 'Runs bounded mainline package checks, guidance consistency checks, and Showcase and Markdown Editor app/Web checks.\n'
       printf 'Pass --platform-examples-test to also run current-platform backend tests.\n'
       printf 'Pass --platform-examples-build to also build current-platform native examples.\n'
       printf 'Pass --skia-real-smoke to run the opt-in real Skia smoke when local Skia link flags are configured.\n'
@@ -79,40 +79,13 @@ run node scripts/validate-renderer-provider-manifests.mjs
 run node scripts/validate-skia-entrypoints.mjs
 run node scripts/test-validate-skia-entrypoints.mjs
 run node scripts/test-validate-conformance-capture-manifest.mjs
-run node scripts/test-validate-platform-evidence-manifest.mjs
-run node scripts/test-record-platform-evidence-manifest.mjs
-run node --check scripts/record-native-ime-evidence.mjs
-run node scripts/test-record-native-ime-evidence.mjs
-run node scripts/test-record-native-skia-evidence.mjs
-run node --check scripts/record-macos-platform-runtime-evidence.mjs
-run node scripts/test-record-macos-platform-runtime-evidence.mjs
-run sh -n scripts/record-macos-local-runtime-evidence.sh
 run node --check scripts/generate-grapheme-break-fixtures.mjs
 run node scripts/generate-grapheme-break-fixtures.mjs --check
-run node --check scripts/validate-renderer-proof-manifest.mjs
-run node scripts/test-validate-renderer-proof-manifest.mjs
-run node --check scripts/record-renderer-proof-manifest.mjs
-run node scripts/test-record-renderer-proof-manifest.mjs
-run node --check scripts/record-web-renderer-proof-manifest.mjs
-run node scripts/test-record-web-renderer-proof-manifest.mjs
-run node --check scripts/ci-renderer-proof-native.mjs
 run node scripts/test-validate-web-runtime-handoff-manifest.mjs
 run node scripts/test-record-web-runtime-presentation.mjs
 run node scripts/test-validate-web-runtime-presentation-manifest.mjs
-run node scripts/validate-conformance-capture-manifest.mjs artifacts/conformance/showcase-golden-capture.json
-run node scripts/validate-conformance-capture-manifest.mjs artifacts/conformance/showcase-benchmark-capture.json
-run node scripts/validate-web-runtime-handoff-manifest.mjs artifacts/conformance/web-runtime-handoff.json
-run node scripts/validate-web-runtime-presentation-manifest.mjs artifacts/conformance/web-runtime-presentation.json
-run node scripts/validate-platform-evidence-manifest.mjs artifacts/conformance/platform-runtime-evidence.json
-run node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/webgpu-wasm-web.json
-run node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/skia-native-macos.json
-run node scripts/validate-renderer-proof-manifest.mjs artifacts/conformance/renderer-proof/wgpu-native-macos.json
-run node --check scripts/validate-checked-conformance-artifacts.mjs
-run node scripts/validate-checked-conformance-artifacts.mjs
 run sh -n scripts/ci-moon-update.sh
 run sh -n scripts/ci-web-runtime-presentation.sh
-run sh -n scripts/ci-renderer-proof-native.sh
-run sh -n scripts/ci-renderer-proof-summary.sh
 
 run moon check
 
