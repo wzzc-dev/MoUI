@@ -8,7 +8,7 @@ test "web backend requires wasm-gc WebGPU host imports" {
     info.renderer_info.backend == @render.RendererBackendKind::WebGpuWasm,
   )
   assert_true(
-    info.renderer_info.status == @render.RendererCapabilityStatus::Ready,
+    info.renderer_info.status == @render.RendererCapabilityStatus::Supported,
   )
   assert_true(
     info.surface_contract.source ==

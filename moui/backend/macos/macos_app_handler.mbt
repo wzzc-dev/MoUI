@@ -211,15 +211,15 @@ fn MacosApp::redraw_window(
         ),
       )
       self.sync_text_input_session()
-      if self.record_native_ime_runtime_evidence(window_id) {
+      if self.record_native_ime_runtime_smoke(window_id) {
         true
-      } else if self.exit_after_first_present &&
+      } else if self.first_frame_smoke_auto_exit &&
         platform_slot.renderer.present_count() > 0 {
         println(
           "macOS renderer presented first frame; exiting by request; title=" +
           runtime_slot.record.title,
         )
-        self.exit_after_first_present = false
+        self.first_frame_smoke_auto_exit = false
         self.dispose_window(window_id)
         true
       } else {

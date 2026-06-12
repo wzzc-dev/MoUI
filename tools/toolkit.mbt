@@ -132,7 +132,7 @@ pub fn read_file_or_directory_text(
   empty_directory_message : String,
 ) -> Result[String, String] {
   if file_exists(path) {
-    return read_required_text(path, "required capability proof input")
+    return read_required_text(path, "required capability smoke input")
   }
   if !directory_exists(path) {
     return Err(missing_message + path)
@@ -150,7 +150,7 @@ pub fn read_file_or_directory_text(
       builder.write_char('\n')
     }
     let file_path = join_path(path, files[index])
-    match read_required_text(file_path, "required capability proof input") {
+    match read_required_text(file_path, "required capability smoke input") {
       Ok(text) => builder.write_string(text)
       Err(message) => return Err(message)
     }

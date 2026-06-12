@@ -202,7 +202,7 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
   let mixed_run_font_fallback_ready = skia_mixed_text_segments("A你\u{1F642}B").length() ==
     4 &&
     skia_grapheme_cluster_texts("\u{1F469}\u{200D}\u{1F4BB}").length() == 1
-  let unicode_17_grapheme_boundary_ready = skia_unicode_17_grapheme_boundary_contract_ready()
+  let unicode_17_grapheme_boundary_ready = skia_unicode_17_grapheme_boundary_contract_available()
   let bidi_reordering_ready = false
   let paragraph_line_breaking_ready = false
   let deterministic_color_emoji_ready = false
@@ -240,7 +240,7 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
 }
 
 ///|
-fn skia_unicode_17_grapheme_boundary_contract_ready() -> Bool {
+fn skia_unicode_17_grapheme_boundary_contract_available() -> Bool {
   skia_grapheme_cluster_boundaries_match("\r\n", [0, 2]) &&
   skia_grapheme_cluster_boundaries_match("\u{094D}\u{0915}", [0, 1, 2]) &&
   skia_grapheme_cluster_boundaries_match("a\u{094D}\u{0924}", [0, 2, 3]) &&

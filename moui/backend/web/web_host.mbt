@@ -150,11 +150,11 @@ pub fn web_capability_summary(
     label="Web host",
     window_lifecycle=true,
     multi_window=true,
-    text_input_ready=true,
-    ime_ready=true,
-    drag_drop_ready=true,
+    text_input_available=true,
+    ime_available=true,
+    drag_drop_available=true,
     async_services~,
-    native_accessibility_ready=false,
+    native_accessibility_available=false,
     description="Browser canvas host with WebGPU imports, async clipboard/file dialogs, logical pointer coordinates, and app-level file drops.",
   )
 }

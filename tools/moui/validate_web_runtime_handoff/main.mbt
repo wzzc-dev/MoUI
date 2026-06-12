@@ -32,7 +32,7 @@ struct HandoffCheck {
 }
 
 ///|
-let evidence_boundary = "Static HTML/runtime/wasm delivery and compiled WebAssembly export audit only; not browser WebGPU device, wasm instantiation, canvas presentation, or pixel evidence."
+let observation_boundary = "Static HTML/runtime/wasm delivery and compiled WebAssembly export audit only; not browser WebGPU device, wasm instantiation, canvas presentation, or pixel observations."
 
 ///|
 fn usage() -> String {
@@ -512,8 +512,8 @@ fn manifest_text(
   builder.write_string("  \"baseUrl\": ")
   write_json_string(builder, base_url)
   builder.write_string(",\n")
-  builder.write_string("  \"evidenceBoundary\": ")
-  write_json_string(builder, evidence_boundary)
+  builder.write_string("  \"observationBoundary\": ")
+  write_json_string(builder, observation_boundary)
   builder.write_string(",\n")
   builder.write_string("  \"runtimeAssets\": [\n")
   builder.write_string("    \"moui/backend/web/runtime.js\",\n")

@@ -21,9 +21,9 @@ test "windows capability summary exposes native service readiness" {
   inspect(summary.input_count(), content="7")
   inspect(summary.services.menus, content="true")
   inspect(summary.services.file_access, content="true")
-  inspect(summary.drag_drop_ready, content="true")
+  inspect(summary.drag_drop_available, content="true")
   inspect(summary.multi_window, content="true")
-  inspect(summary.native_accessibility_ready, content="false")
+  inspect(summary.native_accessibility_available, content="false")
 }
 
 ///|
@@ -393,8 +393,8 @@ test "windows backend keeps ime composition separate at host layer" {
 test "windows accessibility bridge reports UI Automation contract" {
   let info = windows_accessibility_bridge_info()
   inspect(info.kind.label(), content="uiautomation")
-  inspect(info.contract_ready, content="true")
-  inspect(info.native_binding_ready, content="false")
+  inspect(info.semantics_bridge_available, content="true")
+  inspect(info.native_platform_bridge_available, content="false")
 }
 
 ///|

@@ -62,7 +62,7 @@ push, Showcase and Markdown Editor native Skia entrypoints are the preferred
 runtime consumers for proving that these surfaces remain usable on the
 Skia-first native baseline.
 
-| Workflow | Current status | Public surface | Showcase / example evidence | Preview gaps |
+| Workflow | Current status | Public surface | Showcase / example coverage | Preview gaps |
 | --- | --- | --- | --- | --- |
 | Forms | ready with app-owned validation | `form`, `form_section`, `form_field`, `form_field_state`, `FormFieldStatus::Validating`, `form_validation_summary`, `form_actions`, `form_workflow_bar`, `form_error`, `form_helper_text`, `input_group`, `clearable_text_field`, `password_field`, `number_field`, `stepper`, `multiline_text_area_shell`, plus `text_field`, `checkbox`, `toggle`, `segmented_control`, `picker`, and `datepicker` | Showcase Forms and Controls; Settings example | Validation rules and async checks stay in the app model; reusable view/runtime helpers now cover validating/help/error states, keyed first-invalid focus targets, submit guards, and Enter/Escape action status. |
 | Navigation | ready for controlled shells, app-owned route history, app-sampled route transitions, and route focus restoration | `navigation_stack`, `router_stack`, `route_header`, `section_nav`, `sidebar`, `breadcrumb`, `split_view`, `master_detail`, `resizable_split_view`, `wizard`, `tab_view`, `@core.RouteHistoryState`, `@core.RouteFocusStore`, `@host.HostRouteSource`, `View::transition`, `AppRuntime::focus_key` | Showcase Navigation Shell; views navigation/router tests; core router/history tests; Showcase route/state tests; host route fanout tests | App-owned deep-link shadow history is preview-ready through a serializable route stack, back/forward cursor, and `RouterSnapshot` restoration. `HostRouteSource` covers typed route/deep-link event fanout through `Subscription::route_event`, but it does not mutate app history by itself. Showcase now demonstrates a controlled fade/slide route transition sampled by app state; automatic transition scheduling, browser history, native URL bars, and OS deep-link dispatch remain app/host follow-up work. Fixed and controlled drag-resizable split panes are preview-ready; apps still own persisted pane width. Route focus restoration is preview-ready as an app/host call into the runtime after a route switch. |
@@ -157,7 +157,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `form` / `form_section` | `views/form.mbt` | Theme spacing/surface | Group | `views/views_test.mbt` | Showcase Forms | Layout shells for grouped TEA-controlled fields. |
 | `form_field` | `views/form.mbt` | Theme typography/colors | Group with accessibility label | `views/views_test.mbt` | Showcase Forms | Composes label, required marker, helper text, validation message, validating, disabled, and read-only states without renderer changes. `FormFieldStatus::Validating` announces checking state while async validation remains app-owned. |
 | `form_field_state` | `views/form.mbt` | Theme typography/colors | Group with accessibility label | `views/views_test.mbt`, `core/app_framework_wbtest.mbt` | Showcase Forms | Bridges `@core.FormFieldState` validation into the view helper while preserving direct string-error constructors. |
-| `form_validation_summary` | `views/form.mbt` | FormValidationStyle/text/ButtonStyle | Invalid group | `views/views_test.mbt` | Showcase Forms | Renders an app/core-owned `FormValidationSummary` with first-invalid evidence, field errors, and optional focus/review action. Validation rules and focus orchestration stay outside the view helper. |
+| `form_validation_summary` | `views/form.mbt` | FormValidationStyle/text/ButtonStyle | Invalid group | `views/views_test.mbt` | Showcase Forms | Renders an app/core-owned `FormValidationSummary` with first-invalid state, field errors, and optional focus/review action. Validation rules and focus orchestration stay outside the view helper. |
 | `form_actions` | `views/form.mbt` | ButtonStyle/surface/text | Group with disabled action state | `views/views_test.mbt` | Showcase Forms | Reusable save/cancel action row with optional status text and app-controlled disabled submit state. Validation and submit policy remain in the app model. |
 | `form_workflow_bar` | `views/form.mbt` | FormValidationStyle/surface/text/ButtonStyle | Group with invalid state | `views/views_test.mbt` | Showcase Forms | Composes validation summary, first-invalid focus action, `FocusScope` Enter/Escape target status, and a submit-guarded action row into one reusable form footer. Actual focus movement remains app/runtime-owned. |
 | `form_error` / `form_helper_text` | `views/form.mbt` | FormValidationStyle/theme typography/colors | Text | `views/views_test.mbt` | Showcase Forms | Reusable support text helpers for app-local form layouts. `form_error` can consume a neutral validation style while `form_helper_text` stays muted-theme text. |
@@ -223,7 +223,7 @@ fn view(draft : String) -> @core.View[Msg] {
 into foreground/background/surface/primary/status/focus/scrim role rows. The
 rows tie each `DesignSemanticPalette` field to a neutral `@core.ColorPalette`
 or `@core.SemanticColorScale` destination, direct official token/source-import
-evidence when one exists, and explicit role-level parity gaps when a preset only
+coverage when one exists, and explicit role-level parity gaps when a preset only
 has a broader token-group adapter.
 
 `DesignPreset::typography_role_report` lives in
@@ -236,7 +236,7 @@ line-height that do not have a neutral `FontSpec` field yet.
 
 `DesignPreset::component_token_matrix` rows expose per-component mapped and
 required token counts plus related pinned source-import and runtime-aligned
-evidence counts. Those evidence counts are intentionally separate from the
+coverage counts. Those coverage counts are intentionally separate from the
 mapped/required matrix so source-import progress can be shown without claiming
 the complete official component matrix is closed.
 

@@ -2,7 +2,7 @@
 pub(all) struct LinuxBackendInfo {
   host_info : @host.HostAppInfo
   window_backend_available : Bool
-  renderer_ready : Bool
+  renderer_available : Bool
   capabilities : LinuxBackendCapabilities
   accessibility : LinuxAccessibilityBridgeInfo
   services : @host.HostServiceCapabilities
@@ -35,19 +35,23 @@ pub(all) struct LinuxBackendReadiness {
 ///|
 pub(all) struct LinuxAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
-  contract_ready : Bool
-  native_binding_ready : Bool
-  action_roundtrip_ready : Bool
+  semantics_bridge_available : Bool
+  native_platform_bridge_available : Bool
+  action_dispatch_available : Bool
   description : String
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub struct LinuxHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
-  priv exit_after_first_present : Bool
   priv event_sources : @host.HostPlatformEventSources?
   priv web_view_commands : @host.HostWebViewCommandQueue?
   priv web_view_events : @host.HostWebViewEventSource?
+}
+
+///|
+pub struct LinuxHostSmokeOptions {
+  priv first_frame_smoke_auto_exit : Bool
 }
 
 ///|
@@ -83,7 +87,7 @@ struct LinuxApp {
   web_view_events : @host.HostWebViewEventSource?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
-  mut exit_after_first_present : Bool
+  mut first_frame_smoke_auto_exit : Bool
 }
 
 ///|
@@ -103,18 +107,23 @@ priv struct LinuxWindowPlatformSlots {
 ///|
 pub fn LinuxHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  exit_after_first_present? : Bool = false,
   event_sources? : @host.HostPlatformEventSources? = None,
   web_view_commands? : @host.HostWebViewCommandQueue? = None,
   web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> LinuxHostAppOptions {
   {
     scene_resolver,
-    exit_after_first_present,
     event_sources,
     web_view_commands,
     web_view_events,
   }
+}
+
+///|
+pub fn LinuxHostSmokeOptions::new(
+  first_frame_smoke_auto_exit? : Bool = false,
+) -> LinuxHostSmokeOptions {
+  { first_frame_smoke_auto_exit, }
 }
 
 ///|

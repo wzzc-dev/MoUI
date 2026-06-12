@@ -10,16 +10,26 @@ extern "C" fn macos_surface_host_layer_from_view(
 pub struct MacosWgpuAppOptions {
   priv text_engine : @wgpu_renderer.NativeTextEngineSetting
   priv scene_resolver : @host.HostWindowSceneResolver
-  priv exit_after_first_present : Bool
+}
+
+///|
+pub struct MacosWgpuSmokeOptions {
+  priv first_frame_smoke_auto_exit : Bool
 }
 
 ///|
 pub fn MacosWgpuAppOptions::new(
   text_engine? : @wgpu_renderer.NativeTextEngineSetting = @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  exit_after_first_present? : Bool = false,
 ) -> MacosWgpuAppOptions {
-  { text_engine, scene_resolver, exit_after_first_present }
+  { text_engine, scene_resolver }
+}
+
+///|
+pub fn MacosWgpuSmokeOptions::new(
+  first_frame_smoke_auto_exit? : Bool = false,
+) -> MacosWgpuSmokeOptions {
+  { first_frame_smoke_auto_exit, }
 }
 
 ///|
@@ -45,7 +55,28 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
-      exit_after_first_present=options.exit_after_first_present,
+    ),
+    window_requests~,
+  )
+}
+
+///|
+pub fn run_smoke_app_with_options(
+  title : String,
+  runtime : @core.AppRuntime,
+  options~ : MacosWgpuAppOptions,
+  smoke_options? : MacosWgpuSmokeOptions = MacosWgpuSmokeOptions::new(),
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+) -> Unit {
+  @macos_host.run_app_with_renderer_provider_smoke(
+    title,
+    runtime,
+    provider=renderer_provider(options~),
+    options=@macos_host.MacosHostAppOptions::new(
+      scene_resolver=options.scene_resolver,
+    ),
+    smoke_options=@macos_host.MacosHostSmokeOptions::new(
+      first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
     ),
     window_requests~,
   )

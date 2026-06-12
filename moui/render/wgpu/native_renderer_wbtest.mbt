@@ -236,8 +236,8 @@ test "native renderer plans radial brush as true radial visual payload" {
 }
 
 ///|
-test "native proof frame normalizes flipped readback rows" {
-  let frame = NativeRendererProofFrame::{
+test "native smoke frame normalizes flipped readback rows" {
+  let frame = NativeRendererSmokeFrame::{
     width: 1,
     height: 2,
     row_bytes: 4,

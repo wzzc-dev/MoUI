@@ -10,7 +10,7 @@ fn sample_entry() -> SkiaEntry {
     host_summary_call: "@macos_backend.macos_capability_summary()",
     options_type: "MacosSkiaAppOptions",
     run_function: "run_app_with_options",
-    env_var: "MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+    surface_route_env: "MOUI_MACOS_SKIA_SURFACE_ROUTE",
     app_title: "\"MoUI Showcase\"",
     expected_link_token: "-framework AppKit",
     allow_async_pump: false,
@@ -41,19 +41,17 @@ let valid_main =
   #|fn main {
   #|  let app = @app.ShowcaseApp::new()
   #|  let runtime = app.runtime_with_host_summary(@macos_backend.macos_capability_summary())
-  #|  let exit_after_first_present = @env.get("MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT") ==
-  #|    Some("1")
-  #|  let font_resolution = if exit_after_first_present {
-  #|    @skia_renderer.SkiaFontResolution::EmptyTypeface
+  #|  let surface_route = if @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") ==
+  #|    Some("metal-gpu") {
+  #|    @skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute
   #|  } else {
-  #|    @skia_renderer.SkiaFontResolution::SystemFontMgr
+  #|    @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute
   #|  }
   #|  @macos_skia_backend.run_app_with_options(
+  #|    "MoUI Showcase",
   #|    runtime,
   #|    @macos_skia_backend.MacosSkiaAppOptions::new(
-  #|      title="MoUI Showcase",
-  #|      font_resolution~,
-  #|      exit_after_first_present~,
+  #|      surface_route~,
   #|    ),
   #|  )
   #|}

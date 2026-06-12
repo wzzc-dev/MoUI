@@ -36,7 +36,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | Website | MoUI-built homepage workspace | `website/app/` | Bilingual product homepage, first-screen MoUI brand hero, compact Counter code snippet, interactive runtime preview, framework foundations, platform matrix, release-readiness cards, quick-start Web commands, runtime Docs portal that fetches packaged same-origin `docs/*.md` Markdown plus MoUI and `moui_skia` README copies, Web-only `website/web_wasm` entrypoint |
 | Counter | Minimal model/update/view app | `examples/counter/app/` | Simple `Program::simple` flow, `center`/`card`, typed button messages |
 | Button Freeze Probe | Native Skia button freeze repro | `examples/button_freeze_probe/app/` | Minimal `data_filter_bar` filter chips, red primary accent, repeated click counter, direct primary/tonal button comparison, native Skia macOS/Windows/Linux entrypoints |
-| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces, `status_badge` feedback chips, helper-backed table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore evidence, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, neutral core theme toggling, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
+| Showcase | Full view catalog and reusable example index | `examples/showcase/app/` | TEA-first `Model / Msg / update / view` app, public `views` constructors, validating form fields and workflow bars, `ToastQueue`-backed toast stack/progress/status surfaces, `status_badge` feedback chips, helper-backed table/selectable-list data views, column visibility panel, route header/section-nav/sidebar/breadcrumb shells with app-owned route/deep-link history and route focus restore state, custom dialog/alert/sheet/menu surfaces, built-in Counter/Todo patterns, light Markdown preview, neutral core theme toggling, presentation, renderer capability status, advanced rendering demos, text diagnostics, interaction wiring. Showcase intentionally has no `moui_theme` dependency and is not an official design-system compatibility claim. |
 | Design Systems | Addon diagnostic source-mapped design-system preview and parity sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | Material, Carbon, Primer, and Fluent switching through the `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and `moui_theme/fluent` entrypoints over shared `moui_theme/common` models, light/dark/high-contrast/system variants, compact/standard/comfortable density, semantic palette roles, typography specimen, spacing/density grid, component-token matrix sampling, component style bundle usage, custom inheritance/override API, Web and native Skia host entrypoints, coverage/parity status labels, and explicit source-mapped preview wording rather than official-complete claims |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, app-owned column width/order state, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
@@ -185,12 +185,12 @@ development workflows:
   pressed/selected/disabled semantic state examples, button/text-field
   variants, and deterministic image lifecycle states.
 - `Forms`: validating/help/error/disabled/read-only field states, keyed
-  first-invalid focus targets, and submit-guard evidence for the form workflow
+  first-invalid focus targets, and submit-guard state for the form workflow
   bar.
 - `Navigation Shell`: route headers, section navigation, breadcrumbs, dialogs,
   sheets, command metadata, app-owned route/deep-link history, a controlled
   fade/slide route transition preview, a controlled drag-resizable split pane,
-  and `RouteFocusStore` evidence showing which `runtime.focus_key(...)` call
+  and `RouteFocusStore` state showing which `runtime.focus_key(...)` call
   should restore route focus after a route switch. `HostRouteSource` provides
   the host-layer route/deep-link subscription fanout that apps can feed into
   this shared state, but the visible route history is still a serializable
@@ -332,11 +332,11 @@ structural MoUI preview with diagnostics, and shows a dismissible failure
 banner. The Skia PDF backend is reserved for a future export/generation route
 that writes MoUI draw commands to PDF; it is not used to rasterize existing PDF
 pages.
-For first-frame smoke, set `MOUI_PDF_WORKBENCH_STARTUP_PDF` to a PDF path such
-as `examples/pdf_workbench/fixtures/minimum.pdf` alongside the platform
-`MOUI_PDF_WORKBENCH_*_SKIA_EXIT_AFTER_FIRST_PRESENT=1` flag; the startup path
+For an interactive startup run, set `MOUI_PDF_WORKBENCH_STARTUP_PDF` to a PDF
+path such as `examples/pdf_workbench/fixtures/minimum.pdf`; the startup path
 uses the same binary-read, document-load, and PDFium raster request flow as the
-Open button.
+Open button. `node scripts/pdf-workbench-native-smoke.mjs` keeps the automated
+check to PDFium real-raster tests plus native entrypoint builds.
 Set `MOUI_PDF_WORKBENCH_PDFLITE_HELPER` to an already-built
 `pdflite_service_cli` executable when you want native Skia runs to use the real
 pdflite document model. Use `MOUI_PDF_WORKBENCH_PDFLITE_HELPER=auto` from the
@@ -364,7 +364,7 @@ moon test moui/backend/host --target native
 moon build examples/pdf_workbench/macos_skia --target native
 node scripts/pdf-workbench-native-smoke.mjs
 scripts/pdf-workbench-macos-smoke.sh
-MOUI_PDF_WORKBENCH_STARTUP_PDF=examples/pdf_workbench/fixtures/minimum.pdf MOUI_PDF_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/pdf_workbench/macos_skia --target native
+MOUI_PDF_WORKBENCH_STARTUP_PDF=examples/pdf_workbench/fixtures/minimum.pdf moon run examples/pdf_workbench/macos_skia --target native
 moon build examples/pdf_workbench/windows_skia --target native
 moon build examples/pdf_workbench/linux_skia --target native
 ```
@@ -376,9 +376,8 @@ The named lightweight smoke uses fake document and raster services to exercise
 startup open, bitmap drawing, multi-page navigation, search, zoom, and raster
 cache reuse without compiling the pdflite helper executable.
 `node scripts/pdf-workbench-native-smoke.mjs` is the matching-host real-raster
-smoke. It runs the PDFium adapter tests, launches the current host's native
-Skia entrypoint with the fixture PDF and first-frame exit flag, then verifies
-the log contains the PDFium bitmap path and platform first-frame marker.
+smoke. It runs the PDFium adapter tests, builds the current host's native Skia
+entrypoint, and verifies the log contains the PDFium bitmap path.
 `scripts/pdf-workbench-macos-smoke.sh` is a macOS convenience wrapper for the
 same runner.
 
@@ -778,8 +777,8 @@ moon build examples/mo_workbench/macos_skia --target native
 The `macos_skia` entrypoints select the native Skia raster renderer explicitly.
 They require the local Skia native link setup that makes `moui_skia/native`
 available at runtime. Normal macOS Skia runs use the renderer's system
-`FontMgr` path; first-frame smoke runs explicitly select the `EmptyTypeface`
-fallback path through their exit-after-first-present environment flag. The
+`FontMgr` path; tester-owned first-frame smoke runs explicitly select the
+`EmptyTypeface` fallback path. The
 `macos_wgpu` and `macos_wgpu_cosmic` packages remain available as native WGPU
 and text-provider diagnostics.
 
@@ -809,11 +808,10 @@ checked-in packages do not need machine-local path rewrites. Set
 library mode. Helper smoke runs can still use `--link-mode dynamic|static|auto`
 to override the environment for that invocation.
 
-For a fuller local smoke, pass `--run-showcase-smoke`. The helper then launches
-the built Showcase `macos_skia` executable with a first-frame exit flag and
-verifies that the Skia renderer presents a frame before the app exits. Add
-`--run-markdown-smoke` to build and launch the Markdown Editor Skia entrypoint
-with the same first-frame marker:
+For a fuller local smoke, pass `--run-showcase-smoke`. The helper builds
+Showcase and then runs the `moui_tester` first-frame smoke. Add
+`--run-markdown-smoke` to build Markdown Editor and run the same tester-owned
+first-frame marker:
 
 ```sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
@@ -878,10 +876,9 @@ powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps
 `windows_skia` follows the same Skia availability rules as the backend provider:
 if `moui_skia/native` is only in fallback mode, renderer creation reports a
 diagnostic instead of opening an empty HWND.
-Set `MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` or
-`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` in the same MSVC
-environment for matching-host first-frame smoke runs; those logs are runtime
-evidence only for the Windows host that produced them.
+Windows Skia example entrypoints are interactive app entrypoints. Keep
+matching-host first-frame smoke in tester/backend smoke runners and cite the
+smoke log that actually ran.
 Markdown Editor also keeps `examples/markdown_editor/windows_wgpu_cosmic` for
 explicit Moon Cosmic text-provider comparison on the native WGPU diagnostic
 route.
@@ -913,10 +910,9 @@ moon run examples/showcase/linux_skia --target native
 moon run examples/markdown_editor/linux_skia --target native
 ```
 
-Set `MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` or
-`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` before the Skia
-`moon run` command to collect matching-host first-frame logs on Wayland. Keep
-those logs separate from the window package dependency smoke evidence.
+Linux Skia example entrypoints are interactive app entrypoints. Keep
+matching-host first-frame smoke in tester/backend smoke runners and keep those
+logs separate from the window package dependency smoke logs.
 
 For build-only validation, use:
 

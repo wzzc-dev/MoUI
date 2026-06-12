@@ -16,7 +16,7 @@ test "skia renderer backend info reflects native availability" {
   assert_true(info.description.contains("bidi, paragraph line breaking"))
   assert_true(info.description.contains("flush-and-submit finalization"))
   if skia_available() {
-    assert_true(info.status == @render.RendererCapabilityStatus::Ready)
+    assert_true(info.status == @render.RendererCapabilityStatus::Supported)
     assert_true(info.can_render)
   } else {
     assert_true(info.status == @render.RendererCapabilityStatus::Unavailable)
@@ -219,63 +219,63 @@ test "skia text system is directly available for diagnostic conformance" {
 }
 
 ///|
-test "skia selection geometry proof covers line ranges hit testing and bidi evidence" {
+test "skia selection geometry diagnostic covers line ranges hit testing and bidi observation" {
   let text = "ABC \u{05D0}\u{05D1}\u{05D2} 123 alpha beta gamma"
-  guard skia_text_selection_geometry_proof(
+  guard skia_text_selection_geometry_diagnostic(
       text,
       font=@core.FontSpec::new(size=18.0, weight=500),
       max_width=96.0,
     )
-    is Some(proof) else {
-    fail("expected Skia selection geometry proof")
+    is Some(diagnostic) else {
+    fail("expected Skia selection geometry diagnostic")
   }
-  assert_true(proof.selection_rect_count >= 2)
-  assert_true(proof.selected_line_count >= 2)
-  assert_true(proof.line_count >= 2)
-  inspect(proof.hit_test_line_index, content="1")
-  assert_true(proof.hit_test_inside)
-  assert_true(proof.hit_test_offset >= proof.selection_range.start)
+  assert_true(diagnostic.selection_rect_count >= 2)
+  assert_true(diagnostic.selected_line_count >= 2)
+  assert_true(diagnostic.line_count >= 2)
+  inspect(diagnostic.hit_test_line_index, content="1")
+  assert_true(diagnostic.hit_test_inside)
+  assert_true(diagnostic.hit_test_offset >= diagnostic.selection_range.start)
   if skia_available() {
-    assert_true(proof.visual_order_differs)
-    assert_true(proof.visual_segment_count >= 3)
-    assert_true(proof.bidi_visual_order_evidence)
+    assert_true(diagnostic.visual_order_differs)
+    assert_true(diagnostic.visual_segment_count >= 3)
+    assert_true(diagnostic.bidi_visual_order_observed)
   }
 }
 
 ///|
-test "skia emoji font fallback proof records glyph metadata without readiness promotion" {
-  match skia_emoji_font_fallback_proof() {
-    Some(proof) => {
-      inspect(proof.font_family, content="emoji")
-      inspect(proof.font_source, content="skia-system-fontmgr")
-      inspect(proof.fallback_language_tags.length(), content="2")
-      inspect(proof.fallback_language_tags[0], content="und-Zsye")
-      inspect(proof.fallback_language_tags[1], content="en")
-      inspect(proof.fallback_script_tag, content="und-Zsye")
-      inspect(proof.fallback_language_tag_count, content="2")
-      inspect(proof.fallback_request_language_count, content="2")
-      assert_true(proof.text_system_id == "skia-raster-text-system")
-      assert_true(proof.emoji_hint)
-      assert_true(proof.emoji_fallback_attempted)
-      assert_true(proof.fallback_request_ready)
-      assert_true(proof.missing_glyph_recovery_ready)
-      assert_false(proof.deterministic_color_emoji_ready)
-      inspect(proof.glyph_format, content="rgba")
-      assert_true(proof.glyph_key.contains("skia-system-fontmgr"))
-      assert_true(proof.glyph_key.contains("skia-raster-text-system"))
-      assert_true(proof.glyph_key.contains("script=und-Zsye"))
-      assert_true(proof.glyph_key.contains("langs=2"))
-      assert_true(proof.glyph_key.contains("lang-tags=und-Zsye+en"))
+test "skia emoji font fallback diagnostic records glyph metadata without readiness promotion" {
+  match skia_emoji_font_fallback_diagnostic() {
+    Some(diagnostic) => {
+      inspect(diagnostic.font_family, content="emoji")
+      inspect(diagnostic.font_source, content="skia-system-fontmgr")
+      inspect(diagnostic.fallback_language_tags.length(), content="2")
+      inspect(diagnostic.fallback_language_tags[0], content="und-Zsye")
+      inspect(diagnostic.fallback_language_tags[1], content="en")
+      inspect(diagnostic.fallback_script_tag, content="und-Zsye")
+      inspect(diagnostic.fallback_language_tag_count, content="2")
+      inspect(diagnostic.fallback_request_language_count, content="2")
+      assert_true(diagnostic.text_system_id == "skia-raster-text-system")
+      assert_true(diagnostic.emoji_hint)
+      assert_true(diagnostic.emoji_fallback_attempted)
+      assert_true(diagnostic.fallback_request_ready)
+      assert_true(diagnostic.missing_glyph_recovery_ready)
+      assert_false(diagnostic.deterministic_color_emoji_ready)
+      inspect(diagnostic.glyph_format, content="rgba")
+      assert_true(diagnostic.glyph_key.contains("skia-system-fontmgr"))
+      assert_true(diagnostic.glyph_key.contains("skia-raster-text-system"))
+      assert_true(diagnostic.glyph_key.contains("script=und-Zsye"))
+      assert_true(diagnostic.glyph_key.contains("langs=2"))
+      assert_true(diagnostic.glyph_key.contains("lang-tags=und-Zsye+en"))
       assert_true(
-        proof.glyph_key.contains("emoji-u+\{proof.fallback_character}"),
+        diagnostic.glyph_key.contains("emoji-u+\{diagnostic.fallback_character}"),
       )
-      assert_true(proof.glyph_key.contains("rgba"))
-      assert_true(proof.glyph_count >= 1)
-      assert_true(proof.cluster_count == 1)
-      assert_true(proof.glyph_width > 0)
-      assert_true(proof.glyph_height > 0)
-      assert_true(proof.resolved_missing_glyph_count >= 0)
-      assert_true(proof.fallback_character == 0x1F469)
+      assert_true(diagnostic.glyph_key.contains("rgba"))
+      assert_true(diagnostic.glyph_count >= 1)
+      assert_true(diagnostic.cluster_count == 1)
+      assert_true(diagnostic.glyph_width > 0)
+      assert_true(diagnostic.glyph_height > 0)
+      assert_true(diagnostic.resolved_missing_glyph_count >= 0)
+      assert_true(diagnostic.fallback_character == 0x1F469)
     }
     None => assert_true(!skia_available())
   }
@@ -310,7 +310,7 @@ test "skia pixel frame carries presenter payload" {
 }
 
 ///|
-test "skia renderer descriptor exposes evidence-gated backend capabilities" {
+test "skia renderer descriptor exposes observation-gated backend capabilities" {
   let descriptor = skia_raster_native_descriptor()
   let image = find_skia_descriptor_capability(
     descriptor,
@@ -377,14 +377,14 @@ test "skia renderer descriptor exposes evidence-gated backend capabilities" {
       assert_true(
         shader.backend == @render.RendererBackendKind::SkiaRasterNative,
       )
-      assert_true(image.status == @render.RendererFeatureStatus::Ready)
-      assert_true(gradient.status == @render.RendererFeatureStatus::Ready)
-      assert_true(path.status == @render.RendererFeatureStatus::Ready)
-      assert_true(layer.status == @render.RendererFeatureStatus::Ready)
-      assert_true(blend.status == @render.RendererFeatureStatus::Ready)
-      assert_true(filter.status == @render.RendererFeatureStatus::Ready)
-      assert_true(transform.status == @render.RendererFeatureStatus::Ready)
-      assert_true(shader.status == @render.RendererFeatureStatus::Ready)
+      assert_true(image.status == @render.RendererFeatureStatus::Supported)
+      assert_true(gradient.status == @render.RendererFeatureStatus::Supported)
+      assert_true(path.status == @render.RendererFeatureStatus::Supported)
+      assert_true(layer.status == @render.RendererFeatureStatus::Supported)
+      assert_true(blend.status == @render.RendererFeatureStatus::Supported)
+      assert_true(filter.status == @render.RendererFeatureStatus::Supported)
+      assert_true(transform.status == @render.RendererFeatureStatus::Supported)
+      assert_true(shader.status == @render.RendererFeatureStatus::Supported)
       assert_true(image.note.contains("data URI"))
       assert_true(image.note.contains("JPEG/BMP"))
       assert_true(image.note.contains("local PNG/JPEG/BMP"))
