@@ -169,7 +169,7 @@ when browser permissions allow it.
 The Web host now advertises IME readiness because the local `window/web` bridge
 supports browser composition lifecycle events and accepts MoUI
 `TextInputSession` IME requests for enabling input, cursor-area updates, and
-surrounding-text updates. This is browser text-input evidence; it does not make
+surrounding-text updates. This is browser text-input observation; it does not make
 browser text shaping deterministic across browsers.
 The active Web runtime now drains pending async service requests into browser
 callbacks. Clipboard reads complete through exported wasm callback functions.
@@ -268,7 +268,7 @@ before the renderer tries the composed Cosmic fallback.
 Choose the text engine with
 `@macos_wgpu.run_app_with_options(..., options=MacosWgpuAppOptions::new(text_engine=...))`.
 The same options value can carry a `HostWindowSceneResolver` for
-resolver-backed secondary windows and `exit_after_first_present` for first-frame
+resolver-backed secondary windows and `first_frame_smoke_auto_exit` for first-frame
 smoke tests. `core` still owns only the neutral `FontSpec`, `TextSystem`
 contract, and deterministic fallback text system; it does not name concrete
 macOS font files.
@@ -290,9 +290,8 @@ host scale factor, reads premultiplied pixels back after each frame, and sends
 them to a macOS presenter. The Objective-C presenter builds a `CGImage` from the
 pixel bytes and installs it on a dedicated `NSImageView` attached to the content
 view. macOS Skia options default to the same system `FontMgr` text path as the
-Windows and Linux Skia providers; the first-frame smoke entrypoints explicitly
-select `EmptyTypeface` only when their exit-after-first-present environment
-flag is set. This path is intentionally separate from the experimental
+Windows and Linux Skia providers; tester-owned first-frame smoke entrypoints
+explicitly select `EmptyTypeface`. This path is intentionally separate from the experimental
 `backend/macos/wgpu`; Skia is a provider package, not a host-core
 `NativeRenderer` variant.
 For local real-Skia configuration, direct `moon run`/`moon build` commands use
@@ -301,19 +300,19 @@ choose the Skia library mode. Helper smoke runs can pass
 `--link-mode dynamic|static|auto` to override the environment for that
 invocation.
 `macos_skia_provider_preflight_summary()` exposes package-level preflight
-evidence for the selected font resolution, renderer availability,
+observation for the selected font resolution, renderer availability,
 `moui_skia/native` availability, the `NSImageView` presenter path, inherited
 AppKit host service/input/window readiness, explicit
 `HostWindowRenderer` bridge forwarding for Skia text-system, image-resource,
 image-resource change callbacks, present-count, and disposal diagnostics,
 clipboard/menu/file-dialog/open URL/system-theme/async-service readiness,
 native context-menu and host-modal file-dialog readiness, native accessibility
-status, and the runtime evidence boundary. Treat that summary as
-provider/package evidence
+status, and the runtime observation boundary. Treat that summary as
+provider/package observation
 only; MoUI macOS Skia runtime smoke still comes from the real-Skia renderer
-pixel smoke plus the Showcase first-frame smoke marker. Markdown Editor
-first-frame smoke remains optional example coverage and is not a platform
-runtime evidence gate.
+pixel smoke plus tester-owned first-frame/IME markers. Markdown Editor build
+coverage remains optional example coverage and is not a platform runtime
+observation gate.
 The macOS host loop records the renderer image-resource revision after each
 present, routes later observed revision changes through the matching window's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
@@ -415,12 +414,9 @@ powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps
 powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
 ```
 
-For matching-host Skia first-frame evidence, set
-`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` for Showcase or
-`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1` for Markdown
-Editor in the same MSVC environment before the `moon run` command. The host
-option exits after any injected renderer reports a presented frame; keep the
-resulting log/artifacts scoped to Windows runtime evidence.
+The ordinary Windows Skia entrypoints are interactive app entrypoints. Keep
+matching-host first-frame smoke in tester/backend smoke runners rather than
+adding auto-exit flags to Showcase or Markdown Editor packages.
 
 The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as
 macOS, with platform-specific ownership limited to Win32 window handles,
@@ -477,7 +473,7 @@ and blits it to the client DC with `StretchDIBits`. If `moui_skia/native` is onl
 in fallback mode, renderer creation is rejected with a diagnostic instead of
 opening an empty HWND.
 `windows_skia_provider_preflight_summary()` exposes package-level preflight
-evidence for the selected font resolution, renderer availability,
+observation for the selected font resolution, renderer availability,
 `moui_skia/native` availability, the GDI presenter path, inherited Win32 host
 service/input/window readiness, explicit clipboard/menu/file-dialog/open
 URL/system-theme/async-service readiness, the `HostWindowRenderer` bridge that
@@ -485,7 +481,7 @@ forwards Skia text-system, image-resource, present-count, and disposal
 diagnostics, native context-menu and host-modal
 file-dialog readiness, native accessibility status, and the matching-host
 runtime boundary, including whether the first-frame smoke option is enabled.
-Treat that summary and its package test as provider/preflight evidence only;
+Treat that summary and its package test as provider/preflight diagnostic only;
 The Windows host loop records the renderer image-resource revision after each
 present, routes later observed revision changes through the matching HWND's
 `request_redraw`, exposes tracked-window revision snapshots for diagnostics,
@@ -495,12 +491,12 @@ loads when a host window is disposed. The Windows Skia provider creates
 renderers with post-present async image loading, but the required async
 second-frame artifact remains matching-host pending until a Windows/MSVC run
 records it from the Skia entrypoints or provider smoke.
-Passed Windows runtime evidence still needs a Windows/MSVC host running the
+Passed Windows runtime observation still needs a Windows/MSVC host running the
 Showcase or Markdown Editor Skia entrypoints with recorded artifacts. On
 non-Windows hosts, the Win32 presenter and service stubs may fail C compilation
 because they require `windows.h`, so a Darwin failure of
 `moui/backend/windows/skia` is a host/toolchain limit rather than Windows
-runtime evidence.
+runtime observation.
 
 To use a preseeded local `wgpu-native` release for WGPU diagnostics instead of
 the helper-managed copy, set `MBT_WGPU_NATIVE_ROOT` to the extracted MSVC
@@ -574,12 +570,9 @@ moon run examples/showcase/linux_skia --target native
 moon run examples/markdown_editor/linux_skia --target native
 ```
 
-For matching-host Skia first-frame evidence, set
-`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` for Showcase or
-`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` for Markdown
-Editor before the `moon run` command. The Linux host exits after the injected
-renderer reports a presented frame; keep those logs scoped to Linux Wayland
-runtime evidence.
+The ordinary Linux Skia entrypoints are interactive app entrypoints. Keep
+matching-host first-frame smoke in tester/backend smoke runners and store those
+logs under ignored `artifacts/` paths when they are needed for release notes.
 
 When validating from a Linux VM mounted over the same checkout as a macOS or
 Windows host, keep native build output isolated. Either run `moon clean` before
@@ -609,9 +602,9 @@ below client decorations when needed, forwards WebView events through
 rendering. macOS, Windows, and Linux native bridges enforce the shared
 `WebViewNavigationPolicy` before committing a navigation; blocked URLs produce a
 `NavigationFailed` event. Matching-host smoke is still required before
-promoting Linux WebView runtime evidence beyond package-level compile coverage.
+promoting Linux WebView runtime observation beyond package-level compile coverage.
 `linux_skia_provider_preflight_summary()` exposes package-level preflight
-evidence for the selected font resolution, renderer availability,
+observation for the selected font resolution, renderer availability,
 `moui_skia/native` availability, the `wl_shm` presenter path, inherited Wayland
 host service/input/window readiness, explicit Linux clipboard/file-dialog/text-file/open
 URL/system-theme readiness, native menu/async-service gaps, text-input/IME/drag-drop
@@ -642,11 +635,11 @@ redraw, IME request state, and clean shutdown. Add `--require-input` or
 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` only when representative pointer/keyboard
 input is observed; clipboard selection and file drag/drop still need
 matching-host compositor observations before they can be cited as runtime
-evidence. Record dependency-level facts from the `wzzc-dev/window@0.5.1-0.1.4`
+observation. Record dependency-level facts from the `wzzc-dev/window@0.5.1-0.1.4`
 package smoke artifacts; keep the MoUI Showcase
 `linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
-application-level evidence. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic
-evidence when a Vulkan/WGPU stack is configured.
+application-level observation. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic
+observation when a Vulkan/WGPU stack is configured.
 
 `examples/showcase/linux_skia` and `examples/markdown_editor/linux_skia` select
 this provider for the mainline Showcase and editing workflow. Configure real
@@ -664,7 +657,7 @@ Remaining Linux gaps stay visible in `backend/linux.readiness()`:
   remain the Preview Ready path for those behaviors.
 - Linux clipboard, file-dialog, text-file, open URL, text-input/IME request, and
   file drag/drop host surfaces are implemented, but passed platform status still
-  requires matching-host Wayland/desktop-service evidence rather than package
+  requires matching-host Wayland/desktop-service observation rather than package
   preflight alone.
 - The fontconfig/HarfBuzz/FreeType native provider remains a scaffold and relies
   on the composed Moon Cosmic fallback for actual glyph data.

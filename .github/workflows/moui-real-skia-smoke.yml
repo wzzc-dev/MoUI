@@ -32,14 +32,14 @@ jobs:
 
       - name: Run macOS real Skia smoke
         run: |
-          mkdir -p artifacts/platform-evidence/macos artifacts/example-smoke/macos
+          mkdir -p artifacts/platform-observation/macos artifacts/example-smoke/macos
           args=(
-            --smoke-log artifacts/platform-evidence/macos/skia-renderer-smoke.log
+            --smoke-log artifacts/platform-observation/macos/skia-renderer-smoke.log
           )
           if [[ "${{ inputs.run_showcase_smoke }}" == "true" || "${{ inputs.run_markdown_smoke }}" == "true" ]]; then
             args+=(
               --run-showcase-smoke
-              --showcase-log artifacts/platform-evidence/macos/showcase-macos-skia-first-frame.log
+              --showcase-log artifacts/platform-observation/macos/showcase-macos-skia-first-frame.log
             )
           fi
           if [[ "${{ inputs.run_markdown_smoke }}" == "true" ]]; then
@@ -50,12 +50,12 @@ jobs:
           fi
           sh scripts/macos-skia-renderer-smoke.sh "${args[@]}"
 
-      - name: Upload macOS real Skia smoke evidence
+      - name: Upload macOS real Skia smoke log
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: moui-macos-real-skia-smoke
           path: |
-            artifacts/platform-evidence/macos/
+            artifacts/platform-observation/macos/
             artifacts/example-smoke/macos/
           if-no-files-found: warn

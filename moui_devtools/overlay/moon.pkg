@@ -1,0 +1,9 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui_devtools" @devtools,
+}
+
+options(
+  targets: { },
+)

@@ -6,11 +6,11 @@ pub(all) struct HostCapabilitySummary {
   input : HostInputCapabilities
   window_lifecycle : Bool
   multi_window : Bool
-  text_input_ready : Bool
-  ime_ready : Bool
-  drag_drop_ready : Bool
+  text_input_available : Bool
+  ime_available : Bool
+  drag_drop_available : Bool
   async_services : Bool
-  native_accessibility_ready : Bool
+  native_accessibility_available : Bool
   web_view : HostWebViewCapabilities
   description : String
 } derive(Eq, Debug, ToJson)
@@ -23,11 +23,11 @@ pub fn HostCapabilitySummary::new(
   input? : HostInputCapabilities = HostInputCapabilities::none(),
   window_lifecycle? : Bool = false,
   multi_window? : Bool = false,
-  text_input_ready? : Bool = input.text_input,
-  ime_ready? : Bool = input.ime,
-  drag_drop_ready? : Bool = input.drag_drop,
+  text_input_available? : Bool = input.text_input,
+  ime_available? : Bool = input.ime,
+  drag_drop_available? : Bool = input.drag_drop,
   async_services? : Bool = false,
-  native_accessibility_ready? : Bool = false,
+  native_accessibility_available? : Bool = false,
   web_view? : HostWebViewCapabilities = HostWebViewCapabilities::unavailable(),
   description? : String = "",
 ) -> HostCapabilitySummary {
@@ -38,11 +38,11 @@ pub fn HostCapabilitySummary::new(
     input,
     window_lifecycle,
     multi_window,
-    text_input_ready,
-    ime_ready,
-    drag_drop_ready,
+    text_input_available,
+    ime_available,
+    drag_drop_available,
     async_services,
-    native_accessibility_ready,
+    native_accessibility_available,
     web_view,
     description,
   }
@@ -56,11 +56,11 @@ pub fn HostCapabilitySummary::from_contracts(
   label? : String = info.backend.label(),
   window_lifecycle? : Bool = true,
   multi_window? : Bool = false,
-  text_input_ready? : Bool = input.text_input,
-  ime_ready? : Bool = input.ime,
-  drag_drop_ready? : Bool = input.drag_drop,
+  text_input_available? : Bool = input.text_input,
+  ime_available? : Bool = input.ime,
+  drag_drop_available? : Bool = input.drag_drop,
   async_services? : Bool = false,
-  native_accessibility_ready? : Bool = false,
+  native_accessibility_available? : Bool = false,
   web_view? : HostWebViewCapabilities = HostWebViewCapabilities::unavailable(),
   description? : String = info.description,
 ) -> HostCapabilitySummary {
@@ -71,11 +71,11 @@ pub fn HostCapabilitySummary::from_contracts(
     input~,
     window_lifecycle~,
     multi_window~,
-    text_input_ready~,
-    ime_ready~,
-    drag_drop_ready~,
+    text_input_available~,
+    ime_available~,
+    drag_drop_available~,
     async_services~,
-    native_accessibility_ready~,
+    native_accessibility_available~,
     web_view~,
     description~,
   )
@@ -143,16 +143,16 @@ pub fn HostCapabilitySummary::input_count(self : HostCapabilitySummary) -> Int {
   bool_score(self.input.scroll) +
   bool_score(self.input.keyboard) +
   bool_score(self.input.focus) +
-  bool_score(self.text_input_ready) +
-  bool_score(self.ime_ready) +
-  bool_score(self.drag_drop_ready)
+  bool_score(self.text_input_available) +
+  bool_score(self.ime_available) +
+  bool_score(self.drag_drop_available)
 }
 
 ///|
 pub fn HostCapabilitySummary::preflight_fields(
   self : HostCapabilitySummary,
 ) -> String {
-  "host=\{self.label}; host_services=\{host_capability_label_list(self.services.enabled_labels())}; host_input=\{host_capability_label_list(self.input.enabled_labels())}; clipboard=\{host_capability_ready_label(self.services.clipboard)}; menu_service=\{host_capability_ready_label(self.services.menus)}; file_dialogs=\{host_capability_ready_label(self.services.file_dialogs)}; file_access=\{host_capability_ready_label(self.services.file_access)}; open_url=\{host_capability_ready_label(self.services.open_url)}; system_theme=\{host_capability_ready_label(self.services.system_theme)}; async_services=\{host_capability_ready_label(self.async_services)}; window_lifecycle=\{host_capability_ready_label(self.window_lifecycle)}; multi_window=\{host_capability_ready_label(self.multi_window)}; text_input=\{host_capability_ready_label(self.text_input_ready)}; ime=\{host_capability_ready_label(self.ime_ready)}; drag_drop=\{host_capability_ready_label(self.drag_drop_ready)}; native_context_menu=\{host_capability_ready_label(self.services.menus)}; host_modal=\{host_capability_ready_label(self.services.file_dialogs)}; native_accessibility=\{host_capability_ready_label(self.native_accessibility_ready)}; web_view=\{host_capability_ready_label(self.web_view.available)}"
+  "host=\{self.label}; host_services=\{host_capability_label_list(self.services.enabled_labels())}; host_input=\{host_capability_label_list(self.input.enabled_labels())}; clipboard=\{host_capability_available_label(self.services.clipboard)}; menu_service=\{host_capability_available_label(self.services.menus)}; file_dialogs=\{host_capability_available_label(self.services.file_dialogs)}; file_access=\{host_capability_available_label(self.services.file_access)}; open_url=\{host_capability_available_label(self.services.open_url)}; system_theme=\{host_capability_available_label(self.services.system_theme)}; async_services=\{host_capability_available_label(self.async_services)}; window_lifecycle=\{host_capability_available_label(self.window_lifecycle)}; multi_window=\{host_capability_available_label(self.multi_window)}; text_input=\{host_capability_available_label(self.text_input_available)}; ime=\{host_capability_available_label(self.ime_available)}; drag_drop=\{host_capability_available_label(self.drag_drop_available)}; native_context_menu=\{host_capability_available_label(self.services.menus)}; host_modal=\{host_capability_available_label(self.services.file_dialogs)}; native_accessibility=\{host_capability_available_label(self.native_accessibility_available)}; web_view=\{host_capability_available_label(self.web_view.available)}"
 }
 
 ///|
@@ -241,9 +241,9 @@ fn host_capability_label_list(labels : Array[String]) -> String {
 }
 
 ///|
-fn host_capability_ready_label(value : Bool) -> String {
+fn host_capability_available_label(value : Bool) -> String {
   if value {
-    "ready"
+    "available"
   } else {
     "gap"
   }

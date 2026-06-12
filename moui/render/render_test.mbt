@@ -2,14 +2,14 @@
 test "renderer backend info records unified renderer capability" {
   let info = @render.RendererBackendInfo::new(
     backend=@render.RendererBackendKind::WebGpuWasm,
-    status=@render.RendererCapabilityStatus::Ready,
+    status=@render.RendererCapabilityStatus::Supported,
     can_render=true,
     can_resize=true,
     owns_surface=false,
     description="wasm-gc browser WebGPU host imports",
   )
   assert_true(info.backend == @render.RendererBackendKind::WebGpuWasm)
-  assert_true(info.status == @render.RendererCapabilityStatus::Ready)
+  assert_true(info.status == @render.RendererCapabilityStatus::Supported)
   inspect(info.can_render, content="true")
   inspect(info.can_resize, content="true")
 }

@@ -67,11 +67,11 @@ pub fn linux_capability_summary(
     label="Linux host",
     window_lifecycle=true,
     multi_window=true,
-    text_input_ready=true,
-    ime_ready=true,
-    drag_drop_ready=true,
+    text_input_available=true,
+    ime_available=true,
+    drag_drop_available=true,
     async_services=false,
-    native_accessibility_ready=backend_info().accessibility.native_binding_ready,
+    native_accessibility_available=backend_info().accessibility.native_platform_bridge_available,
     web_view=linux_webview_capabilities(),
     description="Wayland host summary with renderer/window readiness, Linux clipboard/file dialog/text-file/open URL services, text-input/IME requests, file drag/drop, and explicit menu/AT-SPI gaps.",
   )
@@ -83,10 +83,10 @@ pub fn readiness() -> LinuxBackendReadiness {
     ready: true,
     blocked_by: [
       "Linux native menu and AT-SPI bindings are not Preview Ready yet", "Linux native fontconfig/HarfBuzz/FreeType provider remains a scaffold and composes with Moon Cosmic fallback",
-      "Linux Preview Ready runtime status still requires matching-host Wayland/Skia evidence artifacts",
+      "Linux Preview Ready runtime status still requires matching-host Wayland/Skia observation artifacts",
     ],
     next_steps: [
-      "record matching-host Linux Showcase and Markdown Editor Skia first-frame evidence",
+      "record matching-host Linux Showcase and Markdown Editor Skia first-frame observation",
       "keep native menu and AT-SPI as documented follow-up work with app/view fallbacks",
       "replace the fontconfig native text stub with a real fontconfig + HarfBuzz + FreeType provider",
     ],
@@ -101,7 +101,7 @@ pub fn backend_info() -> LinuxBackendInfo {
       description="Linux Wayland window host with renderer providers",
     ),
     window_backend_available: true,
-    renderer_ready: true,
+    renderer_available: true,
     capabilities: capability_matrix(),
     accessibility: linux_accessibility_bridge_info(),
     services: service_capabilities(),
@@ -114,9 +114,9 @@ pub fn backend_info() -> LinuxBackendInfo {
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo {
   {
     kind: @host.NativeAccessibilityBridgeKind::ATSPI,
-    contract_ready: true,
-    native_binding_ready: false,
-    action_roundtrip_ready: true,
+    semantics_bridge_available: true,
+    native_platform_bridge_available: false,
+    action_dispatch_available: true,
     description: "Linux exposes an AT-SPI accessibility bridge contract over the shared semantics tree; real AT-SPI provider binding is still a backend follow-up.",
   }
 }

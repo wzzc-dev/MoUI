@@ -1,6 +1,6 @@
 pub(all) struct MacosBackendInfo {
   host_info : @host.HostAppInfo
-  renderer_ready : Bool
+  renderer_available : Bool
   accessibility : MacosAccessibilityBridgeInfo
   description : String
 } derive(Eq, Debug, ToJson)
@@ -8,20 +8,24 @@ pub(all) struct MacosBackendInfo {
 ///|
 pub(all) struct MacosAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
-  contract_ready : Bool
-  native_binding_ready : Bool
-  action_roundtrip_ready : Bool
+  semantics_bridge_available : Bool
+  native_platform_bridge_available : Bool
+  action_dispatch_available : Bool
   description : String
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub struct MacosHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
-  priv exit_after_first_present : Bool
-  priv native_ime_runtime_evidence : Bool
   priv event_sources : @host.HostPlatformEventSources?
   priv web_view_commands : @host.HostWebViewCommandQueue?
   priv web_view_events : @host.HostWebViewEventSource?
+}
+
+///|
+pub struct MacosHostSmokeOptions {
+  priv first_frame_smoke_auto_exit : Bool
+  priv native_ime_runtime_smoke : Bool
 }
 
 ///|
@@ -51,12 +55,12 @@ struct MacosApp {
   web_view_events : @host.HostWebViewEventSource?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
-  mut exit_after_first_present : Bool
-  native_ime_runtime_evidence : Bool
-  mut native_ime_runtime_evidence_done : Bool
-  mut native_ime_runtime_evidence_phase : Int
-  mut native_ime_runtime_evidence_wait_redraws : Int
-  mut native_ime_runtime_evidence_before_commit_text : String
+  mut first_frame_smoke_auto_exit : Bool
+  native_ime_runtime_smoke : Bool
+  mut native_ime_runtime_smoke_done : Bool
+  mut native_ime_runtime_smoke_phase : Int
+  mut native_ime_runtime_smoke_wait_redraws : Int
+  mut native_ime_runtime_smoke_before_commit_text : String
 }
 
 ///|
@@ -75,20 +79,24 @@ priv struct MacosWindowPlatformSlots {
 ///|
 pub fn MacosHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
-  exit_after_first_present? : Bool = false,
-  native_ime_runtime_evidence? : Bool = false,
   event_sources? : @host.HostPlatformEventSources? = None,
   web_view_commands? : @host.HostWebViewCommandQueue? = None,
   web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> MacosHostAppOptions {
   {
     scene_resolver,
-    exit_after_first_present,
-    native_ime_runtime_evidence,
     event_sources,
     web_view_commands,
     web_view_events,
   }
+}
+
+///|
+pub fn MacosHostSmokeOptions::new(
+  first_frame_smoke_auto_exit? : Bool = false,
+  native_ime_runtime_smoke? : Bool = false,
+) -> MacosHostSmokeOptions {
+  { first_frame_smoke_auto_exit, native_ime_runtime_smoke }
 }
 
 ///|

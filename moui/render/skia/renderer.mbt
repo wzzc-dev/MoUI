@@ -76,7 +76,7 @@ pub fn backend_info() -> @render.RendererBackendInfo {
   @render.RendererBackendInfo::new(
     backend=@render.RendererBackendKind::SkiaRasterNative,
     status=if available {
-      @render.RendererCapabilityStatus::Ready
+      @render.RendererCapabilityStatus::Supported
     } else {
       @render.RendererCapabilityStatus::Unavailable
     },

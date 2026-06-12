@@ -79,8 +79,8 @@ if (!showcaseTarget?.compiledWasmExports?.includes("web_dispatch_event")) {
   console.error("valid web runtime handoff fixture: manifest must record compiled wasm exports");
   process.exit(1);
 }
-if (!validManifest.evidenceBoundary.includes("not browser WebGPU")) {
-  console.error("valid web runtime handoff fixture: manifest must keep evidence boundary explicit");
+if (!validManifest.observationBoundary.includes("not browser WebGPU")) {
+  console.error("valid web runtime handoff fixture: manifest must keep observation boundary explicit");
   process.exit(1);
 }
 

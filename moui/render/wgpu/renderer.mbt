@@ -7,7 +7,7 @@ pub struct WgpuRenderer {
 pub fn backend_info() -> @render.RendererBackendInfo {
   @render.RendererBackendInfo::new(
     backend=@render.RendererBackendKind::NativeWgpu,
-    status=@render.RendererCapabilityStatus::Ready,
+    status=@render.RendererCapabilityStatus::Supported,
     can_render=true,
     can_resize=true,
     owns_surface=false,

@@ -822,7 +822,7 @@ fn renderer_smoke_commands(local_png_path : String) -> Array[@core.DrawCommand] 
 }
 
 ///|
-fn renderer_proof_pixel_commands() -> Array[@core.DrawCommand] {
+fn renderer_diagnostic_pixel_commands() -> Array[@core.DrawCommand] {
   [
     @core.DrawCommand::Clear(@core.Color::white()),
     @core.DrawCommand::FillRoundedRectBrush(
@@ -890,7 +890,7 @@ fn renderer_proof_pixel_commands() -> Array[@core.DrawCommand] {
 }
 
 ///|
-fn run_renderer_proof_pixel_smoke() -> Unit {
+fn run_renderer_diagnostic_pixel_smoke() -> Unit {
   let captured : Ref[@skia_renderer.SkiaPixelFrame?] = Ref(None)
   let target = @skia_renderer.SkiaPresentTarget::new(
     description="MoUI Skia renderer smoke pixel presenter",
@@ -915,7 +915,7 @@ fn run_renderer_proof_pixel_smoke() -> Unit {
   guard renderer_result is Ok(renderer) else {
     fail_smoke("failed to create MoUI Skia renderer smoke pixel renderer")
   }
-  renderer.render(renderer_proof_pixel_commands()) catch {
+  renderer.render(renderer_diagnostic_pixel_commands()) catch {
     err =>
       fail_smoke(
         "failed to render MoUI Skia renderer smoke pixels: \{err.message()}",
@@ -1002,7 +1002,7 @@ fn run_gpu_metal_renderer_smoke() -> Unit {
       if !renderer.surface_is_gpu() {
         fail_smoke("MoUI Skia GPU Metal smoke did not create a GPU surface")
       }
-      renderer.render(renderer_proof_pixel_commands()) catch {
+      renderer.render(renderer_diagnostic_pixel_commands()) catch {
         err =>
           fail_smoke(
             "failed to render MoUI Skia GPU Metal smoke frame: \{err.message()}",
@@ -1274,7 +1274,7 @@ fn main {
     run_gpu_metal_renderer_smoke()
   }
 
-  run_renderer_proof_pixel_smoke()
+  run_renderer_diagnostic_pixel_smoke()
 
   let local_png_path = smoke_temp_path(
     "moui-skia-renderer-smoke-local-image.png",

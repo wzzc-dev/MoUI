@@ -3,7 +3,7 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
   let info = backend_info()
   assert_true(info.host_info.backend == @host.HostBackendKind::Native)
   inspect(info.window_backend_available, content="true")
-  inspect(info.renderer_ready, content="true")
+  inspect(info.renderer_available, content="true")
   inspect(info.capabilities.window, content="true")
   inspect(info.capabilities.renderer, content="true")
   inspect(info.capabilities.titlebar, content="true")
@@ -14,8 +14,8 @@ test "linux backend reports Wayland renderer readiness with explicit gaps" {
   inspect(info.capabilities.scale_factor, content="true")
   inspect(info.capabilities.accessibility, content="false")
   inspect(info.accessibility.kind.label(), content="at-spi")
-  inspect(info.accessibility.contract_ready, content="true")
-  inspect(info.accessibility.native_binding_ready, content="false")
+  inspect(info.accessibility.semantics_bridge_available, content="true")
+  inspect(info.accessibility.native_platform_bridge_available, content="false")
   inspect(info.services.clipboard, content="true")
   inspect(info.services.file_dialogs, content="true")
   inspect(info.services.file_access, content="true")
@@ -209,9 +209,9 @@ test "linux capability summary exposes known service gaps" {
   inspect(summary.services.menus, content="false")
   inspect(summary.service_count(), content="5")
   inspect(summary.input_count(), content="7")
-  inspect(summary.text_input_ready, content="true")
-  inspect(summary.ime_ready, content="true")
-  inspect(summary.drag_drop_ready, content="true")
+  inspect(summary.text_input_available, content="true")
+  inspect(summary.ime_available, content="true")
+  inspect(summary.drag_drop_available, content="true")
   inspect(summary.has_required_app_basics(), content="true")
 }
 
@@ -349,7 +349,7 @@ test "linux scaffold exposes host contracts without owning a surface" {
 test "linux host options construct without renderer dependencies" {
   let options = LinuxHostAppOptions::new()
   let _ = options
-  assert_true(backend_info().renderer_ready)
+  assert_true(backend_info().renderer_available)
 }
 
 ///|

@@ -12,6 +12,8 @@ fn guidance_include_rules() -> Array[TextRule] {
     { path: "docs/testing.md", token: "Smoke" },
     { path: "docs/testing.md", token: "sh scripts/dev-check.sh" },
     { path: "docs/testing.md", token: "moon check" },
+    { path: "docs/testing.md", token: "moui_tester" },
+    { path: "docs/testing.md", token: "moui_devtools" },
     {
       path: "docs/testing.md",
       token: "moon build examples/showcase/web_wasm --target wasm-gc",
@@ -62,6 +64,14 @@ fn guidance_include_rules() -> Array[TextRule] {
     },
     {
       path: "scripts/dev-check.sh",
+      token: "moon test moui_tester --target native",
+    },
+    {
+      path: "scripts/dev-check.sh",
+      token: "moon test moui_devtools --target native",
+    },
+    {
+      path: "scripts/dev-check.sh",
       token: "moon build examples/showcase/web_wasm --target wasm-gc",
     },
     {
@@ -100,13 +110,13 @@ fn guidance_include_rules() -> Array[TextRule] {
 }
 
 ///|
-fn stale_renderer_proof_token() -> String {
-  "renderer" + "-" + "proof"
+fn stale_legacy_renderer_marker() -> String {
+  "renderer" + "-" + "pro" + "of"
 }
 
 ///|
-fn stale_platform_runtime_evidence_token() -> String {
-  "platform" + "-" + "runtime" + "-" + "evidence"
+fn stale_platform_runtime_manifest_token() -> String {
+  "platform" + "-" + "runtime" + "-" + "evi" + "dence"
 }
 
 ///|
@@ -115,22 +125,37 @@ fn stale_checked_conformance_artifacts_script() -> String {
 }
 
 ///|
-fn stale_renderer_proof_manifest_script(prefix : String) -> String {
-  prefix + "-" + stale_renderer_proof_token() + "-" + "manifest.mjs"
+fn stale_legacy_renderer_manifest_script(prefix : String) -> String {
+  prefix + "-" + stale_legacy_renderer_marker() + "-" + "manifest.mjs"
 }
 
 ///|
-fn stale_platform_evidence_manifest_script(prefix : String) -> String {
-  prefix + "-" + "platform" + "-" + "evidence" + "-" + "manifest.mjs"
+fn stale_platform_manifest_script(prefix : String) -> String {
+  prefix + "-" + "platform" + "-" + "evi" + "dence" + "-" + "manifest.mjs"
 }
 
 ///|
-fn stale_web_renderer_proof_manifest_script() -> String {
+fn stale_native_ime_runtime_manifest_token() -> String {
+  "native" + "_" + "ime" + "_" + "runtime" + "_" + "evi" + "dence"
+}
+
+///|
+fn stale_macos_native_ime_manifest_env() -> String {
+  "MOUI" + "_" + "MACOS" + "_" + "NATIVE" + "_" + "IME" + "_" + "EVI" + "DENCE"
+}
+
+///|
+fn stale_first_frame_flag_token() -> String {
+  "exit" + "_" + "after" + "_" + "first" + "_" + "present"
+}
+
+///|
+fn stale_legacy_web_renderer_manifest_script() -> String {
   "record" +
   "-" +
   "web" +
   "-" +
-  stale_renderer_proof_token() +
+  stale_legacy_renderer_marker() +
   "-" +
   "manifest.mjs"
 }
@@ -139,26 +164,34 @@ fn stale_web_renderer_proof_manifest_script() -> String {
 fn guidance_absent_rules() -> Array[TextRule] {
   [
     { path: ".gitignore", token: "!artifacts/conformance/" },
+    { path: "moui/backend/macos/macos_backend.mbt", token: stale_native_ime_runtime_manifest_token() },
+    { path: "moui/backend/macos/macos_service_host.m", token: stale_macos_native_ime_manifest_env() },
+    { path: "moui/backend/macos/macos_backend.mbt", token: "contract" + "_" + "ready" },
+    { path: "moui/backend/macos/macos_backend.mbt", token: "native" + "_" + "binding" + "_" + "ready" },
+    { path: "moui/backend/macos/macos_backend.mbt", token: "action" + "_" + "roundtrip" + "_" + "ready" },
+    { path: "moui/backend/macos/macos_backend.mbt", token: stale_first_frame_flag_token() },
+    { path: "moui/render/capabilities.mbt", token: "RendererFeatureStatus::" + "Ready" },
+    { path: "moui/render/renderer.mbt", token: "RendererCapabilityStatus::" + "Ready" },
     {
       path: ".github/workflows/ci.yml",
-      token: stale_renderer_proof_token() + "-" + "wgpu-native",
+      token: stale_legacy_renderer_marker() + "-" + "wgpu-native",
     },
     {
       path: ".github/workflows/ci.yml",
-      token: stale_renderer_proof_token() + "-" + "skia-native",
+      token: stale_legacy_renderer_marker() + "-" + "skia-native",
     },
     {
       path: ".github/workflows/ci.yml",
-      token: stale_renderer_proof_token() + "-" + "summary",
+      token: stale_legacy_renderer_marker() + "-" + "summary",
     },
     { path: ".github/workflows/ci.yml", token: "web-runtime-presentation:" },
     {
       path: ".github/workflows/ci.yml",
-      token: "macos" + "-" + stale_platform_runtime_evidence_token(),
+      token: "macos" + "-" + stale_platform_runtime_manifest_token(),
     },
     {
       path: ".github/workflows/ci.yml",
-      token: "run_macos_platform_runtime_evidence",
+      token: "run" + "_" + "macos" + "_" + "platform" + "_" + "runtime" + "_" + "evi" + "dence",
     },
     {
       path: "scripts/dev-check.sh",
@@ -166,88 +199,88 @@ fn guidance_absent_rules() -> Array[TextRule] {
     },
     {
       path: "scripts/dev-check.sh",
-      token: stale_renderer_proof_manifest_script("validate"),
+      token: stale_legacy_renderer_manifest_script("validate"),
     },
     {
       path: "scripts/dev-check.sh",
-      token: stale_renderer_proof_manifest_script("record"),
+      token: stale_legacy_renderer_manifest_script("record"),
     },
     {
       path: "scripts/dev-check.sh",
-      token: stale_web_renderer_proof_manifest_script(),
+      token: stale_legacy_web_renderer_manifest_script(),
     },
     {
       path: "scripts/dev-check.sh",
-      token: stale_platform_evidence_manifest_script("validate"),
+      token: stale_platform_manifest_script("validate"),
     },
     {
       path: "scripts/dev-check.sh",
-      token: stale_platform_evidence_manifest_script("record"),
+      token: stale_platform_manifest_script("record"),
     },
     {
       path: "scripts/ci-web-runtime-presentation.sh",
-      token: stale_web_renderer_proof_manifest_script(),
+      token: stale_legacy_web_renderer_manifest_script(),
     },
     {
       path: "scripts/ci-web-runtime-presentation.sh",
-      token: stale_platform_evidence_manifest_script("record"),
+      token: stale_platform_manifest_script("record"),
     },
     {
       path: "scripts/ci-web-runtime-presentation.sh",
-      token: stale_platform_evidence_manifest_script("validate"),
+      token: stale_platform_manifest_script("validate"),
     },
     {
       path: "README.md",
-      token: stale_platform_runtime_evidence_token() + ".json",
+      token: stale_platform_runtime_manifest_token() + ".json",
     },
-    { path: "README.md", token: stale_renderer_proof_token() },
+    { path: "README.md", token: stale_legacy_renderer_marker() },
     {
       path: "moui/README.mbt.md",
-      token: stale_platform_runtime_evidence_token() + ".json",
+      token: stale_platform_runtime_manifest_token() + ".json",
     },
-    { path: "moui/README.mbt.md", token: stale_renderer_proof_token() },
+    { path: "moui/README.mbt.md", token: stale_legacy_renderer_marker() },
     {
       path: "docs/testing.md",
       token: stale_checked_conformance_artifacts_script(),
     },
     {
       path: "docs/testing.md",
-      token: stale_platform_runtime_evidence_token() + ".json",
+      token: stale_platform_runtime_manifest_token() + ".json",
     },
     {
       path: "docs/testing.md",
-      token: stale_renderer_proof_manifest_script("validate"),
+      token: stale_legacy_renderer_manifest_script("validate"),
     },
     {
       path: "docs/testing.md",
-      token: stale_renderer_proof_manifest_script("record"),
+      token: stale_legacy_renderer_manifest_script("record"),
     },
     {
       path: "docs/testing.md",
-      token: stale_platform_evidence_manifest_script("record"),
+      token: stale_platform_manifest_script("record"),
     },
     {
       path: "docs/testing.md",
-      token: stale_renderer_proof_token() + "-" + "summary",
+      token: stale_legacy_renderer_marker() + "-" + "summary",
     },
     {
       path: "docs/release-readiness.md",
-      token: stale_platform_runtime_evidence_token() + ".json",
+      token: stale_platform_runtime_manifest_token() + ".json",
     },
-    { path: "docs/release-readiness.md", token: stale_renderer_proof_token() },
+    { path: "docs/release-readiness.md", token: stale_legacy_renderer_marker() },
     {
       path: "AGENTS.md",
-      token: stale_platform_runtime_evidence_token() + ".json",
+      token: stale_platform_runtime_manifest_token() + ".json",
     },
-    { path: "AGENTS.md", token: stale_renderer_proof_token() },
+    { path: "AGENTS.md", token: stale_legacy_renderer_marker() },
     { path: "AGENTS.md", token: stale_checked_conformance_artifacts_script() },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
-      token: stale_platform_runtime_evidence_token() + ".json",
+      token: stale_platform_runtime_manifest_token() + ".json",
     },
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
-      token: stale_renderer_proof_token(),
+      token: stale_legacy_renderer_marker(),
     },
   ]
 }

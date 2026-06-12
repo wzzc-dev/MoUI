@@ -1147,8 +1147,8 @@ test "showcase host capability card surfaces web ime readiness" {
       clipboard=false,
       drag_drop=false,
     ),
-    text_input_ready=true,
-    ime_ready=true,
+    text_input_available=true,
+    ime_available=true,
   )
   let runtime = @app.ShowcaseModel::new()
     .with_host_summary(summary)

@@ -11,19 +11,37 @@ pub fn backend_info() -> LinuxBackendInfo
 
 pub fn capability_matrix() -> LinuxBackendCapabilities
 
+pub fn dispose_linux_platform_views(@wzzc-dev/window/linux.Window) -> Unit
+
+pub fn drain_linux_webview_commands(@wzzc-dev/window/linux.Window, @host.HostWebViewCommandQueue) -> Int
+
+pub fn install_linux_webview_event_dispatcher((UInt64, String, @wzzc-dev/moui/core.WebViewEvent) -> Unit) -> Unit
+
 pub fn linux_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> @host.NativeAccessibilityBridge
 
 pub fn linux_accessibility_bridge_info() -> LinuxAccessibilityBridgeInfo
 
+pub fn linux_adjust_host_event_for_client_decorations(@host.HostEvent, LinuxClientDecorationState) -> @host.HostEvent?
+
 pub fn linux_capability_summary(services? : @host.HostServiceCapabilities) -> @host.HostCapabilitySummary
+
+pub fn linux_client_decorated_commands(Array[@wzzc-dev/moui/core.DrawCommand], title~ : String, metrics~ : @host.HostSurfaceMetrics, decorations~ : LinuxClientDecorationState) -> Array[@wzzc-dev/moui/core.DrawCommand]
+
+pub fn linux_content_metrics_for_surface(@host.HostSurfaceMetrics, LinuxClientDecorationState) -> @host.HostSurfaceMetrics
 
 pub fn linux_input_capabilities() -> @host.HostInputCapabilities
 
-pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse) -> @host.HostServiceBridge
+pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse) -> @host.HostServiceBridge
+
+pub fn linux_surface_metrics_for_content(@host.HostSurfaceMetrics, LinuxClientDecorationState) -> @host.HostSurfaceMetrics
+
+pub fn linux_webview_capabilities() -> @host.HostWebViewCapabilities
 
 pub fn readiness() -> LinuxBackendReadiness
 
 pub fn run_app_with_renderer_provider(String, @wzzc-dev/moui/core.AppRuntime, provider~ : LinuxRendererProvider, options? : LinuxHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
+pub fn run_app_with_renderer_provider_smoke(String, @wzzc-dev/moui/core.AppRuntime, provider~ : LinuxRendererProvider, options? : LinuxHostAppOptions, smoke_options? : LinuxHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub fn scaffold_input_host() -> @host.InputHostState
 
@@ -32,6 +50,8 @@ pub fn scaffold_service_bridge() -> @host.HostServiceBridge
 pub fn scaffold_surface_host(logical_width~ : Double, logical_height~ : Double, scale_factor? : Double) -> @host.SurfaceHostState
 
 pub fn service_capabilities() -> @host.HostServiceCapabilities
+
+pub fn sync_linux_platform_views(@wzzc-dev/window/linux.Window, @wzzc-dev/moui/core.DrawFrame, content_offset_y? : Double) -> Unit
 
 pub fn window_event_to_core(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
 
@@ -46,9 +66,9 @@ pub fn window_event_to_host_with_modifiers(@wzzc-dev/window/core.WindowEvent, @w
 // Types and methods
 pub(all) struct LinuxAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
-  contract_ready : Bool
-  native_binding_ready : Bool
-  action_roundtrip_ready : Bool
+  semantics_bridge_available : Bool
+  native_platform_bridge_available : Bool
+  action_dispatch_available : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -58,6 +78,7 @@ pub impl @wzzc-dev/window/linux.ApplicationHandler for LinuxApp
 pub(all) struct LinuxBackendCapabilities {
   window : Bool
   renderer : Bool
+  titlebar : Bool
   pointer : Bool
   keyboard : Bool
   text_input : Bool
@@ -71,7 +92,7 @@ pub(all) struct LinuxBackendCapabilities {
 pub(all) struct LinuxBackendInfo {
   host_info : @host.HostAppInfo
   window_backend_available : Bool
-  renderer_ready : Bool
+  renderer_available : Bool
   capabilities : LinuxBackendCapabilities
   accessibility : LinuxAccessibilityBridgeInfo
   services : @host.HostServiceCapabilities
@@ -85,16 +106,28 @@ pub(all) struct LinuxBackendReadiness {
   next_steps : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct LinuxClientDecorationState {
+  active : Bool
+  titlebar_height : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn LinuxClientDecorationState::new(active~ : Bool, titlebar_height? : Double) -> Self
+
 pub struct LinuxHostAppOptions {
   // private fields
 }
-pub fn LinuxHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, exit_after_first_present? : Bool) -> Self
+pub fn LinuxHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, web_view_commands? : @host.HostWebViewCommandQueue?, web_view_events? : @host.HostWebViewEventSource?) -> Self
+
+pub struct LinuxHostSmokeOptions {
+  // private fields
+}
+pub fn LinuxHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool) -> Self
 
 pub struct LinuxRendererProvider {
   // private fields
 }
-pub fn LinuxRendererProvider::new(create_renderer~ : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> Unit) -> Self
+pub fn LinuxRendererProvider::new(create_renderer~ : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/linux.Window, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
 
 // Type aliases
 
 // Traits
+

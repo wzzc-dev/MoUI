@@ -2,26 +2,35 @@
 pub struct LinuxSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
-  priv exit_after_first_present : Bool
   priv web_view_commands : @host.HostWebViewCommandQueue?
   priv web_view_events : @host.HostWebViewEventSource?
+}
+
+///|
+pub struct LinuxSkiaSmokeOptions {
+  priv first_frame_smoke_auto_exit : Bool
 }
 
 ///|
 pub fn LinuxSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
-  exit_after_first_present? : Bool = false,
   web_view_commands? : @host.HostWebViewCommandQueue? = None,
   web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> LinuxSkiaAppOptions {
   {
     scene_resolver,
     font_resolution,
-    exit_after_first_present,
     web_view_commands,
     web_view_events,
   }
+}
+
+///|
+pub fn LinuxSkiaSmokeOptions::new(
+  first_frame_smoke_auto_exit? : Bool = false,
+) -> LinuxSkiaSmokeOptions {
+  { first_frame_smoke_auto_exit, }
 }
 
 ///|
@@ -51,9 +60,36 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@linux_host.LinuxHostAppOptions::new(
       scene_resolver=options.scene_resolver,
-      exit_after_first_present=options.exit_after_first_present,
       web_view_commands=options.web_view_commands,
       web_view_events=options.web_view_events,
+    ),
+    window_requests~,
+  )
+}
+
+///|
+pub fn run_smoke_app_with_options(
+  title : String,
+  runtime : @core.AppRuntime,
+  options~ : LinuxSkiaAppOptions,
+  smoke_options? : LinuxSkiaSmokeOptions = LinuxSkiaSmokeOptions::new(),
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+) -> Unit {
+  if !linux_skia_provider_ready() {
+    println(linux_skia_unavailable_message())
+    return
+  }
+  @linux_host.run_app_with_renderer_provider_smoke(
+    title,
+    runtime,
+    provider=renderer_provider(options~),
+    options=@linux_host.LinuxHostAppOptions::new(
+      scene_resolver=options.scene_resolver,
+      web_view_commands=options.web_view_commands,
+      web_view_events=options.web_view_events,
+    ),
+    smoke_options=@linux_host.LinuxHostSmokeOptions::new(
+      first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
     ),
     window_requests~,
   )
@@ -85,7 +121,7 @@ pub fn linux_skia_provider_preflight_summary(
 ) -> String {
   let info = @skia_renderer.backend_info()
   let render_status = if linux_skia_provider_ready() {
-    "ready"
+    "available"
   } else {
     "unavailable"
   }
@@ -93,13 +129,8 @@ pub fn linux_skia_provider_preflight_summary(
     @skia_renderer.SkiaFontResolution::SystemFontMgr => "system-font-mgr"
     @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
   }
-  let first_frame = if options.exit_after_first_present {
-    "enabled"
-  } else {
-    "disabled"
-  }
   let host_preflight = @linux_host.linux_capability_summary().preflight_fields()
-  "Linux Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{linux_skia_presenter_description()}; first_frame_smoke=\{first_frame}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=matching-host pending; unavailable=\"\{linux_skia_unavailable_message()}\""
+  "Linux Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{linux_skia_presenter_description()}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=smoke log required; unavailable=\"\{linux_skia_unavailable_message()}\""
 }
 
 ///|

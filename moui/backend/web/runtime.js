@@ -15,7 +15,7 @@ export function createImageResourceChangeNotifier(callback, scheduleRedraw) {
   const schedule = typeof scheduleRedraw === "function" ? scheduleRedraw : () => {};
   return event => {
     try {
-      globalThis.__mouiWebRuntimeEvidence?.recordEvent?.({
+      globalThis.__mouiWebRuntimeObservation?.recordEvent?.({
         kind: 92,
         name: "image_resource_change",
         ...(event ?? {}),
@@ -23,7 +23,7 @@ export function createImageResourceChangeNotifier(callback, scheduleRedraw) {
       notify?.(event);
     } finally {
       schedule();
-      globalThis.__mouiWebRuntimeEvidence?.recordEvent?.({
+      globalThis.__mouiWebRuntimeObservation?.recordEvent?.({
         kind: 93,
         name: "image_repaint_request",
         source: event?.source ?? "",
@@ -60,11 +60,11 @@ export function createWebGpuImports(options = {}) {
       globalThis.console?.error?.("MoUI image resource notification failed", error);
     }
   };
-  const recordRuntimeEvidenceEvent = event => {
+  const recordRuntimeObservationEvent = event => {
     try {
-      globalThis.__mouiWebRuntimeEvidence?.recordEvent?.(event);
+      globalThis.__mouiWebRuntimeObservation?.recordEvent?.(event);
     } catch {
-      // Evidence recording is best-effort and must not affect rendering.
+      // Observation recording is best-effort and must not affect rendering.
     }
   };
   const textSelectionOptions = options.textSelection ?? {};
@@ -1530,7 +1530,7 @@ export function createWebGpuImports(options = {}) {
       pixelSummary,
     };
     if (wantsColorGlyph) {
-      recordRuntimeEvidenceEvent({
+      recordRuntimeObservationEvent({
         kind: 94,
         name: colorGlyph ? "text_color_glyph" : "text_emoji_glyph",
         text: cluster,
@@ -1863,7 +1863,7 @@ export function createWebGpuImports(options = {}) {
     const count = scope.textVertices.length / TEXT_STRIDE_FLOATS - startIndex;
     if (count > 0) pushRendererItem(renderer, { type: "text", start: startIndex, count });
     if (smokeRole === "emoji-zwj") {
-      recordRuntimeEvidenceEvent({
+      recordRuntimeObservationEvent({
         kind: 95,
         name: "text_grapheme_layout",
         text: value,
@@ -1875,7 +1875,7 @@ export function createWebGpuImports(options = {}) {
         codepoints: codepointsFor(value).map(codepointHex),
       });
     } else if (smokeRole === "bidi") {
-      recordRuntimeEvidenceEvent({
+      recordRuntimeObservationEvent({
         kind: 96,
         name: "text_bidi_layout",
         text: value,
@@ -1885,7 +1885,7 @@ export function createWebGpuImports(options = {}) {
       });
     } else if (smokeRole === "paragraph-line") {
       const match = value.match(/^Smoke wrap line (\d+)/);
-      recordRuntimeEvidenceEvent({
+      recordRuntimeObservationEvent({
         kind: 97,
         name: "text_paragraph_line",
         text: value,
@@ -1912,7 +1912,7 @@ export function createWebGpuImports(options = {}) {
         entry.loaded = true;
         entry.width = image.naturalWidth || image.width || 1;
         entry.height = image.naturalHeight || image.height || 1;
-        recordRuntimeEvidenceEvent({
+        recordRuntimeObservationEvent({
           kind: 90,
           name: "image_load",
           source: key,
@@ -1929,7 +1929,7 @@ export function createWebGpuImports(options = {}) {
       image.onerror = () => {
         entry.loaded = false;
         entry.failed = true;
-        recordRuntimeEvidenceEvent({
+        recordRuntimeObservationEvent({
           kind: 91,
           name: "image_error",
           source: key,
@@ -2555,7 +2555,7 @@ export function createWebGpuImports(options = {}) {
       const imageSource = stringValue(source);
       const rect = { x: Number(x), y: Number(y), width: Number(width), height: Number(height) };
       if (pushImageQuad(renderer, rect, imageSource, opacity, fit)) {
-        recordRuntimeEvidenceEvent({
+        recordRuntimeObservationEvent({
           kind: 99,
           name: "image_ready_frame",
           source: imageSource,
@@ -2565,7 +2565,7 @@ export function createWebGpuImports(options = {}) {
           height: rect.height,
         });
       } else {
-        recordRuntimeEvidenceEvent({
+        recordRuntimeObservationEvent({
           kind: 98,
           name: "image_placeholder_frame",
           source: imageSource,
@@ -2787,7 +2787,7 @@ export function createWebGpuImports(options = {}) {
       device.queue.submit([encoder.finish()]);
       syncTextSelectionLayer(renderer);
       renderer.presentCount += 1;
-      recordRuntimeEvidenceEvent({
+      recordRuntimeObservationEvent({
         kind: 100,
         name: "present_frame",
         frame: renderer.presentCount,

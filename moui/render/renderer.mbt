@@ -9,7 +9,7 @@ pub(all) enum RendererBackendKind {
 
 ///|
 pub(all) enum RendererCapabilityStatus {
-  Ready
+  Supported
   Unavailable
 } derive(Eq, Debug, ToJson)
 

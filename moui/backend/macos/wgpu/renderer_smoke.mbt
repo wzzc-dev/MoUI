@@ -1,6 +1,6 @@
 ///|
-pub fn run_renderer_proof_smoke() -> Unit raise @wgpu_mbt.WgpuError {
-  @wgpu_renderer.native_renderer_proof_smoke(
+pub fn run_renderer_smoke() -> Unit raise @wgpu_mbt.WgpuError {
+  @wgpu_renderer.native_renderer_smoke(
     platform_label="macos",
     text_engine=macos_text_engine(
       @wgpu_renderer.NativeTextEngineSetting::PlatformDefault,
@@ -40,18 +40,18 @@ fn assert_macos_wgpu_async_repaint_proof() -> Unit {
     window_id, renderer, completion_source,
   )
   if scheduled.loading_count < 1 || scheduled.scheduled_count < 1 {
-    abort("macOS WGPU proof async image was not scheduled")
+    abort("macOS WGPU smoke async image was not scheduled")
   }
   if completion_source.diagnostics().redraw_requested_count < 1 ||
     redraws.length() < 1 {
-    abort("macOS WGPU proof async image did not request repaint")
+    abort("macOS WGPU smoke async image did not request repaint")
   }
   match lifecycle.lookup(source) {
     Some(record) =>
       if record.status != @render.ImageResourceStatus::ImageReady {
-        abort("macOS WGPU proof async image did not become ready")
+        abort("macOS WGPU smoke async image did not become ready")
       }
-    None => abort("macOS WGPU proof async image record missing")
+    None => abort("macOS WGPU smoke async image record missing")
   }
 }
 

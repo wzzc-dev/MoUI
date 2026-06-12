@@ -9,6 +9,12 @@ import {
 // Values
 pub fn backend_info() -> MacosBackendInfo
 
+pub fn dispose_macos_platform_views(@wzzc-dev/window/macos.Window) -> Unit
+
+pub fn drain_macos_webview_commands(@wzzc-dev/window/macos.Window, @host.HostWebViewCommandQueue) -> Int
+
+pub fn install_macos_webview_event_dispatcher((UInt64, String, @wzzc-dev/moui/core.WebViewEvent) -> Unit) -> Unit
+
 pub fn macos_accessibility_bridge(root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> @host.NativeAccessibilityBridge
 
 pub fn macos_accessibility_bridge_info() -> MacosAccessibilityBridgeInfo
@@ -17,13 +23,19 @@ pub fn macos_capability_summary(services? : @host.HostServiceCapabilities) -> @h
 
 pub fn macos_input_capabilities() -> @host.HostInputCapabilities
 
-pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
+pub fn macos_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
 
 pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
+
+pub fn macos_webview_capabilities() -> @host.HostWebViewCapabilities
 
 pub fn run_app_with_renderer_provider(String, @wzzc-dev/moui/core.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub async fn run_app_with_renderer_provider_async_pump(String, @wzzc-dev/moui/core.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue, frame_interval_ms? : Int) -> Unit
+
+pub fn run_app_with_renderer_provider_smoke(String, @wzzc-dev/moui/core.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
+pub fn sync_macos_platform_views(@wzzc-dev/window/macos.Window, @wzzc-dev/moui/core.DrawFrame) -> Unit
 
 pub fn window_event_to_core(@wzzc-dev/window/core.WindowEvent, @wzzc-dev/moui/core.Point) -> @wzzc-dev/moui/core.AppEvent?
 
@@ -38,9 +50,9 @@ pub fn window_event_to_host_with_modifiers(@wzzc-dev/window/core.WindowEvent, @w
 // Types and methods
 pub(all) struct MacosAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
-  contract_ready : Bool
-  native_binding_ready : Bool
-  action_roundtrip_ready : Bool
+  semantics_bridge_available : Bool
+  native_platform_bridge_available : Bool
+  action_dispatch_available : Bool
   description : String
 } derive(Eq, ToJson, @debug.Debug)
 
@@ -49,7 +61,7 @@ pub impl @wzzc-dev/window/macos.ApplicationHandler for MacosApp
 
 pub(all) struct MacosBackendInfo {
   host_info : @host.HostAppInfo
-  renderer_ready : Bool
+  renderer_available : Bool
   accessibility : MacosAccessibilityBridgeInfo
   description : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -57,13 +69,19 @@ pub(all) struct MacosBackendInfo {
 pub struct MacosHostAppOptions {
   // private fields
 }
-pub fn MacosHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, exit_after_first_present? : Bool) -> Self
+pub fn MacosHostAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, event_sources? : @host.HostPlatformEventSources?, web_view_commands? : @host.HostWebViewCommandQueue?, web_view_events? : @host.HostWebViewEventSource?) -> Self
+
+pub struct MacosHostSmokeOptions {
+  // private fields
+}
+pub fn MacosHostSmokeOptions::new(first_frame_smoke_auto_exit? : Bool, native_ime_runtime_smoke? : Bool) -> Self
 
 pub struct MacosRendererProvider {
   // private fields
 }
-pub fn MacosRendererProvider::new(create_renderer~ : (@wzzc-dev/window/macos.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/macos.Window, @host.HostSurfaceMetrics) -> Unit) -> Self
+pub fn MacosRendererProvider::new(create_renderer~ : (@wzzc-dev/window/macos.Window, @host.HostSurfaceMetrics) -> @host.HostWindowRenderer?, sync_surface? : (@wzzc-dev/window/macos.Window, @host.HostSurfaceMetrics) -> Unit, image_loader? : @host.HostAsyncImageLoader?) -> Self
 
 // Type aliases
 
 // Traits
+

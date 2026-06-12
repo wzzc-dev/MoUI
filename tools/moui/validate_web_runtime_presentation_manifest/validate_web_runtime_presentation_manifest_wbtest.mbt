@@ -7,7 +7,7 @@ let valid_manifest =
   #|  "baseUrl": "http://127.0.0.1:18080",
   #|  "cdpUrl": "http://127.0.0.1:9223",
   #|  "overallStatus": "passed",
-  #|  "evidenceBoundary": "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
+  #|  "observationBoundary": "Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot observation for the named browser session; this does not claim cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
   #|  "browser": {
   #|    "product": "Chrome/148.0.7778.216",
   #|    "userAgent": "Mozilla/5.0 HeadlessChrome/148.0.0.0",
@@ -68,13 +68,13 @@ let valid_manifest =
   #|        "radialGradient": {
   #|          "required": true,
   #|          "passed": true,
-  #|          "evidence": ["center-mid-edge-pixels", "shader-payload"],
+  #|          "markers": ["center-mid-edge-pixels", "shader-payload"],
   #|          "matchedMarkers": 2
   #|        },
   #|        "colorEmojiPixels": {
   #|          "required": true,
   #|          "passed": true,
-  #|          "evidence": ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
+  #|          "markers": ["high-saturation-pixels", "glyph-or-raster", "font-metadata", "glyph-metadata"],
   #|          "matchedMarkers": 4,
   #|          "glyphHighSaturationPixels": 42,
   #|          "glyphAlphaPixels": 120,
@@ -99,7 +99,7 @@ let valid_manifest =
   #|        "zwjGrapheme": {
   #|          "required": true,
   #|          "passed": true,
-  #|          "evidence": ["single-grapheme-cluster", "no-interior-caret"],
+  #|          "markers": ["single-grapheme-cluster", "no-interior-caret"],
   #|          "matchedMarkers": 2,
   #|          "logicalClusters": 1,
   #|          "visualClusters": 1
@@ -107,7 +107,7 @@ let valid_manifest =
   #|        "bidiLayout": {
   #|          "required": true,
   #|          "passed": true,
-  #|          "evidence": ["visual-order"],
+  #|          "markers": ["visual-order"],
   #|          "matchedMarkers": 1,
   #|          "logicalClusters": ["A", "B", "C", " ", "\\u05d0", "\\u05d1", "\\u05d2"],
   #|          "visualClusters": ["A", "B", "C", " ", "\\u05d2", "\\u05d1", "\\u05d0"]
@@ -115,7 +115,7 @@ let valid_manifest =
   #|        "paragraphWrapping": {
   #|          "required": true,
   #|          "passed": true,
-  #|          "evidence": ["line-metrics", "later-line-pixels"],
+  #|          "markers": ["line-metrics", "later-line-pixels"],
   #|          "matchedMarkers": 2,
   #|          "paragraphLineCount": 3,
   #|          "paragraphRows": 3,
@@ -124,31 +124,31 @@ let valid_manifest =
   #|        "selectionRects": {
   #|          "required": true,
   #|          "passed": true,
-  #|          "evidence": ["selection-rects", "line-range"],
+  #|          "markers": ["selection-rects", "line-range"],
   #|          "matchedMarkers": 2
   #|        },
   #|        "graphemeEditing": {
   #|          "required": true,
   #|          "passed": true,
-  #|          "evidence": ["grapheme-boundaries", "edit-actions"],
+  #|          "markers": ["grapheme-boundaries", "edit-actions"],
   #|          "matchedMarkers": 2
   #|        },
   #|        "imeCandidateAnchor": {
   #|          "required": true,
   #|          "passed": true,
-  #|          "evidence": ["candidate-anchor", "surrounding-text"],
+  #|          "markers": ["candidate-anchor", "surrounding-text"],
   #|          "matchedMarkers": 2
   #|        },
   #|        "imeCompositionVisual": {
   #|          "required": true,
   #|          "passed": true,
-  #|          "evidence": ["composition-range", "preedit-pixels"],
+  #|          "markers": ["composition-range", "preedit-pixels"],
   #|          "matchedMarkers": 2
   #|        },
   #|        "asyncImageSecondFrame": {
   #|          "required": true,
   #|          "passed": true,
-  #|          "evidence": ["late-completion", "repaint-request", "second-frame-pixels"],
+  #|          "markers": ["late-completion", "repaint-request", "second-frame-pixels"],
   #|          "matchedMarkers": 3,
   #|          "eventIndexes": {
   #|            "placeholder": 4,
@@ -160,7 +160,7 @@ let valid_manifest =
   #|          }
   #|        }
   #|      },
-  #|      "evidenceEvents": [
+  #|      "observationEvents": [
   #|        { "kind": 10, "name": "resize" },
   #|        { "kind": 23, "name": "pointer_down" },
   #|        { "kind": 40, "name": "key_down" },
@@ -207,7 +207,7 @@ let valid_manifest =
   #|        "targetClosed": "yes"
   #|      },
   #|      "consoleErrors": [],
-  #|      "notes": ["browser evidence captured"]
+  #|      "notes": ["browser observation captured"]
   #|    }
   #|  ]
   #|}
@@ -236,14 +236,14 @@ test "rejects missing expected target" {
 }
 
 ///|
-test "rejects weak evidence boundary" {
+test "rejects weak observation boundary" {
   let manifest = valid_manifest.replace(
-    old="Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot evidence for the named browser session; this does not prove cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
+    old="Browser-local WebGPU, wasm app startup, canvas sizing, resize/input event-bridge, target close, and screenshot observation for the named browser session; this does not claim cross-browser compatibility, deterministic pixels, or native platform runtime behavior.",
     new="Browser smoke.",
   )
   inspect(
     validate_manifest_text(manifest).contains(
-      "evidenceBoundary must include 'WebGPU'",
+      "observationBoundary must include 'WebGPU'",
     ),
     content="true",
   )

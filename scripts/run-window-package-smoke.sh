@@ -17,7 +17,7 @@ editable window checkout.
 Set MOUI_WINDOW_PACKAGE_ZIP to use an explicit package zip. If the cache is
 missing, run moon update from the MoUI repository first.
 
-For macOS runtime evidence collection, set WINDOW_MOUI_MACOS_SMOKE_LOG_PATH to
+For macOS runtime observation collection, set WINDOW_MOUI_MACOS_SMOKE_LOG_PATH to
 the log file path expected by the window package smoke helper.
 EOF
 }

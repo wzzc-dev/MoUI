@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_tester"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn first_frame_step(title~ : String, @core.AppRuntime) -> TesterStepResult
+
+pub fn runtime_smoke_snapshot(title~ : String, @core.AppRuntime) -> RuntimeSmokeSnapshot
+
+// Errors
+
+// Types and methods
+pub(all) struct RuntimeSmokeSnapshot {
+  title : String
+  draw_command_count : Int
+  focused_text_input : Bool
+  text_input_text : String
+  inspector : @core.InspectorSnapshot
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TesterStepResult {
+  name : String
+  passed : Bool
+  detail : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TesterStepResult::fail(name~ : String, detail? : String) -> Self
+pub fn TesterStepResult::label(Self) -> String
+pub fn TesterStepResult::pass(name~ : String, detail? : String) -> Self
+
+// Type aliases
+
+// Traits
+

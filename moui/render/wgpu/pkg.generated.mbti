@@ -15,11 +15,15 @@ pub fn create_with_host_surface(@render.RendererSurfaceMetrics, HostWgpuSurface)
 
 pub fn create_with_host_surface_and_text_engine(@render.RendererSurfaceMetrics, HostWgpuSurface, text_engine~ : NativeTextEngine) -> WgpuRenderer raise @wgpu_mbt.WgpuError
 
+pub fn native_image_load_completion(String) -> @render.ImageResourceLoadCompletion
+
 pub fn native_platform_glyph_key(cache_key~ : String, payload~ : Bytes) -> NativeGlyphKey
 
 pub fn native_platform_text_engine(NativePlatformTextProvider) -> NativeTextEngine
 
 pub fn native_platform_text_engine_with_fallback(NativePlatformTextProvider, fallback~ : NativeTextEngine) -> NativeTextEngine
+
+pub fn native_renderer_smoke(platform_label~ : String, text_engine~ : NativeTextEngine) -> Unit raise @wgpu_mbt.WgpuError
 
 pub fn native_surface_contract() -> @render.WgpuSurfaceContract
 
@@ -69,9 +73,19 @@ pub(all) enum NativeRasterGlyphFormat {
   ColorRgba
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct NativeRendererSmokeFrame {
+  width : Int
+  height : Int
+  row_bytes : Int
+  pixels : Bytes
+  flip_y : Bool
+}
+
 pub struct NativeTextEngine {
   // private fields
 }
+pub fn NativeTextEngine::fallback_provider_id(Self) -> String
+pub fn NativeTextEngine::provider_id(Self) -> String
 
 pub(all) enum NativeTextEngineSetting {
   MoonCosmic
@@ -97,6 +111,7 @@ pub(all) struct SurfaceHostInfo {
 pub struct WgpuRenderer {
   // private fields
 }
+pub fn WgpuRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
 pub fn WgpuRenderer::backend_info(Self) -> @render.RendererBackendInfo
 pub fn WgpuRenderer::backend_kind(Self) -> @render.RendererBackendKind
 pub fn WgpuRenderer::dispose(Self) -> Unit
@@ -112,3 +127,4 @@ pub fn WgpuRenderer::unsupported_command_count(Self) -> Int
 // Type aliases
 
 // Traits
+

@@ -1,34 +1,34 @@
 #borrow(text)
-extern "C" fn macos_native_ime_evidence_set_marked_text(
+extern "C" fn macos_native_ime_smoke_set_marked_text(
   raw_content_view_handle : UInt64,
   text : Bytes,
   selected_location : Int,
   selected_length : Int,
-) -> Int = "moui_macos_native_ime_evidence_set_marked_text"
+) -> Int = "moui_macos_native_ime_smoke_set_marked_text"
 
 ///|
-extern "C" fn macos_native_ime_evidence_first_rect(
+extern "C" fn macos_native_ime_smoke_first_rect(
   raw_content_view_handle : UInt64,
   location : Int,
   length : Int,
-) -> Int = "moui_macos_native_ime_evidence_first_rect"
+) -> Int = "moui_macos_native_ime_smoke_first_rect"
 
 ///|
 #borrow(text)
-extern "C" fn macos_native_ime_evidence_insert_text(
+extern "C" fn macos_native_ime_smoke_insert_text(
   raw_content_view_handle : UInt64,
   text : Bytes,
-) -> Int = "moui_macos_native_ime_evidence_insert_text"
+) -> Int = "moui_macos_native_ime_smoke_insert_text"
 
 ///|
-let macos_native_ime_evidence_max_wait_redraws = 12
+let macos_native_ime_smoke_max_wait_redraws = 12
 
 ///|
-fn MacosApp::record_native_ime_runtime_evidence(
+fn MacosApp::record_native_ime_runtime_smoke(
   self : MacosApp,
   window_id : @host.HostWindowId,
 ) -> Bool {
-  if !self.native_ime_runtime_evidence || self.native_ime_runtime_evidence_done {
+  if !self.native_ime_runtime_smoke || self.native_ime_runtime_smoke_done {
     return false
   }
   match
@@ -45,9 +45,9 @@ fn MacosApp::record_native_ime_runtime_evidence(
       let prefix = "MoUI native IME runtime matching-host native-app renderer=skia " +
         app_token +
         " platform-protocol=macos-marked-text NSTextInputClient"
-      match self.native_ime_runtime_evidence_phase {
+      match self.native_ime_runtime_smoke_phase {
         0 =>
-          self.start_native_ime_runtime_evidence(
+          self.start_native_ime_runtime_smoke(
             window_id,
             platform_slot,
             runtime_slot,
@@ -55,14 +55,14 @@ fn MacosApp::record_native_ime_runtime_evidence(
             prefix~,
           )
         1 =>
-          self.record_native_ime_composition_evidence(
+          self.record_native_ime_composition_smoke(
             window_id,
             platform_slot,
             runtime_slot,
             prefix~,
           )
         2 =>
-          self.finish_native_ime_runtime_evidence(
+          self.finish_native_ime_runtime_smoke(
             window_id,
             platform_slot,
             runtime_slot,
@@ -70,10 +70,10 @@ fn MacosApp::record_native_ime_runtime_evidence(
             prefix~,
           )
         _ =>
-          self.fail_native_ime_runtime_evidence(
+          self.fail_native_ime_runtime_smoke(
             window_id,
             prefix,
-            "unknown-phase=\{self.native_ime_runtime_evidence_phase}",
+            "unknown-phase=\{self.native_ime_runtime_smoke_phase}",
           )
       }
     }
@@ -82,7 +82,7 @@ fn MacosApp::record_native_ime_runtime_evidence(
 }
 
 ///|
-fn MacosApp::start_native_ime_runtime_evidence(
+fn MacosApp::start_native_ime_runtime_smoke(
   self : MacosApp,
   window_id : @host.HostWindowId,
   platform_slot : MacosWindowPlatformSlot,
@@ -117,7 +117,7 @@ fn MacosApp::start_native_ime_runtime_evidence(
       @host.HostEvent::TextInput(@core.TextInputEvent::InsertText("moui")),
     ),
   )
-  ignore(self.present_native_ime_evidence_frame(platform_slot, runtime_slot))
+  ignore(self.present_native_ime_smoke_frame(platform_slot, runtime_slot))
   self.sync_text_input_session()
   let initial_input = runtime_slot.driver.focused_text_input()
   let candidate_anchor_ok = self.native_ime_request_matches_window(
@@ -128,7 +128,7 @@ fn MacosApp::start_native_ime_runtime_evidence(
     initial_input.text != "" &&
     initial_input.caret_rect.size.height > 0.0
   if !candidate_anchor_ok {
-    return self.fail_native_ime_runtime_evidence(
+    return self.fail_native_ime_runtime_smoke(
       window_id,
       prefix,
       "focused-text-input=false candidate-anchor=false " +
@@ -139,21 +139,21 @@ fn MacosApp::start_native_ime_runtime_evidence(
     native_ime_content_view_handle(platform_slot, prefix~) {
     Some(handle) => handle
     None =>
-      return self.fail_native_ime_runtime_evidence(
+      return self.fail_native_ime_runtime_smoke(
         window_id, prefix, "content-view-handle=false",
       )
   }
   let marked_text = @utf8.encode("ni"[:], bom=false)
-  let set_marked_text_ok = macos_native_ime_evidence_set_marked_text(
+  let set_marked_text_ok = macos_native_ime_smoke_set_marked_text(
       content_view_handle, marked_text, 0, 2,
     ) !=
     0
-  let first_rect_ok = macos_native_ime_evidence_first_rect(
+  let first_rect_ok = macos_native_ime_smoke_first_rect(
       content_view_handle, 0, 2,
     ) !=
     0
   if !set_marked_text_ok || !first_rect_ok {
-    return self.fail_native_ime_runtime_evidence(
+    return self.fail_native_ime_runtime_smoke(
       window_id,
       prefix,
       "appkit-setMarkedText=\{set_marked_text_ok} appkit-firstRectForCharacterRange=\{first_rect_ok}",
@@ -181,7 +181,7 @@ fn MacosApp::start_native_ime_runtime_evidence(
     " MoUI native IME surrounding text passed surrounding-text selection-anchor utf8-offsets grapheme appkit-setMarkedText appkit-firstRectForCharacterRange",
   )
   let composition_input = runtime_slot.driver.focused_text_input()
-  let composition_frame_presented = self.present_native_ime_evidence_frame(
+  let composition_frame_presented = self.present_native_ime_smoke_frame(
     platform_slot, runtime_slot,
   )
   let has_composition = composition_input.composition is Some(_)
@@ -191,7 +191,7 @@ fn MacosApp::start_native_ime_runtime_evidence(
     has_composition &&
     has_composition_cursor
   if !composition_ok {
-    return self.fail_native_ime_runtime_evidence(
+    return self.fail_native_ime_runtime_smoke(
       window_id,
       prefix,
       "composition-visual=false frame-presented=\{composition_frame_presented} focused=\{composition_input.focused} composition=\{has_composition} composition-cursor=\{has_composition_cursor}",
@@ -201,11 +201,11 @@ fn MacosApp::start_native_ime_runtime_evidence(
     prefix +
     " MoUI native IME composition visual passed composition-range composition-cursor preedit-underline preedit-pixels selection-highlight appkit-setMarkedText appkit-firstRectForCharacterRange",
   )
-  self.native_ime_runtime_evidence_before_commit_text = composition_input.text
+  self.native_ime_runtime_smoke_before_commit_text = composition_input.text
   let commit_text = @utf8.encode("你"[:], bom=false)
-  if macos_native_ime_evidence_insert_text(content_view_handle, commit_text) ==
+  if macos_native_ime_smoke_insert_text(content_view_handle, commit_text) ==
     0 {
-    return self.fail_native_ime_runtime_evidence(
+    return self.fail_native_ime_runtime_smoke(
       window_id, prefix, "appkit-insertText=false",
     )
   }
@@ -217,14 +217,14 @@ fn MacosApp::start_native_ime_runtime_evidence(
     window_id,
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("你")),
   )
-  self.native_ime_runtime_evidence_phase = 2
-  self.native_ime_runtime_evidence_wait_redraws = 0
+  self.native_ime_runtime_smoke_phase = 2
+  self.native_ime_runtime_smoke_wait_redraws = 0
   self.request_platform_redraw(window_id)
   false
 }
 
 ///|
-fn MacosApp::record_native_ime_composition_evidence(
+fn MacosApp::record_native_ime_composition_smoke(
   self : MacosApp,
   window_id : @host.HostWindowId,
   platform_slot : MacosWindowPlatformSlot,
@@ -233,7 +233,7 @@ fn MacosApp::record_native_ime_composition_evidence(
 ) -> Bool {
   self.sync_text_input_session()
   let composition_input = runtime_slot.driver.focused_text_input()
-  let composition_frame_presented = self.present_native_ime_evidence_frame(
+  let composition_frame_presented = self.present_native_ime_smoke_frame(
     platform_slot, runtime_slot,
   )
   let composition_ok = composition_frame_presented &&
@@ -241,7 +241,7 @@ fn MacosApp::record_native_ime_composition_evidence(
     composition_input.composition is Some(_) &&
     composition_input.composition_cursor is Some(_)
   if !composition_ok {
-    return self.retry_or_fail_native_ime_runtime_evidence(
+    return self.retry_or_fail_native_ime_runtime_smoke(
       window_id, prefix, "composition-visual=false",
     )
   }
@@ -249,19 +249,19 @@ fn MacosApp::record_native_ime_composition_evidence(
     prefix +
     " MoUI native IME composition visual passed composition-range composition-cursor preedit-underline preedit-pixels selection-highlight appkit-setMarkedText appkit-firstRectForCharacterRange",
   )
-  self.native_ime_runtime_evidence_before_commit_text = composition_input.text
+  self.native_ime_runtime_smoke_before_commit_text = composition_input.text
   let content_view_handle = match
     native_ime_content_view_handle(platform_slot, prefix~) {
     Some(handle) => handle
     None =>
-      return self.fail_native_ime_runtime_evidence(
+      return self.fail_native_ime_runtime_smoke(
         window_id, prefix, "content-view-handle=false",
       )
   }
   let commit_text = @utf8.encode("你"[:], bom=false)
-  if macos_native_ime_evidence_insert_text(content_view_handle, commit_text) ==
+  if macos_native_ime_smoke_insert_text(content_view_handle, commit_text) ==
     0 {
-    return self.fail_native_ime_runtime_evidence(
+    return self.fail_native_ime_runtime_smoke(
       window_id, prefix, "appkit-insertText=false",
     )
   }
@@ -273,14 +273,14 @@ fn MacosApp::record_native_ime_composition_evidence(
     window_id,
     @window_core.WindowEvent::Ime(@window_core.Ime::Commit("你")),
   )
-  self.native_ime_runtime_evidence_phase = 2
-  self.native_ime_runtime_evidence_wait_redraws = 0
+  self.native_ime_runtime_smoke_phase = 2
+  self.native_ime_runtime_smoke_wait_redraws = 0
   self.request_platform_redraw(window_id)
   false
 }
 
 ///|
-fn MacosApp::finish_native_ime_runtime_evidence(
+fn MacosApp::finish_native_ime_runtime_smoke(
   self : MacosApp,
   window_id : @host.HostWindowId,
   platform_slot : MacosWindowPlatformSlot,
@@ -291,8 +291,8 @@ fn MacosApp::finish_native_ime_runtime_evidence(
   self.sync_text_input_session()
   let after_commit_input = runtime_slot.driver.focused_text_input()
   if after_commit_input.text ==
-    self.native_ime_runtime_evidence_before_commit_text {
-    return self.retry_or_fail_native_ime_runtime_evidence(
+    self.native_ime_runtime_smoke_before_commit_text {
+    return self.retry_or_fail_native_ime_runtime_smoke(
       window_id, prefix, "commit=false",
     )
   }
@@ -393,23 +393,23 @@ fn MacosApp::finish_native_ime_runtime_evidence(
       " MoUI native IME Markdown Editor passed markdown-editor composition candidate-anchor candidate-window selection-replacement source-mapping appkit-insertText NSTextInputClient",
     )
   }
-  self.native_ime_runtime_evidence_done = true
+  self.native_ime_runtime_smoke_done = true
   self.dispose_window(window_id)
   true
 }
 
 ///|
-fn MacosApp::retry_or_fail_native_ime_runtime_evidence(
+fn MacosApp::retry_or_fail_native_ime_runtime_smoke(
   self : MacosApp,
   window_id : @host.HostWindowId,
   prefix : String,
   reason : String,
 ) -> Bool {
-  self.native_ime_runtime_evidence_wait_redraws = self.native_ime_runtime_evidence_wait_redraws +
+  self.native_ime_runtime_smoke_wait_redraws = self.native_ime_runtime_smoke_wait_redraws +
     1
-  if self.native_ime_runtime_evidence_wait_redraws >
-    macos_native_ime_evidence_max_wait_redraws {
-    self.fail_native_ime_runtime_evidence(window_id, prefix, reason)
+  if self.native_ime_runtime_smoke_wait_redraws >
+    macos_native_ime_smoke_max_wait_redraws {
+    self.fail_native_ime_runtime_smoke(window_id, prefix, reason)
   } else {
     self.request_platform_redraw(window_id)
     false
@@ -417,13 +417,13 @@ fn MacosApp::retry_or_fail_native_ime_runtime_evidence(
 }
 
 ///|
-fn MacosApp::fail_native_ime_runtime_evidence(
+fn MacosApp::fail_native_ime_runtime_smoke(
   self : MacosApp,
   window_id : @host.HostWindowId,
   prefix : String,
   reason : String,
 ) -> Bool {
-  self.native_ime_runtime_evidence_done = true
+  self.native_ime_runtime_smoke_done = true
   println(prefix + " MoUI native IME runtime failed " + reason)
   self.dispose_window(window_id)
   true
@@ -449,6 +449,8 @@ fn native_ime_content_view_handle(
 fn macos_native_ime_app_token(title : String) -> String {
   if title == "MoUI Markdown Editor" {
     "app=markdown-editor"
+  } else if title == "MoUI Text Input Smoke" {
+    "app=text-input-fixture"
   } else {
     "app=showcase"
   }
@@ -463,6 +465,13 @@ fn macos_native_ime_focus_points(title : String) -> Array[@core.Point] {
       @core.Point::new(x=120.0, y=104.0),
       @core.Point::new(x=220.0, y=128.0),
       @core.Point::new(x=360.0, y=160.0),
+    ]
+  } else if title == "MoUI Text Input Smoke" {
+    [
+      @core.Point::new(x=36.0, y=56.0),
+      @core.Point::new(x=96.0, y=58.0),
+      @core.Point::new(x=180.0, y=64.0),
+      @core.Point::new(x=260.0, y=72.0),
     ]
   } else {
     [
@@ -568,7 +577,7 @@ fn MacosApp::native_ime_runtime_diagnostics(
 }
 
 ///|
-fn MacosApp::present_native_ime_evidence_frame(
+fn MacosApp::present_native_ime_smoke_frame(
   self : MacosApp,
   platform_slot : MacosWindowPlatformSlot,
   runtime_slot : @host.HostWindowRuntimeSlot,

@@ -114,8 +114,8 @@ packages:
   streaming/response events, and queued command evidence pin the main scroll to
   the latest content so the conversation does not remain above the newest
   message.
-- macOS Skia native entrypoint with first-frame exit support through
-  `MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`.
+- macOS Skia native entrypoint as a normal interactive app; first-frame smoke
+  lives in `moui_tester` rather than this app package.
 - A platform-neutral `PiTransportState` with native JSONL, Web bridge, and
   fixture transport kinds for the Pi provider path. Empty command batches no
   longer mark the transport as starting, so non-Pi fixture backend actions can
@@ -908,10 +908,10 @@ printf '{"type":"abort_bash"}\n' | \
     --no-prompt-templates --no-themes --offline
 ```
 
-For a local first-frame check with real Skia, run:
+For a local real-Skia app build plus tester first-frame check, run:
 
 ```sh
 export MOUI_SKIA_LINK_MODE=dynamic
-MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
-  moon run examples/mo_workbench/macos_skia --target native
+moon build examples/mo_workbench/macos_skia --target native
+moon build moui_tester/macos_skia_first_frame_smoke --target native
 ```

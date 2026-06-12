@@ -14,33 +14,33 @@ native paragraph/bidi readiness without matching-host smoke logs.
 
 Status meanings:
 
-- `ready`: implemented directly by the renderer.
+- `supported`: implemented directly by the renderer.
 - `partial`: visible support exists, but follow-up work remains.
 - `gap`: no visible implementation yet.
 - `host-forwarded`: MoonBit forwards the command to the browser WebGPU host
   without local runtime coverage.
 - `unavailable`: the backend has a contract or planned mapping, but cannot be
-  claimed ready in the current fallback-safe build.
+  claimed supported in the current fallback-safe build.
 
 | Feature | Skia raster native | Web wasm-gc | Native wgpu diagnostic | Follow-up |
 | --- | --- | --- | --- | --- |
-| Rect | ready | ready | ready | Skia rect fill/stroke has real native renderer pixel smoke coverage. |
-| Rounded rect | ready | ready | ready | Skia rounded fill/stroke and solid rounded brushes have real native renderer pixel smoke coverage. |
-| Gradient | ready | partial | partial | Skia now renders linear and radial gradient brushes for rounded rects and paths; browser WebGPU and native WGPU diagnostics both preserve radial rounded/path brush payloads and shade radial interpolation in the visual shader. Web stays partial until Web renderer smoke records real radial center/mid/edge pixels; native WGPU keeps the same requirement only for its diagnostic smoke. |
-| Shadow | ready | ready | ready | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
-| Text | ready | ready | ready | Skia `Font` measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interior stabilization for both caret paths, grapheme-safe mixed-run fallback segments, and best-available glyph-run rendering clip to `TextRun.frame` while resolving `FontSpec` family, weight, style, representative coverage characters, and inferred fallback language tags through Skia `FontMgr` `FontFallbackRequest`/`Font`; real native renderer smoke covers glyph-run pixels and bounded `TextRun.frame` clipping; broader shaping is tracked separately. |
-| Image | ready | ready | ready | Skia validates PNG/JPEG/BMP data URI decode, local PNG/JPEG/BMP decode, contain/cover/stretch/scale-down/fit-width/fit-height placement geometry, `draw_image_rect` output, ready/failed lifecycle records, failed-image placeholders, immutable-source failed-cache reuse, and local-file failure retry once the file appears; the real native renderer smoke covers ready data URI/local PNG drawing and failed-image placeholders. |
-| Clip | ready | ready | ready | Skia rectangular, rounded, and path clip scopes have representative real native smoke coverage. |
-| Transform | ready | partial | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated, scaled-and-clipped, layer-masked opacity, and filter-scoped pixel smoke coverage. |
-| Opacity | ready | ready | ready | Skia save-layer opacity has blended pixel smoke coverage. |
-| Layer compositing | ready | ready | ready | Skia validates `save_layer` opacity, rectangular masks, rounded masks, blend-mode layers, and nested layer/filter composition through renderer-local pixel tests plus the real native renderer smoke. The retained redraw path now adds `BeginCachedLayer`/`DrawCachedLayer` frame commands, and native Skia consumes them through a renderer-local offscreen surface/image cache with hit/miss/update/evict diagnostics for repaint boundaries plus admission policy for large or churn-heavy layers. The real-app cached-layer benchmark exercises Showcase hover/scroll and Markdown Editor text input, scroll, and caret-overlay scenarios, showing sibling-boundary cache reuse, rich-text block cache reuse, and editing-overlay frames that avoid body layer updates. Remaining full-damage cases such as broad dirty regions or unavailable dirty bounds stay visible in the diagnostics. Host-side command-cache replay remains a fallback for backends without renderer-local caches; OS-level partial present is still separate evidence. |
-| Blend mode | ready | ready | ready | Skia maps all MoUI blend modes to Skia paint blend modes and validates multiply through renderer-local pixels, with multiply/screen/overlay/darken/lighten output pixels also covered by the real native renderer smoke. |
-| Filter effect | ready | ready | ready | Skia validates saturation and identity-normalized color matrix filters through renderer-local tests, with blur, saturation, brightness, contrast, and color matrix filters also covered by the real native renderer smoke. |
-| Path/vector | ready | ready | ready | Skia replays `PathSpec` into native paths with renderer-local solid/gradient pixel tests and real native smoke coverage for solid/gradient fill and stroke output, plus quadratic and cubic curve verbs. WGPU/Web share the MoonBit tessellator, preserve path brush payloads, and submit radial path vertices through the visual shader instead of flattening radial brushes to a single sampled color. |
-| Shader effect | ready | ready | ready | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have renderer-local pixel tests plus real native renderer pixel smoke coverage; unknown names still use fallback paths. |
+| Rect | supported | supported | supported | Skia rect fill/stroke has real native renderer pixel smoke coverage. |
+| Rounded rect | supported | supported | supported | Skia rounded fill/stroke and solid rounded brushes have real native renderer pixel smoke coverage. |
+| Gradient | supported | partial | partial | Skia now renders linear and radial gradient brushes for rounded rects and paths; browser WebGPU and native WGPU diagnostics both preserve radial rounded/path brush payloads and shade radial interpolation in the visual shader. Web stays partial until Web renderer smoke records real radial center/mid/edge pixels; native WGPU keeps the same requirement only for its diagnostic smoke. |
+| Shadow | supported | supported | supported | Skia soft rounded shadows use `MaskFilter` blur and have real native renderer pixel smoke coverage. |
+| Text | supported | supported | supported | Skia `Font` measurement, font-metric baseline/height, shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, representative combining-mark/Indic-matra/Arabic-mark/Thai-mark/Lao-mark/Sinhala-mark/Khmer-vowel-coeng/Myanmar-mark/Hangul-Jamo/keycap/emoji-modifier/VS/ZWJ/regional-indicator-pair/emoji-tag/prepend-mark cluster interior stabilization for both caret paths, grapheme-safe mixed-run fallback segments, and best-available glyph-run rendering clip to `TextRun.frame` while resolving `FontSpec` family, weight, style, representative coverage characters, and inferred fallback language tags through Skia `FontMgr` `FontFallbackRequest`/`Font`; real native renderer smoke covers glyph-run pixels and bounded `TextRun.frame` clipping; broader shaping is tracked separately. |
+| Image | supported | supported | supported | Skia validates PNG/JPEG/BMP data URI decode, local PNG/JPEG/BMP decode, contain/cover/stretch/scale-down/fit-width/fit-height placement geometry, `draw_image_rect` output, ready/failed lifecycle records, failed-image placeholders, immutable-source failed-cache reuse, and local-file failure retry once the file appears; the real native renderer smoke covers ready data URI/local PNG drawing and failed-image placeholders. |
+| Clip | supported | supported | supported | Skia rectangular, rounded, and path clip scopes have representative real native smoke coverage. |
+| Transform | supported | partial | partial | WGPU/Web fold affine transforms into planned vertices and scope state. Skia maps MoUI affine fields into Skia matrix members and has translated, scaled-and-clipped, layer-masked opacity, and filter-scoped pixel smoke coverage. |
+| Opacity | supported | supported | supported | Skia save-layer opacity has blended pixel smoke coverage. |
+| Layer compositing | supported | supported | supported | Skia validates `save_layer` opacity, rectangular masks, rounded masks, blend-mode layers, and nested layer/filter composition through renderer-local pixel tests plus the real native renderer smoke. The retained redraw path now adds `BeginCachedLayer`/`DrawCachedLayer` frame commands, and native Skia consumes them through a renderer-local offscreen surface/image cache with hit/miss/update/evict diagnostics for repaint boundaries plus admission policy for large or churn-heavy layers. The real-app cached-layer benchmark exercises Showcase hover/scroll and Markdown Editor text input, scroll, and caret-overlay scenarios, showing sibling-boundary cache reuse, rich-text block cache reuse, and editing-overlay frames that avoid body layer updates. Remaining full-damage cases such as broad dirty regions or unavailable dirty bounds stay visible in the diagnostics. Host-side command-cache replay remains a fallback for backends without renderer-local caches; OS-level partial present is still separate observation. |
+| Blend mode | supported | supported | supported | Skia maps all MoUI blend modes to Skia paint blend modes and validates multiply through renderer-local pixels, with multiply/screen/overlay/darken/lighten output pixels also covered by the real native renderer smoke. |
+| Filter effect | supported | supported | supported | Skia validates saturation and identity-normalized color matrix filters through renderer-local tests, with blur, saturation, brightness, contrast, and color matrix filters also covered by the real native renderer smoke. |
+| Path/vector | supported | supported | supported | Skia replays `PathSpec` into native paths with renderer-local solid/gradient pixel tests and real native smoke coverage for solid/gradient fill and stroke output, plus quadratic and cubic curve verbs. WGPU/Web share the MoonBit tessellator, preserve path brush payloads, and submit radial path vertices through the visual shader instead of flattening radial brushes to a single sampled color. |
+| Shader effect | supported | supported | supported | Skia procedural solid, checker, linear-gradient-debug, and vignette effects have renderer-local pixel tests plus real native renderer pixel smoke coverage; unknown names still use fallback paths. |
 | Text shaping | partial | partial | partial | Skia maps `FontSpec` family, weight, and style, builds `FontFallbackRequest` values with representative emoji/non-ASCII coverage characters plus inferred BCP47 script language tags before regular family matching, splits mixed-script text into grapheme-safe fallback segments for per-run `FontMgr` resolution, returns Skia font-metric baseline/height plus shaped-run cluster carets when SkShaper is linked or measured prefix carets otherwise, stabilizes cluster interiors through the shared UAX-style `TextGraphemeBoundaries` scanner, exposes `TextSystem::layout_paragraph()` line metrics, paragraph caret rectangles, selection rectangles, and hit-test geometry through the same measurement path, routes paragraph layout through optional native SkParagraph when `MOUI_SKIA_ENABLE_SKPARAGRAPH=1` and `skia_paragraph_available()` are true, retries emoji-family fonts for emoji-hint text on the system `FontMgr` path, can draw optional SkShaper shaped glyph runs after linking, and audits `moui_skia` fallback/measurement/shaping descriptor resource plans through fallback-safe tests. The shared scanner now uses generated Unicode 17.0 property predicates for CR/LF/control, Prepend, Extend, SpacingMark, Regional_Indicator, ZWJ, Extended_Pictographic, and Indic_Conjunct_Break Linker/Consonant/Extend; `moui/core` runs both curated samples and the full vendored Unicode 17.0 default `GraphemeBreakTest.txt` fixture. `moui/render/skia` runs the same full fixture through `skia_grapheme_cluster_texts`, and the Skia text maturity preflight now marks the Unicode 17 grapheme boundary contract ready. Native SkParagraph/bidi readiness still requires matching-host real-Skia smoke logs, while deterministic color emoji, future Unicode data refreshes, and typography conformance remain follow-up work. |
-| Emoji text | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo cluster samples, prefers emoji coverage characters and inferred language tags in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path. The text/emoji smoke records high-saturation glyph/raster evidence plus font/glyph metadata with a non-empty source/script/fallback-request-character-aware glyph key that matches the recorded source, text-system, shaper, script, fallback language tag payload, language-count, fallback request character, and format metadata; deterministic color emoji, exact typeface/glyph-id parity, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. |
-| Async image | partial | partial | partial | Renderer-neutral lifecycle records, `ImageResourceLoadCompletion` ready/failed results, and monotonic revision snapshots are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; `HostWindowRenderer::apply_image_resource_load_completion` is the renderer-neutral apply port that turns loader completions into revisioned snapshots; WGPU exposes `native_image_load_completion` for PNG/JPEG/BMP data URI and local-file decode completion payloads, and macOS/Windows/Linux WGPU providers install provider-owned `HostAsyncImageLoader` hooks for that path; Skia exposes `skia_image_load_completion` for Skia encoded-image source decode completion payloads, macOS/Windows/Linux Skia providers install provider-owned loader hooks for that path, and provider-created Skia renderers opt into post-present async image loading while still forwarding the renderer image-resource callback setter through the bridge; `HostAsyncImageLoader` scans loading records, de-duplicates in-flight `(window, source)` work, and gates late/cancelled completion callbacks before routing through `HostImageResourceCompletionSource`; `HostNativeAsyncImageSource` records pending native requests so a platform callback can deliver completion later through the same route; macOS/Windows/Linux hosts install baseline-guarded callbacks plus a post-present optional provider-loader hook after a window has presented an image-resource revision. Hosts track presented image revisions, route repaint requests per window when a newer revision is observed, expose previous/current loading/ready/failed/disposed status counts on repaint results plus tracked-window revision/status-count snapshots, cancel in-flight loader work for disposed windows, and discard closed-window image changes; `HostImageResourceCompletionSource` gives native provider/platform loaders a host-layer completion routing boundary with publish/redraw/stale-revision/closed-window diagnostics; Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, records disposed cached image resources during renderer disposal, exposes renderer-local image-resource change callbacks when lifecycle revisions advance, and the real-Skia smoke can record an async image second-frame marker after local/data URI completions request repaint; Web renderer/backend diagnostics expose the same revisioned snapshot shape. Off-main provider/platform async loader implementations and matching-host runtime evidence remain follow-up work. |
+| Emoji text | partial | partial | partial | Skia detects representative single-codepoint, variation-selector, keycap, emoji-modifier, ZWJ, regional-indicator, emoji tag-sequence, Indic/Arabic/Thai/Lao/Sinhala/Khmer/Myanmar mark samples, and Hangul Jamo cluster samples, prefers emoji coverage characters and inferred language tags in system `FontMgr` `FontFallbackRequest` matching, stabilizes representative cluster interior carets, and retries platform emoji font candidates before default-font fallback on the system `FontMgr` path. The text/emoji smoke records high-saturation glyph/raster observation plus font/glyph metadata with a non-empty source/script/fallback-request-character-aware glyph key that matches the recorded source, text-system, shaper, script, fallback language tag payload, language-count, fallback request character, and format metadata; deterministic color emoji, exact typeface/glyph-id parity, grapheme shaping, and cross-platform font fallback conformance remain follow-up work. |
+| Async image | partial | partial | partial | Renderer-neutral lifecycle records, `ImageResourceLoadCompletion` ready/failed results, and monotonic revision snapshots are shared. Native WGPU and Skia providers now expose renderer image-resource snapshots through `HostWindowRenderer`; `HostWindowRenderer::apply_image_resource_load_completion` is the renderer-neutral apply port that turns loader completions into revisioned snapshots; WGPU exposes `native_image_load_completion` for PNG/JPEG/BMP data URI and local-file decode completion payloads, and macOS/Windows/Linux WGPU providers install provider-owned `HostAsyncImageLoader` hooks for that path; Skia exposes `skia_image_load_completion` for Skia encoded-image source decode completion payloads, macOS/Windows/Linux Skia providers install provider-owned loader hooks for that path, and provider-created Skia renderers opt into post-present async image loading while still forwarding the renderer image-resource callback setter through the bridge; `HostAsyncImageLoader` scans loading records, de-duplicates in-flight `(window, source)` work, and gates late/cancelled completion callbacks before routing through `HostImageResourceCompletionSource`; `HostNativeAsyncImageSource` records pending native requests so a platform callback can deliver completion later through the same route; macOS/Windows/Linux hosts install baseline-guarded callbacks plus a post-present optional provider-loader hook after a window has presented an image-resource revision. Hosts track presented image revisions, route repaint requests per window when a newer revision is observed, expose previous/current loading/ready/failed/disposed status counts on repaint results plus tracked-window revision/status-count snapshots, cancel in-flight loader work for disposed windows, and discard closed-window image changes; `HostImageResourceCompletionSource` gives native provider/platform loaders a host-layer completion routing boundary with publish/redraw/stale-revision/closed-window diagnostics; Skia caches immutable failed sources with diagnostics before placeholder drawing, retries previously failed local-file sources once the file appears, records disposed cached image resources during renderer disposal, exposes renderer-local image-resource change callbacks when lifecycle revisions advance, and the real-Skia smoke can record an async image second-frame marker after local/data URI completions request repaint; Web renderer/backend diagnostics expose the same revisioned snapshot shape. Off-main provider/platform async loader implementations and matching-host runtime observation remain follow-up work. |
 
 ## Renderer Descriptors
 
@@ -77,7 +77,7 @@ surface_gpu=true` provider diagnostics before the normal first-frame marker.
 This is not yet a renderer descriptor promotion: `SkiaRasterNative` still
 presents copied CPU pixel frames through platform presenters, and a Skia GPU
 backend kind should only be added after matching-host window presentation and
-pixel/screenshot evidence prove the GPU path.
+pixel/screenshot observation prove the GPU path.
 
 ## Current Native WGPU Diagnostic Notes
 
@@ -188,18 +188,18 @@ loads, and ignoring late completion callbacks after cancellation before they
 can apply to renderer state. `HostNativeAsyncImageSource` records pending
 native `(window, source)` requests and lets a platform callback deliver
 `ImageResourceLoadCompletion` later through the same scheduler and repaint
-route; it is host-boundary evidence for deferred completion delivery, not
-matching-host off-main runtime evidence. The macOS, Windows, and Linux WGPU/Skia
+route; it is host-boundary observation for deferred completion delivery, not
+matching-host off-main runtime observation. The macOS, Windows, and Linux WGPU/Skia
 provider package tests now also prove deferred native-source callbacks carry
 renderer decode-helper payloads before renderer lifecycle apply and redraw
-routing; this remains package-local evidence. The macOS, Windows, and Linux host cores now call
+routing; this remains package-local observation. The macOS, Windows, and Linux host cores now call
 an optional provider-owned loader hook after each presented revision is
 baselined and cancel in-flight loader work when a window is disposed. WGPU
 providers now install a provider-owned loader that maps native PNG/JPEG/BMP
 data URI and local-file decode results into `ImageResourceLoadCompletion`
 payloads through `native_image_load_completion`; native WGPU provider tests also
 exercise that helper through a deferred native-source callback. This is provider
-completion evidence, not matching-host off-main runtime smoke.
+completion observation, not matching-host off-main runtime smoke.
 Skia now exposes `skia_image_load_completion` for Skia encoded-image source
 decode completion payloads, and native Skia providers install provider-owned
 loader hooks around that helper while also forwarding the renderer-local
@@ -210,7 +210,7 @@ loading, so data URI and local-file images can present once as loading,
 complete through `HostImageResourceCompletionSource`, request repaint through
 the shared tracker, and draw on a second frame. The helper reports ready/failed
 lifecycle completions; it does not pre-populate renderer caches, and it is
-provider completion and smoke evidence rather than matching-host off-main
+provider completion and smoke log rather than matching-host off-main
 runtime smoke. macOS/Windows/Linux hosts install baseline-guarded callbacks
 that request redraw for post-present image revisions. Off-main
 provider/platform async loader implementations and Windows/Linux matching-host
@@ -243,11 +243,10 @@ fallback builds `skia_available()`
 returns `false`, renderer creation raises `SkiaUnavailable`, and platform Skia
 entrypoints preflight availability before handing control to host app assembly,
 so explicit Skia selection exits with a diagnostic instead of opening a blank
-window. Windows and Linux host options now expose the same renderer-neutral
-first-frame auto-exit hook used by the Skia entrypoints for matching-host
-runtime smoke runs; those logs prove presentation only for the host that
-produced them. Linux Skia is the native Linux Preview Ready route for renderer
-and text evidence; the Linux native WGPU/fontconfig provider remains diagnostic
+window. Windows and Linux host smoke options expose the same renderer-neutral
+first-frame auto-exit hook used by tester/backend smoke runners; those logs
+record presentation only for the host that produced them. Linux Skia is the native Linux Preview Ready route for renderer
+and text observation; the Linux native WGPU/fontconfig provider remains diagnostic
 and must not be cited as Skia-route readiness.
 
 When real Skia is linked, the renderer creates a CPU `raster_n32_premul` surface
@@ -262,7 +261,7 @@ Skia raster target contract even when real native Skia is not linked. The
 fallback-safe `skia_text_descriptor_preflight` similarly consumes the
 `FontFallbackRequest`, `TextMeasurementDescriptor`, `TextShapingDescriptor`,
 `ShapedTextRunDescriptor`, and `ShapedGlyphRunDescriptor` resource plans as
-cache-key evidence for the current Skia text path. Skia missing-glyph recovery
+cache-key observation for the current Skia text path. Skia missing-glyph recovery
 now accepts complete fallback runs immediately and accepts partial default-font
 fallback only when it reduces missing glyph ids or recovers visible text from a
 blank primary run. The companion
@@ -345,10 +344,10 @@ Cosmic provider stack. The macOS Skia
 provider now matches Windows and Linux by defaulting to
 `SkiaFontResolution::SystemFontMgr`, so normal Showcase, Markdown Editor, and
 Mo Workbench Skia entrypoints use the system FontMgr path with platform font
-lookup, emoji retry, and optional SkShaper when linked. macOS first-frame smoke
-entrypoints explicitly switch to `SkiaFontResolution::EmptyTypeface` only when
-their exit-after-first-present environment flag is set; that keeps CLI smoke
-runs on the safer default-font retry path while preserving the normal app
+lookup, emoji retry, and optional SkShaper when linked. macOS tester-owned
+first-frame smoke entrypoints explicitly switch to
+`SkiaFontResolution::EmptyTypeface`; that keeps CLI smoke runs on the safer
+default-font retry path while preserving the normal app
 default. The renderer smoke also uses the system FontMgr path so real Skia font
 and optional SkShaper coverage remain tracked.
 
@@ -395,7 +394,7 @@ uses a backdrop-sampling WebGPU pass for exact semantics. The advanced shader
 uses explicit-LOD texture sampling for blur and backdrop reads so Chrome's
 WGSL validator accepts filter and overlay paths whose command kind varies per
 fragment input, and the browser runtime forwards WebGPU uncaptured/device-lost
-errors into the page log so browser presentation evidence fails on shader or
+errors into the page log so browser presentation observation fails on shader or
 pipeline validation errors instead of silently relying on a nonblank screenshot.
 Arbitrary paths share the same MoonBit tessellation contract as native. The
 wasm-gc adapter serializes the tessellated `DrawPath` mesh into a compact host

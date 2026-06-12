@@ -16,7 +16,8 @@ sh scripts/dev-check.sh
 This runs local dependency guards, guidance consistency, API surface checks,
 renderer provider and native Skia entrypoint static checks, `moon check`, core
 package tests, Web wasm-gc package tests, native Skia mainline package tests,
-Showcase and Markdown Editor app tests, and Web builds:
+`moui_tester` harness tests, `moui_devtools` snapshot/debug tests, Showcase and
+Markdown Editor app tests, and Web builds:
 
 ```sh
 node scripts/validate-guidance-consistency.mjs
@@ -39,6 +40,8 @@ moon test moui/render/skia --target native
 moon test moui/backend/host --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/web --target wasm-gc
+moon test moui_tester --target native
+moon test moui_devtools --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon build examples/showcase/web_wasm --target wasm-gc
@@ -61,6 +64,8 @@ moon test moui/render/skia --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc
+moon test moui_tester --target native
+moon test moui_devtools --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
@@ -87,7 +92,7 @@ sh scripts/conformance-check.sh --text-diagnostic
 
 `--golden` and `--bench` write local scaffold manifests under ignored
 `artifacts/` paths for screenshot or benchmark handoff. They are not checked-in
-capability evidence.
+capability declarations.
 
 ## Smoke
 
@@ -99,6 +104,7 @@ sh scripts/dev-check.sh --skia-real-smoke
 scripts/macos-skia-renderer-smoke.sh
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke
 scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
+scripts/macos-skia-renderer-smoke.sh --run-ime-smoke
 sh scripts/ci-web-runtime-presentation.sh
 ```
 
@@ -108,8 +114,8 @@ validates it with `validate-web-runtime-presentation-manifest.mjs`. Treat the
 result as a manual smoke log for that browser session.
 
 Native Skia smoke logs can show renderer pixels, async image second-frame
-behavior, optional SkParagraph text behavior, and first-frame example
-presentation. They are direct pass/fail runtime logs, not a repository
+behavior, optional SkParagraph text behavior, and tester-owned first-frame or
+IME observations. They are direct pass/fail runtime logs, not a repository
 manifest gate.
 
 ## Release Notes

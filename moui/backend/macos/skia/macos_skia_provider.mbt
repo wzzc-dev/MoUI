@@ -14,10 +14,14 @@ pub struct MacosSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
   priv surface_route : @skia_renderer.SkiaSurfaceRoute
-  priv exit_after_first_present : Bool
-  priv native_ime_runtime_evidence : Bool
   priv web_view_commands : @host.HostWebViewCommandQueue?
   priv web_view_events : @host.HostWebViewEventSource?
+}
+
+///|
+pub struct MacosSkiaSmokeOptions {
+  priv first_frame_smoke_auto_exit : Bool
+  priv native_ime_runtime_smoke : Bool
 }
 
 ///|
@@ -25,8 +29,6 @@ pub fn MacosSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
-  exit_after_first_present? : Bool = false,
-  native_ime_runtime_evidence? : Bool = false,
   web_view_commands? : @host.HostWebViewCommandQueue? = None,
   web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> MacosSkiaAppOptions {
@@ -34,11 +36,17 @@ pub fn MacosSkiaAppOptions::new(
     scene_resolver,
     font_resolution,
     surface_route,
-    exit_after_first_present,
-    native_ime_runtime_evidence,
     web_view_commands,
     web_view_events,
   }
+}
+
+///|
+pub fn MacosSkiaSmokeOptions::new(
+  first_frame_smoke_auto_exit? : Bool = false,
+  native_ime_runtime_smoke? : Bool = false,
+) -> MacosSkiaSmokeOptions {
+  { first_frame_smoke_auto_exit, native_ime_runtime_smoke }
 }
 
 ///|
@@ -68,10 +76,37 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
-      exit_after_first_present=options.exit_after_first_present,
-      native_ime_runtime_evidence=options.native_ime_runtime_evidence,
       web_view_commands=options.web_view_commands,
       web_view_events=options.web_view_events,
+    ),
+    window_requests~,
+  )
+}
+
+///|
+pub fn run_smoke_app_with_options(
+  title : String,
+  runtime : @core.AppRuntime,
+  options~ : MacosSkiaAppOptions,
+  smoke_options? : MacosSkiaSmokeOptions = MacosSkiaSmokeOptions::new(),
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+) -> Unit {
+  if !macos_skia_provider_ready() {
+    println(macos_skia_unavailable_message())
+    return
+  }
+  @macos_host.run_app_with_renderer_provider_smoke(
+    title,
+    runtime,
+    provider=renderer_provider(options~),
+    options=@macos_host.MacosHostAppOptions::new(
+      scene_resolver=options.scene_resolver,
+      web_view_commands=options.web_view_commands,
+      web_view_events=options.web_view_events,
+    ),
+    smoke_options=@macos_host.MacosHostSmokeOptions::new(
+      first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
+      native_ime_runtime_smoke=smoke_options.native_ime_runtime_smoke,
     ),
     window_requests~,
   )
@@ -95,8 +130,6 @@ pub async fn run_app_with_options_async_pump(
     provider=renderer_provider(options~),
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
-      exit_after_first_present=options.exit_after_first_present,
-      native_ime_runtime_evidence=options.native_ime_runtime_evidence,
       web_view_commands=options.web_view_commands,
       web_view_events=options.web_view_events,
     ),
@@ -131,7 +164,7 @@ pub fn macos_skia_provider_preflight_summary(
 ) -> String {
   let info = @skia_renderer.backend_info()
   let render_status = if macos_skia_provider_ready() {
-    "ready"
+    "available"
   } else {
     "unavailable"
   }

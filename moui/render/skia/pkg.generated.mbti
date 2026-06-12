@@ -19,7 +19,7 @@ pub fn renderer_descriptor() -> @render.RendererDescriptor
 
 pub fn skia_available() -> Bool
 
-pub fn skia_emoji_font_fallback_proof(text? : String, font? : @core.FontSpec, font_resolution? : SkiaFontResolution) -> SkiaEmojiFontFallbackProof?
+pub fn skia_emoji_font_fallback_diagnostic(text? : String, font? : @core.FontSpec, font_resolution? : SkiaFontResolution) -> SkiaEmojiFontFallbackDiagnostic?
 
 pub fn skia_gpu_metal_preflight_summary() -> String
 
@@ -27,11 +27,11 @@ pub fn skia_image_load_completion(String) -> @render.ImageResourceLoadCompletion
 
 pub fn skia_raster_native_descriptor() -> @render.RendererDescriptor
 
-pub fn skia_text_selection_geometry_proof(String, selection? : @core.TextRange?, font? : @core.FontSpec, max_width? : Double, font_resolution? : SkiaFontResolution) -> SkiaTextSelectionGeometryProof?
+pub fn skia_text_selection_geometry_diagnostic(String, selection? : @core.TextRange?, font? : @core.FontSpec, max_width? : Double, font_resolution? : SkiaFontResolution) -> SkiaTextSelectionGeometryDiagnostic?
 
 pub fn skia_text_system(resolution? : SkiaFontResolution) -> @core.TextSystem
 
-pub fn skia_text_visual_order_proof(String, font? : @core.FontSpec, font_resolution? : SkiaFontResolution) -> SkiaTextVisualOrderProof?
+pub fn skia_text_visual_order_diagnostic(String, font? : @core.FontSpec, font_resolution? : SkiaFontResolution) -> SkiaTextVisualOrderDiagnostic?
 
 // Errors
 pub(all) suberror SkiaRendererError {
@@ -45,7 +45,7 @@ pub(all) suberror SkiaRendererError {
 pub fn SkiaRendererError::message(Self) -> String
 
 // Types and methods
-pub(all) struct SkiaEmojiFontFallbackProof {
+pub(all) struct SkiaEmojiFontFallbackDiagnostic {
   text : String
   text_system_id : String
   font_family : String
@@ -133,7 +133,7 @@ pub(all) enum SkiaSurfaceRoute {
 pub fn SkiaSurfaceRoute::is_gpu(Self) -> Bool
 pub fn SkiaSurfaceRoute::label(Self) -> String
 
-pub(all) struct SkiaTextSelectionGeometryProof {
+pub(all) struct SkiaTextSelectionGeometryDiagnostic {
   text : String
   selection_range : @core.TextRange
   selection_rect_count : Int
@@ -147,7 +147,7 @@ pub(all) struct SkiaTextSelectionGeometryProof {
   bidi_visual_order_evidence : Bool
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct SkiaTextVisualOrderProof {
+pub(all) struct SkiaTextVisualOrderDiagnostic {
   logical_text : String
   visual_text : String
   logical_cluster_count : Int

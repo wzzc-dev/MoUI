@@ -13,26 +13,35 @@ extern "C" fn windows_present_skia_pixels_to_hwnd(
 pub struct WindowsSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
-  priv exit_after_first_present : Bool
   priv web_view_commands : @host.HostWebViewCommandQueue?
   priv web_view_events : @host.HostWebViewEventSource?
+}
+
+///|
+pub struct WindowsSkiaSmokeOptions {
+  priv first_frame_smoke_auto_exit : Bool
 }
 
 ///|
 pub fn WindowsSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
-  exit_after_first_present? : Bool = false,
   web_view_commands? : @host.HostWebViewCommandQueue? = None,
   web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> WindowsSkiaAppOptions {
   {
     scene_resolver,
     font_resolution,
-    exit_after_first_present,
     web_view_commands,
     web_view_events,
   }
+}
+
+///|
+pub fn WindowsSkiaSmokeOptions::new(
+  first_frame_smoke_auto_exit? : Bool = false,
+) -> WindowsSkiaSmokeOptions {
+  { first_frame_smoke_auto_exit, }
 }
 
 ///|
@@ -62,9 +71,36 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@windows_host.WindowsHostAppOptions::new(
       scene_resolver=options.scene_resolver,
-      exit_after_first_present=options.exit_after_first_present,
       web_view_commands=options.web_view_commands,
       web_view_events=options.web_view_events,
+    ),
+    window_requests~,
+  )
+}
+
+///|
+pub fn run_smoke_app_with_options(
+  title : String,
+  runtime : @core.AppRuntime,
+  options~ : WindowsSkiaAppOptions,
+  smoke_options? : WindowsSkiaSmokeOptions = WindowsSkiaSmokeOptions::new(),
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+) -> Unit {
+  if !windows_skia_provider_ready() {
+    println(windows_skia_unavailable_message())
+    return
+  }
+  @windows_host.run_app_with_renderer_provider_smoke(
+    title,
+    runtime,
+    provider=renderer_provider(options~),
+    options=@windows_host.WindowsHostAppOptions::new(
+      scene_resolver=options.scene_resolver,
+      web_view_commands=options.web_view_commands,
+      web_view_events=options.web_view_events,
+    ),
+    smoke_options=@windows_host.WindowsHostSmokeOptions::new(
+      first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
     ),
     window_requests~,
   )
@@ -96,7 +132,7 @@ pub fn windows_skia_provider_preflight_summary(
 ) -> String {
   let info = @skia_renderer.backend_info()
   let render_status = if windows_skia_provider_ready() {
-    "ready"
+    "available"
   } else {
     "unavailable"
   }
@@ -104,13 +140,8 @@ pub fn windows_skia_provider_preflight_summary(
     @skia_renderer.SkiaFontResolution::SystemFontMgr => "system-font-mgr"
     @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
   }
-  let first_frame = if options.exit_after_first_present {
-    "enabled"
-  } else {
-    "disabled"
-  }
   let host_preflight = @windows_host.windows_capability_summary().preflight_fields()
-  "Windows Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{windows_skia_presenter_description()}; first_frame_smoke=\{first_frame}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=matching-host pending; unavailable=\"\{windows_skia_unavailable_message()}\""
+  "Windows Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{windows_skia_presenter_description()}; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=smoke log required; unavailable=\"\{windows_skia_unavailable_message()}\""
 }
 
 ///|

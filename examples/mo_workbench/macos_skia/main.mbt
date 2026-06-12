@@ -11,15 +11,6 @@ fn main {
     width=1220.0,
     height=780.0,
   )
-  let exit_after_first_present = @env.get_env_var(
-      "MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT",
-    ) ==
-    Some("1")
-  let font_resolution = if exit_after_first_present {
-    @skia_renderer.SkiaFontResolution::EmptyTypeface
-  } else {
-    @skia_renderer.SkiaFontResolution::SystemFontMgr
-  }
   let surface_route = if @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") ==
     Some("metal-gpu") {
     @skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute
@@ -33,9 +24,7 @@ fn main {
         "Mo Workbench",
         runtime,
         options=@macos_skia_backend.MacosSkiaAppOptions::new(
-          font_resolution~,
           surface_route~,
-          exit_after_first_present~,
         ),
       )
       transport_owner.shutdown()

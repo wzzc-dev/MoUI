@@ -3,7 +3,6 @@ import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/windows" @windows_host,
   "wzzc-dev/moui/backend/windows/skia" @windows_skia_backend,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
   "examples/pdf_workbench/app",
   "examples/pdf_workbench/pdflite_service_native_transport" @pdflite_transport,
   "examples/pdf_workbench/pdfium_adapter",

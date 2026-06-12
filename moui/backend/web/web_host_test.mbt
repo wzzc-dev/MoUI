@@ -7,7 +7,7 @@ test "web backend is wasm-gc only and rejects js fallback semantics" {
     info.renderer_info.backend == @render.RendererBackendKind::WebGpuWasm,
   )
   assert_true(
-    info.renderer_info.status == @render.RendererCapabilityStatus::Ready,
+    info.renderer_info.status == @render.RendererCapabilityStatus::Supported,
   )
   assert_true(
     info.surface_contract.source ==
@@ -75,10 +75,10 @@ test "web capability summary exposes known browser host services" {
   inspect(summary.services.system_theme, content="true")
   inspect(summary.input.drag_drop, content="true")
   inspect(summary.input.ime, content="true")
-  inspect(summary.ime_ready, content="true")
-  inspect(summary.drag_drop_ready, content="true")
+  inspect(summary.ime_available, content="true")
+  inspect(summary.drag_drop_available, content="true")
   inspect(summary.async_services, content="true")
-  inspect(summary.native_accessibility_ready, content="false")
+  inspect(summary.native_accessibility_available, content="false")
   inspect(summary.has_required_app_basics(), content="true")
 }
 

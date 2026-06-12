@@ -1,8 +1,6 @@
 import {
-  "moonbitlang/core/env",
   "wzzc-dev/moui/backend/linux" @linux_backend,
   "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
-  "wzzc-dev/moui/render/skia" @skia_renderer,
   "examples/showcase/app" @showcase_app,
 }
 

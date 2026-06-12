@@ -15,7 +15,7 @@ struct SkiaEntry {
   host_summary_call : String
   options_type : String
   run_function : String
-  env_var : String
+  surface_route_env : String
   app_title : String
   expected_link_token : String
   allow_async_pump : Bool
@@ -72,7 +72,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "@macos_backend.macos_capability_summary()",
       options_type: "MacosSkiaAppOptions",
       run_function: "run_app_with_options",
-      env_var: "MOUI_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      surface_route_env: "MOUI_MACOS_SKIA_SURFACE_ROUTE",
       app_title: "\"MoUI Showcase\"",
       expected_link_token: "-framework AppKit",
       allow_async_pump: false,
@@ -87,7 +87,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "@windows_backend.windows_capability_summary()",
       options_type: "WindowsSkiaAppOptions",
       run_function: "run_app_with_options",
-      env_var: "MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      surface_route_env: "",
       app_title: "\"MoUI Showcase\"",
       expected_link_token: "",
       allow_async_pump: false,
@@ -102,7 +102,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "@linux_backend.linux_capability_summary()",
       options_type: "LinuxSkiaAppOptions",
       run_function: "run_app_with_options",
-      env_var: "MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      surface_route_env: "",
       app_title: "\"MoUI Showcase\"",
       expected_link_token: "-lz",
       allow_async_pump: false,
@@ -117,7 +117,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "",
       options_type: "MacosSkiaAppOptions",
       run_function: "run_app_with_options",
-      env_var: "MOUI_MARKDOWN_EDITOR_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      surface_route_env: "MOUI_MACOS_SKIA_SURFACE_ROUTE",
       app_title: "\"MoUI Markdown Editor\"",
       expected_link_token: "-framework AppKit",
       allow_async_pump: false,
@@ -132,7 +132,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "",
       options_type: "WindowsSkiaAppOptions",
       run_function: "run_app_with_options",
-      env_var: "MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      surface_route_env: "",
       app_title: "\"MoUI Markdown Editor\"",
       expected_link_token: "",
       allow_async_pump: false,
@@ -147,7 +147,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "",
       options_type: "LinuxSkiaAppOptions",
       run_function: "run_app_with_options",
-      env_var: "MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      surface_route_env: "",
       app_title: "\"MoUI Markdown Editor\"",
       expected_link_token: "-lz",
       allow_async_pump: false,
@@ -162,7 +162,7 @@ fn skia_entries() -> Array[SkiaEntry] {
       host_summary_call: "",
       options_type: "MacosSkiaAppOptions",
       run_function: "run_app_with_options_async_pump",
-      env_var: "MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT",
+      surface_route_env: "MOUI_MACOS_SKIA_SURFACE_ROUTE",
       app_title: "\"Mo Workbench\"",
       expected_link_token: "-framework AppKit",
       allow_async_pump: true,
@@ -205,6 +205,11 @@ fn assert_not_contains(
 }
 
 ///|
+fn legacy_first_frame_env_token() -> String {
+  "EXIT" + "_AFTER" + "_FIRST" + "_PRESENT"
+}
+
+///|
 fn validate_entry_texts(
   entry : SkiaEntry,
   pkg : String,
@@ -214,7 +219,17 @@ fn validate_entry_texts(
   let main_path = entry.package_path + "/main.mbt"
   let failures : Array[String] = []
 
-  assert_contains(pkg, "\"moonbitlang/core/env\"", pkg_path, failures)
+  if entry.surface_route_env != "" {
+    assert_contains(pkg, "\"moonbitlang/core/env\"", pkg_path, failures)
+    assert_contains(
+      pkg, "\"wzzc-dev/moui/render/skia\" @skia_renderer", pkg_path, failures,
+    )
+  } else {
+    assert_not_contains(pkg, "\"moonbitlang/core/env\"", pkg_path, failures)
+    assert_not_contains(
+      pkg, "\"wzzc-dev/moui/render/skia\" @skia_renderer", pkg_path, failures,
+    )
+  }
   assert_contains(
     pkg,
     platform_backend_import(entry.platform),
@@ -222,9 +237,6 @@ fn validate_entry_texts(
     failures,
   )
   assert_contains(pkg, entry.host_backend_import, pkg_path, failures)
-  assert_contains(
-    pkg, "\"wzzc-dev/moui/render/skia\" @skia_renderer", pkg_path, failures,
-  )
   assert_contains(pkg, entry.app_import, pkg_path, failures)
   assert_contains(pkg, "supported_targets = \"native\"", pkg_path, failures)
   assert_contains(pkg, "\"is-main\": true", pkg_path, failures)
@@ -251,17 +263,25 @@ fn validate_entry_texts(
     assert_contains(main, "runtime_with_host_summary", main_path, failures)
     assert_contains(main, entry.host_summary_call, main_path, failures)
   }
-  assert_contains(main, entry.env_var, main_path, failures)
-  assert_contains(main, "==\n    Some(\"1\")", main_path, failures)
-  assert_contains(
-    main, "let font_resolution = if exit_after_first_present", main_path, failures,
-  )
-  assert_contains(
-    main, "@skia_renderer.SkiaFontResolution::EmptyTypeface", main_path, failures,
-  )
-  assert_contains(
-    main, "@skia_renderer.SkiaFontResolution::SystemFontMgr", main_path, failures,
-  )
+  assert_not_contains(main, legacy_first_frame_env_token(), main_path, failures)
+  assert_not_contains(main, "first_frame_smoke_auto_exit", main_path, failures)
+  assert_not_contains(main, "MOUI_MACOS_NATIVE_IME_SMOKE", main_path, failures)
+  assert_not_contains(main, "native_ime_runtime_smoke", main_path, failures)
+  assert_not_contains(main, "EmptyTypeface", main_path, failures)
+  assert_not_contains(main, "run_smoke_app_with_options", main_path, failures)
+  if entry.surface_route_env != "" {
+    assert_contains(main, entry.surface_route_env, main_path, failures)
+    assert_contains(
+      main,
+      "@skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute",
+      main_path,
+      failures,
+    )
+    assert_contains(main, "surface_route~", main_path, failures)
+  } else {
+    assert_not_contains(main, "@env.", main_path, failures)
+    assert_not_contains(main, "@skia_renderer.", main_path, failures)
+  }
   assert_contains(
     main,
     entry.backend_alias + "." + entry.run_function,
@@ -275,8 +295,6 @@ fn validate_entry_texts(
     main_path,
     failures,
   )
-  assert_contains(main, "font_resolution~", main_path, failures)
-  assert_contains(main, "exit_after_first_present~", main_path, failures)
   if !entry.allow_async_pump {
     assert_not_contains(
       main, "run_app_with_options_async_pump", main_path, failures,

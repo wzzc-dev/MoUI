@@ -158,10 +158,10 @@ const assertNear = (actual, expected, message) => {
   );
 };
 
-const evidenceEvents = [];
-globalThis.__mouiWebRuntimeEvidence = {
+const observationEvents = [];
+globalThis.__mouiWebRuntimeObservation = {
   recordEvent(event) {
-    evidenceEvents.push(event);
+    observationEvents.push(event);
   },
 };
 
@@ -332,7 +332,7 @@ assert(
 );
 
 uploadedBuffers.length = 0;
-evidenceEvents.length = 0;
+observationEvents.length = 0;
 assert(imports.begin_frame(renderer, 100, 60) === 0, "begin_frame for text smoke failed");
 assert(
   imports.draw_text(
@@ -398,7 +398,7 @@ for (let index = 1; index <= 3; index += 1) {
 }
 assert(imports.present(renderer) === 0, "present text smoke failed");
 assert(
-  evidenceEvents.some(event =>
+  observationEvents.some(event =>
     event.name === "text_color_glyph" &&
     event.format === "rgba" &&
     typeof event.fontFamily === "string" &&
@@ -409,22 +409,22 @@ assert(
     Number(event.glyphWidth) > 0 &&
     Number(event.highSaturationPixels) >= 8
   ),
-  "text smoke must record high-saturation RGBA glyph evidence with font/glyph metadata",
+  "text smoke must record high-saturation RGBA glyph observation with font/glyph metadata",
 );
 assert(
-  evidenceEvents.some(event =>
+  observationEvents.some(event =>
     event.name === "text_grapheme_layout" &&
     event.singleGraphemeCluster === true &&
     event.noInteriorCaret === true
   ),
-  "text smoke must record ZWJ single-grapheme evidence",
+  "text smoke must record ZWJ single-grapheme observation",
 );
 assert(
-  evidenceEvents.some(event => event.name === "text_bidi_layout" && event.visualOrderDiffers === true),
-  "text smoke must record bidi visual-order evidence",
+  observationEvents.some(event => event.name === "text_bidi_layout" && event.visualOrderDiffers === true),
+  "text smoke must record bidi visual-order observation",
 );
 assert(
-  evidenceEvents.filter(event => event.name === "text_paragraph_line").length === 3,
+  observationEvents.filter(event => event.name === "text_paragraph_line").length === 3,
   "text smoke must record paragraph line metrics",
 );
 assert(

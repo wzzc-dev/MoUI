@@ -1,7 +1,7 @@
 # Release Readiness
 
 This page describes the current preview-release validation policy. It is a
-checklist for fresh release work, not a permanent evidence ledger.
+checklist for fresh release work, not a permanent observation ledger.
 
 ## Baseline
 
@@ -20,7 +20,7 @@ MoUI is ready for a preview handoff when the repository can demonstrate:
 
 ## Required Gates
 
-| Gate | Required Evidence | Command |
+| Gate | Required Observation | Command |
 | --- | --- | --- |
 | daily baseline | Bounded package checks, guidance consistency, API surface guardrails, renderer/provider static checks, Showcase and Markdown Editor app tests, and Web wasm-gc builds pass. Design Systems is addon diagnostic coverage through `--theme-diagnostics`. | `sh scripts/dev-check.sh` |
 | Public API audit | Generated interfaces reviewed after public API changes and package budgets/boundary tokens still pass. | `moon info`, then `node scripts/validate-api-surface.mjs` |
@@ -36,7 +36,7 @@ async image second-frame behavior, optional SkParagraph text behavior, WebGPU
 browser-session startup, nonblank canvas output, representative input delivery,
 or current-platform first-frame presentation.
 
-Those logs are runtime evidence logs for a named host/session. They do not
+Those logs are runtime observation logs for a named host/session. They do not
 become a checked-in manifest and they do not automatically promote unrelated
 platforms or renderers.
 

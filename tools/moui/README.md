@@ -22,7 +22,7 @@ Current tools:
   conformance capture manifests for golden screenshot and Web benchmark
   capture handoffs.
 - `validate_web_runtime_handoff_manifest/` validates schema version 1 static
-  Web runtime handoff evidence manifests without broadening them into browser
+  Web runtime handoff observation manifests without broadening them into browser
   WebGPU, wasm-instantiation, canvas, or pixel smoke.
 - `validate_web_runtime_presentation_manifest/` validates schema version 1
   browser-session Web runtime presentation manifests, including WebGPU, wasm

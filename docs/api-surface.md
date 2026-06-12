@@ -17,7 +17,7 @@ packages expose narrower contracts for platform and renderer integration.
   should not leak into the root facade.
 - Integration API: `moui/backend/host`, `moui/render`, and renderer/provider
   packages. These are public because platform backends, renderers, examples,
-  and evidence tools need them, but they are not the everyday app authoring
+  and observation tools need them, but they are not the everyday app authoring
   surface.
 - Addon API: `moui_theme/*` packages. These remain outside `core`, `views`,
   and the root facade so design-system preview work does not become a required

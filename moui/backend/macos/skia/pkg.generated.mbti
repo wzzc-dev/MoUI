@@ -18,14 +18,22 @@ pub fn run_app_with_options(String, @core.AppRuntime, options~ : MacosSkiaAppOpt
 
 pub async fn run_app_with_options_async_pump(String, @core.AppRuntime, options~ : MacosSkiaAppOptions, window_requests? : @host.HostWindowRequestQueue, frame_interval_ms? : Int) -> Unit
 
+pub fn run_smoke_app_with_options(String, @core.AppRuntime, options~ : MacosSkiaAppOptions, smoke_options? : MacosSkiaSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+
 // Errors
 
 // Types and methods
 pub struct MacosSkiaAppOptions {
   // private fields
 }
-pub fn MacosSkiaAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @wzzc-dev/moui/render/skia.SkiaSurfaceRoute, exit_after_first_present? : Bool) -> Self
+pub fn MacosSkiaAppOptions::new(scene_resolver? : @host.HostWindowSceneResolver, font_resolution? : @wzzc-dev/moui/render/skia.SkiaFontResolution, surface_route? : @wzzc-dev/moui/render/skia.SkiaSurfaceRoute, web_view_commands? : @host.HostWebViewCommandQueue?, web_view_events? : @host.HostWebViewEventSource?) -> Self
+
+pub struct MacosSkiaSmokeOptions {
+  // private fields
+}
+pub fn MacosSkiaSmokeOptions::new(first_frame_smoke_auto_exit? : Bool, native_ime_runtime_smoke? : Bool) -> Self
 
 // Type aliases
 
 // Traits
+

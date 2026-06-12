@@ -6,7 +6,7 @@ let valid_manifest =
   #|  "generatedBy": "scripts/validate-web-runtime-handoff.mjs",
   #|  "root": ".",
   #|  "baseUrl": "",
-  #|  "evidenceBoundary": "Static HTML/runtime/wasm delivery and compiled WebAssembly export audit only; not browser WebGPU device, wasm instantiation, canvas presentation, or pixel evidence.",
+  #|  "observationBoundary": "Static HTML/runtime/wasm delivery and compiled WebAssembly export audit only; not browser WebGPU device, wasm instantiation, canvas presentation, or pixel observations.",
   #|  "runtimeAssets": [
   #|    "moui/backend/web/runtime.js",
   #|    "moui/backend/web/browser_runtime.js"
@@ -131,14 +131,14 @@ test "rejects missing compiled wasm export" {
 }
 
 ///|
-test "rejects weak evidence boundary" {
+test "rejects weak observation boundary" {
   let manifest = valid_manifest.replace(
-    old="Static HTML/runtime/wasm delivery and compiled WebAssembly export audit only; not browser WebGPU device, wasm instantiation, canvas presentation, or pixel evidence.",
-    new="Static handoff evidence.",
+    old="Static HTML/runtime/wasm delivery and compiled WebAssembly export audit only; not browser WebGPU device, wasm instantiation, canvas presentation, or pixel observations.",
+    new="Static handoff observation.",
   )
   inspect(
     validate_manifest_text(manifest).contains(
-      "evidenceBoundary must explicitly exclude browser WebGPU device, wasm instantiation, and pixel evidence",
+      "observationBoundary must explicitly exclude browser WebGPU device, wasm instantiation, and pixel observations",
     ),
     content="true",
   )

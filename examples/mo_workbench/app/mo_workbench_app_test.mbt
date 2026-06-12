@@ -2086,7 +2086,7 @@ test "workbench queues all focused checks through one Pi RPC bash batch" {
   )
   inspect(
     model.commands[3].command,
-    content="MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
+    content="moon build moui_tester/macos_skia_first_frame_smoke --target native",
   )
   match model.transport.command_queue[0] {
     StartRpc(session, cwd) => {
@@ -2100,7 +2100,7 @@ test "workbench queues all focused checks through one Pi RPC bash batch" {
       inspect(session, content="moui-skia")
       inspect(
         command,
-        content="MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
+        content="moon build moui_tester/macos_skia_first_frame_smoke --target native",
       )
     }
     _ => fail("expected queued final focused check")
@@ -2399,7 +2399,7 @@ test "workbench focused check bash responses complete queued commands in order" 
     )
     emit(
       JsonLineSent(
-        "moui-skia", "{\"type\":\"bash\",\"command\":\"MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native\"}",
+        "moui-skia", "{\"type\":\"bash\",\"command\":\"moon build moui_tester/macos_skia_first_frame_smoke --target native\"}",
       ),
     )
     emit(
@@ -2442,7 +2442,7 @@ test "workbench focused check bash responses complete queued commands in order" 
   inspect(model.commands[2].output, content="skia ok")
   inspect(
     model.commands[3].command,
-    content="MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
+    content="moon build moui_tester/macos_skia_first_frame_smoke --target native",
   )
   inspect(model.commands[3].status, content="passed")
   inspect(
@@ -4408,7 +4408,7 @@ test "workbench focused check batch stays visible in activity evidence" {
   )
   assert_true(
     has_text(
-      commands, "MO_WORKBENCH_MACOS_SKIA_EXIT_AFTER_FIRST_PRESENT=1 moon run examples/mo_workbench/macos_skia --target native",
+      commands, "moon build moui_tester/macos_skia_first_frame_smoke --target native",
     ),
   )
   assert_false(has_text(commands, "常用检查"))

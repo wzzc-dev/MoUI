@@ -117,7 +117,7 @@ do
 done
 
 bash "$MOUI_SKIA_DIR/scripts/verify-platform-status.sh" ||
-  fail "moui_skia platform status evidence did not validate"
+  fail "moui_skia platform status observation did not validate"
 
 bash "$MOUI_SKIA_DIR/scripts/verify-native-capability-contract.sh" ||
   fail "moui_skia native capability contract did not validate"

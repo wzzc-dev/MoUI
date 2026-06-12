@@ -160,7 +160,7 @@ Current priorities:
 5. Keep Showcase capability status aligned with
    `docs/renderer-capability-report.md` so visual behavior is easy to verify.
    Add Showcase coverage for renderer improvements when the behavior is
-   inspectable, and document why renderer tests/report are the primary evidence
+   inspectable, and document why renderer tests/report are the primary observation
    when it is not.
 
 Validation:
@@ -272,7 +272,7 @@ Planned documentation set:
 - `docs/testing.md`: testing layers and release checks.
 - `docs/ai-collaboration.md`: AI workflow, prompt templates, and review
   checklist.
-- `docs/release-readiness.md`: preview-release gates, current evidence, known
+- `docs/release-readiness.md`: preview-release gates, current observation, known
   gaps, and next implementation slices.
 
 The project also includes MoUI-specific skills at:

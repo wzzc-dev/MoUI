@@ -130,7 +130,7 @@ fn renderer_smoke_keys() -> Array[String] {
 }
 
 ///|
-fn renderer_smoke_evidence_requirements(key : String) -> Array[String] {
+fn renderer_smoke_marker_requirements(key : String) -> Array[String] {
   match key {
     "radialGradient" => ["center-mid-edge-pixels", "shader-payload"]
     "colorEmojiPixels" =>
@@ -365,18 +365,18 @@ fn validate_renderer_smoke(
     failures,
   )
   smoke_passed[smoke_key] = passed
-  let smoke_evidence = require_array(
+  let smoke_markers = require_array(
     smoke,
-    "evidence",
-    label + ".screenshot." + smoke_key + ".evidence",
+    "markers",
+    label + ".screenshot." + smoke_key + ".markers",
     failures,
   )
   assert_string_array(
-    smoke_evidence,
-    label + ".screenshot." + smoke_key + ".evidence",
+    smoke_markers,
+    label + ".screenshot." + smoke_key + ".markers",
     failures,
   )
-  let smoke_markers = require_number(
+  let matched_markers = require_number(
     smoke,
     "matchedMarkers",
     label + ".screenshot." + smoke_key + ".matchedMarkers",
@@ -395,26 +395,26 @@ fn validate_renderer_smoke(
       ".required must be false for non-Showcase targets",
     )
   }
-  if passed && smoke_evidence.is_empty() {
+  if passed && smoke_markers.is_empty() {
     failures.push(
-      label + ".screenshot." + smoke_key + ".passed requires evidence tokens",
+      label + ".screenshot." + smoke_key + ".passed requires marker tokens",
     )
   }
   if passed {
-    for required_token in renderer_smoke_evidence_requirements(smoke_key) {
-      if !json_string_array_contains(smoke_evidence, required_token) {
+    for required_token in renderer_smoke_marker_requirements(smoke_key) {
+      if !json_string_array_contains(smoke_markers, required_token) {
         failures.push(
           label +
           ".screenshot." +
           smoke_key +
-          ".evidence must include '" +
+          ".markers must include '" +
           required_token +
           "'",
         )
       }
     }
   }
-  if smoke_markers < 0.0 {
+  if matched_markers < 0.0 {
     failures.push(
       label + ".screenshot." + smoke_key + ".matchedMarkers must be nonnegative",
     )
@@ -872,18 +872,18 @@ fn validate_target(
       ),
     )
   }
-  let evidence_events = require_array(
+  let observation_events = require_array(
     target,
-    "evidenceEvents",
-    label + ".evidenceEvents",
+    "observationEvents",
+    label + ".observationEvents",
     failures,
   )
-  for event_index in 0..<evidence_events.length() {
-    let event = match json_object_value(evidence_events[event_index]) {
+  for event_index in 0..<observation_events.length() {
+    let event = match json_object_value(observation_events[event_index]) {
       Some(fields) => fields
       None => {
         failures.push(
-          label + ".evidenceEvents[\{event_index}] must be an object",
+          label + ".observationEvents[\{event_index}] must be an object",
         )
         continue
       }
@@ -892,7 +892,7 @@ fn validate_target(
       require_number(
         event,
         "kind",
-        label + ".evidenceEvents[\{event_index}].kind",
+        label + ".observationEvents[\{event_index}].kind",
         failures,
       ),
     )
@@ -900,7 +900,7 @@ fn validate_target(
       require_string(
         event,
         "name",
-        label + ".evidenceEvents[\{event_index}].name",
+        label + ".observationEvents[\{event_index}].name",
         failures,
       ),
     )
@@ -1046,12 +1046,12 @@ fn validate_target(
   assert_string_array(notes, label + ".notes", failures)
   if status == "passed" {
     if status_text != "Running" {
-      failures.push(label + ".statusText must be Running for passed evidence")
+      failures.push(label + ".statusText must be Running for passed observation")
     }
     if body_failed != false || navigator_gpu != true {
       failures.push(
         label +
-        " passed evidence requires bodyFailed=false and navigatorGpu=true",
+        " passed observation requires bodyFailed=false and navigatorGpu=true",
       )
     }
     if canvas_count < 1.0 ||
@@ -1059,30 +1059,30 @@ fn validate_target(
       host_height <= 0.0 ||
       canvas_width <= 0.0 ||
       canvas_height <= 0.0 {
-      failures.push(label + " passed evidence requires a sized canvas")
+      failures.push(label + " passed observation requires a sized canvas")
     }
     if screenshot_width <= 0.0 ||
       screenshot_height <= 0.0 ||
       total_pixels <= 0.0 {
-      failures.push(label + " passed evidence requires a non-empty screenshot")
+      failures.push(label + " passed observation requires a non-empty screenshot")
     }
     if content_pixels < 500.0 || distinct_color_buckets < 6.0 {
-      failures.push(label + " passed evidence requires a nonblank screenshot")
+      failures.push(label + " passed observation requires a nonblank screenshot")
     }
     if !console_errors.is_empty() {
-      failures.push(label + " passed evidence must not contain console errors")
+      failures.push(label + " passed observation must not contain console errors")
     }
     for key in observation_keys() {
       if observation_required_for_passed_target(key, name) &&
         json_yes_no_value(observations, key) != "yes" {
         failures.push(
-          label + ".observations." + key + " must be yes for passed evidence",
+          label + ".observations." + key + " must be yes for passed observation",
         )
       }
     }
     if name == "showcase-web-wasm" && transform_pixels_passed != true {
       failures.push(
-        label + " passed evidence requires Showcase transform pixel markers",
+        label + " passed observation requires Showcase transform pixel markers",
       )
     }
     if name == "showcase-web-wasm" {
@@ -1092,7 +1092,7 @@ fn validate_target(
           _ =>
             failures.push(
               label +
-              " passed evidence requires Showcase " +
+              " passed observation requires Showcase " +
               smoke_key +
               " smoke markers",
             )
@@ -1107,7 +1107,7 @@ fn validate_target(
     })
     if !any_no {
       failures.push(
-        label + " failed evidence must include at least one no observation",
+        label + " failed observation must include at least one no observation",
       )
     }
   }
@@ -1153,16 +1153,16 @@ fn validate_header(
   if !local_http_url(cdp_url) {
     failures.push("cdpUrl must be a local HTTP URL")
   }
-  let evidence_boundary = require_string(
-    manifest, "evidenceBoundary", "evidenceBoundary", failures,
+  let observation_boundary = require_string(
+    manifest, "observationBoundary", "observationBoundary", failures,
   )
   for
     token in [
       "WebGPU", "wasm app startup", "resize/input", "target close", "screenshot",
-      "not prove cross-browser",
+      "not claim cross-browser",
     ] {
-    if !evidence_boundary.contains(token) {
-      failures.push("evidenceBoundary must include '" + token + "'")
+    if !observation_boundary.contains(token) {
+      failures.push("observationBoundary must include '" + token + "'")
     }
   }
   let browser = require_object(manifest, "browser", "browser", failures)

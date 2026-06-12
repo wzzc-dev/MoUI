@@ -32,8 +32,8 @@ const validManifest = {
   generatedBy: "scripts/validate-web-runtime-handoff.mjs",
   root: ".",
   baseUrl: "",
-  evidenceBoundary:
-    "Static HTML/runtime/wasm delivery and compiled WebAssembly export audit only; not browser WebGPU device, wasm instantiation, canvas presentation, or pixel evidence.",
+  observationBoundary:
+    "Static HTML/runtime/wasm delivery and compiled WebAssembly export audit only; not browser WebGPU device, wasm instantiation, canvas presentation, or pixel observations.",
   runtimeAssets: [
     "moui/backend/web/runtime.js",
     "moui/backend/web/browser_runtime.js",
@@ -135,14 +135,14 @@ expectFail(
 );
 
 expectFail(
-  "weak evidence boundary",
+  "weak observation boundary",
   runValidator(
     writeFixture("weak-boundary.json", {
       ...validManifest,
-      evidenceBoundary: "Static handoff evidence.",
+      observationBoundary: "Static handoff observation.",
     }),
   ),
-  "evidenceBoundary must explicitly exclude browser WebGPU device",
+  "observationBoundary must explicitly exclude browser WebGPU device",
 );
 
 expectFail(
