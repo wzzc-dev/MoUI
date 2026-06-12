@@ -138,6 +138,23 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn can_create_surfac
 }
 
 ///|
+pub impl @window_linux.ApplicationHandler for LinuxApp with fn about_to_wait(
+  self,
+  event_loop,
+) {
+  if pump_linux_webview_runtime() {
+    event_loop.set_control_flow(
+      @window_core.ControlFlow::wait_until(
+        linux_webview_runtime_next_tick_ms(delay_ms=16),
+      ),
+    )
+  } else {
+    event_loop.set_control_flow(@window_core.ControlFlow::Wait)
+  }
+  self.drain_window_requests(event_loop)
+}
+
+///|
 pub impl @window_linux.ApplicationHandler for LinuxApp with fn window_event(
   self,
   event_loop,
