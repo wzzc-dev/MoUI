@@ -132,9 +132,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/render/skia/renderer_text.mbt",
-      max_lines: 1970,
-      target_lines: 1800,
-      reason: "split Skia text measurement, fallback, paragraph, and diagnostic helpers",
+      max_lines: 708,
+      target_lines: 650,
+      reason: "keep Skia text diagnostics, drawing, segmentation, and shared text structs compact",
     },
     {
       path: "moui/core/engine_wbtest.mbt",
