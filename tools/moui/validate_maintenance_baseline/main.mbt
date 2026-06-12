@@ -71,7 +71,7 @@ fn oversized_file_threshold() -> Int {
 fn file_budgets() -> Array[FileBudget] {
   [
     {
-      path: "examples/mo_workbench/app/mo_workbench_app_test.mbt",
+      path: "examples/mo_workbench/app/mo_workbench_app_wbtest.mbt",
       max_lines: 1166,
       target_lines: 1100,
       reason: "keep Mo Workbench baseline, backend projection, and shared test helpers compact",
@@ -205,8 +205,8 @@ fn pub_all_budgets() -> Array[PubAllBudget] {
     {
       label: "mo workbench app source",
       path: "examples/mo_workbench/app",
-      max_pub_all_lines: 51,
-      target_pub_all_lines: 30,
+      max_pub_all_lines: 5,
+      target_pub_all_lines: 5,
     },
     {
       label: "website app source",

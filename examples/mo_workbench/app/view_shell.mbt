@@ -109,7 +109,7 @@ fn workbench_min_double(a : Double, b : Double) -> Double {
 }
 
 ///|
-pub fn WorkbenchModel::view(self : WorkbenchModel) -> @core.View[WorkbenchMsg] {
+fn WorkbenchModel::view(self : WorkbenchModel) -> @core.View[WorkbenchMsg] {
   self.view_for_size(@core.Size::new(width=1220.0, height=780.0))
 }
 

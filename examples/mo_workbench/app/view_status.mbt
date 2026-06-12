@@ -624,7 +624,7 @@ fn WorkbenchModel::runtime_activity_label(self : WorkbenchModel) -> String {
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_runtime_signal(
+fn WorkbenchModel::active_agent_runtime_signal(
   self : WorkbenchModel,
 ) -> AgentRuntimeSignal {
   let backend = self.active_agent_backend_profile()

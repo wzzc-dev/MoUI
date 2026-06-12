@@ -23,6 +23,12 @@ automation runs, and knowledge organization.
   `AgentBackendTransportKind`, agent connector profile/state/command/event
   model, injectable `AgentConnectorRuntime`, and UI projections that keep the
   shell from depending on Pi-specific state.
+  Its public package surface is intentionally narrow: app consumers use
+  `runtime`, `runtime_with_transport`, `runtime_with_agent_connectors`,
+  `MoWorkbenchApp`, the Pi transport command/event/runtime protocol, and the
+  agent connector profile/command/event/runtime protocol. The TEA model,
+  messages, update helpers, selector/projection structs, and connector state
+  remain package-internal white-box test surface.
 - `examples/mo_workbench/native_transport` owns the native
   `moonbitlang/async` process driver for JSONL stdin/stdout sessions. It
   imports the shared app package for `PiTransportCommand`,
@@ -56,13 +62,13 @@ three profiles:
 - `Local` uses `FixtureTransport` and keeps prompt evidence inside the shared
   model for UI switching smoke tests.
 
-The connector model is intentionally small:
-`AgentConnectorProfile`, `AgentConnectorState`, `AgentConnectorCommand`,
-`AgentConnectorEvent`, and `AgentConnectorRuntime`. The UI consumes the same
-backend-neutral projections for Pi and connector-backed agents: run overview,
-activity queue, request summaries, provider registry, composer routing,
-composer request summary, timeline, status bar, session binding, runtime
-signal, command catalog, and metrics.
+The connector public protocol is intentionally small:
+`AgentConnectorProfile`, `AgentConnectorCommand`, `AgentConnectorEvent`, and
+`AgentConnectorRuntime`. Connector state is owned inside the app package. The UI
+consumes package-internal backend-neutral projections for Pi and
+connector-backed agents: run overview, activity queue, request summaries,
+provider registry, composer routing, composer request summary, timeline, status
+bar, session binding, runtime signal, command catalog, and metrics.
 
 ACP v1 is a framework placeholder only. It records the product shape needed by
 Agent Connect Protocol style discovery and messaging, but it does not implement
