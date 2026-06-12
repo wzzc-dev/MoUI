@@ -130,7 +130,7 @@ pub fn linux_skia_provider_preflight_summary(
     @skia_renderer.SkiaFontResolution::EmptyTypeface => "empty-typeface"
   }
   let host_preflight = @linux_host.linux_capability_summary().preflight_fields()
-  "Linux Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{linux_skia_presenter_description()}; first_frame_env=MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT|MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=smoke log required; runtime_smokes=showcase-linux-skia,markdown-editor-linux-skia,window-package-linux; service_runtime_evidence=clipboard,file-dialog,text-file,open-url,ime,drag-drop; unavailable=\"\{linux_skia_unavailable_message()}\""
+  "Linux Skia provider preflight: renderer=\{render_status}; can_render=\{info.can_render}; skia_available=\{@skia_renderer.skia_available()}; font=\{font_resolution}; presenter=\{linux_skia_presenter_description()}; first_frame_smoke=disabled; first_frame_env=MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT|MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT; \{skia_host_renderer_bridge_preflight()}; \{host_preflight}; runtime=smoke log required; runtime_smokes=showcase-linux-skia,markdown-editor-linux-skia,window-package-linux; service_runtime_evidence=clipboard,file-dialog,text-file,open-url,ime,drag-drop; unavailable=\"\{linux_skia_unavailable_message()}\""
 }
 
 ///|
