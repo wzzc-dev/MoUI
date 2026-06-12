@@ -17,12 +17,6 @@ using @views {
   text_field,
 }
 
-///|
-pub fn view(model : PdfWorkbenchModel) -> @core.View[PdfWorkbenchMsg] {
-  model.view_for_viewport(@core.Size::new(width=1120.0, height=720.0))
-}
-
-///|
 fn PdfWorkbenchModel::view_with_environment(
   self : PdfWorkbenchModel,
   env : @core.ViewEnvironment,

@@ -113,7 +113,7 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep shared runtime helpers and basic app/program runtime tests compact",
     },
     {
-      path: "examples/pdf_workbench/app/pdf_workbench_app_test.mbt",
+      path: "examples/pdf_workbench/app/pdf_workbench_app_wbtest.mbt",
       max_lines: 721,
       target_lines: 650,
       reason: "keep PDF Workbench model/edit tests and shared app-test helpers compact",
@@ -199,7 +199,7 @@ fn pub_all_budgets() -> Array[PubAllBudget] {
     {
       label: "pdf workbench app source",
       path: "examples/pdf_workbench/app",
-      max_pub_all_lines: 14,
+      max_pub_all_lines: 10,
       target_pub_all_lines: 10,
     },
     {

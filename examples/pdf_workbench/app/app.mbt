@@ -4,7 +4,7 @@ pub struct PdfWorkbenchApp {
 }
 
 ///|
-pub(all) enum PdfWorkbenchStatus {
+pub enum PdfWorkbenchStatus {
   Empty
   Requesting(String)
   Pending(@host.HostServiceRequestId, String)
@@ -66,7 +66,7 @@ pub(all) enum PdfWorkbenchLoadResult {
 }
 
 ///|
-pub(all) struct PdfWorkbenchModel {
+pub struct PdfWorkbenchModel {
   document : PdfWorkbenchDocument?
   status : PdfWorkbenchStatus
   raster_status : PdfWorkbenchRasterStatus
@@ -87,13 +87,13 @@ pub(all) struct PdfWorkbenchModel {
 }
 
 ///|
-pub(all) struct PdfWorkbenchUpdate {
+priv struct PdfWorkbenchUpdate {
   model : PdfWorkbenchModel
   effect : @core.Effect[PdfWorkbenchMsg]
 }
 
 ///|
-pub(all) enum PdfWorkbenchMsg {
+priv enum PdfWorkbenchMsg {
   OpenRequested
   SaveRequested
   SaveAsRequested
@@ -157,7 +157,7 @@ pub fn PdfWorkbenchModel::new() -> PdfWorkbenchModel {
 }
 
 ///|
-pub fn PdfWorkbenchUpdate::new(
+fn PdfWorkbenchUpdate::new(
   model : PdfWorkbenchModel,
   effect? : @core.Effect[PdfWorkbenchMsg] = @core.Effect::none(),
 ) -> PdfWorkbenchUpdate {
@@ -165,22 +165,14 @@ pub fn PdfWorkbenchUpdate::new(
 }
 
 ///|
-pub fn PdfWorkbenchUpdate::as_tuple(
+fn PdfWorkbenchUpdate::as_tuple(
   self : PdfWorkbenchUpdate,
 ) -> (PdfWorkbenchModel, @core.Effect[PdfWorkbenchMsg]) {
   (self.model, self.effect)
 }
 
 ///|
-pub fn PdfWorkbenchModel::update(
-  self : PdfWorkbenchModel,
-  message : PdfWorkbenchMsg,
-) -> PdfWorkbenchModel {
-  self.update_with_services(message, @host.HostAppServices::unavailable()).model
-}
-
-///|
-pub fn PdfWorkbenchModel::update_with_services(
+fn PdfWorkbenchModel::update_with_services(
   self : PdfWorkbenchModel,
   message : PdfWorkbenchMsg,
   services : @host.HostAppServices,
@@ -272,7 +264,7 @@ pub fn PdfWorkbenchModel::update_with_services(
 }
 
 ///|
-pub fn PdfWorkbenchModel::subscriptions(
+fn PdfWorkbenchModel::subscriptions(
   self : PdfWorkbenchModel,
   services : @host.HostAppServices,
 ) -> @core.Subscription[PdfWorkbenchMsg] {
