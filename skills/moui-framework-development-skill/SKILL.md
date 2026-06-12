@@ -421,7 +421,15 @@ summaries as preflight diagnostics only; macOS first-frame and IME smoke now
 run through `moui_tester`, while ordinary Showcase and Markdown Editor
 entrypoints stay as direct app entrypoints. Windows/Linux ordinary Skia
 entrypoints do not carry auto-exit smoke flags; add matching tester/backend
-smoke runners when platform first-frame logs are needed.
+smoke runners when platform first-frame logs are needed. Windows/Linux Skia entrypoints use
+`MOUI_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`,
+`MOUI_MARKDOWN_EDITOR_WINDOWS_SKIA_EXIT_AFTER_FIRST_PRESENT=1`,
+`MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1`, or
+`MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1` for matching-host
+auto-exit first-frame logs. For Linux, keep Showcase, Markdown Editor, and
+`scripts/run-window-package-smoke.sh linux --run` logs separate because the
+first two are app-level Skia evidence and the window package smoke is
+dependency-level Wayland evidence.
 
 Windows native uses Visual Studio C++ build tools and vcpkg `zlib:x64-windows`.
 Use `scripts/windows/msvc_env.ps1` through the renderer-aware MSVC helpers and

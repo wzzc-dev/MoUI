@@ -629,15 +629,35 @@ Markdown Editor frames;
 those claims still require matching-host runtime runs and smoke logs
 manifest entries.
 
+For Linux Skia runtime evidence, record these as separate ignored
+`artifacts/` logs on the matching Wayland host:
+
+```sh
+MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+  moon run examples/showcase/linux_skia --target native
+MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+  moon run examples/markdown_editor/linux_skia --target native
+scripts/run-window-package-smoke.sh linux --run
+```
+
+The Showcase and Markdown Editor logs must include
+`Linux renderer presented first frame; exiting by request; title=...` from the
+host loop before they can be cited as app-level runtime evidence. The window
+package smoke remains dependency-level evidence for Wayland handles,
+`present_rgba_pixels`, resize/redraw, IME request state, and clean shutdown.
+
 The window package carries a consumer-style Linux smoke for this dependency
 surface. On a matching Wayland host, run
 `scripts/run-window-package-smoke.sh linux --run` to exercise
 surface creation, public Wayland handles, `Window::present_rgba_pixels`, resize,
 redraw, IME request state, and clean shutdown. Add `--require-input` or
 `WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` only when representative pointer/keyboard
-input is observed; clipboard selection and file drag/drop still need
-matching-host compositor observations before they can be cited as runtime
-observation. Record dependency-level facts from the `wzzc-dev/window@0.5.1-0.1.4`
+input is observed. Linux clipboard selection, file dialogs, text-file reads and
+writes, desktop URL opening, IME composition/cursor geometry, and file
+drag/drop are implemented host-service/input paths, but they remain
+matching-host runtime evidence boundaries: cite only logs that exercised the
+actual desktop/compositor service, not the package preflight summary alone.
+Record dependency-level facts from the `wzzc-dev/window@0.5.1-0.1.4`
 package smoke artifacts; keep the MoUI Showcase
 `linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
 application-level observation. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic

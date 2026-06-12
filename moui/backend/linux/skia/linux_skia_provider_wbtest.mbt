@@ -50,6 +50,12 @@ test "linux skia provider preflight records package observation boundary" {
   )
   assert_true(preflight.contains("font=system-font-mgr"))
   assert_true(preflight.contains("Linux Wayland wl_shm Skia pixel presenter"))
+  assert_true(preflight.contains("first_frame_smoke=disabled"))
+  assert_true(
+    preflight.contains(
+      "first_frame_env=MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT|MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT",
+    ),
+  )
   assert_true(preflight.contains("renderer_bridge=HostWindowRenderer"))
   assert_true(
     preflight.contains("renderer_text_system=SkiaRasterRenderer.text_system"),
@@ -107,6 +113,16 @@ test "linux skia provider preflight records package observation boundary" {
   assert_true(preflight.contains("native_accessibility=ready"))
   assert_true(preflight.contains("real Skia link flags"))
   assert_true(preflight.contains("smoke log required"))
+  assert_true(
+    preflight.contains(
+      "runtime_smokes=showcase-linux-skia,markdown-editor-linux-skia,window-package-linux",
+    ),
+  )
+  assert_true(
+    preflight.contains(
+      "service_runtime_evidence=clipboard,file-dialog,text-file,open-url,ime,drag-drop",
+    ),
+  )
 
   let empty = linux_skia_provider_preflight_summary(
     options=LinuxSkiaAppOptions::new(
