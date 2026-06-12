@@ -1,5 +1,5 @@
 ///|
-pub(all) enum AgentConnectorStatus {
+enum AgentConnectorStatus {
   ConnectorDisconnected
   ConnectorReady
   ConnectorStarting
@@ -40,7 +40,7 @@ pub(all) enum AgentConnectorEvent {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct AgentConnectorState {
+struct AgentConnectorState {
   backend_id : String
   profile : AgentConnectorProfile
   status : AgentConnectorStatus
@@ -87,7 +87,7 @@ pub fn AgentConnectorProfile::acp_demo() -> AgentConnectorProfile {
 }
 
 ///|
-pub fn AgentConnectorState::new(
+fn AgentConnectorState::new(
   backend_id~ : String,
   profile~ : AgentConnectorProfile,
 ) -> AgentConnectorState {
@@ -106,7 +106,7 @@ pub fn AgentConnectorState::new(
 }
 
 ///|
-pub fn AgentConnectorState::acp_demo() -> AgentConnectorState {
+fn AgentConnectorState::acp_demo() -> AgentConnectorState {
   AgentConnectorState::new(
     backend_id="acp-demo",
     profile=AgentConnectorProfile::acp_demo(),
@@ -114,12 +114,12 @@ pub fn AgentConnectorState::acp_demo() -> AgentConnectorState {
 }
 
 ///|
-pub fn default_agent_connector_states() -> Array[AgentConnectorState] {
+fn default_agent_connector_states() -> Array[AgentConnectorState] {
   [AgentConnectorState::acp_demo()]
 }
 
 ///|
-pub fn AgentConnectorState::enqueue(
+fn AgentConnectorState::enqueue(
   self : AgentConnectorState,
   command : AgentConnectorCommand,
 ) -> AgentConnectorState {
@@ -127,7 +127,7 @@ pub fn AgentConnectorState::enqueue(
 }
 
 ///|
-pub fn AgentConnectorState::enqueue_many(
+fn AgentConnectorState::enqueue_many(
   self : AgentConnectorState,
   commands : Array[AgentConnectorCommand],
 ) -> AgentConnectorState {
@@ -142,7 +142,7 @@ pub fn AgentConnectorState::enqueue_many(
 }
 
 ///|
-pub fn AgentConnectorState::apply_event(
+fn AgentConnectorState::apply_event(
   self : AgentConnectorState,
   event : AgentConnectorEvent,
 ) -> AgentConnectorState {
@@ -196,7 +196,7 @@ pub fn AgentConnectorState::apply_event(
 }
 
 ///|
-pub fn AgentConnectorStatus::label(self : AgentConnectorStatus) -> String {
+fn AgentConnectorStatus::label(self : AgentConnectorStatus) -> String {
   match self {
     ConnectorDisconnected => "未连接"
     ConnectorReady => "就绪"
@@ -207,7 +207,7 @@ pub fn AgentConnectorStatus::label(self : AgentConnectorStatus) -> String {
 }
 
 ///|
-pub fn AgentConnectorState::status_label(self : AgentConnectorState) -> String {
+fn AgentConnectorState::status_label(self : AgentConnectorState) -> String {
   self.status.label()
 }
 
@@ -224,7 +224,7 @@ pub fn AgentConnectorEvent::backend_id(self : AgentConnectorEvent) -> String {
 }
 
 ///|
-pub fn AgentConnectorState::has_active_transport(
+fn AgentConnectorState::has_active_transport(
   self : AgentConnectorState,
 ) -> Bool {
   match self.status {
@@ -234,7 +234,7 @@ pub fn AgentConnectorState::has_active_transport(
 }
 
 ///|
-pub fn AgentConnectorState::has_session_binding(
+fn AgentConnectorState::has_session_binding(
   self : AgentConnectorState,
 ) -> Bool {
   self.provider_session_id != "" || self.session_name != "" || self.model != ""

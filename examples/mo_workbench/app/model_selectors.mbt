@@ -1,6 +1,6 @@
 
 ///|
-pub fn WorkbenchModel::active_session(
+fn WorkbenchModel::active_session(
   self : WorkbenchModel,
 ) -> WorkbenchSession {
   for session in self.sessions {
@@ -12,7 +12,7 @@ pub fn WorkbenchModel::active_session(
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_backend_profile(
+fn WorkbenchModel::active_agent_backend_profile(
   self : WorkbenchModel,
 ) -> AgentBackendProfile {
   let id = self.active_session().backend_id
@@ -25,7 +25,7 @@ pub fn WorkbenchModel::active_agent_backend_profile(
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_backend_capabilities(
+fn WorkbenchModel::active_agent_backend_capabilities(
   self : WorkbenchModel,
 ) -> AgentBackendCapabilities {
   self.active_agent_backend_profile().capabilities
@@ -42,7 +42,7 @@ fn PiTransportState::display_status_label(self : PiTransportState) -> String {
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_backend_status(
+fn WorkbenchModel::active_agent_backend_status(
   self : WorkbenchModel,
 ) -> AgentBackendStatus {
   let backend = self.active_agent_backend_profile()
@@ -86,7 +86,7 @@ pub fn WorkbenchModel::active_agent_backend_status(
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_session_binding(
+fn WorkbenchModel::active_agent_session_binding(
   self : WorkbenchModel,
 ) -> AgentSessionBinding {
   let backend = self.active_agent_backend_profile()
@@ -114,7 +114,7 @@ pub fn WorkbenchModel::active_agent_session_binding(
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_model_catalog(
+fn WorkbenchModel::active_agent_model_catalog(
   self : WorkbenchModel,
 ) -> Array[AgentModelInfo] {
   let models : Array[AgentModelInfo] = []
@@ -128,7 +128,7 @@ pub fn WorkbenchModel::active_agent_model_catalog(
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_command_catalog(
+fn WorkbenchModel::active_agent_command_catalog(
   self : WorkbenchModel,
 ) -> Array[AgentCommandInfo] {
   let commands : Array[AgentCommandInfo] = []
@@ -178,7 +178,7 @@ fn agent_connector_command_catalog(
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_session_metrics(
+fn WorkbenchModel::active_agent_session_metrics(
   self : WorkbenchModel,
 ) -> AgentSessionMetrics {
   let backend = self.active_agent_backend_profile()
@@ -204,7 +204,7 @@ pub fn WorkbenchModel::active_agent_session_metrics(
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_input_settings(
+fn WorkbenchModel::active_agent_input_settings(
   self : WorkbenchModel,
 ) -> AgentInputSettings {
   let backend = self.active_agent_backend_profile()
@@ -227,7 +227,7 @@ pub fn WorkbenchModel::active_agent_input_settings(
 }
 
 ///|
-pub fn WorkbenchModel::active_pi_session_binding(
+fn WorkbenchModel::active_pi_session_binding(
   self : WorkbenchModel,
 ) -> PiSessionBinding {
   for binding in self.pi_session_bindings {
@@ -243,7 +243,7 @@ pub fn WorkbenchModel::active_pi_session_binding(
 }
 
 ///|
-pub fn WorkbenchModel::active_agent_connector_state(
+fn WorkbenchModel::active_agent_connector_state(
   self : WorkbenchModel,
 ) -> AgentConnectorState {
   let backend = self.active_agent_backend_profile()
@@ -264,7 +264,7 @@ pub fn WorkbenchModel::active_agent_connector_state(
 }
 
 ///|
-pub fn WorkbenchModel::pending_transport_count(self : WorkbenchModel) -> Int {
+fn WorkbenchModel::pending_transport_count(self : WorkbenchModel) -> Int {
   let backend = self.active_agent_backend_profile()
   if backend.uses_pi_transport() {
     self.transport.command_queue.length()
@@ -276,6 +276,6 @@ pub fn WorkbenchModel::pending_transport_count(self : WorkbenchModel) -> Int {
 }
 
 ///|
-pub fn WorkbenchModel::open_diagnostic_count(self : WorkbenchModel) -> Int {
+fn WorkbenchModel::open_diagnostic_count(self : WorkbenchModel) -> Int {
   self.diagnostics.length()
 }
