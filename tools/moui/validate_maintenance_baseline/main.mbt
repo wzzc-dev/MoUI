@@ -654,9 +654,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/views_data_interactions_test.mbt",
-      max_lines: 320,
-      target_lines: 290,
-      reason: "keep views data filter, column visibility, list, table, and selection interaction tests compact",
+      max_lines: 170,
+      target_lines: 150,
+      reason: "keep views list, table, and selection toolbar interaction tests compact",
+    },
+    {
+      path: "moui/views/views_data_filter_visibility_test.mbt",
+      max_lines: 160,
+      target_lines: 145,
+      reason: "keep views data filter and column visibility interaction tests compact",
     },
     {
       path: "moui/views/views_command_surfaces_test.mbt",
