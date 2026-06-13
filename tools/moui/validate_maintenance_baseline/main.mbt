@@ -96,9 +96,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/showcase/app/showcase_app_test.mbt",
-      max_lines: 1065,
-      target_lines: 980,
-      reason: "keep Showcase main catalog, diagnostics, renderer, and reusable example tests compact",
+      max_lines: 690,
+      target_lines: 620,
+      reason: "keep Showcase main catalog, section coverage, layout, and reusable example tests compact",
+    },
+    {
+      path: "examples/showcase/app/showcase_diagnostics_app_test.mbt",
+      max_lines: 380,
+      target_lines: 340,
+      reason: "keep Showcase diagnostics, advanced rendering, text diagnostics, interaction lab, and renderer tests compact",
     },
     {
       path: "examples/showcase/app/showcase_navigation_app_test.mbt",
