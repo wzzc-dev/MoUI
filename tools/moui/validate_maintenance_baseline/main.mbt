@@ -432,9 +432,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/program_runtime_diagnostics.mbt",
-      max_lines: 725,
-      target_lines: 650,
-      reason: "keep core program runtime snapshot, effect-task lifecycle, and subscription lifecycle diagnostics compact",
+      max_lines: 600,
+      target_lines: 540,
+      reason: "keep core program runtime snapshot, counters, and subscription lifecycle diagnostics compact",
+    },
+    {
+      path: "moui/core/program_runtime_effect_tasks.mbt",
+      max_lines: 135,
+      target_lines: 120,
+      reason: "keep core program runtime effect-task lifecycle diagnostics compact",
     },
     {
       path: "moui/core/rich_text_document.mbt",
