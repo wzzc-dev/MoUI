@@ -269,20 +269,20 @@ pub fn FileSelection::summary(
 }
 
 ///|
-pub(all) struct SectionListSection[T] {
+pub struct SectionListSection[T] {
   id : String
   title : String
   items : Array[T]
 }
 
 ///|
-pub(all) struct ScrollToIndexIntent {
+pub struct ScrollToIndexIntent {
   index : Int
   offset : @core.Point
 }
 
 ///|
-pub(all) struct BaselineFormRow[Msg] {
+pub struct BaselineFormRow[Msg] {
   label : @core.View[Msg]
   control : @core.View[Msg]
 }
@@ -313,7 +313,7 @@ pub fn[Msg] BaselineFormRow::new(
 }
 
 ///|
-pub(all) struct MenuItem[Msg] {
+pub struct MenuItem[Msg] {
   id : String
   label : String
   message : Msg
@@ -321,7 +321,7 @@ pub(all) struct MenuItem[Msg] {
 }
 
 ///|
-pub(all) struct CommandMenuSection {
+pub struct CommandMenuSection {
   title : String
   commands : Array[@core.ActionCommand]
 }
@@ -335,7 +335,7 @@ pub(all) enum PopoverPlacement {
 }
 
 ///|
-pub(all) struct DropdownState {
+pub struct DropdownState {
   expanded : Bool
   selected : String
 }
@@ -367,7 +367,7 @@ pub fn DropdownState::new(
 }
 
 ///|
-pub(all) struct SidebarItem[Msg] {
+pub struct SidebarItem[Msg] {
   id : String
   label : String
   message : Msg
@@ -375,7 +375,7 @@ pub(all) struct SidebarItem[Msg] {
 }
 
 ///|
-pub(all) struct SectionNavItem[Msg] {
+pub struct SectionNavItem[Msg] {
   id : String
   label : String
   summary : String
@@ -384,14 +384,14 @@ pub(all) struct SectionNavItem[Msg] {
 }
 
 ///|
-pub(all) struct BreadcrumbItem[Msg] {
+pub struct BreadcrumbItem[Msg] {
   id : String
   label : String
   message : Msg?
 }
 
 ///|
-pub(all) struct WizardStep[Msg] {
+pub struct WizardStep[Msg] {
   id : String
   title : String
   subtitle : String

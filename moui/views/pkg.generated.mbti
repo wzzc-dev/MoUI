@@ -342,13 +342,13 @@ pub(all) enum BadgeTone {
   Danger
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct BaselineFormRow[Msg] {
+pub struct BaselineFormRow[Msg] {
   label : @core.View[Msg]
   control : @core.View[Msg]
 }
 pub fn[Msg] BaselineFormRow::new(label~ : @core.View[Msg], control~ : @core.View[Msg]) -> Self[Msg]
 
-pub(all) struct BreadcrumbItem[Msg] {
+pub struct BreadcrumbItem[Msg] {
   id : String
   label : String
   message : Msg?
@@ -400,7 +400,7 @@ pub fn ColumnWidthState::new(widths? : Array[TableColumn], min_width? : Double, 
 pub fn ColumnWidthState::resize(Self, String, Double) -> Self
 pub fn ColumnWidthState::width_for(Self, String, Double) -> Double
 
-pub(all) struct CommandMenuSection {
+pub struct CommandMenuSection {
   title : String
   commands : Array[@core.ActionCommand]
 }
@@ -434,7 +434,7 @@ pub(all) struct DescriptionItem {
   detail : String
 }
 
-pub(all) struct DropdownState {
+pub struct DropdownState {
   expanded : Bool
   selected : String
 }
@@ -492,7 +492,7 @@ pub(all) enum MainAlign {
   Evenly
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct MenuItem[Msg] {
+pub struct MenuItem[Msg] {
   id : String
   label : String
   message : Msg
@@ -525,20 +525,20 @@ pub(all) enum PopoverPlacement {
   TopEnd
 }
 
-pub(all) struct ScrollToIndexIntent {
+pub struct ScrollToIndexIntent {
   index : Int
   offset : @core.Point
 }
 pub fn ScrollToIndexIntent::new(index~ : Int, offset~ : @core.Point) -> Self
 
-pub(all) struct SectionListSection[T] {
+pub struct SectionListSection[T] {
   id : String
   title : String
   items : Array[T]
 }
 pub fn[T] SectionListSection::new(id~ : String, title~ : String, items~ : Array[T]) -> Self[T]
 
-pub(all) struct SectionNavItem[Msg] {
+pub struct SectionNavItem[Msg] {
   id : String
   label : String
   summary : String
@@ -571,7 +571,7 @@ pub fn SelectionState::count(Self) -> Int
 pub fn SelectionState::new(selected? : Array[String]) -> Self
 pub fn SelectionState::toggle(Self, String) -> Self
 
-pub(all) struct SidebarItem[Msg] {
+pub struct SidebarItem[Msg] {
   id : String
   label : String
   message : Msg
@@ -652,7 +652,7 @@ pub(all) struct TreeItem {
   children : Array[TreeItem]
 }
 
-pub(all) struct WizardStep[Msg] {
+pub struct WizardStep[Msg] {
   id : String
   title : String
   subtitle : String
