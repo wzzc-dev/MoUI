@@ -144,9 +144,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/engine_wbtest.mbt",
-      max_lines: 90,
-      target_lines: 80,
-      reason: "keep engine mount, flex, and frame smoke tests compact",
+      max_lines: 30,
+      target_lines: 25,
+      reason: "keep general engine mount and frame smoke tests compact",
     },
     {
       path: "moui/core/view.mbt",
