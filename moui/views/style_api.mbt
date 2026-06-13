@@ -618,12 +618,16 @@ pub fn ColumnVisibilityState::new(
 }
 
 ///|
-pub fn ColumnVisibilityState::visible(self : ColumnVisibilityState) -> Array[String] {
+pub fn ColumnVisibilityState::visible(
+  self : ColumnVisibilityState,
+) -> Array[String] {
   self.visible.copy()
 }
 
 ///|
-pub fn ColumnVisibilityState::locked(self : ColumnVisibilityState) -> Array[String] {
+pub fn ColumnVisibilityState::locked(
+  self : ColumnVisibilityState,
+) -> Array[String] {
   self.locked.copy()
 }
 
