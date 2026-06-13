@@ -102,8 +102,8 @@ fn ShowcaseModel::data_table_card(
           } else {
             None
           },
-          sort_column=sort.column,
-          sort_ascending=sort.ascending,
+          sort_column=sort.column(),
+          sort_ascending=sort.ascending(),
           theme~,
         ),
         column_visibility_panel(
