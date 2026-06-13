@@ -455,6 +455,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core scroll layout, repaint, clipping, and hit-test behavior tests compact",
     },
     {
+      path: "moui/core/redraw_damage_wbtest.mbt",
+      max_lines: 200,
+      target_lines: 180,
+      reason: "keep core damage region, draw-command bounds, scroll/layout damage, and dirty fallback tests compact",
+    },
+    {
+      path: "moui/core/redraw_cached_layer_wbtest.mbt",
+      max_lines: 220,
+      target_lines: 205,
+      reason: "keep core repaint-boundary cached-layer draw-frame and retained redraw tests compact",
+    },
+    {
       path: "moui/core/text_system_conformance_wbtest.mbt",
       max_lines: 285,
       target_lines: 255,
