@@ -95,6 +95,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep Markdown Editor document transfer and host-service tests compact",
     },
     {
+      path: "examples/markdown_editor/app/editor_app_modes_runtime_wbtest.mbt",
+      max_lines: 670,
+      target_lines: 620,
+      reason: "keep Markdown Editor source, quick-format, and writing mode tests compact",
+    },
+    {
+      path: "examples/markdown_editor/app/editor_app_outline_runtime_wbtest.mbt",
+      max_lines: 210,
+      target_lines: 190,
+      reason: "keep Markdown Editor outline sidebar and heading navigation tests compact",
+    },
+    {
       path: "examples/markdown_editor/app/editor_app_keyboard_runtime_wbtest.mbt",
       max_lines: 430,
       target_lines: 390,
