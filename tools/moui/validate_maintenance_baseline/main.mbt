@@ -491,6 +491,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core text input IME composition, composition-caret, and delete-surrounding tests compact",
     },
     {
+      path: "moui/core/runtime_component_effects_wbtest.mbt",
+      max_lines: 170,
+      target_lines: 155,
+      reason: "keep core component effect lifecycle, cancellation, and dispose tests compact",
+    },
+    {
+      path: "moui/core/runtime_saveable_state_wbtest.mbt",
+      max_lines: 280,
+      target_lines: 260,
+      reason: "keep core saveable store, codec, scoped state, and stale subscription tests compact",
+    },
+    {
       path: "moui/core/runtime_effects_wbtest.mbt",
       max_lines: 340,
       target_lines: 305,
