@@ -1,11 +1,11 @@
 ///|
-pub(all) struct NavigationDestination[Msg] {
+pub struct NavigationDestination[Msg] {
   route : String
   view : @core.View[Msg]
 }
 
 ///|
-pub(all) struct TabItem[Msg] {
+pub struct TabItem[Msg] {
   route : String
   label : String
   view : @core.View[Msg]
