@@ -172,7 +172,7 @@ pub fn DataTableModel::update(
     ClearSelection =>
       {
         ..self,
-        selected_rows: self.selected_rows.clear(),
+        selected_rows: @views.SelectionState::new(),
         last_action: "Selection cleared",
       }
     ArchiveSelection =>

@@ -467,7 +467,7 @@ pub(all) struct ColumnOrderState {
 }
 
 ///|
-pub(all) struct SelectionState {
+pub struct SelectionState {
   selected : Array[String]
 }
 
@@ -776,12 +776,6 @@ pub fn SelectionState::toggle(
   id : String,
 ) -> SelectionState {
   { selected: toggle_string_selected(self.selected, id) }
-}
-
-///|
-pub fn SelectionState::clear(self : SelectionState) -> SelectionState {
-  ignore(self)
-  { selected: [] }
 }
 
 ///|
