@@ -1,3 +1,4 @@
+///|
 fn MarkdownEditorApp::toggle_source_preview(self : MarkdownEditorApp) -> Unit {
   self.source_preview_visible.set(!self.source_preview_visible.get())
 }
@@ -151,7 +152,6 @@ fn MarkdownEditorApp::dismiss_auxiliary_panels(
 }
 
 ///|
-
 fn MarkdownEditorApp::jump_to_outline(
   self : MarkdownEditorApp,
   source_start : Int,
@@ -477,7 +477,6 @@ fn MarkdownEditorApp::replace_all_find_matches(
 }
 
 ///|
-
 fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
   let selection = self.selection.get()
   let block_label = markdown_editor_active_block_label(
@@ -527,4 +526,3 @@ fn MarkdownEditorApp::sync_target_inputs(self : MarkdownEditorApp) -> Unit {
 }
 
 ///|
-

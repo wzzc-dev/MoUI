@@ -1,3 +1,4 @@
+///|
 fn MarkdownEditorApp::new_document(self : MarkdownEditorApp) -> Unit {
   self.load_document("", path="")
 }
@@ -752,7 +753,6 @@ fn MarkdownEditorApp::apply_file_dialog_selection_with_services(
 }
 
 ///|
-
 fn markdown_editor_transfer_status_label(
   status : MarkdownEditorTransferStatus,
 ) -> String {
@@ -918,4 +918,3 @@ fn markdown_editor_file_name(path : String) -> String {
   }
   String::from_array(chars[start:]).trim().to_owned()
 }
-

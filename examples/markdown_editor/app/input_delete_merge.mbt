@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_line_start(chars : Array[Char], caret : Int) -> Int {
   let mut start = markdown_editor_clamp_int(caret, 0, chars.length())
   while start > 0 && chars[start - 1] != '\n' {
@@ -388,4 +389,3 @@ fn markdown_editor_previous_line_start(
 }
 
 ///|
-

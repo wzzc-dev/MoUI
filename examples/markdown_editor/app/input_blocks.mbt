@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_complete_rule_on_space(
   source : String,
   caret : Int,
@@ -44,7 +45,6 @@ priv struct MarkdownEditorFootnoteDefinitionEdit {
 }
 
 ///|
-
 fn markdown_editor_insert_hard_break(
   source : String,
   caret : Int,
@@ -78,7 +78,6 @@ fn markdown_editor_insert_hard_break(
 }
 
 ///|
-
 fn markdown_editor_complete_code_fence_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
@@ -460,7 +459,6 @@ fn markdown_editor_line_indent_prefix(line : String) -> String {
 }
 
 ///|
-
 fn markdown_editor_complete_rule_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
@@ -959,7 +957,6 @@ fn markdown_editor_map_offset_after_replacements(
 }
 
 ///|
-
 fn markdown_editor_transform_multiline_paste(
   source : String,
   caret : Int,
@@ -1204,7 +1201,6 @@ fn markdown_editor_trim_trailing_newline(input : String) -> String {
 }
 
 ///|
-
 fn markdown_editor_indent_lines(
   source : String,
   caret : Int,
@@ -1541,4 +1537,3 @@ fn markdown_editor_parse_digits(
 }
 
 ///|
-

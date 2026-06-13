@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_paste_footnote_definition(
   source : String,
   caret : Int,
@@ -1016,4 +1017,3 @@ fn markdown_editor_email_domain_has_dot(domain : String) -> Bool {
   }
   false
 }
-
