@@ -11,9 +11,6 @@ pub type Color = @core.Color
 pub type FontSpec = @core.FontSpec
 
 ///|
-pub type State[T] = @core.State[T]
-
-///|
 pub type View[Msg] = @core.View[Msg]
 
 ///|
