@@ -493,7 +493,7 @@ test "data and toast state helpers keep app owned workflow state predictable" {
   inspect(sort.column(), content="status")
   inspect(sort.ascending(), content="true")
   let page = @views.PaginationState::new(page=3, page_size=10, total_count=24).clamped()
-  inspect(page.page, content="2")
+  inspect(page.page(), content="2")
   inspect(page.start_index(), content="20")
   inspect(page.end_index(), content="24")
   let columns = @views.ColumnVisibilityState::new(visible=["name", "status"], locked=[

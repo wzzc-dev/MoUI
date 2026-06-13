@@ -138,7 +138,7 @@ fn project_table(
         empty=Some(@views.empty_state("No projects", "No projects match the current filter.")),
       ),
       pagination(
-        page=pagination_state.page,
+        page=pagination_state.page(),
         page_count=pagination_state.page_count(),
         on_previous=PreviousPage,
         on_next=NextPage,

@@ -62,7 +62,7 @@ fn ShowcaseModel::data_table_card(
           height=28.0,
         ),
         text(
-          "Data helpers: sort=status desc, page \{page_state.page + 1}/\{page_state.page_count()}, selected \{selection.count()}",
+          "Data helpers: sort=status desc, page \{page_state.page() + 1}/\{page_state.page_count()}, selected \{selection.count()}",
           role=@views.TextRole::Caption,
           theme~,
           width=392.0,
@@ -134,7 +134,7 @@ fn ShowcaseModel::data_table_card(
           width=392.0,
         ),
         pagination(
-          page=page_state.page,
+          page=page_state.page(),
           page_count=page_state.page_count(),
           on_previous=ToggleActive,
           on_next=ToggleActive,
