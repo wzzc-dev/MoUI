@@ -60,9 +60,9 @@ native-only PDFium adapter for real page bitmap rasterization. The root
 
 - `core/` owns the platform-neutral runtime, state, layout, input, semantics,
   draw command model, typed events, `Program`, `Effect`, and `Subscription`.
-- The root `moui` facade exposes common core types plus neutral
-  default/light/dark/custom theme builders directly; there is no separate
-  `style` package.
+- The root `moui` facade exposes a curated app/runtime/theme alias set plus
+  neutral default/light/dark/custom theme builders directly; diagnostics and
+  renderer-facing records stay in their owning packages.
 - `views/` exposes public view constructors returning opaque `@core.View[Msg]`.
 - `moui_theme/` is an optional repo-local addon workspace member for shared
   source-mapped design-system models, package-local Material/Carbon/Primer/Fluent
