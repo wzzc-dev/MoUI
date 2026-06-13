@@ -1,3 +1,4 @@
+///|
 struct WorkbenchSession {
   id : String
   title : String
@@ -367,7 +368,6 @@ enum WorkbenchMsg {
 } derive(Eq, Debug)
 
 ///|
-
 fn WorkbenchSession::new(
   id~ : String,
   title~ : String,
@@ -435,9 +435,7 @@ fn AgentBackendProfile::new(
 }
 
 ///|
-fn AgentBackendTransportKind::label(
-  self : AgentBackendTransportKind,
-) -> String {
+fn AgentBackendTransportKind::label(self : AgentBackendTransportKind) -> String {
   match self {
     PiJsonlRpcTransport => "pi jsonl rpc"
     AcpConnectorTransport => "acp connector"
@@ -461,9 +459,7 @@ fn AgentBackendTransportKind::uses_connector_transport(
 }
 
 ///|
-fn AgentBackendProfile::uses_pi_transport(
-  self : AgentBackendProfile,
-) -> Bool {
+fn AgentBackendProfile::uses_pi_transport(self : AgentBackendProfile) -> Bool {
   self.transport_kind.uses_pi_transport()
 }
 
@@ -496,9 +492,7 @@ fn AgentBackendStatus::new(
 }
 
 ///|
-fn AgentBackendStatus::has_sidebar_status(
-  self : AgentBackendStatus,
-) -> Bool {
+fn AgentBackendStatus::has_sidebar_status(self : AgentBackendStatus) -> Bool {
   self.sidebar_visible
 }
 
@@ -552,9 +546,7 @@ fn AgentSessionMetrics::new(
 }
 
 ///|
-fn AgentSessionMetrics::has_visible_metrics(
-  self : AgentSessionMetrics,
-) -> Bool {
+fn AgentSessionMetrics::has_visible_metrics(self : AgentSessionMetrics) -> Bool {
   if self.total_messages > 0 ||
     self.tool_calls > 0 ||
     self.tool_results > 0 ||
@@ -590,9 +582,7 @@ fn AgentRuntimeSignal::new(
 }
 
 ///|
-fn AgentRuntimeSignal::has_visible_signal(
-  self : AgentRuntimeSignal,
-) -> Bool {
+fn AgentRuntimeSignal::has_visible_signal(self : AgentRuntimeSignal) -> Bool {
   self.visible
 }
 
@@ -826,9 +816,7 @@ fn PiForkMessage::new(entry_id~ : String, text~ : String) -> PiForkMessage {
 }
 
 ///|
-fn PiForkMessage::as_agent_fork_point(
-  self : PiForkMessage,
-) -> AgentForkPoint {
+fn PiForkMessage::as_agent_fork_point(self : PiForkMessage) -> AgentForkPoint {
   AgentForkPoint::new(entry_id=self.entry_id, text=self.text)
 }
 
