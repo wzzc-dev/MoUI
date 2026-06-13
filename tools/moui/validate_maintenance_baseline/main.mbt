@@ -192,9 +192,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/input_pairs.mbt",
-      max_lines: 855,
-      target_lines: 780,
-      reason: "keep Markdown Editor paired delimiter, inline marker, footnote, and autolink input helpers compact",
+      max_lines: 600,
+      target_lines: 540,
+      reason: "keep Markdown Editor paired delimiter and inline marker input helpers compact",
+    },
+    {
+      path: "examples/markdown_editor/app/input_pairs_special_markers.mbt",
+      max_lines: 260,
+      target_lines: 230,
+      reason: "keep Markdown Editor footnote and autolink marker deletion helpers compact",
     },
     {
       path: "examples/markdown_editor/app/input_pairs_reference_markers.mbt",
