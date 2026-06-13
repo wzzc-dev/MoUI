@@ -95,6 +95,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep Mo Workbench Pi streaming, tool, bash, queue, and raw-line ingest tests compact",
     },
     {
+      path: "examples/showcase/app/showcase_app_test.mbt",
+      max_lines: 1065,
+      target_lines: 980,
+      reason: "keep Showcase main catalog, diagnostics, renderer, and reusable example tests compact",
+    },
+    {
+      path: "examples/showcase/app/showcase_navigation_app_test.mbt",
+      max_lines: 405,
+      target_lines: 360,
+      reason: "keep Showcase navigation shell, dialog, sheet, route host, sidebar scroll, and IME tests compact",
+    },
+    {
       path: "examples/markdown_editor/app/editor_app_runtime_wbtest.mbt",
       max_lines: 110,
       target_lines: 95,
