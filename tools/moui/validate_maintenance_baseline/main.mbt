@@ -371,6 +371,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host window request queue and command helper tests compact",
     },
     {
+      path: "moui/core/view_tree.mbt",
+      max_lines: 1150,
+      target_lines: 1030,
+      reason: "keep core view specs, modifiers, styles, picker contracts, and custom layout contracts compact",
+    },
+    {
+      path: "moui/core/rich_text_document.mbt",
+      max_lines: 180,
+      target_lines: 160,
+      reason: "keep core rich text document, run, table, block, source range, and transform contracts compact",
+    },
+    {
       path: "moui/core/rich_text_editor_wbtest.mbt",
       max_lines: 665,
       target_lines: 600,
