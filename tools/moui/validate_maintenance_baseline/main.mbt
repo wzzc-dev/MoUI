@@ -131,6 +131,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep Markdown Editor parser, inline metadata, and rich-text formatter tests compact",
     },
     {
+      path: "examples/markdown_editor/app/markdown_model.mbt",
+      max_lines: 1390,
+      target_lines: 1250,
+      reason: "keep Markdown Editor block parsing, inline parsing, reference, and rich-text mapping model compact",
+    },
+    {
+      path: "examples/markdown_editor/app/markdown_model_tables.mbt",
+      max_lines: 305,
+      target_lines: 280,
+      reason: "keep Markdown Editor table parsing, alignment, source ranges, and rich-text preview model compact",
+    },
+    {
       path: "examples/markdown_editor/app/editor_app_runtime_wbtest.mbt",
       max_lines: 110,
       target_lines: 95,
