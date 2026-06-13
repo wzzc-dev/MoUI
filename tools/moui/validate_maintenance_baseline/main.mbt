@@ -126,9 +126,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_commands_wbtest.mbt",
-      max_lines: 395,
-      target_lines: 360,
-      reason: "keep Markdown Editor inline paste link and image command tests compact",
+      max_lines: 80,
+      target_lines: 70,
+      reason: "keep Markdown Editor core inline command smoke tests compact",
     },
     {
       path: "moui/render/skia/renderer_text.mbt",
