@@ -57,7 +57,14 @@ test "data table state transitions and tree toggle" {
   let clamped = ready.update(ResizeColumn("project", 24.0))
   inspect(clamped.column_widths.width_for("project", 180.0), content="86")
   let moved = ready.update(MoveColumnBefore("priority", "project"))
-  inspect(moved.column_order.order[0], content="priority")
+  let test_columns = [
+    @views.table_column(id="project", label="Project"),
+    @views.table_column(id="priority", label="Priority"),
+  ]
+  inspect(
+    moved.column_order.ordered_columns(test_columns)[0].id(),
+    content="priority",
+  )
   let selected = ready.update(RowSelected(1))
   inspect(selected.selected_rows.count(), content="2")
   let cleared = selected.update(ClearSelection)

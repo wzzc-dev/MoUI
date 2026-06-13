@@ -279,7 +279,7 @@ pub fn[T] SectionListSection::new(
 }
 
 ///|
-pub fn ScrollToIndexIntent::new(
+fn ScrollToIndexIntent::new(
   index~ : Int,
   offset~ : @core.Point,
 ) -> ScrollToIndexIntent {
@@ -462,7 +462,7 @@ pub(all) struct ColumnWidthState {
 }
 
 ///|
-pub(all) struct ColumnOrderState {
+pub struct ColumnOrderState {
   order : Array[String]
 }
 
