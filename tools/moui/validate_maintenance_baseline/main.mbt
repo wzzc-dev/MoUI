@@ -432,9 +432,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/rich_text_editor_mapping_wbtest.mbt",
-      max_lines: 540,
-      target_lines: 490,
-      reason: "keep core rich text editor source-mapped visual text, pointer, selection, and table mapping tests compact",
+      max_lines: 290,
+      target_lines: 260,
+      reason: "keep core rich text editor source-mapped copy, cut, caret, and table mapping tests compact",
+    },
+    {
+      path: "moui/core/rich_text_editor_pointer_mapping_wbtest.mbt",
+      max_lines: 270,
+      target_lines: 240,
+      reason: "keep core rich text editor pointer, selection-highlight, and drag source mapping tests compact",
     },
     {
       path: "moui/core/advanced_layout_wbtest.mbt",
