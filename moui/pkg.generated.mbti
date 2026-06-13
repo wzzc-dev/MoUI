@@ -19,21 +19,11 @@ pub fn theme(base? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Co
 // Types and methods
 
 // Type aliases
-pub using @core {type Alignment}
-
-pub using @core {type AppEvent}
-
 pub using @core {type AppRuntime}
 
 pub using @core {type Binding}
 
-pub using @core {type BorderStyle}
-
-pub using @core {type Brush}
-
 pub using @core {type BuildContext}
-
-pub using @core {type ButtonStyle}
 
 pub using @core {type Color}
 
@@ -41,35 +31,19 @@ pub using @core {type ColorPalette}
 
 pub using @core {type ColorScheme}
 
-pub using @core {type DrawCommand}
-
 pub using @core {type Effect}
-
-pub using @core {type EffectDescriptor}
-
-pub using @core {type Environment}
 
 pub using @core {type FontSpec}
 
-pub using @core {type Insets}
-
 pub using @core {type MotionScale}
-
-pub using @core {type Point}
 
 pub using @core {type Program}
 
-pub using @core {type ProgramRuntimeSnapshot}
-
 pub using @core {type RadiusScale}
-
-pub using @core {type Rect}
 
 pub using @core {type SemanticColorScale}
 
 pub using @core {type ShadowScale}
-
-pub using @core {type Size}
 
 pub using @core {type SpacingScale}
 
@@ -77,19 +51,7 @@ pub using @core {type State}
 
 pub using @core {type Subscription}
 
-pub using @core {type SubscriptionCancelReason}
-
-pub using @core {type SubscriptionDescriptor}
-
-pub using @core {type SubscriptionLifecycleSnapshot}
-
-pub using @core {type SubscriptionLifecycleStatus}
-
 pub using @core {type SurfaceScale}
-
-pub using @core {type SurfaceStyle}
-
-pub using @core {type TextFieldStyle}
 
 pub using @core {type Theme}
 

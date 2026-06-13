@@ -81,7 +81,8 @@ fn package_budgets() -> Array[PackageBudget] {
       forbidden_tokens: [
         "\"wzzc-dev/moui/backend", "\"wzzc-dev/moui/render", "moui_theme", "HostWindowRenderer",
         "RendererBackendKind", "SkiaRasterRenderer", "RuntimeState", "ViewNode",
-        "ViewSpec",
+        "ViewSpec", "DrawCommand", "EffectDescriptor", "SubscriptionDescriptor",
+        "SubscriptionLifecycleSnapshot", "ProgramRuntimeSnapshot",
       ],
     },
     {
@@ -385,9 +386,9 @@ fn validate_root_facade_shape(
   if count_lines_with_prefix(text, "import {") != 1 {
     failures.push(path + ": root facade should keep a single import block")
   }
-  if count_lines_with_prefix(text, "pub using @core {type ") < 30 {
+  if count_lines_with_prefix(text, "pub using @core {type ") > 20 {
     failures.push(
-      path + ": root facade should continue re-exporting core app types",
+      path + ": root facade should keep curated app/runtime/theme aliases only",
     )
   }
 }
