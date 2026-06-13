@@ -245,13 +245,8 @@ pub fn FileSelection::empty() -> FileSelection {
 }
 
 ///|
-pub fn FileSelection::is_empty(self : FileSelection) -> Bool {
+fn FileSelection::is_empty(self : FileSelection) -> Bool {
   self.paths.is_empty()
-}
-
-///|
-pub fn FileSelection::count(self : FileSelection) -> Int {
-  self.paths.length()
 }
 
 ///|
@@ -460,7 +455,7 @@ pub struct DataSortState {
 }
 
 ///|
-pub(all) struct PaginationState {
+pub struct PaginationState {
   page : Int
   page_size : Int
   total_count : Int
@@ -535,11 +530,6 @@ pub fn TableColumn::id(self : TableColumn) -> String {
 }
 
 ///|
-pub fn TableColumn::label(self : TableColumn) -> String {
-  self.label
-}
-
-///|
 pub fn TableColumn::width(self : TableColumn) -> Double {
   self.width
 }
@@ -585,6 +575,16 @@ pub fn PaginationState::new(
     page_size: views_max_int(1, page_size),
     total_count: views_max_int(0, total_count),
   }
+}
+
+///|
+pub fn PaginationState::page(self : PaginationState) -> Int {
+  self.page
+}
+
+///|
+pub fn PaginationState::page_size(self : PaginationState) -> Int {
+  self.page_size
 }
 
 ///|

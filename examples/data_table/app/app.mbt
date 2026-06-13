@@ -277,8 +277,8 @@ fn DataTableModel::pagination_state(
   self : DataTableModel,
 ) -> @views.PaginationState {
   @views.PaginationState::new(
-    page=self.pagination.page,
-    page_size=self.pagination.page_size,
+    page=self.pagination.page(),
+    page_size=self.pagination.page_size(),
     total_count=self.filtered_records().length(),
   ).clamped()
 }
@@ -287,7 +287,7 @@ fn DataTableModel::pagination_state(
 fn DataTableModel::first_page(self : DataTableModel) -> @views.PaginationState {
   @views.PaginationState::new(
     page=0,
-    page_size=self.pagination.page_size,
+    page_size=self.pagination.page_size(),
     total_count=self.filtered_records().length(),
   )
 }
@@ -372,7 +372,7 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
           "Rows: \{self.filtered_records().length()}",
           "Selected: \{self.selected_rows.count()}",
           "Columns: \{self.visible_columns.visible.length()}/4",
-          "Page: \{self.pagination_state().page + 1}/\{self.page_count()}",
+          "Page: \{self.pagination_state().page() + 1}/\{self.page_count()}",
           "Sort: " + self.sort_label(),
           self.last_action,
         ],
@@ -551,7 +551,7 @@ fn DataTableModel::data_panel(
         ),
         self.state_or_table(theme),
         pagination(
-          page=self.pagination_state().page,
+          page=self.pagination_state().page(),
           page_count=self.page_count(),
           on_previous=PreviousPage,
           on_next=NextPage,
