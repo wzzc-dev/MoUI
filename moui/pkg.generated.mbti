@@ -45,8 +45,6 @@ pub using @core {type ShadowScale}
 
 pub using @core {type SpacingScale}
 
-pub using @core {type State}
-
 pub using @core {type Subscription}
 
 pub using @core {type SurfaceScale}
