@@ -377,10 +377,16 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host window runtime slot and platform driver tests compact",
     },
     {
+      path: "moui/backend/host/host_window_commands_test.mbt",
+      max_lines: 140,
+      target_lines: 125,
+      reason: "keep host window commands facade and runtime-slot drain tests compact",
+    },
+    {
       path: "moui/backend/host/host_window_requests_test.mbt",
-      max_lines: 465,
-      target_lines: 420,
-      reason: "keep host window request queue and command helper tests compact",
+      max_lines: 335,
+      target_lines: 305,
+      reason: "keep host window registry request application and request queue tests compact",
     },
     {
       path: "moui/core/view_tree.mbt",
