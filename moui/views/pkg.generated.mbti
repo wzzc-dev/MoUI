@@ -413,7 +413,7 @@ pub(all) enum CrossAlign {
   Stretch
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct DataFilter[Msg] {
+pub struct DataFilter[Msg] {
   id : String
   label : String
   selected : Bool
@@ -429,7 +429,7 @@ pub fn DataSortState::is_sorted(Self, String) -> Bool
 pub fn DataSortState::new(column? : String, ascending? : Bool) -> Self
 pub fn DataSortState::toggle(Self, String) -> Self
 
-pub(all) struct DescriptionItem {
+pub struct DescriptionItem {
   term : String
   detail : String
 }
@@ -552,7 +552,7 @@ pub(all) enum SegmentedControlSize {
   Regular
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct SelectableListItem[Msg] {
+pub struct SelectableListItem[Msg] {
   id : String
   title : String
   subtitle : String
@@ -646,7 +646,7 @@ pub struct ToastStackItem[Msg] {
 }
 pub fn[Msg] ToastStackItem::new(id~ : String, message~ : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, dismiss? : Msg?) -> Self[Msg]
 
-pub(all) struct TreeItem {
+pub struct TreeItem {
   id : String
   label : String
   children : Array[TreeItem]

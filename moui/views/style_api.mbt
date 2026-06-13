@@ -441,7 +441,7 @@ pub fn[Msg] WizardStep::new(
 }
 
 ///|
-pub(all) struct DescriptionItem {
+pub struct DescriptionItem {
   term : String
   detail : String
 }
@@ -490,7 +490,7 @@ pub(all) struct SelectionState {
 }
 
 ///|
-pub(all) struct DataFilter[Msg] {
+pub struct DataFilter[Msg] {
   id : String
   label : String
   selected : Bool
@@ -499,7 +499,7 @@ pub(all) struct DataFilter[Msg] {
 }
 
 ///|
-pub(all) struct SelectableListItem[Msg] {
+pub struct SelectableListItem[Msg] {
   id : String
   title : String
   subtitle : String
@@ -509,7 +509,7 @@ pub(all) struct SelectableListItem[Msg] {
 }
 
 ///|
-pub(all) struct TreeItem {
+pub struct TreeItem {
   id : String
   label : String
   children : Array[TreeItem]
