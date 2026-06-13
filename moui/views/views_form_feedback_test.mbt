@@ -522,7 +522,7 @@ test "data and toast state helpers keep app owned workflow state predictable" {
   inspect(sized[1].width, content="160")
   let order = @views.ColumnOrderState::new(order=["name", "status", "owner"])
     .move_before("owner", "name")
-    .move_after("status", "owner")
+    .move_before("status", "name")
   let ordered = order.ordered_columns(table_columns)
   inspect(ordered[0].id, content="owner")
   inspect(ordered[1].id, content="status")

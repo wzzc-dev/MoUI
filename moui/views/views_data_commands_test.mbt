@@ -742,7 +742,7 @@ test "drop zone maps dropped files to app message" {
 test "file import panel renders empty and unavailable states" {
   let empty = @core.AppRuntime::new_view(
     root=@views.file_import_panel(
-      selection=@views.FileSelection::empty(),
+      selection=@views.FileSelection::new(paths=[]),
       on_drop=_paths => (),
       on_browse=Some(()),
       empty_message="No file chosen",

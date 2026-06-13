@@ -72,7 +72,7 @@ fn ShowcaseModel::file_drop_card(
   showcase_soft_card(
     theme,
     file_import_panel(
-      selection=@views.FileSelection::empty(),
+      selection=@views.FileSelection::new(paths=[]),
       on_drop=paths => RecordFileDrop(paths),
       on_browse=Some(RecordFileDrop([])),
       title="File Drop",

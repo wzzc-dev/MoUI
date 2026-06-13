@@ -116,8 +116,8 @@ fn project_table(
       ),
       column_visibility_panel(
         columns,
-        visible=visible_columns.visible,
-        locked=visible_columns.locked,
+        visible=visible_columns.visible(),
+        locked=visible_columns.locked(),
         on_toggle=(id, shown) => ToggleColumn(id, shown),
       ),
       selection_toolbar(
