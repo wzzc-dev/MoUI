@@ -636,15 +636,21 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/pdf_workbench/app/view_layout.mbt",
-      max_lines: 1360,
-      target_lines: 1250,
-      reason: "keep PDF Workbench root layout, page preview, inspector, status, and toolbar view composition compact",
+      max_lines: 930,
+      target_lines: 860,
+      reason: "keep PDF Workbench root layout, page preview, status, and toolbar view composition compact",
     },
     {
       path: "examples/pdf_workbench/app/view_sidebar.mbt",
       max_lines: 270,
       target_lines: 245,
       reason: "keep PDF Workbench sidebar page navigation and thumbnail rendering compact",
+    },
+    {
+      path: "examples/pdf_workbench/app/view_inspector.mbt",
+      max_lines: 470,
+      target_lines: 430,
+      reason: "keep PDF Workbench inspector summary, edit queue, metadata, and diagnostics panels compact",
     },
     {
       path: "moui/render/skia/skia_renderer_wbtest.mbt",
