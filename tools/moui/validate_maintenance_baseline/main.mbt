@@ -612,9 +612,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/pdf_workbench/app/app.mbt",
-      max_lines: 1125,
-      target_lines: 1050,
-      reason: "keep PDF Workbench app runtime, service, navigation, and document flow compact",
+      max_lines: 620,
+      target_lines: 580,
+      reason: "keep PDF Workbench app model, runtime, update dispatch, and navigation flow compact",
+    },
+    {
+      path: "examples/pdf_workbench/app/host_services.mbt",
+      max_lines: 530,
+      target_lines: 490,
+      reason: "keep PDF Workbench host open/save, completion, writeback, and load flow compact",
     },
     {
       path: "examples/pdf_workbench/app/edit_commands.mbt",
