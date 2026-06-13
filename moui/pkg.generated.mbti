@@ -23,8 +23,6 @@ pub using @core {type AppRuntime}
 
 pub using @core {type Binding}
 
-pub using @core {type BuildContext}
-
 pub using @core {type Color}
 
 pub using @core {type ColorPalette}
