@@ -113,6 +113,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep Showcase navigation shell, dialog, sheet, route host, sidebar scroll, and IME tests compact",
     },
     {
+      path: "examples/markdown_editor/app/editor_snapshot_wbtest.mbt",
+      max_lines: 990,
+      target_lines: 900,
+      reason: "keep Markdown Editor snapshot, visual mapping, selection, and focus-mode tests compact",
+    },
+    {
+      path: "examples/markdown_editor/app/editor_snapshot_parser_wbtest.mbt",
+      max_lines: 360,
+      target_lines: 320,
+      reason: "keep Markdown Editor parser, inline metadata, and rich-text formatter tests compact",
+    },
+    {
       path: "examples/markdown_editor/app/editor_app_runtime_wbtest.mbt",
       max_lines: 110,
       target_lines: 95,
