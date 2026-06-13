@@ -275,6 +275,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host window request queue and command helper tests compact",
     },
     {
+      path: "moui/core/rich_text_editor_wbtest.mbt",
+      max_lines: 665,
+      target_lines: 600,
+      reason: "keep core rich text editor cache, input, IME, drawing, and placeholder tests compact",
+    },
+    {
+      path: "moui/core/rich_text_editor_mapping_wbtest.mbt",
+      max_lines: 540,
+      target_lines: 490,
+      reason: "keep core rich text editor source-mapped visual text, pointer, selection, and table mapping tests compact",
+    },
+    {
       path: "examples/pdf_workbench/app/app.mbt",
       max_lines: 1335,
       target_lines: 1250,
