@@ -1,3 +1,4 @@
+///|
 fn workbench_layout(
   viewport : @core.Size,
   inspector_requested : Bool,

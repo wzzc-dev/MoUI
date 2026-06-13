@@ -4,13 +4,11 @@ pub struct MoWorkbenchApp {
 }
 
 ///|
-
 pub fn MoWorkbenchApp::new() -> MoWorkbenchApp {
   { unit: () }
 }
 
 ///|
-
 fn WorkbenchModel::update(
   self : WorkbenchModel,
   message : WorkbenchMsg,
