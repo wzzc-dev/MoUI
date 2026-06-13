@@ -156,9 +156,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/host/host_services_test.mbt",
-      max_lines: 895,
-      target_lines: 820,
-      reason: "keep host service bridge, queue, facade, and driver tests compact",
+      max_lines: 685,
+      target_lines: 620,
+      reason: "keep host service bridge, facade, and driver context-menu tests compact",
+    },
+    {
+      path: "moui/backend/host/host_async_service_queue_test.mbt",
+      max_lines: 210,
+      target_lines: 190,
+      reason: "keep host async service queue and async driver completion tests compact",
     },
     {
       path: "moui/backend/host/host_service_completion_subscription_test.mbt",
