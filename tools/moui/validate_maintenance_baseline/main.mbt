@@ -437,6 +437,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core scroll layout, repaint, clipping, and hit-test behavior tests compact",
     },
     {
+      path: "moui/core/text_system_conformance_wbtest.mbt",
+      max_lines: 510,
+      target_lines: 470,
+      reason: "keep core fallback text, grapheme, paragraph, and shared conformance helpers compact",
+    },
+    {
+      path: "moui/core/text_system_field_conformance_wbtest.mbt",
+      max_lines: 290,
+      target_lines: 260,
+      reason: "keep core text field and rich text unicode conformance tests compact",
+    },
+    {
       path: "moui/core/runtime_effects_wbtest.mbt",
       max_lines: 600,
       target_lines: 540,
