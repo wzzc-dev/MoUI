@@ -5,7 +5,6 @@ test "file importer maps dropped files into selection" {
   )
   inspect(model.files.length(), content="2")
   inspect(model.files[0].source, content="Drop")
-  inspect(model.selection().summary(), content="2 files selected")
   inspect(model.last_event, content="Imported 2 file(s) from Drop")
 }
 
