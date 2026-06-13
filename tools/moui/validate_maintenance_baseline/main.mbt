@@ -474,9 +474,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/engine_text_input_wbtest.mbt",
-      max_lines: 465,
-      target_lines: 425,
-      reason: "keep core text input editing, selection, history, rendering, host-state, and focus tests compact",
+      max_lines: 285,
+      target_lines: 260,
+      reason: "keep core text input editing, selection, and undo history tests compact",
+    },
+    {
+      path: "moui/core/engine_text_input_host_wbtest.mbt",
+      max_lines: 180,
+      target_lines: 160,
+      reason: "keep core text input rendering, host-state, searchbar, and focus traversal tests compact",
     },
     {
       path: "moui/core/engine_text_input_ime_wbtest.mbt",
