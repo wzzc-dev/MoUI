@@ -33,8 +33,6 @@ pub using @core {type Effect}
 
 pub using @core {type FontSpec}
 
-pub using @core {type MotionScale}
-
 pub using @core {type Program}
 
 pub using @core {type RadiusScale}
@@ -46,8 +44,6 @@ pub using @core {type ShadowScale}
 pub using @core {type SpacingScale}
 
 pub using @core {type Subscription}
-
-pub using @core {type SurfaceScale}
 
 pub using @core {type Theme}
 

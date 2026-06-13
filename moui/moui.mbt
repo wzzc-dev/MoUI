@@ -44,12 +44,6 @@ pub type TypographyScale = @core.TypographyScale
 pub type ShadowScale = @core.ShadowScale
 
 ///|
-pub type MotionScale = @core.MotionScale
-
-///|
-pub type SurfaceScale = @core.SurfaceScale
-
-///|
 pub type Theme = @core.Theme
 
 ///|
@@ -83,8 +77,8 @@ pub fn theme(
   radius_scale? : RadiusScale,
   typography? : TypographyScale,
   shadow_scale? : ShadowScale,
-  motion? : MotionScale,
-  surfaces? : SurfaceScale,
+  motion? : @core.MotionScale,
+  surfaces? : @core.SurfaceScale,
 ) -> Theme {
   let mut base_theme = match base {
     Some(value) => value
