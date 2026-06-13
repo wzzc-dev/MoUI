@@ -84,9 +84,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_app_keyboard_runtime_wbtest.mbt",
-      max_lines: 1050,
-      target_lines: 1000,
-      reason: "keep Markdown Editor keyboard runtime shortcuts and deletion tests compact",
+      max_lines: 780,
+      target_lines: 740,
+      reason: "keep Markdown Editor keyboard runtime shortcut tests compact",
+    },
+    {
+      path: "examples/markdown_editor/app/editor_app_backspace_delete_runtime_wbtest.mbt",
+      max_lines: 285,
+      target_lines: 250,
+      reason: "keep Markdown Editor Backspace/Delete hidden-marker runtime tests compact",
     },
     {
       path: "examples/markdown_editor/app/editor_app_clipboard_runtime_wbtest.mbt",
