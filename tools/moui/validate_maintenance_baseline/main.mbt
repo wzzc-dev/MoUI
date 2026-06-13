@@ -684,9 +684,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/views_feedback_state_test.mbt",
-      max_lines: 245,
-      target_lines: 220,
-      reason: "keep views feedback surface, theme color, state helper, and progress action tests compact",
+      max_lines: 175,
+      target_lines: 155,
+      reason: "keep views feedback surface, theme color, and progress action tests compact",
+    },
+    {
+      path: "moui/views/views_state_helpers_test.mbt",
+      max_lines: 75,
+      target_lines: 65,
+      reason: "keep views app-owned data, selection, column, and toast state helper tests compact",
     },
     {
       path: "moui/views/views_overlay_navigation_test.mbt",
