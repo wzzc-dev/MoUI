@@ -444,9 +444,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/advanced_layout_wbtest.mbt",
-      max_lines: 425,
-      target_lines: 390,
-      reason: "keep core stack, modifier, grid, custom-layout, list, and measure-pass tests compact",
+      max_lines: 260,
+      target_lines: 235,
+      reason: "keep core stack, modifier, grid, list, and measure-pass tests compact",
+    },
+    {
+      path: "moui/core/advanced_layout_custom_wbtest.mbt",
+      max_lines: 160,
+      target_lines: 145,
+      reason: "keep core custom-layout delegate, metrics, cache, and semantics tests compact",
     },
     {
       path: "moui/core/advanced_layout_scroll_wbtest.mbt",
