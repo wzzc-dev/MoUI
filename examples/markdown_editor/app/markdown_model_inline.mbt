@@ -1,0 +1,553 @@
+///|
+enum MarkdownInlineKind {
+  Plain
+  Bold
+  Italic
+  Code
+  Strikethrough
+  Link
+  Autolink
+  Image
+  FootnoteReference
+  HtmlInline
+} derive(Eq, Debug, ToJson)
+
+///|
+struct MarkdownInline {
+  text : String
+  kind : MarkdownInlineKind
+  target : String?
+} derive(Eq, Debug, ToJson)
+
+///|
+struct MarkdownReferenceDefinition {
+  label : String
+  url : String
+  title : String
+} derive(Eq, Debug)
+
+///|
+fn markdown_inline(
+  text : String,
+  kind : MarkdownInlineKind,
+  target? : String? = None,
+) -> MarkdownInline {
+  { text, kind, target }
+}
+
+///|
+fn parse_markdown_inlines(text : String) -> Array[MarkdownInline] {
+  parse_markdown_inlines_with_definitions(text, [])
+}
+
+///|
+fn parse_markdown_inlines_with_definitions(
+  text : String,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Array[MarkdownInline] {
+  markdown_parse_inlines_preserving_plain_html(text, definitions)
+}
+
+///|
+fn markdown_parse_inlines_preserving_plain_html(
+  text : String,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Array[MarkdownInline] {
+  let spans : Array[MarkdownInline] = []
+  let chars = text.to_array()
+  let mut start = 0
+  let mut index = 0
+  while index < chars.length() {
+    match markdown_protected_inline_end(chars, index) {
+      Some(end) => {
+        markdown_append_parsed_inline_segment(
+          spans,
+          String::from_array(chars[start:end]),
+          definitions,
+        )
+        index = end
+        start = end
+      }
+      None =>
+        if chars[index] == '<' {
+          match markdown_html_inline_tag_end(chars, index) {
+            Some(end) => {
+              markdown_append_parsed_inline_segment(
+                spans,
+                String::from_array(chars[start:index]),
+                definitions,
+              )
+              spans.push(
+                markdown_inline(
+                  String::from_array(chars[index:end]),
+                  HtmlInline,
+                ),
+              )
+              index = end
+              start = end
+            }
+            None => index = index + 1
+          }
+        } else {
+          index = index + 1
+        }
+    }
+  }
+  markdown_append_parsed_inline_segment(
+    spans,
+    String::from_array(chars[start:]),
+    definitions,
+  )
+  spans
+}
+
+///|
+fn markdown_append_parsed_inline_segment(
+  spans : Array[MarkdownInline],
+  text : String,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Unit {
+  if text == "" {
+    return
+  }
+  spans.append(
+    markdown_normalize_html_inlines(
+      markdown_inlines_from_ast(@markdown.parse_inlines(text), definitions),
+    ),
+  )
+}
+
+///|
+fn markdown_resolve_reference_inlines(
+  inlines : Array[MarkdownInline],
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Array[MarkdownInline] {
+  let resolved : Array[MarkdownInline] = []
+  for inline in inlines {
+    match inline.target {
+      Some(target) =>
+        match inline.kind {
+          Link | Image =>
+            resolved.push({
+              ..inline,
+              target: Some(markdown_reference_target(definitions, target)),
+            })
+          _ => resolved.push(inline)
+        }
+      None => resolved.push(inline)
+    }
+  }
+  resolved
+}
+
+///|
+fn markdown_normalize_html_inlines(
+  inlines : Array[MarkdownInline],
+) -> Array[MarkdownInline] {
+  let normalized : Array[MarkdownInline] = []
+  for inline in inlines {
+    match inline.kind {
+      MarkdownInlineKind::HtmlInline =>
+        normalized.push({
+          ..inline,
+          text: markdown_html_inline_source(inline.text),
+        })
+      _ => normalized.push(inline)
+    }
+  }
+  normalized
+}
+
+///|
+fn markdown_protected_inline_end(chars : Array[Char], start : Int) -> Int? {
+  if chars[start] == '`' {
+    let mut index = start + 1
+    while index < chars.length() && chars[index] != '`' && chars[index] != '\n' {
+      index = index + 1
+    }
+    if index < chars.length() && chars[index] == '`' {
+      return Some(index + 1)
+    }
+  }
+  if chars[start] == '!' &&
+    start + 1 < chars.length() &&
+    chars[start + 1] == '[' {
+    return markdown_bracketed_inline_end(chars, start + 1)
+  }
+  if chars[start] == '[' {
+    markdown_bracketed_inline_end(chars, start)
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_bracketed_inline_end(chars : Array[Char], open : Int) -> Int? {
+  let mut close = open + 1
+  while close < chars.length() && chars[close] != ']' && chars[close] != '\n' {
+    close = close + 1
+  }
+  if close >= chars.length() ||
+    chars[close] != ']' ||
+    close + 1 >= chars.length() {
+    return None
+  }
+  if chars[close + 1] == '(' {
+    let mut end = close + 2
+    while end < chars.length() && chars[end] != ')' && chars[end] != '\n' {
+      end = end + 1
+    }
+    if end < chars.length() && chars[end] == ')' {
+      Some(end + 1)
+    } else {
+      None
+    }
+  } else if chars[close + 1] == '[' {
+    let mut end = close + 2
+    while end < chars.length() && chars[end] != ']' && chars[end] != '\n' {
+      end = end + 1
+    }
+    if end < chars.length() && chars[end] == ']' {
+      Some(end + 1)
+    } else {
+      None
+    }
+  } else {
+    None
+  }
+}
+
+///|
+fn markdown_html_inline_source(html : String) -> String {
+  if html.has_prefix("<") {
+    html
+  } else {
+    "<" + html + ">"
+  }
+}
+
+///|
+fn markdown_html_inline_tag_end(chars : Array[Char], start : Int) -> Int? {
+  if start + 2 >= chars.length() || chars[start] != '<' {
+    return None
+  }
+  let mut name_start = start + 1
+  if chars[name_start] == '/' {
+    name_start = name_start + 1
+  }
+  if name_start >= chars.length() ||
+    !markdown_html_tag_name_start_char(chars[name_start]) {
+    return None
+  }
+  let mut index = name_start + 1
+  while index < chars.length() && markdown_html_tag_name_char(chars[index]) {
+    index = index + 1
+  }
+  if index >= chars.length() ||
+    (
+      chars[index] != '>' &&
+      chars[index] != '/' &&
+      chars[index] != ' ' &&
+      chars[index] != '\t'
+    ) {
+    return None
+  }
+  while index < chars.length() && chars[index] != '>' && chars[index] != '\n' {
+    index = index + 1
+  }
+  if index >= chars.length() || chars[index] != '>' {
+    None
+  } else {
+    Some(index + 1)
+  }
+}
+
+///|
+fn markdown_html_tag_name_start_char(ch : Char) -> Bool {
+  (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+}
+
+///|
+fn markdown_html_tag_name_char(ch : Char) -> Bool {
+  markdown_html_tag_name_start_char(ch) || (ch >= '0' && ch <= '9') || ch == '-'
+}
+
+///|
+fn markdown_inlines_from_ast(
+  ast : Array[@markdown.Inline],
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Array[MarkdownInline] {
+  let spans : Array[MarkdownInline] = []
+  for inline in ast {
+    append_markdown_inline_ast(spans, inline, definitions)
+  }
+  spans
+}
+
+///|
+fn append_markdown_inline_ast(
+  spans : Array[MarkdownInline],
+  inline : @markdown.Inline,
+  definitions : Array[MarkdownReferenceDefinition],
+) -> Unit {
+  match inline {
+    Text(content~, ..) =>
+      if content != "" {
+        spans.push(markdown_inline(content, Plain))
+      }
+    SoftBreak(..) | HardBreak(..) => spans.push(markdown_inline("\n", Plain))
+    Emphasis(children~, ..) =>
+      spans.push(markdown_inline(markdown_inline_text(children), Italic))
+    Strong(children~, ..) =>
+      spans.push(markdown_inline(markdown_inline_text(children), Bold))
+    Code(content~, ..) => spans.push(markdown_inline(content, Code))
+    Strikethrough(children~, ..) =>
+      spans.push(markdown_inline(markdown_inline_text(children), Strikethrough))
+    Link(children~, url~, ..) =>
+      spans.push(
+        markdown_inline(markdown_inline_text(children), Link, target=Some(url)),
+      )
+    RefLink(children~, label~, ..) =>
+      spans.push(
+        markdown_inline(
+          markdown_inline_text(children),
+          Link,
+          target=Some(markdown_reference_target(definitions, label)),
+        ),
+      )
+    WikiLink(label~, target~, ..) =>
+      spans.push(
+        markdown_inline(
+          if label == "" {
+            target
+          } else {
+            label
+          },
+          Link,
+          target=Some(target),
+        ),
+      )
+    Autolink(url~, ..) =>
+      spans.push(markdown_inline(url, Autolink, target=Some(url)))
+    Image(alt~, url~, ..) =>
+      spans.push(markdown_inline(alt, Image, target=Some(url)))
+    RefImage(alt~, label~, ..) =>
+      spans.push(
+        markdown_inline(
+          alt,
+          Image,
+          target=Some(markdown_reference_target(definitions, label)),
+        ),
+      )
+    HtmlInline(html~, ..) =>
+      spans.push(markdown_inline(markdown_html_inline_source(html), HtmlInline))
+    FootnoteReference(label~, ..) =>
+      spans.push(markdown_inline(label, FootnoteReference))
+  }
+}
+
+///|
+fn markdown_reference_definitions(
+  source : String,
+) -> Array[MarkdownReferenceDefinition] {
+  let definitions : Array[MarkdownReferenceDefinition] = []
+  for definition in @markdown.parse(source).definitions {
+    definitions.push({
+      label: markdown_reference_label_key(definition.label),
+      url: definition.url,
+      title: definition.title,
+    })
+  }
+  for definition in markdown_scan_reference_definitions(source) {
+    definitions.push(definition)
+  }
+  definitions
+}
+
+///|
+fn markdown_scan_reference_definitions(
+  source : String,
+) -> Array[MarkdownReferenceDefinition] {
+  let definitions : Array[MarkdownReferenceDefinition] = []
+  let lines = markdown_split_lines(source)
+  for line in lines {
+    match markdown_scan_reference_definition_line(line) {
+      Some(definition) => definitions.push(definition)
+      None => ()
+    }
+  }
+  definitions
+}
+
+///|
+fn markdown_scan_reference_definition_line(
+  line : String,
+) -> MarkdownReferenceDefinition? {
+  let trimmed = line.trim().to_owned()
+  let chars = trimmed.to_array()
+  if chars.length() < 4 || chars[0] != '[' {
+    return None
+  }
+  let mut close = 1
+  while close < chars.length() && chars[close] != ']' {
+    close = close + 1
+  }
+  if close <= 1 || close + 1 >= chars.length() || chars[close + 1] != ':' {
+    return None
+  }
+  let label = String::from_array(chars[1:close])
+  let rest = String::from_array(chars[close + 2:]).trim().to_owned()
+  if rest == "" {
+    return None
+  }
+  let rest_chars = rest.to_array()
+  let mut url = ""
+  let mut title = ""
+  if rest_chars[0] == '<' {
+    let mut end = 1
+    while end < rest_chars.length() && rest_chars[end] != '>' {
+      end = end + 1
+    }
+    if end >= rest_chars.length() {
+      return None
+    }
+    url = String::from_array(rest_chars[1:end])
+    title = String::from_array(rest_chars[end + 1:]).trim().to_owned()
+  } else {
+    let mut end = 0
+    while end < rest_chars.length() &&
+          rest_chars[end] != ' ' &&
+          rest_chars[end] != '\t' {
+      end = end + 1
+    }
+    url = String::from_array(rest_chars[:end])
+    title = String::from_array(rest_chars[end:]).trim().to_owned()
+  }
+  if url == "" {
+    return None
+  }
+  Some({
+    label: markdown_reference_label_key(label),
+    url,
+    title: markdown_trim_reference_title(title),
+  })
+}
+
+///|
+fn markdown_trim_reference_title(title : String) -> String {
+  let chars = title.to_array()
+  if chars.length() >= 2 &&
+    (
+      (chars[0] == '"' && chars[chars.length() - 1] == '"') ||
+      (chars[0] == '\'' && chars[chars.length() - 1] == '\'')
+    ) {
+    String::from_array(chars[1:chars.length() - 1])
+  } else {
+    title
+  }
+}
+
+///|
+fn markdown_reference_target(
+  definitions : Array[MarkdownReferenceDefinition],
+  label : String,
+) -> String {
+  let normalized = markdown_reference_label_key(label)
+  for definition in definitions {
+    if markdown_reference_label_key(definition.label) == normalized {
+      return definition.url
+    }
+  }
+  label
+}
+
+///|
+fn markdown_reference_label_key(label : String) -> String {
+  label.trim().to_owned().to_lower()
+}
+
+///|
+fn markdown_inline_text(ast : Array[@markdown.Inline]) -> String {
+  let parts : Array[String] = []
+  for inline in ast {
+    parts.push(markdown_inline_plain_text(inline))
+  }
+  markdown_join_lines(parts)
+}
+
+///|
+fn markdown_inline_plain_text(inline : @markdown.Inline) -> String {
+  match inline {
+    Text(content~, ..) => content
+    SoftBreak(..) | HardBreak(..) => "\n"
+    Emphasis(children~, ..)
+    | Strong(children~, ..)
+    | Strikethrough(children~, ..)
+    | Link(children~, ..)
+    | RefLink(children~, ..) => markdown_inline_text(children)
+    Code(content~, ..) => content
+    WikiLink(label~, target~, ..) => if label == "" { target } else { label }
+    Autolink(url~, ..) => url
+    Image(alt~, ..) | RefImage(alt~, ..) => alt
+    HtmlInline(html~, ..) => markdown_html_inline_source(html)
+    FootnoteReference(label~, ..) => label
+  }
+}
+
+///|
+fn markdown_blocks_text(blocks : Array[@markdown.Block]) -> String {
+  let lines : Array[String] = []
+  for block in blocks {
+    match block {
+      Paragraph(children~, ..) | Heading(children~, ..) =>
+        lines.push(markdown_inline_text(children))
+      FencedCode(code~, ..) | IndentedCode(code~, ..) => lines.push(code)
+      Blockquote(children~, ..) => lines.push(markdown_blocks_text(children))
+      BulletList(items~, ..) | OrderedList(items~, ..) =>
+        for item in items {
+          lines.push(markdown_list_item_text(item))
+        }
+      ThematicBreak(..) => lines.push("---")
+      HtmlBlock(html~, ..) => lines.push(html)
+      BlankLines(..) => ()
+      Table(..) => ()
+      FootnoteDefinition(label~, children~, ..) =>
+        lines.push("[^" + label + "]: " + markdown_blocks_text(children))
+    }
+  }
+  markdown_join_lines(lines)
+}
+
+///|
+fn markdown_list_item_text(item : @markdown.ListItem) -> String {
+  markdown_blocks_text(item.children)
+}
+
+///|
+fn markdown_heading_source(level : Int, text : String) -> String {
+  let marks : Array[Char] = []
+  for _ in 0..<level {
+    marks.push('#')
+  }
+  String::from_array(marks) + " " + text
+}
+
+///|
+fn markdown_heading_visible_source_text(source : String) -> String {
+  let chars = source.trim().to_owned().to_array()
+  let mut start = 0
+  while start < chars.length() && chars[start] == '#' {
+    start = start + 1
+  }
+  if start < chars.length() && chars[start] == ' ' {
+    start = start + 1
+  }
+  let mut end = chars.length()
+  while end > start && chars[end - 1] == '#' {
+    end = end - 1
+  }
+  while end > start && chars[end - 1] == ' ' {
+    end = end - 1
+  }
+  String::from_array(chars[start:end])
+}
