@@ -179,6 +179,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host service completion subscription lifecycle tests compact",
     },
     {
+      path: "moui/backend/host/host_window_lifecycle_test.mbt",
+      max_lines: 740,
+      target_lines: 680,
+      reason: "keep host window lifecycle, platform ids, scene resolver, and slot tests compact",
+    },
+    {
+      path: "moui/backend/host/host_window_requests_test.mbt",
+      max_lines: 465,
+      target_lines: 420,
+      reason: "keep host window request queue and command helper tests compact",
+    },
+    {
       path: "examples/pdf_workbench/app/app.mbt",
       max_lines: 1335,
       target_lines: 1250,
