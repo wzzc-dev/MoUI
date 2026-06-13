@@ -1,3 +1,4 @@
+///|
 fn MarkdownEditorApp::target_bar(
   self : MarkdownEditorApp,
   theme : @core.Theme,
@@ -194,7 +195,6 @@ fn MarkdownEditorApp::target_bar(
 }
 
 ///|
-
 fn floating_target_palette(
   editor : @core.View[MarkdownEditorMsg],
   target_bar : @core.View[MarkdownEditorMsg],
@@ -574,7 +574,6 @@ fn markdown_editor_clamp_double(
 }
 
 ///|
-
 fn editor_source_layout(
   app : MarkdownEditorApp,
   source : String,
@@ -759,4 +758,3 @@ fn source_preview_line(
 }
 
 ///|
-

@@ -1,3 +1,4 @@
+///|
 struct MarkdownEditorTableCellRange {
   hit_start : Int
   hit_end : Int
@@ -1119,4 +1120,3 @@ fn markdown_editor_empty_table_row(column_count : Int) -> String {
 }
 
 ///|
-

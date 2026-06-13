@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_table_cell_at_text_offset(
   source : String,
   caret : Int,
@@ -74,7 +75,6 @@ fn markdown_editor_spaces(count : Int) -> String {
 }
 
 ///|
-
 fn markdown_editor_complete_table_header_on_enter(
   chars : Array[Char],
   range : MarkdownSourceRange,
@@ -137,7 +137,6 @@ fn markdown_editor_table_separator_for_columns(column_count : Int) -> String {
 }
 
 ///|
-
 fn markdown_editor_table_cell_text_input(
   source : String,
   caret : Int,
@@ -829,4 +828,3 @@ fn markdown_editor_table_cell_safe_input(input : String) -> String {
 }
 
 ///|
-

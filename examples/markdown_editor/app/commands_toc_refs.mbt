@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_append_snippet(
   source : String,
   command : MarkdownEditorCommand,
@@ -138,7 +139,6 @@ fn markdown_editor_toc_slug_char(ch : Char) -> Bool {
 }
 
 ///|
-
 fn markdown_editor_toggle_link_range(
   source : String,
   range : @core.TextRange,
@@ -237,4 +237,3 @@ fn markdown_editor_set_reference_target(
 }
 
 ///|
-

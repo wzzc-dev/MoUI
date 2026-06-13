@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_wrap_range(
   source : String,
   range : @core.TextRange,
@@ -123,7 +124,6 @@ fn markdown_editor_unwrap_range(
 }
 
 ///|
-
 fn markdown_editor_inline_marker(command : MarkdownEditorCommand) -> String {
   match command {
     Bold => "**"
@@ -272,4 +272,3 @@ fn markdown_editor_toggle_task_block(
 }
 
 ///|
-
