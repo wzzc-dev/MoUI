@@ -654,9 +654,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/views_command_surfaces_test.mbt",
-      max_lines: 475,
-      target_lines: 430,
-      reason: "keep views toolbar, command, menu, gesture, card, and file-import surface tests compact",
+      max_lines: 290,
+      target_lines: 260,
+      reason: "keep views toolbar, disclosure, gesture, command palette, card, and file-import tests compact",
+    },
+    {
+      path: "moui/views/views_menu_surfaces_test.mbt",
+      max_lines: 190,
+      target_lines: 170,
+      reason: "keep views menu bar, command menu, and context-menu surface tests compact",
     },
     {
       path: "moui/views/views_form_feedback_test.mbt",
