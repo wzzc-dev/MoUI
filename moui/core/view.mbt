@@ -42,6 +42,7 @@ enum ViewNode[Msg] {
   ComponentNode((BuildContext) -> View[Msg])
 }
 
+///|
 fn[Msg] view_from_node(node : ViewNode[Msg]) -> View[Msg] {
   { node, }
 }
