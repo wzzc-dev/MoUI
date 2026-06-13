@@ -1,5 +1,6 @@
 #include <moonbit.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,6 +12,7 @@
 #endif
 
 #if defined(_WIN32) && defined(MOUI_WINDOWS_ENABLE_WEBVIEW2)
+#include <unknwn.h>
 #include <WebView2.h>
 #include <wrl.h>
 #include <string>
@@ -73,7 +75,7 @@ static std::wstring mb_bytes_to_wide(moonbit_bytes_t bytes) {
     return L"";
   }
   std::wstring out((size_t)wide_len, L'\0');
-  MultiByteToWideChar(CP_UTF8, 0, (LPCCH)bytes, len, out.data(), wide_len);
+  MultiByteToWideChar(CP_UTF8, 0, (LPCCH)bytes, len, &out[0], wide_len);
   return out;
 }
 
@@ -86,7 +88,7 @@ static std::string wide_to_utf8(const wchar_t *wide) {
     return "";
   }
   std::string out((size_t)len - 1, '\0');
-  WideCharToMultiByte(CP_UTF8, 0, wide, -1, out.data(), len, nullptr, nullptr);
+  WideCharToMultiByte(CP_UTF8, 0, wide, -1, &out[0], len, nullptr, nullptr);
   return out;
 }
 
@@ -112,6 +114,8 @@ struct MOUWindowsWebView {
 static std::vector<MOUWindowsWebView *> g_views;
 static ComPtr<ICoreWebView2Environment> g_environment;
 static bool g_environment_creating = false;
+static bool g_environment_failed = false;
+static HRESULT g_environment_failure = S_OK;
 
 static MOUWindowsWebView *find_view(HWND parent, const std::wstring &id) {
   for (auto *view : g_views) {
@@ -130,6 +134,37 @@ static void emit_wide(HWND parent, int32_t kind, const std::wstring &id,
   std::string detail8 = wide_to_utf8(detail);
   moui_windows_webview_emit_utf8((uint64_t)(uintptr_t)parent, kind, id8.c_str(),
                                  url8.c_str(), detail8.c_str(), flag);
+}
+
+static std::wstring webview2_hresult_detail(const wchar_t *message,
+                                            HRESULT result) {
+  wchar_t code[32];
+  swprintf_s(code, L"0x%08X", (unsigned int)result);
+  std::wstring detail(message);
+  detail += L"; HRESULT=";
+  detail += code;
+  return detail;
+}
+
+static bool webview2_runtime_available(void) {
+  LPWSTR version = nullptr;
+  HRESULT result = GetAvailableCoreWebView2BrowserVersionString(nullptr, &version);
+  if (version != nullptr) {
+    CoTaskMemFree(version);
+  }
+  return SUCCEEDED(result);
+}
+
+static void emit_environment_failure(MOUWindowsWebView *view, HRESULT result) {
+  if (view == nullptr) {
+    return;
+  }
+  view->creating = false;
+  view->navigation_pending = false;
+  emit_wide(
+      view->parent, 4, view->id, view->desired_url,
+      webview2_hresult_detail(L"WebView2 environment creation failed", result),
+      (int32_t)result);
 }
 
 static wchar_t lower_ascii_wide(wchar_t ch) {
@@ -327,7 +362,15 @@ static void create_controller(MOUWindowsWebView *view) {
 }
 
 static void ensure_environment() {
-  if (g_environment || g_environment_creating) {
+  if (g_environment || g_environment_creating || g_environment_failed) {
+    return;
+  }
+  if (!webview2_runtime_available()) {
+    g_environment_failed = true;
+    g_environment_failure = HRESULT_FROM_WIN32(ERROR_PRODUCT_UNINSTALLED);
+    for (auto *view : g_views) {
+      emit_environment_failure(view, g_environment_failure);
+    }
     return;
   }
   g_environment_creating = true;
@@ -337,6 +380,11 @@ static void ensure_environment() {
           [](HRESULT result, ICoreWebView2Environment *environment) -> HRESULT {
             g_environment_creating = false;
             if (FAILED(result) || environment == nullptr) {
+              g_environment_failed = true;
+              g_environment_failure = result;
+              for (auto *view : g_views) {
+                emit_environment_failure(view, result);
+              }
               return S_OK;
             }
             g_environment = environment;
@@ -358,6 +406,9 @@ static MOUWindowsWebView *ensure_view(HWND parent, const std::wstring &id) {
   view->id = id;
   g_views.push_back(view);
   ensure_environment();
+  if (g_environment_failed) {
+    emit_environment_failure(view, g_environment_failure);
+  }
   create_controller(view);
   return view;
 }
@@ -376,7 +427,7 @@ void moui_windows_webview_install_event_callback(
 extern "C" MOONBIT_FFI_EXPORT
 int32_t moui_windows_webview_available(void) {
 #if defined(_WIN32) && defined(MOUI_WINDOWS_ENABLE_WEBVIEW2)
-  return 1;
+  return webview2_runtime_available() ? 1 : 0;
 #else
   return 0;
 #endif

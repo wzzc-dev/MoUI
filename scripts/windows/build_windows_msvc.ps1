@@ -3,13 +3,16 @@ param(
   [string]$Package = "examples/showcase/windows_skia",
   [switch]$BuildOnly,
   [string]$VcpkgRoot = "",
-  [string]$WgpuNativeRoot = ""
+  [string]$WgpuNativeRoot = "",
+  [switch]$EnableWebView2,
+  [string]$WebView2SdkRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = (Resolve-Path (Join-Path $scriptDir "..\..")).Path
+. (Join-Path $scriptDir "webview2_sdk.ps1")
 
 function Require-Path {
   param(
@@ -99,6 +102,10 @@ Enable-MsvcC11Atomics
 if ($usesWgpu) {
   Enable-MsvcGlobalC11ModeForCOnlyStubs
 }
+$webView2 = $null
+if ($EnableWebView2 -or -not [string]::IsNullOrWhiteSpace($WebView2SdkRoot)) {
+  $webView2 = Enable-WebView2BuildEnvironment $WebView2SdkRoot
+}
 
 if (-not (Get-Command moon -ErrorAction SilentlyContinue)) {
   throw "MoonBit toolchain is not available in PATH. Install moon and try again."
@@ -113,6 +120,11 @@ try {
     Write-Host "==> WGPU native root: $resolvedWgpuRoot"
   } else {
     Write-Host "==> renderer route: native Skia mainline"
+  }
+  if ($webView2) {
+    Write-Host "==> WebView2 bridge: enabled with static loader; Evergreen Runtime required"
+  } else {
+    Write-Host "==> WebView2 bridge: fallback unavailable build"
   }
   & moon build $Package --target native
   if ($LASTEXITCODE -ne 0) {
