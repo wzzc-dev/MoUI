@@ -414,9 +414,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/rich_text_editor_wbtest.mbt",
-      max_lines: 665,
-      target_lines: 600,
-      reason: "keep core rich text editor cache, input, IME, drawing, and placeholder tests compact",
+      max_lines: 600,
+      target_lines: 545,
+      reason: "keep core rich text editor cache, input, drawing, block geometry, transform, and placeholder tests compact",
+    },
+    {
+      path: "moui/core/rich_text_editor_ime_wbtest.mbt",
+      max_lines: 70,
+      target_lines: 55,
+      reason: "keep core rich text editor IME composition commit and replacement tests compact",
     },
     {
       path: "moui/core/rich_text_editor_mapping_wbtest.mbt",
