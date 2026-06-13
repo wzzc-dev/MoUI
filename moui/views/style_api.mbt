@@ -454,7 +454,7 @@ pub struct TableColumn {
 }
 
 ///|
-pub(all) struct DataSortState {
+pub struct DataSortState {
   column : String
   ascending : Bool
 }
@@ -553,6 +553,16 @@ pub fn DataSortState::new(
 }
 
 ///|
+pub fn DataSortState::column(self : DataSortState) -> String {
+  self.column
+}
+
+///|
+pub fn DataSortState::ascending(self : DataSortState) -> Bool {
+  self.ascending
+}
+
+///|
 pub fn DataSortState::toggle(
   self : DataSortState,
   column : String,
@@ -562,11 +572,6 @@ pub fn DataSortState::toggle(
   } else {
     { column, ascending: true }
   }
-}
-
-///|
-pub fn DataSortState::is_sorted(self : DataSortState, column : String) -> Bool {
-  self.column == column
 }
 
 ///|
@@ -634,7 +639,7 @@ pub fn ColumnVisibilityState::is_visible(
 }
 
 ///|
-pub fn ColumnVisibilityState::is_locked(
+fn ColumnVisibilityState::is_locked(
   self : ColumnVisibilityState,
   id : String,
 ) -> Bool {
