@@ -562,10 +562,9 @@ pub struct SelectableListItem[Msg] {
 }
 pub fn[Msg] SelectableListItem::new(id~ : String, title~ : String, message~ : Msg, subtitle? : String, detail? : String, enabled? : Bool) -> Self[Msg]
 
-pub(all) struct SelectionState {
+pub struct SelectionState {
   selected : Array[String]
 }
-pub fn SelectionState::clear(Self) -> Self
 pub fn SelectionState::contains(Self, String) -> Bool
 pub fn SelectionState::count(Self) -> Int
 pub fn SelectionState::new(selected? : Array[String]) -> Self
