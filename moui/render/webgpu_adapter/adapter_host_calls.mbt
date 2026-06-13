@@ -1,3 +1,4 @@
+///|
 pub fn draw_commands_to_host_calls(
   commands : Array[@core.DrawCommand],
   size : @core.Size,

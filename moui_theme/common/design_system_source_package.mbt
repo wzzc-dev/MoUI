@@ -97,6 +97,7 @@ pub fn DesignPreset::source_package_import_gap_count(
   count
 }
 
+///|
 fn material_source_package_inventory() -> Array[DesignSourcePackageRecord] {
   [
     source_package(

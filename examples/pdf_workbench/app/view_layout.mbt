@@ -17,6 +17,7 @@ using @views {
   text_field,
 }
 
+///|
 fn PdfWorkbenchModel::view_with_environment(
   self : PdfWorkbenchModel,
   env : @core.ViewEnvironment,

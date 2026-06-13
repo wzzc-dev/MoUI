@@ -741,14 +741,10 @@ fn design_tokens_for(
   density~ : @common.DesignDensity,
 ) -> @common.DesignSystemTokens {
   match preset {
-    Material =>
-      @material.tokens_for_variant(variant~, system_scheme~, density~)
-    Carbon =>
-      @carbon.tokens_for_variant(variant~, system_scheme~, density~)
-    Primer =>
-      @primer.tokens_for_variant(variant~, system_scheme~, density~)
-    Fluent =>
-      @fluent.tokens_for_variant(variant~, system_scheme~, density~)
+    Material => @material.tokens_for_variant(variant~, system_scheme~, density~)
+    Carbon => @carbon.tokens_for_variant(variant~, system_scheme~, density~)
+    Primer => @primer.tokens_for_variant(variant~, system_scheme~, density~)
+    Fluent => @fluent.tokens_for_variant(variant~, system_scheme~, density~)
   }
 }
 
@@ -760,14 +756,10 @@ fn design_report_for(
   density~ : @common.DesignDensity,
 ) -> @common.DesignSystemReport {
   match preset {
-    Material =>
-      @material.report(scheme~, system_scheme~, density~)
-    Carbon =>
-      @carbon.report(scheme~, system_scheme~, density~)
-    Primer =>
-      @primer.report(scheme~, system_scheme~, density~)
-    Fluent =>
-      @fluent.report(scheme~, system_scheme~, density~)
+    Material => @material.report(scheme~, system_scheme~, density~)
+    Carbon => @carbon.report(scheme~, system_scheme~, density~)
+    Primer => @primer.report(scheme~, system_scheme~, density~)
+    Fluent => @fluent.report(scheme~, system_scheme~, density~)
   }
 }
 

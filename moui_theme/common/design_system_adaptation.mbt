@@ -121,6 +121,7 @@ pub fn DesignPreset::undeclared_adaptation_source_count(
   count
 }
 
+///|
 fn material_adaptation_report() -> Array[DesignAdaptationRecord] {
   let source = "https://material-web.dev/theming/material-theming/"
   [

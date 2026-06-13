@@ -9,6 +9,8 @@ supported_targets = "native"
 
 options(
   "is-main": true,
-  link: { "native": { "cc-link-flags": "-lfontconfig -lharfbuzz -lfreetype -lz" } },
+  link: {
+    "native": { "cc-link-flags": "-lfontconfig -lharfbuzz -lfreetype -lz" },
+  },
   targets: { "main.mbt": [ "native" ] },
 )

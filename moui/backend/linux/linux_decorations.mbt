@@ -1,3 +1,4 @@
+///|
 pub fn scaffold_service_bridge() -> @host.HostServiceBridge {
   @host.HostServiceBridge::unavailable()
 }

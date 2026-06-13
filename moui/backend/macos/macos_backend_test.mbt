@@ -23,7 +23,9 @@ test "macos capability summary exposes native service readiness" {
 ///|
 test "macos backend host options are constructed through provider runner API" {
   let options = MacosHostAppOptions::new()
-  let smoke_options = MacosHostSmokeOptions::new(first_frame_smoke_auto_exit=true)
+  let smoke_options = MacosHostSmokeOptions::new(
+    first_frame_smoke_auto_exit=true,
+  )
   let _ = options
   let _ = smoke_options
   assert_true(backend_info().renderer_available)
