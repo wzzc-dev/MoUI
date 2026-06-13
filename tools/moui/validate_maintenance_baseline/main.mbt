@@ -114,9 +114,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/editor_snapshot_wbtest.mbt",
-      max_lines: 990,
-      target_lines: 900,
-      reason: "keep Markdown Editor snapshot, visual mapping, selection, and focus-mode tests compact",
+      max_lines: 580,
+      target_lines: 520,
+      reason: "keep Markdown Editor snapshot shape, table, click, selection, and focus-mode tests compact",
+    },
+    {
+      path: "examples/markdown_editor/app/editor_snapshot_formatting_wbtest.mbt",
+      max_lines: 420,
+      target_lines: 380,
+      reason: "keep Markdown Editor formatter source range, hidden marker, reference, and image-preview tests compact",
     },
     {
       path: "examples/markdown_editor/app/editor_snapshot_parser_wbtest.mbt",
