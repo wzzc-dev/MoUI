@@ -376,18 +376,19 @@ pub struct ChoiceItem {
 pub(all) struct ColumnOrderState {
   order : Array[String]
 }
-pub fn ColumnOrderState::move_after(Self, String, String) -> Self
 pub fn ColumnOrderState::move_before(Self, String, String) -> Self
 pub fn ColumnOrderState::new(order? : Array[String]) -> Self
 pub fn ColumnOrderState::ordered_columns(Self, Array[TableColumn]) -> Array[TableColumn]
 
-pub(all) struct ColumnVisibilityState {
+pub struct ColumnVisibilityState {
   visible : Array[String]
   locked : Array[String]
 }
 pub fn ColumnVisibilityState::is_visible(Self, String) -> Bool
+pub fn ColumnVisibilityState::locked(Self) -> Array[String]
 pub fn ColumnVisibilityState::new(visible~ : Array[String], locked? : Array[String]) -> Self
 pub fn ColumnVisibilityState::set_visible(Self, String, Bool) -> Self
+pub fn ColumnVisibilityState::visible(Self) -> Array[String]
 
 pub(all) struct ColumnWidthState {
   widths : Array[TableColumn]
@@ -457,7 +458,6 @@ pub(all) enum FileImportAvailability {
 pub struct FileSelection {
   paths : Array[String]
 }
-pub fn FileSelection::empty() -> Self
 pub fn FileSelection::new(paths~ : Array[String]) -> Self
 pub fn FileSelection::summary(Self, empty? : String) -> String
 
@@ -622,7 +622,6 @@ pub(all) enum TextRole {
 pub struct ToastQueue[Msg] {
   items : Array[ToastQueueItem[Msg]]
 }
-pub fn[Msg] ToastQueue::dismiss(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] ToastQueue::expire(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] ToastQueue::new(items? : Array[ToastQueueItem[Msg]]) -> Self[Msg]
 pub fn[Msg] ToastQueue::push(Self[Msg], ToastQueueItem[Msg]) -> Self[Msg]

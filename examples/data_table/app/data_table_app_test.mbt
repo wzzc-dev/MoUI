@@ -47,7 +47,7 @@ test "data table state transitions and tree toggle" {
   let collapsed = ready.update(ToggleTree("teams"))
   inspect(collapsed.expanded.length(), content="0")
   let hidden_priority = ready.update(ToggleColumnVisibility("priority", false))
-  inspect(hidden_priority.visible_columns.visible.length(), content="3")
+  inspect(hidden_priority.visible_columns.visible().length(), content="3")
   let project_locked = hidden_priority.update(
     ToggleColumnVisibility("project", false),
   )
