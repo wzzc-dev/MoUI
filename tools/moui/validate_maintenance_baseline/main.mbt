@@ -180,9 +180,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/host/host_window_lifecycle_test.mbt",
-      max_lines: 740,
-      target_lines: 680,
-      reason: "keep host window lifecycle, platform ids, scene resolver, and slot tests compact",
+      max_lines: 555,
+      target_lines: 510,
+      reason: "keep host window lifecycle, platform ids, and scene resolver tests compact",
+    },
+    {
+      path: "moui/backend/host/host_window_runtime_slots_test.mbt",
+      max_lines: 185,
+      target_lines: 165,
+      reason: "keep host window runtime slot and platform driver tests compact",
     },
     {
       path: "moui/backend/host/host_window_requests_test.mbt",
