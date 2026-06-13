@@ -395,6 +395,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core date picker mode, value, formatting, range, and calendar helpers compact",
     },
     {
+      path: "moui/core/program_subscription.mbt",
+      max_lines: 305,
+      target_lines: 270,
+      reason: "keep core subscription contract, descriptor, and plan summary helpers compact",
+    },
+    {
+      path: "moui/core/program_runtime_diagnostics.mbt",
+      max_lines: 725,
+      target_lines: 650,
+      reason: "keep core program runtime snapshot, effect-task lifecycle, and subscription lifecycle diagnostics compact",
+    },
+    {
       path: "moui/core/rich_text_document.mbt",
       max_lines: 180,
       target_lines: 160,
