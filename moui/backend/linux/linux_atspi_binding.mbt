@@ -58,10 +58,10 @@ pub fn LinuxATSPIBinding::perform_action(
         Some(node) =>
           if node.actions.any(action => action == request.action) {
             if (self.dispatch)(
-              request.element_id,
-              request.action,
-              request.value,
-            ) {
+                request.element_id,
+                request.action,
+                request.value,
+              ) {
               self.action_dispatch_count = self.action_dispatch_count + 1
               @host.NativeAccessibilityActionResult::Handled
             } else {

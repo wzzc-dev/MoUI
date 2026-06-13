@@ -774,6 +774,7 @@ pub fn custom_tokens(
   tokens
 }
 
+///|
 fn material_design_tokens(
   scheme : @core.ColorScheme,
   density : DesignDensity,
@@ -1182,6 +1183,7 @@ fn design_tokens(
   }
 }
 
+///|
 fn semantic_palette(
   foreground~ : @core.Color,
   background~ : @core.Color,
@@ -1273,6 +1275,7 @@ fn material_elevation_tokens(
   }
 }
 
+///|
 fn surface_tokens(
   palette : DesignSemanticPalette,
   scheme : @core.ColorScheme,

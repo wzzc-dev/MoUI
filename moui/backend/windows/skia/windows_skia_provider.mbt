@@ -29,12 +29,7 @@ pub fn WindowsSkiaAppOptions::new(
   web_view_commands? : @host.HostWebViewCommandQueue? = None,
   web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> WindowsSkiaAppOptions {
-  {
-    scene_resolver,
-    font_resolution,
-    web_view_commands,
-    web_view_events,
-  }
+  { scene_resolver, font_resolution, web_view_commands, web_view_events }
 }
 
 ///|

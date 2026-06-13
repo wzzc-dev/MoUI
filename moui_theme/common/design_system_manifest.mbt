@@ -237,6 +237,7 @@ pub fn DesignSystemManifest::has_official_source_locks(
   official_sources > 0 && self.source_lock_count() == official_sources
 }
 
+///|
 fn material_manifest() -> DesignSystemManifest {
   {
     preset: DesignPreset::Material,
@@ -651,6 +652,7 @@ fn common_official_token_coverage(
   ]
 }
 
+///|
 fn material_variant_coverage() -> Array[DesignVariantCoverage] {
   official_variant_coverage("Material light/dark color schemes")
 }
