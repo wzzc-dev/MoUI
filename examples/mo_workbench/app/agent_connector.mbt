@@ -234,9 +234,7 @@ fn AgentConnectorState::has_active_transport(
 }
 
 ///|
-fn AgentConnectorState::has_session_binding(
-  self : AgentConnectorState,
-) -> Bool {
+fn AgentConnectorState::has_session_binding(self : AgentConnectorState) -> Bool {
   self.provider_session_id != "" || self.session_name != "" || self.model != ""
 }
 

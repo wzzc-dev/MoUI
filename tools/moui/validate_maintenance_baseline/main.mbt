@@ -72,9 +72,21 @@ fn file_budgets() -> Array[FileBudget] {
   [
     {
       path: "examples/mo_workbench/app/mo_workbench_app_wbtest.mbt",
-      max_lines: 632,
+      max_lines: 633,
       target_lines: 580,
       reason: "keep Mo Workbench composer, backend switching, and shared test helpers compact",
+    },
+    {
+      path: "examples/mo_workbench/app/mo_workbench_pi_ingest_wbtest.mbt",
+      max_lines: 1155,
+      target_lines: 1050,
+      reason: "keep Mo Workbench Pi RPC state, catalog, session, and diagnostic ingest tests compact",
+    },
+    {
+      path: "examples/mo_workbench/app/mo_workbench_pi_streaming_wbtest.mbt",
+      max_lines: 405,
+      target_lines: 360,
+      reason: "keep Mo Workbench Pi streaming, tool, bash, queue, and raw-line ingest tests compact",
     },
     {
       path: "examples/markdown_editor/app/editor_app_runtime_wbtest.mbt",

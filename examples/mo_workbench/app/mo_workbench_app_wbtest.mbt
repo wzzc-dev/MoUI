@@ -285,6 +285,7 @@ test "workbench fixture backend keeps prompt flow local" {
   inspect(model.last_status, content="已交给本地后端")
 }
 
+///|
 fn model_with_reviewable_diff() -> WorkbenchModel {
   {
     ..WorkbenchModel::new(),

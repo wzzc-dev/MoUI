@@ -1,3 +1,4 @@
+///|
 fn WorkbenchModel::ingest_pi_json_object(
   self : WorkbenchModel,
   session_id : String,

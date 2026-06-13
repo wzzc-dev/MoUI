@@ -197,9 +197,7 @@ fn AgentRequestSummary::new(
 }
 
 ///|
-fn AgentRequestSummary::has_visible_request(
-  self : AgentRequestSummary,
-) -> Bool {
+fn AgentRequestSummary::has_visible_request(self : AgentRequestSummary) -> Bool {
   self.source != "" || self.message != ""
 }
 
