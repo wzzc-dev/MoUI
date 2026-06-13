@@ -156,9 +156,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/input_blocks.mbt",
-      max_lines: 1260,
-      target_lines: 1150,
-      reason: "keep Markdown Editor block input shortcuts, code fences, paste, indent, and continuation transforms compact",
+      max_lines: 880,
+      target_lines: 800,
+      reason: "keep Markdown Editor block input shortcuts, paste, indent, and continuation transforms compact",
+    },
+    {
+      path: "examples/markdown_editor/app/input_blocks_code.mbt",
+      max_lines: 390,
+      target_lines: 350,
+      reason: "keep Markdown Editor code fence completion, quoted code blocks, and code-block enter/exit transforms compact",
     },
     {
       path: "examples/markdown_editor/app/input_blocks_ordered.mbt",
