@@ -449,6 +449,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core text field and rich text unicode conformance tests compact",
     },
     {
+      path: "moui/core/engine_text_input_wbtest.mbt",
+      max_lines: 465,
+      target_lines: 425,
+      reason: "keep core text input editing, selection, history, rendering, host-state, and focus tests compact",
+    },
+    {
+      path: "moui/core/engine_text_input_ime_wbtest.mbt",
+      max_lines: 180,
+      target_lines: 155,
+      reason: "keep core text input IME composition, composition-caret, and delete-surrounding tests compact",
+    },
+    {
       path: "moui/core/runtime_effects_wbtest.mbt",
       max_lines: 600,
       target_lines: 540,
