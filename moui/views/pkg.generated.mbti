@@ -373,7 +373,7 @@ pub struct ChoiceItem {
   label : String
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct ColumnOrderState {
+pub struct ColumnOrderState {
   order : Array[String]
 }
 pub fn ColumnOrderState::move_before(Self, String, String) -> Self
@@ -529,7 +529,6 @@ pub struct ScrollToIndexIntent {
   index : Int
   offset : @core.Point
 }
-pub fn ScrollToIndexIntent::new(index~ : Int, offset~ : @core.Point) -> Self
 
 pub struct SectionListSection[T] {
   id : String
