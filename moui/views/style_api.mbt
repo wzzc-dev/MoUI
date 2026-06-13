@@ -71,7 +71,7 @@ pub(all) enum FormValidationDisplay {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct ChoiceItem {
+pub struct ChoiceItem {
   id : String
   label : String
 } derive(Eq, Debug, ToJson)
@@ -108,13 +108,13 @@ pub(all) enum BadgeTone {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct StateViewAction[Msg] {
+pub struct StateViewAction[Msg] {
   label : String
   message : Msg
 }
 
 ///|
-pub(all) struct ToastStackItem[Msg] {
+pub struct ToastStackItem[Msg] {
   id : String
   message : String
   tone : FeedbackTone
@@ -123,7 +123,7 @@ pub(all) struct ToastStackItem[Msg] {
 }
 
 ///|
-pub(all) struct ToastQueueItem[Msg] {
+pub struct ToastQueueItem[Msg] {
   id : String
   message : String
   tone : FeedbackTone
@@ -134,7 +134,7 @@ pub(all) struct ToastQueueItem[Msg] {
 }
 
 ///|
-pub(all) struct ToastQueue[Msg] {
+pub struct ToastQueue[Msg] {
   items : Array[ToastQueueItem[Msg]]
 }
 
@@ -146,7 +146,7 @@ pub(all) enum FileImportAvailability {
 }
 
 ///|
-pub(all) struct FileSelection {
+pub struct FileSelection {
   paths : Array[String]
 }
 
