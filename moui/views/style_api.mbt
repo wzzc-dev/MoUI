@@ -237,7 +237,7 @@ fn FileSelection::is_empty(self : FileSelection) -> Bool {
 }
 
 ///|
-pub fn FileSelection::summary(
+fn FileSelection::summary(
   self : FileSelection,
   empty? : String = "No files selected",
 ) -> String {
@@ -455,7 +455,7 @@ pub struct ColumnVisibilityState {
 }
 
 ///|
-pub(all) struct ColumnWidthState {
+pub struct ColumnWidthState {
   widths : Array[TableColumn]
   min_width : Double
   max_width : Double
