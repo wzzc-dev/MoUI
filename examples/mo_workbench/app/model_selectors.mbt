@@ -1,8 +1,5 @@
-
 ///|
-fn WorkbenchModel::active_session(
-  self : WorkbenchModel,
-) -> WorkbenchSession {
+fn WorkbenchModel::active_session(self : WorkbenchModel) -> WorkbenchSession {
   for session in self.sessions {
     if session.id == self.selected_session_id {
       return session
