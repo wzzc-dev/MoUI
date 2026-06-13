@@ -597,11 +597,14 @@ pub struct TabItem[Msg] {
   view : @core.View[Msg]
 }
 
-pub(all) struct TableColumn {
+pub struct TableColumn {
   id : String
   label : String
   width : Double
 }
+pub fn TableColumn::id(Self) -> String
+pub fn TableColumn::label(Self) -> String
+pub fn TableColumn::width(Self) -> Double
 
 pub(all) enum TextFieldVariant {
   Filled

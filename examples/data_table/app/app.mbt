@@ -615,14 +615,14 @@ fn DataTableModel::table_view(
     sortable_columns=["project", "owner", "status"],
     cell=Some((row_index, column, value) => {
       ignore(row_index)
-      let base : @core.View[DataTableMsg] = if column.id == "status" {
+      let base : @core.View[DataTableMsg] = if column.id() == "status" {
         badge(value, tone=status_tone(value), theme~, width=82.0, height=24.0)
       } else {
         text(
           value,
           role=@views.TextRole::Body,
           theme~,
-          width=column.width - 16.0,
+          width=column.width() - 16.0,
           height=30.0,
         )
       }
@@ -745,7 +745,7 @@ fn DataTableModel::visible_table_columns(
   let sized_columns = self.column_widths.apply(ordered_columns)
   let columns : Array[@views.TableColumn] = []
   for column in sized_columns {
-    if self.visible_columns.is_visible(column.id) {
+    if self.visible_columns.is_visible(column.id()) {
       columns.push(column)
     }
   }
@@ -768,7 +768,7 @@ fn record_table_values(
 ) -> Array[String] {
   let values : Array[String] = []
   for column in columns {
-    values.push(record_table_value(record, column.id))
+    values.push(record_table_value(record, column.id()))
   }
   values
 }
