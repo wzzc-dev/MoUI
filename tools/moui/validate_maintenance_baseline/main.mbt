@@ -167,6 +167,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep Markdown Editor table parsing, alignment, source ranges, and rich-text preview model compact",
     },
     {
+      path: "examples/markdown_editor/app/commands_table.mbt",
+      max_lines: 760,
+      target_lines: 680,
+      reason: "keep Markdown Editor table navigation, row editing, and cell-range command helpers compact",
+    },
+    {
+      path: "examples/markdown_editor/app/commands_table_columns.mbt",
+      max_lines: 380,
+      target_lines: 340,
+      reason: "keep Markdown Editor table column insertion, deletion, clearing, and alignment helpers compact",
+    },
+    {
       path: "examples/markdown_editor/app/input_blocks.mbt",
       max_lines: 635,
       target_lines: 580,
