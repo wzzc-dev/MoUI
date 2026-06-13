@@ -132,9 +132,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/markdown_editor/app/markdown_model.mbt",
-      max_lines: 1050,
-      target_lines: 950,
-      reason: "keep Markdown Editor block parsing, inline parsing, reference, and text utility model compact",
+      max_lines: 490,
+      target_lines: 440,
+      reason: "keep Markdown Editor block parsing, front matter, code fence, and line utility model compact",
+    },
+    {
+      path: "examples/markdown_editor/app/markdown_model_inline.mbt",
+      max_lines: 560,
+      target_lines: 510,
+      reason: "keep Markdown Editor inline parsing, reference definitions, HTML inline, and AST text helpers compact",
     },
     {
       path: "examples/markdown_editor/app/markdown_model_rich_text.mbt",
