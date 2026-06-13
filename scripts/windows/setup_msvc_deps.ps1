@@ -1,13 +1,16 @@
 [CmdletBinding()]
 param(
   [string]$VcpkgRoot = "",
-  [switch]$InstallZlib
+  [switch]$InstallZlib,
+  [switch]$InstallWebView2,
+  [string]$WebView2SdkRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = (Resolve-Path (Join-Path $scriptDir "..\..")).Path
+. (Join-Path $scriptDir "webview2_sdk.ps1")
 
 function Require-Command {
   param(
@@ -205,4 +208,9 @@ if ($null -eq $zlibInfo) {
 
 Write-Host "==> zlib:x64-windows root: $($zlibInfo.Root)"
 Write-Host "==> zlib:x64-windows triplet: $($zlibInfo.TripletRoot)"
+if ($InstallWebView2 -or -not [string]::IsNullOrWhiteSpace($WebView2SdkRoot)) {
+  $webView2 = Ensure-WebView2Sdk $WebView2SdkRoot
+  Write-Host "==> WebView2 SDK root: $($webView2.Root)"
+  Write-Host "==> WebView2 static loader: $($webView2.StaticLib)"
+}
 Write-Host "==> MSVC dependencies are ready"
