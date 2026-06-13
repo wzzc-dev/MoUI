@@ -371,7 +371,7 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
         [
           "Rows: \{self.filtered_records().length()}",
           "Selected: \{self.selected_rows.count()}",
-          "Columns: \{self.visible_columns.visible.length()}/4",
+          "Columns: \{self.visible_columns.visible().length()}/4",
           "Page: \{self.pagination_state().page() + 1}/\{self.page_count()}",
           "Sort: " + self.sort_label(),
           self.last_action,
@@ -491,8 +491,8 @@ fn DataTableModel::data_panel(
             ),
             column_visibility_panel(
               data_table_columns(),
-              visible=self.visible_columns.visible,
-              locked=self.visible_columns.locked,
+              visible=self.visible_columns.visible(),
+              locked=self.visible_columns.locked(),
               on_toggle=(id, visible) => ToggleColumnVisibility(id, visible),
               theme~,
               width=238.0,

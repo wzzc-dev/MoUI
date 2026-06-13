@@ -200,14 +200,6 @@ pub fn[Msg] ToastQueue::push(
 }
 
 ///|
-pub fn[Msg] ToastQueue::dismiss(
-  self : ToastQueue[Msg],
-  id : String,
-) -> ToastQueue[Msg] {
-  ToastQueue::new(items=self.items.filter(item => item.id != id))
-}
-
-///|
 pub fn[Msg] ToastQueue::expire(
   self : ToastQueue[Msg],
   now_ms : Double,
@@ -237,11 +229,6 @@ pub fn[Msg] ToastQueue::to_stack_items(
 ///|
 pub fn FileSelection::new(paths~ : Array[String]) -> FileSelection {
   { paths, }
-}
-
-///|
-pub fn FileSelection::empty() -> FileSelection {
-  { paths: [] }
 }
 
 ///|
@@ -462,7 +449,7 @@ pub struct PaginationState {
 }
 
 ///|
-pub(all) struct ColumnVisibilityState {
+pub struct ColumnVisibilityState {
   visible : Array[String]
   locked : Array[String]
 }
@@ -631,6 +618,16 @@ pub fn ColumnVisibilityState::new(
 }
 
 ///|
+pub fn ColumnVisibilityState::visible(self : ColumnVisibilityState) -> Array[String] {
+  self.visible.copy()
+}
+
+///|
+pub fn ColumnVisibilityState::locked(self : ColumnVisibilityState) -> Array[String] {
+  self.locked.copy()
+}
+
+///|
 pub fn ColumnVisibilityState::is_visible(
   self : ColumnVisibilityState,
   id : String,
@@ -756,28 +753,6 @@ pub fn ColumnOrderState::move_before(
       inserted = true
     }
     next.push(item)
-  }
-  if !inserted {
-    next.push(id)
-  }
-  { order: next }
-}
-
-///|
-pub fn ColumnOrderState::move_after(
-  self : ColumnOrderState,
-  id : String,
-  after : String,
-) -> ColumnOrderState {
-  let remaining = self.order.filter(item => item != id)
-  let next : Array[String] = []
-  let mut inserted = false
-  for item in remaining {
-    next.push(item)
-    if item == after && !inserted {
-      next.push(id)
-      inserted = true
-    }
   }
   if !inserted {
     next.push(id)

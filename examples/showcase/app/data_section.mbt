@@ -108,8 +108,8 @@ fn ShowcaseModel::data_table_card(
         ),
         column_visibility_panel(
           columns,
-          visible=visibility.visible,
-          locked=visibility.locked,
+          visible=visibility.visible(),
+          locked=visibility.locked(),
           on_toggle=(_id, _visible) => ToggleActive,
           theme~,
           width=392.0,
