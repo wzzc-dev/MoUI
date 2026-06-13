@@ -348,9 +348,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/host/host_text_input_test.mbt",
-      max_lines: 515,
-      target_lines: 470,
-      reason: "keep host text input clipboard, shortcut, and context-menu tests compact",
+      max_lines: 310,
+      target_lines: 280,
+      reason: "keep host text input dispatch, clipboard shortcuts, and action fallback tests compact",
+    },
+    {
+      path: "moui/backend/host/host_text_input_context_menu_test.mbt",
+      max_lines: 210,
+      target_lines: 190,
+      reason: "keep host text input context menu command and clipboard paste tests compact",
     },
     {
       path: "moui/backend/host/host_text_input_ime_test.mbt",
