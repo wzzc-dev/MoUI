@@ -1,4 +1,10 @@
 ///|
+priv struct SkiaParagraphClusterBox {
+  has_rect : Bool
+  rtl : Bool
+}
+
+///|
 pub fn SkiaRasterRenderer::text_system(
   self : SkiaRasterRenderer,
 ) -> @core.TextSystem {
