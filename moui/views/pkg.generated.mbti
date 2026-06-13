@@ -368,7 +368,7 @@ pub(all) enum ChipVariant {
   Soft
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct ChoiceItem {
+pub struct ChoiceItem {
   id : String
   label : String
 } derive(Eq, ToJson, @debug.Debug)
@@ -454,7 +454,7 @@ pub(all) enum FileImportAvailability {
   Pending
 }
 
-pub(all) struct FileSelection {
+pub struct FileSelection {
   paths : Array[String]
 }
 pub fn FileSelection::count(Self) -> Int
@@ -579,7 +579,7 @@ pub(all) struct SidebarItem[Msg] {
 }
 pub fn[Msg] SidebarItem::new(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> Self[Msg]
 
-pub(all) struct StateViewAction[Msg] {
+pub struct StateViewAction[Msg] {
   label : String
   message : Msg
 }
@@ -617,7 +617,7 @@ pub(all) enum TextRole {
   Mono
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct ToastQueue[Msg] {
+pub struct ToastQueue[Msg] {
   items : Array[ToastQueueItem[Msg]]
 }
 pub fn[Msg] ToastQueue::dismiss(Self[Msg], String) -> Self[Msg]
@@ -626,7 +626,7 @@ pub fn[Msg] ToastQueue::new(items? : Array[ToastQueueItem[Msg]]) -> Self[Msg]
 pub fn[Msg] ToastQueue::push(Self[Msg], ToastQueueItem[Msg]) -> Self[Msg]
 pub fn[Msg] ToastQueue::to_stack_items(Self[Msg]) -> Array[ToastStackItem[Msg]]
 
-pub(all) struct ToastQueueItem[Msg] {
+pub struct ToastQueueItem[Msg] {
   id : String
   message : String
   tone : FeedbackTone
@@ -637,7 +637,7 @@ pub(all) struct ToastQueueItem[Msg] {
 }
 pub fn[Msg] ToastQueueItem::new(id~ : String, message~ : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, dismiss? : Msg?, created_at_ms? : Double, ttl_ms? : Double) -> Self[Msg]
 
-pub(all) struct ToastStackItem[Msg] {
+pub struct ToastStackItem[Msg] {
   id : String
   message : String
   tone : FeedbackTone
