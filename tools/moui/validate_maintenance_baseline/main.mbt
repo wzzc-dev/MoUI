@@ -191,6 +191,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep Markdown Editor multiline paste, quote/list paste continuation, and paste line helpers compact",
     },
     {
+      path: "examples/markdown_editor/app/input_pairs.mbt",
+      max_lines: 855,
+      target_lines: 780,
+      reason: "keep Markdown Editor paired delimiter, inline marker, footnote, and autolink input helpers compact",
+    },
+    {
+      path: "examples/markdown_editor/app/input_pairs_reference_markers.mbt",
+      max_lines: 320,
+      target_lines: 285,
+      reason: "keep Markdown Editor inline link, image, and reference marker deletion helpers compact",
+    },
+    {
       path: "examples/markdown_editor/app/editor_app_runtime_wbtest.mbt",
       max_lines: 110,
       target_lines: 95,
