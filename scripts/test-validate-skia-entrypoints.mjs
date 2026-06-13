@@ -68,8 +68,8 @@ const badMain = join(badEnvRoot, "examples/showcase/macos_skia/main.mbt");
 writeFileSync(
   badMain,
   readFileSync(badMain, "utf8").replace(
-    "surface_route~,",
-    "surface_route~,\n      first_frame_smoke_auto_exit=true,",
+    "surface_route~)",
+    "surface_route~,\n      first_frame_smoke_auto_exit=true)",
   ),
 );
 expectFail(

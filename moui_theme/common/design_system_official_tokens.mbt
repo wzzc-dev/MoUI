@@ -302,6 +302,7 @@ fn official_token_coverage(
   }
 }
 
+///|
 fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
   let source = "https://material-web.dev/theming/material-theming/"
   [

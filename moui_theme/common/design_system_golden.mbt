@@ -128,6 +128,7 @@ pub fn DesignPreset::golden_mapping_for(
   None
 }
 
+///|
 fn material_golden_mappings() -> Array[DesignTokenMapping] {
   let source = "https://material-web.dev/theming/material-theming/"
   [

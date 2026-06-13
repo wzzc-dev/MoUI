@@ -1,3 +1,4 @@
+///|
 #borrow(text)
 extern "C" fn macos_native_ime_smoke_set_marked_text(
   raw_content_view_handle : UInt64,
@@ -203,8 +204,7 @@ fn MacosApp::start_native_ime_runtime_smoke(
   )
   self.native_ime_runtime_smoke_before_commit_text = composition_input.text
   let commit_text = @utf8.encode("你"[:], bom=false)
-  if macos_native_ime_smoke_insert_text(content_view_handle, commit_text) ==
-    0 {
+  if macos_native_ime_smoke_insert_text(content_view_handle, commit_text) == 0 {
     return self.fail_native_ime_runtime_smoke(
       window_id, prefix, "appkit-insertText=false",
     )
@@ -259,8 +259,7 @@ fn MacosApp::record_native_ime_composition_smoke(
       )
   }
   let commit_text = @utf8.encode("你"[:], bom=false)
-  if macos_native_ime_smoke_insert_text(content_view_handle, commit_text) ==
-    0 {
+  if macos_native_ime_smoke_insert_text(content_view_handle, commit_text) == 0 {
     return self.fail_native_ime_runtime_smoke(
       window_id, prefix, "appkit-insertText=false",
     )
@@ -290,8 +289,7 @@ fn MacosApp::finish_native_ime_runtime_smoke(
 ) -> Bool {
   self.sync_text_input_session()
   let after_commit_input = runtime_slot.driver.focused_text_input()
-  if after_commit_input.text ==
-    self.native_ime_runtime_smoke_before_commit_text {
+  if after_commit_input.text == self.native_ime_runtime_smoke_before_commit_text {
     return self.retry_or_fail_native_ime_runtime_smoke(
       window_id, prefix, "commit=false",
     )

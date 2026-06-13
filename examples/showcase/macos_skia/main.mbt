@@ -10,8 +10,6 @@ fn main {
   @macos_skia_backend.run_app_with_options(
     "MoUI Showcase",
     app.runtime_with_host_summary(@macos_backend.macos_capability_summary()),
-    options=@macos_skia_backend.MacosSkiaAppOptions::new(
-      surface_route~,
-    ),
+    options=@macos_skia_backend.MacosSkiaAppOptions::new(surface_route~),
   )
 }
