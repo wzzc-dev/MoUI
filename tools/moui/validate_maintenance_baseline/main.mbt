@@ -163,8 +163,8 @@ fn pub_all_budgets() -> Array[PubAllBudget] {
     {
       label: "views source",
       path: "moui/views",
-      max_pub_all_lines: 16,
-      target_pub_all_lines: 6,
+      max_pub_all_lines: 15,
+      target_pub_all_lines: 5,
     },
     {
       label: "host source",

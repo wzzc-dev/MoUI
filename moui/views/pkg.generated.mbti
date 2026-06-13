@@ -390,7 +390,7 @@ pub fn ColumnVisibilityState::new(visible~ : Array[String], locked? : Array[Stri
 pub fn ColumnVisibilityState::set_visible(Self, String, Bool) -> Self
 pub fn ColumnVisibilityState::visible(Self) -> Array[String]
 
-pub(all) struct ColumnWidthState {
+pub struct ColumnWidthState {
   widths : Array[TableColumn]
   min_width : Double
   max_width : Double
@@ -459,7 +459,6 @@ pub struct FileSelection {
   paths : Array[String]
 }
 pub fn FileSelection::new(paths~ : Array[String]) -> Self
-pub fn FileSelection::summary(Self, empty? : String) -> String
 
 pub(all) enum FormFieldLayout {
   Vertical
