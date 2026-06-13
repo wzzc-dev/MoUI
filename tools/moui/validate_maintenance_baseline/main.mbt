@@ -372,9 +372,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/view_tree.mbt",
-      max_lines: 900,
-      target_lines: 810,
-      reason: "keep core view specs, modifiers, styles, and picker specs compact",
+      max_lines: 725,
+      target_lines: 650,
+      reason: "keep core view specs, modifiers, and picker specs compact",
+    },
+    {
+      path: "moui/core/view_style.mbt",
+      max_lines: 180,
+      target_lines: 160,
+      reason: "keep core view alignment, shortcut, image-fit, visual style, shadow, and border contracts compact",
     },
     {
       path: "moui/core/custom_layout.mbt",
