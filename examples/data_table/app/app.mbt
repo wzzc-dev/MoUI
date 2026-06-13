@@ -244,8 +244,8 @@ pub fn DataTableModel::sorted_records(
 ) -> Array[DataRecord] {
   sort_records(
     self.filtered_records(),
-    key=data_sort_key_for_column(self.sort.column),
-    ascending=self.sort.ascending,
+    key=data_sort_key_for_column(self.sort.column()),
+    ascending=self.sort.ascending(),
   )
 }
 
@@ -610,7 +610,7 @@ fn DataTableModel::table_view(
     selected_row=selected_visible_index(records, self.selected_row),
     on_row_select=Some(row_index => RowSelected(records[row_index].id)),
     sort_column=self.sort_column_id(),
-    sort_ascending=self.sort.ascending,
+    sort_ascending=self.sort.ascending(),
     on_sort=Some(id => SortBy(data_sort_key_for_column(id))),
     sortable_columns=["project", "owner", "status"],
     cell=Some((row_index, column, value) => {
@@ -938,8 +938,8 @@ fn status_tone(status : String) -> @views.BadgeTone {
 
 ///|
 fn DataTableModel::sort_label(self : DataTableModel) -> String {
-  let direction = if self.sort.ascending { "Asc" } else { "Desc" }
-  match data_sort_key_for_column(self.sort.column) {
+  let direction = if self.sort.ascending() { "Asc" } else { "Desc" }
+  match data_sort_key_for_column(self.sort.column()) {
     Project => "Project " + direction
     Owner => "Owner " + direction
     Status => "Status " + direction
@@ -948,7 +948,7 @@ fn DataTableModel::sort_label(self : DataTableModel) -> String {
 
 ///|
 fn DataTableModel::sort_column_id(self : DataTableModel) -> String {
-  self.sort.column
+  self.sort.column()
 }
 
 ///|

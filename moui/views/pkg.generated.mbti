@@ -385,7 +385,6 @@ pub(all) struct ColumnVisibilityState {
   visible : Array[String]
   locked : Array[String]
 }
-pub fn ColumnVisibilityState::is_locked(Self, String) -> Bool
 pub fn ColumnVisibilityState::is_visible(Self, String) -> Bool
 pub fn ColumnVisibilityState::new(visible~ : Array[String], locked? : Array[String]) -> Self
 pub fn ColumnVisibilityState::set_visible(Self, String, Bool) -> Self
@@ -421,11 +420,12 @@ pub struct DataFilter[Msg] {
   enabled : Bool
 }
 
-pub(all) struct DataSortState {
+pub struct DataSortState {
   column : String
   ascending : Bool
 }
-pub fn DataSortState::is_sorted(Self, String) -> Bool
+pub fn DataSortState::ascending(Self) -> Bool
+pub fn DataSortState::column(Self) -> String
 pub fn DataSortState::new(column? : String, ascending? : Bool) -> Self
 pub fn DataSortState::toggle(Self, String) -> Self
 
