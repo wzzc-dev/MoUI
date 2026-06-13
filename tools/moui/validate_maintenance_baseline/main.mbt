@@ -425,6 +425,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core rich text editor source-mapped visual text, pointer, selection, and table mapping tests compact",
     },
     {
+      path: "moui/core/advanced_layout_wbtest.mbt",
+      max_lines: 425,
+      target_lines: 390,
+      reason: "keep core stack, modifier, grid, custom-layout, list, and measure-pass tests compact",
+    },
+    {
+      path: "moui/core/advanced_layout_scroll_wbtest.mbt",
+      max_lines: 245,
+      target_lines: 220,
+      reason: "keep core scroll layout, repaint, clipping, and hit-test behavior tests compact",
+    },
+    {
       path: "moui/core/runtime_effects_wbtest.mbt",
       max_lines: 600,
       target_lines: 540,
