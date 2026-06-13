@@ -96,13 +96,13 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/render/skia/skia_renderer_wbtest.mbt",
-      max_lines: 85,
+      max_lines: 75,
       target_lines: 75,
       reason: "keep Skia renderer matrix, surface, and brush smoke tests compact",
     },
     {
       path: "moui/views/views_test.mbt",
-      max_lines: 25,
+      max_lines: 20,
       target_lines: 20,
       reason: "keep top-level views facade smoke and shared test runtime helper compact",
     },
