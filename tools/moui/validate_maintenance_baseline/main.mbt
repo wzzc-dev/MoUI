@@ -155,6 +155,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host shared test helpers compact",
     },
     {
+      path: "moui/backend/host/host_services_test.mbt",
+      max_lines: 895,
+      target_lines: 820,
+      reason: "keep host service bridge, queue, facade, and driver tests compact",
+    },
+    {
+      path: "moui/backend/host/host_service_completion_subscription_test.mbt",
+      max_lines: 180,
+      target_lines: 160,
+      reason: "keep host service completion subscription lifecycle tests compact",
+    },
+    {
       path: "examples/pdf_workbench/app/app.mbt",
       max_lines: 1335,
       target_lines: 1250,
