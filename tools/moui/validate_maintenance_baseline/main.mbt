@@ -491,6 +491,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core text input IME composition, composition-caret, and delete-surrounding tests compact",
     },
     {
+      path: "moui/core/engine_focus_wbtest.mbt",
+      max_lines: 200,
+      target_lines: 185,
+      reason: "keep core focus text-field, pointer, topmost hit-test, and tab traversal tests compact",
+    },
+    {
+      path: "moui/core/engine_focus_trap_wbtest.mbt",
+      max_lines: 220,
+      target_lines: 205,
+      reason: "keep core focus trap tab, pointer, and keyed focus tests compact",
+    },
+    {
       path: "moui/core/runtime_component_effects_wbtest.mbt",
       max_lines: 170,
       target_lines: 155,
