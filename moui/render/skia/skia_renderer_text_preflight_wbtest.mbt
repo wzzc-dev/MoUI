@@ -97,7 +97,9 @@ test "skia text visual order diagnostic records rtl glyph layout observation" {
   inspect(diagnostic.logical_text, content="ABC \u{05D0}\u{05D1}\u{05D2} 123")
   inspect(diagnostic.visual_text, content="ABC \u{05D2}\u{05D1}\u{05D0} 123")
   assert_true(diagnostic.visual_order_differs)
-  assert_true(diagnostic.logical_cluster_count == diagnostic.visual_cluster_count)
+  assert_true(
+    diagnostic.logical_cluster_count == diagnostic.visual_cluster_count,
+  )
   assert_true(diagnostic.segment_count >= 3)
   assert_true(diagnostic.glyph_count >= 6)
   assert_true(diagnostic.width > 0.0)

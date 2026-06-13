@@ -267,7 +267,9 @@ test "skia emoji font fallback diagnostic records glyph metadata without readine
       assert_true(diagnostic.glyph_key.contains("langs=2"))
       assert_true(diagnostic.glyph_key.contains("lang-tags=und-Zsye+en"))
       assert_true(
-        diagnostic.glyph_key.contains("emoji-u+\{diagnostic.fallback_character}"),
+        diagnostic.glyph_key.contains(
+          "emoji-u+\{diagnostic.fallback_character}",
+        ),
       )
       assert_true(diagnostic.glyph_key.contains("rgba"))
       assert_true(diagnostic.glyph_count >= 1)
