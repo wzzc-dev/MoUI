@@ -146,9 +146,11 @@ Use this skill when editing or reviewing:
   (`runtime_state`,
   `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
   subpackages.
-- root `moui`: public facade over core/views plus neutral default/light/dark
-  theme helpers and custom `@core.Theme` builder APIs. It does not import
-  `moui_theme`.
+- root `moui`: public facade over a curated app/runtime/theme alias set plus
+  neutral default/light/dark theme helpers and custom `@core.Theme` builder
+  APIs. Diagnostics, draw-command records, renderer-facing records, and
+  low-level implementation payloads stay in their owning packages. It does not
+  import `moui_theme`.
 - `moui_theme/common/`: repo-local addon common package for shared
   source-mapped design-system
   manifests, golden token mappings, golden source-usage audits,
