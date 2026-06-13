@@ -78,9 +78,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "examples/mo_workbench/app/mo_workbench_pi_ingest_wbtest.mbt",
-      max_lines: 1155,
-      target_lines: 1050,
-      reason: "keep Mo Workbench Pi RPC state, catalog, session, and diagnostic ingest tests compact",
+      max_lines: 700,
+      target_lines: 640,
+      reason: "keep Mo Workbench Pi transport, diagnostic, session, and error ingest tests compact",
+    },
+    {
+      path: "examples/mo_workbench/app/mo_workbench_pi_rpc_catalog_wbtest.mbt",
+      max_lines: 455,
+      target_lines: 410,
+      reason: "keep Mo Workbench Pi RPC state, transcript, command catalog, model, and compact tests compact",
     },
     {
       path: "examples/mo_workbench/app/mo_workbench_pi_streaming_wbtest.mbt",
