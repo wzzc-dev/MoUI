@@ -31,7 +31,7 @@ test "data table sorting and paging are stable" {
   let owner_desc = owner_sorted.update(SortBy(DataSortKey::Owner))
   inspect(owner_desc.sorted_records()[0].owner, content="Ren")
   let page_two = DataTableModel::new().update(NextPage)
-  inspect(page_two.pagination.page, content="1")
+  inspect(page_two.pagination.page(), content="1")
   inspect(page_two.visible_records().length(), content="3")
   inspect(page_two.visible_records()[0].project, content="Import Queue")
 }
