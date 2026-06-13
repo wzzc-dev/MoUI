@@ -6,6 +6,8 @@ param(
   [switch]$NoBuild,
   [string]$VcpkgRoot = "",
   [string]$WgpuNativeRoot = "",
+  [switch]$EnableWebView2,
+  [string]$WebView2SdkRoot = "",
   [string]$Version = "0.1.0",
   [string]$BuildNumber = "1"
 )
@@ -124,6 +126,7 @@ function Write-Utf8NoBom {
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = (Resolve-Path (Join-Path $scriptDir "..\..")).Path
+. (Join-Path $scriptDir "webview2_sdk.ps1")
 
 $packageLeaf = Split-Path -Leaf (Convert-PackagePath $Package)
 $packageParent = Split-Path -Leaf (Split-Path -Parent (Convert-PackagePath $Package))
@@ -137,6 +140,10 @@ $resolvedWgpuRoot = if ($usesWgpu) { Ensure-WgpuNativeRoot $WgpuNativeRoot } els
 Enable-MsvcC11Atomics
 if ($usesWgpu) {
   Enable-MsvcGlobalC11ModeForCOnlyStubs
+}
+$webView2 = $null
+if ($EnableWebView2 -or -not [string]::IsNullOrWhiteSpace($WebView2SdkRoot)) {
+  $webView2 = Enable-WebView2BuildEnvironment $WebView2SdkRoot
 }
 
 if (-not (Get-Command moon -ErrorAction SilentlyContinue)) {
@@ -163,6 +170,11 @@ try {
     Write-Host "==> WGPU native root: $resolvedWgpuRoot"
   } else {
     Write-Host "==> renderer route: native Skia mainline"
+  }
+  if ($webView2) {
+    Write-Host "==> WebView2 bridge: enabled with static loader; Evergreen Runtime required"
+  } else {
+    Write-Host "==> WebView2 bridge: fallback unavailable build"
   }
   if (-not $NoBuild) {
     & moon build $Package --target native
@@ -219,7 +231,6 @@ try {
       $zlibRuntimeName
     )
   }
-
   $manifest = @{
     schemaVersion = 1
     platform = "windows"
@@ -231,7 +242,11 @@ try {
     executable = (Split-Path -Leaf $appExe)
     bundleName = $AppName
     runtimeFiles = $runtimeFiles
-  } | ConvertTo-Json -Depth 4
+  }
+  if ($webView2) {
+    $manifest.externalRuntimeDependencies = @("Microsoft Edge WebView2 Evergreen Runtime")
+  }
+  $manifest = $manifest | ConvertTo-Json -Depth 4
   Write-Utf8NoBom $manifestPath $manifest
 
   & node (Join-Path $repoRoot "scripts\validate-package-manifest.mjs") $manifestPath --platform windows

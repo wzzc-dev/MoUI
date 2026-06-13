@@ -171,6 +171,10 @@ fn validate_manifest_fields(
     Some(Json::Array(_)) => ()
     _ => failures.push("runtimeFiles must be an array")
   }
+  match manifest.get("externalRuntimeDependencies") {
+    Some(Json::Array(_)) | None => ()
+    _ => failures.push("externalRuntimeDependencies must be an array")
+  }
   if platform == "macos" {
     if output_kind != "app-bundle" {
       failures.push("macOS outputKind must be 'app-bundle'")
