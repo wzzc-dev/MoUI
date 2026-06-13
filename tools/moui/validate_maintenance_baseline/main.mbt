@@ -269,6 +269,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views toolbar, command, menu, gesture, card, and file-import surface tests compact",
     },
     {
+      path: "moui/views/views_form_feedback_test.mbt",
+      max_lines: 365,
+      target_lines: 330,
+      reason: "keep views form field, workflow, input wrapper, choice, and semantics tests compact",
+    },
+    {
+      path: "moui/views/views_feedback_state_test.mbt",
+      max_lines: 245,
+      target_lines: 220,
+      reason: "keep views feedback surface, theme color, state helper, and progress action tests compact",
+    },
+    {
       path: "moui/core/runtime_wbtest.mbt",
       max_lines: 40,
       target_lines: 35,
