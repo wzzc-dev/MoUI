@@ -474,9 +474,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/runtime_effects_wbtest.mbt",
-      max_lines: 600,
-      target_lines: 540,
-      reason: "keep core program effect plan, dispatch, and bounded-drain runtime tests compact",
+      max_lines: 340,
+      target_lines: 305,
+      reason: "keep core program effect plan, dispatch, and destroy-late-dispatch tests compact",
+    },
+    {
+      path: "moui/core/runtime_effect_turns_wbtest.mbt",
+      max_lines: 280,
+      target_lines: 250,
+      reason: "keep core program effect bounded-drain and host-callback resume tests compact",
     },
     {
       path: "moui/core/runtime_effect_tasks_wbtest.mbt",
