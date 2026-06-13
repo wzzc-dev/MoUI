@@ -1,4 +1,12 @@
 ///|
+priv struct SkiaGlyphRun {
+  glyphs : Array[@skia_native.GlyphId]
+  positions : Array[@moui_skia.Point]
+  clusters : Array[Int]
+  width : Double
+}
+
+///|
 fn skia_measure_text_width(font : @skia_native.Font, text : String) -> Double {
   font.measure_text_utf8(@utf8.encode(text[:], bom=false)).to_double()
 }

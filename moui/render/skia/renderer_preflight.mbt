@@ -112,6 +112,7 @@ fn SkiaTextMaturityPreflight::summary(
   ")"
 }
 
+///|
 fn skia_text_descriptor_preflight(
   font : @core.FontSpec,
   text : String,
