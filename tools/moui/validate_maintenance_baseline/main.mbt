@@ -498,9 +498,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/runtime_subscriptions_wbtest.mbt",
-      max_lines: 500,
-      target_lines: 450,
-      reason: "keep core program subscription lifecycle, restart, duplicate-key, and bounded-drain tests compact",
+      max_lines: 365,
+      target_lines: 330,
+      reason: "keep core program subscription lifecycle, restart, and duplicate-key tests compact",
+    },
+    {
+      path: "moui/core/runtime_subscription_turns_wbtest.mbt",
+      max_lines: 150,
+      target_lines: 130,
+      reason: "keep core program subscription bounded-drain and host-callback resume tests compact",
     },
     {
       path: "examples/pdf_workbench/app/app.mbt",
