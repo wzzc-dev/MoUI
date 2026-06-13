@@ -425,6 +425,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core rich text editor source-mapped visual text, pointer, selection, and table mapping tests compact",
     },
     {
+      path: "moui/core/runtime_effects_wbtest.mbt",
+      max_lines: 600,
+      target_lines: 540,
+      reason: "keep core program effect plan, dispatch, and bounded-drain runtime tests compact",
+    },
+    {
+      path: "moui/core/runtime_effect_tasks_wbtest.mbt",
+      max_lines: 310,
+      target_lines: 280,
+      reason: "keep core program effect-task completion, stale dispatch, cancellation, and replacement tests compact",
+    },
+    {
       path: "examples/pdf_workbench/app/app.mbt",
       max_lines: 1335,
       target_lines: 1250,
