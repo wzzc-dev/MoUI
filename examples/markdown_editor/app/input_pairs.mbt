@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_wrap_selection_input(
   source : String,
   caret : Int,
@@ -192,7 +193,6 @@ fn markdown_editor_ascii_word_char(ch : Char) -> Bool {
 }
 
 ///|
-
 fn markdown_editor_backspace_empty_delimiter_pair(
   source : String,
   caret : Int,
@@ -374,7 +374,6 @@ fn markdown_editor_remove_empty_inline_marker_pair(
 }
 
 ///|
-
 fn markdown_editor_backspace_inline_marker(
   source : String,
   caret : Int,
@@ -1159,4 +1158,3 @@ fn markdown_editor_inline_marker_pair_supported(
 }
 
 ///|
-

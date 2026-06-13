@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_set_code_language(
   source : String,
   selection : MarkdownEditorSelection,
@@ -78,7 +79,6 @@ fn markdown_editor_code_fence_marker_end(
 }
 
 ///|
-
 fn markdown_editor_toggle_code_block(
   source : String,
   selection : MarkdownEditorSelection,
@@ -451,4 +451,3 @@ fn markdown_editor_code_block_quote_prefix(selected : String) -> String {
 }
 
 ///|
-

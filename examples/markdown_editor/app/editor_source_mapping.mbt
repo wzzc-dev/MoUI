@@ -1161,7 +1161,8 @@ fn markdown_editor_front_matter_metadata(
     return { title: "", tags: [] }
   }
   match blocks[0].block.kind {
-    FrontMatter => markdown_editor_parse_front_matter_metadata(blocks[0].block.text)
+    FrontMatter =>
+      markdown_editor_parse_front_matter_metadata(blocks[0].block.text)
     _ => { title: "", tags: [] }
   }
 }
@@ -1177,19 +1178,23 @@ fn markdown_editor_parse_front_matter_metadata(
     let text = line.text.trim().to_owned()
     if text.has_prefix("title:") {
       let value = markdown_editor_substring(
-        text,
-        6,
-        markdown_editor_text_length(text),
-      ).trim().to_owned()
+          text,
+          6,
+          markdown_editor_text_length(text),
+        )
+        .trim()
+        .to_owned()
       title = markdown_editor_front_matter_scalar(value)
       collecting_tags = false
     } else if text.has_prefix("tags:") {
       tags.clear()
       let value = markdown_editor_substring(
-        text,
-        5,
-        markdown_editor_text_length(text),
-      ).trim().to_owned()
+          text,
+          5,
+          markdown_editor_text_length(text),
+        )
+        .trim()
+        .to_owned()
       if value == "" {
         collecting_tags = true
       } else {
@@ -1198,10 +1203,12 @@ fn markdown_editor_parse_front_matter_metadata(
       }
     } else if collecting_tags && text.has_prefix("- ") {
       let value = markdown_editor_substring(
-        text,
-        2,
-        markdown_editor_text_length(text),
-      ).trim().to_owned()
+          text,
+          2,
+          markdown_editor_text_length(text),
+        )
+        .trim()
+        .to_owned()
       let tag = markdown_editor_front_matter_scalar(value)
       if tag != "" {
         tags.push(tag)
@@ -1225,12 +1232,18 @@ fn markdown_editor_front_matter_tags(source : String) -> Array[String] {
     )
   } else {
     let tag = markdown_editor_front_matter_scalar(text)
-    if tag == "" { [] } else { [tag] }
+    if tag == "" {
+      []
+    } else {
+      [tag]
+    }
   }
 }
 
 ///|
-fn markdown_editor_split_front_matter_tag_list(source : String) -> Array[String] {
+fn markdown_editor_split_front_matter_tag_list(
+  source : String,
+) -> Array[String] {
   let tags : Array[String] = []
   let current : Array[Char] = []
   let mut quoted = false

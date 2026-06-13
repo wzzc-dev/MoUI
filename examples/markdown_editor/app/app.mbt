@@ -376,6 +376,7 @@ fn MarkdownEditorApp::subscriptions(
 }
 
 ///|
+
 ///|
 pub fn MarkdownEditorApp::runtime(
   self : MarkdownEditorApp,

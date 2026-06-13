@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_command_from_action(
   action : String,
 ) -> MarkdownEditorCommand? {
@@ -187,7 +188,6 @@ fn markdown_editor_inline_active_marker_supported(
 }
 
 ///|
-
 fn markdown_editor_shortcut(key : String) -> @core.KeyboardShortcut {
   @core.KeyboardShortcut::new(
     key~,
@@ -932,4 +932,3 @@ fn MarkdownEditorApp::action_commands(
 }
 
 ///|
-

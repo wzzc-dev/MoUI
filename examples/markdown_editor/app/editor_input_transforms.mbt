@@ -262,6 +262,7 @@ fn markdown_editor_transform_input(
 }
 
 ///|
+
 ///|
 fn markdown_editor_is_multiline_input(input : String) -> Bool {
   input != "\n" && input.contains("\n")

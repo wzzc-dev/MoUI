@@ -1,3 +1,4 @@
+///|
 fn MarkdownEditorApp::root(
   self : MarkdownEditorApp,
 ) -> @core.View[MarkdownEditorMsg] {
@@ -734,4 +735,3 @@ fn markdown_editor_document_info(
 }
 
 ///|
-

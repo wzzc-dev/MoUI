@@ -1,3 +1,4 @@
+///|
 fn MarkdownEditorApp::clear_history(self : MarkdownEditorApp) -> Unit {
   self.undo_stack.set([])
   self.redo_stack.set([])
@@ -109,7 +110,6 @@ fn MarkdownEditorApp::set_selection(
 }
 
 ///|
-
 fn MarkdownEditorApp::set_document_from_input(
   self : MarkdownEditorApp,
   value : String,
@@ -311,7 +311,6 @@ fn MarkdownEditorApp::restore_history(
 }
 
 ///|
-
 fn MarkdownEditorApp::toggle_task_at(
   self : MarkdownEditorApp,
   content_offset : Int,
@@ -349,4 +348,3 @@ fn MarkdownEditorApp::toggle_current_task(self : MarkdownEditorApp) -> Unit {
 }
 
 ///|
-

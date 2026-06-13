@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_reading_label(snapshot : MarkdownEditorSnapshot) -> String {
   let minutes = if snapshot.reading_minutes == 0 {
     "less than 1 min"
@@ -450,4 +451,3 @@ fn markdown_editor_active_outline_index(
 }
 
 ///|
-

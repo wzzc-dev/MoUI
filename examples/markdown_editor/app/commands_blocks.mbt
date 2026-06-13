@@ -1,3 +1,4 @@
+///|
 fn markdown_editor_transform_current_block(
   source : String,
   command : MarkdownEditorCommand,
@@ -837,7 +838,6 @@ fn markdown_editor_map_selection_to_group(
 }
 
 ///|
-
 fn markdown_editor_block_prefix(command : MarkdownEditorCommand) -> String {
   match command {
     Paragraph => ""
@@ -944,4 +944,3 @@ fn markdown_editor_string_ends_with(source : String, suffix : String) -> Bool {
 }
 
 ///|
-
