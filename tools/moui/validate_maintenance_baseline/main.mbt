@@ -191,6 +191,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host async image loader and native image source tests compact",
     },
     {
+      path: "moui/backend/host/host_text_input_test.mbt",
+      max_lines: 515,
+      target_lines: 470,
+      reason: "keep host text input clipboard, shortcut, and context-menu tests compact",
+    },
+    {
+      path: "moui/backend/host/host_text_input_ime_test.mbt",
+      max_lines: 345,
+      target_lines: 315,
+      reason: "keep host text input IME session and event conversion tests compact",
+    },
+    {
       path: "moui/backend/host/host_window_lifecycle_test.mbt",
       max_lines: 555,
       target_lines: 510,
