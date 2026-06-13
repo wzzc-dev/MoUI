@@ -359,9 +359,15 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host text input IME session and event conversion tests compact",
     },
     {
+      path: "moui/backend/host/host_platform_contract_test.mbt",
+      max_lines: 255,
+      target_lines: 230,
+      reason: "keep host app info, capability summary, input host, surface, and window-event contract tests compact",
+    },
+    {
       path: "moui/backend/host/host_window_lifecycle_test.mbt",
-      max_lines: 555,
-      target_lines: 510,
+      max_lines: 310,
+      target_lines: 285,
       reason: "keep host window lifecycle, platform ids, and scene resolver tests compact",
     },
     {
