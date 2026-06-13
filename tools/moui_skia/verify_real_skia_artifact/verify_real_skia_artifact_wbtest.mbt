@@ -156,10 +156,11 @@ test "accepts Windows-style acceptance log references" {
       old="/artifact/linux-real-skia-acceptance.log",
       new="D:\\a\\MoUI\\MoUI\\moui_skia\\logs\\linux-real-skia-acceptance.log",
     )
-  match verify_artifact_texts("linux", true, sample_paths(), {
-    ..texts,
-    acceptance_text,
-  }) {
+  match
+    verify_artifact_texts("linux", true, sample_paths(), {
+      ..texts,
+      acceptance_text,
+    }) {
     Ok(_) => ()
     Err(message) => fail(message)
   }

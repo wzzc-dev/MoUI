@@ -1,9 +1,5 @@
 ///|
-using @views {
-  column,
-  text,
-  text_field,
-}
+using @views {column, text, text_field}
 
 ///|
 pub(all) struct TextInputSmokeModel {
@@ -16,9 +12,7 @@ pub(all) enum TextInputSmokeMsg {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn TextInputSmokeModel::new(
-  value? : String = "",
-) -> TextInputSmokeModel {
+pub fn TextInputSmokeModel::new(value? : String = "") -> TextInputSmokeModel {
   { value, }
 }
 
@@ -64,7 +58,11 @@ pub fn runtime(
   height? : Double = 180.0,
 ) -> @core.AppRuntime {
   @core.AppRuntime::new_program(
-    program=@core.Program::simple(init=TextInputSmokeModel::new(), update~, view~),
+    program=@core.Program::simple(
+      init=TextInputSmokeModel::new(),
+      update~,
+      view~,
+    ),
     size=@core.Size::new(width~, height~),
   )
 }

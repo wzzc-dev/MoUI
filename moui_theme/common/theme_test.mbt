@@ -35,9 +35,7 @@ test "custom theme can override selected token groups" {
   assert_true(customized.palette.primary == accent)
   inspect(customized.radius_scale.md, content="10")
   inspect(customized.spacing_scale.sm, content="14")
-  assert_true(
-    customized.palette.background == base.palette.background,
-  )
+  assert_true(customized.palette.background == base.palette.background)
   assert_true(
     customized.semantic_colors.danger ==
     @core.Color::rgba(r=0.92, g=0.18, b=0.28),
@@ -4302,9 +4300,7 @@ test "semantic palette role reports expose role-level source and core alignment 
       @common.DesignPreset::Fluent => 0
     }
     assert_true(preset.semantic_palette_role_gap_count() == expected_gap)
-    assert_true(
-      preset.semantic_palette_role_source_gap_count() == expected_gap,
-    )
+    assert_true(preset.semantic_palette_role_source_gap_count() == expected_gap)
     assert_true(
       preset.semantic_palette_role_official_parity_gap_count() == expected_gap,
     )
@@ -4958,7 +4954,7 @@ test "official token anchors expose mapped coverage and required gaps" {
         preset.official_token_anchors()[0].official_token,
       ),
     )
-  for mapping in preset.golden_mappings() {
+    for mapping in preset.golden_mappings() {
       assert_true(preset.has_official_token_anchor(mapping.official_token))
     }
   }
@@ -5957,9 +5953,7 @@ test "design system tokens generate existing theme presets" {
   let material_tokens = @common.DesignPreset::Material.tokens()
   let material_theme = @common.DesignPreset::Material.theme()
   assert_true(material_tokens.to_theme() == material_theme)
-  assert_true(
-    material_tokens.palette.primary == material_theme.palette.primary,
-  )
+  assert_true(material_tokens.palette.primary == material_theme.palette.primary)
   assert_true(
     material_tokens.components.button.primary.radius ==
     material_tokens.radius.md,

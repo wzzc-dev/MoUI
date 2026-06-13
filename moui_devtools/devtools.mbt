@@ -34,9 +34,7 @@ pub fn SnapshotSummary::from_snapshot(
 }
 
 ///|
-pub fn snapshot_summary(
-  snapshot : @core.InspectorSnapshot,
-) -> SnapshotSummary {
+pub fn snapshot_summary(snapshot : @core.InspectorSnapshot) -> SnapshotSummary {
   SnapshotSummary::from_snapshot(snapshot)
 }
 

@@ -1046,7 +1046,9 @@ fn validate_target(
   assert_string_array(notes, label + ".notes", failures)
   if status == "passed" {
     if status_text != "Running" {
-      failures.push(label + ".statusText must be Running for passed observation")
+      failures.push(
+        label + ".statusText must be Running for passed observation",
+      )
     }
     if body_failed != false || navigator_gpu != true {
       failures.push(
@@ -1064,13 +1066,19 @@ fn validate_target(
     if screenshot_width <= 0.0 ||
       screenshot_height <= 0.0 ||
       total_pixels <= 0.0 {
-      failures.push(label + " passed observation requires a non-empty screenshot")
+      failures.push(
+        label + " passed observation requires a non-empty screenshot",
+      )
     }
     if content_pixels < 500.0 || distinct_color_buckets < 6.0 {
-      failures.push(label + " passed observation requires a nonblank screenshot")
+      failures.push(
+        label + " passed observation requires a nonblank screenshot",
+      )
     }
     if !console_errors.is_empty() {
-      failures.push(label + " passed observation must not contain console errors")
+      failures.push(
+        label + " passed observation must not contain console errors",
+      )
     }
     for key in observation_keys() {
       if observation_required_for_passed_target(key, name) &&

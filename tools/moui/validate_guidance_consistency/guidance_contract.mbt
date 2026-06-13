@@ -168,14 +168,38 @@ fn stale_legacy_web_renderer_manifest_script() -> String {
 fn guidance_absent_rules() -> Array[TextRule] {
   [
     { path: ".gitignore", token: "!artifacts/conformance/" },
-    { path: "moui/backend/macos/macos_backend.mbt", token: stale_native_ime_runtime_manifest_token() },
-    { path: "moui/backend/macos/macos_service_host.m", token: stale_macos_native_ime_manifest_env() },
-    { path: "moui/backend/macos/macos_backend.mbt", token: "contract" + "_" + "ready" },
-    { path: "moui/backend/macos/macos_backend.mbt", token: "native" + "_" + "binding" + "_" + "ready" },
-    { path: "moui/backend/macos/macos_backend.mbt", token: "action" + "_" + "roundtrip" + "_" + "ready" },
-    { path: "moui/backend/macos/macos_backend.mbt", token: stale_first_frame_flag_token() },
-    { path: "moui/render/capabilities.mbt", token: "RendererFeatureStatus::" + "Ready" },
-    { path: "moui/render/renderer.mbt", token: "RendererCapabilityStatus::" + "Ready" },
+    {
+      path: "moui/backend/macos/macos_backend.mbt",
+      token: stale_native_ime_runtime_manifest_token(),
+    },
+    {
+      path: "moui/backend/macos/macos_service_host.m",
+      token: stale_macos_native_ime_manifest_env(),
+    },
+    {
+      path: "moui/backend/macos/macos_backend.mbt",
+      token: "contract" + "_" + "ready",
+    },
+    {
+      path: "moui/backend/macos/macos_backend.mbt",
+      token: "native" + "_" + "binding" + "_" + "ready",
+    },
+    {
+      path: "moui/backend/macos/macos_backend.mbt",
+      token: "action" + "_" + "roundtrip" + "_" + "ready",
+    },
+    {
+      path: "moui/backend/macos/macos_backend.mbt",
+      token: stale_first_frame_flag_token(),
+    },
+    {
+      path: "moui/render/capabilities.mbt",
+      token: "RendererFeatureStatus::" + "Ready",
+    },
+    {
+      path: "moui/render/renderer.mbt",
+      token: "RendererCapabilityStatus::" + "Ready",
+    },
     {
       path: ".github/workflows/ci.yml",
       token: stale_legacy_renderer_marker() + "-" + "wgpu-native",
@@ -195,7 +219,16 @@ fn guidance_absent_rules() -> Array[TextRule] {
     },
     {
       path: ".github/workflows/ci.yml",
-      token: "run" + "_" + "macos" + "_" + "platform" + "_" + "runtime" + "_" + "evi" + "dence",
+      token: "run" +
+      "_" +
+      "macos" +
+      "_" +
+      "platform" +
+      "_" +
+      "runtime" +
+      "_" +
+      "evi" +
+      "dence",
     },
     {
       path: "scripts/dev-check.sh",
@@ -259,10 +292,7 @@ fn guidance_absent_rules() -> Array[TextRule] {
       path: "docs/testing.md",
       token: stale_legacy_renderer_manifest_script("record"),
     },
-    {
-      path: "docs/testing.md",
-      token: stale_platform_manifest_script("record"),
-    },
+    { path: "docs/testing.md", token: stale_platform_manifest_script("record") },
     {
       path: "docs/testing.md",
       token: stale_legacy_renderer_marker() + "-" + "summary",

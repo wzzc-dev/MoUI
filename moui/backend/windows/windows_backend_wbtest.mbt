@@ -44,7 +44,9 @@ test "windows host options carry optional scene resolver and smoke options stay 
     scene_resolver=resolver,
     event_sources=Some(@host.HostPlatformEventSources::new()),
   )
-  let smoke_options = WindowsHostSmokeOptions::new(first_frame_smoke_auto_exit=true)
+  let smoke_options = WindowsHostSmokeOptions::new(
+    first_frame_smoke_auto_exit=true,
+  )
   assert_true(smoke_options.first_frame_smoke_auto_exit)
   match options.event_sources {
     Some(sources) => {

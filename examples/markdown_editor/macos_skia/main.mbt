@@ -14,8 +14,6 @@ fn main {
   @macos_skia_backend.run_app_with_options(
     "MoUI Markdown Editor",
     runtime,
-    options=@macos_skia_backend.MacosSkiaAppOptions::new(
-      surface_route~,
-    ),
+    options=@macos_skia_backend.MacosSkiaAppOptions::new(surface_route~),
   )
 }

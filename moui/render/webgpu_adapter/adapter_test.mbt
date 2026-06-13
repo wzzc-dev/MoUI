@@ -2,7 +2,9 @@
 test "wgpu web adapter is wasm-gc host-import only" {
   let info = adapter_info()
   assert_true(info.renderer.backend == @render.RendererBackendKind::WebGpuWasm)
-  assert_true(info.renderer.status == @render.RendererCapabilityStatus::Supported)
+  assert_true(
+    info.renderer.status == @render.RendererCapabilityStatus::Supported,
+  )
   inspect(info.renderer.can_render, content="true")
   inspect(info.renderer.can_resize, content="true")
   inspect(info.surface_contract.ready, content="true")

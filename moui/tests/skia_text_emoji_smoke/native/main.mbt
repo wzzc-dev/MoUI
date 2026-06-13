@@ -182,7 +182,9 @@ fn skia_color_emoji_glyph_key_metadata_ready(
   fallback.glyph_key.contains(fallback.text_system_id) &&
   fallback.glyph_key.contains(fallback.shaper) &&
   fallback.glyph_key.contains("script=\{fallback.fallback_script_tag}") &&
-  fallback.glyph_key.contains("langs=\{fallback.fallback_request_language_count}") &&
+  fallback.glyph_key.contains(
+    "langs=\{fallback.fallback_request_language_count}",
+  ) &&
   fallback.glyph_key.contains("lang-tags=\{language_tags_key}") &&
   fallback.glyph_key.contains("emoji-u+\{fallback.fallback_character}") &&
   fallback.glyph_key.contains(fallback.glyph_format)
@@ -192,9 +194,11 @@ fn skia_color_emoji_glyph_key_metadata_ready(
 fn skia_color_emoji_fallback_language_metadata_ready(
   fallback : @skia_renderer.SkiaEmojiFontFallbackDiagnostic,
 ) -> Bool {
-  fallback.fallback_language_tags.length() == fallback.fallback_language_tag_count &&
+  fallback.fallback_language_tags.length() ==
+  fallback.fallback_language_tag_count &&
   fallback.fallback_language_tag_count >= 1 &&
-  fallback.fallback_request_language_count == fallback.fallback_language_tag_count &&
+  fallback.fallback_request_language_count ==
+  fallback.fallback_language_tag_count &&
   fallback.fallback_language_tags[0] == fallback.fallback_script_tag
 }
 

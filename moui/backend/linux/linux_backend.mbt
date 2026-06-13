@@ -111,12 +111,7 @@ pub fn LinuxHostAppOptions::new(
   web_view_commands? : @host.HostWebViewCommandQueue? = None,
   web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> LinuxHostAppOptions {
-  {
-    scene_resolver,
-    event_sources,
-    web_view_commands,
-    web_view_events,
-  }
+  { scene_resolver, event_sources, web_view_commands, web_view_events }
 }
 
 ///|

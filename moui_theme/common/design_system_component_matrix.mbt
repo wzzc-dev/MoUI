@@ -123,6 +123,7 @@ pub fn DesignPreset::component_token_matrix_runtime_aligned_count(
   count
 }
 
+///|
 fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
   let source = "https://material-web.dev/theming/material-theming/"
   [

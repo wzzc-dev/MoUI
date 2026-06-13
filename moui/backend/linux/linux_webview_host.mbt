@@ -116,8 +116,7 @@ pub fn sync_linux_platform_views(
   for placement in frame.platform_views {
     if placement.kind == "web_view" {
       let platform_frame = linux_webview_platform_frame(
-        placement,
-        content_offset_y,
+        placement, content_offset_y,
       )
       linux_webview_sync(
         wl_display,

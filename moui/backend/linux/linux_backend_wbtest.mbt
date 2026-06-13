@@ -28,7 +28,9 @@ test "linux host options carry optional scene resolver and smoke options stay se
     scene_resolver=resolver,
     event_sources=Some(@host.HostPlatformEventSources::new()),
   )
-  let smoke_options = LinuxHostSmokeOptions::new(first_frame_smoke_auto_exit=true)
+  let smoke_options = LinuxHostSmokeOptions::new(
+    first_frame_smoke_auto_exit=true,
+  )
   assert_true(smoke_options.first_frame_smoke_auto_exit)
   match options.event_sources {
     Some(sources) => {
@@ -190,7 +192,9 @@ test "linux webview fallback reports unavailable without WebKitGTK" {
   if linux_webview_native_available() == 0 {
     inspect(capabilities.available, content="false")
     inspect(capabilities.native_embedding, content="false")
-    assert_true(capabilities.description.contains("MOUI_LINUX_ENABLE_WEBKITGTK"))
+    assert_true(
+      capabilities.description.contains("MOUI_LINUX_ENABLE_WEBKITGTK"),
+    )
   } else {
     inspect(capabilities.available, content="true")
     inspect(capabilities.commands, content="true")
@@ -269,7 +273,9 @@ test "linux webview encodes navigation policies and commands" {
     webview_policy_code(@core.WebViewNavigationPolicy::AllowAll),
     content="2",
   )
-  let load = encode_webview_command(@core.WebViewCommand::LoadUrl("https://example.test"))
+  let load = encode_webview_command(
+    @core.WebViewCommand::LoadUrl("https://example.test"),
+  )
   inspect(load.0, content="0")
   inspect(load.1, content="https://example.test")
   let eval = encode_webview_command(
@@ -301,7 +307,11 @@ test "linux webview placement applies client decoration offset" {
 test "linux webview command queue drains FIFO through host contract" {
   let queue = @host.HostWebViewCommandQueue::new()
   queue.load_url(id="main", url="https://example.test")
-  queue.evaluate_javascript(id="main", script="document.title", request_id="title")
+  queue.evaluate_javascript(
+    id="main",
+    script="document.title",
+    request_id="title",
+  )
   inspect(queue.pending_count(), content="2")
   let commands : Array[String] = []
   let drained = queue.drain_with_handler(command => {

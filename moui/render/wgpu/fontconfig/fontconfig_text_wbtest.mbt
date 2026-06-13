@@ -210,7 +210,10 @@ test "fontconfig debug registered font data length reports stored data" {
 #cfg(platform="linux")
 test "fontconfig debug can register system font and measure via registered alias" {
   let data_len = linux_fontconfig_debug_register_system_font_data(
-    Bytes::from_array([b'R', b'e', b'g', b'i', b's', b't', b'e', b'r', b'e', b'd', b'S', b'a', b'n', b's']),
+    Bytes::from_array([
+      b'R', b'e', b'g', b'i', b's', b't', b'e', b'r', b'e', b'd', b'S', b'a', b'n',
+      b's',
+    ]),
   )
   if data_len < 0 {
     inspect("missing", content="available")
@@ -226,9 +229,7 @@ test "fontconfig debug can register system font and measure via registered alias
     ),
   )
   match fontconfig_measure_layout(input) {
-    Some(layout) => {
-      inspect(layout.size.height > 0.0, content="true")
-    }
+    Some(layout) => inspect(layout.size.height > 0.0, content="true")
     None => inspect("missing", content="available")
   }
 }

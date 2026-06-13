@@ -83,8 +83,8 @@ let valid_doc =
 
 ///|
 fn test_options(
-  repo_root~ : String = "/repo/moui_skia",
-  status_file~ : String = "skia-platform-status.json",
+  repo_root? : String = "/repo/moui_skia",
+  status_file? : String = "skia-platform-status.json",
 ) -> CliOptions {
   {
     repo_root,

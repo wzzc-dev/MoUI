@@ -437,6 +437,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core program effect-task completion, stale dispatch, cancellation, and replacement tests compact",
     },
     {
+      path: "moui/core/runtime_subscription_sources_wbtest.mbt",
+      max_lines: 280,
+      target_lines: 250,
+      reason: "keep core subscription descriptors, mapped sources, helper kinds, and active-kind summary tests compact",
+    },
+    {
+      path: "moui/core/runtime_subscriptions_wbtest.mbt",
+      max_lines: 500,
+      target_lines: 450,
+      reason: "keep core program subscription lifecycle, restart, duplicate-key, and bounded-drain tests compact",
+    },
+    {
       path: "examples/pdf_workbench/app/app.mbt",
       max_lines: 1335,
       target_lines: 1250,

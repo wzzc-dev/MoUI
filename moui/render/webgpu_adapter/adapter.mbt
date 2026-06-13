@@ -1,3 +1,4 @@
+///|
 pub fn backend_info() -> @render.RendererBackendInfo {
   @render.RendererBackendInfo::new(
     backend=@render.RendererBackendKind::WebGpuWasm,

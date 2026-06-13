@@ -100,12 +100,7 @@ pub fn WindowsHostAppOptions::new(
   web_view_commands? : @host.HostWebViewCommandQueue? = None,
   web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> WindowsHostAppOptions {
-  {
-    scene_resolver,
-    event_sources,
-    web_view_commands,
-    web_view_events,
-  }
+  { scene_resolver, event_sources, web_view_commands, web_view_events }
 }
 
 ///|

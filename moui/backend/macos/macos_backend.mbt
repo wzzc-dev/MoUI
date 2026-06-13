@@ -1,3 +1,4 @@
+///|
 pub(all) struct MacosBackendInfo {
   host_info : @host.HostAppInfo
   renderer_available : Bool
@@ -83,12 +84,7 @@ pub fn MacosHostAppOptions::new(
   web_view_commands? : @host.HostWebViewCommandQueue? = None,
   web_view_events? : @host.HostWebViewEventSource? = None,
 ) -> MacosHostAppOptions {
-  {
-    scene_resolver,
-    event_sources,
-    web_view_commands,
-    web_view_events,
-  }
+  { scene_resolver, event_sources, web_view_commands, web_view_events }
 }
 
 ///|

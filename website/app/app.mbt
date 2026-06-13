@@ -136,10 +136,7 @@ fn Model::update_with_services(
 }
 
 ///|
-fn Model::view(
-  self : Model,
-  env : @core.ViewEnvironment,
-) -> @core.View[Msg] {
+fn Model::view(self : Model, env : @core.ViewEnvironment) -> @core.View[Msg] {
   let theme = website_theme(self.dark)
   let metrics = website_metrics(env.viewport_size())
   let content_height = self.website_current_content_height(metrics)
