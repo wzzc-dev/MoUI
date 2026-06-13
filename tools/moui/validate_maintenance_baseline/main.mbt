@@ -359,10 +359,16 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host text input context menu command and clipboard paste tests compact",
     },
     {
+      path: "moui/backend/host/host_text_input_composition_test.mbt",
+      max_lines: 100,
+      target_lines: 90,
+      reason: "keep host text input composition dispatch tests compact",
+    },
+    {
       path: "moui/backend/host/host_text_input_ime_test.mbt",
-      max_lines: 345,
-      target_lines: 315,
-      reason: "keep host text input IME session and event conversion tests compact",
+      max_lines: 255,
+      target_lines: 230,
+      reason: "keep host text input IME session diagnostics and event conversion tests compact",
     },
     {
       path: "moui/backend/host/host_platform_contract_test.mbt",
