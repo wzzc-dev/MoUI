@@ -456,9 +456,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/text_system_conformance_wbtest.mbt",
-      max_lines: 510,
-      target_lines: 470,
-      reason: "keep core fallback text, grapheme, paragraph, and shared conformance helpers compact",
+      max_lines: 285,
+      target_lines: 255,
+      reason: "keep core fallback text, caret, paragraph, and shared conformance helpers compact",
+    },
+    {
+      path: "moui/core/text_grapheme_boundary_conformance_wbtest.mbt",
+      max_lines: 230,
+      target_lines: 205,
+      reason: "keep core grapheme boundary, delete-range, and UTF-8 offset conformance tests compact",
     },
     {
       path: "moui/core/text_system_field_conformance_wbtest.mbt",
