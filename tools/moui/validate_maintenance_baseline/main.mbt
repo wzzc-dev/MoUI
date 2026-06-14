@@ -1001,6 +1001,30 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views menu, popover, sidebar, breadcrumb, and wizard descriptors compact",
     },
     {
+      path: "moui/views/navigation.mbt",
+      max_lines: 125,
+      target_lines: 110,
+      reason: "keep views route stack, router stack, and tabs helpers compact",
+    },
+    {
+      path: "moui/views/navigation_shell.mbt",
+      max_lines: 315,
+      target_lines: 285,
+      reason: "keep views sidebar, section navigation, breadcrumb, and route header helpers compact",
+    },
+    {
+      path: "moui/views/navigation_split.mbt",
+      max_lines: 115,
+      target_lines: 100,
+      reason: "keep views split-pane and master-detail helpers compact",
+    },
+    {
+      path: "moui/views/navigation_presentation.mbt",
+      max_lines: 120,
+      target_lines: 105,
+      reason: "keep views wizard and dialog host presentation helpers compact",
+    },
+    {
       path: "moui/views/data_state.mbt",
       max_lines: 450,
       target_lines: 400,
