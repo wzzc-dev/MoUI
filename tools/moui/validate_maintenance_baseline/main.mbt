@@ -1146,9 +1146,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/toolbar.mbt",
-      max_lines: 225,
-      target_lines: 200,
-      reason: "keep views toolbar, command bar, status bar, and command palette helpers compact",
+      max_lines: 120,
+      target_lines: 105,
+      reason: "keep views toolbar, command bar, button group, and status bar helpers compact",
+    },
+    {
+      path: "moui/views/command_palette.mbt",
+      max_lines: 120,
+      target_lines: 105,
+      reason: "keep views command palette filtering and row rendering compact",
     },
     {
       path: "moui/views/disclosure.mbt",
