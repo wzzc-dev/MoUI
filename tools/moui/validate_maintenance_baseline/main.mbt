@@ -1320,9 +1320,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/data_table.mbt",
-      max_lines: 240,
-      target_lines: 215,
-      reason: "keep views table rendering, sortable header, row, and table sizing helpers compact",
+      max_lines: 60,
+      target_lines: 50,
+      reason: "keep views public table composition compact",
+    },
+    {
+      path: "moui/views/data_table_rendering.mbt",
+      max_lines: 185,
+      target_lines: 165,
+      reason: "keep views table header, row, and sizing helpers compact",
     },
     {
       path: "moui/views/views_test.mbt",
