@@ -76,8 +76,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "root facade",
       path: "moui/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui\"",
-      max_lines: 90,
-      max_pub_lines: 40,
+      max_lines: 25,
+      max_pub_lines: 5,
       max_pub_all_lines: 0,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "pub using @core {type View}", "pub using @core {type Program}",
@@ -88,7 +88,8 @@ fn package_budgets() -> Array[PackageBudget] {
         "RendererBackendKind", "SkiaRasterRenderer", "RuntimeState", "ViewNode",
         "ViewSpec", "DrawCommand", "EffectDescriptor", "SubscriptionDescriptor",
         "SubscriptionLifecycleSnapshot", "ProgramRuntimeSnapshot", "pub using @core {type AppRuntime}",
-        "pub using @core {type Binding}",
+        "pub using @core {type Binding}", "pub fn default_theme(", "pub fn light_theme(",
+        "pub fn dark_theme(", "pub fn theme(",
       ],
     },
     {
