@@ -1,5 +1,5 @@
 ///|
-pub fn RuntimeState::set_action_commands(
+fn RuntimeState::set_action_commands(
   self : RuntimeState,
   commands : ActionCommandMap,
 ) -> Unit {
@@ -7,14 +7,12 @@ pub fn RuntimeState::set_action_commands(
 }
 
 ///|
-pub fn RuntimeState::action_commands(
-  self : RuntimeState,
-) -> Array[ActionCommand] {
+fn RuntimeState::action_commands(self : RuntimeState) -> Array[ActionCommand] {
   self.action_commands.commands()
 }
 
 ///|
-pub fn RuntimeState::dispatch_command(
+fn RuntimeState::dispatch_command(
   self : RuntimeState,
   intent : CommandIntent,
 ) -> Bool {
@@ -30,7 +28,7 @@ pub fn RuntimeState::dispatch_command(
 }
 
 ///|
-pub fn RuntimeState::dispatch_action_command(
+fn RuntimeState::dispatch_action_command(
   self : RuntimeState,
   command : ActionCommand,
 ) -> Bool {
@@ -43,7 +41,7 @@ pub fn RuntimeState::dispatch_action_command(
 }
 
 ///|
-pub fn RuntimeState::dispatch_focused_text_command(
+fn RuntimeState::dispatch_focused_text_command(
   self : RuntimeState,
   intent : CommandIntent,
   paste_text? : String? = None,
@@ -69,7 +67,7 @@ pub fn RuntimeState::dispatch_focused_text_command(
 }
 
 ///|
-pub fn RuntimeState::add_animation(
+fn RuntimeState::add_animation(
   self : RuntimeState,
   controller : AnimationController,
 ) -> Unit {
@@ -80,15 +78,12 @@ pub fn RuntimeState::add_animation(
 }
 
 ///|
-pub fn RuntimeState::animation_count(self : RuntimeState) -> Int {
+fn RuntimeState::animation_count(self : RuntimeState) -> Int {
   self.animations.length()
 }
 
 ///|
-pub fn RuntimeState::dispatch_event(
-  self : RuntimeState,
-  event : AppEvent,
-) -> Unit {
+fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
   match event {
     FrameTick(frame) => self.tick_animations(frame)
     Resize(size) => {
@@ -333,10 +328,7 @@ fn RuntimeState::focus_key(self : RuntimeState, key : String) -> Bool {
 }
 
 ///|
-pub fn RuntimeState::advance_time(
-  self : RuntimeState,
-  time_ms : Double,
-) -> Unit {
+fn RuntimeState::advance_time(self : RuntimeState, time_ms : Double) -> Unit {
   self.dispatch_event(FrameTick(self.clock.frame(time_ms)))
 }
 

@@ -128,17 +128,17 @@ fn RuntimeState::new_component(
 }
 
 ///|
-pub fn RuntimeState::environment(self : RuntimeState) -> Environment {
+fn RuntimeState::environment(self : RuntimeState) -> Environment {
   self.environment
 }
 
 ///|
-pub fn RuntimeState::text_system(self : RuntimeState) -> TextSystem {
+fn RuntimeState::text_system(self : RuntimeState) -> TextSystem {
   self.text_system
 }
 
 ///|
-pub fn RuntimeState::set_text_system(
+fn RuntimeState::set_text_system(
   self : RuntimeState,
   text_system : TextSystem,
 ) -> Unit {
@@ -151,7 +151,7 @@ pub fn RuntimeState::set_text_system(
 }
 
 ///|
-pub fn RuntimeState::register_font_data(
+fn RuntimeState::register_font_data(
   self : RuntimeState,
   family : FontFamily,
   data : Bytes,
@@ -165,7 +165,7 @@ pub fn RuntimeState::register_font_data(
 }
 
 ///|
-pub fn RuntimeState::set_environment(
+fn RuntimeState::set_environment(
   self : RuntimeState,
   environment : Environment,
 ) -> Unit {
@@ -181,7 +181,7 @@ pub fn RuntimeState::set_environment(
 }
 
 ///|
-pub fn RuntimeState::destroy(self : RuntimeState) -> Unit {
+fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.element_tree.root.cancel_component_tree_subscriptions(
     reason=ComponentEffectCancelReason::EffectRuntimeDestroyed,
   )
@@ -210,7 +210,7 @@ pub fn RuntimeState::destroy(self : RuntimeState) -> Unit {
 }
 
 ///|
-pub fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
+fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
   self.rebuild_pass_count = self.rebuild_pass_count + 1
   let result = reconcile_element_for_runtime(
     self.element_tree.root,
@@ -233,7 +233,7 @@ pub fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
 }
 
 ///|
-pub fn RuntimeState::set_redraw_callback(
+fn RuntimeState::set_redraw_callback(
   self : RuntimeState,
   callback : () -> Unit,
 ) -> Unit {
@@ -241,17 +241,17 @@ pub fn RuntimeState::set_redraw_callback(
 }
 
 ///|
-pub fn RuntimeState::layout_pass(self : RuntimeState) -> Unit {
+fn RuntimeState::layout_pass(self : RuntimeState) -> Unit {
   self.ensure_layout_tree()
 }
 
 ///|
-pub fn RuntimeState::paint_pass(self : RuntimeState) -> Array[DrawCommand] {
+fn RuntimeState::paint_pass(self : RuntimeState) -> Array[DrawCommand] {
   self.build_draw_commands()
 }
 
 ///|
-pub fn RuntimeState::layout(self : RuntimeState) -> LayoutResult {
+fn RuntimeState::layout(self : RuntimeState) -> LayoutResult {
   self.ensure_layout_tree()
   self.layout_tree.root.to_layout_result()
 }
@@ -318,7 +318,7 @@ fn RuntimeState::inspector_dirty_reasons(self : RuntimeState) -> Array[String] {
 }
 
 ///|
-pub fn RuntimeState::semantics(self : RuntimeState) -> SemanticsNode {
+fn RuntimeState::semantics(self : RuntimeState) -> SemanticsNode {
   self.ensure_render_tree()
   self.element_tree.root.semantics(
     self.render_tree.root,
@@ -327,7 +327,7 @@ pub fn RuntimeState::semantics(self : RuntimeState) -> SemanticsNode {
 }
 
 ///|
-pub fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
+fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
   self.ensure_render_tree()
   match self.focused_element {
     Some(target) =>
@@ -345,9 +345,7 @@ pub fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
 }
 
 ///|
-pub fn RuntimeState::build_draw_commands(
-  self : RuntimeState,
-) -> Array[DrawCommand] {
+fn RuntimeState::build_draw_commands(self : RuntimeState) -> Array[DrawCommand] {
   self.draw_command_build_count = self.draw_command_build_count + 1
   let commands : Array[DrawCommand] = [Clear(Color::white())]
   self.rebuild_if_possible()
@@ -357,7 +355,7 @@ pub fn RuntimeState::build_draw_commands(
 }
 
 ///|
-pub fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
+fn RuntimeState::build_draw_frame(self : RuntimeState) -> DrawFrame {
   self.draw_command_build_count = self.draw_command_build_count + 1
   let commands : Array[DrawCommand] = [Clear(Color::white())]
   self.rebuild_if_possible()
@@ -388,7 +386,7 @@ fn RuntimeState::cached_draw_commands(
 }
 
 ///|
-pub fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
+fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
   if self.needs_rebuild {
     if self.element_tree.root.has_dirty_build() {
       self.rebuild_pass_count = self.rebuild_pass_count + 1
@@ -407,12 +405,6 @@ pub fn RuntimeState::rebuild_if_possible(self : RuntimeState) -> Unit {
       self.needs_redraw = true
     }
   }
-}
-
-///|
-pub fn RuntimeState::request_rebuild(self : RuntimeState) -> Unit {
-  self.request_component_rebuild(self.element_tree.id())
-  self.request_redraw()
 }
 
 ///|

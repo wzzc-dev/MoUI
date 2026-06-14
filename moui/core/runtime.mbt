@@ -1,6 +1,6 @@
 ///|
 pub struct AppRuntime {
-  state : RuntimeState
+  priv state : RuntimeState
   priv mut program_runtime_snapshot_fn : () -> ProgramRuntimeSnapshot
   priv mut destroy_program_runtime_fn : () -> Unit
 }

@@ -144,7 +144,6 @@ pub(all) enum AppEvent {
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct AppRuntime {
-  state : RuntimeState
   // private fields
 }
 pub fn AppRuntime::action_commands(Self) -> Array[ActionCommand]
@@ -1570,36 +1569,6 @@ pub(all) struct RuntimeInspectorSnapshot {
 pub fn RuntimeInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
 type RuntimeState
-pub fn RuntimeState::action_commands(Self) -> Array[ActionCommand]
-pub fn RuntimeState::add_animation(Self, AnimationController) -> Unit
-pub fn RuntimeState::advance_time(Self, Double) -> Unit
-pub fn RuntimeState::animation_count(Self) -> Int
-pub fn RuntimeState::build_draw_commands(Self) -> Array[DrawCommand]
-pub fn RuntimeState::build_draw_frame(Self) -> DrawFrame
-pub fn RuntimeState::clear_dirty_queue(Self) -> Unit
-pub fn RuntimeState::destroy(Self) -> Unit
-pub fn RuntimeState::dirty_count(Self) -> Int
-pub fn RuntimeState::dirty_element_ids(Self) -> Array[ElementId]
-pub fn RuntimeState::dispatch_action_command(Self, ActionCommand) -> Bool
-pub fn RuntimeState::dispatch_command(Self, CommandIntent) -> Bool
-pub fn RuntimeState::dispatch_event(Self, AppEvent) -> Unit
-pub fn RuntimeState::dispatch_focused_text_command(Self, CommandIntent, paste_text? : String?) -> TextCommandResult
-pub fn RuntimeState::environment(Self) -> Environment
-pub fn RuntimeState::focused_text_input(Self) -> TextInputState
-pub fn RuntimeState::layout(Self) -> LayoutResult
-pub fn RuntimeState::layout_pass(Self) -> Unit
-pub fn RuntimeState::mark_dirty(Self, ElementId) -> Unit
-pub fn RuntimeState::paint_pass(Self) -> Array[DrawCommand]
-pub fn RuntimeState::rebuild(Self) -> Unit
-pub fn RuntimeState::rebuild_if_possible(Self) -> Unit
-pub fn RuntimeState::register_font_data(Self, FontFamily, Bytes) -> Unit
-pub fn RuntimeState::request_rebuild(Self) -> Unit
-pub fn RuntimeState::semantics(Self) -> SemanticsNode
-pub fn RuntimeState::set_action_commands(Self, ActionCommandMap) -> Unit
-pub fn RuntimeState::set_environment(Self, Environment) -> Unit
-pub fn RuntimeState::set_redraw_callback(Self, () -> Unit) -> Unit
-pub fn RuntimeState::set_text_system(Self, TextSystem) -> Unit
-pub fn RuntimeState::text_system(Self) -> TextSystem
 
 pub struct SaveableCodec[T] {
   encode : (T) -> String

@@ -249,7 +249,7 @@ fn RuntimeState::mark_layout_dirty(self : RuntimeState, id : ElementId) -> Unit 
 }
 
 ///|
-pub fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
+fn RuntimeState::mark_dirty(self : RuntimeState, id : ElementId) -> Unit {
   self.queue_paint_dirty(id)
   ignore(self.element_tree.root.mark_paint_dirty_by_id(id))
   self.needs_paint = true
@@ -292,17 +292,17 @@ fn RuntimeState::mark_current_dirty_elements(self : RuntimeState) -> Unit {
 }
 
 ///|
-pub fn RuntimeState::dirty_count(self : RuntimeState) -> Int {
+fn RuntimeState::dirty_count(self : RuntimeState) -> Int {
   self.dirty_elements.length()
 }
 
 ///|
-pub fn RuntimeState::dirty_element_ids(self : RuntimeState) -> Array[ElementId] {
+fn RuntimeState::dirty_element_ids(self : RuntimeState) -> Array[ElementId] {
   self.dirty_elements.copy()
 }
 
 ///|
-pub fn RuntimeState::clear_dirty_queue(self : RuntimeState) -> Unit {
+fn RuntimeState::clear_dirty_queue(self : RuntimeState) -> Unit {
   self.dirty_elements.clear()
   self.dirty_build_elements.clear()
   self.dirty_layout_elements.clear()
