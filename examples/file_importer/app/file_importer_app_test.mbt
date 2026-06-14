@@ -79,9 +79,11 @@ test "file importer handles mocked pending completion" {
       @host.HostServiceResponse::FileDialogSelection(["/tmp/later.txt"]),
     ),
   )
-  let runtime = model
-    .get()
-    .runtime_with_services(services, width=860.0, height=620.0)
+  let runtime = test_runtime(
+    model.get().program_with_services(services),
+    width=860.0,
+    height=620.0,
+  )
   match services.take_completed(id) {
     Some(_) => fail("expected registered completion to be consumed")
     None => ()
@@ -98,8 +100,8 @@ test "file importer handles mocked pending completion" {
 test "file importer runtime receives async file dialog completion" {
   let queue = @host.HostServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
-  let runtime = FileImporterModel::new().runtime_with_services(
-    services,
+  let runtime = test_runtime(
+    FileImporterModel::new().program_with_services(services),
     width=860.0,
     height=620.0,
   )
@@ -122,8 +124,8 @@ test "file importer runtime receives async file dialog completion" {
 test "file importer runtime receives async file dialog rejection" {
   let queue = @host.HostServiceAsyncQueue::new()
   let services = async_file_dialog_services(queue)
-  let runtime = FileImporterModel::new().runtime_with_services(
-    services,
+  let runtime = test_runtime(
+    FileImporterModel::new().program_with_services(services),
     width=860.0,
     height=620.0,
   )
@@ -139,8 +141,8 @@ test "file importer runtime receives async file dialog rejection" {
 ///|
 test "file importer runtime runs host service effects" {
   let services = host_services_for_file_dialog(["/tmp/runtime.csv"])
-  let runtime = FileImporterModel::new().runtime_with_services(
-    services,
+  let runtime = test_runtime(
+    FileImporterModel::new().program_with_services(services),
     width=860.0,
     height=620.0,
   )
@@ -246,7 +248,7 @@ test "file importer child effect maps pending completion into parent" {
 
 ///|
 test "file importer runtime draws panel labels" {
-  let commands = @app.runtime(width=860.0, height=620.0).draw_commands()
+  let commands = test_runtime(@app.program(), width=860.0, height=620.0).draw_commands()
   assert_true(has_text(commands, "File Importer"))
   assert_true(has_text(commands, "Import Files"))
   assert_true(has_text(commands, "Drop files here"))
@@ -355,6 +357,15 @@ fn ParentImporterModel::runtime_with_services(
     ),
     size=@core.Size::new(width~, height~),
   )
+}
+
+///|
+fn test_runtime(
+  program : @core.Program[FileImporterModel, FileImporterMsg],
+  width~ : Double,
+  height~ : Double,
+) -> @runtime.AppRuntime {
+  @runtime.new_program_with_dimensions(program~, width~, height~)
 }
 
 ///|
