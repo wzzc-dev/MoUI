@@ -26,24 +26,6 @@ pub type Subscription[Msg] = @core.Subscription[Msg]
 pub type ColorScheme = @core.ColorScheme
 
 ///|
-pub type ColorPalette = @core.ColorPalette
-
-///|
-pub type SemanticColorScale = @core.SemanticColorScale
-
-///|
-pub type SpacingScale = @core.SpacingScale
-
-///|
-pub type RadiusScale = @core.RadiusScale
-
-///|
-pub type TypographyScale = @core.TypographyScale
-
-///|
-pub type ShadowScale = @core.ShadowScale
-
-///|
 pub type Theme = @core.Theme
 
 ///|
@@ -71,12 +53,12 @@ pub fn theme(
   spacing? : Double,
   corner_radius? : Double,
   scheme? : ColorScheme = ColorScheme::Light,
-  palette? : ColorPalette,
-  semantic_colors? : SemanticColorScale,
-  spacing_scale? : SpacingScale,
-  radius_scale? : RadiusScale,
-  typography? : TypographyScale,
-  shadow_scale? : ShadowScale,
+  palette? : @core.ColorPalette,
+  semantic_colors? : @core.SemanticColorScale,
+  spacing_scale? : @core.SpacingScale,
+  radius_scale? : @core.RadiusScale,
+  typography? : @core.TypographyScale,
+  shadow_scale? : @core.ShadowScale,
   motion? : @core.MotionScale,
   surfaces? : @core.SurfaceScale,
 ) -> Theme {

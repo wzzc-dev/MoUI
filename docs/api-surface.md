@@ -7,10 +7,12 @@ packages expose narrower contracts for platform and renderer integration.
 
 ## Surface Tiers
 
-- App-facing API: `moui` and `moui/views`. The root facade re-exports a
+- App-facing API: `moui` and `moui/views`. The root facade re-exports a small
   curated set of common app/runtime/theme aliases from `moui/core` plus theme
-  builders. Diagnostics, draw commands, renderer details, and lower-level
-  geometry/style records stay in `moui/core` or their owning packages.
+  builders. Detailed theme palette and scale records stay qualified as
+  `@core.*` types rather than root aliases. Diagnostics, draw commands,
+  renderer details, and lower-level geometry/style records stay in `moui/core`
+  or their owning packages.
   `moui/views` exposes constructor helpers that return opaque `@core.View[Msg]`
   values.
 - Core framework API: `moui/core`. This owns `View[Msg]`, `Program`, `Effect`,
