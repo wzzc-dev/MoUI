@@ -455,6 +455,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep web platform-window slot mapping and canvas id helpers compact",
     },
     {
+      path: "moui/core/element.mbt",
+      max_lines: 990,
+      target_lines: 900,
+      reason: "keep core element mounting, reconciliation, dirty, inspector, and cleanup logic compact",
+    },
+    {
+      path: "moui/core/element_tree.mbt",
+      max_lines: 235,
+      target_lines: 210,
+      reason: "keep core element node, tree, render node, and cache state compact",
+    },
+    {
       path: "moui/core/view_tree.mbt",
       max_lines: 725,
       target_lines: 650,
