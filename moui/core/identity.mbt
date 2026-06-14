@@ -1,5 +1,5 @@
 ///|
-pub(all) struct Key {
+struct Key {
   value : String
 } derive(Eq, Debug, ToJson)
 
