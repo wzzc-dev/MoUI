@@ -171,8 +171,8 @@ fn view(draft : String) -> @core.View[Msg] {
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `surface` / `card` | `views/container.mbt` | SurfaceStyle | Group through child | `views/views_test.mbt` | Counter, Showcase, Markdown Editor | Styled container primitives; `card` is the raised, padded entry point for simple apps. |
-| `toolbar` / `command_bar` / `button_group` / `status_bar` | `views/toolbar_disclosure.mbt` | ButtonStyle/text/surface | Group | `views/views_test.mbt`, Showcase tests | Showcase Navigation Shell | App-owned command and status surfaces built from buttons, text, and surfaces. |
-| `command_palette` | `views/toolbar_disclosure.mbt` | ButtonStyle/text/surface | Menu | `views/views_test.mbt`, `core/gesture_action_wbtest.mbt`, Showcase tests | Showcase Navigation Shell | Renders `@core.ActionCommand` metadata (`group`, `description`, shortcut label, enabled state) as a TEA-controlled palette without native menu or renderer changes. |
+| `toolbar` / `command_bar` / `button_group` / `status_bar` | `views/toolbar.mbt` | ButtonStyle/text/surface | Group | `views/views_test.mbt`, Showcase tests | Showcase Navigation Shell | App-owned command and status surfaces built from buttons, text, and surfaces. |
+| `command_palette` | `views/toolbar.mbt` | ButtonStyle/text/surface | Menu | `views/views_test.mbt`, `core/gesture_action_wbtest.mbt`, Showcase tests | Showcase Navigation Shell | Renders `@core.ActionCommand` metadata (`group`, `description`, shortcut label, enabled state) as a TEA-controlled palette without native menu or renderer changes. |
 | `row` / `column` | `views/flex.mbt` | Child/modifier based | Group/list via children | `views/views_test.mbt` | All examples | Flex layout primitives. |
 | `center` | `views/container.mbt` | Optional background | Child semantics | `views/views_test.mbt` | Counter | Single-child layout helper that centers content inside its available space. |
 | `spacer` | `views/flex.mbt` | N/A | None | `views/views_test.mbt` | Showcase | Flexible space primitive. |
@@ -186,8 +186,8 @@ fn view(draft : String) -> @core.View[Msg] {
 | `lazy_list` | `views/virtual_list.mbt` | N/A | List output | `views/views_test.mbt` | Showcase | Windows visible rows from data. |
 | `lazy_grid` | `views/lazy_grid.mbt` | N/A | List/grid output | `views/views_test.mbt` | Showcase | Windows visible grid rows from data. |
 | `virtual_list` / `sectioned_list` / `scroll_to_index` | `views/virtual_list.mbt`, `views/sectioned_list.mbt` | N/A | List output | `views/views_test.mbt`, Showcase tests | Showcase Layout | Overscanned windowed lists, grouped section headers, empty states, and controlled offset intents built on existing scroll/list primitives. |
-| `accordion` / `disclosure` / `collapsible_panel` | `views/toolbar_disclosure.mbt` | ButtonStyle/surface/text | Group | `views/views_test.mbt`, Showcase tests | Showcase Feedback | Controlled disclosure containers; expanded state and toggle behavior stay in the app model. |
-| `resizable_panel` | `views/toolbar_disclosure.mbt` | SurfaceStyle | Group | `views/views_test.mbt`, Showcase tests | Showcase Layout | Controlled-size panel with a visual handle and optional drag callback; the app still owns the size value. |
+| `accordion` / `disclosure` / `collapsible_panel` | `views/disclosure.mbt` | ButtonStyle/surface/text | Group | `views/views_test.mbt`, Showcase tests | Showcase Feedback | Controlled disclosure containers; expanded state and toggle behavior stay in the app model. |
+| `resizable_panel` | `views/disclosure.mbt` | SurfaceStyle | Group | `views/views_test.mbt`, Showcase tests | Showcase Layout | Controlled-size panel with a visual handle and optional drag callback; the app still owns the size value. |
 
 ## Navigation And Presentation
 
