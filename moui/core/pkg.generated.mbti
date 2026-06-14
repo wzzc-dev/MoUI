@@ -445,17 +445,7 @@ pub fn[T] DerivedState::get(Self[T]) -> T
 pub fn[T] DerivedState::new(get~ : () -> T, subscribe~ : (() -> Unit) -> Array[StateSubscription]) -> Self[T]
 pub fn[T] DerivedState::subscribe(Self[T], () -> Unit) -> Array[StateSubscription]
 
-pub(all) struct DirtyFlags {
-  mut needs_build : Bool
-  mut needs_layout : Bool
-  mut needs_paint : Bool
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DirtyFlags::all() -> Self
-pub fn DirtyFlags::clean() -> Self
-pub fn DirtyFlags::clear(Self) -> Unit
-pub fn DirtyFlags::mark_build(Self) -> Unit
-pub fn DirtyFlags::mark_layout(Self) -> Unit
-pub fn DirtyFlags::mark_paint(Self) -> Unit
+type DirtyFlags derive(Eq, ToJson, @debug.Debug)
 
 type DoubleTapGestureResult derive(Eq, ToJson, @debug.Debug)
 
