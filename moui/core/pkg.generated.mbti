@@ -18,11 +18,7 @@ pub fn focus_scope_command_intent(KeyboardEvent) -> CommandIntent?
 
 pub fn hit_test(LayoutResult, Point) -> Bool
 
-pub fn recognize_button_tap(ButtonState, Bool, PointerPhase) -> TapGestureResult
-
 pub fn required_field(message? : String) -> (String) -> String?
-
-pub fn resolve_gesture_arena(Array[GestureArenaMember]) -> GestureArenaResult
 
 pub fn resolve_route(RouteLocation, Array[RouteDescriptor]) -> RouteDescriptor?
 
@@ -468,20 +464,9 @@ pub fn DirtyFlags::mark_build(Self) -> Unit
 pub fn DirtyFlags::mark_layout(Self) -> Unit
 pub fn DirtyFlags::mark_paint(Self) -> Unit
 
-pub(all) struct DoubleTapGestureResult {
-  state : DoubleTapGestureState
-  recognized : Bool
-} derive(Eq, ToJson, @debug.Debug)
+type DoubleTapGestureResult derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct DoubleTapGestureState {
-  first_position : Point?
-  first_time_ms : Double
-  timeout_ms : Double
-  max_distance : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DoubleTapGestureState::new(timeout_ms? : Double, max_distance? : Double) -> Self
-pub fn DoubleTapGestureState::tap(Self, Point, Double) -> DoubleTapGestureResult
-pub fn DoubleTapGestureState::update(Self, PointerEvent, inside? : Bool) -> DoubleTapGestureResult
+type DoubleTapGestureState derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DragDropEvent {
   phase : DragDropPhase
@@ -516,19 +501,9 @@ pub(all) enum DragGesturePhase {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DragGesturePhase::label(Self) -> String
 
-pub(all) struct DragGestureResult {
-  state : DragGestureState
-  event : DragGestureEvent?
-} derive(Eq, ToJson, @debug.Debug)
+type DragGestureResult derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct DragGestureState {
-  phase : DragGesturePhase
-  origin : Point?
-  last_position : Point?
-  min_distance : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DragGestureState::new(min_distance? : Double) -> Self
-pub fn DragGestureState::update(Self, PointerEvent, inside? : Bool) -> DragGestureResult
+type DragGestureState derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum DrawCommand {
   Clear(Color)
@@ -845,47 +820,6 @@ pub(all) struct FrameProfile {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FrameProfile::capture(AppRuntime, Frame) -> Self
 
-pub(all) enum GestureArenaDisposition {
-  Pending
-  Accepted
-  Rejected
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct GestureArenaMember {
-  element_id : ElementId
-  kind : GestureKind
-  priority : Int
-  mut disposition : GestureArenaDisposition
-} derive(Eq, ToJson, @debug.Debug)
-pub fn GestureArenaMember::accept(Self) -> Unit
-pub fn GestureArenaMember::is_pending(Self) -> Bool
-pub fn GestureArenaMember::new(element_id~ : ElementId, kind~ : GestureKind, priority? : Int) -> Self
-pub fn GestureArenaMember::reject(Self) -> Unit
-
-pub(all) struct GestureArenaResult {
-  winner : GestureArenaMember?
-  members : Array[GestureArenaMember]
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum GestureKind {
-  Tap
-  Drag
-  LongPress
-  PanZoom
-  Wheel
-  Hover
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct HitTestEntry {
-  element_id : ElementId
-  local_position : Point
-  frame : Rect
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct HitTestResult {
-  path : Array[HitTestEntry]
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) enum ImageFit {
   Contain
   Cover
@@ -999,29 +933,11 @@ pub(all) struct LinearGradientSpec {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LinearGradientSpec::new(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
 
-pub(all) enum LongPressGesturePhase {
-  Idle
-  Pressing
-  Recognized
-  Cancelled
-} derive(Eq, ToJson, @debug.Debug)
-pub fn LongPressGesturePhase::label(Self) -> String
+type LongPressGesturePhase derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct LongPressGestureResult {
-  state : LongPressGestureState
-  recognized : Bool
-  cancelled : Bool
-} derive(Eq, ToJson, @debug.Debug)
+type LongPressGestureResult derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct LongPressGestureState {
-  phase : LongPressGesturePhase
-  origin : Point?
-  start_time_ms : Double
-  duration_ms : Double
-  max_movement : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn LongPressGestureState::new(duration_ms? : Double, max_movement? : Double) -> Self
-pub fn LongPressGestureState::update(Self, PointerEvent, inside? : Bool) -> LongPressGestureResult
+type LongPressGestureState derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum MainAxisAlignment {
   MainStart
@@ -1813,10 +1729,7 @@ pub(all) struct SurfaceStyle {
 pub fn SurfaceStyle::default(theme? : Theme) -> Self
 pub fn SurfaceStyle::raised(theme? : Theme) -> Self
 
-pub(all) struct TapGestureResult {
-  next_state : ButtonState
-  activated : Bool
-} derive(Eq, ToJson, @debug.Debug)
+type TapGestureResult derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum TextAlign {
   TextStart

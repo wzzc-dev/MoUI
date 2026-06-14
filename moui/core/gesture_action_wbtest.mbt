@@ -1,37 +1,4 @@
 ///|
-test "gesture arena resolves highest priority non rejected member" {
-  let tap = GestureArenaMember::new(
-    element_id=ElementId::new(1),
-    kind=GestureKind::Tap,
-    priority=1,
-  )
-  let drag = GestureArenaMember::new(
-    element_id=ElementId::new(2),
-    kind=GestureKind::Drag,
-    priority=4,
-  )
-  let long_press = GestureArenaMember::new(
-    element_id=ElementId::new(3),
-    kind=GestureKind::LongPress,
-    priority=3,
-  )
-  long_press.reject()
-  let result = resolve_gesture_arena([tap, drag, long_press])
-  guard result.winner is Some({ element_id: { value: 2 }, kind: Drag, .. }) else {
-    fail("expected drag to win")
-  }
-  assert_true(
-    result.members[0].disposition == GestureArenaDisposition::Rejected,
-  )
-  assert_true(
-    result.members[1].disposition == GestureArenaDisposition::Accepted,
-  )
-  assert_true(
-    result.members[2].disposition == GestureArenaDisposition::Rejected,
-  )
-}
-
-///|
 test "long press recognizer separates tap from held press" {
   let state = LongPressGestureState::new(duration_ms=500.0, max_movement=8.0)
   let pressing = state.update(
@@ -58,7 +25,7 @@ test "long press recognizer separates tap from held press" {
     ),
   )
   assert_true(held.recognized)
-  inspect(held.state.phase.label(), content="Recognized")
+  assert_true(held.state.phase == LongPressGesturePhase::Recognized)
   let tap = LongPressGestureState::new(duration_ms=500.0).update(
     PointerEvent::new(
       position=Point::new(x=10.0, y=10.0),
