@@ -111,7 +111,8 @@ test "native accessibility bridge validates action roundtrip" {
         action=@core.SemanticsAction::Focus,
       ),
     ) {
-    NativeAccessibilityActionResult::ElementNotFound({ value: 7 }) => ()
+    NativeAccessibilityActionResult::ElementNotFound(id) =>
+      assert_true(id == @core.ElementId::new(7))
     _ => fail("expected missing element result")
   }
 }
