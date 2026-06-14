@@ -366,9 +366,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/host/host_image_test.mbt",
-      max_lines: 405,
-      target_lines: 375,
-      reason: "keep host image renderer facade and repaint tracker tests compact",
+      max_lines: 110,
+      target_lines: 95,
+      reason: "keep host image renderer facade lifecycle and default diagnostics tests compact",
+    },
+    {
+      path: "moui/backend/host/host_image_repaint_tracker_test.mbt",
+      max_lines: 305,
+      target_lines: 275,
+      reason: "keep host image repaint tracker revision, callback, lifecycle-count, stale, and closed-window tests compact",
     },
     {
       path: "moui/backend/host/host_image_completion_source_test.mbt",
