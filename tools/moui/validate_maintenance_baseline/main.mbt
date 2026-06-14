@@ -306,9 +306,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/host/host_services_test.mbt",
-      max_lines: 480,
-      target_lines: 430,
-      reason: "keep host service bridge and driver context-menu tests compact",
+      max_lines: 255,
+      target_lines: 235,
+      reason: "keep host service bridge, platform channel, and registered-service tests compact",
+    },
+    {
+      path: "moui/backend/host/host_driver_context_menu_test.mbt",
+      max_lines: 240,
+      target_lines: 220,
+      reason: "keep host driver document context-menu routing and action-map tests compact",
     },
     {
       path: "moui/backend/host/host_app_services_facade_test.mbt",
