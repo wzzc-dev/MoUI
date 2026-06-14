@@ -929,6 +929,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views form status, validation display, and baseline row descriptors compact",
     },
     {
+      path: "moui/views/form.mbt",
+      max_lines: 330,
+      target_lines: 300,
+      reason: "keep views form containers, field layout, and field semantics helpers compact",
+    },
+    {
+      path: "moui/views/form_validation.mbt",
+      max_lines: 420,
+      target_lines: 380,
+      reason: "keep views validation summary, workflow actions, and support text helpers compact",
+    },
+    {
       path: "moui/views/feedback_state.mbt",
       max_lines: 135,
       target_lines: 115,
