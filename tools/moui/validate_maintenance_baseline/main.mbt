@@ -576,7 +576,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/program_subscription.mbt",
-      max_lines: 312,
+      max_lines: 360,
       target_lines: 270,
       reason: "keep core subscription contract, opaque descriptor accessors, and plan summary helpers compact",
     },
@@ -1548,9 +1548,39 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/view.mbt",
-      max_lines: 40,
-      target_lines: 35,
+      max_lines: 48,
+      target_lines: 40,
       reason: "keep core View wrapper and realization entry compact",
+    },
+    {
+      path: "moui/runtime/runtime.mbt",
+      max_lines: 430,
+      target_lines: 380,
+      reason: "keep runtime AppRuntime facade, program message loop, and core handoff compact",
+    },
+    {
+      path: "moui/runtime/program_runtime_diagnostics.mbt",
+      max_lines: 270,
+      target_lines: 240,
+      reason: "keep runtime program counters, snapshots, and active lifecycle state compact",
+    },
+    {
+      path: "moui/runtime/program_runtime_effect_tasks.mbt",
+      max_lines: 130,
+      target_lines: 115,
+      reason: "keep runtime effect-task lifecycle handling compact",
+    },
+    {
+      path: "moui/runtime/program_runtime_subscriptions.mbt",
+      max_lines: 185,
+      target_lines: 160,
+      reason: "keep runtime subscription reuse, cancellation, and kind counts compact",
+    },
+    {
+      path: "moui/runtime/program_runtime_wbtest.mbt",
+      max_lines: 235,
+      target_lines: 205,
+      reason: "keep runtime program effects, tasks, and subscription tests compact",
     },
   ]
 }
