@@ -139,14 +139,19 @@ Use this skill when editing or reviewing:
 
 ## Package Map
 
-- `core/`: one MoonBit package for platform-neutral runtime, view specs, state,
-  app-owned route/history helpers, `Program` / `Effect` / `Subscription`,
-  layout, input, semantics, rich text editing, draw commands, styles, and theme
-  tokens. Keep files grouped by responsibility
+- `core/`: one MoonBit package for platform-neutral contracts, view specs,
+  state, app-owned route/history helpers, `Program` / `Effect` /
+  `Subscription`, layout, input, semantics, rich text editing, draw commands,
+  styles, theme tokens, and the transitional runtime kernel while implementation
+  moves to `moui/runtime`. Keep files grouped by responsibility
   (`runtime_state`,
   `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
   subpackages.
-- root `moui`: public facade over a curated app/runtime/theme alias set plus
+- `runtime/`: app/host runtime entrypoint package over `AppRuntime`. New app,
+  backend, smoke, and tooling code should use `@runtime.AppRuntime`,
+  `@runtime.new_view`, or `@runtime.new_program` instead of direct
+  `@core.AppRuntime`.
+- root `moui`: public facade over a curated app/theme alias set plus
   neutral default/light/dark theme helpers and custom `@core.Theme` builder
   APIs. Diagnostics, draw-command records, renderer-facing records, and
   low-level implementation payloads stay in their owning packages. It does not
@@ -334,6 +339,7 @@ Focused checks:
 
 ```sh
 moon test moui/core --target native
+moon test moui/runtime --target native
 moon test moui/views --target native
 moon test moui/backend/host --target native
 moon test moui/backend/web --target wasm-gc

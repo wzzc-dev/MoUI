@@ -2,8 +2,9 @@
 
 MoUI is still a prototype, so backward compatibility is not the first priority.
 The project should still keep a readable public shape: application code should
-start from the root `moui` facade plus `moui/views`, while host and renderer
-packages expose narrower contracts for platform and renderer integration.
+start from the root `moui` facade plus `moui/views`, runtime construction
+should go through `moui/runtime`, and host/renderer packages expose narrower
+contracts for platform and renderer integration.
 
 ## Surface Tiers
 
@@ -15,6 +16,11 @@ packages expose narrower contracts for platform and renderer integration.
   records stay in `moui/core` or their owning packages.
   `moui/views` exposes constructor helpers that return opaque `@core.View[Msg]`
   values.
+- Runtime API: `moui/runtime`. This is the app/host runtime entrypoint package.
+  Runtime consumers should type and construct runtimes through
+  `@runtime.AppRuntime`, `@runtime.new_view`, or `@runtime.new_program` rather
+  than reaching through `@core.AppRuntime`. During the package split it wraps
+  the existing core runtime kernel while the call surface moves first.
 - Core framework API: `moui/core`. This owns `View[Msg]`, `Program`, `Effect`,
   `Subscription`, state, layout, input, semantics, draw commands, diagnostics,
   and renderer-neutral platform-view contracts. It may expose diagnostic and
@@ -31,9 +37,10 @@ packages expose narrower contracts for platform and renderer integration.
 ## Review Rules
 
 Before adding exported declarations, first decide which tier owns the new
-symbol. Prefer keeping app ergonomics in `views`, neutral contracts in `core`,
-host routing in `backend/host`, and concrete renderer details in the renderer
-package that implements them.
+symbol. Prefer keeping app ergonomics in `views`, runtime construction and host
+runtime handles in `runtime`, neutral contracts in `core`, host routing in
+`backend/host`, and concrete renderer details in the renderer package that
+implements them.
 
 Run `moon info` after public API changes and review generated
 `pkg.generated.mbti` diffs. For no-API-change work, those files should stay
@@ -51,6 +58,8 @@ entrypoint. It checks current generated interface files for:
 
 - line and exported-declaration budgets on key packages;
 - root facade imports and forbidden host/renderer/runtime tokens;
+- `moui/runtime` existence, small API budget, and app/host source usage of
+  `@runtime.AppRuntime` instead of direct `@core.AppRuntime`;
 - required app-facing re-exports such as `View`, `Program`, `Effect`,
   `Subscription`, and `Theme`, while keeping runtime bridges, binding helpers,
   diagnostic descriptors, and draw command types out of the root facade;

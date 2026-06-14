@@ -43,7 +43,7 @@ pub fn TesterStepResult::label(self : TesterStepResult) -> String {
 ///|
 pub fn runtime_smoke_snapshot(
   title~ : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
 ) -> RuntimeSmokeSnapshot {
   ignore(runtime.draw_commands())
   let input = runtime.focused_text_input()
@@ -59,7 +59,7 @@ pub fn runtime_smoke_snapshot(
 ///|
 pub fn first_frame_step(
   title~ : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
 ) -> TesterStepResult {
   let snapshot = runtime_smoke_snapshot(title~, runtime)
   if snapshot.draw_command_count > 0 {

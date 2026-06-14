@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/runtime"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> @core.AppRuntime
+
+pub fn[Msg] new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> @core.AppRuntime
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @core {type AppRuntime}
+
+// Traits

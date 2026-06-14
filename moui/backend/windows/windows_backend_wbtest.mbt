@@ -33,7 +33,7 @@ test "windows host options carry optional scene resolver and smoke options stay 
     @host.HostWindowSceneResolution::SceneResolved(
       @host.HostWindowSceneInstance::new(
         request~,
-        runtime=@core.AppRuntime::new_view(
+        runtime=@runtime.AppRuntime::new_view(
           root=(@core.View::empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),

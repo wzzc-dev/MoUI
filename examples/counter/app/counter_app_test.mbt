@@ -19,7 +19,7 @@ test "counter runtime increments from button click" {
 }
 
 ///|
-fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame")
   }

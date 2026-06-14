@@ -60,7 +60,7 @@ pub struct WindowsRendererProvider {
 ///|
 struct WindowsApp {
   title : String
-  runtime : @core.AppRuntime
+  runtime : @runtime.AppRuntime
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   renderer_provider : WindowsRendererProvider
@@ -154,7 +154,7 @@ fn WindowsRendererProvider::cancel_image_resource_loads(
 ///|
 pub fn run_app_with_renderer_provider(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   provider~ : WindowsRendererProvider,
   options? : WindowsHostAppOptions = WindowsHostAppOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
@@ -172,7 +172,7 @@ pub fn run_app_with_renderer_provider(
 ///|
 pub fn run_app_with_renderer_provider_smoke(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   provider~ : WindowsRendererProvider,
   options? : WindowsHostAppOptions = WindowsHostAppOptions::new(),
   smoke_options? : WindowsHostSmokeOptions = WindowsHostSmokeOptions::new(),
@@ -191,7 +191,7 @@ pub fn run_app_with_renderer_provider_smoke(
 ///|
 fn run_app_with_renderer_provider_internal(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   provider~ : WindowsRendererProvider,
   options~ : WindowsHostAppOptions,
   smoke_options~ : WindowsHostSmokeOptions,

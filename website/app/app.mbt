@@ -198,7 +198,7 @@ fn Model::runtime(
   self : Model,
   width? : Double = 1180.0,
   height? : Double = 760.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   self.runtime_with_services(
     @host.HostAppServices::unavailable(),
     width~,
@@ -212,8 +212,8 @@ fn Model::runtime_with_services(
   services : @host.HostAppServices,
   width? : Double = 1180.0,
   height? : Double = 760.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::new_with_environment(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => model.update_with_services(message, services),
@@ -382,7 +382,7 @@ fn Model::website_current_content_height(
 pub fn runtime(
   width? : Double = 1180.0,
   height? : Double = 760.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   Model::new().runtime(width~, height~)
 }
 
@@ -391,7 +391,7 @@ pub fn runtime_with_services(
   services : @host.HostAppServices,
   width? : Double = 1180.0,
   height? : Double = 760.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   Model::new().runtime_with_services(services, width~, height~)
 }
 

@@ -449,7 +449,7 @@ fn draw_text_count_containing(
 }
 
 ///|
-fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text to click: " + text)
   }

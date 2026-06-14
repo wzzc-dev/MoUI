@@ -67,7 +67,7 @@ fn text_frame(
 }
 
 ///|
-fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame for \{text}")
   }
@@ -75,7 +75,7 @@ fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
 }
 
 ///|
-fn click_last_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+fn click_last_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard last_text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame for \{text}")
   }
@@ -83,7 +83,7 @@ fn click_last_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
 }
 
 ///|
-fn click_frame(runtime : @core.AppRuntime, frame : @core.Rect) -> Unit {
+fn click_frame(runtime : @runtime.AppRuntime, frame : @core.Rect) -> Unit {
   let position = @core.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
@@ -117,7 +117,7 @@ fn host_click_frame(
 }
 
 ///|
-fn click_point(runtime : @core.AppRuntime, position : @core.Point) -> Unit {
+fn click_point(runtime : @runtime.AppRuntime, position : @core.Point) -> Unit {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),

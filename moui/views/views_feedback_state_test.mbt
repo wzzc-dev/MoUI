@@ -49,7 +49,7 @@ test "feedback and state components compose visible status surfaces" {
       @views.stat_card("Views", "128", caption="Today"),
     ]),
   ])
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=680.0, height=880.0),
   )
@@ -115,7 +115,7 @@ test "feedback and form components use theme semantic colors" {
       theme~,
     ),
   ])
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=420.0, height=220.0),
   )
@@ -128,7 +128,7 @@ test "feedback and form components use theme semantic colors" {
 ///|
 test "progress status optional action dispatches typed message" {
   let selected = Ref("")
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.progress_status(
       "Upload bundle",
       value=0.25,

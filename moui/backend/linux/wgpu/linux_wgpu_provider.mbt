@@ -18,7 +18,7 @@ pub fn LinuxWgpuAppOptions::new(
 }
 
 ///|
-pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
+pub fn run_app(title : String, runtime : @runtime.AppRuntime) -> Unit {
   run_app_with_options(
     title,
     runtime,
@@ -30,7 +30,7 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
 ///|
 pub fn run_app_with_options(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   options~ : LinuxWgpuAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {

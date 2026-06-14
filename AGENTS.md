@@ -11,10 +11,11 @@ paths, or abstractions that only preserve old shapes.
 
 ## Project Shape
 
-- `core/` owns the platform-neutral runtime, state, layout, input, semantics,
-  draw command model, opaque public `View[Msg]`, typed events, app-owned
-  route/history helpers, `Program`, `Effect`, `Subscription`, and TEA runtime
-  diagnostics. Standard `Effect`/`Subscription` helpers may name common
+- `core/` owns the platform-neutral contract model, state, layout, input,
+  semantics, draw command model, opaque public `View[Msg]`, typed events,
+  app-owned route/history helpers, `Program`, `Effect`, `Subscription`, and
+  the transitional runtime kernel while implementation moves to
+  `moui/runtime`. Standard `Effect`/`Subscription` helpers may name common
   descriptor kinds, subscription reuse is keyed by the stable key plus source
   kind, effect-task lifecycle diagnostics may distinguish same-key descriptor
   kind changes from ordinary same-kind task replacement, program diagnostics
@@ -31,6 +32,11 @@ paths, or abstractions that only preserve old shapes.
   It remains one MoonBit package; internal files are grouped by responsibility
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
   etc.) rather than by additional package boundaries.
+- `runtime/` is the app/host runtime entrypoint package. New app, backend,
+  smoke, and tooling code should type and construct runtimes through
+  `@runtime.AppRuntime`, `@runtime.new_view`, or `@runtime.new_program`
+  instead of direct `@core.AppRuntime`; this keeps the call surface ready for
+  moving runtime logic out of `core` without exposing core private trees.
 - `views/` is a facade over core primitive builders. Public constructors return
   opaque `@core.View[Msg]`; `ViewSpec` and node payloads stay inside `core`.
 - `moui_theme/common/` owns the repo-local addon design-system common surface:
@@ -284,6 +290,7 @@ Useful focused checks:
 moon check
 moon check --warn-list +unnecessary_annotation
 moon test moui/core --target native
+moon test moui/runtime --target native
 moon test moui/views --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/backend/web --target wasm-gc

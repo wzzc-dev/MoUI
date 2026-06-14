@@ -103,7 +103,7 @@ pub fn MoWorkbenchApp::runtime(
   self : MoWorkbenchApp,
   width? : Double = 1220.0,
   height? : Double = 780.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   runtime(width~, height~)
 }
@@ -114,7 +114,7 @@ pub fn MoWorkbenchApp::runtime_with_transport(
   transport_runtime : PiTransportRuntime,
   width? : Double = 1220.0,
   height? : Double = 780.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   runtime_with_transport(transport_runtime, width~, height~)
 }
@@ -126,7 +126,7 @@ pub fn MoWorkbenchApp::runtime_with_agent_connectors(
   connector_runtimes : Array[AgentConnectorRuntime],
   width? : Double = 1220.0,
   height? : Double = 780.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   runtime_with_agent_connectors(
     transport_runtime,
@@ -140,7 +140,7 @@ pub fn MoWorkbenchApp::runtime_with_agent_connectors(
 pub fn runtime(
   width? : Double = 1220.0,
   height? : Double = 780.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   WorkbenchModel::new().runtime(width~, height~)
 }
 
@@ -149,7 +149,7 @@ pub fn runtime_with_transport(
   transport_runtime : PiTransportRuntime,
   width? : Double = 1220.0,
   height? : Double = 780.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   WorkbenchModel::new().runtime_with_transport(
     transport_runtime,
     width~,
@@ -163,7 +163,7 @@ pub fn runtime_with_agent_connectors(
   connector_runtimes : Array[AgentConnectorRuntime],
   width? : Double = 1220.0,
   height? : Double = 780.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   WorkbenchModel::new().runtime_with_agent_connectors(
     transport_runtime,
     connector_runtimes,
@@ -177,7 +177,7 @@ fn WorkbenchModel::runtime(
   self : WorkbenchModel,
   width? : Double = 1220.0,
   height? : Double = 780.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   self.runtime_with_transport(
     PiTransportRuntime::unavailable(),
     width~,
@@ -191,7 +191,7 @@ fn WorkbenchModel::runtime_with_transport(
   transport_runtime : PiTransportRuntime,
   width? : Double = 1220.0,
   height? : Double = 780.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   self.runtime_with_agent_connectors(transport_runtime, [], width~, height~)
 }
 
@@ -202,8 +202,8 @@ fn WorkbenchModel::runtime_with_agent_connectors(
   connector_runtimes : Array[AgentConnectorRuntime],
   width? : Double = 1220.0,
   height? : Double = 780.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::new_with_environment(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => {

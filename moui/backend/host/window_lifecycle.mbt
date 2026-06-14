@@ -40,7 +40,7 @@ pub(all) struct HostWindowOpenRequest {
 ///|
 pub(all) struct HostWindowSceneInstance {
   request : HostWindowOpenRequest
-  runtime : @core.AppRuntime
+  runtime : @runtime.AppRuntime
 }
 
 ///|
@@ -140,7 +140,7 @@ pub fn HostWindowOpenRequest::new(
 ///|
 pub fn HostWindowSceneInstance::new(
   request~ : HostWindowOpenRequest,
-  runtime~ : @core.AppRuntime,
+  runtime~ : @runtime.AppRuntime,
 ) -> HostWindowSceneInstance {
   { request, runtime }
 }

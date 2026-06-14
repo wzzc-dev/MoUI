@@ -345,8 +345,8 @@ fn ParentImporterModel::runtime_with_services(
   services : @host.HostAppServices,
   width? : Double = 900.0,
   height? : Double = 680.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::new(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => model.update_with_services(message, services),
@@ -379,7 +379,7 @@ fn run_file_importer_effect(update : FileImporterUpdate) -> FileImporterModel {
 }
 
 ///|
-fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame for " + text)
   }

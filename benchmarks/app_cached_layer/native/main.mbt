@@ -175,7 +175,7 @@ fn app_bench_assert_renderer_supported(
 
 ///|
 fn app_bench_pipeline_counters(
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
 ) -> AppBenchPipelineCounters {
   let snapshot = runtime.inspector_snapshot().runtime
   {
@@ -282,7 +282,7 @@ fn app_bench_draw_cached_layer_count(
 ///|
 fn app_bench_cached_frame(
   renderer : @skia_renderer.SkiaRasterRenderer,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   label : String,
 ) -> CachedFrameSample {
   let pipeline_before = app_bench_pipeline_counters(runtime)
@@ -420,7 +420,7 @@ fn app_bench_cached_frame(
 ///|
 fn app_bench_full_frame(
   renderer : @skia_renderer.SkiaRasterRenderer,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   label : String,
 ) -> FullFrameSample {
   let pipeline_before = app_bench_pipeline_counters(runtime)
@@ -451,7 +451,7 @@ fn app_bench_full_frame(
 fn app_bench_showcase_runtime(
   width : Double,
   height : Double,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   @showcase.ShowcaseModel::new()
   .update(@showcase.ShowcaseMsg::SelectSection("runtime-renderer"))
   .runtime(width~, height~)
@@ -461,17 +461,17 @@ fn app_bench_showcase_runtime(
 fn app_bench_markdown_runtime(
   width : Double,
   height : Double,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   @markdown.MarkdownEditorApp::new().runtime(width~, height~)
 }
 
 ///|
-fn app_bench_no_prepare(_runtime : @core.AppRuntime) -> Unit {
+fn app_bench_no_prepare(_runtime : @runtime.AppRuntime) -> Unit {
   ()
 }
 
 ///|
-fn app_bench_prepare_markdown_input(runtime : @core.AppRuntime) -> Unit {
+fn app_bench_prepare_markdown_input(runtime : @runtime.AppRuntime) -> Unit {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
@@ -484,7 +484,7 @@ fn app_bench_prepare_markdown_input(runtime : @core.AppRuntime) -> Unit {
 
 ///|
 fn app_bench_dispatch_showcase_scroll(
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   index : Int,
 ) -> Unit {
   let direction = if index / 18 % 2 == 0 { -44.0 } else { 44.0 }
@@ -501,7 +501,7 @@ fn app_bench_dispatch_showcase_scroll(
 
 ///|
 fn app_bench_dispatch_showcase_sidebar_hover(
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   index : Int,
 ) -> Unit {
   let y = if index % 2 == 0 { 208.0 } else { 250.0 }
@@ -523,7 +523,7 @@ fn app_bench_markdown_token(index : Int) -> String {
 
 ///|
 fn app_bench_dispatch_markdown_input(
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   index : Int,
 ) -> Unit {
   runtime.dispatch_event(
@@ -535,7 +535,7 @@ fn app_bench_dispatch_markdown_input(
 
 ///|
 fn app_bench_dispatch_markdown_scroll(
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   index : Int,
 ) -> Unit {
   let direction = if index / 18 % 2 == 0 { -42.0 } else { 42.0 }
@@ -552,7 +552,7 @@ fn app_bench_dispatch_markdown_scroll(
 
 ///|
 fn app_bench_dispatch_markdown_caret_overlay(
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   index : Int,
 ) -> Unit {
   let key = if index % 2 == 0 { "ArrowRight" } else { "ArrowLeft" }
@@ -566,9 +566,9 @@ fn app_bench_run_cached(
   label : String,
   width : Double,
   height : Double,
-  make_runtime : (Double, Double) -> @core.AppRuntime,
-  prepare : (@core.AppRuntime) -> Unit,
-  drive : (@core.AppRuntime, Int) -> Unit,
+  make_runtime : (Double, Double) -> @runtime.AppRuntime,
+  prepare : (@runtime.AppRuntime) -> Unit,
+  drive : (@runtime.AppRuntime, Int) -> Unit,
   frames : Int,
   warmup : Int,
 ) -> CachedRunResult {
@@ -709,9 +709,9 @@ fn app_bench_run_full(
   label : String,
   width : Double,
   height : Double,
-  make_runtime : (Double, Double) -> @core.AppRuntime,
-  prepare : (@core.AppRuntime) -> Unit,
-  drive : (@core.AppRuntime, Int) -> Unit,
+  make_runtime : (Double, Double) -> @runtime.AppRuntime,
+  prepare : (@runtime.AppRuntime) -> Unit,
+  drive : (@runtime.AppRuntime, Int) -> Unit,
   frames : Int,
   warmup : Int,
 ) -> FullRunResult {
@@ -828,9 +828,9 @@ fn app_bench_run_scenario(
   label : String,
   width : Double,
   height : Double,
-  make_runtime : (Double, Double) -> @core.AppRuntime,
-  prepare : (@core.AppRuntime) -> Unit,
-  drive : (@core.AppRuntime, Int) -> Unit,
+  make_runtime : (Double, Double) -> @runtime.AppRuntime,
+  prepare : (@runtime.AppRuntime) -> Unit,
+  drive : (@runtime.AppRuntime, Int) -> Unit,
   frames : Int,
   warmup : Int,
 ) -> Unit {

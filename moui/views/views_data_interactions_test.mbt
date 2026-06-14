@@ -1,7 +1,7 @@
 ///|
 test "selectable list dispatches item messages" {
   let selected = Ref("")
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.selectable_list(
       [
         @views.SelectableListItem::new(
@@ -58,7 +58,7 @@ test "table row selection dispatches row index" {
     @views.table_column(id="name", label="Name", width=120.0),
     @views.table_column(id="state", label="State", width=96.0),
   ]
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.table(
       columns,
       [["Atlas", "Active"], ["Billing", "Review"]],
@@ -89,7 +89,7 @@ test "table row selection dispatches row index" {
 ///|
 test "selection toolbar dispatches enabled bulk action and disables empty selection" {
   let selected = Ref("")
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.selection_toolbar(
       selected_count=2,
       total_count=4,
@@ -136,7 +136,7 @@ test "selection toolbar dispatches enabled bulk action and disables empty select
   )
   inspect(selected.val, content="archive")
   selected.val = ""
-  let empty_runtime = @core.AppRuntime::new_view(
+  let empty_runtime = @runtime.AppRuntime::new_view(
     root=@views.selection_toolbar(
       selected_count=0,
       actions=[

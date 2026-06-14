@@ -50,7 +50,7 @@ pub fn MacosSkiaSmokeOptions::new(
 }
 
 ///|
-pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
+pub fn run_app(title : String, runtime : @runtime.AppRuntime) -> Unit {
   run_app_with_options(
     title,
     runtime,
@@ -62,7 +62,7 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
 ///|
 pub fn run_app_with_options(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   options~ : MacosSkiaAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
@@ -86,7 +86,7 @@ pub fn run_app_with_options(
 ///|
 pub fn run_smoke_app_with_options(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   options~ : MacosSkiaAppOptions,
   smoke_options? : MacosSkiaSmokeOptions = MacosSkiaSmokeOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
@@ -115,7 +115,7 @@ pub fn run_smoke_app_with_options(
 ///|
 pub async fn run_app_with_options_async_pump(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   options~ : MacosSkiaAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
   frame_interval_ms? : Int = 8,
