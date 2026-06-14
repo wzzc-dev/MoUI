@@ -359,18 +359,13 @@ fn compact_text(value : String) -> String {
 }
 
 ///|
-pub fn runtime(
+pub fn program(
   commands~ : @host.HostWebViewCommandQueue,
   capabilities~ : @host.HostWebViewCapabilities,
-  width? : Double = 1120.0,
-  height? : Double = 760.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::simple(
-      init=Model::new(commands~, capabilities~),
-      update~,
-      view~,
-    ),
-    size=@core.Size::new(width~, height~),
+) -> @core.Program[Model, Msg] {
+  @core.Program::simple(
+    init=Model::new(commands~, capabilities~),
+    update~,
+    view~,
   )
 }

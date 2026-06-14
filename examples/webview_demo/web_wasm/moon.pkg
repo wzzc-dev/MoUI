@@ -1,4 +1,5 @@
 import {
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/web",
   "wzzc-dev/moui/backend/host",
   "examples/webview_demo/app" @webview_demo,

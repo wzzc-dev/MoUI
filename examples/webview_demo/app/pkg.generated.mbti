@@ -4,13 +4,12 @@ package "examples/webview_demo/app"
 import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
 }
 
 // Values
 pub let default_url : String
 
-pub fn runtime(commands~ : @host.HostWebViewCommandQueue, capabilities~ : @host.HostWebViewCapabilities, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn program(commands~ : @host.HostWebViewCommandQueue, capabilities~ : @host.HostWebViewCapabilities) -> @core.Program[Model, Msg]
 
 pub fn update(Model, Msg) -> Model
 
