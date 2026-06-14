@@ -936,9 +936,21 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/form_validation.mbt",
-      max_lines: 420,
-      target_lines: 380,
-      reason: "keep views validation summary, workflow actions, and support text helpers compact",
+      max_lines: 205,
+      target_lines: 180,
+      reason: "keep views validation summary rendering and summary sizing helpers compact",
+    },
+    {
+      path: "moui/views/form_workflow.mbt",
+      max_lines: 190,
+      target_lines: 170,
+      reason: "keep views form action row, workflow footer, and focus-status helpers compact",
+    },
+    {
+      path: "moui/views/form_support_text.mbt",
+      max_lines: 40,
+      target_lines: 30,
+      reason: "keep views form error, helper text, and validation style resolution compact",
     },
     {
       path: "moui/views/feedback_state.mbt",
