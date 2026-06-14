@@ -433,8 +433,6 @@ pub fn[T] DerivedState::get(Self[T]) -> T
 pub fn[T] DerivedState::new(get~ : () -> T, subscribe~ : (() -> Unit) -> Array[StateSubscription]) -> Self[T]
 pub fn[T] DerivedState::subscribe(Self[T], () -> Unit) -> Array[StateSubscription]
 
-type DirtyFlags derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct DragDropEvent {
   phase : DragDropPhase
   paths : Array[String]
