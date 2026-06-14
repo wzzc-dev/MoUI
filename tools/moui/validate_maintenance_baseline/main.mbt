@@ -1019,6 +1019,30 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views form error, helper text, and validation style resolution compact",
     },
     {
+      path: "moui/views/input_group_shell.mbt",
+      max_lines: 45,
+      target_lines: 35,
+      reason: "keep views input prefix/suffix shell compact",
+    },
+    {
+      path: "moui/views/input_text_wrappers.mbt",
+      max_lines: 95,
+      target_lines: 85,
+      reason: "keep views clearable and password text wrappers compact",
+    },
+    {
+      path: "moui/views/input_number.mbt",
+      max_lines: 105,
+      target_lines: 95,
+      reason: "keep views number field and stepper helpers compact",
+    },
+    {
+      path: "moui/views/input_multiline.mbt",
+      max_lines: 35,
+      target_lines: 25,
+      reason: "keep views multiline text area shell compact",
+    },
+    {
       path: "moui/views/feedback_state.mbt",
       max_lines: 135,
       target_lines: 115,
