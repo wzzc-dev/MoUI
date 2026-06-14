@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui/backend/windows/wgpu" @windows_wgpu_backend,
+  "wzzc-dev/moui/runtime",
   "examples/counter/app" @counter_app,
   "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
 }

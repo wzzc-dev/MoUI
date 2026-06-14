@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/macos"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
@@ -29,11 +30,11 @@ pub fn macos_system_theme() -> @wzzc-dev/moui/core.ColorScheme
 
 pub fn macos_webview_capabilities() -> @host.HostWebViewCapabilities
 
-pub fn run_app_with_renderer_provider(String, @wzzc-dev/moui/core.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_renderer_provider(String, @runtime.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
-pub async fn run_app_with_renderer_provider_async_pump(String, @wzzc-dev/moui/core.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue, frame_interval_ms? : Int) -> Unit
+pub async fn run_app_with_renderer_provider_async_pump(String, @runtime.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, window_requests? : @host.HostWindowRequestQueue, frame_interval_ms? : Int) -> Unit
 
-pub fn run_app_with_renderer_provider_smoke(String, @wzzc-dev/moui/core.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_renderer_provider_smoke(String, @runtime.AppRuntime, provider~ : MacosRendererProvider, options? : MacosHostAppOptions, smoke_options? : MacosHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub fn sync_macos_platform_views(@wzzc-dev/window/macos.Window, @wzzc-dev/moui/core.DrawFrame) -> Unit
 

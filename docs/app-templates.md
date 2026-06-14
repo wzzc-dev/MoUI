@@ -23,23 +23,29 @@ Minimal `moon.pkg`:
 
 ```moonbit
 import {
-  "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui",
   "wzzc-dev/moui/views",
 }
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+} for "test"
 
 options(
   targets: { },
 )
 ```
 
-Add `"wzzc-dev/moui/backend/host"` only when the app calls host services, and
-add the package to `moon.work` when it is part of this repository.
+Default shared app imports should stay at `moui + views`. Add
+`"wzzc-dev/moui/backend/host"` only when the app calls host services, keep
+`core/runtime` in test-only imports when a white-box runtime smoke needs them,
+and add the package to `moon.work` when it is part of this repository.
 
 ## Counter
 
 Use this for the smallest TEA-first app: one model, one message enum, pure
-`update`, declarative `view`, and a runtime helper for tests.
+`update`, declarative `view`, and a `Program` factory for platform entrypoints.
 
 `app.mbt`:
 
@@ -74,7 +80,7 @@ pub fn update(model : Model, msg : Msg) -> Model {
 }
 
 ///|
-pub fn view(model : Model) -> @core.View[Msg] {
+pub fn view(model : Model) -> @moui.View[Msg] {
   center(
     card(
       column([
@@ -91,14 +97,8 @@ pub fn view(model : Model) -> @core.View[Msg] {
 }
 
 ///|
-pub fn runtime(
-  width? : Double = 520.0,
-  height? : Double = 360.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::simple(init=Model::new(), update~, view~),
-    size=@core.Size::new(width~, height~),
-  )
+pub fn program() -> @moui.Program[Model, Msg] {
+  @moui.Program::simple(init=Model::new(), update~, view~)
 }
 ```
 
@@ -110,6 +110,22 @@ test "counter update changes model" {
   let model = update(Model::new(), Increment)
   inspect(model.count, content="1")
   inspect(update(model, Reset).count, content="0")
+}
+```
+
+Platform entrypoints construct the runtime outside the shared app package:
+
+```moonbit
+///|
+fn main {
+  @web.run_app(
+    "MoUI Counter",
+    @runtime.new_program_with_dimensions(
+      program=@counter_app.program(),
+      width=520.0,
+      height=360.0,
+    ),
+  )
 }
 ```
 
@@ -465,7 +481,7 @@ moon test examples/command_palette/app --target native
 
 ## Template Checklist
 
-- Keep `Model`, `Msg`, `update`, `view`, and `runtime` in the shared app
+- Keep `Model`, `Msg`, `update`, `view`, and `program` in the shared app
   package first.
 - Add package-local tests for pure update behavior and one runtime smoke.
 - Keep platform entrypoints thin and free of business logic.
