@@ -1398,9 +1398,21 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/views_form_feedback_test.mbt",
-      max_lines: 255,
-      target_lines: 230,
-      reason: "keep views form field, workflow, validation, and input wrapper tests compact",
+      max_lines: 105,
+      target_lines: 95,
+      reason: "keep views form field and validation-summary tests compact",
+    },
+    {
+      path: "moui/views/views_form_workflow_test.mbt",
+      max_lines: 125,
+      target_lines: 110,
+      reason: "keep views form workflow, validating-state, and core validation bridge tests compact",
+    },
+    {
+      path: "moui/views/views_input_wrappers_test.mbt",
+      max_lines: 40,
+      target_lines: 35,
+      reason: "keep views enhanced input wrapper composition tests compact",
     },
     {
       path: "moui/views/views_choice_semantics_test.mbt",
