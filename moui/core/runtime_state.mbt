@@ -28,7 +28,6 @@ struct RuntimeState {
   mut redraw_callback : (() -> Unit)?
   mut action_commands : ActionCommandMap
   clock : Clock
-  animations : Array[AnimationController]
   saveable_state : SaveableStateStore
 }
 
@@ -68,7 +67,6 @@ fn RuntimeState::new_spec(
     redraw_callback: None,
     action_commands: ActionCommandMap::new(),
     clock: Clock::new(),
-    animations: [],
     saveable_state: SaveableStateStore::new(),
   }
   let mounted = mount_view_spec_for_runtime(root, Some(state), 1)
@@ -116,7 +114,6 @@ fn RuntimeState::new_component(
     redraw_callback: None,
     action_commands: ActionCommandMap::new(),
     clock: Clock::new(),
-    animations: [],
     saveable_state: SaveableStateStore::new(),
   }
   let mounted = mount_view_spec_for_runtime(root_spec, Some(state), 1)

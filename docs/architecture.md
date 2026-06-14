@@ -438,7 +438,7 @@ The visual system keeps platform-neutral tokens and styles:
   and shadow metadata.
 - `ShadowStyle` and `BorderStyle` are view-level style inputs; paint converts
   them into concrete `DrawCommand` payloads once the final frame is known.
-- `AnimatedDouble`, `AnimatedPoint`, `AnimatedColor`, `TransitionSpec`, and
+- `animated_value`, `animated_point`, `animated_color`, `TransitionSpec`, and
   `TransitionStyle` provide small property-animation samplers for state-driven
   visuals. `View::transition` and `View::presence` apply those samples through
   existing opacity, offset, scale, and foreground modifiers, including a
