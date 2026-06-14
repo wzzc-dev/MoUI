@@ -1,6 +1,6 @@
 ///|
 pub fn picker_item(id : String, label : String) -> @core.PickerItem {
-  { id, label }
+  @core.PickerItem::new(id~, label~)
 }
 
 ///|
