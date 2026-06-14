@@ -34,3 +34,6 @@ Current tools:
 - `scripts/smoke-check.mjs` validates the checked-in `smoke/gates.json`
   catalog that maps daily, nightly, and release smoke suites to commands,
   structured result shapes, docs, workflows, and ignored `artifacts/` outputs.
+- `scripts/smoke-gate.mjs` is the catalog-backed dry-run/run entrypoint for
+  selected smoke suites; CI uses it to avoid duplicating suite commands in
+  workflow YAML.

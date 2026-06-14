@@ -90,6 +90,10 @@ run node --check scripts/smoke-check.mjs
 run node --check scripts/test-smoke-check.mjs
 run node scripts/test-smoke-check.mjs
 run node scripts/smoke-check.mjs --check
+run node --check scripts/smoke-gate.mjs
+run node --check scripts/test-smoke-gate.mjs
+run node scripts/test-smoke-gate.mjs
+run node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 run sh -n scripts/ci-moon-update.sh
 run sh -n scripts/ci-web-runtime-presentation.sh
 
