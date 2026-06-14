@@ -161,10 +161,10 @@ fn view(draft : String) -> @core.View[Msg] {
 | `form_actions` | `views/form_workflow.mbt` | ButtonStyle/surface/text | Group with disabled action state | `views/views_test.mbt` | Showcase Forms | Reusable save/cancel action row with optional status text and app-controlled disabled submit state. Validation and submit policy remain in the app model. |
 | `form_workflow_bar` | `views/form_workflow.mbt` | FormValidationStyle/surface/text/ButtonStyle | Group with invalid state | `views/views_test.mbt` | Showcase Forms | Composes validation summary, first-invalid focus action, `FocusScope` Enter/Escape target status, and a submit-guarded action row into one reusable form footer. Actual focus movement remains app/runtime-owned. |
 | `form_error` / `form_helper_text` | `views/form_support_text.mbt` | FormValidationStyle/theme typography/colors | Text | `views/views_test.mbt` | Showcase Forms | Reusable support text helpers for app-local form layouts. `form_error` can consume a neutral validation style while `form_helper_text` stays muted-theme text. |
-| `input_group` | `views/input_group.mbt` | Theme surface/border | Child semantics | `views/views_test.mbt` | Showcase Forms | Prefix/suffix shell for app-owned inputs. |
-| `clearable_text_field` / `password_field` | `views/input_group.mbt` | TextFieldStyle/ButtonStyle | Text field plus button semantics | `views/views_test.mbt` | Showcase Forms | Controlled wrappers; password reveal state remains app-owned. |
-| `number_field` / `stepper` | `views/input_group.mbt` | TextFieldStyle/ButtonStyle | Text field and button semantics | `views/views_test.mbt` | Showcase Forms | Keeps parsing and numeric state in the app model. |
-| `multiline_text_area_shell` | `views/input_group.mbt` | TextFieldStyle | Text field semantics | `views/views_test.mbt` | Showcase Forms | Fixed-height text field shell for multi-line layouts without adding an editor engine. |
+| `input_group` | `views/input_group_shell.mbt` | Theme surface/border | Child semantics | `views/views_test.mbt` | Showcase Forms | Prefix/suffix shell for app-owned inputs. |
+| `clearable_text_field` / `password_field` | `views/input_text_wrappers.mbt` | TextFieldStyle/ButtonStyle | Text field plus button semantics | `views/views_test.mbt` | Showcase Forms | Controlled wrappers; password reveal state remains app-owned. |
+| `number_field` / `stepper` | `views/input_number.mbt` | TextFieldStyle/ButtonStyle | Text field and button semantics | `views/views_test.mbt` | Showcase Forms | Keeps parsing and numeric state in the app model. |
+| `multiline_text_area_shell` | `views/input_multiline.mbt` | TextFieldStyle | Text field semantics | `views/views_test.mbt` | Showcase Forms | Fixed-height text field shell for multi-line layouts without adding an editor engine. |
 
 ## Layout And Containers
 
