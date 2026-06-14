@@ -143,6 +143,13 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn about_to_wait(
   self,
   event_loop,
 ) {
+  // Drain pending webview commands before pumping GTK events.
+  // This ensures LoadUrl commands reach WebKit before GTK processes
+  // stale navigation events (e.g., initial page load completing after
+  // the user has already navigated elsewhere).
+  for slot in self.platform_slots.slots {
+    self.drain_web_view_commands(slot)
+  }
   if pump_linux_webview_runtime() {
     event_loop.set_control_flow(
       @window_core.ControlFlow::wait_until(
@@ -326,6 +333,21 @@ fn LinuxApp::redraw_window(
         metrics=surface_metrics,
         decorations=platform_slot.decorations,
       )
+
+      // Set up webview pixel drawing to happen during render_frame (after commands, before flush)
+      let has_webviews = frame.platform_views.length() > 0
+      if has_webviews {
+        let win = platform_slot.window
+        let f = frame
+        let offset_y = platform_slot.decorations.titlebar_height
+        let renderer = platform_slot.renderer
+        platform_slot.renderer.set_platform_view_draw_fn(
+          Some(fn() {
+            draw_linux_webview_to_renderer(win, renderer, f, content_offset_y=offset_y)
+          }),
+        )
+      }
+
       let result = platform_slot.renderer.render_frame({
         ..frame,
         commands,
@@ -336,13 +358,10 @@ fn LinuxApp::redraw_window(
         },
       })
 
-      // Draw offscreen webview contents onto the rendered frame
-      draw_linux_webview_to_renderer(
-        platform_slot.window,
-        platform_slot.renderer,
-        frame,
-        content_offset_y=platform_slot.decorations.titlebar_height,
-      )
+      // Clear the platform view draw function
+      if has_webviews {
+        platform_slot.renderer.set_platform_view_draw_fn(None)
+      }
 
       sync_linux_platform_views(
         platform_slot.window,

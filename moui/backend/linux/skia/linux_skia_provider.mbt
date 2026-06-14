@@ -232,6 +232,9 @@ fn host_renderer_from_skia(
         dst_height,
       )
     },
+    set_platform_view_draw_fn=draw_fn => {
+      renderer.set_platform_view_draw_fn(draw_fn)
+    },
   )
 }
 
