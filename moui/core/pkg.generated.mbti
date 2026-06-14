@@ -798,7 +798,7 @@ pub(all) struct InspectorSnapshot {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn InspectorSnapshot::from_runtime(AppRuntime) -> Self
 
-type Key derive(Eq, ToJson, @debug.Debug)
+type Key derive(Eq)
 pub fn Key::new(String) -> Self
 
 pub(all) struct KeyModifiers {
