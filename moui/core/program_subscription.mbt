@@ -19,11 +19,26 @@ priv struct SubscriptionSource[Msg] {
 }
 
 ///|
-pub(all) struct SubscriptionDescriptor {
+struct SubscriptionDescriptor {
   key : String
   kind : String
   label : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn SubscriptionDescriptor::key(self : SubscriptionDescriptor) -> String {
+  self.key
+}
+
+///|
+pub fn SubscriptionDescriptor::kind(self : SubscriptionDescriptor) -> String {
+  self.kind
+}
+
+///|
+pub fn SubscriptionDescriptor::label(self : SubscriptionDescriptor) -> String {
+  self.label
+}
 
 ///|
 pub(all) enum SubscriptionPlanKind {

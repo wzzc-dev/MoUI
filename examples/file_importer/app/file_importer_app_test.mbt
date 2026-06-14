@@ -58,9 +58,9 @@ test "file importer handles mocked pending completion" {
   assert_true(update.model.status is FileImporterStatus::Requesting)
   let summary = update.effect.plan_summary()
   inspect(summary.descriptors.length(), content="1")
-  inspect(summary.descriptors[0].key, content="host:file-import")
-  inspect(summary.descriptors[0].kind, content="host-service")
-  inspect(summary.descriptors[0].label, content="Import files")
+  inspect(summary.descriptors[0].key(), content="host:file-import")
+  inspect(summary.descriptors[0].kind(), content="host-service")
+  inspect(summary.descriptors[0].label(), content="Import files")
   let model = @core.State::new(update.model)
   match update.effect {
     @core.Effect::Run(_descriptor, run) =>
@@ -182,15 +182,15 @@ test "file importer child effect maps pending completion into parent" {
     content="1",
   )
   inspect(
-    pending_snapshot.last_scheduled_effect_summary.descriptors[0].key,
+    pending_snapshot.last_scheduled_effect_summary.descriptors[0].key(),
     content="host:file-import",
   )
   inspect(
-    pending_snapshot.last_scheduled_effect_summary.descriptors[0].kind,
+    pending_snapshot.last_scheduled_effect_summary.descriptors[0].kind(),
     content="host-service",
   )
   inspect(
-    pending_snapshot.last_scheduled_effect_summary.descriptors[0].label,
+    pending_snapshot.last_scheduled_effect_summary.descriptors[0].label(),
     content="Import files",
   )
   inspect(
@@ -198,28 +198,28 @@ test "file importer child effect maps pending completion into parent" {
     content="1",
   )
   inspect(
-    pending_snapshot.last_subscription_plan_summary.descriptors[0].key.contains(
-      "host-service:completion:",
-    ),
+    pending_snapshot.last_subscription_plan_summary.descriptors[0]
+    .key()
+    .contains("host-service:completion:"),
     content="true",
   )
   inspect(
-    pending_snapshot.last_subscription_plan_summary.descriptors[0].kind,
+    pending_snapshot.last_subscription_plan_summary.descriptors[0].kind(),
     content="host-service",
   )
   inspect(
-    pending_snapshot.last_subscription_plan_summary.descriptors[0].label,
+    pending_snapshot.last_subscription_plan_summary.descriptors[0].label(),
     content="Import files completion",
   )
   inspect(pending_snapshot.active_subscriptions.length(), content="1")
   inspect(
-    pending_snapshot.active_subscriptions[0].key.contains(
-      "host-service:completion:",
-    ),
+    pending_snapshot.active_subscriptions[0]
+    .key()
+    .contains("host-service:completion:"),
     content="true",
   )
   inspect(
-    pending_snapshot.active_subscriptions[0].label,
+    pending_snapshot.active_subscriptions[0].label(),
     content="Import files completion",
   )
   let pending = services.drain_pending()

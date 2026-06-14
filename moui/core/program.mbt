@@ -1,9 +1,24 @@
 ///|
-pub(all) struct EffectDescriptor {
+struct EffectDescriptor {
   key : String
   kind : String
   label : String
 } derive(Eq, Debug, ToJson)
+
+///|
+pub fn EffectDescriptor::key(self : EffectDescriptor) -> String {
+  self.key
+}
+
+///|
+pub fn EffectDescriptor::kind(self : EffectDescriptor) -> String {
+  self.kind
+}
+
+///|
+pub fn EffectDescriptor::label(self : EffectDescriptor) -> String {
+  self.label
+}
 
 ///|
 pub(all) enum Effect[Msg] {
