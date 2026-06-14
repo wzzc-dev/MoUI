@@ -912,9 +912,45 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/style_api.mbt",
-      max_lines: 525,
-      target_lines: 480,
-      reason: "keep views style variants, app-owned toast/file helpers, navigation descriptors, and style mapping compact",
+      max_lines: 155,
+      target_lines: 135,
+      reason: "keep views style variants and style mapping compact",
+    },
+    {
+      path: "moui/views/choice_state.mbt",
+      max_lines: 25,
+      target_lines: 20,
+      reason: "keep views choice item, chip variant, and segmented control descriptors compact",
+    },
+    {
+      path: "moui/views/form_state.mbt",
+      max_lines: 45,
+      target_lines: 35,
+      reason: "keep views form status, validation display, and baseline row descriptors compact",
+    },
+    {
+      path: "moui/views/feedback_state.mbt",
+      max_lines: 135,
+      target_lines: 115,
+      reason: "keep views feedback tones, state actions, and toast queue helpers compact",
+    },
+    {
+      path: "moui/views/file_import_state.mbt",
+      max_lines: 45,
+      target_lines: 35,
+      reason: "keep views file import availability and file selection helpers compact",
+    },
+    {
+      path: "moui/views/layout_state.mbt",
+      max_lines: 40,
+      target_lines: 30,
+      reason: "keep views section-list and scroll-to-index descriptors compact",
+    },
+    {
+      path: "moui/views/navigation_state.mbt",
+      max_lines: 140,
+      target_lines: 120,
+      reason: "keep views menu, popover, sidebar, breadcrumb, and wizard descriptors compact",
     },
     {
       path: "moui/views/data_state.mbt",
