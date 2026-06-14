@@ -497,29 +497,47 @@ fn core_control_consumer_roots() -> Array[String] {
 ///|
 fn forbidden_core_control_tokens() -> Array[ForbiddenSourceToken] {
   [
-    { label: "checkbox", token: "@core.View::checkbox" },
-    { label: "controlled checkbox", token: "@core.View::controlled_checkbox" },
-    { label: "text field", token: "@core.View::text_field" },
+    { label: "empty view", token: "@core.View::empty(" },
+    { label: "text view", token: "@core.View::text(" },
+    { label: "button", token: "@core.View::button(" },
+    { label: "image", token: "@core.View::image(" },
+    { label: "web view", token: "@core.View::web_view(" },
+    { label: "flex layout", token: "@core.View::flex(" },
+    { label: "spacer", token: "@core.View::spacer(" },
+    { label: "frame node", token: "@core.View::frame_node(" },
+    { label: "stack layout", token: "@core.View::stack(" },
+    { label: "scroll view", token: "@core.View::scroll(" },
+    { label: "grid layout", token: "@core.View::grid(" },
+    { label: "list layout", token: "@core.View::list(" },
+    { label: "custom view", token: "@core.View::custom_view(" },
+    {
+      label: "custom children layout",
+      token: "@core.View::custom_children_layout(",
+    },
+    { label: "component", token: "@core.View::component(" },
+    { label: "checkbox", token: "@core.View::checkbox(" },
+    { label: "controlled checkbox", token: "@core.View::controlled_checkbox(" },
+    { label: "text field", token: "@core.View::text_field(" },
     {
       label: "controlled text field",
-      token: "@core.View::controlled_text_field",
+      token: "@core.View::controlled_text_field(",
     },
-    { label: "rich text editor", token: "@core.View::rich_text_editor" },
+    { label: "rich text editor", token: "@core.View::rich_text_editor(" },
     {
       label: "controlled rich text editor",
-      token: "@core.View::controlled_rich_text_editor",
+      token: "@core.View::controlled_rich_text_editor(",
     },
-    { label: "picker", token: "@core.View::picker" },
-    { label: "controlled picker", token: "@core.View::controlled_picker" },
-    { label: "datepicker", token: "@core.View::datepicker" },
+    { label: "picker", token: "@core.View::picker(" },
+    { label: "controlled picker", token: "@core.View::controlled_picker(" },
+    { label: "datepicker", token: "@core.View::datepicker(" },
     {
       label: "controlled datepicker",
-      token: "@core.View::controlled_datepicker",
+      token: "@core.View::controlled_datepicker(",
     },
-    { label: "search bar", token: "@core.View::search_bar" },
+    { label: "search bar", token: "@core.View::search_bar(" },
     {
       label: "controlled search bar",
-      token: "@core.View::controlled_search_bar",
+      token: "@core.View::controlled_search_bar(",
     },
   ]
 }
@@ -579,16 +597,16 @@ fn validate_core_control_entrypoint_usage(
         direct_core_control_uses += 1
         failures.push(
           path +
-          ": app/host/test code must use moui/views for " +
+          ": app/host/test code must use moui/views for view construction (" +
           rule.label +
-          " instead of " +
+          ") instead of " +
           rule.token,
         )
       }
     }
   }
   println(
-    "api surface: direct core control entrypoint uses=\{direct_core_control_uses}",
+    "api surface: direct core view constructor uses=\{direct_core_control_uses}",
   )
 }
 
