@@ -1464,9 +1464,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/views_overlay_surfaces_test.mbt",
-      max_lines: 225,
-      target_lines: 200,
-      reason: "keep views popover, dropdown, alert, dialog, and dialog host tests compact",
+      max_lines: 65,
+      target_lines: 60,
+      reason: "keep views popover, dropdown, combobox, and autocomplete surface tests compact",
+    },
+    {
+      path: "moui/views/views_dialog_surfaces_test.mbt",
+      max_lines: 170,
+      target_lines: 150,
+      reason: "keep views alert, dialog, and dialog host surface tests compact",
     },
     {
       path: "moui/core/runtime_wbtest.mbt",
