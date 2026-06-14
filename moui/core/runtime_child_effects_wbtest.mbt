@@ -39,7 +39,7 @@ test "program child effects map into parent messages" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=220.0, height=96.0),
   )
@@ -137,7 +137,7 @@ test "mapped child service tasks complete through parent messages" {
       })
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=220.0, height=96.0),
   )

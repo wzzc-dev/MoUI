@@ -25,7 +25,7 @@ test "program simple updates model and rebuilds view" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=160.0, height=80.0),
   )
@@ -71,7 +71,7 @@ test "program button update waits for draw frame flush" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=160.0, height=80.0),
   )
@@ -121,7 +121,7 @@ test "program simple with environment rebuilds from viewport and environment" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=120.0, height=40.0),
     environment=Environment::default().with_locale("en-US"),

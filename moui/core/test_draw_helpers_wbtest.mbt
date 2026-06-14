@@ -70,7 +70,11 @@ fn draw_text_index(commands : Array[DrawCommand], text : String) -> Int {
 }
 
 ///|
-fn runtime_wbtest_click(runtime : AppRuntime, x~ : Double, y~ : Double) -> Unit {
+fn runtime_wbtest_click(
+  runtime : RuntimeKernel,
+  x~ : Double,
+  y~ : Double,
+) -> Unit {
   let position = Point::new(x~, y~)
   runtime.dispatch_event(
     AppEvent::Pointer(PointerEvent::new(position~, phase=PointerPhase::Down)),
@@ -82,7 +86,7 @@ fn runtime_wbtest_click(runtime : AppRuntime, x~ : Double, y~ : Double) -> Unit 
 
 ///|
 fn runtime_wbtest_click_draw_text(
-  runtime : AppRuntime,
+  runtime : RuntimeKernel,
   text : String,
 ) -> Unit raise {
   guard draw_text_frame(runtime.draw_commands(), text) is Some(frame) else {

@@ -1508,7 +1508,7 @@ fn file_budgets() -> Array[FileBudget] {
       path: "moui/core/runtime_wbtest.mbt",
       max_lines: 40,
       target_lines: 35,
-      reason: "keep basic AppRuntime dispatch smoke compact",
+      reason: "keep basic RuntimeKernel dispatch smoke compact",
     },
     {
       path: "examples/pdf_workbench/app/pdf_workbench_app_wbtest.mbt",

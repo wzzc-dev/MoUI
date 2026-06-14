@@ -52,7 +52,7 @@ test "focus trap constrains tab traversal to trapped subtree" {
 test "focus key targets keyed focusable elements" {
   let first = State::new("")
   let second = State::new("")
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::FlexSpec({
       key: None,
       axis: Axis::Vertical,
@@ -78,7 +78,7 @@ test "focus key targets keyed focusable elements" {
 test "focus key respects active focus trap" {
   let outside = State::new("")
   let trapped = State::new("")
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::FlexSpec({
       key: None,
       axis: Axis::Vertical,

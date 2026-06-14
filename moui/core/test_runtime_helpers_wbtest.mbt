@@ -1,9 +1,9 @@
 ///|
-fn AppRuntime::new_spec(
+fn RuntimeKernel::new_spec(
   root~ : ViewSpec,
   size~ : Size,
   environment? : Environment = Environment::default(),
-) -> AppRuntime {
+) -> RuntimeKernel {
   {
     state: RuntimeState::new_spec(root~, size~, environment~),
     program_runtime_snapshot_fn: () => ProgramRuntimeSnapshot::empty(),
@@ -12,7 +12,7 @@ fn AppRuntime::new_spec(
 }
 
 ///|
-fn AppRuntime::set_root_spec(self : AppRuntime, root : ViewSpec) -> Unit {
+fn RuntimeKernel::set_root_spec(self : RuntimeKernel, root : ViewSpec) -> Unit {
   self.state.set_root_spec(root)
 }
 

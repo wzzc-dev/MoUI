@@ -43,7 +43,7 @@ test "program bounds synchronous subscription-start loops in one drain turn" {
       })
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=220.0, height=48.0),
   )
@@ -107,7 +107,7 @@ test "program resumes pending subscription-start messages on next host callback"
       })
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=280.0, height=80.0),
   )

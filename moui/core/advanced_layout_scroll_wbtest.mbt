@@ -76,7 +76,7 @@ test "state backed scroll repaints without activation rebuild or layout pass" {
     viewport=Some(Size::new(width=80.0, height=40.0)),
     state=Some(scroll),
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = RuntimeKernel::new_view(
     root~,
     size=Size::new(width=80.0, height=40.0),
   )
@@ -120,7 +120,7 @@ test "state backed scroll repositions repaint boundary child without layout" {
     viewport=Some(Size::new(width=80.0, height=40.0)),
     state=Some(scroll),
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = RuntimeKernel::new_view(
     root~,
     size=Size::new(width=80.0, height=40.0),
   )

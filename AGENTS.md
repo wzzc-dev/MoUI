@@ -11,11 +11,11 @@ paths, or abstractions that only preserve old shapes.
 
 ## Project Shape
 
-- `core/` owns the platform-neutral contract model, state, layout, input,
-  semantics, draw command model, opaque public `View[Msg]`, typed events,
-  app-owned route/history helpers, `Program`, `Effect`, `Subscription`, and
-  the transitional runtime kernel while implementation moves to
-  `moui/runtime`. Standard `Effect`/`Subscription` helpers may name common
+- `core/` owns the platform-neutral contract model, opaque public `View[Msg]`,
+  typed events, app-owned route/history helpers, `Program`, `Effect`,
+  `Subscription`, environment/geometry/draw/semantics/text/theme contracts, and
+  a narrow `RuntimeKernel` seam while tree/layout/paint handoff continues
+  moving to `moui/runtime`. Standard `Effect`/`Subscription` helpers may name common
   descriptor kinds, subscription reuse is keyed by the stable key plus source
   kind, effect-task lifecycle diagnostics may distinguish same-key descriptor
   kind changes from ordinary same-kind task replacement, program diagnostics
@@ -32,12 +32,12 @@ paths, or abstractions that only preserve old shapes.
   It remains one MoonBit package; internal files are grouped by responsibility
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
   etc.) rather than by additional package boundaries.
-- `runtime/` is the app/host runtime entrypoint package. It exposes an opaque
-  `@runtime.AppRuntime` wrapper over the current core runtime kernel. New app,
-  backend, smoke, and tooling code should type and construct runtimes through
-  `@runtime.AppRuntime`, `@runtime.new_view`, or `@runtime.new_program`
-  instead of direct `@core.AppRuntime`; this keeps the call surface ready for
-  moving runtime logic out of `core` without exposing core private trees.
+- `runtime/` is the app/host runtime entrypoint package. It exposes opaque
+  `@runtime.AppRuntime` construction/query/dispatch methods and owns program
+  message drain, effect task lifecycle, subscription lifecycle, and program
+  runtime diagnostics. New app, backend, smoke, and tooling code should type
+  and construct runtimes through `@runtime.AppRuntime`, `@runtime.new_view`, or
+  `@runtime.new_program`; `@core.AppRuntime` is not a public path.
 - `views/` is a facade over core primitive builders. Public constructors return
   opaque `@core.View[Msg]`; app, host, smoke, and cross-package tests should
   use `views` widget-level entrypoints instead of direct `@core.View::*`

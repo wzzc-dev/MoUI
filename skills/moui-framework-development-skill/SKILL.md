@@ -140,18 +140,19 @@ Use this skill when editing or reviewing:
 ## Package Map
 
 - `core/`: one MoonBit package for platform-neutral contracts, view specs,
-  state, app-owned route/history helpers, `Program` / `Effect` /
-  `Subscription`, layout, input, semantics, rich text editing, draw commands,
-  styles, theme tokens, and the transitional runtime kernel while implementation
-  moves to `moui/runtime`. Keep files grouped by responsibility
+  app-owned route/history helpers, `Program` / `Effect` /
+  `Subscription`, layout/input/semantics/rich text/draw/style/theme contracts,
+  and a narrow `RuntimeKernel` seam while tree/layout/paint handoff continues
+  moving to `moui/runtime`. Keep files grouped by responsibility
   (`runtime_state`,
   `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
   subpackages.
-- `runtime/`: app/host runtime entrypoint package exposing an opaque
-  `AppRuntime` wrapper over the current core runtime kernel. New app, backend,
-  smoke, and tooling code should use `@runtime.AppRuntime`,
-  `@runtime.new_view`, or `@runtime.new_program` instead of direct
-  `@core.AppRuntime`.
+- `runtime/`: app/host runtime entrypoint package exposing opaque
+  `AppRuntime` construction/query/dispatch methods and owning program message
+  drain, effect task lifecycle, subscription lifecycle, and program runtime
+  diagnostics. New app, backend, smoke, and tooling code should use
+  `@runtime.AppRuntime`, `@runtime.new_view`, or `@runtime.new_program`;
+  `@core.AppRuntime` is not a public path.
 - root `moui`: public facade over curated
   `View`/`Program`/`Effect`/`Subscription`/`Theme` aliases. Neutral
   default/light/dark theme helpers and custom `@core.Theme` builder APIs live

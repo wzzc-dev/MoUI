@@ -73,7 +73,7 @@ test "program controlled text field and searchbar update model" {
     update=(model, message) => model.update(message),
     view=model => model.view(),
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=320.0, height=180.0),
   )
@@ -96,7 +96,7 @@ test "program controlled text field stays current across consecutive input event
     update=(model, message) => model.update(message),
     view=model => model.view(),
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=320.0, height=180.0),
   )
@@ -113,7 +113,7 @@ test "program controlled text field rebuilds after focused text commands" {
     update=(model, message) => model.update(message),
     view=model => model.view(),
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=320.0, height=180.0),
   )

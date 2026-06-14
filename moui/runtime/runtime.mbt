@@ -1,6 +1,6 @@
 ///|
 pub struct AppRuntime {
-  priv inner : @core.AppRuntime
+  priv inner : @core.RuntimeKernel
   priv program_runtime_snapshot_fn : Ref[() -> @core.ProgramRuntimeSnapshot]
   priv destroy_program_runtime_fn : Ref[() -> Unit]
 }
@@ -50,7 +50,12 @@ pub fn[Msg] AppRuntime::new_view(
   on_message? : ((Msg) -> Unit)? = None,
 ) -> AppRuntime {
   AppRuntime::{
-    inner: @core.AppRuntime::new_view(root~, size~, environment~, on_message~),
+    inner: @core.RuntimeKernel::new_view(
+      root~,
+      size~,
+      environment~,
+      on_message~,
+    ),
     program_runtime_snapshot_fn: Ref(() => empty_program_runtime_snapshot()),
     destroy_program_runtime_fn: Ref(() => ()),
   }

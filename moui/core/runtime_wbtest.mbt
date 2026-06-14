@@ -1,6 +1,6 @@
 ///|
 test "app runtime dispatches events and draws" {
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::ButtonSpec({
       key: None,
       text: "Click",

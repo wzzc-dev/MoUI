@@ -59,7 +59,7 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
       })
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -208,7 +208,7 @@ test "program subscriptions restart when source kind changes under same key" {
       }
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -278,7 +278,7 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
       ])
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )

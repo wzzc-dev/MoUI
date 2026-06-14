@@ -15,7 +15,7 @@ fn drop_target_root(handler : FileDropHandler) -> ViewSpec {
 test "file drop modifier dispatches dropped paths to hit target" {
   let dropped_path = Ref("")
   let dropped_x = Ref(0.0)
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=drop_target_root((paths, position) => {
       if paths.length() > 0 {
         dropped_path.val = paths[0]
@@ -41,7 +41,7 @@ test "file drop modifier dispatches dropped paths to hit target" {
 ///|
 test "file drop modifier ignores non-drop and outside events" {
   let drop_count = Ref(0)
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=drop_target_root((_paths, _position) => {
       drop_count.val = drop_count.val + 1
     }),
