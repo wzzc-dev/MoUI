@@ -719,9 +719,7 @@ pub(all) enum FontStyle {
   Italic
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct FormController {
-  fields : Array[FormFieldState]
-}
+type FormController
 pub fn FormController::field_error(Self, String) -> String
 pub fn FormController::new(fields~ : Array[FormFieldState]) -> Self
 pub fn FormController::validate(Self) -> FormValidationSummary
@@ -747,10 +745,7 @@ pub(all) struct FormValidationResult {
   summary : FormValidationSummary
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct FormValidationRule {
-  message : String
-  validate : (String) -> String?
-}
+type FormValidationRule
 pub fn FormValidationRule::from_validator((String) -> String?) -> Self
 pub fn FormValidationRule::new(message~ : String, validate~ : (String) -> Bool) -> Self
 pub fn FormValidationRule::required(message? : String) -> Self
