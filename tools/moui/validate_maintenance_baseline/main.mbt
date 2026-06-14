@@ -629,6 +629,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core program subscription bounded-drain and host-callback resume tests compact",
     },
     {
+      path: "moui/core/state_holder_wbtest.mbt",
+      max_lines: 230,
+      target_lines: 205,
+      reason: "keep core state holder, keyboard shortcut, disabled, and focus traversal tests compact",
+    },
+    {
+      path: "moui/core/state_gesture_wbtest.mbt",
+      max_lines: 170,
+      target_lines: 150,
+      reason: "keep core high-level gesture wrapper runtime tests compact",
+    },
+    {
       path: "examples/pdf_workbench/app/app.mbt",
       max_lines: 390,
       target_lines: 360,
