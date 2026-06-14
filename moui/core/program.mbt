@@ -42,7 +42,7 @@ pub(all) struct EffectPlanSummary {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct Program[Model, Msg] {
+struct Program[Model, Msg] {
   init : () -> (Model, Effect[Msg])
   update : (Model, Msg) -> (Model, Effect[Msg])
   view : (Model, ViewEnvironment) -> View[Msg]
