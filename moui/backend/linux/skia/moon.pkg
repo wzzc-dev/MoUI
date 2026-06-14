@@ -1,5 +1,4 @@
 import {
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/linux" @linux_host,
@@ -7,6 +6,10 @@ import {
   "wzzc-dev/moui/render/skia" @skia_renderer,
   "wzzc-dev/window/linux" @window_linux,
 }
+
+import {
+  "wzzc-dev/moui/core",
+} for "wbtest"
 
 supported_targets = "native"
 
