@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "description": "Checked-in MoUI smoke gate catalog. This is source metadata, not generated smoke evidence.",
+  "tiers": ["daily", "nightly", "release"],
+  "suites": [
+    {
+      "id": "daily.dev-check",
+      "tier": "daily",
+      "kind": "package-baseline",
+      "host": "any",
+      "purpose": "Keep the default development gate bounded to package checks, static guards, and Web wasm-gc builds.",
+      "defaultDevCheck": true,
+      "commands": [
+        {
+          "argv": ["sh", "scripts/dev-check.sh"],
+          "mode": "run"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/ci.yml",
+        "gate": "pull_request"
+      },
+      "docs": ["docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": []
+    },
+    {
+      "id": "web.runtime-presentation",
+      "tier": "nightly",
+      "kind": "browser-runtime-smoke",
+      "host": "macos-14",
+      "purpose": "Record and validate a real browser WebGPU/wasm/canvas/input/pixel presentation session.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": ["sh", "scripts/ci-web-runtime-presentation.sh"],
+          "mode": "run"
+        }
+      ],
+      "result": {
+        "type": "manifest",
+        "path": "artifacts/smoke/web-runtime-presentation/presentation-smoke.json",
+        "validator": [
+          "node",
+          "scripts/validate-web-runtime-presentation-manifest.mjs",
+          "artifacts/smoke/web-runtime-presentation/presentation-smoke.json",
+          "--require-passed"
+        ]
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-smoke-gates.yml",
+        "gate": "nightly"
+      },
+      "docs": ["docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": [
+        "artifacts/smoke/web-runtime-presentation/presentation-smoke.json",
+        "artifacts/smoke/web-runtime-presentation/http-server.log",
+        "artifacts/smoke/web-runtime-presentation/chrome.log"
+      ]
+    },
+    {
+      "id": "macos.skia-real-showcase-markdown",
+      "tier": "release",
+      "kind": "native-real-renderer-smoke",
+      "host": "macos-14",
+      "purpose": "Prove real-Skia renderer pixels plus tester-owned Showcase and Markdown Editor first-frame presentation on the matching host.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": [
+            "sh",
+            "scripts/macos-skia-renderer-smoke.sh",
+            "--run-showcase-smoke",
+            "--run-markdown-smoke",
+            "--smoke-log",
+            "artifacts/platform-observation/macos/skia-renderer-smoke.log",
+            "--showcase-log",
+            "artifacts/platform-observation/macos/showcase-macos-skia-first-frame.log",
+            "--markdown-log",
+            "artifacts/example-smoke/macos/markdown-macos-skia-first-frame.log"
+          ],
+          "mode": "run"
+        }
+      ],
+      "result": {
+        "type": "log-marker",
+        "markers": [
+          "MoUI Skia renderer smoke passed",
+          "MoUI Skia async image second-frame smoke passed",
+          "Verified moui_tester first-frame smoke marker.",
+          "MoUI macOS Skia renderer smoke passed."
+        ]
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-smoke-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": ["docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": [
+        "artifacts/platform-observation/macos/skia-renderer-smoke.log",
+        "artifacts/platform-observation/macos/showcase-macos-skia-first-frame.log",
+        "artifacts/example-smoke/macos/markdown-macos-skia-first-frame.log"
+      ]
+    },
+    {
+      "id": "window-package.matching-host",
+      "tier": "release",
+      "kind": "dependency-matching-host-smoke",
+      "host": "matching-host",
+      "purpose": "Run the resolved window package MoUI helper on the host being claimed without reintroducing an editable window checkout.",
+      "defaultDevCheck": false,
+      "commands": [
+        {
+          "argv": ["scripts/run-window-package-smoke.sh", "<macos|web|windows|linux>", "--run"],
+          "mode": "manual"
+        }
+      ],
+      "result": {
+        "type": "exit-code"
+      },
+      "ci": {
+        "workflow": ".github/workflows/moui-runtime-smoke-gates.yml",
+        "gate": "release-manual"
+      },
+      "docs": ["docs/testing.md", "docs/release-readiness.md"],
+      "artifacts": ["artifacts/window-package-smoke/<platform>.log"]
+    }
+  ]
+}

@@ -331,13 +331,20 @@ API surface guard, guidance consistency, renderer/provider and native Skia
 entrypoint static checks, and app/Web checks for Showcase and Markdown Editor. Use
 `sh scripts/dev-check.sh --theme-diagnostics` for `moui_theme` and Design
 Systems addon diagnostic coverage. Keep `docs/testing.md` and repo-local skills
-synchronized when adding or removing daily quality gates.
+synchronized when adding or removing daily quality gates. It also validates the
+checked-in `smoke/gates.json` smoke gate catalog with
+`node scripts/smoke-check.mjs --check`; default `dev-check` checks the catalog
+shape, not real browser or platform smoke execution. The scheduled/manual CI
+entrypoint for those opt-in gates is
+`.github/workflows/moui-runtime-smoke-gates.yml`.
 
 Manual smoke is opt-in. Browser-session smoke uses
 `scripts/ci-web-runtime-presentation.sh`, which builds Showcase, starts a local
 HTTP server and Chrome CDP, records a local manifest under
 `artifacts/smoke/web-runtime-presentation/`, and validates that browser
-session. Native renderer/platform smoke should cite the CI run, uploaded
+session. `smoke/gates.json` maps daily, nightly, and release suites to their
+commands, structured result shapes, docs, workflows, and ignored artifact
+outputs. Native renderer/platform smoke should cite the CI run, uploaded
 artifact, or local smoke log that was actually inspected. Do not commit
 generated `artifacts/` JSON as the long-term capability source of truth.
 
@@ -393,6 +400,10 @@ node --check scripts/record-web-runtime-presentation.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
+node --check scripts/smoke-check.mjs
+node --check scripts/test-smoke-check.mjs
+node scripts/test-smoke-check.mjs
+node scripts/smoke-check.mjs --check
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check
 node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check
