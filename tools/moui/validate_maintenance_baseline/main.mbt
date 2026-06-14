@@ -1223,10 +1223,16 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views tree view expansion and row helpers compact",
     },
     {
-      path: "moui/views/data_filters.mbt",
-      max_lines: 285,
-      target_lines: 255,
-      reason: "keep views data filter bar, filter chips, and column visibility helpers compact",
+      path: "moui/views/data_filter_bar.mbt",
+      max_lines: 145,
+      target_lines: 125,
+      reason: "keep views data filter bar and chip helpers compact",
+    },
+    {
+      path: "moui/views/data_filter_column_visibility.mbt",
+      max_lines: 145,
+      target_lines: 125,
+      reason: "keep views column visibility panel and row helpers compact",
     },
     {
       path: "moui/views/data_table.mbt",
