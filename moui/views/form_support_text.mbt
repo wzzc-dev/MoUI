@@ -1,0 +1,34 @@
+///|
+pub fn[Msg] form_error(
+  message : String,
+  theme? : @core.Theme = @core.Theme::default(),
+  style? : @core.FormValidationStyle,
+  width? : Double = 320.0,
+) -> @core.View[Msg] {
+  text(message, role=TextRole::Caption, theme~, width~, height=24.0)
+  .foreground(resolve_form_validation_style(style, theme).foreground)
+  .semantics_role(@core.SemanticsRole::Text)
+  .accessibility_label("Error: " + message)
+}
+
+///|
+pub fn[Msg] form_helper_text(
+  message : String,
+  theme? : @core.Theme = @core.Theme::default(),
+  width? : Double = 320.0,
+) -> @core.View[Msg] {
+  text(message, role=TextRole::Caption, theme~, width~, height=24.0)
+  .foreground(theme.palette.muted)
+  .semantics_role(@core.SemanticsRole::Text)
+}
+
+///|
+fn resolve_form_validation_style(
+  style : @core.FormValidationStyle?,
+  theme : @core.Theme,
+) -> @core.FormValidationStyle {
+  match style {
+    Some(value) => value
+    None => @core.FormValidationStyle::default(theme~)
+  }
+}
