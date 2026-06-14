@@ -31,3 +31,6 @@ Current tools:
   browser-session Web runtime presentation manifests, including WebGPU, wasm
   startup, canvas, resize/input, screenshot markers, and clean target close
   boundaries for local smoke runs.
+- `scripts/smoke-check.mjs` validates the checked-in `smoke/gates.json`
+  catalog that maps daily, nightly, and release smoke suites to commands,
+  structured result shapes, docs, workflows, and ignored `artifacts/` outputs.

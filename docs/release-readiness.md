@@ -27,6 +27,7 @@ MoUI is ready for a preview handoff when the repository can demonstrate:
 | Public API audit | Generated interfaces reviewed after public API changes and package budgets/boundary tokens still pass. | `moon info`, then `node scripts/validate-api-surface.mjs` |
 | Focused conformance | Input/focus, layout, render, platform service, and text slices pass at their owning layer. | `sh scripts/conformance-check.sh --input`, `--layout`, `--render`, `--platform-services`, `--text`, `--text-diagnostic` |
 | Renderer sync | Native Skia and WebGPU mainline capability docs, tests, and visible Showcase coverage agree. Native WGPU remains explicit diagnostic coverage. | `moon test moui/render --target native`, `moon test moui/render/skia --target native`, `moon test moui/render/webgpu_adapter --target wasm-gc`, plus Showcase Web build |
+| smoke gate catalog | The checked-in smoke gate catalog names the daily, nightly, and release smoke suites, their structured result type, owning workflow, docs, and artifacts without committing generated evidence. | `node scripts/smoke-check.mjs --check` |
 | manual smoke | Real renderer/browser/platform behavior has fresh pass/fail logs from the matching host when the release note claims it. | `scripts/macos-skia-renderer-smoke.sh`, `sh scripts/ci-web-runtime-presentation.sh`, current-platform example first-frame runs |
 | Guidance freshness | Docs, `AGENTS.md`, and repo-local skills agree after validation, package, renderer, platform, or example changes. | `node scripts/validate-guidance-consistency.mjs` |
 
@@ -36,6 +37,11 @@ Manual smoke logs may demonstrate real-Skia linking, renderer pixel output,
 async image second-frame behavior, optional SkParagraph text behavior, WebGPU
 browser-session startup, nonblank canvas output, representative input delivery,
 or current-platform first-frame presentation.
+
+`smoke/gates.json` is the source of truth for mapping those observations to
+daily, nightly, and release gates. Use `node scripts/smoke-check.mjs --tier
+nightly --json` or `--tier release --json` to print the structured plan before
+triggering `.github/workflows/moui-runtime-smoke-gates.yml`.
 
 Those logs are runtime observation logs for a named host/session. They do not
 become a checked-in manifest and they do not automatically promote unrelated
