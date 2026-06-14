@@ -1,9 +1,9 @@
 ///|
-struct ElementEventResult {
+priv struct ElementEventResult {
   changed : Bool
   activated : Bool
   focused : ElementId?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 fn ElementNode::rebuild_dirty_components(

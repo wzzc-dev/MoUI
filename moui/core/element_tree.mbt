@@ -63,11 +63,11 @@ priv struct ElementRenderCache {
 }
 
 ///|
-struct TextHistoryEntry {
+priv struct TextHistoryEntry {
   text : String
   caret : Int
   selection : TextRange?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 fn TextHistoryEntry::from_element(
@@ -78,11 +78,10 @@ fn TextHistoryEntry::from_element(
 }
 
 ///|
-struct RenderNode {
+priv struct RenderNode {
   element_id : ElementId
   frame : Rect
   children : Array[RenderNode]
-  hit_testable : Bool
   paint_bounds : Rect
   content_revision : Int
   is_repaint_boundary : Bool
@@ -93,7 +92,7 @@ struct RenderNode {
   platform_views : Array[PlatformViewPlacement]
   cached_draw_commands : Array[DrawCommand]?
   cached_overlay_draw_commands : Array[DrawCommand]?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 priv struct CachedLayerState {
@@ -112,7 +111,6 @@ fn RenderNode::empty() -> RenderNode {
     element_id: ElementId::new(0),
     frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
     children: [],
-    hit_testable: false,
     paint_bounds: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
     content_revision: 0,
     is_repaint_boundary: false,
