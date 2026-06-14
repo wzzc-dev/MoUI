@@ -773,6 +773,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep Skia renderer matrix, surface, and brush smoke tests compact",
     },
     {
+      path: "moui/views/data_display.mbt",
+      max_lines: 970,
+      target_lines: 880,
+      reason: "keep views data filters, selection toolbar, column visibility, lists, tree, and avatar helpers compact",
+    },
+    {
+      path: "moui/views/data_table.mbt",
+      max_lines: 240,
+      target_lines: 215,
+      reason: "keep views table rendering, sortable header, row, and table sizing helpers compact",
+    },
+    {
       path: "moui/views/views_test.mbt",
       max_lines: 20,
       target_lines: 20,
