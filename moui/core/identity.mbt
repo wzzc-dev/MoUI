@@ -4,7 +4,7 @@ struct Key {
 } derive(Eq)
 
 ///|
-pub(all) struct ElementId {
+struct ElementId {
   value : Int
 } derive(Eq, Debug, ToJson)
 
@@ -16,13 +16,18 @@ priv struct DirtyFlags {
 }
 
 ///|
-pub fn Key::new(value : String) -> Key {
+fn Key::new(value : String) -> Key {
   { value, }
 }
 
 ///|
 pub fn ElementId::new(value : Int) -> ElementId {
   { value, }
+}
+
+///|
+pub fn ElementId::value(self : ElementId) -> Int {
+  self.value
 }
 
 ///|

@@ -584,10 +584,9 @@ pub(all) enum EffectTaskLifecycleStatus {
   EffectTaskCancelled
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct ElementId {
-  value : Int
-} derive(Eq, ToJson, @debug.Debug)
+type ElementId derive(Eq, ToJson, @debug.Debug)
 pub fn ElementId::new(Int) -> Self
+pub fn ElementId::value(Self) -> Int
 
 pub(all) struct Environment {
   theme : Theme
@@ -799,7 +798,6 @@ pub(all) struct InspectorSnapshot {
 pub fn InspectorSnapshot::from_runtime(AppRuntime) -> Self
 
 type Key derive(Eq)
-pub fn Key::new(String) -> Self
 
 pub(all) struct KeyModifiers {
   shift : Bool
