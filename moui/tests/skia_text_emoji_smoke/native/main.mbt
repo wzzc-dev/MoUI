@@ -234,16 +234,38 @@ fn skia_color_emoji_diagnostic_metadata_ready(
 
 ///|
 fn smoke_text_field_view(value : @core.Binding[String]) -> @core.View[Unit] {
-  @core.View::text_field(
-    value~,
+  let field_style : @core.TextFieldStyle = {
+    normal: {
+      foreground: @core.Color::black(),
+      background: @core.Brush::solid(@core.Color::white()),
+      border: None,
+      radius: 4.0,
+      shadow: None,
+    },
+    focused: {
+      foreground: @core.Color::black(),
+      background: @core.Brush::solid(@core.Color::white()),
+      border: None,
+      radius: 4.0,
+      shadow: None,
+    },
+    disabled: {
+      foreground: @core.Color::black(),
+      background: @core.Brush::solid(@core.Color::white()),
+      border: None,
+      radius: 4.0,
+      shadow: None,
+    },
+    placeholder_color: @core.Color::gray(),
+    cursor_color: @core.Color::blue(),
+    font: @core.FontSpec::new(size=18.0, weight=500),
+  }
+  @views.text_field_binding(
+    value,
     placeholder="Input",
-    size=@core.Size::new(width=168.0, height=44.0),
-    font=@core.FontSpec::new(size=18.0, weight=500),
-    foreground=@core.Color::black(),
-    placeholder_color=@core.Color::gray(),
-    background=@core.Brush::solid(@core.Color::white()),
-    cursor_color=@core.Color::blue(),
-    corner_radius=4.0,
+    style=field_style,
+    width=168.0,
+    height=44.0,
   )
 }
 

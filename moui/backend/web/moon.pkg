@@ -9,6 +9,10 @@ import {
   "wzzc-dev/window/web" @window_web,
 }
 
+import {
+  "wzzc-dev/moui/views",
+} for "test"
+
 supported_targets = "wasm-gc"
 
 options(

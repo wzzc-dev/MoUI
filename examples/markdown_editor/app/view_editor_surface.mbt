@@ -608,31 +608,53 @@ fn editor_source_layout(
     x=0.0,
     y=markdown_editor_clamp_double(scroll_offset.y, 0.0, max_scroll),
   )
-  let editor_control = @core.View::controlled_rich_text_editor(
-    value=source,
+  let editor_style : @core.TextFieldStyle = {
+    normal: {
+      foreground: appearance.foreground,
+      background: @core.Brush::solid(appearance.page_background),
+      border: None,
+      radius: theme.radius_scale.sm,
+      shadow: None,
+    },
+    focused: {
+      foreground: appearance.foreground,
+      background: @core.Brush::solid(appearance.page_background),
+      border: None,
+      radius: theme.radius_scale.sm,
+      shadow: None,
+    },
+    disabled: {
+      foreground: appearance.foreground,
+      background: @core.Brush::solid(appearance.page_background),
+      border: None,
+      radius: theme.radius_scale.sm,
+      shadow: None,
+    },
+    placeholder_color: appearance.placeholder,
+    cursor_color: theme.palette.primary,
+    font: editor_font,
+  }
+  let editor_format = source => {
+    if app.source_mode_enabled.get() {
+      markdown_editor_format_source_mode(source, editor_font)
+    } else {
+      markdown_editor_format_for_writing_mode(
+        source,
+        selection,
+        base=editor_font,
+        focus_mode=app.focus_mode_enabled.get(),
+      )
+    }
+  }
+  let editor_control = rich_text_editor(
+    source,
+    editor_format,
     on_input=value => UpdateDocument(value),
     placeholder="Start writing Markdown",
-    size=@core.Size::new(width=editor_width, height=content_height),
-    format=source => {
-      if app.source_mode_enabled.get() {
-        markdown_editor_format_source_mode(source, editor_font)
-      } else {
-        markdown_editor_format_for_writing_mode(
-          source,
-          selection,
-          base=editor_font,
-          focus_mode=app.focus_mode_enabled.get(),
-        )
-      }
-    },
-    font=editor_font,
-    foreground=appearance.foreground,
-    placeholder_color=appearance.placeholder,
-    background=@core.Brush::solid(appearance.page_background),
-    border=None,
-    focused_border=None,
-    cursor_color=theme.palette.primary,
-    corner_radius=theme.radius_scale.sm,
+    theme~,
+    style=editor_style,
+    width=editor_width,
+    height=content_height,
     on_selection_change=Some(on_selection_change),
     on_prefix_click=Some(on_prefix_click),
     input_transform=Some(markdown_editor_transform_input),

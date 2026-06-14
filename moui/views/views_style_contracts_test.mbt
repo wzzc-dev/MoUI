@@ -74,6 +74,7 @@ test "picker controls can resolve surface style from theme" {
 test "controls can consume neutral core style contracts" {
   let button_bg = @core.Color::rgba(r=0.72, g=0.12, b=0.36)
   let field_bg = @core.Color::rgba(r=0.10, g=0.18, b=0.26)
+  let rich_field_bg = @core.Color::rgba(r=0.12, g=0.20, b=0.34)
   let progress_fg = @core.Color::rgba(r=0.18, g=0.64, b=0.38)
   let slider_thumb = @core.Color::rgba(r=0.96, g=0.68, b=0.20)
   let picker_bg = @core.Color::rgba(r=0.18, g=0.12, b=0.30)
@@ -105,6 +106,16 @@ test "controls can consume neutral core style contracts" {
     placeholder_color: @core.Color::gray(),
     cursor_color: progress_fg,
     font: @core.FontSpec::new(size=15.0, weight=500),
+  }
+  let rich_field_state = {
+    ..field_state,
+    background: @core.Brush::solid(rich_field_bg),
+  }
+  let rich_field_style = {
+    ..field_style,
+    normal: rich_field_state,
+    focused: rich_field_state,
+    disabled: rich_field_state,
   }
   let progress_style : @core.ProgressStyle = {
     foreground: progress_fg,
@@ -140,6 +151,19 @@ test "controls can consume neutral core style contracts" {
         placeholder="Styled field",
         style=field_style,
       ),
+      @views.rich_text_editor(
+        "rich tokens",
+        value => {
+          @core.RichTextDocument::new(blocks=[
+            @core.RichTextBlock::new(runs=[@core.RichTextRun::new(text=value)]),
+          ])
+        },
+        on_input=_value => (),
+        placeholder="Styled editor",
+        style=rich_field_style,
+        width=180.0,
+        height=60.0,
+      ),
       @views.progress(0.5, style=progress_style, width=160.0),
       @views.slider(0.5, style=slider_style, width=160.0),
       @views.picker(
@@ -158,6 +182,7 @@ test "controls can consume neutral core style contracts" {
   let draw = runtime.draw_commands()
   assert_true(has_solid_fill(draw, button_bg))
   assert_true(has_solid_fill(draw, field_bg))
+  assert_true(has_solid_fill(draw, rich_field_bg))
   assert_true(has_solid_fill(draw, progress_fg))
   assert_true(has_solid_fill(draw, slider_thumb))
   assert_true(has_solid_fill(draw, picker_bg))

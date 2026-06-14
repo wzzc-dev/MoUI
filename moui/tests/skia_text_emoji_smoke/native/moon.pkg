@@ -5,6 +5,7 @@ import {
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/skia" @skia_renderer,
+  "wzzc-dev/moui/views",
 }
 
 supported_targets = "native"

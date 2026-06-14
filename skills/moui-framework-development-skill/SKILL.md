@@ -186,7 +186,10 @@ Use this skill when editing or reviewing:
   typography role parity,
   component-token matrix coverage plus
   adaptation-difference closure.
-- `views/`: public view constructors returning opaque `@core.View[Msg]`.
+- `views/`: public view constructors returning opaque `@core.View[Msg]`. App,
+  host, smoke, and cross-package tests should use `views` widget-level
+  entrypoints instead of direct `@core.View::*` control constructors while core
+  still owns internal node payloads.
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
   window lifecycle registry, window scene resolver, per-window runtime slot
   collection, platform-window id map, renderer-neutral `HostWindowRenderer`
