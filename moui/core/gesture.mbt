@@ -101,13 +101,13 @@ pub(all) struct ActionCommand {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct CommandBinding {
+struct CommandBinding {
   command : ActionCommand
   handle : () -> Unit
 }
 
 ///|
-pub(all) struct ActionCommandMap {
+struct ActionCommandMap {
   bindings : Array[CommandBinding]
 }
 
