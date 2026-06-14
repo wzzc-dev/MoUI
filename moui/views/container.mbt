@@ -118,6 +118,15 @@ fn views_max_double(a : Double, b : Double) -> Double {
 }
 
 ///|
+fn views_max_int(a : Int, b : Int) -> Int {
+  if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
 pub fn[Msg] empty() -> @core.View[Msg] {
   @core.View::empty()
 }
