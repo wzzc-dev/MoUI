@@ -1,13 +1,7 @@
 ///|
 pub struct AppRuntime {
   priv inner : @core.RuntimeKernel
-  priv program_runtime_snapshot_fn : Ref[() -> @core.ProgramRuntimeSnapshot]
   priv destroy_program_runtime_fn : Ref[() -> Unit]
-}
-
-///|
-fn program_message_drain_limit() -> Int {
-  1024
 }
 
 ///|
@@ -56,7 +50,6 @@ pub fn[Msg] AppRuntime::new_view(
       environment~,
       on_message~,
     ),
-    program_runtime_snapshot_fn: Ref(() => empty_program_runtime_snapshot()),
     destroy_program_runtime_fn: Ref(() => ()),
   }
 }
@@ -105,7 +98,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
       dispatching.val = true
       let mut processed_this_drain = 0
       while pending_index.val < pending_messages.length() &&
-            processed_this_drain < program_message_drain_limit() {
+            processed_this_drain < 1024 {
         let message = pending_messages[pending_index.val]
         pending_index.val = pending_index.val + 1
         processed_this_drain = processed_this_drain + 1
@@ -145,15 +138,18 @@ pub fn[Model, Msg] AppRuntime::new_program(
     Some(process) => process()
     None => ()
   }
-  let runtime = AppRuntime::new_view(
-    root=@core.View::primitive_component_view(ctx => {
-      program.runtime_view(ctx.watch(model), ctx.view_environment())
-    }),
-    size~,
-    environment~,
-    on_message=Some(dispatch),
-  )
-  runtime.program_runtime_snapshot_fn.val = () => program_runtime.snapshot()
+  let runtime = AppRuntime::{
+    inner: @core.RuntimeKernel::new_view(
+      root=@core.View::primitive_component_view(ctx => {
+        program.runtime_view(ctx.watch(model), ctx.view_environment())
+      }),
+      size~,
+      environment~,
+      on_message=Some(dispatch),
+      program_runtime_snapshot=Some(() => program_runtime.snapshot()),
+    ),
+    destroy_program_runtime_fn: Ref(() => ()),
+  }
   runtime.destroy_program_runtime_fn.val = () => {
     if program_active.val {
       program_active.val = false
@@ -385,59 +381,14 @@ pub fn AppRuntime::dirty_element_ids(
 pub fn AppRuntime::inspector_snapshot(
   self : AppRuntime,
 ) -> @core.InspectorSnapshot {
-  let snapshot = self.inner.inspector_snapshot()
-  let program = self.program_runtime_snapshot()
-  {
-    ..snapshot,
-    runtime: {
-      ..snapshot.runtime,
-      program_dispatched_count: program.dispatched_count,
-      program_update_count: program.update_count,
-      ignored_program_dispatch_count: program.ignored_program_dispatch_count,
-      program_message_enqueue_count: program.message_enqueue_count,
-      program_message_drain_count: program.message_drain_count,
-      program_pending_message_count: program.pending_message_count,
-      program_max_pending_message_count: program.max_pending_message_count,
-      program_effect_plan_count: program.effect_plan_count,
-      program_effect_count: program.effect_count,
-      program_effect_none_count: program.effect_none_count,
-      program_effect_batch_count: program.effect_batch_count,
-      program_effect_send_count: program.effect_send_count,
-      program_effect_dispatch_count: program.effect_dispatch_count,
-      program_effect_run_count: program.effect_run_count,
-      program_effect_task_count: program.effect_task_count,
-      duplicate_effect_descriptor_key_count: program.duplicate_effect_descriptor_key_count,
-      duplicate_effect_descriptor_keys: program.duplicate_effect_descriptor_keys,
-      last_effect_summary: program.last_effect_summary,
-      last_scheduled_effect_summary: program.last_scheduled_effect_summary,
-      active_effect_task_count: program.active_effect_task_count,
-      started_effect_task_count: program.started_effect_task_count,
-      completed_effect_task_count: program.completed_effect_task_count,
-      cancelled_effect_task_count: program.cancelled_effect_task_count,
-      ignored_effect_task_dispatch_count: program.ignored_effect_task_dispatch_count,
-      active_effect_tasks: program.active_effect_tasks,
-      effect_task_lifecycle: program.effect_task_lifecycle,
-      program_subscription_plan_count: program.subscription_plan_count,
-      last_subscription_plan_summary: program.last_subscription_plan_summary,
-      active_subscription_count: program.active_subscription_count,
-      started_subscription_count: program.started_subscription_count,
-      reused_subscription_count: program.reused_subscription_count,
-      cancelled_subscription_count: program.cancelled_subscription_count,
-      duplicate_subscription_key_count: program.duplicate_subscription_key_count,
-      duplicate_subscription_keys: program.duplicate_subscription_keys,
-      ignored_subscription_dispatch_count: program.ignored_subscription_dispatch_count,
-      active_subscriptions: program.active_subscriptions,
-      active_subscription_kind_counts: program.active_subscription_kind_counts,
-      subscription_lifecycle: program.subscription_lifecycle,
-    },
-  }
+  self.inner.inspector_snapshot()
 }
 
 ///|
 pub fn AppRuntime::program_runtime_snapshot(
   self : AppRuntime,
 ) -> @core.ProgramRuntimeSnapshot {
-  (self.program_runtime_snapshot_fn.val)()
+  self.inner.program_runtime_snapshot()
 }
 
 ///|
