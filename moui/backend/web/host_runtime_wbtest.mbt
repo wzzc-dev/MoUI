@@ -70,7 +70,7 @@ test "web app options carry optional scene resolver" {
       @host.HostWindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
-          root=(@core.View::empty() : @core.View[Unit]),
+          root=(@views.empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),
       ),
@@ -92,7 +92,7 @@ test "web route dispatch publishes active route source events" {
     program=@core.Program::simple(
       init=(),
       update=(model, _message : Unit) => model,
-      view=_model => (@core.View::empty() : @core.View[Unit]),
+      view=_model => (@views.empty() : @core.View[Unit]),
       subscriptions=_model => {
         source.subscription(key="web:route", label="Web route", map=event => {
           observed.push(event)

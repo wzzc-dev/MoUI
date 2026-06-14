@@ -4,6 +4,7 @@ import {
 
 import {
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/views",
 } for "wbtest"
 
 options(
