@@ -516,9 +516,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/runtime_state.mbt",
-      max_lines: 830,
-      target_lines: 760,
-      reason: "keep core runtime construction, environment, event dispatch, query, and rebuild entrypoints compact",
+      max_lines: 460,
+      target_lines: 415,
+      reason: "keep core runtime construction, environment, query, draw, and rebuild entrypoints compact",
+    },
+    {
+      path: "moui/core/runtime_events.mbt",
+      max_lines: 390,
+      target_lines: 350,
+      reason: "keep core runtime action command, input event, focus, and animation dispatch compact",
     },
     {
       path: "moui/core/runtime_render_pipeline.mbt",
