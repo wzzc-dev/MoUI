@@ -102,7 +102,7 @@ test "host service bridge applies system theme to runtime environment" {
 test "host driver dispatches command intents through runtime action map" {
   let copied = Ref(0)
   let runtime = host_test_runtime(
-    root=@core.View::empty(),
+    root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   runtime.set_action_commands(
@@ -126,7 +126,7 @@ test "host driver dispatches command intents through runtime action map" {
 ///|
 test "host driver applies theme change to runtime environment" {
   let runtime = host_test_runtime(
-    root=@core.View::empty(),
+    root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
