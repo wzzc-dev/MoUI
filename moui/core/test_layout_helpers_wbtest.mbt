@@ -70,6 +70,18 @@ fn reconcile_element(old : ElementNode, next_spec : ViewSpec) -> ElementNode {
 }
 
 ///|
+struct HitTestEntry {
+  element_id : ElementId
+  local_position : Point
+  frame : Rect
+} derive(Eq, Debug, ToJson)
+
+///|
+struct HitTestResult {
+  path : Array[HitTestEntry]
+} derive(Eq, Debug, ToJson)
+
+///|
 fn ElementNode::hit_test_path(
   self : ElementNode,
   point : Point,
