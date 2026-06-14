@@ -1271,9 +1271,7 @@ pub(all) struct RouterSnapshot {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RouterSnapshot::new(routes~ : Array[String]) -> Self
 
-pub(all) struct RouterState {
-  navigation : NavigationState
-}
+type RouterState
 pub fn RouterState::current(Self) -> RouteLocation
 pub fn RouterState::new(initial? : RouteLocation) -> Self
 pub fn RouterState::pop(Self) -> Bool
