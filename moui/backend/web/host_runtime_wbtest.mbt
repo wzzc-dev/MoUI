@@ -69,7 +69,7 @@ test "web app options carry optional scene resolver" {
     @host.HostWindowSceneResolution::SceneResolved(
       @host.HostWindowSceneInstance::new(
         request~,
-        runtime=@core.AppRuntime::new_view(
+        runtime=@runtime.AppRuntime::new_view(
           root=(@core.View::empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),
@@ -88,7 +88,7 @@ test "web app options carry optional scene resolver" {
 test "web route dispatch publishes active route source events" {
   let source = @host.HostRouteSource::new()
   let observed : Array[@host.HostRouteEvent] = []
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init=(),
       update=(model, _message : Unit) => model,

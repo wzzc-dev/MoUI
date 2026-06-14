@@ -499,7 +499,7 @@ pub fn ShowcaseApp::runtime(
   self : ShowcaseApp,
   width? : Double = 960.0,
   height? : Double = 560.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   ShowcaseModel::new().runtime(width~, height~)
 }
@@ -510,7 +510,7 @@ pub fn ShowcaseApp::runtime_with_host_summary(
   host_summary : @host.HostCapabilitySummary,
   width? : Double = 960.0,
   height? : Double = 560.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   ShowcaseModel::new().with_host_summary(host_summary).runtime(width~, height~)
 }
@@ -520,7 +520,7 @@ pub fn ShowcaseModel::runtime(
   self : ShowcaseModel,
   width? : Double = 960.0,
   height? : Double = 560.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   self.runtime_with_optional_route_host(None, width~, height~)
 }
 
@@ -530,7 +530,7 @@ pub fn ShowcaseModel::runtime_with_route_host(
   route_host : ShowcaseRouteHost,
   width? : Double = 960.0,
   height? : Double = 560.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   self.runtime_with_optional_route_host(Some(route_host), width~, height~)
 }
 
@@ -540,8 +540,8 @@ fn ShowcaseModel::runtime_with_optional_route_host(
   route_host : ShowcaseRouteHost?,
   width~ : Double,
   height~ : Double,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::new_with_environment(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => {

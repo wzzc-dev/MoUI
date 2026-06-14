@@ -46,7 +46,7 @@ test "web app options carry scene resolver and platform event sources" {
     @host.HostWindowSceneResolution::SceneResolved(
       @host.HostWindowSceneInstance::new(
         request~,
-        runtime=@core.AppRuntime::new_view(
+        runtime=@runtime.AppRuntime::new_view(
           root=(@core.View::empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),

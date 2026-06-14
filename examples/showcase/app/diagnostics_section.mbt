@@ -291,7 +291,7 @@ fn subscription_kind_count_summary(
 
 ///|
 fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=diagnostics_inspector_sample_program(theme),
     size=@core.Size::new(width=220.0, height=120.0),
   )

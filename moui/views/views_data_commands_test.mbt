@@ -105,7 +105,7 @@ test "data display components compose tables trees descriptions and avatars" {
     @views.avatar("Mira", size=32.0),
     @views.avatar_group(["Mira", "Noah", "Iris", "Ava", "Kai"], size=28.0),
   ])
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=720.0, height=680.0),
   )

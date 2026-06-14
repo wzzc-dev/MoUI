@@ -5,7 +5,7 @@ test "center card and title render simple content" {
     width=400.0,
     height=300.0,
   )
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=400.0, height=300.0),
   )
@@ -64,7 +64,7 @@ test "form field primitives build labels helper and errors" {
     ],
     width=440.0,
   )
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=520.0, height=320.0),
   )
@@ -108,7 +108,7 @@ test "form workflow bar links validation focus and keyboard action status" {
   let invalid_summary = @core.FormValidationSummary::from_errors([
     { name: "email", message: "Email is required" },
   ])
-  let invalid_runtime = @core.AppRuntime::new_view(
+  let invalid_runtime = @runtime.AppRuntime::new_view(
     root=@views.form_workflow_bar(
       summary=invalid_summary,
       primary=@views.StateViewAction::new(label="Save", message=()),
@@ -135,7 +135,7 @@ test "form workflow bar links validation focus and keyboard action status" {
     fail("expected disabled primary action")
   }
   assert_true(save.state.disabled)
-  let valid_runtime = @core.AppRuntime::new_view(
+  let valid_runtime = @runtime.AppRuntime::new_view(
     root=@views.form_workflow_bar(
       summary=@core.FormValidationSummary::from_errors([]),
       primary=@views.StateViewAction::new(label="Save", message=()),
@@ -164,7 +164,7 @@ test "form validation display can hide support text" {
     error="Should not draw",
     validation_display=@views.FormValidationDisplay::Hidden,
   )
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=360.0, height=120.0),
   )
@@ -179,7 +179,7 @@ test "form field validating state exposes preview semantics" {
     helper="Checking availability.",
     status=@views.FormFieldStatus::Validating,
   )
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=480.0, height=160.0),
   )
@@ -204,7 +204,7 @@ test "form field state uses core validation errors" {
     child=@views.text_field(field.value.get(), on_input=_value => ()),
     required=true,
   )
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=420.0, height=140.0),
   )
@@ -232,7 +232,7 @@ test "enhanced input wrappers compose public controls" {
     @views.stepper(on_decrement=(), on_increment=(), label="Page"),
     @views.multiline_text_area_shell("Line one", on_input=_value => ()),
   ])
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=520.0, height=380.0),
   )

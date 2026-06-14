@@ -1,7 +1,7 @@
 ///|
 test "host route source subscription dispatches mapped route events" {
   let source = HostRouteSource::new()
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
@@ -76,7 +76,7 @@ test "host route event constructor preserves location and source" {
 ///|
 test "host route source subscription cleanup removes late publishers" {
   let source = HostRouteSource::new()
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
@@ -117,7 +117,7 @@ test "host timer source subscription starts timer and dispatches mapped frames" 
     timer_dispatch.val = Some(dispatch)
     Some(() => ())
   })
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
@@ -169,7 +169,7 @@ test "host timer source subscription cleanup cancels timer" {
     timer_dispatch.val = Some(dispatch)
     Some(() => cleanup_count.val = cleanup_count.val + 1)
   })
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,

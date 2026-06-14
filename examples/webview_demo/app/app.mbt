@@ -364,8 +364,8 @@ pub fn runtime(
   capabilities~ : @host.HostWebViewCapabilities,
   width? : Double = 1120.0,
   height? : Double = 760.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init=Model::new(commands~, capabilities~),
       update~,

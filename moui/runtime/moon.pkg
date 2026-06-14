@@ -2,10 +2,6 @@ import {
   "wzzc-dev/moui/core",
 }
 
-import {
-  "wzzc-dev/moui/runtime",
-} for "wbtest"
-
 options(
   targets: { },
 )

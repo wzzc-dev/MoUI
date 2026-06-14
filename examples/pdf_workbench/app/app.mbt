@@ -284,7 +284,7 @@ pub fn PdfWorkbenchApp::runtime(
   self : PdfWorkbenchApp,
   width? : Double = 1120.0,
   height? : Double = 720.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   PdfWorkbenchModel::new().runtime(width~, height~)
 }
@@ -299,7 +299,7 @@ pub fn PdfWorkbenchApp::runtime_with_services(
   startup_page_number? : Int = 1,
   width? : Double = 1120.0,
   height? : Double = 720.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   PdfWorkbenchModel::new().runtime_with_services(
     services,
@@ -317,7 +317,7 @@ pub fn PdfWorkbenchModel::runtime(
   self : PdfWorkbenchModel,
   width? : Double = 1120.0,
   height? : Double = 720.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   self.runtime_with_services(
     @host.HostAppServices::unavailable(),
     width~,
@@ -335,8 +335,8 @@ pub fn PdfWorkbenchModel::runtime_with_services(
   startup_page_number? : Int = 1,
   width? : Double = 1120.0,
   height? : Double = 720.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::new_with_environment(
       init=() => {
         self
@@ -364,6 +364,6 @@ pub fn PdfWorkbenchModel::runtime_with_services(
 pub fn runtime(
   width? : Double = 1120.0,
   height? : Double = 720.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   PdfWorkbenchModel::new().runtime(width~, height~)
 }
