@@ -55,7 +55,12 @@ pub fn[Msg] custom_layout(
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  @core.View::custom_view(measure~, paint~, semantics_role~, semantics_label~)
+  @core.View::primitive_custom_view(
+    measure~,
+    paint~,
+    semantics_role~,
+    semantics_label~,
+  )
 }
 
 ///|
@@ -67,7 +72,7 @@ pub fn[Msg] custom_children_layout(
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  @core.View::custom_children_layout(
+  @core.View::primitive_custom_children_layout_view(
     children~,
     measure~,
     place~,
@@ -81,7 +86,7 @@ pub fn[Msg] custom_children_layout(
 pub fn[Msg] component(
   build : (@core.BuildContext) -> @core.View[Msg],
 ) -> @core.View[Msg] {
-  @core.View::component(build)
+  @core.View::primitive_component_view(build)
 }
 
 ///|

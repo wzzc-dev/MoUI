@@ -158,7 +158,7 @@ test "program effect tasks cancel by key change and runtime destroy" {
       }
     },
     view=model => {
-      View::button(
+      View::primitive_button_view(
         text=model,
         size=Size::new(width=140.0, height=44.0),
         font=FontSpec::new(size=16.0),
@@ -254,7 +254,7 @@ test "program effect task replacement reports same-key kind changes" {
       }
     },
     view=model => {
-      View::button(
+      View::primitive_button_view(
         text=model,
         size=Size::new(width=140.0, height=44.0),
         font=FontSpec::new(size=16.0),

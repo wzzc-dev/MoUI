@@ -19,7 +19,7 @@ pub fn[Msg] focus_ring(
     ),
     width=if focused { 2.0 } else { 1.0 },
   )
-  let wrapped = @core.View::container(
+  let wrapped = @core.View::primitive_container_view(
     child=Some(child.padding(padding)),
     size=None,
     border=Some(ring),

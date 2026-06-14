@@ -16,10 +16,10 @@ test "controlled checkbox picker and datepicker emit new value messages" {
       }
     },
     view=enabled => {
-      View::flex(
+      View::primitive_flex_view(
         children=[
           runtime_test_label("Enabled: \{enabled}"),
-          View::controlled_checkbox(
+          View::primitive_controlled_checkbox_view(
             label="Enabled",
             checked=enabled,
             on_change=value => ControlledChecked(value),
@@ -55,9 +55,9 @@ test "controlled checkbox picker and datepicker emit new value messages" {
       }
     },
     view=selected => {
-      View::flex(
+      View::primitive_flex_view(
         children=[
-          View::controlled_picker(
+          View::primitive_controlled_picker_view(
             items~,
             selected~,
             on_select=value => ControlledPicked(value),
@@ -94,9 +94,9 @@ test "controlled checkbox picker and datepicker emit new value messages" {
       }
     },
     view=selected => {
-      View::flex(
+      View::primitive_flex_view(
         children=[
-          View::controlled_picker(
+          View::primitive_controlled_picker_view(
             items=stacked_items,
             selected~,
             on_select=value => ControlledPicked(value),
@@ -107,7 +107,7 @@ test "controlled checkbox picker and datepicker emit new value messages" {
             corner_radius=6.0,
             max_height=120.0,
           ),
-          View::controlled_datepicker(
+          View::primitive_controlled_datepicker_view(
             selected=DateValue::new(year=2026, month=5, day=21),
             on_select=value => ControlledDated(value),
             mode=DatePickerMode::Date,
@@ -147,9 +147,9 @@ test "controlled checkbox picker and datepicker emit new value messages" {
       }
     },
     view=selected => {
-      View::flex(
+      View::primitive_flex_view(
         children=[
-          View::controlled_datepicker(
+          View::primitive_controlled_datepicker_view(
             selected~,
             on_select=value => ControlledDated(value),
             mode=DatePickerMode::Date,
@@ -201,9 +201,9 @@ test "controlled datepicker ignores dates outside min max range" {
       }
     },
     view=selected => {
-      View::flex(
+      View::primitive_flex_view(
         children=[
-          View::controlled_datepicker(
+          View::primitive_controlled_datepicker_view(
             selected~,
             on_select=value => ControlledDated(value),
             mode=DatePickerMode::Date,
