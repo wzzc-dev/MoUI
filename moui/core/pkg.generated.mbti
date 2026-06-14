@@ -372,18 +372,13 @@ pub(all) enum CrossAxisAlignment {
   CrossStretch
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct CustomLayoutCache {
-  mut entries : Array[CustomLayoutCacheEntry]
-}
+type CustomLayoutCache
 pub fn CustomLayoutCache::clear(Self) -> Unit
 pub fn CustomLayoutCache::get(Self, String) -> String?
 pub fn CustomLayoutCache::new() -> Self
 pub fn CustomLayoutCache::set(Self, String, String) -> Unit
 
-pub(all) struct CustomLayoutCacheEntry {
-  key : String
-  mut value : String
-} derive(Eq, ToJson, @debug.Debug)
+type CustomLayoutCacheEntry derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct CustomLayoutContext {
   constraints : Constraints
@@ -1430,10 +1425,7 @@ pub fn SaveableCodec::int() -> Self[Int]
 pub fn[T] SaveableCodec::new(encode~ : (T) -> String, decode~ : (String) -> T?) -> Self[T]
 pub fn SaveableCodec::string() -> Self[String]
 
-pub(all) struct SaveableStateSnapshot {
-  entries : Array[SaveableStringEntry]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn SaveableStateSnapshot::new(entries? : Array[SaveableStringEntry]) -> Self
+type SaveableStateSnapshot derive(Eq, ToJson, @debug.Debug)
 
 pub struct SaveableStateStore {
   mut strings : Array[SaveableStringEntry]
@@ -1451,10 +1443,7 @@ pub fn SaveableStateStore::set_int(Self, String, Int) -> Unit
 pub fn SaveableStateStore::set_string(Self, String, String) -> Unit
 pub fn SaveableStateStore::snapshot(Self) -> SaveableStateSnapshot
 
-pub(all) struct SaveableStringEntry {
-  key : String
-  mut value : String
-} derive(Eq, ToJson, @debug.Debug)
+type SaveableStringEntry derive(Eq, ToJson, @debug.Debug)
 
 pub struct ScrollState {
   offset_slot : State[Point]
@@ -2085,10 +2074,7 @@ pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Msg)?) -> Self[Msg]
 
-pub(all) struct ViewEnvironment {
-  viewport_size : Size
-  environment : Environment
-}
+type ViewEnvironment
 pub fn ViewEnvironment::environment(Self) -> Environment
 pub fn ViewEnvironment::new(viewport_size~ : Size, environment~ : Environment) -> Self
 pub fn ViewEnvironment::viewport_size(Self) -> Size

@@ -1,5 +1,5 @@
 ///|
-pub(all) struct ViewEnvironment {
+struct ViewEnvironment {
   viewport_size : Size
   environment : Environment
 }
