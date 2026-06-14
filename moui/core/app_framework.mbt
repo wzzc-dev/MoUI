@@ -330,7 +330,7 @@ pub fn RouteHistoryState::restore_router(
 }
 
 ///|
-pub fn RouteFocusEntry::new(
+fn RouteFocusEntry::new(
   route~ : String,
   focus_key~ : String,
 ) -> RouteFocusEntry {
@@ -338,10 +338,8 @@ pub fn RouteFocusEntry::new(
 }
 
 ///|
-pub fn RouteFocusStore::new(
-  entries? : Array[RouteFocusEntry] = [],
-) -> RouteFocusStore {
-  { entries: entries.copy() }
+pub fn RouteFocusStore::new() -> RouteFocusStore {
+  { entries: [] }
 }
 
 ///|
