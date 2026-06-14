@@ -53,6 +53,7 @@ pub struct SkiaRasterRenderer {
   priv layer_cache : Array[SkiaCachedLayerImageEntry]
   priv layer_cache_admissions : Array[SkiaCachedLayerAdmissionRecord]
   priv mut layer_cache_tick : Int
+  priv mut platform_view_draw_fn : (() -> Unit)?
 }
 
 ///|
@@ -165,6 +166,7 @@ pub fn create_with_present_target_and_route(
     layer_cache: [],
     layer_cache_admissions: [],
     layer_cache_tick: 0,
+    platform_view_draw_fn: None,
   }
 }
 
@@ -262,6 +264,11 @@ fn SkiaRasterRenderer::render_frame_inner(
         }
       }
       canvas.restore_to_count(saved)
+      // Draw platform view pixels (e.g., offscreen webview) after commands but before flush
+      match self.platform_view_draw_fn {
+        Some(draw_fn) => draw_fn()
+        None => ()
+      }
       if !complete {
         return stats.to_render_frame_result(presented=false)
       }
@@ -378,3 +385,13 @@ pub fn SkiaRasterRenderer::draw_platform_view_pixels(
     None => ()
   }
 }
+
+///| Set a callback to draw platform view pixels after command rendering but before flush.
+pub fn SkiaRasterRenderer::set_platform_view_draw_fn(
+  self : SkiaRasterRenderer,
+  draw_fn : (() -> Unit)?,
+) -> Unit {
+  self.platform_view_draw_fn = draw_fn
+}
+
+
