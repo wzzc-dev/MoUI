@@ -40,7 +40,10 @@ jobs:
           node --check scripts/test-smoke-check.mjs
           node scripts/test-smoke-check.mjs
           node scripts/smoke-check.mjs --check
-          node scripts/smoke-check.mjs --tier "$SMOKE_GATE" --json
+          node --check scripts/smoke-gate.mjs
+          node --check scripts/test-smoke-gate.mjs
+          node scripts/test-smoke-gate.mjs
+          node scripts/smoke-gate.mjs --tier "$SMOKE_GATE" --dry-run --json
 
   web-runtime-presentation:
     name: Web runtime presentation smoke
@@ -60,7 +63,7 @@ jobs:
           sh scripts/ci-moon-update.sh
 
       - name: Run Web runtime presentation smoke
-        run: sh scripts/ci-web-runtime-presentation.sh
+        run: node scripts/smoke-gate.mjs --suite web.runtime-presentation --run
 
       - name: Upload Web runtime presentation artifacts
         if: ${{ always() }}
@@ -88,14 +91,7 @@ jobs:
           sh scripts/ci-moon-update.sh
 
       - name: Run macOS real-Skia release smoke
-        run: |
-          mkdir -p artifacts/platform-observation/macos artifacts/example-smoke/macos
-          sh scripts/macos-skia-renderer-smoke.sh \
-            --run-showcase-smoke \
-            --run-markdown-smoke \
-            --smoke-log artifacts/platform-observation/macos/skia-renderer-smoke.log \
-            --showcase-log artifacts/platform-observation/macos/showcase-macos-skia-first-frame.log \
-            --markdown-log artifacts/example-smoke/macos/markdown-macos-skia-first-frame.log
+        run: node scripts/smoke-gate.mjs --suite macos.skia-real-showcase-markdown --run
 
       - name: Upload macOS real-Skia smoke artifacts
         if: ${{ always() }}

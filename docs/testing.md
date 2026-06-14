@@ -38,6 +38,10 @@ node --check scripts/smoke-check.mjs
 node --check scripts/test-smoke-check.mjs
 node scripts/test-smoke-check.mjs
 node scripts/smoke-check.mjs --check
+node --check scripts/smoke-gate.mjs
+node --check scripts/test-smoke-gate.mjs
+node scripts/test-smoke-gate.mjs
+node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 sh -n scripts/ci-web-runtime-presentation.sh
 moon check
 moon test moui/core --target native
@@ -131,10 +135,14 @@ node scripts/test-smoke-check.mjs
 node scripts/smoke-check.mjs --check
 node scripts/smoke-check.mjs --tier nightly --list
 node scripts/smoke-check.mjs --tier release --json
+node scripts/smoke-gate.mjs --tier nightly --dry-run --json
+node scripts/smoke-gate.mjs --suite web.runtime-presentation --run
 ```
 
 The catalog check is part of the default `dev-check`; real browser/platform
-smoke remains opt-in. The scheduled/manual
+smoke remains opt-in. `scripts/smoke-gate.mjs` is the unified runner for suites
+selected from the catalog; it defaults to dry-run and requires `--allow-manual`
+before running commands marked manual. The scheduled/manual
 `.github/workflows/moui-runtime-smoke-gates.yml` workflow is the CI entrypoint
 for the Web runtime presentation nightly smoke and the manual macOS real-Skia
 release smoke.

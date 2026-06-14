@@ -334,8 +334,9 @@ Systems addon diagnostic coverage. Keep `docs/testing.md` and repo-local skills
 synchronized when adding or removing daily quality gates. It also validates the
 checked-in `smoke/gates.json` smoke gate catalog with
 `node scripts/smoke-check.mjs --check`; default `dev-check` checks the catalog
-shape, not real browser or platform smoke execution. The scheduled/manual CI
-entrypoint for those opt-in gates is
+shape and `smoke-gate.mjs` dry-run, not real browser or platform smoke
+execution. `scripts/smoke-gate.mjs` is the unified catalog-backed runner for
+selected suites. The scheduled/manual CI entrypoint for those opt-in gates is
 `.github/workflows/moui-runtime-smoke-gates.yml`.
 
 Manual smoke is opt-in. Browser-session smoke uses
@@ -404,6 +405,10 @@ node --check scripts/smoke-check.mjs
 node --check scripts/test-smoke-check.mjs
 node scripts/test-smoke-check.mjs
 node scripts/smoke-check.mjs --check
+node --check scripts/smoke-gate.mjs
+node --check scripts/test-smoke-gate.mjs
+node scripts/test-smoke-gate.mjs
+node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check
 node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check

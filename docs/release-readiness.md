@@ -41,7 +41,9 @@ or current-platform first-frame presentation.
 `smoke/gates.json` is the source of truth for mapping those observations to
 daily, nightly, and release gates. Use `node scripts/smoke-check.mjs --tier
 nightly --json` or `--tier release --json` to print the structured plan before
-triggering `.github/workflows/moui-runtime-smoke-gates.yml`.
+triggering `.github/workflows/moui-runtime-smoke-gates.yml`. Use
+`node scripts/smoke-gate.mjs --tier release --dry-run --json` to preview the
+exact catalog-backed commands before running a release gate.
 
 Those logs are runtime observation logs for a named host/session. They do not
 become a checked-in manifest and they do not automatically promote unrelated
