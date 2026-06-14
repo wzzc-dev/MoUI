@@ -449,6 +449,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep web app runtime loop, event dispatch, redraw, and text-input sync compact",
     },
     {
+      path: "moui/backend/web/web_async_services.mbt",
+      max_lines: 520,
+      target_lines: 470,
+      reason: "keep web async browser service queueing, completion, and text-file cache helpers compact",
+    },
+    {
+      path: "moui/backend/web/web_host.mbt",
+      max_lines: 360,
+      target_lines: 325,
+      reason: "keep web host capability, service bridge, and host-string bridge facade compact",
+    },
+    {
       path: "moui/backend/web/web_window_requests.mbt",
       max_lines: 200,
       target_lines: 180,
