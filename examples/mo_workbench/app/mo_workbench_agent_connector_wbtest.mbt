@@ -18,10 +18,10 @@ test "workbench ACP connector backend queues prompt through connector runtime" {
   let summary = update.effect.plan_summary()
   inspect(summary.descriptors.length(), content="1")
   inspect(
-    summary.descriptors[0].key,
+    summary.descriptors[0].key(),
     content="agent-connector:acp-demo:dispatch",
   )
-  inspect(summary.descriptors[0].kind, content="agent-connector")
+  inspect(summary.descriptors[0].kind(), content="agent-connector")
   let model = run_workbench_effect_with_agent_connectors(
     update,
     PiTransportRuntime::unavailable(),

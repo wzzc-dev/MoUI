@@ -20,9 +20,9 @@ test "host event source subscription dispatches mapped host events" {
   inspect(source.active_handler_count(), content="1")
   let initial = runtime.program_runtime_snapshot()
   inspect(initial.active_subscription_count, content="1")
-  inspect(initial.active_subscriptions[0].key, content="host:event")
-  inspect(initial.active_subscriptions[0].kind, content="host-event")
-  inspect(initial.active_subscriptions[0].label, content="Host event adapter")
+  inspect(initial.active_subscriptions[0].key(), content="host:event")
+  inspect(initial.active_subscriptions[0].kind(), content="host-event")
+  inspect(initial.active_subscriptions[0].label(), content="Host event adapter")
   inspect(source.publish(HostEvent::RedrawRequested), content="1")
   inspect(runtime.program_runtime_snapshot().dispatched_count, content="0")
   inspect(
@@ -161,10 +161,10 @@ test "host window event source subscription dispatches mapped window events" {
   inspect(source.active_handler_count(), content="1")
   let initial = runtime.program_runtime_snapshot()
   inspect(initial.active_subscription_count, content="1")
-  inspect(initial.active_subscriptions[0].key, content="host:window-event")
-  inspect(initial.active_subscriptions[0].kind, content="window-event")
+  inspect(initial.active_subscriptions[0].key(), content="host:window-event")
+  inspect(initial.active_subscriptions[0].kind(), content="window-event")
   inspect(
-    initial.active_subscriptions[0].label,
+    initial.active_subscriptions[0].label(),
     content="Host window event adapter",
   )
   inspect(
