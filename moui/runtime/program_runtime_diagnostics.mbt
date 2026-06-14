@@ -259,8 +259,3 @@ fn ProgramRuntimeDiagnostics::snapshot(
     subscription_lifecycle: self.subscription_lifecycle.copy(),
   }
 }
-
-///|
-fn empty_program_runtime_snapshot() -> @core.ProgramRuntimeSnapshot {
-  ProgramRuntimeDiagnostics::new().snapshot()
-}
