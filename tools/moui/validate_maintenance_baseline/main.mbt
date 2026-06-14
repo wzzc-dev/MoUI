@@ -923,6 +923,24 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views choice item, chip variant, and segmented control descriptors compact",
     },
     {
+      path: "moui/views/choice_groups.mbt",
+      max_lines: 70,
+      target_lines: 60,
+      reason: "keep views radio and checkbox group helpers compact",
+    },
+    {
+      path: "moui/views/choice_segmented.mbt",
+      max_lines: 60,
+      target_lines: 50,
+      reason: "keep views segmented control rendering compact",
+    },
+    {
+      path: "moui/views/choice_chips.mbt",
+      max_lines: 160,
+      target_lines: 140,
+      reason: "keep views chip, tag, filter-chip, and choice-chip helpers compact",
+    },
+    {
       path: "moui/views/control_choice.mbt",
       max_lines: 85,
       target_lines: 75,
