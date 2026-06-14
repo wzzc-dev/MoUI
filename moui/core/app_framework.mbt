@@ -80,8 +80,7 @@ pub(all) struct FormFieldError {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct FormValidationRule {
-  message : String
+struct FormValidationRule {
   validate : (String) -> String?
 }
 
@@ -93,7 +92,7 @@ pub(all) struct FormValidationSummary {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct FormController {
+struct FormController {
   fields : Array[FormFieldState]
 }
 
@@ -604,10 +603,7 @@ pub fn FormValidationRule::new(
   message~ : String,
   validate~ : (String) -> Bool,
 ) -> FormValidationRule {
-  {
-    message,
-    validate: value => if validate(value) { None } else { Some(message) },
-  }
+  { validate: value => if validate(value) { None } else { Some(message) } }
 }
 
 ///|
@@ -621,7 +617,7 @@ pub fn FormValidationRule::required(
 pub fn FormValidationRule::from_validator(
   validator : (String) -> String?,
 ) -> FormValidationRule {
-  { message: "Invalid", validate: validator }
+  { validate: validator }
 }
 
 ///|
