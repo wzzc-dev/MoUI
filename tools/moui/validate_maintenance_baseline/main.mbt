@@ -456,9 +456,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/element.mbt",
-      max_lines: 990,
-      target_lines: 900,
-      reason: "keep core element mounting, reconciliation, dirty, inspector, and cleanup logic compact",
+      max_lines: 330,
+      target_lines: 300,
+      reason: "keep core element dirty, inspector, component rebuild, and cleanup logic compact",
+    },
+    {
+      path: "moui/core/element_reconcile.mbt",
+      max_lines: 690,
+      target_lines: 620,
+      reason: "keep core element mounting, reconciliation, dirty-kind comparison, and child reuse compact",
     },
     {
       path: "moui/core/element_tree.mbt",
