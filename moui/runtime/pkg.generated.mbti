@@ -6,15 +6,58 @@ import {
 }
 
 // Values
-pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> @core.AppRuntime
+pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> AppRuntime
 
-pub fn[Msg] new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> @core.AppRuntime
+pub fn[Msg] new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> AppRuntime
 
 // Errors
 
 // Types and methods
+pub struct AppRuntime {
+  // private fields
+}
+pub fn AppRuntime::action_commands(Self) -> Array[@core.ActionCommand]
+pub fn AppRuntime::add_animation(Self, @core.AnimationController) -> Unit
+pub fn AppRuntime::advance_time(Self, Double) -> Unit
+pub fn AppRuntime::animation_count(Self) -> Int
+pub fn AppRuntime::destroy(Self) -> Unit
+pub fn AppRuntime::dirty_count(Self) -> Int
+pub fn AppRuntime::dirty_element_ids(Self) -> Array[@core.ElementId]
+pub fn AppRuntime::dispatch_action_command(Self, @core.ActionCommand) -> Bool
+pub fn AppRuntime::dispatch_command(Self, @core.CommandIntent) -> Bool
+pub fn AppRuntime::dispatch_event(Self, @core.AppEvent) -> Unit
+pub fn AppRuntime::dispatch_focused_text_command(Self, @core.CommandIntent, paste_text? : String?) -> @core.TextCommandResult
+pub fn AppRuntime::draw_commands(Self) -> Array[@core.DrawCommand]
+pub fn AppRuntime::draw_frame(Self) -> @core.DrawFrame
+pub fn AppRuntime::environment(Self) -> @core.Environment
+pub fn AppRuntime::focus_key(Self, String) -> Bool
+pub fn AppRuntime::focus_next(Self) -> Bool
+pub fn AppRuntime::focus_previous(Self) -> Bool
+pub fn AppRuntime::focused_text_input(Self) -> @core.TextInputState
+pub fn AppRuntime::inspector_snapshot(Self) -> @core.InspectorSnapshot
+pub fn AppRuntime::invalidate_cached_layer_key(Self, String) -> Unit
+pub fn AppRuntime::layout(Self) -> @core.LayoutResult
+pub fn AppRuntime::layout_pass(Self) -> Unit
+pub fn AppRuntime::needs_layout(Self) -> Bool
+pub fn AppRuntime::needs_paint(Self) -> Bool
+pub fn AppRuntime::needs_rebuild(Self) -> Bool
+pub fn AppRuntime::needs_redraw(Self) -> Bool
+pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> Self
+pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> Self
+pub fn AppRuntime::paint_pass(Self) -> Array[@core.DrawCommand]
+pub fn AppRuntime::program_runtime_snapshot(Self) -> @core.ProgramRuntimeSnapshot
+pub fn AppRuntime::rebuild(Self) -> Unit
+pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
+pub fn AppRuntime::restore_location_focus(Self, @core.RouteFocusStore, @core.RouteLocation) -> Bool
+pub fn AppRuntime::restore_route_focus(Self, @core.RouteFocusStore, String) -> Bool
+pub fn AppRuntime::semantics(Self) -> @core.SemanticsNode
+pub fn AppRuntime::set_action_commands(Self, @core.ActionCommandMap) -> Unit
+pub fn AppRuntime::set_environment(Self, @core.Environment) -> Unit
+pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
+pub fn AppRuntime::set_text_system(Self, @core.TextSystem) -> Unit
+pub fn AppRuntime::size(Self) -> @core.Size
+pub fn AppRuntime::text_system(Self) -> @core.TextSystem
 
 // Type aliases
-pub using @core {type AppRuntime}
 
 // Traits

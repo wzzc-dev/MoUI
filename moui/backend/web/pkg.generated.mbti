@@ -6,6 +6,7 @@ import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/render/webgpu_adapter",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
@@ -25,11 +26,11 @@ pub fn renderer_backend_info() -> @render.RendererBackendInfo
 
 pub fn request_animation_frame_event() -> @host.HostEvent
 
-pub fn run_app(String, @wzzc-dev/moui/core.AppRuntime) -> Unit
+pub fn run_app(String, @runtime.AppRuntime) -> Unit
 
-pub fn run_app_with_options(String, @wzzc-dev/moui/core.AppRuntime, options~ : WebAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_options(String, @runtime.AppRuntime, options~ : WebAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
-pub fn run_app_with_window_requests(String, @wzzc-dev/moui/core.AppRuntime, @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_window_requests(String, @runtime.AppRuntime, @host.HostWindowRequestQueue) -> Unit
 
 pub fn semantics_to_aria(@wzzc-dev/moui/core.SemanticsNode) -> AriaNode
 

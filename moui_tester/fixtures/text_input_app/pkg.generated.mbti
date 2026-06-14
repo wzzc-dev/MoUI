@@ -4,10 +4,11 @@ package "wzzc-dev/moui_tester/fixtures/text_input_app"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
 
 pub fn update(TextInputSmokeModel, TextInputSmokeMsg) -> TextInputSmokeModel
 
