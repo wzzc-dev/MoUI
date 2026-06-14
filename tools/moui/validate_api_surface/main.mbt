@@ -24,6 +24,12 @@ struct ViewReturnRule {
 }
 
 ///|
+struct ForbiddenSourceToken {
+  label : String
+  token : String
+}
+
+///|
 fn usage() -> String {
   let text =
     #|Usage: tools/moui/validate_api_surface [--repo-root PATH]
@@ -471,6 +477,44 @@ fn runtime_consumer_roots() -> Array[String] {
 }
 
 ///|
+fn core_control_consumer_roots() -> Array[String] {
+  [
+    "benchmarks", "examples", "moui/backend", "moui/tests", "moui_devtools", "moui_tester",
+    "website",
+  ]
+}
+
+///|
+fn forbidden_core_control_tokens() -> Array[ForbiddenSourceToken] {
+  [
+    { label: "checkbox", token: "@core.View::checkbox" },
+    { label: "controlled checkbox", token: "@core.View::controlled_checkbox" },
+    { label: "text field", token: "@core.View::text_field" },
+    {
+      label: "controlled text field",
+      token: "@core.View::controlled_text_field",
+    },
+    { label: "rich text editor", token: "@core.View::rich_text_editor" },
+    {
+      label: "controlled rich text editor",
+      token: "@core.View::controlled_rich_text_editor",
+    },
+    { label: "picker", token: "@core.View::picker" },
+    { label: "controlled picker", token: "@core.View::controlled_picker" },
+    { label: "datepicker", token: "@core.View::datepicker" },
+    {
+      label: "controlled datepicker",
+      token: "@core.View::controlled_datepicker",
+    },
+    { label: "search bar", token: "@core.View::search_bar" },
+    {
+      label: "controlled search bar",
+      token: "@core.View::controlled_search_bar",
+    },
+  ]
+}
+
+///|
 fn validate_runtime_entrypoint_usage(
   repo_root : String,
   failures : Array[String],
@@ -502,6 +546,43 @@ fn validate_runtime_entrypoint_usage(
 }
 
 ///|
+fn validate_core_control_entrypoint_usage(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = []
+  for root in core_control_consumer_roots() {
+    collect_mbt_files(repo_root, root, files, failures)
+  }
+  let mut direct_core_control_uses = 0
+  let tokens = forbidden_core_control_tokens()
+  for path in files {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    for rule in tokens {
+      if text.contains(rule.token) {
+        direct_core_control_uses += 1
+        failures.push(
+          path +
+          ": app/host/test code must use moui/views for " +
+          rule.label +
+          " instead of " +
+          rule.token,
+        )
+      }
+    }
+  }
+  println(
+    "api surface: direct core control entrypoint uses=\{direct_core_control_uses}",
+  )
+}
+
+///|
 fn run_checks(repo_root : String) -> Array[String] {
   let failures : Array[String] = []
   for budget in package_budgets() {
@@ -510,6 +591,7 @@ fn run_checks(repo_root : String) -> Array[String] {
   validate_root_facade_shape(repo_root, failures)
   validate_views_return_types(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)
+  validate_core_control_entrypoint_usage(repo_root, failures)
   failures
 }
 

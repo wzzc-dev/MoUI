@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/views",
   "wzzc-dev/moui/render/wgpu" @wgpu_renderer,
   "wzzc-dev/moui/render/skia" @skia_renderer,
   "wzzc-dev/moui_skia/native" @skia_native,
