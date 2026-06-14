@@ -1,46 +1,46 @@
 ///|
-struct TapGestureResult {
+priv struct TapGestureResult {
   next_state : ButtonState
   activated : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
-enum LongPressGesturePhase {
+priv enum LongPressGesturePhase {
   Idle
   Pressing
   Recognized
   Cancelled
-} derive(Eq, Debug, ToJson)
+} derive(Eq)
 
 ///|
-struct LongPressGestureState {
+priv struct LongPressGestureState {
   phase : LongPressGesturePhase
   origin : Point?
   start_time_ms : Double
   duration_ms : Double
   max_movement : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
-struct LongPressGestureResult {
+priv struct LongPressGestureResult {
   state : LongPressGestureState
   recognized : Bool
   cancelled : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
-struct DoubleTapGestureState {
+priv struct DoubleTapGestureState {
   first_position : Point?
   first_time_ms : Double
   timeout_ms : Double
   max_distance : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
-struct DoubleTapGestureResult {
+priv struct DoubleTapGestureResult {
   state : DoubleTapGestureState
   recognized : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub(all) enum DragGesturePhase {
@@ -62,18 +62,18 @@ pub(all) struct DragGestureEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
-struct DragGestureState {
+priv struct DragGestureState {
   phase : DragGesturePhase
   origin : Point?
   last_position : Point?
   min_distance : Double
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
-struct DragGestureResult {
+priv struct DragGestureResult {
   state : DragGestureState
   event : DragGestureEvent?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub(all) enum CommandIntent {

@@ -263,8 +263,6 @@ pub(all) struct ChoiceControlStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ChoiceControlStyle::default(theme? : Theme) -> Self
 
-type Clock derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct Color {
   r : Double
   g : Double
@@ -368,8 +366,6 @@ pub fn CustomLayoutCache::get(Self, String) -> String?
 pub fn CustomLayoutCache::new() -> Self
 pub fn CustomLayoutCache::set(Self, String, String) -> Unit
 
-type CustomLayoutCacheEntry derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct CustomLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
@@ -439,10 +435,6 @@ pub fn[T] DerivedState::subscribe(Self[T], () -> Unit) -> Array[StateSubscriptio
 
 type DirtyFlags derive(Eq, ToJson, @debug.Debug)
 
-type DoubleTapGestureResult derive(Eq, ToJson, @debug.Debug)
-
-type DoubleTapGestureState derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct DragDropEvent {
   phase : DragDropPhase
   paths : Array[String]
@@ -475,10 +467,6 @@ pub(all) enum DragGesturePhase {
   Cancelled
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DragGesturePhase::label(Self) -> String
-
-type DragGestureResult derive(Eq, ToJson, @debug.Debug)
-
-type DragGestureState derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum DrawCommand {
   Clear(Color)
@@ -597,8 +585,6 @@ pub(all) enum EffectTaskLifecycleStatus {
   EffectTaskCompleted
   EffectTaskCancelled
 } derive(Eq, ToJson, @debug.Debug)
-
-type ElementEventResult derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ElementId {
   value : Int
@@ -891,12 +877,6 @@ pub(all) struct LinearGradientSpec {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LinearGradientSpec::new(start~ : Point, end~ : Point, start_color~ : Color, end_color~ : Color) -> Self
 
-type LongPressGesturePhase derive(Eq, ToJson, @debug.Debug)
-
-type LongPressGestureResult derive(Eq, ToJson, @debug.Debug)
-
-type LongPressGestureState derive(Eq, ToJson, @debug.Debug)
-
 pub(all) enum MainAxisAlignment {
   MainStart
   MainCenter
@@ -1110,8 +1090,6 @@ pub(all) struct RenderInspectorSnapshot {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderInspectorSnapshot::from_commands(Array[DrawCommand]) -> Self
 pub fn RenderInspectorSnapshot::from_runtime(AppRuntime) -> Self
-
-type RenderNode derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
@@ -1664,8 +1642,6 @@ pub(all) struct SurfaceStyle {
 pub fn SurfaceStyle::default(theme? : Theme) -> Self
 pub fn SurfaceStyle::raised(theme? : Theme) -> Self
 
-type TapGestureResult derive(Eq, ToJson, @debug.Debug)
-
 pub(all) enum TextAlign {
   TextStart
   TextCenter
@@ -1708,8 +1684,6 @@ pub fn TextGraphemeBoundaries::normalize_range(Self, TextRange) -> TextRange
 pub fn TextGraphemeBoundaries::previous_boundary(Self, Int) -> Int
 pub fn TextGraphemeBoundaries::text(Self) -> String
 pub fn TextGraphemeBoundaries::utf8_offset(Self, Int) -> Int
-
-type TextHistoryEntry derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum TextInputEvent {
   InsertText(String)
@@ -1921,8 +1895,6 @@ pub fn TransitionStyle::with_foreground(Self, Color) -> Self
 pub fn TransitionStyle::with_offset(Self, dx? : Double, dy? : Double) -> Self
 pub fn TransitionStyle::with_opacity(Self, Double) -> Self
 pub fn TransitionStyle::with_scale(Self, sx? : Double, sy? : Double) -> Self
-
-type Tween derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct TypographyScale {
   body : FontSpec

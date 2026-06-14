@@ -522,7 +522,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/element_tree.mbt",
-      max_lines: 235,
+      max_lines: 221,
       target_lines: 210,
       reason: "keep core element node, tree, render node, and cache state compact",
     },

@@ -16,36 +16,6 @@ fn aligned_rect(
 }
 
 ///|
-fn element_hit_testable(spec : ViewSpec) -> Bool {
-  match spec {
-    ButtonSpec(_) => true
-    TextFieldSpec(_) => true
-    RichTextEditorSpec(_) => true
-    CheckboxSpec(_) => true
-    PickerSpec(_) => true
-    DatePickerSpec(_) => true
-    SearchBarSpec(_) => true
-    WebViewHostSpec(_) => true
-    SheetSpec(_) => true
-    ContainerSpec(data) => data.background is Some(_)
-    ModifiedSpec(data) =>
-      data.modifier is BackgroundModifier(_) ||
-      data.modifier is BorderModifier(_) ||
-      data.modifier is ShadowModifier(_) ||
-      data.modifier is OnTapModifier(_) ||
-      data.modifier is OnLongPressModifier(_) ||
-      data.modifier is OnDoubleTapModifier(_) ||
-      data.modifier is OnDragModifier(_) ||
-      data.modifier is OnDragWithFrameModifier(_) ||
-      data.modifier is OnFileDropModifier(_) ||
-      data.modifier is FocusableModifier(true)
-    CustomSpec(_) | CustomLayoutSpec(_) => true
-    ComponentSpec(_) => false
-    _ => false
-  }
-}
-
-///|
 fn ElementNode::render_with_environment(
   self : ElementNode,
   placed : PlacedNode,
@@ -416,7 +386,6 @@ fn ElementNode::render_with_environment(
     element_id: self.id,
     frame: bounds,
     children,
-    hit_testable: element_hit_testable(self.spec),
     paint_bounds,
     content_revision: self.render_cache.content_revision,
     is_repaint_boundary: false,

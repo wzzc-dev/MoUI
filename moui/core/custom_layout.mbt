@@ -1,8 +1,8 @@
 ///|
-struct CustomLayoutCacheEntry {
+priv struct CustomLayoutCacheEntry {
   key : String
   mut value : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 struct CustomLayoutCache {
