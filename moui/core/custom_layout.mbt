@@ -1,12 +1,12 @@
 ///|
-pub(all) struct CustomLayoutCacheEntry {
+struct CustomLayoutCacheEntry {
   key : String
   mut value : String
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct CustomLayoutCache {
-  mut entries : Array[CustomLayoutCacheEntry]
+struct CustomLayoutCache {
+  entries : Array[CustomLayoutCacheEntry]
 }
 
 ///|
