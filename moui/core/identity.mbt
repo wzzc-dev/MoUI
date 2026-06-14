@@ -1,7 +1,7 @@
 ///|
 struct Key {
   value : String
-} derive(Eq, Debug, ToJson)
+} derive(Eq)
 
 ///|
 pub(all) struct ElementId {
