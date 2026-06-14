@@ -1,5 +1,5 @@
 ///|
-pub(all) struct TextGraphemeBoundaries {
+pub struct TextGraphemeBoundaries {
   priv text : String
   priv boundaries : Array[Int]
 } derive(Eq, Debug, ToJson)

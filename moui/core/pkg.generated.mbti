@@ -195,12 +195,7 @@ pub fn Brush::radial_gradient(center~ : Point, radius~ : Double, center_color~ :
 pub fn Brush::solid(Color) -> Self
 
 pub struct BuildContext {
-  runtime : RuntimeState
-  component_id : ElementId
-  subscriptions : Array[StateSubscription]
-  effects : Array[ComponentEffect]
-  old_effects : Array[ComponentEffect]
-  environment : Environment
+  // private fields
 }
 pub fn BuildContext::accessibility_contrast(Self) -> AccessibilityContrast
 pub fn[T] BuildContext::binding(Self, State[T]) -> Binding[T]
@@ -330,27 +325,12 @@ pub(all) enum CommandIntent {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CommandIntent::display_label(Self) -> String
 
-pub(all) struct ComponentEffect {
-  key : String
-  cleanup : (() -> Unit)?
-  cleanup_with_reason : ((ComponentEffectCancelReason) -> Unit)?
-  mut status : ComponentEffectStatus
-  mut cancel_reason : ComponentEffectCancelReason?
-  mut reused : Bool
-}
-pub fn ComponentEffect::cancel(Self) -> Unit
-pub fn ComponentEffect::cancel_with_reason(Self, ComponentEffectCancelReason) -> Unit
-pub fn ComponentEffect::new(key~ : String, cleanup? : (() -> Unit)?, cleanup_with_reason? : ((ComponentEffectCancelReason) -> Unit)?) -> Self
+type ComponentEffect
 
 pub(all) enum ComponentEffectCancelReason {
   EffectKeyChanged
   EffectUnmounted
   EffectRuntimeDestroyed
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum ComponentEffectStatus {
-  EffectActive
-  EffectCancelled
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct CompositionUpdate {
@@ -1861,7 +1841,7 @@ pub(all) struct TextFieldStyle {
 pub fn TextFieldStyle::filled(theme? : Theme) -> Self
 pub fn TextFieldStyle::outline(theme? : Theme) -> Self
 
-pub(all) struct TextGraphemeBoundaries {
+pub struct TextGraphemeBoundaries {
   // private fields
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextGraphemeBoundaries::boundaries(Self) -> Array[Int]
