@@ -1,5 +1,5 @@
 ///|
-priv struct Model {
+pub struct Model {
   dark : Bool
   body_scroll_y : Double
   docs_scroll_y : Double
@@ -10,7 +10,7 @@ priv struct Model {
 }
 
 ///|
-priv enum Msg {
+pub enum Msg {
   ToggleDark
   ScrollBodyTo(Double)
   ScrollDocsTo(Double)
@@ -194,33 +194,20 @@ fn Model::view(self : Model, env : @core.ViewEnvironment) -> @core.View[Msg] {
 }
 
 ///|
-fn Model::runtime(
-  self : Model,
-  width? : Double = 1180.0,
-  height? : Double = 760.0,
-) -> @runtime.AppRuntime {
-  self.runtime_with_services(
-    @host.HostAppServices::unavailable(),
-    width~,
-    height~,
-  )
+fn Model::program(self : Model) -> @core.Program[Model, Msg] {
+  self.program_with_services(@host.HostAppServices::unavailable())
 }
 
 ///|
-fn Model::runtime_with_services(
+fn Model::program_with_services(
   self : Model,
   services : @host.HostAppServices,
-  width? : Double = 1180.0,
-  height? : Double = 760.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::new_with_environment(
-      init=() => (self, @core.Effect::none()),
-      update=(model, message) => model.update_with_services(message, services),
-      view=(model, env) => model.view(env),
-      subscriptions=model => model.subscriptions(services),
-    ),
-    size=@core.Size::new(width~, height~),
+) -> @core.Program[Model, Msg] {
+  @core.Program::new_with_environment(
+    init=() => (self, @core.Effect::none()),
+    update=(model, message) => model.update_with_services(message, services),
+    view=(model, env) => model.view(env),
+    subscriptions=model => model.subscriptions(services),
   )
 }
 
@@ -379,20 +366,15 @@ fn Model::website_current_content_height(
 }
 
 ///|
-pub fn runtime(
-  width? : Double = 1180.0,
-  height? : Double = 760.0,
-) -> @runtime.AppRuntime {
-  Model::new().runtime(width~, height~)
+pub fn program() -> @core.Program[Model, Msg] {
+  Model::new().program()
 }
 
 ///|
-pub fn runtime_with_services(
+pub fn program_with_services(
   services : @host.HostAppServices,
-  width? : Double = 1180.0,
-  height? : Double = 760.0,
-) -> @runtime.AppRuntime {
-  Model::new().runtime_with_services(services, width~, height~)
+) -> @core.Program[Model, Msg] {
+  Model::new().program_with_services(services)
 }
 
 ///|
