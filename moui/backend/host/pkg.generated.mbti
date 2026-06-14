@@ -5,6 +5,7 @@ import {
   "Milky2018/moon_accesskit",
   "moonbitlang/core/debug",
   "wzzc-dev/moui/render",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/window/dpi",
 }
 
@@ -428,7 +429,7 @@ pub fn HostRouteSource::publish(Self, HostRouteEvent) -> Int
 pub fn[Msg] HostRouteSource::subscription(Self, key? : String, label? : String, map~ : (HostRouteEvent) -> Msg?) -> @wzzc-dev/moui/core.Subscription[Msg]
 
 pub(all) struct HostRuntimeDriver {
-  runtime : @wzzc-dev/moui/core.AppRuntime
+  runtime : @runtime.AppRuntime
   scheduler : RedrawScheduler
   mut close_requested : Bool
   mut frame_time_ms : Double
@@ -446,7 +447,7 @@ pub fn HostRuntimeDriver::environment(Self) -> @wzzc-dev/moui/core.Environment
 pub fn HostRuntimeDriver::event_result(Self) -> HostEventResult
 pub fn HostRuntimeDriver::finish_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::focused_text_input(Self) -> @wzzc-dev/moui/core.TextInputState
-pub fn HostRuntimeDriver::new(runtime~ : @wzzc-dev/moui/core.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
+pub fn HostRuntimeDriver::new(runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
 pub fn HostRuntimeDriver::request_redraw(Self) -> Unit
 pub fn HostRuntimeDriver::request_redraw_if_needed(Self) -> Unit
 pub fn HostRuntimeDriver::set_environment(Self, @wzzc-dev/moui/core.Environment) -> Unit
@@ -808,7 +809,7 @@ pub(all) struct HostWindowRuntimeSlot {
 }
 pub fn HostWindowRuntimeSlot::from_driver(record~ : HostWindowRecord, driver~ : HostRuntimeDriver) -> Self
 pub fn HostWindowRuntimeSlot::from_resolved_open(HostWindowResolvedOpen, schedule_redraw~ : () -> Unit) -> Self
-pub fn HostWindowRuntimeSlot::new(record~ : HostWindowRecord, runtime~ : @wzzc-dev/moui/core.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
+pub fn HostWindowRuntimeSlot::new(record~ : HostWindowRecord, runtime~ : @runtime.AppRuntime, schedule_redraw~ : () -> Unit) -> Self
 
 pub struct HostWindowRuntimeSlots {
   mut slots : Array[HostWindowRuntimeSlot]
@@ -839,9 +840,9 @@ pub fn HostWindowScene::new(scene_id~ : String, payload? : String) -> Self
 
 pub(all) struct HostWindowSceneInstance {
   request : HostWindowOpenRequest
-  runtime : @wzzc-dev/moui/core.AppRuntime
+  runtime : @runtime.AppRuntime
 }
-pub fn HostWindowSceneInstance::new(request~ : HostWindowOpenRequest, runtime~ : @wzzc-dev/moui/core.AppRuntime) -> Self
+pub fn HostWindowSceneInstance::new(request~ : HostWindowOpenRequest, runtime~ : @runtime.AppRuntime) -> Self
 
 pub(all) enum HostWindowSceneResolution {
   SceneResolved(HostWindowSceneInstance)

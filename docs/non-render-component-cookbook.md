@@ -48,7 +48,7 @@ fn profile_form(name : String, error : String?) -> @core.View[Msg] {
   ])
 }
 
-fn focus_first_invalid(runtime : @core.AppRuntime) -> Bool {
+fn focus_first_invalid(runtime : @runtime.AppRuntime) -> Bool {
   runtime.focus_key("profile-name")
 }
 ```
@@ -162,7 +162,7 @@ Use `sidebar`, `breadcrumb`, `split_view`, `master_detail`, `wizard`, and
 app model or in `@core.RouterState`; use `RouteLocation` query params when a
 route needs stable restoration. For focus restoration, record a route-to-key
 mapping in `RouteFocusStore`, key the target focusable view, and call
-`store.restore(runtime, route)` after the route has rendered.
+`runtime.restore_route_focus(store, route)` after the route has rendered.
 
 ```moonbit nocheck
 using @views {master_detail, sidebar}
@@ -188,10 +188,10 @@ fn settings_shell(current : String, detail : @core.View[Msg]) -> @core.View[Msg]
 
 fn restore_settings_focus(
   store : @core.RouteFocusStore,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   route : String,
 ) -> Bool {
-  store.restore(runtime, route)
+  runtime.restore_route_focus(store, route)
 }
 ```
 

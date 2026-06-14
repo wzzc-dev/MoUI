@@ -32,8 +32,9 @@ paths, or abstractions that only preserve old shapes.
   It remains one MoonBit package; internal files are grouped by responsibility
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
   etc.) rather than by additional package boundaries.
-- `runtime/` is the app/host runtime entrypoint package. New app, backend,
-  smoke, and tooling code should type and construct runtimes through
+- `runtime/` is the app/host runtime entrypoint package. It exposes an opaque
+  `@runtime.AppRuntime` wrapper over the current core runtime kernel. New app,
+  backend, smoke, and tooling code should type and construct runtimes through
   `@runtime.AppRuntime`, `@runtime.new_view`, or `@runtime.new_program`
   instead of direct `@core.AppRuntime`; this keeps the call surface ready for
   moving runtime logic out of `core` without exposing core private trees.

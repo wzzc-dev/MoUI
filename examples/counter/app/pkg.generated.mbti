@@ -3,10 +3,11 @@ package "examples/counter/app"
 
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
 
 pub fn update(Model, Msg) -> Model
 

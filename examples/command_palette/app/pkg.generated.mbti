@@ -4,6 +4,7 @@ package "examples/command_palette/app"
 import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
 }
 
@@ -14,9 +15,9 @@ pub fn command_palette_commands() -> Array[@core.ActionCommand]
 
 pub fn command_sections() -> Array[@views.CommandMenuSection]
 
-pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
 
-pub fn runtime_with_services(@host.HostAppServices, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn runtime_with_services(@host.HostAppServices, width? : Double, height? : Double) -> @runtime.AppRuntime
 
 pub fn update(CommandPaletteModel, CommandPaletteMsg) -> CommandPaletteModel
 
@@ -29,8 +30,8 @@ pub struct CommandPaletteApp {
   unit : Unit
 }
 pub fn CommandPaletteApp::new() -> Self
-pub fn CommandPaletteApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn CommandPaletteApp::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn CommandPaletteApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn CommandPaletteApp::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @runtime.AppRuntime
 
 pub(all) struct CommandPaletteModel {
   query : String
@@ -42,8 +43,8 @@ pub fn CommandPaletteModel::commands(Self) -> Array[@core.ActionCommand]
 pub fn CommandPaletteModel::dispatch_intent(Self, @core.CommandIntent) -> Self
 pub fn CommandPaletteModel::filtered_commands(Self) -> Array[@core.ActionCommand]
 pub fn CommandPaletteModel::new() -> Self
-pub fn CommandPaletteModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn CommandPaletteModel::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn CommandPaletteModel::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn CommandPaletteModel::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @runtime.AppRuntime
 pub fn CommandPaletteModel::update(Self, CommandPaletteMsg) -> Self
 pub fn CommandPaletteModel::update_with_services(Self, CommandPaletteMsg, @host.HostAppServices) -> (Self, @core.Effect[CommandPaletteMsg])
 pub fn CommandPaletteModel::view(Self) -> @core.View[CommandPaletteMsg]

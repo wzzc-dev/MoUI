@@ -96,15 +96,16 @@ fn package_budgets() -> Array[PackageBudget] {
       path: "moui/runtime/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/runtime\"",
       max_lines: 80,
-      max_pub_lines: 10,
+      max_pub_lines: 45,
       max_pub_all_lines: 0,
       required_tokens: [
-        "\"wzzc-dev/moui/core\"", "pub using @core {type AppRuntime}", "pub fn[Model, Msg] new_program(",
-        "pub fn[Msg] new_view(",
+        "\"wzzc-dev/moui/core\"", "pub struct AppRuntime", "pub fn[Model, Msg] new_program(",
+        "pub fn[Msg] new_view(", "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
+        "pub fn AppRuntime::draw_frame(",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/backend", "\"wzzc-dev/moui/render", "moui_theme", "RuntimeState",
-        "ViewNode", "ViewSpec", "DrawCommand",
+        "ViewNode", "ViewSpec", "pub using @core {type AppRuntime}", "inner : @core.AppRuntime",
       ],
     },
     {

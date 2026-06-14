@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
@@ -49,8 +50,8 @@ pub struct MarkdownEditorApp {
   // private fields
 }
 pub fn MarkdownEditorApp::new() -> Self
-pub fn MarkdownEditorApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn MarkdownEditorApp::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn MarkdownEditorApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn MarkdownEditorApp::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @runtime.AppRuntime
 pub fn MarkdownEditorApp::save_document_as(Self, String) -> Unit
 
 type MarkdownEditorAutolinkTarget derive(Eq, @debug.Debug)

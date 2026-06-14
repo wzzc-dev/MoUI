@@ -4,11 +4,12 @@ package "examples/design_systems/app"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui_theme/common",
 }
 
 // Values
-pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
 
 pub fn update(DesignSystemsModel, DesignSystemsMsg) -> DesignSystemsModel
 
@@ -28,7 +29,7 @@ pub struct DesignSystemsApp {
   unit : Unit
 }
 pub fn DesignSystemsApp::new() -> Self
-pub fn DesignSystemsApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn DesignSystemsApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
 
 pub(all) struct DesignSystemsModel {
   preset : DesignSystemChoice
@@ -40,7 +41,7 @@ pub(all) struct DesignSystemsModel {
   draft : String
 }
 pub fn DesignSystemsModel::new() -> Self
-pub fn DesignSystemsModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn DesignSystemsModel::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
 pub fn DesignSystemsModel::theme(Self) -> @core.Theme
 pub fn DesignSystemsModel::tokens(Self) -> @common.DesignSystemTokens
 pub fn DesignSystemsModel::update(Self, DesignSystemsMsg) -> Self

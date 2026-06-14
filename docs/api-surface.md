@@ -19,8 +19,9 @@ contracts for platform and renderer integration.
 - Runtime API: `moui/runtime`. This is the app/host runtime entrypoint package.
   Runtime consumers should type and construct runtimes through
   `@runtime.AppRuntime`, `@runtime.new_view`, or `@runtime.new_program` rather
-  than reaching through `@core.AppRuntime`. During the package split it wraps
-  the existing core runtime kernel while the call surface moves first.
+  than reaching through `@core.AppRuntime`. During the package split it exposes
+  an opaque wrapper over the existing core runtime kernel so app, host, smoke,
+  and tooling signatures no longer leak the core runtime type.
 - Core framework API: `moui/core`. This owns `View[Msg]`, `Program`, `Effect`,
   `Subscription`, state, layout, input, semantics, draw commands, diagnostics,
   and renderer-neutral platform-view contracts. It may expose diagnostic and
@@ -58,8 +59,9 @@ entrypoint. It checks current generated interface files for:
 
 - line and exported-declaration budgets on key packages;
 - root facade imports and forbidden host/renderer/runtime tokens;
-- `moui/runtime` existence, small API budget, and app/host source usage of
-  `@runtime.AppRuntime` instead of direct `@core.AppRuntime`;
+- `moui/runtime` existence, an opaque `AppRuntime` wrapper with bounded runtime
+  methods, and app/host source usage of `@runtime.AppRuntime` instead of direct
+  `@core.AppRuntime`;
 - app, host, smoke, and cross-package tests using `moui/views` for widget-level
   controls instead of direct `@core.View::*` control constructors;
 - required app-facing re-exports such as `View`, `Program`, `Effect`,

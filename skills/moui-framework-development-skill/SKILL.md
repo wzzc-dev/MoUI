@@ -147,8 +147,9 @@ Use this skill when editing or reviewing:
   (`runtime_state`,
   `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
   subpackages.
-- `runtime/`: app/host runtime entrypoint package over `AppRuntime`. New app,
-  backend, smoke, and tooling code should use `@runtime.AppRuntime`,
+- `runtime/`: app/host runtime entrypoint package exposing an opaque
+  `AppRuntime` wrapper over the current core runtime kernel. New app, backend,
+  smoke, and tooling code should use `@runtime.AppRuntime`,
   `@runtime.new_view`, or `@runtime.new_program` instead of direct
   `@core.AppRuntime`.
 - root `moui`: public facade over a curated app/theme alias set plus

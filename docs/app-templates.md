@@ -24,6 +24,7 @@ Minimal `moon.pkg`:
 ```moonbit
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
 }
 
@@ -93,8 +94,8 @@ pub fn view(model : Model) -> @core.View[Msg] {
 pub fn runtime(
   width? : Double = 520.0,
   height? : Double = 360.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::simple(init=Model::new(), update~, view~),
     size=@core.Size::new(width~, height~),
   )
@@ -423,8 +424,8 @@ pub fn EditorModel::runtime_with_services(
   services : @host.HostAppServices,
   width? : Double = 980.0,
   height? : Double = 700.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::new(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => model.update_with_services(message, services),
