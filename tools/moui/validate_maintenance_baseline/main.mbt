@@ -1032,9 +1032,21 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/data_display.mbt",
-      max_lines: 550,
-      target_lines: 500,
-      reason: "keep views selection toolbar, lists, pagination, detail, and avatar helpers compact",
+      max_lines: 140,
+      target_lines: 125,
+      reason: "keep views description list and detail panel helpers compact",
+    },
+    {
+      path: "moui/views/data_selection.mbt",
+      max_lines: 335,
+      target_lines: 305,
+      reason: "keep views selection toolbar, selectable list, pagination, and row helpers compact",
+    },
+    {
+      path: "moui/views/data_avatar.mbt",
+      max_lines: 90,
+      target_lines: 75,
+      reason: "keep views avatar and avatar group helpers compact",
     },
     {
       path: "moui/views/data_tree.mbt",
