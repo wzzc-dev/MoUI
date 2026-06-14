@@ -683,6 +683,30 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core runtime, layout, render, semantics, and frame inspector tests compact",
     },
     {
+      path: "moui/core/test_view_factories_wbtest.mbt",
+      max_lines: 75,
+      target_lines: 65,
+      reason: "keep core wbtest view factory helpers compact",
+    },
+    {
+      path: "moui/core/test_draw_helpers_wbtest.mbt",
+      max_lines: 100,
+      target_lines: 90,
+      reason: "keep core wbtest draw lookup and runtime click helpers compact",
+    },
+    {
+      path: "moui/core/test_layout_helpers_wbtest.mbt",
+      max_lines: 130,
+      target_lines: 115,
+      reason: "keep core wbtest layout, element tree, reconcile, and hit-test helpers compact",
+    },
+    {
+      path: "moui/core/test_runtime_helpers_wbtest.mbt",
+      max_lines: 155,
+      target_lines: 140,
+      reason: "keep core wbtest runtime and ViewSpec modifier helpers compact",
+    },
+    {
       path: "examples/pdf_workbench/app/app.mbt",
       max_lines: 390,
       target_lines: 360,
