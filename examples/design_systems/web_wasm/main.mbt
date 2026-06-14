@@ -1,6 +1,13 @@
 ///|
 fn main {
-  @web.run_app("MoUI Design Systems", @design_systems_app.runtime())
+  @web.run_app(
+    "MoUI Design Systems",
+    @runtime.new_program_with_dimensions(
+      program=@design_systems_app.program(),
+      width=960.0,
+      height=680.0,
+    ),
+  )
 }
 
 ///|

@@ -1,4 +1,5 @@
 import {
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
   "examples/design_systems/app" @design_systems_app,
 }
