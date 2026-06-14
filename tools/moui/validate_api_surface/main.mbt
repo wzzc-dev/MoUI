@@ -70,19 +70,19 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "root facade",
       path: "moui/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui\"",
-      max_lines: 120,
-      max_pub_lines: 55,
+      max_lines: 90,
+      max_pub_lines: 40,
       max_pub_all_lines: 0,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "pub using @core {type View}", "pub using @core {type Program}",
         "pub using @core {type Effect}", "pub using @core {type Subscription}", "pub using @core {type Theme}",
-        "pub using @core {type AppRuntime}", "pub using @core {type Binding}",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/backend", "\"wzzc-dev/moui/render", "moui_theme", "HostWindowRenderer",
         "RendererBackendKind", "SkiaRasterRenderer", "RuntimeState", "ViewNode",
         "ViewSpec", "DrawCommand", "EffectDescriptor", "SubscriptionDescriptor",
-        "SubscriptionLifecycleSnapshot", "ProgramRuntimeSnapshot",
+        "SubscriptionLifecycleSnapshot", "ProgramRuntimeSnapshot", "pub using @core {type AppRuntime}",
+        "pub using @core {type Binding}",
       ],
     },
     {
@@ -388,7 +388,7 @@ fn validate_root_facade_shape(
   }
   if count_lines_with_prefix(text, "pub using @core {type ") > 20 {
     failures.push(
-      path + ": root facade should keep curated app/runtime/theme aliases only",
+      path + ": root facade should keep curated app/theme aliases only",
     )
   }
 }

@@ -1,10 +1,4 @@
 ///|
-pub type AppRuntime = @core.AppRuntime
-
-///|
-pub type Binding[T] = @core.Binding[T]
-
-///|
 pub type Color = @core.Color
 
 ///|
