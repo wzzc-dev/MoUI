@@ -175,7 +175,7 @@ struct FrameProfile {
 
 ///|
 pub fn InspectorSnapshot::from_runtime(
-  runtime : AppRuntime,
+  runtime : RuntimeKernel,
 ) -> InspectorSnapshot {
   let view_tree = ViewTreeInspectorSnapshot::from_runtime(runtime)
   {
@@ -189,7 +189,7 @@ pub fn InspectorSnapshot::from_runtime(
 
 ///|
 pub fn RuntimeInspectorSnapshot::from_runtime(
-  runtime : AppRuntime,
+  runtime : RuntimeKernel,
 ) -> RuntimeInspectorSnapshot {
   let dirty_count = runtime.dirty_count()
   let dirty_element_ids = runtime.dirty_element_ids()
@@ -298,14 +298,14 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
 
 ///|
 pub fn ViewTreeInspectorSnapshot::from_runtime(
-  runtime : AppRuntime,
+  runtime : RuntimeKernel,
 ) -> ViewTreeInspectorSnapshot {
   runtime.view_tree_inspector_snapshot()
 }
 
 ///|
 pub fn LayoutInspectorSnapshot::from_runtime(
-  runtime : AppRuntime,
+  runtime : RuntimeKernel,
 ) -> LayoutInspectorSnapshot {
   let layout = runtime.state.cached_layout()
   {
@@ -322,7 +322,7 @@ pub fn LayoutInspectorSnapshot::from_runtime(
 
 ///|
 pub fn RenderInspectorSnapshot::from_runtime(
-  runtime : AppRuntime,
+  runtime : RuntimeKernel,
 ) -> RenderInspectorSnapshot {
   RenderInspectorSnapshot::from_commands(runtime.state.cached_draw_commands())
 }
@@ -336,7 +336,7 @@ pub fn RenderInspectorSnapshot::from_commands(
 
 ///|
 pub fn SemanticsInspectorSnapshot::from_runtime(
-  runtime : AppRuntime,
+  runtime : RuntimeKernel,
 ) -> SemanticsInspectorSnapshot {
   let semantics = runtime.state.cached_semantics()
   {
@@ -356,7 +356,7 @@ pub fn SemanticsInspectorSnapshot::from_runtime(
 
 ///|
 pub fn FrameProfile::capture(
-  runtime : AppRuntime,
+  runtime : RuntimeKernel,
   frame : Frame,
 ) -> FrameProfile {
   runtime.dispatch_event(AppEvent::FrameTick(frame))

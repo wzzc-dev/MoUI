@@ -85,7 +85,7 @@ test "program runtime aggregates duplicate structured effect keys" {
     update=(model, _message) => (model, Effect::none()),
     view=model => runtime_test_label(model),
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=160.0, height=48.0),
   )
@@ -147,7 +147,7 @@ test "program initial effects run before first view build" {
     },
     view=model => runtime_test_label("Boot " + model),
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=220.0, height=72.0),
   )
@@ -221,7 +221,7 @@ test "program effects can dispatch typed follow-up messages" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=160.0, height=80.0),
   )
@@ -300,7 +300,7 @@ test "program ignores effect dispatches after runtime destroy" {
     },
     view=model => runtime_test_label(model),
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=160.0, height=80.0),
   )

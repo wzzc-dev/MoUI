@@ -112,7 +112,7 @@ test "state backed scroll reports local damage rect" {
       damage_text("Still", width=80.0, height=32.0).repaint_boundary(),
     ],
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = RuntimeKernel::new_view(
     root~,
     size=Size::new(width=220.0, height=100.0),
   )
@@ -151,7 +151,7 @@ test "layout dirty child reports local damage rect" {
       damage_text("Still", width=80.0, height=32.0).repaint_boundary(),
     ],
   )
-  let runtime = AppRuntime::new_view(
+  let runtime = RuntimeKernel::new_view(
     root~,
     size=Size::new(width=220.0, height=100.0),
   )
@@ -174,7 +174,7 @@ test "layout dirty child reports local damage rect" {
 ///|
 test "dirty redraw without bounds falls back to full damage" {
   let root : View[Unit] = damage_text("Fallback", width=80.0, height=32.0)
-  let runtime = AppRuntime::new_view(
+  let runtime = RuntimeKernel::new_view(
     root~,
     size=Size::new(width=120.0, height=60.0),
   )

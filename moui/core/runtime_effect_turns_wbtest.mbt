@@ -60,7 +60,7 @@ test "program bounds synchronous effect self loops in one drain turn" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=80.0),
   )
@@ -128,7 +128,7 @@ test "program resumes pending self-loop messages on next host callback" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=260.0, height=80.0),
   )
@@ -213,7 +213,7 @@ test "program resumes pending structured effect-run messages on next host callba
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=300.0, height=80.0),
   )
