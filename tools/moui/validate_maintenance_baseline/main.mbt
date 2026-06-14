@@ -1561,7 +1561,7 @@ fn pub_all_budgets() -> Array[PubAllBudget] {
     {
       label: "core source",
       path: "moui/core",
-      max_pub_all_lines: 170,
+      max_pub_all_lines: 169,
       target_pub_all_lines: 120,
     },
     {
