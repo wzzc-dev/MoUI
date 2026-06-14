@@ -17,9 +17,7 @@ pub struct AppRuntime {
   // private fields
 }
 pub fn AppRuntime::action_commands(Self) -> Array[@core.ActionCommand]
-pub fn AppRuntime::add_animation(Self, @core.AnimationController) -> Unit
 pub fn AppRuntime::advance_time(Self, Double) -> Unit
-pub fn AppRuntime::animation_count(Self) -> Int
 pub fn AppRuntime::destroy(Self) -> Unit
 pub fn AppRuntime::dirty_count(Self) -> Int
 pub fn AppRuntime::dirty_element_ids(Self) -> Array[@core.ElementId]

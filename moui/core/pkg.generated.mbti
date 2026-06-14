@@ -85,46 +85,6 @@ pub(all) struct AlignmentGuideSet {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn AlignmentGuideSet::from_size(Size, first_baseline? : Double?) -> Self
 
-pub(all) struct AnimatedColor {
-  from : Color
-  to : Color
-  duration_ms : Double
-  easing : Easing
-} derive(Eq, ToJson, @debug.Debug)
-pub fn AnimatedColor::new(from~ : Color, to~ : Color, duration_ms? : Double, easing? : Easing) -> Self
-pub fn AnimatedColor::value(Self, Double) -> Color
-
-pub(all) struct AnimatedDouble {
-  from : Double
-  to : Double
-  duration_ms : Double
-  easing : Easing
-} derive(Eq, ToJson, @debug.Debug)
-pub fn AnimatedDouble::new(from~ : Double, to~ : Double, duration_ms? : Double, easing? : Easing) -> Self
-pub fn AnimatedDouble::value(Self, Double) -> Double
-
-pub(all) struct AnimatedPoint {
-  from : Point
-  to : Point
-  duration_ms : Double
-  easing : Easing
-} derive(Eq, ToJson, @debug.Debug)
-pub fn AnimatedPoint::new(from~ : Point, to~ : Point, duration_ms? : Double, easing? : Easing) -> Self
-pub fn AnimatedPoint::value(Self, Double) -> Point
-
-pub(all) struct AnimationController {
-  duration_ms : Double
-  mut elapsed_ms : Double
-  mut status : AnimationStatus
-} derive(Eq, ToJson, @debug.Debug)
-pub fn AnimationController::is_active(Self) -> Bool
-pub fn AnimationController::new(duration_ms~ : Double) -> Self
-pub fn AnimationController::progress(Self) -> Double
-pub fn AnimationController::reset(Self) -> Unit
-pub fn AnimationController::start(Self) -> Unit
-pub fn AnimationController::stop(Self) -> Unit
-pub fn AnimationController::tick(Self, Frame) -> Bool
-
 pub(all) enum AnimationStatus {
   Idle
   Running
@@ -147,9 +107,7 @@ pub struct AppRuntime {
   // private fields
 }
 pub fn AppRuntime::action_commands(Self) -> Array[ActionCommand]
-pub fn AppRuntime::add_animation(Self, AnimationController) -> Unit
 pub fn AppRuntime::advance_time(Self, Double) -> Unit
-pub fn AppRuntime::animation_count(Self) -> Int
 pub fn AppRuntime::destroy(Self) -> Unit
 pub fn AppRuntime::dirty_count(Self) -> Int
 pub fn AppRuntime::dirty_element_ids(Self) -> Array[ElementId]
@@ -318,11 +276,7 @@ pub(all) struct ChoiceControlStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ChoiceControlStyle::default(theme? : Theme) -> Self
 
-pub(all) struct Clock {
-  mut last_time_ms : Double?
-} derive(Eq, ToJson, @debug.Debug)
-pub fn Clock::frame(Self, Double) -> Frame
-pub fn Clock::new() -> Self
+type Clock derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Color {
   r : Double
@@ -908,7 +862,6 @@ pub(all) struct FrameProfile {
   frame : Frame
   dirty_count : Int
   draw_command_count : Int
-  active_animations : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FrameProfile::capture(AppRuntime, Frame) -> Self
 
@@ -2107,13 +2060,13 @@ pub fn Transform2D::identity() -> Self
 pub fn Transform2D::scale(sx~ : Double, sy~ : Double) -> Self
 pub fn Transform2D::translation(dx~ : Double, dy~ : Double) -> Self
 
-pub(all) struct TransitionSample {
+pub struct TransitionSample {
   progress : Double
   style : TransitionStyle
   present : Bool
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct TransitionSpec {
+pub struct TransitionSpec {
   from : TransitionStyle
   to : TransitionStyle
   duration_ms : Double
@@ -2127,7 +2080,7 @@ pub fn TransitionSpec::sample_elapsed(Self, Double, reduced_motion? : Bool) -> T
 pub fn TransitionSpec::scale(from_scale? : Double, to_scale? : Double, duration_ms? : Double, easing? : Easing) -> Self
 pub fn TransitionSpec::slide(from_offset~ : Point, to_offset? : Point, duration_ms? : Double, easing? : Easing) -> Self
 
-pub(all) struct TransitionStyle {
+pub struct TransitionStyle {
   opacity : Double
   offset : Point
   scale : Point
@@ -2141,13 +2094,7 @@ pub fn TransitionStyle::with_offset(Self, dx? : Double, dy? : Double) -> Self
 pub fn TransitionStyle::with_opacity(Self, Double) -> Self
 pub fn TransitionStyle::with_scale(Self, sx? : Double, sy? : Double) -> Self
 
-pub(all) struct Tween {
-  from : Double
-  to : Double
-  easing : Easing
-} derive(Eq, ToJson, @debug.Debug)
-pub fn Tween::new(from~ : Double, to~ : Double, easing? : Easing) -> Self
-pub fn Tween::value(Self, Double) -> Double
+type Tween derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct TypographyScale {
   body : FontSpec
