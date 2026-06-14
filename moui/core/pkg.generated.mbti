@@ -948,10 +948,8 @@ pub(all) enum PathVerb {
   Close
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct PickerItem {
-  id : String
-  label : String
-}
+type PickerItem
+pub fn PickerItem::new(id~ : String, label~ : String) -> Self
 
 pub(all) struct PickerStyle {
   font : FontSpec
@@ -1199,12 +1197,11 @@ pub(all) struct RouteDescriptor {
 pub fn RouteDescriptor::new(id~ : String, path~ : String, title? : String, fallback? : Bool) -> Self
 
 type RouteFocusEntry derive(Eq, ToJson, @debug.Debug)
-pub fn RouteFocusEntry::new(route~ : String, focus_key~ : String) -> Self
 
 type RouteFocusStore
 pub fn RouteFocusStore::focus_key(Self, String) -> String?
 pub fn RouteFocusStore::focus_key_for_location(Self, RouteLocation) -> String?
-pub fn RouteFocusStore::new(entries? : Array[RouteFocusEntry]) -> Self
+pub fn RouteFocusStore::new() -> Self
 pub fn RouteFocusStore::remember(Self, route~ : String, focus_key~ : String) -> Unit
 pub fn RouteFocusStore::remember_location(Self, RouteLocation, focus_key~ : String) -> Unit
 pub fn RouteFocusStore::restore(Self, AppRuntime, String) -> Bool

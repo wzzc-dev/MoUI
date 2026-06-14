@@ -43,8 +43,8 @@ test "controlled checkbox picker and datepicker emit new value messages" {
   assert_true(has_draw_text(enabled_runtime.draw_commands(), "Enabled: true"))
 
   let items = [
-    PickerItem::{ id: "alpha", label: "Alpha" },
-    PickerItem::{ id: "beta", label: "Beta" },
+    PickerItem::new(id="alpha", label="Alpha"),
+    PickerItem::new(id="beta", label="Beta"),
   ]
   let picker_program = Program::simple(
     init="alpha",
@@ -82,8 +82,8 @@ test "controlled checkbox picker and datepicker emit new value messages" {
   assert_true(has_draw_text(picker_runtime.draw_commands(), "Beta"))
 
   let stacked_items = [
-    PickerItem::{ id: "beta", label: "Beta" },
-    PickerItem::{ id: "alpha", label: "Alpha" },
+    PickerItem::new(id="beta", label="Beta"),
+    PickerItem::new(id="alpha", label="Alpha"),
   ]
   let stacked_popup_program = Program::simple(
     init="alpha",

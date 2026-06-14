@@ -250,9 +250,14 @@ priv struct ComponentViewSpec {
 }
 
 ///|
-pub(all) struct PickerItem {
+struct PickerItem {
   id : String
   label : String
+}
+
+///|
+pub fn PickerItem::new(id~ : String, label~ : String) -> PickerItem {
+  { id, label }
 }
 
 ///|
