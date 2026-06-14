@@ -88,7 +88,7 @@ test "program resumes pending subscription-start messages on next host callback"
       }
     },
     view=model => {
-      View::button(
+      View::primitive_button_view(
         text="Sub Resume \{model.pulses} host:\{model.host_seen_at}",
         size=Size::new(width=240.0, height=44.0),
         font=FontSpec::new(size=16.0),

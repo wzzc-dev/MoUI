@@ -15,7 +15,7 @@ pub fn[Msg] checkbox(
   let foreground = resolve_control_color(foreground, style.foreground)
   let check_color = resolve_control_color(check_color, style.selected_color)
   let box_size = resolve_control_double(box_size, style.control_size)
-  @core.View::controlled_checkbox(
+  @core.View::primitive_controlled_checkbox_view(
     label~,
     checked~,
     on_change~,
@@ -42,7 +42,7 @@ pub fn[Msg] checkbox_binding(
   let foreground = resolve_control_color(foreground, style.foreground)
   let check_color = resolve_control_color(check_color, style.selected_color)
   let box_size = resolve_control_double(box_size, style.control_size)
-  @core.View::checkbox(
+  @core.View::primitive_checkbox_view(
     label~,
     checked~,
     font~,

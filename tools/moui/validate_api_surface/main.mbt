@@ -121,6 +121,13 @@ fn package_budgets() -> Array[PackageBudget] {
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui_theme", "\"wzzc-dev/moui/render/skia\"", "SkiaRasterRenderer",
+        "View::empty(", "View::text(", "View::button(", "View::image(", "View::web_view(",
+        "View::flex(", "View::spacer(", "View::frame_node(", "View::stack(", "View::scroll(",
+        "View::grid(", "View::list(", "View::custom_view(", "View::custom_children_layout(",
+        "View::component(", "View::checkbox(", "View::controlled_checkbox(", "View::text_field(",
+        "View::controlled_text_field(", "View::rich_text_editor(", "View::controlled_rich_text_editor(",
+        "View::picker(", "View::controlled_picker(", "View::datepicker(", "View::controlled_datepicker(",
+        "View::search_bar(", "View::controlled_search_bar(",
       ],
     },
     {
@@ -498,46 +505,133 @@ fn core_control_consumer_roots() -> Array[String] {
 fn forbidden_core_control_tokens() -> Array[ForbiddenSourceToken] {
   [
     { label: "empty view", token: "@core.View::empty(" },
+    {
+      label: "primitive empty view",
+      token: "@core.View::primitive_empty_view(",
+    },
     { label: "text view", token: "@core.View::text(" },
+    { label: "primitive text view", token: "@core.View::primitive_text_view(" },
     { label: "button", token: "@core.View::button(" },
+    { label: "primitive button", token: "@core.View::primitive_button_view(" },
     { label: "image", token: "@core.View::image(" },
+    { label: "primitive image", token: "@core.View::primitive_image_view(" },
     { label: "web view", token: "@core.View::web_view(" },
+    { label: "primitive web view", token: "@core.View::primitive_web_view(" },
     { label: "flex layout", token: "@core.View::flex(" },
+    {
+      label: "primitive flex layout",
+      token: "@core.View::primitive_flex_view(",
+    },
     { label: "spacer", token: "@core.View::spacer(" },
+    { label: "primitive spacer", token: "@core.View::primitive_spacer_view(" },
     { label: "frame node", token: "@core.View::frame_node(" },
+    { label: "primitive frame", token: "@core.View::primitive_frame_view(" },
     { label: "stack layout", token: "@core.View::stack(" },
+    {
+      label: "primitive stack layout",
+      token: "@core.View::primitive_stack_view(",
+    },
     { label: "scroll view", token: "@core.View::scroll(" },
+    {
+      label: "primitive scroll view",
+      token: "@core.View::primitive_scroll_view(",
+    },
     { label: "grid layout", token: "@core.View::grid(" },
+    {
+      label: "primitive grid layout",
+      token: "@core.View::primitive_grid_view(",
+    },
     { label: "list layout", token: "@core.View::list(" },
+    {
+      label: "primitive list layout",
+      token: "@core.View::primitive_list_view(",
+    },
     { label: "custom view", token: "@core.View::custom_view(" },
+    {
+      label: "primitive custom view",
+      token: "@core.View::primitive_custom_view(",
+    },
     {
       label: "custom children layout",
       token: "@core.View::custom_children_layout(",
     },
+    {
+      label: "primitive custom children layout",
+      token: "@core.View::primitive_custom_children_layout_view(",
+    },
     { label: "component", token: "@core.View::component(" },
+    {
+      label: "primitive component",
+      token: "@core.View::primitive_component_view(",
+    },
     { label: "checkbox", token: "@core.View::checkbox(" },
+    {
+      label: "primitive checkbox",
+      token: "@core.View::primitive_checkbox_view(",
+    },
     { label: "controlled checkbox", token: "@core.View::controlled_checkbox(" },
+    {
+      label: "primitive controlled checkbox",
+      token: "@core.View::primitive_controlled_checkbox_view(",
+    },
     { label: "text field", token: "@core.View::text_field(" },
+    {
+      label: "primitive text field",
+      token: "@core.View::primitive_text_field_view(",
+    },
     {
       label: "controlled text field",
       token: "@core.View::controlled_text_field(",
     },
+    {
+      label: "primitive controlled text field",
+      token: "@core.View::primitive_controlled_text_field_view(",
+    },
     { label: "rich text editor", token: "@core.View::rich_text_editor(" },
+    {
+      label: "primitive rich text editor",
+      token: "@core.View::primitive_rich_text_editor_view(",
+    },
     {
       label: "controlled rich text editor",
       token: "@core.View::controlled_rich_text_editor(",
     },
+    {
+      label: "primitive controlled rich text editor",
+      token: "@core.View::primitive_controlled_rich_text_editor_view(",
+    },
     { label: "picker", token: "@core.View::picker(" },
+    { label: "primitive picker", token: "@core.View::primitive_picker_view(" },
     { label: "controlled picker", token: "@core.View::controlled_picker(" },
+    {
+      label: "primitive controlled picker",
+      token: "@core.View::primitive_controlled_picker_view(",
+    },
     { label: "datepicker", token: "@core.View::datepicker(" },
+    {
+      label: "primitive datepicker",
+      token: "@core.View::primitive_datepicker_view(",
+    },
     {
       label: "controlled datepicker",
       token: "@core.View::controlled_datepicker(",
     },
+    {
+      label: "primitive controlled datepicker",
+      token: "@core.View::primitive_controlled_datepicker_view(",
+    },
     { label: "search bar", token: "@core.View::search_bar(" },
+    {
+      label: "primitive search bar",
+      token: "@core.View::primitive_search_bar_view(",
+    },
     {
       label: "controlled search bar",
       token: "@core.View::controlled_search_bar(",
+    },
+    {
+      label: "primitive controlled search bar",
+      token: "@core.View::primitive_controlled_search_bar_view(",
     },
   ]
 }

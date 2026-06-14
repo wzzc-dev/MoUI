@@ -1,10 +1,10 @@
 ///|
-pub fn[Msg] View::empty() -> View[Msg] {
+pub fn[Msg] View::primitive_empty_view() -> View[Msg] {
   view_from_node(EmptyNode)
 }
 
 ///|
-pub fn[Msg] View::text(
+pub fn[Msg] View::primitive_text_view(
   text~ : String,
   size~ : Size,
   font~ : FontSpec,
@@ -14,7 +14,7 @@ pub fn[Msg] View::text(
 }
 
 ///|
-pub fn[Msg] View::button(
+pub fn[Msg] View::primitive_button_view(
   text~ : String,
   size~ : Size,
   font~ : FontSpec,
@@ -49,7 +49,7 @@ pub fn[Msg] View::button(
 }
 
 ///|
-pub fn[Msg] View::image(
+pub fn[Msg] View::primitive_image_view(
   source~ : String,
   size? : Size? = None,
   opacity? : Double = 1.0,
@@ -62,7 +62,7 @@ pub fn[Msg] View::image(
 }
 
 ///|
-pub fn[Msg] View::web_view(
+pub fn[Msg] View::primitive_web_view(
   id~ : String,
   url~ : String,
   width? : Double? = None,
@@ -80,7 +80,7 @@ pub fn[Msg] View::web_view(
 }
 
 ///|
-pub fn[Msg] View::flex(
+pub fn[Msg] View::primitive_flex_view(
   children~ : Array[View[Msg]],
   axis~ : Axis,
   spacing? : Double = 0.0,
@@ -103,7 +103,7 @@ pub fn[Msg] View::flex(
 }
 
 ///|
-pub fn[Msg] View::padding_insets(
+pub fn[Msg] View::primitive_padding_insets_view(
   child~ : View[Msg],
   insets~ : Insets,
 ) -> View[Msg] {
@@ -113,7 +113,7 @@ pub fn[Msg] View::padding_insets(
 }
 
 ///|
-pub fn[Msg] View::container(
+pub fn[Msg] View::primitive_container_view(
   child? : View[Msg]? = None,
   size? : Size? = None,
   background? : Brush? = None,
@@ -141,7 +141,7 @@ pub fn[Msg] View::container(
 }
 
 ///|
-pub fn[Msg] View::spacer(
+pub fn[Msg] View::primitive_spacer_view(
   min_length? : Double = 0.0,
   weight? : Double = 1.0,
 ) -> View[Msg] {
@@ -149,7 +149,7 @@ pub fn[Msg] View::spacer(
 }
 
 ///|
-pub fn[Msg] View::frame_node(
+pub fn[Msg] View::primitive_frame_view(
   child~ : View[Msg],
   width~ : Double?,
   height~ : Double?,
@@ -176,14 +176,16 @@ pub fn[Msg] View::frame_node(
 }
 
 ///|
-pub fn[Msg] View::stack(children~ : Array[View[Msg]]) -> View[Msg] {
+pub fn[Msg] View::primitive_stack_view(
+  children~ : Array[View[Msg]],
+) -> View[Msg] {
   view_from_node(
     StackNode({ key: None, children: [] }, children.map(child => child.node)),
   )
 }
 
 ///|
-pub fn[Msg] View::scroll(
+pub fn[Msg] View::primitive_scroll_view(
   child~ : View[Msg],
   offset? : Point = Point::new(x=0.0, y=0.0),
   viewport? : Size? = None,
@@ -209,7 +211,7 @@ pub fn[Msg] View::scroll(
 }
 
 ///|
-pub fn[Msg] View::grid(
+pub fn[Msg] View::primitive_grid_view(
   children~ : Array[View[Msg]],
   columns? : Int = 1,
   row_spacing? : Double = 0.0,
@@ -224,7 +226,7 @@ pub fn[Msg] View::grid(
 }
 
 ///|
-pub fn[Msg] View::list(
+pub fn[Msg] View::primitive_list_view(
   children~ : Array[View[Msg]],
   spacing? : Double = 0.0,
 ) -> View[Msg] {
@@ -237,7 +239,7 @@ pub fn[Msg] View::list(
 }
 
 ///|
-pub fn[Msg] View::sheet(
+pub fn[Msg] View::primitive_sheet_view(
   content~ : View[Msg],
   presentation_mode~ : SheetPresentationMode,
   background~ : Brush,
@@ -263,7 +265,7 @@ pub fn[Msg] View::sheet(
 }
 
 ///|
-pub fn[Msg] View::custom_view(
+pub fn[Msg] View::primitive_custom_view(
   measure~ : (Constraints) -> Size,
   paint~ : (Rect) -> Array[DrawCommand],
   semantics_role? : SemanticsRole = SemanticsRole::Group,
@@ -275,7 +277,7 @@ pub fn[Msg] View::custom_view(
 }
 
 ///|
-pub fn[Msg] View::custom_children_layout(
+pub fn[Msg] View::primitive_custom_children_layout_view(
   children~ : Array[View[Msg]],
   measure~ : (CustomLayoutContext) -> Size,
   place~ : (CustomPlacementContext) -> Array[Rect],
@@ -301,6 +303,8 @@ pub fn[Msg] View::custom_children_layout(
 }
 
 ///|
-pub fn[Msg] View::component(build : (BuildContext) -> View[Msg]) -> View[Msg] {
+pub fn[Msg] View::primitive_component_view(
+  build : (BuildContext) -> View[Msg],
+) -> View[Msg] {
   view_from_node(ComponentNode(build))
 }

@@ -119,7 +119,7 @@ pub fn[Msg] View::presence(
   if sample.present {
     self.apply_transition_style(sample.style)
   } else {
-    View::empty()
+    View::primitive_empty_view()
   }
 }
 
