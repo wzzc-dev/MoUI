@@ -5,14 +5,14 @@ pub(all) enum FocusTraversalDirection {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct FocusScopeItem {
+struct FocusScopeItem {
   id : String
   enabled : Bool
   focusable : Bool
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct FocusScope {
+struct FocusScope {
   items : Array[FocusScopeItem]
   current : String?
   wrap : Bool
