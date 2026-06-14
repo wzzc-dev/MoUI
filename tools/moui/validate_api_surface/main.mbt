@@ -113,9 +113,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 2075,
-      max_pub_lines: 581,
-      max_pub_all_lines: 158,
+      max_lines: 2073,
+      max_pub_lines: 587,
+      max_pub_all_lines: 156,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct Effect", "pub(all) struct Subscription", "pub(all) struct DrawFrame",
@@ -128,7 +128,8 @@ fn package_budgets() -> Array[PackageBudget] {
         "View::component(", "View::checkbox(", "View::controlled_checkbox(", "View::text_field(",
         "View::controlled_text_field(", "View::rich_text_editor(", "View::controlled_rich_text_editor(",
         "View::picker(", "View::controlled_picker(", "View::datepicker(", "View::controlled_datepicker(",
-        "View::search_bar(", "View::controlled_search_bar(",
+        "View::search_bar(", "View::controlled_search_bar(", "pub(all) struct EffectDescriptor",
+        "pub(all) struct SubscriptionDescriptor",
       ],
     },
     {

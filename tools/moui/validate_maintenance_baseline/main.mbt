@@ -576,9 +576,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/program_subscription.mbt",
-      max_lines: 305,
+      max_lines: 312,
       target_lines: 270,
-      reason: "keep core subscription contract, descriptor, and plan summary helpers compact",
+      reason: "keep core subscription contract, opaque descriptor accessors, and plan summary helpers compact",
     },
     {
       path: "moui/core/program_runtime_diagnostics.mbt",
@@ -1561,7 +1561,7 @@ fn pub_all_budgets() -> Array[PubAllBudget] {
     {
       label: "core source",
       path: "moui/core",
-      max_pub_all_lines: 158,
+      max_pub_all_lines: 156,
       target_pub_all_lines: 120,
     },
     {

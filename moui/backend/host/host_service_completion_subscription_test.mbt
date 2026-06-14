@@ -58,12 +58,12 @@ test "host app services completion subscription dispatches typed messages" {
   let initial = runtime.program_runtime_snapshot()
   inspect(initial.active_subscription_count, content="1")
   inspect(
-    initial.active_subscriptions[0].key,
+    initial.active_subscriptions[0].key(),
     content="host-service:completion:1",
   )
-  inspect(initial.active_subscriptions[0].kind, content="host-service")
+  inspect(initial.active_subscriptions[0].kind(), content="host-service")
   inspect(
-    initial.active_subscriptions[0].label,
+    initial.active_subscriptions[0].label(),
     content="File dialog completion",
   )
   let pending = services.drain_pending()
