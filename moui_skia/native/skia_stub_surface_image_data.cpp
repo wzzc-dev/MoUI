@@ -231,6 +231,51 @@ moonbit_skia_bitmap_byte_size(MoonbitSkiaBitmap* wrapper) {
 
 
 
+extern "C" MOONBIT_FFI_EXPORT MoonbitSkiaBitmap*
+moonbit_skia_bitmap_from_pixels(
+  moonbit_bytes_t pixels,
+  int32_t width,
+  int32_t height,
+  int32_t row_bytes
+) {
+  if (pixels == nullptr || width <= 0 || height <= 0 || row_bytes <= 0) {
+    return moonbit_skia_make_bitmap_wrapper(nullptr);
+  }
+#if defined(MOUI_SKIA_HAS_SKIA)
+  SkBitmap* bitmap = new SkBitmap();
+  if (!bitmap->tryAllocPixels(moonbit_skia_make_rgba8888_premul_info(width, height))) {
+    delete bitmap;
+    return moonbit_skia_make_bitmap_wrapper(nullptr);
+  }
+
+  // Copy pixel data into bitmap
+  void* dst = bitmap->getPixels();
+  if (dst == nullptr) {
+    delete bitmap;
+    return moonbit_skia_make_bitmap_wrapper(nullptr);
+  }
+
+  // Row-by-row copy to handle different row_bytes
+  for (int y = 0; y < height; y++) {
+    const uint8_t* src_row = static_cast<const uint8_t*>(static_cast<void*>(pixels)) + y * row_bytes;
+    uint8_t* dst_row = static_cast<uint8_t*>(dst) + y * bitmap->rowBytes();
+    size_t copy_size = std::min(static_cast<size_t>(row_bytes),
+                                 static_cast<size_t>(width * 4));
+    memcpy(dst_row, src_row, copy_size);
+  }
+
+  return moonbit_skia_make_bitmap_wrapper(bitmap);
+#else
+  (void)pixels;
+  (void)width;
+  (void)height;
+  (void)row_bytes;
+  return moonbit_skia_make_bitmap_wrapper(nullptr);
+#endif
+}
+
+
+
 extern "C" MOONBIT_FFI_EXPORT void
 moonbit_skia_bitmap_erase_color(MoonbitSkiaBitmap* wrapper, uint32_t color_argb) {
   if (wrapper == nullptr || wrapper->bitmap == nullptr) {

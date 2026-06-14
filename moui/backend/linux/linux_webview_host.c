@@ -60,12 +60,14 @@ typedef struct MOUILinuxWebView {
   char *desired_url;
   char *current_url;
   int32_t policy;
-  GtkWidget *window;
+  GtkWidget *offscreen_window;  // Changed from 'window' to 'offscreen_window'
   WebKitWebView *webview;
   int seen;
   int visible;
   int allow_next_navigation;
   int navigation_pending;
+  int width;   // Track current size for rendering
+  int height;
   struct MOUILinuxWebView *next;
 } MOUILinuxWebView;
 
@@ -304,10 +306,15 @@ static MOUILinuxWebView *ensure_view(uint64_t surface, const char *id) {
   }
   view->parent_surface = surface;
   view->id = strdup(id ? id : "");
-  view->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_decorated(GTK_WINDOW(view->window), FALSE);
+
+  // Create offscreen window for rendering to memory
+  view->offscreen_window = gtk_offscreen_window_new();
   view->webview = WEBKIT_WEB_VIEW(webkit_web_view_new());
-  gtk_container_add(GTK_CONTAINER(view->window), GTK_WIDGET(view->webview));
+  gtk_container_add(GTK_CONTAINER(view->offscreen_window), GTK_WIDGET(view->webview));
+
+  // Show the widget hierarchy (but window stays offscreen)
+  gtk_widget_show_all(view->offscreen_window);
+
   g_signal_connect(view->webview, "decide-policy", G_CALLBACK(on_decide_policy),
                    view);
   g_signal_connect(view->webview, "load-changed", G_CALLBACK(on_load_changed),
@@ -415,7 +422,9 @@ void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
 #if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
   (void)wl_display;
   (void)title;
-  (void)policy;
+  (void)x;  // Position not needed for offscreen rendering
+  (void)y;
+
   char *id_text = moui_linux_webview_bytes_to_cstr(id);
   char *url_text = moui_linux_webview_bytes_to_cstr(url);
   if (id_text == NULL || url_text == NULL) {
@@ -428,13 +437,18 @@ void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
     view->seen = 1;
     view->policy = policy;
     view->visible = width > 0.0 && height > 0.0;
-    gtk_window_move(GTK_WINDOW(view->window), (int)x, (int)y);
-    gtk_window_resize(GTK_WINDOW(view->window), (int)width, (int)height);
-    gtk_widget_set_visible(view->window, view->visible);
-    if (view->visible) {
-      gtk_widget_show_all(view->window);
-      gtk_window_present(GTK_WINDOW(view->window));
+
+    // Update size for offscreen rendering
+    int new_width = (int)width;
+    int new_height = (int)height;
+    if (view->width != new_width || view->height != new_height) {
+      view->width = new_width;
+      view->height = new_height;
+      // Resize the offscreen window
+      gtk_window_resize(GTK_WINDOW(view->offscreen_window), new_width, new_height);
+      gtk_widget_set_size_request(GTK_WIDGET(view->webview), new_width, new_height);
     }
+
     linux_webview_load_controlled(view, url_text);
   }
   free(id_text);
@@ -456,10 +470,10 @@ void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
 MOONBIT_FFI_EXPORT
 void moui_linux_webview_platform_views_end(uint64_t wl_surface) {
 #if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
+  // In offscreen mode, just mark unseen views as invisible
   for (MOUILinuxWebView *view = g_views; view != NULL; view = view->next) {
-    if (view->parent_surface == wl_surface && !view->seen && view->window) {
+    if (view->parent_surface == wl_surface && !view->seen) {
       view->visible = 0;
-      gtk_widget_hide(view->window);
     }
   }
 #else
@@ -475,8 +489,8 @@ void moui_linux_webview_platform_views_dispose(uint64_t wl_surface) {
     MOUILinuxWebView *view = *cursor;
     if (view->parent_surface == wl_surface) {
       *cursor = view->next;
-      if (view->window) {
-        gtk_widget_destroy(view->window);
+      if (view->offscreen_window) {
+        gtk_widget_destroy(view->offscreen_window);
       }
       free(view->id);
       free(view->desired_url);
@@ -565,3 +579,76 @@ void moui_linux_webview_command(uint64_t wl_surface, moonbit_bytes_t id,
   }
 #endif
 }
+
+// Wrapper struct to return surface data to MoonBit
+typedef struct {
+  void* surface_ptr;     // cairo_surface_t* cast to void*
+  int32_t width;
+  int32_t height;
+  int32_t stride;        // Row bytes
+} MOUIWebViewSurfaceData;
+
+// Get surface data for a webview (offscreen rendering)
+MOONBIT_FFI_EXPORT
+MOUIWebViewSurfaceData moui_linux_webview_get_surface_data(
+    uint64_t wl_surface,
+    moonbit_bytes_t id
+) {
+  MOUIWebViewSurfaceData result = {NULL, 0, 0, 0};
+
+#if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
+  char *id_text = moui_linux_webview_bytes_to_cstr(id);
+  MOUILinuxWebView *view = find_view(wl_surface, id_text);
+  free(id_text);
+
+  if (view == NULL || view->offscreen_window == NULL || !view->visible) {
+    return result;
+  }
+
+  cairo_surface_t *surface = gtk_offscreen_window_get_surface(
+      GTK_OFFSCREEN_WINDOW(view->offscreen_window));
+
+  if (surface == NULL) {
+    return result;
+  }
+
+  result.surface_ptr = surface;
+  result.width = view->width;
+  result.height = view->height;
+  result.stride = cairo_image_surface_get_stride(surface);
+#else
+  (void)wl_surface;
+  (void)id;
+#endif
+
+  return result;
+}
+
+// Get pixel data from cairo surface
+MOONBIT_FFI_EXPORT
+moonbit_bytes_t moui_linux_webview_get_surface_pixels(void* surface_ptr) {
+#if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
+  if (surface_ptr == NULL) {
+    return moonbit_make_bytes(0, 0);
+  }
+
+  cairo_surface_t *surface = (cairo_surface_t*)surface_ptr;
+  cairo_surface_flush(surface);  // Ensure all drawing is complete
+
+  unsigned char *data = cairo_image_surface_get_data(surface);
+  int stride = cairo_image_surface_get_stride(surface);
+  int height = cairo_image_surface_get_height(surface);
+  int size = stride * height;
+
+  moonbit_bytes_t bytes = moonbit_make_bytes(size, 0);
+  if (data != NULL && size > 0) {
+    memcpy(bytes, data, size);
+  }
+  return bytes;
+#else
+  (void)surface_ptr;
+  return moonbit_make_bytes(0, 0);
+#endif
+}
+
+#endif // !defined(MOUI_LINUX_ENABLE_CEF)
