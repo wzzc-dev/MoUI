@@ -473,6 +473,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core element node, tree, render node, and cache state compact",
     },
     {
+      path: "moui/core/runtime_state.mbt",
+      max_lines: 830,
+      target_lines: 760,
+      reason: "keep core runtime construction, environment, event dispatch, query, and rebuild entrypoints compact",
+    },
+    {
+      path: "moui/core/runtime_render_pipeline.mbt",
+      max_lines: 330,
+      target_lines: 300,
+      reason: "keep core runtime render pipeline, damage, cached-layer, and dirty queue helpers compact",
+    },
+    {
       path: "moui/core/view_tree.mbt",
       max_lines: 725,
       target_lines: 650,
