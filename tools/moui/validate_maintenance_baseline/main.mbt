@@ -1031,6 +1031,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views baseline form row layout measurement and placement helpers compact",
     },
     {
+      path: "moui/views/toolbar.mbt",
+      max_lines: 225,
+      target_lines: 200,
+      reason: "keep views toolbar, command bar, status bar, and command palette helpers compact",
+    },
+    {
+      path: "moui/views/disclosure.mbt",
+      max_lines: 185,
+      target_lines: 165,
+      reason: "keep views disclosure, accordion, collapsible panel, and resizable panel helpers compact",
+    },
+    {
       path: "moui/views/navigation_state.mbt",
       max_lines: 140,
       target_lines: 120,
