@@ -632,7 +632,7 @@ pub(all) enum FilterEffect {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn FilterEffect::blur(Double) -> Self
 
-type FocusScope derive(Eq, ToJson, @debug.Debug)
+type FocusScope derive(Eq)
 pub fn FocusScope::command_target(Self, CommandIntent) -> String?
 pub fn FocusScope::first_focusable(Self) -> String?
 pub fn FocusScope::focus_first_invalid(Self, FormValidationSummary) -> String?
@@ -642,7 +642,7 @@ pub fn FocusScope::next(Self) -> String?
 pub fn FocusScope::previous(Self) -> String?
 pub fn FocusScope::traverse(Self, FocusTraversalDirection) -> String?
 
-type FocusScopeItem derive(Eq, ToJson, @debug.Debug)
+type FocusScopeItem derive(Eq)
 pub fn FocusScopeItem::new(id~ : String, enabled? : Bool, focusable? : Bool) -> Self
 
 pub struct FocusState {
