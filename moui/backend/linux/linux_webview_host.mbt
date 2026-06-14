@@ -62,25 +62,63 @@ extern "C" fn linux_webview_command(
   detail : Bytes,
 ) -> Unit = "moui_linux_webview_command"
 
-///| Surface data returned from C
+///|
+/// Surface data returned from C
 pub struct WebViewSurfaceData {
   surface_ptr : UInt64
   width : Int
   height : Int
-  stride : Int  // row_bytes
+  stride : Int // row_bytes
 }
 
-///| Get surface data for a webview (offscreen rendering)
+///|
+/// Get surface pointer for a webview (offscreen rendering)
 #borrow(id)
-extern "C" fn linux_webview_get_surface_data(
+extern "C" fn linux_webview_get_surface_ptr(
   wl_surface : UInt64,
   id : Bytes,
-) -> WebViewSurfaceData = "moui_linux_webview_get_surface_data"
+) -> UInt64 = "moui_linux_webview_get_surface_ptr"
 
-///| Get pixel data from cairo surface pointer
-extern "C" fn linux_webview_get_surface_pixels(
-  surface_ptr : UInt64,
-) -> Bytes = "moui_linux_webview_get_surface_pixels"
+///|
+/// Get surface width for a webview
+#borrow(id)
+extern "C" fn linux_webview_get_surface_width(
+  wl_surface : UInt64,
+  id : Bytes,
+) -> Int = "moui_linux_webview_get_surface_width"
+
+///|
+/// Get surface height for a webview
+#borrow(id)
+extern "C" fn linux_webview_get_surface_height(
+  wl_surface : UInt64,
+  id : Bytes,
+) -> Int = "moui_linux_webview_get_surface_height"
+
+///|
+/// Get surface stride for a webview
+#borrow(id)
+extern "C" fn linux_webview_get_surface_stride(
+  wl_surface : UInt64,
+  id : Bytes,
+) -> Int = "moui_linux_webview_get_surface_stride"
+
+///|
+/// Get surface data for a webview by calling individual getters
+pub fn linux_webview_get_surface_data(
+  wl_surface : UInt64,
+  id : Bytes,
+) -> WebViewSurfaceData {
+  let surface_ptr = linux_webview_get_surface_ptr(wl_surface, id)
+  let width = linux_webview_get_surface_width(wl_surface, id)
+  let height = linux_webview_get_surface_height(wl_surface, id)
+  let stride = linux_webview_get_surface_stride(wl_surface, id)
+  { surface_ptr, width, height, stride }
+}
+
+///|
+/// Get pixel data from cairo surface pointer
+extern "C" fn linux_webview_get_surface_pixels(surface_ptr : UInt64) -> Bytes = "moui_linux_webview_get_surface_pixels"
 
 ///|
 pub fn linux_webview_capabilities() -> @host.HostWebViewCapabilities {
@@ -172,7 +210,8 @@ fn linux_webview_platform_frame(
   )
 }
 
-///| Draw webview contents onto Skia canvas (for offscreen rendering)
+///|
+/// Draw webview contents onto Skia canvas (for offscreen rendering)
 pub fn draw_linux_webview_contents(
   window : @window_linux.Window,
   canvas : @skia_native.Canvas,
@@ -183,29 +222,32 @@ pub fn draw_linux_webview_contents(
 
   for placement in frame.platform_views {
     if placement.kind == "web_view" {
-      let surface_data = linux_webview_get_surface_data(
-        wl_surface,
-        encode_webview_string(placement.id),
-      )
+      let id_bytes = encode_webview_string(placement.id)
+      let surface_data = linux_webview_get_surface_data(wl_surface, id_bytes)
 
-      if surface_data.surface_ptr.compare(0UL) != 0 && surface_data.width > 0 && surface_data.height > 0 {
+      if surface_data.surface_ptr.compare(0UL) != 0 &&
+        surface_data.width > 0 &&
+        surface_data.height > 0 {
         // Get pixel data from Cairo surface
         let pixels = linux_webview_get_surface_pixels(surface_data.surface_ptr)
 
         // Create Skia bitmap from pixels
         // Cairo format is BGRA (native endian), which matches Skia's N32 premul on little-endian
-        match @skia_native.Bitmap::from_pixels(
-          pixels,
-          surface_data.width,
-          surface_data.height,
-          surface_data.stride,
-        ) {
-          Some(bitmap) => {
+        match
+          @skia_native.Bitmap::from_pixels(
+            pixels,
+            surface_data.width,
+            surface_data.height,
+            surface_data.stride,
+          ) {
+          Some(bitmap) =>
             // Convert to image
             match @skia_native.Image::from_bitmap(bitmap) {
               Some(image) => {
                 // Calculate destination rect with content offset
-                let platform_frame = linux_webview_platform_frame(placement, content_offset_y)
+                let platform_frame = linux_webview_platform_frame(
+                  placement, content_offset_y,
+                )
 
                 // Source rect covers the entire surface
                 let src_rect = @moui_skia.Rect::from_xywh(
@@ -234,7 +276,6 @@ pub fn draw_linux_webview_contents(
               }
               None => ()
             }
-          }
           None => ()
         }
       }
@@ -242,7 +283,8 @@ pub fn draw_linux_webview_contents(
   }
 }
 
-///| Draw webview contents using renderer's draw_platform_view_pixels method
+///|
+/// Draw webview contents using renderer's draw_platform_view_pixels method
 pub fn draw_linux_webview_to_renderer(
   window : @window_linux.Window,
   renderer : @host.HostWindowRenderer,
@@ -253,17 +295,19 @@ pub fn draw_linux_webview_to_renderer(
 
   for placement in frame.platform_views {
     if placement.kind == "web_view" {
-      let surface_data = linux_webview_get_surface_data(
-        wl_surface,
-        encode_webview_string(placement.id),
-      )
+      let id_bytes = encode_webview_string(placement.id)
+      let surface_data = linux_webview_get_surface_data(wl_surface, id_bytes)
 
-      if surface_data.surface_ptr.compare(0UL) != 0 && surface_data.width > 0 && surface_data.height > 0 {
+      if surface_data.surface_ptr.compare(0UL) != 0 &&
+        surface_data.width > 0 &&
+        surface_data.height > 0 {
         // Get pixel data from Cairo surface
         let pixels = linux_webview_get_surface_pixels(surface_data.surface_ptr)
 
         // Calculate destination rect with content offset
-        let platform_frame = linux_webview_platform_frame(placement, content_offset_y)
+        let platform_frame = linux_webview_platform_frame(
+          placement, content_offset_y,
+        )
 
         // Call renderer's platform view pixel drawing method
         renderer.draw_platform_view_pixels(
