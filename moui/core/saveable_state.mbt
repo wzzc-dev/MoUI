@@ -10,12 +10,12 @@ pub struct SaveableStateStore {
 }
 
 ///|
-pub(all) struct SaveableStateSnapshot {
+struct SaveableStateSnapshot {
   entries : Array[SaveableStringEntry]
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct SaveableStringEntry {
+struct SaveableStringEntry {
   key : String
   mut value : String
 } derive(Eq, Debug, ToJson)
@@ -74,7 +74,7 @@ pub fn SaveableStateStore::new() -> SaveableStateStore {
 }
 
 ///|
-pub fn SaveableStateSnapshot::new(
+fn SaveableStateSnapshot::new(
   entries? : Array[SaveableStringEntry] = [],
 ) -> SaveableStateSnapshot {
   { entries, }
