@@ -974,6 +974,10 @@ pub(all) enum PointerPhase {
 type Program[Model, Msg]
 pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
+pub fn[Model, Msg] Program::runtime_init(Self[Model, Msg]) -> (Model, Effect[Msg])
+pub fn[Model, Msg] Program::runtime_subscriptions(Self[Model, Msg], Model) -> Subscription[Msg]
+pub fn[Model, Msg] Program::runtime_update(Self[Model, Msg], Model, Msg) -> (Model, Effect[Msg])
+pub fn[Model, Msg] Program::runtime_view(Self[Model, Msg], Model, ViewEnvironment) -> View[Msg]
 pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 
@@ -1329,6 +1333,11 @@ pub fn RuntimeInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
 type RuntimeState
 
+pub struct RuntimeViewSpec {
+  // private fields
+}
+pub fn RuntimeViewSpec::runtime_kind_label(Self) -> String
+
 type SaveableCodec[T]
 pub fn SaveableCodec::bool() -> Self[Bool]
 pub fn[T] SaveableCodec::decode_value(Self[T], String) -> T?
@@ -1550,6 +1559,7 @@ pub fn[Msg] Subscription::none() -> Self[Msg]
 pub fn[Msg] Subscription::plan_summary(Self[Msg]) -> SubscriptionPlanSummary
 pub fn[Msg] Subscription::route_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::run(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
+pub fn[Msg] Subscription::runtime_sources(Self[Msg]) -> Array[SubscriptionRuntimeSource[Msg]]
 pub fn[Msg] Subscription::service_completion(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::timer(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::window_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
@@ -1600,6 +1610,15 @@ pub(all) struct SubscriptionPlanSummary {
   descriptors : Array[SubscriptionDescriptor]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SubscriptionPlanSummary::empty() -> Self
+
+pub struct SubscriptionRuntimeSource[Msg] {
+  // private fields
+}
+pub fn[Msg] SubscriptionRuntimeSource::descriptor(Self[Msg]) -> SubscriptionDescriptor
+pub fn[Msg] SubscriptionRuntimeSource::key(Self[Msg]) -> String
+pub fn[Msg] SubscriptionRuntimeSource::kind(Self[Msg]) -> String
+pub fn[Msg] SubscriptionRuntimeSource::label(Self[Msg]) -> String
+pub fn[Msg] SubscriptionRuntimeSource::start(Self[Msg], (Msg) -> Unit) -> (() -> Unit)?
 
 pub(all) enum SurfaceLevel {
   Base
@@ -1958,6 +1977,7 @@ pub fn[Msg] View::primitive_text_field_view(value~ : Binding[String], placeholde
 pub fn[Msg] View::primitive_text_view(text~ : String, size~ : Size, font~ : FontSpec, color~ : Color) -> Self[Msg]
 pub fn[Msg] View::primitive_web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Msg)?) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
+pub fn[Msg] View::runtime_realize(Self[Msg], (Msg) -> Unit) -> RuntimeViewSpec
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
 pub fn[Msg] View::semantics_action(Self[Msg], SemanticsAction) -> Self[Msg]
 pub fn[Msg] View::semantics_checked(Self[Msg], checked? : Bool) -> Self[Msg]
