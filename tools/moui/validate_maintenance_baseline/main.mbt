@@ -443,6 +443,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host platform-window id binding lookup and removal helpers compact",
     },
     {
+      path: "moui/backend/web/host_runtime.mbt",
+      max_lines: 885,
+      target_lines: 800,
+      reason: "keep web app runtime loop, event dispatch, window requests, redraw, and text-input sync compact",
+    },
+    {
+      path: "moui/backend/web/web_window_slots.mbt",
+      max_lines: 85,
+      target_lines: 75,
+      reason: "keep web platform-window slot mapping and canvas id helpers compact",
+    },
+    {
       path: "moui/core/view_tree.mbt",
       max_lines: 725,
       target_lines: 650,
