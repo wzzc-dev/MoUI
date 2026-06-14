@@ -6,13 +6,6 @@ import {
 }
 
 // Values
-pub fn dark_theme() -> @core.Theme
-
-pub fn default_theme() -> @core.Theme
-
-pub fn light_theme() -> @core.Theme
-
-pub fn theme(base? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, semantic_colors? : @core.SemanticColorScale, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
 
 // Errors
 

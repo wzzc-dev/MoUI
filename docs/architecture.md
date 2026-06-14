@@ -12,8 +12,8 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
   moving out of `core`.
 - Public root package aliases only the curated app/theme types
   `View`, `Program`, `Effect`, `Subscription`, and `Theme` for
-  `@wzzc-dev/moui` consumers, and exposes neutral
-  default/light/dark/custom theme builders directly over `@core.Theme`.
+  `@wzzc-dev/moui` consumers. Neutral default/light/dark/custom theme builders
+  live in `moui/views` and return plain `@core.Theme` values.
 - `moui_theme/common` is a repo-local addon diagnostic workspace member for shared
   source-mapped design-system
   manifests, source-usage audits for golden mappings, official-token/source-lock
