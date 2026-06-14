@@ -1396,13 +1396,13 @@ fn validate_root_facade_budget(
   }
   let type_aliases = count_lines_with_prefix(text, "pub type ")
   println(
-    "maintenance: root facade type aliases=\{type_aliases} max=10 target=10",
+    "maintenance: root facade type aliases=\{type_aliases} max=8 target=8",
   )
   push_max_check(
     failures,
     path + " root facade type-alias forwarding count",
     type_aliases,
-    10,
+    8,
   )
 }
 
