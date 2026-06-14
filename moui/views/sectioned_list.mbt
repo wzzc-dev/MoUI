@@ -21,7 +21,7 @@ pub fn[T, Msg] sectioned_list(
         scroll_view(view, state=Some(state), width=0.0, height=viewport_height)
       None =>
         scroll_view(
-          @core.View::empty(),
+          @core.View::primitive_empty_view(),
           state=Some(state),
           width=0.0,
           height=viewport_height,
@@ -56,7 +56,7 @@ pub fn[T, Msg] sectioned_list(
     let virtual_children : Array[@core.View[Msg]] = []
     if first_visible > 0 {
       virtual_children.push(
-        @core.View::spacer(
+        @core.View::primitive_spacer_view(
           min_length=sectioned_entries_height(
             entries, 0, first_visible, header_height, item_height, spacing,
           ),
@@ -69,7 +69,7 @@ pub fn[T, Msg] sectioned_list(
     }
     if last_visible + 1 < entries.length() {
       virtual_children.push(
-        @core.View::spacer(
+        @core.View::primitive_spacer_view(
           min_length=sectioned_entries_height(
             entries,
             last_visible + 1,
@@ -82,7 +82,7 @@ pub fn[T, Msg] sectioned_list(
         ).key("sectioned-list-after"),
       )
     }
-    @core.View::scroll(
+    @core.View::primitive_scroll_view(
       child=list(virtual_children, spacing~),
       offset=state.offset(),
       viewport=Some(@core.Size::new(width=0.0, height=viewport_height)),

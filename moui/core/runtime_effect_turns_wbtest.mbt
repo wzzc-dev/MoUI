@@ -48,7 +48,7 @@ test "program bounds synchronous effect self loops in one drain turn" {
       }
     },
     view=model => {
-      View::button(
+      View::primitive_button_view(
         text="Loop \{model}",
         size=Size::new(width=140.0, height=44.0),
         font=FontSpec::new(size=16.0),
@@ -110,7 +110,7 @@ test "program resumes pending self-loop messages on next host callback" {
       }
     },
     view=model => {
-      View::button(
+      View::primitive_button_view(
         text="Resume \{model.pulses} host:\{model.host_seen_at}",
         size=Size::new(width=220.0, height=44.0),
         font=FontSpec::new(size=16.0),
@@ -195,7 +195,7 @@ test "program resumes pending structured effect-run messages on next host callba
       }
     },
     view=model => {
-      View::button(
+      View::primitive_button_view(
         text="Run Resume \{model.pulses} host:\{model.host_seen_at}",
         size=Size::new(width=260.0, height=44.0),
         font=FontSpec::new(size=16.0),

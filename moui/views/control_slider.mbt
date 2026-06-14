@@ -30,7 +30,7 @@ pub fn[Msg] slider(
     foreground,
     resolved_style.thumb_color,
   )
-  let base = @core.View::custom_view(
+  let base = @core.View::primitive_custom_view(
     measure=constraints => {
       constraints.constrain(@core.Size::new(width~, height~))
     },

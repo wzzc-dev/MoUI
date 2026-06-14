@@ -209,7 +209,7 @@ test "program effects can dispatch typed follow-up messages" {
       }
     },
     view=model => {
-      View::button(
+      View::primitive_button_view(
         text=model,
         size=Size::new(width=120.0, height=44.0),
         font=FontSpec::new(size=16.0),

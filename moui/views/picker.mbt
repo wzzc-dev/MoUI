@@ -17,7 +17,7 @@ pub fn[Msg] picker(
     Some(value) => value
     None => @core.PickerStyle::default(theme~)
   }
-  @core.View::controlled_picker(
+  @core.View::primitive_controlled_picker_view(
     items~,
     selected~,
     on_select~,
@@ -43,7 +43,7 @@ pub fn[Msg] picker_binding(
     Some(value) => value
     None => @core.PickerStyle::default(theme~)
   }
-  @core.View::picker(
+  @core.View::primitive_picker_view(
     items~,
     selected~,
     placeholder~,

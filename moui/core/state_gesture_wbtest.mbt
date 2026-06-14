@@ -1,9 +1,9 @@
 ///|
 test "view gesture wrappers emit long double and drag messages" {
   let log = Ref("")
-  let root : View[String] = View::container(
+  let root : View[String] = View::primitive_container_view(
       child=Some(
-        View::text(
+        View::primitive_text_view(
           text="Gesture target",
           size=Size::new(width=180.0, height=44.0),
           font=FontSpec::new(size=14.0),
@@ -126,7 +126,7 @@ test "view gesture wrappers emit long double and drag messages" {
 ///|
 test "disabled wrapper suppresses high level gesture activation" {
   let log = Ref("")
-  let root : View[String] = View::container(
+  let root : View[String] = View::primitive_container_view(
       size=Some(Size::new(width=120.0, height=80.0)),
       background=Some(Brush::solid(Color::gray())),
     )

@@ -13,7 +13,7 @@ test "program simple updates model and rebuilds view" {
       }
     },
     view=model => {
-      View::button(
+      View::primitive_button_view(
         text="Count \{model}",
         size=Size::new(width=120.0, height=44.0),
         font=FontSpec::new(size=16.0),
@@ -59,7 +59,7 @@ test "program button update waits for draw frame flush" {
       }
     },
     view=model => {
-      View::button(
+      View::primitive_button_view(
         text="Count \{model}",
         size=Size::new(width=120.0, height=44.0),
         font=FontSpec::new(size=16.0),

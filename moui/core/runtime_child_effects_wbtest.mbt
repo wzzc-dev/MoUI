@@ -29,7 +29,7 @@ test "program child effects map into parent messages" {
       }
     },
     view=model => {
-      View::flex(
+      View::primitive_flex_view(
         children=[
           child_effect_view(model.child).map(message => ParentChild(message)),
           runtime_test_label("Log " + model.log.join(",")),
@@ -222,7 +222,7 @@ fn update_child_effect(
 
 ///|
 fn child_effect_view(child : String) -> View[ChildEffectMsg] {
-  View::button(
+  View::primitive_button_view(
     text="Child \{child}",
     size=Size::new(width=160.0, height=44.0),
     font=FontSpec::new(size=16.0),
@@ -236,7 +236,7 @@ fn child_effect_view(child : String) -> View[ChildEffectMsg] {
 
 ///|
 fn child_task_effect_view(child : String) -> View[ChildTaskEffectMsg] {
-  View::button(
+  View::primitive_button_view(
     text="Child \{child}",
     size=Size::new(width=160.0, height=44.0),
     font=FontSpec::new(size=16.0),

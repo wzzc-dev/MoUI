@@ -13,7 +13,7 @@ pub fn[Msg] datepicker(
     Some(value) => value
     None => @core.PickerStyle::default(theme~)
   }
-  @core.View::controlled_datepicker(
+  @core.View::primitive_controlled_datepicker_view(
     selected~,
     on_select~,
     mode~,
@@ -41,7 +41,7 @@ pub fn[Msg] datepicker_binding(
     Some(value) => value
     None => @core.PickerStyle::default(theme~)
   }
-  @core.View::datepicker(
+  @core.View::primitive_datepicker_view(
     selected~,
     mode~,
     placeholder~,

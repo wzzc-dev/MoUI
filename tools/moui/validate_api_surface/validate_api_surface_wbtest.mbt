@@ -51,12 +51,17 @@ test "core view construction is reserved for views facade consumers" {
   inspect(core_control_consumer_roots().contains("moui/views"), content="false")
   inspect(runtime_consumer_roots().contains("moui/views"), content="true")
   let tokens = forbidden_core_control_tokens().map(rule => rule.token)
-  inspect(tokens.length(), content="27")
+  inspect(tokens.length(), content="54")
   assert_true(tokens.contains("@core.View::empty("))
   assert_true(tokens.contains("@core.View::button("))
   assert_true(tokens.contains("@core.View::component("))
   assert_true(tokens.contains("@core.View::controlled_text_field("))
   assert_true(tokens.contains("@core.View::controlled_search_bar("))
+  assert_true(tokens.contains("@core.View::primitive_button_view("))
+  assert_true(tokens.contains("@core.View::primitive_component_view("))
+  assert_true(
+    tokens.contains("@core.View::primitive_controlled_text_field_view("),
+  )
 }
 
 ///|

@@ -66,8 +66,8 @@ test "scroll view handles wheel delta through callback" {
 ///|
 test "state backed scroll repaints without activation rebuild or layout pass" {
   let scroll = ScrollState::new()
-  let root : View[Unit] = View::scroll(
-    child=View::text(
+  let root : View[Unit] = View::primitive_scroll_view(
+    child=View::primitive_text_view(
       text="Scrolled",
       size=Size::new(width=120.0, height=80.0),
       font=FontSpec::new(),
@@ -110,8 +110,8 @@ test "state backed scroll repaints without activation rebuild or layout pass" {
 ///|
 test "state backed scroll repositions repaint boundary child without layout" {
   let scroll = ScrollState::new()
-  let root : View[Unit] = View::scroll(
-    child=View::text(
+  let root : View[Unit] = View::primitive_scroll_view(
+    child=View::primitive_text_view(
       text="Cached child",
       size=Size::new(width=120.0, height=80.0),
       font=FontSpec::new(),

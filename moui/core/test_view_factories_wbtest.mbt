@@ -62,7 +62,7 @@ fn test_tab_accepting_rich_text_editor(value : Binding[String]) -> ViewSpec {
 
 ///|
 fn[Msg] runtime_test_label(text : String) -> View[Msg] {
-  View::text(
+  View::primitive_text_view(
     text~,
     size=Size::new(width=320.0, height=24.0),
     font=FontSpec::new(size=14.0),

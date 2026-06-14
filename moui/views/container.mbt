@@ -18,8 +18,10 @@ pub fn[Msg] surface(
     Some(color) => (Some(@core.Brush::solid(color)), corner_radius)
     None => (Some(style.brush), style.radius)
   }
-  let container = @core.View::container(
-    child=Some(@core.View::padding_insets(child~, insets=child_padding)),
+  let container = @core.View::primitive_container_view(
+    child=Some(
+      @core.View::primitive_padding_insets_view(child~, insets=child_padding),
+    ),
     size=None,
     background~,
     border=style.border,
@@ -137,7 +139,7 @@ fn views_min_int(a : Int, b : Int) -> Int {
 
 ///|
 pub fn[Msg] empty() -> @core.View[Msg] {
-  @core.View::empty()
+  @core.View::primitive_empty_view()
 }
 
 ///|
@@ -152,5 +154,5 @@ pub fn[Msg] spacer(
   min_length? : Double = 0.0,
   weight? : Double = 1.0,
 ) -> @core.View[Msg] {
-  @core.View::spacer(min_length~, weight~)
+  @core.View::primitive_spacer_view(min_length~, weight~)
 }

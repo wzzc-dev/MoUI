@@ -1,6 +1,6 @@
 ///|
 pub fn[Msg] stack(children : Array[@core.View[Msg]]) -> @core.View[Msg] {
-  @core.View::stack(children~)
+  @core.View::primitive_stack_view(children~)
 }
 
 ///|
@@ -24,5 +24,11 @@ pub fn[Msg] scroll_view(
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  @core.View::scroll(child~, offset~, viewport~, state~, on_scroll~)
+  @core.View::primitive_scroll_view(
+    child~,
+    offset~,
+    viewport~,
+    state~,
+    on_scroll~,
+  )
 }

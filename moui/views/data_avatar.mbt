@@ -7,7 +7,7 @@ pub fn[Msg] avatar(
 ) -> @core.View[Msg] {
   match image {
     Some(source) =>
-      @core.View::image(
+      @core.View::primitive_image_view(
         source~,
         size=Some(@core.Size::new(width=size, height=size)),
       )

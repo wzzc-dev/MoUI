@@ -1,4 +1,14 @@
 ///|
+fn damage_text(text : String, width~ : Double, height~ : Double) -> View[Unit] {
+  View::primitive_text_view(
+    text~,
+    size=Size::new(width~, height~),
+    font=FontSpec::new(size=12.0),
+    color=Color::black(),
+  )
+}
+
+///|
 test "damage region clips rects and promotes large coverage" {
   let surface = Rect::new(x=0.0, y=0.0, width=100.0, height=100.0)
   let clipped = DamageRegion::from_rects(
@@ -90,24 +100,18 @@ test "draw command bounds cover common paint commands" {
 ///|
 test "state backed scroll reports local damage rect" {
   let scroll = ScrollState::new()
-  let root : View[Unit] = View::flex(axis=Axis::Horizontal, spacing=8.0, children=[
-    View::scroll(
-      child=View::text(
-        text="Scrolled",
-        size=Size::new(width=120.0, height=80.0),
-        font=FontSpec::new(size=12.0),
-        color=Color::black(),
+  let root : View[Unit] = View::primitive_flex_view(
+    axis=Axis::Horizontal,
+    spacing=8.0,
+    children=[
+      View::primitive_scroll_view(
+        child=damage_text("Scrolled", width=120.0, height=80.0),
+        viewport=Some(Size::new(width=80.0, height=40.0)),
+        state=Some(scroll),
       ),
-      viewport=Some(Size::new(width=80.0, height=40.0)),
-      state=Some(scroll),
-    ),
-    View::text(
-      text="Still",
-      size=Size::new(width=80.0, height=32.0),
-      font=FontSpec::new(size=12.0),
-      color=Color::black(),
-    ).repaint_boundary(),
-  ])
+      damage_text("Still", width=80.0, height=32.0).repaint_boundary(),
+    ],
+  )
   let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=220.0, height=100.0),
@@ -135,24 +139,18 @@ test "state backed scroll reports local damage rect" {
 
 ///|
 test "layout dirty child reports local damage rect" {
-  let root : View[Unit] = View::flex(axis=Axis::Horizontal, spacing=8.0, children=[
-    View::frame(
-      View::text(
-        text="Layout",
-        size=Size::new(width=80.0, height=24.0),
-        font=FontSpec::new(size=12.0),
-        color=Color::black(),
+  let root : View[Unit] = View::primitive_flex_view(
+    axis=Axis::Horizontal,
+    spacing=8.0,
+    children=[
+      View::frame(
+        damage_text("Layout", width=80.0, height=24.0),
+        width=90.0,
+        height=40.0,
       ),
-      width=90.0,
-      height=40.0,
-    ),
-    View::text(
-      text="Still",
-      size=Size::new(width=80.0, height=32.0),
-      font=FontSpec::new(size=12.0),
-      color=Color::black(),
-    ).repaint_boundary(),
-  ])
+      damage_text("Still", width=80.0, height=32.0).repaint_boundary(),
+    ],
+  )
   let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=220.0, height=100.0),
@@ -175,12 +173,7 @@ test "layout dirty child reports local damage rect" {
 
 ///|
 test "dirty redraw without bounds falls back to full damage" {
-  let root : View[Unit] = View::text(
-    text="Fallback",
-    size=Size::new(width=80.0, height=32.0),
-    font=FontSpec::new(size=12.0),
-    color=Color::black(),
-  )
+  let root : View[Unit] = damage_text("Fallback", width=80.0, height=32.0)
   let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=120.0, height=60.0),
