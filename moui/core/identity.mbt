@@ -9,11 +9,11 @@ pub(all) struct ElementId {
 } derive(Eq, Debug, ToJson)
 
 ///|
-struct DirtyFlags {
+priv struct DirtyFlags {
   mut needs_build : Bool
   mut needs_layout : Bool
   mut needs_paint : Bool
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub fn Key::new(value : String) -> Key {
