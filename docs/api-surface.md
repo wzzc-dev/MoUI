@@ -8,11 +8,11 @@ packages expose narrower contracts for platform and renderer integration.
 ## Surface Tiers
 
 - App-facing API: `moui` and `moui/views`. The root facade re-exports a small
-  curated set of common app/runtime/theme aliases from `moui/core` plus theme
-  builders. Detailed theme palette and scale records stay qualified as
-  `@core.*` types rather than root aliases. Diagnostics, draw commands,
-  renderer details, and lower-level geometry/style records stay in `moui/core`
-  or their owning packages.
+  curated set of common app/theme aliases from `moui/core` plus theme builders.
+  Runtime bridges such as `AppRuntime`, binding helpers, detailed theme palette
+  and scale records stay qualified as `@core.*` types rather than root aliases.
+  Diagnostics, draw commands, renderer details, and lower-level geometry/style
+  records stay in `moui/core` or their owning packages.
   `moui/views` exposes constructor helpers that return opaque `@core.View[Msg]`
   values.
 - Core framework API: `moui/core`. This owns `View[Msg]`, `Program`, `Effect`,
@@ -52,8 +52,8 @@ entrypoint. It checks current generated interface files for:
 - line and exported-declaration budgets on key packages;
 - root facade imports and forbidden host/renderer/runtime tokens;
 - required app-facing re-exports such as `View`, `Program`, `Effect`,
-  `Subscription`, `Theme`, `AppRuntime`, and `Binding`, while keeping
-  diagnostic descriptors and draw command types out of the root facade;
+  `Subscription`, and `Theme`, while keeping runtime bridges, binding helpers,
+  diagnostic descriptors, and draw command types out of the root facade;
 - `moui/views` constructors returning `@core.View[Msg]`;
 - host/render/package boundary tokens staying in their owning packages.
 
