@@ -335,6 +335,15 @@ fn LinuxApp::redraw_window(
           frame.damage
         },
       })
+
+      // Draw offscreen webview contents onto the rendered frame
+      draw_linux_webview_to_renderer(
+        platform_slot.window,
+        platform_slot.renderer,
+        frame,
+        content_offset_y=platform_slot.decorations.titlebar_height,
+      )
+
       sync_linux_platform_views(
         platform_slot.window,
         frame,
