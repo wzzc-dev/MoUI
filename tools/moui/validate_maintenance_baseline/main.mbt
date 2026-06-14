@@ -1259,6 +1259,24 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views feedback surface, theme color, and progress action tests compact",
     },
     {
+      path: "moui/views/views_theme_style_contracts_test.mbt",
+      max_lines: 75,
+      target_lines: 65,
+      reason: "keep views theme and theme-derived style contract tests compact",
+    },
+    {
+      path: "moui/views/views_control_style_contracts_test.mbt",
+      max_lines: 125,
+      target_lines: 110,
+      reason: "keep views neutral control style contract tests compact",
+    },
+    {
+      path: "moui/views/views_feedback_style_contracts_test.mbt",
+      max_lines: 135,
+      target_lines: 120,
+      reason: "keep views feedback, badge, and validation style contract tests compact",
+    },
+    {
       path: "moui/views/views_state_helpers_test.mbt",
       max_lines: 75,
       target_lines: 65,
