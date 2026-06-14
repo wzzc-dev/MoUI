@@ -14,6 +14,7 @@ pub struct HostWindowRenderer {
   ) -> Unit
   priv present_count_fn : () -> Int
   priv dispose_fn : () -> Unit
+  priv draw_platform_view_pixels_fn : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
   priv layer_cache : HostLayerCommandCache
 }
 
@@ -46,6 +47,7 @@ pub fn HostWindowRenderer::new(
   ) -> Unit = _callback => (),
   present_count? : () -> Int = () => 0,
   dispose? : () -> Unit = () => (),
+  draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit = fn(_pixels, _w, _h, _s, _dx, _dy, _dw, _dh) {},
 ) -> HostWindowRenderer {
   let image_resource_snapshot = match image_resource_snapshot {
     Some(snapshot) => snapshot
@@ -83,6 +85,7 @@ pub fn HostWindowRenderer::new(
     set_image_resource_change_callback_fn: set_image_resource_change_callback,
     present_count_fn: present_count,
     dispose_fn: dispose,
+    draw_platform_view_pixels_fn: draw_platform_view_pixels,
     layer_cache,
   }
 }
@@ -157,6 +160,30 @@ pub fn HostWindowRenderer::present_count(self : HostWindowRenderer) -> Int {
 pub fn HostWindowRenderer::dispose(self : HostWindowRenderer) -> Unit {
   self.layer_cache.clear()
   (self.dispose_fn)()
+}
+
+///| Draw platform view pixels onto the renderer surface (e.g., offscreen webview)
+pub fn HostWindowRenderer::draw_platform_view_pixels(
+  self : HostWindowRenderer,
+  pixels : Bytes,
+  src_width : Int,
+  src_height : Int,
+  src_stride : Int,
+  dst_x : Double,
+  dst_y : Double,
+  dst_width : Double,
+  dst_height : Double,
+) -> Unit {
+  (self.draw_platform_view_pixels_fn)(
+    pixels,
+    src_width,
+    src_height,
+    src_stride,
+    dst_x,
+    dst_y,
+    dst_width,
+    dst_height,
+  )
 }
 
 ///|

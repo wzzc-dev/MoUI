@@ -35,6 +35,15 @@ extern "C" fn native_bitmap_erase_color(
   color_argb : UInt,
 ) -> Unit = "moonbit_skia_bitmap_erase_color"
 
+///| Create bitmap from external pixel buffer (RGBA8888 premultiplied)
+#borrow(pixels)
+extern "C" fn native_bitmap_from_pixels(
+  pixels : Bytes,
+  width : Int,
+  height : Int,
+  row_bytes : Int,
+) -> BitmapHandle = "moonbit_skia_bitmap_from_pixels"
+
 ///|
 #borrow(bytes)
 extern "C" fn native_data_from_bytes(bytes : Bytes) -> DataHandle = "moonbit_skia_data_from_bytes"
@@ -380,6 +389,20 @@ pub fn Bitmap::alloc_n32_premul(size : @skia.ISize) -> Bitmap? {
     None
   } else {
     Bitmap::from_handle(native_bitmap_alloc_n32_premul(size.width, size.height))
+  }
+}
+
+///| Create Bitmap from external pixel buffer (RGBA8888 premultiplied)
+pub fn Bitmap::from_pixels(
+  pixels : Bytes,
+  width : Int,
+  height : Int,
+  row_bytes : Int,
+) -> Bitmap? {
+  if width <= 0 || height <= 0 {
+    None
+  } else {
+    Bitmap::from_handle(native_bitmap_from_pixels(pixels, width, height, row_bytes))
   }
 }
 
