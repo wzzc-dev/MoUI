@@ -1,6 +1,6 @@
 ///|
 test "draw frame emits repaint boundary update then cached layer draw" {
-  let root : View[Unit] = View::text(
+  let root : View[Unit] = View::primitive_text_view(
     text="Cached",
     size=Size::new(width=80.0, height=24.0),
     font=FontSpec::new(size=12.0),
@@ -27,7 +27,7 @@ test "program draw frame emits repaint boundary update then cached layer draw" {
     init=(),
     update=(_model, _message) => (),
     view=_model => {
-      View::text(
+      View::primitive_text_view(
         text="Cached",
         size=Size::new(width=80.0, height=24.0),
         font=FontSpec::new(size=12.0),
@@ -116,7 +116,7 @@ test "repaint boundary cache key stays stable across content revisions" {
 
 ///|
 fn retained_redraw_button(text : String) -> View[RetainedRedrawProgramMsg] {
-  View::button(
+  View::primitive_button_view(
     text~,
     size=Size::new(width=80.0, height=32.0),
     font=FontSpec::new(size=12.0),
@@ -130,7 +130,7 @@ fn retained_redraw_button(text : String) -> View[RetainedRedrawProgramMsg] {
 
 ///|
 fn retained_redraw_label(text : String) -> View[RetainedRedrawProgramMsg] {
-  View::text(
+  View::primitive_text_view(
     text~,
     size=Size::new(width=80.0, height=32.0),
     font=FontSpec::new(size=12.0),
@@ -168,7 +168,7 @@ test "program update preserves clean sibling repaint boundary cache" {
       }
     },
     view=model => {
-      View::flex(axis=Axis::Horizontal, spacing=8.0, children=[
+      View::primitive_flex_view(axis=Axis::Horizontal, spacing=8.0, children=[
         retained_redraw_button("Left \{model}").key("left").repaint_boundary(),
         retained_redraw_label("Right").key("right").repaint_boundary(),
       ])
@@ -191,7 +191,7 @@ test "program update preserves clean sibling repaint boundary cache" {
 
 ///|
 test "paint only sibling boundary hover reports local damage rect" {
-  let root = View::flex(axis=Axis::Horizontal, spacing=8.0, children=[
+  let root = View::primitive_flex_view(axis=Axis::Horizontal, spacing=8.0, children=[
     retained_redraw_button("Left").key("left").repaint_boundary(),
     retained_redraw_label("Right").key("right").repaint_boundary(),
   ])

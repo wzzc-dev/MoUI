@@ -15,7 +15,7 @@ pub fn[Msg] progress(
   }
   let foreground = resolve_control_color(foreground, resolved_style.foreground)
   let background = resolve_control_color(background, resolved_style.background)
-  @core.View::custom_view(
+  @core.View::primitive_custom_view(
     measure=constraints => {
       constraints.constrain(@core.Size::new(width~, height~))
     },

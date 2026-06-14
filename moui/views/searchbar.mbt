@@ -11,7 +11,7 @@ pub fn[Msg] searchbar(
   let style = variant.style(theme)
   let normal = style.normal
   let focused = style.focused
-  @core.View::controlled_search_bar(
+  @core.View::primitive_controlled_search_bar_view(
     query~,
     on_input~,
     placeholder~,
@@ -40,7 +40,7 @@ pub fn[Msg] searchbar_binding(
   let style = variant.style(theme)
   let normal = style.normal
   let focused = style.focused
-  @core.View::search_bar(
+  @core.View::primitive_search_bar_view(
     query~,
     placeholder~,
     font=style.font,

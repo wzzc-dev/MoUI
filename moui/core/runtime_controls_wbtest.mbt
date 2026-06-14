@@ -28,10 +28,10 @@ fn ControlledTextModel::update(
 fn ControlledTextModel::view(
   self : ControlledTextModel,
 ) -> View[ControlledTextMsg] {
-  View::flex(
+  View::primitive_flex_view(
     children=[
       runtime_test_label("Draft: \{self.draft}"),
-      View::controlled_text_field(
+      View::primitive_controlled_text_field_view(
         value=self.draft,
         on_input=value => ControlledDraftChanged(value),
         placeholder="Draft",
@@ -45,7 +45,7 @@ fn ControlledTextModel::view(
         cursor_color=Color::blue(),
       ),
       runtime_test_label("Query: \{self.query} cleared \{self.cleared}"),
-      View::controlled_search_bar(
+      View::primitive_controlled_search_bar_view(
         query=self.query,
         on_input=value => ControlledQueryChanged(value),
         placeholder="Search",

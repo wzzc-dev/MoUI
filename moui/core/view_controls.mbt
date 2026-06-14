@@ -98,7 +98,7 @@ priv struct ControlledSearchBarViewData[Msg] {
 }
 
 ///|
-pub fn[Msg] View::checkbox(
+pub fn[Msg] View::primitive_checkbox_view(
   label~ : String,
   checked~ : Binding[Bool],
   font~ : FontSpec,
@@ -120,7 +120,7 @@ pub fn[Msg] View::checkbox(
 }
 
 ///|
-pub fn[Msg] View::controlled_checkbox(
+pub fn[Msg] View::primitive_controlled_checkbox_view(
   label~ : String,
   checked~ : Bool,
   on_change~ : (Bool) -> Msg,
@@ -144,7 +144,7 @@ pub fn[Msg] View::controlled_checkbox(
 }
 
 ///|
-pub fn[Msg] View::text_field(
+pub fn[Msg] View::primitive_text_field_view(
   value~ : Binding[String],
   placeholder~ : String,
   size~ : Size,
@@ -181,7 +181,7 @@ pub fn[Msg] View::text_field(
 }
 
 ///|
-pub fn[Msg] View::controlled_text_field(
+pub fn[Msg] View::primitive_controlled_text_field_view(
   value~ : String,
   on_input~ : (String) -> Msg,
   placeholder~ : String,
@@ -217,7 +217,7 @@ pub fn[Msg] View::controlled_text_field(
 }
 
 ///|
-pub fn[Msg] View::rich_text_editor(
+pub fn[Msg] View::primitive_rich_text_editor_view(
   value~ : Binding[String],
   placeholder~ : String,
   size~ : Size,
@@ -263,7 +263,7 @@ pub fn[Msg] View::rich_text_editor(
 }
 
 ///|
-pub fn[Msg] View::controlled_rich_text_editor(
+pub fn[Msg] View::primitive_controlled_rich_text_editor_view(
   value~ : String,
   on_input~ : (String) -> Msg,
   placeholder~ : String,
@@ -307,7 +307,7 @@ pub fn[Msg] View::controlled_rich_text_editor(
 }
 
 ///|
-pub fn[Msg] View::picker(
+pub fn[Msg] View::primitive_picker_view(
   items~ : Array[PickerItem],
   selected~ : Binding[String],
   placeholder~ : String,
@@ -333,7 +333,7 @@ pub fn[Msg] View::picker(
 }
 
 ///|
-pub fn[Msg] View::controlled_picker(
+pub fn[Msg] View::primitive_controlled_picker_view(
   items~ : Array[PickerItem],
   selected~ : String,
   on_select~ : (String) -> Msg,
@@ -361,7 +361,7 @@ pub fn[Msg] View::controlled_picker(
 }
 
 ///|
-pub fn[Msg] View::datepicker(
+pub fn[Msg] View::primitive_datepicker_view(
   selected~ : Binding[DateValue],
   mode~ : DatePickerMode,
   placeholder~ : String,
@@ -389,7 +389,7 @@ pub fn[Msg] View::datepicker(
 }
 
 ///|
-pub fn[Msg] View::controlled_datepicker(
+pub fn[Msg] View::primitive_controlled_datepicker_view(
   selected~ : DateValue,
   on_select~ : (DateValue) -> Msg,
   mode~ : DatePickerMode,
@@ -419,7 +419,7 @@ pub fn[Msg] View::controlled_datepicker(
 }
 
 ///|
-pub fn[Msg] View::search_bar(
+pub fn[Msg] View::primitive_search_bar_view(
   query~ : Binding[String],
   placeholder~ : String,
   font~ : FontSpec,
@@ -457,7 +457,7 @@ pub fn[Msg] View::search_bar(
 }
 
 ///|
-pub fn[Msg] View::controlled_search_bar(
+pub fn[Msg] View::primitive_controlled_search_bar_view(
   query~ : String,
   on_input~ : (String) -> Msg,
   placeholder~ : String,

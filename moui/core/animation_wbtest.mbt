@@ -152,7 +152,7 @@ test "view presence unmounts content after exit progress" {
 
 ///|
 fn transitioned_text_view(spec : TransitionSpec) -> View[Unit] {
-  View::text(
+  View::primitive_text_view(
     text="Motion",
     size=Size::new(width=80.0, height=20.0),
     font=FontSpec::new(),
@@ -162,7 +162,7 @@ fn transitioned_text_view(spec : TransitionSpec) -> View[Unit] {
 
 ///|
 fn exited_text_view(spec : TransitionSpec) -> View[Unit] {
-  View::text(
+  View::primitive_text_view(
     text="Gone",
     size=Size::new(width=80.0, height=20.0),
     font=FontSpec::new(),
