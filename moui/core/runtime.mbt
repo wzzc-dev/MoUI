@@ -29,10 +29,15 @@ pub fn[Msg] RuntimeKernel::new_view(
   size~ : Size,
   environment? : Environment = Environment::default(),
   on_message? : ((Msg) -> Unit)? = None,
+  program_runtime_snapshot? : (() -> ProgramRuntimeSnapshot)? = None,
 ) -> RuntimeKernel {
   let emit = match on_message {
     Some(handler) => handler
     None => _message => ()
+  }
+  let snapshot = match program_runtime_snapshot {
+    Some(provider) => provider
+    None => () => ProgramRuntimeSnapshot::empty()
   }
   {
     state: RuntimeState::new_spec(
@@ -40,7 +45,7 @@ pub fn[Msg] RuntimeKernel::new_view(
       size~,
       environment~,
     ),
-    program_runtime_snapshot_fn: () => ProgramRuntimeSnapshot::empty(),
+    program_runtime_snapshot_fn: snapshot,
     destroy_program_runtime_fn: () => (),
   }
 }
