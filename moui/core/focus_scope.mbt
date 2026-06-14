@@ -9,7 +9,7 @@ struct FocusScopeItem {
   id : String
   enabled : Bool
   focusable : Bool
-} derive(Eq, Debug, ToJson)
+} derive(Eq)
 
 ///|
 struct FocusScope {
@@ -18,7 +18,7 @@ struct FocusScope {
   wrap : Bool
   default_action : String
   dismiss_action : String
-} derive(Eq, Debug, ToJson)
+} derive(Eq)
 
 ///|
 pub fn FocusScopeItem::new(
