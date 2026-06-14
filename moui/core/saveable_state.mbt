@@ -1,11 +1,11 @@
 ///|
-pub struct SaveableCodec[T] {
+struct SaveableCodec[T] {
   encode : (T) -> String
   decode : (String) -> T?
 }
 
 ///|
-pub struct SaveableStateStore {
+struct SaveableStateStore {
   mut strings : Array[SaveableStringEntry]
 }
 
@@ -15,7 +15,7 @@ struct SaveableStateSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
-struct SaveableStringEntry {
+priv struct SaveableStringEntry {
   key : String
   mut value : String
 } derive(Eq, Debug, ToJson)
