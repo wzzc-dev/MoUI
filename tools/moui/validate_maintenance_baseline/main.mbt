@@ -971,6 +971,30 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views section-list and scroll-to-index descriptors compact",
     },
     {
+      path: "moui/views/grid_list.mbt",
+      max_lines: 25,
+      target_lines: 20,
+      reason: "keep views eager grid and list primitive wrappers compact",
+    },
+    {
+      path: "moui/views/virtual_list.mbt",
+      max_lines: 185,
+      target_lines: 165,
+      reason: "keep views lazy list, virtual list, scroll intent, and window helpers compact",
+    },
+    {
+      path: "moui/views/sectioned_list.mbt",
+      max_lines: 185,
+      target_lines: 165,
+      reason: "keep views sectioned list flattening, windowing, and spacer helpers compact",
+    },
+    {
+      path: "moui/views/lazy_grid.mbt",
+      max_lines: 95,
+      target_lines: 85,
+      reason: "keep views lazy grid row windowing helpers compact",
+    },
+    {
       path: "moui/views/layout_helpers.mbt",
       max_lines: 170,
       target_lines: 145,
