@@ -31,6 +31,19 @@ pub(all) enum Effect[Msg] {
 }
 
 ///|
+priv enum EffectRuntimeOpNode[Msg] {
+  EffectRuntimeSend(Msg)
+  EffectRuntimeDispatch(((Msg) -> Unit) -> Unit)
+  EffectRuntimeRun(EffectDescriptor, ((Msg) -> Unit) -> Unit)
+  EffectRuntimeTask(EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?)
+}
+
+///|
+pub struct EffectRuntimeOp[Msg] {
+  priv node : EffectRuntimeOpNode[Msg]
+}
+
+///|
 pub(all) enum EffectPlanKind {
   EffectPlanNone
   EffectPlanBatch
@@ -125,6 +138,29 @@ pub fn[Msg] Effect::service_task(
 ///|
 pub fn[Msg] Effect::plan_summary(self : Effect[Msg]) -> EffectPlanSummary {
   effect_plan_summary(self, depth=1)
+}
+
+///|
+pub fn[Msg] Effect::runtime_ops(
+  self : Effect[Msg],
+) -> Array[EffectRuntimeOp[Msg]] {
+  effect_runtime_ops(self)
+}
+
+///|
+pub fn[Msg] EffectRuntimeOp::runtime_visit(
+  self : EffectRuntimeOp[Msg],
+  send : (Msg) -> Unit,
+  dispatch_effect : (((Msg) -> Unit) -> Unit) -> Unit,
+  run_effect : (EffectDescriptor, ((Msg) -> Unit) -> Unit) -> Unit,
+  start_task : (EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit,
+) -> Unit {
+  match self.node {
+    EffectRuntimeSend(message) => send(message)
+    EffectRuntimeDispatch(run) => dispatch_effect(run)
+    EffectRuntimeRun(descriptor, run) => run_effect(descriptor, run)
+    EffectRuntimeTask(descriptor, start) => start_task(descriptor, start)
+  }
 }
 
 ///|
@@ -410,35 +446,38 @@ fn duplicate_effect_descriptor_key_count(
 }
 
 ///|
+fn[Msg] effect_runtime_ops(effect : Effect[Msg]) -> Array[EffectRuntimeOp[Msg]] {
+  match effect {
+    NoEffect => []
+    Batch(effects) => {
+      let ops : Array[EffectRuntimeOp[Msg]] = []
+      for effect in effects {
+        ops.append(effect_runtime_ops(effect))
+      }
+      ops
+    }
+    Send(message) => [{ node: EffectRuntimeSend(message) }]
+    Dispatch(run) => [{ node: EffectRuntimeDispatch(run) }]
+    Run(descriptor, run) => [{ node: EffectRuntimeRun(descriptor, run) }]
+    Task(descriptor, start) => [{ node: EffectRuntimeTask(descriptor, start) }]
+  }
+}
+
+///|
 fn[Msg] run_effect(
   effect : Effect[Msg],
   dispatch : (Msg) -> Unit,
   start_task : (EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit,
 ) -> Int {
-  match effect {
-    NoEffect => 0
-    Batch(effects) => {
-      let mut count = 0
-      for effect in effects {
-        count = count + run_effect(effect, dispatch, start_task)
-      }
-      count
-    }
-    Send(message) => {
-      dispatch(message)
-      1
-    }
-    Dispatch(run) => {
-      run(dispatch)
-      1
-    }
-    Run(_descriptor, run) => {
-      run(dispatch)
-      1
-    }
-    Task(descriptor, start) => {
-      start_task(descriptor, start)
-      1
-    }
+  let mut count = 0
+  for op in effect.runtime_ops() {
+    op.runtime_visit(
+      dispatch,
+      run => run(dispatch),
+      (_descriptor, run) => run(dispatch),
+      start_task,
+    )
+    count = count + 1
   }
+  count
 }
