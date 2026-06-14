@@ -773,6 +773,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep Skia renderer matrix, surface, and brush smoke tests compact",
     },
     {
+      path: "moui/views/style_api.mbt",
+      max_lines: 525,
+      target_lines: 480,
+      reason: "keep views style variants, app-owned toast/file helpers, navigation descriptors, and style mapping compact",
+    },
+    {
+      path: "moui/views/data_state.mbt",
+      max_lines: 450,
+      target_lines: 400,
+      reason: "keep views app-owned data descriptors, table state, selection state, and data workflow helpers compact",
+    },
+    {
       path: "moui/views/data_display.mbt",
       max_lines: 690,
       target_lines: 620,
