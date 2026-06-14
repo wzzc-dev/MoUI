@@ -26,7 +26,7 @@ test "program effect tasks complete on first dispatch and ignore stale dispatche
     },
     view=model => runtime_test_label(model),
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -112,7 +112,7 @@ test "program effect tasks ignore synchronous second dispatch before first messa
     },
     view=model => runtime_test_label(model),
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -170,7 +170,7 @@ test "program effect tasks cancel by key change and runtime destroy" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=80.0),
   )
@@ -266,7 +266,7 @@ test "program effect task replacement reports same-key kind changes" {
       )
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=80.0),
   )

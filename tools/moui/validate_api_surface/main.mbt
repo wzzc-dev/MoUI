@@ -129,7 +129,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "View::controlled_text_field(", "View::rich_text_editor(", "View::controlled_rich_text_editor(",
         "View::picker(", "View::controlled_picker(", "View::datepicker(", "View::controlled_datepicker(",
         "View::search_bar(", "View::controlled_search_bar(", "pub(all) struct EffectDescriptor",
-        "pub(all) struct SubscriptionDescriptor",
+        "pub(all) struct SubscriptionDescriptor", "type AppRuntime", "AppRuntime::",
       ],
     },
     {
@@ -707,6 +707,36 @@ fn validate_core_control_entrypoint_usage(
 }
 
 ///|
+fn validate_runtime_source_boundaries(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = []
+  collect_mbt_files(repo_root, "moui/runtime", files, failures)
+  let mut core_app_runtime_uses = 0
+  for path in files {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    if text.contains("@core.AppRuntime") ||
+      text.contains("inner : @core.AppRuntime") {
+      core_app_runtime_uses += 1
+      failures.push(
+        path +
+        ": runtime must not wrap @core.AppRuntime; use the core runtime kernel seam only while ownership migrates",
+      )
+    }
+  }
+  println(
+    "api surface: runtime @core.AppRuntime source uses=\{core_app_runtime_uses}",
+  )
+}
+
+///|
 fn run_checks(repo_root : String) -> Array[String] {
   let failures : Array[String] = []
   for budget in package_budgets() {
@@ -714,6 +744,7 @@ fn run_checks(repo_root : String) -> Array[String] {
   }
   validate_root_facade_shape(repo_root, failures)
   validate_views_return_types(repo_root, failures)
+  validate_runtime_source_boundaries(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)
   validate_core_control_entrypoint_usage(repo_root, failures)
   failures

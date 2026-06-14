@@ -31,7 +31,7 @@ test "subscription descriptors and map preserve feature composition" {
     view=model => runtime_test_label(model),
     subscriptions=_model => parent,
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -116,7 +116,7 @@ test "mapped child subscriptions cancel and ignore stale dispatches" {
       }
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -242,7 +242,7 @@ test "program snapshots aggregate active subscription kinds" {
       ])
     },
   )
-  let runtime = AppRuntime::new_program(
+  let runtime = RuntimeKernel::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )

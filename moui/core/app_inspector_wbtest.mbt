@@ -1,6 +1,6 @@
 ///|
 test "runtime inspector and frame profile expose devtool counters" {
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::TextSpec({
       key: None,
       text: "Inspect",
@@ -82,7 +82,7 @@ test "runtime inspector and frame profile expose devtool counters" {
 
 ///|
 test "runtime pipeline counters track layout paint and draw command work" {
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::TextSpec({
       key: None,
       text: "Counters",
@@ -108,7 +108,7 @@ test "runtime pipeline counters track layout paint and draw command work" {
 
 ///|
 test "inspector snapshot captures semantic states and dirty reasons" {
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::ModifiedSpec({
       key: None,
       child: ViewSpec::TextSpec({

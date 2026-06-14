@@ -221,7 +221,7 @@ test "action command map dispatches shortcuts and intents" {
 test "runtime dispatches action command shortcuts before focused text input" {
   let copied = Ref(0)
   let text = State::new("")
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::TextFieldSpec({
       key: None,
       value: text.binding(),

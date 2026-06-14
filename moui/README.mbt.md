@@ -58,11 +58,12 @@ native-only PDFium adapter for real page bitmap rasterization. The root
 
 ## Project Shape
 
-- `core/` owns the platform-neutral contract model, state, layout, input,
-  semantics, draw command model, typed events, `Program`, `Effect`,
-  `Subscription`, and the transitional runtime kernel.
-- `runtime/` exposes the app/host `AppRuntime` wrapper and construction
-  entrypoints over the current core runtime kernel.
+- `core/` owns the platform-neutral contract model, opaque `View`, typed
+  events, `Program`, `Effect`, `Subscription`, geometry, draw, semantics, and a
+  narrow `RuntimeKernel` seam while tree/layout/paint handoff migrates.
+- `runtime/` exposes the app/host `AppRuntime` construction entrypoints and
+  owns program message drain, effect task, subscription lifecycle, and
+  diagnostics.
 - The root `moui` facade exposes only the curated
   `View`/`Program`/`Effect`/`Subscription`/`Theme` aliases plus neutral
   default/light/dark/custom theme builders directly; diagnostics and

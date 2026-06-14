@@ -35,7 +35,7 @@ test "controlled checkbox picker and datepicker emit new value messages" {
       )
     },
   )
-  let enabled_runtime = AppRuntime::new_program(
+  let enabled_runtime = RuntimeKernel::new_program(
     program=enabled_program,
     size=Size::new(width=240.0, height=100.0),
   )
@@ -73,7 +73,7 @@ test "controlled checkbox picker and datepicker emit new value messages" {
       )
     },
   )
-  let picker_runtime = AppRuntime::new_program(
+  let picker_runtime = RuntimeKernel::new_program(
     program=picker_program,
     size=Size::new(width=240.0, height=180.0),
   )
@@ -123,7 +123,7 @@ test "controlled checkbox picker and datepicker emit new value messages" {
       )
     },
   )
-  let stacked_runtime = AppRuntime::new_program(
+  let stacked_runtime = RuntimeKernel::new_program(
     program=stacked_popup_program,
     size=Size::new(width=320.0, height=220.0),
   )
@@ -164,7 +164,7 @@ test "controlled checkbox picker and datepicker emit new value messages" {
       )
     },
   )
-  let date_runtime = AppRuntime::new_program(
+  let date_runtime = RuntimeKernel::new_program(
     program=date_program,
     size=Size::new(width=320.0, height=240.0),
   )
@@ -220,7 +220,7 @@ test "controlled datepicker ignores dates outside min max range" {
       )
     },
   )
-  let date_runtime = AppRuntime::new_program(
+  let date_runtime = RuntimeKernel::new_program(
     program=date_program,
     size=Size::new(width=320.0, height=240.0),
   )

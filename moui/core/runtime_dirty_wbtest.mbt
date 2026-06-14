@@ -1,6 +1,6 @@
 ///|
 test "button press batches paint without build or layout flush" {
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::ButtonSpec({
       key: None,
       text: "Press",
