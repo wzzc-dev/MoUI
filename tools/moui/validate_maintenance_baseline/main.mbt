@@ -1007,10 +1007,22 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views feedback tones, state actions, and toast queue helpers compact",
     },
     {
-      path: "moui/views/feedback.mbt",
-      max_lines: 280,
-      target_lines: 250,
-      reason: "keep views transient feedback surfaces and shared feedback tone helpers compact",
+      path: "moui/views/feedback_guidance.mbt",
+      max_lines: 70,
+      target_lines: 55,
+      reason: "keep views inline feedback guidance surfaces compact",
+    },
+    {
+      path: "moui/views/feedback_surface.mbt",
+      max_lines: 125,
+      target_lines: 105,
+      reason: "keep shared feedback surface and tone-style helpers compact",
+    },
+    {
+      path: "moui/views/feedback_transient.mbt",
+      max_lines: 130,
+      target_lines: 115,
+      reason: "keep views transient feedback surfaces compact",
     },
     {
       path: "moui/views/feedback_status.mbt",
