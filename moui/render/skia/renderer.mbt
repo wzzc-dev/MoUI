@@ -322,3 +322,59 @@ pub fn SkiaRasterRenderer::last_frame(
 ) -> SkiaPixelFrame? {
   self.last_frame
 }
+
+///| Draw platform view content (e.g., offscreen webview pixels) onto the surface
+///| This should be called after render_frame but before the window system presents
+pub fn SkiaRasterRenderer::draw_platform_view_pixels(
+  self : SkiaRasterRenderer,
+  pixels : Bytes,
+  src_width : Int,
+  src_height : Int,
+  src_stride : Int,
+  dst_x : Double,
+  dst_y : Double,
+  dst_width : Double,
+  dst_height : Double,
+) -> Unit {
+  match self.surface.canvas() {
+    Some(canvas) => {
+      match @skia_native.Bitmap::from_pixels(
+        pixels,
+        src_width,
+        src_height,
+        src_stride,
+      ) {
+        Some(bitmap) => {
+          match @skia_native.Image::from_bitmap(bitmap) {
+            Some(image) => {
+              let src_rect = @moui_skia.Rect::from_xywh(
+                0.0,
+                0.0,
+                Float::from_int(src_width),
+                Float::from_int(src_height),
+              )
+              let dst_rect = @moui_skia.Rect::from_xywh(
+                Float::from_double(dst_x * self.metrics.scale_factor),
+                Float::from_double(dst_y * self.metrics.scale_factor),
+                Float::from_double(dst_width * self.metrics.scale_factor),
+                Float::from_double(dst_height * self.metrics.scale_factor),
+              )
+              canvas.draw_image_rect(
+                image,
+                src_rect,
+                dst_rect,
+                @moui_skia.Paint::new(),
+                sampling=@moui_skia.SamplingOptions::linear(),
+              )
+              // Flush to ensure the drawing is committed
+              ignore(self.surface.flush_and_submit())
+            }
+            None => ()
+          }
+        }
+        None => ()
+      }
+    }
+    None => ()
+  }
+}
