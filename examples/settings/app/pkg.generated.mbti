@@ -3,11 +3,10 @@ package "examples/settings/app"
 
 import {
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn program() -> @core.Program[SettingsModel, SettingsMsg]
 
 pub fn update(SettingsModel, SettingsMsg) -> SettingsModel
 
@@ -20,7 +19,7 @@ pub struct SettingsApp {
   unit : Unit
 }
 pub fn SettingsApp::new() -> Self
-pub fn SettingsApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn SettingsApp::program(Self) -> @core.Program[SettingsModel, SettingsMsg]
 
 pub(all) struct SettingsModel {
   selected_section : String
@@ -34,8 +33,8 @@ pub(all) struct SettingsModel {
 }
 pub fn SettingsModel::from_store(@core.SaveableStateStore) -> Self
 pub fn SettingsModel::new() -> Self
+pub fn SettingsModel::program(Self) -> @core.Program[Self, SettingsMsg]
 pub fn SettingsModel::restore_from_snapshot(@core.SaveableStateSnapshot) -> Self
-pub fn SettingsModel::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
 pub fn SettingsModel::save_snapshot(Self) -> @core.SaveableStateSnapshot
 pub fn SettingsModel::update(Self, SettingsMsg) -> Self
 pub fn SettingsModel::view(Self) -> @core.View[SettingsMsg]
