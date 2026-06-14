@@ -4,7 +4,7 @@ package "wzzc-dev/moui/backend/macos/skia"
 import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/macos",
-  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
@@ -12,13 +12,13 @@ pub fn macos_skia_provider_preflight_summary(options? : MacosSkiaAppOptions) -> 
 
 pub fn renderer_provider(options? : MacosSkiaAppOptions) -> @macos.MacosRendererProvider
 
-pub fn run_app(String, @core.AppRuntime) -> Unit
+pub fn run_app(String, @runtime.AppRuntime) -> Unit
 
-pub fn run_app_with_options(String, @core.AppRuntime, options~ : MacosSkiaAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_options(String, @runtime.AppRuntime, options~ : MacosSkiaAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
-pub async fn run_app_with_options_async_pump(String, @core.AppRuntime, options~ : MacosSkiaAppOptions, window_requests? : @host.HostWindowRequestQueue, frame_interval_ms? : Int) -> Unit
+pub async fn run_app_with_options_async_pump(String, @runtime.AppRuntime, options~ : MacosSkiaAppOptions, window_requests? : @host.HostWindowRequestQueue, frame_interval_ms? : Int) -> Unit
 
-pub fn run_smoke_app_with_options(String, @core.AppRuntime, options~ : MacosSkiaAppOptions, smoke_options? : MacosSkiaSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_smoke_app_with_options(String, @runtime.AppRuntime, options~ : MacosSkiaAppOptions, smoke_options? : MacosSkiaSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 // Errors
 

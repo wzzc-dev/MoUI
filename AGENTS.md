@@ -37,7 +37,9 @@ paths, or abstractions that only preserve old shapes.
   message drain, effect task lifecycle, subscription lifecycle, and program
   runtime diagnostics. New app, backend, smoke, and tooling code should type
   and construct runtimes through `@runtime.AppRuntime`, `@runtime.new_view`, or
-  `@runtime.new_program`; `@core.AppRuntime` is not a public path.
+  `@runtime.new_program`; platform entrypoints that only have width/height may
+  use `@runtime.new_program_with_dimensions`. `@core.AppRuntime` is not a
+  public path.
 - `views/` is a facade over core primitive builders. Public constructors return
   opaque `@core.View[Msg]`; app, host, smoke, and cross-package tests should
   use `views` widget-level entrypoints instead of direct `@core.View::*`
@@ -137,8 +139,11 @@ paths, or abstractions that only preserve old shapes.
   `render/wgpu/coretext/`, `render/wgpu/directwrite/`,
   `render/wgpu/fontconfig/`, and the shared `render/wgpu/text_protocol/`
   package. `core/` owns only the neutral `TextSystem` contract.
-- `examples/*/app/` packages are shared app logic. Platform subpackages are
-  entrypoints only. Showcase has `macos_skia`, `windows_skia`, and
+- `examples/*/app/` packages are shared app logic and should default to
+  `wzzc-dev/moui + wzzc-dev/moui/views` rather than importing
+  `wzzc-dev/moui/runtime`; keep runtime construction in platform entrypoints or
+  test-only imports. Platform subpackages are entrypoints only. Showcase has
+  `macos_skia`, `windows_skia`, and
   `linux_skia` entrypoints for the recommended native Skia renderer mainline.
   Showcase is the MoUI framework capability catalog and must not import
   `moui_theme`. `examples/design_systems/app` is the dedicated addon diagnostic

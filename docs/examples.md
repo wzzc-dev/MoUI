@@ -91,7 +91,7 @@ pub fn update(model : Model, msg : Msg) -> Model {
   }
 }
 
-pub fn view(model : Model) -> @core.View[Msg] {
+pub fn view(model : Model) -> @moui.View[Msg] {
   center(
     card(
       column([
@@ -105,6 +105,10 @@ pub fn view(model : Model) -> @core.View[Msg] {
       ]),
     ),
   )
+}
+
+pub fn program() -> @moui.Program[Model, Msg] {
+  @moui.Program::simple(init=Model::new(), update~, view~)
 }
 ```
 

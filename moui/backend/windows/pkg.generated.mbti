@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/windows"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
@@ -13,9 +14,9 @@ pub fn drain_windows_webview_commands(@wzzc-dev/window/windows.Window, @host.Hos
 
 pub fn install_windows_webview_event_dispatcher((UInt64, String, @wzzc-dev/moui/core.WebViewEvent) -> Unit) -> Unit
 
-pub fn run_app_with_renderer_provider(String, @wzzc-dev/moui/core.AppRuntime, provider~ : WindowsRendererProvider, options? : WindowsHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_renderer_provider(String, @runtime.AppRuntime, provider~ : WindowsRendererProvider, options? : WindowsHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
-pub fn run_app_with_renderer_provider_smoke(String, @wzzc-dev/moui/core.AppRuntime, provider~ : WindowsRendererProvider, options? : WindowsHostAppOptions, smoke_options? : WindowsHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_renderer_provider_smoke(String, @runtime.AppRuntime, provider~ : WindowsRendererProvider, options? : WindowsHostAppOptions, smoke_options? : WindowsHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub fn sync_windows_platform_views(@wzzc-dev/window/windows.Window, @wzzc-dev/moui/core.DrawFrame) -> Unit
 

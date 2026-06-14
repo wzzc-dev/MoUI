@@ -28,7 +28,7 @@ pub fn update(model : Model, msg : Msg) -> Model {
 }
 
 ///|
-pub fn view(model : Model) -> @core.View[Msg] {
+pub fn view(model : Model) -> @moui.View[Msg] {
   center(
     card(
       column([
@@ -45,12 +45,6 @@ pub fn view(model : Model) -> @core.View[Msg] {
 }
 
 ///|
-pub fn runtime(
-  width? : Double = 520.0,
-  height? : Double = 360.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::simple(init=Model::new(), update~, view~),
-    size=@core.Size::new(width~, height~),
-  )
+pub fn program() -> @moui.Program[Model, Msg] {
+  @moui.Program::simple(init=Model::new(), update~, view~)
 }

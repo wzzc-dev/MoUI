@@ -152,7 +152,9 @@ Use this skill when editing or reviewing:
   drain, effect task lifecycle, subscription lifecycle, and program runtime
   diagnostics. New app, backend, smoke, and tooling code should use
   `@runtime.AppRuntime`, `@runtime.new_view`, or `@runtime.new_program`;
-  `@core.AppRuntime` is not a public path.
+  platform entrypoints that only have width/height may use
+  `@runtime.new_program_with_dimensions`. `@core.AppRuntime` is not a public
+  path.
 - root `moui`: public facade over curated
   `View`/`Program`/`Effect`/`Subscription`/`Theme` aliases. Neutral
   default/light/dark theme helpers and custom `@core.Theme` builder APIs live
@@ -258,7 +260,9 @@ Use this skill when editing or reviewing:
   SkParagraph path and include `engine=skparagraph` markers.
 - `moui/tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
   packages for comparing supported text systems and documented gaps.
-- `examples/*/app`: shared application logic.
+- `examples/*/app`: shared application logic. Default imports should stay at
+  `wzzc-dev/moui + wzzc-dev/moui/views`; keep runtime construction in platform
+  entrypoints or test-only imports.
 - `examples/*/{web_wasm,<platform>_<renderer>}`: platform/renderer profile
   entrypoints where an example has a runnable host package.
 - `examples/webview_demo/{app,macos_skia,windows_skia,linux_skia,web_wasm}`:
