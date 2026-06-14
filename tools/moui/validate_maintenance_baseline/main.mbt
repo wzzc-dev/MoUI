@@ -954,9 +954,21 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/feedback_status.mbt",
-      max_lines: 450,
-      target_lines: 400,
-      reason: "keep views workflow state panels, progress status, badges, and stat cards compact",
+      max_lines: 185,
+      target_lines: 165,
+      reason: "keep views workflow state panels and inline error helpers compact",
+    },
+    {
+      path: "moui/views/feedback_progress.mbt",
+      max_lines: 150,
+      target_lines: 130,
+      reason: "keep views progress status layout and progress-label helpers compact",
+    },
+    {
+      path: "moui/views/feedback_badge.mbt",
+      max_lines: 130,
+      target_lines: 115,
+      reason: "keep views badge, status badge, stat card, and badge tone helpers compact",
     },
     {
       path: "moui/views/file_import_state.mbt",
