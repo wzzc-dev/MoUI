@@ -5,9 +5,9 @@ pub(all) struct Frame {
 } derive(Eq, Debug, ToJson)
 
 ///|
-struct Clock {
+priv struct Clock {
   mut last_time_ms : Double?
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub(all) enum AnimationStatus {
@@ -25,11 +25,11 @@ pub(all) enum Easing {
 } derive(Eq, Debug, ToJson)
 
 ///|
-struct Tween {
+priv struct Tween {
   from : Double
   to : Double
   easing : Easing
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 pub struct TransitionStyle {
