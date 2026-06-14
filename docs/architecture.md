@@ -4,9 +4,12 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 
 ## Scope
 
-- Platform-neutral `core` runtime, view specs, Taffy-backed layout placement,
-  hit testing, and draw commands.
-- Public root package aliases common core view/runtime/theme types for
+- Platform-neutral `core` contracts, view specs, Taffy-backed layout
+  placement, hit testing, draw commands, and the transitional runtime kernel.
+- `moui/runtime` is the app/host runtime entrypoint package over
+  `AppRuntime`; source consumers use `@runtime.AppRuntime` while the runtime
+  implementation continues moving out of `core`.
+- Public root package aliases common core view/theme types for
   `@wzzc-dev/moui` consumers and exposes neutral default/light/dark/custom
   theme builders directly over `@core.Theme`.
 - `moui_theme/common` is a repo-local addon diagnostic workspace member for shared
@@ -34,7 +37,8 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 
 ```text
 moui/                         root public facade workspace member
-moui/core/                    one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
+moui/core/                    platform-neutral contracts plus transitional runtime kernel, state, layout, input, editor, paint, and view model
+moui/runtime/                 app/host runtime entrypoint package over AppRuntime
 moui/views/                   public view constructors
 moui_theme/common/            addon diagnostic common source-mapped design-system model, aggregate design-system reports, token taxonomy reports, semantic palette role reports, typography role reports, golden mappings, source usage audits, source-lock quality reports, source-package inventories, source-imported token records, coverage gaps, integrity reports, runtime token alignment, official-token/source-lock coverage, token-group resolver reports, density resolver reports, variant resolver reports, customization capability reports, component-token matrices, adaptation reports, semantic/component tokens, coverage manifests, and custom Theme builders
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints over common tokens, manifests, reports, component matrices, and light/dark/high-contrast/system Theme helpers

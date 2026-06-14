@@ -230,7 +230,7 @@ pub fn SettingsApp::runtime(
   self : SettingsApp,
   width? : Double = 920.0,
   height? : Double = 620.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   SettingsModel::new().runtime(width~, height~)
 }
@@ -239,7 +239,7 @@ pub fn SettingsApp::runtime(
 pub fn runtime(
   width? : Double = 920.0,
   height? : Double = 620.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   SettingsModel::new().runtime(width~, height~)
 }
 
@@ -248,8 +248,8 @@ pub fn SettingsModel::runtime(
   self : SettingsModel,
   width? : Double = 920.0,
   height? : Double = 620.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::simple(init=self, update~, view~),
     size=@core.Size::new(width~, height~),
   )

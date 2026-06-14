@@ -1,6 +1,6 @@
 ///|
 pub(all) struct HostRuntimeDriver {
-  runtime : @core.AppRuntime
+  runtime : @runtime.AppRuntime
   scheduler : RedrawScheduler
   mut close_requested : Bool
   mut frame_time_ms : Double
@@ -8,7 +8,7 @@ pub(all) struct HostRuntimeDriver {
 
 ///|
 pub fn HostRuntimeDriver::new(
-  runtime~ : @core.AppRuntime,
+  runtime~ : @runtime.AppRuntime,
   schedule_redraw~ : () -> Unit,
 ) -> HostRuntimeDriver {
   let driver = {

@@ -235,7 +235,7 @@ pub fn FileImporterApp::runtime(
   self : FileImporterApp,
   width? : Double = 860.0,
   height? : Double = 620.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   runtime(width~, height~)
 }
@@ -244,7 +244,7 @@ pub fn FileImporterApp::runtime(
 pub fn runtime(
   width? : Double = 860.0,
   height? : Double = 620.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   FileImporterModel::new().runtime(width~, height~)
 }
 
@@ -253,7 +253,7 @@ pub fn FileImporterModel::runtime(
   self : FileImporterModel,
   width? : Double = 860.0,
   height? : Double = 620.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   self.runtime_with_services(
     @host.HostAppServices::unavailable(),
     width~,
@@ -267,8 +267,8 @@ pub fn FileImporterModel::runtime_with_services(
   services : @host.HostAppServices,
   width? : Double = 860.0,
   height? : Double = 620.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::new(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => {

@@ -185,7 +185,7 @@ fn pdf_workbench_ready_raster_services(
 
 ///|
 fn pdf_workbench_click_text(
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   label : String,
 ) -> Unit raise {
   guard pdf_workbench_text_frame(runtime.draw_commands(), label) is Some(frame) else {
@@ -209,7 +209,7 @@ fn pdf_workbench_click_text(
 
 ///|
 fn pdf_workbench_scroll_at(
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   frame : @core.Rect,
   dy~ : Double,
 ) -> Unit {

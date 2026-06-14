@@ -19,7 +19,7 @@ test "grouped choice controls compose selections and chips" {
       @views.choice_chip("Choice", selected=true, on_select=()),
     ]),
   ])
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=560.0, height=360.0),
   )
@@ -62,7 +62,7 @@ test "component semantics expose selection validation and expanded states" {
     @views.button("Disabled action").disabled(),
     @views.inline_error("Sync failed"),
   ])
-  let semantics = @core.AppRuntime::new_view(
+  let semantics = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=760.0, height=520.0),
   ).semantics()

@@ -39,7 +39,7 @@ pub struct MacosRendererProvider {
 ///|
 struct MacosApp {
   title : String
-  runtime : @core.AppRuntime
+  runtime : @runtime.AppRuntime
   driver : @host.HostRuntimeDriver
   text_input_session : @host.TextInputSession
   renderer_provider : MacosRendererProvider

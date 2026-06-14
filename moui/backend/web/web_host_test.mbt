@@ -305,7 +305,7 @@ test "animation frame maps to redraw requested host event" {
 ///|
 test "web accessibility maps semantics to aria nodes" {
   let checked = @core.State::new(true)
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=(
       @core.View::checkbox(
         label="Done",

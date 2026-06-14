@@ -382,7 +382,7 @@ pub fn MarkdownEditorApp::runtime(
   self : MarkdownEditorApp,
   width? : Double = 1120.0,
   height? : Double = 720.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   self.runtime_with_services(
     @host.HostAppServices::unavailable(),
     width~,
@@ -396,8 +396,8 @@ pub fn MarkdownEditorApp::runtime_with_services(
   services : @host.HostAppServices,
   width? : Double = 1120.0,
   height? : Double = 720.0,
-) -> @core.AppRuntime {
-  let runtime = @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::new(
       init=() => (self, @core.Effect::none()),
       update=(app, message) => app.update_with_services(message, services),

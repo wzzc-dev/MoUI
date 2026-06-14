@@ -290,7 +290,7 @@ pub fn CommandPaletteApp::runtime(
   self : CommandPaletteApp,
   width? : Double = 800.0,
   height? : Double = 680.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   runtime(width~, height~)
 }
@@ -301,7 +301,7 @@ pub fn CommandPaletteApp::runtime_with_services(
   services : @host.HostAppServices,
   width? : Double = 800.0,
   height? : Double = 680.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   runtime_with_services(services, width~, height~)
 }
@@ -310,7 +310,7 @@ pub fn CommandPaletteApp::runtime_with_services(
 pub fn runtime(
   width? : Double = 800.0,
   height? : Double = 680.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   CommandPaletteModel::new().runtime(width~, height~)
 }
 
@@ -319,7 +319,7 @@ pub fn runtime_with_services(
   services : @host.HostAppServices,
   width? : Double = 800.0,
   height? : Double = 680.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   CommandPaletteModel::new().runtime_with_services(services, width~, height~)
 }
 
@@ -328,8 +328,8 @@ pub fn CommandPaletteModel::runtime(
   self : CommandPaletteModel,
   width? : Double = 800.0,
   height? : Double = 680.0,
-) -> @core.AppRuntime {
-  let runtime = @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(init=self, update~, view~),
     size=@core.Size::new(width~, height~),
   )
@@ -343,8 +343,8 @@ pub fn CommandPaletteModel::runtime_with_services(
   services : @host.HostAppServices,
   width? : Double = 800.0,
   height? : Double = 680.0,
-) -> @core.AppRuntime {
-  let runtime = @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::new(
       init=() => (self, @core.Effect::none()),
       update=(model, message) => model.update_with_services(message, services),

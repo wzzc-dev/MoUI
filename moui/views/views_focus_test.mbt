@@ -5,7 +5,7 @@ test "shortcut button renders hint and dispatches keyboard shortcut" {
     key="s",
     modifiers=@core.KeyModifiers::new(meta=true),
   )
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.shortcut_button("Save", on_click="save", shortcut~, width=220.0),
     size=@core.Size::new(width=260.0, height=90.0),
     on_message=Some(message => selected.val = message),

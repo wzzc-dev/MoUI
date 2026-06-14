@@ -21,7 +21,7 @@ test "host app services completion subscription dispatches typed messages" {
     HostServiceResponse::Pending(id) => id
     _ => fail("expected pending file dialog")
   }
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init={ pending: Some(pending_id), selected: "Pending completion" },
       update=(model, completion : HostCompletedServiceResponse) => {
@@ -113,7 +113,7 @@ test "host app services completion subscription cancels queue handler" {
     HostServiceResponse::Pending(id) => id
     _ => fail("expected pending file dialog")
   }
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init={ pending: Some(pending_id), selected: "Pending completion" },
       update=(model, completion : HostCompletedServiceResponse) => {

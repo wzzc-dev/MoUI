@@ -398,7 +398,7 @@ pub fn DataTableApp::runtime(
   self : DataTableApp,
   width? : Double = 1020.0,
   height? : Double = 740.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   runtime(width~, height~)
 }
@@ -407,7 +407,7 @@ pub fn DataTableApp::runtime(
 pub fn runtime(
   width? : Double = 1020.0,
   height? : Double = 740.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   DataTableModel::new().runtime(width~, height~)
 }
 
@@ -416,8 +416,8 @@ pub fn DataTableModel::runtime(
   self : DataTableModel,
   width? : Double = 1020.0,
   height? : Double = 740.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::simple(init=self, update~, view~),
     size=@core.Size::new(width~, height~),
   )

@@ -21,7 +21,7 @@ test "popover dropdown combobox and autocomplete compose menu surfaces" {
     ),
     @views.autocomplete("T", on_input=_value => (), items, expanded=true),
   ])
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=640.0, height=520.0),
   )
@@ -83,7 +83,7 @@ test "alert composes dialog content and actions" {
 ///|
 test "dialog composes custom content dismiss and action messages" {
   let selected = Ref("")
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.dialog(
       "Edit project",
       content=@views.description_list([
@@ -187,7 +187,7 @@ test "dialog composes custom content dismiss and action messages" {
 
 ///|
 test "dialog host uses transparent scrim and keeps modal boundary visible" {
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.dialog_host(
       @views.text("Background", width=180.0, height=32.0),
       dialog=Some(

@@ -64,7 +64,7 @@ test "command menu dispatches enabled command and ignores disabled command" {
       ),
     ]),
   ]
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.command_menu(sections, on_select=intent => intent, width=280.0),
     size=@core.Size::new(width=320.0, height=220.0),
     on_message=Some(intent => selected.val = intent.display_label()),

@@ -75,7 +75,7 @@ test "navigation shell components compose sidebar breadcrumb split and wizard" {
     ),
     @views.wizard(steps, current="first", on_select=_route => ()),
   ])
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=760.0, height=620.0),
   )
@@ -117,7 +117,7 @@ test "navigation shell components compose sidebar breadcrumb split and wizard" {
 ///|
 test "section nav dispatches selected item messages" {
   let selected = Ref("")
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.section_nav(
       "Areas",
       [
@@ -194,7 +194,7 @@ test "router stack selects route location path and preserves query params" {
     ],
     fallback=@views.text("Missing route", width=120.0),
   )
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=320.0, height=120.0),
   )

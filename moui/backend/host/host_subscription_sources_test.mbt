@@ -1,7 +1,7 @@
 ///|
 test "host event source subscription dispatches mapped host events" {
   let source = HostEventSource::new()
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
@@ -50,7 +50,7 @@ test "host event source subscription dispatches mapped host events" {
 ///|
 test "host event source subscription cleanup removes late publishers" {
   let source = HostEventSource::new()
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
@@ -89,7 +89,7 @@ test "host event source subscription cleanup removes late publishers" {
 test "host platform event sources publish host and window subscriptions" {
   let sources = HostPlatformEventSources::new()
   let window_id = HostWindowId::new(9)
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
@@ -152,7 +152,7 @@ test "host window event source subscription dispatches mapped window events" {
   let source = HostWindowEventSource::new()
   let target = HostWindowId::new(7)
   let other = HostWindowId::new(8)
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
@@ -224,7 +224,7 @@ test "host window event source subscription dispatches mapped window events" {
 test "host window event source subscription cleanup removes late publishers" {
   let source = HostWindowEventSource::new()
   let window_id = HostWindowId::new(1)
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,

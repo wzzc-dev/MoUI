@@ -56,8 +56,8 @@ pub fn view(model : TextInputSmokeModel) -> @core.View[TextInputSmokeMsg] {
 pub fn runtime(
   width? : Double = 520.0,
   height? : Double = 180.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init=TextInputSmokeModel::new(),
       update~,

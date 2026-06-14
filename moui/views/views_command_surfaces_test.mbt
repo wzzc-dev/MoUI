@@ -40,7 +40,7 @@ test "toolbar and disclosure containers compose command surfaces" {
       size=180.0,
     ),
   ])
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=760.0, height=760.0),
   )
@@ -60,7 +60,7 @@ test "toolbar and disclosure containers compose command surfaces" {
 ///|
 test "resizable panel drag handle emits controlled size" {
   let last_size = Ref(0.0)
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.resizable_panel(
       content=@views.text("Drag resize", width=120.0),
       size=180.0,
@@ -127,7 +127,7 @@ test "command palette renders command metadata and filters rows" {
     query="file",
     on_select=intent => intent,
   )
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=520.0, height=320.0),
   )
@@ -141,7 +141,7 @@ test "command palette renders command metadata and filters rows" {
 ///|
 test "card supports independent optional dimensions" {
   let root : @core.View[Unit] = @views.card(@views.text("Wide"), width=240.0)
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=400.0, height=120.0),
   )

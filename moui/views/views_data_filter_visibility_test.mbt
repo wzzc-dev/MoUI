@@ -1,7 +1,7 @@
 ///|
 test "data filter bar dispatches filters and disables unavailable actions" {
   let selected = Ref("")
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.data_filter_bar(
       query="atlas",
       on_query=value => "query:" + value,
@@ -59,7 +59,7 @@ test "data filter bar dispatches filters and disables unavailable actions" {
   click_text(runtime, "Clear")
   inspect(selected.val, content="clear")
   selected.val = ""
-  let empty_runtime = @core.AppRuntime::new_view(
+  let empty_runtime = @runtime.AppRuntime::new_view(
     root=@views.data_filter_bar(
       query="",
       on_query=value => "query:" + value,
@@ -95,7 +95,7 @@ test "column visibility panel dispatches controlled column toggles" {
     @views.table_column(id="status", label="Status", width=96.0),
     @views.table_column(id="owner", label="Owner", width=112.0),
   ]
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.column_visibility_panel(
       columns,
       visible=["name", "owner"],

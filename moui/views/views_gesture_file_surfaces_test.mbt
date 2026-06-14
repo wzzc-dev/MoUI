@@ -9,7 +9,7 @@ test "public view gesture wrappers can be composed from views" {
     .on_double_tap("double")
     .on_long_press("long")
     .on_drag(event => event.phase.label())
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=200.0, height=120.0),
     on_message=Some(message => log.val = log.val + message + ";"),
@@ -89,7 +89,7 @@ test "drop zone maps dropped files to app message" {
     width=240.0,
     height=80.0,
   )
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=320.0, height=160.0),
     on_message=Some(paths => if paths.length() > 0 { seen.val = paths[0] }),
@@ -108,7 +108,7 @@ test "drop zone maps dropped files to app message" {
 
 ///|
 test "file import panel renders empty and unavailable states" {
-  let empty = @core.AppRuntime::new_view(
+  let empty = @runtime.AppRuntime::new_view(
     root=@views.file_import_panel(
       selection=@views.FileSelection::new(paths=[]),
       on_drop=_paths => (),
@@ -121,7 +121,7 @@ test "file import panel renders empty and unavailable states" {
   assert_true(has_text(empty, "No file chosen"))
   assert_true(has_text(empty, "Browse"))
 
-  let unavailable = @core.AppRuntime::new_view(
+  let unavailable = @runtime.AppRuntime::new_view(
     root=@views.file_import_panel(
       selection=@views.FileSelection::new(paths=["/tmp/a.txt"]),
       on_drop=_paths => (),

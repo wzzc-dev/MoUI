@@ -1,7 +1,7 @@
 ///|
 test "resizable split view drag handle emits controlled primary width" {
   let last_width = Ref(0.0)
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.resizable_split_view(
       primary=@views.text("Primary", width=120.0, height=24.0),
       detail=@views.text("Detail", width=160.0, height=24.0),
@@ -40,7 +40,7 @@ test "resizable split view drag handle emits controlled primary width" {
 ///|
 test "slider drag emits controlled value" {
   let last_value = Ref(0.0)
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.slider(0.4, width=200.0, on_change=Some(value => value)),
     size=@core.Size::new(width=240.0, height=80.0),
     on_message=Some(value => last_value.val = value),
@@ -68,7 +68,7 @@ test "slider drag emits controlled value" {
 ///|
 test "slider drag remains stable across program rebuilds" {
   let seen = Ref(0.4)
-  let runtime = @core.AppRuntime::new_program(
+  let runtime = @runtime.AppRuntime::new_program(
     program=@core.Program::simple(
       init=0.4,
       update=(_model, message) => {
