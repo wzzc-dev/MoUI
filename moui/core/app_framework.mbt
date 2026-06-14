@@ -43,10 +43,10 @@ pub(all) struct RouteHistoryState {
 } derive(Eq, Debug, ToJson)
 
 ///|
-struct RouteFocusEntry {
+priv struct RouteFocusEntry {
   route : String
   focus_key : String
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 struct RouteFocusStore {
