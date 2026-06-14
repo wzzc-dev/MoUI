@@ -52,9 +52,7 @@ pub fn ActionCommand::matches(Self, KeyboardEvent) -> Bool
 pub fn ActionCommand::new(intent~ : CommandIntent, label? : String, shortcut? : KeyboardShortcut?, enabled? : Bool, group? : String, description? : String, context_menu? : Bool) -> Self
 pub fn ActionCommand::shortcut_label(Self) -> String
 
-pub(all) struct ActionCommandMap {
-  bindings : Array[CommandBinding]
-}
+type ActionCommandMap
 pub fn ActionCommandMap::commands(Self) -> Array[ActionCommand]
 pub fn ActionCommandMap::dispatch_command(Self, ActionCommand) -> Bool
 pub fn ActionCommandMap::dispatch_intent(Self, CommandIntent) -> Bool
@@ -299,10 +297,7 @@ pub(all) enum ColorScheme {
   Dark
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct CommandBinding {
-  command : ActionCommand
-  handle : () -> Unit
-}
+type CommandBinding
 pub fn CommandBinding::new(command~ : ActionCommand, handle~ : () -> Unit) -> Self
 
 pub(all) enum CommandIntent {
