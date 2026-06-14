@@ -1163,6 +1163,24 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views menu, popover, sidebar, breadcrumb, and wizard descriptors compact",
     },
     {
+      path: "moui/views/popover_surface.mbt",
+      max_lines: 60,
+      target_lines: 50,
+      reason: "keep views popover surface and semantics helpers compact",
+    },
+    {
+      path: "moui/views/popover_selectors.mbt",
+      max_lines: 135,
+      target_lines: 120,
+      reason: "keep views dropdown, combobox, and autocomplete wrappers compact",
+    },
+    {
+      path: "moui/views/popover_menu.mbt",
+      max_lines: 60,
+      target_lines: 50,
+      reason: "keep views shared popover menu rendering helpers compact",
+    },
+    {
       path: "moui/views/navigation.mbt",
       max_lines: 125,
       target_lines: 110,
