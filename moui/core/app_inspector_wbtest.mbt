@@ -78,7 +78,6 @@ test "runtime inspector and frame profile expose devtool counters" {
     Frame::new(time_ms=16.0, delta_ms=16.0),
   )
   inspect(profile.draw_command_count, content="2")
-  inspect(profile.active_animations, content="0")
 }
 
 ///|

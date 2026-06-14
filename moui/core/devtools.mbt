@@ -171,7 +171,6 @@ pub(all) struct FrameProfile {
   frame : Frame
   dirty_count : Int
   draw_command_count : Int
-  active_animations : Int
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -365,7 +364,6 @@ pub fn FrameProfile::capture(
     frame,
     dirty_count: runtime.dirty_count(),
     draw_command_count: runtime.draw_commands().length(),
-    active_animations: runtime.animation_count(),
   }
 }
 

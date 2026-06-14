@@ -95,8 +95,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "runtime facade",
       path: "moui/runtime/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/runtime\"",
-      max_lines: 80,
-      max_pub_lines: 45,
+      max_lines: 61,
+      max_pub_lines: 42,
       max_pub_all_lines: 0,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "pub struct AppRuntime", "pub fn[Model, Msg] new_program(",
@@ -112,9 +112,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 2347,
-      max_pub_lines: 623,
-      max_pub_all_lines: 205,
+      max_lines: 2294,
+      max_pub_lines: 607,
+      max_pub_all_lines: 196,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "pub(all) struct Program",
         "pub(all) struct Effect", "pub(all) struct Subscription", "pub(all) struct DrawFrame",

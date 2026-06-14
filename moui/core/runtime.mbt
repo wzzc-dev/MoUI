@@ -222,14 +222,6 @@ pub fn AppRuntime::set_environment(
 }
 
 ///|
-pub fn AppRuntime::add_animation(
-  self : AppRuntime,
-  controller : AnimationController,
-) -> Unit {
-  self.state.add_animation(controller)
-}
-
-///|
 pub fn AppRuntime::advance_time(self : AppRuntime, time_ms : Double) -> Unit {
   self.state.advance_time(time_ms)
 }
@@ -365,11 +357,6 @@ pub fn AppRuntime::program_runtime_snapshot(
   self : AppRuntime,
 ) -> ProgramRuntimeSnapshot {
   (self.program_runtime_snapshot_fn)()
-}
-
-///|
-pub fn AppRuntime::animation_count(self : AppRuntime) -> Int {
-  self.state.animation_count()
 }
 
 ///|

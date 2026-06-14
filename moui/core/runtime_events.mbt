@@ -67,25 +67,9 @@ fn RuntimeState::dispatch_focused_text_command(
 }
 
 ///|
-fn RuntimeState::add_animation(
-  self : RuntimeState,
-  controller : AnimationController,
-) -> Unit {
-  self.animations.push(controller)
-  if controller.is_active() {
-    self.request_redraw()
-  }
-}
-
-///|
-fn RuntimeState::animation_count(self : RuntimeState) -> Int {
-  self.animations.length()
-}
-
-///|
 fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
   match event {
-    FrameTick(frame) => self.tick_animations(frame)
+    FrameTick(_) => ()
     Resize(size) => {
       self.size = size
       self.needs_rebuild = self.element_tree.root.mark_component_tree_build_dirty()
@@ -95,12 +79,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       self.element_tree.root.mark_subtree_layout_dirty()
       self.mark_build_dirty(self.element_tree.id())
     }
-    Redraw(_) => {
-      self.needs_redraw = false
-      if self.has_active_animations() {
-        self.request_redraw()
-      }
-    }
+    Redraw(_) => self.needs_redraw = false
     Pointer(event) => {
       if event.phase == PointerPhase::Down {
         let previous_focus = self.focused_element
@@ -330,28 +309,6 @@ fn RuntimeState::focus_key(self : RuntimeState, key : String) -> Bool {
 ///|
 fn RuntimeState::advance_time(self : RuntimeState, time_ms : Double) -> Unit {
   self.dispatch_event(FrameTick(self.clock.frame(time_ms)))
-}
-
-///|
-fn RuntimeState::tick_animations(self : RuntimeState, frame : Frame) -> Unit {
-  let mut active = false
-  let mut changed = false
-  for controller in self.animations {
-    changed = controller.tick(frame) || changed
-    active = controller.is_active() || active
-  }
-  if changed {
-    self.needs_paint = true
-    self.mark_dirty(self.element_tree.id())
-  }
-  if active {
-    self.request_redraw()
-  }
-}
-
-///|
-fn RuntimeState::has_active_animations(self : RuntimeState) -> Bool {
-  self.animations.any(controller => controller.is_active())
 }
 
 ///|
