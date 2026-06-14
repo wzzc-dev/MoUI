@@ -214,6 +214,39 @@ pub fn[Model, Msg] Program::simple_with_environment(
 }
 
 ///|
+pub fn[Model, Msg] Program::runtime_init(
+  self : Program[Model, Msg],
+) -> (Model, Effect[Msg]) {
+  (self.init)()
+}
+
+///|
+pub fn[Model, Msg] Program::runtime_update(
+  self : Program[Model, Msg],
+  model : Model,
+  message : Msg,
+) -> (Model, Effect[Msg]) {
+  (self.update)(model, message)
+}
+
+///|
+pub fn[Model, Msg] Program::runtime_view(
+  self : Program[Model, Msg],
+  model : Model,
+  environment : ViewEnvironment,
+) -> View[Msg] {
+  (self.view)(model, environment)
+}
+
+///|
+pub fn[Model, Msg] Program::runtime_subscriptions(
+  self : Program[Model, Msg],
+  model : Model,
+) -> Subscription[Msg] {
+  (self.subscriptions)(model)
+}
+
+///|
 fn[Msg] effect_plan_summary(
   effect : Effect[Msg],
   depth~ : Int,
