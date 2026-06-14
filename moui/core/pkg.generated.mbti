@@ -1027,12 +1027,7 @@ pub(all) enum PointerPhase {
   Cancel
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct Program[Model, Msg] {
-  init : () -> (Model, Effect[Msg])
-  update : (Model, Msg) -> (Model, Effect[Msg])
-  view : (Model, ViewEnvironment) -> View[Msg]
-  subscriptions : (Model) -> Subscription[Msg]
-}
+type Program[Model, Msg]
 pub fn[Model, Msg] Program::new(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::new_with_environment(init~ : () -> (Model, Effect[Msg]), update~ : (Model, Msg) -> (Model, Effect[Msg]), view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
