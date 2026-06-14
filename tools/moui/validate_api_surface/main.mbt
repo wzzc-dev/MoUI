@@ -112,9 +112,9 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 2130,
+      max_lines: 2128,
       max_pub_lines: 583,
-      max_pub_all_lines: 164,
+      max_pub_all_lines: 163,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct Effect", "pub(all) struct Subscription", "pub(all) struct DrawFrame",

@@ -54,7 +54,7 @@ struct RouteFocusStore {
 }
 
 ///|
-pub(all) struct RouterState {
+struct RouterState {
   navigation : NavigationState
 }
 
