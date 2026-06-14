@@ -1338,10 +1338,7 @@ pub fn RuntimeInspectorSnapshot::from_runtime(AppRuntime) -> Self
 
 type RuntimeState
 
-pub struct SaveableCodec[T] {
-  encode : (T) -> String
-  decode : (String) -> T?
-}
+type SaveableCodec[T]
 pub fn SaveableCodec::bool() -> Self[Bool]
 pub fn[T] SaveableCodec::decode_value(Self[T], String) -> T?
 pub fn[T] SaveableCodec::encode_value(Self[T], T) -> String
@@ -1351,9 +1348,7 @@ pub fn SaveableCodec::string() -> Self[String]
 
 type SaveableStateSnapshot derive(Eq, ToJson, @debug.Debug)
 
-pub struct SaveableStateStore {
-  mut strings : Array[SaveableStringEntry]
-}
+type SaveableStateStore
 pub fn[T] SaveableStateStore::get(Self, String, SaveableCodec[T]) -> T?
 pub fn SaveableStateStore::get_bool(Self, String) -> Bool?
 pub fn SaveableStateStore::get_int(Self, String) -> Int?
@@ -1366,8 +1361,6 @@ pub fn SaveableStateStore::set_bool(Self, String, Bool) -> Unit
 pub fn SaveableStateStore::set_int(Self, String, Int) -> Unit
 pub fn SaveableStateStore::set_string(Self, String, String) -> Unit
 pub fn SaveableStateStore::snapshot(Self) -> SaveableStateSnapshot
-
-type SaveableStringEntry derive(Eq, ToJson, @debug.Debug)
 
 pub struct ScrollState {
   offset_slot : State[Point]
