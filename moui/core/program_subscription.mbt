@@ -19,6 +19,11 @@ priv struct SubscriptionSource[Msg] {
 }
 
 ///|
+pub struct SubscriptionRuntimeSource[Msg] {
+  priv source : SubscriptionSource[Msg]
+}
+
+///|
 struct SubscriptionDescriptor {
   key : String
   kind : String
@@ -171,6 +176,49 @@ pub fn[Msg] Subscription::descriptors(
   self : Subscription[Msg],
 ) -> Array[SubscriptionDescriptor] {
   self.sources().map(source => source.descriptor())
+}
+
+///|
+pub fn[Msg] Subscription::runtime_sources(
+  self : Subscription[Msg],
+) -> Array[SubscriptionRuntimeSource[Msg]] {
+  self.sources().map(source => { source, })
+}
+
+///|
+pub fn[Msg] SubscriptionRuntimeSource::key(
+  self : SubscriptionRuntimeSource[Msg],
+) -> String {
+  self.source.key
+}
+
+///|
+pub fn[Msg] SubscriptionRuntimeSource::kind(
+  self : SubscriptionRuntimeSource[Msg],
+) -> String {
+  self.source.kind
+}
+
+///|
+pub fn[Msg] SubscriptionRuntimeSource::label(
+  self : SubscriptionRuntimeSource[Msg],
+) -> String {
+  self.source.label
+}
+
+///|
+pub fn[Msg] SubscriptionRuntimeSource::descriptor(
+  self : SubscriptionRuntimeSource[Msg],
+) -> SubscriptionDescriptor {
+  self.source.descriptor()
+}
+
+///|
+pub fn[Msg] SubscriptionRuntimeSource::start(
+  self : SubscriptionRuntimeSource[Msg],
+  dispatch : (Msg) -> Unit,
+) -> (() -> Unit)? {
+  (self.source.start)(dispatch)
 }
 
 ///|
