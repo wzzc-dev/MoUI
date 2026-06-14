@@ -173,6 +173,8 @@ fn daily_quality_gate_tokens() -> Array[String] {
     "node scripts/test-validate-conformance-capture-manifest.mjs", "node scripts/test-validate-web-runtime-handoff-manifest.mjs",
     "node --check scripts/smoke-check.mjs", "node --check scripts/test-smoke-check.mjs",
     "node scripts/test-smoke-check.mjs", "node scripts/smoke-check.mjs --check",
+    "node --check scripts/smoke-gate.mjs", "node --check scripts/test-smoke-gate.mjs",
+    "node scripts/test-smoke-gate.mjs", "node scripts/smoke-gate.mjs --tier nightly --dry-run --json",
     "sh -n scripts/ci-web-runtime-presentation.sh", "moon check", "moon test moui/core --target native",
     "moon test moui/views --target native", "moon test moui/render/skia --target native",
     "moon test moui/backend/host --target native", "moon test moui/backend/web --target wasm-gc",
@@ -199,7 +201,8 @@ fn release_readiness_quality_tokens() -> Array[String] {
     "node scripts/validate-maintenance-baseline.mjs", "node scripts/validate-api-surface.mjs",
     "daily baseline", "maintenance ratchets", "manual smoke", "CI run or smoke log",
     "node scripts/smoke-check.mjs --check", "smoke gate catalog", "smoke/gates.json",
-    ".github/workflows/moui-runtime-smoke-gates.yml", "--theme-diagnostics", "Design Systems is addon diagnostic coverage",
+    "node scripts/smoke-gate.mjs --tier release --dry-run --json", ".github/workflows/moui-runtime-smoke-gates.yml",
+    "--theme-diagnostics", "Design Systems is addon diagnostic coverage",
   ]
 }
 
@@ -218,7 +221,7 @@ fn agent_quality_gate_tokens() -> Array[String] {
   [
     "node scripts/validate-maintenance-baseline.mjs", "node scripts/validate-api-surface.mjs",
     "daily validation script", "maintenance baseline", "manual smoke", "smoke/gates.json",
-    ".github/workflows/moui-runtime-smoke-gates.yml", "Do not commit artifacts/",
+    "scripts/smoke-gate.mjs", ".github/workflows/moui-runtime-smoke-gates.yml", "Do not commit artifacts/",
     "--theme-diagnostics", "Design Systems is addon diagnostic coverage",
   ]
 }
