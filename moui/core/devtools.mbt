@@ -167,11 +167,11 @@ pub(all) struct InspectorSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct FrameProfile {
+struct FrameProfile {
   frame : Frame
   dirty_count : Int
   draw_command_count : Int
-} derive(Eq, Debug, ToJson)
+} derive(Eq)
 
 ///|
 pub fn InspectorSnapshot::from_runtime(
