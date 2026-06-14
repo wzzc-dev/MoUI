@@ -226,33 +226,23 @@ pub fn SettingsModel::view(self : SettingsModel) -> @core.View[SettingsMsg] {
 }
 
 ///|
-pub fn SettingsApp::runtime(
+pub fn SettingsApp::program(
   self : SettingsApp,
-  width? : Double = 920.0,
-  height? : Double = 620.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[SettingsModel, SettingsMsg] {
   ignore(self)
-  SettingsModel::new().runtime(width~, height~)
+  SettingsModel::new().program()
 }
 
 ///|
-pub fn runtime(
-  width? : Double = 920.0,
-  height? : Double = 620.0,
-) -> @runtime.AppRuntime {
-  SettingsModel::new().runtime(width~, height~)
+pub fn program() -> @core.Program[SettingsModel, SettingsMsg] {
+  SettingsModel::new().program()
 }
 
 ///|
-pub fn SettingsModel::runtime(
+pub fn SettingsModel::program(
   self : SettingsModel,
-  width? : Double = 920.0,
-  height? : Double = 620.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::simple(init=self, update~, view~),
-    size=@core.Size::new(width~, height~),
-  )
+) -> @core.Program[SettingsModel, SettingsMsg] {
+  @core.Program::simple(init=self, update~, view~)
 }
 
 ///|
