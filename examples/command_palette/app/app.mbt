@@ -286,74 +286,51 @@ pub fn CommandPaletteModel::view(
 }
 
 ///|
-pub fn CommandPaletteApp::runtime(
+pub fn CommandPaletteApp::program(
   self : CommandPaletteApp,
-  width? : Double = 800.0,
-  height? : Double = 680.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
   ignore(self)
-  runtime(width~, height~)
+  program()
 }
 
 ///|
-pub fn CommandPaletteApp::runtime_with_services(
+pub fn CommandPaletteApp::program_with_services(
   self : CommandPaletteApp,
   services : @host.HostAppServices,
-  width? : Double = 800.0,
-  height? : Double = 680.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
   ignore(self)
-  runtime_with_services(services, width~, height~)
+  program_with_services(services)
 }
 
 ///|
-pub fn runtime(
-  width? : Double = 800.0,
-  height? : Double = 680.0,
-) -> @runtime.AppRuntime {
-  CommandPaletteModel::new().runtime(width~, height~)
+pub fn program() -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
+  CommandPaletteModel::new().program()
 }
 
 ///|
-pub fn runtime_with_services(
+pub fn program_with_services(
   services : @host.HostAppServices,
-  width? : Double = 800.0,
-  height? : Double = 680.0,
-) -> @runtime.AppRuntime {
-  CommandPaletteModel::new().runtime_with_services(services, width~, height~)
+) -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
+  CommandPaletteModel::new().program_with_services(services)
 }
 
 ///|
-pub fn CommandPaletteModel::runtime(
+pub fn CommandPaletteModel::program(
   self : CommandPaletteModel,
-  width? : Double = 800.0,
-  height? : Double = 680.0,
-) -> @runtime.AppRuntime {
-  let runtime = @runtime.AppRuntime::new_program(
-    program=@core.Program::simple(init=self, update~, view~),
-    size=@core.Size::new(width~, height~),
-  )
-  runtime.set_action_commands(action_command_map())
-  runtime
+) -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
+  @core.Program::simple(init=self, update~, view~)
 }
 
 ///|
-pub fn CommandPaletteModel::runtime_with_services(
+pub fn CommandPaletteModel::program_with_services(
   self : CommandPaletteModel,
   services : @host.HostAppServices,
-  width? : Double = 800.0,
-  height? : Double = 680.0,
-) -> @runtime.AppRuntime {
-  let runtime = @runtime.AppRuntime::new_program(
-    program=@core.Program::new(
-      init=() => (self, @core.Effect::none()),
-      update=(model, message) => model.update_with_services(message, services),
-      view~,
-    ),
-    size=@core.Size::new(width~, height~),
+) -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
+  @core.Program::new(
+    init=() => (self, @core.Effect::none()),
+    update=(model, message) => model.update_with_services(message, services),
+    view~,
   )
-  runtime.set_action_commands(action_command_map())
-  runtime
 }
 
 ///|
