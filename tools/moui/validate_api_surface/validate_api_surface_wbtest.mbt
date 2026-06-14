@@ -38,9 +38,16 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
 ///|
 test "runtime facade budget pins the opaque wrapper boundary" {
   let runtime = budget_by_label("runtime facade")
+  inspect(runtime.max_lines, content="63")
+  inspect(runtime.max_pub_lines, content="43")
   inspect(runtime.max_pub_all_lines, content="0")
   assert_true(runtime.required_tokens.contains("pub struct AppRuntime"))
   assert_true(runtime.required_tokens.contains("pub fn[Msg] new_view("))
+  assert_true(
+    runtime.required_tokens.contains(
+      "pub fn[Model, Msg] new_program_with_dimensions(",
+    ),
+  )
   assert_true(
     runtime.required_tokens.contains(
       "pub fn[Model, Msg] AppRuntime::new_program(",
@@ -48,6 +55,43 @@ test "runtime facade budget pins the opaque wrapper boundary" {
   )
   assert_true(runtime.forbidden_tokens.contains("RuntimeState"))
   assert_true(runtime.forbidden_tokens.contains("inner : @core.AppRuntime"))
+}
+
+///|
+test "backend runtime interface guard covers native providers" {
+  let paths = backend_runtime_interface_paths()
+  inspect(paths.length(), content="11")
+  assert_true(paths.contains("moui/backend/host/pkg.generated.mbti"))
+  assert_true(paths.contains("moui/backend/web/pkg.generated.mbti"))
+  assert_true(paths.contains("moui/backend/macos/skia/pkg.generated.mbti"))
+  assert_true(paths.contains("moui/backend/windows/wgpu/pkg.generated.mbti"))
+  assert_true(paths.contains("moui/backend/linux/pkg.generated.mbti"))
+}
+
+///|
+test "shared app runtime import guard ignores test-only imports" {
+  inspect(max_shared_app_runtime_imports(), content="12")
+  let default_import =
+    #|import {
+    #|  "wzzc-dev/moui",
+    #|  "wzzc-dev/moui/runtime",
+    #|}
+    #|
+  assert_true(
+    moon_pkg_has_default_import(default_import, "\"wzzc-dev/moui/runtime\""),
+  )
+  let test_only_import =
+    #|import {
+    #|  "wzzc-dev/moui",
+    #|}
+    #|
+    #|import {
+    #|  "wzzc-dev/moui/runtime",
+    #|} for "test"
+    #|
+  assert_false(
+    moon_pkg_has_default_import(test_only_import, "\"wzzc-dev/moui/runtime\""),
+  )
 }
 
 ///|

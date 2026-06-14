@@ -188,6 +188,20 @@ pub fn[Model, Msg] new_program(
 }
 
 ///|
+pub fn[Model, Msg] new_program_with_dimensions(
+  program~ : @core.Program[Model, Msg],
+  width~ : Double,
+  height~ : Double,
+  environment? : @core.Environment = @core.Environment::default(),
+) -> AppRuntime {
+  AppRuntime::new_program(
+    program~,
+    size=@core.Size::new(width~, height~),
+    environment~,
+  )
+}
+
+///|
 pub fn AppRuntime::dispatch_event(
   self : AppRuntime,
   event : @core.AppEvent,

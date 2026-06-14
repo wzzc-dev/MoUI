@@ -96,12 +96,13 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "runtime facade",
       path: "moui/runtime/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/runtime\"",
-      max_lines: 61,
-      max_pub_lines: 42,
+      max_lines: 63,
+      max_pub_lines: 43,
       max_pub_all_lines: 0,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "pub struct AppRuntime", "pub fn[Model, Msg] new_program(",
-        "pub fn[Msg] new_view(", "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
+        "pub fn[Model, Msg] new_program_with_dimensions(", "pub fn[Msg] new_view(",
+        "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
         "pub fn AppRuntime::draw_frame(",
       ],
       forbidden_tokens: [
@@ -496,6 +497,78 @@ fn runtime_consumer_roots() -> Array[String] {
 }
 
 ///|
+fn backend_runtime_interface_paths() -> Array[String] {
+  [
+    "moui/backend/host/pkg.generated.mbti", "moui/backend/web/pkg.generated.mbti",
+    "moui/backend/macos/pkg.generated.mbti", "moui/backend/windows/pkg.generated.mbti",
+    "moui/backend/linux/pkg.generated.mbti", "moui/backend/macos/skia/pkg.generated.mbti",
+    "moui/backend/windows/skia/pkg.generated.mbti", "moui/backend/linux/skia/pkg.generated.mbti",
+    "moui/backend/macos/wgpu/pkg.generated.mbti", "moui/backend/windows/wgpu/pkg.generated.mbti",
+    "moui/backend/linux/wgpu/pkg.generated.mbti",
+  ]
+}
+
+///|
+fn max_shared_app_runtime_imports() -> Int {
+  12
+}
+
+///|
+fn collect_shared_app_moon_pkgs(
+  repo_root : String,
+  paths : Array[String],
+  failures : Array[String],
+) -> Unit {
+  let examples_root = @tools.resolve_path(repo_root, "examples")
+  let entries = match read_dir_names(examples_root, "examples") {
+    Ok(values) => values
+    Err(message) => {
+      failures.push(message)
+      []
+    }
+  }
+  for entry in entries {
+    let path = "examples/" + entry + "/app/moon.pkg"
+    if @tools.file_exists(@tools.resolve_path(repo_root, path)) {
+      paths.push(path)
+    }
+  }
+  let website_app = "website/app/moon.pkg"
+  if @tools.file_exists(@tools.resolve_path(repo_root, website_app)) {
+    paths.push(website_app)
+  }
+}
+
+///|
+fn moon_pkg_has_default_import(text : String, package_token : String) -> Bool {
+  let mut in_import_block = false
+  let mut block_contains_package = false
+  for line_view in text.split("\n") {
+    let line = line_view.to_owned().trim().to_owned()
+    if !in_import_block {
+      if line == "import {" {
+        in_import_block = true
+        block_contains_package = false
+      }
+    } else {
+      if line.contains(package_token) {
+        block_contains_package = true
+      }
+      if line.has_prefix("}") {
+        if block_contains_package &&
+          !line.contains("for \"test\"") &&
+          !line.contains("for \"wbtest\"") {
+          return true
+        }
+        in_import_block = false
+        block_contains_package = false
+      }
+    }
+  }
+  false
+}
+
+///|
 fn core_control_consumer_roots() -> Array[String] {
   [
     "benchmarks", "examples", "moui/backend", "moui/tests", "moui_devtools", "moui_tester",
@@ -670,6 +743,66 @@ fn validate_runtime_entrypoint_usage(
 }
 
 ///|
+fn validate_backend_runtime_interfaces(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let mut direct_core_runtime_interfaces = 0
+  for path in backend_runtime_interface_paths() {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    if text.contains("@core.AppRuntime") ||
+      text.contains("@wzzc-dev/moui/core.AppRuntime") ||
+      text.contains("wzzc-dev/moui/core.AppRuntime") {
+      direct_core_runtime_interfaces += 1
+      failures.push(
+        path +
+        ": backend public interfaces must expose @runtime.AppRuntime, not @core.AppRuntime",
+      )
+    }
+  }
+  println(
+    "api surface: backend @core.AppRuntime interface files=\{direct_core_runtime_interfaces}",
+  )
+}
+
+///|
+fn validate_shared_app_runtime_imports(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let paths : Array[String] = []
+  collect_shared_app_moon_pkgs(repo_root, paths, failures)
+  let mut runtime_imports = 0
+  for path in paths {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    if moon_pkg_has_default_import(text, "\"wzzc-dev/moui/runtime\"") {
+      runtime_imports += 1
+    }
+  }
+  let max_runtime_imports = max_shared_app_runtime_imports()
+  if runtime_imports > max_runtime_imports {
+    failures.push(
+      "shared app default runtime imports are \{runtime_imports}, above budget \{max_runtime_imports}",
+    )
+  }
+  println(
+    "api surface: shared app default runtime imports=\{runtime_imports}/\{max_runtime_imports}",
+  )
+}
+
+///|
 fn validate_core_control_entrypoint_usage(
   repo_root : String,
   failures : Array[String],
@@ -745,7 +878,9 @@ fn run_checks(repo_root : String) -> Array[String] {
   validate_root_facade_shape(repo_root, failures)
   validate_views_return_types(repo_root, failures)
   validate_runtime_source_boundaries(repo_root, failures)
+  validate_backend_runtime_interfaces(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)
+  validate_shared_app_runtime_imports(repo_root, failures)
   validate_core_control_entrypoint_usage(repo_root, failures)
   failures
 }

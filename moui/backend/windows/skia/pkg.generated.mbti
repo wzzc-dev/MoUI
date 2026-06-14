@@ -4,17 +4,17 @@ package "wzzc-dev/moui/backend/windows/skia"
 import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/windows",
-  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
 pub fn renderer_provider(options? : WindowsSkiaAppOptions) -> @windows.WindowsRendererProvider
 
-pub fn run_app(String, @core.AppRuntime) -> Unit
+pub fn run_app(String, @runtime.AppRuntime) -> Unit
 
-pub fn run_app_with_options(String, @core.AppRuntime, options~ : WindowsSkiaAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_options(String, @runtime.AppRuntime, options~ : WindowsSkiaAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
-pub fn run_smoke_app_with_options(String, @core.AppRuntime, options~ : WindowsSkiaAppOptions, smoke_options? : WindowsSkiaSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_smoke_app_with_options(String, @runtime.AppRuntime, options~ : WindowsSkiaAppOptions, smoke_options? : WindowsSkiaSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub fn windows_skia_provider_preflight_summary(options? : WindowsSkiaAppOptions) -> String
 

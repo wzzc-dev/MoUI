@@ -146,8 +146,9 @@ node payloads.
 
 Stateful controls can use localized `@views.component` adapters with
 `BuildContext` when they must subscribe to framework cells or bridge complex
-control state, but shared app runtimes should default to `Program::simple` and
-`AppRuntime::new_program`. Effect-capable apps should use `Program::new` when
+control state, but shared app packages should default to `Program::simple`
+factories and let platform entrypoints create `AppRuntime` values through
+`moui/runtime`. Effect-capable apps should use `Program::new` when
 `update` returns follow-up work: `Effect::send` re-enters the typed message loop
 directly, and `Effect::dispatch` gives an effect runner the typed message
 dispatcher for app-owned host-service bridges or other callbacks without making
