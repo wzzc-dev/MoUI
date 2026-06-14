@@ -1451,6 +1451,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views app-owned data, selection, column, and toast state helper tests compact",
     },
     {
+      path: "moui/views/views_focus_test.mbt",
+      max_lines: 80,
+      target_lines: 70,
+      reason: "keep views shortcut button and focus ring tests compact",
+    },
+    {
+      path: "moui/views/views_focus_trap_test.mbt",
+      max_lines: 135,
+      target_lines: 120,
+      reason: "keep views focus trap, presentation focus, and sheet layout tests compact",
+    },
+    {
       path: "moui/views/views_overlay_navigation_test.mbt",
       max_lines: 210,
       target_lines: 190,
