@@ -971,6 +971,30 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views section-list and scroll-to-index descriptors compact",
     },
     {
+      path: "moui/views/layout_helpers.mbt",
+      max_lines: 170,
+      target_lines: 145,
+      reason: "keep views simple layout modifiers, custom-layout wrappers, and shared geometry helpers compact",
+    },
+    {
+      path: "moui/views/layout_flow.mbt",
+      max_lines: 145,
+      target_lines: 130,
+      reason: "keep views wrap/flow measurement and placement helpers compact",
+    },
+    {
+      path: "moui/views/layout_responsive_grid.mbt",
+      max_lines: 155,
+      target_lines: 140,
+      reason: "keep views responsive grid measurement, placement, and column helpers compact",
+    },
+    {
+      path: "moui/views/layout_baseline_form.mbt",
+      max_lines: 160,
+      target_lines: 145,
+      reason: "keep views baseline form row layout measurement and placement helpers compact",
+    },
+    {
       path: "moui/views/navigation_state.mbt",
       max_lines: 140,
       target_lines: 120,
