@@ -1,11 +1,11 @@
 ///|
 pub struct BuildContext {
-  runtime : RuntimeState
-  component_id : ElementId
-  subscriptions : Array[StateSubscription]
-  effects : Array[ComponentEffect]
-  old_effects : Array[ComponentEffect]
-  environment : Environment
+  priv runtime : RuntimeState
+  priv component_id : ElementId
+  priv subscriptions : Array[StateSubscription]
+  priv effects : Array[ComponentEffect]
+  priv old_effects : Array[ComponentEffect]
+  priv environment : Environment
 }
 
 ///|

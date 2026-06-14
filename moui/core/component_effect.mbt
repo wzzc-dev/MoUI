@@ -1,18 +1,10 @@
 ///|
-pub(all) struct ComponentEffect {
+struct ComponentEffect {
   key : String
   cleanup : (() -> Unit)?
   cleanup_with_reason : ((ComponentEffectCancelReason) -> Unit)?
-  mut status : ComponentEffectStatus
-  mut cancel_reason : ComponentEffectCancelReason?
   mut reused : Bool
 }
-
-///|
-pub(all) enum ComponentEffectStatus {
-  EffectActive
-  EffectCancelled
-} derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) enum ComponentEffectCancelReason {
@@ -22,33 +14,19 @@ pub(all) enum ComponentEffectCancelReason {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn ComponentEffect::new(
+fn ComponentEffect::new(
   key~ : String,
   cleanup? : (() -> Unit)? = None,
   cleanup_with_reason? : ((ComponentEffectCancelReason) -> Unit)? = None,
 ) -> ComponentEffect {
-  {
-    key,
-    cleanup,
-    cleanup_with_reason,
-    status: ComponentEffectStatus::EffectActive,
-    cancel_reason: None,
-    reused: false,
-  }
+  { key, cleanup, cleanup_with_reason, reused: false }
 }
 
 ///|
-pub fn ComponentEffect::cancel(self : ComponentEffect) -> Unit {
-  self.cancel_with_reason(ComponentEffectCancelReason::EffectUnmounted)
-}
-
-///|
-pub fn ComponentEffect::cancel_with_reason(
+fn ComponentEffect::cancel_with_reason(
   self : ComponentEffect,
   reason : ComponentEffectCancelReason,
 ) -> Unit {
-  self.status = ComponentEffectStatus::EffectCancelled
-  self.cancel_reason = Some(reason)
   match self.cleanup_with_reason {
     Some(cleanup) => cleanup(reason)
     None => ()
