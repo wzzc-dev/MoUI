@@ -21,9 +21,9 @@ test "host route source subscription dispatches mapped route events" {
   inspect(source.active_handler_count(), content="1")
   let initial = runtime.program_runtime_snapshot()
   inspect(initial.active_subscription_count, content="1")
-  inspect(initial.active_subscriptions[0].key, content="host:route")
-  inspect(initial.active_subscriptions[0].kind, content="route-event")
-  inspect(initial.active_subscriptions[0].label, content="Host route adapter")
+  inspect(initial.active_subscriptions[0].key(), content="host:route")
+  inspect(initial.active_subscriptions[0].kind(), content="route-event")
+  inspect(initial.active_subscriptions[0].label(), content="Host route adapter")
   inspect(
     source.publish(HostRouteEvent::from_route(route="/ignored", source="app")),
     content="1",
@@ -122,9 +122,9 @@ test "host timer source subscription starts timer and dispatches mapped frames" 
   inspect(captured_interval.val, content="250")
   let initial = runtime.program_runtime_snapshot()
   inspect(initial.active_subscription_count, content="1")
-  inspect(initial.active_subscriptions[0].key, content="host:timer")
-  inspect(initial.active_subscriptions[0].kind, content="timer")
-  inspect(initial.active_subscriptions[0].label, content="Host timer adapter")
+  inspect(initial.active_subscriptions[0].key(), content="host:timer")
+  inspect(initial.active_subscriptions[0].kind(), content="timer")
+  inspect(initial.active_subscriptions[0].label(), content="Host timer adapter")
   match timer_dispatch.val {
     Some(dispatch) => dispatch(@core.Frame::new(time_ms=1000.0, delta_ms=250.0))
     None => fail("expected host timer dispatch")

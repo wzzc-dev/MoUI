@@ -19,9 +19,9 @@ test "workbench transport runtime effect dispatches prompt events" {
   inspect(update.model.pending_transport_count(), content="2")
   let summary = update.effect.plan_summary()
   inspect(summary.descriptors.length(), content="1")
-  inspect(summary.descriptors[0].key, content="pi-transport:dispatch")
-  inspect(summary.descriptors[0].kind, content="transport")
-  inspect(summary.descriptors[0].label, content="Pi transport dispatch")
+  inspect(summary.descriptors[0].key(), content="pi-transport:dispatch")
+  inspect(summary.descriptors[0].kind(), content="transport")
+  inspect(summary.descriptors[0].label(), content="Pi transport dispatch")
   let accepted = run_workbench_effect(update)
   inspect(captured.val.length(), content="2")
   let refresh = accepted.update_with_transport(

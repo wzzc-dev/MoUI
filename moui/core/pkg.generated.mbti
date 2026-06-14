@@ -533,11 +533,10 @@ pub fn[Msg] Effect::send(Msg) -> Self[Msg]
 pub fn[Msg] Effect::service_task(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Effect::task(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 
-pub(all) struct EffectDescriptor {
-  key : String
-  kind : String
-  label : String
-} derive(Eq, ToJson, @debug.Debug)
+type EffectDescriptor derive(Eq, ToJson, @debug.Debug)
+pub fn EffectDescriptor::key(Self) -> String
+pub fn EffectDescriptor::kind(Self) -> String
+pub fn EffectDescriptor::label(Self) -> String
 
 pub(all) enum EffectPlanKind {
   EffectPlanNone
@@ -1561,11 +1560,10 @@ pub(all) enum SubscriptionCancelReason {
   SubscriptionRuntimeDestroyed
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct SubscriptionDescriptor {
-  key : String
-  kind : String
-  label : String
-} derive(Eq, ToJson, @debug.Debug)
+type SubscriptionDescriptor derive(Eq, ToJson, @debug.Debug)
+pub fn SubscriptionDescriptor::key(Self) -> String
+pub fn SubscriptionDescriptor::kind(Self) -> String
+pub fn SubscriptionDescriptor::label(Self) -> String
 
 pub(all) struct SubscriptionKindCount {
   kind : String

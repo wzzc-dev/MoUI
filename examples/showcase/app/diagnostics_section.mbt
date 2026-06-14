@@ -71,12 +71,12 @@ fn ShowcaseModel::inspector_snapshot_card(
     snapshot.render.open_filter_depth.to_string()
   let scheduled_effect_label = if runtime.last_scheduled_effect_summary.descriptors.length() >
     0 {
-    runtime.last_scheduled_effect_summary.descriptors[0].label
+    runtime.last_scheduled_effect_summary.descriptors[0].label()
   } else {
     "none"
   }
   let active_subscription_label = if runtime.active_subscriptions.length() > 0 {
-    runtime.active_subscriptions[0].label
+    runtime.active_subscriptions[0].label()
   } else {
     "none"
   }

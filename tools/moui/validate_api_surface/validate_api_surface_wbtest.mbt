@@ -51,6 +51,18 @@ test "runtime facade budget pins the opaque wrapper boundary" {
 }
 
 ///|
+test "core descriptor payloads stay opaque" {
+  let core = budget_by_label("core")
+  inspect(core.max_pub_all_lines, content="156")
+  assert_true(
+    core.forbidden_tokens.contains("pub(all) struct EffectDescriptor"),
+  )
+  assert_true(
+    core.forbidden_tokens.contains("pub(all) struct SubscriptionDescriptor"),
+  )
+}
+
+///|
 test "core view construction is reserved for views facade consumers" {
   inspect(core_control_consumer_roots().contains("moui/views"), content="false")
   inspect(runtime_consumer_roots().contains("moui/views"), content="true")
