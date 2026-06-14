@@ -419,6 +419,30 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host window registry request application and request queue tests compact",
     },
     {
+      path: "moui/backend/host/window_lifecycle.mbt",
+      max_lines: 520,
+      target_lines: 470,
+      reason: "keep host window registry, scene resolution, lifecycle updates, and request application compact",
+    },
+    {
+      path: "moui/backend/host/window_runtime_slots.mbt",
+      max_lines: 240,
+      target_lines: 215,
+      reason: "keep host window runtime slot lookup, sync, request, and removal helpers compact",
+    },
+    {
+      path: "moui/backend/host/window_request_queue.mbt",
+      max_lines: 150,
+      target_lines: 130,
+      reason: "keep host window request queue commands, drain, and completion helpers compact",
+    },
+    {
+      path: "moui/backend/host/window_platform_map.mbt",
+      max_lines: 110,
+      target_lines: 95,
+      reason: "keep host platform-window id binding lookup and removal helpers compact",
+    },
+    {
       path: "moui/core/view_tree.mbt",
       max_lines: 725,
       target_lines: 650,
