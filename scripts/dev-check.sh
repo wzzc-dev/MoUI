@@ -86,6 +86,10 @@ run node scripts/generate-grapheme-break-fixtures.mjs --check
 run node scripts/test-validate-web-runtime-handoff-manifest.mjs
 run node scripts/test-record-web-runtime-presentation.mjs
 run node scripts/test-validate-web-runtime-presentation-manifest.mjs
+run node --check scripts/smoke-check.mjs
+run node --check scripts/test-smoke-check.mjs
+run node scripts/test-smoke-check.mjs
+run node scripts/smoke-check.mjs --check
 run sh -n scripts/ci-moon-update.sh
 run sh -n scripts/ci-web-runtime-presentation.sh
 

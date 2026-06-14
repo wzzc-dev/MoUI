@@ -34,6 +34,10 @@ test "daily quality gate tokens include moonbit-backed api surface guard" {
   let tokens = daily_quality_gate_tokens()
   assert_true(tokens.contains("node scripts/validate-maintenance-baseline.mjs"))
   assert_true(tokens.contains("node scripts/validate-api-surface.mjs"))
+  assert_true(tokens.contains("node --check scripts/smoke-check.mjs"))
+  assert_true(tokens.contains("node --check scripts/test-smoke-check.mjs"))
+  assert_true(tokens.contains("node scripts/test-smoke-check.mjs"))
+  assert_true(tokens.contains("node scripts/smoke-check.mjs --check"))
   assert_true(tokens.contains("moon test moui/core --target native"))
   assert_true(
     tokens.contains("moon build examples/showcase/web_wasm --target wasm-gc"),
@@ -49,6 +53,10 @@ test "release readiness quality tokens summarize current daily gates" {
   assert_true(tokens.contains("maintenance ratchets"))
   assert_true(tokens.contains("manual smoke"))
   assert_true(tokens.contains("CI run or smoke log"))
+  assert_true(tokens.contains("node scripts/smoke-check.mjs --check"))
+  assert_true(tokens.contains("smoke gate catalog"))
+  assert_true(tokens.contains("smoke/gates.json"))
+  assert_true(tokens.contains(".github/workflows/moui-runtime-smoke-gates.yml"))
   assert_true(tokens.contains("--theme-diagnostics"))
   assert_true(tokens.contains("Design Systems is addon diagnostic coverage"))
 }
@@ -61,6 +69,8 @@ test "agent quality gate tokens cover AGENTS sync points" {
   assert_true(tokens.contains("daily validation script"))
   assert_true(tokens.contains("maintenance baseline"))
   assert_true(tokens.contains("manual smoke"))
+  assert_true(tokens.contains("smoke/gates.json"))
+  assert_true(tokens.contains(".github/workflows/moui-runtime-smoke-gates.yml"))
   assert_true(tokens.contains("Do not commit artifacts/"))
   assert_true(tokens.contains("--theme-diagnostics"))
   assert_true(tokens.contains("Design Systems is addon diagnostic coverage"))

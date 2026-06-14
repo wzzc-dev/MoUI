@@ -34,6 +34,10 @@ node scripts/test-validate-web-runtime-handoff-manifest.mjs
 node scripts/test-validate-conformance-capture-manifest.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
+node --check scripts/smoke-check.mjs
+node --check scripts/test-smoke-check.mjs
+node scripts/test-smoke-check.mjs
+node scripts/smoke-check.mjs --check
 sh -n scripts/ci-web-runtime-presentation.sh
 moon check
 moon test moui/core --target native
@@ -114,6 +118,26 @@ scripts/macos-skia-renderer-smoke.sh --run-showcase-smoke --run-markdown-smoke
 scripts/macos-skia-renderer-smoke.sh --run-ime-smoke
 sh scripts/ci-web-runtime-presentation.sh
 ```
+
+`smoke/gates.json` is the checked-in smoke gate catalog. It describes the
+daily, nightly, and release smoke tiers, the command entrypoint for each suite,
+the structured result shape, the owning workflow, and the docs that explain the
+gate. Validate it without running platform smoke:
+
+```sh
+node --check scripts/smoke-check.mjs
+node --check scripts/test-smoke-check.mjs
+node scripts/test-smoke-check.mjs
+node scripts/smoke-check.mjs --check
+node scripts/smoke-check.mjs --tier nightly --list
+node scripts/smoke-check.mjs --tier release --json
+```
+
+The catalog check is part of the default `dev-check`; real browser/platform
+smoke remains opt-in. The scheduled/manual
+`.github/workflows/moui-runtime-smoke-gates.yml` workflow is the CI entrypoint
+for the Web runtime presentation nightly smoke and the manual macOS real-Skia
+release smoke.
 
 The Web script builds Showcase, serves the repository, records a Chrome/CDP
 browser-session manifest under `artifacts/smoke/web-runtime-presentation/`, and

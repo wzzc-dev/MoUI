@@ -279,13 +279,17 @@ or the Design Systems addon diagnostic example; Design Systems is addon diagnost
 The daily check also runs the MoonBit-backed maintenance baseline ratchets,
 API surface guard, guidance consistency, renderer/provider and native Skia
 entrypoint static checks, and app/Web validation for Showcase and Markdown
-Editor. The maintenance baseline locks current oversized file, source-level
-`pub(all)`, and root facade forwarding budgets; when a refactor splits files or
-shrinks public surface area, lower the relevant budget in the same change. It
-does not validate checked-in conformance artifacts, because `artifacts/` is now
-ignored by default. Do not commit artifacts/ JSON as capability claims; use
-manual smoke logs, CI runs, or uploaded artifacts when a release note needs
-runtime context.
+Editor. It also validates the checked-in `smoke/gates.json` smoke gate catalog
+with `node scripts/smoke-check.mjs --check`; the default daily gate checks the
+catalog shape, not real browser or platform smoke execution. The scheduled and
+manual CI entrypoint for those opt-in gates is
+`.github/workflows/moui-runtime-smoke-gates.yml`. The maintenance baseline
+locks current oversized file, source-level `pub(all)`, and root facade
+forwarding budgets; when a refactor splits files or shrinks public surface
+area, lower the relevant budget in the same change. It does not validate
+checked-in conformance artifacts, because `artifacts/` is now ignored by
+default. Do not commit artifacts/ JSON as capability claims; use manual smoke
+logs, CI runs, or uploaded artifacts when a release note needs runtime context.
 
 Useful focused checks:
 
@@ -328,6 +332,10 @@ node --check scripts/record-web-runtime-presentation.mjs
 node scripts/test-record-web-runtime-presentation.mjs
 node --check scripts/validate-web-runtime-presentation-manifest.mjs
 node scripts/test-validate-web-runtime-presentation-manifest.mjs
+node --check scripts/smoke-check.mjs
+node --check scripts/test-smoke-check.mjs
+node scripts/test-smoke-check.mjs
+node scripts/smoke-check.mjs --check
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check
 node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check
