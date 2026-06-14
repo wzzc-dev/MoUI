@@ -394,33 +394,23 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
 }
 
 ///|
-pub fn DataTableApp::runtime(
+pub fn DataTableApp::program(
   self : DataTableApp,
-  width? : Double = 1020.0,
-  height? : Double = 740.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[DataTableModel, DataTableMsg] {
   ignore(self)
-  runtime(width~, height~)
+  program()
 }
 
 ///|
-pub fn runtime(
-  width? : Double = 1020.0,
-  height? : Double = 740.0,
-) -> @runtime.AppRuntime {
-  DataTableModel::new().runtime(width~, height~)
+pub fn program() -> @core.Program[DataTableModel, DataTableMsg] {
+  DataTableModel::new().program()
 }
 
 ///|
-pub fn DataTableModel::runtime(
+pub fn DataTableModel::program(
   self : DataTableModel,
-  width? : Double = 1020.0,
-  height? : Double = 740.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::simple(init=self, update~, view~),
-    size=@core.Size::new(width~, height~),
-  )
+) -> @core.Program[DataTableModel, DataTableMsg] {
+  @core.Program::simple(init=self, update~, view~)
 }
 
 ///|
