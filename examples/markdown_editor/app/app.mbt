@@ -402,7 +402,7 @@ pub fn MarkdownEditorApp::runtime_with_services(
     program=@core.Program::new(
       init=() => (self, @core.Effect::none()),
       update=(app, message) => app.update_with_services(message, services),
-      view=app => @core.View::component(ctx => app.reactive_root(ctx)),
+      view=app => @views.component(ctx => app.reactive_root(ctx)),
       subscriptions=app => app.subscriptions(services),
     ),
     size=@core.Size::new(width~, height~),

@@ -3,7 +3,7 @@ test "host driver skips context menu without focused text input" {
   let submitted = Ref(0)
   let saw_menu = Ref(false)
   let runtime = host_test_runtime(
-    root=@core.View::empty(),
+    root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   runtime.set_action_commands(
@@ -40,7 +40,7 @@ test "host driver shows marked document context menu commands without text focus
   let new_document = Ref(0)
   let open_document = Ref(0)
   let runtime = host_test_runtime(
-    root=@core.View::empty(),
+    root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   runtime.set_action_commands(
