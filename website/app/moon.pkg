@@ -1,9 +1,12 @@
 import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
 }
+
+import {
+  "wzzc-dev/moui/runtime",
+} for "wbtest"
 
 supported_targets = "+native+wasm-gc"
 

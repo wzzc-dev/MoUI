@@ -1,6 +1,6 @@
 ///|
 test "website initial render includes bilingual homepage sections" {
-  let runtime = runtime(width=1180.0, height=760.0)
+  let runtime = test_program_runtime(width=1180.0, height=760.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "MoUI"))
   assert_true(has_text(commands, "MoonBit GUI Framework"))
@@ -35,7 +35,7 @@ test "website initial render includes bilingual homepage sections" {
 
 ///|
 test "website theme toggle updates visible icon" {
-  let runtime = runtime(width=1180.0, height=760.0)
+  let runtime = test_program_runtime(width=1180.0, height=760.0)
   assert_true(has_text(runtime.draw_commands(), "☾"))
   click_text(runtime, "☾")
   let commands = runtime.draw_commands()
@@ -57,7 +57,7 @@ test "website hero CTA buttons open repository URL" {
       }
     },
   )
-  let runtime = Model::new().runtime_with_services(
+  let runtime = Model::new().test_runtime_with_services(
     @host.HostAppServices::new(bridge~),
     width=1180.0,
     height=760.0,
@@ -88,7 +88,7 @@ test "website docs portal loads runtime markdown through host text service" {
       }
     },
   )
-  let runtime = Model::new().runtime_with_services(
+  let runtime = Model::new().test_runtime_with_services(
     @host.HostAppServices::new(bridge~),
     width=1180.0,
     height=760.0,
@@ -169,7 +169,7 @@ test "website docs completion ignores stale request id for selected markdown" {
 
 ///|
 test "website hero code snippet is compact and visible" {
-  let runtime = runtime(width=1180.0, height=760.0)
+  let runtime = test_program_runtime(width=1180.0, height=760.0)
   let commands = runtime.draw_commands()
   assert_true(has_text_color_different(commands, "enum", "count"))
   assert_true(has_text_color_different(commands, "Msg", "count"))
@@ -187,7 +187,7 @@ test "website hero code snippet is compact and visible" {
 
 ///|
 test "website hero shows source and live counter side by side" {
-  let runtime = runtime(width=1180.0, height=760.0)
+  let runtime = test_program_runtime(width=1180.0, height=760.0)
   let initial = runtime.draw_commands()
   guard text_frame(initial, "Source") is Some(source_title) else {
     fail("expected source title")
@@ -213,13 +213,13 @@ test "website hero shows source and live counter side by side" {
 ///|
 test "website shows visible main scrollbar and moves thumb" {
   let size = @core.Size::new(width=1180.0, height=760.0)
-  let initial = runtime(width=size.width, height=size.height).draw_commands()
+  let initial = test_program_runtime(width=size.width, height=size.height).draw_commands()
   guard website_scrollbar_thumb_frame(initial, size) is Some(before) else {
     fail("expected visible website scrollbar thumb")
   }
   let scrolled = Model::new()
     .update(ScrollBodyTo(620.0))
-    .runtime(width=size.width, height=size.height)
+    .test_runtime(width=size.width, height=size.height)
     .draw_commands()
   guard website_scrollbar_thumb_frame(scrolled, size) is Some(after) else {
     fail("expected moved website scrollbar thumb")
@@ -230,7 +230,7 @@ test "website shows visible main scrollbar and moves thumb" {
 ///|
 test "website positive wheel delta scrolls body downward" {
   let size = @core.Size::new(width=1180.0, height=760.0)
-  let runtime = runtime(width=size.width, height=size.height)
+  let runtime = test_program_runtime(width=size.width, height=size.height)
   guard website_scrollbar_thumb_frame(runtime.draw_commands(), size)
     is Some(before) else {
     fail("expected visible website scrollbar thumb")
@@ -253,7 +253,7 @@ test "website positive wheel delta scrolls body downward" {
 
 ///|
 test "website feature cards stack supporting copy below the header row" {
-  let commands = runtime(width=1180.0, height=760.0).draw_commands()
+  let commands = test_program_runtime(width=1180.0, height=760.0).draw_commands()
   assert_feature_card_stacked(
     commands, "Predictable", "Model, Msg, update, view.", "Typed messages drive one explicit update path.",
   )
@@ -270,7 +270,7 @@ test "website feature cards stack supporting copy below the header row" {
 
 ///|
 test "website platform card summaries render as separate lines" {
-  let commands = runtime(width=1180.0, height=760.0).draw_commands()
+  let commands = test_program_runtime(width=1180.0, height=760.0).draw_commands()
   assert_true(has_text(commands, "This page: shared app logic"))
   assert_true(has_text(commands, "in website/app and a thin"))
   assert_true(has_text(commands, "Web entrypoint."))
@@ -293,7 +293,10 @@ test "website platform card summaries render as separate lines" {
 ///|
 test "website hero and product signal remain visible on desktop and compact sizes" {
   let desktop_size = @core.Size::new(width=1180.0, height=760.0)
-  let desktop = runtime(width=desktop_size.width, height=desktop_size.height).draw_commands()
+  let desktop = test_program_runtime(
+    width=desktop_size.width,
+    height=desktop_size.height,
+  ).draw_commands()
   assert_true(text_within(desktop, "MoUI", desktop_size))
   assert_true(text_within(desktop, "MoonBit GUI Framework", desktop_size))
   assert_true(
@@ -310,7 +313,10 @@ test "website hero and product signal remain visible on desktop and compact size
   assert_true(text_within(desktop, "App surface", desktop_size))
   assert_true(text_within(desktop, "Live Counter", desktop_size))
   let compact_size = @core.Size::new(width=390.0, height=720.0)
-  let compact = runtime(width=compact_size.width, height=compact_size.height).draw_commands()
+  let compact = test_program_runtime(
+    width=compact_size.width,
+    height=compact_size.height,
+  ).draw_commands()
   assert_true(text_within(compact, "MoUI", compact_size))
   assert_true(text_within(compact, "Live Counter", compact_size))
   assert_true(
@@ -341,6 +347,42 @@ fn assert_feature_card_stacked(
   assert_true(summary.origin.x >= zh_summary.origin.x - 1.0)
   assert_true(summary.origin.x <= zh_summary.origin.x + 1.0)
   assert_true(summary.size.width > title.size.width)
+}
+
+///|
+fn Model::test_runtime(
+  self : Model,
+  width~ : Double,
+  height~ : Double,
+) -> @runtime.AppRuntime {
+  test_runtime(self.program(), width~, height~)
+}
+
+///|
+fn Model::test_runtime_with_services(
+  self : Model,
+  services : @host.HostAppServices,
+  width~ : Double,
+  height~ : Double,
+) -> @runtime.AppRuntime {
+  test_runtime(self.program_with_services(services), width~, height~)
+}
+
+///|
+fn test_program_runtime(
+  width~ : Double,
+  height~ : Double,
+) -> @runtime.AppRuntime {
+  test_runtime(program(), width~, height~)
+}
+
+///|
+fn test_runtime(
+  program : @core.Program[Model, Msg],
+  width~ : Double,
+  height~ : Double,
+) -> @runtime.AppRuntime {
+  @runtime.new_program_with_dimensions(program~, width~, height~)
 }
 
 ///|
