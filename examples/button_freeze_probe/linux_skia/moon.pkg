@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
+  "wzzc-dev/moui/runtime",
   "examples/button_freeze_probe/app",
 }
 
