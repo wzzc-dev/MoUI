@@ -1464,9 +1464,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/views_overlay_navigation_test.mbt",
-      max_lines: 210,
-      target_lines: 190,
-      reason: "keep views navigation shell, section navigation, and router tests compact",
+      max_lines: 125,
+      target_lines: 110,
+      reason: "keep views navigation shell composition tests compact",
+    },
+    {
+      path: "moui/views/views_navigation_routing_test.mbt",
+      max_lines: 95,
+      target_lines: 85,
+      reason: "keep views section navigation dispatch and router stack tests compact",
     },
     {
       path: "moui/views/views_adjustable_navigation_controls_test.mbt",
