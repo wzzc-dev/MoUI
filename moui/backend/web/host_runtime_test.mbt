@@ -411,14 +411,18 @@ test "web maps ime composition lifecycle and redraw" {
     ),
     @core.Point::new(x=0.0, y=0.0),
   )
+  let expected_preedit = Some(
+    @host.HostEvent::TextInput(
+      @core.TextInputEvent::CompositionUpdate(
+        @core.CompositionUpdate::new(
+          text="ni",
+          cursor=Some(@core.TextRange::new(start=0, end=2)),
+        ),
+      ),
+    ),
+  )
   match preedit {
-    Some(
-      @host.HostEvent::TextInput(
-        @core.TextInputEvent::CompositionUpdate(
-          { text: "ni", cursor: Some({ start: 0, end: 2 }) }
-        )
-      )
-    ) => ()
+    event if event == expected_preedit => ()
     _ => fail("expected composition update")
   }
 

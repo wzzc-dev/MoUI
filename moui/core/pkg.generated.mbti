@@ -327,10 +327,7 @@ pub(all) enum ComponentEffectCancelReason {
   EffectRuntimeDestroyed
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct CompositionUpdate {
-  text : String
-  cursor : TextRange?
-} derive(Eq, ToJson, @debug.Debug)
+type CompositionUpdate derive(Eq, ToJson, @debug.Debug)
 pub fn CompositionUpdate::new(text~ : String, cursor? : TextRange?) -> Self
 
 pub(all) struct Constraints {
