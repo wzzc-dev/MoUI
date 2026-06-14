@@ -1196,8 +1196,6 @@ pub(all) struct RouteDescriptor {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RouteDescriptor::new(id~ : String, path~ : String, title? : String, fallback? : Bool) -> Self
 
-type RouteFocusEntry derive(Eq, ToJson, @debug.Debug)
-
 type RouteFocusStore
 pub fn RouteFocusStore::focus_key(Self, String) -> String?
 pub fn RouteFocusStore::focus_key_for_location(Self, RouteLocation) -> String?
