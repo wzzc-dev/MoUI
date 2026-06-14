@@ -5,14 +5,7 @@ test "host route source subscription dispatches mapped route events" {
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
-      view=model => {
-        @core.View::text(
-          text=model,
-          size=@core.Size::new(width=280.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model, width=280.0, height=24.0),
       subscriptions=_model => {
         source.subscription(key="host:route", label="Host route adapter", map=event => {
           if event.source == "deep-link" {
@@ -80,14 +73,7 @@ test "host route source subscription cleanup removes late publishers" {
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
-      view=model => {
-        @core.View::text(
-          text=model,
-          size=@core.Size::new(width=240.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model, width=240.0, height=24.0),
       subscriptions=_model => {
         source.subscription(key="host:route", label="Host route adapter", map=_event => {
           Some("route event")
@@ -121,14 +107,7 @@ test "host timer source subscription starts timer and dispatches mapped frames" 
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
-      view=model => {
-        @core.View::text(
-          text=model,
-          size=@core.Size::new(width=240.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model, width=240.0, height=24.0),
       subscriptions=_model => {
         source.subscription(
           interval_ms=250.0,
@@ -173,14 +152,7 @@ test "host timer source subscription cleanup cancels timer" {
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
-      view=model => {
-        @core.View::text(
-          text=model,
-          size=@core.Size::new(width=240.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model, width=240.0, height=24.0),
       subscriptions=_model => {
         source.subscription(
           interval_ms=16.0,

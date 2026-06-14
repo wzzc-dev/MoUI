@@ -78,9 +78,9 @@ pub fn[Msg] custom_children_layout(
 }
 
 ///|
-pub fn component(
-  build : (@core.BuildContext) -> @core.View[Unit],
-) -> @core.View[Unit] {
+pub fn[Msg] component(
+  build : (@core.BuildContext) -> @core.View[Msg],
+) -> @core.View[Msg] {
   @core.View::component(build)
 }
 

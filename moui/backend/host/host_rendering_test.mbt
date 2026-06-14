@@ -120,7 +120,7 @@ test "native accessibility bridge validates action roundtrip" {
 test "host driver dispatches resize and deduplicates redraw requests" {
   let scheduled = Ref(0)
   let runtime = host_test_runtime(
-    root=@core.View::empty(),
+    root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => {
@@ -237,7 +237,7 @@ test "host renderer expands cached layer updates and replays cached hits" {
 test "redraw scheduler schedules follow-up requested during frame" {
   let scheduled = Ref(0)
   let runtime = host_test_runtime(
-    root=@core.View::empty(),
+    root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => {

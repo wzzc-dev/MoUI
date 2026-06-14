@@ -5,14 +5,7 @@ test "host event source subscription dispatches mapped host events" {
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
-      view=model => {
-        @core.View::text(
-          text=model,
-          size=@core.Size::new(width=240.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model, width=240.0, height=24.0),
       subscriptions=_model => {
         source.subscription(key="host:event", label="Host event adapter", map=event => {
           match event {
@@ -54,14 +47,7 @@ test "host event source subscription cleanup removes late publishers" {
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
-      view=model => {
-        @core.View::text(
-          text=model,
-          size=@core.Size::new(width=240.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model, width=240.0, height=24.0),
       subscriptions=_model => {
         source.subscription(key="host:event", label="Host event adapter", map=event => {
           match event {
@@ -93,14 +79,7 @@ test "host platform event sources publish host and window subscriptions" {
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
-      view=model => {
-        @core.View::text(
-          text=model,
-          size=@core.Size::new(width=280.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model, width=280.0, height=24.0),
       subscriptions=_model => {
         @core.Subscription::batch([
           sources
@@ -156,14 +135,7 @@ test "host window event source subscription dispatches mapped window events" {
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
-      view=model => {
-        @core.View::text(
-          text=model,
-          size=@core.Size::new(width=240.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model, width=240.0, height=24.0),
       subscriptions=_model => {
         source.subscription(
           key="host:window-event",
@@ -228,14 +200,7 @@ test "host window event source subscription cleanup removes late publishers" {
     program=@core.Program::simple(
       init="idle",
       update=(_model, message : String) => message,
-      view=model => {
-        @core.View::text(
-          text=model,
-          size=@core.Size::new(width=240.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model, width=240.0, height=24.0),
       subscriptions=_model => {
         source.subscription(
           key="host:window-event",

@@ -40,14 +40,7 @@ test "host app services completion subscription dispatches typed messages" {
           _ => model
         }
       },
-      view=model => {
-        @core.View::text(
-          text=model.selected,
-          size=@core.Size::new(width=260.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model.selected, width=260.0, height=24.0),
       subscriptions=model => {
         match model.pending {
           Some(id) =>
@@ -130,14 +123,7 @@ test "host app services completion subscription cancels queue handler" {
           _ => model
         }
       },
-      view=model => {
-        @core.View::text(
-          text=model.selected,
-          size=@core.Size::new(width=260.0, height=24.0),
-          font=@core.FontSpec::new(size=14.0),
-          color=@core.Color::black(),
-        )
-      },
+      view=model => @views.text(model.selected, width=260.0, height=24.0),
       subscriptions=model => {
         match model.pending {
           Some(id) =>

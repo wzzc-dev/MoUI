@@ -8,7 +8,7 @@ test "host window runtime slots manage multiple window drivers" {
       HostWindowSceneInstance::new(
         request~,
         runtime=host_test_runtime(
-          root=@core.View::empty(),
+          root=@views.empty(),
           size=request.metrics.logical_size,
         ),
       ),
@@ -172,7 +172,7 @@ test "host window runtime slots manage multiple window drivers" {
 ///|
 test "host runtime driver exposes runtime state for platform slots" {
   let runtime = host_test_runtime(
-    root=@core.View::empty(),
+    root=@views.empty(),
     size=@core.Size::new(width=320.0, height=240.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())

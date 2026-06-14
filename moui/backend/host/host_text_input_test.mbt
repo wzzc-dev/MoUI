@@ -233,7 +233,7 @@ test "host driver keyboard paste replaces selection with extended emoji" {
 test "host driver falls back clipboard shortcuts to action commands" {
   let copied = Ref(0)
   let runtime = host_test_runtime(
-    root=@core.View::empty(),
+    root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   runtime.set_action_commands(
@@ -266,7 +266,7 @@ test "host driver defers paste action command while clipboard read is pending" {
   let pasted = Ref(0)
   let queue = HostServiceAsyncQueue::new()
   let runtime = host_test_runtime(
-    root=@core.View::empty(),
+    root=@views.empty(),
     size=@core.Size::new(width=10.0, height=10.0),
   )
   runtime.set_action_commands(

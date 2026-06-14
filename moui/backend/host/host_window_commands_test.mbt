@@ -95,7 +95,7 @@ test "host window commands can drain through runtime slots" {
   )
   let slots = HostWindowRuntimeSlots::new()
   let runtime = host_test_runtime(
-    root=@core.View::empty(),
+    root=@views.empty(),
     size=@core.Size::new(width=320.0, height=240.0),
   )
   assert_true(

@@ -67,7 +67,7 @@ pub fn[Msg] command_menu(Array[CommandMenuSection], on_select~ : (@core.CommandI
 
 pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
-pub fn component((@core.BuildContext) -> @core.View[Unit]) -> @core.View[Unit]
+pub fn[Msg] component((@core.BuildContext) -> @core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] context_menu_region(child~ : @core.View[Msg], menu~ : @core.View[Msg], visible~ : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
