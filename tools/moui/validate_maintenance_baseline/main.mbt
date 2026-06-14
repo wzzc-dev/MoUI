@@ -665,6 +665,24 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core build-context watch, binding, and derived-state subscription tests compact",
     },
     {
+      path: "moui/core/app_routing_wbtest.mbt",
+      max_lines: 145,
+      target_lines: 130,
+      reason: "keep core router, route history, and route focus tests compact",
+    },
+    {
+      path: "moui/core/app_forms_wbtest.mbt",
+      max_lines: 45,
+      target_lines: 40,
+      reason: "keep core form field and form controller validation tests compact",
+    },
+    {
+      path: "moui/core/app_inspector_wbtest.mbt",
+      max_lines: 190,
+      target_lines: 170,
+      reason: "keep core runtime, layout, render, semantics, and frame inspector tests compact",
+    },
+    {
       path: "examples/pdf_workbench/app/app.mbt",
       max_lines: 390,
       target_lines: 360,
