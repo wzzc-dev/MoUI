@@ -76,7 +76,11 @@ test "data table state transitions and tree toggle" {
 
 ///|
 test "data table runtime draws ready shell" {
-  let commands = @app.runtime(width=1020.0, height=740.0).draw_commands()
+  let commands = @runtime.new_program_with_dimensions(
+    program=@app.program(),
+    width=1020.0,
+    height=740.0,
+  ).draw_commands()
   assert_true(has_text(commands, "Data Table"))
   assert_true(has_text(commands, "Teams"))
   assert_true(has_text(commands, "Search projects"))
@@ -104,22 +108,34 @@ test "data table runtime draws ready shell" {
 
 ///|
 test "data table runtime draws empty loading and error states" {
-  let empty_commands = DataTableModel::new()
-    .update(QueryChanged("zzz"))
-    .runtime(width=1020.0, height=680.0)
-    .draw_commands()
+  let empty_commands = test_runtime(
+    DataTableModel::new().update(QueryChanged("zzz")).program(),
+    width=1020.0,
+    height=680.0,
+  ).draw_commands()
   assert_true(has_text(empty_commands, "No rows"))
-  let loading_commands = DataTableModel::new()
-    .update(SetLoading)
-    .runtime(width=1020.0, height=680.0)
-    .draw_commands()
+  let loading_commands = test_runtime(
+    DataTableModel::new().update(SetLoading).program(),
+    width=1020.0,
+    height=680.0,
+  ).draw_commands()
   assert_true(has_text(loading_commands, "Loading data"))
-  let error_commands = DataTableModel::new()
-    .update(SetFailed("Network unavailable"))
-    .runtime(width=1020.0, height=680.0)
-    .draw_commands()
+  let error_commands = test_runtime(
+    DataTableModel::new().update(SetFailed("Network unavailable")).program(),
+    width=1020.0,
+    height=680.0,
+  ).draw_commands()
   assert_true(has_text(error_commands, "Could not load data"))
   assert_true(has_text(error_commands, "Retry"))
+}
+
+///|
+fn test_runtime(
+  program : @core.Program[DataTableModel, DataTableMsg],
+  width~ : Double,
+  height~ : Double,
+) -> @runtime.AppRuntime {
+  @runtime.new_program_with_dimensions(program~, width~, height~)
 }
 
 ///|

@@ -4,12 +4,11 @@ package "examples/data_table/app"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
 }
 
 // Values
-pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn program() -> @core.Program[DataTableModel, DataTableMsg]
 
 pub fn update(DataTableModel, DataTableMsg) -> DataTableModel
 
@@ -44,7 +43,7 @@ pub struct DataTableApp {
   unit : Unit
 }
 pub fn DataTableApp::new() -> Self
-pub fn DataTableApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn DataTableApp::program(Self) -> @core.Program[DataTableModel, DataTableMsg]
 
 pub(all) struct DataTableModel {
   records : Array[DataRecord]
@@ -65,7 +64,7 @@ pub(all) struct DataTableModel {
 pub fn DataTableModel::filtered_records(Self) -> Array[DataRecord]
 pub fn DataTableModel::new() -> Self
 pub fn DataTableModel::page_count(Self) -> Int
-pub fn DataTableModel::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn DataTableModel::program(Self) -> @core.Program[Self, DataTableMsg]
 pub fn DataTableModel::selected_record(Self) -> DataRecord?
 pub fn DataTableModel::sorted_records(Self) -> Array[DataRecord]
 pub fn DataTableModel::update(Self, DataTableMsg) -> Self
