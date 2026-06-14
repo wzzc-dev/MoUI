@@ -60,6 +60,8 @@ entrypoint. It checks current generated interface files for:
 - root facade imports and forbidden host/renderer/runtime tokens;
 - `moui/runtime` existence, small API budget, and app/host source usage of
   `@runtime.AppRuntime` instead of direct `@core.AppRuntime`;
+- app, host, smoke, and cross-package tests using `moui/views` for widget-level
+  controls instead of direct `@core.View::*` control constructors;
 - required app-facing re-exports such as `View`, `Program`, `Effect`,
   `Subscription`, and `Theme`, while keeping runtime bridges, binding helpers,
   diagnostic descriptors, and draw command types out of the root facade;

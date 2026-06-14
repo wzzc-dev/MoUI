@@ -307,13 +307,14 @@ test "web accessibility maps semantics to aria nodes" {
   let checked = @core.State::new(true)
   let runtime = @runtime.AppRuntime::new_view(
     root=(
-      @core.View::checkbox(
-        label="Done",
+      @views.checkbox_binding(
+        "Done",
         checked=checked.binding(),
         font=@core.FontSpec::new(),
         foreground=@core.Color::black(),
         check_color=@core.Color::blue(),
-        size=@core.Size::new(width=20.0, height=32.0),
+        box_size=20.0,
+        height=32.0,
       ) : @core.View[Unit]),
     size=@core.Size::new(width=120.0, height=40.0),
   )

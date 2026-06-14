@@ -6,6 +6,7 @@ using @views {
   frame,
   padding_edges,
   row,
+  rich_text_editor,
   scroll_view,
   spacer,
   surface,
