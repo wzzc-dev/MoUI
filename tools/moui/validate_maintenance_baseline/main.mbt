@@ -923,6 +923,36 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views choice item, chip variant, and segmented control descriptors compact",
     },
     {
+      path: "moui/views/control_choice.mbt",
+      max_lines: 85,
+      target_lines: 75,
+      reason: "keep views toggle, switch, radio, and binding aliases compact",
+    },
+    {
+      path: "moui/views/control_helpers.mbt",
+      max_lines: 40,
+      target_lines: 30,
+      reason: "keep views control color and scalar helpers compact",
+    },
+    {
+      path: "moui/views/control_progress.mbt",
+      max_lines: 60,
+      target_lines: 40,
+      reason: "keep views custom progress painting helper compact",
+    },
+    {
+      path: "moui/views/control_slider.mbt",
+      max_lines: 130,
+      target_lines: 115,
+      reason: "keep views slider painting, drag mapping, and binding helper compact",
+    },
+    {
+      path: "moui/views/control_focus_overlay.mbt",
+      max_lines: 95,
+      target_lines: 70,
+      reason: "keep views focus ring, menu button, and tooltip wrappers compact",
+    },
+    {
       path: "moui/views/form_state.mbt",
       max_lines: 45,
       target_lines: 35,
