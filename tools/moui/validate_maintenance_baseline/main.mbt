@@ -1260,9 +1260,27 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/views/data_table_state.mbt",
-      max_lines: 225,
-      target_lines: 200,
-      reason: "keep views table column, visibility, width, and order state helpers compact",
+      max_lines: 45,
+      target_lines: 35,
+      reason: "keep views table column descriptors compact",
+    },
+    {
+      path: "moui/views/data_table_visibility_state.mbt",
+      max_lines: 60,
+      target_lines: 50,
+      reason: "keep views table column visibility state helper compact",
+    },
+    {
+      path: "moui/views/data_table_width_state.mbt",
+      max_lines: 75,
+      target_lines: 65,
+      reason: "keep views table column width state helper compact",
+    },
+    {
+      path: "moui/views/data_table_order_state.mbt",
+      max_lines: 65,
+      target_lines: 55,
+      reason: "keep views table column order state helper compact",
     },
     {
       path: "moui/views/data_selection_state.mbt",
