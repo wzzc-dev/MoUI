@@ -1,10 +1,4 @@
 ///|
-pub type Color = @core.Color
-
-///|
-pub type FontSpec = @core.FontSpec
-
-///|
 pub type View[Msg] = @core.View[Msg]
 
 ///|
@@ -15,9 +9,6 @@ pub type Effect[Msg] = @core.Effect[Msg]
 
 ///|
 pub type Subscription[Msg] = @core.Subscription[Msg]
-
-///|
-pub type ColorScheme = @core.ColorScheme
 
 ///|
 pub type Theme = @core.Theme
@@ -40,13 +31,13 @@ pub fn dark_theme() -> Theme {
 ///|
 pub fn theme(
   base? : Theme,
-  font? : FontSpec,
-  foreground? : Color,
-  background? : Color,
-  accent? : Color,
+  font? : @core.FontSpec,
+  foreground? : @core.Color,
+  background? : @core.Color,
+  accent? : @core.Color,
   spacing? : Double,
   corner_radius? : Double,
-  scheme? : ColorScheme = ColorScheme::Light,
+  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
   palette? : @core.ColorPalette,
   semantic_colors? : @core.SemanticColorScale,
   spacing_scale? : @core.SpacingScale,
@@ -60,8 +51,8 @@ pub fn theme(
     Some(value) => value
     None =>
       match scheme {
-        ColorScheme::Light => @core.Theme::light()
-        ColorScheme::Dark => @core.Theme::dark()
+        @core.ColorScheme::Light => @core.Theme::light()
+        @core.ColorScheme::Dark => @core.Theme::dark()
       }
   }
   match palette {

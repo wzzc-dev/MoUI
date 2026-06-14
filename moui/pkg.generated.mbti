@@ -19,13 +19,7 @@ pub fn theme(base? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Co
 // Types and methods
 
 // Type aliases
-pub using @core {type Color}
-
-pub using @core {type ColorScheme}
-
 pub using @core {type Effect}
-
-pub using @core {type FontSpec}
 
 pub using @core {type Program}
 

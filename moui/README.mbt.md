@@ -63,8 +63,9 @@ native-only PDFium adapter for real page bitmap rasterization. The root
   `Subscription`, and the transitional runtime kernel.
 - `runtime/` exposes the app/host `AppRuntime` wrapper and construction
   entrypoints over the current core runtime kernel.
-- The root `moui` facade exposes a curated app/theme alias set plus
-  neutral default/light/dark/custom theme builders directly; diagnostics and
+- The root `moui` facade exposes only the curated
+  `View`/`Program`/`Effect`/`Subscription`/`Theme` aliases plus neutral
+  default/light/dark/custom theme builders directly; diagnostics and
   renderer-facing records stay in their owning packages.
 - `views/` exposes public view constructors returning opaque `@core.View[Msg]`.
 - `moui_theme/` is an optional repo-local addon workspace member for shared
