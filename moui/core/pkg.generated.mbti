@@ -203,9 +203,8 @@ pub(all) struct BadgeStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn BadgeStyle::default(theme? : Theme) -> Self
 
-pub(all) struct Binding[T] {
-  get_value : () -> T
-  set_value : (T) -> Unit
+pub struct Binding[T] {
+  // private fields
 }
 pub fn[T] Binding::get(Self[T]) -> T
 pub fn[T] Binding::new(get~ : () -> T, set~ : (T) -> Unit) -> Self[T]
@@ -515,9 +514,8 @@ pub fn DateValue::format(Self, DatePickerMode) -> String
 pub fn DateValue::new(year~ : Int, month~ : Int, day~ : Int, hour? : Int, minute? : Int, second? : Int) -> Self
 pub fn DateValue::today() -> Self
 
-pub(all) struct DerivedState[T] {
-  get_value : () -> T
-  subscribe_value : (() -> Unit) -> Array[StateSubscription]
+pub struct DerivedState[T] {
+  // private fields
 }
 pub fn[A, B, T] DerivedState::combine(State[A], State[B], (A, B) -> T) -> Self[T]
 pub fn[T, U] DerivedState::from_state(State[T], (T) -> U) -> Self[U]
@@ -1802,8 +1800,8 @@ pub(all) struct SpacingScale {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SpacingScale::default() -> Self
 
-pub(all) struct State[T] {
-  slot : StateSlot[T]
+pub struct State[T] {
+  // private fields
 }
 pub fn[T] State::binding(Self[T]) -> Binding[T]
 pub fn[T, U] State::derived(Self[T], (T) -> U) -> DerivedState[U]
@@ -1814,25 +1812,12 @@ pub fn[T] State::subscribe(Self[T], () -> Unit) -> StateSubscription
 pub fn[T] State::update(Self[T], (T) -> T raise?) -> Unit raise?
 pub fn[T] State::version(Self[T]) -> Int
 
-pub(all) struct StateListener {
-  mut active : Bool
-  callback : () -> Unit
-}
-pub fn StateListener::new(() -> Unit) -> Self
+type StateListener
 
-pub(all) struct StateSlot[T] {
-  mut value : T
-  mut version : Int
-  mut listeners : Array[StateListener]
-}
-pub fn[T] StateSlot::get(Self[T]) -> T
-pub fn[T] StateSlot::new(T) -> Self[T]
-pub fn[T] StateSlot::set(Self[T], T) -> Unit
-pub fn[T] StateSlot::subscribe(Self[T], () -> Unit) -> StateSubscription
-pub fn[T] StateSlot::update(Self[T], (T) -> T raise?) -> Unit raise?
+type StateSlot[T]
 
-pub(all) struct StateSubscription {
-  listener : StateListener
+pub struct StateSubscription {
+  // private fields
 }
 pub fn StateSubscription::cancel(Self) -> Unit
 pub fn StateSubscription::is_active(Self) -> Bool

@@ -1,18 +1,18 @@
 ///|
-pub(all) struct State[T] {
-  slot : StateSlot[T]
+pub struct State[T] {
+  priv slot : StateSlot[T]
 }
 
 ///|
-pub(all) struct Binding[T] {
-  get_value : () -> T
-  set_value : (T) -> Unit
+pub struct Binding[T] {
+  priv get_value : () -> T
+  priv set_value : (T) -> Unit
 }
 
 ///|
-pub(all) struct DerivedState[T] {
-  get_value : () -> T
-  subscribe_value : (() -> Unit) -> Array[StateSubscription]
+pub struct DerivedState[T] {
+  priv get_value : () -> T
+  priv subscribe_value : (() -> Unit) -> Array[StateSubscription]
 }
 
 ///|
