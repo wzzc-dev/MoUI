@@ -5,11 +5,12 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
 }
 
 // Values
-pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
 
 pub fn update(FileImporterModel, FileImporterMsg) -> FileImporterModel
 
@@ -22,7 +23,7 @@ pub struct FileImporterApp {
   unit : Unit
 }
 pub fn FileImporterApp::new() -> Self
-pub fn FileImporterApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn FileImporterApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
 
 pub(all) struct FileImporterModel {
   files : Array[ImportedFile]
@@ -32,8 +33,8 @@ pub(all) struct FileImporterModel {
 }
 pub fn FileImporterModel::availability(Self) -> @views.FileImportAvailability
 pub fn FileImporterModel::new() -> Self
-pub fn FileImporterModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn FileImporterModel::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn FileImporterModel::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn FileImporterModel::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @runtime.AppRuntime
 pub fn FileImporterModel::selection(Self) -> @views.FileSelection
 pub fn FileImporterModel::subscriptions(Self, @host.HostAppServices) -> @core.Subscription[FileImporterMsg]
 pub fn FileImporterModel::update(Self, FileImporterMsg) -> Self

@@ -4,12 +4,13 @@ package "wzzc-dev/moui_tester"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn first_frame_step(title~ : String, @core.AppRuntime) -> TesterStepResult
+pub fn first_frame_step(title~ : String, @runtime.AppRuntime) -> TesterStepResult
 
-pub fn runtime_smoke_snapshot(title~ : String, @core.AppRuntime) -> RuntimeSmokeSnapshot
+pub fn runtime_smoke_snapshot(title~ : String, @runtime.AppRuntime) -> RuntimeSmokeSnapshot
 
 // Errors
 

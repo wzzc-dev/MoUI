@@ -4,14 +4,15 @@ package "examples/mo_workbench/app"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
 
-pub fn runtime_with_agent_connectors(PiTransportRuntime, Array[AgentConnectorRuntime], width? : Double, height? : Double) -> @core.AppRuntime
+pub fn runtime_with_agent_connectors(PiTransportRuntime, Array[AgentConnectorRuntime], width? : Double, height? : Double) -> @runtime.AppRuntime
 
-pub fn runtime_with_transport(PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn runtime_with_transport(PiTransportRuntime, width? : Double, height? : Double) -> @runtime.AppRuntime
 
 // Errors
 
@@ -124,9 +125,9 @@ pub struct MoWorkbenchApp {
   unit : Unit
 }
 pub fn MoWorkbenchApp::new() -> Self
-pub fn MoWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn MoWorkbenchApp::runtime_with_agent_connectors(Self, PiTransportRuntime, Array[AgentConnectorRuntime], width? : Double, height? : Double) -> @core.AppRuntime
-pub fn MoWorkbenchApp::runtime_with_transport(Self, PiTransportRuntime, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn MoWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn MoWorkbenchApp::runtime_with_agent_connectors(Self, PiTransportRuntime, Array[AgentConnectorRuntime], width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn MoWorkbenchApp::runtime_with_transport(Self, PiTransportRuntime, width? : Double, height? : Double) -> @runtime.AppRuntime
 
 type PiAgentSnapshot derive(Eq, @debug.Debug)
 
