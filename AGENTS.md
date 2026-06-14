@@ -38,7 +38,9 @@ paths, or abstractions that only preserve old shapes.
   instead of direct `@core.AppRuntime`; this keeps the call surface ready for
   moving runtime logic out of `core` without exposing core private trees.
 - `views/` is a facade over core primitive builders. Public constructors return
-  opaque `@core.View[Msg]`; `ViewSpec` and node payloads stay inside `core`.
+  opaque `@core.View[Msg]`; app, host, smoke, and cross-package tests should
+  use `views` widget-level entrypoints instead of direct `@core.View::*`
+  control constructors. `ViewSpec` and node payloads stay inside `core`.
 - `moui_theme/common/` owns the repo-local addon design-system common surface:
   shared source-mapped design-system
   manifests, golden token mappings, golden source-usage audits,

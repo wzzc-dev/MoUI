@@ -135,6 +135,13 @@ Controls that require complex local state, such as rich text editing or
 virtualized resources, keep that state explicit through bindings, cells, or
 dedicated integration callbacks.
 
+Widget-level control entrypoints are app-facing in `moui/views`. App code,
+host tests, smoke checks, and example apps should use helpers such as
+`@views.text_field`, `@views.checkbox`, `@views.picker`, and
+`@views.rich_text_editor`; direct `@core.View::*` control constructors are a
+transitional bridge used by `views` while core still owns the internal node
+payloads.
+
 Stateful controls can use localized `View::component` adapters with
 `BuildContext` when they must subscribe to framework cells or bridge complex
 control state, but shared app runtimes should default to `Program::simple` and
