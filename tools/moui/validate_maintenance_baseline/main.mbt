@@ -317,6 +317,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep host driver document context-menu routing and action-map tests compact",
     },
     {
+      path: "moui/backend/host/host_subscription_sources_test.mbt",
+      max_lines: 275,
+      target_lines: 250,
+      reason: "keep host and window event subscription source lifecycle tests compact",
+    },
+    {
+      path: "moui/backend/host/host_route_timer_subscription_sources_test.mbt",
+      max_lines: 220,
+      target_lines: 200,
+      reason: "keep host route and timer subscription source lifecycle tests compact",
+    },
+    {
       path: "moui/backend/host/host_app_services_facade_test.mbt",
       max_lines: 210,
       target_lines: 185,
