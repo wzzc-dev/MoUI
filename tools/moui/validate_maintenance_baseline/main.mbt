@@ -947,6 +947,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views feedback tones, state actions, and toast queue helpers compact",
     },
     {
+      path: "moui/views/feedback.mbt",
+      max_lines: 280,
+      target_lines: 250,
+      reason: "keep views transient feedback surfaces and shared feedback tone helpers compact",
+    },
+    {
+      path: "moui/views/feedback_status.mbt",
+      max_lines: 450,
+      target_lines: 400,
+      reason: "keep views workflow state panels, progress status, badges, and stat cards compact",
+    },
+    {
       path: "moui/views/file_import_state.mbt",
       max_lines: 45,
       target_lines: 35,
