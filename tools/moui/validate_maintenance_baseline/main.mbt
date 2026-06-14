@@ -444,9 +444,15 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/backend/web/host_runtime.mbt",
-      max_lines: 885,
-      target_lines: 800,
-      reason: "keep web app runtime loop, event dispatch, window requests, redraw, and text-input sync compact",
+      max_lines: 700,
+      target_lines: 630,
+      reason: "keep web app runtime loop, event dispatch, redraw, and text-input sync compact",
+    },
+    {
+      path: "moui/backend/web/web_window_requests.mbt",
+      max_lines: 200,
+      target_lines: 180,
+      reason: "keep web window request draining, open/attach, and rollback helpers compact",
     },
     {
       path: "moui/backend/web/web_window_slots.mbt",
