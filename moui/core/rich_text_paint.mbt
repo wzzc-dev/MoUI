@@ -239,7 +239,6 @@ fn rich_text_block_render_node(
     element_id: editor_id,
     frame,
     children: [],
-    hit_testable: false,
     paint_bounds,
     content_revision: rich_text_block_content_revision(
       block, index, frame, base_font, foreground,
