@@ -152,11 +152,12 @@ Use this skill when editing or reviewing:
   smoke, and tooling code should use `@runtime.AppRuntime`,
   `@runtime.new_view`, or `@runtime.new_program` instead of direct
   `@core.AppRuntime`.
-- root `moui`: public facade over a curated app/theme alias set plus
-  neutral default/light/dark theme helpers and custom `@core.Theme` builder
-  APIs. Diagnostics, draw-command records, renderer-facing records, and
-  low-level implementation payloads stay in their owning packages. It does not
-  import `moui_theme`.
+- root `moui`: public facade over curated
+  `View`/`Program`/`Effect`/`Subscription`/`Theme` aliases plus neutral
+  default/light/dark theme helpers and custom `@core.Theme` builder APIs.
+  Diagnostics, draw-command records, renderer-facing records, and low-level
+  implementation payloads stay in their owning packages. It does not import
+  `moui_theme`.
 - `moui_theme/common/`: repo-local addon common package for shared
   source-mapped design-system
   manifests, golden token mappings, golden source-usage audits,
