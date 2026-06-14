@@ -39,7 +39,7 @@ pub(all) struct TextRange {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct CompositionUpdate {
+struct CompositionUpdate {
   text : String
   cursor : TextRange?
 } derive(Eq, Debug, ToJson)
