@@ -9,6 +9,10 @@ import {
   "wzzc-dev/window/linux" @window_linux,
 }
 
+import {
+  "wzzc-dev/moui/views",
+} for "wbtest"
+
 supported_targets = "native"
 
 options(

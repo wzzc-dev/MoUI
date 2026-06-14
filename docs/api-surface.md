@@ -62,8 +62,9 @@ entrypoint. It checks current generated interface files for:
 - `moui/runtime` existence, an opaque `AppRuntime` wrapper with bounded runtime
   methods, and app/host source usage of `@runtime.AppRuntime` instead of direct
   `@core.AppRuntime`;
-- app, host, smoke, and cross-package tests using `moui/views` for widget-level
-  controls instead of direct `@core.View::*` control constructors;
+- app, host, smoke, and cross-package tests using `moui/views` for view
+  construction and widget-level controls instead of direct `@core.View::*`
+  constructors;
 - required app-facing re-exports such as `View`, `Program`, `Effect`,
   `Subscription`, and `Theme`, while keeping runtime bridges, binding helpers,
   diagnostic descriptors, and draw command types out of the root facade;

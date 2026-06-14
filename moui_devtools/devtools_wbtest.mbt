@@ -1,7 +1,7 @@
 ///|
 test "devtools summarizes inspector snapshots" {
   let runtime = @runtime.AppRuntime::new_view(
-    root=(@core.View::empty() : @core.View[Unit]),
+    root=(@views.empty() : @core.View[Unit]),
     size=@core.Size::new(width=320.0, height=240.0),
   )
   ignore(runtime.draw_commands())

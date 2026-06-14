@@ -42,7 +42,7 @@ test "macos host options carry optional scene resolver and smoke options stay se
       @host.HostWindowSceneInstance::new(
         request~,
         runtime=@runtime.AppRuntime::new_view(
-          root=(@core.View::empty() : @core.View[Unit]),
+          root=(@views.empty() : @core.View[Unit]),
           size=request.metrics.logical_size,
         ),
       ),
