@@ -84,7 +84,7 @@ pub fn NativeAccessibilityNode::from_semantics(
 pub fn accesskit_node_id_for_element(
   element_id : @core.ElementId,
 ) -> @accesskit.NodeId {
-  @accesskit.NodeId::from_u64(element_id.value.to_uint64())
+  @accesskit.NodeId::from_u64(element_id.value().to_uint64())
 }
 
 ///|
