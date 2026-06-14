@@ -1361,6 +1361,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep top-level views facade smoke and shared test runtime helper compact",
     },
     {
+      path: "moui/views/views_helpers_test.mbt",
+      max_lines: 85,
+      target_lines: 75,
+      reason: "keep views text, click, and semantics test helpers compact",
+    },
+    {
+      path: "moui/views/views_draw_surface_helpers_test.mbt",
+      max_lines: 110,
+      target_lines: 95,
+      reason: "keep views draw surface and rect test helpers compact",
+    },
+    {
       path: "moui/views/views_data_commands_test.mbt",
       max_lines: 165,
       target_lines: 150,
