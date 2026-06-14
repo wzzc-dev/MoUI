@@ -872,31 +872,21 @@ fn design_density_from_id(id : String) -> @common.DesignDensity {
 }
 
 ///|
-pub fn DesignSystemsApp::runtime(
+pub fn DesignSystemsApp::program(
   self : DesignSystemsApp,
-  width? : Double = 960.0,
-  height? : Double = 680.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[DesignSystemsModel, DesignSystemsMsg] {
   ignore(self)
-  DesignSystemsModel::new().runtime(width~, height~)
+  program()
 }
 
 ///|
-pub fn runtime(
-  width? : Double = 960.0,
-  height? : Double = 680.0,
-) -> @runtime.AppRuntime {
-  DesignSystemsModel::new().runtime(width~, height~)
+pub fn program() -> @core.Program[DesignSystemsModel, DesignSystemsMsg] {
+  DesignSystemsModel::new().program()
 }
 
 ///|
-pub fn DesignSystemsModel::runtime(
+pub fn DesignSystemsModel::program(
   self : DesignSystemsModel,
-  width? : Double = 960.0,
-  height? : Double = 680.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::simple(init=self, update~, view~),
-    size=@core.Size::new(width~, height~),
-  )
+) -> @core.Program[DesignSystemsModel, DesignSystemsMsg] {
+  @core.Program::simple(init=self, update~, view~)
 }
