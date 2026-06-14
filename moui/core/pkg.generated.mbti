@@ -99,9 +99,7 @@ pub(all) enum AppEvent {
   CloseRequested
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct AppRuntime {
-  // private fields
-}
+type AppRuntime
 pub fn AppRuntime::action_commands(Self) -> Array[ActionCommand]
 pub fn AppRuntime::advance_time(Self, Double) -> Unit
 pub fn AppRuntime::destroy(Self) -> Unit

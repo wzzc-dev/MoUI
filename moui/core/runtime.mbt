@@ -1,8 +1,8 @@
 ///|
-pub struct AppRuntime {
-  priv state : RuntimeState
-  priv mut program_runtime_snapshot_fn : () -> ProgramRuntimeSnapshot
-  priv mut destroy_program_runtime_fn : () -> Unit
+struct AppRuntime {
+  state : RuntimeState
+  mut program_runtime_snapshot_fn : () -> ProgramRuntimeSnapshot
+  mut destroy_program_runtime_fn : () -> Unit
 }
 
 ///|
