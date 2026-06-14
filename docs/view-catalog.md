@@ -125,7 +125,7 @@ fn view(draft : String) -> @core.View[Msg] {
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `ToastQueue` / `ToastQueueItem` | `views/style_api.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase Feedback | Pure app-owned state helper for transient notifications. Apps push, expire, and convert queued items into `ToastStackItem` rows while timers and host notifications remain outside `views`. |
+| `ToastQueue` / `ToastQueueItem` | `views/feedback_state.mbt` | N/A | N/A | `views/views_test.mbt` | Showcase Feedback | Pure app-owned state helper for transient notifications. Apps push, expire, and convert queued items into `ToastStackItem` rows while timers and host notifications remain outside `views`. |
 | `toast` / `toast_stack` / `snackbar` | `views/feedback.mbt` | FeedbackStyle | Group with optional dismiss action | `views/views_test.mbt` | Showcase Feedback | App-owned transient/status surfaces. `toast_stack` renders an app-owned notification queue with optional per-item action and dismiss messages; `ToastQueue` can supply those rows, while timers stay in the app model. |
 | `banner` / `callout` | `views/feedback.mbt` | FeedbackStyle | Group | `views/views_test.mbt` | Showcase Feedback | Inline status and guidance surfaces with optional action. |
 | `progress_status` | `views/feedback.mbt` | FeedbackStyle/ProgressStyle/ButtonStyle/BadgeStyle | Group with nested progress and status badge | `views/views_test.mbt` | Showcase Feedback | App-owned task progress card with title, `status_badge`, message, progress bar, and optional action. The task lifecycle and progress value stay in the app model. |
