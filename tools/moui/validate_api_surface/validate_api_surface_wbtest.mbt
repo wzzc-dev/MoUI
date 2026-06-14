@@ -19,8 +19,10 @@ fn budget_by_label(label : String) -> PackageBudget raise {
 }
 
 ///|
-test "root facade budget keeps runtime and diagnostics out" {
+test "root facade budget keeps runtime diagnostics and theme builders out" {
   let root = budget_by_label("root facade")
+  inspect(root.max_lines, content="25")
+  inspect(root.max_pub_lines, content="5")
   inspect(root.max_pub_all_lines, content="0")
   assert_true(root.required_tokens.contains("pub using @core {type View}"))
   assert_true(root.required_tokens.contains("pub using @core {type Program}"))
@@ -29,6 +31,8 @@ test "root facade budget keeps runtime and diagnostics out" {
   )
   assert_true(root.forbidden_tokens.contains("DrawCommand"))
   assert_true(root.forbidden_tokens.contains("ProgramRuntimeSnapshot"))
+  assert_true(root.forbidden_tokens.contains("pub fn light_theme("))
+  assert_true(root.forbidden_tokens.contains("pub fn theme("))
 }
 
 ///|

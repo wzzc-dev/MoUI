@@ -8,8 +8,9 @@ contracts for platform and renderer integration.
 
 ## Surface Tiers
 
-- App-facing API: `moui` and `moui/views`. The root facade re-exports a small
-  curated set of common app/theme aliases from `moui/core` plus theme builders.
+- App-facing API: `moui` and `moui/views`. The root facade re-exports only a
+  curated set of common app/theme type aliases from `moui/core`; theme builder
+  helpers live in `moui/views`.
   Runtime bridges such as `AppRuntime`, binding helpers, detailed theme palette
   and scale records stay qualified as `@core.*` types rather than root aliases.
   Diagnostics, draw commands, renderer details, and lower-level geometry/style

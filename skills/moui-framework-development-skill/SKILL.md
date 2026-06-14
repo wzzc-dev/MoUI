@@ -153,8 +153,9 @@ Use this skill when editing or reviewing:
   `@runtime.new_view`, or `@runtime.new_program` instead of direct
   `@core.AppRuntime`.
 - root `moui`: public facade over curated
-  `View`/`Program`/`Effect`/`Subscription`/`Theme` aliases plus neutral
-  default/light/dark theme helpers and custom `@core.Theme` builder APIs.
+  `View`/`Program`/`Effect`/`Subscription`/`Theme` aliases. Neutral
+  default/light/dark theme helpers and custom `@core.Theme` builder APIs live
+  in `moui/views`.
   Diagnostics, draw-command records, renderer-facing records, and low-level
   implementation payloads stay in their owning packages. It does not import
   `moui_theme`.
