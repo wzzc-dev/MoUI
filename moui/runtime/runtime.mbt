@@ -1,6 +1,45 @@
 ///|
 pub struct AppRuntime {
   priv inner : @core.AppRuntime
+  priv program_runtime_snapshot_fn : Ref[() -> @core.ProgramRuntimeSnapshot]
+  priv destroy_program_runtime_fn : Ref[() -> Unit]
+}
+
+///|
+fn program_message_drain_limit() -> Int {
+  1024
+}
+
+///|
+fn[Msg] compact_pending_program_messages(
+  pending_messages : Array[Msg],
+  start : Int,
+) -> Unit {
+  let remaining : Array[Msg] = []
+  for index in start..<pending_messages.length() {
+    remaining.push(pending_messages[index])
+  }
+  pending_messages.clear()
+  pending_messages.append(remaining)
+}
+
+///|
+fn[Msg] run_effect(
+  effect : @core.Effect[Msg],
+  dispatch : (Msg) -> Unit,
+  start_task : (@core.EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit,
+) -> Int {
+  let mut count = 0
+  for op in effect.runtime_ops() {
+    op.runtime_visit(
+      dispatch,
+      run => run(dispatch),
+      (_descriptor, run) => run(dispatch),
+      start_task,
+    )
+    count = count + 1
+  }
+  count
 }
 
 ///|
@@ -12,6 +51,8 @@ pub fn[Msg] AppRuntime::new_view(
 ) -> AppRuntime {
   AppRuntime::{
     inner: @core.AppRuntime::new_view(root~, size~, environment~, on_message~),
+    program_runtime_snapshot_fn: Ref(() => empty_program_runtime_snapshot()),
+    destroy_program_runtime_fn: Ref(() => ()),
   }
 }
 
@@ -21,9 +62,105 @@ pub fn[Model, Msg] AppRuntime::new_program(
   size~ : @core.Size,
   environment? : @core.Environment = @core.Environment::default(),
 ) -> AppRuntime {
-  AppRuntime::{
-    inner: @core.AppRuntime::new_program(program~, size~, environment~),
+  let (initial_model, initial_effect) = program.runtime_init()
+  let model = @core.State::new(initial_model)
+  let program_runtime = ProgramRuntimeDiagnostics::new()
+  let pending_messages : Array[Msg] = []
+  let pending_index = Ref(0)
+  let dispatching = Ref(false)
+  let syncing_subscriptions = Ref(false)
+  let program_active = Ref(true)
+  let process_ref : Ref[(() -> Unit)?] = Ref(None)
+  let pending_count = () => pending_messages.length() - pending_index.val
+  let dispatch = message => {
+    if program_active.val {
+      pending_messages.push(message)
+      program_runtime.record_message_enqueued(pending_count())
+      if !syncing_subscriptions.val {
+        match process_ref.val {
+          Some(process) => process()
+          None => ()
+        }
+      }
+    } else {
+      program_runtime.record_ignored_program_dispatch()
+    }
   }
+  let sync_subscriptions = () => {
+    syncing_subscriptions.val = true
+    program_runtime.sync_subscriptions(
+      program.runtime_subscriptions(model.get()),
+      dispatch,
+    )
+    syncing_subscriptions.val = false
+  }
+  let process_messages = () => {
+    if !dispatching.val && !syncing_subscriptions.val {
+      program_runtime.record_message_drain_started(pending_count())
+      dispatching.val = true
+      let mut processed_this_drain = 0
+      while pending_index.val < pending_messages.length() &&
+            processed_this_drain < program_message_drain_limit() {
+        let message = pending_messages[pending_index.val]
+        pending_index.val = pending_index.val + 1
+        processed_this_drain = processed_this_drain + 1
+        program_runtime.record_dispatch()
+        let (next_model, effect) = program.runtime_update(model.get(), message)
+        program_runtime.record_update()
+        model.set(next_model)
+        let effect_summary = effect.plan_summary()
+        let effect_count = run_effect(effect, dispatch, (descriptor, start) => {
+          program_runtime.start_effect_task(descriptor, start, dispatch)
+        })
+        program_runtime.record_effects(effect_summary, effect_count)
+        sync_subscriptions()
+        program_runtime.record_message_processed(pending_count())
+      }
+      if pending_index.val < pending_messages.length() {
+        compact_pending_program_messages(pending_messages, pending_index.val)
+        pending_index.val = 0
+        program_runtime.record_message_processed(pending_count())
+      } else {
+        pending_messages.clear()
+        pending_index.val = 0
+        program_runtime.record_message_queue_cleared()
+      }
+      dispatching.val = false
+    }
+  }
+  process_ref.val = Some(process_messages)
+  let initial_effect_summary = initial_effect.plan_summary()
+  let initial_effect_count = run_effect(initial_effect, dispatch, (
+    descriptor,
+    start,
+  ) => program_runtime.start_effect_task(descriptor, start, dispatch))
+  program_runtime.record_effects(initial_effect_summary, initial_effect_count)
+  sync_subscriptions()
+  match process_ref.val {
+    Some(process) => process()
+    None => ()
+  }
+  let runtime = AppRuntime::new_view(
+    root=@core.View::primitive_component_view(ctx => {
+      program.runtime_view(ctx.watch(model), ctx.view_environment())
+    }),
+    size~,
+    environment~,
+    on_message=Some(dispatch),
+  )
+  runtime.program_runtime_snapshot_fn.val = () => program_runtime.snapshot()
+  runtime.destroy_program_runtime_fn.val = () => {
+    if program_active.val {
+      program_active.val = false
+      program_runtime.cancel_all_effect_tasks(
+        @core.EffectTaskCancelReason::EffectTaskRuntimeDestroyed,
+      )
+      program_runtime.cancel_all_subscriptions(
+        @core.SubscriptionCancelReason::SubscriptionRuntimeDestroyed,
+      )
+    }
+  }
+  runtime
 }
 
 ///|
@@ -95,6 +232,7 @@ pub fn AppRuntime::advance_time(self : AppRuntime, time_ms : Double) -> Unit {
 
 ///|
 pub fn AppRuntime::destroy(self : AppRuntime) -> Unit {
+  (self.destroy_program_runtime_fn.val)()
   self.inner.destroy()
 }
 
@@ -235,7 +373,7 @@ pub fn AppRuntime::inspector_snapshot(
 pub fn AppRuntime::program_runtime_snapshot(
   self : AppRuntime,
 ) -> @core.ProgramRuntimeSnapshot {
-  self.inner.program_runtime_snapshot()
+  (self.program_runtime_snapshot_fn.val)()
 }
 
 ///|

@@ -529,6 +529,7 @@ pub fn[Msg, NextMsg] Effect::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] Effect::none() -> Self[Msg]
 pub fn[Msg] Effect::plan_summary(Self[Msg]) -> EffectPlanSummary
 pub fn[Msg] Effect::run(key~ : String, run~ : ((Msg) -> Unit) -> Unit, kind? : String, label? : String) -> Self[Msg]
+pub fn[Msg] Effect::runtime_ops(Self[Msg]) -> Array[EffectRuntimeOp[Msg]]
 pub fn[Msg] Effect::send(Msg) -> Self[Msg]
 pub fn[Msg] Effect::service_task(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Effect::task(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
@@ -562,6 +563,11 @@ pub(all) struct EffectPlanSummary {
   duplicate_descriptor_keys : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn EffectPlanSummary::empty() -> Self
+
+pub struct EffectRuntimeOp[Msg] {
+  // private fields
+}
+pub fn[Msg] EffectRuntimeOp::runtime_visit(Self[Msg], (Msg) -> Unit, (((Msg) -> Unit) -> Unit) -> Unit, (EffectDescriptor, ((Msg) -> Unit) -> Unit) -> Unit, (EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit) -> Unit
 
 pub(all) enum EffectTaskCancelReason {
   EffectTaskKeyChanged
