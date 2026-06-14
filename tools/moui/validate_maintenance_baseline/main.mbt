@@ -641,6 +641,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core high-level gesture wrapper runtime tests compact",
     },
     {
+      path: "moui/core/state_lifecycle_wbtest.mbt",
+      max_lines: 230,
+      target_lines: 205,
+      reason: "keep core component lifecycle, keyed reorder, removal, and cache tests compact",
+    },
+    {
+      path: "moui/core/state_build_context_wbtest.mbt",
+      max_lines: 165,
+      target_lines: 145,
+      reason: "keep core build-context watch, binding, and derived-state subscription tests compact",
+    },
+    {
       path: "examples/pdf_workbench/app/app.mbt",
       max_lines: 390,
       target_lines: 360,
