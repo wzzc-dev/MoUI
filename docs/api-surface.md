@@ -26,7 +26,9 @@ contracts for platform and renderer integration.
   `Subscription`, state, layout, input, semantics, draw commands, diagnostics,
   and renderer-neutral platform-view contracts. It may expose diagnostic and
   support records while the prototype matures, but implementation payloads
-  should not leak into the root facade.
+  should not leak into the root facade. Component-facing contracts such as
+  `BuildContext` keep runtime/effect storage fields private and expose behavior
+  through methods.
 - Integration API: `moui/backend/host`, `moui/render`, and renderer/provider
   packages. These are public because platform backends, renderers, examples,
   and observation tools need them, but they are not the everyday app authoring
