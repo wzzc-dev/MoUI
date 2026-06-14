@@ -15,6 +15,7 @@ pub struct HostWindowRenderer {
   priv present_count_fn : () -> Int
   priv dispose_fn : () -> Unit
   priv draw_platform_view_pixels_fn : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
+  priv set_platform_view_draw_fn_fn : ((() -> Unit)?) -> Unit
   priv layer_cache : HostLayerCommandCache
 }
 
@@ -48,6 +49,7 @@ pub fn HostWindowRenderer::new(
   present_count? : () -> Int = () => 0,
   dispose? : () -> Unit = () => (),
   draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit = fn(_pixels, _w, _h, _s, _dx, _dy, _dw, _dh) {},
+  set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit = _fn => (),
 ) -> HostWindowRenderer {
   let image_resource_snapshot = match image_resource_snapshot {
     Some(snapshot) => snapshot
@@ -86,6 +88,7 @@ pub fn HostWindowRenderer::new(
     present_count_fn: present_count,
     dispose_fn: dispose,
     draw_platform_view_pixels_fn: draw_platform_view_pixels,
+    set_platform_view_draw_fn_fn: set_platform_view_draw_fn,
     layer_cache,
   }
 }
@@ -184,6 +187,15 @@ pub fn HostWindowRenderer::draw_platform_view_pixels(
     dst_width,
     dst_height,
   )
+}
+
+///| Set a callback to draw platform view content after command rendering but before flush.
+///| Used by Linux to composite offscreen webview pixels into the Skia surface.
+pub fn HostWindowRenderer::set_platform_view_draw_fn(
+  self : HostWindowRenderer,
+  draw_fn : (() -> Unit)?,
+) -> Unit {
+  (self.set_platform_view_draw_fn_fn)(draw_fn)
 }
 
 ///|

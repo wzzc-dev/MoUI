@@ -68,6 +68,7 @@ typedef struct MOUILinuxWebView {
   int navigation_pending;
   int width;   // Track current size for rendering
   int height;
+  char *cancelled_url;  // URL of the navigation replaced by a newer one
   struct MOUILinuxWebView *next;
 } MOUILinuxWebView;
 
@@ -147,6 +148,12 @@ static void linux_webview_load_controlled(MOUILinuxWebView *view,
       strcmp(view->current_url, url) == 0) {
     return;
   }
+  // Record the URL being replaced so stale WEBKIT_LOAD_FINISHED events
+  // (already queued in the GTK event loop) can be identified and skipped.
+  if (view->desired_url != NULL) {
+    free(view->cancelled_url);
+    view->cancelled_url = strdup(view->desired_url);
+  }
   free(view->desired_url);
   view->desired_url = strdup(url);
   view->allow_next_navigation = 1;
@@ -197,10 +204,22 @@ static void on_load_changed(WebKitWebView *webview, WebKitLoadEvent load_event,
     view->current_url = strdup(uri ? uri : "");
     moui_linux_webview_emit(view->parent_surface, 2, view->id, uri, "", 0);
     break;
-  case WEBKIT_LOAD_FINISHED:
+  case WEBKIT_LOAD_FINISHED: {
     view->navigation_pending = 0;
+    // Skip stale WEBKIT_LOAD_FINISHED events from a navigation that was
+    // replaced by a newer one (e.g., initial page load finishing after
+    // the user navigated elsewhere). Only skip if the URL matches exactly.
+    if (view->cancelled_url != NULL && uri != NULL &&
+        strcmp(view->cancelled_url, uri) == 0) {
+      free(view->cancelled_url);
+      view->cancelled_url = NULL;
+      break;
+    }
+    free(view->cancelled_url);
+    view->cancelled_url = NULL;
     moui_linux_webview_emit(view->parent_surface, 3, view->id, uri, "", 0);
     break;
+  }
   default:
     break;
   }
@@ -449,7 +468,13 @@ void moui_linux_webview_sync(uint64_t wl_display, uint64_t wl_surface,
       gtk_widget_set_size_request(GTK_WIDGET(view->webview), new_width, new_height);
     }
 
-    linux_webview_load_controlled(view, url_text);
+    // Only set initial URL on first creation. All subsequent URL changes
+    // are driven by commands (LoadUrl, GoBack, GoForward), not sync.
+    // This prevents stale NavigationCommitted events from the initial load
+    // from overwriting the user's intended URL.
+    if (view->desired_url == NULL) {
+      linux_webview_load_controlled(view, url_text);
+    }
   }
   free(id_text);
   free(url_text);
@@ -495,6 +520,7 @@ void moui_linux_webview_platform_views_dispose(uint64_t wl_surface) {
       free(view->id);
       free(view->desired_url);
       free(view->current_url);
+      free(view->cancelled_url);
       free(view);
     } else {
       cursor = &view->next;
@@ -588,40 +614,110 @@ typedef struct {
   int32_t stride;        // Row bytes
 } MOUIWebViewSurfaceData;
 
-// Get surface data for a webview (offscreen rendering)
+// Get surface pointer for a webview (offscreen rendering)
 MOONBIT_FFI_EXPORT
-MOUIWebViewSurfaceData moui_linux_webview_get_surface_data(
+uint64_t moui_linux_webview_get_surface_ptr(
     uint64_t wl_surface,
     moonbit_bytes_t id
 ) {
-  MOUIWebViewSurfaceData result = {NULL, 0, 0, 0};
-
 #if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
   char *id_text = moui_linux_webview_bytes_to_cstr(id);
   MOUILinuxWebView *view = find_view(wl_surface, id_text);
   free(id_text);
 
   if (view == NULL || view->offscreen_window == NULL || !view->visible) {
-    return result;
+    return 0;
   }
 
   cairo_surface_t *surface = gtk_offscreen_window_get_surface(
       GTK_OFFSCREEN_WINDOW(view->offscreen_window));
 
   if (surface == NULL) {
-    return result;
+    return 0;
   }
 
-  result.surface_ptr = surface;
-  result.width = view->width;
-  result.height = view->height;
-  result.stride = cairo_image_surface_get_stride(surface);
+  return (uint64_t)(uintptr_t)surface;
 #else
   (void)wl_surface;
   (void)id;
+  return 0;
 #endif
+}
 
-  return result;
+// Get surface width for a webview
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_webview_get_surface_width(
+    uint64_t wl_surface,
+    moonbit_bytes_t id
+) {
+#if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
+  char *id_text = moui_linux_webview_bytes_to_cstr(id);
+  MOUILinuxWebView *view = find_view(wl_surface, id_text);
+  free(id_text);
+
+  if (view == NULL || view->offscreen_window == NULL || !view->visible) {
+    return 0;
+  }
+
+  return view->width;
+#else
+  (void)wl_surface;
+  (void)id;
+  return 0;
+#endif
+}
+
+// Get surface height for a webview
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_webview_get_surface_height(
+    uint64_t wl_surface,
+    moonbit_bytes_t id
+) {
+#if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
+  char *id_text = moui_linux_webview_bytes_to_cstr(id);
+  MOUILinuxWebView *view = find_view(wl_surface, id_text);
+  free(id_text);
+
+  if (view == NULL || view->offscreen_window == NULL || !view->visible) {
+    return 0;
+  }
+
+  return view->height;
+#else
+  (void)wl_surface;
+  (void)id;
+  return 0;
+#endif
+}
+
+// Get surface stride for a webview
+MOONBIT_FFI_EXPORT
+int32_t moui_linux_webview_get_surface_stride(
+    uint64_t wl_surface,
+    moonbit_bytes_t id
+) {
+#if defined(MOUI_LINUX_ENABLE_WEBKITGTK)
+  char *id_text = moui_linux_webview_bytes_to_cstr(id);
+  MOUILinuxWebView *view = find_view(wl_surface, id_text);
+  free(id_text);
+
+  if (view == NULL || view->offscreen_window == NULL || !view->visible) {
+    return 0;
+  }
+
+  cairo_surface_t *surface = gtk_offscreen_window_get_surface(
+      GTK_OFFSCREEN_WINDOW(view->offscreen_window));
+
+  if (surface == NULL) {
+    return 0;
+  }
+
+  return cairo_image_surface_get_stride(surface);
+#else
+  (void)wl_surface;
+  (void)id;
+  return 0;
+#endif
 }
 
 // Get pixel data from cairo surface
@@ -650,5 +746,3 @@ moonbit_bytes_t moui_linux_webview_get_surface_pixels(void* surface_ptr) {
   return moonbit_make_bytes(0, 0);
 #endif
 }
-
-#endif // !defined(MOUI_LINUX_ENABLE_CEF)

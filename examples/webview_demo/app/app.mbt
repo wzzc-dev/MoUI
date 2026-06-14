@@ -12,7 +12,7 @@ using @views {
 }
 
 ///|
-pub let default_url = "https://wzzc-dev.github.io/MoUI/"
+pub let default_url = "https://example.com/"
 
 ///|
 let web_view_id = "webview-demo-main"
