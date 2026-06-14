@@ -219,8 +219,8 @@ fn Model::result_count(self : Model) -> Int {
 pub fn runtime(
   width? : Double = 560.0,
   height? : Double = 360.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::simple(init=Model::new(), update~, view~),
     size=@core.Size::new(width~, height~),
   )

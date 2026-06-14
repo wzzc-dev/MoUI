@@ -13,7 +13,7 @@ pub struct HostWindowRuntimeSlots {
 ///|
 pub fn HostWindowRuntimeSlot::new(
   record~ : HostWindowRecord,
-  runtime~ : @core.AppRuntime,
+  runtime~ : @runtime.AppRuntime,
   schedule_redraw~ : () -> Unit,
 ) -> HostWindowRuntimeSlot {
   {

@@ -4,7 +4,7 @@ let macos_first_present_pump_limit = 16
 ///|
 pub fn run_app_with_renderer_provider(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   provider~ : MacosRendererProvider,
   options? : MacosHostAppOptions = MacosHostAppOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
@@ -23,7 +23,7 @@ pub fn run_app_with_renderer_provider(
 ///|
 pub fn run_app_with_renderer_provider_smoke(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   provider~ : MacosRendererProvider,
   options? : MacosHostAppOptions = MacosHostAppOptions::new(),
   smoke_options? : MacosHostSmokeOptions = MacosHostSmokeOptions::new(),
@@ -47,7 +47,7 @@ pub fn run_app_with_renderer_provider_smoke(
 ///|
 pub async fn run_app_with_renderer_provider_async_pump(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   provider~ : MacosRendererProvider,
   options? : MacosHostAppOptions = MacosHostAppOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
@@ -73,7 +73,7 @@ pub async fn run_app_with_renderer_provider_async_pump(
 ///|
 fn create_macos_app(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   provider~ : MacosRendererProvider,
   options~ : MacosHostAppOptions,
   smoke_options~ : MacosHostSmokeOptions,

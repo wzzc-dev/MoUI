@@ -131,7 +131,7 @@ fn diagnostic_native_text_field_view(
 }
 
 ///|
-fn focus_diagnostic_native_text_field(runtime : @core.AppRuntime) -> Unit {
+fn focus_diagnostic_native_text_field(runtime : @runtime.AppRuntime) -> Unit {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
@@ -266,7 +266,7 @@ test "diagnostic native skia zwj and color emoji samples keep caret coverage wit
 ///|
 test "diagnostic native skia text system drives runtime text field geometry" {
   let value = @core.State::new("")
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=diagnostic_native_text_field_view(value.binding()),
     size=@core.Size::new(width=220.0, height=80.0),
   )

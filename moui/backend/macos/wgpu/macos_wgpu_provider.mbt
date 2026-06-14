@@ -33,7 +33,7 @@ pub fn MacosWgpuSmokeOptions::new(
 }
 
 ///|
-pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
+pub fn run_app(title : String, runtime : @runtime.AppRuntime) -> Unit {
   run_app_with_options(
     title,
     runtime,
@@ -45,7 +45,7 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
 ///|
 pub fn run_app_with_options(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   options~ : MacosWgpuAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
@@ -63,7 +63,7 @@ pub fn run_app_with_options(
 ///|
 pub fn run_smoke_app_with_options(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   options~ : MacosWgpuAppOptions,
   smoke_options? : MacosWgpuSmokeOptions = MacosWgpuSmokeOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),

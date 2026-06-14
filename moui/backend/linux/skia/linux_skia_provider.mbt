@@ -29,7 +29,7 @@ pub fn LinuxSkiaSmokeOptions::new(
 }
 
 ///|
-pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
+pub fn run_app(title : String, runtime : @runtime.AppRuntime) -> Unit {
   run_app_with_options(
     title,
     runtime,
@@ -41,7 +41,7 @@ pub fn run_app(title : String, runtime : @core.AppRuntime) -> Unit {
 ///|
 pub fn run_app_with_options(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   options~ : LinuxSkiaAppOptions,
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
 ) -> Unit {
@@ -65,7 +65,7 @@ pub fn run_app_with_options(
 ///|
 pub fn run_smoke_app_with_options(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   options~ : LinuxSkiaAppOptions,
   smoke_options? : LinuxSkiaSmokeOptions = LinuxSkiaSmokeOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),

@@ -1,7 +1,7 @@
 ///|
 test "web view constructor exposes platform placement and events" {
   let seen = Ref("")
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=@views.web_view(
       id="docs",
       url="https://wzzc-dev.github.io/MoUI/",

@@ -344,7 +344,7 @@ fn assert_feature_card_stacked(
 }
 
 ///|
-fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
+fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard last_text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame")
   }
@@ -352,7 +352,7 @@ fn click_text(runtime : @core.AppRuntime, text : String) -> Unit raise {
 }
 
 ///|
-fn click_frame(runtime : @core.AppRuntime, frame : @core.Rect) -> Unit {
+fn click_frame(runtime : @runtime.AppRuntime, frame : @core.Rect) -> Unit {
   let point = @core.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,

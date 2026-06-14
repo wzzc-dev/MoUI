@@ -876,7 +876,7 @@ pub fn DesignSystemsApp::runtime(
   self : DesignSystemsApp,
   width? : Double = 960.0,
   height? : Double = 680.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   ignore(self)
   DesignSystemsModel::new().runtime(width~, height~)
 }
@@ -885,7 +885,7 @@ pub fn DesignSystemsApp::runtime(
 pub fn runtime(
   width? : Double = 960.0,
   height? : Double = 680.0,
-) -> @core.AppRuntime {
+) -> @runtime.AppRuntime {
   DesignSystemsModel::new().runtime(width~, height~)
 }
 
@@ -894,8 +894,8 @@ pub fn DesignSystemsModel::runtime(
   self : DesignSystemsModel,
   width? : Double = 960.0,
   height? : Double = 680.0,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_program(
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_program(
     program=@core.Program::simple(init=self, update~, view~),
     size=@core.Size::new(width~, height~),
   )

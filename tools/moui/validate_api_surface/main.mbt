@@ -86,6 +86,22 @@ fn package_budgets() -> Array[PackageBudget] {
       ],
     },
     {
+      label: "runtime facade",
+      path: "moui/runtime/pkg.generated.mbti",
+      package_token: "package \"wzzc-dev/moui/runtime\"",
+      max_lines: 80,
+      max_pub_lines: 10,
+      max_pub_all_lines: 0,
+      required_tokens: [
+        "\"wzzc-dev/moui/core\"", "pub using @core {type AppRuntime}", "pub fn[Model, Msg] new_program(",
+        "pub fn[Msg] new_view(",
+      ],
+      forbidden_tokens: [
+        "\"wzzc-dev/moui/backend", "\"wzzc-dev/moui/render", "moui_theme", "RuntimeState",
+        "ViewNode", "ViewSpec", "DrawCommand",
+      ],
+    },
+    {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
@@ -232,6 +248,59 @@ fn count_lines_with_prefix(text : String, prefix : String) -> Int {
 ///|
 fn read_repo_text(repo_root : String, path : String) -> Result[String, String] {
   @tools.read_required_text(@tools.resolve_path(repo_root, path), path)
+}
+
+///|
+fn skipped_directory_name(name : String) -> Bool {
+  name == ".git" ||
+  name == ".mooncakes" ||
+  name == "_build" ||
+  name == "artifacts"
+}
+
+///|
+fn read_dir_names(
+  path : String,
+  label : String,
+) -> Result[Array[String], String] {
+  if !@tools.directory_exists(path) {
+    return Err(label + " is missing: " + path)
+  }
+  let entries : Array[String] = @fs.read_dir(path) catch {
+    _ => return Err(label + " could not be read: " + path)
+  }
+  entries.sort()
+  Ok(entries)
+}
+
+///|
+fn collect_mbt_files(
+  repo_root : String,
+  relative_dir : String,
+  files : Array[String],
+  failures : Array[String],
+) -> Unit {
+  let absolute_dir = @tools.resolve_path(repo_root, relative_dir)
+  let entries = match read_dir_names(absolute_dir, relative_dir) {
+    Ok(values) => values
+    Err(message) => {
+      failures.push(message)
+      return
+    }
+  }
+  for entry in entries {
+    let relative = relative_dir + "/" + entry
+    let absolute = @tools.resolve_path(repo_root, relative)
+    if @tools.directory_exists(absolute) {
+      if !skipped_directory_name(entry) {
+        collect_mbt_files(repo_root, relative, files, failures)
+      }
+    } else if @tools.file_exists(absolute) &&
+      relative.has_suffix(".mbt") &&
+      !relative.has_suffix("pkg.generated.mbti") {
+      files.push(relative)
+    }
+  }
 }
 
 ///|
@@ -394,6 +463,45 @@ fn validate_root_facade_shape(
 }
 
 ///|
+fn runtime_consumer_roots() -> Array[String] {
+  [
+    "benchmarks", "examples", "moui/backend", "moui/tests", "moui/views", "moui_devtools",
+    "moui_tester", "website",
+  ]
+}
+
+///|
+fn validate_runtime_entrypoint_usage(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = []
+  for root in runtime_consumer_roots() {
+    collect_mbt_files(repo_root, root, files, failures)
+  }
+  let mut direct_core_runtime_uses = 0
+  for path in files {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    if text.contains("@core.AppRuntime") {
+      direct_core_runtime_uses += 1
+      failures.push(
+        path +
+        ": app/host runtime entrypoints must use @runtime.AppRuntime instead of @core.AppRuntime",
+      )
+    }
+  }
+  println(
+    "api surface: direct @core.AppRuntime consumer files=\{direct_core_runtime_uses}",
+  )
+}
+
+///|
 fn run_checks(repo_root : String) -> Array[String] {
   let failures : Array[String] = []
   for budget in package_budgets() {
@@ -401,6 +509,7 @@ fn run_checks(repo_root : String) -> Array[String] {
   }
   validate_root_facade_shape(repo_root, failures)
   validate_views_return_types(repo_root, failures)
+  validate_runtime_entrypoint_usage(repo_root, failures)
   failures
 }
 

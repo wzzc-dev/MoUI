@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/json",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
 }
 

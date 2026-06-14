@@ -248,7 +248,7 @@ test "macos backend converts resize event to host metrics" {
 
 ///|
 test "macos resize metrics update runtime driver logical size" {
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=(@core.View::empty() : @core.View[Unit]),
     size=@core.Size::new(width=10.0, height=10.0),
   )

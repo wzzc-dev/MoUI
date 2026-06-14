@@ -1,7 +1,7 @@
 ///|
 pub fn run_app_with_renderer_provider(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   provider~ : LinuxRendererProvider,
   options? : LinuxHostAppOptions = LinuxHostAppOptions::new(),
   window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
@@ -19,7 +19,7 @@ pub fn run_app_with_renderer_provider(
 ///|
 pub fn run_app_with_renderer_provider_smoke(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   provider~ : LinuxRendererProvider,
   options? : LinuxHostAppOptions = LinuxHostAppOptions::new(),
   smoke_options? : LinuxHostSmokeOptions = LinuxHostSmokeOptions::new(),
@@ -38,7 +38,7 @@ pub fn run_app_with_renderer_provider_smoke(
 ///|
 fn run_app_with_renderer_provider_internal(
   title : String,
-  runtime : @core.AppRuntime,
+  runtime : @runtime.AppRuntime,
   provider~ : LinuxRendererProvider,
   options~ : LinuxHostAppOptions,
   smoke_options~ : LinuxHostSmokeOptions,

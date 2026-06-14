@@ -248,7 +248,7 @@ fn smoke_text_field_view(value : @core.Binding[String]) -> @core.View[Unit] {
 }
 
 ///|
-fn focus_smoke_text_field(runtime : @core.AppRuntime) -> Unit {
+fn focus_smoke_text_field(runtime : @runtime.AppRuntime) -> Unit {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
@@ -426,7 +426,7 @@ fn ime_candidate_anchor_observation_available(
   text_system : @core.TextSystem,
 ) -> Bool {
   let value = @core.State::new("A\u{1F469}\u{200D}\u{1F4BB}B")
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=smoke_text_field_view(value.binding()),
     size=@core.Size::new(width=176.0, height=64.0),
   )
@@ -458,7 +458,7 @@ fn ime_composition_visual_observation_available(
   text_system : @core.TextSystem,
 ) -> Bool {
   let value = @core.State::new("x")
-  let runtime = @core.AppRuntime::new_view(
+  let runtime = @runtime.AppRuntime::new_view(
     root=smoke_text_field_view(value.binding()),
     size=@core.Size::new(width=176.0, height=64.0),
   )

@@ -1,6 +1,6 @@
 ///|
-fn test_runtime(root : @core.View[Unit]) -> @core.AppRuntime {
-  @core.AppRuntime::new_view(
+fn test_runtime(root : @core.View[Unit]) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=640.0, height=480.0),
   )

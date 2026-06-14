@@ -2,8 +2,8 @@
 fn host_test_runtime(
   root~ : @core.View[Unit],
   size~ : @core.Size,
-) -> @core.AppRuntime {
-  @core.AppRuntime::new_view(root~, size~)
+) -> @runtime.AppRuntime {
+  @runtime.AppRuntime::new_view(root~, size~)
 }
 
 ///|
