@@ -1163,6 +1163,18 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views wizard and dialog host presentation helpers compact",
     },
     {
+      path: "moui/views/dialog_alert.mbt",
+      max_lines: 85,
+      target_lines: 75,
+      reason: "keep views alert dialog content helper compact",
+    },
+    {
+      path: "moui/views/dialog_shell.mbt",
+      max_lines: 185,
+      target_lines: 165,
+      reason: "keep views custom dialog shell and action helpers compact",
+    },
+    {
       path: "moui/views/data_display_state.mbt",
       max_lines: 15,
       target_lines: 10,
