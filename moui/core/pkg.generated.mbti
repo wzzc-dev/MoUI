@@ -756,11 +756,7 @@ pub(all) struct Frame {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Frame::new(time_ms~ : Double, delta_ms~ : Double) -> Self
 
-pub(all) struct FrameProfile {
-  frame : Frame
-  dirty_count : Int
-  draw_command_count : Int
-} derive(Eq, ToJson, @debug.Debug)
+type FrameProfile derive(Eq)
 pub fn FrameProfile::capture(AppRuntime, Frame) -> Self
 
 pub(all) enum ImageFit {
