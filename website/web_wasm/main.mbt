@@ -2,7 +2,11 @@
 fn main {
   @web.run_app(
     "MoUI Website",
-    @website_app.runtime_with_services(@web.web_app_services()),
+    @runtime.new_program_with_dimensions(
+      program=@website_app.program_with_services(@web.web_app_services()),
+      width=1180.0,
+      height=760.0,
+    ),
   )
 }
 

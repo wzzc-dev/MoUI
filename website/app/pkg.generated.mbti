@@ -3,17 +3,68 @@ package "website/app"
 
 import {
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/core",
 }
 
 // Values
-pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn program() -> @core.Program[Model, Msg]
 
-pub fn runtime_with_services(@host.HostAppServices, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn program_with_services(@host.HostAppServices) -> @core.Program[Model, Msg]
 
 // Errors
 
 // Types and methods
+pub struct Model {
+  dark : Bool
+  body_scroll_y : Double
+  docs_scroll_y : Double
+  hero_count : Int
+  page : WebsitePage
+  selected_doc_slug : String
+  doc_state : WebsiteDocLoadState
+}
+
+pub enum Msg {
+  ToggleDark
+  ScrollBodyTo(Double)
+  ScrollDocsTo(Double)
+  CounterIncrement
+  CounterReset
+  OpenRepository
+  OpenHome
+  OpenHomeAt(Double)
+  OpenDocs
+  SelectDoc(String)
+  RetryDoc
+  HostDocsCompleted(@host.HostCompletedServiceResponse)
+}
+
+pub enum WebsiteDocBlock {
+  DocHeading(Int, String)
+  DocParagraph(String)
+  DocListItem(String, String)
+  DocQuote(String)
+  DocCodeBlock(String, String)
+  DocTable(Array[String])
+  DocRule
+}
+
+pub struct WebsiteDocDocument {
+  title : String
+  blocks : Array[WebsiteDocBlock]
+}
+
+pub enum WebsiteDocLoadState {
+  DocNotLoaded
+  DocLoading(@host.HostServiceRequestId, String)
+  DocLoaded(String, WebsiteDocDocument)
+  DocFailed(String, String)
+}
+
+pub enum WebsitePage {
+  WebsiteHome
+  WebsiteDocs
+}
 
 // Type aliases
 
