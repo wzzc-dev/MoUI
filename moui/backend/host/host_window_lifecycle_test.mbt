@@ -182,7 +182,7 @@ test "host window scene resolver maps open requests to runtimes" {
         HostWindowSceneInstance::new(
           request~,
           runtime=host_test_runtime(
-            root=@core.View::empty(),
+            root=@views.empty(),
             size=request.metrics.logical_size,
           ),
         ),
@@ -236,7 +236,7 @@ test "host window registry resolves scenes before registering opened windows" {
         HostWindowSceneInstance::new(
           request~,
           runtime=host_test_runtime(
-            root=@core.View::empty(),
+            root=@views.empty(),
             size=request.metrics.logical_size,
           ),
         ),

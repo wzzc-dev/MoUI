@@ -228,14 +228,23 @@ fn view_return_rules() -> Array[ViewReturnRule] {
 
 ///|
 fn line_count(text : String) -> Int {
-  let mut count = 0
-  for index in 0..<text.length() {
+  let end = for index = text.length(); index > 0; {
+    if text[index - 1] == '\n' {
+      continue index - 1
+    } else {
+      break index
+    }
+  } nobreak {
+    0
+  }
+  if end == 0 {
+    return 0
+  }
+  let mut count = 1
+  for index in 0..<end {
     if text[index] == '\n' {
       count += 1
     }
-  }
-  if text != "" && !text.has_suffix("\n") {
-    count += 1
   }
   count
 }

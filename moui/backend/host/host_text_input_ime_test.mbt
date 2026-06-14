@@ -2,12 +2,11 @@
 test "text input session enables updates and disables ime requests" {
   let text = @core.State::new("ab")
   let runtime = host_test_runtime(
-    root=@core.View::flex(
-      children=[host_test_text_field(text.binding(), width=120.0, height=40.0)],
-      axis=@core.Axis::Vertical,
+    root=@views.column(
+      [host_test_text_field(text.binding(), width=120.0, height=40.0)],
       spacing=4.0,
-      main_axis_alignment=@core.MainAxisAlignment::MainStart,
-      cross_axis_alignment=@core.CrossAxisAlignment::CrossStart,
+      justify=@views.MainAlign::Start,
+      align=@views.CrossAlign::Start,
     ),
     size=@core.Size::new(width=240.0, height=60.0),
   )
