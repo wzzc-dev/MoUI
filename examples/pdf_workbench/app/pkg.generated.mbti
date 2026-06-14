@@ -5,12 +5,13 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
 pub fn pdf_workbench_minimum_pdf_bytes() -> Bytes
 
-pub fn runtime(width? : Double, height? : Double) -> @core.AppRuntime
+pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
 
 // Errors
 
@@ -19,8 +20,8 @@ pub struct PdfWorkbenchApp {
   unit : Unit
 }
 pub fn PdfWorkbenchApp::new() -> Self
-pub fn PdfWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn PdfWorkbenchApp::runtime_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn PdfWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn PdfWorkbenchApp::runtime_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int, width? : Double, height? : Double) -> @runtime.AppRuntime
 
 pub(all) struct PdfWorkbenchCropBox {
   left : Double
@@ -110,8 +111,8 @@ pub struct PdfWorkbenchModel {
   last_event : String
 }
 pub fn PdfWorkbenchModel::new() -> Self
-pub fn PdfWorkbenchModel::runtime(Self, width? : Double, height? : Double) -> @core.AppRuntime
-pub fn PdfWorkbenchModel::runtime_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int, width? : Double, height? : Double) -> @core.AppRuntime
+pub fn PdfWorkbenchModel::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn PdfWorkbenchModel::runtime_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int, width? : Double, height? : Double) -> @runtime.AppRuntime
 
 pub(all) struct PdfWorkbenchPageSummary {
   page_number : Int
