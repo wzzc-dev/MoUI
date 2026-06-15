@@ -28,10 +28,12 @@ contextual commands, and editing workflows.
 Platform packages should stay thin. Shared editor behavior belongs in the app
 package or the framework package that owns the reusable capability.
 
-The shared app runtime is installed with `Program::simple` and
-`AppRuntime::new_program`. Editor input, toolbar actions, shortcuts, target
-field edits, selection changes, task toggles, and scroll updates enter through
-typed `MarkdownEditorMsg` values. The package still keeps a small internal
+The shared app exposes `MarkdownEditorApp::program` and
+`MarkdownEditorApp::program_with_services`; platform entrypoints and wbtest
+helpers construct the actual runtime through `moui/runtime`. Editor input,
+toolbar actions, shortcuts, target field edits, selection changes, task
+toggles, and scroll updates enter through typed `MarkdownEditorMsg` values. The
+package still keeps a small internal
 `@views.component` adapter at the app boundary so the demo/test
 `MarkdownEditorApp` handle can expose mutable document and target-state helpers
 while the mounted runtime rebuilds from the same state cells. Ordinary app code
@@ -213,7 +215,7 @@ The editor supports formatted editing for common block and inline structures:
   document generated from the same parsed Markdown snapshot, including
   headings, paragraphs, lists and task items, tables, code blocks, links,
   images, raw HTML blocks/inlines, footnotes, and escaped text/attributes.
-  The app exposes `MarkdownEditorApp::runtime_with_services`
+  The app exposes `MarkdownEditorApp::program_with_services`
   for hosts/tests that inject `HostAppServices`. The macOS and Windows native
   entrypoints pass their platform service bridges so file-dialog, text-file,
   clipboard, and target-opening transfer works in those hosts; the Web wasm-gc
