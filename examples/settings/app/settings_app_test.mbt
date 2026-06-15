@@ -41,7 +41,11 @@ test "settings saveable snapshot restores model state" {
 
 ///|
 test "settings runtime draws profile shell" {
-  let runtime = @app.runtime(width=920.0, height=620.0)
+  let runtime = @runtime.new_program_with_dimensions(
+    program=@app.program(),
+    width=920.0,
+    height=620.0,
+  )
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Settings"))
   assert_true(has_text(commands, "Profile"))
@@ -53,9 +57,13 @@ test "settings runtime draws profile shell" {
 
 ///|
 test "settings preferences section exposes theme controls" {
-  let runtime = SettingsModel::new()
-    .update(SelectSettingsSection("preferences"))
-    .runtime(width=920.0, height=620.0)
+  let runtime = @runtime.new_program_with_dimensions(
+    program=SettingsModel::new()
+      .update(SelectSettingsSection("preferences"))
+      .program(),
+    width=920.0,
+    height=620.0,
+  )
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "Preferences"))
   assert_true(has_text(commands, "Theme"))
@@ -67,7 +75,11 @@ test "settings preferences section exposes theme controls" {
 
 ///|
 test "settings runtime save button updates status" {
-  let runtime = @app.runtime(width=920.0, height=620.0)
+  let runtime = @runtime.new_program_with_dimensions(
+    program=@app.program(),
+    width=920.0,
+    height=620.0,
+  )
   assert_true(has_text(runtime.draw_commands(), "Saved: Not saved"))
   click_text(runtime, "Save Settings")
   assert_true(has_text(runtime.draw_commands(), "Saved: Profile"))
