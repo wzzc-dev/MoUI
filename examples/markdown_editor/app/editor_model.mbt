@@ -46,7 +46,7 @@ struct MarkdownEditorEditResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
-enum MarkdownEditorCommand {
+pub enum MarkdownEditorCommand {
   Bold
   Italic
   Code
