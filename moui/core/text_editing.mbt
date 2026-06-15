@@ -74,7 +74,7 @@ fn move_text_caret(
   } else {
     match active_text_selection(selection) {
       Some(selection) => {
-        let selection = boundaries.normalize_range(selection)
+        let selection = normalize_grapheme_range(boundaries, selection)
         match direction {
           MoveLeft => { caret: selection.start, selection: None }
           MoveRight => { caret: selection.end, selection: None }

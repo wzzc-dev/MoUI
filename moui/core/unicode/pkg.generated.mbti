@@ -1,0 +1,50 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/core/unicode"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn next_grapheme_caret_boundary(String, Int) -> Int
+
+pub fn previous_grapheme_caret_boundary(String, Int) -> Int
+
+pub fn stabilize_grapheme_cluster_carets(String, Array[Double]) -> Array[Double]
+
+// Errors
+
+// Types and methods
+pub(all) struct GraphemeRange {
+  start : Int
+  end : Int
+} derive(Eq, @debug.Debug)
+pub fn GraphemeRange::collapsed(Int) -> Self
+pub fn GraphemeRange::is_collapsed(Self) -> Bool
+pub fn GraphemeRange::new(start~ : Int, end~ : Int) -> Self
+pub fn GraphemeRange::normalized(Self) -> Self
+
+pub struct TextGraphemeBoundaries {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn TextGraphemeBoundaries::boundaries(Self) -> Array[Int]
+pub fn TextGraphemeBoundaries::ceil_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::clamp_index(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::cluster_count(Self) -> Int
+pub fn TextGraphemeBoundaries::delete_range(Self, Int, Int, Int) -> GraphemeRange
+pub fn TextGraphemeBoundaries::floor_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::is_boundary(Self, Int) -> Bool
+pub fn TextGraphemeBoundaries::length(Self) -> Int
+pub fn TextGraphemeBoundaries::nearest_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::nearest_boundary_utf8_offset(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::new(text~ : String) -> Self
+pub fn TextGraphemeBoundaries::next_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::normalize_range(Self, GraphemeRange) -> GraphemeRange
+pub fn TextGraphemeBoundaries::previous_boundary(Self, Int) -> Int
+pub fn TextGraphemeBoundaries::text(Self) -> String
+pub fn TextGraphemeBoundaries::utf8_offset(Self, Int) -> Int
+
+// Type aliases
+
+// Traits
+

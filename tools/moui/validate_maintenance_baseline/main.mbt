@@ -606,7 +606,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/text_grapheme_boundary_conformance_wbtest.mbt",
-      max_lines: 230,
+      max_lines: 235,
       target_lines: 205,
       reason: "keep core grapheme boundary, delete-range, and UTF-8 offset conformance tests compact",
     },

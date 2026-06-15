@@ -3,6 +3,7 @@ package "wzzc-dev/moui/core"
 
 import {
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/core/unicode",
 }
 
 // Values
@@ -14,9 +15,15 @@ pub fn animated_value(from~ : Double, to~ : Double, progress~ : Double, easing? 
 
 pub fn default_text_commands() -> Array[ActionCommand]
 
+pub fn delete_grapheme_range(@unicode.TextGraphemeBoundaries, Int, Int, Int) -> TextRange
+
+pub fn fallback_stabilize_grapheme_cluster_carets(String, Array[Double]) -> Array[Double]
+
 pub fn focus_scope_command_intent(KeyboardEvent) -> CommandIntent?
 
 pub fn hit_test(LayoutResult, Point) -> Bool
+
+pub fn normalize_grapheme_range(@unicode.TextGraphemeBoundaries, TextRange) -> TextRange
 
 pub fn required_field(message? : String) -> (String) -> String?
 
@@ -27,6 +34,10 @@ pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, Rect, Font
 pub fn rich_text_document_height(RichTextDocument, FontSpec) -> Double
 
 pub fn rich_text_editor_content_rect(Rect) -> Rect
+
+pub fn text_next_grapheme_caret_boundary(String, Int) -> Int
+
+pub fn text_previous_grapheme_caret_boundary(String, Int) -> Int
 
 pub fn validate_form(Array[FormFieldState]) -> FormValidationResult
 
@@ -1610,26 +1621,6 @@ pub(all) struct TextFieldStyle {
 pub fn TextFieldStyle::filled(theme? : Theme) -> Self
 pub fn TextFieldStyle::outline(theme? : Theme) -> Self
 
-pub struct TextGraphemeBoundaries {
-  // private fields
-} derive(Eq, ToJson, @debug.Debug)
-pub fn TextGraphemeBoundaries::boundaries(Self) -> Array[Int]
-pub fn TextGraphemeBoundaries::ceil_boundary(Self, Int) -> Int
-pub fn TextGraphemeBoundaries::clamp_index(Self, Int) -> Int
-pub fn TextGraphemeBoundaries::cluster_count(Self) -> Int
-pub fn TextGraphemeBoundaries::delete_range(Self, Int, Int, Int) -> TextRange
-pub fn TextGraphemeBoundaries::floor_boundary(Self, Int) -> Int
-pub fn TextGraphemeBoundaries::is_boundary(Self, Int) -> Bool
-pub fn TextGraphemeBoundaries::length(Self) -> Int
-pub fn TextGraphemeBoundaries::nearest_boundary(Self, Int) -> Int
-pub fn TextGraphemeBoundaries::nearest_boundary_utf8_offset(Self, Int) -> Int
-pub fn TextGraphemeBoundaries::new(text~ : String) -> Self
-pub fn TextGraphemeBoundaries::next_boundary(Self, Int) -> Int
-pub fn TextGraphemeBoundaries::normalize_range(Self, TextRange) -> TextRange
-pub fn TextGraphemeBoundaries::previous_boundary(Self, Int) -> Int
-pub fn TextGraphemeBoundaries::text(Self) -> String
-pub fn TextGraphemeBoundaries::utf8_offset(Self, Int) -> Int
-
 pub(all) enum TextInputEvent {
   InsertText(String)
   CompositionStart
@@ -2034,6 +2025,8 @@ pub fn WebViewSpec::new(id~ : String, url~ : String, width? : Double?, height? :
 
 // Type aliases
 pub type RichTextFormatter = (String) -> RichTextDocument
+
+pub using @unicode {type TextGraphemeBoundaries}
 
 // Traits
 

@@ -8,7 +8,8 @@ fn append_text_field_selection_commands(
 ) -> Unit {
   match active_text_selection(selection) {
     Some(selection) => {
-      let selection = TextGraphemeBoundaries::new(text~).normalize_range(
+      let selection = normalize_grapheme_range(
+        TextGraphemeBoundaries::new(text~),
         selection,
       )
       let start = clamp_int(

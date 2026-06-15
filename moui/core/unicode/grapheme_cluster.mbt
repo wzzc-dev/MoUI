@@ -1,8 +1,62 @@
+///| A lightweight half-open codepoint range `[start, end)` used by the
+///| grapheme boundary API. It mirrors `@core.TextRange` but keeps this
+///| package free of any core dependency.
+pub(all) struct GraphemeRange {
+  start : Int
+  end : Int
+} derive(Eq, Debug)
+
+///|
+pub fn GraphemeRange::new(start~ : Int, end~ : Int) -> GraphemeRange {
+  { start, end }
+}
+
+///|
+pub fn GraphemeRange::collapsed(index : Int) -> GraphemeRange {
+  { start: index, end: index }
+}
+
+///|
+pub fn GraphemeRange::normalized(
+  self : GraphemeRange,
+) -> GraphemeRange {
+  if self.start <= self.end {
+    self
+  } else {
+    { start: self.end, end: self.start }
+  }
+}
+
+///|
+pub fn GraphemeRange::is_collapsed(self : GraphemeRange) -> Bool {
+  self.start == self.end
+}
+
+///|
+fn max_int(a : Int, b : Int) -> Int {
+  if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
+fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+  if value < min {
+    min
+  } else if value > max {
+    max
+  } else {
+    value
+  }
+}
+
 ///|
 pub struct TextGraphemeBoundaries {
   priv text : String
   priv boundaries : Array[Int]
-} derive(Eq, Debug, ToJson)
+} derive(Eq, Debug)
 
 ///|
 pub fn TextGraphemeBoundaries::new(text~ : String) -> TextGraphemeBoundaries {
@@ -152,13 +206,13 @@ pub fn TextGraphemeBoundaries::nearest_boundary(
 ///|
 pub fn TextGraphemeBoundaries::normalize_range(
   self : TextGraphemeBoundaries,
-  range : TextRange,
-) -> TextRange {
+  range : GraphemeRange,
+) -> GraphemeRange {
   let normalized = range.normalized()
   if normalized.is_collapsed() {
-    TextRange::collapsed(self.nearest_boundary(normalized.start))
+    GraphemeRange::collapsed(self.nearest_boundary(normalized.start))
   } else {
-    TextRange::new(
+    GraphemeRange::new(
       start=self.floor_boundary(normalized.start),
       end=self.ceil_boundary(normalized.end),
     )
@@ -171,7 +225,7 @@ pub fn TextGraphemeBoundaries::delete_range(
   caret : Int,
   before : Int,
   after : Int,
-) -> TextRange {
+) -> GraphemeRange {
   let mut start = self.nearest_boundary(caret)
   let mut end = start
   for _ in 0..<max_int(0, before) {
@@ -180,7 +234,7 @@ pub fn TextGraphemeBoundaries::delete_range(
   for _ in 0..<max_int(0, after) {
     end = self.next_boundary(end)
   }
-  TextRange::new(start~, end~)
+  GraphemeRange::new(start~, end~)
 }
 
 ///|
@@ -202,7 +256,7 @@ pub fn TextGraphemeBoundaries::nearest_boundary_utf8_offset(
 }
 
 ///|
-fn fallback_stabilize_grapheme_cluster_carets(
+pub fn stabilize_grapheme_cluster_carets(
   text : String,
   carets : Array[Double],
 ) -> Array[Double] {
@@ -216,7 +270,7 @@ fn fallback_stabilize_grapheme_cluster_carets(
     let start = boundaries[boundary_index]
     let end = boundaries[boundary_index + 1]
     if end > start + 1 {
-      fallback_stabilize_caret_cluster(adjusted, start, end)
+      stabilize_caret_cluster(adjusted, start, end)
     }
   }
   adjusted
@@ -270,7 +324,7 @@ fn fallback_grapheme_should_break(
 }
 
 ///|
-fn fallback_stabilize_caret_cluster(
+fn stabilize_caret_cluster(
   carets : Array[Double],
   start : Int,
   end : Int,
@@ -288,12 +342,12 @@ fn fallback_stabilize_caret_cluster(
 }
 
 ///|
-fn text_previous_grapheme_caret_boundary(text : String, caret : Int) -> Int {
+pub fn previous_grapheme_caret_boundary(text : String, caret : Int) -> Int {
   TextGraphemeBoundaries::new(text~).previous_boundary(caret)
 }
 
 ///|
-fn text_next_grapheme_caret_boundary(text : String, caret : Int) -> Int {
+pub fn next_grapheme_caret_boundary(text : String, caret : Int) -> Int {
   TextGraphemeBoundaries::new(text~).next_boundary(caret)
 }
 
