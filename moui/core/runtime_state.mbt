@@ -1,5 +1,5 @@
 ///|
-struct RuntimeState {
+priv struct RuntimeState {
   mut root_spec : ViewSpec
   mut element_tree : ElementTree
   mut layout_tree : LayoutTree
