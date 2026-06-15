@@ -146,7 +146,7 @@ test "action commands match enabled shortcuts" {
       KeyboardEvent::new(key="v", modifiers=KeyModifiers::new(meta=true)),
     ),
   )
-  let defaults = default_text_commands()
+  let defaults = @core.default_text_commands()
   inspect(defaults.length(), content="6")
   assert_true(defaults.any(command => command.intent == CommandIntent::Cut))
   assert_true(defaults.any(command => command.intent == CommandIntent::Undo))
