@@ -40,7 +40,7 @@ and `website/`, excluding generated `pkg.generated.mbti` files, vendored
 The guard tracks three budgets:
 
 - oversized file ratchets for current hotspots such as `moui/core/view.mbt`,
-  `moui/core/runtime_wbtest.mbt`, `moui/views/views_test.mbt`,
+  `moui/runtime/runtime_view_smoke_wbtest.mbt`, `moui/views/views_test.mbt`,
   `moui/backend/host/host_test.mbt`, Skia renderer text/tests, and large
   example app files;
 - direct package source `pub(all)` counts for core, views, host, render,
