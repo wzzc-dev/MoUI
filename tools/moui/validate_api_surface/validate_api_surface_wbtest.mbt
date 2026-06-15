@@ -173,6 +173,23 @@ test "core descriptor payloads stay opaque" {
 }
 
 ///|
+test "core program runtime ownership guard covers moved implementation" {
+  let tokens = forbidden_core_program_runtime_source_tokens().map(rule => {
+    rule.token
+  })
+  assert_true(tokens.contains("ProgramRuntimeDiagnostics"))
+  assert_true(tokens.contains("program_message_drain_limit"))
+  assert_true(tokens.contains("pending_messages"))
+  assert_true(tokens.contains("start_effect_task("))
+  assert_true(tokens.contains("sync_subscriptions("))
+  assert_true(tokens.contains("RuntimeKernel::new_program("))
+  let paths = forbidden_core_program_runtime_source_paths()
+  assert_true(paths.contains("moui/core/program_runtime_diagnostics.mbt"))
+  assert_true(paths.contains("moui/core/program_runtime_effect_tasks.mbt"))
+  assert_true(paths.contains("moui/core/program_runtime_subscriptions.mbt"))
+}
+
+///|
 test "core view construction is reserved for views facade consumers" {
   inspect(core_control_consumer_roots().contains("moui/views"), content="false")
   inspect(runtime_consumer_roots().contains("moui/views"), content="true")
