@@ -159,9 +159,9 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="2096")
-  inspect(core.max_pub_lines, content="603")
-  inspect(core.max_pub_all_lines, content="156")
+  inspect(core.max_lines, content="2083")
+  inspect(core.max_pub_lines, content="602")
+  inspect(core.max_pub_all_lines, content="154")
   assert_true(
     core.forbidden_tokens.contains("pub(all) struct EffectDescriptor"),
   )
