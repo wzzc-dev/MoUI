@@ -5,9 +5,10 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 ## Scope
 
 - Platform-neutral `core` contracts, opaque views, environment/event/geometry
-  and draw models, plus a narrow `RuntimeKernel` contract seam consumed by
-  `moui/runtime` for view-tree/layout/paint handoff. `RuntimeState` and tree
-  payloads remain private engine details.
+  and draw models, plus the runtime-only `ViewLoweringSink` /
+  `View::lower_for_runtime` seam consumed by `moui/runtime`. Persistent
+  runtime state, element/render trees, layout, paint, event dispatch, and
+  program execution are runtime-owned and are not exposed from `core`.
 - `moui/runtime` is the app/host runtime entrypoint package. It exposes opaque
   `@runtime.AppRuntime` construction/query/dispatch methods and owns program
   message drain, effect task, subscription lifecycle, and runtime diagnostics.
@@ -40,8 +41,8 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 
 ```text
 moui/                         root public facade workspace member
-moui/core/                    platform-neutral contracts plus the narrow RuntimeKernel seam for runtime-owned AppRuntime handoff
-moui/runtime/                 opaque app/host AppRuntime entrypoint and program runtime execution
+moui/core/                    platform-neutral contracts plus the runtime-only view lowering seam
+moui/runtime/                 opaque app/host AppRuntime entrypoint, runtime state, tree/layout/paint, and program execution
 moui/views/                   public view constructors
 moui_theme/common/            addon diagnostic common source-mapped design-system model, aggregate design-system reports, token taxonomy reports, semantic palette role reports, typography role reports, golden mappings, source usage audits, source-lock quality reports, source-package inventories, source-imported token records, coverage gaps, integrity reports, runtime token alignment, official-token/source-lock coverage, token-group resolver reports, density resolver reports, variant resolver reports, customization capability reports, component-token matrices, adaptation reports, semantic/component tokens, coverage manifests, and custom Theme builders
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints over common tokens, manifests, reports, component matrices, and light/dark/high-contrast/system Theme helpers

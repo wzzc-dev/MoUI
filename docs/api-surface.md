@@ -23,13 +23,15 @@ contracts for platform and renderer integration.
   Runtime consumers should type and construct runtimes through
   `@runtime.AppRuntime`, `@runtime.new_view`, `@runtime.new_program`, or the
   width/height entrypoint helper `@runtime.new_program_with_dimensions`. Core
-  no longer exposes `@core.AppRuntime` or `RuntimeState`; runtime owns program
-  execution and uses only the low-level `RuntimeKernel` contract seam for
-  tree, layout, and paint handoff.
+  no longer exposes `@core.AppRuntime`, `RuntimeKernel`, or `RuntimeState`;
+  runtime owns program execution, runtime state, tree/layout/paint, event
+  dispatch, and uses only the `ViewLoweringSink` / `View::lower_for_runtime`
+  contract seam to lower opaque views.
 - Core framework API: `moui/core`. This owns `View[Msg]`, `Program`, `Effect`,
   `Subscription`, layout, input, semantics, draw-command, diagnostic snapshot,
-  and renderer-neutral platform-view contracts, plus private engine state behind
-  the `RuntimeKernel` seam used by `moui/runtime`. It may expose diagnostic and
+  renderer-neutral platform-view contracts, and the runtime-only view lowering
+  seam used by `moui/runtime`. It does not expose `RuntimeKernel`,
+  `RuntimeState`, `ViewSpec`, `ElementNode`, or `ElementTree`. It may expose diagnostic and
   support records while the prototype matures, but implementation payloads
   should not leak into the root facade. Component-facing contracts such as
   `BuildContext` keep runtime/effect storage fields private and expose behavior
@@ -67,8 +69,11 @@ entrypoint. It checks current generated interface files for:
 - line and exported-declaration budgets on key packages;
 - root facade imports and forbidden host/renderer/runtime tokens;
 - `moui/runtime` existence, an opaque `AppRuntime` with bounded runtime methods,
-  runtime source not wrapping `@core.AppRuntime`, and app/host source usage of
-  `@runtime.AppRuntime`;
+  runtime source not wrapping `@core.AppRuntime` or `@core.RuntimeKernel`, and
+  app/host source usage of `@runtime.AppRuntime`;
+- final core/runtime boundary tokens: `RuntimeKernel`, `RuntimeState`,
+  `ViewSpec`, `ElementNode`, and `ElementTree` must not appear in the core
+  generated public API;
 - backend generated interfaces exposing `@runtime.AppRuntime` rather than the
   old `@core.AppRuntime` path, plus a zero-budget guard that prevents shared
   app packages from default-importing `moui/runtime`;

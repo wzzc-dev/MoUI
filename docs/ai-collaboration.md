@@ -26,9 +26,10 @@ workflow for agents and maintainers.
   ```
 
 - `core/` owns platform-neutral contracts, opaque views, events, geometry,
-  draw/semantics/text/theme contracts, and the narrow `RuntimeKernel` seam;
-  `moui/runtime` owns `AppRuntime`, program message drain, effect tasks,
-  subscriptions, and runtime diagnostics.
+  draw/semantics/text/theme contracts, and the runtime-only view lowering seam;
+  `moui/runtime` owns `AppRuntime`, runtime state, tree/layout/paint, event
+  dispatch, program message drain, effect tasks, subscriptions, and runtime
+  diagnostics.
 - `views/` owns public constructor helpers and should reuse core primitive
   builders, bindings, styles, and modifiers without exposing lowering details.
 - `backend/host/` owns `HostEvent`, surface metrics, input contracts, file
