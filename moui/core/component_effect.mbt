@@ -38,6 +38,20 @@ fn ComponentEffect::cancel_with_reason(
 }
 
 ///|
+pub fn ComponentEffect::finish_reuse(
+  old_effects : Array[ComponentEffect],
+  reason? : ComponentEffectCancelReason = ComponentEffectCancelReason::EffectKeyChanged,
+  cancel_reused? : Bool = false,
+) -> Unit {
+  for effect in old_effects {
+    if cancel_reused || !effect.reused {
+      effect.cancel_with_reason(reason)
+    }
+    effect.reused = false
+  }
+}
+
+///|
 pub fn BuildContext::run_effect(
   self : BuildContext,
   key~ : String,
@@ -75,7 +89,5 @@ fn cancel_component_effects(
   effects : Array[ComponentEffect],
   reason? : ComponentEffectCancelReason = ComponentEffectCancelReason::EffectUnmounted,
 ) -> Unit {
-  for effect in effects {
-    effect.cancel_with_reason(reason)
-  }
+  ComponentEffect::finish_reuse(effects, reason~, cancel_reused=true)
 }
