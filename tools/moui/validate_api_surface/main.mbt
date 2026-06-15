@@ -516,7 +516,7 @@ fn max_shared_app_runtime_imports() -> Int {
 
 ///|
 fn max_shared_app_core_imports() -> Int {
-  9
+  8
 }
 
 ///|

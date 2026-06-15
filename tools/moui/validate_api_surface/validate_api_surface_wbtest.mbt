@@ -96,7 +96,7 @@ test "shared app runtime import guard ignores test-only imports" {
 
 ///|
 test "shared app core import guard tracks default imports" {
-  inspect(max_shared_app_core_imports(), content="9")
+  inspect(max_shared_app_core_imports(), content="8")
   let default_import =
     #|import {
     #|  "wzzc-dev/moui",

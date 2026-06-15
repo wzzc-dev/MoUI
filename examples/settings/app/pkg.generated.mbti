@@ -2,6 +2,7 @@
 package "examples/settings/app"
 
 import {
+  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
 }
 
@@ -31,14 +32,12 @@ pub(all) struct SettingsModel {
   telemetry : Bool
   saved_label : String
 }
-pub fn SettingsModel::from_store(@core.SaveableStateStore) -> Self
 pub fn SettingsModel::new() -> Self
 pub fn SettingsModel::program(Self) -> @core.Program[Self, SettingsMsg]
-pub fn SettingsModel::restore_from_snapshot(@core.SaveableStateSnapshot) -> Self
-pub fn SettingsModel::save_snapshot(Self) -> @core.SaveableStateSnapshot
+pub fn SettingsModel::restore_from_snapshot(SettingsSnapshot) -> Self
+pub fn SettingsModel::save_snapshot(Self) -> SettingsSnapshot
 pub fn SettingsModel::update(Self, SettingsMsg) -> Self
 pub fn SettingsModel::view(Self) -> @core.View[SettingsMsg]
-pub fn SettingsModel::write_to_store(Self, @core.SaveableStateStore) -> Unit
 
 pub(all) enum SettingsMsg {
   SelectSettingsSection(String)
@@ -51,6 +50,17 @@ pub(all) enum SettingsMsg {
   SaveSettings
   ResetSettings
 }
+
+pub struct SettingsSnapshot {
+  selected_section : String
+  display_name : String
+  email : String
+  workspace : String
+  theme_mode : String
+  notifications : Bool
+  telemetry : Bool
+  saved_label : String
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 
