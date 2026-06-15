@@ -271,7 +271,7 @@ pub fn[T] BuildContext::save(
   value : T,
   codec : SaveableCodec[T],
 ) -> Unit {
-  self.runtime.saveable_state.set(self.scoped_saveable_key(key), value, codec)
+  self.saveable_state.set(self.scoped_saveable_key(key), value, codec)
 }
 
 ///|
@@ -280,7 +280,7 @@ pub fn[T] BuildContext::restore(
   key~ : String,
   codec : SaveableCodec[T],
 ) -> T? {
-  self.runtime.saveable_state.get(self.scoped_saveable_key(key), codec)
+  self.saveable_state.get(self.scoped_saveable_key(key), codec)
 }
 
 ///|
@@ -291,17 +291,15 @@ pub fn[T] BuildContext::saveable(
   codec : SaveableCodec[T],
 ) -> State[T] {
   let scoped = self.scoped_saveable_key(key)
-  let restored = self.runtime.saveable_state
-    .get(scoped, codec)
-    .unwrap_or(initial)
+  let restored = self.saveable_state.get(scoped, codec).unwrap_or(initial)
   let state = State::new(restored)
-  let store = self.runtime.saveable_state
-  let runtime = self.runtime
+  let store = self.saveable_state
+  let request_rebuild = self.request_component_rebuild
   let component_id = self.component_id
   self.subscriptions.push(
     state.subscribe(() => {
       store.set(scoped, state.get(), codec)
-      runtime.request_component_rebuild(component_id)
+      request_rebuild(component_id)
     }),
   )
   store.set(scoped, state.get(), codec)

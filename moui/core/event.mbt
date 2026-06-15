@@ -160,6 +160,16 @@ pub fn CompositionUpdate::new(
 }
 
 ///|
+pub fn CompositionUpdate::text(self : CompositionUpdate) -> String {
+  self.text
+}
+
+///|
+pub fn CompositionUpdate::cursor(self : CompositionUpdate) -> TextRange? {
+  self.cursor
+}
+
+///|
 pub fn DragDropEvent::new(
   phase~ : DragDropPhase,
   paths? : Array[String] = [],

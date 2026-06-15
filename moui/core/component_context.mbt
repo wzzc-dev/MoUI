@@ -1,7 +1,9 @@
 ///|
 pub struct BuildContext {
-  priv runtime : RuntimeState
   priv component_id : ElementId
+  priv request_component_rebuild : (ElementId) -> Unit
+  priv viewport_size : Size
+  priv saveable_state : SaveableStateStore
   priv subscriptions : Array[StateSubscription]
   priv effects : Array[ComponentEffect]
   priv old_effects : Array[ComponentEffect]
@@ -21,6 +23,29 @@ priv struct ComponentBuildResult {
 }
 
 ///|
+pub fn BuildContext::new_for_runtime(
+  component_id~ : ElementId,
+  request_component_rebuild~ : (ElementId) -> Unit,
+  viewport_size~ : Size,
+  saveable_state~ : SaveableStateStore,
+  subscriptions~ : Array[StateSubscription],
+  effects~ : Array[ComponentEffect],
+  old_effects~ : Array[ComponentEffect],
+  environment~ : Environment,
+) -> BuildContext {
+  {
+    component_id,
+    request_component_rebuild,
+    viewport_size,
+    saveable_state,
+    subscriptions,
+    effects,
+    old_effects,
+    environment,
+  }
+}
+
+///|
 fn Component::new(build : (BuildContext) -> ViewSpec) -> Component {
   { build, }
 }
@@ -29,7 +54,7 @@ fn Component::new(build : (BuildContext) -> ViewSpec) -> Component {
 pub fn[T] BuildContext::watch(self : BuildContext, state : State[T]) -> T {
   let component_id = self.component_id
   let subscription = state.subscribe(() => {
-    self.runtime.request_component_rebuild(component_id)
+    (self.request_component_rebuild)(component_id)
   })
   self.subscriptions.push(subscription)
   state.get()
@@ -43,7 +68,7 @@ pub fn[T] BuildContext::watch_derived(
   let component_id = self.component_id
   for
     subscription in state.subscribe(() => {
-      self.runtime.request_component_rebuild(component_id)
+      (self.request_component_rebuild)(component_id)
     }) {
     self.subscriptions.push(subscription)
   }
@@ -57,7 +82,7 @@ pub fn[T] BuildContext::binding(
 ) -> Binding[T] {
   let component_id = self.component_id
   let subscription = state.subscribe(() => {
-    self.runtime.request_component_rebuild(component_id)
+    (self.request_component_rebuild)(component_id)
   })
   self.subscriptions.push(subscription)
   state.binding()
@@ -167,7 +192,7 @@ pub fn BuildContext::scale_factor(self : BuildContext) -> Double {
 
 ///|
 pub fn BuildContext::viewport_size(self : BuildContext) -> Size {
-  self.runtime.size
+  self.viewport_size
 }
 
 ///|
@@ -223,19 +248,19 @@ fn build_component_spec(
   let subscriptions : Array[StateSubscription] = []
   let effects : Array[ComponentEffect] = []
   let context = BuildContext::{
-    runtime,
     component_id,
+    request_component_rebuild: id => runtime.request_component_rebuild(id),
+    viewport_size: runtime.size,
+    saveable_state: runtime.saveable_state,
     subscriptions,
     effects,
     old_effects,
     environment: runtime.environment,
   }
   let child_spec = (component.build)(context)
-  for effect in old_effects {
-    if !effect.reused {
-      effect.cancel_with_reason(ComponentEffectCancelReason::EffectKeyChanged)
-    }
-    effect.reused = false
-  }
+  ComponentEffect::finish_reuse(
+    old_effects,
+    reason=ComponentEffectCancelReason::EffectKeyChanged,
+  )
   { child_spec, subscriptions, effects }
 }

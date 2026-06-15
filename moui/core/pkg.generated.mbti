@@ -158,6 +158,7 @@ pub fn BuildContext::enabled(Self) -> Bool
 pub fn BuildContext::environment(Self) -> Environment
 pub fn BuildContext::layout_direction(Self) -> LayoutDirection
 pub fn BuildContext::locale(Self) -> String
+pub fn BuildContext::new_for_runtime(component_id~ : ElementId, request_component_rebuild~ : (ElementId) -> Unit, viewport_size~ : Size, saveable_state~ : SaveableStateStore, subscriptions~ : Array[StateSubscription], effects~ : Array[ComponentEffect], old_effects~ : Array[ComponentEffect], environment~ : Environment) -> Self
 pub fn BuildContext::on_dispose(Self, key~ : String, () -> Unit) -> Unit
 pub fn BuildContext::on_mount(Self, key~ : String, () -> Unit) -> Unit
 pub fn BuildContext::on_unmount(Self, key~ : String, () -> Unit) -> Unit
@@ -274,6 +275,7 @@ pub(all) enum CommandIntent {
 pub fn CommandIntent::display_label(Self) -> String
 
 type ComponentEffect
+pub fn ComponentEffect::finish_reuse(Array[Self], reason? : ComponentEffectCancelReason, cancel_reused? : Bool) -> Unit
 
 pub(all) enum ComponentEffectCancelReason {
   EffectKeyChanged
@@ -282,7 +284,9 @@ pub(all) enum ComponentEffectCancelReason {
 } derive(Eq, ToJson, @debug.Debug)
 
 type CompositionUpdate derive(Eq, ToJson, @debug.Debug)
+pub fn CompositionUpdate::cursor(Self) -> TextRange?
 pub fn CompositionUpdate::new(text~ : String, cursor? : TextRange?) -> Self
+pub fn CompositionUpdate::text(Self) -> String
 
 pub(all) struct Constraints {
   min : Size
@@ -876,6 +880,8 @@ pub(all) enum PathVerb {
 } derive(Eq, ToJson, @debug.Debug)
 
 type PickerItem
+pub fn PickerItem::id(Self) -> String
+pub fn PickerItem::label(Self) -> String
 pub fn PickerItem::new(id~ : String, label~ : String) -> Self
 
 pub(all) struct PickerStyle {
