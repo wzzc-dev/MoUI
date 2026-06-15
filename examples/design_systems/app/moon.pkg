@@ -1,5 +1,5 @@
 import {
-  "wzzc-dev/moui/core",
+  "wzzc-dev/moui",
   "wzzc-dev/moui/views",
   "wzzc-dev/moui_theme/carbon",
   "wzzc-dev/moui_theme/common",
@@ -9,6 +9,7 @@ import {
 }
 
 import {
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
 } for "test"
 

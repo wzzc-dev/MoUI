@@ -45,9 +45,10 @@ paths, or abstractions that only preserve old shapes.
 - `views/` is a facade over core primitive builders. Public constructors return
   opaque `@core.View[Msg]`; app, host, smoke, and cross-package tests should
   use `views` widget-level entrypoints instead of direct `@core.View::*`
-  control constructors. Control-specific app-facing event, policy, or metadata
-  aliases such as WebView events and action commands belong here rather than in
-  the root facade. `ViewSpec` and node payloads stay inside `core`.
+  control constructors. Control-specific app-facing event, policy, metadata, or
+  style aliases such as WebView events, action commands, and colors belong here
+  rather than in the root facade. `ViewSpec` and node payloads stay inside
+  `core`.
 - `moui_theme/common/` owns the repo-local addon design-system common surface:
   shared source-mapped design-system
   manifests, golden token mappings, golden source-usage audits,

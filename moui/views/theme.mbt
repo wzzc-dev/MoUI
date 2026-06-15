@@ -1,4 +1,10 @@
 ///|
+pub using @core {type Color}
+
+///|
+pub using @core {type ColorScheme}
+
+///|
 pub fn theme(
   base? : @core.Theme,
   font? : @core.FontSpec,

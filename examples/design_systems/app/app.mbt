@@ -30,7 +30,7 @@ pub(all) enum DesignSystemChoice {
 ///|
 pub(all) struct DesignSystemsModel {
   preset : DesignSystemChoice
-  scheme : @core.ColorScheme
+  scheme : @views.ColorScheme
   variant : @common.DesignSchemeVariant
   density : @common.DesignDensity
   custom_enabled : Bool
@@ -58,7 +58,7 @@ pub fn DesignSystemsApp::new() -> DesignSystemsApp {
 pub fn DesignSystemsModel::new() -> DesignSystemsModel {
   {
     preset: DesignSystemChoice::Material,
-    scheme: @core.ColorScheme::Light,
+    scheme: @views.ColorScheme::Light,
     variant: @common.DesignSchemeVariant::SchemeLight,
     density: @common.DesignDensity::Standard,
     custom_enabled: false,
@@ -92,7 +92,7 @@ pub fn update(
 }
 
 ///|
-pub fn view(model : DesignSystemsModel) -> @core.View[DesignSystemsMsg] {
+pub fn view(model : DesignSystemsModel) -> @moui.View[DesignSystemsMsg] {
   model.view()
 }
 
@@ -109,12 +109,12 @@ pub fn DesignSystemsModel::tokens(
 }
 
 ///|
-pub fn DesignSystemsModel::theme(self : DesignSystemsModel) -> @core.Theme {
+pub fn DesignSystemsModel::theme(self : DesignSystemsModel) -> @moui.Theme {
   let base = self.tokens().to_theme()
   if self.custom_enabled {
     @common.custom(
       base~,
-      accent=@core.Color::rgba(r=0.82, g=0.18, b=0.42),
+      accent=@views.Color::rgba(r=0.82, g=0.18, b=0.42),
       spacing=14.0,
       corner_radius=10.0,
     )
@@ -126,7 +126,7 @@ pub fn DesignSystemsModel::theme(self : DesignSystemsModel) -> @core.Theme {
 ///|
 pub fn DesignSystemsModel::view(
   self : DesignSystemsModel,
-) -> @core.View[DesignSystemsMsg] {
+) -> @moui.View[DesignSystemsMsg] {
   let tokens = self.tokens()
   let theme = self.theme()
   let report = design_report_for(
@@ -173,9 +173,9 @@ pub fn DesignSystemsModel::view(
 ///|
 fn DesignSystemsModel::hero(
   self : DesignSystemsModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   report : @common.DesignSystemReport,
-) -> @core.View[DesignSystemsMsg] {
+) -> @moui.View[DesignSystemsMsg] {
   ignore(self)
   surface(
     row(
@@ -249,8 +249,8 @@ fn DesignSystemsModel::hero(
 ///|
 fn DesignSystemsModel::switcher_panel(
   self : DesignSystemsModel,
-  theme : @core.Theme,
-) -> @core.View[DesignSystemsMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[DesignSystemsMsg] {
   design_panel(
     theme,
     "Preset, scheme, variant, density",
@@ -312,10 +312,10 @@ fn DesignSystemsModel::switcher_panel(
 ///|
 fn DesignSystemsModel::palette_panel(
   self : DesignSystemsModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   tokens : @common.DesignSystemTokens,
   report : @common.DesignSystemReport,
-) -> @core.View[DesignSystemsMsg] {
+) -> @moui.View[DesignSystemsMsg] {
   ignore(self)
   design_panel(
     theme,
@@ -357,10 +357,10 @@ fn DesignSystemsModel::palette_panel(
 ///|
 fn DesignSystemsModel::typography_panel(
   self : DesignSystemsModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   tokens : @common.DesignSystemTokens,
   report : @common.DesignSystemReport,
-) -> @core.View[DesignSystemsMsg] {
+) -> @moui.View[DesignSystemsMsg] {
   ignore(self)
   design_panel(
     theme,
@@ -405,9 +405,9 @@ fn DesignSystemsModel::typography_panel(
 ///|
 fn DesignSystemsModel::spacing_density_panel(
   self : DesignSystemsModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   tokens : @common.DesignSystemTokens,
-) -> @core.View[DesignSystemsMsg] {
+) -> @moui.View[DesignSystemsMsg] {
   ignore(self)
   design_panel(
     theme,
@@ -444,12 +444,12 @@ fn DesignSystemsModel::spacing_density_panel(
 ///|
 fn DesignSystemsModel::component_matrix_panel(
   self : DesignSystemsModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   tokens : @common.DesignSystemTokens,
-) -> @core.View[DesignSystemsMsg] {
+) -> @moui.View[DesignSystemsMsg] {
   let styles = tokens.core_component_styles()
   let matrix = design_component_token_matrix(self.preset)
-  let rows : Array[@core.View[DesignSystemsMsg]] = [
+  let rows : Array[@moui.View[DesignSystemsMsg]] = [
     picker(
       [
         picker_item("button", "Button"),
@@ -508,8 +508,8 @@ fn DesignSystemsModel::component_matrix_panel(
 ///|
 fn DesignSystemsModel::customization_panel(
   self : DesignSystemsModel,
-  theme : @core.Theme,
-) -> @core.View[DesignSystemsMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[DesignSystemsMsg] {
   let custom_label = if self.custom_enabled {
     "Custom override on"
   } else {
@@ -579,13 +579,13 @@ fn DesignSystemsModel::customization_panel(
 
 ///|
 fn design_panel(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   title : String,
-  children : Array[@core.View[DesignSystemsMsg]],
+  children : Array[@moui.View[DesignSystemsMsg]],
   width~ : Double,
   height~ : Double,
-) -> @core.View[DesignSystemsMsg] {
-  let rows : Array[@core.View[DesignSystemsMsg]] = [
+) -> @moui.View[DesignSystemsMsg] {
+  let rows : Array[@moui.View[DesignSystemsMsg]] = [
     text(
       title,
       role=@views.TextRole::Control,
@@ -609,10 +609,10 @@ fn design_panel(
 
 ///|
 fn design_metric_row(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
   value : String,
-) -> @core.View[DesignSystemsMsg] {
+) -> @moui.View[DesignSystemsMsg] {
   row(
     [
       text(
@@ -637,10 +637,10 @@ fn design_metric_row(
 
 ///|
 fn design_swatch(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
-  color : @core.Color,
-) -> @core.View[DesignSystemsMsg] {
+  color : @views.Color,
+) -> @moui.View[DesignSystemsMsg] {
   surface(
     text(label, role=@views.TextRole::Caption, theme~, width=76.0, height=24.0).foreground(
       theme.palette.primary_foreground,
@@ -656,10 +656,10 @@ fn design_swatch(
 
 ///|
 fn spacing_tile(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
   value : Double,
-) -> @core.View[DesignSystemsMsg] {
+) -> @moui.View[DesignSystemsMsg] {
   surface(
     column(
       [
@@ -737,7 +737,7 @@ fn design_preset_from_id(id : String) -> DesignSystemChoice {
 fn design_tokens_for(
   preset : DesignSystemChoice,
   variant~ : @common.DesignSchemeVariant,
-  system_scheme~ : @core.ColorScheme,
+  system_scheme~ : @views.ColorScheme,
   density~ : @common.DesignDensity,
 ) -> @common.DesignSystemTokens {
   match preset {
@@ -751,8 +751,8 @@ fn design_tokens_for(
 ///|
 fn design_report_for(
   preset : DesignSystemChoice,
-  scheme~ : @core.ColorScheme,
-  system_scheme~ : @core.ColorScheme,
+  scheme~ : @views.ColorScheme,
+  system_scheme~ : @views.ColorScheme,
   density~ : @common.DesignDensity,
 ) -> @common.DesignSystemReport {
   match preset {
@@ -818,18 +818,18 @@ fn design_customization_capability_gap_count(
 }
 
 ///|
-fn design_scheme_id(scheme : @core.ColorScheme) -> String {
+fn design_scheme_id(scheme : @views.ColorScheme) -> String {
   match scheme {
-    @core.ColorScheme::Light => "light"
-    @core.ColorScheme::Dark => "dark"
+    @views.ColorScheme::Light => "light"
+    @views.ColorScheme::Dark => "dark"
   }
 }
 
 ///|
-fn design_scheme_from_id(id : String) -> @core.ColorScheme {
+fn design_scheme_from_id(id : String) -> @views.ColorScheme {
   match id {
-    "dark" => @core.ColorScheme::Dark
-    _ => @core.ColorScheme::Light
+    "dark" => @views.ColorScheme::Dark
+    _ => @views.ColorScheme::Light
   }
 }
 
@@ -874,19 +874,19 @@ fn design_density_from_id(id : String) -> @common.DesignDensity {
 ///|
 pub fn DesignSystemsApp::program(
   self : DesignSystemsApp,
-) -> @core.Program[DesignSystemsModel, DesignSystemsMsg] {
+) -> @moui.Program[DesignSystemsModel, DesignSystemsMsg] {
   ignore(self)
   program()
 }
 
 ///|
-pub fn program() -> @core.Program[DesignSystemsModel, DesignSystemsMsg] {
+pub fn program() -> @moui.Program[DesignSystemsModel, DesignSystemsMsg] {
   DesignSystemsModel::new().program()
 }
 
 ///|
 pub fn DesignSystemsModel::program(
   self : DesignSystemsModel,
-) -> @core.Program[DesignSystemsModel, DesignSystemsMsg] {
-  @core.Program::simple(init=self, update~, view~)
+) -> @moui.Program[DesignSystemsModel, DesignSystemsMsg] {
+  @moui.Program::simple(init=self, update~, view~)
 }
