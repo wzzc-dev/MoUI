@@ -73,11 +73,8 @@ test "runtime inspector and frame profile expose devtool counters" {
   inspect(semantics.action_count, content="0")
   inspect(semantics.selected_count, content="0")
   inspect(semantics.described_count, content="0")
-  let profile = FrameProfile::capture(
-    runtime,
-    Frame::new(time_ms=16.0, delta_ms=16.0),
-  )
-  inspect(profile.draw_command_count, content="2")
+  runtime.dispatch_event(FrameTick(Frame::new(time_ms=16.0, delta_ms=16.0)))
+  inspect(runtime.draw_commands().length(), content="2")
 }
 
 ///|

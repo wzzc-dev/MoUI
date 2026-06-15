@@ -744,7 +744,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/app_inspector_wbtest.mbt",
-      max_lines: 190,
+      max_lines: 185,
       target_lines: 170,
       reason: "keep core runtime, layout, render, semantics, and frame inspector tests compact",
     },
