@@ -4,11 +4,13 @@ fn main {
   let services = @host.HostAppServices::new(
     bridge=@windows_host.windows_service_bridge(),
   )
-  let runtime = app.runtime_with_services(
-    services,
-    raster_services=@pdfium_adapter.raster_services(),
-    document_services=pdf_workbench_document_services(),
-    startup_pdf_path=pdf_workbench_startup_pdf_path(),
+  let runtime = @runtime.new_program_with_dimensions(
+    program=app.program_with_services(
+      services,
+      raster_services=@pdfium_adapter.raster_services(),
+      document_services=pdf_workbench_document_services(),
+      startup_pdf_path=pdf_workbench_startup_pdf_path(),
+    ),
     width=1120.0,
     height=720.0,
   )
