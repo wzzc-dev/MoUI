@@ -34,7 +34,7 @@ pub fn[Msg] button(
 pub fn[Msg] shortcut_button(
   label : String,
   on_click~ : Msg,
-  shortcut~ : @core.KeyboardShortcut,
+  shortcut~ : KeyboardShortcut,
   variant? : ButtonVariant = ButtonVariant::Primary,
   theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 200.0,
