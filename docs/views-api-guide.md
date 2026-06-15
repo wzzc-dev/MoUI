@@ -1,7 +1,9 @@
 # Views API Guide
 
-MoUI application code should prefer the `views` package for ordinary UI. `core`
-remains the lower-level runtime, layout, paint, rich text, and testing surface.
+MoUI application code should prefer the root `moui` facade plus the `views`
+package for ordinary UI. `core` remains the lower-level contract, layout,
+paint, rich text, geometry, and advanced testing surface; runtime construction
+belongs in `moui/runtime`.
 
 ## Local DSL Imports
 
@@ -42,8 +44,10 @@ names unambiguous in larger files.
 Use `views` for ordinary app authoring: controls, layout, surfaces, scrolling,
 and simple composition.
 
-Use `core` directly for runtime setup, state and binding types, custom
-paint/layout, rich text models, geometry calculations, and test assertions.
+Use `moui/runtime` for platform entrypoint runtime setup and white-box runtime
+smoke tests. Use `core` directly only for lower-level state and binding types,
+custom paint/layout, rich text models, geometry calculations, and advanced test
+assertions that are not covered by root aliases or `views` helpers.
 
 Advanced helpers such as custom layout and navigation destination construction
 may stay qualified as `@views.*` when that makes the call site clearer.
