@@ -1433,10 +1433,10 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views alert, dialog, and dialog host surface tests compact",
     },
     {
-      path: "moui/core/runtime_wbtest.mbt",
-      max_lines: 40,
-      target_lines: 35,
-      reason: "keep basic RuntimeKernel dispatch smoke compact",
+      path: "moui/runtime/runtime_view_smoke_wbtest.mbt",
+      max_lines: 35,
+      target_lines: 30,
+      reason: "keep basic AppRuntime view dispatch smoke compact",
     },
     {
       path: "examples/pdf_workbench/app/pdf_workbench_app_wbtest.mbt",

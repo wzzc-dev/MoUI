@@ -15,7 +15,7 @@ test "generated unicode fixtures are excluded from oversized ratchet scan" {
     content="true",
   )
   inspect(
-    generated_fixture_path("moui/core/runtime_wbtest.mbt"),
+    generated_fixture_path("moui/runtime/runtime_view_smoke_wbtest.mbt"),
     content="false",
   )
 }
@@ -25,5 +25,8 @@ test "tracked budgets include current maintenance hotspots" {
   let paths = tracked_budget_paths()
   inspect(paths.contains("moui/backend/host/host_test.mbt"), content="true")
   inspect(paths.contains("moui/views/views_test.mbt"), content="true")
-  inspect(paths.contains("moui/core/runtime_wbtest.mbt"), content="true")
+  inspect(
+    paths.contains("moui/runtime/runtime_view_smoke_wbtest.mbt"),
+    content="true",
+  )
 }
