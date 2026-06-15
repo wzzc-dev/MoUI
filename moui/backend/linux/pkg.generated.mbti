@@ -4,6 +4,7 @@ package "wzzc-dev/moui/backend/linux"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
@@ -31,7 +32,7 @@ pub fn linux_content_metrics_for_surface(@host.HostSurfaceMetrics, LinuxClientDe
 
 pub fn linux_input_capabilities() -> @host.HostInputCapabilities
 
-pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse) -> @host.HostServiceBridge
+pub fn linux_service_bridge(system_theme? : @wzzc-dev/moui/core.ColorScheme, clipboard? : (@host.HostClipboardRequest) -> @host.HostServiceResponse, open_url? : (String) -> Bool, file_dialog? : (@host.HostFileDialogOptions) -> Array[String], text_file? : (@host.HostTextFileRequest) -> @host.HostServiceResponse, binary_file? : (@host.HostBinaryFileRequest) -> @host.HostServiceResponse, menu? : (Array[@wzzc-dev/moui/core.ActionCommand]) -> Int) -> @host.HostServiceBridge
 
 pub fn linux_surface_metrics_for_content(@host.HostSurfaceMetrics, LinuxClientDecorationState) -> @host.HostSurfaceMetrics
 
@@ -39,9 +40,9 @@ pub fn linux_webview_capabilities() -> @host.HostWebViewCapabilities
 
 pub fn readiness() -> LinuxBackendReadiness
 
-pub fn run_app_with_renderer_provider(String, @wzzc-dev/moui/core.AppRuntime, provider~ : LinuxRendererProvider, options? : LinuxHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_renderer_provider(String, @runtime.AppRuntime, provider~ : LinuxRendererProvider, options? : LinuxHostAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
-pub fn run_app_with_renderer_provider_smoke(String, @wzzc-dev/moui/core.AppRuntime, provider~ : LinuxRendererProvider, options? : LinuxHostAppOptions, smoke_options? : LinuxHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_renderer_provider_smoke(String, @runtime.AppRuntime, provider~ : LinuxRendererProvider, options? : LinuxHostAppOptions, smoke_options? : LinuxHostSmokeOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub fn scaffold_input_host() -> @host.InputHostState
 
@@ -64,6 +65,22 @@ pub fn window_event_to_host_with_modifiers(@wzzc-dev/window/core.WindowEvent, @w
 // Errors
 
 // Types and methods
+pub struct LinuxATSPIBinding {
+  // private fields
+}
+pub fn LinuxATSPIBinding::diagnostics(Self) -> LinuxATSPIBindingDiagnostics
+pub fn LinuxATSPIBinding::dispose(Self) -> LinuxATSPIBindingDiagnostics
+pub fn LinuxATSPIBinding::new(root~ : @wzzc-dev/moui/core.SemanticsNode, dispatch~ : (@wzzc-dev/moui/core.ElementId, @wzzc-dev/moui/core.SemanticsAction, String?) -> Bool) -> Self
+pub fn LinuxATSPIBinding::perform_action(Self, @host.NativeAccessibilityActionRequest) -> @host.NativeAccessibilityActionResult
+pub fn LinuxATSPIBinding::publish_semantics(Self, @wzzc-dev/moui/core.SemanticsNode) -> LinuxATSPIBindingDiagnostics
+
+pub(all) struct LinuxATSPIBindingDiagnostics {
+  native_binding_ready : Bool
+  published_node_count : Int
+  action_dispatch_count : Int
+  disposed : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct LinuxAccessibilityBridgeInfo {
   kind : @host.NativeAccessibilityBridgeKind
   semantics_bridge_available : Bool

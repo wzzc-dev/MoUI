@@ -12,7 +12,11 @@ test "counter update changes model" {
 
 ///|
 test "counter runtime increments from button click" {
-  let runtime = @app.runtime(width=520.0, height=360.0)
+  let runtime = @runtime.new_program_with_dimensions(
+    program=@app.program(),
+    width=520.0,
+    height=360.0,
+  )
   assert_true(has_text(runtime.draw_commands(), "Count: 0"))
   click_text(runtime, "+")
   assert_true(has_text(runtime.draw_commands(), "Count: 1"))

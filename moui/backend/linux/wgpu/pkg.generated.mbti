@@ -5,15 +5,15 @@ import {
   "Milky2018/wgpu_mbt",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/backend/linux",
-  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
 pub fn renderer_provider(options? : LinuxWgpuAppOptions) -> @linux.LinuxRendererProvider
 
-pub fn run_app(String, @core.AppRuntime) -> Unit
+pub fn run_app(String, @runtime.AppRuntime) -> Unit
 
-pub fn run_app_with_options(String, @core.AppRuntime, options~ : LinuxWgpuAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
+pub fn run_app_with_options(String, @runtime.AppRuntime, options~ : LinuxWgpuAppOptions, window_requests? : @host.HostWindowRequestQueue) -> Unit
 
 pub fn run_renderer_smoke() -> Unit raise @wgpu_mbt.WgpuError
 
