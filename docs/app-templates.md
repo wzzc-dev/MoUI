@@ -27,11 +27,6 @@ import {
   "wzzc-dev/moui/views",
 }
 
-import {
-  "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
-} for "test"
-
 options(
   targets: { },
 )
@@ -39,8 +34,10 @@ options(
 
 Default shared app imports should stay at `moui + views`. Add
 `"wzzc-dev/moui/backend/host"` only when the app calls host services, keep
-`core/runtime` in test-only imports when a white-box runtime smoke needs them,
-and add the package to `moon.work` when it is part of this repository.
+`runtime` in platform entrypoints or test-only imports when a runtime smoke
+needs it, add `core` only for low-level diagnostics or advanced framework
+contracts, and add the package to `moon.work` when it is part of this
+repository.
 
 ## Counter
 
@@ -467,7 +464,6 @@ pub fn EditorModel::subscriptions(
 Recommended checks:
 
 ```sh
-moon test moui/core --target native
 moon test moui/views --target native
 moon test moui/backend/host --target native
 moon test examples/markdown_editor/app --target native
@@ -478,7 +474,8 @@ moon test examples/command_palette/app --target native
 
 - Keep `Model`, `Msg`, `update`, `view`, and `program` in the shared app
   package first.
-- Add package-local tests for pure update behavior and one runtime smoke.
+- Add package-local tests for pure update behavior; add a runtime smoke only
+  when validating runtime wiring or diagnostics.
 - Keep platform entrypoints thin and free of business logic.
 - Keep ordinary restoration app-owned; add `wzzc-dev/moui/core` explicitly
   only for low-level restore stores or other advanced framework contracts.
