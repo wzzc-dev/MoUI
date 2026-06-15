@@ -1323,11 +1323,6 @@ pub fn RuntimeKernel::set_text_system(Self, TextSystem) -> Unit
 pub fn RuntimeKernel::size(Self) -> Size
 pub fn RuntimeKernel::text_system(Self) -> TextSystem
 
-pub struct RuntimeViewSpec {
-  // private fields
-}
-pub fn RuntimeViewSpec::runtime_kind_label(Self) -> String
-
 type SaveableCodec[T]
 pub fn SaveableCodec::bool() -> Self[Bool]
 pub fn[T] SaveableCodec::decode_value(Self[T], String) -> T?
@@ -1967,7 +1962,6 @@ pub fn[Msg] View::primitive_text_field_view(value~ : Binding[String], placeholde
 pub fn[Msg] View::primitive_text_view(text~ : String, size~ : Size, font~ : FontSpec, color~ : Color) -> Self[Msg]
 pub fn[Msg] View::primitive_web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Msg)?) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
-pub fn[Msg] View::runtime_realize(Self[Msg], (Msg) -> Unit) -> RuntimeViewSpec
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
 pub fn[Msg] View::semantics_action(Self[Msg], SemanticsAction) -> Self[Msg]
 pub fn[Msg] View::semantics_checked(Self[Msg], checked? : Bool) -> Self[Msg]
