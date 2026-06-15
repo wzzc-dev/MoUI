@@ -4,6 +4,16 @@ pub struct MoWorkbenchApp {
 }
 
 ///|
+pub struct MoWorkbenchProgramModel {
+  priv inner : WorkbenchModel
+}
+
+///|
+pub struct MoWorkbenchProgramMsg {
+  priv inner : WorkbenchMsg
+}
+
+///|
 pub fn MoWorkbenchApp::new() -> MoWorkbenchApp {
   { unit: () }
 }
@@ -99,123 +109,96 @@ fn view(model : WorkbenchModel) -> @core.View[WorkbenchMsg] {
 }
 
 ///|
-pub fn MoWorkbenchApp::runtime(
+pub fn MoWorkbenchApp::program(
   self : MoWorkbenchApp,
-  width? : Double = 1220.0,
-  height? : Double = 780.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
   ignore(self)
-  runtime(width~, height~)
+  program()
 }
 
 ///|
-pub fn MoWorkbenchApp::runtime_with_transport(
+pub fn MoWorkbenchApp::program_with_transport(
   self : MoWorkbenchApp,
   transport_runtime : PiTransportRuntime,
-  width? : Double = 1220.0,
-  height? : Double = 780.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
   ignore(self)
-  runtime_with_transport(transport_runtime, width~, height~)
+  program_with_transport(transport_runtime)
 }
 
 ///|
-pub fn MoWorkbenchApp::runtime_with_agent_connectors(
+pub fn MoWorkbenchApp::program_with_agent_connectors(
   self : MoWorkbenchApp,
   transport_runtime : PiTransportRuntime,
   connector_runtimes : Array[AgentConnectorRuntime],
-  width? : Double = 1220.0,
-  height? : Double = 780.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
   ignore(self)
-  runtime_with_agent_connectors(
-    transport_runtime,
-    connector_runtimes,
-    width~,
-    height~,
-  )
+  program_with_agent_connectors(transport_runtime, connector_runtimes)
 }
 
 ///|
-pub fn runtime(
-  width? : Double = 1220.0,
-  height? : Double = 780.0,
-) -> @runtime.AppRuntime {
-  WorkbenchModel::new().runtime(width~, height~)
+pub fn program() -> @core.Program[
+  MoWorkbenchProgramModel,
+  MoWorkbenchProgramMsg,
+] {
+  WorkbenchModel::new().program()
 }
 
 ///|
-pub fn runtime_with_transport(
+pub fn program_with_transport(
   transport_runtime : PiTransportRuntime,
-  width? : Double = 1220.0,
-  height? : Double = 780.0,
-) -> @runtime.AppRuntime {
-  WorkbenchModel::new().runtime_with_transport(
-    transport_runtime,
-    width~,
-    height~,
-  )
+) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+  WorkbenchModel::new().program_with_transport(transport_runtime)
 }
 
 ///|
-pub fn runtime_with_agent_connectors(
+pub fn program_with_agent_connectors(
   transport_runtime : PiTransportRuntime,
   connector_runtimes : Array[AgentConnectorRuntime],
-  width? : Double = 1220.0,
-  height? : Double = 780.0,
-) -> @runtime.AppRuntime {
-  WorkbenchModel::new().runtime_with_agent_connectors(
-    transport_runtime,
-    connector_runtimes,
-    width~,
-    height~,
+) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+  WorkbenchModel::new().program_with_agent_connectors(
+    transport_runtime, connector_runtimes,
   )
 }
 
 ///|
-fn WorkbenchModel::runtime(
+fn WorkbenchModel::program(
   self : WorkbenchModel,
-  width? : Double = 1220.0,
-  height? : Double = 780.0,
-) -> @runtime.AppRuntime {
-  self.runtime_with_transport(
-    PiTransportRuntime::unavailable(),
-    width~,
-    height~,
-  )
+) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+  self.program_with_transport(PiTransportRuntime::unavailable())
 }
 
 ///|
-fn WorkbenchModel::runtime_with_transport(
+fn WorkbenchModel::program_with_transport(
   self : WorkbenchModel,
   transport_runtime : PiTransportRuntime,
-  width? : Double = 1220.0,
-  height? : Double = 780.0,
-) -> @runtime.AppRuntime {
-  self.runtime_with_agent_connectors(transport_runtime, [], width~, height~)
+) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+  self.program_with_agent_connectors(transport_runtime, [])
 }
 
 ///|
-fn WorkbenchModel::runtime_with_agent_connectors(
+fn WorkbenchModel::program_with_agent_connectors(
   self : WorkbenchModel,
   transport_runtime : PiTransportRuntime,
   connector_runtimes : Array[AgentConnectorRuntime],
-  width? : Double = 1220.0,
-  height? : Double = 780.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::new_with_environment(
-      init=() => (self, @core.Effect::none()),
-      update=(model, message) => {
-        model
-        .update_with_agent_connectors(
-          message, transport_runtime, connector_runtimes,
-        )
-        .as_tuple()
-      },
-      view=(model, env) => model.view_with_environment(env),
-    ),
-    size=@core.Size::new(width~, height~),
+) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+  @core.Program::new_with_environment(
+    init=() => ({ inner: self }, @core.Effect::none()),
+    update=(model, message) => {
+      let update = model.inner.update_with_agent_connectors(
+        message.inner,
+        transport_runtime,
+        connector_runtimes,
+      )
+      (
+        { inner: update.model },
+        update.effect.map(message => MoWorkbenchProgramMsg::{ inner: message }),
+      )
+    },
+    view=(model, env) => {
+      model.inner
+      .view_with_environment(env)
+      .map(message => MoWorkbenchProgramMsg::{ inner: message })
+    },
   )
 }
 
@@ -225,11 +208,4 @@ fn WorkbenchUpdate::new(
   effect? : @core.Effect[WorkbenchMsg] = @core.Effect::none(),
 ) -> WorkbenchUpdate {
   { model, effect }
-}
-
-///|
-fn WorkbenchUpdate::as_tuple(
-  self : WorkbenchUpdate,
-) -> (WorkbenchModel, @core.Effect[WorkbenchMsg]) {
-  (self.model, self.effect)
 }
