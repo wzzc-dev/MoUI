@@ -9,13 +9,6 @@ fn[Msg] runtime_test_label(text : String) -> @core.View[Msg] {
 }
 
 ///|
-fn has_draw_text(commands : Array[@core.DrawCommand], text : String) -> Bool {
-  commands.any(command => {
-    command is @core.DrawCommand::DrawText({ text: value, .. }) && value == text
-  })
-}
-
-///|
 enum RuntimeEffectMsg {
   RuntimeEffectBoot(String)
   RuntimeEffectFinished(String)
