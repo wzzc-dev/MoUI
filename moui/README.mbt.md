@@ -60,11 +60,11 @@ native-only PDFium adapter for real page bitmap rasterization. The root
 
 - `core/` owns the platform-neutral contract model, opaque `View`, typed
   events, `Program`, `Effect`, `Subscription`, geometry, draw, semantics, and a
-  narrow `RuntimeKernel` contract seam consumed by `moui/runtime` for
-  tree/layout/paint handoff.
+  runtime-only `ViewLoweringSink` / `View::lower_for_runtime` seam consumed by
+  `moui/runtime`.
 - `runtime/` exposes the app/host `AppRuntime` construction entrypoints and
-  owns program message drain, effect task, subscription lifecycle, and
-  diagnostics.
+  owns runtime state, tree/layout/paint, event dispatch, program message drain,
+  effect task, subscription lifecycle, and diagnostics.
 - The root `moui` facade exposes only the curated
   `View`/`Program`/`Effect`/`Subscription`/`Theme` aliases; diagnostics,
   theme builders, runtime handles, and renderer-facing records stay in their
