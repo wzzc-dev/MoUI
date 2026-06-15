@@ -36,6 +36,18 @@ pub(all) struct SettingsModel {
 }
 
 ///|
+pub struct SettingsSnapshot {
+  selected_section : String
+  display_name : String
+  email : String
+  workspace : String
+  theme_mode : String
+  notifications : Bool
+  telemetry : Bool
+  saved_label : String
+} derive(Eq, Debug)
+
+///|
 pub(all) enum SettingsMsg {
   SelectSettingsSection(String)
   DisplayNameChanged(String)
@@ -91,64 +103,42 @@ pub fn update(model : SettingsModel, message : SettingsMsg) -> SettingsModel {
 }
 
 ///|
-pub fn SettingsModel::write_to_store(
-  self : SettingsModel,
-  store : @core.SaveableStateStore,
-) -> Unit {
-  store.set_string("selected_section", self.selected_section)
-  store.set_string("display_name", self.display_name)
-  store.set_string("email", self.email)
-  store.set_string("workspace", self.workspace)
-  store.set_string("theme_mode", self.theme_mode)
-  store.set_bool("notifications", self.notifications)
-  store.set_bool("telemetry", self.telemetry)
-  store.set_string("saved_label", self.saved_label)
-}
-
-///|
-pub fn SettingsModel::from_store(
-  store : @core.SaveableStateStore,
-) -> SettingsModel {
-  let base = SettingsModel::new()
+pub fn SettingsModel::save_snapshot(self : SettingsModel) -> SettingsSnapshot {
   {
-    selected_section: store
-    .get_string("selected_section")
-    .unwrap_or(base.selected_section),
-    display_name: store.get_string("display_name").unwrap_or(base.display_name),
-    email: store.get_string("email").unwrap_or(base.email),
-    workspace: store.get_string("workspace").unwrap_or(base.workspace),
-    theme_mode: store.get_string("theme_mode").unwrap_or(base.theme_mode),
-    notifications: store.get_bool("notifications").unwrap_or(base.notifications),
-    telemetry: store.get_bool("telemetry").unwrap_or(base.telemetry),
-    saved_label: store.get_string("saved_label").unwrap_or(base.saved_label),
+    selected_section: self.selected_section,
+    display_name: self.display_name,
+    email: self.email,
+    workspace: self.workspace,
+    theme_mode: self.theme_mode,
+    notifications: self.notifications,
+    telemetry: self.telemetry,
+    saved_label: self.saved_label,
   }
 }
 
 ///|
-pub fn SettingsModel::save_snapshot(
-  self : SettingsModel,
-) -> @core.SaveableStateSnapshot {
-  let store = @core.SaveableStateStore::new()
-  self.write_to_store(store)
-  store.snapshot()
-}
-
-///|
 pub fn SettingsModel::restore_from_snapshot(
-  snapshot : @core.SaveableStateSnapshot,
+  snapshot : SettingsSnapshot,
 ) -> SettingsModel {
-  let store = @core.SaveableStateStore::new()
-  store.restore(snapshot)
-  SettingsModel::from_store(store)
+  {
+    selected_section: snapshot.selected_section,
+    display_name: snapshot.display_name,
+    email: snapshot.email,
+    workspace: snapshot.workspace,
+    theme_mode: snapshot.theme_mode,
+    notifications: snapshot.notifications,
+    telemetry: snapshot.telemetry,
+    saved_label: snapshot.saved_label,
+  }
 }
 
 ///|
-pub fn view(model : SettingsModel) -> @core.View[SettingsMsg] {
+pub fn view(model : SettingsModel) -> @moui.View[SettingsMsg] {
   model.view()
 }
 
 ///|
-pub fn SettingsModel::view(self : SettingsModel) -> @core.View[SettingsMsg] {
+pub fn SettingsModel::view(self : SettingsModel) -> @moui.View[SettingsMsg] {
   let theme = self.resolved_theme()
   let content = column(
     [
@@ -228,28 +218,28 @@ pub fn SettingsModel::view(self : SettingsModel) -> @core.View[SettingsMsg] {
 ///|
 pub fn SettingsApp::program(
   self : SettingsApp,
-) -> @core.Program[SettingsModel, SettingsMsg] {
+) -> @moui.Program[SettingsModel, SettingsMsg] {
   ignore(self)
   SettingsModel::new().program()
 }
 
 ///|
-pub fn program() -> @core.Program[SettingsModel, SettingsMsg] {
+pub fn program() -> @moui.Program[SettingsModel, SettingsMsg] {
   SettingsModel::new().program()
 }
 
 ///|
 pub fn SettingsModel::program(
   self : SettingsModel,
-) -> @core.Program[SettingsModel, SettingsMsg] {
-  @core.Program::simple(init=self, update~, view~)
+) -> @moui.Program[SettingsModel, SettingsMsg] {
+  @moui.Program::simple(init=self, update~, view~)
 }
 
 ///|
 fn SettingsModel::settings_sidebar(
   self : SettingsModel,
-  theme : @core.Theme,
-) -> @core.View[SettingsMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[SettingsMsg] {
   sidebar(
     "Settings",
     [
@@ -279,8 +269,8 @@ fn SettingsModel::settings_sidebar(
 ///|
 fn SettingsModel::settings_detail(
   self : SettingsModel,
-  theme : @core.Theme,
-) -> @core.View[SettingsMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[SettingsMsg] {
   let detail = match self.selected_section {
     "workspace" => self.workspace_form(theme)
     "preferences" => self.preferences_form(theme)
@@ -299,8 +289,8 @@ fn SettingsModel::settings_detail(
 ///|
 fn SettingsModel::profile_form(
   self : SettingsModel,
-  theme : @core.Theme,
-) -> @core.View[SettingsMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[SettingsMsg] {
   form(
     [
       form_section(
@@ -351,8 +341,8 @@ fn SettingsModel::profile_form(
 ///|
 fn SettingsModel::workspace_form(
   self : SettingsModel,
-  theme : @core.Theme,
-) -> @core.View[SettingsMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[SettingsMsg] {
   form(
     [
       form_section(
@@ -404,8 +394,8 @@ fn SettingsModel::workspace_form(
 ///|
 fn SettingsModel::preferences_form(
   self : SettingsModel,
-  theme : @core.Theme,
-) -> @core.View[SettingsMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[SettingsMsg] {
   form(
     [
       form_section(
@@ -457,7 +447,7 @@ fn SettingsModel::preferences_form(
 }
 
 ///|
-fn SettingsModel::resolved_theme(self : SettingsModel) -> @core.Theme {
+fn SettingsModel::resolved_theme(self : SettingsModel) -> @moui.Theme {
   if self.theme_mode == "dark" {
     @views.dark_theme()
   } else {
