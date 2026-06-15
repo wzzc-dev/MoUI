@@ -27,13 +27,13 @@ test "effect plan summary describes nested effect structure" {
   inspect(summary.scheduled_count, content="2")
   inspect(summary.max_depth, content="3")
   inspect(summary.descriptors.length(), content="1")
-  inspect(summary.descriptors[0].key, content="host:load")
-  inspect(summary.descriptors[0].kind, content="host-service")
-  inspect(summary.descriptors[0].label, content="Load host data")
+  inspect(summary.descriptors[0].key(), content="host:load")
+  inspect(summary.descriptors[0].kind(), content="host-service")
+  inspect(summary.descriptors[0].label(), content="Load host data")
   let mapped = effect.map(message => "parent:" + message)
   let mapped_summary = mapped.plan_summary()
   inspect(mapped_summary.descriptors.length(), content="1")
-  inspect(mapped_summary.descriptors[0].key, content="host:load")
+  inspect(mapped_summary.descriptors[0].key(), content="host:load")
 }
 
 ///|
@@ -85,7 +85,7 @@ test "program runtime aggregates duplicate structured effect keys" {
     update=(model, _message) => (model, Effect::none()),
     view=model => runtime_test_label(model),
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=160.0, height=48.0),
   )
@@ -112,7 +112,7 @@ test "program runtime aggregates duplicate structured effect keys" {
     program_snapshot.last_effect_summary.duplicate_descriptor_keys[0],
     content="host:sync",
   )
-  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  let inspector = runtime.inspector_snapshot().runtime
   inspect(inspector.program_effect_run_count, content="2")
   inspect(inspector.duplicate_effect_descriptor_key_count, content="1")
   inspect(inspector.duplicate_effect_descriptor_keys.length(), content="1")
@@ -147,7 +147,7 @@ test "program initial effects run before first view build" {
     },
     view=model => runtime_test_label("Boot " + model),
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=220.0, height=72.0),
   )
@@ -221,7 +221,7 @@ test "program effects can dispatch typed follow-up messages" {
       )
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=160.0, height=80.0),
   )
@@ -263,11 +263,11 @@ test "program effects can dispatch typed follow-up messages" {
     content="1",
   )
   inspect(
-    snapshot.last_scheduled_effect_summary.descriptors[0].key,
+    snapshot.last_scheduled_effect_summary.descriptors[0].key(),
     content="effect:program-follow-up",
   )
   inspect(
-    snapshot.last_scheduled_effect_summary.descriptors[0].kind,
+    snapshot.last_scheduled_effect_summary.descriptors[0].kind(),
     content="task",
   )
 }
@@ -300,7 +300,7 @@ test "program ignores effect dispatches after runtime destroy" {
     },
     view=model => runtime_test_label(model),
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=160.0, height=80.0),
   )
@@ -323,7 +323,7 @@ test "program ignores effect dispatches after runtime destroy" {
   inspect(ignored.update_count, content="0")
   inspect(ignored.message_enqueue_count, content="0")
   inspect(ignored.ignored_program_dispatch_count, content="2")
-  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  let inspector = runtime.inspector_snapshot().runtime
   inspect(inspector.program_dispatched_count, content="0")
   inspect(inspector.ignored_program_dispatch_count, content="2")
 }

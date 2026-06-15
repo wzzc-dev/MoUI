@@ -16,7 +16,8 @@ capability rules, platform contract, and validation commands.
 
 Use this skill when editing or reviewing:
 
-- `core/` runtime, state, layout, input, semantics, or draw commands.
+- `core/` contracts, internal engine state, layout, input, semantics, or draw
+  commands.
 - `views/` public constructors and modifiers.
 - `backend/host`, `backend/web`, `backend/macos`, `backend/windows`, or
   `backend/linux`.

@@ -1323,7 +1323,6 @@ pub fn RuntimeKernel::needs_layout(Self) -> Bool
 pub fn RuntimeKernel::needs_paint(Self) -> Bool
 pub fn RuntimeKernel::needs_rebuild(Self) -> Bool
 pub fn RuntimeKernel::needs_redraw(Self) -> Bool
-pub fn[Model, Msg] RuntimeKernel::new_program(program~ : Program[Model, Msg], size~ : Size, environment? : Environment) -> Self
 pub fn[Msg] RuntimeKernel::new_view(root~ : View[Msg], size~ : Size, environment? : Environment, on_message? : ((Msg) -> Unit)?, program_runtime_snapshot? : (() -> ProgramRuntimeSnapshot)?) -> Self
 pub fn RuntimeKernel::paint_pass(Self) -> Array[DrawCommand]
 pub fn RuntimeKernel::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot

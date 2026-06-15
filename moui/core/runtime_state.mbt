@@ -78,53 +78,6 @@ fn RuntimeState::new_spec(
 }
 
 ///|
-fn RuntimeState::new_component(
-  root~ : Component,
-  size~ : Size,
-  environment? : Environment = Environment::default(),
-) -> RuntimeState {
-  let root_spec = ViewSpec::component(root)
-  let mounted = mount_view_spec_for_runtime(root_spec, None, 1)
-  let state = {
-    root_spec,
-    element_tree: ElementTree::new(mounted.node),
-    layout_tree: LayoutTree::empty(),
-    render_tree: RenderTree::empty(),
-    size,
-    needs_redraw: true,
-    needs_rebuild: false,
-    needs_layout: true,
-    needs_paint: true,
-    rebuild_pass_count: 0,
-    layout_pass_count: 0,
-    paint_pass_count: 0,
-    draw_command_build_count: 0,
-    cache_epoch: 0,
-    last_damage_region: DamageRegion::full("initial frame"),
-    known_layer_cache_keys: [],
-    next_element_id: mounted.next_id,
-    dirty_elements: [],
-    dirty_build_elements: [],
-    dirty_layout_elements: [],
-    dirty_paint_elements: [],
-    focused_element: None,
-    active_pointer_capture: None,
-    environment,
-    text_system: TextSystem::fallback(),
-    redraw_callback: None,
-    action_commands: ActionCommandMap::new(),
-    clock: Clock::new(),
-    saveable_state: SaveableStateStore::new(),
-  }
-  let mounted = mount_view_spec_for_runtime(root_spec, Some(state), 1)
-  state.element_tree = ElementTree::new(mounted.node)
-  state.next_element_id = mounted.next_id
-  state.mark_dirty(state.element_tree.id())
-  state.render_current_tree()
-  state
-}
-
-///|
 fn RuntimeState::environment(self : RuntimeState) -> Environment {
   self.environment
 }
