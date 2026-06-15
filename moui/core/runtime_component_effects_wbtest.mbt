@@ -41,7 +41,7 @@ test "component effects clean up on rebuild and unmount" {
 test "app runtime destroy cancels component effects and clears lifecycle state" {
   let starts = Ref(0)
   let cleanups = Ref(0)
-  let runtime = RuntimeKernel::new_component(
+  let runtime = RuntimeState::new_component(
     root=Component::new(ctx => {
       ctx.run_effect(key="root", () => {
         starts.val = starts.val + 1
@@ -143,7 +143,7 @@ test "component update effects rerun only when deps change" {
 ///|
 test "runtime destroy reports effect cancellation reason" {
   let reason : Ref[ComponentEffectCancelReason?] = Ref(None)
-  let runtime = RuntimeKernel::new_component(
+  let runtime = RuntimeState::new_component(
     root=Component::new(ctx => {
       ctx.run_effect(key="tracked", () => None)
       ctx.run_effect_with_reason(key="tracked-reason", () => {

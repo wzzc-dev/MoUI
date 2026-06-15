@@ -1,6 +1,6 @@
 ///|
 test "app runtime updates root and environment through public API" {
-  let runtime = RuntimeKernel::new_spec(
+  let runtime = RuntimeState::new_spec(
     root=ViewSpec::TextSpec({
       key: None,
       text: "A",

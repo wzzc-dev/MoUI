@@ -112,7 +112,7 @@ test "state backed scroll reports local damage rect" {
       damage_text("Still", width=80.0, height=32.0).repaint_boundary(),
     ],
   )
-  let runtime = RuntimeKernel::new_view(
+  let runtime = RuntimeState::new_view(
     root~,
     size=Size::new(width=220.0, height=100.0),
   )
@@ -151,15 +151,15 @@ test "layout dirty child reports local damage rect" {
       damage_text("Still", width=80.0, height=32.0).repaint_boundary(),
     ],
   )
-  let runtime = RuntimeKernel::new_view(
+  let runtime = RuntimeState::new_view(
     root~,
     size=Size::new(width=220.0, height=100.0),
   )
   ignore(runtime.draw_frame())
-  let child = runtime.state.element_tree.root.children[0]
+  let child = runtime.element_tree.root.children[0]
   child.dirty.mark_layout()
   child.clear_cached_layout_and_paint()
-  runtime.state.mark_layout_dirty(child.id)
+  runtime.mark_layout_dirty(child.id)
   match runtime.draw_frame().damage {
     Rects(rects) => {
       assert_true(rects.length() > 0)
@@ -174,14 +174,14 @@ test "layout dirty child reports local damage rect" {
 ///|
 test "dirty redraw without bounds falls back to full damage" {
   let root : View[Unit] = damage_text("Fallback", width=80.0, height=32.0)
-  let runtime = RuntimeKernel::new_view(
+  let runtime = RuntimeState::new_view(
     root~,
     size=Size::new(width=120.0, height=60.0),
   )
   ignore(runtime.draw_frame())
-  runtime.state.needs_paint = true
-  runtime.state.needs_redraw = true
-  runtime.state.clear_dirty_queue()
+  runtime.needs_paint = true
+  runtime.needs_redraw = true
+  runtime.clear_dirty_queue()
   match runtime.draw_frame().damage {
     FullSurface(reason) => inspect(reason, content="dirty bounds unavailable")
     _ => fail("expected full damage when dirty bounds are unavailable")

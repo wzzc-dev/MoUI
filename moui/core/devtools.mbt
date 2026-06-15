@@ -168,36 +168,38 @@ pub(all) struct InspectorSnapshot {
 
 ///|
 fn InspectorSnapshot::from_runtime(
-  runtime : RuntimeKernel,
+  state : RuntimeState,
+  program? : ProgramRuntimeSnapshot = ProgramRuntimeSnapshot::empty(),
 ) -> InspectorSnapshot {
-  let view_tree = ViewTreeInspectorSnapshot::from_runtime(runtime)
+  let view_tree = ViewTreeInspectorSnapshot::from_runtime(state)
   {
-    runtime: RuntimeInspectorSnapshot::from_runtime(runtime),
+    runtime: RuntimeInspectorSnapshot::from_runtime(state, program~),
     view_tree,
-    layout: LayoutInspectorSnapshot::from_runtime(runtime),
-    render: RenderInspectorSnapshot::from_runtime(runtime),
-    semantics: SemanticsInspectorSnapshot::from_runtime(runtime),
+    layout: LayoutInspectorSnapshot::from_runtime(state),
+    render: RenderInspectorSnapshot::from_runtime(state),
+    semantics: SemanticsInspectorSnapshot::from_runtime(state),
   }
 }
 
 ///|
 fn RuntimeInspectorSnapshot::from_runtime(
-  runtime : RuntimeKernel,
+  state : RuntimeState,
+  program? : ProgramRuntimeSnapshot = ProgramRuntimeSnapshot::empty(),
 ) -> RuntimeInspectorSnapshot {
-  let dirty_count = runtime.dirty_count()
-  let dirty_element_ids = runtime.dirty_element_ids()
-  let dirty_build_element_ids = runtime.state.dirty_build_elements.copy()
-  let dirty_layout_element_ids = runtime.state.dirty_layout_elements.copy()
-  let dirty_paint_element_ids = runtime.state.dirty_paint_elements.copy()
+  let dirty_count = state.dirty_count()
+  let dirty_element_ids = state.dirty_element_ids()
+  let dirty_build_element_ids = state.dirty_build_elements.copy()
+  let dirty_layout_element_ids = state.dirty_layout_elements.copy()
+  let dirty_paint_element_ids = state.dirty_paint_elements.copy()
   let dirty_build_count = dirty_build_element_ids.length()
   let dirty_layout_count = dirty_layout_element_ids.length()
   let dirty_paint_count = dirty_paint_element_ids.length()
-  let needs_rebuild = runtime.needs_rebuild()
-  let needs_layout = runtime.needs_layout()
-  let needs_paint = runtime.needs_paint()
-  let needs_redraw = runtime.needs_redraw()
-  let rebuild_reason = runtime.inspector_rebuild_reason()
-  let dirty_reasons = runtime.inspector_dirty_reasons()
+  let needs_rebuild = state.needs_rebuild
+  let needs_layout = state.needs_layout
+  let needs_paint = state.needs_paint
+  let needs_redraw = state.needs_redraw
+  let rebuild_reason = state.inspector_rebuild_reason()
+  let dirty_reasons = state.inspector_dirty_reasons()
   let dirty_state = RuntimeDirtyStateSummary::{
     dirty_count,
     dirty_element_ids: dirty_element_ids.copy(),
@@ -218,16 +220,15 @@ fn RuntimeInspectorSnapshot::from_runtime(
     dirty_count > 0,
     reason: rebuild_reason,
     reasons: dirty_reasons.copy(),
-    damage_kind: runtime.state.last_damage_region.kind(),
-    damage_rect_count: runtime.state.last_damage_region.rect_count(),
-    damage_full_reason: runtime.state.last_damage_region.full_reason(),
-    cache_epoch: runtime.state.cache_epoch,
-    cached_layer_count: runtime.state.known_layer_cache_keys.length(),
+    damage_kind: state.last_damage_region.kind(),
+    damage_rect_count: state.last_damage_region.rect_count(),
+    damage_full_reason: state.last_damage_region.full_reason(),
+    cache_epoch: state.cache_epoch,
+    cached_layer_count: state.known_layer_cache_keys.length(),
   }
-  let program = runtime.program_runtime_snapshot()
-  let draw_commands = runtime.state.cached_draw_commands()
+  let draw_commands = state.cached_draw_commands()
   RuntimeInspectorSnapshot::{
-    size: runtime.size(),
+    size: state.size,
     dirty_count,
     dirty_element_ids,
     dirty_build_count,
@@ -242,10 +243,10 @@ fn RuntimeInspectorSnapshot::from_runtime(
     needs_paint,
     needs_redraw,
     draw_command_count: draw_commands.length(),
-    rebuild_pass_count: runtime.state.rebuild_pass_count,
-    layout_pass_count: runtime.state.layout_pass_count,
-    paint_pass_count: runtime.state.paint_pass_count,
-    draw_command_build_count: runtime.state.draw_command_build_count,
+    rebuild_pass_count: state.rebuild_pass_count,
+    layout_pass_count: state.layout_pass_count,
+    paint_pass_count: state.paint_pass_count,
+    draw_command_build_count: state.draw_command_build_count,
     program_dispatched_count: program.dispatched_count,
     program_update_count: program.update_count,
     ignored_program_dispatch_count: program.ignored_program_dispatch_count,
@@ -291,33 +292,30 @@ fn RuntimeInspectorSnapshot::from_runtime(
 
 ///|
 fn ViewTreeInspectorSnapshot::from_runtime(
-  runtime : RuntimeKernel,
+  state : RuntimeState,
 ) -> ViewTreeInspectorSnapshot {
-  runtime.view_tree_inspector_snapshot()
+  state.view_tree_inspector_snapshot()
 }
 
 ///|
 fn LayoutInspectorSnapshot::from_runtime(
-  runtime : RuntimeKernel,
+  state : RuntimeState,
 ) -> LayoutInspectorSnapshot {
-  let layout = runtime.state.cached_layout()
+  let layout = state.cached_layout()
   {
     root_frame: layout.frame,
     node_count: layout_node_count(layout),
     leaf_count: layout_leaf_count(layout),
     max_depth: layout_max_depth(layout),
-    bounds: layout_bounds_entries(
-      runtime.state.cached_layout_tree_root(),
-      depth=0,
-    ),
+    bounds: layout_bounds_entries(state.cached_layout_tree_root(), depth=0),
   }
 }
 
 ///|
 fn RenderInspectorSnapshot::from_runtime(
-  runtime : RuntimeKernel,
+  state : RuntimeState,
 ) -> RenderInspectorSnapshot {
-  RenderInspectorSnapshot::from_commands(runtime.state.cached_draw_commands())
+  RenderInspectorSnapshot::from_commands(state.cached_draw_commands())
 }
 
 ///|
@@ -329,9 +327,9 @@ pub fn RenderInspectorSnapshot::from_commands(
 
 ///|
 fn SemanticsInspectorSnapshot::from_runtime(
-  runtime : RuntimeKernel,
+  state : RuntimeState,
 ) -> SemanticsInspectorSnapshot {
-  let semantics = runtime.state.cached_semantics()
+  let semantics = state.cached_semantics()
   {
     root_role: semantics.role,
     node_count: semantics_node_count(semantics),
@@ -345,6 +343,11 @@ fn SemanticsInspectorSnapshot::from_runtime(
     required_count: semantics_required_count(semantics),
     described_count: semantics_described_count(semantics),
   }
+}
+
+///|
+fn RuntimeState::inspector_snapshot(self : RuntimeState) -> InspectorSnapshot {
+  InspectorSnapshot::from_runtime(self)
 }
 
 ///|

@@ -1282,44 +1282,6 @@ pub(all) struct RuntimeInspectorSnapshot {
   dirty_reasons : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
 
-type RuntimeKernel
-pub fn RuntimeKernel::action_commands(Self) -> Array[ActionCommand]
-pub fn RuntimeKernel::advance_time(Self, Double) -> Unit
-pub fn RuntimeKernel::destroy(Self) -> Unit
-pub fn RuntimeKernel::dirty_count(Self) -> Int
-pub fn RuntimeKernel::dirty_element_ids(Self) -> Array[ElementId]
-pub fn RuntimeKernel::dispatch_action_command(Self, ActionCommand) -> Bool
-pub fn RuntimeKernel::dispatch_command(Self, CommandIntent) -> Bool
-pub fn RuntimeKernel::dispatch_event(Self, AppEvent) -> Unit
-pub fn RuntimeKernel::dispatch_focused_text_command(Self, CommandIntent, paste_text? : String?) -> TextCommandResult
-pub fn RuntimeKernel::draw_commands(Self) -> Array[DrawCommand]
-pub fn RuntimeKernel::draw_frame(Self) -> DrawFrame
-pub fn RuntimeKernel::environment(Self) -> Environment
-pub fn RuntimeKernel::focus_key(Self, String) -> Bool
-pub fn RuntimeKernel::focus_next(Self) -> Bool
-pub fn RuntimeKernel::focus_previous(Self) -> Bool
-pub fn RuntimeKernel::focused_text_input(Self) -> TextInputState
-pub fn RuntimeKernel::inspector_snapshot(Self) -> InspectorSnapshot
-pub fn RuntimeKernel::invalidate_cached_layer_key(Self, String) -> Unit
-pub fn RuntimeKernel::layout(Self) -> LayoutResult
-pub fn RuntimeKernel::layout_pass(Self) -> Unit
-pub fn RuntimeKernel::needs_layout(Self) -> Bool
-pub fn RuntimeKernel::needs_paint(Self) -> Bool
-pub fn RuntimeKernel::needs_rebuild(Self) -> Bool
-pub fn RuntimeKernel::needs_redraw(Self) -> Bool
-pub fn[Msg] RuntimeKernel::new_view(root~ : View[Msg], size~ : Size, environment? : Environment, on_message? : ((Msg) -> Unit)?, program_runtime_snapshot? : (() -> ProgramRuntimeSnapshot)?) -> Self
-pub fn RuntimeKernel::paint_pass(Self) -> Array[DrawCommand]
-pub fn RuntimeKernel::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
-pub fn RuntimeKernel::rebuild(Self) -> Unit
-pub fn RuntimeKernel::register_font_data(Self, FontFamily, Bytes) -> Unit
-pub fn RuntimeKernel::semantics(Self) -> SemanticsNode
-pub fn RuntimeKernel::set_action_commands(Self, ActionCommandMap) -> Unit
-pub fn RuntimeKernel::set_environment(Self, Environment) -> Unit
-pub fn RuntimeKernel::set_redraw_callback(Self, () -> Unit) -> Unit
-pub fn RuntimeKernel::set_text_system(Self, TextSystem) -> Unit
-pub fn RuntimeKernel::size(Self) -> Size
-pub fn RuntimeKernel::text_system(Self) -> TextSystem
-
 type SaveableCodec[T]
 pub fn SaveableCodec::bool() -> Self[Bool]
 pub fn[T] SaveableCodec::decode_value(Self[T], String) -> T?
