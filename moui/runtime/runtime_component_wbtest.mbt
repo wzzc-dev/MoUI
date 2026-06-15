@@ -21,7 +21,10 @@ test "app runtime component watches state through public API" {
   guard runtime.draw_commands() is [_, DrawText({ text: "Count 1", .. })] else {
     fail("expected rebuilt component text")
   }
-  inspect(count.slot.listeners.length(), content="1")
+  count.set(2)
+  guard runtime.draw_commands() is [_, DrawText({ text: "Count 2", .. })] else {
+    fail("expected component to stay subscribed through public state API")
+  }
 }
 
 ///|
