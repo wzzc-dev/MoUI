@@ -159,7 +159,7 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="2040")
+  inspect(core.max_lines, content="2038")
   inspect(core.max_pub_lines, content="563")
   inspect(core.max_pub_all_lines, content="154")
   assert_true(core.required_tokens.contains("pub struct ViewLoweringSink"))
@@ -173,6 +173,7 @@ test "core descriptor payloads stay opaque" {
   assert_true(core.forbidden_tokens.contains("type RuntimeState"))
   assert_true(core.forbidden_tokens.contains("type RuntimeKernel"))
   assert_true(core.forbidden_tokens.contains("RuntimeKernel::"))
+  assert_true(core.forbidden_tokens.contains("type ViewNode["))
   assert_true(core.forbidden_tokens.contains("type ViewSpec"))
   assert_true(core.forbidden_tokens.contains("type ElementNode"))
   assert_true(core.forbidden_tokens.contains("type ElementTree"))
