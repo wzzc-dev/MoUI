@@ -17,14 +17,6 @@ fn[Msg] modify_view(
 }
 
 ///|
-fn[Msg] modify_realized_view(
-  view : View[Msg],
-  modifier : (ViewSpec) -> ViewSpec,
-) -> View[Msg] {
-  modify_view(view, RealizedModifier(modifier))
-}
-
-///|
 fn[Msg] realize_view(view : View[Msg], emit : (Msg) -> Unit) -> ViewSpec {
   realize_view_node(view.node, emit)
 }

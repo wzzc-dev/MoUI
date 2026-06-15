@@ -464,6 +464,11 @@ fn modified_measured_size(
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)
     | AlignModifier(_)
+    | SpacingModifier(_)
+    | MainAxisAlignmentModifier(_)
+    | CrossAxisAlignmentModifier(_)
+    | ThemeModifier(_)
+    | EnvironmentModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier
     | RepaintBoundaryModifier => child_size
@@ -513,6 +518,11 @@ fn modified_child_constraints(
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)
     | AlignModifier(_)
+    | SpacingModifier(_)
+    | MainAxisAlignmentModifier(_)
+    | CrossAxisAlignmentModifier(_)
+    | ThemeModifier(_)
+    | EnvironmentModifier(_)
     | AspectRatioModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier
@@ -560,6 +570,11 @@ fn modified_child_frames(
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)
+    | SpacingModifier(_)
+    | MainAxisAlignmentModifier(_)
+    | CrossAxisAlignmentModifier(_)
+    | ThemeModifier(_)
+    | EnvironmentModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier
     | RepaintBoundaryModifier => [frame]

@@ -186,6 +186,11 @@ fn modified_intrinsic_size(
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)
     | AlignModifier(_)
+    | SpacingModifier(_)
+    | MainAxisAlignmentModifier(_)
+    | CrossAxisAlignmentModifier(_)
+    | ThemeModifier(_)
+    | EnvironmentModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier
     | RepaintBoundaryModifier => child_size

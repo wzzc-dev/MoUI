@@ -211,6 +211,11 @@ fn render_modified_node(
     | KeyboardShortcutModifier(_)
     | FlexibleModifier(_)
     | LayoutPriorityModifier(_)
+    | SpacingModifier(_)
+    | MainAxisAlignmentModifier(_)
+    | CrossAxisAlignmentModifier(_)
+    | ThemeModifier(_)
+    | EnvironmentModifier(_)
     | IntrinsicWidthModifier
     | IntrinsicHeightModifier
     | RepaintBoundaryModifier =>

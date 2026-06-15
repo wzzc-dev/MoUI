@@ -344,7 +344,15 @@ fn ViewSpec::environment(
 
 ///|
 fn ViewSpec::modified(self : ViewSpec, modifier : ViewModifier) -> ViewSpec {
-  ModifiedSpec({ key: None, modifier, child: self })
+  match modifier {
+    SpacingModifier(spacing) => self.spacing(spacing)
+    MainAxisAlignmentModifier(alignment) => self.main_axis_alignment(alignment)
+    CrossAxisAlignmentModifier(alignment) =>
+      self.cross_axis_alignment(alignment)
+    ThemeModifier(theme) => self.theme(theme)
+    EnvironmentModifier(environment) => self.environment(environment)
+    _ => ModifiedSpec({ key: None, modifier, child: self })
+  }
 }
 
 ///|
