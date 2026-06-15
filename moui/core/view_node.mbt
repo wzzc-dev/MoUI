@@ -1,5 +1,5 @@
 ///|
-enum ViewNode[Msg] {
+priv enum ViewNode[Msg] {
   EmptyNode
   TextNode(TextViewSpec)
   ButtonNode(ButtonViewSpec, Msg?)

@@ -72,8 +72,8 @@ entrypoint. It checks current generated interface files for:
   runtime source not wrapping `@core.AppRuntime` or `@core.RuntimeKernel`, and
   app/host source usage of `@runtime.AppRuntime`;
 - final core/runtime boundary tokens: `RuntimeKernel`, `RuntimeState`,
-  `ViewSpec`, `ElementNode`, and `ElementTree` must not appear in the core
-  generated public API;
+  `ViewNode`, `ViewSpec`, `ElementNode`, and `ElementTree` must not appear in
+  the core generated public API;
 - backend generated interfaces exposing `@runtime.AppRuntime` rather than the
   old `@core.AppRuntime` path, plus a zero-budget guard that prevents shared
   app packages from default-importing `moui/runtime`;
