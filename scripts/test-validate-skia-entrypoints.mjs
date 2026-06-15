@@ -62,6 +62,22 @@ expectFail(
   'missing \'"wzzc-dev/moui/render/skia" @skia_renderer\'',
 );
 
+const badRuntimeImportRoot = mkdtempSync(join(tmpdir(), "moui-skia-entrypoints-bad-runtime-import-"));
+cpSync(tmp, badRuntimeImportRoot, { recursive: true });
+const badRuntimePkg = join(badRuntimeImportRoot, "examples/showcase/macos_skia/moon.pkg");
+writeFileSync(
+  badRuntimePkg,
+  readFileSync(badRuntimePkg, "utf8").replace(
+    '  "wzzc-dev/moui/runtime",\n',
+    "",
+  ),
+);
+expectFail(
+  "reject missing runtime import",
+  badRuntimeImportRoot,
+  'missing \'"wzzc-dev/moui/runtime"\'',
+);
+
 const badEnvRoot = mkdtempSync(join(tmpdir(), "moui-skia-entrypoints-bad-env-"));
 cpSync(tmp, badEnvRoot, { recursive: true });
 const badMain = join(badEnvRoot, "examples/showcase/macos_skia/main.mbt");
@@ -78,6 +94,22 @@ expectFail(
   "first_frame_smoke_auto_exit",
 );
 
+const badRuntimeCtorRoot = mkdtempSync(join(tmpdir(), "moui-skia-entrypoints-bad-runtime-ctor-"));
+cpSync(tmp, badRuntimeCtorRoot, { recursive: true });
+const badRuntimeMain = join(badRuntimeCtorRoot, "examples/showcase/macos_skia/main.mbt");
+writeFileSync(
+  badRuntimeMain,
+  readFileSync(badRuntimeMain, "utf8").replace(
+    "@runtime.new_program_with_dimensions",
+    "@runtime.new_view_with_dimensions",
+  ),
+);
+expectFail(
+  "reject missing runtime constructor",
+  badRuntimeCtorRoot,
+  "new_program_with_dimensions",
+);
+
 const badHostSummaryRoot = mkdtempSync(join(tmpdir(), "moui-skia-entrypoints-bad-host-summary-"));
 cpSync(tmp, badHostSummaryRoot, { recursive: true });
 const badShowcaseMain = join(badHostSummaryRoot, "examples/showcase/macos_skia/main.mbt");
@@ -85,14 +117,14 @@ writeFileSync(
   badShowcaseMain,
   readFileSync(badShowcaseMain, "utf8")
     .replace(
-      "app.runtime_with_host_summary(@macos_backend.macos_capability_summary())",
-      "app.runtime()",
+      "program_with_host_summary",
+      "program",
     ),
 );
 expectFail(
   "reject missing Showcase Skia host summary",
   badHostSummaryRoot,
-  "runtime_with_host_summary",
+  "program_with_host_summary",
 );
 
 console.log("native Skia entrypoint validator tests: ok");

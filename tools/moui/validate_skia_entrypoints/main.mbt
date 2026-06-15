@@ -244,6 +244,7 @@ fn validate_entry_texts(
     pkg, "targets: { \"main.mbt\": [ \"native\" ] }", pkg_path, failures,
   )
   assert_contains(pkg, entry.expected_link_token, pkg_path, failures)
+  assert_contains(pkg, "\"wzzc-dev/moui/runtime\"", pkg_path, failures)
 
   assert_not_contains(pkg, "\"wzzc-dev/moui/render/wgpu\"", pkg_path, failures)
   assert_not_contains(
@@ -259,8 +260,11 @@ fn validate_entry_texts(
   assert_contains(main, "///|", main_path, failures)
   assert_contains(main, "fn main", main_path, failures)
   assert_contains(main, entry.app_constructor, main_path, failures)
+  assert_contains(
+    main, "@runtime.new_program_with_dimensions", main_path, failures,
+  )
   if entry.host_summary_call != "" {
-    assert_contains(main, "runtime_with_host_summary", main_path, failures)
+    assert_contains(main, "program_with_host_summary", main_path, failures)
     assert_contains(main, entry.host_summary_call, main_path, failures)
   }
   assert_not_contains(main, legacy_first_frame_env_token(), main_path, failures)
