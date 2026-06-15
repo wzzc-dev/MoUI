@@ -32,7 +32,13 @@ type BorderStyle = @core.BorderStyle
 type Brush = @core.Brush
 
 ///|
+type BadgeStyle = @core.BadgeStyle
+
+///|
 type ButtonState = @core.ButtonState
+
+///|
+type ButtonStyle = @core.ButtonStyle
 
 ///|
 type CachedLayerSpec = @core.CachedLayerSpec
@@ -48,6 +54,9 @@ type CommandBinding = @core.CommandBinding
 
 ///|
 type CommandIntent = @core.CommandIntent
+
+///|
+type ChoiceControlStyle = @core.ChoiceControlStyle
 
 ///|
 type ComponentEffect = @core.ComponentEffect
@@ -131,6 +140,9 @@ type EffectTaskLifecycleSnapshot = @core.EffectTaskLifecycleSnapshot
 type EffectTaskLifecycleStatus = @core.EffectTaskLifecycleStatus
 
 ///|
+type Easing = @core.Easing
+
+///|
 type ElementId = @core.ElementId
 
 ///|
@@ -140,10 +152,16 @@ type Environment = @core.Environment
 type FilterEffect = @core.FilterEffect
 
 ///|
+type FeedbackStyle = @core.FeedbackStyle
+
+///|
 type FocusScope = @core.FocusScope
 
 ///|
 type FocusScopeItem = @core.FocusScopeItem
+
+///|
+type FocusState = @core.FocusState
 
 ///|
 type FocusTraversalDirection = @core.FocusTraversalDirection
@@ -159,6 +177,12 @@ type FontSpec = @core.FontSpec
 
 ///|
 type FontStyle = @core.FontStyle
+
+///|
+type FormValidationSummary = @core.FormValidationSummary
+
+///|
+type FormValidationStyle = @core.FormValidationStyle
 
 ///|
 type Frame = @core.Frame
@@ -209,6 +233,9 @@ type LinearGradientSpec = @core.LinearGradientSpec
 type MainAxisAlignment = @core.MainAxisAlignment
 
 ///|
+type NavigationState = @core.NavigationState
+
+///|
 type PathSpec = @core.PathSpec
 
 ///|
@@ -216,6 +243,9 @@ type PathVerb = @core.PathVerb
 
 ///|
 type PickerItem = @core.PickerItem
+
+///|
+type PickerStyle = @core.PickerStyle
 
 ///|
 type PlatformViewPlacement = @core.PlatformViewPlacement
@@ -234,6 +264,9 @@ type Program[Model, Msg] = @core.Program[Model, Msg]
 
 ///|
 type ProgramRuntimeSnapshot = @core.ProgramRuntimeSnapshot
+
+///|
+type ProgressStyle = @core.ProgressStyle
 
 ///|
 type RadiusScale = @core.RadiusScale
@@ -323,7 +356,16 @@ type SheetPresentationMode = @core.SheetPresentationMode
 type Size = @core.Size
 
 ///|
+type SemanticColorScale = @core.SemanticColorScale
+
+///|
+type SliderStyle = @core.SliderStyle
+
+///|
 type ScrollState = @core.ScrollState
+
+///|
+type SpacingScale = @core.SpacingScale
 
 ///|
 type State[T] = @core.State[T]
@@ -404,7 +446,16 @@ type TextRun = @core.TextRun
 type TextSystem = @core.TextSystem
 
 ///|
+type TextFieldStyle = @core.TextFieldStyle
+
+///|
 type Theme = @core.Theme
+
+///|
+type TransitionSpec = @core.TransitionSpec
+
+///|
+type TransitionStyle = @core.TransitionStyle
 
 ///|
 type Transform2D = @core.Transform2D
