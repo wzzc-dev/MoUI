@@ -89,14 +89,7 @@ pub fn[Msg] View::primitive_flex_view(
 ) -> View[Msg] {
   view_from_node(
     FlexNode(
-      {
-        key: None,
-        axis,
-        spacing,
-        main_axis_alignment,
-        cross_axis_alignment,
-        children: [],
-      },
+      { key: None, axis, spacing, main_axis_alignment, cross_axis_alignment },
       children.map(child => child.node),
     ),
   )
@@ -107,9 +100,7 @@ pub fn[Msg] View::primitive_padding_insets_view(
   child~ : View[Msg],
   insets~ : Insets,
 ) -> View[Msg] {
-  view_from_node(
-    PaddingNode({ key: None, insets, child: EmptySpec }, child.node),
-  )
+  view_from_node(PaddingNode({ key: None, insets }, child.node))
 }
 
 ///|
@@ -123,15 +114,7 @@ pub fn[Msg] View::primitive_container_view(
 ) -> View[Msg] {
   view_from_node(
     ContainerNode(
-      {
-        key: None,
-        size,
-        background,
-        border,
-        corner_radius,
-        shadow,
-        child: None,
-      },
+      { key: None, size, background, border, corner_radius, shadow },
       match child {
         Some(child) => Some(child.node)
         None => None
@@ -160,16 +143,7 @@ pub fn[Msg] View::primitive_frame_view(
 ) -> View[Msg] {
   view_from_node(
     FrameNode(
-      {
-        key: None,
-        width,
-        height,
-        min_width,
-        min_height,
-        max_width,
-        max_height,
-        child: EmptySpec,
-      },
+      { key: None, width, height, min_width, min_height, max_width, max_height },
       child.node,
     ),
   )
@@ -179,9 +153,7 @@ pub fn[Msg] View::primitive_frame_view(
 pub fn[Msg] View::primitive_stack_view(
   children~ : Array[View[Msg]],
 ) -> View[Msg] {
-  view_from_node(
-    StackNode({ key: None, children: [] }, children.map(child => child.node)),
-  )
+  view_from_node(StackNode({ key: None }, children.map(child => child.node)))
 }
 
 ///|
@@ -201,7 +173,6 @@ pub fn[Msg] View::primitive_scroll_view(
         on_scroll: None,
         scroll_state: None,
         scroll_activates: false,
-        child: EmptySpec,
       },
       child.node,
       state,
@@ -219,7 +190,7 @@ pub fn[Msg] View::primitive_grid_view(
 ) -> View[Msg] {
   view_from_node(
     GridNode(
-      { key: None, columns, row_spacing, column_spacing, children: [] },
+      { key: None, columns, row_spacing, column_spacing },
       children.map(child => child.node),
     ),
   )
@@ -231,10 +202,7 @@ pub fn[Msg] View::primitive_list_view(
   spacing? : Double = 0.0,
 ) -> View[Msg] {
   view_from_node(
-    ListNode(
-      { key: None, spacing, children: [] },
-      children.map(child => child.node),
-    ),
+    ListNode({ key: None, spacing }, children.map(child => child.node)),
   )
 }
 
@@ -251,7 +219,6 @@ pub fn[Msg] View::primitive_sheet_view(
     SheetNode(
       {
         key: None,
-        content: EmptySpec,
         presentation_mode,
         background,
         corner_radius,
@@ -289,7 +256,6 @@ pub fn[Msg] View::primitive_custom_children_layout_view(
     CustomLayoutNode(
       {
         key: None,
-        children: [],
         cache: CustomLayoutCache::new(),
         measure,
         place,
