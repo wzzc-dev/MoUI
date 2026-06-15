@@ -206,7 +206,7 @@ View shell:
 
 ```moonbit
 ///|
-pub fn DashboardModel::view(self : DashboardModel) -> @core.View[DashboardMsg] {
+pub fn DashboardModel::view(self : DashboardModel) -> @moui.View[DashboardMsg] {
   let columns = [
     table_column(id="name", label="Name", width=220.0),
     table_column(id="status", label="Status", width=140.0),
@@ -271,7 +271,7 @@ Table body:
 fn DashboardModel::table_body(
   self : DashboardModel,
   columns : Array[@views.TableColumn],
-) -> @core.View[DashboardMsg] {
+) -> @moui.View[DashboardMsg] {
   match self.load_state {
     Loading => @views.loading_state("Loading rows")
     Empty => empty_state("No rows", "Try another filter.")
@@ -339,22 +339,22 @@ pub(all) enum EditorMsg {
   SourceChanged(String)
   TogglePalette
   CommandQueryChanged(String)
-  DispatchCommand(@core.CommandIntent)
+  DispatchCommand(@views.CommandIntent)
   BrowseForDocument
   HostCompleted(@host.HostCompletedServiceResponse)
 }
 
 ///|
-pub fn EditorModel::commands(self : EditorModel) -> Array[@core.ActionCommand] {
+pub fn EditorModel::commands(self : EditorModel) -> Array[@views.ActionCommand] {
   [
-    @core.ActionCommand::new(
-      intent=@core.CommandIntent::Submit,
+    @views.ActionCommand::new(
+      intent=@views.CommandIntent::Submit,
       label="Save Document",
       group="File",
       description="Persist the current document.",
     ),
-    @core.ActionCommand::new(
-      intent=@core.CommandIntent::OpenContextMenu,
+    @views.ActionCommand::new(
+      intent=@views.CommandIntent::OpenContextMenu,
       label="Open Document",
       group="File",
     ),
@@ -366,7 +366,7 @@ View shell:
 
 ```moonbit
 ///|
-pub fn EditorModel::view(self : EditorModel) -> @core.View[EditorMsg] {
+pub fn EditorModel::view(self : EditorModel) -> @moui.View[EditorMsg] {
   let editor = markdown_editor(
     self.source,
     format_markdown,
@@ -381,7 +381,7 @@ pub fn EditorModel::view(self : EditorModel) -> @core.View[EditorMsg] {
     child=column([
       menu_bar([
         @views.MenuItem::new(id="open", label="Open", message=BrowseForDocument),
-        @views.MenuItem::new(id="save", label="Save", message=DispatchCommand(@core.CommandIntent::Submit)),
+        @views.MenuItem::new(id="save", label="Save", message=DispatchCommand(@views.CommandIntent::Submit)),
       ]),
       command_bar([
         @views.MenuItem::new(id="open", label="Open", message=BrowseForDocument),
@@ -413,12 +413,12 @@ pub fn EditorModel::update_with_services(
   self : EditorModel,
   msg : EditorMsg,
   services : @host.HostAppServices,
-) -> (EditorModel, @core.Effect[EditorMsg]) {
+) -> (EditorModel, @moui.Effect[EditorMsg]) {
   match msg {
     BrowseForDocument =>
       (
         self,
-        @core.Effect::host_service(
+        @moui.Effect::host_service(
           key="host:open-document",
           label="Open document",
           run=dispatch => {
@@ -427,10 +427,10 @@ pub fn EditorModel::update_with_services(
           },
         ),
       )
-    DispatchCommand(intent) => (self.dispatch_command(intent, services), @core.Effect::none())
-    SourceChanged(source) => ({ ..self, source, dirty: true }, @core.Effect::none())
-    HostCompleted(completion) => (self.apply_host_completion(completion), @core.Effect::none())
-    _ => (self, @core.Effect::none())
+    DispatchCommand(intent) => (self.dispatch_command(intent, services), @moui.Effect::none())
+    SourceChanged(source) => ({ ..self, source, dirty: true }, @moui.Effect::none())
+    HostCompleted(completion) => (self.apply_host_completion(completion), @moui.Effect::none())
+    _ => (self, @moui.Effect::none())
   }
 }
 
@@ -438,9 +438,9 @@ pub fn EditorModel::update_with_services(
 pub fn EditorModel::program_with_services(
   self : EditorModel,
   services : @host.HostAppServices,
-) -> @core.Program[EditorModel, EditorMsg] {
-  @core.Program::new(
-    init=() => (self, @core.Effect::none()),
+) -> @moui.Program[EditorModel, EditorMsg] {
+  @moui.Program::new(
+    init=() => (self, @moui.Effect::none()),
     update=(model, message) => model.update_with_services(message, services),
     view=model => model.view(),
     subscriptions=model => model.subscriptions(services),
@@ -451,7 +451,7 @@ pub fn EditorModel::program_with_services(
 pub fn EditorModel::subscriptions(
   self : EditorModel,
   services : @host.HostAppServices,
-) -> @core.Subscription[EditorMsg] {
+) -> @moui.Subscription[EditorMsg] {
   match self.pending_host_request {
     Some(id) =>
       services.completion_subscription(
@@ -459,7 +459,7 @@ pub fn EditorModel::subscriptions(
         map=completion => HostCompleted(completion),
         label="Open document completion",
       )
-    None => @core.Subscription::none()
+    None => @moui.Subscription::none()
   }
 }
 ```
@@ -480,7 +480,8 @@ moon test examples/command_palette/app --target native
   package first.
 - Add package-local tests for pure update behavior and one runtime smoke.
 - Keep platform entrypoints thin and free of business logic.
-- Use `@core.SaveableStateStore` for restoration and `@host.HostAppServices`
-  for platform services.
+- Keep ordinary restoration app-owned; add `wzzc-dev/moui/core` explicitly
+  only for low-level restore stores or other advanced framework contracts.
+  Use `@host.HostAppServices` for platform services.
 - Run `moon info` after adding a package and commit the generated
   `pkg.generated.mbti` with the template-derived app.
