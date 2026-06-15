@@ -435,20 +435,15 @@ pub fn EditorModel::update_with_services(
 }
 
 ///|
-pub fn EditorModel::runtime_with_services(
+pub fn EditorModel::program_with_services(
   self : EditorModel,
   services : @host.HostAppServices,
-  width? : Double = 980.0,
-  height? : Double = 700.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::new(
-      init=() => (self, @core.Effect::none()),
-      update=(model, message) => model.update_with_services(message, services),
-      view=model => model.view(),
-      subscriptions=model => model.subscriptions(services),
-    ),
-    size=@core.Size::new(width~, height~),
+) -> @core.Program[EditorModel, EditorMsg] {
+  @core.Program::new(
+    init=() => (self, @core.Effect::none()),
+    update=(model, message) => model.update_with_services(message, services),
+    view=model => model.view(),
+    subscriptions=model => model.subscriptions(services),
   )
 }
 
