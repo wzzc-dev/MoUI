@@ -27,7 +27,7 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
   let alpha_dispatch : Ref[((ProgramSubscriptionMsg) -> Unit)?] = Ref(None)
   let beta_dispatch : Ref[((ProgramSubscriptionMsg) -> Unit)?] = Ref(None)
   let cleanup_log : Array[String] = []
-  let program = Program::new(
+  let program : Program[ProgramSubscriptionModel, ProgramSubscriptionMsg] = Program::new(
     init=() => ({ channel: "alpha", ticks: 0 }, Effect::none()),
     update=(model, message) => {
       match message {
@@ -59,7 +59,7 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
       })
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -76,20 +76,20 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
     content="1",
   )
   inspect(
-    initial.last_subscription_plan_summary.descriptors[0].key,
+    initial.last_subscription_plan_summary.descriptors[0].key(),
     content="timer:alpha",
   )
   inspect(
-    initial.last_subscription_plan_summary.descriptors[0].kind,
+    initial.last_subscription_plan_summary.descriptors[0].kind(),
     content="timer",
   )
   inspect(
-    initial.last_subscription_plan_summary.descriptors[0].label,
+    initial.last_subscription_plan_summary.descriptors[0].label(),
     content="alpha",
   )
   inspect(initial.active_subscription_count, content="1")
   inspect(initial.started_subscription_count, content="1")
-  inspect(initial.active_subscriptions[0].key, content="timer:alpha")
+  inspect(initial.active_subscriptions[0].key(), content="timer:alpha")
   match alpha_dispatch.val {
     Some(dispatch) => dispatch(ProgramSubscriptionTick)
     None => fail("expected alpha subscription dispatch")
@@ -124,7 +124,7 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
     None => fail("expected beta subscription dispatch")
   }
   assert_true(has_draw_text(runtime.draw_commands(), "beta:2"))
-  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  let inspector = runtime.inspector_snapshot().runtime
   inspect(inspector.program_dispatched_count, content="3")
   inspect(inspector.program_update_count, content="3")
   inspect(inspector.active_subscription_count, content="1")
@@ -132,9 +132,9 @@ test "program subscriptions start reuse cancel and dispatch typed messages" {
   inspect(inspector.duplicate_subscription_key_count, content="0")
   inspect(inspector.ignored_subscription_dispatch_count, content="1")
   inspect(inspector.active_subscriptions.length(), content="1")
-  inspect(inspector.active_subscriptions[0].key, content="timer:beta")
-  inspect(inspector.active_subscriptions[0].kind, content="timer")
-  inspect(inspector.active_subscriptions[0].label, content="beta")
+  inspect(inspector.active_subscriptions[0].key(), content="timer:beta")
+  inspect(inspector.active_subscriptions[0].kind(), content="timer")
+  inspect(inspector.active_subscriptions[0].label(), content="beta")
   assert_true(
     inspector.subscription_lifecycle.any(entry => {
       entry.key == "timer:alpha" &&
@@ -175,7 +175,10 @@ test "program subscriptions restart when source kind changes under same key" {
   let timer_dispatch : Ref[((ProgramSubscriptionKindMsg) -> Unit)?] = Ref(None)
   let host_dispatch : Ref[((ProgramSubscriptionKindMsg) -> Unit)?] = Ref(None)
   let cleanup_log : Array[String] = []
-  let program = Program::new(
+  let program : Program[
+    ProgramSubscriptionKindModel,
+    ProgramSubscriptionKindMsg,
+  ] = Program::new(
     init=() => ({ use_host: false, pulses: 0 }, Effect::none()),
     update=(model, message) => {
       match message {
@@ -208,13 +211,13 @@ test "program subscriptions restart when source kind changes under same key" {
       }
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
   assert_true(has_draw_text(runtime.draw_commands(), "timer:0"))
   let initial = runtime.program_runtime_snapshot()
-  inspect(initial.active_subscriptions[0].kind, content="timer")
+  inspect(initial.active_subscriptions[0].kind(), content="timer")
   match timer_dispatch.val {
     Some(dispatch) => dispatch(ProgramSubscriptionKindToggle)
     None => fail("expected timer subscription dispatch")
@@ -225,8 +228,8 @@ test "program subscriptions restart when source kind changes under same key" {
   inspect(switched.reused_subscription_count, content="0")
   inspect(switched.cancelled_subscription_count, content="1")
   inspect(switched.active_subscription_count, content="1")
-  inspect(switched.active_subscriptions[0].key, content="shared-source")
-  inspect(switched.active_subscriptions[0].kind, content="host-event")
+  inspect(switched.active_subscriptions[0].key(), content="shared-source")
+  inspect(switched.active_subscriptions[0].kind(), content="host-event")
   inspect(cleanup_log.join(","), content="timer")
   assert_true(
     switched.subscription_lifecycle.any(entry => {
@@ -254,7 +257,7 @@ test "program subscriptions restart when source kind changes under same key" {
 ///|
 test "program subscriptions queue synchronous start dispatch and report duplicate keys" {
   let start_count = Ref(0)
-  let program = Program::new(
+  let program : Program[ProgramSubscriptionModel, ProgramSubscriptionMsg] = Program::new(
     init=() => ({ channel: "instant", ticks: 0 }, Effect::none()),
     update=(model, message) => {
       match message {
@@ -278,7 +281,7 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
       ])
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -296,11 +299,11 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
     content="2",
   )
   inspect(
-    snapshot.last_subscription_plan_summary.descriptors[0].label,
+    snapshot.last_subscription_plan_summary.descriptors[0].label(),
     content="Instant",
   )
   inspect(
-    snapshot.last_subscription_plan_summary.descriptors[1].label,
+    snapshot.last_subscription_plan_summary.descriptors[1].label(),
     content="Duplicate ignored",
   )
   inspect(
@@ -317,9 +320,9 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
   inspect(snapshot.duplicate_subscription_keys.length(), content="1")
   inspect(snapshot.duplicate_subscription_keys[0], content="instant")
   inspect(snapshot.active_subscription_count, content="1")
-  inspect(snapshot.active_subscriptions[0].label, content="Instant")
+  inspect(snapshot.active_subscriptions[0].label(), content="Instant")
   inspect(snapshot.dispatched_count, content="1")
-  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  let inspector = runtime.inspector_snapshot().runtime
   inspect(inspector.program_subscription_plan_count, content="2")
   inspect(
     inspector.last_subscription_plan_summary.duplicate_key_count,
@@ -330,7 +333,7 @@ test "program subscriptions queue synchronous start dispatch and report duplicat
     content="instant",
   )
   inspect(
-    inspector.last_subscription_plan_summary.descriptors[1].key,
+    inspector.last_subscription_plan_summary.descriptors[1].key(),
     content="instant",
   )
   inspect(inspector.reused_subscription_count, content="1")

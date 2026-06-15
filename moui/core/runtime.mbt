@@ -1,26 +1,7 @@
 ///|
 struct RuntimeKernel {
   state : RuntimeState
-  mut program_runtime_snapshot_fn : () -> ProgramRuntimeSnapshot
-  mut destroy_program_runtime_fn : () -> Unit
-}
-
-///|
-fn program_message_drain_limit() -> Int {
-  1024
-}
-
-///|
-fn[Msg] compact_pending_program_messages(
-  pending_messages : Array[Msg],
-  start : Int,
-) -> Unit {
-  let remaining : Array[Msg] = []
-  for index in start..<pending_messages.length() {
-    remaining.push(pending_messages[index])
-  }
-  pending_messages.clear()
-  pending_messages.append(remaining)
+  program_runtime_snapshot_fn : () -> ProgramRuntimeSnapshot
 }
 
 ///|
@@ -46,144 +27,7 @@ pub fn[Msg] RuntimeKernel::new_view(
       environment~,
     ),
     program_runtime_snapshot_fn: snapshot,
-    destroy_program_runtime_fn: () => (),
   }
-}
-
-///|
-fn RuntimeKernel::new_component(
-  root~ : Component,
-  size~ : Size,
-  environment? : Environment = Environment::default(),
-) -> RuntimeKernel {
-  {
-    state: RuntimeState::new_component(root~, size~, environment~),
-    program_runtime_snapshot_fn: () => ProgramRuntimeSnapshot::empty(),
-    destroy_program_runtime_fn: () => (),
-  }
-}
-
-///|
-fn[Msg] RuntimeKernel::new_component_view(
-  root~ : (BuildContext) -> View[Msg],
-  size~ : Size,
-  environment? : Environment = Environment::default(),
-  on_message? : ((Msg) -> Unit)? = None,
-) -> RuntimeKernel {
-  let emit = match on_message {
-    Some(handler) => handler
-    None => _message => ()
-  }
-  RuntimeKernel::new_component(
-    root=Component::new(ctx => realize_view(root(ctx), emit)),
-    size~,
-    environment~,
-  )
-}
-
-///|
-pub fn[Model, Msg] RuntimeKernel::new_program(
-  program~ : Program[Model, Msg],
-  size~ : Size,
-  environment? : Environment = Environment::default(),
-) -> RuntimeKernel {
-  let (initial_model, initial_effect) = (program.init)()
-  let model = State::new(initial_model)
-  let program_runtime = ProgramRuntimeDiagnostics::new()
-  let pending_messages : Array[Msg] = []
-  let pending_index = Ref(0)
-  let dispatching = Ref(false)
-  let syncing_subscriptions = Ref(false)
-  let program_active = Ref(true)
-  let process_ref : Ref[(() -> Unit)?] = Ref(None)
-  let pending_count = () => pending_messages.length() - pending_index.val
-  let dispatch = message => {
-    if program_active.val {
-      pending_messages.push(message)
-      program_runtime.record_message_enqueued(pending_count())
-      if !syncing_subscriptions.val {
-        match process_ref.val {
-          Some(process) => process()
-          None => ()
-        }
-      }
-    } else {
-      program_runtime.record_ignored_program_dispatch()
-    }
-  }
-  let sync_subscriptions = () => {
-    syncing_subscriptions.val = true
-    program_runtime.sync_subscriptions(
-      (program.subscriptions)(model.get()),
-      dispatch,
-    )
-    syncing_subscriptions.val = false
-  }
-  let process_messages = () => {
-    if !dispatching.val && !syncing_subscriptions.val {
-      program_runtime.record_message_drain_started(pending_count())
-      dispatching.val = true
-      let mut processed_this_drain = 0
-      while pending_index.val < pending_messages.length() &&
-            processed_this_drain < program_message_drain_limit() {
-        let message = pending_messages[pending_index.val]
-        pending_index.val = pending_index.val + 1
-        processed_this_drain = processed_this_drain + 1
-        program_runtime.record_dispatch()
-        let (next_model, effect) = (program.update)(model.get(), message)
-        program_runtime.record_update()
-        model.set(next_model)
-        let effect_summary = effect.plan_summary()
-        let effect_count = run_effect(effect, dispatch, (descriptor, start) => {
-          program_runtime.start_effect_task(descriptor, start, dispatch)
-        })
-        program_runtime.record_effects(effect_summary, effect_count)
-        sync_subscriptions()
-        program_runtime.record_message_processed(pending_count())
-      }
-      if pending_index.val < pending_messages.length() {
-        compact_pending_program_messages(pending_messages, pending_index.val)
-        pending_index.val = 0
-        program_runtime.record_message_processed(pending_count())
-      } else {
-        pending_messages.clear()
-        pending_index.val = 0
-        program_runtime.record_message_queue_cleared()
-      }
-      dispatching.val = false
-    }
-  }
-  process_ref.val = Some(process_messages)
-  let initial_effect_summary = initial_effect.plan_summary()
-  let initial_effect_count = run_effect(initial_effect, dispatch, (
-    descriptor,
-    start,
-  ) => program_runtime.start_effect_task(descriptor, start, dispatch))
-  program_runtime.record_effects(initial_effect_summary, initial_effect_count)
-  sync_subscriptions()
-  match process_ref.val {
-    Some(process) => process()
-    None => ()
-  }
-  let runtime = RuntimeKernel::new_component_view(
-    root=ctx => (program.view)(ctx.watch(model), ctx.view_environment()),
-    size~,
-    environment~,
-    on_message=Some(dispatch),
-  )
-  runtime.program_runtime_snapshot_fn = () => program_runtime.snapshot()
-  runtime.destroy_program_runtime_fn = () => {
-    if program_active.val {
-      program_active.val = false
-      program_runtime.cancel_all_effect_tasks(
-        EffectTaskCancelReason::EffectTaskRuntimeDestroyed,
-      )
-      program_runtime.cancel_all_subscriptions(
-        SubscriptionCancelReason::SubscriptionRuntimeDestroyed,
-      )
-    }
-  }
-  runtime
 }
 
 ///|
@@ -239,7 +83,6 @@ pub fn RuntimeKernel::advance_time(
 
 ///|
 pub fn RuntimeKernel::destroy(self : RuntimeKernel) -> Unit {
-  (self.destroy_program_runtime_fn)()
   self.state.destroy()
 }
 

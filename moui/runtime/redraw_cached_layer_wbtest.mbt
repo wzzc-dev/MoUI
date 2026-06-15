@@ -6,7 +6,7 @@ test "draw frame emits repaint boundary update then cached layer draw" {
     font=FontSpec::new(size=12.0),
     color=Color::black(),
   ).repaint_boundary()
-  let runtime = RuntimeKernel::new_view(
+  let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=120.0, height=60.0),
   )
@@ -35,7 +35,7 @@ test "program draw frame emits repaint boundary update then cached layer draw" {
       ).repaint_boundary()
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=120.0, height=60.0),
   )
@@ -52,6 +52,11 @@ test "program draw frame emits repaint boundary update then cached layer draw" {
 ///|
 enum RetainedRedrawProgramMsg {
   RetainedRedrawIncrement
+}
+
+///|
+enum RetainedRedrawTextMsg {
+  RetainedRedrawSetTwo
 }
 
 ///|
@@ -82,28 +87,36 @@ fn first_begin_cached_layer_spec(
 }
 
 ///|
-fn retained_redraw_text_spec(text : String) -> ViewSpec {
-  ModifiedSpec({
-    key: None,
-    modifier: RepaintBoundaryModifier,
-    child: TextSpec({
-      key: None,
-      text,
-      size: Size::new(width=80.0, height=24.0),
-      font: FontSpec::new(size=12.0),
-      color: Color::black(),
-    }),
-  })
+fn retained_redraw_text_button(text : String) -> View[RetainedRedrawTextMsg] {
+  View::primitive_button_view(
+    text~,
+    size=Size::new(width=80.0, height=32.0),
+    font=FontSpec::new(size=12.0),
+    foreground=Color::black(),
+    background=Brush::solid(Color::gray()),
+    hovered_background=Brush::solid(Color::gray()),
+    pressed_background=Brush::solid(Color::blue()),
+    on_click=Some(RetainedRedrawSetTwo),
+  ).repaint_boundary()
 }
 
 ///|
 test "repaint boundary cache key stays stable across content revisions" {
-  let runtime = RuntimeKernel::new_spec(
-    root=retained_redraw_text_spec("One"),
+  let program : Program[String, RetainedRedrawTextMsg] = Program::simple(
+    init="One",
+    update=(_model, message) => {
+      match message {
+        RetainedRedrawSetTwo => "Two"
+      }
+    },
+    view=model => retained_redraw_text_button(model),
+  )
+  let runtime = AppRuntime::new_program(
+    program~,
     size=Size::new(width=120.0, height=60.0),
   )
   let first = first_begin_cached_layer_spec(runtime.draw_frame().commands)
-  runtime.set_root_spec(retained_redraw_text_spec("Two"))
+  runtime_wbtest_click(runtime, x=12.0, y=12.0)
   let updated = first_begin_cached_layer_spec(runtime.draw_frame().commands)
   match (first, updated) {
     (Some(first), Some(updated)) => {
@@ -139,7 +152,7 @@ fn retained_redraw_label(text : String) -> View[RetainedRedrawProgramMsg] {
 }
 
 ///|
-fn dispatch_retained_redraw_click(runtime : RuntimeKernel) -> Unit {
+fn dispatch_retained_redraw_click(runtime : AppRuntime) -> Unit {
   runtime.dispatch_event(
     AppEvent::Pointer(
       PointerEvent::new(
@@ -174,7 +187,7 @@ test "program update preserves clean sibling repaint boundary cache" {
       ])
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=200.0, height=60.0),
   )
@@ -195,7 +208,7 @@ test "paint only sibling boundary hover reports local damage rect" {
     retained_redraw_button("Left").key("left").repaint_boundary(),
     retained_redraw_label("Right").key("right").repaint_boundary(),
   ])
-  let runtime = RuntimeKernel::new_view(
+  let runtime = AppRuntime::new_view(
     root~,
     size=Size::new(width=200.0, height=60.0),
   )
@@ -210,7 +223,7 @@ test "paint only sibling boundary hover reports local damage rect" {
     ),
   )
   match runtime.draw_frame().damage {
-    Rects(rects) => {
+    DamageRegion::Rects(rects) => {
       assert_true(rects.length() > 0)
       assert_true(rects.length() <= 2)
       assert_true(rects[0].size.width <= 90.0)

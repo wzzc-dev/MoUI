@@ -26,7 +26,7 @@ test "program effect tasks complete on first dispatch and ignore stale dispatche
     },
     view=model => runtime_test_label(model),
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -37,20 +37,20 @@ test "program effect tasks complete on first dispatch and ignore stale dispatche
   inspect(initial.started_effect_task_count, content="1")
   inspect(initial.completed_effect_task_count, content="0")
   inspect(initial.cancelled_effect_task_count, content="0")
-  inspect(initial.active_effect_tasks[0].key, content="task:load")
-  inspect(initial.active_effect_tasks[0].kind, content="service")
-  inspect(initial.active_effect_tasks[0].label, content="Load task")
+  inspect(initial.active_effect_tasks[0].key(), content="task:load")
+  inspect(initial.active_effect_tasks[0].kind(), content="service")
+  inspect(initial.active_effect_tasks[0].label(), content="Load task")
   assert_true(
     initial.last_scheduled_effect_summary.root_kind ==
     EffectPlanKind::EffectPlanTask,
   )
   inspect(initial.last_scheduled_effect_summary.task_count, content="1")
   inspect(
-    initial.last_scheduled_effect_summary.descriptors[0].key,
+    initial.last_scheduled_effect_summary.descriptors[0].key(),
     content="task:load",
   )
   inspect(
-    initial.last_scheduled_effect_summary.descriptors[0].kind,
+    initial.last_scheduled_effect_summary.descriptors[0].kind(),
     content="service",
   )
   match task_dispatch.val {
@@ -79,7 +79,7 @@ test "program effect tasks complete on first dispatch and ignore stale dispatche
   inspect(stale.dispatched_count, content="1")
   inspect(stale.update_count, content="1")
   inspect(stale.ignored_effect_task_dispatch_count, content="1")
-  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  let inspector = runtime.inspector_snapshot().runtime
   inspect(inspector.program_effect_task_count, content="1")
   inspect(inspector.active_effect_task_count, content="0")
   inspect(inspector.completed_effect_task_count, content="1")
@@ -112,7 +112,7 @@ test "program effect tasks ignore synchronous second dispatch before first messa
     },
     view=model => runtime_test_label(model),
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -170,7 +170,7 @@ test "program effect tasks cancel by key change and runtime destroy" {
       )
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=180.0, height=80.0),
   )
@@ -266,18 +266,18 @@ test "program effect task replacement reports same-key kind changes" {
       )
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=180.0, height=80.0),
   )
   let initial = runtime.program_runtime_snapshot()
-  inspect(initial.active_effect_tasks[0].kind, content="service")
+  inspect(initial.active_effect_tasks[0].kind(), content="service")
   runtime_wbtest_click(runtime, x=20.0, y=20.0)
   assert_true(has_draw_text(runtime.draw_commands(), "custom"))
   let replaced = runtime.program_runtime_snapshot()
   inspect(replaced.started_effect_task_count, content="2")
   inspect(replaced.cancelled_effect_task_count, content="1")
-  inspect(replaced.active_effect_tasks[0].kind, content="custom-load")
+  inspect(replaced.active_effect_tasks[0].kind(), content="custom-load")
   inspect(cleanup_log.join(","), content="service")
   assert_true(
     replaced.effect_task_lifecycle.any(entry => {
@@ -287,7 +287,7 @@ test "program effect task replacement reports same-key kind changes" {
       entry.cancel_reason == Some(EffectTaskCancelReason::EffectTaskKindChanged)
     }),
   )
-  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  let inspector = runtime.inspector_snapshot().runtime
   assert_true(
     inspector.effect_task_lifecycle.any(entry => {
       entry.key == "task:shared-loader" &&
