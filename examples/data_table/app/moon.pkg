@@ -1,9 +1,10 @@
 import {
-  "wzzc-dev/moui/core",
+  "wzzc-dev/moui",
   "wzzc-dev/moui/views",
 }
 
 import {
+  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
 } for "test"
 

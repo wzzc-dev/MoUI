@@ -93,7 +93,7 @@ fn Model::record(
 }
 
 ///|
-pub fn view(model : Model) -> @core.View[Msg] {
+pub fn view(model : Model) -> @moui.View[Msg] {
   let theme = probe_theme()
   center(
     surface(
@@ -189,8 +189,8 @@ pub fn view(model : Model) -> @core.View[Msg] {
 }
 
 ///|
-fn probe_theme() -> @core.Theme {
-  @core.Theme::light().with_accent(@core.Color::rgba(r=0.78, g=0.10, b=0.12))
+fn probe_theme() -> @moui.Theme {
+  @views.light_theme()
 }
 
 ///|
@@ -216,8 +216,8 @@ fn Model::result_count(self : Model) -> Int {
 }
 
 ///|
-pub fn program() -> @core.Program[Model, Msg] {
-  @core.Program::simple(init=Model::new(), update~, view~)
+pub fn program() -> @moui.Program[Model, Msg] {
+  @moui.Program::simple(init=Model::new(), update~, view~)
 }
 
 ///|

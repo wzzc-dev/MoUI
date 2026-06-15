@@ -70,6 +70,8 @@ entrypoint. It checks current generated interface files for:
 - backend generated interfaces exposing `@runtime.AppRuntime` rather than the
   old `@core.AppRuntime` path, plus a zero-budget guard that prevents shared
   app packages from default-importing `moui/runtime`;
+- shared app package default `moui/core` import budget, currently a ratchet
+  while app-facing examples move to `moui + views`;
 - app, host, smoke, and cross-package tests using `moui/views` for view
   construction and widget-level controls instead of direct `@core.View::*`
   constructors;
