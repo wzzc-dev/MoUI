@@ -36,7 +36,7 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
 }
 
 ///|
-test "runtime facade budget pins the opaque wrapper boundary" {
+test "runtime facade budget pins the opaque runtime boundary" {
   let runtime = budget_by_label("runtime facade")
   inspect(runtime.max_lines, content="63")
   inspect(runtime.max_pub_lines, content="43")
