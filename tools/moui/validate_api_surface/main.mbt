@@ -723,6 +723,32 @@ fn forbidden_core_control_tokens() -> Array[ForbiddenSourceToken] {
 }
 
 ///|
+fn forbidden_core_program_runtime_source_tokens() -> Array[ForbiddenSourceToken] {
+  [
+    { label: "program runtime diagnostics", token: "ProgramRuntimeDiagnostics" },
+    {
+      label: "program message drain loop",
+      token: "program_message_drain_limit",
+    },
+    { label: "program message queue", token: "pending_messages" },
+    { label: "effect task lifecycle", token: "start_effect_task(" },
+    { label: "subscription lifecycle", token: "sync_subscriptions(" },
+    {
+      label: "program runtime constructor",
+      token: "RuntimeKernel::new_program(",
+    },
+  ]
+}
+
+///|
+fn forbidden_core_program_runtime_source_paths() -> Array[String] {
+  [
+    "moui/core/program_runtime_diagnostics.mbt", "moui/core/program_runtime_effect_tasks.mbt",
+    "moui/core/program_runtime_subscriptions.mbt",
+  ]
+}
+
+///|
 fn validate_runtime_entrypoint_usage(
   repo_root : String,
   failures : Array[String],
@@ -912,6 +938,49 @@ fn validate_runtime_source_boundaries(
 }
 
 ///|
+fn validate_core_program_runtime_ownership(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = []
+  collect_mbt_files(repo_root, "moui/core", files, failures)
+  let mut source_hits = 0
+  let tokens = forbidden_core_program_runtime_source_tokens()
+  for path in files {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    for rule in tokens {
+      if text.contains(rule.token) {
+        source_hits += 1
+        failures.push(
+          path +
+          ": program runtime implementation belongs in moui/runtime (" +
+          rule.label +
+          ") instead of core",
+        )
+      }
+    }
+  }
+  let mut stale_files = 0
+  for path in forbidden_core_program_runtime_source_paths() {
+    if @tools.file_exists(@tools.resolve_path(repo_root, path)) {
+      stale_files += 1
+      failures.push(
+        path + ": program runtime implementation file belongs in moui/runtime",
+      )
+    }
+  }
+  println(
+    "api surface: core program-runtime source tokens=\{source_hits}; stale files=\{stale_files}",
+  )
+}
+
+///|
 fn run_checks(repo_root : String) -> Array[String] {
   let failures : Array[String] = []
   for budget in package_budgets() {
@@ -920,6 +989,7 @@ fn run_checks(repo_root : String) -> Array[String] {
   validate_root_facade_shape(repo_root, failures)
   validate_views_return_types(repo_root, failures)
   validate_runtime_source_boundaries(repo_root, failures)
+  validate_core_program_runtime_ownership(repo_root, failures)
   validate_backend_runtime_interfaces(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)
   validate_shared_app_runtime_imports(repo_root, failures)
