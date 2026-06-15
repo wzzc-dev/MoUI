@@ -5,14 +5,14 @@ pub(all) struct LayoutResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct MeasuredNode {
+priv struct MeasuredNode {
   element_id : ElementId
   size : Size
   children : Array[MeasuredNode]
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct PlacedNode {
+priv struct PlacedNode {
   element_id : ElementId
   frame : Rect
   children : Array[PlacedNode]
@@ -684,7 +684,7 @@ fn measure_list_measured(
 }
 
 ///|
-pub fn PlacedNode::to_layout_result(self : PlacedNode) -> LayoutResult {
+fn PlacedNode::to_layout_result(self : PlacedNode) -> LayoutResult {
   {
     frame: self.frame,
     children: self.children.map(child => child.to_layout_result()),

@@ -844,12 +844,6 @@ pub(all) enum MainAxisAlignment {
   SpaceEvenly
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct MeasuredNode {
-  element_id : ElementId
-  size : Size
-  children : Array[MeasuredNode]
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct MotionScale {
   fast_ms : Double
   normal_ms : Double
@@ -897,13 +891,6 @@ pub(all) struct PickerStyle {
   popup_max_height : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn PickerStyle::default(theme? : Theme) -> Self
-
-pub(all) struct PlacedNode {
-  element_id : ElementId
-  frame : Rect
-  children : Array[PlacedNode]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn PlacedNode::to_layout_result(Self) -> LayoutResult
 
 pub(all) struct PlatformViewPlacement {
   id : String
