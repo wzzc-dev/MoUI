@@ -96,7 +96,7 @@ test "shared app runtime import guard ignores test-only imports" {
 
 ///|
 test "shared app core import guard tracks default imports" {
-  inspect(max_shared_app_core_imports(), content="7")
+  inspect(max_shared_app_core_imports(), content="6")
   let default_import =
     #|import {
     #|  "wzzc-dev/moui",
@@ -121,9 +121,27 @@ test "shared app core import guard tracks default imports" {
 }
 
 ///|
-test "views facade exposes WebView control contracts" {
+test "views facade exposes control-specific contracts" {
   let views = budget_by_label("views facade")
-  inspect(views.max_pub_lines, content="242")
+  inspect(views.max_pub_lines, content="248")
+  assert_true(
+    views.required_tokens.contains("pub using @core {type ActionCommand}"),
+  )
+  assert_true(
+    views.required_tokens.contains("pub using @core {type ActionCommandMap}"),
+  )
+  assert_true(
+    views.required_tokens.contains("pub using @core {type CommandBinding}"),
+  )
+  assert_true(
+    views.required_tokens.contains("pub using @core {type CommandIntent}"),
+  )
+  assert_true(
+    views.required_tokens.contains("pub using @core {type KeyModifiers}"),
+  )
+  assert_true(
+    views.required_tokens.contains("pub using @core {type KeyboardShortcut}"),
+  )
   assert_true(
     views.required_tokens.contains("pub using @core {type WebViewEvent}"),
   )

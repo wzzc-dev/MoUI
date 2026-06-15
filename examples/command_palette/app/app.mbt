@@ -29,7 +29,7 @@ pub(all) struct CommandPaletteModel {
 ///|
 pub(all) enum CommandPaletteMsg {
   QueryChanged(String)
-  CommandSelected(@core.CommandIntent)
+  CommandSelected(@views.CommandIntent)
   ShowNativeMenu
   HostMenuCompleted(@host.HostServiceResponse)
   ToggleContextMenu
@@ -74,12 +74,12 @@ pub fn CommandPaletteModel::update_with_services(
   self : CommandPaletteModel,
   message : CommandPaletteMsg,
   services : @host.HostAppServices,
-) -> (CommandPaletteModel, @core.Effect[CommandPaletteMsg]) {
+) -> (CommandPaletteModel, @moui.Effect[CommandPaletteMsg]) {
   match message {
     ShowNativeMenu =>
       (
         { ..self, last_result: "Opening native menu" },
-        @core.Effect::host_service(
+        @moui.Effect::host_service(
           key="host:command-menu",
           label="Show command menu",
           run=dispatch => {
@@ -89,7 +89,7 @@ pub fn CommandPaletteModel::update_with_services(
           },
         ),
       )
-    _ => (self.update(message), @core.Effect::none())
+    _ => (self.update(message), @moui.Effect::none())
   }
 }
 
@@ -104,7 +104,7 @@ pub fn update(
 ///|
 pub fn CommandPaletteModel::commands(
   self : CommandPaletteModel,
-) -> Array[@core.ActionCommand] {
+) -> Array[@views.ActionCommand] {
   ignore(self)
   command_palette_commands()
 }
@@ -112,7 +112,7 @@ pub fn CommandPaletteModel::commands(
 ///|
 pub fn CommandPaletteModel::filtered_commands(
   self : CommandPaletteModel,
-) -> Array[@core.ActionCommand] {
+) -> Array[@views.ActionCommand] {
   let needle = self.query.to_lower()
   self
   .commands()
@@ -128,7 +128,7 @@ pub fn CommandPaletteModel::filtered_commands(
 ///|
 pub fn CommandPaletteModel::dispatch_intent(
   self : CommandPaletteModel,
-  intent : @core.CommandIntent,
+  intent : @views.CommandIntent,
 ) -> CommandPaletteModel {
   let command = find_command(self.commands(), intent)
   match command {
@@ -166,14 +166,14 @@ fn CommandPaletteModel::apply_host_menu_response(
 }
 
 ///|
-pub fn view(model : CommandPaletteModel) -> @core.View[CommandPaletteMsg] {
+pub fn view(model : CommandPaletteModel) -> @moui.View[CommandPaletteMsg] {
   model.view()
 }
 
 ///|
 pub fn CommandPaletteModel::view(
   self : CommandPaletteModel,
-) -> @core.View[CommandPaletteMsg] {
+) -> @moui.View[CommandPaletteMsg] {
   let theme = @views.light_theme()
   let shell = column(
     [
@@ -240,7 +240,7 @@ pub fn CommandPaletteModel::view(
           ),
           button(
             "Submit",
-            on_click=CommandSelected(@core.CommandIntent::Submit),
+            on_click=CommandSelected(@views.CommandIntent::Submit),
             variant=@views.ButtonVariant::Primary,
             theme~,
             width=88.0,
@@ -288,7 +288,7 @@ pub fn CommandPaletteModel::view(
 ///|
 pub fn CommandPaletteApp::program(
   self : CommandPaletteApp,
-) -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
+) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
   ignore(self)
   program()
 }
@@ -297,37 +297,37 @@ pub fn CommandPaletteApp::program(
 pub fn CommandPaletteApp::program_with_services(
   self : CommandPaletteApp,
   services : @host.HostAppServices,
-) -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
+) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
   ignore(self)
   program_with_services(services)
 }
 
 ///|
-pub fn program() -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
+pub fn program() -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
   CommandPaletteModel::new().program()
 }
 
 ///|
 pub fn program_with_services(
   services : @host.HostAppServices,
-) -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
+) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
   CommandPaletteModel::new().program_with_services(services)
 }
 
 ///|
 pub fn CommandPaletteModel::program(
   self : CommandPaletteModel,
-) -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
-  @core.Program::simple(init=self, update~, view~)
+) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
+  @moui.Program::simple(init=self, update~, view~)
 }
 
 ///|
 pub fn CommandPaletteModel::program_with_services(
   self : CommandPaletteModel,
   services : @host.HostAppServices,
-) -> @core.Program[CommandPaletteModel, CommandPaletteMsg] {
-  @core.Program::new(
-    init=() => (self, @core.Effect::none()),
+) -> @moui.Program[CommandPaletteModel, CommandPaletteMsg] {
+  @moui.Program::new(
+    init=() => (self, @moui.Effect::none()),
     update=(model, message) => model.update_with_services(message, services),
     view~,
   )
@@ -336,8 +336,8 @@ pub fn CommandPaletteModel::program_with_services(
 ///|
 fn CommandPaletteModel::context_region(
   self : CommandPaletteModel,
-  theme : @core.Theme,
-) -> @core.View[CommandPaletteMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[CommandPaletteMsg] {
   context_menu_region(
     child=surface(
       column(
@@ -381,9 +381,9 @@ fn CommandPaletteModel::context_region(
 ///|
 fn CommandPaletteModel::command_log(
   self : CommandPaletteModel,
-  theme : @core.Theme,
-) -> @core.View[CommandPaletteMsg] {
-  let rows : Array[@core.View[CommandPaletteMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[CommandPaletteMsg] {
+  let rows : Array[@moui.View[CommandPaletteMsg]] = [
     text(
       "Dispatch Log",
       role=@views.TextRole::Control,
@@ -426,64 +426,64 @@ fn CommandPaletteModel::command_log(
 }
 
 ///|
-pub fn command_palette_commands() -> Array[@core.ActionCommand] {
+pub fn command_palette_commands() -> Array[@views.ActionCommand] {
   [
-    @core.ActionCommand::new(
-      intent=@core.CommandIntent::Submit,
+    @views.ActionCommand::new(
+      intent=@views.CommandIntent::Submit,
       label="Save Document",
       shortcut=Some(
-        @core.KeyboardShortcut::new(
+        @views.KeyboardShortcut::new(
           key="s",
-          modifiers=@core.KeyModifiers::new(meta=true),
+          modifiers=@views.KeyModifiers::new(meta=true),
         ),
       ),
       group="File",
       description="Persist the current document.",
     ),
-    @core.ActionCommand::new(
-      intent=@core.CommandIntent::Copy,
+    @views.ActionCommand::new(
+      intent=@views.CommandIntent::Copy,
       label="Copy Selection",
       shortcut=Some(
-        @core.KeyboardShortcut::new(
+        @views.KeyboardShortcut::new(
           key="c",
-          modifiers=@core.KeyModifiers::new(meta=true),
+          modifiers=@views.KeyModifiers::new(meta=true),
         ),
       ),
       group="Edit",
       description="Copy the selected block.",
     ),
-    @core.ActionCommand::new(
-      intent=@core.CommandIntent::Paste,
+    @views.ActionCommand::new(
+      intent=@views.CommandIntent::Paste,
       label="Paste Selection",
       shortcut=Some(
-        @core.KeyboardShortcut::new(
+        @views.KeyboardShortcut::new(
           key="v",
-          modifiers=@core.KeyModifiers::new(meta=true),
+          modifiers=@views.KeyModifiers::new(meta=true),
         ),
       ),
       group="Edit",
       description="Paste from the clipboard.",
     ),
-    @core.ActionCommand::new(
-      intent=@core.CommandIntent::Cancel,
+    @views.ActionCommand::new(
+      intent=@views.CommandIntent::Cancel,
       label="Archive Document",
       shortcut=Some(
-        @core.KeyboardShortcut::new(
+        @views.KeyboardShortcut::new(
           key="Backspace",
-          modifiers=@core.KeyModifiers::new(meta=true),
+          modifiers=@views.KeyModifiers::new(meta=true),
         ),
       ),
       enabled=false,
       group="File",
       description="Disabled until a document is selected.",
     ),
-    @core.ActionCommand::new(
-      intent=@core.CommandIntent::OpenContextMenu,
+    @views.ActionCommand::new(
+      intent=@views.CommandIntent::OpenContextMenu,
       label="Open Fallback Menu",
       shortcut=Some(
-        @core.KeyboardShortcut::new(
+        @views.KeyboardShortcut::new(
           key="k",
-          modifiers=@core.KeyModifiers::new(meta=true),
+          modifiers=@views.KeyModifiers::new(meta=true),
         ),
       ),
       group="View",
@@ -511,20 +511,20 @@ pub fn command_sections() -> Array[@views.CommandMenuSection] {
 }
 
 ///|
-pub fn action_command_map() -> @core.ActionCommandMap {
+pub fn action_command_map() -> @views.ActionCommandMap {
   let commands = command_palette_commands()
-  @core.ActionCommandMap::new(
+  @views.ActionCommandMap::new(
     bindings=commands.map(command => {
-      @core.CommandBinding::new(command~, handle=() => ())
+      @views.CommandBinding::new(command~, handle=() => ())
     }),
   )
 }
 
 ///|
 fn find_command(
-  commands : Array[@core.ActionCommand],
-  intent : @core.CommandIntent,
-) -> @core.ActionCommand? {
+  commands : Array[@views.ActionCommand],
+  intent : @views.CommandIntent,
+) -> @views.ActionCommand? {
   for command in commands {
     if command.intent == intent {
       return Some(command)
