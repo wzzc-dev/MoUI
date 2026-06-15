@@ -1476,9 +1476,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/view.mbt",
-      max_lines: 48,
-      target_lines: 40,
-      reason: "keep core View wrapper and realization entry compact",
+      max_lines: 36,
+      target_lines: 30,
+      reason: "keep core View wrapper and package-local realization entry compact",
     },
     {
       path: "moui/runtime/runtime.mbt",
