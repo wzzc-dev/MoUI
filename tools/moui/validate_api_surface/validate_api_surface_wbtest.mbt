@@ -96,7 +96,7 @@ test "shared app runtime import guard ignores test-only imports" {
 
 ///|
 test "shared app core import guard tracks default imports" {
-  inspect(max_shared_app_core_imports(), content="6")
+  inspect(max_shared_app_core_imports(), content="5")
   let default_import =
     #|import {
     #|  "wzzc-dev/moui",
@@ -123,7 +123,7 @@ test "shared app core import guard tracks default imports" {
 ///|
 test "views facade exposes control-specific contracts" {
   let views = budget_by_label("views facade")
-  inspect(views.max_pub_lines, content="248")
+  inspect(views.max_pub_lines, content="250")
   assert_true(
     views.required_tokens.contains("pub using @core {type ActionCommand}"),
   )
@@ -132,6 +132,10 @@ test "views facade exposes control-specific contracts" {
   )
   assert_true(
     views.required_tokens.contains("pub using @core {type CommandBinding}"),
+  )
+  assert_true(views.required_tokens.contains("pub using @core {type Color}"))
+  assert_true(
+    views.required_tokens.contains("pub using @core {type ColorScheme}"),
   )
   assert_true(
     views.required_tokens.contains("pub using @core {type CommandIntent}"),
