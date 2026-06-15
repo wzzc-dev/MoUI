@@ -49,7 +49,6 @@ pub(all) struct CustomPlacementContext {
 ///|
 priv struct CustomLayoutSpec {
   key : Key?
-  children : Array[ViewSpec]
   cache : CustomLayoutCache
   measure : (CustomLayoutContext) -> Size
   place : (CustomPlacementContext) -> Array[Rect]

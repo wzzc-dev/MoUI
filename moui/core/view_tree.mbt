@@ -101,14 +101,12 @@ priv struct FlexViewSpec {
   spacing : Double
   main_axis_alignment : MainAxisAlignment
   cross_axis_alignment : CrossAxisAlignment
-  children : Array[ViewSpec]
 }
 
 ///|
 priv struct PaddingViewSpec {
   key : Key?
   insets : Insets
-  child : ViewSpec
 }
 
 ///|
@@ -119,7 +117,6 @@ priv struct ContainerViewSpec {
   border : BorderStyle?
   corner_radius : Double
   shadow : ShadowStyle?
-  child : ViewSpec?
 }
 
 ///|
@@ -138,13 +135,11 @@ priv struct FrameViewSpec {
   min_height : Double?
   max_width : Double?
   max_height : Double?
-  child : ViewSpec
 }
 
 ///|
 priv struct StackViewSpec {
   key : Key?
-  children : Array[ViewSpec]
 }
 
 ///|
@@ -155,7 +150,6 @@ priv struct ScrollViewSpec {
   on_scroll : ((Point) -> Unit)?
   scroll_state : ScrollState?
   scroll_activates : Bool
-  child : ViewSpec
 }
 
 ///|
@@ -164,14 +158,12 @@ priv struct GridViewSpec {
   columns : Int
   row_spacing : Double
   column_spacing : Double
-  children : Array[ViewSpec]
 }
 
 ///|
 priv struct ListViewSpec {
   key : Key?
   spacing : Double
-  children : Array[ViewSpec]
 }
 
 ///|
@@ -233,25 +225,12 @@ priv enum ViewModifier {
 }
 
 ///|
-priv struct ModifiedViewSpec {
-  key : Key?
-  modifier : ViewModifier
-  child : ViewSpec
-}
-
-///|
 priv struct CustomViewSpec {
   key : Key?
   measure : (Constraints) -> Size
   paint : (Rect) -> Array[DrawCommand]
   semantics_role : SemanticsRole
   semantics_label : String
-}
-
-///|
-priv struct ComponentViewSpec {
-  key : Key?
-  component : Component
 }
 
 ///|
@@ -318,39 +297,9 @@ pub(all) enum SheetPresentationMode {
 ///|
 priv struct SheetViewSpec {
   key : Key?
-  content : ViewSpec
   presentation_mode : SheetPresentationMode
   background : Brush
   corner_radius : Double
   shadow : ShadowStyle?
   on_dismiss : (() -> Unit)?
-}
-
-///|
-priv enum ViewSpec {
-  EmptySpec
-  TextSpec(TextViewSpec)
-  ButtonSpec(ButtonViewSpec)
-  TextFieldSpec(TextFieldViewSpec)
-  RichTextEditorSpec(RichTextEditorViewSpec)
-  ImageSpec(ImageViewSpec)
-  CheckboxSpec(CheckboxViewSpec)
-  PickerSpec(PickerViewSpec)
-  DatePickerSpec(DatePickerViewSpec)
-  SearchBarSpec(SearchBarViewSpec)
-  WebViewHostSpec(WebViewSpec)
-  SheetSpec(SheetViewSpec)
-  FlexSpec(FlexViewSpec)
-  PaddingSpec(PaddingViewSpec)
-  ContainerSpec(ContainerViewSpec)
-  SpacerSpec(SpacerViewSpec)
-  FrameSpec(FrameViewSpec)
-  StackSpec(StackViewSpec)
-  ScrollSpec(ScrollViewSpec)
-  GridSpec(GridViewSpec)
-  ListSpec(ListViewSpec)
-  ModifiedSpec(ModifiedViewSpec)
-  CustomSpec(CustomViewSpec)
-  CustomLayoutSpec(CustomLayoutSpec)
-  ComponentSpec(ComponentViewSpec)
 }

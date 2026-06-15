@@ -11,18 +11,6 @@ pub struct BuildContext {
 }
 
 ///|
-priv struct Component {
-  build : (BuildContext) -> ViewSpec
-}
-
-///|
-priv struct ComponentBuildResult {
-  child_spec : ViewSpec
-  subscriptions : Array[StateSubscription]
-  effects : Array[ComponentEffect]
-}
-
-///|
 pub fn BuildContext::new_for_runtime(
   component_id~ : ElementId,
   request_component_rebuild~ : (ElementId) -> Unit,
@@ -43,11 +31,6 @@ pub fn BuildContext::new_for_runtime(
     old_effects,
     environment,
   }
-}
-
-///|
-fn Component::new(build : (BuildContext) -> ViewSpec) -> Component {
-  { build, }
 }
 
 ///|
@@ -232,35 +215,4 @@ pub fn BuildContext::content_size_category(
 ///|
 pub fn BuildContext::enabled(self : BuildContext) -> Bool {
   self.environment.enabled
-}
-
-///|
-fn build_component_spec(
-  component : Component,
-  runtime : RuntimeState,
-  component_id : ElementId,
-  old_subscriptions : Array[StateSubscription],
-  old_effects : Array[ComponentEffect],
-) -> ComponentBuildResult {
-  for subscription in old_subscriptions {
-    subscription.cancel()
-  }
-  let subscriptions : Array[StateSubscription] = []
-  let effects : Array[ComponentEffect] = []
-  let context = BuildContext::{
-    component_id,
-    request_component_rebuild: id => runtime.request_component_rebuild(id),
-    viewport_size: runtime.size,
-    saveable_state: runtime.saveable_state,
-    subscriptions,
-    effects,
-    old_effects,
-    environment: runtime.environment,
-  }
-  let child_spec = (component.build)(context)
-  ComponentEffect::finish_reuse(
-    old_effects,
-    reason=ComponentEffectCancelReason::EffectKeyChanged,
-  )
-  { child_spec, subscriptions, effects }
 }

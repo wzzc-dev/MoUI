@@ -503,58 +503,10 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep web platform-window slot mapping and canvas id helpers compact",
     },
     {
-      path: "moui/core/element.mbt",
-      max_lines: 330,
-      target_lines: 300,
-      reason: "keep core element dirty, inspector, component rebuild, and cleanup logic compact",
-    },
-    {
-      path: "moui/core/element_reconcile.mbt",
-      max_lines: 340,
-      target_lines: 305,
-      reason: "keep core element mounting, reconciliation, and child reuse compact",
-    },
-    {
-      path: "moui/core/element_reconcile_dirty.mbt",
-      max_lines: 370,
-      target_lines: 330,
-      reason: "keep core ViewSpec and modifier dirty-kind comparison compact",
-    },
-    {
-      path: "moui/core/element_tree.mbt",
-      max_lines: 221,
-      target_lines: 210,
-      reason: "keep core element node, tree, render node, and cache state compact",
-    },
-    {
-      path: "moui/core/runtime_state.mbt",
-      max_lines: 460,
-      target_lines: 415,
-      reason: "keep core runtime construction, environment, query, draw, and rebuild entrypoints compact",
-    },
-    {
-      path: "moui/core/runtime_events.mbt",
-      max_lines: 390,
-      target_lines: 350,
-      reason: "keep core runtime action command, input event, focus, and animation dispatch compact",
-    },
-    {
-      path: "moui/core/runtime_render_pipeline.mbt",
-      max_lines: 330,
-      target_lines: 300,
-      reason: "keep core runtime render pipeline, damage, cached-layer, and dirty queue helpers compact",
-    },
-    {
       path: "moui/core/view_tree.mbt",
-      max_lines: 360,
-      target_lines: 330,
-      reason: "keep core view spec, modifier, picker, and sheet contracts compact",
-    },
-    {
-      path: "moui/core/view_spec_ops.mbt",
-      max_lines: 370,
-      target_lines: 335,
-      reason: "keep core ViewSpec key, identity, modifier, and layout propagation helpers compact",
+      max_lines: 320,
+      target_lines: 290,
+      reason: "keep core opaque view payload, modifier, picker, and sheet contracts compact",
     },
     {
       path: "moui/core/view_style.mbt",
@@ -1476,9 +1428,9 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/view.mbt",
-      max_lines: 36,
-      target_lines: 30,
-      reason: "keep core View wrapper and package-local realization entry compact",
+      max_lines: 20,
+      target_lines: 18,
+      reason: "keep core View wrapper compact",
     },
     {
       path: "moui/runtime/runtime.mbt",
@@ -1578,8 +1530,8 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/runtime/test_core_aliases_wbtest.mbt",
-      max_lines: 145,
-      target_lines: 130,
+      max_lines: 45,
+      target_lines: 40,
       reason: "keep runtime wbtest core contract aliases and click helpers compact",
     },
   ]
