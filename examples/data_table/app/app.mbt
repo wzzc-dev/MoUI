@@ -303,12 +303,12 @@ pub fn DataTableModel::selected_record(self : DataTableModel) -> DataRecord? {
 }
 
 ///|
-pub fn view(model : DataTableModel) -> @core.View[DataTableMsg] {
+pub fn view(model : DataTableModel) -> @moui.View[DataTableMsg] {
   model.view()
 }
 
 ///|
-pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
+pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
   let theme = @views.light_theme()
   let shell = column(
     [
@@ -396,28 +396,28 @@ pub fn DataTableModel::view(self : DataTableModel) -> @core.View[DataTableMsg] {
 ///|
 pub fn DataTableApp::program(
   self : DataTableApp,
-) -> @core.Program[DataTableModel, DataTableMsg] {
+) -> @moui.Program[DataTableModel, DataTableMsg] {
   ignore(self)
   program()
 }
 
 ///|
-pub fn program() -> @core.Program[DataTableModel, DataTableMsg] {
+pub fn program() -> @moui.Program[DataTableModel, DataTableMsg] {
   DataTableModel::new().program()
 }
 
 ///|
 pub fn DataTableModel::program(
   self : DataTableModel,
-) -> @core.Program[DataTableModel, DataTableMsg] {
-  @core.Program::simple(init=self, update~, view~)
+) -> @moui.Program[DataTableModel, DataTableMsg] {
+  @moui.Program::simple(init=self, update~, view~)
 }
 
 ///|
 fn DataTableModel::filter_tree(
   self : DataTableModel,
-  theme : @core.Theme,
-) -> @core.View[DataTableMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[DataTableMsg] {
   surface(
     column(
       [
@@ -461,8 +461,8 @@ fn DataTableModel::filter_tree(
 ///|
 fn DataTableModel::data_panel(
   self : DataTableModel,
-  theme : @core.Theme,
-) -> @core.View[DataTableMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[DataTableMsg] {
   let project_width = self.column_widths.width_for("project", 180.0)
   surface(
     column(
@@ -563,8 +563,8 @@ fn DataTableModel::data_panel(
 ///|
 fn DataTableModel::state_or_table(
   self : DataTableModel,
-  theme : @core.Theme,
-) -> @core.View[DataTableMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[DataTableMsg] {
   match self.status {
     DataStatus::Loading =>
       loading_state(
@@ -590,8 +590,8 @@ fn DataTableModel::state_or_table(
 ///|
 fn DataTableModel::table_view(
   self : DataTableModel,
-  theme : @core.Theme,
-) -> @core.View[DataTableMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[DataTableMsg] {
   let records = self.visible_records()
   let columns = self.visible_table_columns()
   table(
@@ -605,7 +605,7 @@ fn DataTableModel::table_view(
     sortable_columns=["project", "owner", "status"],
     cell=Some((row_index, column, value) => {
       ignore(row_index)
-      let base : @core.View[DataTableMsg] = if column.id() == "status" {
+      let base : @moui.View[DataTableMsg] = if column.id() == "status" {
         badge(value, tone=status_tone(value), theme~, width=82.0, height=24.0)
       } else {
         text(
@@ -633,8 +633,8 @@ fn DataTableModel::table_view(
 ///|
 fn DataTableModel::selected_summary(
   self : DataTableModel,
-  theme : @core.Theme,
-) -> @core.View[DataTableMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[DataTableMsg] {
   let items = match self.selected_record() {
     Some(record) =>
       [

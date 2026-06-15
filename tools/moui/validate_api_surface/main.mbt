@@ -515,6 +515,11 @@ fn max_shared_app_runtime_imports() -> Int {
 }
 
 ///|
+fn max_shared_app_core_imports() -> Int {
+  10
+}
+
+///|
 fn collect_shared_app_moon_pkgs(
   repo_root : String,
   paths : Array[String],
@@ -804,6 +809,37 @@ fn validate_shared_app_runtime_imports(
 }
 
 ///|
+fn validate_shared_app_core_imports(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let paths : Array[String] = []
+  collect_shared_app_moon_pkgs(repo_root, paths, failures)
+  let mut core_imports = 0
+  for path in paths {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    if moon_pkg_has_default_import(text, "\"wzzc-dev/moui/core\"") {
+      core_imports += 1
+    }
+  }
+  let max_core_imports = max_shared_app_core_imports()
+  if core_imports > max_core_imports {
+    failures.push(
+      "shared app default core imports are \{core_imports}, above budget \{max_core_imports}",
+    )
+  }
+  println(
+    "api surface: shared app default core imports=\{core_imports}/\{max_core_imports}",
+  )
+}
+
+///|
 fn validate_core_control_entrypoint_usage(
   repo_root : String,
   failures : Array[String],
@@ -882,6 +918,7 @@ fn run_checks(repo_root : String) -> Array[String] {
   validate_backend_runtime_interfaces(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)
   validate_shared_app_runtime_imports(repo_root, failures)
+  validate_shared_app_core_imports(repo_root, failures)
   validate_core_control_entrypoint_usage(repo_root, failures)
   failures
 }

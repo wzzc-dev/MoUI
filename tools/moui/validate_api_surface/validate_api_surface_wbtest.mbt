@@ -95,6 +95,32 @@ test "shared app runtime import guard ignores test-only imports" {
 }
 
 ///|
+test "shared app core import guard tracks default imports" {
+  inspect(max_shared_app_core_imports(), content="10")
+  let default_import =
+    #|import {
+    #|  "wzzc-dev/moui",
+    #|  "wzzc-dev/moui/core",
+    #|}
+    #|
+  assert_true(
+    moon_pkg_has_default_import(default_import, "\"wzzc-dev/moui/core\""),
+  )
+  let test_only_import =
+    #|import {
+    #|  "wzzc-dev/moui",
+    #|}
+    #|
+    #|import {
+    #|  "wzzc-dev/moui/core",
+    #|} for "test"
+    #|
+  assert_false(
+    moon_pkg_has_default_import(test_only_import, "\"wzzc-dev/moui/core\""),
+  )
+}
+
+///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
   inspect(core.max_lines, content="2097")
