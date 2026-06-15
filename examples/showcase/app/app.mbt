@@ -495,62 +495,47 @@ fn toggle_color_scheme(scheme : @core.ColorScheme) -> @core.ColorScheme {
 }
 
 ///|
-pub fn ShowcaseApp::runtime(
+pub fn ShowcaseApp::program(
   self : ShowcaseApp,
-  width? : Double = 960.0,
-  height? : Double = 560.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[ShowcaseModel, ShowcaseMsg] {
   ignore(self)
-  ShowcaseModel::new().runtime(width~, height~)
+  ShowcaseModel::new().program()
 }
 
 ///|
-pub fn ShowcaseApp::runtime_with_host_summary(
+pub fn ShowcaseApp::program_with_host_summary(
   self : ShowcaseApp,
   host_summary : @host.HostCapabilitySummary,
-  width? : Double = 960.0,
-  height? : Double = 560.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[ShowcaseModel, ShowcaseMsg] {
   ignore(self)
-  ShowcaseModel::new().with_host_summary(host_summary).runtime(width~, height~)
+  ShowcaseModel::new().with_host_summary(host_summary).program()
 }
 
 ///|
-pub fn ShowcaseModel::runtime(
+pub fn ShowcaseModel::program(
   self : ShowcaseModel,
-  width? : Double = 960.0,
-  height? : Double = 560.0,
-) -> @runtime.AppRuntime {
-  self.runtime_with_optional_route_host(None, width~, height~)
+) -> @core.Program[ShowcaseModel, ShowcaseMsg] {
+  self.program_with_optional_route_host(None)
 }
 
 ///|
-pub fn ShowcaseModel::runtime_with_route_host(
+pub fn ShowcaseModel::program_with_route_host(
   self : ShowcaseModel,
   route_host : ShowcaseRouteHost,
-  width? : Double = 960.0,
-  height? : Double = 560.0,
-) -> @runtime.AppRuntime {
-  self.runtime_with_optional_route_host(Some(route_host), width~, height~)
+) -> @core.Program[ShowcaseModel, ShowcaseMsg] {
+  self.program_with_optional_route_host(Some(route_host))
 }
 
 ///|
-fn ShowcaseModel::runtime_with_optional_route_host(
+fn ShowcaseModel::program_with_optional_route_host(
   self : ShowcaseModel,
   route_host : ShowcaseRouteHost?,
-  width~ : Double,
-  height~ : Double,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::new_with_environment(
-      init=() => (self, @core.Effect::none()),
-      update=(model, message) => {
-        model.update_with_route_host(message, route_host)
-      },
-      view=(model, env) => model.view(env),
-      subscriptions=_model => showcase_route_subscription(route_host),
-    ),
-    size=@core.Size::new(width~, height~),
+) -> @core.Program[ShowcaseModel, ShowcaseMsg] {
+  @core.Program::new_with_environment(
+    init=() => (self, @core.Effect::none()),
+    update=(model, message) => model.update_with_route_host(message, route_host),
+    view=(model, env) => model.view(env),
+    subscriptions=_model => showcase_route_subscription(route_host),
   )
 }
 

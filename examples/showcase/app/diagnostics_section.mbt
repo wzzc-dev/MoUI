@@ -291,112 +291,259 @@ fn subscription_kind_count_summary(
 
 ///|
 fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
-  let runtime = @runtime.AppRuntime::new_program(
-    program=diagnostics_inspector_sample_program(theme),
-    size=@core.Size::new(width=220.0, height=120.0),
+  ignore(theme)
+  let effect_summary = showcase_inspector_effect_summary()
+  let subscription_summary = showcase_inspector_subscription_summary()
+  let no_effect : @core.Effect[ShowcaseMsg] = @core.Effect::none()
+  let no_effect_summary = no_effect.plan_summary()
+  let dirty_state = @core.RuntimeDirtyStateSummary::{
+    dirty_count: 0,
+    dirty_element_ids: [],
+    dirty_build_count: 0,
+    dirty_build_element_ids: [],
+    dirty_layout_count: 0,
+    dirty_layout_element_ids: [],
+    dirty_paint_count: 0,
+    dirty_paint_element_ids: [],
+    needs_rebuild: false,
+    needs_layout: false,
+    needs_paint: false,
+    needs_redraw: true,
+    has_pending_work: true,
+    reason: "redraw requested",
+    reasons: ["redraw requested"],
+    damage_kind: "full",
+    damage_rect_count: 0,
+    damage_full_reason: "redraw requested",
+    cache_epoch: 1,
+    cached_layer_count: 0,
+  }
+  @core.InspectorSnapshot::{
+    runtime: @core.RuntimeInspectorSnapshot::{
+      size: @core.Size::new(width=220.0, height=120.0),
+      dirty_count: 0,
+      dirty_element_ids: [],
+      dirty_build_count: 0,
+      dirty_build_element_ids: [],
+      dirty_layout_count: 0,
+      dirty_layout_element_ids: [],
+      dirty_paint_count: 0,
+      dirty_paint_element_ids: [],
+      dirty_state,
+      needs_rebuild: false,
+      needs_layout: false,
+      needs_paint: false,
+      needs_redraw: true,
+      draw_command_count: 8,
+      rebuild_pass_count: 1,
+      layout_pass_count: 1,
+      paint_pass_count: 1,
+      draw_command_build_count: 1,
+      program_dispatched_count: 1,
+      program_update_count: 1,
+      ignored_program_dispatch_count: 0,
+      program_message_enqueue_count: 1,
+      program_message_drain_count: 1,
+      program_pending_message_count: 0,
+      program_max_pending_message_count: 1,
+      program_effect_plan_count: 2,
+      program_effect_count: 2,
+      program_effect_none_count: 1,
+      program_effect_batch_count: 1,
+      program_effect_send_count: 0,
+      program_effect_dispatch_count: 0,
+      program_effect_run_count: 1,
+      program_effect_task_count: 1,
+      duplicate_effect_descriptor_key_count: 0,
+      duplicate_effect_descriptor_keys: [],
+      last_effect_summary: no_effect_summary,
+      last_scheduled_effect_summary: effect_summary,
+      active_effect_task_count: 1,
+      started_effect_task_count: 1,
+      completed_effect_task_count: 0,
+      cancelled_effect_task_count: 0,
+      ignored_effect_task_dispatch_count: 0,
+      active_effect_tasks: [effect_summary.descriptors[1]],
+      effect_task_lifecycle: [
+        @core.EffectTaskLifecycleSnapshot::{
+          key: "diagnostics:task",
+          kind: "inspector",
+          label: "Inspector task",
+          status: @core.EffectTaskLifecycleStatus::EffectTaskActive,
+          cancel_reason: None,
+        },
+      ],
+      program_subscription_plan_count: 2,
+      last_subscription_plan_summary: subscription_summary,
+      active_subscription_count: 2,
+      started_subscription_count: 2,
+      reused_subscription_count: 0,
+      cancelled_subscription_count: 0,
+      duplicate_subscription_key_count: 1,
+      duplicate_subscription_keys: ["diagnostics:tick"],
+      ignored_subscription_dispatch_count: 0,
+      active_subscriptions: [
+        subscription_summary.descriptors[0],
+        subscription_summary.descriptors[2],
+      ],
+      active_subscription_kind_counts: [
+        @core.SubscriptionKindCount::{ kind: "animation", count: 1 },
+        @core.SubscriptionKindCount::{ kind: "host-event", count: 1 },
+      ],
+      subscription_lifecycle: [
+        @core.SubscriptionLifecycleSnapshot::{
+          key: "diagnostics:tick",
+          kind: "animation",
+          label: "Inspector tick",
+          status: @core.SubscriptionLifecycleStatus::SubscriptionActive,
+          cancel_reason: None,
+        },
+        @core.SubscriptionLifecycleSnapshot::{
+          key: "diagnostics:host",
+          kind: "host-event",
+          label: "Inspector host event",
+          status: @core.SubscriptionLifecycleStatus::SubscriptionActive,
+          cancel_reason: None,
+        },
+      ],
+      rebuild_reason: "redraw requested",
+      dirty_reasons: ["redraw requested"],
+    },
+    view_tree: @core.ViewTreeInspectorSnapshot::{
+      root_kind: "component",
+      node_count: 6,
+      component_count: 1,
+      control_count: 2,
+      modified_count: 1,
+      dirty_build_count: 0,
+      dirty_layout_count: 0,
+      dirty_paint_count: 0,
+      nodes: [
+        @core.ViewNodeInspectorSummary::{
+          element_id: @core.ElementId::new(1),
+          kind: "component",
+          key: "inspector-root",
+          child_count: 1,
+          needs_build: false,
+          needs_layout: false,
+          needs_paint: false,
+        },
+        @core.ViewNodeInspectorSummary::{
+          element_id: @core.ElementId::new(2),
+          kind: "surface",
+          key: "inspector-surface",
+          child_count: 1,
+          needs_build: false,
+          needs_layout: false,
+          needs_paint: false,
+        },
+        @core.ViewNodeInspectorSummary::{
+          element_id: @core.ElementId::new(3),
+          kind: "column",
+          key: "inspector-column",
+          child_count: 3,
+          needs_build: false,
+          needs_layout: false,
+          needs_paint: false,
+        },
+      ],
+    },
+    layout: @core.LayoutInspectorSnapshot::{
+      root_frame: @core.Rect::new(x=0.0, y=0.0, width=220.0, height=120.0),
+      node_count: 6,
+      leaf_count: 3,
+      max_depth: 3,
+      bounds: [
+        @core.LayoutBoundsInspectorEntry::{
+          element_id: @core.ElementId::new(1),
+          frame: @core.Rect::new(x=0.0, y=0.0, width=220.0, height=120.0),
+          depth: 0,
+          child_count: 1,
+        },
+        @core.LayoutBoundsInspectorEntry::{
+          element_id: @core.ElementId::new(2),
+          frame: @core.Rect::new(x=8.0, y=8.0, width=180.0, height=104.0),
+          depth: 1,
+          child_count: 1,
+        },
+        @core.LayoutBoundsInspectorEntry::{
+          element_id: @core.ElementId::new(3),
+          frame: @core.Rect::new(x=16.0, y=16.0, width=150.0, height=80.0),
+          depth: 2,
+          child_count: 3,
+        },
+      ],
+    },
+    render: @core.RenderInspectorSnapshot::{
+      command_count: 8,
+      text_count: 3,
+      image_count: 0,
+      clip_depth: 1,
+      open_clip_depth: 0,
+      layer_depth: 1,
+      open_layer_depth: 0,
+      filter_depth: 0,
+      open_filter_depth: 0,
+      path_count: 0,
+      shader_count: 0,
+      unbalanced_pop_count: 0,
+    },
+    semantics: @core.SemanticsInspectorSnapshot::{
+      root_role: @core.SemanticsRole::Group,
+      node_count: 4,
+      focusable_count: 1,
+      action_count: 1,
+      max_depth: 3,
+      selected_count: 0,
+      checked_count: 0,
+      expanded_count: 0,
+      invalid_count: 1,
+      required_count: 0,
+      described_count: 1,
+    },
+  }
+}
+
+///|
+fn showcase_inspector_effect_summary() -> @core.EffectPlanSummary {
+  let effect : @core.Effect[ShowcaseMsg] = @core.Effect::batch([
+    @core.Effect::run(
+      key="diagnostics:boot",
+      kind="inspector",
+      label="Inspector boot",
+      run=dispatch => dispatch(ToggleActive),
+    ),
+    @core.Effect::task(
+      key="diagnostics:task",
+      kind="inspector",
+      label="Inspector task",
+      start=_dispatch => Some(() => ()),
+    ),
+  ])
+  effect.plan_summary()
+}
+
+///|
+fn showcase_inspector_subscription_summary() -> @core.SubscriptionPlanSummary {
+  let subscriptions : @core.Subscription[ShowcaseMsg] = @core.Subscription::batch([
+      @core.Subscription::animation_tick(
+        key="diagnostics:tick",
+        label="Inspector tick",
+        start=_dispatch => Some(() => ()),
+      ),
+      @core.Subscription::animation_tick(
+        key="diagnostics:tick",
+        label="Duplicate tick ignored",
+        start=_dispatch => Some(() => ()),
+      ),
+      @core.Subscription::host_event(
+        key="diagnostics:host",
+        label="Inspector host event",
+        start=_dispatch => Some(() => ()),
+      ),
+    ],
   )
-  runtime.inspector_snapshot()
-}
-
-///|
-priv struct DiagnosticsInspectorSampleModel {
-  event_count : Int
-}
-
-///|
-priv enum DiagnosticsInspectorSampleMsg {
-  DiagnosticsInspectorSampleBooted
-}
-
-///|
-fn diagnostics_inspector_sample_program(
-  theme : @core.Theme,
-) -> @core.Program[
-  DiagnosticsInspectorSampleModel,
-  DiagnosticsInspectorSampleMsg,
-] {
-  @core.Program::new_with_environment(
-    init=() => {
-      (
-        { event_count: 0 },
-        @core.Effect::batch([
-          @core.Effect::run(
-            key="diagnostics:boot",
-            kind="inspector",
-            label="Inspector boot",
-            run=dispatch => dispatch(DiagnosticsInspectorSampleBooted),
-          ),
-          @core.Effect::task(
-            key="diagnostics:task",
-            kind="inspector",
-            label="Inspector task",
-            start=_dispatch => Some(() => ()),
-          ),
-        ]),
-      )
-    },
-    update=(model, message) => {
-      match message {
-        DiagnosticsInspectorSampleBooted =>
-          ({ event_count: model.event_count + 1 }, @core.Effect::none())
-      }
-    },
-    view=(model, _env) => {
-      surface(
-        column(
-          [
-            text("Inspector sample", theme~, width=150.0, height=24.0),
-            text(
-              "Program events: " + model.event_count.to_string(),
-              theme~,
-              width=150.0,
-              height=22.0,
-            ),
-            button(
-              "Inspect",
-              on_click=DiagnosticsInspectorSampleBooted,
-              variant=@views.ButtonVariant::Outline,
-              theme~,
-              width=112.0,
-              height=34.0,
-            ),
-          ],
-          spacing=theme.spacing_scale.xs,
-          align=@views.CrossAlign::Start,
-        ),
-        width=180.0,
-        height=104.0,
-        variant=@views.SurfaceVariant::Base,
-        theme~,
-        padding=theme.spacing_scale.sm,
-      )
-      .semantics_invalid(invalid=true)
-      .semantics_description("Inspector sample surface")
-    },
-    subscriptions=model => {
-      if model.event_count > 0 {
-        @core.Subscription::batch([
-          @core.Subscription::animation_tick(
-            key="diagnostics:tick",
-            label="Inspector tick",
-            start=_dispatch => Some(() => ()),
-          ),
-          @core.Subscription::animation_tick(
-            key="diagnostics:tick",
-            label="Duplicate tick ignored",
-            start=_dispatch => Some(() => ()),
-          ),
-          @core.Subscription::host_event(
-            key="diagnostics:host",
-            label="Inspector host event",
-            start=_dispatch => Some(() => ()),
-          ),
-        ])
-      } else {
-        @core.Subscription::none()
-      }
-    },
-  )
+  subscriptions.plan_summary()
 }
 
 ///|

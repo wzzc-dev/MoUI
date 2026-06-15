@@ -5,7 +5,6 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
 }
 
 // Values
@@ -17,8 +16,8 @@ pub struct ShowcaseApp {
   unit : Unit
 }
 pub fn ShowcaseApp::new() -> Self
-pub fn ShowcaseApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
-pub fn ShowcaseApp::runtime_with_host_summary(Self, @host.HostCapabilitySummary, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn ShowcaseApp::program(Self) -> @core.Program[ShowcaseModel, ShowcaseMsg]
+pub fn ShowcaseApp::program_with_host_summary(Self, @host.HostCapabilitySummary) -> @core.Program[ShowcaseModel, ShowcaseMsg]
 
 pub(all) struct ShowcaseModel {
   scheme : @core.ColorScheme
@@ -53,8 +52,8 @@ pub(all) struct ShowcaseModel {
   host_summary : @host.HostCapabilitySummary
 }
 pub fn ShowcaseModel::new() -> Self
-pub fn ShowcaseModel::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
-pub fn ShowcaseModel::runtime_with_route_host(Self, ShowcaseRouteHost, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn ShowcaseModel::program(Self) -> @core.Program[Self, ShowcaseMsg]
+pub fn ShowcaseModel::program_with_route_host(Self, ShowcaseRouteHost) -> @core.Program[Self, ShowcaseMsg]
 pub fn ShowcaseModel::todo_count(Self) -> Int
 pub fn ShowcaseModel::update(Self, ShowcaseMsg) -> Self
 pub fn ShowcaseModel::view(Self, @core.ViewEnvironment) -> @core.View[ShowcaseMsg]
