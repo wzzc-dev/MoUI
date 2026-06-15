@@ -762,6 +762,48 @@ fn forbidden_core_program_runtime_source_paths() -> Array[String] {
 }
 
 ///|
+fn forbidden_core_runtime_boundary_source_tokens() -> Array[
+  ForbiddenSourceToken,
+] {
+  [
+    { label: "app runtime owner", token: "AppRuntime" },
+    { label: "legacy runtime kernel", token: "RuntimeKernel" },
+    { label: "runtime state owner", token: "RuntimeState" },
+    { label: "runtime element node", token: "ElementNode" },
+    { label: "runtime element tree", token: "ElementTree" },
+    { label: "runtime render node", token: "RenderNode" },
+    { label: "runtime dirty flags", token: "DirtyFlags" },
+    { label: "legacy view spec enum", token: "enum ViewSpec" },
+    { label: "legacy view spec type", token: "type ViewSpec" },
+    { label: "legacy text view spec constructor", token: "ViewSpec::TextSpec" },
+    {
+      label: "legacy button view spec constructor",
+      token: "ViewSpec::ButtonSpec",
+    },
+    { label: "legacy flex view spec constructor", token: "ViewSpec::FlexSpec" },
+    { label: "legacy realized view return", token: "-> ViewSpec" },
+    { label: "legacy realized view parameter", token: ": ViewSpec" },
+    { label: "legacy realized view children", token: "Array[ViewSpec]" },
+    { label: "legacy view realization", token: "realize_view(" },
+    { label: "legacy view node realization", token: "realize_view_node(" },
+  ]
+}
+
+///|
+fn forbidden_core_runtime_boundary_source_paths() -> Array[String] {
+  [
+    "moui/core/element.mbt", "moui/core/element_reconcile.mbt", "moui/core/element_reconcile_dirty.mbt",
+    "moui/core/element_tree.mbt", "moui/core/input_drag_drop.mbt", "moui/core/input_focus.mbt",
+    "moui/core/input_keyboard.mbt", "moui/core/input_pointer.mbt", "moui/core/input_text_dispatch.mbt",
+    "moui/core/input_web_view.mbt", "moui/core/layout_engine.mbt", "moui/core/paint_controls.mbt",
+    "moui/core/paint_engine.mbt", "moui/core/paint_popup_controls.mbt", "moui/core/paint_text_controls.mbt",
+    "moui/core/render_tree.mbt", "moui/core/runtime_events.mbt", "moui/core/runtime_render_pipeline.mbt",
+    "moui/core/runtime_state.mbt", "moui/core/taffy_layout.mbt", "moui/core/text_editing_fields.mbt",
+    "moui/core/view_realize.mbt", "moui/core/view_spec_ops.mbt",
+  ]
+}
+
+///|
 fn validate_runtime_entrypoint_usage(
   repo_root : String,
   failures : Array[String],
@@ -1004,6 +1046,49 @@ fn validate_core_program_runtime_ownership(
 }
 
 ///|
+fn validate_core_runtime_boundary(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = []
+  collect_mbt_files(repo_root, "moui/core", files, failures)
+  let mut source_hits = 0
+  let tokens = forbidden_core_runtime_boundary_source_tokens()
+  for path in files {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    for rule in tokens {
+      if text.contains(rule.token) {
+        source_hits += 1
+        failures.push(
+          path +
+          ": runtime implementation belongs in moui/runtime (" +
+          rule.label +
+          ") instead of core",
+        )
+      }
+    }
+  }
+  let mut stale_files = 0
+  for path in forbidden_core_runtime_boundary_source_paths() {
+    if @tools.file_exists(@tools.resolve_path(repo_root, path)) {
+      stale_files += 1
+      failures.push(
+        path + ": runtime implementation file belongs in moui/runtime",
+      )
+    }
+  }
+  println(
+    "api surface: core runtime-boundary source tokens=\{source_hits}; stale files=\{stale_files}",
+  )
+}
+
+///|
 fn run_checks(repo_root : String) -> Array[String] {
   let failures : Array[String] = []
   for budget in package_budgets() {
@@ -1013,6 +1098,7 @@ fn run_checks(repo_root : String) -> Array[String] {
   validate_views_return_types(repo_root, failures)
   validate_runtime_source_boundaries(repo_root, failures)
   validate_core_program_runtime_ownership(repo_root, failures)
+  validate_core_runtime_boundary(repo_root, failures)
   validate_backend_runtime_interfaces(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)
   validate_shared_app_runtime_imports(repo_root, failures)

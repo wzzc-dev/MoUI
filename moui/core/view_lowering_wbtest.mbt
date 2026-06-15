@@ -390,7 +390,7 @@ fn lowering_test_sink() -> ViewLoweringSink[LoweringTestMsg, String] {
 }
 
 ///|
-test "view lowering seam visits opaque views without ViewSpec" {
+test "view lowering seam visits opaque views without runtime specs" {
   let view : View[LoweringTestMsg] = View::primitive_flex_view(
       axis=Axis::Vertical,
       spacing=4.0,
