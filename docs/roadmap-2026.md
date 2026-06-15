@@ -24,7 +24,7 @@ and clear engineering quality gates.
 MoUI keeps the runtime pipeline explicit:
 
 ```text
-View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+View[Msg] -> ViewLoweringSink -> runtime view nodes -> runtime element/layout/render trees -> DrawFrame -> renderer + host platform views
 ```
 
 The package boundaries follow that pipeline:
@@ -67,7 +67,7 @@ Focus areas:
 - Keep `@views.custom_children_layout` as the advanced child layout delegate
   for package-local custom controls and layout experiments.
 - Keep input, focus, text editing, layout, paint, and semantics behavior in
-  platform-neutral packages.
+  the platform-neutral runtime package, with contracts in `core`.
 - Review public API changes with `moon info` and generated `pkg.generated.mbti`
   diffs.
 

@@ -16,7 +16,8 @@ paths, or abstractions that only preserve old shapes.
   `Subscription`, environment/geometry/draw/semantics/text/theme contracts, and
   the runtime-only `ViewLoweringSink` / `View::lower_for_runtime` seam consumed
   by `moui/runtime`. `RuntimeKernel`, `RuntimeState`, `ViewSpec`,
-  element/render trees, and node payloads are not public app-facing API.
+  element/render trees, and node payloads do not live in `core` and are not
+  app-facing API.
   Standard `Effect`/`Subscription` helpers may name common
   descriptor kinds, subscription reuse is keyed by the stable key plus source
   kind, effect-task lifecycle diagnostics may distinguish same-key descriptor
@@ -31,9 +32,9 @@ paths, or abstractions that only preserve old shapes.
   cache keys, cached-layer draw commands, and platform-view placements such as
   WebView rectangles, but concrete timer, host, window, route, platform
   WebView, or service adapters remain outside `core`.
-  It remains one MoonBit package; internal files are grouped by responsibility
-  (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
-  etc.) rather than by additional package boundaries.
+  It remains one MoonBit package; contract files are grouped by responsibility
+  (`component_context`, `view_tree`, `geometry`, `paint`, `semantics`,
+  `text_*`, `rich_text_*`, etc.) rather than by additional package boundaries.
 - `runtime/` is the app/host runtime entrypoint package. It exposes opaque
   `@runtime.AppRuntime` construction/query/dispatch methods and owns runtime
   state, element/render trees, reconcile, dirty queue, layout/paint, event
@@ -49,8 +50,8 @@ paths, or abstractions that only preserve old shapes.
   use `views` widget-level entrypoints instead of direct `@core.View::*`
   control constructors. Control-specific app-facing event, policy, metadata, or
   style aliases such as WebView events, action commands, and colors belong here
-  rather than in the root facade. `ViewSpec` and node payloads stay inside
-  `core`.
+  rather than in the root facade. Runtime-owned lowered nodes and implementation
+  payloads stay inside `moui/runtime`.
 - `moui_theme/common/` owns the repo-local addon design-system common surface:
   shared source-mapped design-system
   manifests, golden token mappings, golden source-usage audits,
@@ -470,8 +471,8 @@ report and tests when changing image, clip, opacity, transform, or other draw
 command support. `RendererDescriptor` and `RendererSelection` are reporting and
 matching concepts, not native host runtime assembly. Native runtime assembly
 belongs to `backend/<platform>/wgpu` or `backend/<platform>/skia` renderer
-provider packages; `core`, `ViewSpec`, `Program`, and host cores must not depend
-on concrete renderer choices.
+provider packages; `core`, the view lowering contract, `Program`, and host
+cores must not depend on concrete renderer choices.
 
 Use `pkg.generated.mbti` as the public API contract baseline and focused
 contract/conformance tests as behavior observation. Do not add long-lived

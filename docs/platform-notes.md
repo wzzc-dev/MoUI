@@ -87,11 +87,13 @@ do not mutate the element tree directly.
 - Renderers consume `DrawCommand` values and remain separate from view
 constructors and platform event conversion.
 - Native `web_view` is a platform-view contract rather than a renderer command.
-  `core` lays out `WebViewSpec` nodes and exposes `DrawFrame.platform_views`;
-  native hosts sync those rectangles to real platform WebView objects after
-  rendering the MoUI frame. Navigation is controlled: page/user navigation emits
-  `WebViewEvent::NavigationRequested`, and the app commits by updating the view
-  `url` or sending `WebViewCommand::LoadUrl` through the host command queue.
+  `core` defines the neutral `WebViewSpec` contract, `moui/runtime` lays it out
+  and exposes placements through `DrawFrame.platform_views`, and native hosts
+  sync those rectangles to real platform WebView objects after rendering the
+  MoUI frame. Navigation is controlled: page/user navigation emits
+  `WebViewEvent::NavigationRequested`, and the app commits by updating the
+  view `url` or sending `WebViewCommand::LoadUrl` through the host command
+  queue.
 - Typed host services are routed through `HostServiceBridge`, with explicit
   capability flags for clipboard, menus, file dialogs, text-file access, URL
   opening, and system theme. Unsupported services should return `Unavailable` responses instead of

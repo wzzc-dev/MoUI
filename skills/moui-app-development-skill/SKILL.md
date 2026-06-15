@@ -18,7 +18,8 @@ Use this skill when the user asks to:
 
 - Create or extend a MoUI app, demo, prototype, editor, tool, or example.
 - Create or extend the root `website/` homepage app workspace.
-- Compose views from `views/` and `core/` public APIs.
+- Compose views from the root `moui` facade and `views/` public APIs, adding
+  `core` only for explicit low-level contracts.
 - Add app state, event handling, layout, styling, text input, lists, scrolling,
   or navigation behavior.
 - Add or adjust shared app logic under `examples/<name>/app`.
@@ -76,7 +77,8 @@ separate framework task using `moui-framework-development-skill`.
   `@moui.View[Msg]` / `@core.View[Msg]` compatible values. Ordinary shared app
   packages should default to importing `wzzc-dev/moui` and
   `wzzc-dev/moui/views`; add `core` only for low-level framework contracts that
-  do not belong in the root facade or `views`.
+  do not belong in the root facade or `views`, and keep `runtime` in platform
+  entrypoints or test-only imports.
 - Keep state, reducers, data models, and view composition in the shared app
   package when the behavior should work across platforms.
 - Keep route and deep-link history in shared app state with
