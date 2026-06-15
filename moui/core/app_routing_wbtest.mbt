@@ -128,11 +128,15 @@ test "route focus store restores keyed runtime focus" {
     }),
     size=Size::new(width=160.0, height=120.0),
   )
-  assert_true(store.restore(runtime, "/settings"))
+  match store.focus_key("/settings") {
+    Some(key) => assert_true(runtime.focus_key(key))
+    None => fail("expected settings focus key")
+  }
   runtime.dispatch_event(TextInput(InsertText("a")))
-  assert_true(
-    store.restore_location(runtime, RouteLocation::parse("/detail?id=42")),
-  )
+  match store.focus_key_for_location(RouteLocation::parse("/detail?id=42")) {
+    Some(key) => assert_true(runtime.focus_key(key))
+    None => fail("expected detail focus key")
+  }
   runtime.dispatch_event(TextInput(InsertText("b")))
   inspect(email.get(), content="a")
   inspect(title.get(), content="b")

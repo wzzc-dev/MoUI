@@ -386,30 +386,6 @@ pub fn RouteFocusStore::focus_key_for_location(
 }
 
 ///|
-pub fn RouteFocusStore::restore(
-  self : RouteFocusStore,
-  runtime : RuntimeKernel,
-  route : String,
-) -> Bool {
-  match self.focus_key(route) {
-    Some(key) => runtime.focus_key(key)
-    None => false
-  }
-}
-
-///|
-pub fn RouteFocusStore::restore_location(
-  self : RouteFocusStore,
-  runtime : RuntimeKernel,
-  location : RouteLocation,
-) -> Bool {
-  match self.focus_key_for_location(location) {
-    Some(key) => runtime.focus_key(key)
-    None => false
-  }
-}
-
-///|
 pub fn RouteLocation::parse(value : String) -> RouteLocation {
   let parts = split_once(value, '?')
   match parts {

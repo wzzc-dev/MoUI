@@ -167,14 +167,7 @@ pub(all) struct InspectorSnapshot {
 } derive(Eq, Debug, ToJson)
 
 ///|
-struct FrameProfile {
-  frame : Frame
-  dirty_count : Int
-  draw_command_count : Int
-} derive(Eq)
-
-///|
-pub fn InspectorSnapshot::from_runtime(
+fn InspectorSnapshot::from_runtime(
   runtime : RuntimeKernel,
 ) -> InspectorSnapshot {
   let view_tree = ViewTreeInspectorSnapshot::from_runtime(runtime)
@@ -188,7 +181,7 @@ pub fn InspectorSnapshot::from_runtime(
 }
 
 ///|
-pub fn RuntimeInspectorSnapshot::from_runtime(
+fn RuntimeInspectorSnapshot::from_runtime(
   runtime : RuntimeKernel,
 ) -> RuntimeInspectorSnapshot {
   let dirty_count = runtime.dirty_count()
@@ -297,14 +290,14 @@ pub fn RuntimeInspectorSnapshot::from_runtime(
 }
 
 ///|
-pub fn ViewTreeInspectorSnapshot::from_runtime(
+fn ViewTreeInspectorSnapshot::from_runtime(
   runtime : RuntimeKernel,
 ) -> ViewTreeInspectorSnapshot {
   runtime.view_tree_inspector_snapshot()
 }
 
 ///|
-pub fn LayoutInspectorSnapshot::from_runtime(
+fn LayoutInspectorSnapshot::from_runtime(
   runtime : RuntimeKernel,
 ) -> LayoutInspectorSnapshot {
   let layout = runtime.state.cached_layout()
@@ -321,7 +314,7 @@ pub fn LayoutInspectorSnapshot::from_runtime(
 }
 
 ///|
-pub fn RenderInspectorSnapshot::from_runtime(
+fn RenderInspectorSnapshot::from_runtime(
   runtime : RuntimeKernel,
 ) -> RenderInspectorSnapshot {
   RenderInspectorSnapshot::from_commands(runtime.state.cached_draw_commands())
@@ -335,7 +328,7 @@ pub fn RenderInspectorSnapshot::from_commands(
 }
 
 ///|
-pub fn SemanticsInspectorSnapshot::from_runtime(
+fn SemanticsInspectorSnapshot::from_runtime(
   runtime : RuntimeKernel,
 ) -> SemanticsInspectorSnapshot {
   let semantics = runtime.state.cached_semantics()
@@ -351,19 +344,6 @@ pub fn SemanticsInspectorSnapshot::from_runtime(
     invalid_count: semantics_invalid_count(semantics),
     required_count: semantics_required_count(semantics),
     described_count: semantics_described_count(semantics),
-  }
-}
-
-///|
-pub fn FrameProfile::capture(
-  runtime : RuntimeKernel,
-  frame : Frame,
-) -> FrameProfile {
-  runtime.dispatch_event(AppEvent::FrameTick(frame))
-  {
-    frame,
-    dirty_count: runtime.dirty_count(),
-    draw_command_count: runtime.draw_commands().length(),
   }
 }
 
