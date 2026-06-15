@@ -861,7 +861,7 @@ fn validate_runtime_source_boundaries(
       core_app_runtime_uses += 1
       failures.push(
         path +
-        ": runtime must not wrap @core.AppRuntime; use the core runtime kernel seam only while ownership migrates",
+        ": runtime must not wrap @core.AppRuntime; use @core.RuntimeKernel as the narrow contract seam",
       )
     }
   }
