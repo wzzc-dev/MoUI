@@ -5,9 +5,10 @@ fn main {
     @native_transport.PiNativeTransportConfig::pi(),
     session_id="moui-skia",
   )
-  let runtime = app.runtime_with_agent_connectors(
-    transport_owner.runtime(),
-    [@app.AgentConnectorRuntime::fixture(backend_id="acp-demo")],
+  let runtime = @runtime.new_program_with_dimensions(
+    program=app.program_with_agent_connectors(transport_owner.runtime(), [
+      @app.AgentConnectorRuntime::fixture(backend_id="acp-demo"),
+    ]),
     width=1220.0,
     height=780.0,
   )
