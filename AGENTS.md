@@ -14,8 +14,10 @@ paths, or abstractions that only preserve old shapes.
 - `core/` owns the platform-neutral contract model, opaque public `View[Msg]`,
   typed events, app-owned route/history helpers, `Program`, `Effect`,
   `Subscription`, environment/geometry/draw/semantics/text/theme contracts, and
-  a narrow `RuntimeKernel` seam while tree/layout/paint handoff continues
-  moving to `moui/runtime`. Standard `Effect`/`Subscription` helpers may name common
+  a narrow `RuntimeKernel` contract seam consumed by `moui/runtime` for
+  package-neutral tree/layout/paint handoff. `RuntimeState`, element/render
+  trees, and node payloads are private engine details, not app-facing API.
+  Standard `Effect`/`Subscription` helpers may name common
   descriptor kinds, subscription reuse is keyed by the stable key plus source
   kind, effect-task lifecycle diagnostics may distinguish same-key descriptor
   kind changes from ordinary same-kind task replacement, program diagnostics
