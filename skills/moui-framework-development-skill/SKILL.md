@@ -142,9 +142,10 @@ Use this skill when editing or reviewing:
 - `core/`: one MoonBit package for platform-neutral contracts, view specs,
   app-owned route/history helpers, `Program` / `Effect` /
   `Subscription`, layout/input/semantics/rich text/draw/style/theme contracts,
-  and a narrow `RuntimeKernel` seam while tree/layout/paint handoff continues
-  moving to `moui/runtime`. Keep files grouped by responsibility
-  (`runtime_state`,
+  and a narrow `RuntimeKernel` contract seam consumed by `moui/runtime` for
+  package-neutral tree/layout/paint handoff. `RuntimeState`, element/render
+  trees, and node payloads stay private implementation details. Keep files
+  grouped by responsibility (`runtime_state`,
   `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
   subpackages.
 - `runtime/`: app/host runtime entrypoint package exposing opaque

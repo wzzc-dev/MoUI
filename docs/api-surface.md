@@ -22,9 +22,9 @@ contracts for platform and renderer integration.
   Runtime consumers should type and construct runtimes through
   `@runtime.AppRuntime`, `@runtime.new_view`, `@runtime.new_program`, or the
   width/height entrypoint helper `@runtime.new_program_with_dimensions`. Core
-  no longer exposes `@core.AppRuntime`; runtime owns program execution and only
-  uses the low-level `RuntimeKernel` seam for the still-migrating tree, layout,
-  and paint handoff.
+  no longer exposes `@core.AppRuntime` or `RuntimeState`; runtime owns program
+  execution and uses only the low-level `RuntimeKernel` contract seam for
+  tree, layout, and paint handoff.
 - Core framework API: `moui/core`. This owns `View[Msg]`, `Program`, `Effect`,
   `Subscription`, state, layout, input, semantics, draw commands, diagnostics,
   and renderer-neutral platform-view contracts. It may expose diagnostic and
