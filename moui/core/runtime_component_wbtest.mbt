@@ -1,7 +1,7 @@
 ///|
 test "app runtime component watches state through public API" {
   let count = State::new(0)
-  let runtime = RuntimeKernel::new_component(
+  let runtime = RuntimeState::new_component(
     root=Component::new(ctx => {
       ViewSpec::TextSpec({
         key: None,
@@ -26,7 +26,7 @@ test "app runtime component watches state through public API" {
 
 ///|
 test "build context viewport size updates after resize" {
-  let runtime = RuntimeKernel::new_component(
+  let runtime = RuntimeState::new_component(
     root=Component::new(ctx => {
       let size = ctx.viewport_size()
       ViewSpec::TextSpec({

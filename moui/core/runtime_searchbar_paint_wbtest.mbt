@@ -1,7 +1,7 @@
 ///|
 test "searchbar paints vector icons instead of font fallback glyphs" {
   let query = State::new("abc")
-  let runtime = RuntimeKernel::new_spec(
+  let runtime = RuntimeState::new_spec(
     root=ViewSpec::SearchBarSpec({
       key: None,
       query: query.binding(),
