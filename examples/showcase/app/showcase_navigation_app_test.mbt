@@ -262,8 +262,7 @@ test "showcase route host subscription applies browser popstate route" {
 
 ///|
 test "showcase sidebar catalog scrolls to lower sections" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
+  let runtime = @app.ShowcaseModel::new().runtime(width=760.0, height=420.0)
   let size = @core.Size::new(width=760.0, height=420.0)
   assert_false(text_within(runtime.draw_commands(), "Interaction Lab", size))
   runtime.dispatch_event(
@@ -313,7 +312,7 @@ test "showcase sidebar catalog scrolls to lower sections" {
 
 ///|
 test "showcase native ime evidence points focus sidebar search" {
-  let runtime = @app.ShowcaseApp::new().runtime(width=960.0, height=560.0)
+  let runtime = @app.ShowcaseModel::new().runtime(width=960.0, height=560.0)
   click_point(runtime, @core.Point::new(x=120.0, y=148.0))
   runtime.dispatch_event(
     @core.AppEvent::TextInput(@core.TextInputEvent::InsertText("moui")),
