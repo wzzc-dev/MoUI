@@ -96,7 +96,7 @@ test "shared app runtime import guard ignores test-only imports" {
 
 ///|
 test "shared app core import guard tracks default imports" {
-  inspect(max_shared_app_core_imports(), content="8")
+  inspect(max_shared_app_core_imports(), content="7")
   let default_import =
     #|import {
     #|  "wzzc-dev/moui",
@@ -117,6 +117,20 @@ test "shared app core import guard tracks default imports" {
     #|
   assert_false(
     moon_pkg_has_default_import(test_only_import, "\"wzzc-dev/moui/core\""),
+  )
+}
+
+///|
+test "views facade exposes WebView control contracts" {
+  let views = budget_by_label("views facade")
+  inspect(views.max_pub_lines, content="242")
+  assert_true(
+    views.required_tokens.contains("pub using @core {type WebViewEvent}"),
+  )
+  assert_true(
+    views.required_tokens.contains(
+      "pub using @core {type WebViewNavigationPolicy}",
+    ),
   )
 }
 
