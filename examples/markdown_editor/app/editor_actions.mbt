@@ -274,7 +274,7 @@ fn markdown_editor_command_binding(
 }
 
 ///|
-fn MarkdownEditorApp::action_commands(
+pub fn MarkdownEditorApp::action_commands(
   self : MarkdownEditorApp,
   services? : @host.HostAppServices = @host.HostAppServices::unavailable(),
 ) -> @core.ActionCommandMap {

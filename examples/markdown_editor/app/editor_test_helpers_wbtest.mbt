@@ -433,6 +433,35 @@ fn MarkdownEditorApp::jump_to_outline_for_test(
 }
 
 ///|
+fn MarkdownEditorApp::runtime(
+  self : MarkdownEditorApp,
+  width? : Double = 1120.0,
+  height? : Double = 720.0,
+) -> @runtime.AppRuntime {
+  self.runtime_with_services(
+    @host.HostAppServices::unavailable(),
+    width~,
+    height~,
+  )
+}
+
+///|
+fn MarkdownEditorApp::runtime_with_services(
+  self : MarkdownEditorApp,
+  services : @host.HostAppServices,
+  width? : Double = 1120.0,
+  height? : Double = 720.0,
+) -> @runtime.AppRuntime {
+  let runtime = @runtime.new_program_with_dimensions(
+    program=self.program_with_services(services),
+    width~,
+    height~,
+  )
+  runtime.set_action_commands(self.action_commands(services~))
+  runtime
+}
+
+///|
 fn markdown_editor_apply_command(
   source : String,
   command : MarkdownEditorCommand,

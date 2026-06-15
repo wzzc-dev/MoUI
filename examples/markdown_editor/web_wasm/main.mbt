@@ -1,11 +1,13 @@
 ///|
 fn main {
   let app = @markdown_app.MarkdownEditorApp::new()
-  let runtime = app.runtime_with_services(
-    @web.web_app_services(),
+  let services = @web.web_app_services()
+  let runtime = @runtime.new_program_with_dimensions(
+    program=app.program_with_services(services),
     width=980.0,
     height=640.0,
   )
+  runtime.set_action_commands(app.action_commands(services~))
   @web.run_app("MoUI Markdown Editor", runtime)
 }
 

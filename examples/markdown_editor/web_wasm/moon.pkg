@@ -1,4 +1,5 @@
 import {
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/web",
   "examples/markdown_editor/app" @markdown_app,
 }

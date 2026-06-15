@@ -510,7 +510,7 @@ fn backend_runtime_interface_paths() -> Array[String] {
 
 ///|
 fn max_shared_app_runtime_imports() -> Int {
-  3
+  2
 }
 
 ///|
