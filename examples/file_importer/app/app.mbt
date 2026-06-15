@@ -43,7 +43,7 @@ pub(all) struct FileImporterModel {
 ///|
 pub(all) struct FileImporterUpdate {
   model : FileImporterModel
-  effect : @core.Effect[FileImporterMsg]
+  effect : @moui.Effect[FileImporterMsg]
 }
 
 ///|
@@ -110,7 +110,7 @@ pub fn FileImporterModel::update_with_services(
 ///|
 pub fn FileImporterUpdate::new(
   model : FileImporterModel,
-  effect? : @core.Effect[FileImporterMsg] = @core.Effect::none(),
+  effect? : @moui.Effect[FileImporterMsg] = @moui.Effect::none(),
 ) -> FileImporterUpdate {
   { model, effect }
 }
@@ -118,7 +118,7 @@ pub fn FileImporterUpdate::new(
 ///|
 pub fn FileImporterUpdate::as_tuple(
   self : FileImporterUpdate,
-) -> (FileImporterModel, @core.Effect[FileImporterMsg]) {
+) -> (FileImporterModel, @moui.Effect[FileImporterMsg]) {
   (self.model, self.effect)
 }
 
@@ -151,14 +151,14 @@ pub fn FileImporterModel::availability(
 }
 
 ///|
-pub fn view(model : FileImporterModel) -> @core.View[FileImporterMsg] {
+pub fn view(model : FileImporterModel) -> @moui.View[FileImporterMsg] {
   model.view()
 }
 
 ///|
 pub fn FileImporterModel::view(
   self : FileImporterModel,
-) -> @core.View[FileImporterMsg] {
+) -> @moui.View[FileImporterMsg] {
   let theme = @views.light_theme()
   let shell = column(
     [
@@ -233,20 +233,20 @@ pub fn FileImporterModel::view(
 ///|
 pub fn FileImporterApp::program(
   self : FileImporterApp,
-) -> @core.Program[FileImporterModel, FileImporterMsg] {
+) -> @moui.Program[FileImporterModel, FileImporterMsg] {
   ignore(self)
   program()
 }
 
 ///|
-pub fn program() -> @core.Program[FileImporterModel, FileImporterMsg] {
+pub fn program() -> @moui.Program[FileImporterModel, FileImporterMsg] {
   FileImporterModel::new().program()
 }
 
 ///|
 pub fn FileImporterModel::program(
   self : FileImporterModel,
-) -> @core.Program[FileImporterModel, FileImporterMsg] {
+) -> @moui.Program[FileImporterModel, FileImporterMsg] {
   self.program_with_services(@host.HostAppServices::unavailable())
 }
 
@@ -254,9 +254,9 @@ pub fn FileImporterModel::program(
 pub fn FileImporterModel::program_with_services(
   self : FileImporterModel,
   services : @host.HostAppServices,
-) -> @core.Program[FileImporterModel, FileImporterMsg] {
-  @core.Program::new(
-    init=() => (self, @core.Effect::none()),
+) -> @moui.Program[FileImporterModel, FileImporterMsg] {
+  @moui.Program::new(
+    init=() => (self, @moui.Effect::none()),
     update=(model, message) => {
       model.update_with_services(message, services).as_tuple()
     },
@@ -269,7 +269,7 @@ pub fn FileImporterModel::program_with_services(
 pub fn FileImporterModel::subscriptions(
   self : FileImporterModel,
   services : @host.HostAppServices,
-) -> @core.Subscription[FileImporterMsg] {
+) -> @moui.Subscription[FileImporterMsg] {
   match self.status {
     FileImporterStatus::Pending(id) =>
       services.completion_subscription(
@@ -277,7 +277,7 @@ pub fn FileImporterModel::subscriptions(
         map=completion => HostCompleted(completion),
         label="Import files completion",
       )
-    _ => @core.Subscription::none()
+    _ => @moui.Subscription::none()
   }
 }
 
@@ -293,7 +293,7 @@ fn FileImporterModel::request_file_dialog(
       last_event: "Waiting for file picker",
       availability_reason: "",
     },
-    effect=@core.Effect::host_service(
+    effect=@moui.Effect::host_service(
       key="host:file-import",
       label="Import files",
       run=dispatch => {
@@ -386,9 +386,9 @@ fn FileImporterModel::with_paths(
 ///|
 fn FileImporterModel::import_summary(
   self : FileImporterModel,
-  theme : @core.Theme,
-) -> @core.View[FileImporterMsg] {
-  let rows : Array[@core.View[FileImporterMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[FileImporterMsg] {
+  let rows : Array[@moui.View[FileImporterMsg]] = [
     stat_card(
       "Selected files",
       self.files.length().to_string(),
@@ -432,8 +432,8 @@ fn FileImporterModel::import_summary(
 ///|
 fn FileImporterModel::platform_note(
   self : FileImporterModel,
-  theme : @core.Theme,
-) -> @core.View[FileImporterMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[FileImporterMsg] {
   ignore(self)
   banner(
     "Platform paths",
