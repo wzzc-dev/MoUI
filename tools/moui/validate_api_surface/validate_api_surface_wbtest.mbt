@@ -97,6 +97,7 @@ test "shared app runtime import guard ignores test-only imports" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
+  inspect(core.max_lines, content="2097")
   inspect(core.max_pub_all_lines, content="156")
   assert_true(
     core.forbidden_tokens.contains("pub(all) struct EffectDescriptor"),
@@ -104,6 +105,7 @@ test "core descriptor payloads stay opaque" {
   assert_true(
     core.forbidden_tokens.contains("pub(all) struct SubscriptionDescriptor"),
   )
+  assert_true(core.forbidden_tokens.contains("type RuntimeState"))
 }
 
 ///|
