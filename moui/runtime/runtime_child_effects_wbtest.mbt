@@ -39,7 +39,7 @@ test "program child effects map into parent messages" {
       )
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=220.0, height=96.0),
   )
@@ -74,15 +74,15 @@ test "program child effects map into parent messages" {
     content="1",
   )
   inspect(
-    snapshot.last_scheduled_effect_summary.descriptors[0].key,
+    snapshot.last_scheduled_effect_summary.descriptors[0].key(),
     content="child-effect:follow-up",
   )
   inspect(
-    snapshot.last_scheduled_effect_summary.descriptors[0].kind,
+    snapshot.last_scheduled_effect_summary.descriptors[0].kind(),
     content="child-task",
   )
   inspect(
-    snapshot.last_scheduled_effect_summary.descriptors[0].label,
+    snapshot.last_scheduled_effect_summary.descriptors[0].label(),
     content="Child follow-up",
   )
 }
@@ -137,7 +137,7 @@ test "mapped child service tasks complete through parent messages" {
       })
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=220.0, height=96.0),
   )
@@ -149,20 +149,20 @@ test "mapped child service tasks complete through parent messages" {
   inspect(started.active_effect_task_count, content="1")
   inspect(started.started_effect_task_count, content="1")
   inspect(started.completed_effect_task_count, content="0")
-  inspect(started.active_effect_tasks[0].key, content="child-task:load")
-  inspect(started.active_effect_tasks[0].kind, content="service")
-  inspect(started.active_effect_tasks[0].label, content="Child load")
+  inspect(started.active_effect_tasks[0].key(), content="child-task:load")
+  inspect(started.active_effect_tasks[0].kind(), content="service")
+  inspect(started.active_effect_tasks[0].label(), content="Child load")
   assert_true(
     started.last_scheduled_effect_summary.root_kind ==
     EffectPlanKind::EffectPlanTask,
   )
   inspect(started.last_scheduled_effect_summary.task_count, content="1")
   inspect(
-    started.last_scheduled_effect_summary.descriptors[0].key,
+    started.last_scheduled_effect_summary.descriptors[0].key(),
     content="child-task:load",
   )
   inspect(
-    started.last_scheduled_effect_summary.descriptors[0].kind,
+    started.last_scheduled_effect_summary.descriptors[0].kind(),
     content="service",
   )
   match child_dispatch.val {

@@ -581,28 +581,10 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core subscription contract, opaque descriptor accessors, and plan summary helpers compact",
     },
     {
-      path: "moui/core/program_runtime_diagnostics.mbt",
-      max_lines: 275,
-      target_lines: 245,
-      reason: "keep core program runtime counter diagnostics compact",
-    },
-    {
       path: "moui/core/program_runtime_snapshot.mbt",
       max_lines: 140,
       target_lines: 125,
       reason: "keep core program runtime snapshot, lifecycle, and empty-state contracts compact",
-    },
-    {
-      path: "moui/core/program_runtime_effect_tasks.mbt",
-      max_lines: 135,
-      target_lines: 120,
-      reason: "keep core program runtime effect-task lifecycle diagnostics compact",
-    },
-    {
-      path: "moui/core/program_runtime_subscriptions.mbt",
-      max_lines: 180,
-      target_lines: 160,
-      reason: "keep core program runtime subscription lifecycle diagnostics compact",
     },
     {
       path: "moui/core/rich_text_document.mbt",
@@ -665,12 +647,6 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep core damage region, draw-command bounds, scroll/layout damage, and dirty fallback tests compact",
     },
     {
-      path: "moui/core/redraw_cached_layer_wbtest.mbt",
-      max_lines: 220,
-      target_lines: 205,
-      reason: "keep core repaint-boundary cached-layer draw-frame and retained redraw tests compact",
-    },
-    {
       path: "moui/core/text_system_conformance_wbtest.mbt",
       max_lines: 285,
       target_lines: 255,
@@ -729,54 +705,6 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 280,
       target_lines: 260,
       reason: "keep core saveable store, codec, scoped state, and stale subscription tests compact",
-    },
-    {
-      path: "moui/core/runtime_effects_wbtest.mbt",
-      max_lines: 340,
-      target_lines: 305,
-      reason: "keep core program effect plan, dispatch, and destroy-late-dispatch tests compact",
-    },
-    {
-      path: "moui/core/runtime_effect_turns_wbtest.mbt",
-      max_lines: 280,
-      target_lines: 250,
-      reason: "keep core program effect bounded-drain and host-callback resume tests compact",
-    },
-    {
-      path: "moui/core/runtime_effect_tasks_wbtest.mbt",
-      max_lines: 310,
-      target_lines: 280,
-      reason: "keep core program effect-task completion, stale dispatch, cancellation, and replacement tests compact",
-    },
-    {
-      path: "moui/core/runtime_subscription_sources_wbtest.mbt",
-      max_lines: 280,
-      target_lines: 250,
-      reason: "keep core subscription descriptors, mapped sources, helper kinds, and active-kind summary tests compact",
-    },
-    {
-      path: "moui/core/runtime_subscriptions_wbtest.mbt",
-      max_lines: 365,
-      target_lines: 330,
-      reason: "keep core program subscription lifecycle, restart, and duplicate-key tests compact",
-    },
-    {
-      path: "moui/core/runtime_subscription_turns_wbtest.mbt",
-      max_lines: 150,
-      target_lines: 130,
-      reason: "keep core program subscription bounded-drain and host-callback resume tests compact",
-    },
-    {
-      path: "moui/core/runtime_controls_wbtest.mbt",
-      max_lines: 145,
-      target_lines: 130,
-      reason: "keep core controlled text input runtime tests compact",
-    },
-    {
-      path: "moui/core/runtime_control_choices_wbtest.mbt",
-      max_lines: 235,
-      target_lines: 210,
-      reason: "keep core controlled checkbox, picker, and datepicker runtime tests compact",
     },
     {
       path: "moui/core/state_holder_wbtest.mbt",
@@ -840,8 +768,8 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/core/test_runtime_helpers_wbtest.mbt",
-      max_lines: 155,
-      target_lines: 140,
+      max_lines: 215,
+      target_lines: 190,
       reason: "keep core wbtest runtime and ViewSpec modifier helpers compact",
     },
     {
@@ -1554,7 +1482,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/runtime/runtime.mbt",
-      max_lines: 444,
+      max_lines: 445,
       target_lines: 380,
       reason: "keep runtime AppRuntime facade, dimensions entrypoint, program message loop, and core handoff compact",
     },
@@ -1581,6 +1509,78 @@ fn file_budgets() -> Array[FileBudget] {
       max_lines: 235,
       target_lines: 205,
       reason: "keep runtime program effects, tasks, and subscription tests compact",
+    },
+    {
+      path: "moui/runtime/program_simple_runtime_wbtest.mbt",
+      max_lines: 135,
+      target_lines: 120,
+      reason: "keep runtime simple program update, draw flush, and environment tests compact",
+    },
+    {
+      path: "moui/runtime/redraw_cached_layer_wbtest.mbt",
+      max_lines: 235,
+      target_lines: 215,
+      reason: "keep runtime repaint-boundary cached-layer draw-frame and retained redraw tests compact",
+    },
+    {
+      path: "moui/runtime/runtime_effects_wbtest.mbt",
+      max_lines: 330,
+      target_lines: 300,
+      reason: "keep runtime program effect plan, dispatch, and destroy-late-dispatch tests compact",
+    },
+    {
+      path: "moui/runtime/runtime_effect_turns_wbtest.mbt",
+      max_lines: 260,
+      target_lines: 235,
+      reason: "keep runtime program effect bounded-drain and host-callback resume tests compact",
+    },
+    {
+      path: "moui/runtime/runtime_effect_tasks_wbtest.mbt",
+      max_lines: 310,
+      target_lines: 280,
+      reason: "keep runtime program effect-task completion, stale dispatch, cancellation, and replacement tests compact",
+    },
+    {
+      path: "moui/runtime/runtime_child_effects_wbtest.mbt",
+      max_lines: 250,
+      target_lines: 225,
+      reason: "keep runtime child effect mapping, task lifecycle, and parent dispatch tests compact",
+    },
+    {
+      path: "moui/runtime/runtime_subscription_sources_wbtest.mbt",
+      max_lines: 270,
+      target_lines: 245,
+      reason: "keep runtime subscription descriptors, mapped sources, helper kinds, and active-kind summary tests compact",
+    },
+    {
+      path: "moui/runtime/runtime_subscriptions_wbtest.mbt",
+      max_lines: 345,
+      target_lines: 315,
+      reason: "keep runtime program subscription lifecycle, restart, and duplicate-key tests compact",
+    },
+    {
+      path: "moui/runtime/runtime_subscription_turns_wbtest.mbt",
+      max_lines: 150,
+      target_lines: 130,
+      reason: "keep runtime program subscription bounded-drain and host-callback resume tests compact",
+    },
+    {
+      path: "moui/runtime/runtime_controls_wbtest.mbt",
+      max_lines: 140,
+      target_lines: 125,
+      reason: "keep runtime controlled text input program tests compact",
+    },
+    {
+      path: "moui/runtime/runtime_control_choices_wbtest.mbt",
+      max_lines: 235,
+      target_lines: 210,
+      reason: "keep runtime controlled checkbox, picker, and datepicker program tests compact",
+    },
+    {
+      path: "moui/runtime/test_core_aliases_wbtest.mbt",
+      max_lines: 145,
+      target_lines: 130,
+      reason: "keep runtime wbtest core contract aliases and click helpers compact",
     },
   ]
 }

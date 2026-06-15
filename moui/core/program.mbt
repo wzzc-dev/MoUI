@@ -462,22 +462,3 @@ fn[Msg] effect_runtime_ops(effect : Effect[Msg]) -> Array[EffectRuntimeOp[Msg]] 
     Task(descriptor, start) => [{ node: EffectRuntimeTask(descriptor, start) }]
   }
 }
-
-///|
-fn[Msg] run_effect(
-  effect : Effect[Msg],
-  dispatch : (Msg) -> Unit,
-  start_task : (EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit,
-) -> Int {
-  let mut count = 0
-  for op in effect.runtime_ops() {
-    op.runtime_visit(
-      dispatch,
-      run => run(dispatch),
-      (_descriptor, run) => run(dispatch),
-      start_task,
-    )
-    count = count + 1
-  }
-  count
-}

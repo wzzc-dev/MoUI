@@ -27,8 +27,9 @@ contracts for platform and renderer integration.
   execution and uses only the low-level `RuntimeKernel` contract seam for
   tree, layout, and paint handoff.
 - Core framework API: `moui/core`. This owns `View[Msg]`, `Program`, `Effect`,
-  `Subscription`, state, layout, input, semantics, draw commands, diagnostics,
-  and renderer-neutral platform-view contracts. It may expose diagnostic and
+  `Subscription`, layout, input, semantics, draw-command, diagnostic snapshot,
+  and renderer-neutral platform-view contracts, plus private engine state behind
+  the `RuntimeKernel` seam used by `moui/runtime`. It may expose diagnostic and
   support records while the prototype matures, but implementation payloads
   should not leak into the root facade. Component-facing contracts such as
   `BuildContext` keep runtime/effect storage fields private and expose behavior

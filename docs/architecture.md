@@ -40,7 +40,7 @@ MoUI is a multi-platform MoonBit GUI framework prototype. The current architectu
 
 ```text
 moui/                         root public facade workspace member
-moui/core/                    platform-neutral contracts plus the narrow RuntimeKernel contract seam for runtime-owned entrypoints
+moui/core/                    platform-neutral contracts plus the narrow RuntimeKernel seam for runtime-owned AppRuntime handoff
 moui/runtime/                 opaque app/host AppRuntime entrypoint and program runtime execution
 moui/views/                   public view constructors
 moui_theme/common/            addon diagnostic common source-mapped design-system model, aggregate design-system reports, token taxonomy reports, semantic palette role reports, typography role reports, golden mappings, source usage audits, source-lock quality reports, source-package inventories, source-imported token records, coverage gaps, integrity reports, runtime token alignment, official-token/source-lock coverage, token-group resolver reports, density resolver reports, variant resolver reports, customization capability reports, component-token matrices, adaptation reports, semantic/component tokens, coverage manifests, and custom Theme builders

@@ -62,7 +62,7 @@ fn ControlledTextModel::view(
     ],
     axis=Axis::Vertical,
     spacing=4.0,
-    cross_axis_alignment=CrossStart,
+    cross_axis_alignment=CrossAxisAlignment::CrossStart,
   )
 }
 
@@ -73,7 +73,7 @@ test "program controlled text field and searchbar update model" {
     update=(model, message) => model.update(message),
     view=model => model.view(),
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=320.0, height=180.0),
   )
@@ -96,7 +96,7 @@ test "program controlled text field stays current across consecutive input event
     update=(model, message) => model.update(message),
     view=model => model.view(),
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=320.0, height=180.0),
   )
@@ -113,23 +113,23 @@ test "program controlled text field rebuilds after focused text commands" {
     update=(model, message) => model.update(message),
     view=model => model.view(),
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=320.0, height=180.0),
   )
   runtime_wbtest_click(runtime, x=10.0, y=34.0)
   let pasted = runtime.dispatch_focused_text_command(
-    Paste,
+    CommandIntent::Paste,
     paste_text=Some("!"),
   )
   assert_true(pasted.handled)
   assert_true(pasted.changed)
   assert_true(has_draw_text(runtime.draw_commands(), "Draft: Hello!"))
-  let undo = runtime.dispatch_focused_text_command(Undo)
+  let undo = runtime.dispatch_focused_text_command(CommandIntent::Undo)
   assert_true(undo.handled)
   assert_true(undo.changed)
   assert_true(has_draw_text(runtime.draw_commands(), "Draft: Hello"))
-  let redo = runtime.dispatch_focused_text_command(Redo)
+  let redo = runtime.dispatch_focused_text_command(CommandIntent::Redo)
   assert_true(redo.handled)
   assert_true(redo.changed)
   assert_true(has_draw_text(runtime.draw_commands(), "Draft: Hello!"))

@@ -25,7 +25,7 @@ test "program simple updates model and rebuilds view" {
       )
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=160.0, height=80.0),
   )
@@ -71,14 +71,12 @@ test "program button update waits for draw frame flush" {
       )
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=160.0, height=80.0),
   )
   assert_true(has_draw_text(runtime.draw_commands(), "Count 0"))
-  let rebuild_passes = runtime.state.rebuild_pass_count
-  let layout_passes = runtime.state.layout_pass_count
-  let paint_passes = runtime.state.paint_pass_count
+  let before = runtime.inspector_snapshot().runtime
   runtime.dispatch_event(
     AppEvent::Pointer(
       PointerEvent::new(
@@ -96,16 +94,18 @@ test "program button update waits for draw frame flush" {
     ),
   )
   inspect(runtime.needs_rebuild(), content="true")
-  inspect(runtime.state.rebuild_pass_count, content="\{rebuild_passes}")
-  inspect(runtime.state.layout_pass_count, content="\{layout_passes}")
-  inspect(runtime.state.paint_pass_count, content="\{paint_passes}")
-  assert_true(runtime.state.dirty_build_elements.length() > 0)
-  assert_true(runtime.state.dirty_layout_elements.length() > 0)
-  assert_true(runtime.state.dirty_paint_elements.length() > 0)
+  let pending = runtime.inspector_snapshot().runtime
+  inspect(pending.rebuild_pass_count, content="\{before.rebuild_pass_count}")
+  inspect(pending.layout_pass_count, content="\{before.layout_pass_count}")
+  inspect(pending.paint_pass_count, content="\{before.paint_pass_count}")
+  assert_true(pending.dirty_build_count > 0)
+  assert_true(pending.dirty_layout_count > 0)
+  assert_true(pending.dirty_paint_count > 0)
   assert_true(has_draw_text(runtime.draw_commands(), "Count 1"))
-  assert_true(runtime.state.rebuild_pass_count > rebuild_passes)
-  assert_true(runtime.state.layout_pass_count > layout_passes)
-  assert_true(runtime.state.paint_pass_count > paint_passes)
+  let after = runtime.inspector_snapshot().runtime
+  assert_true(after.rebuild_pass_count > before.rebuild_pass_count)
+  assert_true(after.layout_pass_count > before.layout_pass_count)
+  assert_true(after.paint_pass_count > before.paint_pass_count)
 }
 
 ///|
@@ -121,7 +121,7 @@ test "program simple with environment rebuilds from viewport and environment" {
       )
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=120.0, height=40.0),
     environment=Environment::default().with_locale("en-US"),

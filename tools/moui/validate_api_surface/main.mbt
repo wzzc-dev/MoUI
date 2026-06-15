@@ -114,8 +114,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 2097,
-      max_pub_lines: 604,
+      max_lines: 2096,
+      max_pub_lines: 603,
       max_pub_all_lines: 156,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -131,7 +131,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "View::picker(", "View::controlled_picker(", "View::datepicker(", "View::controlled_datepicker(",
         "View::search_bar(", "View::controlled_search_bar(", "pub(all) struct EffectDescriptor",
         "pub(all) struct SubscriptionDescriptor", "type AppRuntime", "AppRuntime::",
-        "type RuntimeState",
+        "type RuntimeState", "RuntimeKernel::new_program(",
       ],
     },
     {

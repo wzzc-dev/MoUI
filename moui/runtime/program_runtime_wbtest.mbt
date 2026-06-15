@@ -23,7 +23,7 @@ enum RuntimeEffectMsg {
 
 ///|
 test "runtime program initial effects run before first view build" {
-  let program = @core.Program::new(
+  let program : @core.Program[String, RuntimeEffectMsg] = @core.Program::new(
     init=() => {
       (
         "booting",
@@ -77,7 +77,7 @@ enum RuntimeTaskMsg {
 test "runtime program effect tasks complete and ignore stale dispatches" {
   let task_dispatch : Ref[((RuntimeTaskMsg) -> Unit)?] = Ref(None)
   let cleanup_count = Ref(0)
-  let program = @core.Program::new(
+  let program : @core.Program[String, RuntimeTaskMsg] = @core.Program::new(
     init=() => {
       (
         "pending",
@@ -149,7 +149,7 @@ test "runtime program subscriptions start reuse cancel and dispatch typed messag
   let alpha_dispatch : Ref[((RuntimeSubscriptionMsg) -> Unit)?] = Ref(None)
   let beta_dispatch : Ref[((RuntimeSubscriptionMsg) -> Unit)?] = Ref(None)
   let cleanup_log : Array[String] = []
-  let program = @core.Program::new(
+  let program : @core.Program[RuntimeSubscriptionModel, RuntimeSubscriptionMsg] = @core.Program::new(
     init=() => ({ channel: "alpha", ticks: 0 }, @core.Effect::none()),
     update=(model, message) => {
       match message {

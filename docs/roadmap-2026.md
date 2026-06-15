@@ -29,8 +29,11 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
 
 The package boundaries follow that pipeline:
 
-- `core/` owns platform-neutral runtime, state, layout, input, semantics,
-  opaque `View[Msg]`, typed events, effects, and the draw command model.
+- `core/` owns platform-neutral contracts, opaque `View[Msg]`, typed events,
+  effects, subscriptions, layout/input/semantics/draw contracts, and the narrow
+  `RuntimeKernel` seam used by `moui/runtime`.
+- `runtime/` owns opaque `AppRuntime`, program message drain, effect-task
+  lifecycle, subscription lifecycle, and runtime diagnostics.
 - `views/` exposes public facade constructors that return `@core.View[Msg]`.
 - `backend/host/` defines shared host contracts.
 - `backend/web/` is the browser wasm-gc host.
