@@ -664,6 +664,10 @@ pub using @core {type ActionCommand}
 
 pub using @core {type ActionCommandMap}
 
+pub using @core {type Color}
+
+pub using @core {type ColorScheme}
+
 pub using @core {type CommandBinding}
 
 pub using @core {type CommandIntent}
