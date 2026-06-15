@@ -388,7 +388,7 @@ pub fn RouteFocusStore::focus_key_for_location(
 ///|
 pub fn RouteFocusStore::restore(
   self : RouteFocusStore,
-  runtime : AppRuntime,
+  runtime : RuntimeKernel,
   route : String,
 ) -> Bool {
   match self.focus_key(route) {
@@ -400,7 +400,7 @@ pub fn RouteFocusStore::restore(
 ///|
 pub fn RouteFocusStore::restore_location(
   self : RouteFocusStore,
-  runtime : AppRuntime,
+  runtime : RuntimeKernel,
   location : RouteLocation,
 ) -> Bool {
   match self.focus_key_for_location(location) {

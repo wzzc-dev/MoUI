@@ -1,5 +1,5 @@
 ///|
-struct AppRuntime {
+struct RuntimeKernel {
   state : RuntimeState
   mut program_runtime_snapshot_fn : () -> ProgramRuntimeSnapshot
   mut destroy_program_runtime_fn : () -> Unit
@@ -24,12 +24,12 @@ fn[Msg] compact_pending_program_messages(
 }
 
 ///|
-pub fn[Msg] AppRuntime::new_view(
+pub fn[Msg] RuntimeKernel::new_view(
   root~ : View[Msg],
   size~ : Size,
   environment? : Environment = Environment::default(),
   on_message? : ((Msg) -> Unit)? = None,
-) -> AppRuntime {
+) -> RuntimeKernel {
   let emit = match on_message {
     Some(handler) => handler
     None => _message => ()
@@ -46,11 +46,11 @@ pub fn[Msg] AppRuntime::new_view(
 }
 
 ///|
-fn AppRuntime::new_component(
+fn RuntimeKernel::new_component(
   root~ : Component,
   size~ : Size,
   environment? : Environment = Environment::default(),
-) -> AppRuntime {
+) -> RuntimeKernel {
   {
     state: RuntimeState::new_component(root~, size~, environment~),
     program_runtime_snapshot_fn: () => ProgramRuntimeSnapshot::empty(),
@@ -59,17 +59,17 @@ fn AppRuntime::new_component(
 }
 
 ///|
-fn[Msg] AppRuntime::new_component_view(
+fn[Msg] RuntimeKernel::new_component_view(
   root~ : (BuildContext) -> View[Msg],
   size~ : Size,
   environment? : Environment = Environment::default(),
   on_message? : ((Msg) -> Unit)? = None,
-) -> AppRuntime {
+) -> RuntimeKernel {
   let emit = match on_message {
     Some(handler) => handler
     None => _message => ()
   }
-  AppRuntime::new_component(
+  RuntimeKernel::new_component(
     root=Component::new(ctx => realize_view(root(ctx), emit)),
     size~,
     environment~,
@@ -77,11 +77,11 @@ fn[Msg] AppRuntime::new_component_view(
 }
 
 ///|
-pub fn[Model, Msg] AppRuntime::new_program(
+pub fn[Model, Msg] RuntimeKernel::new_program(
   program~ : Program[Model, Msg],
   size~ : Size,
   environment? : Environment = Environment::default(),
-) -> AppRuntime {
+) -> RuntimeKernel {
   let (initial_model, initial_effect) = (program.init)()
   let model = State::new(initial_model)
   let program_runtime = ProgramRuntimeDiagnostics::new()
@@ -160,7 +160,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
     Some(process) => process()
     None => ()
   }
-  let runtime = AppRuntime::new_component_view(
+  let runtime = RuntimeKernel::new_component_view(
     root=ctx => (program.view)(ctx.watch(model), ctx.view_environment()),
     size~,
     environment~,
@@ -182,31 +182,34 @@ pub fn[Model, Msg] AppRuntime::new_program(
 }
 
 ///|
-pub fn AppRuntime::dispatch_event(self : AppRuntime, event : AppEvent) -> Unit {
+pub fn RuntimeKernel::dispatch_event(
+  self : RuntimeKernel,
+  event : AppEvent,
+) -> Unit {
   self.state.dispatch_event(event)
 }
 
 ///|
-pub fn AppRuntime::environment(self : AppRuntime) -> Environment {
+pub fn RuntimeKernel::environment(self : RuntimeKernel) -> Environment {
   self.state.environment()
 }
 
 ///|
-pub fn AppRuntime::text_system(self : AppRuntime) -> TextSystem {
+pub fn RuntimeKernel::text_system(self : RuntimeKernel) -> TextSystem {
   self.state.text_system()
 }
 
 ///|
-pub fn AppRuntime::set_text_system(
-  self : AppRuntime,
+pub fn RuntimeKernel::set_text_system(
+  self : RuntimeKernel,
   text_system : TextSystem,
 ) -> Unit {
   self.state.set_text_system(text_system)
 }
 
 ///|
-pub fn AppRuntime::register_font_data(
-  self : AppRuntime,
+pub fn RuntimeKernel::register_font_data(
+  self : RuntimeKernel,
   family : FontFamily,
   data : Bytes,
 ) -> Unit {
@@ -214,191 +217,204 @@ pub fn AppRuntime::register_font_data(
 }
 
 ///|
-pub fn AppRuntime::set_environment(
-  self : AppRuntime,
+pub fn RuntimeKernel::set_environment(
+  self : RuntimeKernel,
   environment : Environment,
 ) -> Unit {
   self.state.set_environment(environment)
 }
 
 ///|
-pub fn AppRuntime::advance_time(self : AppRuntime, time_ms : Double) -> Unit {
+pub fn RuntimeKernel::advance_time(
+  self : RuntimeKernel,
+  time_ms : Double,
+) -> Unit {
   self.state.advance_time(time_ms)
 }
 
 ///|
-pub fn AppRuntime::destroy(self : AppRuntime) -> Unit {
+pub fn RuntimeKernel::destroy(self : RuntimeKernel) -> Unit {
   (self.destroy_program_runtime_fn)()
   self.state.destroy()
 }
 
 ///|
-pub fn AppRuntime::rebuild(self : AppRuntime) -> Unit {
+pub fn RuntimeKernel::rebuild(self : RuntimeKernel) -> Unit {
   self.state.rebuild()
 }
 
 ///|
-pub fn AppRuntime::layout_pass(self : AppRuntime) -> Unit {
+pub fn RuntimeKernel::layout_pass(self : RuntimeKernel) -> Unit {
   self.state.layout_pass()
 }
 
 ///|
-pub fn AppRuntime::layout(self : AppRuntime) -> LayoutResult {
+pub fn RuntimeKernel::layout(self : RuntimeKernel) -> LayoutResult {
   self.state.layout()
 }
 
 ///|
-fn AppRuntime::view_tree_inspector_snapshot(
-  self : AppRuntime,
+fn RuntimeKernel::view_tree_inspector_snapshot(
+  self : RuntimeKernel,
 ) -> ViewTreeInspectorSnapshot {
   self.state.view_tree_inspector_snapshot()
 }
 
 ///|
-fn AppRuntime::inspector_rebuild_reason(self : AppRuntime) -> String {
+fn RuntimeKernel::inspector_rebuild_reason(self : RuntimeKernel) -> String {
   self.state.inspector_rebuild_reason()
 }
 
 ///|
-fn AppRuntime::inspector_dirty_reasons(self : AppRuntime) -> Array[String] {
+fn RuntimeKernel::inspector_dirty_reasons(
+  self : RuntimeKernel,
+) -> Array[String] {
   self.state.inspector_dirty_reasons()
 }
 
 ///|
-pub fn AppRuntime::paint_pass(self : AppRuntime) -> Array[DrawCommand] {
+pub fn RuntimeKernel::paint_pass(self : RuntimeKernel) -> Array[DrawCommand] {
   self.state.paint_pass()
 }
 
 ///|
-pub fn AppRuntime::semantics(self : AppRuntime) -> SemanticsNode {
+pub fn RuntimeKernel::semantics(self : RuntimeKernel) -> SemanticsNode {
   self.state.semantics()
 }
 
 ///|
-pub fn AppRuntime::focused_text_input(self : AppRuntime) -> TextInputState {
+pub fn RuntimeKernel::focused_text_input(
+  self : RuntimeKernel,
+) -> TextInputState {
   self.state.focused_text_input()
 }
 
 ///|
-pub fn AppRuntime::focus_next(self : AppRuntime) -> Bool {
+pub fn RuntimeKernel::focus_next(self : RuntimeKernel) -> Bool {
   self.state.move_focus()
 }
 
 ///|
-pub fn AppRuntime::focus_previous(self : AppRuntime) -> Bool {
+pub fn RuntimeKernel::focus_previous(self : RuntimeKernel) -> Bool {
   self.state.move_focus(reverse=true)
 }
 
 ///|
-pub fn AppRuntime::focus_key(self : AppRuntime, key : String) -> Bool {
+pub fn RuntimeKernel::focus_key(self : RuntimeKernel, key : String) -> Bool {
   self.state.focus_key(key)
 }
 
 ///|
-pub fn AppRuntime::draw_commands(self : AppRuntime) -> Array[DrawCommand] {
+pub fn RuntimeKernel::draw_commands(self : RuntimeKernel) -> Array[DrawCommand] {
   self.state.build_draw_commands()
 }
 
 ///|
-pub fn AppRuntime::draw_frame(self : AppRuntime) -> DrawFrame {
+pub fn RuntimeKernel::draw_frame(self : RuntimeKernel) -> DrawFrame {
   self.state.build_draw_frame()
 }
 
 ///|
-pub fn AppRuntime::invalidate_cached_layer_key(
-  self : AppRuntime,
+pub fn RuntimeKernel::invalidate_cached_layer_key(
+  self : RuntimeKernel,
   key : String,
 ) -> Unit {
   self.state.invalidate_cached_layer_key(key)
 }
 
 ///|
-pub fn AppRuntime::size(self : AppRuntime) -> Size {
+pub fn RuntimeKernel::size(self : RuntimeKernel) -> Size {
   self.state.size
 }
 
 ///|
-pub fn AppRuntime::needs_redraw(self : AppRuntime) -> Bool {
+pub fn RuntimeKernel::needs_redraw(self : RuntimeKernel) -> Bool {
   self.state.needs_redraw
 }
 
 ///|
-pub fn AppRuntime::needs_rebuild(self : AppRuntime) -> Bool {
+pub fn RuntimeKernel::needs_rebuild(self : RuntimeKernel) -> Bool {
   self.state.needs_rebuild
 }
 
 ///|
-pub fn AppRuntime::needs_layout(self : AppRuntime) -> Bool {
+pub fn RuntimeKernel::needs_layout(self : RuntimeKernel) -> Bool {
   self.state.needs_layout
 }
 
 ///|
-pub fn AppRuntime::needs_paint(self : AppRuntime) -> Bool {
+pub fn RuntimeKernel::needs_paint(self : RuntimeKernel) -> Bool {
   self.state.needs_paint
 }
 
 ///|
-pub fn AppRuntime::dirty_count(self : AppRuntime) -> Int {
+pub fn RuntimeKernel::dirty_count(self : RuntimeKernel) -> Int {
   self.state.dirty_count()
 }
 
 ///|
-pub fn AppRuntime::dirty_element_ids(self : AppRuntime) -> Array[ElementId] {
+pub fn RuntimeKernel::dirty_element_ids(
+  self : RuntimeKernel,
+) -> Array[ElementId] {
   self.state.dirty_element_ids()
 }
 
 ///|
-pub fn AppRuntime::inspector_snapshot(self : AppRuntime) -> InspectorSnapshot {
+pub fn RuntimeKernel::inspector_snapshot(
+  self : RuntimeKernel,
+) -> InspectorSnapshot {
   InspectorSnapshot::from_runtime(self)
 }
 
 ///|
-pub fn AppRuntime::program_runtime_snapshot(
-  self : AppRuntime,
+pub fn RuntimeKernel::program_runtime_snapshot(
+  self : RuntimeKernel,
 ) -> ProgramRuntimeSnapshot {
   (self.program_runtime_snapshot_fn)()
 }
 
 ///|
-pub fn AppRuntime::set_redraw_callback(
-  self : AppRuntime,
+pub fn RuntimeKernel::set_redraw_callback(
+  self : RuntimeKernel,
   callback : () -> Unit,
 ) -> Unit {
   self.state.set_redraw_callback(callback)
 }
 
 ///|
-pub fn AppRuntime::set_action_commands(
-  self : AppRuntime,
+pub fn RuntimeKernel::set_action_commands(
+  self : RuntimeKernel,
   commands : ActionCommandMap,
 ) -> Unit {
   self.state.set_action_commands(commands)
 }
 
 ///|
-pub fn AppRuntime::action_commands(self : AppRuntime) -> Array[ActionCommand] {
+pub fn RuntimeKernel::action_commands(
+  self : RuntimeKernel,
+) -> Array[ActionCommand] {
   self.state.action_commands()
 }
 
 ///|
-pub fn AppRuntime::dispatch_command(
-  self : AppRuntime,
+pub fn RuntimeKernel::dispatch_command(
+  self : RuntimeKernel,
   intent : CommandIntent,
 ) -> Bool {
   self.state.dispatch_command(intent)
 }
 
 ///|
-pub fn AppRuntime::dispatch_action_command(
-  self : AppRuntime,
+pub fn RuntimeKernel::dispatch_action_command(
+  self : RuntimeKernel,
   command : ActionCommand,
 ) -> Bool {
   self.state.dispatch_action_command(command)
 }
 
 ///|
-pub fn AppRuntime::dispatch_focused_text_command(
-  self : AppRuntime,
+pub fn RuntimeKernel::dispatch_focused_text_command(
+  self : RuntimeKernel,
   intent : CommandIntent,
   paste_text? : String? = None,
 ) -> TextCommandResult {

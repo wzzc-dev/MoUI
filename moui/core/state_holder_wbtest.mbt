@@ -15,7 +15,7 @@ test "state holders expose mutable app navigation and focus state" {
 ///|
 test "keyboard shortcuts activate wrapped buttons" {
   let clicks = Ref(0)
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::ButtonSpec({
       key: None,
       text: "Shortcut",
@@ -45,7 +45,7 @@ test "keyboard shortcuts activate wrapped buttons" {
 ///|
 test "disabled wrapper suppresses pointer activation" {
   let clicks = Ref(0)
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::ButtonSpec({
       key: None,
       text: "Disabled",
@@ -83,7 +83,7 @@ test "disabled wrapper suppresses pointer activation" {
 
 ///|
 test "focusable wrapper contributes focus order" {
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::TextSpec({
       key: None,
       text: "Focusable",
@@ -101,7 +101,7 @@ test "focusable wrapper contributes focus order" {
 test "app runtime exposes explicit focus traversal helpers" {
   let first = State::new("")
   let second = State::new("")
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::FlexSpec({
       key: None,
       axis: Axis::Vertical,
@@ -134,7 +134,7 @@ test "app runtime focus traversal skips disabled controls" {
   let first = State::new("")
   let disabled = State::new("")
   let third = State::new("")
-  let runtime = AppRuntime::new_spec(
+  let runtime = RuntimeKernel::new_spec(
     root=ViewSpec::FlexSpec({
       key: None,
       axis: Axis::Vertical,
