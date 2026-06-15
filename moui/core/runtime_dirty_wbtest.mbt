@@ -1,6 +1,6 @@
 ///|
 test "button press batches paint without build or layout flush" {
-  let runtime = RuntimeKernel::new_spec(
+  let runtime = RuntimeState::new_spec(
     root=ViewSpec::ButtonSpec({
       key: None,
       text: "Press",
@@ -17,9 +17,9 @@ test "button press batches paint without build or layout flush" {
     }),
     size=Size::new(width=120.0, height=60.0),
   )
-  inspect(runtime.state.rebuild_pass_count, content="0")
-  inspect(runtime.state.layout_pass_count, content="1")
-  inspect(runtime.state.paint_pass_count, content="1")
+  inspect(runtime.rebuild_pass_count, content="0")
+  inspect(runtime.layout_pass_count, content="1")
+  inspect(runtime.paint_pass_count, content="1")
   runtime.dispatch_event(
     AppEvent::Pointer(
       PointerEvent::new(
@@ -31,15 +31,15 @@ test "button press batches paint without build or layout flush" {
   inspect(runtime.needs_rebuild(), content="false")
   inspect(runtime.needs_layout(), content="false")
   inspect(runtime.needs_paint(), content="true")
-  inspect(runtime.state.dirty_build_elements.length(), content="0")
-  inspect(runtime.state.dirty_layout_elements.length(), content="0")
-  inspect(runtime.state.dirty_paint_elements.length(), content="1")
-  inspect(runtime.state.rebuild_pass_count, content="0")
-  inspect(runtime.state.layout_pass_count, content="1")
-  inspect(runtime.state.paint_pass_count, content="1")
+  inspect(runtime.dirty_build_elements.length(), content="0")
+  inspect(runtime.dirty_layout_elements.length(), content="0")
+  inspect(runtime.dirty_paint_elements.length(), content="1")
+  inspect(runtime.rebuild_pass_count, content="0")
+  inspect(runtime.layout_pass_count, content="1")
+  inspect(runtime.paint_pass_count, content="1")
   ignore(runtime.draw_commands())
-  inspect(runtime.state.rebuild_pass_count, content="0")
-  inspect(runtime.state.layout_pass_count, content="1")
-  inspect(runtime.state.paint_pass_count, content="2")
-  inspect(runtime.state.dirty_paint_elements.length(), content="0")
+  inspect(runtime.rebuild_pass_count, content="0")
+  inspect(runtime.layout_pass_count, content="1")
+  inspect(runtime.paint_pass_count, content="2")
+  inspect(runtime.dirty_paint_elements.length(), content="0")
 }

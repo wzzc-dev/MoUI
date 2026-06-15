@@ -1,6 +1,6 @@
 ///|
 test "runtime inspector and frame profile expose devtool counters" {
-  let runtime = RuntimeKernel::new_spec(
+  let runtime = RuntimeState::new_spec(
     root=ViewSpec::TextSpec({
       key: None,
       text: "Inspect",
@@ -79,7 +79,7 @@ test "runtime inspector and frame profile expose devtool counters" {
 
 ///|
 test "runtime pipeline counters track layout paint and draw command work" {
-  let runtime = RuntimeKernel::new_spec(
+  let runtime = RuntimeState::new_spec(
     root=ViewSpec::TextSpec({
       key: None,
       text: "Counters",
@@ -89,23 +89,23 @@ test "runtime pipeline counters track layout paint and draw command work" {
     }),
     size=Size::new(width=100.0, height=40.0),
   )
-  inspect(runtime.state.rebuild_pass_count, content="0")
-  inspect(runtime.state.layout_pass_count, content="1")
-  inspect(runtime.state.paint_pass_count, content="1")
-  inspect(runtime.state.draw_command_build_count, content="0")
+  inspect(runtime.rebuild_pass_count, content="0")
+  inspect(runtime.layout_pass_count, content="1")
+  inspect(runtime.paint_pass_count, content="1")
+  inspect(runtime.draw_command_build_count, content="0")
   ignore(runtime.draw_commands())
-  inspect(runtime.state.draw_command_build_count, content="1")
+  inspect(runtime.draw_command_build_count, content="1")
   runtime.dispatch_event(Redraw(Initial))
   runtime.dispatch_event(AppEvent::Resize(Size::new(width=140.0, height=60.0)))
   ignore(runtime.draw_commands())
-  inspect(runtime.state.layout_pass_count, content="2")
-  inspect(runtime.state.paint_pass_count, content="2")
-  inspect(runtime.state.draw_command_build_count, content="2")
+  inspect(runtime.layout_pass_count, content="2")
+  inspect(runtime.paint_pass_count, content="2")
+  inspect(runtime.draw_command_build_count, content="2")
 }
 
 ///|
 test "inspector snapshot captures semantic states and dirty reasons" {
-  let runtime = RuntimeKernel::new_spec(
+  let runtime = RuntimeState::new_spec(
     root=ViewSpec::ModifiedSpec({
       key: None,
       child: ViewSpec::TextSpec({
@@ -119,7 +119,7 @@ test "inspector snapshot captures semantic states and dirty reasons" {
     }),
     size=Size::new(width=160.0, height=60.0),
   )
-  runtime.state.mark_dirty(runtime.state.element_tree.id())
+  runtime.mark_dirty(runtime.element_tree.id())
   let dirty_ids = runtime.dirty_element_ids()
   inspect(dirty_ids.length(), content="1")
   inspect(dirty_ids[0].value, content="1")
@@ -142,9 +142,9 @@ test "inspector snapshot captures semantic states and dirty reasons" {
   assert_true(snapshot.runtime.dirty_state.needs_paint)
   assert_true(snapshot.runtime.dirty_state.needs_redraw)
   inspect(runtime.dirty_count(), content="1")
-  inspect(runtime.state.layout_pass_count, content="1")
-  inspect(runtime.state.paint_pass_count, content="1")
-  inspect(runtime.state.draw_command_build_count, content="0")
+  inspect(runtime.layout_pass_count, content="1")
+  inspect(runtime.paint_pass_count, content="1")
+  inspect(runtime.draw_command_build_count, content="0")
   assert_true(runtime.needs_paint())
   assert_true(runtime.needs_redraw())
   inspect(snapshot.view_tree.node_count, content="2")

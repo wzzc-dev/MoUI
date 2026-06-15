@@ -76,7 +76,7 @@ test "state backed scroll repaints without activation rebuild or layout pass" {
     viewport=Some(Size::new(width=80.0, height=40.0)),
     state=Some(scroll),
   )
-  let runtime = RuntimeKernel::new_view(
+  let runtime = RuntimeState::new_view(
     root~,
     size=Size::new(width=80.0, height=40.0),
   )
@@ -85,7 +85,7 @@ test "state backed scroll repaints without activation rebuild or layout pass" {
     Some(frame) => inspect(frame.origin.y, content="0")
     None => inspect("missing", content="0")
   }
-  let layout_passes = runtime.state.layout_pass_count
+  let layout_passes = runtime.layout_pass_count
   runtime.dispatch_event(
     Pointer(
       PointerEvent::new(
@@ -104,7 +104,7 @@ test "state backed scroll repaints without activation rebuild or layout pass" {
     Some(frame) => inspect(frame.origin.y, content="-12")
     None => inspect("missing", content="-12")
   }
-  inspect(runtime.state.layout_pass_count, content="\{layout_passes}")
+  inspect(runtime.layout_pass_count, content="\{layout_passes}")
 }
 
 ///|
@@ -120,12 +120,12 @@ test "state backed scroll repositions repaint boundary child without layout" {
     viewport=Some(Size::new(width=80.0, height=40.0)),
     state=Some(scroll),
   )
-  let runtime = RuntimeKernel::new_view(
+  let runtime = RuntimeState::new_view(
     root~,
     size=Size::new(width=80.0, height=40.0),
   )
   ignore(runtime.draw_commands())
-  let layout_passes = runtime.state.layout_pass_count
+  let layout_passes = runtime.layout_pass_count
   runtime.dispatch_event(
     Pointer(
       PointerEvent::new(
@@ -140,7 +140,7 @@ test "state backed scroll repositions repaint boundary child without layout" {
     Some(frame) => inspect(frame.origin.y, content="-12")
     None => inspect("missing", content="-12")
   }
-  inspect(runtime.state.layout_pass_count, content="\{layout_passes}")
+  inspect(runtime.layout_pass_count, content="\{layout_passes}")
 }
 
 ///|
