@@ -1337,8 +1337,6 @@ pub fn RuntimeKernel::set_text_system(Self, TextSystem) -> Unit
 pub fn RuntimeKernel::size(Self) -> Size
 pub fn RuntimeKernel::text_system(Self) -> TextSystem
 
-type RuntimeState
-
 pub struct RuntimeViewSpec {
   // private fields
 }
