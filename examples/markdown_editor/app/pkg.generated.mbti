@@ -5,7 +5,6 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
 }
 
 // Values
@@ -49,16 +48,48 @@ pub struct MarkdownEditorApp {
   editor_scroll : @core.ScrollState
   // private fields
 }
+pub fn MarkdownEditorApp::action_commands(Self, services? : @host.HostAppServices) -> @core.ActionCommandMap
 pub fn MarkdownEditorApp::new() -> Self
-pub fn MarkdownEditorApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
-pub fn MarkdownEditorApp::runtime_with_services(Self, @host.HostAppServices, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn MarkdownEditorApp::program(Self) -> @core.Program[Self, MarkdownEditorMsg]
+pub fn MarkdownEditorApp::program_with_services(Self, @host.HostAppServices) -> @core.Program[Self, MarkdownEditorMsg]
 pub fn MarkdownEditorApp::save_document_as(Self, String) -> Unit
 
 type MarkdownEditorAutolinkTarget derive(Eq, @debug.Debug)
 
 type MarkdownEditorBlock derive(Eq, ToJson, @debug.Debug)
 
-type MarkdownEditorCommand derive(Eq, ToJson, @debug.Debug)
+pub enum MarkdownEditorCommand {
+  Bold
+  Italic
+  Code
+  Strikethrough
+  Link
+  Image
+  SetLinkTarget(String)
+  SetImageTarget(String)
+  SetCodeLanguage(String)
+  SetFootnoteText(String)
+  SetHtmlBlockText(String)
+  Paragraph
+  Heading(Int)
+  BulletList
+  TaskList
+  OrderedList
+  Quote
+  CodeBlock
+  HorizontalRule
+  Table
+  InsertTableOfContents
+  InsertFrontMatter
+  DuplicateBlock
+  MoveBlockUp
+  MoveBlockDown
+  InsertTableRow
+  InsertTableColumn
+  DeleteTableRow
+  DeleteTableColumn
+  SetTableColumnAlignment(@core.TextAlign?)
+} derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownEditorEditResult derive(Eq, ToJson, @debug.Debug)
 
@@ -67,6 +98,64 @@ type MarkdownEditorFrontMatterParseResult derive(Eq, @debug.Debug)
 type MarkdownEditorHistoryEntry derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownEditorMergeBlockKind derive(Eq, @debug.Debug)
+
+pub enum MarkdownEditorMsg {
+  NewDocument
+  SaveDocument
+  SaveDocumentAs
+  OpenDocument
+  ImportFromClipboard
+  ExportToClipboard
+  ExportHtmlToClipboard
+  HostTransferCompleted(@host.HostCompletedServiceResponse)
+  Undo
+  Redo
+  ToggleOutline
+  ToggleFileSidebar
+  ToggleDocumentInfo
+  ToggleFind
+  ToggleFocusMode
+  ToggleTypewriterMode
+  ToggleZenMode
+  ToggleFormatPalette
+  UpdateFormatPaletteQuery(String)
+  ApplyFirstFormatPaletteAction
+  ApplyFormatPaletteAction(String)
+  CycleWritingAppearance
+  OpenFind
+  OpenFindReplace
+  CloseFind
+  DismissAuxiliaryPanels
+  ToggleSourcePreview
+  ToggleSourceMode
+  UpdateDocument(String)
+  UpdateFindQuery(String)
+  UpdateReplaceText(String)
+  UpdateLinkTarget(String)
+  UpdateImageTarget(String)
+  UpdateFootnoteText(String)
+  UpdateHtmlBlockText(String)
+  ApplyLinkTarget
+  OpenTarget
+  ApplyImageTarget
+  ApplyFootnoteText
+  ApplyHtmlBlockText
+  FindNext
+  FindPrevious
+  ReplaceFindCurrent
+  ReplaceFindAll
+  ApplyCommand(MarkdownEditorCommand)
+  SetSelection(Int, @core.TextRange?)
+  OpenRecentDocument(String)
+  JumpToOutline(Int)
+  JumpToNextHeading
+  JumpToPreviousHeading
+  ToggleCurrentTask
+  InsertHardBreak
+  IndentLines
+  OutdentLines
+  ToggleTaskAt(Int)
+}
 
 type MarkdownEditorOffsetReplacement derive(Eq, @debug.Debug)
 
