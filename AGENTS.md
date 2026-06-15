@@ -35,6 +35,9 @@ paths, or abstractions that only preserve old shapes.
   It remains one MoonBit package; contract files are grouped by responsibility
   (`component_context`, `view_tree`, `geometry`, `paint`, `semantics`,
   `text_*`, `rich_text_*`, etc.) rather than by additional package boundaries.
+  `core/unicode` is a zero-dependency sub-package owning the Unicode 17 grapheme
+  boundary property table and cluster algorithm; `core` re-exports
+  `TextGraphemeBoundaries` and bridges its range API to `TextRange`.
 - `runtime/` is the app/host runtime entrypoint package. It exposes opaque
   `@runtime.AppRuntime` construction/query/dispatch methods and owns runtime
   state, element/render trees, reconcile, dirty queue, layout/paint, event
@@ -356,7 +359,7 @@ node scripts/test-smoke-gate.mjs
 node scripts/smoke-gate.mjs --tier nightly --dry-run --json
 node --check scripts/generate-grapheme-break-fixtures.mjs
 node scripts/generate-grapheme-break-fixtures.mjs --check
-node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check
+node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/unicode/grapheme_break_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_break_fixture --test-name "unicode 17 grapheme break fixture samples" --check
 node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_editing_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_editing_fixture --test-name "unicode 17 grapheme editing fixture samples" --actual-kind core-editing --check
 node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/core/text_grapheme_layout_unicode_17_wbtest.mbt --helper-name assert_unicode_17_grapheme_layout_fixture --test-name "unicode 17 grapheme layout fixture samples" --actual-kind core-layout --check
 node scripts/generate-grapheme-break-fixtures.mjs --input moui/core/testdata/GraphemeBreakTest-17.0.0.txt --output moui/render/skia/skia_grapheme_break_unicode_17_wbtest.mbt --helper-name assert_skia_unicode_17_grapheme_break_fixture --test-name "skia unicode 17 grapheme break fixture samples" --actual-kind skia-clusters --check

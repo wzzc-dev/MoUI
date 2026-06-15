@@ -22,8 +22,11 @@ fn assert_grapheme_delete_range(
   after : Int,
   expected : TextRange,
 ) -> Unit raise {
-  let actual = TextGraphemeBoundaries::new(text~).delete_range(
-    caret, before, after,
+  let actual = delete_grapheme_range(
+    TextGraphemeBoundaries::new(text~),
+    caret,
+    before,
+    after,
   )
   inspect(actual.start, content="\{expected.start}")
   inspect(actual.end, content="\{expected.end}")
@@ -134,13 +137,19 @@ test "grapheme boundary contract covers ranges deletes and utf8 offsets" {
   inspect(boundaries.ceil_boundary(2), content="4")
   inspect(boundaries.nearest_boundary(2), content="1")
   inspect(boundaries.nearest_boundary(3), content="4")
-  let expanded = boundaries.normalize_range(TextRange::new(start=2, end=3))
+  let expanded = normalize_grapheme_range(
+    boundaries,
+    TextRange::new(start=2, end=3),
+  )
   inspect(expanded.start, content="1")
   inspect(expanded.end, content="4")
-  let collapsed = boundaries.normalize_range(TextRange::collapsed(3))
+  let collapsed = normalize_grapheme_range(
+    boundaries,
+    TextRange::collapsed(3),
+  )
   inspect(collapsed.start, content="4")
   inspect(collapsed.end, content="4")
-  let delete = boundaries.delete_range(4, 1, 0)
+  let delete = delete_grapheme_range(boundaries, 4, 1, 0)
   inspect(delete.start, content="1")
   inspect(delete.end, content="4")
   inspect(boundaries.utf8_offset(4), content="12")
