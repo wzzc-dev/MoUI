@@ -1,9 +1,12 @@
 import {
   "moonbitlang/core/json",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
 }
+
+import {
+  "wzzc-dev/moui/runtime",
+} for "wbtest"
 
 options(
   targets: { },
