@@ -38,8 +38,8 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
 ///|
 test "runtime facade budget pins the opaque runtime boundary" {
   let runtime = budget_by_label("runtime facade")
-  inspect(runtime.max_lines, content="63")
-  inspect(runtime.max_pub_lines, content="43")
+  inspect(runtime.max_lines, content="60")
+  inspect(runtime.max_pub_lines, content="40")
   inspect(runtime.max_pub_all_lines, content="0")
   assert_true(runtime.required_tokens.contains("pub struct AppRuntime"))
   assert_true(runtime.required_tokens.contains("pub fn[Msg] new_view("))
