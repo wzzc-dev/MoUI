@@ -529,6 +529,14 @@ fn max_shared_app_core_imports() -> Int {
 }
 
 ///|
+fn allowed_shared_app_core_imports() -> Array[String] {
+  [
+    "examples/markdown_editor/app/moon.pkg", "examples/mo_workbench/app/moon.pkg",
+    "examples/pdf_workbench/app/moon.pkg", "examples/showcase/app/moon.pkg", "website/app/moon.pkg",
+  ]
+}
+
+///|
 fn collect_shared_app_moon_pkgs(
   repo_root : String,
   paths : Array[String],
@@ -851,6 +859,8 @@ fn validate_shared_app_core_imports(
   let paths : Array[String] = []
   collect_shared_app_moon_pkgs(repo_root, paths, failures)
   let mut core_imports = 0
+  let mut unauthorized_core_imports = 0
+  let allowed = allowed_shared_app_core_imports()
   for path in paths {
     let text = match read_repo_text(repo_root, path) {
       Ok(value) => value
@@ -861,6 +871,13 @@ fn validate_shared_app_core_imports(
     }
     if moon_pkg_has_default_import(text, "\"wzzc-dev/moui/core\"") {
       core_imports += 1
+      if !allowed.contains(path) {
+        unauthorized_core_imports += 1
+        failures.push(
+          path +
+          ": shared app packages should default to moui + views; add core only to the explicit advanced-app allowlist",
+        )
+      }
     }
   }
   let max_core_imports = max_shared_app_core_imports()
@@ -870,7 +887,7 @@ fn validate_shared_app_core_imports(
     )
   }
   println(
-    "api surface: shared app default core imports=\{core_imports}/\{max_core_imports}",
+    "api surface: shared app default core imports=\{core_imports}/\{max_core_imports}; unauthorized=\{unauthorized_core_imports}",
   )
 }
 

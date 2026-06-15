@@ -198,6 +198,18 @@ test "core program runtime ownership guard covers moved implementation" {
 }
 
 ///|
+test "shared app core import budget is an explicit advanced-app allowlist" {
+  let allowed = allowed_shared_app_core_imports()
+  inspect(max_shared_app_core_imports(), content="5")
+  inspect(allowed.length(), content="5")
+  assert_true(allowed.contains("examples/markdown_editor/app/moon.pkg"))
+  assert_true(allowed.contains("examples/mo_workbench/app/moon.pkg"))
+  assert_true(allowed.contains("examples/pdf_workbench/app/moon.pkg"))
+  assert_true(allowed.contains("examples/showcase/app/moon.pkg"))
+  assert_true(allowed.contains("website/app/moon.pkg"))
+}
+
+///|
 test "core view construction is reserved for views facade consumers" {
   inspect(core_control_consumer_roots().contains("moui/views"), content="false")
   inspect(runtime_consumer_roots().contains("moui/views"), content="true")
