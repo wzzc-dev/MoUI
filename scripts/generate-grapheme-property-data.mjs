@@ -12,7 +12,7 @@ const usage = () => {
       "  [--output <text_grapheme_data.mbt>]",
       "  [--check]",
       "",
-      "The default output is moui/core/text_grapheme_data.mbt.",
+      "The default output is moui/core/unicode/grapheme_data.mbt.",
     ].join("\n"),
   );
   process.exit(2);
@@ -21,7 +21,7 @@ const usage = () => {
 let graphemeProperty = "";
 let emojiData = "";
 let derivedCoreProperties = "";
-let output = "moui/core/text_grapheme_data.mbt";
+let output = "moui/core/unicode/grapheme_data.mbt";
 let check = false;
 
 const args = process.argv.slice(2);

@@ -112,7 +112,10 @@ fn assert_unicode_17_grapheme_editing_fixture(
       boundaries.nearest_boundary_utf8_offset(index),
       content="\{expected_utf8_offsets[nearest_utf8_index]}",
     )
-    let collapsed = boundaries.normalize_range(TextRange::collapsed(index))
+    let collapsed = normalize_grapheme_range(
+      boundaries,
+      TextRange::collapsed(index),
+    )
     inspect(collapsed.start, content="\{nearest}")
     inspect(collapsed.end, content="\{nearest}")
     if index < length {
@@ -120,7 +123,8 @@ fn assert_unicode_17_grapheme_editing_fixture(
         index + 1,
         expected,
       )
-      let normalized = boundaries.normalize_range(
+      let normalized = normalize_grapheme_range(
+        boundaries,
         TextRange::new(start=index, end=index + 1),
       )
       inspect(normalized.start, content="\{floor}")
@@ -130,10 +134,10 @@ fn assert_unicode_17_grapheme_editing_fixture(
   for index in 1..<expected.length() {
     let previous = expected[index - 1]
     let current = expected[index]
-    let delete_before = boundaries.delete_range(current, 1, 0)
+    let delete_before = delete_grapheme_range(boundaries, current, 1, 0)
     inspect(delete_before.start, content="\{previous}")
     inspect(delete_before.end, content="\{current}")
-    let delete_after = boundaries.delete_range(previous, 0, 1)
+    let delete_after = delete_grapheme_range(boundaries, previous, 0, 1)
     inspect(delete_after.start, content="\{previous}")
     inspect(delete_after.end, content="\{current}")
   }
