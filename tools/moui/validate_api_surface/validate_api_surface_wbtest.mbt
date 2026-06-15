@@ -206,6 +206,29 @@ test "core program runtime ownership guard covers moved implementation" {
 }
 
 ///|
+test "core runtime boundary guard covers moved implementation" {
+  let tokens = forbidden_core_runtime_boundary_source_tokens().map(rule => {
+    rule.token
+  })
+  assert_true(tokens.contains("AppRuntime"))
+  assert_true(tokens.contains("RuntimeKernel"))
+  assert_true(tokens.contains("RuntimeState"))
+  assert_true(tokens.contains("ElementNode"))
+  assert_true(tokens.contains("ElementTree"))
+  assert_true(tokens.contains("RenderNode"))
+  assert_true(tokens.contains("DirtyFlags"))
+  assert_true(tokens.contains("enum ViewSpec"))
+  assert_true(tokens.contains("ViewSpec::FlexSpec"))
+  assert_true(tokens.contains("realize_view("))
+  let paths = forbidden_core_runtime_boundary_source_paths()
+  assert_true(paths.contains("moui/core/element.mbt"))
+  assert_true(paths.contains("moui/core/runtime_state.mbt"))
+  assert_true(paths.contains("moui/core/runtime_render_pipeline.mbt"))
+  assert_true(paths.contains("moui/core/view_realize.mbt"))
+  assert_true(paths.contains("moui/core/view_spec_ops.mbt"))
+}
+
+///|
 test "shared app core import budget is an explicit advanced-app allowlist" {
   let allowed = allowed_shared_app_core_imports()
   inspect(max_shared_app_core_imports(), content="5")
