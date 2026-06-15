@@ -17,12 +17,12 @@ workflow for agents and maintainers.
 
 ## Project Invariants
 
-- Public view constructors return opaque `@core.View[Msg]`; `ViewSpec` stays an
-  internal core representation.
+- Public view constructors return opaque `@core.View[Msg]`; runtime-owned
+  lowered nodes are not app-facing API.
 - The runtime pipeline stays:
 
   ```text
-  View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+  View[Msg] -> ViewLoweringSink -> runtime view nodes -> runtime element/layout/render trees -> DrawFrame -> renderer + host platform views
   ```
 
 - `core/` owns platform-neutral contracts, opaque views, events, geometry,
