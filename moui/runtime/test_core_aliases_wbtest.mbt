@@ -1,18 +1,4 @@
 ///|
-fn draw_text_frame(commands : Array[DrawCommand], text : String) -> Rect? {
-  for command in commands {
-    match command {
-      DrawCommand::DrawText({ text: value, frame, .. }) =>
-        if value == text {
-          return Some(frame)
-        }
-      _ => ()
-    }
-  }
-  None
-}
-
-///|
 fn draw_text_index(commands : Array[DrawCommand], text : String) -> Int {
   for index, command in commands {
     match command {
