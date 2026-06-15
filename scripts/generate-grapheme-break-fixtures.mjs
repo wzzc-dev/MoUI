@@ -10,7 +10,7 @@ const usage = () => {
 };
 
 let input = "moui/core/testdata/grapheme_break_samples.txt";
-let output = "moui/core/text_grapheme_break_fixtures_wbtest.mbt";
+let output = "moui/core/unicode/grapheme_break_fixtures_wbtest.mbt";
 let helperName = "assert_generated_grapheme_break_fixture";
 let testName = "generated grapheme break fixture samples";
 let actualKind = "core-boundaries";

@@ -107,7 +107,8 @@ pub fn skia_text_selection_geometry_diagnostic(
     Some(range) => range
     None => skia_default_selection_geometry_range(layout)
   }
-  let normalized = @core.TextGraphemeBoundaries::new(text~).normalize_range(
+  let normalized = @core.normalize_grapheme_range(
+    @core.TextGraphemeBoundaries::new(text~),
     selection_range,
   )
   let selection_rects = layout.selection_rects(normalized)

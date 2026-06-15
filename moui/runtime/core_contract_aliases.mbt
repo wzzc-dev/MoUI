@@ -409,6 +409,24 @@ type TextCommandResult = @core.TextCommandResult
 ///|
 type TextGraphemeBoundaries = @core.TextGraphemeBoundaries
 
+///| Normalizes a `TextRange` to grapheme boundaries via the core bridge.
+fn normalize_grapheme_range(
+  boundaries : TextGraphemeBoundaries,
+  range : TextRange,
+) -> TextRange {
+  @core.normalize_grapheme_range(boundaries, range)
+}
+
+///| Computes the deletion range around `caret` in grapheme boundaries.
+fn delete_grapheme_range(
+  boundaries : TextGraphemeBoundaries,
+  caret : Int,
+  before : Int,
+  after : Int,
+) -> TextRange {
+  @core.delete_grapheme_range(boundaries, caret, before, after)
+}
+
 ///|
 type TextInputEvent = @core.TextInputEvent
 

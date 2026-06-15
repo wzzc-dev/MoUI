@@ -158,7 +158,7 @@ pub fn TextParagraphLayoutResult::selection_rects(
   range : TextRange,
 ) -> Array[Rect] {
   let boundaries = TextGraphemeBoundaries::new(text=self.text)
-  let normalized = boundaries.normalize_range(range)
+  let normalized = normalize_grapheme_range(boundaries, range)
   if normalized.is_collapsed() {
     return [self.caret_rect_at(normalized.start)]
   }
