@@ -159,9 +159,11 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="2066")
-  inspect(core.max_pub_lines, content="590")
+  inspect(core.max_lines, content="2072")
+  inspect(core.max_pub_lines, content="593")
   inspect(core.max_pub_all_lines, content="154")
+  assert_true(core.required_tokens.contains("pub struct ViewLoweringSink"))
+  assert_true(core.required_tokens.contains("View::lower_for_runtime"))
   assert_true(
     core.forbidden_tokens.contains("pub(all) struct EffectDescriptor"),
   )

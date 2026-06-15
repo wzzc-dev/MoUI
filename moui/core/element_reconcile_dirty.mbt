@@ -339,6 +339,16 @@ fn ViewModifier::reconcile_dirty_kind(
       bool_dirty(old != new, ReconcileLayout)
     (AlignModifier(old), AlignModifier(new)) =>
       bool_dirty(old != new, ReconcileLayout)
+    (SpacingModifier(old), SpacingModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
+    (MainAxisAlignmentModifier(old), MainAxisAlignmentModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
+    (CrossAxisAlignmentModifier(old), CrossAxisAlignmentModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
+    (ThemeModifier(old), ThemeModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
+    (EnvironmentModifier(old), EnvironmentModifier(new)) =>
+      bool_dirty(old != new, ReconcileLayout)
     (AspectRatioModifier(old), AspectRatioModifier(new)) =>
       bool_dirty(old != new, ReconcileLayout)
     (IntrinsicWidthModifier, IntrinsicWidthModifier) => ReconcileClean

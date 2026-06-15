@@ -221,6 +221,11 @@ priv enum ViewModifier {
   FlexibleModifier(Double)
   LayoutPriorityModifier(Double)
   AlignModifier(Alignment)
+  SpacingModifier(Double)
+  MainAxisAlignmentModifier(MainAxisAlignment)
+  CrossAxisAlignmentModifier(CrossAxisAlignment)
+  ThemeModifier(Theme)
+  EnvironmentModifier(Environment)
   AspectRatioModifier(Double)
   IntrinsicWidthModifier
   IntrinsicHeightModifier
