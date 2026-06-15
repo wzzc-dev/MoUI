@@ -159,8 +159,8 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="2078")
-  inspect(core.max_pub_lines, content="599")
+  inspect(core.max_lines, content="2040")
+  inspect(core.max_pub_lines, content="563")
   inspect(core.max_pub_all_lines, content="154")
   assert_true(core.required_tokens.contains("pub struct ViewLoweringSink"))
   assert_true(core.required_tokens.contains("View::lower_for_runtime"))
@@ -171,7 +171,11 @@ test "core descriptor payloads stay opaque" {
     core.forbidden_tokens.contains("pub(all) struct SubscriptionDescriptor"),
   )
   assert_true(core.forbidden_tokens.contains("type RuntimeState"))
-  assert_true(core.forbidden_tokens.contains("RuntimeKernel::new_program("))
+  assert_true(core.forbidden_tokens.contains("type RuntimeKernel"))
+  assert_true(core.forbidden_tokens.contains("RuntimeKernel::"))
+  assert_true(core.forbidden_tokens.contains("type ViewSpec"))
+  assert_true(core.forbidden_tokens.contains("type ElementNode"))
+  assert_true(core.forbidden_tokens.contains("type ElementTree"))
   assert_true(core.forbidden_tokens.contains("type FrameProfile"))
   assert_true(
     core.forbidden_tokens.contains("InspectorSnapshot::from_runtime("),
@@ -192,7 +196,7 @@ test "core program runtime ownership guard covers moved implementation" {
   assert_true(tokens.contains("pending_messages"))
   assert_true(tokens.contains("start_effect_task("))
   assert_true(tokens.contains("sync_subscriptions("))
-  assert_true(tokens.contains("RuntimeKernel::new_program("))
+  assert_true(tokens.contains("RuntimeKernel"))
   let paths = forbidden_core_program_runtime_source_paths()
   assert_true(paths.contains("moui/core/program_runtime_diagnostics.mbt"))
   assert_true(paths.contains("moui/core/program_runtime_effect_tasks.mbt"))

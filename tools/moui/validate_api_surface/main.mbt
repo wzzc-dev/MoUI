@@ -114,8 +114,8 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 2078,
-      max_pub_lines: 599,
+      max_lines: 2040,
+      max_pub_lines: 563,
       max_pub_all_lines: 154,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
@@ -132,7 +132,9 @@ fn package_budgets() -> Array[PackageBudget] {
         "View::picker(", "View::controlled_picker(", "View::datepicker(", "View::controlled_datepicker(",
         "View::search_bar(", "View::controlled_search_bar(", "pub(all) struct EffectDescriptor",
         "pub(all) struct SubscriptionDescriptor", "type AppRuntime", "AppRuntime::",
-        "type RuntimeState", "RuntimeKernel::new_program(", "type FrameProfile",
+        "type RuntimeKernel", "RuntimeKernel::", "type RuntimeState", "RuntimeState::",
+        "type ElementNode", "ElementNode::", "type ElementTree", "ElementTree::",
+        "type ViewSpec", "pub(all) enum ViewSpec", "pub enum ViewSpec", "type FrameProfile",
         "FrameProfile::capture(", "InspectorSnapshot::from_runtime(", "RuntimeInspectorSnapshot::from_runtime(",
         "ViewTreeInspectorSnapshot::from_runtime(", "LayoutInspectorSnapshot::from_runtime(",
         "RenderInspectorSnapshot::from_runtime(", "SemanticsInspectorSnapshot::from_runtime(",
@@ -746,10 +748,7 @@ fn forbidden_core_program_runtime_source_tokens() -> Array[ForbiddenSourceToken]
     { label: "program message queue", token: "pending_messages" },
     { label: "effect task lifecycle", token: "start_effect_task(" },
     { label: "subscription lifecycle", token: "sync_subscriptions(" },
-    {
-      label: "program runtime constructor",
-      token: "RuntimeKernel::new_program(",
-    },
+    { label: "legacy core runtime kernel", token: "RuntimeKernel" },
   ]
 }
 
@@ -946,11 +945,12 @@ fn validate_runtime_source_boundaries(
       }
     }
     if text.contains("@core.AppRuntime") ||
-      text.contains("inner : @core.AppRuntime") {
+      text.contains("inner : @core.AppRuntime") ||
+      text.contains("@core.RuntimeKernel") {
       core_app_runtime_uses += 1
       failures.push(
         path +
-        ": runtime must not wrap @core.AppRuntime; use @core.RuntimeKernel as the narrow contract seam",
+        ": runtime must own state directly; do not wrap @core.AppRuntime or @core.RuntimeKernel",
       )
     }
   }

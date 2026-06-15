@@ -14,9 +14,9 @@ paths, or abstractions that only preserve old shapes.
 - `core/` owns the platform-neutral contract model, opaque public `View[Msg]`,
   typed events, app-owned route/history helpers, `Program`, `Effect`,
   `Subscription`, environment/geometry/draw/semantics/text/theme contracts, and
-  a narrow `RuntimeKernel` contract seam consumed by `moui/runtime` for
-  package-neutral tree/layout/paint handoff. `RuntimeState`, element/render
-  trees, and node payloads are private engine details, not app-facing API.
+  the runtime-only `ViewLoweringSink` / `View::lower_for_runtime` seam consumed
+  by `moui/runtime`. `RuntimeKernel`, `RuntimeState`, `ViewSpec`,
+  element/render trees, and node payloads are not public app-facing API.
   Standard `Effect`/`Subscription` helpers may name common
   descriptor kinds, subscription reuse is keyed by the stable key plus source
   kind, effect-task lifecycle diagnostics may distinguish same-key descriptor
@@ -35,9 +35,11 @@ paths, or abstractions that only preserve old shapes.
   (`runtime_state`, `component_context`, `input_*`, `paint_*`, `rich_text_*`,
   etc.) rather than by additional package boundaries.
 - `runtime/` is the app/host runtime entrypoint package. It exposes opaque
-  `@runtime.AppRuntime` construction/query/dispatch methods and owns program
-  message drain, effect task lifecycle, subscription lifecycle, and program
-  runtime diagnostics. New app, backend, smoke, and tooling code should type
+  `@runtime.AppRuntime` construction/query/dispatch methods and owns runtime
+  state, element/render trees, reconcile, dirty queue, layout/paint, event
+  dispatch, focus/text input, program message drain, effect task lifecycle,
+  subscription lifecycle, and program runtime diagnostics. New app, backend,
+  smoke, and tooling code should type
   and construct runtimes through `@runtime.AppRuntime`, `@runtime.new_view`, or
   `@runtime.new_program`; platform entrypoints that only have width/height may
   use `@runtime.new_program_with_dimensions`. `@core.AppRuntime` is not a

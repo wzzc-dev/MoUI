@@ -140,19 +140,18 @@ Use this skill when editing or reviewing:
 
 ## Package Map
 
-- `core/`: one MoonBit package for platform-neutral contracts, view specs,
+- `core/`: one MoonBit package for platform-neutral contracts, opaque views,
   app-owned route/history helpers, `Program` / `Effect` /
   `Subscription`, layout/input/semantics/rich text/draw/style/theme contracts,
-  and a narrow `RuntimeKernel` contract seam consumed by `moui/runtime` for
-  package-neutral tree/layout/paint handoff. `RuntimeState`, element/render
-  trees, and node payloads stay private implementation details. Keep files
-  grouped by responsibility (`runtime_state`,
-  `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
-  subpackages.
+  and the runtime-only `ViewLoweringSink` / `View::lower_for_runtime` seam
+  consumed by `moui/runtime`. `RuntimeKernel`, `RuntimeState`, `ViewSpec`,
+  element/render trees, and node payloads are not public app-facing API.
 - `runtime/`: app/host runtime entrypoint package exposing opaque
-  `AppRuntime` construction/query/dispatch methods and owning program message
-  drain, effect task lifecycle, subscription lifecycle, and program runtime
-  diagnostics. New app, backend, smoke, and tooling code should use
+  `AppRuntime` construction/query/dispatch methods and owning runtime state,
+  element/render trees, reconcile, dirty queue, layout/paint, event dispatch,
+  focus/text input, program message drain, effect task lifecycle, subscription
+  lifecycle, and program runtime diagnostics. New app, backend, smoke, and
+  tooling code should use
   `@runtime.AppRuntime`, `@runtime.new_view`, or `@runtime.new_program`;
   platform entrypoints that only have width/height may use
   `@runtime.new_program_with_dimensions`. `@core.AppRuntime` is not a public
