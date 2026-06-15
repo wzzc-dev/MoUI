@@ -131,7 +131,11 @@ fn package_budgets() -> Array[PackageBudget] {
         "View::picker(", "View::controlled_picker(", "View::datepicker(", "View::controlled_datepicker(",
         "View::search_bar(", "View::controlled_search_bar(", "pub(all) struct EffectDescriptor",
         "pub(all) struct SubscriptionDescriptor", "type AppRuntime", "AppRuntime::",
-        "type RuntimeState", "RuntimeKernel::new_program(",
+        "type RuntimeState", "RuntimeKernel::new_program(", "type FrameProfile",
+        "FrameProfile::capture(", "InspectorSnapshot::from_runtime(", "RuntimeInspectorSnapshot::from_runtime(",
+        "ViewTreeInspectorSnapshot::from_runtime(", "LayoutInspectorSnapshot::from_runtime(",
+        "RenderInspectorSnapshot::from_runtime(", "SemanticsInspectorSnapshot::from_runtime(",
+        "RouteFocusStore::restore(", "RouteFocusStore::restore_location(",
       ],
     },
     {

@@ -170,6 +170,14 @@ test "core descriptor payloads stay opaque" {
   )
   assert_true(core.forbidden_tokens.contains("type RuntimeState"))
   assert_true(core.forbidden_tokens.contains("RuntimeKernel::new_program("))
+  assert_true(core.forbidden_tokens.contains("type FrameProfile"))
+  assert_true(
+    core.forbidden_tokens.contains("InspectorSnapshot::from_runtime("),
+  )
+  assert_true(
+    core.forbidden_tokens.contains("RuntimeInspectorSnapshot::from_runtime("),
+  )
+  assert_true(core.forbidden_tokens.contains("RouteFocusStore::restore("))
 }
 
 ///|
