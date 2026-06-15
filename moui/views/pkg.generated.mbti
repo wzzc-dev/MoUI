@@ -660,6 +660,18 @@ pub struct WizardStep[Msg] {
 pub fn[Msg] WizardStep::new(id~ : String, title~ : String, subtitle? : String, content~ : @core.View[Msg], enabled? : Bool) -> Self[Msg]
 
 // Type aliases
+pub using @core {type ActionCommand}
+
+pub using @core {type ActionCommandMap}
+
+pub using @core {type CommandBinding}
+
+pub using @core {type CommandIntent}
+
+pub using @core {type KeyModifiers}
+
+pub using @core {type KeyboardShortcut}
+
 pub using @core {type WebViewEvent}
 
 pub using @core {type WebViewNavigationPolicy}

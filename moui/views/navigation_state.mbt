@@ -9,7 +9,7 @@ pub struct MenuItem[Msg] {
 ///|
 pub struct CommandMenuSection {
   title : String
-  commands : Array[@core.ActionCommand]
+  commands : Array[ActionCommand]
 }
 
 ///|
@@ -39,7 +39,7 @@ pub fn[Msg] MenuItem::new(
 ///|
 pub fn CommandMenuSection::new(
   title~ : String,
-  commands~ : Array[@core.ActionCommand],
+  commands~ : Array[ActionCommand],
 ) -> CommandMenuSection {
   { title, commands }
 }

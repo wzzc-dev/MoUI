@@ -703,6 +703,9 @@ platform-specific event into app code.
 Keyboard shortcuts, menus, and host command responses share the
 `ActionCommand`/`CommandIntent` model. `ActionCommandMap` is the platform-neutral
 dispatcher for matching shortcuts and invoking enabled command handlers.
+Application-facing command metadata aliases are exported from `moui/views`
+alongside the command palette and menu constructors; lower-level runtime and
+host integration can still use the `core` contract directly.
 The `views` package also provides view-level menu helpers over the same
 metadata: `menu_bar`, `command_menu`, and `context_menu_region` render buttons,
 rows, surfaces, and overlays as ordinary `View[Msg]` values. They are fallback

@@ -1,8 +1,8 @@
 ///|
 pub fn[Msg] command_palette(
-  commands : Array[@core.ActionCommand],
+  commands : Array[ActionCommand],
   query? : String = "",
-  on_select~ : (@core.CommandIntent) -> Msg,
+  on_select~ : (CommandIntent) -> Msg,
   theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 420.0,
   max_height? : Double = 260.0,
@@ -47,8 +47,8 @@ pub fn[Msg] command_palette(
 
 ///|
 fn[Msg] command_palette_row(
-  command : @core.ActionCommand,
-  on_select~ : (@core.CommandIntent) -> Msg,
+  command : ActionCommand,
+  on_select~ : (CommandIntent) -> Msg,
   theme~ : @core.Theme,
   width~ : Double,
 ) -> @core.View[Msg] {
@@ -88,7 +88,7 @@ fn[Msg] command_palette_row(
 }
 
 ///|
-fn command_palette_meta(command : @core.ActionCommand) -> String {
+fn command_palette_meta(command : ActionCommand) -> String {
   if command.group != "" && command.description != "" {
     command.group + " - " + command.description
   } else if command.group != "" {
@@ -99,10 +99,7 @@ fn command_palette_meta(command : @core.ActionCommand) -> String {
 }
 
 ///|
-fn command_palette_matches(
-  command : @core.ActionCommand,
-  query : String,
-) -> Bool {
+fn command_palette_matches(command : ActionCommand, query : String) -> Bool {
   if query == "" {
     true
   } else {

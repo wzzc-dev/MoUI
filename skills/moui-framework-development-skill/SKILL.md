@@ -196,9 +196,9 @@ Use this skill when editing or reviewing:
 - `views/`: public view constructors returning opaque `@core.View[Msg]`. App,
   host, smoke, and cross-package tests should use `views` widget-level
   entrypoints instead of direct `@core.View::*` control constructors while core
-  still owns internal node payloads. Control-specific app-facing event or
-  policy aliases, such as WebView events, live here rather than in the root
-  facade.
+  still owns internal node payloads. Control-specific app-facing event, policy,
+  or metadata aliases, such as WebView events and action commands, live here
+  rather than in the root facade.
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
   window lifecycle registry, window scene resolver, per-window runtime slot
   collection, platform-window id map, renderer-neutral `HostWindowRenderer`
