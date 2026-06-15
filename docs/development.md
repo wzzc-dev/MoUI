@@ -401,10 +401,10 @@ builds only when explicitly validating the experimental WGPU diagnostic route.
 MoUI keeps production runtime boundaries explicit when using Mooncakes
 frontends and tooling:
 
-- `Milky2018/moon_taffy` is allowed in `core/` because layout is
-  platform-neutral. MoUI maps ordinary flex/grid/list/stack placement through
-  Taffy and keeps custom layout delegates, dirty marking, and render tree
-  ownership in MoUI.
+- `Milky2018/moon_taffy` is allowed in `moui/runtime` because layout is
+  platform-neutral runtime logic. MoUI maps ordinary flex/grid/list/stack
+  placement through Taffy and keeps custom layout delegates, dirty marking, and
+  render tree ownership in the runtime package.
 - `Milky2018/moon_accesskit` is the native accessibility tree representation
   used by `backend/host`; `@core.SemanticsNode` remains platform-neutral, and
   Web continues to use its ARIA adapter.

@@ -108,8 +108,8 @@ event sources that should be started, reused by key, or canceled as the model
 changes. Views that need viewport or platform inputs use
 `view : (Model, ViewEnvironment) -> View[Msg]` through
 `Program::simple_with_environment` or `Program::new_with_environment`. User code
-does not call `lower`, `to_spec`, or `ViewSpec`; those names belong to the core
-runtime implementation.
+does not call `lower`, `to_spec`, or legacy `ViewSpec` paths; the supported
+runtime-only seam is `View::lower_for_runtime`, consumed by `moui/runtime`.
 
 `views/` is a facade over core primitive builders:
 
@@ -228,22 +228,21 @@ exposing the internal view tree.
 MoUI keeps the runtime pipeline explicit:
 
 ```text
-View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+View[Msg] -> ViewLoweringSink -> runtime view nodes -> runtime element/layout/render trees -> DrawFrame -> renderer + host platform views
 ```
 
 - `View[Msg]` is the immutable, opaque public description produced by app code;
-  the internal view tree is the private core tree realized by the runtime.
-- `ElementTree` is the mounted runtime tree. Its `ElementNode` entries own
-  identity, keys, child specs, dirty flags, control state, component state,
-  layout cache, and render cache.
-- `LayoutTree` is the latest placement result. Its `PlacedNode` entries carry
-  the final frames produced by measurement and parent placement.
-- `RenderTree` is the paint-stage tree. Its `RenderNode` entries attach hit
-  testing and draw command payloads to frames that came from `LayoutTree`.
+  `core` exposes only the runtime-only lowering visitor needed to read that
+  opaque description.
+- `moui/runtime` lowers views into runtime-private node descriptions, mounts
+  them into its element tree, reconciles keyed children, tracks dirty state, and
+  owns layout and render caches.
+- Runtime layout stores the latest placement result. Runtime paint attaches hit
+  testing and draw command payloads to those frames and produces `DrawFrame`
+  values for host/render integration.
 - App code should normally go through `AppRuntime`, `Component`, and
-  `BuildContext`; `RuntimeState`, `ElementTree`, `LayoutTree`, `RenderTree`,
-  and their node types are engine implementation details even though some core
-  tests still exercise them directly.
+  `BuildContext`; runtime-private state, element/layout/render trees, and their
+  node types are engine implementation details in `moui/runtime`.
 - `ViewEnvironment` is the read-only TEA-facing environment snapshot. It exposes
   the current viewport size and `Environment` without giving app-level views
   access to `BuildContext` subscriptions, bindings, or component effects.
@@ -295,16 +294,16 @@ View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> Dr
   sources, while build-context subscriptions model component-local state
   invalidation and lifecycle effects.
 - Layout uses constraints down, measured size up, then parent placement, and
-  writes the result into `LayoutTree`.
-- Paint consumes `LayoutTree` frames to build `RenderTree` and emits
-  platform-neutral `DrawCommand` values. `RenderNode` entries retain paint
-  bounds, content revisions, and repaint-boundary cache keys. The normal host
-  path asks `AppRuntime::draw_frame()` for commands plus a `DamageRegion` and
-  cache epoch; `DrawFrame.platform_views` carries native platform-view
-  placements such as `web_view` without adding them to `DrawCommand`. Legacy
-  tests can still call `draw_commands()` for a full command stream. Renderers
-  may degrade based on capability, but view constructors preserve brush, border,
-  shadow, clip, image, and text intent.
+  stores the result in runtime-private placement state.
+- Paint consumes runtime placement frames and emits platform-neutral
+  `DrawCommand` values. Runtime render entries retain paint bounds, content
+  revisions, and repaint-boundary cache keys. The normal host path asks
+  `AppRuntime::draw_frame()` for commands plus a `DamageRegion` and cache
+  epoch; `DrawFrame.platform_views` carries native platform-view placements
+  such as `web_view` without adding them to `DrawCommand`. Legacy tests can
+  still call `draw_commands()` for a full command stream. Renderers may degrade
+  based on capability, but view constructors preserve brush, border, shadow,
+  clip, image, and text intent.
 - Backends normalize platform events into `HostEvent`; they do not own UI
   state or mutate element/render trees directly.
 - `HostRuntimeDriver` owns redraw scheduling at the host boundary, dispatches
@@ -409,10 +408,10 @@ Taffy.
 
 ## Modifiers And Environment
 
-Modifiers are represented as `ModifiedSpec` wrappers instead of recursively
-rewriting every child spec. This keeps modifier order observable and makes
-stateful wrappers like disabled, focusable, semantics, and shortcuts compose
-predictably:
+Modifiers are represented as ordered view modifier nodes instead of recursively
+rewriting every child description. This keeps modifier order observable and
+makes stateful wrappers like disabled, focusable, semantics, and shortcuts
+compose predictably:
 
 ```moonbit
 @views.text("A").padding(8.0).background(@core.Color::gray())
@@ -420,9 +419,8 @@ predictably:
 ```
 
 The first paints the background outside the padding; the second paints it
-inside. `font`, `foreground`, `corner_radius`, and the runtime text system
-flow through the render environment, while layout and paint modifiers stay as
-ordered wrappers.
+inside. `font`, `foreground`, `corner_radius`, and the runtime text system flow
+through the render environment, while layout and paint modifiers stay ordered.
 MoUI currently supports background brushes, opacity, shadow, border, offset,
 clip, scale, disabled, accessibility labels, semantics roles, focusability,
 tap actions, keyboard shortcuts, and simple flexible/alignment wrappers in
@@ -446,8 +444,9 @@ The visual system keeps platform-neutral tokens and styles:
   visuals. `View::transition` and `View::presence` apply those samples through
   existing opacity, offset, scale, and foreground modifiers, including a
   reduced-motion shortcut.
-- `ImageFit::Contain/Cover/Stretch/ScaleDown/FitWidth/FitHeight` records image intent, with
-  source, opacity, and rounded clipping preserved in the view spec.
+- `ImageFit::Contain/Cover/Stretch/ScaleDown/FitWidth/FitHeight` records image
+  intent, with source, opacity, and rounded clipping preserved through lowering
+  into runtime-owned nodes.
 - Native Skia and WebGPU renderers keep visible draw-command support on the
   mainline. Skia owns native raster pixels and text diagnostics, while WebGPU
   owns browser wasm-gc presentation. Experimental native WGPU still validates
@@ -465,8 +464,8 @@ set to the browser runtime. Experimental native WGPU continues to exercise the
 GPU surface path and provider text integrations when explicitly requested. See
 [Renderer capability report](renderer-capability-report.md).
 
-Text measurement flows through the runtime `TextSystem` contract. `core/` owns
-the neutral contract and deterministic fallback; the native Skia mainline
+Text measurement flows through the runtime using the `TextSystem` contract.
+`core/` owns the neutral contract and deterministic fallback; the native Skia mainline
 exposes `skia_text_system()` for renderer/text diagnostics, WGPU diagnostic
 providers live under `render/wgpu/*`, and Web installs a browser Canvas-backed
 system that matches its WebGPU glyph path. See [Text system](text-system.md).
@@ -516,7 +515,7 @@ let pair = @views.custom_children_layout(
 ## Platform Host Contract
 
 `backend/host` is the shared boundary between platform packages and the
-platform-neutral runtime. It defines `HostSurfaceMetrics`, input capabilities,
+platform-neutral `moui/runtime` package. It defines `HostSurfaceMetrics`, input capabilities,
 coordinate policies, `HostEvent`, text input session synchronization,
 `HostRuntimeDriver`, file drag/drop normalization, and `HostWindowRegistry` for
 platform-neutral window lifecycle and multi-window bookkeeping. It also exposes
@@ -737,8 +736,9 @@ and validation commands.
 
 ## Accessibility
 
-`core/semantics.mbt` produces a platform-neutral semantics tree with roles,
-labels, hints, values, focus order, checked state, and live-region metadata.
+`core/semantics.mbt` defines the platform-neutral semantics tree contract with
+roles, labels, hints, values, focus order, checked state, and live-region
+metadata; `moui/runtime` builds the current tree from mounted views.
 `backend/web` includes a semantics-to-ARIA adapter for the wasm-gc Web path.
 Native accessibility snapshots are exported from `backend/host` as
 `Milky2018/moon_accesskit` tree updates. Platform bridges stay behind backend

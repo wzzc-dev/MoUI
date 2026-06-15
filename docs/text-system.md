@@ -1,9 +1,10 @@
 # Text System
 
-MoUI keeps text measurement in the platform-neutral runtime while letting
-native and Web hosts install the renderer-backed text system that matches their
-platform. The public boundary is `@core.TextSystem`; measurement-only legacy
-shapes are no longer part of the framework contract.
+MoUI keeps the text contract platform-neutral in `core` while `moui/runtime`
+uses the active text system during layout, paint, hit testing, selection, and
+IME geometry. Native and Web hosts install the renderer-backed text system that
+matches their platform. The public boundary is `@core.TextSystem`;
+measurement-only legacy shapes are no longer part of the framework contract.
 Native Skia is the recommended native renderer/text route, Web uses browser
 WebGPU plus browser text integration, and the native WGPU provider stack below
 remains an explicit diagnostic route for comparing provider behavior.
@@ -27,8 +28,8 @@ remains an explicit diagnostic route for comparing provider behavior.
   left/right caret movement and shift-selection.
 - `AppRuntime` exposes `text_system()` and `set_text_system()` so hosts can
   install a platform text system before layout, painting, hit testing,
-  selection, and IME anchor geometry are produced. The underlying
-  `RuntimeState` stores the active system as an engine detail.
+  selection, and IME anchor geometry are produced. Runtime-private state stores
+  the active system as an engine detail.
 - `FontSpec` carries a structured family stack. The default stack is
   `SystemUi`; concrete font names are resolved by the active native or Web
   provider unless app code requests a named family.
@@ -39,7 +40,7 @@ remains an explicit diagnostic route for comparing provider behavior.
 The live text path is:
 
 ```text
-View[Msg] -> internal view tree -> DrawCommand::DrawText(TextRun) -> active TextSystem measurement -> renderer glyph path
+View[Msg] -> runtime lowering/layout/paint -> DrawCommand::DrawText(TextRun) -> active TextSystem measurement -> renderer glyph path
 ```
 
 Caret positions, selection geometry, wrapping, clipping, and IME request

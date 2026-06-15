@@ -28,14 +28,14 @@ contracts for platform and renderer integration.
   dispatch, and uses only the `ViewLoweringSink` / `View::lower_for_runtime`
   contract seam to lower opaque views.
 - Core framework API: `moui/core`. This owns `View[Msg]`, `Program`, `Effect`,
-  `Subscription`, layout, input, semantics, draw-command, diagnostic snapshot,
-  renderer-neutral platform-view contracts, and the runtime-only view lowering
+  `Subscription`, geometry, semantics, draw-command, text/theme/platform-view
+  contracts, diagnostic snapshot records, and the runtime-only view lowering
   seam used by `moui/runtime`. It does not expose `RuntimeKernel`,
-  `RuntimeState`, `ViewSpec`, `ElementNode`, or `ElementTree`. It may expose diagnostic and
-  support records while the prototype matures, but implementation payloads
-  should not leak into the root facade. Component-facing contracts such as
-  `BuildContext` keep runtime/effect storage fields private and expose behavior
-  through methods.
+  `RuntimeState`, `ViewSpec`, `ElementNode`, `ElementTree`, or `RenderNode`.
+  It may expose diagnostic and support records while the prototype matures, but
+  implementation payloads should not leak into the root facade.
+  Component-facing contracts such as `BuildContext` keep runtime/effect storage
+  fields private and expose behavior through methods.
 - Integration API: `moui/backend/host`, `moui/render`, and renderer/provider
   packages. These are public because platform backends, renderers, examples,
   and observation tools need them, but they are not the everyday app authoring
@@ -72,8 +72,9 @@ entrypoint. It checks current generated interface files for:
   runtime source not wrapping `@core.AppRuntime` or `@core.RuntimeKernel`, and
   app/host source usage of `@runtime.AppRuntime`;
 - final core/runtime boundary tokens: `RuntimeKernel`, `RuntimeState`,
-  `ViewNode`, `ViewSpec`, `ElementNode`, and `ElementTree` must not appear in
-  the core generated public API;
+  `ViewNode`, `ViewSpec`, `ElementNode`, `ElementTree`, `RenderNode`, and
+  related stale runtime implementation files must not appear in the core
+  generated public API or core source boundary;
 - backend generated interfaces exposing `@runtime.AppRuntime` rather than the
   old `@core.AppRuntime` path, plus a zero-budget guard that prevents shared
   app packages from default-importing `moui/runtime`;
@@ -91,3 +92,11 @@ entrypoint. It checks current generated interface files for:
 Budget failures are review prompts, not compatibility promises. If a deliberate
 API expansion is worth keeping, update the budget and explain the reason in the
 same change.
+
+The current shared-app core allowlist is intentionally small and treated as
+advanced usage rather than the normal app path: Showcase uses low-level
+draw/geometry/style contracts for capability diagnostics, Markdown Editor uses
+rich-text and text-range contracts, PDF Workbench and Mo Workbench use
+structured effects/host-service contracts, and Website uses docs-rendering
+theme/font contracts. New ordinary apps should start from `moui + views`, with
+`runtime` limited to platform entrypoints and tests.
