@@ -16,7 +16,7 @@ test "view gesture wrappers emit long double and drag messages" {
     .on_long_press("long")
     .on_double_tap("double")
     .on_drag(event => event.phase.label())
-  let runtime = RuntimeKernel::new_view(
+  let runtime = RuntimeState::new_view(
     root~,
     size=Size::new(width=220.0, height=120.0),
     on_message=Some(message => log.val = log.val + message + ";"),
@@ -134,7 +134,7 @@ test "disabled wrapper suppresses high level gesture activation" {
     .on_double_tap("double")
     .on_drag(event => event.phase.label())
     .disabled()
-  let runtime = RuntimeKernel::new_view(
+  let runtime = RuntimeState::new_view(
     root~,
     size=Size::new(width=160.0, height=120.0),
     on_message=Some(message => log.val = log.val + message + ";"),

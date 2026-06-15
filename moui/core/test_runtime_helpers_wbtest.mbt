@@ -1,25 +1,15 @@
 ///|
-fn RuntimeKernel::new_spec(
-  root~ : ViewSpec,
+fn[Msg] RuntimeState::new_view(
+  root~ : View[Msg],
   size~ : Size,
   environment? : Environment = Environment::default(),
-) -> RuntimeKernel {
-  {
-    state: RuntimeState::new_spec(root~, size~, environment~),
-    program_runtime_snapshot_fn: () => ProgramRuntimeSnapshot::empty(),
+  on_message? : ((Msg) -> Unit)? = None,
+) -> RuntimeState {
+  let emit = match on_message {
+    Some(handler) => handler
+    None => _message => ()
   }
-}
-
-///|
-fn RuntimeKernel::new_component(
-  root~ : Component,
-  size~ : Size,
-  environment? : Environment = Environment::default(),
-) -> RuntimeKernel {
-  {
-    state: RuntimeState::new_component(root~, size~, environment~),
-    program_runtime_snapshot_fn: () => ProgramRuntimeSnapshot::empty(),
-  }
+  RuntimeState::new_spec(root=realize_view(root, emit), size~, environment~)
 }
 
 ///|
@@ -28,50 +18,7 @@ fn RuntimeState::new_component(
   size~ : Size,
   environment? : Environment = Environment::default(),
 ) -> RuntimeState {
-  let root_spec = ViewSpec::component(root)
-  let mounted = mount_view_spec_for_runtime(root_spec, None, 1)
-  let state = {
-    root_spec,
-    element_tree: ElementTree::new(mounted.node),
-    layout_tree: LayoutTree::empty(),
-    render_tree: RenderTree::empty(),
-    size,
-    needs_redraw: true,
-    needs_rebuild: false,
-    needs_layout: true,
-    needs_paint: true,
-    rebuild_pass_count: 0,
-    layout_pass_count: 0,
-    paint_pass_count: 0,
-    draw_command_build_count: 0,
-    cache_epoch: 0,
-    last_damage_region: DamageRegion::full("initial frame"),
-    known_layer_cache_keys: [],
-    next_element_id: mounted.next_id,
-    dirty_elements: [],
-    dirty_build_elements: [],
-    dirty_layout_elements: [],
-    dirty_paint_elements: [],
-    focused_element: None,
-    active_pointer_capture: None,
-    environment,
-    text_system: TextSystem::fallback(),
-    redraw_callback: None,
-    action_commands: ActionCommandMap::new(),
-    clock: Clock::new(),
-    saveable_state: SaveableStateStore::new(),
-  }
-  let remounted = mount_view_spec_for_runtime(root_spec, Some(state), 1)
-  state.element_tree = ElementTree::new(remounted.node)
-  state.next_element_id = remounted.next_id
-  state.mark_dirty(state.element_tree.id())
-  state.render_current_tree()
-  state
-}
-
-///|
-fn RuntimeKernel::set_root_spec(self : RuntimeKernel, root : ViewSpec) -> Unit {
-  self.state.set_root_spec(root)
+  RuntimeState::new_spec(root=ViewSpec::component(root), size~, environment~)
 }
 
 ///|
@@ -99,6 +46,46 @@ fn RuntimeState::mount(self : RuntimeState, root : ViewSpec) -> Unit {
   self.needs_redraw = true
   self.mark_dirty(self.element_tree.id())
   self.layout_pass()
+}
+
+///|
+fn RuntimeState::draw_commands(self : RuntimeState) -> Array[DrawCommand] {
+  self.build_draw_commands()
+}
+
+///|
+fn RuntimeState::draw_frame(self : RuntimeState) -> DrawFrame {
+  self.build_draw_frame()
+}
+
+///|
+fn RuntimeState::needs_redraw(self : RuntimeState) -> Bool {
+  self.needs_redraw
+}
+
+///|
+fn RuntimeState::needs_rebuild(self : RuntimeState) -> Bool {
+  self.needs_rebuild
+}
+
+///|
+fn RuntimeState::needs_layout(self : RuntimeState) -> Bool {
+  self.needs_layout
+}
+
+///|
+fn RuntimeState::needs_paint(self : RuntimeState) -> Bool {
+  self.needs_paint
+}
+
+///|
+fn RuntimeState::focus_next(self : RuntimeState) -> Bool {
+  self.move_focus()
+}
+
+///|
+fn RuntimeState::focus_previous(self : RuntimeState) -> Bool {
+  self.move_focus(reverse=true)
 }
 
 ///|

@@ -114,7 +114,7 @@ test "route focus store restores keyed runtime focus" {
   )
   let email = State::new("")
   let title = State::new("")
-  let runtime = RuntimeKernel::new_spec(
+  let runtime = RuntimeState::new_spec(
     root=ViewSpec::FlexSpec({
       key: None,
       axis: Axis::Vertical,
