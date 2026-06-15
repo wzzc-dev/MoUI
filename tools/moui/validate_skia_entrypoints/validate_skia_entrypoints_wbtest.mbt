@@ -21,6 +21,7 @@ fn sample_entry() -> SkiaEntry {
 let valid_pkg =
   #|import {
   #|  "moonbitlang/core/env",
+  #|  "wzzc-dev/moui/runtime",
   #|  "wzzc-dev/moui/backend/macos" @macos_backend,
   #|  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
   #|  "wzzc-dev/moui/render/skia" @skia_renderer,
@@ -40,7 +41,13 @@ let valid_main =
   #|///|
   #|fn main {
   #|  let app = @app.ShowcaseApp::new()
-  #|  let runtime = app.runtime_with_host_summary(@macos_backend.macos_capability_summary())
+  #|  let runtime = @runtime.new_program_with_dimensions(
+  #|    program=app.program_with_host_summary(
+  #|      @macos_backend.macos_capability_summary(),
+  #|    ),
+  #|    width=960.0,
+  #|    height=560.0,
+  #|  )
   #|  let surface_route = if @env.get_env_var("MOUI_MACOS_SKIA_SURFACE_ROUTE") ==
   #|    Some("metal-gpu") {
   #|    @skia_renderer.SkiaSurfaceRoute::MetalGpuSurfaceRoute
@@ -83,18 +90,48 @@ test "reports missing renderer import" {
 }
 
 ///|
-test "reports missing host summary" {
+test "reports missing runtime import" {
+  let failures = validate_entry_texts(
+    sample_entry(),
+    valid_pkg.replace(old="  \"wzzc-dev/moui/runtime\",\n", new=""),
+    valid_main,
+  )
+  inspect(
+    failures.contains(
+      "examples/showcase/macos_skia/moon.pkg: missing '\"wzzc-dev/moui/runtime\"'",
+    ),
+    content="true",
+  )
+}
+
+///|
+test "reports missing runtime constructor" {
   let failures = validate_entry_texts(
     sample_entry(),
     valid_pkg,
     valid_main.replace(
-      old="app.runtime_with_host_summary(@macos_backend.macos_capability_summary())",
-      new="app.runtime()",
+      old="@runtime.new_program_with_dimensions",
+      new="@runtime.new_view_with_dimensions",
     ),
   )
   inspect(
     failures.contains(
-      "examples/showcase/macos_skia/main.mbt: missing 'runtime_with_host_summary'",
+      "examples/showcase/macos_skia/main.mbt: missing '@runtime.new_program_with_dimensions'",
+    ),
+    content="true",
+  )
+}
+
+///|
+test "reports missing host summary" {
+  let failures = validate_entry_texts(
+    sample_entry(),
+    valid_pkg,
+    valid_main.replace(old="program_with_host_summary", new="program"),
+  )
+  inspect(
+    failures.contains(
+      "examples/showcase/macos_skia/main.mbt: missing 'program_with_host_summary'",
     ),
     content="true",
   )
