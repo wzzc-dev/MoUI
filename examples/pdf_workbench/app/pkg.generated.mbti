@@ -5,13 +5,12 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/runtime",
 }
 
 // Values
 pub fn pdf_workbench_minimum_pdf_bytes() -> Bytes
 
-pub fn runtime(width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn program() -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg]
 
 // Errors
 
@@ -20,8 +19,8 @@ pub struct PdfWorkbenchApp {
   unit : Unit
 }
 pub fn PdfWorkbenchApp::new() -> Self
-pub fn PdfWorkbenchApp::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
-pub fn PdfWorkbenchApp::runtime_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn PdfWorkbenchApp::program(Self) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg]
+pub fn PdfWorkbenchApp::program_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg]
 
 pub(all) struct PdfWorkbenchCropBox {
   left : Double
@@ -111,8 +110,43 @@ pub struct PdfWorkbenchModel {
   last_event : String
 }
 pub fn PdfWorkbenchModel::new() -> Self
-pub fn PdfWorkbenchModel::runtime(Self, width? : Double, height? : Double) -> @runtime.AppRuntime
-pub fn PdfWorkbenchModel::runtime_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int, width? : Double, height? : Double) -> @runtime.AppRuntime
+pub fn PdfWorkbenchModel::program(Self) -> @core.Program[Self, PdfWorkbenchMsg]
+pub fn PdfWorkbenchModel::program_with_services(Self, @host.HostAppServices, raster_services? : PdfWorkbenchRasterServices, document_services? : PdfWorkbenchDocumentServices, startup_pdf_path? : String, startup_page_number? : Int) -> @core.Program[Self, PdfWorkbenchMsg]
+
+pub enum PdfWorkbenchMsg {
+  OpenRequested
+  SaveRequested
+  SaveAsRequested
+  HostCompleted(@host.HostCompletedServiceResponse)
+  SaveCompleted(String, Bytes, Array[String], @host.HostServiceResponse)
+  SaveFailed(String)
+  RasterCompleted(PdfWorkbenchRasterRequest, PdfWorkbenchRasterResponse)
+  PreviousPage
+  NextPage
+  SelectPage(Int)
+  SearchChanged(String)
+  SearchPrevious
+  SearchNext
+  PageNumberChanged(String)
+  GoToPage
+  MetadataTitleChanged(String)
+  ApplyMetadataTitle
+  BookmarkTitleChanged(String)
+  AddBookmarkForCurrentPage
+  AnnotationTextChanged(String)
+  AddAnnotationForCurrentPage
+  PreviewScrolled(@core.Point)
+  ToggleReaderFullscreen
+  ZoomIn
+  ZoomOut
+  ZoomFitWidth
+  RotateCurrentPage
+  CropCurrentPage
+  StampCurrentPage
+  UndoLastEdit
+  DiscardEdits
+  ClearFailure
+}
 
 pub(all) struct PdfWorkbenchPageSummary {
   page_number : Int

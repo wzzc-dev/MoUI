@@ -70,7 +70,7 @@ test "backend runtime interface guard covers native providers" {
 
 ///|
 test "shared app runtime import guard ignores test-only imports" {
-  inspect(max_shared_app_runtime_imports(), content="4")
+  inspect(max_shared_app_runtime_imports(), content="3")
   let default_import =
     #|import {
     #|  "wzzc-dev/moui",

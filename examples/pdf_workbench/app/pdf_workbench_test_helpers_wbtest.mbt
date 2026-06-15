@@ -7,6 +7,48 @@ fn PdfWorkbenchModel::update(
 }
 
 ///|
+fn PdfWorkbenchModel::runtime(
+  self : PdfWorkbenchModel,
+  width? : Double = 1120.0,
+  height? : Double = 720.0,
+) -> @runtime.AppRuntime {
+  pdf_workbench_test_runtime(self.program(), width~, height~)
+}
+
+///|
+fn PdfWorkbenchModel::runtime_with_services(
+  self : PdfWorkbenchModel,
+  services : @host.HostAppServices,
+  raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
+  document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
+  startup_pdf_path? : String = "",
+  startup_page_number? : Int = 1,
+  width? : Double = 1120.0,
+  height? : Double = 720.0,
+) -> @runtime.AppRuntime {
+  pdf_workbench_test_runtime(
+    self.program_with_services(
+      services,
+      raster_services~,
+      document_services~,
+      startup_pdf_path~,
+      startup_page_number~,
+    ),
+    width~,
+    height~,
+  )
+}
+
+///|
+fn pdf_workbench_test_runtime(
+  program : @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg],
+  width~ : Double,
+  height~ : Double,
+) -> @runtime.AppRuntime {
+  @runtime.new_program_with_dimensions(program~, width~, height~)
+}
+
+///|
 fn run_pdf_workbench_effect(
   update : PdfWorkbenchUpdate,
   services : @host.HostAppServices,

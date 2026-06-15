@@ -93,7 +93,7 @@ priv struct PdfWorkbenchUpdate {
 }
 
 ///|
-priv enum PdfWorkbenchMsg {
+pub enum PdfWorkbenchMsg {
   OpenRequested
   SaveRequested
   SaveAsRequested
@@ -280,90 +280,70 @@ fn PdfWorkbenchModel::subscriptions(
 }
 
 ///|
-pub fn PdfWorkbenchApp::runtime(
+pub fn PdfWorkbenchApp::program(
   self : PdfWorkbenchApp,
-  width? : Double = 1120.0,
-  height? : Double = 720.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
   ignore(self)
-  PdfWorkbenchModel::new().runtime(width~, height~)
+  PdfWorkbenchModel::new().program()
 }
 
 ///|
-pub fn PdfWorkbenchApp::runtime_with_services(
+pub fn PdfWorkbenchApp::program_with_services(
   self : PdfWorkbenchApp,
   services : @host.HostAppServices,
   raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
   startup_pdf_path? : String = "",
   startup_page_number? : Int = 1,
-  width? : Double = 1120.0,
-  height? : Double = 720.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
   ignore(self)
-  PdfWorkbenchModel::new().runtime_with_services(
+  PdfWorkbenchModel::new().program_with_services(
     services,
     raster_services~,
     document_services~,
     startup_pdf_path~,
     startup_page_number~,
-    width~,
-    height~,
   )
 }
 
 ///|
-pub fn PdfWorkbenchModel::runtime(
+pub fn PdfWorkbenchModel::program(
   self : PdfWorkbenchModel,
-  width? : Double = 1120.0,
-  height? : Double = 720.0,
-) -> @runtime.AppRuntime {
-  self.runtime_with_services(
-    @host.HostAppServices::unavailable(),
-    width~,
-    height~,
-  )
+) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
+  self.program_with_services(@host.HostAppServices::unavailable())
 }
 
 ///|
-pub fn PdfWorkbenchModel::runtime_with_services(
+pub fn PdfWorkbenchModel::program_with_services(
   self : PdfWorkbenchModel,
   services : @host.HostAppServices,
   raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
   startup_pdf_path? : String = "",
   startup_page_number? : Int = 1,
-  width? : Double = 1120.0,
-  height? : Double = 720.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::new_with_environment(
-      init=() => {
-        self
-        .request_startup_pdf(startup_pdf_path, startup_page_number, services)
-        .as_tuple()
-      },
-      update=(model, message) => {
-        model
-        .update_with_services(
-          message,
-          services,
-          raster_services~,
-          document_services~,
-        )
-        .as_tuple()
-      },
-      view=(model, env) => model.view_with_environment(env),
-      subscriptions=model => model.subscriptions(services),
-    ),
-    size=@core.Size::new(width~, height~),
+) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
+  @core.Program::new_with_environment(
+    init=() => {
+      self
+      .request_startup_pdf(startup_pdf_path, startup_page_number, services)
+      .as_tuple()
+    },
+    update=(model, message) => {
+      model
+      .update_with_services(
+        message,
+        services,
+        raster_services~,
+        document_services~,
+      )
+      .as_tuple()
+    },
+    view=(model, env) => model.view_with_environment(env),
+    subscriptions=model => model.subscriptions(services),
   )
 }
 
 ///|
-pub fn runtime(
-  width? : Double = 1120.0,
-  height? : Double = 720.0,
-) -> @runtime.AppRuntime {
-  PdfWorkbenchModel::new().runtime(width~, height~)
+pub fn program() -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
+  PdfWorkbenchModel::new().program()
 }
