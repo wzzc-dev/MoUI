@@ -25,7 +25,10 @@ workflow for agents and maintainers.
   View[Msg] -> internal view tree -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
   ```
 
-- `core/` owns runtime, state, layout, input, semantics, and draw commands.
+- `core/` owns platform-neutral contracts, opaque views, events, geometry,
+  draw/semantics/text/theme contracts, and the narrow `RuntimeKernel` seam;
+  `moui/runtime` owns `AppRuntime`, program message drain, effect tasks,
+  subscriptions, and runtime diagnostics.
 - `views/` owns public constructor helpers and should reuse core primitive
   builders, bindings, styles, and modifiers without exposing lowering details.
 - `backend/host/` owns `HostEvent`, surface metrics, input contracts, file

@@ -43,7 +43,7 @@ test "program bounds synchronous subscription-start loops in one drain turn" {
       })
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=220.0, height=48.0),
   )
@@ -63,7 +63,7 @@ test "program bounds synchronous subscription-start loops in one drain turn" {
   inspect(snapshot.message_drain_count, content="1")
   inspect(snapshot.pending_message_count, content="1")
   inspect(snapshot.active_subscription_count, content="1")
-  inspect(snapshot.active_subscriptions[0].key, content="loop-source")
+  inspect(snapshot.active_subscriptions[0].key(), content="loop-source")
 }
 
 ///|
@@ -107,7 +107,7 @@ test "program resumes pending subscription-start messages on next host callback"
       })
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=280.0, height=80.0),
   )

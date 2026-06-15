@@ -17,21 +17,21 @@ test "subscription descriptors and map preserve feature composition" {
   inspect(plan.duplicate_key_count, content="0")
   inspect(plan.max_depth, content="2")
   inspect(plan.descriptors.length(), content="1")
-  inspect(plan.descriptors[0].key, content="child-tick")
-  inspect(plan.descriptors[0].kind, content="timer")
-  inspect(plan.descriptors[0].label, content="Child tick")
+  inspect(plan.descriptors[0].key(), content="child-tick")
+  inspect(plan.descriptors[0].kind(), content="timer")
+  inspect(plan.descriptors[0].label(), content="Child tick")
   let descriptors = parent.descriptors()
   inspect(descriptors.length(), content="1")
-  inspect(descriptors[0].key, content="child-tick")
-  inspect(descriptors[0].kind, content="timer")
-  inspect(descriptors[0].label, content="Child tick")
+  inspect(descriptors[0].key(), content="child-tick")
+  inspect(descriptors[0].kind(), content="timer")
+  inspect(descriptors[0].label(), content="Child tick")
   let program = Program::new(
     init=() => ("waiting", Effect::none()),
     update=(_model, message) => (message, Effect::none()),
     view=model => runtime_test_label(model),
     subscriptions=_model => parent,
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -42,26 +42,26 @@ test "subscription descriptors and map preserve feature composition" {
     content="1",
   )
   inspect(
-    snapshot.last_subscription_plan_summary.descriptors[0].key,
+    snapshot.last_subscription_plan_summary.descriptors[0].key(),
     content="child-tick",
   )
   inspect(snapshot.active_subscriptions.length(), content="1")
-  inspect(snapshot.active_subscriptions[0].key, content="child-tick")
+  inspect(snapshot.active_subscriptions[0].key(), content="child-tick")
   match child_dispatch.val {
     Some(dispatch) => dispatch("pulse")
     None => fail("expected child dispatch")
   }
   assert_true(has_draw_text(runtime.draw_commands(), "parent:pulse"))
-  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  let inspector = runtime.inspector_snapshot().runtime
   inspect(
     inspector.last_subscription_plan_summary.descriptors.length(),
     content="1",
   )
   inspect(
-    inspector.last_subscription_plan_summary.descriptors[0].label,
+    inspector.last_subscription_plan_summary.descriptors[0].label(),
     content="Child tick",
   )
-  inspect(inspector.active_subscriptions[0].label, content="Child tick")
+  inspect(inspector.active_subscriptions[0].label(), content="Child tick")
 }
 
 ///|
@@ -116,7 +116,7 @@ test "mapped child subscriptions cancel and ignore stale dispatches" {
       }
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -124,9 +124,9 @@ test "mapped child subscriptions cancel and ignore stale dispatches" {
   let initial = runtime.program_runtime_snapshot()
   inspect(initial.active_subscription_count, content="1")
   inspect(initial.started_subscription_count, content="1")
-  inspect(initial.active_subscriptions[0].key, content="child-mapped:tick")
-  inspect(initial.active_subscriptions[0].kind, content="timer")
-  inspect(initial.active_subscriptions[0].label, content="Child mapped tick")
+  inspect(initial.active_subscriptions[0].key(), content="child-mapped:tick")
+  inspect(initial.active_subscriptions[0].kind(), content="timer")
+  inspect(initial.active_subscriptions[0].label(), content="Child mapped tick")
   assert_true(
     initial.subscription_lifecycle.any(entry => {
       entry.key == "child-mapped:tick" &&
@@ -202,17 +202,17 @@ test "subscription source helpers standardize diagnostic kinds" {
   ])
   let summary = subscription.plan_summary()
   inspect(summary.source_count, content="6")
-  inspect(summary.descriptors[0].kind, content="timer")
-  inspect(summary.descriptors[1].kind, content="animation")
-  inspect(summary.descriptors[2].kind, content="window-event")
-  inspect(summary.descriptors[3].kind, content="host-event")
-  inspect(summary.descriptors[4].kind, content="route-event")
-  inspect(summary.descriptors[5].kind, content="host-service")
+  inspect(summary.descriptors[0].kind(), content="timer")
+  inspect(summary.descriptors[1].kind(), content="animation")
+  inspect(summary.descriptors[2].kind(), content="window-event")
+  inspect(summary.descriptors[3].kind(), content="host-event")
+  inspect(summary.descriptors[4].kind(), content="route-event")
+  inspect(summary.descriptors[5].kind(), content="host-service")
   let mapped = subscription.map(message => "parent:" + message)
   let mapped_summary = mapped.plan_summary()
-  inspect(mapped_summary.descriptors[0].label, content="Refresh timer")
+  inspect(mapped_summary.descriptors[0].label(), content="Refresh timer")
   inspect(
-    mapped_summary.descriptors[5].key,
+    mapped_summary.descriptors[5].key(),
     content="host-service:completion:7",
   )
 }
@@ -242,7 +242,7 @@ test "program snapshots aggregate active subscription kinds" {
       ])
     },
   )
-  let runtime = RuntimeKernel::new_program(
+  let runtime = AppRuntime::new_program(
     program~,
     size=Size::new(width=180.0, height=48.0),
   )
@@ -262,7 +262,7 @@ test "program snapshots aggregate active subscription kinds" {
     content="host-service",
   )
   inspect(snapshot.active_subscription_kind_counts[2].count, content="1")
-  let inspector = RuntimeInspectorSnapshot::from_runtime(runtime)
+  let inspector = runtime.inspector_snapshot().runtime
   inspect(inspector.active_subscription_kind_counts.length(), content="3")
   inspect(inspector.active_subscription_kind_counts[0].kind, content="timer")
   inspect(inspector.active_subscription_kind_counts[0].count, content="2")

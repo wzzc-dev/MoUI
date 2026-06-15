@@ -5,6 +5,11 @@ pub struct AppRuntime {
 }
 
 ///|
+fn program_message_drain_limit() -> Int {
+  1024
+}
+
+///|
 fn[Msg] compact_pending_program_messages(
   pending_messages : Array[Msg],
   start : Int,
@@ -98,7 +103,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
       dispatching.val = true
       let mut processed_this_drain = 0
       while pending_index.val < pending_messages.length() &&
-            processed_this_drain < 1024 {
+            processed_this_drain < program_message_drain_limit() {
         let message = pending_messages[pending_index.val]
         pending_index.val = pending_index.val + 1
         processed_this_drain = processed_this_drain + 1
