@@ -2,8 +2,8 @@
 
 The `views` package exposes user-facing constructors for building MoUI apps.
 Public constructors return opaque `@core.View[Msg]`, so app code can stay
-declarative while the core runtime owns identity, layout, paint, input, and
-semantics. `ViewSpec` is an internal core representation, not an app-facing API.
+declarative while `moui/runtime` owns identity, layout, paint, input, and
+semantics. Runtime-owned lowered nodes are not app-facing API.
 
 Use this catalog as a support matrix for current view APIs. Source-level details
 remain in `views/*.mbt` and the generated public API summary in
@@ -91,7 +91,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `text` | `views/label.mbt` | Font/foreground modifiers | Text role through core | `views/views_test.mbt` | Showcase, Markdown Editor | Basic label primitive. |
 | `image` | `views/image.mbt` | Modifier-based | Image draw intent | `views/views_test.mbt` | Showcase | Renderer image support is tracked in the capability report; Showcase Interaction Lab covers ready/loading/failed lifecycle states. |
 | `web_view` | `views/web_view.mbt` | Host native WebView | WebView role through core | `views/views_test.mbt`, WebView Demo app tests | WebView Demo | Controlled native WebView primitive. Navigation requests are first reported as `WebViewEvent::NavigationRequested`; apps commit by updating the `url` model value or issuing `HostWebViewCommandQueue::load_url`. Commands also cover reload, stop, back, forward, and JavaScript evaluation. |
-| `rich_text_editor` | `views/markdown_editor.mbt` | TextFieldStyle with optional direct style override | Text field semantics through core | `views/views_test.mbt`, `core/rich_text_editor_test.mbt` | Markdown Editor | Generic rich text editor wrapper; app code can pass `style?` for custom editor chrome. See `docs/markdown-editor.md`. |
+| `rich_text_editor` | `views/markdown_editor.mbt` | TextFieldStyle with optional direct style override | Text field semantics through runtime | `views/views_test.mbt`, `runtime/rich_text_editor_wbtest.mbt` | Markdown Editor | Generic rich text editor wrapper; app code can pass `style?` for custom editor chrome. See `docs/markdown-editor.md`. |
 | `markdown_editor` | `views/markdown_editor.mbt` | TextFieldStyle with optional direct style override | Text field semantics through core | `views/views_test.mbt` | Markdown Editor | App supplies Markdown parsing and styled runs; app code can pass `style?` for custom editor chrome. See `docs/markdown-editor.md`. |
 
 ## Controls
@@ -105,7 +105,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `toggle` | `views/control_choice.mbt` | ChoiceControlStyle with direct color overrides | Switch | `views/views_test.mbt` | Showcase | TEA-first switch control; binding alias available. |
 | `toggle_switch` | `views/control_choice.mbt` | ChoiceControlStyle with direct color overrides | Switch | `views/views_test.mbt` | Showcase | Alias-style switch entry point. |
 | `radio` | `views/control_choice.mbt` | ChoiceControlStyle with direct color overrides | Radio | `views/views_test.mbt` | Showcase | TEA-first single-option primitive; use `radio_binding` for component-local state. |
-| `text_field` | `views/text_field.mbt` | TextFieldStyle | Text field | `views/views_test.mbt`, core input tests | Showcase, Markdown Editor | TEA-first text input; use `text_field_binding` for component-local state. App, host, smoke, and cross-package tests should use this `views` entrypoint rather than direct core control constructors. |
+| `text_field` | `views/text_field.mbt` | TextFieldStyle | Text field | `views/views_test.mbt`, runtime input tests | Showcase, Markdown Editor | TEA-first text input; use `text_field_binding` for component-local state. App, host, smoke, and cross-package tests should use this `views` entrypoint rather than direct core control constructors. |
 | `searchbar` | `views/searchbar.mbt` | TextFieldStyle | Search field | `views/views_test.mbt` | Showcase | TEA-first text input specialized for filtering and clear actions; `searchbar_binding` remains for advanced state. |
 | `picker` | `views/picker.mbt` | PickerStyle | Picker | `runtime/runtime_control_choices_wbtest.mbt`, `views/views_test.mbt` | Showcase | TEA-first option picker with renderer-neutral popup stacking above later siblings; `picker_binding` remains for advanced state. |
 | `datepicker` | `views/datepicker.mbt` | PickerStyle | Date picker | `runtime/runtime_control_choices_wbtest.mbt`, `views/views_test.mbt` | Showcase | TEA-first date picker with Sunday-first calendar popup rendering and min/max range enforcement; `datepicker_binding` remains for advanced state. |
@@ -118,7 +118,7 @@ fn view(draft : String) -> @core.View[Msg] {
 | `progress` | `views/control_progress.mbt` | ProgressStyle with direct color overrides | Progress | `views/views_test.mbt` | Showcase | Custom painted progress indicator. |
 | `focus_ring` | `views/control_focus_overlay.mbt` | Border/theme | Focusable group with selected state | `views/views_test.mbt` | Showcase Interaction Lab | Visual wrapper for app-owned focus ids. It exposes a focus action plus selected/unselected semantics; use `View::focus_trap` when runtime Tab traversal must stay inside a dialog or popover subtree. |
 | `tooltip` | `views/control_focus_overlay.mbt` | SurfaceStyle | Tooltip when visible | `views/views_test.mbt` | Showcase Interaction Lab | Wraps a child with an optional overlay. |
-| `View::on_long_press` / `View::on_double_tap` / `View::on_drag` / `View::on_drag_with_frame` | `core/view.mbt` | N/A | Button-like activation metadata | `core/gesture_action_wbtest.mbt`, `core/state_holder_wbtest.mbt`, `views/views_test.mbt` | Showcase Interaction Lab | High-level gesture wrappers over pointer events; recognizer state stays in core/runtime and disabled ancestors suppress activation. `View::on_drag_with_frame` additionally passes the laid-out content frame for frame-relative controlled widgets. |
+| `View::on_long_press` / `View::on_double_tap` / `View::on_drag` / `View::on_drag_with_frame` | `core/view.mbt` | N/A | Button-like activation metadata | `runtime/state_gesture_wbtest.mbt`, `views/views_test.mbt` | Showcase Interaction Lab | High-level gesture wrappers over pointer events; recognizer state lives in runtime and disabled ancestors suppress activation. `View::on_drag_with_frame` additionally passes the laid-out content frame for frame-relative controlled widgets. |
 | `View::transition` / `View::presence` | `core/view.mbt` | N/A | Child semantics preserved while present | `core/animation_wbtest.mbt` | Showcase visual cards | Samples `TransitionSpec` into existing opacity, offset, scale, and foreground modifiers; `presence` keeps exiting content mounted until controlled progress completes and respects reduced motion. |
 
 ## Feedback And States
@@ -177,12 +177,12 @@ fn view(draft : String) -> @core.View[Msg] {
 | `center` | `views/container.mbt` | Optional background | Child semantics | `views/views_test.mbt` | Counter | Single-child layout helper that centers content inside its available space. |
 | `spacer` | `views/flex.mbt` | N/A | None | `views/views_test.mbt` | Showcase | Flexible space primitive. |
 | `frame` | `views/frame.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Constraint wrapper. |
-| `padding` / `padding_insets` | `views/padding.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | All examples | Ordered layout modifier wrappers. |
+| `padding` / `padding_insets` | `views/padding.mbt` | N/A | Child semantics | `views/views_test.mbt`, `runtime/advanced_layout_wbtest.mbt` | All examples | Ordered layout modifier wrappers. |
 | `stack` / `overlay` | `views/stack.mbt` | Child/modifier based | Children preserved | `views/views_test.mbt` | Showcase, Dialog host, Tooltip | Overlay layout primitives. |
 | `popover` | `views/popover_surface.mbt` | SurfaceStyle | Anchor plus optional overlay content | `views/views_test.mbt` | Showcase Interaction Lab | View-level floating surface using existing stack, align, and surface primitives. The optional `trap_focus=true` path applies `View::focus_trap`; by default popovers remain non-modal. Native context menus go through host services. |
-| `scroll_view` | `views/stack.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | Showcase, Markdown Editor | Emits clip/offset behavior through core and can report wheel deltas through `on_scroll`. |
+| `scroll_view` | `views/stack.mbt` | N/A | Child semantics | `views/views_test.mbt`, `runtime/advanced_layout_scroll_wbtest.mbt` | Showcase, Markdown Editor | Emits clip/offset behavior through runtime and can report wheel deltas through `on_scroll`. |
 | `grid` | `views/grid_list.mbt` | N/A | Children preserved | `views/views_test.mbt` | Showcase | Fixed-column layout. |
-| `list` | `views/grid_list.mbt` | N/A | List/list item roles through core | `views/views_test.mbt`, `core/semantics_test.mbt` | Showcase Todo pattern | Eager list layout. |
+| `list` | `views/grid_list.mbt` | N/A | List/list item roles through runtime semantics | `views/views_test.mbt`, `runtime/semantics_wbtest.mbt` | Showcase Todo pattern | Eager list layout. |
 | `lazy_list` | `views/virtual_list.mbt` | N/A | List output | `views/views_test.mbt` | Showcase | Windows visible rows from data. |
 | `lazy_grid` | `views/lazy_grid.mbt` | N/A | List/grid output | `views/views_test.mbt` | Showcase | Windows visible grid rows from data. |
 | `virtual_list` / `sectioned_list` / `scroll_to_index` | `views/virtual_list.mbt`, `views/sectioned_list.mbt` | N/A | List output | `views/views_test.mbt`, Showcase tests | Showcase Layout | Overscanned windowed lists, grouped section headers, empty states, and controlled offset intents built on existing scroll/list primitives. |
@@ -260,13 +260,13 @@ consume those neutral style contracts through optional `style`,
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `expanded` / `flexible` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Flex child modifiers. |
-| `layout_priority` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | Showcase | Supplies priority metadata to custom layout delegates. |
+| `layout_priority` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt`, `runtime/advanced_layout_custom_wbtest.mbt` | Showcase | Supplies priority metadata to custom layout delegates. |
 | `wrap` / `flow` / `responsive_grid` / `baseline_form_rows` | `views/layout_flow.mbt`, `views/layout_responsive_grid.mbt`, `views/layout_baseline_form.mbt` | N/A | Group | `views/views_test.mbt`, Showcase tests | Showcase Layout | Responsive wrapping, adaptive grid columns, and baseline-aligned form rows built with `custom_children_layout`; no renderer changes. |
-| `align` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_wbtest.mbt` | Showcase, Dialog host, Tooltip | Places the child within its parent frame using the requested alignment. |
+| `align` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt`, `runtime/advanced_layout_wbtest.mbt` | Showcase, Dialog host, Tooltip | Places the child within its parent frame using the requested alignment. |
 | `aspect_ratio` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Ratio constraint wrapper. |
 | `intrinsic_width` / `intrinsic_height` | `views/layout_helpers.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Intrinsic measurement wrappers. |
 | `custom_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt` | Showcase Advanced Rendering | Builds a custom `View[Msg]`; Showcase uses it to emit layer/blend, filter, shader, path, transform, and opacity draw commands. |
-| `custom_children_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt`, `core/advanced_layout_wbtest.mbt` | Showcase | Builds a custom child-layout `View[Msg]` with child size, baseline, priority, and placement callbacks. |
+| `custom_children_layout` | `views/layout_helpers.mbt` | Caller-defined | Caller-defined | `views/views_test.mbt`, `runtime/advanced_layout_custom_wbtest.mbt` | Showcase | Builds a custom child-layout `View[Msg]` with child size, baseline, priority, and placement callbacks. |
 | `component` | `views/layout_helpers.mbt` | BuildContext-based | Built child semantics | `views/views_test.mbt` | Examples via app components | Wraps `@core.Component::new`. |
 
 ## Maintenance Checklist

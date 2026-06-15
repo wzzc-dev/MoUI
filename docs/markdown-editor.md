@@ -22,8 +22,11 @@ contextual commands, and editing workflows.
   Skia renderer provider.
 - `views/markdown_editor.mbt`: public rich text editor wrappers used by the
   example.
-- `core/rich_text_*.mbt` plus `core/text_editing*.mbt`: platform-neutral rich
-  text painting, geometry, selection, and editing model.
+- `core/rich_text_*.mbt` plus `core/text_editing.mbt`: platform-neutral rich
+  text document, geometry, selection, and text-range contracts.
+- `moui/runtime/rich_text_*_runtime.mbt`, `runtime/text_editing*.mbt`, and
+  runtime input files: mounted rich-text editor painting, hit testing,
+  selection mapping, IME/text-field editing, and focus/input behavior.
 
 Platform packages should stay thin. Shared editor behavior belongs in the app
 package or the framework package that owns the reusable capability.

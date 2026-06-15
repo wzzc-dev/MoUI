@@ -1,6 +1,6 @@
 ---
 name: moui-framework-development-skill
-description: Use this skill when developing or maintaining the MoUI MoonBit GUI framework itself, including core runtime, opaque View/layout/state/input, renderers, platform backends, examples used as framework validation, renderer capability tracking, documentation, and validation commands.
+description: Use this skill when developing or maintaining the MoUI MoonBit GUI framework itself, including core contracts, runtime-owned View/layout/state/input, renderers, platform backends, examples used as framework validation, renderer capability tracking, documentation, and validation commands.
 version: 0.1.0
 ---
 
@@ -16,8 +16,8 @@ capability rules, platform contract, and validation commands.
 
 Use this skill when editing or reviewing:
 
-- `core/` contracts, internal engine state, layout, input, semantics, or draw
-  commands.
+- `core/` contracts, runtime-owned engine state, layout, input, semantics, or
+  draw commands.
 - `views/` public constructors and modifiers.
 - `backend/host`, `backend/web`, `backend/macos`, `backend/windows`, or
   `backend/linux`.
@@ -53,7 +53,7 @@ Use this skill when editing or reviewing:
 - Runtime pipeline:
 
   ```text
-  View[Msg] -> internal view tree -> ElementNode -> MeasuredNode/PlacedNode -> RenderNode -> DrawFrame(commands + platform_views) -> renderer + host platform views
+  View[Msg] -> ViewLoweringSink -> runtime view nodes -> runtime element/layout/render trees -> DrawFrame(commands + platform_views) -> renderer + host platform views
   ```
 
 - `core/` stays platform-neutral.
@@ -145,7 +145,8 @@ Use this skill when editing or reviewing:
   `Subscription`, layout/input/semantics/rich text/draw/style/theme contracts,
   and the runtime-only `ViewLoweringSink` / `View::lower_for_runtime` seam
   consumed by `moui/runtime`. `RuntimeKernel`, `RuntimeState`, `ViewSpec`,
-  element/render trees, and node payloads are not public app-facing API.
+  element/render trees, and node payloads do not live in `core` and are not
+  app-facing API.
 - `runtime/`: app/host runtime entrypoint package exposing opaque
   `AppRuntime` construction/query/dispatch methods and owning runtime state,
   element/render trees, reconcile, dirty queue, layout/paint, event dispatch,
@@ -195,8 +196,8 @@ Use this skill when editing or reviewing:
   adaptation-difference closure.
 - `views/`: public view constructors returning opaque `@core.View[Msg]`. App,
   host, smoke, and cross-package tests should use `views` widget-level
-  entrypoints instead of direct `@core.View::*` control constructors while core
-  still owns internal node payloads. Control-specific app-facing event, policy,
+  entrypoints instead of direct `@core.View::*` control constructors. Runtime
+  owns lowered node payloads. Control-specific app-facing event, policy,
   metadata, or style aliases, such as WebView events, action commands, and
   colors, live here rather than in the root facade.
 - `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
