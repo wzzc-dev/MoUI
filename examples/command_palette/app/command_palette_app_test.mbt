@@ -53,7 +53,7 @@ test "command palette command map dispatches shortcut but not disabled" {
 
 ///|
 test "command palette runtime exposes command rows" {
-  let commands = @app.runtime(width=800.0, height=680.0).draw_commands()
+  let commands = test_runtime(@app.program(), width=800.0, height=680.0).draw_commands()
   assert_true(has_text(commands, "Command Palette"))
   assert_true(has_text(commands, "Save Document"))
   assert_true(has_text(commands, "Meta+s"))
@@ -110,7 +110,7 @@ test "command palette host menu service dispatches selected command" {
 
 ///|
 test "command palette shortcut dispatch does not regress runtime command map" {
-  let runtime = @app.runtime(width=800.0, height=680.0)
+  let runtime = test_runtime(@app.program(), width=800.0, height=680.0)
   runtime.dispatch_event(
     @core.AppEvent::Keyboard(
       @core.KeyboardEvent::new(
@@ -124,6 +124,17 @@ test "command palette shortcut dispatch does not regress runtime command map" {
     .action_commands()
     .any(command => command.display_label() == "Save Document"),
   )
+}
+
+///|
+fn test_runtime(
+  program : @core.Program[CommandPaletteModel, CommandPaletteMsg],
+  width~ : Double,
+  height~ : Double,
+) -> @runtime.AppRuntime {
+  let runtime = @runtime.new_program_with_dimensions(program~, width~, height~)
+  runtime.set_action_commands(action_command_map())
+  runtime
 }
 
 ///|
