@@ -249,7 +249,6 @@ fn[Msg] realize_view_node(
       match modifier {
         KeyModifierNode(key) => spec.with_key(key)
         PlainModifier(modifier) => spec.modified(modifier)
-        RealizedModifier(modifier) => modifier(spec)
         TapModifier(message) => spec.on_tap(() => emit(message))
         LongPressModifier(message) => spec.on_long_press(() => emit(message))
         DoubleTapModifier(message) => spec.on_double_tap(() => emit(message))
@@ -443,7 +442,6 @@ fn[Msg, NextMsg] map_modifier_node(
   match modifier {
     KeyModifierNode(key) => KeyModifierNode(key)
     PlainModifier(modifier) => PlainModifier(modifier)
-    RealizedModifier(modifier) => RealizedModifier(modifier)
     TapModifier(message) => TapModifier(map(message))
     LongPressModifier(message) => LongPressModifier(map(message))
     DoubleTapModifier(message) => DoubleTapModifier(map(message))
