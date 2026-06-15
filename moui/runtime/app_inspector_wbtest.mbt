@@ -122,7 +122,7 @@ test "inspector snapshot captures semantic states and dirty reasons" {
   runtime.mark_dirty(runtime.element_tree.id())
   let dirty_ids = runtime.dirty_element_ids()
   inspect(dirty_ids.length(), content="1")
-  inspect(dirty_ids[0].value, content="1")
+  inspect(dirty_ids[0].value(), content="1")
   dirty_ids.clear()
   inspect(runtime.dirty_count(), content="1")
   let snapshot = runtime.inspector_snapshot()
@@ -130,7 +130,7 @@ test "inspector snapshot captures semantic states and dirty reasons" {
   assert_true(snapshot.runtime.dirty_reasons.any(reason => reason == "paint"))
   inspect(snapshot.runtime.dirty_count, content="1")
   inspect(snapshot.runtime.dirty_element_ids.length(), content="1")
-  inspect(snapshot.runtime.dirty_element_ids[0].value, content="1")
+  inspect(snapshot.runtime.dirty_element_ids[0].value(), content="1")
   inspect(snapshot.runtime.dirty_state.reason, content="paint requested")
   assert_true(snapshot.runtime.dirty_state.has_pending_work)
   assert_true(
@@ -138,7 +138,10 @@ test "inspector snapshot captures semantic states and dirty reasons" {
   )
   inspect(snapshot.runtime.dirty_state.dirty_count, content="1")
   inspect(snapshot.runtime.dirty_state.dirty_element_ids.length(), content="1")
-  inspect(snapshot.runtime.dirty_state.dirty_element_ids[0].value, content="1")
+  inspect(
+    snapshot.runtime.dirty_state.dirty_element_ids[0].value(),
+    content="1",
+  )
   assert_true(snapshot.runtime.dirty_state.needs_paint)
   assert_true(snapshot.runtime.dirty_state.needs_redraw)
   inspect(runtime.dirty_count(), content="1")
