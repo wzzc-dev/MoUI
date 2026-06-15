@@ -17,7 +17,8 @@ contracts for platform and renderer integration.
   Diagnostics, draw commands, renderer details, and lower-level geometry/style
   records stay in `moui/core` or their owning packages.
   `moui/views` exposes constructor helpers that return opaque `@core.View[Msg]`
-  values.
+  values plus control-specific app-facing contracts such as
+  `@views.WebViewEvent`.
 - Runtime API: `moui/runtime`. This is the app/host runtime entrypoint package.
   Runtime consumers should type and construct runtimes through
   `@runtime.AppRuntime`, `@runtime.new_view`, `@runtime.new_program`, or the
