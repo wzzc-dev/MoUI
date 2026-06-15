@@ -399,11 +399,11 @@ same runner.
 
 ## Command Palette
 
-The Command Palette example keeps command definitions in `ActionCommand`
+The Command Palette example keeps command definitions in `@views.ActionCommand`
 metadata, renders them through the public palette and command menu views, and
-uses `ActionCommandMap` for shortcut dispatch. Disabled commands stay visible
-for discoverability but do not dispatch through model actions or runtime command
-bindings. Its effect-capable `program_with_services` path demonstrates
+uses `@views.ActionCommandMap` for shortcut dispatch. Disabled commands stay
+visible for discoverability but do not dispatch through model actions or runtime
+command bindings. Its effect-capable `program_with_services` path demonstrates
 `HostAppServices::show_context_menu`, dispatching the selected native menu
 command back through the same typed message loop while preserving the view-level
 fallback context menu for hosts without native menu support.

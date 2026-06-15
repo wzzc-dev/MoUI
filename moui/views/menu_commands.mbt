@@ -1,4 +1,22 @@
 ///|
+pub using @core {type ActionCommand}
+
+///|
+pub using @core {type ActionCommandMap}
+
+///|
+pub using @core {type CommandBinding}
+
+///|
+pub using @core {type CommandIntent}
+
+///|
+pub using @core {type KeyModifiers}
+
+///|
+pub using @core {type KeyboardShortcut}
+
+///|
 pub fn[Msg] menu_bar(
   menus : Array[MenuItem[Msg]],
   active? : String = "",
@@ -42,7 +60,7 @@ pub fn[Msg] menu_bar(
 ///|
 pub fn[Msg] command_menu(
   sections : Array[CommandMenuSection],
-  on_select~ : (@core.CommandIntent) -> Msg,
+  on_select~ : (CommandIntent) -> Msg,
   theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 320.0,
   max_height? : Double = 280.0,
@@ -131,8 +149,8 @@ pub fn[Msg] context_menu_region(
 
 ///|
 fn[Msg] command_menu_row(
-  command : @core.ActionCommand,
-  on_select~ : (@core.CommandIntent) -> Msg,
+  command : ActionCommand,
+  on_select~ : (CommandIntent) -> Msg,
   theme~ : @core.Theme,
   width~ : Double,
 ) -> @core.View[Msg] {
