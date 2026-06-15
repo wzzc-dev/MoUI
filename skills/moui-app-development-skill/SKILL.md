@@ -72,8 +72,11 @@ separate framework task using `moui-framework-development-skill`.
   entrypoints. Data Table covers operational table state such as filtering,
   sorting, column visibility, app-owned column width/order, selection, and
   pagination.
-- App UI should be built from public view constructors returning
-  opaque `@core.View[Msg]`.
+- App UI should be built from public view constructors returning opaque
+  `@moui.View[Msg]` / `@core.View[Msg]` compatible values. Ordinary shared app
+  packages should default to importing `wzzc-dev/moui` and
+  `wzzc-dev/moui/views`; add `core` only for low-level framework contracts that
+  do not belong in the root facade or `views`.
 - Keep state, reducers, data models, and view composition in the shared app
   package when the behavior should work across platforms.
 - Keep route and deep-link history in shared app state with
@@ -86,10 +89,10 @@ separate framework task using `moui-framework-development-skill`.
   app route commands and pass a `HostRouteSource` through `WebAppOptions`.
   Native URL/deep-link dispatch and automatic transition scheduling remain
   explicit app/host work rather than automatic platform behavior.
-- Prefer the TEA runtime helpers: use `@core.Program::simple` for pure
-  model/update/view apps, `@core.Program::simple_with_environment` when the
-  view needs `ViewEnvironment`, and `@core.Program::new` when `update` returns
-  `@core.Effect[Msg]` follow-up work. Synchronous clicks, effects, tasks, and
+- Prefer the TEA helpers from the root facade: use `@moui.Program::simple` for
+  pure model/update/view apps, `@moui.Program::simple_with_environment` when
+  the view needs `ViewEnvironment`, and `@moui.Program::new` when `update`
+  returns `@moui.Effect[Msg]` follow-up work. Synchronous clicks, effects, tasks, and
   subscription callbacks enter the same bounded runtime message queue; avoid
   relying on an intentional synchronous self-loop to finish all work in one
   host callback.
@@ -103,13 +106,13 @@ separate framework task using `moui-framework-development-skill`.
   descriptor categories; use `Subscription::listen` / `Subscription::run` for
   custom kinds. Keep concrete timer or host adapters outside `core`.
 - Keep host-service calls out of pure reducers. For app-owned clipboard, file
-  dialog, text-file, URL, theme, or menu work, return `@core.Effect::host_service` with a
+  dialog, text-file, URL, theme, or menu work, return `@moui.Effect::host_service` with a
   stable diagnostic key that is unique within the returned effect batch, call
   `@host.HostAppServices` inside the effect runner, and dispatch a typed
-  completion message back into the model. Use `@core.Effect::run` for custom
-  structured effect kinds, `@core.Effect::service_task` for service-like
+  completion message back into the model. Use `@moui.Effect::run` for custom
+  structured effect kinds, `@moui.Effect::service_task` for service-like
   one-shot async tasks that need runtime-owned cancellation, completion, and
-  stale-dispatch diagnostics, or `@core.Effect::task` for custom task
+  stale-dispatch diagnostics, or `@moui.Effect::task` for custom task
   descriptor kinds. When a service returns
   `HostServiceResponse::Pending(id)`, store the id in app model state and
   declare `HostAppServices::completion_subscription` from

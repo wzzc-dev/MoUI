@@ -60,15 +60,17 @@ native-only PDFium adapter for real page bitmap rasterization. The root
 
 - `core/` owns the platform-neutral contract model, opaque `View`, typed
   events, `Program`, `Effect`, `Subscription`, geometry, draw, semantics, and a
-  narrow `RuntimeKernel` seam while tree/layout/paint handoff migrates.
+  narrow `RuntimeKernel` contract seam consumed by `moui/runtime` for
+  tree/layout/paint handoff.
 - `runtime/` exposes the app/host `AppRuntime` construction entrypoints and
   owns program message drain, effect task, subscription lifecycle, and
   diagnostics.
 - The root `moui` facade exposes only the curated
-  `View`/`Program`/`Effect`/`Subscription`/`Theme` aliases plus neutral
-  default/light/dark/custom theme builders directly; diagnostics and
-  renderer-facing records stay in their owning packages.
-- `views/` exposes public view constructors returning opaque `@core.View[Msg]`.
+  `View`/`Program`/`Effect`/`Subscription`/`Theme` aliases; diagnostics,
+  theme builders, runtime handles, and renderer-facing records stay in their
+  owning packages.
+- `views/` exposes public view constructors returning opaque
+  `@moui.View[Msg]` / `@core.View[Msg]` compatible values.
 - `moui_theme/` is an optional repo-local addon workspace member for shared
   source-mapped design-system models, package-local Material/Carbon/Primer/Fluent
   entrypoints, and custom theme builders; core MoUI apps do not need it.
