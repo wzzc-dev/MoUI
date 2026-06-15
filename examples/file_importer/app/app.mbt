@@ -231,53 +231,37 @@ pub fn FileImporterModel::view(
 }
 
 ///|
-pub fn FileImporterApp::runtime(
+pub fn FileImporterApp::program(
   self : FileImporterApp,
-  width? : Double = 860.0,
-  height? : Double = 620.0,
-) -> @runtime.AppRuntime {
+) -> @core.Program[FileImporterModel, FileImporterMsg] {
   ignore(self)
-  runtime(width~, height~)
+  program()
 }
 
 ///|
-pub fn runtime(
-  width? : Double = 860.0,
-  height? : Double = 620.0,
-) -> @runtime.AppRuntime {
-  FileImporterModel::new().runtime(width~, height~)
+pub fn program() -> @core.Program[FileImporterModel, FileImporterMsg] {
+  FileImporterModel::new().program()
 }
 
 ///|
-pub fn FileImporterModel::runtime(
+pub fn FileImporterModel::program(
   self : FileImporterModel,
-  width? : Double = 860.0,
-  height? : Double = 620.0,
-) -> @runtime.AppRuntime {
-  self.runtime_with_services(
-    @host.HostAppServices::unavailable(),
-    width~,
-    height~,
-  )
+) -> @core.Program[FileImporterModel, FileImporterMsg] {
+  self.program_with_services(@host.HostAppServices::unavailable())
 }
 
 ///|
-pub fn FileImporterModel::runtime_with_services(
+pub fn FileImporterModel::program_with_services(
   self : FileImporterModel,
   services : @host.HostAppServices,
-  width? : Double = 860.0,
-  height? : Double = 620.0,
-) -> @runtime.AppRuntime {
-  @runtime.AppRuntime::new_program(
-    program=@core.Program::new(
-      init=() => (self, @core.Effect::none()),
-      update=(model, message) => {
-        model.update_with_services(message, services).as_tuple()
-      },
-      view~,
-      subscriptions=model => model.subscriptions(services),
-    ),
-    size=@core.Size::new(width~, height~),
+) -> @core.Program[FileImporterModel, FileImporterMsg] {
+  @core.Program::new(
+    init=() => (self, @core.Effect::none()),
+    update=(model, message) => {
+      model.update_with_services(message, services).as_tuple()
+    },
+    view~,
+    subscriptions=model => model.subscriptions(services),
   )
 }
 
