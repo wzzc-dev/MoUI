@@ -1,7 +1,6 @@
 ///|
 test "showcase app emits visual polish commands" {
-  let app = @app.ShowcaseApp::new()
-  let runtime = app.runtime(width=760.0, height=420.0)
+  let runtime = @app.ShowcaseModel::new().runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "MoUI View Showcase"))
   assert_true(has_text(commands, "View Catalog"))

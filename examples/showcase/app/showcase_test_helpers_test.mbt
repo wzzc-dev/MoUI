@@ -67,6 +67,29 @@ fn text_frame(
 }
 
 ///|
+fn @app.ShowcaseModel::runtime(
+  self : @app.ShowcaseModel,
+  width? : Double = 960.0,
+  height? : Double = 560.0,
+) -> @runtime.AppRuntime {
+  @runtime.new_program_with_dimensions(program=self.program(), width~, height~)
+}
+
+///|
+fn @app.ShowcaseModel::runtime_with_route_host(
+  self : @app.ShowcaseModel,
+  route_host : @app.ShowcaseRouteHost,
+  width? : Double = 960.0,
+  height? : Double = 560.0,
+) -> @runtime.AppRuntime {
+  @runtime.new_program_with_dimensions(
+    program=self.program_with_route_host(route_host),
+    width~,
+    height~,
+  )
+}
+
+///|
 fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame for \{text}")
@@ -100,34 +123,22 @@ fn host_click_frame(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )
-  ignore(
-    driver.dispatch(
-      @host.HostEvent::Pointer(
-        @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),
+  for phase in [@core.PointerPhase::Down, @core.PointerPhase::Up] {
+    ignore(
+      driver.dispatch(
+        @host.HostEvent::Pointer(@core.PointerEvent::new(position~, phase~)),
       ),
-    ),
-  )
-  ignore(
-    driver.dispatch(
-      @host.HostEvent::Pointer(
-        @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up),
-      ),
-    ),
-  )
+    )
+  }
 }
 
 ///|
 fn click_point(runtime : @runtime.AppRuntime, position : @core.Point) -> Unit {
-  runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Down),
-    ),
-  )
-  runtime.dispatch_event(
-    @core.AppEvent::Pointer(
-      @core.PointerEvent::new(position~, phase=@core.PointerPhase::Up),
-    ),
-  )
+  for phase in [@core.PointerPhase::Down, @core.PointerPhase::Up] {
+    runtime.dispatch_event(
+      @core.AppEvent::Pointer(@core.PointerEvent::new(position~, phase~)),
+    )
+  }
 }
 
 ///|

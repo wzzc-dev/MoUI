@@ -18,7 +18,11 @@ fn main {
         @web.web_capability_summary(),
       )
   }
-  let runtime = model.runtime_with_route_host(route_host)
+  let runtime = @runtime.new_program_with_dimensions(
+    program=model.program_with_route_host(route_host),
+    width=960.0,
+    height=560.0,
+  )
   @web.run_app_with_options(
     "MoUI Showcase Wasm Host",
     runtime,

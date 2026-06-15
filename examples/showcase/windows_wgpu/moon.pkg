@@ -1,4 +1,5 @@
 import {
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/windows" @windows_backend,
   "wzzc-dev/moui/backend/windows/wgpu" @windows_wgpu_backend,
   "examples/showcase/app" @showcase_app,

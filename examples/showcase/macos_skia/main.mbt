@@ -7,9 +7,16 @@ fn main {
   } else {
     @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute
   }
+  let runtime = @runtime.new_program_with_dimensions(
+    program=app.program_with_host_summary(
+      @macos_backend.macos_capability_summary(),
+    ),
+    width=960.0,
+    height=560.0,
+  )
   @macos_skia_backend.run_app_with_options(
     "MoUI Showcase",
-    app.runtime_with_host_summary(@macos_backend.macos_capability_summary()),
+    runtime,
     options=@macos_skia_backend.MacosSkiaAppOptions::new(surface_route~),
   )
 }
