@@ -195,6 +195,7 @@ test "core program runtime ownership guard covers moved implementation" {
   assert_true(paths.contains("moui/core/program_runtime_diagnostics.mbt"))
   assert_true(paths.contains("moui/core/program_runtime_effect_tasks.mbt"))
   assert_true(paths.contains("moui/core/program_runtime_subscriptions.mbt"))
+  assert_true(paths.contains("moui/core/runtime_wbtest.mbt"))
 }
 
 ///|

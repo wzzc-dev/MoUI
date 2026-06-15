@@ -756,7 +756,7 @@ fn forbidden_core_program_runtime_source_tokens() -> Array[ForbiddenSourceToken]
 fn forbidden_core_program_runtime_source_paths() -> Array[String] {
   [
     "moui/core/program_runtime_diagnostics.mbt", "moui/core/program_runtime_effect_tasks.mbt",
-    "moui/core/program_runtime_subscriptions.mbt",
+    "moui/core/program_runtime_subscriptions.mbt", "moui/core/runtime_wbtest.mbt",
   ]
 }
 
