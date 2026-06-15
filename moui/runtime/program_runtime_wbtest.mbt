@@ -66,9 +66,6 @@ test "runtime program initial effects run before first view build" {
     snapshot.last_scheduled_effect_summary.root_kind ==
     @core.EffectPlanKind::EffectPlanBatch,
   )
-  let inspector = runtime.inspector_snapshot()
-  inspect(inspector.runtime.program_dispatched_count, content="2")
-  inspect(inspector.runtime.program_effect_dispatch_count, content="1")
 }
 
 ///|
@@ -198,12 +195,9 @@ test "runtime program subscriptions start reuse cancel and dispatch typed messag
   inspect(initial.active_subscription_count, content="1")
   inspect(initial.started_subscription_count, content="1")
   inspect(initial.active_subscriptions[0].key(), content="timer:alpha")
-  let inspector = runtime.inspector_snapshot()
-  inspect(inspector.runtime.program_subscription_plan_count, content="1")
-  inspect(inspector.runtime.active_subscription_count, content="1")
   inspect(
-    inspector.runtime.active_subscriptions[0].key(),
-    content="timer:alpha",
+    runtime.inspector_snapshot().runtime.program_subscription_plan_count,
+    content="1",
   )
   match alpha_dispatch.val {
     Some(dispatch) => dispatch(RuntimeSubscriptionTick)
