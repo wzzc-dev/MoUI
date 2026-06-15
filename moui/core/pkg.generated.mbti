@@ -722,9 +722,6 @@ pub(all) struct Frame {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Frame::new(time_ms~ : Double, delta_ms~ : Double) -> Self
 
-type FrameProfile derive(Eq)
-pub fn FrameProfile::capture(RuntimeKernel, Frame) -> Self
-
 pub(all) enum ImageFit {
   Contain
   Cover
@@ -757,7 +754,6 @@ pub(all) struct InspectorSnapshot {
   render : RenderInspectorSnapshot
   semantics : SemanticsInspectorSnapshot
 } derive(Eq, ToJson, @debug.Debug)
-pub fn InspectorSnapshot::from_runtime(RuntimeKernel) -> Self
 
 type Key derive(Eq)
 
@@ -820,7 +816,6 @@ pub(all) struct LayoutInspectorSnapshot {
   max_depth : Int
   bounds : Array[LayoutBoundsInspectorEntry]
 } derive(Eq, ToJson, @debug.Debug)
-pub fn LayoutInspectorSnapshot::from_runtime(RuntimeKernel) -> Self
 
 pub(all) struct LayoutResult {
   frame : Rect
@@ -1038,7 +1033,6 @@ pub(all) struct RenderInspectorSnapshot {
   unbalanced_pop_count : Int
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RenderInspectorSnapshot::from_commands(Array[DrawCommand]) -> Self
-pub fn RenderInspectorSnapshot::from_runtime(RuntimeKernel) -> Self
 
 pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
@@ -1129,8 +1123,6 @@ pub fn RouteFocusStore::focus_key_for_location(Self, RouteLocation) -> String?
 pub fn RouteFocusStore::new() -> Self
 pub fn RouteFocusStore::remember(Self, route~ : String, focus_key~ : String) -> Unit
 pub fn RouteFocusStore::remember_location(Self, RouteLocation, focus_key~ : String) -> Unit
-pub fn RouteFocusStore::restore(Self, RuntimeKernel, String) -> Bool
-pub fn RouteFocusStore::restore_location(Self, RuntimeKernel, RouteLocation) -> Bool
 
 pub(all) struct RouteHistoryEntry {
   route : String
@@ -1283,7 +1275,6 @@ pub(all) struct RuntimeInspectorSnapshot {
   rebuild_reason : String
   dirty_reasons : Array[String]
 } derive(Eq, ToJson, @debug.Debug)
-pub fn RuntimeInspectorSnapshot::from_runtime(RuntimeKernel) -> Self
 
 type RuntimeKernel
 pub fn RuntimeKernel::action_commands(Self) -> Array[ActionCommand]
@@ -1391,7 +1382,6 @@ pub(all) struct SemanticsInspectorSnapshot {
   required_count : Int
   described_count : Int
 } derive(Eq, ToJson, @debug.Debug)
-pub fn SemanticsInspectorSnapshot::from_runtime(RuntimeKernel) -> Self
 
 pub(all) struct SemanticsNode {
   element_id : ElementId
@@ -2017,7 +2007,6 @@ pub(all) struct ViewTreeInspectorSnapshot {
   dirty_paint_count : Int
   nodes : Array[ViewNodeInspectorSummary]
 } derive(Eq, ToJson, @debug.Debug)
-pub fn ViewTreeInspectorSnapshot::from_runtime(RuntimeKernel) -> Self
 
 pub(all) struct VisualStyle {
   background : Brush?
