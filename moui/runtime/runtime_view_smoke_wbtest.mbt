@@ -1,20 +1,17 @@
 ///|
-test "app runtime dispatches events and draws" {
-  let runtime = RuntimeKernel::new_spec(
-    root=ViewSpec::ButtonSpec({
-      key: None,
-      text: "Click",
-      size: Size::new(width=100.0, height=50.0),
-      font: FontSpec::new(size=16.0, weight=600),
-      foreground: Color::black(),
-      background: Brush::solid(Color::gray()),
-      hovered_background: Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
-      pressed_background: Brush::solid(Color::blue()),
-      border: None,
-      shadow: None,
-      corner_radius: 0.0,
-      on_click: None,
-    }),
+test "view runtime dispatches events and draws through AppRuntime" {
+  let root : View[Unit] = View::primitive_button_view(
+    text="Click",
+    size=Size::new(width=100.0, height=50.0),
+    font=FontSpec::new(size=16.0, weight=600),
+    foreground=Color::black(),
+    background=Brush::solid(Color::gray()),
+    hovered_background=Brush::solid(Color::rgba(r=0.72, g=0.78, b=0.92)),
+    pressed_background=Brush::solid(Color::blue()),
+    on_click=None,
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
     size=Size::new(width=120.0, height=80.0),
   )
   inspect(runtime.draw_commands().length(), content="3")
