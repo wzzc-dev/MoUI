@@ -357,7 +357,7 @@ pub fn[Msg] View::padding(self : View[Msg], value : Double) -> View[Msg] {
 
 ///|
 pub fn[Msg] View::spacing(self : View[Msg], spacing : Double) -> View[Msg] {
-  modify_realized_view(self, spec => spec.spacing(spacing))
+  modify_view(self, PlainModifier(SpacingModifier(spacing)))
 }
 
 ///|
@@ -365,7 +365,7 @@ pub fn[Msg] View::main_axis_alignment(
   self : View[Msg],
   alignment : MainAxisAlignment,
 ) -> View[Msg] {
-  modify_realized_view(self, spec => spec.main_axis_alignment(alignment))
+  modify_view(self, PlainModifier(MainAxisAlignmentModifier(alignment)))
 }
 
 ///|
@@ -373,12 +373,12 @@ pub fn[Msg] View::cross_axis_alignment(
   self : View[Msg],
   alignment : CrossAxisAlignment,
 ) -> View[Msg] {
-  modify_realized_view(self, spec => spec.cross_axis_alignment(alignment))
+  modify_view(self, PlainModifier(CrossAxisAlignmentModifier(alignment)))
 }
 
 ///|
 pub fn[Msg] View::theme(self : View[Msg], theme : Theme) -> View[Msg] {
-  modify_realized_view(self, spec => spec.theme(theme))
+  modify_view(self, PlainModifier(ThemeModifier(theme)))
 }
 
 ///|
@@ -386,7 +386,7 @@ pub fn[Msg] View::environment(
   self : View[Msg],
   environment : Environment,
 ) -> View[Msg] {
-  modify_realized_view(self, spec => spec.environment(environment))
+  modify_view(self, PlainModifier(EnvironmentModifier(environment)))
 }
 
 ///|
