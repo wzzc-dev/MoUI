@@ -139,10 +139,11 @@ fn package_budgets() -> Array[PackageBudget] {
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
       max_lines: 750,
-      max_pub_lines: 240,
+      max_pub_lines: 242,
       max_pub_all_lines: 60,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(", "pub fn[Msg] column(", "pub fn[Msg] markdown_editor(",
+        "pub using @core {type WebViewEvent}", "pub using @core {type WebViewNavigationPolicy}",
       ],
       forbidden_tokens: [
         "ViewSpec", "ViewNode", "RuntimeState", "HostWindowRenderer", "SkiaRasterRenderer",
@@ -516,7 +517,7 @@ fn max_shared_app_runtime_imports() -> Int {
 
 ///|
 fn max_shared_app_core_imports() -> Int {
-  8
+  7
 }
 
 ///|

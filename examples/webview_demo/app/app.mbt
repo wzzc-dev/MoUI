@@ -40,7 +40,7 @@ pub(all) enum Msg {
   GoBack
   GoForward
   EvaluateLocation
-  WebViewEvent(@core.WebViewEvent)
+  WebViewEvent(@views.WebViewEvent)
 }
 
 ///|
@@ -122,26 +122,26 @@ fn Model::with_log(self : Model, entry : String) -> Model {
 ///|
 fn Model::apply_web_view_event(
   self : Model,
-  event : @core.WebViewEvent,
+  event : @views.WebViewEvent,
 ) -> Model {
   match event {
-    @core.WebViewEvent::NavigationRequested(url) =>
+    @views.WebViewEvent::NavigationRequested(url) =>
       self.with_log("request " + url).with_url(url)
-    @core.WebViewEvent::NavigationStarted(url) =>
+    @views.WebViewEvent::NavigationStarted(url) =>
       { ..self.with_log("start " + url), status: "loading" }
-    @core.WebViewEvent::NavigationCommitted(url) =>
+    @views.WebViewEvent::NavigationCommitted(url) =>
       { ..self.with_log("commit " + url), url, address: url, status: "loaded" }
-    @core.WebViewEvent::NavigationFinished(url) =>
+    @views.WebViewEvent::NavigationFinished(url) =>
       { ..self.with_log("finish " + url), url, address: url, status: "done" }
-    @core.WebViewEvent::NavigationFailed(url, reason) =>
+    @views.WebViewEvent::NavigationFailed(url, reason) =>
       { ..self.with_log("failed " + url), status: reason }
-    @core.WebViewEvent::TitleChanged(value) =>
+    @views.WebViewEvent::TitleChanged(value) =>
       { ..self.with_log("title " + value), title: value }
-    @core.WebViewEvent::CanGoBackChanged(value) =>
+    @views.WebViewEvent::CanGoBackChanged(value) =>
       { ..self, can_go_back: value }
-    @core.WebViewEvent::CanGoForwardChanged(value) =>
+    @views.WebViewEvent::CanGoForwardChanged(value) =>
       { ..self, can_go_forward: value }
-    @core.WebViewEvent::JavaScriptResult(request_id, value) =>
+    @views.WebViewEvent::JavaScriptResult(request_id, value) =>
       {
         ..self.with_log("js " + request_id),
         js_result: value,
@@ -151,8 +151,8 @@ fn Model::apply_web_view_event(
 }
 
 ///|
-pub fn view(model : Model) -> @core.View[Msg] {
-  let theme = @core.Theme::default()
+pub fn view(model : Model) -> @moui.View[Msg] {
+  let theme = @moui.Theme::default()
   column(
     [
       header(model, theme),
@@ -169,7 +169,7 @@ pub fn view(model : Model) -> @core.View[Msg] {
 }
 
 ///|
-fn header(model : Model, theme : @core.Theme) -> @core.View[Msg] {
+fn header(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
   surface(
     row(
       [
@@ -192,7 +192,7 @@ fn header(model : Model, theme : @core.Theme) -> @core.View[Msg] {
 }
 
 ///|
-fn toolbar(model : Model) -> @core.View[Msg] {
+fn toolbar(model : Model) -> @moui.View[Msg] {
   surface(
     row(
       [
@@ -231,7 +231,7 @@ fn command_button(
   label : String,
   message : Msg,
   enabled~ : Bool,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   if enabled {
     button(label, on_click=message, variant=@views.ButtonVariant::Tonal)
   } else {
@@ -240,7 +240,7 @@ fn command_button(
 }
 
 ///|
-fn browser_surface(model : Model, theme : @core.Theme) -> @core.View[Msg] {
+fn browser_surface(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
   let child = if model.capabilities.available {
     web_view(
       id=web_view_id,
@@ -256,7 +256,7 @@ fn browser_surface(model : Model, theme : @core.Theme) -> @core.View[Msg] {
 }
 
 ///|
-fn unavailable_view(model : Model, theme : @core.Theme) -> @core.View[Msg] {
+fn unavailable_view(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
   column(
     [
       spacer(min_length=120.0, weight=0.0),
@@ -272,7 +272,7 @@ fn unavailable_view(model : Model, theme : @core.Theme) -> @core.View[Msg] {
 }
 
 ///|
-fn status_panel(model : Model, theme : @core.Theme) -> @core.View[Msg] {
+fn status_panel(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
   surface(
     column(
       [
@@ -294,7 +294,7 @@ fn status_panel(model : Model, theme : @core.Theme) -> @core.View[Msg] {
 }
 
 ///|
-fn status_chip(model : Model, theme : @core.Theme) -> @core.View[Msg] {
+fn status_chip(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
   let color = if model.capabilities.available {
     theme.palette.primary
   } else {
@@ -308,7 +308,7 @@ fn status_chip(model : Model, theme : @core.Theme) -> @core.View[Msg] {
 }
 
 ///|
-fn stat_line(label : String, value : String) -> @core.View[Msg] {
+fn stat_line(label : String, value : String) -> @moui.View[Msg] {
   row(
     [text(label).caption().frame(width=74.0), text(value).mono().expanded()],
     spacing=8.0,
@@ -317,8 +317,8 @@ fn stat_line(label : String, value : String) -> @core.View[Msg] {
 }
 
 ///|
-fn event_log(logs : Array[String], theme : @core.Theme) -> @core.View[Msg] {
-  let children : Array[@core.View[Msg]] = []
+fn event_log(logs : Array[String], theme : @moui.Theme) -> @moui.View[Msg] {
+  let children : Array[@moui.View[Msg]] = []
   if logs.is_empty() {
     children.push(text("waiting").caption().foreground(theme.palette.muted))
   } else {
@@ -362,8 +362,8 @@ fn compact_text(value : String) -> String {
 pub fn program(
   commands~ : @host.HostWebViewCommandQueue,
   capabilities~ : @host.HostWebViewCapabilities,
-) -> @core.Program[Model, Msg] {
-  @core.Program::simple(
+) -> @moui.Program[Model, Msg] {
+  @moui.Program::simple(
     init=Model::new(commands~, capabilities~),
     update~,
     view~,
