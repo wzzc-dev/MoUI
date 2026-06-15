@@ -254,23 +254,8 @@ pub fn AppRuntime::destroy(self : AppRuntime) -> Unit {
 }
 
 ///|
-pub fn AppRuntime::rebuild(self : AppRuntime) -> Unit {
-  self.state.rebuild()
-}
-
-///|
-pub fn AppRuntime::layout_pass(self : AppRuntime) -> Unit {
-  self.state.layout_pass()
-}
-
-///|
 pub fn AppRuntime::layout(self : AppRuntime) -> @core.LayoutResult {
   self.state.layout()
-}
-
-///|
-pub fn AppRuntime::paint_pass(self : AppRuntime) -> Array[@core.DrawCommand] {
-  self.state.paint_pass()
 }
 
 ///|

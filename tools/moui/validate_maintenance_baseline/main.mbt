@@ -1482,7 +1482,7 @@ fn file_budgets() -> Array[FileBudget] {
     },
     {
       path: "moui/runtime/runtime.mbt",
-      max_lines: 445,
+      max_lines: 427,
       target_lines: 380,
       reason: "keep runtime AppRuntime facade, dimensions entrypoint, program message loop, and core handoff compact",
     },

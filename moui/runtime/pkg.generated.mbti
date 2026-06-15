@@ -37,16 +37,13 @@ pub fn AppRuntime::focused_text_input(Self) -> @core.TextInputState
 pub fn AppRuntime::inspector_snapshot(Self) -> @core.InspectorSnapshot
 pub fn AppRuntime::invalidate_cached_layer_key(Self, String) -> Unit
 pub fn AppRuntime::layout(Self) -> @core.LayoutResult
-pub fn AppRuntime::layout_pass(Self) -> Unit
 pub fn AppRuntime::needs_layout(Self) -> Bool
 pub fn AppRuntime::needs_paint(Self) -> Bool
 pub fn AppRuntime::needs_rebuild(Self) -> Bool
 pub fn AppRuntime::needs_redraw(Self) -> Bool
 pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> Self
 pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> Self
-pub fn AppRuntime::paint_pass(Self) -> Array[@core.DrawCommand]
 pub fn AppRuntime::program_runtime_snapshot(Self) -> @core.ProgramRuntimeSnapshot
-pub fn AppRuntime::rebuild(Self) -> Unit
 pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
 pub fn AppRuntime::restore_location_focus(Self, @core.RouteFocusStore, @core.RouteLocation) -> Bool
 pub fn AppRuntime::restore_route_focus(Self, @core.RouteFocusStore, String) -> Bool
