@@ -162,23 +162,20 @@ test "app runtime focus traversal skips disabled controls" {
 
 ///|
 test "focus scope traversal wraps and skips disabled items" {
+  let items = [
+    FocusScopeItem::new(id="first"),
+    FocusScopeItem::new(id="disabled", enabled=false),
+    FocusScopeItem::new(id="third"),
+  ]
   let scope = FocusScope::new(current=Some("first"), items=[
     FocusScopeItem::new(id="first"),
     FocusScopeItem::new(id="disabled", enabled=false),
     FocusScopeItem::new(id="third"),
   ])
   inspect(scope.next().unwrap_or(""), content="third")
-  let wrapped = FocusScope::new(
-    current=Some("third"),
-    items=scope.items,
-    wrap=true,
-  )
+  let wrapped = FocusScope::new(current=Some("third"), items~, wrap=true)
   inspect(wrapped.next().unwrap_or(""), content="first")
-  let clamped = FocusScope::new(
-    current=Some("third"),
-    items=scope.items,
-    wrap=false,
-  )
+  let clamped = FocusScope::new(current=Some("third"), items~, wrap=false)
   inspect(clamped.next().unwrap_or(""), content="third")
   inspect(clamped.previous().unwrap_or(""), content="first")
 }
@@ -207,11 +204,11 @@ test "focus scope maps invalid fields and default actions" {
     scope.command_target(CommandIntent::Cancel).unwrap_or(""),
     content="close",
   )
-  match focus_scope_command_intent(KeyboardEvent::new(key="Enter")) {
+  match @core.focus_scope_command_intent(KeyboardEvent::new(key="Enter")) {
     Some(Submit) => ()
     _ => fail("expected Enter to map to submit")
   }
-  match focus_scope_command_intent(KeyboardEvent::new(key="Escape")) {
+  match @core.focus_scope_command_intent(KeyboardEvent::new(key="Escape")) {
     Some(Cancel) => ()
     _ => fail("expected Escape to map to cancel")
   }

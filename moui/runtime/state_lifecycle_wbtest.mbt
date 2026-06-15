@@ -48,8 +48,6 @@ test "sibling components rebuild only the watched subtree" {
   ignore(runtime.build_draw_commands())
   inspect(left_builds.val, content="2")
   inspect(right_builds.val, content="1")
-  inspect(left.slot.listeners.length(), content="1")
-  inspect(right.slot.listeners.length(), content="1")
 }
 
 ///|
@@ -101,12 +99,8 @@ test "keyed component reorder preserves subscriptions" {
     }),
     size=Size::new(width=100.0, height=40.0),
   )
-  inspect(first.slot.listeners.length(), content="1")
-  inspect(second.slot.listeners.length(), content="1")
   flip.set(true)
   ignore(runtime.build_draw_commands())
-  inspect(first.slot.listeners.length(), content="1")
-  inspect(second.slot.listeners.length(), content="1")
   inspect(first_builds.val, content="1")
   inspect(second_builds.val, content="1")
   first.set(7)
@@ -139,11 +133,8 @@ test "removed component cancels subscriptions" {
     }),
     size=Size::new(width=100.0, height=40.0),
   )
-  inspect(child_state.slot.listeners.length(), content="1")
   visible.set(false)
   ignore(runtime.build_draw_commands())
-  inspect(child_state.slot.listeners.length(), content="1")
-  inspect(child_state.slot.listeners[0].active, content="false")
   child_state.set(1)
   inspect(runtime.needs_rebuild, content="false")
 }

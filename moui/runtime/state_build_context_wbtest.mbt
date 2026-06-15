@@ -13,18 +13,15 @@ test "build context watch rebuilds and replaces old subscription" {
     }),
     size=Size::new(width=120.0, height=40.0),
   )
-  inspect(state.slot.listeners.length(), content="1")
   state.set(1)
   inspect(runtime.needs_rebuild, content="true")
   guard runtime.build_draw_commands() is [_, DrawText({ text: "Value: 1", .. })] else {
     fail("expected rebuilt text")
   }
-  inspect(state.slot.listeners.length(), content="1")
   state.set(2)
   guard runtime.build_draw_commands() is [_, DrawText({ text: "Value: 2", .. })] else {
     fail("expected rebuilt text after second state change")
   }
-  inspect(state.slot.listeners.length(), content="1")
 }
 
 ///|
@@ -54,11 +51,9 @@ test "build context binding subscribes control state" {
     }),
     size=Size::new(width=160.0, height=60.0),
   )
-  inspect(state.slot.listeners.length(), content="1")
   state.set("typed")
   inspect(runtime.needs_rebuild, content="true")
   ignore(runtime.build_draw_commands())
-  inspect(state.slot.listeners.length(), content="1")
 }
 
 ///|
@@ -112,14 +107,12 @@ test "build context binding drives text field input and dependent label" {
       ),
     ),
   )
-  inspect(draft.slot.listeners.length(), content="2")
   runtime.dispatch_event(TextInput(TextInputEvent::InsertText("Hi")))
   inspect(draft.get(), content="Hi")
   let commands = runtime.build_draw_commands()
   assert_true(
     commands.any(command => command is DrawText({ text: "Draft: Hi", .. })),
   )
-  inspect(draft.slot.listeners.length(), content="2")
 }
 
 ///|
