@@ -1,0 +1,54 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui/widget"
+
+import {
+  "wzzc-dev/moui/core",
+}
+
+// Values
+pub fn[Msg] button(text~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, background~ : @core.Brush, hovered_background~ : @core.Brush, pressed_background~ : @core.Brush, border? : @core.BorderStyle?, shadow? : @core.ShadowStyle?, corner_radius? : Double, on_click? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] checkbox(label~ : String, checked~ : @core.Binding[Bool], font~ : @core.FontSpec, foreground~ : @core.Color, check_color~ : @core.Color, size~ : @core.Size, on_change? : ((Bool) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] container(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] custom(kind? : String, key? : String?, measure~ : (@core.WidgetLayoutContext) -> @core.WidgetLayoutResult, paint? : (@core.WidgetPaintContext) -> @core.WidgetPaintPlan, event? : (@core.WidgetEventContext) -> @core.WidgetEventResult[Msg], semantics? : () -> @core.WidgetSemanticsInfo, focusable? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint? : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] empty(kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] flex(children~ : Array[@core.View[Msg]], axis~ : @core.Axis, spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] frame(child~ : @core.View[Msg], width~ : Double?, height~ : Double?, min_width~ : Double?, min_height~ : Double?, max_width~ : Double?, max_height~ : Double?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] grid(children~ : Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] image(source~ : String, size? : @core.Size?, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] list(children~ : Array[@core.View[Msg]], spacing? : Double, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] padding(child~ : @core.View[Msg], insets~ : @core.Insets, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] rect(width~ : Double, height~ : Double, color~ : @core.Color, kind? : String, key? : String?, on_tap? : Msg?) -> @core.View[Msg]
+
+pub fn[Msg] scroll(child~ : @core.View[Msg], offset? : @core.Point, viewport? : @core.Size?, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPresentationMode, background~ : @core.Brush, corner_radius~ : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] spacer(min_length? : Double, weight? : Double, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] stack(children~ : Array[@core.View[Msg]], kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] text(text~ : String, size~ : @core.Size, font~ : @core.FontSpec, color~ : @core.Color, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : @core.WebViewNavigationPolicy, on_event? : ((@core.WebViewEvent) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

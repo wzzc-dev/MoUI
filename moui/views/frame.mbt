@@ -8,7 +8,7 @@ pub fn[Msg] frame(
   max_width? : Double,
   max_height? : Double,
 ) -> @core.View[Msg] {
-  @core.View::primitive_frame_view(
+  @widget.frame(
     child~,
     width~,
     height~,

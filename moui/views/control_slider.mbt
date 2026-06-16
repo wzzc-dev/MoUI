@@ -30,11 +30,15 @@ pub fn[Msg] slider(
     foreground,
     resolved_style.thumb_color,
   )
-  let base = @core.View::primitive_custom_view(
-    measure=constraints => {
-      constraints.constrain(@core.Size::new(width~, height~))
+  let base = @widget.custom(
+    kind="Slider",
+    measure=ctx => {
+      @core.WidgetLayoutResult::new(
+        size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
+      )
     },
-    paint=frame => {
+    paint=ctx => {
+      let frame = ctx.frame
       let track = @core.Rect::new(
         x=frame.origin.x,
         y=frame.origin.y + (frame.size.height - track_height) / 2.0,
@@ -43,7 +47,7 @@ pub fn[Msg] slider(
       )
       let knob_x = frame.origin.x +
         normalized * max_view_double(0.0, frame.size.width - knob)
-      [
+      @core.WidgetPaintPlan::commands([
         @core.DrawCommand::FillRoundedRectBrush(
           @core.RoundedRect::new(rect=track, radius=track_radius),
           @core.Brush::solid(background),
@@ -72,10 +76,15 @@ pub fn[Msg] slider(
           ),
           @core.Brush::solid(thumb_color),
         ),
-      ]
+      ])
     },
-    semantics_role=@core.SemanticsRole::Slider,
-    semantics_label="Slider",
+    semantics=() => {
+      @core.WidgetSemanticsInfo::new(
+        role=@core.SemanticsRole::Slider,
+        label="Slider",
+        value="\{value}",
+      )
+    },
   )
   match on_change {
     Some(handler) =>

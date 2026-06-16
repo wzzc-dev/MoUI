@@ -13,6 +13,13 @@ fn ElementNode::dispatch_text_input(
       SearchBarSpec(data) => handle_searchbar_input(self, data, event)
       RichTextEditorSpec(data) =>
         handle_rich_text_editor_input(self, data, event)
+      WidgetSpec(data) =>
+        self.dispatch_widget_event(
+          data,
+          AppEvent::TextInput(event),
+          RenderNode::empty(),
+          TextSystem::fallback(),
+        )
       _ => { changed: false, activated: false, focused: None }
     }
   } else {

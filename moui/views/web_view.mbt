@@ -14,13 +14,5 @@ pub fn[Msg] web_view(
   policy? : WebViewNavigationPolicy = WebViewNavigationPolicy::AllowHttpHttpsFile,
   on_event? : ((WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
-  @core.View::primitive_web_view(
-    id~,
-    url~,
-    width~,
-    height~,
-    title~,
-    policy~,
-    on_event~,
-  )
+  @widget.web_view(id~, url~, width~, height~, title~, policy~, on_event~)
 }

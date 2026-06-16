@@ -5,7 +5,7 @@ pub fn[Msg] row(
   justify? : MainAlign = MainAlign::Start,
   align? : CrossAlign = CrossAlign::Stretch,
 ) -> @core.View[Msg] {
-  @core.View::primitive_flex_view(
+  @widget.flex(
     children~,
     axis=@core.Axis::Horizontal,
     spacing~,
@@ -21,7 +21,7 @@ pub fn[Msg] column(
   justify? : MainAlign = MainAlign::Start,
   align? : CrossAlign = CrossAlign::Stretch,
 ) -> @core.View[Msg] {
-  @core.View::primitive_flex_view(
+  @widget.flex(
     children~,
     axis=@core.Axis::Vertical,
     spacing~,

@@ -255,6 +255,20 @@ priv struct ComponentViewSpec {
 }
 
 ///|
+priv struct WidgetViewSpec {
+  identity : @core.WidgetIdentity
+  revision : String
+  children : () -> Array[ViewSpec]
+  child_constraints : (Constraints) -> Constraints
+  layout : (@core.WidgetLayoutContext) -> @core.WidgetLayoutResult
+  paint : (@core.WidgetPaintContext) -> @core.WidgetPaintPlan
+  event : (@core.WidgetEventContext) -> @core.WidgetEventResult[Unit]
+  semantics : () -> @core.WidgetSemanticsInfo
+  focusable : () -> Bool
+  state : @core.WidgetStateContext
+}
+
+///|
 priv struct PickerViewSpec {
   key : Key?
   items : Array[PickerItem]
@@ -360,4 +374,18 @@ priv enum ViewSpec {
   CustomSpec(CustomViewSpec)
   CustomLayoutSpec(CustomLayoutSpec)
   ComponentSpec(ComponentViewSpec)
+  WidgetSpec(WidgetViewSpec)
+}
+
+///|
+fn widget_state_context_default() -> @core.WidgetStateContext {
+  {
+    focused: false,
+    hovered: false,
+    pressed: false,
+    selected: false,
+    checked: false,
+    expanded: false,
+    disabled: false,
+  }
 }
