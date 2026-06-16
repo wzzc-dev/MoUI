@@ -78,44 +78,6 @@ pub fn rich_text_document_caret_rect_at_source(
 }
 
 ///|
-fn rich_text_editor_caret_at_point(
-  data : RichTextEditorViewSpec,
-  point : Point,
-  frame : Rect,
-  text_system : TextSystem,
-) -> Int {
-  let text = data.value.get()
-  let document = (data.format)(text)
-  let content = rich_text_editor_content_rect(frame)
-  rich_text_document_source_offset_at_point(
-    document,
-    point,
-    content,
-    data.font,
-    text_system,
-  ).unwrap_or(text_length(text))
-}
-
-///|
-fn rich_text_editor_prefix_source_offset_at_point(
-  data : RichTextEditorViewSpec,
-  point : Point,
-  frame : Rect,
-  text_system : TextSystem,
-) -> Int? {
-  let text = data.value.get()
-  let document = (data.format)(text)
-  let content = rich_text_editor_content_rect(frame)
-  rich_text_document_prefix_source_offset_at_point(
-    document,
-    point,
-    content,
-    data.font,
-    text_system,
-  )
-}
-
-///|
 fn rich_text_block_table_source_offset_at_point(
   block : RichTextBlock,
   point : Point,

@@ -364,9 +364,11 @@ pub fn[Msg] scroll(
               ),
             ),
           ],
+          child_layers: [],
           post_commands: [@core.DrawCommand::PopClip],
           overlay_commands: [],
           platform_views: [],
+          repaint_boundary: false,
         }
       },
       event=ctx => {
@@ -383,15 +385,13 @@ pub fn[Msg] scroll(
                       state.offset().y - event.wheel_delta.y,
                     ),
                   )
-                  {
-                    changed: true,
-                    activated: true,
-                    focused: false,
-                    captured: true,
-                    state: None,
-                    dirty: @core.WidgetDirtyHint::WidgetLayoutDirty,
-                    messages: [handler(event.wheel_delta)],
-                  }
+                  widget_event_result(
+                    changed=true,
+                    activated=true,
+                    captured=true,
+                    dirty=@core.WidgetDirtyHint::WidgetLayoutDirty,
+                    messages=[handler(event.wheel_delta)],
+                  )
                 }
                 (Some(state), None) => {
                   state.scroll_to(
@@ -401,26 +401,20 @@ pub fn[Msg] scroll(
                       state.offset().y - event.wheel_delta.y,
                     ),
                   )
-                  {
-                    changed: true,
-                    activated: false,
-                    focused: false,
-                    captured: true,
-                    state: None,
-                    dirty: @core.WidgetDirtyHint::WidgetLayoutDirty,
-                    messages: [],
-                  }
+                  widget_event_result(
+                    changed=true,
+                    captured=true,
+                    dirty=@core.WidgetDirtyHint::WidgetLayoutDirty,
+                  )
                 }
                 (None, Some(handler)) =>
-                  {
-                    changed: true,
-                    activated: true,
-                    focused: false,
-                    captured: true,
-                    state: None,
-                    dirty: @core.WidgetDirtyHint::WidgetPaintDirty,
-                    messages: [handler(event.wheel_delta)],
-                  }
+                  widget_event_result(
+                    changed=true,
+                    activated=true,
+                    captured=true,
+                    dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+                    messages=[handler(event.wheel_delta)],
+                  )
                 (None, None) => @core.WidgetEventResult::ignored()
               }
             } else {

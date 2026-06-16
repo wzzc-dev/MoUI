@@ -52,6 +52,8 @@ fn RuntimeState::dispatch_focused_text_command(
         target,
         intent,
         paste_text~,
+        environment=self.environment,
+        text_system=self.text_system,
       )
       if result.changed {
         self.needs_redraw = true
@@ -81,6 +83,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
     }
     Redraw(_) => self.needs_redraw = false
     Pointer(event) => {
+      self.ensure_render_tree()
       if event.phase == PointerPhase::Down {
         let previous_focus = self.focused_element
         let candidate_focus = self.element_tree.root.find_focusable_at(
@@ -101,6 +104,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
             self.element_tree.root.dispatch_pointer(
               event,
               self.render_tree.root,
+              environment=self.environment,
               text_system=self.text_system,
               capture_lookup=false,
             )
@@ -110,6 +114,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
                 target,
                 event,
                 self.render_tree.root,
+                environment=self.environment,
                 text_system=self.text_system,
               ) {
               Some(result) => result
@@ -118,6 +123,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
                 self.element_tree.root.dispatch_pointer(
                   event,
                   self.render_tree.root,
+                  environment=self.environment,
                   text_system=self.text_system,
                   capture_lookup=false,
                 )
@@ -128,6 +134,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
           self.element_tree.root.dispatch_pointer(
             event,
             self.render_tree.root,
+            environment=self.environment,
             text_system=self.text_system,
             capture_lookup=false,
           )
@@ -151,7 +158,11 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       }
     }
     Keyboard(event) => {
-      let shortcut = self.element_tree.root.dispatch_keyboard_shortcut(event)
+      let shortcut = self.element_tree.root.dispatch_keyboard_shortcut(
+        event,
+        environment=self.environment,
+        text_system=self.text_system,
+      )
       if shortcut.changed || shortcut.activated {
         self.needs_redraw = self.needs_redraw || shortcut.changed
         self.needs_rebuild = self.needs_rebuild || shortcut.activated
@@ -173,7 +184,10 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
               ignore(self.move_focus(reverse=event.modifiers.shift))
             } else if self.element_tree.root.accepts_tab_input(target) {
               let result = self.element_tree.root.dispatch_keyboard(
-                target, event,
+                target,
+                event,
+                environment=self.environment,
+                text_system=self.text_system,
               )
               self.needs_redraw = self.needs_redraw || result.changed
               self.needs_rebuild = self.needs_rebuild || result.activated
@@ -199,7 +213,12 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
             let is_text_input = self.element_tree.root.is_text_input_target(
               target,
             )
-            let result = self.element_tree.root.dispatch_keyboard(target, event)
+            let result = self.element_tree.root.dispatch_keyboard(
+              target,
+              event,
+              environment=self.environment,
+              text_system=self.text_system,
+            )
             self.needs_redraw = self.needs_redraw || result.changed
             self.needs_rebuild = self.needs_rebuild || result.activated
             self.needs_paint = self.needs_paint || result.changed
@@ -220,7 +239,12 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
     TextInput(event) =>
       match self.focused_element {
         Some(target) => {
-          let result = self.element_tree.root.dispatch_text_input(target, event)
+          let result = self.element_tree.root.dispatch_text_input(
+            target,
+            event,
+            environment=self.environment,
+            text_system=self.text_system,
+          )
           self.needs_redraw = self.needs_redraw || result.changed
           self.needs_rebuild = self.needs_rebuild || result.activated
           self.needs_paint = self.needs_paint || result.changed
@@ -252,7 +276,12 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       }
     }
     AppEvent::WebView(id, event) =>
-      if self.element_tree.root.dispatch_web_view_event(id, event) {
+      if self.element_tree.root.dispatch_web_view_event(
+          id,
+          event,
+          environment=self.environment,
+          text_system=self.text_system,
+        ) {
         self.needs_rebuild = true
         self.needs_redraw = true
         self.needs_paint = true

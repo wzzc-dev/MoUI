@@ -1,6 +1,6 @@
 import {
   "moonbitlang/core/encoding/utf8",
-  "wzzc-dev/moui/core/unicode" @unicode,
+  "wzzc-dev/moui/core/unicode",
 }
 
 options(

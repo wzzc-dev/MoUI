@@ -93,3 +93,20 @@ fn environment_measure_text(
 ) -> TextLayoutResult {
   environment.text_system.measure_text(input)
 }
+
+///|
+fn render_environment_to_widget_environment(
+  environment : RenderEnvironment,
+) -> Environment {
+  {
+    ..Environment::default(),
+    scale_factor: environment.scale_factor,
+    text_scale: environment.text_scale,
+    locale: environment.locale,
+    layout_direction: environment.layout_direction,
+    accessibility_contrast: environment.accessibility_contrast,
+    reduced_motion: environment.reduced_motion,
+    content_size_category: environment.content_size_category,
+    enabled: environment.enabled,
+  }
+}
