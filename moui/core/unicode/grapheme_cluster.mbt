@@ -1,6 +1,9 @@
 ///| A lightweight half-open codepoint range `[start, end)` used by the
+
 ///| grapheme boundary API. It mirrors `@core.TextRange` but keeps this
-///| package free of any core dependency.
+
+///|
+/// package free of any core dependency.
 pub(all) struct GraphemeRange {
   start : Int
   end : Int
@@ -17,9 +20,7 @@ pub fn GraphemeRange::collapsed(index : Int) -> GraphemeRange {
 }
 
 ///|
-pub fn GraphemeRange::normalized(
-  self : GraphemeRange,
-) -> GraphemeRange {
+pub fn GraphemeRange::normalized(self : GraphemeRange) -> GraphemeRange {
   if self.start <= self.end {
     self
   } else {

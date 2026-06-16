@@ -91,7 +91,7 @@ pub fn[Msg] custom_children_layout(
 pub fn[Msg] component(
   build : (@core.BuildContext) -> @core.View[Msg],
 ) -> @core.View[Msg] {
-  @core.View::primitive_component_view(build)
+  @widget.component(build)
 }
 
 ///|

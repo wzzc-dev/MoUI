@@ -60,6 +60,61 @@ test "widget layout constrains children and inspector keeps identity" {
 }
 
 ///|
+test "widget component builds child and reports component inspector state" {
+  let root : @core.View[Unit] = @widget.component(_ctx => {
+    @widget.rect(width=32.0, height=18.0, color=@core.Color::blue())
+  })
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  let layout = runtime.layout()
+  match layout.children.get(0) {
+    Some(child) =>
+      if child.frame.size != @core.Size::new(width=32.0, height=18.0) {
+        fail("expected component widget to lay out built child")
+      }
+    None => fail("expected component widget to build child")
+  }
+  let snapshot = runtime.inspector_snapshot()
+  if snapshot.view_tree.root_kind != "Component" ||
+    snapshot.view_tree.component_count != 1 {
+    fail("expected generic widget component in inspector")
+  }
+}
+
+///|
+test "widget component watch rebuilds built child" {
+  let width_state = @core.State::new(24.0)
+  let root : @core.View[Unit] = @widget.component(ctx => {
+    @widget.rect(
+      width=ctx.watch(width_state),
+      height=10.0,
+      color=@core.Color::blue(),
+    )
+  })
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=100.0),
+  )
+  match runtime.layout().children.get(0) {
+    Some(child) =>
+      if child.frame.size != @core.Size::new(width=24.0, height=10.0) {
+        fail("expected initial component child size")
+      }
+    None => fail("expected initial component child")
+  }
+  width_state.set(48.0)
+  match runtime.layout().children.get(0) {
+    Some(child) =>
+      if child.frame.size != @core.Size::new(width=48.0, height=10.0) {
+        fail("expected watched state to rebuild component child")
+      }
+    None => fail("expected rebuilt component child")
+  }
+}
+
+///|
 test "widget scroll updates state and marks layout dirty" {
   let received : Array[@core.Point] = []
   let state = @core.ScrollState::new()
@@ -131,6 +186,36 @@ test "widget webview paints platform view and dispatches events" {
 }
 
 ///|
+test "nested widget webview dispatches events through generic children" {
+  let received : Array[@core.WebViewEvent] = []
+  let runtime = AppRuntime::new_view(
+    root=@widget.padding(
+      child=@widget.web_view(
+        id="nested",
+        url="https://example.com/nested",
+        width=Some(320.0),
+        height=Some(180.0),
+        title="Nested",
+        on_event=Some(event => event),
+      ),
+      insets=@core.Insets::all(4.0),
+    ),
+    size=@core.Size::new(width=328.0, height=188.0),
+    on_message=Some(message => received.push(message)),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::WebView(
+      "nested",
+      @core.WebViewEvent::NavigationFinished("https://example.com/nested"),
+    ),
+  )
+  if received !=
+    [@core.WebViewEvent::NavigationFinished("https://example.com/nested")] {
+    fail("expected nested widget webview to dispatch event")
+  }
+}
+
+///|
 test "widget button dispatches click through runtime" {
   let received : Array[String] = []
   let runtime = AppRuntime::new_view(
@@ -195,6 +280,252 @@ test "widget checkbox controlled event dispatches without core primitive" {
   )
   if received != [true] {
     fail("expected controlled checkbox widget to dispatch next value")
+  }
+}
+
+///|
+test "widget picker dispatches overlay selection without core primitive" {
+  let received : Array[String] = []
+  let runtime = AppRuntime::new_view(
+    root=@widget.frame(
+      child=@widget.picker(
+        items=[
+          @core.PickerItem::new(id="one", label="One"),
+          @core.PickerItem::new(id="two", label="Two"),
+        ],
+        selected=@core.Binding::new(get=() => "one", set=_value => ()),
+        placeholder="Pick",
+        font=@core.FontSpec::new(size=14.0),
+        foreground=@core.Color::black(),
+        background=@core.Brush::solid(@core.Color::white()),
+        corner_radius=6.0,
+        max_height=160.0,
+        on_select=Some(id => id),
+      ),
+      width=Some(200.0),
+      height=Some(40.0),
+      min_width=None,
+      min_height=None,
+      max_width=None,
+      max_height=None,
+    ),
+    size=@core.Size::new(width=200.0, height=40.0),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=12.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  let opened = runtime.inspector_snapshot()
+  match opened.view_tree.nodes.get(1) {
+    Some(node) =>
+      if !node.needs_paint {
+        fail("expected opening picker to dirty paint")
+      }
+    None => fail("expected picker inspector node")
+  }
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=84.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  if received != ["two"] {
+    fail("expected picker overlay selection message")
+  }
+  let snapshot = runtime.inspector_snapshot()
+  match snapshot.view_tree.nodes.get(1) {
+    Some(node) =>
+      if node.kind != "Picker" {
+        fail("expected picker widget identity in inspector")
+      }
+    None => fail("expected picker inspector node")
+  }
+  if snapshot.view_tree.root_kind != "Frame" {
+    fail("expected picker widget identity in inspector")
+  }
+}
+
+///|
+test "widget picker binding selection mutates binding" {
+  let selected_state = @core.State::new("one")
+  let root : @core.View[Unit] = @widget.frame(
+    child=@widget.picker(
+      items=[
+        @core.PickerItem::new(id="one", label="One"),
+        @core.PickerItem::new(id="two", label="Two"),
+      ],
+      selected=selected_state.binding(),
+      placeholder="Pick",
+      font=@core.FontSpec::new(size=14.0),
+      foreground=@core.Color::black(),
+      background=@core.Brush::solid(@core.Color::white()),
+      corner_radius=6.0,
+      max_height=160.0,
+    ),
+    width=Some(200.0),
+    height=Some(40.0),
+    min_width=None,
+    min_height=None,
+    max_width=None,
+    max_height=None,
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=200.0, height=40.0),
+  )
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=12.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=84.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  if selected_state.get() != "two" {
+    fail("expected picker binding to update")
+  }
+}
+
+///|
+test "widget datepicker dispatches overlay selection without core primitive" {
+  let received : Array[@core.DateValue] = []
+  let runtime = AppRuntime::new_view(
+    root=@widget.frame(
+      child=@widget.datepicker(
+        selected=@core.Binding::new(
+          get=() => @core.DateValue::new(year=2024, month=1, day=15),
+          set=_value => (),
+        ),
+        mode=@core.DatePickerMode::Date,
+        placeholder="Select date",
+        font=@core.FontSpec::new(size=14.0),
+        foreground=@core.Color::black(),
+        background=@core.Brush::solid(@core.Color::white()),
+        corner_radius=6.0,
+        on_select=Some(value => value),
+      ),
+      width=Some(200.0),
+      height=Some(40.0),
+      min_width=None,
+      min_height=None,
+      max_width=None,
+      max_height=None,
+    ),
+    size=@core.Size::new(width=200.0, height=40.0),
+    on_message=Some(message => received.push(message)),
+  )
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=12.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  let opened = runtime.inspector_snapshot()
+  match opened.view_tree.nodes.get(1) {
+    Some(node) =>
+      if !node.needs_paint {
+        fail("expected opening datepicker to dirty paint")
+      }
+    None => fail("expected datepicker inspector node")
+  }
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=100.0, y=148.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  if received != [@core.DateValue::new(year=2024, month=1, day=2)] {
+    fail("expected datepicker overlay selection message")
+  }
+  let snapshot = runtime.inspector_snapshot()
+  match snapshot.view_tree.nodes.get(1) {
+    Some(node) =>
+      if node.kind != "DatePicker" {
+        fail("expected datepicker widget identity in inspector")
+      }
+    None => fail("expected datepicker inspector node")
+  }
+}
+
+///|
+test "widget datepicker binding selection mutates binding after month navigation" {
+  let selected_state = @core.State::new(
+    @core.DateValue::new(year=2024, month=1, day=15),
+  )
+  let root : @core.View[Unit] = @widget.frame(
+    child=@widget.datepicker(
+      selected=selected_state.binding(),
+      mode=@core.DatePickerMode::Date,
+      placeholder="Select date",
+      font=@core.FontSpec::new(size=14.0),
+      foreground=@core.Color::black(),
+      background=@core.Brush::solid(@core.Color::white()),
+      corner_radius=6.0,
+    ),
+    width=Some(200.0),
+    height=Some(40.0),
+    min_width=None,
+    min_height=None,
+    max_width=None,
+    max_height=None,
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=200.0, height=40.0),
+  )
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=12.0, y=12.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=256.0, y=69.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  ignore(runtime.draw_frame())
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=140.0, y=220.0),
+        phase=@core.PointerPhase::Up,
+      ),
+    ),
+  )
+  if selected_state.get() != @core.DateValue::new(year=2024, month=2, day=14) {
+    fail("expected datepicker binding to preserve navigated month")
   }
 }
 

@@ -4,101 +4,22 @@ fn ElementNode::find_focusable_at(
   point : Point,
   render : RenderNode,
 ) -> ElementId? {
-  match self.spec {
-    TextFieldSpec(_)
-    | CheckboxSpec(_)
-    | ButtonSpec(_)
-    | PickerSpec(_)
-    | DatePickerSpec(_)
-    | SearchBarSpec(_) =>
-      if render.frame.contains(point) {
-        Some(self.id)
-      } else {
-        None
-      }
-    RichTextEditorSpec(_) =>
-      if render.frame.contains(point) {
-        Some(self.id)
-      } else {
-        None
-      }
-    WidgetSpec(data) =>
-      if (data.focusable)() && render.frame.contains(point) {
-        Some(self.id)
-      } else {
-        let mut index = self.children.length() - 1
-        while index >= 0 {
-          if index < render.children.length() &&
-            render.children[index].frame.contains(point) {
-            match
-              self.children[index].find_focusable_at(
-                point,
-                render.children[index],
-              ) {
-              Some(id) => return Some(id)
-              None => ()
-            }
-          }
-          index = index - 1
+  if (self.widget.focusable)() && render.hit_bounds().contains(point) {
+    Some(self.id)
+  } else {
+    let mut index = self.children.length() - 1
+    while index >= 0 {
+      if index < render.children.length() &&
+        render.children[index].hit_bounds().contains(point) {
+        match
+          self.children[index].find_focusable_at(point, render.children[index]) {
+          Some(id) => return Some(id)
+          None => ()
         }
-        None
       }
-    FlexSpec(_)
-    | PaddingSpec(_)
-    | ContainerSpec(_)
-    | FrameSpec(_)
-    | StackSpec(_)
-    | ScrollSpec(_)
-    | GridSpec(_)
-    | ListSpec(_)
-    | CustomLayoutSpec(_)
-    | ComponentSpec(_) => {
-      let mut index = self.children.length() - 1
-      while index >= 0 {
-        if index < render.children.length() &&
-          render.children[index].frame.contains(point) {
-          match
-            self.children[index].find_focusable_at(
-              point,
-              render.children[index],
-            ) {
-            Some(id) => return Some(id)
-            None => ()
-          }
-        }
-        index = index - 1
-      }
-      None
+      index = index - 1
     }
-    ModifiedSpec(data) =>
-      match data.modifier {
-        DisabledModifier(true) => None
-        FocusableModifier(true) =>
-          if render.frame.contains(point) {
-            Some(self.id)
-          } else {
-            None
-          }
-        _ => {
-          let mut index = self.children.length() - 1
-          while index >= 0 {
-            if index < render.children.length() &&
-              render.children[index].frame.contains(point) {
-              match
-                self.children[index].find_focusable_at(
-                  point,
-                  render.children[index],
-                ) {
-                Some(id) => return Some(id)
-                None => ()
-              }
-            }
-            index = index - 1
-          }
-          None
-        }
-      }
-    _ => None
+    None
   }
 }
 
@@ -107,41 +28,11 @@ fn ElementNode::focusable_ids(
   self : ElementNode,
   ids : Array[ElementId],
 ) -> Unit {
-  match self.spec {
-    TextFieldSpec(_)
-    | RichTextEditorSpec(_)
-    | ButtonSpec(_)
-    | CheckboxSpec(_) => ids.push(self.id)
-    WidgetSpec(data) => {
-      if (data.focusable)() {
-        ids.push(self.id)
-      }
-      for child in self.children {
-        child.focusable_ids(ids)
-      }
-    }
-    ModifiedSpec(data) =>
-      match data.modifier {
-        DisabledModifier(true) => ()
-        FocusableModifier(true) => ids.push(self.id)
-        _ =>
-          for child in self.children {
-            child.focusable_ids(ids)
-          }
-      }
-    FlexSpec(_)
-    | PaddingSpec(_)
-    | ContainerSpec(_)
-    | FrameSpec(_)
-    | StackSpec(_)
-    | ScrollSpec(_)
-    | GridSpec(_)
-    | ListSpec(_)
-    | ComponentSpec(_) =>
-      for child in self.children {
-        child.focusable_ids(ids)
-      }
-    _ => ()
+  if (self.widget.focusable)() {
+    ids.push(self.id)
+  }
+  for child in self.children {
+    child.focusable_ids(ids)
   }
 }
 
@@ -150,9 +41,7 @@ fn ElementNode::focusable_key_target(
   self : ElementNode,
   key : String,
 ) -> ElementId? {
-  if self.spec is ModifiedSpec({ modifier: DisabledModifier(true), .. }) {
-    None
-  } else if self.key == Some(Key::new(key)) {
+  if self.key == Some(Key::new(key)) {
     self.first_focusable_descendant()
   } else {
     for child in self.children {
@@ -194,66 +83,12 @@ fn ElementNode::contains_element_id(
 }
 
 ///|
-fn ElementNode::is_enabled_focus_trap(self : ElementNode) -> Bool {
-  self.spec is ModifiedSpec({ modifier: FocusTrapModifier(true), .. })
-}
-
-///|
-fn ElementNode::last_enabled_focus_trap(self : ElementNode) -> ElementNode? {
-  if self.spec is ModifiedSpec({ modifier: DisabledModifier(true), .. }) {
-    None
-  } else {
-    let mut result : ElementNode? = if self.is_enabled_focus_trap() {
-      Some(self)
-    } else {
-      None
-    }
-    for child in self.children {
-      match child.last_enabled_focus_trap() {
-        Some(scope) => result = Some(scope)
-        None => ()
-      }
-    }
-    result
-  }
-}
-
-///|
-fn ElementNode::deepest_enabled_focus_trap_containing(
-  self : ElementNode,
-  target : ElementId,
-) -> ElementNode? {
-  if self.spec is ModifiedSpec({ modifier: DisabledModifier(true), .. }) ||
-    !self.contains_element_id(target) {
-    None
-  } else {
-    let mut result : ElementNode? = None
-    for child in self.children {
-      match child.deepest_enabled_focus_trap_containing(target) {
-        Some(scope) => result = Some(scope)
-        None => ()
-      }
-    }
-    match result {
-      Some(_) => result
-      None => if self.is_enabled_focus_trap() { Some(self) } else { None }
-    }
-  }
-}
-
-///|
 fn ElementNode::active_focus_trap(
   self : ElementNode,
   current~ : ElementId?,
 ) -> ElementNode? {
-  match current {
-    Some(current) =>
-      match self.deepest_enabled_focus_trap_containing(current) {
-        Some(scope) => Some(scope)
-        None => self.last_enabled_focus_trap()
-      }
-    None => self.last_enabled_focus_trap()
-  }
+  ignore(current)
+  None
 }
 
 ///|
@@ -262,10 +97,7 @@ fn ElementNode::accepts_tab_input(
   target : ElementId,
 ) -> Bool {
   if self.id == target {
-    match self.spec {
-      RichTextEditorSpec(data) => data.accepts_tab_input
-      _ => false
-    }
+    self.widget_accepts_text_input(self.widget)
   } else {
     for child in self.children {
       if child.accepts_tab_input(target) {
@@ -282,10 +114,7 @@ fn ElementNode::is_text_input_target(
   target : ElementId,
 ) -> Bool {
   if self.id == target {
-    match self.spec {
-      TextFieldSpec(_) | SearchBarSpec(_) | RichTextEditorSpec(_) => true
-      _ => false
-    }
+    self.widget_accepts_text_input(self.widget)
   } else {
     for child in self.children {
       if child.is_text_input_target(target) {
@@ -294,6 +123,23 @@ fn ElementNode::is_text_input_target(
     }
     false
   }
+}
+
+///|
+fn ElementNode::widget_accepts_text_input(
+  self : ElementNode,
+  data : RuntimeWidget,
+) -> Bool {
+  (data.text_input_state)({
+    frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+    child_frames: [],
+    focused: true,
+    state: { ..data.state, focused: true },
+    text_control: self.control.text_context(),
+    environment: Environment::default(),
+    text_system: TextSystem::fallback(),
+  })
+  is Some(_)
 }
 
 ///|
@@ -346,169 +192,20 @@ fn ElementNode::next_focus(
 ///|
 fn ElementNode::constrained_focus_target(
   self : ElementNode,
-  target : ElementId?,
+  requested : ElementId?,
   current~ : ElementId?,
 ) -> ElementId? {
   match self.active_focus_trap(current~) {
     Some(scope) =>
-      match target {
-        Some(target) =>
-          if scope.contains_element_id(target) {
-            Some(target)
+      match requested {
+        Some(id) =>
+          if scope.contains_element_id(id) {
+            Some(id)
           } else {
-            match current {
-              Some(current) =>
-                if scope.contains_element_id(current) {
-                  Some(current)
-                } else {
-                  scope.next_focus_in_scope(current=None, reverse=false)
-                }
-              None => scope.next_focus_in_scope(current=None, reverse=false)
-            }
+            scope.next_focus_in_scope(current~, reverse=false)
           }
-        None =>
-          match current {
-            Some(current) =>
-              if scope.contains_element_id(current) {
-                Some(current)
-              } else {
-                scope.next_focus_in_scope(current=None, reverse=false)
-              }
-            None => scope.next_focus_in_scope(current=None, reverse=false)
-          }
+        None => None
       }
-    None => target
-  }
-}
-
-///|
-fn handle_rich_text_editor_keyboard(
-  element : ElementNode,
-  data : RichTextEditorViewSpec,
-  event : KeyboardEvent,
-) -> ElementEventResult {
-  if !event.pressed {
-    return { changed: false, activated: false, focused: None }
-  }
-  if event.key == "Enter" {
-    return handle_rich_text_editor_input(element, data, InsertText("\n"))
-  }
-  if event.key == "Tab" && data.accepts_tab_input {
-    let text = if event.modifiers.shift { "\u{000b}" } else { "\t" }
-    return handle_rich_text_editor_input(element, data, InsertText(text))
-  }
-  if is_select_all_shortcut(event) {
-    return select_text_range(element, data.value.get())
-  }
-  if is_undo_shortcut(event) {
-    let result = handle_rich_text_editor_command(
-      element,
-      data,
-      Undo,
-      paste_text=None,
-    )
-    return { changed: result.changed, activated: false, focused: None }
-  }
-  if is_redo_shortcut(event) {
-    let result = handle_rich_text_editor_command(
-      element,
-      data,
-      Redo,
-      paste_text=None,
-    )
-    return { changed: result.changed, activated: false, focused: None }
-  }
-  if event.key == "Backspace" {
-    match active_text_selection(element.control.selection) {
-      Some(selection) =>
-        return handle_rich_text_editor_input(
-          element,
-          data,
-          DeleteRange(selection),
-        )
-      None =>
-        return handle_rich_text_editor_input(
-          element,
-          data,
-          DeleteSurrounding(1, 0),
-        )
-    }
-  }
-  if event.key == "Delete" {
-    match active_text_selection(element.control.selection) {
-      Some(selection) =>
-        return handle_rich_text_editor_input(
-          element,
-          data,
-          DeleteRange(selection),
-        )
-      None =>
-        return handle_rich_text_editor_input(
-          element,
-          data,
-          DeleteSurrounding(0, 1),
-        )
-    }
-  }
-  if event.key == "ArrowLeft" {
-    return apply_rich_text_caret_move(
-      element,
-      data,
-      move_text_caret(
-        data.value.get(),
-        element.control.caret,
-        element.control.selection,
-        MoveLeft,
-        extend=event.modifiers.shift,
-      ),
-    )
-  }
-  if event.key == "ArrowRight" {
-    return apply_rich_text_caret_move(
-      element,
-      data,
-      move_text_caret(
-        data.value.get(),
-        element.control.caret,
-        element.control.selection,
-        MoveRight,
-        extend=event.modifiers.shift,
-      ),
-    )
-  }
-  if event.key == "ArrowUp" {
-    return move_multiline_caret_vertical(element, data, -1)
-  }
-  if event.key == "ArrowDown" {
-    return move_multiline_caret_vertical(element, data, 1)
-  }
-  if event.key == "Home" {
-    element.control.caret = multiline_line_start(
-      data.value.get(),
-      element.control.caret,
-    )
-    element.control.selection = None
-    notify_rich_text_selection_change(data, element)
-    element.dirty.mark_paint()
-    return { changed: true, activated: false, focused: None }
-  }
-  if event.key == "End" {
-    element.control.caret = multiline_line_end(
-      data.value.get(),
-      element.control.caret,
-    )
-    element.control.selection = None
-    notify_rich_text_selection_change(data, element)
-    element.dirty.mark_paint()
-    return { changed: true, activated: false, focused: None }
-  }
-  match event.text {
-    Some(text) =>
-      if text != "" {
-        handle_rich_text_editor_input(element, data, InsertText(text))
-      } else {
-        { changed: false, activated: false, focused: None }
-      }
-    None => { changed: false, activated: false, focused: None }
+    None => requested
   }
 }

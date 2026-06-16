@@ -19,6 +19,7 @@ test "widget map maps direct event messages" {
         ),
         focused: false,
         state: widget_test_state(),
+        text_control: widget_test_text_control(),
         text_system: @core.TextSystem::fallback(),
         environment: @core.Environment::default(),
       })
@@ -56,6 +57,7 @@ test "widget map maps nested children" {
                 ),
                 focused: false,
                 state: widget_test_state(),
+                text_control: widget_test_text_control(),
                 text_system: @core.TextSystem::fallback(),
                 environment: @core.Environment::default(),
               })
@@ -81,5 +83,19 @@ fn widget_test_state() -> @core.WidgetStateContext {
     checked: false,
     expanded: false,
     disabled: false,
+    scratch: "",
+  }
+}
+
+///|
+fn widget_test_text_control() -> @core.TextControlStateContext {
+  {
+    caret: 0,
+    selection: None,
+    text_selection_anchor: None,
+    composition: None,
+    composition_cursor: None,
+    undo_stack: [],
+    redo_stack: [],
   }
 }
