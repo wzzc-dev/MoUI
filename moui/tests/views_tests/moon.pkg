@@ -1,0 +1,6 @@
+
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
+} for "test"
