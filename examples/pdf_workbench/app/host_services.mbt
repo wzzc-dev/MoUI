@@ -18,7 +18,7 @@ fn PdfWorkbenchModel::request_startup_pdf(
           startup_page_number
         },
       ),
-    }.request_open_path(path, services, source="startup")
+    }.request_open_path(path, services)
   }
 }
 
@@ -27,7 +27,6 @@ fn PdfWorkbenchModel::request_open_path(
   self : PdfWorkbenchModel,
   path : String,
   services : @host.HostAppServices,
-  source~ : String,
 ) -> PdfWorkbenchUpdate {
   let request = @host.HostServiceRequest::BinaryFile(
     @host.HostBinaryFileRequest::ReadBytes(path),
@@ -43,9 +42,7 @@ fn PdfWorkbenchModel::request_open_path(
         pdf_workbench_string_hash(path).to_string(),
       label="Open PDF path",
       run=dispatch => {
-        println("pdf workbench: opening " + source + " PDF " + path)
         let response = services.read_binary_file(path)
-        println(pdf_workbench_binary_response_log(response))
         dispatch(HostCompleted(pdf_workbench_completion(request, response)))
       },
     ),
@@ -75,7 +72,6 @@ fn PdfWorkbenchModel::request_open(
       key="pdf-workbench:open-file",
       label="Open PDF file",
       run=dispatch => {
-        println("pdf workbench: opening PDF file dialog")
         let response = services.open_file(title="Open PDF", filters=["pdf"])
         dispatch(HostCompleted(pdf_workbench_completion(request, response)))
       },
@@ -182,7 +178,6 @@ fn PdfWorkbenchModel::request_binary_write(
         let request = @host.HostServiceRequest::BinaryFile(
           @host.HostBinaryFileRequest::WriteBytes(path, bytes),
         )
-        println("pdf workbench: writing \{bytes.length()} byte(s) to " + path)
         let response = services.write_binary_file(path, bytes)
         ignore(request)
         dispatch(SaveCompleted(path, bytes, diagnostics, response))
@@ -269,12 +264,10 @@ fn PdfWorkbenchModel::apply_file_dialog(
         }
       _ => {
         let path = paths[0]
-        println("pdf workbench: selected " + path)
         let read_request = @host.HostServiceRequest::BinaryFile(
           @host.HostBinaryFileRequest::ReadBytes(path),
         )
         let response = services.read_binary_file(path)
-        println(pdf_workbench_binary_response_log(response))
         self.apply_host_completion(
           pdf_workbench_completion(read_request, response),
           services,
@@ -315,10 +308,6 @@ fn PdfWorkbenchModel::apply_pdf_bytes(
         None => document.selected_page
       }
       let loaded_document = { ..document, selected_page, }
-      println(
-        "pdf workbench: loaded \{bytes.length()} byte(s), pages=\{document.page_count}, path=" +
-        path,
-      )
       self.reset_panel_scrolls()
       {
         ..self,
@@ -340,12 +329,6 @@ fn PdfWorkbenchModel::apply_pdf_bytes(
       }
     }
     Failed(reason) => {
-      println(
-        "pdf workbench: load failed for " +
-        path +
-        " (\{bytes.length()} byte(s)): " +
-        reason,
-      )
       {
         ..self,
         document: None,

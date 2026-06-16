@@ -607,23 +607,6 @@ fn pdf_workbench_unavailable_message(
 }
 
 ///|
-fn pdf_workbench_binary_response_log(
-  response : @host.HostServiceResponse,
-) -> String {
-  match response {
-    @host.HostServiceResponse::BinaryFileContent(path, bytes) =>
-      "pdf workbench: read \{bytes.length()} byte(s) from " + path
-    @host.HostServiceResponse::BinaryFileWritten(path) =>
-      "pdf workbench: wrote PDF bytes to " + path
-    @host.HostServiceResponse::Unavailable(reason) =>
-      "pdf workbench: binary file service unavailable: " + reason
-    @host.HostServiceResponse::Pending(id) =>
-      "pdf workbench: binary file service pending id=\{id.value}"
-    _ => "pdf workbench: binary file service returned non-binary response"
-  }
-}
-
-///|
 fn pdf_workbench_pending_label(request : @host.HostServiceRequest) -> String {
   match request {
     @host.HostServiceRequest::FileDialog(_) => "PDF file dialog completion"
