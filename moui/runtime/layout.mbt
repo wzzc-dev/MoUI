@@ -35,7 +35,7 @@ fn ElementNode::measure_with_text_system(
   let measured = {
     element_id: self.id,
     size: constraints.constrain(
-      self.measured_size_from_children(children, text_system~),
+      self.measured_size_from_children(children, constraints, text_system~),
     ),
     children,
   }
@@ -105,6 +105,7 @@ fn ElementNode::place_measured_with_text_system(
 fn ElementNode::measured_size_from_children(
   self : ElementNode,
   children : Array[MeasuredNode],
+  constraints : Constraints,
   text_system~ : TextSystem,
 ) -> Size {
   match self.spec {
@@ -204,6 +205,13 @@ fn ElementNode::measured_size_from_children(
         safe_area: Insets::symmetric(),
         viewport: None,
       })
+    WidgetSpec(data) =>
+      (data.layout)({
+        constraints,
+        child_sizes: children.map(child => child.size),
+        text_system,
+        environment: Environment::default(),
+      }).size
     ComponentSpec(_) =>
       if children.length() > 0 {
         children[0].size
@@ -232,6 +240,7 @@ fn child_constraints_for_measure(
     FrameSpec(data) => frame_constraints_for_measure(data, constraints)
     ModifiedSpec(data) => modified_child_constraints(data.modifier, constraints)
     ScrollSpec(_) => Constraints::unbounded()
+    WidgetSpec(data) => (data.child_constraints)(constraints)
     ComponentSpec(_) => constraints
     _ => constraints.loosen()
   }
@@ -347,6 +356,17 @@ fn ElementNode::child_frames_for_place(
         safe_area: Insets::symmetric(),
         viewport: Some(frame.size),
       })
+    WidgetSpec(data) => {
+      let result = (data.layout)({
+        constraints: Constraints::tight(frame.size),
+        child_sizes: self.children.map(child => child.intrinsic_size()),
+        text_system,
+        environment: Environment::default(),
+      })
+      result.child_frames.map(child_frame => {
+        child_frame.offset(dx=frame.origin.x, dy=frame.origin.y)
+      })
+    }
     ModifiedSpec(data) =>
       modified_child_frames(data.modifier, frame, self.children)
     ComponentSpec(_) => if self.children.length() > 0 { [frame] } else { [] }

@@ -369,6 +369,31 @@ fn ElementNode::render_with_environment(
         }
       }
     }
+    WidgetSpec(data) => {
+      let plan = (data.paint)({
+        frame: bounds,
+        child_frames: placed.children.map(child => child.frame),
+        focused: focused == Some(self.id),
+        state: { ..data.state, focused: focused == Some(self.id) },
+        environment: Environment::default(),
+        text_system: environment.text_system,
+      })
+      commands.append(plan.commands)
+      post_commands.append(plan.post_commands)
+      overlay_commands.append(plan.overlay_commands)
+      platform_views.append(plan.platform_views)
+      for index, child in self.children {
+        if index < placed.children.length() {
+          children.push(
+            child.render_with_environment(
+              placed.children[index],
+              focused,
+              environment,
+            ),
+          )
+        }
+      }
+    }
     ComponentSpec(_) =>
       if self.children.length() > 0 && placed.children.length() > 0 {
         children.push(

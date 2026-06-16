@@ -359,6 +359,13 @@ fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
         safe_area: Insets::symmetric(),
         viewport: None,
       })
+    WidgetSpec(data) =>
+      (data.layout)({
+        constraints: Constraints::unbounded(),
+        child_sizes: self.children.map(child => child.intrinsic_size()),
+        text_system: TextSystem::fallback(),
+        environment: Environment::default(),
+      }).size
     ComponentSpec(_) =>
       if self.children.length() > 0 {
         self.children[0].intrinsic_size()

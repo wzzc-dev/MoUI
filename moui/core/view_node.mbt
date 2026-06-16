@@ -1,5 +1,6 @@
 ///|
 priv enum ViewNode[Msg] {
+  WidgetNode(WidgetOps[Msg])
   EmptyNode
   TextNode(TextViewSpec)
   ButtonNode(ButtonViewSpec, Msg?)

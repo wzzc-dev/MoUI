@@ -5,6 +5,10 @@ import {
   "Milky2018/moon_taffy/tree" @taffy,
 }
 
+import {
+  "wzzc-dev/moui/widget",
+} for "test"
+
 options(
   targets: { },
 )
