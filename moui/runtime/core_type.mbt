@@ -1,3 +1,4 @@
+///|
 using @core {
   type AccessibilityContrast,
   type ActionCommand,
@@ -150,6 +151,10 @@ using @core {
   type WebViewEvent,
   type WebViewNavigationPolicy,
   type WebViewSpec,
+  type WidgetDirtyHint,
+  type WidgetEventContext,
+  type WidgetEventResult,
+  type WidgetStateContext,
   type TransitionStyle,
   type TransitionSpec,
 }
@@ -187,7 +192,8 @@ type View[Msg] = @core.View[Msg]
 ///|
 type RichTextFormatter = (String) -> RichTextDocument
 
-///| Normalizes a `TextRange` to grapheme boundaries via the core bridge.
+///|
+/// Normalizes a `TextRange` to grapheme boundaries via the core bridge.
 fn normalize_grapheme_range(
   boundaries : TextGraphemeBoundaries,
   range : TextRange,
@@ -195,7 +201,8 @@ fn normalize_grapheme_range(
   @core.normalize_grapheme_range(boundaries, range)
 }
 
-///| Computes the deletion range around `caret` in grapheme boundaries.
+///|
+/// Computes the deletion range around `caret` in grapheme boundaries.
 fn delete_grapheme_range(
   boundaries : TextGraphemeBoundaries,
   caret : Int,

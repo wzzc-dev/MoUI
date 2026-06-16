@@ -16,6 +16,13 @@ fn ElementNode::dispatch_keyboard(
       ButtonSpec(data) => handle_button_keyboard(self, data, event)
       CheckboxSpec(data) => handle_checkbox_keyboard(self, data, event)
       ModifiedSpec(data) => handle_focused_modified_keyboard(self, data, event)
+      WidgetSpec(data) =>
+        self.dispatch_widget_event(
+          data,
+          AppEvent::Keyboard(event),
+          RenderNode::empty(),
+          TextSystem::fallback(),
+        )
       _ => { changed: false, activated: false, focused: None }
     }
   } else {

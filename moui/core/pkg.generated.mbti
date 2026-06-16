@@ -771,6 +771,8 @@ pub(all) struct InspectorSnapshot {
 } derive(Eq, ToJson, @debug.Debug)
 
 type Key derive(Eq)
+pub fn Key::new(String) -> Self
+pub fn Key::value(Self) -> String
 
 pub(all) struct KeyModifiers {
   shift : Bool
@@ -1928,6 +1930,8 @@ pub fn[Msg] View::spacing(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::theme(Self[Msg], Theme) -> Self[Msg]
 pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
+pub fn[Msg] View::widget(WidgetOps[Msg]) -> Self[Msg]
+pub fn[Msg] View::widget_ops(Self[Msg]) -> WidgetOps[Msg]?
 
 type ViewEnvironment
 pub fn ViewEnvironment::environment(Self) -> Environment
@@ -1937,7 +1941,7 @@ pub fn ViewEnvironment::viewport_size(Self) -> Size
 pub struct ViewLoweringSink[Msg, Node] {
   // private fields
 }
-pub fn[Msg, Node] ViewLoweringSink::new(empty~ : () -> Node, text~ : (String?, String, Size, FontSpec, Color) -> Node, button~ : (String?, String, Size, FontSpec, Color, Brush, Brush, Brush, BorderStyle?, ShadowStyle?, Double, Msg?) -> Node, text_field~ : (String?, Binding[String], String, Size, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?) -> Node, controlled_text_field~ : (String?, String, (String) -> Msg, String, Size, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?) -> Node, rich_text_editor~ : (String?, Binding[String], String, Size, (String) -> RichTextDocument, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, ((Int, TextRange?) -> Msg)?, ((Int) -> Msg)?, ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, Bool) -> Node, controlled_rich_text_editor~ : (String?, String, (String) -> Msg, String, Size, (String) -> RichTextDocument, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, ((Int, TextRange?) -> Msg)?, ((Int) -> Msg)?, ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, Bool) -> Node, image~ : (String?, String, Size?, Double, Double, ImageFit) -> Node, checkbox~ : (String?, String, Binding[Bool], FontSpec, Color, Color, Size) -> Node, controlled_checkbox~ : (String?, String, Bool, (Bool) -> Msg, FontSpec, Color, Color, Size) -> Node, picker~ : (String?, Array[PickerItem], Binding[String], String, FontSpec, Color, Brush, Double, Double) -> Node, controlled_picker~ : (String?, Array[PickerItem], String, (String) -> Msg, String, FontSpec, Color, Brush, Double, Double) -> Node, datepicker~ : (String?, Binding[DateValue], DatePickerMode, String, FontSpec, Color, Brush, Double, DateValue?, DateValue?) -> Node, controlled_datepicker~ : (String?, DateValue, (DateValue) -> Msg, DatePickerMode, String, FontSpec, Color, Brush, Double, DateValue?, DateValue?) -> Node, search_bar~ : (String?, Binding[String], String, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?, Msg?) -> Node, controlled_search_bar~ : (String?, String, (String) -> Msg, String, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?, Msg?) -> Node, web_view~ : (String?, WebViewSpec, ((WebViewEvent) -> Msg)?) -> Node, sheet~ : (String?, Node, SheetPresentationMode, Brush, Double, ShadowStyle?, Msg?) -> Node, flex~ : (String?, Axis, Double, MainAxisAlignment, CrossAxisAlignment, Array[Node]) -> Node, padding~ : (String?, Insets, Node) -> Node, container~ : (String?, Size?, Brush?, BorderStyle?, Double, ShadowStyle?, Node?) -> Node, spacer~ : (String?, Double, Double) -> Node, frame~ : (String?, Double?, Double?, Double?, Double?, Double?, Double?, Node) -> Node, stack~ : (String?, Array[Node]) -> Node, scroll~ : (String?, Point, Size?, ScrollState?, ((Point) -> Msg)?, Node) -> Node, grid~ : (String?, Int, Double, Double, Array[Node]) -> Node, list~ : (String?, Double, Array[Node]) -> Node, key~ : (String, Node) -> Node, padding_modifier~ : (Insets, Node) -> Node, frame_modifier~ : (Double?, Double?, Double?, Double?, Double?, Double?, Node) -> Node, background_modifier~ : (Brush, Node) -> Node, foreground_modifier~ : (Color, Node) -> Node, font_modifier~ : (FontSpec, Node) -> Node, corner_radius_modifier~ : (Double, Node) -> Node, opacity_modifier~ : (Double, Node) -> Node, shadow_modifier~ : (ShadowStyle, Node) -> Node, border_modifier~ : (BorderStyle, Node) -> Node, offset_modifier~ : (Double, Double, Node) -> Node, clip_modifier~ : (Node) -> Node, scale_modifier~ : (Double, Double, Node) -> Node, disabled_modifier~ : (Bool, Node) -> Node, accessibility_label_modifier~ : (String, Node) -> Node, semantics_role_modifier~ : (SemanticsRole, Node) -> Node, semantics_selected_modifier~ : (Bool, Node) -> Node, semantics_pressed_modifier~ : (Bool, Node) -> Node, semantics_checked_modifier~ : (Bool, Node) -> Node, semantics_expanded_modifier~ : (Bool, Node) -> Node, semantics_invalid_modifier~ : (Bool, Node) -> Node, semantics_required_modifier~ : (Bool, Node) -> Node, semantics_description_modifier~ : (String, Node) -> Node, semantics_action_modifier~ : (SemanticsAction, Node) -> Node, focusable_modifier~ : (Bool, Node) -> Node, focus_trap_modifier~ : (Bool, Node) -> Node, on_tap_modifier~ : (Msg, Node) -> Node, on_long_press_modifier~ : (Msg, Node) -> Node, on_double_tap_modifier~ : (Msg, Node) -> Node, on_drag_modifier~ : ((DragGestureEvent) -> Msg, Node) -> Node, on_drag_with_frame_modifier~ : ((DragGestureEvent, Rect) -> Msg, Node) -> Node, on_file_drop_modifier~ : ((Array[String], Point) -> Msg, Node) -> Node, keyboard_shortcut_modifier~ : (KeyboardShortcut, Node) -> Node, flexible_modifier~ : (Double, Node) -> Node, layout_priority_modifier~ : (Double, Node) -> Node, align_modifier~ : (Alignment, Node) -> Node, spacing_modifier~ : (Double, Node) -> Node, main_axis_alignment_modifier~ : (MainAxisAlignment, Node) -> Node, cross_axis_alignment_modifier~ : (CrossAxisAlignment, Node) -> Node, theme_modifier~ : (Theme, Node) -> Node, environment_modifier~ : (Environment, Node) -> Node, on_tap_handler_modifier~ : (() -> Unit, Node) -> Node, on_long_press_handler_modifier~ : (() -> Unit, Node) -> Node, on_double_tap_handler_modifier~ : (() -> Unit, Node) -> Node, on_drag_handler_modifier~ : ((DragGestureEvent) -> Unit, Node) -> Node, on_drag_with_frame_handler_modifier~ : ((DragGestureEvent, Rect) -> Unit, Node) -> Node, on_file_drop_handler_modifier~ : ((Array[String], Point) -> Unit, Node) -> Node, aspect_ratio_modifier~ : (Double, Node) -> Node, intrinsic_width_modifier~ : (Node) -> Node, intrinsic_height_modifier~ : (Node) -> Node, repaint_boundary_modifier~ : (Node) -> Node, custom~ : (String?, (Constraints) -> Size, (Rect) -> Array[DrawCommand], SemanticsRole, String) -> Node, custom_layout~ : (String?, Array[Node], CustomLayoutCache, (CustomLayoutContext) -> Size, (CustomPlacementContext) -> Array[Rect], (Rect) -> Array[DrawCommand], SemanticsRole, String) -> Node, component~ : ((BuildContext) -> View[Msg]) -> Node) -> Self[Msg, Node]
+pub fn[Msg, Node] ViewLoweringSink::new(widget~ : (WidgetOps[Msg]) -> Node, empty~ : () -> Node, text~ : (String?, String, Size, FontSpec, Color) -> Node, button~ : (String?, String, Size, FontSpec, Color, Brush, Brush, Brush, BorderStyle?, ShadowStyle?, Double, Msg?) -> Node, text_field~ : (String?, Binding[String], String, Size, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?) -> Node, controlled_text_field~ : (String?, String, (String) -> Msg, String, Size, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?) -> Node, rich_text_editor~ : (String?, Binding[String], String, Size, (String) -> RichTextDocument, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, ((Int, TextRange?) -> Msg)?, ((Int) -> Msg)?, ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, Bool) -> Node, controlled_rich_text_editor~ : (String?, String, (String) -> Msg, String, Size, (String) -> RichTextDocument, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, ((Int, TextRange?) -> Msg)?, ((Int) -> Msg)?, ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, Bool) -> Node, image~ : (String?, String, Size?, Double, Double, ImageFit) -> Node, checkbox~ : (String?, String, Binding[Bool], FontSpec, Color, Color, Size) -> Node, controlled_checkbox~ : (String?, String, Bool, (Bool) -> Msg, FontSpec, Color, Color, Size) -> Node, picker~ : (String?, Array[PickerItem], Binding[String], String, FontSpec, Color, Brush, Double, Double) -> Node, controlled_picker~ : (String?, Array[PickerItem], String, (String) -> Msg, String, FontSpec, Color, Brush, Double, Double) -> Node, datepicker~ : (String?, Binding[DateValue], DatePickerMode, String, FontSpec, Color, Brush, Double, DateValue?, DateValue?) -> Node, controlled_datepicker~ : (String?, DateValue, (DateValue) -> Msg, DatePickerMode, String, FontSpec, Color, Brush, Double, DateValue?, DateValue?) -> Node, search_bar~ : (String?, Binding[String], String, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?, Msg?) -> Node, controlled_search_bar~ : (String?, String, (String) -> Msg, String, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?, Msg?) -> Node, web_view~ : (String?, WebViewSpec, ((WebViewEvent) -> Msg)?) -> Node, sheet~ : (String?, Node, SheetPresentationMode, Brush, Double, ShadowStyle?, Msg?) -> Node, flex~ : (String?, Axis, Double, MainAxisAlignment, CrossAxisAlignment, Array[Node]) -> Node, padding~ : (String?, Insets, Node) -> Node, container~ : (String?, Size?, Brush?, BorderStyle?, Double, ShadowStyle?, Node?) -> Node, spacer~ : (String?, Double, Double) -> Node, frame~ : (String?, Double?, Double?, Double?, Double?, Double?, Double?, Node) -> Node, stack~ : (String?, Array[Node]) -> Node, scroll~ : (String?, Point, Size?, ScrollState?, ((Point) -> Msg)?, Node) -> Node, grid~ : (String?, Int, Double, Double, Array[Node]) -> Node, list~ : (String?, Double, Array[Node]) -> Node, key~ : (String, Node) -> Node, padding_modifier~ : (Insets, Node) -> Node, frame_modifier~ : (Double?, Double?, Double?, Double?, Double?, Double?, Node) -> Node, background_modifier~ : (Brush, Node) -> Node, foreground_modifier~ : (Color, Node) -> Node, font_modifier~ : (FontSpec, Node) -> Node, corner_radius_modifier~ : (Double, Node) -> Node, opacity_modifier~ : (Double, Node) -> Node, shadow_modifier~ : (ShadowStyle, Node) -> Node, border_modifier~ : (BorderStyle, Node) -> Node, offset_modifier~ : (Double, Double, Node) -> Node, clip_modifier~ : (Node) -> Node, scale_modifier~ : (Double, Double, Node) -> Node, disabled_modifier~ : (Bool, Node) -> Node, accessibility_label_modifier~ : (String, Node) -> Node, semantics_role_modifier~ : (SemanticsRole, Node) -> Node, semantics_selected_modifier~ : (Bool, Node) -> Node, semantics_pressed_modifier~ : (Bool, Node) -> Node, semantics_checked_modifier~ : (Bool, Node) -> Node, semantics_expanded_modifier~ : (Bool, Node) -> Node, semantics_invalid_modifier~ : (Bool, Node) -> Node, semantics_required_modifier~ : (Bool, Node) -> Node, semantics_description_modifier~ : (String, Node) -> Node, semantics_action_modifier~ : (SemanticsAction, Node) -> Node, focusable_modifier~ : (Bool, Node) -> Node, focus_trap_modifier~ : (Bool, Node) -> Node, on_tap_modifier~ : (Msg, Node) -> Node, on_long_press_modifier~ : (Msg, Node) -> Node, on_double_tap_modifier~ : (Msg, Node) -> Node, on_drag_modifier~ : ((DragGestureEvent) -> Msg, Node) -> Node, on_drag_with_frame_modifier~ : ((DragGestureEvent, Rect) -> Msg, Node) -> Node, on_file_drop_modifier~ : ((Array[String], Point) -> Msg, Node) -> Node, keyboard_shortcut_modifier~ : (KeyboardShortcut, Node) -> Node, flexible_modifier~ : (Double, Node) -> Node, layout_priority_modifier~ : (Double, Node) -> Node, align_modifier~ : (Alignment, Node) -> Node, spacing_modifier~ : (Double, Node) -> Node, main_axis_alignment_modifier~ : (MainAxisAlignment, Node) -> Node, cross_axis_alignment_modifier~ : (CrossAxisAlignment, Node) -> Node, theme_modifier~ : (Theme, Node) -> Node, environment_modifier~ : (Environment, Node) -> Node, on_tap_handler_modifier~ : (() -> Unit, Node) -> Node, on_long_press_handler_modifier~ : (() -> Unit, Node) -> Node, on_double_tap_handler_modifier~ : (() -> Unit, Node) -> Node, on_drag_handler_modifier~ : ((DragGestureEvent) -> Unit, Node) -> Node, on_drag_with_frame_handler_modifier~ : ((DragGestureEvent, Rect) -> Unit, Node) -> Node, on_file_drop_handler_modifier~ : ((Array[String], Point) -> Unit, Node) -> Node, aspect_ratio_modifier~ : (Double, Node) -> Node, intrinsic_width_modifier~ : (Node) -> Node, intrinsic_height_modifier~ : (Node) -> Node, repaint_boundary_modifier~ : (Node) -> Node, custom~ : (String?, (Constraints) -> Size, (Rect) -> Array[DrawCommand], SemanticsRole, String) -> Node, custom_layout~ : (String?, Array[Node], CustomLayoutCache, (CustomLayoutContext) -> Size, (CustomPlacementContext) -> Array[Rect], (Rect) -> Array[DrawCommand], SemanticsRole, String) -> Node, component~ : ((BuildContext) -> View[Msg]) -> Node) -> Self[Msg, Node]
 
 pub(all) struct ViewNodeInspectorSummary {
   element_id : ElementId
@@ -2022,6 +2026,106 @@ pub(all) struct WebViewSpec {
 }
 pub fn WebViewSpec::allows_url(Self, String) -> Bool
 pub fn WebViewSpec::new(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Unit)?) -> Self
+
+pub(all) enum WidgetDirtyHint {
+  WidgetClean
+  WidgetPaintDirty
+  WidgetLayoutDirty
+  WidgetBuildDirty
+} derive(Eq, @debug.Debug)
+
+pub(all) struct WidgetEventContext {
+  frame : Rect
+  child_frames : Array[Rect]
+  event : AppEvent
+  focused : Bool
+  state : WidgetStateContext
+  text_system : TextSystem
+  environment : Environment
+}
+
+pub(all) struct WidgetEventResult[Msg] {
+  changed : Bool
+  activated : Bool
+  focused : Bool
+  captured : Bool
+  state : WidgetStateContext?
+  dirty : WidgetDirtyHint
+  messages : Array[Msg]
+} derive(Eq, @debug.Debug)
+pub fn[Msg] WidgetEventResult::ignored() -> Self[Msg]
+pub fn[Msg] WidgetEventResult::message(Msg) -> Self[Msg]
+
+pub(all) struct WidgetIdentity {
+  kind : String
+  key : Key?
+} derive(Eq)
+pub fn WidgetIdentity::new(kind~ : String, key? : String?) -> Self
+
+pub(all) struct WidgetLayoutContext {
+  constraints : Constraints
+  child_sizes : Array[Size]
+  text_system : TextSystem
+  environment : Environment
+}
+
+pub(all) struct WidgetLayoutResult {
+  size : Size
+  child_frames : Array[Rect]
+} derive(Eq, @debug.Debug)
+pub fn WidgetLayoutResult::new(size~ : Size, child_frames? : Array[Rect]) -> Self
+
+pub struct WidgetOps[Msg] {
+  // private fields
+}
+pub fn[Msg] WidgetOps::child_constraints(Self[Msg], Constraints) -> Constraints
+pub fn[Msg] WidgetOps::children(Self[Msg]) -> Array[View[Msg]]
+pub fn[Msg] WidgetOps::event(Self[Msg], WidgetEventContext) -> WidgetEventResult[Msg]
+pub fn[Msg] WidgetOps::focusable(Self[Msg]) -> Bool
+pub fn[Msg] WidgetOps::identity(Self[Msg]) -> WidgetIdentity
+pub fn[Msg] WidgetOps::layout(Self[Msg], WidgetLayoutContext) -> WidgetLayoutResult
+pub fn[Msg, NextMsg] WidgetOps::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
+pub fn[Msg] WidgetOps::new(identity~ : () -> WidgetIdentity, revision? : () -> String, children? : () -> Array[View[Msg]], child_constraints? : (Constraints) -> Constraints, layout~ : (WidgetLayoutContext) -> WidgetLayoutResult, paint? : (WidgetPaintContext) -> WidgetPaintPlan, event? : (WidgetEventContext) -> WidgetEventResult[Msg], semantics? : () -> WidgetSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
+pub fn[Msg] WidgetOps::paint(Self[Msg], WidgetPaintContext) -> WidgetPaintPlan
+pub fn[Msg] WidgetOps::revision(Self[Msg]) -> String
+pub fn[Msg] WidgetOps::semantics(Self[Msg]) -> WidgetSemanticsInfo
+
+pub(all) struct WidgetPaintContext {
+  frame : Rect
+  child_frames : Array[Rect]
+  focused : Bool
+  state : WidgetStateContext
+  environment : Environment
+  text_system : TextSystem
+}
+
+pub(all) struct WidgetPaintPlan {
+  commands : Array[DrawCommand]
+  post_commands : Array[DrawCommand]
+  overlay_commands : Array[DrawCommand]
+  platform_views : Array[PlatformViewPlacement]
+} derive(Eq, @debug.Debug)
+pub fn WidgetPaintPlan::commands(Array[DrawCommand]) -> Self
+pub fn WidgetPaintPlan::empty() -> Self
+
+pub(all) struct WidgetSemanticsInfo {
+  role : SemanticsRole
+  label : String
+  value : String
+  description : String
+  actions : Array[SemanticsAction]
+} derive(Eq, @debug.Debug)
+pub fn WidgetSemanticsInfo::new(role? : SemanticsRole, label? : String, value? : String, description? : String, actions? : Array[SemanticsAction]) -> Self
+
+pub(all) struct WidgetStateContext {
+  focused : Bool
+  hovered : Bool
+  pressed : Bool
+  selected : Bool
+  checked : Bool
+  expanded : Bool
+  disabled : Bool
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 pub type RichTextFormatter = (String) -> RichTextDocument

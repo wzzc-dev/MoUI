@@ -55,11 +55,16 @@ pub fn[Msg] custom_layout(
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  @core.View::primitive_custom_view(
-    measure~,
-    paint~,
-    semantics_role~,
-    semantics_label~,
+  @widget.custom(
+    measure=ctx => @core.WidgetLayoutResult::new(size=measure(ctx.constraints)),
+    paint=ctx => @core.WidgetPaintPlan::commands(paint(ctx.frame)),
+    semantics=() => {
+      @core.WidgetSemanticsInfo::new(
+        role=semantics_role,
+        label=semantics_label,
+        value=semantics_label,
+      )
+    },
   )
 }
 
@@ -72,7 +77,7 @@ pub fn[Msg] custom_children_layout(
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  @core.View::primitive_custom_children_layout_view(
+  @widget.custom_children_layout(
     children~,
     measure~,
     place~,

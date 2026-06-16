@@ -47,6 +47,36 @@ fn ElementNode::dispatch_pointer(
         text_system~,
         capture_lookup~,
       )
+    WidgetSpec(data) => {
+      let child_result = self.dispatch_pointer_to_children(
+        event,
+        render,
+        text_system~,
+        capture_lookup~,
+      )
+      if child_result.activated {
+        child_result
+      } else {
+        let own = self.dispatch_widget_event(
+          data,
+          AppEvent::Pointer(event),
+          render,
+          text_system,
+        )
+        if own.changed || own.activated || own.focused is Some(_) {
+          {
+            changed: child_result.changed || own.changed,
+            activated: own.activated,
+            focused: match own.focused {
+              Some(value) => Some(value)
+              None => child_result.focused
+            },
+          }
+        } else {
+          child_result
+        }
+      }
+    }
     SheetSpec(data) =>
       self.dispatch_sheet_pointer(
         data,
@@ -77,6 +107,58 @@ fn ElementNode::dispatch_pointer(
     | WebViewHostSpec(_)
     | SpacerSpec(_)
     | CustomSpec(_) => { changed: false, activated: false, focused: None }
+  }
+}
+
+///|
+fn ElementNode::dispatch_widget_event(
+  self : ElementNode,
+  data : WidgetViewSpec,
+  event : AppEvent,
+  render : RenderNode,
+  text_system : TextSystem,
+) -> ElementEventResult {
+  let result = (data.event)({
+    frame: render.frame,
+    child_frames: render.children.map(child => child.frame),
+    event,
+    focused: false,
+    state: { ..data.state, focused: false },
+    text_system,
+    environment: Environment::default(),
+  })
+  match result.state {
+    Some(next_state) => self.spec = WidgetSpec({ ..data, state: next_state })
+    None => ()
+  }
+  self.apply_widget_dirty_hint(result.dirty)
+  {
+    changed: result.changed || result.captured,
+    activated: result.activated,
+    focused: if result.focused {
+      Some(self.id)
+    } else {
+      None
+    },
+  }
+}
+
+///|
+fn ElementNode::apply_widget_dirty_hint(
+  self : ElementNode,
+  dirty : WidgetDirtyHint,
+) -> Unit {
+  match dirty {
+    WidgetClean => ()
+    WidgetPaintDirty => self.mark_pointer_paint_dirty()
+    WidgetLayoutDirty => {
+      self.dirty.mark_layout()
+      self.clear_cached_layout_and_paint()
+    }
+    WidgetBuildDirty => {
+      self.dirty.mark_build()
+      self.clear_cached_layout_and_paint()
+    }
   }
 }
 

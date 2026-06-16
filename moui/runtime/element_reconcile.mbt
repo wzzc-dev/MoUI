@@ -84,6 +84,12 @@ fn mount_view_spec_for_runtime(
         }
         None => ()
       }
+    WidgetSpec(data) =>
+      for child_spec in (data.children)() {
+        let mounted = mount_view_spec_for_runtime(child_spec, runtime, next)
+        children.push(mounted.node)
+        next = mounted.next_id
+      }
     FlexSpec(data) =>
       for child_spec in data.children {
         let mounted = mount_view_spec_for_runtime(child_spec, runtime, next)
@@ -186,6 +192,7 @@ fn reconcile_element_for_runtime(
     }
   } else {
     let own_dirty = old.spec.reconcile_dirty_kind(next_spec)
+    let next_spec = preserve_widget_runtime_state(old.spec, next_spec)
     old.spec = next_spec
     old.key = old.spec.identity_key()
     let children_result = if old.spec is ComponentSpec(_) {
@@ -201,6 +208,15 @@ fn reconcile_element_for_runtime(
     let dirty_kind = own_dirty.combine(children_result.dirty_kind)
     old.apply_reconcile_dirty(dirty_kind)
     { node: old, next_id: children_result.next_id, dirty_kind }
+  }
+}
+
+///|
+fn preserve_widget_runtime_state(old : ViewSpec, next : ViewSpec) -> ViewSpec {
+  match (old, next) {
+    (WidgetSpec(old_data), WidgetSpec(next_data)) =>
+      WidgetSpec({ ..next_data, state: old_data.state })
+    _ => next
   }
 }
 
@@ -318,6 +334,7 @@ fn child_specs(spec : ViewSpec) -> Array[ViewSpec] {
       }
     ModifiedSpec(data) => [data.child]
     ComponentSpec(_) => []
+    WidgetSpec(data) => (data.children)()
     _ => []
   }
 }

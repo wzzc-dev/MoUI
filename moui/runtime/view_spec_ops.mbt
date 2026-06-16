@@ -26,6 +26,11 @@ fn ViewSpec::identity_key(self : ViewSpec) -> Key? {
     CustomSpec(data) => data.key
     CustomLayoutSpec(data) => data.key
     ComponentSpec(data) => data.key
+    WidgetSpec(data) =>
+      match data.identity.key {
+        Some(key) => Some(Key::new(key.value()))
+        None => None
+      }
   }
 }
 
@@ -57,6 +62,11 @@ fn ViewSpec::with_key(self : ViewSpec, key : Key) -> ViewSpec {
     CustomSpec(data) => CustomSpec({ ..data, key: Some(key) })
     CustomLayoutSpec(data) => CustomLayoutSpec({ ..data, key: Some(key) })
     ComponentSpec(data) => ComponentSpec({ ..data, key: Some(key) })
+    WidgetSpec(data) =>
+      WidgetSpec({
+        ..data,
+        identity: { ..data.identity, key: Some(@core.Key::new(key.value)) },
+      })
   }
 }
 
@@ -88,6 +98,7 @@ fn ViewSpec::kind(self : ViewSpec) -> Int {
     ComponentSpec(_) => 22
     RichTextEditorSpec(_) => 23
     CustomLayoutSpec(_) => 24
+    WidgetSpec(data) => stable_widget_kind(data.identity.kind)
   }
 }
 
@@ -119,6 +130,7 @@ fn ViewSpec::inspector_kind_label(self : ViewSpec) -> String {
     CustomSpec(_) => "Custom"
     CustomLayoutSpec(_) => "CustomLayout"
     ComponentSpec(_) => "Component"
+    WidgetSpec(data) => data.identity.kind
   }
 }
 
@@ -133,6 +145,7 @@ fn ViewSpec::inspector_is_control(self : ViewSpec) -> Bool {
     | DatePickerSpec(_)
     | SearchBarSpec(_)
     | WebViewHostSpec(_) => true
+    WidgetSpec(data) => (data.focusable)()
     _ => false
   }
 }
@@ -141,6 +154,17 @@ fn ViewSpec::inspector_is_control(self : ViewSpec) -> Bool {
 fn ViewSpec::same_identity(self : ViewSpec, next : ViewSpec) -> Bool {
   self.kind() == next.kind() && self.identity_key() == next.identity_key()
 }
+
+///|
+fn stable_widget_kind(kind : String) -> Int {
+  let mut hash = 0
+  for ch in kind {
+    hash = (hash * 31 + ch.to_int()) % 1000000007
+  }
+  1000 + (if hash < 0 { -hash } else { hash })
+}
+
+///|
 
 ///|
 fn ViewSpec::font(self : ViewSpec, font : FontSpec) -> ViewSpec {

@@ -15,14 +15,14 @@ pub fn[Msg] checkbox(
   let foreground = resolve_control_color(foreground, style.foreground)
   let check_color = resolve_control_color(check_color, style.selected_color)
   let box_size = resolve_control_double(box_size, style.control_size)
-  @core.View::primitive_controlled_checkbox_view(
+  @widget.checkbox(
     label~,
-    checked~,
-    on_change~,
+    checked=@core.Binding::new(get=() => checked, set=_value => ()),
     font~,
     foreground~,
     check_color~,
     size=@core.Size::new(width=box_size, height~),
+    on_change=Some(on_change),
   )
 }
 
@@ -42,7 +42,7 @@ pub fn[Msg] checkbox_binding(
   let foreground = resolve_control_color(foreground, style.foreground)
   let check_color = resolve_control_color(check_color, style.selected_color)
   let box_size = resolve_control_double(box_size, style.control_size)
-  @core.View::primitive_checkbox_view(
+  @widget.checkbox(
     label~,
     checked~,
     font~,

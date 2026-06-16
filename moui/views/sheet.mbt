@@ -7,7 +7,7 @@ pub fn[Msg] sheet(
   shadow? : @core.ShadowStyle? = None,
   on_dismiss? : Msg? = None,
 ) -> @core.View[Msg] {
-  @core.View::primitive_sheet_view(
+  @widget.sheet(
     content~,
     presentation_mode~,
     background=@core.Brush::solid(background),

@@ -15,6 +15,7 @@ fn ElementNode::dispatch_drag_drop(
     | GridSpec(_)
     | ListSpec(_)
     | CustomLayoutSpec(_)
+    | WidgetSpec(_)
     | ComponentSpec(_)
     | SheetSpec(_) => self.dispatch_drag_drop_to_children(event, render)
     _ => { changed: false, activated: false, focused: None }

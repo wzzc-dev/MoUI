@@ -4,6 +4,7 @@ fn[Msg, NextMsg] map_view_node(
   map : (Msg) -> NextMsg,
 ) -> ViewNode[NextMsg] {
   match node {
+    WidgetNode(ops) => WidgetNode(ops.map(map))
     EmptyNode => EmptyNode
     TextNode(data) => TextNode(data)
     ButtonNode(data, message) =>

@@ -197,6 +197,16 @@ fn ElementNode::semantics_info(
         description: "",
         actions: [],
       }
+    WidgetSpec(data) => {
+      let info = (data.semantics)()
+      {
+        role: info.role,
+        label: info.label,
+        value: info.value,
+        description: info.description,
+        actions: info.actions,
+      }
+    }
     EmptySpec | SpacerSpec(_) =>
       { role: None, label: "", value: "", description: "", actions: [] }
     FlexSpec(_)

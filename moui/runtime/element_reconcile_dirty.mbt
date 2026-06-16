@@ -171,6 +171,12 @@ fn ViewSpec::reconcile_dirty_kind(
       old.modifier.reconcile_dirty_kind(new.modifier)
     (CustomSpec(_), CustomSpec(_)) => ReconcileLayout
     (CustomLayoutSpec(_), CustomLayoutSpec(_)) => ReconcileLayout
+    (WidgetSpec(old), WidgetSpec(new)) =>
+      if old.revision != "" && old.revision == new.revision {
+        ReconcileClean
+      } else {
+        ReconcileLayout
+      }
     (ComponentSpec(_), ComponentSpec(_)) => ReconcileClean
     _ => ReconcileLayout
   }

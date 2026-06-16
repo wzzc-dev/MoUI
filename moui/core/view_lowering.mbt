@@ -1,5 +1,6 @@
 ///|
 pub struct ViewLoweringSink[Msg, Node] {
+  priv widget : (WidgetOps[Msg]) -> Node
   priv empty : () -> Node
   priv text : (String?, String, Size, FontSpec, Color) -> Node
   priv button : (
@@ -304,6 +305,7 @@ pub struct ViewLoweringSink[Msg, Node] {
 
 ///|
 pub fn[Msg, Node] ViewLoweringSink::new(
+  widget~ : (WidgetOps[Msg]) -> Node,
   empty~ : () -> Node,
   text~ : (String?, String, Size, FontSpec, Color) -> Node,
   button~ : (
@@ -589,6 +591,7 @@ pub fn[Msg, Node] ViewLoweringSink::new(
   component~ : ((BuildContext) -> View[Msg]) -> Node,
 ) -> ViewLoweringSink[Msg, Node] {
   {
+    widget,
     empty,
     text,
     button,
@@ -695,6 +698,7 @@ fn[Msg, Node] lower_view_node_for_runtime(
   sink : ViewLoweringSink[Msg, Node],
 ) -> Node {
   match node {
+    WidgetNode(ops) => (sink.widget)(ops)
     EmptyNode => (sink.empty)()
     TextNode(data) =>
       (sink.text)(

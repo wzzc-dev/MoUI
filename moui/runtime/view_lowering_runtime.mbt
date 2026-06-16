@@ -11,8 +11,55 @@ fn[Msg] lower_view_for_runtime(
   view : @core.View[Msg],
   emit : (Msg) -> Unit,
 ) -> ViewSpec {
+  match view.widget_ops() {
+    Some(ops) => widget_ops_for_runtime(ops, emit)
+    None => lower_legacy_view_for_runtime(view, emit)
+  }
+}
+
+///|
+fn[Msg] widget_ops_for_runtime(
+  ops : @core.WidgetOps[Msg],
+  emit : (Msg) -> Unit,
+) -> ViewSpec {
+  WidgetSpec({
+    identity: ops.identity(),
+    revision: ops.revision(),
+    children: () => {
+      ops.children().map(child => lower_view_for_runtime(child, emit))
+    },
+    child_constraints: constraints => ops.child_constraints(constraints),
+    layout: context => ops.layout(context),
+    paint: context => ops.paint(context),
+    event: context => {
+      let result = ops.event(context)
+      for message in result.messages {
+        emit(message)
+      }
+      {
+        changed: result.changed,
+        activated: result.activated,
+        focused: result.focused,
+        captured: result.captured,
+        state: result.state,
+        dirty: result.dirty,
+        messages: [],
+      }
+    },
+    semantics: () => ops.semantics(),
+    focusable: () => ops.focusable(),
+    state: widget_state_context_default(),
+  })
+}
+
+///|
+fn[Msg] lower_legacy_view_for_runtime(
+  view : @core.View[Msg],
+  emit : (Msg) -> Unit,
+) -> ViewSpec {
   view.lower_for_runtime(
     @core.ViewLoweringSink::new(
+      widget=ops => widget_ops_for_runtime(ops, emit),
       empty=() => ViewSpec::EmptySpec,
       text=(key, text, size, font, color) => {
         TextSpec({ key: key_from_runtime_string(key), text, size, font, color })
