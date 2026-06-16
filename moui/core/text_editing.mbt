@@ -6,6 +6,19 @@ pub(all) struct TextCommandResult {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub fn TextCommandResult::ignored() -> TextCommandResult {
+  { handled: false, changed: false, clipboard_text: None }
+}
+
+///|
+pub fn TextCommandResult::handled(
+  changed? : Bool = false,
+  clipboard_text? : String? = None,
+) -> TextCommandResult {
+  { handled: true, changed, clipboard_text }
+}
+
+///|
 priv enum TextCaretDirection {
   MoveLeft
   MoveRight

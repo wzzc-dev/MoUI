@@ -1,6 +1,6 @@
 ///|
 priv struct RuntimeState {
-  mut root_spec : ViewSpec
+  mut root_widget : RuntimeWidget
   mut element_tree : ElementTree
   mut layout_tree : LayoutTree
   mut render_tree : RenderTree
@@ -42,22 +42,22 @@ fn[Msg] RuntimeState::new_view(
     Some(handler) => handler
     None => _message => ()
   }
-  RuntimeState::new_spec(
-    root=lower_view_for_runtime(root, emit),
+  RuntimeState::new_runtime_widget(
+    root=erase_view_for_runtime(root, emit),
     size~,
     environment~,
   )
 }
 
 ///|
-fn RuntimeState::new_spec(
-  root~ : ViewSpec,
+fn RuntimeState::new_runtime_widget(
+  root~ : RuntimeWidget,
   size~ : Size,
   environment? : Environment = Environment::default(),
 ) -> RuntimeState {
-  let initial = mount_view_spec_with_next(root, 1)
+  let initial = mount_runtime_widget_with_next(root, 1)
   let state = {
-    root_spec: root,
+    root_widget: root,
     element_tree: ElementTree::new(initial.node),
     layout_tree: LayoutTree::empty(),
     render_tree: RenderTree::empty(),
@@ -87,7 +87,7 @@ fn RuntimeState::new_spec(
     clock: Clock::new(),
     saveable_state: SaveableStateStore::new(),
   }
-  let mounted = mount_view_spec_for_runtime(root, Some(state), 1)
+  let mounted = mount_runtime_widget_for_runtime(root, Some(state), 1)
   state.element_tree = ElementTree::new(mounted.node)
   state.next_element_id = mounted.next_id
   state.mark_dirty(state.element_tree.id())
@@ -156,7 +156,7 @@ fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.element_tree = ElementTree::empty()
   self.layout_tree = LayoutTree::empty()
   self.render_tree = RenderTree::empty()
-  self.root_spec = ViewSpec::EmptySpec
+  self.root_widget = empty_runtime_widget()
   self.next_element_id = 1
   self.dirty_elements.clear()
   self.dirty_build_elements.clear()
@@ -182,7 +182,7 @@ fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
   self.rebuild_pass_count = self.rebuild_pass_count + 1
   let result = reconcile_element_for_runtime(
     self.element_tree.root,
-    self.root_spec,
+    self.root_widget,
     Some(self),
     self.next_element_id,
   )
@@ -304,6 +304,7 @@ fn RuntimeState::focused_text_input(self : RuntimeState) -> TextInputState {
           target,
           self.render_tree.root,
           text_system=self.text_system,
+          environment=self.environment,
         ) {
         Some(state) => state
         None => TextInputState::none()

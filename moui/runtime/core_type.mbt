@@ -143,7 +143,7 @@ using @core {
   type Theme,
   type Transform2D,
   type ViewEnvironment,
-  type ViewNodeInspectorSummary,
+  type WidgetInspectorSummary,
   type ViewStyle,
   type ViewTreeInspectorSnapshot,
   type VisualStyle,

@@ -21,7 +21,7 @@ pub fn[Msg] rich_text_editor(
   }
   let normal = resolved_style.normal
   let focused = resolved_style.focused
-  @core.View::primitive_controlled_rich_text_editor_view(
+  @widget.controlled_rich_text_editor(
     value~,
     on_input~,
     placeholder~,
@@ -99,7 +99,7 @@ pub fn[Msg] rich_text_editor_binding(
   }
   let normal = resolved_style.normal
   let focused = resolved_style.focused
-  @core.View::primitive_rich_text_editor_view(
+  @widget.rich_text_editor(
     value~,
     placeholder~,
     size=@core.Size::new(width~, height~),

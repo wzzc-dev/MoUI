@@ -47,18 +47,21 @@ fn ReconcileDirtyKind::combine(
 }
 
 ///|
-fn mount_view_spec(spec : ViewSpec) -> ElementNode {
-  mount_view_spec_with_next(spec, 1).node
+fn mount_runtime_widget(spec : RuntimeWidget) -> ElementNode {
+  mount_runtime_widget_with_next(spec, 1).node
 }
 
 ///|
-fn mount_view_spec_with_next(spec : ViewSpec, next_id : Int) -> MountResult {
-  mount_view_spec_for_runtime(spec, None, next_id)
+fn mount_runtime_widget_with_next(
+  spec : RuntimeWidget,
+  next_id : Int,
+) -> MountResult {
+  mount_runtime_widget_for_runtime(spec, None, next_id)
 }
 
 ///|
-fn mount_view_spec_for_runtime(
-  spec : ViewSpec,
+fn mount_runtime_widget_for_runtime(
+  spec : RuntimeWidget,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> MountResult {
@@ -67,100 +70,31 @@ fn mount_view_spec_for_runtime(
   let children : Array[ElementNode] = []
   let mut component_subscriptions : Array[StateSubscription] = []
   let mut component_effects : Array[ComponentEffect] = []
-  match spec {
-    ComponentSpec(data) =>
-      match runtime {
-        Some(runtime) => {
-          let built = build_component_spec(data.component, runtime, id, [], [])
-          component_subscriptions = built.subscriptions
-          component_effects = built.effects
-          let mounted = mount_view_spec_for_runtime(
-            built.child_spec,
-            Some(runtime),
-            next,
-          )
-          children.push(mounted.node)
-          next = mounted.next_id
-        }
-        None => ()
-      }
-    WidgetSpec(data) =>
-      for child_spec in (data.children)() {
-        let mounted = mount_view_spec_for_runtime(child_spec, runtime, next)
-        children.push(mounted.node)
-        next = mounted.next_id
-      }
-    FlexSpec(data) =>
-      for child_spec in data.children {
-        let mounted = mount_view_spec_for_runtime(child_spec, runtime, next)
-        children.push(mounted.node)
-        next = mounted.next_id
-      }
-    PaddingSpec(data) => {
-      let mounted = mount_view_spec_for_runtime(data.child, runtime, next)
-      children.push(mounted.node)
-      next = mounted.next_id
-    }
-    FrameSpec(data) => {
-      let mounted = mount_view_spec_for_runtime(data.child, runtime, next)
-      children.push(mounted.node)
-      next = mounted.next_id
-    }
-    StackSpec(data) =>
-      for child_spec in data.children {
-        let mounted = mount_view_spec_for_runtime(child_spec, runtime, next)
-        children.push(mounted.node)
-        next = mounted.next_id
-      }
-    ScrollSpec(data) => {
-      let mounted = mount_view_spec_for_runtime(data.child, runtime, next)
-      children.push(mounted.node)
-      next = mounted.next_id
-    }
-    GridSpec(data) =>
-      for child_spec in data.children {
-        let mounted = mount_view_spec_for_runtime(child_spec, runtime, next)
-        children.push(mounted.node)
-        next = mounted.next_id
-      }
-    ListSpec(data) =>
-      for child_spec in data.children {
-        let mounted = mount_view_spec_for_runtime(child_spec, runtime, next)
-        children.push(mounted.node)
-        next = mounted.next_id
-      }
-    CustomLayoutSpec(data) =>
-      for child_spec in data.children {
-        let mounted = mount_view_spec_for_runtime(child_spec, runtime, next)
-        children.push(mounted.node)
-        next = mounted.next_id
-      }
-    SheetSpec(data) => {
-      let mounted = mount_view_spec_for_runtime(data.content, runtime, next)
-      children.push(mounted.node)
-      next = mounted.next_id
-    }
-    ContainerSpec(data) =>
-      match data.child {
-        Some(child) => {
-          let mounted = mount_view_spec_for_runtime(child, runtime, next)
-          children.push(mounted.node)
-          next = mounted.next_id
-        }
-        None => ()
-      }
-    ModifiedSpec(data) => {
-      let mounted = mount_view_spec_for_runtime(data.child, runtime, next)
+  match (spec.build_child, runtime) {
+    (Some(build), Some(runtime)) => {
+      let built = build_component_child(build, runtime, id, [], [])
+      component_subscriptions = built.subscriptions
+      component_effects = built.effects
+      let mounted = mount_runtime_widget_for_runtime(
+        built.child_widget,
+        Some(runtime),
+        next,
+      )
       children.push(mounted.node)
       next = mounted.next_id
     }
     _ => ()
   }
+  for child_widget in (spec.children)() {
+    let mounted = mount_runtime_widget_for_runtime(child_widget, runtime, next)
+    children.push(mounted.node)
+    next = mounted.next_id
+  }
   {
     node: {
       id,
       key: spec.identity_key(),
-      spec,
+      widget: spec,
       children,
       dirty: DirtyFlags::all(),
       control: ElementControlState::new(),
@@ -178,31 +112,33 @@ fn mount_view_spec_for_runtime(
 ///|
 fn reconcile_element_for_runtime(
   old : ElementNode,
-  next_spec : ViewSpec,
+  next_widget : RuntimeWidget,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ReconcileResult {
-  if !old.spec.same_identity(next_spec) {
+  if !old.widget.same_identity(next_widget) {
     old.cancel_component_tree_subscriptions()
-    let mounted = mount_view_spec_for_runtime(next_spec, runtime, next_id)
+    let mounted = mount_runtime_widget_for_runtime(
+      next_widget, runtime, next_id,
+    )
     {
       node: mounted.node,
       next_id: mounted.next_id,
       dirty_kind: ReconcileLayout,
     }
   } else {
-    let own_dirty = old.spec.reconcile_dirty_kind(next_spec)
-    let next_spec = preserve_widget_runtime_state(old.spec, next_spec)
-    old.spec = next_spec
-    old.key = old.spec.identity_key()
-    let children_result = if old.spec is ComponentSpec(_) {
+    let own_dirty = old.widget.reconcile_dirty_kind(next_widget)
+    let next_widget = preserve_widget_runtime_state(old.widget, next_widget)
+    old.widget = next_widget
+    old.key = old.widget.identity_key()
+    let children_result = if old.widget.is_building_widget() {
       {
         children: old.children,
         next_id,
         dirty_kind: ReconcileDirtyKind::ReconcileClean,
       }
     } else {
-      reconcile_children_for_runtime(old.children, old.spec, runtime, next_id)
+      reconcile_children_for_runtime(old.children, old.widget, runtime, next_id)
     }
     old.children = children_result.children
     let dirty_kind = own_dirty.combine(children_result.dirty_kind)
@@ -212,22 +148,21 @@ fn reconcile_element_for_runtime(
 }
 
 ///|
-fn preserve_widget_runtime_state(old : ViewSpec, next : ViewSpec) -> ViewSpec {
-  match (old, next) {
-    (WidgetSpec(old_data), WidgetSpec(next_data)) =>
-      WidgetSpec({ ..next_data, state: old_data.state })
-    _ => next
-  }
+fn preserve_widget_runtime_state(
+  old : RuntimeWidget,
+  next : RuntimeWidget,
+) -> RuntimeWidget {
+  { ..next, state: old.state }
 }
 
 ///|
 fn reconcile_children_for_runtime(
   old_children : Array[ElementNode],
-  next_spec : ViewSpec,
+  next_widget : RuntimeWidget,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ChildrenReconcileResult {
-  let next_specs = child_specs(next_spec)
+  let next_widgets = child_widgets(next_widget)
   let children : Array[ElementNode] = []
   let used : Array[Bool] = []
   for _ in old_children {
@@ -235,14 +170,14 @@ fn reconcile_children_for_runtime(
   }
   let mut next = next_id
   let mut dirty = ReconcileDirtyKind::ReconcileClean
-  for index, child_spec in next_specs {
-    let old_index = find_reusable_child(old_children, used, child_spec, index)
+  for index, child_widget in next_widgets {
+    let old_index = find_reusable_child(old_children, used, child_widget, index)
     match old_index {
       Some(old_index) => {
         used[old_index] = true
         let result = reconcile_element_for_runtime(
           old_children[old_index],
-          child_spec,
+          child_widget,
           runtime,
           next,
         )
@@ -251,7 +186,9 @@ fn reconcile_children_for_runtime(
         dirty = dirty.combine(result.dirty_kind)
       }
       None => {
-        let mounted = mount_view_spec_for_runtime(child_spec, runtime, next)
+        let mounted = mount_runtime_widget_for_runtime(
+          child_widget, runtime, next,
+        )
         children.push(mounted.node)
         next = mounted.next_id
         dirty = dirty.combine(ReconcileDirtyKind::ReconcileLayout)
@@ -289,15 +226,15 @@ fn ElementNode::apply_reconcile_dirty(
 fn find_reusable_child(
   old_children : Array[ElementNode],
   used : Array[Bool],
-  child_spec : ViewSpec,
+  child_widget : RuntimeWidget,
   index : Int,
 ) -> Int? {
-  match child_spec.identity_key() {
+  match child_widget.identity_key() {
     Some(key) => {
       for old_index, old_child in old_children {
         if !used[old_index] &&
           old_child.key == Some(key) &&
-          old_child.spec.kind() == child_spec.kind() {
+          old_child.widget.kind() == child_widget.kind() {
           return Some(old_index)
         }
       }
@@ -307,7 +244,7 @@ fn find_reusable_child(
       if index < old_children.length() &&
         !used[index] &&
         old_children[index].key is None &&
-        old_children[index].spec.kind() == child_spec.kind() {
+        old_children[index].widget.kind() == child_widget.kind() {
         Some(index)
       } else {
         None
@@ -316,25 +253,6 @@ fn find_reusable_child(
 }
 
 ///|
-fn child_specs(spec : ViewSpec) -> Array[ViewSpec] {
-  match spec {
-    FlexSpec(data) => data.children
-    PaddingSpec(data) => [data.child]
-    FrameSpec(data) => [data.child]
-    StackSpec(data) => data.children
-    ScrollSpec(data) => [data.child]
-    GridSpec(data) => data.children
-    ListSpec(data) => data.children
-    CustomLayoutSpec(data) => data.children
-    SheetSpec(data) => [data.content]
-    ContainerSpec(data) =>
-      match data.child {
-        Some(child) => [child]
-        None => []
-      }
-    ModifiedSpec(data) => [data.child]
-    ComponentSpec(_) => []
-    WidgetSpec(data) => (data.children)()
-    _ => []
-  }
+fn child_widgets(spec : RuntimeWidget) -> Array[RuntimeWidget] {
+  (spec.children)()
 }

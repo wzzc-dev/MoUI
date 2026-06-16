@@ -159,11 +159,12 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="2038")
+  inspect(core.max_lines, content="2137")
   inspect(core.max_pub_lines, content="563")
-  inspect(core.max_pub_all_lines, content="154")
-  assert_true(core.required_tokens.contains("pub struct ViewLoweringSink"))
-  assert_true(core.required_tokens.contains("View::lower_for_runtime"))
+  inspect(core.max_pub_all_lines, content="167")
+  assert_true(core.required_tokens.contains("pub struct WidgetOps[Msg]"))
+  assert_true(core.required_tokens.contains("View::widget"))
+  assert_true(core.required_tokens.contains("WidgetOps::new"))
   assert_true(
     core.forbidden_tokens.contains("pub(all) struct EffectDescriptor"),
   )
@@ -174,6 +175,14 @@ test "core descriptor payloads stay opaque" {
   assert_true(core.forbidden_tokens.contains("type RuntimeKernel"))
   assert_true(core.forbidden_tokens.contains("RuntimeKernel::"))
   assert_true(core.forbidden_tokens.contains("type ViewNode["))
+  assert_true(core.forbidden_tokens.contains("ViewLoweringSink"))
+  assert_true(core.forbidden_tokens.contains("View::lower_for_runtime("))
+  assert_true(core.forbidden_tokens.contains("View::primitive_button_view("))
+  assert_true(
+    core.forbidden_tokens.contains(
+      "View::primitive_controlled_text_field_view(",
+    ),
+  )
   assert_true(core.forbidden_tokens.contains("type ViewSpec"))
   assert_true(core.forbidden_tokens.contains("type ElementNode"))
   assert_true(core.forbidden_tokens.contains("type ElementTree"))
@@ -219,6 +228,9 @@ test "core runtime boundary guard covers moved implementation" {
   assert_true(tokens.contains("DirtyFlags"))
   assert_true(tokens.contains("enum ViewSpec"))
   assert_true(tokens.contains("ViewSpec::FlexSpec"))
+  assert_true(tokens.contains("ViewLoweringSink"))
+  assert_true(tokens.contains("View::lower_for_runtime("))
+  assert_true(tokens.contains("View::primitive_button_view("))
   assert_true(tokens.contains("realize_view("))
   let paths = forbidden_core_runtime_boundary_source_paths()
   assert_true(paths.contains("moui/core/element.mbt"))
@@ -252,7 +264,7 @@ test "core view construction is reserved for views facade consumers" {
   assert_true(tokens.contains("@core.View::controlled_text_field("))
   assert_true(tokens.contains("@core.View::controlled_search_bar("))
   assert_true(tokens.contains("@core.View::primitive_button_view("))
-  assert_true(tokens.contains("@core.View::primitive_component_view("))
+  assert_true(tokens.contains("@core.View::primitive_web_view("))
   assert_true(
     tokens.contains("@core.View::primitive_controlled_text_field_view("),
   )

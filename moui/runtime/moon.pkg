@@ -1,8 +1,5 @@
 import {
   "wzzc-dev/moui/core",
-  "Milky2018/moon_taffy/geometry" @taffy_geometry,
-  "Milky2018/moon_taffy/style" @taffy_style,
-  "Milky2018/moon_taffy/tree" @taffy,
 }
 
 import {

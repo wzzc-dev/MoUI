@@ -14,10 +14,10 @@ fn ElementNode::rebuild_dirty_components(
   let mut next = next_id
   let mut dirty_kind = ReconcileDirtyKind::ReconcileClean
   if self.dirty.needs_build {
-    match self.spec {
-      ComponentSpec(data) => {
-        let built = build_component_spec(
-          data.component,
+    match self.widget.build_child {
+      Some(build) => {
+        let built = build_component_child(
+          build,
           runtime,
           self.id,
           self.component.component_subscriptions,
@@ -28,13 +28,13 @@ fn ElementNode::rebuild_dirty_components(
         let result = if self.children.length() > 0 {
           reconcile_element_for_runtime(
             self.children[0],
-            built.child_spec,
+            built.child_widget,
             Some(runtime),
             next,
           )
         } else {
-          let mounted = mount_view_spec_for_runtime(
-            built.child_spec,
+          let mounted = mount_runtime_widget_for_runtime(
+            built.child_widget,
             Some(runtime),
             next,
           )
@@ -48,7 +48,7 @@ fn ElementNode::rebuild_dirty_components(
         next = result.next_id
         dirty_kind = dirty_kind.combine(result.dirty_kind)
       }
-      _ => ()
+      None => ()
     }
     self.dirty.needs_build = false
     self.apply_reconcile_dirty(dirty_kind)
@@ -95,10 +95,10 @@ fn ElementNode::has_dirty_paint(self : ElementNode) -> Bool {
 fn ElementNode::view_tree_inspector_snapshot(
   self : ElementNode,
 ) -> ViewTreeInspectorSnapshot {
-  let nodes : Array[ViewNodeInspectorSummary] = []
-  self.collect_view_node_summaries(nodes)
+  let nodes : Array[WidgetInspectorSummary] = []
+  self.collect_widget_summaries(nodes)
   {
-    root_kind: self.spec.inspector_kind_label(),
+    root_kind: self.widget.inspector_kind_label(),
     node_count: nodes.length(),
     component_count: self.inspector_component_count(),
     control_count: self.inspector_control_count(),
@@ -111,13 +111,13 @@ fn ElementNode::view_tree_inspector_snapshot(
 }
 
 ///|
-fn ElementNode::collect_view_node_summaries(
+fn ElementNode::collect_widget_summaries(
   self : ElementNode,
-  nodes : Array[ViewNodeInspectorSummary],
+  nodes : Array[WidgetInspectorSummary],
 ) -> Unit {
   nodes.push({
     element_id: self.id,
-    kind: self.spec.inspector_kind_label(),
+    kind: self.widget.inspector_kind_label(),
     key: match self.key {
       Some(key) => key.value
       None => ""
@@ -128,13 +128,13 @@ fn ElementNode::collect_view_node_summaries(
     needs_paint: self.dirty.needs_paint,
   })
   for child in self.children {
-    child.collect_view_node_summaries(nodes)
+    child.collect_widget_summaries(nodes)
   }
 }
 
 ///|
 fn ElementNode::inspector_component_count(self : ElementNode) -> Int {
-  let mut count = if self.spec is ComponentSpec(_) { 1 } else { 0 }
+  let mut count = if self.widget.is_building_widget() { 1 } else { 0 }
   for child in self.children {
     count = count + child.inspector_component_count()
   }
@@ -143,7 +143,7 @@ fn ElementNode::inspector_component_count(self : ElementNode) -> Int {
 
 ///|
 fn ElementNode::inspector_control_count(self : ElementNode) -> Int {
-  let mut count = if self.spec.inspector_is_control() { 1 } else { 0 }
+  let mut count = if self.widget.inspector_is_control() { 1 } else { 0 }
   for child in self.children {
     count = count + child.inspector_control_count()
   }
@@ -152,7 +152,11 @@ fn ElementNode::inspector_control_count(self : ElementNode) -> Int {
 
 ///|
 fn ElementNode::inspector_modified_count(self : ElementNode) -> Int {
-  let mut count = if self.spec is ModifiedSpec(_) { 1 } else { 0 }
+  let mut count = if self.widget.identity.kind.has_prefix("Modified<") {
+    1
+  } else {
+    0
+  }
   for child in self.children {
     count = count + child.inspector_modified_count()
   }
@@ -232,26 +236,22 @@ fn ElementNode::collect_dirty_element_ids_by_kind(
 
 ///|
 fn ElementNode::mark_root_component_build_dirty(self : ElementNode) -> Bool {
-  match self.spec {
-    ComponentSpec(_) => {
-      self.dirty.mark_build()
-      self.clear_cached_layout_and_paint()
-      true
-    }
-    _ => false
+  if self.widget.is_building_widget() {
+    self.dirty.mark_build()
+    self.clear_cached_layout_and_paint()
+    true
+  } else {
+    false
   }
 }
 
 ///|
 fn ElementNode::mark_component_tree_build_dirty(self : ElementNode) -> Bool {
   let mut found = false
-  match self.spec {
-    ComponentSpec(_) => {
-      self.dirty.mark_build()
-      self.clear_cached_layout_and_paint()
-      found = true
-    }
-    _ => ()
+  if self.widget.is_building_widget() {
+    self.dirty.mark_build()
+    self.clear_cached_layout_and_paint()
+    found = true
   }
   for child in self.children {
     found = child.mark_component_tree_build_dirty() || found

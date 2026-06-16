@@ -28,6 +28,7 @@ fn RuntimeState::layout_current_tree(self : RuntimeState) -> Unit {
   self.layout_tree = {
     root: self.element_tree.root.place_with_text_system(
       Rect::new(x=0.0, y=0.0, width=self.size.width, height=self.size.height),
+      environment=self.environment,
       text_system=self.text_system,
       layout_direction=self.environment.layout_direction,
     ),

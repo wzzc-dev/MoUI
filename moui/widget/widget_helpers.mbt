@@ -68,6 +68,15 @@ fn widget_max_double(left : Double, right : Double) -> Double {
 }
 
 ///|
+fn widget_min_double(left : Double, right : Double) -> Double {
+  if left <= right {
+    left
+  } else {
+    right
+  }
+}
+
+///|
 fn widget_max_int(left : Int, right : Int) -> Int {
   if left >= right {
     left
@@ -130,8 +139,18 @@ fn[Msg] widget_event_result(
   focused? : Bool = false,
   captured? : Bool = false,
   state? : @core.WidgetStateContext? = None,
+  text_control? : @core.TextControlStateContext? = None,
   dirty? : @core.WidgetDirtyHint = @core.WidgetDirtyHint::WidgetClean,
   messages? : Array[Msg] = [],
 ) -> @core.WidgetEventResult[Msg] {
-  { changed, activated, focused, captured, state, dirty, messages }
+  {
+    changed,
+    activated,
+    focused,
+    captured,
+    state,
+    text_control,
+    dirty,
+    messages,
+  }
 }

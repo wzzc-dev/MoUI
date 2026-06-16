@@ -17,16 +17,16 @@ pub fn[Msg] picker(
     Some(value) => value
     None => @core.PickerStyle::default(theme~)
   }
-  @core.View::primitive_controlled_picker_view(
+  @widget.picker(
     items~,
-    selected~,
-    on_select~,
+    selected=@core.Binding::new(get=() => selected, set=_value => ()),
     placeholder~,
     font=resolved_style.font,
     foreground=resolved_style.foreground,
     background=resolved_style.background,
     corner_radius=resolved_style.radius,
     max_height~,
+    on_select=Some(on_select),
   )
 }
 
@@ -43,7 +43,7 @@ pub fn[Msg] picker_binding(
     Some(value) => value
     None => @core.PickerStyle::default(theme~)
   }
-  @core.View::primitive_picker_view(
+  @widget.picker(
     items~,
     selected~,
     placeholder~,

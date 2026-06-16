@@ -13,9 +13,8 @@ pub fn[Msg] datepicker(
     Some(value) => value
     None => @core.PickerStyle::default(theme~)
   }
-  @core.View::primitive_controlled_datepicker_view(
-    selected~,
-    on_select~,
+  @widget.datepicker(
+    selected=@core.Binding::new(get=() => selected, set=_value => ()),
     mode~,
     placeholder~,
     font=resolved_style.font,
@@ -24,6 +23,7 @@ pub fn[Msg] datepicker(
     corner_radius=resolved_style.radius,
     min_date~,
     max_date~,
+    on_select=Some(on_select),
   )
 }
 
@@ -41,7 +41,7 @@ pub fn[Msg] datepicker_binding(
     Some(value) => value
     None => @core.PickerStyle::default(theme~)
   }
-  @core.View::primitive_datepicker_view(
+  @widget.datepicker(
     selected~,
     mode~,
     placeholder~,

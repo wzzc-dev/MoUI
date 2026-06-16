@@ -144,7 +144,7 @@ fn PdfWorkbenchModel::apply_raster_completion(
         " bitmap",
       }
     }
-    RasterPageUnavailable(reason) => {
+    RasterPageUnavailable(reason) =>
       {
         ..self,
         raster_page: None,
@@ -152,8 +152,7 @@ fn PdfWorkbenchModel::apply_raster_completion(
         status: Ready,
         last_event: "Raster unavailable: " + reason,
       }
-    }
-    RasterPageFailed(reason) => {
+    RasterPageFailed(reason) =>
       {
         ..self,
         raster_page: None,
@@ -161,7 +160,6 @@ fn PdfWorkbenchModel::apply_raster_completion(
         status: Ready,
         last_event: "Raster failed: " + reason,
       }
-    }
   }
 }
 

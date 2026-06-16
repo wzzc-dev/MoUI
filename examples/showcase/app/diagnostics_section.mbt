@@ -419,7 +419,7 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
       dirty_layout_count: 0,
       dirty_paint_count: 0,
       nodes: [
-        @core.ViewNodeInspectorSummary::{
+        @core.WidgetInspectorSummary::{
           element_id: @core.ElementId::new(1),
           kind: "component",
           key: "inspector-root",
@@ -428,7 +428,7 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
           needs_layout: false,
           needs_paint: false,
         },
-        @core.ViewNodeInspectorSummary::{
+        @core.WidgetInspectorSummary::{
           element_id: @core.ElementId::new(2),
           kind: "surface",
           key: "inspector-surface",
@@ -437,7 +437,7 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
           needs_layout: false,
           needs_paint: false,
         },
-        @core.ViewNodeInspectorSummary::{
+        @core.WidgetInspectorSummary::{
           element_id: @core.ElementId::new(3),
           kind: "column",
           key: "inspector-column",

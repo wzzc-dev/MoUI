@@ -328,7 +328,7 @@ fn PdfWorkbenchModel::apply_pdf_bytes(
         " (\{bytes.length()} byte(s), \{document.page_count} page(s))",
       }
     }
-    Failed(reason) => {
+    Failed(reason) =>
       {
         ..self,
         document: None,
@@ -344,7 +344,6 @@ fn PdfWorkbenchModel::apply_pdf_bytes(
         ),
         last_event: "PDF load failed",
       }
-    }
   }
 }
 

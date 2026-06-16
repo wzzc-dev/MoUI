@@ -1,23 +1,13 @@
 ///|
-priv struct Component {
-  build : (@core.BuildContext) -> ViewSpec
-}
-
-///|
 priv struct ComponentBuildResult {
-  child_spec : ViewSpec
+  child_widget : RuntimeWidget
   subscriptions : Array[StateSubscription]
   effects : Array[ComponentEffect]
 }
 
 ///|
-fn Component::new(build : (@core.BuildContext) -> ViewSpec) -> Component {
-  { build, }
-}
-
-///|
-fn build_component_spec(
-  component : Component,
+fn build_component_child(
+  build : (@core.BuildContext) -> RuntimeWidget,
   runtime : RuntimeState,
   component_id : ElementId,
   old_subscriptions : Array[StateSubscription],
@@ -38,10 +28,10 @@ fn build_component_spec(
     old_effects~,
     environment=runtime.environment,
   )
-  let child_spec = (component.build)(context)
+  let child_widget = build(context)
   ComponentEffect::finish_reuse(
     old_effects,
     reason=ComponentEffectCancelReason::EffectKeyChanged,
   )
-  { child_spec, subscriptions, effects }
+  { child_widget, subscriptions, effects }
 }

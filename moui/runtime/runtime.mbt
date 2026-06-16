@@ -142,7 +142,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
   }
   let runtime = AppRuntime::{
     state: RuntimeState::new_view(
-      root=@core.View::primitive_component_view(ctx => {
+      root=runtime_component_view(ctx => {
         program.runtime_view(ctx.watch(model), ctx.view_environment())
       }),
       size~,
@@ -164,6 +164,41 @@ pub fn[Model, Msg] AppRuntime::new_program(
     }
   }
   runtime
+}
+
+///|
+fn[Msg] runtime_component_view(
+  build : (@core.BuildContext) -> @core.View[Msg],
+) -> @core.View[Msg] {
+  @core.View::widget(
+    @core.WidgetOps::new(
+      identity=() => @core.WidgetIdentity::new(kind="Component"),
+      revision=() => "component",
+      build_child=Some(build),
+      layout=ctx => {
+        let child_size = if ctx.child_sizes.length() > 0 {
+          ctx.child_sizes[0]
+        } else {
+          @core.Size::new(width=0.0, height=0.0)
+        }
+        @core.WidgetLayoutResult::new(
+          size=ctx.constraints.constrain(child_size),
+          child_frames=if ctx.child_sizes.length() > 0 {
+            [
+              @core.Rect::new(
+                x=0.0,
+                y=0.0,
+                width=child_size.width,
+                height=child_size.height,
+              ),
+            ]
+          } else {
+            []
+          },
+        )
+      },
+    ),
+  )
 }
 
 ///|

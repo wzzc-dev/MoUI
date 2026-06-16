@@ -4,21 +4,25 @@ fn ElementNode::dispatch_drag_drop(
   event : DragDropEvent,
   render : RenderNode,
 ) -> ElementEventResult {
-  match self.spec {
-    ModifiedSpec(data) => self.dispatch_modified_drag_drop(data, event, render)
-    FlexSpec(_)
-    | PaddingSpec(_)
-    | ContainerSpec(_)
-    | FrameSpec(_)
-    | StackSpec(_)
-    | ScrollSpec(_)
-    | GridSpec(_)
-    | ListSpec(_)
-    | CustomLayoutSpec(_)
-    | WidgetSpec(_)
-    | ComponentSpec(_)
-    | SheetSpec(_) => self.dispatch_drag_drop_to_children(event, render)
-    _ => { changed: false, activated: false, focused: None }
+  let child_result = self.dispatch_drag_drop_to_children(event, render)
+  if child_result.activated {
+    child_result
+  } else {
+    let result = self.dispatch_widget_event(
+      self.widget,
+      AppEvent::DragDrop(event),
+      render,
+      TextSystem::fallback(),
+      environment=Environment::default(),
+    )
+    {
+      changed: child_result.changed || result.changed,
+      activated: result.activated,
+      focused: match result.focused {
+        Some(value) => Some(value)
+        None => child_result.focused
+      },
+    }
   }
 }
 
@@ -54,37 +58,5 @@ fn ElementNode::dispatch_drag_drop_to_children(
       { changed, activated, focused: None }
     }
     None => { changed: false, activated: false, focused: None }
-  }
-}
-
-///|
-fn ElementNode::dispatch_modified_drag_drop(
-  self : ElementNode,
-  data : ModifiedViewSpec,
-  event : DragDropEvent,
-  render : RenderNode,
-) -> ElementEventResult {
-  match data.modifier {
-    DisabledModifier(true) =>
-      { changed: false, activated: false, focused: None }
-    OnFileDropModifier(handler) => {
-      let child_result = self.dispatch_drag_drop_to_children(event, render)
-      if child_result.activated {
-        child_result
-      } else {
-        match (event.phase, event.position) {
-          (Dropped, Some(position)) =>
-            if render.frame.contains(position) && event.paths.length() > 0 {
-              handler(event.paths, position)
-              self.dirty.mark_paint()
-              { changed: true, activated: true, focused: None }
-            } else {
-              { changed: false, activated: false, focused: None }
-            }
-          _ => child_result
-        }
-      }
-    }
-    _ => self.dispatch_drag_drop_to_children(event, render)
   }
 }

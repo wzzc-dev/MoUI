@@ -2,7 +2,7 @@
 priv struct ElementNode {
   id : ElementId
   mut key : Key?
-  mut spec : ViewSpec
+  mut widget : RuntimeWidget
   mut children : Array[ElementNode]
   dirty : DirtyFlags
   control : ElementControlState
@@ -23,18 +23,11 @@ priv struct LayoutTree {
 
 ///|
 priv struct ElementControlState {
-  mut button_state : ButtonState
-  mut picker_expanded : Bool
-  mut datepicker_expanded : Bool
-  mut datepicker_view : DateValue
   mut caret : Int
   mut selection : TextRange?
   mut text_selection_anchor : Int?
   mut composition : String?
   mut composition_cursor : TextRange?
-  mut long_press_gesture : LongPressGestureState
-  mut double_tap_gesture : DoubleTapGestureState
-  mut drag_gesture : DragGestureState
   text_undo_stack : Array[TextHistoryEntry]
   text_redo_stack : Array[TextHistoryEntry]
 }
@@ -70,11 +63,52 @@ priv struct TextHistoryEntry {
 }
 
 ///|
-fn TextHistoryEntry::from_element(
-  text : String,
-  element : ElementNode,
+fn TextHistoryEntry::to_context(
+  self : TextHistoryEntry,
+) -> @core.TextHistoryEntryContext {
+  { text: self.text, caret: self.caret, selection: self.selection }
+}
+
+///|
+fn TextHistoryEntry::from_context(
+  value : @core.TextHistoryEntryContext,
 ) -> TextHistoryEntry {
-  { text, caret: element.control.caret, selection: element.control.selection }
+  { text: value.text, caret: value.caret, selection: value.selection }
+}
+
+///|
+fn ElementControlState::text_context(
+  self : ElementControlState,
+) -> @core.TextControlStateContext {
+  {
+    caret: self.caret,
+    selection: self.selection,
+    text_selection_anchor: self.text_selection_anchor,
+    composition: self.composition,
+    composition_cursor: self.composition_cursor,
+    undo_stack: self.text_undo_stack.map(entry => entry.to_context()),
+    redo_stack: self.text_redo_stack.map(entry => entry.to_context()),
+  }
+}
+
+///|
+fn ElementControlState::apply_text_context(
+  self : ElementControlState,
+  value : @core.TextControlStateContext,
+) -> Unit {
+  self.caret = value.caret
+  self.selection = value.selection
+  self.text_selection_anchor = value.text_selection_anchor
+  self.composition = value.composition
+  self.composition_cursor = value.composition_cursor
+  self.text_undo_stack.clear()
+  self.text_undo_stack.append(
+    value.undo_stack.map(entry => TextHistoryEntry::from_context(entry)),
+  )
+  self.text_redo_stack.clear()
+  self.text_redo_stack.append(
+    value.redo_stack.map(entry => TextHistoryEntry::from_context(entry)),
+  )
 }
 
 ///|
@@ -131,7 +165,7 @@ fn ElementTree::new(root : ElementNode) -> ElementTree {
 
 ///|
 fn ElementTree::empty() -> ElementTree {
-  { root: mount_view_spec(ViewSpec::EmptySpec) }
+  { root: mount_runtime_widget(empty_runtime_widget()) }
 }
 
 ///|
@@ -158,18 +192,11 @@ fn LayoutTree::empty() -> LayoutTree {
 ///|
 fn ElementControlState::new() -> ElementControlState {
   {
-    button_state: ButtonState::Normal,
-    picker_expanded: false,
-    datepicker_expanded: false,
-    datepicker_view: DateValue::today(),
     caret: 0,
     selection: None,
     text_selection_anchor: None,
     composition: None,
     composition_cursor: None,
-    long_press_gesture: LongPressGestureState::new(),
-    double_tap_gesture: DoubleTapGestureState::new(),
-    drag_gesture: DragGestureState::new(),
     text_undo_stack: [],
     text_redo_stack: [],
   }
