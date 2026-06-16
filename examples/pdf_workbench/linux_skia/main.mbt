@@ -40,7 +40,6 @@ fn pdf_workbench_document_services() -> @app.PdfWorkbenchDocumentServices {
       helper_cwd=pdf_workbench_env_var("MOUI_PDF_WORKBENCH_PDFLITE_HELPER_CWD"),
     ).transport_config() {
     Some(config) => {
-      println("pdf workbench: pdflite helper " + config.command_label())
       config.document_services()
     }
     None => @app.PdfWorkbenchDocumentServices::lightweight()
