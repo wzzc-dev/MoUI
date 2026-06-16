@@ -1,9 +1,4 @@
 ///|
-fn hit_test(layout : LayoutResult, point : Point) -> Bool {
-  @core.hit_test(layout, point)
-}
-
-///|
 fn layout_spec(spec : ViewSpec, bounds : Rect) -> LayoutResult {
   mount_view_spec(spec).place(bounds).to_layout_result()
 }
