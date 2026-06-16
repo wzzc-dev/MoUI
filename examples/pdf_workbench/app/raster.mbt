@@ -121,16 +121,6 @@ fn PdfWorkbenchModel::apply_raster_completion(
   }
   match response {
     RasterPageReady(page) => {
-      println(
-        "pdf workbench: rendered page " +
-        page.page_number.to_string() +
-        " as " +
-        page.width_px.to_string() +
-        "x" +
-        page.height_px.to_string() +
-        " bitmap: " +
-        page.image_source,
-      )
       let cache = self.raster_cache.copy()
       pdf_workbench_raster_cache_store(cache, page)
       let document = match self.document {
@@ -155,7 +145,6 @@ fn PdfWorkbenchModel::apply_raster_completion(
       }
     }
     RasterPageUnavailable(reason) => {
-      println("pdf workbench: raster unavailable: " + reason)
       {
         ..self,
         raster_page: None,
@@ -165,7 +154,6 @@ fn PdfWorkbenchModel::apply_raster_completion(
       }
     }
     RasterPageFailed(reason) => {
-      println("pdf workbench: raster failed: " + reason)
       {
         ..self,
         raster_page: None,
