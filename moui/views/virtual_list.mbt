@@ -28,10 +28,9 @@ pub fn[T, Msg] lazy_list(
   let virtual_children : Array[@core.View[Msg]] = []
   if first_visible > 0 {
     virtual_children.push(
-      @core.View::primitive_spacer_view(
-        min_length=first_visible.to_double() * stride,
-        weight=0.0,
-      ).key("lazy-list-before"),
+      spacer(min_length=first_visible.to_double() * stride, weight=0.0).key(
+        "lazy-list-before",
+      ),
     )
   }
   for child in children {
@@ -44,16 +43,16 @@ pub fn[T, Msg] lazy_list(
   }
   if hidden_after > 0 {
     virtual_children.push(
-      @core.View::primitive_spacer_view(
-        min_length=hidden_after.to_double() * stride,
-        weight=0.0,
-      ).key("lazy-list-after"),
+      spacer(min_length=hidden_after.to_double() * stride, weight=0.0).key(
+        "lazy-list-after",
+      ),
     )
   }
-  @core.View::primitive_scroll_view(
-    child=list(virtual_children, spacing~),
+  scroll_view(
+    list(virtual_children, spacing~),
     offset=state.offset(),
-    viewport=Some(@core.Size::new(width=0.0, height=viewport_height)),
+    width=0.0,
+    height=viewport_height,
     state=Some(state),
   )
 }
@@ -141,10 +140,9 @@ fn[T, Msg] virtual_list_window(
   let virtual_children : Array[@core.View[Msg]] = []
   if first_visible > 0 {
     virtual_children.push(
-      @core.View::primitive_spacer_view(
-        min_length=first_visible.to_double() * stride,
-        weight=0.0,
-      ).key("virtual-list-before"),
+      spacer(min_length=first_visible.to_double() * stride, weight=0.0).key(
+        "virtual-list-before",
+      ),
     )
   }
   for child in children {
@@ -157,16 +155,16 @@ fn[T, Msg] virtual_list_window(
   }
   if hidden_after > 0 {
     virtual_children.push(
-      @core.View::primitive_spacer_view(
-        min_length=hidden_after.to_double() * stride,
-        weight=0.0,
-      ).key("virtual-list-after"),
+      spacer(min_length=hidden_after.to_double() * stride, weight=0.0).key(
+        "virtual-list-after",
+      ),
     )
   }
-  @core.View::primitive_scroll_view(
-    child=list(virtual_children, spacing~),
+  scroll_view(
+    list(virtual_children, spacing~),
     offset=state.offset(),
-    viewport=Some(@core.Size::new(width=0.0, height=viewport_height)),
+    width=0.0,
+    height=viewport_height,
     state=Some(state),
   )
 }

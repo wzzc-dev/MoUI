@@ -6,7 +6,7 @@ pub fn[Msg] text(
   width? : Double = 160.0,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
-  @core.View::primitive_text_view(
+  @widget.text(
     text~,
     size=@core.Size::new(width~, height~),
     font=role.font(theme),

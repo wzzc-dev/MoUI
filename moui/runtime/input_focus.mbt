@@ -22,6 +22,27 @@ fn ElementNode::find_focusable_at(
       } else {
         None
       }
+    WidgetSpec(data) =>
+      if (data.focusable)() && render.frame.contains(point) {
+        Some(self.id)
+      } else {
+        let mut index = self.children.length() - 1
+        while index >= 0 {
+          if index < render.children.length() &&
+            render.children[index].frame.contains(point) {
+            match
+              self.children[index].find_focusable_at(
+                point,
+                render.children[index],
+              ) {
+              Some(id) => return Some(id)
+              None => ()
+            }
+          }
+          index = index - 1
+        }
+        None
+      }
     FlexSpec(_)
     | PaddingSpec(_)
     | ContainerSpec(_)
@@ -91,6 +112,14 @@ fn ElementNode::focusable_ids(
     | RichTextEditorSpec(_)
     | ButtonSpec(_)
     | CheckboxSpec(_) => ids.push(self.id)
+    WidgetSpec(data) => {
+      if (data.focusable)() {
+        ids.push(self.id)
+      }
+      for child in self.children {
+        child.focusable_ids(ids)
+      }
+    }
     ModifiedSpec(data) =>
       match data.modifier {
         DisabledModifier(true) => ()

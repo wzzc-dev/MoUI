@@ -44,10 +44,9 @@ pub fn[T, Msg] lazy_grid(
   let virtual_rows : Array[@core.View[Msg]] = []
   if first_visible_row > 0 {
     virtual_rows.push(
-      @core.View::primitive_spacer_view(
-        min_length=first_visible_row.to_double() * row_stride,
-        weight=0.0,
-      ).key("lazy-grid-before"),
+      spacer(min_length=first_visible_row.to_double() * row_stride, weight=0.0).key(
+        "lazy-grid-before",
+      ),
     )
   }
   for row in rows {
@@ -60,16 +59,16 @@ pub fn[T, Msg] lazy_grid(
   }
   if hidden_after > 0 {
     virtual_rows.push(
-      @core.View::primitive_spacer_view(
-        min_length=hidden_after.to_double() * row_stride,
-        weight=0.0,
-      ).key("lazy-grid-after"),
+      spacer(min_length=hidden_after.to_double() * row_stride, weight=0.0).key(
+        "lazy-grid-after",
+      ),
     )
   }
-  @core.View::primitive_scroll_view(
-    child=list(virtual_rows, spacing=row_spacing),
+  scroll_view(
+    list(virtual_rows, spacing=row_spacing),
     offset=state.offset(),
-    viewport=Some(@core.Size::new(width=viewport_width, height=viewport_height)),
+    width=viewport_width,
+    height=viewport_height,
     state=Some(state),
   )
 }
