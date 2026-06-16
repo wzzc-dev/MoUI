@@ -541,10 +541,7 @@ fn composition_start_index(
 ) -> Int {
   match active_text_selection(selection) {
     Some(selection) =>
-      normalize_grapheme_range(
-        TextGraphemeBoundaries::new(text~),
-        selection,
-      ).start
+      normalize_grapheme_range(TextGraphemeBoundaries::new(text~), selection).start
     None => TextGraphemeBoundaries::new(text~).nearest_boundary(caret)
   }
 }
