@@ -13,7 +13,7 @@ matures.
 The runtime pipeline is explicit:
 
 ```text
-View[Msg] -> Widget[Msg] -> RuntimeWidget -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+View[Msg] -> Widget[Msg] -> runtime.Widget -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ```
 
 ## Project Shape

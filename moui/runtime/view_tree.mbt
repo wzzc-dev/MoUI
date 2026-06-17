@@ -1,9 +1,9 @@
 ///|
-priv struct RuntimeWidget {
+priv struct Widget {
   identity : @core.WidgetIdentity
   revision : String
-  children : () -> Array[RuntimeWidget]
-  build_child : ((@core.ComponentContext) -> RuntimeWidget)?
+  children : () -> Array[Widget]
+  build_child : ((@core.ComponentContext) -> Widget)?
   child_constraints : (Constraints) -> Constraints
   layout : (@core.WidgetLayoutContext) -> @core.WidgetLayoutResult
   paint : (@core.WidgetPaintContext) -> @core.WidgetPaintPlan

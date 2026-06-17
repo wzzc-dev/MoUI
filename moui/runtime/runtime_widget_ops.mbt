@@ -1,5 +1,5 @@
 ///|
-fn RuntimeWidget::identity_key(self : RuntimeWidget) -> Key? {
+fn Widget::identity_key(self : Widget) -> Key? {
   match self.identity.key {
     Some(key) => Some(Key::new(key.value()))
     None => None
@@ -7,37 +7,34 @@ fn RuntimeWidget::identity_key(self : RuntimeWidget) -> Key? {
 }
 
 ///|
-fn RuntimeWidget::kind(self : RuntimeWidget) -> Int {
+fn Widget::kind(self : Widget) -> Int {
   stable_widget_kind(self.identity.kind)
 }
 
 ///|
-fn RuntimeWidget::inspector_kind_label(self : RuntimeWidget) -> String {
+fn Widget::inspector_kind_label(self : Widget) -> String {
   self.identity.kind
 }
 
 ///|
-fn RuntimeWidget::inspector_is_control(self : RuntimeWidget) -> Bool {
+fn Widget::inspector_is_control(self : Widget) -> Bool {
   (self.focusable)()
 }
 
 ///|
-fn RuntimeWidget::same_identity(
-  self : RuntimeWidget,
-  next : RuntimeWidget,
-) -> Bool {
+fn Widget::same_identity(self : Widget, next : Widget) -> Bool {
   self.kind() == next.kind() && self.identity_key() == next.identity_key()
 }
 
 ///|
-fn RuntimeWidget::is_building_widget(self : RuntimeWidget) -> Bool {
+fn Widget::is_building_widget(self : Widget) -> Bool {
   self.build_child is Some(_)
 }
 
 ///|
-fn RuntimeWidget::reconcile_dirty_kind(
-  self : RuntimeWidget,
-  next : RuntimeWidget,
+fn Widget::reconcile_dirty_kind(
+  self : Widget,
+  next : Widget,
 ) -> ReconcileDirtyKind {
   if self.revision != "" && self.revision == next.revision {
     ReconcileClean
@@ -47,7 +44,7 @@ fn RuntimeWidget::reconcile_dirty_kind(
 }
 
 ///|
-fn empty_runtime_widget() -> RuntimeWidget {
+fn empty_widget() -> Widget {
   {
     identity: @core.WidgetIdentity::new(kind="Empty"),
     revision: "empty",

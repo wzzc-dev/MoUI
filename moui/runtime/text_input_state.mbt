@@ -30,7 +30,7 @@ fn ElementNode::focused_text_input(
 ///|
 fn widget_text_input_state(
   element : ElementNode,
-  data : RuntimeWidget,
+  data : Widget,
   render : RenderNode,
   text_system : TextSystem,
   environment : Environment,

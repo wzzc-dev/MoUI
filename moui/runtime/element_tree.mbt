@@ -2,7 +2,7 @@
 priv struct ElementNode {
   id : ElementId
   mut key : Key?
-  mut widget : RuntimeWidget
+  mut widget : Widget
   mut children : Array[ElementNode]
   dirty : DirtyFlags
   control : ElementControlState
@@ -165,7 +165,7 @@ fn ElementTree::new(root : ElementNode) -> ElementTree {
 
 ///|
 fn ElementTree::empty() -> ElementTree {
-  { root: mount_runtime_widget(empty_runtime_widget()) }
+  { root: mount_widget(empty_widget()) }
 }
 
 ///|

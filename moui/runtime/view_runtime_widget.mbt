@@ -2,7 +2,7 @@
 fn[Msg] erase_view_for_runtime(
   view : @core.View[Msg],
   emit : (Msg) -> Unit,
-) -> RuntimeWidget {
+) -> Widget {
   erase_widget_for_runtime(view.ops(), emit)
 }
 
@@ -10,7 +10,7 @@ fn[Msg] erase_view_for_runtime(
 fn[Msg] erase_widget_for_runtime(
   widget : @core.Widget[Msg],
   emit : (Msg) -> Unit,
-) -> RuntimeWidget {
+) -> Widget {
   {
     identity: widget.identity(),
     revision: widget.revision(),

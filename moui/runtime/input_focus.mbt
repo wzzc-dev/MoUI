@@ -128,7 +128,7 @@ fn ElementNode::is_text_input_target(
 ///|
 fn ElementNode::widget_accepts_text_input(
   self : ElementNode,
-  data : RuntimeWidget,
+  data : Widget,
 ) -> Bool {
   (data.text_input_state)({
     frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
