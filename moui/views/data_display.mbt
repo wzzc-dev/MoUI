@@ -1,7 +1,7 @@
 ///|
 pub fn[Msg] description_list(
   items : Array[DescriptionItem],
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 360.0,
   term_width? : Double = 112.0,
   row_height? : Double = 30.0,
@@ -46,7 +46,7 @@ pub fn[Msg] detail_panel(
   subtitle? : String = "",
   action? : StateViewAction[Msg]? = None,
   empty? : @core.View[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 280.0,
   height? : Double = 180.0,
 ) -> @core.View[Msg] {

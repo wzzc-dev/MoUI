@@ -426,7 +426,8 @@ fn grapheme_editing_observation_available() -> Bool {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let boundary_indexes = boundaries.boundaries()
   let delete_previous = boundaries.delete_range(4, 1, 0)
-  let normalized_selection = boundaries.normalize_range(
+  let normalized_selection = @core.normalize_grapheme_range(
+    boundaries,
     @core.TextRange::new(start=2, end=3),
   )
   let utf8_offset = boundaries.utf8_offset(4)

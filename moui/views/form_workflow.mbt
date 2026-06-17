@@ -5,7 +5,7 @@ pub fn[Msg] form_actions(
   status? : String = "",
   primary_enabled? : Bool = true,
   secondary_enabled? : Bool = true,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   let action_width = 116.0
@@ -72,7 +72,7 @@ pub fn[Msg] form_workflow_bar(
   valid_message? : String = "",
   invalid_title? : String = "Review required",
   status? : String = "",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {

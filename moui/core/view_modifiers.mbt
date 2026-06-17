@@ -23,19 +23,19 @@ pub fn[Msg] View::foreground(self : View[Msg], color : Color) -> View[Msg] {
 
 ///|
 pub fn[Msg] View::title(self : View[Msg]) -> View[Msg] {
-  let theme = Theme::default()
+  let theme = Theme::neutral()
   self.font(theme.typography.title).foreground(theme.foreground)
 }
 
 ///|
 pub fn[Msg] View::caption(self : View[Msg]) -> View[Msg] {
-  let theme = Theme::default()
+  let theme = Theme::neutral()
   self.font(theme.typography.caption).foreground(theme.palette.muted)
 }
 
 ///|
 pub fn[Msg] View::mono(self : View[Msg]) -> View[Msg] {
-  let theme = Theme::default()
+  let theme = Theme::neutral()
   self
   .font({ ..theme.typography.body, families: FontFamilyStack::monospace() })
   .foreground(theme.foreground)

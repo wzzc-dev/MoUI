@@ -30,15 +30,24 @@ fn[Msg] run_effect(
   start_task : (@core.EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit,
 ) -> Int {
   let mut count = 0
-  for op in effect.runtime_ops() {
-    op.runtime_visit(
-      dispatch,
-      run => run(dispatch),
-      (_descriptor, run) => run(dispatch),
-      start_task,
-    )
-    count = count + 1
-  }
+  effect.runtime_visit(
+    message => {
+      dispatch(message)
+      count = count + 1
+    },
+    run => {
+      run(dispatch)
+      count = count + 1
+    },
+    (_descriptor, run) => {
+      run(dispatch)
+      count = count + 1
+    },
+    (descriptor, start) => {
+      start_task(descriptor, start)
+      count = count + 1
+    },
+  )
   count
 }
 
@@ -46,7 +55,7 @@ fn[Msg] run_effect(
 pub fn[Msg] AppRuntime::new_view(
   root~ : @core.View[Msg],
   size~ : @core.Size,
-  environment? : @core.Environment = @core.Environment::default(),
+  environment? : @core.Environment = @core.Environment::neutral(),
   on_message? : ((Msg) -> Unit)? = None,
 ) -> AppRuntime {
   AppRuntime::{
@@ -60,7 +69,7 @@ pub fn[Msg] AppRuntime::new_view(
 pub fn[Model, Msg] AppRuntime::new_program(
   program~ : @core.Program[Model, Msg],
   size~ : @core.Size,
-  environment? : @core.Environment = @core.Environment::default(),
+  environment? : @core.Environment = @core.Environment::neutral(),
 ) -> AppRuntime {
   let (initial_model, initial_effect) = program.runtime_init()
   let model = @core.State::new(initial_model)
@@ -108,7 +117,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
         let (next_model, effect) = program.runtime_update(model.get(), message)
         program_runtime.record_update()
         model.set(next_model)
-        let effect_summary = effect.plan_summary()
+        let effect_summary = effect_plan_summary(effect)
         let effect_count = run_effect(effect, dispatch, (descriptor, start) => {
           program_runtime.start_effect_task(descriptor, start, dispatch)
         })
@@ -129,7 +138,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
     }
   }
   process_ref.val = Some(process_messages)
-  let initial_effect_summary = initial_effect.plan_summary()
+  let initial_effect_summary = effect_plan_summary(initial_effect)
   let initial_effect_count = run_effect(initial_effect, dispatch, (
     descriptor,
     start,
@@ -168,7 +177,7 @@ pub fn[Model, Msg] AppRuntime::new_program(
 
 ///|
 fn[Msg] runtime_component_view(
-  build : (@core.BuildContext) -> @core.View[Msg],
+  build : (@core.ComponentContext) -> @core.View[Msg],
 ) -> @core.View[Msg] {
   @core.View::widget(
     @core.WidgetOps::new(
@@ -205,7 +214,7 @@ fn[Msg] runtime_component_view(
 pub fn[Msg] new_view(
   root~ : @core.View[Msg],
   size~ : @core.Size,
-  environment? : @core.Environment = @core.Environment::default(),
+  environment? : @core.Environment = @core.Environment::neutral(),
   on_message? : ((Msg) -> Unit)? = None,
 ) -> AppRuntime {
   AppRuntime::new_view(root~, size~, environment~, on_message~)
@@ -215,7 +224,7 @@ pub fn[Msg] new_view(
 pub fn[Model, Msg] new_program(
   program~ : @core.Program[Model, Msg],
   size~ : @core.Size,
-  environment? : @core.Environment = @core.Environment::default(),
+  environment? : @core.Environment = @core.Environment::neutral(),
 ) -> AppRuntime {
   AppRuntime::new_program(program~, size~, environment~)
 }
@@ -225,7 +234,7 @@ pub fn[Model, Msg] new_program_with_dimensions(
   program~ : @core.Program[Model, Msg],
   width~ : Double,
   height~ : Double,
-  environment? : @core.Environment = @core.Environment::default(),
+  environment? : @core.Environment = @core.Environment::neutral(),
 ) -> AppRuntime {
   AppRuntime::new_program(
     program~,

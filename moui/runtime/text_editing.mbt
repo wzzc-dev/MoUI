@@ -4,7 +4,7 @@ fn ElementNode::dispatch_text_command(
   target : ElementId,
   intent : CommandIntent,
   paste_text? : String? = None,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> TextCommandResult {
   if self.id == target {
@@ -41,7 +41,7 @@ fn ElementNode::dispatch_widget_text_command(
   data : RuntimeWidget,
   intent : CommandIntent,
   paste_text~ : String?,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> TextCommandResult {
   let result = (data.text_command)(

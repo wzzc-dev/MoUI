@@ -5,7 +5,7 @@ pub fn[Msg] alert(
   primary_action~ : StateViewAction[Msg],
   secondary_action? : StateViewAction[Msg]? = None,
   tone? : FeedbackTone = FeedbackTone::Info,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   let feedback_style = FeedbackStyle::default(theme~)

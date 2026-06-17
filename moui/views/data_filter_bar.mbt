@@ -6,7 +6,7 @@ pub fn[Msg] data_filter_bar(
   result_count? : Int = 0,
   on_clear? : Msg? = None,
   placeholder? : String = "Search rows",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
 ) -> @core.View[Msg] {
   let search_width = views_max_double(160.0, width * 0.46)

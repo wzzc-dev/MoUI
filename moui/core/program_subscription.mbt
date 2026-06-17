@@ -46,25 +46,6 @@ pub fn SubscriptionDescriptor::label(self : SubscriptionDescriptor) -> String {
 }
 
 ///|
-pub(all) enum SubscriptionPlanKind {
-  SubscriptionPlanNone
-  SubscriptionPlanBatch
-  SubscriptionPlanSource
-} derive(Eq, Debug, ToJson)
-
-///|
-pub(all) struct SubscriptionPlanSummary {
-  root_kind : SubscriptionPlanKind
-  none_count : Int
-  batch_count : Int
-  source_count : Int
-  duplicate_key_count : Int
-  duplicate_keys : Array[String]
-  max_depth : Int
-  descriptors : Array[SubscriptionDescriptor]
-} derive(Eq, Debug, ToJson)
-
-///|
 pub fn[Msg] Subscription::none() -> Subscription[Msg] {
   { node: SubscriptionNone }
 }
@@ -222,28 +203,33 @@ pub fn[Msg] SubscriptionRuntimeSource::start(
 }
 
 ///|
-pub fn[Msg] Subscription::plan_summary(
+pub fn[Msg] Subscription::runtime_visit(
   self : Subscription[Msg],
-) -> SubscriptionPlanSummary {
-  let summary = subscription_plan_summary(self, depth=1)
-  {
-    ..summary,
-    duplicate_key_count: self.duplicate_key_count(),
-    duplicate_keys: self.duplicate_keys(),
-  }
+  none : (Int) -> Unit,
+  batch : (Int, Int) -> Unit,
+  source : (Int, SubscriptionDescriptor) -> Unit,
+) -> Unit {
+  self.runtime_visit_depth(0, none, batch, source)
 }
 
 ///|
-pub fn SubscriptionPlanSummary::empty() -> SubscriptionPlanSummary {
-  {
-    root_kind: SubscriptionPlanKind::SubscriptionPlanNone,
-    none_count: 0,
-    batch_count: 0,
-    source_count: 0,
-    duplicate_key_count: 0,
-    duplicate_keys: [],
-    max_depth: 0,
-    descriptors: [],
+fn[Msg] Subscription::runtime_visit_depth(
+  self : Subscription[Msg],
+  depth : Int,
+  none : (Int) -> Unit,
+  batch : (Int, Int) -> Unit,
+  source : (Int, SubscriptionDescriptor) -> Unit,
+) -> Unit {
+  match self.node {
+    SubscriptionNone => none(depth)
+    SubscriptionBatch(subscriptions) => {
+      batch(depth, subscriptions.length())
+      for subscription in subscriptions {
+        subscription.runtime_visit_depth(depth + 1, none, batch, source)
+      }
+    }
+    SubscriptionSource(subscription_source) =>
+      source(depth, subscription_source.descriptor())
   }
 }
 
@@ -261,94 +247,6 @@ fn[Msg] Subscription::sources(
       sources
     }
     SubscriptionSource(source) => [source]
-  }
-}
-
-///|
-fn[Msg] Subscription::duplicate_key_count(self : Subscription[Msg]) -> Int {
-  let seen_keys : Array[String] = []
-  let mut duplicate_count = 0
-  for source in self.sources() {
-    if seen_keys.any(key => key == source.key) {
-      duplicate_count = duplicate_count + 1
-    } else {
-      seen_keys.push(source.key)
-    }
-  }
-  duplicate_count
-}
-
-///|
-fn[Msg] Subscription::duplicate_keys(self : Subscription[Msg]) -> Array[String] {
-  let seen_keys : Array[String] = []
-  let duplicate_keys : Array[String] = []
-  for source in self.sources() {
-    if seen_keys.any(key => key == source.key) {
-      if !duplicate_keys.any(key => key == source.key) {
-        duplicate_keys.push(source.key)
-      }
-    } else {
-      seen_keys.push(source.key)
-    }
-  }
-  duplicate_keys
-}
-
-///|
-fn[Msg] subscription_plan_summary(
-  subscription : Subscription[Msg],
-  depth~ : Int,
-) -> SubscriptionPlanSummary {
-  match subscription.node {
-    SubscriptionNone =>
-      {
-        root_kind: SubscriptionPlanKind::SubscriptionPlanNone,
-        none_count: 1,
-        batch_count: 0,
-        source_count: 0,
-        duplicate_key_count: 0,
-        duplicate_keys: [],
-        max_depth: depth,
-        descriptors: [],
-      }
-    SubscriptionSource(source) =>
-      {
-        root_kind: SubscriptionPlanKind::SubscriptionPlanSource,
-        none_count: 0,
-        batch_count: 0,
-        source_count: 1,
-        duplicate_key_count: 0,
-        duplicate_keys: [],
-        max_depth: depth,
-        descriptors: [source.descriptor()],
-      }
-    SubscriptionBatch(subscriptions) => {
-      let mut none_count = 0
-      let mut batch_count = 1
-      let mut source_count = 0
-      let mut max_depth = depth
-      let descriptors : Array[SubscriptionDescriptor] = []
-      for child in subscriptions {
-        let child_summary = subscription_plan_summary(child, depth=depth + 1)
-        none_count = none_count + child_summary.none_count
-        batch_count = batch_count + child_summary.batch_count
-        source_count = source_count + child_summary.source_count
-        if child_summary.max_depth > max_depth {
-          max_depth = child_summary.max_depth
-        }
-        descriptors.append(child_summary.descriptors)
-      }
-      {
-        root_kind: SubscriptionPlanKind::SubscriptionPlanBatch,
-        none_count,
-        batch_count,
-        source_count,
-        duplicate_key_count: 0,
-        duplicate_keys: [],
-        max_depth,
-        descriptors,
-      }
-    }
   }
 }
 

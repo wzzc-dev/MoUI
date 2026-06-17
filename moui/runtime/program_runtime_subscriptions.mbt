@@ -1,7 +1,7 @@
 ///|
 fn ProgramRuntimeDiagnostics::record_subscription_plan(
   self : ProgramRuntimeDiagnostics,
-  summary : @core.SubscriptionPlanSummary,
+  summary : SubscriptionPlanSummary,
 ) -> Unit {
   self.subscription_plan_count = self.subscription_plan_count + 1
   self.record_duplicate_subscription_keys(summary.duplicate_keys)
@@ -34,7 +34,7 @@ fn[Msg] ProgramRuntimeDiagnostics::sync_subscriptions(
   subscription : @core.Subscription[Msg],
   dispatch : (Msg) -> Unit,
 ) -> Unit {
-  self.record_subscription_plan(subscription.plan_summary())
+  self.record_subscription_plan(subscription_plan_summary(subscription))
   let next : Array[ActiveProgramSubscription] = []
   let seen_keys : Array[String] = []
   for active in self.active_subscriptions {

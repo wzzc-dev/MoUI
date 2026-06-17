@@ -69,7 +69,7 @@ pub fn[Msg] command_menu(Array[CommandMenuSection], on_select~ : (@core.CommandI
 
 pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] component((@core.BuildContext) -> @core.View[Msg]) -> @core.View[Msg]
+pub fn[Msg] component((@core.ComponentContext) -> @core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] context_menu_region(child~ : @core.View[Msg], menu~ : @core.View[Msg], visible~ : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
@@ -83,9 +83,11 @@ pub fn[Msg] data_filter(id~ : String, label~ : String, selected~ : Bool, message
 
 pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[DataFilter[Msg]], result_count? : Int, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
-pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode? : DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+
+pub fn default_theme() -> @core.Theme
 
 pub fn description_item(String, String) -> DescriptionItem
 
@@ -482,6 +484,12 @@ pub fn DataSortState::ascending(Self) -> Bool
 pub fn DataSortState::column(Self) -> String
 pub fn DataSortState::new(column? : String, ascending? : Bool) -> Self
 pub fn DataSortState::toggle(Self, String) -> Self
+
+pub(all) enum DatePickerMode {
+  Date
+  DateAndTime
+  Time
+} derive(Eq, ToJson, @debug.Debug)
 
 pub struct DescriptionItem {
   term : String

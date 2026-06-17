@@ -146,7 +146,7 @@ fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
       constraints: Constraints::unbounded(),
       child_sizes: self.children.map(child => child.intrinsic_size()),
       text_system: TextSystem::fallback(),
-      environment: Environment::default(),
+      environment: Environment::neutral(),
     }).size
   self.layout_cache.cached_intrinsic_size = Some(size)
   size

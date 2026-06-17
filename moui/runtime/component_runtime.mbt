@@ -7,7 +7,7 @@ priv struct ComponentBuildResult {
 
 ///|
 fn build_component_child(
-  build : (@core.BuildContext) -> RuntimeWidget,
+  build : (@core.ComponentContext) -> RuntimeWidget,
   runtime : RuntimeState,
   component_id : ElementId,
   old_subscriptions : Array[StateSubscription],
@@ -18,16 +18,16 @@ fn build_component_child(
   }
   let subscriptions : Array[StateSubscription] = []
   let effects : Array[ComponentEffect] = []
-  let context = @core.BuildContext::new(
-    component_id~,
-    request_component_rebuild=id => runtime.request_component_rebuild(id),
-    viewport_size=runtime.size,
-    saveable_state=runtime.saveable_state,
-    subscriptions~,
-    effects~,
-    old_effects~,
-    environment=runtime.environment,
-  )
+  let context = @core.ComponentContext::from_runtime({
+    component_id,
+    request_component_rebuild: id => runtime.request_component_rebuild(id),
+    viewport_size: runtime.size,
+    saveable_state: runtime.saveable_state,
+    subscriptions,
+    effects,
+    old_effects,
+    environment: runtime.environment,
+  })
   let child_widget = build(context)
   ComponentEffect::finish_reuse(
     old_effects,

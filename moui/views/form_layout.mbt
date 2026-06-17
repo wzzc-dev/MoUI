@@ -1,8 +1,8 @@
 ///|
 pub fn[Msg] form(
   children : Array[@core.View[Msg]],
-  spacing? : Double = @core.Theme::default().spacing_scale.lg,
-  theme? : @core.Theme = @core.Theme::default(),
+  spacing? : Double = default_theme().spacing_scale.lg,
+  theme? : @core.Theme = default_theme(),
   width? : Double,
 ) -> @core.View[Msg] {
   column(children, spacing~, align=CrossAlign::Stretch)
@@ -17,10 +17,10 @@ pub fn[Msg] form_section(
   title? : String = "",
   children : Array[@core.View[Msg]],
   summary? : String = "",
-  spacing? : Double = @core.Theme::default().spacing_scale.md,
-  theme? : @core.Theme = @core.Theme::default(),
+  spacing? : Double = default_theme().spacing_scale.md,
+  theme? : @core.Theme = default_theme(),
   width? : Double,
-  padding? : Double = @core.Theme::default().spacing_scale.md,
+  padding? : Double = default_theme().spacing_scale.md,
 ) -> @core.View[Msg] {
   let content_width = match width {
     Some(value) => views_max_double(40.0, value - padding * 2.0)
