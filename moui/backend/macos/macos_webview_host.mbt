@@ -73,7 +73,7 @@ pub fn macos_webview_capabilities() -> @host.HostWebViewCapabilities {
 
 ///|
 pub fn install_macos_webview_event_dispatcher(
-  dispatch : (UInt64, String, @core.WebViewEvent) -> Unit,
+  dispatch : (UInt64, String, @host.WebViewEvent) -> Unit,
 ) -> Unit {
   macos_webview_install_event_callback(
     fn(callback, raw_handle, kind, id, url, detail, flag) {
@@ -102,9 +102,13 @@ pub fn sync_macos_platform_views(
           macos_webview_sync(
             raw_content_view_handle,
             encode_webview_string(placement.id),
-            encode_webview_string(placement.url),
-            encode_webview_string(placement.title),
-            webview_policy_code(placement.policy),
+            encode_webview_string(placement.property_or("url", "")),
+            encode_webview_string(placement.property_or("title", "")),
+            webview_policy_code(
+              @host.WebViewNavigationPolicy::from_revision_key(
+                placement.property_or("policy", "http-https-file"),
+              ),
+            ),
             placement.frame.origin.x,
             placement.frame.origin.y,
             placement.frame.size.width,
@@ -171,43 +175,43 @@ fn native_webview_event(
   url : Bytes,
   detail : Bytes,
   flag : Int,
-) -> @core.WebViewEvent {
+) -> @host.WebViewEvent {
   let url_text = decode_webview_string(url)
   let detail_text = decode_webview_string(detail)
   match kind {
-    0 => @core.WebViewEvent::NavigationRequested(url_text)
-    1 => @core.WebViewEvent::NavigationStarted(url_text)
-    2 => @core.WebViewEvent::NavigationCommitted(url_text)
-    3 => @core.WebViewEvent::NavigationFinished(url_text)
-    4 => @core.WebViewEvent::NavigationFailed(url_text, detail_text)
-    5 => @core.WebViewEvent::TitleChanged(detail_text)
-    6 => @core.WebViewEvent::CanGoBackChanged(flag != 0)
-    7 => @core.WebViewEvent::CanGoForwardChanged(flag != 0)
-    8 => @core.WebViewEvent::JavaScriptResult(url_text, detail_text)
-    _ => @core.WebViewEvent::NavigationFailed(url_text, detail_text)
+    0 => @host.WebViewEvent::NavigationRequested(url_text)
+    1 => @host.WebViewEvent::NavigationStarted(url_text)
+    2 => @host.WebViewEvent::NavigationCommitted(url_text)
+    3 => @host.WebViewEvent::NavigationFinished(url_text)
+    4 => @host.WebViewEvent::NavigationFailed(url_text, detail_text)
+    5 => @host.WebViewEvent::TitleChanged(detail_text)
+    6 => @host.WebViewEvent::CanGoBackChanged(flag != 0)
+    7 => @host.WebViewEvent::CanGoForwardChanged(flag != 0)
+    8 => @host.WebViewEvent::JavaScriptResult(url_text, detail_text)
+    _ => @host.WebViewEvent::NavigationFailed(url_text, detail_text)
   }
 }
 
 ///|
-fn webview_policy_code(policy : @core.WebViewNavigationPolicy) -> Int {
+fn webview_policy_code(policy : @host.WebViewNavigationPolicy) -> Int {
   match policy {
-    @core.WebViewNavigationPolicy::AllowHttpHttpsFile => 0
-    @core.WebViewNavigationPolicy::AllowHttpHttps => 1
-    @core.WebViewNavigationPolicy::AllowAll => 2
+    @host.WebViewNavigationPolicy::AllowHttpHttpsFile => 0
+    @host.WebViewNavigationPolicy::AllowHttpHttps => 1
+    @host.WebViewNavigationPolicy::AllowAll => 2
   }
 }
 
 ///|
 fn encode_webview_command(
-  command : @core.WebViewCommand,
+  command : @host.WebViewCommand,
 ) -> (Int, String, String) {
   match command {
-    @core.WebViewCommand::LoadUrl(url) => (0, url, "")
-    @core.WebViewCommand::Reload => (1, "", "")
-    @core.WebViewCommand::Stop => (2, "", "")
-    @core.WebViewCommand::GoBack => (3, "", "")
-    @core.WebViewCommand::GoForward => (4, "", "")
-    @core.WebViewCommand::EvaluateJavaScript(script, request_id) =>
+    @host.WebViewCommand::LoadUrl(url) => (0, url, "")
+    @host.WebViewCommand::Reload => (1, "", "")
+    @host.WebViewCommand::Stop => (2, "", "")
+    @host.WebViewCommand::GoBack => (3, "", "")
+    @host.WebViewCommand::GoForward => (4, "", "")
+    @host.WebViewCommand::EvaluateJavaScript(script, request_id) =>
       (5, script, request_id)
   }
 }

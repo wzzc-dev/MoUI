@@ -25,21 +25,9 @@ pub fn hit_test(LayoutResult, Point) -> Bool
 
 pub fn normalize_grapheme_range(@unicode.TextGraphemeBoundaries, TextRange) -> TextRange
 
-pub fn required_field(message? : String) -> (String) -> String?
-
-pub fn resolve_route(RouteLocation, Array[RouteDescriptor]) -> RouteDescriptor?
-
-pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, Rect, FontSpec, text_system? : TextSystem) -> Rect?
-
-pub fn rich_text_document_height(RichTextDocument, FontSpec) -> Double
-
-pub fn rich_text_editor_content_rect(Rect) -> Rect
-
 pub fn text_next_grapheme_caret_boundary(String, Int) -> Int
 
 pub fn text_previous_grapheme_caret_boundary(String, Int) -> Int
-
-pub fn validate_form(Array[FormFieldState]) -> FormValidationResult
 
 // Errors
 
@@ -102,7 +90,7 @@ pub(all) enum AppEvent {
   Keyboard(KeyboardEvent)
   TextInput(TextInputEvent)
   DragDrop(DragDropEvent)
-  WebView(String, WebViewEvent)
+  PlatformView(String, PlatformViewEvent)
   Resize(Size)
   Redraw(RedrawReason)
   CloseRequested
@@ -112,17 +100,6 @@ pub(all) enum Axis {
   Horizontal
   Vertical
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct BadgeStyle {
-  neutral : ToneStyle
-  accent : ToneStyle
-  success : ToneStyle
-  warning : ToneStyle
-  danger : ToneStyle
-  radius : Double
-  padding : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn BadgeStyle::default(theme? : Theme) -> Self
 
 pub struct Binding[T] {
   // private fields
@@ -169,7 +146,7 @@ pub fn BuildContext::enabled(Self) -> Bool
 pub fn BuildContext::environment(Self) -> Environment
 pub fn BuildContext::layout_direction(Self) -> LayoutDirection
 pub fn BuildContext::locale(Self) -> String
-pub fn BuildContext::new_for_runtime(component_id~ : ElementId, request_component_rebuild~ : (ElementId) -> Unit, viewport_size~ : Size, saveable_state~ : SaveableStateStore, subscriptions~ : Array[StateSubscription], effects~ : Array[ComponentEffect], old_effects~ : Array[ComponentEffect], environment~ : Environment) -> Self
+pub fn BuildContext::new(component_id~ : ElementId, request_component_rebuild~ : (ElementId) -> Unit, viewport_size~ : Size, saveable_state~ : SaveableStateStore, subscriptions~ : Array[StateSubscription], effects~ : Array[ComponentEffect], old_effects~ : Array[ComponentEffect], environment~ : Environment) -> Self
 pub fn BuildContext::on_dispose(Self, key~ : String, () -> Unit) -> Unit
 pub fn BuildContext::on_mount(Self, key~ : String, () -> Unit) -> Unit
 pub fn BuildContext::on_unmount(Self, key~ : String, () -> Unit) -> Unit
@@ -208,17 +185,6 @@ pub(all) enum ButtonState {
   Pressed
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct ButtonStyle {
-  normal : ControlStateStyle
-  hovered : ControlStateStyle
-  pressed : ControlStateStyle
-  disabled : ControlStateStyle
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ButtonStyle::filled(theme? : Theme) -> Self
-pub fn ButtonStyle::ghost(theme? : Theme) -> Self
-pub fn ButtonStyle::outline(theme? : Theme) -> Self
-pub fn ButtonStyle::tonal(theme? : Theme) -> Self
-
 pub(all) struct CachedLayerSpec {
   key : String
   frame : Rect
@@ -226,15 +192,6 @@ pub(all) struct CachedLayerSpec {
   scale_factor : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CachedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
-
-pub(all) struct ChoiceControlStyle {
-  foreground : Color
-  selected_color : Color
-  disabled_foreground : Color
-  disabled_selected_color : Color
-  control_size : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ChoiceControlStyle::default(theme? : Theme) -> Self
 
 pub(all) struct Color {
   r : Double
@@ -320,14 +277,6 @@ pub(all) enum ContentSizeCategory {
   Accessibility
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ContentSizeCategory::text_scale(Self) -> Double
-
-pub(all) struct ControlStateStyle {
-  foreground : Color
-  background : Brush
-  border : BorderStyle?
-  radius : Double
-  shadow : ShadowStyle?
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum CrossAxisAlignment {
   CrossStart
@@ -573,17 +522,6 @@ pub fn Environment::with_scale_factor(Self, Double) -> Self
 pub fn Environment::with_text_scale(Self, Double) -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
 
-pub(all) struct FeedbackStyle {
-  neutral : ToneStyle
-  info : ToneStyle
-  success : ToneStyle
-  warning : ToneStyle
-  danger : ToneStyle
-  radius : Double
-  padding : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn FeedbackStyle::default(theme? : Theme) -> Self
-
 pub(all) enum FilterEffect {
   Blur(Double)
   Saturate(Double)
@@ -596,7 +534,7 @@ pub fn FilterEffect::blur(Double) -> Self
 type FocusScope derive(Eq)
 pub fn FocusScope::command_target(Self, CommandIntent) -> String?
 pub fn FocusScope::first_focusable(Self) -> String?
-pub fn FocusScope::focus_first_invalid(Self, FormValidationSummary) -> String?
+pub fn FocusScope::focus_target_or_first(Self, String?) -> String?
 pub fn FocusScope::last_focusable(Self) -> String?
 pub fn FocusScope::new(items~ : Array[FocusScopeItem], current? : String?, wrap? : Bool, default_action? : String, dismiss_action? : String) -> Self
 pub fn FocusScope::next(Self) -> String?
@@ -662,54 +600,6 @@ pub(all) enum FontStyle {
   Normal
   Italic
 } derive(Eq, ToJson, @debug.Debug)
-
-type FormController
-pub fn FormController::field_error(Self, String) -> String
-pub fn FormController::new(fields~ : Array[FormFieldState]) -> Self
-pub fn FormController::validate(Self) -> FormValidationSummary
-
-pub(all) struct FormFieldError {
-  name : String
-  message : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct FormFieldState {
-  name : String
-  label : String
-  value : State[String]
-  rules : Array[FormValidationRule]
-}
-pub fn FormFieldState::binding(Self) -> Binding[String]
-pub fn FormFieldState::new(name~ : String, initial? : String, label? : String, validator? : (String) -> String?, rules? : Array[FormValidationRule]) -> Self
-pub fn FormFieldState::validate(Self) -> FormFieldError?
-
-pub(all) struct FormValidationResult {
-  valid : Bool
-  errors : Array[FormFieldError]
-  summary : FormValidationSummary
-} derive(Eq, ToJson, @debug.Debug)
-
-type FormValidationRule
-pub fn FormValidationRule::from_validator((String) -> String?) -> Self
-pub fn FormValidationRule::new(message~ : String, validate~ : (String) -> Bool) -> Self
-pub fn FormValidationRule::required(message? : String) -> Self
-
-pub(all) struct FormValidationStyle {
-  foreground : Color
-  background : Color
-  border : Color
-  radius : Double
-  padding : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn FormValidationStyle::default(theme? : Theme) -> Self
-
-pub(all) struct FormValidationSummary {
-  valid : Bool
-  errors : Array[FormFieldError]
-  first_invalid_id : String?
-} derive(Eq, ToJson, @debug.Debug)
-pub fn FormValidationSummary::from_errors(Array[FormFieldError]) -> Self
-pub fn FormValidationSummary::from_fields(Array[FormFieldState]) -> Self
 
 pub(all) struct Frame {
   time_ms : Double
@@ -849,33 +739,26 @@ pub(all) enum PathVerb {
   Close
 } derive(Eq, ToJson, @debug.Debug)
 
-pub struct PickerItem {
-  id : String
-  label : String
-}
-pub fn PickerItem::id(Self) -> String
-pub fn PickerItem::label(Self) -> String
-pub fn PickerItem::new(id~ : String, label~ : String) -> Self
-
-pub(all) struct PickerStyle {
-  font : FontSpec
-  foreground : Color
-  background : Brush
-  radius : Double
-  popup_max_height : Double
+pub(all) enum PlatformViewEvent {
+  Named(name~ : String, value~ : String, detail~ : String, flag~ : Bool)
 } derive(Eq, ToJson, @debug.Debug)
-pub fn PickerStyle::default(theme? : Theme) -> Self
 
 pub(all) struct PlatformViewPlacement {
   id : String
   kind : String
   frame : Rect
   clip : Rect?
-  url : String
-  title : String
-  policy : WebViewNavigationPolicy
+  properties : Array[PlatformViewProperty]
 } derive(Eq, ToJson, @debug.Debug)
-pub fn PlatformViewPlacement::web_view(spec~ : WebViewSpec, frame~ : Rect, clip? : Rect?) -> Self
+pub fn PlatformViewPlacement::new(id~ : String, kind~ : String, frame~ : Rect, clip? : Rect?, properties? : Array[PlatformViewProperty]) -> Self
+pub fn PlatformViewPlacement::property(Self, String) -> String?
+pub fn PlatformViewPlacement::property_or(Self, String, String) -> String
+
+pub(all) struct PlatformViewProperty {
+  key : String
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PlatformViewProperty::new(key~ : String, value~ : String) -> Self
 
 pub(all) struct Point {
   x : Double
@@ -908,13 +791,6 @@ pub fn[Model, Msg] Program::runtime_update(Self[Model, Msg], Model, Msg) -> (Mod
 pub fn[Model, Msg] Program::runtime_view(Self[Model, Msg], Model, ViewEnvironment) -> View[Msg]
 pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
-
-pub(all) struct ProgressStyle {
-  foreground : Color
-  background : Color
-  radius : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ProgressStyle::default(theme? : Theme) -> Self
 
 pub(all) struct RadialGradientSpec {
   center : Point
@@ -956,162 +832,11 @@ pub(all) enum RedrawReason {
   Explicit
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct RichTextBlock {
-  runs : Array[RichTextRun]
-  table : RichTextTable?
-  prefix : String
-  font : FontSpec?
-  color : Color?
-  background : Brush?
-  border_left : BorderStyle?
-  inset : Insets
-  line_height : Double?
-  corner_radius : Double
-  rule : Bool
-  source_range : RichTextSourceRange?
-  content_range : RichTextSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextBlock::new(runs~ : Array[RichTextRun], table? : RichTextTable?, prefix? : String, font? : FontSpec?, color? : Color?, background? : Brush?, border_left? : BorderStyle?, inset? : Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool, source_range? : RichTextSourceRange?, content_range? : RichTextSourceRange?) -> Self
-
-pub(all) enum RichTextDecoration {
-  Strikethrough
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct RichTextDocument {
-  blocks : Array[RichTextBlock]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextDocument::new(blocks~ : Array[RichTextBlock]) -> Self
-pub fn RichTextDocument::plain(String) -> Self
-
-pub(all) struct RichTextInputTransform {
-  text : String
-  caret : Int
-  selection : TextRange?
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextInputTransform::new(text~ : String, caret~ : Int, selection? : TextRange?) -> Self
-
-pub(all) struct RichTextRun {
-  text : String
-  visual_text : String?
-  image_source : String?
-  image_size : Size?
-  image_fit : ImageFit
-  font : FontSpec?
-  color : Color?
-  background : Brush?
-  background_radius : Double
-  decoration : RichTextDecoration?
-  source_range : RichTextSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextRun::new(text~ : String, visual_text? : String?, image_source? : String?, image_size? : Size?, image_fit? : ImageFit, font? : FontSpec?, color? : Color?, background? : Brush?, background_radius? : Double, decoration? : RichTextDecoration?, source_range? : RichTextSourceRange?) -> Self
-
-pub(all) struct RichTextSourceRange {
-  start : Int
-  end : Int
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct RichTextTable {
-  rows : Array[Array[RichTextTableCell]]
-  row_height : Double
-  cell_padding : Insets
-  border : Color
-  header_background : Brush?
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct RichTextTableCell {
-  text : String
-  header : Bool
-  align : TextAlign?
-  source_range : RichTextSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct RoundedRect {
   rect : Rect
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RoundedRect::new(rect~ : Rect, radius? : Double) -> Self
-
-pub(all) struct RouteDescriptor {
-  id : String
-  path : String
-  title : String
-  fallback : Bool
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RouteDescriptor::new(id~ : String, path~ : String, title? : String, fallback? : Bool) -> Self
-
-type RouteFocusStore
-pub fn RouteFocusStore::focus_key(Self, String) -> String?
-pub fn RouteFocusStore::focus_key_for_location(Self, RouteLocation) -> String?
-pub fn RouteFocusStore::new() -> Self
-pub fn RouteFocusStore::remember(Self, route~ : String, focus_key~ : String) -> Unit
-pub fn RouteFocusStore::remember_location(Self, RouteLocation, focus_key~ : String) -> Unit
-
-pub(all) struct RouteHistoryEntry {
-  route : String
-  title : String
-  source : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RouteHistoryEntry::location(Self) -> RouteLocation
-pub fn RouteHistoryEntry::new(route~ : String, title? : String, source? : String) -> Self
-
-pub(all) struct RouteHistoryState {
-  entries : Array[RouteHistoryEntry]
-  cursor : Int
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RouteHistoryState::back(Self) -> Self
-pub fn RouteHistoryState::can_go_back(Self) -> Bool
-pub fn RouteHistoryState::can_go_forward(Self) -> Bool
-pub fn RouteHistoryState::current(Self) -> RouteLocation
-pub fn RouteHistoryState::current_entry(Self) -> RouteHistoryEntry?
-pub fn RouteHistoryState::current_route(Self) -> String
-pub fn RouteHistoryState::forward(Self) -> Self
-pub fn RouteHistoryState::from_deep_link(String, title? : String, source? : String) -> Self
-pub fn RouteHistoryState::from_routes(routes~ : Array[String], cursor? : Int, title? : String, source? : String) -> Self
-pub fn RouteHistoryState::from_snapshot(RouterSnapshot, title? : String, source? : String) -> Self
-pub fn RouteHistoryState::new(initial? : RouteLocation, title? : String, source? : String) -> Self
-pub fn RouteHistoryState::push(Self, RouteLocation, title? : String, source? : String) -> Self
-pub fn RouteHistoryState::replace(Self, RouteLocation, title? : String, source? : String) -> Self
-pub fn RouteHistoryState::restore_router(Self, RouterState) -> Unit
-pub fn RouteHistoryState::router_snapshot(Self) -> RouterSnapshot
-
-pub(all) struct RouteLocation {
-  path : String
-  query : Array[RouteQueryParam]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RouteLocation::new(path~ : String, query? : Array[RouteQueryParam]) -> Self
-pub fn RouteLocation::param_value(Self, String) -> String?
-pub fn RouteLocation::params(Self) -> Array[RouteParam]
-pub fn RouteLocation::parse(String) -> Self
-pub fn RouteLocation::query_value(Self, String) -> String?
-pub fn RouteLocation::to_route(Self) -> String
-
-pub(all) struct RouteParam {
-  key : String
-  value : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RouteParam::new(key~ : String, value~ : String) -> Self
-
-pub(all) struct RouteQueryParam {
-  key : String
-  value : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RouteQueryParam::new(key~ : String, value~ : String) -> Self
-
-pub(all) struct RouterSnapshot {
-  routes : Array[String]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RouterSnapshot::new(routes~ : Array[String]) -> Self
-
-type RouterState
-pub fn RouterState::current(Self) -> RouteLocation
-pub fn RouterState::new(initial? : RouteLocation) -> Self
-pub fn RouterState::pop(Self) -> Bool
-pub fn RouterState::push(Self, RouteLocation) -> Unit
-pub fn RouterState::replace(Self, RouteLocation) -> Unit
-pub fn RouterState::resolve(Self, Array[RouteDescriptor]) -> RouteDescriptor?
-pub fn RouterState::restore(Self, RouterSnapshot) -> Unit
-pub fn RouterState::snapshot(Self) -> RouterSnapshot
-pub fn RouterState::stack(Self) -> Array[RouteLocation]
 
 type SaveableCodec[T]
 pub fn SaveableCodec::bool() -> Self[Bool]
@@ -1265,16 +990,6 @@ pub fn Size::clamp(Self, Constraints) -> Self
 pub fn Size::inflate(Self, Insets) -> Self
 pub fn Size::new(width~ : Double, height~ : Double) -> Self
 
-pub(all) struct SliderStyle {
-  foreground : Color
-  background : Color
-  thumb_color : Color
-  track_height : Double
-  thumb_size : Double
-  radius : Double
-} derive(Eq, ToJson, @debug.Debug)
-pub fn SliderStyle::default(theme? : Theme) -> Self
-
 pub(all) struct SpacingScale {
   xs : Double
   sm : Double
@@ -1369,17 +1084,6 @@ pub(all) struct SurfaceScale {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SurfaceScale::default(ColorPalette, ColorScheme) -> Self
 
-pub(all) struct SurfaceStyle {
-  brush : Brush
-  border : BorderStyle?
-  radius : Double
-  shadow : ShadowStyle?
-  padding : Insets
-  level : SurfaceLevel
-} derive(Eq, ToJson, @debug.Debug)
-pub fn SurfaceStyle::default(theme? : Theme) -> Self
-pub fn SurfaceStyle::raised(theme? : Theme) -> Self
-
 pub(all) enum TextAlign {
   TextStart
   TextCenter
@@ -1403,17 +1107,6 @@ pub(all) struct TextControlStateContext {
   undo_stack : Array[TextHistoryEntryContext]
   redo_stack : Array[TextHistoryEntryContext]
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct TextFieldStyle {
-  normal : ControlStateStyle
-  focused : ControlStateStyle
-  disabled : ControlStateStyle
-  placeholder_color : Color
-  cursor_color : Color
-  font : FontSpec
-} derive(Eq, ToJson, @debug.Debug)
-pub fn TextFieldStyle::filled(theme? : Theme) -> Self
-pub fn TextFieldStyle::outline(theme? : Theme) -> Self
 
 pub(all) struct TextHistoryEntryContext {
   text : String
@@ -1524,13 +1217,6 @@ pub(all) struct TextRun {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextRun::new(text~ : String, frame~ : Rect, font~ : FontSpec, color~ : Color, align? : TextAlign) -> Self
 
-pub(all) struct TextStyle {
-  font : FontSpec
-  color : Color
-} derive(Eq, ToJson, @debug.Debug)
-pub fn TextStyle::body(theme? : Theme) -> Self
-pub fn TextStyle::title(theme? : Theme) -> Self
-
 pub struct TextSystem {
   id : String
   measure : (TextLayoutInput) -> TextLayoutResult
@@ -1579,12 +1265,6 @@ pub fn Theme::with_spacing(Self, Double) -> Self
 pub fn Theme::with_spacing_scale(Self, SpacingScale) -> Self
 pub fn Theme::with_surfaces(Self, SurfaceScale) -> Self
 pub fn Theme::with_typography(Self, TypographyScale) -> Self
-
-pub(all) struct ToneStyle {
-  foreground : Color
-  background : Color
-  border : Color
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Transform2D {
   a : Double
@@ -1726,48 +1406,6 @@ pub(all) struct VisualStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn VisualStyle::empty() -> Self
 
-pub(all) enum WebViewCommand {
-  LoadUrl(String)
-  Reload
-  Stop
-  GoBack
-  GoForward
-  EvaluateJavaScript(String, String)
-} derive(Eq, ToJson, @debug.Debug)
-pub fn WebViewCommand::evaluate_javascript(script~ : String, request_id? : String) -> Self
-pub fn WebViewCommand::load_url(String) -> Self
-
-pub(all) enum WebViewEvent {
-  NavigationRequested(String)
-  NavigationStarted(String)
-  NavigationCommitted(String)
-  NavigationFinished(String)
-  NavigationFailed(String, String)
-  TitleChanged(String)
-  CanGoBackChanged(Bool)
-  CanGoForwardChanged(Bool)
-  JavaScriptResult(String, String)
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum WebViewNavigationPolicy {
-  AllowHttpHttpsFile
-  AllowHttpHttps
-  AllowAll
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct WebViewSpec {
-  key : Key?
-  id : String
-  url : String
-  width : Double?
-  height : Double?
-  title : String
-  policy : WebViewNavigationPolicy
-  on_event : ((WebViewEvent) -> Unit)?
-}
-pub fn WebViewSpec::allows_url(Self, String) -> Bool
-pub fn WebViewSpec::new(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Unit)?) -> Self
-
 pub(all) enum WidgetDirtyHint {
   WidgetClean
   WidgetPaintDirty
@@ -1897,8 +1535,6 @@ pub fn[Msg] WidgetTextCommandResult::ignored() -> Self[Msg]
 pub fn[Msg] WidgetTextCommandResult::new(result~ : TextCommandResult, text_control? : TextControlStateContext?, messages? : Array[Msg]) -> Self[Msg]
 
 // Type aliases
-pub type RichTextFormatter = (String) -> RichTextDocument
-
 pub using @unicode {type TextGraphemeBoundaries}
 
 // Traits

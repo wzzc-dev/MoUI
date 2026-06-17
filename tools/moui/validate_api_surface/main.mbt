@@ -102,27 +102,42 @@ fn root_facade_required_tokens() -> Array[String] {
 ///|
 fn views_facade_core_alias_tokens() -> Array[String] {
   [
-    "ActionCommand", "ActionCommandMap", "BadgeStyle", "ButtonStyle", "ChoiceControlStyle",
-    "Color", "ColorScheme", "CommandBinding", "CommandIntent", "ControlStateStyle",
-    "FeedbackStyle", "FormController", "FormFieldError", "FormFieldState", "FormValidationResult",
-    "FormValidationRule", "FormValidationStyle", "FormValidationSummary", "KeyModifiers",
-    "KeyboardShortcut", "PickerItem", "PickerStyle", "ProgressStyle", "RichTextBlock",
-    "RichTextDecoration", "RichTextDocument", "RichTextInputTransform", "RichTextRun",
-    "RichTextSourceRange", "RichTextTable", "RichTextTableCell", "RouteDescriptor",
-    "RouteFocusStore", "RouteHistoryEntry", "RouteHistoryState", "RouteLocation",
-    "RouteParam", "RouteQueryParam", "RouterSnapshot", "RouterState", "SliderStyle",
-    "SurfaceStyle", "TextFieldStyle", "TextStyle", "ToneStyle", "WebViewEvent", "WebViewNavigationPolicy",
+    "ActionCommand", "ActionCommandMap", "Color", "ColorScheme", "CommandBinding",
+    "CommandIntent", "KeyModifiers", "KeyboardShortcut",
   ]
+}
+
+///|
+fn views_facade_widget_alias_tokens() -> Array[String] {
+  [
+    "RichTextInputTransform", "RichTextSourceRange", "RichTextDecoration", "RichTextRun",
+    "RichTextTableCell", "RichTextTable", "RichTextBlock", "RichTextDocument",
+  ]
+}
+
+///|
+fn views_facade_host_alias_tokens() -> Array[String] {
+  ["WebViewEvent", "WebViewNavigationPolicy"]
 }
 
 ///|
 fn views_facade_required_tokens() -> Array[String] {
   let tokens = [
-    "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(", "pub fn[Msg] column(", "pub fn[Msg] markdown_editor(",
-    "pub type RichTextFormatter = (String) -> @core.RichTextDocument",
+    "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend/host\"", "\"wzzc-dev/moui/widget\"",
+    "pub fn[Msg] button(", "pub fn[Msg] column(", "pub fn[Msg] markdown_editor(",
+    "pub(all) struct ButtonStyle", "pub(all) struct FormFieldState", "pub(all) struct RouteLocation",
+    "pub(all) struct RouteHistoryState", "type RouteFocusStore", "type RouterState",
+    "pub fn resolve_route(", "pub using @widget {type RichTextDocument}", "pub using @widget {type RichTextInputTransform}",
+    "pub type RichTextFormatter = (String) -> @widget.RichTextDocument", "pub fn rich_text_document_height(",
   ]
   for type_name in views_facade_core_alias_tokens() {
     tokens.push("pub using @core {type \{type_name}}")
+  }
+  for type_name in views_facade_widget_alias_tokens() {
+    tokens.push("pub using @widget {type \{type_name}}")
+  }
+  for type_name in views_facade_host_alias_tokens() {
+    tokens.push("pub using @host {type \{type_name}}")
   }
   tokens
 }
@@ -224,16 +239,16 @@ fn package_budgets() -> Array[PackageBudget] {
         "RuntimeInspectorSnapshot::from_runtime(", "ViewTreeInspectorSnapshot::from_runtime(",
         "LayoutInspectorSnapshot::from_runtime(", "RenderInspectorSnapshot::from_runtime(",
         "SemanticsInspectorSnapshot::from_runtime(", "RouteFocusStore::restore(",
-        "RouteFocusStore::restore_location(",
+        "RouteFocusStore::restore_location(", "BuildContext::new_for_runtime",
       ],
     },
     {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 760,
-      max_pub_lines: 288,
-      max_pub_all_lines: 60,
+      max_lines: 980,
+      max_pub_lines: 370,
+      max_pub_all_lines: 85,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
         "ViewSpec", "ViewNode", "RuntimeState", "HostWindowRenderer", "SkiaRasterRenderer",
@@ -247,7 +262,9 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_lines: 390,
       max_pub_all_lines: 100,
       required_tokens: [
-        "HostWindowRenderer", "HostAsyncImageLoader", "HostRouteSource",
+        "HostWindowRenderer", "HostAsyncImageLoader", "HostRouteSource", "pub(all) struct HostRouteLocation",
+        "pub(all) struct HostRouteQueryParam", "pub(all) struct WebViewSpec", "pub(all) enum WebViewCommand",
+        "pub(all) enum WebViewEvent", "pub(all) enum WebViewNavigationPolicy",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/render/skia\"", "\"wzzc-dev/moui/render/wgpu\"", "SkiaRasterRenderer",
@@ -337,7 +354,7 @@ fn legacy_core_family_budgets() -> Array[LegacyCoreFamilyBudget] {
         "ButtonStyle", "TextFieldStyle", "ChoiceControlStyle", "ProgressStyle", "SliderStyle",
         "PickerStyle", "FeedbackStyle", "BadgeStyle", "FormValidationStyle", "PickerItem",
       ],
-      max_occurrences: 28,
+      max_occurrences: 0,
       target_occurrences: 0,
     },
     {
@@ -347,7 +364,7 @@ fn legacy_core_family_budgets() -> Array[LegacyCoreFamilyBudget] {
         "FormFieldState", "FormValidationRule", "FormController", "required_field",
         "validate_form",
       ],
-      max_occurrences: 34,
+      max_occurrences: 0,
       target_occurrences: 0,
     },
     {
@@ -357,7 +374,7 @@ fn legacy_core_family_budgets() -> Array[LegacyCoreFamilyBudget] {
         "RichTextFormatter", "RichTextTable", "RichTextTableCell", "RichTextSourceRange",
         "RichTextDecoration", "rich_text_document_", "rich_text_editor_",
       ],
-      max_occurrences: 38,
+      max_occurrences: 0,
       target_occurrences: 0,
     },
     {
@@ -366,7 +383,7 @@ fn legacy_core_family_budgets() -> Array[LegacyCoreFamilyBudget] {
         "WebViewSpec", "WebViewCommand", "WebViewEvent", "WebViewNavigationPolicy",
         "PlatformViewPlacement::web_view", "WebView(String",
       ],
-      max_occurrences: 17,
+      max_occurrences: 0,
       target_occurrences: 0,
     },
     {
@@ -375,7 +392,7 @@ fn legacy_core_family_budgets() -> Array[LegacyCoreFamilyBudget] {
         "RouteHistoryState", "RouteDescriptor", "RouterState", "RouteFocusStore",
         "RouteLocation", "RouterSnapshot", "resolve_route",
       ],
-      max_occurrences: 66,
+      max_occurrences: 0,
       target_occurrences: 0,
     },
     {
@@ -977,6 +994,59 @@ fn forbidden_core_program_runtime_source_paths() -> Array[String] {
 }
 
 ///|
+fn forbidden_core_webview_source_tokens() -> Array[ForbiddenSourceToken] {
+  [
+    { label: "host-owned WebView spec", token: "type WebViewSpec" },
+    { label: "host-owned WebView spec struct", token: "struct WebViewSpec" },
+    { label: "host-owned WebView command", token: "enum WebViewCommand" },
+    { label: "host-owned WebView event", token: "enum WebViewEvent" },
+    {
+      label: "host-owned WebView navigation policy",
+      token: "enum WebViewNavigationPolicy",
+    },
+    {
+      label: "WebView-specific platform placement helper",
+      token: "PlatformViewPlacement::web_view",
+    },
+    { label: "WebView-specific app event", token: "WebView(String" },
+  ]
+}
+
+///|
+fn forbidden_core_routing_source_tokens() -> Array[ForbiddenSourceToken] {
+  [
+    { label: "views-owned route location", token: "type RouteLocation" },
+    {
+      label: "views-owned route location struct",
+      token: "struct RouteLocation",
+    },
+    { label: "views-owned route descriptor", token: "type RouteDescriptor" },
+    {
+      label: "views-owned route descriptor struct",
+      token: "struct RouteDescriptor",
+    },
+    { label: "views-owned router snapshot", token: "type RouterSnapshot" },
+    {
+      label: "views-owned router snapshot struct",
+      token: "struct RouterSnapshot",
+    },
+    { label: "views-owned route history", token: "type RouteHistoryState" },
+    {
+      label: "views-owned route history struct",
+      token: "struct RouteHistoryState",
+    },
+    { label: "views-owned route focus store", token: "type RouteFocusStore" },
+    {
+      label: "views-owned route focus store struct",
+      token: "struct RouteFocusStore",
+    },
+    { label: "views-owned router state", token: "type RouterState" },
+    { label: "views-owned router state struct", token: "struct RouterState" },
+    { label: "views-owned route resolver", token: "resolve_route(" },
+  ]
+}
+
+///|
 fn forbidden_core_runtime_boundary_source_tokens() -> Array[
   ForbiddenSourceToken,
 ] {
@@ -1280,6 +1350,77 @@ fn validate_core_program_runtime_ownership(
 }
 
 ///|
+fn validate_core_webview_ownership(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = []
+  collect_mbt_files(repo_root, "moui/core", files, failures)
+  let mut source_hits = 0
+  let tokens = forbidden_core_webview_source_tokens()
+  for path in files {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    for rule in tokens {
+      if text.contains(rule.token) {
+        source_hits += 1
+        failures.push(
+          path +
+          ": WebView command/event/policy/spec ownership belongs in moui/backend/host (" +
+          rule.label +
+          ") instead of core",
+        )
+      }
+    }
+  }
+  println("api surface: core WebView ownership source tokens=\{source_hits}")
+}
+
+///|
+fn validate_core_routing_ownership(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = []
+  collect_mbt_files(repo_root, "moui/core", files, failures)
+  let mut source_hits = 0
+  let tokens = forbidden_core_routing_source_tokens()
+  for path in files {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    for rule in tokens {
+      if text.contains(rule.token) {
+        source_hits += 1
+        failures.push(
+          path +
+          ": routing/history ownership belongs in moui/views (" +
+          rule.label +
+          ") instead of core",
+        )
+      }
+    }
+  }
+  let stale_path = "moui/core/routing.mbt"
+  if @tools.file_exists(@tools.resolve_path(repo_root, stale_path)) {
+    source_hits += 1
+    failures.push(
+      stale_path + ": routing/history implementation belongs in moui/views",
+    )
+  }
+  println("api surface: core routing ownership source tokens=\{source_hits}")
+}
+
+///|
 fn validate_core_runtime_boundary(
   repo_root : String,
   failures : Array[String],
@@ -1333,6 +1474,8 @@ fn run_checks(repo_root : String) -> Array[String] {
   validate_views_return_types(repo_root, failures)
   validate_runtime_source_boundaries(repo_root, failures)
   validate_core_program_runtime_ownership(repo_root, failures)
+  validate_core_webview_ownership(repo_root, failures)
+  validate_core_routing_ownership(repo_root, failures)
   validate_core_runtime_boundary(repo_root, failures)
   validate_backend_runtime_interfaces(repo_root, failures)
   validate_runtime_entrypoint_usage(repo_root, failures)

@@ -282,7 +282,7 @@ fn MarkdownEditorApp::scroll_to_source_with_anchor(
   let viewport_height = markdown_editor_viewport_height()
   let content_height = markdown_editor_max_double(
     viewport_height,
-    @core.rich_text_document_height(snapshot.rich_text, editor_font) + 96.0,
+    @views.rich_text_document_height(snapshot.rich_text, editor_font) + 96.0,
   )
   let max_scroll = markdown_editor_max_double(
     0.0,
@@ -294,9 +294,9 @@ fn MarkdownEditorApp::scroll_to_source_with_anchor(
     width=editor_width,
     height=content_height,
   )
-  let content = @core.rich_text_editor_content_rect(editor_frame)
+  let content = @views.rich_text_editor_content_rect(editor_frame)
   match
-    @core.rich_text_document_caret_rect_at_source(
+    @views.rich_text_document_caret_rect_at_source(
       snapshot.rich_text,
       source_start,
       content,

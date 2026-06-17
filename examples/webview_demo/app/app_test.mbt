@@ -25,7 +25,7 @@ test "webview demo emits native placement with default url when available" {
   let frame = runtime.draw_frame()
   inspect(frame.platform_views.length(), content="1")
   inspect(frame.platform_views[0].id, content="webview-demo-main")
-  inspect(frame.platform_views[0].url, content=default_url)
+  inspect(frame.platform_views[0].property_or("url", ""), content=default_url)
 }
 
 ///|

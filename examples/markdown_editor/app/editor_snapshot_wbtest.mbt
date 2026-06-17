@@ -210,7 +210,7 @@ test "markdown editor snapshot preserves code block blank lines" {
     fail("expected blank code line in rich text")
   }
   inspect(
-    @core.rich_text_document_height(snapshot.rich_text, @core.FontSpec::new()).to_int(),
+    @views.rich_text_document_height(snapshot.rich_text, @core.FontSpec::new()).to_int(),
     content="68",
   )
 }
@@ -249,7 +249,7 @@ test "markdown editor snapshot preserves visible empty paragraph lines" {
     fail("expected visible rich text block for middle blank line")
   }
   inspect(
-    @core.rich_text_document_height(snapshot.rich_text, @core.FontSpec::new()).to_int(),
+    @views.rich_text_document_height(snapshot.rich_text, @core.FontSpec::new()).to_int(),
     content="99",
   )
 }
@@ -259,12 +259,14 @@ test "markdown editor caret geometry lands on inserted blank line" {
   let content = @core.Rect::new(x=10.0, y=20.0, width=320.0, height=160.0)
   let font = @core.FontSpec::new(size=16.0)
   let heading = markdown_editor_format("# Title\n")
-  guard @core.rich_text_document_caret_rect_at_source(heading, 8, content, font)
+  guard @views.rich_text_document_caret_rect_at_source(
+      heading, 8, content, font,
+    )
     is Some(heading_blank) else {
     fail("expected heading blank-line caret rect")
   }
   let paragraph = markdown_editor_format("Body\n")
-  guard @core.rich_text_document_caret_rect_at_source(
+  guard @views.rich_text_document_caret_rect_at_source(
       paragraph, 5, content, font,
     )
     is Some(paragraph_blank) else {

@@ -3,7 +3,9 @@ package "wzzc-dev/moui/views"
 
 import {
   "moonbitlang/core/debug",
+  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/widget",
 }
 
 // Values
@@ -21,19 +23,19 @@ pub fn[Msg] avatar(String, image? : String?, theme? : @core.Theme, size? : Doubl
 
 pub fn[Msg] avatar_group(Array[String], theme? : @core.Theme, size? : Double, max_visible? : Int) -> @core.View[Msg]
 
-pub fn[Msg] badge(String, tone? : BadgeTone, theme? : @core.Theme, style? : @core.BadgeStyle, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] badge(String, tone? : BadgeTone, theme? : @core.Theme, style? : BadgeStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] banner(String, String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] baseline_form_rows(Array[BaselineFormRow[Msg]], width? : Double, label_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, style? : @core.ButtonStyle, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, style? : ButtonStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] button_group(Array[MenuItem[Msg]], selected? : String, theme? : @core.Theme, button_width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] callout(String, String, tone? : FeedbackTone, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] callout(String, String, tone? : FeedbackTone, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] card(@core.View[Msg], width? : Double, height? : Double, padding? : Double, theme? : @core.Theme) -> @core.View[Msg]
 
@@ -81,9 +83,9 @@ pub fn[Msg] data_filter(id~ : String, label~ : String, selected~ : Bool, message
 
 pub fn[Msg] data_filter_bar(query~ : String, on_query~ : (String) -> Msg, filters? : Array[DataFilter[Msg]], result_count? : Int, on_clear? : Msg?, placeholder? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : @core.PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+pub fn[Msg] datepicker(selected~ : @core.DateValue, on_select~ : (@core.DateValue) -> Msg, mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
-pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : @core.PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
+pub fn[Msg] datepicker_binding(selected~ : @core.Binding[@core.DateValue], mode? : @core.DatePickerMode, placeholder? : String, theme? : @core.Theme, style? : PickerStyle, min_date? : @core.DateValue?, max_date? : @core.DateValue?) -> @core.View[Msg]
 
 pub fn description_item(String, String) -> DescriptionItem
 
@@ -103,11 +105,11 @@ pub fn[Msg] dropdown(String, Array[MenuItem[Msg]], state~ : DropdownState, on_to
 
 pub fn[Msg] empty() -> @core.View[Msg]
 
-pub fn[Msg] empty_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] empty_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn environment(theme? : @core.Theme) -> @core.Environment
 
-pub fn[Msg] error_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] error_state(String, String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] expanded(@core.View[Msg], weight? : Double) -> @core.View[Msg]
 
@@ -125,19 +127,19 @@ pub fn[Msg] form(Array[@core.View[Msg]], spacing? : Double, theme? : @core.Theme
 
 pub fn[Msg] form_actions(primary~ : StateViewAction[Msg], secondary? : StateViewAction[Msg]?, status? : String, primary_enabled? : Bool, secondary_enabled? : Bool, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] form_error(String, theme? : @core.Theme, style? : @core.FormValidationStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] form_error(String, theme? : @core.Theme, style? : FormValidationStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] form_field(label~ : String, child~ : @core.View[Msg], helper? : String, error? : String, status? : FormFieldStatus, layout? : FormFieldLayout, validation_display? : FormValidationDisplay, required? : Bool, disabled? : Bool, read_only? : Bool, theme? : @core.Theme, width? : Double, label_width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] form_field_state(field~ : @core.FormFieldState, child~ : @core.View[Msg], helper? : String, validation_display? : FormValidationDisplay, required? : Bool, disabled? : Bool, read_only? : Bool, theme? : @core.Theme, width? : Double, label_width? : Double) -> @core.View[Msg]
+pub fn[Msg] form_field_state(field~ : FormFieldState, child~ : @core.View[Msg], helper? : String, validation_display? : FormValidationDisplay, required? : Bool, disabled? : Bool, read_only? : Bool, theme? : @core.Theme, width? : Double, label_width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] form_helper_text(String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] form_section(title? : String, Array[@core.View[Msg]], summary? : String, spacing? : Double, theme? : @core.Theme, width? : Double, padding? : Double) -> @core.View[Msg]
 
-pub fn[Msg] form_validation_summary(summary~ : @core.FormValidationSummary, title? : String, valid_message? : String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FormValidationStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] form_validation_summary(summary~ : FormValidationSummary, title? : String, valid_message? : String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FormValidationStyle, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] form_workflow_bar(summary~ : @core.FormValidationSummary, primary~ : StateViewAction[Msg], secondary? : StateViewAction[Msg]?, focus_scope? : @core.FocusScope?, focus_invalid? : StateViewAction[Msg]?, valid_message? : String, invalid_title? : String, status? : String, theme? : @core.Theme, style? : @core.FormValidationStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] form_workflow_bar(summary~ : FormValidationSummary, primary~ : StateViewAction[Msg], secondary? : StateViewAction[Msg]?, focus_scope? : @core.FocusScope?, focus_invalid? : StateViewAction[Msg]?, valid_message? : String, invalid_title? : String, status? : String, theme? : @core.Theme, style? : FormValidationStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] frame(@core.View[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.View[Msg]
 
@@ -145,7 +147,7 @@ pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, 
 
 pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.View[Msg]
 
-pub fn[Msg] inline_error(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, badge_style? : @core.BadgeStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] inline_error(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FeedbackStyle, badge_style? : BadgeStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] input_group(child~ : @core.View[Msg], prefix? : @core.View[Msg]?, suffix? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, height? : Double, padding? : Double) -> @core.View[Msg]
 
@@ -163,11 +165,11 @@ pub fn light_theme() -> @core.Theme
 
 pub fn[Msg] list(Array[@core.View[Msg]], spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] loading_state(title? : String, message? : String, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] loading_state(title? : String, message? : String, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] markdown_editor(String, (String) -> @core.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : @core.TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
+pub fn[Msg] markdown_editor(String, (String) -> @widget.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @widget.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
-pub fn[Msg] markdown_editor_binding(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : @core.TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
+pub fn[Msg] markdown_editor_binding(@core.Binding[String], (String) -> @widget.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @widget.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] master_detail(master~ : @core.View[Msg], detail~ : @core.View[Msg], master_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
 
@@ -199,17 +201,17 @@ pub fn[Msg] pagination(page~ : Int, page_count~ : Int, on_previous~ : Msg, on_ne
 
 pub fn[Msg] password_field(String, on_input~ : (String) -> Msg, revealed~ : Bool, on_toggle_reveal~ : Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] picker(Array[@core.PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, style? : @core.PickerStyle, max_height? : Double) -> @core.View[Msg]
+pub fn[Msg] picker(Array[PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder? : String, theme? : @core.Theme, style? : PickerStyle, max_height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] picker_binding(Array[@core.PickerItem], selected~ : @core.Binding[String], placeholder? : String, theme? : @core.Theme, style? : @core.PickerStyle, max_height? : Double) -> @core.View[Msg]
+pub fn[Msg] picker_binding(Array[PickerItem], selected~ : @core.Binding[String], placeholder? : String, theme? : @core.Theme, style? : PickerStyle, max_height? : Double) -> @core.View[Msg]
 
-pub fn picker_item(String, String) -> @core.PickerItem
+pub fn picker_item(String, String) -> PickerItem
 
 pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expanded~ : Bool, placement? : PopoverPlacement, theme? : @core.Theme, width? : Double, height? : Double, trap_focus? : Bool) -> @core.View[Msg]
 
-pub fn[Msg] progress(Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @core.ProgressStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] progress(Double, width? : Double, height? : Double, theme? : @core.Theme, style? : ProgressStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] progress_status(String, value~ : Double, message? : String, status? : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, badge_style? : @core.BadgeStyle, progress_style? : @core.ProgressStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] progress_status(String, value~ : Double, message? : String, status? : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FeedbackStyle, badge_style? : BadgeStyle, progress_style? : ProgressStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] radio(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
@@ -217,19 +219,29 @@ pub fn[Msg] radio_binding(String, @core.Binding[Bool], theme? : @core.Theme, for
 
 pub fn[Msg] radio_group(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
+pub fn required_field(message? : String) -> (String) -> String?
+
 pub fn[Msg] resizable_panel(content~ : @core.View[Msg], size~ : Double, theme? : @core.Theme, height? : Double, min_size? : Double, max_size? : Double, on_drag? : ((Double) -> Msg)?) -> @core.View[Msg]
 
 pub fn[Msg] resizable_split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], primary_width~ : Double, detail_width? : Double, height? : Double, min_primary_width? : Double, max_primary_width? : Double, spacing? : Double, handle_width? : Double, theme? : @core.Theme, on_drag~ : (Double) -> Msg) -> @core.View[Msg]
 
+pub fn resolve_route(RouteLocation, Array[RouteDescriptor]) -> RouteDescriptor?
+
 pub fn[Msg] responsive_grid(Array[@core.View[Msg]], width? : Double, min_column_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] rich_text_editor(String, (String) -> @core.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : @core.TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
+pub fn rich_text_document_caret_rect_at_source(@widget.RichTextDocument, Int, @core.Rect, @core.FontSpec, text_system? : @core.TextSystem) -> @core.Rect?
 
-pub fn[Msg] rich_text_editor_binding(@core.Binding[String], (String) -> @core.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : @core.TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
+pub fn rich_text_document_height(@widget.RichTextDocument, @core.FontSpec) -> Double
+
+pub fn[Msg] rich_text_editor(String, (String) -> @widget.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @widget.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] rich_text_editor_binding(@core.Binding[String], (String) -> @widget.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @widget.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
+
+pub fn rich_text_editor_content_rect(@core.Rect) -> @core.Rect
 
 pub fn[Msg] route_header(String, subtitle? : String, actions? : Array[MenuItem[Msg]], theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] router_stack(@core.RouterState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
+pub fn[Msg] router_stack(RouterState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
 pub fn[Msg] row(Array[@core.View[Msg]], spacing? : Double, justify? : MainAlign, align? : CrossAlign) -> @core.View[Msg]
 
@@ -259,11 +271,11 @@ pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardS
 
 pub fn[Msg] sidebar(String, Array[SidebarItem[Msg]], selected~ : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @core.SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
+pub fn[Msg] slider(Double, min? : Double, max? : Double, width? : Double, height? : Double, theme? : @core.Theme, style? : SliderStyle, foreground? : @core.Color, background? : @core.Color, on_change? : ((Double) -> Msg)?) -> @core.View[Msg]
 
-pub fn[Msg] slider_binding(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, theme? : @core.Theme, style? : @core.SliderStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
+pub fn[Msg] slider_binding(@core.Binding[Double], min? : Double, max? : Double, width? : Double, height? : Double, theme? : @core.Theme, style? : SliderStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
-pub fn[Msg] snackbar(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] snackbar(String, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] spacer(min_length? : Double, weight? : Double) -> @core.View[Msg]
 
@@ -271,9 +283,9 @@ pub fn[Msg] split_view(primary~ : @core.View[Msg], detail~ : @core.View[Msg], pr
 
 pub fn[Msg] stack(Array[@core.View[Msg]]) -> @core.View[Msg]
 
-pub fn[Msg] stat_card(String, String, caption? : String, tone? : FeedbackTone, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] stat_card(String, String, caption? : String, tone? : FeedbackTone, theme? : @core.Theme, style? : FeedbackStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] status_badge(String, tone? : BadgeTone, detail? : String, theme? : @core.Theme, style? : @core.BadgeStyle, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] status_badge(String, tone? : BadgeTone, detail? : String, theme? : @core.Theme, style? : BadgeStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] status_bar(Array[String], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -295,15 +307,15 @@ pub fn[Msg] tag(String, theme? : @core.Theme, width? : Double, height? : Double)
 
 pub fn[Msg] text(String, role? : TextRole, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : @core.TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] text_field_binding(@core.Binding[String], on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : @core.TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] text_field_binding(@core.Binding[String], on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn theme(base? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, semantic_colors? : @core.SemanticColorScale, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
 
-pub fn[Msg] toast(String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double) -> @core.View[Msg]
+pub fn[Msg] toast(String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] toast_stack(Array[ToastStackItem[Msg]], theme? : @core.Theme, style? : @core.FeedbackStyle, width? : Double, spacing? : Double) -> @core.View[Msg]
+pub fn[Msg] toast_stack(Array[ToastStackItem[Msg]], theme? : @core.Theme, style? : FeedbackStyle, width? : Double, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] toggle(String, Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, foreground? : @core.Color, check_color? : @core.Color) -> @core.View[Msg]
 
@@ -321,9 +333,11 @@ pub fn tree_item(id~ : String, label~ : String, children? : Array[TreeItem]) -> 
 
 pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : String, on_select? : ((String) -> Msg)?, on_toggle? : ((String) -> Msg)?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn validate_form(Array[FormFieldState]) -> FormValidationResult
+
 pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
 
-pub fn[Msg] web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : @core.WebViewNavigationPolicy, on_event? : ((@core.WebViewEvent) -> Msg)?) -> @core.View[Msg]
+pub fn[Msg] web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : @host.WebViewNavigationPolicy, on_event? : ((@host.WebViewEvent) -> Msg)?) -> @core.View[Msg]
 
 pub fn[Msg] wizard(Array[WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -334,6 +348,17 @@ pub fn[Msg] wrap(Array[@core.View[Msg]], width? : Double, spacing? : Double, row
 // Errors
 
 // Types and methods
+pub(all) struct BadgeStyle {
+  neutral : ToneStyle
+  accent : ToneStyle
+  success : ToneStyle
+  warning : ToneStyle
+  danger : ToneStyle
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn BadgeStyle::default(theme? : @core.Theme) -> Self
+
 pub(all) enum BadgeTone {
   Neutral
   Accent
@@ -355,6 +380,17 @@ pub struct BreadcrumbItem[Msg] {
 }
 pub fn[Msg] BreadcrumbItem::new(id~ : String, label~ : String, message? : Msg?) -> Self[Msg]
 
+pub(all) struct ButtonStyle {
+  normal : ControlStateStyle
+  hovered : ControlStateStyle
+  pressed : ControlStateStyle
+  disabled : ControlStateStyle
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonStyle::filled(theme? : @core.Theme) -> Self
+pub fn ButtonStyle::ghost(theme? : @core.Theme) -> Self
+pub fn ButtonStyle::outline(theme? : @core.Theme) -> Self
+pub fn ButtonStyle::tonal(theme? : @core.Theme) -> Self
+
 pub(all) enum ButtonVariant {
   Primary
   Tonal
@@ -367,6 +403,15 @@ pub(all) enum ChipVariant {
   Outline
   Soft
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ChoiceControlStyle {
+  foreground : @core.Color
+  selected_color : @core.Color
+  disabled_foreground : @core.Color
+  disabled_selected_color : @core.Color
+  control_size : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ChoiceControlStyle::default(theme? : @core.Theme) -> Self
 
 pub struct ChoiceItem {
   id : String
@@ -406,6 +451,14 @@ pub struct CommandMenuSection {
 }
 pub fn CommandMenuSection::new(title~ : String, commands~ : Array[@core.ActionCommand]) -> Self
 
+pub(all) struct ControlStateStyle {
+  foreground : @core.Color
+  background : @core.Brush
+  border : @core.BorderStyle?
+  radius : Double
+  shadow : @core.ShadowStyle?
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum CrossAlign {
   Start
   Center
@@ -441,6 +494,17 @@ pub struct DropdownState {
 }
 pub fn DropdownState::new(expanded? : Bool, selected? : String) -> Self
 
+pub(all) struct FeedbackStyle {
+  neutral : ToneStyle
+  info : ToneStyle
+  success : ToneStyle
+  warning : ToneStyle
+  danger : ToneStyle
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FeedbackStyle::default(theme? : @core.Theme) -> Self
+
 pub(all) enum FeedbackTone {
   Neutral
   Success
@@ -460,10 +524,30 @@ pub struct FileSelection {
 }
 pub fn FileSelection::new(paths~ : Array[String]) -> Self
 
+type FormController
+pub fn FormController::field_error(Self, String) -> String
+pub fn FormController::new(fields~ : Array[FormFieldState]) -> Self
+pub fn FormController::validate(Self) -> FormValidationSummary
+
+pub(all) struct FormFieldError {
+  name : String
+  message : String
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum FormFieldLayout {
   Vertical
   Horizontal
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct FormFieldState {
+  name : String
+  label : String
+  value : @core.State[String]
+  rules : Array[FormValidationRule]
+}
+pub fn FormFieldState::binding(Self) -> @core.Binding[String]
+pub fn FormFieldState::new(name~ : String, initial? : String, label? : String, validator? : (String) -> String?, rules? : Array[FormValidationRule]) -> Self
+pub fn FormFieldState::validate(Self) -> FormFieldError?
 
 pub(all) enum FormFieldStatus {
   Normal
@@ -479,6 +563,34 @@ pub(all) enum FormValidationDisplay {
   OnInvalid
   Hidden
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct FormValidationResult {
+  valid : Bool
+  errors : Array[FormFieldError]
+  summary : FormValidationSummary
+} derive(Eq, ToJson, @debug.Debug)
+
+type FormValidationRule
+pub fn FormValidationRule::from_validator((String) -> String?) -> Self
+pub fn FormValidationRule::new(message~ : String, validate~ : (String) -> Bool) -> Self
+pub fn FormValidationRule::required(message? : String) -> Self
+
+pub(all) struct FormValidationStyle {
+  foreground : @core.Color
+  background : @core.Color
+  border : @core.Color
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationStyle::default(theme? : @core.Theme) -> Self
+
+pub(all) struct FormValidationSummary {
+  valid : Bool
+  errors : Array[FormFieldError]
+  first_invalid_id : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn FormValidationSummary::from_errors(Array[FormFieldError]) -> Self
+pub fn FormValidationSummary::from_fields(Array[FormFieldState]) -> Self
 
 pub(all) enum MainAlign {
   Start
@@ -517,12 +629,118 @@ pub fn PaginationState::page_size(Self) -> Int
 pub fn PaginationState::previous(Self) -> Self
 pub fn PaginationState::start_index(Self) -> Int
 
+pub struct PickerItem {
+  id : String
+  label : String
+}
+pub fn PickerItem::id(Self) -> String
+pub fn PickerItem::label(Self) -> String
+pub fn PickerItem::new(id~ : String, label~ : String) -> Self
+
+pub(all) struct PickerStyle {
+  font : @core.FontSpec
+  foreground : @core.Color
+  background : @core.Brush
+  radius : Double
+  popup_max_height : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PickerStyle::default(theme? : @core.Theme) -> Self
+
 pub(all) enum PopoverPlacement {
   BottomStart
   BottomEnd
   TopStart
   TopEnd
 }
+
+pub(all) struct ProgressStyle {
+  foreground : @core.Color
+  background : @core.Color
+  radius : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ProgressStyle::default(theme? : @core.Theme) -> Self
+
+pub(all) struct RouteDescriptor {
+  id : String
+  path : String
+  title : String
+  fallback : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteDescriptor::new(id~ : String, path~ : String, title? : String, fallback? : Bool) -> Self
+
+type RouteFocusStore
+pub fn RouteFocusStore::focus_key(Self, String) -> String?
+pub fn RouteFocusStore::focus_key_for_location(Self, RouteLocation) -> String?
+pub fn RouteFocusStore::new() -> Self
+pub fn RouteFocusStore::remember(Self, route~ : String, focus_key~ : String) -> Unit
+pub fn RouteFocusStore::remember_location(Self, RouteLocation, focus_key~ : String) -> Unit
+
+pub(all) struct RouteHistoryEntry {
+  route : String
+  title : String
+  source : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteHistoryEntry::location(Self) -> RouteLocation
+pub fn RouteHistoryEntry::new(route~ : String, title? : String, source? : String) -> Self
+
+pub(all) struct RouteHistoryState {
+  entries : Array[RouteHistoryEntry]
+  cursor : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteHistoryState::back(Self) -> Self
+pub fn RouteHistoryState::can_go_back(Self) -> Bool
+pub fn RouteHistoryState::can_go_forward(Self) -> Bool
+pub fn RouteHistoryState::current(Self) -> RouteLocation
+pub fn RouteHistoryState::current_entry(Self) -> RouteHistoryEntry?
+pub fn RouteHistoryState::current_route(Self) -> String
+pub fn RouteHistoryState::forward(Self) -> Self
+pub fn RouteHistoryState::from_deep_link(String, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::from_routes(routes~ : Array[String], cursor? : Int, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::from_snapshot(RouterSnapshot, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::new(initial? : RouteLocation, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::push(Self, RouteLocation, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::replace(Self, RouteLocation, title? : String, source? : String) -> Self
+pub fn RouteHistoryState::restore_router(Self, RouterState) -> Unit
+pub fn RouteHistoryState::router_snapshot(Self) -> RouterSnapshot
+
+pub(all) struct RouteLocation {
+  path : String
+  query : Array[RouteQueryParam]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteLocation::new(path~ : String, query? : Array[RouteQueryParam]) -> Self
+pub fn RouteLocation::param_value(Self, String) -> String?
+pub fn RouteLocation::params(Self) -> Array[RouteParam]
+pub fn RouteLocation::parse(String) -> Self
+pub fn RouteLocation::query_value(Self, String) -> String?
+pub fn RouteLocation::to_route(Self) -> String
+
+pub(all) struct RouteParam {
+  key : String
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteParam::new(key~ : String, value~ : String) -> Self
+
+pub(all) struct RouteQueryParam {
+  key : String
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouteQueryParam::new(key~ : String, value~ : String) -> Self
+
+pub(all) struct RouterSnapshot {
+  routes : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RouterSnapshot::new(routes~ : Array[String]) -> Self
+
+type RouterState
+pub fn RouterState::current(Self) -> RouteLocation
+pub fn RouterState::new(initial? : RouteLocation) -> Self
+pub fn RouterState::pop(Self) -> Bool
+pub fn RouterState::push(Self, RouteLocation) -> Unit
+pub fn RouterState::replace(Self, RouteLocation) -> Unit
+pub fn RouterState::resolve(Self, Array[RouteDescriptor]) -> RouteDescriptor?
+pub fn RouterState::restore(Self, RouterSnapshot) -> Unit
+pub fn RouterState::snapshot(Self) -> RouterSnapshot
+pub fn RouterState::stack(Self) -> Array[RouteLocation]
 
 pub struct ScrollToIndexIntent {
   index : Int
@@ -576,11 +794,32 @@ pub struct SidebarItem[Msg] {
 }
 pub fn[Msg] SidebarItem::new(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> Self[Msg]
 
+pub(all) struct SliderStyle {
+  foreground : @core.Color
+  background : @core.Color
+  thumb_color : @core.Color
+  track_height : Double
+  thumb_size : Double
+  radius : Double
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SliderStyle::default(theme? : @core.Theme) -> Self
+
 pub struct StateViewAction[Msg] {
   label : String
   message : Msg
 }
 pub fn[Msg] StateViewAction::new(label~ : String, message~ : Msg) -> Self[Msg]
+
+pub(all) struct SurfaceStyle {
+  brush : @core.Brush
+  border : @core.BorderStyle?
+  radius : Double
+  shadow : @core.ShadowStyle?
+  padding : @core.Insets
+  level : @core.SurfaceLevel
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SurfaceStyle::default(theme? : @core.Theme) -> Self
+pub fn SurfaceStyle::raised(theme? : @core.Theme) -> Self
 
 pub(all) enum SurfaceVariant {
   Base
@@ -602,6 +841,17 @@ pub struct TableColumn {
 pub fn TableColumn::id(Self) -> String
 pub fn TableColumn::width(Self) -> Double
 
+pub(all) struct TextFieldStyle {
+  normal : ControlStateStyle
+  focused : ControlStateStyle
+  disabled : ControlStateStyle
+  placeholder_color : @core.Color
+  cursor_color : @core.Color
+  font : @core.FontSpec
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldStyle::filled(theme? : @core.Theme) -> Self
+pub fn TextFieldStyle::outline(theme? : @core.Theme) -> Self
+
 pub(all) enum TextFieldVariant {
   Filled
   Outline
@@ -615,6 +865,13 @@ pub(all) enum TextRole {
   Control
   Mono
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextStyle {
+  font : @core.FontSpec
+  color : @core.Color
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextStyle::body(theme? : @core.Theme) -> Self
+pub fn TextStyle::title(theme? : @core.Theme) -> Self
 
 pub struct ToastQueue[Msg] {
   items : Array[ToastQueueItem[Msg]]
@@ -644,6 +901,12 @@ pub struct ToastStackItem[Msg] {
 }
 pub fn[Msg] ToastStackItem::new(id~ : String, message~ : String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, dismiss? : Msg?) -> Self[Msg]
 
+pub(all) struct ToneStyle {
+  foreground : @core.Color
+  background : @core.Color
+  border : @core.Color
+} derive(Eq, ToJson, @debug.Debug)
+
 pub struct TreeItem {
   id : String
   label : String
@@ -664,12 +927,6 @@ pub using @core {type ActionCommand}
 
 pub using @core {type ActionCommandMap}
 
-pub using @core {type BadgeStyle}
-
-pub using @core {type ButtonStyle}
-
-pub using @core {type ChoiceControlStyle}
-
 pub using @core {type Color}
 
 pub using @core {type ColorScheme}
@@ -678,83 +935,31 @@ pub using @core {type CommandBinding}
 
 pub using @core {type CommandIntent}
 
-pub using @core {type ControlStateStyle}
-
-pub using @core {type FeedbackStyle}
-
-pub using @core {type FormController}
-
-pub using @core {type FormFieldError}
-
-pub using @core {type FormFieldState}
-
-pub using @core {type FormValidationResult}
-
-pub using @core {type FormValidationRule}
-
-pub using @core {type FormValidationStyle}
-
-pub using @core {type FormValidationSummary}
-
 pub using @core {type KeyModifiers}
 
 pub using @core {type KeyboardShortcut}
 
-pub using @core {type PickerItem}
+pub using @widget {type RichTextBlock}
 
-pub using @core {type PickerStyle}
+pub using @widget {type RichTextDecoration}
 
-pub using @core {type ProgressStyle}
+pub using @widget {type RichTextDocument}
 
-pub using @core {type RichTextBlock}
+pub type RichTextFormatter = (String) -> @widget.RichTextDocument
 
-pub using @core {type RichTextDecoration}
+pub using @widget {type RichTextInputTransform}
 
-pub using @core {type RichTextDocument}
+pub using @widget {type RichTextRun}
 
-pub type RichTextFormatter = (String) -> @core.RichTextDocument
+pub using @widget {type RichTextSourceRange}
 
-pub using @core {type RichTextInputTransform}
+pub using @widget {type RichTextTable}
 
-pub using @core {type RichTextRun}
+pub using @widget {type RichTextTableCell}
 
-pub using @core {type RichTextSourceRange}
+pub using @host {type WebViewEvent}
 
-pub using @core {type RichTextTable}
-
-pub using @core {type RichTextTableCell}
-
-pub using @core {type RouteDescriptor}
-
-pub using @core {type RouteFocusStore}
-
-pub using @core {type RouteHistoryEntry}
-
-pub using @core {type RouteHistoryState}
-
-pub using @core {type RouteLocation}
-
-pub using @core {type RouteParam}
-
-pub using @core {type RouteQueryParam}
-
-pub using @core {type RouterSnapshot}
-
-pub using @core {type RouterState}
-
-pub using @core {type SliderStyle}
-
-pub using @core {type SurfaceStyle}
-
-pub using @core {type TextFieldStyle}
-
-pub using @core {type TextStyle}
-
-pub using @core {type ToneStyle}
-
-pub using @core {type WebViewEvent}
-
-pub using @core {type WebViewNavigationPolicy}
+pub using @host {type WebViewNavigationPolicy}
 
 // Traits
 

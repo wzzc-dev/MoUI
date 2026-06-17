@@ -1,26 +1,26 @@
 ///|
 pub(all) struct TextStyle {
-  font : FontSpec
-  color : Color
+  font : @core.FontSpec
+  color : @core.Color
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct SurfaceStyle {
-  brush : Brush
-  border : BorderStyle?
+  brush : @core.Brush
+  border : @core.BorderStyle?
   radius : Double
-  shadow : ShadowStyle?
-  padding : Insets
-  level : SurfaceLevel
+  shadow : @core.ShadowStyle?
+  padding : @core.Insets
+  level : @core.SurfaceLevel
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct ControlStateStyle {
-  foreground : Color
-  background : Brush
-  border : BorderStyle?
+  foreground : @core.Color
+  background : @core.Brush
+  border : @core.BorderStyle?
   radius : Double
-  shadow : ShadowStyle?
+  shadow : @core.ShadowStyle?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -36,32 +36,32 @@ pub(all) struct TextFieldStyle {
   normal : ControlStateStyle
   focused : ControlStateStyle
   disabled : ControlStateStyle
-  placeholder_color : Color
-  cursor_color : Color
-  font : FontSpec
+  placeholder_color : @core.Color
+  cursor_color : @core.Color
+  font : @core.FontSpec
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct ChoiceControlStyle {
-  foreground : Color
-  selected_color : Color
-  disabled_foreground : Color
-  disabled_selected_color : Color
+  foreground : @core.Color
+  selected_color : @core.Color
+  disabled_foreground : @core.Color
+  disabled_selected_color : @core.Color
   control_size : Double
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct ProgressStyle {
-  foreground : Color
-  background : Color
+  foreground : @core.Color
+  background : @core.Color
   radius : Double
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct SliderStyle {
-  foreground : Color
-  background : Color
-  thumb_color : Color
+  foreground : @core.Color
+  background : @core.Color
+  thumb_color : @core.Color
   track_height : Double
   thumb_size : Double
   radius : Double
@@ -69,18 +69,18 @@ pub(all) struct SliderStyle {
 
 ///|
 pub(all) struct PickerStyle {
-  font : FontSpec
-  foreground : Color
-  background : Brush
+  font : @core.FontSpec
+  foreground : @core.Color
+  background : @core.Brush
   radius : Double
   popup_max_height : Double
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct ToneStyle {
-  foreground : Color
-  background : Color
-  border : Color
+  foreground : @core.Color
+  background : @core.Color
+  border : @core.Color
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -107,102 +107,119 @@ pub(all) struct BadgeStyle {
 
 ///|
 pub(all) struct FormValidationStyle {
-  foreground : Color
-  background : Color
-  border : Color
+  foreground : @core.Color
+  background : @core.Color
+  border : @core.Color
   radius : Double
   padding : Double
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn TextStyle::body(theme? : Theme = Theme::default()) -> TextStyle {
+pub fn TextStyle::body(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> TextStyle {
   { font: theme.typography.body, color: theme.foreground }
 }
 
 ///|
-pub fn TextStyle::title(theme? : Theme = Theme::default()) -> TextStyle {
+pub fn TextStyle::title(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> TextStyle {
   { font: theme.typography.title, color: theme.foreground }
 }
 
 ///|
-pub fn SurfaceStyle::default(theme? : Theme = Theme::default()) -> SurfaceStyle {
+pub fn SurfaceStyle::default(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> SurfaceStyle {
   {
-    brush: theme.surface_brush(SurfaceLevel::Base),
+    brush: theme.surface_brush(@core.SurfaceLevel::Base),
     border: None,
     radius: theme.radius_scale.md,
     shadow: None,
-    padding: Insets::all(theme.spacing_scale.md),
-    level: SurfaceLevel::Base,
+    padding: @core.Insets::all(theme.spacing_scale.md),
+    level: @core.SurfaceLevel::Base,
   }
 }
 
 ///|
-pub fn SurfaceStyle::raised(theme? : Theme = Theme::default()) -> SurfaceStyle {
+pub fn SurfaceStyle::raised(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> SurfaceStyle {
   {
-    brush: theme.surface_brush(SurfaceLevel::Raised),
+    brush: theme.surface_brush(@core.SurfaceLevel::Raised),
     border: Some(
-      BorderStyle::new(brush=Brush::solid(theme.palette.outline), width=1.0),
+      @core.BorderStyle::new(
+        brush=@core.Brush::solid(theme.palette.outline),
+        width=1.0,
+      ),
     ),
     radius: theme.radius_scale.lg,
     shadow: Some(theme.shadow_scale.md),
-    padding: Insets::all(theme.spacing_scale.lg),
-    level: SurfaceLevel::Raised,
+    padding: @core.Insets::all(theme.spacing_scale.lg),
+    level: @core.SurfaceLevel::Raised,
   }
 }
 
 ///|
 fn control_state(
-  foreground~ : Color,
-  background~ : Brush,
-  border? : BorderStyle,
+  foreground~ : @core.Color,
+  background~ : @core.Brush,
+  border? : @core.BorderStyle,
   radius? : Double = 0.0,
-  shadow? : ShadowStyle,
+  shadow? : @core.ShadowStyle,
 ) -> ControlStateStyle {
   { foreground, background, border, radius, shadow }
 }
 
 ///|
-pub fn ButtonStyle::filled(theme? : Theme = Theme::default()) -> ButtonStyle {
+pub fn ButtonStyle::filled(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> ButtonStyle {
   let normal = control_state(
     foreground=theme.palette.primary_foreground,
-    background=Brush::solid(theme.palette.primary),
+    background=@core.Brush::solid(theme.palette.primary),
     radius=theme.radius_scale.md,
   )
   let hovered = control_state(
     foreground=theme.palette.primary_foreground,
-    background=Brush::solid(Color::rgba(r=0.18, g=0.42, b=1.0)),
+    background=@core.Brush::solid(@core.Color::rgba(r=0.18, g=0.42, b=1.0)),
     radius=theme.radius_scale.md,
   )
   let pressed = control_state(
     foreground=theme.palette.primary_foreground,
-    background=Brush::solid(Color::rgba(r=0.08, g=0.25, b=0.76)),
+    background=@core.Brush::solid(@core.Color::rgba(r=0.08, g=0.25, b=0.76)),
     radius=theme.radius_scale.md,
   )
   let disabled = control_state(
     foreground=theme.palette.muted,
-    background=Brush::solid(theme.palette.surface_variant),
+    background=@core.Brush::solid(theme.palette.surface_variant),
     radius=theme.radius_scale.md,
   )
   { normal, hovered, pressed, disabled }
 }
 
 ///|
-pub fn ButtonStyle::tonal(theme? : Theme = Theme::default()) -> ButtonStyle {
+pub fn ButtonStyle::tonal(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> ButtonStyle {
   let normal = control_state(
     foreground=theme.foreground,
-    background=Brush::solid(theme.palette.surface_variant),
+    background=@core.Brush::solid(theme.palette.surface_variant),
     radius=theme.radius_scale.md,
   )
   { normal, hovered: normal, pressed: normal, disabled: normal }
 }
 
 ///|
-pub fn ButtonStyle::outline(theme? : Theme = Theme::default()) -> ButtonStyle {
+pub fn ButtonStyle::outline(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> ButtonStyle {
   let normal = control_state(
     foreground=theme.foreground,
-    background=Brush::solid(Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
-    border=BorderStyle::new(
-      brush=Brush::solid(theme.palette.outline),
+    background=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+    border=@core.BorderStyle::new(
+      brush=@core.Brush::solid(theme.palette.outline),
       width=1.0,
     ),
     radius=theme.radius_scale.md,
@@ -211,10 +228,12 @@ pub fn ButtonStyle::outline(theme? : Theme = Theme::default()) -> ButtonStyle {
 }
 
 ///|
-pub fn ButtonStyle::ghost(theme? : Theme = Theme::default()) -> ButtonStyle {
+pub fn ButtonStyle::ghost(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> ButtonStyle {
   let normal = control_state(
     foreground=theme.foreground,
-    background=Brush::solid(Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+    background=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
     radius=theme.radius_scale.md,
   )
   { normal, hovered: normal, pressed: normal, disabled: normal }
@@ -222,22 +241,22 @@ pub fn ButtonStyle::ghost(theme? : Theme = Theme::default()) -> ButtonStyle {
 
 ///|
 pub fn TextFieldStyle::filled(
-  theme? : Theme = Theme::default(),
+  theme? : @core.Theme = @core.Theme::default(),
 ) -> TextFieldStyle {
   let normal = control_state(
     foreground=theme.foreground,
-    background=Brush::solid(theme.palette.surface),
-    border=BorderStyle::new(
-      brush=Brush::solid(theme.palette.outline),
+    background=@core.Brush::solid(theme.palette.surface),
+    border=@core.BorderStyle::new(
+      brush=@core.Brush::solid(theme.palette.outline),
       width=1.0,
     ),
     radius=theme.radius_scale.md,
   )
   let focused = control_state(
     foreground=theme.foreground,
-    background=Brush::solid(theme.palette.surface),
-    border=BorderStyle::new(
-      brush=Brush::solid(theme.palette.primary),
+    background=@core.Brush::solid(theme.palette.surface),
+    border=@core.BorderStyle::new(
+      brush=@core.Brush::solid(theme.palette.primary),
       width=2.0,
     ),
     radius=theme.radius_scale.md,
@@ -254,14 +273,14 @@ pub fn TextFieldStyle::filled(
 
 ///|
 pub fn TextFieldStyle::outline(
-  theme? : Theme = Theme::default(),
+  theme? : @core.Theme = @core.Theme::default(),
 ) -> TextFieldStyle {
   TextFieldStyle::filled(theme~)
 }
 
 ///|
 pub fn ChoiceControlStyle::default(
-  theme? : Theme = Theme::default(),
+  theme? : @core.Theme = @core.Theme::default(),
 ) -> ChoiceControlStyle {
   {
     foreground: theme.palette.foreground,
@@ -274,7 +293,7 @@ pub fn ChoiceControlStyle::default(
 
 ///|
 pub fn ProgressStyle::default(
-  theme? : Theme = Theme::default(),
+  theme? : @core.Theme = @core.Theme::default(),
 ) -> ProgressStyle {
   {
     foreground: theme.palette.primary,
@@ -284,7 +303,9 @@ pub fn ProgressStyle::default(
 }
 
 ///|
-pub fn SliderStyle::default(theme? : Theme = Theme::default()) -> SliderStyle {
+pub fn SliderStyle::default(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> SliderStyle {
   {
     foreground: theme.palette.primary,
     background: theme.palette.surface_variant,
@@ -296,11 +317,13 @@ pub fn SliderStyle::default(theme? : Theme = Theme::default()) -> SliderStyle {
 }
 
 ///|
-pub fn PickerStyle::default(theme? : Theme = Theme::default()) -> PickerStyle {
+pub fn PickerStyle::default(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> PickerStyle {
   {
     font: theme.typography.control,
     foreground: theme.foreground,
-    background: Brush::solid(theme.palette.surface),
+    background: @core.Brush::solid(theme.palette.surface),
     radius: theme.radius_scale.md,
     popup_max_height: 200.0,
   }
@@ -308,11 +331,11 @@ pub fn PickerStyle::default(theme? : Theme = Theme::default()) -> PickerStyle {
 
 ///|
 pub fn FeedbackStyle::default(
-  theme? : Theme = Theme::default(),
+  theme? : @core.Theme = @core.Theme::default(),
 ) -> FeedbackStyle {
   let background_alpha = match theme.scheme {
-    ColorScheme::Light => 0.12
-    ColorScheme::Dark => 0.22
+    @core.ColorScheme::Light => 0.12
+    @core.ColorScheme::Dark => 0.22
   }
   {
     neutral: tone_style(
@@ -346,7 +369,9 @@ pub fn FeedbackStyle::default(
 }
 
 ///|
-pub fn BadgeStyle::default(theme? : Theme = Theme::default()) -> BadgeStyle {
+pub fn BadgeStyle::default(
+  theme? : @core.Theme = @core.Theme::default(),
+) -> BadgeStyle {
   {
     neutral: {
       foreground: theme.palette.foreground,
@@ -364,7 +389,7 @@ pub fn BadgeStyle::default(theme? : Theme = Theme::default()) -> BadgeStyle {
 
 ///|
 pub fn FormValidationStyle::default(
-  theme? : Theme = Theme::default(),
+  theme? : @core.Theme = @core.Theme::default(),
 ) -> FormValidationStyle {
   let color = theme.semantic_colors.danger
   {
@@ -378,7 +403,7 @@ pub fn FormValidationStyle::default(
 
 ///|
 fn tone_style(
-  foreground~ : Color,
+  foreground~ : @core.Color,
   background_alpha~ : Double,
   border_alpha~ : Double,
 ) -> ToneStyle {
@@ -390,8 +415,8 @@ fn tone_style(
 }
 
 ///|
-fn badge_tone(background : Color) -> ToneStyle {
-  { foreground: Color::white(), background, border: background }
+fn badge_tone(background : @core.Color) -> ToneStyle {
+  { foreground: @core.Color::white(), background, border: background }
 }
 
 ///|
