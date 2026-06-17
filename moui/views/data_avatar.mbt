@@ -2,7 +2,7 @@
 pub fn[Msg] avatar(
   label : String,
   image? : String? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   size? : Double = 40.0,
 ) -> @core.View[Msg] {
   match image {
@@ -35,7 +35,7 @@ pub fn[Msg] avatar(
 ///|
 pub fn[Msg] avatar_group(
   labels : Array[String],
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   size? : Double = 36.0,
   max_visible? : Int = 4,
 ) -> @core.View[Msg] {

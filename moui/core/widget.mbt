@@ -152,7 +152,7 @@ pub struct WidgetOps[Msg] {
   priv identity_fn : () -> WidgetIdentity
   priv revision_fn : () -> String
   priv children_fn : () -> Array[View[Msg]]
-  priv build_child_fn : ((BuildContext) -> View[Msg])?
+  priv build_child_fn : ((ComponentContext) -> View[Msg])?
   priv child_constraints_fn : (Constraints) -> Constraints
   priv layout_fn : (WidgetLayoutContext) -> WidgetLayoutResult
   priv paint_fn : (WidgetPaintContext) -> WidgetPaintPlan
@@ -290,7 +290,7 @@ pub fn[Msg] WidgetOps::new(
   identity~ : () -> WidgetIdentity,
   revision? : () -> String = () => "",
   children? : () -> Array[View[Msg]] = () => [],
-  build_child? : ((BuildContext) -> View[Msg])? = None,
+  build_child? : ((ComponentContext) -> View[Msg])? = None,
   child_constraints? : (Constraints) -> Constraints = constraints => {
     constraints.loosen()
   },
@@ -342,7 +342,7 @@ pub fn[Msg] WidgetOps::children(self : WidgetOps[Msg]) -> Array[View[Msg]] {
 ///|
 pub fn[Msg] WidgetOps::build_child(
   self : WidgetOps[Msg],
-) -> ((BuildContext) -> View[Msg])? {
+) -> ((ComponentContext) -> View[Msg])? {
   self.build_child_fn
 }
 

@@ -5,7 +5,7 @@ pub fn[Msg] dropdown(
   state~ : DropdownState,
   on_toggle~ : Msg,
   placeholder? : String = "Select",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 240.0,
   max_height? : Double = 180.0,
 ) -> @core.View[Msg] {
@@ -50,7 +50,7 @@ pub fn[Msg] combobox(
   expanded~ : Bool,
   on_toggle~ : Msg,
   placeholder? : String = "Search",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 280.0,
   max_height? : Double = 180.0,
 ) -> @core.View[Msg] {
@@ -106,7 +106,7 @@ pub fn[Msg] autocomplete(
   suggestions : Array[MenuItem[Msg]],
   expanded~ : Bool,
   placeholder? : String = "Search",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 280.0,
   max_height? : Double = 180.0,
 ) -> @core.View[Msg] {

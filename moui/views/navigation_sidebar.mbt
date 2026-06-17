@@ -3,7 +3,7 @@ pub fn[Msg] sidebar(
   title : String,
   items : Array[SidebarItem[Msg]],
   selected~ : String,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 240.0,
   height? : Double = 320.0,
 ) -> @core.View[Msg] {

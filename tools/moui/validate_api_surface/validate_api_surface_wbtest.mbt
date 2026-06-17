@@ -24,7 +24,7 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
   inspect(root.max_lines, content="125")
   inspect(root.max_pub_lines, content="40")
   inspect(root.max_pub_all_lines, content="0")
-  inspect(root_facade_app_safe_aliases().length(), content="37")
+  inspect(root_facade_app_safe_aliases().length(), content="36")
   assert_true(root.required_tokens.contains("pub using @core {type View}"))
   assert_true(root.required_tokens.contains("pub using @core {type Program}"))
   assert_true(root.required_tokens.contains("pub using @core {type Binding}"))
@@ -43,6 +43,11 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
     root.forbidden_tokens.contains("pub using @core {type RichTextDocument}"),
   )
   assert_true(root.forbidden_tokens.contains("DrawCommand"))
+  assert_true(root.forbidden_tokens.contains("DatePickerMode"))
+  assert_true(root.forbidden_tokens.contains("EffectPlanSummary"))
+  assert_true(root.forbidden_tokens.contains("SubscriptionPlanSummary"))
+  assert_true(root.forbidden_tokens.contains("EffectRuntimeOp"))
+  assert_true(root.forbidden_tokens.contains("ComponentContext"))
   assert_true(root.forbidden_tokens.contains("ProgramRuntimeSnapshot"))
   assert_true(root.forbidden_tokens.contains("pub fn light_theme("))
   assert_true(root.forbidden_tokens.contains("pub fn theme("))
@@ -51,9 +56,9 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
 ///|
 test "runtime facade budget pins the opaque runtime boundary" {
   let runtime = budget_by_label("runtime facade")
-  inspect(runtime.max_lines, content="307")
-  inspect(runtime.max_pub_lines, content="42")
-  inspect(runtime.max_pub_all_lines, content="17")
+  inspect(runtime.max_lines, content="360")
+  inspect(runtime.max_pub_lines, content="45")
+  inspect(runtime.max_pub_all_lines, content="22")
   assert_true(runtime.required_tokens.contains("pub struct AppRuntime"))
   assert_true(runtime.required_tokens.contains("pub fn[Msg] new_view("))
   assert_true(
@@ -84,6 +89,18 @@ test "runtime facade budget pins the opaque runtime boundary" {
   )
   assert_true(
     runtime.required_tokens.contains("pub(all) struct RuntimeInspectorSnapshot"),
+  )
+  assert_true(
+    runtime.required_tokens.contains("pub(all) struct EffectPlanSummary"),
+  )
+  assert_true(
+    runtime.required_tokens.contains("pub(all) struct SubscriptionPlanSummary"),
+  )
+  assert_true(
+    runtime.required_tokens.contains("pub fn[Msg] effect_plan_summary("),
+  )
+  assert_true(
+    runtime.required_tokens.contains("pub fn[Msg] subscription_plan_summary("),
   )
   assert_true(runtime.forbidden_tokens.contains("RuntimeState"))
   assert_true(runtime.forbidden_tokens.contains("inner : @core.AppRuntime"))
@@ -181,6 +198,10 @@ test "views facade exposes control-specific contracts" {
   assert_true(required.contains("pub using @core {type KeyboardShortcut}"))
   assert_true(required.contains("pub(all) struct ButtonStyle"))
   assert_true(required.contains("pub(all) struct FormFieldState"))
+  assert_true(required.contains("pub(all) enum DatePickerMode"))
+  assert_true(required.contains("pub fn default_theme()"))
+  assert_true(required.contains("pub fn light_theme()"))
+  assert_true(required.contains("pub fn dark_theme()"))
   assert_false(required.contains("pub using @core {type ButtonStyle}"))
   assert_false(required.contains("pub using @core {type TextFieldStyle}"))
   assert_false(required.contains("pub using @core {type PickerItem}"))
@@ -215,9 +236,9 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="1904")
-  inspect(core.max_pub_lines, content="552")
-  inspect(core.max_pub_all_lines, content="151")
+  inspect(core.max_lines, content="1510")
+  inspect(core.max_pub_lines, content="465")
+  inspect(core.max_pub_all_lines, content="115")
   assert_true(core.required_tokens.contains("pub struct WidgetOps[Msg]"))
   assert_true(core.required_tokens.contains("View::widget"))
   assert_true(core.required_tokens.contains("WidgetOps::new"))
@@ -254,6 +275,17 @@ test "core descriptor payloads stay opaque" {
   assert_true(
     core.forbidden_tokens.contains("pub(all) struct RenderInspectorSnapshot"),
   )
+  assert_true(core.forbidden_tokens.contains("DatePickerMode"))
+  assert_true(core.forbidden_tokens.contains("EffectPlanSummary"))
+  assert_true(core.forbidden_tokens.contains("SubscriptionPlanSummary"))
+  assert_true(core.forbidden_tokens.contains("EffectRuntimeOp"))
+  assert_true(core.forbidden_tokens.contains("Effect::plan_summary("))
+  assert_true(core.forbidden_tokens.contains("Effect::runtime_ops("))
+  assert_true(core.forbidden_tokens.contains("Subscription::plan_summary("))
+  assert_true(core.forbidden_tokens.contains("Theme::default("))
+  assert_true(core.forbidden_tokens.contains("Environment::default("))
+  assert_true(core.forbidden_tokens.contains("BuildContext"))
+  assert_true(core.forbidden_tokens.contains("ComponentContext::new("))
   assert_true(core.forbidden_tokens.contains("type FrameProfile"))
   assert_true(
     core.forbidden_tokens.contains("InspectorSnapshot::from_runtime("),
@@ -267,7 +299,7 @@ test "core descriptor payloads stay opaque" {
 ///|
 test "core legacy families are ratcheted toward existing layers" {
   let budgets = legacy_core_family_budgets()
-  inspect(budgets.length(), content="6")
+  inspect(budgets.length(), content="9")
   for budget in budgets {
     inspect(budget.target_occurrences, content="0")
   }
@@ -277,6 +309,9 @@ test "core legacy families are ratcheted toward existing layers" {
   assert_true(labels.contains("rich text editor domain model"))
   assert_true(labels.contains("WebView platform service model"))
   assert_true(labels.contains("routing and history controller"))
+  assert_true(labels.contains("datepicker control semantics"))
+  assert_true(labels.contains("runtime diagnostics summary contract"))
+  assert_true(labels.contains("design default theme helpers"))
   assert_true(labels.contains("runtime diagnostics snapshots"))
   let control = budgets[0]
   inspect(control.max_occurrences, content="0")
@@ -294,9 +329,38 @@ test "core legacy families are ratcheted toward existing layers" {
   inspect(routing.max_occurrences, content="0")
   assert_true(routing.tokens.contains("RouteHistoryState"))
   assert_true(routing.tokens.contains("resolve_route"))
-  let diagnostics = budgets[5]
+  let datepicker = budgets[5]
+  inspect(datepicker.max_occurrences, content="0")
+  assert_true(datepicker.tokens.contains("DatePickerMode"))
+  assert_true(datepicker.tokens.contains("DatePickerDisplayMode"))
+  let runtime_summary = budgets[6]
+  inspect(runtime_summary.max_occurrences, content="0")
+  assert_true(runtime_summary.tokens.contains("EffectPlanSummary"))
+  assert_true(runtime_summary.tokens.contains("runtime_ops"))
+  let default_theme = budgets[7]
+  inspect(default_theme.max_occurrences, content="0")
+  assert_true(default_theme.tokens.contains("Theme::default"))
+  assert_true(default_theme.tokens.contains("default_theme"))
+  let diagnostics = budgets[8]
   inspect(diagnostics.max_occurrences, content="0")
   assert_true(diagnostics.tokens.contains("ProgramRuntimeSnapshot"))
+}
+
+///|
+test "widget facade owns widget-local datepicker mode without depending on views" {
+  let widget = budget_by_label("widget facade")
+  inspect(widget.max_lines, content="170")
+  inspect(widget.max_pub_lines, content="45")
+  inspect(widget.max_pub_all_lines, content="10")
+  assert_true(widget.required_tokens.contains("\"wzzc-dev/moui/core\""))
+  assert_true(
+    widget.required_tokens.contains("pub(all) enum DatePickerDisplayMode"),
+  )
+  assert_true(widget.required_tokens.contains("pub fn[Msg] datepicker("))
+  assert_true(widget.forbidden_tokens.contains("\"wzzc-dev/moui/views\""))
+  assert_true(widget.forbidden_tokens.contains("@views."))
+  assert_true(widget.forbidden_tokens.contains("DatePickerMode"))
+  assert_true(widget.forbidden_tokens.contains("default_theme("))
 }
 
 ///|

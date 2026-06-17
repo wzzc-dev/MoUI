@@ -18,7 +18,7 @@ pub fn[Msg] picker(
   selected~ : String,
   on_select~ : (String) -> Msg,
   placeholder? : String = "Select...",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : PickerStyle,
   max_height? : Double = 200.0,
 ) -> @core.View[Msg] {
@@ -44,7 +44,7 @@ pub fn[Msg] picker_binding(
   items : Array[PickerItem],
   selected~ : @core.Binding[String],
   placeholder? : String = "Select...",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : PickerStyle,
   max_height? : Double = 200.0,
 ) -> @core.View[Msg] {

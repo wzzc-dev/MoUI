@@ -8,7 +8,7 @@ pub fn[Msg] wizard(
   steps : Array[WizardStep[Msg]],
   current~ : String,
   on_select~ : (String) -> Msg,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
   height? : Double = 260.0,
 ) -> @core.View[Msg] {

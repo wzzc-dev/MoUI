@@ -1,11 +1,4 @@
 ///|
-pub(all) enum DatePickerMode {
-  Date
-  DateAndTime
-  Time
-} derive(Eq, Debug, ToJson)
-
-///|
 pub(all) struct DateValue {
   year : Int
   month : Int
@@ -28,16 +21,16 @@ pub fn DateValue::new(
 }
 
 ///|
-pub fn DateValue::today() -> DateValue {
-  { year: 2024, month: 1, day: 1, hour: 0, minute: 0, second: 0 }
+pub fn DateValue::format_date(self : DateValue) -> String {
+  "\{self.year}-\{self.month}-\{self.day}"
 }
 
 ///|
-pub fn DateValue::format(self : DateValue, mode : DatePickerMode) -> String {
-  match mode {
-    DatePickerMode::Date => "\{self.year}-\{self.month}-\{self.day}"
-    DatePickerMode::DateAndTime =>
-      "\{self.year}-\{self.month}-\{self.day} \{self.hour}:\{self.minute}"
-    DatePickerMode::Time => "\{self.hour}:\{self.minute}"
-  }
+pub fn DateValue::format_time(self : DateValue) -> String {
+  "\{self.hour}:\{self.minute}"
+}
+
+///|
+pub fn DateValue::format_date_time(self : DateValue) -> String {
+  "\{self.format_date()} \{self.format_time()}"
 }

@@ -5,7 +5,7 @@ pub fn[Msg] split_view(
   primary_width? : Double = 240.0,
   detail_width? : Double = 480.0,
   height? : Double = 320.0,
-  spacing? : Double = @core.Theme::default().spacing_scale.md,
+  spacing? : Double = default_theme().spacing_scale.md,
 ) -> @core.View[Msg] {
   row(
     [
@@ -26,9 +26,9 @@ pub fn[Msg] resizable_split_view(
   height? : Double = 320.0,
   min_primary_width? : Double = 160.0,
   max_primary_width? : Double = 420.0,
-  spacing? : Double = @core.Theme::default().spacing_scale.sm,
+  spacing? : Double = default_theme().spacing_scale.sm,
   handle_width? : Double = 8.0,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   on_drag~ : (Double) -> Msg,
 ) -> @core.View[Msg] {
   let width = navigation_clamp_double(
@@ -71,7 +71,7 @@ pub fn[Msg] master_detail(
   master_width? : Double = 220.0,
   detail_width? : Double = 420.0,
   height? : Double = 300.0,
-  spacing? : Double = @core.Theme::default().spacing_scale.md,
+  spacing? : Double = default_theme().spacing_scale.md,
 ) -> @core.View[Msg] {
   split_view(
     primary=master,

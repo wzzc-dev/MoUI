@@ -28,7 +28,7 @@ pub fn update(
 
 ///|
 pub fn view(model : TextInputSmokeModel) -> @core.View[TextInputSmokeMsg] {
-  let theme = @core.Theme::default()
+  let theme = @views.default_theme()
   column(
     [
       text(

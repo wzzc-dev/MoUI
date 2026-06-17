@@ -88,7 +88,7 @@ test "command palette host menu service dispatches selected command" {
     services,
   )
   inspect(opening.last_result, content="Opening native menu")
-  let summary = effect.plan_summary()
+  let summary = @runtime.effect_plan_summary(effect)
   inspect(summary.descriptors.length(), content="1")
   inspect(summary.descriptors[0].key(), content="host:command-menu")
   inspect(summary.descriptors[0].kind(), content="host-service")

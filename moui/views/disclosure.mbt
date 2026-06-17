@@ -5,7 +5,7 @@ pub fn[Msg] disclosure(
   expanded~ : Bool,
   on_toggle~ : Msg,
   subtitle? : String = "",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
   let title_width = views_max_double(80.0, width - 54.0)
@@ -57,7 +57,7 @@ pub fn[Msg] accordion(
   sections : Array[WizardStep[Msg]],
   expanded~ : Array[String],
   on_toggle~ : (String) -> Msg,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []
@@ -86,7 +86,7 @@ pub fn[Msg] collapsible_panel(
   expanded~ : Bool,
   on_toggle~ : Msg,
   subtitle? : String = "",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
   surface(
@@ -115,7 +115,7 @@ pub fn[Msg] collapsible_panel(
 pub fn[Msg] resizable_panel(
   content~ : @core.View[Msg],
   size~ : Double,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   height? : Double = 160.0,
   min_size? : Double = 120.0,
   max_size? : Double = 520.0,

@@ -1,7 +1,7 @@
 ///|
 pub fn snapshot_overlay(
   snapshot : @runtime.InspectorSnapshot,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = @views.default_theme(),
 ) -> @core.View[Unit] {
   @views.text(
     @devtools.snapshot_debug_text(snapshot),

@@ -4,7 +4,7 @@ pub fn[Msg] selection_toolbar(
   total_count? : Int = 0,
   actions? : Array[MenuItem[Msg]] = [],
   on_clear? : Msg? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
 ) -> @core.View[Msg] {
   let selected = views_max_int(0, selected_count)

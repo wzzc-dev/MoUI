@@ -6,7 +6,7 @@ pub fn[Msg] surface(
   background? : @core.Color,
   corner_radius? : Double = 0.0,
   variant? : SurfaceVariant = SurfaceVariant::Base,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   padding? : Double,
 ) -> @core.View[Msg] {
   let style = variant.style(theme)
@@ -38,7 +38,7 @@ pub fn[Msg] card(
   width? : Double,
   height? : Double,
   padding? : Double = 32.0,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> @core.View[Msg] {
   surface(
     child,
@@ -56,7 +56,7 @@ pub fn[Msg] center(
   width? : Double,
   height? : Double,
   background? : @core.Color,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> @core.View[Msg] {
   let centered = custom_children_layout(
     children=[child],

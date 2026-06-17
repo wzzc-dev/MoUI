@@ -99,7 +99,7 @@ fn render_environment_to_widget_environment(
   environment : RenderEnvironment,
 ) -> Environment {
   {
-    ..Environment::default(),
+    ..Environment::neutral(),
     scale_factor: environment.scale_factor,
     text_scale: environment.text_scale,
     locale: environment.locale,

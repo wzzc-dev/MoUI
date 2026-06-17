@@ -84,7 +84,7 @@ test "host service bridge applies system theme to runtime environment" {
     Some(@core.ColorScheme::Dark) => ()
     _ => fail("expected dark system theme")
   }
-  let environment = @core.Environment::default()
+  let environment = @core.Environment::neutral()
     .with_locale("zh-CN")
     .with_text_scale(1.25)
   let updated = bridge.environment_with_system_theme(environment)

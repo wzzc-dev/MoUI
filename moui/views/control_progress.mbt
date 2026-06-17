@@ -3,7 +3,7 @@ pub fn[Msg] progress(
   value : Double,
   width? : Double = 180.0,
   height? : Double = 8.0,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : ProgressStyle,
   foreground? : @core.Color,
   background? : @core.Color,

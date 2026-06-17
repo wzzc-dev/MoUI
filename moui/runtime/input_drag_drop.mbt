@@ -13,7 +13,7 @@ fn ElementNode::dispatch_drag_drop(
       AppEvent::DragDrop(event),
       render,
       TextSystem::fallback(),
-      environment=Environment::default(),
+      environment=Environment::neutral(),
     )
     {
       changed: child_result.changed || result.changed,

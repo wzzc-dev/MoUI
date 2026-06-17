@@ -10,6 +10,8 @@ import {
   "moonbitlang/core/json",
 } for "test"
 
+supported_targets = "+native+wasm-gc"
+
 options(
   targets: { },
 )

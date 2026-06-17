@@ -8,8 +8,8 @@ pub fn[Msg] radio_group(
   items : Array[ChoiceItem],
   selected~ : String,
   on_select~ : (String) -> Msg,
-  theme? : @core.Theme = @core.Theme::default(),
-  spacing? : Double = @core.Theme::default().spacing_scale.sm,
+  theme? : @core.Theme = default_theme(),
+  spacing? : Double = default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []
   for item in items {
@@ -32,8 +32,8 @@ pub fn[Msg] checkbox_group(
   items : Array[ChoiceItem],
   selected~ : Array[String],
   on_change~ : (String, Bool) -> Msg,
-  theme? : @core.Theme = @core.Theme::default(),
-  spacing? : Double = @core.Theme::default().spacing_scale.sm,
+  theme? : @core.Theme = default_theme(),
+  spacing? : Double = default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []
   for item in items {

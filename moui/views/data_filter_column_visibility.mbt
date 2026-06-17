@@ -6,7 +6,7 @@ pub fn[Msg] column_visibility_panel(
   locked? : Array[String] = [],
   title? : String = "Column visibility",
   summary? : String = "",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
   let inner_width = views_max_double(

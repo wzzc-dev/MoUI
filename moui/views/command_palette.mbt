@@ -3,7 +3,7 @@ pub fn[Msg] command_palette(
   commands : Array[ActionCommand],
   query? : String = "",
   on_select~ : (CommandIntent) -> Msg,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 420.0,
   max_height? : Double = 260.0,
 ) -> @core.View[Msg] {

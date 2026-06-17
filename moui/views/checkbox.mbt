@@ -3,7 +3,7 @@ pub fn[Msg] checkbox(
   label : String,
   checked~ : Bool,
   on_change~ : (Bool) -> Msg,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   font? : @core.FontSpec,
   foreground? : @core.Color,
   check_color? : @core.Color,
@@ -30,7 +30,7 @@ pub fn[Msg] checkbox(
 pub fn[Msg] checkbox_binding(
   label : String,
   checked~ : @core.Binding[Bool],
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   font? : @core.FontSpec,
   foreground? : @core.Color,
   check_color? : @core.Color,

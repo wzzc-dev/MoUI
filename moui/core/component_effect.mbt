@@ -52,8 +52,8 @@ pub fn ComponentEffect::finish_reuse(
 }
 
 ///|
-pub fn BuildContext::run_effect(
-  self : BuildContext,
+pub fn ComponentContext::run_effect(
+  self : ComponentContext,
   key~ : String,
   effect : () -> (() -> Unit)?,
 ) -> Unit {
@@ -67,8 +67,8 @@ pub fn BuildContext::run_effect(
 }
 
 ///|
-pub fn BuildContext::run_effect_with_reason(
-  self : BuildContext,
+pub fn ComponentContext::run_effect_with_reason(
+  self : ComponentContext,
   key~ : String,
   effect : () -> ((ComponentEffectCancelReason) -> Unit)?,
 ) -> Unit {

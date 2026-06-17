@@ -68,8 +68,8 @@ pub(all) struct ProgramRuntimeSnapshot {
   effect_task_count : Int
   duplicate_effect_descriptor_key_count : Int
   duplicate_effect_descriptor_keys : Array[String]
-  last_effect_summary : @core.EffectPlanSummary
-  last_scheduled_effect_summary : @core.EffectPlanSummary
+  last_effect_summary : EffectPlanSummary
+  last_scheduled_effect_summary : EffectPlanSummary
   active_effect_task_count : Int
   started_effect_task_count : Int
   completed_effect_task_count : Int
@@ -78,7 +78,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   active_effect_tasks : Array[@core.EffectDescriptor]
   effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
   subscription_plan_count : Int
-  last_subscription_plan_summary : @core.SubscriptionPlanSummary
+  last_subscription_plan_summary : SubscriptionPlanSummary
   active_subscription_count : Int
   started_subscription_count : Int
   reused_subscription_count : Int
@@ -111,8 +111,8 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     effect_task_count: 0,
     duplicate_effect_descriptor_key_count: 0,
     duplicate_effect_descriptor_keys: [],
-    last_effect_summary: @core.EffectPlanSummary::empty(),
-    last_scheduled_effect_summary: @core.EffectPlanSummary::empty(),
+    last_effect_summary: EffectPlanSummary::empty(),
+    last_scheduled_effect_summary: EffectPlanSummary::empty(),
     active_effect_task_count: 0,
     started_effect_task_count: 0,
     completed_effect_task_count: 0,
@@ -121,7 +121,7 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
     active_effect_tasks: [],
     effect_task_lifecycle: [],
     subscription_plan_count: 0,
-    last_subscription_plan_summary: @core.SubscriptionPlanSummary::empty(),
+    last_subscription_plan_summary: SubscriptionPlanSummary::empty(),
     active_subscription_count: 0,
     started_subscription_count: 0,
     reused_subscription_count: 0,
@@ -173,8 +173,8 @@ pub(all) struct RuntimeInspectorSnapshot {
   program_effect_task_count : Int
   duplicate_effect_descriptor_key_count : Int
   duplicate_effect_descriptor_keys : Array[String]
-  last_effect_summary : @core.EffectPlanSummary
-  last_scheduled_effect_summary : @core.EffectPlanSummary
+  last_effect_summary : EffectPlanSummary
+  last_scheduled_effect_summary : EffectPlanSummary
   active_effect_task_count : Int
   started_effect_task_count : Int
   completed_effect_task_count : Int
@@ -183,7 +183,7 @@ pub(all) struct RuntimeInspectorSnapshot {
   active_effect_tasks : Array[@core.EffectDescriptor]
   effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
   program_subscription_plan_count : Int
-  last_subscription_plan_summary : @core.SubscriptionPlanSummary
+  last_subscription_plan_summary : SubscriptionPlanSummary
   active_subscription_count : Int
   started_subscription_count : Int
   reused_subscription_count : Int

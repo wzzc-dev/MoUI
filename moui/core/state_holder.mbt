@@ -128,24 +128,24 @@ pub fn NavigationState::binding(
 }
 
 ///|
-pub fn BuildContext::watch_scroll(
-  self : BuildContext,
+pub fn ComponentContext::watch_scroll(
+  self : ComponentContext,
   state : ScrollState,
 ) -> Point {
   self.watch(state.offset_slot)
 }
 
 ///|
-pub fn BuildContext::watch_focus(
-  self : BuildContext,
+pub fn ComponentContext::watch_focus(
+  self : ComponentContext,
   state : FocusState,
 ) -> String? {
   self.watch(state.key_slot)
 }
 
 ///|
-pub fn BuildContext::watch_navigation(
-  self : BuildContext,
+pub fn ComponentContext::watch_navigation(
+  self : ComponentContext,
   state : NavigationState,
 ) -> Array[String] {
   self.watch(state.stack_slot)

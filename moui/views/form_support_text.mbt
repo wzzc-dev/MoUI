@@ -1,7 +1,7 @@
 ///|
 pub fn[Msg] form_error(
   message : String,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
@@ -14,7 +14,7 @@ pub fn[Msg] form_error(
 ///|
 pub fn[Msg] form_helper_text(
   message : String,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   text(message, role=TextRole::Caption, theme~, width~, height=24.0)

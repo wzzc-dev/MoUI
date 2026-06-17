@@ -1,7 +1,14 @@
 ///|
+pub(all) enum DatePickerDisplayMode {
+  Date
+  DateAndTime
+  Time
+} derive(Eq, Debug, ToJson)
+
+///|
 pub fn[Msg] datepicker(
   selected~ : @core.Binding[@core.DateValue],
-  mode~ : @core.DatePickerMode,
+  mode~ : DatePickerDisplayMode,
   placeholder~ : String,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
@@ -17,7 +24,7 @@ pub fn[Msg] datepicker(
     @core.WidgetOps::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
-        "datepicker:\{selected.get().format(mode)}:\{datepicker_mode_revision(mode)}:\{placeholder}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_brush_revision(background)}:\{corner_radius}:\{datepicker_value_option_revision(min_date)}:\{datepicker_value_option_revision(max_date)}:\{on_select is Some(_)}"
+        "datepicker:\{datepicker_display_value(selected.get(), mode)}:\{datepicker_mode_revision(mode)}:\{placeholder}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_brush_revision(background)}:\{corner_radius}:\{datepicker_value_option_revision(min_date)}:\{datepicker_value_option_revision(max_date)}:\{on_select is Some(_)}"
       },
       layout=ctx => {
         @core.WidgetLayoutResult::new(
@@ -75,7 +82,7 @@ pub fn[Msg] datepicker(
         @core.WidgetSemanticsInfo::new(
           role=@core.SemanticsRole::Menu,
           label=placeholder,
-          value=selected.get().format(mode),
+          value=datepicker_display_value(selected.get(), mode),
           actions=[
             @core.SemanticsAction::Focus,
             @core.SemanticsAction::Activate,
@@ -94,7 +101,7 @@ fn append_datepicker_commands(
   frame~ : @core.Rect,
   selected~ : @core.DateValue,
   view_date~ : @core.DateValue,
-  mode~ : @core.DatePickerMode,
+  mode~ : DatePickerDisplayMode,
   placeholder~ : String,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
@@ -104,7 +111,7 @@ fn append_datepicker_commands(
   max_date~ : @core.DateValue?,
   expanded~ : Bool,
 ) -> Unit {
-  let theme = @core.Theme::default()
+  let theme = @core.Theme::neutral()
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
   commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
   commands.push(
@@ -114,11 +121,8 @@ fn append_datepicker_commands(
       1.0,
     ),
   )
-  let display_text = if selected.format(mode) == "" {
-    placeholder
-  } else {
-    selected.format(mode)
-  }
+  let formatted = datepicker_display_value(selected, mode)
+  let display_text = if formatted == "" { placeholder } else { formatted }
   commands.push(
     @core.DrawCommand::DrawText(
       @core.TextRun::new(
@@ -174,7 +178,7 @@ fn append_datepicker_popup_commands(
   min_date~ : @core.DateValue?,
   max_date~ : @core.DateValue?,
 ) -> Unit {
-  let theme = @core.Theme::default()
+  let theme = @core.Theme::neutral()
   let panel_frame = datepicker_popup_frame(frame)
   let panel_rounded = @core.RoundedRect::new(rect=panel_frame, radius=8.0)
   overlay_commands.push(
@@ -728,19 +732,31 @@ fn datepicker_days_in_month(year : Int, month : Int) -> Int {
 }
 
 ///|
-fn datepicker_mode_revision(mode : @core.DatePickerMode) -> String {
+fn datepicker_mode_revision(mode : DatePickerDisplayMode) -> String {
   match mode {
-    @core.DatePickerMode::Date => "date"
-    @core.DatePickerMode::DateAndTime => "datetime"
-    @core.DatePickerMode::Time => "time"
+    Date => "date"
+    DateAndTime => "datetime"
+    Time => "time"
   }
 }
 
 ///|
 fn datepicker_value_option_revision(value : @core.DateValue?) -> String {
   match value {
-    Some(value) => value.format(@core.DatePickerMode::DateAndTime)
+    Some(value) => value.format_date_time()
     None => "none"
+  }
+}
+
+///|
+fn datepicker_display_value(
+  value : @core.DateValue,
+  mode : DatePickerDisplayMode,
+) -> String {
+  match mode {
+    Date => value.format_date()
+    DateAndTime => value.format_date_time()
+    Time => value.format_time()
   }
 }
 

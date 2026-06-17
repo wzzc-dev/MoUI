@@ -220,8 +220,8 @@ fn parse_saveable_int(value : String) -> Int? {
 }
 
 ///|
-pub fn BuildContext::save_string(
-  self : BuildContext,
+pub fn ComponentContext::save_string(
+  self : ComponentContext,
   key~ : String,
   value : String,
 ) -> Unit {
@@ -229,16 +229,16 @@ pub fn BuildContext::save_string(
 }
 
 ///|
-pub fn BuildContext::restore_string(
-  self : BuildContext,
+pub fn ComponentContext::restore_string(
+  self : ComponentContext,
   key~ : String,
 ) -> String? {
   self.restore(key~, SaveableCodec::string())
 }
 
 ///|
-pub fn BuildContext::save_bool(
-  self : BuildContext,
+pub fn ComponentContext::save_bool(
+  self : ComponentContext,
   key~ : String,
   value : Bool,
 ) -> Unit {
@@ -246,13 +246,16 @@ pub fn BuildContext::save_bool(
 }
 
 ///|
-pub fn BuildContext::restore_bool(self : BuildContext, key~ : String) -> Bool? {
+pub fn ComponentContext::restore_bool(
+  self : ComponentContext,
+  key~ : String,
+) -> Bool? {
   self.restore(key~, SaveableCodec::bool())
 }
 
 ///|
-pub fn BuildContext::save_int(
-  self : BuildContext,
+pub fn ComponentContext::save_int(
+  self : ComponentContext,
   key~ : String,
   value : Int,
 ) -> Unit {
@@ -260,13 +263,16 @@ pub fn BuildContext::save_int(
 }
 
 ///|
-pub fn BuildContext::restore_int(self : BuildContext, key~ : String) -> Int? {
+pub fn ComponentContext::restore_int(
+  self : ComponentContext,
+  key~ : String,
+) -> Int? {
   self.restore(key~, SaveableCodec::int())
 }
 
 ///|
-pub fn[T] BuildContext::save(
-  self : BuildContext,
+pub fn[T] ComponentContext::save(
+  self : ComponentContext,
   key~ : String,
   value : T,
   codec : SaveableCodec[T],
@@ -275,8 +281,8 @@ pub fn[T] BuildContext::save(
 }
 
 ///|
-pub fn[T] BuildContext::restore(
-  self : BuildContext,
+pub fn[T] ComponentContext::restore(
+  self : ComponentContext,
   key~ : String,
   codec : SaveableCodec[T],
 ) -> T? {
@@ -284,8 +290,8 @@ pub fn[T] BuildContext::restore(
 }
 
 ///|
-pub fn[T] BuildContext::saveable(
-  self : BuildContext,
+pub fn[T] ComponentContext::saveable(
+  self : ComponentContext,
   key~ : String,
   initial : T,
   codec : SaveableCodec[T],
@@ -307,8 +313,8 @@ pub fn[T] BuildContext::saveable(
 }
 
 ///|
-pub fn BuildContext::saveable_string(
-  self : BuildContext,
+pub fn ComponentContext::saveable_string(
+  self : ComponentContext,
   key~ : String,
   initial : String,
 ) -> State[String] {
@@ -316,8 +322,8 @@ pub fn BuildContext::saveable_string(
 }
 
 ///|
-pub fn BuildContext::saveable_bool(
-  self : BuildContext,
+pub fn ComponentContext::saveable_bool(
+  self : ComponentContext,
   key~ : String,
   initial : Bool,
 ) -> State[Bool] {
@@ -325,8 +331,8 @@ pub fn BuildContext::saveable_bool(
 }
 
 ///|
-pub fn BuildContext::saveable_int(
-  self : BuildContext,
+pub fn ComponentContext::saveable_int(
+  self : ComponentContext,
   key~ : String,
   initial : Int,
 ) -> State[Int] {
@@ -334,8 +340,8 @@ pub fn BuildContext::saveable_int(
 }
 
 ///|
-fn BuildContext::scoped_saveable_key(
-  self : BuildContext,
+fn ComponentContext::scoped_saveable_key(
+  self : ComponentContext,
   key : String,
 ) -> String {
   "\{self.component_id.value}:\{key}"

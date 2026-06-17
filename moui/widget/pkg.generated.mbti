@@ -11,7 +11,7 @@ pub fn[Msg] button(text~ : String, size~ : @core.Size, font~ : @core.FontSpec, f
 
 pub fn[Msg] checkbox(label~ : String, checked~ : @core.Binding[Bool], font~ : @core.FontSpec, foreground~ : @core.Color, check_color~ : @core.Color, size~ : @core.Size, on_change? : ((Bool) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] component((@core.BuildContext) -> @core.View[Msg], kind? : String, key? : String?) -> @core.View[Msg]
+pub fn[Msg] component((@core.ComponentContext) -> @core.View[Msg], kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] container(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, kind? : String, key? : String?) -> @core.View[Msg]
 
@@ -25,7 +25,7 @@ pub fn[Msg] custom(kind? : String, key? : String?, measure~ : (@core.WidgetLayou
 
 pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint? : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String, kind? : String, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] datepicker(selected~ : @core.Binding[@core.DateValue], mode~ : @core.DatePickerMode, placeholder~ : String, font~ : @core.FontSpec, foreground~ : @core.Color, background~ : @core.Brush, corner_radius~ : Double, min_date? : @core.DateValue?, max_date? : @core.DateValue?, on_select? : ((@core.DateValue) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
+pub fn[Msg] datepicker(selected~ : @core.Binding[@core.DateValue], mode~ : DatePickerDisplayMode, placeholder~ : String, font~ : @core.FontSpec, foreground~ : @core.Color, background~ : @core.Brush, corner_radius~ : Double, min_date? : @core.DateValue?, max_date? : @core.DateValue?, on_select? : ((@core.DateValue) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] empty(kind? : String, key? : String?) -> @core.View[Msg]
 
@@ -70,6 +70,12 @@ pub fn[Msg] text_field(value~ : @core.Binding[String], placeholder~ : String, si
 // Errors
 
 // Types and methods
+pub(all) enum DatePickerDisplayMode {
+  Date
+  DateAndTime
+  Time
+} derive(Eq, ToJson, @debug.Debug)
+
 pub struct PickerOption {
   id : String
   label : String

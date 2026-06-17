@@ -452,9 +452,10 @@ fn app_bench_showcase_runtime(
   width : Double,
   height : Double,
 ) -> @runtime.AppRuntime {
-  @showcase.ShowcaseModel::new()
-  .update(@showcase.ShowcaseMsg::SelectSection("runtime-renderer"))
-  .runtime(width~, height~)
+  let model = @showcase.ShowcaseModel::new().update(
+    @showcase.ShowcaseMsg::SelectSection("runtime-renderer"),
+  )
+  @runtime.new_program_with_dimensions(program=model.program(), width~, height~)
 }
 
 ///|
@@ -462,7 +463,14 @@ fn app_bench_markdown_runtime(
   width : Double,
   height : Double,
 ) -> @runtime.AppRuntime {
-  @markdown.MarkdownEditorApp::new().runtime(width~, height~)
+  let app = @markdown.MarkdownEditorApp::new()
+  let runtime = @runtime.new_program_with_dimensions(
+    program=app.program_with_services(@host.HostAppServices::unavailable()),
+    width~,
+    height~,
+  )
+  runtime.set_action_commands(app.action_commands())
+  runtime
 }
 
 ///|

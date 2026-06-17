@@ -5,6 +5,75 @@ pub using @core {type Color}
 pub using @core {type ColorScheme}
 
 ///|
+pub fn light_theme() -> @core.Theme {
+  let palette = @core.ColorPalette::light()
+  let semantic_colors = @core.SemanticColorScale::default(
+    palette,
+    @core.ColorScheme::Light,
+  )
+  let spacing_scale = @core.SpacingScale::default()
+  let radius_scale = @core.RadiusScale::default()
+  let typography = @core.TypographyScale::default()
+  let shadow_scale = @core.ShadowScale::default(scheme=@core.ColorScheme::Light)
+  let motion = @core.MotionScale::default()
+  let surfaces = @core.SurfaceScale::default(palette, @core.ColorScheme::Light)
+  {
+    scheme: @core.ColorScheme::Light,
+    palette,
+    semantic_colors,
+    spacing_scale,
+    radius_scale,
+    typography,
+    shadow_scale,
+    motion,
+    surfaces,
+    font: typography.body,
+    foreground: palette.foreground,
+    background: palette.background,
+    accent: palette.primary,
+    spacing: spacing_scale.sm,
+    corner_radius: radius_scale.md,
+  }
+}
+
+///|
+pub fn dark_theme() -> @core.Theme {
+  let palette = @core.ColorPalette::dark()
+  let semantic_colors = @core.SemanticColorScale::default(
+    palette,
+    @core.ColorScheme::Dark,
+  )
+  let spacing_scale = @core.SpacingScale::default()
+  let radius_scale = @core.RadiusScale::default()
+  let typography = @core.TypographyScale::default()
+  let shadow_scale = @core.ShadowScale::default(scheme=@core.ColorScheme::Dark)
+  let motion = @core.MotionScale::default()
+  let surfaces = @core.SurfaceScale::default(palette, @core.ColorScheme::Dark)
+  {
+    scheme: @core.ColorScheme::Dark,
+    palette,
+    semantic_colors,
+    spacing_scale,
+    radius_scale,
+    typography,
+    shadow_scale,
+    motion,
+    surfaces,
+    font: typography.body,
+    foreground: palette.foreground,
+    background: palette.background,
+    accent: palette.primary,
+    spacing: spacing_scale.sm,
+    corner_radius: radius_scale.md,
+  }
+}
+
+///|
+pub fn default_theme() -> @core.Theme {
+  light_theme()
+}
+
+///|
 pub fn theme(
   base? : @core.Theme,
   font? : @core.FontSpec,
@@ -27,8 +96,8 @@ pub fn theme(
     Some(value) => value
     None =>
       match scheme {
-        @core.ColorScheme::Light => @core.Theme::light()
-        @core.ColorScheme::Dark => @core.Theme::dark()
+        @core.ColorScheme::Light => light_theme()
+        @core.ColorScheme::Dark => dark_theme()
       }
   }
   match palette {
@@ -91,18 +160,6 @@ pub fn theme(
 }
 
 ///|
-pub fn environment(
-  theme? : @core.Theme = @core.Theme::default(),
-) -> @core.Environment {
-  @core.Environment::default().with_theme(theme)
-}
-
-///|
-pub fn light_theme() -> @core.Theme {
-  @core.Theme::light()
-}
-
-///|
-pub fn dark_theme() -> @core.Theme {
-  @core.Theme::dark()
+pub fn environment(theme? : @core.Theme = default_theme()) -> @core.Environment {
+  @core.Environment::neutral().with_theme(theme)
 }

@@ -5,7 +5,7 @@ pub fn[Msg] multiline_text_area_shell(
   placeholder? : String = "",
   lines? : Int = 4,
   variant? : TextFieldVariant = TextFieldVariant::Outline,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 320.0,
   line_height? : Double = 28.0,
 ) -> @core.View[Msg] {

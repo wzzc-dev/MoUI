@@ -6,7 +6,7 @@ pub fn[Msg] progress_status(
   status? : String = "",
   tone? : FeedbackTone = FeedbackTone::Info,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FeedbackStyle,
   badge_style? : BadgeStyle,
   progress_style? : ProgressStyle,

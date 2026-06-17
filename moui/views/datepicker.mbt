@@ -1,10 +1,17 @@
 ///|
+pub(all) enum DatePickerMode {
+  Date
+  DateAndTime
+  Time
+} derive(Eq, Debug, ToJson)
+
+///|
 pub fn[Msg] datepicker(
   selected~ : @core.DateValue,
   on_select~ : (@core.DateValue) -> Msg,
-  mode? : @core.DatePickerMode = @core.DatePickerMode::Date,
+  mode? : DatePickerMode = DatePickerMode::Date,
   placeholder? : String = "Select date",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : PickerStyle,
   min_date? : @core.DateValue? = None,
   max_date? : @core.DateValue? = None,
@@ -15,7 +22,7 @@ pub fn[Msg] datepicker(
   }
   @widget.datepicker(
     selected=@core.Binding::new(get=() => selected, set=_value => ()),
-    mode~,
+    mode=mode.to_widget_mode(),
     placeholder~,
     font=resolved_style.font,
     foreground=resolved_style.foreground,
@@ -30,9 +37,9 @@ pub fn[Msg] datepicker(
 ///|
 pub fn[Msg] datepicker_binding(
   selected~ : @core.Binding[@core.DateValue],
-  mode? : @core.DatePickerMode = @core.DatePickerMode::Date,
+  mode? : DatePickerMode = DatePickerMode::Date,
   placeholder? : String = "Select date",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : PickerStyle,
   min_date? : @core.DateValue? = None,
   max_date? : @core.DateValue? = None,
@@ -43,7 +50,7 @@ pub fn[Msg] datepicker_binding(
   }
   @widget.datepicker(
     selected~,
-    mode~,
+    mode=mode.to_widget_mode(),
     placeholder~,
     font=resolved_style.font,
     foreground=resolved_style.foreground,
@@ -52,4 +59,15 @@ pub fn[Msg] datepicker_binding(
     min_date~,
     max_date~,
   )
+}
+
+///|
+fn DatePickerMode::to_widget_mode(
+  self : DatePickerMode,
+) -> @widget.DatePickerDisplayMode {
+  match self {
+    Date => @widget.DatePickerDisplayMode::Date
+    DateAndTime => @widget.DatePickerDisplayMode::DateAndTime
+    Time => @widget.DatePickerDisplayMode::Time
+  }
 }

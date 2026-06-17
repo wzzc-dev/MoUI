@@ -268,7 +268,7 @@ fn ElementNode::render_focused_with_text_system(
   self : ElementNode,
   placed : PlacedNode,
   focused~ : ElementId?,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system~ : TextSystem,
 ) -> RenderNode {
   self.render_with_environment(

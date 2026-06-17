@@ -3,7 +3,7 @@ fn ElementNode::dispatch_pointer(
   self : ElementNode,
   event : PointerEvent,
   render : RenderNode,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
   capture_lookup? : Bool = true,
 ) -> ElementEventResult {
@@ -42,7 +42,7 @@ fn ElementNode::dispatch_widget_event(
   event : AppEvent,
   render : RenderNode,
   text_system : TextSystem,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
 ) -> ElementEventResult {
   let result = (data.event)({
     frame: render.frame,
@@ -207,7 +207,7 @@ fn ElementNode::dispatch_pointer_to_target(
   target : ElementId,
   event : PointerEvent,
   render : RenderNode,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system~ : TextSystem,
 ) -> ElementEventResult? {
   if self.id == target {

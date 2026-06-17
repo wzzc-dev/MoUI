@@ -56,7 +56,7 @@ test "file importer handles mocked pending completion" {
     services,
   )
   assert_true(update.model.status is FileImporterStatus::Requesting)
-  let summary = update.effect.plan_summary()
+  let summary = @runtime.effect_plan_summary(update.effect)
   inspect(summary.descriptors.length(), content="1")
   inspect(summary.descriptors[0].key(), content="host:file-import")
   inspect(summary.descriptors[0].kind(), content="host-service")

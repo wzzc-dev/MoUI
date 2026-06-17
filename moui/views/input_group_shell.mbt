@@ -3,10 +3,10 @@ pub fn[Msg] input_group(
   child~ : @core.View[Msg],
   prefix? : @core.View[Msg]? = None,
   suffix? : @core.View[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 320.0,
   height? : Double = 44.0,
-  padding? : Double = @core.Theme::default().spacing_scale.sm,
+  padding? : Double = default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []
   match prefix {

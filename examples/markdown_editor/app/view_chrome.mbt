@@ -2,7 +2,7 @@
 fn MarkdownEditorApp::root(
   self : MarkdownEditorApp,
 ) -> @core.View[MarkdownEditorMsg] {
-  let theme = @core.Theme::light()
+  let theme = @views.light_theme()
   let document = self.document.get()
   let appearance = self.appearance_spec()
   let editor_font = markdown_editor_appearance_font(appearance)
@@ -80,7 +80,7 @@ fn MarkdownEditorApp::root(
 ///|
 fn MarkdownEditorApp::reactive_root(
   self : MarkdownEditorApp,
-  ctx : @core.BuildContext,
+  ctx : @core.ComponentContext,
 ) -> @core.View[MarkdownEditorMsg] {
   ignore(ctx.watch(self.document))
   ignore(ctx.watch(self.selection))
@@ -140,7 +140,7 @@ fn markdown_editor_workspace_width(
     width = width + markdown_editor_source_inspector_width()
     gaps = gaps + 1
   }
-  width + @core.Theme::light().spacing_scale.lg * gaps.to_double()
+  width + @views.light_theme().spacing_scale.lg * gaps.to_double()
 }
 
 ///|

@@ -297,7 +297,7 @@ fn showcase_inspector_snapshot(
   let effect_summary = showcase_inspector_effect_summary()
   let subscription_summary = showcase_inspector_subscription_summary()
   let no_effect : @core.Effect[ShowcaseMsg] = @core.Effect::none()
-  let no_effect_summary = no_effect.plan_summary()
+  let no_effect_summary = @runtime.effect_plan_summary(no_effect)
   let dirty_state = @runtime.RuntimeDirtyStateSummary::{
     dirty_count: 0,
     dirty_element_ids: [],
@@ -507,7 +507,7 @@ fn showcase_inspector_snapshot(
 }
 
 ///|
-fn showcase_inspector_effect_summary() -> @core.EffectPlanSummary {
+fn showcase_inspector_effect_summary() -> @runtime.EffectPlanSummary {
   let effect : @core.Effect[ShowcaseMsg] = @core.Effect::batch([
     @core.Effect::run(
       key="diagnostics:boot",
@@ -522,11 +522,11 @@ fn showcase_inspector_effect_summary() -> @core.EffectPlanSummary {
       start=_dispatch => Some(() => ()),
     ),
   ])
-  effect.plan_summary()
+  @runtime.effect_plan_summary(effect)
 }
 
 ///|
-fn showcase_inspector_subscription_summary() -> @core.SubscriptionPlanSummary {
+fn showcase_inspector_subscription_summary() -> @runtime.SubscriptionPlanSummary {
   let subscriptions : @core.Subscription[ShowcaseMsg] = @core.Subscription::batch([
       @core.Subscription::animation_tick(
         key="diagnostics:tick",
@@ -545,7 +545,7 @@ fn showcase_inspector_subscription_summary() -> @core.SubscriptionPlanSummary {
       ),
     ],
   )
-  subscriptions.plan_summary()
+  @runtime.subscription_plan_summary(subscriptions)
 }
 
 ///|

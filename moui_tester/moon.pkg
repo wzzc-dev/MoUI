@@ -3,6 +3,8 @@ import {
   "wzzc-dev/moui/runtime",
 }
 
+supported_targets = "+native+wasm-gc"
+
 options(
   targets: { },
 )

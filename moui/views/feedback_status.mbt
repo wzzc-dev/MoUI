@@ -3,7 +3,7 @@ pub fn[Msg] empty_state(
   title : String,
   message : String,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
@@ -23,7 +23,7 @@ pub fn[Msg] empty_state(
 pub fn[Msg] loading_state(
   title? : String = "Loading",
   message? : String = "Please wait while content is prepared.",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
@@ -44,7 +44,7 @@ pub fn[Msg] error_state(
   title : String,
   message : String,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
@@ -64,7 +64,7 @@ pub fn[Msg] error_state(
 pub fn[Msg] inline_error(
   message : String,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FeedbackStyle,
   badge_style? : BadgeStyle,
   width? : Double = 360.0,

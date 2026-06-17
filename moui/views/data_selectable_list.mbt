@@ -3,7 +3,7 @@ pub fn[Msg] selectable_list(
   items : Array[SelectableListItem[Msg]],
   selected? : String = "",
   empty? : @core.View[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 360.0,
   row_height? : Double = 64.0,
 ) -> @core.View[Msg] {

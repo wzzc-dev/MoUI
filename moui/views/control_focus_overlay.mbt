@@ -3,7 +3,7 @@ pub fn[Msg] focus_ring(
   child : @core.View[Msg],
   focused~ : Bool,
   label? : String = "Focused item",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double,
   height? : Double,
   padding? : Double = 3.0,
@@ -41,7 +41,7 @@ pub fn[Msg] menu_button(
   label : String,
   on_click? : Msg,
   variant? : ButtonVariant = ButtonVariant::Tonal,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 160.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
