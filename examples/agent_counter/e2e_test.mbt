@@ -39,10 +39,10 @@ test "e2e: MCP get_semantics returns the agent counter tree" {
   )
   let s = resp_str(response)
   // The semantics tree must contain the counter's text/button labels.
-  if not(s.contains("Increment")) {
+  if !(s.contains("Increment")) {
     fail("expected Increment button in semantics; got \{s}")
   }
-  if not(s.contains("Count:")) {
+  if !(s.contains("Count:")) {
     fail("expected Count: text in semantics; got \{s}")
   }
 }
@@ -57,7 +57,7 @@ test "e2e: MCP tools/list advertises dispatch ops" {
       req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
     ),
   )
-  if not(s.contains("dispatch_command") && s.contains("get_semantics")) {
+  if !(s.contains("dispatch_command") && s.contains("get_semantics")) {
     fail("expected dispatch_command + get_semantics tools; got \{s}")
   }
 }
@@ -83,7 +83,7 @@ test "e2e: MCP dispatch_command routes through runtime and updates state" {
   )
   let rs = resp_str(r)
   // The tool call must return a content-wrapped, accepted result.
-  if not(rs.contains("content") && rs.contains("accepted")) {
+  if !(rs.contains("content") && rs.contains("accepted")) {
     fail("expected accepted dispatch result; got \{rs}")
   }
 
@@ -113,7 +113,7 @@ test "e2e: dispatch_event reaches runtime via host (pointer input)" {
       ),
     ),
   )
-  if not(result.accepted) {
+  if !(result.accepted) {
     fail("expected agent-injected pointer event to be accepted by the runtime")
   }
   // Semantics tree must still be readable after the event.
@@ -166,7 +166,7 @@ test "e2e: agent clicks Increment via MCP and counter goes 0 -> 1" {
       ),
     ),
   )
-  if not(before.contains("Count: 0")) {
+  if !(before.contains("Count: 0")) {
     fail("expected initial Count: 0; got \{before}")
   }
 
@@ -182,7 +182,7 @@ test "e2e: agent clicks Increment via MCP and counter goes 0 -> 1" {
       ),
     ),
   )
-  if not(after.contains("Count: 1")) {
+  if !(after.contains("Count: 1")) {
     fail("expected Count: 1 after agent click; got \{after}")
   }
   if after.contains("Count: 0") {
@@ -205,7 +205,7 @@ test "e2e: three agent clicks drive Count 0 -> 3" {
       ),
     ),
   )
-  if not(after.contains("Count: 3")) {
+  if !(after.contains("Count: 3")) {
     fail("expected Count: 3 after three agent clicks; got \{after}")
   }
 }
@@ -225,7 +225,7 @@ test "e2e: agent clicking Decrement decreases the count" {
       ),
     ),
   )
-  if not(after.contains("Count: 0")) {
+  if !(after.contains("Count: 0")) {
     fail("expected Count: 0 after Increment then Decrement; got \{after}")
   }
 }
@@ -249,7 +249,7 @@ test "e2e: rendered frame (screen content) changes 0 -> 1 after agent click" {
       ),
     ),
   )
-  if not(before_frame.contains("Count: 0")) {
+  if !(before_frame.contains("Count: 0")) {
     fail("expected rendered frame to show Count: 0; got \{before_frame}")
   }
 
@@ -266,14 +266,14 @@ test "e2e: rendered frame (screen content) changes 0 -> 1 after agent click" {
       ),
     ),
   )
-  if not(after_frame.contains("Count: 1")) {
+  if !(after_frame.contains("Count: 1")) {
     fail(
       "expected rendered frame to show Count: 1 after agent click; got \{after_frame}",
     )
   }
   if after_frame.contains("Count: 0") {
     fail(
-      "rendered frame still shows Count: 0 — agent action not visible on screen",
+      "rendered frame still shows Count: 0 — agent action ! visible on screen",
     )
   }
 }
