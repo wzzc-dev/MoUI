@@ -91,7 +91,7 @@ test "markdown editor selected list commands preserve nested indentation" {
   let selection_end = markdown_editor_text_length(
     "Intro\nParent\n  Child\n  More",
   )
-  let selected = Some({
+  let selected : MarkdownEditorSelection? = Some({
     caret: selection_end,
     selection: Some(@core.TextRange::new(start=6, end=selection_end)),
   })
@@ -127,7 +127,7 @@ test "markdown editor selected list commands preserve nested indentation" {
 test "markdown editor selected list commands preserve quote context" {
   let source = "Intro\n> First\n> Second\nTail"
   let selection_end = markdown_editor_text_length("Intro\n> First\n> Second")
-  let selected = Some({
+  let selected : MarkdownEditorSelection? = Some({
     caret: selection_end,
     selection: Some(@core.TextRange::new(start=6, end=selection_end)),
   })

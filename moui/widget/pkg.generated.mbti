@@ -15,8 +15,6 @@ pub fn[Msg] component((@core.ComponentContext) -> @core.View[Msg], kind? : Strin
 
 pub fn[Msg] container(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, kind? : String, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
-
 pub fn[Msg] controlled_search_bar(query~ : String, on_input~ : (String) -> Msg, placeholder~ : String, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius~ : Double, on_submit? : Msg?, on_clear? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] controlled_text_field(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_submit? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
@@ -44,14 +42,6 @@ pub fn[Msg] padding(child~ : @core.View[Msg], insets~ : @core.Insets, kind? : St
 pub fn[Msg] picker(items~ : Array[PickerOption], selected~ : @core.Binding[String], placeholder~ : String, font~ : @core.FontSpec, foreground~ : @core.Color, background~ : @core.Brush, corner_radius~ : Double, max_height~ : Double, on_select? : ((String) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn[Msg] rect(width~ : Double, height~ : Double, color~ : @core.Color, kind? : String, key? : String?, on_tap? : Msg?) -> @core.View[Msg]
-
-pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, @core.Rect, @core.FontSpec, text_system? : @core.TextSystem) -> @core.Rect?
-
-pub fn rich_text_document_height(RichTextDocument, @core.FontSpec) -> Double
-
-pub fn[Msg] rich_text_editor(value~ : @core.Binding[String], placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
-
-pub fn rich_text_editor_content_rect(@core.Rect) -> @core.Rect
 
 pub fn[Msg] scroll(child~ : @core.View[Msg], offset? : @core.Point, viewport? : @core.Size?, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
 
@@ -84,77 +74,7 @@ pub fn PickerOption::id(Self) -> String
 pub fn PickerOption::label(Self) -> String
 pub fn PickerOption::new(id~ : String, label~ : String) -> Self
 
-pub(all) struct RichTextBlock {
-  runs : Array[RichTextRun]
-  table : RichTextTable?
-  prefix : String
-  font : @core.FontSpec?
-  color : @core.Color?
-  background : @core.Brush?
-  border_left : @core.BorderStyle?
-  inset : @core.Insets
-  line_height : Double?
-  corner_radius : Double
-  rule : Bool
-  source_range : RichTextSourceRange?
-  content_range : RichTextSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextBlock::new(runs~ : Array[RichTextRun], table? : RichTextTable?, prefix? : String, font? : @core.FontSpec?, color? : @core.Color?, background? : @core.Brush?, border_left? : @core.BorderStyle?, inset? : @core.Insets, line_height? : Double?, corner_radius? : Double, rule? : Bool, source_range? : RichTextSourceRange?, content_range? : RichTextSourceRange?) -> Self
-
-pub(all) enum RichTextDecoration {
-  Strikethrough
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct RichTextDocument {
-  blocks : Array[RichTextBlock]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextDocument::new(blocks~ : Array[RichTextBlock]) -> Self
-pub fn RichTextDocument::plain(String) -> Self
-
-pub(all) struct RichTextInputTransform {
-  text : String
-  caret : Int
-  selection : @core.TextRange?
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextInputTransform::new(text~ : String, caret~ : Int, selection? : @core.TextRange?) -> Self
-
-pub(all) struct RichTextRun {
-  text : String
-  visual_text : String?
-  image_source : String?
-  image_size : @core.Size?
-  image_fit : @core.ImageFit
-  font : @core.FontSpec?
-  color : @core.Color?
-  background : @core.Brush?
-  background_radius : Double
-  decoration : RichTextDecoration?
-  source_range : RichTextSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RichTextRun::new(text~ : String, visual_text? : String?, image_source? : String?, image_size? : @core.Size?, image_fit? : @core.ImageFit, font? : @core.FontSpec?, color? : @core.Color?, background? : @core.Brush?, background_radius? : Double, decoration? : RichTextDecoration?, source_range? : RichTextSourceRange?) -> Self
-
-pub(all) struct RichTextSourceRange {
-  start : Int
-  end : Int
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct RichTextTable {
-  rows : Array[Array[RichTextTableCell]]
-  row_height : Double
-  cell_padding : @core.Insets
-  border : @core.Color
-  header_background : @core.Brush?
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct RichTextTableCell {
-  text : String
-  header : Bool
-  align : @core.TextAlign?
-  source_range : RichTextSourceRange?
-} derive(Eq, ToJson, @debug.Debug)
-
 // Type aliases
-pub type RichTextFormatter = (String) -> RichTextDocument
 
 // Traits
 

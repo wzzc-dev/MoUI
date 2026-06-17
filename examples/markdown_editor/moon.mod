@@ -4,5 +4,5 @@ version = "0.1.0"
 
 import {
   "wzzc-dev/moui@0.1.4",
-  "mizchi/markdown@0.5.0",
+  "wzzc-dev/moui_richtext@0.1.0",
 }
