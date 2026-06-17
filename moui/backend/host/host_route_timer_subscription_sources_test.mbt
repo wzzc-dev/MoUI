@@ -49,7 +49,7 @@ test "host route source subscription dispatches mapped route events" {
 ///|
 test "host route event constructor preserves location and source" {
   let event = HostRouteEvent::new(
-    location=@core.RouteLocation::parse("/docs?tab=api&lang=moonbit"),
+    location=HostRouteLocation::parse("/docs?tab=api&lang=moonbit"),
     source="browser",
   )
   inspect(event.location.path, content="/docs")

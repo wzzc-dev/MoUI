@@ -62,7 +62,9 @@ pub fn HostRuntimeDriver::dispatch(
       self.request_redraw_if_needed()
     }
     WebView(id, event) => {
-      self.runtime.dispatch_event(@core.AppEvent::WebView(id, event))
+      self.runtime.dispatch_event(
+        @core.AppEvent::PlatformView(id, event.to_platform_event()),
+      )
       self.request_redraw_if_needed()
     }
     ThemeChanged(scheme) => {

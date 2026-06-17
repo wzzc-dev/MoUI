@@ -4,6 +4,7 @@ package "wzzc-dev/moui_theme/common"
 import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
 }
 
 // Values
@@ -55,13 +56,13 @@ pub(all) struct DesignBadgeTokens {
   radius : Double
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignBadgeTokens::core_style(Self) -> @core.BadgeStyle
+pub fn DesignBadgeTokens::core_style(Self) -> @views.BadgeStyle
 
 pub(all) struct DesignButtonCoreStyles {
-  primary : @core.ButtonStyle
-  tonal : @core.ButtonStyle
-  outline : @core.ButtonStyle
-  ghost : @core.ButtonStyle
+  primary : @views.ButtonStyle
+  tonal : @views.ButtonStyle
+  outline : @views.ButtonStyle
+  ghost : @views.ButtonStyle
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DesignButtonTokens {
@@ -79,7 +80,7 @@ pub(all) struct DesignChoiceControlTokens {
   disabled_selected_color : @core.Color
   control_size : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignChoiceControlTokens::core_style(Self) -> @core.ChoiceControlStyle
+pub fn DesignChoiceControlTokens::core_style(Self) -> @views.ChoiceControlStyle
 
 pub(all) struct DesignComponentCoverage {
   component : String
@@ -154,20 +155,20 @@ pub(all) struct DesignControlStateTokens {
   radius : Double
   state_layer_alpha : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignControlStateTokens::core_style(Self) -> @core.ControlStateStyle
+pub fn DesignControlStateTokens::core_style(Self) -> @views.ControlStateStyle
 
 pub(all) struct DesignCoreComponentStyles {
   button : DesignButtonCoreStyles
   text_field : DesignTextFieldCoreStyles
   surface : DesignSurfaceCoreStyles
-  choice_control : @core.ChoiceControlStyle
-  progress : @core.ProgressStyle
-  slider : @core.SliderStyle
-  picker : @core.PickerStyle
-  date_picker : @core.PickerStyle
-  feedback : @core.FeedbackStyle
-  badge : @core.BadgeStyle
-  form_validation : @core.FormValidationStyle
+  choice_control : @views.ChoiceControlStyle
+  progress : @views.ProgressStyle
+  slider : @views.SliderStyle
+  picker : @views.PickerStyle
+  date_picker : @views.PickerStyle
+  feedback : @views.FeedbackStyle
+  badge : @views.BadgeStyle
+  form_validation : @views.FormValidationStyle
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DesignCustomizationCapabilityRecord {
@@ -253,7 +254,7 @@ pub(all) struct DesignFeedbackTokens {
   radius : Double
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignFeedbackTokens::core_style(Self) -> @core.FeedbackStyle
+pub fn DesignFeedbackTokens::core_style(Self) -> @views.FeedbackStyle
 
 pub(all) struct DesignFormValidationTokens {
   foreground : @core.Color
@@ -262,7 +263,7 @@ pub(all) struct DesignFormValidationTokens {
   radius : Double
   padding : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignFormValidationTokens::core_style(Self) -> @core.FormValidationStyle
+pub fn DesignFormValidationTokens::core_style(Self) -> @views.FormValidationStyle
 
 pub(all) struct DesignMotionTokens {
   fast_ms : Double
@@ -323,7 +324,7 @@ pub(all) struct DesignPickerTokens {
   radius : Double
   popup_max_height : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignPickerTokens::core_style(Self) -> @core.PickerStyle
+pub fn DesignPickerTokens::core_style(Self) -> @views.PickerStyle
 
 pub(all) enum DesignPreset {
   Material
@@ -485,7 +486,7 @@ pub(all) struct DesignProgressTokens {
   background : @core.Color
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignProgressTokens::core_style(Self) -> @core.ProgressStyle
+pub fn DesignProgressTokens::core_style(Self) -> @views.ProgressStyle
 
 pub(all) struct DesignRadiusTokens {
   sm : Double
@@ -593,7 +594,7 @@ pub(all) struct DesignSliderTokens {
   thumb_size : Double
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignSliderTokens::core_style(Self) -> @core.SliderStyle
+pub fn DesignSliderTokens::core_style(Self) -> @views.SliderStyle
 
 pub(all) struct DesignSourceImportCoverage {
   preset : DesignPreset
@@ -742,9 +743,9 @@ pub(all) struct DesignSurfaceComponentTokens {
 pub fn DesignSurfaceComponentTokens::core_styles(Self, @core.Theme) -> DesignSurfaceCoreStyles
 
 pub(all) struct DesignSurfaceCoreStyles {
-  base : @core.SurfaceStyle
-  raised : @core.SurfaceStyle
-  overlay : @core.SurfaceStyle
+  base : @views.SurfaceStyle
+  raised : @views.SurfaceStyle
+  overlay : @views.SurfaceStyle
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DesignSurfaceTokens {
@@ -879,9 +880,9 @@ pub fn DesignSystemTokens::with_spacing(Self, DesignSpacingTokens) -> Self
 pub fn DesignSystemTokens::with_state_layer(Self, DesignStateLayerTokens) -> Self
 
 pub(all) struct DesignTextFieldCoreStyles {
-  filled : @core.TextFieldStyle
-  outline : @core.TextFieldStyle
-  plain : @core.TextFieldStyle
+  filled : @views.TextFieldStyle
+  outline : @views.TextFieldStyle
+  plain : @views.TextFieldStyle
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DesignTextFieldTokens {
@@ -892,7 +893,7 @@ pub(all) struct DesignTextFieldTokens {
   cursor : @core.Color
   font : @core.FontSpec
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignTextFieldTokens::core_style(Self) -> @core.TextFieldStyle
+pub fn DesignTextFieldTokens::core_style(Self) -> @views.TextFieldStyle
 pub fn DesignTextFieldTokens::core_styles(Self) -> DesignTextFieldCoreStyles
 
 pub(all) enum DesignTokenCategory {
@@ -994,7 +995,7 @@ pub(all) struct DesignToneTokens {
   background : @core.Color
   border : @core.Color
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignToneTokens::core_style(Self) -> @core.ToneStyle
+pub fn DesignToneTokens::core_style(Self) -> @views.ToneStyle
 
 pub(all) enum DesignTypographyRole {
   TypographyBody

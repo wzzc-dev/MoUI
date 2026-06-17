@@ -268,7 +268,9 @@ fn ShowcaseModel::focus_shortcut_card(
         .foreground(theme.palette.muted),
         text(
           "First invalid: " +
-          focus_scope.focus_first_invalid(validation_summary).unwrap_or("none"),
+          focus_scope
+          .focus_target_or_first(validation_summary.first_invalid_id)
+          .unwrap_or("none"),
           width=width - 32.0,
           height=22.0,
         )

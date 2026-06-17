@@ -3869,49 +3869,49 @@ test "source manifests keep preview presets from claiming full official coverage
     material.component_coverage.any(item => {
       item.component == "Progress" &&
       item.status == @common.DesignTokenStatus::ComponentMapped &&
-      item.moui_surface == "@core.ProgressStyle"
+      item.moui_surface == "@views.ProgressStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "Slider" &&
       item.status == @common.DesignTokenStatus::ComponentMapped &&
-      item.moui_surface == "@core.SliderStyle"
+      item.moui_surface == "@views.SliderStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "Picker" &&
       item.status == @common.DesignTokenStatus::ComponentMapped &&
-      item.moui_surface == "@core.PickerStyle"
+      item.moui_surface == "@views.PickerStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "DatePicker" &&
       item.status == @common.DesignTokenStatus::ComponentMapped &&
-      item.moui_surface == "@core.PickerStyle"
+      item.moui_surface == "@views.PickerStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "Feedback" &&
       item.status == @common.DesignTokenStatus::ComponentMapped &&
-      item.moui_surface == "@core.FeedbackStyle"
+      item.moui_surface == "@views.FeedbackStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "Badge" &&
       item.status == @common.DesignTokenStatus::ComponentMapped &&
-      item.moui_surface == "@core.BadgeStyle"
+      item.moui_surface == "@views.BadgeStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "FormValidation" &&
       item.status == @common.DesignTokenStatus::ComponentMapped &&
-      item.moui_surface == "@core.FormValidationStyle"
+      item.moui_surface == "@views.FormValidationStyle"
     }),
   )
 }
@@ -4646,7 +4646,7 @@ test "component token matrices expose source locked official component gaps" {
     is Some(primer_picker) else {
     fail("expected Primer picker matrix")
   }
-  inspect(primer_picker.moui_surface, content="@core.PickerStyle")
+  inspect(primer_picker.moui_surface, content="@views.PickerStyle")
   assert_true(primer_picker.source_imported_token_count >= 3)
   assert_true(primer_picker.runtime_aligned_token_count >= 1)
   guard @common.DesignPreset::Fluent.component_token_matrix_for("DatePicker")
@@ -4700,7 +4700,7 @@ test "component style resolver reports tie component tokens to neutral core styl
     is Some(material_button) else {
     fail("expected Material button style resolver")
   }
-  assert_true(material_button.core_style_surface == "@core.ButtonStyle")
+  assert_true(material_button.core_style_surface == "@views.ButtonStyle")
   assert_true(material_button.style_api.contains("core_component_styles"))
   assert_true(material_button.remaining_gap.contains("state layers"))
   guard @common.DesignPreset::Carbon.component_style_resolver_for("Feedback")
@@ -4708,18 +4708,18 @@ test "component style resolver reports tie component tokens to neutral core styl
     fail("expected Carbon feedback style resolver")
   }
   assert_true(carbon_feedback.style_api.contains("DesignFeedbackTokens"))
-  assert_true(carbon_feedback.core_style_surface == "@core.FeedbackStyle")
+  assert_true(carbon_feedback.core_style_surface == "@views.FeedbackStyle")
   guard @common.DesignPreset::Primer.component_style_resolver_for("Picker")
     is Some(primer_picker) else {
     fail("expected Primer picker style resolver")
   }
-  assert_true(primer_picker.core_style_surface == "@core.PickerStyle")
+  assert_true(primer_picker.core_style_surface == "@views.PickerStyle")
   assert_true(primer_picker.token_surface.contains("picker"))
   guard @common.DesignPreset::Fluent.component_style_resolver_for("DatePicker")
     is Some(fluent_date_picker) else {
     fail("expected Fluent date-picker style resolver")
   }
-  assert_true(fluent_date_picker.core_style_surface == "@core.PickerStyle")
+  assert_true(fluent_date_picker.core_style_surface == "@views.PickerStyle")
   assert_true(fluent_date_picker.remaining_gap.contains("calendar"))
 }
 

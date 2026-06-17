@@ -25,7 +25,7 @@ fn host_test_text_field(
   } else {
     None
   }
-  let normal : @core.ControlStateStyle = {
+  let normal : @views.ControlStateStyle = {
     foreground: @core.Color::black(),
     background: @core.Brush::solid(@core.Color::white()),
     border: normal_border,
@@ -33,7 +33,7 @@ fn host_test_text_field(
     shadow: None,
   }
   let focused = { ..normal, border: focused_border }
-  let field_style : @core.TextFieldStyle = {
+  let field_style : @views.TextFieldStyle = {
     normal,
     focused,
     disabled: normal,

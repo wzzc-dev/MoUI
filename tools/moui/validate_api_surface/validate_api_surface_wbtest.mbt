@@ -163,10 +163,14 @@ test "shared app core import guard tracks default imports" {
 ///|
 test "views facade exposes control-specific contracts" {
   let views = budget_by_label("views facade")
-  inspect(views.max_lines, content="760")
-  inspect(views.max_pub_lines, content="288")
-  inspect(views_facade_core_alias_tokens().length(), content="47")
+  inspect(views.max_lines, content="980")
+  inspect(views.max_pub_lines, content="370")
+  inspect(views_facade_core_alias_tokens().length(), content="8")
+  inspect(views_facade_widget_alias_tokens().length(), content="8")
+  inspect(views_facade_host_alias_tokens().length(), content="2")
   let required = views.required_tokens
+  assert_true(required.contains("\"wzzc-dev/moui/backend/host\""))
+  assert_true(required.contains("\"wzzc-dev/moui/widget\""))
   assert_true(required.contains("pub using @core {type ActionCommand}"))
   assert_true(required.contains("pub using @core {type ActionCommandMap}"))
   assert_true(required.contains("pub using @core {type CommandBinding}"))
@@ -175,26 +179,37 @@ test "views facade exposes control-specific contracts" {
   assert_true(required.contains("pub using @core {type CommandIntent}"))
   assert_true(required.contains("pub using @core {type KeyModifiers}"))
   assert_true(required.contains("pub using @core {type KeyboardShortcut}"))
-  assert_true(required.contains("pub using @core {type ButtonStyle}"))
-  assert_true(required.contains("pub using @core {type TextFieldStyle}"))
-  assert_true(required.contains("pub using @core {type PickerItem}"))
-  assert_true(required.contains("pub using @core {type FormFieldState}"))
-  assert_true(required.contains("pub using @core {type FormValidationSummary}"))
-  assert_true(required.contains("pub using @core {type RichTextDocument}"))
-  assert_true(
-    required.contains("pub using @core {type RichTextInputTransform}"),
+  assert_true(required.contains("pub(all) struct ButtonStyle"))
+  assert_true(required.contains("pub(all) struct FormFieldState"))
+  assert_false(required.contains("pub using @core {type ButtonStyle}"))
+  assert_false(required.contains("pub using @core {type TextFieldStyle}"))
+  assert_false(required.contains("pub using @core {type PickerItem}"))
+  assert_false(required.contains("pub using @core {type FormFieldState}"))
+  assert_false(
+    required.contains("pub using @core {type FormValidationSummary}"),
   )
-  assert_true(required.contains("pub using @core {type RouteHistoryState}"))
-  assert_true(required.contains("pub using @core {type RouteLocation}"))
-  assert_true(required.contains("pub using @core {type WebViewEvent}"))
+  assert_true(required.contains("pub using @widget {type RichTextDocument}"))
   assert_true(
-    required.contains("pub using @core {type WebViewNavigationPolicy}"),
+    required.contains("pub using @widget {type RichTextInputTransform}"),
   )
   assert_true(
     required.contains(
-      "pub type RichTextFormatter = (String) -> @core.RichTextDocument",
+      "pub type RichTextFormatter = (String) -> @widget.RichTextDocument",
     ),
   )
+  assert_false(required.contains("pub using @core {type RichTextDocument}"))
+  assert_true(required.contains("pub(all) struct RouteLocation"))
+  assert_true(required.contains("pub(all) struct RouteHistoryState"))
+  assert_true(required.contains("type RouteFocusStore"))
+  assert_true(required.contains("type RouterState"))
+  assert_false(required.contains("pub using @core {type RouteHistoryState}"))
+  assert_false(required.contains("pub using @core {type RouteLocation}"))
+  assert_false(required.contains("pub using @core {type WebViewEvent}"))
+  assert_true(required.contains("pub using @host {type WebViewEvent}"))
+  assert_true(
+    required.contains("pub using @host {type WebViewNavigationPolicy}"),
+  )
+  assert_true(required.contains("pub fn rich_text_document_height("))
 }
 
 ///|
@@ -264,11 +279,21 @@ test "core legacy families are ratcheted toward existing layers" {
   assert_true(labels.contains("routing and history controller"))
   assert_true(labels.contains("runtime diagnostics snapshots"))
   let control = budgets[0]
+  inspect(control.max_occurrences, content="0")
   assert_true(control.tokens.contains("ButtonStyle"))
   assert_true(control.tokens.contains("PickerItem"))
+  let form = budgets[1]
+  inspect(form.max_occurrences, content="0")
+  let rich_text = budgets[2]
+  inspect(rich_text.max_occurrences, content="0")
   let webview = budgets[3]
+  inspect(webview.max_occurrences, content="0")
   assert_true(webview.tokens.contains("WebViewEvent"))
   assert_true(webview.tokens.contains("PlatformViewPlacement::web_view"))
+  let routing = budgets[4]
+  inspect(routing.max_occurrences, content="0")
+  assert_true(routing.tokens.contains("RouteHistoryState"))
+  assert_true(routing.tokens.contains("resolve_route"))
   let diagnostics = budgets[5]
   inspect(diagnostics.max_occurrences, content="0")
   assert_true(diagnostics.tokens.contains("ProgramRuntimeSnapshot"))
@@ -290,6 +315,27 @@ test "core program runtime ownership guard covers moved implementation" {
   assert_true(paths.contains("moui/core/program_runtime_effect_tasks.mbt"))
   assert_true(paths.contains("moui/core/program_runtime_subscriptions.mbt"))
   assert_true(paths.contains("moui/core/runtime_wbtest.mbt"))
+}
+
+///|
+test "core WebView ownership guard points at host-owned API" {
+  let tokens = forbidden_core_webview_source_tokens().map(rule => rule.token)
+  assert_true(tokens.contains("type WebViewSpec"))
+  assert_true(tokens.contains("enum WebViewCommand"))
+  assert_true(tokens.contains("enum WebViewEvent"))
+  assert_true(tokens.contains("enum WebViewNavigationPolicy"))
+  assert_true(tokens.contains("PlatformViewPlacement::web_view"))
+  assert_true(tokens.contains("WebView(String"))
+}
+
+///|
+test "core routing ownership guard points at views-owned API" {
+  let tokens = forbidden_core_routing_source_tokens().map(rule => rule.token)
+  assert_true(tokens.contains("type RouteLocation"))
+  assert_true(tokens.contains("struct RouteHistoryState"))
+  assert_true(tokens.contains("type RouteFocusStore"))
+  assert_true(tokens.contains("struct RouterState"))
+  assert_true(tokens.contains("resolve_route("))
 }
 
 ///|

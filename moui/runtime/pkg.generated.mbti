@@ -46,8 +46,6 @@ pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg],
 pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> Self
 pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
 pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
-pub fn AppRuntime::restore_location_focus(Self, @core.RouteFocusStore, @core.RouteLocation) -> Bool
-pub fn AppRuntime::restore_route_focus(Self, @core.RouteFocusStore, String) -> Bool
 pub fn AppRuntime::semantics(Self) -> @core.SemanticsNode
 pub fn AppRuntime::set_action_commands(Self, @core.ActionCommandMap) -> Unit
 pub fn AppRuntime::set_environment(Self, @core.Environment) -> Unit

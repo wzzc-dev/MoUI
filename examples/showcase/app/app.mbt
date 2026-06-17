@@ -370,10 +370,11 @@ fn ShowcaseModel::with_host_route_event(
   event : @host.HostRouteEvent,
 ) -> ShowcaseModel {
   let route = event.location.to_route()
+  let location = @views.RouteLocation::parse(route)
   let history = if self.route_history.current_route() == route {
     self.route_history.replace(
-      event.location,
-      title=showcase_route_title(event.location.path),
+      location,
+      title=showcase_route_title(location.path),
       source=event.source,
     )
   } else {
@@ -381,8 +382,8 @@ fn ShowcaseModel::with_host_route_event(
       Some(cursor) => { ..self.route_history, cursor, }
       None =>
         self.route_history.push(
-          event.location,
-          title=showcase_route_title(event.location.path),
+          location,
+          title=showcase_route_title(location.path),
           source=event.source,
         )
     }

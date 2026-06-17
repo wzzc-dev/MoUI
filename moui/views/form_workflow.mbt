@@ -123,7 +123,9 @@ fn form_workflow_status(
         form_workflow_command_status(scope)
       } else {
         "Fix " +
-        form_workflow_target(scope.focus_first_invalid(summary)) +
+        form_workflow_target(
+          scope.focus_target_or_first(summary.first_invalid_id),
+        ) +
         " before submit"
       }
     None =>
@@ -164,7 +166,9 @@ fn form_workflow_description(
     Some(scope) =>
       validity +
       "; focus target: " +
-      form_workflow_target(scope.focus_first_invalid(summary)) +
+      form_workflow_target(
+        scope.focus_target_or_first(summary.first_invalid_id),
+      ) +
       "; " +
       form_workflow_command_status(scope)
     None => validity

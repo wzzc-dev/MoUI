@@ -381,7 +381,7 @@ fn LinuxApp::dispatch_web_view_event(
   self : LinuxApp,
   native_surface : UInt64,
   id : String,
-  event : @core.WebViewEvent,
+  event : @host.WebViewEvent,
 ) -> Unit {
   match self.web_view_host_id(native_surface) {
     Some(window_id) => {

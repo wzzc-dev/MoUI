@@ -300,12 +300,12 @@ fn markdown_editor_palette_anchor(
     Some(range) => range.normalized().start
     None => selection.caret
   }
-  let content = @core.rich_text_editor_content_rect(editor_frame).offset(
+  let content = @views.rich_text_editor_content_rect(editor_frame).offset(
     dx=0.0,
     dy=-scroll_offset.y,
   )
   match
-    @core.rich_text_document_caret_rect_at_source(
+    @views.rich_text_document_caret_rect_at_source(
       snapshot.rich_text,
       caret,
       content,
@@ -598,7 +598,7 @@ fn editor_source_layout(
   let viewport_height = markdown_editor_viewport_height()
   let content_height = markdown_editor_max_double(
     viewport_height,
-    @core.rich_text_document_height(snapshot.rich_text, editor_font) + 96.0,
+    @views.rich_text_document_height(snapshot.rich_text, editor_font) + 96.0,
   )
   let max_scroll = markdown_editor_max_double(
     0.0,

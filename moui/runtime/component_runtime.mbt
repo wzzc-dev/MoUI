@@ -18,7 +18,7 @@ fn build_component_child(
   }
   let subscriptions : Array[StateSubscription] = []
   let effects : Array[ComponentEffect] = []
-  let context = @core.BuildContext::new_for_runtime(
+  let context = @core.BuildContext::new(
     component_id~,
     request_component_rebuild=id => runtime.request_component_rebuild(id),
     viewport_size=runtime.size,

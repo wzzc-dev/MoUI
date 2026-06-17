@@ -5,7 +5,7 @@ pub type RichTextFormatter = (String) -> RichTextDocument
 pub(all) struct RichTextInputTransform {
   text : String
   caret : Int
-  selection : TextRange?
+  selection : @core.TextRange?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -24,11 +24,11 @@ pub(all) struct RichTextRun {
   text : String
   visual_text : String?
   image_source : String?
-  image_size : Size?
-  image_fit : ImageFit
-  font : FontSpec?
-  color : Color?
-  background : Brush?
+  image_size : @core.Size?
+  image_fit : @core.ImageFit
+  font : @core.FontSpec?
+  color : @core.Color?
+  background : @core.Brush?
   background_radius : Double
   decoration : RichTextDecoration?
   source_range : RichTextSourceRange?
@@ -38,7 +38,7 @@ pub(all) struct RichTextRun {
 pub(all) struct RichTextTableCell {
   text : String
   header : Bool
-  align : TextAlign?
+  align : @core.TextAlign?
   source_range : RichTextSourceRange?
 } derive(Eq, Debug, ToJson)
 
@@ -46,9 +46,9 @@ pub(all) struct RichTextTableCell {
 pub(all) struct RichTextTable {
   rows : Array[Array[RichTextTableCell]]
   row_height : Double
-  cell_padding : Insets
-  border : Color
-  header_background : Brush?
+  cell_padding : @core.Insets
+  border : @core.Color
+  header_background : @core.Brush?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -56,11 +56,11 @@ pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
   table : RichTextTable?
   prefix : String
-  font : FontSpec?
-  color : Color?
-  background : Brush?
-  border_left : BorderStyle?
-  inset : Insets
+  font : @core.FontSpec?
+  color : @core.Color?
+  background : @core.Brush?
+  border_left : @core.BorderStyle?
+  inset : @core.Insets
   line_height : Double?
   corner_radius : Double
   rule : Bool
@@ -78,11 +78,11 @@ pub fn RichTextRun::new(
   text~ : String,
   visual_text? : String? = None,
   image_source? : String? = None,
-  image_size? : Size? = None,
-  image_fit? : ImageFit = ImageFit::Contain,
-  font? : FontSpec? = None,
-  color? : Color? = None,
-  background? : Brush? = None,
+  image_size? : @core.Size? = None,
+  image_fit? : @core.ImageFit = @core.ImageFit::Contain,
+  font? : @core.FontSpec? = None,
+  color? : @core.Color? = None,
+  background? : @core.Brush? = None,
   background_radius? : Double = 4.0,
   decoration? : RichTextDecoration? = None,
   source_range? : RichTextSourceRange? = None,
@@ -106,7 +106,7 @@ pub fn RichTextRun::new(
 pub fn RichTextInputTransform::new(
   text~ : String,
   caret~ : Int,
-  selection? : TextRange? = None,
+  selection? : @core.TextRange? = None,
 ) -> RichTextInputTransform {
   { text, caret, selection }
 }
@@ -116,11 +116,11 @@ pub fn RichTextBlock::new(
   runs~ : Array[RichTextRun],
   table? : RichTextTable? = None,
   prefix? : String = "",
-  font? : FontSpec? = None,
-  color? : Color? = None,
-  background? : Brush? = None,
-  border_left? : BorderStyle? = None,
-  inset? : Insets = Insets::symmetric(),
+  font? : @core.FontSpec? = None,
+  color? : @core.Color? = None,
+  background? : @core.Brush? = None,
+  border_left? : @core.BorderStyle? = None,
+  inset? : @core.Insets = @core.Insets::symmetric(),
   line_height? : Double? = None,
   corner_radius? : Double = 0.0,
   rule? : Bool = false,

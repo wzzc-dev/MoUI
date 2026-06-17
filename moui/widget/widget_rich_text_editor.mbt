@@ -3,7 +3,7 @@ pub fn[Msg] rich_text_editor(
   value~ : @core.Binding[String],
   placeholder~ : String,
   size~ : @core.Size,
-  format~ : @core.RichTextFormatter,
+  format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
   placeholder_color~ : @core.Color,
@@ -15,7 +15,7 @@ pub fn[Msg] rich_text_editor(
   on_input? : ((String) -> Msg)? = None,
   on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
   on_prefix_click? : ((Int) -> Msg)? = None,
-  input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)? = None,
+  input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = false,
   kind? : String = "RichTextEditor",
   key? : String? = None,
@@ -105,7 +105,7 @@ pub fn[Msg] controlled_rich_text_editor(
   on_input~ : (String) -> Msg,
   placeholder~ : String,
   size~ : @core.Size,
-  format~ : @core.RichTextFormatter,
+  format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
   placeholder_color~ : @core.Color,
@@ -116,7 +116,7 @@ pub fn[Msg] controlled_rich_text_editor(
   corner_radius? : Double = 0.0,
   on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
   on_prefix_click? : ((Int) -> Msg)? = None,
-  input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)? = None,
+  input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = false,
   kind? : String = "RichTextEditor",
   key? : String? = None,
@@ -149,7 +149,7 @@ fn rich_text_editor_paint(
   ctx : @core.WidgetPaintContext,
   value~ : @core.Binding[String],
   placeholder~ : String,
-  format~ : @core.RichTextFormatter,
+  format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
   placeholder_color~ : @core.Color,
@@ -178,7 +178,7 @@ fn rich_text_editor_paint(
     ctx.text_control,
     focused=ctx.focused,
   )
-  let content = @core.rich_text_editor_content_rect(ctx.frame)
+  let content = rich_text_editor_content_rect(ctx.frame)
   commands.push(@core.DrawCommand::PushClip(content))
   let child_layers : Array[@core.WidgetPaintLayer] = []
   if display_text == "" {
@@ -252,7 +252,7 @@ fn append_rich_text_border(
 ///|
 fn append_rich_text_document_layers(
   layers : Array[@core.WidgetPaintLayer],
-  document : @core.RichTextDocument,
+  document : RichTextDocument,
   content : @core.Rect,
   base_font : @core.FontSpec,
   foreground : @core.Color,
@@ -298,7 +298,7 @@ fn append_rich_text_document_layers(
 ///|
 fn append_rich_text_block_commands(
   commands : Array[@core.DrawCommand],
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   block_frame : @core.Rect,
   line_height : Double,
   base_font : @core.FontSpec,
@@ -389,7 +389,7 @@ fn append_rich_text_block_commands(
 ///|
 fn append_rich_text_block_runs(
   commands : Array[@core.DrawCommand],
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   frame : @core.Rect,
   base_font : @core.FontSpec,
   foreground : @core.Color,
@@ -454,7 +454,7 @@ fn append_rich_text_block_runs(
 ///|
 fn append_rich_text_run_segment(
   commands : Array[@core.DrawCommand],
-  run : @core.RichTextRun,
+  run : RichTextRun,
   text : String,
   run_frame : @core.Rect,
   width : Double,
@@ -508,14 +508,14 @@ fn append_rich_text_run_segment(
 ///|
 fn append_rich_text_run_decoration(
   commands : Array[@core.DrawCommand],
-  run : @core.RichTextRun,
+  run : RichTextRun,
   frame : @core.Rect,
   width : Double,
   font : @core.FontSpec,
   color : @core.Color,
 ) -> Unit {
   match run.decoration {
-    Some(@core.RichTextDecoration::Strikethrough) => {
+    Some(RichTextDecoration::Strikethrough) => {
       let thickness = max_double(1.0, font.size / 14.0)
       commands.push(
         @core.DrawCommand::FillRect(
@@ -536,7 +536,7 @@ fn append_rich_text_run_decoration(
 ///|
 fn append_rich_text_block_table(
   commands : Array[@core.DrawCommand],
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   frame : @core.Rect,
   base_font : @core.FontSpec,
   foreground : @core.Color,
@@ -616,7 +616,7 @@ fn append_rich_text_editor_overlay(
   commands : Array[@core.DrawCommand],
   text~ : String,
   display_text~ : String,
-  document~ : @core.RichTextDocument,
+  document~ : RichTextDocument,
   content~ : @core.Rect,
   font~ : @core.FontSpec,
   cursor_color~ : @core.Color,
@@ -651,7 +651,7 @@ fn append_rich_text_editor_overlay(
     0,
     text_length(display_text),
   )
-  let caret_rect = @core.rich_text_document_caret_rect_at_source(
+  let caret_rect = rich_text_document_caret_rect_at_source(
     document,
     caret,
     content,
@@ -667,7 +667,7 @@ fn append_rich_text_editor_overlay(
 ///|
 fn append_rich_text_composition_underline(
   commands : Array[@core.DrawCommand],
-  document : @core.RichTextDocument,
+  document : RichTextDocument,
   text~ : String,
   display_text~ : String,
   content~ : @core.Rect,
@@ -685,7 +685,7 @@ fn append_rich_text_composition_underline(
           control.selection,
         )
         let end = start + text_length(composition)
-        let start_rect = @core.rich_text_document_caret_rect_at_source(
+        let start_rect = rich_text_document_caret_rect_at_source(
           document,
           start,
           content,
@@ -696,7 +696,7 @@ fn append_rich_text_composition_underline(
             display_text, start, content, font, text_system,
           ),
         )
-        let end_rect = @core.rich_text_document_caret_rect_at_source(
+        let end_rect = rich_text_document_caret_rect_at_source(
           document,
           end,
           content,
@@ -729,12 +729,12 @@ fn append_rich_text_composition_underline(
 fn[Msg] rich_text_editor_event(
   ctx : @core.WidgetEventContext,
   value~ : @core.Binding[String],
-  format~ : @core.RichTextFormatter,
+  format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   on_input~ : ((String) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   on_prefix_click~ : ((Int) -> Msg)?,
-  input_transform~ : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?,
+  input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   accepts_tab_input~ : Bool,
 ) -> @core.WidgetEventResult[Msg] {
   match ctx.event {
@@ -776,7 +776,7 @@ fn[Msg] rich_text_editor_event(
 fn[Msg] rich_text_pointer_event(
   ctx : @core.WidgetEventContext,
   value~ : @core.Binding[String],
-  format~ : @core.RichTextFormatter,
+  format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   on_prefix_click~ : ((Int) -> Msg)?,
@@ -788,7 +788,7 @@ fn[Msg] rich_text_pointer_event(
       if inside {
         let text = value.get()
         let document = format(text)
-        let content = @core.rich_text_editor_content_rect(ctx.frame)
+        let content = rich_text_editor_content_rect(ctx.frame)
         let prefix_messages = match on_prefix_click {
           Some(handler) =>
             match
@@ -836,7 +836,7 @@ fn[Msg] rich_text_pointer_event(
         Some(anchor) => {
           let text = value.get()
           let document = format(text)
-          let content = @core.rich_text_editor_content_rect(ctx.frame)
+          let content = rich_text_editor_content_rect(ctx.frame)
           let caret = rich_text_document_source_offset_at_point(
             document,
             event.position,
@@ -890,7 +890,7 @@ fn[Msg] rich_text_keyboard_event(
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
-  input_transform~ : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?,
+  input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   accepts_tab_input~ : Bool,
   event~ : @core.KeyboardEvent,
 ) -> @core.WidgetEventResult[Msg] {
@@ -1073,7 +1073,7 @@ fn[Msg] rich_text_input_event(
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
-  input_transform~ : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?,
+  input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   event~ : @core.TextInputEvent,
   record_history~ : Bool,
 ) -> @core.WidgetEventResult[Msg] {
@@ -1177,10 +1177,10 @@ fn[Msg] rich_text_input_event(
 fn[Msg] rich_text_editor_command(
   ctx : @core.WidgetEventContext,
   value~ : @core.Binding[String],
-  format~ : @core.RichTextFormatter,
+  format~ : RichTextFormatter,
   on_input~ : ((String) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
-  input_transform~ : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?,
+  input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   intent : @core.CommandIntent,
   paste_text~ : String?,
 ) -> @core.WidgetTextCommandResult[Msg] {
@@ -1312,14 +1312,14 @@ fn[Msg] rich_text_editor_command(
 fn rich_text_input_state(
   text~ : String,
   frame~ : @core.Rect,
-  format~ : @core.RichTextFormatter,
+  format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
 ) -> @core.TextInputState {
   let boundaries = @core.TextGraphemeBoundaries::new(text~)
   let display_text = rich_text_with_composition(text, control, focused=true)
-  let content = @core.rich_text_editor_content_rect(frame)
+  let content = rich_text_editor_content_rect(frame)
   let caret = boundaries.nearest_boundary(control.caret)
   let visual_caret = clamp_int(
     rich_text_visual_caret(text, control, focused=true),
@@ -1327,7 +1327,7 @@ fn rich_text_input_state(
     text_length(display_text),
   )
   let document = format(display_text)
-  let caret_rect = @core.rich_text_document_caret_rect_at_source(
+  let caret_rect = rich_text_document_caret_rect_at_source(
     document,
     visual_caret,
     content,
@@ -1460,14 +1460,34 @@ fn plain_rich_text_caret_rect(
 }
 
 ///|
+pub fn rich_text_editor_content_rect(frame : @core.Rect) -> @core.Rect {
+  frame.inset(@core.Insets::symmetric(horizontal=14.0, vertical=12.0))
+}
+
+///|
 fn string_prefix(text : String, end : Int) -> String {
   let chars = text.to_array()
   String::from_array(chars[:clamp_int(end, 0, chars.length())])
 }
 
 ///|
+pub fn rich_text_document_height(
+  document : RichTextDocument,
+  base_font : @core.FontSpec,
+) -> Double {
+  let mut height = 0.0
+  for block in document.blocks {
+    height = height +
+      rich_text_block_line_height(block, base_font) +
+      block.inset.top +
+      block.inset.bottom
+  }
+  height
+}
+
+///|
 fn rich_text_block_line_height(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   base_font : @core.FontSpec,
 ) -> Double {
   let text_height = rich_text_block_line_step(block, base_font)
@@ -1492,7 +1512,7 @@ fn rich_text_block_line_height(
 
 ///|
 fn rich_text_block_line_step(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   base_font : @core.FontSpec,
 ) -> Double {
   block.line_height.unwrap_or(
@@ -1501,7 +1521,7 @@ fn rich_text_block_line_step(
 }
 
 ///|
-fn rich_text_block_visual_line_count(block : @core.RichTextBlock) -> Int {
+fn rich_text_block_visual_line_count(block : RichTextBlock) -> Int {
   let mut line_count = 1
   line_count = line_count + rich_text_text_newline_count(block.prefix)
   for run in block.runs {
@@ -1523,13 +1543,13 @@ fn rich_text_text_newline_count(text : String) -> Int {
 }
 
 ///|
-fn rich_text_run_visual_text(run : @core.RichTextRun) -> String {
+fn rich_text_run_visual_text(run : RichTextRun) -> String {
   run.visual_text.unwrap_or(run.text)
 }
 
 ///|
 fn rich_text_block_font(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   base_font : @core.FontSpec,
 ) -> @core.FontSpec {
   block.font.unwrap_or(base_font)
@@ -1537,7 +1557,7 @@ fn rich_text_block_font(
 
 ///|
 fn rich_text_block_color(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   foreground : @core.Color,
 ) -> @core.Color {
   block.color.unwrap_or(foreground)
@@ -1554,7 +1574,7 @@ fn rich_text_width(
 
 ///|
 fn rich_text_run_segment_width(
-  run : @core.RichTextRun,
+  run : RichTextRun,
   text : String,
   font : @core.FontSpec,
   text_system : @core.TextSystem,
@@ -1567,7 +1587,7 @@ fn rich_text_run_segment_width(
 
 ///|
 fn rich_text_run_segment_height(
-  run : @core.RichTextRun,
+  run : RichTextRun,
   line_height : Double,
 ) -> Double {
   match run.image_size {
@@ -1577,7 +1597,7 @@ fn rich_text_run_segment_height(
 }
 
 ///|
-fn rich_text_run_hit_width(run : @core.RichTextRun, width : Double) -> Double? {
+fn rich_text_run_hit_width(run : RichTextRun, width : Double) -> Double? {
   match run.image_source {
     Some(_) => Some(width)
     _ => None
@@ -1697,11 +1717,11 @@ fn multiline_line_end(text : String, caret : Int) -> Int {
 
 ///|
 fn rich_text_transform_insert(
-  input_transform : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)?,
+  input_transform : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   text : String,
   control : @core.TextControlStateContext,
   inserted : String,
-) -> @core.RichTextInputTransform? {
+) -> RichTextInputTransform? {
   match input_transform {
     Some(transform) =>
       transform(text, control.caret, control.selection, inserted)
@@ -1713,7 +1733,7 @@ fn rich_text_transform_insert(
 fn apply_rich_text_input_transform(
   control : @core.TextControlStateContext,
   previous : String,
-  edit : @core.RichTextInputTransform,
+  edit : RichTextInputTransform,
   record_history~ : Bool,
 ) -> TextInputApplyResult {
   let changed = edit.text != previous ||
@@ -1752,7 +1772,7 @@ fn apply_rich_text_input_transform(
 ///|
 fn selected_rich_text(
   text : String,
-  document : @core.RichTextDocument,
+  document : RichTextDocument,
   selection : @core.TextRange?,
 ) -> String {
   match active_text_selection(selection) {
@@ -1768,7 +1788,7 @@ fn selected_rich_text(
 
 ///|
 fn selected_rich_text_document_text(
-  document : @core.RichTextDocument,
+  document : RichTextDocument,
   selection : @core.TextRange,
 ) -> String {
   let lines : Array[String] = []
@@ -1783,7 +1803,7 @@ fn selected_rich_text_document_text(
 
 ///|
 fn selected_rich_text_block_text(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   selection : @core.TextRange,
 ) -> String? {
   match (block.source_range, block.content_range) {
@@ -1819,7 +1839,7 @@ fn selected_rich_text_block_text(
 
 ///|
 fn selected_rich_text_runs_text(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   start : Int,
   end : Int,
 ) -> String {
@@ -1852,7 +1872,7 @@ fn selected_rich_text_runs_text(
 }
 
 ///|
-fn rich_text_run_copy_text(run : @core.RichTextRun) -> String {
+fn rich_text_run_copy_text(run : RichTextRun) -> String {
   match run.visual_text {
     Some(text) => text
     None =>
@@ -1931,7 +1951,7 @@ fn join_text_lines(lines : Array[String]) -> String {
 ///|
 fn append_rich_text_selection_commands(
   commands : Array[@core.DrawCommand],
-  document : @core.RichTextDocument,
+  document : RichTextDocument,
   content : @core.Rect,
   base_font : @core.FontSpec,
   text_system : @core.TextSystem,
@@ -1968,7 +1988,7 @@ fn append_rich_text_selection_commands(
 
 ///|
 fn rich_text_block_selection_visual_range(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   selection : @core.TextRange,
 ) -> @core.TextRange? {
   match (block.source_range, block.content_range) {
@@ -2019,7 +2039,7 @@ fn rich_text_block_selection_visual_range(
 ///|
 fn append_rich_text_block_selection_rect(
   commands : Array[@core.DrawCommand],
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   range : @core.TextRange,
   frame : @core.Rect,
   base_font : @core.FontSpec,
@@ -2055,8 +2075,77 @@ fn append_rich_text_block_selection_rect(
 }
 
 ///|
+pub fn rich_text_document_caret_rect_at_source(
+  document : RichTextDocument,
+  source_caret : Int,
+  content : @core.Rect,
+  base_font : @core.FontSpec,
+  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
+) -> @core.Rect? {
+  rich_text_document_caret_rect(
+    document, source_caret, content, base_font, text_system,
+  )
+}
+
+///|
+fn rich_text_document_caret_rect(
+  document : RichTextDocument,
+  source_caret : Int,
+  content : @core.Rect,
+  base_font : @core.FontSpec,
+  text_system : @core.TextSystem,
+) -> @core.Rect? {
+  if !rich_text_document_has_source_ranges(document) {
+    return None
+  }
+  let mut y = content.origin.y
+  let mut last_rect = @core.Rect::new(
+    x=content.origin.x,
+    y=content.origin.y + 4.0,
+    width=1.5,
+    height=max_double(10.0, base_font.size * 1.55 - 8.0),
+  )
+  for block in document.blocks {
+    let line_height = rich_text_block_line_height(block, base_font)
+    let block_height = line_height + block.inset.top + block.inset.bottom
+    let frame = @core.Rect::new(
+      x=content.origin.x + block.inset.left,
+      y=y + block.inset.top,
+      width=max_double(
+        0.0,
+        content.size.width - block.inset.left - block.inset.right,
+      ),
+      height=line_height,
+    )
+    if rich_text_caret_before_block(source_caret, block) {
+      return Some(
+        rich_text_block_caret_rect(block, 0, frame, base_font, text_system),
+      )
+    }
+    match rich_text_block_visual_offset(block, source_caret) {
+      Some(visual_offset) =>
+        return Some(
+          rich_text_block_caret_rect(
+            block, visual_offset, frame, base_font, text_system,
+          ),
+        )
+      None => ()
+    }
+    last_rect = rich_text_block_caret_rect(
+      block,
+      rich_text_block_visual_length(block),
+      frame,
+      base_font,
+      text_system,
+    )
+    y = y + block_height
+  }
+  Some(last_rect)
+}
+
+///|
 fn rich_text_document_source_offset_at_point(
-  document : @core.RichTextDocument,
+  document : RichTextDocument,
   point : @core.Point,
   content : @core.Rect,
   base_font : @core.FontSpec,
@@ -2096,8 +2185,49 @@ fn rich_text_document_source_offset_at_point(
 }
 
 ///|
+fn rich_text_caret_before_block(
+  source_caret : Int,
+  block : RichTextBlock,
+) -> Bool {
+  match block.source_range {
+    Some(range) => source_caret < range.start
+    None => false
+  }
+}
+
+///|
+fn rich_text_block_visual_offset(
+  block : RichTextBlock,
+  source_caret : Int,
+) -> Int? {
+  match (block.source_range, block.content_range) {
+    (Some(source), Some(content)) =>
+      if source_caret < source.start || source_caret > source.end {
+        None
+      } else if source_caret < content.start {
+        Some(0)
+      } else if source_caret > content.end {
+        Some(rich_text_block_visual_length(block))
+      } else {
+        Some(
+          rich_text_block_source_offset_to_visual(block, source_caret, content),
+        )
+      }
+    (_, Some(content)) =>
+      if source_caret < content.start || source_caret > content.end {
+        None
+      } else {
+        Some(
+          rich_text_block_source_offset_to_visual(block, source_caret, content),
+        )
+      }
+    _ => None
+  }
+}
+
+///|
 fn rich_text_document_prefix_source_offset_at_point(
-  document : @core.RichTextDocument,
+  document : RichTextDocument,
   point : @core.Point,
   content : @core.Rect,
   base_font : @core.FontSpec,
@@ -2131,7 +2261,7 @@ fn rich_text_document_prefix_source_offset_at_point(
 
 ///|
 fn rich_text_block_prefix_source_offset_at_point(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   point : @core.Point,
   frame : @core.Rect,
   base_font : @core.FontSpec,
@@ -2154,7 +2284,7 @@ fn rich_text_block_prefix_source_offset_at_point(
 
 ///|
 fn rich_text_block_source_offset_at_point(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   point : @core.Point,
   frame : @core.Rect,
   base_font : @core.FontSpec,
@@ -2168,7 +2298,7 @@ fn rich_text_block_source_offset_at_point(
 
 ///|
 fn rich_text_block_visual_offset_at_point(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   point : @core.Point,
   frame : @core.Rect,
   base_font : @core.FontSpec,
@@ -2289,7 +2419,7 @@ fn rich_text_run_visual_offset_at_x(
 
 ///|
 fn rich_text_block_source_offset_from_visual(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   visual_offset : Int,
 ) -> Int {
   match block.content_range {
@@ -2319,7 +2449,7 @@ fn rich_text_block_source_offset_from_visual(
 
 ///|
 fn rich_text_block_run_source_offset_from_visual(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   visual_offset : Int,
 ) -> Int? {
   let mut remaining = visual_offset
@@ -2366,9 +2496,9 @@ fn rich_text_block_run_source_offset_from_visual(
 
 ///|
 fn rich_text_block_source_offset_to_visual(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   source_offset : Int,
-  content : @core.RichTextSourceRange,
+  content : RichTextSourceRange,
 ) -> Int {
   if source_offset < content.start {
     0
@@ -2390,7 +2520,7 @@ fn rich_text_block_source_offset_to_visual(
 
 ///|
 fn rich_text_block_run_visual_offset_from_source(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   source_offset : Int,
 ) -> Int? {
   let mut visual = 0
@@ -2418,7 +2548,7 @@ fn rich_text_block_run_visual_offset_from_source(
 
 ///|
 fn rich_text_block_caret_rect(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   visual_offset : Int,
   frame : @core.Rect,
   base_font : @core.FontSpec,
@@ -2508,7 +2638,7 @@ fn rich_text_block_caret_rect(
 
 ///|
 fn rich_text_run_segment_prefix_width(
-  run : @core.RichTextRun,
+  run : RichTextRun,
   text : String,
   visual_offset : Int,
   font : @core.FontSpec,
@@ -2557,7 +2687,7 @@ fn rich_text_cursor_rect_at(
 }
 
 ///|
-fn rich_text_block_visual_length(block : @core.RichTextBlock) -> Int {
+fn rich_text_block_visual_length(block : RichTextBlock) -> Int {
   let mut length = text_length(block.prefix)
   for run in block.runs {
     length = length + text_length(rich_text_run_visual_text(run))
@@ -2566,9 +2696,7 @@ fn rich_text_block_visual_length(block : @core.RichTextBlock) -> Int {
 }
 
 ///|
-fn rich_text_document_has_source_ranges(
-  document : @core.RichTextDocument,
-) -> Bool {
+fn rich_text_document_has_source_ranges(document : RichTextDocument) -> Bool {
   document.blocks.any(block => {
     block.source_range is Some(_) ||
     block.content_range is Some(_) ||
@@ -2578,7 +2706,7 @@ fn rich_text_document_has_source_ranges(
 }
 
 ///|
-fn rich_text_block_table_has_source_ranges(block : @core.RichTextBlock) -> Bool {
+fn rich_text_block_table_has_source_ranges(block : RichTextBlock) -> Bool {
   match block.table {
     Some(table) =>
       table.rows.any(row => row.any(cell => cell.source_range is Some(_)))
@@ -2587,7 +2715,7 @@ fn rich_text_block_table_has_source_ranges(block : @core.RichTextBlock) -> Bool 
 }
 
 ///|
-fn rich_text_table_column_count(table : @core.RichTextTable) -> Int {
+fn rich_text_table_column_count(table : RichTextTable) -> Int {
   let mut count = 0
   for row in table.rows {
     count = max_int(count, row.length())
@@ -2598,7 +2726,7 @@ fn rich_text_table_column_count(table : @core.RichTextTable) -> Int {
 ///|
 fn rich_text_block_cache_key(
   index : Int,
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   frame : @core.Rect,
 ) -> String {
   "rich-text-block;range=\{rich_text_source_range_key(block.source_range)};index=\{index};w=\{frame.size.width};h=\{frame.size.height}"
@@ -2606,7 +2734,7 @@ fn rich_text_block_cache_key(
 
 ///|
 fn rich_text_block_content_revision(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   index : Int,
   frame : @core.Rect,
   base_font : @core.FontSpec,
@@ -2726,7 +2854,7 @@ fn rich_text_block_content_revision(
 }
 
 ///|
-fn rich_text_source_range_key(range : @core.RichTextSourceRange?) -> String {
+fn rich_text_source_range_key(range : RichTextSourceRange?) -> String {
   match range {
     Some(range) => "len=\{max_int(0, range.end - range.start)}"
     None => "none"
@@ -2825,9 +2953,9 @@ fn rich_text_image_fit_key(fit : @core.ImageFit) -> String {
 }
 
 ///|
-fn rich_text_decoration_key(value : @core.RichTextDecoration?) -> String {
+fn rich_text_decoration_key(value : RichTextDecoration?) -> String {
   match value {
-    Some(@core.RichTextDecoration::Strikethrough) => "strikethrough"
+    Some(RichTextDecoration::Strikethrough) => "strikethrough"
     None => "none"
   }
 }
@@ -2863,7 +2991,7 @@ fn rich_text_hash_mix_string(hash : Int, value : String) -> Int {
 
 ///|
 fn rich_text_block_table_source_offset_at_point(
-  block : @core.RichTextBlock,
+  block : RichTextBlock,
   point : @core.Point,
   frame : @core.Rect,
 ) -> Int? {

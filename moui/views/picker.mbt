@@ -4,6 +4,15 @@ pub fn picker_item(id : String, label : String) -> PickerItem {
 }
 
 ///|
+fn picker_options(items : Array[PickerItem]) -> Array[@widget.PickerOption] {
+  let options : Array[@widget.PickerOption] = []
+  for item in items {
+    options.push(@widget.PickerOption::new(id=item.id(), label=item.label()))
+  }
+  options
+}
+
+///|
 pub fn[Msg] picker(
   items : Array[PickerItem],
   selected~ : String,
@@ -18,7 +27,7 @@ pub fn[Msg] picker(
     None => PickerStyle::default(theme~)
   }
   @widget.picker(
-    items~,
+    items=picker_options(items),
     selected=@core.Binding::new(get=() => selected, set=_value => ()),
     placeholder~,
     font=resolved_style.font,
@@ -44,7 +53,7 @@ pub fn[Msg] picker_binding(
     None => PickerStyle::default(theme~)
   }
   @widget.picker(
-    items~,
+    items=picker_options(items),
     selected~,
     placeholder~,
     font=resolved_style.font,

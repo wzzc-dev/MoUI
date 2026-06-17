@@ -2,7 +2,7 @@
 pub(all) struct FormFieldState {
   name : String
   label : String
-  value : State[String]
+  value : @core.State[String]
   rules : Array[FormValidationRule]
 }
 
@@ -46,11 +46,11 @@ pub fn FormFieldState::new(
 ) -> FormFieldState {
   let collected = rules.copy()
   collected.push(FormValidationRule::from_validator(validator))
-  { name, label, value: State::new(initial), rules: collected }
+  { name, label, value: @core.State::new(initial), rules: collected }
 }
 
 ///|
-pub fn FormFieldState::binding(self : FormFieldState) -> Binding[String] {
+pub fn FormFieldState::binding(self : FormFieldState) -> @core.Binding[String] {
   self.value.binding()
 }
 

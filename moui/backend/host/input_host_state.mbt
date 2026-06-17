@@ -47,7 +47,7 @@ pub(all) enum HostEvent {
   Keyboard(@core.KeyboardEvent)
   TextInput(@core.TextInputEvent)
   DragDrop(@core.DragDropEvent)
-  WebView(String, @core.WebViewEvent)
+  WebView(String, WebViewEvent)
   ThemeChanged(@core.ColorScheme)
   Command(@core.CommandIntent)
   RedrawRequested
@@ -235,7 +235,8 @@ pub fn HostEvent::to_core(self : HostEvent) -> @core.AppEvent? {
     Keyboard(event) => Some(@core.AppEvent::Keyboard(event))
     TextInput(event) => Some(@core.AppEvent::TextInput(event))
     DragDrop(event) => Some(@core.AppEvent::DragDrop(event))
-    WebView(id, event) => Some(@core.AppEvent::WebView(id, event))
+    WebView(id, event) =>
+      Some(@core.AppEvent::PlatformView(id, event.to_platform_event()))
     ThemeChanged(_) => None
     Command(_) => None
     RedrawRequested =>

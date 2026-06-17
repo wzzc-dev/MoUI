@@ -2,7 +2,7 @@
 fn ElementNode::dispatch_web_view_event(
   self : ElementNode,
   id : String,
-  event : WebViewEvent,
+  event : PlatformViewEvent,
   environment? : Environment = Environment::default(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> Bool {
@@ -10,7 +10,7 @@ fn ElementNode::dispatch_web_view_event(
   let result = (data.event)({
     frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
     child_frames: [],
-    event: AppEvent::WebView(id, event),
+    event: AppEvent::PlatformView(id, event),
     focused: false,
     state: data.state,
     text_control: self.control.text_context(),
