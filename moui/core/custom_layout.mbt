@@ -47,17 +47,6 @@ pub(all) struct CustomPlacementContext {
 }
 
 ///|
-priv struct CustomLayoutSpec {
-  key : Key?
-  cache : CustomLayoutCache
-  measure : (CustomLayoutContext) -> Size
-  place : (CustomPlacementContext) -> Array[Rect]
-  paint : (Rect) -> Array[DrawCommand]
-  semantics_role : SemanticsRole
-  semantics_label : String
-}
-
-///|
 pub fn CustomLayoutCache::new() -> CustomLayoutCache {
   { entries: [] }
 }

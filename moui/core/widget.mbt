@@ -24,6 +24,7 @@ pub(all) struct WidgetPaintContext {
   child_frames : Array[Rect]
   focused : Bool
   state : WidgetStateContext
+  text_control : TextControlStateContext
   environment : Environment
   text_system : TextSystem
 }
@@ -31,7 +32,19 @@ pub(all) struct WidgetPaintContext {
 ///|
 pub(all) struct WidgetPaintPlan {
   commands : Array[DrawCommand]
+  child_layers : Array[WidgetPaintLayer]
   post_commands : Array[DrawCommand]
+  overlay_commands : Array[DrawCommand]
+  platform_views : Array[PlatformViewPlacement]
+  repaint_boundary : Bool
+} derive(Eq, Debug)
+
+///|
+pub(all) struct WidgetPaintLayer {
+  frame : Rect
+  cache_key : String
+  content_revision : Int
+  commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
   platform_views : Array[PlatformViewPlacement]
 } derive(Eq, Debug)
@@ -43,6 +56,7 @@ pub(all) struct WidgetEventContext {
   event : AppEvent
   focused : Bool
   state : WidgetStateContext
+  text_control : TextControlStateContext
   text_system : TextSystem
   environment : Environment
 }
@@ -62,7 +76,15 @@ pub(all) struct WidgetEventResult[Msg] {
   focused : Bool
   captured : Bool
   state : WidgetStateContext?
+  text_control : TextControlStateContext?
   dirty : WidgetDirtyHint
+  messages : Array[Msg]
+} derive(Eq, Debug)
+
+///|
+pub(all) struct WidgetTextCommandResult[Msg] {
+  result : TextCommandResult
+  text_control : TextControlStateContext?
   messages : Array[Msg]
 } derive(Eq, Debug)
 
@@ -84,17 +106,41 @@ pub(all) struct WidgetStateContext {
   checked : Bool
   expanded : Bool
   disabled : Bool
+  scratch : String
 } derive(Eq, Debug)
+
+///|
+pub(all) struct TextHistoryEntryContext {
+  text : String
+  caret : Int
+  selection : TextRange?
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct TextControlStateContext {
+  caret : Int
+  selection : TextRange?
+  text_selection_anchor : Int?
+  composition : String?
+  composition_cursor : TextRange?
+  undo_stack : Array[TextHistoryEntryContext]
+  redo_stack : Array[TextHistoryEntryContext]
+} derive(Eq, Debug, ToJson)
 
 ///|
 pub struct WidgetOps[Msg] {
   priv identity_fn : () -> WidgetIdentity
   priv revision_fn : () -> String
   priv children_fn : () -> Array[View[Msg]]
+  priv build_child_fn : ((BuildContext) -> View[Msg])?
   priv child_constraints_fn : (Constraints) -> Constraints
   priv layout_fn : (WidgetLayoutContext) -> WidgetLayoutResult
   priv paint_fn : (WidgetPaintContext) -> WidgetPaintPlan
   priv event_fn : (WidgetEventContext) -> WidgetEventResult[Msg]
+  priv text_input_state_fn : (WidgetPaintContext) -> TextInputState?
+  priv text_command_fn : (WidgetEventContext, CommandIntent, String?) -> WidgetTextCommandResult[
+    Msg,
+  ]
   priv semantics_fn : () -> WidgetSemanticsInfo
   priv focusable_fn : () -> Bool
 }
@@ -123,14 +169,47 @@ pub fn WidgetLayoutResult::new(
 
 ///|
 pub fn WidgetPaintPlan::empty() -> WidgetPaintPlan {
-  { commands: [], post_commands: [], overlay_commands: [], platform_views: [] }
+  {
+    commands: [],
+    child_layers: [],
+    post_commands: [],
+    overlay_commands: [],
+    platform_views: [],
+    repaint_boundary: false,
+  }
 }
 
 ///|
 pub fn WidgetPaintPlan::commands(
   commands : Array[DrawCommand],
 ) -> WidgetPaintPlan {
-  { commands, post_commands: [], overlay_commands: [], platform_views: [] }
+  {
+    commands,
+    child_layers: [],
+    post_commands: [],
+    overlay_commands: [],
+    platform_views: [],
+    repaint_boundary: false,
+  }
+}
+
+///|
+pub fn WidgetPaintLayer::new(
+  frame~ : Rect,
+  cache_key~ : String,
+  content_revision~ : Int,
+  commands? : Array[DrawCommand] = [],
+  overlay_commands? : Array[DrawCommand] = [],
+  platform_views? : Array[PlatformViewPlacement] = [],
+) -> WidgetPaintLayer {
+  {
+    frame,
+    cache_key,
+    content_revision,
+    commands,
+    overlay_commands,
+    platform_views,
+  }
 }
 
 ///|
@@ -141,6 +220,7 @@ pub fn[Msg] WidgetEventResult::ignored() -> WidgetEventResult[Msg] {
     focused: false,
     captured: false,
     state: None,
+    text_control: None,
     dirty: WidgetClean,
     messages: [],
   }
@@ -154,9 +234,24 @@ pub fn[Msg] WidgetEventResult::message(message : Msg) -> WidgetEventResult[Msg] 
     focused: false,
     captured: true,
     state: None,
+    text_control: None,
     dirty: WidgetPaintDirty,
     messages: [message],
   }
+}
+
+///|
+pub fn[Msg] WidgetTextCommandResult::ignored() -> WidgetTextCommandResult[Msg] {
+  { result: TextCommandResult::ignored(), text_control: None, messages: [] }
+}
+
+///|
+pub fn[Msg] WidgetTextCommandResult::new(
+  result~ : TextCommandResult,
+  text_control? : TextControlStateContext? = None,
+  messages? : Array[Msg] = [],
+) -> WidgetTextCommandResult[Msg] {
+  { result, text_control, messages }
 }
 
 ///|
@@ -175,6 +270,7 @@ pub fn[Msg] WidgetOps::new(
   identity~ : () -> WidgetIdentity,
   revision? : () -> String = () => "",
   children? : () -> Array[View[Msg]] = () => [],
+  build_child? : ((BuildContext) -> View[Msg])? = None,
   child_constraints? : (Constraints) -> Constraints = constraints => {
     constraints.loosen()
   },
@@ -185,6 +281,10 @@ pub fn[Msg] WidgetOps::new(
   event? : (WidgetEventContext) -> WidgetEventResult[Msg] = _ctx => {
     WidgetEventResult::ignored()
   },
+  text_input_state? : (WidgetPaintContext) -> TextInputState? = _ctx => None,
+  text_command? : (WidgetEventContext, CommandIntent, String?) -> WidgetTextCommandResult[
+    Msg,
+  ] = (_ctx, _intent, _paste_text) => WidgetTextCommandResult::ignored(),
   semantics? : () -> WidgetSemanticsInfo = () => WidgetSemanticsInfo::new(),
   focusable? : () -> Bool = () => false,
 ) -> WidgetOps[Msg] {
@@ -192,10 +292,13 @@ pub fn[Msg] WidgetOps::new(
     identity_fn: identity,
     revision_fn: revision,
     children_fn: children,
+    build_child_fn: build_child,
     child_constraints_fn: child_constraints,
     layout_fn: layout,
     paint_fn: paint,
     event_fn: event,
+    text_input_state_fn: text_input_state,
+    text_command_fn: text_command,
     semantics_fn: semantics,
     focusable_fn: focusable,
   }
@@ -214,6 +317,13 @@ pub fn[Msg] WidgetOps::revision(self : WidgetOps[Msg]) -> String {
 ///|
 pub fn[Msg] WidgetOps::children(self : WidgetOps[Msg]) -> Array[View[Msg]] {
   (self.children_fn)()
+}
+
+///|
+pub fn[Msg] WidgetOps::build_child(
+  self : WidgetOps[Msg],
+) -> ((BuildContext) -> View[Msg])? {
+  self.build_child_fn
 }
 
 ///|
@@ -249,6 +359,34 @@ pub fn[Msg] WidgetOps::event(
 }
 
 ///|
+pub fn[Msg] WidgetOps::text_input_state(
+  self : WidgetOps[Msg],
+  context : WidgetPaintContext,
+) -> TextInputState? {
+  (self.text_input_state_fn)(context)
+}
+
+///|
+pub fn[Msg] WidgetOps::text_command(
+  self : WidgetOps[Msg],
+  context : WidgetEventContext,
+  intent : CommandIntent,
+  paste_text? : String? = None,
+) -> TextCommandResult {
+  (self.text_command_fn)(context, intent, paste_text).result
+}
+
+///|
+pub fn[Msg] WidgetOps::text_command_result(
+  self : WidgetOps[Msg],
+  context : WidgetEventContext,
+  intent : CommandIntent,
+  paste_text? : String? = None,
+) -> WidgetTextCommandResult[Msg] {
+  (self.text_command_fn)(context, intent, paste_text)
+}
+
+///|
 pub fn[Msg] WidgetOps::semantics(self : WidgetOps[Msg]) -> WidgetSemanticsInfo {
   (self.semantics_fn)()
 }
@@ -267,6 +405,10 @@ pub fn[Msg, NextMsg] WidgetOps::map(
     identity=() => self.identity(),
     revision=() => self.revision(),
     children=() => self.children().map(child => child.map(map)),
+    build_child=match self.build_child() {
+      Some(build) => Some(ctx => build(ctx).map(map))
+      None => None
+    },
     child_constraints=constraints => self.child_constraints(constraints),
     layout=context => self.layout(context),
     paint=context => self.paint(context),
@@ -278,7 +420,17 @@ pub fn[Msg, NextMsg] WidgetOps::map(
         focused: result.focused,
         captured: result.captured,
         state: result.state,
+        text_control: result.text_control,
         dirty: result.dirty,
+        messages: result.messages.map(message => map(message)),
+      }
+    },
+    text_input_state=context => self.text_input_state(context),
+    text_command=(context, intent, paste_text) => {
+      let result = self.text_command_result(context, intent, paste_text~)
+      {
+        result: result.result,
+        text_control: result.text_control,
         messages: result.messages.map(message => map(message)),
       }
     },

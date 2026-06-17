@@ -11,160 +11,13 @@ type DragGestureHandler = (DragGestureEvent) -> Unit
 type FrameDragGestureHandler = (DragGestureEvent, Rect) -> Unit
 
 ///|
-priv struct TextViewSpec {
-  key : Key?
-  text : String
-  size : Size
-  font : FontSpec
-  color : Color
-}
+type DragGestureMessageHandler[Msg] = (DragGestureEvent) -> Msg
 
 ///|
-priv struct ButtonViewSpec {
-  key : Key?
-  text : String
-  size : Size
-  font : FontSpec
-  foreground : Color
-  background : Brush
-  hovered_background : Brush
-  pressed_background : Brush
-  border : BorderStyle?
-  shadow : ShadowStyle?
-  corner_radius : Double
-  on_click : ClickHandler?
-}
+type FrameDragGestureMessageHandler[Msg] = (DragGestureEvent, Rect) -> Msg
 
 ///|
-priv struct TextFieldViewSpec {
-  key : Key?
-  value : Binding[String]
-  placeholder : String
-  size : Size
-  font : FontSpec
-  foreground : Color
-  placeholder_color : Color
-  background : Brush
-  border : BorderStyle?
-  focused_border : BorderStyle?
-  cursor_color : Color
-  corner_radius : Double
-  on_submit : (() -> Unit)?
-}
-
-///|
-priv struct RichTextEditorViewSpec {
-  key : Key?
-  value : Binding[String]
-  placeholder : String
-  size : Size
-  format : RichTextFormatter
-  font : FontSpec
-  foreground : Color
-  placeholder_color : Color
-  background : Brush
-  border : BorderStyle?
-  focused_border : BorderStyle?
-  cursor_color : Color
-  corner_radius : Double
-  on_selection_change : ((Int, TextRange?) -> Unit)?
-  on_prefix_click : ((Int) -> Unit)?
-  input_transform : ((String, Int, TextRange?, String) -> RichTextInputTransform?)?
-  accepts_tab_input : Bool
-}
-
-///|
-priv struct ImageViewSpec {
-  key : Key?
-  source : String
-  size : Size?
-  opacity : Double
-  corner_radius : Double
-  fit : ImageFit
-}
-
-///|
-priv struct CheckboxViewSpec {
-  key : Key?
-  label : String
-  checked : Binding[Bool]
-  font : FontSpec
-  foreground : Color
-  check_color : Color
-  size : Size
-}
-
-///|
-priv struct FlexViewSpec {
-  key : Key?
-  axis : Axis
-  spacing : Double
-  main_axis_alignment : MainAxisAlignment
-  cross_axis_alignment : CrossAxisAlignment
-}
-
-///|
-priv struct PaddingViewSpec {
-  key : Key?
-  insets : Insets
-}
-
-///|
-priv struct ContainerViewSpec {
-  key : Key?
-  size : Size?
-  background : Brush?
-  border : BorderStyle?
-  corner_radius : Double
-  shadow : ShadowStyle?
-}
-
-///|
-priv struct SpacerViewSpec {
-  key : Key?
-  min_length : Double
-  weight : Double
-}
-
-///|
-priv struct FrameViewSpec {
-  key : Key?
-  width : Double?
-  height : Double?
-  min_width : Double?
-  min_height : Double?
-  max_width : Double?
-  max_height : Double?
-}
-
-///|
-priv struct StackViewSpec {
-  key : Key?
-}
-
-///|
-priv struct ScrollViewSpec {
-  key : Key?
-  offset : Point
-  viewport : Size?
-  on_scroll : ((Point) -> Unit)?
-  scroll_state : ScrollState?
-  scroll_activates : Bool
-}
-
-///|
-priv struct GridViewSpec {
-  key : Key?
-  columns : Int
-  row_spacing : Double
-  column_spacing : Double
-}
-
-///|
-priv struct ListViewSpec {
-  key : Key?
-  spacing : Double
-}
+type FileDropMessageHandler[Msg] = (Array[String], Point) -> Msg
 
 ///|
 priv struct FrameModifierSpec {
@@ -177,7 +30,8 @@ priv struct FrameModifierSpec {
 }
 
 ///|
-priv enum ViewModifier {
+priv enum ViewModifier[Msg] {
+  KeyModifier(Key)
   PaddingModifier(Insets)
   FrameModifier(FrameModifierSpec)
   BackgroundModifier(Brush)
@@ -203,12 +57,12 @@ priv enum ViewModifier {
   SemanticsActionModifier(SemanticsAction)
   FocusableModifier(Bool)
   FocusTrapModifier(Bool)
-  OnTapModifier(ClickHandler)
-  OnLongPressModifier(ClickHandler)
-  OnDoubleTapModifier(ClickHandler)
-  OnDragModifier(DragGestureHandler)
-  OnDragWithFrameModifier(FrameDragGestureHandler)
-  OnFileDropModifier(FileDropHandler)
+  OnTapMessageModifier(Msg)
+  OnLongPressMessageModifier(Msg)
+  OnDoubleTapMessageModifier(Msg)
+  OnDragMessageModifier(DragGestureMessageHandler[Msg])
+  OnDragWithFrameMessageModifier(FrameDragGestureMessageHandler[Msg])
+  OnFileDropMessageModifier(FileDropMessageHandler[Msg])
   KeyboardShortcutModifier(KeyboardShortcut)
   FlexibleModifier(Double)
   LayoutPriorityModifier(Double)
@@ -225,81 +79,767 @@ priv enum ViewModifier {
 }
 
 ///|
-priv struct CustomViewSpec {
-  key : Key?
-  measure : (Constraints) -> Size
-  paint : (Rect) -> Array[DrawCommand]
-  semantics_role : SemanticsRole
-  semantics_label : String
+fn[Msg] View::apply_modifier(
+  self : View[Msg],
+  modifier : ViewModifier[Msg],
+) -> View[Msg] {
+  View::widget(modifier_widget_ops(self, modifier))
 }
 
 ///|
-struct PickerItem {
-  id : String
-  label : String
+fn[Msg] modifier_widget_ops(
+  child : View[Msg],
+  modifier : ViewModifier[Msg],
+) -> WidgetOps[Msg] {
+  let child_ops = child.ops
+  WidgetOps::new(
+    identity=() => modifier_identity(child_ops, modifier),
+    revision=() => {
+      "modifier:\{modifier_revision(modifier)}:\{child_ops.revision()}"
+    },
+    children=() => [child],
+    child_constraints=constraints => {
+      modifier_child_constraints(modifier, constraints)
+    },
+    layout=ctx => modifier_layout(modifier, ctx),
+    paint=ctx => modifier_paint(modifier, ctx),
+    event=ctx => modifier_event(modifier, ctx),
+    text_input_state=ctx => child_ops.text_input_state(ctx),
+    text_command=(ctx, intent, paste_text) => {
+      child_ops.text_command_result(ctx, intent, paste_text~)
+    },
+    semantics=() => modifier_semantics(modifier),
+    focusable=() => modifier_focusable(modifier),
+  )
 }
 
 ///|
-pub fn PickerItem::new(id~ : String, label~ : String) -> PickerItem {
-  { id, label }
+fn[Msg] modifier_identity(
+  child : WidgetOps[Msg],
+  modifier : ViewModifier[Msg],
+) -> WidgetIdentity {
+  match modifier {
+    KeyModifier(key) => {
+      let identity = child.identity()
+      { kind: identity.kind, key: Some(key) }
+    }
+    _ => {
+      let identity = child.identity()
+      {
+        kind: "Modified<\{modifier_kind(modifier)}>/\{identity.kind}",
+        key: identity.key,
+      }
+    }
+  }
 }
 
 ///|
-priv struct PickerViewSpec {
-  key : Key?
-  items : Array[PickerItem]
-  selected : Binding[String]
-  placeholder : String
-  font : FontSpec
-  foreground : Color
-  background : Brush
-  cornerRadius : Double
-  maxHeight : Double
+fn[Msg] modifier_kind(modifier : ViewModifier[Msg]) -> String {
+  match modifier {
+    KeyModifier(_) => "Key"
+    PaddingModifier(_) => "Padding"
+    FrameModifier(_) => "Frame"
+    BackgroundModifier(_) => "Background"
+    ForegroundModifier(_) => "Foreground"
+    FontModifier(_) => "Font"
+    CornerRadiusModifier(_) => "CornerRadius"
+    OpacityModifier(_) => "Opacity"
+    ShadowModifier(_) => "Shadow"
+    BorderModifier(_) => "Border"
+    OffsetModifier(_, _) => "Offset"
+    ClipModifier => "Clip"
+    ScaleModifier(_, _) => "Scale"
+    DisabledModifier(_) => "Disabled"
+    AccessibilityLabelModifier(_) => "AccessibilityLabel"
+    SemanticsRoleModifier(_) => "SemanticsRole"
+    SemanticsSelectedModifier(_) => "SemanticsSelected"
+    SemanticsPressedModifier(_) => "SemanticsPressed"
+    SemanticsCheckedModifier(_) => "SemanticsChecked"
+    SemanticsExpandedModifier(_) => "SemanticsExpanded"
+    SemanticsInvalidModifier(_) => "SemanticsInvalid"
+    SemanticsRequiredModifier(_) => "SemanticsRequired"
+    SemanticsDescriptionModifier(_) => "SemanticsDescription"
+    SemanticsActionModifier(_) => "SemanticsAction"
+    FocusableModifier(_) => "Focusable"
+    FocusTrapModifier(_) => "FocusTrap"
+    OnTapMessageModifier(_) => "OnTap"
+    OnLongPressMessageModifier(_) => "OnLongPress"
+    OnDoubleTapMessageModifier(_) => "OnDoubleTap"
+    OnDragMessageModifier(_) => "OnDrag"
+    OnDragWithFrameMessageModifier(_) => "OnDragWithFrame"
+    OnFileDropMessageModifier(_) => "OnFileDrop"
+    KeyboardShortcutModifier(_) => "KeyboardShortcut"
+    FlexibleModifier(_) => "Flexible"
+    LayoutPriorityModifier(_) => "LayoutPriority"
+    AlignModifier(_) => "Align"
+    SpacingModifier(_) => "Spacing"
+    MainAxisAlignmentModifier(_) => "MainAxisAlignment"
+    CrossAxisAlignmentModifier(_) => "CrossAxisAlignment"
+    ThemeModifier(_) => "Theme"
+    EnvironmentModifier(_) => "Environment"
+    AspectRatioModifier(_) => "AspectRatio"
+    IntrinsicWidthModifier => "IntrinsicWidth"
+    IntrinsicHeightModifier => "IntrinsicHeight"
+    RepaintBoundaryModifier => "RepaintBoundary"
+  }
 }
 
 ///|
-priv struct DatePickerViewSpec {
-  key : Key?
-  selected : Binding[DateValue]
-  mode : DatePickerMode
-  placeholder : String
-  font : FontSpec
-  foreground : Color
-  background : Brush
-  corner_radius : Double
-  min_date : DateValue?
-  max_date : DateValue?
+fn[Msg] modifier_revision(modifier : ViewModifier[Msg]) -> String {
+  match modifier {
+    KeyModifier(key) => "key:\{key.value}"
+    PaddingModifier(insets) =>
+      "padding:\{insets.top}:\{insets.right}:\{insets.bottom}:\{insets.left}"
+    FrameModifier(data) =>
+      "frame:\{option_double_revision(data.width)}:\{option_double_revision(data.height)}:\{option_double_revision(data.min_width)}:\{option_double_revision(data.min_height)}:\{option_double_revision(data.max_width)}:\{option_double_revision(data.max_height)}"
+    BackgroundModifier(brush) => "background:\{brush_revision(brush)}"
+    ForegroundModifier(color) => "foreground:\{color_revision(color)}"
+    FontModifier(font) => "font:\{font.size}:\{font.weight}"
+    CornerRadiusModifier(radius) => "corner-radius:\{radius}"
+    OpacityModifier(opacity) => "opacity:\{opacity}"
+    ShadowModifier(style) =>
+      "shadow:\{color_revision(style.color)}:\{style.offset.x}:\{style.offset.y}:\{style.blur_radius}:\{style.spread}"
+    BorderModifier(style) =>
+      "border:\{brush_revision(style.brush)}:\{style.width}"
+    OffsetModifier(dx, dy) => "offset:\{dx}:\{dy}"
+    ClipModifier => "clip"
+    ScaleModifier(sx, sy) => "scale:\{sx}:\{sy}"
+    DisabledModifier(disabled) => "disabled:\{disabled}"
+    AccessibilityLabelModifier(label) => "accessibility-label:\{label}"
+    SemanticsRoleModifier(role) => "semantics-role:\{role_label(role)}"
+    SemanticsSelectedModifier(selected) => "semantics-selected:\{selected}"
+    SemanticsPressedModifier(pressed) => "semantics-pressed:\{pressed}"
+    SemanticsCheckedModifier(checked) => "semantics-checked:\{checked}"
+    SemanticsExpandedModifier(expanded) => "semantics-expanded:\{expanded}"
+    SemanticsInvalidModifier(invalid) => "semantics-invalid:\{invalid}"
+    SemanticsRequiredModifier(required) => "semantics-required:\{required}"
+    SemanticsDescriptionModifier(description) =>
+      "semantics-description:\{description}"
+    SemanticsActionModifier(action) =>
+      "semantics-action:\{action_label(action)}"
+    FocusableModifier(focusable) => "focusable:\{focusable}"
+    FocusTrapModifier(enabled) => "focus-trap:\{enabled}"
+    OnTapMessageModifier(_) => "on-tap"
+    OnLongPressMessageModifier(_) => "on-long-press"
+    OnDoubleTapMessageModifier(_) => "on-double-tap"
+    OnDragMessageModifier(_) => "on-drag"
+    OnDragWithFrameMessageModifier(_) => "on-drag-with-frame"
+    OnFileDropMessageModifier(_) => "on-file-drop"
+    KeyboardShortcutModifier(shortcut) =>
+      "keyboard-shortcut:\{shortcut.key}:\{shortcut.modifiers.meta}:\{shortcut.modifiers.control}:\{shortcut.modifiers.alt}:\{shortcut.modifiers.shift}"
+    FlexibleModifier(weight) => "flexible:\{weight}"
+    LayoutPriorityModifier(priority) => "layout-priority:\{priority}"
+    AlignModifier(alignment) => "align:\{alignment.x}:\{alignment.y}"
+    SpacingModifier(spacing) => "spacing:\{spacing}"
+    MainAxisAlignmentModifier(alignment) =>
+      "main-axis-alignment:\{main_axis_alignment_label(alignment)}"
+    CrossAxisAlignmentModifier(alignment) =>
+      "cross-axis-alignment:\{cross_axis_alignment_label(alignment)}"
+    ThemeModifier(_) => "theme"
+    EnvironmentModifier(_) => "environment"
+    AspectRatioModifier(ratio) => "aspect-ratio:\{ratio}"
+    IntrinsicWidthModifier => "intrinsic-width"
+    IntrinsicHeightModifier => "intrinsic-height"
+    RepaintBoundaryModifier => "repaint-boundary"
+  }
 }
 
 ///|
-priv struct SearchBarViewSpec {
-  key : Key?
-  query : Binding[String]
-  placeholder : String
-  font : FontSpec
-  foreground : Color
-  placeholder_color : Color
-  background : Brush
-  border : BorderStyle?
-  focused_border : BorderStyle?
-  cursor_color : Color
-  corner_radius : Double
-  on_submit : (() -> Unit)?
-  on_clear : (() -> Unit)?
+fn[Msg] modifier_child_constraints(
+  modifier : ViewModifier[Msg],
+  constraints : Constraints,
+) -> Constraints {
+  match modifier {
+    PaddingModifier(insets) => constraints.deflate(insets)
+    FrameModifier(data) =>
+      frame_modifier_constraints_for_measure(data, constraints)
+    _ => constraints.loosen()
+  }
 }
 
 ///|
-pub(all) enum SheetPresentationMode {
-  Modal
-  BottomSheet
-} derive(Eq, Debug, ToJson)
+fn[Msg] modifier_layout(
+  modifier : ViewModifier[Msg],
+  ctx : WidgetLayoutContext,
+) -> WidgetLayoutResult {
+  let child_size = first_modifier_child_size(ctx.child_sizes)
+  let size = ctx.constraints.constrain(
+    match modifier {
+      PaddingModifier(insets) => child_size.inflate(insets)
+      FrameModifier(data) => resolve_frame_modifier_size(data, child_size)
+      AspectRatioModifier(ratio) => aspect_ratio_size(child_size, ratio)
+      _ => child_size
+    },
+  )
+  WidgetLayoutResult::new(size~, child_frames=[
+    modifier_child_frame(modifier, size, child_size),
+  ])
+}
 
 ///|
-priv struct SheetViewSpec {
-  key : Key?
-  presentation_mode : SheetPresentationMode
-  background : Brush
-  corner_radius : Double
-  shadow : ShadowStyle?
-  on_dismiss : (() -> Unit)?
+fn[Msg] modifier_child_frame(
+  modifier : ViewModifier[Msg],
+  size : Size,
+  child_size : Size,
+) -> Rect {
+  let frame = Rect::new(x=0.0, y=0.0, width=size.width, height=size.height)
+  match modifier {
+    PaddingModifier(insets) => frame.inset(insets)
+    FrameModifier(data) => frame_rect_for_modifier(data, frame)
+    AlignModifier(alignment) => aligned_rect(frame, child_size, alignment)
+    OffsetModifier(dx, dy) => frame.offset(dx~, dy~)
+    AspectRatioModifier(ratio) => aspect_ratio_rect(frame, ratio)
+    _ => frame
+  }
+}
+
+///|
+fn[Msg] modifier_paint(
+  modifier : ViewModifier[Msg],
+  ctx : WidgetPaintContext,
+) -> WidgetPaintPlan {
+  match modifier {
+    BackgroundModifier(brush) => {
+      let radius = 0.0
+      WidgetPaintPlan::commands([
+        DrawCommand::FillRoundedRectBrush(
+          RoundedRect::new(rect=ctx.frame, radius~),
+          brush,
+        ),
+      ])
+    }
+    OpacityModifier(opacity) =>
+      {
+        commands: [DrawCommand::PushOpacity(opacity)],
+        child_layers: [],
+        post_commands: [DrawCommand::PopOpacity],
+        overlay_commands: [],
+        platform_views: [],
+        repaint_boundary: false,
+      }
+    ShadowModifier(style) =>
+      WidgetPaintPlan::commands([
+        DrawCommand::DrawShadow(
+          ShadowSpec::new(
+            rect=RoundedRect::new(rect=ctx.frame, radius=0.0),
+            color=style.color,
+            offset=style.offset,
+            blur_radius=style.blur_radius,
+            spread=style.spread,
+          ),
+        ),
+      ])
+    BorderModifier(style) =>
+      if style.width > 0.0 {
+        WidgetPaintPlan::commands([
+          DrawCommand::StrokeRoundedRectBrush(
+            RoundedRect::new(rect=ctx.frame, radius=0.0),
+            style.brush,
+            style.width,
+          ),
+        ])
+      } else {
+        WidgetPaintPlan::empty()
+      }
+    ClipModifier =>
+      {
+        commands: [DrawCommand::PushClip(ctx.frame)],
+        child_layers: [],
+        post_commands: [DrawCommand::PopClip],
+        overlay_commands: [],
+        platform_views: [],
+        repaint_boundary: false,
+      }
+    ScaleModifier(sx, sy) =>
+      {
+        commands: [DrawCommand::PushTransform(Transform2D::scale(sx~, sy~))],
+        child_layers: [],
+        post_commands: [DrawCommand::PopTransform],
+        overlay_commands: [],
+        platform_views: [],
+        repaint_boundary: false,
+      }
+    DisabledModifier(true) =>
+      {
+        commands: [DrawCommand::PushOpacity(0.42)],
+        child_layers: [],
+        post_commands: [DrawCommand::PopOpacity],
+        overlay_commands: [],
+        platform_views: [],
+        repaint_boundary: false,
+      }
+    RepaintBoundaryModifier =>
+      { ..WidgetPaintPlan::empty(), repaint_boundary: true }
+    _ => WidgetPaintPlan::empty()
+  }
+}
+
+///|
+fn[Msg] modifier_event(
+  modifier : ViewModifier[Msg],
+  ctx : WidgetEventContext,
+) -> WidgetEventResult[Msg] {
+  match modifier {
+    DisabledModifier(true) => WidgetEventResult::ignored()
+    OnTapMessageModifier(message) => handle_tap_modifier(message, ctx)
+    OnLongPressMessageModifier(message) =>
+      handle_long_press_modifier(message, ctx)
+    OnDoubleTapMessageModifier(message) =>
+      handle_double_tap_modifier(message, ctx)
+    OnDragMessageModifier(handler) =>
+      handle_drag_modifier(ctx, handler=(event, _frame) => handler(event))
+    OnDragWithFrameMessageModifier(handler) =>
+      handle_drag_modifier(ctx, handler~)
+    OnFileDropMessageModifier(handler) =>
+      handle_file_drop_modifier(handler, ctx)
+    KeyboardShortcutModifier(shortcut) =>
+      handle_keyboard_shortcut(shortcut, ctx)
+    FocusableModifier(true) => handle_focusable_modifier(ctx)
+    _ => WidgetEventResult::ignored()
+  }
+}
+
+///|
+fn[Msg] handle_tap_modifier(
+  message : Msg,
+  ctx : WidgetEventContext,
+) -> WidgetEventResult[Msg] {
+  match ctx.event {
+    Pointer(event) => {
+      let inside = ctx.frame.contains(event.position)
+      let current = widget_state_to_button_state(ctx.state)
+      let tap = recognize_button_tap(current, inside, event.phase)
+      let next_state = button_state_to_widget_state(ctx.state, tap.next_state)
+      let changed = next_state != ctx.state || tap.activated
+      {
+        changed,
+        activated: tap.activated,
+        focused: false,
+        captured: inside || current == ButtonState::Pressed,
+        state: Some(next_state),
+        text_control: None,
+        dirty: if changed {
+          WidgetDirtyHint::WidgetPaintDirty
+        } else {
+          WidgetDirtyHint::WidgetClean
+        },
+        messages: if tap.activated {
+          [message]
+        } else {
+          []
+        },
+      }
+    }
+    Keyboard(event) =>
+      if event.pressed && (event.key == "Enter" || event.key == " ") {
+        WidgetEventResult::message(message)
+      } else {
+        WidgetEventResult::ignored()
+      }
+    _ => WidgetEventResult::ignored()
+  }
+}
+
+///|
+fn[Msg] handle_long_press_modifier(
+  message : Msg,
+  ctx : WidgetEventContext,
+) -> WidgetEventResult[Msg] {
+  match ctx.event {
+    Pointer(event) => {
+      let result = LongPressGestureState::new().update(
+        event,
+        inside=ctx.frame.contains(event.position),
+      )
+      if result.recognized {
+        WidgetEventResult::message(message)
+      } else {
+        {
+          ..WidgetEventResult::ignored(),
+          changed: result.cancelled,
+          captured: result.cancelled,
+          dirty: if result.cancelled {
+            WidgetDirtyHint::WidgetPaintDirty
+          } else {
+            WidgetDirtyHint::WidgetClean
+          },
+        }
+      }
+    }
+    _ => WidgetEventResult::ignored()
+  }
+}
+
+///|
+fn[Msg] handle_double_tap_modifier(
+  message : Msg,
+  ctx : WidgetEventContext,
+) -> WidgetEventResult[Msg] {
+  match ctx.event {
+    Pointer(event) => {
+      let result = DoubleTapGestureState::new().update(
+        event,
+        inside=ctx.frame.contains(event.position),
+      )
+      if result.recognized {
+        WidgetEventResult::message(message)
+      } else {
+        WidgetEventResult::ignored()
+      }
+    }
+    _ => WidgetEventResult::ignored()
+  }
+}
+
+///|
+fn[Msg] handle_drag_modifier(
+  ctx : WidgetEventContext,
+  handler~ : (DragGestureEvent, Rect) -> Msg,
+) -> WidgetEventResult[Msg] {
+  match ctx.event {
+    Pointer(event) => {
+      let result = DragGestureState::new().update(
+        event,
+        inside=ctx.frame.contains(event.position),
+      )
+      match result.event {
+        Some(drag_event) => {
+          let frame = match ctx.child_frames {
+            [child_frame, ..] => child_frame
+            [] => ctx.frame
+          }
+          {
+            changed: true,
+            activated: true,
+            focused: false,
+            captured: true,
+            state: None,
+            text_control: None,
+            dirty: WidgetDirtyHint::WidgetPaintDirty,
+            messages: [handler(drag_event, frame)],
+          }
+        }
+        None => WidgetEventResult::ignored()
+      }
+    }
+    _ => WidgetEventResult::ignored()
+  }
+}
+
+///|
+fn[Msg] handle_file_drop_modifier(
+  handler : (Array[String], Point) -> Msg,
+  ctx : WidgetEventContext,
+) -> WidgetEventResult[Msg] {
+  match ctx.event {
+    DragDrop(event) =>
+      match (event.phase, event.position) {
+        (Dropped, Some(position)) =>
+          if ctx.frame.contains(position) && event.paths.length() > 0 {
+            {
+              changed: true,
+              activated: true,
+              focused: false,
+              captured: true,
+              state: None,
+              text_control: None,
+              dirty: WidgetDirtyHint::WidgetPaintDirty,
+              messages: [handler(event.paths, position)],
+            }
+          } else {
+            WidgetEventResult::ignored()
+          }
+        _ => WidgetEventResult::ignored()
+      }
+    _ => WidgetEventResult::ignored()
+  }
+}
+
+///|
+fn[Msg] handle_keyboard_shortcut(
+  shortcut : KeyboardShortcut,
+  ctx : WidgetEventContext,
+) -> WidgetEventResult[Msg] {
+  match ctx.event {
+    Keyboard(event) =>
+      if shortcut.matches(event) {
+        { ..WidgetEventResult::ignored(), captured: true }
+      } else {
+        WidgetEventResult::ignored()
+      }
+    _ => WidgetEventResult::ignored()
+  }
+}
+
+///|
+fn[Msg] handle_focusable_modifier(
+  ctx : WidgetEventContext,
+) -> WidgetEventResult[Msg] {
+  match ctx.event {
+    Keyboard(event) =>
+      if event.pressed && (event.key == "Enter" || event.key == " ") {
+        { ..WidgetEventResult::ignored(), activated: true, captured: true }
+      } else {
+        WidgetEventResult::ignored()
+      }
+    Pointer(event) =>
+      if event.phase == PointerPhase::Down && ctx.frame.contains(event.position) {
+        { ..WidgetEventResult::ignored(), focused: true, captured: true }
+      } else {
+        WidgetEventResult::ignored()
+      }
+    _ => WidgetEventResult::ignored()
+  }
+}
+
+///|
+fn[Msg] modifier_semantics(modifier : ViewModifier[Msg]) -> WidgetSemanticsInfo {
+  match modifier {
+    AccessibilityLabelModifier(label) =>
+      WidgetSemanticsInfo::new(label~, value=label)
+    SemanticsRoleModifier(role) => WidgetSemanticsInfo::new(role~)
+    FocusableModifier(focusable) =>
+      WidgetSemanticsInfo::new(actions=if focusable { [Focus] } else { [] })
+    OnTapMessageModifier(_)
+    | OnLongPressMessageModifier(_)
+    | OnDoubleTapMessageModifier(_)
+    | OnDragMessageModifier(_)
+    | OnDragWithFrameMessageModifier(_)
+    | KeyboardShortcutModifier(_) =>
+      WidgetSemanticsInfo::new(role=SemanticsRole::Button, actions=[
+        Focus,
+        Activate,
+      ])
+    SemanticsSelectedModifier(_) =>
+      WidgetSemanticsInfo::new(actions=[SemanticsAction::Select])
+    SemanticsExpandedModifier(expanded) =>
+      WidgetSemanticsInfo::new(
+        actions=if expanded {
+          [SemanticsAction::Collapse]
+        } else {
+          [SemanticsAction::Expand]
+        },
+      )
+    SemanticsDescriptionModifier(description) =>
+      WidgetSemanticsInfo::new(description~)
+    SemanticsActionModifier(action) =>
+      WidgetSemanticsInfo::new(actions=[action])
+    _ => WidgetSemanticsInfo::new()
+  }
+}
+
+///|
+fn[Msg] modifier_focusable(modifier : ViewModifier[Msg]) -> Bool {
+  match modifier {
+    FocusableModifier(value) => value
+    OnTapMessageModifier(_)
+    | OnLongPressMessageModifier(_)
+    | OnDoubleTapMessageModifier(_)
+    | KeyboardShortcutModifier(_) => true
+    _ => false
+  }
+}
+
+///|
+fn first_modifier_child_size(sizes : Array[Size]) -> Size {
+  match sizes {
+    [size, ..] => size
+    [] => Size::new(width=0.0, height=0.0)
+  }
+}
+
+///|
+fn frame_modifier_constraints_for_measure(
+  data : FrameModifierSpec,
+  constraints : Constraints,
+) -> Constraints {
+  match (data.width, data.height) {
+    (Some(width), Some(height)) => constraints.tighten(width~, height~).loosen()
+    (Some(width), None) => constraints.tighten(width~).loosen()
+    (None, Some(height)) => constraints.tighten(height~).loosen()
+    (None, None) => constraints.loosen()
+  }
+}
+
+///|
+fn resolve_frame_modifier_size(data : FrameModifierSpec, child : Size) -> Size {
+  let width = data.width.unwrap_or(child.width)
+  let height = data.height.unwrap_or(child.height)
+  let min_width = data.min_width.unwrap_or(0.0)
+  let min_height = data.min_height.unwrap_or(0.0)
+  let max_width = data.max_width.unwrap_or(width)
+  let max_height = data.max_height.unwrap_or(height)
+  Size::new(width~, height~).clamp({
+    min: Size::new(width=min_width, height=min_height),
+    max: Size::new(
+      width=max_double(min_width, max_width),
+      height=max_double(min_height, max_height),
+    ),
+  })
+}
+
+///|
+fn frame_rect_for_modifier(data : FrameModifierSpec, bounds : Rect) -> Rect {
+  let size = resolve_frame_modifier_size(data, bounds.size)
+  Rect::new(
+    x=bounds.origin.x,
+    y=bounds.origin.y,
+    width=size.width,
+    height=size.height,
+  )
+}
+
+///|
+fn aligned_rect(
+  bounds : Rect,
+  child_size : Size,
+  alignment : Alignment,
+) -> Rect {
+  let width = min_double(bounds.size.width, child_size.width)
+  let height = min_double(bounds.size.height, child_size.height)
+  let dx = max_double(0.0, bounds.size.width - width) *
+    (alignment.x + 1.0) /
+    2.0
+  let dy = max_double(0.0, bounds.size.height - height) *
+    (alignment.y + 1.0) /
+    2.0
+  Rect::new(x=bounds.origin.x + dx, y=bounds.origin.y + dy, width~, height~)
+}
+
+///|
+fn aspect_ratio_size(size : Size, ratio : Double) -> Size {
+  if size.width > 0.0 {
+    Size::new(width=size.width, height=size.width / ratio)
+  } else if size.height > 0.0 {
+    Size::new(width=size.height * ratio, height=size.height)
+  } else {
+    size
+  }
+}
+
+///|
+fn aspect_ratio_rect(frame : Rect, ratio : Double) -> Rect {
+  let size = aspect_ratio_size(frame.size, ratio).clamp(
+    Constraints::tight(frame.size),
+  )
+  Rect::new(
+    x=frame.origin.x,
+    y=frame.origin.y,
+    width=size.width,
+    height=size.height,
+  )
+}
+
+///|
+fn widget_state_to_button_state(state : WidgetStateContext) -> ButtonState {
+  if state.pressed {
+    ButtonState::Pressed
+  } else if state.hovered {
+    ButtonState::Hovered
+  } else {
+    ButtonState::Normal
+  }
+}
+
+///|
+fn button_state_to_widget_state(
+  state : WidgetStateContext,
+  button_state : ButtonState,
+) -> WidgetStateContext {
+  match button_state {
+    ButtonState::Normal => { ..state, hovered: false, pressed: false }
+    ButtonState::Hovered => { ..state, hovered: true, pressed: false }
+    ButtonState::Pressed => { ..state, hovered: true, pressed: true }
+  }
+}
+
+///|
+fn option_double_revision(value : Double?) -> String {
+  match value {
+    Some(value) => "\{value}"
+    None => "none"
+  }
+}
+
+///|
+fn color_revision(color : Color) -> String {
+  "\{color.r},\{color.g},\{color.b},\{color.a}"
+}
+
+///|
+fn brush_revision(value : Brush) -> String {
+  match value {
+    Brush::Solid(color) => "solid:\{color_revision(color)}"
+    Brush::LinearGradient(spec) =>
+      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{color_revision(spec.start_color)},\{color_revision(spec.end_color)}"
+    Brush::RadialGradient(spec) =>
+      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{color_revision(spec.center_color)},\{color_revision(spec.edge_color)}"
+  }
+}
+
+///|
+fn role_label(role : SemanticsRole) -> String {
+  match role {
+    None => "none"
+    Group => "group"
+    Text => "text"
+    Button => "button"
+    TextField => "text-field"
+    Checkbox => "checkbox"
+    Grid => "grid"
+    ScrollView => "scroll-view"
+    Switch => "switch"
+    Radio => "radio"
+    Slider => "slider"
+    Progress => "progress"
+    Tab => "tab"
+    List => "list"
+    ListItem => "list-item"
+    Dialog => "dialog"
+    Tooltip => "tooltip"
+    Menu => "menu"
+    ButtonGroup => "button-group"
+    Form => "form"
+    FormField => "form-field"
+    Tree => "tree"
+    TreeItem => "tree-item"
+    WebView => "web-view"
+  }
+}
+
+///|
+fn action_label(action : SemanticsAction) -> String {
+  match action {
+    Activate => "activate"
+    Focus => "focus"
+    SetText => "set-text"
+    Submit => "submit"
+    Scroll => "scroll"
+    Select => "select"
+    Dismiss => "dismiss"
+    Expand => "expand"
+    Collapse => "collapse"
+  }
+}
+
+///|
+fn main_axis_alignment_label(alignment : MainAxisAlignment) -> String {
+  match alignment {
+    MainStart => "start"
+    MainCenter => "center"
+    MainEnd => "end"
+    SpaceAround => "space-around"
+    SpaceBetween => "space-between"
+    SpaceEvenly => "space-evenly"
+  }
+}
+
+///|
+fn cross_axis_alignment_label(alignment : CrossAxisAlignment) -> String {
+  match alignment {
+    CrossStart => "start"
+    CrossCenter => "center"
+    CrossEnd => "end"
+    CrossStretch => "stretch"
+  }
 }

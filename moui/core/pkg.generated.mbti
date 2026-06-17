@@ -892,7 +892,10 @@ pub(all) enum PathVerb {
   Close
 } derive(Eq, ToJson, @debug.Debug)
 
-type PickerItem
+pub struct PickerItem {
+  id : String
+  label : String
+}
 pub fn PickerItem::id(Self) -> String
 pub fn PickerItem::label(Self) -> String
 pub fn PickerItem::new(id~ : String, label~ : String) -> Self
@@ -1611,6 +1614,18 @@ pub(all) struct TextCommandResult {
   changed : Bool
   clipboard_text : String?
 } derive(Eq, ToJson, @debug.Debug)
+pub fn TextCommandResult::handled(changed? : Bool, clipboard_text? : String?) -> Self
+pub fn TextCommandResult::ignored() -> Self
+
+pub(all) struct TextControlStateContext {
+  caret : Int
+  selection : TextRange?
+  text_selection_anchor : Int?
+  composition : String?
+  composition_cursor : TextRange?
+  undo_stack : Array[TextHistoryEntryContext]
+  redo_stack : Array[TextHistoryEntryContext]
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct TextFieldStyle {
   normal : ControlStateStyle
@@ -1622,6 +1637,12 @@ pub(all) struct TextFieldStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn TextFieldStyle::filled(theme? : Theme) -> Self
 pub fn TextFieldStyle::outline(theme? : Theme) -> Self
+
+pub(all) struct TextHistoryEntryContext {
+  text : String
+  caret : Int
+  selection : TextRange?
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum TextInputEvent {
   InsertText(String)
@@ -1869,7 +1890,6 @@ pub fn[Msg] View::intrinsic_width(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::key(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::keyboard_shortcut(Self[Msg], KeyboardShortcut) -> Self[Msg]
 pub fn[Msg] View::layout_priority(Self[Msg], Double) -> Self[Msg]
-pub fn[Msg, Node] View::lower_for_runtime(Self[Msg], ViewLoweringSink[Msg, Node]) -> Node
 pub fn[Msg] View::main_axis_alignment(Self[Msg], MainAxisAlignment) -> Self[Msg]
 pub fn[Msg, NextMsg] View::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] View::mono(Self[Msg]) -> Self[Msg]
@@ -1881,38 +1901,9 @@ pub fn[Msg] View::on_file_drop(Self[Msg], (Array[String], Point) -> Msg) -> Self
 pub fn[Msg] View::on_long_press(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::on_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::opacity(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] View::ops(Self[Msg]) -> WidgetOps[Msg]
 pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
-pub fn[Msg] View::primitive_button_view(text~ : String, size~ : Size, font~ : FontSpec, foreground~ : Color, background~ : Brush, hovered_background~ : Brush, pressed_background~ : Brush, border? : BorderStyle?, shadow? : ShadowStyle?, corner_radius? : Double, on_click? : Msg?) -> Self[Msg]
-pub fn[Msg] View::primitive_checkbox_view(label~ : String, checked~ : Binding[Bool], font~ : FontSpec, foreground~ : Color, check_color~ : Color, size~ : Size) -> Self[Msg]
-pub fn[Msg] View::primitive_component_view((BuildContext) -> Self[Msg]) -> Self[Msg]
-pub fn[Msg] View::primitive_container_view(child? : Self[Msg]?, size? : Size?, background? : Brush?, border? : BorderStyle?, corner_radius? : Double, shadow? : ShadowStyle?) -> Self[Msg]
-pub fn[Msg] View::primitive_controlled_checkbox_view(label~ : String, checked~ : Bool, on_change~ : (Bool) -> Msg, font~ : FontSpec, foreground~ : Color, check_color~ : Color, size~ : Size) -> Self[Msg]
-pub fn[Msg] View::primitive_controlled_datepicker_view(selected~ : DateValue, on_select~ : (DateValue) -> Msg, mode~ : DatePickerMode, placeholder~ : String, font~ : FontSpec, foreground~ : Color, background~ : Brush, corner_radius~ : Double, min_date? : DateValue?, max_date? : DateValue?) -> Self[Msg]
-pub fn[Msg] View::primitive_controlled_picker_view(items~ : Array[PickerItem], selected~ : String, on_select~ : (String) -> Msg, placeholder~ : String, font~ : FontSpec, foreground~ : Color, background~ : Brush, corner_radius~ : Double, max_height~ : Double) -> Self[Msg]
-pub fn[Msg] View::primitive_controlled_rich_text_editor_view(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : Size, format~ : (String) -> RichTextDocument, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius? : Double, on_selection_change? : ((Int, TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool) -> Self[Msg]
-pub fn[Msg] View::primitive_controlled_search_bar_view(query~ : String, on_input~ : (String) -> Msg, placeholder~ : String, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius~ : Double, on_submit? : Msg?, on_clear? : Msg?) -> Self[Msg]
-pub fn[Msg] View::primitive_controlled_text_field_view(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : Size, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius? : Double, on_submit? : Msg?) -> Self[Msg]
-pub fn[Msg] View::primitive_custom_children_layout_view(children~ : Array[Self[Msg]], measure~ : (CustomLayoutContext) -> Size, place~ : (CustomPlacementContext) -> Array[Rect], paint? : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self[Msg]
-pub fn[Msg] View::primitive_custom_view(measure~ : (Constraints) -> Size, paint~ : (Rect) -> Array[DrawCommand], semantics_role? : SemanticsRole, semantics_label? : String) -> Self[Msg]
-pub fn[Msg] View::primitive_datepicker_view(selected~ : Binding[DateValue], mode~ : DatePickerMode, placeholder~ : String, font~ : FontSpec, foreground~ : Color, background~ : Brush, corner_radius~ : Double, min_date? : DateValue?, max_date? : DateValue?) -> Self[Msg]
-pub fn[Msg] View::primitive_empty_view() -> Self[Msg]
-pub fn[Msg] View::primitive_flex_view(children~ : Array[Self[Msg]], axis~ : Axis, spacing? : Double, main_axis_alignment? : MainAxisAlignment, cross_axis_alignment? : CrossAxisAlignment) -> Self[Msg]
-pub fn[Msg] View::primitive_frame_view(child~ : Self[Msg], width~ : Double?, height~ : Double?, min_width~ : Double?, min_height~ : Double?, max_width~ : Double?, max_height~ : Double?) -> Self[Msg]
-pub fn[Msg] View::primitive_grid_view(children~ : Array[Self[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> Self[Msg]
-pub fn[Msg] View::primitive_image_view(source~ : String, size? : Size?, opacity? : Double, corner_radius? : Double, fit? : ImageFit) -> Self[Msg]
-pub fn[Msg] View::primitive_list_view(children~ : Array[Self[Msg]], spacing? : Double) -> Self[Msg]
-pub fn[Msg] View::primitive_padding_insets_view(child~ : Self[Msg], insets~ : Insets) -> Self[Msg]
-pub fn[Msg] View::primitive_picker_view(items~ : Array[PickerItem], selected~ : Binding[String], placeholder~ : String, font~ : FontSpec, foreground~ : Color, background~ : Brush, corner_radius~ : Double, max_height~ : Double) -> Self[Msg]
-pub fn[Msg] View::primitive_rich_text_editor_view(value~ : Binding[String], placeholder~ : String, size~ : Size, format~ : (String) -> RichTextDocument, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius? : Double, on_selection_change? : ((Int, TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool) -> Self[Msg]
-pub fn[Msg] View::primitive_scroll_view(child~ : Self[Msg], offset? : Point, viewport? : Size?, state? : ScrollState?, on_scroll? : ((Point) -> Msg)?) -> Self[Msg]
-pub fn[Msg] View::primitive_search_bar_view(query~ : Binding[String], placeholder~ : String, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius~ : Double, on_submit? : Msg?, on_clear? : Msg?) -> Self[Msg]
-pub fn[Msg] View::primitive_sheet_view(content~ : Self[Msg], presentation_mode~ : SheetPresentationMode, background~ : Brush, corner_radius~ : Double, shadow? : ShadowStyle?, on_dismiss? : Msg?) -> Self[Msg]
-pub fn[Msg] View::primitive_spacer_view(min_length? : Double, weight? : Double) -> Self[Msg]
-pub fn[Msg] View::primitive_stack_view(children~ : Array[Self[Msg]]) -> Self[Msg]
-pub fn[Msg] View::primitive_text_field_view(value~ : Binding[String], placeholder~ : String, size~ : Size, font~ : FontSpec, foreground~ : Color, placeholder_color~ : Color, background~ : Brush, border? : BorderStyle?, focused_border? : BorderStyle?, cursor_color~ : Color, corner_radius? : Double, on_submit? : Msg?) -> Self[Msg]
-pub fn[Msg] View::primitive_text_view(text~ : String, size~ : Size, font~ : FontSpec, color~ : Color) -> Self[Msg]
-pub fn[Msg] View::primitive_web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Msg)?) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
 pub fn[Msg] View::semantics_action(Self[Msg], SemanticsAction) -> Self[Msg]
@@ -1938,21 +1929,6 @@ pub fn ViewEnvironment::environment(Self) -> Environment
 pub fn ViewEnvironment::new(viewport_size~ : Size, environment~ : Environment) -> Self
 pub fn ViewEnvironment::viewport_size(Self) -> Size
 
-pub struct ViewLoweringSink[Msg, Node] {
-  // private fields
-}
-pub fn[Msg, Node] ViewLoweringSink::new(widget~ : (WidgetOps[Msg]) -> Node, empty~ : () -> Node, text~ : (String?, String, Size, FontSpec, Color) -> Node, button~ : (String?, String, Size, FontSpec, Color, Brush, Brush, Brush, BorderStyle?, ShadowStyle?, Double, Msg?) -> Node, text_field~ : (String?, Binding[String], String, Size, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?) -> Node, controlled_text_field~ : (String?, String, (String) -> Msg, String, Size, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?) -> Node, rich_text_editor~ : (String?, Binding[String], String, Size, (String) -> RichTextDocument, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, ((Int, TextRange?) -> Msg)?, ((Int) -> Msg)?, ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, Bool) -> Node, controlled_rich_text_editor~ : (String?, String, (String) -> Msg, String, Size, (String) -> RichTextDocument, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, ((Int, TextRange?) -> Msg)?, ((Int) -> Msg)?, ((String, Int, TextRange?, String) -> RichTextInputTransform?)?, Bool) -> Node, image~ : (String?, String, Size?, Double, Double, ImageFit) -> Node, checkbox~ : (String?, String, Binding[Bool], FontSpec, Color, Color, Size) -> Node, controlled_checkbox~ : (String?, String, Bool, (Bool) -> Msg, FontSpec, Color, Color, Size) -> Node, picker~ : (String?, Array[PickerItem], Binding[String], String, FontSpec, Color, Brush, Double, Double) -> Node, controlled_picker~ : (String?, Array[PickerItem], String, (String) -> Msg, String, FontSpec, Color, Brush, Double, Double) -> Node, datepicker~ : (String?, Binding[DateValue], DatePickerMode, String, FontSpec, Color, Brush, Double, DateValue?, DateValue?) -> Node, controlled_datepicker~ : (String?, DateValue, (DateValue) -> Msg, DatePickerMode, String, FontSpec, Color, Brush, Double, DateValue?, DateValue?) -> Node, search_bar~ : (String?, Binding[String], String, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?, Msg?) -> Node, controlled_search_bar~ : (String?, String, (String) -> Msg, String, FontSpec, Color, Color, Brush, BorderStyle?, BorderStyle?, Color, Double, Msg?, Msg?) -> Node, web_view~ : (String?, WebViewSpec, ((WebViewEvent) -> Msg)?) -> Node, sheet~ : (String?, Node, SheetPresentationMode, Brush, Double, ShadowStyle?, Msg?) -> Node, flex~ : (String?, Axis, Double, MainAxisAlignment, CrossAxisAlignment, Array[Node]) -> Node, padding~ : (String?, Insets, Node) -> Node, container~ : (String?, Size?, Brush?, BorderStyle?, Double, ShadowStyle?, Node?) -> Node, spacer~ : (String?, Double, Double) -> Node, frame~ : (String?, Double?, Double?, Double?, Double?, Double?, Double?, Node) -> Node, stack~ : (String?, Array[Node]) -> Node, scroll~ : (String?, Point, Size?, ScrollState?, ((Point) -> Msg)?, Node) -> Node, grid~ : (String?, Int, Double, Double, Array[Node]) -> Node, list~ : (String?, Double, Array[Node]) -> Node, key~ : (String, Node) -> Node, padding_modifier~ : (Insets, Node) -> Node, frame_modifier~ : (Double?, Double?, Double?, Double?, Double?, Double?, Node) -> Node, background_modifier~ : (Brush, Node) -> Node, foreground_modifier~ : (Color, Node) -> Node, font_modifier~ : (FontSpec, Node) -> Node, corner_radius_modifier~ : (Double, Node) -> Node, opacity_modifier~ : (Double, Node) -> Node, shadow_modifier~ : (ShadowStyle, Node) -> Node, border_modifier~ : (BorderStyle, Node) -> Node, offset_modifier~ : (Double, Double, Node) -> Node, clip_modifier~ : (Node) -> Node, scale_modifier~ : (Double, Double, Node) -> Node, disabled_modifier~ : (Bool, Node) -> Node, accessibility_label_modifier~ : (String, Node) -> Node, semantics_role_modifier~ : (SemanticsRole, Node) -> Node, semantics_selected_modifier~ : (Bool, Node) -> Node, semantics_pressed_modifier~ : (Bool, Node) -> Node, semantics_checked_modifier~ : (Bool, Node) -> Node, semantics_expanded_modifier~ : (Bool, Node) -> Node, semantics_invalid_modifier~ : (Bool, Node) -> Node, semantics_required_modifier~ : (Bool, Node) -> Node, semantics_description_modifier~ : (String, Node) -> Node, semantics_action_modifier~ : (SemanticsAction, Node) -> Node, focusable_modifier~ : (Bool, Node) -> Node, focus_trap_modifier~ : (Bool, Node) -> Node, on_tap_modifier~ : (Msg, Node) -> Node, on_long_press_modifier~ : (Msg, Node) -> Node, on_double_tap_modifier~ : (Msg, Node) -> Node, on_drag_modifier~ : ((DragGestureEvent) -> Msg, Node) -> Node, on_drag_with_frame_modifier~ : ((DragGestureEvent, Rect) -> Msg, Node) -> Node, on_file_drop_modifier~ : ((Array[String], Point) -> Msg, Node) -> Node, keyboard_shortcut_modifier~ : (KeyboardShortcut, Node) -> Node, flexible_modifier~ : (Double, Node) -> Node, layout_priority_modifier~ : (Double, Node) -> Node, align_modifier~ : (Alignment, Node) -> Node, spacing_modifier~ : (Double, Node) -> Node, main_axis_alignment_modifier~ : (MainAxisAlignment, Node) -> Node, cross_axis_alignment_modifier~ : (CrossAxisAlignment, Node) -> Node, theme_modifier~ : (Theme, Node) -> Node, environment_modifier~ : (Environment, Node) -> Node, on_tap_handler_modifier~ : (() -> Unit, Node) -> Node, on_long_press_handler_modifier~ : (() -> Unit, Node) -> Node, on_double_tap_handler_modifier~ : (() -> Unit, Node) -> Node, on_drag_handler_modifier~ : ((DragGestureEvent) -> Unit, Node) -> Node, on_drag_with_frame_handler_modifier~ : ((DragGestureEvent, Rect) -> Unit, Node) -> Node, on_file_drop_handler_modifier~ : ((Array[String], Point) -> Unit, Node) -> Node, aspect_ratio_modifier~ : (Double, Node) -> Node, intrinsic_width_modifier~ : (Node) -> Node, intrinsic_height_modifier~ : (Node) -> Node, repaint_boundary_modifier~ : (Node) -> Node, custom~ : (String?, (Constraints) -> Size, (Rect) -> Array[DrawCommand], SemanticsRole, String) -> Node, custom_layout~ : (String?, Array[Node], CustomLayoutCache, (CustomLayoutContext) -> Size, (CustomPlacementContext) -> Array[Rect], (Rect) -> Array[DrawCommand], SemanticsRole, String) -> Node, component~ : ((BuildContext) -> View[Msg]) -> Node) -> Self[Msg, Node]
-
-pub(all) struct ViewNodeInspectorSummary {
-  element_id : ElementId
-  kind : String
-  key : String
-  child_count : Int
-  needs_build : Bool
-  needs_layout : Bool
-  needs_paint : Bool
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct ViewStyle {
   font : FontSpec?
   foreground : Color?
@@ -1972,7 +1948,7 @@ pub(all) struct ViewTreeInspectorSnapshot {
   dirty_build_count : Int
   dirty_layout_count : Int
   dirty_paint_count : Int
-  nodes : Array[ViewNodeInspectorSummary]
+  nodes : Array[WidgetInspectorSummary]
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct VisualStyle {
@@ -2040,6 +2016,7 @@ pub(all) struct WidgetEventContext {
   event : AppEvent
   focused : Bool
   state : WidgetStateContext
+  text_control : TextControlStateContext
   text_system : TextSystem
   environment : Environment
 }
@@ -2050,6 +2027,7 @@ pub(all) struct WidgetEventResult[Msg] {
   focused : Bool
   captured : Bool
   state : WidgetStateContext?
+  text_control : TextControlStateContext?
   dirty : WidgetDirtyHint
   messages : Array[Msg]
 } derive(Eq, @debug.Debug)
@@ -2061,6 +2039,16 @@ pub(all) struct WidgetIdentity {
   key : Key?
 } derive(Eq)
 pub fn WidgetIdentity::new(kind~ : String, key? : String?) -> Self
+
+pub(all) struct WidgetInspectorSummary {
+  element_id : ElementId
+  kind : String
+  key : String
+  child_count : Int
+  needs_build : Bool
+  needs_layout : Bool
+  needs_paint : Bool
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct WidgetLayoutContext {
   constraints : Constraints
@@ -2078,6 +2066,7 @@ pub fn WidgetLayoutResult::new(size~ : Size, child_frames? : Array[Rect]) -> Sel
 pub struct WidgetOps[Msg] {
   // private fields
 }
+pub fn[Msg] WidgetOps::build_child(Self[Msg]) -> ((BuildContext) -> View[Msg])?
 pub fn[Msg] WidgetOps::child_constraints(Self[Msg], Constraints) -> Constraints
 pub fn[Msg] WidgetOps::children(Self[Msg]) -> Array[View[Msg]]
 pub fn[Msg] WidgetOps::event(Self[Msg], WidgetEventContext) -> WidgetEventResult[Msg]
@@ -2085,25 +2074,41 @@ pub fn[Msg] WidgetOps::focusable(Self[Msg]) -> Bool
 pub fn[Msg] WidgetOps::identity(Self[Msg]) -> WidgetIdentity
 pub fn[Msg] WidgetOps::layout(Self[Msg], WidgetLayoutContext) -> WidgetLayoutResult
 pub fn[Msg, NextMsg] WidgetOps::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
-pub fn[Msg] WidgetOps::new(identity~ : () -> WidgetIdentity, revision? : () -> String, children? : () -> Array[View[Msg]], child_constraints? : (Constraints) -> Constraints, layout~ : (WidgetLayoutContext) -> WidgetLayoutResult, paint? : (WidgetPaintContext) -> WidgetPaintPlan, event? : (WidgetEventContext) -> WidgetEventResult[Msg], semantics? : () -> WidgetSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
+pub fn[Msg] WidgetOps::new(identity~ : () -> WidgetIdentity, revision? : () -> String, children? : () -> Array[View[Msg]], build_child? : ((BuildContext) -> View[Msg])?, child_constraints? : (Constraints) -> Constraints, layout~ : (WidgetLayoutContext) -> WidgetLayoutResult, paint? : (WidgetPaintContext) -> WidgetPaintPlan, event? : (WidgetEventContext) -> WidgetEventResult[Msg], text_input_state? : (WidgetPaintContext) -> TextInputState?, text_command? : (WidgetEventContext, CommandIntent, String?) -> WidgetTextCommandResult[Msg], semantics? : () -> WidgetSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
 pub fn[Msg] WidgetOps::paint(Self[Msg], WidgetPaintContext) -> WidgetPaintPlan
 pub fn[Msg] WidgetOps::revision(Self[Msg]) -> String
 pub fn[Msg] WidgetOps::semantics(Self[Msg]) -> WidgetSemanticsInfo
+pub fn[Msg] WidgetOps::text_command(Self[Msg], WidgetEventContext, CommandIntent, paste_text? : String?) -> TextCommandResult
+pub fn[Msg] WidgetOps::text_command_result(Self[Msg], WidgetEventContext, CommandIntent, paste_text? : String?) -> WidgetTextCommandResult[Msg]
+pub fn[Msg] WidgetOps::text_input_state(Self[Msg], WidgetPaintContext) -> TextInputState?
 
 pub(all) struct WidgetPaintContext {
   frame : Rect
   child_frames : Array[Rect]
   focused : Bool
   state : WidgetStateContext
+  text_control : TextControlStateContext
   environment : Environment
   text_system : TextSystem
 }
 
+pub(all) struct WidgetPaintLayer {
+  frame : Rect
+  cache_key : String
+  content_revision : Int
+  commands : Array[DrawCommand]
+  overlay_commands : Array[DrawCommand]
+  platform_views : Array[PlatformViewPlacement]
+} derive(Eq, @debug.Debug)
+pub fn WidgetPaintLayer::new(frame~ : Rect, cache_key~ : String, content_revision~ : Int, commands? : Array[DrawCommand], overlay_commands? : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement]) -> Self
+
 pub(all) struct WidgetPaintPlan {
   commands : Array[DrawCommand]
+  child_layers : Array[WidgetPaintLayer]
   post_commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
   platform_views : Array[PlatformViewPlacement]
+  repaint_boundary : Bool
 } derive(Eq, @debug.Debug)
 pub fn WidgetPaintPlan::commands(Array[DrawCommand]) -> Self
 pub fn WidgetPaintPlan::empty() -> Self
@@ -2125,7 +2130,16 @@ pub(all) struct WidgetStateContext {
   checked : Bool
   expanded : Bool
   disabled : Bool
+  scratch : String
 } derive(Eq, @debug.Debug)
+
+pub(all) struct WidgetTextCommandResult[Msg] {
+  result : TextCommandResult
+  text_control : TextControlStateContext?
+  messages : Array[Msg]
+} derive(Eq, @debug.Debug)
+pub fn[Msg] WidgetTextCommandResult::ignored() -> Self[Msg]
+pub fn[Msg] WidgetTextCommandResult::new(result~ : TextCommandResult, text_control? : TextControlStateContext?, messages? : Array[Msg]) -> Self[Msg]
 
 // Type aliases
 pub type RichTextFormatter = (String) -> RichTextDocument

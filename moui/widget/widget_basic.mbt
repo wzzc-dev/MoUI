@@ -118,6 +118,7 @@ pub fn[Msg] web_view(
         } else {
           {
             commands: [],
+            child_layers: [],
             post_commands: [],
             overlay_commands: [],
             platform_views: [
@@ -133,6 +134,7 @@ pub fn[Msg] web_view(
                 frame=ctx.frame,
               ),
             ],
+            repaint_boundary: false,
           }
         }
       },
@@ -140,15 +142,9 @@ pub fn[Msg] web_view(
         match (ctx.event, on_event) {
           (@core.AppEvent::WebView(event_id, event), Some(handler)) =>
             if event_id == id {
-              {
-                changed: false,
-                activated: true,
-                focused: false,
-                captured: true,
-                state: None,
-                dirty: @core.WidgetDirtyHint::WidgetClean,
-                messages: [handler(event)],
-              }
+              widget_event_result(activated=true, captured=true, messages=[
+                handler(event),
+              ])
             } else {
               @core.WidgetEventResult::ignored()
             }
