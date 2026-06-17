@@ -11,7 +11,7 @@ pub struct BuildContext {
 }
 
 ///|
-pub fn BuildContext::new_for_runtime(
+pub fn BuildContext::new(
   component_id~ : ElementId,
   request_component_rebuild~ : (ElementId) -> Unit,
   viewport_size~ : Size,

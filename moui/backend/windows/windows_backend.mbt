@@ -766,7 +766,7 @@ fn WindowsApp::dispatch_web_view_event(
   self : WindowsApp,
   native_window : UInt64,
   id : String,
-  event : @core.WebViewEvent,
+  event : @host.WebViewEvent,
 ) -> Unit {
   match self.web_view_host_id(native_window) {
     Some(window_id) => {

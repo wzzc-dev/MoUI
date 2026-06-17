@@ -118,11 +118,11 @@ pub fn FocusScope::traverse(
 }
 
 ///|
-pub fn FocusScope::focus_first_invalid(
+pub fn FocusScope::focus_target_or_first(
   self : FocusScope,
-  summary : FormValidationSummary,
+  target : String?,
 ) -> String? {
-  match summary.first_invalid_id {
+  match target {
     Some(id) =>
       if self.contains_focusable(id) {
         Some(id)

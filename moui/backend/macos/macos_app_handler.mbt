@@ -235,7 +235,7 @@ fn MacosApp::dispatch_web_view_event(
   self : MacosApp,
   raw_content_view_handle : UInt64,
   id : String,
-  event : @core.WebViewEvent,
+  event : @host.WebViewEvent,
 ) -> Unit {
   match self.web_view_host_id(raw_content_view_handle) {
     Some(window_id) => {

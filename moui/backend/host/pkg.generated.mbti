@@ -216,7 +216,7 @@ pub(all) enum HostEvent {
   Keyboard(@wzzc-dev/moui/core.KeyboardEvent)
   TextInput(@wzzc-dev/moui/core.TextInputEvent)
   DragDrop(@wzzc-dev/moui/core.DragDropEvent)
-  WebView(String, @wzzc-dev/moui/core.WebViewEvent)
+  WebView(String, WebViewEvent)
   ThemeChanged(@wzzc-dev/moui/core.ColorScheme)
   Command(@wzzc-dev/moui/core.CommandIntent)
   RedrawRequested
@@ -413,12 +413,27 @@ pub fn HostPlatformWindowMap::remove_host(Self, HostWindowId) -> @wzzc-dev/windo
 pub fn HostPlatformWindowMap::remove_platform(Self, @wzzc-dev/window/core.WindowId) -> HostWindowId?
 
 pub(all) struct HostRouteEvent {
-  location : @wzzc-dev/moui/core.RouteLocation
+  location : HostRouteLocation
   source : String
 } derive(Eq, ToJson, @debug.Debug)
 pub fn HostRouteEvent::from_route(route~ : String, source? : String) -> Self
-pub fn HostRouteEvent::new(location~ : @wzzc-dev/moui/core.RouteLocation, source? : String) -> Self
+pub fn HostRouteEvent::new(location~ : HostRouteLocation, source? : String) -> Self
 pub fn HostRouteEvent::route(Self) -> String
+
+pub(all) struct HostRouteLocation {
+  path : String
+  query : Array[HostRouteQueryParam]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostRouteLocation::new(path~ : String, query? : Array[HostRouteQueryParam]) -> Self
+pub fn HostRouteLocation::parse(String) -> Self
+pub fn HostRouteLocation::query_value(Self, String) -> String?
+pub fn HostRouteLocation::to_route(Self) -> String
+
+pub(all) struct HostRouteQueryParam {
+  key : String
+  value : String
+} derive(Eq, ToJson, @debug.Debug)
+pub fn HostRouteQueryParam::new(key~ : String, value~ : String) -> Self
 
 pub struct HostRouteSource {
   // private fields
@@ -611,7 +626,7 @@ pub struct HostWebViewCommandQueue {
   // private fields
 }
 pub fn HostWebViewCommandQueue::drain_with_handler(Self, (HostWebViewQueuedCommand) -> Unit) -> Int
-pub fn HostWebViewCommandQueue::enqueue(Self, id~ : String, command~ : @wzzc-dev/moui/core.WebViewCommand) -> Unit
+pub fn HostWebViewCommandQueue::enqueue(Self, id~ : String, command~ : WebViewCommand) -> Unit
 pub fn HostWebViewCommandQueue::evaluate_javascript(Self, id~ : String, script~ : String, request_id? : String) -> Unit
 pub fn HostWebViewCommandQueue::go_back(Self, id~ : String) -> Unit
 pub fn HostWebViewCommandQueue::go_forward(Self, id~ : String) -> Unit
@@ -624,9 +639,9 @@ pub fn HostWebViewCommandQueue::stop(Self, id~ : String) -> Unit
 pub(all) struct HostWebViewEvent {
   window_id : HostWindowId
   id : String
-  event : @wzzc-dev/moui/core.WebViewEvent
+  event : WebViewEvent
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostWebViewEvent::new(window_id~ : HostWindowId, id~ : String, event~ : @wzzc-dev/moui/core.WebViewEvent) -> Self
+pub fn HostWebViewEvent::new(window_id~ : HostWindowId, id~ : String, event~ : WebViewEvent) -> Self
 
 pub struct HostWebViewEventSource {
   // private fields
@@ -638,7 +653,7 @@ pub fn[Msg] HostWebViewEventSource::subscription(Self, key? : String, label? : S
 
 pub(all) struct HostWebViewQueuedCommand {
   id : String
-  command : @wzzc-dev/moui/core.WebViewCommand
+  command : WebViewCommand
 } derive(Eq, ToJson, @debug.Debug)
 
 pub struct HostWindowCommands {
@@ -1010,6 +1025,53 @@ pub(all) enum TextInputSessionAction {
   UpdateIme(@wzzc-dev/window/core.ImeRequest)
   DisableIme(@wzzc-dev/window/core.ImeRequest)
 } derive(Eq, @debug.Debug)
+
+pub(all) enum WebViewCommand {
+  LoadUrl(String)
+  Reload
+  Stop
+  GoBack
+  GoForward
+  EvaluateJavaScript(String, String)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WebViewCommand::evaluate_javascript(script~ : String, request_id? : String) -> Self
+pub fn WebViewCommand::load_url(String) -> Self
+
+pub(all) enum WebViewEvent {
+  NavigationRequested(String)
+  NavigationStarted(String)
+  NavigationCommitted(String)
+  NavigationFinished(String)
+  NavigationFailed(String, String)
+  TitleChanged(String)
+  CanGoBackChanged(Bool)
+  CanGoForwardChanged(Bool)
+  JavaScriptResult(String, String)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WebViewEvent::from_platform_event(@wzzc-dev/moui/core.PlatformViewEvent) -> Self?
+pub fn WebViewEvent::to_platform_event(Self) -> @wzzc-dev/moui/core.PlatformViewEvent
+
+pub(all) enum WebViewNavigationPolicy {
+  AllowHttpHttpsFile
+  AllowHttpHttps
+  AllowAll
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WebViewNavigationPolicy::from_revision_key(String) -> Self
+pub fn WebViewNavigationPolicy::revision_key(Self) -> String
+
+pub(all) struct WebViewSpec {
+  key : @wzzc-dev/moui/core.Key?
+  id : String
+  url : String
+  width : Double?
+  height : Double?
+  title : String
+  policy : WebViewNavigationPolicy
+  on_event : ((WebViewEvent) -> Unit)?
+}
+pub fn WebViewSpec::allows_url(Self, String) -> Bool
+pub fn WebViewSpec::new(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Unit)?) -> Self
+pub fn WebViewSpec::platform_view_placement(Self, frame~ : @wzzc-dev/moui/core.Rect, clip? : @wzzc-dev/moui/core.Rect?) -> @wzzc-dev/moui/core.PlatformViewPlacement
 
 // Type aliases
 

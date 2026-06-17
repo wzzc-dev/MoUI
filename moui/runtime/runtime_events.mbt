@@ -278,7 +278,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
         self.request_activation_rebuild()
       }
     }
-    AppEvent::WebView(id, event) =>
+    AppEvent::PlatformView(id, event) =>
       if self.element_tree.root.dispatch_web_view_event(
           id,
           event,

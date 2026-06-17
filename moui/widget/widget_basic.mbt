@@ -85,84 +85,6 @@ pub fn[Msg] image(
 }
 
 ///|
-pub fn[Msg] web_view(
-  id~ : String,
-  url~ : String,
-  width? : Double? = None,
-  height? : Double? = None,
-  title? : String = "",
-  policy? : @core.WebViewNavigationPolicy = @core.WebViewNavigationPolicy::AllowHttpHttpsFile,
-  on_event? : ((@core.WebViewEvent) -> Msg)? = None,
-  kind? : String = "WebView",
-  key? : String? = None,
-) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.WidgetOps::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
-      revision=() => {
-        "web-view:\{id}:\{url}:\{web_view_double_option_revision(width)}:\{web_view_double_option_revision(height)}:\{title}:\{web_view_policy_revision(policy)}:\{on_event is Some(_)}"
-      },
-      layout=ctx => {
-        @core.WidgetLayoutResult::new(
-          size=ctx.constraints.constrain(
-            @core.Size::new(
-              width=width.unwrap_or(640.0),
-              height=height.unwrap_or(360.0),
-            ),
-          ),
-        )
-      },
-      paint=ctx => {
-        if ctx.frame.is_empty() {
-          @core.WidgetPaintPlan::empty()
-        } else {
-          {
-            commands: [],
-            child_layers: [],
-            post_commands: [],
-            overlay_commands: [],
-            platform_views: [
-              @core.PlatformViewPlacement::web_view(
-                spec=@core.WebViewSpec::new(
-                  id~,
-                  url~,
-                  width~,
-                  height~,
-                  title~,
-                  policy~,
-                ),
-                frame=ctx.frame,
-              ),
-            ],
-            repaint_boundary: false,
-          }
-        }
-      },
-      event=ctx => {
-        match (ctx.event, on_event) {
-          (@core.AppEvent::WebView(event_id, event), Some(handler)) =>
-            if event_id == id {
-              widget_event_result(activated=true, captured=true, messages=[
-                handler(event),
-              ])
-            } else {
-              @core.WidgetEventResult::ignored()
-            }
-          _ => @core.WidgetEventResult::ignored()
-        }
-      },
-      semantics=() => {
-        @core.WidgetSemanticsInfo::new(
-          role=@core.SemanticsRole::Group,
-          label=title,
-          value=url,
-        )
-      },
-    ),
-  )
-}
-
-///|
 pub fn[Msg] flex(
   children~ : Array[@core.View[Msg]],
   axis~ : @core.Axis,
@@ -378,23 +300,6 @@ fn image_fit_revision(fit : @core.ImageFit) -> String {
     @core.ImageFit::ScaleDown => "scale-down"
     @core.ImageFit::FitWidth => "fit-width"
     @core.ImageFit::FitHeight => "fit-height"
-  }
-}
-
-///|
-fn web_view_policy_revision(policy : @core.WebViewNavigationPolicy) -> String {
-  match policy {
-    @core.WebViewNavigationPolicy::AllowHttpHttpsFile => "http-https-file"
-    @core.WebViewNavigationPolicy::AllowHttpHttps => "http-https"
-    @core.WebViewNavigationPolicy::AllowAll => "all"
-  }
-}
-
-///|
-fn web_view_double_option_revision(value : Double?) -> String {
-  match value {
-    Some(value) => "\{value}"
-    None => "none"
   }
 }
 

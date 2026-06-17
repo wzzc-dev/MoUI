@@ -55,7 +55,7 @@ struct RouteFocusStore {
 
 ///|
 struct RouterState {
-  navigation : NavigationState
+  navigation : @core.NavigationState
 }
 
 ///|
@@ -412,7 +412,7 @@ pub fn RouteLocation::to_route(self : RouteLocation) -> String {
 pub fn RouterState::new(
   initial? : RouteLocation = RouteLocation::new(path="/"),
 ) -> RouterState {
-  { navigation: NavigationState::new(initial=initial.to_route()) }
+  { navigation: @core.NavigationState::new(initial=initial.to_route()) }
 }
 
 ///|

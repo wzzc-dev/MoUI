@@ -40,7 +40,7 @@ pub(all) enum Msg {
   GoBack
   GoForward
   EvaluateLocation
-  WebViewEvent(@core.WebViewEvent)
+  WebViewEvent(@host.WebViewEvent)
 }
 
 // Type aliases
