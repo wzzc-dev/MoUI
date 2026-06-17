@@ -55,11 +55,11 @@ pub fn[Msg] custom_layout(
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  @widget.custom(
-    measure=ctx => @core.WidgetLayoutResult::new(size=measure(ctx.constraints)),
-    paint=ctx => @core.WidgetPaintPlan::commands(paint(ctx.frame)),
+  raw_custom(
+    measure=ctx => @core.VirtualNodeLayoutResult::new(size=measure(ctx.constraints)),
+    paint=ctx => @core.VirtualNodePaintPlan::commands(paint(ctx.frame)),
     semantics=() => {
-      @core.WidgetSemanticsInfo::new(
+      @core.VirtualNodeSemanticsInfo::new(
         role=semantics_role,
         label=semantics_label,
         value=semantics_label,
@@ -77,7 +77,7 @@ pub fn[Msg] custom_children_layout(
   semantics_role? : @core.SemanticsRole = @core.SemanticsRole::Group,
   semantics_label? : String = "",
 ) -> @core.View[Msg] {
-  @widget.custom_children_layout(
+  raw_custom_children_layout(
     children~,
     measure~,
     place~,
@@ -91,7 +91,7 @@ pub fn[Msg] custom_children_layout(
 pub fn[Msg] component(
   build : (@core.ComponentContext) -> @core.View[Msg],
 ) -> @core.View[Msg] {
-  @widget.component(build)
+  raw_component(build)
 }
 
 ///|

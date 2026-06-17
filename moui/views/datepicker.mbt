@@ -20,9 +20,9 @@ pub fn[Msg] datepicker(
     Some(value) => value
     None => PickerStyle::default(theme~)
   }
-  @widget.datepicker(
+  raw_datepicker(
     selected=@core.Binding::new(get=() => selected, set=_value => ()),
-    mode=mode.to_widget_mode(),
+    mode=mode.to_virtual_node_mode(),
     placeholder~,
     font=resolved_style.font,
     foreground=resolved_style.foreground,
@@ -48,9 +48,9 @@ pub fn[Msg] datepicker_binding(
     Some(value) => value
     None => PickerStyle::default(theme~)
   }
-  @widget.datepicker(
+  raw_datepicker(
     selected~,
-    mode=mode.to_widget_mode(),
+    mode=mode.to_virtual_node_mode(),
     placeholder~,
     font=resolved_style.font,
     foreground=resolved_style.foreground,
@@ -62,12 +62,12 @@ pub fn[Msg] datepicker_binding(
 }
 
 ///|
-fn DatePickerMode::to_widget_mode(
+fn DatePickerMode::to_virtual_node_mode(
   self : DatePickerMode,
-) -> @widget.DatePickerDisplayMode {
+) -> RawDatePickerDisplayMode {
   match self {
-    Date => @widget.DatePickerDisplayMode::Date
-    DateAndTime => @widget.DatePickerDisplayMode::DateAndTime
-    Time => @widget.DatePickerDisplayMode::Time
+    Date => RawDatePickerDisplayMode::Date
+    DateAndTime => RawDatePickerDisplayMode::DateAndTime
+    Time => RawDatePickerDisplayMode::Time
   }
 }

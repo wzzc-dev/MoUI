@@ -722,7 +722,7 @@ fn file_budgets() -> Array[FileBudget] {
       path: "moui/runtime/test_runtime_helpers_wbtest.mbt",
       max_lines: 225,
       target_lines: 200,
-      reason: "keep runtime wbtest runtime and widget modifier helpers compact",
+      reason: "keep runtime wbtest runtime and virtual-node modifier helpers compact",
     },
     {
       path: "examples/pdf_workbench/app/app.mbt",

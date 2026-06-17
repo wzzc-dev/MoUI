@@ -1,5 +1,5 @@
 ///|
-pub fn[Msg] button(
+pub fn[Msg] raw_button(
   text~ : String,
   size~ : @core.Size,
   font~ : @core.FontSpec,
@@ -14,17 +14,17 @@ pub fn[Msg] button(
   kind? : String = "Button",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => {
-        "button:\{text}:\{widget_size_revision(size)}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_brush_revision(background)}:\{widget_brush_revision(hovered_background)}:\{widget_brush_revision(pressed_background)}:\{widget_border_option_revision(border)}:\{widget_shadow_option_revision(shadow)}:\{corner_radius}:\{on_click is Some(_)}"
+        "button:\{text}:\{virtual_node_size_revision(size)}:\{virtual_node_font_revision(font)}:\{virtual_node_color_revision(foreground)}:\{virtual_node_brush_revision(background)}:\{virtual_node_brush_revision(hovered_background)}:\{virtual_node_brush_revision(pressed_background)}:\{virtual_node_border_option_revision(border)}:\{virtual_node_shadow_option_revision(shadow)}:\{corner_radius}:\{on_click is Some(_)}"
       },
       layout=ctx => {
-        @core.WidgetLayoutResult::new(size=ctx.constraints.constrain(size))
+        @core.VirtualNodeLayoutResult::new(size=ctx.constraints.constrain(size))
       },
       paint=ctx => {
-        let background = widget_button_background(
+        let background = virtual_node_button_background(
           ctx.state,
           background,
           hovered_background,
@@ -71,7 +71,7 @@ pub fn[Msg] button(
             @core.TextRun::new(text~, frame=ctx.frame, font~, color=foreground),
           ),
         )
-        @core.WidgetPaintPlan::commands(commands)
+        @core.VirtualNodePaintPlan::commands(commands)
       },
       event=ctx => {
         match ctx.event {
@@ -84,42 +84,42 @@ pub fn[Msg] button(
             } else {
               @core.ButtonState::Normal
             }
-            let next = widget_button_next_state(current, inside, event.phase)
+            let next = virtual_node_button_next_state(current, inside, event.phase)
             let activated = event.phase == @core.PointerPhase::Up &&
               inside &&
               current == @core.ButtonState::Pressed
             let changed = next != current || activated
             match (activated, on_click) {
               (true, Some(message)) =>
-                widget_event_result(
+                virtual_node_event_result(
                   changed~,
                   activated=true,
                   captured=true,
-                  state=Some(widget_button_state_context(ctx.state, next)),
-                  dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+                  state=Some(virtual_node_button_state_context(ctx.state, next)),
+                  dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
                   messages=[message],
                 )
               (true, None) =>
-                widget_event_result(
+                virtual_node_event_result(
                   changed~,
                   activated=false,
                   captured=true,
-                  state=Some(widget_button_state_context(ctx.state, next)),
-                  dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+                  state=Some(virtual_node_button_state_context(ctx.state, next)),
+                  dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
                 )
               (false, _) =>
-                widget_event_result(
+                virtual_node_event_result(
                   changed~,
                   captured=inside || changed,
                   state=if changed {
-                    Some(widget_button_state_context(ctx.state, next))
+                    Some(virtual_node_button_state_context(ctx.state, next))
                   } else {
                     None
                   },
                   dirty=if changed {
-                    @core.WidgetDirtyHint::WidgetPaintDirty
+                    @core.VirtualNodeDirtyHint::VirtualNodePaintDirty
                   } else {
-                    @core.WidgetDirtyHint::WidgetClean
+                    @core.VirtualNodeDirtyHint::VirtualNodeClean
                   },
                 )
             }
@@ -129,28 +129,28 @@ pub fn[Msg] button(
               (event.key == "Enter" || event.key == "Space" || event.key == " ") {
               match on_click {
                 Some(message) =>
-                  widget_event_result(
+                  virtual_node_event_result(
                     changed=true,
                     activated=true,
                     captured=true,
-                    dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+                    dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
                     messages=[message],
                   )
                 None =>
-                  widget_event_result(
+                  virtual_node_event_result(
                     changed=true,
                     captured=true,
-                    dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+                    dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
                   )
               }
             } else {
-              @core.WidgetEventResult::ignored()
+              @core.VirtualNodeEventResult::ignored()
             }
-          _ => @core.WidgetEventResult::ignored()
+          _ => @core.VirtualNodeEventResult::ignored()
         }
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(
+        @core.VirtualNodeSemanticsInfo::new(
           role=@core.SemanticsRole::Button,
           label=text,
           actions=[
@@ -165,10 +165,10 @@ pub fn[Msg] button(
 }
 
 ///|
-fn widget_button_state_context(
-  current : @core.WidgetStateContext,
+fn virtual_node_button_state_context(
+  current : @core.VirtualNodeStateContext,
   next : @core.ButtonState,
-) -> @core.WidgetStateContext {
+) -> @core.VirtualNodeStateContext {
   {
     ..current,
     hovered: next == @core.ButtonState::Hovered,
@@ -177,7 +177,7 @@ fn widget_button_state_context(
 }
 
 ///|
-pub fn[Msg] checkbox(
+pub fn[Msg] raw_checkbox(
   label~ : String,
   checked~ : @core.Binding[Bool],
   font~ : @core.FontSpec,
@@ -188,14 +188,14 @@ pub fn[Msg] checkbox(
   kind? : String = "Checkbox",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => {
-        "checkbox:\{label}:\{checked.get()}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_color_revision(check_color)}:\{widget_size_revision(size)}:\{on_change is Some(_)}"
+        "checkbox:\{label}:\{checked.get()}:\{virtual_node_font_revision(font)}:\{virtual_node_color_revision(foreground)}:\{virtual_node_color_revision(check_color)}:\{virtual_node_size_revision(size)}:\{on_change is Some(_)}"
       },
       layout=ctx => {
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size=ctx.constraints.constrain(
             checkbox_intrinsic_size(label, font, size),
           ),
@@ -213,7 +213,7 @@ pub fn[Msg] checkbox(
           size~,
           frame=ctx.frame,
         )
-        @core.WidgetPaintPlan::commands(commands)
+        @core.VirtualNodePaintPlan::commands(commands)
       },
       event=ctx => {
         match ctx.event {
@@ -222,36 +222,36 @@ pub fn[Msg] checkbox(
               ctx.frame.contains(event.position) {
               let next = !checked.get()
               checked.set(next)
-              widget_event_result(
+              virtual_node_event_result(
                 changed=true,
                 activated=true,
                 captured=true,
-                dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+                dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
                 messages=checkbox_messages(on_change, next),
               )
             } else {
-              @core.WidgetEventResult::ignored()
+              @core.VirtualNodeEventResult::ignored()
             }
           @core.AppEvent::Keyboard(event) =>
             if event.pressed &&
               (event.key == "Enter" || event.key == "Space" || event.key == " ") {
               let next = !checked.get()
               checked.set(next)
-              widget_event_result(
+              virtual_node_event_result(
                 changed=true,
                 activated=true,
                 captured=true,
-                dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+                dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
                 messages=checkbox_messages(on_change, next),
               )
             } else {
-              @core.WidgetEventResult::ignored()
+              @core.VirtualNodeEventResult::ignored()
             }
-          _ => @core.WidgetEventResult::ignored()
+          _ => @core.VirtualNodeEventResult::ignored()
         }
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(
+        @core.VirtualNodeSemanticsInfo::new(
           role=@core.SemanticsRole::Checkbox,
           label~,
           value=if checked.get() { "true" } else { "false" },
@@ -284,10 +284,10 @@ fn checkbox_intrinsic_size(
   size : @core.Size,
 ) -> @core.Size {
   let spacing = 8.0
-  let label_width = widget_text_length(label).to_double() * font.size * 0.58
+  let label_width = virtual_node_text_length(label).to_double() * font.size * 0.58
   @core.Size::new(
     width=size.width + spacing + label_width,
-    height=widget_max_double(size.height, font.size * 1.25),
+    height=virtual_node_max_double(size.height, font.size * 1.25),
   )
 }
 
@@ -304,7 +304,7 @@ fn append_checkbox_commands(
 ) -> Unit {
   let box_side = size.width
   let box_y = frame.origin.y +
-    widget_max_double(0.0, (frame.size.height - box_side) / 2.0)
+    virtual_node_max_double(0.0, (frame.size.height - box_side) / 2.0)
   let box_rect = @core.Rect::new(
     x=frame.origin.x,
     y=box_y,
@@ -334,7 +334,7 @@ fn append_checkbox_commands(
         frame=@core.Rect::new(
           x=frame.origin.x + box_side + 8.0,
           y=frame.origin.y,
-          width=widget_max_double(0.0, frame.size.width - box_side - 8.0),
+          width=virtual_node_max_double(0.0, frame.size.width - box_side - 8.0),
           height=frame.size.height,
         ),
         font~,

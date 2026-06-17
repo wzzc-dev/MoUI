@@ -758,14 +758,16 @@ pub struct HostWindowRenderer {
 }
 pub fn HostWindowRenderer::apply_image_resource_load_completion(Self, @render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot
 pub fn HostWindowRenderer::dispose(Self) -> Unit
+pub fn HostWindowRenderer::draw_platform_view_pixels(Self, Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
 pub fn HostWindowRenderer::image_resource_snapshot(Self) -> @render.ImageResourceSnapshot
 pub fn HostWindowRenderer::image_resources(Self) -> Array[@render.ImageResourceRecord]
-pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, render_frame? : ((@wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult)?, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, image_resources? : () -> Array[@render.ImageResourceRecord], image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)?, apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)?, set_image_resource_change_callback? : (((@render.ImageResourceSnapshot) -> Unit)?) -> Unit, present_count? : () -> Int, dispose? : () -> Unit) -> Self
+pub fn HostWindowRenderer::new(resize~ : (HostSurfaceMetrics) -> Unit, render~ : (Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit, render_frame? : ((@wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult)?, text_system~ : () -> @wzzc-dev/moui/core.TextSystem, image_resources? : () -> Array[@render.ImageResourceRecord], image_resource_snapshot? : (() -> @render.ImageResourceSnapshot)?, apply_image_resource_load_completion? : ((@render.ImageResourceLoadCompletion) -> @render.ImageResourceSnapshot)?, set_image_resource_change_callback? : (((@render.ImageResourceSnapshot) -> Unit)?) -> Unit, present_count? : () -> Int, dispose? : () -> Unit, draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit, set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit) -> Self
 pub fn HostWindowRenderer::present_count(Self) -> Int
 pub fn HostWindowRenderer::render(Self, Array[@wzzc-dev/moui/core.DrawCommand]) -> Unit
 pub fn HostWindowRenderer::render_frame(Self, @wzzc-dev/moui/core.DrawFrame) -> @render.RenderFrameResult
 pub fn HostWindowRenderer::resize(Self, HostSurfaceMetrics) -> Unit
 pub fn HostWindowRenderer::set_image_resource_change_callback(Self, ((@render.ImageResourceSnapshot) -> Unit)?) -> Unit
+pub fn HostWindowRenderer::set_platform_view_draw_fn(Self, (() -> Unit)?) -> Unit
 pub fn HostWindowRenderer::text_system(Self) -> @wzzc-dev/moui/core.TextSystem
 
 pub(all) enum HostWindowRequest {

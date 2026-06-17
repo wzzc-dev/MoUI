@@ -5,7 +5,7 @@ pub fn[Msg] grid(
   row_spacing? : Double = 0.0,
   column_spacing? : Double = 0.0,
 ) -> @core.View[Msg] {
-  @widget.grid(children~, columns~, row_spacing~, column_spacing~)
+  raw_grid(children~, columns~, row_spacing~, column_spacing~)
 }
 
 ///|
@@ -13,5 +13,5 @@ pub fn[Msg] list(
   children : Array[@core.View[Msg]],
   spacing? : Double = 0.0,
 ) -> @core.View[Msg] {
-  @widget.list(children~, spacing~)
+  raw_list(children~, spacing~)
 }

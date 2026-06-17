@@ -7,8 +7,8 @@ fn ElementNode::dispatch_text_input(
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   if self.id == target {
-    self.dispatch_widget_event(
-      self.widget,
+    self.dispatch_virtual_node_event(
+      self.virtual_node,
       AppEvent::TextInput(event),
       RenderNode::empty(),
       text_system,
