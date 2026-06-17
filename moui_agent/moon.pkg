@@ -1,0 +1,15 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+  "moonbitlang/core/json",
+  "moonbitlang/core/ref",
+}
+
+import {
+  "wzzc-dev/moui/widget",
+  "wzzc-dev/moui/views",
+} for "test"
+
+options(
+  targets: { },
+)

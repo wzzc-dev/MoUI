@@ -430,6 +430,18 @@ pub fn AppRuntime::set_action_commands(
 }
 
 ///|
+/// Installs an observer invoked with every `AppEvent` before it is processed.
+/// Replaces any previously installed observer. Passing a no-op effectively
+/// disables observation. This is the additive hook the agent layer consumes;
+/// it is inert unless explicitly called.
+pub fn AppRuntime::set_event_observer(
+  self : AppRuntime,
+  observer : (@core.AppEvent) -> Unit,
+) -> Unit {
+  self.state.event_observer = observer
+}
+
+///|
 pub fn AppRuntime::action_commands(
   self : AppRuntime,
 ) -> Array[@core.ActionCommand] {

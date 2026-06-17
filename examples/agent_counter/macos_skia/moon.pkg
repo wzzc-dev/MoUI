@@ -1,0 +1,21 @@
+import {
+  "examples/agent_counter" @app,
+  "wzzc-dev/moui/backend/macos/skia" @macos_skia_backend,
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui_agent" @agent,
+  "wzzc-dev/moui_agent_mcp" @mcp,
+  "moonbitlang/core/json",
+  "moonbitlang/async",
+  "moonbitlang/async/stdio",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -lz",
+    },
+  },
+)

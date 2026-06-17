@@ -70,6 +70,9 @@ fn RuntimeState::dispatch_focused_text_command(
 
 ///|
 fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
+  // Additive observation hook: broadcast every AppEvent before processing.
+  // Defaults to a no-op; only active when an observer is installed (agent layer).
+  (self.event_observer)(event)
   match event {
     FrameTick(_) => ()
     Resize(size) => {
