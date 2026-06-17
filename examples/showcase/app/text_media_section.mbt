@@ -35,7 +35,7 @@ fn ShowcaseModel::text_media_section(
           theme~,
           width=320.0,
         ),
-        rich_text_editor(
+        showcase_rich_text_editor(
           self.draft,
           showcase_format_rich_text,
           on_input=value => DraftChanged(value),
@@ -45,9 +45,8 @@ fn ShowcaseModel::text_media_section(
           variant=@views.TextFieldVariant::Filled,
           theme~,
         ),
-        markdown_editor(
+        showcase_markdown_editor(
           self.draft,
-          showcase_format_markdown,
           on_input=value => DraftChanged(value),
           placeholder="Markdown preview",
           width=320.0,

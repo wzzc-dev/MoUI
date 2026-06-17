@@ -42,6 +42,7 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
   assert_true(
     root.forbidden_tokens.contains("pub using @core {type RichTextDocument}"),
   )
+  assert_true(root.forbidden_tokens.contains("RichText"))
   assert_true(root.forbidden_tokens.contains("DrawCommand"))
   assert_true(root.forbidden_tokens.contains("DatePickerMode"))
   assert_true(root.forbidden_tokens.contains("EffectPlanSummary"))
@@ -183,11 +184,11 @@ test "views facade exposes control-specific contracts" {
   inspect(views.max_lines, content="980")
   inspect(views.max_pub_lines, content="370")
   inspect(views_facade_core_alias_tokens().length(), content="8")
-  inspect(views_facade_widget_alias_tokens().length(), content="8")
+  inspect(views_facade_widget_alias_tokens().length(), content="0")
   inspect(views_facade_host_alias_tokens().length(), content="2")
   let required = views.required_tokens
   assert_true(required.contains("\"wzzc-dev/moui/backend/host\""))
-  assert_true(required.contains("\"wzzc-dev/moui/widget\""))
+  assert_false(required.contains("\"wzzc-dev/moui/widget\""))
   assert_true(required.contains("pub using @core {type ActionCommand}"))
   assert_true(required.contains("pub using @core {type ActionCommandMap}"))
   assert_true(required.contains("pub using @core {type CommandBinding}"))
@@ -209,11 +210,11 @@ test "views facade exposes control-specific contracts" {
   assert_false(
     required.contains("pub using @core {type FormValidationSummary}"),
   )
-  assert_true(required.contains("pub using @widget {type RichTextDocument}"))
-  assert_true(
+  assert_false(required.contains("pub using @widget {type RichTextDocument}"))
+  assert_false(
     required.contains("pub using @widget {type RichTextInputTransform}"),
   )
-  assert_true(
+  assert_false(
     required.contains(
       "pub type RichTextFormatter = (String) -> @widget.RichTextDocument",
     ),
@@ -230,7 +231,10 @@ test "views facade exposes control-specific contracts" {
   assert_true(
     required.contains("pub using @host {type WebViewNavigationPolicy}"),
   )
-  assert_true(required.contains("pub fn rich_text_document_height("))
+  assert_false(required.contains("pub fn rich_text_document_height("))
+  assert_true(views.forbidden_tokens.contains("RichText"))
+  assert_true(views.forbidden_tokens.contains("rich_text_"))
+  assert_true(views.forbidden_tokens.contains("markdown_editor"))
 }
 
 ///|
@@ -294,6 +298,7 @@ test "core descriptor payloads stay opaque" {
     core.forbidden_tokens.contains("RuntimeInspectorSnapshot::from_runtime("),
   )
   assert_true(core.forbidden_tokens.contains("RouteFocusStore::restore("))
+  assert_true(core.forbidden_tokens.contains("RichText"))
 }
 
 ///|
@@ -361,6 +366,9 @@ test "widget facade owns widget-local datepicker mode without depending on views
   assert_true(widget.forbidden_tokens.contains("@views."))
   assert_true(widget.forbidden_tokens.contains("DatePickerMode"))
   assert_true(widget.forbidden_tokens.contains("default_theme("))
+  assert_true(widget.forbidden_tokens.contains("RichText"))
+  assert_true(widget.forbidden_tokens.contains("rich_text_"))
+  assert_true(widget.forbidden_tokens.contains("markdown_editor"))
 }
 
 ///|
@@ -465,7 +473,7 @@ test "views return rules cover app-facing constructors" {
   assert_true(names.contains("button"))
   assert_true(names.contains("column"))
   assert_true(names.contains("text_field"))
-  assert_true(names.contains("markdown_editor"))
+  assert_false(names.contains("markdown_editor"))
   assert_true(names.contains("navigation_stack"))
   assert_true(names.contains("web_view"))
   for rule in view_return_rules() {

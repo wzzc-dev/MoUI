@@ -277,7 +277,8 @@ test "markdown formatter gives quotes and code blocks vertical breathing room" {
   assert_true(code_inset.top >= 8.0)
   assert_true(code_inset.bottom >= 8.0)
   assert_true(
-    @views.rich_text_document_height(document, @core.FontSpec::new()) > 100.0,
+    @moui_richtext.rich_text_document_height(document, @core.FontSpec::new()) >
+    100.0,
   )
 }
 

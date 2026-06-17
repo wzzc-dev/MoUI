@@ -300,12 +300,12 @@ fn markdown_editor_palette_anchor(
     Some(range) => range.normalized().start
     None => selection.caret
   }
-  let content = @views.rich_text_editor_content_rect(editor_frame).offset(
+  let content = @moui_richtext.rich_text_editor_content_rect(editor_frame).offset(
     dx=0.0,
     dy=-scroll_offset.y,
   )
   match
-    @views.rich_text_document_caret_rect_at_source(
+    @moui_richtext.rich_text_document_caret_rect_at_source(
       snapshot.rich_text,
       caret,
       content,
@@ -598,7 +598,8 @@ fn editor_source_layout(
   let viewport_height = markdown_editor_viewport_height()
   let content_height = markdown_editor_max_double(
     viewport_height,
-    @views.rich_text_document_height(snapshot.rich_text, editor_font) + 96.0,
+    @moui_richtext.rich_text_document_height(snapshot.rich_text, editor_font) +
+    96.0,
   )
   let max_scroll = markdown_editor_max_double(
     0.0,
@@ -646,15 +647,20 @@ fn editor_source_layout(
       )
     }
   }
-  let editor_control = rich_text_editor(
-    source,
-    editor_format,
+  let editor_control = controlled_rich_text_editor(
+    value=source,
     on_input=value => UpdateDocument(value),
     placeholder="Start writing Markdown",
-    theme~,
-    style=editor_style,
-    width=editor_width,
-    height=content_height,
+    size=@core.Size::new(width=editor_width, height=content_height),
+    format=editor_format,
+    font=editor_style.font,
+    foreground=editor_style.normal.foreground,
+    placeholder_color=editor_style.placeholder_color,
+    background=editor_style.normal.background,
+    border=editor_style.normal.border,
+    focused_border=editor_style.focused.border,
+    cursor_color=editor_style.cursor_color,
+    corner_radius=editor_style.normal.radius,
     on_selection_change=Some(on_selection_change),
     on_prefix_click=Some(on_prefix_click),
     input_transform=Some(markdown_editor_transform_input),

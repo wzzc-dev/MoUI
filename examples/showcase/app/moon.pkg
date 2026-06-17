@@ -4,6 +4,7 @@ import {
   "wzzc-dev/moui/render",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
+  "wzzc-dev/moui_richtext",
 }
 
 supported_targets = "+native+wasm-gc"
