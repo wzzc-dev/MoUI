@@ -3,29 +3,29 @@ fn[Msg] erase_view_for_runtime(
   view : @core.View[Msg],
   emit : (Msg) -> Unit,
 ) -> RuntimeWidget {
-  erase_widget_ops_for_runtime(view.ops(), emit)
+  erase_widget_for_runtime(view.ops(), emit)
 }
 
 ///|
-fn[Msg] erase_widget_ops_for_runtime(
-  ops : @core.WidgetOps[Msg],
+fn[Msg] erase_widget_for_runtime(
+  widget : @core.Widget[Msg],
   emit : (Msg) -> Unit,
 ) -> RuntimeWidget {
   {
-    identity: ops.identity(),
-    revision: ops.revision(),
+    identity: widget.identity(),
+    revision: widget.revision(),
     children: () => {
-      ops.children().map(child => erase_view_for_runtime(child, emit))
+      widget.children().map(child => erase_view_for_runtime(child, emit))
     },
-    build_child: match ops.build_child() {
+    build_child: match widget.build_child() {
       Some(build) => Some(ctx => erase_view_for_runtime(build(ctx), emit))
       None => None
     },
-    child_constraints: constraints => ops.child_constraints(constraints),
-    layout: context => ops.layout(context),
-    paint: context => ops.paint(context),
+    child_constraints: constraints => widget.child_constraints(constraints),
+    layout: context => widget.layout(context),
+    paint: context => widget.paint(context),
     event: context => {
-      let result = ops.event(context)
+      let result = widget.event(context)
       for message in result.messages {
         emit(message)
       }
@@ -40,16 +40,16 @@ fn[Msg] erase_widget_ops_for_runtime(
         messages: [],
       }
     },
-    text_input_state: context => ops.text_input_state(context),
+    text_input_state: context => widget.text_input_state(context),
     text_command: (context, intent, paste_text) => {
-      let result = ops.text_command_result(context, intent, paste_text~)
+      let result = widget.text_command_result(context, intent, paste_text~)
       for message in result.messages {
         emit(message)
       }
       { result: result.result, text_control: result.text_control, messages: [] }
     },
-    semantics: () => ops.semantics(),
-    focusable: () => ops.focusable(),
+    semantics: () => widget.semantics(),
+    focusable: () => widget.focusable(),
     state: widget_state_context_default(),
   }
 }

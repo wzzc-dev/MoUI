@@ -10,7 +10,7 @@ pub fn[Msg] sheet(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "sheet:\{sheet_presentation_revision(presentation_mode)}:\{widget_brush_revision(background)}:\{corner_radius}:\{widget_shadow_option_revision(shadow)}:\{on_dismiss is Some(_)}"

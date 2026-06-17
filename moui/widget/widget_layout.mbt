@@ -4,7 +4,7 @@ pub fn[Msg] empty(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => "empty",
       layout=ctx => {
@@ -24,7 +24,7 @@ pub fn[Msg] spacer(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => "spacer:\{min_length}:\{weight}",
       layout=ctx => {
@@ -46,7 +46,7 @@ pub fn[Msg] stack(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => "stack",
       children=() => children,
@@ -82,7 +82,7 @@ pub fn[Msg] padding(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "padding:\{insets.top}:\{insets.right}:\{insets.bottom}:\{insets.left}"
@@ -123,7 +123,7 @@ pub fn[Msg] frame(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "frame:\{widget_double_option_revision(width)}:\{widget_double_option_revision(height)}:\{widget_double_option_revision(min_width)}:\{widget_double_option_revision(min_height)}:\{widget_double_option_revision(max_width)}:\{widget_double_option_revision(max_height)}"
@@ -167,7 +167,7 @@ pub fn[Msg] container(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "container:\{widget_size_option_revision(size)}:\{widget_brush_option_revision(background)}:\{widget_border_option_revision(border)}:\{corner_radius}:\{widget_shadow_option_revision(shadow)}"
@@ -224,7 +224,7 @@ pub fn[Msg] grid(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => "grid:\{columns}:\{row_spacing}:\{column_spacing}",
       children=() => children,
@@ -276,7 +276,7 @@ pub fn[Msg] list(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => "list:\{spacing}",
       children=() => children,
@@ -322,7 +322,7 @@ pub fn[Msg] scroll(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         let current = scroll_offset(offset, state)

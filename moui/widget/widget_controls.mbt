@@ -15,7 +15,7 @@ pub fn[Msg] button(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "button:\{text}:\{widget_size_revision(size)}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_brush_revision(background)}:\{widget_brush_revision(hovered_background)}:\{widget_brush_revision(pressed_background)}:\{widget_border_option_revision(border)}:\{widget_shadow_option_revision(shadow)}:\{corner_radius}:\{on_click is Some(_)}"
@@ -189,7 +189,7 @@ pub fn[Msg] checkbox(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "checkbox:\{label}:\{checked.get()}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_color_revision(check_color)}:\{widget_size_revision(size)}:\{on_change is Some(_)}"

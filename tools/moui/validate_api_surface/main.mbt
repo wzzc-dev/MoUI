@@ -154,7 +154,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "ViewSpec", "DrawCommand", "EffectDescriptor", "SubscriptionDescriptor",
         "DatePickerMode", "EffectPlanSummary", "SubscriptionPlanSummary", "EffectRuntimeOp",
         "ComponentContext", "SubscriptionLifecycleSnapshot", "ProgramRuntimeSnapshot",
-        "RichText", "rich_text_", "pub using @core {type AppRuntime}", "pub using @core {type WidgetOps}",
+        "RichText", "rich_text_", "pub using @core {type AppRuntime}", "pub using @core {type Widget}",
         "pub using @core {type WidgetLayoutContext}", "pub using @core {type WidgetPaintContext}",
         "pub using @core {type WidgetEventContext}", "pub using @core {type RuntimeInspectorSnapshot}",
         "pub using @core {type RenderInspectorSnapshot}", "pub using @core {type WebViewEvent}",
@@ -203,7 +203,7 @@ fn package_budgets() -> Array[PackageBudget] {
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) enum Effect", "type Subscription", "pub(all) struct DrawFrame",
-        "pub struct WidgetOps[Msg]", "View::widget", "WidgetOps::new",
+        "pub struct Widget[Msg]", "View::widget", "Widget::new",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui_theme", "\"wzzc-dev/moui/render/skia\"", "SkiaRasterRenderer",

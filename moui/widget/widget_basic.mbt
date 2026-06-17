@@ -8,7 +8,7 @@ pub fn[Msg] text(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "text:\{text}:\{size.width}:\{size.height}:\{font.size}:\{font.weight}:\{color.r}:\{color.g}:\{color.b}:\{color.a}"
@@ -45,7 +45,7 @@ pub fn[Msg] image(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "image:\{source}:\{size_revision(size)}:\{opacity}:\{corner_radius}:\{image_fit_revision(fit)}"
@@ -95,7 +95,7 @@ pub fn[Msg] flex(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "flex:\{axis_revision(axis)}:\{spacing}:\{main_axis_revision(main_axis_alignment)}:\{cross_axis_revision(cross_axis_alignment)}"

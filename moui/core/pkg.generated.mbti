@@ -1313,7 +1313,7 @@ pub fn[Msg] View::on_file_drop(Self[Msg], (Array[String], Point) -> Msg) -> Self
 pub fn[Msg] View::on_long_press(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::on_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::opacity(Self[Msg], Double) -> Self[Msg]
-pub fn[Msg] View::ops(Self[Msg]) -> WidgetOps[Msg]
+pub fn[Msg] View::ops(Self[Msg]) -> Widget[Msg]
 pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
@@ -1333,8 +1333,8 @@ pub fn[Msg] View::spacing(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::theme(Self[Msg], Theme) -> Self[Msg]
 pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
-pub fn[Msg] View::widget(WidgetOps[Msg]) -> Self[Msg]
-pub fn[Msg] View::widget_ops(Self[Msg]) -> WidgetOps[Msg]?
+pub fn[Msg] View::widget(Widget[Msg]) -> Self[Msg]
+pub fn[Msg] View::widget_ops(Self[Msg]) -> Widget[Msg]?
 
 type ViewEnvironment
 pub fn ViewEnvironment::environment(Self) -> Environment
@@ -1360,6 +1360,25 @@ pub(all) struct VisualStyle {
   opacity : Double?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn VisualStyle::empty() -> Self
+
+pub struct Widget[Msg] {
+  // private fields
+}
+pub fn[Msg] Widget::build_child(Self[Msg]) -> ((ComponentContext) -> View[Msg])?
+pub fn[Msg] Widget::child_constraints(Self[Msg], Constraints) -> Constraints
+pub fn[Msg] Widget::children(Self[Msg]) -> Array[View[Msg]]
+pub fn[Msg] Widget::event(Self[Msg], WidgetEventContext) -> WidgetEventResult[Msg]
+pub fn[Msg] Widget::focusable(Self[Msg]) -> Bool
+pub fn[Msg] Widget::identity(Self[Msg]) -> WidgetIdentity
+pub fn[Msg] Widget::layout(Self[Msg], WidgetLayoutContext) -> WidgetLayoutResult
+pub fn[Msg, NextMsg] Widget::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
+pub fn[Msg] Widget::new(identity~ : () -> WidgetIdentity, revision? : () -> String, children? : () -> Array[View[Msg]], build_child? : ((ComponentContext) -> View[Msg])?, child_constraints? : (Constraints) -> Constraints, layout~ : (WidgetLayoutContext) -> WidgetLayoutResult, paint? : (WidgetPaintContext) -> WidgetPaintPlan, event? : (WidgetEventContext) -> WidgetEventResult[Msg], text_input_state? : (WidgetPaintContext) -> TextInputState?, text_command? : (WidgetEventContext, CommandIntent, String?) -> WidgetTextCommandResult[Msg], semantics? : () -> WidgetSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
+pub fn[Msg] Widget::paint(Self[Msg], WidgetPaintContext) -> WidgetPaintPlan
+pub fn[Msg] Widget::revision(Self[Msg]) -> String
+pub fn[Msg] Widget::semantics(Self[Msg]) -> WidgetSemanticsInfo
+pub fn[Msg] Widget::text_command(Self[Msg], WidgetEventContext, CommandIntent, paste_text? : String?) -> TextCommandResult
+pub fn[Msg] Widget::text_command_result(Self[Msg], WidgetEventContext, CommandIntent, paste_text? : String?) -> WidgetTextCommandResult[Msg]
+pub fn[Msg] Widget::text_input_state(Self[Msg], WidgetPaintContext) -> TextInputState?
 
 pub(all) enum WidgetDirtyHint {
   WidgetClean
@@ -1410,25 +1429,6 @@ pub(all) struct WidgetLayoutResult {
   child_frames : Array[Rect]
 } derive(Eq, @debug.Debug)
 pub fn WidgetLayoutResult::new(size~ : Size, child_frames? : Array[Rect]) -> Self
-
-pub struct WidgetOps[Msg] {
-  // private fields
-}
-pub fn[Msg] WidgetOps::build_child(Self[Msg]) -> ((ComponentContext) -> View[Msg])?
-pub fn[Msg] WidgetOps::child_constraints(Self[Msg], Constraints) -> Constraints
-pub fn[Msg] WidgetOps::children(Self[Msg]) -> Array[View[Msg]]
-pub fn[Msg] WidgetOps::event(Self[Msg], WidgetEventContext) -> WidgetEventResult[Msg]
-pub fn[Msg] WidgetOps::focusable(Self[Msg]) -> Bool
-pub fn[Msg] WidgetOps::identity(Self[Msg]) -> WidgetIdentity
-pub fn[Msg] WidgetOps::layout(Self[Msg], WidgetLayoutContext) -> WidgetLayoutResult
-pub fn[Msg, NextMsg] WidgetOps::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
-pub fn[Msg] WidgetOps::new(identity~ : () -> WidgetIdentity, revision? : () -> String, children? : () -> Array[View[Msg]], build_child? : ((ComponentContext) -> View[Msg])?, child_constraints? : (Constraints) -> Constraints, layout~ : (WidgetLayoutContext) -> WidgetLayoutResult, paint? : (WidgetPaintContext) -> WidgetPaintPlan, event? : (WidgetEventContext) -> WidgetEventResult[Msg], text_input_state? : (WidgetPaintContext) -> TextInputState?, text_command? : (WidgetEventContext, CommandIntent, String?) -> WidgetTextCommandResult[Msg], semantics? : () -> WidgetSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
-pub fn[Msg] WidgetOps::paint(Self[Msg], WidgetPaintContext) -> WidgetPaintPlan
-pub fn[Msg] WidgetOps::revision(Self[Msg]) -> String
-pub fn[Msg] WidgetOps::semantics(Self[Msg]) -> WidgetSemanticsInfo
-pub fn[Msg] WidgetOps::text_command(Self[Msg], WidgetEventContext, CommandIntent, paste_text? : String?) -> TextCommandResult
-pub fn[Msg] WidgetOps::text_command_result(Self[Msg], WidgetEventContext, CommandIntent, paste_text? : String?) -> WidgetTextCommandResult[Msg]
-pub fn[Msg] WidgetOps::text_input_state(Self[Msg], WidgetPaintContext) -> TextInputState?
 
 pub(all) struct WidgetPaintContext {
   frame : Rect

@@ -33,9 +33,7 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
   assert_true(
     root.forbidden_tokens.contains("pub using @core {type AppRuntime}"),
   )
-  assert_true(
-    root.forbidden_tokens.contains("pub using @core {type WidgetOps}"),
-  )
+  assert_true(root.forbidden_tokens.contains("pub using @core {type Widget}"))
   assert_true(
     root.forbidden_tokens.contains("pub using @core {type WebViewEvent}"),
   )
@@ -243,9 +241,9 @@ test "core descriptor payloads stay opaque" {
   inspect(core.max_lines, content="1510")
   inspect(core.max_pub_lines, content="465")
   inspect(core.max_pub_all_lines, content="115")
-  assert_true(core.required_tokens.contains("pub struct WidgetOps[Msg]"))
+  assert_true(core.required_tokens.contains("pub struct Widget[Msg]"))
   assert_true(core.required_tokens.contains("View::widget"))
-  assert_true(core.required_tokens.contains("WidgetOps::new"))
+  assert_true(core.required_tokens.contains("Widget::new"))
   assert_true(
     core.forbidden_tokens.contains("pub(all) struct EffectDescriptor"),
   )

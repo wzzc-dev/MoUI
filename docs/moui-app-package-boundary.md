@@ -13,7 +13,7 @@
 `core` 应该包含：
 
 - 基础值类型：geometry、color、brush、font、event、keyboard、text range 等。
-- 抽象 UI 协议：`View`、`WidgetOps`、layout/paint/event/semantics/focus/text input contract。
+- 抽象 UI 协议：`View`、`Widget`、layout/paint/event/semantics/focus/text input contract。
 - App loop contract：`Program`、`Effect`、`Subscription` 这类平台中立执行协议。
 - Renderer-neutral draw/text/accessibility contract：绘制命令、文本测量协议、语义树协议。
 - Theme 的中立 token surface：不绑定具体设计系统品牌、不含平台或 renderer 实现。
@@ -82,7 +82,7 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
   `TextRange`、grapheme boundary、`TextSystem`、paragraph layout contract、基础
   text input state。
 - **`ComponentContext` runtime 构造入口已收口**：`ComponentContext` 仍作为
-  component-facing kernel 类型保留在 `core`，因为 `core.WidgetOps` /
+  component-facing kernel 类型保留在 `core`，因为 `core.Widget` /
   `views.component` 的签名需要它且 `core` 不能反向依赖 `runtime`。runtime 使用
   `ComponentContext::from_runtime(ComponentRuntimeContextInput)` 构造执行上下文；
   普通 component API 不暴露散落的 runtime storage 参数，root facade 也不暴露该
@@ -202,7 +202,7 @@ root facade 暴露的是 app-safe 的 kernel 类型别名，不是把整个 `cor
 
 不应该进入 root facade 的类型包括：
 
-- `WidgetOps`、`WidgetLayoutContext`、`WidgetPaintContext`、`WidgetEventContext`
+- `Widget`、`WidgetLayoutContext`、`WidgetPaintContext`、`WidgetEventContext`
 - `WidgetPaintPlan`、`WidgetPaintLayer`、`WidgetEventResult`
 - `DrawCommand`、`DrawFrame`、`DamageRegion`
 - `ComponentContext::from_runtime` 这类 runtime-only 构造入口
@@ -245,8 +245,8 @@ WebView wrapper，应用层应使用 `wzzc-dev/moui/views`，不应该绕过
 新增 widget 时遵循这个落点：
 
 - 公共 app-facing constructor 放在 `moui/views`。
-- 具体 widget ops 实现放在 `moui/widget`。
-- 底层协议通过 `@core.View::widget` 和 `@core.WidgetOps` 对接。
+- 具体 widget behavior 实现放在 `moui/widget`。
+- 底层协议通过 `@core.View::widget` 和 `@core.Widget` 对接。
 - 普通 app 只看到 `@views.some_control(...) -> View[Msg]`。
 
 换句话说，Iced 的 `iced::widget` 同时是内置控件和自定义控件入口；
@@ -279,8 +279,8 @@ WGPU 相关 backend/render 包只作为实验或诊断入口使用，不是普�
 框架内部、控件实现、renderer/backend 集成可以使用更低层的包。
 
 - `moui/core`：基础协议层 / 抽象 UI kernel，包含平台中立协议和值类型，
-  例如 `View`、`WidgetOps`、event、layout、paint、semantics、text contract 等。
-- `moui/widget`：具体 widget ops 实现。
+  例如 `View`、`Widget`、event、layout、paint、semantics、text contract 等。
+- `moui/widget`：具体 widget behavior 实现。
 - `moui/runtime`：runtime state、element tree、layout/paint/event dispatch、program execution。
 - `moui/backend/host`：host service、window/event/service 协议。
 - `moui/backend/*`：平台 backend。

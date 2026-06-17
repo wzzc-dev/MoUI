@@ -148,7 +148,7 @@ pub(all) struct TextControlStateContext {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub struct WidgetOps[Msg] {
+pub struct Widget[Msg] {
   priv identity_fn : () -> WidgetIdentity
   priv revision_fn : () -> String
   priv children_fn : () -> Array[View[Msg]]
@@ -286,7 +286,7 @@ pub fn WidgetSemanticsInfo::new(
 }
 
 ///|
-pub fn[Msg] WidgetOps::new(
+pub fn[Msg] Widget::new(
   identity~ : () -> WidgetIdentity,
   revision? : () -> String = () => "",
   children? : () -> Array[View[Msg]] = () => [],
@@ -307,7 +307,7 @@ pub fn[Msg] WidgetOps::new(
   ] = (_ctx, _intent, _paste_text) => WidgetTextCommandResult::ignored(),
   semantics? : () -> WidgetSemanticsInfo = () => WidgetSemanticsInfo::new(),
   focusable? : () -> Bool = () => false,
-) -> WidgetOps[Msg] {
+) -> Widget[Msg] {
   {
     identity_fn: identity,
     revision_fn: revision,
@@ -325,70 +325,70 @@ pub fn[Msg] WidgetOps::new(
 }
 
 ///|
-pub fn[Msg] WidgetOps::identity(self : WidgetOps[Msg]) -> WidgetIdentity {
+pub fn[Msg] Widget::identity(self : Widget[Msg]) -> WidgetIdentity {
   (self.identity_fn)()
 }
 
 ///|
-pub fn[Msg] WidgetOps::revision(self : WidgetOps[Msg]) -> String {
+pub fn[Msg] Widget::revision(self : Widget[Msg]) -> String {
   (self.revision_fn)()
 }
 
 ///|
-pub fn[Msg] WidgetOps::children(self : WidgetOps[Msg]) -> Array[View[Msg]] {
+pub fn[Msg] Widget::children(self : Widget[Msg]) -> Array[View[Msg]] {
   (self.children_fn)()
 }
 
 ///|
-pub fn[Msg] WidgetOps::build_child(
-  self : WidgetOps[Msg],
+pub fn[Msg] Widget::build_child(
+  self : Widget[Msg],
 ) -> ((ComponentContext) -> View[Msg])? {
   self.build_child_fn
 }
 
 ///|
-pub fn[Msg] WidgetOps::child_constraints(
-  self : WidgetOps[Msg],
+pub fn[Msg] Widget::child_constraints(
+  self : Widget[Msg],
   constraints : Constraints,
 ) -> Constraints {
   (self.child_constraints_fn)(constraints)
 }
 
 ///|
-pub fn[Msg] WidgetOps::layout(
-  self : WidgetOps[Msg],
+pub fn[Msg] Widget::layout(
+  self : Widget[Msg],
   context : WidgetLayoutContext,
 ) -> WidgetLayoutResult {
   (self.layout_fn)(context)
 }
 
 ///|
-pub fn[Msg] WidgetOps::paint(
-  self : WidgetOps[Msg],
+pub fn[Msg] Widget::paint(
+  self : Widget[Msg],
   context : WidgetPaintContext,
 ) -> WidgetPaintPlan {
   (self.paint_fn)(context)
 }
 
 ///|
-pub fn[Msg] WidgetOps::event(
-  self : WidgetOps[Msg],
+pub fn[Msg] Widget::event(
+  self : Widget[Msg],
   context : WidgetEventContext,
 ) -> WidgetEventResult[Msg] {
   (self.event_fn)(context)
 }
 
 ///|
-pub fn[Msg] WidgetOps::text_input_state(
-  self : WidgetOps[Msg],
+pub fn[Msg] Widget::text_input_state(
+  self : Widget[Msg],
   context : WidgetPaintContext,
 ) -> TextInputState? {
   (self.text_input_state_fn)(context)
 }
 
 ///|
-pub fn[Msg] WidgetOps::text_command(
-  self : WidgetOps[Msg],
+pub fn[Msg] Widget::text_command(
+  self : Widget[Msg],
   context : WidgetEventContext,
   intent : CommandIntent,
   paste_text? : String? = None,
@@ -397,8 +397,8 @@ pub fn[Msg] WidgetOps::text_command(
 }
 
 ///|
-pub fn[Msg] WidgetOps::text_command_result(
-  self : WidgetOps[Msg],
+pub fn[Msg] Widget::text_command_result(
+  self : Widget[Msg],
   context : WidgetEventContext,
   intent : CommandIntent,
   paste_text? : String? = None,
@@ -407,21 +407,21 @@ pub fn[Msg] WidgetOps::text_command_result(
 }
 
 ///|
-pub fn[Msg] WidgetOps::semantics(self : WidgetOps[Msg]) -> WidgetSemanticsInfo {
+pub fn[Msg] Widget::semantics(self : Widget[Msg]) -> WidgetSemanticsInfo {
   (self.semantics_fn)()
 }
 
 ///|
-pub fn[Msg] WidgetOps::focusable(self : WidgetOps[Msg]) -> Bool {
+pub fn[Msg] Widget::focusable(self : Widget[Msg]) -> Bool {
   (self.focusable_fn)()
 }
 
 ///|
-pub fn[Msg, NextMsg] WidgetOps::map(
-  self : WidgetOps[Msg],
+pub fn[Msg, NextMsg] Widget::map(
+  self : Widget[Msg],
   map : (Msg) -> NextMsg,
-) -> WidgetOps[NextMsg] {
-  WidgetOps::new(
+) -> Widget[NextMsg] {
+  Widget::new(
     identity=() => self.identity(),
     revision=() => self.revision(),
     children=() => self.children().map(child => child.map(map)),
@@ -461,25 +461,25 @@ pub fn[Msg, NextMsg] WidgetOps::map(
 
 ///|
 pub struct View[Msg] {
-  priv ops : WidgetOps[Msg]
+  priv widget : Widget[Msg]
 }
 
 ///|
-fn[Msg] view_from_ops(ops : WidgetOps[Msg]) -> View[Msg] {
-  { ops, }
+fn[Msg] view_from_widget(widget : Widget[Msg]) -> View[Msg] {
+  { widget, }
 }
 
 ///|
-pub fn[Msg] View::widget(ops : WidgetOps[Msg]) -> View[Msg] {
-  view_from_ops(ops)
+pub fn[Msg] View::widget(widget : Widget[Msg]) -> View[Msg] {
+  view_from_widget(widget)
 }
 
 ///|
-pub fn[Msg] View::widget_ops(self : View[Msg]) -> WidgetOps[Msg]? {
-  Some(self.ops)
+pub fn[Msg] View::widget_ops(self : View[Msg]) -> Widget[Msg]? {
+  Some(self.widget)
 }
 
 ///|
-pub fn[Msg] View::ops(self : View[Msg]) -> WidgetOps[Msg] {
-  self.ops
+pub fn[Msg] View::ops(self : View[Msg]) -> Widget[Msg] {
+  self.widget
 }
