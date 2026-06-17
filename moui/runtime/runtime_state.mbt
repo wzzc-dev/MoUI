@@ -1,6 +1,6 @@
 ///|
 priv struct RuntimeState {
-  mut root_widget : RuntimeWidget
+  mut root_widget : Widget
   mut element_tree : ElementTree
   mut layout_tree : LayoutTree
   mut render_tree : RenderTree
@@ -46,7 +46,7 @@ fn[Msg] RuntimeState::new_view(
     Some(handler) => handler
     None => _message => ()
   }
-  RuntimeState::new_runtime_widget(
+  RuntimeState::new_widget(
     root=erase_view_for_runtime(root, emit),
     size~,
     environment~,
@@ -54,12 +54,12 @@ fn[Msg] RuntimeState::new_view(
 }
 
 ///|
-fn RuntimeState::new_runtime_widget(
-  root~ : RuntimeWidget,
+fn RuntimeState::new_widget(
+  root~ : Widget,
   size~ : Size,
   environment? : Environment = Environment::neutral(),
 ) -> RuntimeState {
-  let initial = mount_runtime_widget_with_next(root, 1)
+  let initial = mount_widget_with_next(root, 1)
   let state = {
     root_widget: root,
     element_tree: ElementTree::new(initial.node),
@@ -92,7 +92,7 @@ fn RuntimeState::new_runtime_widget(
     clock: Clock::new(),
     saveable_state: SaveableStateStore::new(),
   }
-  let mounted = mount_runtime_widget_for_runtime(root, Some(state), 1)
+  let mounted = mount_widget_for_runtime(root, Some(state), 1)
   state.element_tree = ElementTree::new(mounted.node)
   state.next_element_id = mounted.next_id
   state.mark_dirty(state.element_tree.id())
@@ -161,7 +161,7 @@ fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.element_tree = ElementTree::empty()
   self.layout_tree = LayoutTree::empty()
   self.render_tree = RenderTree::empty()
-  self.root_widget = empty_runtime_widget()
+  self.root_widget = empty_widget()
   self.next_element_id = 1
   self.dirty_elements.clear()
   self.dirty_build_elements.clear()
