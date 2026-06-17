@@ -15,4 +15,5 @@ dist/
 .tools/
 .claude/
 .idea/
+.vscode/
 website/web_wasm/docs/*
