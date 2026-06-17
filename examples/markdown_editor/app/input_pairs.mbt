@@ -4,7 +4,7 @@ fn markdown_editor_wrap_selection_input(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
   }
@@ -37,7 +37,7 @@ fn markdown_editor_pair_inline_marker_input(
   source : String,
   marker : String,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if marker == "" || marker == "*" || marker == "_" {
     return None
   }
@@ -60,7 +60,7 @@ fn markdown_editor_pair_delimiter_input(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
   }
@@ -121,7 +121,7 @@ fn markdown_editor_skip_closing_delimiter(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -197,7 +197,7 @@ fn markdown_editor_backspace_empty_delimiter_pair(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -244,7 +244,7 @@ fn markdown_editor_delete_empty_delimiter_pair(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -270,7 +270,7 @@ fn markdown_editor_backspace_empty_inline_marker_pair(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -315,7 +315,7 @@ fn markdown_editor_delete_empty_inline_marker_pair(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -365,7 +365,7 @@ fn markdown_editor_remove_empty_inline_marker_pair(
   chars : Array[Char],
   open_start : Int,
   marker_length : Int,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   markdown_editor_transform_result(
     text=String::from_array(chars[:open_start]) +
       String::from_array(chars[open_start + marker_length * 2:]),
@@ -377,7 +377,7 @@ fn markdown_editor_remove_empty_inline_marker_pair(
 fn markdown_editor_backspace_inline_marker(
   source : String,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   match markdown_editor_backspace_footnote_marker(chars, caret) {
@@ -451,7 +451,7 @@ fn markdown_editor_delete_inline_marker(
   source : String,
   chars : Array[Char],
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   match markdown_editor_delete_footnote_marker(chars, caret) {
     Some(transform) => return Some(transform)
     None => ()
@@ -564,7 +564,7 @@ fn markdown_editor_remove_inline_marker_pair(
   open_start : Int,
   marker_length : Int,
   close_start : Int,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   let text = String::from_array(chars[:open_start]) +
     String::from_array(chars[open_start + marker_length:close_start]) +
     String::from_array(chars[close_start + marker_length:])

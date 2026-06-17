@@ -28,7 +28,7 @@ fn markdown_editor_backspace_marker(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -75,7 +75,7 @@ fn markdown_editor_backspace_quoted_inner_marker(
   range : MarkdownSourceRange,
   line : String,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let context_length = markdown_editor_block_command_context_prefix_length(line)
   let context_prefix = markdown_editor_substring(line, 0, context_length)
   if !markdown_editor_block_command_context_has_quote(context_prefix) {
@@ -102,7 +102,7 @@ fn markdown_editor_delete_marker(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -140,7 +140,7 @@ fn markdown_editor_delete_quoted_inner_marker(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -174,7 +174,7 @@ fn markdown_editor_backspace_merge_block(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -222,7 +222,7 @@ fn markdown_editor_delete_merge_block(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }

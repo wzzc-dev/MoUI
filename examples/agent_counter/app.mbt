@@ -3,7 +3,7 @@
 // An agent reads its semantics tree, observes events, and fires command
 // intents that flow through update() — exactly like a user clicking.
 
-using @views { column, text, button }
+using @views {column, text, button}
 
 ///|
 pub struct Model {

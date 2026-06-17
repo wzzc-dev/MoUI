@@ -1,12 +1,12 @@
 ///|
 fn markdown_editor_normalize_ordered_transform(
-  edit : @core.RichTextInputTransform,
-) -> @core.RichTextInputTransform {
+  edit : @views.RichTextInputTransform,
+) -> @views.RichTextInputTransform {
   let normalized = markdown_editor_renumber_ordered_lists(edit.text)
   if normalized.text == edit.text {
     edit
   } else {
-    @core.RichTextInputTransform::new(
+    @views.RichTextInputTransform::new(
       text=normalized.text,
       caret=markdown_editor_map_offset_after_replacements(
         edit.caret,

@@ -44,7 +44,7 @@ priv struct ProgramRuntimeDiagnostics {
   mut cancelled_effect_task_count : Int
   mut ignored_effect_task_dispatch_count : Int
   mut active_effect_tasks : Array[ActiveProgramEffectTask]
-  effect_task_lifecycle : Array[@core.EffectTaskLifecycleSnapshot]
+  effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
   mut subscription_plan_count : Int
   mut last_subscription_plan_summary : @core.SubscriptionPlanSummary
   mut started_subscription_count : Int
@@ -54,7 +54,7 @@ priv struct ProgramRuntimeDiagnostics {
   duplicate_subscription_keys : Array[String]
   mut ignored_subscription_dispatch_count : Int
   mut active_subscriptions : Array[ActiveProgramSubscription]
-  subscription_lifecycle : Array[@core.SubscriptionLifecycleSnapshot]
+  subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
 }
 
 ///|
@@ -215,7 +215,7 @@ fn ProgramRuntimeDiagnostics::record_duplicate_effect_descriptor_keys(
 ///|
 fn ProgramRuntimeDiagnostics::snapshot(
   self : ProgramRuntimeDiagnostics,
-) -> @core.ProgramRuntimeSnapshot {
+) -> ProgramRuntimeSnapshot {
   {
     dispatched_count: self.dispatched_count,
     update_count: self.update_count,

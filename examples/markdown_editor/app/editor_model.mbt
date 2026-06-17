@@ -15,7 +15,7 @@ struct MarkdownEditorBlock {
 struct MarkdownEditorSnapshot {
   source : String
   blocks : Array[MarkdownEditorBlock]
-  rich_text : @core.RichTextDocument
+  rich_text : @views.RichTextDocument
   line_count : Int
   word_count : Int
   reading_minutes : Int

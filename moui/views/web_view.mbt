@@ -1,10 +1,4 @@
 ///|
-pub using @core {type WebViewEvent}
-
-///|
-pub using @core {type WebViewNavigationPolicy}
-
-///|
 pub fn[Msg] web_view(
   id~ : String,
   url~ : String,

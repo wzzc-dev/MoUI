@@ -14,7 +14,7 @@ pub(all) struct ShowcaseModel {
   draft : String
   tab : String
   selected_section : String
-  route_history : @core.RouteHistoryState
+  route_history : @views.RouteHistoryState
   filter : String
   data_filter_query : String
   data_filter_active : Bool
@@ -135,8 +135,8 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     draft: "Visual polish",
     tab: "form",
     selected_section: "overview",
-    route_history: @core.RouteHistoryState::new(
-      initial=@core.RouteLocation::new(path="overview"),
+    route_history: @views.RouteHistoryState::new(
+      initial=@views.RouteLocation::new(path="overview"),
       title="Overview",
       source="showcase",
     ),
@@ -230,8 +230,8 @@ pub fn ShowcaseModel::update(
       self
       .with_route_history(
         self.route_history.push(
-          @core.RouteLocation::parse(route),
-          title=showcase_route_title(@core.RouteLocation::parse(route).path),
+          @views.RouteLocation::parse(route),
+          title=showcase_route_title(@views.RouteLocation::parse(route).path),
           source="deep-link",
         ),
       )
@@ -295,7 +295,7 @@ fn ShowcaseModel::update_with_route_host(
   let next = self.update(message)
   let effect = match message {
     SelectSection(route) => {
-      let location = @core.RouteLocation::parse(route)
+      let location = @views.RouteLocation::parse(route)
       let command = if self.route_history.current_route() == location.to_route() {
         ReplaceRoute(location.to_route())
       } else {
@@ -304,7 +304,9 @@ fn ShowcaseModel::update_with_route_host(
       command.effect(route_host)
     }
     OpenRouteLink(route) =>
-      PushRoute(@core.RouteLocation::parse(route).to_route()).effect(route_host)
+      PushRoute(@views.RouteLocation::parse(route).to_route()).effect(
+        route_host,
+      )
     RouteBack => BackRoute.effect(route_host)
     RouteForward => ForwardRoute.effect(route_host)
     _ => @core.Effect::none()
@@ -345,7 +347,7 @@ fn ShowcaseModel::with_route_pushed(
   self : ShowcaseModel,
   route : String,
 ) -> ShowcaseModel {
-  let location = @core.RouteLocation::parse(route)
+  let location = @views.RouteLocation::parse(route)
   let history = if self.route_history.current_route() == location.to_route() {
     self.route_history.replace(
       location,
@@ -390,7 +392,7 @@ fn ShowcaseModel::with_host_route_event(
 
 ///|
 fn showcase_route_history_cursor_for_route(
-  history : @core.RouteHistoryState,
+  history : @views.RouteHistoryState,
   route : String,
 ) -> Int? {
   for index, entry in history.entries {
@@ -404,7 +406,7 @@ fn showcase_route_history_cursor_for_route(
 ///|
 fn ShowcaseModel::with_route_history(
   self : ShowcaseModel,
-  route_history : @core.RouteHistoryState,
+  route_history : @views.RouteHistoryState,
 ) -> ShowcaseModel {
   { ..self, route_history, selected_section: route_history.current().path }
 }
