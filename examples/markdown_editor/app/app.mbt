@@ -6,13 +6,15 @@ using @views {
   frame,
   padding_edges,
   row,
-  rich_text_editor,
   scroll_view,
   spacer,
   surface,
   text,
   text_field,
 }
+
+///|
+using @moui_richtext {controlled_rich_text_editor}
 
 ///|
 pub struct MarkdownEditorApp {
@@ -401,15 +403,4 @@ pub fn MarkdownEditorApp::program_with_services(
 ///|
 fn sample_markdown() -> String {
   "# Editor notes\n\nThis **WYSIWYG** surface keeps `Markdown` as the saved value.\n\n## Today\n- Type into the formatted page\n- Use shortcuts or contextual controls\n- Open source only when needed\n\n> Unsupported syntax stays editable as plain text.\n\n```\nlet saved = markdown\n```\n\n---"
-}
-
-///|
-fn clamp_example_int(value : Int, min : Int, max : Int) -> Int {
-  if value < min {
-    min
-  } else if value > max {
-    max
-  } else {
-    value
-  }
 }

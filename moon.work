@@ -1,5 +1,6 @@
 members = [
   "./moui",
+  "./moui_richtext",
   "./moui_tester",
   "./moui_devtools",
   "./moui_agent",

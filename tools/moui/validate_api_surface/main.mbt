@@ -108,10 +108,7 @@ fn views_facade_core_alias_tokens() -> Array[String] {
 
 ///|
 fn views_facade_widget_alias_tokens() -> Array[String] {
-  [
-    "RichTextInputTransform", "RichTextSourceRange", "RichTextDecoration", "RichTextRun",
-    "RichTextTableCell", "RichTextTable", "RichTextBlock", "RichTextDocument",
-  ]
+  []
 }
 
 ///|
@@ -122,14 +119,11 @@ fn views_facade_host_alias_tokens() -> Array[String] {
 ///|
 fn views_facade_required_tokens() -> Array[String] {
   let tokens = [
-    "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend/host\"", "\"wzzc-dev/moui/widget\"",
-    "pub fn[Msg] button(", "pub fn[Msg] column(", "pub fn[Msg] markdown_editor(",
-    "pub(all) struct ButtonStyle", "pub(all) struct FormFieldState", "pub(all) struct RouteLocation",
-    "pub(all) struct RouteHistoryState", "type RouteFocusStore", "type RouterState",
-    "pub fn resolve_route(", "pub using @widget {type RichTextDocument}", "pub using @widget {type RichTextInputTransform}",
-    "pub type RichTextFormatter = (String) -> @widget.RichTextDocument", "pub fn rich_text_document_height(",
-    "pub(all) enum DatePickerMode", "pub fn default_theme()", "pub fn light_theme()",
-    "pub fn dark_theme()",
+    "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend/host\"", "pub fn[Msg] button(",
+    "pub fn[Msg] column(", "pub(all) struct ButtonStyle", "pub(all) struct FormFieldState",
+    "pub(all) struct RouteLocation", "pub(all) struct RouteHistoryState", "type RouteFocusStore",
+    "type RouterState", "pub fn resolve_route(", "pub(all) enum DatePickerMode",
+    "pub fn default_theme()", "pub fn light_theme()", "pub fn dark_theme()",
   ]
   for type_name in views_facade_core_alias_tokens() {
     tokens.push("pub using @core {type \{type_name}}")
@@ -160,7 +154,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "ViewSpec", "DrawCommand", "EffectDescriptor", "SubscriptionDescriptor",
         "DatePickerMode", "EffectPlanSummary", "SubscriptionPlanSummary", "EffectRuntimeOp",
         "ComponentContext", "SubscriptionLifecycleSnapshot", "ProgramRuntimeSnapshot",
-        "pub using @core {type AppRuntime}", "pub using @core {type WidgetOps}",
+        "RichText", "rich_text_", "pub using @core {type AppRuntime}", "pub using @core {type WidgetOps}",
         "pub using @core {type WidgetLayoutContext}", "pub using @core {type WidgetPaintContext}",
         "pub using @core {type WidgetEventContext}", "pub using @core {type RuntimeInspectorSnapshot}",
         "pub using @core {type RenderInspectorSnapshot}", "pub using @core {type WebViewEvent}",
@@ -248,6 +242,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "LayoutInspectorSnapshot::from_runtime(", "RenderInspectorSnapshot::from_runtime(",
         "SemanticsInspectorSnapshot::from_runtime(", "RouteFocusStore::restore(",
         "RouteFocusStore::restore_location(", "ComponentContext::new_for_runtime",
+        "RichText",
       ],
     },
     {
@@ -263,7 +258,8 @@ fn package_budgets() -> Array[PackageBudget] {
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/views\"", "@views.", "DatePickerMode", "default_theme(",
-        "light_theme(", "dark_theme(", "Theme::default(",
+        "light_theme(", "dark_theme(", "Theme::default(", "RichText", "rich_text_",
+        "markdown_editor",
       ],
     },
     {
@@ -276,6 +272,7 @@ fn package_budgets() -> Array[PackageBudget] {
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
         "ViewSpec", "ViewNode", "RuntimeState", "HostWindowRenderer", "SkiaRasterRenderer",
+        "RichText", "rich_text_", "markdown_editor",
       ],
     },
     {
@@ -349,11 +346,6 @@ fn view_return_rules() -> Array[ViewReturnRule] {
     {
       name: "text_field",
       signature_prefix: "pub fn[Msg] text_field(",
-      return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "markdown_editor",
-      signature_prefix: "pub fn[Msg] markdown_editor(",
       return_token: "-> @core.View[Msg]",
     },
     {

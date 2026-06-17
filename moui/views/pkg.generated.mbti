@@ -5,7 +5,6 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
-  "wzzc-dev/moui/widget",
 }
 
 // Values
@@ -169,10 +168,6 @@ pub fn[Msg] list(Array[@core.View[Msg]], spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] loading_state(title? : String, message? : String, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] markdown_editor(String, (String) -> @widget.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @widget.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
-
-pub fn[Msg] markdown_editor_binding(@core.Binding[String], (String) -> @widget.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @widget.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
-
 pub fn[Msg] master_detail(master~ : @core.View[Msg], detail~ : @core.View[Msg], master_width? : Double, detail_width? : Double, height? : Double, spacing? : Double) -> @core.View[Msg]
 
 pub fn[Msg] menu_bar(Array[MenuItem[Msg]], active? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
@@ -230,16 +225,6 @@ pub fn[Msg] resizable_split_view(primary~ : @core.View[Msg], detail~ : @core.Vie
 pub fn resolve_route(RouteLocation, Array[RouteDescriptor]) -> RouteDescriptor?
 
 pub fn[Msg] responsive_grid(Array[@core.View[Msg]], width? : Double, min_column_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
-
-pub fn rich_text_document_caret_rect_at_source(@widget.RichTextDocument, Int, @core.Rect, @core.FontSpec, text_system? : @core.TextSystem) -> @core.Rect?
-
-pub fn rich_text_document_height(@widget.RichTextDocument, @core.FontSpec) -> Double
-
-pub fn[Msg] rich_text_editor(String, (String) -> @widget.RichTextDocument, on_input~ : (String) -> Msg, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @widget.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
-
-pub fn[Msg] rich_text_editor_binding(@core.Binding[String], (String) -> @widget.RichTextDocument, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, font? : @core.FontSpec?, width? : Double, height? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> @widget.RichTextInputTransform?)?, accepts_tab_input? : Bool) -> @core.View[Msg]
-
-pub fn rich_text_editor_content_rect(@core.Rect) -> @core.Rect
 
 pub fn[Msg] route_header(String, subtitle? : String, actions? : Array[MenuItem[Msg]], theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
@@ -946,24 +931,6 @@ pub using @core {type CommandIntent}
 pub using @core {type KeyModifiers}
 
 pub using @core {type KeyboardShortcut}
-
-pub using @widget {type RichTextBlock}
-
-pub using @widget {type RichTextDecoration}
-
-pub using @widget {type RichTextDocument}
-
-pub type RichTextFormatter = (String) -> @widget.RichTextDocument
-
-pub using @widget {type RichTextInputTransform}
-
-pub using @widget {type RichTextRun}
-
-pub using @widget {type RichTextSourceRange}
-
-pub using @widget {type RichTextTable}
-
-pub using @widget {type RichTextTableCell}
 
 pub using @host {type WebViewEvent}
 
