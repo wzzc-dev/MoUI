@@ -27,7 +27,7 @@ test "widget map maps direct event messages" {
         fail("expected mapped direct message")
       }
     }
-    None => fail("expected widget ops")
+    None => fail("expected widget")
   }
 }
 
@@ -65,11 +65,11 @@ test "widget map maps nested children" {
                 fail("expected mapped child message")
               }
             }
-            None => fail("expected child widget ops")
+            None => fail("expected child widget")
           }
         None => fail("expected child")
       }
-    None => fail("expected widget ops")
+    None => fail("expected widget")
   }
 }
 

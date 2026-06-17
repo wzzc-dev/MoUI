@@ -38,7 +38,7 @@ pub fn[Msg] text_field(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "textfield:\{value.get()}:\{placeholder}:\{widget_size_revision(size)}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_color_revision(placeholder_color)}:\{widget_brush_revision(background)}:\{widget_border_option_revision(border)}:\{widget_border_option_revision(focused_border)}:\{widget_color_revision(cursor_color)}:\{corner_radius}:\{on_submit is Some(_)}"
@@ -175,7 +175,7 @@ pub fn[Msg] search_bar(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "searchbar:\{query.get()}:\{placeholder}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_color_revision(placeholder_color)}:\{widget_brush_revision(background)}:\{widget_border_option_revision(border)}:\{widget_border_option_revision(focused_border)}:\{widget_color_revision(cursor_color)}:\{corner_radius}:\{on_submit is Some(_)}:\{on_clear is Some(_)}"

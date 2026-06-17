@@ -15,7 +15,7 @@ pub fn[Msg] custom(
   focusable? : Bool = false,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       layout=measure,
       paint~,
@@ -39,7 +39,7 @@ pub fn[Msg] custom_children_layout(
 ) -> @core.View[Msg] {
   let cache = @core.CustomLayoutCache::new()
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       children=() => children,
       layout=ctx => {

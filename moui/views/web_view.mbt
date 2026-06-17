@@ -9,7 +9,7 @@ pub fn[Msg] web_view(
   on_event? : ((WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind="WebView", key=Some(id)),
       revision=() => {
         "web-view:\{id}:\{url}:\{web_view_double_option_revision(width)}:\{web_view_double_option_revision(height)}:\{title}:\{policy.revision_key()}:\{on_event is Some(_)}"
