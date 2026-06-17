@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/views",
   "wzzc-dev/moui_devtools" @devtools,
 }

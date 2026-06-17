@@ -5,7 +5,7 @@ pub fn[Msg] banner(
   tone? : FeedbackTone = FeedbackTone::Info,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FeedbackStyle,
+  style? : FeedbackStyle,
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)
@@ -27,7 +27,7 @@ pub fn[Msg] callout(
   message : String,
   tone? : FeedbackTone = FeedbackTone::Info,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FeedbackStyle,
+  style? : FeedbackStyle,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)

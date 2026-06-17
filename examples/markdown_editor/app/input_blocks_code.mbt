@@ -4,7 +4,7 @@ fn markdown_editor_complete_code_fence_on_enter(
   range : MarkdownSourceRange,
   line : String,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret != range.end {
     return None
   }
@@ -31,7 +31,7 @@ fn markdown_editor_complete_quoted_code_fence_on_enter(
   range : MarkdownSourceRange,
   line : String,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret != range.end {
     return None
   }
@@ -64,7 +64,7 @@ fn markdown_editor_exit_empty_code_block_on_enter(
   source : String,
   block : MarkdownEditorBlock,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   let current_line = markdown_editor_current_line_range(source, {
@@ -178,7 +178,7 @@ fn markdown_editor_exit_empty_quoted_code_block_on_enter(
   source : String,
   block : MarkdownEditorQuotedCodeBlock,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   let current_line = markdown_editor_current_line_range(source, {
@@ -258,7 +258,7 @@ fn markdown_editor_quoted_code_block_enter(
   source : String,
   block : MarkdownEditorQuotedCodeBlock,
   caret : Int,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   let current_line = markdown_editor_current_line_range(source, {

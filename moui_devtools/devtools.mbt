@@ -18,7 +18,7 @@ pub struct SnapshotHistory {
 
 ///|
 pub fn SnapshotSummary::from_snapshot(
-  snapshot : @core.InspectorSnapshot,
+  snapshot : @runtime.InspectorSnapshot,
 ) -> SnapshotSummary {
   {
     width: snapshot.runtime.size.width,
@@ -34,7 +34,9 @@ pub fn SnapshotSummary::from_snapshot(
 }
 
 ///|
-pub fn snapshot_summary(snapshot : @core.InspectorSnapshot) -> SnapshotSummary {
+pub fn snapshot_summary(
+  snapshot : @runtime.InspectorSnapshot,
+) -> SnapshotSummary {
   SnapshotSummary::from_snapshot(snapshot)
 }
 
@@ -44,13 +46,13 @@ pub fn SnapshotSummary::text(self : SnapshotSummary) -> String {
 }
 
 ///|
-pub fn snapshot_debug_text(snapshot : @core.InspectorSnapshot) -> String {
+pub fn snapshot_debug_text(snapshot : @runtime.InspectorSnapshot) -> String {
   SnapshotSummary::from_snapshot(snapshot).text()
 }
 
 ///|
 pub fn snapshot_json(
-  snapshot : @core.InspectorSnapshot,
+  snapshot : @runtime.InspectorSnapshot,
   indent? : Int = 2,
 ) -> String {
   snapshot.to_json().stringify(indent~)
@@ -64,7 +66,7 @@ pub fn SnapshotHistory::new() -> SnapshotHistory {
 ///|
 pub fn SnapshotHistory::push(
   self : SnapshotHistory,
-  snapshot : @core.InspectorSnapshot,
+  snapshot : @runtime.InspectorSnapshot,
 ) -> Unit {
   self.entries.push(SnapshotSummary::from_snapshot(snapshot))
 }

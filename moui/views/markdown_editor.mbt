@@ -1,18 +1,18 @@
 ///|
 pub fn[Msg] rich_text_editor(
   value : String,
-  format : @core.RichTextFormatter,
+  format : RichTextFormatter,
   on_input~ : (String) -> Msg,
   placeholder? : String = "Write",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.TextFieldStyle,
+  style? : TextFieldStyle,
   font? : @core.FontSpec? = None,
   width? : Double = 520.0,
   height? : Double = 360.0,
   on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
   on_prefix_click? : ((Int) -> Msg)? = None,
-  input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)? = None,
+  input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = false,
 ) -> @core.View[Msg] {
   let resolved_style = match style {
@@ -45,18 +45,18 @@ pub fn[Msg] rich_text_editor(
 ///|
 pub fn[Msg] markdown_editor(
   value : String,
-  format : @core.RichTextFormatter,
+  format : RichTextFormatter,
   on_input~ : (String) -> Msg,
   placeholder? : String = "Write markdown",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.TextFieldStyle,
+  style? : TextFieldStyle,
   font? : @core.FontSpec? = None,
   width? : Double = 520.0,
   height? : Double = 360.0,
   on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
   on_prefix_click? : ((Int) -> Msg)? = None,
-  input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)? = None,
+  input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = true,
 ) -> @core.View[Msg] {
   rich_text_editor(
@@ -80,17 +80,17 @@ pub fn[Msg] markdown_editor(
 ///|
 pub fn[Msg] rich_text_editor_binding(
   value : @core.Binding[String],
-  format : @core.RichTextFormatter,
+  format : RichTextFormatter,
   placeholder? : String = "Write",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.TextFieldStyle,
+  style? : TextFieldStyle,
   font? : @core.FontSpec? = None,
   width? : Double = 520.0,
   height? : Double = 360.0,
   on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
   on_prefix_click? : ((Int) -> Msg)? = None,
-  input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)? = None,
+  input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = false,
 ) -> @core.View[Msg] {
   let resolved_style = match style {
@@ -122,17 +122,17 @@ pub fn[Msg] rich_text_editor_binding(
 ///|
 pub fn[Msg] markdown_editor_binding(
   value : @core.Binding[String],
-  format : @core.RichTextFormatter,
+  format : RichTextFormatter,
   placeholder? : String = "Write markdown",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.TextFieldStyle,
+  style? : TextFieldStyle,
   font? : @core.FontSpec? = None,
   width? : Double = 520.0,
   height? : Double = 360.0,
   on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
   on_prefix_click? : ((Int) -> Msg)? = None,
-  input_transform? : ((String, Int, @core.TextRange?, String) -> @core.RichTextInputTransform?)? = None,
+  input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = true,
 ) -> @core.View[Msg] {
   rich_text_editor_binding(

@@ -1,42 +1,42 @@
 ///|
-fn showcase_format_rich_text(value : String) -> @core.RichTextDocument {
-  @core.RichTextDocument::new(blocks=[
-    @core.RichTextBlock::new(runs=[@core.RichTextRun::new(text=value)]),
+fn showcase_format_rich_text(value : String) -> @views.RichTextDocument {
+  @views.RichTextDocument::new(blocks=[
+    @views.RichTextBlock::new(runs=[@views.RichTextRun::new(text=value)]),
   ])
 }
 
 ///|
-fn showcase_format_markdown(value : String) -> @core.RichTextDocument {
-  let blocks : Array[@core.RichTextBlock] = []
+fn showcase_format_markdown(value : String) -> @views.RichTextDocument {
+  let blocks : Array[@views.RichTextBlock] = []
   for line in showcase_markdown_lines(value) {
     blocks.push(showcase_markdown_line(line))
   }
   if blocks.is_empty() {
     blocks.push(
-      @core.RichTextBlock::new(runs=[@core.RichTextRun::new(text="")]),
+      @views.RichTextBlock::new(runs=[@views.RichTextRun::new(text="")]),
     )
   }
-  @core.RichTextDocument::new(blocks~)
+  @views.RichTextDocument::new(blocks~)
 }
 
 ///|
-fn showcase_markdown_line(line : String) -> @core.RichTextBlock {
+fn showcase_markdown_line(line : String) -> @views.RichTextBlock {
   let base = @core.FontSpec::new()
   if line.has_prefix("# ") {
     let font = { ..base, size: base.size * 1.32, weight: 700 }
-    @core.RichTextBlock::new(
-      runs=[@core.RichTextRun::new(text=line[2:].to_owned(), font=Some(font))],
+    @views.RichTextBlock::new(
+      runs=[@views.RichTextRun::new(text=line[2:].to_owned(), font=Some(font))],
       font=Some(font),
       line_height=Some(base.size * 1.8),
     )
   } else if line.has_prefix("- ") {
-    @core.RichTextBlock::new(
+    @views.RichTextBlock::new(
       runs=showcase_markdown_inline_runs(line[2:].to_owned(), base),
       prefix="- ",
       line_height=Some(base.size * 1.55),
     )
   } else {
-    @core.RichTextBlock::new(
+    @views.RichTextBlock::new(
       runs=showcase_markdown_inline_runs(line, base),
       line_height=Some(base.size * 1.55),
     )
@@ -47,8 +47,8 @@ fn showcase_markdown_line(line : String) -> @core.RichTextBlock {
 fn showcase_markdown_inline_runs(
   line : String,
   base : @core.FontSpec,
-) -> Array[@core.RichTextRun] {
-  let runs : Array[@core.RichTextRun] = []
+) -> Array[@views.RichTextRun] {
+  let runs : Array[@views.RichTextRun] = []
   let chars = line.to_array()
   let current : Array[Char] = []
   let mut index = 0
@@ -61,7 +61,7 @@ fn showcase_markdown_inline_runs(
       let end = showcase_find_marker(chars, start, "**")
       if end >= 0 {
         runs.push(
-          @core.RichTextRun::new(
+          @views.RichTextRun::new(
             text=String::from_array(chars[start:end]),
             font=Some({ ..base, weight: 700 }),
           ),
@@ -77,7 +77,7 @@ fn showcase_markdown_inline_runs(
       let end = showcase_find_marker(chars, start, "`")
       if end >= 0 {
         runs.push(
-          @core.RichTextRun::new(
+          @views.RichTextRun::new(
             text=String::from_array(chars[start:end]),
             font=Some({
               ..base,
@@ -101,7 +101,7 @@ fn showcase_markdown_inline_runs(
       let end = showcase_find_marker(chars, start, "*")
       if end >= 0 {
         runs.push(
-          @core.RichTextRun::new(
+          @views.RichTextRun::new(
             text=String::from_array(chars[start:end]),
             font=Some({ ..base, style: @core.FontStyle::Italic }),
           ),
@@ -118,18 +118,18 @@ fn showcase_markdown_inline_runs(
   }
   showcase_flush_plain_run(runs, current)
   if runs.is_empty() {
-    runs.push(@core.RichTextRun::new(text=""))
+    runs.push(@views.RichTextRun::new(text=""))
   }
   runs
 }
 
 ///|
 fn showcase_flush_plain_run(
-  runs : Array[@core.RichTextRun],
+  runs : Array[@views.RichTextRun],
   current : Array[Char],
 ) -> Unit {
   if !current.is_empty() {
-    runs.push(@core.RichTextRun::new(text=String::from_array(current)))
+    runs.push(@views.RichTextRun::new(text=String::from_array(current)))
     current.clear()
   }
 }

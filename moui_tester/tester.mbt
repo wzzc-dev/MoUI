@@ -11,7 +11,7 @@ pub(all) struct RuntimeSmokeSnapshot {
   draw_command_count : Int
   focused_text_input : Bool
   text_input_text : String
-  inspector : @core.InspectorSnapshot
+  inspector : @runtime.InspectorSnapshot
 } derive(Eq, Debug, ToJson)
 
 ///|

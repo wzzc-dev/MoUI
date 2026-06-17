@@ -53,7 +53,7 @@ pub fn[Msg] navigation_stack_selected(
 
 ///|
 pub fn[Msg] router_stack(
-  router : @core.RouterState,
+  router : RouterState,
   destinations : Array[NavigationDestination[Msg]],
   fallback? : @core.View[Msg] = empty(),
 ) -> @core.View[Msg] {

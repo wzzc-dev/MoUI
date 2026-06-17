@@ -5,13 +5,13 @@ pub fn[Msg] datepicker(
   mode? : @core.DatePickerMode = @core.DatePickerMode::Date,
   placeholder? : String = "Select date",
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.PickerStyle,
+  style? : PickerStyle,
   min_date? : @core.DateValue? = None,
   max_date? : @core.DateValue? = None,
 ) -> @core.View[Msg] {
   let resolved_style = match style {
     Some(value) => value
-    None => @core.PickerStyle::default(theme~)
+    None => PickerStyle::default(theme~)
   }
   @widget.datepicker(
     selected=@core.Binding::new(get=() => selected, set=_value => ()),
@@ -33,13 +33,13 @@ pub fn[Msg] datepicker_binding(
   mode? : @core.DatePickerMode = @core.DatePickerMode::Date,
   placeholder? : String = "Select date",
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.PickerStyle,
+  style? : PickerStyle,
   min_date? : @core.DateValue? = None,
   max_date? : @core.DateValue? = None,
 ) -> @core.View[Msg] {
   let resolved_style = match style {
     Some(value) => value
-    None => @core.PickerStyle::default(theme~)
+    None => PickerStyle::default(theme~)
   }
   @widget.datepicker(
     selected~,

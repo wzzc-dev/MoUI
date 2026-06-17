@@ -45,7 +45,7 @@ test "event_observer: installed observer receives events before processing" {
     size=@core.Size::new(width=100.0, height=100.0),
     on_message=Some(message => received.push(message)),
   )
-  runtime.set_event_observer(event =>
+  runtime.set_event_observer(event => {
     observed.push(
       match event {
         Pointer(_) => "pointer"
@@ -54,7 +54,7 @@ test "event_observer: installed observer receives events before processing" {
         _ => "other"
       },
     )
-  )
+  })
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(

@@ -1,7 +1,7 @@
 ///|
 pub struct AppRuntime {
   priv state : RuntimeState
-  priv program_runtime_snapshot_fn : () -> @core.ProgramRuntimeSnapshot
+  priv program_runtime_snapshot_fn : () -> ProgramRuntimeSnapshot
   priv destroy_program_runtime_fn : Ref[() -> Unit]
 }
 
@@ -156,10 +156,10 @@ pub fn[Model, Msg] AppRuntime::new_program(
     if program_active.val {
       program_active.val = false
       program_runtime.cancel_all_effect_tasks(
-        @core.EffectTaskCancelReason::EffectTaskRuntimeDestroyed,
+        EffectTaskCancelReason::EffectTaskRuntimeDestroyed,
       )
       program_runtime.cancel_all_subscriptions(
-        @core.SubscriptionCancelReason::SubscriptionRuntimeDestroyed,
+        SubscriptionCancelReason::SubscriptionRuntimeDestroyed,
       )
     }
   }
@@ -400,16 +400,14 @@ pub fn AppRuntime::dirty_element_ids(
 }
 
 ///|
-pub fn AppRuntime::inspector_snapshot(
-  self : AppRuntime,
-) -> @core.InspectorSnapshot {
+pub fn AppRuntime::inspector_snapshot(self : AppRuntime) -> InspectorSnapshot {
   self.inspector_snapshot_from_state()
 }
 
 ///|
 pub fn AppRuntime::program_runtime_snapshot(
   self : AppRuntime,
-) -> @core.ProgramRuntimeSnapshot {
+) -> ProgramRuntimeSnapshot {
   (self.program_runtime_snapshot_fn)()
 }
 

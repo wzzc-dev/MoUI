@@ -276,7 +276,7 @@ fn ShowcaseModel::inspector_snapshot_card(
 
 ///|
 fn subscription_kind_count_summary(
-  counts : Array[@core.SubscriptionKindCount],
+  counts : Array[@runtime.SubscriptionKindCount],
 ) -> String {
   if counts.length() == 0 {
     "none"
@@ -290,13 +290,15 @@ fn subscription_kind_count_summary(
 }
 
 ///|
-fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
+fn showcase_inspector_snapshot(
+  theme : @core.Theme,
+) -> @runtime.InspectorSnapshot {
   ignore(theme)
   let effect_summary = showcase_inspector_effect_summary()
   let subscription_summary = showcase_inspector_subscription_summary()
   let no_effect : @core.Effect[ShowcaseMsg] = @core.Effect::none()
   let no_effect_summary = no_effect.plan_summary()
-  let dirty_state = @core.RuntimeDirtyStateSummary::{
+  let dirty_state = @runtime.RuntimeDirtyStateSummary::{
     dirty_count: 0,
     dirty_element_ids: [],
     dirty_build_count: 0,
@@ -318,8 +320,8 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
     cache_epoch: 1,
     cached_layer_count: 0,
   }
-  @core.InspectorSnapshot::{
-    runtime: @core.RuntimeInspectorSnapshot::{
+  @runtime.InspectorSnapshot::{
+    runtime: @runtime.RuntimeInspectorSnapshot::{
       size: @core.Size::new(width=220.0, height=120.0),
       dirty_count: 0,
       dirty_element_ids: [],
@@ -365,11 +367,11 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
       ignored_effect_task_dispatch_count: 0,
       active_effect_tasks: [effect_summary.descriptors[1]],
       effect_task_lifecycle: [
-        @core.EffectTaskLifecycleSnapshot::{
+        @runtime.EffectTaskLifecycleSnapshot::{
           key: "diagnostics:task",
           kind: "inspector",
           label: "Inspector task",
-          status: @core.EffectTaskLifecycleStatus::EffectTaskActive,
+          status: @runtime.EffectTaskLifecycleStatus::EffectTaskActive,
           cancel_reason: None,
         },
       ],
@@ -387,29 +389,29 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
         subscription_summary.descriptors[2],
       ],
       active_subscription_kind_counts: [
-        @core.SubscriptionKindCount::{ kind: "animation", count: 1 },
-        @core.SubscriptionKindCount::{ kind: "host-event", count: 1 },
+        @runtime.SubscriptionKindCount::{ kind: "animation", count: 1 },
+        @runtime.SubscriptionKindCount::{ kind: "host-event", count: 1 },
       ],
       subscription_lifecycle: [
-        @core.SubscriptionLifecycleSnapshot::{
+        @runtime.SubscriptionLifecycleSnapshot::{
           key: "diagnostics:tick",
           kind: "animation",
           label: "Inspector tick",
-          status: @core.SubscriptionLifecycleStatus::SubscriptionActive,
+          status: @runtime.SubscriptionLifecycleStatus::SubscriptionActive,
           cancel_reason: None,
         },
-        @core.SubscriptionLifecycleSnapshot::{
+        @runtime.SubscriptionLifecycleSnapshot::{
           key: "diagnostics:host",
           kind: "host-event",
           label: "Inspector host event",
-          status: @core.SubscriptionLifecycleStatus::SubscriptionActive,
+          status: @runtime.SubscriptionLifecycleStatus::SubscriptionActive,
           cancel_reason: None,
         },
       ],
       rebuild_reason: "redraw requested",
       dirty_reasons: ["redraw requested"],
     },
-    view_tree: @core.ViewTreeInspectorSnapshot::{
+    view_tree: @runtime.ViewTreeInspectorSnapshot::{
       root_kind: "component",
       node_count: 6,
       component_count: 1,
@@ -419,7 +421,7 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
       dirty_layout_count: 0,
       dirty_paint_count: 0,
       nodes: [
-        @core.WidgetInspectorSummary::{
+        @runtime.WidgetInspectorSummary::{
           element_id: @core.ElementId::new(1),
           kind: "component",
           key: "inspector-root",
@@ -428,7 +430,7 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
           needs_layout: false,
           needs_paint: false,
         },
-        @core.WidgetInspectorSummary::{
+        @runtime.WidgetInspectorSummary::{
           element_id: @core.ElementId::new(2),
           kind: "surface",
           key: "inspector-surface",
@@ -437,7 +439,7 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
           needs_layout: false,
           needs_paint: false,
         },
-        @core.WidgetInspectorSummary::{
+        @runtime.WidgetInspectorSummary::{
           element_id: @core.ElementId::new(3),
           kind: "column",
           key: "inspector-column",
@@ -448,25 +450,25 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
         },
       ],
     },
-    layout: @core.LayoutInspectorSnapshot::{
+    layout: @runtime.LayoutInspectorSnapshot::{
       root_frame: @core.Rect::new(x=0.0, y=0.0, width=220.0, height=120.0),
       node_count: 6,
       leaf_count: 3,
       max_depth: 3,
       bounds: [
-        @core.LayoutBoundsInspectorEntry::{
+        @runtime.LayoutBoundsInspectorEntry::{
           element_id: @core.ElementId::new(1),
           frame: @core.Rect::new(x=0.0, y=0.0, width=220.0, height=120.0),
           depth: 0,
           child_count: 1,
         },
-        @core.LayoutBoundsInspectorEntry::{
+        @runtime.LayoutBoundsInspectorEntry::{
           element_id: @core.ElementId::new(2),
           frame: @core.Rect::new(x=8.0, y=8.0, width=180.0, height=104.0),
           depth: 1,
           child_count: 1,
         },
-        @core.LayoutBoundsInspectorEntry::{
+        @runtime.LayoutBoundsInspectorEntry::{
           element_id: @core.ElementId::new(3),
           frame: @core.Rect::new(x=16.0, y=16.0, width=150.0, height=80.0),
           depth: 2,
@@ -474,7 +476,7 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
         },
       ],
     },
-    render: @core.RenderInspectorSnapshot::{
+    render: @runtime.RenderInspectorSnapshot::{
       command_count: 8,
       text_count: 3,
       image_count: 0,
@@ -488,7 +490,7 @@ fn showcase_inspector_snapshot(theme : @core.Theme) -> @core.InspectorSnapshot {
       shader_count: 0,
       unbalanced_pop_count: 0,
     },
-    semantics: @core.SemanticsInspectorSnapshot::{
+    semantics: @runtime.SemanticsInspectorSnapshot::{
       root_role: @core.SemanticsRole::Group,
       node_count: 4,
       focusable_count: 1,

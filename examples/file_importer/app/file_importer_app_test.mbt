@@ -241,7 +241,8 @@ test "file importer child effect maps pending completion into parent" {
   assert_true(
     completed_snapshot.subscription_lifecycle.any(entry => {
       entry.key.contains("host-service:completion:") &&
-      entry.status == @core.SubscriptionLifecycleStatus::SubscriptionCancelled
+      entry.status ==
+      @runtime.SubscriptionLifecycleStatus::SubscriptionCancelled
     }),
   )
 }

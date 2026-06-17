@@ -8,6 +8,8 @@ import {
 }
 
 // Values
+pub fn app_event_from_json(Json) -> @core.AppEvent?
+
 pub fn command_intent_from_json(Json) -> @core.CommandIntent?
 
 pub fn event_category(@core.AppEvent) -> String
@@ -44,13 +46,24 @@ pub(all) enum EventSource {
   System
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct FrameSnapshot {
+  texts : Array[String]
+  draw_command_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
 pub struct RuntimeAgentHost {
   runtime : @runtime.AppRuntime
+  mut active : Bool
   mut next_token : Int
   mut next_sequence : Int
   mut subscriptions : Array[Subscription]
+  // private fields
 }
+pub fn RuntimeAgentHost::activate(Self) -> Unit
+pub fn RuntimeAgentHost::deactivate(Self) -> Unit
+pub fn RuntimeAgentHost::is_active(Self) -> Bool
 pub fn RuntimeAgentHost::new(@runtime.AppRuntime) -> Self
+pub impl AgentHost for RuntimeAgentHost
 
 pub(all) struct RuntimeStateSnapshot {
   dispatched_count : Int
@@ -81,6 +94,7 @@ pub fn SubscriptionToken::new(Int) -> Self
 pub(open) trait AgentHost {
   fn semantics(Self) -> SemanticsSnapshot
   fn state(Self) -> RuntimeStateSnapshot
+  fn frame(Self) -> FrameSnapshot
   fn capabilities(Self) -> Array[AgentCapability]
   fn subscribe_events(Self, EventFilter, (AgentEvent) -> Unit) -> SubscriptionToken
   fn unsubscribe(Self, SubscriptionToken) -> Unit

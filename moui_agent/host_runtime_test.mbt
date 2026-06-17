@@ -88,7 +88,10 @@ test "RuntimeAgentHost: capabilities lists the agent ops" {
   let runtime = new_counter_runtime()
   let host = RuntimeAgentHost::new(runtime)
   let kinds = host.capabilities().map(c => c.kind)
-  for expected in ["get_semantics", "get_state", "dispatch_command", "dispatch_event", "subscribe_events"] {
+  for
+    expected in [
+      "get_semantics", "get_state", "dispatch_command", "dispatch_event", "subscribe_events",
+    ] {
     if not(kinds.contains(expected)) {
       fail("expected capability \{expected}; got \{kinds}")
     }
@@ -316,7 +319,9 @@ test "RuntimeAgentHost: deactivate stops event delivery, activate resumes" {
     fail("expected dispatch rejected while deactivated")
   }
   if received.length() != 0 {
-    fail("expected no events delivered while deactivated; got \{received.length()}")
+    fail(
+      "expected no events delivered while deactivated; got \{received.length()}",
+    )
   }
   // Reactivate; a fresh subscription + dispatch should deliver again.
   host.activate()

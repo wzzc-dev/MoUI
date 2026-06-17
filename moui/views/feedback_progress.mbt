@@ -7,16 +7,16 @@ pub fn[Msg] progress_status(
   tone? : FeedbackTone = FeedbackTone::Info,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FeedbackStyle,
-  badge_style? : @core.BadgeStyle,
-  progress_style? : @core.ProgressStyle,
+  style? : FeedbackStyle,
+  badge_style? : BadgeStyle,
+  progress_style? : ProgressStyle,
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)
   let badge_style = resolve_badge_style(badge_style, theme)
   let progress_style = match progress_style {
     Some(value) => value
-    None => @core.ProgressStyle::default(theme~)
+    None => ProgressStyle::default(theme~)
   }
   let inner_width = views_max_double(
     120.0,

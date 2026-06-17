@@ -4,14 +4,14 @@ pub fn[Msg] progress(
   width? : Double = 180.0,
   height? : Double = 8.0,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.ProgressStyle,
+  style? : ProgressStyle,
   foreground? : @core.Color,
   background? : @core.Color,
 ) -> @core.View[Msg] {
   let value = clamp_view_double(value, 0.0, 1.0)
   let resolved_style = match style {
     Some(value) => value
-    None => @core.ProgressStyle::default(theme~)
+    None => ProgressStyle::default(theme~)
   }
   let foreground = resolve_control_color(foreground, resolved_style.foreground)
   let background = resolve_control_color(background, resolved_style.background)
