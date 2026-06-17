@@ -4,7 +4,7 @@ fn[Msg] feedback_surface(
   tone~ : FeedbackTone,
   action~ : StateViewAction[Msg]?,
   theme~ : @core.Theme,
-  style~ : @core.FeedbackStyle,
+  style~ : FeedbackStyle,
   width~ : Double,
   title~ : String,
   height~ : Double,
@@ -64,44 +64,35 @@ fn[Msg] feedback_surface(
 
 ///|
 fn resolve_feedback_style(
-  style : @core.FeedbackStyle?,
+  style : FeedbackStyle?,
   theme : @core.Theme,
-) -> @core.FeedbackStyle {
+) -> FeedbackStyle {
   match style {
     Some(value) => value
-    None => @core.FeedbackStyle::default(theme~)
+    None => FeedbackStyle::default(theme~)
   }
 }
 
 ///|
-fn feedback_accent(
-  tone : FeedbackTone,
-  style : @core.FeedbackStyle,
-) -> @core.Color {
+fn feedback_accent(tone : FeedbackTone, style : FeedbackStyle) -> @core.Color {
   feedback_tone_style(tone, style).foreground
 }
 
 ///|
 fn feedback_background(
   tone : FeedbackTone,
-  style : @core.FeedbackStyle,
+  style : FeedbackStyle,
 ) -> @core.Color {
   feedback_tone_style(tone, style).background
 }
 
 ///|
-fn feedback_border(
-  tone : FeedbackTone,
-  style : @core.FeedbackStyle,
-) -> @core.Color {
+fn feedback_border(tone : FeedbackTone, style : FeedbackStyle) -> @core.Color {
   feedback_tone_style(tone, style).border
 }
 
 ///|
-fn feedback_tone_style(
-  tone : FeedbackTone,
-  style : @core.FeedbackStyle,
-) -> @core.ToneStyle {
+fn feedback_tone_style(tone : FeedbackTone, style : FeedbackStyle) -> ToneStyle {
   match tone {
     Neutral => style.neutral
     Info => style.info

@@ -4,7 +4,7 @@ fn ShowcaseModel::navigation_section(
   theme : @core.Theme,
   metrics : ShowcaseMetrics,
 ) -> @core.View[ShowcaseMsg] {
-  let route_focus_store = @core.RouteFocusStore::new()
+  let route_focus_store = @views.RouteFocusStore::new()
   route_focus_store.remember(
     route="overview",
     focus_key="sidebar-item-overview",
@@ -292,7 +292,7 @@ fn ShowcaseModel::navigation_transition_card(
 }
 
 ///|
-fn showcase_route_history_label(history : @core.RouteHistoryState) -> String {
+fn showcase_route_history_label(history : @views.RouteHistoryState) -> String {
   let routes : Array[String] = []
   for entry in history.entries {
     routes.push(entry.route)

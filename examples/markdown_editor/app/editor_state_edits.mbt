@@ -31,7 +31,7 @@ fn MarkdownEditorApp::apply_command_to_selection(
 ///|
 fn MarkdownEditorApp::apply_text_transform(
   self : MarkdownEditorApp,
-  transform : @core.RichTextInputTransform,
+  transform : @views.RichTextInputTransform,
 ) -> Unit {
   let before = self.history_entry()
   if transform.text == before.source &&

@@ -10,7 +10,7 @@ pub fn[Msg] checkbox(
   box_size? : Double,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
-  let style = @core.ChoiceControlStyle::default(theme~)
+  let style = ChoiceControlStyle::default(theme~)
   let font = resolve_choice_font(font, theme)
   let foreground = resolve_control_color(foreground, style.foreground)
   let check_color = resolve_control_color(check_color, style.selected_color)
@@ -37,7 +37,7 @@ pub fn[Msg] checkbox_binding(
   box_size? : Double,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
-  let style = @core.ChoiceControlStyle::default(theme~)
+  let style = ChoiceControlStyle::default(theme~)
   let font = resolve_choice_font(font, theme)
   let foreground = resolve_control_color(foreground, style.foreground)
   let check_color = resolve_control_color(check_color, style.selected_color)

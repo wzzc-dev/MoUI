@@ -3,7 +3,7 @@ fn markdown_editor_delete_reference_marker(
   source : String,
   chars : Array[Char],
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret >= chars.length() {
     return None
   }
@@ -99,7 +99,7 @@ fn markdown_editor_backspace_reference_marker(
   source : String,
   chars : Array[Char],
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret > 0 {
     match
       markdown_editor_reference_bounds_full_end_before(source, chars, caret) {
@@ -304,7 +304,7 @@ fn markdown_editor_remove_reference_marker(
   content_start : Int,
   close_start : Int,
   target_end : Int,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   let text = String::from_array(chars[:open_start]) +
     String::from_array(chars[content_start:close_start]) +
     String::from_array(chars[target_end + 1:])

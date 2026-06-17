@@ -1,11 +1,11 @@
 ///|
 pub fn[Msg] form_validation_summary(
-  summary~ : @core.FormValidationSummary,
+  summary~ : FormValidationSummary,
   title? : String = "Review required",
   valid_message? : String = "",
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FormValidationStyle,
+  style? : FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   if summary.valid {
@@ -28,11 +28,11 @@ pub fn[Msg] form_validation_summary(
 
 ///|
 fn[Msg] form_validation_error_summary(
-  summary : @core.FormValidationSummary,
+  summary : FormValidationSummary,
   title~ : String,
   action~ : StateViewAction[Msg]?,
   theme~ : @core.Theme,
-  style~ : @core.FormValidationStyle,
+  style~ : FormValidationStyle,
   width~ : Double,
 ) -> @core.View[Msg] {
   let content_width = views_max_double(120.0, width - style.padding * 2.0)
@@ -105,7 +105,7 @@ fn[Msg] form_validation_success(
   message : String,
   action~ : StateViewAction[Msg]?,
   theme~ : @core.Theme,
-  style? : @core.FormValidationStyle,
+  style? : FormValidationStyle,
   width~ : Double,
 ) -> @core.View[Msg] {
   let content_width = match style {
@@ -171,7 +171,7 @@ fn[Msg] form_validation_success(
 }
 
 ///|
-fn form_validation_error_label(error : @core.FormFieldError) -> String {
+fn form_validation_error_label(error : FormFieldError) -> String {
   if error.name == "" {
     error.message
   } else {
@@ -181,7 +181,7 @@ fn form_validation_error_label(error : @core.FormFieldError) -> String {
 
 ///|
 fn[Msg] form_validation_summary_height(
-  summary : @core.FormValidationSummary,
+  summary : FormValidationSummary,
   action : StateViewAction[Msg]?,
   base~ : Double,
 ) -> Double {

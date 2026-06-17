@@ -29,7 +29,7 @@ fn MarkdownEditorSnapshot::parse_with_font(
 fn markdown_editor_format(
   source : String,
   base? : @core.FontSpec = @core.FontSpec::new(),
-) -> @core.RichTextDocument {
+) -> @views.RichTextDocument {
   MarkdownEditorSnapshot::parse_with_font(source, base).rich_text
 }
 
@@ -38,11 +38,11 @@ fn markdown_editor_format_for_selection(
   source : String,
   selection : MarkdownEditorSelection,
   base? : @core.FontSpec = @core.FontSpec::new(),
-) -> @core.RichTextDocument {
+) -> @views.RichTextDocument {
   let document = markdown_editor_format(source, base~)
-  let blocks : Array[@core.RichTextBlock] = []
+  let blocks : Array[@views.RichTextBlock] = []
   for block in document.blocks {
-    let runs : Array[@core.RichTextRun] = []
+    let runs : Array[@views.RichTextRun] = []
     for run in block.runs {
       runs.push(
         markdown_editor_reveal_active_inline_run(source, selection, run),
@@ -55,7 +55,7 @@ fn markdown_editor_format_for_selection(
       }),
     )
   }
-  @core.RichTextDocument::new(blocks~)
+  @views.RichTextDocument::new(blocks~)
 }
 
 ///|
@@ -64,7 +64,7 @@ fn markdown_editor_format_for_writing_mode(
   selection : MarkdownEditorSelection,
   base? : @core.FontSpec = @core.FontSpec::new(),
   focus_mode~ : Bool,
-) -> @core.RichTextDocument {
+) -> @views.RichTextDocument {
   let document = markdown_editor_format_for_selection(source, selection, base~)
   if focus_mode {
     markdown_editor_dim_inactive_blocks(document, selection)
@@ -77,17 +77,17 @@ fn markdown_editor_format_for_writing_mode(
 fn markdown_editor_format_source_mode(
   source : String,
   base : @core.FontSpec,
-) -> @core.RichTextDocument {
+) -> @views.RichTextDocument {
   let length = markdown_editor_text_length(source)
   let font = {
     ..base,
     families: @core.FontFamilyStack::monospace(),
     size: base.size * 0.92,
   }
-  @core.RichTextDocument::new(blocks=[
-    @core.RichTextBlock::new(
+  @views.RichTextDocument::new(blocks=[
+    @views.RichTextBlock::new(
       runs=[
-        @core.RichTextRun::new(
+        @views.RichTextRun::new(
           text=source,
           font=Some(font),
           source_range=Some({ start: 0, end: length }),
@@ -103,10 +103,10 @@ fn markdown_editor_format_source_mode(
 
 ///|
 fn markdown_editor_dim_inactive_blocks(
-  document : @core.RichTextDocument,
+  document : @views.RichTextDocument,
   selection : MarkdownEditorSelection,
-) -> @core.RichTextDocument {
-  let blocks : Array[@core.RichTextBlock] = []
+) -> @views.RichTextDocument {
+  let blocks : Array[@views.RichTextBlock] = []
   for block in document.blocks {
     if markdown_editor_focus_block_active(block, selection) {
       blocks.push(block)
@@ -114,12 +114,12 @@ fn markdown_editor_dim_inactive_blocks(
       blocks.push(markdown_editor_dim_rich_text_block(block))
     }
   }
-  @core.RichTextDocument::new(blocks~)
+  @views.RichTextDocument::new(blocks~)
 }
 
 ///|
 fn markdown_editor_focus_block_active(
-  block : @core.RichTextBlock,
+  block : @views.RichTextBlock,
   selection : MarkdownEditorSelection,
 ) -> Bool {
   match block.source_range {
@@ -130,9 +130,9 @@ fn markdown_editor_focus_block_active(
 
 ///|
 fn markdown_editor_dim_rich_text_block(
-  block : @core.RichTextBlock,
-) -> @core.RichTextBlock {
-  let runs : Array[@core.RichTextRun] = []
+  block : @views.RichTextBlock,
+) -> @views.RichTextBlock {
+  let runs : Array[@views.RichTextRun] = []
   for run in block.runs {
     runs.push(markdown_editor_dim_rich_text_run(run))
   }
@@ -150,8 +150,8 @@ fn markdown_editor_dim_rich_text_block(
 
 ///|
 fn markdown_editor_dim_rich_text_run(
-  run : @core.RichTextRun,
-) -> @core.RichTextRun {
+  run : @views.RichTextRun,
+) -> @views.RichTextRun {
   {
     ..run,
     color: match run.color {
@@ -180,8 +180,8 @@ fn markdown_editor_default_text_color() -> @core.Color {
 fn markdown_editor_reveal_active_block_marker(
   source : String,
   selection : MarkdownEditorSelection,
-  block : @core.RichTextBlock,
-) -> @core.RichTextBlock {
+  block : @views.RichTextBlock,
+) -> @views.RichTextBlock {
   match (block.source_range, block.content_range) {
     (Some(source_range), Some(content_range)) => {
       if markdown_editor_active_code_block(source, selection, block) {
@@ -223,7 +223,7 @@ fn markdown_editor_reveal_active_block_marker(
 fn markdown_editor_active_code_block(
   source : String,
   selection : MarkdownEditorSelection,
-  block : @core.RichTextBlock,
+  block : @views.RichTextBlock,
 ) -> Bool {
   match (block.source_range, block.content_range) {
     (Some(source_range), Some(_content_range)) => {
@@ -242,8 +242,8 @@ fn markdown_editor_active_code_block(
 ///|
 fn markdown_editor_reveal_active_code_block(
   source : String,
-  block : @core.RichTextBlock,
-) -> @core.RichTextBlock {
+  block : @views.RichTextBlock,
+) -> @views.RichTextBlock {
   match block.source_range {
     Some(source_range) => {
       let source_text = markdown_editor_substring(
@@ -255,7 +255,7 @@ fn markdown_editor_reveal_active_code_block(
       {
         ..block,
         runs: [
-          @core.RichTextRun::new(
+          @views.RichTextRun::new(
             text=source_text,
             font~,
             source_range=Some(source_range),
@@ -270,7 +270,7 @@ fn markdown_editor_reveal_active_code_block(
 
 ///|
 fn markdown_editor_first_run_font(
-  block : @core.RichTextBlock,
+  block : @views.RichTextBlock,
 ) -> @core.FontSpec? {
   if block.runs.length() == 0 {
     None
@@ -293,8 +293,8 @@ fn markdown_editor_source_starts_with_code_fence(source : String) -> Bool {
 fn markdown_editor_reveal_active_inline_run(
   source : String,
   selection : MarkdownEditorSelection,
-  run : @core.RichTextRun,
-) -> @core.RichTextRun {
+  run : @views.RichTextRun,
+) -> @views.RichTextRun {
   match run.source_range {
     Some(range) =>
       if markdown_editor_selection_touches_range(selection, range) {
@@ -322,7 +322,7 @@ fn markdown_editor_reveal_active_inline_run(
 ///|
 fn markdown_editor_selection_touches_range(
   selection : MarkdownEditorSelection,
-  range : @core.RichTextSourceRange,
+  range : @views.RichTextSourceRange,
 ) -> Bool {
   match markdown_editor_active_selection(selection.selection) {
     Some(active) => {
@@ -336,8 +336,8 @@ fn markdown_editor_selection_touches_range(
 ///|
 fn markdown_editor_inline_marker_source_range(
   source : String,
-  range : @core.RichTextSourceRange,
-) -> @core.RichTextSourceRange? {
+  range : @views.RichTextSourceRange,
+) -> @views.RichTextSourceRange? {
   let chars = source.to_array()
   if range.start < 0 || range.end < range.start || range.end > chars.length() {
     return None
@@ -376,8 +376,8 @@ fn markdown_editor_inline_marker_source_range(
 ///|
 fn markdown_editor_reference_source_range(
   source : String,
-  range : @core.RichTextSourceRange,
-) -> @core.RichTextSourceRange? {
+  range : @views.RichTextSourceRange,
+) -> @views.RichTextSourceRange? {
   let text_range = @core.TextRange::new(start=range.start, end=range.end)
   match markdown_editor_range_link_bounds(source, text_range) {
     Some(bounds) =>
@@ -797,12 +797,12 @@ fn markdown_editor_blocks_to_rich_text(
   source : String,
   blocks : Array[MarkdownEditorBlock],
   base : @core.FontSpec,
-) -> @core.RichTextDocument {
-  let rich_blocks : Array[@core.RichTextBlock] = []
+) -> @views.RichTextDocument {
+  let rich_blocks : Array[@views.RichTextBlock] = []
   for block in blocks {
     rich_blocks.push(markdown_editor_block_to_rich_text(source, block, base))
   }
-  @core.RichTextDocument::new(blocks=rich_blocks)
+  @views.RichTextDocument::new(blocks=rich_blocks)
 }
 
 ///|
@@ -810,7 +810,7 @@ fn markdown_editor_block_to_rich_text(
   source : String,
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
-) -> @core.RichTextBlock {
+) -> @views.RichTextBlock {
   let block = markdown_block_to_rich_text(editor_block.block, base)
   {
     ..block,
@@ -827,10 +827,10 @@ fn markdown_editor_block_to_rich_text(
 
 ///|
 fn markdown_editor_table_with_source_ranges(
-  table : @core.RichTextTable?,
+  table : @views.RichTextTable?,
   source : String,
   editor_block : MarkdownEditorBlock,
-) -> @core.RichTextTable? {
+) -> @views.RichTextTable? {
   match table {
     Some(table) => {
       let block_source_text = markdown_editor_substring(
@@ -852,9 +852,9 @@ fn markdown_editor_table_with_source_ranges(
           },
         },
       )
-      let rows : Array[Array[@core.RichTextTableCell]] = []
+      let rows : Array[Array[@views.RichTextTableCell]] = []
       for row_index in 0..<table.rows.length() {
-        let row : Array[@core.RichTextTableCell] = []
+        let row : Array[@views.RichTextTableCell] = []
         for column_index in 0..<table.rows[row_index].length() {
           let cell = table.rows[row_index][column_index]
           let mapped = markdown_editor_find_table_cell(
@@ -896,10 +896,10 @@ fn markdown_editor_find_table_cell(
 
 ///|
 fn markdown_editor_runs_with_source_ranges(
-  runs : Array[@core.RichTextRun],
+  runs : Array[@views.RichTextRun],
   editor_block : MarkdownEditorBlock,
-) -> Array[@core.RichTextRun] {
-  let mapped : Array[@core.RichTextRun] = []
+) -> Array[@views.RichTextRun] {
+  let mapped : Array[@views.RichTextRun] = []
   let mut search = 0
   let mut index = 0
   let content = markdown_editor_block_source_content(editor_block)
@@ -1130,7 +1130,7 @@ fn markdown_editor_chars_match(
 ///|
 fn markdown_core_range(
   range : MarkdownSourceRange,
-) -> @core.RichTextSourceRange {
+) -> @views.RichTextSourceRange {
   { start: range.start, end: range.end }
 }
 

@@ -6,7 +6,7 @@ pub fn[Msg] slider(
   width? : Double = 180.0,
   height? : Double = 28.0,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.SliderStyle,
+  style? : SliderStyle,
   foreground? : @core.Color,
   background? : @core.Color,
   on_change? : ((Double) -> Msg)? = None,
@@ -15,7 +15,7 @@ pub fn[Msg] slider(
   let normalized = clamp_view_double((value - min) / range, 0.0, 1.0)
   let resolved_style = match style {
     Some(value) => value
-    None => @core.SliderStyle::default(theme~)
+    None => SliderStyle::default(theme~)
   }
   let knob = min_view_double(height, resolved_style.thumb_size)
   let track_height = min_view_double(height, resolved_style.track_height)
@@ -110,7 +110,7 @@ pub fn[Msg] slider_binding(
   width? : Double = 180.0,
   height? : Double = 28.0,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.SliderStyle,
+  style? : SliderStyle,
   foreground? : @core.Color,
   background? : @core.Color,
 ) -> @core.View[Msg] {

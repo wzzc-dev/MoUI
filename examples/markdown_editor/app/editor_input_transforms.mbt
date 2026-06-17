@@ -4,7 +4,7 @@ fn markdown_editor_transform_input(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   match
     markdown_editor_paste_footnote_definition(source, caret, selection, input) {
     Some(transform) => return Some(transform)

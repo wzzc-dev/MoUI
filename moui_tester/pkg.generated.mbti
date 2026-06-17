@@ -3,7 +3,6 @@ package "wzzc-dev/moui_tester"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
 }
 
@@ -20,7 +19,7 @@ pub(all) struct RuntimeSmokeSnapshot {
   draw_command_count : Int
   focused_text_input : Bool
   text_input_text : String
-  inspector : @core.InspectorSnapshot
+  inspector : @runtime.InspectorSnapshot
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct TesterStepResult {

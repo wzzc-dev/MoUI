@@ -31,7 +31,8 @@ async fn main {
     let parsed = @json.parse(trimmed) catch {
       _ => {
         @stdio.stdout.write(
-          ((@mcp.rpc_error_no_id(-32700, "Parse error") : Json).stringify() + "\n"),
+          (@mcp.rpc_error_no_id(-32700, "Parse error") : Json).stringify() +
+          "\n",
         )
         continue
       }
@@ -43,7 +44,7 @@ async fn main {
     })
     // Flush any notifications produced during this request, then the response.
     for notification in pending {
-      @stdio.stdout.write(((notification : Json).stringify() + "\n"))
+      @stdio.stdout.write((notification : Json).stringify() + "\n")
     }
     @stdio.stdout.write((response : Json).stringify() + "\n")
   }

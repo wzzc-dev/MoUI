@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_agent_mcp"
+
+import {
+  "wzzc-dev/moui_agent",
+}
+
+// Values
+pub fn[Host : @moui_agent.AgentHost] route(Host, Json) -> Json
+
+pub fn[Host : @moui_agent.AgentHost] route_notify(Host, Json, (Json) -> Unit) -> Json
+
+pub fn rpc_error(Json, Int, String) -> Json
+
+pub fn rpc_error_no_id(Int, String) -> Json
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

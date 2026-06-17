@@ -4,7 +4,7 @@ pub fn[Msg] empty_state(
   message : String,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FeedbackStyle,
+  style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)
@@ -24,7 +24,7 @@ pub fn[Msg] loading_state(
   title? : String = "Loading",
   message? : String = "Please wait while content is prepared.",
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FeedbackStyle,
+  style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)
@@ -45,7 +45,7 @@ pub fn[Msg] error_state(
   message : String,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FeedbackStyle,
+  style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)
@@ -65,8 +65,8 @@ pub fn[Msg] inline_error(
   message : String,
   action? : StateViewAction[Msg]? = None,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FeedbackStyle,
-  badge_style? : @core.BadgeStyle,
+  style? : FeedbackStyle,
+  badge_style? : BadgeStyle,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)
@@ -135,7 +135,7 @@ fn[Msg] state_panel(
   message : String,
   action~ : StateViewAction[Msg]?,
   theme~ : @core.Theme,
-  style~ : @core.FeedbackStyle,
+  style~ : FeedbackStyle,
   width~ : Double,
   tone~ : FeedbackTone,
 ) -> @core.View[Msg] {

@@ -113,7 +113,7 @@ fn form_field_semantics_description(
 
 ///|
 fn form_error_color(theme : @core.Theme) -> @core.Color {
-  @core.FormValidationStyle::default(theme~).foreground
+  FormValidationStyle::default(theme~).foreground
 }
 
 ///|

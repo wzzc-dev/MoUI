@@ -42,7 +42,7 @@ fn markdown_editor_insert_table_row_after_cell(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
   current : MarkdownEditorTableCellRange,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   let column_count = markdown_editor_table_column_count(cells)
   let column_count = if column_count <= 0 { 1 } else { column_count }
   let row = markdown_editor_empty_table_row(column_count)
@@ -213,7 +213,7 @@ fn markdown_editor_append_table_row(
   source : String,
   block : MarkdownEditorBlock,
   first_row : Int,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   let cells = markdown_editor_table_cells_for_block(source, block)
   let column_count = cells.filter(cell => cell.row == first_row).length()
   let column_count = if column_count <= 0 { 1 } else { column_count }

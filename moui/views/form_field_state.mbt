@@ -1,6 +1,6 @@
 ///|
 pub fn[Msg] form_field_state(
-  field~ : @core.FormFieldState,
+  field~ : FormFieldState,
   child~ : @core.View[Msg],
   helper? : String = "",
   validation_display? : FormValidationDisplay = FormValidationDisplay::OnInvalid,

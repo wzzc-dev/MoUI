@@ -146,7 +146,7 @@ fn ShowcaseModel::focus_shortcut_card(
       @core.FocusScopeItem::new(id="save", focusable=false),
     ],
   )
-  let validation_summary = @core.FormValidationSummary::from_errors([
+  let validation_summary = @views.FormValidationSummary::from_errors([
     { name: "email", message: "Email required" },
   ])
   showcase_soft_card(

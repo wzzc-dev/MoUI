@@ -152,18 +152,18 @@ fn markdown_table_row_text(row : Array[@markdown.TableCell]) -> String {
 fn markdown_table_preview(
   block : MarkdownBlock,
   base : @core.FontSpec,
-) -> @core.RichTextTable? {
+) -> @views.RichTextTable? {
   match block.kind {
     Table => {
       let lines = markdown_split_lines(block.text)
       if lines.length() == 0 {
         return None
       }
-      let rows : Array[Array[@core.RichTextTableCell]] = []
+      let rows : Array[Array[@views.RichTextTableCell]] = []
       let aligns = block.table_alignments
       let mut line_offset = 0
       for index in 0..<lines.length() {
-        let cells : Array[@core.RichTextTableCell] = []
+        let cells : Array[@views.RichTextTableCell] = []
         let source_line = lines[index]
         for cell in markdown_table_cell_ranges_for_line(source_line) {
           cells.push({
@@ -285,7 +285,7 @@ fn markdown_table_trimmed_range(
   chars : Array[Char],
   start : Int,
   end : Int,
-) -> @core.RichTextSourceRange {
+) -> @views.RichTextSourceRange {
   let mut content_start = start
   let mut content_end = end
   while content_start < content_end &&

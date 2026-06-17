@@ -14,7 +14,7 @@ fn markdown_editor_move_table_cell(
   caret : Int,
   selection : @core.TextRange?,
   forward~ : Bool,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -67,7 +67,7 @@ fn markdown_editor_move_table_cell(
 fn markdown_editor_exit_table_before_table_start(
   source : String,
   block : MarkdownEditorBlock,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   let chars = source.to_array()
   let start = markdown_editor_clamp_int(
     block.source_range.start,
@@ -217,7 +217,7 @@ fn markdown_editor_insert_table_row_on_enter(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -265,7 +265,7 @@ fn markdown_editor_exit_table_after_empty_last_row_on_enter(
   block : MarkdownEditorBlock,
   cells : Array[MarkdownEditorTableCellRange],
   current : MarkdownEditorTableCellRange,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if current.row <= 0 ||
     current.row != markdown_editor_table_last_data_row(cells) ||
     !markdown_editor_table_row_empty(source, cells, current.row) {
@@ -330,7 +330,7 @@ fn markdown_editor_table_row_empty(
 fn markdown_editor_exit_table_after_table_end(
   source : String,
   table_end : Int,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   let chars = source.to_array()
   let table_end = markdown_editor_clamp_int(table_end, 0, chars.length())
   if table_end >= chars.length() {
@@ -366,7 +366,7 @@ fn markdown_editor_backspace_empty_trailing_table_row(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   markdown_editor_remove_empty_trailing_table_row_at_caret(
     source, caret, selection,
   )
@@ -377,7 +377,7 @@ fn markdown_editor_delete_empty_trailing_table_row(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   markdown_editor_remove_empty_trailing_table_row_at_caret(
     source, caret, selection,
   )
@@ -388,7 +388,7 @@ fn markdown_editor_remove_empty_trailing_table_row_at_caret(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -425,7 +425,7 @@ fn markdown_editor_remove_empty_trailing_table_row_on_backspace(
   source : String,
   cells : Array[MarkdownEditorTableCellRange],
   current : MarkdownEditorTableCellRange,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if current.row <= 0 ||
     current.row != markdown_editor_table_last_data_row(cells) ||
     markdown_editor_table_data_row_count(cells) <= 1 ||

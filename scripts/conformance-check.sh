@@ -137,7 +137,7 @@ write_showcase_capture_manifest() {
   "showcaseTarget": "examples/showcase/web_wasm",
   "url": "http://127.0.0.1:18080/examples/showcase/web_wasm/",
 ${benchmark_targets_json}
-  "renderInspectorSource": "Showcase Diagnostics inspector snapshot card backed by @core.RenderInspectorSnapshot",
+  "renderInspectorSource": "Showcase Diagnostics inspector snapshot card backed by @runtime.RenderInspectorSnapshot",
   "renderInspectorCounters": [
     "command_count",
     "text_count",

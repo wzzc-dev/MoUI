@@ -30,6 +30,14 @@ struct ForbiddenSourceToken {
 }
 
 ///|
+struct LegacyCoreFamilyBudget {
+  label : String
+  tokens : Array[String]
+  max_occurrences : Int
+  target_occurrences : Int
+}
+
+///|
 fn usage() -> String {
   let text =
     #|Usage: tools/moui/validate_api_surface [--repo-root PATH]
@@ -70,53 +78,114 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 }
 
 ///|
+fn root_facade_app_safe_aliases() -> Array[String] {
+  [
+    "View", "Program", "Effect", "Subscription", "Theme", "Point", "Size", "Rect",
+    "Insets", "Constraints", "Axis", "Color", "Brush", "BorderStyle", "ShadowStyle",
+    "FontSpec", "FontFamily", "FontFamilyStack", "TextRange", "TextAlign", "State",
+    "Binding", "DerivedState", "Environment", "ViewEnvironment", "ColorScheme", "LayoutDirection",
+    "AccessibilityContrast", "ContentSizeCategory", "ScrollState", "FocusState",
+    "NavigationState", "CommandIntent", "KeyboardShortcut", "KeyModifiers", "DateValue",
+    "DatePickerMode",
+  ]
+}
+
+///|
+fn root_facade_required_tokens() -> Array[String] {
+  let tokens = ["\"wzzc-dev/moui/core\""]
+  for type_name in root_facade_app_safe_aliases() {
+    tokens.push("pub using @core {type \{type_name}}")
+  }
+  tokens
+}
+
+///|
+fn views_facade_core_alias_tokens() -> Array[String] {
+  [
+    "ActionCommand", "ActionCommandMap", "BadgeStyle", "ButtonStyle", "ChoiceControlStyle",
+    "Color", "ColorScheme", "CommandBinding", "CommandIntent", "ControlStateStyle",
+    "FeedbackStyle", "FormController", "FormFieldError", "FormFieldState", "FormValidationResult",
+    "FormValidationRule", "FormValidationStyle", "FormValidationSummary", "KeyModifiers",
+    "KeyboardShortcut", "PickerItem", "PickerStyle", "ProgressStyle", "RichTextBlock",
+    "RichTextDecoration", "RichTextDocument", "RichTextInputTransform", "RichTextRun",
+    "RichTextSourceRange", "RichTextTable", "RichTextTableCell", "RouteDescriptor",
+    "RouteFocusStore", "RouteHistoryEntry", "RouteHistoryState", "RouteLocation",
+    "RouteParam", "RouteQueryParam", "RouterSnapshot", "RouterState", "SliderStyle",
+    "SurfaceStyle", "TextFieldStyle", "TextStyle", "ToneStyle", "WebViewEvent", "WebViewNavigationPolicy",
+  ]
+}
+
+///|
+fn views_facade_required_tokens() -> Array[String] {
+  let tokens = [
+    "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(", "pub fn[Msg] column(", "pub fn[Msg] markdown_editor(",
+    "pub type RichTextFormatter = (String) -> @core.RichTextDocument",
+  ]
+  for type_name in views_facade_core_alias_tokens() {
+    tokens.push("pub using @core {type \{type_name}}")
+  }
+  tokens
+}
+
+///|
 fn package_budgets() -> Array[PackageBudget] {
   [
     {
       label: "root facade",
       path: "moui/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui\"",
-      max_lines: 25,
-      max_pub_lines: 5,
+      max_lines: 125,
+      max_pub_lines: 40,
       max_pub_all_lines: 0,
-      required_tokens: [
-        "\"wzzc-dev/moui/core\"", "pub using @core {type View}", "pub using @core {type Program}",
-        "pub using @core {type Effect}", "pub using @core {type Subscription}", "pub using @core {type Theme}",
-      ],
+      required_tokens: root_facade_required_tokens(),
       forbidden_tokens: [
         "\"wzzc-dev/moui/backend", "\"wzzc-dev/moui/render", "moui_theme", "HostWindowRenderer",
         "RendererBackendKind", "SkiaRasterRenderer", "RuntimeState", "ViewNode",
         "ViewSpec", "DrawCommand", "EffectDescriptor", "SubscriptionDescriptor",
         "SubscriptionLifecycleSnapshot", "ProgramRuntimeSnapshot", "pub using @core {type AppRuntime}",
-        "pub using @core {type Binding}", "pub fn default_theme(", "pub fn light_theme(",
-        "pub fn dark_theme(", "pub fn theme(",
+        "pub using @core {type WidgetOps}", "pub using @core {type WidgetLayoutContext}",
+        "pub using @core {type WidgetPaintContext}", "pub using @core {type WidgetEventContext}",
+        "pub using @core {type RuntimeInspectorSnapshot}", "pub using @core {type RenderInspectorSnapshot}",
+        "pub using @core {type WebViewEvent}", "pub using @core {type WebViewSpec}",
+        "pub using @core {type WebViewCommand}", "pub using @core {type WebViewNavigationPolicy}",
+        "pub using @core {type RichTextDocument}", "pub using @core {type RichTextInputTransform}",
+        "pub using @core {type FormFieldState}", "pub using @core {type FormValidationSummary}",
+        "pub using @core {type RouteHistoryState}", "pub using @core {type RouterState}",
+        "pub fn default_theme(", "pub fn light_theme(", "pub fn dark_theme(", "pub fn theme(",
       ],
     },
     {
       label: "runtime facade",
       path: "moui/runtime/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/runtime\"",
-      max_lines: 60,
-      max_pub_lines: 40,
-      max_pub_all_lines: 0,
+      max_lines: 307,
+      max_pub_lines: 42,
+      max_pub_all_lines: 17,
       required_tokens: [
         "\"wzzc-dev/moui/core\"", "pub struct AppRuntime", "pub fn[Model, Msg] new_program(",
         "pub fn[Model, Msg] new_program_with_dimensions(", "pub fn[Msg] new_view(",
         "pub fn[Model, Msg] AppRuntime::new_program(", "pub fn[Msg] AppRuntime::new_view(",
-        "pub fn AppRuntime::draw_frame(",
+        "pub fn AppRuntime::draw_frame(", "pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot",
+        "pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot",
+        "pub(all) struct InspectorSnapshot", "pub(all) struct ProgramRuntimeSnapshot",
+        "pub(all) struct RuntimeInspectorSnapshot", "pub(all) struct RenderInspectorSnapshot",
+        "pub(all) struct ViewTreeInspectorSnapshot", "pub(all) enum EffectTaskCancelReason",
+        "pub(all) enum SubscriptionCancelReason",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/backend", "\"wzzc-dev/moui/render", "moui_theme", "RuntimeState",
         "ViewNode", "ViewSpec", "pub using @core {type AppRuntime}", "inner : @core.AppRuntime",
+        "core_inspector_snapshot", "core_program_runtime_snapshot", "@core.InspectorSnapshot",
+        "@core.ProgramRuntimeSnapshot",
       ],
     },
     {
       label: "core",
       path: "moui/core/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/core\"",
-      max_lines: 2137,
-      max_pub_lines: 563,
-      max_pub_all_lines: 167,
+      max_lines: 1904,
+      max_pub_lines: 552,
+      max_pub_all_lines: 151,
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) struct Effect", "pub(all) struct Subscription", "pub(all) struct DrawFrame",
@@ -147,6 +216,10 @@ fn package_budgets() -> Array[PackageBudget] {
         "type RuntimeKernel", "RuntimeKernel::", "type RuntimeState", "RuntimeState::",
         "type ViewNode[", "type ElementNode", "ElementNode::", "type ElementTree",
         "ElementTree::", "type ViewSpec", "pub(all) enum ViewSpec", "pub enum ViewSpec",
+        "pub(all) struct InspectorSnapshot", "pub(all) struct ProgramRuntimeSnapshot",
+        "pub(all) struct RuntimeInspectorSnapshot", "pub(all) struct RenderInspectorSnapshot",
+        "pub(all) struct ViewTreeInspectorSnapshot", "pub(all) struct LayoutInspectorSnapshot",
+        "pub(all) struct SemanticsInspectorSnapshot", "pub(all) struct WidgetInspectorSummary",
         "type FrameProfile", "FrameProfile::capture(", "InspectorSnapshot::from_runtime(",
         "RuntimeInspectorSnapshot::from_runtime(", "ViewTreeInspectorSnapshot::from_runtime(",
         "LayoutInspectorSnapshot::from_runtime(", "RenderInspectorSnapshot::from_runtime(",
@@ -158,17 +231,10 @@ fn package_budgets() -> Array[PackageBudget] {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 750,
-      max_pub_lines: 250,
+      max_lines: 760,
+      max_pub_lines: 288,
       max_pub_all_lines: 60,
-      required_tokens: [
-        "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(", "pub fn[Msg] column(", "pub fn[Msg] markdown_editor(",
-        "pub using @core {type ActionCommand}", "pub using @core {type ActionCommandMap}",
-        "pub using @core {type Color}", "pub using @core {type ColorScheme}", "pub using @core {type CommandBinding}",
-        "pub using @core {type CommandIntent}", "pub using @core {type KeyModifiers}",
-        "pub using @core {type KeyboardShortcut}", "pub using @core {type WebViewEvent}",
-        "pub using @core {type WebViewNavigationPolicy}",
-      ],
+      required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
         "ViewSpec", "ViewNode", "RuntimeState", "HostWindowRenderer", "SkiaRasterRenderer",
       ],
@@ -258,6 +324,69 @@ fn view_return_rules() -> Array[ViewReturnRule] {
       name: "web_view",
       signature_prefix: "pub fn[Msg] web_view(",
       return_token: "-> @core.View[Msg]",
+    },
+  ]
+}
+
+///|
+fn legacy_core_family_budgets() -> Array[LegacyCoreFamilyBudget] {
+  [
+    {
+      label: "control styles and picker model",
+      tokens: [
+        "ButtonStyle", "TextFieldStyle", "ChoiceControlStyle", "ProgressStyle", "SliderStyle",
+        "PickerStyle", "FeedbackStyle", "BadgeStyle", "FormValidationStyle", "PickerItem",
+      ],
+      max_occurrences: 28,
+      target_occurrences: 0,
+    },
+    {
+      label: "form workflow helpers",
+      tokens: [
+        "FormFieldError", "FormValidationResult", "FormValidationSummary", "FormValidationStyle",
+        "FormFieldState", "FormValidationRule", "FormController", "required_field",
+        "validate_form",
+      ],
+      max_occurrences: 34,
+      target_occurrences: 0,
+    },
+    {
+      label: "rich text editor domain model",
+      tokens: [
+        "RichTextDocument", "RichTextBlock", "RichTextRun", "RichTextInputTransform",
+        "RichTextFormatter", "RichTextTable", "RichTextTableCell", "RichTextSourceRange",
+        "RichTextDecoration", "rich_text_document_", "rich_text_editor_",
+      ],
+      max_occurrences: 38,
+      target_occurrences: 0,
+    },
+    {
+      label: "WebView platform service model",
+      tokens: [
+        "WebViewSpec", "WebViewCommand", "WebViewEvent", "WebViewNavigationPolicy",
+        "PlatformViewPlacement::web_view", "WebView(String",
+      ],
+      max_occurrences: 17,
+      target_occurrences: 0,
+    },
+    {
+      label: "routing and history controller",
+      tokens: [
+        "RouteHistoryState", "RouteDescriptor", "RouterState", "RouteFocusStore",
+        "RouteLocation", "RouterSnapshot", "resolve_route",
+      ],
+      max_occurrences: 66,
+      target_occurrences: 0,
+    },
+    {
+      label: "runtime diagnostics snapshots",
+      tokens: [
+        "RuntimeInspectorSnapshot", "ProgramRuntimeSnapshot", "ViewTreeInspectorSnapshot",
+        "RenderInspectorSnapshot", "InspectorSnapshot", "LayoutInspectorSnapshot",
+        "SemanticsInspectorSnapshot", "WidgetInspectorSummary",
+      ],
+      max_occurrences: 0,
+      target_occurrences: 0,
     },
   ]
 }
@@ -507,10 +636,79 @@ fn validate_root_facade_shape(
   if count_lines_with_prefix(text, "import {") != 1 {
     failures.push(path + ": root facade should keep a single import block")
   }
-  if count_lines_with_prefix(text, "pub using @core {type ") > 20 {
+  let allowed = root_facade_app_safe_aliases()
+  let mut aliases = 0
+  let alias_prefix = "pub using @core {type "
+  for line_view in text.split("\n") {
+    let line = line_view.to_owned()
+    if line.has_prefix(alias_prefix) {
+      aliases += 1
+      let type_name = line[alias_prefix.length():line.length() - 1].to_owned()
+      if !allowed.contains(type_name) {
+        failures.push(
+          path +
+          ": root facade alias " +
+          type_name +
+          " is not app-safe allowlisted",
+        )
+      }
+    }
+  }
+  if aliases != allowed.length() {
     failures.push(
-      path + ": root facade should keep curated app/theme aliases only",
+      path +
+      ": root facade should expose exactly the curated app-safe alias set; got \{aliases}, expected \{allowed.length()}",
     )
+  }
+}
+
+///|
+fn count_token_occurrences(text : String, token : String) -> Int {
+  let mut count = 0
+  let mut start = 0
+  while start < text.length() {
+    match text[start:].find(token) {
+      Some(index) => {
+        count += 1
+        start += index + token.length()
+      }
+      None => break
+    }
+  }
+  count
+}
+
+///|
+fn validate_core_legacy_family_budgets(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let path = "moui/core/pkg.generated.mbti"
+  let text = match read_repo_text(repo_root, path) {
+    Ok(value) => value
+    Err(message) => {
+      failures.push(message)
+      return
+    }
+  }
+  for budget in legacy_core_family_budgets() {
+    let mut count = 0
+    for token in budget.tokens {
+      count += count_token_occurrences(text, token)
+    }
+    println(
+      "api surface: core legacy family " +
+      budget.label +
+      " occurrences=\{count} max=\{budget.max_occurrences} target=\{budget.target_occurrences}",
+    )
+    if count > budget.max_occurrences {
+      failures.push(
+        path +
+        ": core legacy family " +
+        budget.label +
+        " occurrences=\{count}, above ratchet max \{budget.max_occurrences}; move new API to views/widget/runtime/backend/host",
+      )
+    }
   }
 }
 
@@ -536,7 +734,7 @@ fn backend_runtime_interface_paths() -> Array[String] {
 
 ///|
 fn max_shared_app_runtime_imports() -> Int {
-  0
+  1
 }
 
 ///|
@@ -550,6 +748,11 @@ fn allowed_shared_app_core_imports() -> Array[String] {
     "examples/markdown_editor/app/moon.pkg", "examples/mo_workbench/app/moon.pkg",
     "examples/pdf_workbench/app/moon.pkg", "examples/showcase/app/moon.pkg", "website/app/moon.pkg",
   ]
+}
+
+///|
+fn allowed_shared_app_runtime_imports() -> Array[String] {
+  ["examples/showcase/app/moon.pkg"]
 }
 
 ///|
@@ -778,7 +981,8 @@ fn forbidden_core_runtime_boundary_source_tokens() -> Array[
   ForbiddenSourceToken,
 ] {
   [
-    { label: "app runtime owner", token: "AppRuntime" },
+    { label: "app runtime owner", token: "type AppRuntime" },
+    { label: "app runtime constructor", token: "AppRuntime::new_" },
     { label: "legacy runtime kernel", token: "RuntimeKernel" },
     { label: "runtime state owner", token: "RuntimeState" },
     { label: "runtime element node", token: "ElementNode" },
@@ -892,6 +1096,8 @@ fn validate_shared_app_runtime_imports(
   let paths : Array[String] = []
   collect_shared_app_moon_pkgs(repo_root, paths, failures)
   let mut runtime_imports = 0
+  let mut unauthorized_runtime_imports = 0
+  let allowed = allowed_shared_app_runtime_imports()
   for path in paths {
     let text = match read_repo_text(repo_root, path) {
       Ok(value) => value
@@ -902,6 +1108,13 @@ fn validate_shared_app_runtime_imports(
     }
     if moon_pkg_has_default_import(text, "\"wzzc-dev/moui/runtime\"") {
       runtime_imports += 1
+      if !allowed.contains(path) {
+        unauthorized_runtime_imports += 1
+        failures.push(
+          path +
+          ": shared app packages should not default-import runtime; add only explicit diagnostics/platform exceptions",
+        )
+      }
     }
   }
   let max_runtime_imports = max_shared_app_runtime_imports()
@@ -911,7 +1124,7 @@ fn validate_shared_app_runtime_imports(
     )
   }
   println(
-    "api surface: shared app default runtime imports=\{runtime_imports}/\{max_runtime_imports}",
+    "api surface: shared app default runtime imports=\{runtime_imports}/\{max_runtime_imports}; unauthorized=\{unauthorized_runtime_imports}",
   )
 }
 
@@ -1116,6 +1329,7 @@ fn run_checks(repo_root : String) -> Array[String] {
     validate_package_budget(repo_root, budget, failures)
   }
   validate_root_facade_shape(repo_root, failures)
+  validate_core_legacy_family_budgets(repo_root, failures)
   validate_views_return_types(repo_root, failures)
   validate_runtime_source_boundaries(repo_root, failures)
   validate_core_program_runtime_ownership(repo_root, failures)
