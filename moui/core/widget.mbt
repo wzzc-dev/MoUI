@@ -19,6 +19,26 @@ pub(all) struct WidgetLayoutResult {
 } derive(Eq, Debug)
 
 ///|
+/// Recursive layout tree produced by the layout pass. Unlike
+/// `WidgetLayoutResult` (a single node's measured size + child frames),
+/// `LayoutResult` is the fully-nested tree emitted by `AppRuntime::layout`.
+pub(all) struct LayoutResult {
+  frame : Rect
+  children : Array[LayoutResult]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn hit_test(layout : LayoutResult, point : Point) -> Bool {
+  if !layout.frame.contains(point) {
+    false
+  } else if layout.children.length() == 0 {
+    true
+  } else {
+    layout.children.any(child => hit_test(child, point))
+  }
+}
+
+///|
 pub(all) struct WidgetPaintContext {
   frame : Rect
   child_frames : Array[Rect]
@@ -437,4 +457,29 @@ pub fn[Msg, NextMsg] WidgetOps::map(
     semantics=() => self.semantics(),
     focusable=() => self.focusable(),
   )
+}
+
+///|
+pub struct View[Msg] {
+  priv ops : WidgetOps[Msg]
+}
+
+///|
+fn[Msg] view_from_ops(ops : WidgetOps[Msg]) -> View[Msg] {
+  { ops, }
+}
+
+///|
+pub fn[Msg] View::widget(ops : WidgetOps[Msg]) -> View[Msg] {
+  view_from_ops(ops)
+}
+
+///|
+pub fn[Msg] View::widget_ops(self : View[Msg]) -> WidgetOps[Msg]? {
+  Some(self.ops)
+}
+
+///|
+pub fn[Msg] View::ops(self : View[Msg]) -> WidgetOps[Msg] {
+  self.ops
 }
