@@ -34,9 +34,8 @@ fn ShowcaseModel::text_diagnostics_section(
               text("Markdown/Rich Text", width=card_width - 32.0, height=24.0)
               .font(theme.typography.caption)
               .foreground(theme.palette.foreground),
-              markdown_editor(
+              showcase_markdown_editor(
                 self.draft,
-                showcase_format_markdown,
                 on_input=value => DraftChanged(value),
                 placeholder="Markdown diagnostic",
                 width=card_width - 32.0,

@@ -470,11 +470,11 @@ fn markdown_editor_apply_command(
 }
 
 ///|
-fn markdown_to_rich_text(text : String) -> @views.RichTextDocument {
-  let blocks : Array[@views.RichTextBlock] = []
+fn markdown_to_rich_text(text : String) -> @moui_richtext.RichTextDocument {
+  let blocks : Array[@moui_richtext.RichTextBlock] = []
   let base = @core.FontSpec::new()
   for block in parse_markdown(text) {
     blocks.push(markdown_block_to_rich_text(block, base))
   }
-  @views.RichTextDocument::new(blocks~)
+  @moui_richtext.RichTextDocument::new(blocks~)
 }

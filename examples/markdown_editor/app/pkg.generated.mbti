@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui_richtext",
 }
 
 // Values
@@ -12,15 +13,9 @@ import {
 // Errors
 
 // Types and methods
-type MarkdownBlock derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownBlockKind derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownCodeFenceInfo derive(Eq, @debug.Debug)
-
 pub struct MarkdownEditorApp {
   document : @core.State[String]
-  selection : @core.State[MarkdownEditorSelection]
+  selection : @core.State[@moui_richtext.MarkdownEditorSelection]
   link_target : @core.State[String]
   image_target : @core.State[String]
   footnote_text : @core.State[String]
@@ -54,50 +49,7 @@ pub fn MarkdownEditorApp::program(Self) -> @core.Program[Self, MarkdownEditorMsg
 pub fn MarkdownEditorApp::program_with_services(Self, @host.HostAppServices) -> @core.Program[Self, MarkdownEditorMsg]
 pub fn MarkdownEditorApp::save_document_as(Self, String) -> Unit
 
-type MarkdownEditorAutolinkTarget derive(Eq, @debug.Debug)
-
-type MarkdownEditorBlock derive(Eq, ToJson, @debug.Debug)
-
-pub enum MarkdownEditorCommand {
-  Bold
-  Italic
-  Code
-  Strikethrough
-  Link
-  Image
-  SetLinkTarget(String)
-  SetImageTarget(String)
-  SetCodeLanguage(String)
-  SetFootnoteText(String)
-  SetHtmlBlockText(String)
-  Paragraph
-  Heading(Int)
-  BulletList
-  TaskList
-  OrderedList
-  Quote
-  CodeBlock
-  HorizontalRule
-  Table
-  InsertTableOfContents
-  InsertFrontMatter
-  DuplicateBlock
-  MoveBlockUp
-  MoveBlockDown
-  InsertTableRow
-  InsertTableColumn
-  DeleteTableRow
-  DeleteTableColumn
-  SetTableColumnAlignment(@core.TextAlign?)
-} derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownEditorEditResult derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownEditorFrontMatterParseResult derive(Eq, @debug.Debug)
-
 type MarkdownEditorHistoryEntry derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownEditorMergeBlockKind derive(Eq, @debug.Debug)
 
 pub enum MarkdownEditorMsg {
   NewDocument
@@ -144,7 +96,7 @@ pub enum MarkdownEditorMsg {
   FindPrevious
   ReplaceFindCurrent
   ReplaceFindAll
-  ApplyCommand(MarkdownEditorCommand)
+  ApplyCommand(@moui_richtext.MarkdownEditorCommand)
   SetSelection(Int, @core.TextRange?)
   OpenRecentDocument(String)
   JumpToOutline(Int)
@@ -157,49 +109,7 @@ pub enum MarkdownEditorMsg {
   ToggleTaskAt(Int)
 }
 
-type MarkdownEditorOffsetReplacement derive(Eq, @debug.Debug)
-
-type MarkdownEditorOrderedLineInfo derive(Eq, @debug.Debug)
-
-type MarkdownEditorOrderedRenumberContext derive(Eq, @debug.Debug)
-
-type MarkdownEditorOutlineItem derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownEditorPastedMarkdownTable derive(Eq, @debug.Debug)
-
-type MarkdownEditorQuotedCodeBlock derive(Eq, @debug.Debug)
-
-type MarkdownEditorQuotedCodeFence derive(Eq, @debug.Debug)
-
-type MarkdownEditorRenumberResult derive(Eq, @debug.Debug)
-
-type MarkdownEditorSelection derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownEditorSnapshot derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownEditorTableCellRange derive(Eq, @debug.Debug)
-
-type MarkdownEditorTableParseResult derive(Eq, @debug.Debug)
-
 type MarkdownEditorTargetKind derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownFrontMatterParseResult derive(Eq, @debug.Debug)
-
-type MarkdownInline derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownInlineKind derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownLine derive(Eq, @debug.Debug)
-
-type MarkdownLinkBounds derive(Eq, @debug.Debug)
-
-type MarkdownReferenceContext derive(Eq, @debug.Debug)
-
-type MarkdownReferenceDefinition derive(Eq, @debug.Debug)
-
-type MarkdownSourceRange derive(Eq, ToJson, @debug.Debug)
-
-type MarkdownTableParseResult derive(Eq, @debug.Debug)
 
 // Type aliases
 

@@ -1,8 +1,8 @@
 import {
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui_richtext",
   "wzzc-dev/moui/views",
-  "mizchi/markdown",
 }
 
 import {
