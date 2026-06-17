@@ -3,7 +3,7 @@ pub fn[Msg] route_header(
   title : String,
   subtitle? : String = "",
   actions? : Array[MenuItem[Msg]] = [],
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
 ) -> @core.View[Msg] {
   let padding = theme.spacing_scale.md

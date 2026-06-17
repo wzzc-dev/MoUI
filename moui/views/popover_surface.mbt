@@ -4,7 +4,7 @@ pub fn[Msg] popover(
   content~ : @core.View[Msg],
   expanded~ : Bool,
   placement? : PopoverPlacement = PopoverPlacement::BottomStart,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 240.0,
   height? : Double = 160.0,
   trap_focus? : Bool = false,

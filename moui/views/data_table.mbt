@@ -10,7 +10,7 @@ pub fn[Msg] table(
   sortable_columns? : Array[String] = [],
   cell? : ((Int, TableColumn, String) -> @core.View[Msg])? = None,
   empty? : @core.View[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   row_height? : Double = 38.0,
 ) -> @core.View[Msg] {
   if rows.length() == 0 {

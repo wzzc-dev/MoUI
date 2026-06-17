@@ -32,8 +32,6 @@ pub using @core {type Constraints}
 
 pub using @core {type ContentSizeCategory}
 
-pub using @core {type DatePickerMode}
-
 pub using @core {type DateValue}
 
 pub using @core {type DerivedState}

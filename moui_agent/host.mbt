@@ -89,7 +89,7 @@ pub fn RuntimeAgentHost::activate(self : RuntimeAgentHost) -> Unit {
 /// every AgentHost method return a rejected/empty result. The host can be
 /// brought back with activate(). No-op if already inactive.
 pub fn RuntimeAgentHost::deactivate(self : RuntimeAgentHost) -> Unit {
-  if !(self.active) {
+  if !self.active {
     return
   }
   self.active = false
@@ -110,7 +110,7 @@ pub fn RuntimeAgentHost::is_active(self : RuntimeAgentHost) -> Bool {
 pub impl AgentHost for RuntimeAgentHost with fn semantics(
   self : RuntimeAgentHost,
 ) -> SemanticsSnapshot {
-  if !(self.active) {
+  if !self.active {
     // Offline: return an empty snapshot rather than failing.
     let empty : @core.SemanticsNode = {
       element_id: @core.ElementId::new(0),
@@ -136,7 +136,7 @@ pub impl AgentHost for RuntimeAgentHost with fn semantics(
 
 ///|
 pub impl AgentHost for RuntimeAgentHost with fn state(self : RuntimeAgentHost) -> RuntimeStateSnapshot {
-  if !(self.active) {
+  if !self.active {
     return RuntimeStateSnapshot::{
       dispatched_count: 0,
       update_count: 0,
@@ -164,7 +164,7 @@ pub impl AgentHost for RuntimeAgentHost with fn state(self : RuntimeAgentHost) -
 /// up on (the runtime's draw_commands are exactly what a window backend
 /// rasterizes).
 pub impl AgentHost for RuntimeAgentHost with fn frame(self : RuntimeAgentHost) -> FrameSnapshot {
-  if !(self.active) {
+  if !self.active {
     return FrameSnapshot::{ texts: [], draw_command_count: 0 }
   }
   let commands = self.runtime.draw_commands()
@@ -222,7 +222,7 @@ pub impl AgentHost for RuntimeAgentHost with fn subscribe_events(
   filter : EventFilter,
   sink : (AgentEvent) -> Unit,
 ) -> SubscriptionToken {
-  if !(self.active) {
+  if !self.active {
     // Offline: hand back a token the host will never deliver to. Callers can
     // still unsubscribe it; it just won't receive events until activate().
     return SubscriptionToken::new(0)
@@ -249,7 +249,7 @@ pub impl AgentHost for RuntimeAgentHost with fn dispatch_event(
   self : RuntimeAgentHost,
   event : @core.AppEvent,
 ) -> DispatchResult {
-  if !(self.active) {
+  if !self.active {
     return DispatchResult::{
       accepted: false,
       reason: Some("agent host is deactivated"),
@@ -264,7 +264,7 @@ pub impl AgentHost for RuntimeAgentHost with fn dispatch_command(
   self : RuntimeAgentHost,
   intent : @core.CommandIntent,
 ) -> DispatchResult {
-  if !(self.active) {
+  if !self.active {
     return DispatchResult::{
       accepted: false,
       reason: Some("agent host is deactivated"),

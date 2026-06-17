@@ -36,8 +36,8 @@ priv struct ProgramRuntimeDiagnostics {
   mut effect_task_count : Int
   mut duplicate_effect_descriptor_key_count : Int
   duplicate_effect_descriptor_keys : Array[String]
-  mut last_effect_summary : @core.EffectPlanSummary
-  mut last_scheduled_effect_summary : @core.EffectPlanSummary
+  mut last_effect_summary : EffectPlanSummary
+  mut last_scheduled_effect_summary : EffectPlanSummary
   mut next_effect_task_value : Int
   mut started_effect_task_count : Int
   mut completed_effect_task_count : Int
@@ -46,7 +46,7 @@ priv struct ProgramRuntimeDiagnostics {
   mut active_effect_tasks : Array[ActiveProgramEffectTask]
   effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
   mut subscription_plan_count : Int
-  mut last_subscription_plan_summary : @core.SubscriptionPlanSummary
+  mut last_subscription_plan_summary : SubscriptionPlanSummary
   mut started_subscription_count : Int
   mut reused_subscription_count : Int
   mut cancelled_subscription_count : Int
@@ -77,8 +77,8 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
     effect_task_count: 0,
     duplicate_effect_descriptor_key_count: 0,
     duplicate_effect_descriptor_keys: [],
-    last_effect_summary: @core.EffectPlanSummary::empty(),
-    last_scheduled_effect_summary: @core.EffectPlanSummary::empty(),
+    last_effect_summary: EffectPlanSummary::empty(),
+    last_scheduled_effect_summary: EffectPlanSummary::empty(),
     next_effect_task_value: 1,
     started_effect_task_count: 0,
     completed_effect_task_count: 0,
@@ -87,7 +87,7 @@ fn ProgramRuntimeDiagnostics::new() -> ProgramRuntimeDiagnostics {
     active_effect_tasks: [],
     effect_task_lifecycle: [],
     subscription_plan_count: 0,
-    last_subscription_plan_summary: @core.SubscriptionPlanSummary::empty(),
+    last_subscription_plan_summary: SubscriptionPlanSummary::empty(),
     started_subscription_count: 0,
     reused_subscription_count: 0,
     cancelled_subscription_count: 0,
@@ -169,7 +169,7 @@ fn ProgramRuntimeDiagnostics::record_pending_message_count(
 ///|
 fn ProgramRuntimeDiagnostics::record_effects(
   self : ProgramRuntimeDiagnostics,
-  summary : @core.EffectPlanSummary,
+  summary : EffectPlanSummary,
   executed_count : Int,
 ) -> Unit {
   self.effect_plan_count = self.effect_plan_count + 1

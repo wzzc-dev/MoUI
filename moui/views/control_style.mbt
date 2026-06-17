@@ -115,22 +115,18 @@ pub(all) struct FormValidationStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn TextStyle::body(
-  theme? : @core.Theme = @core.Theme::default(),
-) -> TextStyle {
+pub fn TextStyle::body(theme? : @core.Theme = default_theme()) -> TextStyle {
   { font: theme.typography.body, color: theme.foreground }
 }
 
 ///|
-pub fn TextStyle::title(
-  theme? : @core.Theme = @core.Theme::default(),
-) -> TextStyle {
+pub fn TextStyle::title(theme? : @core.Theme = default_theme()) -> TextStyle {
   { font: theme.typography.title, color: theme.foreground }
 }
 
 ///|
 pub fn SurfaceStyle::default(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> SurfaceStyle {
   {
     brush: theme.surface_brush(@core.SurfaceLevel::Base),
@@ -144,7 +140,7 @@ pub fn SurfaceStyle::default(
 
 ///|
 pub fn SurfaceStyle::raised(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> SurfaceStyle {
   {
     brush: theme.surface_brush(@core.SurfaceLevel::Raised),
@@ -174,7 +170,7 @@ fn control_state(
 
 ///|
 pub fn ButtonStyle::filled(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
   let normal = control_state(
     foreground=theme.palette.primary_foreground,
@@ -201,7 +197,7 @@ pub fn ButtonStyle::filled(
 
 ///|
 pub fn ButtonStyle::tonal(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
   let normal = control_state(
     foreground=theme.foreground,
@@ -213,7 +209,7 @@ pub fn ButtonStyle::tonal(
 
 ///|
 pub fn ButtonStyle::outline(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
   let normal = control_state(
     foreground=theme.foreground,
@@ -229,7 +225,7 @@ pub fn ButtonStyle::outline(
 
 ///|
 pub fn ButtonStyle::ghost(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
   let normal = control_state(
     foreground=theme.foreground,
@@ -241,7 +237,7 @@ pub fn ButtonStyle::ghost(
 
 ///|
 pub fn TextFieldStyle::filled(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> TextFieldStyle {
   let normal = control_state(
     foreground=theme.foreground,
@@ -273,14 +269,14 @@ pub fn TextFieldStyle::filled(
 
 ///|
 pub fn TextFieldStyle::outline(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> TextFieldStyle {
   TextFieldStyle::filled(theme~)
 }
 
 ///|
 pub fn ChoiceControlStyle::default(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> ChoiceControlStyle {
   {
     foreground: theme.palette.foreground,
@@ -293,7 +289,7 @@ pub fn ChoiceControlStyle::default(
 
 ///|
 pub fn ProgressStyle::default(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> ProgressStyle {
   {
     foreground: theme.palette.primary,
@@ -304,7 +300,7 @@ pub fn ProgressStyle::default(
 
 ///|
 pub fn SliderStyle::default(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> SliderStyle {
   {
     foreground: theme.palette.primary,
@@ -318,7 +314,7 @@ pub fn SliderStyle::default(
 
 ///|
 pub fn PickerStyle::default(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> PickerStyle {
   {
     font: theme.typography.control,
@@ -331,7 +327,7 @@ pub fn PickerStyle::default(
 
 ///|
 pub fn FeedbackStyle::default(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> FeedbackStyle {
   let background_alpha = match theme.scheme {
     @core.ColorScheme::Light => 0.12
@@ -370,7 +366,7 @@ pub fn FeedbackStyle::default(
 
 ///|
 pub fn BadgeStyle::default(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> BadgeStyle {
   {
     neutral: {
@@ -389,7 +385,7 @@ pub fn BadgeStyle::default(
 
 ///|
 pub fn FormValidationStyle::default(
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> FormValidationStyle {
   let color = theme.semantic_colors.danger
   {

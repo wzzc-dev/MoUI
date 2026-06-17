@@ -136,7 +136,7 @@ fn ElementNode::widget_accepts_text_input(
     focused: true,
     state: { ..data.state, focused: true },
     text_control: self.control.text_context(),
-    environment: Environment::default(),
+    environment: Environment::neutral(),
     text_system: TextSystem::fallback(),
   })
   is Some(_)

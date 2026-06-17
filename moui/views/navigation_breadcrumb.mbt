@@ -1,8 +1,8 @@
 ///|
 pub fn[Msg] breadcrumb(
   items : Array[BreadcrumbItem[Msg]],
-  theme? : @core.Theme = @core.Theme::default(),
-  spacing? : Double = @core.Theme::default().spacing_scale.xs,
+  theme? : @core.Theme = default_theme(),
+  spacing? : Double = default_theme().spacing_scale.xs,
 ) -> @core.View[Msg] {
   let children : Array[@core.View[Msg]] = []
   for index, item in items {

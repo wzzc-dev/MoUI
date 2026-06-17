@@ -4,7 +4,7 @@ pub fn[Msg] searchbar(
   on_input~ : (String) -> Msg,
   placeholder? : String = "Search...",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   on_submit? : Msg? = None,
   on_clear? : Msg? = None,
 ) -> @core.View[Msg] {
@@ -33,7 +33,7 @@ pub fn[Msg] searchbar_binding(
   query~ : @core.Binding[String],
   placeholder? : String = "Search...",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   on_submit? : Msg? = None,
   on_clear? : Msg? = None,
 ) -> @core.View[Msg] {

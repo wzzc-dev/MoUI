@@ -5,7 +5,7 @@ pub fn[Msg] clearable_text_field(
   on_clear~ : Msg,
   placeholder? : String = "",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 280.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
@@ -42,7 +42,7 @@ pub fn[Msg] password_field(
   on_toggle_reveal~ : Msg,
   placeholder? : String = "Password",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 280.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {

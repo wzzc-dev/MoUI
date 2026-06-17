@@ -3,7 +3,7 @@ fn ElementNode::dispatch_keyboard(
   self : ElementNode,
   target : ElementId,
   event : KeyboardEvent,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   if self.id == target {
@@ -38,7 +38,7 @@ fn ElementNode::dispatch_keyboard(
 fn ElementNode::dispatch_keyboard_shortcut(
   self : ElementNode,
   event : KeyboardEvent,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   let child_result = self.dispatch_keyboard_shortcut_to_children(
@@ -63,7 +63,7 @@ fn ElementNode::dispatch_keyboard_shortcut(
 fn ElementNode::dispatch_keyboard_shortcut_to_children(
   self : ElementNode,
   event : KeyboardEvent,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   let mut changed = false
@@ -89,7 +89,7 @@ fn ElementNode::dispatch_keyboard_shortcut_to_children(
 ///|
 fn ElementNode::activate_primary(
   self : ElementNode,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   let child_result = self.activate_first_child(environment~, text_system~)
@@ -109,7 +109,7 @@ fn ElementNode::activate_primary(
 ///|
 fn ElementNode::activate_first_child(
   self : ElementNode,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   for child in self.children {

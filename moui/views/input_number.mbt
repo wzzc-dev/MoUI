@@ -6,7 +6,7 @@ pub fn[Msg] number_field(
   step? : Double = 1.0,
   placeholder? : String = "0",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 220.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
@@ -48,7 +48,7 @@ pub fn[Msg] stepper(
   on_decrement~ : Msg,
   on_increment~ : Msg,
   label? : String = "",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 140.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {

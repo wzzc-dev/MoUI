@@ -7,7 +7,7 @@ pub fn[Msg] form_field_state(
   required? : Bool = false,
   disabled? : Bool = false,
   read_only? : Bool = false,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 320.0,
   label_width? : Double = 120.0,
 ) -> @core.View[Msg] {

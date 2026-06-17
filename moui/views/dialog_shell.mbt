@@ -6,7 +6,7 @@ pub fn[Msg] dialog(
   primary_action? : StateViewAction[Msg]? = None,
   secondary_action? : StateViewAction[Msg]? = None,
   dismiss_action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 432.0,
   height? : Double = 280.0,
 ) -> @core.View[Msg] {

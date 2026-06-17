@@ -44,7 +44,7 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
 - 控件实现进入 `moui/widget`：rich text editor、picker、text field、button 等低层
   widget implementation。
 - runtime/diagnostics 进入 `moui/runtime`：runtime inspector、program lifecycle
-  snapshot、view/render diagnostics snapshot、`BuildContext` runtime 构造细节。
+  snapshot、view/render diagnostics snapshot、`ComponentContext` runtime 构造细节。
 - 平台服务进入 `moui/backend/host`：WebView command/event/policy/spec、host
   capability、host service contract。
 - renderer/backend 实现仍在 `moui/render/*` 和 `moui/backend/*`。
@@ -81,19 +81,25 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
   `@views.rich_text_document_height` 等 facade 给普通 app 使用。`core` 只保留
   `TextRange`、grapheme boundary、`TextSystem`、paragraph layout contract、基础
   text input state。
-- **`BuildContext` runtime 构造命名已收口**：旧的
-  `BuildContext::new_for_runtime` 已移除。`BuildContext` 仍作为 component-facing
-  kernel 类型保留在 `core`，因为 `core.WidgetOps` / `views.component` 的签名需要
-  它且 `core` 不能反向依赖 `runtime`。当前只保留中性的 `BuildContext::new` 供
-  runtime 构造执行上下文，root facade 不暴露该构造器；新增代码不得恢复
-  `new_for_runtime` 或暴露 runtime storage 形状。
+- **`ComponentContext` runtime 构造入口已收口**：`ComponentContext` 仍作为
+  component-facing kernel 类型保留在 `core`，因为 `core.WidgetOps` /
+  `views.component` 的签名需要它且 `core` 不能反向依赖 `runtime`。runtime 使用
+  `ComponentContext::from_runtime(ComponentRuntimeContextInput)` 构造执行上下文；
+  普通 component API 不暴露散落的 runtime storage 参数，root facade 也不暴露该
+  构造入口。
+- **Date picker 控件语义已迁出**：`DateValue` 是中立数据模型，继续属于
+  `core`；`DatePickerMode` 是具体控件语义，属于 `moui/views`。`moui/widget`
+  只拥有 widget-local display mode 或更基础的实现参数，转换由 `views` 完成。
+- **Theme schema 和默认审美已拆分**：`core.Theme` / `core.Environment` 保留
+  token schema 和 `neutral()` fallback/testing 值；`default_theme()`、
+  `light_theme()`、`dark_theme()` 等 app-facing 默认审美属于 `moui/views`。
 - **诊断/Inspector 结构偏 runtime/devtools**：`RuntimeInspectorSnapshot`、
   `ProgramRuntimeSnapshot`、`ViewTreeInspectorSnapshot`、`RenderInspectorSnapshot`
-  等是很有价值的诊断 API，但不是 UI kernel 的基础协议。第二阶段已经由
-  `moui/runtime` 拥有 runtime-owned diagnostics/snapshot 类型；`core` 不再导出
-  这些 diagnostics 类型，也不能作为新增 diagnostics API 的 owning package。
-  它们应避免进入 root facade，devtools/overlay 应基于
-  `@runtime.InspectorSnapshot` 构建视图。
+  等是很有价值的诊断 API，但不是 UI kernel 的基础协议。`EffectPlanSummary`、
+  `SubscriptionPlanSummary` 和 runtime snapshots 由 `moui/runtime` 拥有；`core`
+  不再导出 diagnostics summary 或 runtime op 列表，也不能作为新增 diagnostics
+  API 的 owning package。它们应避免进入 root facade，devtools/overlay 应基于
+  `@runtime.*` diagnostics 类型构建视图。
 - **Routing/history ownership 已迁出**：`RouteLocation`、`RouteDescriptor`、
   `RouterSnapshot`、`RouteHistoryState`、`RouteFocusStore`、`RouterState` 和
   `resolve_route` 已归 `moui/views` navigation 支持层拥有。`core` 只保留
@@ -104,73 +110,22 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
 新增 API 默认放在更具体的 owning package；只有确认它是跨 runtime 的抽象协议或
 基础值类型时，才进入 `core`。
 
-## 现状声明（过渡期）
+## 目标边界声明
 
-本规范描述的是 MoUI 包边界的**目标态**。截至当前版本，仓库内存在以下已知的、
-计划随 root facade 扩展逐步收敛的偏差，不应被视为鼓励扩大的先例：
+本规范描述的是当前 API 的目标边界。新增依赖或公开 API 时，按 owning package
+直接落位，不保留兼容别名或 deprecated 过渡入口。
 
-- **第一阶段 facade 已落地**：`moui/views` 已承接 app-facing 厚类型，
-  包括控件样式、form validation、rich text document / input transform、
-  routing/history、WebView event/policy 等。普通 app 新增代码应
-  优先使用 `@views.RichTextDocument`、`@views.FormValidationSummary`、
-  `@views.RouteHistoryState`、`@views.TextFieldStyle`、`@views.WebViewEvent`
-  等入口，而不是新增 `@core.*` 厚类型引用。
-- **第二阶段 diagnostics ownership 已落地**：`moui/runtime` 已拥有
-  `ProgramRuntimeSnapshot`、`RuntimeInspectorSnapshot`、`InspectorSnapshot`、
-  `ViewTreeInspectorSnapshot`、`LayoutInspectorSnapshot`、`RenderInspectorSnapshot`
-  和 `SemanticsInspectorSnapshot` 等诊断类型。`AppRuntime::inspector_snapshot`
-  和 `AppRuntime::program_runtime_snapshot` 返回 runtime-owned 类型。`core` 中的
-  历史 diagnostics 类型和兼容桥已经删除；新增 devtools、tester、diagnostics 示例
-  必须使用 `@runtime.*`。
-- **第三阶段 WebView ownership 已落地**：`moui/backend/host` 已拥有
-  WebView command/event/policy/spec 以及 host queue/event source。`moui/views`
-  继续提供普通 app 入口 `web_view`，并 re-export `@views.WebViewEvent` /
-  `@views.WebViewNavigationPolicy`。`core` 的 WebView 专有 public surface 已删除，
-  API guard 将 `core` WebView legacy family 锁定为
-  `occurrences=0 max=0 target=0`；新增 WebView API 必须进入 `backend/host` 或
-  `views`。
-- **第四阶段 routing/history ownership 已落地**：`moui/views` 已拥有 routing /
-  history / route focus store / router state API，`moui/core` 的 routing owning
-  surface 已删除，API guard 将 `core` routing legacy family 锁定为
-  `occurrences=0 max=0 target=0`。新增 navigation/router/history API 必须进入
-  `views`；`core.NavigationState` 只作为基础 state holder 保留。
-- **第五阶段 form/style ownership 已落地**：控件 style、form validation 和
-  picker item 已由 `moui/views` 拥有，`moui/core` 的相关 owning surface 已删除，
-  API guard 将 `core` control style 和 form workflow legacy family 锁定为
-  `occurrences=0 max=0 target=0`。
-- **第六阶段 rich text ownership 已落地**：rich text document / input transform /
-  geometry / paint / selection helper 已由 `moui/widget` 拥有，`moui/views` 提供
-  app-facing facade。`moui/core` 的 rich text owning surface 已删除，API guard
-  将 `core` rich text legacy family 锁定为 `occurrences=0 max=0 target=0`。
-- **第七阶段 BuildContext 构造命名已收口**：`BuildContext::new_for_runtime`
-  已删除并由中性的 `BuildContext::new` 替代。由于 `BuildContext` 是
-  component-facing kernel 类型，仍保留在 `core`；构造入口只由 runtime 使用，
-  不进入 root facade。
-- **`@core` 当前仍包含部分 advanced kernel surface**：例如 `WidgetOps`、
-  `DrawCommand`、`TextInputState` 等，这些是框架/控件/renderer 协作协议，不是
-  普通 app 默认入口。新增 app-facing 能力应优先放到 `views`、`widget`、
-  `runtime`、`backend/host`、`render` 或 `moui_theme`。
-- **`@core` 仍被部分 app 直接依赖**：root facade（`moui/moui.mbt`）已经开始按
-  “Root Facade 暴露规则”re-export app-safe neutral aliases，例如 `Color`、
-  `Size`、`Rect`、`State`、`Environment` 等。部分业务 app 仍直接 import `@core`
-  使用几何、event、draw command、text range、program contract 等 kernel /
-  advanced 能力，这是过渡期事实。checklist 中“普通共享 app 是否只依赖
-  `wzzc-dev/moui` 和 `wzzc-dev/moui/views`”应以**目标态**理解，不作为阻断当前
-  example 合规的硬性条件；但新增 form、rich text、routing、控件 style
-  app-facing 引用应走 `@views`，新增 WebView host 协议应走 `@host`。
-- **`showcase/app` 直接依赖 `@render`**：用于 renderer capability 报告
-  （`renderer_feature_capability_report()` 等）。这属于已知偏差，正确做法是把
-  capability 报告收敛为 app-facing API（经 `moui/views` 或 root facade 暴露），
-  而不是让普通 app 直接依赖 `@render/*`。在收敛前，`showcase/app` 是该规则的唯一
-  已知例外。
-- **`showcase/app` 直接依赖 `@runtime`**：用于展示 runtime diagnostics snapshot
-  示例卡片。普通 app 不应以此为先例默认依赖 runtime；只有平台入口、测试、devtools
-  或明确的 diagnostics 示例可以使用 `@runtime.*` diagnostics 类型。
-- **测试目标下的额外 import 不计入运行时边界**：各 app 在 `for "test"` /
-  `for "wbtest"` 下 import `@runtime`、`@core` 等仅用于测试，不构成运行时依赖，
-  不违反本规范。
+- app-facing 控件、控件语义、默认主题、form/routing/WebView/rich text facade
+  进入 `moui/views`。
+- widget implementation 细节进入 `moui/widget`，且 `widget` 不依赖 `views`。
+- runtime lifecycle、component runtime input、effect/subscription diagnostics
+  summary、inspector snapshot 进入 `moui/runtime`。
+- host/platform service 协议进入 `moui/backend/host` 或具体 backend。
+- `core` 只保留跨 runtime/backend/renderer/widget 稳定成立的协议和值类型。
 
-新增依赖或公开 API 时，应朝目标态靠拢，而不是以现存偏差为先例扩大偏差。
+`showcase/app` 可以作为 diagnostics 示例直接依赖 `@runtime`，也可以为了 renderer
+capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当作默认依赖模式。
+测试目标下的 `for "test"` / `for "wbtest"` 额外 import 不计入运行时边界。
 
 ## 普通共享 App 包
 
@@ -250,19 +205,20 @@ root facade 暴露的是 app-safe 的 kernel 类型别名，不是把整个 `cor
 - `WidgetOps`、`WidgetLayoutContext`、`WidgetPaintContext`、`WidgetEventContext`
 - `WidgetPaintPlan`、`WidgetPaintLayer`、`WidgetEventResult`
 - `DrawCommand`、`DrawFrame`、`DamageRegion`
-- `BuildContext::new` 这类 runtime-only 构造入口
+- `ComponentContext::from_runtime` 这类 runtime-only 构造入口
 - runtime snapshot、inspector snapshot、diagnostic payload
 - renderer resource、renderer capability、platform-view placement
 - backend host/runtime driver 相关类型
-- 具体控件 style 默认值、表单 workflow helper、WebView command/event、routing/history
-  controller、rich text document/editor transform 等非 kernel 能力
+- 具体控件 mode/style/default theme、表单 workflow helper、WebView command/event、
+  routing/history controller、rich text document/editor transform 等非 kernel 能力
 
 扩展 root facade 时必须同步更新 `pkg.generated.mbti` 和 API surface guard，
 并用 review 确认新增 alias 是 app-safe neutral type。
 
 Diagnostics 类型的 owning package 是 `wzzc-dev/moui/runtime`。`core` 不再导出
+`EffectPlanSummary`、`SubscriptionPlanSummary`、`EffectRuntimeOp`、
 `InspectorSnapshot`、`ProgramRuntimeSnapshot` 或 `RenderInspectorSnapshot` 这类
-diagnostics 类型。
+diagnostics/runtime 类型。
 
 WebView 类型的 owning package 是 `wzzc-dev/moui/backend/host`。`core` 不再导出
 `WebViewSpec`、`WebViewCommand`、`WebViewEvent` 或

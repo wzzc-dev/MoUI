@@ -3,7 +3,7 @@ pub fn[Msg] drop_zone(
   title? : String = "Drop files here",
   message? : String = "",
   on_drop~ : (Array[String]) -> Msg,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 320.0,
   height? : Double = 104.0,
   enabled? : Bool = true,
@@ -74,7 +74,7 @@ pub fn[Msg] file_import_panel(
   title? : String = "Import files",
   drop_title? : String = "Drop files here",
   empty_message? : String = "No files selected",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
   let enabled = availability is FileImportAvailability::Available

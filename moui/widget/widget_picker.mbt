@@ -126,7 +126,7 @@ fn append_picker_commands(
   max_height~ : Double,
   expanded~ : Bool,
 ) -> Unit {
-  let theme = @core.Theme::default()
+  let theme = @core.Theme::neutral()
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
   commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
   commands.push(
@@ -195,7 +195,7 @@ fn append_picker_popup_commands(
   corner_radius~ : Double,
   max_height~ : Double,
 ) -> Unit {
-  let theme = @core.Theme::default()
+  let theme = @core.Theme::neutral()
   let list_frame = picker_popup_frame(items, frame, max_height)
   let list_rounded = @core.RoundedRect::new(
     rect=list_frame,

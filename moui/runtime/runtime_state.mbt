@@ -39,7 +39,7 @@ priv struct RuntimeState {
 fn[Msg] RuntimeState::new_view(
   root~ : @core.View[Msg],
   size~ : Size,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   on_message? : ((Msg) -> Unit)? = None,
 ) -> RuntimeState {
   let emit = match on_message {
@@ -57,7 +57,7 @@ fn[Msg] RuntimeState::new_view(
 fn RuntimeState::new_runtime_widget(
   root~ : RuntimeWidget,
   size~ : Size,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
 ) -> RuntimeState {
   let initial = mount_runtime_widget_with_next(root, 1)
   let state = {

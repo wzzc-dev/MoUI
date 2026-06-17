@@ -3,7 +3,7 @@ pub fn[Msg] section_nav(
   title : String,
   items : Array[SectionNavItem[Msg]],
   selected~ : String,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
   item_width? : Double = 150.0,
   item_height? : Double = 76.0,

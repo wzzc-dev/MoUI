@@ -3,7 +3,7 @@ priv struct RuntimeWidget {
   identity : @core.WidgetIdentity
   revision : String
   children : () -> Array[RuntimeWidget]
-  build_child : ((@core.BuildContext) -> RuntimeWidget)?
+  build_child : ((@core.ComponentContext) -> RuntimeWidget)?
   child_constraints : (Constraints) -> Constraints
   layout : (@core.WidgetLayoutContext) -> @core.WidgetLayoutResult
   paint : (@core.WidgetPaintContext) -> @core.WidgetPaintPlan

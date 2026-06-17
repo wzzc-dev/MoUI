@@ -4,7 +4,7 @@ fn ElementNode::focused_text_input(
   target : ElementId,
   render : RenderNode,
   text_system? : TextSystem = TextSystem::fallback(),
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
 ) -> TextInputState? {
   if self.id == target {
     widget_text_input_state(self, self.widget, render, text_system, environment)

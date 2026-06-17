@@ -4,7 +4,7 @@ pub fn[Msg] form_validation_summary(
   title? : String = "Review required",
   valid_message? : String = "",
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {

@@ -4,7 +4,7 @@ pub fn[Msg] segmented_control(
   selected~ : String,
   on_select~ : (String) -> Msg,
   size? : SegmentedControlSize = SegmentedControlSize::Regular,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   let height = match size {

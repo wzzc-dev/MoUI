@@ -278,7 +278,7 @@ pub fn SurfaceScale::default(
 }
 
 ///|
-pub fn Theme::light() -> Theme {
+pub fn Theme::neutral() -> Theme {
   let palette = ColorPalette::light()
   let semantic_colors = SemanticColorScale::default(palette, ColorScheme::Light)
   let spacing_scale = SpacingScale::default()
@@ -304,40 +304,6 @@ pub fn Theme::light() -> Theme {
     spacing: spacing_scale.sm,
     corner_radius: radius_scale.md,
   }
-}
-
-///|
-pub fn Theme::dark() -> Theme {
-  let palette = ColorPalette::dark()
-  let semantic_colors = SemanticColorScale::default(palette, ColorScheme::Dark)
-  let spacing_scale = SpacingScale::default()
-  let radius_scale = RadiusScale::default()
-  let typography = TypographyScale::default()
-  let shadow_scale = ShadowScale::default(scheme=ColorScheme::Dark)
-  let motion = MotionScale::default()
-  let surfaces = SurfaceScale::default(palette, ColorScheme::Dark)
-  {
-    scheme: ColorScheme::Dark,
-    palette,
-    semantic_colors,
-    spacing_scale,
-    radius_scale,
-    typography,
-    shadow_scale,
-    motion,
-    surfaces,
-    font: typography.body,
-    foreground: palette.foreground,
-    background: palette.background,
-    accent: palette.primary,
-    spacing: spacing_scale.sm,
-    corner_radius: radius_scale.md,
-  }
-}
-
-///|
-pub fn Theme::default() -> Theme {
-  Theme::light()
 }
 
 ///|
@@ -458,8 +424,8 @@ pub fn Theme::surface_brush(self : Theme, level : SurfaceLevel) -> Brush {
 }
 
 ///|
-pub fn Environment::default() -> Environment {
-  let theme = Theme::default()
+pub fn Environment::neutral() -> Environment {
+  let theme = Theme::neutral()
   {
     theme,
     color_scheme: theme.scheme,
@@ -487,11 +453,7 @@ pub fn Environment::with_color_scheme(
   self : Environment,
   color_scheme : ColorScheme,
 ) -> Environment {
-  let theme = match color_scheme {
-    Light => Theme::light()
-    Dark => Theme::dark()
-  }
-  { ..self, theme, color_scheme }
+  { ..self, color_scheme, theme: { ..self.theme, scheme: color_scheme } }
 }
 
 ///|

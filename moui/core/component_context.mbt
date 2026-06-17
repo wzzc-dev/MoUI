@@ -1,5 +1,5 @@
 ///|
-pub struct BuildContext {
+pub struct ComponentContext {
   priv component_id : ElementId
   priv request_component_rebuild : (ElementId) -> Unit
   priv viewport_size : Size
@@ -11,30 +11,38 @@ pub struct BuildContext {
 }
 
 ///|
-pub fn BuildContext::new(
-  component_id~ : ElementId,
-  request_component_rebuild~ : (ElementId) -> Unit,
-  viewport_size~ : Size,
-  saveable_state~ : SaveableStateStore,
-  subscriptions~ : Array[StateSubscription],
-  effects~ : Array[ComponentEffect],
-  old_effects~ : Array[ComponentEffect],
-  environment~ : Environment,
-) -> BuildContext {
+pub(all) struct ComponentRuntimeContextInput {
+  component_id : ElementId
+  request_component_rebuild : (ElementId) -> Unit
+  viewport_size : Size
+  saveable_state : SaveableStateStore
+  subscriptions : Array[StateSubscription]
+  effects : Array[ComponentEffect]
+  old_effects : Array[ComponentEffect]
+  environment : Environment
+}
+
+///|
+pub fn ComponentContext::from_runtime(
+  input : ComponentRuntimeContextInput,
+) -> ComponentContext {
   {
-    component_id,
-    request_component_rebuild,
-    viewport_size,
-    saveable_state,
-    subscriptions,
-    effects,
-    old_effects,
-    environment,
+    component_id: input.component_id,
+    request_component_rebuild: input.request_component_rebuild,
+    viewport_size: input.viewport_size,
+    saveable_state: input.saveable_state,
+    subscriptions: input.subscriptions,
+    effects: input.effects,
+    old_effects: input.old_effects,
+    environment: input.environment,
   }
 }
 
 ///|
-pub fn[T] BuildContext::watch(self : BuildContext, state : State[T]) -> T {
+pub fn[T] ComponentContext::watch(
+  self : ComponentContext,
+  state : State[T],
+) -> T {
   let component_id = self.component_id
   let subscription = state.subscribe(() => {
     (self.request_component_rebuild)(component_id)
@@ -44,8 +52,8 @@ pub fn[T] BuildContext::watch(self : BuildContext, state : State[T]) -> T {
 }
 
 ///|
-pub fn[T] BuildContext::watch_derived(
-  self : BuildContext,
+pub fn[T] ComponentContext::watch_derived(
+  self : ComponentContext,
   state : DerivedState[T],
 ) -> T {
   let component_id = self.component_id
@@ -59,8 +67,8 @@ pub fn[T] BuildContext::watch_derived(
 }
 
 ///|
-pub fn[T] BuildContext::binding(
-  self : BuildContext,
+pub fn[T] ComponentContext::binding(
+  self : ComponentContext,
   state : State[T],
 ) -> Binding[T] {
   let component_id = self.component_id
@@ -72,7 +80,9 @@ pub fn[T] BuildContext::binding(
 }
 
 ///|
-pub fn BuildContext::view_environment(self : BuildContext) -> ViewEnvironment {
+pub fn ComponentContext::view_environment(
+  self : ComponentContext,
+) -> ViewEnvironment {
   ViewEnvironment::new(
     viewport_size=self.viewport_size(),
     environment=self.environment,
@@ -80,8 +90,8 @@ pub fn BuildContext::view_environment(self : BuildContext) -> ViewEnvironment {
 }
 
 ///|
-pub fn BuildContext::on_update(
-  self : BuildContext,
+pub fn ComponentContext::on_update(
+  self : ComponentContext,
   key~ : String,
   deps~ : Array[String],
   effect : () -> (() -> Unit)?,
@@ -91,8 +101,8 @@ pub fn BuildContext::on_update(
 }
 
 ///|
-pub fn BuildContext::on_update_with_reason(
-  self : BuildContext,
+pub fn ComponentContext::on_update_with_reason(
+  self : ComponentContext,
   key~ : String,
   deps~ : Array[String],
   effect : () -> ((ComponentEffectCancelReason) -> Unit)?,
@@ -102,8 +112,8 @@ pub fn BuildContext::on_update_with_reason(
 }
 
 ///|
-pub fn BuildContext::on_mount(
-  self : BuildContext,
+pub fn ComponentContext::on_mount(
+  self : ComponentContext,
   key~ : String,
   effect : () -> Unit,
 ) -> Unit {
@@ -114,8 +124,8 @@ pub fn BuildContext::on_mount(
 }
 
 ///|
-pub fn BuildContext::on_unmount_with_reason(
-  self : BuildContext,
+pub fn ComponentContext::on_unmount_with_reason(
+  self : ComponentContext,
   key~ : String,
   cleanup : (ComponentEffectCancelReason) -> Unit,
 ) -> Unit {
@@ -123,8 +133,8 @@ pub fn BuildContext::on_unmount_with_reason(
 }
 
 ///|
-pub fn BuildContext::on_unmount(
-  self : BuildContext,
+pub fn ComponentContext::on_unmount(
+  self : ComponentContext,
   key~ : String,
   cleanup : () -> Unit,
 ) -> Unit {
@@ -132,8 +142,8 @@ pub fn BuildContext::on_unmount(
 }
 
 ///|
-pub fn BuildContext::on_dispose(
-  self : BuildContext,
+pub fn ComponentContext::on_dispose(
+  self : ComponentContext,
   key~ : String,
   cleanup : () -> Unit,
 ) -> Unit {
@@ -141,8 +151,8 @@ pub fn BuildContext::on_dispose(
 }
 
 ///|
-fn BuildContext::take_old_effect(
-  self : BuildContext,
+fn ComponentContext::take_old_effect(
+  self : ComponentContext,
   key : String,
 ) -> ComponentEffect? {
   for effect in self.old_effects {
@@ -154,66 +164,68 @@ fn BuildContext::take_old_effect(
 }
 
 ///|
-pub fn BuildContext::environment(self : BuildContext) -> Environment {
+pub fn ComponentContext::environment(self : ComponentContext) -> Environment {
   self.environment
 }
 
 ///|
-pub fn BuildContext::theme(self : BuildContext) -> Theme {
+pub fn ComponentContext::theme(self : ComponentContext) -> Theme {
   self.environment.theme
 }
 
 ///|
-pub fn BuildContext::color_scheme(self : BuildContext) -> ColorScheme {
+pub fn ComponentContext::color_scheme(self : ComponentContext) -> ColorScheme {
   self.environment.color_scheme
 }
 
 ///|
-pub fn BuildContext::scale_factor(self : BuildContext) -> Double {
+pub fn ComponentContext::scale_factor(self : ComponentContext) -> Double {
   self.environment.scale_factor
 }
 
 ///|
-pub fn BuildContext::viewport_size(self : BuildContext) -> Size {
+pub fn ComponentContext::viewport_size(self : ComponentContext) -> Size {
   self.viewport_size
 }
 
 ///|
-pub fn BuildContext::text_scale(self : BuildContext) -> Double {
+pub fn ComponentContext::text_scale(self : ComponentContext) -> Double {
   self.environment.text_scale
 }
 
 ///|
-pub fn BuildContext::locale(self : BuildContext) -> String {
+pub fn ComponentContext::locale(self : ComponentContext) -> String {
   self.environment.locale
 }
 
 ///|
-pub fn BuildContext::layout_direction(self : BuildContext) -> LayoutDirection {
+pub fn ComponentContext::layout_direction(
+  self : ComponentContext,
+) -> LayoutDirection {
   self.environment.layout_direction
 }
 
 ///|
-pub fn BuildContext::accessibility_contrast(
-  self : BuildContext,
+pub fn ComponentContext::accessibility_contrast(
+  self : ComponentContext,
 ) -> AccessibilityContrast {
   self.environment.accessibility_contrast
 }
 
 ///|
-pub fn BuildContext::reduced_motion(self : BuildContext) -> Bool {
+pub fn ComponentContext::reduced_motion(self : ComponentContext) -> Bool {
   self.environment.reduced_motion
 }
 
 ///|
-pub fn BuildContext::content_size_category(
-  self : BuildContext,
+pub fn ComponentContext::content_size_category(
+  self : ComponentContext,
 ) -> ContentSizeCategory {
   self.environment.content_size_category
 }
 
 ///|
-pub fn BuildContext::enabled(self : BuildContext) -> Bool {
+pub fn ComponentContext::enabled(self : ComponentContext) -> Bool {
   self.environment.enabled
 }
 
