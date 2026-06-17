@@ -1,0 +1,90 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_agent"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
+}
+
+// Values
+pub fn command_intent_from_json(Json) -> @core.CommandIntent?
+
+pub fn event_category(@core.AppEvent) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct AgentCapability {
+  kind : String
+  description : String
+  schema : Json
+} derive(ToJson, @debug.Debug)
+
+pub(all) struct AgentEvent {
+  sequence : Int
+  source : EventSource
+  event : @core.AppEvent
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct DispatchResult {
+  accepted : Bool
+  reason : String?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum EventFilter {
+  All
+  Only(Array[String])
+} derive(Eq, ToJson, @debug.Debug)
+pub fn EventFilter::accept(Self, String) -> Bool
+
+pub(all) enum EventSource {
+  User
+  Agent
+  System
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct RuntimeAgentHost {
+  runtime : @runtime.AppRuntime
+  mut next_token : Int
+  mut next_sequence : Int
+  mut subscriptions : Array[Subscription]
+}
+pub fn RuntimeAgentHost::new(@runtime.AppRuntime) -> Self
+
+pub(all) struct RuntimeStateSnapshot {
+  dispatched_count : Int
+  update_count : Int
+  pending_message_count : Int
+  active_subscription_count : Int
+  active_effect_task_count : Int
+  dirty_element_ids : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SemanticsSnapshot {
+  root : @core.SemanticsNode
+  node_count : Int
+  depth : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+type Subscription
+
+pub struct SubscriptionToken {
+  // private fields
+}
+pub fn SubscriptionToken::id(Self) -> Int
+pub fn SubscriptionToken::new(Int) -> Self
+
+// Type aliases
+
+// Traits
+pub(open) trait AgentHost {
+  fn semantics(Self) -> SemanticsSnapshot
+  fn state(Self) -> RuntimeStateSnapshot
+  fn capabilities(Self) -> Array[AgentCapability]
+  fn subscribe_events(Self, EventFilter, (AgentEvent) -> Unit) -> SubscriptionToken
+  fn unsubscribe(Self, SubscriptionToken) -> Unit
+  fn dispatch_event(Self, @core.AppEvent) -> DispatchResult
+  fn dispatch_command(Self, @core.CommandIntent) -> DispatchResult
+}
+

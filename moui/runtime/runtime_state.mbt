@@ -27,6 +27,10 @@ priv struct RuntimeState {
   mut text_system : TextSystem
   mut redraw_callback : (() -> Unit)?
   mut action_commands : ActionCommandMap
+  /// Optional observer invoked with every `AppEvent` before it is processed.
+  /// Defaults to a no-op, so the runtime behaves identically when unused.
+  /// This is the additive hook consumed by the agent layer (`moui_agent`).
+  mut event_observer : (AppEvent) -> Unit
   clock : Clock
   saveable_state : SaveableStateStore
 }
@@ -84,6 +88,7 @@ fn RuntimeState::new_runtime_widget(
     text_system: TextSystem::fallback(),
     redraw_callback: None,
     action_commands: ActionCommandMap::new(),
+    event_observer: _event => (),
     clock: Clock::new(),
     saveable_state: SaveableStateStore::new(),
   }

@@ -1,0 +1,13 @@
+import {
+  "wzzc-dev/moui_agent" @agent,
+  "wzzc-dev/moui/core",
+  "moonbitlang/core/json",
+}
+
+import {
+  "wzzc-dev/moui_agent" @agent,
+} for "test"
+
+options(
+  targets: { },
+)
