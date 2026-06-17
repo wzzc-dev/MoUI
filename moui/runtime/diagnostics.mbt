@@ -223,7 +223,7 @@ pub(all) struct RuntimeDirtyStateSummary {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct WidgetInspectorSummary {
+pub(all) struct VirtualNodeInspectorSummary {
   element_id : @core.ElementId
   kind : String
   key : String
@@ -243,7 +243,7 @@ pub(all) struct ViewTreeInspectorSnapshot {
   dirty_build_count : Int
   dirty_layout_count : Int
   dirty_paint_count : Int
-  nodes : Array[WidgetInspectorSummary]
+  nodes : Array[VirtualNodeInspectorSummary]
 } derive(Eq, Debug, ToJson)
 
 ///|

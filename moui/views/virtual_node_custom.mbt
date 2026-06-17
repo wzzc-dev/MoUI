@@ -1,22 +1,22 @@
 ///|
-pub fn[Msg] custom(
+pub fn[Msg] raw_custom(
   kind? : String = "Custom",
   key? : String? = None,
-  measure~ : (@core.WidgetLayoutContext) -> @core.WidgetLayoutResult,
-  paint? : (@core.WidgetPaintContext) -> @core.WidgetPaintPlan = _ctx => {
-    @core.WidgetPaintPlan::empty()
+  measure~ : (@core.VirtualNodeLayoutContext) -> @core.VirtualNodeLayoutResult,
+  paint? : (@core.VirtualNodePaintContext) -> @core.VirtualNodePaintPlan = _ctx => {
+    @core.VirtualNodePaintPlan::empty()
   },
-  event? : (@core.WidgetEventContext) -> @core.WidgetEventResult[Msg] = _ctx => {
-    @core.WidgetEventResult::ignored()
+  event? : (@core.VirtualNodeEventContext) -> @core.VirtualNodeEventResult[Msg] = _ctx => {
+    @core.VirtualNodeEventResult::ignored()
   },
-  semantics? : () -> @core.WidgetSemanticsInfo = () => {
-    @core.WidgetSemanticsInfo::new()
+  semantics? : () -> @core.VirtualNodeSemanticsInfo = () => {
+    @core.VirtualNodeSemanticsInfo::new()
   },
   focusable? : Bool = false,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       layout=measure,
       paint~,
       event~,
@@ -27,7 +27,7 @@ pub fn[Msg] custom(
 }
 
 ///|
-pub fn[Msg] custom_children_layout(
+pub fn[Msg] raw_custom_children_layout(
   children~ : Array[@core.View[Msg]],
   measure~ : (@core.CustomLayoutContext) -> @core.Size,
   place~ : (@core.CustomPlacementContext) -> Array[@core.Rect],
@@ -38,9 +38,9 @@ pub fn[Msg] custom_children_layout(
   key? : String? = None,
 ) -> @core.View[Msg] {
   let cache = @core.CustomLayoutCache::new()
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       children=() => children,
       layout=ctx => {
         let cache_key = custom_layout_cache_key(ctx.child_sizes)
@@ -83,7 +83,7 @@ pub fn[Msg] custom_children_layout(
           safe_area: @core.Insets::symmetric(),
           viewport: Some(size),
         }
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size~,
           child_frames=place(placement_context).map(frame => {
             @core.Rect::new(
@@ -95,9 +95,9 @@ pub fn[Msg] custom_children_layout(
           }),
         )
       },
-      paint=ctx => @core.WidgetPaintPlan::commands(paint(ctx.frame)),
+      paint=ctx => @core.VirtualNodePaintPlan::commands(paint(ctx.frame)),
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(
+        @core.VirtualNodeSemanticsInfo::new(
           role=semantics_role,
           label=semantics_label,
           value=semantics_label,
@@ -108,7 +108,7 @@ pub fn[Msg] custom_children_layout(
 }
 
 ///|
-pub fn[Msg] rect(
+pub fn[Msg] raw_rect(
   width~ : Double,
   height~ : Double,
   color~ : @core.Color,
@@ -116,16 +116,16 @@ pub fn[Msg] rect(
   key? : String? = None,
   on_tap? : Msg? = None,
 ) -> @core.View[Msg] {
-  custom(
+  raw_custom(
     kind~,
     key~,
     measure=ctx => {
-      @core.WidgetLayoutResult::new(
+      @core.VirtualNodeLayoutResult::new(
         size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
       )
     },
     paint=ctx => {
-      @core.WidgetPaintPlan::commands([
+      @core.VirtualNodePaintPlan::commands([
         @core.DrawCommand::FillRect(ctx.frame, color),
       ])
     },
@@ -134,11 +134,11 @@ pub fn[Msg] rect(
         (@core.AppEvent::Pointer(event), Some(message)) =>
           if event.phase == @core.PointerPhase::Up &&
             ctx.frame.contains(event.position) {
-            @core.WidgetEventResult::message(message)
+            @core.VirtualNodeEventResult::message(message)
           } else {
-            @core.WidgetEventResult::ignored()
+            @core.VirtualNodeEventResult::ignored()
           }
-        _ => @core.WidgetEventResult::ignored()
+        _ => @core.VirtualNodeEventResult::ignored()
       }
     },
   )
@@ -146,7 +146,7 @@ pub fn[Msg] rect(
 
 ///|
 fn custom_layout_cache_key(sizes : Array[@core.Size]) -> String {
-  let mut key = "widget-custom-layout"
+  let mut key = "virtual-node-custom-layout"
   for size in sizes {
     key = "\{key};\{size.width}x\{size.height}"
   }

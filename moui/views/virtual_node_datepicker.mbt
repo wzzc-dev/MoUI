@@ -1,14 +1,14 @@
 ///|
-pub(all) enum DatePickerDisplayMode {
+pub(all) enum RawDatePickerDisplayMode {
   Date
   DateAndTime
   Time
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn[Msg] datepicker(
+pub fn[Msg] raw_datepicker(
   selected~ : @core.Binding[@core.DateValue],
-  mode~ : DatePickerDisplayMode,
+  mode~ : RawDatePickerDisplayMode,
   placeholder~ : String,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
@@ -20,14 +20,14 @@ pub fn[Msg] datepicker(
   kind? : String = "DatePicker",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => {
-        "datepicker:\{datepicker_display_value(selected.get(), mode)}:\{datepicker_mode_revision(mode)}:\{placeholder}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_brush_revision(background)}:\{corner_radius}:\{datepicker_value_option_revision(min_date)}:\{datepicker_value_option_revision(max_date)}:\{on_select is Some(_)}"
+        "datepicker:\{datepicker_display_value(selected.get(), mode)}:\{datepicker_mode_revision(mode)}:\{placeholder}:\{virtual_node_font_revision(font)}:\{virtual_node_color_revision(foreground)}:\{virtual_node_brush_revision(background)}:\{corner_radius}:\{datepicker_value_option_revision(min_date)}:\{datepicker_value_option_revision(max_date)}:\{on_select is Some(_)}"
       },
       layout=ctx => {
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size=ctx.constraints.constrain(
             @core.Size::new(width=200.0, height=40.0),
           ),
@@ -75,11 +75,11 @@ pub fn[Msg] datepicker(
             )
           @core.AppEvent::Keyboard(event) =>
             handle_datepicker_keyboard(ctx.state, event, selected~)
-          _ => @core.WidgetEventResult::ignored()
+          _ => @core.VirtualNodeEventResult::ignored()
         }
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(
+        @core.VirtualNodeSemanticsInfo::new(
           role=@core.SemanticsRole::Menu,
           label=placeholder,
           value=datepicker_display_value(selected.get(), mode),
@@ -101,7 +101,7 @@ fn append_datepicker_commands(
   frame~ : @core.Rect,
   selected~ : @core.DateValue,
   view_date~ : @core.DateValue,
-  mode~ : DatePickerDisplayMode,
+  mode~ : RawDatePickerDisplayMode,
   placeholder~ : String,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
@@ -307,24 +307,24 @@ fn append_datepicker_popup_commands(
 
 ///|
 fn[Msg] handle_datepicker_pointer(
-  state : @core.WidgetStateContext,
+  state : @core.VirtualNodeStateContext,
   event : @core.PointerEvent,
   frame~ : @core.Rect,
   selected~ : @core.Binding[@core.DateValue],
   min_date~ : @core.DateValue?,
   max_date~ : @core.DateValue?,
   on_select~ : ((@core.DateValue) -> Msg)?,
-) -> @core.WidgetEventResult[Msg] {
+) -> @core.VirtualNodeEventResult[Msg] {
   let main_button_clicked = event.phase == @core.PointerPhase::Up &&
     frame.contains(event.position)
   if state.expanded {
     let panel_frame = datepicker_popup_frame(frame)
     if main_button_clicked && !panel_frame.contains(event.position) {
-      widget_event_result(
+      virtual_node_event_result(
         changed=true,
         captured=true,
         state=Some(datepicker_state(state, expanded=false, selected.get())),
-        dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+        dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
       )
     } else if event.phase == @core.PointerPhase::Up &&
       panel_frame.contains(event.position) {
@@ -338,56 +338,56 @@ fn[Msg] handle_datepicker_pointer(
         on_select~,
       )
     } else if event.phase == @core.PointerPhase::Up {
-      widget_event_result(
+      virtual_node_event_result(
         changed=true,
         captured=true,
         state=Some(datepicker_state(state, expanded=false, selected.get())),
-        dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+        dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
       )
     } else if frame.contains(event.position) ||
       panel_frame.contains(event.position) {
-      widget_event_result(changed=true, captured=true)
+      virtual_node_event_result(changed=true, captured=true)
     } else {
-      @core.WidgetEventResult::ignored()
+      @core.VirtualNodeEventResult::ignored()
     }
   } else if main_button_clicked {
-    widget_event_result(
+    virtual_node_event_result(
       changed=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, selected.get())),
-      dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
     )
   } else {
-    @core.WidgetEventResult::ignored()
+    @core.VirtualNodeEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_datepicker_panel_pointer(
-  state : @core.WidgetStateContext,
+  state : @core.VirtualNodeStateContext,
   event : @core.PointerEvent,
   panel_frame~ : @core.Rect,
   selected~ : @core.Binding[@core.DateValue],
   min_date~ : @core.DateValue?,
   max_date~ : @core.DateValue?,
   on_select~ : ((@core.DateValue) -> Msg)?,
-) -> @core.WidgetEventResult[Msg] {
+) -> @core.VirtualNodeEventResult[Msg] {
   let view_date = datepicker_view_date(state, selected.get())
   if datepicker_left_nav_frame(panel_frame).contains(event.position) {
     let next_view = datepicker_previous_month(view_date)
-    widget_event_result(
+    virtual_node_event_result(
       changed=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, next_view)),
-      dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
     )
   } else if datepicker_right_nav_frame(panel_frame).contains(event.position) {
     let next_view = datepicker_next_month(view_date)
-    widget_event_result(
+    virtual_node_event_result(
       changed=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=true, next_view)),
-      dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
     )
   } else {
     match datepicker_day_at_position(panel_frame, event.position, view_date) {
@@ -401,49 +401,49 @@ fn[Msg] handle_datepicker_panel_pointer(
         }
         if datepicker_value_in_range(next, min_date, max_date) {
           selected.set(next)
-          widget_event_result(
+          virtual_node_event_result(
             changed=true,
             activated=true,
             captured=true,
             state=Some(datepicker_state(state, expanded=false, next)),
-            dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+            dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
             messages=datepicker_messages(on_select, next),
           )
         } else {
-          @core.WidgetEventResult::ignored()
+          @core.VirtualNodeEventResult::ignored()
         }
       }
-      None => widget_event_result(changed=true, captured=true)
+      None => virtual_node_event_result(changed=true, captured=true)
     }
   }
 }
 
 ///|
 fn[Msg] handle_datepicker_keyboard(
-  state : @core.WidgetStateContext,
+  state : @core.VirtualNodeStateContext,
   event : @core.KeyboardEvent,
   selected~ : @core.Binding[@core.DateValue],
-) -> @core.WidgetEventResult[Msg] {
+) -> @core.VirtualNodeEventResult[Msg] {
   if !event.pressed {
-    @core.WidgetEventResult::ignored()
+    @core.VirtualNodeEventResult::ignored()
   } else if event.key == "Escape" && state.expanded {
-    widget_event_result(
+    virtual_node_event_result(
       changed=true,
       captured=true,
       state=Some(datepicker_state(state, expanded=false, selected.get())),
-      dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
     )
   } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
-    widget_event_result(
+    virtual_node_event_result(
       changed=true,
       captured=true,
       state=Some(
         datepicker_state(state, expanded=!state.expanded, selected.get()),
       ),
-      dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
     )
   } else {
-    @core.WidgetEventResult::ignored()
+    @core.VirtualNodeEventResult::ignored()
   }
 }
 
@@ -460,16 +460,16 @@ fn[Msg] datepicker_messages(
 
 ///|
 fn datepicker_state(
-  state : @core.WidgetStateContext,
+  state : @core.VirtualNodeStateContext,
   expanded~ : Bool,
   view_date : @core.DateValue,
-) -> @core.WidgetStateContext {
+) -> @core.VirtualNodeStateContext {
   { ..state, expanded, scratch: datepicker_encode_view_date(view_date) }
 }
 
 ///|
 fn datepicker_view_date(
-  state : @core.WidgetStateContext,
+  state : @core.VirtualNodeStateContext,
   selected : @core.DateValue,
 ) -> @core.DateValue {
   match datepicker_decode_view_date(state.scratch, selected) {
@@ -561,7 +561,7 @@ fn datepicker_popup_frame(frame : @core.Rect) -> @core.Rect {
   @core.Rect::new(
     x=frame.origin.x,
     y=frame.origin.y + frame.size.height + 4.0,
-    width=widget_max_double(frame.size.width, 280.0),
+    width=virtual_node_max_double(frame.size.width, 280.0),
     height=350.0,
   )
 }
@@ -732,7 +732,7 @@ fn datepicker_days_in_month(year : Int, month : Int) -> Int {
 }
 
 ///|
-fn datepicker_mode_revision(mode : DatePickerDisplayMode) -> String {
+fn datepicker_mode_revision(mode : RawDatePickerDisplayMode) -> String {
   match mode {
     Date => "date"
     DateAndTime => "datetime"
@@ -751,7 +751,7 @@ fn datepicker_value_option_revision(value : @core.DateValue?) -> String {
 ///|
 fn datepicker_display_value(
   value : @core.DateValue,
-  mode : DatePickerDisplayMode,
+  mode : RawDatePickerDisplayMode,
 ) -> String {
   match mode {
     Date => value.format_date()

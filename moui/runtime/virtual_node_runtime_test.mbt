@@ -1,8 +1,8 @@
 ///|
-test "runtime dispatches messages from widget" {
+test "runtime dispatches messages from virtual node" {
   let received : Array[Int] = []
   let runtime = AppRuntime::new_view(
-    root=@widget.rect(
+    root=@views.raw_rect(
       width=20.0,
       height=20.0,
       color=@core.Color::blue(),
@@ -20,14 +20,14 @@ test "runtime dispatches messages from widget" {
     ),
   )
   if received != [9] {
-    fail("expected runtime to dispatch widget message")
+    fail("expected runtime to dispatch virtual node message")
   }
 }
 
 ///|
-test "widget layout constrains children and inspector keeps identity" {
-  let root : @core.View[Unit] = @widget.padding(
-    child=@widget.rect(width=20.0, height=10.0, color=@core.Color::blue()),
+test "virtual node layout constrains children and inspector keeps identity" {
+  let root : @core.View[Unit] = @views.raw_padding(
+    child=@views.raw_rect(width=20.0, height=10.0, color=@core.Color::blue()),
     insets=@core.Insets::all(4.0),
     key=Some("outer"),
   )
@@ -48,21 +48,21 @@ test "widget layout constrains children and inspector keeps identity" {
   }
   let snapshot = runtime.inspector_snapshot()
   if snapshot.view_tree.root_kind != "Padding" {
-    fail("expected widget kind in inspector")
+    fail("expected virtual node kind in inspector")
   }
   match snapshot.view_tree.nodes.get(0) {
     Some(node) =>
       if node.key != "outer" {
-        fail("expected widget key in inspector")
+        fail("expected virtual node key in inspector")
       }
     None => fail("expected inspector root node")
   }
 }
 
 ///|
-test "widget component builds child and reports component inspector state" {
-  let root : @core.View[Unit] = @widget.component(_ctx => {
-    @widget.rect(width=32.0, height=18.0, color=@core.Color::blue())
+test "virtual node component builds child and reports component inspector state" {
+  let root : @core.View[Unit] = @views.raw_component(_ctx => {
+    @views.raw_rect(width=32.0, height=18.0, color=@core.Color::blue())
   })
   let runtime = AppRuntime::new_view(
     root~,
@@ -72,22 +72,22 @@ test "widget component builds child and reports component inspector state" {
   match layout.children.get(0) {
     Some(child) =>
       if child.frame.size != @core.Size::new(width=32.0, height=18.0) {
-        fail("expected component widget to lay out built child")
+        fail("expected component virtual node to lay out built child")
       }
-    None => fail("expected component widget to build child")
+    None => fail("expected component virtual node to build child")
   }
   let snapshot = runtime.inspector_snapshot()
   if snapshot.view_tree.root_kind != "Component" ||
     snapshot.view_tree.component_count != 1 {
-    fail("expected generic widget component in inspector")
+    fail("expected generic virtual node component in inspector")
   }
 }
 
 ///|
-test "widget component watch rebuilds built child" {
+test "virtual node component watch rebuilds built child" {
   let width_state = @core.State::new(24.0)
-  let root : @core.View[Unit] = @widget.component(ctx => {
-    @widget.rect(
+  let root : @core.View[Unit] = @views.raw_component(ctx => {
+    @views.raw_rect(
       width=ctx.watch(width_state),
       height=10.0,
       color=@core.Color::blue(),
@@ -115,12 +115,12 @@ test "widget component watch rebuilds built child" {
 }
 
 ///|
-test "widget scroll updates state and marks layout dirty" {
+test "virtual node scroll updates state and marks layout dirty" {
   let received : Array[@core.Point] = []
   let state = @core.ScrollState::new()
   let runtime = AppRuntime::new_view(
-    root=@widget.scroll(
-      child=@widget.rect(width=20.0, height=200.0, color=@core.Color::blue()),
+    root=@views.raw_scroll(
+      child=@views.raw_rect(width=20.0, height=200.0, color=@core.Color::blue()),
       viewport=Some(@core.Size::new(width=20.0, height=40.0)),
       state=Some(state),
       on_scroll=Some(delta => delta),
@@ -139,23 +139,23 @@ test "widget scroll updates state and marks layout dirty" {
     ),
   )
   if state.offset() != @core.Point::new(x=0.0, y=12.0) {
-    fail("expected widget scroll to update scroll state")
+    fail("expected virtual node scroll to update scroll state")
   }
   if received != [@core.Point::new(x=0.0, y=-12.0)] {
-    fail("expected widget scroll to dispatch on_scroll message")
+    fail("expected virtual node scroll to dispatch on_scroll message")
   }
   let snapshot = runtime.inspector_snapshot()
   match snapshot.view_tree.nodes.get(0) {
     Some(node) =>
       if !node.needs_layout {
-        fail("expected widget scroll to mark layout dirty")
+        fail("expected virtual node scroll to mark layout dirty")
       }
     None => fail("expected inspector root node")
   }
 }
 
 ///|
-test "widget webview paints platform view and dispatches events" {
+test "virtual node webview paints platform view and dispatches events" {
   let received : Array[@views.WebViewEvent] = []
   let runtime = AppRuntime::new_view(
     root=@views.web_view(
@@ -174,9 +174,9 @@ test "widget webview paints platform view and dispatches events" {
     Some(view) =>
       if view.id != "docs" ||
         view.property_or("url", "") != "https://example.com" {
-        fail("expected widget webview platform placement")
+        fail("expected virtual node webview platform placement")
       }
-    None => fail("expected widget webview platform placement")
+    None => fail("expected virtual node webview platform placement")
   }
   runtime.dispatch_event(
     @core.AppEvent::PlatformView(
@@ -185,15 +185,15 @@ test "widget webview paints platform view and dispatches events" {
     ),
   )
   if received != [@views.WebViewEvent::TitleChanged("Loaded")] {
-    fail("expected widget webview to dispatch event")
+    fail("expected virtual node webview to dispatch event")
   }
 }
 
 ///|
-test "nested widget webview dispatches events through generic children" {
+test "nested virtual node webview dispatches events through generic children" {
   let received : Array[@views.WebViewEvent] = []
   let runtime = AppRuntime::new_view(
-    root=@widget.padding(
+    root=@views.raw_padding(
       child=@views.web_view(
         id="nested",
         url="https://example.com/nested",
@@ -215,15 +215,15 @@ test "nested widget webview dispatches events through generic children" {
   )
   if received !=
     [@views.WebViewEvent::NavigationFinished("https://example.com/nested")] {
-    fail("expected nested widget webview to dispatch event")
+    fail("expected nested virtual node webview to dispatch event")
   }
 }
 
 ///|
-test "widget button dispatches click through runtime" {
+test "virtual node button dispatches click through runtime" {
   let received : Array[String] = []
   let runtime = AppRuntime::new_view(
-    root=@widget.button(
+    root=@views.raw_button(
       text="Go",
       size=@core.Size::new(width=80.0, height=32.0),
       font=@core.FontSpec::new(size=14.0),
@@ -253,16 +253,16 @@ test "widget button dispatches click through runtime" {
     ),
   )
   if received != ["clicked"] {
-    fail("expected widget button to dispatch on_click")
+    fail("expected virtual node button to dispatch on_click")
   }
 }
 
 ///|
-test "widget checkbox controlled event dispatches without core primitive" {
+test "virtual node checkbox controlled event dispatches without core primitive" {
   let received : Array[Bool] = []
   let checked = @core.Binding::new(get=() => false, set=_next => ())
   let runtime = AppRuntime::new_view(
-    root=@widget.checkbox(
+    root=@views.raw_checkbox(
       label="Enabled",
       checked~,
       font=@core.FontSpec::new(size=14.0),
@@ -283,19 +283,19 @@ test "widget checkbox controlled event dispatches without core primitive" {
     ),
   )
   if received != [true] {
-    fail("expected controlled checkbox widget to dispatch next value")
+    fail("expected controlled checkbox virtual node to dispatch next value")
   }
 }
 
 ///|
-test "widget picker dispatches overlay selection without core primitive" {
+test "virtual node picker dispatches overlay selection without core primitive" {
   let received : Array[String] = []
   let runtime = AppRuntime::new_view(
-    root=@widget.frame(
-      child=@widget.picker(
+    root=@views.raw_frame(
+      child=@views.raw_picker(
         items=[
-          @widget.PickerOption::new(id="one", label="One"),
-          @widget.PickerOption::new(id="two", label="Two"),
+          @views.RawPickerOption::new(id="one", label="One"),
+          @views.RawPickerOption::new(id="two", label="Two"),
         ],
         selected=@core.Binding::new(get=() => "one", set=_value => ()),
         placeholder="Pick",
@@ -349,23 +349,23 @@ test "widget picker dispatches overlay selection without core primitive" {
   match snapshot.view_tree.nodes.get(1) {
     Some(node) =>
       if node.kind != "Picker" {
-        fail("expected picker widget identity in inspector")
+        fail("expected picker virtual node identity in inspector")
       }
     None => fail("expected picker inspector node")
   }
   if snapshot.view_tree.root_kind != "Frame" {
-    fail("expected picker widget identity in inspector")
+    fail("expected picker virtual node identity in inspector")
   }
 }
 
 ///|
-test "widget picker binding selection mutates binding" {
+test "virtual node picker binding selection mutates binding" {
   let selected_state = @core.State::new("one")
-  let root : @core.View[Unit] = @widget.frame(
-    child=@widget.picker(
-      items=[
-        @widget.PickerOption::new(id="one", label="One"),
-        @widget.PickerOption::new(id="two", label="Two"),
+  let root : @core.View[Unit] = @views.raw_frame(
+    child=@views.raw_picker(
+        items=[
+        @views.RawPickerOption::new(id="one", label="One"),
+        @views.RawPickerOption::new(id="two", label="Two"),
       ],
       selected=selected_state.binding(),
       placeholder="Pick",
@@ -409,16 +409,16 @@ test "widget picker binding selection mutates binding" {
 }
 
 ///|
-test "widget datepicker dispatches overlay selection without core primitive" {
+test "virtual node datepicker dispatches overlay selection without core primitive" {
   let received : Array[@core.DateValue] = []
   let runtime = AppRuntime::new_view(
-    root=@widget.frame(
-      child=@widget.datepicker(
+    root=@views.raw_frame(
+      child=@views.raw_datepicker(
         selected=@core.Binding::new(
           get=() => @core.DateValue::new(year=2024, month=1, day=15),
           set=_value => (),
         ),
-        mode=@widget.DatePickerDisplayMode::Date,
+        mode=@views.RawDatePickerDisplayMode::Date,
         placeholder="Select date",
         font=@core.FontSpec::new(size=14.0),
         foreground=@core.Color::black(),
@@ -469,21 +469,21 @@ test "widget datepicker dispatches overlay selection without core primitive" {
   match snapshot.view_tree.nodes.get(1) {
     Some(node) =>
       if node.kind != "DatePicker" {
-        fail("expected datepicker widget identity in inspector")
+        fail("expected datepicker virtual node identity in inspector")
       }
     None => fail("expected datepicker inspector node")
   }
 }
 
 ///|
-test "widget datepicker binding selection mutates binding after month navigation" {
+test "virtual node datepicker binding selection mutates binding after month navigation" {
   let selected_state = @core.State::new(
     @core.DateValue::new(year=2024, month=1, day=15),
   )
-  let root : @core.View[Unit] = @widget.frame(
-    child=@widget.datepicker(
+  let root : @core.View[Unit] = @views.raw_frame(
+    child=@views.raw_datepicker(
       selected=selected_state.binding(),
-      mode=@widget.DatePickerDisplayMode::Date,
+      mode=@views.RawDatePickerDisplayMode::Date,
       placeholder="Select date",
       font=@core.FontSpec::new(size=14.0),
       foreground=@core.Color::black(),
@@ -534,11 +534,11 @@ test "widget datepicker binding selection mutates binding after month navigation
 }
 
 ///|
-test "widget sheet handles outside dismiss and preserves child event" {
+test "virtual node sheet handles outside dismiss and preserves child event" {
   let received : Array[Int] = []
   let runtime = AppRuntime::new_view(
-    root=@widget.sheet(
-      content=@widget.rect(
+    root=@views.raw_sheet(
+      content=@views.raw_rect(
         width=40.0,
         height=40.0,
         color=@core.Color::blue(),
@@ -573,6 +573,6 @@ test "widget sheet handles outside dismiss and preserves child event" {
   }
   let snapshot = runtime.inspector_snapshot()
   if snapshot.view_tree.root_kind != "Sheet" {
-    fail("expected sheet widget identity in inspector")
+    fail("expected sheet virtual node identity in inspector")
   }
 }
