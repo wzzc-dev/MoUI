@@ -80,7 +80,7 @@ fn markdown_editor_complete_table_header_on_enter(
   range : MarkdownSourceRange,
   line : String,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret != range.end || !markdown_editor_table_header_candidate(line) {
     return None
   }
@@ -142,7 +142,7 @@ fn markdown_editor_table_cell_text_input(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   match
     markdown_editor_table_cell_matrix_paste(source, caret, selection, input) {
     Some(transform) => return Some(transform)
@@ -190,7 +190,7 @@ fn markdown_editor_table_cell_matrix_paste(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if input == "\t" || markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -301,7 +301,7 @@ fn markdown_editor_paste_tsv_as_table(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if input == "\t" ||
     !input.contains("\t") ||
     markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
@@ -322,7 +322,7 @@ fn markdown_editor_paste_markdown_table_as_table(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
   }
@@ -344,7 +344,7 @@ fn markdown_editor_paste_table_text_as_block(
   caret : Int,
   selection : @core.TextRange?,
   table : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   markdown_editor_paste_block_text_as_block(source, caret, selection, table)
 }
 
@@ -354,7 +354,7 @@ fn markdown_editor_paste_block_text_as_block(
   caret : Int,
   selection : @core.TextRange?,
   block_text : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let chars = source.to_array()
   let range = match markdown_editor_active_selection(selection) {
     Some(active) => active.normalized()
@@ -548,7 +548,7 @@ fn markdown_editor_apply_table_paste_grid(
   grid : Array[Array[String]],
   alignments : Array[@core.TextAlign?],
   caret : Int,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   let table_lines = markdown_editor_source_lines_for_range(
     source,
     block.source_range,

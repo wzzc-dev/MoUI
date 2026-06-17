@@ -16,7 +16,7 @@ fn[Msg] ProgramRuntimeDiagnostics::start_effect_task(
     key: descriptor.key(),
     kind: descriptor.kind(),
     label: descriptor.label(),
-    status: @core.EffectTaskLifecycleStatus::EffectTaskActive,
+    status: EffectTaskLifecycleStatus::EffectTaskActive,
     cancel_reason: None,
   })
   let cleanup = start(message => {
@@ -61,7 +61,7 @@ fn ProgramRuntimeDiagnostics::complete_effect_task(
         key: task.descriptor.key(),
         kind: task.descriptor.kind(),
         label: task.descriptor.label(),
-        status: @core.EffectTaskLifecycleStatus::EffectTaskCompleted,
+        status: EffectTaskLifecycleStatus::EffectTaskCompleted,
         cancel_reason: None,
       })
       true
@@ -79,9 +79,9 @@ fn ProgramRuntimeDiagnostics::cancel_effect_tasks_replaced_by_descriptor(
   for task in self.active_effect_tasks {
     if task.descriptor.key() == descriptor.key() {
       let reason = if task.descriptor.kind() == descriptor.kind() {
-        @core.EffectTaskCancelReason::EffectTaskKeyChanged
+        EffectTaskCancelReason::EffectTaskKeyChanged
       } else {
-        @core.EffectTaskCancelReason::EffectTaskKindChanged
+        EffectTaskCancelReason::EffectTaskKindChanged
       }
       self.cancel_effect_task(task, reason)
     } else {
@@ -94,7 +94,7 @@ fn ProgramRuntimeDiagnostics::cancel_effect_tasks_replaced_by_descriptor(
 ///|
 fn ProgramRuntimeDiagnostics::cancel_all_effect_tasks(
   self : ProgramRuntimeDiagnostics,
-  reason : @core.EffectTaskCancelReason,
+  reason : EffectTaskCancelReason,
 ) -> Unit {
   for task in self.active_effect_tasks {
     self.cancel_effect_task(task, reason)
@@ -106,7 +106,7 @@ fn ProgramRuntimeDiagnostics::cancel_all_effect_tasks(
 fn ProgramRuntimeDiagnostics::cancel_effect_task(
   self : ProgramRuntimeDiagnostics,
   task : ActiveProgramEffectTask,
-  reason : @core.EffectTaskCancelReason,
+  reason : EffectTaskCancelReason,
 ) -> Unit {
   task.active.val = false
   match task.cancel.val {
@@ -118,7 +118,7 @@ fn ProgramRuntimeDiagnostics::cancel_effect_task(
     key: task.descriptor.key(),
     kind: task.descriptor.kind(),
     label: task.descriptor.label(),
-    status: @core.EffectTaskLifecycleStatus::EffectTaskCancelled,
+    status: EffectTaskLifecycleStatus::EffectTaskCancelled,
     cancel_reason: Some(reason),
   })
 }

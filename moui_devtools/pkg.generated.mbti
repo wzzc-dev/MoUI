@@ -3,15 +3,15 @@ package "wzzc-dev/moui_devtools"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn snapshot_debug_text(@core.InspectorSnapshot) -> String
+pub fn snapshot_debug_text(@runtime.InspectorSnapshot) -> String
 
-pub fn snapshot_json(@core.InspectorSnapshot, indent? : Int) -> String
+pub fn snapshot_json(@runtime.InspectorSnapshot, indent? : Int) -> String
 
-pub fn snapshot_summary(@core.InspectorSnapshot) -> SnapshotSummary
+pub fn snapshot_summary(@runtime.InspectorSnapshot) -> SnapshotSummary
 
 // Errors
 
@@ -23,7 +23,7 @@ pub fn SnapshotHistory::debug_text(Self) -> String
 pub fn SnapshotHistory::latest(Self) -> SnapshotSummary?
 pub fn SnapshotHistory::length(Self) -> Int
 pub fn SnapshotHistory::new() -> Self
-pub fn SnapshotHistory::push(Self, @core.InspectorSnapshot) -> Unit
+pub fn SnapshotHistory::push(Self, @runtime.InspectorSnapshot) -> Unit
 
 pub(all) struct SnapshotSummary {
   width : Double
@@ -36,7 +36,7 @@ pub(all) struct SnapshotSummary {
   active_effect_task_count : Int
   active_subscription_count : Int
 } derive(Eq, ToJson, @debug.Debug)
-pub fn SnapshotSummary::from_snapshot(@core.InspectorSnapshot) -> Self
+pub fn SnapshotSummary::from_snapshot(@runtime.InspectorSnapshot) -> Self
 pub fn SnapshotSummary::text(Self) -> String
 
 // Type aliases

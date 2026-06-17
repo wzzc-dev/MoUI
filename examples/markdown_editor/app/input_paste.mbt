@@ -4,7 +4,7 @@ fn markdown_editor_paste_footnote_definition(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let pasted = input.trim().to_owned()
   if markdown_editor_text_length(pasted) != markdown_editor_text_length(input) {
     return None
@@ -146,7 +146,7 @@ fn markdown_editor_paste_autolink(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) ||
     markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
@@ -177,7 +177,7 @@ fn markdown_editor_complete_autolink_on_space(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) ||
     markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
@@ -215,7 +215,7 @@ fn markdown_editor_complete_autolink_on_enter(
   caret : Int,
   selection : @core.TextRange?,
   line : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) ||
     markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
@@ -363,7 +363,7 @@ fn markdown_editor_paste_html_block(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_any_code_block_at_content_offset(source, caret, selection) {
     return None
   }
@@ -470,7 +470,7 @@ fn markdown_editor_paste_reference_over_selection(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let target = input.trim().to_owned()
   if markdown_editor_text_length(target) != markdown_editor_text_length(input) {
     return None
@@ -780,7 +780,7 @@ fn markdown_editor_paste_reference_label_over_selection(
   source : String,
   range : @core.TextRange,
   paste : MarkdownEditorPasteReferenceCommand,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let image = match paste.command {
     SetImageTarget(_) => true
     _ => false
@@ -830,7 +830,7 @@ fn markdown_editor_reference_label_transform(
   label : String,
   definition_text : String,
   image~ : Bool,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   let chars = source.to_array()
   let start = markdown_editor_clamp_int(replace_start, 0, chars.length())
   let end = markdown_editor_clamp_int(replace_end, start, chars.length())

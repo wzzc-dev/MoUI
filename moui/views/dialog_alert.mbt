@@ -8,7 +8,7 @@ pub fn[Msg] alert(
   theme? : @core.Theme = @core.Theme::default(),
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
-  let feedback_style = @core.FeedbackStyle::default(theme~)
+  let feedback_style = FeedbackStyle::default(theme~)
   let content_width = views_max_double(
     120.0,
     width - theme.spacing_scale.md * 2.0,

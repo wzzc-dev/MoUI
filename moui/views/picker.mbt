@@ -1,21 +1,21 @@
 ///|
-pub fn picker_item(id : String, label : String) -> @core.PickerItem {
-  @core.PickerItem::new(id~, label~)
+pub fn picker_item(id : String, label : String) -> PickerItem {
+  PickerItem::new(id~, label~)
 }
 
 ///|
 pub fn[Msg] picker(
-  items : Array[@core.PickerItem],
+  items : Array[PickerItem],
   selected~ : String,
   on_select~ : (String) -> Msg,
   placeholder? : String = "Select...",
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.PickerStyle,
+  style? : PickerStyle,
   max_height? : Double = 200.0,
 ) -> @core.View[Msg] {
   let resolved_style = match style {
     Some(value) => value
-    None => @core.PickerStyle::default(theme~)
+    None => PickerStyle::default(theme~)
   }
   @widget.picker(
     items~,
@@ -32,16 +32,16 @@ pub fn[Msg] picker(
 
 ///|
 pub fn[Msg] picker_binding(
-  items : Array[@core.PickerItem],
+  items : Array[PickerItem],
   selected~ : @core.Binding[String],
   placeholder? : String = "Select...",
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.PickerStyle,
+  style? : PickerStyle,
   max_height? : Double = 200.0,
 ) -> @core.View[Msg] {
   let resolved_style = match style {
     Some(value) => value
-    None => @core.PickerStyle::default(theme~)
+    None => PickerStyle::default(theme~)
   }
   @widget.picker(
     items~,

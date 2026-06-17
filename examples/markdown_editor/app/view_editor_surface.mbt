@@ -608,7 +608,7 @@ fn editor_source_layout(
     x=0.0,
     y=markdown_editor_clamp_double(scroll_offset.y, 0.0, max_scroll),
   )
-  let editor_style : @core.TextFieldStyle = {
+  let editor_style : @views.TextFieldStyle = {
     normal: {
       foreground: appearance.foreground,
       background: @core.Brush::solid(appearance.page_background),

@@ -664,6 +664,12 @@ pub using @core {type ActionCommand}
 
 pub using @core {type ActionCommandMap}
 
+pub using @core {type BadgeStyle}
+
+pub using @core {type ButtonStyle}
+
+pub using @core {type ChoiceControlStyle}
+
 pub using @core {type Color}
 
 pub using @core {type ColorScheme}
@@ -672,9 +678,79 @@ pub using @core {type CommandBinding}
 
 pub using @core {type CommandIntent}
 
+pub using @core {type ControlStateStyle}
+
+pub using @core {type FeedbackStyle}
+
+pub using @core {type FormController}
+
+pub using @core {type FormFieldError}
+
+pub using @core {type FormFieldState}
+
+pub using @core {type FormValidationResult}
+
+pub using @core {type FormValidationRule}
+
+pub using @core {type FormValidationStyle}
+
+pub using @core {type FormValidationSummary}
+
 pub using @core {type KeyModifiers}
 
 pub using @core {type KeyboardShortcut}
+
+pub using @core {type PickerItem}
+
+pub using @core {type PickerStyle}
+
+pub using @core {type ProgressStyle}
+
+pub using @core {type RichTextBlock}
+
+pub using @core {type RichTextDecoration}
+
+pub using @core {type RichTextDocument}
+
+pub type RichTextFormatter = (String) -> @core.RichTextDocument
+
+pub using @core {type RichTextInputTransform}
+
+pub using @core {type RichTextRun}
+
+pub using @core {type RichTextSourceRange}
+
+pub using @core {type RichTextTable}
+
+pub using @core {type RichTextTableCell}
+
+pub using @core {type RouteDescriptor}
+
+pub using @core {type RouteFocusStore}
+
+pub using @core {type RouteHistoryEntry}
+
+pub using @core {type RouteHistoryState}
+
+pub using @core {type RouteLocation}
+
+pub using @core {type RouteParam}
+
+pub using @core {type RouteQueryParam}
+
+pub using @core {type RouterSnapshot}
+
+pub using @core {type RouterState}
+
+pub using @core {type SliderStyle}
+
+pub using @core {type SurfaceStyle}
+
+pub using @core {type TextFieldStyle}
+
+pub using @core {type TextStyle}
+
+pub using @core {type ToneStyle}
 
 pub using @core {type WebViewEvent}
 

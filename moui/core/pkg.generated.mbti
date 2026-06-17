@@ -545,26 +545,6 @@ pub struct EffectRuntimeOp[Msg] {
 }
 pub fn[Msg] EffectRuntimeOp::runtime_visit(Self[Msg], (Msg) -> Unit, (((Msg) -> Unit) -> Unit) -> Unit, (EffectDescriptor, ((Msg) -> Unit) -> Unit) -> Unit, (EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit) -> Unit
 
-pub(all) enum EffectTaskCancelReason {
-  EffectTaskKeyChanged
-  EffectTaskKindChanged
-  EffectTaskRuntimeDestroyed
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct EffectTaskLifecycleSnapshot {
-  key : String
-  kind : String
-  label : String
-  status : EffectTaskLifecycleStatus
-  cancel_reason : EffectTaskCancelReason?
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum EffectTaskLifecycleStatus {
-  EffectTaskActive
-  EffectTaskCompleted
-  EffectTaskCancelled
-} derive(Eq, ToJson, @debug.Debug)
-
 type ElementId derive(Eq, ToJson, @debug.Debug)
 pub fn ElementId::new(Int) -> Self
 pub fn ElementId::value(Self) -> Int
@@ -762,14 +742,6 @@ pub(all) struct Insets {
 pub fn Insets::all(Double) -> Self
 pub fn Insets::symmetric(horizontal? : Double, vertical? : Double) -> Self
 
-pub(all) struct InspectorSnapshot {
-  runtime : RuntimeInspectorSnapshot
-  view_tree : ViewTreeInspectorSnapshot
-  layout : LayoutInspectorSnapshot
-  render : RenderInspectorSnapshot
-  semantics : SemanticsInspectorSnapshot
-} derive(Eq, ToJson, @debug.Debug)
-
 type Key derive(Eq)
 pub fn Key::new(String) -> Self
 pub fn Key::value(Self) -> String
@@ -814,24 +786,9 @@ pub(all) struct LayerSpec {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn LayerSpec::new(opacity? : Double, blend_mode? : BlendMode, mask? : LayerMask, offscreen? : Bool) -> Self
 
-pub(all) struct LayoutBoundsInspectorEntry {
-  element_id : ElementId
-  frame : Rect
-  depth : Int
-  child_count : Int
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) enum LayoutDirection {
   LeftToRight
   RightToLeft
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct LayoutInspectorSnapshot {
-  root_frame : Rect
-  node_count : Int
-  leaf_count : Int
-  max_depth : Int
-  bounds : Array[LayoutBoundsInspectorEntry]
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct LayoutResult {
@@ -952,47 +909,6 @@ pub fn[Model, Msg] Program::runtime_view(Self[Model, Msg], Model, ViewEnvironmen
 pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 
-pub(all) struct ProgramRuntimeSnapshot {
-  dispatched_count : Int
-  update_count : Int
-  ignored_program_dispatch_count : Int
-  message_enqueue_count : Int
-  message_drain_count : Int
-  pending_message_count : Int
-  max_pending_message_count : Int
-  effect_plan_count : Int
-  effect_count : Int
-  effect_none_count : Int
-  effect_batch_count : Int
-  effect_send_count : Int
-  effect_dispatch_count : Int
-  effect_run_count : Int
-  effect_task_count : Int
-  duplicate_effect_descriptor_key_count : Int
-  duplicate_effect_descriptor_keys : Array[String]
-  last_effect_summary : EffectPlanSummary
-  last_scheduled_effect_summary : EffectPlanSummary
-  active_effect_task_count : Int
-  started_effect_task_count : Int
-  completed_effect_task_count : Int
-  cancelled_effect_task_count : Int
-  ignored_effect_task_dispatch_count : Int
-  active_effect_tasks : Array[EffectDescriptor]
-  effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
-  subscription_plan_count : Int
-  last_subscription_plan_summary : SubscriptionPlanSummary
-  active_subscription_count : Int
-  started_subscription_count : Int
-  reused_subscription_count : Int
-  cancelled_subscription_count : Int
-  duplicate_subscription_key_count : Int
-  duplicate_subscription_keys : Array[String]
-  ignored_subscription_dispatch_count : Int
-  active_subscriptions : Array[SubscriptionDescriptor]
-  active_subscription_kind_counts : Array[SubscriptionKindCount]
-  subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct ProgressStyle {
   foreground : Color
   background : Color
@@ -1039,22 +955,6 @@ pub(all) enum RedrawReason {
   Resize
   Explicit
 } derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct RenderInspectorSnapshot {
-  command_count : Int
-  text_count : Int
-  image_count : Int
-  clip_depth : Int
-  open_clip_depth : Int
-  layer_depth : Int
-  open_layer_depth : Int
-  filter_depth : Int
-  open_filter_depth : Int
-  path_count : Int
-  shader_count : Int
-  unbalanced_pop_count : Int
-} derive(Eq, ToJson, @debug.Debug)
-pub fn RenderInspectorSnapshot::from_commands(Array[DrawCommand]) -> Self
 
 pub(all) struct RichTextBlock {
   runs : Array[RichTextRun]
@@ -1213,91 +1113,6 @@ pub fn RouterState::restore(Self, RouterSnapshot) -> Unit
 pub fn RouterState::snapshot(Self) -> RouterSnapshot
 pub fn RouterState::stack(Self) -> Array[RouteLocation]
 
-pub(all) struct RuntimeDirtyStateSummary {
-  dirty_count : Int
-  dirty_element_ids : Array[ElementId]
-  dirty_build_count : Int
-  dirty_build_element_ids : Array[ElementId]
-  dirty_layout_count : Int
-  dirty_layout_element_ids : Array[ElementId]
-  dirty_paint_count : Int
-  dirty_paint_element_ids : Array[ElementId]
-  needs_rebuild : Bool
-  needs_layout : Bool
-  needs_paint : Bool
-  needs_redraw : Bool
-  has_pending_work : Bool
-  reason : String
-  reasons : Array[String]
-  damage_kind : String
-  damage_rect_count : Int
-  damage_full_reason : String
-  cache_epoch : Int
-  cached_layer_count : Int
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct RuntimeInspectorSnapshot {
-  size : Size
-  dirty_count : Int
-  dirty_element_ids : Array[ElementId]
-  dirty_build_count : Int
-  dirty_build_element_ids : Array[ElementId]
-  dirty_layout_count : Int
-  dirty_layout_element_ids : Array[ElementId]
-  dirty_paint_count : Int
-  dirty_paint_element_ids : Array[ElementId]
-  dirty_state : RuntimeDirtyStateSummary
-  needs_rebuild : Bool
-  needs_layout : Bool
-  needs_paint : Bool
-  needs_redraw : Bool
-  draw_command_count : Int
-  rebuild_pass_count : Int
-  layout_pass_count : Int
-  paint_pass_count : Int
-  draw_command_build_count : Int
-  program_dispatched_count : Int
-  program_update_count : Int
-  ignored_program_dispatch_count : Int
-  program_message_enqueue_count : Int
-  program_message_drain_count : Int
-  program_pending_message_count : Int
-  program_max_pending_message_count : Int
-  program_effect_plan_count : Int
-  program_effect_count : Int
-  program_effect_none_count : Int
-  program_effect_batch_count : Int
-  program_effect_send_count : Int
-  program_effect_dispatch_count : Int
-  program_effect_run_count : Int
-  program_effect_task_count : Int
-  duplicate_effect_descriptor_key_count : Int
-  duplicate_effect_descriptor_keys : Array[String]
-  last_effect_summary : EffectPlanSummary
-  last_scheduled_effect_summary : EffectPlanSummary
-  active_effect_task_count : Int
-  started_effect_task_count : Int
-  completed_effect_task_count : Int
-  cancelled_effect_task_count : Int
-  ignored_effect_task_dispatch_count : Int
-  active_effect_tasks : Array[EffectDescriptor]
-  effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
-  program_subscription_plan_count : Int
-  last_subscription_plan_summary : SubscriptionPlanSummary
-  active_subscription_count : Int
-  started_subscription_count : Int
-  reused_subscription_count : Int
-  cancelled_subscription_count : Int
-  duplicate_subscription_key_count : Int
-  duplicate_subscription_keys : Array[String]
-  ignored_subscription_dispatch_count : Int
-  active_subscriptions : Array[SubscriptionDescriptor]
-  active_subscription_kind_counts : Array[SubscriptionKindCount]
-  subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
-  rebuild_reason : String
-  dirty_reasons : Array[String]
-} derive(Eq, ToJson, @debug.Debug)
-
 type SaveableCodec[T]
 pub fn SaveableCodec::bool() -> Self[Bool]
 pub fn[T] SaveableCodec::decode_value(Self[T], String) -> T?
@@ -1351,20 +1166,6 @@ pub(all) enum SemanticsAction {
   Expand
   Collapse
   Dismiss
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct SemanticsInspectorSnapshot {
-  root_role : SemanticsRole
-  node_count : Int
-  focusable_count : Int
-  action_count : Int
-  max_depth : Int
-  selected_count : Int
-  checked_count : Int
-  expanded_count : Int
-  invalid_count : Int
-  required_count : Int
-  described_count : Int
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SemanticsNode {
@@ -1523,34 +1324,10 @@ pub fn[Msg] Subscription::service_completion(key~ : String, start~ : ((Msg) -> U
 pub fn[Msg] Subscription::timer(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::window_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 
-pub(all) enum SubscriptionCancelReason {
-  SubscriptionKeyChanged
-  SubscriptionKindChanged
-  SubscriptionRuntimeDestroyed
-} derive(Eq, ToJson, @debug.Debug)
-
 type SubscriptionDescriptor derive(Eq, ToJson, @debug.Debug)
 pub fn SubscriptionDescriptor::key(Self) -> String
 pub fn SubscriptionDescriptor::kind(Self) -> String
 pub fn SubscriptionDescriptor::label(Self) -> String
-
-pub(all) struct SubscriptionKindCount {
-  kind : String
-  count : Int
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct SubscriptionLifecycleSnapshot {
-  key : String
-  kind : String
-  label : String
-  status : SubscriptionLifecycleStatus
-  cancel_reason : SubscriptionCancelReason?
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum SubscriptionLifecycleStatus {
-  SubscriptionActive
-  SubscriptionCancelled
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum SubscriptionPlanKind {
   SubscriptionPlanNone
@@ -1939,18 +1716,6 @@ pub fn ViewStyle::empty() -> Self
 pub fn ViewStyle::from_theme(Theme) -> Self
 pub fn ViewStyle::merge(Self, Self) -> Self
 
-pub(all) struct ViewTreeInspectorSnapshot {
-  root_kind : String
-  node_count : Int
-  component_count : Int
-  control_count : Int
-  modified_count : Int
-  dirty_build_count : Int
-  dirty_layout_count : Int
-  dirty_paint_count : Int
-  nodes : Array[WidgetInspectorSummary]
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct VisualStyle {
   background : Brush?
   foreground : Color?
@@ -2039,16 +1804,6 @@ pub(all) struct WidgetIdentity {
   key : Key?
 } derive(Eq)
 pub fn WidgetIdentity::new(kind~ : String, key? : String?) -> Self
-
-pub(all) struct WidgetInspectorSummary {
-  element_id : ElementId
-  kind : String
-  key : String
-  child_count : Int
-  needs_build : Bool
-  needs_layout : Bool
-  needs_paint : Bool
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct WidgetLayoutContext {
   constraints : Constraints

@@ -2,6 +2,7 @@
 package "wzzc-dev/moui/runtime"
 
 import {
+  "moonbitlang/core/debug",
   "wzzc-dev/moui/core",
 }
 
@@ -34,7 +35,7 @@ pub fn AppRuntime::focus_key(Self, String) -> Bool
 pub fn AppRuntime::focus_next(Self) -> Bool
 pub fn AppRuntime::focus_previous(Self) -> Bool
 pub fn AppRuntime::focused_text_input(Self) -> @core.TextInputState
-pub fn AppRuntime::inspector_snapshot(Self) -> @core.InspectorSnapshot
+pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot
 pub fn AppRuntime::invalidate_cached_layer_key(Self, String) -> Unit
 pub fn AppRuntime::layout(Self) -> @core.LayoutResult
 pub fn AppRuntime::needs_layout(Self) -> Bool
@@ -43,7 +44,7 @@ pub fn AppRuntime::needs_rebuild(Self) -> Bool
 pub fn AppRuntime::needs_redraw(Self) -> Bool
 pub fn[Model, Msg] AppRuntime::new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> Self
 pub fn[Msg] AppRuntime::new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> Self
-pub fn AppRuntime::program_runtime_snapshot(Self) -> @core.ProgramRuntimeSnapshot
+pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot
 pub fn AppRuntime::register_font_data(Self, @core.FontFamily, Bytes) -> Unit
 pub fn AppRuntime::restore_location_focus(Self, @core.RouteFocusStore, @core.RouteLocation) -> Bool
 pub fn AppRuntime::restore_route_focus(Self, @core.RouteFocusStore, String) -> Bool
@@ -55,6 +56,251 @@ pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn AppRuntime::set_text_system(Self, @core.TextSystem) -> Unit
 pub fn AppRuntime::size(Self) -> @core.Size
 pub fn AppRuntime::text_system(Self) -> @core.TextSystem
+
+pub(all) enum EffectTaskCancelReason {
+  EffectTaskKeyChanged
+  EffectTaskKindChanged
+  EffectTaskRuntimeDestroyed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct EffectTaskLifecycleSnapshot {
+  key : String
+  kind : String
+  label : String
+  status : EffectTaskLifecycleStatus
+  cancel_reason : EffectTaskCancelReason?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum EffectTaskLifecycleStatus {
+  EffectTaskActive
+  EffectTaskCompleted
+  EffectTaskCancelled
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct InspectorSnapshot {
+  runtime : RuntimeInspectorSnapshot
+  view_tree : ViewTreeInspectorSnapshot
+  layout : LayoutInspectorSnapshot
+  render : RenderInspectorSnapshot
+  semantics : SemanticsInspectorSnapshot
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct LayoutBoundsInspectorEntry {
+  element_id : @core.ElementId
+  frame : @core.Rect
+  depth : Int
+  child_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct LayoutInspectorSnapshot {
+  root_frame : @core.Rect
+  node_count : Int
+  leaf_count : Int
+  max_depth : Int
+  bounds : Array[LayoutBoundsInspectorEntry]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ProgramRuntimeSnapshot {
+  dispatched_count : Int
+  update_count : Int
+  ignored_program_dispatch_count : Int
+  message_enqueue_count : Int
+  message_drain_count : Int
+  pending_message_count : Int
+  max_pending_message_count : Int
+  effect_plan_count : Int
+  effect_count : Int
+  effect_none_count : Int
+  effect_batch_count : Int
+  effect_send_count : Int
+  effect_dispatch_count : Int
+  effect_run_count : Int
+  effect_task_count : Int
+  duplicate_effect_descriptor_key_count : Int
+  duplicate_effect_descriptor_keys : Array[String]
+  last_effect_summary : @core.EffectPlanSummary
+  last_scheduled_effect_summary : @core.EffectPlanSummary
+  active_effect_task_count : Int
+  started_effect_task_count : Int
+  completed_effect_task_count : Int
+  cancelled_effect_task_count : Int
+  ignored_effect_task_dispatch_count : Int
+  active_effect_tasks : Array[@core.EffectDescriptor]
+  effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
+  subscription_plan_count : Int
+  last_subscription_plan_summary : @core.SubscriptionPlanSummary
+  active_subscription_count : Int
+  started_subscription_count : Int
+  reused_subscription_count : Int
+  cancelled_subscription_count : Int
+  duplicate_subscription_key_count : Int
+  duplicate_subscription_keys : Array[String]
+  ignored_subscription_dispatch_count : Int
+  active_subscriptions : Array[@core.SubscriptionDescriptor]
+  active_subscription_kind_counts : Array[SubscriptionKindCount]
+  subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RenderInspectorSnapshot {
+  command_count : Int
+  text_count : Int
+  image_count : Int
+  clip_depth : Int
+  open_clip_depth : Int
+  layer_depth : Int
+  open_layer_depth : Int
+  filter_depth : Int
+  open_filter_depth : Int
+  path_count : Int
+  shader_count : Int
+  unbalanced_pop_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+pub fn RenderInspectorSnapshot::from_commands(Array[@core.DrawCommand]) -> Self
+
+pub(all) struct RuntimeDirtyStateSummary {
+  dirty_count : Int
+  dirty_element_ids : Array[@core.ElementId]
+  dirty_build_count : Int
+  dirty_build_element_ids : Array[@core.ElementId]
+  dirty_layout_count : Int
+  dirty_layout_element_ids : Array[@core.ElementId]
+  dirty_paint_count : Int
+  dirty_paint_element_ids : Array[@core.ElementId]
+  needs_rebuild : Bool
+  needs_layout : Bool
+  needs_paint : Bool
+  needs_redraw : Bool
+  has_pending_work : Bool
+  reason : String
+  reasons : Array[String]
+  damage_kind : String
+  damage_rect_count : Int
+  damage_full_reason : String
+  cache_epoch : Int
+  cached_layer_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct RuntimeInspectorSnapshot {
+  size : @core.Size
+  dirty_count : Int
+  dirty_element_ids : Array[@core.ElementId]
+  dirty_build_count : Int
+  dirty_build_element_ids : Array[@core.ElementId]
+  dirty_layout_count : Int
+  dirty_layout_element_ids : Array[@core.ElementId]
+  dirty_paint_count : Int
+  dirty_paint_element_ids : Array[@core.ElementId]
+  dirty_state : RuntimeDirtyStateSummary
+  needs_rebuild : Bool
+  needs_layout : Bool
+  needs_paint : Bool
+  needs_redraw : Bool
+  draw_command_count : Int
+  rebuild_pass_count : Int
+  layout_pass_count : Int
+  paint_pass_count : Int
+  draw_command_build_count : Int
+  program_dispatched_count : Int
+  program_update_count : Int
+  ignored_program_dispatch_count : Int
+  program_message_enqueue_count : Int
+  program_message_drain_count : Int
+  program_pending_message_count : Int
+  program_max_pending_message_count : Int
+  program_effect_plan_count : Int
+  program_effect_count : Int
+  program_effect_none_count : Int
+  program_effect_batch_count : Int
+  program_effect_send_count : Int
+  program_effect_dispatch_count : Int
+  program_effect_run_count : Int
+  program_effect_task_count : Int
+  duplicate_effect_descriptor_key_count : Int
+  duplicate_effect_descriptor_keys : Array[String]
+  last_effect_summary : @core.EffectPlanSummary
+  last_scheduled_effect_summary : @core.EffectPlanSummary
+  active_effect_task_count : Int
+  started_effect_task_count : Int
+  completed_effect_task_count : Int
+  cancelled_effect_task_count : Int
+  ignored_effect_task_dispatch_count : Int
+  active_effect_tasks : Array[@core.EffectDescriptor]
+  effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
+  program_subscription_plan_count : Int
+  last_subscription_plan_summary : @core.SubscriptionPlanSummary
+  active_subscription_count : Int
+  started_subscription_count : Int
+  reused_subscription_count : Int
+  cancelled_subscription_count : Int
+  duplicate_subscription_key_count : Int
+  duplicate_subscription_keys : Array[String]
+  ignored_subscription_dispatch_count : Int
+  active_subscriptions : Array[@core.SubscriptionDescriptor]
+  active_subscription_kind_counts : Array[SubscriptionKindCount]
+  subscription_lifecycle : Array[SubscriptionLifecycleSnapshot]
+  rebuild_reason : String
+  dirty_reasons : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SemanticsInspectorSnapshot {
+  root_role : @core.SemanticsRole
+  node_count : Int
+  focusable_count : Int
+  action_count : Int
+  max_depth : Int
+  selected_count : Int
+  checked_count : Int
+  expanded_count : Int
+  invalid_count : Int
+  required_count : Int
+  described_count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum SubscriptionCancelReason {
+  SubscriptionKeyChanged
+  SubscriptionKindChanged
+  SubscriptionRuntimeDestroyed
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SubscriptionKindCount {
+  kind : String
+  count : Int
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SubscriptionLifecycleSnapshot {
+  key : String
+  kind : String
+  label : String
+  status : SubscriptionLifecycleStatus
+  cancel_reason : SubscriptionCancelReason?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum SubscriptionLifecycleStatus {
+  SubscriptionActive
+  SubscriptionCancelled
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ViewTreeInspectorSnapshot {
+  root_kind : String
+  node_count : Int
+  component_count : Int
+  control_count : Int
+  modified_count : Int
+  dirty_build_count : Int
+  dirty_layout_count : Int
+  dirty_paint_count : Int
+  nodes : Array[WidgetInspectorSummary]
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct WidgetInspectorSummary {
+  element_id : @core.ElementId
+  kind : String
+  key : String
+  child_count : Int
+  needs_build : Bool
+  needs_layout : Bool
+  needs_paint : Bool
+} derive(Eq, ToJson, @debug.Debug)
 
 // Type aliases
 

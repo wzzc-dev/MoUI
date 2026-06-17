@@ -3,7 +3,7 @@ pub fn[Msg] badge(
   label : String,
   tone? : BadgeTone = BadgeTone::Neutral,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.BadgeStyle,
+  style? : BadgeStyle,
   width? : Double = 72.0,
   height? : Double = 24.0,
 ) -> @core.View[Msg] {
@@ -30,7 +30,7 @@ pub fn[Msg] status_badge(
   tone? : BadgeTone = BadgeTone::Neutral,
   detail? : String = "",
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.BadgeStyle,
+  style? : BadgeStyle,
   width? : Double = 72.0,
   height? : Double = 24.0,
 ) -> @core.View[Msg] {
@@ -51,7 +51,7 @@ pub fn[Msg] stat_card(
   caption? : String = "",
   tone? : FeedbackTone = FeedbackTone::Neutral,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FeedbackStyle,
+  style? : FeedbackStyle,
   width? : Double = 180.0,
   height? : Double = 116.0,
 ) -> @core.View[Msg] {
@@ -84,31 +84,25 @@ pub fn[Msg] stat_card(
 }
 
 ///|
-fn resolve_badge_style(
-  style : @core.BadgeStyle?,
-  theme : @core.Theme,
-) -> @core.BadgeStyle {
+fn resolve_badge_style(style : BadgeStyle?, theme : @core.Theme) -> BadgeStyle {
   match style {
     Some(value) => value
-    None => @core.BadgeStyle::default(theme~)
+    None => BadgeStyle::default(theme~)
   }
 }
 
 ///|
-fn badge_background(tone : BadgeTone, style : @core.BadgeStyle) -> @core.Color {
+fn badge_background(tone : BadgeTone, style : BadgeStyle) -> @core.Color {
   badge_tone_style(tone, style).background
 }
 
 ///|
-fn badge_foreground(tone : BadgeTone, style : @core.BadgeStyle) -> @core.Color {
+fn badge_foreground(tone : BadgeTone, style : BadgeStyle) -> @core.Color {
   badge_tone_style(tone, style).foreground
 }
 
 ///|
-fn badge_tone_style(
-  tone : BadgeTone,
-  style : @core.BadgeStyle,
-) -> @core.ToneStyle {
+fn badge_tone_style(tone : BadgeTone, style : BadgeStyle) -> ToneStyle {
   match tone {
     Neutral => style.neutral
     Accent => style.accent

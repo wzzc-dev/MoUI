@@ -25,7 +25,7 @@ pub(all) struct SemanticsSnapshot {
 
 ///|
 /// A JSON projection of runtime state that an agent inspects. Mirrors a subset
-/// of @core.ProgramRuntimeSnapshot that is useful for agent decision-making.
+/// of @runtime.ProgramRuntimeSnapshot that is useful for agent decision-making.
 pub(all) struct RuntimeStateSnapshot {
   dispatched_count : Int
   update_count : Int
@@ -179,9 +179,7 @@ pub fn app_event_from_json(value : Json) -> @core.AppEvent? {
 }
 
 ///|
-fn decode_pointer_event(
-  fields : Map[String, Json],
-) -> @core.AppEvent? {
+fn decode_pointer_event(fields : Map[String, Json]) -> @core.AppEvent? {
   guard moui_agent_json_object_object(fields, "position") is Some(pos) else {
     return None
   }

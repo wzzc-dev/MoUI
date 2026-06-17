@@ -11,6 +11,7 @@ struct RecordingHost {
   mut subscriptions : Array[RecordingSubscription]
 }
 
+///|
 struct RecordingSubscription {
   token : Int
   filter : @agent.EventFilter
@@ -37,16 +38,18 @@ let test_semantics_root : @core.SemanticsNode = {
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with semantics(
+pub impl @agent.AgentHost for RecordingHost with fn semantics(
   self : RecordingHost,
 ) -> @agent.SemanticsSnapshot {
-  @agent.SemanticsSnapshot::{ root: test_semantics_root, node_count: 1, depth: 1 }
+  @agent.SemanticsSnapshot::{
+    root: test_semantics_root,
+    node_count: 1,
+    depth: 1,
+  }
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with state(
-  self : RecordingHost,
-) -> @agent.RuntimeStateSnapshot {
+pub impl @agent.AgentHost for RecordingHost with fn state(self : RecordingHost) -> @agent.RuntimeStateSnapshot {
   @agent.RuntimeStateSnapshot::{
     dispatched_count: self.intents.length(),
     update_count: 0,
@@ -58,14 +61,12 @@ pub impl @agent.AgentHost for RecordingHost with state(
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with frame(
-  self : RecordingHost,
-) -> @agent.FrameSnapshot {
+pub impl @agent.AgentHost for RecordingHost with fn frame(self : RecordingHost) -> @agent.FrameSnapshot {
   @agent.FrameSnapshot::{ texts: [], draw_command_count: 0 }
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with capabilities(
+pub impl @agent.AgentHost for RecordingHost with fn capabilities(
   self : RecordingHost,
 ) -> Array[@agent.AgentCapability] {
   [
@@ -78,7 +79,7 @@ pub impl @agent.AgentHost for RecordingHost with capabilities(
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with subscribe_events(
+pub impl @agent.AgentHost for RecordingHost with fn subscribe_events(
   self : RecordingHost,
   filter : @agent.EventFilter,
   sink : (@agent.AgentEvent) -> Unit,
@@ -89,7 +90,7 @@ pub impl @agent.AgentHost for RecordingHost with subscribe_events(
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with unsubscribe(
+pub impl @agent.AgentHost for RecordingHost with fn unsubscribe(
   self : RecordingHost,
   token : @agent.SubscriptionToken,
 ) -> Unit {
@@ -98,7 +99,7 @@ pub impl @agent.AgentHost for RecordingHost with unsubscribe(
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with dispatch_event(
+pub impl @agent.AgentHost for RecordingHost with fn dispatch_event(
   self : RecordingHost,
   event : @core.AppEvent,
 ) -> @agent.DispatchResult {
@@ -109,10 +110,7 @@ pub impl @agent.AgentHost for RecordingHost with dispatch_event(
 
 ///|
 /// Deliver an observed AppEvent to matching subscribers (FrameTick suppressed).
-fn RecordingHost::deliver(
-  self : RecordingHost,
-  event : @core.AppEvent,
-) -> Unit {
+fn RecordingHost::deliver(self : RecordingHost, event : @core.AppEvent) -> Unit {
   match event {
     FrameTick(_) => return
     _ => ()
@@ -133,7 +131,7 @@ fn RecordingHost::deliver(
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with dispatch_command(
+pub impl @agent.AgentHost for RecordingHost with fn dispatch_command(
   self : RecordingHost,
   intent : @core.CommandIntent,
 ) -> @agent.DispatchResult {
@@ -179,7 +177,8 @@ test "route: tools/list advertises the agent tools" {
   let host = RecordingHost::new()
   let request = req("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}")
   let s = str_of(route(host, request))
-  for tool in ["get_semantics", "get_state", "dispatch_command", "dispatch_event"] {
+  for
+    tool in ["get_semantics", "get_state", "dispatch_command", "dispatch_event"] {
     if not(s.contains(tool)) {
       fail("expected tool \{tool} in tools/list; got \{s}")
     }
@@ -189,7 +188,9 @@ test "route: tools/list advertises the agent tools" {
 ///|
 test "route: tools/call dispatch_command invokes the host" {
   let host = RecordingHost::new()
-  let request = req("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_command\",\"arguments\":{\"intent\":\"Activate\"}}}")
+  let request = req(
+    "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_command\",\"arguments\":{\"intent\":\"Activate\"}}}",
+  )
   let s = str_of(route(host, request))
   if not(s.contains("content")) {
     fail("expected content wrapper; got \{s}")
@@ -206,7 +207,9 @@ test "route: tools/call dispatch_command invokes the host" {
 ///|
 test "route: tools/call get_semantics returns the tree" {
   let host = RecordingHost::new()
-  let request = req("{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}")
+  let request = req(
+    "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}",
+  )
   let s = str_of(route(host, request))
   if not(s.contains("click-me")) {
     fail("expected semantics label in response; got \{s}")
@@ -216,7 +219,9 @@ test "route: tools/call get_semantics returns the tree" {
 ///|
 test "route: unknown method returns -32601" {
   let host = RecordingHost::new()
-  let request = req("{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"no/such/method\"}")
+  let request = req(
+    "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"no/such/method\"}",
+  )
   let s = str_of(route(host, request))
   if not(s.contains("-32601")) {
     fail("expected -32601; got \{s}")
@@ -226,7 +231,9 @@ test "route: unknown method returns -32601" {
 ///|
 test "route: unknown tool returns -32602" {
   let host = RecordingHost::new()
-  let request = req("{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"tools/call\",\"params\":{\"name\":\"bogus_tool\",\"arguments\":{}}}")
+  let request = req(
+    "{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"tools/call\",\"params\":{\"name\":\"bogus_tool\",\"arguments\":{}}}",
+  )
   let s = str_of(route(host, request))
   if not(s.contains("-32602")) {
     fail("expected -32602; got \{s}")
@@ -236,13 +243,17 @@ test "route: unknown tool returns -32602" {
 ///|
 test "route: dispatch_command with bad intent returns -32602" {
   let host = RecordingHost::new()
-  let request = req("{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_command\",\"arguments\":{\"intent\":\"NotARealIntent\"}}}")
+  let request = req(
+    "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_command\",\"arguments\":{\"intent\":\"NotARealIntent\"}}}",
+  )
   let s = str_of(route(host, request))
   if not(s.contains("-32602")) {
     fail("expected -32602 for unknown intent; got \{s}")
   }
   if host.intents.length() != 0 {
-    fail("expected no recorded intent for bad input; got \{host.intents.length()}")
+    fail(
+      "expected no recorded intent for bad input; got \{host.intents.length()}",
+    )
   }
 }
 
@@ -255,7 +266,9 @@ test "route_notify: subscribe_events streams events to the notify sink" {
   // Subscribe — returns a token, no notification yet.
   let sub_resp = route_notify(
     host,
-    req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"subscribe_events\",\"arguments\":{}}}"),
+    req(
+      "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"subscribe_events\",\"arguments\":{}}}",
+    ),
     n => notifications.push((n : Json).stringify()),
   )
   let sub_str = (sub_resp : Json).stringify()
@@ -265,11 +278,15 @@ test "route_notify: subscribe_events streams events to the notify sink" {
   // Now dispatch an event; the host must fan it out and the router must notify.
   let _ = route_notify(
     host,
-    req("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_event\",\"arguments\":{\"event\":{\"kind\":\"Pointer\",\"position\":{\"x\":5,\"y\":5},\"phase\":\"Up\"}}}}"),
+    req(
+      "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_event\",\"arguments\":{\"event\":{\"kind\":\"Pointer\",\"position\":{\"x\":5,\"y\":5},\"phase\":\"Up\"}}}}",
+    ),
     n => notifications.push((n : Json).stringify()),
   )
   if notifications.length() < 1 {
-    fail("expected at least one notification after dispatch_event; got \{notifications.length()}")
+    fail(
+      "expected at least one notification after dispatch_event; got \{notifications.length()}",
+    )
   }
   if not(notifications[0].contains("notifications/events")) {
     fail("expected notifications/events method; got \{notifications[0]}")

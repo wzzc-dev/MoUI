@@ -1,9 +1,9 @@
 ///|
 fn AppRuntime::inspector_snapshot_from_state(
   self : AppRuntime,
-) -> @core.InspectorSnapshot {
+) -> InspectorSnapshot {
   let view_tree = self.state.view_tree_inspector_snapshot()
-  @core.InspectorSnapshot::{
+  InspectorSnapshot::{
     runtime: runtime_inspector_snapshot_from_state(
       self.state,
       self.program_runtime_snapshot(),
@@ -16,8 +16,8 @@ fn AppRuntime::inspector_snapshot_from_state(
 }
 
 ///|
-fn program_runtime_snapshot_empty() -> @core.ProgramRuntimeSnapshot {
-  @core.ProgramRuntimeSnapshot::{
+fn program_runtime_snapshot_empty() -> ProgramRuntimeSnapshot {
+  ProgramRuntimeSnapshot::{
     dispatched_count: 0,
     update_count: 0,
     ignored_program_dispatch_count: 0,
@@ -62,8 +62,8 @@ fn program_runtime_snapshot_empty() -> @core.ProgramRuntimeSnapshot {
 ///|
 fn runtime_inspector_snapshot_from_state(
   state : RuntimeState,
-  program : @core.ProgramRuntimeSnapshot,
-) -> @core.RuntimeInspectorSnapshot {
+  program : ProgramRuntimeSnapshot,
+) -> RuntimeInspectorSnapshot {
   let dirty_count = state.dirty_count()
   let dirty_element_ids = state.dirty_element_ids()
   let dirty_build_element_ids = state.dirty_build_elements.copy()
@@ -78,7 +78,7 @@ fn runtime_inspector_snapshot_from_state(
   let needs_redraw = state.needs_redraw
   let rebuild_reason = state.inspector_rebuild_reason()
   let dirty_reasons = state.inspector_dirty_reasons()
-  let dirty_state = @core.RuntimeDirtyStateSummary::{
+  let dirty_state = RuntimeDirtyStateSummary::{
     dirty_count,
     dirty_element_ids: dirty_element_ids.copy(),
     dirty_build_count,
@@ -105,7 +105,7 @@ fn runtime_inspector_snapshot_from_state(
     cached_layer_count: state.known_layer_cache_keys.length(),
   }
   let draw_commands = state.cached_draw_commands()
-  @core.RuntimeInspectorSnapshot::{
+  RuntimeInspectorSnapshot::{
     size: state.size,
     dirty_count,
     dirty_element_ids,
@@ -171,9 +171,9 @@ fn runtime_inspector_snapshot_from_state(
 ///|
 fn layout_inspector_snapshot_from_state(
   state : RuntimeState,
-) -> @core.LayoutInspectorSnapshot {
+) -> LayoutInspectorSnapshot {
   let layout = state.cached_layout()
-  @core.LayoutInspectorSnapshot::{
+  LayoutInspectorSnapshot::{
     root_frame: layout.frame,
     node_count: layout_node_count(layout),
     leaf_count: layout_leaf_count(layout),
@@ -185,16 +185,16 @@ fn layout_inspector_snapshot_from_state(
 ///|
 fn render_inspector_snapshot_from_state(
   state : RuntimeState,
-) -> @core.RenderInspectorSnapshot {
+) -> RenderInspectorSnapshot {
   render_inspector_from_commands(state.cached_draw_commands())
 }
 
 ///|
 fn semantics_inspector_snapshot_from_state(
   state : RuntimeState,
-) -> @core.SemanticsInspectorSnapshot {
+) -> SemanticsInspectorSnapshot {
   let semantics = state.cached_semantics()
-  @core.SemanticsInspectorSnapshot::{
+  SemanticsInspectorSnapshot::{
     root_role: semantics.role,
     node_count: semantics_node_count(semantics),
     focusable_count: semantics_focusable_count(semantics),
@@ -244,9 +244,9 @@ fn layout_max_depth(node : LayoutResult) -> Int {
 fn layout_bounds_entries(
   node : PlacedNode,
   depth~ : Int,
-) -> Array[@core.LayoutBoundsInspectorEntry] {
-  let entries : Array[@core.LayoutBoundsInspectorEntry] = [
-    @core.LayoutBoundsInspectorEntry::{
+) -> Array[LayoutBoundsInspectorEntry] {
+  let entries : Array[LayoutBoundsInspectorEntry] = [
+    LayoutBoundsInspectorEntry::{
       element_id: node.element_id,
       frame: node.frame,
       depth,
@@ -262,7 +262,7 @@ fn layout_bounds_entries(
 ///|
 fn render_inspector_from_commands(
   commands : Array[DrawCommand],
-) -> @core.RenderInspectorSnapshot {
+) -> RenderInspectorSnapshot {
   let mut text_count = 0
   let mut image_count = 0
   let mut clip_depth = 0
@@ -316,7 +316,7 @@ fn render_inspector_from_commands(
       _ => ()
     }
   }
-  @core.RenderInspectorSnapshot::{
+  RenderInspectorSnapshot::{
     command_count: commands.length(),
     text_count,
     image_count,

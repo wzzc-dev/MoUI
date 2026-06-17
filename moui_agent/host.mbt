@@ -38,9 +38,7 @@ pub struct RuntimeAgentHost {
 /// Construct a host bound to `runtime`. Installs the event observer that fans
 /// AppEvents out to subscribers, and activates the host. The host borrows the
 /// runtime for the rest of its life.
-pub fn RuntimeAgentHost::new(
-  runtime : @runtime.AppRuntime,
-) -> RuntimeAgentHost {
+pub fn RuntimeAgentHost::new(runtime : @runtime.AppRuntime) -> RuntimeAgentHost {
   // MoonBit closures capture by reference. We need the observer to call back
   // into the host on each event, so we store the host in a nullable cell that
   // the closure captures. Build the cell empty first, then fill it.
@@ -109,7 +107,7 @@ pub fn RuntimeAgentHost::is_active(self : RuntimeAgentHost) -> Bool {
 // —— Reads ————————————————————————————————————————————————
 
 ///|
-pub impl AgentHost for RuntimeAgentHost with semantics(
+pub impl AgentHost for RuntimeAgentHost with fn semantics(
   self : RuntimeAgentHost,
 ) -> SemanticsSnapshot {
   if not(self.active) {
@@ -137,9 +135,7 @@ pub impl AgentHost for RuntimeAgentHost with semantics(
 }
 
 ///|
-pub impl AgentHost for RuntimeAgentHost with state(
-  self : RuntimeAgentHost,
-) -> RuntimeStateSnapshot {
+pub impl AgentHost for RuntimeAgentHost with fn state(self : RuntimeAgentHost) -> RuntimeStateSnapshot {
   if not(self.active) {
     return RuntimeStateSnapshot::{
       dispatched_count: 0,
@@ -151,9 +147,7 @@ pub impl AgentHost for RuntimeAgentHost with state(
     }
   }
   let snap = self.runtime.program_runtime_snapshot()
-  let dirty = self.runtime.dirty_element_ids().map(id =>
-    "\{id.value()}"
-  )
+  let dirty = self.runtime.dirty_element_ids().map(id => "\{id.value()}")
   RuntimeStateSnapshot::{
     dispatched_count: snap.dispatched_count,
     update_count: snap.update_count,
@@ -169,9 +163,7 @@ pub impl AgentHost for RuntimeAgentHost with state(
 /// painted in the current frame. This is the "screen" an agent's action shows
 /// up on (the runtime's draw_commands are exactly what a window backend
 /// rasterizes).
-pub impl AgentHost for RuntimeAgentHost with frame(
-  self : RuntimeAgentHost,
-) -> FrameSnapshot {
+pub impl AgentHost for RuntimeAgentHost with fn frame(self : RuntimeAgentHost) -> FrameSnapshot {
   if not(self.active) {
     return FrameSnapshot::{ texts: [], draw_command_count: 0 }
   }
@@ -187,7 +179,7 @@ pub impl AgentHost for RuntimeAgentHost with frame(
 }
 
 ///|
-pub impl AgentHost for RuntimeAgentHost with capabilities(
+pub impl AgentHost for RuntimeAgentHost with fn capabilities(
   self : RuntimeAgentHost,
 ) -> Array[AgentCapability] {
   // Capabilities are always advertised; deactivation is a runtime gate, not a
@@ -225,7 +217,7 @@ pub impl AgentHost for RuntimeAgentHost with capabilities(
 // —— Event subscription ————————————————————————————————————
 
 ///|
-pub impl AgentHost for RuntimeAgentHost with subscribe_events(
+pub impl AgentHost for RuntimeAgentHost with fn subscribe_events(
   self : RuntimeAgentHost,
   filter : EventFilter,
   sink : (AgentEvent) -> Unit,
@@ -242,7 +234,7 @@ pub impl AgentHost for RuntimeAgentHost with subscribe_events(
 }
 
 ///|
-pub impl AgentHost for RuntimeAgentHost with unsubscribe(
+pub impl AgentHost for RuntimeAgentHost with fn unsubscribe(
   self : RuntimeAgentHost,
   token : SubscriptionToken,
 ) -> Unit {
@@ -253,7 +245,7 @@ pub impl AgentHost for RuntimeAgentHost with unsubscribe(
 // —— Writes (through the runtime's existing dispatch path) ——————
 
 ///|
-pub impl AgentHost for RuntimeAgentHost with dispatch_event(
+pub impl AgentHost for RuntimeAgentHost with fn dispatch_event(
   self : RuntimeAgentHost,
   event : @core.AppEvent,
 ) -> DispatchResult {
@@ -268,7 +260,7 @@ pub impl AgentHost for RuntimeAgentHost with dispatch_event(
 }
 
 ///|
-pub impl AgentHost for RuntimeAgentHost with dispatch_command(
+pub impl AgentHost for RuntimeAgentHost with fn dispatch_command(
   self : RuntimeAgentHost,
   intent : @core.CommandIntent,
 ) -> DispatchResult {
@@ -279,9 +271,14 @@ pub impl AgentHost for RuntimeAgentHost with dispatch_command(
     }
   }
   let ok = self.runtime.dispatch_command(intent)
-  DispatchResult::{ accepted: ok, reason: if ok { None } else {
-    Some("runtime did not dispatch the command intent")
-  } }
+  DispatchResult::{
+    accepted: ok,
+    reason: if ok {
+      None
+    } else {
+      Some("runtime did not dispatch the command intent")
+    },
+  }
 }
 
 // —— Internal: fan an observed AppEvent out to matching subscribers ———

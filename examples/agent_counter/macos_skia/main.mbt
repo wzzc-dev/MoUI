@@ -27,7 +27,7 @@ async fn main {
   // agent's dispatch_event repaints the live window the user is watching.
   let mcp_task : async () -> Unit = async fn() -> Unit {
     while true {
-      match(@stdio.stdin.read_until("\n")) {
+      match @stdio.stdin.read_until("\n") {
         None => return
         Some(line) => {
           let trimmed = line.trim().to_owned()
@@ -37,7 +37,8 @@ async fn main {
           let parsed = @json.parse(trimmed) catch {
             _ => {
               @stdio.stdout.write(
-                ((@mcp.rpc_error_no_id(-32700, "Parse error") : Json).stringify() + "\n"),
+                (@mcp.rpc_error_no_id(-32700, "Parse error") : Json).stringify() +
+                "\n",
               )
               continue
             }
@@ -47,7 +48,7 @@ async fn main {
             pending.push(notification)
           })
           for notification in pending {
-            @stdio.stdout.write(((notification : Json).stringify() + "\n"))
+            @stdio.stdout.write((notification : Json).stringify() + "\n")
           }
           @stdio.stdout.write((response : Json).stringify() + "\n")
         }

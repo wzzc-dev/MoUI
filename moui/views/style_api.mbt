@@ -51,12 +51,12 @@ pub(all) enum CrossAlign {
 fn ButtonVariant::style(
   self : ButtonVariant,
   theme : @core.Theme,
-) -> @core.ButtonStyle {
+) -> ButtonStyle {
   match self {
-    Primary => @core.ButtonStyle::filled(theme~)
-    Tonal => @core.ButtonStyle::tonal(theme~)
-    Outline => @core.ButtonStyle::outline(theme~)
-    Ghost => @core.ButtonStyle::ghost(theme~)
+    Primary => ButtonStyle::filled(theme~)
+    Tonal => ButtonStyle::tonal(theme~)
+    Outline => ButtonStyle::outline(theme~)
+    Ghost => ButtonStyle::ghost(theme~)
   }
 }
 
@@ -64,12 +64,12 @@ fn ButtonVariant::style(
 fn TextFieldVariant::style(
   self : TextFieldVariant,
   theme : @core.Theme,
-) -> @core.TextFieldStyle {
+) -> TextFieldStyle {
   match self {
-    Filled => @core.TextFieldStyle::filled(theme~)
-    Outline => @core.TextFieldStyle::outline(theme~)
+    Filled => TextFieldStyle::filled(theme~)
+    Outline => TextFieldStyle::outline(theme~)
     Plain => {
-      let base = @core.TextFieldStyle::filled(theme~)
+      let base = TextFieldStyle::filled(theme~)
       let clear = @core.Brush::solid(
         @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
       )
@@ -88,13 +88,13 @@ fn TextFieldVariant::style(
 fn SurfaceVariant::style(
   self : SurfaceVariant,
   theme : @core.Theme,
-) -> @core.SurfaceStyle {
+) -> SurfaceStyle {
   match self {
-    Base => @core.SurfaceStyle::default(theme~)
-    Raised => @core.SurfaceStyle::raised(theme~)
+    Base => SurfaceStyle::default(theme~)
+    Raised => SurfaceStyle::raised(theme~)
     Overlay =>
       {
-        ..@core.SurfaceStyle::default(theme~),
+        ..SurfaceStyle::default(theme~),
         brush: theme.surface_brush(@core.SurfaceLevel::Overlay),
         level: @core.SurfaceLevel::Overlay,
       }

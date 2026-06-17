@@ -26,7 +26,7 @@ pub fn SubscriptionToken::id(self : SubscriptionToken) -> Int {
 /// Construct a token. Exposed so alternative AgentHost implementations (and
 /// tests) can mint tokens for their own subscription registries.
 pub fn SubscriptionToken::new(id : Int) -> SubscriptionToken {
-  { id }
+  { id, }
 }
 
 ///|
@@ -79,25 +79,25 @@ pub(open) trait AgentHost {
   // —— Reads ————————————————————————————————————————————————
 
   /// Snapshot of the current semantics tree (the app's "DOM" for the agent).
-  semantics(self : Self) -> SemanticsSnapshot
+  fn semantics(self : Self) -> SemanticsSnapshot
 
   /// Snapshot of runtime state (message/effect/subscription counters + dirty).
-  state(self : Self) -> RuntimeStateSnapshot
+  fn state(self : Self) -> RuntimeStateSnapshot
 
   /// What the compositor renders to the screen right now — the painted text of
   /// the current frame. This is the surface an agent's action becomes visible
   /// on (a window backend rasterizes exactly these draw commands).
-  frame(self : Self) -> FrameSnapshot
+  fn frame(self : Self) -> FrameSnapshot
 
   /// Operations this host accepts (capabilities). MVP returns a static list.
-  capabilities(self : Self) -> Array[AgentCapability]
+  fn capabilities(self : Self) -> Array[AgentCapability]
 
   // —— Event subscription ————————————————————————————————————
 
   /// Register an event sink. Returns a token usable with `unsubscribe`.
   /// The sink receives an AgentEvent per matching AppEvent, tagged with a
   /// monotonic sequence and best-effort source.
-  subscribe_events(
+  fn subscribe_events(
     self : Self,
     filter : EventFilter,
     sink : (AgentEvent) -> Unit,
@@ -105,14 +105,14 @@ pub(open) trait AgentHost {
 
   /// Stop delivering events to the subscription identified by `token`.
   /// No-op if the token is unknown.
-  unsubscribe(self : Self, token : SubscriptionToken) -> Unit
+  fn unsubscribe(self : Self, token : SubscriptionToken) -> Unit
 
   // —— Writes (go through the app's existing dispatch path) ——————
 
   /// Inject an AppEvent (Pointer/Keyboard/TextInput/...) as if from a user.
-  dispatch_event(self : Self, event : @core.AppEvent) -> DispatchResult
+  fn dispatch_event(self : Self, event : @core.AppEvent) -> DispatchResult
 
   /// Fire a command intent (Activate/Submit/Copy/...) via the runtime's
   /// command dispatch. This is the primary MVP path for agent actions.
-  dispatch_command(self : Self, intent : @core.CommandIntent) -> DispatchResult
+  fn dispatch_command(self : Self, intent : @core.CommandIntent) -> DispatchResult
 }

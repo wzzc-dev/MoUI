@@ -2,7 +2,7 @@
 pub fn[Msg] form_error(
   message : String,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FormValidationStyle,
+  style? : FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   text(message, role=TextRole::Caption, theme~, width~, height=24.0)
@@ -24,11 +24,11 @@ pub fn[Msg] form_helper_text(
 
 ///|
 fn resolve_form_validation_style(
-  style : @core.FormValidationStyle?,
+  style : FormValidationStyle?,
   theme : @core.Theme,
-) -> @core.FormValidationStyle {
+) -> FormValidationStyle {
   match style {
     Some(value) => value
-    None => @core.FormValidationStyle::default(theme~)
+    None => FormValidationStyle::default(theme~)
   }
 }

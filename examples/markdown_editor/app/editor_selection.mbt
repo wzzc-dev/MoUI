@@ -280,7 +280,7 @@ fn markdown_editor_html_block_at_selection(
 fn markdown_editor_code_block_enter(
   source : String,
   caret : Int,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   let line_start = markdown_editor_line_start(chars, caret)

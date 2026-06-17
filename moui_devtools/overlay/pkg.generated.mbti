@@ -3,10 +3,11 @@ package "wzzc-dev/moui_devtools/overlay"
 
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/runtime",
 }
 
 // Values
-pub fn snapshot_overlay(@core.InspectorSnapshot, theme? : @core.Theme) -> @core.View[Unit]
+pub fn snapshot_overlay(@runtime.InspectorSnapshot, theme? : @core.Theme) -> @core.View[Unit]
 
 // Errors
 

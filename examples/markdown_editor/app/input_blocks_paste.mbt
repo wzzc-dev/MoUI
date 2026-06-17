@@ -4,7 +4,7 @@ fn markdown_editor_transform_multiline_paste(
   caret : Int,
   selection : @core.TextRange?,
   input : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   match markdown_editor_active_selection(selection) {
     Some(_) => None
     None => {

@@ -33,7 +33,9 @@ test "e2e: MCP get_semantics returns the agent counter tree" {
   let host = @agent.RuntimeAgentHost::new(runtime)
   let response = @mcp.route(
     host,
-    req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}"),
+    req(
+      "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}",
+    ),
   )
   let s = resp_str(response)
   // The semantics tree must contain the counter's text/button labels.
@@ -50,7 +52,10 @@ test "e2e: MCP tools/list advertises dispatch ops" {
   let runtime = new_runtime()
   let host = @agent.RuntimeAgentHost::new(runtime)
   let s = resp_str(
-    @mcp.route(host, req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}")),
+    @mcp.route(
+      host,
+      req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"),
+    ),
   )
   if not(s.contains("dispatch_command") && s.contains("get_semantics")) {
     fail("expected dispatch_command + get_semantics tools; got \{s}")
@@ -72,7 +77,9 @@ test "e2e: MCP dispatch_command routes through runtime and updates state" {
   // Agent fires a command through the MCP router.
   let r = @mcp.route(
     host,
-    req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_command\",\"arguments\":{\"intent\":\"Activate\"}}}"),
+    req(
+      "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_command\",\"arguments\":{\"intent\":\"Activate\"}}}",
+    ),
   )
   let rs = resp_str(r)
   // The tool call must return a content-wrapped, accepted result.
@@ -133,11 +140,15 @@ fn click_via_mcp(
 ) -> Unit {
   let _ = @mcp.route(
     host,
-    req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_event\",\"arguments\":{\"event\":{\"kind\":\"Pointer\",\"position\":{\"x\":\{x},\"y\":\{y}},\"phase\":\"Down\"}}}}"),
+    req(
+      "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_event\",\"arguments\":{\"event\":{\"kind\":\"Pointer\",\"position\":{\"x\":\{x},\"y\":\{y}},\"phase\":\"Down\"}}}}",
+    ),
   )
   let _ = @mcp.route(
     host,
-    req("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_event\",\"arguments\":{\"event\":{\"kind\":\"Pointer\",\"position\":{\"x\":\{x},\"y\":\{y}},\"phase\":\"Up\"}}}}"),
+    req(
+      "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_event\",\"arguments\":{\"event\":{\"kind\":\"Pointer\",\"position\":{\"x\":\{x},\"y\":\{y}},\"phase\":\"Up\"}}}}",
+    ),
   )
 }
 
@@ -150,7 +161,9 @@ test "e2e: agent clicks Increment via MCP and counter goes 0 -> 1" {
   let before = resp_str(
     @mcp.route(
       host,
-      req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}"),
+      req(
+        "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}",
+      ),
     ),
   )
   if not(before.contains("Count: 0")) {
@@ -164,7 +177,9 @@ test "e2e: agent clicks Increment via MCP and counter goes 0 -> 1" {
   let after = resp_str(
     @mcp.route(
       host,
-      req("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}"),
+      req(
+        "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}",
+      ),
     ),
   )
   if not(after.contains("Count: 1")) {
@@ -185,7 +200,9 @@ test "e2e: three agent clicks drive Count 0 -> 3" {
   let after = resp_str(
     @mcp.route(
       host,
-      req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}"),
+      req(
+        "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}",
+      ),
     ),
   )
   if not(after.contains("Count: 3")) {
@@ -203,7 +220,9 @@ test "e2e: agent clicking Decrement decreases the count" {
   let after = resp_str(
     @mcp.route(
       host,
-      req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}"),
+      req(
+        "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}",
+      ),
     ),
   )
   if not(after.contains("Count: 0")) {
@@ -225,7 +244,9 @@ test "e2e: rendered frame (screen content) changes 0 -> 1 after agent click" {
   let before_frame = resp_str(
     @mcp.route(
       host,
-      req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"get_frame\",\"arguments\":{}}}"),
+      req(
+        "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"get_frame\",\"arguments\":{}}}",
+      ),
     ),
   )
   if not(before_frame.contains("Count: 0")) {
@@ -240,13 +261,19 @@ test "e2e: rendered frame (screen content) changes 0 -> 1 after agent click" {
   let after_frame = resp_str(
     @mcp.route(
       host,
-      req("{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"get_frame\",\"arguments\":{}}}"),
+      req(
+        "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\",\"params\":{\"name\":\"get_frame\",\"arguments\":{}}}",
+      ),
     ),
   )
   if not(after_frame.contains("Count: 1")) {
-    fail("expected rendered frame to show Count: 1 after agent click; got \{after_frame}")
+    fail(
+      "expected rendered frame to show Count: 1 after agent click; got \{after_frame}",
+    )
   }
   if after_frame.contains("Count: 0") {
-    fail("rendered frame still shows Count: 0 — agent action not visible on screen")
+    fail(
+      "rendered frame still shows Count: 0 — agent action not visible on screen",
+    )
   }
 }

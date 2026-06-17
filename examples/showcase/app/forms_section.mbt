@@ -82,7 +82,7 @@ fn ShowcaseModel::forms_section(
               width=field_width,
             ),
             form_workflow_bar(
-              summary=@core.FormValidationSummary::from_errors([
+              summary=@views.FormValidationSummary::from_errors([
                 { name: "email", message: "Email is required" },
                 {
                   name: "display_name",

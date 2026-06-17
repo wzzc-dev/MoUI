@@ -2,7 +2,7 @@
 fn markdown_editor_backspace_footnote_marker(
   chars : Array[Char],
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret <= 0 {
     return None
   }
@@ -43,7 +43,7 @@ fn markdown_editor_backspace_footnote_marker(
 fn markdown_editor_delete_footnote_marker(
   chars : Array[Char],
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret >= chars.length() {
     return None
   }
@@ -134,7 +134,7 @@ fn markdown_editor_footnote_open_before(
 fn markdown_editor_backspace_autolink_marker(
   chars : Array[Char],
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret <= 0 {
     return None
   }
@@ -175,7 +175,7 @@ fn markdown_editor_backspace_autolink_marker(
 fn markdown_editor_delete_autolink_marker(
   chars : Array[Char],
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret >= chars.length() {
     return None
   }

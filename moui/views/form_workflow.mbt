@@ -64,7 +64,7 @@ pub fn[Msg] form_actions(
 
 ///|
 pub fn[Msg] form_workflow_bar(
-  summary~ : @core.FormValidationSummary,
+  summary~ : FormValidationSummary,
   primary~ : StateViewAction[Msg],
   secondary? : StateViewAction[Msg]? = None,
   focus_scope? : @core.FocusScope? = None,
@@ -73,7 +73,7 @@ pub fn[Msg] form_workflow_bar(
   invalid_title? : String = "Review required",
   status? : String = "",
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.FormValidationStyle,
+  style? : FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []
@@ -110,7 +110,7 @@ pub fn[Msg] form_workflow_bar(
 
 ///|
 fn form_workflow_status(
-  summary : @core.FormValidationSummary,
+  summary : FormValidationSummary,
   focus_scope : @core.FocusScope?,
   status : String,
 ) -> String {
@@ -156,7 +156,7 @@ fn form_workflow_command_status(scope : @core.FocusScope) -> String {
 
 ///|
 fn form_workflow_description(
-  summary : @core.FormValidationSummary,
+  summary : FormValidationSummary,
   focus_scope : @core.FocusScope?,
 ) -> String {
   let validity = if summary.valid { "valid" } else { "invalid" }

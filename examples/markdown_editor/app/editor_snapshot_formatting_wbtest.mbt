@@ -366,7 +366,7 @@ test "markdown editor formatter maps link image and strike delimiters" {
     )
   }
   guard document.blocks[0].runs[5].decoration
-    is Some(@core.RichTextDecoration::Strikethrough) else {
+    is Some(@views.RichTextDecoration::Strikethrough) else {
     fail("expected strikethrough decoration")
   }
 }

@@ -3,7 +3,7 @@ fn markdown_editor_complete_rule_on_space(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -20,7 +20,7 @@ fn markdown_editor_complete_setext_heading_on_space(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -49,7 +49,7 @@ fn markdown_editor_insert_hard_break(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let chars = source.to_array()
   let caret = markdown_editor_clamp_int(caret, 0, chars.length())
   if markdown_editor_table_cell_at_text_offset(source, caret, selection) {
@@ -83,7 +83,7 @@ fn markdown_editor_complete_rule_on_enter(
   range : MarkdownSourceRange,
   line : String,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret != range.end || !markdown_editor_is_typed_rule_line(line) {
     return None
   }
@@ -99,7 +99,7 @@ fn markdown_editor_complete_setext_heading_on_enter(
   range : MarkdownSourceRange,
   line : String,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret != range.end || !markdown_editor_is_typed_setext_underline_line(line) {
     return None
   }
@@ -155,9 +155,9 @@ fn markdown_editor_transform_result(
   text~ : String,
   caret~ : Int,
   selection? : @core.TextRange? = None,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   markdown_editor_normalize_ordered_transform(
-    @core.RichTextInputTransform::new(text~, caret~, selection~),
+    @views.RichTextInputTransform::new(text~, caret~, selection~),
   )
 }
 
@@ -166,7 +166,7 @@ fn markdown_editor_autocomplete_block_marker(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -305,7 +305,7 @@ fn markdown_editor_indent_lines(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform {
+) -> @views.RichTextInputTransform {
   markdown_editor_shift_lines(source, caret, selection, indent=true).unwrap()
 }
 
@@ -314,7 +314,7 @@ fn markdown_editor_outdent_lines(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   markdown_editor_shift_lines(source, caret, selection, indent=false)
 }
 
@@ -324,7 +324,7 @@ fn markdown_editor_shift_lines(
   caret : Int,
   selection : @core.TextRange?,
   indent~ : Bool,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let current = { caret, selection }
   let range = markdown_editor_selected_line_range(source, current)
   let chars = source.to_array()
@@ -406,7 +406,7 @@ fn markdown_editor_exit_empty_continuation(
   chars : Array[Char],
   range : MarkdownSourceRange,
   line : String,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   let marker = markdown_editor_continuation_marker(line)
   if marker == "" {
     return None
@@ -451,7 +451,7 @@ fn markdown_editor_backspace_empty_continuation(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -470,7 +470,7 @@ fn markdown_editor_delete_empty_continuation(
   source : String,
   caret : Int,
   selection : @core.TextRange?,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if markdown_editor_active_selection(selection) is Some(_) {
     return None
   }
@@ -490,7 +490,7 @@ fn markdown_editor_exit_empty_heading(
   range : MarkdownSourceRange,
   line : String,
   caret : Int,
-) -> @core.RichTextInputTransform? {
+) -> @views.RichTextInputTransform? {
   if caret != range.end {
     return None
   }

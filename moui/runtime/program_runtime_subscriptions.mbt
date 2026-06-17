@@ -70,7 +70,7 @@ fn[Msg] ProgramRuntimeDiagnostics::sync_subscriptions(
 ///|
 fn ProgramRuntimeDiagnostics::cancel_all_subscriptions(
   self : ProgramRuntimeDiagnostics,
-  reason : @core.SubscriptionCancelReason,
+  reason : SubscriptionCancelReason,
 ) -> Unit {
   for active in self.active_subscriptions {
     self.cancel_subscription(active, reason)
@@ -96,11 +96,11 @@ fn ProgramRuntimeDiagnostics::reusable_subscription(
 fn subscription_cancel_reason(
   active : ActiveProgramSubscription,
   next : Array[ActiveProgramSubscription],
-) -> @core.SubscriptionCancelReason {
+) -> SubscriptionCancelReason {
   if next.any(subscription => subscription.key == active.key) {
-    @core.SubscriptionCancelReason::SubscriptionKindChanged
+    SubscriptionCancelReason::SubscriptionKindChanged
   } else {
-    @core.SubscriptionCancelReason::SubscriptionKeyChanged
+    SubscriptionCancelReason::SubscriptionKeyChanged
   }
 }
 
@@ -123,7 +123,7 @@ fn[Msg] ProgramRuntimeDiagnostics::start_subscription(
     key: source.key(),
     kind: source.kind(),
     label: source.label(),
-    status: @core.SubscriptionLifecycleStatus::SubscriptionActive,
+    status: SubscriptionLifecycleStatus::SubscriptionActive,
     cancel_reason: None,
   })
   {
@@ -141,7 +141,7 @@ fn[Msg] ProgramRuntimeDiagnostics::start_subscription(
 fn ProgramRuntimeDiagnostics::cancel_subscription(
   self : ProgramRuntimeDiagnostics,
   active : ActiveProgramSubscription,
-  reason : @core.SubscriptionCancelReason,
+  reason : SubscriptionCancelReason,
 ) -> Unit {
   active.active.val = false
   match active.cancel {
@@ -153,7 +153,7 @@ fn ProgramRuntimeDiagnostics::cancel_subscription(
     key: active.key,
     kind: active.kind,
     label: active.label,
-    status: @core.SubscriptionLifecycleStatus::SubscriptionCancelled,
+    status: SubscriptionLifecycleStatus::SubscriptionCancelled,
     cancel_reason: Some(reason),
   })
 }
@@ -161,8 +161,8 @@ fn ProgramRuntimeDiagnostics::cancel_subscription(
 ///|
 fn ProgramRuntimeDiagnostics::active_subscription_kind_counts(
   self : ProgramRuntimeDiagnostics,
-) -> Array[@core.SubscriptionKindCount] {
-  let counts : Array[@core.SubscriptionKindCount] = []
+) -> Array[SubscriptionKindCount] {
+  let counts : Array[SubscriptionKindCount] = []
   for active in self.active_subscriptions {
     let mut found = false
     for index, count in counts {

@@ -14,7 +14,7 @@ const validManifest = {
   showcaseTarget: "examples/showcase/web_wasm",
   url: "http://127.0.0.1:18080/examples/showcase/web_wasm/",
   renderInspectorSource:
-    "Showcase Diagnostics inspector snapshot card backed by @core.RenderInspectorSnapshot",
+    "Showcase Diagnostics inspector snapshot card backed by @runtime.RenderInspectorSnapshot",
   renderInspectorCounters: [
     "command_count",
     "text_count",

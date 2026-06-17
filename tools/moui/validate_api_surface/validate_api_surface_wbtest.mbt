@@ -21,13 +21,26 @@ fn budget_by_label(label : String) -> PackageBudget raise {
 ///|
 test "root facade budget keeps runtime diagnostics and theme builders out" {
   let root = budget_by_label("root facade")
-  inspect(root.max_lines, content="25")
-  inspect(root.max_pub_lines, content="5")
+  inspect(root.max_lines, content="125")
+  inspect(root.max_pub_lines, content="40")
   inspect(root.max_pub_all_lines, content="0")
+  inspect(root_facade_app_safe_aliases().length(), content="37")
   assert_true(root.required_tokens.contains("pub using @core {type View}"))
   assert_true(root.required_tokens.contains("pub using @core {type Program}"))
+  assert_true(root.required_tokens.contains("pub using @core {type Binding}"))
+  assert_true(root.required_tokens.contains("pub using @core {type Color}"))
+  assert_true(root.required_tokens.contains("pub using @core {type DateValue}"))
   assert_true(
     root.forbidden_tokens.contains("pub using @core {type AppRuntime}"),
+  )
+  assert_true(
+    root.forbidden_tokens.contains("pub using @core {type WidgetOps}"),
+  )
+  assert_true(
+    root.forbidden_tokens.contains("pub using @core {type WebViewEvent}"),
+  )
+  assert_true(
+    root.forbidden_tokens.contains("pub using @core {type RichTextDocument}"),
   )
   assert_true(root.forbidden_tokens.contains("DrawCommand"))
   assert_true(root.forbidden_tokens.contains("ProgramRuntimeSnapshot"))
@@ -38,9 +51,9 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
 ///|
 test "runtime facade budget pins the opaque runtime boundary" {
   let runtime = budget_by_label("runtime facade")
-  inspect(runtime.max_lines, content="60")
-  inspect(runtime.max_pub_lines, content="40")
-  inspect(runtime.max_pub_all_lines, content="0")
+  inspect(runtime.max_lines, content="307")
+  inspect(runtime.max_pub_lines, content="42")
+  inspect(runtime.max_pub_all_lines, content="17")
   assert_true(runtime.required_tokens.contains("pub struct AppRuntime"))
   assert_true(runtime.required_tokens.contains("pub fn[Msg] new_view("))
   assert_true(
@@ -53,8 +66,30 @@ test "runtime facade budget pins the opaque runtime boundary" {
       "pub fn[Model, Msg] AppRuntime::new_program(",
     ),
   )
+  assert_true(
+    runtime.required_tokens.contains(
+      "pub fn AppRuntime::inspector_snapshot(Self) -> InspectorSnapshot",
+    ),
+  )
+  assert_true(
+    runtime.required_tokens.contains(
+      "pub fn AppRuntime::program_runtime_snapshot(Self) -> ProgramRuntimeSnapshot",
+    ),
+  )
+  assert_true(
+    runtime.required_tokens.contains("pub(all) struct InspectorSnapshot"),
+  )
+  assert_true(
+    runtime.required_tokens.contains("pub(all) struct ProgramRuntimeSnapshot"),
+  )
+  assert_true(
+    runtime.required_tokens.contains("pub(all) struct RuntimeInspectorSnapshot"),
+  )
   assert_true(runtime.forbidden_tokens.contains("RuntimeState"))
   assert_true(runtime.forbidden_tokens.contains("inner : @core.AppRuntime"))
+  assert_true(runtime.forbidden_tokens.contains("core_inspector_snapshot"))
+  assert_true(runtime.forbidden_tokens.contains("@core.InspectorSnapshot"))
+  assert_true(runtime.forbidden_tokens.contains("@core.ProgramRuntimeSnapshot"))
 }
 
 ///|
@@ -70,7 +105,12 @@ test "backend runtime interface guard covers native providers" {
 
 ///|
 test "shared app runtime import guard ignores test-only imports" {
-  inspect(max_shared_app_runtime_imports(), content="0")
+  inspect(max_shared_app_runtime_imports(), content="1")
+  assert_true(
+    allowed_shared_app_runtime_imports().contains(
+      "examples/showcase/app/moon.pkg",
+    ),
+  )
   let default_import =
     #|import {
     #|  "wzzc-dev/moui",
@@ -123,35 +163,36 @@ test "shared app core import guard tracks default imports" {
 ///|
 test "views facade exposes control-specific contracts" {
   let views = budget_by_label("views facade")
-  inspect(views.max_pub_lines, content="250")
+  inspect(views.max_lines, content="760")
+  inspect(views.max_pub_lines, content="288")
+  inspect(views_facade_core_alias_tokens().length(), content="47")
+  let required = views.required_tokens
+  assert_true(required.contains("pub using @core {type ActionCommand}"))
+  assert_true(required.contains("pub using @core {type ActionCommandMap}"))
+  assert_true(required.contains("pub using @core {type CommandBinding}"))
+  assert_true(required.contains("pub using @core {type Color}"))
+  assert_true(required.contains("pub using @core {type ColorScheme}"))
+  assert_true(required.contains("pub using @core {type CommandIntent}"))
+  assert_true(required.contains("pub using @core {type KeyModifiers}"))
+  assert_true(required.contains("pub using @core {type KeyboardShortcut}"))
+  assert_true(required.contains("pub using @core {type ButtonStyle}"))
+  assert_true(required.contains("pub using @core {type TextFieldStyle}"))
+  assert_true(required.contains("pub using @core {type PickerItem}"))
+  assert_true(required.contains("pub using @core {type FormFieldState}"))
+  assert_true(required.contains("pub using @core {type FormValidationSummary}"))
+  assert_true(required.contains("pub using @core {type RichTextDocument}"))
   assert_true(
-    views.required_tokens.contains("pub using @core {type ActionCommand}"),
+    required.contains("pub using @core {type RichTextInputTransform}"),
+  )
+  assert_true(required.contains("pub using @core {type RouteHistoryState}"))
+  assert_true(required.contains("pub using @core {type RouteLocation}"))
+  assert_true(required.contains("pub using @core {type WebViewEvent}"))
+  assert_true(
+    required.contains("pub using @core {type WebViewNavigationPolicy}"),
   )
   assert_true(
-    views.required_tokens.contains("pub using @core {type ActionCommandMap}"),
-  )
-  assert_true(
-    views.required_tokens.contains("pub using @core {type CommandBinding}"),
-  )
-  assert_true(views.required_tokens.contains("pub using @core {type Color}"))
-  assert_true(
-    views.required_tokens.contains("pub using @core {type ColorScheme}"),
-  )
-  assert_true(
-    views.required_tokens.contains("pub using @core {type CommandIntent}"),
-  )
-  assert_true(
-    views.required_tokens.contains("pub using @core {type KeyModifiers}"),
-  )
-  assert_true(
-    views.required_tokens.contains("pub using @core {type KeyboardShortcut}"),
-  )
-  assert_true(
-    views.required_tokens.contains("pub using @core {type WebViewEvent}"),
-  )
-  assert_true(
-    views.required_tokens.contains(
-      "pub using @core {type WebViewNavigationPolicy}",
+    required.contains(
+      "pub type RichTextFormatter = (String) -> @core.RichTextDocument",
     ),
   )
 }
@@ -159,9 +200,9 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="2137")
-  inspect(core.max_pub_lines, content="563")
-  inspect(core.max_pub_all_lines, content="167")
+  inspect(core.max_lines, content="1904")
+  inspect(core.max_pub_lines, content="552")
+  inspect(core.max_pub_all_lines, content="151")
   assert_true(core.required_tokens.contains("pub struct WidgetOps[Msg]"))
   assert_true(core.required_tokens.contains("View::widget"))
   assert_true(core.required_tokens.contains("WidgetOps::new"))
@@ -186,6 +227,18 @@ test "core descriptor payloads stay opaque" {
   assert_true(core.forbidden_tokens.contains("type ViewSpec"))
   assert_true(core.forbidden_tokens.contains("type ElementNode"))
   assert_true(core.forbidden_tokens.contains("type ElementTree"))
+  assert_true(
+    core.forbidden_tokens.contains("pub(all) struct InspectorSnapshot"),
+  )
+  assert_true(
+    core.forbidden_tokens.contains("pub(all) struct ProgramRuntimeSnapshot"),
+  )
+  assert_true(
+    core.forbidden_tokens.contains("pub(all) struct RuntimeInspectorSnapshot"),
+  )
+  assert_true(
+    core.forbidden_tokens.contains("pub(all) struct RenderInspectorSnapshot"),
+  )
   assert_true(core.forbidden_tokens.contains("type FrameProfile"))
   assert_true(
     core.forbidden_tokens.contains("InspectorSnapshot::from_runtime("),
@@ -194,6 +247,31 @@ test "core descriptor payloads stay opaque" {
     core.forbidden_tokens.contains("RuntimeInspectorSnapshot::from_runtime("),
   )
   assert_true(core.forbidden_tokens.contains("RouteFocusStore::restore("))
+}
+
+///|
+test "core legacy families are ratcheted toward existing layers" {
+  let budgets = legacy_core_family_budgets()
+  inspect(budgets.length(), content="6")
+  for budget in budgets {
+    inspect(budget.target_occurrences, content="0")
+  }
+  let labels = budgets.map(budget => budget.label)
+  assert_true(labels.contains("control styles and picker model"))
+  assert_true(labels.contains("form workflow helpers"))
+  assert_true(labels.contains("rich text editor domain model"))
+  assert_true(labels.contains("WebView platform service model"))
+  assert_true(labels.contains("routing and history controller"))
+  assert_true(labels.contains("runtime diagnostics snapshots"))
+  let control = budgets[0]
+  assert_true(control.tokens.contains("ButtonStyle"))
+  assert_true(control.tokens.contains("PickerItem"))
+  let webview = budgets[3]
+  assert_true(webview.tokens.contains("WebViewEvent"))
+  assert_true(webview.tokens.contains("PlatformViewPlacement::web_view"))
+  let diagnostics = budgets[5]
+  inspect(diagnostics.max_occurrences, content="0")
+  assert_true(diagnostics.tokens.contains("ProgramRuntimeSnapshot"))
 }
 
 ///|
@@ -219,7 +297,8 @@ test "core runtime boundary guard covers moved implementation" {
   let tokens = forbidden_core_runtime_boundary_source_tokens().map(rule => {
     rule.token
   })
-  assert_true(tokens.contains("AppRuntime"))
+  assert_true(tokens.contains("type AppRuntime"))
+  assert_true(tokens.contains("AppRuntime::new_"))
   assert_true(tokens.contains("RuntimeKernel"))
   assert_true(tokens.contains("RuntimeState"))
   assert_true(tokens.contains("ElementNode"))

@@ -2,7 +2,7 @@
 fn markdown_block_to_rich_text(
   block : MarkdownBlock,
   base : @core.FontSpec,
-) -> @core.RichTextBlock {
+) -> @views.RichTextBlock {
   match block.kind {
     Heading(level) => {
       let font = {
@@ -10,32 +10,32 @@ fn markdown_block_to_rich_text(
         size: base.size * markdown_heading_size_scale(level),
         weight: 700,
       }
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, font),
         font=Some(font),
         line_height=Some(base.size * markdown_heading_line_height_scale(level)),
       )
     }
     UnorderedListItem =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base),
         prefix="• ",
         line_height=Some(base.size * 1.55),
       )
     TaskListItem(checked) =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base),
         prefix=if checked { "☑ " } else { "☐ " },
         line_height=Some(base.size * 1.55),
       )
     OrderedListItem(number) =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base),
         prefix="\{number}. ",
         line_height=Some(base.size * 1.55),
       )
     Blockquote =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base),
         color=Some(@core.Color::black().multiply_alpha(0.82)),
         border_left=Some(
@@ -48,7 +48,7 @@ fn markdown_block_to_rich_text(
         line_height=Some(base.size * 1.55),
       )
     CodeBlock =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=markdown_code_block_runs(block, base),
         background=Some(
           @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.08)),
@@ -58,15 +58,15 @@ fn markdown_block_to_rich_text(
         corner_radius=6.0,
       )
     HorizontalRule =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=[],
         line_height=Some(base.size * 1.0),
         rule=true,
       )
     Table =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=[
-          @core.RichTextRun::new(
+          @views.RichTextRun::new(
             text=block.text,
             font=Some({
               ..base,
@@ -84,9 +84,9 @@ fn markdown_block_to_rich_text(
         corner_radius=6.0,
       )
     FootnoteDefinition(label) =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=[
-          @core.RichTextRun::new(
+          @views.RichTextRun::new(
             text="[^" + label + "]: ",
             visual_text=Some(label),
             font=Some({ ..base, size: base.size * 0.78, weight: 700 }),
@@ -111,9 +111,9 @@ fn markdown_block_to_rich_text(
         line_height=Some(base.size * 1.45),
       )
     HtmlBlock =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=[
-          @core.RichTextRun::new(
+          @views.RichTextRun::new(
             text=block.text,
             font=Some({
               ..base,
@@ -131,9 +131,9 @@ fn markdown_block_to_rich_text(
         corner_radius=6.0,
       )
     FrontMatter =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=[
-          @core.RichTextRun::new(
+          @views.RichTextRun::new(
             text=block.text,
             font=Some({
               ..base,
@@ -151,7 +151,7 @@ fn markdown_block_to_rich_text(
         corner_radius=6.0,
       )
     Paragraph =>
-      @core.RichTextBlock::new(
+      @views.RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base),
         line_height=Some(base.size * 1.55),
       )
@@ -162,7 +162,7 @@ fn markdown_block_to_rich_text(
 fn markdown_code_block_runs(
   block : MarkdownBlock,
   base : @core.FontSpec,
-) -> Array[@core.RichTextRun] {
+) -> Array[@views.RichTextRun] {
   let font = {
     ..base,
     families: @core.FontFamilyStack::monospace(),
@@ -171,16 +171,16 @@ fn markdown_code_block_runs(
   match block.code_language {
     Some(language) =>
       [
-        @core.RichTextRun::new(
+        @views.RichTextRun::new(
           text=language,
           font=Some({ ..font, size: base.size * 0.78, weight: 700 }),
           visual_text=Some(language),
           color=Some(@core.Color::black().multiply_alpha(0.56)),
         ),
-        @core.RichTextRun::new(text="\n", font=Some(font)),
-        @core.RichTextRun::new(text=block.text, font=Some(font)),
+        @views.RichTextRun::new(text="\n", font=Some(font)),
+        @views.RichTextRun::new(text=block.text, font=Some(font)),
       ]
-    None => [@core.RichTextRun::new(text=block.text, font=Some(font))]
+    None => [@views.RichTextRun::new(text=block.text, font=Some(font))]
   }
 }
 
@@ -218,11 +218,11 @@ fn markdown_heading_line_height_scale(level : Int) -> Double {
 fn markdown_inlines_to_rich_text(
   inlines : Array[MarkdownInline],
   base : @core.FontSpec,
-) -> Array[@core.RichTextRun] {
-  let runs : Array[@core.RichTextRun] = []
+) -> Array[@views.RichTextRun] {
+  let runs : Array[@views.RichTextRun] = []
   for span in inlines {
     runs.push(
-      @core.RichTextRun::new(
+      @views.RichTextRun::new(
         text=markdown_inline_source_text(span),
         visual_text=Some(markdown_inline_visual_text(span)),
         image_source=markdown_inline_image_source(span),
@@ -329,9 +329,9 @@ fn markdown_inline_background(kind : MarkdownInlineKind) -> @core.Brush? {
 ///|
 fn markdown_inline_decoration(
   kind : MarkdownInlineKind,
-) -> @core.RichTextDecoration? {
+) -> @views.RichTextDecoration? {
   match kind {
-    Strikethrough => Some(@core.RichTextDecoration::Strikethrough)
+    Strikethrough => Some(@views.RichTextDecoration::Strikethrough)
     Plain
     | Bold
     | Italic

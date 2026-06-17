@@ -31,12 +31,14 @@ struct MockAgentHost {
   mut subscriptions : Array[MockSubscription]
 }
 
+///|
 struct MockSubscription {
   token : Int
   filter : EventFilter
   sink : (AgentEvent) -> Unit
 }
 
+///|
 fn MockAgentHost::new() -> MockAgentHost {
   {
     dispatched_intents: [],
@@ -49,11 +51,12 @@ fn MockAgentHost::new() -> MockAgentHost {
 
 ///|
 /// Implements AgentHost for the mock. Used by the contract tests below.
-impl AgentHost for MockAgentHost with semantics(self : MockAgentHost) -> SemanticsSnapshot {
+impl AgentHost for MockAgentHost with fn semantics(self : MockAgentHost) -> SemanticsSnapshot {
   SemanticsSnapshot::{ root: mock_root, node_count: 1, depth: 1 }
 }
 
-impl AgentHost for MockAgentHost with state(self : MockAgentHost) -> RuntimeStateSnapshot {
+///|
+impl AgentHost for MockAgentHost with fn state(self : MockAgentHost) -> RuntimeStateSnapshot {
   RuntimeStateSnapshot::{
     dispatched_count: self.dispatched_intents.length() +
     self.dispatched_events.length(),
@@ -65,15 +68,15 @@ impl AgentHost for MockAgentHost with state(self : MockAgentHost) -> RuntimeStat
   }
 }
 
-impl AgentHost for MockAgentHost with frame(
-  self : MockAgentHost,
-) -> FrameSnapshot {
+///|
+impl AgentHost for MockAgentHost with fn frame(self : MockAgentHost) -> FrameSnapshot {
   FrameSnapshot::{ texts: [], draw_command_count: 0 }
 }
 
-impl AgentHost for MockAgentHost with capabilities(
-  self : MockAgentHost,
-) -> Array[AgentCapability] {
+///|
+impl AgentHost for MockAgentHost with fn capabilities(self : MockAgentHost) -> Array[
+  AgentCapability,
+] {
   [
     AgentCapability::{
       kind: "dispatch_command",
@@ -88,7 +91,8 @@ impl AgentHost for MockAgentHost with capabilities(
   ]
 }
 
-impl AgentHost for MockAgentHost with subscribe_events(
+///|
+impl AgentHost for MockAgentHost with fn subscribe_events(
   self : MockAgentHost,
   filter : EventFilter,
   sink : (AgentEvent) -> Unit,
@@ -99,7 +103,8 @@ impl AgentHost for MockAgentHost with subscribe_events(
   SubscriptionToken::new(id)
 }
 
-impl AgentHost for MockAgentHost with unsubscribe(
+///|
+impl AgentHost for MockAgentHost with fn unsubscribe(
   self : MockAgentHost,
   token : SubscriptionToken,
 ) -> Unit {
@@ -107,7 +112,8 @@ impl AgentHost for MockAgentHost with unsubscribe(
   self.subscriptions = self.subscriptions.filter(s => s.token != target)
 }
 
-impl AgentHost for MockAgentHost with dispatch_event(
+///|
+impl AgentHost for MockAgentHost with fn dispatch_event(
   self : MockAgentHost,
   event : @core.AppEvent,
 ) -> DispatchResult {
@@ -117,7 +123,8 @@ impl AgentHost for MockAgentHost with dispatch_event(
   DispatchResult::{ accepted: true, reason: None }
 }
 
-impl AgentHost for MockAgentHost with dispatch_command(
+///|
+impl AgentHost for MockAgentHost with fn dispatch_command(
   self : MockAgentHost,
   intent : @core.CommandIntent,
 ) -> DispatchResult {
@@ -238,10 +245,9 @@ test "AgentHost: unsubscribe stops delivery" {
 test "AgentHost: EventFilter::Only restricts categories" {
   let host = MockAgentHost::new()
   let received : Array[String] = []
-  let _ = host.subscribe_events(
-    EventFilter::Only(["keyboard"]),
-    e => received.push(event_category(e.event)),
-  )
+  let _ = host.subscribe_events(EventFilter::Only(["keyboard"]), e => {
+    received.push(event_category(e.event))
+  })
   // A pointer event should be filtered out...
   ignore(
     host.dispatch_event(
@@ -256,15 +262,13 @@ test "AgentHost: EventFilter::Only restricts categories" {
   // ...but a keyboard event should pass.
   ignore(
     host.dispatch_event(
-      @core.AppEvent::Keyboard(
-        @core.KeyboardEvent::{
-          key: "a",
-          text: None,
-          pressed: true,
-          repeat: false,
-          modifiers: @core.KeyModifiers::none(),
-        },
-      ),
+      @core.AppEvent::Keyboard(@core.KeyboardEvent::{
+        key: "a",
+        text: None,
+        pressed: true,
+        repeat: false,
+        modifiers: @core.KeyModifiers::none(),
+      }),
     ),
   )
   if received != ["keyboard"] {

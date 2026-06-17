@@ -6,7 +6,7 @@ pub fn[Msg] text_field(
   placeholder? : String = "",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.TextFieldStyle,
+  style? : TextFieldStyle,
   width? : Double = 240.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
@@ -40,7 +40,7 @@ pub fn[Msg] text_field_binding(
   placeholder? : String = "",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
   theme? : @core.Theme = @core.Theme::default(),
-  style? : @core.TextFieldStyle,
+  style? : TextFieldStyle,
   width? : Double = 240.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
