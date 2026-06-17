@@ -1,14 +1,14 @@
 ///|
-pub fn[Msg] empty(
+pub fn[Msg] raw_empty(
   kind? : String = "Empty",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => "empty",
       layout=ctx => {
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size=ctx.constraints.constrain(@core.Size::new(width=0.0, height=0.0)),
         )
       },
@@ -17,15 +17,15 @@ pub fn[Msg] empty(
 }
 
 ///|
-pub fn[Msg] spacer(
+pub fn[Msg] raw_spacer(
   min_length? : Double = 0.0,
   weight? : Double = 1.0,
   kind? : String = "Spacer",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => "spacer:\{min_length}:\{weight}",
       layout=ctx => {
         let size = if weight > 0.0 {
@@ -33,21 +33,21 @@ pub fn[Msg] spacer(
         } else {
           @core.Size::new(width=min_length, height=min_length)
         }
-        @core.WidgetLayoutResult::new(size=ctx.constraints.constrain(size))
+        @core.VirtualNodeLayoutResult::new(size=ctx.constraints.constrain(size))
       },
     ),
   )
 }
 
 ///|
-pub fn[Msg] stack(
+pub fn[Msg] raw_stack(
   children~ : Array[@core.View[Msg]],
   kind? : String = "Stack",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => "stack",
       children=() => children,
       layout=ctx => {
@@ -55,8 +55,8 @@ pub fn[Msg] stack(
         let mut height = 0.0
         let frames : Array[@core.Rect] = []
         for size in ctx.child_sizes {
-          width = widget_max_double(width, size.width)
-          height = widget_max_double(height, size.height)
+          width = virtual_node_max_double(width, size.width)
+          height = virtual_node_max_double(height, size.height)
         }
         let size = ctx.constraints.constrain(@core.Size::new(width~, height~))
         for _child in ctx.child_sizes {
@@ -64,26 +64,26 @@ pub fn[Msg] stack(
             @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
           )
         }
-        @core.WidgetLayoutResult::new(size~, child_frames=frames)
+        @core.VirtualNodeLayoutResult::new(size~, child_frames=frames)
       },
-      paint=_ctx => @core.WidgetPaintPlan::empty(),
+      paint=_ctx => @core.VirtualNodePaintPlan::empty(),
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(role=@core.SemanticsRole::Group)
+        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Group)
       },
     ),
   )
 }
 
 ///|
-pub fn[Msg] padding(
+pub fn[Msg] raw_padding(
   child~ : @core.View[Msg],
   insets~ : @core.Insets,
   kind? : String = "Padding",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => {
         "padding:\{insets.top}:\{insets.right}:\{insets.bottom}:\{insets.left}"
       },
@@ -91,7 +91,7 @@ pub fn[Msg] padding(
       child_constraints=constraints => constraints.deflate(insets),
       layout=ctx => {
         let child_size = first_child_size(ctx.child_sizes)
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size=ctx.constraints.constrain(child_size.inflate(insets)),
           child_frames=[
             @core.Rect::new(
@@ -104,14 +104,14 @@ pub fn[Msg] padding(
         )
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(role=@core.SemanticsRole::Group)
+        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Group)
       },
     ),
   )
 }
 
 ///|
-pub fn[Msg] frame(
+pub fn[Msg] raw_frame(
   child~ : @core.View[Msg],
   width~ : Double?,
   height~ : Double?,
@@ -122,11 +122,11 @@ pub fn[Msg] frame(
   kind? : String = "Frame",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => {
-        "frame:\{widget_double_option_revision(width)}:\{widget_double_option_revision(height)}:\{widget_double_option_revision(min_width)}:\{widget_double_option_revision(min_height)}:\{widget_double_option_revision(max_width)}:\{widget_double_option_revision(max_height)}"
+        "frame:\{virtual_node_double_option_revision(width)}:\{virtual_node_double_option_revision(height)}:\{virtual_node_double_option_revision(min_width)}:\{virtual_node_double_option_revision(min_height)}:\{virtual_node_double_option_revision(max_width)}:\{virtual_node_double_option_revision(max_height)}"
       },
       children=() => [child],
       child_constraints=constraints => {
@@ -144,19 +144,19 @@ pub fn[Msg] frame(
             max_height~,
           ),
         )
-        @core.WidgetLayoutResult::new(size~, child_frames=[
+        @core.VirtualNodeLayoutResult::new(size~, child_frames=[
           @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
         ])
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(role=@core.SemanticsRole::Group)
+        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Group)
       },
     ),
   )
 }
 
 ///|
-pub fn[Msg] container(
+pub fn[Msg] raw_container(
   child? : @core.View[Msg]? = None,
   size? : @core.Size? = None,
   background? : @core.Brush? = None,
@@ -166,11 +166,11 @@ pub fn[Msg] container(
   kind? : String = "Container",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => {
-        "container:\{widget_size_option_revision(size)}:\{widget_brush_option_revision(background)}:\{widget_border_option_revision(border)}:\{corner_radius}:\{widget_shadow_option_revision(shadow)}"
+        "container:\{virtual_node_size_option_revision(size)}:\{virtual_node_brush_option_revision(background)}:\{virtual_node_border_option_revision(border)}:\{corner_radius}:\{virtual_node_shadow_option_revision(shadow)}"
       },
       children=() => {
         match child {
@@ -196,7 +196,7 @@ pub fn[Msg] container(
         } else {
           []
         }
-        @core.WidgetLayoutResult::new(size=measured, child_frames=frames)
+        @core.VirtualNodeLayoutResult::new(size=measured, child_frames=frames)
       },
       paint=ctx => {
         container_paint(
@@ -208,14 +208,14 @@ pub fn[Msg] container(
         )
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(role=@core.SemanticsRole::Group)
+        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Group)
       },
     ),
   )
 }
 
 ///|
-pub fn[Msg] grid(
+pub fn[Msg] raw_grid(
   children~ : Array[@core.View[Msg]],
   columns? : Int = 1,
   row_spacing? : Double = 0.0,
@@ -223,27 +223,27 @@ pub fn[Msg] grid(
   kind? : String = "Grid",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => "grid:\{columns}:\{row_spacing}:\{column_spacing}",
       children=() => children,
       layout=ctx => {
-        let columns = widget_max_int(1, columns)
+        let columns = virtual_node_max_int(1, columns)
         let count = ctx.child_sizes.length()
         let rows = grid_row_count(count, columns)
         let mut cell_width = 0.0
         let mut cell_height = 0.0
         for size in ctx.child_sizes {
-          cell_width = widget_max_double(cell_width, size.width)
-          cell_height = widget_max_double(cell_height, size.height)
+          cell_width = virtual_node_max_double(cell_width, size.width)
+          cell_height = virtual_node_max_double(cell_height, size.height)
         }
         let measured = ctx.constraints.constrain(
           @core.Size::new(
             width=cell_width * columns.to_double() +
-              column_spacing * widget_max_int(0, columns - 1).to_double(),
+              column_spacing * virtual_node_max_int(0, columns - 1).to_double(),
             height=cell_height * rows.to_double() +
-              row_spacing * widget_max_int(0, rows - 1).to_double(),
+              row_spacing * virtual_node_max_int(0, rows - 1).to_double(),
           ),
         )
         let frames : Array[@core.Rect] = []
@@ -259,25 +259,25 @@ pub fn[Msg] grid(
             ),
           )
         }
-        @core.WidgetLayoutResult::new(size=measured, child_frames=frames)
+        @core.VirtualNodeLayoutResult::new(size=measured, child_frames=frames)
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(role=@core.SemanticsRole::Group)
+        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Group)
       },
     ),
   )
 }
 
 ///|
-pub fn[Msg] list(
+pub fn[Msg] raw_list(
   children~ : Array[@core.View[Msg]],
   spacing? : Double = 0.0,
   kind? : String = "List",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => "list:\{spacing}",
       children=() => children,
       layout=ctx => {
@@ -296,23 +296,23 @@ pub fn[Msg] list(
               height=size.height,
             ),
           )
-          width = widget_max_double(width, size.width)
+          width = virtual_node_max_double(width, size.width)
           height = height + size.height
         }
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
           child_frames=frames,
         )
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(role=@core.SemanticsRole::Group)
+        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Group)
       },
     ),
   )
 }
 
 ///|
-pub fn[Msg] scroll(
+pub fn[Msg] raw_scroll(
   child~ : @core.View[Msg],
   offset? : @core.Point = @core.Point::new(x=0.0, y=0.0),
   viewport? : @core.Size? = None,
@@ -321,12 +321,12 @@ pub fn[Msg] scroll(
   kind? : String = "Scroll",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => {
         let current = scroll_offset(offset, state)
-        "scroll:\{current.x}:\{current.y}:\{widget_size_option_revision(viewport)}:\{state is Some(_)}:\{on_scroll is Some(_)}"
+        "scroll:\{current.x}:\{current.y}:\{virtual_node_size_option_revision(viewport)}:\{state is Some(_)}:\{on_scroll is Some(_)}"
       },
       children=() => [child],
       child_constraints=_constraints => @core.Constraints::unbounded(),
@@ -334,7 +334,7 @@ pub fn[Msg] scroll(
         let viewport_size = viewport.unwrap_or(
           first_child_size(ctx.child_sizes),
         )
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size=ctx.constraints.constrain(viewport_size),
           child_frames=[
             scroll_child_frame(
@@ -385,11 +385,11 @@ pub fn[Msg] scroll(
                       state.offset().y - event.wheel_delta.y,
                     ),
                   )
-                  widget_event_result(
+                  virtual_node_event_result(
                     changed=true,
                     activated=true,
                     captured=true,
-                    dirty=@core.WidgetDirtyHint::WidgetLayoutDirty,
+                    dirty=@core.VirtualNodeDirtyHint::VirtualNodeLayoutDirty,
                     messages=[handler(event.wheel_delta)],
                   )
                 }
@@ -401,30 +401,30 @@ pub fn[Msg] scroll(
                       state.offset().y - event.wheel_delta.y,
                     ),
                   )
-                  widget_event_result(
+                  virtual_node_event_result(
                     changed=true,
                     captured=true,
-                    dirty=@core.WidgetDirtyHint::WidgetLayoutDirty,
+                    dirty=@core.VirtualNodeDirtyHint::VirtualNodeLayoutDirty,
                   )
                 }
                 (None, Some(handler)) =>
-                  widget_event_result(
+                  virtual_node_event_result(
                     changed=true,
                     activated=true,
                     captured=true,
-                    dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+                    dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
                     messages=[handler(event.wheel_delta)],
                   )
-                (None, None) => @core.WidgetEventResult::ignored()
+                (None, None) => @core.VirtualNodeEventResult::ignored()
               }
             } else {
-              @core.WidgetEventResult::ignored()
+              @core.VirtualNodeEventResult::ignored()
             }
-          _ => @core.WidgetEventResult::ignored()
+          _ => @core.VirtualNodeEventResult::ignored()
         }
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(role=@core.SemanticsRole::Group)
+        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Group)
       },
     ),
   )
@@ -471,8 +471,8 @@ fn resolve_frame_size(
   @core.Size::new(width~, height~).clamp({
     min: @core.Size::new(width=min_width, height=min_height),
     max: @core.Size::new(
-      width=widget_max_double(min_width, max_width),
-      height=widget_max_double(min_height, max_height),
+      width=virtual_node_max_double(min_width, max_width),
+      height=virtual_node_max_double(min_height, max_height),
     ),
   })
 }
@@ -484,7 +484,7 @@ fn container_paint(
   border~ : @core.BorderStyle?,
   corner_radius~ : Double,
   shadow~ : @core.ShadowStyle?,
-) -> @core.WidgetPaintPlan {
+) -> @core.VirtualNodePaintPlan {
   let commands : Array[@core.DrawCommand] = []
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
   match shadow {
@@ -520,7 +520,7 @@ fn container_paint(
       }
     None => ()
   }
-  @core.WidgetPaintPlan::commands(commands)
+  @core.VirtualNodePaintPlan::commands(commands)
 }
 
 ///|
@@ -553,8 +553,8 @@ fn scroll_child_frame(
   @core.Rect::new(
     x=frame.origin.x - offset.x,
     y=frame.origin.y - offset.y,
-    width=widget_max_double(viewport.width, child_size.width),
-    height=widget_max_double(viewport.height, child_size.height),
+    width=virtual_node_max_double(viewport.width, child_size.width),
+    height=virtual_node_max_double(viewport.height, child_size.height),
   )
 }
 
@@ -568,7 +568,7 @@ fn max_scroll_offset(min : Double, value : Double) -> Double {
 }
 
 ///|
-fn widget_double_option_revision(value : Double?) -> String {
+fn virtual_node_double_option_revision(value : Double?) -> String {
   match value {
     Some(value) => "\{value}"
     None => "none"
@@ -576,7 +576,7 @@ fn widget_double_option_revision(value : Double?) -> String {
 }
 
 ///|
-fn widget_size_option_revision(value : @core.Size?) -> String {
+fn virtual_node_size_option_revision(value : @core.Size?) -> String {
   match value {
     Some(value) => "\{value.width}x\{value.height}"
     None => "auto"

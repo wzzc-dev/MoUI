@@ -6,7 +6,6 @@ import {
 }
 
 import {
-  "wzzc-dev/moui/widget",
   "wzzc-dev/moui/views",
 } for "test"
 

@@ -1,5 +1,5 @@
 ///|
-pub fn[Msg] sheet(
+pub fn[Msg] raw_sheet(
   content~ : @core.View[Msg],
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
   background~ : @core.Brush,
@@ -9,11 +9,11 @@ pub fn[Msg] sheet(
   kind? : String = "Sheet",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => {
-        "sheet:\{sheet_presentation_revision(presentation_mode)}:\{widget_brush_revision(background)}:\{corner_radius}:\{widget_shadow_option_revision(shadow)}:\{on_dismiss is Some(_)}"
+        "sheet:\{sheet_presentation_revision(presentation_mode)}:\{virtual_node_brush_revision(background)}:\{corner_radius}:\{virtual_node_shadow_option_revision(shadow)}:\{on_dismiss is Some(_)}"
       },
       children=() => [content],
       child_constraints=constraints => {
@@ -29,7 +29,7 @@ pub fn[Msg] sheet(
         let measured = ctx.constraints.constrain(
           child_size.inflate(sheet_content_insets()),
         )
-        @core.WidgetLayoutResult::new(size=measured, child_frames=[
+        @core.VirtualNodeLayoutResult::new(size=measured, child_frames=[
           sheet_content_frame(
             presentation_mode,
             @core.Rect::new(
@@ -66,7 +66,7 @@ pub fn[Msg] sheet(
         commands.push(
           @core.DrawCommand::FillRoundedRectBrush(rounded, background),
         )
-        @core.WidgetPaintPlan::commands(commands)
+        @core.VirtualNodePaintPlan::commands(commands)
       },
       event=ctx => {
         match (ctx.event, on_dismiss) {
@@ -74,33 +74,33 @@ pub fn[Msg] sheet(
             if event.phase == @core.PointerPhase::Up &&
               ctx.frame.contains(event.position) &&
               sheet_point_outside_content(event.position, ctx.child_frames) {
-              widget_event_result(
+              virtual_node_event_result(
                 changed=true,
                 activated=true,
                 captured=true,
-                dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+                dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
                 messages=[message],
               )
             } else if ctx.frame.contains(event.position) {
-              widget_event_result(changed=true, captured=true)
+              virtual_node_event_result(changed=true, captured=true)
             } else {
-              @core.WidgetEventResult::ignored()
+              @core.VirtualNodeEventResult::ignored()
             }
           (@core.AppEvent::Pointer(event), None) =>
             if event.phase == @core.PointerPhase::Up &&
               ctx.frame.contains(event.position) &&
               sheet_point_outside_content(event.position, ctx.child_frames) {
-              widget_event_result(changed=true, captured=true)
+              virtual_node_event_result(changed=true, captured=true)
             } else if ctx.frame.contains(event.position) {
-              widget_event_result(changed=true, captured=true)
+              virtual_node_event_result(changed=true, captured=true)
             } else {
-              @core.WidgetEventResult::ignored()
+              @core.VirtualNodeEventResult::ignored()
             }
-          _ => @core.WidgetEventResult::ignored()
+          _ => @core.VirtualNodeEventResult::ignored()
         }
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(role=@core.SemanticsRole::Dialog)
+        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Dialog)
       },
       focusable=() => false,
     ),

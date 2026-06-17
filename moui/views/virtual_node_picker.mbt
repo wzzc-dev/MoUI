@@ -1,27 +1,27 @@
 ///|
-pub struct PickerOption {
+pub struct RawPickerOption {
   id : String
   label : String
 }
 
 ///|
-pub fn PickerOption::new(id~ : String, label~ : String) -> PickerOption {
+pub fn RawPickerOption::new(id~ : String, label~ : String) -> RawPickerOption {
   { id, label }
 }
 
 ///|
-pub fn PickerOption::id(self : PickerOption) -> String {
+pub fn RawPickerOption::id(self : RawPickerOption) -> String {
   self.id
 }
 
 ///|
-pub fn PickerOption::label(self : PickerOption) -> String {
+pub fn RawPickerOption::label(self : RawPickerOption) -> String {
   self.label
 }
 
 ///|
-pub fn[Msg] picker(
-  items~ : Array[PickerOption],
+pub fn[Msg] raw_picker(
+  items~ : Array[RawPickerOption],
   selected~ : @core.Binding[String],
   placeholder~ : String,
   font~ : @core.FontSpec,
@@ -33,14 +33,14 @@ pub fn[Msg] picker(
   kind? : String = "Picker",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => {
-        "picker:\{picker_items_revision(items)}:\{selected.get()}:\{placeholder}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_brush_revision(background)}:\{corner_radius}:\{max_height}:\{on_select is Some(_)}"
+        "picker:\{picker_items_revision(items)}:\{selected.get()}:\{placeholder}:\{virtual_node_font_revision(font)}:\{virtual_node_color_revision(foreground)}:\{virtual_node_brush_revision(background)}:\{corner_radius}:\{max_height}:\{on_select is Some(_)}"
       },
       layout=ctx => {
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size=ctx.constraints.constrain(
             @core.Size::new(width=200.0, height=40.0),
           ),
@@ -92,11 +92,11 @@ pub fn[Msg] picker(
               selected~,
               on_select~,
             )
-          _ => @core.WidgetEventResult::ignored()
+          _ => @core.VirtualNodeEventResult::ignored()
         }
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(
+        @core.VirtualNodeSemanticsInfo::new(
           role=@core.SemanticsRole::Menu,
           label=placeholder,
           value=picker_selected_label(items, selected.get(), placeholder),
@@ -116,7 +116,7 @@ fn append_picker_commands(
   commands : Array[@core.DrawCommand],
   overlay_commands : Array[@core.DrawCommand],
   frame~ : @core.Rect,
-  items~ : Array[PickerOption],
+  items~ : Array[RawPickerOption],
   selected_id~ : String,
   placeholder~ : String,
   font~ : @core.FontSpec,
@@ -187,7 +187,7 @@ fn append_picker_commands(
 fn append_picker_popup_commands(
   overlay_commands : Array[@core.DrawCommand],
   frame~ : @core.Rect,
-  items~ : Array[PickerOption],
+  items~ : Array[RawPickerOption],
   selected_id~ : String,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
@@ -249,14 +249,14 @@ fn append_picker_popup_commands(
 
 ///|
 fn[Msg] handle_picker_pointer(
-  state : @core.WidgetStateContext,
+  state : @core.VirtualNodeStateContext,
   event : @core.PointerEvent,
   frame~ : @core.Rect,
-  items~ : Array[PickerOption],
+  items~ : Array[RawPickerOption],
   selected~ : @core.Binding[String],
   max_height~ : Double,
   on_select~ : ((String) -> Msg)?,
-) -> @core.WidgetEventResult[Msg] {
+) -> @core.VirtualNodeEventResult[Msg] {
   let inside_button = frame.contains(event.position)
   let popup_frame = picker_popup_frame(items, frame, max_height)
   let inside_popup = popup_frame.contains(event.position)
@@ -265,103 +265,103 @@ fn[Msg] handle_picker_pointer(
       match picker_item_id_at_position(items, popup_frame, event.position) {
         Some(id) => {
           selected.set(id)
-          widget_event_result(
+          virtual_node_event_result(
             changed=true,
             activated=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
-            dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+            dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
             messages=picker_messages(on_select, id),
           )
         }
         None =>
-          widget_event_result(
+          virtual_node_event_result(
             changed=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
-            dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+            dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
           )
       }
     } else if event.phase == @core.PointerPhase::Up && inside_button {
-      widget_event_result(
+      virtual_node_event_result(
         changed=true,
         captured=true,
         state=Some({ ..state, expanded: false }),
-        dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+        dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
       )
     } else if event.phase == @core.PointerPhase::Up {
-      widget_event_result(
+      virtual_node_event_result(
         changed=true,
         captured=true,
         state=Some({ ..state, expanded: false }),
-        dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+        dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
       )
     } else if inside_button || inside_popup {
-      widget_event_result(changed=true, captured=true)
+      virtual_node_event_result(changed=true, captured=true)
     } else {
-      @core.WidgetEventResult::ignored()
+      @core.VirtualNodeEventResult::ignored()
     }
   } else if event.phase == @core.PointerPhase::Up && inside_button {
-    widget_event_result(
+    virtual_node_event_result(
       changed=true,
       captured=true,
       state=Some({ ..state, expanded: true }),
-      dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
     )
   } else {
-    @core.WidgetEventResult::ignored()
+    @core.VirtualNodeEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_picker_keyboard(
-  state : @core.WidgetStateContext,
+  state : @core.VirtualNodeStateContext,
   event : @core.KeyboardEvent,
-  items~ : Array[PickerOption],
+  items~ : Array[RawPickerOption],
   selected~ : @core.Binding[String],
   on_select~ : ((String) -> Msg)?,
-) -> @core.WidgetEventResult[Msg] {
+) -> @core.VirtualNodeEventResult[Msg] {
   if !event.pressed {
-    @core.WidgetEventResult::ignored()
+    @core.VirtualNodeEventResult::ignored()
   } else if event.key == "Escape" && state.expanded {
-    widget_event_result(
+    virtual_node_event_result(
       changed=true,
       captured=true,
       state=Some({ ..state, expanded: false }),
-      dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
     )
   } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
     if state.expanded {
       match picker_selected_id_or_first(items, selected.get()) {
         Some(id) => {
           selected.set(id)
-          widget_event_result(
+          virtual_node_event_result(
             changed=true,
             activated=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
-            dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+            dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
             messages=picker_messages(on_select, id),
           )
         }
         None =>
-          widget_event_result(
+          virtual_node_event_result(
             changed=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
-            dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+            dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
           )
       }
     } else {
-      widget_event_result(
+      virtual_node_event_result(
         changed=true,
         captured=true,
         state=Some({ ..state, expanded: true }),
-        dirty=@core.WidgetDirtyHint::WidgetPaintDirty,
+        dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
       )
     }
   } else {
-    @core.WidgetEventResult::ignored()
+    @core.VirtualNodeEventResult::ignored()
   }
 }
 
@@ -378,7 +378,7 @@ fn[Msg] picker_messages(
 
 ///|
 fn picker_selected_label(
-  items : Array[PickerOption],
+  items : Array[RawPickerOption],
   selected_id : String,
   placeholder : String,
 ) -> String {
@@ -394,7 +394,7 @@ fn picker_selected_label(
 
 ///|
 fn picker_selected_id_or_first(
-  items : Array[PickerOption],
+  items : Array[RawPickerOption],
   selected_id : String,
 ) -> String? {
   let mut selected : String? = None
@@ -416,7 +416,7 @@ fn picker_selected_id_or_first(
 
 ///|
 fn picker_item_id_at_position(
-  items : Array[PickerOption],
+  items : Array[RawPickerOption],
   list_frame : @core.Rect,
   position : @core.Point,
 ) -> String? {
@@ -430,7 +430,7 @@ fn picker_item_id_at_position(
 
 ///|
 fn picker_popup_frame(
-  items : Array[PickerOption],
+  items : Array[RawPickerOption],
   frame : @core.Rect,
   max_height : Double,
 ) -> @core.Rect {
@@ -438,7 +438,7 @@ fn picker_popup_frame(
     x=frame.origin.x,
     y=frame.origin.y + frame.size.height + 4.0,
     width=frame.size.width,
-    height=widget_min_double(
+    height=virtual_node_min_double(
       max_height,
       items.length().to_double() * picker_item_height(),
     ),
@@ -461,7 +461,7 @@ fn picker_item_height() -> Double {
 }
 
 ///|
-fn picker_items_revision(items : Array[PickerOption]) -> String {
+fn picker_items_revision(items : Array[RawPickerOption]) -> String {
   let mut result = ""
   for item in items {
     result = "\{result}|\{item.id()}:\{item.label()}"

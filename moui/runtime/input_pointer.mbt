@@ -17,8 +17,8 @@ fn ElementNode::dispatch_pointer(
   if child_result.activated {
     child_result
   } else {
-    let own = self.dispatch_widget_event(
-      self.widget,
+    let own = self.dispatch_virtual_node_event(
+      self.virtual_node,
       AppEvent::Pointer(event),
       render,
       text_system,
@@ -36,9 +36,9 @@ fn ElementNode::dispatch_pointer(
 }
 
 ///|
-fn ElementNode::dispatch_widget_event(
+fn ElementNode::dispatch_virtual_node_event(
   self : ElementNode,
-  data : Widget,
+  data : VirtualNode,
   event : AppEvent,
   render : RenderNode,
   text_system : TextSystem,
@@ -55,14 +55,14 @@ fn ElementNode::dispatch_widget_event(
     environment,
   })
   match result.state {
-    Some(next_state) => self.widget = { ..data, state: next_state }
+    Some(next_state) => self.virtual_node = { ..data, state: next_state }
     None => ()
   }
   match result.text_control {
     Some(next_control) => self.control.apply_text_context(next_control)
     None => ()
   }
-  self.apply_widget_dirty_hint(result.dirty)
+  self.apply_virtual_node_dirty_hint(result.dirty)
   {
     changed: result.changed || result.captured,
     activated: result.activated,
@@ -75,18 +75,18 @@ fn ElementNode::dispatch_widget_event(
 }
 
 ///|
-fn ElementNode::apply_widget_dirty_hint(
+fn ElementNode::apply_virtual_node_dirty_hint(
   self : ElementNode,
-  dirty : WidgetDirtyHint,
+  dirty : VirtualNodeDirtyHint,
 ) -> Unit {
   match dirty {
-    WidgetClean => ()
-    WidgetPaintDirty => self.mark_pointer_paint_dirty()
-    WidgetLayoutDirty => {
+    VirtualNodeClean => ()
+    VirtualNodePaintDirty => self.mark_pointer_paint_dirty()
+    VirtualNodeLayoutDirty => {
       self.dirty.mark_layout()
       self.clear_cached_layout_and_paint()
     }
-    WidgetBuildDirty => {
+    VirtualNodeBuildDirty => {
       self.dirty.mark_build()
       self.clear_cached_layout_and_paint()
     }

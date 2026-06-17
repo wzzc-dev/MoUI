@@ -1,16 +1,16 @@
 ///|
-pub fn[Msg] component(
+pub fn[Msg] raw_component(
   build : (@core.ComponentContext) -> @core.View[Msg],
   kind? : String = "Component",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind~, key~),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
       revision=() => "component",
       build_child=Some(build),
       layout=ctx => {
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size=ctx.constraints.constrain(first_child_size(ctx.child_sizes)),
           child_frames=if ctx.child_sizes.length() > 0 {
             let size = first_child_size(ctx.child_sizes)
@@ -28,7 +28,7 @@ pub fn[Msg] component(
         )
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(role=@core.SemanticsRole::Group)
+        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Group)
       },
     ),
   )

@@ -7,7 +7,7 @@ pub fn[Msg] avatar(
 ) -> @core.View[Msg] {
   match image {
     Some(source) =>
-      @widget.image(
+      raw_image(
         source~,
         size=Some(@core.Size::new(width=size, height=size)),
       )

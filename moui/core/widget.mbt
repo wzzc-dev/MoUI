@@ -1,11 +1,11 @@
 ///|
-pub(all) struct WidgetIdentity {
+pub(all) struct VirtualNodeIdentity {
   kind : String
   key : Key?
 } derive(Eq)
 
 ///|
-pub(all) struct WidgetLayoutContext {
+pub(all) struct VirtualNodeLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
   text_system : TextSystem
@@ -13,14 +13,14 @@ pub(all) struct WidgetLayoutContext {
 }
 
 ///|
-pub(all) struct WidgetLayoutResult {
+pub(all) struct VirtualNodeLayoutResult {
   size : Size
   child_frames : Array[Rect]
 } derive(Eq, Debug)
 
 ///|
 /// Recursive layout tree produced by the layout pass. Unlike
-/// `WidgetLayoutResult` (a single node's measured size + child frames),
+/// `VirtualNodeLayoutResult` (a single node's measured size + child frames),
 /// `LayoutResult` is the fully-nested tree emitted by `AppRuntime::layout`.
 pub(all) struct LayoutResult {
   frame : Rect
@@ -39,20 +39,20 @@ pub fn hit_test(layout : LayoutResult, point : Point) -> Bool {
 }
 
 ///|
-pub(all) struct WidgetPaintContext {
+pub(all) struct VirtualNodePaintContext {
   frame : Rect
   child_frames : Array[Rect]
   focused : Bool
-  state : WidgetStateContext
+  state : VirtualNodeStateContext
   text_control : TextControlStateContext
   environment : Environment
   text_system : TextSystem
 }
 
 ///|
-pub(all) struct WidgetPaintPlan {
+pub(all) struct VirtualNodePaintPlan {
   commands : Array[DrawCommand]
-  child_layers : Array[WidgetPaintLayer]
+  child_layers : Array[VirtualNodePaintLayer]
   post_commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
   platform_views : Array[PlatformViewPlacement]
@@ -60,7 +60,7 @@ pub(all) struct WidgetPaintPlan {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct WidgetPaintLayer {
+pub(all) struct VirtualNodePaintLayer {
   frame : Rect
   cache_key : String
   content_revision : Int
@@ -70,46 +70,46 @@ pub(all) struct WidgetPaintLayer {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct WidgetEventContext {
+pub(all) struct VirtualNodeEventContext {
   frame : Rect
   child_frames : Array[Rect]
   event : AppEvent
   focused : Bool
-  state : WidgetStateContext
+  state : VirtualNodeStateContext
   text_control : TextControlStateContext
   text_system : TextSystem
   environment : Environment
 }
 
 ///|
-pub(all) enum WidgetDirtyHint {
-  WidgetClean
-  WidgetPaintDirty
-  WidgetLayoutDirty
-  WidgetBuildDirty
+pub(all) enum VirtualNodeDirtyHint {
+  VirtualNodeClean
+  VirtualNodePaintDirty
+  VirtualNodeLayoutDirty
+  VirtualNodeBuildDirty
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct WidgetEventResult[Msg] {
+pub(all) struct VirtualNodeEventResult[Msg] {
   changed : Bool
   activated : Bool
   focused : Bool
   captured : Bool
-  state : WidgetStateContext?
+  state : VirtualNodeStateContext?
   text_control : TextControlStateContext?
-  dirty : WidgetDirtyHint
+  dirty : VirtualNodeDirtyHint
   messages : Array[Msg]
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct WidgetTextCommandResult[Msg] {
+pub(all) struct VirtualNodeTextCommandResult[Msg] {
   result : TextCommandResult
   text_control : TextControlStateContext?
   messages : Array[Msg]
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct WidgetSemanticsInfo {
+pub(all) struct VirtualNodeSemanticsInfo {
   role : SemanticsRole
   label : String
   value : String
@@ -118,7 +118,7 @@ pub(all) struct WidgetSemanticsInfo {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct WidgetStateContext {
+pub(all) struct VirtualNodeStateContext {
   focused : Bool
   hovered : Bool
   pressed : Bool
@@ -148,28 +148,28 @@ pub(all) struct TextControlStateContext {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub struct Widget[Msg] {
-  priv identity_fn : () -> WidgetIdentity
+pub struct VirtualNode[Msg] {
+  priv identity_fn : () -> VirtualNodeIdentity
   priv revision_fn : () -> String
   priv children_fn : () -> Array[View[Msg]]
   priv build_child_fn : ((ComponentContext) -> View[Msg])?
   priv child_constraints_fn : (Constraints) -> Constraints
-  priv layout_fn : (WidgetLayoutContext) -> WidgetLayoutResult
-  priv paint_fn : (WidgetPaintContext) -> WidgetPaintPlan
-  priv event_fn : (WidgetEventContext) -> WidgetEventResult[Msg]
-  priv text_input_state_fn : (WidgetPaintContext) -> TextInputState?
-  priv text_command_fn : (WidgetEventContext, CommandIntent, String?) -> WidgetTextCommandResult[
+  priv layout_fn : (VirtualNodeLayoutContext) -> VirtualNodeLayoutResult
+  priv paint_fn : (VirtualNodePaintContext) -> VirtualNodePaintPlan
+  priv event_fn : (VirtualNodeEventContext) -> VirtualNodeEventResult[Msg]
+  priv text_input_state_fn : (VirtualNodePaintContext) -> TextInputState?
+  priv text_command_fn : (VirtualNodeEventContext, CommandIntent, String?) -> VirtualNodeTextCommandResult[
     Msg,
   ]
-  priv semantics_fn : () -> WidgetSemanticsInfo
+  priv semantics_fn : () -> VirtualNodeSemanticsInfo
   priv focusable_fn : () -> Bool
 }
 
 ///|
-pub fn WidgetIdentity::new(
+pub fn VirtualNodeIdentity::new(
   kind~ : String,
   key? : String? = None,
-) -> WidgetIdentity {
+) -> VirtualNodeIdentity {
   {
     kind,
     key: match key {
@@ -180,15 +180,15 @@ pub fn WidgetIdentity::new(
 }
 
 ///|
-pub fn WidgetLayoutResult::new(
+pub fn VirtualNodeLayoutResult::new(
   size~ : Size,
   child_frames? : Array[Rect] = [],
-) -> WidgetLayoutResult {
+) -> VirtualNodeLayoutResult {
   { size, child_frames }
 }
 
 ///|
-pub fn WidgetPaintPlan::empty() -> WidgetPaintPlan {
+pub fn VirtualNodePaintPlan::empty() -> VirtualNodePaintPlan {
   {
     commands: [],
     child_layers: [],
@@ -200,9 +200,9 @@ pub fn WidgetPaintPlan::empty() -> WidgetPaintPlan {
 }
 
 ///|
-pub fn WidgetPaintPlan::commands(
+pub fn VirtualNodePaintPlan::commands(
   commands : Array[DrawCommand],
-) -> WidgetPaintPlan {
+) -> VirtualNodePaintPlan {
   {
     commands,
     child_layers: [],
@@ -214,14 +214,14 @@ pub fn WidgetPaintPlan::commands(
 }
 
 ///|
-pub fn WidgetPaintLayer::new(
+pub fn VirtualNodePaintLayer::new(
   frame~ : Rect,
   cache_key~ : String,
   content_revision~ : Int,
   commands? : Array[DrawCommand] = [],
   overlay_commands? : Array[DrawCommand] = [],
   platform_views? : Array[PlatformViewPlacement] = [],
-) -> WidgetPaintLayer {
+) -> VirtualNodePaintLayer {
   {
     frame,
     cache_key,
@@ -233,7 +233,7 @@ pub fn WidgetPaintLayer::new(
 }
 
 ///|
-pub fn[Msg] WidgetEventResult::ignored() -> WidgetEventResult[Msg] {
+pub fn[Msg] VirtualNodeEventResult::ignored() -> VirtualNodeEventResult[Msg] {
   {
     changed: false,
     activated: false,
@@ -241,13 +241,13 @@ pub fn[Msg] WidgetEventResult::ignored() -> WidgetEventResult[Msg] {
     captured: false,
     state: None,
     text_control: None,
-    dirty: WidgetClean,
+    dirty: VirtualNodeClean,
     messages: [],
   }
 }
 
 ///|
-pub fn[Msg] WidgetEventResult::message(message : Msg) -> WidgetEventResult[Msg] {
+pub fn[Msg] VirtualNodeEventResult::message(message : Msg) -> VirtualNodeEventResult[Msg] {
   {
     changed: true,
     activated: true,
@@ -255,59 +255,59 @@ pub fn[Msg] WidgetEventResult::message(message : Msg) -> WidgetEventResult[Msg] 
     captured: true,
     state: None,
     text_control: None,
-    dirty: WidgetPaintDirty,
+    dirty: VirtualNodePaintDirty,
     messages: [message],
   }
 }
 
 ///|
-pub fn[Msg] WidgetTextCommandResult::ignored() -> WidgetTextCommandResult[Msg] {
+pub fn[Msg] VirtualNodeTextCommandResult::ignored() -> VirtualNodeTextCommandResult[Msg] {
   { result: TextCommandResult::ignored(), text_control: None, messages: [] }
 }
 
 ///|
-pub fn[Msg] WidgetTextCommandResult::new(
+pub fn[Msg] VirtualNodeTextCommandResult::new(
   result~ : TextCommandResult,
   text_control? : TextControlStateContext? = None,
   messages? : Array[Msg] = [],
-) -> WidgetTextCommandResult[Msg] {
+) -> VirtualNodeTextCommandResult[Msg] {
   { result, text_control, messages }
 }
 
 ///|
-pub fn WidgetSemanticsInfo::new(
+pub fn VirtualNodeSemanticsInfo::new(
   role? : SemanticsRole = SemanticsRole::Group,
   label? : String = "",
   value? : String = "",
   description? : String = "",
   actions? : Array[SemanticsAction] = [],
-) -> WidgetSemanticsInfo {
+) -> VirtualNodeSemanticsInfo {
   { role, label, value, description, actions }
 }
 
 ///|
-pub fn[Msg] Widget::new(
-  identity~ : () -> WidgetIdentity,
+pub fn[Msg] VirtualNode::new(
+  identity~ : () -> VirtualNodeIdentity,
   revision? : () -> String = () => "",
   children? : () -> Array[View[Msg]] = () => [],
   build_child? : ((ComponentContext) -> View[Msg])? = None,
   child_constraints? : (Constraints) -> Constraints = constraints => {
     constraints.loosen()
   },
-  layout~ : (WidgetLayoutContext) -> WidgetLayoutResult,
-  paint? : (WidgetPaintContext) -> WidgetPaintPlan = _ctx => {
-    WidgetPaintPlan::empty()
+  layout~ : (VirtualNodeLayoutContext) -> VirtualNodeLayoutResult,
+  paint? : (VirtualNodePaintContext) -> VirtualNodePaintPlan = _ctx => {
+    VirtualNodePaintPlan::empty()
   },
-  event? : (WidgetEventContext) -> WidgetEventResult[Msg] = _ctx => {
-    WidgetEventResult::ignored()
+  event? : (VirtualNodeEventContext) -> VirtualNodeEventResult[Msg] = _ctx => {
+    VirtualNodeEventResult::ignored()
   },
-  text_input_state? : (WidgetPaintContext) -> TextInputState? = _ctx => None,
-  text_command? : (WidgetEventContext, CommandIntent, String?) -> WidgetTextCommandResult[
+  text_input_state? : (VirtualNodePaintContext) -> TextInputState? = _ctx => None,
+  text_command? : (VirtualNodeEventContext, CommandIntent, String?) -> VirtualNodeTextCommandResult[
     Msg,
-  ] = (_ctx, _intent, _paste_text) => WidgetTextCommandResult::ignored(),
-  semantics? : () -> WidgetSemanticsInfo = () => WidgetSemanticsInfo::new(),
+  ] = (_ctx, _intent, _paste_text) => VirtualNodeTextCommandResult::ignored(),
+  semantics? : () -> VirtualNodeSemanticsInfo = () => VirtualNodeSemanticsInfo::new(),
   focusable? : () -> Bool = () => false,
-) -> Widget[Msg] {
+) -> VirtualNode[Msg] {
   {
     identity_fn: identity,
     revision_fn: revision,
@@ -325,71 +325,71 @@ pub fn[Msg] Widget::new(
 }
 
 ///|
-pub fn[Msg] Widget::identity(self : Widget[Msg]) -> WidgetIdentity {
+pub fn[Msg] VirtualNode::identity(self : VirtualNode[Msg]) -> VirtualNodeIdentity {
   (self.identity_fn)()
 }
 
 ///|
-pub fn[Msg] Widget::revision(self : Widget[Msg]) -> String {
+pub fn[Msg] VirtualNode::revision(self : VirtualNode[Msg]) -> String {
   (self.revision_fn)()
 }
 
 ///|
-pub fn[Msg] Widget::children(self : Widget[Msg]) -> Array[View[Msg]] {
+pub fn[Msg] VirtualNode::children(self : VirtualNode[Msg]) -> Array[View[Msg]] {
   (self.children_fn)()
 }
 
 ///|
-pub fn[Msg] Widget::build_child(
-  self : Widget[Msg],
+pub fn[Msg] VirtualNode::build_child(
+  self : VirtualNode[Msg],
 ) -> ((ComponentContext) -> View[Msg])? {
   self.build_child_fn
 }
 
 ///|
-pub fn[Msg] Widget::child_constraints(
-  self : Widget[Msg],
+pub fn[Msg] VirtualNode::child_constraints(
+  self : VirtualNode[Msg],
   constraints : Constraints,
 ) -> Constraints {
   (self.child_constraints_fn)(constraints)
 }
 
 ///|
-pub fn[Msg] Widget::layout(
-  self : Widget[Msg],
-  context : WidgetLayoutContext,
-) -> WidgetLayoutResult {
+pub fn[Msg] VirtualNode::layout(
+  self : VirtualNode[Msg],
+  context : VirtualNodeLayoutContext,
+) -> VirtualNodeLayoutResult {
   (self.layout_fn)(context)
 }
 
 ///|
-pub fn[Msg] Widget::paint(
-  self : Widget[Msg],
-  context : WidgetPaintContext,
-) -> WidgetPaintPlan {
+pub fn[Msg] VirtualNode::paint(
+  self : VirtualNode[Msg],
+  context : VirtualNodePaintContext,
+) -> VirtualNodePaintPlan {
   (self.paint_fn)(context)
 }
 
 ///|
-pub fn[Msg] Widget::event(
-  self : Widget[Msg],
-  context : WidgetEventContext,
-) -> WidgetEventResult[Msg] {
+pub fn[Msg] VirtualNode::event(
+  self : VirtualNode[Msg],
+  context : VirtualNodeEventContext,
+) -> VirtualNodeEventResult[Msg] {
   (self.event_fn)(context)
 }
 
 ///|
-pub fn[Msg] Widget::text_input_state(
-  self : Widget[Msg],
-  context : WidgetPaintContext,
+pub fn[Msg] VirtualNode::text_input_state(
+  self : VirtualNode[Msg],
+  context : VirtualNodePaintContext,
 ) -> TextInputState? {
   (self.text_input_state_fn)(context)
 }
 
 ///|
-pub fn[Msg] Widget::text_command(
-  self : Widget[Msg],
-  context : WidgetEventContext,
+pub fn[Msg] VirtualNode::text_command(
+  self : VirtualNode[Msg],
+  context : VirtualNodeEventContext,
   intent : CommandIntent,
   paste_text? : String? = None,
 ) -> TextCommandResult {
@@ -397,31 +397,31 @@ pub fn[Msg] Widget::text_command(
 }
 
 ///|
-pub fn[Msg] Widget::text_command_result(
-  self : Widget[Msg],
-  context : WidgetEventContext,
+pub fn[Msg] VirtualNode::text_command_result(
+  self : VirtualNode[Msg],
+  context : VirtualNodeEventContext,
   intent : CommandIntent,
   paste_text? : String? = None,
-) -> WidgetTextCommandResult[Msg] {
+) -> VirtualNodeTextCommandResult[Msg] {
   (self.text_command_fn)(context, intent, paste_text)
 }
 
 ///|
-pub fn[Msg] Widget::semantics(self : Widget[Msg]) -> WidgetSemanticsInfo {
+pub fn[Msg] VirtualNode::semantics(self : VirtualNode[Msg]) -> VirtualNodeSemanticsInfo {
   (self.semantics_fn)()
 }
 
 ///|
-pub fn[Msg] Widget::focusable(self : Widget[Msg]) -> Bool {
+pub fn[Msg] VirtualNode::focusable(self : VirtualNode[Msg]) -> Bool {
   (self.focusable_fn)()
 }
 
 ///|
-pub fn[Msg, NextMsg] Widget::map(
-  self : Widget[Msg],
+pub fn[Msg, NextMsg] VirtualNode::map(
+  self : VirtualNode[Msg],
   map : (Msg) -> NextMsg,
-) -> Widget[NextMsg] {
-  Widget::new(
+) -> VirtualNode[NextMsg] {
+  VirtualNode::new(
     identity=() => self.identity(),
     revision=() => self.revision(),
     children=() => self.children().map(child => child.map(map)),
@@ -461,25 +461,25 @@ pub fn[Msg, NextMsg] Widget::map(
 
 ///|
 pub struct View[Msg] {
-  priv widget : Widget[Msg]
+  priv virtual_node : VirtualNode[Msg]
 }
 
 ///|
-fn[Msg] view_from_widget(widget : Widget[Msg]) -> View[Msg] {
-  { widget, }
+fn[Msg] view_from_virtual_node(virtual_node : VirtualNode[Msg]) -> View[Msg] {
+  { virtual_node, }
 }
 
 ///|
-pub fn[Msg] View::widget(widget : Widget[Msg]) -> View[Msg] {
-  view_from_widget(widget)
+pub fn[Msg] View::virtual_node(virtual_node : VirtualNode[Msg]) -> View[Msg] {
+  view_from_virtual_node(virtual_node)
 }
 
 ///|
-pub fn[Msg] View::widget_ops(self : View[Msg]) -> Widget[Msg]? {
-  Some(self.widget)
+pub fn[Msg] View::virtual_node_ops(self : View[Msg]) -> VirtualNode[Msg]? {
+  Some(self.virtual_node)
 }
 
 ///|
-pub fn[Msg] View::ops(self : View[Msg]) -> Widget[Msg] {
-  self.widget
+pub fn[Msg] View::ops(self : View[Msg]) -> VirtualNode[Msg] {
+  self.virtual_node
 }

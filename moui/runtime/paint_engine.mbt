@@ -21,18 +21,18 @@ fn ElementNode::render_with_environment(
   let post_commands : Array[DrawCommand] = []
   let overlay_commands : Array[DrawCommand] = []
   let platform_views : Array[PlatformViewPlacement] = []
-  let plan = (self.widget.paint)({
+  let plan = (self.virtual_node.paint)({
     frame: bounds,
     child_frames: placed.children.map(child => child.frame),
     focused: focused == Some(self.id),
-    state: { ..self.widget.state, focused: focused == Some(self.id) },
+    state: { ..self.virtual_node.state, focused: focused == Some(self.id) },
     text_control: self.control.text_context(),
-    environment: render_environment_to_widget_environment(environment),
+    environment: render_environment_to_virtual_node_environment(environment),
     text_system: environment.text_system,
   })
   commands.append(plan.commands)
   for layer in plan.child_layers {
-    children.push(widget_paint_layer_render_node(self.id, layer))
+    children.push(virtual_node_paint_layer_render_node(self.id, layer))
   }
   post_commands.append(plan.post_commands)
   overlay_commands.append(plan.overlay_commands)
@@ -82,9 +82,9 @@ fn ElementNode::render_with_environment(
 }
 
 ///|
-fn widget_paint_layer_render_node(
+fn virtual_node_paint_layer_render_node(
   element_id : ElementId,
-  layer : @core.WidgetPaintLayer,
+  layer : @core.VirtualNodePaintLayer,
 ) -> RenderNode {
   let paint_bounds = render_node_paint_bounds(
     layer.frame,

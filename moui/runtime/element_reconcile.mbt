@@ -47,18 +47,18 @@ fn ReconcileDirtyKind::combine(
 }
 
 ///|
-fn mount_widget(spec : Widget) -> ElementNode {
-  mount_widget_with_next(spec, 1).node
+fn mount_virtual_node(spec : VirtualNode) -> ElementNode {
+  mount_virtual_node_with_next(spec, 1).node
 }
 
 ///|
-fn mount_widget_with_next(spec : Widget, next_id : Int) -> MountResult {
-  mount_widget_for_runtime(spec, None, next_id)
+fn mount_virtual_node_with_next(spec : VirtualNode, next_id : Int) -> MountResult {
+  mount_virtual_node_for_runtime(spec, None, next_id)
 }
 
 ///|
-fn mount_widget_for_runtime(
-  spec : Widget,
+fn mount_virtual_node_for_runtime(
+  spec : VirtualNode,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> MountResult {
@@ -72,8 +72,8 @@ fn mount_widget_for_runtime(
       let built = build_component_child(build, runtime, id, [], [])
       component_subscriptions = built.subscriptions
       component_effects = built.effects
-      let mounted = mount_widget_for_runtime(
-        built.child_widget,
+      let mounted = mount_virtual_node_for_runtime(
+        built.child_virtual_node,
         Some(runtime),
         next,
       )
@@ -82,8 +82,8 @@ fn mount_widget_for_runtime(
     }
     _ => ()
   }
-  for child_widget in (spec.children)() {
-    let mounted = mount_widget_for_runtime(child_widget, runtime, next)
+  for child_virtual_node in (spec.children)() {
+    let mounted = mount_virtual_node_for_runtime(child_virtual_node, runtime, next)
     children.push(mounted.node)
     next = mounted.next_id
   }
@@ -91,7 +91,7 @@ fn mount_widget_for_runtime(
     node: {
       id,
       key: spec.identity_key(),
-      widget: spec,
+      virtual_node: spec,
       children,
       dirty: DirtyFlags::all(),
       control: ElementControlState::new(),
@@ -109,14 +109,14 @@ fn mount_widget_for_runtime(
 ///|
 fn reconcile_element_for_runtime(
   old : ElementNode,
-  next_widget : Widget,
+  next_virtual_node : VirtualNode,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ReconcileResult {
-  if !old.widget.same_identity(next_widget) {
+  if !old.virtual_node.same_identity(next_virtual_node) {
     old.cancel_component_tree_subscriptions()
-    let mounted = mount_widget_for_runtime(
-      next_widget, runtime, next_id,
+    let mounted = mount_virtual_node_for_runtime(
+      next_virtual_node, runtime, next_id,
     )
     {
       node: mounted.node,
@@ -124,18 +124,18 @@ fn reconcile_element_for_runtime(
       dirty_kind: ReconcileLayout,
     }
   } else {
-    let own_dirty = old.widget.reconcile_dirty_kind(next_widget)
-    let next_widget = preserve_widget_runtime_state(old.widget, next_widget)
-    old.widget = next_widget
-    old.key = old.widget.identity_key()
-    let children_result = if old.widget.is_building_widget() {
+    let own_dirty = old.virtual_node.reconcile_dirty_kind(next_virtual_node)
+    let next_virtual_node = preserve_virtual_node_runtime_state(old.virtual_node, next_virtual_node)
+    old.virtual_node = next_virtual_node
+    old.key = old.virtual_node.identity_key()
+    let children_result = if old.virtual_node.is_building_virtual_node() {
       {
         children: old.children,
         next_id,
         dirty_kind: ReconcileDirtyKind::ReconcileClean,
       }
     } else {
-      reconcile_children_for_runtime(old.children, old.widget, runtime, next_id)
+      reconcile_children_for_runtime(old.children, old.virtual_node, runtime, next_id)
     }
     old.children = children_result.children
     let dirty_kind = own_dirty.combine(children_result.dirty_kind)
@@ -145,18 +145,18 @@ fn reconcile_element_for_runtime(
 }
 
 ///|
-fn preserve_widget_runtime_state(old : Widget, next : Widget) -> Widget {
+fn preserve_virtual_node_runtime_state(old : VirtualNode, next : VirtualNode) -> VirtualNode {
   { ..next, state: old.state }
 }
 
 ///|
 fn reconcile_children_for_runtime(
   old_children : Array[ElementNode],
-  next_widget : Widget,
+  next_virtual_node : VirtualNode,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ChildrenReconcileResult {
-  let next_widgets = child_widgets(next_widget)
+  let next_virtual_nodes = child_virtual_nodes(next_virtual_node)
   let children : Array[ElementNode] = []
   let used : Array[Bool] = []
   for _ in old_children {
@@ -164,14 +164,14 @@ fn reconcile_children_for_runtime(
   }
   let mut next = next_id
   let mut dirty = ReconcileDirtyKind::ReconcileClean
-  for index, child_widget in next_widgets {
-    let old_index = find_reusable_child(old_children, used, child_widget, index)
+  for index, child_virtual_node in next_virtual_nodes {
+    let old_index = find_reusable_child(old_children, used, child_virtual_node, index)
     match old_index {
       Some(old_index) => {
         used[old_index] = true
         let result = reconcile_element_for_runtime(
           old_children[old_index],
-          child_widget,
+          child_virtual_node,
           runtime,
           next,
         )
@@ -180,8 +180,8 @@ fn reconcile_children_for_runtime(
         dirty = dirty.combine(result.dirty_kind)
       }
       None => {
-        let mounted = mount_widget_for_runtime(
-          child_widget, runtime, next,
+        let mounted = mount_virtual_node_for_runtime(
+          child_virtual_node, runtime, next,
         )
         children.push(mounted.node)
         next = mounted.next_id
@@ -220,15 +220,15 @@ fn ElementNode::apply_reconcile_dirty(
 fn find_reusable_child(
   old_children : Array[ElementNode],
   used : Array[Bool],
-  child_widget : Widget,
+  child_virtual_node : VirtualNode,
   index : Int,
 ) -> Int? {
-  match child_widget.identity_key() {
+  match child_virtual_node.identity_key() {
     Some(key) => {
       for old_index, old_child in old_children {
         if !used[old_index] &&
           old_child.key == Some(key) &&
-          old_child.widget.kind() == child_widget.kind() {
+          old_child.virtual_node.kind() == child_virtual_node.kind() {
           return Some(old_index)
         }
       }
@@ -238,7 +238,7 @@ fn find_reusable_child(
       if index < old_children.length() &&
         !used[index] &&
         old_children[index].key is None &&
-        old_children[index].widget.kind() == child_widget.kind() {
+        old_children[index].virtual_node.kind() == child_virtual_node.kind() {
         Some(index)
       } else {
         None
@@ -247,6 +247,6 @@ fn find_reusable_child(
 }
 
 ///|
-fn child_widgets(spec : Widget) -> Array[Widget] {
+fn child_virtual_nodes(spec : VirtualNode) -> Array[VirtualNode] {
   (spec.children)()
 }

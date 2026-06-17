@@ -4,10 +4,10 @@ pub fn picker_item(id : String, label : String) -> PickerItem {
 }
 
 ///|
-fn picker_options(items : Array[PickerItem]) -> Array[@widget.PickerOption] {
-  let options : Array[@widget.PickerOption] = []
+fn picker_options(items : Array[PickerItem]) -> Array[RawPickerOption] {
+  let options : Array[RawPickerOption] = []
   for item in items {
-    options.push(@widget.PickerOption::new(id=item.id(), label=item.label()))
+    options.push(RawPickerOption::new(id=item.id(), label=item.label()))
   }
   options
 }
@@ -26,7 +26,7 @@ pub fn[Msg] picker(
     Some(value) => value
     None => PickerStyle::default(theme~)
   }
-  @widget.picker(
+  raw_picker(
     items=picker_options(items),
     selected=@core.Binding::new(get=() => selected, set=_value => ()),
     placeholder~,
@@ -52,7 +52,7 @@ pub fn[Msg] picker_binding(
     Some(value) => value
     None => PickerStyle::default(theme~)
   }
-  @widget.picker(
+  raw_picker(
     items=picker_options(items),
     selected~,
     placeholder~,

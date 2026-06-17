@@ -1,12 +1,12 @@
 ///|
-test "widget map maps direct event messages" {
-  let view = rect(
+test "virtual node map maps direct event messages" {
+  let view = raw_rect(
     width=10.0,
     height=10.0,
     color=@core.Color::blue(),
     on_tap=Some(1),
   ).map(value => value + 41)
-  match view.widget_ops() {
+  match view.virtual_node_ops() {
     Some(ops) => {
       let result = ops.event({
         frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
@@ -18,8 +18,8 @@ test "widget map maps direct event messages" {
           ),
         ),
         focused: false,
-        state: widget_test_state(),
-        text_control: widget_test_text_control(),
+        state: virtual_node_test_state(),
+        text_control: virtual_node_test_text_control(),
         text_system: @core.TextSystem::fallback(),
         environment: @core.Environment::neutral(),
       })
@@ -27,24 +27,24 @@ test "widget map maps direct event messages" {
         fail("expected mapped direct message")
       }
     }
-    None => fail("expected widget")
+    None => fail("expected virtual node")
   }
 }
 
 ///|
-test "widget map maps nested children" {
-  let child = rect(
+test "virtual node map maps nested children" {
+  let child = raw_rect(
     width=10.0,
     height=10.0,
     color=@core.Color::blue(),
     on_tap=Some(7),
   )
-  let view = stack(children=[child]).map(value => "msg-\{value}")
-  match view.widget_ops() {
+  let view = raw_stack(children=[child]).map(value => "msg-\{value}")
+  match view.virtual_node_ops() {
     Some(ops) =>
       match ops.children().get(0) {
         Some(child) =>
-          match child.widget_ops() {
+          match child.virtual_node_ops() {
             Some(child_ops) => {
               let result = child_ops.event({
                 frame: @core.Rect::new(x=0.0, y=0.0, width=10.0, height=10.0),
@@ -56,8 +56,8 @@ test "widget map maps nested children" {
                   ),
                 ),
                 focused: false,
-                state: widget_test_state(),
-                text_control: widget_test_text_control(),
+                state: virtual_node_test_state(),
+                text_control: virtual_node_test_text_control(),
                 text_system: @core.TextSystem::fallback(),
                 environment: @core.Environment::neutral(),
               })
@@ -65,16 +65,16 @@ test "widget map maps nested children" {
                 fail("expected mapped child message")
               }
             }
-            None => fail("expected child widget")
+            None => fail("expected child virtual node")
           }
         None => fail("expected child")
       }
-    None => fail("expected widget")
+    None => fail("expected virtual node")
   }
 }
 
 ///|
-fn widget_test_state() -> @core.WidgetStateContext {
+fn virtual_node_test_state() -> @core.VirtualNodeStateContext {
   {
     focused: false,
     hovered: false,
@@ -88,7 +88,7 @@ fn widget_test_state() -> @core.WidgetStateContext {
 }
 
 ///|
-fn widget_test_text_control() -> @core.TextControlStateContext {
+fn virtual_node_test_text_control() -> @core.TextControlStateContext {
   {
     caret: 0,
     selection: None,

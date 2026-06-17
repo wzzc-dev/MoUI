@@ -1,46 +1,46 @@
 ///|
-fn widget_color_revision(color : @core.Color) -> String {
+fn virtual_node_color_revision(color : @core.Color) -> String {
   "\{color.r},\{color.g},\{color.b},\{color.a}"
 }
 
 ///|
-fn widget_brush_revision(value : @core.Brush) -> String {
+fn virtual_node_brush_revision(value : @core.Brush) -> String {
   match value {
-    @core.Brush::Solid(color) => "solid:\{widget_color_revision(color)}"
+    @core.Brush::Solid(color) => "solid:\{virtual_node_color_revision(color)}"
     @core.Brush::LinearGradient(spec) =>
-      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{widget_color_revision(spec.start_color)},\{widget_color_revision(spec.end_color)}"
+      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{virtual_node_color_revision(spec.start_color)},\{virtual_node_color_revision(spec.end_color)}"
     @core.Brush::RadialGradient(spec) =>
-      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{widget_color_revision(spec.center_color)},\{widget_color_revision(spec.edge_color)}"
+      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{virtual_node_color_revision(spec.center_color)},\{virtual_node_color_revision(spec.edge_color)}"
   }
 }
 
 ///|
-fn widget_brush_option_revision(value : @core.Brush?) -> String {
+fn virtual_node_brush_option_revision(value : @core.Brush?) -> String {
   match value {
-    Some(brush) => widget_brush_revision(brush)
+    Some(brush) => virtual_node_brush_revision(brush)
     None => "none"
   }
 }
 
 ///|
-fn widget_border_option_revision(value : @core.BorderStyle?) -> String {
+fn virtual_node_border_option_revision(value : @core.BorderStyle?) -> String {
   match value {
-    Some(value) => "\{widget_brush_revision(value.brush)}:\{value.width}"
+    Some(value) => "\{virtual_node_brush_revision(value.brush)}:\{value.width}"
     None => "none"
   }
 }
 
 ///|
-fn widget_shadow_option_revision(value : @core.ShadowStyle?) -> String {
+fn virtual_node_shadow_option_revision(value : @core.ShadowStyle?) -> String {
   match value {
     Some(value) =>
-      "\{widget_color_revision(value.color)}:\{value.offset.x},\{value.offset.y}:\{value.blur_radius}:\{value.spread}"
+      "\{virtual_node_color_revision(value.color)}:\{value.offset.x},\{value.offset.y}:\{value.blur_radius}:\{value.spread}"
     None => "none"
   }
 }
 
 ///|
-fn widget_font_revision(font : @core.FontSpec) -> String {
+fn virtual_node_font_revision(font : @core.FontSpec) -> String {
   let style = match font.style {
     @core.FontStyle::Normal => "normal"
     @core.FontStyle::Italic => "italic"
@@ -49,17 +49,17 @@ fn widget_font_revision(font : @core.FontSpec) -> String {
 }
 
 ///|
-fn widget_size_revision(size : @core.Size) -> String {
+fn virtual_node_size_revision(size : @core.Size) -> String {
   "\{size.width}x\{size.height}"
 }
 
 ///|
-fn widget_text_length(text : String) -> Int {
+fn virtual_node_text_length(text : String) -> Int {
   text.to_array().length()
 }
 
 ///|
-fn widget_max_double(left : Double, right : Double) -> Double {
+fn virtual_node_max_double(left : Double, right : Double) -> Double {
   if left >= right {
     left
   } else {
@@ -68,7 +68,7 @@ fn widget_max_double(left : Double, right : Double) -> Double {
 }
 
 ///|
-fn widget_min_double(left : Double, right : Double) -> Double {
+fn virtual_node_min_double(left : Double, right : Double) -> Double {
   if left <= right {
     left
   } else {
@@ -77,7 +77,7 @@ fn widget_min_double(left : Double, right : Double) -> Double {
 }
 
 ///|
-fn widget_max_int(left : Int, right : Int) -> Int {
+fn virtual_node_max_int(left : Int, right : Int) -> Int {
   if left >= right {
     left
   } else {
@@ -86,7 +86,7 @@ fn widget_max_int(left : Int, right : Int) -> Int {
 }
 
 ///|
-fn widget_button_next_state(
+fn virtual_node_button_next_state(
   current : @core.ButtonState,
   inside : Bool,
   phase : @core.PointerPhase,
@@ -117,8 +117,8 @@ fn widget_button_next_state(
 }
 
 ///|
-fn widget_button_background(
-  state : @core.WidgetStateContext,
+fn virtual_node_button_background(
+  state : @core.VirtualNodeStateContext,
   normal : @core.Brush,
   hovered : @core.Brush,
   pressed : @core.Brush,
@@ -133,16 +133,16 @@ fn widget_button_background(
 }
 
 ///|
-fn[Msg] widget_event_result(
+fn[Msg] virtual_node_event_result(
   changed? : Bool = false,
   activated? : Bool = false,
   focused? : Bool = false,
   captured? : Bool = false,
-  state? : @core.WidgetStateContext? = None,
+  state? : @core.VirtualNodeStateContext? = None,
   text_control? : @core.TextControlStateContext? = None,
-  dirty? : @core.WidgetDirtyHint = @core.WidgetDirtyHint::WidgetClean,
+  dirty? : @core.VirtualNodeDirtyHint = @core.VirtualNodeDirtyHint::VirtualNodeClean,
   messages? : Array[Msg] = [],
-) -> @core.WidgetEventResult[Msg] {
+) -> @core.VirtualNodeEventResult[Msg] {
   {
     changed,
     activated,

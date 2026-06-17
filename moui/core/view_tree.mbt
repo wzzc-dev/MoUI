@@ -83,19 +83,19 @@ fn[Msg] View::apply_modifier(
   self : View[Msg],
   modifier : ViewModifier[Msg],
 ) -> View[Msg] {
-  View::widget(modifier_widget(self, modifier))
+  View::virtual_node(modifier_virtual_node(self, modifier))
 }
 
 ///|
-fn[Msg] modifier_widget(
+fn[Msg] modifier_virtual_node(
   child : View[Msg],
   modifier : ViewModifier[Msg],
-) -> Widget[Msg] {
-  let child_widget = child.widget
-  Widget::new(
-    identity=() => modifier_identity(child_widget, modifier),
+) -> VirtualNode[Msg] {
+  let child_virtual_node = child.ops()
+  VirtualNode::new(
+    identity=() => modifier_identity(child_virtual_node, modifier),
     revision=() => {
-      "modifier:\{modifier_revision(modifier)}:\{child_widget.revision()}"
+      "modifier:\{modifier_revision(modifier)}:\{child_virtual_node.revision()}"
     },
     children=() => [child],
     child_constraints=constraints => {
@@ -104,9 +104,9 @@ fn[Msg] modifier_widget(
     layout=ctx => modifier_layout(modifier, ctx),
     paint=ctx => modifier_paint(modifier, ctx),
     event=ctx => modifier_event(modifier, ctx),
-    text_input_state=ctx => child_widget.text_input_state(ctx),
+    text_input_state=ctx => child_virtual_node.text_input_state(ctx),
     text_command=(ctx, intent, paste_text) => {
-      child_widget.text_command_result(ctx, intent, paste_text~)
+      child_virtual_node.text_command_result(ctx, intent, paste_text~)
     },
     semantics=() => modifier_semantics(modifier),
     focusable=() => modifier_focusable(modifier),
@@ -115,9 +115,9 @@ fn[Msg] modifier_widget(
 
 ///|
 fn[Msg] modifier_identity(
-  child : Widget[Msg],
+  child : VirtualNode[Msg],
   modifier : ViewModifier[Msg],
-) -> WidgetIdentity {
+) -> VirtualNodeIdentity {
   match modifier {
     KeyModifier(key) => {
       let identity = child.identity()
@@ -260,8 +260,8 @@ fn[Msg] modifier_child_constraints(
 ///|
 fn[Msg] modifier_layout(
   modifier : ViewModifier[Msg],
-  ctx : WidgetLayoutContext,
-) -> WidgetLayoutResult {
+  ctx : VirtualNodeLayoutContext,
+) -> VirtualNodeLayoutResult {
   let child_size = first_modifier_child_size(ctx.child_sizes)
   let size = ctx.constraints.constrain(
     match modifier {
@@ -271,7 +271,7 @@ fn[Msg] modifier_layout(
       _ => child_size
     },
   )
-  WidgetLayoutResult::new(size~, child_frames=[
+  VirtualNodeLayoutResult::new(size~, child_frames=[
     modifier_child_frame(modifier, size, child_size),
   ])
 }
@@ -296,12 +296,12 @@ fn[Msg] modifier_child_frame(
 ///|
 fn[Msg] modifier_paint(
   modifier : ViewModifier[Msg],
-  ctx : WidgetPaintContext,
-) -> WidgetPaintPlan {
+  ctx : VirtualNodePaintContext,
+) -> VirtualNodePaintPlan {
   match modifier {
     BackgroundModifier(brush) => {
       let radius = 0.0
-      WidgetPaintPlan::commands([
+      VirtualNodePaintPlan::commands([
         DrawCommand::FillRoundedRectBrush(
           RoundedRect::new(rect=ctx.frame, radius~),
           brush,
@@ -318,7 +318,7 @@ fn[Msg] modifier_paint(
         repaint_boundary: false,
       }
     ShadowModifier(style) =>
-      WidgetPaintPlan::commands([
+      VirtualNodePaintPlan::commands([
         DrawCommand::DrawShadow(
           ShadowSpec::new(
             rect=RoundedRect::new(rect=ctx.frame, radius=0.0),
@@ -331,7 +331,7 @@ fn[Msg] modifier_paint(
       ])
     BorderModifier(style) =>
       if style.width > 0.0 {
-        WidgetPaintPlan::commands([
+        VirtualNodePaintPlan::commands([
           DrawCommand::StrokeRoundedRectBrush(
             RoundedRect::new(rect=ctx.frame, radius=0.0),
             style.brush,
@@ -339,7 +339,7 @@ fn[Msg] modifier_paint(
           ),
         ])
       } else {
-        WidgetPaintPlan::empty()
+        VirtualNodePaintPlan::empty()
       }
     ClipModifier =>
       {
@@ -369,18 +369,18 @@ fn[Msg] modifier_paint(
         repaint_boundary: false,
       }
     RepaintBoundaryModifier =>
-      { ..WidgetPaintPlan::empty(), repaint_boundary: true }
-    _ => WidgetPaintPlan::empty()
+      { ..VirtualNodePaintPlan::empty(), repaint_boundary: true }
+    _ => VirtualNodePaintPlan::empty()
   }
 }
 
 ///|
 fn[Msg] modifier_event(
   modifier : ViewModifier[Msg],
-  ctx : WidgetEventContext,
-) -> WidgetEventResult[Msg] {
+  ctx : VirtualNodeEventContext,
+) -> VirtualNodeEventResult[Msg] {
   match modifier {
-    DisabledModifier(true) => WidgetEventResult::ignored()
+    DisabledModifier(true) => VirtualNodeEventResult::ignored()
     OnTapMessageModifier(message) => handle_tap_modifier(message, ctx)
     OnLongPressMessageModifier(message) =>
       handle_long_press_modifier(message, ctx)
@@ -395,21 +395,21 @@ fn[Msg] modifier_event(
     KeyboardShortcutModifier(shortcut) =>
       handle_keyboard_shortcut(shortcut, ctx)
     FocusableModifier(true) => handle_focusable_modifier(ctx)
-    _ => WidgetEventResult::ignored()
+    _ => VirtualNodeEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_tap_modifier(
   message : Msg,
-  ctx : WidgetEventContext,
-) -> WidgetEventResult[Msg] {
+  ctx : VirtualNodeEventContext,
+) -> VirtualNodeEventResult[Msg] {
   match ctx.event {
     Pointer(event) => {
       let inside = ctx.frame.contains(event.position)
-      let current = widget_state_to_button_state(ctx.state)
+      let current = virtual_node_state_to_button_state(ctx.state)
       let tap = recognize_button_tap(current, inside, event.phase)
-      let next_state = button_state_to_widget_state(ctx.state, tap.next_state)
+      let next_state = button_state_to_virtual_node_state(ctx.state, tap.next_state)
       let changed = next_state != ctx.state || tap.activated
       {
         changed,
@@ -419,9 +419,9 @@ fn[Msg] handle_tap_modifier(
         state: Some(next_state),
         text_control: None,
         dirty: if changed {
-          WidgetDirtyHint::WidgetPaintDirty
+          VirtualNodeDirtyHint::VirtualNodePaintDirty
         } else {
-          WidgetDirtyHint::WidgetClean
+          VirtualNodeDirtyHint::VirtualNodeClean
         },
         messages: if tap.activated {
           [message]
@@ -432,19 +432,19 @@ fn[Msg] handle_tap_modifier(
     }
     Keyboard(event) =>
       if event.pressed && (event.key == "Enter" || event.key == " ") {
-        WidgetEventResult::message(message)
+        VirtualNodeEventResult::message(message)
       } else {
-        WidgetEventResult::ignored()
+        VirtualNodeEventResult::ignored()
       }
-    _ => WidgetEventResult::ignored()
+    _ => VirtualNodeEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_long_press_modifier(
   message : Msg,
-  ctx : WidgetEventContext,
-) -> WidgetEventResult[Msg] {
+  ctx : VirtualNodeEventContext,
+) -> VirtualNodeEventResult[Msg] {
   match ctx.event {
     Pointer(event) => {
       let result = LongPressGestureState::new().update(
@@ -452,29 +452,29 @@ fn[Msg] handle_long_press_modifier(
         inside=ctx.frame.contains(event.position),
       )
       if result.recognized {
-        WidgetEventResult::message(message)
+        VirtualNodeEventResult::message(message)
       } else {
         {
-          ..WidgetEventResult::ignored(),
+          ..VirtualNodeEventResult::ignored(),
           changed: result.cancelled,
           captured: result.cancelled,
           dirty: if result.cancelled {
-            WidgetDirtyHint::WidgetPaintDirty
+            VirtualNodeDirtyHint::VirtualNodePaintDirty
           } else {
-            WidgetDirtyHint::WidgetClean
+            VirtualNodeDirtyHint::VirtualNodeClean
           },
         }
       }
     }
-    _ => WidgetEventResult::ignored()
+    _ => VirtualNodeEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_double_tap_modifier(
   message : Msg,
-  ctx : WidgetEventContext,
-) -> WidgetEventResult[Msg] {
+  ctx : VirtualNodeEventContext,
+) -> VirtualNodeEventResult[Msg] {
   match ctx.event {
     Pointer(event) => {
       let result = DoubleTapGestureState::new().update(
@@ -482,20 +482,20 @@ fn[Msg] handle_double_tap_modifier(
         inside=ctx.frame.contains(event.position),
       )
       if result.recognized {
-        WidgetEventResult::message(message)
+        VirtualNodeEventResult::message(message)
       } else {
-        WidgetEventResult::ignored()
+        VirtualNodeEventResult::ignored()
       }
     }
-    _ => WidgetEventResult::ignored()
+    _ => VirtualNodeEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_drag_modifier(
-  ctx : WidgetEventContext,
+  ctx : VirtualNodeEventContext,
   handler~ : (DragGestureEvent, Rect) -> Msg,
-) -> WidgetEventResult[Msg] {
+) -> VirtualNodeEventResult[Msg] {
   match ctx.event {
     Pointer(event) => {
       let result = DragGestureState::new().update(
@@ -515,22 +515,22 @@ fn[Msg] handle_drag_modifier(
             captured: true,
             state: None,
             text_control: None,
-            dirty: WidgetDirtyHint::WidgetPaintDirty,
+            dirty: VirtualNodeDirtyHint::VirtualNodePaintDirty,
             messages: [handler(drag_event, frame)],
           }
         }
-        None => WidgetEventResult::ignored()
+        None => VirtualNodeEventResult::ignored()
       }
     }
-    _ => WidgetEventResult::ignored()
+    _ => VirtualNodeEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_file_drop_modifier(
   handler : (Array[String], Point) -> Msg,
-  ctx : WidgetEventContext,
-) -> WidgetEventResult[Msg] {
+  ctx : VirtualNodeEventContext,
+) -> VirtualNodeEventResult[Msg] {
   match ctx.event {
     DragDrop(event) =>
       match (event.phase, event.position) {
@@ -543,77 +543,77 @@ fn[Msg] handle_file_drop_modifier(
               captured: true,
               state: None,
               text_control: None,
-              dirty: WidgetDirtyHint::WidgetPaintDirty,
+              dirty: VirtualNodeDirtyHint::VirtualNodePaintDirty,
               messages: [handler(event.paths, position)],
             }
           } else {
-            WidgetEventResult::ignored()
+            VirtualNodeEventResult::ignored()
           }
-        _ => WidgetEventResult::ignored()
+        _ => VirtualNodeEventResult::ignored()
       }
-    _ => WidgetEventResult::ignored()
+    _ => VirtualNodeEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_keyboard_shortcut(
   shortcut : KeyboardShortcut,
-  ctx : WidgetEventContext,
-) -> WidgetEventResult[Msg] {
+  ctx : VirtualNodeEventContext,
+) -> VirtualNodeEventResult[Msg] {
   match ctx.event {
     Keyboard(event) =>
       if shortcut.matches(event) {
-        { ..WidgetEventResult::ignored(), captured: true }
+        { ..VirtualNodeEventResult::ignored(), captured: true }
       } else {
-        WidgetEventResult::ignored()
+        VirtualNodeEventResult::ignored()
       }
-    _ => WidgetEventResult::ignored()
+    _ => VirtualNodeEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_focusable_modifier(
-  ctx : WidgetEventContext,
-) -> WidgetEventResult[Msg] {
+  ctx : VirtualNodeEventContext,
+) -> VirtualNodeEventResult[Msg] {
   match ctx.event {
     Keyboard(event) =>
       if event.pressed && (event.key == "Enter" || event.key == " ") {
-        { ..WidgetEventResult::ignored(), activated: true, captured: true }
+        { ..VirtualNodeEventResult::ignored(), activated: true, captured: true }
       } else {
-        WidgetEventResult::ignored()
+        VirtualNodeEventResult::ignored()
       }
     Pointer(event) =>
       if event.phase == PointerPhase::Down && ctx.frame.contains(event.position) {
-        { ..WidgetEventResult::ignored(), focused: true, captured: true }
+        { ..VirtualNodeEventResult::ignored(), focused: true, captured: true }
       } else {
-        WidgetEventResult::ignored()
+        VirtualNodeEventResult::ignored()
       }
-    _ => WidgetEventResult::ignored()
+    _ => VirtualNodeEventResult::ignored()
   }
 }
 
 ///|
-fn[Msg] modifier_semantics(modifier : ViewModifier[Msg]) -> WidgetSemanticsInfo {
+fn[Msg] modifier_semantics(modifier : ViewModifier[Msg]) -> VirtualNodeSemanticsInfo {
   match modifier {
     AccessibilityLabelModifier(label) =>
-      WidgetSemanticsInfo::new(label~, value=label)
-    SemanticsRoleModifier(role) => WidgetSemanticsInfo::new(role~)
+      VirtualNodeSemanticsInfo::new(label~, value=label)
+    SemanticsRoleModifier(role) => VirtualNodeSemanticsInfo::new(role~)
     FocusableModifier(focusable) =>
-      WidgetSemanticsInfo::new(actions=if focusable { [Focus] } else { [] })
+      VirtualNodeSemanticsInfo::new(actions=if focusable { [Focus] } else { [] })
     OnTapMessageModifier(_)
     | OnLongPressMessageModifier(_)
     | OnDoubleTapMessageModifier(_)
     | OnDragMessageModifier(_)
     | OnDragWithFrameMessageModifier(_)
     | KeyboardShortcutModifier(_) =>
-      WidgetSemanticsInfo::new(role=SemanticsRole::Button, actions=[
+      VirtualNodeSemanticsInfo::new(role=SemanticsRole::Button, actions=[
         Focus,
         Activate,
       ])
     SemanticsSelectedModifier(_) =>
-      WidgetSemanticsInfo::new(actions=[SemanticsAction::Select])
+      VirtualNodeSemanticsInfo::new(actions=[SemanticsAction::Select])
     SemanticsExpandedModifier(expanded) =>
-      WidgetSemanticsInfo::new(
+      VirtualNodeSemanticsInfo::new(
         actions=if expanded {
           [SemanticsAction::Collapse]
         } else {
@@ -621,10 +621,10 @@ fn[Msg] modifier_semantics(modifier : ViewModifier[Msg]) -> WidgetSemanticsInfo 
         },
       )
     SemanticsDescriptionModifier(description) =>
-      WidgetSemanticsInfo::new(description~)
+      VirtualNodeSemanticsInfo::new(description~)
     SemanticsActionModifier(action) =>
-      WidgetSemanticsInfo::new(actions=[action])
-    _ => WidgetSemanticsInfo::new()
+      VirtualNodeSemanticsInfo::new(actions=[action])
+    _ => VirtualNodeSemanticsInfo::new()
   }
 }
 
@@ -731,7 +731,7 @@ fn aspect_ratio_rect(frame : Rect, ratio : Double) -> Rect {
 }
 
 ///|
-fn widget_state_to_button_state(state : WidgetStateContext) -> ButtonState {
+fn virtual_node_state_to_button_state(state : VirtualNodeStateContext) -> ButtonState {
   if state.pressed {
     ButtonState::Pressed
   } else if state.hovered {
@@ -742,10 +742,10 @@ fn widget_state_to_button_state(state : WidgetStateContext) -> ButtonState {
 }
 
 ///|
-fn button_state_to_widget_state(
-  state : WidgetStateContext,
+fn button_state_to_virtual_node_state(
+  state : VirtualNodeStateContext,
   button_state : ButtonState,
-) -> WidgetStateContext {
+) -> VirtualNodeStateContext {
   match button_state {
     ButtonState::Normal => { ..state, hovered: false, pressed: false }
     ButtonState::Hovered => { ..state, hovered: true, pressed: false }

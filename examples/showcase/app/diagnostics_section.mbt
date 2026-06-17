@@ -421,7 +421,7 @@ fn showcase_inspector_snapshot(
       dirty_layout_count: 0,
       dirty_paint_count: 0,
       nodes: [
-        @runtime.WidgetInspectorSummary::{
+        @runtime.VirtualNodeInspectorSummary::{
           element_id: @core.ElementId::new(1),
           kind: "component",
           key: "inspector-root",
@@ -430,7 +430,7 @@ fn showcase_inspector_snapshot(
           needs_layout: false,
           needs_paint: false,
         },
-        @runtime.WidgetInspectorSummary::{
+        @runtime.VirtualNodeInspectorSummary::{
           element_id: @core.ElementId::new(2),
           kind: "surface",
           key: "inspector-surface",
@@ -439,7 +439,7 @@ fn showcase_inspector_snapshot(
           needs_layout: false,
           needs_paint: false,
         },
-        @runtime.WidgetInspectorSummary::{
+        @runtime.VirtualNodeInspectorSummary::{
           element_id: @core.ElementId::new(3),
           kind: "column",
           key: "inspector-column",

@@ -15,7 +15,7 @@ pub fn[Msg] checkbox(
   let foreground = resolve_control_color(foreground, style.foreground)
   let check_color = resolve_control_color(check_color, style.selected_color)
   let box_size = resolve_control_double(box_size, style.control_size)
-  @widget.checkbox(
+  raw_checkbox(
     label~,
     checked=@core.Binding::new(get=() => checked, set=_value => ()),
     font~,
@@ -42,7 +42,7 @@ pub fn[Msg] checkbox_binding(
   let foreground = resolve_control_color(foreground, style.foreground)
   let check_color = resolve_control_color(check_color, style.selected_color)
   let box_size = resolve_control_double(box_size, style.control_size)
-  @widget.checkbox(
+  raw_checkbox(
     label~,
     checked~,
     font~,

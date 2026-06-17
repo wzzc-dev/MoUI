@@ -95,7 +95,7 @@ fn environment_measure_text(
 }
 
 ///|
-fn render_environment_to_widget_environment(
+fn render_environment_to_virtual_node_environment(
   environment : RenderEnvironment,
 ) -> Environment {
   {
