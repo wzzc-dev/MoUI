@@ -15,7 +15,7 @@ test "workbench ACP connector backend queues prompt through connector runtime" {
   inspect(update.model.transcript.length(), content="1")
   inspect(update.model.transcript[0].role, content="user")
   inspect(update.model.last_status, content="Queued prompt for Agent connector")
-  let summary = update.effect.plan_summary()
+  let summary = @runtime.effect_plan_summary(update.effect)
   inspect(summary.descriptors.length(), content="1")
   inspect(
     summary.descriptors[0].key(),
@@ -54,7 +54,10 @@ test "workbench ACP connector unavailable runtime reports failure without Pi que
     )
   inspect(update.model.pending_transport_count(), content="2")
   inspect(update.model.transport.command_queue.length(), content="0")
-  inspect(update.effect.plan_summary().descriptors.length(), content="1")
+  inspect(
+    @runtime.effect_plan_summary(update.effect).descriptors.length(),
+    content="1",
+  )
   let model = run_workbench_effect_with_agent_connectors(
     update,
     PiTransportRuntime::unavailable(),

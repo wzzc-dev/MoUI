@@ -1,7 +1,7 @@
 ///|
 pub fn[Msg] toolbar(
   children : Array[@core.View[Msg]],
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
   height? : Double = 48.0,
 ) -> @core.View[Msg] {
@@ -19,7 +19,7 @@ pub fn[Msg] toolbar(
 pub fn[Msg] button_group(
   items : Array[MenuItem[Msg]],
   selected? : String = "",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   button_width? : Double = 88.0,
   height? : Double = 36.0,
 ) -> @core.View[Msg] {
@@ -51,7 +51,7 @@ pub fn[Msg] button_group(
 ///|
 pub fn[Msg] command_bar(
   items : Array[MenuItem[Msg]],
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
   height? : Double = 48.0,
 ) -> @core.View[Msg] {
@@ -74,7 +74,7 @@ pub fn[Msg] command_bar(
 ///|
 pub fn[Msg] status_bar(
   items : Array[String],
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
   height? : Double = 30.0,
 ) -> @core.View[Msg] {

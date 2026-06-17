@@ -4,7 +4,7 @@ pub fn[Msg] chip(
   selected? : Bool = false,
   on_click? : Msg? = None,
   variant? : ChipVariant = ChipVariant::Soft,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 112.0,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
@@ -39,7 +39,7 @@ pub fn[Msg] chip(
 ///|
 pub fn[Msg] tag(
   label : String,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 96.0,
   height? : Double = 28.0,
 ) -> @core.View[Msg] {
@@ -58,7 +58,7 @@ pub fn[Msg] filter_chip(
   label : String,
   selected~ : Bool,
   on_change~ : (Bool) -> Msg,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 120.0,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
@@ -78,7 +78,7 @@ pub fn[Msg] choice_chip(
   label : String,
   selected~ : Bool,
   on_select~ : Msg,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 120.0,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {

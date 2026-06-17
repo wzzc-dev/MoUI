@@ -135,50 +135,6 @@ pub fn Brush::multiply_alpha(Self, Double) -> Self
 pub fn Brush::radial_gradient(center~ : Point, radius~ : Double, center_color~ : Color, edge_color~ : Color) -> Self
 pub fn Brush::solid(Color) -> Self
 
-pub struct BuildContext {
-  // private fields
-}
-pub fn BuildContext::accessibility_contrast(Self) -> AccessibilityContrast
-pub fn[T] BuildContext::binding(Self, State[T]) -> Binding[T]
-pub fn BuildContext::color_scheme(Self) -> ColorScheme
-pub fn BuildContext::content_size_category(Self) -> ContentSizeCategory
-pub fn BuildContext::enabled(Self) -> Bool
-pub fn BuildContext::environment(Self) -> Environment
-pub fn BuildContext::layout_direction(Self) -> LayoutDirection
-pub fn BuildContext::locale(Self) -> String
-pub fn BuildContext::new(component_id~ : ElementId, request_component_rebuild~ : (ElementId) -> Unit, viewport_size~ : Size, saveable_state~ : SaveableStateStore, subscriptions~ : Array[StateSubscription], effects~ : Array[ComponentEffect], old_effects~ : Array[ComponentEffect], environment~ : Environment) -> Self
-pub fn BuildContext::on_dispose(Self, key~ : String, () -> Unit) -> Unit
-pub fn BuildContext::on_mount(Self, key~ : String, () -> Unit) -> Unit
-pub fn BuildContext::on_unmount(Self, key~ : String, () -> Unit) -> Unit
-pub fn BuildContext::on_unmount_with_reason(Self, key~ : String, (ComponentEffectCancelReason) -> Unit) -> Unit
-pub fn BuildContext::on_update(Self, key~ : String, deps~ : Array[String], () -> (() -> Unit)?) -> Unit
-pub fn BuildContext::on_update_with_reason(Self, key~ : String, deps~ : Array[String], () -> ((ComponentEffectCancelReason) -> Unit)?) -> Unit
-pub fn BuildContext::reduced_motion(Self) -> Bool
-pub fn[T] BuildContext::restore(Self, key~ : String, SaveableCodec[T]) -> T?
-pub fn BuildContext::restore_bool(Self, key~ : String) -> Bool?
-pub fn BuildContext::restore_int(Self, key~ : String) -> Int?
-pub fn BuildContext::restore_string(Self, key~ : String) -> String?
-pub fn BuildContext::run_effect(Self, key~ : String, () -> (() -> Unit)?) -> Unit
-pub fn BuildContext::run_effect_with_reason(Self, key~ : String, () -> ((ComponentEffectCancelReason) -> Unit)?) -> Unit
-pub fn[T] BuildContext::save(Self, key~ : String, T, SaveableCodec[T]) -> Unit
-pub fn BuildContext::save_bool(Self, key~ : String, Bool) -> Unit
-pub fn BuildContext::save_int(Self, key~ : String, Int) -> Unit
-pub fn BuildContext::save_string(Self, key~ : String, String) -> Unit
-pub fn[T] BuildContext::saveable(Self, key~ : String, T, SaveableCodec[T]) -> State[T]
-pub fn BuildContext::saveable_bool(Self, key~ : String, Bool) -> State[Bool]
-pub fn BuildContext::saveable_int(Self, key~ : String, Int) -> State[Int]
-pub fn BuildContext::saveable_string(Self, key~ : String, String) -> State[String]
-pub fn BuildContext::scale_factor(Self) -> Double
-pub fn BuildContext::text_scale(Self) -> Double
-pub fn BuildContext::theme(Self) -> Theme
-pub fn BuildContext::view_environment(Self) -> ViewEnvironment
-pub fn BuildContext::viewport_size(Self) -> Size
-pub fn[T] BuildContext::watch(Self, State[T]) -> T
-pub fn[T] BuildContext::watch_derived(Self, DerivedState[T]) -> T
-pub fn BuildContext::watch_focus(Self, FocusState) -> String?
-pub fn BuildContext::watch_navigation(Self, NavigationState) -> Array[String]
-pub fn BuildContext::watch_scroll(Self, ScrollState) -> Point
-
 pub(all) enum ButtonState {
   Normal
   Hovered
@@ -242,6 +198,50 @@ pub(all) enum CommandIntent {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CommandIntent::display_label(Self) -> String
 
+pub struct ComponentContext {
+  // private fields
+}
+pub fn ComponentContext::accessibility_contrast(Self) -> AccessibilityContrast
+pub fn[T] ComponentContext::binding(Self, State[T]) -> Binding[T]
+pub fn ComponentContext::color_scheme(Self) -> ColorScheme
+pub fn ComponentContext::content_size_category(Self) -> ContentSizeCategory
+pub fn ComponentContext::enabled(Self) -> Bool
+pub fn ComponentContext::environment(Self) -> Environment
+pub fn ComponentContext::from_runtime(ComponentRuntimeContextInput) -> Self
+pub fn ComponentContext::layout_direction(Self) -> LayoutDirection
+pub fn ComponentContext::locale(Self) -> String
+pub fn ComponentContext::on_dispose(Self, key~ : String, () -> Unit) -> Unit
+pub fn ComponentContext::on_mount(Self, key~ : String, () -> Unit) -> Unit
+pub fn ComponentContext::on_unmount(Self, key~ : String, () -> Unit) -> Unit
+pub fn ComponentContext::on_unmount_with_reason(Self, key~ : String, (ComponentEffectCancelReason) -> Unit) -> Unit
+pub fn ComponentContext::on_update(Self, key~ : String, deps~ : Array[String], () -> (() -> Unit)?) -> Unit
+pub fn ComponentContext::on_update_with_reason(Self, key~ : String, deps~ : Array[String], () -> ((ComponentEffectCancelReason) -> Unit)?) -> Unit
+pub fn ComponentContext::reduced_motion(Self) -> Bool
+pub fn[T] ComponentContext::restore(Self, key~ : String, SaveableCodec[T]) -> T?
+pub fn ComponentContext::restore_bool(Self, key~ : String) -> Bool?
+pub fn ComponentContext::restore_int(Self, key~ : String) -> Int?
+pub fn ComponentContext::restore_string(Self, key~ : String) -> String?
+pub fn ComponentContext::run_effect(Self, key~ : String, () -> (() -> Unit)?) -> Unit
+pub fn ComponentContext::run_effect_with_reason(Self, key~ : String, () -> ((ComponentEffectCancelReason) -> Unit)?) -> Unit
+pub fn[T] ComponentContext::save(Self, key~ : String, T, SaveableCodec[T]) -> Unit
+pub fn ComponentContext::save_bool(Self, key~ : String, Bool) -> Unit
+pub fn ComponentContext::save_int(Self, key~ : String, Int) -> Unit
+pub fn ComponentContext::save_string(Self, key~ : String, String) -> Unit
+pub fn[T] ComponentContext::saveable(Self, key~ : String, T, SaveableCodec[T]) -> State[T]
+pub fn ComponentContext::saveable_bool(Self, key~ : String, Bool) -> State[Bool]
+pub fn ComponentContext::saveable_int(Self, key~ : String, Int) -> State[Int]
+pub fn ComponentContext::saveable_string(Self, key~ : String, String) -> State[String]
+pub fn ComponentContext::scale_factor(Self) -> Double
+pub fn ComponentContext::text_scale(Self) -> Double
+pub fn ComponentContext::theme(Self) -> Theme
+pub fn ComponentContext::view_environment(Self) -> ViewEnvironment
+pub fn ComponentContext::viewport_size(Self) -> Size
+pub fn[T] ComponentContext::watch(Self, State[T]) -> T
+pub fn[T] ComponentContext::watch_derived(Self, DerivedState[T]) -> T
+pub fn ComponentContext::watch_focus(Self, FocusState) -> String?
+pub fn ComponentContext::watch_navigation(Self, NavigationState) -> Array[String]
+pub fn ComponentContext::watch_scroll(Self, ScrollState) -> Point
+
 type ComponentEffect
 pub fn ComponentEffect::finish_reuse(Array[Self], reason? : ComponentEffectCancelReason, cancel_reused? : Bool) -> Unit
 
@@ -250,6 +250,17 @@ pub(all) enum ComponentEffectCancelReason {
   EffectUnmounted
   EffectRuntimeDestroyed
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ComponentRuntimeContextInput {
+  component_id : ElementId
+  request_component_rebuild : (ElementId) -> Unit
+  viewport_size : Size
+  saveable_state : SaveableStateStore
+  subscriptions : Array[StateSubscription]
+  effects : Array[ComponentEffect]
+  old_effects : Array[ComponentEffect]
+  environment : Environment
+}
 
 type CompositionUpdate derive(Eq, ToJson, @debug.Debug)
 pub fn CompositionUpdate::cursor(Self) -> TextRange?
@@ -331,12 +342,6 @@ pub fn DamageRegion::full_reason(Self) -> String
 pub fn DamageRegion::kind(Self) -> String
 pub fn DamageRegion::rect_count(Self) -> Int
 
-pub(all) enum DatePickerMode {
-  Date
-  DateAndTime
-  Time
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct DateValue {
   year : Int
   month : Int
@@ -345,9 +350,10 @@ pub(all) struct DateValue {
   minute : Int
   second : Int
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DateValue::format(Self, DatePickerMode) -> String
+pub fn DateValue::format_date(Self) -> String
+pub fn DateValue::format_date_time(Self) -> String
+pub fn DateValue::format_time(Self) -> String
 pub fn DateValue::new(year~ : Int, month~ : Int, day~ : Int, hour? : Int, minute? : Int, second? : Int) -> Self
-pub fn DateValue::today() -> Self
 
 pub struct DerivedState[T] {
   // private fields
@@ -452,9 +458,8 @@ pub fn[Msg] Effect::dispatch(((Msg) -> Unit) -> Unit) -> Self[Msg]
 pub fn[Msg] Effect::host_service(key~ : String, run~ : ((Msg) -> Unit) -> Unit, label? : String) -> Self[Msg]
 pub fn[Msg, NextMsg] Effect::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] Effect::none() -> Self[Msg]
-pub fn[Msg] Effect::plan_summary(Self[Msg]) -> EffectPlanSummary
 pub fn[Msg] Effect::run(key~ : String, run~ : ((Msg) -> Unit) -> Unit, kind? : String, label? : String) -> Self[Msg]
-pub fn[Msg] Effect::runtime_ops(Self[Msg]) -> Array[EffectRuntimeOp[Msg]]
+pub fn[Msg] Effect::runtime_visit(Self[Msg], (Msg) -> Unit, (((Msg) -> Unit) -> Unit) -> Unit, (EffectDescriptor, ((Msg) -> Unit) -> Unit) -> Unit, (EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit) -> Unit
 pub fn[Msg] Effect::send(Msg) -> Self[Msg]
 pub fn[Msg] Effect::service_task(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Effect::task(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
@@ -463,36 +468,6 @@ type EffectDescriptor derive(Eq, ToJson, @debug.Debug)
 pub fn EffectDescriptor::key(Self) -> String
 pub fn EffectDescriptor::kind(Self) -> String
 pub fn EffectDescriptor::label(Self) -> String
-
-pub(all) enum EffectPlanKind {
-  EffectPlanNone
-  EffectPlanBatch
-  EffectPlanSend
-  EffectPlanDispatch
-  EffectPlanRun
-  EffectPlanTask
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct EffectPlanSummary {
-  root_kind : EffectPlanKind
-  none_count : Int
-  batch_count : Int
-  send_count : Int
-  dispatch_count : Int
-  run_count : Int
-  task_count : Int
-  scheduled_count : Int
-  max_depth : Int
-  descriptors : Array[EffectDescriptor]
-  duplicate_descriptor_key_count : Int
-  duplicate_descriptor_keys : Array[String]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn EffectPlanSummary::empty() -> Self
-
-pub struct EffectRuntimeOp[Msg] {
-  // private fields
-}
-pub fn[Msg] EffectRuntimeOp::runtime_visit(Self[Msg], (Msg) -> Unit, (((Msg) -> Unit) -> Unit) -> Unit, (EffectDescriptor, ((Msg) -> Unit) -> Unit) -> Unit, (EffectDescriptor, ((Msg) -> Unit) -> (() -> Unit)?) -> Unit) -> Unit
 
 type ElementId derive(Eq, ToJson, @debug.Debug)
 pub fn ElementId::new(Int) -> Self
@@ -510,7 +485,7 @@ pub(all) struct Environment {
   content_size_category : ContentSizeCategory
   enabled : Bool
 } derive(Eq, ToJson, @debug.Debug)
-pub fn Environment::default() -> Self
+pub fn Environment::neutral() -> Self
 pub fn Environment::with_accessibility_contrast(Self, AccessibilityContrast) -> Self
 pub fn Environment::with_color_scheme(Self, ColorScheme) -> Self
 pub fn Environment::with_content_size_category(Self, ContentSizeCategory) -> Self
@@ -1031,10 +1006,10 @@ pub fn[Msg] Subscription::host_event(key~ : String, start~ : ((Msg) -> Unit) -> 
 pub fn[Msg] Subscription::listen(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 pub fn[Msg, NextMsg] Subscription::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] Subscription::none() -> Self[Msg]
-pub fn[Msg] Subscription::plan_summary(Self[Msg]) -> SubscriptionPlanSummary
 pub fn[Msg] Subscription::route_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::run(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, kind? : String, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::runtime_sources(Self[Msg]) -> Array[SubscriptionRuntimeSource[Msg]]
+pub fn[Msg] Subscription::runtime_visit(Self[Msg], (Int) -> Unit, (Int, Int) -> Unit, (Int, SubscriptionDescriptor) -> Unit) -> Unit
 pub fn[Msg] Subscription::service_completion(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::timer(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
 pub fn[Msg] Subscription::window_event(key~ : String, start~ : ((Msg) -> Unit) -> (() -> Unit)?, label? : String) -> Self[Msg]
@@ -1043,24 +1018,6 @@ type SubscriptionDescriptor derive(Eq, ToJson, @debug.Debug)
 pub fn SubscriptionDescriptor::key(Self) -> String
 pub fn SubscriptionDescriptor::kind(Self) -> String
 pub fn SubscriptionDescriptor::label(Self) -> String
-
-pub(all) enum SubscriptionPlanKind {
-  SubscriptionPlanNone
-  SubscriptionPlanBatch
-  SubscriptionPlanSource
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct SubscriptionPlanSummary {
-  root_kind : SubscriptionPlanKind
-  none_count : Int
-  batch_count : Int
-  source_count : Int
-  duplicate_key_count : Int
-  duplicate_keys : Array[String]
-  max_depth : Int
-  descriptors : Array[SubscriptionDescriptor]
-} derive(Eq, ToJson, @debug.Debug)
-pub fn SubscriptionPlanSummary::empty() -> Self
 
 pub struct SubscriptionRuntimeSource[Msg] {
   // private fields
@@ -1247,9 +1204,7 @@ pub(all) struct Theme {
   spacing : Double
   corner_radius : Double
 } derive(Eq, ToJson, @debug.Debug)
-pub fn Theme::dark() -> Self
-pub fn Theme::default() -> Self
-pub fn Theme::light() -> Self
+pub fn Theme::neutral() -> Self
 pub fn Theme::surface_brush(Self, SurfaceLevel) -> Brush
 pub fn Theme::with_accent(Self, Color) -> Self
 pub fn Theme::with_background(Self, Color) -> Self
@@ -1459,7 +1414,7 @@ pub fn WidgetLayoutResult::new(size~ : Size, child_frames? : Array[Rect]) -> Sel
 pub struct WidgetOps[Msg] {
   // private fields
 }
-pub fn[Msg] WidgetOps::build_child(Self[Msg]) -> ((BuildContext) -> View[Msg])?
+pub fn[Msg] WidgetOps::build_child(Self[Msg]) -> ((ComponentContext) -> View[Msg])?
 pub fn[Msg] WidgetOps::child_constraints(Self[Msg], Constraints) -> Constraints
 pub fn[Msg] WidgetOps::children(Self[Msg]) -> Array[View[Msg]]
 pub fn[Msg] WidgetOps::event(Self[Msg], WidgetEventContext) -> WidgetEventResult[Msg]
@@ -1467,7 +1422,7 @@ pub fn[Msg] WidgetOps::focusable(Self[Msg]) -> Bool
 pub fn[Msg] WidgetOps::identity(Self[Msg]) -> WidgetIdentity
 pub fn[Msg] WidgetOps::layout(Self[Msg], WidgetLayoutContext) -> WidgetLayoutResult
 pub fn[Msg, NextMsg] WidgetOps::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
-pub fn[Msg] WidgetOps::new(identity~ : () -> WidgetIdentity, revision? : () -> String, children? : () -> Array[View[Msg]], build_child? : ((BuildContext) -> View[Msg])?, child_constraints? : (Constraints) -> Constraints, layout~ : (WidgetLayoutContext) -> WidgetLayoutResult, paint? : (WidgetPaintContext) -> WidgetPaintPlan, event? : (WidgetEventContext) -> WidgetEventResult[Msg], text_input_state? : (WidgetPaintContext) -> TextInputState?, text_command? : (WidgetEventContext, CommandIntent, String?) -> WidgetTextCommandResult[Msg], semantics? : () -> WidgetSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
+pub fn[Msg] WidgetOps::new(identity~ : () -> WidgetIdentity, revision? : () -> String, children? : () -> Array[View[Msg]], build_child? : ((ComponentContext) -> View[Msg])?, child_constraints? : (Constraints) -> Constraints, layout~ : (WidgetLayoutContext) -> WidgetLayoutResult, paint? : (WidgetPaintContext) -> WidgetPaintPlan, event? : (WidgetEventContext) -> WidgetEventResult[Msg], text_input_state? : (WidgetPaintContext) -> TextInputState?, text_command? : (WidgetEventContext, CommandIntent, String?) -> WidgetTextCommandResult[Msg], semantics? : () -> WidgetSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
 pub fn[Msg] WidgetOps::paint(Self[Msg], WidgetPaintContext) -> WidgetPaintPlan
 pub fn[Msg] WidgetOps::revision(Self[Msg]) -> String
 pub fn[Msg] WidgetOps::semantics(Self[Msg]) -> WidgetSemanticsInfo

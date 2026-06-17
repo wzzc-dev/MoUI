@@ -455,8 +455,8 @@ pub fn ShowcaseModel::view(
   env : @core.ViewEnvironment,
 ) -> @core.View[ShowcaseMsg] {
   let theme = match self.scheme {
-    @core.ColorScheme::Light => @core.Theme::light()
-    @core.ColorScheme::Dark => @core.Theme::dark()
+    @core.ColorScheme::Light => @views.light_theme()
+    @core.ColorScheme::Dark => @views.dark_theme()
   }
   let metrics = showcase_metrics(env.viewport_size(), theme)
   let offset = if self.active { 18.0 } else { 0.0 }

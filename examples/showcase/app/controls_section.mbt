@@ -165,7 +165,7 @@ fn ShowcaseModel::controls_section(
                   datepicker(
                     selected=self.date_value,
                     on_select=value => DateSelected(value),
-                    mode=@core.DatePickerMode::Date,
+                    mode=@views.DatePickerMode::Date,
                     placeholder="Release date",
                     theme~,
                   ).frame(width=260.0, height=38.0),

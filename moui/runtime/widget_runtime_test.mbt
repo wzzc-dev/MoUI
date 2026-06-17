@@ -418,7 +418,7 @@ test "widget datepicker dispatches overlay selection without core primitive" {
           get=() => @core.DateValue::new(year=2024, month=1, day=15),
           set=_value => (),
         ),
-        mode=@core.DatePickerMode::Date,
+        mode=@widget.DatePickerDisplayMode::Date,
         placeholder="Select date",
         font=@core.FontSpec::new(size=14.0),
         foreground=@core.Color::black(),
@@ -483,7 +483,7 @@ test "widget datepicker binding selection mutates binding after month navigation
   let root : @core.View[Unit] = @widget.frame(
     child=@widget.datepicker(
       selected=selected_state.binding(),
-      mode=@core.DatePickerMode::Date,
+      mode=@widget.DatePickerDisplayMode::Date,
       placeholder="Select date",
       font=@core.FontSpec::new(size=14.0),
       foreground=@core.Color::black(),

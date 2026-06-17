@@ -4,7 +4,7 @@ pub fn[Msg] pagination(
   page_count~ : Int,
   on_previous~ : Msg,
   on_next~ : Msg,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 360.0,
   previous_label? : String = "Previous",
   next_label? : String = "Next",

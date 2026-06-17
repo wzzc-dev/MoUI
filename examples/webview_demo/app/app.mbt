@@ -152,7 +152,7 @@ fn Model::apply_web_view_event(
 
 ///|
 pub fn view(model : Model) -> @moui.View[Msg] {
-  let theme = @moui.Theme::default()
+  let theme = @views.default_theme()
   column(
     [
       header(model, theme),

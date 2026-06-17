@@ -87,8 +87,8 @@ pub fn custom(
     Some(value) => value
     None =>
       match scheme {
-        @core.ColorScheme::Light => @core.Theme::light()
-        @core.ColorScheme::Dark => @core.Theme::dark()
+        @core.ColorScheme::Light => @views.light_theme()
+        @core.ColorScheme::Dark => @views.dark_theme()
       }
   }
   match palette {

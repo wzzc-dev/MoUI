@@ -7,11 +7,15 @@ import {
 }
 
 // Values
+pub fn[Msg] effect_plan_summary(@core.Effect[Msg]) -> EffectPlanSummary
+
 pub fn[Model, Msg] new_program(program~ : @core.Program[Model, Msg], size~ : @core.Size, environment? : @core.Environment) -> AppRuntime
 
 pub fn[Model, Msg] new_program_with_dimensions(program~ : @core.Program[Model, Msg], width~ : Double, height~ : Double, environment? : @core.Environment) -> AppRuntime
 
 pub fn[Msg] new_view(root~ : @core.View[Msg], size~ : @core.Size, environment? : @core.Environment, on_message? : ((Msg) -> Unit)?) -> AppRuntime
+
+pub fn[Msg] subscription_plan_summary(@core.Subscription[Msg]) -> SubscriptionPlanSummary
 
 // Errors
 
@@ -54,6 +58,31 @@ pub fn AppRuntime::set_redraw_callback(Self, () -> Unit) -> Unit
 pub fn AppRuntime::set_text_system(Self, @core.TextSystem) -> Unit
 pub fn AppRuntime::size(Self) -> @core.Size
 pub fn AppRuntime::text_system(Self) -> @core.TextSystem
+
+pub(all) enum EffectPlanKind {
+  EffectPlanNone
+  EffectPlanBatch
+  EffectPlanSend
+  EffectPlanDispatch
+  EffectPlanRun
+  EffectPlanTask
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct EffectPlanSummary {
+  root_kind : EffectPlanKind
+  none_count : Int
+  batch_count : Int
+  send_count : Int
+  dispatch_count : Int
+  run_count : Int
+  task_count : Int
+  scheduled_count : Int
+  max_depth : Int
+  descriptors : Array[@core.EffectDescriptor]
+  duplicate_descriptor_key_count : Int
+  duplicate_descriptor_keys : Array[String]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn EffectPlanSummary::empty() -> Self
 
 pub(all) enum EffectTaskCancelReason {
   EffectTaskKeyChanged
@@ -116,8 +145,8 @@ pub(all) struct ProgramRuntimeSnapshot {
   effect_task_count : Int
   duplicate_effect_descriptor_key_count : Int
   duplicate_effect_descriptor_keys : Array[String]
-  last_effect_summary : @core.EffectPlanSummary
-  last_scheduled_effect_summary : @core.EffectPlanSummary
+  last_effect_summary : EffectPlanSummary
+  last_scheduled_effect_summary : EffectPlanSummary
   active_effect_task_count : Int
   started_effect_task_count : Int
   completed_effect_task_count : Int
@@ -126,7 +155,7 @@ pub(all) struct ProgramRuntimeSnapshot {
   active_effect_tasks : Array[@core.EffectDescriptor]
   effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
   subscription_plan_count : Int
-  last_subscription_plan_summary : @core.SubscriptionPlanSummary
+  last_subscription_plan_summary : SubscriptionPlanSummary
   active_subscription_count : Int
   started_subscription_count : Int
   reused_subscription_count : Int
@@ -215,8 +244,8 @@ pub(all) struct RuntimeInspectorSnapshot {
   program_effect_task_count : Int
   duplicate_effect_descriptor_key_count : Int
   duplicate_effect_descriptor_keys : Array[String]
-  last_effect_summary : @core.EffectPlanSummary
-  last_scheduled_effect_summary : @core.EffectPlanSummary
+  last_effect_summary : EffectPlanSummary
+  last_scheduled_effect_summary : EffectPlanSummary
   active_effect_task_count : Int
   started_effect_task_count : Int
   completed_effect_task_count : Int
@@ -225,7 +254,7 @@ pub(all) struct RuntimeInspectorSnapshot {
   active_effect_tasks : Array[@core.EffectDescriptor]
   effect_task_lifecycle : Array[EffectTaskLifecycleSnapshot]
   program_subscription_plan_count : Int
-  last_subscription_plan_summary : @core.SubscriptionPlanSummary
+  last_subscription_plan_summary : SubscriptionPlanSummary
   active_subscription_count : Int
   started_subscription_count : Int
   reused_subscription_count : Int
@@ -277,6 +306,24 @@ pub(all) enum SubscriptionLifecycleStatus {
   SubscriptionActive
   SubscriptionCancelled
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum SubscriptionPlanKind {
+  SubscriptionPlanNone
+  SubscriptionPlanBatch
+  SubscriptionPlanSource
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct SubscriptionPlanSummary {
+  root_kind : SubscriptionPlanKind
+  none_count : Int
+  batch_count : Int
+  source_count : Int
+  duplicate_key_count : Int
+  duplicate_keys : Array[String]
+  max_depth : Int
+  descriptors : Array[@core.SubscriptionDescriptor]
+} derive(Eq, ToJson, @debug.Debug)
+pub fn SubscriptionPlanSummary::empty() -> Self
 
 pub(all) struct ViewTreeInspectorSnapshot {
   root_kind : String

@@ -3,7 +3,7 @@ pub fn[Msg] sheet(
   content~ : @core.View[Msg],
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
   background? : @core.Color = @core.Color::white(),
-  corner_radius? : Double = @core.Theme::default().radius_scale.lg,
+  corner_radius? : Double = default_theme().radius_scale.lg,
   shadow? : @core.ShadowStyle? = None,
   on_dismiss? : Msg? = None,
 ) -> @core.View[Msg] {
@@ -27,7 +27,7 @@ pub fn[Msg] sheet_host(
   trap_focus? : Bool = true,
 ) -> @core.View[Msg] {
   if presented && sheet is Some(sheet_spec) {
-    let theme = @core.Theme::default()
+    let theme = default_theme()
     let scrim = modal_scrim(alpha=0.28)
     let scrim_with_tap = match on_dismiss {
       Some(message) => scrim.on_tap(message)

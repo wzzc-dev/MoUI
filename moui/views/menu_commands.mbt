@@ -20,7 +20,7 @@ pub using @core {type KeyboardShortcut}
 pub fn[Msg] menu_bar(
   menus : Array[MenuItem[Msg]],
   active? : String = "",
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
   height? : Double = 42.0,
 ) -> @core.View[Msg] {
@@ -61,7 +61,7 @@ pub fn[Msg] menu_bar(
 pub fn[Msg] command_menu(
   sections : Array[CommandMenuSection],
   on_select~ : (CommandIntent) -> Msg,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 320.0,
   max_height? : Double = 280.0,
 ) -> @core.View[Msg] {
@@ -121,7 +121,7 @@ pub fn[Msg] context_menu_region(
   child~ : @core.View[Msg],
   menu~ : @core.View[Msg],
   visible~ : Bool,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
 ) -> @core.View[Msg] {
   let content = if visible {
     overlay(

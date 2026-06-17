@@ -3,7 +3,7 @@ pub fn[Msg] toast(
   message : String,
   tone? : FeedbackTone = FeedbackTone::Neutral,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
@@ -23,10 +23,10 @@ pub fn[Msg] toast(
 ///|
 pub fn[Msg] toast_stack(
   items : Array[ToastStackItem[Msg]],
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FeedbackStyle,
   width? : Double = 360.0,
-  spacing? : Double = @core.Theme::default().spacing_scale.sm,
+  spacing? : Double = default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
   if items.length() == 0 {
     empty()
@@ -46,7 +46,7 @@ pub fn[Msg] toast_stack(
 pub fn[Msg] snackbar(
   message : String,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   style? : FeedbackStyle,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {

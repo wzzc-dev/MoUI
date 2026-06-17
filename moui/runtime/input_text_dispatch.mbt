@@ -3,7 +3,7 @@ fn ElementNode::dispatch_text_input(
   self : ElementNode,
   target : ElementId,
   event : TextInputEvent,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   if self.id == target {

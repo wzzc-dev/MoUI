@@ -21,7 +21,7 @@ test "widget map maps direct event messages" {
         state: widget_test_state(),
         text_control: widget_test_text_control(),
         text_system: @core.TextSystem::fallback(),
-        environment: @core.Environment::default(),
+        environment: @core.Environment::neutral(),
       })
       if result.messages != [42] {
         fail("expected mapped direct message")
@@ -59,7 +59,7 @@ test "widget map maps nested children" {
                 state: widget_test_state(),
                 text_control: widget_test_text_control(),
                 text_system: @core.TextSystem::fallback(),
-                environment: @core.Environment::default(),
+                environment: @core.Environment::neutral(),
               })
               if result.messages != ["msg-7"] {
                 fail("expected mapped child message")

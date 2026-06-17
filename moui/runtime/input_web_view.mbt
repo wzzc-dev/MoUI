@@ -3,7 +3,7 @@ fn ElementNode::dispatch_web_view_event(
   self : ElementNode,
   id : String,
   event : PlatformViewEvent,
-  environment? : Environment = Environment::default(),
+  environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> Bool {
   let data = self.widget

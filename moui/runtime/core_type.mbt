@@ -26,7 +26,6 @@ using @core {
   type CustomLayoutContext,
   type CustomPlacementContext,
   type DamageRegion,
-  type DatePickerMode,
   type DateValue,
   type DragDropEvent,
   type DragDropPhase,
@@ -36,8 +35,6 @@ using @core {
   type DrawFrame,
   type Easing,
   type EffectDescriptor,
-  type EffectPlanKind,
-  type EffectPlanSummary,
   type ElementId,
   type Environment,
   type FilterEffect,
@@ -88,8 +85,6 @@ using @core {
   type SpacingScale,
   type StateSubscription,
   type SubscriptionDescriptor,
-  type SubscriptionPlanKind,
-  type SubscriptionPlanSummary,
   type TextAlign,
   type TextCommandResult,
   type TextGraphemeBoundaries,
@@ -126,9 +121,6 @@ type DerivedState[T] = @core.DerivedState[T]
 
 ///|
 type Effect[Msg] = @core.Effect[Msg]
-
-///|
-type EffectRuntimeOp[Msg] = @core.EffectRuntimeOp[Msg]
 
 ///|
 type Program[Model, Msg] = @core.Program[Model, Msg]

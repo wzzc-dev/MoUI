@@ -105,6 +105,3 @@ pub type KeyModifiers = @core.KeyModifiers
 
 ///|
 pub type DateValue = @core.DateValue
-
-///|
-pub type DatePickerMode = @core.DatePickerMode

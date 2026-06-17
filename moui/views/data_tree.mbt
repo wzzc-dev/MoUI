@@ -5,7 +5,7 @@ pub fn[Msg] tree_view(
   selected? : String = "",
   on_select? : ((String) -> Msg)? = None,
   on_toggle? : ((String) -> Msg)? = None,
-  theme? : @core.Theme = @core.Theme::default(),
+  theme? : @core.Theme = default_theme(),
   width? : Double = 280.0,
 ) -> @core.View[Msg] {
   let rows : Array[@core.View[Msg]] = []

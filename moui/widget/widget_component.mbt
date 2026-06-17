@@ -1,6 +1,6 @@
 ///|
 pub fn[Msg] component(
-  build : (@core.BuildContext) -> @core.View[Msg],
+  build : (@core.ComponentContext) -> @core.View[Msg],
   kind? : String = "Component",
   key? : String? = None,
 ) -> @core.View[Msg] {
