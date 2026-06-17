@@ -47,21 +47,18 @@ fn ReconcileDirtyKind::combine(
 }
 
 ///|
-fn mount_runtime_widget(spec : RuntimeWidget) -> ElementNode {
-  mount_runtime_widget_with_next(spec, 1).node
+fn mount_widget(spec : Widget) -> ElementNode {
+  mount_widget_with_next(spec, 1).node
 }
 
 ///|
-fn mount_runtime_widget_with_next(
-  spec : RuntimeWidget,
-  next_id : Int,
-) -> MountResult {
-  mount_runtime_widget_for_runtime(spec, None, next_id)
+fn mount_widget_with_next(spec : Widget, next_id : Int) -> MountResult {
+  mount_widget_for_runtime(spec, None, next_id)
 }
 
 ///|
-fn mount_runtime_widget_for_runtime(
-  spec : RuntimeWidget,
+fn mount_widget_for_runtime(
+  spec : Widget,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> MountResult {
@@ -75,7 +72,7 @@ fn mount_runtime_widget_for_runtime(
       let built = build_component_child(build, runtime, id, [], [])
       component_subscriptions = built.subscriptions
       component_effects = built.effects
-      let mounted = mount_runtime_widget_for_runtime(
+      let mounted = mount_widget_for_runtime(
         built.child_widget,
         Some(runtime),
         next,
@@ -86,7 +83,7 @@ fn mount_runtime_widget_for_runtime(
     _ => ()
   }
   for child_widget in (spec.children)() {
-    let mounted = mount_runtime_widget_for_runtime(child_widget, runtime, next)
+    let mounted = mount_widget_for_runtime(child_widget, runtime, next)
     children.push(mounted.node)
     next = mounted.next_id
   }
@@ -112,13 +109,13 @@ fn mount_runtime_widget_for_runtime(
 ///|
 fn reconcile_element_for_runtime(
   old : ElementNode,
-  next_widget : RuntimeWidget,
+  next_widget : Widget,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ReconcileResult {
   if !old.widget.same_identity(next_widget) {
     old.cancel_component_tree_subscriptions()
-    let mounted = mount_runtime_widget_for_runtime(
+    let mounted = mount_widget_for_runtime(
       next_widget, runtime, next_id,
     )
     {
@@ -148,17 +145,14 @@ fn reconcile_element_for_runtime(
 }
 
 ///|
-fn preserve_widget_runtime_state(
-  old : RuntimeWidget,
-  next : RuntimeWidget,
-) -> RuntimeWidget {
+fn preserve_widget_runtime_state(old : Widget, next : Widget) -> Widget {
   { ..next, state: old.state }
 }
 
 ///|
 fn reconcile_children_for_runtime(
   old_children : Array[ElementNode],
-  next_widget : RuntimeWidget,
+  next_widget : Widget,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ChildrenReconcileResult {
@@ -186,7 +180,7 @@ fn reconcile_children_for_runtime(
         dirty = dirty.combine(result.dirty_kind)
       }
       None => {
-        let mounted = mount_runtime_widget_for_runtime(
+        let mounted = mount_widget_for_runtime(
           child_widget, runtime, next,
         )
         children.push(mounted.node)
@@ -226,7 +220,7 @@ fn ElementNode::apply_reconcile_dirty(
 fn find_reusable_child(
   old_children : Array[ElementNode],
   used : Array[Bool],
-  child_widget : RuntimeWidget,
+  child_widget : Widget,
   index : Int,
 ) -> Int? {
   match child_widget.identity_key() {
@@ -253,6 +247,6 @@ fn find_reusable_child(
 }
 
 ///|
-fn child_widgets(spec : RuntimeWidget) -> Array[RuntimeWidget] {
+fn child_widgets(spec : Widget) -> Array[Widget] {
   (spec.children)()
 }

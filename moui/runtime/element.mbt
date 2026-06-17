@@ -33,7 +33,7 @@ fn ElementNode::rebuild_dirty_components(
             next,
           )
         } else {
-          let mounted = mount_runtime_widget_for_runtime(
+          let mounted = mount_widget_for_runtime(
             built.child_widget,
             Some(runtime),
             next,

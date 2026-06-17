@@ -38,7 +38,7 @@ fn ElementNode::dispatch_pointer(
 ///|
 fn ElementNode::dispatch_widget_event(
   self : ElementNode,
-  data : RuntimeWidget,
+  data : Widget,
   event : AppEvent,
   render : RenderNode,
   text_system : TextSystem,
@@ -175,7 +175,7 @@ fn ElementNode::has_active_pointer_capture(
 }
 
 ///|
-fn ElementNode::has_local_active_pointer_capture(self : ElementNode) -> Bool {
+fn ElementNode::has_local_active_pointer_capture(_self : ElementNode) -> Bool {
   false
 }
 

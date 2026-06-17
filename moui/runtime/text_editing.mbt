@@ -38,7 +38,7 @@ fn ElementNode::dispatch_text_command(
 ///|
 fn ElementNode::dispatch_widget_text_command(
   self : ElementNode,
-  data : RuntimeWidget,
+  data : Widget,
   intent : CommandIntent,
   paste_text~ : String?,
   environment? : Environment = Environment::neutral(),

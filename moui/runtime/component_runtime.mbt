@@ -1,13 +1,13 @@
 ///|
 priv struct ComponentBuildResult {
-  child_widget : RuntimeWidget
+  child_widget : Widget
   subscriptions : Array[StateSubscription]
   effects : Array[ComponentEffect]
 }
 
 ///|
 fn build_component_child(
-  build : (@core.ComponentContext) -> RuntimeWidget,
+  build : (@core.ComponentContext) -> Widget,
   runtime : RuntimeState,
   component_id : ElementId,
   old_subscriptions : Array[StateSubscription],
