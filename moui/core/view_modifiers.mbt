@@ -3,7 +3,7 @@ pub fn[Msg, NextMsg] View::map(
   self : View[Msg],
   map : (Msg) -> NextMsg,
 ) -> View[NextMsg] {
-  View::widget(self.ops.map(map))
+  View::widget(self.widget.map(map))
 }
 
 ///|
@@ -120,7 +120,7 @@ pub fn[Msg] View::presence(
     self.apply_transition_style(sample.style)
   } else {
     View::widget(
-      WidgetOps::new(identity=() => WidgetIdentity::new(kind="Empty"), layout=ctx => {
+      Widget::new(identity=() => WidgetIdentity::new(kind="Empty"), layout=ctx => {
         WidgetLayoutResult::new(
           size=ctx.constraints.constrain(Size::new(width=0.0, height=0.0)),
         )

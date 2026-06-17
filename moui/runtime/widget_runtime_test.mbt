@@ -1,5 +1,5 @@
 ///|
-test "runtime dispatches messages from widget ops" {
+test "runtime dispatches messages from widget" {
   let received : Array[Int] = []
   let runtime = AppRuntime::new_view(
     root=@widget.rect(
