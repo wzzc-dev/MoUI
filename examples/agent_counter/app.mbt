@@ -4,7 +4,7 @@
 // intents that flow through update() — exactly like a user clicking.
 
 using @views {column, text, button}
-
+using @moui { type Program}
 ///|
 pub struct Model {
   count : Int
@@ -32,7 +32,7 @@ pub fn update(model : Model, msg : Msg) -> Model {
 }
 
 ///|
-pub fn view(model : Model) -> @core.View[Msg] {
+pub fn view(model : Model) -> @moui.View[Msg] {
   column([
     text("Agent Counter"),
     text("Count: \{model.count}"),
@@ -43,6 +43,6 @@ pub fn view(model : Model) -> @core.View[Msg] {
 }
 
 ///|
-pub fn program() -> @core.Program[Model, Msg] {
-  @core.Program::simple(init=Model::new(), update~, view~)
+pub fn program() -> Program[Model, Msg] {
+  Program::simple(init=Model::new(), update~, view~)
 }
