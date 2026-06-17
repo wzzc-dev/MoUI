@@ -34,7 +34,7 @@ pub fn[Msg] picker(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "picker:\{picker_items_revision(items)}:\{selected.get()}:\{placeholder}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_brush_revision(background)}:\{corner_radius}:\{max_height}:\{on_select is Some(_)}"

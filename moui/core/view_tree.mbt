@@ -83,19 +83,19 @@ fn[Msg] View::apply_modifier(
   self : View[Msg],
   modifier : ViewModifier[Msg],
 ) -> View[Msg] {
-  View::widget(modifier_widget_ops(self, modifier))
+  View::widget(modifier_widget(self, modifier))
 }
 
 ///|
-fn[Msg] modifier_widget_ops(
+fn[Msg] modifier_widget(
   child : View[Msg],
   modifier : ViewModifier[Msg],
-) -> WidgetOps[Msg] {
-  let child_ops = child.ops
-  WidgetOps::new(
-    identity=() => modifier_identity(child_ops, modifier),
+) -> Widget[Msg] {
+  let child_widget = child.widget
+  Widget::new(
+    identity=() => modifier_identity(child_widget, modifier),
     revision=() => {
-      "modifier:\{modifier_revision(modifier)}:\{child_ops.revision()}"
+      "modifier:\{modifier_revision(modifier)}:\{child_widget.revision()}"
     },
     children=() => [child],
     child_constraints=constraints => {
@@ -104,9 +104,9 @@ fn[Msg] modifier_widget_ops(
     layout=ctx => modifier_layout(modifier, ctx),
     paint=ctx => modifier_paint(modifier, ctx),
     event=ctx => modifier_event(modifier, ctx),
-    text_input_state=ctx => child_ops.text_input_state(ctx),
+    text_input_state=ctx => child_widget.text_input_state(ctx),
     text_command=(ctx, intent, paste_text) => {
-      child_ops.text_command_result(ctx, intent, paste_text~)
+      child_widget.text_command_result(ctx, intent, paste_text~)
     },
     semantics=() => modifier_semantics(modifier),
     focusable=() => modifier_focusable(modifier),
@@ -115,7 +115,7 @@ fn[Msg] modifier_widget_ops(
 
 ///|
 fn[Msg] modifier_identity(
-  child : WidgetOps[Msg],
+  child : Widget[Msg],
   modifier : ViewModifier[Msg],
 ) -> WidgetIdentity {
   match modifier {

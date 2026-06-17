@@ -180,7 +180,7 @@ fn[Msg] runtime_component_view(
   build : (@core.ComponentContext) -> @core.View[Msg],
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind="Component"),
       revision=() => "component",
       build_child=Some(build),

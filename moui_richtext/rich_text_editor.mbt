@@ -21,7 +21,7 @@ pub fn[Msg] rich_text_editor(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "rich-text-editor:\{value.get()}:\{placeholder}:\{widget_size_revision(size)}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_color_revision(placeholder_color)}:\{widget_brush_revision(background)}:\{widget_border_option_revision(border)}:\{widget_border_option_revision(focused_border)}:\{widget_color_revision(cursor_color)}:\{corner_radius}:\{accepts_tab_input}"

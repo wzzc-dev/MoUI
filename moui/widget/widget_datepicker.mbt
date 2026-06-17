@@ -21,7 +21,7 @@ pub fn[Msg] datepicker(
   key? : String? = None,
 ) -> @core.View[Msg] {
   @core.View::widget(
-    @core.WidgetOps::new(
+    @core.Widget::new(
       identity=() => @core.WidgetIdentity::new(kind~, key~),
       revision=() => {
         "datepicker:\{datepicker_display_value(selected.get(), mode)}:\{datepicker_mode_revision(mode)}:\{placeholder}:\{widget_font_revision(font)}:\{widget_color_revision(foreground)}:\{widget_brush_revision(background)}:\{corner_radius}:\{datepicker_value_option_revision(min_date)}:\{datepicker_value_option_revision(max_date)}:\{on_select is Some(_)}"
