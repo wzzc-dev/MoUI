@@ -211,7 +211,7 @@ test "linux webview maps native title history javascript and policy events" {
       encode_webview_string("Loaded title"),
       0,
     ) {
-    @core.WebViewEvent::TitleChanged("Loaded title") => ()
+    @host.WebViewEvent::TitleChanged("Loaded title") => ()
     _ => fail("expected Linux WebView title event")
   }
   match
@@ -221,7 +221,7 @@ test "linux webview maps native title history javascript and policy events" {
       encode_webview_string(""),
       1,
     ) {
-    @core.WebViewEvent::CanGoBackChanged(true) => ()
+    @host.WebViewEvent::CanGoBackChanged(true) => ()
     _ => fail("expected Linux WebView back-history event")
   }
   match
@@ -231,7 +231,7 @@ test "linux webview maps native title history javascript and policy events" {
       encode_webview_string(""),
       0,
     ) {
-    @core.WebViewEvent::CanGoForwardChanged(false) => ()
+    @host.WebViewEvent::CanGoForwardChanged(false) => ()
     _ => fail("expected Linux WebView forward-history event")
   }
   match
@@ -241,7 +241,7 @@ test "linux webview maps native title history javascript and policy events" {
       encode_webview_string("42"),
       0,
     ) {
-    @core.WebViewEvent::JavaScriptResult("request-1", "42") => ()
+    @host.WebViewEvent::JavaScriptResult("request-1", "42") => ()
     _ => fail("expected Linux WebView JavaScript result event")
   }
   match
@@ -251,7 +251,7 @@ test "linux webview maps native title history javascript and policy events" {
       encode_webview_string("WebView navigation policy blocked URL"),
       0,
     ) {
-    @core.WebViewEvent::NavigationFailed(url, reason) => {
+    @host.WebViewEvent::NavigationFailed(url, reason) => {
       inspect(url, content="ftp://example.test/file")
       inspect(reason, content="WebView navigation policy blocked URL")
     }
@@ -262,24 +262,24 @@ test "linux webview maps native title history javascript and policy events" {
 ///|
 test "linux webview encodes navigation policies and commands" {
   inspect(
-    webview_policy_code(@core.WebViewNavigationPolicy::AllowHttpHttpsFile),
+    webview_policy_code(@host.WebViewNavigationPolicy::AllowHttpHttpsFile),
     content="0",
   )
   inspect(
-    webview_policy_code(@core.WebViewNavigationPolicy::AllowHttpHttps),
+    webview_policy_code(@host.WebViewNavigationPolicy::AllowHttpHttps),
     content="1",
   )
   inspect(
-    webview_policy_code(@core.WebViewNavigationPolicy::AllowAll),
+    webview_policy_code(@host.WebViewNavigationPolicy::AllowAll),
     content="2",
   )
   let load = encode_webview_command(
-    @core.WebViewCommand::LoadUrl("https://example.test"),
+    @host.WebViewCommand::LoadUrl("https://example.test"),
   )
   inspect(load.0, content="0")
   inspect(load.1, content="https://example.test")
   let eval = encode_webview_command(
-    @core.WebViewCommand::EvaluateJavaScript("1 + 1", "sum"),
+    @host.WebViewCommand::EvaluateJavaScript("1 + 1", "sum"),
   )
   inspect(eval.0, content="5")
   inspect(eval.1, content="1 + 1")
@@ -288,12 +288,12 @@ test "linux webview encodes navigation policies and commands" {
 
 ///|
 test "linux webview placement applies client decoration offset" {
-  let placement = @core.PlatformViewPlacement::web_view(
-    spec=@core.WebViewSpec::new(
-      id="main",
-      url="https://example.test",
-      title="Example",
-    ),
+  let spec = @host.WebViewSpec::new(
+    id="main",
+    url="https://example.test",
+    title="Example",
+  )
+  let placement = spec.platform_view_placement(
     frame=@core.Rect::new(x=12.0, y=24.0, width=320.0, height=180.0),
   )
   let frame = linux_webview_platform_frame(placement, 32.0)

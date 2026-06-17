@@ -210,24 +210,24 @@ pub(all) struct DesignComponentTokens {
 
 ///|
 pub(all) struct DesignButtonCoreStyles {
-  primary : @core.ButtonStyle
-  tonal : @core.ButtonStyle
-  outline : @core.ButtonStyle
-  ghost : @core.ButtonStyle
+  primary : @views.ButtonStyle
+  tonal : @views.ButtonStyle
+  outline : @views.ButtonStyle
+  ghost : @views.ButtonStyle
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct DesignTextFieldCoreStyles {
-  filled : @core.TextFieldStyle
-  outline : @core.TextFieldStyle
-  plain : @core.TextFieldStyle
+  filled : @views.TextFieldStyle
+  outline : @views.TextFieldStyle
+  plain : @views.TextFieldStyle
 } derive(Eq, Debug, ToJson)
 
 ///|
 pub(all) struct DesignSurfaceCoreStyles {
-  base : @core.SurfaceStyle
-  raised : @core.SurfaceStyle
-  overlay : @core.SurfaceStyle
+  base : @views.SurfaceStyle
+  raised : @views.SurfaceStyle
+  overlay : @views.SurfaceStyle
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -235,14 +235,14 @@ pub(all) struct DesignCoreComponentStyles {
   button : DesignButtonCoreStyles
   text_field : DesignTextFieldCoreStyles
   surface : DesignSurfaceCoreStyles
-  choice_control : @core.ChoiceControlStyle
-  progress : @core.ProgressStyle
-  slider : @core.SliderStyle
-  picker : @core.PickerStyle
-  date_picker : @core.PickerStyle
-  feedback : @core.FeedbackStyle
-  badge : @core.BadgeStyle
-  form_validation : @core.FormValidationStyle
+  choice_control : @views.ChoiceControlStyle
+  progress : @views.ProgressStyle
+  slider : @views.SliderStyle
+  picker : @views.PickerStyle
+  date_picker : @views.PickerStyle
+  feedback : @views.FeedbackStyle
+  badge : @views.BadgeStyle
+  form_validation : @views.FormValidationStyle
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -376,7 +376,7 @@ pub fn DesignSurfaceTokens::core_surfaces(
 ///|
 pub fn DesignControlStateTokens::core_style(
   self : DesignControlStateTokens,
-) -> @core.ControlStateStyle {
+) -> @views.ControlStateStyle {
   {
     foreground: self.foreground,
     background: @core.Brush::solid(self.background),
@@ -402,7 +402,7 @@ pub fn DesignButtonTokens::core_styles(
 ///|
 pub fn DesignTextFieldTokens::core_style(
   self : DesignTextFieldTokens,
-) -> @core.TextFieldStyle {
+) -> @views.TextFieldStyle {
   {
     normal: self.normal.core_style(),
     focused: self.focused.core_style(),
@@ -432,7 +432,7 @@ pub fn DesignTextFieldTokens::core_styles(
 ///|
 pub fn DesignChoiceControlTokens::core_style(
   self : DesignChoiceControlTokens,
-) -> @core.ChoiceControlStyle {
+) -> @views.ChoiceControlStyle {
   {
     foreground: self.foreground,
     selected_color: self.selected_color,
@@ -445,7 +445,7 @@ pub fn DesignChoiceControlTokens::core_style(
 ///|
 pub fn DesignProgressTokens::core_style(
   self : DesignProgressTokens,
-) -> @core.ProgressStyle {
+) -> @views.ProgressStyle {
   {
     foreground: self.foreground,
     background: self.background,
@@ -456,7 +456,7 @@ pub fn DesignProgressTokens::core_style(
 ///|
 pub fn DesignSliderTokens::core_style(
   self : DesignSliderTokens,
-) -> @core.SliderStyle {
+) -> @views.SliderStyle {
   {
     foreground: self.foreground,
     background: self.background,
@@ -470,7 +470,7 @@ pub fn DesignSliderTokens::core_style(
 ///|
 pub fn DesignPickerTokens::core_style(
   self : DesignPickerTokens,
-) -> @core.PickerStyle {
+) -> @views.PickerStyle {
   {
     font: self.font,
     foreground: self.foreground,
@@ -486,17 +486,17 @@ pub fn DesignSurfaceComponentTokens::core_styles(
   theme : @core.Theme,
 ) -> DesignSurfaceCoreStyles {
   let base = {
-    ..@core.SurfaceStyle::default(theme~),
+    ..@views.SurfaceStyle::default(theme~),
     padding: @core.Insets::all(self.base_padding),
     radius: self.base_radius,
   }
   let raised = {
-    ..@core.SurfaceStyle::raised(theme~),
+    ..@views.SurfaceStyle::raised(theme~),
     padding: @core.Insets::all(self.raised_padding),
     radius: self.raised_radius,
   }
   let overlay = {
-    ..@core.SurfaceStyle::default(theme~),
+    ..@views.SurfaceStyle::default(theme~),
     brush: theme.surface_brush(@core.SurfaceLevel::Overlay),
     padding: @core.Insets::all(self.overlay_padding),
     radius: self.overlay_radius,
@@ -507,7 +507,9 @@ pub fn DesignSurfaceComponentTokens::core_styles(
 }
 
 ///|
-pub fn DesignToneTokens::core_style(self : DesignToneTokens) -> @core.ToneStyle {
+pub fn DesignToneTokens::core_style(
+  self : DesignToneTokens,
+) -> @views.ToneStyle {
   {
     foreground: self.foreground,
     background: self.background,
@@ -518,7 +520,7 @@ pub fn DesignToneTokens::core_style(self : DesignToneTokens) -> @core.ToneStyle 
 ///|
 pub fn DesignFeedbackTokens::core_style(
   self : DesignFeedbackTokens,
-) -> @core.FeedbackStyle {
+) -> @views.FeedbackStyle {
   {
     neutral: self.neutral.core_style(),
     info: self.info.core_style(),
@@ -533,7 +535,7 @@ pub fn DesignFeedbackTokens::core_style(
 ///|
 pub fn DesignBadgeTokens::core_style(
   self : DesignBadgeTokens,
-) -> @core.BadgeStyle {
+) -> @views.BadgeStyle {
   {
     neutral: self.neutral.core_style(),
     accent: self.accent.core_style(),
@@ -548,7 +550,7 @@ pub fn DesignBadgeTokens::core_style(
 ///|
 pub fn DesignFormValidationTokens::core_style(
   self : DesignFormValidationTokens,
-) -> @core.FormValidationStyle {
+) -> @views.FormValidationStyle {
   {
     foreground: self.foreground,
     background: self.background,
@@ -1518,7 +1520,7 @@ fn control_state_border(state : DesignControlStateTokens) -> @core.BorderStyle? 
 fn button_core_style(
   state : DesignControlStateTokens,
   state_layer : DesignStateLayerTokens,
-) -> @core.ButtonStyle {
+) -> @views.ButtonStyle {
   let normal = state.core_style()
   let hovered = {
     ..normal,

@@ -768,37 +768,37 @@ fn neutral_component_coverage(
 ) -> Array[DesignComponentCoverage] {
   [
     component(
-      "Button", source_family, "@core.ButtonStyle", status, "MoUI has neutral filled/tonal/outline/ghost styles.",
+      "Button", source_family, "@views.ButtonStyle", status, "MoUI has neutral filled/tonal/outline/ghost styles.",
     ),
     component(
-      "TextField", source_family, "@core.TextFieldStyle", status, "MoUI has neutral filled/outline/plain style mapping.",
+      "TextField", source_family, "@views.TextFieldStyle", status, "MoUI has neutral filled/outline/plain style mapping.",
     ),
     component(
-      "Surface", source_family, "@core.SurfaceStyle", status, "MoUI has neutral base/raised/overlay surface mapping.",
+      "Surface", source_family, "@views.SurfaceStyle", status, "MoUI has neutral base/raised/overlay surface mapping.",
     ),
     component(
-      "ChoiceControl", source_family, "@core.ChoiceControlStyle", status, "MoUI has a neutral choice-control style contract.",
+      "ChoiceControl", source_family, "@views.ChoiceControlStyle", status, "MoUI has a neutral choice-control style contract.",
     ),
     component(
-      "Progress", source_family, "@core.ProgressStyle", status, "MoUI has a neutral progress style contract.",
+      "Progress", source_family, "@views.ProgressStyle", status, "MoUI has a neutral progress style contract.",
     ),
     component(
-      "Slider", source_family, "@core.SliderStyle", status, "MoUI has a neutral slider style contract.",
+      "Slider", source_family, "@views.SliderStyle", status, "MoUI has a neutral slider style contract.",
     ),
     component(
-      "Picker", source_family, "@core.PickerStyle", status, "MoUI has a neutral picker style contract.",
+      "Picker", source_family, "@views.PickerStyle", status, "MoUI has a neutral picker style contract.",
     ),
     component(
-      "DatePicker", source_family, "@core.PickerStyle", status, "MoUI reuses the neutral picker style contract for date pickers.",
+      "DatePicker", source_family, "@views.PickerStyle", status, "MoUI reuses the neutral picker style contract for date pickers.",
     ),
     component(
-      "Feedback", source_family, "@core.FeedbackStyle", status, "MoUI has neutral status-surface tokens for toast, snackbar, banner, callout, and state panels.",
+      "Feedback", source_family, "@views.FeedbackStyle", status, "MoUI has neutral status-surface tokens for toast, snackbar, banner, callout, and state panels.",
     ),
     component(
-      "Badge", source_family, "@core.BadgeStyle", status, "MoUI has neutral badge tone tokens for status labels.",
+      "Badge", source_family, "@views.BadgeStyle", status, "MoUI has neutral badge tone tokens for status labels.",
     ),
     component(
-      "FormValidation", source_family, "@core.FormValidationStyle", status, "MoUI has neutral form-validation status tokens.",
+      "FormValidation", source_family, "@views.FormValidationStyle", status, "MoUI has neutral form-validation status tokens.",
     ),
   ]
 }

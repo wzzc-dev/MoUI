@@ -58,7 +58,7 @@ pub fn event_category(event : @core.AppEvent) -> String {
     Keyboard(_) => "keyboard"
     TextInput(_) => "text"
     DragDrop(_) => "dragdrop"
-    WebView(_, _) => "webview"
+    PlatformView(_, _) => "platform-view"
     Resize(_) => "resize"
     Redraw(_) => "redraw"
     CloseRequested => "close"

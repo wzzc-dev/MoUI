@@ -156,9 +156,9 @@ test "widget scroll updates state and marks layout dirty" {
 
 ///|
 test "widget webview paints platform view and dispatches events" {
-  let received : Array[@core.WebViewEvent] = []
+  let received : Array[@views.WebViewEvent] = []
   let runtime = AppRuntime::new_view(
-    root=@widget.web_view(
+    root=@views.web_view(
       id="docs",
       url="https://example.com",
       width=Some(320.0),
@@ -172,25 +172,29 @@ test "widget webview paints platform view and dispatches events" {
   let frame = runtime.draw_frame()
   match frame.platform_views.get(0) {
     Some(view) =>
-      if view.id != "docs" || view.url != "https://example.com" {
+      if view.id != "docs" ||
+        view.property_or("url", "") != "https://example.com" {
         fail("expected widget webview platform placement")
       }
     None => fail("expected widget webview platform placement")
   }
   runtime.dispatch_event(
-    @core.AppEvent::WebView("docs", @core.WebViewEvent::TitleChanged("Loaded")),
+    @core.AppEvent::PlatformView(
+      "docs",
+      @views.WebViewEvent::TitleChanged("Loaded").to_platform_event(),
+    ),
   )
-  if received != [@core.WebViewEvent::TitleChanged("Loaded")] {
+  if received != [@views.WebViewEvent::TitleChanged("Loaded")] {
     fail("expected widget webview to dispatch event")
   }
 }
 
 ///|
 test "nested widget webview dispatches events through generic children" {
-  let received : Array[@core.WebViewEvent] = []
+  let received : Array[@views.WebViewEvent] = []
   let runtime = AppRuntime::new_view(
     root=@widget.padding(
-      child=@widget.web_view(
+      child=@views.web_view(
         id="nested",
         url="https://example.com/nested",
         width=Some(320.0),
@@ -204,13 +208,13 @@ test "nested widget webview dispatches events through generic children" {
     on_message=Some(message => received.push(message)),
   )
   runtime.dispatch_event(
-    @core.AppEvent::WebView(
+    @core.AppEvent::PlatformView(
       "nested",
-      @core.WebViewEvent::NavigationFinished("https://example.com/nested"),
+      @views.WebViewEvent::NavigationFinished("https://example.com/nested").to_platform_event(),
     ),
   )
   if received !=
-    [@core.WebViewEvent::NavigationFinished("https://example.com/nested")] {
+    [@views.WebViewEvent::NavigationFinished("https://example.com/nested")] {
     fail("expected nested widget webview to dispatch event")
   }
 }
@@ -290,8 +294,8 @@ test "widget picker dispatches overlay selection without core primitive" {
     root=@widget.frame(
       child=@widget.picker(
         items=[
-          @core.PickerItem::new(id="one", label="One"),
-          @core.PickerItem::new(id="two", label="Two"),
+          @widget.PickerOption::new(id="one", label="One"),
+          @widget.PickerOption::new(id="two", label="Two"),
         ],
         selected=@core.Binding::new(get=() => "one", set=_value => ()),
         placeholder="Pick",
@@ -360,8 +364,8 @@ test "widget picker binding selection mutates binding" {
   let root : @core.View[Unit] = @widget.frame(
     child=@widget.picker(
       items=[
-        @core.PickerItem::new(id="one", label="One"),
-        @core.PickerItem::new(id="two", label="Two"),
+        @widget.PickerOption::new(id="one", label="One"),
+        @widget.PickerOption::new(id="two", label="Two"),
       ],
       selected=selected_state.binding(),
       placeholder="Pick",

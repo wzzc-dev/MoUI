@@ -1,6 +1,27 @@
 ///|
+pub struct PickerOption {
+  id : String
+  label : String
+}
+
+///|
+pub fn PickerOption::new(id~ : String, label~ : String) -> PickerOption {
+  { id, label }
+}
+
+///|
+pub fn PickerOption::id(self : PickerOption) -> String {
+  self.id
+}
+
+///|
+pub fn PickerOption::label(self : PickerOption) -> String {
+  self.label
+}
+
+///|
 pub fn[Msg] picker(
-  items~ : Array[@core.PickerItem],
+  items~ : Array[PickerOption],
   selected~ : @core.Binding[String],
   placeholder~ : String,
   font~ : @core.FontSpec,
@@ -95,7 +116,7 @@ fn append_picker_commands(
   commands : Array[@core.DrawCommand],
   overlay_commands : Array[@core.DrawCommand],
   frame~ : @core.Rect,
-  items~ : Array[@core.PickerItem],
+  items~ : Array[PickerOption],
   selected_id~ : String,
   placeholder~ : String,
   font~ : @core.FontSpec,
@@ -166,7 +187,7 @@ fn append_picker_commands(
 fn append_picker_popup_commands(
   overlay_commands : Array[@core.DrawCommand],
   frame~ : @core.Rect,
-  items~ : Array[@core.PickerItem],
+  items~ : Array[PickerOption],
   selected_id~ : String,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
@@ -231,7 +252,7 @@ fn[Msg] handle_picker_pointer(
   state : @core.WidgetStateContext,
   event : @core.PointerEvent,
   frame~ : @core.Rect,
-  items~ : Array[@core.PickerItem],
+  items~ : Array[PickerOption],
   selected~ : @core.Binding[String],
   max_height~ : Double,
   on_select~ : ((String) -> Msg)?,
@@ -296,7 +317,7 @@ fn[Msg] handle_picker_pointer(
 fn[Msg] handle_picker_keyboard(
   state : @core.WidgetStateContext,
   event : @core.KeyboardEvent,
-  items~ : Array[@core.PickerItem],
+  items~ : Array[PickerOption],
   selected~ : @core.Binding[String],
   on_select~ : ((String) -> Msg)?,
 ) -> @core.WidgetEventResult[Msg] {
@@ -357,7 +378,7 @@ fn[Msg] picker_messages(
 
 ///|
 fn picker_selected_label(
-  items : Array[@core.PickerItem],
+  items : Array[PickerOption],
   selected_id : String,
   placeholder : String,
 ) -> String {
@@ -373,7 +394,7 @@ fn picker_selected_label(
 
 ///|
 fn picker_selected_id_or_first(
-  items : Array[@core.PickerItem],
+  items : Array[PickerOption],
   selected_id : String,
 ) -> String? {
   let mut selected : String? = None
@@ -395,7 +416,7 @@ fn picker_selected_id_or_first(
 
 ///|
 fn picker_item_id_at_position(
-  items : Array[@core.PickerItem],
+  items : Array[PickerOption],
   list_frame : @core.Rect,
   position : @core.Point,
 ) -> String? {
@@ -409,7 +430,7 @@ fn picker_item_id_at_position(
 
 ///|
 fn picker_popup_frame(
-  items : Array[@core.PickerItem],
+  items : Array[PickerOption],
   frame : @core.Rect,
   max_height : Double,
 ) -> @core.Rect {
@@ -440,7 +461,7 @@ fn picker_item_height() -> Double {
 }
 
 ///|
-fn picker_items_revision(items : Array[@core.PickerItem]) -> String {
+fn picker_items_revision(items : Array[PickerOption]) -> String {
   let mut result = ""
   for item in items {
     result = "\{result}|\{item.id()}:\{item.label()}"

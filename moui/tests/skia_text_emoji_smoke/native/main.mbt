@@ -234,7 +234,7 @@ fn skia_color_emoji_diagnostic_metadata_ready(
 
 ///|
 fn smoke_text_field_view(value : @core.Binding[String]) -> @core.View[Unit] {
-  let field_style : @core.TextFieldStyle = {
+  let field_style : @views.TextFieldStyle = {
     normal: {
       foreground: @core.Color::black(),
       background: @core.Brush::solid(@core.Color::white()),

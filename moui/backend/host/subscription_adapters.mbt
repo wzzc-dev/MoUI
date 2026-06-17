@@ -28,8 +28,20 @@ pub(all) struct HostWindowEvent {
 } derive(Eq, Debug, ToJson)
 
 ///|
+pub(all) struct HostRouteLocation {
+  path : String
+  query : Array[HostRouteQueryParam]
+} derive(Eq, Debug, ToJson)
+
+///|
+pub(all) struct HostRouteQueryParam {
+  key : String
+  value : String
+} derive(Eq, Debug, ToJson)
+
+///|
 pub(all) struct HostRouteEvent {
-  location : @core.RouteLocation
+  location : HostRouteLocation
   source : String
 } derive(Eq, Debug, ToJson)
 
@@ -118,8 +130,24 @@ pub fn HostWindowEvent::new(
 }
 
 ///|
+pub fn HostRouteLocation::new(
+  path~ : String,
+  query? : Array[HostRouteQueryParam] = [],
+) -> HostRouteLocation {
+  { path, query }
+}
+
+///|
+pub fn HostRouteQueryParam::new(
+  key~ : String,
+  value~ : String,
+) -> HostRouteQueryParam {
+  { key, value }
+}
+
+///|
 pub fn HostRouteEvent::new(
-  location~ : @core.RouteLocation,
+  location~ : HostRouteLocation,
   source? : String = "host-route",
 ) -> HostRouteEvent {
   { location, source }
@@ -130,12 +158,60 @@ pub fn HostRouteEvent::from_route(
   route~ : String,
   source? : String = "host-route",
 ) -> HostRouteEvent {
-  HostRouteEvent::new(location=@core.RouteLocation::parse(route), source~)
+  HostRouteEvent::new(location=HostRouteLocation::parse(route), source~)
 }
 
 ///|
 pub fn HostRouteEvent::route(self : HostRouteEvent) -> String {
   self.location.to_route()
+}
+
+///|
+pub fn HostRouteLocation::parse(value : String) -> HostRouteLocation {
+  let parts = host_route_split_once(value, '?')
+  match parts {
+    Some((path, query_string)) => {
+      let query : Array[HostRouteQueryParam] = []
+      for pair_view in query_string.split("&") {
+        let pair = pair_view.to_owned()
+        if pair != "" {
+          match host_route_split_once(pair, '=') {
+            Some((key, value)) => query.push({ key, value })
+            None => query.push({ key: pair, value: "" })
+          }
+        }
+      }
+      HostRouteLocation::new(path~, query~)
+    }
+    None => HostRouteLocation::new(path=value)
+  }
+}
+
+///|
+pub fn HostRouteLocation::query_value(
+  self : HostRouteLocation,
+  key : String,
+) -> String? {
+  for param in self.query {
+    if param.key == key {
+      return Some(param.value)
+    }
+  }
+  None
+}
+
+///|
+pub fn HostRouteLocation::to_route(self : HostRouteLocation) -> String {
+  if self.query.length() == 0 {
+    self.path
+  } else {
+    let parts : Array[String] = []
+    for param in self.query {
+      parts.push("\{param.key}=\{param.value}")
+    }
+    let query_string = parts.join("&")
+    "\{self.path}?\{query_string}"
+  }
 }
 
 ///|
@@ -353,4 +429,25 @@ fn HostWindowEventSource::remove_handler(
   }
   self.handlers = remaining
   removed
+}
+
+///|
+fn host_route_split_once(value : String, separator : Char) -> (String, String)? {
+  let before : Array[Char] = []
+  let after : Array[Char] = []
+  let mut found = false
+  for ch in value {
+    if !found && ch == separator {
+      found = true
+    } else if found {
+      after.push(ch)
+    } else {
+      before.push(ch)
+    }
+  }
+  if found {
+    Some((String::from_array(before), String::from_array(after)))
+  } else {
+    None
+  }
 }

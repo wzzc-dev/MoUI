@@ -321,30 +321,6 @@ pub fn AppRuntime::focus_key(self : AppRuntime, key : String) -> Bool {
 }
 
 ///|
-pub fn AppRuntime::restore_route_focus(
-  self : AppRuntime,
-  store : @core.RouteFocusStore,
-  route : String,
-) -> Bool {
-  match store.focus_key(route) {
-    Some(key) => self.focus_key(key)
-    None => false
-  }
-}
-
-///|
-pub fn AppRuntime::restore_location_focus(
-  self : AppRuntime,
-  store : @core.RouteFocusStore,
-  location : @core.RouteLocation,
-) -> Bool {
-  match store.focus_key_for_location(location) {
-    Some(key) => self.focus_key(key)
-    None => false
-  }
-}
-
-///|
 pub fn AppRuntime::draw_commands(self : AppRuntime) -> Array[@core.DrawCommand] {
   self.state.build_draw_commands()
 }
