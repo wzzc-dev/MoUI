@@ -216,6 +216,56 @@ pub fn[Msg] radio_binding(String, @core.Binding[Bool], theme? : @core.Theme, for
 
 pub fn[Msg] radio_group(Array[ChoiceItem], selected~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
+pub fn[Msg] raw_button(text~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, background~ : @core.Brush, hovered_background~ : @core.Brush, pressed_background~ : @core.Brush, border? : @core.BorderStyle?, shadow? : @core.ShadowStyle?, corner_radius? : Double, on_click? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_checkbox(label~ : String, checked~ : @core.Binding[Bool], font~ : @core.FontSpec, foreground~ : @core.Color, check_color~ : @core.Color, size~ : @core.Size, on_change? : ((Bool) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_component((@core.ComponentContext) -> @core.View[Msg], kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_container(child? : @core.View[Msg]?, size? : @core.Size?, background? : @core.Brush?, border? : @core.BorderStyle?, corner_radius? : Double, shadow? : @core.ShadowStyle?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_controlled_search_bar(query~ : String, on_input~ : (String) -> Msg, placeholder~ : String, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius~ : Double, on_submit? : Msg?, on_clear? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_controlled_text_field(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_submit? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_custom(kind? : String, key? : String?, measure~ : (@core.VirtualNodeLayoutContext) -> @core.VirtualNodeLayoutResult, paint? : (@core.VirtualNodePaintContext) -> @core.VirtualNodePaintPlan, event? : (@core.VirtualNodeEventContext) -> @core.VirtualNodeEventResult[Msg], semantics? : () -> @core.VirtualNodeSemanticsInfo, focusable? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] raw_custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint? : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_datepicker(selected~ : @core.Binding[@core.DateValue], mode~ : RawDatePickerDisplayMode, placeholder~ : String, font~ : @core.FontSpec, foreground~ : @core.Color, background~ : @core.Brush, corner_radius~ : Double, min_date? : @core.DateValue?, max_date? : @core.DateValue?, on_select? : ((@core.DateValue) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_empty(kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_flex(children~ : Array[@core.View[Msg]], axis~ : @core.Axis, spacing? : Double, main_axis_alignment? : @core.MainAxisAlignment, cross_axis_alignment? : @core.CrossAxisAlignment, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_frame(child~ : @core.View[Msg], width~ : Double?, height~ : Double?, min_width~ : Double?, min_height~ : Double?, max_width~ : Double?, max_height~ : Double?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_grid(children~ : Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_image(source~ : String, size? : @core.Size?, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_list(children~ : Array[@core.View[Msg]], spacing? : Double, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_padding(child~ : @core.View[Msg], insets~ : @core.Insets, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_picker(items~ : Array[RawPickerOption], selected~ : @core.Binding[String], placeholder~ : String, font~ : @core.FontSpec, foreground~ : @core.Color, background~ : @core.Brush, corner_radius~ : Double, max_height~ : Double, on_select? : ((String) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_rect(width~ : Double, height~ : Double, color~ : @core.Color, kind? : String, key? : String?, on_tap? : Msg?) -> @core.View[Msg]
+
+pub fn[Msg] raw_scroll(child~ : @core.View[Msg], offset? : @core.Point, viewport? : @core.Size?, state? : @core.ScrollState?, on_scroll? : ((@core.Point) -> Msg)?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_search_bar(query~ : @core.Binding[String], placeholder~ : String, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius~ : Double, on_input? : ((String) -> Msg)?, on_submit? : Msg?, on_clear? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPresentationMode, background~ : @core.Brush, corner_radius~ : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_spacer(min_length? : Double, weight? : Double, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_stack(children~ : Array[@core.View[Msg]], kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_text(text~ : String, size~ : @core.Size, font~ : @core.FontSpec, color~ : @core.Color, kind? : String, key? : String?) -> @core.View[Msg]
+
+pub fn[Msg] raw_text_field(value~ : @core.Binding[String], placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_submit? : Msg?, kind? : String, key? : String?) -> @core.View[Msg]
+
 pub fn required_field(message? : String) -> (String) -> String?
 
 pub fn[Msg] resizable_panel(content~ : @core.View[Msg], size~ : Double, theme? : @core.Theme, height? : Double, min_size? : Double, max_size? : Double, on_drag? : ((Double) -> Msg)?) -> @core.View[Msg]
@@ -652,6 +702,20 @@ pub(all) struct ProgressStyle {
   radius : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ProgressStyle::default(theme? : @core.Theme) -> Self
+
+pub(all) enum RawDatePickerDisplayMode {
+  Date
+  DateAndTime
+  Time
+} derive(Eq, ToJson, @debug.Debug)
+
+pub struct RawPickerOption {
+  id : String
+  label : String
+}
+pub fn RawPickerOption::id(Self) -> String
+pub fn RawPickerOption::label(Self) -> String
+pub fn RawPickerOption::new(id~ : String, label~ : String) -> Self
 
 pub(all) struct RouteDescriptor {
   id : String

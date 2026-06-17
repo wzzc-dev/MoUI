@@ -13,21 +13,21 @@ matures.
 The runtime pipeline is explicit:
 
 ```text
-View[Msg] -> Widget[Msg] -> runtime.Widget -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+View[Msg] -> VirtualNode[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ```
 
 ## Project Shape
 
 - `moui/core/` owns platform-neutral contracts, opaque `View`, typed events,
   `Program`, `Effect`, `Subscription`, geometry, draw, semantics, and the
-  generic `Widget` protocol.
-- `moui/widget/` owns concrete widget behavior that should not become new
-  `core` enum variants.
+  generic `VirtualNode` protocol.
+- `moui/views/` owns public view constructors and concrete control behavior
+  implemented with `@core.VirtualNode`, without adding new `core` enum variants.
 - `moui/runtime/` exposes app/host `AppRuntime` construction entrypoints and
   owns runtime state, tree/layout/paint, event dispatch, program message drain,
   effect task, subscription lifecycle, and diagnostics.
-- `moui/views/` exposes public view constructors returning opaque
-  `@moui.View[Msg]` / `@core.View[Msg]` compatible values.
+- `moui/views/` returns opaque `@moui.View[Msg]` / `@core.View[Msg]`
+  compatible values for app code.
 - `moui/backend/host/` defines shared host contracts; platform backends
   normalize window and input events into `HostEvent`.
 - `moui/backend/<platform>/skia` selects the native Skia raster mainline

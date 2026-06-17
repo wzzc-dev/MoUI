@@ -8,14 +8,14 @@ pub fn[Msg] web_view(
   policy? : WebViewNavigationPolicy = WebViewNavigationPolicy::AllowHttpHttpsFile,
   on_event? : ((WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind="WebView", key=Some(id)),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind="WebView", key=Some(id)),
       revision=() => {
         "web-view:\{id}:\{url}:\{web_view_double_option_revision(width)}:\{web_view_double_option_revision(height)}:\{title}:\{policy.revision_key()}:\{on_event is Some(_)}"
       },
       layout=ctx => {
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size=ctx.constraints.constrain(
             @core.Size::new(
               width=width.unwrap_or(640.0),
@@ -26,7 +26,7 @@ pub fn[Msg] web_view(
       },
       paint=ctx => {
         if ctx.frame.is_empty() {
-          @core.WidgetPaintPlan::empty()
+          @core.VirtualNodePaintPlan::empty()
         } else {
           let spec = @host.WebViewSpec::new(
             id~,
@@ -52,17 +52,17 @@ pub fn[Msg] web_view(
             if event_id == id {
               match @host.WebViewEvent::from_platform_event(event) {
                 Some(web_event) =>
-                  @core.WidgetEventResult::message(handler(web_event))
-                None => @core.WidgetEventResult::ignored()
+                  @core.VirtualNodeEventResult::message(handler(web_event))
+                None => @core.VirtualNodeEventResult::ignored()
               }
             } else {
-              @core.WidgetEventResult::ignored()
+              @core.VirtualNodeEventResult::ignored()
             }
-          _ => @core.WidgetEventResult::ignored()
+          _ => @core.VirtualNodeEventResult::ignored()
         }
       },
       semantics=() => {
-        @core.WidgetSemanticsInfo::new(
+        @core.VirtualNodeSemanticsInfo::new(
           role=@core.SemanticsRole::Group,
           label=title,
           value=url,

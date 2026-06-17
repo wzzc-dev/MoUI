@@ -33,7 +33,7 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
   assert_true(
     root.forbidden_tokens.contains("pub using @core {type AppRuntime}"),
   )
-  assert_true(root.forbidden_tokens.contains("pub using @core {type Widget}"))
+  assert_true(root.forbidden_tokens.contains("pub using @core {type VirtualNode}"))
   assert_true(
     root.forbidden_tokens.contains("pub using @core {type WebViewEvent}"),
   )
@@ -179,14 +179,13 @@ test "shared app core import guard tracks default imports" {
 ///|
 test "views facade exposes control-specific contracts" {
   let views = budget_by_label("views facade")
-  inspect(views.max_lines, content="980")
+  inspect(views.max_lines, content="1020")
   inspect(views.max_pub_lines, content="370")
+  inspect(views.max_pub_all_lines, content="45")
   inspect(views_facade_core_alias_tokens().length(), content="8")
-  inspect(views_facade_widget_alias_tokens().length(), content="0")
   inspect(views_facade_host_alias_tokens().length(), content="2")
   let required = views.required_tokens
   assert_true(required.contains("\"wzzc-dev/moui/backend/host\""))
-  assert_false(required.contains("\"wzzc-dev/moui/widget\""))
   assert_true(required.contains("pub using @core {type ActionCommand}"))
   assert_true(required.contains("pub using @core {type ActionCommandMap}"))
   assert_true(required.contains("pub using @core {type CommandBinding}"))
@@ -208,16 +207,14 @@ test "views facade exposes control-specific contracts" {
   assert_false(
     required.contains("pub using @core {type FormValidationSummary}"),
   )
-  assert_false(required.contains("pub using @widget {type RichTextDocument}"))
-  assert_false(
-    required.contains("pub using @widget {type RichTextInputTransform}"),
-  )
-  assert_false(
-    required.contains(
-      "pub type RichTextFormatter = (String) -> @widget.RichTextDocument",
-    ),
-  )
   assert_false(required.contains("pub using @core {type RichTextDocument}"))
+  assert_true(required.contains("pub fn[Msg] raw_button("))
+  assert_true(required.contains("pub fn[Msg] raw_component("))
+  assert_true(required.contains("pub fn[Msg] raw_datepicker("))
+  assert_true(required.contains("pub fn[Msg] raw_picker("))
+  assert_true(required.contains("pub(all) enum RawDatePickerDisplayMode"))
+  assert_true(required.contains("pub struct RawPickerOption"))
+  assert_true(required.contains("pub fn RawPickerOption::new("))
   assert_true(required.contains("pub(all) struct RouteLocation"))
   assert_true(required.contains("pub(all) struct RouteHistoryState"))
   assert_true(required.contains("type RouteFocusStore"))
@@ -241,9 +238,9 @@ test "core descriptor payloads stay opaque" {
   inspect(core.max_lines, content="1510")
   inspect(core.max_pub_lines, content="465")
   inspect(core.max_pub_all_lines, content="115")
-  assert_true(core.required_tokens.contains("pub struct Widget[Msg]"))
-  assert_true(core.required_tokens.contains("View::widget"))
-  assert_true(core.required_tokens.contains("Widget::new"))
+  assert_true(core.required_tokens.contains("pub struct VirtualNode[Msg]"))
+  assert_true(core.required_tokens.contains("View::virtual_node"))
+  assert_true(core.required_tokens.contains("VirtualNode::new"))
   assert_true(
     core.forbidden_tokens.contains("pub(all) struct EffectDescriptor"),
   )
@@ -347,26 +344,6 @@ test "core legacy families are ratcheted toward existing layers" {
   let diagnostics = budgets[8]
   inspect(diagnostics.max_occurrences, content="0")
   assert_true(diagnostics.tokens.contains("ProgramRuntimeSnapshot"))
-}
-
-///|
-test "widget facade owns widget-local datepicker mode without depending on views" {
-  let widget = budget_by_label("widget facade")
-  inspect(widget.max_lines, content="170")
-  inspect(widget.max_pub_lines, content="45")
-  inspect(widget.max_pub_all_lines, content="10")
-  assert_true(widget.required_tokens.contains("\"wzzc-dev/moui/core\""))
-  assert_true(
-    widget.required_tokens.contains("pub(all) enum DatePickerDisplayMode"),
-  )
-  assert_true(widget.required_tokens.contains("pub fn[Msg] datepicker("))
-  assert_true(widget.forbidden_tokens.contains("\"wzzc-dev/moui/views\""))
-  assert_true(widget.forbidden_tokens.contains("@views."))
-  assert_true(widget.forbidden_tokens.contains("DatePickerMode"))
-  assert_true(widget.forbidden_tokens.contains("default_theme("))
-  assert_true(widget.forbidden_tokens.contains("RichText"))
-  assert_true(widget.forbidden_tokens.contains("rich_text_"))
-  assert_true(widget.forbidden_tokens.contains("markdown_editor"))
 }
 
 ///|

@@ -34,7 +34,7 @@ fn ElementNode::measure_with_text_system(
       None => ()
     }
   }
-  let child_constraints = (self.widget.child_constraints)(constraints)
+  let child_constraints = (self.virtual_node.child_constraints)(constraints)
   let children : Array[MeasuredNode] = []
   for child in self.children {
     children.push(
@@ -45,7 +45,7 @@ fn ElementNode::measure_with_text_system(
       ),
     )
   }
-  let widget_layout = (self.widget.layout)({
+  let virtual_node_layout = (self.virtual_node.layout)({
     constraints,
     child_sizes: children.map(child => child.size),
     text_system,
@@ -53,7 +53,7 @@ fn ElementNode::measure_with_text_system(
   })
   let measured = {
     element_id: self.id,
-    size: constraints.constrain(widget_layout.size),
+    size: constraints.constrain(virtual_node_layout.size),
     children,
   }
   self.layout_cache.cached_measure_constraints = Some(constraints)
@@ -104,7 +104,7 @@ fn ElementNode::place_measured_with_text_system(
   text_system~ : TextSystem,
   layout_direction~ : LayoutDirection,
 ) -> PlacedNode {
-  let result = (self.widget.layout)({
+  let result = (self.virtual_node.layout)({
     constraints: Constraints::tight(frame.size),
     child_sizes: self.children.map(child => child.intrinsic_size()),
     text_system,
@@ -142,7 +142,7 @@ fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
       None => ()
     }
   }
-  let size = (self.widget.layout)({
+  let size = (self.virtual_node.layout)({
       constraints: Constraints::unbounded(),
       child_sizes: self.children.map(child => child.intrinsic_size()),
       text_system: TextSystem::fallback(),

@@ -19,7 +19,7 @@ pub fn[Msg] focus_ring(
     ),
     width=if focused { 2.0 } else { 1.0 },
   )
-  let wrapped = @widget.container(
+  let wrapped = raw_container(
     child=Some(child.padding(padding)),
     size=None,
     border=Some(ring),

@@ -1,13 +1,13 @@
 ///|
 priv struct ComponentBuildResult {
-  child_widget : Widget
+  child_virtual_node : VirtualNode
   subscriptions : Array[StateSubscription]
   effects : Array[ComponentEffect]
 }
 
 ///|
 fn build_component_child(
-  build : (@core.ComponentContext) -> Widget,
+  build : (@core.ComponentContext) -> VirtualNode,
   runtime : RuntimeState,
   component_id : ElementId,
   old_subscriptions : Array[StateSubscription],
@@ -28,10 +28,10 @@ fn build_component_child(
     old_effects,
     environment: runtime.environment,
   })
-  let child_widget = build(context)
+  let child_virtual_node = build(context)
   ComponentEffect::finish_reuse(
     old_effects,
     reason=ComponentEffectCancelReason::EffectKeyChanged,
   )
-  { child_widget, subscriptions, effects }
+  { child_virtual_node, subscriptions, effects }
 }

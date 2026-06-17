@@ -179,9 +179,9 @@ pub fn[Model, Msg] AppRuntime::new_program(
 fn[Msg] runtime_component_view(
   build : (@core.ComponentContext) -> @core.View[Msg],
 ) -> @core.View[Msg] {
-  @core.View::widget(
-    @core.Widget::new(
-      identity=() => @core.WidgetIdentity::new(kind="Component"),
+  @core.View::virtual_node(
+    @core.VirtualNode::new(
+      identity=() => @core.VirtualNodeIdentity::new(kind="Component"),
       revision=() => "component",
       build_child=Some(build),
       layout=ctx => {
@@ -190,7 +190,7 @@ fn[Msg] runtime_component_view(
         } else {
           @core.Size::new(width=0.0, height=0.0)
         }
-        @core.WidgetLayoutResult::new(
+        @core.VirtualNodeLayoutResult::new(
           size=ctx.constraints.constrain(child_size),
           child_frames=if ctx.child_sizes.length() > 0 {
             [

@@ -107,11 +107,6 @@ fn views_facade_core_alias_tokens() -> Array[String] {
 }
 
 ///|
-fn views_facade_widget_alias_tokens() -> Array[String] {
-  []
-}
-
-///|
 fn views_facade_host_alias_tokens() -> Array[String] {
   ["WebViewEvent", "WebViewNavigationPolicy"]
 }
@@ -124,12 +119,12 @@ fn views_facade_required_tokens() -> Array[String] {
     "pub(all) struct RouteLocation", "pub(all) struct RouteHistoryState", "type RouteFocusStore",
     "type RouterState", "pub fn resolve_route(", "pub(all) enum DatePickerMode",
     "pub fn default_theme()", "pub fn light_theme()", "pub fn dark_theme()",
+    "pub fn[Msg] raw_button(", "pub fn[Msg] raw_component(", "pub fn[Msg] raw_datepicker(",
+    "pub fn[Msg] raw_picker(", "pub(all) enum RawDatePickerDisplayMode",
+    "pub struct RawPickerOption", "pub fn RawPickerOption::new(",
   ]
   for type_name in views_facade_core_alias_tokens() {
     tokens.push("pub using @core {type \{type_name}}")
-  }
-  for type_name in views_facade_widget_alias_tokens() {
-    tokens.push("pub using @widget {type \{type_name}}")
   }
   for type_name in views_facade_host_alias_tokens() {
     tokens.push("pub using @host {type \{type_name}}")
@@ -154,9 +149,9 @@ fn package_budgets() -> Array[PackageBudget] {
         "ViewSpec", "DrawCommand", "EffectDescriptor", "SubscriptionDescriptor",
         "DatePickerMode", "EffectPlanSummary", "SubscriptionPlanSummary", "EffectRuntimeOp",
         "ComponentContext", "SubscriptionLifecycleSnapshot", "ProgramRuntimeSnapshot",
-        "RichText", "rich_text_", "pub using @core {type AppRuntime}", "pub using @core {type Widget}",
-        "pub using @core {type WidgetLayoutContext}", "pub using @core {type WidgetPaintContext}",
-        "pub using @core {type WidgetEventContext}", "pub using @core {type RuntimeInspectorSnapshot}",
+        "RichText", "rich_text_", "pub using @core {type AppRuntime}", "pub using @core {type VirtualNode}",
+        "pub using @core {type VirtualNodeLayoutContext}", "pub using @core {type VirtualNodePaintContext}",
+        "pub using @core {type VirtualNodeEventContext}", "pub using @core {type RuntimeInspectorSnapshot}",
         "pub using @core {type RenderInspectorSnapshot}", "pub using @core {type WebViewEvent}",
         "pub using @core {type WebViewSpec}", "pub using @core {type WebViewCommand}",
         "pub using @core {type WebViewNavigationPolicy}", "pub using @core {type RichTextDocument}",
@@ -203,7 +198,7 @@ fn package_budgets() -> Array[PackageBudget] {
       required_tokens: [
         "pub struct View[Msg]", "View::map", "pub(all) struct Theme", "type Program[Model, Msg]",
         "pub(all) enum Effect", "type Subscription", "pub(all) struct DrawFrame",
-        "pub struct Widget[Msg]", "View::widget", "Widget::new",
+        "pub struct VirtualNode[Msg]", "View::virtual_node", "VirtualNode::new",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui_theme", "\"wzzc-dev/moui/render/skia\"", "SkiaRasterRenderer",
@@ -233,7 +228,7 @@ fn package_budgets() -> Array[PackageBudget] {
         "pub(all) struct InspectorSnapshot", "pub(all) struct ProgramRuntimeSnapshot",
         "pub(all) struct RuntimeInspectorSnapshot", "pub(all) struct RenderInspectorSnapshot",
         "pub(all) struct ViewTreeInspectorSnapshot", "pub(all) struct LayoutInspectorSnapshot",
-        "pub(all) struct SemanticsInspectorSnapshot", "pub(all) struct WidgetInspectorSummary",
+        "pub(all) struct SemanticsInspectorSnapshot", "pub(all) struct VirtualNodeInspectorSummary",
         "DatePickerMode", "EffectPlanSummary", "SubscriptionPlanSummary", "EffectRuntimeOp",
         "Effect::plan_summary(", "Effect::runtime_ops(", "Subscription::plan_summary(",
         "Theme::default(", "Environment::default(", "BuildContext", "ComponentContext::new(",
@@ -246,29 +241,12 @@ fn package_budgets() -> Array[PackageBudget] {
       ],
     },
     {
-      label: "widget facade",
-      path: "moui/widget/pkg.generated.mbti",
-      package_token: "package \"wzzc-dev/moui/widget\"",
-      max_lines: 170,
-      max_pub_lines: 45,
-      max_pub_all_lines: 10,
-      required_tokens: [
-        "\"wzzc-dev/moui/core\"", "pub fn[Msg] component((@core.ComponentContext) -> @core.View[Msg]",
-        "pub fn[Msg] datepicker(", "pub(all) enum DatePickerDisplayMode",
-      ],
-      forbidden_tokens: [
-        "\"wzzc-dev/moui/views\"", "@views.", "DatePickerMode", "default_theme(",
-        "light_theme(", "dark_theme(", "Theme::default(", "RichText", "rich_text_",
-        "markdown_editor",
-      ],
-    },
-    {
       label: "views facade",
       path: "moui/views/pkg.generated.mbti",
       package_token: "package \"wzzc-dev/moui/views\"",
-      max_lines: 980,
+      max_lines: 1020,
       max_pub_lines: 370,
-      max_pub_all_lines: 85,
+      max_pub_all_lines: 45,
       required_tokens: views_facade_required_tokens(),
       forbidden_tokens: [
         "ViewSpec", "ViewNode", "RuntimeState", "HostWindowRenderer", "SkiaRasterRenderer",
@@ -440,7 +418,7 @@ fn legacy_core_family_budgets() -> Array[LegacyCoreFamilyBudget] {
       tokens: [
         "RuntimeInspectorSnapshot", "ProgramRuntimeSnapshot", "ViewTreeInspectorSnapshot",
         "RenderInspectorSnapshot", "InspectorSnapshot", "LayoutInspectorSnapshot",
-        "SemanticsInspectorSnapshot", "WidgetInspectorSummary",
+        "SemanticsInspectorSnapshot", "VirtualNodeInspectorSummary",
       ],
       max_occurrences: 0,
       target_occurrences: 0,
@@ -763,7 +741,7 @@ fn validate_core_legacy_family_budgets(
         path +
         ": core legacy family " +
         budget.label +
-        " occurrences=\{count}, above ratchet max \{budget.max_occurrences}; move new API to views/widget/runtime/backend/host",
+        " occurrences=\{count}, above ratchet max \{budget.max_occurrences}; move new API to views/runtime/backend/host",
       )
     }
   }

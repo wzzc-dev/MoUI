@@ -15,7 +15,7 @@ fn ElementNode::build_semantics(
   focused : ElementId?,
   next_order : Ref[Int],
 ) -> SemanticsNode {
-  let info = (self.widget.semantics)()
+  let info = (self.virtual_node.semantics)()
   let actions = self.semantics_actions(info.actions)
   let focusable = actions.any(action => action == SemanticsAction::Focus)
   let focus_order = if focusable {
@@ -27,11 +27,11 @@ fn ElementNode::build_semantics(
   }
   let state : SemanticsState = {
     focused: focused == Some(self.id),
-    disabled: self.widget.state.disabled,
-    selected: self.widget.state.selected,
-    pressed: self.widget.state.pressed,
-    checked: self.widget.state.checked,
-    expanded: self.widget.state.expanded,
+    disabled: self.virtual_node.state.disabled,
+    selected: self.virtual_node.state.selected,
+    pressed: self.virtual_node.state.pressed,
+    checked: self.virtual_node.state.checked,
+    expanded: self.virtual_node.state.expanded,
     invalid: false,
     required: false,
   }
@@ -110,7 +110,7 @@ fn ElementNode::semantics_actions(
 
 ///|
 fn ElementNode::primary_semantics_label(self : ElementNode) -> String {
-  let info = (self.widget.semantics)()
+  let info = (self.virtual_node.semantics)()
   if info.label != "" {
     info.label
   } else if self.children.length() > 0 {
@@ -122,7 +122,7 @@ fn ElementNode::primary_semantics_label(self : ElementNode) -> String {
 
 ///|
 fn ElementNode::primary_semantics_value(self : ElementNode) -> String {
-  let info = (self.widget.semantics)()
+  let info = (self.virtual_node.semantics)()
   if info.value != "" {
     info.value
   } else if self.children.length() > 0 {
@@ -134,7 +134,7 @@ fn ElementNode::primary_semantics_value(self : ElementNode) -> String {
 
 ///|
 fn ElementNode::primary_semantics_description(self : ElementNode) -> String {
-  let info = (self.widget.semantics)()
+  let info = (self.virtual_node.semantics)()
   if info.description != "" {
     info.description
   } else if self.children.length() > 0 {
@@ -148,7 +148,7 @@ fn ElementNode::primary_semantics_description(self : ElementNode) -> String {
 fn ElementNode::primary_semantics_actions(
   self : ElementNode,
 ) -> Array[SemanticsAction] {
-  let info = (self.widget.semantics)()
+  let info = (self.virtual_node.semantics)()
   let actions = info.actions.copy()
   if self.children.length() > 0 {
     append_unique_semantics_actions(

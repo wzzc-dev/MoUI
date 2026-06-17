@@ -4,7 +4,7 @@
 test "event_observer: dispatch works with default (no-op) observer" {
   let received : Array[Int] = []
   let runtime = AppRuntime::new_view(
-    root=@widget.rect(
+    root=@views.raw_rect(
       width=20.0,
       height=20.0,
       color=@core.Color::blue(),
@@ -36,7 +36,7 @@ test "event_observer: installed observer receives events before processing" {
   let observed : Array[String] = []
   let received : Array[Int] = []
   let runtime = AppRuntime::new_view(
-    root=@widget.rect(
+    root=@views.raw_rect(
       width=20.0,
       height=20.0,
       color=@core.Color::blue(),
@@ -79,7 +79,7 @@ test "event_observer: set_event_observer replaces previous observer" {
   let first : Array[String] = []
   let second : Array[String] = []
   let runtime = AppRuntime::new_view(
-    root=@widget.rect(
+    root=@views.raw_rect(
       width=20.0,
       height=20.0,
       color=@core.Color::blue(),

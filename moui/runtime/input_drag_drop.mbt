@@ -8,8 +8,8 @@ fn ElementNode::dispatch_drag_drop(
   if child_result.activated {
     child_result
   } else {
-    let result = self.dispatch_widget_event(
-      self.widget,
+    let result = self.dispatch_virtual_node_event(
+      self.virtual_node,
       AppEvent::DragDrop(event),
       render,
       TextSystem::fallback(),

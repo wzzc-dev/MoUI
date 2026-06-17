@@ -11,5 +11,5 @@ pub fn[Msg] image(
     (Some(width), Some(height)) => Some(@core.Size::new(width~, height~))
     _ => None
   }
-  @widget.image(source~, size~, opacity~, corner_radius~, fit~)
+  raw_image(source~, size~, opacity~, corner_radius~, fit~)
 }
