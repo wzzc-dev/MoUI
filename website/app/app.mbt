@@ -477,6 +477,7 @@ fn website_theme(dark : Bool) -> @moui.Theme {
     }
   }
   let typography : @core.TypographyScale = {
+    ..@core.TypographyScale::default(),
     body: @core.FontSpec::new(size=16.0, weight=500),
     title: @core.FontSpec::new(size=28.0, weight=800),
     caption: @core.FontSpec::new(size=13.0, weight=500),

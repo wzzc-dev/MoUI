@@ -16,6 +16,7 @@ fn ElementNode::dispatch_web_view_event(
     text_control: self.control.text_context(),
     text_system,
     environment,
+    now_ms: 0.0,
   })
   match result.state {
     Some(next_state) => self.erased_view_node = { ..data, state: next_state }

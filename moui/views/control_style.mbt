@@ -142,11 +142,18 @@ pub fn SurfaceStyle::default(
 pub fn SurfaceStyle::raised(
   theme? : @core.Theme = default_theme(),
 ) -> SurfaceStyle {
+  // Dark surfaces render nearly invisible black shadows, so lift the border
+  // toward a subtle white highlight in dark mode to read the elevation edge;
+  // light mode keeps the standard outline.
+  let border_color = match theme.scheme {
+    @core.ColorScheme::Light => theme.palette.outline
+    @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.06)
+  }
   {
     brush: theme.surface_brush(@core.SurfaceLevel::Raised),
     border: Some(
       @core.BorderStyle::new(
-        brush=@core.Brush::solid(theme.palette.outline),
+        brush=@core.Brush::solid(border_color),
         width=1.0,
       ),
     ),
@@ -172,19 +179,22 @@ fn control_state(
 pub fn ButtonStyle::filled(
   theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
+  let primary = theme.palette.primary
+  // Derive hover/press shades from the palette primary instead of hard-coded
+  // rgba literals so the button tracks the active theme's accent color.
   let normal = control_state(
     foreground=theme.palette.primary_foreground,
-    background=@core.Brush::solid(theme.palette.primary),
+    background=@core.Brush::solid(primary),
     radius=theme.radius_scale.md,
   )
   let hovered = control_state(
     foreground=theme.palette.primary_foreground,
-    background=@core.Brush::solid(@core.Color::rgba(r=0.18, g=0.42, b=1.0)),
+    background=@core.Brush::solid(primary.darken(0.08)),
     radius=theme.radius_scale.md,
   )
   let pressed = control_state(
     foreground=theme.palette.primary_foreground,
-    background=@core.Brush::solid(@core.Color::rgba(r=0.08, g=0.25, b=0.76)),
+    background=@core.Brush::solid(primary.darken(0.16)),
     radius=theme.radius_scale.md,
   )
   let disabled = control_state(
@@ -199,40 +209,98 @@ pub fn ButtonStyle::filled(
 pub fn ButtonStyle::tonal(
   theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
+  let base = theme.palette.surface_variant
   let normal = control_state(
     foreground=theme.foreground,
-    background=@core.Brush::solid(theme.palette.surface_variant),
+    background=@core.Brush::solid(base),
     radius=theme.radius_scale.md,
   )
-  { normal, hovered: normal, pressed: normal, disabled: normal }
+  // Layer a translucent primary tint over the tonal base for hover/press so
+  // the control visibly responds to interaction while staying low-emphasis.
+  let hovered = control_state(
+    foreground=theme.foreground,
+    background=@core.Brush::solid(base.lerp(theme.palette.primary, 0.18)),
+    radius=theme.radius_scale.md,
+  )
+  let pressed = control_state(
+    foreground=theme.foreground,
+    background=@core.Brush::solid(base.lerp(theme.palette.primary, 0.30)),
+    radius=theme.radius_scale.md,
+  )
+  let disabled = control_state(
+    foreground=theme.palette.muted,
+    background=@core.Brush::solid(base.multiply_alpha(0.5)),
+    radius=theme.radius_scale.md,
+  )
+  { normal, hovered, pressed, disabled }
 }
 
 ///|
 pub fn ButtonStyle::outline(
   theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
+  let border = @core.BorderStyle::new(
+    brush=@core.Brush::solid(theme.palette.outline),
+    width=1.0,
+  )
   let normal = control_state(
     foreground=theme.foreground,
     background=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+    border~,
+    radius=theme.radius_scale.md,
+  )
+  let hovered = control_state(
+    foreground=theme.foreground,
+    background=@core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.5)),
+    border~,
+    radius=theme.radius_scale.md,
+  )
+  let pressed = control_state(
+    foreground=theme.foreground,
+    background=@core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.9)),
+    border~,
+    radius=theme.radius_scale.md,
+  )
+  let disabled = control_state(
+    foreground=theme.palette.muted,
+    background=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
     border=@core.BorderStyle::new(
-      brush=@core.Brush::solid(theme.palette.outline),
+      brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.5)),
       width=1.0,
     ),
     radius=theme.radius_scale.md,
   )
-  { normal, hovered: normal, pressed: normal, disabled: normal }
+  { normal, hovered, pressed, disabled }
 }
 
 ///|
 pub fn ButtonStyle::ghost(
   theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
+  let transparent = @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0))
   let normal = control_state(
     foreground=theme.foreground,
-    background=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
+    background=transparent,
     radius=theme.radius_scale.md,
   )
-  { normal, hovered: normal, pressed: normal, disabled: normal }
+  // Ghost stays borderless and transparent at rest; hover/press introduce a
+  // subtle foreground-tinted wash so the hit area is discoverable.
+  let hovered = control_state(
+    foreground=theme.foreground,
+    background=@core.Brush::solid(theme.foreground.multiply_alpha(0.06)),
+    radius=theme.radius_scale.md,
+  )
+  let pressed = control_state(
+    foreground=theme.foreground,
+    background=@core.Brush::solid(theme.foreground.multiply_alpha(0.12)),
+    radius=theme.radius_scale.md,
+  )
+  let disabled = control_state(
+    foreground=theme.palette.muted,
+    background=transparent,
+    radius=theme.radius_scale.md,
+  )
+  { normal, hovered, pressed, disabled }
 }
 
 ///|

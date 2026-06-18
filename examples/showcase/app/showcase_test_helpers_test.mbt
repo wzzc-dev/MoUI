@@ -142,6 +142,29 @@ fn click_point(runtime : @runtime.AppRuntime, position : @moui.Point) -> Unit {
 }
 
 ///|
+/// Drive the host redraw loop until in-flight animations settle (no further
+/// redraw requested). Button hover/press transitions keep requesting frames
+/// for a few ticks; this drains them so a test can assert a stable state.
+fn settle_redraw(driver : @host.HostRuntimeDriver) -> Unit {
+  // Button transitions use the theme's fast_ms (120ms) at 16ms/frame, so ~8
+  // frames suffice; cap at 32 to avoid an infinite loop if a control never
+  // stops reporting `animating`. Each iteration advances the clock by one
+  // frame, forces a paint (so `active_animations` is recomputed), and checks
+  // whether the runtime still wants another frame.
+  let mut frames = 0
+  while frames < 32 {
+    driver.begin_redraw()
+    ignore(driver.draw_commands())
+    driver.finish_redraw()
+    let result = driver.event_result()
+    if !result.needs_redraw && !result.redraw_requested {
+      return
+    }
+    frames = frames + 1
+  }
+}
+
+///|
 fn last_text_frame(
   commands : Array[@core.DrawCommand],
   text : String,

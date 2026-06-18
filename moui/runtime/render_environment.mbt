@@ -12,6 +12,11 @@ priv struct RenderEnvironment {
   accessibility_contrast : AccessibilityContrast
   reduced_motion : Bool
   content_size_category : ContentSizeCategory
+  /// Current animation clock time in ms. 0.0 means "no clock active" (e.g. the
+  /// intrinsic-size layout path), which makes transition progress clamp to the
+  /// terminal state so non-animated paint is unchanged. Non-zero only during a
+  /// real paint pass driven by `FrameTick`.
+  now_ms : Double
 }
 
 ///|
@@ -31,6 +36,7 @@ fn RenderEnvironment::from_environment(
     accessibility_contrast: environment.accessibility_contrast,
     reduced_motion: environment.reduced_motion,
     content_size_category: environment.content_size_category,
+    now_ms: 0.0,
   }
 }
 
@@ -40,6 +46,14 @@ fn RenderEnvironment::with_text_system(
   text_system : TextSystem,
 ) -> RenderEnvironment {
   { ..self, text_system, }
+}
+
+///|
+fn RenderEnvironment::with_now_ms(
+  self : RenderEnvironment,
+  now_ms : Double,
+) -> RenderEnvironment {
+  { ..self, now_ms: now_ms }
 }
 
 ///|
@@ -57,7 +71,8 @@ fn RenderEnvironment::matches_default_cache_key(
   self.layout_direction == LayoutDirection::LeftToRight &&
   self.accessibility_contrast == AccessibilityContrast::Standard &&
   !self.reduced_motion &&
-  self.content_size_category == ContentSizeCategory::Medium
+  self.content_size_category == ContentSizeCategory::Medium &&
+  self.now_ms == 0.0
 }
 
 // ///|
