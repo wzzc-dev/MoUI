@@ -108,7 +108,7 @@ test "pdf workbench dirty save reports adapter requirement" {
     SaveRequested,
     @host.HostAppServices::unavailable(),
   )
-  assert_false(update.effect is @core.Effect::NoEffect)
+  assert_false(update.effect is @moui.Effect::NoEffect)
   let failed = run_pdf_workbench_effect(
     update,
     @host.HostAppServices::unavailable(),

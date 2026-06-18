@@ -26,8 +26,7 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 - `moui/runtime/` exposes app/host `AppRuntime` construction entrypoints and
   owns runtime state, tree/layout/paint, event dispatch, program message drain,
   effect task, subscription lifecycle, and diagnostics.
-- `moui/views/` returns opaque `@moui.View[Msg]` / `@core.View[Msg]`
-  compatible values for app code.
+- `moui/views/` returns app-facing `@moui.View[Msg]` values for app code.
 - `moui/backend/host/` defines shared host contracts; platform backends
   normalize window and input events into `HostEvent`.
 - `moui/backend/<platform>/skia` selects the native Skia raster mainline

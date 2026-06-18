@@ -41,7 +41,7 @@ fn PdfWorkbenchModel::runtime_with_services(
 
 ///|
 fn pdf_workbench_test_runtime(
-  program : @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg],
+  program : @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg],
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {
@@ -53,10 +53,10 @@ fn run_pdf_workbench_effect(
   update : PdfWorkbenchUpdate,
   services : @host.HostAppServices,
 ) -> PdfWorkbenchUpdate {
-  let model = @core.State::new(update.model)
-  let effect = @core.State::new(@core.Effect::none())
+  let model = @moui.State::new(update.model)
+  let effect = @moui.State::new(@moui.Effect::none())
   match update.effect {
-    @core.Effect::Run(_descriptor, run) =>
+    @moui.Effect::Run(_descriptor, run) =>
       run(message => {
         let next = model.get().update_with_services(message, services)
         model.set(next.model)
@@ -74,12 +74,12 @@ fn run_pdf_workbench_effect_chain(
   raster_services? : PdfWorkbenchRasterServices = PdfWorkbenchRasterServices::unavailable(),
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
 ) -> PdfWorkbenchUpdate {
-  let model = @core.State::new(update.model)
-  let effect = @core.State::new(update.effect)
+  let model = @moui.State::new(update.model)
+  let effect = @moui.State::new(update.effect)
   let mut turns = 0
-  while turns < 8 && !(effect.get() is @core.Effect::NoEffect) {
+  while turns < 8 && !(effect.get() is @moui.Effect::NoEffect) {
     let current = effect.get()
-    effect.set(@core.Effect::none())
+    effect.set(@moui.Effect::none())
     run_pdf_workbench_effect_value(
       current, model, effect, services, raster_services, document_services,
     )
@@ -90,15 +90,15 @@ fn run_pdf_workbench_effect_chain(
 
 ///|
 fn run_pdf_workbench_effect_value(
-  current : @core.Effect[PdfWorkbenchMsg],
-  model : @core.State[PdfWorkbenchModel],
-  effect : @core.State[@core.Effect[PdfWorkbenchMsg]],
+  current : @moui.Effect[PdfWorkbenchMsg],
+  model : @moui.State[PdfWorkbenchModel],
+  effect : @moui.State[@moui.Effect[PdfWorkbenchMsg]],
   services : @host.HostAppServices,
   raster_services : PdfWorkbenchRasterServices,
   document_services : PdfWorkbenchDocumentServices,
 ) -> Unit {
   match current {
-    @core.Effect::Run(_descriptor, run) =>
+    @moui.Effect::Run(_descriptor, run) =>
       run(message => {
         let next = model
           .get()
@@ -111,7 +111,7 @@ fn run_pdf_workbench_effect_value(
         model.set(next.model)
         effect.set(next.effect)
       })
-    @core.Effect::Dispatch(run) =>
+    @moui.Effect::Dispatch(run) =>
       run(message => {
         let next = model
           .get()
@@ -124,7 +124,7 @@ fn run_pdf_workbench_effect_value(
         model.set(next.model)
         effect.set(next.effect)
       })
-    @core.Effect::Send(message) => {
+    @moui.Effect::Send(message) => {
       let next = model
         .get()
         .update_with_services(
@@ -136,7 +136,7 @@ fn run_pdf_workbench_effect_value(
       model.set(next.model)
       effect.set(next.effect)
     }
-    @core.Effect::Batch(effects) =>
+    @moui.Effect::Batch(effects) =>
       for nested in effects {
         run_pdf_workbench_effect_value(
           nested, model, effect, services, raster_services, document_services,
@@ -233,7 +233,7 @@ fn pdf_workbench_click_text(
   guard pdf_workbench_text_frame(runtime.draw_commands(), label) is Some(frame) else {
     fail("expected text frame for " + label)
   }
-  let point = @core.Point::new(
+  let point = @moui.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )
@@ -255,7 +255,7 @@ fn pdf_workbench_scroll_at(
   frame : @core.Rect,
   dy~ : Double,
 ) -> Unit {
-  let point = @core.Point::new(
+  let point = @moui.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )
@@ -264,7 +264,7 @@ fn pdf_workbench_scroll_at(
       @core.PointerEvent::new(
         position=point,
         phase=@core.PointerPhase::Move,
-        wheel_delta=@core.Point::new(x=0.0, y=dy),
+        wheel_delta=@moui.Point::new(x=0.0, y=dy),
       ),
     ),
   )

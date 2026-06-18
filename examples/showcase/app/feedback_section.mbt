@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::feedback_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let action = @views.StateViewAction::new(label="Retry", message=ToggleActive)
   let toast_queue : @views.ToastQueue[ShowcaseMsg] = @views.ToastQueue::new(items=[
     @views.ToastQueueItem::new(

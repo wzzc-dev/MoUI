@@ -1,10 +1,10 @@
 ///|
 fn ShowcaseModel::text_media_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
   opacity : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   self.section_panel(
     theme,
     "Text & Media",

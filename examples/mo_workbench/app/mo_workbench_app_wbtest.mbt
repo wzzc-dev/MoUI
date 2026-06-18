@@ -387,44 +387,44 @@ fn draw_solid_fill_count(
 }
 
 ///|
-fn test_workbench_app_background(scheme : @core.ColorScheme) -> @core.Color {
+fn test_workbench_app_background(scheme : @moui.ColorScheme) -> @core.Color {
   match scheme {
-    @core.ColorScheme::Light => test_ui_color(0.965, 0.966, 0.958)
-    @core.ColorScheme::Dark => test_ui_color(0.055, 0.060, 0.070)
+    @moui.ColorScheme::Light => test_ui_color(0.965, 0.966, 0.958)
+    @moui.ColorScheme::Dark => test_ui_color(0.055, 0.060, 0.070)
   }
 }
 
 ///|
-fn test_workbench_sidebar_background(scheme : @core.ColorScheme) -> @core.Color {
+fn test_workbench_sidebar_background(scheme : @moui.ColorScheme) -> @core.Color {
   match scheme {
-    @core.ColorScheme::Light => test_ui_color(0.905, 0.910, 0.905)
-    @core.ColorScheme::Dark => test_ui_color(0.075, 0.080, 0.092)
+    @moui.ColorScheme::Light => test_ui_color(0.905, 0.910, 0.905)
+    @moui.ColorScheme::Dark => test_ui_color(0.075, 0.080, 0.092)
   }
 }
 
 ///|
-fn test_workbench_main_background(scheme : @core.ColorScheme) -> @core.Color {
+fn test_workbench_main_background(scheme : @moui.ColorScheme) -> @core.Color {
   match scheme {
-    @core.ColorScheme::Light => test_ui_color(0.975, 0.976, 0.968)
-    @core.ColorScheme::Dark => test_ui_color(0.062, 0.067, 0.078)
+    @moui.ColorScheme::Light => test_ui_color(0.975, 0.976, 0.968)
+    @moui.ColorScheme::Dark => test_ui_color(0.062, 0.067, 0.078)
   }
 }
 
 ///|
-fn test_workbench_panel_background(scheme : @core.ColorScheme) -> @core.Color {
+fn test_workbench_panel_background(scheme : @moui.ColorScheme) -> @core.Color {
   match scheme {
-    @core.ColorScheme::Light => test_ui_color(0.992, 0.993, 0.988)
-    @core.ColorScheme::Dark => test_ui_color(0.105, 0.112, 0.128)
+    @moui.ColorScheme::Light => test_ui_color(0.992, 0.993, 0.988)
+    @moui.ColorScheme::Dark => test_ui_color(0.105, 0.112, 0.128)
   }
 }
 
 ///|
 fn test_workbench_status_bar_background(
-  scheme : @core.ColorScheme,
+  scheme : @moui.ColorScheme,
 ) -> @core.Color {
   match scheme {
-    @core.ColorScheme::Light => test_ui_color(0.910, 0.918, 0.912)
-    @core.ColorScheme::Dark => test_ui_color(0.083, 0.089, 0.102)
+    @moui.ColorScheme::Light => test_ui_color(0.910, 0.918, 0.912)
+    @moui.ColorScheme::Dark => test_ui_color(0.083, 0.089, 0.102)
   }
 }
 
@@ -453,7 +453,7 @@ fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text to click: " + text)
   }
-  let point = @core.Point::new(
+  let point = @moui.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )
@@ -542,7 +542,7 @@ fn first_surface_frame(commands : Array[@core.DrawCommand]) -> @core.Rect? {
 
 ///|
 fn run_workbench_effect(update : WorkbenchUpdate) -> WorkbenchModel {
-  let model = @core.State::new(update.model)
+  let model = @moui.State::new(update.model)
   let dispatch = message => model.set(model.get().update(message))
   match update.effect {
     NoEffect => ()
@@ -566,7 +566,7 @@ fn run_workbench_effect_with_transport(
   update : WorkbenchUpdate,
   transport : PiTransportRuntime,
 ) -> WorkbenchModel {
-  let model = @core.State::new(update.model)
+  let model = @moui.State::new(update.model)
   fn dispatch(message : WorkbenchMsg) -> Unit {
     let next = model.get().update_with_transport(message, transport)
     model.set(next.model)
@@ -600,7 +600,7 @@ fn run_workbench_effect_with_agent_connectors(
   transport : PiTransportRuntime,
   connectors : Array[AgentConnectorRuntime],
 ) -> WorkbenchModel {
-  let model = @core.State::new(update.model)
+  let model = @moui.State::new(update.model)
   fn dispatch(message : WorkbenchMsg) -> Unit {
     let next = model
       .get()

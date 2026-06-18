@@ -74,7 +74,7 @@ pub struct PdfWorkbenchModel {
   raster_cache : Array[PdfWorkbenchRasterPage]
   sidebar_scroll : @core.ScrollState
   inspector_scroll : @core.ScrollState
-  preview_scroll_offset : @core.Point
+  preview_scroll_offset : @moui.Point
   reader_fullscreen : Bool
   query : String
   metadata_title_draft : String
@@ -89,7 +89,7 @@ pub struct PdfWorkbenchModel {
 ///|
 priv struct PdfWorkbenchUpdate {
   model : PdfWorkbenchModel
-  effect : @core.Effect[PdfWorkbenchMsg]
+  effect : @moui.Effect[PdfWorkbenchMsg]
 }
 
 ///|
@@ -115,7 +115,7 @@ pub enum PdfWorkbenchMsg {
   AddBookmarkForCurrentPage
   AnnotationTextChanged(String)
   AddAnnotationForCurrentPage
-  PreviewScrolled(@core.Point)
+  PreviewScrolled(@moui.Point)
   ToggleReaderFullscreen
   ZoomIn
   ZoomOut
@@ -143,7 +143,7 @@ pub fn PdfWorkbenchModel::new() -> PdfWorkbenchModel {
     raster_cache: [],
     sidebar_scroll: @core.ScrollState::new(),
     inspector_scroll: @core.ScrollState::new(),
-    preview_scroll_offset: @core.Point::new(x=0.0, y=0.0),
+    preview_scroll_offset: @moui.Point::new(x=0.0, y=0.0),
     reader_fullscreen: false,
     query: "",
     metadata_title_draft: "",
@@ -159,7 +159,7 @@ pub fn PdfWorkbenchModel::new() -> PdfWorkbenchModel {
 ///|
 fn PdfWorkbenchUpdate::new(
   model : PdfWorkbenchModel,
-  effect? : @core.Effect[PdfWorkbenchMsg] = @core.Effect::none(),
+  effect? : @moui.Effect[PdfWorkbenchMsg] = @moui.Effect::none(),
 ) -> PdfWorkbenchUpdate {
   { model, effect }
 }
@@ -167,7 +167,7 @@ fn PdfWorkbenchUpdate::new(
 ///|
 fn PdfWorkbenchUpdate::as_tuple(
   self : PdfWorkbenchUpdate,
-) -> (PdfWorkbenchModel, @core.Effect[PdfWorkbenchMsg]) {
+) -> (PdfWorkbenchModel, @moui.Effect[PdfWorkbenchMsg]) {
   (self.model, self.effect)
 }
 
@@ -267,7 +267,7 @@ fn PdfWorkbenchModel::update_with_services(
 fn PdfWorkbenchModel::subscriptions(
   self : PdfWorkbenchModel,
   services : @host.HostAppServices,
-) -> @core.Subscription[PdfWorkbenchMsg] {
+) -> @moui.Subscription[PdfWorkbenchMsg] {
   match self.status {
     Pending(id, label) =>
       services.completion_subscription(
@@ -275,14 +275,14 @@ fn PdfWorkbenchModel::subscriptions(
         map=completion => HostCompleted(completion),
         label~,
       )
-    _ => @core.Subscription::none()
+    _ => @moui.Subscription::none()
   }
 }
 
 ///|
 pub fn PdfWorkbenchApp::program(
   self : PdfWorkbenchApp,
-) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
+) -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
   ignore(self)
   PdfWorkbenchModel::new().program()
 }
@@ -295,7 +295,7 @@ pub fn PdfWorkbenchApp::program_with_services(
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
   startup_pdf_path? : String = "",
   startup_page_number? : Int = 1,
-) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
+) -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
   ignore(self)
   PdfWorkbenchModel::new().program_with_services(
     services,
@@ -309,7 +309,7 @@ pub fn PdfWorkbenchApp::program_with_services(
 ///|
 pub fn PdfWorkbenchModel::program(
   self : PdfWorkbenchModel,
-) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
+) -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
   self.program_with_services(@host.HostAppServices::unavailable())
 }
 
@@ -321,8 +321,8 @@ pub fn PdfWorkbenchModel::program_with_services(
   document_services? : PdfWorkbenchDocumentServices = PdfWorkbenchDocumentServices::lightweight(),
   startup_pdf_path? : String = "",
   startup_page_number? : Int = 1,
-) -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
-  @core.Program::new_with_environment(
+) -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
+  @moui.Program::new_with_environment(
     init=() => {
       self
       .request_startup_pdf(startup_pdf_path, startup_page_number, services)
@@ -344,6 +344,6 @@ pub fn PdfWorkbenchModel::program_with_services(
 }
 
 ///|
-pub fn program() -> @core.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
+pub fn program() -> @moui.Program[PdfWorkbenchModel, PdfWorkbenchMsg] {
   PdfWorkbenchModel::new().program()
 }

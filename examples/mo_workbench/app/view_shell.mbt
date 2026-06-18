@@ -1,9 +1,9 @@
 ///|
 fn workbench_layout(
-  viewport : @core.Size,
+  viewport : @moui.Size,
   inspector_requested : Bool,
 ) -> WorkbenchLayout {
-  let viewport = @core.Size::new(
+  let viewport = @moui.Size::new(
     width=workbench_max_double(1.0, viewport.width),
     height=workbench_max_double(1.0, viewport.height),
   )
@@ -110,15 +110,15 @@ fn workbench_min_double(a : Double, b : Double) -> Double {
 }
 
 ///|
-fn WorkbenchModel::view(self : WorkbenchModel) -> @core.View[WorkbenchMsg] {
-  self.view_for_size(@core.Size::new(width=1220.0, height=780.0))
+fn WorkbenchModel::view(self : WorkbenchModel) -> @moui.View[WorkbenchMsg] {
+  self.view_for_size(@moui.Size::new(width=1220.0, height=780.0))
 }
 
 ///|
 fn WorkbenchModel::view_with_environment(
   self : WorkbenchModel,
-  env : @core.ViewEnvironment,
-) -> @core.View[WorkbenchMsg] {
+  env : @moui.ViewEnvironment,
+) -> @moui.View[WorkbenchMsg] {
   self.view_for_size(
     env.viewport_size(),
     scheme=self.appearance_color_scheme(env.environment().color_scheme),
@@ -128,9 +128,9 @@ fn WorkbenchModel::view_with_environment(
 ///|
 fn WorkbenchModel::view_for_size(
   self : WorkbenchModel,
-  viewport : @core.Size,
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-) -> @core.View[WorkbenchMsg] {
+  viewport : @moui.Size,
+  scheme? : @moui.ColorScheme = @moui.ColorScheme::Light,
+) -> @moui.View[WorkbenchMsg] {
   let theme = workbench_theme(scheme)
   let layout = workbench_layout(viewport, true)
   surface(
@@ -155,9 +155,9 @@ fn WorkbenchModel::view_for_size(
 fn WorkbenchModel::app_sidebar(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     self.sidebar_brand(layout, theme),
     self.sidebar_new_session_button(layout, theme),
     self.sidebar_section_label("任务历史", layout, theme),
@@ -183,8 +183,8 @@ fn WorkbenchModel::app_sidebar(
 fn WorkbenchModel::sidebar_brand(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   ignore(self)
   column(
     [
@@ -212,9 +212,9 @@ fn WorkbenchModel::sidebar_brand(
 fn WorkbenchModel::pinned_threads(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = []
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
+  let rows : Array[@moui.View[WorkbenchMsg]] = []
   for session in self.sessions {
     rows.push(
       self.thread_button(
@@ -234,8 +234,8 @@ fn WorkbenchModel::pinned_threads(
 fn WorkbenchModel::sidebar_new_session_button(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   ignore(self)
   button(
     "新对话",
@@ -258,8 +258,8 @@ fn WorkbenchModel::should_show_sidebar_transport_footer(
 fn WorkbenchModel::sidebar_settings_button(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   button(
     "设置",
     on_click=SelectPanel("settings"),
@@ -274,8 +274,8 @@ fn WorkbenchModel::sidebar_settings_button(
 fn WorkbenchModel::sidebar_footer(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let status = self.active_agent_backend_status()
   row(
     [
@@ -291,8 +291,8 @@ fn WorkbenchModel::sidebar_footer(
 fn sidebar_backend_status_cell(
   status : AgentBackendStatus,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let width = layout.sidebar_inner_width - 72.0
   if status.status_label == "" || status.status_label == "未连接" {
     if status.pending_count > 0 {
@@ -317,10 +317,10 @@ fn WorkbenchModel::thread_button(
   label : String,
   message : WorkbenchMsg,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   selected~ : Bool,
   meta~ : String,
-) -> @core.View[WorkbenchMsg] {
+) -> @moui.View[WorkbenchMsg] {
   ignore(self)
   let background = if selected {
     workbench_sidebar_selected_background(theme)
@@ -366,8 +366,8 @@ fn WorkbenchModel::thread_button(
 fn WorkbenchModel::conversation_surface(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let scroll_height = self.main_scroll_height(layout)
   let content_height = self.chat_content_height(layout)
   let max_scroll = workbench_max_double(0.0, content_height - scroll_height)
@@ -383,7 +383,7 @@ fn WorkbenchModel::conversation_surface(
         [
           scroll_view(
             self.chat_transcript(layout, theme),
-            offset=@core.Point::new(x=0.0, y=offset_y),
+            offset=@moui.Point::new(x=0.0, y=offset_y),
             width=layout.content_width,
             height=scroll_height,
             on_scroll=Some(delta => {
@@ -445,11 +445,11 @@ fn WorkbenchModel::settings_page_active(self : WorkbenchModel) -> Bool {
 fn WorkbenchModel::settings_page(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let width = settings_page_width(layout)
   let body_width = workbench_max_double(1.0, width - 28.0)
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     self.settings_header_row(body_width, theme),
     self.settings_appearance_row(body_width, theme),
     self.settings_workspace_row(body_width, theme),
@@ -481,8 +481,8 @@ fn settings_page_width(layout : WorkbenchLayout) -> Double {
 fn WorkbenchModel::settings_header_row(
   self : WorkbenchModel,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   ignore(self)
   row(
     [
@@ -518,8 +518,8 @@ fn WorkbenchModel::settings_header_row(
 fn WorkbenchModel::settings_appearance_row(
   self : WorkbenchModel,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let label_width = 112.0
   let button_width = workbench_clamp_double(
     (width - label_width - 16.0 - 16.0) / 3.0,
@@ -569,8 +569,8 @@ fn WorkbenchModel::settings_appearance_row(
 fn WorkbenchModel::settings_workspace_row(
   self : WorkbenchModel,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let label_width = 112.0
   let button_width = workbench_clamp_double(
     (width - label_width - 16.0 - 8.0) / 2.0,
@@ -618,8 +618,8 @@ fn WorkbenchModel::settings_workspace_row(
 fn WorkbenchModel::settings_context_row(
   self : WorkbenchModel,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let label_width = 112.0
   let chip_width = workbench_clamp_double(
     (width - label_width - 16.0 - 18.0) / 4.0,
@@ -652,8 +652,8 @@ fn WorkbenchModel::settings_context_row(
 fn WorkbenchModel::settings_backend_row(
   self : WorkbenchModel,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let label_width = 112.0
   settings_row_surface(
     row(
@@ -680,8 +680,8 @@ fn settings_row_label(
   title : String,
   detail : String,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   column(
     [
       text(title, role=Control, theme~, width~, height=22.0),
@@ -708,8 +708,8 @@ fn setting_choice_button(
   selected~ : Bool,
   message~ : WorkbenchMsg,
   width~ : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   button(
     label,
     on_click=message,
@@ -722,10 +722,10 @@ fn setting_choice_button(
 
 ///|
 fn settings_row_surface(
-  child : @core.View[WorkbenchMsg],
+  child : @moui.View[WorkbenchMsg],
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   surface(
     child,
     width~,
@@ -740,11 +740,11 @@ fn settings_row_surface(
 ///|
 fn WorkbenchModel::appearance_color_scheme(
   self : WorkbenchModel,
-  environment_scheme : @core.ColorScheme,
-) -> @core.ColorScheme {
+  environment_scheme : @moui.ColorScheme,
+) -> @moui.ColorScheme {
   match self.appearance_mode {
-    "light" => @core.ColorScheme::Light
-    "dark" => @core.ColorScheme::Dark
+    "light" => @moui.ColorScheme::Light
+    "dark" => @moui.ColorScheme::Dark
     _ => environment_scheme
   }
 }
@@ -774,8 +774,8 @@ fn WorkbenchModel::main_scroll_height(
 fn WorkbenchModel::top_bar(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let active = self.active_session()
   let show_backend_chip = self.should_show_top_bar_backend_chip()
   let show_status_meta = should_show_session_status_meta(active.status)
@@ -784,7 +784,7 @@ fn WorkbenchModel::top_bar(
     show_backend_chip~,
     show_status_meta~,
   )
-  let controls : Array[@core.View[WorkbenchMsg]] = [
+  let controls : Array[@moui.View[WorkbenchMsg]] = [
     self.top_bar_identity(active, identity_width, theme),
     spacer(min_length=10.0, weight=1.0),
   ]
@@ -837,8 +837,8 @@ fn WorkbenchModel::should_show_top_bar_backend_chip(
 ///|
 fn WorkbenchModel::active_agent_backend_chip(
   self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let status = self.active_agent_backend_status()
   badge("Agent " + status.label, tone=Neutral, theme~, width=82.0)
 }
@@ -846,10 +846,10 @@ fn WorkbenchModel::active_agent_backend_chip(
 ///|
 fn WorkbenchModel::backend_selector_cell(
   self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let active = self.active_agent_backend_profile()
-  let controls : Array[@core.View[WorkbenchMsg]] = []
+  let controls : Array[@moui.View[WorkbenchMsg]] = []
   for profile in agent_backend_profiles() {
     controls.push(
       button(
@@ -870,8 +870,8 @@ fn WorkbenchModel::top_bar_identity(
   self : WorkbenchModel,
   active : WorkbenchSession,
   identity_width : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   ignore(self)
   let title_width = workbench_max_double(1.0, identity_width - 78.0 - 8.0)
   let title_label = end_ellipsis_label(
