@@ -4,9 +4,9 @@ fn guidance_include_rules() -> Array[TextRule] {
     { path: "README.md", token: "sh scripts/dev-check.sh" },
     { path: "README.md", token: "manual smoke" },
     { path: "README.md", token: "artifacts/ is ignored" },
-    { path: "moui/README.mbt.md", token: "sh scripts/dev-check.sh" },
-    { path: "moui/README.mbt.md", token: "manual smoke" },
-    { path: "moui/README.mbt.md", token: "artifacts/ is ignored" },
+    { path: "README.mbt.md", token: "sh scripts/dev-check.sh" },
+    { path: "README.mbt.md", token: "manual smoke" },
+    { path: "README.mbt.md", token: "artifacts/" },
     { path: "docs/testing.md", token: "Daily" },
     { path: "docs/testing.md", token: "Focused" },
     { path: "docs/testing.md", token: "Smoke" },
@@ -32,6 +32,14 @@ fn guidance_include_rules() -> Array[TextRule] {
     {
       path: "skills/moui-framework-development-skill/SKILL.md",
       token: "Manual smoke",
+    },
+    {
+      path: "skills/moui-app-development/SKILL.md",
+      token: "examples/<name>/app",
+    },
+    {
+      path: "skills/moui-app-development/SKILL.md",
+      token: "sh scripts/dev-check.sh",
     },
     {
       path: "scripts/dev-check.sh",
@@ -272,10 +280,10 @@ fn guidance_absent_rules() -> Array[TextRule] {
     },
     { path: "README.md", token: stale_legacy_renderer_marker() },
     {
-      path: "moui/README.mbt.md",
+      path: "README.mbt.md",
       token: stale_platform_runtime_manifest_token() + ".json",
     },
-    { path: "moui/README.mbt.md", token: stale_legacy_renderer_marker() },
+    { path: "README.mbt.md", token: stale_legacy_renderer_marker() },
     {
       path: "docs/testing.md",
       token: stale_checked_conformance_artifacts_script(),
@@ -336,5 +344,5 @@ fn guidance_no_workflow_file_rules() -> Array[String] {
 
 ///|
 fn guidance_symlink_rules() -> Array[SymlinkRule] {
-  [{ path: "README.md", target: "moui/README.mbt.md" }]
+  [{ path: "README.md", target: "README.mbt.md" }]
 }
