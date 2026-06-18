@@ -892,8 +892,7 @@ fn app_api_hygiene_test_path(path : String) -> Bool {
 
 ///|
 fn app_api_hygiene_allowed_core_view_line(line : String) -> Bool {
-  line.contains("@core.View::node") ||
-  line.contains("@core.View::primitive_")
+  line.contains("@core.View::node") || line.contains("@core.View::primitive_")
 }
 
 ///|

@@ -13,10 +13,12 @@ priv enum TextCaretDirection {
   MoveEnd
 }
 
+///|
 test {
   ignore(TextCaretDirection::MoveStart)
   ignore(TextCaretDirection::MoveEnd)
 }
+
 ///|
 priv struct TextCaretMoveResult {
   caret : Int
@@ -404,10 +406,13 @@ fn text_input_grapheme_selection(
     None => None
   }
 }
+
+///|
 test {
   let boundaries = @core.TextGraphemeBoundaries::new(text="hello")
   ignore(text_input_grapheme_selection(boundaries, None))
 }
+
 ///|
 fn composition_start_index(
   text : String,

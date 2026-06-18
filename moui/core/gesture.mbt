@@ -28,8 +28,15 @@ priv struct LongPressGestureResult {
   cancelled : Bool
 }
 
+///|
 test {
-  ignore(LongPressGestureResult::{ state: LongPressGestureState::new(), recognized : true, cancelled : true }.state)
+  ignore(
+    LongPressGestureResult::{
+      state: LongPressGestureState::new(),
+      recognized: true,
+      cancelled: true,
+    }.state,
+  )
 }
 
 ///|
@@ -46,9 +53,16 @@ priv struct DoubleTapGestureResult {
   recognized : Bool
 }
 
+///|
 test {
-  ignore(DoubleTapGestureResult::{ state: DoubleTapGestureState::new(), recognized: false}.state)
+  ignore(
+    DoubleTapGestureResult::{
+      state: DoubleTapGestureState::new(),
+      recognized: false,
+    }.state,
+  )
 }
+
 ///|
 pub(all) enum DragGesturePhase {
   Idle
@@ -82,8 +96,11 @@ priv struct DragGestureResult {
   event : DragGestureEvent?
 }
 
+///|
 test {
-  ignore(DragGestureResult::{state: DragGestureState::new(), event: None}.state)
+  ignore(
+    DragGestureResult::{ state: DragGestureState::new(), event: None }.state,
+  )
 }
 
 ///|
