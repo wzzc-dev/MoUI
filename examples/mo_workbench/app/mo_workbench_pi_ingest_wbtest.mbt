@@ -102,7 +102,7 @@ test "workbench selecting fixture session clears stale Pi surface without transp
   inspect(model.last_status, content="Workbench session selected")
   inspect(model.prompt, content="")
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Disconnected")
+  inspect(model.transport.display_status_label(), content="未连接")
   inspect(model.transport.last_json_line, content="")
   inspect(model.transcript.length(), content="0")
   inspect(model.events.length(), content="0")
@@ -122,7 +122,7 @@ test "workbench applies transport events to model timeline" {
   let model = WorkbenchModel::new().update(
     ReceiveTransport(ProcessStarted("4242")),
   )
-  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.display_status_label(), content="运行中")
   inspect(model.transport.last_json_line, content="pid 4242")
   assert_true(
     model.events.any(event => event.title == "Pi RPC process started"),

@@ -19,7 +19,7 @@ pub fn TextCommandResult::handled(
 }
 
 ///|
-priv enum TextCaretDirection {
+pub(all) enum TextCaretDirection {
   MoveLeft
   MoveRight
   MoveStart
@@ -27,7 +27,7 @@ priv enum TextCaretDirection {
 }
 
 ///|
-priv struct TextCaretMoveResult {
+pub(all) struct TextCaretMoveResult {
   caret : Int
   selection : TextRange?
 }
@@ -61,7 +61,7 @@ fn text_selection_anchor(caret : Int, selection : TextRange?) -> Int {
 }
 
 ///|
-fn move_text_caret(
+pub fn move_text_caret(
   text : String,
   caret : Int,
   selection : TextRange?,

@@ -1,3 +1,4 @@
+using @core { optional_rect_union }
 ///|
 fn ElementNode::render_with_environment(
   self : ElementNode,

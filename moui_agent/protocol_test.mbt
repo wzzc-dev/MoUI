@@ -51,7 +51,7 @@ fn MockAgentHost::new() -> MockAgentHost {
 
 ///|
 /// Implements AgentHost for the mock. Used by the contract tests below.
-impl AgentHost for MockAgentHost with fn semantics(self : MockAgentHost) -> SemanticsSnapshot {
+impl AgentHost for MockAgentHost with fn semantics(_self : MockAgentHost) -> SemanticsSnapshot {
   SemanticsSnapshot::{ root: mock_root, node_count: 1, depth: 1 }
 }
 
@@ -69,12 +69,12 @@ impl AgentHost for MockAgentHost with fn state(self : MockAgentHost) -> RuntimeS
 }
 
 ///|
-impl AgentHost for MockAgentHost with fn frame(self : MockAgentHost) -> FrameSnapshot {
+impl AgentHost for MockAgentHost with fn frame(_self : MockAgentHost) -> FrameSnapshot {
   FrameSnapshot::{ texts: [], draw_command_count: 0 }
 }
 
 ///|
-impl AgentHost for MockAgentHost with fn capabilities(self : MockAgentHost) -> Array[
+impl AgentHost for MockAgentHost with fn capabilities(_self : MockAgentHost) -> Array[
   AgentCapability,
 ] {
   [
@@ -176,8 +176,8 @@ test "AgentHost: capabilities lists dispatch ops" {
   let host = MockAgentHost::new()
   let caps = host.capabilities()
   let kinds = caps.map(c => c.kind)
-  if not(kinds.contains("dispatch_command")) {
-    fail("expected dispatch_command capability; got \{kinds}")
+  if !kinds.contains("dispatch_command") {
+    fail("expected dispatch_command capability")
   }
 }
 
@@ -185,7 +185,7 @@ test "AgentHost: capabilities lists dispatch ops" {
 test "AgentHost: dispatch_command records the intent" {
   let host = MockAgentHost::new()
   let r = host.dispatch_command(@core.CommandIntent::Activate)
-  if not(r.accepted) {
+  if !r.accepted {
     fail("expected accepted")
   }
   if host.dispatched_intents.length() != 1 {
@@ -272,7 +272,7 @@ test "AgentHost: EventFilter::Only restricts categories" {
     ),
   )
   if received != ["keyboard"] {
-    fail("expected only keyboard event; got \{received}")
+    fail("expected only keyboard event")
   }
 }
 

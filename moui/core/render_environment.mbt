@@ -1,5 +1,5 @@
 ///|
-priv struct RenderEnvironment {
+pub struct RenderEnvironment {
   font : FontSpec?
   foreground : Color?
   corner_radius : Double?
@@ -15,7 +15,7 @@ priv struct RenderEnvironment {
 }
 
 ///|
-fn RenderEnvironment::from_environment(
+pub fn RenderEnvironment::from_environment(
   environment : Environment,
 ) -> RenderEnvironment {
   {
@@ -35,7 +35,7 @@ fn RenderEnvironment::from_environment(
 }
 
 ///|
-fn RenderEnvironment::with_text_system(
+pub fn RenderEnvironment::with_text_system(
   self : RenderEnvironment,
   text_system : TextSystem,
 ) -> RenderEnvironment {
@@ -43,7 +43,7 @@ fn RenderEnvironment::with_text_system(
 }
 
 ///|
-fn RenderEnvironment::matches_default_cache_key(
+pub fn RenderEnvironment::matches_default_cache_key(
   self : RenderEnvironment,
 ) -> Bool {
   self.font is None &&
@@ -61,7 +61,7 @@ fn RenderEnvironment::matches_default_cache_key(
 }
 
 ///|
-fn environment_color(
+pub fn environment_color(
   environment : RenderEnvironment,
   fallback : Color,
 ) -> Color {
@@ -74,7 +74,7 @@ fn environment_color(
 }
 
 ///|
-fn environment_font(
+pub fn environment_font(
   environment : RenderEnvironment,
   fallback : FontSpec,
 ) -> FontSpec {
@@ -87,7 +87,7 @@ fn environment_font(
 }
 
 ///|
-fn environment_measure_text(
+pub fn environment_measure_text(
   environment : RenderEnvironment,
   input : TextLayoutInput,
 ) -> TextLayoutResult {
