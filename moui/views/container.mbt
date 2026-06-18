@@ -37,7 +37,7 @@ pub fn[Msg] card(
   child : @core.View[Msg],
   width? : Double,
   height? : Double,
-  padding? : Double = 32.0,
+  padding? : Double = 24.0,
   theme? : @core.Theme = default_theme(),
 ) -> @core.View[Msg] {
   container(
