@@ -17,7 +17,7 @@ pub fn[Msg] toolbar(
 
 ///|
 pub fn[Msg] button_group(
-  items : Array[MenuItem[Msg]],
+  items : Array[ActionItem[Msg]],
   selected? : String = "",
   theme? : @core.Theme = default_theme(),
   button_width? : Double = 88.0,
@@ -50,7 +50,7 @@ pub fn[Msg] button_group(
 
 ///|
 pub fn[Msg] command_bar(
-  items : Array[MenuItem[Msg]],
+  items : Array[ActionItem[Msg]],
   theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
   height? : Double = 48.0,

@@ -7,6 +7,14 @@ pub struct MenuItem[Msg] {
 }
 
 ///|
+pub struct ActionItem[Msg] {
+  id : String
+  label : String
+  message : Msg
+  enabled : Bool
+}
+
+///|
 pub struct CommandMenuSection {
   title : String
   commands : Array[ActionCommand]
@@ -33,6 +41,16 @@ pub fn[Msg] MenuItem::new(
   message~ : Msg,
   enabled? : Bool = true,
 ) -> MenuItem[Msg] {
+  { id, label, message, enabled }
+}
+
+///|
+pub fn[Msg] ActionItem::new(
+  id~ : String,
+  label~ : String,
+  message~ : Msg,
+  enabled? : Bool = true,
+) -> ActionItem[Msg] {
   { id, label, message, enabled }
 }
 

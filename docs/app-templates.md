@@ -242,7 +242,7 @@ pub fn DashboardModel::view(self : DashboardModel) -> @moui.View[DashboardMsg] {
         selection_toolbar(
           selected_count=self.selected_count,
           total_count=self.rows.length(),
-          actions=[@views.MenuItem::new(id="export", label="Export", message=ExportRows)],
+          actions=[@views.ActionItem::new(id="export", label="Export", message=ExportRows)],
           on_clear=Some(ClearSelection),
         ),
       ], spacing=12.0),
@@ -381,8 +381,8 @@ pub fn EditorModel::view(self : EditorModel) -> @moui.View[EditorMsg] {
         @views.MenuItem::new(id="save", label="Save", message=DispatchCommand(@views.CommandIntent::Submit)),
       ]),
       command_bar([
-        @views.MenuItem::new(id="open", label="Open", message=BrowseForDocument),
-        @views.MenuItem::new(id="commands", label="Commands", message=TogglePalette),
+        @views.ActionItem::new(id="open", label="Open", message=BrowseForDocument),
+        @views.ActionItem::new(id="commands", label="Commands", message=TogglePalette),
       ]),
       editor,
       status_bar([if self.dirty { "Unsaved" } else { "Saved" }]),

@@ -1,4 +1,40 @@
 ///|
+pub fn[Msg] text(
+  text : String,
+  role? : TextRole = TextRole::Body,
+  theme? : @core.Theme = default_theme(),
+  width? : Double = 160.0,
+  height? : Double = 32.0,
+) -> @core.View[Msg] {
+  let size = @core.Size::new(width~, height~)
+  let font = role.font(theme)
+  let color = role.color(theme)
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="Text"),
+    revision=() => {
+      "text:\{text}:\{size.width}:\{size.height}:\{font.size}:\{font.weight}:\{color.r}:\{color.g}:\{color.b}:\{color.a}"
+    },
+    layout=ctx => {
+      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
+    },
+    paint=ctx => {
+      @core.ViewPaintPlan::commands([
+        @core.DrawCommand::DrawText(
+          @core.TextRun::new(text~, frame=ctx.frame, font~, color~),
+        ),
+      ])
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(
+        role=@core.SemanticsRole::Text,
+        label=text,
+        value=text,
+      )
+    },
+  )
+}
+
+///|
 pub fn[Msg] text_field(
   value : String,
   on_input~ : (String) -> Msg,
@@ -64,4 +100,26 @@ pub fn[Msg] text_field_binding(
     corner_radius=normal.radius,
     on_submit~,
   )
+}
+
+///|
+pub fn[Msg] text_area(
+  value : String,
+  on_input~ : (String) -> Msg,
+  placeholder? : String = "",
+  lines? : Int = 4,
+  variant? : TextFieldVariant = TextFieldVariant::Outline,
+  theme? : @core.Theme = default_theme(),
+  width? : Double = 320.0,
+  line_height? : Double = 28.0,
+) -> @core.View[Msg] {
+  text_field(
+    value,
+    on_input~,
+    placeholder~,
+    variant~,
+    theme~,
+    width~,
+    height=views_max_double(line_height, lines.to_double() * line_height),
+  ).accessibility_label("Multiline text area")
 }

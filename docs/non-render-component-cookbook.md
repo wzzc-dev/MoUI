@@ -123,7 +123,7 @@ fn project_table(
       selection_toolbar(
         selected_count=selection.count(),
         total_count=rows.length(),
-        actions=[@views.MenuItem::new(id="export", label="Export", message=ExportRows)],
+        actions=[@views.ActionItem::new(id="export", label="Export", message=ExportRows)],
         on_clear=Some(ClearSelection),
       ),
       table(
