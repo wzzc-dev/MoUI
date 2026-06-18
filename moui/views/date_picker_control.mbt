@@ -32,25 +32,26 @@ fn[Msg] date_picker_control(
         ),
       )
     },
-    paint=ctx => {
-      let commands : Array[@core.DrawCommand] = []
-      let overlay_commands : Array[@core.DrawCommand] = []
-      append_datepicker_commands(
-        commands,
-        overlay_commands,
-        frame=ctx.frame,
-        selected=selected.get(),
-        view_date=datepicker_view_date(ctx.state, selected.get()),
-        mode~,
-        placeholder~,
-        font~,
-        foreground~,
-        background~,
-        corner_radius~,
-        min_date~,
-        max_date~,
-        expanded=ctx.state.expanded,
-      )
+   paint=ctx => {
+     let commands : Array[@core.DrawCommand] = []
+     let overlay_commands : Array[@core.DrawCommand] = []
+     append_datepicker_commands(
+       commands,
+       overlay_commands,
+       frame=ctx.frame,
+       selected=selected.get(),
+       view_date=datepicker_view_date(ctx.state, selected.get()),
+       mode~,
+       placeholder~,
+       font~,
+       foreground~,
+       background~,
+       corner_radius~,
+       min_date~,
+       max_date~,
+       expanded=ctx.state.expanded,
+        theme=ctx.environment.theme,
+     )
       {
         commands,
         child_layers: [],
@@ -103,17 +104,20 @@ fn append_datepicker_commands(
   foreground~ : @core.Color,
   background~ : @core.Brush,
   corner_radius~ : Double,
-  min_date~ : @core.DateValue?,
-  max_date~ : @core.DateValue?,
-  expanded~ : Bool,
+ min_date~ : @core.DateValue?,
+ max_date~ : @core.DateValue?,
+ expanded~ : Bool,
+  theme~ : @core.Theme,
 ) -> Unit {
-  let theme = @core.Theme::neutral()
+  // Use the active theme (threaded from the paint environment) instead of a
+  // reconstructed neutral theme, so the field outline and popup track the
+  // real color scheme and accent in dark mode.
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
   commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
   commands.push(
     @core.DrawCommand::StrokeRoundedRectBrush(
       rounded,
-      @core.Brush::solid(theme.palette.outline.with_alpha(0.5)),
+      @core.Brush::solid(theme.palette.outline.multiply_alpha(0.6)),
       1.0,
     ),
   )
@@ -149,18 +153,19 @@ fn append_datepicker_commands(
       ),
     ),
   )
-  if expanded {
-    append_datepicker_popup_commands(
-      overlay_commands,
-      frame~,
-      selected~,
-      view_date~,
-      foreground~,
-      background~,
-      min_date~,
-      max_date~,
-    )
-  }
+ if expanded {
+   append_datepicker_popup_commands(
+     overlay_commands,
+     frame~,
+     selected~,
+     view_date~,
+     foreground~,
+     background~,
+     min_date~,
+     max_date~,
+      theme~,
+   )
+ }
 }
 
 ///|
@@ -173,18 +178,24 @@ fn append_datepicker_popup_commands(
   background~ : @core.Brush,
   min_date~ : @core.DateValue?,
   max_date~ : @core.DateValue?,
+  theme~ : @core.Theme,
 ) -> Unit {
-  let theme = @core.Theme::neutral()
   let panel_frame = datepicker_popup_frame(frame)
-  let panel_rounded = @core.RoundedRect::new(rect=panel_frame, radius=8.0)
+  let panel_rounded = @core.RoundedRect::new(
+    rect=panel_frame,
+    radius=theme.radius_scale.lg,
+  )
+  // Use the theme's large elevation shadow so the popup tracks the active
+  // scheme instead of a flat hard-coded black shadow that vanishes in dark.
+  let shadow = theme.shadow_scale.lg
   overlay_commands.push(
     @core.DrawCommand::DrawShadow(
       @core.ShadowSpec::new(
         rect=panel_rounded,
-        color=@core.Color::black().with_alpha(0.15),
-        offset=@core.Point::new(x=0.0, y=4.0),
-        blur_radius=12.0,
-        spread=0.0,
+        color=shadow.color,
+        offset=shadow.offset,
+        blur_radius=shadow.blur_radius,
+        spread=shadow.spread,
       ),
     ),
   )
