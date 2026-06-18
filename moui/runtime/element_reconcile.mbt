@@ -47,18 +47,21 @@ fn ReconcileDirtyKind::combine(
 }
 
 ///|
-fn mount_virtual_node(spec : VirtualNode) -> ElementNode {
-  mount_virtual_node_with_next(spec, 1).node
+fn mount_erased_view_node(spec : ErasedViewNode) -> ElementNode {
+  mount_erased_view_node_with_next(spec, 1).node
 }
 
 ///|
-fn mount_virtual_node_with_next(spec : VirtualNode, next_id : Int) -> MountResult {
-  mount_virtual_node_for_runtime(spec, None, next_id)
+fn mount_erased_view_node_with_next(
+  spec : ErasedViewNode,
+  next_id : Int,
+) -> MountResult {
+  mount_erased_view_node_for_runtime(spec, None, next_id)
 }
 
 ///|
-fn mount_virtual_node_for_runtime(
-  spec : VirtualNode,
+fn mount_erased_view_node_for_runtime(
+  spec : ErasedViewNode,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> MountResult {
@@ -72,8 +75,8 @@ fn mount_virtual_node_for_runtime(
       let built = build_component_child(build, runtime, id, [], [])
       component_subscriptions = built.subscriptions
       component_effects = built.effects
-      let mounted = mount_virtual_node_for_runtime(
-        built.child_virtual_node,
+      let mounted = mount_erased_view_node_for_runtime(
+        built.child_erased_view_node,
         Some(runtime),
         next,
       )
@@ -82,8 +85,10 @@ fn mount_virtual_node_for_runtime(
     }
     _ => ()
   }
-  for child_virtual_node in (spec.children)() {
-    let mounted = mount_virtual_node_for_runtime(child_virtual_node, runtime, next)
+  for child_erased_view_node in (spec.children)() {
+    let mounted = mount_erased_view_node_for_runtime(
+      child_erased_view_node, runtime, next,
+    )
     children.push(mounted.node)
     next = mounted.next_id
   }
@@ -91,7 +96,7 @@ fn mount_virtual_node_for_runtime(
     node: {
       id,
       key: spec.identity_key(),
-      virtual_node: spec,
+      erased_view_node: spec,
       children,
       dirty: DirtyFlags::all(),
       control: ElementControlState::new(),
@@ -109,14 +114,14 @@ fn mount_virtual_node_for_runtime(
 ///|
 fn reconcile_element_for_runtime(
   old : ElementNode,
-  next_virtual_node : VirtualNode,
+  next_erased_view_node : ErasedViewNode,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ReconcileResult {
-  if !old.virtual_node.same_identity(next_virtual_node) {
+  if !old.erased_view_node.same_identity(next_erased_view_node) {
     old.cancel_component_tree_subscriptions()
-    let mounted = mount_virtual_node_for_runtime(
-      next_virtual_node, runtime, next_id,
+    let mounted = mount_erased_view_node_for_runtime(
+      next_erased_view_node, runtime, next_id,
     )
     {
       node: mounted.node,
@@ -124,18 +129,28 @@ fn reconcile_element_for_runtime(
       dirty_kind: ReconcileLayout,
     }
   } else {
-    let own_dirty = old.virtual_node.reconcile_dirty_kind(next_virtual_node)
-    let next_virtual_node = preserve_virtual_node_runtime_state(old.virtual_node, next_virtual_node)
-    old.virtual_node = next_virtual_node
-    old.key = old.virtual_node.identity_key()
-    let children_result = if old.virtual_node.is_building_virtual_node() {
+    let own_dirty = old.erased_view_node.reconcile_dirty_kind(
+      next_erased_view_node,
+    )
+    let next_erased_view_node = preserve_erased_view_node_runtime_state(
+      old.erased_view_node,
+      next_erased_view_node,
+    )
+    old.erased_view_node = next_erased_view_node
+    old.key = old.erased_view_node.identity_key()
+    let children_result = if old.erased_view_node.is_building_erased_view_node() {
       {
         children: old.children,
         next_id,
         dirty_kind: ReconcileDirtyKind::ReconcileClean,
       }
     } else {
-      reconcile_children_for_runtime(old.children, old.virtual_node, runtime, next_id)
+      reconcile_children_for_runtime(
+        old.children,
+        old.erased_view_node,
+        runtime,
+        next_id,
+      )
     }
     old.children = children_result.children
     let dirty_kind = own_dirty.combine(children_result.dirty_kind)
@@ -145,18 +160,21 @@ fn reconcile_element_for_runtime(
 }
 
 ///|
-fn preserve_virtual_node_runtime_state(old : VirtualNode, next : VirtualNode) -> VirtualNode {
+fn preserve_erased_view_node_runtime_state(
+  old : ErasedViewNode,
+  next : ErasedViewNode,
+) -> ErasedViewNode {
   { ..next, state: old.state }
 }
 
 ///|
 fn reconcile_children_for_runtime(
   old_children : Array[ElementNode],
-  next_virtual_node : VirtualNode,
+  next_erased_view_node : ErasedViewNode,
   runtime : RuntimeState?,
   next_id : Int,
 ) -> ChildrenReconcileResult {
-  let next_virtual_nodes = child_virtual_nodes(next_virtual_node)
+  let next_erased_view_nodes = child_erased_view_nodes(next_erased_view_node)
   let children : Array[ElementNode] = []
   let used : Array[Bool] = []
   for _ in old_children {
@@ -164,14 +182,16 @@ fn reconcile_children_for_runtime(
   }
   let mut next = next_id
   let mut dirty = ReconcileDirtyKind::ReconcileClean
-  for index, child_virtual_node in next_virtual_nodes {
-    let old_index = find_reusable_child(old_children, used, child_virtual_node, index)
+  for index, child_erased_view_node in next_erased_view_nodes {
+    let old_index = find_reusable_child(
+      old_children, used, child_erased_view_node, index,
+    )
     match old_index {
       Some(old_index) => {
         used[old_index] = true
         let result = reconcile_element_for_runtime(
           old_children[old_index],
-          child_virtual_node,
+          child_erased_view_node,
           runtime,
           next,
         )
@@ -180,8 +200,8 @@ fn reconcile_children_for_runtime(
         dirty = dirty.combine(result.dirty_kind)
       }
       None => {
-        let mounted = mount_virtual_node_for_runtime(
-          child_virtual_node, runtime, next,
+        let mounted = mount_erased_view_node_for_runtime(
+          child_erased_view_node, runtime, next,
         )
         children.push(mounted.node)
         next = mounted.next_id
@@ -220,15 +240,15 @@ fn ElementNode::apply_reconcile_dirty(
 fn find_reusable_child(
   old_children : Array[ElementNode],
   used : Array[Bool],
-  child_virtual_node : VirtualNode,
+  child_erased_view_node : ErasedViewNode,
   index : Int,
 ) -> Int? {
-  match child_virtual_node.identity_key() {
+  match child_erased_view_node.identity_key() {
     Some(key) => {
       for old_index, old_child in old_children {
         if !used[old_index] &&
           old_child.key == Some(key) &&
-          old_child.virtual_node.kind() == child_virtual_node.kind() {
+          old_child.erased_view_node.kind() == child_erased_view_node.kind() {
           return Some(old_index)
         }
       }
@@ -238,7 +258,8 @@ fn find_reusable_child(
       if index < old_children.length() &&
         !used[index] &&
         old_children[index].key is None &&
-        old_children[index].virtual_node.kind() == child_virtual_node.kind() {
+        old_children[index].erased_view_node.kind() ==
+        child_erased_view_node.kind() {
         Some(index)
       } else {
         None
@@ -247,6 +268,6 @@ fn find_reusable_child(
 }
 
 ///|
-fn child_virtual_nodes(spec : VirtualNode) -> Array[VirtualNode] {
+fn child_erased_view_nodes(spec : ErasedViewNode) -> Array[ErasedViewNode] {
   (spec.children)()
 }

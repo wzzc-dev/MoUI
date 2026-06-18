@@ -13,16 +13,16 @@ matures.
 The runtime pipeline is explicit:
 
 ```text
-View[Msg] -> VirtualNode[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
+View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 ```
 
 ## Project Shape
 
 - `moui/core/` owns platform-neutral contracts, opaque `View`, typed events,
   `Program`, `Effect`, `Subscription`, geometry, draw, semantics, and the
-  generic `VirtualNode` protocol.
+  private custom view protocol wrapped by `View[Msg]`.
 - `moui/views/` owns public view constructors and concrete control behavior
-  implemented with `@core.VirtualNode`, without adding new `core` enum variants.
+  implemented with `@core.View::node`, without adding new `core` enum variants.
 - `moui/runtime/` exposes app/host `AppRuntime` construction entrypoints and
   owns runtime state, tree/layout/paint, event dispatch, program message drain,
   effect task, subscription lifecycle, and diagnostics.

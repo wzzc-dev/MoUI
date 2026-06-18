@@ -1,8 +1,81 @@
 ///|
+fn[Msg] runtime_test_rect(
+  width~ : Double,
+  height~ : Double,
+  color~ : @core.Color,
+  on_tap? : Msg? = None,
+) -> @core.View[Msg] {
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="Rect"),
+    revision=() => "test-rect:\{width}:\{height}",
+    layout=ctx => {
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
+      )
+    },
+    paint=ctx => {
+      @core.ViewPaintPlan::commands([
+        @core.DrawCommand::FillRect(ctx.frame, color),
+      ])
+    },
+    event=ctx => {
+      match (ctx.event, on_tap) {
+        (@core.AppEvent::Pointer(event), Some(message)) =>
+          if event.phase == @core.PointerPhase::Up &&
+            ctx.frame.contains(event.position) {
+            @core.ViewEventResult::message(message)
+          } else {
+            @core.ViewEventResult::ignored()
+          }
+        _ => @core.ViewEventResult::ignored()
+      }
+    },
+  )
+}
+
+///|
+fn[Msg] runtime_test_padding(
+  child~ : @core.View[Msg],
+  insets~ : @core.Insets,
+  key? : String? = None,
+) -> @core.View[Msg] {
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="Padding", key~),
+    revision=() => {
+      "test-padding:\{insets.top}:\{insets.right}:\{insets.bottom}:\{insets.left}"
+    },
+    children=() => [child],
+    child_constraints=constraints => constraints.deflate(insets),
+    layout=ctx => {
+      let child_size = runtime_test_first_child_size(ctx.child_sizes)
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(child_size.inflate(insets)),
+        child_frames=[
+          @core.Rect::new(
+            x=insets.left,
+            y=insets.top,
+            width=child_size.width,
+            height=child_size.height,
+          ),
+        ],
+      )
+    },
+  )
+}
+
+///|
+fn runtime_test_first_child_size(sizes : Array[@core.Size]) -> @core.Size {
+  match sizes.get(0) {
+    Some(size) => size
+    None => @core.Size::new(width=0.0, height=0.0)
+  }
+}
+
+///|
 test "runtime dispatches messages from virtual node" {
   let received : Array[Int] = []
   let runtime = AppRuntime::new_view(
-    root=@views.raw_rect(
+    root=runtime_test_rect(
       width=20.0,
       height=20.0,
       color=@core.Color::blue(),
@@ -26,8 +99,8 @@ test "runtime dispatches messages from virtual node" {
 
 ///|
 test "virtual node layout constrains children and inspector keeps identity" {
-  let root : @core.View[Unit] = @views.raw_padding(
-    child=@views.raw_rect(width=20.0, height=10.0, color=@core.Color::blue()),
+  let root : @core.View[Unit] = runtime_test_padding(
+    child=runtime_test_rect(width=20.0, height=10.0, color=@core.Color::blue()),
     insets=@core.Insets::all(4.0),
     key=Some("outer"),
   )
@@ -61,8 +134,8 @@ test "virtual node layout constrains children and inspector keeps identity" {
 
 ///|
 test "virtual node component builds child and reports component inspector state" {
-  let root : @core.View[Unit] = @views.raw_component(_ctx => {
-    @views.raw_rect(width=32.0, height=18.0, color=@core.Color::blue())
+  let root : @core.View[Unit] = @views.component(_ctx => {
+    runtime_test_rect(width=32.0, height=18.0, color=@core.Color::blue())
   })
   let runtime = AppRuntime::new_view(
     root~,
@@ -86,8 +159,8 @@ test "virtual node component builds child and reports component inspector state"
 ///|
 test "virtual node component watch rebuilds built child" {
   let width_state = @core.State::new(24.0)
-  let root : @core.View[Unit] = @views.raw_component(ctx => {
-    @views.raw_rect(
+  let root : @core.View[Unit] = @views.component(ctx => {
+    runtime_test_rect(
       width=ctx.watch(width_state),
       height=10.0,
       color=@core.Color::blue(),
@@ -119,9 +192,10 @@ test "virtual node scroll updates state and marks layout dirty" {
   let received : Array[@core.Point] = []
   let state = @core.ScrollState::new()
   let runtime = AppRuntime::new_view(
-    root=@views.raw_scroll(
-      child=@views.raw_rect(width=20.0, height=200.0, color=@core.Color::blue()),
-      viewport=Some(@core.Size::new(width=20.0, height=40.0)),
+    root=@views.scroll_view(
+      runtime_test_rect(width=20.0, height=200.0, color=@core.Color::blue()),
+      width=20.0,
+      height=40.0,
       state=Some(state),
       on_scroll=Some(delta => delta),
     ),
@@ -193,7 +267,7 @@ test "virtual node webview paints platform view and dispatches events" {
 test "nested virtual node webview dispatches events through generic children" {
   let received : Array[@views.WebViewEvent] = []
   let runtime = AppRuntime::new_view(
-    root=@views.raw_padding(
+    root=runtime_test_padding(
       child=@views.web_view(
         id="nested",
         url="https://example.com/nested",
@@ -223,16 +297,7 @@ test "nested virtual node webview dispatches events through generic children" {
 test "virtual node button dispatches click through runtime" {
   let received : Array[String] = []
   let runtime = AppRuntime::new_view(
-    root=@views.raw_button(
-      text="Go",
-      size=@core.Size::new(width=80.0, height=32.0),
-      font=@core.FontSpec::new(size=14.0),
-      foreground=@core.Color::white(),
-      background=@core.Brush::solid(@core.Color::blue()),
-      hovered_background=@core.Brush::solid(@core.Color::blue()),
-      pressed_background=@core.Brush::solid(@core.Color::gray()),
-      on_click=Some("clicked"),
-    ),
+    root=@views.button("Go", on_click="clicked", width=80.0, height=32.0),
     size=@core.Size::new(width=80.0, height=32.0),
     on_message=Some(message => received.push(message)),
   )
@@ -260,16 +325,13 @@ test "virtual node button dispatches click through runtime" {
 ///|
 test "virtual node checkbox controlled event dispatches without core primitive" {
   let received : Array[Bool] = []
-  let checked = @core.Binding::new(get=() => false, set=_next => ())
   let runtime = AppRuntime::new_view(
-    root=@views.raw_checkbox(
-      label="Enabled",
-      checked~,
-      font=@core.FontSpec::new(size=14.0),
-      foreground=@core.Color::black(),
-      check_color=@core.Color::blue(),
-      size=@core.Size::new(width=18.0, height=32.0),
-      on_change=Some(next => next),
+    root=@views.checkbox(
+      "Enabled",
+      checked=false,
+      on_change=next => next,
+      box_size=18.0,
+      height=32.0,
     ),
     size=@core.Size::new(width=120.0, height=32.0),
     on_message=Some(message => received.push(message)),
@@ -291,27 +353,16 @@ test "virtual node checkbox controlled event dispatches without core primitive" 
 test "virtual node picker dispatches overlay selection without core primitive" {
   let received : Array[String] = []
   let runtime = AppRuntime::new_view(
-    root=@views.raw_frame(
-      child=@views.raw_picker(
-        items=[
-          @views.RawPickerOption::new(id="one", label="One"),
-          @views.RawPickerOption::new(id="two", label="Two"),
-        ],
-        selected=@core.Binding::new(get=() => "one", set=_value => ()),
+    root=@views.frame(
+      @views.picker(
+        [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
+        selected="one",
+        on_select=id => id,
         placeholder="Pick",
-        font=@core.FontSpec::new(size=14.0),
-        foreground=@core.Color::black(),
-        background=@core.Brush::solid(@core.Color::white()),
-        corner_radius=6.0,
         max_height=160.0,
-        on_select=Some(id => id),
       ),
-      width=Some(200.0),
-      height=Some(40.0),
-      min_width=None,
-      min_height=None,
-      max_width=None,
-      max_height=None,
+      width=200.0,
+      height=40.0,
     ),
     size=@core.Size::new(width=200.0, height=40.0),
     on_message=Some(message => received.push(message)),
@@ -361,26 +412,15 @@ test "virtual node picker dispatches overlay selection without core primitive" {
 ///|
 test "virtual node picker binding selection mutates binding" {
   let selected_state = @core.State::new("one")
-  let root : @core.View[Unit] = @views.raw_frame(
-    child=@views.raw_picker(
-        items=[
-        @views.RawPickerOption::new(id="one", label="One"),
-        @views.RawPickerOption::new(id="two", label="Two"),
-      ],
+  let root : @core.View[Unit] = @views.frame(
+    @views.picker_binding(
+      [@views.picker_item("one", "One"), @views.picker_item("two", "Two")],
       selected=selected_state.binding(),
       placeholder="Pick",
-      font=@core.FontSpec::new(size=14.0),
-      foreground=@core.Color::black(),
-      background=@core.Brush::solid(@core.Color::white()),
-      corner_radius=6.0,
       max_height=160.0,
     ),
-    width=Some(200.0),
-    height=Some(40.0),
-    min_width=None,
-    min_height=None,
-    max_width=None,
-    max_height=None,
+    width=200.0,
+    height=40.0,
   )
   let runtime = AppRuntime::new_view(
     root~,
@@ -412,26 +452,15 @@ test "virtual node picker binding selection mutates binding" {
 test "virtual node datepicker dispatches overlay selection without core primitive" {
   let received : Array[@core.DateValue] = []
   let runtime = AppRuntime::new_view(
-    root=@views.raw_frame(
-      child=@views.raw_datepicker(
-        selected=@core.Binding::new(
-          get=() => @core.DateValue::new(year=2024, month=1, day=15),
-          set=_value => (),
-        ),
-        mode=@views.RawDatePickerDisplayMode::Date,
+    root=@views.frame(
+      @views.datepicker(
+        selected=@core.DateValue::new(year=2024, month=1, day=15),
+        on_select=value => value,
+        mode=@views.DatePickerMode::Date,
         placeholder="Select date",
-        font=@core.FontSpec::new(size=14.0),
-        foreground=@core.Color::black(),
-        background=@core.Brush::solid(@core.Color::white()),
-        corner_radius=6.0,
-        on_select=Some(value => value),
       ),
-      width=Some(200.0),
-      height=Some(40.0),
-      min_width=None,
-      min_height=None,
-      max_width=None,
-      max_height=None,
+      width=200.0,
+      height=40.0,
     ),
     size=@core.Size::new(width=200.0, height=40.0),
     on_message=Some(message => received.push(message)),
@@ -480,22 +509,14 @@ test "virtual node datepicker binding selection mutates binding after month navi
   let selected_state = @core.State::new(
     @core.DateValue::new(year=2024, month=1, day=15),
   )
-  let root : @core.View[Unit] = @views.raw_frame(
-    child=@views.raw_datepicker(
+  let root : @core.View[Unit] = @views.frame(
+    @views.datepicker_binding(
       selected=selected_state.binding(),
-      mode=@views.RawDatePickerDisplayMode::Date,
+      mode=@views.DatePickerMode::Date,
       placeholder="Select date",
-      font=@core.FontSpec::new(size=14.0),
-      foreground=@core.Color::black(),
-      background=@core.Brush::solid(@core.Color::white()),
-      corner_radius=6.0,
     ),
-    width=Some(200.0),
-    height=Some(40.0),
-    min_width=None,
-    min_height=None,
-    max_width=None,
-    max_height=None,
+    width=200.0,
+    height=40.0,
   )
   let runtime = AppRuntime::new_view(
     root~,
@@ -537,14 +558,14 @@ test "virtual node datepicker binding selection mutates binding after month navi
 test "virtual node sheet handles outside dismiss and preserves child event" {
   let received : Array[Int] = []
   let runtime = AppRuntime::new_view(
-    root=@views.raw_sheet(
-      content=@views.raw_rect(
+    root=@views.sheet(
+      content=runtime_test_rect(
         width=40.0,
         height=40.0,
         color=@core.Color::blue(),
         on_tap=Some(1),
       ),
-      background=@core.Brush::solid(@core.Color::white()),
+      background=@core.Color::white(),
       corner_radius=8.0,
       on_dismiss=Some(2),
     ),

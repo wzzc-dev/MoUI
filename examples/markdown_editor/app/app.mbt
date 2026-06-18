@@ -15,7 +15,6 @@ using @views {
 
 ///|
 using @moui_richtext {controlled_rich_text_editor}
-
 ///|
 pub struct MarkdownEditorApp {
   document : @core.State[String]

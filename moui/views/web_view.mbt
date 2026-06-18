@@ -8,67 +8,65 @@ pub fn[Msg] web_view(
   policy? : WebViewNavigationPolicy = WebViewNavigationPolicy::AllowHttpHttpsFile,
   on_event? : ((WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
-  @core.View::virtual_node(
-    @core.VirtualNode::new(
-      identity=() => @core.VirtualNodeIdentity::new(kind="WebView", key=Some(id)),
-      revision=() => {
-        "web-view:\{id}:\{url}:\{web_view_double_option_revision(width)}:\{web_view_double_option_revision(height)}:\{title}:\{policy.revision_key()}:\{on_event is Some(_)}"
-      },
-      layout=ctx => {
-        @core.VirtualNodeLayoutResult::new(
-          size=ctx.constraints.constrain(
-            @core.Size::new(
-              width=width.unwrap_or(640.0),
-              height=height.unwrap_or(360.0),
-            ),
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="WebView", key=Some(id)),
+    revision=() => {
+      "web-view:\{id}:\{url}:\{web_view_double_option_revision(width)}:\{web_view_double_option_revision(height)}:\{title}:\{policy.revision_key()}:\{on_event is Some(_)}"
+    },
+    layout=ctx => {
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(
+          @core.Size::new(
+            width=width.unwrap_or(640.0),
+            height=height.unwrap_or(360.0),
           ),
+        ),
+      )
+    },
+    paint=ctx => {
+      if ctx.frame.is_empty() {
+        @core.ViewPaintPlan::empty()
+      } else {
+        let spec = @host.WebViewSpec::new(
+          id~,
+          url~,
+          width~,
+          height~,
+          title~,
+          policy~,
         )
-      },
-      paint=ctx => {
-        if ctx.frame.is_empty() {
-          @core.VirtualNodePaintPlan::empty()
-        } else {
-          let spec = @host.WebViewSpec::new(
-            id~,
-            url~,
-            width~,
-            height~,
-            title~,
-            policy~,
-          )
-          {
-            commands: [],
-            child_layers: [],
-            post_commands: [],
-            overlay_commands: [],
-            platform_views: [spec.platform_view_placement(frame=ctx.frame)],
-            repaint_boundary: false,
-          }
+        {
+          commands: [],
+          child_layers: [],
+          post_commands: [],
+          overlay_commands: [],
+          platform_views: [spec.platform_view_placement(frame=ctx.frame)],
+          repaint_boundary: false,
         }
-      },
-      event=ctx => {
-        match (ctx.event, on_event) {
-          (@core.AppEvent::PlatformView(event_id, event), Some(handler)) =>
-            if event_id == id {
-              match @host.WebViewEvent::from_platform_event(event) {
-                Some(web_event) =>
-                  @core.VirtualNodeEventResult::message(handler(web_event))
-                None => @core.VirtualNodeEventResult::ignored()
-              }
-            } else {
-              @core.VirtualNodeEventResult::ignored()
+      }
+    },
+    event=ctx => {
+      match (ctx.event, on_event) {
+        (@core.AppEvent::PlatformView(event_id, event), Some(handler)) =>
+          if event_id == id {
+            match @host.WebViewEvent::from_platform_event(event) {
+              Some(web_event) =>
+                @core.ViewEventResult::message(handler(web_event))
+              None => @core.ViewEventResult::ignored()
             }
-          _ => @core.VirtualNodeEventResult::ignored()
-        }
-      },
-      semantics=() => {
-        @core.VirtualNodeSemanticsInfo::new(
-          role=@core.SemanticsRole::Group,
-          label=title,
-          value=url,
-        )
-      },
-    ),
+          } else {
+            @core.ViewEventResult::ignored()
+          }
+        _ => @core.ViewEventResult::ignored()
+      }
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(
+        role=@core.SemanticsRole::Group,
+        label=title,
+        value=url,
+      )
+    },
   )
 }
 
