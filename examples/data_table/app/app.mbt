@@ -15,7 +15,7 @@ using @views {
   row,
   selection_toolbar,
   status_bar,
-  surface,
+  container,
   table,
   table_column,
   text,
@@ -383,11 +383,11 @@ pub fn DataTableModel::view(self : DataTableModel) -> @moui.View[DataTableMsg] {
     spacing=theme.spacing_scale.md,
     align=@views.CrossAlign::Stretch,
   )
-  surface(
+  container(
     shell,
     width=980.0,
     height=700.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -418,7 +418,7 @@ fn DataTableModel::filter_tree(
   self : DataTableModel,
   theme : @moui.Theme,
 ) -> @moui.View[DataTableMsg] {
-  surface(
+  container(
     column(
       [
         text(
@@ -452,7 +452,7 @@ fn DataTableModel::filter_tree(
     ),
     width=250.0,
     height=540.0,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -464,7 +464,7 @@ fn DataTableModel::data_panel(
   theme : @moui.Theme,
 ) -> @moui.View[DataTableMsg] {
   let project_width = self.column_widths.width_for("project", 180.0)
-  surface(
+  container(
     column(
       [
         row(
@@ -554,7 +554,7 @@ fn DataTableModel::data_panel(
     ),
     width=660.0,
     height=540.0,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )

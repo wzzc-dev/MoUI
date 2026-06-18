@@ -24,7 +24,7 @@ fn WorkbenchModel::workspace_inspector(
     self.workspace_inspector_tabs(layout, theme),
     self.workspace_inspector_content(layout, theme),
   ]
-  surface(
+  container(
     column(rows, spacing=8.0, align=Stretch),
     width=layout.inspector_width,
     height=layout.workspace_body_height,
@@ -218,7 +218,7 @@ fn WorkbenchModel::workspace_context_panel(
       rows.push(inspector_file_card(self.files[index], layout, theme))
     }
   }
-  surface(
+  container(
     column(rows, spacing=7.0, align=Stretch),
     width=layout.inspector_body_width,
     height=layout.inspector_content_height(),
@@ -261,7 +261,7 @@ fn WorkbenchModel::inspector_diff_card(
     1.0,
     layout.inspector_body_width - 20.0,
   )
-  surface(
+  container(
     column(
       [
         row(
@@ -336,7 +336,7 @@ fn WorkbenchModel::inspector_workspace_detail_card(
     ) {
     lines.push(text(line, role=Caption, theme~, width~, height=20.0))
   }
-  surface(
+  container(
     column(lines, spacing=2.0, align=Start),
     width=layout.inspector_body_width,
     height=inspector_workspace_detail_card_height(self),
@@ -362,7 +362,7 @@ fn inspector_file_card(
   theme : @moui.Theme,
 ) -> @moui.View[WorkbenchMsg] {
   let text_width = workbench_max_double(1.0, layout.inspector_body_width - 86.0)
-  surface(
+  container(
     row(
       [
         badge(file.change_kind, tone=Neutral, theme~, width=58.0),
@@ -451,7 +451,7 @@ fn WorkbenchModel::workspace_runs_panel(
       }
     }
   }
-  surface(
+  container(
     column(rows, spacing=7.0, align=Stretch),
     width=layout.inspector_body_width,
     height=layout.inspector_content_height(),
@@ -469,7 +469,7 @@ fn inspector_event_card(
   theme : @moui.Theme,
 ) -> @moui.View[WorkbenchMsg] {
   let text_width = workbench_max_double(1.0, layout.inspector_body_width - 86.0)
-  surface(
+  container(
     row(
       [
         badge(
@@ -569,7 +569,7 @@ fn WorkbenchModel::inspector_runtime_signal_card(
   theme : @moui.Theme,
 ) -> @moui.View[WorkbenchMsg] {
   let signal = self.active_agent_runtime_signal()
-  surface(
+  container(
     column(
       [
         text(
@@ -689,7 +689,7 @@ fn inspector_command_card(
   if command.details_expanded {
     rows.push(inspector_command_detail(command, layout, theme))
   }
-  surface(
+  container(
     column(rows, spacing=6.0, align=Stretch),
     width=layout.inspector_body_width,
     height=inspector_command_card_height(command),
@@ -721,7 +721,7 @@ fn inspector_command_detail(
       text(line, role=Caption, theme~, width=detail_width, height=19.0),
     )
   }
-  surface(
+  container(
     column(lines, spacing=1.0, align=Start),
     width=layout.inspector_body_width - 20.0,
     height=inspector_command_detail_height(command),
@@ -780,7 +780,7 @@ fn WorkbenchModel::workspace_diagnostics_panel(
       rows.push(inspector_diagnostic_card(diagnostics[index], layout, theme))
     }
   }
-  surface(
+  container(
     column(rows, spacing=7.0, align=Stretch),
     width=layout.inspector_body_width,
     height=layout.inspector_content_height(),
@@ -822,7 +822,7 @@ fn WorkbenchModel::inspector_diagnostic_header(
       height=28.0,
     )
   } else {
-    surface(
+    container(
       empty(),
       width=54.0,
       height=28.0,
@@ -866,7 +866,7 @@ fn inspector_diagnostic_card(
   theme : @moui.Theme,
 ) -> @moui.View[WorkbenchMsg] {
   let text_width = workbench_max_double(1.0, layout.inspector_body_width - 86.0)
-  surface(
+  container(
     column(
       [
         row(
@@ -934,7 +934,7 @@ fn inspector_error_card(
   theme : @moui.Theme,
 ) -> @moui.View[WorkbenchMsg] {
   let width = workbench_max_double(1.0, layout.inspector_body_width - 20.0)
-  surface(
+  container(
     column(
       [
         text(title, role=Control, theme~, width~, height=22.0),
@@ -1012,7 +1012,7 @@ fn inspector_empty_state(
   layout : WorkbenchLayout,
   theme : @moui.Theme,
 ) -> @moui.View[WorkbenchMsg] {
-  surface(
+  container(
     column(
       [
         text(
@@ -1070,7 +1070,7 @@ fn WorkbenchModel::workspace_status_bar(
       theme~,
     ),
   ]
-  surface(
+  container(
     row(
       [
         text(
@@ -1102,7 +1102,7 @@ fn status_bar_metric_cell(
   theme~ : @moui.Theme,
 ) -> @moui.View[WorkbenchMsg] {
   if label == "" {
-    surface(
+    container(
       empty(),
       width~,
       height=24.0,

@@ -327,7 +327,7 @@ fn MarkdownEditorApp::format_palette(
       .foreground(theme.palette.muted),
     )
   }
-  surface(
+  container(
     padding_edges(
       column(
         [
@@ -376,7 +376,7 @@ fn MarkdownEditorApp::format_palette(
     ),
     width=panel_width,
     height=240.0,
-    variant=@views.SurfaceVariant::Overlay,
+    variant=@views.ContainerVariant::Overlay,
     theme~,
     padding=0.0,
   )

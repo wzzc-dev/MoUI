@@ -41,7 +41,7 @@ fn pdf_workbench_inspector(
         ),
       )
   }
-  @views.surface(
+  @views.container(
     @views.scroll_view(
       @views.column(
         rows,
@@ -55,7 +55,7 @@ fn pdf_workbench_inspector(
     ),
     width=metrics.inspector_width,
     height=metrics.body_height,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.sm,
   )
@@ -75,7 +75,7 @@ fn pdf_workbench_inspector_summary(
   } else {
     @views.BadgeTone::Success
   }
-  @views.surface(
+  @views.container(
     @views.column(
       [
         @views.row(
@@ -387,7 +387,7 @@ fn pdf_workbench_inspector_group(
   for child in children {
     rows.push(child)
   }
-  @views.surface(
+  @views.container(
     @views.column(
       rows,
       spacing=theme.spacing_scale.xs,
@@ -421,7 +421,7 @@ fn pdf_workbench_edit_queue_row(
   theme : @moui.Theme,
 ) -> @moui.View[PdfWorkbenchMsg] {
   let label = index.to_string() + ". " + pdf_workbench_edit_queue_label(edit)
-  @views.surface(
+  @views.container(
     pdf_workbench_inspector_caption(label, width - 16.0, 30.0, theme),
     width~,
     height=38.0,

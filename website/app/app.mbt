@@ -179,7 +179,7 @@ fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
     spacing=0.0,
     align=@views.CrossAlign::Start,
   ).frame(width=metrics.body_width, height=metrics.body_height)
-  surface(
+  container(
     column(
       [self.top_bar(theme, metrics), body],
       spacing=0.0,

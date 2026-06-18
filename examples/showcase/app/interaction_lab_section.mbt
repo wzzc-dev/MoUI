@@ -102,7 +102,7 @@ fn ShowcaseModel::gesture_card(
         text("Gestures", width=width - 32.0, height=24.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.foreground),
-        surface(
+        container(
           text("Press, double tap, or drag", width=width - 64.0, height=24.0)
           .font(theme.typography.body)
           .foreground(theme.palette.foreground),
@@ -465,11 +465,11 @@ fn ShowcaseModel::variant_gallery_card(
         .foreground(theme.palette.muted),
         row(
           [
-            surface_variant_tile(theme, "Base", @views.SurfaceVariant::Base),
-            surface_variant_tile(
+            container_variant_tile(theme, "Base", @views.ContainerVariant::Base),
+            container_variant_tile(
               theme,
               "Overlay",
-              @views.SurfaceVariant::Overlay,
+              @views.ContainerVariant::Overlay,
             ),
           ],
           spacing=6.0,
@@ -486,12 +486,12 @@ fn ShowcaseModel::variant_gallery_card(
 }
 
 ///|
-fn surface_variant_tile(
+fn container_variant_tile(
   theme : @moui.Theme,
   label : String,
-  variant : @views.SurfaceVariant,
+  variant : @views.ContainerVariant,
 ) -> @moui.View[ShowcaseMsg] {
-  surface(
+  container(
     text(label, width=80.0, height=22.0)
     .font(theme.typography.caption)
     .foreground(theme.palette.foreground),

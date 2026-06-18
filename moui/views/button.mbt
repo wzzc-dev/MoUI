@@ -47,7 +47,7 @@ pub fn[Msg] shortcut_button(
   row(
     [
       button(label, on_click~, variant~, theme~, width=button_width, height~),
-      surface(
+      container(
         text(
           shortcut_label,
           role=TextRole::Mono,
@@ -57,7 +57,7 @@ pub fn[Msg] shortcut_button(
         ).foreground(theme.palette.muted),
         width=shortcut_width,
         height~,
-        variant=SurfaceVariant::Base,
+        variant=ContainerVariant::Base,
         theme~,
         padding=6.0,
       )

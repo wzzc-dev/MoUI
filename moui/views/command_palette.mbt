@@ -31,7 +31,7 @@ pub fn[Msg] command_palette(
       ),
     )
   }
-  surface(
+  container(
     scroll_view(
       column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
       width=width - theme.spacing_scale.md * 2.0,
@@ -39,7 +39,7 @@ pub fn[Msg] command_palette(
     ),
     width~,
     height=max_height,
-    variant=SurfaceVariant::Overlay,
+    variant=ContainerVariant::Overlay,
     theme~,
     padding=theme.spacing_scale.md,
   ).semantics_role(@core.SemanticsRole::Menu)

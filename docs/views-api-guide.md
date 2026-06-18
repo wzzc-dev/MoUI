@@ -11,7 +11,7 @@ In application and example UI packages, import only the `views` functions the
 package uses:
 
 ```moonbit
-using @views { column, text, surface, scroll_view }
+using @views { column, text, container, scroll_view }
 ```
 
 MoonBit packages share top-level identifiers across files, so multi-file
@@ -21,9 +21,9 @@ of repeating the same `using` block in every file.
 Then call those functions without the `@views.` prefix:
 
 ```moonbit
-surface(
+container(
   column([...], align=@views.CrossAlign::Start),
-  variant=@views.SurfaceVariant::Raised,
+  variant=@views.ContainerVariant::Raised,
   theme~,
 )
 ```
@@ -33,7 +33,7 @@ Keep enum and type names qualified by default:
 ```moonbit
 align=@views.CrossAlign::Start
 variant=@views.ButtonVariant::Primary
-variant=@views.SurfaceVariant::Raised
+variant=@views.ContainerVariant::Raised
 ```
 
 This keeps the DSL compact while making `Start`, `Raised`, and similar variant

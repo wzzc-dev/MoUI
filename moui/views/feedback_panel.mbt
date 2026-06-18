@@ -1,5 +1,5 @@
 ///|
-fn[Msg] feedback_surface(
+fn[Msg] feedback_panel(
   message : String,
   tone~ : FeedbackTone,
   action~ : StateViewAction[Msg]?,
@@ -46,7 +46,7 @@ fn[Msg] feedback_surface(
       )
     None => body
   }
-  surface(
+  container(
     content,
     width~,
     height~,

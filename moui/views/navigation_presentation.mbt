@@ -46,7 +46,7 @@ pub fn[Msg] wizard(
       .semantics_selected(selected=step.id == current),
     )
   }
-  surface(
+  container(
     column(
       [
         row(
@@ -61,7 +61,7 @@ pub fn[Msg] wizard(
     ),
     width~,
     height~,
-    variant=SurfaceVariant::Raised,
+    variant=ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   ).semantics_role(@core.SemanticsRole::Group)

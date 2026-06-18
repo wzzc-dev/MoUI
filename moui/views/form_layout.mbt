@@ -52,10 +52,10 @@ pub fn[Msg] form_section(
   for child in children {
     rows.push(child)
   }
-  surface(
+  container(
     column(rows, spacing~, align=CrossAlign::Stretch),
     width?,
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding~,
   ).semantics_role(@core.SemanticsRole::Group)

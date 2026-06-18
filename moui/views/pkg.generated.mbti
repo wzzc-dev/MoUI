@@ -70,6 +70,8 @@ pub fn[Msg] command_palette(Array[@core.ActionCommand], query? : String, on_sele
 
 pub fn[Msg] component((@core.ComponentContext) -> @core.View[Msg]) -> @core.View[Msg]
 
+pub fn[Msg] container(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, variant? : ContainerVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
+
 pub fn[Msg] context_menu_region(child~ : @core.View[Msg], menu~ : @core.View[Msg], visible~ : Bool, theme? : @core.Theme) -> @core.View[Msg]
 
 pub fn[Msg] custom_children_layout(children~ : Array[@core.View[Msg]], measure~ : (@core.CustomLayoutContext) -> @core.Size, place~ : (@core.CustomPlacementContext) -> Array[@core.Rect], paint? : (@core.Rect) -> Array[@core.DrawCommand], semantics_role? : @core.SemanticsRole, semantics_label? : String) -> @core.View[Msg]
@@ -278,8 +280,6 @@ pub fn[Msg] status_bar(Array[String], theme? : @core.Theme, width? : Double, hei
 
 pub fn[Msg] stepper(on_decrement~ : Msg, on_increment~ : Msg, label? : String, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] surface(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, corner_radius? : Double, variant? : SurfaceVariant, theme? : @core.Theme, padding? : Double) -> @core.View[Msg]
-
 pub fn[Msg] tab_item(route~ : String, label~ : String, view~ : @core.View[Msg]) -> TabItem[Msg]
 
 pub fn[Msg] tab_view(String, Array[TabItem[Msg]], spacing? : Double, on_select~ : (String) -> Msg) -> @core.View[Msg]
@@ -437,6 +437,12 @@ pub struct CommandMenuSection {
   commands : Array[@core.ActionCommand]
 }
 pub fn CommandMenuSection::new(title~ : String, commands~ : Array[@core.ActionCommand]) -> Self
+
+pub(all) enum ContainerVariant {
+  Base
+  Raised
+  Overlay
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct ControlStateStyle {
   foreground : @core.Color
@@ -813,12 +819,6 @@ pub(all) struct SurfaceStyle {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SurfaceStyle::default(theme? : @core.Theme) -> Self
 pub fn SurfaceStyle::raised(theme? : @core.Theme) -> Self
-
-pub(all) enum SurfaceVariant {
-  Base
-  Raised
-  Overlay
-} derive(Eq, ToJson, @debug.Debug)
 
 pub struct TabItem[Msg] {
   route : String

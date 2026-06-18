@@ -30,7 +30,7 @@ pub fn[Msg] drop_zone(
       ),
     )
   }
-  let zone = surface(
+  let zone = container(
       column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center),
       width~,
       height~,
@@ -114,11 +114,11 @@ pub fn[Msg] file_import_panel(
     empty_message~,
   )
   rows.push(list)
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
     width~,
     height=file_import_panel_height(selection, on_browse is Some(_)),
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
   )

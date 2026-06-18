@@ -9,7 +9,7 @@ using @views {
   scroll_view,
   segmented_control,
   status_badge,
-  surface,
+  container,
   text,
   text_field,
 }
@@ -160,11 +160,11 @@ pub fn DesignSystemsModel::view(
     spacing=theme.spacing_scale.md,
     align=@views.CrossAlign::Stretch,
   )
-  surface(
+  container(
     scroll_view(content, width=920.0, height=620.0),
     width=960.0,
     height=680.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -177,7 +177,7 @@ fn DesignSystemsModel::hero(
   report : @common.DesignSystemReport,
 ) -> @moui.View[DesignSystemsMsg] {
   ignore(self)
-  surface(
+  container(
     row(
       [
         column(
@@ -240,7 +240,7 @@ fn DesignSystemsModel::hero(
     ),
     width=920.0,
     height=132.0,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -597,11 +597,11 @@ fn design_panel(
   for child in children {
     rows.push(child)
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.sm, align=@views.CrossAlign::Start),
     width~,
     height~,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -641,7 +641,7 @@ fn design_swatch(
   label : String,
   color : @views.Color,
 ) -> @moui.View[DesignSystemsMsg] {
-  surface(
+  container(
     text(label, role=@views.TextRole::Caption, theme~, width=76.0, height=24.0).foreground(
       theme.palette.primary_foreground,
     ),
@@ -660,7 +660,7 @@ fn spacing_tile(
   label : String,
   value : Double,
 ) -> @moui.View[DesignSystemsMsg] {
-  surface(
+  container(
     column(
       [
         text(

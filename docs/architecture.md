@@ -166,7 +166,7 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
   `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and
   `moui_theme/fluent` package entrypoints; `core` remains a neutral token
   runtime.
-- Spec-first views in `views`, including `text`, `button`, `text_field`, `surface`, row/column layout, and spacer primitives.
+- Spec-first views in `views`, including `text`, `button`, `text_field`, `container`, row/column layout, and spacer primitives.
 - Unified host boundaries in `backend/host`, with shared window-event mapping and platform hosts normalizing events into `HostEvent`.
 - Native mainline rendering through provider packages over `render/skia`, with experimental native WGPU diagnostics retained under `render/wgpu`.
 - Web rendering through `render/webgpu_adapter` on `wasm-gc` only, with browser WebGPU host imports for visible drawing. The old JS-target WebGPU path is intentionally removed.
