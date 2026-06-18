@@ -1,14 +1,14 @@
-///|
-type ClickHandler = () -> Unit
+// ///|
+// type ClickHandler = () -> Unit
 
-///|
-type FileDropHandler = (Array[String], Point) -> Unit
+// ///|
+// type FileDropHandler = (Array[String], Point) -> Unit
 
-///|
-type DragGestureHandler = (DragGestureEvent) -> Unit
+// ///|
+// type DragGestureHandler = (DragGestureEvent) -> Unit
 
-///|
-type FrameDragGestureHandler = (DragGestureEvent, Rect) -> Unit
+// ///|
+// type FrameDragGestureHandler = (DragGestureEvent, Rect) -> Unit
 
 ///|
 type DragGestureMessageHandler[Msg] = (DragGestureEvent) -> Msg
@@ -30,6 +30,8 @@ priv struct FrameModifierSpec {
 }
 
 ///|
+/// 
+#warnings("-unused_field")
 priv enum ViewModifier[Msg] {
   KeyModifier(Key)
   PaddingModifier(Insets)

@@ -82,11 +82,6 @@ fn WorkbenchModel::update(
 }
 
 ///|
-fn update(model : WorkbenchModel, message : WorkbenchMsg) -> WorkbenchModel {
-  model.update(message)
-}
-
-///|
 fn WorkbenchModel::set_appearance_mode(
   self : WorkbenchModel,
   mode : String,
@@ -101,11 +96,6 @@ fn WorkbenchModel::set_appearance_mode(
       }
     _ => { ..self, last_status: "Appearance mode unavailable" }
   }
-}
-
-///|
-fn view(model : WorkbenchModel) -> @moui.View[WorkbenchMsg] {
-  model.view()
 }
 
 ///|
@@ -195,8 +185,13 @@ fn WorkbenchModel::program_with_agent_connectors(
       )
     },
     view=(model, env) => {
-      model.inner
-      .view_with_environment(env)
+      let view = if env.viewport_size().width <= 0.0 ||
+        env.viewport_size().height <= 0.0 {
+        model.inner.view()
+      } else {
+        model.inner.view_with_environment(env)
+      }
+      view
       .map(message => MoWorkbenchProgramMsg::{ inner: message })
     },
   )

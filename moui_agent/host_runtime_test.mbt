@@ -34,6 +34,7 @@ fn counter_view(model : CounterModel) -> @core.View[CounterMsg] {
   @views.column([
     @views.text("Count: \{model.count}"),
     @views.button("Increment", on_click=Increment),
+    @views.button("Decrement", on_click=Decrement),
   ])
 }
 
@@ -92,8 +93,8 @@ test "RuntimeAgentHost: capabilities lists the agent ops" {
     expected in [
       "get_semantics", "get_state", "dispatch_command", "dispatch_event", "subscribe_events",
     ] {
-    if not(kinds.contains(expected)) {
-      fail("expected capability \{expected}; got \{kinds}")
+    if !kinds.contains(expected) {
+      fail("expected runtime capability")
     }
   }
 }
@@ -159,7 +160,7 @@ test "RuntimeAgentHost: dispatch_event is accepted and runs through runtime" {
       ),
     ),
   )
-  if not(result.accepted) {
+  if !result.accepted {
     fail("expected dispatch_event to be accepted")
   }
 }
@@ -194,7 +195,7 @@ test "RuntimeAgentHost: dispatch_command routes through runtime and reports acce
 test "RuntimeAgentHost: new host is active by default" {
   let runtime = new_counter_runtime()
   let host = RuntimeAgentHost::new(runtime)
-  if not(host.is_active()) {
+  if !host.is_active() {
     fail("expected a freshly constructed host to be active")
   }
 }
@@ -220,7 +221,7 @@ test "RuntimeAgentHost: deactivate rejects dispatch_event" {
   }
   match result.reason {
     Some(msg) =>
-      if not(msg.contains("deactivated")) {
+      if !msg.contains("deactivated") {
         fail("expected reason to mention deactivation; got \{msg}")
       }
     None => fail("expected a reason when rejected due to deactivation")
@@ -278,7 +279,7 @@ test "RuntimeAgentHost: activate restores full behavior" {
   }
   // Bring it back online.
   host.activate()
-  if not(host.is_active()) {
+  if !host.is_active() {
     fail("expected host to be active after activate()")
   }
   // Now reads are populated again...
@@ -294,7 +295,7 @@ test "RuntimeAgentHost: activate restores full behavior" {
       ),
     ),
   )
-  if not(ok.accepted) {
+  if !ok.accepted {
     fail("expected dispatch to be accepted after activate")
   }
 }
@@ -334,7 +335,7 @@ test "RuntimeAgentHost: deactivate stops event delivery, activate resumes" {
       ),
     ),
   )
-  if not(ok.accepted) {
+  if !ok.accepted {
     fail("expected dispatch accepted after reactivate")
   }
   if received.length() < 1 {
@@ -355,7 +356,7 @@ test "RuntimeAgentHost: activate/deactivate are idempotent" {
   // Double-activate is a no-op.
   host.activate()
   host.activate()
-  if not(host.is_active()) {
+  if !host.is_active() {
     fail("expected host to remain active after double activate")
   }
 }

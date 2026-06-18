@@ -151,7 +151,7 @@ pub fn DrawFrame::new(
 }
 
 ///|
-fn optional_rect_union(left : Rect?, right : Rect?) -> Rect? {
+pub fn optional_rect_union(left : Rect?, right : Rect?) -> Rect? {
   match (left, right) {
     (Some(a), Some(b)) => Some(a.union(b))
     (Some(a), None) => Some(a)

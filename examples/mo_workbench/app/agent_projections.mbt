@@ -16,6 +16,12 @@ enum AgentActivityQueueKind {
   PendingRequest
 } derive(Eq, Debug)
 
+test {
+  ignore(AgentActivityQueueKind::ProviderRecovery)
+  ignore(AgentActivityQueueKind::PlanProgress)
+  ignore(AgentCatalogItemKind::ModelCatalogItem)
+  ignore(AgentCatalogItemKind::CommandCatalogItem)
+}
 ///|
 enum AgentCatalogItemKind {
   ModelCatalogItem
@@ -197,11 +203,6 @@ fn AgentRequestSummary::new(
 }
 
 ///|
-fn AgentRequestSummary::has_visible_request(self : AgentRequestSummary) -> Bool {
-  self.source != "" || self.message != ""
-}
-
-///|
 fn AgentActivityQueueItem::new(
   backend_id~ : String,
   kind~ : AgentActivityQueueKind,
@@ -226,20 +227,6 @@ fn AgentActivityQueueItem::new(
     secondary_label,
     secondary_message,
   }
-}
-
-///|
-fn AgentActivityQueueItem::has_primary_action(
-  self : AgentActivityQueueItem,
-) -> Bool {
-  self.primary_message is Some(_)
-}
-
-///|
-fn AgentActivityQueueItem::has_secondary_action(
-  self : AgentActivityQueueItem,
-) -> Bool {
-  self.secondary_message is Some(_)
 }
 
 ///|
@@ -282,15 +269,6 @@ fn AgentRunOverview::new(
 }
 
 ///|
-fn AgentRunOverview::has_visible_overview(self : AgentRunOverview) -> Bool {
-  self.title != "" ||
-  self.detail != "" ||
-  self.activity_count > 0 ||
-  self.request_count > 0 ||
-  self.focus_title != ""
-}
-
-///|
 fn AgentProviderRegistryItem::new(
   backend_id~ : String,
   label~ : String,
@@ -320,13 +298,6 @@ fn AgentProviderRegistryItem::new(
 }
 
 ///|
-fn AgentProviderRegistryItem::has_action(
-  self : AgentProviderRegistryItem,
-) -> Bool {
-  self.action_message is Some(_)
-}
-
-///|
 fn AgentProviderSwitchSummary::new(
   backend_id~ : String,
   label~ : String,
@@ -347,13 +318,6 @@ fn AgentProviderSwitchSummary::new(
     switch_count,
     tone,
   }
-}
-
-///|
-fn AgentProviderSwitchSummary::has_switch_targets(
-  self : AgentProviderSwitchSummary,
-) -> Bool {
-  self.switch_count > 1
 }
 
 ///|
@@ -448,16 +412,6 @@ fn AgentStatusBarSummary::new(
 }
 
 ///|
-fn AgentStatusBarSummary::has_visible_metrics(
-  self : AgentStatusBarSummary,
-) -> Bool {
-  self.status_label != "" ||
-  self.queue_label != "" ||
-  self.diagnostic_label != "" ||
-  self.activity_label != ""
-}
-
-///|
 fn AgentTimelineItem::new(
   backend_id~ : String,
   source_kind~ : String,
@@ -478,13 +432,6 @@ fn AgentTimelineItem::new(
     process,
     visible,
   }
-}
-
-///|
-fn AgentTimelineItem::has_visible_timeline_item(
-  self : AgentTimelineItem,
-) -> Bool {
-  self.visible && (self.title != "" || self.detail != "")
 }
 
 ///|
@@ -597,7 +544,6 @@ fn WorkbenchModel::agent_activity_queue(
   items
 }
 
-///|
 fn WorkbenchModel::agent_run_overview(
   self : WorkbenchModel,
 ) -> AgentRunOverview {
@@ -626,6 +572,10 @@ fn WorkbenchModel::agent_run_overview(
     tone=if requests.length() > 0 { "warning" } else { "neutral" },
     active=signal.has_active_signal(),
   )
+}
+
+test {
+  ignore(WorkbenchModel::agent_run_overview(WorkbenchModel::new()))
 }
 
 ///|
@@ -682,6 +632,10 @@ fn WorkbenchModel::agent_provider_switch_summary(
       "neutral"
     },
   )
+}
+
+test {
+  ignore(WorkbenchModel::agent_provider_switch_summary(WorkbenchModel::new()))
 }
 
 ///|
@@ -794,6 +748,10 @@ fn WorkbenchModel::agent_timeline_items(
     )
   }
   items
+}
+
+test {
+  ignore(WorkbenchModel::agent_timeline_items(WorkbenchModel::new()))
 }
 
 ///|

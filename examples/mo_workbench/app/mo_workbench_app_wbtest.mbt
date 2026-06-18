@@ -176,7 +176,7 @@ test "workbench switches current session backend and resets provider state" {
   inspect(model.active_agent_backend_profile().label, content="本地")
   inspect(model.prompt, content="")
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Disconnected")
+  inspect(model.transport.display_status_label(), content="未连接")
   inspect(model.pi_session_bindings.length(), content="0")
   inspect(model.transcript.length(), content="0")
   inspect(model.last_status, content="Agent backend switched: 本地")
@@ -210,7 +210,7 @@ test "workbench fixture backend ignores stale Pi transport events" {
   inspect(model.active_session().backend_id, content="fixture")
   inspect(model.last_status, content="Agent backend switched: 本地")
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Disconnected")
+  inspect(model.transport.display_status_label(), content="未连接")
   inspect(model.transport.last_json_line, content="")
   inspect(model.transcript.length(), content="0")
   inspect(model.diagnostics.length(), content="0")
@@ -248,7 +248,7 @@ test "workbench fixture backend ignores stale Pi refresh effects" {
   inspect(model.active_session().backend_id, content="fixture")
   inspect(model.last_status, content="Agent backend switched: 本地")
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Disconnected")
+  inspect(model.transport.display_status_label(), content="未连接")
   assert_false(
     model.events.any(event => event.title == "Pi transcript refresh queued"),
   )

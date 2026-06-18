@@ -6,7 +6,7 @@ test "schema: DispatchResult ToJson round-trips accepted" {
   // fields is a Map[String, Json]; check the "accepted" entry.
   match fields.get("accepted") {
     Some(Json::True) => ()
-    other => fail("expected accepted == true, got \{other}")
+    _ => fail("expected accepted == true")
   }
 }
 
@@ -15,7 +15,7 @@ test "schema: DispatchResult ToJson includes reason when present" {
   let r = DispatchResult::{ accepted: false, reason: Some("nope") }
   let json = r.to_json()
   let str = (json : Json).stringify()
-  if not(str.contains("nope")) {
+  if !str.contains("nope") {
     fail("expected serialized result to contain reason; got \{str}")
   }
 }
@@ -29,10 +29,10 @@ test "schema: EventSource serializes as a string tag" {
   }
   let str = (ev.to_json() : Json).stringify()
   // The source variant should appear in the JSON.
-  if not(str.contains("Agent")) {
+  if !str.contains("Agent") {
     fail("expected source tag in JSON; got \{str}")
   }
-  if not(str.contains("\"sequence\"")) {
+  if !str.contains("\"sequence\"") {
     fail("expected sequence field; got \{str}")
   }
 }
@@ -87,13 +87,13 @@ test "schema: SemanticsSnapshot carries node_count and depth" {
   }
   let snap = SemanticsSnapshot::{ root: leaf, node_count: 1, depth: 1 }
   let str = (snap.to_json() : Json).stringify()
-  if not(str.contains("\"node_count\"")) {
+  if !str.contains("\"node_count\"") {
     fail("expected node_count field; got \{str}")
   }
-  if not(str.contains("\"depth\"")) {
+  if !str.contains("\"depth\"") {
     fail("expected depth field; got \{str}")
   }
-  if not(str.contains("hi")) {
+  if !str.contains("hi") {
     fail("expected wrapped node label; got \{str}")
   }
 }

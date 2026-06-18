@@ -10,9 +10,9 @@ test "workbench clears visible diagnostics" {
       ),
     ),
   )
-  inspect(model.open_diagnostic_count(), content="1")
+  inspect(model.diagnostics.length(), content="1")
   let cleared = model.update(ClearDiagnostics)
-  inspect(cleared.open_diagnostic_count(), content="0")
+  inspect(cleared.diagnostics.length(), content="0")
   inspect(
     cleared.last_status,
     content="Diagnostics cleared for current session",
@@ -196,7 +196,7 @@ test "workbench command evidence runtime effect dispatches prompt" {
     _ => fail("expected captured command evidence prompt")
   }
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.display_status_label(), content="运行中")
 }
 
 ///|
@@ -275,7 +275,7 @@ test "workbench command fix runtime effect dispatches prompt" {
     _ => fail("expected captured command fix prompt")
   }
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.display_status_label(), content="运行中")
 }
 
 ///|
