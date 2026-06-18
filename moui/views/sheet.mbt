@@ -2,7 +2,7 @@
 pub fn[Msg] sheet(
   content~ : @core.View[Msg],
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
-  background? : @core.Color = @core.Color::white(),
+  background? : @core.Color = default_theme().palette.surface,
   corner_radius? : Double = default_theme().radius_scale.lg,
   shadow? : @core.ShadowStyle? = None,
   on_dismiss? : Msg? = None,
