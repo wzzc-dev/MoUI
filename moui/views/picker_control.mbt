@@ -48,20 +48,21 @@ fn[Msg] picker_control(
     paint=ctx => {
       let commands : Array[@core.DrawCommand] = []
       let overlay_commands : Array[@core.DrawCommand] = []
-      append_picker_commands(
-        commands,
-        overlay_commands,
-        frame=ctx.frame,
-        items~,
-        selected_id=selected.get(),
-        placeholder~,
-        font~,
-        foreground~,
-        background~,
-        corner_radius~,
-        max_height~,
-        expanded=ctx.state.expanded,
-      )
+     append_picker_commands(
+       commands,
+       overlay_commands,
+       frame=ctx.frame,
+       items~,
+       selected_id=selected.get(),
+       placeholder~,
+       font~,
+       foreground~,
+       background~,
+       corner_radius~,
+       max_height~,
+       expanded=ctx.state.expanded,
+        theme=ctx.environment.theme,
+     )
       {
         commands,
         child_layers: [],
@@ -118,17 +119,18 @@ fn append_picker_commands(
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
   background~ : @core.Brush,
-  corner_radius~ : Double,
-  max_height~ : Double,
-  expanded~ : Bool,
+ corner_radius~ : Double,
+ max_height~ : Double,
+ expanded~ : Bool,
+  theme~ : @core.Theme,
 ) -> Unit {
-  let theme = @core.Theme::neutral()
+  // Use the active theme so the field border tracks the real outline token.
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
   commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
   commands.push(
     @core.DrawCommand::StrokeRoundedRectBrush(
       rounded,
-      @core.Brush::solid(theme.palette.surface_variant),
+      @core.Brush::solid(theme.palette.outline.multiply_alpha(0.6)),
       1.0,
     ),
   )
@@ -164,19 +166,20 @@ fn append_picker_commands(
       ),
     ),
   )
-  if expanded {
-    append_picker_popup_commands(
-      overlay_commands,
-      frame~,
-      items~,
-      selected_id~,
-      font~,
-      foreground~,
-      background~,
-      corner_radius~,
-      max_height~,
-    )
-  }
+ if expanded {
+   append_picker_popup_commands(
+     overlay_commands,
+     frame~,
+     items~,
+     selected_id~,
+     font~,
+     foreground~,
+     background~,
+     corner_radius~,
+     max_height~,
+      theme~,
+   )
+ }
 }
 
 ///|
@@ -190,21 +193,23 @@ fn append_picker_popup_commands(
   background~ : @core.Brush,
   corner_radius~ : Double,
   max_height~ : Double,
+  theme~ : @core.Theme,
 ) -> Unit {
-  let theme = @core.Theme::neutral()
   let list_frame = picker_popup_frame(items, frame, max_height)
   let list_rounded = @core.RoundedRect::new(
     rect=list_frame,
     radius=corner_radius,
   )
+  // Use the theme's large elevation shadow so the popup reads in dark mode.
+  let shadow = theme.shadow_scale.lg
   overlay_commands.push(
     @core.DrawCommand::DrawShadow(
       @core.ShadowSpec::new(
         rect=list_rounded,
-        color=@core.Color::black().with_alpha(0.15),
-        offset=@core.Point::new(x=0.0, y=4.0),
-        blur_radius=12.0,
-        spread=0.0,
+        color=shadow.color,
+        offset=shadow.offset,
+        blur_radius=shadow.blur_radius,
+        spread=shadow.spread,
       ),
     ),
   )
