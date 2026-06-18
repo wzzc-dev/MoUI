@@ -16,7 +16,7 @@ pub fn[Msg] text_field(
   }
   let normal = resolved_style.normal
   let focused = resolved_style.focused
-  raw_controlled_text_field(
+  controlled_text_field_control(
     value~,
     on_input~,
     placeholder~,
@@ -50,7 +50,7 @@ pub fn[Msg] text_field_binding(
   }
   let normal = resolved_style.normal
   let focused = resolved_style.focused
-  raw_text_field(
+  text_field_control(
     value~,
     placeholder~,
     size=@core.Size::new(width~, height~),

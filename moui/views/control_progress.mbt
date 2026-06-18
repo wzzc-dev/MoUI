@@ -15,17 +15,17 @@ pub fn[Msg] progress(
   }
   let foreground = resolve_control_color(foreground, resolved_style.foreground)
   let background = resolve_control_color(background, resolved_style.background)
-  raw_custom(
+  custom_control(
     kind="Progress",
     measure=ctx => {
-      @core.VirtualNodeLayoutResult::new(
+      @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
       )
     },
     paint=ctx => {
       let frame = ctx.frame
       let radius = min_view_double(height / 2.0, resolved_style.radius)
-      @core.VirtualNodePaintPlan::commands([
+      @core.ViewPaintPlan::commands([
         @core.DrawCommand::FillRoundedRectBrush(
           @core.RoundedRect::new(rect=frame, radius~),
           @core.Brush::solid(background),
@@ -45,7 +45,7 @@ pub fn[Msg] progress(
       ])
     },
     semantics=() => {
-      @core.VirtualNodeSemanticsInfo::new(
+      @core.ViewSemanticsInfo::new(
         role=@core.SemanticsRole::Progress,
         label="Progress",
         value="\{value}",

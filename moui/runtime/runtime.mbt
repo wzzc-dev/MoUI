@@ -179,34 +179,32 @@ pub fn[Model, Msg] AppRuntime::new_program(
 fn[Msg] runtime_component_view(
   build : (@core.ComponentContext) -> @core.View[Msg],
 ) -> @core.View[Msg] {
-  @core.View::virtual_node(
-    @core.VirtualNode::new(
-      identity=() => @core.VirtualNodeIdentity::new(kind="Component"),
-      revision=() => "component",
-      build_child=Some(build),
-      layout=ctx => {
-        let child_size = if ctx.child_sizes.length() > 0 {
-          ctx.child_sizes[0]
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="Component"),
+    revision=() => "component",
+    build_child=Some(build),
+    layout=ctx => {
+      let child_size = if ctx.child_sizes.length() > 0 {
+        ctx.child_sizes[0]
+      } else {
+        @core.Size::new(width=0.0, height=0.0)
+      }
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(child_size),
+        child_frames=if ctx.child_sizes.length() > 0 {
+          [
+            @core.Rect::new(
+              x=0.0,
+              y=0.0,
+              width=child_size.width,
+              height=child_size.height,
+            ),
+          ]
         } else {
-          @core.Size::new(width=0.0, height=0.0)
-        }
-        @core.VirtualNodeLayoutResult::new(
-          size=ctx.constraints.constrain(child_size),
-          child_frames=if ctx.child_sizes.length() > 0 {
-            [
-              @core.Rect::new(
-                x=0.0,
-                y=0.0,
-                width=child_size.width,
-                height=child_size.height,
-              ),
-            ]
-          } else {
-            []
-          },
-        )
-      },
-    ),
+          []
+        },
+      )
+    },
   )
 }
 

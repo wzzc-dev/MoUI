@@ -4,7 +4,7 @@ fn ElementNode::find_focusable_at(
   point : Point,
   render : RenderNode,
 ) -> ElementId? {
-  if (self.virtual_node.focusable)() && render.hit_bounds().contains(point) {
+  if (self.erased_view_node.focusable)() && render.hit_bounds().contains(point) {
     Some(self.id)
   } else {
     let mut index = self.children.length() - 1
@@ -28,7 +28,7 @@ fn ElementNode::focusable_ids(
   self : ElementNode,
   ids : Array[ElementId],
 ) -> Unit {
-  if (self.virtual_node.focusable)() {
+  if (self.erased_view_node.focusable)() {
     ids.push(self.id)
   }
   for child in self.children {
@@ -97,7 +97,7 @@ fn ElementNode::accepts_tab_input(
   target : ElementId,
 ) -> Bool {
   if self.id == target {
-    self.virtual_node_accepts_text_input(self.virtual_node)
+    self.view_accepts_text_input(self.erased_view_node)
   } else {
     for child in self.children {
       if child.accepts_tab_input(target) {
@@ -114,7 +114,7 @@ fn ElementNode::is_text_input_target(
   target : ElementId,
 ) -> Bool {
   if self.id == target {
-    self.virtual_node_accepts_text_input(self.virtual_node)
+    self.view_accepts_text_input(self.erased_view_node)
   } else {
     for child in self.children {
       if child.is_text_input_target(target) {
@@ -126,9 +126,9 @@ fn ElementNode::is_text_input_target(
 }
 
 ///|
-fn ElementNode::virtual_node_accepts_text_input(
+fn ElementNode::view_accepts_text_input(
   self : ElementNode,
-  data : VirtualNode,
+  data : ErasedViewNode,
 ) -> Bool {
   (data.text_input_state)({
     frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),

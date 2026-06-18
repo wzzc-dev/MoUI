@@ -7,8 +7,8 @@ fn ElementNode::dispatch_keyboard(
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   if self.id == target {
-    self.dispatch_virtual_node_event(
-      self.virtual_node,
+    self.dispatch_view_event(
+      self.erased_view_node,
       AppEvent::Keyboard(event),
       RenderNode::empty(),
       text_system,
@@ -48,7 +48,9 @@ fn ElementNode::dispatch_keyboard_shortcut(
   )
   if child_result.activated {
     child_result
-  } else if self.virtual_node.identity.kind.has_prefix("Modified<KeyboardShortcut>") {
+  } else if self.erased_view_node.identity.kind.has_prefix(
+      "Modified<KeyboardShortcut>",
+    ) {
     if child_result.changed {
       child_result
     } else {
@@ -96,8 +98,8 @@ fn ElementNode::activate_primary(
   if child_result.activated {
     child_result
   } else {
-    self.dispatch_virtual_node_event(
-      self.virtual_node,
+    self.dispatch_view_event(
+      self.erased_view_node,
       AppEvent::Keyboard(KeyboardEvent::new(key="Enter")),
       RenderNode::empty(),
       text_system,

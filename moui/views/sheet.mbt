@@ -7,7 +7,7 @@ pub fn[Msg] sheet(
   shadow? : @core.ShadowStyle? = None,
   on_dismiss? : Msg? = None,
 ) -> @core.View[Msg] {
-  raw_sheet(
+  sheet_surface(
     content~,
     presentation_mode~,
     background=@core.Brush::solid(background),

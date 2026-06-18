@@ -8,8 +8,8 @@ fn ElementNode::dispatch_drag_drop(
   if child_result.activated {
     child_result
   } else {
-    let result = self.dispatch_virtual_node_event(
-      self.virtual_node,
+    let result = self.dispatch_view_event(
+      self.erased_view_node,
       AppEvent::DragDrop(event),
       render,
       TextSystem::fallback(),

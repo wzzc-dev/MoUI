@@ -325,6 +325,16 @@ pub(all) struct SubscriptionPlanSummary {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SubscriptionPlanSummary::empty() -> Self
 
+pub(all) struct ViewInspectorSummary {
+  element_id : @core.ElementId
+  kind : String
+  key : String
+  child_count : Int
+  needs_build : Bool
+  needs_layout : Bool
+  needs_paint : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct ViewTreeInspectorSnapshot {
   root_kind : String
   node_count : Int
@@ -334,17 +344,7 @@ pub(all) struct ViewTreeInspectorSnapshot {
   dirty_build_count : Int
   dirty_layout_count : Int
   dirty_paint_count : Int
-  nodes : Array[VirtualNodeInspectorSummary]
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct VirtualNodeInspectorSummary {
-  element_id : @core.ElementId
-  kind : String
-  key : String
-  child_count : Int
-  needs_build : Bool
-  needs_layout : Bool
-  needs_paint : Bool
+  nodes : Array[ViewInspectorSummary]
 } derive(Eq, ToJson, @debug.Debug)
 
 // Type aliases

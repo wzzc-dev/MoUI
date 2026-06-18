@@ -1,91 +1,5 @@
 ///|
-pub fn[Msg] raw_text(
-  text~ : String,
-  size~ : @core.Size,
-  font~ : @core.FontSpec,
-  color~ : @core.Color,
-  kind? : String = "Text",
-  key? : String? = None,
-) -> @core.View[Msg] {
-  @core.View::virtual_node(
-    @core.VirtualNode::new(
-      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
-      revision=() => {
-        "text:\{text}:\{size.width}:\{size.height}:\{font.size}:\{font.weight}:\{color.r}:\{color.g}:\{color.b}:\{color.a}"
-      },
-      layout=ctx => {
-        @core.VirtualNodeLayoutResult::new(size=ctx.constraints.constrain(size))
-      },
-      paint=ctx => {
-        @core.VirtualNodePaintPlan::commands([
-          @core.DrawCommand::DrawText(
-            @core.TextRun::new(text~, frame=ctx.frame, font~, color~),
-          ),
-        ])
-      },
-      semantics=() => {
-        @core.VirtualNodeSemanticsInfo::new(
-          role=@core.SemanticsRole::Text,
-          label=text,
-          value=text,
-        )
-      },
-    ),
-  )
-}
-
-///|
-pub fn[Msg] raw_image(
-  source~ : String,
-  size? : @core.Size? = None,
-  opacity? : Double = 1.0,
-  corner_radius? : Double = 0.0,
-  fit? : @core.ImageFit = @core.ImageFit::Contain,
-  kind? : String = "Image",
-  key? : String? = None,
-) -> @core.View[Msg] {
-  @core.View::virtual_node(
-    @core.VirtualNode::new(
-      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
-      revision=() => {
-        "image:\{source}:\{size_revision(size)}:\{opacity}:\{corner_radius}:\{image_fit_revision(fit)}"
-      },
-      layout=ctx => {
-        let measured = size.unwrap_or(@core.Size::new(width=0.0, height=0.0))
-        @core.VirtualNodeLayoutResult::new(size=ctx.constraints.constrain(measured))
-      },
-      paint=ctx => {
-        let frame = match size {
-          Some(size) =>
-            @core.Rect::new(
-              x=ctx.frame.origin.x,
-              y=ctx.frame.origin.y,
-              width=size.width,
-              height=size.height,
-            )
-          None => ctx.frame
-        }
-        let commands : Array[@core.DrawCommand] = []
-        if corner_radius > 0.0 {
-          commands.push(@core.DrawCommand::PushClip(frame))
-        }
-        commands.push(
-          @core.DrawCommand::DrawImage({ source, frame, opacity, fit }),
-        )
-        if corner_radius > 0.0 {
-          commands.push(@core.DrawCommand::PopClip)
-        }
-        @core.VirtualNodePaintPlan::commands(commands)
-      },
-      semantics=() => {
-        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Group)
-      },
-    ),
-  )
-}
-
-///|
-pub fn[Msg] raw_flex(
+fn[Msg] flex_layout(
   children~ : Array[@core.View[Msg]],
   axis~ : @core.Axis,
   spacing? : Double = 0.0,
@@ -94,32 +8,30 @@ pub fn[Msg] raw_flex(
   kind? : String = "Flex",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::virtual_node(
-    @core.VirtualNode::new(
-      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
-      revision=() => {
-        "flex:\{axis_revision(axis)}:\{spacing}:\{main_axis_revision(main_axis_alignment)}:\{cross_axis_revision(cross_axis_alignment)}"
-      },
-      children=() => children,
-      layout=ctx => {
-        let measured = flex_measured_size(axis, spacing, ctx.child_sizes)
-        let size = ctx.constraints.constrain(measured)
-        @core.VirtualNodeLayoutResult::new(
-          size~,
-          child_frames=flex_child_frames(
-            axis,
-            spacing,
-            main_axis_alignment,
-            cross_axis_alignment,
-            ctx.child_sizes,
-            size,
-          ),
-        )
-      },
-      semantics=() => {
-        @core.VirtualNodeSemanticsInfo::new(role=@core.SemanticsRole::Group)
-      },
-    ),
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind~, key~),
+    revision=() => {
+      "flex:\{axis_revision(axis)}:\{spacing}:\{main_axis_revision(main_axis_alignment)}:\{cross_axis_revision(cross_axis_alignment)}"
+    },
+    children=() => children,
+    layout=ctx => {
+      let measured = flex_measured_size(axis, spacing, ctx.child_sizes)
+      let size = ctx.constraints.constrain(measured)
+      @core.ViewLayoutResult::new(
+        size~,
+        child_frames=flex_child_frames(
+          axis,
+          spacing,
+          main_axis_alignment,
+          cross_axis_alignment,
+          ctx.child_sizes,
+          size,
+        ),
+      )
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+    },
   )
 }
 
@@ -135,11 +47,11 @@ fn flex_measured_size(
     match axis {
       @core.Axis::Horizontal => {
         main = main + size.width
-        cross = virtual_node_max_double(cross, size.height)
+        cross = view_max_double(cross, size.height)
       }
       @core.Axis::Vertical => {
         main = main + size.height
-        cross = virtual_node_max_double(cross, size.width)
+        cross = view_max_double(cross, size.width)
       }
     }
     if index > 0 {
@@ -176,7 +88,7 @@ fn flex_child_frames(
       @core.Axis::Horizontal => size.width
       @core.Axis::Vertical => size.height
     }
-    let remaining = virtual_node_max_double(
+    let remaining = view_max_double(
       0.0,
       available_main - child_main_total - total_spacing,
     )
@@ -276,9 +188,9 @@ fn cross_axis_offset(
   match alignment {
     @core.CrossAxisAlignment::CrossStart => { offset: 0.0, size: child }
     @core.CrossAxisAlignment::CrossCenter =>
-      { offset: virtual_node_max_double(0.0, available - child) / 2.0, size: child }
+      { offset: view_max_double(0.0, available - child) / 2.0, size: child }
     @core.CrossAxisAlignment::CrossEnd =>
-      { offset: virtual_node_max_double(0.0, available - child), size: child }
+      { offset: view_max_double(0.0, available - child), size: child }
     @core.CrossAxisAlignment::CrossStretch => { offset: 0.0, size: available }
   }
 }

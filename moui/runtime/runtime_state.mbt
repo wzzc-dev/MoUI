@@ -1,6 +1,6 @@
 ///|
 priv struct RuntimeState {
-  mut root_virtual_node : VirtualNode
+  mut root_erased_view_node : ErasedViewNode
   mut element_tree : ElementTree
   mut layout_tree : LayoutTree
   mut render_tree : RenderTree
@@ -46,7 +46,7 @@ fn[Msg] RuntimeState::new_view(
     Some(handler) => handler
     None => _message => ()
   }
-  RuntimeState::new_virtual_node(
+  RuntimeState::new_erased_view_node(
     root=erase_view_for_runtime(root, emit),
     size~,
     environment~,
@@ -54,14 +54,14 @@ fn[Msg] RuntimeState::new_view(
 }
 
 ///|
-fn RuntimeState::new_virtual_node(
-  root~ : VirtualNode,
+fn RuntimeState::new_erased_view_node(
+  root~ : ErasedViewNode,
   size~ : Size,
   environment? : Environment = Environment::neutral(),
 ) -> RuntimeState {
-  let initial = mount_virtual_node_with_next(root, 1)
+  let initial = mount_erased_view_node_with_next(root, 1)
   let state = {
-    root_virtual_node: root,
+    root_erased_view_node: root,
     element_tree: ElementTree::new(initial.node),
     layout_tree: LayoutTree::empty(),
     render_tree: RenderTree::empty(),
@@ -92,7 +92,7 @@ fn RuntimeState::new_virtual_node(
     clock: Clock::new(),
     saveable_state: SaveableStateStore::new(),
   }
-  let mounted = mount_virtual_node_for_runtime(root, Some(state), 1)
+  let mounted = mount_erased_view_node_for_runtime(root, Some(state), 1)
   state.element_tree = ElementTree::new(mounted.node)
   state.next_element_id = mounted.next_id
   state.mark_dirty(state.element_tree.id())
@@ -161,7 +161,7 @@ fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.element_tree = ElementTree::empty()
   self.layout_tree = LayoutTree::empty()
   self.render_tree = RenderTree::empty()
-  self.root_virtual_node = empty_virtual_node()
+  self.root_erased_view_node = empty_erased_view_node()
   self.next_element_id = 1
   self.dirty_elements.clear()
   self.dirty_build_elements.clear()
@@ -187,7 +187,7 @@ fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
   self.rebuild_pass_count = self.rebuild_pass_count + 1
   let result = reconcile_element_for_runtime(
     self.element_tree.root,
-    self.root_virtual_node,
+    self.root_erased_view_node,
     Some(self),
     self.next_element_id,
   )

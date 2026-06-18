@@ -1,27 +1,27 @@
 ///|
-pub struct RawPickerOption {
+priv struct PickerOption {
   id : String
   label : String
 }
 
 ///|
-pub fn RawPickerOption::new(id~ : String, label~ : String) -> RawPickerOption {
+fn PickerOption::new(id~ : String, label~ : String) -> PickerOption {
   { id, label }
 }
 
 ///|
-pub fn RawPickerOption::id(self : RawPickerOption) -> String {
+fn PickerOption::id(self : PickerOption) -> String {
   self.id
 }
 
 ///|
-pub fn RawPickerOption::label(self : RawPickerOption) -> String {
+fn PickerOption::label(self : PickerOption) -> String {
   self.label
 }
 
 ///|
-pub fn[Msg] raw_picker(
-  items~ : Array[RawPickerOption],
+fn[Msg] picker_control(
+  items~ : Array[PickerOption],
   selected~ : @core.Binding[String],
   placeholder~ : String,
   font~ : @core.FontSpec,
@@ -33,81 +33,76 @@ pub fn[Msg] raw_picker(
   kind? : String = "Picker",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::virtual_node(
-    @core.VirtualNode::new(
-      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
-      revision=() => {
-        "picker:\{picker_items_revision(items)}:\{selected.get()}:\{placeholder}:\{virtual_node_font_revision(font)}:\{virtual_node_color_revision(foreground)}:\{virtual_node_brush_revision(background)}:\{corner_radius}:\{max_height}:\{on_select is Some(_)}"
-      },
-      layout=ctx => {
-        @core.VirtualNodeLayoutResult::new(
-          size=ctx.constraints.constrain(
-            @core.Size::new(width=200.0, height=40.0),
-          ),
-        )
-      },
-      paint=ctx => {
-        let commands : Array[@core.DrawCommand] = []
-        let overlay_commands : Array[@core.DrawCommand] = []
-        append_picker_commands(
-          commands,
-          overlay_commands,
-          frame=ctx.frame,
-          items~,
-          selected_id=selected.get(),
-          placeholder~,
-          font~,
-          foreground~,
-          background~,
-          corner_radius~,
-          max_height~,
-          expanded=ctx.state.expanded,
-        )
-        {
-          commands,
-          child_layers: [],
-          post_commands: [],
-          overlay_commands,
-          platform_views: [],
-          repaint_boundary: false,
-        }
-      },
-      event=ctx => {
-        match ctx.event {
-          @core.AppEvent::Pointer(event) =>
-            handle_picker_pointer(
-              ctx.state,
-              event,
-              frame=ctx.frame,
-              items~,
-              selected~,
-              max_height~,
-              on_select~,
-            )
-          @core.AppEvent::Keyboard(event) =>
-            handle_picker_keyboard(
-              ctx.state,
-              event,
-              items~,
-              selected~,
-              on_select~,
-            )
-          _ => @core.VirtualNodeEventResult::ignored()
-        }
-      },
-      semantics=() => {
-        @core.VirtualNodeSemanticsInfo::new(
-          role=@core.SemanticsRole::Menu,
-          label=placeholder,
-          value=picker_selected_label(items, selected.get(), placeholder),
-          actions=[
-            @core.SemanticsAction::Focus,
-            @core.SemanticsAction::Activate,
-          ],
-        )
-      },
-      focusable=() => true,
-    ),
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind~, key~),
+    revision=() => {
+      "picker:\{picker_items_revision(items)}:\{selected.get()}:\{placeholder}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_brush_revision(background)}:\{corner_radius}:\{max_height}:\{on_select is Some(_)}"
+    },
+    layout=ctx => {
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(
+          @core.Size::new(width=200.0, height=40.0),
+        ),
+      )
+    },
+    paint=ctx => {
+      let commands : Array[@core.DrawCommand] = []
+      let overlay_commands : Array[@core.DrawCommand] = []
+      append_picker_commands(
+        commands,
+        overlay_commands,
+        frame=ctx.frame,
+        items~,
+        selected_id=selected.get(),
+        placeholder~,
+        font~,
+        foreground~,
+        background~,
+        corner_radius~,
+        max_height~,
+        expanded=ctx.state.expanded,
+      )
+      {
+        commands,
+        child_layers: [],
+        post_commands: [],
+        overlay_commands,
+        platform_views: [],
+        repaint_boundary: false,
+      }
+    },
+    event=ctx => {
+      match ctx.event {
+        @core.AppEvent::Pointer(event) =>
+          handle_picker_pointer(
+            ctx.state,
+            event,
+            frame=ctx.frame,
+            items~,
+            selected~,
+            max_height~,
+            on_select~,
+          )
+        @core.AppEvent::Keyboard(event) =>
+          handle_picker_keyboard(
+            ctx.state,
+            event,
+            items~,
+            selected~,
+            on_select~,
+          )
+        _ => @core.ViewEventResult::ignored()
+      }
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(
+        role=@core.SemanticsRole::Menu,
+        label=placeholder,
+        value=picker_selected_label(items, selected.get(), placeholder),
+        actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
+      )
+    },
+    focusable=() => true,
   )
 }
 
@@ -116,7 +111,7 @@ fn append_picker_commands(
   commands : Array[@core.DrawCommand],
   overlay_commands : Array[@core.DrawCommand],
   frame~ : @core.Rect,
-  items~ : Array[RawPickerOption],
+  items~ : Array[PickerOption],
   selected_id~ : String,
   placeholder~ : String,
   font~ : @core.FontSpec,
@@ -187,7 +182,7 @@ fn append_picker_commands(
 fn append_picker_popup_commands(
   overlay_commands : Array[@core.DrawCommand],
   frame~ : @core.Rect,
-  items~ : Array[RawPickerOption],
+  items~ : Array[PickerOption],
   selected_id~ : String,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
@@ -249,14 +244,14 @@ fn append_picker_popup_commands(
 
 ///|
 fn[Msg] handle_picker_pointer(
-  state : @core.VirtualNodeStateContext,
+  state : @core.ViewStateContext,
   event : @core.PointerEvent,
   frame~ : @core.Rect,
-  items~ : Array[RawPickerOption],
+  items~ : Array[PickerOption],
   selected~ : @core.Binding[String],
   max_height~ : Double,
   on_select~ : ((String) -> Msg)?,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   let inside_button = frame.contains(event.position)
   let popup_frame = picker_popup_frame(items, frame, max_height)
   let inside_popup = popup_frame.contains(event.position)
@@ -265,103 +260,103 @@ fn[Msg] handle_picker_pointer(
       match picker_item_id_at_position(items, popup_frame, event.position) {
         Some(id) => {
           selected.set(id)
-          virtual_node_event_result(
+          view_event_result(
             changed=true,
             activated=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
-            dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
             messages=picker_messages(on_select, id),
           )
         }
         None =>
-          virtual_node_event_result(
+          view_event_result(
             changed=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
-            dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
           )
       }
     } else if event.phase == @core.PointerPhase::Up && inside_button {
-      virtual_node_event_result(
+      view_event_result(
         changed=true,
         captured=true,
         state=Some({ ..state, expanded: false }),
-        dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+        dirty=@core.ViewDirtyHint::ViewPaintDirty,
       )
     } else if event.phase == @core.PointerPhase::Up {
-      virtual_node_event_result(
+      view_event_result(
         changed=true,
         captured=true,
         state=Some({ ..state, expanded: false }),
-        dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+        dirty=@core.ViewDirtyHint::ViewPaintDirty,
       )
     } else if inside_button || inside_popup {
-      virtual_node_event_result(changed=true, captured=true)
+      view_event_result(changed=true, captured=true)
     } else {
-      @core.VirtualNodeEventResult::ignored()
+      @core.ViewEventResult::ignored()
     }
   } else if event.phase == @core.PointerPhase::Up && inside_button {
-    virtual_node_event_result(
+    view_event_result(
       changed=true,
       captured=true,
       state=Some({ ..state, expanded: true }),
-      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   } else {
-    @core.VirtualNodeEventResult::ignored()
+    @core.ViewEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_picker_keyboard(
-  state : @core.VirtualNodeStateContext,
+  state : @core.ViewStateContext,
   event : @core.KeyboardEvent,
-  items~ : Array[RawPickerOption],
+  items~ : Array[PickerOption],
   selected~ : @core.Binding[String],
   on_select~ : ((String) -> Msg)?,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   if !event.pressed {
-    @core.VirtualNodeEventResult::ignored()
+    @core.ViewEventResult::ignored()
   } else if event.key == "Escape" && state.expanded {
-    virtual_node_event_result(
+    view_event_result(
       changed=true,
       captured=true,
       state=Some({ ..state, expanded: false }),
-      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   } else if event.key == "Enter" || event.key == "Space" || event.key == " " {
     if state.expanded {
       match picker_selected_id_or_first(items, selected.get()) {
         Some(id) => {
           selected.set(id)
-          virtual_node_event_result(
+          view_event_result(
             changed=true,
             activated=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
-            dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
             messages=picker_messages(on_select, id),
           )
         }
         None =>
-          virtual_node_event_result(
+          view_event_result(
             changed=true,
             captured=true,
             state=Some({ ..state, expanded: false }),
-            dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
           )
       }
     } else {
-      virtual_node_event_result(
+      view_event_result(
         changed=true,
         captured=true,
         state=Some({ ..state, expanded: true }),
-        dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+        dirty=@core.ViewDirtyHint::ViewPaintDirty,
       )
     }
   } else {
-    @core.VirtualNodeEventResult::ignored()
+    @core.ViewEventResult::ignored()
   }
 }
 
@@ -378,7 +373,7 @@ fn[Msg] picker_messages(
 
 ///|
 fn picker_selected_label(
-  items : Array[RawPickerOption],
+  items : Array[PickerOption],
   selected_id : String,
   placeholder : String,
 ) -> String {
@@ -394,7 +389,7 @@ fn picker_selected_label(
 
 ///|
 fn picker_selected_id_or_first(
-  items : Array[RawPickerOption],
+  items : Array[PickerOption],
   selected_id : String,
 ) -> String? {
   let mut selected : String? = None
@@ -416,7 +411,7 @@ fn picker_selected_id_or_first(
 
 ///|
 fn picker_item_id_at_position(
-  items : Array[RawPickerOption],
+  items : Array[PickerOption],
   list_frame : @core.Rect,
   position : @core.Point,
 ) -> String? {
@@ -430,7 +425,7 @@ fn picker_item_id_at_position(
 
 ///|
 fn picker_popup_frame(
-  items : Array[RawPickerOption],
+  items : Array[PickerOption],
   frame : @core.Rect,
   max_height : Double,
 ) -> @core.Rect {
@@ -438,7 +433,7 @@ fn picker_popup_frame(
     x=frame.origin.x,
     y=frame.origin.y + frame.size.height + 4.0,
     width=frame.size.width,
-    height=virtual_node_min_double(
+    height=view_min_double(
       max_height,
       items.length().to_double() * picker_item_height(),
     ),
@@ -461,7 +456,7 @@ fn picker_item_height() -> Double {
 }
 
 ///|
-fn picker_items_revision(items : Array[RawPickerOption]) -> String {
+fn picker_items_revision(items : Array[PickerOption]) -> String {
   let mut result = ""
   for item in items {
     result = "\{result}|\{item.id()}:\{item.label()}"

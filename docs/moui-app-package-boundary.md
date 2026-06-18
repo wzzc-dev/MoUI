@@ -13,7 +13,7 @@
 `core` 应该包含：
 
 - 基础值类型：geometry、color、brush、font、event、keyboard、text range 等。
-- 抽象 UI 协议：`View`、`VirtualNode`、layout/paint/event/semantics/focus/text input contract。
+- 抽象 UI 协议：`View`、layout/paint/event/semantics/focus/text input contract。
 - App loop contract：`Program`、`Effect`、`Subscription` 这类平台中立执行协议。
 - Renderer-neutral draw/text/accessibility contract：绘制命令、文本测量协议、语义树协议。
 - Theme 的中立 token surface：不绑定具体设计系统品牌、不含平台或 renderer 实现。
@@ -41,7 +41,7 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
 
 - app-facing 能力和具体控件行为进入 `moui/views`：控件样式、form helper、
   routing/history、picker item、WebView constructor、普通 app 需要看到的 rich text
-  facade，以及 button/text field/picker 等低层 VirtualNode 实现。
+  facade，以及 button/text field/picker 等低层 custom view 实现。
 - runtime/diagnostics 进入 `moui/runtime`：runtime inspector、program lifecycle
   snapshot、view/render diagnostics snapshot、`ComponentContext` runtime 构造细节。
 - 平台服务进入 `moui/backend/host`：WebView command/event/policy/spec、host
@@ -61,8 +61,8 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
   `TextFieldStyle`、`ChoiceControlStyle`、`ProgressStyle`、`SliderStyle`、
   `PickerStyle`、`FeedbackStyle`、`BadgeStyle`、`FormValidationStyle`、
   `PickerItem` 已由 `moui/views` 拥有。`core` 只保留 `Color`、`Brush`、
-  `BorderStyle`、`ShadowStyle`、`Theme` token 这类基础值。低层 picker
-  使用 `@views.RawPickerOption` 作为实现输入，普通 app 仍使用
+  `BorderStyle`、`ShadowStyle`、`Theme` token 这类基础值。picker 的低层
+  option representation 是 `views` 包内私有实现细节；普通 app 使用
   `@views.PickerItem` / `@views.picker`。
 - **WebView ownership 已迁出**：`WebViewSpec`、`WebViewCommand`、
   `WebViewEvent`、`WebViewNavigationPolicy` 已归 `moui/backend/host` 拥有。
@@ -81,14 +81,14 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
   `TextRange`、grapheme boundary、`TextSystem`、paragraph layout contract、基础
   text input state。
 - **`ComponentContext` runtime 构造入口已收口**：`ComponentContext` 仍作为
-  component-facing kernel 类型保留在 `core`，因为 `core.VirtualNode` /
+  component-facing kernel 类型保留在 `core`，因为 `View::node` /
   `views.component` 的签名需要它且 `core` 不能反向依赖 `runtime`。runtime 使用
   `ComponentContext::from_runtime(ComponentRuntimeContextInput)` 构造执行上下文；
   普通 component API 不暴露散落的 runtime storage 参数，root facade 也不暴露该
   构造入口。
 - **Date picker 控件语义已迁出**：`DateValue` 是中立数据模型，继续属于
-  `core`；`DatePickerMode` 是具体控件语义，属于 `moui/views`。低层
-  `RawDatePickerDisplayMode` 也由 `views` 拥有，转换由普通 constructor 完成。
+  `core`；`DatePickerMode` 是具体控件语义，属于 `moui/views`。低层 display
+  mode representation 是 `views` 包内私有实现细节，转换由普通 constructor 完成。
 - **Theme schema 和默认审美已拆分**：`core.Theme` / `core.Environment` 保留
   token schema 和 `neutral()` fallback/testing 值；`default_theme()`、
   `light_theme()`、`dark_theme()` 等 app-facing 默认审美属于 `moui/views`。
@@ -115,7 +115,7 @@ MoUI 的包边界优先保持少而清晰，不按每个功能名拆出一组顶
 直接落位，不保留兼容别名或 deprecated 过渡入口。
 
 - app-facing 控件、控件语义、默认主题、form/routing/WebView/rich text facade、
-  以及具体 VirtualNode 控件行为进入 `moui/views`。
+  以及具体 custom view 控件行为进入 `moui/views`。
 - runtime lifecycle、component runtime input、effect/subscription diagnostics
   summary、inspector snapshot 进入 `moui/runtime`。
 - host/platform service 协议进入 `moui/backend/host` 或具体 backend。
@@ -182,7 +182,7 @@ root facade 暴露的是 app-safe 的 kernel 类型别名，不是把整个 `cor
 
 - 平台中立，不绑定 Web、macOS、Windows、Linux、Skia、WGPU 或 host service 实现。
 - app-safe，普通应用作者可以理解并稳定使用。
-- 不暴露 runtime tree、renderer、backend、inspector、debug payload 或 VirtualNode implementation details。
+- 不暴露 runtime tree、renderer、backend、inspector、debug payload 或 private view implementation details。
 - 是普通 app 高频需要的类型。
 
 推荐由 `wzzc-dev/moui` 暴露的类型包括：
@@ -199,8 +199,8 @@ root facade 暴露的是 app-safe 的 kernel 类型别名，不是把整个 `cor
 
 不应该进入 root facade 的类型包括：
 
-- `VirtualNode`、`VirtualNodeLayoutContext`、`VirtualNodePaintContext`、`VirtualNodeEventContext`
-- `VirtualNodePaintPlan`、`VirtualNodePaintLayer`、`VirtualNodeEventResult`
+- `ViewLayoutContext`、`ViewPaintContext`、`ViewEventContext`
+- `ViewPaintPlan`、`ViewPaintLayer`、`ViewEventResult`
 - `DrawCommand`、`DrawFrame`、`DamageRegion`
 - `ComponentContext::from_runtime` 这类 runtime-only 构造入口
 - runtime snapshot、inspector snapshot、diagnostic payload
@@ -222,14 +222,15 @@ WebView 类型的 owning package 是 `wzzc-dev/moui/backend/host`。`core` 不�
 `WebViewNavigationPolicy`，也不提供 `PlatformViewPlacement::web_view` 这类
 WebView 专有 helper。
 
-## `moui/views` 低层 VirtualNode 规则
+## `moui/views` 低层 custom view 规则
 
 `wzzc-dev/moui/views` 同时面向普通 app 和 MoUI 内置控件实现者。普通 app 使用
 `button`、`text_field`、`picker` 这类 app-facing constructor；框架和控件实现可以在
-`views` 包内使用 `raw_*` helper 对接 `@core.VirtualNode`。
+`views` 包内使用私有 `*_control` / `*_layout` / `*_surface` helper 对接
+`@core.View::node`。
 
 只有在需要实现新的 reusable control，并且必须自定义以下行为时，才新增低层
-`raw_*` helper：
+helper：
 
 - layout
 - paint
@@ -244,14 +245,16 @@ WebView wrapper，应用层应使用 `wzzc-dev/moui/views` 的 app-facing constr
 新增控件时遵循这个落点：
 
 - 公共 app-facing constructor 放在 `moui/views`。
-- 具体 VirtualNode behavior 实现也放在 `moui/views`，通常命名为 `raw_*`。
-- 底层协议通过 `@core.View::virtual_node` 和 `@core.VirtualNode` 对接。
+- 具体 custom view behavior 实现也放在 `moui/views`，helper 名应描述行为，
+  例如 `button_control`、`text_field_control`、`scroll_container`。
+- 底层协议通过 `@core.View::node` 以及 `ViewLayoutContext`、`ViewPaintContext`、
+  `ViewEventContext` 等回调类型对接。
 - 普通 app 只看到 `@views.some_control(...) -> View[Msg]`。
 
 换句话说，Iced 的控件层同时是内置控件和自定义控件入口；
 MoUI 当前把两类入口统一在 `moui/views`：普通 app 使用高层 constructor，
-控件作者复用同包内的 `raw_*` VirtualNode helper。这不改变普通 app 默认只依赖
-`moui` 和 `moui/views` 的规则。
+控件作者复用同包内私有 control/layout helper。这不改变普通 app 默认只依赖
+`moui` 和 `moui/views` 的规则；低层 public 入口只有 `@core.View::node(...)`。
 
 ## 平台入口包
 
@@ -277,8 +280,8 @@ WGPU 相关 backend/render 包只作为实验或诊断入口使用，不是普�
 框架内部、控件实现、renderer/backend 集成可以使用更低层的包。
 
 - `moui/core`：基础协议层 / 抽象 UI kernel，包含平台中立协议和值类型，
-  例如 `View`、`VirtualNode`、event、layout、paint、semantics、text contract 等。
-- `moui/views`：app-facing constructor 与具体 VirtualNode 控件行为实现。
+  例如 `View`、event、layout、paint、semantics、text contract 等。
+- `moui/views`：app-facing constructor 与具体 custom view 控件行为实现。
 - `moui/runtime`：runtime state、element tree、layout/paint/event dispatch、program execution。
 - `moui/backend/host`：host service、window/event/service 协议。
 - `moui/backend/*`：平台 backend。
@@ -295,7 +298,7 @@ WGPU 相关 backend/render 包只作为实验或诊断入口使用，不是普�
 - 如果普通 app import `wzzc-dev/moui/backend/host`，是否确实需要 host service 协议？
 - 普通 app 是否错误依赖了 `runtime`、`render/*` 或平台 backend？
 - 新增 root alias 是否是平台中立、app-safe、高频使用的类型？
-- 新增低层 VirtualNode helper 是否同时提供了 `moui/views` app-facing constructor？
+- 新增低层 custom view helper 是否同时提供了 `moui/views` app-facing constructor？
 - 新增控件是否避免向 `core` 添加具体控件 enum variant、primitive constructor 或 runtime lowering 分支？
 - 新增 `core` API 是否真的是跨 runtime 的基础协议 / 抽象 UI kernel 能力？
 - 新增 style、form、webview、routing、rich text editor、diagnostics API 是否更适合

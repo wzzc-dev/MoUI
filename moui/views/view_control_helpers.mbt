@@ -1,46 +1,46 @@
 ///|
-fn virtual_node_color_revision(color : @core.Color) -> String {
+fn view_color_revision(color : @core.Color) -> String {
   "\{color.r},\{color.g},\{color.b},\{color.a}"
 }
 
 ///|
-fn virtual_node_brush_revision(value : @core.Brush) -> String {
+fn view_brush_revision(value : @core.Brush) -> String {
   match value {
-    @core.Brush::Solid(color) => "solid:\{virtual_node_color_revision(color)}"
+    @core.Brush::Solid(color) => "solid:\{view_color_revision(color)}"
     @core.Brush::LinearGradient(spec) =>
-      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{virtual_node_color_revision(spec.start_color)},\{virtual_node_color_revision(spec.end_color)}"
+      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{view_color_revision(spec.start_color)},\{view_color_revision(spec.end_color)}"
     @core.Brush::RadialGradient(spec) =>
-      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{virtual_node_color_revision(spec.center_color)},\{virtual_node_color_revision(spec.edge_color)}"
+      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{view_color_revision(spec.center_color)},\{view_color_revision(spec.edge_color)}"
   }
 }
 
 ///|
-fn virtual_node_brush_option_revision(value : @core.Brush?) -> String {
+fn view_brush_option_revision(value : @core.Brush?) -> String {
   match value {
-    Some(brush) => virtual_node_brush_revision(brush)
+    Some(brush) => view_brush_revision(brush)
     None => "none"
   }
 }
 
 ///|
-fn virtual_node_border_option_revision(value : @core.BorderStyle?) -> String {
+fn view_border_option_revision(value : @core.BorderStyle?) -> String {
   match value {
-    Some(value) => "\{virtual_node_brush_revision(value.brush)}:\{value.width}"
+    Some(value) => "\{view_brush_revision(value.brush)}:\{value.width}"
     None => "none"
   }
 }
 
 ///|
-fn virtual_node_shadow_option_revision(value : @core.ShadowStyle?) -> String {
+fn view_shadow_option_revision(value : @core.ShadowStyle?) -> String {
   match value {
     Some(value) =>
-      "\{virtual_node_color_revision(value.color)}:\{value.offset.x},\{value.offset.y}:\{value.blur_radius}:\{value.spread}"
+      "\{view_color_revision(value.color)}:\{value.offset.x},\{value.offset.y}:\{value.blur_radius}:\{value.spread}"
     None => "none"
   }
 }
 
 ///|
-fn virtual_node_font_revision(font : @core.FontSpec) -> String {
+fn view_font_revision(font : @core.FontSpec) -> String {
   let style = match font.style {
     @core.FontStyle::Normal => "normal"
     @core.FontStyle::Italic => "italic"
@@ -49,17 +49,17 @@ fn virtual_node_font_revision(font : @core.FontSpec) -> String {
 }
 
 ///|
-fn virtual_node_size_revision(size : @core.Size) -> String {
+fn view_size_revision(size : @core.Size) -> String {
   "\{size.width}x\{size.height}"
 }
 
 ///|
-fn virtual_node_text_length(text : String) -> Int {
+fn view_text_length(text : String) -> Int {
   text.to_array().length()
 }
 
 ///|
-fn virtual_node_max_double(left : Double, right : Double) -> Double {
+fn view_max_double(left : Double, right : Double) -> Double {
   if left >= right {
     left
   } else {
@@ -68,7 +68,7 @@ fn virtual_node_max_double(left : Double, right : Double) -> Double {
 }
 
 ///|
-fn virtual_node_min_double(left : Double, right : Double) -> Double {
+fn view_min_double(left : Double, right : Double) -> Double {
   if left <= right {
     left
   } else {
@@ -77,7 +77,7 @@ fn virtual_node_min_double(left : Double, right : Double) -> Double {
 }
 
 ///|
-fn virtual_node_max_int(left : Int, right : Int) -> Int {
+fn view_max_int(left : Int, right : Int) -> Int {
   if left >= right {
     left
   } else {
@@ -86,7 +86,7 @@ fn virtual_node_max_int(left : Int, right : Int) -> Int {
 }
 
 ///|
-fn virtual_node_button_next_state(
+fn view_button_next_state(
   current : @core.ButtonState,
   inside : Bool,
   phase : @core.PointerPhase,
@@ -117,8 +117,8 @@ fn virtual_node_button_next_state(
 }
 
 ///|
-fn virtual_node_button_background(
-  state : @core.VirtualNodeStateContext,
+fn view_button_background(
+  state : @core.ViewStateContext,
   normal : @core.Brush,
   hovered : @core.Brush,
   pressed : @core.Brush,
@@ -133,16 +133,16 @@ fn virtual_node_button_background(
 }
 
 ///|
-fn[Msg] virtual_node_event_result(
+fn[Msg] view_event_result(
   changed? : Bool = false,
   activated? : Bool = false,
   focused? : Bool = false,
   captured? : Bool = false,
-  state? : @core.VirtualNodeStateContext? = None,
+  state? : @core.ViewStateContext? = None,
   text_control? : @core.TextControlStateContext? = None,
-  dirty? : @core.VirtualNodeDirtyHint = @core.VirtualNodeDirtyHint::VirtualNodeClean,
+  dirty? : @core.ViewDirtyHint = @core.ViewDirtyHint::ViewClean,
   messages? : Array[Msg] = [],
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   {
     changed,
     activated,

@@ -3,7 +3,7 @@ pub fn[Msg, NextMsg] View::map(
   self : View[Msg],
   map : (Msg) -> NextMsg,
 ) -> View[NextMsg] {
-  View::virtual_node(self.ops().map(map))
+  { node: self.node.map(map) }
 }
 
 ///|
@@ -119,13 +119,11 @@ pub fn[Msg] View::presence(
   if sample.present {
     self.apply_transition_style(sample.style)
   } else {
-    View::virtual_node(
-      VirtualNode::new(identity=() => VirtualNodeIdentity::new(kind="Empty"), layout=ctx => {
-        VirtualNodeLayoutResult::new(
-          size=ctx.constraints.constrain(Size::new(width=0.0, height=0.0)),
-        )
-      }),
-    )
+    View::node(identity=() => ViewIdentity::new(kind="Empty"), layout=ctx => {
+      ViewLayoutResult::new(
+        size=ctx.constraints.constrain(Size::new(width=0.0, height=0.0)),
+      )
+    })
   }
 }
 

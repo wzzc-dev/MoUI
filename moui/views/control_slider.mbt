@@ -30,10 +30,10 @@ pub fn[Msg] slider(
     foreground,
     resolved_style.thumb_color,
   )
-  let base = raw_custom(
+  let base = custom_control(
     kind="Slider",
     measure=ctx => {
-      @core.VirtualNodeLayoutResult::new(
+      @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
       )
     },
@@ -47,7 +47,7 @@ pub fn[Msg] slider(
       )
       let knob_x = frame.origin.x +
         normalized * max_view_double(0.0, frame.size.width - knob)
-      @core.VirtualNodePaintPlan::commands([
+      @core.ViewPaintPlan::commands([
         @core.DrawCommand::FillRoundedRectBrush(
           @core.RoundedRect::new(rect=track, radius=track_radius),
           @core.Brush::solid(background),
@@ -79,7 +79,7 @@ pub fn[Msg] slider(
       ])
     },
     semantics=() => {
-      @core.VirtualNodeSemanticsInfo::new(
+      @core.ViewSemanticsInfo::new(
         role=@core.SemanticsRole::Slider,
         label="Slider",
         value="\{value}",

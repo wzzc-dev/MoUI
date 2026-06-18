@@ -7,9 +7,29 @@ pub fn[Msg] avatar(
 ) -> @core.View[Msg] {
   match image {
     Some(source) =>
-      raw_image(
-        source~,
-        size=Some(@core.Size::new(width=size, height=size)),
+      @core.View::node(
+        identity=() => @core.ViewIdentity::new(kind="Image"),
+        revision=() => "avatar-image:\{source}:\{size}",
+        layout=ctx => {
+          @core.ViewLayoutResult::new(
+            size=ctx.constraints.constrain(
+              @core.Size::new(width=size, height=size),
+            ),
+          )
+        },
+        paint=ctx => {
+          @core.ViewPaintPlan::commands([
+            @core.DrawCommand::DrawImage({
+              source,
+              frame: ctx.frame,
+              opacity: 1.0,
+              fit: @core.ImageFit::Contain,
+            }),
+          ])
+        },
+        semantics=() => {
+          @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
+        },
       )
       .corner_radius(size / 2.0)
       .clip()

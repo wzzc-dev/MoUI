@@ -1278,18 +1278,23 @@ pub fn TypographyScale::default() -> Self
 pub struct View[Msg] {
   // private fields
 }
+pub fn[Msg] View::accepts_focus(Self[Msg]) -> Bool
 pub fn[Msg] View::accessibility_label(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::align(Self[Msg], alignment? : Alignment) -> Self[Msg]
 pub fn[Msg] View::aspect_ratio(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::background(Self[Msg], Color) -> Self[Msg]
 pub fn[Msg] View::background_brush(Self[Msg], Brush) -> Self[Msg]
 pub fn[Msg] View::border(Self[Msg], BorderStyle) -> Self[Msg]
+pub fn[Msg] View::build_child(Self[Msg]) -> ((ComponentContext) -> Self[Msg])?
 pub fn[Msg] View::caption(Self[Msg]) -> Self[Msg]
+pub fn[Msg] View::child_constraints(Self[Msg], Constraints) -> Constraints
+pub fn[Msg] View::children(Self[Msg]) -> Array[Self[Msg]]
 pub fn[Msg] View::clip(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::corner_radius(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::cross_axis_alignment(Self[Msg], CrossAxisAlignment) -> Self[Msg]
 pub fn[Msg] View::disabled(Self[Msg], disabled? : Bool) -> Self[Msg]
 pub fn[Msg] View::environment(Self[Msg], Environment) -> Self[Msg]
+pub fn[Msg] View::event(Self[Msg], ViewEventContext) -> ViewEventResult[Msg]
 pub fn[Msg] View::expanded(Self[Msg], weight? : Double) -> Self[Msg]
 pub fn[Msg] View::flexible(Self[Msg], weight? : Double) -> Self[Msg]
 pub fn[Msg] View::focus_trap(Self[Msg], enabled? : Bool) -> Self[Msg]
@@ -1297,14 +1302,17 @@ pub fn[Msg] View::focusable(Self[Msg], focusable? : Bool) -> Self[Msg]
 pub fn[Msg] View::font(Self[Msg], FontSpec) -> Self[Msg]
 pub fn[Msg] View::foreground(Self[Msg], Color) -> Self[Msg]
 pub fn[Msg] View::frame(Self[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> Self[Msg]
+pub fn[Msg] View::identity(Self[Msg]) -> ViewIdentity
 pub fn[Msg] View::intrinsic_height(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::intrinsic_width(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::key(Self[Msg], String) -> Self[Msg]
 pub fn[Msg] View::keyboard_shortcut(Self[Msg], KeyboardShortcut) -> Self[Msg]
+pub fn[Msg] View::layout(Self[Msg], ViewLayoutContext) -> ViewLayoutResult
 pub fn[Msg] View::layout_priority(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::main_axis_alignment(Self[Msg], MainAxisAlignment) -> Self[Msg]
 pub fn[Msg, NextMsg] View::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] View::mono(Self[Msg]) -> Self[Msg]
+pub fn[Msg] View::node(identity~ : () -> ViewIdentity, revision? : () -> String, children? : () -> Array[Self[Msg]], build_child? : ((ComponentContext) -> Self[Msg])?, child_constraints? : (Constraints) -> Constraints, layout~ : (ViewLayoutContext) -> ViewLayoutResult, paint? : (ViewPaintContext) -> ViewPaintPlan, event? : (ViewEventContext) -> ViewEventResult[Msg], text_input_state? : (ViewPaintContext) -> TextInputState?, text_command? : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg], semantics? : () -> ViewSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
 pub fn[Msg] View::offset(Self[Msg], dx? : Double, dy? : Double) -> Self[Msg]
 pub fn[Msg] View::on_double_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::on_drag(Self[Msg], (DragGestureEvent) -> Msg) -> Self[Msg]
@@ -1313,11 +1321,13 @@ pub fn[Msg] View::on_file_drop(Self[Msg], (Array[String], Point) -> Msg) -> Self
 pub fn[Msg] View::on_long_press(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::on_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::opacity(Self[Msg], Double) -> Self[Msg]
-pub fn[Msg] View::ops(Self[Msg]) -> VirtualNode[Msg]
 pub fn[Msg] View::padding(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] View::paint(Self[Msg], ViewPaintContext) -> ViewPaintPlan
 pub fn[Msg] View::presence(Self[Msg], present~ : Bool, spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
 pub fn[Msg] View::repaint_boundary(Self[Msg]) -> Self[Msg]
+pub fn[Msg] View::revision(Self[Msg]) -> String
 pub fn[Msg] View::scale(Self[Msg], sx? : Double, sy? : Double) -> Self[Msg]
+pub fn[Msg] View::semantics(Self[Msg]) -> ViewSemanticsInfo
 pub fn[Msg] View::semantics_action(Self[Msg], SemanticsAction) -> Self[Msg]
 pub fn[Msg] View::semantics_checked(Self[Msg], checked? : Bool) -> Self[Msg]
 pub fn[Msg] View::semantics_description(Self[Msg], String) -> Self[Msg]
@@ -1330,16 +1340,118 @@ pub fn[Msg] View::semantics_role(Self[Msg], SemanticsRole) -> Self[Msg]
 pub fn[Msg] View::semantics_selected(Self[Msg], selected? : Bool) -> Self[Msg]
 pub fn[Msg] View::shadow(Self[Msg], ShadowStyle) -> Self[Msg]
 pub fn[Msg] View::spacing(Self[Msg], Double) -> Self[Msg]
+pub fn[Msg] View::text_command(Self[Msg], ViewEventContext, CommandIntent, paste_text? : String?) -> TextCommandResult
+pub fn[Msg] View::text_command_result(Self[Msg], ViewEventContext, CommandIntent, paste_text? : String?) -> ViewTextCommandResult[Msg]
+pub fn[Msg] View::text_input_state(Self[Msg], ViewPaintContext) -> TextInputState?
 pub fn[Msg] View::theme(Self[Msg], Theme) -> Self[Msg]
 pub fn[Msg] View::title(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::transition(Self[Msg], spec? : TransitionSpec, progress? : Double, reduced_motion? : Bool) -> Self[Msg]
-pub fn[Msg] View::virtual_node(VirtualNode[Msg]) -> Self[Msg]
-pub fn[Msg] View::virtual_node_ops(Self[Msg]) -> VirtualNode[Msg]?
+
+pub(all) enum ViewDirtyHint {
+  ViewClean
+  ViewPaintDirty
+  ViewLayoutDirty
+  ViewBuildDirty
+} derive(Eq, @debug.Debug)
 
 type ViewEnvironment
 pub fn ViewEnvironment::environment(Self) -> Environment
 pub fn ViewEnvironment::new(viewport_size~ : Size, environment~ : Environment) -> Self
 pub fn ViewEnvironment::viewport_size(Self) -> Size
+
+pub(all) struct ViewEventContext {
+  frame : Rect
+  child_frames : Array[Rect]
+  event : AppEvent
+  focused : Bool
+  state : ViewStateContext
+  text_control : TextControlStateContext
+  text_system : TextSystem
+  environment : Environment
+}
+
+pub(all) struct ViewEventResult[Msg] {
+  changed : Bool
+  activated : Bool
+  focused : Bool
+  captured : Bool
+  state : ViewStateContext?
+  text_control : TextControlStateContext?
+  dirty : ViewDirtyHint
+  messages : Array[Msg]
+} derive(Eq, @debug.Debug)
+pub fn[Msg] ViewEventResult::ignored() -> Self[Msg]
+pub fn[Msg] ViewEventResult::message(Msg) -> Self[Msg]
+
+pub(all) struct ViewIdentity {
+  kind : String
+  key : Key?
+} derive(Eq)
+pub fn ViewIdentity::new(kind~ : String, key? : String?) -> Self
+
+pub(all) struct ViewLayoutContext {
+  constraints : Constraints
+  child_sizes : Array[Size]
+  text_system : TextSystem
+  environment : Environment
+}
+
+pub(all) struct ViewLayoutResult {
+  size : Size
+  child_frames : Array[Rect]
+} derive(Eq, @debug.Debug)
+pub fn ViewLayoutResult::new(size~ : Size, child_frames? : Array[Rect]) -> Self
+
+pub(all) struct ViewPaintContext {
+  frame : Rect
+  child_frames : Array[Rect]
+  focused : Bool
+  state : ViewStateContext
+  text_control : TextControlStateContext
+  environment : Environment
+  text_system : TextSystem
+}
+
+pub(all) struct ViewPaintLayer {
+  frame : Rect
+  cache_key : String
+  content_revision : Int
+  commands : Array[DrawCommand]
+  overlay_commands : Array[DrawCommand]
+  platform_views : Array[PlatformViewPlacement]
+} derive(Eq, @debug.Debug)
+pub fn ViewPaintLayer::new(frame~ : Rect, cache_key~ : String, content_revision~ : Int, commands? : Array[DrawCommand], overlay_commands? : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement]) -> Self
+
+pub(all) struct ViewPaintPlan {
+  commands : Array[DrawCommand]
+  child_layers : Array[ViewPaintLayer]
+  post_commands : Array[DrawCommand]
+  overlay_commands : Array[DrawCommand]
+  platform_views : Array[PlatformViewPlacement]
+  repaint_boundary : Bool
+} derive(Eq, @debug.Debug)
+pub fn ViewPaintPlan::commands(Array[DrawCommand]) -> Self
+pub fn ViewPaintPlan::empty() -> Self
+
+pub(all) struct ViewSemanticsInfo {
+  role : SemanticsRole
+  label : String
+  value : String
+  description : String
+  actions : Array[SemanticsAction]
+} derive(Eq, @debug.Debug)
+pub fn ViewSemanticsInfo::new(role? : SemanticsRole, label? : String, value? : String, description? : String, actions? : Array[SemanticsAction]) -> Self
+
+pub(all) struct ViewStateContext {
+  focused : Bool
+  hovered : Bool
+  pressed : Bool
+  selected : Bool
+  checked : Bool
+  expanded : Bool
+  disabled : Bool
+  scratch : String
+} derive(Eq, @debug.Debug)
 
 pub(all) struct ViewStyle {
   font : FontSpec?
@@ -1351,133 +1463,13 @@ pub fn ViewStyle::empty() -> Self
 pub fn ViewStyle::from_theme(Theme) -> Self
 pub fn ViewStyle::merge(Self, Self) -> Self
 
-pub struct VirtualNode[Msg] {
-  // private fields
-}
-pub fn[Msg] VirtualNode::build_child(Self[Msg]) -> ((ComponentContext) -> View[Msg])?
-pub fn[Msg] VirtualNode::child_constraints(Self[Msg], Constraints) -> Constraints
-pub fn[Msg] VirtualNode::children(Self[Msg]) -> Array[View[Msg]]
-pub fn[Msg] VirtualNode::event(Self[Msg], VirtualNodeEventContext) -> VirtualNodeEventResult[Msg]
-pub fn[Msg] VirtualNode::focusable(Self[Msg]) -> Bool
-pub fn[Msg] VirtualNode::identity(Self[Msg]) -> VirtualNodeIdentity
-pub fn[Msg] VirtualNode::layout(Self[Msg], VirtualNodeLayoutContext) -> VirtualNodeLayoutResult
-pub fn[Msg, NextMsg] VirtualNode::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
-pub fn[Msg] VirtualNode::new(identity~ : () -> VirtualNodeIdentity, revision? : () -> String, children? : () -> Array[View[Msg]], build_child? : ((ComponentContext) -> View[Msg])?, child_constraints? : (Constraints) -> Constraints, layout~ : (VirtualNodeLayoutContext) -> VirtualNodeLayoutResult, paint? : (VirtualNodePaintContext) -> VirtualNodePaintPlan, event? : (VirtualNodeEventContext) -> VirtualNodeEventResult[Msg], text_input_state? : (VirtualNodePaintContext) -> TextInputState?, text_command? : (VirtualNodeEventContext, CommandIntent, String?) -> VirtualNodeTextCommandResult[Msg], semantics? : () -> VirtualNodeSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
-pub fn[Msg] VirtualNode::paint(Self[Msg], VirtualNodePaintContext) -> VirtualNodePaintPlan
-pub fn[Msg] VirtualNode::revision(Self[Msg]) -> String
-pub fn[Msg] VirtualNode::semantics(Self[Msg]) -> VirtualNodeSemanticsInfo
-pub fn[Msg] VirtualNode::text_command(Self[Msg], VirtualNodeEventContext, CommandIntent, paste_text? : String?) -> TextCommandResult
-pub fn[Msg] VirtualNode::text_command_result(Self[Msg], VirtualNodeEventContext, CommandIntent, paste_text? : String?) -> VirtualNodeTextCommandResult[Msg]
-pub fn[Msg] VirtualNode::text_input_state(Self[Msg], VirtualNodePaintContext) -> TextInputState?
-
-pub(all) enum VirtualNodeDirtyHint {
-  VirtualNodeClean
-  VirtualNodePaintDirty
-  VirtualNodeLayoutDirty
-  VirtualNodeBuildDirty
-} derive(Eq, @debug.Debug)
-
-pub(all) struct VirtualNodeEventContext {
-  frame : Rect
-  child_frames : Array[Rect]
-  event : AppEvent
-  focused : Bool
-  state : VirtualNodeStateContext
-  text_control : TextControlStateContext
-  text_system : TextSystem
-  environment : Environment
-}
-
-pub(all) struct VirtualNodeEventResult[Msg] {
-  changed : Bool
-  activated : Bool
-  focused : Bool
-  captured : Bool
-  state : VirtualNodeStateContext?
-  text_control : TextControlStateContext?
-  dirty : VirtualNodeDirtyHint
-  messages : Array[Msg]
-} derive(Eq, @debug.Debug)
-pub fn[Msg] VirtualNodeEventResult::ignored() -> Self[Msg]
-pub fn[Msg] VirtualNodeEventResult::message(Msg) -> Self[Msg]
-
-pub(all) struct VirtualNodeIdentity {
-  kind : String
-  key : Key?
-} derive(Eq)
-pub fn VirtualNodeIdentity::new(kind~ : String, key? : String?) -> Self
-
-pub(all) struct VirtualNodeLayoutContext {
-  constraints : Constraints
-  child_sizes : Array[Size]
-  text_system : TextSystem
-  environment : Environment
-}
-
-pub(all) struct VirtualNodeLayoutResult {
-  size : Size
-  child_frames : Array[Rect]
-} derive(Eq, @debug.Debug)
-pub fn VirtualNodeLayoutResult::new(size~ : Size, child_frames? : Array[Rect]) -> Self
-
-pub(all) struct VirtualNodePaintContext {
-  frame : Rect
-  child_frames : Array[Rect]
-  focused : Bool
-  state : VirtualNodeStateContext
-  text_control : TextControlStateContext
-  environment : Environment
-  text_system : TextSystem
-}
-
-pub(all) struct VirtualNodePaintLayer {
-  frame : Rect
-  cache_key : String
-  content_revision : Int
-  commands : Array[DrawCommand]
-  overlay_commands : Array[DrawCommand]
-  platform_views : Array[PlatformViewPlacement]
-} derive(Eq, @debug.Debug)
-pub fn VirtualNodePaintLayer::new(frame~ : Rect, cache_key~ : String, content_revision~ : Int, commands? : Array[DrawCommand], overlay_commands? : Array[DrawCommand], platform_views? : Array[PlatformViewPlacement]) -> Self
-
-pub(all) struct VirtualNodePaintPlan {
-  commands : Array[DrawCommand]
-  child_layers : Array[VirtualNodePaintLayer]
-  post_commands : Array[DrawCommand]
-  overlay_commands : Array[DrawCommand]
-  platform_views : Array[PlatformViewPlacement]
-  repaint_boundary : Bool
-} derive(Eq, @debug.Debug)
-pub fn VirtualNodePaintPlan::commands(Array[DrawCommand]) -> Self
-pub fn VirtualNodePaintPlan::empty() -> Self
-
-pub(all) struct VirtualNodeSemanticsInfo {
-  role : SemanticsRole
-  label : String
-  value : String
-  description : String
-  actions : Array[SemanticsAction]
-} derive(Eq, @debug.Debug)
-pub fn VirtualNodeSemanticsInfo::new(role? : SemanticsRole, label? : String, value? : String, description? : String, actions? : Array[SemanticsAction]) -> Self
-
-pub(all) struct VirtualNodeStateContext {
-  focused : Bool
-  hovered : Bool
-  pressed : Bool
-  selected : Bool
-  checked : Bool
-  expanded : Bool
-  disabled : Bool
-  scratch : String
-} derive(Eq, @debug.Debug)
-
-pub(all) struct VirtualNodeTextCommandResult[Msg] {
+pub(all) struct ViewTextCommandResult[Msg] {
   result : TextCommandResult
   text_control : TextControlStateContext?
   messages : Array[Msg]
 } derive(Eq, @debug.Debug)
-pub fn[Msg] VirtualNodeTextCommandResult::ignored() -> Self[Msg]
-pub fn[Msg] VirtualNodeTextCommandResult::new(result~ : TextCommandResult, text_control? : TextControlStateContext?, messages? : Array[Msg]) -> Self[Msg]
+pub fn[Msg] ViewTextCommandResult::ignored() -> Self[Msg]
+pub fn[Msg] ViewTextCommandResult::new(result~ : TextCommandResult, text_control? : TextControlStateContext?, messages? : Array[Msg]) -> Self[Msg]
 
 pub(all) struct VisualStyle {
   background : Brush?

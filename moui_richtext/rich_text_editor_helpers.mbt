@@ -469,31 +469,31 @@ fn is_redo_shortcut(event : @core.KeyboardEvent) -> Bool {
 }
 
 ///|
-fn virtual_node_color_revision(color : @core.Color) -> String {
+fn view_color_revision(color : @core.Color) -> String {
   "\{color.r},\{color.g},\{color.b},\{color.a}"
 }
 
 ///|
-fn virtual_node_brush_revision(value : @core.Brush) -> String {
+fn view_brush_revision(value : @core.Brush) -> String {
   match value {
-    @core.Brush::Solid(color) => "solid:\{virtual_node_color_revision(color)}"
+    @core.Brush::Solid(color) => "solid:\{view_color_revision(color)}"
     @core.Brush::LinearGradient(spec) =>
-      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{virtual_node_color_revision(spec.start_color)},\{virtual_node_color_revision(spec.end_color)}"
+      "linear:\{spec.start.x},\{spec.start.y},\{spec.end.x},\{spec.end.y},\{view_color_revision(spec.start_color)},\{view_color_revision(spec.end_color)}"
     @core.Brush::RadialGradient(spec) =>
-      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{virtual_node_color_revision(spec.center_color)},\{virtual_node_color_revision(spec.edge_color)}"
+      "radial:\{spec.center.x},\{spec.center.y},\{spec.radius},\{view_color_revision(spec.center_color)},\{view_color_revision(spec.edge_color)}"
   }
 }
 
 ///|
-fn virtual_node_border_option_revision(value : @core.BorderStyle?) -> String {
+fn view_border_option_revision(value : @core.BorderStyle?) -> String {
   match value {
-    Some(value) => "\{virtual_node_brush_revision(value.brush)}:\{value.width}"
+    Some(value) => "\{view_brush_revision(value.brush)}:\{value.width}"
     None => "none"
   }
 }
 
 ///|
-fn virtual_node_font_revision(font : @core.FontSpec) -> String {
+fn view_font_revision(font : @core.FontSpec) -> String {
   let style = match font.style {
     @core.FontStyle::Normal => "normal"
     @core.FontStyle::Italic => "italic"
@@ -502,21 +502,21 @@ fn virtual_node_font_revision(font : @core.FontSpec) -> String {
 }
 
 ///|
-fn virtual_node_size_revision(size : @core.Size) -> String {
+fn view_size_revision(size : @core.Size) -> String {
   "\{size.width}x\{size.height}"
 }
 
 ///|
-fn[Msg] virtual_node_event_result(
+fn[Msg] view_event_result(
   changed? : Bool = false,
   activated? : Bool = false,
   focused? : Bool = false,
   captured? : Bool = false,
-  state? : @core.VirtualNodeStateContext? = None,
+  state? : @core.ViewStateContext? = None,
   text_control? : @core.TextControlStateContext? = None,
-  dirty? : @core.VirtualNodeDirtyHint = @core.VirtualNodeDirtyHint::VirtualNodeClean,
+  dirty? : @core.ViewDirtyHint = @core.ViewDirtyHint::ViewClean,
   messages? : Array[Msg] = [],
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   {
     changed,
     activated,

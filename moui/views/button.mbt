@@ -15,7 +15,7 @@ pub fn[Msg] button(
   let normal = resolved_style.normal
   let hovered = resolved_style.hovered
   let pressed = resolved_style.pressed
-  raw_button(
+  button_control(
     text~,
     size=@core.Size::new(width~, height~),
     font=theme.typography.control,

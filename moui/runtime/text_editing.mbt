@@ -8,8 +8,8 @@ fn ElementNode::dispatch_text_command(
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> TextCommandResult {
   if self.id == target {
-    self.dispatch_virtual_node_text_command(
-      self.virtual_node,
+    self.dispatch_view_text_command(
+      self.erased_view_node,
       intent,
       paste_text~,
       environment~,
@@ -36,9 +36,9 @@ fn ElementNode::dispatch_text_command(
 }
 
 ///|
-fn ElementNode::dispatch_virtual_node_text_command(
+fn ElementNode::dispatch_view_text_command(
   self : ElementNode,
-  data : VirtualNode,
+  data : ErasedViewNode,
   intent : CommandIntent,
   paste_text~ : String?,
   environment? : Environment = Environment::neutral(),
