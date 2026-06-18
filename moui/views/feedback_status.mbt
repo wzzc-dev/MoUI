@@ -109,7 +109,7 @@ pub fn[Msg] inline_error(
       )
     None => ()
   }
-  surface(
+  container(
     row(body, spacing=theme.spacing_scale.sm, align=CrossAlign::Center),
     width~,
     height=44.0,
@@ -162,7 +162,7 @@ fn[Msg] state_panel(
       )
     None => ()
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
     width~,
     height=148.0,

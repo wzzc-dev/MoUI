@@ -178,7 +178,7 @@ fn WorkbenchModel::turn_evidence_card(
         )
       }
   }
-  surface(
+  container(
     column(rows, spacing=7.0, align=Start),
     width=layout.panel_width,
     height=self.turn_evidence_card_height(),
@@ -431,7 +431,7 @@ fn WorkbenchModel::workspace_detail_panel(
   row(
     [
       blank_cell(width=layout.row_badge_width, height=1.0),
-      surface(
+      container(
         column(lines, spacing=2.0, align=Start),
         width=detail_width,
         height=self.workspace_detail_panel_height(),
@@ -588,7 +588,7 @@ fn WorkbenchModel::transcript_panel(
       }
     }
   }
-  surface(
+  container(
     column(rows, spacing=4.0, align=Start),
     width=layout.panel_width,
     height=self.transcript_panel_height(layout),
@@ -716,7 +716,7 @@ fn WorkbenchModel::process_summary_row(
     1.0,
     layout.panel_body_width - badge_width - action_width - 24.0,
   )
-  surface(
+  container(
     row(
       [
         badge("过程", tone=Neutral, theme~, width=badge_width),
@@ -787,7 +787,7 @@ fn WorkbenchModel::process_detail_panel(
   row(
     [
       blank_cell(width=transcript_compact_badge_width(layout), height=1.0),
-      surface(
+      container(
         column(views, spacing=2.0, align=Start),
         width=detail_width + 16.0,
         height=self.process_detail_panel_height(),
@@ -1107,7 +1107,7 @@ fn transcript_compact_row(
 ) -> @moui.View[WorkbenchMsg] {
   let badge_width = transcript_compact_badge_width(layout)
   let text_width = transcript_row_text_width(layout)
-  surface(
+  container(
     row(
       [
         badge(badge_label, tone~, theme~, width=badge_width),
@@ -1305,7 +1305,7 @@ fn fork_affordance_row(
   row(
     [
       blank_cell(width=transcript_compact_badge_width(layout), height=1.0),
-      surface(
+      container(
         row(
           [
             button(

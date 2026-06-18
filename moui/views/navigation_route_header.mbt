@@ -59,7 +59,7 @@ pub fn[Msg] route_header(
       ),
     )
   }
-  surface(
+  container(
     row(
       children,
       spacing=theme.spacing_scale.md,
@@ -68,7 +68,7 @@ pub fn[Msg] route_header(
     ),
     width~,
     height=if subtitle == "" { 58.0 } else { 78.0 },
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding~,
   )

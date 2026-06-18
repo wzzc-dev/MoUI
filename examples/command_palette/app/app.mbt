@@ -7,7 +7,7 @@ using @views {
   context_menu_region,
   row,
   status_bar,
-  surface,
+  container,
   text,
   text_field,
   toolbar,
@@ -275,11 +275,11 @@ pub fn CommandPaletteModel::view(
     spacing=theme.spacing_scale.md,
     align=@views.CrossAlign::Stretch,
   )
-  surface(
+  container(
     shell,
     width=760.0,
     height=620.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -339,7 +339,7 @@ fn CommandPaletteModel::context_region(
   theme : @moui.Theme,
 ) -> @moui.View[CommandPaletteMsg] {
   context_menu_region(
-    child=surface(
+    child=container(
       column(
         [
           text(
@@ -362,7 +362,7 @@ fn CommandPaletteModel::context_region(
       ),
       width=260.0,
       height=96.0,
-      variant=@views.SurfaceVariant::Raised,
+      variant=@views.ContainerVariant::Raised,
       theme~,
       padding=theme.spacing_scale.md,
     ),
@@ -415,11 +415,11 @@ fn CommandPaletteModel::command_log(
       )
     }
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start),
     width=700.0,
     height=110.0,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )

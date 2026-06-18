@@ -46,7 +46,7 @@ fn[Msg] table_header(
         )
     }
     cells.push(
-      surface(
+      container(
         content,
         width=column.width,
         height=row_height,
@@ -90,7 +90,7 @@ fn[Msg] table_row(
         )
     }
     cells.push(
-      surface(
+      container(
         content,
         width=column.width,
         height=row_height,

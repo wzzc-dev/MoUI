@@ -163,7 +163,7 @@ fn command_detail_panel(
   row(
     [
       blank_cell(width=layout.row_badge_width, height=1.0),
-      surface(
+      container(
         column(lines, spacing=2.0, align=Start),
         width=detail_width,
         height=command_detail_panel_height(command),
@@ -528,7 +528,7 @@ fn blank_row(height : Double) -> @moui.View[WorkbenchMsg] {
 
 ///|
 fn blank_cell(width~ : Double, height~ : Double) -> @moui.View[WorkbenchMsg] {
-  surface(
+  container(
     empty(),
     width~,
     height~,

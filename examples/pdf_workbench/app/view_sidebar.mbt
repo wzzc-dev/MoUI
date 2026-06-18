@@ -53,7 +53,7 @@ fn pdf_workbench_sidebar(
         ),
       )
   }
-  @views.surface(
+  @views.container(
     @views.scroll_view(
       @views.column(
         rows,
@@ -67,7 +67,7 @@ fn pdf_workbench_sidebar(
     ),
     width=metrics.sidebar_width,
     height=metrics.body_height,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.sm,
   )

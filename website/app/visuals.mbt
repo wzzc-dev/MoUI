@@ -12,7 +12,7 @@ fn hero_demo_panel(
   let inner_height = height - padding * 2.0
   let source_width = (inner_width - gap) / 2.0
   let counter_width = inner_width - source_width - gap
-  surface(
+  container(
     row(
       [
         hero_source_panel(theme, source_width, inner_height, compact),
@@ -38,7 +38,7 @@ fn hero_source_panel(
   compact : Bool,
 ) -> @moui.View[Msg] {
   let header_height = if compact { 34.0 } else { 36.0 }
-  surface(
+  container(
     column(
       [
         hero_demo_header(theme, "Source", "View[Msg]", width, header_height),
@@ -65,7 +65,7 @@ fn hero_counter_panel(
   count : Int,
 ) -> @moui.View[Msg] {
   let header_height = if compact { 34.0 } else { 36.0 }
-  surface(
+  container(
     column(
       [
         hero_demo_header(theme, "Counter", "TEA", width, header_height),
@@ -92,7 +92,7 @@ fn hero_demo_header(
   height : Double,
 ) -> @moui.View[Msg] {
   let label_width = max_website_double(44.0, width - 92.0)
-  surface(
+  container(
     row(
       [
         text(label, width=label_width, height=height - 14.0)
@@ -128,7 +128,7 @@ fn hero_source_code(
   let row_gap = if compact || narrow { 0.0 } else { 1.0 }
   let line_height = (height - padding * 2.0 - row_gap * 14.0) / 15.0
   let font_size = if narrow { 4.6 } else if compact { 9.4 } else { 12.2 }
-  surface(
+  container(
     column(
       [
         code_snippet_line(
@@ -217,7 +217,7 @@ fn hero_counter_demo(
   } else {
     42.0
   }
-  surface(
+  container(
     column(
       [
         spacer(min_length=0.0, weight=1.0),
@@ -239,7 +239,7 @@ fn hero_counter_demo(
           ),
         )
         .foreground(theme.palette.muted),
-        surface(
+        container(
           text("\{count}", width=inner_width - 28.0, height=value_height - 16.0)
           .font(@core.FontSpec::new(size=value_font_size, weight=860))
           .foreground(theme.palette.primary),

@@ -78,7 +78,7 @@ fn text_frame_clip_card(
         text("Text Frame Clip", width=width - 32.0, height=24.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.foreground),
-        surface(
+        container(
           text(text_frame_clip_sample(), width=frame_width - 16.0, height=28.0)
           .font(theme.typography.body)
           .foreground(theme.palette.foreground),

@@ -8,7 +8,7 @@ pub fn[Msg] toast(
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)
-  feedback_surface(
+  feedback_panel(
     message,
     tone~,
     action~,
@@ -51,7 +51,7 @@ pub fn[Msg] snackbar(
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)
-  feedback_surface(
+  feedback_panel(
     message,
     tone=FeedbackTone::Neutral,
     action~,

@@ -34,7 +34,7 @@ pub fn[Msg] resizable_split_view(
   let width = navigation_clamp_double(
     primary_width, min_primary_width, max_primary_width,
   )
-  let handle = surface(
+  let handle = container(
       empty(),
       width=handle_width,
       height~,

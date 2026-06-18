@@ -9,7 +9,7 @@ pub fn[Msg] banner(
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)
-  feedback_surface(
+  feedback_panel(
     message,
     tone~,
     action~,
@@ -31,7 +31,7 @@ pub fn[Msg] callout(
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
   let style = resolve_feedback_style(style, theme)
-  feedback_surface(
+  feedback_panel(
     message,
     tone~,
     action=None,

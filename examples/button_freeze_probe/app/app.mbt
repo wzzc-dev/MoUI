@@ -6,7 +6,7 @@ using @views {
   data_filter,
   data_filter_bar,
   row,
-  surface,
+  container,
   text,
 }
 
@@ -96,7 +96,7 @@ fn Model::record(
 pub fn view(model : Model) -> @moui.View[Msg] {
   let theme = probe_theme()
   center(
-    surface(
+    container(
       column(
         [
           text(
@@ -177,7 +177,7 @@ pub fn view(model : Model) -> @moui.View[Msg] {
       ),
       width=480.0,
       height=296.0,
-      variant=@views.SurfaceVariant::Raised,
+      variant=@views.ContainerVariant::Raised,
       theme~,
       padding=theme.spacing_scale.md,
     ),

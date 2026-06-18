@@ -935,10 +935,10 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views inline feedback guidance surfaces compact",
     },
     {
-      path: "moui/views/feedback_surface.mbt",
+      path: "moui/views/feedback_panel.mbt",
       max_lines: 125,
       target_lines: 105,
-      reason: "keep shared feedback surface and tone-style helpers compact",
+      reason: "keep shared feedback panel and tone-style helpers compact",
     },
     {
       path: "moui/views/feedback_transient.mbt",
@@ -1049,10 +1049,10 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views menu, popover, sidebar, breadcrumb, and wizard descriptors compact",
     },
     {
-      path: "moui/views/popover_surface.mbt",
+      path: "moui/views/popover_overlay.mbt",
       max_lines: 60,
       target_lines: 50,
-      reason: "keep views popover surface and semantics helpers compact",
+      reason: "keep views popover overlay and semantics helpers compact",
     },
     {
       path: "moui/views/popover_selectors.mbt",

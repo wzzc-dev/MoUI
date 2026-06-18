@@ -38,7 +38,7 @@ pub fn[Msg] alert(
       height=36.0,
     ),
   )
-  surface(
+  container(
     column(
       [
         text(
@@ -67,7 +67,7 @@ pub fn[Msg] alert(
     ),
     width~,
     height=158.0,
-    variant=SurfaceVariant::Raised,
+    variant=ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )

@@ -74,11 +74,11 @@ pub fn[Msg] dialog(
       ).frame(width=content_width, height=footer_height),
     )
   }
-  surface(
+  container(
     column(body_rows, spacing=section_spacing, align=CrossAlign::Start),
     width~,
     height~,
-    variant=SurfaceVariant::Raised,
+    variant=ContainerVariant::Raised,
     theme~,
     padding=panel_padding,
   )

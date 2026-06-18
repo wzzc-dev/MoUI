@@ -18,11 +18,11 @@ pub fn[Msg] input_group(
     Some(view) => rows.push(view)
     None => ()
   }
-  surface(
+  container(
     row(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center),
     width~,
     height~,
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding~,
   ).border(

@@ -104,11 +104,11 @@ pub fn[Msg] detail_panel(
       )
     None => ()
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
     width~,
     height~,
-    variant=SurfaceVariant::Raised,
+    variant=ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )

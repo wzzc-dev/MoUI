@@ -86,7 +86,7 @@ pub fn[Msg] progress_status(
       )
     None => ()
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
     width~,
     height=progress_status_height(message != "", action is Some(_)),

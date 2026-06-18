@@ -89,7 +89,7 @@ pub fn[Msg] collapsible_panel(
   theme? : @core.Theme = default_theme(),
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
-  surface(
+  container(
     disclosure(
       title,
       content~,
@@ -100,7 +100,7 @@ pub fn[Msg] collapsible_panel(
       width=width - theme.spacing_scale.md * 2.0,
     ),
     width~,
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
   ).border(
@@ -122,7 +122,7 @@ pub fn[Msg] resizable_panel(
   on_drag? : ((Double) -> Msg)? = None,
 ) -> @core.View[Msg] {
   let panel_width = disclosure_clamp_double(size, min_size, max_size)
-  let handle = surface(
+  let handle = container(
     empty(),
     width=8.0,
     height~,
@@ -146,14 +146,14 @@ pub fn[Msg] resizable_panel(
   }
   row(
     [
-      surface(
+      container(
         content.frame(
           width=panel_width - theme.spacing_scale.md * 2.0,
           height=height - theme.spacing_scale.md * 2.0,
         ),
         width=panel_width,
         height~,
-        variant=SurfaceVariant::Raised,
+        variant=ContainerVariant::Raised,
         theme~,
         padding=theme.spacing_scale.md,
       ),

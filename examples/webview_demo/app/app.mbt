@@ -5,7 +5,7 @@ using @views {
   expanded,
   row,
   spacer,
-  surface,
+  container,
   text,
   text_field,
   web_view,
@@ -170,7 +170,7 @@ pub fn view(model : Model) -> @moui.View[Msg] {
 
 ///|
 fn header(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
-  surface(
+  container(
     row(
       [
         column(
@@ -193,7 +193,7 @@ fn header(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
 
 ///|
 fn toolbar(model : Model) -> @moui.View[Msg] {
-  surface(
+  container(
     row(
       [
         text_field(
@@ -252,7 +252,7 @@ fn browser_surface(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
   } else {
     unavailable_view(model, theme)
   }
-  surface(child, height=568.0, padding=8.0)
+  container(child, height=568.0, padding=8.0)
 }
 
 ///|
@@ -273,7 +273,7 @@ fn unavailable_view(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
 
 ///|
 fn status_panel(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
-  surface(
+  container(
     column(
       [
         text("Status").font(theme.typography.title),

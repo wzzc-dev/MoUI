@@ -10,11 +10,11 @@ pub fn[Msg] popover(
   trap_focus? : Bool = false,
 ) -> @core.View[Msg] {
   let view = if expanded {
-    let panel = surface(
+    let panel = container(
         content,
         width~,
         height~,
-        variant=SurfaceVariant::Overlay,
+        variant=ContainerVariant::Overlay,
         theme~,
         padding=theme.spacing_scale.sm,
       )

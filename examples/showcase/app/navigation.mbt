@@ -187,7 +187,7 @@ fn ShowcaseModel::sidebar(
     x=0.0,
     y=clamp_double(self.sidebar_scroll_offset.y, 0.0, max_scroll),
   )
-  surface(
+  container(
     column(
       [
         title,
@@ -226,7 +226,7 @@ fn ShowcaseModel::sidebar(
     ),
     width=metrics.sidebar_width,
     height=metrics.panel_height,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
   )

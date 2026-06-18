@@ -31,11 +31,11 @@ pub fn[Msg] sidebar(
       .key("sidebar-item-" + item.id),
     )
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
     width~,
     height~,
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
   ).semantics_role(@core.SemanticsRole::List)

@@ -133,7 +133,7 @@ fn WorkbenchModel::view_for_size(
 ) -> @moui.View[WorkbenchMsg] {
   let theme = workbench_theme(scheme)
   let layout = workbench_layout(viewport, true)
-  surface(
+  container(
     row(
       [
         self.app_sidebar(layout, theme),
@@ -168,7 +168,7 @@ fn WorkbenchModel::app_sidebar(
   if self.should_show_sidebar_transport_footer() {
     rows.push(self.sidebar_footer(layout, theme))
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.sm, align=Stretch),
     width=layout.sidebar_width,
     height=layout.viewport.height,
@@ -328,7 +328,7 @@ fn WorkbenchModel::thread_button(
     workbench_sidebar_background(theme)
   }
   let label_width = layout.sidebar_inner_width - 72.0
-  surface(
+  container(
     row(
       [
         button(
@@ -421,7 +421,7 @@ fn WorkbenchModel::conversation_surface(
   } else {
     center_column
   }
-  surface(
+  container(
     column(
       [workspace_body, self.workspace_status_bar(layout, theme)],
       spacing=10.0,
@@ -456,7 +456,7 @@ fn WorkbenchModel::settings_page(
     self.settings_context_row(body_width, theme),
     self.settings_backend_row(body_width, theme),
   ]
-  surface(
+  container(
     column(rows, spacing=10.0, align=Stretch),
     width~,
     height=layout.workspace_body_height,
@@ -726,7 +726,7 @@ fn settings_row_surface(
   width : Double,
   theme : @moui.Theme,
 ) -> @moui.View[WorkbenchMsg] {
-  surface(
+  container(
     child,
     width~,
     height=58.0,
@@ -801,7 +801,7 @@ fn WorkbenchModel::top_bar(
       ),
     )
   }
-  surface(
+  container(
     row(controls, spacing=8.0, align=Center),
     width=layout.content_width + layout.scrollbar_width,
     height=58.0,

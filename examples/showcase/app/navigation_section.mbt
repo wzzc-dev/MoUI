@@ -55,7 +55,7 @@ fn ShowcaseModel::navigation_section(
           ],
           theme~,
         ),
-        surface(
+        container(
           column(
             [
               text(
@@ -78,7 +78,7 @@ fn ShowcaseModel::navigation_section(
           ),
           width=520.0,
           height=54.0,
-          variant=@views.SurfaceVariant::Base,
+          variant=@views.ContainerVariant::Base,
           theme~,
           padding=theme.spacing_scale.xs,
         ),
@@ -180,7 +180,7 @@ fn ShowcaseModel::navigation_history_card(
   self : ShowcaseModel,
   theme : @moui.Theme,
 ) -> @moui.View[ShowcaseMsg] {
-  surface(
+  container(
     column(
       [
         row(
@@ -233,7 +233,7 @@ fn ShowcaseModel::navigation_history_card(
     ),
     width=520.0,
     height=104.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.xs,
   )
@@ -255,7 +255,7 @@ fn ShowcaseModel::navigation_transition_card(
     easing=@core.Easing::EaseOut,
   )
   let progress = clamp_double(self.slider_value, 0.0, 1.0)
-  surface(
+  container(
     column(
       [
         text(
@@ -285,7 +285,7 @@ fn ShowcaseModel::navigation_transition_card(
     ),
     width=520.0,
     height=88.0,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.sm,
   ).transition(spec=transition, progress~)
@@ -335,7 +335,7 @@ fn ShowcaseModel::navigation_command_card(
       ),
     ]),
   ]
-  surface(
+  container(
     column(
       [
         toolbar(
@@ -376,7 +376,7 @@ fn ShowcaseModel::navigation_command_card(
     ),
     width=520.0,
     height=156.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=0.0,
   )
@@ -479,7 +479,7 @@ fn ShowcaseModel::navigation_shell_card(
       width=master_width,
       height=184.0,
     ),
-    detail=surface(
+    detail=container(
       column(
         [
           text(
@@ -502,7 +502,7 @@ fn ShowcaseModel::navigation_shell_card(
       ),
       width=300.0,
       height=184.0,
-      variant=@views.SurfaceVariant::Raised,
+      variant=@views.ContainerVariant::Raised,
       theme~,
       padding=theme.spacing_scale.md,
     ),

@@ -25,7 +25,7 @@ pub fn[Msg] selectable_list(
         ),
       )
     }
-    surface(
+    container(
       column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
       width~,
       height=selectable_list_height(
@@ -33,7 +33,7 @@ pub fn[Msg] selectable_list(
         row_height,
         spacing=theme.spacing_scale.xs,
       ),
-      variant=SurfaceVariant::Base,
+      variant=ContainerVariant::Base,
       theme~,
       padding=0.0,
     )
@@ -94,7 +94,7 @@ fn[Msg] selectable_list_row(
       ).foreground(theme.palette.muted),
     )
   }
-  let content = surface(
+  let content = container(
     row(
       content_children,
       spacing=theme.spacing_scale.sm,

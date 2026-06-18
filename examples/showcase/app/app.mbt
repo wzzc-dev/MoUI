@@ -461,7 +461,7 @@ pub fn ShowcaseModel::view(
   let metrics = showcase_metrics(env.viewport_size(), theme)
   let offset = if self.active { 18.0 } else { 0.0 }
   let opacity = if self.active { 1.0 } else { 0.68 }
-  let shell = surface(
+  let shell = container(
     column(
       [
         self.header(theme, metrics),
@@ -472,7 +472,7 @@ pub fn ShowcaseModel::view(
     ),
     width=metrics.viewport.width,
     height=metrics.viewport.height,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
   )
   let sheeted = @views.sheet_host(

@@ -14,7 +14,7 @@ pub(all) enum TextFieldVariant {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) enum SurfaceVariant {
+pub(all) enum ContainerVariant {
   Base
   Raised
   Overlay
@@ -85,8 +85,8 @@ fn TextFieldVariant::style(
 }
 
 ///|
-fn SurfaceVariant::style(
-  self : SurfaceVariant,
+fn ContainerVariant::style(
+  self : ContainerVariant,
   theme : @core.Theme,
 ) -> SurfaceStyle {
   match self {

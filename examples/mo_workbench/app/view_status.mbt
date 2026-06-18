@@ -66,7 +66,7 @@ fn WorkbenchModel::session_status_panel(
       rows.push(self.session_controls_row(layout, theme))
     }
   }
-  surface(
+  container(
     column(rows, spacing=6.0, align=Start),
     width=layout.panel_width,
     height=session_status_panel_height(self.session_status_row_count()),

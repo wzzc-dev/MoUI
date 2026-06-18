@@ -53,11 +53,11 @@ pub fn[Msg] column_visibility_panel(
       )
     }
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
     width~,
     height=column_visibility_panel_height(columns.length()),
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
   )

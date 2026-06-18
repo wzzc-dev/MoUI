@@ -90,7 +90,7 @@ moon info
 
 Focus areas:
 
-- Keep Text, Button, TextField, Checkbox, Container/Surface, Row/Column/Flex,
+- Keep Text, Button, TextField, Checkbox, Container, Row/Column/Flex,
   Stack, Scroll, List, Grid, Navigation, and Markdown Editor usable in real apps.
 - Prefer MoonBit-style labeled and optional parameters for public constructors.
 - Add semantics for interactive controls where possible.

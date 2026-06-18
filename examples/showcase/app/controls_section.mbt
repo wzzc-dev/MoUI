@@ -191,7 +191,7 @@ fn control_ecosystem_baseline_card(
   width : Double,
 ) -> @moui.View[ShowcaseMsg] {
   let inner_width = max_showcase_double(160.0, width - 32.0)
-  surface(
+  container(
     column(
       [
         text("Preview Control Baseline", width=inner_width, height=26.0)
@@ -228,7 +228,7 @@ fn control_ecosystem_baseline_card(
     ),
     width~,
     height=194.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
   ).border(showcase_panel_border(theme))
