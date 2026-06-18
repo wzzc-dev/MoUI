@@ -270,12 +270,13 @@ fn ElementNode::render_focused_with_text_system(
   focused~ : ElementId?,
   environment? : Environment = Environment::neutral(),
   text_system~ : TextSystem,
+  now_ms~ : Double,
 ) -> RenderNode {
   self.render_with_environment(
     placed,
     focused,
-    RenderEnvironment::from_environment(environment).with_text_system(
-      text_system,
-    ),
+    RenderEnvironment::from_environment(environment)
+      .with_text_system(text_system)
+      .with_now_ms(now_ms),
   )
 }

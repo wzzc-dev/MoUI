@@ -43,21 +43,12 @@ fn[Msg] sheet_shell(
     paint=ctx => {
       let commands : Array[@core.DrawCommand] = []
       let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
-      match shadow {
-        Some(style) =>
-          commands.push(
-            @core.DrawCommand::DrawShadow(
-              @core.ShadowSpec::new(
-                rect=rounded,
-                color=style.color,
-                offset=style.offset,
-                blur_radius=style.blur_radius,
-                spread=style.spread,
-              ),
-            ),
-          )
-        None => ()
-      }
+      emit_elevation_shadow(
+        commands,
+        rounded,
+        shadow,
+        ctx.environment.color_scheme,
+      )
       commands.push(
         @core.DrawCommand::FillRoundedRectBrush(rounded, background),
       )
