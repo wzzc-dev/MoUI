@@ -1,14 +1,14 @@
 ///|
 fn section_panel(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   title : String,
   summary : String,
-  body : @core.View[ShowcaseMsg],
+  body : @moui.View[ShowcaseMsg],
   metrics~ : ShowcaseMetrics,
-  scroll_offset? : @core.Point = @core.Point::new(x=0.0, y=0.0),
+  scroll_offset? : @moui.Point = @moui.Point::new(x=0.0, y=0.0),
   scroll_state? : @core.ScrollState? = None,
-  on_scroll? : ((@core.Point) -> ShowcaseMsg)? = None,
-) -> @core.View[ShowcaseMsg] {
+  on_scroll? : ((@moui.Point) -> ShowcaseMsg)? = None,
+) -> @moui.View[ShowcaseMsg] {
   let scroll_body = match on_scroll {
     Some(handler) =>
       scroll_view(
@@ -61,13 +61,13 @@ fn section_panel(
 ///|
 fn ShowcaseModel::section_panel(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   title : String,
   summary : String,
-  body : @core.View[ShowcaseMsg],
+  body : @moui.View[ShowcaseMsg],
   metrics~ : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
-  let offset = @core.Point::new(
+) -> @moui.View[ShowcaseMsg] {
+  let offset = @moui.Point::new(
     x=0.0,
     y=max_showcase_double(0.0, self.detail_scroll.offset().y),
   )
@@ -83,7 +83,7 @@ fn ShowcaseModel::section_panel(
 }
 
 ///|
-fn showcase_panel_border(theme : @core.Theme) -> @core.BorderStyle {
+fn showcase_panel_border(theme : @moui.Theme) -> @core.BorderStyle {
   @core.BorderStyle::new(
     brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.82)),
     width=1.0,
@@ -92,12 +92,12 @@ fn showcase_panel_border(theme : @core.Theme) -> @core.BorderStyle {
 
 ///|
 fn showcase_soft_card(
-  theme : @core.Theme,
-  child : @core.View[ShowcaseMsg],
+  theme : @moui.Theme,
+  child : @moui.View[ShowcaseMsg],
   width~ : Double,
   height~ : Double,
   padding? : Double = 0.0,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   surface(
     child,
     width~,
@@ -110,10 +110,10 @@ fn showcase_soft_card(
 
 ///|
 fn example_preview(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   title : String,
-  child : @core.View[ShowcaseMsg],
-) -> @core.View[ShowcaseMsg] {
+  child : @moui.View[ShowcaseMsg],
+) -> @moui.View[ShowcaseMsg] {
   surface(
     column(
       [
@@ -135,20 +135,20 @@ fn example_preview(
 ///|
 fn ShowcaseModel::layout_tile(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   self.layout_tile_sized(theme, label, 156.0, 40.0)
 }
 
 ///|
 fn ShowcaseModel::layout_tile_sized(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
   width : Double,
   height : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   surface(
     row(
@@ -174,10 +174,10 @@ fn ShowcaseModel::layout_tile_sized(
 }
 
 ///|
-fn layout_tile_marker(theme : @core.Theme) -> @core.View[ShowcaseMsg] {
+fn layout_tile_marker(theme : @moui.Theme) -> @moui.View[ShowcaseMsg] {
   @views.custom_layout(
     measure=constraints => {
-      constraints.constrain(@core.Size::new(width=4.0, height=22.0))
+      constraints.constrain(@moui.Size::new(width=4.0, height=22.0))
     },
     paint=frame => {
       [
@@ -194,13 +194,13 @@ fn layout_tile_marker(theme : @core.Theme) -> @core.View[ShowcaseMsg] {
 ///|
 fn ShowcaseModel::visual_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
   card_width : Double,
   active : Bool,
   offset : Double,
   opacity : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   let media_width = max_showcase_double(120.0, card_width - 36.0)
   let media_height = if metrics.compact { 96.0 } else { 136.0 }
@@ -215,8 +215,8 @@ fn ShowcaseModel::visual_card(
     easing=@core.Easing::Linear,
   )
   let gradient = @core.Brush::linear_gradient(
-    start=@core.Point::new(x=0.0, y=0.0),
-    end=@core.Point::new(x=260.0, y=160.0),
+    start=@moui.Point::new(x=0.0, y=0.0),
+    end=@moui.Point::new(x=260.0, y=160.0),
     start_color=theme.palette.primary.multiply_alpha(0.92),
     end_color=theme.palette.surface_variant,
   )
@@ -271,17 +271,17 @@ fn ShowcaseModel::visual_card(
 ///|
 fn ShowcaseModel::capability_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   let inner_width = max_showcase_double(
     120.0,
     width - theme.spacing_scale.lg * 2.0,
   )
   let list_height = max_showcase_double(56.0, height - 72.0)
-  let rows : Array[@core.View[ShowcaseMsg]] = []
+  let rows : Array[@moui.View[ShowcaseMsg]] = []
   let visible_limit = max_showcase_int(1, (list_height / 42.0).to_int())
   let entries = capability_card_entries()
   let mut visible_count = 0
@@ -320,10 +320,10 @@ fn ShowcaseModel::capability_card(
 ///|
 fn ShowcaseModel::host_capability_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let inner_width = max_showcase_double(
     120.0,
     width - theme.spacing_scale.lg * 2.0,
@@ -394,9 +394,9 @@ fn host_capability_row(
   label : String,
   value : String,
   detail : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let value_width = 78.0
   let label_width = max_showcase_double(70.0, width - value_width - 8.0)
   column(
@@ -488,14 +488,14 @@ fn capability_has_partial_or_gap(
 ///|
 fn ShowcaseModel::visual_correctness_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   active : Bool,
   opacity : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   let image_motion = @core.TransitionSpec::slide(
-    from_offset=@core.Point::new(x=0.0, y=0.0),
-    to_offset=@core.Point::new(x=if active { 10.0 } else { 0.0 }, y=0.0),
+    from_offset=@moui.Point::new(x=0.0, y=0.0),
+    to_offset=@moui.Point::new(x=if active { 10.0 } else { 0.0 }, y=0.0),
     easing=@core.Easing::Linear,
   )
   showcase_soft_card(
@@ -557,8 +557,8 @@ fn ShowcaseModel::visual_correctness_card(
 ///|
 fn ShowcaseModel::shortcut_preview(
   self : ShowcaseModel,
-  theme : @core.Theme,
-) -> @core.View[ShowcaseMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   surface(
     text("Keyboard: Meta+K", width=190.0, height=28.0)
@@ -575,10 +575,10 @@ fn ShowcaseModel::shortcut_preview(
 ///|
 fn ShowcaseModel::progress_preview(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   value : Double,
   width~ : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   surface(
     progress(
@@ -597,10 +597,10 @@ fn ShowcaseModel::progress_preview(
 ///|
 fn ShowcaseModel::theme_helpers(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   active : Bool,
   opacity : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   column(
     [
       text("Theme helpers", width=220.0, height=28.0)
@@ -631,12 +631,12 @@ fn ShowcaseModel::theme_helpers(
 ///|
 fn ShowcaseModel::vector_path_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
-) -> @core.View[ShowcaseMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   @views.custom_layout(
     measure=constraints => {
-      constraints.constrain(@core.Size::new(width=292.0, height=74.0))
+      constraints.constrain(@moui.Size::new(width=292.0, height=74.0))
     },
     paint=frame => {
       let inset = 12.0
@@ -645,8 +645,8 @@ fn ShowcaseModel::vector_path_card(
       let bottom = frame.origin.y + frame.size.height - inset
       let mid_y = frame.origin.y + frame.size.height * 0.5
       let fill = @core.Brush::linear_gradient(
-        start=@core.Point::new(x=left, y=top),
-        end=@core.Point::new(x=left + 72.0, y=bottom),
+        start=@moui.Point::new(x=left, y=top),
+        end=@moui.Point::new(x=left + 72.0, y=bottom),
         start_color=theme.palette.primary.multiply_alpha(0.88),
         end_color=theme.accent.multiply_alpha(0.82),
       )
@@ -661,13 +661,13 @@ fn ShowcaseModel::vector_path_card(
         @core.DrawCommand::DrawPath(
           @core.PathSpec::new(
             verbs=[
-              @core.PathVerb::MoveTo(@core.Point::new(x=left, y=bottom)),
+              @core.PathVerb::MoveTo(@moui.Point::new(x=left, y=bottom)),
               @core.PathVerb::CubicTo(
-                @core.Point::new(x=left + 24.0, y=top - 4.0),
-                @core.Point::new(x=left + 58.0, y=top + 4.0),
-                @core.Point::new(x=left + 82.0, y=bottom),
+                @moui.Point::new(x=left + 24.0, y=top - 4.0),
+                @moui.Point::new(x=left + 58.0, y=top + 4.0),
+                @moui.Point::new(x=left + 82.0, y=bottom),
               ),
-              @core.PathVerb::LineTo(@core.Point::new(x=left + 42.0, y=mid_y)),
+              @core.PathVerb::LineTo(@moui.Point::new(x=left + 42.0, y=mid_y)),
               @core.PathVerb::Close,
             ],
             fill=Some(fill),
@@ -676,15 +676,15 @@ fn ShowcaseModel::vector_path_card(
         @core.DrawCommand::DrawPath(
           @core.PathSpec::new(
             verbs=[
-              @core.PathVerb::MoveTo(@core.Point::new(x=left + 116.0, y=bottom)),
+              @core.PathVerb::MoveTo(@moui.Point::new(x=left + 116.0, y=bottom)),
               @core.PathVerb::QuadTo(
-                @core.Point::new(x=left + 148.0, y=top),
-                @core.Point::new(x=left + 180.0, y=bottom),
+                @moui.Point::new(x=left + 148.0, y=top),
+                @moui.Point::new(x=left + 180.0, y=bottom),
               ),
               @core.PathVerb::CubicTo(
-                @core.Point::new(x=left + 196.0, y=mid_y),
-                @core.Point::new(x=left + 216.0, y=mid_y),
-                @core.Point::new(x=left + 236.0, y=top + 8.0),
+                @moui.Point::new(x=left + 196.0, y=mid_y),
+                @moui.Point::new(x=left + 216.0, y=mid_y),
+                @moui.Point::new(x=left + 236.0, y=top + 8.0),
               ),
             ],
             stroke=Some(stroke),
@@ -700,13 +700,13 @@ fn ShowcaseModel::vector_path_card(
 ///|
 fn ShowcaseModel::sparkline(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   value : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   @views.custom_layout(
     measure=constraints => {
-      constraints.constrain(@core.Size::new(width=300.0, height=34.0))
+      constraints.constrain(@moui.Size::new(width=300.0, height=34.0))
     },
     paint=frame => {
       let fill = @core.Rect::new(
@@ -733,8 +733,8 @@ fn ShowcaseModel::sparkline(
 ///|
 fn ShowcaseModel::dialog(
   self : ShowcaseModel,
-  theme : @core.Theme,
-) -> @core.View[ShowcaseMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   @views.dialog(
     "Showcase dialog",
@@ -778,8 +778,8 @@ fn ShowcaseModel::dialog(
 ///|
 fn ShowcaseModel::sheet(
   self : ShowcaseModel,
-  theme : @core.Theme,
-) -> @core.View[ShowcaseMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   sheet(
     content=column(
@@ -815,9 +815,9 @@ fn ShowcaseModel::sheet(
 ///|
 fn capability_row(
   entry : @render.RendererFeatureCapability,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let status_width = clamp_double(width * 0.52, 156.0, 240.0)
   let feature_width = max_showcase_double(
     70.0,
@@ -838,12 +838,12 @@ fn capability_row(
 ///|
 fn capability_status_view(
   entry : @render.RendererFeatureCapability,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let backends = @render.renderer_capability_backends()
   let row_height = if backends.length() <= 2 { 18.0 } else { 13.0 }
-  let rows : Array[@core.View[ShowcaseMsg]] = []
+  let rows : Array[@moui.View[ShowcaseMsg]] = []
   for backend in backends {
     let status = entry.status_for_backend(backend)
     rows.push(
@@ -862,7 +862,7 @@ fn capability_status_view(
 ///|
 fn capability_status_color(
   status : @render.RendererFeatureStatus,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @core.Color {
   if status.needs_follow_up() {
     theme.palette.primary

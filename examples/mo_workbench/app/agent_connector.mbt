@@ -314,11 +314,11 @@ pub fn[Msg] AgentConnectorRuntime::effect(
   self : AgentConnectorRuntime,
   commands : Array[AgentConnectorCommand],
   map : (AgentConnectorEvent) -> Msg,
-) -> @core.Effect[Msg] {
+) -> @moui.Effect[Msg] {
   if commands.is_empty() {
-    @core.Effect::none()
+    @moui.Effect::none()
   } else {
-    @core.Effect::run(
+    @moui.Effect::run(
       key="agent-connector:" + self.backend_id + ":dispatch",
       kind="agent-connector",
       label="Agent connector dispatch: " + self.backend_id,

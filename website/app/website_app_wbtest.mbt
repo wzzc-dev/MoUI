@@ -212,7 +212,7 @@ test "website hero shows source and live counter side by side" {
 
 ///|
 test "website shows visible main scrollbar and moves thumb" {
-  let size = @core.Size::new(width=1180.0, height=760.0)
+  let size = @moui.Size::new(width=1180.0, height=760.0)
   let initial = test_program_runtime(width=size.width, height=size.height).draw_commands()
   guard website_scrollbar_thumb_frame(initial, size) is Some(before) else {
     fail("expected visible website scrollbar thumb")
@@ -229,7 +229,7 @@ test "website shows visible main scrollbar and moves thumb" {
 
 ///|
 test "website positive wheel delta scrolls body downward" {
-  let size = @core.Size::new(width=1180.0, height=760.0)
+  let size = @moui.Size::new(width=1180.0, height=760.0)
   let runtime = test_program_runtime(width=size.width, height=size.height)
   guard website_scrollbar_thumb_frame(runtime.draw_commands(), size)
     is Some(before) else {
@@ -238,9 +238,9 @@ test "website positive wheel delta scrolls body downward" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=size.width / 2.0, y=120.0),
+        position=@moui.Point::new(x=size.width / 2.0, y=120.0),
         phase=@core.PointerPhase::Move,
-        wheel_delta=@core.Point::new(x=0.0, y=180.0),
+        wheel_delta=@moui.Point::new(x=0.0, y=180.0),
       ),
     ),
   )
@@ -292,7 +292,7 @@ test "website platform card summaries render as separate lines" {
 
 ///|
 test "website hero and product signal remain visible on desktop and compact sizes" {
-  let desktop_size = @core.Size::new(width=1180.0, height=760.0)
+  let desktop_size = @moui.Size::new(width=1180.0, height=760.0)
   let desktop = test_program_runtime(
     width=desktop_size.width,
     height=desktop_size.height,
@@ -312,7 +312,7 @@ test "website hero and product signal remain visible on desktop and compact size
   )
   assert_true(text_within(desktop, "App surface", desktop_size))
   assert_true(text_within(desktop, "Live Counter", desktop_size))
-  let compact_size = @core.Size::new(width=390.0, height=720.0)
+  let compact_size = @moui.Size::new(width=390.0, height=720.0)
   let compact = test_program_runtime(
     width=compact_size.width,
     height=compact_size.height,
@@ -378,7 +378,7 @@ fn test_program_runtime(
 
 ///|
 fn test_runtime(
-  program : @core.Program[Model, Msg],
+  program : @moui.Program[Model, Msg],
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {
@@ -395,7 +395,7 @@ fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
 
 ///|
 fn click_frame(runtime : @runtime.AppRuntime, frame : @core.Rect) -> Unit {
-  let point = @core.Point::new(
+  let point = @moui.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )
@@ -482,7 +482,7 @@ fn has_text_color_different(
 ///|
 fn website_scrollbar_thumb_frame(
   commands : Array[@core.DrawCommand],
-  size : @core.Size,
+  size : @moui.Size,
 ) -> @core.Rect? {
   let candidates : Array[@core.Rect] = []
   for command in commands {
@@ -507,7 +507,7 @@ fn website_scrollbar_thumb_frame(
 fn text_within(
   commands : Array[@core.DrawCommand],
   text : String,
-  size : @core.Size,
+  size : @moui.Size,
 ) -> Bool {
   guard text_frame(commands, text) is Some(frame) else { return false }
   frame.origin.x >= 0.0 &&

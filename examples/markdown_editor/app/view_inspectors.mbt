@@ -14,9 +14,9 @@ fn markdown_editor_reading_label(snapshot : MarkdownEditorSnapshot) -> String {
 fn files_inspector(
   app : MarkdownEditorApp,
   snapshot : MarkdownEditorSnapshot,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   height~ : Double,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   let content_width = markdown_editor_file_sidebar_content_width()
   let recent_paths = app.recent_document_paths.get()
   let recent_content = if recent_paths.length() == 0 {
@@ -84,9 +84,9 @@ fn files_inspector(
 ///|
 fn document_info_inspector(
   snapshot : MarkdownEditorSnapshot,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   height~ : Double,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   let info = markdown_editor_document_info(snapshot)
   let content_width = markdown_editor_info_content_width()
   let rows = column(
@@ -180,8 +180,8 @@ fn document_info_inspector(
 fn markdown_editor_info_row(
   label : String,
   value : String,
-  theme : @core.Theme,
-) -> @core.View[MarkdownEditorMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
   row(
     [
       text(label, width=126.0, height=24.0)
@@ -198,8 +198,8 @@ fn markdown_editor_info_row(
 
 ///|
 fn markdown_editor_info_divider(
-  theme : @core.Theme,
-) -> @core.View[MarkdownEditorMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
   frame(empty(), width=markdown_editor_info_content_width(), height=1.0).background(
     theme.palette.muted.multiply_alpha(0.24),
   )
@@ -222,9 +222,9 @@ fn markdown_editor_reading_time_short_label(
 fn file_sidebar_recent_rows(
   paths : Array[String],
   current_path~ : String,
-  theme : @core.Theme,
-) -> @core.View[MarkdownEditorMsg] {
-  let rows : Array[@core.View[MarkdownEditorMsg]] = []
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
+  let rows : Array[@moui.View[MarkdownEditorMsg]] = []
   for path in paths {
     rows.push(
       file_sidebar_recent_row(path, current=path == current_path, theme),
@@ -237,8 +237,8 @@ fn file_sidebar_recent_rows(
 fn file_sidebar_recent_row(
   path : String,
   current~ : Bool,
-  theme : @core.Theme,
-) -> @core.View[MarkdownEditorMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
   button(
     markdown_editor_file_sidebar_recent_label(path),
     on_click=OpenRecentDocument(path),
@@ -276,18 +276,18 @@ fn markdown_editor_file_sidebar_recent_label(path : String) -> String {
 ///|
 fn source_preview(
   text : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   height~ : Double,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   scroll_view(source_preview_lines(text, theme), width=260.0, height~)
 }
 
 ///|
 fn source_inspector(
   source : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   height~ : Double,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   surface(
     padding_edges(
       column(
@@ -323,9 +323,9 @@ fn source_inspector(
 fn outline_inspector(
   snapshot : MarkdownEditorSnapshot,
   selection : MarkdownEditorSelection,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   height~ : Double,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   let active_index = markdown_editor_active_outline_index(
     snapshot.outline,
     selection.caret,
@@ -380,9 +380,9 @@ fn outline_inspector(
 fn outline_rows(
   outline : Array[MarkdownEditorOutlineItem],
   active_index : Int,
-  theme : @core.Theme,
-) -> @core.View[MarkdownEditorMsg] {
-  let rows : Array[@core.View[MarkdownEditorMsg]] = []
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
+  let rows : Array[@moui.View[MarkdownEditorMsg]] = []
   for index in 0..<outline.length() {
     rows.push(outline_row(outline[index], active=index == active_index, theme))
   }
@@ -393,8 +393,8 @@ fn outline_rows(
 fn outline_row(
   item : MarkdownEditorOutlineItem,
   active~ : Bool,
-  theme : @core.Theme,
-) -> @core.View[MarkdownEditorMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
   let indent = markdown_editor_outline_indent_width(item.level)
   padding_edges(
     button(

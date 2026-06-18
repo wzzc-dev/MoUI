@@ -2,9 +2,9 @@
 fn WorkbenchModel::composer(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let content : Array[@core.View[WorkbenchMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
+  let content : Array[@moui.View[WorkbenchMsg]] = [
     text_field(
       self.prompt,
       on_input=value => PromptChanged(value),
@@ -83,8 +83,8 @@ fn WorkbenchModel::should_show_composer_route_row(
 fn WorkbenchModel::composer_route_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let summary = self.agent_composer_route_summary()
   let detail_width = workbench_max_double(
     1.0,
@@ -125,15 +125,15 @@ fn WorkbenchModel::should_show_composer_request_row(
 fn WorkbenchModel::composer_request_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let summary = self.agent_composer_request_summary()
   let action_width = if summary.action_message is Some(_) { 64.0 } else { 0.0 }
   let detail_width = workbench_max_double(
     1.0,
     layout.composer_input_width - 54.0 - action_width - 24.0,
   )
-  let controls : Array[@core.View[WorkbenchMsg]] = [
+  let controls : Array[@moui.View[WorkbenchMsg]] = [
     badge(
       summary.badge_label,
       tone=agent_activity_queue_badge_tone(summary.tone),
@@ -182,10 +182,10 @@ fn WorkbenchModel::should_show_agent_control_row(self : WorkbenchModel) -> Bool 
 ///|
 fn WorkbenchModel::agent_control_row(
   self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let capabilities = self.active_agent_backend_capabilities()
-  let controls : Array[@core.View[WorkbenchMsg]] = [
+  let controls : Array[@moui.View[WorkbenchMsg]] = [
     text("Agent", role=Caption, theme~, width=42.0, height=30.0),
     self.backend_selector_cell(theme),
   ]
@@ -240,10 +240,10 @@ fn WorkbenchModel::context_is_default(self : WorkbenchModel) -> Bool {
 fn WorkbenchModel::composer_scope_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   ignore(layout)
-  let controls : Array[@core.View[WorkbenchMsg]] = [
+  let controls : Array[@moui.View[WorkbenchMsg]] = [
     text("范围", role=Caption, theme~, width=42.0, height=30.0),
     self.context_chip("仓库", "repo", theme, width=50.0),
     self.context_chip("示例", "examples", theme, width=50.0),
@@ -277,9 +277,9 @@ fn WorkbenchModel::composer_scope_row(
 ///|
 fn WorkbenchModel::composer_action_row(
   self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let controls : Array[@core.View[WorkbenchMsg]] = []
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
+  let controls : Array[@moui.View[WorkbenchMsg]] = []
   if self.should_show_composer_options_toggle() {
     controls.push(
       button(
@@ -399,8 +399,8 @@ fn WorkbenchModel::is_composer_slash_prompt(self : WorkbenchModel) -> Bool {
 fn WorkbenchModel::composer_command_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let suggestions = self.composer_command_suggestions()
   let limit = workbench_min_int(suggestions.length(), 3)
   let button_width = workbench_clamp_double(
@@ -408,7 +408,7 @@ fn WorkbenchModel::composer_command_row(
     96.0,
     142.0,
   )
-  let controls : Array[@core.View[WorkbenchMsg]] = [
+  let controls : Array[@moui.View[WorkbenchMsg]] = [
     text("命令", role=Caption, theme~, width=42.0, height=30.0),
   ]
   for index in 0..<limit {
@@ -501,9 +501,9 @@ fn WorkbenchModel::context_chip(
   self : WorkbenchModel,
   label : String,
   id : String,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width~ : Double,
-) -> @core.View[WorkbenchMsg] {
+) -> @moui.View[WorkbenchMsg] {
   button(
     label,
     on_click=ToggleContext(id),
@@ -539,8 +539,8 @@ fn WorkbenchModel::sidebar_section_label(
   self : WorkbenchModel,
   label : String,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   ignore(self)
   text(
     label,
@@ -553,14 +553,14 @@ fn WorkbenchModel::sidebar_section_label(
 
 ///|
 fn main_scrollbar(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   viewport_height~ : Double,
   content_height~ : Double,
   offset_y~ : Double,
-) -> @core.View[WorkbenchMsg] {
+) -> @moui.View[WorkbenchMsg] {
   let width = 12.0
   custom_layout(
-    measure=_ => @core.Size::new(width~, height=viewport_height),
+    measure=_ => @moui.Size::new(width~, height=viewport_height),
     paint=frame => {
       let max_scroll = workbench_max_double(
         0.0,

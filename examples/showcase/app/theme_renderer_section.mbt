@@ -1,10 +1,10 @@
 ///|
 fn ShowcaseModel::theme_renderer_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
   opacity : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let custom_theme = @views.theme(
     background=theme.palette.background,
     accent=theme.palette.primary,

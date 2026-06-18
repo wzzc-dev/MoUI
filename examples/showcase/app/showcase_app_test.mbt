@@ -49,7 +49,7 @@ test "showcase state toggles theme and active copy" {
   let runtime = model.runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "State-driven visuals are active"))
-  assert_true(model.scheme == @core.ColorScheme::Dark)
+  assert_true(model.scheme == @moui.ColorScheme::Dark)
   assert_true(model.active)
 }
 
@@ -299,9 +299,9 @@ test "showcase layout demos avoid overlapping labels" {
 test "showcase keeps header and overview content bounded across viewport sizes" {
   for
     size in [
-      @core.Size::new(width=760.0, height=420.0),
-      @core.Size::new(width=960.0, height=560.0),
-      @core.Size::new(width=1400.0, height=760.0),
+      @moui.Size::new(width=760.0, height=420.0),
+      @moui.Size::new(width=960.0, height=560.0),
+      @moui.Size::new(width=1400.0, height=760.0),
     ] {
     let runtime = @app.ShowcaseModel::new().runtime(
       width=size.width,

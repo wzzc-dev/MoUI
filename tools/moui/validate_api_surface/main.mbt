@@ -863,6 +863,76 @@ fn core_control_consumer_roots() -> Array[String] {
 }
 
 ///|
+fn app_api_hygiene_roots() -> Array[String] {
+  ["examples", "docs", "website"]
+}
+
+///|
+fn app_api_hygiene_forbidden_tokens() -> Array[ForbiddenSourceToken] {
+  [
+    { label: "Program type", token: "@core.Program[" },
+    { label: "Program constructor", token: "@core.Program::" },
+    { label: "View type", token: "@core.View[" },
+    { label: "View constructor", token: "@core.View::" },
+    { label: "State type", token: "@core.State[" },
+    { label: "State constructor", token: "@core.State::" },
+    { label: "Binding type", token: "@core.Binding[" },
+    { label: "Binding constructor", token: "@core.Binding::" },
+    { label: "Effect type", token: "@core.Effect[" },
+    { label: "Effect constructor", token: "@core.Effect::" },
+    { label: "Subscription type", token: "@core.Subscription[" },
+    { label: "Subscription constructor", token: "@core.Subscription::" },
+  ]
+}
+
+///|
+fn app_api_hygiene_test_path(path : String) -> Bool {
+  path.has_suffix("_test.mbt") || path.has_suffix("_wbtest.mbt")
+}
+
+///|
+fn app_api_hygiene_allowed_core_view_line(line : String) -> Bool {
+  line.contains("@core.View::node") ||
+  line.contains("@core.View::primitive_")
+}
+
+///|
+fn app_api_hygiene_line_allowed(path : String, line : String) -> Bool {
+  app_api_hygiene_test_path(path) ||
+  app_api_hygiene_allowed_core_view_line(line)
+}
+
+///|
+fn collect_app_api_hygiene_files(
+  repo_root : String,
+  relative_dir : String,
+  files : Array[String],
+  failures : Array[String],
+) -> Unit {
+  let absolute_dir = @tools.resolve_path(repo_root, relative_dir)
+  let entries = match read_dir_names(absolute_dir, relative_dir) {
+    Ok(values) => values
+    Err(message) => {
+      failures.push(message)
+      return
+    }
+  }
+  for entry in entries {
+    let relative = relative_dir + "/" + entry
+    let absolute = @tools.resolve_path(repo_root, relative)
+    if @tools.directory_exists(absolute) {
+      if !skipped_directory_name(entry) {
+        collect_app_api_hygiene_files(repo_root, relative, files, failures)
+      }
+    } else if @tools.file_exists(absolute) &&
+      (relative.has_suffix(".mbt") || relative.has_suffix(".md")) &&
+      !relative.has_suffix("pkg.generated.mbti") {
+      files.push(relative)
+    }
+  }
+}
+
+///|
 fn forbidden_core_control_tokens() -> Array[ForbiddenSourceToken] {
   [
     { label: "empty view", token: "@core.View::empty(" },
@@ -1303,6 +1373,50 @@ fn validate_core_control_entrypoint_usage(
 }
 
 ///|
+fn validate_app_api_hygiene(
+  repo_root : String,
+  failures : Array[String],
+) -> Unit {
+  let files : Array[String] = ["README.mbt.md"]
+  for root in app_api_hygiene_roots() {
+    collect_app_api_hygiene_files(repo_root, root, files, failures)
+  }
+  let mut direct_core_app_api_uses = 0
+  let tokens = app_api_hygiene_forbidden_tokens()
+  for path in files {
+    let text = match read_repo_text(repo_root, path) {
+      Ok(value) => value
+      Err(message) => {
+        failures.push(message)
+        continue
+      }
+    }
+    let mut line_number = 1
+    for line_view in text.split("\n") {
+      let line = line_view.to_owned()
+      if !app_api_hygiene_line_allowed(path, line) {
+        for rule in tokens {
+          if line.contains(rule.token) {
+            direct_core_app_api_uses += 1
+            failures.push(
+              path +
+              ":\{line_number}: ordinary app/docs examples should use @moui." +
+              rule.label +
+              " instead of " +
+              rule.token,
+            )
+          }
+        }
+      }
+      line_number += 1
+    }
+  }
+  println(
+    "api surface: direct @core app-facing source/docs uses=\{direct_core_app_api_uses}",
+  )
+}
+
+///|
 fn validate_runtime_source_boundaries(
   repo_root : String,
   failures : Array[String],
@@ -1509,6 +1623,7 @@ fn run_checks(repo_root : String) -> Array[String] {
   validate_shared_app_runtime_imports(repo_root, failures)
   validate_shared_app_core_imports(repo_root, failures)
   validate_core_control_entrypoint_usage(repo_root, failures)
+  validate_app_api_hygiene(repo_root, failures)
   failures
 }
 

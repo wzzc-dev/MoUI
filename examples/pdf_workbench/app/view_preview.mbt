@@ -6,8 +6,8 @@ fn pdf_workbench_preview_canvas(
   raster_status : PdfWorkbenchRasterStatus,
   zoom : Double,
   metrics : PdfWorkbenchLayoutMetrics,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   @views.custom_layout(
     measure=_ => pdf_workbench_preview_content_size(raster_page, zoom, metrics),
     paint=frame => {
@@ -181,13 +181,13 @@ fn pdf_workbench_preview_page_size(
   raster_page : PdfWorkbenchRasterPage?,
   zoom : Double,
   metrics : PdfWorkbenchLayoutMetrics,
-) -> @core.Size {
+) -> @moui.Size {
   let aspect = pdf_workbench_preview_aspect(raster_page)
   let available_width = (metrics.preview_width - 32.0).max(120.0)
   let page_width = (available_width * pdf_workbench_preview_display_zoom(zoom)).max(
     120.0,
   )
-  @core.Size::new(width=page_width, height=(page_width / aspect).max(120.0))
+  @moui.Size::new(width=page_width, height=(page_width / aspect).max(120.0))
 }
 
 ///|
@@ -195,9 +195,9 @@ fn pdf_workbench_preview_content_size(
   raster_page : PdfWorkbenchRasterPage?,
   zoom : Double,
   metrics : PdfWorkbenchLayoutMetrics,
-) -> @core.Size {
+) -> @moui.Size {
   let page_size = pdf_workbench_preview_page_size(raster_page, zoom, metrics)
-  @core.Size::new(
+  @moui.Size::new(
     width=(page_size.width + 32.0).max(metrics.preview_width),
     height=(page_size.height + 72.0).max(metrics.preview_height),
   )
@@ -208,7 +208,7 @@ fn pdf_workbench_push_page_edit_overlays(
   commands : Array[@core.DrawCommand],
   document : PdfWorkbenchDocument,
   page_rect : @core.Rect,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> Unit {
   let mut stamp_index = 0
   let mut note_index = 0

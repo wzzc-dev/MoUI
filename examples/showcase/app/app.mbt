@@ -5,7 +5,7 @@ pub struct ShowcaseApp {
 
 ///|
 pub(all) struct ShowcaseModel {
-  scheme : @core.ColorScheme
+  scheme : @moui.ColorScheme
   active : Bool
   dialog_visible : Bool
   sheet_visible : Bool
@@ -21,9 +21,9 @@ pub(all) struct ShowcaseModel {
   data_filter_review : Bool
   slider_value : Double
   picker_value : String
-  date_value : @core.DateValue
-  detail_scroll_offset : @core.Point
-  sidebar_scroll_offset : @core.Point
+  date_value : @moui.DateValue
+  detail_scroll_offset : @moui.Point
+  sidebar_scroll_offset : @moui.Point
   detail_scroll : @core.ScrollState
   sidebar_scroll : @core.ScrollState
   list_scroll : @core.ScrollState
@@ -67,7 +67,7 @@ pub(all) enum ShowcaseMsg {
   DraftChanged(String)
   SliderChanged(Double)
   PickerSelected(String)
-  DateSelected(@core.DateValue)
+  DateSelected(@moui.DateValue)
   FeatureEnabledChanged(Bool)
   SecondaryEnabledChanged(Bool)
   CounterIncrement
@@ -106,7 +106,7 @@ priv struct ShowcaseSection {
 
 ///|
 priv struct ShowcaseMetrics {
-  viewport : @core.Size
+  viewport : @moui.Size
   shell_width : Double
   sidebar_width : Double
   detail_width : Double
@@ -126,7 +126,7 @@ pub fn ShowcaseApp::new() -> ShowcaseApp {
 ///|
 pub fn ShowcaseModel::new() -> ShowcaseModel {
   {
-    scheme: @core.ColorScheme::Light,
+    scheme: @moui.ColorScheme::Light,
     active: false,
     dialog_visible: false,
     sheet_visible: false,
@@ -146,9 +146,9 @@ pub fn ShowcaseModel::new() -> ShowcaseModel {
     data_filter_review: false,
     slider_value: 0.64,
     picker_value: "native",
-    date_value: @core.DateValue::new(year=2026, month=5, day=21),
-    detail_scroll_offset: @core.Point::new(x=0.0, y=0.0),
-    sidebar_scroll_offset: @core.Point::new(x=0.0, y=0.0),
+    date_value: @moui.DateValue::new(year=2026, month=5, day=21),
+    detail_scroll_offset: @moui.Point::new(x=0.0, y=0.0),
+    sidebar_scroll_offset: @moui.Point::new(x=0.0, y=0.0),
     detail_scroll: @core.ScrollState::new(),
     sidebar_scroll: @core.ScrollState::new(),
     list_scroll: @core.ScrollState::new(),
@@ -291,7 +291,7 @@ fn ShowcaseModel::update_with_route_host(
   self : ShowcaseModel,
   message : ShowcaseMsg,
   route_host : ShowcaseRouteHost?,
-) -> (ShowcaseModel, @core.Effect[ShowcaseMsg]) {
+) -> (ShowcaseModel, @moui.Effect[ShowcaseMsg]) {
   let next = self.update(message)
   let effect = match message {
     SelectSection(route) => {
@@ -309,7 +309,7 @@ fn ShowcaseModel::update_with_route_host(
       )
     RouteBack => BackRoute.effect(route_host)
     RouteForward => ForwardRoute.effect(route_host)
-    _ => @core.Effect::none()
+    _ => @moui.Effect::none()
   }
   (next, effect)
 }
@@ -318,15 +318,15 @@ fn ShowcaseModel::update_with_route_host(
 fn ShowcaseRouteHistoryCommand::effect(
   self : ShowcaseRouteHistoryCommand,
   route_host : ShowcaseRouteHost?,
-) -> @core.Effect[ShowcaseMsg] {
+) -> @moui.Effect[ShowcaseMsg] {
   match route_host {
     Some(host) =>
-      @core.Effect::host_service(
+      @moui.Effect::host_service(
         key="showcase:route-history",
         label=self.label(),
         run=_dispatch => (host.dispatch_command)(self),
       )
-    None => @core.Effect::none()
+    None => @moui.Effect::none()
   }
 }
 
@@ -424,7 +424,7 @@ fn ShowcaseModel::with_detail_scroll_to(
   self : ShowcaseModel,
   y : Double,
 ) -> ShowcaseModel {
-  let offset = @core.Point::new(x=0.0, y=max_showcase_double(0.0, y))
+  let offset = @moui.Point::new(x=0.0, y=max_showcase_double(0.0, y))
   self.detail_scroll.set_offset(offset)
   { ..self, detail_scroll_offset: offset }
 }
@@ -434,7 +434,7 @@ fn ShowcaseModel::with_sidebar_scroll_to(
   self : ShowcaseModel,
   y : Double,
 ) -> ShowcaseModel {
-  let offset = @core.Point::new(x=0.0, y~)
+  let offset = @moui.Point::new(x=0.0, y~)
   self.sidebar_scroll.set_offset(offset)
   { ..self, sidebar_scroll_offset: offset }
 }
@@ -452,11 +452,11 @@ fn showcase_route_title(route : String) -> String {
 ///|
 pub fn ShowcaseModel::view(
   self : ShowcaseModel,
-  env : @core.ViewEnvironment,
-) -> @core.View[ShowcaseMsg] {
+  env : @moui.ViewEnvironment,
+) -> @moui.View[ShowcaseMsg] {
   let theme = match self.scheme {
-    @core.ColorScheme::Light => @views.light_theme()
-    @core.ColorScheme::Dark => @views.dark_theme()
+    @moui.ColorScheme::Light => @views.light_theme()
+    @moui.ColorScheme::Dark => @views.dark_theme()
   }
   let metrics = showcase_metrics(env.viewport_size(), theme)
   let offset = if self.active { 18.0 } else { 0.0 }
@@ -490,17 +490,17 @@ pub fn ShowcaseModel::view(
 }
 
 ///|
-fn toggle_color_scheme(scheme : @core.ColorScheme) -> @core.ColorScheme {
+fn toggle_color_scheme(scheme : @moui.ColorScheme) -> @moui.ColorScheme {
   match scheme {
-    @core.ColorScheme::Light => @core.ColorScheme::Dark
-    @core.ColorScheme::Dark => @core.ColorScheme::Light
+    @moui.ColorScheme::Light => @moui.ColorScheme::Dark
+    @moui.ColorScheme::Dark => @moui.ColorScheme::Light
   }
 }
 
 ///|
 pub fn ShowcaseApp::program(
   self : ShowcaseApp,
-) -> @core.Program[ShowcaseModel, ShowcaseMsg] {
+) -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
   ignore(self)
   ShowcaseModel::new().program()
 }
@@ -509,7 +509,7 @@ pub fn ShowcaseApp::program(
 pub fn ShowcaseApp::program_with_host_summary(
   self : ShowcaseApp,
   host_summary : @host.HostCapabilitySummary,
-) -> @core.Program[ShowcaseModel, ShowcaseMsg] {
+) -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
   ignore(self)
   ShowcaseModel::new().with_host_summary(host_summary).program()
 }
@@ -517,7 +517,7 @@ pub fn ShowcaseApp::program_with_host_summary(
 ///|
 pub fn ShowcaseModel::program(
   self : ShowcaseModel,
-) -> @core.Program[ShowcaseModel, ShowcaseMsg] {
+) -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
   self.program_with_optional_route_host(None)
 }
 
@@ -525,7 +525,7 @@ pub fn ShowcaseModel::program(
 pub fn ShowcaseModel::program_with_route_host(
   self : ShowcaseModel,
   route_host : ShowcaseRouteHost,
-) -> @core.Program[ShowcaseModel, ShowcaseMsg] {
+) -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
   self.program_with_optional_route_host(Some(route_host))
 }
 
@@ -533,9 +533,9 @@ pub fn ShowcaseModel::program_with_route_host(
 fn ShowcaseModel::program_with_optional_route_host(
   self : ShowcaseModel,
   route_host : ShowcaseRouteHost?,
-) -> @core.Program[ShowcaseModel, ShowcaseMsg] {
-  @core.Program::new_with_environment(
-    init=() => (self, @core.Effect::none()),
+) -> @moui.Program[ShowcaseModel, ShowcaseMsg] {
+  @moui.Program::new_with_environment(
+    init=() => (self, @moui.Effect::none()),
     update=(model, message) => model.update_with_route_host(message, route_host),
     view=(model, env) => model.view(env),
     subscriptions=_model => showcase_route_subscription(route_host),
@@ -545,7 +545,7 @@ fn ShowcaseModel::program_with_optional_route_host(
 ///|
 fn showcase_route_subscription(
   route_host : ShowcaseRouteHost?,
-) -> @core.Subscription[ShowcaseMsg] {
+) -> @moui.Subscription[ShowcaseMsg] {
   match route_host {
     Some(host) =>
       host.route_source.subscription(
@@ -553,6 +553,6 @@ fn showcase_route_subscription(
         label="Showcase host route",
         map=event => Some(HostRouteChanged(event)),
       )
-    None => @core.Subscription::none()
+    None => @moui.Subscription::none()
   }
 }

@@ -1,7 +1,7 @@
 ///|
 fn MarkdownEditorApp::root(
   self : MarkdownEditorApp,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   let theme = @views.light_theme()
   let document = self.document.get()
   let appearance = self.appearance_spec()
@@ -20,7 +20,7 @@ fn MarkdownEditorApp::root(
   let target_kind = self.target_kind.get()
   let block_label = self.block_label.get()
   let scroll_offset = self.editor_scroll.offset()
-  let children : Array[@core.View[MarkdownEditorMsg]] = []
+  let children : Array[@moui.View[MarkdownEditorMsg]] = []
   if !zen {
     children.push(
       self.chrome(
@@ -81,7 +81,7 @@ fn MarkdownEditorApp::root(
 fn MarkdownEditorApp::reactive_root(
   self : MarkdownEditorApp,
   ctx : @core.ComponentContext,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   ignore(ctx.watch(self.document))
   ignore(ctx.watch(self.selection))
   ignore(ctx.watch(self.link_target))
@@ -146,8 +146,8 @@ fn markdown_editor_workspace_width(
 ///|
 fn markdown_editor_centered_workspace(
   appearance : MarkdownEditorAppearanceSpec,
-  child : @core.View[MarkdownEditorMsg],
-) -> @core.View[MarkdownEditorMsg] {
+  child : @moui.View[MarkdownEditorMsg],
+) -> @moui.View[MarkdownEditorMsg] {
   @views.custom_children_layout(
     children=[child],
     measure=ctx => ctx.constraints.max,
@@ -182,13 +182,13 @@ fn markdown_editor_centered_workspace(
 ///|
 fn MarkdownEditorApp::chrome(
   self : MarkdownEditorApp,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   snapshot : MarkdownEditorSnapshot,
   block_label : String,
   source : String,
   selection : MarkdownEditorSelection,
   width : Double,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   let toolbar = row(
     [
       editor_chrome_button("New", NewDocument, theme),
@@ -240,11 +240,11 @@ fn MarkdownEditorApp::chrome(
 ///|
 fn MarkdownEditorApp::find_bar(
   self : MarkdownEditorApp,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   source : String,
   selection : MarkdownEditorSelection,
   width : Double,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   let query = self.find_query.get()
   let matches = markdown_editor_find_matches(source, query)
   frame(
@@ -305,16 +305,16 @@ fn MarkdownEditorApp::find_bar(
 ///|
 fn MarkdownEditorApp::format_palette(
   self : MarkdownEditorApp,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   let panel_width = markdown_editor_min_double(540.0, width)
   let content_width = markdown_editor_max_double(
     120.0,
     panel_width - theme.spacing_scale.md * 2.0,
   )
   let query = self.format_palette_query.get()
-  let rows : Array[@core.View[MarkdownEditorMsg]] = []
+  let rows : Array[@moui.View[MarkdownEditorMsg]] = []
   for item in markdown_editor_format_palette_filtered_items(query) {
     rows.push(
       markdown_editor_format_palette_row(item, theme, width=content_width),
@@ -385,9 +385,9 @@ fn MarkdownEditorApp::format_palette(
 ///|
 fn markdown_editor_format_palette_row(
   item : MarkdownEditorFormatPaletteItem,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width~ : Double,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   let label_width = markdown_editor_max_double(120.0, width - 250.0)
   row(
     [

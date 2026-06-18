@@ -17,9 +17,9 @@ fn workbench_inspector_tabs() -> Array[WorkbenchInspectorTab] {
 fn WorkbenchModel::workspace_inspector(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     self.workspace_inspector_header(layout, theme),
     self.workspace_inspector_tabs(layout, theme),
     self.workspace_inspector_content(layout, theme),
@@ -39,8 +39,8 @@ fn WorkbenchModel::workspace_inspector(
 fn WorkbenchModel::workspace_inspector_header(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   row(
     [
       text(
@@ -103,8 +103,8 @@ fn WorkbenchModel::workspace_inspector_summary_label(
 fn WorkbenchModel::workspace_inspector_tabs(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let tabs = workbench_inspector_tabs()
   let tab_width = workbench_max_double(
     1.0,
@@ -112,7 +112,7 @@ fn WorkbenchModel::workspace_inspector_tabs(
     tabs.length().to_double(),
   )
   let active = self.active_inspector_panel_id()
-  let controls : Array[@core.View[WorkbenchMsg]] = []
+  let controls : Array[@moui.View[WorkbenchMsg]] = []
   for tab in tabs {
     controls.push(
       button(
@@ -161,8 +161,8 @@ fn WorkbenchModel::default_inspector_panel_id(self : WorkbenchModel) -> String {
 fn WorkbenchModel::workspace_inspector_content(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   match self.active_inspector_panel_id() {
     "runs" => self.workspace_runs_panel(layout, theme)
     "diagnostics" => self.workspace_diagnostics_panel(layout, theme)
@@ -179,10 +179,10 @@ fn WorkbenchLayout::inspector_content_height(self : WorkbenchLayout) -> Double {
 fn WorkbenchModel::workspace_context_panel(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let active = self.active_session()
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     inspector_section_title("会话", active.title, layout, theme),
     inspector_key_value_row(
       "项目",
@@ -233,8 +233,8 @@ fn WorkbenchModel::workspace_context_panel(
 fn WorkbenchModel::inspector_context_scope_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let chip_width = workbench_max_double(
     1.0,
     (layout.inspector_body_width - 20.0 - 18.0) / 4.0,
@@ -255,8 +255,8 @@ fn WorkbenchModel::inspector_context_scope_row(
 fn WorkbenchModel::inspector_diff_card(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let detail_width = workbench_max_double(
     1.0,
     layout.inspector_body_width - 20.0,
@@ -325,10 +325,10 @@ fn WorkbenchModel::inspector_diff_card(
 fn WorkbenchModel::inspector_workspace_detail_card(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let width = workbench_max_double(1.0, layout.inspector_body_width - 20.0)
-  let lines : Array[@core.View[WorkbenchMsg]] = []
+  let lines : Array[@moui.View[WorkbenchMsg]] = []
   for
     line in self.workspace_detail_lines(
       readable_line_char_limit(width),
@@ -359,8 +359,8 @@ fn inspector_workspace_detail_card_height(model : WorkbenchModel) -> Double {
 fn inspector_file_card(
   file : FileContext,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let text_width = workbench_max_double(1.0, layout.inspector_body_width - 86.0)
   surface(
     row(
@@ -397,9 +397,9 @@ fn inspector_file_card(
 fn WorkbenchModel::workspace_runs_panel(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     inspector_section_title(
       "运行输出",
       self.inspector_runs_summary(),
@@ -466,8 +466,8 @@ fn WorkbenchModel::workspace_runs_panel(
 fn inspector_event_card(
   event : AgentEvent,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let text_width = workbench_max_double(1.0, layout.inspector_body_width - 86.0)
   surface(
     row(
@@ -527,15 +527,15 @@ fn WorkbenchModel::inspector_runs_summary(self : WorkbenchModel) -> String {
 ///|
 fn inspector_focused_check_row(
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let label_width = 66.0
   let button_width = workbench_max_double(
     1.0,
     (layout.inspector_body_width - label_width - 24.0) / 4.0,
   )
   let presets = workbench_check_presets()
-  let controls : Array[@core.View[WorkbenchMsg]] = [
+  let controls : Array[@moui.View[WorkbenchMsg]] = [
     text("常用检查", role=Caption, theme~, width=label_width, height=30.0),
     button(
       "全部",
@@ -566,8 +566,8 @@ fn inspector_focused_check_row(
 fn WorkbenchModel::inspector_runtime_signal_card(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let signal = self.active_agent_runtime_signal()
   surface(
     column(
@@ -607,10 +607,10 @@ fn WorkbenchModel::inspector_runtime_signal_card(
 fn inspector_command_card(
   command : CommandRun,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let text_width = workbench_max_double(1.0, layout.inspector_body_width - 86.0)
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     row(
       [
         badge(
@@ -704,13 +704,13 @@ fn inspector_command_card(
 fn inspector_command_detail(
   command : CommandRun,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let detail_width = workbench_max_double(
     1.0,
     layout.inspector_body_width - 20.0,
   )
-  let lines : Array[@core.View[WorkbenchMsg]] = []
+  let lines : Array[@moui.View[WorkbenchMsg]] = []
   for
     line in command_detail_lines(
       command,
@@ -753,10 +753,10 @@ fn inspector_command_detail_height(command : CommandRun) -> Double {
 fn WorkbenchModel::workspace_diagnostics_panel(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let diagnostics = self.visible_workspace_diagnostics()
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     self.inspector_diagnostic_header(diagnostics.length(), layout, theme),
   ]
   match self.transport_failure_message() {
@@ -809,8 +809,8 @@ fn WorkbenchModel::inspector_diagnostic_header(
   self : WorkbenchModel,
   count : Int,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   ignore(self)
   let action = if count > 0 {
     button(
@@ -863,8 +863,8 @@ fn WorkbenchModel::transport_failure_message(self : WorkbenchModel) -> String? {
 fn inspector_diagnostic_card(
   diagnostic : DiagnosticItem,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let text_width = workbench_max_double(1.0, layout.inspector_body_width - 86.0)
   surface(
     column(
@@ -931,8 +931,8 @@ fn inspector_error_card(
   title : String,
   detail : String,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let width = workbench_max_double(1.0, layout.inspector_body_width - 20.0)
   surface(
     column(
@@ -957,8 +957,8 @@ fn inspector_section_title(
   label : String,
   detail : String,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   row(
     [
       text(label, role=Control, theme~, width=58.0, height=28.0),
@@ -983,8 +983,8 @@ fn inspector_key_value_row(
   label : String,
   value : String,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let clean = if value.trim().to_owned() == "" { "未设置" } else { value }
   row(
     [
@@ -1010,8 +1010,8 @@ fn inspector_empty_state(
   title : String,
   detail : String,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   surface(
     column(
       [
@@ -1046,8 +1046,8 @@ fn inspector_empty_state(
 fn WorkbenchModel::workspace_status_bar(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let width = layout.content_width +
     layout.scrollbar_width +
     (if layout.inspector_visible {
@@ -1056,7 +1056,7 @@ fn WorkbenchModel::workspace_status_bar(
       0.0
     })
   let left_width = workbench_max_double(1.0, width - 374.0)
-  let metrics : Array[@core.View[WorkbenchMsg]] = [
+  let metrics : Array[@moui.View[WorkbenchMsg]] = [
     status_bar_metric_cell(self.status_bar_context_label(), width=82.0, theme~),
     status_bar_metric_cell(self.status_bar_queue_label(), width=72.0, theme~),
     status_bar_metric_cell(
@@ -1099,8 +1099,8 @@ fn WorkbenchModel::workspace_status_bar(
 fn status_bar_metric_cell(
   label : String,
   width~ : Double,
-  theme~ : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme~ : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   if label == "" {
     surface(
       empty(),

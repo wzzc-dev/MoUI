@@ -181,7 +181,7 @@ test "pdf workbench lightweight smoke covers startup raster navigation search an
     raster_services~,
     document_services~,
   )
-  assert_true(unzoomed_page_three.effect is @core.Effect::NoEffect)
+  assert_true(unzoomed_page_three.effect is @moui.Effect::NoEffect)
   inspect(render_count.val, content="5")
   guard unzoomed_page_three.model.raster_page is Some(page_three_cached) else {
     fail("expected cached page three raster in smoke")
@@ -194,7 +194,7 @@ test "pdf workbench lightweight smoke covers startup raster navigation search an
     raster_services~,
     document_services~,
   )
-  assert_true(cached_page_one.effect is @core.Effect::NoEffect)
+  assert_true(cached_page_one.effect is @moui.Effect::NoEffect)
   inspect(render_count.val, content="5")
   guard cached_page_one.model.raster_page is Some(cached_raster) else {
     fail("expected cached page one raster in smoke")
@@ -798,7 +798,7 @@ test "pdf workbench zoom changes raster key and cache hit skips render" {
     services,
     raster_services~,
   )
-  assert_true(hit.effect is @core.Effect::NoEffect)
+  assert_true(hit.effect is @moui.Effect::NoEffect)
   inspect(render_count.val, content="2")
   guard hit.model.raster_page is Some(_) else {
     fail("expected cached raster page")
@@ -882,7 +882,7 @@ test "pdf workbench raster cache is bounded and preserves recent hits" {
     services,
     raster_services~,
   )
-  assert_true(hit_original.effect is @core.Effect::NoEffect)
+  assert_true(hit_original.effect is @moui.Effect::NoEffect)
   model = hit_original.model
   inspect(render_count.val, content="12")
   guard model.raster_cache.last() is Some(recent) else {

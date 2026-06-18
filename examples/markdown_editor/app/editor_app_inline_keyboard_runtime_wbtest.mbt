@@ -107,7 +107,7 @@ test "markdown editor runtime typed marker wraps tracked selection" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=84.0),
+        position=@moui.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -141,7 +141,7 @@ test "markdown editor runtime underscore marker wraps tracked selection" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=84.0),
+        position=@moui.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -175,7 +175,7 @@ test "markdown editor runtime underline italic marker wraps tracked selection" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=84.0),
+        position=@moui.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),

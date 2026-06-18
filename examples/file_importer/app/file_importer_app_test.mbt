@@ -61,9 +61,9 @@ test "file importer handles mocked pending completion" {
   inspect(summary.descriptors[0].key(), content="host:file-import")
   inspect(summary.descriptors[0].kind(), content="host-service")
   inspect(summary.descriptors[0].label(), content="Import files")
-  let model = @core.State::new(update.model)
+  let model = @moui.State::new(update.model)
   match update.effect {
-    @core.Effect::Run(_descriptor, run) =>
+    @moui.Effect::Run(_descriptor, run) =>
       run(message => model.set(model.get().update(message)))
     _ => fail("expected file importer browse effect")
   }
@@ -311,7 +311,7 @@ fn ParentImporterModel::update_with_services(
   self : ParentImporterModel,
   message : ParentImporterMsg,
   services : @host.HostAppServices,
-) -> (ParentImporterModel, @core.Effect[ParentImporterMsg]) {
+) -> (ParentImporterModel, @moui.Effect[ParentImporterMsg]) {
   match message {
     Child(child_message) => {
       let update = self.child.update_with_services(child_message, services)
@@ -323,7 +323,7 @@ fn ParentImporterModel::update_with_services(
 ///|
 fn ParentImporterModel::view(
   self : ParentImporterModel,
-) -> @core.View[ParentImporterMsg] {
+) -> @moui.View[ParentImporterMsg] {
   @views.column(
     [
       @views.text("Parent Shell", width=220.0, height=28.0),
@@ -338,7 +338,7 @@ fn ParentImporterModel::view(
 fn ParentImporterModel::subscriptions(
   self : ParentImporterModel,
   services : @host.HostAppServices,
-) -> @core.Subscription[ParentImporterMsg] {
+) -> @moui.Subscription[ParentImporterMsg] {
   self.child.subscriptions(services).map(message => Child(message))
 }
 
@@ -350,19 +350,19 @@ fn ParentImporterModel::runtime_with_services(
   height? : Double = 680.0,
 ) -> @runtime.AppRuntime {
   @runtime.AppRuntime::new_program(
-    program=@core.Program::new(
-      init=() => (self, @core.Effect::none()),
+    program=@moui.Program::new(
+      init=() => (self, @moui.Effect::none()),
       update=(model, message) => model.update_with_services(message, services),
       view=model => model.view(),
       subscriptions=model => model.subscriptions(services),
     ),
-    size=@core.Size::new(width~, height~),
+    size=@moui.Size::new(width~, height~),
   )
 }
 
 ///|
 fn test_runtime(
-  program : @core.Program[FileImporterModel, FileImporterMsg],
+  program : @moui.Program[FileImporterModel, FileImporterMsg],
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {
@@ -371,21 +371,21 @@ fn test_runtime(
 
 ///|
 fn run_file_importer_effect(update : FileImporterUpdate) -> FileImporterModel {
-  let model = @core.State::new(update.model)
+  let model = @moui.State::new(update.model)
   let dispatch = message => model.set(model.get().update(message))
   match update.effect {
-    @core.Effect::NoEffect => ()
-    @core.Effect::Batch(effects) =>
+    @moui.Effect::NoEffect => ()
+    @moui.Effect::Batch(effects) =>
       for effect in effects {
         let next = run_file_importer_effect(
           FileImporterUpdate::new(model.get(), effect~),
         )
         model.set(next)
       }
-    @core.Effect::Send(message) => dispatch(message)
-    @core.Effect::Dispatch(run) => run(dispatch)
-    @core.Effect::Run(_descriptor, run) => run(dispatch)
-    @core.Effect::Task(_descriptor, start) => ignore(start(dispatch))
+    @moui.Effect::Send(message) => dispatch(message)
+    @moui.Effect::Dispatch(run) => run(dispatch)
+    @moui.Effect::Run(_descriptor, run) => run(dispatch)
+    @moui.Effect::Task(_descriptor, start) => ignore(start(dispatch))
   }
   model.get()
 }
@@ -395,7 +395,7 @@ fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame for " + text)
   }
-  let point = @core.Point::new(
+  let point = @moui.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )

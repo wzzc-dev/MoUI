@@ -40,7 +40,7 @@ fn WorkbenchUpdate::from_agent_transport_delta(
   transport_runtime : PiTransportRuntime,
   connector_runtimes : Array[AgentConnectorRuntime],
 ) -> WorkbenchUpdate {
-  let effects : Array[@core.Effect[WorkbenchMsg]] = []
+  let effects : Array[@moui.Effect[WorkbenchMsg]] = []
   let commands = model.transport_commands_added_after(previous)
   let pi_effect = transport_runtime.effect(commands, event => {
     ReceiveTransport(event)
@@ -61,9 +61,9 @@ fn WorkbenchUpdate::from_agent_transport_delta(
     }
   }
   let effect = if effects.is_empty() {
-    @core.Effect::none()
+    @moui.Effect::none()
   } else {
-    @core.Effect::batch(effects)
+    @moui.Effect::batch(effects)
   }
   WorkbenchUpdate::new(model, effect~)
 }
@@ -367,7 +367,7 @@ fn WorkbenchModel::select_session_with_agent_connectors(
       connector_commands,
     ),
   }
-  let effects : Array[@core.Effect[WorkbenchMsg]] = []
+  let effects : Array[@moui.Effect[WorkbenchMsg]] = []
   let pi_effect = transport_runtime.effect(commands, event => {
     ReceiveTransport(event)
   })
@@ -386,9 +386,9 @@ fn WorkbenchModel::select_session_with_agent_connectors(
     }
   }
   let effect = if effects.is_empty() {
-    @core.Effect::none()
+    @moui.Effect::none()
   } else {
-    @core.Effect::batch(effects)
+    @moui.Effect::batch(effects)
   }
   WorkbenchUpdate::new(model, effect~)
 }

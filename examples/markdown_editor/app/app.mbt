@@ -17,34 +17,34 @@ using @views {
 using @moui_richtext {controlled_rich_text_editor}
 ///|
 pub struct MarkdownEditorApp {
-  document : @core.State[String]
-  selection : @core.State[MarkdownEditorSelection]
-  link_target : @core.State[String]
-  image_target : @core.State[String]
-  footnote_text : @core.State[String]
-  html_block_text : @core.State[String]
-  target_kind : @core.State[MarkdownEditorTargetKind]
-  block_label : @core.State[String]
-  source_preview_visible : @core.State[Bool]
-  source_mode_enabled : @core.State[Bool]
-  outline_visible : @core.State[Bool]
-  file_sidebar_visible : @core.State[Bool]
-  document_info_visible : @core.State[Bool]
-  focus_mode_enabled : @core.State[Bool]
-  typewriter_mode_enabled : @core.State[Bool]
-  zen_mode_enabled : @core.State[Bool]
-  format_palette_visible : @core.State[Bool]
-  format_palette_query : @core.State[String]
-  priv writing_appearance : @core.State[MarkdownEditorAppearance]
-  find_visible : @core.State[Bool]
-  find_query : @core.State[String]
-  replace_text : @core.State[String]
-  document_path : @core.State[String]
-  recent_document_paths : @core.State[Array[String]]
-  saved_document : @core.State[String]
-  priv transfer_status : @core.State[MarkdownEditorTransferStatus]
-  undo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
-  redo_stack : @core.State[Array[MarkdownEditorHistoryEntry]]
+  document : @moui.State[String]
+  selection : @moui.State[MarkdownEditorSelection]
+  link_target : @moui.State[String]
+  image_target : @moui.State[String]
+  footnote_text : @moui.State[String]
+  html_block_text : @moui.State[String]
+  target_kind : @moui.State[MarkdownEditorTargetKind]
+  block_label : @moui.State[String]
+  source_preview_visible : @moui.State[Bool]
+  source_mode_enabled : @moui.State[Bool]
+  outline_visible : @moui.State[Bool]
+  file_sidebar_visible : @moui.State[Bool]
+  document_info_visible : @moui.State[Bool]
+  focus_mode_enabled : @moui.State[Bool]
+  typewriter_mode_enabled : @moui.State[Bool]
+  zen_mode_enabled : @moui.State[Bool]
+  format_palette_visible : @moui.State[Bool]
+  format_palette_query : @moui.State[String]
+  priv writing_appearance : @moui.State[MarkdownEditorAppearance]
+  find_visible : @moui.State[Bool]
+  find_query : @moui.State[String]
+  replace_text : @moui.State[String]
+  document_path : @moui.State[String]
+  recent_document_paths : @moui.State[Array[String]]
+  saved_document : @moui.State[String]
+  priv transfer_status : @moui.State[MarkdownEditorTransferStatus]
+  undo_stack : @moui.State[Array[MarkdownEditorHistoryEntry]]
+  redo_stack : @moui.State[Array[MarkdownEditorHistoryEntry]]
   editor_scroll : @core.ScrollState
 }
 
@@ -199,34 +199,34 @@ pub enum MarkdownEditorMsg {
 pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
   let document = sample_markdown()
   {
-    document: @core.State::new(document),
-    selection: @core.State::new({ caret: 0, selection: None }),
-    link_target: @core.State::new("https://moui.dev"),
-    image_target: @core.State::new("assets/image.png"),
-    footnote_text: @core.State::new("Footnote text"),
-    html_block_text: @core.State::new("<div>HTML</div>"),
-    target_kind: @core.State::new(PlainSelection),
-    block_label: @core.State::new("Paragraph"),
-    source_preview_visible: @core.State::new(false),
-    source_mode_enabled: @core.State::new(false),
-    outline_visible: @core.State::new(false),
-    file_sidebar_visible: @core.State::new(false),
-    document_info_visible: @core.State::new(false),
-    focus_mode_enabled: @core.State::new(false),
-    typewriter_mode_enabled: @core.State::new(false),
-    zen_mode_enabled: @core.State::new(false),
-    format_palette_visible: @core.State::new(false),
-    format_palette_query: @core.State::new(""),
-    writing_appearance: @core.State::new(PaperAppearance),
-    find_visible: @core.State::new(false),
-    find_query: @core.State::new(""),
-    replace_text: @core.State::new(""),
-    document_path: @core.State::new(""),
-    recent_document_paths: @core.State::new([]),
-    saved_document: @core.State::new(document),
-    transfer_status: @core.State::new(TransferReady),
-    undo_stack: @core.State::new([]),
-    redo_stack: @core.State::new([]),
+    document: @moui.State::new(document),
+    selection: @moui.State::new({ caret: 0, selection: None }),
+    link_target: @moui.State::new("https://moui.dev"),
+    image_target: @moui.State::new("assets/image.png"),
+    footnote_text: @moui.State::new("Footnote text"),
+    html_block_text: @moui.State::new("<div>HTML</div>"),
+    target_kind: @moui.State::new(PlainSelection),
+    block_label: @moui.State::new("Paragraph"),
+    source_preview_visible: @moui.State::new(false),
+    source_mode_enabled: @moui.State::new(false),
+    outline_visible: @moui.State::new(false),
+    file_sidebar_visible: @moui.State::new(false),
+    document_info_visible: @moui.State::new(false),
+    focus_mode_enabled: @moui.State::new(false),
+    typewriter_mode_enabled: @moui.State::new(false),
+    zen_mode_enabled: @moui.State::new(false),
+    format_palette_visible: @moui.State::new(false),
+    format_palette_query: @moui.State::new(""),
+    writing_appearance: @moui.State::new(PaperAppearance),
+    find_visible: @moui.State::new(false),
+    find_query: @moui.State::new(""),
+    replace_text: @moui.State::new(""),
+    document_path: @moui.State::new(""),
+    recent_document_paths: @moui.State::new([]),
+    saved_document: @moui.State::new(document),
+    transfer_status: @moui.State::new(TransferReady),
+    undo_stack: @moui.State::new([]),
+    redo_stack: @moui.State::new([]),
     editor_scroll: @core.ScrollState::new(),
   }
 }
@@ -338,7 +338,7 @@ fn MarkdownEditorApp::update_with_services(
   self : MarkdownEditorApp,
   message : MarkdownEditorMsg,
   services : @host.HostAppServices,
-) -> (MarkdownEditorApp, @core.Effect[MarkdownEditorMsg]) {
+) -> (MarkdownEditorApp, @moui.Effect[MarkdownEditorMsg]) {
   match message {
     SaveDocument => (self, self.request_document_save(services))
     SaveDocumentAs => (self, self.request_file_save_as(services))
@@ -351,9 +351,9 @@ fn MarkdownEditorApp::update_with_services(
       (self, self.request_text_file_read(path, services))
     HostTransferCompleted(completion) => {
       self.apply_transfer_completion_with_services(completion, services)
-      (self, @core.Effect::none())
+      (self, @moui.Effect::none())
     }
-    _ => (self.update(message), @core.Effect::none())
+    _ => (self.update(message), @moui.Effect::none())
   }
 }
 
@@ -361,7 +361,7 @@ fn MarkdownEditorApp::update_with_services(
 fn MarkdownEditorApp::subscriptions(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-) -> @core.Subscription[MarkdownEditorMsg] {
+) -> @moui.Subscription[MarkdownEditorMsg] {
   match self.transfer_status.get() {
     TransferPending(id, kind) =>
       services.completion_subscription(
@@ -373,7 +373,7 @@ fn MarkdownEditorApp::subscriptions(
           id.value.to_string(),
         label="Markdown editor transfer completion",
       )
-    _ => @core.Subscription::none()
+    _ => @moui.Subscription::none()
   }
 }
 
@@ -382,7 +382,7 @@ fn MarkdownEditorApp::subscriptions(
 ///|
 pub fn MarkdownEditorApp::program(
   self : MarkdownEditorApp,
-) -> @core.Program[MarkdownEditorApp, MarkdownEditorMsg] {
+) -> @moui.Program[MarkdownEditorApp, MarkdownEditorMsg] {
   self.program_with_services(@host.HostAppServices::unavailable())
 }
 
@@ -390,9 +390,9 @@ pub fn MarkdownEditorApp::program(
 pub fn MarkdownEditorApp::program_with_services(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-) -> @core.Program[MarkdownEditorApp, MarkdownEditorMsg] {
-  @core.Program::new(
-    init=() => (self, @core.Effect::none()),
+) -> @moui.Program[MarkdownEditorApp, MarkdownEditorMsg] {
+  @moui.Program::new(
+    init=() => (self, @moui.Effect::none()),
     update=(app, message) => app.update_with_services(message, services),
     view=app => @views.component(ctx => app.reactive_root(ctx)),
     subscriptions=app => app.subscriptions(services),
