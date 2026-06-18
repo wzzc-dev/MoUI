@@ -378,7 +378,7 @@ test "workbench ingests Pi queue and thinking session events" {
   inspect(model.pi_agent.thinking_level, content="high")
   inspect(
     model.pi_agent.display_status_label(),
-    content="queue pending · 排队 3",
+    content="队列等待 · 排队 3",
   )
   let session = model.active_session()
   inspect(session.status, content="running")
