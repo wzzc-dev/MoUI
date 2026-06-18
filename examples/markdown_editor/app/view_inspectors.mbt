@@ -34,7 +34,7 @@ fn files_inspector(
       height=markdown_editor_max_double(0.0, height - 124.0),
     )
   }
-  surface(
+  container(
     padding_edges(
       column(
         [
@@ -73,7 +73,7 @@ fn files_inspector(
     ),
     width=markdown_editor_file_sidebar_width(),
     height~,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
     corner_radius=theme.radius_scale.sm,
@@ -145,7 +145,7 @@ fn document_info_inspector(
     spacing=theme.spacing_scale.xs,
     align=@views.CrossAlign::Start,
   )
-  surface(
+  container(
     padding_edges(
       column(
         [
@@ -168,7 +168,7 @@ fn document_info_inspector(
     ),
     width=markdown_editor_info_inspector_width(),
     height~,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
     corner_radius=theme.radius_scale.sm,
@@ -288,7 +288,7 @@ fn source_inspector(
   theme : @moui.Theme,
   height~ : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
-  surface(
+  container(
     padding_edges(
       column(
         [
@@ -311,7 +311,7 @@ fn source_inspector(
     ),
     width=markdown_editor_source_inspector_width(),
     height~,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
     corner_radius=theme.radius_scale.sm,
@@ -345,7 +345,7 @@ fn outline_inspector(
       height=markdown_editor_max_double(0.0, height - 52.0),
     )
   }
-  surface(
+  container(
     padding_edges(
       column(
         [
@@ -368,7 +368,7 @@ fn outline_inspector(
     ),
     width=markdown_editor_outline_inspector_width(),
     height~,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
     corner_radius=theme.radius_scale.sm,

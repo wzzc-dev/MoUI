@@ -62,11 +62,11 @@ pub fn[Msg] tooltip(
   if visible {
     stack([
       child,
-      surface(
+      container(
         text(message, width=180.0, height=24.0).semantics_role(
           @core.SemanticsRole::Tooltip,
         ),
-        variant=SurfaceVariant::Raised,
+        variant=ContainerVariant::Raised,
       ).align(alignment=@core.Alignment::top_trailing()),
     ])
   } else {

@@ -12,7 +12,7 @@ using @views {
   sidebar,
   split_view,
   status_bar,
-  surface,
+  container,
   text,
   text_field,
   toggle_switch,
@@ -205,11 +205,11 @@ pub fn SettingsModel::view(self : SettingsModel) -> @moui.View[SettingsMsg] {
     spacing=theme.spacing_scale.md,
     align=@views.CrossAlign::Stretch,
   )
-  surface(
+  container(
     content,
     width=880.0,
     height=560.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -276,11 +276,11 @@ fn SettingsModel::settings_detail(
     "preferences" => self.preferences_form(theme)
     _ => self.profile_form(theme)
   }
-  surface(
+  container(
     scroll_view(detail, width=558.0, height=388.0),
     width=590.0,
     height=420.0,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )

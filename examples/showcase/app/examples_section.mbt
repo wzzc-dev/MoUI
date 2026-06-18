@@ -29,7 +29,7 @@ fn ShowcaseModel::counter_preview(
   self : ShowcaseModel,
   theme : @moui.Theme,
 ) -> @moui.View[ShowcaseMsg] {
-  surface(
+  container(
     column(
       [
         text("MoUI Counter")
@@ -48,7 +48,7 @@ fn ShowcaseModel::counter_preview(
       spacing=theme.spacing_scale.md,
       align=@views.CrossAlign::Center,
     ),
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
   )
 }
@@ -88,13 +88,13 @@ fn ShowcaseModel::todo_preview(
   for item in self.todo_items {
     children.push(self.todo_row(item, theme))
   }
-  surface(
+  container(
     column(
       children,
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Center,
     ),
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
   )
 }

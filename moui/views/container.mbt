@@ -1,11 +1,11 @@
 ///|
-pub fn[Msg] surface(
+pub fn[Msg] container(
   child : @core.View[Msg],
   width? : Double,
   height? : Double,
   background? : @core.Color,
   corner_radius? : Double = 0.0,
-  variant? : SurfaceVariant = SurfaceVariant::Base,
+  variant? : ContainerVariant = ContainerVariant::Base,
   theme? : @core.Theme = default_theme(),
   padding? : Double,
 ) -> @core.View[Msg] {
@@ -40,11 +40,11 @@ pub fn[Msg] card(
   padding? : Double = 32.0,
   theme? : @core.Theme = default_theme(),
 ) -> @core.View[Msg] {
-  surface(
+  container(
     child,
     width?,
     height?,
-    variant=SurfaceVariant::Raised,
+    variant=ContainerVariant::Raised,
     theme~,
     padding~,
   )
@@ -103,7 +103,14 @@ pub fn[Msg] center(
   )
   match background {
     Some(color) =>
-      surface(centered, width?, height?, background=color, theme~, padding=0.0)
+      container(
+        centered,
+        width?,
+        height?,
+        background=color,
+        theme~,
+        padding=0.0,
+      )
     None => centered
   }
 }

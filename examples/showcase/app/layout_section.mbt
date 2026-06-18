@@ -81,7 +81,7 @@ fn ShowcaseModel::layout_section(
   let overlay_demo = overlay(
     padding(self.layout_tile(theme, "Base: Padding"), 8.0),
     align(
-      surface(
+      container(
         text("Overlay", width=62.0, height=18.0)
         .font(theme.typography.caption)
         .foreground(theme.palette.primary_foreground),

@@ -50,11 +50,11 @@ pub fn[Msg] form_actions(
       align=CrossAlign::Center,
     ).frame(width~, height=40.0),
   )
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Stretch),
     width~,
     height=if status == "" { 52.0 } else { 82.0 },
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.xs,
   )

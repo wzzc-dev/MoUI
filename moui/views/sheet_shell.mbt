@@ -1,5 +1,5 @@
 ///|
-fn[Msg] sheet_surface(
+fn[Msg] sheet_shell(
   content~ : @core.View[Msg],
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
   background~ : @core.Brush,

@@ -8,7 +8,7 @@ pub fn[Msg] badge(
   height? : Double = 24.0,
 ) -> @core.View[Msg] {
   let style = resolve_badge_style(style, theme)
-  surface(
+  container(
     text(
       label,
       role=TextRole::Caption,
@@ -73,11 +73,11 @@ pub fn[Msg] stat_card(
       ),
     )
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
     width~,
     height~,
-    variant=SurfaceVariant::Raised,
+    variant=ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )

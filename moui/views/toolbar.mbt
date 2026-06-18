@@ -5,11 +5,11 @@ pub fn[Msg] toolbar(
   width? : Double = 520.0,
   height? : Double = 48.0,
 ) -> @core.View[Msg] {
-  surface(
+  container(
     row(children, spacing=theme.spacing_scale.sm, align=CrossAlign::Center),
     width~,
     height~,
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.xs,
   ).semantics_role(@core.SemanticsRole::Group)
@@ -90,7 +90,7 @@ pub fn[Msg] status_bar(
       ),
     )
   }
-  surface(
+  container(
     row(segments, spacing=theme.spacing_scale.sm, align=CrossAlign::Center),
     width~,
     height~,

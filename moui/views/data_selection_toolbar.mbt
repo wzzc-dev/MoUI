@@ -37,7 +37,7 @@ pub fn[Msg] selection_toolbar(
       )
     None => ()
   }
-  surface(
+  container(
     row(
       [
         text(
@@ -65,7 +65,7 @@ pub fn[Msg] selection_toolbar(
     ),
     width~,
     height=selection_toolbar_height(action_views.length()),
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.sm,
   )

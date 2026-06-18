@@ -53,7 +53,7 @@ fn pdf_workbench_page_surface(
       on_scroll=Some(delta => PreviewScrolled(delta)),
     ),
   )
-  @views.surface(
+  @views.container(
     @views.column(
       rows,
       spacing=theme.spacing_scale.sm,
@@ -61,7 +61,7 @@ fn pdf_workbench_page_surface(
     ),
     width=metrics.page_width,
     height=metrics.body_height,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )

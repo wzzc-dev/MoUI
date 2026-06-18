@@ -9,7 +9,7 @@ using @views {
   row,
   stat_card,
   status_bar,
-  surface,
+  container,
   text,
 }
 
@@ -220,11 +220,11 @@ pub fn FileImporterModel::view(
     spacing=theme.spacing_scale.md,
     align=@views.CrossAlign::Stretch,
   )
-  surface(
+  container(
     shell,
     width=820.0,
     height=560.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )
@@ -419,11 +419,11 @@ fn FileImporterModel::import_summary(
       ),
     )
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.sm, align=@views.CrossAlign::Start),
     width=372.0,
     height=292.0,
-    variant=@views.SurfaceVariant::Raised,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding=theme.spacing_scale.md,
   )

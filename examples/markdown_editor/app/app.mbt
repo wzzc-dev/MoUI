@@ -8,13 +8,14 @@ using @views {
   row,
   scroll_view,
   spacer,
-  surface,
+  container,
   text,
   text_field,
 }
 
 ///|
 using @moui_richtext {controlled_rich_text_editor}
+
 ///|
 pub struct MarkdownEditorApp {
   document : @moui.State[String]

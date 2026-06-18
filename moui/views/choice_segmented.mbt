@@ -36,7 +36,7 @@ pub fn[Msg] segmented_control(
       .semantics_selected(selected=active),
     )
   }
-  surface(
+  container(
     row(segments, spacing=0.0, align=CrossAlign::Center),
     width~,
     height~,

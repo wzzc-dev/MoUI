@@ -35,7 +35,7 @@ pub fn[Msg] avatar(
       .clip()
       .accessibility_label(label)
     None =>
-      surface(
+      container(
         text(
           avatar_initials(label),
           role=TextRole::Control,
@@ -69,7 +69,7 @@ pub fn[Msg] avatar_group(
   let remaining = labels.length() - visible
   if remaining > 0 {
     children.push(
-      surface(
+      container(
         text(
           "+\{remaining}",
           role=TextRole::Caption,

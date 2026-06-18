@@ -67,7 +67,7 @@ fn Model::top_bar(
     spacing=0.0,
     align=@views.CrossAlign::Center,
   )
-  surface(
+  container(
     frame(
       top_bar_content,
       width=metrics.viewport.width,
@@ -517,7 +517,7 @@ fn section_shell(
   let padded = padding_edges(centered, top~, right=0.0, bottom~, left=0.0)
   match background {
     Some(color) =>
-      surface(
+      container(
         padded,
         width=metrics.viewport.width,
         background=color,
@@ -631,7 +631,7 @@ fn metric_card(
   width~ : Double,
   accent~ : @core.Color,
 ) -> @moui.View[Msg] {
-  surface(
+  container(
     column(
       [
         text(label, width=width - 28.0, height=24.0)
@@ -667,12 +667,12 @@ fn feature_card(
   accent : @core.Color,
 ) -> @moui.View[Msg] {
   let content_width = width - 40.0
-  surface(
+  container(
     column(
       [
         row(
           [
-            surface(
+            container(
               text(index, width=28.0, height=28.0)
               .font(@core.FontSpec::new(size=16.0, weight=820))
               .foreground(accent),
@@ -721,7 +721,7 @@ fn platform_card(
   accent : @core.Color,
 ) -> @moui.View[Msg] {
   ignore(value)
-  surface(
+  container(
     column(
       [
         showcase_thumb(theme, status, width - 2.0, accent),
@@ -882,7 +882,7 @@ fn quick_start_placeholder(
   theme : @moui.Theme,
   width : Double,
 ) -> @moui.View[Msg] {
-  surface(
+  container(
     column(
       [
         badge(
