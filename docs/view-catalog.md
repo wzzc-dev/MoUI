@@ -172,7 +172,7 @@ fn view(draft : String) -> @moui.View[Msg] {
 
 | Constructor | Source | Theme | Semantics | Tests | Example coverage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| `surface` / `card` | `views/container.mbt` | SurfaceStyle | Group through child | `views/views_test.mbt` | Counter, Showcase, Markdown Editor | Styled container primitives; `card` is the raised, padded entry point for simple apps. |
+| `container` / `card` | `views/container.mbt` | SurfaceStyle | Group through child | `views/views_test.mbt` | Counter, Showcase, Markdown Editor | Styled container primitives; `card` is the raised, padded entry point for simple apps. |
 | `toolbar` / `command_bar` / `button_group` / `status_bar` | `views/toolbar.mbt` | ButtonStyle/text/surface | Group | `views/views_test.mbt`, Showcase tests | Showcase Navigation Shell | App-owned command and status surfaces built from buttons, text, and surfaces. |
 | `command_palette` | `views/command_palette.mbt` | ButtonStyle/text/surface | Menu | `views/views_test.mbt`, `core/gesture_action_wbtest.mbt`, Showcase tests | Showcase Navigation Shell | Renders `@views.ActionCommand` metadata (`group`, `description`, shortcut label, enabled state) as a TEA-controlled palette without native menu or renderer changes. |
 | `row` / `column` | `views/flex.mbt` | Child/modifier based | Group/list via children | `views/views_test.mbt` | All examples | Flex layout primitives. |
@@ -181,7 +181,7 @@ fn view(draft : String) -> @moui.View[Msg] {
 | `frame` | `views/frame.mbt` | N/A | Child semantics | `views/views_test.mbt` | Showcase | Constraint wrapper. |
 | `padding` / `padding_insets` | `views/padding.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | All examples | Ordered layout modifier wrappers. |
 | `stack` / `overlay` | `views/stack.mbt` | Child/modifier based | Children preserved | `views/views_test.mbt` | Showcase, Dialog host, Tooltip | Overlay layout primitives. |
-| `popover` | `views/popover_surface.mbt` | SurfaceStyle | Anchor plus optional overlay content | `views/views_test.mbt` | Showcase Interaction Lab | View-level floating surface using existing stack, align, and surface primitives. The optional `trap_focus=true` path applies `View::focus_trap`; by default popovers remain non-modal. Native context menus go through host services. |
+| `popover` | `views/popover_overlay.mbt` | SurfaceStyle | Anchor plus optional overlay content | `views/views_test.mbt` | Showcase Interaction Lab | View-level floating overlay using existing stack, align, and container primitives. The optional `trap_focus=true` path applies `View::focus_trap`; by default popovers remain non-modal. Native context menus go through host services. |
 | `scroll_view` | `views/stack.mbt` | N/A | Child semantics | `views/views_test.mbt`, `core/advanced_layout_test.mbt` | Showcase, Markdown Editor | Emits clip/offset behavior through core and can report wheel deltas through `on_scroll`. |
 | `grid` | `views/grid_list.mbt` | N/A | Children preserved | `views/views_test.mbt` | Showcase | Fixed-column layout. |
 | `list` | `views/grid_list.mbt` | N/A | List/list item roles through core | `views/views_test.mbt`, `core/semantics_test.mbt` | Showcase Todo pattern | Eager list layout. |

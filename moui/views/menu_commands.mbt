@@ -45,11 +45,11 @@ pub fn[Msg] menu_bar(
       .semantics_selected(selected~),
     )
   }
-  surface(
+  container(
     row(items, spacing=theme.spacing_scale.xs, align=CrossAlign::Center),
     width~,
     height~,
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.xs,
   )
@@ -100,7 +100,7 @@ pub fn[Msg] command_menu(
       ),
     )
   }
-  surface(
+  container(
     scroll_view(
       column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
       width=width - theme.spacing_scale.md * 2.0,
@@ -108,7 +108,7 @@ pub fn[Msg] command_menu(
     ),
     width~,
     height=max_height,
-    variant=SurfaceVariant::Overlay,
+    variant=ContainerVariant::Overlay,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -126,7 +126,7 @@ pub fn[Msg] context_menu_region(
   let content = if visible {
     overlay(
       child,
-      surface(menu, variant=SurfaceVariant::Overlay, theme~, padding=0.0)
+      container(menu, variant=ContainerVariant::Overlay, theme~, padding=0.0)
       .semantics_role(@core.SemanticsRole::Menu)
       .align(alignment=@core.Alignment::bottom_trailing()),
     )

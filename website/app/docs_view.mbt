@@ -99,7 +99,7 @@ fn Model::docs_sidebar(
       .accessibility_label("Open " + entry.title),
     )
   }
-  surface(
+  container(
     column(
       [
         docs_start_text(
@@ -138,7 +138,7 @@ fn Model::docs_document_panel(
 ) -> @moui.View[Msg] {
   match self.doc_state {
     DocLoaded(path, document) =>
-      surface(
+      container(
         column(
           [
             docs_document_header(
@@ -230,7 +230,7 @@ fn docs_status_panel(
   action : Msg,
   action_label : String,
 ) -> @moui.View[Msg] {
-  surface(
+  container(
     column(
       [
         docs_start_text(
@@ -298,7 +298,7 @@ fn docs_block_view(
         muted=false,
       )
     DocQuote(value) =>
-      surface(
+      container(
         docs_wrapped_text(theme, value, width - 28.0, 14.0, 22.0, muted=true),
         width~,
         height=website_doc_text_block_height(value, width - 28.0, 14.0, 22.0) +
@@ -402,7 +402,7 @@ fn docs_code_panel(
       ),
     )
   }
-  surface(
+  container(
     column(rows, spacing=0.0, align=@views.CrossAlign::Start),
     width~,
     height=website_doc_code_height(language, value, width),
@@ -434,7 +434,7 @@ fn docs_table_panel(
       )
     }
   }
-  surface(
+  container(
     column(rows, spacing=0.0, align=@views.CrossAlign::Start),
     width~,
     height=website_doc_table_height(lines, width),

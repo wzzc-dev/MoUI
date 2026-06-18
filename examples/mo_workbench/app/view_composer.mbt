@@ -34,7 +34,7 @@ fn WorkbenchModel::composer(
   if self.should_show_composer_action_row() {
     content.push(self.composer_action_row(theme))
   }
-  surface(
+  container(
     column(content, spacing=6.0, align=Stretch),
     width=layout.composer_width,
     height=self.composer_height(layout),

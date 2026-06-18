@@ -1,5 +1,5 @@
 ///|
-using @views {column, expanded, row, surface}
+using @views {column, expanded, row, container}
 
 ///|
 fn PdfWorkbenchModel::view_with_environment(
@@ -21,11 +21,11 @@ fn PdfWorkbenchModel::view_for_viewport(
     reader_fullscreen=self.reader_fullscreen,
   )
   if self.reader_fullscreen {
-    return surface(
+    return container(
       pdf_workbench_page_surface(self, metrics, theme),
       width=metrics.viewport.width,
       height=metrics.viewport.height,
-      variant=@views.SurfaceVariant::Base,
+      variant=@views.ContainerVariant::Base,
       theme~,
       padding=theme.spacing_scale.sm,
     )
@@ -51,7 +51,7 @@ fn PdfWorkbenchModel::view_for_viewport(
   }
   rows.push(body)
   rows.push(pdf_workbench_status(self, metrics, theme))
-  surface(
+  container(
     column(
       rows,
       spacing=theme.spacing_scale.md,
@@ -59,7 +59,7 @@ fn PdfWorkbenchModel::view_for_viewport(
     ),
     width=metrics.viewport.width,
     height=metrics.viewport.height,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.lg,
   )

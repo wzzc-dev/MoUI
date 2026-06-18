@@ -58,11 +58,11 @@ pub fn[Msg] data_filter_bar(
       ),
     )
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Stretch),
     width~,
     height=data_filter_bar_height(chips.length()),
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.sm,
   )

@@ -83,7 +83,7 @@ fn[Msg] form_validation_error_summary(
       )
     None => ()
   }
-  surface(
+  container(
     column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
     width~,
     height=form_validation_summary_height(summary, action, base=70.0),
@@ -141,7 +141,7 @@ fn[Msg] form_validation_success(
   }
   let summary_view : @core.View[Msg] = match style {
     Some(value) =>
-      surface(
+      container(
         column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
         width~,
         height=if action is Some(_) { 82.0 } else { 48.0 },
@@ -156,11 +156,11 @@ fn[Msg] form_validation_success(
         ),
       )
     None =>
-      surface(
+      container(
         column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
         width~,
         height=if action is Some(_) { 82.0 } else { 48.0 },
-        variant=SurfaceVariant::Base,
+        variant=ContainerVariant::Base,
         theme~,
         padding=theme.spacing_scale.sm,
       )

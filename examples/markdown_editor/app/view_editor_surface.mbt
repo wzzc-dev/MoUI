@@ -210,9 +210,9 @@ fn floating_target_palette(
   let palette = if target_kind == PlainSelection {
     empty()
   } else {
-    surface(
+    container(
       target_bar,
-      variant=@views.SurfaceVariant::Raised,
+      variant=@views.ContainerVariant::Raised,
       theme~,
       padding=theme.spacing_scale.xs,
     )

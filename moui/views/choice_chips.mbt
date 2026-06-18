@@ -15,7 +15,7 @@ pub fn[Msg] chip(
     width=width - 18.0,
     height=height - 8.0,
   ).foreground(chip_foreground(selected, theme))
-  let surfaced = surface(
+  let surfaced = container(
     child,
     width~,
     height~,

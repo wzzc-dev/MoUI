@@ -28,7 +28,7 @@ fn section_panel(
         state=scroll_state,
       )
   }
-  surface(
+  container(
     column(
       [
         column(
@@ -50,7 +50,7 @@ fn section_panel(
     ),
     width=metrics.panel_width,
     height=metrics.panel_height,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
   )
@@ -98,11 +98,11 @@ fn showcase_soft_card(
   height~ : Double,
   padding? : Double = 0.0,
 ) -> @moui.View[ShowcaseMsg] {
-  surface(
+  container(
     child,
     width~,
     height~,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding~,
   ).border(showcase_panel_border(theme))
@@ -114,7 +114,7 @@ fn example_preview(
   title : String,
   child : @moui.View[ShowcaseMsg],
 ) -> @moui.View[ShowcaseMsg] {
-  surface(
+  container(
     column(
       [
         text(title, width=220.0, height=26.0)
@@ -127,7 +127,7 @@ fn example_preview(
     ),
     width=500.0,
     height=190.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
   )
 }
@@ -150,7 +150,7 @@ fn ShowcaseModel::layout_tile_sized(
   height : Double,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
-  surface(
+  container(
     row(
       [
         layout_tile_marker(theme),
@@ -560,13 +560,13 @@ fn ShowcaseModel::shortcut_preview(
   theme : @moui.Theme,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
-  surface(
+  container(
     text("Keyboard: Meta+K", width=190.0, height=28.0)
     .font(theme.typography.caption)
     .foreground(theme.palette.foreground),
     width=220.0,
     height=50.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
   ).border(showcase_panel_border(theme))
@@ -580,7 +580,7 @@ fn ShowcaseModel::progress_preview(
   width~ : Double,
 ) -> @moui.View[ShowcaseMsg] {
   ignore(self)
-  surface(
+  container(
     progress(
       value,
       width=max_showcase_double(80.0, width - 24.0),
@@ -588,7 +588,7 @@ fn ShowcaseModel::progress_preview(
     ),
     width~,
     height=42.0,
-    variant=@views.SurfaceVariant::Base,
+    variant=@views.ContainerVariant::Base,
     theme~,
     padding=12.0,
   ).border(showcase_panel_border(theme))

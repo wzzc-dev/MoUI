@@ -49,14 +49,14 @@ pub fn[Msg] section_nav(
       )
     }
     item_views.push(
-      surface(
+      container(
         column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
         width=item_width,
         height=item_height,
         variant=if selected_item {
-          SurfaceVariant::Raised
+          ContainerVariant::Raised
         } else {
-          SurfaceVariant::Base
+          ContainerVariant::Base
         },
         theme~,
         padding=item_padding,
@@ -95,11 +95,11 @@ pub fn[Msg] section_nav(
     @core.Axis::Vertical =>
       item_height * item_views.length().to_double() + spacing * gap_count
   }
-  surface(
+  container(
     column(rows, spacing~, align=CrossAlign::Start),
     width~,
     height=title_height + body_height + item_padding * 2.0,
-    variant=SurfaceVariant::Base,
+    variant=ContainerVariant::Base,
     theme~,
     padding=item_padding,
   )
