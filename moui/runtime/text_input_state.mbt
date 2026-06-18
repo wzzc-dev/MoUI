@@ -7,7 +7,13 @@ fn ElementNode::focused_text_input(
   environment? : Environment = Environment::neutral(),
 ) -> TextInputState? {
   if self.id == target {
-    virtual_node_text_input_state(self, self.virtual_node, render, text_system, environment)
+    view_text_input_state(
+      self,
+      self.erased_view_node,
+      render,
+      text_system,
+      environment,
+    )
   } else {
     for index, child in self.children {
       if index < render.children.length() {
@@ -28,9 +34,9 @@ fn ElementNode::focused_text_input(
 }
 
 ///|
-fn virtual_node_text_input_state(
+fn view_text_input_state(
   element : ElementNode,
-  data : VirtualNode,
+  data : ErasedViewNode,
   render : RenderNode,
   text_system : TextSystem,
   environment : Environment,

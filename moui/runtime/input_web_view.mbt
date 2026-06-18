@@ -6,7 +6,7 @@ fn ElementNode::dispatch_web_view_event(
   environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> Bool {
-  let data = self.virtual_node
+  let data = self.erased_view_node
   let result = (data.event)({
     frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
     child_frames: [],
@@ -18,7 +18,7 @@ fn ElementNode::dispatch_web_view_event(
     environment,
   })
   match result.state {
-    Some(next_state) => self.virtual_node = { ..data, state: next_state }
+    Some(next_state) => self.erased_view_node = { ..data, state: next_state }
     None => ()
   }
   match result.text_control {
