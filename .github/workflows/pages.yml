@@ -55,7 +55,7 @@ jobs:
           fi
           mkdir -p dist/pages/docs
           cp docs/*.md dist/pages/docs/
-          cp moui/README.mbt.md dist/pages/docs/moui-readme.md
+          cp README.mbt.md dist/pages/docs/moui-readme.md
           cp moui_skia/README.mbt.md dist/pages/docs/moui-skia-readme.md
 
           mkdir -p dist/pages/moui/backend/web

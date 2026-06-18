@@ -150,10 +150,18 @@ fn push_moon_work_member_checks(
         )
         if workspace_member.has_prefix("./examples/") {
           let package_name = workspace_member["./examples/".length():].to_owned()
+          let app_path = "examples/" + package_name + "/app/"
+          let expected_path = if @tools.directory_exists(
+            @tools.resolve_path(repo_root, app_path),
+          ) {
+            app_path
+          } else {
+            "examples/" + package_name + "/"
+          }
           push_include_check(
             repo_root,
             "docs/examples.md",
-            "examples/" + package_name + "/app/",
+            expected_path,
             failures,
           )
         }
@@ -260,7 +268,7 @@ fn theme_diagnostic_rules() -> Array[TextRule] {
     },
     { path: "AGENTS.md", token: "--theme-diagnostics" },
     { path: "AGENTS.md", token: "Design Systems is addon diagnostic coverage" },
-    { path: "moui/README.mbt.md", token: "--theme-diagnostics" },
+    { path: "README.mbt.md", token: "--theme-diagnostics" },
     {
       path: "docs/maintenance.md",
       token: "Design Systems is addon diagnostic coverage",

@@ -1,0 +1,4 @@
+interface:
+  display_name: "MoUI App Development"
+  short_description: "Build and maintain MoUI app packages and examples."
+  default_prompt: "Use $moui-app-development when building or changing shared MoUI app packages, example apps, views composed with moui/views, or platform entrypoints."

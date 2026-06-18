@@ -51,7 +51,7 @@ const sources = [
     to: name,
   })),
   {
-    from: join(repoRoot, "moui", "README.mbt.md"),
+    from: join(repoRoot, "README.mbt.md"),
     to: "moui-readme.md",
   },
   {

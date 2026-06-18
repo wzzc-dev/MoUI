@@ -82,26 +82,30 @@ sh scripts/conformance-check.sh --bench
 These commands generate local scaffold manifests and logs under `artifacts/`;
 release notes should cite the relevant CI run, uploaded artifact, or smoke log
 instead of committing generated artifacts.
+`artifacts/` is ignored; keep those files as local or CI evidence.
 
 ## Documentation
 
-- [Architecture](website/web_wasm/docs/architecture.md)
-- [Development](website/web_wasm/docs/development.md)
-- [Testing](website/web_wasm/docs/testing.md)
-- [API surface](website/web_wasm/docs/api-surface.md)
-- [Maintenance mainline](website/web_wasm/docs/maintenance.md)
-- [Platform notes](website/web_wasm/docs/platform-notes.md)
-- [Renderer capability report](website/web_wasm/docs/renderer-capability-report.md)
-- [View catalog](website/web_wasm/docs/view-catalog.md)
-- [Views API guide](website/web_wasm/docs/views-api-guide.md)
-- [Non-render component cookbook](website/web_wasm/docs/non-render-component-cookbook.md)
-- [App templates](website/web_wasm/docs/app-templates.md)
-- [Examples](website/web_wasm/docs/examples.md)
-- [Markdown Editor](website/web_wasm/docs/markdown-editor.md)
-- [Mo Workbench](website/web_wasm/docs/mo-workbench.md)
-- [AI collaboration](website/web_wasm/docs/ai-collaboration.md)
-- [2026 roadmap](website/web_wasm/docs/roadmap-2026.md)
-- [Release readiness](website/web_wasm/docs/release-readiness.md)
+The source docs live under `docs/`. The website preview copies those Markdown
+files into `website/web_wasm/docs/` with `node scripts/sync-website-docs.mjs`.
+
+- [Architecture](docs/architecture.md)
+- [Development](docs/development.md)
+- [Testing](docs/testing.md)
+- [API surface](docs/api-surface.md)
+- [Maintenance mainline](docs/maintenance.md)
+- [Platform notes](docs/platform-notes.md)
+- [Renderer capability report](docs/renderer-capability-report.md)
+- [View catalog](docs/view-catalog.md)
+- [Views API guide](docs/views-api-guide.md)
+- [Non-render component cookbook](docs/non-render-component-cookbook.md)
+- [App templates](docs/app-templates.md)
+- [Examples](docs/examples.md)
+- [Markdown Editor](docs/markdown-editor.md)
+- [Mo Workbench](docs/mo-workbench.md)
+- [AI collaboration](docs/ai-collaboration.md)
+- [2026 roadmap](docs/roadmap-2026.md)
+- [Release readiness](docs/release-readiness.md)
 
 ## License
 
