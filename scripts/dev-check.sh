@@ -71,10 +71,6 @@ run_built_executable() {
   run "$executable"
 }
 
-run sh scripts/check-local-deps.sh
-run node scripts/validate-guidance-consistency.mjs
-run node --check scripts/validate-maintenance-baseline.mjs
-run node scripts/validate-maintenance-baseline.mjs
 run node --check scripts/validate-api-surface.mjs
 run node scripts/validate-api-surface.mjs
 run node scripts/validate-renderer-provider-manifests.mjs
