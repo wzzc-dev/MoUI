@@ -204,7 +204,7 @@ test "website hero shows source and live counter side by side" {
   let incremented = runtime.draw_commands()
   assert_true(has_text(incremented, "1"))
   assert_true(has_text_color_different(incremented, "view", "count"))
-  assert_true(has_text_color_different(incremented, "@core", "count"))
+  assert_true(has_text_color_different(incremented, "@moui", "count"))
   assert_true(has_text_color_different(incremented, "View", "count"))
   click_text(runtime, "Reset")
   assert_true(has_text(runtime.draw_commands(), "0"))
