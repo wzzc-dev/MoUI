@@ -410,34 +410,34 @@ pub fn FeedbackStyle::default(
   theme? : @core.Theme = default_theme(),
 ) -> FeedbackStyle {
   let background_alpha = match theme.scheme {
-    @core.ColorScheme::Light => 0.12
-    @core.ColorScheme::Dark => 0.22
+    @core.ColorScheme::Light => 0.14
+    @core.ColorScheme::Dark => 0.24
   }
   {
     neutral: tone_style(
       foreground=theme.palette.muted,
       background_alpha~,
-      border_alpha=0.72,
+      border_alpha=0.78,
     ),
     info: tone_style(
       foreground=theme.semantic_colors.info,
       background_alpha~,
-      border_alpha=0.72,
+      border_alpha=0.78,
     ),
     success: tone_style(
       foreground=theme.semantic_colors.success,
       background_alpha~,
-      border_alpha=0.72,
+      border_alpha=0.78,
     ),
     warning: tone_style(
       foreground=theme.semantic_colors.warning,
       background_alpha~,
-      border_alpha=0.72,
+      border_alpha=0.78,
     ),
     danger: tone_style(
       foreground=theme.semantic_colors.danger,
       background_alpha~,
-      border_alpha=0.72,
+      border_alpha=0.78,
     ),
     radius: theme.radius_scale.md,
     padding: theme.spacing_scale.sm,
