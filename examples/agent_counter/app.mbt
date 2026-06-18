@@ -4,7 +4,10 @@
 // intents that flow through update() — exactly like a user clicking.
 
 using @views {column, text, button}
-using @moui { type Program}
+
+///|
+using @moui {type Program}
+
 ///|
 pub struct Model {
   count : Int

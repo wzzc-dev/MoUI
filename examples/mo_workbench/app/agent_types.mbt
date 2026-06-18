@@ -367,10 +367,12 @@ enum WorkbenchMsg {
   MainScrollTo(Double)
 } derive(Eq, Debug)
 
+///|
 test {
   ignore(WorkbenchMsg::FollowTranscript("", "", ""))
   ignore(WorkbenchMsg::MarkCommandComplete(0, 0))
 }
+
 ///|
 fn WorkbenchSession::new(
   id~ : String,
@@ -1007,8 +1009,13 @@ fn PiSessionBinding::status_label(self : PiSessionBinding) -> String {
   }
 }
 
+///|
 test {
-  ignore(PiSessionBinding::status_label(PiSessionBinding::new(workbench_session_id="123", status="bound")))
+  ignore(
+    PiSessionBinding::status_label(
+      PiSessionBinding::new(workbench_session_id="123", status="bound"),
+    ),
+  )
 }
 
 ///|
@@ -1144,8 +1151,11 @@ fn PiAgentSnapshot::status_label(self : PiAgentSnapshot) -> String {
   self.phase + tool + queue
 }
 
+///|
 test {
-  ignore(PiAgentSnapshot::status_label(PiAgentSnapshot::new(active_tool_name="test")))
+  ignore(
+    PiAgentSnapshot::status_label(PiAgentSnapshot::new(active_tool_name="test")),
+  )
 }
 
 ///|

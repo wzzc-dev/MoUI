@@ -135,6 +135,7 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
   }
 }
 
+///|
 test {
   ignore(ProgramRuntimeSnapshot::empty())
 }
