@@ -32,7 +32,7 @@ pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing
 
 pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, style? : ButtonStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] button_group(Array[MenuItem[Msg]], selected? : String, theme? : @core.Theme, button_width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] button_group(Array[ActionItem[Msg]], selected? : String, theme? : @core.Theme, button_width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] callout(String, String, tone? : FeedbackTone, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
@@ -62,7 +62,7 @@ pub fn[Msg] column_visibility_panel(Array[TableColumn], visible~ : Array[String]
 
 pub fn[Msg] combobox(String, on_input~ : (String) -> Msg, Array[MenuItem[Msg]], expanded~ : Bool, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] command_bar(Array[MenuItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] command_bar(Array[ActionItem[Msg]], theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] command_menu(Array[CommandMenuSection], on_select~ : (@core.CommandIntent) -> Msg, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
 
@@ -176,8 +176,6 @@ pub fn[Msg] menu_bar(Array[MenuItem[Msg]], active? : String, theme? : @core.Them
 
 pub fn[Msg] menu_button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] multiline_text_area_shell(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double) -> @core.View[Msg]
-
 pub fn[Msg] navigation_destination(route~ : String, view~ : @core.View[Msg]) -> NavigationDestination[Msg]
 
 pub fn[Msg] navigation_stack(@core.NavigationState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
@@ -228,7 +226,7 @@ pub fn resolve_route(RouteLocation, Array[RouteDescriptor]) -> RouteDescriptor?
 
 pub fn[Msg] responsive_grid(Array[@core.View[Msg]], width? : Double, min_column_width? : Double, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] route_header(String, subtitle? : String, actions? : Array[MenuItem[Msg]], theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] route_header(String, subtitle? : String, actions? : Array[ActionItem[Msg]], theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] router_stack(RouterState, Array[NavigationDestination[Msg]], fallback? : @core.View[Msg]) -> @core.View[Msg]
 
@@ -250,7 +248,7 @@ pub fn[Msg] segmented_control(Array[ChoiceItem], selected~ : String, on_select~ 
 
 pub fn[Msg] selectable_list(Array[SelectableListItem[Msg]], selected? : String, empty? : @core.View[Msg]?, theme? : @core.Theme, width? : Double, row_height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions? : Array[MenuItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
+pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions? : Array[ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
 pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPresentationMode, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
 
@@ -294,6 +292,8 @@ pub fn[Msg] tag(String, theme? : @core.Theme, width? : Double, height? : Double)
 
 pub fn[Msg] text(String, role? : TextRole, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
+pub fn[Msg] text_area(String, on_input~ : (String) -> Msg, placeholder? : String, lines? : Int, variant? : TextFieldVariant, theme? : @core.Theme, width? : Double, line_height? : Double) -> @core.View[Msg]
+
 pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] text_field_binding(@core.Binding[String], on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
@@ -335,6 +335,14 @@ pub fn[Msg] wrap(Array[@core.View[Msg]], width? : Double, spacing? : Double, row
 // Errors
 
 // Types and methods
+pub struct ActionItem[Msg] {
+  id : String
+  label : String
+  message : Msg
+  enabled : Bool
+}
+pub fn[Msg] ActionItem::new(id~ : String, label~ : String, message~ : Msg, enabled? : Bool) -> Self[Msg]
+
 pub(all) struct BadgeStyle {
   neutral : ToneStyle
   accent : ToneStyle

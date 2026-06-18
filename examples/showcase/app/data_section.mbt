@@ -118,12 +118,12 @@ fn ShowcaseModel::data_table_card(
           selected_count=selection.count(),
           total_count=3,
           actions=[
-            @views.MenuItem::new(
+            @views.ActionItem::new(
               id="archive",
               label="Archive",
               message=ToggleActive,
             ),
-            @views.MenuItem::new(
+            @views.ActionItem::new(
               id="export",
               label="Export",
               message=ToggleActive,

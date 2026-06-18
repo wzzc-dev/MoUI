@@ -2,7 +2,7 @@
 pub fn[Msg] selection_toolbar(
   selected_count~ : Int,
   total_count? : Int = 0,
-  actions? : Array[MenuItem[Msg]] = [],
+  actions? : Array[ActionItem[Msg]] = [],
   on_clear? : Msg? = None,
   theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
