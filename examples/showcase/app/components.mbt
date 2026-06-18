@@ -84,10 +84,24 @@ fn ShowcaseModel::section_panel(
 
 ///|
 fn showcase_panel_border(theme : @moui.Theme) -> @core.BorderStyle {
+  // Slightly softer than the legacy 0.82 outline so the panel reads as a calm
+  // container rather than a hard-edged box, letting the new accent and surface
+  // tones carry the hierarchy.
   @core.BorderStyle::new(
-    brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.82)),
+    brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.6)),
     width=1.0,
   )
+}
+
+///|
+/// Soft hairline border for elevated cards. Fainter than the panel border so
+/// the shadow, not the stroke, carries the elevation cue.
+fn showcase_card_border(theme : @moui.Theme) -> @core.BorderStyle {
+  let color = match theme.scheme {
+    @core.ColorScheme::Light => theme.palette.outline.multiply_alpha(0.55)
+    @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.06)
+  }
+  @core.BorderStyle::new(brush=@core.Brush::solid(color), width=1.0)
 }
 
 ///|
@@ -102,10 +116,10 @@ fn showcase_soft_card(
     child,
     width~,
     height~,
-    variant=@views.ContainerVariant::Base,
+    variant=@views.ContainerVariant::Raised,
     theme~,
     padding~,
-  ).border(showcase_panel_border(theme))
+  ).border(showcase_card_border(theme))
 }
 
 ///|
@@ -127,9 +141,9 @@ fn example_preview(
     ),
     width=500.0,
     height=190.0,
-    variant=@views.ContainerVariant::Base,
+    variant=@views.ContainerVariant::Raised,
     theme~,
-  )
+  ).border(showcase_card_border(theme))
 }
 
 ///|
@@ -217,8 +231,11 @@ fn ShowcaseModel::visual_card(
   let gradient = @core.Brush::linear_gradient(
     start=@moui.Point::new(x=0.0, y=0.0),
     end=@moui.Point::new(x=260.0, y=160.0),
-    start_color=theme.palette.primary.multiply_alpha(0.92),
-    end_color=theme.palette.surface_variant,
+    // Soft accent-tinted wash behind the hero image: a low-primary tint over
+    // the surface so the image stays the focal point and the tint reads as
+    // brand color rather than a heavy block.
+    start_color=theme.palette.surface.lerp(theme.palette.primary, 0.22),
+    end_color=theme.palette.surface,
   )
   showcase_soft_card(
     theme,
@@ -569,7 +586,7 @@ fn ShowcaseModel::shortcut_preview(
     variant=@views.ContainerVariant::Base,
     theme~,
     padding=theme.spacing_scale.md,
-  ).border(showcase_panel_border(theme))
+  ).border(showcase_card_border(theme))
 }
 
 ///|
@@ -591,7 +608,7 @@ fn ShowcaseModel::progress_preview(
     variant=@views.ContainerVariant::Base,
     theme~,
     padding=12.0,
-  ).border(showcase_panel_border(theme))
+  ).border(showcase_card_border(theme))
 }
 
 ///|
