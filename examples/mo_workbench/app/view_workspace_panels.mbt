@@ -1056,16 +1056,17 @@ fn WorkbenchModel::workspace_status_bar(
       0.0
     })
   let left_width = workbench_max_double(1.0, width - 374.0)
+  let summary = self.agent_status_bar_summary()
   let metrics : Array[@moui.View[WorkbenchMsg]] = [
-    status_bar_metric_cell(self.status_bar_context_label(), width=82.0, theme~),
-    status_bar_metric_cell(self.status_bar_queue_label(), width=72.0, theme~),
+    status_bar_metric_cell(summary.context_label, width=82.0, theme~),
+    status_bar_metric_cell(summary.queue_label, width=72.0, theme~),
     status_bar_metric_cell(
-      self.status_bar_diagnostic_label(),
+      summary.diagnostic_label,
       width=86.0,
       theme~,
     ),
     status_bar_metric_cell(
-      self.status_bar_activity_label(),
+      summary.activity_label,
       width=102.0,
       theme~,
     ),
@@ -1074,7 +1075,7 @@ fn WorkbenchModel::workspace_status_bar(
     row(
       [
         text(
-          self.status_bar_status_label(),
+          summary.status_label,
           role=Caption,
           theme~,
           width=left_width,

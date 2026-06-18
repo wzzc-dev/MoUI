@@ -1685,31 +1685,11 @@ fn max_double(a : Double, b : Double) -> Double {
 }
 
 ///|
-fn min_double(a : Double, b : Double) -> Double {
-  if a <= b {
-    a
-  } else {
-    b
-  }
-}
-
-///|
 fn max_int(a : Int, b : Int) -> Int {
   if a >= b {
     a
   } else {
     b
-  }
-}
-
-///|
-fn clamp_double(value : Double, min : Double, max : Double) -> Double {
-  if value < min {
-    min
-  } else if value > max {
-    max
-  } else {
-    value
   }
 }
 

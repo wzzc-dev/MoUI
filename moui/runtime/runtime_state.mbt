@@ -1,6 +1,5 @@
 ///|
 priv struct RuntimeState {
-  mut root_erased_view_node : ErasedViewNode
   mut element_tree : ElementTree
   mut layout_tree : LayoutTree
   mut render_tree : RenderTree
@@ -61,7 +60,6 @@ fn RuntimeState::new_erased_view_node(
 ) -> RuntimeState {
   let initial = mount_erased_view_node_with_next(root, 1)
   let state = {
-    root_erased_view_node: root,
     element_tree: ElementTree::new(initial.node),
     layout_tree: LayoutTree::empty(),
     render_tree: RenderTree::empty(),
@@ -161,7 +159,6 @@ fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.element_tree = ElementTree::empty()
   self.layout_tree = LayoutTree::empty()
   self.render_tree = RenderTree::empty()
-  self.root_erased_view_node = empty_erased_view_node()
   self.next_element_id = 1
   self.dirty_elements.clear()
   self.dirty_build_elements.clear()
@@ -183,44 +180,11 @@ fn RuntimeState::destroy(self : RuntimeState) -> Unit {
 }
 
 ///|
-fn RuntimeState::rebuild(self : RuntimeState) -> Unit {
-  self.rebuild_pass_count = self.rebuild_pass_count + 1
-  let result = reconcile_element_for_runtime(
-    self.element_tree.root,
-    self.root_erased_view_node,
-    Some(self),
-    self.next_element_id,
-  )
-  self.element_tree = ElementTree::new(result.node)
-  self.next_element_id = result.next_id
-  self.clear_stale_pointer_capture()
-  self.needs_rebuild = false
-  self.needs_layout = self.element_tree.root.has_dirty_layout()
-  self.needs_paint = self.element_tree.root.has_dirty_paint()
-  if self.needs_layout || self.needs_paint {
-    self.mark_current_dirty_elements()
-  }
-  if self.needs_layout {
-    self.layout_pass()
-  }
-}
-
-///|
 fn RuntimeState::set_redraw_callback(
   self : RuntimeState,
   callback : () -> Unit,
 ) -> Unit {
   self.redraw_callback = Some(callback)
-}
-
-///|
-fn RuntimeState::layout_pass(self : RuntimeState) -> Unit {
-  self.ensure_layout_tree()
-}
-
-///|
-fn RuntimeState::paint_pass(self : RuntimeState) -> Array[DrawCommand] {
-  self.build_draw_commands()
 }
 
 ///|

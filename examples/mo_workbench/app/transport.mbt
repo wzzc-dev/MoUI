@@ -5,6 +5,10 @@ enum PiTransportKind {
   Fixture
 } derive(Eq, Debug)
 
+test {
+  ignore(PiTransportKind::WebBridge)
+  ignore(PiTransportKind::Fixture)
+}
 ///|
 enum PiTransportStatus {
   Disconnected
@@ -136,6 +140,10 @@ fn PiTransportState::status_label(self : PiTransportState) -> String {
   self.status.label()
 }
 
+test {
+  ignore(PiTransportState::new().status_label())
+}
+
 ///|
 fn PiTransportStatus::label(self : PiTransportStatus) -> String {
   match self {
@@ -153,6 +161,10 @@ fn PiTransportKind::label(self : PiTransportKind) -> String {
     WebBridge => "web bridge"
     Fixture => "fixture"
   }
+}
+
+test {
+  ignore(PiTransportKind::label(NativeProcessJsonl))
 }
 
 ///|

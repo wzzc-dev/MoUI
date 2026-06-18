@@ -85,7 +85,7 @@ pub fn ComponentContext::run_effect_with_reason(
 }
 
 ///|
-fn cancel_component_effects(
+pub fn cancel_component_effects(
   effects : Array[ComponentEffect],
   reason? : ComponentEffectCancelReason = ComponentEffectCancelReason::EffectUnmounted,
 ) -> Unit {

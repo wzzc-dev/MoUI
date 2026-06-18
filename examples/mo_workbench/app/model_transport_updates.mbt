@@ -1,4 +1,5 @@
 ///|
+#warnings("-unused_value")
 fn WorkbenchModel::update_with_transport(
   self : WorkbenchModel,
   message : WorkbenchMsg,

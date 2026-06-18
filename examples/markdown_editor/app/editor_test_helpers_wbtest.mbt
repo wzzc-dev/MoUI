@@ -1,4 +1,12 @@
-///|
+using @moui_richtext {
+  type MarkdownBlockKind,
+  type MarkdownInlineKind,
+  markdown_block_to_rich_text,
+  markdown_editor_format,
+  markdown_editor_format_for_selection,
+  parse_markdown,
+}
+
 fn MarkdownEditorApp::document(self : MarkdownEditorApp) -> String {
   self.document.get()
 }
