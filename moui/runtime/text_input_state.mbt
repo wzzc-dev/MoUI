@@ -49,5 +49,6 @@ fn view_text_input_state(
     text_control: element.control.text_context(),
     environment,
     text_system,
+    now_ms: 0.0,
   })
 }

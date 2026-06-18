@@ -54,6 +54,7 @@ fn ElementNode::dispatch_view_text_command(
       text_control: self.control.text_context(),
       text_system,
       environment,
+      now_ms: 0.0,
     },
     intent,
     paste_text,

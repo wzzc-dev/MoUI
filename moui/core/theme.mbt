@@ -47,9 +47,25 @@ pub(all) struct RadiusScale {
 
 ///|
 pub(all) struct TypographyScale {
-  body : FontSpec
+  /// Largest tier; page-level display numbers or hero headlines.
+  display : FontSpec
+  /// Section/page headlines.
+  headline : FontSpec
+  /// Card or panel titles.
   title : FontSpec
+  /// Secondary title beneath a title or a list-section label.
+  subtitle : FontSpec
+  /// Default body copy.
+  body : FontSpec
+  /// Compact emphasized text for buttons, tabs, and form labels.
+  label : FontSpec
+  /// Small ancillary text. Kept as an alias-friendly name alongside `caption`;
+  /// `caption` is the historical field, `overline` adds an even smaller
+  /// uppercase-style tier for eyebrows and metadata labels.
   caption : FontSpec
+  /// Tiny all-caps-style metadata label (eyebrows, table headers).
+  overline : FontSpec
+  /// Legacy alias for `label`: emphasized control text (buttons, tabs).
   control : FontSpec
 } derive(Eq, Debug, ToJson)
 
@@ -203,11 +219,19 @@ pub fn RadiusScale::default() -> RadiusScale {
 
 ///|
 pub fn TypographyScale::default() -> TypographyScale {
+  let label = FontSpec::new(size=16.0, weight=600)
   {
-    body: FontSpec::new(size=16.0, weight=400),
+    display: FontSpec::new(size=40.0, weight=700),
+    headline: FontSpec::new(size=28.0, weight=700),
     title: FontSpec::new(size=22.0, weight=700),
+    subtitle: FontSpec::new(size=18.0, weight=600),
+    body: FontSpec::new(size=16.0, weight=400),
+    label,
     caption: FontSpec::new(size=13.0, weight=400),
-    control: FontSpec::new(size=16.0, weight=600),
+    overline: FontSpec::new(size=11.0, weight=600),
+    // `control` is the historical name for emphasized control text; alias it
+    // to `label` so existing callers keep the same visuals.
+    control: label,
   }
 }
 

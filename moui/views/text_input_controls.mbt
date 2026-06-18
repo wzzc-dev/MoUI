@@ -74,6 +74,7 @@ fn[Msg] text_field_control(
         overlay_commands,
         platform_views: [],
         repaint_boundary: false,
+        animating: false,
       }
     },
     event=ctx => {
@@ -212,6 +213,7 @@ fn[Msg] search_bar_control(
         overlay_commands,
         platform_views: [],
         repaint_boundary: false,
+        animating: false,
       }
     },
     event=ctx => {

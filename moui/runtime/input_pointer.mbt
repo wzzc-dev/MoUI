@@ -6,6 +6,7 @@ fn ElementNode::dispatch_pointer(
   environment? : Environment = Environment::neutral(),
   text_system? : TextSystem = TextSystem::fallback(),
   capture_lookup? : Bool = true,
+  now_ms? : Double = 0.0,
 ) -> ElementEventResult {
   let child_result = self.dispatch_pointer_to_children(
     event,
@@ -13,6 +14,7 @@ fn ElementNode::dispatch_pointer(
     environment~,
     text_system~,
     capture_lookup~,
+    now_ms~,
   )
   if child_result.activated {
     child_result
@@ -23,6 +25,7 @@ fn ElementNode::dispatch_pointer(
       render,
       text_system,
       environment~,
+      now_ms~,
     )
     {
       changed: child_result.changed || own.changed,
@@ -43,6 +46,7 @@ fn ElementNode::dispatch_view_event(
   render : RenderNode,
   text_system : TextSystem,
   environment? : Environment = Environment::neutral(),
+  now_ms? : Double = 0.0,
 ) -> ElementEventResult {
   let result = (data.event)({
     frame: render.frame,
@@ -53,6 +57,7 @@ fn ElementNode::dispatch_view_event(
     text_control: self.control.text_context(),
     text_system,
     environment,
+    now_ms,
   })
   match result.state {
     Some(next_state) => self.erased_view_node = { ..data, state: next_state }
@@ -107,6 +112,7 @@ fn ElementNode::dispatch_pointer_to_children(
   environment~ : Environment,
   text_system~ : TextSystem,
   capture_lookup~ : Bool,
+  now_ms~ : Double,
 ) -> ElementEventResult {
   let mut changed = false
   let mut activated = false
@@ -126,6 +132,7 @@ fn ElementNode::dispatch_pointer_to_children(
           environment~,
           text_system~,
           capture_lookup~,
+          now_ms~,
         )
         changed = result.changed
         activated = result.activated
@@ -209,6 +216,7 @@ fn ElementNode::dispatch_pointer_to_target(
   render : RenderNode,
   environment? : Environment = Environment::neutral(),
   text_system~ : TextSystem,
+  now_ms? : Double = 0.0,
 ) -> ElementEventResult? {
   if self.id == target {
     Some(
@@ -218,6 +226,7 @@ fn ElementNode::dispatch_pointer_to_target(
         environment~,
         text_system~,
         capture_lookup=false,
+        now_ms~,
       ),
     )
   } else {
@@ -231,6 +240,7 @@ fn ElementNode::dispatch_pointer_to_target(
             render.children[index],
             environment~,
             text_system~,
+            now_ms~,
           ) {
           Some(result) => {
             if result.changed {

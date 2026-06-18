@@ -139,6 +139,7 @@ fn ElementNode::view_accepts_text_input(
     text_control: self.control.text_context(),
     environment: Environment::neutral(),
     text_system: TextSystem::fallback(),
+    now_ms: 0.0,
   })
   is Some(_)
 }

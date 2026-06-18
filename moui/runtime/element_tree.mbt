@@ -126,6 +126,10 @@ priv struct RenderNode {
   platform_views : Array[PlatformViewPlacement]
   cached_draw_commands : Array[DrawCommand]?
   cached_overlay_draw_commands : Array[DrawCommand]?
+  /// True when this node or any descendant reported a mid-animation paint
+  /// sample (`ViewPaintPlan.animating`). Folded up the tree so the runtime
+  /// can keep ticking redraws while any animation is in flight.
+  animating : Bool
 }
 
 ///|
@@ -155,6 +159,7 @@ fn RenderNode::empty() -> RenderNode {
     platform_views: [],
     cached_draw_commands: None,
     cached_overlay_draw_commands: None,
+    animating: false,
   }
 }
 
