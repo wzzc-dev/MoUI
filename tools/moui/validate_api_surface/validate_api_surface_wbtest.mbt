@@ -30,7 +30,9 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
   assert_true(root.required_tokens.contains("pub using @core {type State}"))
   assert_true(root.required_tokens.contains("pub using @core {type Binding}"))
   assert_true(root.required_tokens.contains("pub using @core {type Effect}"))
-  assert_true(root.required_tokens.contains("pub using @core {type Subscription}"))
+  assert_true(
+    root.required_tokens.contains("pub using @core {type Subscription}"),
+  )
   assert_true(root.required_tokens.contains("pub using @core {type Size}"))
   assert_true(root.required_tokens.contains("pub using @core {type Point}"))
   assert_true(root.required_tokens.contains("pub using @core {type Rect}"))
@@ -510,7 +512,9 @@ test "app api hygiene guard keeps examples on the root facade" {
   assert_true(tokens.contains("@core.Effect::"))
   assert_true(tokens.contains("@core.Subscription["))
   assert_true(tokens.contains("@core.Subscription::"))
-  assert_true(app_api_hygiene_test_path("examples/counter/app/counter_app_test.mbt"))
+  assert_true(
+    app_api_hygiene_test_path("examples/counter/app/counter_app_test.mbt"),
+  )
   assert_true(
     app_api_hygiene_test_path("examples/counter/app/counter_app_wbtest.mbt"),
   )
@@ -523,17 +527,17 @@ test "app api hygiene guard keeps examples on the root facade" {
       "do not add @core.View::primitive_text_view",
     ),
   )
-  assert_false(app_api_hygiene_allowed_core_view_line("fn view() -> @core.View[Msg]"))
+  assert_false(
+    app_api_hygiene_allowed_core_view_line("fn view() -> @core.View[Msg]"),
+  )
   assert_true(
     app_api_hygiene_line_allowed(
-      "examples/counter/app/counter_app_test.mbt",
-      "fn view() -> @core.View[Msg]",
+      "examples/counter/app/counter_app_test.mbt", "fn view() -> @core.View[Msg]",
     ),
   )
   assert_false(
     app_api_hygiene_line_allowed(
-      "examples/counter/app/app.mbt",
-      "fn view() -> @core.View[Msg]",
+      "examples/counter/app/app.mbt", "fn view() -> @core.View[Msg]",
     ),
   )
 }

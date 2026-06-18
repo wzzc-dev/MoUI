@@ -343,7 +343,12 @@ fn LinuxApp::redraw_window(
         let renderer = platform_slot.renderer
         platform_slot.renderer.set_platform_view_draw_fn(
           Some(fn() {
-            draw_linux_webview_to_renderer(win, renderer, f, content_offset_y=offset_y)
+            draw_linux_webview_to_renderer(
+              win,
+              renderer,
+              f,
+              content_offset_y=offset_y,
+            )
           }),
         )
       }

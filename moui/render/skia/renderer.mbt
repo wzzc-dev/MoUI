@@ -331,7 +331,9 @@ pub fn SkiaRasterRenderer::last_frame(
 }
 
 ///| Draw platform view content (e.g., offscreen webview pixels) onto the surface
-///| This should be called after render_frame but before the window system presents
+
+///|
+/// This should be called after render_frame but before the window system presents
 pub fn SkiaRasterRenderer::draw_platform_view_pixels(
   self : SkiaRasterRenderer,
   pixels : Bytes,
@@ -344,14 +346,12 @@ pub fn SkiaRasterRenderer::draw_platform_view_pixels(
   dst_height : Double,
 ) -> Unit {
   match self.surface.canvas() {
-    Some(canvas) => {
-      match @skia_native.Bitmap::from_pixels(
-        pixels,
-        src_width,
-        src_height,
-        src_stride,
-      ) {
-        Some(bitmap) => {
+    Some(canvas) =>
+      match
+        @skia_native.Bitmap::from_pixels(
+          pixels, src_width, src_height, src_stride,
+        ) {
+        Some(bitmap) =>
           match @skia_native.Image::from_bitmap(bitmap) {
             Some(image) => {
               let src_rect = @moui_skia.Rect::from_xywh(
@@ -378,20 +378,17 @@ pub fn SkiaRasterRenderer::draw_platform_view_pixels(
             }
             None => ()
           }
-        }
         None => ()
       }
-    }
     None => ()
   }
 }
 
-///| Set a callback to draw platform view pixels after command rendering but before flush.
+///|
+/// Set a callback to draw platform view pixels after command rendering but before flush.
 pub fn SkiaRasterRenderer::set_platform_view_draw_fn(
   self : SkiaRasterRenderer,
   draw_fn : (() -> Unit)?,
 ) -> Unit {
   self.platform_view_draw_fn = draw_fn
 }
-
-

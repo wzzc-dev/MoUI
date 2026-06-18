@@ -220,16 +220,18 @@ fn host_renderer_from_skia(
     },
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
-    draw_platform_view_pixels=fn(pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height) {
+    draw_platform_view_pixels=fn(
+      pixels,
+      src_width,
+      src_height,
+      src_stride,
+      dst_x,
+      dst_y,
+      dst_width,
+      dst_height,
+    ) {
       renderer.draw_platform_view_pixels(
-        pixels,
-        src_width,
-        src_height,
-        src_stride,
-        dst_x,
-        dst_y,
-        dst_width,
-        dst_height,
+        pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height,
       )
     },
     set_platform_view_draw_fn=draw_fn => {

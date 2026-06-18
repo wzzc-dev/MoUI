@@ -1,3 +1,4 @@
+///|
 test "markdown editor snapshot tracks typora core document shape" {
   let snapshot = MarkdownEditorSnapshot::parse(
     "# Title\n\nParagraph with **bold**\n- [x] done\n```\nlet x = 1\n```",

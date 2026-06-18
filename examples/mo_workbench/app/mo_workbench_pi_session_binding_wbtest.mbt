@@ -89,7 +89,10 @@ test "workbench binds switched Pi session after get_state refresh" {
   inspect(binding.model, content="openai/gpt-5")
   inspect(binding.status, content="bound")
   inspect(binding.last_command, content="get_state")
-  inspect(binding.as_agent_session_binding().display_status_label(), content="后端会话：Mo Workbench smoke")
+  inspect(
+    binding.as_agent_session_binding().display_status_label(),
+    content="后端会话：Mo Workbench smoke",
+  )
   let session = model.active_session()
   inspect(session.status, content="active")
   inspect(session.summary, content="Agent session 019e7ed4 on openai/gpt-5")

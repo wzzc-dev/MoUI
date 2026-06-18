@@ -14,7 +14,16 @@ pub struct HostWindowRenderer {
   ) -> Unit
   priv present_count_fn : () -> Int
   priv dispose_fn : () -> Unit
-  priv draw_platform_view_pixels_fn : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit
+  priv draw_platform_view_pixels_fn : (
+    Bytes,
+    Int,
+    Int,
+    Int,
+    Double,
+    Double,
+    Double,
+    Double,
+  ) -> Unit
   priv set_platform_view_draw_fn_fn : ((() -> Unit)?) -> Unit
   priv layer_cache : HostLayerCommandCache
 }
@@ -48,7 +57,16 @@ pub fn HostWindowRenderer::new(
   ) -> Unit = _callback => (),
   present_count? : () -> Int = () => 0,
   dispose? : () -> Unit = () => (),
-  draw_platform_view_pixels? : (Bytes, Int, Int, Int, Double, Double, Double, Double) -> Unit = fn(_pixels, _w, _h, _s, _dx, _dy, _dw, _dh) {},
+  draw_platform_view_pixels? : (
+    Bytes,
+    Int,
+    Int,
+    Int,
+    Double,
+    Double,
+    Double,
+    Double,
+  ) -> Unit = fn(_pixels, _w, _h, _s, _dx, _dy, _dw, _dh) {  },
   set_platform_view_draw_fn? : ((() -> Unit)?) -> Unit = _fn => (),
 ) -> HostWindowRenderer {
   let image_resource_snapshot = match image_resource_snapshot {
@@ -165,7 +183,8 @@ pub fn HostWindowRenderer::dispose(self : HostWindowRenderer) -> Unit {
   (self.dispose_fn)()
 }
 
-///| Draw platform view pixels onto the renderer surface (e.g., offscreen webview)
+///|
+/// Draw platform view pixels onto the renderer surface (e.g., offscreen webview)
 pub fn HostWindowRenderer::draw_platform_view_pixels(
   self : HostWindowRenderer,
   pixels : Bytes,
@@ -178,19 +197,14 @@ pub fn HostWindowRenderer::draw_platform_view_pixels(
   dst_height : Double,
 ) -> Unit {
   (self.draw_platform_view_pixels_fn)(
-    pixels,
-    src_width,
-    src_height,
-    src_stride,
-    dst_x,
-    dst_y,
-    dst_width,
-    dst_height,
+    pixels, src_width, src_height, src_stride, dst_x, dst_y, dst_width, dst_height,
   )
 }
 
 ///| Set a callback to draw platform view content after command rendering but before flush.
-///| Used by Linux to composite offscreen webview pixels into the Skia surface.
+
+///|
+/// Used by Linux to composite offscreen webview pixels into the Skia surface.
 pub fn HostWindowRenderer::set_platform_view_draw_fn(
   self : HostWindowRenderer,
   draw_fn : (() -> Unit)?,

@@ -16,12 +16,14 @@ enum AgentActivityQueueKind {
   PendingRequest
 } derive(Eq, Debug)
 
+///|
 test {
   ignore(AgentActivityQueueKind::ProviderRecovery)
   ignore(AgentActivityQueueKind::PlanProgress)
   ignore(AgentCatalogItemKind::ModelCatalogItem)
   ignore(AgentCatalogItemKind::CommandCatalogItem)
 }
+
 ///|
 enum AgentCatalogItemKind {
   ModelCatalogItem
@@ -544,6 +546,7 @@ fn WorkbenchModel::agent_activity_queue(
   items
 }
 
+///|
 fn WorkbenchModel::agent_run_overview(
   self : WorkbenchModel,
 ) -> AgentRunOverview {
@@ -574,6 +577,7 @@ fn WorkbenchModel::agent_run_overview(
   )
 }
 
+///|
 test {
   ignore(WorkbenchModel::agent_run_overview(WorkbenchModel::new()))
 }
@@ -634,6 +638,7 @@ fn WorkbenchModel::agent_provider_switch_summary(
   )
 }
 
+///|
 test {
   ignore(WorkbenchModel::agent_provider_switch_summary(WorkbenchModel::new()))
 }
@@ -750,6 +755,7 @@ fn WorkbenchModel::agent_timeline_items(
   items
 }
 
+///|
 test {
   ignore(WorkbenchModel::agent_timeline_items(WorkbenchModel::new()))
 }

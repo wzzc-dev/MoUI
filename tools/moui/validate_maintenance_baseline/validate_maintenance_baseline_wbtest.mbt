@@ -24,9 +24,24 @@ test "generated unicode fixtures are excluded from oversized ratchet scan" {
 test "tracked budgets include current maintenance hotspots" {
   let paths = tracked_budget_paths()
   inspect(paths.contains("moui/backend/host/host_test.mbt"), content="true")
-  inspect(paths.contains("moui/views/views_test.mbt"), content="true")
+  inspect(paths.contains("moui/core/view_tree.mbt"), content="true")
   inspect(
-    paths.contains("moui/runtime/runtime_view_smoke_wbtest.mbt"),
+    paths.contains("moui/runtime/program_runtime_diagnostics.mbt"),
     content="true",
+  )
+}
+
+///|
+test "line budget overflow paths are sorted from most lines to fewest" {
+  let overflows = [
+    { path: "small.mbt", lines: 12 },
+    { path: "large.mbt", lines: 50 },
+    { path: "also-large.mbt", lines: 50 },
+  ]
+  debug_inspect(
+    line_budget_overflow_paths(overflows),
+    content=(
+      #|["also-large.mbt", "large.mbt", "small.mbt"]
+    ),
   )
 }

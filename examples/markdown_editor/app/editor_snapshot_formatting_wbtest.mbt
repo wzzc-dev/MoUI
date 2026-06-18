@@ -1,3 +1,4 @@
+///|
 test "markdown editor formatter emits source ranges for visual mapping" {
   let document = markdown_editor_format("# Title\n- [ ] task")
   inspect(document.blocks.length(), content="2")

@@ -57,9 +57,7 @@ test "event_observer: dispatch works with default (no-op) observer" {
     ),
   )
   if received != [1] {
-    fail(
-      "expected default (no-op) observer to leave dispatch behavior intact",
-    )
+    fail("expected default (no-op) observer to leave dispatch behavior intact")
   }
 }
 
@@ -114,11 +112,11 @@ test "event_observer: set_event_observer replaces previous observer" {
   let first : Array[String] = []
   let second : Array[String] = []
   let root : @core.View[Unit] = event_observer_test_rect(
-      width=20.0,
-      height=20.0,
-      color=@core.Color::blue(),
-      on_tap=None,
-    )
+    width=20.0,
+    height=20.0,
+    color=@core.Color::blue(),
+    on_tap=None,
+  )
   let runtime = AppRuntime::new_view(
     root~,
     size=@core.Size::new(width=100.0, height=100.0),
