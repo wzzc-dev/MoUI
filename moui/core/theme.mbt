@@ -154,29 +154,36 @@ pub(all) struct Environment {
 
 ///|
 pub fn ColorPalette::light() -> ColorPalette {
+  // Warm-neutral light surfaces (zinc-tinted) with an indigo-violet accent.
+  // Surfaces carry a faint cool-warm bias so cards read as elevated without
+  // heavy shadows; the accent is a saturated indigo that stays legible on both
+  // light and dark.
   {
-    foreground: Color::black(),
-    background: Color::white(),
-    surface: Color::rgba(r=0.96, g=0.97, b=0.98),
-    surface_variant: Color::rgba(r=0.90, g=0.92, b=0.95),
-    primary: Color::blue(),
-    primary_foreground: Color::white(),
-    outline: Color::gray(),
-    muted: Color::rgba(r=0.42, g=0.45, b=0.50),
+    foreground: Color::rgba(r=0.094, g=0.094, b=0.106),
+    background: Color::rgba(r=0.992, g=0.992, b=0.996),
+    surface: Color::rgba(r=0.984, g=0.984, b=0.988),
+    surface_variant: Color::rgba(r=0.941, g=0.941, b=0.953),
+    primary: Color::rgba(r=0.345, g=0.337, b=0.839),
+    primary_foreground: Color::rgba(r=0.992, g=0.988, b=1.0),
+    outline: Color::rgba(r=0.831, g=0.831, b=0.851),
+    muted: Color::rgba(r=0.451, g=0.451, b=0.498),
   }
 }
 
 ///|
 pub fn ColorPalette::dark() -> ColorPalette {
+  // Deep neutral-charcoal dark surfaces with the same indigo accent lifted in
+  // lightness for dark-mode contrast. Surfaces step up by ~5% lightness per
+  // elevation tier so raised/overlay layers separate cleanly without borders.
   {
-    foreground: Color::rgba(r=0.94, g=0.95, b=0.96),
-    background: Color::rgba(r=0.08, g=0.09, b=0.11),
-    surface: Color::rgba(r=0.13, g=0.15, b=0.18),
-    surface_variant: Color::rgba(r=0.20, g=0.23, b=0.28),
-    primary: Color::rgba(r=0.42, g=0.58, b=1.0),
-    primary_foreground: Color::white(),
-    outline: Color::rgba(r=0.34, g=0.38, b=0.45),
-    muted: Color::rgba(r=0.64, g=0.67, b=0.72),
+    foreground: Color::rgba(r=0.953, g=0.953, b=0.965),
+    background: Color::rgba(r=0.094, g=0.094, b=0.106),
+    surface: Color::rgba(r=0.137, g=0.137, b=0.153),
+    surface_variant: Color::rgba(r=0.196, g=0.196, b=0.216),
+    primary: Color::rgba(r=0.580, g=0.565, b=0.949),
+    primary_foreground: Color::rgba(r=0.106, g=0.094, b=0.165),
+    outline: Color::rgba(r=0.310, g=0.310, b=0.337),
+    muted: Color::rgba(r=0.620, g=0.620, b=0.663),
   }
 }
 
@@ -188,18 +195,18 @@ pub fn SemanticColorScale::default(
   match scheme {
     Light =>
       {
-        success: Color::rgba(r=0.08, g=0.48, b=0.28),
-        warning: Color::rgba(r=0.76, g=0.44, b=0.06),
-        danger: Color::rgba(r=0.74, g=0.12, b=0.16),
+        success: Color::rgba(r=0.10, g=0.50, b=0.30),
+        warning: Color::rgba(r=0.74, g=0.46, b=0.08),
+        danger: Color::rgba(r=0.76, g=0.16, b=0.18),
         info: palette.primary,
         focus: palette.primary,
-        scrim: Color::rgba(r=0.0, g=0.0, b=0.0, a=0.42),
+        scrim: Color::rgba(r=0.0, g=0.0, b=0.0, a=0.38),
       }
     Dark =>
       {
-        success: Color::rgba(r=0.36, g=0.78, b=0.48),
-        warning: Color::rgba(r=1.0, g=0.76, b=0.34),
-        danger: Color::rgba(r=1.0, g=0.48, b=0.52),
+        success: Color::rgba(r=0.38, g=0.76, b=0.50),
+        warning: Color::rgba(r=0.98, g=0.78, b=0.36),
+        danger: Color::rgba(r=1.0, g=0.52, b=0.50),
         info: palette.primary,
         focus: palette.primary,
         scrim: Color::rgba(r=0.0, g=0.0, b=0.0, a=0.62),
@@ -214,16 +221,19 @@ pub fn SpacingScale::default() -> SpacingScale {
 
 ///|
 pub fn RadiusScale::default() -> RadiusScale {
-  { sm: 4.0, md: 8.0, lg: 12.0, pill: 999.0 }
+  // Slightly larger radii than the legacy 4/8/12 set: modern UIs trend toward
+  // softer corners. `sm` stays tight for chips/inputs, `md` is the default
+  // control radius, `lg` is for cards/panels.
+  { sm: 6.0, md: 10.0, lg: 14.0, pill: 999.0 }
 }
 
 ///|
 pub fn TypographyScale::default() -> TypographyScale {
   let label = FontSpec::new(size=16.0, weight=600)
   {
-    display: FontSpec::new(size=40.0, weight=700),
-    headline: FontSpec::new(size=28.0, weight=700),
-    title: FontSpec::new(size=22.0, weight=700),
+    display: FontSpec::new(size=38.0, weight=600),
+    headline: FontSpec::new(size=27.0, weight=600),
+    title: FontSpec::new(size=21.0, weight=600),
     subtitle: FontSpec::new(size=18.0, weight=600),
     body: FontSpec::new(size=16.0, weight=400),
     label,
@@ -239,26 +249,30 @@ pub fn TypographyScale::default() -> TypographyScale {
 pub fn ShadowScale::default(
   scheme? : ColorScheme = ColorScheme::Light,
 ) -> ShadowScale {
+  // Softer, lower-spread shadows than the legacy set. Light mode uses a faint
+  // cool-neutral shadow; dark mode lifts alpha so elevation reads against the
+  // dark surface. `sm` is a hairline lift for inputs/chips, `md` for cards,
+  // `lg` for popovers/dialogs.
   let alpha = match scheme {
-    Light => 0.18
-    Dark => 0.36
+    Light => 0.10
+    Dark => 0.46
   }
   {
     sm: ShadowStyle::new(
       color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha * 0.65),
       offset=Point::new(x=0.0, y=1.0),
-      blur_radius=6.0,
+      blur_radius=4.0,
     ),
     md: ShadowStyle::new(
       color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha),
-      offset=Point::new(x=0.0, y=4.0),
-      blur_radius=16.0,
+      offset=Point::new(x=0.0, y=3.0),
+      blur_radius=12.0,
     ),
     lg: ShadowStyle::new(
       color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha * 1.2),
-      offset=Point::new(x=0.0, y=10.0),
-      blur_radius=28.0,
-      spread=2.0,
+      offset=Point::new(x=0.0, y=8.0),
+      blur_radius=24.0,
+      spread=0.0,
     ),
   }
 }
@@ -278,18 +292,21 @@ pub fn SurfaceScale::default(
   palette : ColorPalette,
   scheme : ColorScheme,
 ) -> SurfaceScale {
+  // Subtle vertical gradient on the raised tier: light mode lifts the top
+  // toward white for a soft sheen; dark mode lifts toward the variant surface
+  // so the elevation edge is legible without a hard border.
   let raised = match scheme {
     Light =>
       Brush::linear_gradient(
         start=Point::new(x=0.0, y=0.0),
-        end=Point::new(x=0.0, y=120.0),
+        end=Point::new(x=0.0, y=64.0),
         start_color=Color::white(),
         end_color=palette.surface,
       )
     Dark =>
       Brush::linear_gradient(
         start=Point::new(x=0.0, y=0.0),
-        end=Point::new(x=0.0, y=120.0),
+        end=Point::new(x=0.0, y=64.0),
         start_color=palette.surface_variant,
         end_color=palette.surface,
       )
