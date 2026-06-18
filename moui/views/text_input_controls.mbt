@@ -525,21 +525,25 @@ fn append_text_field_selection_commands(
         start,
         max_int(start, layout.caret_positions.length() - 1),
       )
-      let x0 = text_frame.origin.x + layout.caret_positions[start]
-      let x1 = text_frame.origin.x + layout.caret_positions[end]
-      if x1 > x0 {
-        commands.push(
-          @core.DrawCommand::FillRect(
-            @core.Rect::new(
-              x=x0,
-              y=text_frame.origin.y + 6.0,
-              width=x1 - x0,
-              height=max_double(8.0, text_frame.size.height - 12.0),
-            ),
-            @core.Color::blue().with_alpha(0.18),
-          ),
-        )
-      }
+     let x0 = text_frame.origin.x + layout.caret_positions[start]
+     let x1 = text_frame.origin.x + layout.caret_positions[end]
+     if x1 > x0 {
+        // Selection highlight tracks the active theme accent rather than a
+        // hard-coded blue so it matches the new indigo accent and any custom
+        // accent set via Theme::with_accent.
+        let selection_color = default_theme().palette.primary.with_alpha(0.22)
+       commands.push(
+         @core.DrawCommand::FillRect(
+           @core.Rect::new(
+             x=x0,
+             y=text_frame.origin.y + 6.0,
+             width=x1 - x0,
+             height=max_double(8.0, text_frame.size.height - 12.0),
+           ),
+            selection_color,
+         ),
+       )
+     }
     }
     None => ()
   }
