@@ -1,11 +1,11 @@
 ///|
 fn ShowcaseModel::overview_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
   offset : Double,
   opacity : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   self.section_panel(
     theme,
     "Overview",

@@ -27,7 +27,7 @@ pub enum Msg {
 
 ///|
 priv struct Metrics {
-  viewport : @core.Size
+  viewport : @moui.Size
   compact : Bool
   content_width : Double
   body_width : Double
@@ -99,12 +99,12 @@ fn Model::update_with_services(
   self : Model,
   message : Msg,
   services : @host.HostAppServices,
-) -> (Model, @core.Effect[Msg]) {
+) -> (Model, @moui.Effect[Msg]) {
   match message {
     OpenRepository =>
       (
         self,
-        @core.Effect::host_service(
+        @moui.Effect::host_service(
           key="host:open-moui-repository",
           label="Open MoUI repository",
           run=_dispatch => ignore(services.open_url(moui_repository_url())),
@@ -130,13 +130,13 @@ fn Model::update_with_services(
       model.request_selected_doc(services)
     }
     HostDocsCompleted(completion) =>
-      (self.apply_docs_completion(completion), @core.Effect::none())
-    _ => (self.update(message), @core.Effect::none())
+      (self.apply_docs_completion(completion), @moui.Effect::none())
+    _ => (self.update(message), @moui.Effect::none())
   }
 }
 
 ///|
-fn Model::view(self : Model, env : @core.ViewEnvironment) -> @core.View[Msg] {
+fn Model::view(self : Model, env : @moui.ViewEnvironment) -> @moui.View[Msg] {
   let theme = website_theme(self.dark)
   let metrics = website_metrics(env.viewport_size())
   let content_height = self.website_current_content_height(metrics)
@@ -154,7 +154,7 @@ fn Model::view(self : Model, env : @core.ViewEnvironment) -> @core.View[Msg] {
     [
       scroll_view(
         body_content,
-        offset=@core.Point::new(x=0.0, y=body_scroll_y),
+        offset=@moui.Point::new(x=0.0, y=body_scroll_y),
         width=metrics.body_scroll_width,
         height=metrics.body_height,
         on_scroll=Some(delta => {
@@ -194,7 +194,7 @@ fn Model::view(self : Model, env : @core.ViewEnvironment) -> @core.View[Msg] {
 }
 
 ///|
-fn Model::program(self : Model) -> @core.Program[Model, Msg] {
+fn Model::program(self : Model) -> @moui.Program[Model, Msg] {
   self.program_with_services(@host.HostAppServices::unavailable())
 }
 
@@ -202,9 +202,9 @@ fn Model::program(self : Model) -> @core.Program[Model, Msg] {
 fn Model::program_with_services(
   self : Model,
   services : @host.HostAppServices,
-) -> @core.Program[Model, Msg] {
-  @core.Program::new_with_environment(
-    init=() => (self, @core.Effect::none()),
+) -> @moui.Program[Model, Msg] {
+  @moui.Program::new_with_environment(
+    init=() => (self, @moui.Effect::none()),
     update=(model, message) => model.update_with_services(message, services),
     view=(model, env) => model.view(env),
     subscriptions=model => model.subscriptions(services),
@@ -214,9 +214,9 @@ fn Model::program_with_services(
 ///|
 fn Model::home_content(
   self : Model,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : Metrics,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   column(
     [
       self.hero(theme, metrics),
@@ -234,11 +234,11 @@ fn Model::home_content(
 fn Model::subscriptions(
   self : Model,
   services : @host.HostAppServices,
-) -> @core.Subscription[Msg] {
+) -> @moui.Subscription[Msg] {
   match self.doc_state.pending_id() {
     Some(id) =>
       if id.value <= 0 {
-        @core.Subscription::none()
+        @moui.Subscription::none()
       } else {
         services.completion_subscription(
           id,
@@ -247,7 +247,7 @@ fn Model::subscriptions(
           label="Website docs markdown completion",
         )
       }
-    None => @core.Subscription::none()
+    None => @moui.Subscription::none()
   }
 }
 
@@ -255,7 +255,7 @@ fn Model::subscriptions(
 fn Model::request_selected_doc(
   self : Model,
   services : @host.HostAppServices,
-) -> (Model, @core.Effect[Msg]) {
+) -> (Model, @moui.Effect[Msg]) {
   let entry = self.website_doc_selected_entry()
   (
     {
@@ -264,7 +264,7 @@ fn Model::request_selected_doc(
       selected_doc_slug: entry.slug,
       doc_state: DocLoading(@host.HostServiceRequestId::new(0), entry.path),
     },
-    @core.Effect::host_service(
+    @moui.Effect::host_service(
       key="website:load-doc:" + entry.slug,
       label="Load website markdown doc",
       run=dispatch => {
@@ -366,14 +366,14 @@ fn Model::website_current_content_height(
 }
 
 ///|
-pub fn program() -> @core.Program[Model, Msg] {
+pub fn program() -> @moui.Program[Model, Msg] {
   Model::new().program()
 }
 
 ///|
 pub fn program_with_services(
   services : @host.HostAppServices,
-) -> @core.Program[Model, Msg] {
+) -> @moui.Program[Model, Msg] {
   Model::new().program_with_services(services)
 }
 
@@ -383,7 +383,7 @@ fn moui_repository_url() -> String {
 }
 
 ///|
-fn website_metrics(viewport : @core.Size) -> Metrics {
+fn website_metrics(viewport : @moui.Size) -> Metrics {
   let compact = viewport.width < 820.0
   let scrollbar_width = 14.0
   let body_scroll_width = max_website_double(
@@ -447,11 +447,11 @@ fn website_body_content_height(compact : Bool) -> Double {
 }
 
 ///|
-fn website_theme(dark : Bool) -> @core.Theme {
+fn website_theme(dark : Bool) -> @moui.Theme {
   let scheme = if dark {
-    @core.ColorScheme::Dark
+    @moui.ColorScheme::Dark
   } else {
-    @core.ColorScheme::Light
+    @moui.ColorScheme::Light
   }
   let palette : @core.ColorPalette = if dark {
     {

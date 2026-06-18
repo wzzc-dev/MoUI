@@ -27,8 +27,22 @@ test "root facade budget keeps runtime diagnostics and theme builders out" {
   inspect(root_facade_app_safe_aliases().length(), content="36")
   assert_true(root.required_tokens.contains("pub using @core {type View}"))
   assert_true(root.required_tokens.contains("pub using @core {type Program}"))
+  assert_true(root.required_tokens.contains("pub using @core {type State}"))
   assert_true(root.required_tokens.contains("pub using @core {type Binding}"))
+  assert_true(root.required_tokens.contains("pub using @core {type Effect}"))
+  assert_true(root.required_tokens.contains("pub using @core {type Subscription}"))
+  assert_true(root.required_tokens.contains("pub using @core {type Size}"))
+  assert_true(root.required_tokens.contains("pub using @core {type Point}"))
+  assert_true(root.required_tokens.contains("pub using @core {type Rect}"))
+  assert_true(root.required_tokens.contains("pub using @core {type Insets}"))
   assert_true(root.required_tokens.contains("pub using @core {type Color}"))
+  assert_true(root.required_tokens.contains("pub using @core {type Theme}"))
+  assert_true(
+    root.required_tokens.contains("pub using @core {type ViewEnvironment}"),
+  )
+  assert_true(
+    root.required_tokens.contains("pub using @core {type ColorScheme}"),
+  )
   assert_true(root.required_tokens.contains("pub using @core {type DateValue}"))
   assert_true(
     root.forbidden_tokens.contains("pub using @core {type AppRuntime}"),
@@ -472,6 +486,55 @@ test "core view construction is reserved for views facade consumers" {
   assert_true(tokens.contains("@core.View::primitive_web_view("))
   assert_true(
     tokens.contains("@core.View::primitive_controlled_text_field_view("),
+  )
+}
+
+///|
+test "app api hygiene guard keeps examples on the root facade" {
+  let roots = app_api_hygiene_roots()
+  inspect(roots.length(), content="3")
+  assert_true(roots.contains("examples"))
+  assert_true(roots.contains("docs"))
+  assert_true(roots.contains("website"))
+  let tokens = app_api_hygiene_forbidden_tokens().map(rule => rule.token)
+  inspect(tokens.length(), content="12")
+  assert_true(tokens.contains("@core.Program["))
+  assert_true(tokens.contains("@core.Program::"))
+  assert_true(tokens.contains("@core.View["))
+  assert_true(tokens.contains("@core.View::"))
+  assert_true(tokens.contains("@core.State["))
+  assert_true(tokens.contains("@core.State::"))
+  assert_true(tokens.contains("@core.Binding["))
+  assert_true(tokens.contains("@core.Binding::"))
+  assert_true(tokens.contains("@core.Effect["))
+  assert_true(tokens.contains("@core.Effect::"))
+  assert_true(tokens.contains("@core.Subscription["))
+  assert_true(tokens.contains("@core.Subscription::"))
+  assert_true(app_api_hygiene_test_path("examples/counter/app/counter_app_test.mbt"))
+  assert_true(
+    app_api_hygiene_test_path("examples/counter/app/counter_app_wbtest.mbt"),
+  )
+  assert_false(app_api_hygiene_test_path("examples/counter/app/app.mbt"))
+  assert_true(
+    app_api_hygiene_allowed_core_view_line("implemented via @core.View::node"),
+  )
+  assert_true(
+    app_api_hygiene_allowed_core_view_line(
+      "do not add @core.View::primitive_text_view",
+    ),
+  )
+  assert_false(app_api_hygiene_allowed_core_view_line("fn view() -> @core.View[Msg]"))
+  assert_true(
+    app_api_hygiene_line_allowed(
+      "examples/counter/app/counter_app_test.mbt",
+      "fn view() -> @core.View[Msg]",
+    ),
+  )
+  assert_false(
+    app_api_hygiene_line_allowed(
+      "examples/counter/app/app.mbt",
+      "fn view() -> @core.View[Msg]",
+    ),
   )
 }
 

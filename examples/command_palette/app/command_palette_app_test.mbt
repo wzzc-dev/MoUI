@@ -93,9 +93,9 @@ test "command palette host menu service dispatches selected command" {
   inspect(summary.descriptors[0].key(), content="host:command-menu")
   inspect(summary.descriptors[0].kind(), content="host-service")
   inspect(summary.descriptors[0].label(), content="Show command menu")
-  let model = @core.State::new(opening)
+  let model = @moui.State::new(opening)
   match effect {
-    @core.Effect::Run(_descriptor, run) =>
+    @moui.Effect::Run(_descriptor, run) =>
       run(message => {
         let (next, _effect) = model
           .get()
@@ -128,7 +128,7 @@ test "command palette shortcut dispatch does not regress runtime command map" {
 
 ///|
 fn test_runtime(
-  program : @core.Program[CommandPaletteModel, CommandPaletteMsg],
+  program : @moui.Program[CommandPaletteModel, CommandPaletteMsg],
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {

@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::diagnostics_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let card_width = if metrics.compact { metrics.body_width } else { 300.0 }
   self.section_panel(
     theme,
@@ -46,9 +46,9 @@ fn ShowcaseModel::diagnostics_section(
 ///|
 fn ShowcaseModel::inspector_snapshot_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   let inner_width = max_showcase_double(180.0, width - 32.0)
   let stat_columns = if inner_width < 520.0 { 1 } else { 4 }
@@ -291,12 +291,12 @@ fn subscription_kind_count_summary(
 
 ///|
 fn showcase_inspector_snapshot(
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @runtime.InspectorSnapshot {
   ignore(theme)
   let effect_summary = showcase_inspector_effect_summary()
   let subscription_summary = showcase_inspector_subscription_summary()
-  let no_effect : @core.Effect[ShowcaseMsg] = @core.Effect::none()
+  let no_effect : @moui.Effect[ShowcaseMsg] = @moui.Effect::none()
   let no_effect_summary = @runtime.effect_plan_summary(no_effect)
   let dirty_state = @runtime.RuntimeDirtyStateSummary::{
     dirty_count: 0,
@@ -322,7 +322,7 @@ fn showcase_inspector_snapshot(
   }
   @runtime.InspectorSnapshot::{
     runtime: @runtime.RuntimeInspectorSnapshot::{
-      size: @core.Size::new(width=220.0, height=120.0),
+      size: @moui.Size::new(width=220.0, height=120.0),
       dirty_count: 0,
       dirty_element_ids: [],
       dirty_build_count: 0,
@@ -508,14 +508,14 @@ fn showcase_inspector_snapshot(
 
 ///|
 fn showcase_inspector_effect_summary() -> @runtime.EffectPlanSummary {
-  let effect : @core.Effect[ShowcaseMsg] = @core.Effect::batch([
-    @core.Effect::run(
+  let effect : @moui.Effect[ShowcaseMsg] = @moui.Effect::batch([
+    @moui.Effect::run(
       key="diagnostics:boot",
       kind="inspector",
       label="Inspector boot",
       run=dispatch => dispatch(ToggleActive),
     ),
-    @core.Effect::task(
+    @moui.Effect::task(
       key="diagnostics:task",
       kind="inspector",
       label="Inspector task",
@@ -527,18 +527,18 @@ fn showcase_inspector_effect_summary() -> @runtime.EffectPlanSummary {
 
 ///|
 fn showcase_inspector_subscription_summary() -> @runtime.SubscriptionPlanSummary {
-  let subscriptions : @core.Subscription[ShowcaseMsg] = @core.Subscription::batch([
-      @core.Subscription::animation_tick(
+  let subscriptions : @moui.Subscription[ShowcaseMsg] = @moui.Subscription::batch([
+      @moui.Subscription::animation_tick(
         key="diagnostics:tick",
         label="Inspector tick",
         start=_dispatch => Some(() => ()),
       ),
-      @core.Subscription::animation_tick(
+      @moui.Subscription::animation_tick(
         key="diagnostics:tick",
         label="Duplicate tick ignored",
         start=_dispatch => Some(() => ()),
       ),
-      @core.Subscription::host_event(
+      @moui.Subscription::host_event(
         key="diagnostics:host",
         label="Inspector host event",
         start=_dispatch => Some(() => ()),
@@ -551,12 +551,12 @@ fn showcase_inspector_subscription_summary() -> @runtime.SubscriptionPlanSummary
 ///|
 fn ShowcaseModel::diagnostics_route_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   title : String,
   summary : String,
   route : String,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,

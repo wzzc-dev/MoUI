@@ -1,9 +1,9 @@
 ///|
 fn Model::docs_content(
   self : Model,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : Metrics,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let doc_width = if metrics.compact {
     metrics.content_width
   } else {
@@ -47,7 +47,7 @@ fn Model::docs_content(
 }
 
 ///|
-fn docs_header(theme : @core.Theme, width : Double) -> @core.View[Msg] {
+fn docs_header(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
   column(
     [
       badge("Runtime docs", tone=@views.BadgeTone::Accent, theme~, width=112.0),
@@ -74,10 +74,10 @@ fn docs_header(theme : @core.Theme, width : Double) -> @core.View[Msg] {
 ///|
 fn Model::docs_sidebar(
   self : Model,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[Msg] {
-  let rows : Array[@core.View[Msg]] = []
+) -> @moui.View[Msg] {
+  let rows : Array[@moui.View[Msg]] = []
   for entry in website_docs_entries() {
     let selected = entry.slug == self.selected_doc_slug
     rows.push(
@@ -133,9 +133,9 @@ fn Model::docs_sidebar(
 ///|
 fn Model::docs_document_panel(
   self : Model,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   match self.doc_state {
     DocLoaded(path, document) =>
       surface(
@@ -193,11 +193,11 @@ fn Model::docs_document_panel(
 
 ///|
 fn docs_document_header(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   entry : WebsiteDocEntry,
   title : String,
   width : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   column(
     [
       docs_start_text(
@@ -223,13 +223,13 @@ fn docs_document_header(
 
 ///|
 fn docs_status_panel(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   title : String,
   detail : String,
   action : Msg,
   action_label : String,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   surface(
     column(
       [
@@ -264,11 +264,11 @@ fn docs_status_panel(
 
 ///|
 fn docs_document_blocks(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   document : WebsiteDocDocument,
   width : Double,
-) -> @core.View[Msg] {
-  let blocks : Array[@core.View[Msg]] = []
+) -> @moui.View[Msg] {
+  let blocks : Array[@moui.View[Msg]] = []
   for block in document.blocks {
     blocks.push(docs_block_view(theme, block, width))
   }
@@ -277,10 +277,10 @@ fn docs_document_blocks(
 
 ///|
 fn docs_block_view(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   block : WebsiteDocBlock,
   width : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   match block {
     DocHeading(level, value) => {
       let size = website_doc_heading_font_size(level)
@@ -317,15 +317,15 @@ fn docs_block_view(
 
 ///|
 fn docs_wrapped_text(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   value : String,
   width : Double,
   font_size : Double,
   line_height : Double,
   muted~ : Bool,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let lines = website_doc_wrap_lines(value, width, font_size)
-  let rows : Array[@core.View[Msg]] = []
+  let rows : Array[@moui.View[Msg]] = []
   let font = @core.FontSpec::new(
     size=font_size,
     weight=if font_size >= 20.0 { 760 } else { 460 },
@@ -351,9 +351,9 @@ fn docs_start_text(
   height~ : Double,
   font~ : @core.FontSpec,
   color~ : @core.Color,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   custom_layout(
-    measure=_constraints => @core.Size::new(width~, height~),
+    measure=_constraints => @moui.Size::new(width~, height~),
     paint=frame => {
       [
         @core.DrawCommand::DrawText(
@@ -373,13 +373,13 @@ fn docs_start_text(
 
 ///|
 fn docs_code_panel(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   language : String,
   value : String,
   width : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let code_width = width - 28.0
-  let rows : Array[@core.View[Msg]] = []
+  let rows : Array[@moui.View[Msg]] = []
   if language != "" {
     rows.push(
       docs_start_text(
@@ -415,12 +415,12 @@ fn docs_code_panel(
 
 ///|
 fn docs_table_panel(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   lines : Array[String],
   width : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let code_width = width - 28.0
-  let rows : Array[@core.View[Msg]] = []
+  let rows : Array[@moui.View[Msg]] = []
   for line in lines {
     for wrapped in website_doc_wrap_lines(line, code_width, 12.0) {
       rows.push(
@@ -446,9 +446,9 @@ fn docs_table_panel(
 }
 
 ///|
-fn docs_rule(theme : @core.Theme, width : Double) -> @core.View[Msg] {
+fn docs_rule(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
   custom_layout(
-    measure=_constraints => @core.Size::new(width~, height=22.0),
+    measure=_constraints => @moui.Size::new(width~, height=22.0),
     paint=frame => {
       [
         @core.DrawCommand::FillRect(

@@ -1,11 +1,11 @@
 ///|
 fn ShowcaseModel::catalog_shell(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
   offset : Double,
   opacity : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   split_view(
     primary=self.sidebar(theme, metrics),
     detail=self.current_destination(theme, metrics, offset, opacity),
@@ -19,11 +19,11 @@ fn ShowcaseModel::catalog_shell(
 ///|
 fn ShowcaseModel::current_destination(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
   offset : Double,
   opacity : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let route = self.route_history.current().path
   if route == "overview" {
     self.overview_section(theme, metrics, offset, opacity)
@@ -133,9 +133,9 @@ fn showcase_sections() -> Array[ShowcaseSection] {
 ///|
 fn ShowcaseModel::sidebar(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let inner_width = metrics.sidebar_width - theme.spacing_scale.lg * 2.0
   let sidebar_body_height = max_showcase_double(
     64.0,
@@ -153,7 +153,7 @@ fn ShowcaseModel::sidebar(
   ).frame(width=inner_width, height=38.0)
   let scrollbar_gutter = 24.0
   let list_width = max_showcase_double(120.0, inner_width - scrollbar_gutter)
-  let list_rows : Array[@core.View[ShowcaseMsg]] = []
+  let list_rows : Array[@moui.View[ShowcaseMsg]] = []
   let query = self.filter
   for section in showcase_sections() {
     if string_contains(section.title, query) ||
@@ -183,7 +183,7 @@ fn ShowcaseModel::sidebar(
     0.0,
     content_height - list_viewport_height,
   )
-  let normalized_offset = @core.Point::new(
+  let normalized_offset = @moui.Point::new(
     x=0.0,
     y=clamp_double(self.sidebar_scroll_offset.y, 0.0, max_scroll),
   )
@@ -236,14 +236,14 @@ fn ShowcaseModel::sidebar(
 
 ///|
 fn sidebar_scrollbar(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   viewport_height~ : Double,
   content_height~ : Double,
   offset_y~ : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let width = 8.0
   @views.custom_layout(
-    measure=_constraints => @core.Size::new(width~, height=viewport_height),
+    measure=_constraints => @moui.Size::new(width~, height=viewport_height),
     paint=frame => {
       let max_scroll = max_showcase_double(
         0.0,
@@ -292,11 +292,11 @@ fn sidebar_scrollbar(
 ///|
 fn ShowcaseModel::sidebar_item(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   section : ShowcaseSection,
   selected : Bool,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   let variant = if selected {
     @views.ButtonVariant::Primary
@@ -316,9 +316,9 @@ fn ShowcaseModel::sidebar_item(
 ///|
 fn ShowcaseModel::header(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let overview_width = if metrics.compact { 78.0 } else { 82.0 }
   let examples_width = if metrics.compact { 80.0 } else { 82.0 }
   let scheme_width = if metrics.compact { 64.0 } else { 70.0 }
@@ -377,7 +377,7 @@ fn ShowcaseModel::header(
           height=38.0,
         ),
         button(
-          if self.scheme == @core.ColorScheme::Dark {
+          if self.scheme == @moui.ColorScheme::Dark {
             "Light"
           } else {
             "Dark"
@@ -424,9 +424,9 @@ fn ShowcaseModel::header(
 }
 
 ///|
-fn showcase_scheme_label(scheme : @core.ColorScheme) -> String {
+fn showcase_scheme_label(scheme : @moui.ColorScheme) -> String {
   match scheme {
-    @core.ColorScheme::Light => "Light"
-    @core.ColorScheme::Dark => "Dark"
+    @moui.ColorScheme::Light => "Light"
+    @moui.ColorScheme::Dark => "Dark"
   }
 }

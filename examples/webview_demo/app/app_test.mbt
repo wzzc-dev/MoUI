@@ -30,7 +30,7 @@ test "webview demo emits native placement with default url when available" {
 
 ///|
 fn test_runtime(
-  program : @core.Program[Model, Msg],
+  program : @moui.Program[Model, Msg],
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {

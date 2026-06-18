@@ -227,7 +227,7 @@ test "markdown editor zen mode keeps editing live" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=48.0),
+        position=@moui.Point::new(x=28.0, y=48.0),
         phase=@core.PointerPhase::Down,
       ),
     ),

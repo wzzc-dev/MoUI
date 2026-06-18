@@ -15,7 +15,7 @@ using @views {
 
 ///|
 priv struct WorkbenchLayout {
-  viewport : @core.Size
+  viewport : @moui.Size
   sidebar_width : Double
   sidebar_inner_width : Double
   main_width : Double

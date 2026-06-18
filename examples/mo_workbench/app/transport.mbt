@@ -244,11 +244,11 @@ pub fn[Msg] PiTransportRuntime::effect(
   self : PiTransportRuntime,
   commands : Array[PiTransportCommand],
   map : (PiTransportEvent) -> Msg,
-) -> @core.Effect[Msg] {
+) -> @moui.Effect[Msg] {
   if commands.is_empty() {
-    @core.Effect::none()
+    @moui.Effect::none()
   } else {
-    @core.Effect::run(
+    @moui.Effect::run(
       key="pi-transport:dispatch",
       kind="transport",
       label="Pi transport dispatch",

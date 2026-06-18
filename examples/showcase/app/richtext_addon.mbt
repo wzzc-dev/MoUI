@@ -1,7 +1,7 @@
 ///|
 fn showcase_text_field_style(
   variant : @views.TextFieldVariant,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @views.TextFieldStyle {
   match variant {
     Filled => @views.TextFieldStyle::filled(theme~)
@@ -31,8 +31,8 @@ fn[Msg] showcase_rich_text_editor(
   width? : Double = 240.0,
   height? : Double = 40.0,
   variant? : @views.TextFieldVariant = Filled,
-  theme? : @core.Theme = @views.default_theme(),
-) -> @core.View[Msg] {
+  theme? : @moui.Theme = @views.default_theme(),
+) -> @moui.View[Msg] {
   let style = showcase_text_field_style(variant, theme)
   let normal = style.normal
   let focused = style.focused
@@ -40,7 +40,7 @@ fn[Msg] showcase_rich_text_editor(
     value~,
     on_input~,
     placeholder~,
-    size=@core.Size::new(width~, height~),
+    size=@moui.Size::new(width~, height~),
     format~,
     font=style.font,
     foreground=normal.foreground,
@@ -61,8 +61,8 @@ fn[Msg] showcase_markdown_editor(
   width? : Double = 240.0,
   height? : Double = 40.0,
   variant? : @views.TextFieldVariant = Filled,
-  theme? : @core.Theme = @views.default_theme(),
-) -> @core.View[Msg] {
+  theme? : @moui.Theme = @views.default_theme(),
+) -> @moui.View[Msg] {
   let style = showcase_text_field_style(variant, theme)
   let normal = style.normal
   let focused = style.focused
@@ -70,7 +70,7 @@ fn[Msg] showcase_markdown_editor(
     value~,
     on_input~,
     placeholder~,
-    size=@core.Size::new(width~, height~),
+    size=@moui.Size::new(width~, height~),
     font=style.font,
     foreground=normal.foreground,
     placeholder_color=style.placeholder_color,
