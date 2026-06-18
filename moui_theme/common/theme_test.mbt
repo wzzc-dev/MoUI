@@ -4688,7 +4688,7 @@ test "component style resolver reports tie component tokens to neutral core styl
       assert_true(item.source_locked)
       assert_true(item.source_ref != "")
       assert_true(item.token_surface.contains("DesignComponentTokens"))
-      assert_true(item.core_style_surface.contains("@core."))
+      assert_true(item.core_style_surface.contains("@views."))
       assert_true(item.tokens_api.contains("DesignPreset::tokens"))
       assert_true(item.style_api != "")
       assert_true(item.resolves_tokens)
