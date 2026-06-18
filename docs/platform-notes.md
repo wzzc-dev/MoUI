@@ -1,0 +1,743 @@
+# Platform Notes
+
+## Window Package Dependency
+
+MoUI resolves the modified window host as `wzzc-dev/window@0.5.1-0.1.4` from
+the MoonBit registry. A repo-local window checkout is no longer part of normal
+development. The fork package currently supplies target support that the
+upstream package does not yet cover for MoUI.
+The main checkout now includes `moui_skia`, which provides the editable Skia
+binding used by the native Skia raster mainline renderer.
+
+## Shared Host Contract
+
+Platform backends normalize window, input, surface, focus, text input, redraw,
+and close events through `backend/host`. App code receives the same core event
+model across Web, macOS, Windows, and the current Linux Wayland scaffold.
+`HostWindowRegistry` also provides shared bookkeeping for window ids, primary
+windows, focused windows, close requests, closed-window cleanup, and per-window
+surface metrics so future multi-window platform hosts do not duplicate lifecycle
+state machines. `HostWindowRequestQueue` is the matching platform-neutral
+request channel for opening, focusing, closing, resizing, minimizing, showing,
+and changing the primary window. `OpenWindow` requests include a scene id and
+payload in addition to title, metrics, and primary-window intent, giving future
+multi-window hosts a stable app-level key for selecting content/runtime when a
+new platform window is created. `HostWindowSceneResolver` resolves those
+requests into new `AppRuntime` instances or explicit scene rejections without
+embedding platform policy in app code. `HostWindowRegistry::resolve_open_request`
+then binds a resolved runtime to the registry record that owns the new window
+id, and `HostWindowRuntimeSlot` wraps the record with its `HostRuntimeDriver`.
+`HostWindowRuntimeSlots` stores those per-window drivers, supports lookup and
+primary/focused slot selection, syncs updated lifecycle records from the
+registry, provides shared insert/sync/request/lifecycle-event helpers for
+active backends, and removes closed slots. `HostPlatformWindowMap` binds
+platform `WindowId` values to `HostWindowId` values, giving multi-window
+dispatch a shared routing primitive before backends attach multiple
+renderer/window handle sets.
+Active platform entrypoints accept a shared queue through their options-bearing
+runner and drain focus, close, resize, minimize, show, and set-primary requests
+at the platform edge. Each drained request records an ordered completion on the
+same queue, so tests and higher-level host code can observe accepted operations
+and explicit rejections. Active backends use the shared queue drain helper for
+that drain-and-record loop so request completion tracking remains host-owned.
+Once the platform reports a window as closed, queued commands for that window
+are rejected rather than being replayed against stale runtime slots, and those
+rejections are recorded as normal request completions.
+Web creates the primary window through the same registry/slot path and supports
+resolver-backed `OpenWindow` requests through `run_app_with_options` and
+`WebAppOptions`. Native host cores create platform windows through the same
+registry/slot path but do not choose concrete renderer families themselves.
+Instead, public native entrypoints live in `backend/<platform>/wgpu` and
+`backend/<platform>/skia`; those packages call
+`backend/<platform>.run_app_with_renderer_provider` with a platform-local
+`RendererProvider`. A resolved native window asks that provider for a
+renderer-neutral `HostWindowRenderer`, then registers a `HostRuntimeDriver`,
+platform binding, and platform slot, and routes redraw, events, context menus,
+host service completions, IME sync, and disposal by `HostWindowId`. Without a
+scene resolver, hosts reject `OpenWindow` with the shared unavailable-resolver
+response.
+
+Native renderer choice is package selection, not a field on host-core app
+options. Use `backend/<platform>/skia` for the native Skia raster mainline.
+Use `backend/<platform>/wgpu` only for native WGPU experimental diagnostics.
+The Skia provider preflights `moui_skia/native` availability before handing
+control to the host app runner. Fallback builds therefore return with a clear
+diagnostic instead of opening a platform window that later fails to attach a
+renderer.
+
+Current-platform provider tests are included by
+`sh scripts/dev-check.sh --platform-examples-test`. Run provider packages
+directly only when you are already on the matching host and toolchain.
+
+The boundary is:
+
+```text
+platform window event -> HostEvent -> AppRuntime -> DrawCommand -> renderer
+```
+
+Backends should keep platform details at the edge:
+
+- Surface metrics carry logical size, physical size, and scale factor.
+- Pointer coordinates are normalized before they reach `core`.
+- File drag/drop events carry normalized logical positions and platform file
+  paths before they reach `core` drop targets.
+- Keyboard modifiers and IME events are converted into shared core input types.
+- Redraw scheduling is owned by `HostRuntimeDriver`; hosts request redraws, but
+do not mutate the element tree directly.
+- Renderers consume `DrawCommand` values and remain separate from view
+constructors and platform event conversion.
+- Native `web_view` is a platform-view contract rather than a renderer command.
+  `moui/views` emits platform-view placements through the
+  View paint plan, backend host contracts own WebView specs/events, and
+  `DrawFrame.platform_views` carries rectangles that native hosts sync to real platform WebView
+  objects after rendering the MoUI frame. Navigation is controlled: page/user
+  navigation emits `WebViewEvent::NavigationRequested`, and the app commits by
+  updating the view `url` or sending `WebViewCommand::LoadUrl` through the host
+  command queue.
+- Typed host services are routed through `HostServiceBridge`, with explicit
+  capability flags for clipboard, menus, file dialogs, text-file access, URL
+  opening, and system theme. Unsupported services should return `Unavailable` responses instead of
+  leaking platform checks into `core` or `views`.
+- App-owned route history lives in `core` as `RouteHistoryState`, where it can
+  model deep-link strings, back/forward cursors, and `RouterSnapshot`
+  restoration without depending on a platform host. `backend/host` provides
+  `HostRouteSource` for typed route/deep-link fanout through
+  `Subscription::route_event`. `backend/web` wires browser
+  `pushState`/`replaceState`/`popstate` into that route source and exposes Web
+  history commands for app-owned route effects. Native URL bars, OS deep-link
+  dispatch, and app history mutation remain separate platform/app
+  integrations.
+- `HostCapabilitySummary` is the app-facing diagnostics rollup over service,
+  input, window, text-input, IME, drag/drop, async-service, accessibility, and
+  native WebView readiness. Web, macOS, Windows, and Linux expose package-local
+  summary helpers, and Showcase displays the injected summary in its Runtime
+  section.
+  `HostCapabilitySummary::preflight_fields()` provides the renderer-neutral
+  ready/gap field string used by native Skia provider preflight summaries, so
+  provider packages can expose audit logs without duplicating host capability
+  formatting or importing concrete renderer policy into host cores.
+- Permission- or callback-driven host services can use `HostServiceAsyncQueue`
+  and return `HostServiceResponse::Pending` instead of blocking the runtime.
+  Hosts drain pending requests into in-flight platform work, complete them with
+  the original request, and record completions. Runtime-owned responses such as
+  clipboard paste are dispatched through `HostRuntimeDriver`; app-owned service
+  workflows should declare `HostAppServices::completion_subscription` while the
+  model stores a pending request id so pending completions re-enter the app's
+  typed message loop. When that subscription is canceled, the queue removes the
+  handler so a later platform response remains available through the completed
+  response queue instead of dispatching into stale app state.
+- Host service bridges can apply a reported light/dark system theme to a runtime
+  `Environment`. Web, macOS, and Windows do this once at startup before the
+  first layout/redraw pass. Runtime `ThemeChanged` window events are normalized
+  to `HostEvent::ThemeChanged` and update the environment through
+  `HostRuntimeDriver`.
+- Web, macOS, and Windows route copy/cut/paste keyboard shortcuts through the
+  active service bridge. When that bridge exposes clipboard support, focused
+  text controls read or write the platform clipboard; app action commands still
+  receive the intent when no text command handles it. Pending clipboard reads
+  are treated as handled until the async completion arrives, so paste commands
+  are not dispatched twice.
+- Secondary mouse-button presses are treated as context-menu requests at the
+  host edge. Web, macOS, Windows, and Linux skip normal pointer dispatch for
+  those events so right-click does not activate regular controls; macOS,
+  Windows, and Linux then route the runtime action command menu through their
+  native menu service.
+  When a text input is focused, the host driver prepends MoUI's default text
+  commands to that menu so native context menus can copy, cut, paste, undo,
+  redo, and select text through the same clipboard and command path as keyboard
+  shortcuts.
+
+## Web Wasm-GC
+
+The Web path is the canonical browser target: `wasm-gc + window/web + browser
+WebGPU host imports`. It requires browser WebGPU. Startup fails clearly if
+`navigator.gpu`, an adapter, or a device is unavailable. There is no JS-target
+fallback branch. Browser Canvas measurement and WebGPU glyph drawing share the
+same CSS `system-ui` font stack generated from `FontSpec`; app-registered embedded fonts
+can be surfaced through browser font APIs, but remote font loading is not part
+of the backend contract.
+WebGPU entrypoints may opt into `webgpu.textSelection.enabled` when a canvas
+page needs browser-native selection/copy for drawn static text. That creates a
+transparent DOM text layer from each presented frame's `DrawText` bounds while
+leaving rendering, wheel scrolling, and app interaction on the canvas path.
+The active Web runtime service bridge opens external URLs through the browser
+host import, which calls `window.open(..., "_blank", "noopener,noreferrer")`
+and reports failure when the browser blocks the popup or the API is unavailable.
+Web copy/cut shortcuts are forwarded from the hidden text input to the runtime
+and write selected text through a browser host import using the user-gesture
+`document.execCommand("copy")` path. Focused browser text input can still paste
+through normal input events; app-level async clipboard reads use
+`navigator.clipboard.readText()` and complete through `HostServiceAsyncQueue`
+when browser permissions allow it.
+The Web host now advertises IME readiness because the local `window/web` bridge
+supports browser composition lifecycle events and accepts MoUI
+`TextInputSession` IME requests for enabling input, cursor-area updates, and
+surrounding-text updates. This is browser text-input observation; it does not make
+browser text shaping deterministic across browsers.
+The active Web runtime now drains pending async service requests into browser
+callbacks. Clipboard reads complete through exported wasm callback functions.
+When `showOpenFilePicker` is available, open-file selection keeps the browser
+file handle, reads the chosen `File.text()`, and caches the content under the
+browser-exposed file name so app-owned handlers can follow the file-dialog
+selection with the shared text-file read service. The hidden file input remains
+the fallback open/directory path; fallback open can import text but does not
+produce a writable handle, while directory selection still returns
+browser-exposed relative names. Typed completions are delivered through
+`HostAppServices::completion_subscription`. Save dialogs use the File System
+Access API when `showSaveFilePicker` is available, keep the selected handle,
+and route later Web text-file writes through `createWritable()`; without a
+writable handle, the write completes as unavailable. Canceled file pickers
+return an empty selection.
+The browser host import reads `prefers-color-scheme` at startup and listens for
+media-query changes through `window/web`; MoUI maps those events into runtime
+environment color-scheme updates.
+Browser file drag/drop events on the canvas are normalized through
+`HostEvent::DragDrop` and dispatched to `View::on_file_drop` targets. The
+Web platform receives browser-exposed file names or relative names rather than
+native filesystem paths.
+The Web backend intentionally does not implement `web_view` with an iframe
+overlay. Browser wasm-gc hosts report native WebView unavailable, and examples
+that share WebView app logic should render a fallback surface on Web.
+The Web browser runtime normalizes the initial route from `?route=`,
+`?section=`, or the hash, listens for `popstate`, and dispatches those route
+events through the optional `HostRouteSource` passed in `WebAppOptions`.
+Entrypoints can keep shared app logic platform-neutral by translating abstract
+route commands into `web_history_push_route`, `web_history_replace_route`,
+`web_history_back`, and `web_history_forward` at the Web edge.
+See [Text system](text-system.md) for the shared runtime and renderer text
+contract.
+
+The reusable browser runtime assets live under `backend/web/*.js`. Each
+`examples/*/web_wasm/` package is only the app-specific Web entrypoint and
+supplies the example-specific wasm URL. The canvas host reports logical event
+coordinates after DPR mapping and avoids CSS transforms, borders, and padding so
+resize and input coordinates stay stable. The browser runtime treats native
+pointer events as authoritative when the browser supports `PointerEvent` and
+does not synthesize MoUI pointer activation from compatibility mouse/click
+fallbacks in that mode. Older environments without pointer-event support still
+use mouse/click fallback with transaction de-duplication, including delayed
+fallback events whose rounded coordinates drift slightly. This keeps a slow app
+rebuild after a button release from replaying the same browser click as a
+second MoUI pointer activation.
+Touch drags on the canvas synthesize wheel-style scroll deltas before browser
+fallback panning, so `scroll_view` surfaces such as the website homepage can
+scroll from mobile swipe gestures while still using the same app-owned
+`on_scroll` path as desktop wheels and trackpads.
+
+## macOS Native
+
+The macOS host core uses `wzzc-dev/window/macos` for AppKit windows, lifecycle,
+events, services, text-input session synchronization, renderer resize calls, and
+redraw requests. It receives concrete rendering through
+`MacosRendererProvider`; `backend/macos/skia` is the recommended native
+mainline and presents CPU pixel frames through an `NSImageView`, while
+`backend/macos/wgpu` installs a `CAMetalLayer` on the window `NSView` for
+native WGPU diagnostics.
+macOS native WebView support uses `WKWebView` as a host platform view attached
+to the window content view. `backend/macos` reports native WebView available
+when the WebKit-backed stub is linked, syncs placements from
+`DrawFrame.platform_views`, forwards WebView navigation/title/history/script
+events through `HostEvent::WebView`, and drains `HostWebViewCommandQueue`
+commands after frame rendering.
+Window events pass through the shared `backend/host` conversion helpers, and the
+native host never imports `render/wgpu`, `render/skia`, `wgpu_mbt`, or
+`moui_skia`.
+The macOS service bridge routes text clipboard requests through `NSPasteboard`,
+opens URLs through `NSWorkspace`, presents open/save/directory dialogs through
+`NSOpenPanel` and `NSSavePanel`, presents command menus at the current pointer
+position through `NSMenu`, reads/writes UTF-8 text files through the shared
+text-file service contract, and reports the effective light/dark system
+appearance through the shared `HostServiceBridge` contract.
+The native app entrypoint applies that reported appearance to the runtime
+environment before creating the host driver, so components see the system color
+scheme on their initial build. AppKit theme-change events use the shared
+`HostEvent::ThemeChanged` runtime path when emitted by the local window backend.
+Right-click context-menu requests use the same `NSMenu` path and dispatch the
+selected `ActionCommand` back through `HostRuntimeDriver`.
+File drag/drop events emitted by the local `window/macos` backend are normalized
+through `HostEvent::DragDrop` and dispatched to `View::on_file_drop`
+targets.
+Native WGPU diagnostics can use either the shared Moon Cosmic provider or a platform
+provider. `backend/macos/wgpu` defaults to the CoreText/CoreGraphics provider
+for runtime measurement and glyph rasterization, explicitly composed with the
+Moon Cosmic provider as fallback; the Objective-C CoreText stub lives in
+`render/wgpu/coretext`, while the selectable/composed Cosmic provider lives in
+`render/wgpu/cosmic_text`. The CoreText provider consumes the shared native
+`FontSpec` payload, attempts named families from the structured family stack,
+maps generic CSS families such as `ui-monospace` and `serif` to suitable macOS
+fonts, registers app-provided font bytes under their requested family alias when
+CoreText accepts them, and falls back to the system font for unavailable names
+before the renderer tries the composed Cosmic fallback.
+Choose the text engine with
+`@macos_wgpu.run_app_with_options(..., options=MacosWgpuAppOptions::new(text_engine=...))`.
+The same options value can carry a `HostWindowSceneResolver` for
+resolver-backed secondary windows and `first_frame_smoke_auto_exit` for first-frame
+smoke tests. `core` still owns only the neutral `FontSpec`, `TextSystem`
+contract, and deterministic fallback text system; it does not name concrete
+macOS font files.
+The `examples/showcase/macos_wgpu` and `examples/showcase/macos_wgpu_cosmic` entrypoints
+remain WGPU diagnostics; `macos_wgpu_cosmic` selects `MoonCosmic` explicitly for
+comparison with the WGPU CoreText path.
+`backend/macos` also exposes an async pump variant for native app entrypoints
+that must run `moonbitlang/async` side work on the same thread as the AppKit
+event pump. `backend/macos/skia.run_app_with_options_async_pump` keeps the
+default blocking `run_app_with_options` behavior unchanged, but lets
+`examples/mo_workbench/macos_skia` interleave the Skia window pump with its
+owned Pi JSONL transport worker.
+
+Select the native mainline Skia provider by importing
+`wzzc-dev/moui/backend/macos/skia` and using `MacosSkiaAppOptions`. The
+provider creates `render/skia.SkiaRasterRenderer`,
+draws into a CPU raster surface in physical pixels, scales the canvas by the
+host scale factor, reads premultiplied pixels back after each frame, and sends
+them to a macOS presenter. The Objective-C presenter builds a `CGImage` from the
+pixel bytes and installs it on a dedicated `NSImageView` attached to the content
+view. macOS Skia options default to the same system `FontMgr` text path as the
+Windows and Linux Skia providers; tester-owned first-frame smoke entrypoints
+explicitly select `EmptyTypeface`. This path is intentionally separate from the experimental
+`backend/macos/wgpu`; Skia is a provider package, not a host-core
+`NativeRenderer` variant.
+For local real-Skia configuration, direct `moon run`/`moon build` commands use
+the `moui_skia` prebuild hook and `MOUI_SKIA_LINK_MODE=dynamic|static|auto` to
+choose the Skia library mode. Helper smoke runs can pass
+`--link-mode dynamic|static|auto` to override the environment for that
+invocation.
+`macos_skia_provider_preflight_summary()` exposes package-level preflight
+observation for the selected font resolution, renderer availability,
+`moui_skia/native` availability, the `NSImageView` presenter path, inherited
+AppKit host service/input/window readiness, explicit
+`HostWindowRenderer` bridge forwarding for Skia text-system, image-resource,
+image-resource change callbacks, present-count, and disposal diagnostics,
+clipboard/menu/file-dialog/open URL/system-theme/async-service readiness,
+native context-menu and host-modal file-dialog readiness, native accessibility
+status, and the runtime observation boundary. Treat that summary as
+provider/package observation
+only; MoUI macOS Skia runtime smoke still comes from the real-Skia renderer
+pixel smoke plus tester-owned first-frame/IME markers. Markdown Editor build
+coverage remains optional example coverage and is not a platform runtime
+observation gate.
+The macOS host loop records the renderer image-resource revision after each
+present, routes later observed revision changes through the matching window's
+`request_redraw`, exposes tracked-window revision snapshots for diagnostics,
+calls the optional provider-owned `HostAsyncImageLoader` after the presented
+revision is baselined, and removes tracked image revisions plus in-flight image
+loads when a host window is disposed. The macOS Skia provider creates
+renderers with post-present async image loading so local/data URI image sources
+can be baselined as loading, completed through `skia_image_load_completion`,
+and repainted on a second frame; the real-Skia smoke records that as a
+matching-host artifact only when the async second-frame marker is present.
+
+Packages that use `backend/macos` directly must link the AppKit service bridge
+frameworks during the final native link step. Missing `_objc_msgSend` or
+`___CFConstantStringClassReference` usually means that link step is missing the
+host-core flags:
+
+```moonbit
+link: {
+  "native": {
+    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz"
+  },
+},
+```
+
+Packages that use `backend/macos/wgpu` also need QuartzCore, CoreText,
+CoreGraphics, Foundation, CoreFoundation, and Objective-C flags for the WGPU
+surface and native text provider. Missing `CAMetalLayer` or CoreText raster
+symbols mean the provider flags are absent from the final link:
+
+```moonbit
+link: {
+  "native": {
+    "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework CoreText -framework CoreGraphics -framework Foundation -framework CoreFoundation -lobjc -lz"
+  },
+},
+```
+
+Use `moon run <package> --target native --dry-run -v` to inspect the final
+`cc` command and confirm the expected flags are present. If `moon build` works
+but `moon run` links a temporary native stub dylib without those flags, use the
+README build-and-execute flow while debugging the toolchain/link configuration.
+
+## Windows Native
+
+Windows native examples use the MSVC toolchain with Visual Studio C++ build
+tools and vcpkg `zlib:x64-windows`. The Skia entrypoints are the recommended
+native mainline. WGPU diagnostic entrypoints still use `wgpu_mbt` dynamic mode
+with the official `wgpu-windows-x86_64-msvc-release.zip` release.
+Windows native WebView support is gated behind
+`MOUI_WINDOWS_ENABLE_WEBVIEW2`. Fallback builds compile without the WebView2 SDK
+and report `HostWebViewCapabilities.available=false`; builds with the flag use
+WebView2 controllers parented to the app HWND, sync `DrawFrame.platform_views`,
+forward controlled navigation and title/history/script events, and drain
+`HostWebViewCommandQueue` commands after renderer presentation. The `moui`
+module prebuild leaves WebView2 flags empty by default; enable the real bridge
+by setting environment variables such as
+`MOUI_WINDOWS_ENABLE_WEBVIEW2=1`,
+`MOUI_WINDOWS_WEBVIEW2_INCLUDE=<webview2-sdk-include>`, and
+`MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS="<WebView2Loader link flags>"`, or by setting
+the explicit `MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS` /
+`MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS` pair. The prebuild adds
+`-DMOUI_WINDOWS_ENABLE_WEBVIEW2` when explicit WebView2 flags are provided.
+
+For MSVC setup and packaging:
+
+```powershell
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\setup_msvc_deps.ps1 -InstallZlib
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\build_windows_msvc.ps1 `
+  -Package examples/showcase/windows_skia `
+  -BuildOnly
+powershell -ExecutionPolicy Bypass -File .\scripts\windows\package_windows_app_msvc.ps1 `
+  -Package examples/showcase/windows_skia `
+  -AppName MoUIShowcase
+```
+
+The MSVC helper imports `vcvarsall.bat` through `vswhere`, sets `CC` and `CXX`
+to `scripts\windows\msvc_cl.cmd`, enables MSVC C11 mode and atomics only for
+`.c` native stubs, and detects whether the selected package imports the WGPU
+provider. Skia packages do not download or package `wgpu_native.dll`; WGPU
+diagnostic packages set `MBT_WGPU_LINK_MODE=dynamic` and point
+`MBT_WGPU_NATIVE_ROOT` at the extracted MSVC WGPU release. `moui_skia` emits
+`/std:c++20` stub flags for its Windows Skia C++ bindings, which remain
+separate from the C11-only path. WGPU-only diagnostic packages may temporarily
+enable global `/std:c11` for the `wgpu_mbt` C stubs because that native-stub
+path can invoke `cl.exe` directly. Packaged MSVC apps use the vcpkg
+`zlib:x64-windows` runtime for native image decoding. When the
+Visual Studio-bundled vcpkg rejects direct classic installs, run
+`setup_msvc_deps.ps1 -InstallZlib` so the dependency is installed with an
+ignored repository-local manifest workspace under `.tools\vcpkg-msvc`. Packaged
+apps should be launched through the generated `run.cmd`; WGPU diagnostic
+packages use that wrapper so the bundled WGPU release metadata is visible to
+the dynamic loader.
+
+To run an entrypoint directly after setup:
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/showcase/windows_skia --target native }"
+powershell -ExecutionPolicy Bypass -Command "& { . .\scripts\windows\msvc_env.ps1; moon run examples/markdown_editor/windows_skia --target native }"
+```
+
+The ordinary Windows Skia entrypoints are interactive app entrypoints. Keep
+matching-host first-frame smoke in tester/backend smoke runners rather than
+adding auto-exit flags to Showcase or Markdown Editor packages.
+
+The Windows host follows the same `HostEvent` and `HostRuntimeDriver` path as
+macOS, with platform-specific ownership limited to Win32 window handles,
+services, lifecycle, resize handling, text-input session synchronization, and
+redraw requests. Concrete rendering is injected through
+`WindowsRendererProvider`; `backend/windows/wgpu` owns HWND/HINSTANCE WGPU
+surface creation for diagnostics and `backend/windows/skia` owns the GDI pixel
+presenter for the native mainline. Text
+clipboard requests are implemented through the Win32
+`CF_UNICODETEXT` clipboard API and normalized to UTF-8 at the host-service
+boundary. The Windows service bridge also opens URLs through `ShellExecuteW`,
+presents basic open/save/directory dialogs through the Win32 common dialog and
+shell APIs, presents command menus at the current cursor position through
+`TrackPopupMenu`, reads/writes UTF-8 text files through the shared text-file
+service contract, and reports light/dark system theme from the current user's
+`AppsUseLightTheme` registry value.
+The native app entrypoint applies that reported theme to the runtime environment
+before creating the host driver, matching the macOS startup path. Windows
+theme-change events use the shared `HostEvent::ThemeChanged` runtime path when
+emitted by the local window backend.
+Right-click context-menu requests use the same `TrackPopupMenu` path and dispatch
+the selected `ActionCommand` back through `HostRuntimeDriver`.
+File drag/drop events emitted by the local `window/windows` backend are
+normalized through `HostEvent::DragDrop` and dispatched to
+`View::on_file_drop` targets, matching the macOS host path.
+`backend/windows/wgpu` remains the WGPU diagnostic path and installs the sibling
+`render/wgpu/directwrite` provider
+through the same renderer/runtime boundary used by macOS CoreText and composes
+it with `render/wgpu/cosmic_text` as fallback. That provider is currently an
+explicit scaffold using `render/wgpu/text_protocol` for UTF-32 input encoding,
+private versioned measurement payload parsing, a versioned registration
+payload, and a generic shaped-run envelope for glyph placements plus
+DirectWrite-private raster payloads. It also routes raster glyph bytes through
+the shared single-channel raster parser. Its native stub advertises the
+DirectWrite integration point while returning no platform layout/raster data,
+so the composed Cosmic fallback handles native text until the real DirectWrite
+engine lands. Choose `MoonCosmic` with
+`WindowsWgpuAppOptions::new(text_engine=...)`.
+The `examples/showcase/windows_wgpu` and `examples/showcase/windows_wgpu_cosmic`
+entrypoints remain WGPU diagnostics; `windows_wgpu_cosmic` selects `MoonCosmic`
+explicitly for comparison with the WGPU DirectWrite scaffold plus Cosmic
+fallback path. The `examples/showcase/windows_skia` entrypoint selects the
+Windows Skia provider for the mainline Showcase, and
+`examples/markdown_editor/windows_skia` selects it for the mainline editing
+workflow.
+The Markdown Editor also has `examples/markdown_editor/windows_wgpu_cosmic` for the
+same explicit text-provider comparison on the editing workflow.
+
+Select Skia by importing `wzzc-dev/moui/backend/windows/skia` and using
+`WindowsSkiaAppOptions`. The provider creates `render/skia.SkiaRasterRenderer`
+and presents the CPU pixel frame through the Win32 presenter. The C presenter
+copies the RGBA premultiplied readback into a top-down 32-bit BGRA DIB buffer
+and blits it to the client DC with `StretchDIBits`. If `moui_skia/native` is only
+in fallback mode, renderer creation is rejected with a diagnostic instead of
+opening an empty HWND.
+`windows_skia_provider_preflight_summary()` exposes package-level preflight
+observation for the selected font resolution, renderer availability,
+`moui_skia/native` availability, the GDI presenter path, inherited Win32 host
+service/input/window readiness, explicit clipboard/menu/file-dialog/open
+URL/system-theme/async-service readiness, the `HostWindowRenderer` bridge that
+forwards Skia text-system, image-resource, present-count, and disposal
+diagnostics, native context-menu and host-modal
+file-dialog readiness, native accessibility status, and the matching-host
+runtime boundary, including whether the first-frame smoke option is enabled.
+Treat that summary and its package test as provider/preflight diagnostic only;
+The Windows host loop records the renderer image-resource revision after each
+present, routes later observed revision changes through the matching HWND's
+`request_redraw`, exposes tracked-window revision snapshots for diagnostics,
+calls the optional provider-owned `HostAsyncImageLoader` after the presented
+revision is baselined, and removes tracked image revisions plus in-flight image
+loads when a host window is disposed. The Windows Skia provider creates
+renderers with post-present async image loading, but the required async
+second-frame artifact remains matching-host pending until a Windows/MSVC run
+records it from the Skia entrypoints or provider smoke.
+Passed Windows runtime observation still needs a Windows/MSVC host running the
+Showcase or Markdown Editor Skia entrypoints with recorded artifacts. On
+non-Windows hosts, the Win32 presenter and service stubs may fail C compilation
+because they require `windows.h`, so a Darwin failure of
+`moui/backend/windows/skia` is a host/toolchain limit rather than Windows
+runtime observation.
+
+To use a preseeded local `wgpu-native` release for WGPU diagnostics instead of
+the helper-managed copy, set `MBT_WGPU_NATIVE_ROOT` to the extracted MSVC
+release root or pass that path as `-WgpuNativeRoot` to the Windows helper
+script. MSVC dynamic roots should contain `lib\wgpu_native.dll` and
+`wgpu-native-meta\wgpu-native-git-tag`.
+
+## Linux Native
+
+`backend/linux` is a minimal native Wayland host core. It uses the
+`wzzc-dev/window@0.5.1-0.1.4` Linux package for Wayland event-loop and window handles,
+normalizes window/input events through the shared `HostEvent` contract, and runs
+the Showcase entrypoints through the same renderer/runtime boundary as macOS
+and Windows. Concrete rendering is injected through `LinuxRendererProvider`;
+`backend/linux/skia` is the native mainline and reuses the window package's
+`Window::present_rgba_pixels` presenter, while `backend/linux/wgpu` creates
+native WGPU surfaces from `wl_display` and `wl_surface` for diagnostics.
+
+The Wayland window path requests server-side decorations when the compositor
+exposes `xdg-decoration`. If the compositor falls back to client-side
+decorations, `backend/linux` reserves a small titlebar band above the MoUI
+content, draws the window title and basic controls into the renderer command
+stream, and translates input coordinates so application views still receive a
+content-origin coordinate space.
+The same adapter consumes the window package's Wayland key/modifier mapping and
+current pointer coordinates: Linux backend tests cover modifier propagation into
+shared keyboard events and button events using the position carried by the
+window event rather than stale pointer state. The fork also exposes Wayland
+data-device clipboard selection and file drag/drop events to MoUI; drag/drop
+paths continue through `HostEvent::DragDrop` before reaching `View::on_file_drop`.
+Text-input focus state and IME requests are synchronized through the shared
+`TextInputSession` path used by other native hosts. That session now records
+`TextInputImeRequestDiagnostics` for each enabled/update request, including
+grapheme-normalized cursor/anchor character positions, UTF-8 offsets for
+surrounding text, the logical candidate-anchor caret rectangle, and whether
+surrounding-text payloads fit the window package's IME contract.
+
+Linux runtime requirements are intentionally native:
+
+- A Wayland compositor. For repeatable headless checks, run Weston with the
+  headless backend and point `WAYLAND_DISPLAY` at its socket.
+- A usable Vulkan stack only when running WGPU diagnostics. Headless software
+  validation can use Mesa llvmpipe through `vulkan-swrast`/Lavapipe when
+  hardware Vulkan is not available.
+- Wayland development headers and generated xdg-shell protocol sources for the
+  `wzzc-dev/window@0.5.1-0.1.4` native stub.
+- `wl_data_device_manager` from the compositor for native clipboard selection
+  and file drag/drop runtime behavior.
+- XDG desktop integration for Linux services: OpenURI goes through
+  xdg-desktop-portal when available and falls back to the desktop opener;
+  file-dialog selections require a desktop dialog helper on the matching host.
+- zlib in the final native link; Linux entrypoints and `backend/linux` include
+  `-lz`.
+- Optional WebKitGTK development packages when building with
+  `MOUI_LINUX_ENABLE_WEBKITGTK` for native WebView support. Fallback builds do
+  not link WebKitGTK and report WebView unavailable. A configured host should
+  set `MOUI_LINUX_ENABLE_WEBKITGTK=1`; the `moui` prebuild resolves
+  `gtk+-3.0` with `webkit2gtk-4.1` or `webkit2gtk-4.0` through `pkg-config`.
+  Distro-specific setups can override that with
+  `MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` and
+  `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS`; the prebuild adds
+  `-DMOUI_LINUX_ENABLE_WEBKITGTK` when explicit WebKitGTK flags are provided.
+
+Useful focused commands on a configured Linux host:
+
+```sh
+moon test moui/backend/linux --target native
+moon build examples/showcase/linux_skia --target native
+moon build examples/markdown_editor/linux_skia --target native
+moon run examples/showcase/linux_skia --target native
+moon run examples/markdown_editor/linux_skia --target native
+```
+
+The ordinary Linux Skia entrypoints are interactive app entrypoints. Keep
+matching-host first-frame smoke in tester/backend smoke runners and store those
+logs under ignored `artifacts/` paths when they are needed for release notes.
+
+When validating from a Linux VM mounted over the same checkout as a macOS or
+Windows host, keep native build output isolated. Either run `moon clean` before
+switching hosts or copy the checkout to a Linux-local temporary directory
+without `_build`; the native archive and MoonDB files are host-specific and can
+be corrupted by cross-host reuse.
+
+The WGPU diagnostic text path in `backend/linux/wgpu` composes the Linux
+`render/wgpu/fontconfig` provider with the shared Moon Cosmic fallback.
+The fontconfig provider includes real fontconfig family resolution, FreeType
+rasterization (loaded via dlopen), HarfBuzz shaping, embedded-font registration,
+and a narrow color-emoji path; MoonBit tests verify protocol versioning and
+native payload parsing on all platforms, while the full shaping/measurement/raster
+path runs on Linux with the required C libraries. Choose `MoonCosmic` with
+`LinuxWgpuAppOptions::new(text_engine=...)`;
+`examples/showcase/linux_wgpu_cosmic` selects the Moon Cosmic provider explicitly for
+comparison.
+
+Select the native mainline Skia provider by importing
+`wzzc-dev/moui/backend/linux/skia` and using `LinuxSkiaAppOptions`. The
+provider creates `render/skia.SkiaRasterRenderer` and presents the CPU pixel
+frame through a narrow API exposed by
+`wzzc-dev/window/linux`. That window package owns the Wayland objects and
+provides `Window::present_rgba_pixels`, implemented with reusable `wl_shm`
+buffers, buffer-release tracking, `wl_surface_attach`, damage, commit, and
+display flush. Keeping the `wl_shm` presenter in the window backend avoids
+duplicating Wayland registry and buffer ownership in MoUI.
+Linux native WebView support is WebKitGTK-gated. Fallback builds do not link
+GTK/WebKitGTK, report `HostWebViewCapabilities.available=false`, and still
+compile the WebView Demo as unavailable UI. With `MOUI_LINUX_ENABLE_WEBKITGTK=1`
+and matching native dependencies, the host syncs placements from
+`DrawFrame.platform_views` using the Wayland surface handle, offsets placement
+below client decorations when needed, pumps the GTK main context from the Linux
+event-loop wait path, forwards navigation/title/history/JavaScript events
+through `HostEvent::WebView`, and drains `HostWebViewCommandQueue` commands
+after frame rendering. macOS, Windows, and Linux native bridges enforce the
+shared `WebViewNavigationPolicy` before committing a navigation; blocked URLs
+produce a `NavigationFailed` event. Matching-host smoke is still required before
+promoting Linux WebView runtime observation beyond package-level compile coverage.
+`linux_skia_provider_preflight_summary()` exposes package-level preflight
+observation for the selected font resolution, renderer availability,
+`moui_skia/native` availability, the `wl_shm` presenter path, inherited Wayland
+host service/input/window readiness, explicit Linux clipboard/file-dialog/text-file/open
+URL/menu/system-theme readiness, native menu readiness, async-service gap,
+text-input/IME/drag-drop readiness, native context-menu readiness and native
+accessibility readiness, host-modal
+file-dialog readiness, `HostWindowRenderer` bridge
+forwarding for Skia text-system, image-resource, present-count, and disposal
+diagnostics, and the matching-host runtime boundary, including whether the first-frame smoke
+option is enabled. The Linux host loop records the renderer image-resource
+revision after each present, routes later observed revision changes through the
+matching Wayland window's `request_redraw`, exposes tracked-window revision
+snapshots for diagnostics, calls the optional provider-owned
+`HostAsyncImageLoader` after the presented revision is baselined, and removes
+tracked image revisions plus in-flight image loads when a host window is
+disposed. The Linux Skia provider package now covers the host route from a
+loading first-frame image record through deferred `skia_image_load_completion`,
+repaint request, and second presented-frame status recording. The required
+async second-frame runtime artifact remains matching-host pending until a
+Wayland run records it from the Skia entrypoints or provider smoke. The summary
+is useful for provider/package
+audits, but it does not prove a real Wayland compositor presented Showcase or
+Markdown Editor frames;
+those claims still require matching-host runtime runs and smoke logs
+manifest entries.
+
+For Linux Skia runtime evidence, record these as separate ignored
+`artifacts/` logs on the matching Wayland host:
+
+```sh
+MOUI_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+  moon run examples/showcase/linux_skia --target native
+MOUI_MARKDOWN_EDITOR_LINUX_SKIA_EXIT_AFTER_FIRST_PRESENT=1 \
+  moon run examples/markdown_editor/linux_skia --target native
+scripts/run-window-package-smoke.sh linux --run
+```
+
+The Showcase and Markdown Editor logs must include
+`Linux renderer presented first frame; exiting by request; title=...` from the
+host loop before they can be cited as app-level runtime evidence. The window
+package smoke remains dependency-level evidence for Wayland handles,
+`present_rgba_pixels`, resize/redraw, IME request state, and clean shutdown.
+
+The window package carries a consumer-style Linux smoke for this dependency
+surface. On a matching Wayland host, run
+`scripts/run-window-package-smoke.sh linux --run` to exercise
+surface creation, public Wayland handles, `Window::present_rgba_pixels`, resize,
+redraw, IME request state, and clean shutdown. Add `--require-input` or
+`WINDOW_MOUI_LINUX_REQUIRE_INPUT=1` only when representative pointer/keyboard
+input is observed. Linux clipboard selection, file dialogs, text-file reads and
+writes, desktop URL opening, IME composition/cursor geometry, and file
+drag/drop are implemented host-service/input paths, but they remain
+matching-host runtime evidence boundaries: cite only logs that exercised the
+actual desktop/compositor service, not the package preflight summary alone.
+Record dependency-level facts from the `wzzc-dev/window@0.5.1-0.1.4`
+package smoke artifacts; keep the MoUI Showcase
+`linux_skia` and Markdown Editor `linux_skia` runs as separate mainline
+application-level observation. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic
+observation when a Vulkan/WGPU stack is configured.
+
+For Linux WebView runtime evidence on a configured host, build or run the demo
+with WebKitGTK enabled and cite the smoke log separately from Skia first-frame
+evidence:
+
+```sh
+MOUI_LINUX_ENABLE_WEBKITGTK=1 \
+  moon check examples/webview_demo/linux_skia --target native
+MOUI_LINUX_ENABLE_WEBKITGTK=1 \
+  moon run examples/webview_demo/linux_skia --target native
+```
+
+That smoke should exercise placement, controlled navigation policy failures,
+title/history notifications, JavaScript result callbacks, and command queue
+draining. Package tests cover the pure event/command mapping and fallback
+capability path, but they do not prove a real WebKitGTK view presented.
+
+`examples/showcase/linux_skia` and `examples/markdown_editor/linux_skia` select
+this provider for the mainline Showcase and editing workflow. Configure real
+Skia link flags before relying on native Skia-rendered pixels.
+The default JetBrains Linux provider links fontconfig, FreeType, and HarfBuzz;
+with those libraries available, `moui_skia` builds a system `FontMgr` through
+fontconfig and falls back to common font directories such as `/usr/share/fonts`
+when fontconfig reports no families. Missing CJK or emoji glyph coverage still
+depends on installed system fonts, and full mixed-script fallback runs remain a
+text-system follow-up rather than a Linux backend responsibility.
+
+Linux native context menus use the shared `HostServiceBridge::ShowMenu`
+contract. The backend encodes enabled command rows for a desktop menu picker,
+dispatches the selected `ActionCommand` through `HostRuntimeDriver`, and reports
+an unavailable response when the configured desktop menu tool is absent.
+
+Linux AT-SPI accessibility binding stays behind `backend/linux`: it publishes
+AccessKit-shaped snapshots from the shared semantics tree, dispatches action
+callbacks through the shared semantics action bridge, and reports cleanup
+diagnostics when disposed. Matching-host assistive-technology smoke is still
+runtime evidence, not package-level proof.
+
+Remaining Linux gaps stay visible in `backend/linux.readiness()`:
+
+- Linux clipboard, file-dialog, text-file, open URL, text-input/IME request, and
+  file drag/drop host surfaces are implemented, but passed platform status still
+  requires matching-host Wayland/desktop-service observation rather than package
+  preflight alone.
+
+## Platform Validation
+
+Use focused platform validation instead of broad all-repository native checks:
+
+```sh
+moon test moui/backend/host --target native
+moon test moui/backend/web --target wasm-gc
+sh scripts/conformance-check.sh --platform-services
+sh scripts/dev-check.sh --platform-examples-test
+```
+
+Before release-style validation on a configured host, include platform example
+builds:
+
+```sh
+sh scripts/dev-check.sh --platform-examples-build
+```
+
+When changing event conversion, also run the affected backend package tests. When
+changing renderer surface creation or WGPU setup, build at least one native
+example for the current platform.

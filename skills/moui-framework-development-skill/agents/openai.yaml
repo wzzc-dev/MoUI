@@ -1,0 +1,4 @@
+interface:
+  display_name: "MoUI Framework Development"
+  short_description: "Change MoUI internals and quality gates."
+  default_prompt: "Use $moui-framework-development-skill when changing MoUI internals, public API, smoke gates, or repository validation."
