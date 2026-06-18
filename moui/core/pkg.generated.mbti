@@ -1439,8 +1439,15 @@ pub(all) struct ViewSemanticsInfo {
   value : String
   description : String
   actions : Array[SemanticsAction]
+  disabled : Bool?
+  selected : Bool?
+  pressed : Bool?
+  checked : Bool?
+  expanded : Bool?
+  invalid : Bool?
+  required : Bool?
 } derive(Eq, @debug.Debug)
-pub fn ViewSemanticsInfo::new(role? : SemanticsRole, label? : String, value? : String, description? : String, actions? : Array[SemanticsAction]) -> Self
+pub fn ViewSemanticsInfo::new(role? : SemanticsRole, label? : String, value? : String, description? : String, actions? : Array[SemanticsAction], disabled? : Bool, selected? : Bool, pressed? : Bool, checked? : Bool, expanded? : Bool, invalid? : Bool, required? : Bool) -> Self
 
 pub(all) struct ViewStateContext {
   focused : Bool
@@ -1485,4 +1492,3 @@ pub fn VisualStyle::empty() -> Self
 pub using @unicode {type TextGraphemeBoundaries}
 
 // Traits
-
