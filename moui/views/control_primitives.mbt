@@ -328,20 +328,22 @@ fn[Msg] checkbox_control(
         ),
       )
     },
-    paint=ctx => {
-      let commands : Array[@core.DrawCommand] = []
-      append_checkbox_commands(
-        commands,
-        label~,
-        checked=checked.get(),
-        font~,
-        foreground~,
-        check_color~,
-        size~,
-        frame=ctx.frame,
-      )
-      @core.ViewPaintPlan::commands(commands)
-    },
+   paint=ctx => {
+     let commands : Array[@core.DrawCommand] = []
+     append_checkbox_commands(
+       commands,
+       label~,
+       checked=checked.get(),
+       font~,
+       foreground~,
+       check_color~,
+       size~,
+       frame=ctx.frame,
+        theme=ctx.environment.theme,
+        focused=ctx.focused,
+     )
+     @core.ViewPaintPlan::commands(commands)
+   },
     event=ctx => {
       match ctx.event {
         @core.AppEvent::Pointer(event) =>
@@ -411,6 +413,8 @@ fn append_checkbox_commands(
   check_color~ : @core.Color,
   size~ : @core.Size,
   frame~ : @core.Rect,
+  theme~ : @core.Theme,
+  focused~ : Bool,
 ) -> Unit {
   let box_side = size.width
   let box_y = frame.origin.y +
@@ -421,7 +425,9 @@ fn append_checkbox_commands(
     width=box_side,
     height=box_side,
   )
-  let box = @core.RoundedRect::new(rect=box_rect, radius=4.0)
+  // Track the theme's small radius so checkboxes stay consistent with the
+  // rest of the control set.
+  let box = @core.RoundedRect::new(rect=box_rect, radius=theme.radius_scale.sm)
   if checked {
     commands.push(@core.DrawCommand::FillRoundedRect(box, check_color))
     commands.push(
@@ -430,12 +436,20 @@ fn append_checkbox_commands(
           text="✓",
           frame=box_rect,
           font=@core.FontSpec::new(size=box_side * 0.78, weight=700),
-          color=@core.Color::white(),
+          color=theme.palette.primary_foreground,
         ),
       ),
     )
   } else {
-    commands.push(@core.DrawCommand::StrokeRoundedRect(box, check_color, 2.0))
+    // Unchecked uses a neutral outline (not the accent) so the control reads
+    // as inactive at rest; the accent only appears on selection. Focus swaps
+    // the outline to the accent to signal keyboard affordance.
+    let outline = if focused {
+      check_color
+    } else {
+      theme.palette.outline
+    }
+    commands.push(@core.DrawCommand::StrokeRoundedRect(box, outline, 2.0))
   }
   commands.push(
     @core.DrawCommand::DrawText(
