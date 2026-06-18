@@ -37,8 +37,20 @@ pub fn[Msg] slider(
         size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
       )
     },
-    paint=ctx => {
-      let frame = ctx.frame
+   paint=ctx => {
+     let frame = ctx.frame
+      // Focus grows the thumb slightly so keyboard users get a visible
+      // affordance, and the thumb gains a crisp ring that separates it from
+      // the filled track. Ring color is a near-white highlight in light mode
+      // and a faint surface-tinted edge in dark mode.
+      let focused = ctx.focused
+      let thumb_size = knob + (if focused { 3.0 } else { 0.0 })
+      let ring_color = match ctx.environment.theme.scheme {
+        @core.ColorScheme::Light => @core.Color::white().with_alpha(0.92)
+        @core.ColorScheme::Dark =>
+          ctx.environment.theme.palette.foreground.with_alpha(0.18)
+      }
+      let ring_width = 2.0
       let track = @core.Rect::new(
         x=frame.origin.x,
         y=frame.origin.y + (frame.size.height - track_height) / 2.0,
@@ -46,7 +58,16 @@ pub fn[Msg] slider(
         height=track_height,
       )
       let knob_x = frame.origin.x +
-        normalized * max_view_double(0.0, frame.size.width - knob)
+        normalized * max_view_double(0.0, frame.size.width - thumb_size)
+      let thumb_rect = @core.RoundedRect::new(
+        rect=@core.Rect::new(
+          x=knob_x,
+          y=frame.origin.y + (frame.size.height - thumb_size) / 2.0,
+          width=thumb_size,
+          height=thumb_size,
+        ),
+        radius=thumb_radius,
+      )
       @core.ViewPaintPlan::commands([
         @core.DrawCommand::FillRoundedRectBrush(
           @core.RoundedRect::new(rect=track, radius=track_radius),
@@ -65,19 +86,16 @@ pub fn[Msg] slider(
           @core.Brush::solid(foreground_color),
         ),
         @core.DrawCommand::FillRoundedRectBrush(
-          @core.RoundedRect::new(
-            rect=@core.Rect::new(
-              x=knob_x,
-              y=frame.origin.y + (frame.size.height - knob) / 2.0,
-              width=knob,
-              height=knob,
-            ),
-            radius=thumb_radius,
-          ),
+          thumb_rect,
           @core.Brush::solid(thumb_color),
         ),
+        @core.DrawCommand::StrokeRoundedRectBrush(
+          thumb_rect,
+          @core.Brush::solid(ring_color),
+          ring_width,
+        ),
       ])
-    },
+   },
     semantics=() => {
       @core.ViewSemanticsInfo::new(
         role=@core.SemanticsRole::Slider,
