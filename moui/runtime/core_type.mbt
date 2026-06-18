@@ -41,4 +41,5 @@ using @core {
   type TextRange,
   type TextSystem,
   type ViewDirtyHint,
+  type ViewSemanticsInfo,
 }
