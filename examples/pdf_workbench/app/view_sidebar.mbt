@@ -2,9 +2,9 @@
 fn pdf_workbench_sidebar(
   model : PdfWorkbenchModel,
   metrics : PdfWorkbenchLayoutMetrics,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
-  let rows : Array[@core.View[PdfWorkbenchMsg]] = []
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
+  let rows : Array[@moui.View[PdfWorkbenchMsg]] = []
   let item_width = pdf_workbench_panel_item_width(
     metrics.sidebar_scroll_width,
     theme,
@@ -80,8 +80,8 @@ fn pdf_workbench_page_nav_item(
   matched~ : Bool,
   thumbnail_raster~ : PdfWorkbenchRasterPage?,
   width~ : Double,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   let control_width = (width - 68.0).max(110.0)
   @views.row(
     [
@@ -128,10 +128,10 @@ fn pdf_workbench_page_thumbnail(
   summary : PdfWorkbenchPageSummary,
   selected~ : Bool,
   thumbnail_raster~ : PdfWorkbenchRasterPage?,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   @views.custom_layout(
-    measure=_ => @core.Size::new(width=54.0, height=68.0),
+    measure=_ => @moui.Size::new(width=54.0, height=68.0),
     paint=frame => {
       let page_width = 40.0
       let page_height = 56.0

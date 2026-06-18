@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::text_diagnostics_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let card_width = if metrics.compact { metrics.body_width } else { 300.0 }
   self.section_panel(
     theme,
@@ -67,9 +67,9 @@ fn text_frame_clip_sample() -> String {
 
 ///|
 fn text_frame_clip_card(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let frame_width = 96.0
   showcase_soft_card(
     theme,
@@ -101,11 +101,11 @@ fn text_frame_clip_card(
 
 ///|
 fn text_diagnostic_card(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   title : String,
   sample : String,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   showcase_soft_card(
     theme,
     column(

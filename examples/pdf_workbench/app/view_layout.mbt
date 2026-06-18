@@ -4,16 +4,16 @@ using @views {column, expanded, row, surface}
 ///|
 fn PdfWorkbenchModel::view_with_environment(
   self : PdfWorkbenchModel,
-  env : @core.ViewEnvironment,
-) -> @core.View[PdfWorkbenchMsg] {
+  env : @moui.ViewEnvironment,
+) -> @moui.View[PdfWorkbenchMsg] {
   self.view_for_viewport(env.viewport_size())
 }
 
 ///|
 fn PdfWorkbenchModel::view_for_viewport(
   self : PdfWorkbenchModel,
-  viewport : @core.Size,
-) -> @core.View[PdfWorkbenchMsg] {
+  viewport : @moui.Size,
+) -> @moui.View[PdfWorkbenchMsg] {
   let theme = @views.light_theme()
   let metrics = pdf_workbench_layout_metrics(
     viewport,
@@ -31,7 +31,7 @@ fn PdfWorkbenchModel::view_for_viewport(
     )
   }
   let header = pdf_workbench_toolbar(self, theme)
-  let body_columns : Array[@core.View[PdfWorkbenchMsg]] = []
+  let body_columns : Array[@moui.View[PdfWorkbenchMsg]] = []
   if metrics.sidebar_visible {
     body_columns.push(pdf_workbench_sidebar(self, metrics, theme))
   }
@@ -44,7 +44,7 @@ fn PdfWorkbenchModel::view_for_viewport(
     spacing=theme.spacing_scale.md,
     align=@views.CrossAlign::Start,
   )
-  let rows : Array[@core.View[PdfWorkbenchMsg]] = [header]
+  let rows : Array[@moui.View[PdfWorkbenchMsg]] = [header]
   match self.status {
     Failed(_) => rows.push(pdf_workbench_failure_banner(self, metrics, theme))
     _ => ()
@@ -67,7 +67,7 @@ fn PdfWorkbenchModel::view_for_viewport(
 
 ///|
 priv struct PdfWorkbenchLayoutMetrics {
-  viewport : @core.Size
+  viewport : @moui.Size
   inner_width : Double
   body_height : Double
   sidebar_visible : Bool
@@ -84,8 +84,8 @@ priv struct PdfWorkbenchLayoutMetrics {
 
 ///|
 fn pdf_workbench_layout_metrics(
-  viewport : @core.Size,
-  theme : @core.Theme,
+  viewport : @moui.Size,
+  theme : @moui.Theme,
   reader_fullscreen? : Bool = false,
 ) -> PdfWorkbenchLayoutMetrics {
   let safe_width = viewport.width.max(640.0)
@@ -134,7 +134,7 @@ fn pdf_workbench_layout_metrics(
   let panel_padding = theme.spacing_scale.md
   let compact_panel_padding = theme.spacing_scale.sm
   {
-    viewport: @core.Size::new(width=safe_width, height=safe_height),
+    viewport: @moui.Size::new(width=safe_width, height=safe_height),
     inner_width,
     body_height,
     sidebar_visible,
@@ -157,7 +157,7 @@ fn pdf_workbench_layout_metrics(
 ///|
 fn pdf_workbench_panel_item_width(
   scroll_width : Double,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> Double {
   (scroll_width - theme.spacing_scale.md).max(140.0)
 }
@@ -165,7 +165,7 @@ fn pdf_workbench_panel_item_width(
 ///|
 fn pdf_workbench_panel_scroll_height(
   metrics : PdfWorkbenchLayoutMetrics,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> Double {
   (metrics.body_height - theme.spacing_scale.sm * 2.0).max(260.0)
 }

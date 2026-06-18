@@ -19,7 +19,7 @@ test "design systems app switches official presets and custom override" {
     .update(@app.DesignSystemsMsg::SelectDensity("compact"))
     .update(@app.DesignSystemsMsg::ToggleCustom)
   assert_true(model.preset == @app.DesignSystemChoice::Carbon)
-  assert_true(model.scheme == @core.ColorScheme::Dark)
+  assert_true(model.scheme == @moui.ColorScheme::Dark)
   assert_true(model.variant == @common.DesignSchemeVariant::SchemeSystem)
   assert_true(model.density == @common.DesignDensity::Compact)
   assert_true(model.custom_enabled)
@@ -31,7 +31,7 @@ test "design systems app switches official presets and custom override" {
 
 ///|
 fn test_runtime(
-  program : @core.Program[@app.DesignSystemsModel, @app.DesignSystemsMsg],
+  program : @moui.Program[@app.DesignSystemsModel, @app.DesignSystemsMsg],
 ) -> @runtime.AppRuntime {
   @runtime.new_program_with_dimensions(program~, width=960.0, height=680.0)
 }

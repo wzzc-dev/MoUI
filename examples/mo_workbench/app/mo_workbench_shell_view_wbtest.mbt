@@ -137,61 +137,61 @@ test "workbench runtime follows light and dark chrome surfaces" {
   assert_true(
     draw_solid_fill_count(
       commands,
-      test_workbench_app_background(@core.ColorScheme::Light),
+      test_workbench_app_background(@moui.ColorScheme::Light),
     ) >=
     1,
   )
   assert_true(
     draw_solid_fill_count(
       commands,
-      test_workbench_sidebar_background(@core.ColorScheme::Light),
+      test_workbench_sidebar_background(@moui.ColorScheme::Light),
     ) >=
     1,
   )
   assert_true(
     draw_solid_fill_count(
       commands,
-      test_workbench_main_background(@core.ColorScheme::Light),
+      test_workbench_main_background(@moui.ColorScheme::Light),
     ) >=
     1,
   )
   assert_true(
     draw_solid_fill_count(
       commands,
-      test_workbench_panel_background(@core.ColorScheme::Light),
+      test_workbench_panel_background(@moui.ColorScheme::Light),
     ) >=
     3,
   )
   assert_true(
     draw_solid_fill_count(
       commands,
-      test_workbench_status_bar_background(@core.ColorScheme::Light),
+      test_workbench_status_bar_background(@moui.ColorScheme::Light),
     ) >=
     1,
   )
 
   runtime.set_environment(
-    runtime.environment().with_color_scheme(@core.ColorScheme::Dark),
+    runtime.environment().with_color_scheme(@moui.ColorScheme::Dark),
   )
   let dark_commands = runtime.draw_commands()
   assert_true(
     draw_solid_fill_count(
       dark_commands,
-      test_workbench_app_background(@core.ColorScheme::Dark),
+      test_workbench_app_background(@moui.ColorScheme::Dark),
     ) >=
     1,
   )
   assert_true(
     draw_solid_fill_count(
       dark_commands,
-      test_workbench_panel_background(@core.ColorScheme::Dark),
+      test_workbench_panel_background(@moui.ColorScheme::Dark),
     ) >=
     3,
   )
   assert_true(
     draw_solid_fill_count(
       dark_commands,
-      test_workbench_status_bar_background(@core.ColorScheme::Dark),
+      test_workbench_status_bar_background(@moui.ColorScheme::Dark),
     ) >=
     1,
   )
@@ -214,7 +214,7 @@ test "workbench settings page switches appearance mode from sidebar" {
   assert_true(
     draw_solid_fill_count(
       runtime.draw_commands(),
-      test_workbench_app_background(@core.ColorScheme::Dark),
+      test_workbench_app_background(@moui.ColorScheme::Dark),
     ) >=
     1,
   )
@@ -223,7 +223,7 @@ test "workbench settings page switches appearance mode from sidebar" {
   assert_true(
     draw_solid_fill_count(
       runtime.draw_commands(),
-      test_workbench_app_background(@core.ColorScheme::Light),
+      test_workbench_app_background(@moui.ColorScheme::Light),
     ) >=
     1,
   )
@@ -731,12 +731,12 @@ test "workbench main workflow shows and moves visible scrollbar" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(
+        position=@moui.Point::new(
           x=before.origin.x - 80.0,
           y=before.origin.y + 24.0,
         ),
         phase=@core.PointerPhase::Move,
-        wheel_delta=@core.Point::new(x=0.0, y=-240.0),
+        wheel_delta=@moui.Point::new(x=0.0, y=-240.0),
       ),
     ),
   )
@@ -762,12 +762,12 @@ test "workbench composer remains visible after scroll and resize" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(
+        position=@moui.Point::new(
           x=thumb.origin.x - 80.0,
           y=thumb.origin.y + 24.0,
         ),
         phase=@core.PointerPhase::Move,
-        wheel_delta=@core.Point::new(x=0.0, y=-240.0),
+        wheel_delta=@moui.Point::new(x=0.0, y=-240.0),
       ),
     ),
   )
@@ -777,7 +777,7 @@ test "workbench composer remains visible after scroll and resize" {
   }
   assert_true(after.origin.y == before.origin.y)
   runtime.dispatch_event(
-    @core.AppEvent::Resize(@core.Size::new(width=1440.0, height=900.0)),
+    @core.AppEvent::Resize(@moui.Size::new(width=1440.0, height=900.0)),
   )
   guard text_frame(runtime.draw_commands(), "给 Agent 一个任务")
     is Some(resized) else {
@@ -796,7 +796,7 @@ test "workbench shell adapts to runtime viewport resize" {
   inspect(compact_frame.size.height, content="640")
   assert_true(has_text(runtime.draw_commands(), "当前会话"))
   runtime.dispatch_event(
-    @core.AppEvent::Resize(@core.Size::new(width=1440.0, height=900.0)),
+    @core.AppEvent::Resize(@moui.Size::new(width=1440.0, height=900.0)),
   )
   guard first_surface_frame(runtime.draw_commands()) is Some(expanded_frame) else {
     fail("expected root surface frame after resize")

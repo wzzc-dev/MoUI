@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::data_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   self.section_panel(
     theme,
     "Data",
@@ -31,9 +31,9 @@ fn ShowcaseModel::data_section(
 ///|
 fn ShowcaseModel::data_table_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let sort = @views.DataSortState::new(column="status", ascending=false)
   let visibility = @views.ColumnVisibilityState::new(
     visible=["name", "owner"],
@@ -182,9 +182,9 @@ fn ShowcaseModel::data_filter_result_count(self : ShowcaseModel) -> Int {
 ///|
 fn ShowcaseModel::data_selectable_list_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,
@@ -240,9 +240,9 @@ fn ShowcaseModel::data_selectable_list_card(
 ///|
 fn ShowcaseModel::data_tree_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   let tree = [
     tree_item(id="workspace", label="Workspace", children=[
@@ -284,9 +284,9 @@ fn ShowcaseModel::data_tree_card(
 ///|
 fn ShowcaseModel::data_profile_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,

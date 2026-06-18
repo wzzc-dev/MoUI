@@ -2,11 +2,11 @@
 fn WorkbenchModel::session_status_panel(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let active = self.active_session()
   let binding = self.active_agent_session_binding()
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     row(
       [
         text(
@@ -117,8 +117,8 @@ fn WorkbenchModel::session_status_row_count(self : WorkbenchModel) -> Int {
 ///|
 fn session_status_badge(
   status : String,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   if should_show_session_status_meta(status) {
     badge(
       session_status_label(status),
@@ -352,8 +352,8 @@ fn diff_next_action_detail(diff : DiffOverview) -> String {
 fn next_action_row(
   action : WorkbenchNextAction,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let detail_width = workbench_max_double(
     1.0,
     layout.panel_body_width - 66.0 - 68.0 - 58.0 - 32.0,
@@ -399,8 +399,8 @@ fn next_action_row(
 ///|
 fn secondary_next_action_button(
   action : WorkbenchNextAction,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   match action.secondary_message {
     Some(message) =>
       button(
@@ -419,8 +419,8 @@ fn secondary_next_action_button(
 fn plan_progress_row(
   steps : Array[PlanStep],
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let open_count = plan_open_count(steps)
   let current = current_plan_step(steps)
   let step_title = match current {
@@ -479,8 +479,8 @@ fn plan_progress_row(
 ///|
 fn plan_continue_button(
   step : PlanStep?,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   match step {
     Some(value) =>
       button(
@@ -542,8 +542,8 @@ fn plan_step_tone(status : String) -> @views.BadgeTone {
 fn model_catalog_row(
   models : Array[AgentModelInfo],
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let primary = models[0]
   row(
     [
@@ -601,8 +601,8 @@ fn model_catalog_label(models : Array[AgentModelInfo]) -> String {
 fn WorkbenchModel::runtime_signal_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   row(
     [
       text(
@@ -723,12 +723,12 @@ fn pi_agent_phase_display_label(phase : String) -> String {
 fn WorkbenchModel::session_controls_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   ignore(layout)
   let capabilities = self.active_agent_backend_capabilities()
   let settings = self.active_agent_input_settings()
-  let controls : Array[@core.View[WorkbenchMsg]] = []
+  let controls : Array[@moui.View[WorkbenchMsg]] = []
   if capabilities.supports_thinking_level &&
     settings.has_visible_thinking_level() {
     controls.push(self.thinking_level_cell(theme))
@@ -871,8 +871,8 @@ fn WorkbenchModel::should_show_session_name_sync_action(
 ///|
 fn WorkbenchModel::thinking_level_cell(
   self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   text(
     "思考：" + self.thinking_level_label(),
     role=Caption,
@@ -885,8 +885,8 @@ fn WorkbenchModel::thinking_level_cell(
 ///|
 fn WorkbenchModel::cancel_run_button(
   self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   if self.has_cancel_target() {
     button(
       "停止",
@@ -963,8 +963,8 @@ fn AgentSessionBinding::has_visible_binding(self : AgentSessionBinding) -> Bool 
 fn session_binding_row(
   binding : AgentSessionBinding,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let cell_width = workbench_max_double(
     1.0,
     (layout.panel_body_width - 8.0) / 2.0,
@@ -989,8 +989,8 @@ fn session_binding_row(
 fn session_binding_detail(
   binding : AgentSessionBinding,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let detail = session_binding_detail_label(binding)
   if detail == "" {
     blank_cell(width~, height=30.0)
@@ -1056,8 +1056,8 @@ fn WorkbenchModel::thinking_level_label(self : WorkbenchModel) -> String {
 fn session_stats_row(
   metrics : AgentSessionMetrics,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let token_width = workbench_max_double(
     1.0,
     layout.panel_body_width - 128.0 - 108.0 - 112.0 - 24.0,
@@ -1102,8 +1102,8 @@ fn session_stats_row(
 ///|
 fn session_stats_context_cell(
   metrics : AgentSessionMetrics,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   match metrics.context_percent {
     Some(percent) =>
       text(
@@ -1171,8 +1171,8 @@ fn WorkbenchModel::should_show_focused_check_presets(
 ///|
 fn focused_check_preset_row(
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let presets = workbench_check_presets()
   let action_count = presets.length() + 1
   let button_width = workbench_clamp_double(
@@ -1181,7 +1181,7 @@ fn focused_check_preset_row(
     58.0,
     112.0,
   )
-  let controls : Array[@core.View[WorkbenchMsg]] = [
+  let controls : Array[@moui.View[WorkbenchMsg]] = [
     text("常用检查", role=Caption, theme~, width=72.0, height=30.0),
   ]
   controls.push(

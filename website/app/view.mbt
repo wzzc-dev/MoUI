@@ -1,16 +1,16 @@
 ///|
 fn Model::top_bar(
   self : Model,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : Metrics,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let action_label = if self.dark { "☀" } else { "☾" }
   let action_accessibility_label = if self.dark {
     "Switch to light theme"
   } else {
     "Switch to dark theme"
   }
-  let items : Array[@core.View[Msg]] = [brand_mark(theme)]
+  let items : Array[@moui.View[Msg]] = [brand_mark(theme)]
   if !metrics.compact {
     items.push(
       nav_button(theme, "Home", self.page is WebsiteHome, OpenHomeAt(0.0)),
@@ -83,7 +83,7 @@ fn Model::top_bar(
 }
 
 ///|
-fn brand_mark(theme : @core.Theme) -> @core.View[Msg] {
+fn brand_mark(theme : @moui.Theme) -> @moui.View[Msg] {
   row(
     [
       text("MoUI", width=72.0, height=26.0)
@@ -100,11 +100,11 @@ fn brand_mark(theme : @core.Theme) -> @core.View[Msg] {
 
 ///|
 fn nav_button(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
   active : Bool,
   message : Msg,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   button(
     label,
     on_click=message,
@@ -122,9 +122,9 @@ fn nav_button(
 ///|
 fn Model::hero(
   self : Model,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : Metrics,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let ctas = row(
     [
       button(
@@ -253,9 +253,9 @@ fn Model::hero(
 ///|
 fn Model::capability_strip(
   self : Model,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : Metrics,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   ignore(self)
   let stat_width = if metrics.compact {
     metrics.content_width
@@ -313,9 +313,9 @@ fn Model::capability_strip(
 ///|
 fn Model::foundation_section(
   self : Model,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : Metrics,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   ignore(self)
   section_shell(
     theme,
@@ -386,9 +386,9 @@ fn Model::foundation_section(
 ///|
 fn Model::platform_section(
   self : Model,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : Metrics,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   ignore(self)
   section_shell(
     theme,
@@ -471,9 +471,9 @@ fn Model::platform_section(
 ///|
 fn Model::quick_start_section(
   self : Model,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : Metrics,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   ignore(self)
   let copy_width = if metrics.compact { metrics.content_width } else { 520.0 }
   section_shell(
@@ -495,13 +495,13 @@ fn Model::quick_start_section(
 
 ///|
 fn section_shell(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : Metrics,
-  child : @core.View[Msg],
+  child : @moui.View[Msg],
   top~ : Double,
   bottom~ : Double,
   background~ : @core.Color?,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let centered = frame(
     row(
       [
@@ -531,15 +531,15 @@ fn section_shell(
 
 ///|
 fn painted_section_shell(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : Metrics,
-  child : @core.View[Msg],
+  child : @moui.View[Msg],
   top~ : Double,
   bottom~ : Double,
   background~ : @core.Color?,
   dotted~ : Bool,
   wash~ : Bool,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   ignore(dotted)
   ignore(wash)
   section_shell(theme, metrics, child, top~, bottom~, background~)
@@ -547,12 +547,12 @@ fn painted_section_shell(
 
 ///|
 fn section_header(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   title : String,
   summary_zh : String,
   summary : String,
   width : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   column(
     [
       text(title, width~, height=46.0)
@@ -572,14 +572,14 @@ fn section_header(
 
 ///|
 fn website_scrollbar(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   viewport_height~ : Double,
   content_height~ : Double,
   offset_y~ : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let width = 14.0
   custom_layout(
-    measure=_constraints => @core.Size::new(width~, height=viewport_height),
+    measure=_constraints => @moui.Size::new(width~, height=viewport_height),
     paint=frame => {
       let max_scroll = max_website_double(0.0, content_height - viewport_height)
       if max_scroll <= 0.0 {
@@ -624,13 +624,13 @@ fn website_scrollbar(
 
 ///|
 fn metric_card(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
   value : String,
   caption~ : String,
   width~ : Double,
   accent~ : @core.Color,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   surface(
     column(
       [
@@ -658,14 +658,14 @@ fn metric_card(
 
 ///|
 fn feature_card(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   index : String,
   title : String,
   zh_summary : String,
   summary : String,
   width : Double,
   accent : @core.Color,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let content_width = width - 40.0
   surface(
     column(
@@ -711,7 +711,7 @@ fn feature_card(
 
 ///|
 fn platform_card(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   title : String,
   subtitle : String,
   summary_lines : Array[String],
@@ -719,7 +719,7 @@ fn platform_card(
   value : Double,
   width : Double,
   accent : @core.Color,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   ignore(value)
   surface(
     column(
@@ -753,10 +753,10 @@ fn platform_card(
 
 ///|
 fn platform_card_summary(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   lines : Array[String],
   width : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   column(
     lines.map(line => {
       text(line, width~, height=17.0)
@@ -770,17 +770,17 @@ fn platform_card_summary(
 
 ///|
 fn showcase_thumb(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
   width : Double,
   accent : @core.Color,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   ignore(theme)
   let foreground = accent
   let font = @core.FontSpec::new(size=24.0, weight=820)
   custom_layout(
     measure=constraints => {
-      constraints.constrain(@core.Size::new(width~, height=118.0))
+      constraints.constrain(@moui.Size::new(width~, height=118.0))
     },
     paint=frame => {
       let commands : Array[@core.DrawCommand] = [
@@ -800,13 +800,13 @@ fn showcase_thumb(
             @core.PathSpec::new(
               verbs=[
                 @core.PathVerb::MoveTo(
-                  @core.Point::new(
+                  @moui.Point::new(
                     x=start_x,
                     y=frame.origin.y + frame.size.height,
                   ),
                 ),
                 @core.PathVerb::LineTo(
-                  @core.Point::new(
+                  @moui.Point::new(
                     x=start_x - frame.size.height,
                     y=frame.origin.y,
                   ),
@@ -840,7 +840,7 @@ fn showcase_thumb(
 }
 
 ///|
-fn quick_start_copy(theme : @core.Theme, width : Double) -> @core.View[Msg] {
+fn quick_start_copy(theme : @moui.Theme, width : Double) -> @moui.View[Msg] {
   column(
     [
       badge("Build it", tone=@views.BadgeTone::Success, theme~, width=78.0),
@@ -879,9 +879,9 @@ fn quick_start_copy(theme : @core.Theme, width : Double) -> @core.View[Msg] {
 
 ///|
 fn quick_start_placeholder(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   surface(
     column(
       [
@@ -924,63 +924,63 @@ fn hero_statement_font(metrics : Metrics) -> @core.FontSpec {
 }
 
 ///|
-fn website_blue(theme : @core.Theme) -> @core.Color {
+fn website_blue(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.40, g=0.58, b=1.0)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.10, g=0.34, b=0.92)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.40, g=0.58, b=1.0)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.10, g=0.34, b=0.92)
   }
 }
 
 ///|
-fn website_green(theme : @core.Theme) -> @core.Color {
+fn website_green(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.24, g=0.78, b=0.58)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.05, g=0.52, b=0.34)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.24, g=0.78, b=0.58)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.05, g=0.52, b=0.34)
   }
 }
 
 ///|
-fn website_amber(theme : @core.Theme) -> @core.Color {
+fn website_amber(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.98, g=0.69, b=0.25)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.78, g=0.39, b=0.05)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.98, g=0.69, b=0.25)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.78, g=0.39, b=0.05)
   }
 }
 
 ///|
-fn hero_background(theme : @core.Theme) -> @core.Color {
+fn hero_background(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.08, g=0.09, b=0.10)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.98, g=0.99, b=0.98)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.08, g=0.09, b=0.10)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.98, g=0.99, b=0.98)
   }
 }
 
 ///|
-fn showcase_section_background(theme : @core.Theme) -> @core.Color {
+fn showcase_section_background(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.09, g=0.10, b=0.12)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.94, g=0.97, b=0.95)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.09, g=0.10, b=0.12)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.94, g=0.97, b=0.95)
   }
 }
 
 ///|
-fn soft_panel_background(theme : @core.Theme) -> @core.Color {
+fn soft_panel_background(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.11, g=0.13, b=0.15)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.99, g=1.0, b=0.99)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.11, g=0.13, b=0.15)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.99, g=1.0, b=0.99)
   }
 }
 
 ///|
-fn code_panel_background(theme : @core.Theme) -> @core.Color {
+fn code_panel_background(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::black()
-    @core.ColorScheme::Light => @core.Color::white()
+    @moui.ColorScheme::Dark => @core.Color::black()
+    @moui.ColorScheme::Light => @core.Color::white()
   }
 }
 
 ///|
-fn website_border(theme : @core.Theme) -> @core.BorderStyle {
+fn website_border(theme : @moui.Theme) -> @core.BorderStyle {
   @core.BorderStyle::new(
     brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.62)),
     width=1.0,
@@ -989,7 +989,7 @@ fn website_border(theme : @core.Theme) -> @core.BorderStyle {
 
 ///|
 fn accent_border(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   accent : @core.Color,
 ) -> @core.BorderStyle {
   ignore(theme)

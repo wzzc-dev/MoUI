@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::forms_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let field_width = if metrics.compact { metrics.body_width } else { 420.0 }
   let profile_focus_scope = @core.FocusScope::new(
     items=[

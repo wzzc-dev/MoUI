@@ -1,11 +1,11 @@
 ///|
 fn hero_demo_panel(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
   compact : Bool,
   count : Int,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let padding = if compact { 8.0 } else { 10.0 }
   let gap = if compact { 6.0 } else { 12.0 }
   let inner_width = width - padding * 2.0
@@ -32,11 +32,11 @@ fn hero_demo_panel(
 
 ///|
 fn hero_source_panel(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
   compact : Bool,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let header_height = if compact { 34.0 } else { 36.0 }
   surface(
     column(
@@ -58,12 +58,12 @@ fn hero_source_panel(
 
 ///|
 fn hero_counter_panel(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
   compact : Bool,
   count : Int,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let header_height = if compact { 34.0 } else { 36.0 }
   surface(
     column(
@@ -85,12 +85,12 @@ fn hero_counter_panel(
 
 ///|
 fn hero_demo_header(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
   trailing : String,
   width : Double,
   height : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let label_width = max_website_double(44.0, width - 92.0)
   surface(
     row(
@@ -117,11 +117,11 @@ fn hero_demo_header(
 
 ///|
 fn hero_source_code(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
   compact : Bool,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let narrow = width < 240.0
   let padding = if narrow { 8.0 } else if compact { 10.0 } else { 18.0 }
   let inner_width = width - padding * 2.0
@@ -156,7 +156,7 @@ fn hero_source_code(
         ),
         code_snippet_line(theme, "08", "}", inner_width, line_height, font_size),
         code_snippet_line(
-          theme, "09", "fn view(count : Int) -> @core.View[Msg] {", inner_width,
+          theme, "09", "fn view(count : Int) -> @moui.View[Msg] {", inner_width,
           line_height, font_size,
         ),
         code_snippet_line(
@@ -193,12 +193,12 @@ fn hero_source_code(
 
 ///|
 fn hero_counter_demo(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   height : Double,
   compact : Bool,
   count : Int,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let narrow = width < 220.0
   let padding = if narrow { 10.0 } else if compact { 16.0 } else { 24.0 }
   let inner_width = width - padding * 2.0
@@ -288,18 +288,18 @@ fn hero_counter_demo(
 
 ///|
 fn code_snippet_line(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   line_no : String,
   value : String,
   width : Double,
   height : Double,
   font_size : Double,
-) -> @core.View[Msg] {
+) -> @moui.View[Msg] {
   let gutter_width = if font_size < 12.0 { 22.0 } else { 30.0 }
   let font = code_snippet_font(font_size)
   custom_layout(
     measure=constraints => {
-      constraints.constrain(@core.Size::new(width~, height~))
+      constraints.constrain(@moui.Size::new(width~, height~))
     },
     paint=frame => {
       let commands : Array[@core.DrawCommand] = [
@@ -358,7 +358,7 @@ priv struct SyntaxSegment {
 
 ///|
 fn syntax_highlight_draw_commands(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   value : String,
   frame : @core.Rect,
   font : @core.FontSpec,
@@ -531,23 +531,23 @@ fn code_snippet_font(size : Double) -> @core.FontSpec {
 }
 
 ///|
-fn code_snippet_foreground(theme : @core.Theme) -> @core.Color {
+fn code_snippet_foreground(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.86, g=0.93, b=0.90)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.08, g=0.10, b=0.13)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.86, g=0.93, b=0.90)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.08, g=0.10, b=0.13)
   }
 }
 
 ///|
-fn code_snippet_gutter(theme : @core.Theme) -> @core.Color {
+fn code_snippet_gutter(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.46, g=0.58, b=0.57)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.42, g=0.48, b=0.52)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.46, g=0.58, b=0.57)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.42, g=0.48, b=0.52)
   }
 }
 
 ///|
-fn syntax_tone_color(theme : @core.Theme, tone : SyntaxTone) -> @core.Color {
+fn syntax_tone_color(theme : @moui.Theme, tone : SyntaxTone) -> @core.Color {
   match tone {
     SyntaxPlain => code_snippet_foreground(theme)
     SyntaxKeyword => code_syntax_keyword(theme)
@@ -561,70 +561,70 @@ fn syntax_tone_color(theme : @core.Theme, tone : SyntaxTone) -> @core.Color {
 }
 
 ///|
-fn code_syntax_keyword(theme : @core.Theme) -> @core.Color {
+fn code_syntax_keyword(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.56, g=0.75, b=1.0)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.07, g=0.29, b=0.84)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.56, g=0.75, b=1.0)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.07, g=0.29, b=0.84)
   }
 }
 
 ///|
-fn code_syntax_type(theme : @core.Theme) -> @core.Color {
+fn code_syntax_type(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.90, g=0.66, b=1.0)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.56, g=0.20, b=0.76)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.90, g=0.66, b=1.0)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.56, g=0.20, b=0.76)
   }
 }
 
 ///|
-fn code_syntax_function(theme : @core.Theme) -> @core.Color {
+fn code_syntax_function(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.36, g=0.87, b=0.68)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.03, g=0.45, b=0.28)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.36, g=0.87, b=0.68)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.03, g=0.45, b=0.28)
   }
 }
 
 ///|
-fn code_syntax_string(theme : @core.Theme) -> @core.Color {
+fn code_syntax_string(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=1.0, g=0.70, b=0.44)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.72, g=0.30, b=0.02)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=1.0, g=0.70, b=0.44)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.72, g=0.30, b=0.02)
   }
 }
 
 ///|
-fn code_syntax_number(theme : @core.Theme) -> @core.Color {
+fn code_syntax_number(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.73, g=0.83, b=1.0)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.18, g=0.39, b=0.78)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.73, g=0.83, b=1.0)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.18, g=0.39, b=0.78)
   }
 }
 
 ///|
-fn code_syntax_operator(theme : @core.Theme) -> @core.Color {
+fn code_syntax_operator(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.70, g=0.76, b=0.78)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.38, g=0.44, b=0.48)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.70, g=0.76, b=0.78)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.38, g=0.44, b=0.48)
   }
 }
 
 ///|
-fn code_syntax_module(theme : @core.Theme) -> @core.Color {
+fn code_syntax_module(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.53, g=0.87, b=0.92)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.00, g=0.45, b=0.56)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.53, g=0.87, b=0.92)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.00, g=0.45, b=0.56)
   }
 }
 
 ///|
-fn hero_demo_header_background(theme : @core.Theme) -> @core.Color {
+fn hero_demo_header_background(theme : @moui.Theme) -> @core.Color {
   code_panel_background(theme)
 }
 
 ///|
-fn hero_counter_background(theme : @core.Theme) -> @core.Color {
+fn hero_counter_background(theme : @moui.Theme) -> @core.Color {
   match theme.scheme {
-    @core.ColorScheme::Dark => @core.Color::rgba(r=0.10, g=0.11, b=0.13)
-    @core.ColorScheme::Light => @core.Color::rgba(r=0.98, g=0.99, b=0.98)
+    @moui.ColorScheme::Dark => @core.Color::rgba(r=0.10, g=0.11, b=0.13)
+    @moui.ColorScheme::Light => @core.Color::rgba(r=0.98, g=0.99, b=0.98)
   }
 }

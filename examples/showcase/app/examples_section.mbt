@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::examples_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   self.section_panel(
     theme,
     "Examples",
@@ -27,8 +27,8 @@ fn ShowcaseModel::examples_section(
 ///|
 fn ShowcaseModel::counter_preview(
   self : ShowcaseModel,
-  theme : @core.Theme,
-) -> @core.View[ShowcaseMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[ShowcaseMsg] {
   surface(
     column(
       [
@@ -56,9 +56,9 @@ fn ShowcaseModel::counter_preview(
 ///|
 fn ShowcaseModel::todo_preview(
   self : ShowcaseModel,
-  theme : @core.Theme,
-) -> @core.View[ShowcaseMsg] {
-  let children : Array[@core.View[ShowcaseMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[ShowcaseMsg] {
+  let children : Array[@moui.View[ShowcaseMsg]] = [
     text("MoUI Todo")
     .font(theme.typography.title)
     .foreground(theme.palette.foreground),
@@ -103,8 +103,8 @@ fn ShowcaseModel::todo_preview(
 fn ShowcaseModel::todo_row(
   self : ShowcaseModel,
   item : ShowcaseTodoItem,
-  theme : @core.Theme,
-) -> @core.View[ShowcaseMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   row(
     [

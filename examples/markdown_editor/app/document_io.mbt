@@ -58,14 +58,14 @@ fn MarkdownEditorApp::record_recent_document_path(
 fn MarkdownEditorApp::request_file_open(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-) -> @core.Effect[MarkdownEditorMsg] {
+) -> @moui.Effect[MarkdownEditorMsg] {
   self.transfer_status.set(TransferRequesting(FileOpen))
   let options = @host.HostFileDialogOptions::new(
     kind=@host.HostFileDialogKind::OpenFile,
     title="Open Markdown",
     filters=["md", "markdown"],
   )
-  @core.Effect::host_service(
+  @moui.Effect::host_service(
     key="markdown-editor:file-open",
     label="Choose Markdown file",
     run=dispatch => {
@@ -116,7 +116,7 @@ fn MarkdownEditorApp::perform_file_open(
 fn MarkdownEditorApp::request_document_save(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-) -> @core.Effect[MarkdownEditorMsg] {
+) -> @moui.Effect[MarkdownEditorMsg] {
   let path = self.document_path.get()
   if path == "" {
     self.request_file_save_as(services)
@@ -142,10 +142,10 @@ fn MarkdownEditorApp::perform_document_save(
 fn MarkdownEditorApp::request_file_save_as(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-) -> @core.Effect[MarkdownEditorMsg] {
+) -> @moui.Effect[MarkdownEditorMsg] {
   self.transfer_status.set(TransferRequesting(FileSaveAs))
   let options = self.save_file_dialog_options()
-  @core.Effect::host_service(
+  @moui.Effect::host_service(
     key="markdown-editor:file-save-as",
     label="Choose Markdown save location",
     run=dispatch => {
@@ -223,13 +223,13 @@ fn MarkdownEditorApp::request_text_file_read(
   self : MarkdownEditorApp,
   path : String,
   services : @host.HostAppServices,
-) -> @core.Effect[MarkdownEditorMsg] {
+) -> @moui.Effect[MarkdownEditorMsg] {
   if path.trim().to_owned() == "" {
     self.transfer_status.set(TransferUnavailable("recent file path is empty"))
-    return @core.Effect::none()
+    return @moui.Effect::none()
   }
   self.transfer_status.set(TransferRequesting(FileOpen))
-  @core.Effect::host_service(
+  @moui.Effect::host_service(
     key="markdown-editor:file-open-recent",
     label="Open recent Markdown file",
     run=dispatch => {
@@ -252,9 +252,9 @@ fn MarkdownEditorApp::request_text_file_write(
   path : String,
   services : @host.HostAppServices,
   kind~ : MarkdownEditorTransferKind,
-) -> @core.Effect[MarkdownEditorMsg] {
+) -> @moui.Effect[MarkdownEditorMsg] {
   self.transfer_status.set(TransferRequesting(kind))
-  @core.Effect::host_service(
+  @moui.Effect::host_service(
     key="markdown-editor:file-write:" + markdown_editor_transfer_kind_key(kind),
     label="Write Markdown file",
     run=dispatch => {
@@ -335,9 +335,9 @@ fn MarkdownEditorApp::transfer_status_label(self : MarkdownEditorApp) -> String 
 fn MarkdownEditorApp::request_clipboard_import(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-) -> @core.Effect[MarkdownEditorMsg] {
+) -> @moui.Effect[MarkdownEditorMsg] {
   self.transfer_status.set(TransferRequesting(ClipboardImport))
-  @core.Effect::host_service(
+  @moui.Effect::host_service(
     key="markdown-editor:clipboard-import",
     label="Import Markdown from clipboard",
     run=dispatch => {
@@ -382,9 +382,9 @@ fn MarkdownEditorApp::perform_clipboard_import(
 fn MarkdownEditorApp::request_clipboard_export(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-) -> @core.Effect[MarkdownEditorMsg] {
+) -> @moui.Effect[MarkdownEditorMsg] {
   self.transfer_status.set(TransferRequesting(ClipboardExport))
-  @core.Effect::host_service(
+  @moui.Effect::host_service(
     key="markdown-editor:clipboard-export",
     label="Export Markdown to clipboard",
     run=dispatch => {
@@ -429,10 +429,10 @@ fn MarkdownEditorApp::perform_clipboard_export(
 fn MarkdownEditorApp::request_html_export(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-) -> @core.Effect[MarkdownEditorMsg] {
+) -> @moui.Effect[MarkdownEditorMsg] {
   let html = self.html_export_document()
   self.transfer_status.set(TransferRequesting(ClipboardHtmlExport))
-  @core.Effect::host_service(
+  @moui.Effect::host_service(
     key="markdown-editor:html-export",
     label="Export HTML to clipboard",
     run=dispatch => {
@@ -478,7 +478,7 @@ fn MarkdownEditorApp::perform_html_export(
 fn MarkdownEditorApp::request_open_target(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
-) -> @core.Effect[MarkdownEditorMsg] {
+) -> @moui.Effect[MarkdownEditorMsg] {
   let target = match self.open_target_value() {
     Some(target) => target
     None => {
@@ -487,11 +487,11 @@ fn MarkdownEditorApp::request_open_target(
           "open target requires an active link or image target",
         ),
       )
-      return @core.Effect::none()
+      return @moui.Effect::none()
     }
   }
   self.transfer_status.set(TransferRequesting(OpenTarget))
-  @core.Effect::host_service(
+  @moui.Effect::host_service(
     key="markdown-editor:open-target",
     label="Open Markdown link or image target",
     run=dispatch => {

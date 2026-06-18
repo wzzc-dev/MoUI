@@ -1,8 +1,8 @@
 ///|
 fn pdf_workbench_toolbar(
   model : PdfWorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   @views.row(
     [
       @views.column(
@@ -96,8 +96,8 @@ fn pdf_workbench_zoom_label(zoom : Double) -> String {
 fn pdf_workbench_failure_banner(
   model : PdfWorkbenchModel,
   metrics : PdfWorkbenchLayoutMetrics,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   match model.status {
     Failed(reason) =>
       @views.row(
@@ -131,8 +131,8 @@ fn pdf_workbench_failure_banner(
 fn pdf_workbench_status(
   model : PdfWorkbenchModel,
   metrics : PdfWorkbenchLayoutMetrics,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   let status = match model.status {
     Empty => "Empty"
     Requesting(label) => "Requesting: " + label

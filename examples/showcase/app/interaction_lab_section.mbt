@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::interaction_lab_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let card_width = if metrics.compact { metrics.body_width } else { 300.0 }
   self.section_panel(
     theme,
@@ -30,9 +30,9 @@ fn ShowcaseModel::interaction_lab_section(
 ///|
 fn ShowcaseModel::tooltip_demo_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,
@@ -64,10 +64,10 @@ fn ShowcaseModel::tooltip_demo_card(
 ///|
 fn ShowcaseModel::file_drop_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   drop_label : String,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,
@@ -90,10 +90,10 @@ fn ShowcaseModel::file_drop_card(
 ///|
 fn ShowcaseModel::gesture_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   gesture_label : String,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,
@@ -131,9 +131,9 @@ fn ShowcaseModel::gesture_card(
 ///|
 fn ShowcaseModel::focus_shortcut_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   let focus_scope = @core.FocusScope::new(
     current=Some("name"),
@@ -311,9 +311,9 @@ fn ShowcaseModel::focus_shortcut_card(
 ///|
 fn ShowcaseModel::popover_dropdown_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let items = [
     @views.MenuItem::new(
       id="native",
@@ -402,9 +402,9 @@ fn ShowcaseModel::popover_dropdown_card(
 ///|
 fn ShowcaseModel::variant_gallery_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   showcase_soft_card(
     theme,
     column(
@@ -487,10 +487,10 @@ fn ShowcaseModel::variant_gallery_card(
 
 ///|
 fn surface_variant_tile(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
   variant : @views.SurfaceVariant,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   surface(
     text(label, width=80.0, height=22.0)
     .font(theme.typography.caption)
@@ -506,9 +506,9 @@ fn surface_variant_tile(
 ///|
 fn ShowcaseModel::image_lifecycle_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   showcase_soft_card(
     theme,
@@ -538,10 +538,10 @@ fn ShowcaseModel::image_lifecycle_card(
 
 ///|
 fn image_lifecycle_tile(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   label : String,
   source : String,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   column(
     [
       image(

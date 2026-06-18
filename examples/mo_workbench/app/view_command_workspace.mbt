@@ -2,8 +2,8 @@
 fn event_row(
   event : AgentEvent,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let text_width = workbench_max_double(
     1.0,
     layout.panel_body_width - layout.row_badge_width - 8.0,
@@ -57,9 +57,9 @@ fn event_phase_label(phase : String) -> String {
 fn command_run_row(
   command : CommandRun,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     command_run_summary_row(command, layout, theme),
   ]
   if command.details_expanded {
@@ -72,8 +72,8 @@ fn command_run_row(
 fn command_run_summary_row(
   command : CommandRun,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   row(
     [
       badge(
@@ -147,14 +147,14 @@ fn command_run_summary_row(
 fn command_detail_panel(
   command : CommandRun,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let detail_width = workbench_max_double(
     1.0,
     layout.panel_body_width - layout.row_badge_width - 8.0,
   )
   let max_chars = readable_line_char_limit(detail_width)
-  let lines : Array[@core.View[WorkbenchMsg]] = []
+  let lines : Array[@moui.View[WorkbenchMsg]] = []
   for line in command_detail_lines(command, max_chars, max_lines=7) {
     lines.push(
       text(line, role=Caption, theme~, width=detail_width, height=22.0),
@@ -365,8 +365,8 @@ fn command_status_tone(status : String) -> @views.BadgeTone {
 fn file_context_row(
   file : FileContext,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   row(
     [
       badge(
@@ -463,8 +463,8 @@ fn WorkbenchModel::has_cancelled_command(self : WorkbenchModel) -> Bool {
 fn diagnostic_row(
   diagnostic : DiagnosticItem,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   row(
     [
       badge(
@@ -522,12 +522,12 @@ fn diagnostic_badge_tone(severity : String) -> @views.BadgeTone {
 }
 
 ///|
-fn blank_row(height : Double) -> @core.View[WorkbenchMsg] {
+fn blank_row(height : Double) -> @moui.View[WorkbenchMsg] {
   blank_cell(width=650.0, height~)
 }
 
 ///|
-fn blank_cell(width~ : Double, height~ : Double) -> @core.View[WorkbenchMsg] {
+fn blank_cell(width~ : Double, height~ : Double) -> @moui.View[WorkbenchMsg] {
   surface(
     empty(),
     width~,

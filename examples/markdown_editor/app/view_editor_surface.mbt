@@ -1,8 +1,8 @@
 ///|
 fn MarkdownEditorApp::target_bar(
   self : MarkdownEditorApp,
-  theme : @core.Theme,
-) -> @core.View[MarkdownEditorMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
   let kind = self.target_kind.get()
   let block_label = self.block_label.get()
   let block_badge = text("Block: " + block_label, width=132.0, height=34.0)
@@ -196,17 +196,17 @@ fn MarkdownEditorApp::target_bar(
 
 ///|
 fn floating_target_palette(
-  editor : @core.View[MarkdownEditorMsg],
-  target_bar : @core.View[MarkdownEditorMsg],
+  editor : @moui.View[MarkdownEditorMsg],
+  target_bar : @moui.View[MarkdownEditorMsg],
   snapshot : MarkdownEditorSnapshot,
   selection : MarkdownEditorSelection,
   target_kind : MarkdownEditorTargetKind,
   editor_font : @core.FontSpec,
-  theme : @core.Theme,
-  scroll_offset : @core.Point,
+  theme : @moui.Theme,
+  scroll_offset : @moui.Point,
   width : Double,
   height : Double,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   let palette = if target_kind == PlainSelection {
     empty()
   } else {
@@ -219,12 +219,12 @@ fn floating_target_palette(
   }
   @views.custom_children_layout(
     children=[editor, palette],
-    measure=_ => @core.Size::new(width~, height~),
+    measure=_ => @moui.Size::new(width~, height~),
     place=ctx => {
       let palette_size = if ctx.child_sizes.length() > 1 {
         ctx.child_sizes[1]
       } else {
-        @core.Size::new(width=0.0, height=0.0)
+        @moui.Size::new(width=0.0, height=0.0)
       }
       let editor_frame = @core.Rect::new(
         x=ctx.frame.origin.x,
@@ -283,11 +283,11 @@ fn markdown_editor_palette_anchor(
   editor_font : @core.FontSpec,
   palette_width : Double,
   palette_height : Double,
-  scroll_offset : @core.Point,
-  theme : @core.Theme,
-) -> @core.Point {
+  scroll_offset : @moui.Point,
+  theme : @moui.Theme,
+) -> @moui.Point {
   if target_kind == PlainSelection {
-    return @core.Point::new(
+    return @moui.Point::new(
       x=editor_frame.origin.x + (editor_frame.size.width - palette_width) / 2.0,
       y=editor_frame.origin.y +
         markdown_editor_max_double(
@@ -327,10 +327,10 @@ fn markdown_editor_palette_anchor(
       } else {
         rect.origin.y + rect.size.height + theme.spacing_scale.sm
       }
-      @core.Point::new(x~, y~)
+      @moui.Point::new(x~, y~)
     }
     None =>
-      @core.Point::new(
+      @moui.Point::new(
         x=editor_frame.origin.x +
           (editor_frame.size.width - palette_width) / 2.0,
         y=editor_frame.origin.y +
@@ -347,8 +347,8 @@ fn editor_button(
   label : String,
   message : MarkdownEditorMsg,
   variant : @views.ButtonVariant,
-  theme : @core.Theme,
-) -> @core.View[MarkdownEditorMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
   let width = if markdown_editor_text_length(label) > 5 { 78.0 } else { 64.0 }
   button(label, on_click=message, variant~, theme~, width~, height=34.0)
 }
@@ -357,8 +357,8 @@ fn editor_button(
 fn editor_chrome_button(
   label : String,
   message : MarkdownEditorMsg,
-  theme : @core.Theme,
-) -> @core.View[MarkdownEditorMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
   let width = if label == "Src" ||
     label == "Nav" ||
     label == "Cmd" ||
@@ -535,7 +535,7 @@ fn markdown_editor_viewport_height() -> Double {
 fn markdown_editor_page_shadow() -> @core.ShadowStyle {
   @core.ShadowStyle::new(
     color=@core.Color::black().multiply_alpha(0.12),
-    offset=@core.Point::new(x=0.0, y=2.0),
+    offset=@moui.Point::new(x=0.0, y=2.0),
     blur_radius=18.0,
   )
 }
@@ -580,18 +580,18 @@ fn editor_source_layout(
   snapshot : MarkdownEditorSnapshot,
   editor_font : @core.FontSpec,
   appearance : MarkdownEditorAppearanceSpec,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   show_source : Bool,
   show_outline : Bool,
   show_files : Bool,
   show_info : Bool,
-  target_bar : @core.View[MarkdownEditorMsg],
+  target_bar : @moui.View[MarkdownEditorMsg],
   selection : MarkdownEditorSelection,
   target_kind : MarkdownEditorTargetKind,
-  scroll_offset : @core.Point,
+  scroll_offset : @moui.Point,
   on_selection_change : (Int, @core.TextRange?) -> MarkdownEditorMsg,
   on_prefix_click : (Int) -> MarkdownEditorMsg,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   let editor_width = markdown_editor_primary_editor_width(
     show_source, show_outline, show_files, show_info, appearance,
   )
@@ -605,7 +605,7 @@ fn editor_source_layout(
     0.0,
     content_height - viewport_height,
   )
-  let normalized_offset = @core.Point::new(
+  let normalized_offset = @moui.Point::new(
     x=0.0,
     y=markdown_editor_clamp_double(scroll_offset.y, 0.0, max_scroll),
   )
@@ -651,7 +651,7 @@ fn editor_source_layout(
     value=source,
     on_input=value => UpdateDocument(value),
     placeholder="Start writing Markdown",
-    size=@core.Size::new(width=editor_width, height=content_height),
+    size=@moui.Size::new(width=editor_width, height=content_height),
     format=editor_format,
     font=editor_style.font,
     foreground=editor_style.normal.foreground,
@@ -684,7 +684,7 @@ fn editor_source_layout(
   if !show_source && !show_outline && !show_files && !show_info {
     editor_view
   } else {
-    let side_children : Array[@core.View[MarkdownEditorMsg]] = []
+    let side_children : Array[@moui.View[MarkdownEditorMsg]] = []
     if show_files {
       side_children.push(
         files_inspector(app, snapshot, theme, height=viewport_height),
@@ -725,10 +725,10 @@ fn editor_source_layout(
 
 ///|
 fn editor_page(
-  editor : @core.View[MarkdownEditorMsg],
-  theme : @core.Theme,
+  editor : @moui.View[MarkdownEditorMsg],
+  theme : @moui.Theme,
   appearance : MarkdownEditorAppearanceSpec,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   editor
   .shadow(markdown_editor_page_shadow())
   .border(
@@ -744,8 +744,8 @@ fn editor_page(
 ///|
 fn source_preview_lines(
   text : String,
-  theme : @core.Theme,
-) -> @core.View[MarkdownEditorMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
   let font = @core.FontSpec::new(
     families=@core.FontFamilyStack::named("SFMono-Regular")
       .with_fallback(@core.FontFamily::UiMonospace)
@@ -753,7 +753,7 @@ fn source_preview_lines(
     size=12.0,
     weight=400,
   )
-  let children : Array[@core.View[MarkdownEditorMsg]] = []
+  let children : Array[@moui.View[MarkdownEditorMsg]] = []
   for line in markdown_split_lines(markdown_editor_preview_text(text)) {
     children.push(source_preview_line(line, font, theme.palette.foreground))
   }
@@ -765,9 +765,9 @@ fn source_preview_line(
   line : String,
   font : @core.FontSpec,
   color : @core.Color,
-) -> @core.View[MarkdownEditorMsg] {
+) -> @moui.View[MarkdownEditorMsg] {
   @views.custom_layout(
-    measure=_ => @core.Size::new(width=260.0, height=18.0),
+    measure=_ => @moui.Size::new(width=260.0, height=18.0),
     paint=bounds => {
       [
         @core.DrawCommand::DrawText(

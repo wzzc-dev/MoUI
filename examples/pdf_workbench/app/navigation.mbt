@@ -17,7 +17,7 @@ fn PdfWorkbenchModel::select_page_delta(
         preview_scroll_offset: if next == document.selected_page {
           self.preview_scroll_offset
         } else {
-          @core.Point::new(x=0.0, y=0.0)
+          @moui.Point::new(x=0.0, y=0.0)
         },
       }
     }
@@ -40,7 +40,7 @@ fn PdfWorkbenchModel::select_page(
         preview_scroll_offset: if selected == document.selected_page {
           self.preview_scroll_offset
         } else {
-          @core.Point::new(x=0.0, y=0.0)
+          @moui.Point::new(x=0.0, y=0.0)
         },
       }
     }
@@ -60,7 +60,7 @@ fn PdfWorkbenchModel::with_zoom(
     preview_scroll_offset: if clamped == self.zoom {
       self.preview_scroll_offset
     } else {
-      @core.Point::new(x=0.0, y=0.0)
+      @moui.Point::new(x=0.0, y=0.0)
     },
   }
 }
@@ -68,11 +68,11 @@ fn PdfWorkbenchModel::with_zoom(
 ///|
 fn PdfWorkbenchModel::scroll_preview(
   self : PdfWorkbenchModel,
-  delta : @core.Point,
+  delta : @moui.Point,
 ) -> PdfWorkbenchModel {
   {
     ..self,
-    preview_scroll_offset: @core.Point::new(
+    preview_scroll_offset: @moui.Point::new(
       x=(self.preview_scroll_offset.x - delta.x).max(0.0),
       y=(self.preview_scroll_offset.y - delta.y).max(0.0),
     ),
@@ -136,7 +136,7 @@ fn PdfWorkbenchModel::select_search_result(
             preview_scroll_offset: if page == document.selected_page {
               self.preview_scroll_offset
             } else {
-              @core.Point::new(x=0.0, y=0.0)
+              @moui.Point::new(x=0.0, y=0.0)
             },
             last_event: "Search matched page " +
             page.to_string() +
@@ -199,7 +199,7 @@ fn PdfWorkbenchModel::go_to_page_number(
             preview_scroll_offset: if selected == document.selected_page {
               self.preview_scroll_offset
             } else {
-              @core.Point::new(x=0.0, y=0.0)
+              @moui.Point::new(x=0.0, y=0.0)
             },
             last_event: if selected == page {
               "Jumped to page " + selected.to_string()

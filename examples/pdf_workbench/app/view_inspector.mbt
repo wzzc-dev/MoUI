@@ -2,9 +2,9 @@
 fn pdf_workbench_inspector(
   model : PdfWorkbenchModel,
   metrics : PdfWorkbenchLayoutMetrics,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
-  let rows : Array[@core.View[PdfWorkbenchMsg]] = []
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
+  let rows : Array[@moui.View[PdfWorkbenchMsg]] = []
   let item_width = pdf_workbench_panel_item_width(
     metrics.inspector_scroll_width,
     theme,
@@ -67,8 +67,8 @@ fn pdf_workbench_inspector_summary(
   document : PdfWorkbenchDocument,
   matches : Int,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   let zoom_label = pdf_workbench_zoom_label(model.zoom)
   let edit_tone = if document.dirty {
     @views.BadgeTone::Warning
@@ -145,8 +145,8 @@ fn pdf_workbench_inspector_summary(
 ///|
 fn pdf_workbench_inspector_page_group(
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   let button_width = (width - theme.spacing_scale.sm) / 2.0
   pdf_workbench_inspector_group(
     "Page",
@@ -192,8 +192,8 @@ fn pdf_workbench_inspector_document_group(
   model : PdfWorkbenchModel,
   document : PdfWorkbenchDocument,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   pdf_workbench_inspector_group(
     "Document",
     [
@@ -268,9 +268,9 @@ fn pdf_workbench_inspector_document_group(
 fn pdf_workbench_inspector_queue_group(
   document : PdfWorkbenchDocument,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
-  let rows : Array[@core.View[PdfWorkbenchMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
+  let rows : Array[@moui.View[PdfWorkbenchMsg]] = [
     @views.row(
       [
         @views.button(
@@ -324,9 +324,9 @@ fn pdf_workbench_inspector_queue_group(
 fn pdf_workbench_inspector_diagnostics_group(
   document : PdfWorkbenchDocument,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
-  let rows : Array[@core.View[PdfWorkbenchMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
+  let rows : Array[@moui.View[PdfWorkbenchMsg]] = [
     pdf_workbench_inspector_caption(
       document.metadata_summary,
       width,
@@ -371,11 +371,11 @@ fn pdf_workbench_inspector_diagnostics_group(
 ///|
 fn pdf_workbench_inspector_group(
   title : String,
-  children : Array[@core.View[PdfWorkbenchMsg]],
+  children : Array[@moui.View[PdfWorkbenchMsg]],
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
-  let rows : Array[@core.View[PdfWorkbenchMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
+  let rows : Array[@moui.View[PdfWorkbenchMsg]] = [
     @views.text(
       title,
       role=@views.TextRole::Control,
@@ -406,8 +406,8 @@ fn pdf_workbench_inspector_caption(
   value : String,
   width : Double,
   height : Double,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   @views.text(value, role=@views.TextRole::Caption, theme~, width~, height~).foreground(
     theme.palette.muted,
   )
@@ -418,8 +418,8 @@ fn pdf_workbench_edit_queue_row(
   edit : PdfWorkbenchEdit,
   index : Int,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   let label = index.to_string() + ". " + pdf_workbench_edit_queue_label(edit)
   @views.surface(
     pdf_workbench_inspector_caption(label, width - 16.0, 30.0, theme),

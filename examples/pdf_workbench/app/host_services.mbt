@@ -37,7 +37,7 @@ fn PdfWorkbenchModel::request_open_path(
       status: Requesting("Opening PDF"),
       last_event: "Opening " + pdf_workbench_file_name(path),
     },
-    effect=@core.Effect::host_service(
+    effect=@moui.Effect::host_service(
       key="pdf-workbench:open-path:" +
         pdf_workbench_string_hash(path).to_string(),
       label="Open PDF path",
@@ -68,7 +68,7 @@ fn PdfWorkbenchModel::request_open(
       last_event: "Waiting for file picker",
       startup_page_after_load: None,
     },
-    effect=@core.Effect::host_service(
+    effect=@moui.Effect::host_service(
       key="pdf-workbench:open-file",
       label="Open PDF file",
       run=dispatch => {
@@ -130,7 +130,7 @@ fn PdfWorkbenchModel::request_save_path(
       status: Requesting("Choosing save location"),
       last_event: "Waiting for save dialog",
     },
-    effect=@core.Effect::host_service(
+    effect=@moui.Effect::host_service(
       key="pdf-workbench:save-path",
       label="Choose PDF save path",
       run=dispatch => {
@@ -159,7 +159,7 @@ fn PdfWorkbenchModel::request_binary_write(
       status: Requesting("Writing PDF bytes"),
       last_event: "Writing original bytes to " + path,
     },
-    effect=@core.Effect::host_service(
+    effect=@moui.Effect::host_service(
       key="pdf-workbench:write-binary",
       label="Write PDF bytes",
       run=dispatch => {
@@ -320,7 +320,7 @@ fn PdfWorkbenchModel::apply_pdf_bytes(
         raster_page: None,
         raster_cache: [],
         raster_status: RasterIdle,
-        preview_scroll_offset: @core.Point::new(x=0.0, y=0.0),
+        preview_scroll_offset: @moui.Point::new(x=0.0, y=0.0),
         query: "",
         status: Ready,
         last_event: "Loaded " +

@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::advanced_rendering_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   let card_width = if metrics.compact { 260.0 } else { 300.0 }
   let cards = [
@@ -34,11 +34,11 @@ fn ShowcaseModel::advanced_rendering_section(
 
 ///|
 fn advanced_rendering_card(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   title : String,
   width : Double,
   mode : String,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   showcase_soft_card(
     theme,
     column(
@@ -59,14 +59,14 @@ fn advanced_rendering_card(
 
 ///|
 fn advanced_rendering_canvas(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   mode : String,
   width : Double,
   height : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   @views.custom_layout(
     measure=constraints => {
-      constraints.constrain(@core.Size::new(width~, height~))
+      constraints.constrain(@moui.Size::new(width~, height~))
     },
     paint=frame => {
       let bg = @core.RoundedRect::new(rect=frame, radius=theme.radius_scale.md)
@@ -190,7 +190,7 @@ fn advanced_rendering_canvas(
                 radius=theme.radius_scale.lg,
               ),
               @core.Brush::radial_gradient(
-                center=@core.Point::new(
+                center=@moui.Point::new(
                   x=frame.origin.x + width * 0.62,
                   y=frame.origin.y + height * 0.48,
                 ),
@@ -270,10 +270,10 @@ fn advanced_rendering_canvas(
             @core.DrawCommand::DrawPath(
               @core.PathSpec::new(
                 verbs=[
-                  @core.PathVerb::MoveTo(@core.Point::new(x=0.0, y=60.0)),
-                  @core.PathVerb::LineTo(@core.Point::new(x=34.0, y=4.0)),
-                  @core.PathVerb::LineTo(@core.Point::new(x=78.0, y=54.0)),
-                  @core.PathVerb::LineTo(@core.Point::new(x=42.0, y=44.0)),
+                  @core.PathVerb::MoveTo(@moui.Point::new(x=0.0, y=60.0)),
+                  @core.PathVerb::LineTo(@moui.Point::new(x=34.0, y=4.0)),
+                  @core.PathVerb::LineTo(@moui.Point::new(x=78.0, y=54.0)),
+                  @core.PathVerb::LineTo(@moui.Point::new(x=42.0, y=44.0)),
                   @core.PathVerb::Close,
                 ],
                 fill=Some(
@@ -349,7 +349,7 @@ fn advanced_rendering_canvas(
                 radius=18.0,
               ),
               @core.Brush::radial_gradient(
-                center=@core.Point::new(x=left + 24.0, y=top + 24.0),
+                center=@moui.Point::new(x=left + 24.0, y=top + 24.0),
                 radius=64.0,
                 center_color=@core.Color::rgba(r=1.0, g=0.04, b=0.18),
                 edge_color=@core.Color::rgba(r=0.02, g=0.2, b=1.0),
@@ -431,15 +431,15 @@ fn advanced_rendering_canvas(
               @core.PathSpec::new(
                 verbs=[
                   @core.PathVerb::MoveTo(
-                    @core.Point::new(x=left + 8.0, y=top + 74.0),
+                    @moui.Point::new(x=left + 8.0, y=top + 74.0),
                   ),
                   @core.PathVerb::CubicTo(
-                    @core.Point::new(x=left + 42.0, y=top - 6.0),
-                    @core.Point::new(x=left + 104.0, y=top + 14.0),
-                    @core.Point::new(x=left + 136.0, y=top + 76.0),
+                    @moui.Point::new(x=left + 42.0, y=top - 6.0),
+                    @moui.Point::new(x=left + 104.0, y=top + 14.0),
+                    @moui.Point::new(x=left + 136.0, y=top + 76.0),
                   ),
                   @core.PathVerb::LineTo(
-                    @core.Point::new(x=left + 70.0, y=top + 48.0),
+                    @moui.Point::new(x=left + 70.0, y=top + 48.0),
                   ),
                   @core.PathVerb::Close,
                 ],

@@ -2,8 +2,8 @@
 fn pdf_workbench_page_surface(
   model : PdfWorkbenchModel,
   metrics : PdfWorkbenchLayoutMetrics,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   let page = match model.document {
     Some(document) => document.selected_summary()
     None =>
@@ -30,7 +30,7 @@ fn pdf_workbench_page_surface(
       document.page_count.to_string()
     None => "Preview"
   }
-  let rows : Array[@core.View[PdfWorkbenchMsg]] = [
+  let rows : Array[@moui.View[PdfWorkbenchMsg]] = [
     pdf_workbench_page_toolbar(model, page_label, metrics, theme),
   ]
   if !metrics.reader_fullscreen && !metrics.inspector_visible {
@@ -72,8 +72,8 @@ fn pdf_workbench_page_toolbar(
   model : PdfWorkbenchModel,
   page_label : String,
   metrics : PdfWorkbenchLayoutMetrics,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   let fullscreen_label = if model.reader_fullscreen { "Exit" } else { "Full" }
   @views.row(
     [
@@ -153,8 +153,8 @@ fn pdf_workbench_page_toolbar(
 fn pdf_workbench_compact_edit_strip(
   model : PdfWorkbenchModel,
   metrics : PdfWorkbenchLayoutMetrics,
-  theme : @core.Theme,
-) -> @core.View[PdfWorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[PdfWorkbenchMsg] {
   ignore(metrics)
   let dirty = match model.document {
     Some(document) => document.dirty || document.edits.length() > 0

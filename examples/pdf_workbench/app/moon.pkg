@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/encoding/utf8",
+  "wzzc-dev/moui",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/views",

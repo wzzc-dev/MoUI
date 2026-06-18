@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::controls_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let choice_items = [
     choice_item("native", "Native"),
     choice_item("web", "Web"),
@@ -187,9 +187,9 @@ fn ShowcaseModel::controls_section(
 
 ///|
 fn control_ecosystem_baseline_card(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let inner_width = max_showcase_double(160.0, width - 32.0)
   surface(
     column(
@@ -236,10 +236,10 @@ fn control_ecosystem_baseline_card(
 
 ///|
 fn baseline_row(
-  theme : @core.Theme,
+  theme : @moui.Theme,
   width : Double,
   label : String,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   text(label, width~, height=20.0)
   .font(theme.typography.caption)
   .foreground(theme.palette.muted)

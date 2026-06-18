@@ -90,7 +90,7 @@ fn click_text(runtime : @runtime.AppRuntime, text : String) -> Unit raise {
   guard text_frame(runtime.draw_commands(), text) is Some(frame) else {
     fail("expected text frame for " + text)
   }
-  let point = @core.Point::new(
+  let point = @moui.Point::new(
     x=frame.origin.x + frame.size.width / 2.0,
     y=frame.origin.y + frame.size.height / 2.0,
   )

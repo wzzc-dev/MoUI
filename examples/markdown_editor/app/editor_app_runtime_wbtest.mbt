@@ -39,7 +39,7 @@ test "markdown editor page decoration keeps editor interactive" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=84.0),
+        position=@moui.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -58,7 +58,7 @@ test "markdown editor controlled runtime rebuilds after input" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=84.0),
+        position=@moui.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),

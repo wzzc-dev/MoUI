@@ -274,7 +274,7 @@ test "markdown editor runtime enter outdents nested empty list marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=112.0),
+        position=@moui.Point::new(x=28.0, y=112.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -297,7 +297,7 @@ test "markdown editor runtime tab indents focused line" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=84.0),
+        position=@moui.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -397,7 +397,7 @@ test "markdown editor runtime undo restores input transform caret" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=28.0, y=84.0),
+        position=@moui.Point::new(x=28.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),

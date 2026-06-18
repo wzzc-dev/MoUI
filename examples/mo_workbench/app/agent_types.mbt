@@ -318,7 +318,7 @@ priv struct WorkbenchModel {
 ///|
 priv struct WorkbenchUpdate {
   model : WorkbenchModel
-  effect : @core.Effect[WorkbenchMsg]
+  effect : @moui.Effect[WorkbenchMsg]
 }
 
 ///|

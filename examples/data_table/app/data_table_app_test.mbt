@@ -131,7 +131,7 @@ test "data table runtime draws empty loading and error states" {
 
 ///|
 fn test_runtime(
-  program : @core.Program[DataTableModel, DataTableMsg],
+  program : @moui.Program[DataTableModel, DataTableMsg],
   width~ : Double,
   height~ : Double,
 ) -> @runtime.AppRuntime {

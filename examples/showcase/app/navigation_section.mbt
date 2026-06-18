@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::navigation_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let route_focus_store = @views.RouteFocusStore::new()
   route_focus_store.remember(
     route="overview",
@@ -178,8 +178,8 @@ fn ShowcaseModel::navigation_section(
 ///|
 fn ShowcaseModel::navigation_history_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
-) -> @core.View[ShowcaseMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[ShowcaseMsg] {
   surface(
     column(
       [
@@ -242,8 +242,8 @@ fn ShowcaseModel::navigation_history_card(
 ///|
 fn ShowcaseModel::navigation_transition_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
-) -> @core.View[ShowcaseMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[ShowcaseMsg] {
   let transition = @core.TransitionSpec::new(
     from=@core.TransitionStyle::identity()
       .with_opacity(0.72)
@@ -303,9 +303,9 @@ fn showcase_route_history_label(history : @views.RouteHistoryState) -> String {
 ///|
 fn ShowcaseModel::navigation_command_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(metrics)
   let commands = [
     @views.MenuItem::new(id="new", label="New", message=ShowDialog),
@@ -385,9 +385,9 @@ fn ShowcaseModel::navigation_command_card(
 ///|
 fn ShowcaseModel::navigation_palette_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(self)
   ignore(metrics)
   let commands = [
@@ -436,9 +436,9 @@ fn ShowcaseModel::navigation_palette_card(
 ///|
 fn ShowcaseModel::navigation_shell_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let min_master_width = 150.0
   let max_master_width = 260.0
   let master_range = max_master_width - min_master_width
@@ -520,9 +520,9 @@ fn ShowcaseModel::navigation_shell_card(
 ///|
 fn ShowcaseModel::navigation_wizard_card(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   ignore(metrics)
   ignore(self)
   wizard(

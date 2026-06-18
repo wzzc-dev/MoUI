@@ -163,7 +163,7 @@ test "markdown editor runtime typing updates document" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=32.0, y=84.0),
+        position=@moui.Point::new(x=32.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -194,7 +194,7 @@ test "markdown editor runtime enter completes fenced code block" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@core.Point::new(x=32.0, y=84.0),
+        position=@moui.Point::new(x=32.0, y=84.0),
         phase=@core.PointerPhase::Down,
       ),
     ),

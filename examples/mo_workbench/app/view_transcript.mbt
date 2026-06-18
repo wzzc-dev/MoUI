@@ -2,12 +2,12 @@
 fn WorkbenchModel::chat_transcript(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   if self.should_show_chat_empty_state() {
     return self.chat_empty_state(layout, theme)
   }
-  let rows : Array[@core.View[WorkbenchMsg]] = []
+  let rows : Array[@moui.View[WorkbenchMsg]] = []
   if self.has_session_status_panel_content() {
     rows.push(self.session_status_panel(layout, theme))
   }
@@ -59,8 +59,8 @@ fn WorkbenchModel::should_show_chat_empty_state(self : WorkbenchModel) -> Bool {
 fn WorkbenchModel::chat_empty_state(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   ignore(self)
   let width = layout.content_width
   let body_width = workbench_clamp_double(width - 96.0, 220.0, 520.0)
@@ -140,9 +140,9 @@ fn WorkbenchModel::has_workspace_digest_content(self : WorkbenchModel) -> Bool {
 fn WorkbenchModel::turn_evidence_card(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     self.turn_evidence_header_row(layout, theme),
   ]
   if self.has_activity_panel_content() {
@@ -193,8 +193,8 @@ fn WorkbenchModel::turn_evidence_card(
 fn WorkbenchModel::turn_evidence_header_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   row(
     [
       text("当前证据", role=Control, theme~, width=104.0, height=28.0),
@@ -274,13 +274,13 @@ fn command_turn_summary(command : CommandRun) -> String {
 fn WorkbenchModel::workspace_summary_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let summary_width = workbench_max_double(
     1.0,
     layout.panel_body_width - layout.row_badge_width - 124.0 - 16.0,
   )
-  let rows : Array[@core.View[WorkbenchMsg]] = [
+  let rows : Array[@moui.View[WorkbenchMsg]] = [
     row(
       [
         badge("工作区", tone=Accent, theme~, width=layout.row_badge_width),
@@ -359,8 +359,8 @@ fn WorkbenchModel::workspace_summary_detail_label(
 ///|
 fn WorkbenchModel::workspace_summary_actions(
   self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   row(
     [
       button(
@@ -385,8 +385,8 @@ fn WorkbenchModel::workspace_summary_actions(
 ///|
 fn WorkbenchModel::workspace_summary_action_button(
   self : WorkbenchModel,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   if self.diff.has_context() {
     button(
       "审核",
@@ -415,14 +415,14 @@ fn WorkbenchModel::workspace_summary_action_button(
 fn WorkbenchModel::workspace_detail_panel(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let detail_width = workbench_max_double(
     1.0,
     layout.panel_body_width - layout.row_badge_width - 8.0,
   )
   let max_chars = readable_line_char_limit(detail_width)
-  let lines : Array[@core.View[WorkbenchMsg]] = []
+  let lines : Array[@moui.View[WorkbenchMsg]] = []
   for line in self.workspace_detail_lines(max_chars, max_lines=5) {
     lines.push(
       text(line, role=Caption, theme~, width=detail_width, height=22.0),
@@ -570,9 +570,9 @@ fn WorkbenchModel::latest_active_command(self : WorkbenchModel) -> CommandRun? {
 fn WorkbenchModel::transcript_panel(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
-  let rows : Array[@core.View[WorkbenchMsg]] = []
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
+  let rows : Array[@moui.View[WorkbenchMsg]] = []
   for item in self.transcript {
     if transcript_item_is_visible_conversation(item) {
       if self.should_show_process_summary_before_item(item) {
@@ -708,8 +708,8 @@ fn event_is_process_evidence(event : AgentEvent) -> Bool {
 fn WorkbenchModel::process_summary_row(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let badge_width = transcript_compact_badge_width(layout)
   let action_width = 58.0
   let text_width = workbench_max_double(
@@ -774,11 +774,11 @@ fn process_summary_row_height() -> Double {
 fn WorkbenchModel::process_detail_panel(
   self : WorkbenchModel,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let detail_width = layout.process_detail_text_width()
   let lines = self.process_detail_lines(readable_line_char_limit(detail_width))
-  let views : Array[@core.View[WorkbenchMsg]] = []
+  let views : Array[@moui.View[WorkbenchMsg]] = []
   for line in lines {
     views.push(
       text(line, role=Caption, theme~, width=detail_width, height=20.0),
@@ -1083,8 +1083,8 @@ fn WorkbenchModel::transcript_row(
   self : WorkbenchModel,
   item : TranscriptItem,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   ignore(self)
   transcript_compact_row(
     item,
@@ -1100,11 +1100,11 @@ fn WorkbenchModel::transcript_row(
 fn transcript_compact_row(
   item : TranscriptItem,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   badge_label~ : String,
   tone~ : @views.BadgeTone,
   background~ : @core.Color,
-) -> @core.View[WorkbenchMsg] {
+) -> @moui.View[WorkbenchMsg] {
   let badge_width = transcript_compact_badge_width(layout)
   let text_width = transcript_row_text_width(layout)
   surface(
@@ -1129,10 +1129,10 @@ fn transcript_compact_row(
 fn transcript_text_block(
   item : TranscriptItem,
   width : Double,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let max_chars = readable_line_char_limit(width)
-  let lines : Array[@core.View[WorkbenchMsg]] = []
+  let lines : Array[@moui.View[WorkbenchMsg]] = []
   for line in readable_text_lines(item.summary, max_chars, max_lines=2) {
     lines.push(text(line, role=Body, theme~, width~, height=22.0))
   }
@@ -1188,7 +1188,7 @@ fn transcript_row_text_width(layout : WorkbenchLayout) -> Double {
 }
 
 ///|
-fn transcript_row_background(role : String, theme : @core.Theme) -> @core.Color {
+fn transcript_row_background(role : String, theme : @moui.Theme) -> @core.Color {
   match role {
     "assistant" => workbench_transcript_assistant_background(theme)
     "user" => workbench_transcript_user_background(theme)
@@ -1296,8 +1296,8 @@ fn fork_affordance_row_height(
 fn fork_affordance_row(
   point : AgentForkPoint,
   layout : WorkbenchLayout,
-  theme : @core.Theme,
-) -> @core.View[WorkbenchMsg] {
+  theme : @moui.Theme,
+) -> @moui.View[WorkbenchMsg] {
   let indent = transcript_compact_badge_width(layout) + 8.0
   let width = workbench_max_double(1.0, layout.panel_body_width - indent)
   let action_width = 54.0
@@ -1393,9 +1393,9 @@ fn count_badge(
   count : Int,
   label~ : String,
   tone~ : @views.BadgeTone,
-  theme~ : @core.Theme,
+  theme~ : @moui.Theme,
   width~ : Double,
-) -> @core.View[WorkbenchMsg] {
+) -> @moui.View[WorkbenchMsg] {
   if count == 0 {
     blank_cell(width~, height=24.0)
   } else {

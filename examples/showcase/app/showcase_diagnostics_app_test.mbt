@@ -260,7 +260,7 @@ test "showcase text diagnostics keeps key labels and frame clip sample bounded" 
     .update(@app.ShowcaseMsg::SelectSection("text-diagnostics"))
     .runtime(width=960.0, height=620.0)
   let commands = runtime.draw_commands()
-  let size = @core.Size::new(width=960.0, height=620.0)
+  let size = @moui.Size::new(width=960.0, height=620.0)
   assert_true(text_within(commands, "Text Diagnostics", size))
   assert_true(text_within(commands, "CJK", size))
   assert_true(text_within(commands, "RTL / Bidi", size))
@@ -306,7 +306,7 @@ test "showcase interaction lab exposes tooltip variants and file drop wiring" {
         phase=@core.DragDropPhase::Dropped,
         paths=["/tmp/showcase.txt"],
         position=Some(
-          @core.Point::new(
+          @moui.Point::new(
             x=drop_frame.origin.x + 4.0,
             y=drop_frame.origin.y + 4.0,
           ),
@@ -328,7 +328,7 @@ test "showcase renderer section clips long capability content" {
     text_within(
       commands,
       "Runtime & Renderer",
-      @core.Size::new(width=760.0, height=420.0),
+      @moui.Size::new(width=760.0, height=420.0),
     ),
   )
   assert_true(

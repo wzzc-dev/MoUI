@@ -1,9 +1,9 @@
 ///|
 fn ShowcaseModel::layout_section(
   self : ShowcaseModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
   metrics : ShowcaseMetrics,
-) -> @core.View[ShowcaseMsg] {
+) -> @moui.View[ShowcaseMsg] {
   let gallery_grid_columns = if metrics.compact { 1 } else { 2 }
   let gallery_grid_width = if metrics.compact { 252.0 } else { 324.0 }
   let gallery_grid_height = if metrics.compact { 128.0 } else { 100.0 }
@@ -102,7 +102,7 @@ fn ShowcaseModel::layout_section(
         ),
       ],
       measure=ctx => {
-        ctx.constraints.constrain(@core.Size::new(width=220.0, height=34.0))
+        ctx.constraints.constrain(@moui.Size::new(width=220.0, height=34.0))
       },
       place=ctx => [ctx.frame],
       paint=frame => {

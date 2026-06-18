@@ -104,14 +104,14 @@ fn WorkbenchModel::set_appearance_mode(
 }
 
 ///|
-fn view(model : WorkbenchModel) -> @core.View[WorkbenchMsg] {
+fn view(model : WorkbenchModel) -> @moui.View[WorkbenchMsg] {
   model.view()
 }
 
 ///|
 pub fn MoWorkbenchApp::program(
   self : MoWorkbenchApp,
-) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+) -> @moui.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
   ignore(self)
   program()
 }
@@ -120,7 +120,7 @@ pub fn MoWorkbenchApp::program(
 pub fn MoWorkbenchApp::program_with_transport(
   self : MoWorkbenchApp,
   transport_runtime : PiTransportRuntime,
-) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+) -> @moui.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
   ignore(self)
   program_with_transport(transport_runtime)
 }
@@ -130,13 +130,13 @@ pub fn MoWorkbenchApp::program_with_agent_connectors(
   self : MoWorkbenchApp,
   transport_runtime : PiTransportRuntime,
   connector_runtimes : Array[AgentConnectorRuntime],
-) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+) -> @moui.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
   ignore(self)
   program_with_agent_connectors(transport_runtime, connector_runtimes)
 }
 
 ///|
-pub fn program() -> @core.Program[
+pub fn program() -> @moui.Program[
   MoWorkbenchProgramModel,
   MoWorkbenchProgramMsg,
 ] {
@@ -146,7 +146,7 @@ pub fn program() -> @core.Program[
 ///|
 pub fn program_with_transport(
   transport_runtime : PiTransportRuntime,
-) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+) -> @moui.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
   WorkbenchModel::new().program_with_transport(transport_runtime)
 }
 
@@ -154,7 +154,7 @@ pub fn program_with_transport(
 pub fn program_with_agent_connectors(
   transport_runtime : PiTransportRuntime,
   connector_runtimes : Array[AgentConnectorRuntime],
-) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+) -> @moui.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
   WorkbenchModel::new().program_with_agent_connectors(
     transport_runtime, connector_runtimes,
   )
@@ -163,7 +163,7 @@ pub fn program_with_agent_connectors(
 ///|
 fn WorkbenchModel::program(
   self : WorkbenchModel,
-) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+) -> @moui.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
   self.program_with_transport(PiTransportRuntime::unavailable())
 }
 
@@ -171,7 +171,7 @@ fn WorkbenchModel::program(
 fn WorkbenchModel::program_with_transport(
   self : WorkbenchModel,
   transport_runtime : PiTransportRuntime,
-) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+) -> @moui.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
   self.program_with_agent_connectors(transport_runtime, [])
 }
 
@@ -180,9 +180,9 @@ fn WorkbenchModel::program_with_agent_connectors(
   self : WorkbenchModel,
   transport_runtime : PiTransportRuntime,
   connector_runtimes : Array[AgentConnectorRuntime],
-) -> @core.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
-  @core.Program::new_with_environment(
-    init=() => ({ inner: self }, @core.Effect::none()),
+) -> @moui.Program[MoWorkbenchProgramModel, MoWorkbenchProgramMsg] {
+  @moui.Program::new_with_environment(
+    init=() => ({ inner: self }, @moui.Effect::none()),
     update=(model, message) => {
       let update = model.inner.update_with_agent_connectors(
         message.inner,
@@ -205,7 +205,7 @@ fn WorkbenchModel::program_with_agent_connectors(
 ///|
 fn WorkbenchUpdate::new(
   model : WorkbenchModel,
-  effect? : @core.Effect[WorkbenchMsg] = @core.Effect::none(),
+  effect? : @moui.Effect[WorkbenchMsg] = @moui.Effect::none(),
 ) -> WorkbenchUpdate {
   { model, effect }
 }
