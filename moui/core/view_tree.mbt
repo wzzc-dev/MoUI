@@ -597,6 +597,7 @@ fn[Msg] modifier_semantics(modifier : ViewModifier[Msg]) -> ViewSemanticsInfo {
     AccessibilityLabelModifier(label) =>
       ViewSemanticsInfo::new(label~, value=label)
     SemanticsRoleModifier(role) => ViewSemanticsInfo::new(role~)
+    DisabledModifier(disabled) => ViewSemanticsInfo::new(disabled~)
     FocusableModifier(focusable) =>
       ViewSemanticsInfo::new(actions=if focusable { [Focus] } else { [] })
     OnTapMessageModifier(_)
@@ -609,16 +610,21 @@ fn[Msg] modifier_semantics(modifier : ViewModifier[Msg]) -> ViewSemanticsInfo {
         Focus,
         Activate,
       ])
-    SemanticsSelectedModifier(_) =>
-      ViewSemanticsInfo::new(actions=[SemanticsAction::Select])
+    SemanticsSelectedModifier(selected) =>
+      ViewSemanticsInfo::new(selected~, actions=[SemanticsAction::Select])
+    SemanticsPressedModifier(pressed) => ViewSemanticsInfo::new(pressed~)
+    SemanticsCheckedModifier(checked) => ViewSemanticsInfo::new(checked~)
     SemanticsExpandedModifier(expanded) =>
       ViewSemanticsInfo::new(
+        expanded~,
         actions=if expanded {
           [SemanticsAction::Collapse]
         } else {
           [SemanticsAction::Expand]
         },
       )
+    SemanticsInvalidModifier(invalid) => ViewSemanticsInfo::new(invalid~)
+    SemanticsRequiredModifier(required) => ViewSemanticsInfo::new(required~)
     SemanticsDescriptionModifier(description) =>
       ViewSemanticsInfo::new(description~)
     SemanticsActionModifier(action) => ViewSemanticsInfo::new(actions=[action])

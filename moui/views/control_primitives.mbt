@@ -246,6 +246,7 @@ fn[Msg] checkbox_control(
         role=@core.SemanticsRole::Checkbox,
         label~,
         value=if checked.get() { "true" } else { "false" },
+        checked=checked.get(),
         actions=[@core.SemanticsAction::Focus, @core.SemanticsAction::Activate],
       )
     },

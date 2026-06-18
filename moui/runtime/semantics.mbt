@@ -25,16 +25,6 @@ fn ElementNode::build_semantics(
   } else {
     None
   }
-  let state : SemanticsState = {
-    focused: focused == Some(self.id),
-    disabled: self.erased_view_node.state.disabled,
-    selected: self.erased_view_node.state.selected,
-    pressed: self.erased_view_node.state.pressed,
-    checked: self.erased_view_node.state.checked,
-    expanded: self.erased_view_node.state.expanded,
-    invalid: false,
-    required: false,
-  }
   let children : Array[SemanticsNode] = []
   for index, child in self.children {
     if index < render.children.length() {
@@ -43,6 +33,7 @@ fn ElementNode::build_semantics(
       )
     }
   }
+  let state = self.semantics_state(info, children, focused)
   {
     element_id: self.id,
     role: info.role,
@@ -54,6 +45,44 @@ fn ElementNode::build_semantics(
     focus_order,
     frame: render.frame,
     children,
+  }
+}
+
+///|
+fn ElementNode::semantics_state(
+  self : ElementNode,
+  info : ViewSemanticsInfo,
+  children : Array[SemanticsNode],
+  focused : ElementId?,
+) -> SemanticsState {
+  let inherited = match children {
+    [child, ..] => child.state
+    [] => SemanticsState::default()
+  }
+  {
+    focused: focused == Some(self.id),
+    disabled: option_bool(
+      info.disabled,
+      self.erased_view_node.state.disabled || inherited.disabled,
+    ),
+    selected: option_bool(
+      info.selected,
+      self.erased_view_node.state.selected || inherited.selected,
+    ),
+    pressed: option_bool(
+      info.pressed,
+      self.erased_view_node.state.pressed || inherited.pressed,
+    ),
+    checked: option_bool(
+      info.checked,
+      self.erased_view_node.state.checked || inherited.checked,
+    ),
+    expanded: option_bool(
+      info.expanded,
+      self.erased_view_node.state.expanded || inherited.expanded,
+    ),
+    invalid: option_bool(info.invalid, inherited.invalid),
+    required: option_bool(info.required, inherited.required),
   }
 }
 
@@ -168,5 +197,13 @@ fn append_unique_semantics_actions(
     if !target.any(existing => existing == action) {
       target.push(action)
     }
+  }
+}
+
+///|
+fn option_bool(value : Bool?, fallback : Bool) -> Bool {
+  match value {
+    Some(value) => value
+    None => fallback
   }
 }

@@ -597,3 +597,28 @@ test "virtual node sheet handles outside dismiss and preserves child event" {
     fail("expected sheet virtual node identity in inspector")
   }
 }
+
+///|
+test "runtime semantics includes declared state modifiers" {
+  let root : @core.View[Unit] = @views.text("Stateful", width=80.0, height=24.0)
+    .semantics_role(@core.SemanticsRole::Checkbox)
+    .semantics_checked(checked=true)
+    .semantics_selected(selected=true)
+    .semantics_pressed(pressed=true)
+    .semantics_expanded(expanded=true)
+    .semantics_invalid(invalid=true)
+    .semantics_required(required=true)
+    .disabled(disabled=true)
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=100.0, height=32.0),
+  )
+  let semantics = runtime.semantics()
+  assert_true(semantics.state.checked)
+  assert_true(semantics.state.selected)
+  assert_true(semantics.state.pressed)
+  assert_true(semantics.state.expanded)
+  assert_true(semantics.state.invalid)
+  assert_true(semantics.state.required)
+  assert_true(semantics.state.disabled)
+}

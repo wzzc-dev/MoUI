@@ -115,6 +115,13 @@ pub(all) struct ViewSemanticsInfo {
   value : String
   description : String
   actions : Array[SemanticsAction]
+  disabled : Bool?
+  selected : Bool?
+  pressed : Bool?
+  checked : Bool?
+  expanded : Bool?
+  invalid : Bool?
+  required : Bool?
 } derive(Eq, Debug)
 
 ///|
@@ -276,8 +283,28 @@ pub fn ViewSemanticsInfo::new(
   value? : String = "",
   description? : String = "",
   actions? : Array[SemanticsAction] = [],
+  disabled? : Bool,
+  selected? : Bool,
+  pressed? : Bool,
+  checked? : Bool,
+  expanded? : Bool,
+  invalid? : Bool,
+  required? : Bool,
 ) -> ViewSemanticsInfo {
-  { role, label, value, description, actions }
+  {
+    role,
+    label,
+    value,
+    description,
+    actions,
+    disabled,
+    selected,
+    pressed,
+    checked,
+    expanded,
+    invalid,
+    required,
+  }
 }
 
 ///|
