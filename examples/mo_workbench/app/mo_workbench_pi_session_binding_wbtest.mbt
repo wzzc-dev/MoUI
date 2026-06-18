@@ -91,7 +91,7 @@ test "workbench binds switched Pi session after get_state refresh" {
   inspect(binding.last_command, content="get_state")
   inspect(
     binding.as_agent_session_binding().display_status_label(),
-    content="后端会话：Mo Workbench smoke",
+    content="已绑定 · Mo Workbench smoke",
   )
   let session = model.active_session()
   inspect(session.status, content="active")
