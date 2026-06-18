@@ -4,8 +4,6 @@ import {
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/backend/host",
-  "wzzc-dev/moui_skia",
-  "wzzc-dev/moui_skia/native" @skia_native,
   "wzzc-dev/window/core" @window_core,
   "wzzc-dev/window/dpi",
   "wzzc-dev/window/linux" @window_linux,
