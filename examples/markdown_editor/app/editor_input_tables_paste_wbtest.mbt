@@ -1,3 +1,4 @@
+///|
 test "markdown editor tab indents and shift tab outdents selected lines" {
   let indented = markdown_editor_transform_input(
     "Intro\n- one\n- two\nTail",

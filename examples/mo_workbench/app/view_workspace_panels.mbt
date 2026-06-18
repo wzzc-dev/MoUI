@@ -1060,16 +1060,8 @@ fn WorkbenchModel::workspace_status_bar(
   let metrics : Array[@moui.View[WorkbenchMsg]] = [
     status_bar_metric_cell(summary.context_label, width=82.0, theme~),
     status_bar_metric_cell(summary.queue_label, width=72.0, theme~),
-    status_bar_metric_cell(
-      summary.diagnostic_label,
-      width=86.0,
-      theme~,
-    ),
-    status_bar_metric_cell(
-      summary.activity_label,
-      width=102.0,
-      theme~,
-    ),
+    status_bar_metric_cell(summary.diagnostic_label, width=86.0, theme~),
+    status_bar_metric_cell(summary.activity_label, width=102.0, theme~),
   ]
   container(
     row(

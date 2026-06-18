@@ -191,8 +191,7 @@ fn WorkbenchModel::program_with_agent_connectors(
       } else {
         model.inner.view_with_environment(env)
       }
-      view
-      .map(message => MoWorkbenchProgramMsg::{ inner: message })
+      view.map(message => MoWorkbenchProgramMsg::{ inner: message })
     },
   )
 }

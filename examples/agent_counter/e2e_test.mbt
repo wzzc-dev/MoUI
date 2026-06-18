@@ -39,10 +39,10 @@ test "e2e: MCP get_semantics returns the agent counter tree" {
   )
   let s = resp_str(response)
   // The semantics tree must contain the counter's text/button labels.
-  if !(s.contains("Increment")) {
+  if !s.contains("Increment") {
     fail("expected Increment button in semantics; got \{s}")
   }
-  if !(s.contains("Count:")) {
+  if !s.contains("Count:") {
     fail("expected Count: text in semantics; got \{s}")
   }
 }
@@ -113,7 +113,7 @@ test "e2e: dispatch_event reaches runtime via host (pointer input)" {
       ),
     ),
   )
-  if !(result.accepted) {
+  if !result.accepted {
     fail("expected agent-injected pointer event to be accepted by the runtime")
   }
   // Semantics tree must still be readable after the event.
@@ -166,7 +166,7 @@ test "e2e: agent clicks Increment via MCP and counter goes 0 -> 1" {
       ),
     ),
   )
-  if !(before.contains("Count: 0")) {
+  if !before.contains("Count: 0") {
     fail("expected initial Count: 0; got \{before}")
   }
 
@@ -182,7 +182,7 @@ test "e2e: agent clicks Increment via MCP and counter goes 0 -> 1" {
       ),
     ),
   )
-  if !(after.contains("Count: 1")) {
+  if !after.contains("Count: 1") {
     fail("expected Count: 1 after agent click; got \{after}")
   }
   if after.contains("Count: 0") {
@@ -205,7 +205,7 @@ test "e2e: three agent clicks drive Count 0 -> 3" {
       ),
     ),
   )
-  if !(after.contains("Count: 3")) {
+  if !after.contains("Count: 3") {
     fail("expected Count: 3 after three agent clicks; got \{after}")
   }
 }
@@ -225,7 +225,7 @@ test "e2e: agent clicking Decrement decreases the count" {
       ),
     ),
   )
-  if !(after.contains("Count: 0")) {
+  if !after.contains("Count: 0") {
     fail("expected Count: 0 after Increment then Decrement; got \{after}")
   }
 }
@@ -249,7 +249,7 @@ test "e2e: rendered frame (screen content) changes 0 -> 1 after agent click" {
       ),
     ),
   )
-  if !(before_frame.contains("Count: 0")) {
+  if !before_frame.contains("Count: 0") {
     fail("expected rendered frame to show Count: 0; got \{before_frame}")
   }
 
@@ -266,7 +266,7 @@ test "e2e: rendered frame (screen content) changes 0 -> 1 after agent click" {
       ),
     ),
   )
-  if !(after_frame.contains("Count: 1")) {
+  if !after_frame.contains("Count: 1") {
     fail(
       "expected rendered frame to show Count: 1 after agent click; got \{after_frame}",
     )
