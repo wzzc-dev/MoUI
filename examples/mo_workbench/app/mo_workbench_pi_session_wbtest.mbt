@@ -81,7 +81,7 @@ test "workbench refresh runtime effect dispatches current session batch" {
     _ => fail("expected captured stats refresh")
   }
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.display_status_label(), content="运行中")
 }
 
 ///|

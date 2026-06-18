@@ -135,6 +135,10 @@ fn ProgramRuntimeSnapshot::empty() -> ProgramRuntimeSnapshot {
   }
 }
 
+test {
+  ignore(ProgramRuntimeSnapshot::empty())
+}
+
 ///|
 pub(all) struct RuntimeInspectorSnapshot {
   size : @core.Size

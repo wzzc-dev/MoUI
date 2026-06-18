@@ -119,14 +119,6 @@ fn default_agent_connector_states() -> Array[AgentConnectorState] {
 }
 
 ///|
-fn AgentConnectorState::enqueue(
-  self : AgentConnectorState,
-  command : AgentConnectorCommand,
-) -> AgentConnectorState {
-  self.enqueue_many([command])
-}
-
-///|
 fn AgentConnectorState::enqueue_many(
   self : AgentConnectorState,
   commands : Array[AgentConnectorCommand],

@@ -87,6 +87,7 @@ fn ElementNode::active_focus_trap(
   self : ElementNode,
   current~ : ElementId?,
 ) -> ElementNode? {
+  ignore(self)
   ignore(current)
   None
 }

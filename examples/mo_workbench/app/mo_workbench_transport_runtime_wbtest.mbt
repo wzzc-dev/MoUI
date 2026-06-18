@@ -283,7 +283,7 @@ test "workbench command catalog runtime effect dispatches slash prompt" {
     _ => fail("expected captured command prompt")
   }
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.display_status_label(), content="运行中")
   inspect(model.transport.last_json_line, content="{\"event\":\"done\"}")
 }
 
@@ -342,7 +342,7 @@ test "workbench transcript follow-up runtime effect dispatches prompt" {
     _ => fail("expected captured transcript follow-up prompt")
   }
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.display_status_label(), content="运行中")
 }
 
 ///|
@@ -400,7 +400,7 @@ test "workbench activity follow-up runtime effect dispatches prompt" {
     _ => fail("expected captured activity follow-up prompt")
   }
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.display_status_label(), content="运行中")
 }
 
 ///|
@@ -460,7 +460,7 @@ test "workbench file context runtime effect dispatches prompt" {
     _ => fail("expected captured file inspection prompt")
   }
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.display_status_label(), content="运行中")
 }
 
 ///|
@@ -560,7 +560,7 @@ test "workbench diff review runtime effect dispatches prompt" {
     _ => fail("expected captured diff review prompt")
   }
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.display_status_label(), content="运行中")
 }
 
 ///|
@@ -639,5 +639,5 @@ test "workbench diagnostic fix runtime effect dispatches prompt" {
     _ => fail("expected captured diagnostic fix prompt")
   }
   inspect(model.pending_transport_count(), content="0")
-  inspect(model.transport.status_label(), content="Running")
+  inspect(model.transport.display_status_label(), content="运行中")
 }

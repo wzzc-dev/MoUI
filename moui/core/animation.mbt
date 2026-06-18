@@ -5,7 +5,7 @@ pub(all) struct Frame {
 } derive(Eq, Debug, ToJson)
 
 ///|
-priv struct Clock {
+pub struct Clock {
   mut last_time_ms : Double?
 }
 
@@ -60,12 +60,12 @@ pub fn Frame::new(time_ms~ : Double, delta_ms~ : Double) -> Frame {
 }
 
 ///|
-fn Clock::new() -> Clock {
+pub fn Clock::new() -> Clock {
   { last_time_ms: None }
 }
 
 ///|
-fn Clock::frame(self : Clock, time_ms : Double) -> Frame {
+pub fn Clock::frame(self : Clock, time_ms : Double) -> Frame {
   let delta = match self.last_time_ms {
     Some(last) => max_double(0.0, time_ms - last)
     None => 0.0

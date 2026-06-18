@@ -1,4 +1,3 @@
-///|
 test "markdown parser recognizes supported block and inline subset" {
   let blocks = parse_markdown(
     "# Title\n## Section\n### Detail\n#### Fine\n##### Small\n###### Caption\nText with **bold** and *italic* and `code` and [link](https://moui.dev) and ![alt](image.png) and ~~old~~\n- bullet\n- [ ] todo\n- [x] done\n1. one\n> quote\n---\n```\ncode\n```",

@@ -271,8 +271,3 @@ fn WorkbenchModel::pending_transport_count(self : WorkbenchModel) -> Int {
     0
   }
 }
-
-///|
-fn WorkbenchModel::open_diagnostic_count(self : WorkbenchModel) -> Int {
-  self.diagnostics.length()
-}

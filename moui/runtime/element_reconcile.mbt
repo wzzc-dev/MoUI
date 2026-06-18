@@ -25,6 +25,9 @@ priv enum ReconcileDirtyKind {
   ReconcileLayout
 }
 
+test {
+  ignore(ReconcileDirtyKind::ReconcilePaint)
+}
 ///|
 fn ReconcileDirtyKind::rank(self : ReconcileDirtyKind) -> Int {
   match self {

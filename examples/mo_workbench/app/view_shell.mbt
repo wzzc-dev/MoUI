@@ -848,14 +848,16 @@ fn WorkbenchModel::backend_selector_cell(
   self : WorkbenchModel,
   theme : @moui.Theme,
 ) -> @moui.View[WorkbenchMsg] {
-  let active = self.active_agent_backend_profile()
   let controls : Array[@moui.View[WorkbenchMsg]] = []
-  for profile in agent_backend_profiles() {
+  for item in self.agent_provider_registry_items() {
     controls.push(
       button(
-        profile.label,
-        on_click=SwitchAgentBackend(profile.id),
-        variant=if profile.id == active.id { Outline } else { Ghost },
+        item.label,
+        on_click=match item.action_message {
+          Some(message) => message
+          None => SwitchAgentBackend(item.backend_id)
+        },
+        variant=if item.active { Outline } else { Ghost },
         theme~,
         width=64.0,
         height=30.0,

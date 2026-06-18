@@ -3,7 +3,7 @@ priv enum DatePickerDisplayMode {
   Date
   DateAndTime
   Time
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 fn[Msg] date_picker_control(

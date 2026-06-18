@@ -39,7 +39,7 @@ let test_semantics_root : @core.SemanticsNode = {
 
 ///|
 pub impl @agent.AgentHost for RecordingHost with fn semantics(
-  self : RecordingHost,
+  _self : RecordingHost,
 ) -> @agent.SemanticsSnapshot {
   @agent.SemanticsSnapshot::{
     root: test_semantics_root,
@@ -61,13 +61,13 @@ pub impl @agent.AgentHost for RecordingHost with fn state(self : RecordingHost) 
 }
 
 ///|
-pub impl @agent.AgentHost for RecordingHost with fn frame(self : RecordingHost) -> @agent.FrameSnapshot {
+pub impl @agent.AgentHost for RecordingHost with fn frame(_self : RecordingHost) -> @agent.FrameSnapshot {
   @agent.FrameSnapshot::{ texts: [], draw_command_count: 0 }
 }
 
 ///|
 pub impl @agent.AgentHost for RecordingHost with fn capabilities(
-  self : RecordingHost,
+  _self : RecordingHost,
 ) -> Array[@agent.AgentCapability] {
   [
     @agent.AgentCapability::{
@@ -164,10 +164,10 @@ test "route: initialize returns protocolVersion and server info" {
   let host = RecordingHost::new()
   let request = req("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}")
   let s = str_of(route(host, request))
-  if not(s.contains("protocolVersion")) {
+  if !s.contains("protocolVersion") {
     fail("expected protocolVersion; got \{s}")
   }
-  if not(s.contains("moui-agent")) {
+  if !s.contains("moui-agent") {
     fail("expected server name; got \{s}")
   }
 }
@@ -179,7 +179,7 @@ test "route: tools/list advertises the agent tools" {
   let s = str_of(route(host, request))
   for
     tool in ["get_semantics", "get_state", "dispatch_command", "dispatch_event"] {
-    if not(s.contains(tool)) {
+    if !s.contains(tool) {
       fail("expected tool \{tool} in tools/list; got \{s}")
     }
   }
@@ -192,7 +192,7 @@ test "route: tools/call dispatch_command invokes the host" {
     "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_command\",\"arguments\":{\"intent\":\"Activate\"}}}",
   )
   let s = str_of(route(host, request))
-  if not(s.contains("content")) {
+  if !s.contains("content") {
     fail("expected content wrapper; got \{s}")
   }
   if host.intents.length() != 1 {
@@ -211,7 +211,7 @@ test "route: tools/call get_semantics returns the tree" {
     "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"tools/call\",\"params\":{\"name\":\"get_semantics\",\"arguments\":{}}}",
   )
   let s = str_of(route(host, request))
-  if not(s.contains("click-me")) {
+  if !s.contains("click-me") {
     fail("expected semantics label in response; got \{s}")
   }
 }
@@ -223,7 +223,7 @@ test "route: unknown method returns -32601" {
     "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"no/such/method\"}",
   )
   let s = str_of(route(host, request))
-  if not(s.contains("-32601")) {
+  if !s.contains("-32601") {
     fail("expected -32601; got \{s}")
   }
 }
@@ -235,7 +235,7 @@ test "route: unknown tool returns -32602" {
     "{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"tools/call\",\"params\":{\"name\":\"bogus_tool\",\"arguments\":{}}}",
   )
   let s = str_of(route(host, request))
-  if not(s.contains("-32602")) {
+  if !s.contains("-32602") {
     fail("expected -32602; got \{s}")
   }
 }
@@ -247,7 +247,7 @@ test "route: dispatch_command with bad intent returns -32602" {
     "{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\",\"params\":{\"name\":\"dispatch_command\",\"arguments\":{\"intent\":\"NotARealIntent\"}}}",
   )
   let s = str_of(route(host, request))
-  if not(s.contains("-32602")) {
+  if !s.contains("-32602") {
     fail("expected -32602 for unknown intent; got \{s}")
   }
   if host.intents.length() != 0 {
@@ -272,7 +272,7 @@ test "route_notify: subscribe_events streams events to the notify sink" {
     n => notifications.push((n : Json).stringify()),
   )
   let sub_str = (sub_resp : Json).stringify()
-  if not(sub_str.contains("subscribed") && sub_str.contains("token")) {
+  if !(sub_str.contains("subscribed") && sub_str.contains("token")) {
     fail("expected subscribed+token in response; got \{sub_str}")
   }
   // Now dispatch an event; the host must fan it out and the router must notify.
@@ -288,7 +288,7 @@ test "route_notify: subscribe_events streams events to the notify sink" {
       "expected at least one notification after dispatch_event; got \{notifications.length()}",
     )
   }
-  if not(notifications[0].contains("notifications/events")) {
+  if !notifications[0].contains("notifications/events") {
     fail("expected notifications/events method; got \{notifications[0]}")
   }
 }

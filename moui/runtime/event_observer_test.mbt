@@ -58,7 +58,7 @@ test "event_observer: dispatch works with default (no-op) observer" {
   )
   if received != [1] {
     fail(
-      "expected default (no-op) observer to leave dispatch behavior intact; got \{received}",
+      "expected default (no-op) observer to leave dispatch behavior intact",
     )
   }
 }
@@ -100,11 +100,11 @@ test "event_observer: installed observer receives events before processing" {
   )
   // Observer fired for the pointer event...
   if observed != ["pointer"] {
-    fail("expected observer to see pointer event; got \{observed}")
+    fail("expected observer to see pointer event")
   }
   // ...and normal processing still happened (message dispatched to on_message).
   if received != [7] {
-    fail("expected processing to proceed after observation; got \{received}")
+    fail("expected processing to proceed after observation")
   }
 }
 
@@ -113,13 +113,14 @@ test "event_observer: installed observer receives events before processing" {
 test "event_observer: set_event_observer replaces previous observer" {
   let first : Array[String] = []
   let second : Array[String] = []
-  let runtime = AppRuntime::new_view(
-    root=event_observer_test_rect(
+  let root : @core.View[Unit] = event_observer_test_rect(
       width=20.0,
       height=20.0,
       color=@core.Color::blue(),
       on_tap=None,
-    ),
+    )
+  let runtime = AppRuntime::new_view(
+    root~,
     size=@core.Size::new(width=100.0, height=100.0),
   )
   runtime.set_event_observer(_ => first.push("first"))
@@ -133,9 +134,9 @@ test "event_observer: set_event_observer replaces previous observer" {
     ),
   )
   if first != [] {
-    fail("expected first observer to be replaced; got \{first}")
+    fail("expected first observer to be replaced")
   }
   if second != ["second"] {
-    fail("expected second observer to be active; got \{second}")
+    fail("expected second observer to be active")
   }
 }
