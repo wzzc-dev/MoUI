@@ -181,25 +181,29 @@ pub fn ButtonStyle::filled(
 ) -> ButtonStyle {
   let primary = theme.palette.primary
   // Derive hover/press shades from the palette primary instead of hard-coded
-  // rgba literals so the button tracks the active theme's accent color.
+  // rgba literals so the button tracks the active theme's accent color. Hover
+  // lightens slightly for a modern lift; press darkens to signal activation.
+  // A subtle resting shadow gives the primary CTA a tactile, elevated feel.
   let normal = control_state(
     foreground=theme.palette.primary_foreground,
     background=@core.Brush::solid(primary),
+    shadow=theme.shadow_scale.sm,
     radius=theme.radius_scale.md,
   )
   let hovered = control_state(
     foreground=theme.palette.primary_foreground,
-    background=@core.Brush::solid(primary.darken(0.08)),
+    background=@core.Brush::solid(primary.lighten(0.06)),
+    shadow=theme.shadow_scale.md,
     radius=theme.radius_scale.md,
   )
   let pressed = control_state(
     foreground=theme.palette.primary_foreground,
-    background=@core.Brush::solid(primary.darken(0.16)),
+    background=@core.Brush::solid(primary.darken(0.12)),
     radius=theme.radius_scale.md,
   )
   let disabled = control_state(
     foreground=theme.palette.muted,
-    background=@core.Brush::solid(theme.palette.surface_variant),
+    background=@core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.7)),
     radius=theme.radius_scale.md,
   )
   { normal, hovered, pressed, disabled }
@@ -209,27 +213,29 @@ pub fn ButtonStyle::filled(
 pub fn ButtonStyle::tonal(
   theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
-  let base = theme.palette.surface_variant
+  // Tonal uses a translucent primary tint over the surface so the control
+  // reads as related to the accent without the full saturation of `filled`.
+  let base = theme.palette.surface.lerp(theme.palette.primary, 0.12)
   let normal = control_state(
-    foreground=theme.foreground,
+    foreground=theme.palette.primary,
     background=@core.Brush::solid(base),
     radius=theme.radius_scale.md,
   )
   // Layer a translucent primary tint over the tonal base for hover/press so
   // the control visibly responds to interaction while staying low-emphasis.
   let hovered = control_state(
-    foreground=theme.foreground,
-    background=@core.Brush::solid(base.lerp(theme.palette.primary, 0.18)),
+    foreground=theme.palette.primary,
+    background=@core.Brush::solid(base.lerp(theme.palette.primary, 0.22)),
     radius=theme.radius_scale.md,
   )
   let pressed = control_state(
-    foreground=theme.foreground,
-    background=@core.Brush::solid(base.lerp(theme.palette.primary, 0.30)),
+    foreground=theme.palette.primary,
+    background=@core.Brush::solid(base.lerp(theme.palette.primary, 0.34)),
     radius=theme.radius_scale.md,
   )
   let disabled = control_state(
     foreground=theme.palette.muted,
-    background=@core.Brush::solid(base.multiply_alpha(0.5)),
+    background=@core.Brush::solid(base.multiply_alpha(0.6)),
     radius=theme.radius_scale.md,
   )
   { normal, hovered, pressed, disabled }
@@ -240,7 +246,13 @@ pub fn ButtonStyle::outline(
   theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
   let border = @core.BorderStyle::new(
-    brush=@core.Brush::solid(theme.palette.outline),
+    brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.8)),
+    width=1.0,
+  )
+  // Hover/press tighten the border toward the accent for affordance and tint
+  // the foreground to match, so the control reads as interactive.
+  let accent_border = @core.BorderStyle::new(
+    brush=@core.Brush::solid(theme.palette.primary.multiply_alpha(0.6)),
     width=1.0,
   )
   let normal = control_state(
@@ -250,22 +262,22 @@ pub fn ButtonStyle::outline(
     radius=theme.radius_scale.md,
   )
   let hovered = control_state(
-    foreground=theme.foreground,
+    foreground=theme.palette.primary,
     background=@core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.5)),
-    border~,
+    border=accent_border,
     radius=theme.radius_scale.md,
   )
   let pressed = control_state(
-    foreground=theme.foreground,
+    foreground=theme.palette.primary,
     background=@core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.9)),
-    border~,
+    border=accent_border,
     radius=theme.radius_scale.md,
   )
   let disabled = control_state(
     foreground=theme.palette.muted,
     background=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
     border=@core.BorderStyle::new(
-      brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.5)),
+      brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.4)),
       width=1.0,
     ),
     radius=theme.radius_scale.md,
@@ -311,7 +323,7 @@ pub fn TextFieldStyle::filled(
     foreground=theme.foreground,
     background=@core.Brush::solid(theme.palette.surface),
     border=@core.BorderStyle::new(
-      brush=@core.Brush::solid(theme.palette.outline),
+      brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.85)),
       width=1.0,
     ),
     radius=theme.radius_scale.md,
@@ -372,10 +384,10 @@ pub fn SliderStyle::default(
 ) -> SliderStyle {
   {
     foreground: theme.palette.primary,
-    background: theme.palette.surface_variant,
+    background: theme.palette.surface_variant.multiply_alpha(0.7),
     thumb_color: theme.palette.primary,
-    track_height: 6.0,
-    thumb_size: 20.0,
+    track_height: 4.0,
+    thumb_size: 18.0,
     radius: theme.radius_scale.pill,
   }
 }
