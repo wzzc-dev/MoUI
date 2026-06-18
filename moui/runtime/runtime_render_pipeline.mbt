@@ -56,7 +56,23 @@ fn RuntimeState::render_current_tree(self : RuntimeState) -> Unit {
       focused=self.focused_element,
       environment=self.environment,
       text_system=self.text_system,
+      now_ms=self.now_ms,
     ),
+  }
+  // Fold the per-subtree animation flag up to the root: if any painted node
+  // reported a mid-animation sample, keep the host ticking redraws until the
+  // animation settles. Controls clear this once progress reaches 1.0.
+  self.active_animations = self.render_tree.root.animating
+  // If an animation is still in flight, request another frame right after the
+  // paint that observed it. This is evaluated after `active_animations` is
+  // updated, so once a transition settles the flag flips false and the redraw
+  // loop stops naturally instead of ticking one extra frame forever.
+  if self.active_animations {
+    self.needs_redraw = true
+    match self.redraw_callback {
+      Some(callback) => callback()
+      None => ()
+    }
   }
   self.last_damage_region = self.compute_damage_region(
     previous_render,

@@ -32,6 +32,15 @@ priv struct RuntimeState {
   mut event_observer : (AppEvent) -> Unit
   clock : Clock
   saveable_state : SaveableStateStore
+  /// Current animation clock time in ms, advanced by `FrameTick`. Threaded
+  /// into `ViewPaintContext.now_ms` so controls can compute transition
+  /// progress. Stays 0.0 until the host begins driving frame ticks.
+  mut now_ms : Double
+  /// True when the most recent paint produced a mid-animation sample
+  /// (`RenderNode.animating` folded up the tree). While true the runtime
+  /// keeps `needs_redraw` set on each `FrameTick` so the host keeps ticking
+  /// until every in-flight animation settles.
+  mut active_animations : Bool
 }
 
 ///|
@@ -89,6 +98,8 @@ fn RuntimeState::new_erased_view_node(
     event_observer: _event => (),
     clock: Clock::new(),
     saveable_state: SaveableStateStore::new(),
+    now_ms: 0.0,
+    active_animations: false,
   }
   let mounted = mount_erased_view_node_for_runtime(root, Some(state), 1)
   state.element_tree = ElementTree::new(mounted.node)

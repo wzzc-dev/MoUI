@@ -251,6 +251,42 @@ pub fn Color::multiply_alpha(self : Color, opacity : Double) -> Color {
 }
 
 ///|
+/// Linearly interpolate between this color and `other` by `t` (clamped to
+/// 0..1). `t = 0` returns `self`, `t = 1` returns `other`. Used to derive
+/// hover/press shades and drive color transitions without a full animation
+/// pipeline.
+pub fn Color::lerp(self : Color, other : Color, t : Double) -> Color {
+  let u = clamp_double(t, 0.0, 1.0)
+  Color::rgba(
+    r=self.r + (other.r - self.r) * u,
+    g=self.g + (other.g - self.g) * u,
+    b=self.b + (other.b - self.b) * u,
+    a=self.a + (other.a - self.a) * u,
+  )
+}
+
+///|
+/// Alias of `Color::lerp` with the conventional `weight` naming: a `weight`
+/// of 0.0 keeps `self`, 1.0 fully adopts `other`.
+pub fn Color::mix(self : Color, other : Color, weight : Double) -> Color {
+  self.lerp(other, weight)
+}
+
+///|
+/// Blend this color toward white by `amount` (clamped to 0..1). Useful for
+/// deriving hover shades from a base palette color.
+pub fn Color::lighten(self : Color, amount : Double) -> Color {
+  self.lerp(Color::white(), amount)
+}
+
+///|
+/// Blend this color toward black by `amount` (clamped to 0..1). Useful for
+/// deriving press/active shades from a base palette color.
+pub fn Color::darken(self : Color, amount : Double) -> Color {
+  self.lerp(Color::black(), amount)
+}
+
+///|
 pub fn FontFamily::css_name(self : FontFamily) -> String {
   match self {
     Name(name) => name

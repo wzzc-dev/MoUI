@@ -264,8 +264,8 @@ test "views facade exposes control-specific contracts" {
 ///|
 test "core descriptor payloads stay opaque" {
   let core = budget_by_label("core")
-  inspect(core.max_lines, content="1510")
-  inspect(core.max_pub_lines, content="465")
+  inspect(core.max_lines, content="1560")
+  inspect(core.max_pub_lines, content="480")
   inspect(core.max_pub_all_lines, content="115")
   assert_true(core.required_tokens.contains("View::node"))
   assert_true(core.required_tokens.contains("View::identity"))

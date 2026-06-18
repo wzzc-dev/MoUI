@@ -5,8 +5,9 @@ pub fn[Msg] button(
   variant? : ButtonVariant = ButtonVariant::Primary,
   theme? : @core.Theme = default_theme(),
   style? : ButtonStyle,
+  icon? : IconName? = None,
   width? : Double = 100.0,
-  height? : Double = 44.0,
+  height? : Double = 40.0,
 ) -> @core.View[Msg] {
   let resolved_style = match style {
     Some(value) => value
@@ -15,17 +16,25 @@ pub fn[Msg] button(
   let normal = resolved_style.normal
   let hovered = resolved_style.hovered
   let pressed = resolved_style.pressed
+  // `width`/`height` act as minimums: the button measures its label (plus an
+  // optional leading icon) and grows to fit the content with padding from the
+  // theme scale.
   button_control(
     text~,
-    size=@core.Size::new(width~, height~),
+    min_size=@core.Size::new(width~, height~),
     font=theme.typography.control,
     foreground=normal.foreground,
     background=normal.background,
     hovered_background=hovered.background,
     pressed_background=pressed.background,
+    padding_horizontal=theme.spacing_scale.lg,
+    padding_vertical=theme.spacing_scale.sm,
+    transition_duration_ms=theme.motion.fast_ms,
+    transition_easing=theme.motion.easing,
     border=normal.border,
     shadow=normal.shadow,
     corner_radius=normal.radius,
+    leading_icon=icon,
     on_click~,
   )
 }

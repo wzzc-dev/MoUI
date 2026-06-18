@@ -74,7 +74,19 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
   // Defaults to a no-op; only active when an observer is installed (agent layer).
   (self.event_observer)(event)
   match event {
-    FrameTick(_) => ()
+    FrameTick(frame) => {
+      // Advance the animation clock so controls can compute transition
+      // progress from `ViewPaintContext.now_ms`. While any subtree is still
+      // animating, keep paint + redraw dirty so the host ticks another frame;
+      // once every animation settles (`active_animations` flips false) this
+      // becomes a passive clock update with no extra redraw.
+      self.now_ms = frame.time_ms
+      if self.active_animations {
+        self.needs_paint = true
+        self.needs_redraw = true
+        self.mark_dirty(self.element_tree.id())
+      }
+    }
     Resize(size) => {
       self.size = size
       self.needs_rebuild = self.element_tree.root.mark_component_tree_build_dirty()
@@ -110,6 +122,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
               environment=self.environment,
               text_system=self.text_system,
               capture_lookup=false,
+              now_ms=self.now_ms,
             )
           } else {
             match
@@ -119,6 +132,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
                 self.render_tree.root,
                 environment=self.environment,
                 text_system=self.text_system,
+                now_ms=self.now_ms,
               ) {
               Some(result) => result
               None => {
@@ -129,6 +143,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
                   environment=self.environment,
                   text_system=self.text_system,
                   capture_lookup=false,
+                  now_ms=self.now_ms,
                 )
               }
             }
@@ -140,6 +155,7 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
             environment=self.environment,
             text_system=self.text_system,
             capture_lookup=false,
+            now_ms=self.now_ms,
           )
       }
       if event.phase == PointerPhase::Down {

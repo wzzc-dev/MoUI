@@ -86,6 +86,7 @@ test "view map maps direct event messages" {
     text_control: view_test_text_control(),
     text_system: @core.TextSystem::fallback(),
     environment: @core.Environment::neutral(),
+    now_ms: 0.0,
   })
   if result.messages != [42] {
     fail("expected mapped direct message")
@@ -117,6 +118,7 @@ test "view map maps nested children" {
         text_control: view_test_text_control(),
         text_system: @core.TextSystem::fallback(),
         environment: @core.Environment::neutral(),
+        now_ms: 0.0,
       })
       if result.messages != ["msg-7"] {
         fail("expected mapped child message")

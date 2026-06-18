@@ -325,7 +325,11 @@ pub fn DesignSemanticPalette::core_semantic_colors(
 pub fn DesignTypographyTokens::core_typography(
   self : DesignTypographyTokens,
 ) -> @core.TypographyScale {
+  // Start from the neutral default so the extended tiers (display/headline/
+  // subtitle/label/overline) keep sensible values, then override the four
+  // legacy slots this design-system token set owns.
   {
+    ..@core.TypographyScale::default(),
     body: self.body,
     title: self.title,
     caption: self.caption,

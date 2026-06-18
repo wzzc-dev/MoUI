@@ -32,6 +32,7 @@ fn ElementNode::render_with_environment(
     text_control: self.control.text_context(),
     environment: render_environment_to_view_environment(environment),
     text_system: environment.text_system,
+    now_ms: environment.now_ms,
   })
   commands.append(plan.commands)
   for layer in plan.child_layers {
@@ -56,6 +57,11 @@ fn ElementNode::render_with_environment(
   let paint_bounds = render_node_paint_bounds(
     bounds, commands, children, post_commands, overlay_commands,
   )
+  // A subtree is animating if this node's own paint reported a mid-animation
+  // sample or any rendered child did. Folded up so the runtime only needs to
+  // check the root to keep redraws ticking.
+  let child_animating = children.iter().any(child => child.animating)
+  let animating = plan.animating || child_animating
   let render = {
     element_id: self.id,
     frame: bounds,
@@ -70,6 +76,7 @@ fn ElementNode::render_with_environment(
     platform_views,
     cached_draw_commands: None,
     cached_overlay_draw_commands: None,
+    animating,
   }
   let render = if plan.repaint_boundary {
     render.with_repaint_boundary_cache()
@@ -110,6 +117,7 @@ fn view_paint_layer_render_node(
     platform_views: layer.platform_views,
     cached_draw_commands: Some(layer.commands),
     cached_overlay_draw_commands: Some(layer.overlay_commands),
+    animating: false,
   }
 }
 

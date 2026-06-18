@@ -47,6 +47,12 @@ pub(all) struct ViewPaintContext {
   text_control : TextControlStateContext
   environment : Environment
   text_system : TextSystem
+  /// Current animation clock time in milliseconds, threaded from the runtime's
+  /// `FrameTick`. Controls read this to compute transition `progress` between
+  /// a state-change timestamp and `now_ms`. Stays 0.0 when no clock is active
+  /// (e.g. the intrinsic-size layout path), which makes progress clamp to the
+  /// terminal state so non-animated paint is unchanged.
+  now_ms : Double
 }
 
 ///|
@@ -57,6 +63,11 @@ pub(all) struct ViewPaintPlan {
   overlay_commands : Array[DrawCommand]
   platform_views : Array[PlatformViewPlacement]
   repaint_boundary : Bool
+  /// True when this paint pass is a mid-animation sample (progress < 1.0) and
+  /// the runtime should keep requesting redraws until the animation settles.
+  /// The runtime folds this across the painted tree to decide whether to keep
+  /// ticking. Controls that hard-cut between states leave this false.
+  animating : Bool
 } derive(Eq, Debug)
 
 ///|
@@ -79,6 +90,10 @@ pub(all) struct ViewEventContext {
   text_control : TextControlStateContext
   text_system : TextSystem
   environment : Environment
+  /// Current animation clock time in ms, matching `ViewPaintContext.now_ms`.
+  /// Event handlers read this to timestamp state transitions (e.g. recording
+  /// when a button entered hover) so the next paint can interpolate progress.
+  now_ms : Double
 }
 
 ///|
@@ -200,6 +215,7 @@ pub fn ViewPaintPlan::empty() -> ViewPaintPlan {
     overlay_commands: [],
     platform_views: [],
     repaint_boundary: false,
+    animating: false,
   }
 }
 
@@ -212,7 +228,19 @@ pub fn ViewPaintPlan::commands(commands : Array[DrawCommand]) -> ViewPaintPlan {
     overlay_commands: [],
     platform_views: [],
     repaint_boundary: false,
+    animating: false,
   }
+}
+
+///|
+/// Like `ViewPaintPlan::commands` but flags the paint as a mid-animation
+/// sample. The runtime keeps requesting redraws while any painted plan in the
+/// tree reports `animating=true`. Controls set this when their transition
+/// `progress < 1.0` (and `reduced_motion` is not in effect).
+pub fn ViewPaintPlan::animating_commands(
+  commands : Array[DrawCommand],
+) -> ViewPaintPlan {
+  { ..ViewPaintPlan::commands(commands), animating: true }
 }
 
 ///|

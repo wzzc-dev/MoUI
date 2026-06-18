@@ -30,7 +30,7 @@ pub fn[Msg] baseline_form_rows(Array[BaselineFormRow[Msg]], width? : Double, lab
 
 pub fn[Msg] breadcrumb(Array[BreadcrumbItem[Msg]], theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
-pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, style? : ButtonStyle, width? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] button(String, on_click? : Msg, variant? : ButtonVariant, theme? : @core.Theme, style? : ButtonStyle, icon? : IconName?, width? : Double, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] button_group(Array[ActionItem[Msg]], selected? : String, theme? : @core.Theme, button_width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -147,6 +147,8 @@ pub fn[Msg] form_workflow_bar(summary~ : FormValidationSummary, primary~ : State
 pub fn[Msg] frame(@core.View[Msg], width? : Double, height? : Double, min_width? : Double, min_height? : Double, max_width? : Double, max_height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] grid(Array[@core.View[Msg]], columns? : Int, row_spacing? : Double, column_spacing? : Double) -> @core.View[Msg]
+
+pub fn[Msg] icon(IconName, size? : Double, color? : @core.Color, weight? : Double) -> @core.View[Msg]
 
 pub fn[Msg] image(String, width? : Double, height? : Double, opacity? : Double, corner_radius? : Double, fit? : @core.ImageFit) -> @core.View[Msg]
 
@@ -599,6 +601,21 @@ pub(all) struct FormValidationSummary {
 pub fn FormValidationSummary::from_errors(Array[FormFieldError]) -> Self
 pub fn FormValidationSummary::from_fields(Array[FormFieldState]) -> Self
 
+pub(all) enum IconName {
+  Check
+  Close
+  ChevronDown
+  ChevronRight
+  ChevronLeft
+  Plus
+  Minus
+  Search
+  ArrowRight
+  Settings
+  Trash
+  Info
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum MainAlign {
   Start
   Center
@@ -865,6 +882,11 @@ pub(all) enum TextRole {
   Caption
   Control
   Mono
+  Display
+  Headline
+  Subtitle
+  Label
+  Overline
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct TextStyle {

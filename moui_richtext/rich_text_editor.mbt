@@ -223,6 +223,7 @@ fn rich_text_editor_paint(
     overlay_commands,
     platform_views: [],
     repaint_boundary: false,
+    animating: false,
   }
 }
 

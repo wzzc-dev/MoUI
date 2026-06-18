@@ -151,7 +151,14 @@ fn[Msg] container_box(
       @core.ViewLayoutResult::new(size=measured, child_frames=frames)
     },
     paint=ctx => {
-      container_paint(ctx.frame, background~, border~, corner_radius~, shadow~)
+      container_paint(
+        ctx.frame,
+        background~,
+        border~,
+        corner_radius~,
+        shadow~,
+        scheme=ctx.environment.color_scheme,
+      )
     },
     semantics=() => {
       @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Group)
@@ -302,6 +309,7 @@ fn[Msg] scroll_container(
         overlay_commands: [],
         platform_views: [],
         repaint_boundary: false,
+        animating: false,
       }
     },
     event=ctx => {
@@ -416,24 +424,11 @@ fn container_paint(
   border~ : @core.BorderStyle?,
   corner_radius~ : Double,
   shadow~ : @core.ShadowStyle?,
+  scheme~ : @core.ColorScheme,
 ) -> @core.ViewPaintPlan {
   let commands : Array[@core.DrawCommand] = []
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
-  match shadow {
-    Some(style) =>
-      commands.push(
-        @core.DrawCommand::DrawShadow(
-          @core.ShadowSpec::new(
-            rect=rounded,
-            color=style.color,
-            offset=style.offset,
-            blur_radius=style.blur_radius,
-            spread=style.spread,
-          ),
-        ),
-      )
-    None => ()
-  }
+  emit_elevation_shadow(commands, rounded, shadow, scheme)
   match background {
     Some(brush) =>
       commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, brush))

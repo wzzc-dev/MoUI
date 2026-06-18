@@ -315,6 +315,7 @@ fn[Msg] modifier_paint(
         overlay_commands: [],
         platform_views: [],
         repaint_boundary: false,
+        animating: false,
       }
     ShadowModifier(style) =>
       ViewPaintPlan::commands([
@@ -348,6 +349,7 @@ fn[Msg] modifier_paint(
         overlay_commands: [],
         platform_views: [],
         repaint_boundary: false,
+        animating: false,
       }
     ScaleModifier(sx, sy) =>
       {
@@ -357,6 +359,7 @@ fn[Msg] modifier_paint(
         overlay_commands: [],
         platform_views: [],
         repaint_boundary: false,
+        animating: false,
       }
     DisabledModifier(true) =>
       {
@@ -366,6 +369,7 @@ fn[Msg] modifier_paint(
         overlay_commands: [],
         platform_views: [],
         repaint_boundary: false,
+        animating: false,
       }
     RepaintBoundaryModifier =>
       { ..ViewPaintPlan::empty(), repaint_boundary: true }

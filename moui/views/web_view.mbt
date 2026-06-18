@@ -42,6 +42,7 @@ pub fn[Msg] web_view(
           overlay_commands: [],
           platform_views: [spec.platform_view_placement(frame=ctx.frame)],
           repaint_boundary: false,
+          animating: false,
         }
       }
     },

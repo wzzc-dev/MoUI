@@ -27,6 +27,13 @@ pub(all) enum TextRole {
   Caption
   Control
   Mono
+  // Extended typography tiers (P2). The legacy Body/Title/Caption/Control
+  // variants stay as aliases so existing callers are unaffected.
+  Display
+  Headline
+  Subtitle
+  Label
+  Overline
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -110,14 +117,20 @@ fn TextRole::font(self : TextRole, theme : @core.Theme) -> @core.FontSpec {
     Control => theme.typography.control
     Mono =>
       { ..theme.typography.body, families: @core.FontFamilyStack::monospace() }
+    Display => theme.typography.display
+    Headline => theme.typography.headline
+    Subtitle => theme.typography.subtitle
+    Label => theme.typography.label
+    Overline => theme.typography.overline
   }
 }
 
 ///|
 fn TextRole::color(self : TextRole, theme : @core.Theme) -> @core.Color {
   match self {
-    Caption => theme.palette.muted
-    Body | Title | Control | Mono => theme.foreground
+    Caption | Overline => theme.palette.muted
+    Body | Title | Control | Mono | Display | Headline | Subtitle | Label =>
+      theme.foreground
   }
 }
 

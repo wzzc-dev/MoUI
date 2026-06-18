@@ -1,53 +1,121 @@
 ///|
 fn[Msg] button_control(
   text~ : String,
-  size~ : @core.Size,
+  min_size~ : @core.Size,
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
   background~ : @core.Brush,
   hovered_background~ : @core.Brush,
   pressed_background~ : @core.Brush,
+  padding_horizontal~ : Double,
+  padding_vertical~ : Double,
+  transition_duration_ms~ : Double,
+  transition_easing~ : @core.Easing,
   border? : @core.BorderStyle? = None,
   shadow? : @core.ShadowStyle? = None,
   corner_radius? : Double = 0.0,
+  leading_icon? : IconName? = None,
   on_click? : Msg? = None,
   kind? : String = "Button",
   key? : String? = None,
 ) -> @core.View[Msg] {
+  let icon_size = font.size
+  let icon_gap = padding_horizontal * 0.5
+  let icon_block_width = match leading_icon {
+    Some(_) => icon_size + icon_gap
+    None => 0.0
+  }
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "button:\{text}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_brush_revision(background)}:\{view_brush_revision(hovered_background)}:\{view_brush_revision(pressed_background)}:\{view_border_option_revision(border)}:\{view_shadow_option_revision(shadow)}:\{corner_radius}:\{on_click is Some(_)}"
+      "button:\{text}:\{view_size_revision(min_size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_brush_revision(background)}:\{view_brush_revision(hovered_background)}:\{view_brush_revision(pressed_background)}:\{view_border_option_revision(border)}:\{view_shadow_option_revision(shadow)}:\{corner_radius}:\{padding_horizontal}:\{padding_vertical}:\{icon_block_width}:\{on_click is Some(_)}"
     },
     layout=ctx => {
-      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
+      // Content-driven sizing: measure the label with the real text system,
+      // then pad it and floor it at the supplied minimum size. When a leading
+      // icon is present, reserve its square plus a small gap before the label.
+      // Constraints still clamp the result so parents can force a fixed frame.
+      let measured = ctx.text_system.measure_text(
+        @core.TextLayoutInput::new(text~, font~),
+      )
+      let content_width = view_max_double(
+        min_size.width,
+        icon_block_width +
+        measured.size.width +
+        padding_horizontal * 2.0,
+      )
+      let content_height = view_max_double(
+        min_size.height,
+        measured.size.height + padding_vertical * 2.0,
+      )
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(
+          @core.Size::new(width=content_width, height=content_height),
+        ),
+      )
     },
     paint=ctx => {
-      let background = view_button_background(
-        ctx.state,
-        background,
-        hovered_background,
-        pressed_background,
-      )
+      let current_state = if ctx.state.pressed {
+        @core.ButtonState::Pressed
+      } else if ctx.state.hovered {
+        @core.ButtonState::Hovered
+      } else {
+        @core.ButtonState::Normal
+      }
+      // Resolve the transition progress from the scratch-recorded start time
+      // and the current animation clock. When reduced motion is requested or
+      // the transition has completed, snap to the terminal color; otherwise
+      // interpolate the background color between the previous visual state and
+      // the current one so hover/press ease in instead of hard-cutting.
+      let transition = parse_button_transition(ctx.state.scratch)
+      let (background_brush, animating) = match transition {
+        Some((from_state, start_ms)) => {
+          if ctx.environment.reduced_motion ||
+            transition_duration_ms <= 0.0 ||
+            ctx.now_ms <= 0.0 {
+            (button_state_brush(current_state, background, hovered_background, pressed_background), false)
+          } else {
+            let start = start_ms.to_double()
+            let raw_progress = (ctx.now_ms - start) / transition_duration_ms
+            if raw_progress >= 1.0 {
+              (button_state_brush(current_state, background, hovered_background, pressed_background), false)
+            } else if raw_progress <= 0.0 {
+              (button_state_brush(from_state, background, hovered_background, pressed_background), true)
+            } else {
+              let from_color = button_state_color(
+                button_state_brush(
+                  from_state,
+                  background,
+                  hovered_background,
+                  pressed_background,
+                ),
+              )
+              let to_color = button_state_color(
+                button_state_brush(
+                  current_state,
+                  background,
+                  hovered_background,
+                  pressed_background,
+                ),
+              )
+              let blended = @core.animated_color(
+                from=from_color,
+                to=to_color,
+                progress=raw_progress,
+                easing=transition_easing,
+              )
+              (@core.Brush::solid(blended), true)
+            }
+          }
+        }
+        None =>
+          (button_state_brush(current_state, background, hovered_background, pressed_background), false)
+      }
       let commands : Array[@core.DrawCommand] = []
       let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
-      match shadow {
-        Some(shadow) =>
-          commands.push(
-            @core.DrawCommand::DrawShadow(
-              @core.ShadowSpec::new(
-                rect=rounded,
-                color=shadow.color,
-                offset=shadow.offset,
-                blur_radius=shadow.blur_radius,
-                spread=shadow.spread,
-              ),
-            ),
-          )
-        None => ()
-      }
+      emit_elevation_shadow(commands, rounded, shadow, ctx.environment.color_scheme)
       commands.push(
-        @core.DrawCommand::FillRoundedRectBrush(rounded, background),
+        @core.DrawCommand::FillRoundedRectBrush(rounded, background_brush),
       )
       match border {
         Some(border) =>
@@ -62,12 +130,48 @@ fn[Msg] button_control(
           }
         None => ()
       }
+      // Lay out the leading icon (vertically centered) and offset the text
+      // frame to the right of it so the label stays centered in the remainder.
+      let text_origin_x = ctx.frame.origin.x + padding_horizontal + icon_block_width
+      let text_frame = @core.Rect::new(
+        x=text_origin_x,
+        y=ctx.frame.origin.y,
+        width=view_max_double(0.0, ctx.frame.size.width - padding_horizontal - icon_block_width - padding_horizontal),
+        height=ctx.frame.size.height,
+      )
+      match leading_icon {
+        Some(name) => {
+          let icon_origin_x = ctx.frame.origin.x + padding_horizontal
+          let icon_origin_y = ctx.frame.origin.y + (ctx.frame.size.height - icon_size) / 2.0
+          let scale = icon_size / 24.0
+          let scaled = icon_scale_verbs(
+            icon_path(name),
+            icon_origin_x,
+            icon_origin_y,
+            scale,
+          )
+          commands.push(
+            @core.DrawCommand::DrawPath(
+              @core.PathSpec::new(
+                verbs=scaled,
+                stroke=Some(@core.Brush::solid(foreground)),
+                stroke_width=1.6,
+              ),
+            ),
+          )
+        }
+        None => ()
+      }
       commands.push(
         @core.DrawCommand::DrawText(
-          @core.TextRun::new(text~, frame=ctx.frame, font~, color=foreground),
+          @core.TextRun::new(text~, frame=text_frame, font~, color=foreground),
         ),
       )
-      @core.ViewPaintPlan::commands(commands)
+      if animating {
+        @core.ViewPaintPlan::animating_commands(commands)
+      } else {
+        @core.ViewPaintPlan::commands(commands)
+      }
     },
     event=ctx => {
       match ctx.event {
@@ -91,7 +195,9 @@ fn[Msg] button_control(
                 changed~,
                 activated=true,
                 captured=true,
-                state=Some(view_button_state_context(ctx.state, next)),
+                state=Some(
+                  view_button_state_context(ctx.state, current, next, ctx.now_ms),
+                ),
                 dirty=@core.ViewDirtyHint::ViewPaintDirty,
                 messages=[message],
               )
@@ -100,7 +206,9 @@ fn[Msg] button_control(
                 changed~,
                 activated=false,
                 captured=true,
-                state=Some(view_button_state_context(ctx.state, next)),
+                state=Some(
+                  view_button_state_context(ctx.state, current, next, ctx.now_ms),
+                ),
                 dirty=@core.ViewDirtyHint::ViewPaintDirty,
               )
             (false, _) =>
@@ -108,7 +216,9 @@ fn[Msg] button_control(
                 changed~,
                 captured=inside || changed,
                 state=if changed {
-                  Some(view_button_state_context(ctx.state, next))
+                  Some(
+                    view_button_state_context(ctx.state, current, next, ctx.now_ms),
+                  )
                 } else {
                   None
                 },
@@ -159,12 +269,24 @@ fn[Msg] button_control(
 ///|
 fn view_button_state_context(
   current : @core.ViewStateContext,
+  from_state : @core.ButtonState,
   next : @core.ButtonState,
+  now_ms : Double,
 ) -> @core.ViewStateContext {
+  // Record the transition origin and start time in scratch so the next paint
+  // can interpolate the background from `from_state` toward `next`. When the
+  // state did not actually change (e.g. a no-op move), keep the prior scratch
+  // so an in-flight animation continues instead of restarting.
+  let scratch = if from_state == next {
+    current.scratch
+  } else {
+    button_transition_scratch(from_state, now_ms)
+  }
   {
     ..current,
     hovered: next == @core.ButtonState::Hovered,
     pressed: next == @core.ButtonState::Pressed,
+    scratch,
   }
 }
 
@@ -186,9 +308,23 @@ fn[Msg] checkbox_control(
       "checkbox:\{label}:\{checked.get()}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(check_color)}:\{view_size_revision(size)}:\{on_change is Some(_)}"
     },
     layout=ctx => {
+      // Measure the label with the real text system instead of the old
+      // `char_count * font.size * 0.58` estimate, so checkbox intrinsic
+      // width tracks the actual font instead of drifting across scripts.
+      let label_width = if label.length() == 0 {
+        0.0
+      } else {
+        let measured = ctx.text_system.measure_text(
+          @core.TextLayoutInput::new(text=label, font=font),
+        )
+        measured.size.width
+      }
+      let spacing = 8.0
+      let intrinsic_width = size.width + spacing + label_width
+      let intrinsic_height = view_max_double(size.height, font.size * 1.25)
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(
-          checkbox_intrinsic_size(label, font, size),
+          @core.Size::new(width=intrinsic_width, height=intrinsic_height),
         ),
       )
     },
@@ -263,20 +399,6 @@ fn[Msg] checkbox_messages(
     Some(handler) => [handler(checked)]
     None => []
   }
-}
-
-///|
-fn checkbox_intrinsic_size(
-  label : String,
-  font : @core.FontSpec,
-  size : @core.Size,
-) -> @core.Size {
-  let spacing = 8.0
-  let label_width = view_text_length(label).to_double() * font.size * 0.58
-  @core.Size::new(
-    width=size.width + spacing + label_width,
-    height=view_max_double(size.height, font.size * 1.25),
-  )
 }
 
 ///|
