@@ -2,7 +2,7 @@
 pub fn[Msg] route_header(
   title : String,
   subtitle? : String = "",
-  actions? : Array[MenuItem[Msg]] = [],
+  actions? : Array[ActionItem[Msg]] = [],
   theme? : @core.Theme = default_theme(),
   width? : Double = 520.0,
 ) -> @core.View[Msg] {

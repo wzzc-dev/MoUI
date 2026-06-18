@@ -917,10 +917,10 @@ fn file_budgets() -> Array[FileBudget] {
       reason: "keep views number field and stepper helpers compact",
     },
     {
-      path: "moui/views/input_multiline.mbt",
+      path: "moui/views/text_area.mbt",
       max_lines: 35,
       target_lines: 25,
-      reason: "keep views multiline text area shell compact",
+      reason: "keep views text area compact",
     },
     {
       path: "moui/views/feedback_state.mbt",

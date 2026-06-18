@@ -31,12 +31,12 @@ fn ShowcaseModel::navigation_section(
           "Navigation Shell",
           subtitle="Current route: " + self.selected_section,
           actions=[
-            @views.MenuItem::new(
+            @views.ActionItem::new(
               id="dialog",
               label="Dialog",
               message=ShowDialog,
             ),
-            @views.MenuItem::new(id="sheet", label="Sheet", message=ShowSheet),
+            @views.ActionItem::new(id="sheet", label="Sheet", message=ShowSheet),
           ],
           theme~,
           width=520.0,
@@ -308,9 +308,9 @@ fn ShowcaseModel::navigation_command_card(
 ) -> @moui.View[ShowcaseMsg] {
   ignore(metrics)
   let commands = [
-    @views.MenuItem::new(id="new", label="New", message=ShowDialog),
-    @views.MenuItem::new(id="open", label="Open", message=ShowSheet),
-    @views.MenuItem::new(
+    @views.ActionItem::new(id="new", label="New", message=ShowDialog),
+    @views.ActionItem::new(id="open", label="Open", message=ShowSheet),
+    @views.ActionItem::new(
       id="archive",
       label="Archive",
       message=ToggleActive,

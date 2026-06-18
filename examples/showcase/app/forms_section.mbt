@@ -176,7 +176,7 @@ fn ShowcaseModel::forms_section(
             ),
             form_field(
               label="Notes",
-              child=multiline_text_area_shell(
+              child=text_area(
                 "First line of notes",
                 on_input=value => DraftChanged(value),
                 placeholder="Add notes",
@@ -184,7 +184,7 @@ fn ShowcaseModel::forms_section(
                 theme~,
                 width=field_width,
               ),
-              helper="The shell preserves sizing without adding a new editor engine.",
+              helper="The text area preserves sizing without adding a new editor engine.",
               theme~,
               width=field_width,
             ),
@@ -197,7 +197,7 @@ fn ShowcaseModel::forms_section(
             ),
           ],
           title="Enhanced Inputs",
-          summary="Prefix/suffix, clearable, password, number, stepper, and text area shells",
+          summary="Prefix/suffix, clearable, password, number, stepper, and text area",
           width=field_width,
           theme~,
         ),

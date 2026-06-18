@@ -495,12 +495,12 @@ fn DataTableModel::data_panel(
           selected_count=self.selected_rows.count(),
           total_count=self.filtered_records().length(),
           actions=[
-            @views.MenuItem::new(
+            @views.ActionItem::new(
               id="archive",
               label="Archive",
               message=ArchiveSelection,
             ),
-            @views.MenuItem::new(
+            @views.ActionItem::new(
               id="export",
               label="Export",
               message=ExportSelection,
