@@ -2,7 +2,7 @@
 priv struct ElementNode {
   id : ElementId
   mut key : Key?
-  mut virtual_node : VirtualNode
+  mut erased_view_node : ErasedViewNode
   mut children : Array[ElementNode]
   dirty : DirtyFlags
   control : ElementControlState
@@ -165,7 +165,7 @@ fn ElementTree::new(root : ElementNode) -> ElementTree {
 
 ///|
 fn ElementTree::empty() -> ElementTree {
-  { root: mount_virtual_node(empty_virtual_node()) }
+  { root: mount_erased_view_node(empty_erased_view_node()) }
 }
 
 ///|

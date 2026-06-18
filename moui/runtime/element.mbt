@@ -14,7 +14,7 @@ fn ElementNode::rebuild_dirty_components(
   let mut next = next_id
   let mut dirty_kind = ReconcileDirtyKind::ReconcileClean
   if self.dirty.needs_build {
-    match self.virtual_node.build_child {
+    match self.erased_view_node.build_child {
       Some(build) => {
         let built = build_component_child(
           build,
@@ -28,13 +28,13 @@ fn ElementNode::rebuild_dirty_components(
         let result = if self.children.length() > 0 {
           reconcile_element_for_runtime(
             self.children[0],
-            built.child_virtual_node,
+            built.child_erased_view_node,
             Some(runtime),
             next,
           )
         } else {
-          let mounted = mount_virtual_node_for_runtime(
-            built.child_virtual_node,
+          let mounted = mount_erased_view_node_for_runtime(
+            built.child_erased_view_node,
             Some(runtime),
             next,
           )
@@ -95,10 +95,10 @@ fn ElementNode::has_dirty_paint(self : ElementNode) -> Bool {
 fn ElementNode::view_tree_inspector_snapshot(
   self : ElementNode,
 ) -> ViewTreeInspectorSnapshot {
-  let nodes : Array[VirtualNodeInspectorSummary] = []
-  self.collect_virtual_node_summaries(nodes)
+  let nodes : Array[ViewInspectorSummary] = []
+  self.collect_view_summaries(nodes)
   {
-    root_kind: self.virtual_node.inspector_kind_label(),
+    root_kind: self.erased_view_node.inspector_kind_label(),
     node_count: nodes.length(),
     component_count: self.inspector_component_count(),
     control_count: self.inspector_control_count(),
@@ -111,13 +111,13 @@ fn ElementNode::view_tree_inspector_snapshot(
 }
 
 ///|
-fn ElementNode::collect_virtual_node_summaries(
+fn ElementNode::collect_view_summaries(
   self : ElementNode,
-  nodes : Array[VirtualNodeInspectorSummary],
+  nodes : Array[ViewInspectorSummary],
 ) -> Unit {
   nodes.push({
     element_id: self.id,
-    kind: self.virtual_node.inspector_kind_label(),
+    kind: self.erased_view_node.inspector_kind_label(),
     key: match self.key {
       Some(key) => key.value
       None => ""
@@ -128,13 +128,17 @@ fn ElementNode::collect_virtual_node_summaries(
     needs_paint: self.dirty.needs_paint,
   })
   for child in self.children {
-    child.collect_virtual_node_summaries(nodes)
+    child.collect_view_summaries(nodes)
   }
 }
 
 ///|
 fn ElementNode::inspector_component_count(self : ElementNode) -> Int {
-  let mut count = if self.virtual_node.is_building_virtual_node() { 1 } else { 0 }
+  let mut count = if self.erased_view_node.is_building_erased_view_node() {
+    1
+  } else {
+    0
+  }
   for child in self.children {
     count = count + child.inspector_component_count()
   }
@@ -143,7 +147,11 @@ fn ElementNode::inspector_component_count(self : ElementNode) -> Int {
 
 ///|
 fn ElementNode::inspector_control_count(self : ElementNode) -> Int {
-  let mut count = if self.virtual_node.inspector_is_control() { 1 } else { 0 }
+  let mut count = if self.erased_view_node.inspector_is_control() {
+    1
+  } else {
+    0
+  }
   for child in self.children {
     count = count + child.inspector_control_count()
   }
@@ -152,7 +160,7 @@ fn ElementNode::inspector_control_count(self : ElementNode) -> Int {
 
 ///|
 fn ElementNode::inspector_modified_count(self : ElementNode) -> Int {
-  let mut count = if self.virtual_node.identity.kind.has_prefix("Modified<") {
+  let mut count = if self.erased_view_node.identity.kind.has_prefix("Modified<") {
     1
   } else {
     0
@@ -236,7 +244,7 @@ fn ElementNode::collect_dirty_element_ids_by_kind(
 
 ///|
 fn ElementNode::mark_root_component_build_dirty(self : ElementNode) -> Bool {
-  if self.virtual_node.is_building_virtual_node() {
+  if self.erased_view_node.is_building_erased_view_node() {
     self.dirty.mark_build()
     self.clear_cached_layout_and_paint()
     true
@@ -248,7 +256,7 @@ fn ElementNode::mark_root_component_build_dirty(self : ElementNode) -> Bool {
 ///|
 fn ElementNode::mark_component_tree_build_dirty(self : ElementNode) -> Bool {
   let mut found = false
-  if self.virtual_node.is_building_virtual_node() {
+  if self.erased_view_node.is_building_erased_view_node() {
     self.dirty.mark_build()
     self.clear_cached_layout_and_paint()
     found = true

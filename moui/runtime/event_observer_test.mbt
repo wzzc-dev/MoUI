@@ -1,10 +1,45 @@
 ///|
+fn[Msg] event_observer_test_rect(
+  width~ : Double,
+  height~ : Double,
+  color~ : @core.Color,
+  on_tap? : Msg? = None,
+) -> @core.View[Msg] {
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="Rect"),
+    revision=() => "event-observer-test-rect:\{width}:\{height}",
+    layout=ctx => {
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
+      )
+    },
+    paint=ctx => {
+      @core.ViewPaintPlan::commands([
+        @core.DrawCommand::FillRect(ctx.frame, color),
+      ])
+    },
+    event=ctx => {
+      match (ctx.event, on_tap) {
+        (@core.AppEvent::Pointer(event), Some(message)) =>
+          if event.phase == @core.PointerPhase::Up &&
+            ctx.frame.contains(event.position) {
+            @core.ViewEventResult::message(message)
+          } else {
+            @core.ViewEventResult::ignored()
+          }
+        _ => @core.ViewEventResult::ignored()
+      }
+    },
+  )
+}
+
+///|
 /// Regression: without an event observer installed, dispatch_event behaves
 /// exactly as before the additive hook — messages still flow, no panics.
 test "event_observer: dispatch works with default (no-op) observer" {
   let received : Array[Int] = []
   let runtime = AppRuntime::new_view(
-    root=@views.raw_rect(
+    root=event_observer_test_rect(
       width=20.0,
       height=20.0,
       color=@core.Color::blue(),
@@ -36,7 +71,7 @@ test "event_observer: installed observer receives events before processing" {
   let observed : Array[String] = []
   let received : Array[Int] = []
   let runtime = AppRuntime::new_view(
-    root=@views.raw_rect(
+    root=event_observer_test_rect(
       width=20.0,
       height=20.0,
       color=@core.Color::blue(),
@@ -79,7 +114,7 @@ test "event_observer: set_event_observer replaces previous observer" {
   let first : Array[String] = []
   let second : Array[String] = []
   let runtime = AppRuntime::new_view(
-    root=@views.raw_rect(
+    root=event_observer_test_rect(
       width=20.0,
       height=20.0,
       color=@core.Color::blue(),

@@ -20,7 +20,7 @@ priv struct TextCaretMoveResult {
 }
 
 ///|
-pub fn[Msg] raw_text_field(
+fn[Msg] text_field_control(
   value~ : @core.Binding[String],
   placeholder~ : String,
   size~ : @core.Size,
@@ -37,90 +37,88 @@ pub fn[Msg] raw_text_field(
   kind? : String = "TextField",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::virtual_node(
-    @core.VirtualNode::new(
-      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
-      revision=() => {
-        "textfield:\{value.get()}:\{placeholder}:\{virtual_node_size_revision(size)}:\{virtual_node_font_revision(font)}:\{virtual_node_color_revision(foreground)}:\{virtual_node_color_revision(placeholder_color)}:\{virtual_node_brush_revision(background)}:\{virtual_node_border_option_revision(border)}:\{virtual_node_border_option_revision(focused_border)}:\{virtual_node_color_revision(cursor_color)}:\{corner_radius}:\{on_submit is Some(_)}"
-      },
-      layout=ctx => {
-        @core.VirtualNodeLayoutResult::new(size=ctx.constraints.constrain(size))
-      },
-      paint=ctx => {
-        let commands : Array[@core.DrawCommand] = []
-        let overlay_commands : Array[@core.DrawCommand] = []
-        append_text_field_commands(
-          commands,
-          overlay_commands,
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind~, key~),
+    revision=() => {
+      "textfield:\{value.get()}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{on_submit is Some(_)}"
+    },
+    layout=ctx => {
+      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
+    },
+    paint=ctx => {
+      let commands : Array[@core.DrawCommand] = []
+      let overlay_commands : Array[@core.DrawCommand] = []
+      append_text_field_commands(
+        commands,
+        overlay_commands,
+        text=value.get(),
+        placeholder~,
+        size~,
+        font~,
+        foreground~,
+        placeholder_color~,
+        background~,
+        border~,
+        focused_border~,
+        cursor_color~,
+        corner_radius~,
+        frame=ctx.frame,
+        focused=ctx.focused,
+        control=ctx.text_control,
+        text_system=ctx.text_system,
+      )
+      {
+        commands,
+        child_layers: [],
+        post_commands: [],
+        overlay_commands,
+        platform_views: [],
+        repaint_boundary: false,
+      }
+    },
+    event=ctx => {
+      handle_text_field_event(
+        ctx,
+        value~,
+        on_input~,
+        on_submit~,
+        search_bar=false,
+        on_clear=None,
+      )
+    },
+    text_input_state=ctx => {
+      Some(
+        text_input_state_for_single_line(
           text=value.get(),
-          placeholder~,
-          size~,
-          font~,
-          foreground~,
-          placeholder_color~,
-          background~,
-          border~,
-          focused_border~,
-          cursor_color~,
-          corner_radius~,
           frame=ctx.frame,
-          focused=ctx.focused,
+          font~,
           control=ctx.text_control,
           text_system=ctx.text_system,
-        )
-        {
-          commands,
-          child_layers: [],
-          post_commands: [],
-          overlay_commands,
-          platform_views: [],
-          repaint_boundary: false,
-        }
-      },
-      event=ctx => {
-        handle_text_field_event(
-          ctx,
-          value~,
-          on_input~,
-          on_submit~,
           search_bar=false,
-          on_clear=None,
-        )
-      },
-      text_input_state=ctx => {
-        Some(
-          text_input_state_for_single_line(
-            text=value.get(),
-            frame=ctx.frame,
-            font~,
-            control=ctx.text_control,
-            text_system=ctx.text_system,
-            search_bar=false,
-          ),
-        )
-      },
-      text_command=(ctx, intent, paste_text) => {
-        handle_text_field_command(ctx, value~, on_input~, intent, paste_text~)
-      },
-      semantics=() => {
-        @core.VirtualNodeSemanticsInfo::new(
-          role=@core.SemanticsRole::TextField,
-          label=placeholder,
-          value=value.get(),
-          actions=[
-            @core.SemanticsAction::Focus,
-            @core.SemanticsAction::SetText,
-            @core.SemanticsAction::Submit,
-          ],
-        )
-      },
-      focusable=() => true,
-    ),
+        ),
+      )
+    },
+    text_command=(ctx, intent, paste_text) => {
+      handle_text_field_command(ctx, value~, on_input~, intent, paste_text~)
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(
+        role=@core.SemanticsRole::TextField,
+        label=placeholder,
+        value=value.get(),
+        actions=[
+          @core.SemanticsAction::Focus,
+          @core.SemanticsAction::SetText,
+          @core.SemanticsAction::Submit,
+        ],
+      )
+    },
+    focusable=() => true,
   )
 }
 
 ///|
-pub fn[Msg] raw_controlled_text_field(
+fn[Msg] controlled_text_field_control(
   value~ : String,
   on_input~ : (String) -> Msg,
   placeholder~ : String,
@@ -137,7 +135,7 @@ pub fn[Msg] raw_controlled_text_field(
   kind? : String = "TextField",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  raw_text_field(
+  text_field_control(
     value=@core.Binding::new(get=() => value, set=_next => ()),
     placeholder~,
     size~,
@@ -157,7 +155,7 @@ pub fn[Msg] raw_controlled_text_field(
 }
 
 ///|
-pub fn[Msg] raw_search_bar(
+fn[Msg] search_bar_control(
   query~ : @core.Binding[String],
   placeholder~ : String,
   font~ : @core.FontSpec,
@@ -174,99 +172,97 @@ pub fn[Msg] raw_search_bar(
   kind? : String = "SearchBar",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::virtual_node(
-    @core.VirtualNode::new(
-      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
-      revision=() => {
-        "searchbar:\{query.get()}:\{placeholder}:\{virtual_node_font_revision(font)}:\{virtual_node_color_revision(foreground)}:\{virtual_node_color_revision(placeholder_color)}:\{virtual_node_brush_revision(background)}:\{virtual_node_border_option_revision(border)}:\{virtual_node_border_option_revision(focused_border)}:\{virtual_node_color_revision(cursor_color)}:\{corner_radius}:\{on_submit is Some(_)}:\{on_clear is Some(_)}"
-      },
-      layout=ctx => {
-        @core.VirtualNodeLayoutResult::new(
-          size=ctx.constraints.constrain(
-            @core.Size::new(width=240.0, height=40.0),
-          ),
-        )
-      },
-      paint=ctx => {
-        let commands : Array[@core.DrawCommand] = []
-        let overlay_commands : Array[@core.DrawCommand] = []
-        append_searchbar_commands(
-          commands,
-          overlay_commands,
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind~, key~),
+    revision=() => {
+      "searchbar:\{query.get()}:\{placeholder}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{on_submit is Some(_)}:\{on_clear is Some(_)}"
+    },
+    layout=ctx => {
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(
+          @core.Size::new(width=240.0, height=40.0),
+        ),
+      )
+    },
+    paint=ctx => {
+      let commands : Array[@core.DrawCommand] = []
+      let overlay_commands : Array[@core.DrawCommand] = []
+      append_searchbar_commands(
+        commands,
+        overlay_commands,
+        text=query.get(),
+        placeholder~,
+        font~,
+        foreground~,
+        placeholder_color~,
+        background~,
+        border~,
+        focused_border~,
+        cursor_color~,
+        corner_radius~,
+        frame=ctx.frame,
+        focused=ctx.focused,
+        control=ctx.text_control,
+        text_system=ctx.text_system,
+      )
+      {
+        commands,
+        child_layers: [],
+        post_commands: [],
+        overlay_commands,
+        platform_views: [],
+        repaint_boundary: false,
+      }
+    },
+    event=ctx => {
+      handle_text_field_event(
+        ctx,
+        value=query,
+        on_input~,
+        on_submit~,
+        search_bar=true,
+        on_clear~,
+      )
+    },
+    text_input_state=ctx => {
+      Some(
+        text_input_state_for_single_line(
           text=query.get(),
-          placeholder~,
-          font~,
-          foreground~,
-          placeholder_color~,
-          background~,
-          border~,
-          focused_border~,
-          cursor_color~,
-          corner_radius~,
           frame=ctx.frame,
-          focused=ctx.focused,
+          font~,
           control=ctx.text_control,
           text_system=ctx.text_system,
-        )
-        {
-          commands,
-          child_layers: [],
-          post_commands: [],
-          overlay_commands,
-          platform_views: [],
-          repaint_boundary: false,
-        }
-      },
-      event=ctx => {
-        handle_text_field_event(
-          ctx,
-          value=query,
-          on_input~,
-          on_submit~,
           search_bar=true,
-          on_clear~,
-        )
-      },
-      text_input_state=ctx => {
-        Some(
-          text_input_state_for_single_line(
-            text=query.get(),
-            frame=ctx.frame,
-            font~,
-            control=ctx.text_control,
-            text_system=ctx.text_system,
-            search_bar=true,
-          ),
-        )
-      },
-      text_command=(ctx, intent, paste_text) => {
-        handle_text_field_command(
-          ctx,
-          value=query,
-          on_input~,
-          intent,
-          paste_text~,
-        )
-      },
-      semantics=() => {
-        @core.VirtualNodeSemanticsInfo::new(
-          role=@core.SemanticsRole::TextField,
-          label=placeholder,
-          value=query.get(),
-          actions=[
-            @core.SemanticsAction::Focus,
-            @core.SemanticsAction::SetText,
-            @core.SemanticsAction::Submit,
-          ],
-        )
-      },
-      focusable=() => true,
-    ),
+        ),
+      )
+    },
+    text_command=(ctx, intent, paste_text) => {
+      handle_text_field_command(
+        ctx,
+        value=query,
+        on_input~,
+        intent,
+        paste_text~,
+      )
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(
+        role=@core.SemanticsRole::TextField,
+        label=placeholder,
+        value=query.get(),
+        actions=[
+          @core.SemanticsAction::Focus,
+          @core.SemanticsAction::SetText,
+          @core.SemanticsAction::Submit,
+        ],
+      )
+    },
+    focusable=() => true,
   )
 }
 
 ///|
-pub fn[Msg] raw_controlled_search_bar(
+fn[Msg] controlled_search_bar_control(
   query~ : String,
   on_input~ : (String) -> Msg,
   placeholder~ : String,
@@ -283,7 +279,7 @@ pub fn[Msg] raw_controlled_search_bar(
   kind? : String = "SearchBar",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  raw_search_bar(
+  search_bar_control(
     query=@core.Binding::new(get=() => query, set=_next => ()),
     placeholder~,
     font~,
@@ -681,13 +677,13 @@ fn append_searchbar_clear_icon(
 
 ///|
 fn[Msg] handle_text_field_event(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
   on_submit~ : Msg?,
   search_bar~ : Bool,
   on_clear~ : Msg?,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   match ctx.event {
     @core.AppEvent::Pointer(event) =>
       handle_text_field_pointer(
@@ -701,26 +697,20 @@ fn[Msg] handle_text_field_event(
     @core.AppEvent::Keyboard(event) =>
       handle_text_field_keyboard(ctx, value~, on_input~, on_submit~, event)
     @core.AppEvent::TextInput(event) =>
-      virtual_node_text_input_result(
-        ctx,
-        value~,
-        on_input~,
-        event,
-        record_history=true,
-      )
-    _ => @core.VirtualNodeEventResult::ignored()
+      view_text_input_result(ctx, value~, on_input~, event, record_history=true)
+    _ => @core.ViewEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_text_field_pointer(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
   search_bar~ : Bool,
   on_clear~ : Msg?,
   event : @core.PointerEvent,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   let text = value.get()
   if search_bar && text != "" {
     let clear_frame = searchbar_clear_frame(ctx.frame)
@@ -730,13 +720,13 @@ fn[Msg] handle_text_field_pointer(
       value.set("")
       let messages = text_input_messages(on_input, "") +
         option_message(on_clear)
-      return virtual_node_event_result(
+      return view_event_result(
         changed=true,
         activated=true,
         focused=true,
         captured=true,
         text_control=Some(next_control),
-        dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+        dirty=@core.ViewDirtyHint::ViewPaintDirty,
         messages~,
       )
     }
@@ -751,73 +741,73 @@ fn[Msg] handle_text_field_pointer(
       composition: None,
       composition_cursor: None,
     }
-    virtual_node_event_result(
+    view_event_result(
       changed=true,
       focused=true,
       captured=true,
       text_control=Some(next_control),
-      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   } else {
-    @core.VirtualNodeEventResult::ignored()
+    @core.ViewEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] handle_text_field_keyboard(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
   on_submit~ : Msg?,
   event : @core.KeyboardEvent,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   if !event.pressed {
-    return @core.VirtualNodeEventResult::ignored()
+    return @core.ViewEventResult::ignored()
   }
   if event.key == "Enter" {
-    return virtual_node_event_result(
+    return view_event_result(
       changed=true,
       activated=on_submit is Some(_),
       captured=true,
-      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=option_message(on_submit),
     )
   }
   if is_select_all_shortcut(event) {
     let next_control = select_text_control(ctx.text_control, value.get())
-    return virtual_node_event_result(
+    return view_event_result(
       changed=true,
       captured=true,
       text_control=Some(next_control),
-      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
     )
   }
   if is_undo_shortcut(event) {
     let result = restore_text_history(ctx.text_control, value.get(), undo=true)
     value.set(result.text)
-    return virtual_node_event_result(
+    return view_event_result(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=text_input_messages(on_input, result.text),
     )
   }
   if is_redo_shortcut(event) {
     let result = restore_text_history(ctx.text_control, value.get(), undo=false)
     value.set(result.text)
-    return virtual_node_event_result(
+    return view_event_result(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=text_input_messages(on_input, result.text),
     )
   }
   if event.key == "Backspace" {
     match active_text_selection(ctx.text_control.selection) {
       Some(selection) =>
-        return virtual_node_text_input_result(
+        return view_text_input_result(
           ctx,
           value~,
           on_input~,
@@ -825,7 +815,7 @@ fn[Msg] handle_text_field_keyboard(
           record_history=true,
         )
       None =>
-        return virtual_node_text_input_result(
+        return view_text_input_result(
           ctx,
           value~,
           on_input~,
@@ -837,7 +827,7 @@ fn[Msg] handle_text_field_keyboard(
   if event.key == "Delete" {
     match active_text_selection(ctx.text_control.selection) {
       Some(selection) =>
-        return virtual_node_text_input_result(
+        return view_text_input_result(
           ctx,
           value~,
           on_input~,
@@ -845,7 +835,7 @@ fn[Msg] handle_text_field_keyboard(
           record_history=true,
         )
       None =>
-        return virtual_node_text_input_result(
+        return view_text_input_result(
           ctx,
           value~,
           on_input~,
@@ -855,7 +845,7 @@ fn[Msg] handle_text_field_keyboard(
     }
   }
   if event.key == "ArrowLeft" {
-    return virtual_node_caret_move_result(
+    return view_caret_move_result(
       ctx,
       value.get(),
       MoveLeft,
@@ -863,7 +853,7 @@ fn[Msg] handle_text_field_keyboard(
     )
   }
   if event.key == "ArrowRight" {
-    return virtual_node_caret_move_result(
+    return view_caret_move_result(
       ctx,
       value.get(),
       MoveRight,
@@ -871,7 +861,7 @@ fn[Msg] handle_text_field_keyboard(
     )
   }
   if event.key == "Home" {
-    return virtual_node_caret_move_result(
+    return view_caret_move_result(
       ctx,
       value.get(),
       MoveStart,
@@ -879,7 +869,7 @@ fn[Msg] handle_text_field_keyboard(
     )
   }
   if event.key == "End" {
-    return virtual_node_caret_move_result(
+    return view_caret_move_result(
       ctx,
       value.get(),
       MoveEnd,
@@ -889,7 +879,7 @@ fn[Msg] handle_text_field_keyboard(
   match event.text {
     Some(text) =>
       if text != "" {
-        virtual_node_text_input_result(
+        view_text_input_result(
           ctx,
           value~,
           on_input~,
@@ -897,9 +887,9 @@ fn[Msg] handle_text_field_keyboard(
           record_history=true,
         )
       } else {
-        @core.VirtualNodeEventResult::ignored()
+        @core.ViewEventResult::ignored()
       }
-    None => @core.VirtualNodeEventResult::ignored()
+    None => @core.ViewEventResult::ignored()
   }
 }
 
@@ -963,12 +953,12 @@ fn restore_text_history(
 }
 
 ///|
-fn[Msg] virtual_node_caret_move_result(
-  ctx : @core.VirtualNodeEventContext,
+fn[Msg] view_caret_move_result(
+  ctx : @core.ViewEventContext,
   text : String,
   direction : TextCaretDirection,
   extend : Bool,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   let caret_move = move_text_caret(
     text,
     ctx.text_control.caret,
@@ -987,32 +977,32 @@ fn[Msg] virtual_node_caret_move_result(
     next_control.selection != ctx.text_control.selection ||
     ctx.text_control.composition is Some(_) ||
     ctx.text_control.composition_cursor is Some(_)
-  virtual_node_event_result(
+  view_event_result(
     changed~,
     captured=true,
     text_control=Some(next_control),
-    dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+    dirty=@core.ViewDirtyHint::ViewPaintDirty,
   )
 }
 
 ///|
-fn[Msg] virtual_node_text_input_result(
-  ctx : @core.VirtualNodeEventContext,
+fn[Msg] view_text_input_result(
+  ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
   event : @core.TextInputEvent,
   record_history~ : Bool,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   let text = value.get()
   let result = apply_text_input(ctx.text_control, text, event, record_history~)
   if result.changed {
     value.set(result.text)
   }
-  virtual_node_event_result(
+  view_event_result(
     changed=result.changed,
     captured=result.changed,
     text_control=Some(result.control),
-    dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+    dirty=@core.ViewDirtyHint::ViewPaintDirty,
     messages=if result.changed {
       text_input_messages(on_input, result.text)
     } else {
@@ -1152,16 +1142,16 @@ fn apply_text_edit(
 
 ///|
 fn[Msg] handle_text_field_command(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
   intent : @core.CommandIntent,
   paste_text~ : String?,
-) -> @core.VirtualNodeTextCommandResult[Msg] {
+) -> @core.ViewTextCommandResult[Msg] {
   let text = value.get()
   match intent {
     @core.CommandIntent::Copy =>
-      @core.VirtualNodeTextCommandResult::new(
+      @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(
           clipboard_text=Some(selected_text(text, ctx.text_control.selection)),
         ),
@@ -1179,7 +1169,7 @@ fn[Msg] handle_text_field_command(
           if result.changed {
             value.set(result.text)
           }
-          @core.VirtualNodeTextCommandResult::new(
+          @core.ViewTextCommandResult::new(
             result=@core.TextCommandResult::handled(
               changed=result.changed,
               clipboard_text=Some(copied),
@@ -1193,7 +1183,7 @@ fn[Msg] handle_text_field_command(
           )
         }
         None =>
-          @core.VirtualNodeTextCommandResult::new(
+          @core.ViewTextCommandResult::new(
             result=@core.TextCommandResult::handled(clipboard_text=Some("")),
           )
       }
@@ -1210,7 +1200,7 @@ fn[Msg] handle_text_field_command(
           if result.changed {
             value.set(result.text)
           }
-          @core.VirtualNodeTextCommandResult::new(
+          @core.ViewTextCommandResult::new(
             result=@core.TextCommandResult::handled(changed=result.changed),
             text_control=Some(result.control),
             messages=if result.changed {
@@ -1221,7 +1211,7 @@ fn[Msg] handle_text_field_command(
           )
         }
         None =>
-          @core.VirtualNodeTextCommandResult::new(
+          @core.ViewTextCommandResult::new(
             result=@core.TextCommandResult::handled(),
           )
       }
@@ -1230,7 +1220,7 @@ fn[Msg] handle_text_field_command(
       if result.changed {
         value.set(result.text)
       }
-      @core.VirtualNodeTextCommandResult::new(
+      @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
         text_control=Some(result.control),
         messages=if result.changed {
@@ -1245,7 +1235,7 @@ fn[Msg] handle_text_field_command(
       if result.changed {
         value.set(result.text)
       }
-      @core.VirtualNodeTextCommandResult::new(
+      @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
         text_control=Some(result.control),
         messages=if result.changed {
@@ -1257,12 +1247,12 @@ fn[Msg] handle_text_field_command(
     }
     @core.CommandIntent::SelectAll => {
       let next_control = select_text_control(ctx.text_control, text)
-      @core.VirtualNodeTextCommandResult::new(
+      @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=true),
         text_control=Some(next_control),
       )
     }
-    _ => @core.VirtualNodeTextCommandResult::ignored()
+    _ => @core.ViewTextCommandResult::ignored()
   }
 }
 

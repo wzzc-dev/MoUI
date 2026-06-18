@@ -1,11 +1,11 @@
 ///|
-pub(all) struct VirtualNodeIdentity {
+pub(all) struct ViewIdentity {
   kind : String
   key : Key?
 } derive(Eq)
 
 ///|
-pub(all) struct VirtualNodeLayoutContext {
+pub(all) struct ViewLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
   text_system : TextSystem
@@ -13,14 +13,14 @@ pub(all) struct VirtualNodeLayoutContext {
 }
 
 ///|
-pub(all) struct VirtualNodeLayoutResult {
+pub(all) struct ViewLayoutResult {
   size : Size
   child_frames : Array[Rect]
 } derive(Eq, Debug)
 
 ///|
 /// Recursive layout tree produced by the layout pass. Unlike
-/// `VirtualNodeLayoutResult` (a single node's measured size + child frames),
+/// `ViewLayoutResult` (a single node's measured size + child frames),
 /// `LayoutResult` is the fully-nested tree emitted by `AppRuntime::layout`.
 pub(all) struct LayoutResult {
   frame : Rect
@@ -39,20 +39,20 @@ pub fn hit_test(layout : LayoutResult, point : Point) -> Bool {
 }
 
 ///|
-pub(all) struct VirtualNodePaintContext {
+pub(all) struct ViewPaintContext {
   frame : Rect
   child_frames : Array[Rect]
   focused : Bool
-  state : VirtualNodeStateContext
+  state : ViewStateContext
   text_control : TextControlStateContext
   environment : Environment
   text_system : TextSystem
 }
 
 ///|
-pub(all) struct VirtualNodePaintPlan {
+pub(all) struct ViewPaintPlan {
   commands : Array[DrawCommand]
-  child_layers : Array[VirtualNodePaintLayer]
+  child_layers : Array[ViewPaintLayer]
   post_commands : Array[DrawCommand]
   overlay_commands : Array[DrawCommand]
   platform_views : Array[PlatformViewPlacement]
@@ -60,7 +60,7 @@ pub(all) struct VirtualNodePaintPlan {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct VirtualNodePaintLayer {
+pub(all) struct ViewPaintLayer {
   frame : Rect
   cache_key : String
   content_revision : Int
@@ -70,46 +70,46 @@ pub(all) struct VirtualNodePaintLayer {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct VirtualNodeEventContext {
+pub(all) struct ViewEventContext {
   frame : Rect
   child_frames : Array[Rect]
   event : AppEvent
   focused : Bool
-  state : VirtualNodeStateContext
+  state : ViewStateContext
   text_control : TextControlStateContext
   text_system : TextSystem
   environment : Environment
 }
 
 ///|
-pub(all) enum VirtualNodeDirtyHint {
-  VirtualNodeClean
-  VirtualNodePaintDirty
-  VirtualNodeLayoutDirty
-  VirtualNodeBuildDirty
+pub(all) enum ViewDirtyHint {
+  ViewClean
+  ViewPaintDirty
+  ViewLayoutDirty
+  ViewBuildDirty
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct VirtualNodeEventResult[Msg] {
+pub(all) struct ViewEventResult[Msg] {
   changed : Bool
   activated : Bool
   focused : Bool
   captured : Bool
-  state : VirtualNodeStateContext?
+  state : ViewStateContext?
   text_control : TextControlStateContext?
-  dirty : VirtualNodeDirtyHint
+  dirty : ViewDirtyHint
   messages : Array[Msg]
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct VirtualNodeTextCommandResult[Msg] {
+pub(all) struct ViewTextCommandResult[Msg] {
   result : TextCommandResult
   text_control : TextControlStateContext?
   messages : Array[Msg]
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct VirtualNodeSemanticsInfo {
+pub(all) struct ViewSemanticsInfo {
   role : SemanticsRole
   label : String
   value : String
@@ -118,7 +118,7 @@ pub(all) struct VirtualNodeSemanticsInfo {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct VirtualNodeStateContext {
+pub(all) struct ViewStateContext {
   focused : Bool
   hovered : Bool
   pressed : Bool
@@ -148,28 +148,25 @@ pub(all) struct TextControlStateContext {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub struct VirtualNode[Msg] {
-  priv identity_fn : () -> VirtualNodeIdentity
-  priv revision_fn : () -> String
-  priv children_fn : () -> Array[View[Msg]]
-  priv build_child_fn : ((ComponentContext) -> View[Msg])?
-  priv child_constraints_fn : (Constraints) -> Constraints
-  priv layout_fn : (VirtualNodeLayoutContext) -> VirtualNodeLayoutResult
-  priv paint_fn : (VirtualNodePaintContext) -> VirtualNodePaintPlan
-  priv event_fn : (VirtualNodeEventContext) -> VirtualNodeEventResult[Msg]
-  priv text_input_state_fn : (VirtualNodePaintContext) -> TextInputState?
-  priv text_command_fn : (VirtualNodeEventContext, CommandIntent, String?) -> VirtualNodeTextCommandResult[
+priv struct ViewNode[Msg] {
+  identity_fn : () -> ViewIdentity
+  revision_fn : () -> String
+  children_fn : () -> Array[View[Msg]]
+  build_child_fn : ((ComponentContext) -> View[Msg])?
+  child_constraints_fn : (Constraints) -> Constraints
+  layout_fn : (ViewLayoutContext) -> ViewLayoutResult
+  paint_fn : (ViewPaintContext) -> ViewPaintPlan
+  event_fn : (ViewEventContext) -> ViewEventResult[Msg]
+  text_input_state_fn : (ViewPaintContext) -> TextInputState?
+  text_command_fn : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
     Msg,
   ]
-  priv semantics_fn : () -> VirtualNodeSemanticsInfo
-  priv focusable_fn : () -> Bool
+  semantics_fn : () -> ViewSemanticsInfo
+  focusable_fn : () -> Bool
 }
 
 ///|
-pub fn VirtualNodeIdentity::new(
-  kind~ : String,
-  key? : String? = None,
-) -> VirtualNodeIdentity {
+pub fn ViewIdentity::new(kind~ : String, key? : String? = None) -> ViewIdentity {
   {
     kind,
     key: match key {
@@ -180,15 +177,15 @@ pub fn VirtualNodeIdentity::new(
 }
 
 ///|
-pub fn VirtualNodeLayoutResult::new(
+pub fn ViewLayoutResult::new(
   size~ : Size,
   child_frames? : Array[Rect] = [],
-) -> VirtualNodeLayoutResult {
+) -> ViewLayoutResult {
   { size, child_frames }
 }
 
 ///|
-pub fn VirtualNodePaintPlan::empty() -> VirtualNodePaintPlan {
+pub fn ViewPaintPlan::empty() -> ViewPaintPlan {
   {
     commands: [],
     child_layers: [],
@@ -200,9 +197,7 @@ pub fn VirtualNodePaintPlan::empty() -> VirtualNodePaintPlan {
 }
 
 ///|
-pub fn VirtualNodePaintPlan::commands(
-  commands : Array[DrawCommand],
-) -> VirtualNodePaintPlan {
+pub fn ViewPaintPlan::commands(commands : Array[DrawCommand]) -> ViewPaintPlan {
   {
     commands,
     child_layers: [],
@@ -214,14 +209,14 @@ pub fn VirtualNodePaintPlan::commands(
 }
 
 ///|
-pub fn VirtualNodePaintLayer::new(
+pub fn ViewPaintLayer::new(
   frame~ : Rect,
   cache_key~ : String,
   content_revision~ : Int,
   commands? : Array[DrawCommand] = [],
   overlay_commands? : Array[DrawCommand] = [],
   platform_views? : Array[PlatformViewPlacement] = [],
-) -> VirtualNodePaintLayer {
+) -> ViewPaintLayer {
   {
     frame,
     cache_key,
@@ -233,7 +228,7 @@ pub fn VirtualNodePaintLayer::new(
 }
 
 ///|
-pub fn[Msg] VirtualNodeEventResult::ignored() -> VirtualNodeEventResult[Msg] {
+pub fn[Msg] ViewEventResult::ignored() -> ViewEventResult[Msg] {
   {
     changed: false,
     activated: false,
@@ -241,13 +236,13 @@ pub fn[Msg] VirtualNodeEventResult::ignored() -> VirtualNodeEventResult[Msg] {
     captured: false,
     state: None,
     text_control: None,
-    dirty: VirtualNodeClean,
+    dirty: ViewClean,
     messages: [],
   }
 }
 
 ///|
-pub fn[Msg] VirtualNodeEventResult::message(message : Msg) -> VirtualNodeEventResult[Msg] {
+pub fn[Msg] ViewEventResult::message(message : Msg) -> ViewEventResult[Msg] {
   {
     changed: true,
     activated: true,
@@ -255,59 +250,57 @@ pub fn[Msg] VirtualNodeEventResult::message(message : Msg) -> VirtualNodeEventRe
     captured: true,
     state: None,
     text_control: None,
-    dirty: VirtualNodePaintDirty,
+    dirty: ViewPaintDirty,
     messages: [message],
   }
 }
 
 ///|
-pub fn[Msg] VirtualNodeTextCommandResult::ignored() -> VirtualNodeTextCommandResult[Msg] {
+pub fn[Msg] ViewTextCommandResult::ignored() -> ViewTextCommandResult[Msg] {
   { result: TextCommandResult::ignored(), text_control: None, messages: [] }
 }
 
 ///|
-pub fn[Msg] VirtualNodeTextCommandResult::new(
+pub fn[Msg] ViewTextCommandResult::new(
   result~ : TextCommandResult,
   text_control? : TextControlStateContext? = None,
   messages? : Array[Msg] = [],
-) -> VirtualNodeTextCommandResult[Msg] {
+) -> ViewTextCommandResult[Msg] {
   { result, text_control, messages }
 }
 
 ///|
-pub fn VirtualNodeSemanticsInfo::new(
+pub fn ViewSemanticsInfo::new(
   role? : SemanticsRole = SemanticsRole::Group,
   label? : String = "",
   value? : String = "",
   description? : String = "",
   actions? : Array[SemanticsAction] = [],
-) -> VirtualNodeSemanticsInfo {
+) -> ViewSemanticsInfo {
   { role, label, value, description, actions }
 }
 
 ///|
-pub fn[Msg] VirtualNode::new(
-  identity~ : () -> VirtualNodeIdentity,
+fn[Msg] ViewNode::new(
+  identity~ : () -> ViewIdentity,
   revision? : () -> String = () => "",
   children? : () -> Array[View[Msg]] = () => [],
   build_child? : ((ComponentContext) -> View[Msg])? = None,
   child_constraints? : (Constraints) -> Constraints = constraints => {
     constraints.loosen()
   },
-  layout~ : (VirtualNodeLayoutContext) -> VirtualNodeLayoutResult,
-  paint? : (VirtualNodePaintContext) -> VirtualNodePaintPlan = _ctx => {
-    VirtualNodePaintPlan::empty()
+  layout~ : (ViewLayoutContext) -> ViewLayoutResult,
+  paint? : (ViewPaintContext) -> ViewPaintPlan = _ctx => ViewPaintPlan::empty(),
+  event? : (ViewEventContext) -> ViewEventResult[Msg] = _ctx => {
+    ViewEventResult::ignored()
   },
-  event? : (VirtualNodeEventContext) -> VirtualNodeEventResult[Msg] = _ctx => {
-    VirtualNodeEventResult::ignored()
-  },
-  text_input_state? : (VirtualNodePaintContext) -> TextInputState? = _ctx => None,
-  text_command? : (VirtualNodeEventContext, CommandIntent, String?) -> VirtualNodeTextCommandResult[
+  text_input_state? : (ViewPaintContext) -> TextInputState? = _ctx => None,
+  text_command? : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
     Msg,
-  ] = (_ctx, _intent, _paste_text) => VirtualNodeTextCommandResult::ignored(),
-  semantics? : () -> VirtualNodeSemanticsInfo = () => VirtualNodeSemanticsInfo::new(),
+  ] = (_ctx, _intent, _paste_text) => ViewTextCommandResult::ignored(),
+  semantics? : () -> ViewSemanticsInfo = () => ViewSemanticsInfo::new(),
   focusable? : () -> Bool = () => false,
-) -> VirtualNode[Msg] {
+) -> ViewNode[Msg] {
   {
     identity_fn: identity,
     revision_fn: revision,
@@ -325,71 +318,71 @@ pub fn[Msg] VirtualNode::new(
 }
 
 ///|
-pub fn[Msg] VirtualNode::identity(self : VirtualNode[Msg]) -> VirtualNodeIdentity {
+fn[Msg] ViewNode::identity(self : ViewNode[Msg]) -> ViewIdentity {
   (self.identity_fn)()
 }
 
 ///|
-pub fn[Msg] VirtualNode::revision(self : VirtualNode[Msg]) -> String {
+fn[Msg] ViewNode::revision(self : ViewNode[Msg]) -> String {
   (self.revision_fn)()
 }
 
 ///|
-pub fn[Msg] VirtualNode::children(self : VirtualNode[Msg]) -> Array[View[Msg]] {
+fn[Msg] ViewNode::children(self : ViewNode[Msg]) -> Array[View[Msg]] {
   (self.children_fn)()
 }
 
 ///|
-pub fn[Msg] VirtualNode::build_child(
-  self : VirtualNode[Msg],
+fn[Msg] ViewNode::build_child(
+  self : ViewNode[Msg],
 ) -> ((ComponentContext) -> View[Msg])? {
   self.build_child_fn
 }
 
 ///|
-pub fn[Msg] VirtualNode::child_constraints(
-  self : VirtualNode[Msg],
+fn[Msg] ViewNode::child_constraints(
+  self : ViewNode[Msg],
   constraints : Constraints,
 ) -> Constraints {
   (self.child_constraints_fn)(constraints)
 }
 
 ///|
-pub fn[Msg] VirtualNode::layout(
-  self : VirtualNode[Msg],
-  context : VirtualNodeLayoutContext,
-) -> VirtualNodeLayoutResult {
+fn[Msg] ViewNode::layout(
+  self : ViewNode[Msg],
+  context : ViewLayoutContext,
+) -> ViewLayoutResult {
   (self.layout_fn)(context)
 }
 
 ///|
-pub fn[Msg] VirtualNode::paint(
-  self : VirtualNode[Msg],
-  context : VirtualNodePaintContext,
-) -> VirtualNodePaintPlan {
+fn[Msg] ViewNode::paint(
+  self : ViewNode[Msg],
+  context : ViewPaintContext,
+) -> ViewPaintPlan {
   (self.paint_fn)(context)
 }
 
 ///|
-pub fn[Msg] VirtualNode::event(
-  self : VirtualNode[Msg],
-  context : VirtualNodeEventContext,
-) -> VirtualNodeEventResult[Msg] {
+fn[Msg] ViewNode::event(
+  self : ViewNode[Msg],
+  context : ViewEventContext,
+) -> ViewEventResult[Msg] {
   (self.event_fn)(context)
 }
 
 ///|
-pub fn[Msg] VirtualNode::text_input_state(
-  self : VirtualNode[Msg],
-  context : VirtualNodePaintContext,
+fn[Msg] ViewNode::text_input_state(
+  self : ViewNode[Msg],
+  context : ViewPaintContext,
 ) -> TextInputState? {
   (self.text_input_state_fn)(context)
 }
 
 ///|
-pub fn[Msg] VirtualNode::text_command(
-  self : VirtualNode[Msg],
-  context : VirtualNodeEventContext,
+fn[Msg] ViewNode::text_command(
+  self : ViewNode[Msg],
+  context : ViewEventContext,
   intent : CommandIntent,
   paste_text? : String? = None,
 ) -> TextCommandResult {
@@ -397,31 +390,31 @@ pub fn[Msg] VirtualNode::text_command(
 }
 
 ///|
-pub fn[Msg] VirtualNode::text_command_result(
-  self : VirtualNode[Msg],
-  context : VirtualNodeEventContext,
+fn[Msg] ViewNode::text_command_result(
+  self : ViewNode[Msg],
+  context : ViewEventContext,
   intent : CommandIntent,
   paste_text? : String? = None,
-) -> VirtualNodeTextCommandResult[Msg] {
+) -> ViewTextCommandResult[Msg] {
   (self.text_command_fn)(context, intent, paste_text)
 }
 
 ///|
-pub fn[Msg] VirtualNode::semantics(self : VirtualNode[Msg]) -> VirtualNodeSemanticsInfo {
+fn[Msg] ViewNode::semantics(self : ViewNode[Msg]) -> ViewSemanticsInfo {
   (self.semantics_fn)()
 }
 
 ///|
-pub fn[Msg] VirtualNode::focusable(self : VirtualNode[Msg]) -> Bool {
+fn[Msg] ViewNode::focusable(self : ViewNode[Msg]) -> Bool {
   (self.focusable_fn)()
 }
 
 ///|
-pub fn[Msg, NextMsg] VirtualNode::map(
-  self : VirtualNode[Msg],
+fn[Msg, NextMsg] ViewNode::map(
+  self : ViewNode[Msg],
   map : (Msg) -> NextMsg,
-) -> VirtualNode[NextMsg] {
-  VirtualNode::new(
+) -> ViewNode[NextMsg] {
+  ViewNode::new(
     identity=() => self.identity(),
     revision=() => self.revision(),
     children=() => self.children().map(child => child.map(map)),
@@ -461,25 +454,136 @@ pub fn[Msg, NextMsg] VirtualNode::map(
 
 ///|
 pub struct View[Msg] {
-  priv virtual_node : VirtualNode[Msg]
+  priv node : ViewNode[Msg]
 }
 
 ///|
-fn[Msg] view_from_virtual_node(virtual_node : VirtualNode[Msg]) -> View[Msg] {
-  { virtual_node, }
+pub fn[Msg] View::node(
+  identity~ : () -> ViewIdentity,
+  revision? : () -> String = () => "",
+  children? : () -> Array[View[Msg]] = () => [],
+  build_child? : ((ComponentContext) -> View[Msg])? = None,
+  child_constraints? : (Constraints) -> Constraints = constraints => {
+    constraints.loosen()
+  },
+  layout~ : (ViewLayoutContext) -> ViewLayoutResult,
+  paint? : (ViewPaintContext) -> ViewPaintPlan = _ctx => ViewPaintPlan::empty(),
+  event? : (ViewEventContext) -> ViewEventResult[Msg] = _ctx => {
+    ViewEventResult::ignored()
+  },
+  text_input_state? : (ViewPaintContext) -> TextInputState? = _ctx => None,
+  text_command? : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[
+    Msg,
+  ] = (_ctx, _intent, _paste_text) => ViewTextCommandResult::ignored(),
+  semantics? : () -> ViewSemanticsInfo = () => ViewSemanticsInfo::new(),
+  focusable? : () -> Bool = () => false,
+) -> View[Msg] {
+  {
+    node: ViewNode::new(
+      identity~,
+      revision~,
+      children~,
+      build_child~,
+      child_constraints~,
+      layout~,
+      paint~,
+      event~,
+      text_input_state~,
+      text_command~,
+      semantics~,
+      focusable~,
+    ),
+  }
 }
 
 ///|
-pub fn[Msg] View::virtual_node(virtual_node : VirtualNode[Msg]) -> View[Msg] {
-  view_from_virtual_node(virtual_node)
+pub fn[Msg] View::identity(self : View[Msg]) -> ViewIdentity {
+  self.node.identity()
 }
 
 ///|
-pub fn[Msg] View::virtual_node_ops(self : View[Msg]) -> VirtualNode[Msg]? {
-  Some(self.virtual_node)
+pub fn[Msg] View::revision(self : View[Msg]) -> String {
+  self.node.revision()
 }
 
 ///|
-pub fn[Msg] View::ops(self : View[Msg]) -> VirtualNode[Msg] {
-  self.virtual_node
+pub fn[Msg] View::children(self : View[Msg]) -> Array[View[Msg]] {
+  self.node.children()
+}
+
+///|
+pub fn[Msg] View::build_child(
+  self : View[Msg],
+) -> ((ComponentContext) -> View[Msg])? {
+  self.node.build_child()
+}
+
+///|
+pub fn[Msg] View::child_constraints(
+  self : View[Msg],
+  constraints : Constraints,
+) -> Constraints {
+  self.node.child_constraints(constraints)
+}
+
+///|
+pub fn[Msg] View::layout(
+  self : View[Msg],
+  context : ViewLayoutContext,
+) -> ViewLayoutResult {
+  self.node.layout(context)
+}
+
+///|
+pub fn[Msg] View::paint(
+  self : View[Msg],
+  context : ViewPaintContext,
+) -> ViewPaintPlan {
+  self.node.paint(context)
+}
+
+///|
+pub fn[Msg] View::event(
+  self : View[Msg],
+  context : ViewEventContext,
+) -> ViewEventResult[Msg] {
+  self.node.event(context)
+}
+
+///|
+pub fn[Msg] View::text_input_state(
+  self : View[Msg],
+  context : ViewPaintContext,
+) -> TextInputState? {
+  self.node.text_input_state(context)
+}
+
+///|
+pub fn[Msg] View::text_command(
+  self : View[Msg],
+  context : ViewEventContext,
+  intent : CommandIntent,
+  paste_text? : String? = None,
+) -> TextCommandResult {
+  self.node.text_command(context, intent, paste_text~)
+}
+
+///|
+pub fn[Msg] View::text_command_result(
+  self : View[Msg],
+  context : ViewEventContext,
+  intent : CommandIntent,
+  paste_text? : String? = None,
+) -> ViewTextCommandResult[Msg] {
+  self.node.text_command_result(context, intent, paste_text~)
+}
+
+///|
+pub fn[Msg] View::semantics(self : View[Msg]) -> ViewSemanticsInfo {
+  self.node.semantics()
+}
+
+///|
+pub fn[Msg] View::accepts_focus(self : View[Msg]) -> Bool {
+  self.node.focusable()
 }

@@ -18,8 +18,8 @@ pub fn[Msg] surface(
     Some(color) => (Some(@core.Brush::solid(color)), corner_radius)
     None => (Some(style.brush), style.radius)
   }
-  let container = raw_container(
-    child=Some(raw_padding(child~, insets=child_padding)),
+  let container = container_box(
+    child=Some(padding_layout(child~, insets=child_padding)),
     size=None,
     background~,
     border=style.border,
@@ -137,7 +137,15 @@ fn views_min_int(a : Int, b : Int) -> Int {
 
 ///|
 pub fn[Msg] empty() -> @core.View[Msg] {
-  raw_empty()
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="Empty"),
+    revision=() => "empty",
+    layout=ctx => {
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(@core.Size::new(width=0.0, height=0.0)),
+      )
+    },
+  )
 }
 
 ///|
@@ -152,5 +160,16 @@ pub fn[Msg] spacer(
   min_length? : Double = 0.0,
   weight? : Double = 1.0,
 ) -> @core.View[Msg] {
-  raw_spacer(min_length~, weight~)
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="Spacer"),
+    revision=() => "spacer:\{min_length}:\{weight}",
+    layout=ctx => {
+      let size = if weight > 0.0 {
+        @core.Size::new(width=0.0, height=0.0)
+      } else {
+        @core.Size::new(width=min_length, height=min_length)
+      }
+      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
+    },
+  )
 }

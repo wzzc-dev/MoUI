@@ -20,82 +20,80 @@ pub fn[Msg] rich_text_editor(
   kind? : String = "RichTextEditor",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  @core.View::virtual_node(
-    @core.VirtualNode::new(
-      identity=() => @core.VirtualNodeIdentity::new(kind~, key~),
-      revision=() => {
-        "rich-text-editor:\{value.get()}:\{placeholder}:\{virtual_node_size_revision(size)}:\{virtual_node_font_revision(font)}:\{virtual_node_color_revision(foreground)}:\{virtual_node_color_revision(placeholder_color)}:\{virtual_node_brush_revision(background)}:\{virtual_node_border_option_revision(border)}:\{virtual_node_border_option_revision(focused_border)}:\{virtual_node_color_revision(cursor_color)}:\{corner_radius}:\{accepts_tab_input}"
-      },
-      layout=ctx => {
-        @core.VirtualNodeLayoutResult::new(size=ctx.constraints.constrain(size))
-      },
-      paint=ctx => {
-        rich_text_editor_paint(
-          ctx,
-          value~,
-          placeholder~,
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind~, key~),
+    revision=() => {
+      "rich-text-editor:\{value.get()}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{accepts_tab_input}"
+    },
+    layout=ctx => {
+      @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
+    },
+    paint=ctx => {
+      rich_text_editor_paint(
+        ctx,
+        value~,
+        placeholder~,
+        format~,
+        font~,
+        foreground~,
+        placeholder_color~,
+        background~,
+        border~,
+        focused_border~,
+        cursor_color~,
+        corner_radius~,
+      )
+    },
+    event=ctx => {
+      rich_text_editor_event(
+        ctx,
+        value~,
+        format~,
+        font~,
+        on_input~,
+        on_selection_change~,
+        on_prefix_click~,
+        input_transform~,
+        accepts_tab_input~,
+      )
+    },
+    text_input_state=ctx => {
+      Some(
+        rich_text_input_state(
+          text=value.get(),
+          frame=ctx.frame,
           format~,
           font~,
-          foreground~,
-          placeholder_color~,
-          background~,
-          border~,
-          focused_border~,
-          cursor_color~,
-          corner_radius~,
-        )
-      },
-      event=ctx => {
-        rich_text_editor_event(
-          ctx,
-          value~,
-          format~,
-          font~,
-          on_input~,
-          on_selection_change~,
-          on_prefix_click~,
-          input_transform~,
-          accepts_tab_input~,
-        )
-      },
-      text_input_state=ctx => {
-        Some(
-          rich_text_input_state(
-            text=value.get(),
-            frame=ctx.frame,
-            format~,
-            font~,
-            control=ctx.text_control,
-            text_system=ctx.text_system,
-          ),
-        )
-      },
-      text_command=(ctx, intent, paste_text) => {
-        rich_text_editor_command(
-          ctx,
-          value~,
-          format~,
-          on_input~,
-          on_selection_change~,
-          input_transform~,
-          intent,
-          paste_text~,
-        )
-      },
-      semantics=() => {
-        @core.VirtualNodeSemanticsInfo::new(
-          role=@core.SemanticsRole::TextField,
-          label=placeholder,
-          value=value.get(),
-          actions=[
-            @core.SemanticsAction::Focus,
-            @core.SemanticsAction::SetText,
-            @core.SemanticsAction::Submit,
-          ],
-        )
-      },
-      focusable=() => true,
-    ),
+          control=ctx.text_control,
+          text_system=ctx.text_system,
+        ),
+      )
+    },
+    text_command=(ctx, intent, paste_text) => {
+      rich_text_editor_command(
+        ctx,
+        value~,
+        format~,
+        on_input~,
+        on_selection_change~,
+        input_transform~,
+        intent,
+        paste_text~,
+      )
+    },
+    semantics=() => {
+      @core.ViewSemanticsInfo::new(
+        role=@core.SemanticsRole::TextField,
+        label=placeholder,
+        value=value.get(),
+        actions=[
+          @core.SemanticsAction::Focus,
+          @core.SemanticsAction::SetText,
+          @core.SemanticsAction::Submit,
+        ],
+      )
+    },
+    focusable=() => true,
   )
 }
 
@@ -146,7 +144,7 @@ pub fn[Msg] controlled_rich_text_editor(
 
 ///|
 fn rich_text_editor_paint(
-  ctx : @core.VirtualNodePaintContext,
+  ctx : @core.ViewPaintContext,
   value~ : @core.Binding[String],
   placeholder~ : String,
   format~ : RichTextFormatter,
@@ -158,7 +156,7 @@ fn rich_text_editor_paint(
   focused_border~ : @core.BorderStyle?,
   cursor_color~ : @core.Color,
   corner_radius~ : Double,
-) -> @core.VirtualNodePaintPlan {
+) -> @core.ViewPaintPlan {
   let commands : Array[@core.DrawCommand] = []
   let overlay_commands : Array[@core.DrawCommand] = []
   let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
@@ -180,7 +178,7 @@ fn rich_text_editor_paint(
   )
   let content = rich_text_editor_content_rect(ctx.frame)
   commands.push(@core.DrawCommand::PushClip(content))
-  let child_layers : Array[@core.VirtualNodePaintLayer] = []
+  let child_layers : Array[@core.ViewPaintLayer] = []
   if display_text == "" {
     commands.push(
       @core.DrawCommand::DrawText(
@@ -251,7 +249,7 @@ fn append_rich_text_border(
 
 ///|
 fn append_rich_text_document_layers(
-  layers : Array[@core.VirtualNodePaintLayer],
+  layers : Array[@core.ViewPaintLayer],
   document : RichTextDocument,
   content : @core.Rect,
   base_font : @core.FontSpec,
@@ -282,7 +280,7 @@ fn append_rich_text_document_layers(
       text_system~,
     )
     layers.push(
-      @core.VirtualNodePaintLayer::new(
+      @core.ViewPaintLayer::new(
         frame~,
         cache_key=rich_text_block_cache_key(index, block, frame),
         content_revision=rich_text_block_content_revision(
@@ -727,7 +725,7 @@ fn append_rich_text_composition_underline(
 
 ///|
 fn[Msg] rich_text_editor_event(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   format~ : RichTextFormatter,
   font~ : @core.FontSpec,
@@ -736,7 +734,7 @@ fn[Msg] rich_text_editor_event(
   on_prefix_click~ : ((Int) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   accepts_tab_input~ : Bool,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   match ctx.event {
     @core.AppEvent::Pointer(event) =>
       rich_text_pointer_event(
@@ -768,20 +766,20 @@ fn[Msg] rich_text_editor_event(
         event~,
         record_history=true,
       )
-    _ => @core.VirtualNodeEventResult::ignored()
+    _ => @core.ViewEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] rich_text_pointer_event(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   format~ : RichTextFormatter,
   font~ : @core.FontSpec,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   on_prefix_click~ : ((Int) -> Msg)?,
   event~ : @core.PointerEvent,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   let inside = ctx.frame.contains(event.position)
   match event.phase {
     @core.PointerPhase::Down =>
@@ -819,17 +817,17 @@ fn[Msg] rich_text_pointer_event(
           composition: None,
           composition_cursor: None,
         }
-        virtual_node_event_result(
+        view_event_result(
           changed=true,
           focused=true,
           captured=true,
           text_control=Some(next_control),
-          dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+          dirty=@core.ViewDirtyHint::ViewPaintDirty,
           messages=prefix_messages +
             selection_messages(on_selection_change, caret, None),
         )
       } else {
-        @core.VirtualNodeEventResult::ignored()
+        @core.ViewEventResult::ignored()
       }
     @core.PointerPhase::Move =>
       match ctx.text_control.text_selection_anchor {
@@ -858,11 +856,11 @@ fn[Msg] rich_text_pointer_event(
             composition: None,
             composition_cursor: None,
           }
-          virtual_node_event_result(
+          view_event_result(
             changed~,
             captured=true,
             text_control=Some(next_control),
-            dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+            dirty=@core.ViewDirtyHint::ViewPaintDirty,
             messages=if changed {
               selection_messages(on_selection_change, caret, next_selection)
             } else {
@@ -870,15 +868,15 @@ fn[Msg] rich_text_pointer_event(
             },
           )
         }
-        None => @core.VirtualNodeEventResult::ignored()
+        None => @core.ViewEventResult::ignored()
       }
     @core.PointerPhase::Up | @core.PointerPhase::Cancel => {
       let changed = ctx.text_control.text_selection_anchor is Some(_)
-      virtual_node_event_result(
+      view_event_result(
         changed~,
         captured=changed,
         text_control=Some({ ..ctx.text_control, text_selection_anchor: None }),
-        dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+        dirty=@core.ViewDirtyHint::ViewPaintDirty,
       )
     }
   }
@@ -886,16 +884,16 @@ fn[Msg] rich_text_pointer_event(
 
 ///|
 fn[Msg] rich_text_keyboard_event(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   accepts_tab_input~ : Bool,
   event~ : @core.KeyboardEvent,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   if !event.pressed {
-    return @core.VirtualNodeEventResult::ignored()
+    return @core.ViewEventResult::ignored()
   }
   if event.key == "Tab" && accepts_tab_input {
     let text = if event.modifiers.shift { "\u{000b}" } else { "\t" }
@@ -922,11 +920,11 @@ fn[Msg] rich_text_keyboard_event(
   }
   if is_select_all_shortcut(event) {
     let next_control = select_rich_text_control(ctx.text_control, value.get())
-    return virtual_node_event_result(
+    return view_event_result(
       changed=true,
       captured=true,
       text_control=Some(next_control),
-      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=selection_messages(
         on_selection_change,
         next_control.caret,
@@ -937,11 +935,11 @@ fn[Msg] rich_text_keyboard_event(
   if is_undo_shortcut(event) {
     let result = restore_text_history(ctx.text_control, value.get(), undo=true)
     value.set(result.text)
-    return virtual_node_event_result(
+    return view_event_result(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=text_input_messages(on_input, result.text) +
         selection_messages(
           on_selection_change,
@@ -953,11 +951,11 @@ fn[Msg] rich_text_keyboard_event(
   if is_redo_shortcut(event) {
     let result = restore_text_history(ctx.text_control, value.get(), undo=false)
     value.set(result.text)
-    return virtual_node_event_result(
+    return view_event_result(
       changed=result.changed,
       captured=true,
       text_control=Some(result.control),
-      dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+      dirty=@core.ViewDirtyHint::ViewPaintDirty,
       messages=text_input_messages(on_input, result.text) +
         selection_messages(
           on_selection_change,
@@ -1061,22 +1059,22 @@ fn[Msg] rich_text_keyboard_event(
           record_history=true,
         )
       } else {
-        @core.VirtualNodeEventResult::ignored()
+        @core.ViewEventResult::ignored()
       }
-    None => @core.VirtualNodeEventResult::ignored()
+    None => @core.ViewEventResult::ignored()
   }
 }
 
 ///|
 fn[Msg] rich_text_input_event(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   on_input~ : ((String) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   event~ : @core.TextInputEvent,
   record_history~ : Bool,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   let text = value.get()
   let result = match event {
     @core.TextInputEvent::InsertText(inserted) =>
@@ -1155,11 +1153,11 @@ fn[Msg] rich_text_input_event(
   if result.changed {
     value.set(result.text)
   }
-  virtual_node_event_result(
+  view_event_result(
     changed=result.changed,
     captured=result.changed,
     text_control=Some(result.control),
-    dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+    dirty=@core.ViewDirtyHint::ViewPaintDirty,
     messages=if result.changed {
       text_input_messages(on_input, result.text) +
       selection_messages(
@@ -1175,7 +1173,7 @@ fn[Msg] rich_text_input_event(
 
 ///|
 fn[Msg] rich_text_editor_command(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   value~ : @core.Binding[String],
   format~ : RichTextFormatter,
   on_input~ : ((String) -> Msg)?,
@@ -1183,12 +1181,12 @@ fn[Msg] rich_text_editor_command(
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   intent : @core.CommandIntent,
   paste_text~ : String?,
-) -> @core.VirtualNodeTextCommandResult[Msg] {
+) -> @core.ViewTextCommandResult[Msg] {
   let text = value.get()
   let document = format(text)
   match intent {
     @core.CommandIntent::Copy =>
-      @core.VirtualNodeTextCommandResult::new(
+      @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(
           clipboard_text=Some(
             selected_rich_text(text, document, ctx.text_control.selection),
@@ -1212,7 +1210,7 @@ fn[Msg] rich_text_editor_command(
             event=@core.TextInputEvent::DeleteRange(selection),
             record_history=true,
           )
-          @core.VirtualNodeTextCommandResult::new(
+          @core.ViewTextCommandResult::new(
             result=@core.TextCommandResult::handled(
               changed=event_result.changed,
               clipboard_text=Some(copied),
@@ -1222,7 +1220,7 @@ fn[Msg] rich_text_editor_command(
           )
         }
         None =>
-          @core.VirtualNodeTextCommandResult::new(
+          @core.ViewTextCommandResult::new(
             result=@core.TextCommandResult::handled(clipboard_text=Some("")),
           )
       }
@@ -1239,7 +1237,7 @@ fn[Msg] rich_text_editor_command(
             event=@core.TextInputEvent::InsertText(value_to_paste),
             record_history=true,
           )
-          @core.VirtualNodeTextCommandResult::new(
+          @core.ViewTextCommandResult::new(
             result=@core.TextCommandResult::handled(
               changed=event_result.changed,
             ),
@@ -1248,7 +1246,7 @@ fn[Msg] rich_text_editor_command(
           )
         }
         None =>
-          @core.VirtualNodeTextCommandResult::new(
+          @core.ViewTextCommandResult::new(
             result=@core.TextCommandResult::handled(),
           )
       }
@@ -1257,7 +1255,7 @@ fn[Msg] rich_text_editor_command(
       if result.changed {
         value.set(result.text)
       }
-      @core.VirtualNodeTextCommandResult::new(
+      @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
         text_control=Some(result.control),
         messages=if result.changed {
@@ -1277,7 +1275,7 @@ fn[Msg] rich_text_editor_command(
       if result.changed {
         value.set(result.text)
       }
-      @core.VirtualNodeTextCommandResult::new(
+      @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=result.changed),
         text_control=Some(result.control),
         messages=if result.changed {
@@ -1294,7 +1292,7 @@ fn[Msg] rich_text_editor_command(
     }
     @core.CommandIntent::SelectAll => {
       let next_control = select_rich_text_control(ctx.text_control, text)
-      @core.VirtualNodeTextCommandResult::new(
+      @core.ViewTextCommandResult::new(
         result=@core.TextCommandResult::handled(changed=true),
         text_control=Some(next_control),
         messages=selection_messages(
@@ -1304,7 +1302,7 @@ fn[Msg] rich_text_editor_command(
         ),
       )
     }
-    _ => @core.VirtualNodeTextCommandResult::ignored()
+    _ => @core.ViewTextCommandResult::ignored()
   }
 }
 
@@ -1353,12 +1351,12 @@ fn rich_text_input_state(
 
 ///|
 fn[Msg] rich_text_caret_move_result(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   text : String,
   direction : TextCaretDirection,
   extend : Bool,
   on_selection_change : ((Int, @core.TextRange?) -> Msg)?,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   let caret_move = move_text_caret(
     text,
     ctx.text_control.caret,
@@ -1377,11 +1375,11 @@ fn[Msg] rich_text_caret_move_result(
     next_control.selection != ctx.text_control.selection ||
     ctx.text_control.composition is Some(_) ||
     ctx.text_control.composition_cursor is Some(_)
-  virtual_node_event_result(
+  view_event_result(
     changed~,
     captured=true,
     text_control=Some(next_control),
-    dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+    dirty=@core.ViewDirtyHint::ViewPaintDirty,
     messages=if changed {
       selection_messages(
         on_selection_change,
@@ -1657,11 +1655,11 @@ fn select_rich_text_control(
 
 ///|
 fn[Msg] rich_text_line_edge_move_result(
-  ctx : @core.VirtualNodeEventContext,
+  ctx : @core.ViewEventContext,
   text : String,
   home~ : Bool,
   on_selection_change : ((Int, @core.TextRange?) -> Msg)?,
-) -> @core.VirtualNodeEventResult[Msg] {
+) -> @core.ViewEventResult[Msg] {
   let caret = if home {
     multiline_line_start(text, ctx.text_control.caret)
   } else {
@@ -1678,11 +1676,11 @@ fn[Msg] rich_text_line_edge_move_result(
     ctx.text_control.selection is Some(_) ||
     ctx.text_control.composition is Some(_) ||
     ctx.text_control.composition_cursor is Some(_)
-  virtual_node_event_result(
+  view_event_result(
     changed~,
     captured=true,
     text_control=Some(next_control),
-    dirty=@core.VirtualNodeDirtyHint::VirtualNodePaintDirty,
+    dirty=@core.ViewDirtyHint::ViewPaintDirty,
     messages=if changed {
       selection_messages(
         on_selection_change,
