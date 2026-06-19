@@ -1,15 +1,3 @@
-// ///|
-// type ClickHandler = () -> Unit
-
-// ///|
-// type FileDropHandler = (Array[String], Point) -> Unit
-
-// ///|
-// type DragGestureHandler = (DragGestureEvent) -> Unit
-
-// ///|
-// type FrameDragGestureHandler = (DragGestureEvent, Rect) -> Unit
-
 ///|
 type DragGestureMessageHandler[Msg] = (DragGestureEvent) -> Msg
 
