@@ -5,11 +5,6 @@ pub(all) struct Frame {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub struct Clock {
-  mut last_time_ms : Double?
-}
-
-///|
 pub(all) enum AnimationStatus {
   Idle
   Running
@@ -57,21 +52,6 @@ pub struct TransitionSample {
 ///|
 pub fn Frame::new(time_ms~ : Double, delta_ms~ : Double) -> Frame {
   { time_ms, delta_ms }
-}
-
-///|
-pub fn Clock::new() -> Clock {
-  { last_time_ms: None }
-}
-
-///|
-pub fn Clock::frame(self : Clock, time_ms : Double) -> Frame {
-  let delta = match self.last_time_ms {
-    Some(last) => max_double(0.0, time_ms - last)
-    None => 0.0
-  }
-  self.last_time_ms = Some(time_ms)
-  Frame::new(time_ms~, delta_ms=delta)
 }
 
 ///|

@@ -103,40 +103,6 @@ fn RenderEnvironment::matches_default_cache_key(
   self.now_ms == 0.0
 }
 
-// ///|
-// fn environment_color(
-//   environment : RenderEnvironment,
-//   fallback : Color,
-// ) -> Color {
-//   let color = environment.foreground.unwrap_or(fallback)
-//   if environment.enabled {
-//     color
-//   } else {
-//     color.multiply_alpha(0.7)
-//   }
-// }
-
-// ///|
-// fn environment_font(
-//   environment : RenderEnvironment,
-//   fallback : FontSpec,
-// ) -> FontSpec {
-//   let font = environment.font.unwrap_or(fallback)
-//   if environment.text_scale == 1.0 {
-//     font
-//   } else {
-//     { ..font, size: font.size * environment.text_scale }
-//   }
-// }
-
-// ///|
-// fn environment_measure_text(
-//   environment : RenderEnvironment,
-//   input : TextLayoutInput,
-// ) -> TextLayoutResult {
-//   environment.text_system.measure_text(input)
-// }
-
 ///|
 fn render_environment_to_view_environment(
   environment : RenderEnvironment,
