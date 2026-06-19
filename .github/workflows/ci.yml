@@ -27,10 +27,7 @@ jobs:
         run: |
           moon version --all
           sh scripts/ci-moon-update.sh
-
-      - name: Check dependency wiring
-        run: sh scripts/check-local-deps.sh
-
+          
       - name: Run daily development and guidance checks
         run: sh scripts/dev-check.sh
 

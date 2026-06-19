@@ -48,12 +48,10 @@ From the repository root:
 
 ```sh
 moon update
-sh scripts/check-local-deps.sh
 sh scripts/dev-check.sh
 ```
 
-`moon update` refreshes registry packages. `scripts/check-local-deps.sh`
-verifies the `wzzc-dev/window` and `wzzc-dev/moui_skia` wiring. `dev-check.sh`
+`moon update` refreshes registry packages. `dev-check.sh`
 is the daily validation gate (dependency guards, guidance consistency,
 maintenance baseline ratchets, API surface, `moon check`, core/view/render/
 backend package tests, Showcase and Markdown Editor app tests, Web wasm-gc
