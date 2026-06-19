@@ -242,14 +242,10 @@ pub fn ButtonStyle::tonal(
 pub fn ButtonStyle::outline(
   theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
+  // shadcn/minimal outline: 1px border at rest, surface-tint background on
+  // hover/press. Foreground stays constant — no color shift, just a wash.
   let border = @core.BorderStyle::new(
     brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.8)),
-    width=1.0,
-  )
-  // Hover/press tighten the border toward the accent for affordance and tint
-  // the foreground to match, so the control reads as interactive.
-  let accent_border = @core.BorderStyle::new(
-    brush=@core.Brush::solid(theme.palette.primary.multiply_alpha(0.6)),
     width=1.0,
   )
   let normal = control_state(
@@ -259,22 +255,22 @@ pub fn ButtonStyle::outline(
     radius=theme.radius_scale.md,
   )
   let hovered = control_state(
-    foreground=theme.palette.primary,
-    background=@core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.5)),
-    border=accent_border,
+    foreground=theme.foreground,
+    background=@core.Brush::solid(theme.palette.surface_variant),
+    border~,
     radius=theme.radius_scale.md,
   )
   let pressed = control_state(
-    foreground=theme.palette.primary,
-    background=@core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.9)),
-    border=accent_border,
+    foreground=theme.foreground,
+    background=@core.Brush::solid(theme.palette.surface_variant.lerp(theme.palette.foreground, 0.06)),
+    border~,
     radius=theme.radius_scale.md,
   )
   let disabled = control_state(
     foreground=theme.palette.muted,
     background=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
     border=@core.BorderStyle::new(
-      brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.4)),
+      brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.5)),
       width=1.0,
     ),
     radius=theme.radius_scale.md,
