@@ -6,11 +6,34 @@ pub(all) enum DesignDensity {
 } derive(Eq, Debug, ToJson)
 
 ///|
+///|
+/// Design-system semantic palette. Extended with a neutral background/foreground/
+/// stroke ramp so Fluent 2 (and any system with layered neutral surfaces) can
+/// express `colorNeutralBackground1/2/3`, `colorNeutralForeground1/2`, and
+/// `colorNeutralStroke1/2` distinctly instead of collapsing them into a single
+/// `surface`/`surface_variant` pair. Presets that do not need the full ramp
+/// alias the tiers (e.g. background2 = background1) via their palette builder.
 pub(all) struct DesignSemanticPalette {
   foreground : @core.Color
   background : @core.Color
   surface : @core.Color
   surface_variant : @core.Color
+  // Neutral background ramp. background1 = app canvas, background2 = card,
+  // background3 = raised/flyout. Presets without a ramp set all three equal
+  // to `background`/`surface`.
+  background_2 : @core.Color
+  background_3 : @core.Color
+  // Neutral foreground ramp. foreground1 = primary text, foreground2 = secondary
+  // text. Presets without a ramp set foreground2 = foreground.
+  foreground_2 : @core.Color
+  // Neutral stroke ramp. stroke1 = strong control border, stroke2 = subtle
+  // divider. Presets without a ramp set both to `outline`.
+  stroke_1 : @core.Color
+  stroke_2 : @core.Color
+  // Brand stroke (distinct from brand fill). Fluent 2 separates
+  // colorBrandBackground from colorBrandStroke1. Presets without a separate
+  // brand stroke set this to `primary`.
+  brand_stroke : @core.Color
   primary : @core.Color
   primary_foreground : @core.Color
   outline : @core.Color
@@ -24,11 +47,22 @@ pub(all) struct DesignSemanticPalette {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// Extended typography tiers matching Fluent 2 / Material 3 type ramps beyond
+/// the legacy body/title/caption/control four. Presets that do not define a
+/// full ramp leave these `None`; `core_typography` falls back to derived
+/// values from the four base tiers.
 pub(all) struct DesignTypographyTokens {
   body : @core.FontSpec
   title : @core.FontSpec
   caption : @core.FontSpec
   control : @core.FontSpec
+  // Fluent 2 type ramp: subtitle1 (20/600), title1 (28/600), title2 (24/600),
+  // body1_strong (14/600), caption2 (12/600). `None` means derive from base.
+  subtitle : @core.FontSpec?
+  title_large : @core.FontSpec?
+  title_medium : @core.FontSpec?
+  body_strong : @core.FontSpec?
+  caption_strong : @core.FontSpec?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -341,11 +375,17 @@ pub fn DesignSemanticPalette::core_palette(
     ..@core.ColorPalette::from_seed(primary=self.primary, scheme),
     foreground: self.foreground,
     background: self.background,
-    surface: self.surface,
-    surface_variant: self.surface_variant,
+    // Map the neutral background ramp onto the palette surface tiers:
+    // surface = background_2 (card), surface_variant = background_3 (raised).
+    surface: self.background_2,
+    surface_variant: self.background_3,
+    on_surface: self.foreground,
+    on_surface_variant: self.foreground_2,
     primary: self.primary,
     on_primary: self.primary_foreground,
-    outline: self.outline,
+    // stroke_1 = strong control border, stroke_2 = subtle divider.
+    outline: self.stroke_1,
+    outline_variant: self.stroke_2,
     muted: self.muted,
     success: self.success,
     on_success: contrast_on(self.success),
@@ -379,14 +419,24 @@ pub fn DesignTypographyTokens::core_typography(
   self : DesignTypographyTokens,
 ) -> @core.TypographyScale {
   // Start from the neutral default so the extended tiers (display/headline/
-  // subtitle/label/overline) keep sensible values, then override the four
-  // legacy slots this design-system token set owns.
+  // subtitle/label/overline) keep sensible values, then override the slots
+  // this design-system token set owns. Fluent 2 supplies subtitle/title_large/
+  // title_medium/body_strong; other presets leave them None and inherit the
+  // neutral defaults.
+  // Override every TypographyScale slot. Fluent 2 supplies the extended
+  // tiers (subtitle/headline/display/label/overline); other presets leave
+  // them None and inherit the neutral default values.
+  let neutral = @core.TypographyScale::default()
   {
-    ..@core.TypographyScale::default(),
     body: self.body,
     title: self.title,
     caption: self.caption,
     control: self.control,
+    subtitle: self.subtitle.unwrap_or(neutral.subtitle),
+    headline: self.title_large.unwrap_or(neutral.headline),
+    display: self.title_medium.unwrap_or(neutral.display),
+    label: self.body_strong.unwrap_or(neutral.label),
+    overline: self.caption_strong.unwrap_or(neutral.overline),
   }
 }
 
@@ -1285,38 +1335,72 @@ fn fluent_design_tokens(
   density : DesignDensity,
   variant~ : DesignSchemeVariant,
 ) -> DesignSystemTokens {
+  // Fluent 2 token values pinned from @fluentui/tokens. The neutral ramp
+  // (colorNeutralBackground1/2/3, colorNeutralForeground1/2,
+  // colorNeutralStroke1/2) is now first-class instead of collapsed into a
+  // single surface pair; brand stroke is separated from brand fill
+  // (colorBrandStroke1 != colorBrandBackground). Status colors use the Fluent
+  // 2 status ramp (green/yellow/red) rather than the legacy Office palette.
   let palette = match scheme {
     @core.ColorScheme::Light =>
       semantic_palette(
+        // colorNeutralForeground1 / Background1
         foreground=color_byte(r=36, g=36, b=36),
         background=@core.Color::white(),
+        // Legacy aliases kept for compatibility; the ramp fields below are
+        // the source of truth for surface tiers.
         surface=color_byte(r=250, g=250, b=250),
         surface_variant=color_byte(r=245, g=245, b=245),
-        primary=color_byte(r=0, g=120, b=212),
+        // Fluent 2 neutral background ramp.
+        // colorNeutralBackground2 (card) / Background3 (raised/flyout).
+        background_2=Some(color_byte(r=250, g=250, b=250)),
+        background_3=Some(color_byte(r=245, g=245, b=245)),
+        // colorNeutralForeground2 (secondary text).
+        foreground_2=Some(color_byte(r=97, g=97, b=97)),
+        // colorNeutralStroke1 (strong border) / Stroke2 (subtle divider).
+        stroke_1=Some(color_byte(r=209, g=209, b=209)),
+        stroke_2=Some(color_byte(r=224, g=224, b=224)),
+        // colorBrandBackground (primary fill) / colorBrandStroke1.
+        primary=color_byte(r=15, g=108, b=189),
         primary_foreground=@core.Color::white(),
+        brand_stroke=Some(color_byte(r=15, g=108, b=189)),
         outline=color_byte(r=209, g=209, b=209),
         muted=color_byte(r=97, g=97, b=97),
+        // Fluent 2 status ramp (BackgroundGreen/Yellow/Red).
         success=color_byte(r=16, g=124, b=16),
-        warning=color_byte(r=218, g=59, b=1),
-        danger=color_byte(r=209, g=52, b=56),
-        info=color_byte(r=0, g=120, b=212),
+        warning=color_byte(r=138, g=84, b=0),
+        danger=color_byte(r=177, g=15, b=14),
+        info=color_byte(r=15, g=108, b=189),
         focus=Some(@core.Color::black()),
         scrim=Some(color(r=0.0, g=0.0, b=0.0, a=0.4)),
       )
     @core.ColorScheme::Dark =>
       semantic_palette(
-        foreground=color(r=0.95, g=0.95, b=0.95),
-        background=color(r=0.08, g=0.09, b=0.10),
-        surface=color(r=0.13, g=0.14, b=0.16),
-        surface_variant=color(r=0.20, g=0.22, b=0.25),
-        primary=color(r=0.38, g=0.71, b=1.0),
-        primary_foreground=color(r=0.02, g=0.06, b=0.10),
-        outline=color(r=0.36, g=0.39, b=0.43),
-        muted=color(r=0.70, g=0.73, b=0.77),
-        success=color(r=0.42, g=0.75, b=0.49),
-        warning=color(r=0.95, g=0.70, b=0.34),
-        danger=color(r=1.0, g=0.55, b=0.57),
-        info=color(r=0.51, g=0.73, b=1.0),
+        // colorNeutralForeground1 / Background1 (Fluent 2 dark: #292929).
+        foreground=@core.Color::white(),
+        background=color_byte(r=41, g=41, b=41),
+        surface=color_byte(r=31, g=31, b=31),
+        surface_variant=color_byte(r=20, g=20, b=20),
+        // Dark neutral ramp: Background2 = #1F1F1F, Background3 = #141414.
+        background_2=Some(color_byte(r=31, g=31, b=31)),
+        background_3=Some(color_byte(r=20, g=20, b=20)),
+        // colorNeutralForeground2 (dark) = #D6D6D6.
+        foreground_2=Some(color_byte(r=214, g=214, b=214)),
+        // colorNeutralStroke1 (dark) = #525252, Stroke2 = #3D3D3D.
+        stroke_1=Some(color_byte(r=82, g=82, b=82)),
+        stroke_2=Some(color_byte(r=61, g=61, b=61)),
+        // colorBrandBackground (dark) = #115EA3, BrandStroke1 = #2886DE.
+        primary=color_byte(r=17, g=94, b=163),
+        primary_foreground=@core.Color::white(),
+        brand_stroke=Some(color_byte(r=40, g=134, b=222)),
+        outline=color_byte(r=82, g=82, b=82),
+        muted=color_byte(r=214, g=214, b=214),
+        success=color_byte(r=154, g=223, b=125),
+        warning=color_byte(r=255, g=200, b=0),
+        danger=color_byte(r=255, g=159, b=150),
+        info=color_byte(r=96, g=205, b=255),
+        focus=Some(@core.Color::white()),
+        scrim=Some(color(r=0.0, g=0.0, b=0.0, a=0.6)),
       )
   }
   let tokens = design_tokens(
@@ -1324,30 +1408,36 @@ fn fluent_design_tokens(
     scheme~,
     variant~,
     density~,
-    source_family="Fluent alias tokens",
+    source_family="Fluent 2 alias tokens (@fluentui/tokens)",
     palette~,
     spacing=spacing_tokens(
       { xs: 4.0, sm: 8.0, md: 12.0, lg: 20.0, xl: 32.0 },
       density,
     ),
-    // Fluent 2 border-radius tiers pinned from @fluentui/tokens: sm=2
-    // (borderRadiusSmall), md=4 (borderRadiusMedium), lg=8 (borderRadiusXLarge).
-    // The 6px borderRadiusLarge tier is PreviewMapped onto lg because the
-    // neutral large slot is shared with the 8px XLarge tier; controls stay on
-    // the smaller 2/4 pair so buttons and inputs read as crisp rectangles.
+    // Fluent 2 border-radius tiers: sm=2 (borderRadiusSmall), md=4
+    // (borderRadiusMedium), lg=8 (borderRadiusXLarge), pill=circular.
     radius={ sm: 2.0, md: 4.0, lg: 8.0, pill: 999.0 },
     typography=typography_tokens(
-      title=22.0,
+      title=20.0,
       body=14.0,
       caption=12.0,
       control=14.0,
+      // Fluent 2 type ramp: subtitle1 (20/600), title1 (28/600),
+      // title2 (24/600), body1Strong (14/600), caption2 (12/600).
+      subtitle=Some(@core.FontSpec::new(size=20.0, weight=600)),
+      title_large=Some(@core.FontSpec::new(size=28.0, weight=600)),
+      title_medium=Some(@core.FontSpec::new(size=24.0, weight=600)),
+      body_strong=Some(@core.FontSpec::new(size=14.0, weight=600)),
+      caption_strong=Some(@core.FontSpec::new(size=12.0, weight=600)),
     ),
     elevation=fluent_elevation_tokens(scheme),
     motion={
+      // Fluent 2 duration tokens: normal=0.15s, fast=0.1s, slow=0.25s,
+      // ease curve = cubic-bezier(0.33,0,0.67,1) (EaseInOut approximated).
       fast_ms: 100.0,
-      normal_ms: 200.0,
-      slow_ms: 300.0,
-      easing: @core.Easing::EaseOut,
+      normal_ms: 150.0,
+      slow_ms: 250.0,
+      easing: @core.Easing::EaseInOut,
     },
   )
   fluent_component_overrides(tokens, palette, scheme)
@@ -1366,9 +1456,15 @@ fn fluent_component_overrides(
   let base = tokens.components
   let button = {
     ..base
+    // Primary button: Fluent 2 uses colorBrandBackground as fill and
+    // colorBrandStroke1 as the rest border, separated from the fill color.
+    .button,
+    primary: {
+      ..base.button.primary,
+      border: palette.brand_stroke,
+    },
     // subtle: transparent background, foreground tint, hover reveals a faint
     // neutral wash (colorNeutralBackground1Hover semantics).
-    .button,
     subtle: control_state_tokens(
       foreground=palette.foreground,
       background=transparent(),
@@ -1389,7 +1485,8 @@ fn fluent_component_overrides(
     ),
   }
   // Underline text field: bottom-border-only normal/focused, no side/top
-  // border, focus uses the brand stroke at 2px with an inner-reveal hint.
+  // border. Normal uses colorNeutralStroke1, focused uses colorBrandStroke1 at
+  // 2px with an inner-reveal hint (colorBrandBackground).
   let underline_border_width = 1.0
   let underline_focus_width = 2.0
   let tf = base.text_field
@@ -1397,19 +1494,25 @@ fn fluent_component_overrides(
     ..tf,
     normal: {
       ..tf.normal,
-      border: palette.outline,
+      border: palette.stroke_1,
       border_width: underline_border_width,
       bottom_border_only: true,
       inner_focus_border: None,
     },
     focused: {
       ..tf.focused,
-      border: palette.focus,
+      border: palette.brand_stroke,
       border_width: underline_focus_width,
       bottom_border_only: true,
       inner_focus_border: Some(palette.primary),
     },
     appearance: DesignTextFieldAppearance::Underline,
+  }
+  // Fluent 2 also uses neutral stroke1 (not outline) for picker borders and
+  // brand stroke for choice-control selected state.
+  let picker = {
+    ..base.picker,
+    background: @core.Brush::solid(palette.background_2),
   }
   // Per-tier card shadows from the Fluent elevation ramp.
   let surface = {
@@ -1419,7 +1522,7 @@ fn fluent_component_overrides(
     overlay_shadow: tokens.elevation.flyout,
   }
   ignore(scheme)
-  { ..tokens, components: { ..base, button, text_field, surface } }
+  { ..tokens, components: { ..base, button, text_field, picker, surface } }
 }
 
 ///|
@@ -1541,12 +1644,26 @@ fn semantic_palette(
   info~ : @core.Color,
   focus? : @core.Color? = None,
   scrim? : @core.Color? = None,
+  // Neutral ramp overrides. Default to the legacy surface/foreground/outline
+  // aliases so presets without a ramp keep their old appearance.
+  background_2? : @core.Color? = None,
+  background_3? : @core.Color? = None,
+  foreground_2? : @core.Color? = None,
+  stroke_1? : @core.Color? = None,
+  stroke_2? : @core.Color? = None,
+  brand_stroke? : @core.Color? = None,
 ) -> DesignSemanticPalette {
   {
     foreground,
     background,
     surface,
     surface_variant,
+    background_2: background_2.unwrap_or(surface),
+    background_3: background_3.unwrap_or(surface_variant),
+    foreground_2: foreground_2.unwrap_or(muted),
+    stroke_1: stroke_1.unwrap_or(outline),
+    stroke_2: stroke_2.unwrap_or(outline),
+    brand_stroke: brand_stroke.unwrap_or(primary),
     primary,
     primary_foreground,
     outline,
@@ -1566,12 +1683,22 @@ fn typography_tokens(
   body~ : Double,
   caption~ : Double,
   control~ : Double,
+  subtitle? : @core.FontSpec? = None,
+  title_large? : @core.FontSpec? = None,
+  title_medium? : @core.FontSpec? = None,
+  body_strong? : @core.FontSpec? = None,
+  caption_strong? : @core.FontSpec? = None,
 ) -> DesignTypographyTokens {
   {
     body: @core.FontSpec::new(size=body, weight=400),
     title: @core.FontSpec::new(size=title, weight=700),
     caption: @core.FontSpec::new(size=caption, weight=400),
     control: @core.FontSpec::new(size=control, weight=600),
+    subtitle,
+    title_large,
+    title_medium,
+    body_strong,
+    caption_strong,
   }
 }
 
