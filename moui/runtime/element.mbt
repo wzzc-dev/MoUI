@@ -119,7 +119,7 @@ fn ElementNode::collect_view_summaries(
     element_id: self.id,
     kind: self.erased_view_node.inspector_kind_label(),
     key: match self.key {
-      Some(key) => key.value
+      Some(key) => key.value()
       None => ""
     },
     child_count: self.children.length(),
