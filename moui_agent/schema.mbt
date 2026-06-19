@@ -193,6 +193,7 @@ fn decode_pointer_event(fields : Map[String, Json]) -> @core.AppEvent? {
     "Up" => @core.PointerPhase::Up
     "Move" => @core.PointerPhase::Move
     "Cancel" => @core.PointerPhase::Cancel
+    "Exit" => @core.PointerPhase::Exit
     _ => return None
   }
   Some(

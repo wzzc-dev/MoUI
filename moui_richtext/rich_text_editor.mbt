@@ -871,7 +871,7 @@ fn[Msg] rich_text_pointer_event(
         }
         None => @core.ViewEventResult::ignored()
       }
-    @core.PointerPhase::Up | @core.PointerPhase::Cancel => {
+    @core.PointerPhase::Up | @core.PointerPhase::Cancel | @core.PointerPhase::Exit => {
       let changed = ctx.text_control.text_selection_anchor is Some(_)
       view_event_result(
         changed~,

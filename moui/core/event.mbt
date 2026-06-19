@@ -1,9 +1,16 @@
 ///|
+/// Pointer interaction phase. `Move`/`Down`/`Up`/`Cancel` are produced by host
+/// backends from raw input. `Exit` is a synthetic, runtime-only phase: the
+/// runtime emits it to the previously hovered element when the pointer leaves
+/// its bounds (host backends never produce it). Views use it to clear hover
+/// state that they otherwise could not, because a normal `Move` outside the
+/// element is never delivered to it by hit-testing.
 pub(all) enum PointerPhase {
   Move
   Down
   Up
   Cancel
+  Exit
 } derive(Eq, Debug, ToJson)
 
 ///|
