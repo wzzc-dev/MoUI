@@ -22,15 +22,18 @@ test "design presets support dark variants" {
 test "custom theme can override selected token groups" {
   let accent = @core.Color::rgba(r=0.86, g=0.18, b=0.42)
   let base = @common.DesignPreset::Carbon.theme()
+  let palette = { ..base.palette, primary: accent }
+  let spacing_scale = { ..base.spacing_scale, sm: 14.0 }
+  let radius_scale = { ..base.radius_scale, md: 10.0 }
   let customized = @common.custom(
     base~,
-    accent~,
+    palette~,
     semantic_colors={
       ..base.semantic_colors,
       danger: @core.Color::rgba(r=0.92, g=0.18, b=0.28),
     },
-    corner_radius=10.0,
-    spacing=14.0,
+    radius_scale~,
+    spacing_scale~,
   )
   assert_true(customized.palette.primary == accent)
   inspect(customized.radius_scale.md, content="10")
@@ -3919,7 +3922,7 @@ test "source manifests keep preview presets from claiming full official coverage
 ///|
 test "customization coverage advertises inheritance and token override APIs" {
   let manifest = @common.DesignPreset::Carbon.manifest()
-  assert_true(manifest.customization_coverage.length() == 7)
+  assert_true(manifest.customization_coverage.length() == 6)
   assert_true(
     manifest.customization_coverage.any(item => {
       item.capability == "Theme base inheritance" &&
@@ -3965,9 +3968,9 @@ test "customization reports tie public APIs to neutral token surfaces" {
     assert_true(
       report.length() == preset.manifest().customization_coverage.length(),
     )
-    assert_true(preset.customization_report_count() == 7)
+    assert_true(preset.customization_report_count() == 6)
     assert_true(preset.customization_capability_gap_count() == 0)
-    assert_true(preset.customization_official_parity_gap_count() == 7)
+    assert_true(preset.customization_official_parity_gap_count() == 6)
     for item in report {
       assert_true(item.api_surface != "")
       assert_true(item.token_surface != "")

@@ -36,8 +36,11 @@ catalog rows.
   keyed focusable view, and `RouteFocusStore` records route-to-focus-key
   restoration targets. `View::focus_trap` constrains Tab traversal and pointer
   focus to a view-level subtree for dialog/popover compositions.
-- Visual customization usually flows through `@moui.Theme`, style types, or
-  ordered modifiers such as `.padding`, `.background`, `.title`, `.clip`, and `.opacity`.
+- Visual customization usually flows through token groups on `@moui.Theme`,
+  style types, or ordered modifiers such as `.padding`, `.background`,
+  `.title`, `.clip`, and `.opacity`. Theme customization should replace
+  canonical groups like `palette`, `typography`, `spacing_scale`, and
+  `radius_scale` rather than adding theme-level alias fields.
 - File drop targets use the `View::on_file_drop` modifier so apps can accept
   normalized platform file paths as typed messages without depending on
   backend-specific events.

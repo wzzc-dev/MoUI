@@ -302,7 +302,7 @@ pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, p
 
 pub fn[Msg] text_field_binding(@core.Binding[String], on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn theme(base? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, semantic_colors? : @core.SemanticColorScale, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
+pub fn theme(base? : @core.Theme, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, semantic_colors? : @core.SemanticColorScale, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
 
 pub fn[Msg] toast(String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 

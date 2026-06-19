@@ -130,12 +130,6 @@ pub(all) struct Theme {
   shadow_scale : ShadowScale
   motion : MotionScale
   surfaces : SurfaceScale
-  font : FontSpec
-  foreground : Color
-  background : Color
-  accent : Color
-  spacing : Double
-  corner_radius : Double
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -320,51 +314,6 @@ pub fn Theme::neutral() -> Theme {
     shadow_scale,
     motion,
     surfaces,
-    font: typography.body,
-    foreground: palette.foreground,
-    background: palette.background,
-    accent: palette.primary,
-    spacing: spacing_scale.sm,
-    corner_radius: radius_scale.md,
-  }
-}
-
-///|
-pub fn Theme::with_font(self : Theme, font : FontSpec) -> Theme {
-  { ..self, font, typography: { ..self.typography, body: font } }
-}
-
-///|
-pub fn Theme::with_foreground(self : Theme, color : Color) -> Theme {
-  { ..self, foreground: color, palette: { ..self.palette, foreground: color } }
-}
-
-///|
-pub fn Theme::with_background(self : Theme, color : Color) -> Theme {
-  { ..self, background: color, palette: { ..self.palette, background: color } }
-}
-
-///|
-pub fn Theme::with_accent(self : Theme, color : Color) -> Theme {
-  {
-    ..self,
-    accent: color,
-    palette: { ..self.palette, primary: color },
-    semantic_colors: { ..self.semantic_colors, info: color, focus: color },
-  }
-}
-
-///|
-pub fn Theme::with_spacing(self : Theme, spacing : Double) -> Theme {
-  { ..self, spacing, spacing_scale: { ..self.spacing_scale, sm: spacing } }
-}
-
-///|
-pub fn Theme::with_corner_radius(self : Theme, radius : Double) -> Theme {
-  {
-    ..self,
-    corner_radius: radius,
-    radius_scale: { ..self.radius_scale, md: radius },
   }
 }
 
@@ -381,9 +330,6 @@ pub fn Theme::with_palette(self : Theme, palette : ColorPalette) -> Theme {
     palette,
     semantic_colors,
     surfaces,
-    foreground: palette.foreground,
-    background: palette.background,
-    accent: palette.primary,
   }
 }
 
@@ -400,7 +346,7 @@ pub fn Theme::with_spacing_scale(
   self : Theme,
   spacing_scale : SpacingScale,
 ) -> Theme {
-  { ..self, spacing_scale, spacing: spacing_scale.sm }
+  { ..self, spacing_scale, }
 }
 
 ///|
@@ -408,7 +354,7 @@ pub fn Theme::with_radius_scale(
   self : Theme,
   radius_scale : RadiusScale,
 ) -> Theme {
-  { ..self, radius_scale, corner_radius: radius_scale.md }
+  { ..self, radius_scale, }
 }
 
 ///|
@@ -416,7 +362,7 @@ pub fn Theme::with_typography(
   self : Theme,
   typography : TypographyScale,
 ) -> Theme {
-  { ..self, typography, font: typography.body }
+  { ..self, typography, }
 }
 
 ///|
@@ -561,9 +507,9 @@ pub fn ContentSizeCategory::text_scale(self : ContentSizeCategory) -> Double {
 ///|
 pub fn ViewStyle::from_theme(theme : Theme) -> ViewStyle {
   {
-    font: Some(theme.font),
-    foreground: Some(theme.foreground),
+    font: Some(theme.typography.body),
+    foreground: Some(theme.palette.foreground),
     background: Some(theme.surface_brush(SurfaceLevel::Base)),
-    corner_radius: Some(theme.corner_radius),
+    corner_radius: Some(theme.radius_scale.md),
   }
 }

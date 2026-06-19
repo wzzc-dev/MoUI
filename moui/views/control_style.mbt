@@ -116,12 +116,12 @@ pub(all) struct FormValidationStyle {
 
 ///|
 pub fn TextStyle::body(theme? : @core.Theme = default_theme()) -> TextStyle {
-  { font: theme.typography.body, color: theme.foreground }
+  { font: theme.typography.body, color: theme.palette.foreground }
 }
 
 ///|
 pub fn TextStyle::title(theme? : @core.Theme = default_theme()) -> TextStyle {
-  { font: theme.typography.title, color: theme.foreground }
+  { font: theme.typography.title, color: theme.palette.foreground }
 }
 
 ///|
@@ -249,19 +249,19 @@ pub fn ButtonStyle::outline(
     width=1.0,
   )
   let normal = control_state(
-    foreground=theme.foreground,
+    foreground=theme.palette.foreground,
     background=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
     border~,
     radius=theme.radius_scale.md,
   )
   let hovered = control_state(
-    foreground=theme.foreground,
+    foreground=theme.palette.foreground,
     background=@core.Brush::solid(theme.palette.surface_variant),
     border~,
     radius=theme.radius_scale.md,
   )
   let pressed = control_state(
-    foreground=theme.foreground,
+    foreground=theme.palette.foreground,
     background=@core.Brush::solid(theme.palette.surface_variant.lerp(theme.palette.foreground, 0.06)),
     border~,
     radius=theme.radius_scale.md,
@@ -284,20 +284,20 @@ pub fn ButtonStyle::ghost(
 ) -> ButtonStyle {
   let transparent = @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0))
   let normal = control_state(
-    foreground=theme.foreground,
+    foreground=theme.palette.foreground,
     background=transparent,
     radius=theme.radius_scale.md,
   )
   // Ghost stays borderless and transparent at rest; hover/press introduce a
   // subtle foreground-tinted wash so the hit area is discoverable.
   let hovered = control_state(
-    foreground=theme.foreground,
-    background=@core.Brush::solid(theme.foreground.multiply_alpha(0.06)),
+    foreground=theme.palette.foreground,
+    background=@core.Brush::solid(theme.palette.foreground.multiply_alpha(0.06)),
     radius=theme.radius_scale.md,
   )
   let pressed = control_state(
-    foreground=theme.foreground,
-    background=@core.Brush::solid(theme.foreground.multiply_alpha(0.12)),
+    foreground=theme.palette.foreground,
+    background=@core.Brush::solid(theme.palette.foreground.multiply_alpha(0.12)),
     radius=theme.radius_scale.md,
   )
   let disabled = control_state(
@@ -313,7 +313,7 @@ pub fn TextFieldStyle::filled(
   theme? : @core.Theme = default_theme(),
 ) -> TextFieldStyle {
   let normal = control_state(
-    foreground=theme.foreground,
+    foreground=theme.palette.foreground,
     background=@core.Brush::solid(theme.palette.surface),
     border=@core.BorderStyle::new(
       brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.85)),
@@ -322,7 +322,7 @@ pub fn TextFieldStyle::filled(
     radius=theme.radius_scale.md,
   )
   let focused = control_state(
-    foreground=theme.foreground,
+    foreground=theme.palette.foreground,
     background=@core.Brush::solid(theme.palette.surface),
     border=@core.BorderStyle::new(
       brush=@core.Brush::solid(theme.palette.primary),
@@ -391,7 +391,7 @@ pub fn PickerStyle::default(
 ) -> PickerStyle {
   {
     font: theme.typography.control,
-    foreground: theme.foreground,
+    foreground: theme.palette.foreground,
     background: @core.Brush::solid(theme.palette.surface),
     radius: theme.radius_scale.md,
     popup_max_height: 200.0,

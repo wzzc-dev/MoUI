@@ -130,7 +130,7 @@ fn TextRole::color(self : TextRole, theme : @core.Theme) -> @core.Color {
   match self {
     Caption | Overline => theme.palette.muted
     Body | Title | Control | Mono | Display | Headline | Subtitle | Label =>
-      theme.foreground
+      theme.palette.foreground
   }
 }
 

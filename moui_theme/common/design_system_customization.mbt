@@ -2,7 +2,6 @@
 pub(all) enum DesignCustomizationKind {
   ThemeInheritance
   ThemeTokenOverride
-  CompatibilityOverride
   DesignTokenInheritance
   DesignTokenGroupOverride
   ComponentTokenOverride
@@ -28,7 +27,6 @@ pub fn DesignCustomizationKind::label(self : DesignCustomizationKind) -> String 
   match self {
     ThemeInheritance => "theme inheritance"
     ThemeTokenOverride => "theme token override"
-    CompatibilityOverride => "compatibility override"
     DesignTokenInheritance => "design-token inheritance"
     DesignTokenGroupOverride => "design-token group override"
     ComponentTokenOverride => "component-token override"
@@ -58,17 +56,6 @@ pub fn DesignPreset::customization_report(
       "Theme token group override",
       "@common.custom(palette/semantic_colors/spacing_scale/radius_scale/typography/shadow_scale/motion/surfaces)",
       "@core.Theme token groups",
-      inherits_base=true,
-      supports_override=true,
-      recomputes_dependents=false,
-      status=DesignTokenStatus::ThemeMapped,
-    ),
-    customization_capability_record(
-      self,
-      DesignCustomizationKind::CompatibilityOverride,
-      "Theme compatibility override",
-      "@common.custom(font/foreground/background/accent/spacing/corner_radius)",
-      "@core.Theme compatibility fields",
       inherits_base=true,
       supports_override=true,
       recomputes_dependents=false,

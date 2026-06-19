@@ -27,12 +27,6 @@ pub fn light_theme() -> @core.Theme {
     shadow_scale,
     motion,
     surfaces,
-    font: typography.body,
-    foreground: palette.foreground,
-    background: palette.background,
-    accent: palette.primary,
-    spacing: spacing_scale.sm,
-    corner_radius: radius_scale.md,
   }
 }
 
@@ -59,12 +53,6 @@ pub fn dark_theme() -> @core.Theme {
     shadow_scale,
     motion,
     surfaces,
-    font: typography.body,
-    foreground: palette.foreground,
-    background: palette.background,
-    accent: palette.primary,
-    spacing: spacing_scale.sm,
-    corner_radius: radius_scale.md,
   }
 }
 
@@ -76,12 +64,6 @@ pub fn default_theme() -> @core.Theme {
 ///|
 pub fn theme(
   base? : @core.Theme,
-  font? : @core.FontSpec,
-  foreground? : @core.Color,
-  background? : @core.Color,
-  accent? : @core.Color,
-  spacing? : Double,
-  corner_radius? : Double,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
   palette? : @core.ColorPalette,
   semantic_colors? : @core.SemanticColorScale,
@@ -130,30 +112,6 @@ pub fn theme(
   }
   match surfaces {
     Some(value) => base_theme = base_theme.with_surfaces(value)
-    None => ()
-  }
-  match font {
-    Some(value) => base_theme = base_theme.with_font(value)
-    None => ()
-  }
-  match foreground {
-    Some(value) => base_theme = base_theme.with_foreground(value)
-    None => ()
-  }
-  match background {
-    Some(value) => base_theme = base_theme.with_background(value)
-    None => ()
-  }
-  match accent {
-    Some(value) => base_theme = base_theme.with_accent(value)
-    None => ()
-  }
-  match spacing {
-    Some(value) => base_theme = base_theme.with_spacing(value)
-    None => ()
-  }
-  match corner_radius {
-    Some(value) => base_theme = base_theme.with_corner_radius(value)
     None => ()
   }
   base_theme

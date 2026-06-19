@@ -528,9 +528,8 @@ fn append_text_field_selection_commands(
      let x0 = text_frame.origin.x + layout.caret_positions[start]
      let x1 = text_frame.origin.x + layout.caret_positions[end]
      if x1 > x0 {
-        // Selection highlight tracks the active theme accent rather than a
-        // hard-coded blue so it matches the new indigo accent and any custom
-        // accent set via Theme::with_accent.
+        // Selection highlight tracks the primary palette token rather than a
+        // hard-coded blue so it follows custom palette overrides.
         let selection_color = default_theme().palette.primary.with_alpha(0.22)
        commands.push(
          @core.DrawCommand::FillRect(

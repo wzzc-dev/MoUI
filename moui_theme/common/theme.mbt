@@ -76,12 +76,6 @@ pub fn custom(
   shadow_scale? : @core.ShadowScale,
   motion? : @core.MotionScale,
   surfaces? : @core.SurfaceScale,
-  font? : @core.FontSpec,
-  foreground? : @core.Color,
-  background? : @core.Color,
-  accent? : @core.Color,
-  spacing? : Double,
-  corner_radius? : Double,
 ) -> @core.Theme {
   let mut theme = match base {
     Some(value) => value
@@ -121,30 +115,6 @@ pub fn custom(
   }
   match surfaces {
     Some(value) => theme = theme.with_surfaces(value)
-    None => ()
-  }
-  match font {
-    Some(value) => theme = theme.with_font(value)
-    None => ()
-  }
-  match foreground {
-    Some(value) => theme = theme.with_foreground(value)
-    None => ()
-  }
-  match background {
-    Some(value) => theme = theme.with_background(value)
-    None => ()
-  }
-  match accent {
-    Some(value) => theme = theme.with_accent(value)
-    None => ()
-  }
-  match spacing {
-    Some(value) => theme = theme.with_spacing(value)
-    None => ()
-  }
-  match corner_radius {
-    Some(value) => theme = theme.with_corner_radius(value)
     None => ()
   }
   theme
