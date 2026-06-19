@@ -37,12 +37,16 @@ pub fn[Msg] command_palette(
       width=width - theme.spacing_scale.md * 2.0,
       height=max_height - theme.spacing_scale.md * 2.0,
     ),
-    width~,
-    height=max_height,
-    variant=ContainerVariant::Overlay,
-    theme~,
-    padding=theme.spacing_scale.md,
-  ).semantics_role(@core.SemanticsRole::Menu)
+   width~,
+   height=max_height,
+   variant=ContainerVariant::Overlay,
+   theme~,
+   padding=theme.spacing_scale.md,
+  )
+  // Command palettes float over the whole window, so lift them with the
+  // theme's large elevation shadow like a dialog/popover.
+  .shadow(theme.shadow_scale.lg)
+  .semantics_role(@core.SemanticsRole::Menu)
 }
 
 ///|
