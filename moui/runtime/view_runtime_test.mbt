@@ -675,3 +675,145 @@ fn runtime_test_text_run(
   }
   None
 }
+
+///|
+/// A minimal hover-tracking view used to verify the runtime's synthetic
+/// `PointerPhase::Exit` delivery. It mirrors the button's state machine: a
+/// `Move` inside sets `hovered`, a `Move` outside (or an `Exit`) clears it.
+/// Each state change appends the resulting `hovered` flag to `log` so the test
+/// can assert the full hover-enter/leave sequence.
+fn[Msg] runtime_test_hover_tracker(
+  width~ : Double,
+  height~ : Double,
+  log~ : Array[Bool],
+) -> @core.View[Msg] {
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="HoverTracker"),
+    revision=() => "hover-tracker:\{width}:\{height}",
+    layout=ctx => {
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
+      )
+    },
+    paint=_ctx => @core.ViewPaintPlan::commands([]),
+    event=ctx => {
+      match ctx.event {
+        @core.AppEvent::Pointer(event) => {
+          let inside = ctx.frame.contains(event.position)
+          // Treat Exit like an out-of-bounds move: the pointer has left.
+          let effective_inside = if event.phase == @core.PointerPhase::Exit {
+            false
+          } else {
+            inside
+          }
+          let next_hovered = match event.phase {
+            @core.PointerPhase::Down => ctx.state.hovered
+            @core.PointerPhase::Move => effective_inside
+            @core.PointerPhase::Up => effective_inside
+            @core.PointerPhase::Cancel | @core.PointerPhase::Exit => false
+          }
+          let changed = next_hovered != ctx.state.hovered
+          if changed {
+            log.push(next_hovered)
+          }
+          if changed {
+            {
+              ..@core.ViewEventResult::ignored(),
+              changed: true,
+              captured: true,
+              state: Some({ ..ctx.state, hovered: next_hovered }),
+              dirty: @core.ViewDirtyHint::ViewPaintDirty,
+            }
+          } else {
+            @core.ViewEventResult::ignored()
+          }
+        }
+        _ => @core.ViewEventResult::ignored()
+      }
+    },
+  )
+}
+
+///|
+/// Regression: a control that turns hovered on pointer-enter must clear that
+/// hover when the pointer moves off it. Host backends only emit `Move`, and a
+/// move landing outside the control is never delivered by hit-testing — so the
+/// runtime synthesizes a `PointerPhase::Exit` to the previously hovered
+/// element. Two trackers sit at fixed frames with a gap between them, so the
+/// pointer can land on genuinely empty space. Asserts the enter/leave log is
+/// `[true, false, true]` after hovering the left tracker, moving into the gap,
+/// then back onto it.
+test "runtime delivers synthetic Exit to clear hover on pointer leave" {
+  let log : Array[Bool] = []
+  // Canvas is 300x40. Left tracker occupies x in [0,100); a gap spans
+  // [100,200) with no element; right tracker occupies [200,300). The parent
+  // places children at fixed frames so hit-testing distinguishes them and the
+  // gap resolves to the parent (not the left tracker).
+  let root : @core.View[Unit] = @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="HoverStage"),
+    revision=() => "hover-stage",
+    children=() => [
+      runtime_test_hover_tracker(width=100.0, height=40.0, log~),
+      runtime_test_hover_tracker(width=100.0, height=40.0, log=runtime_test_unused_log()),
+    ],
+    child_constraints=_constraints => @core.Constraints::unbounded(),
+    layout=ctx => {
+      let frames : Array[@core.Rect] = []
+      // Left tracker at [0,0,100,40], right tracker at [200,0,100,40].
+      for index, _size in ctx.child_sizes {
+        let x = if index == 0 { 0.0 } else { 200.0 }
+        frames.push(
+          @core.Rect::new(x~, y=0.0, width=100.0, height=40.0),
+        )
+      }
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(@core.Size::new(width=300.0, height=40.0)),
+        child_frames=frames,
+      )
+    },
+    paint=_ctx => @core.ViewPaintPlan::commands([]),
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=300.0, height=40.0),
+  )
+  ignore(runtime.layout())
+  // Hover the left tracker.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  // Move into the gap (x in [100,200)). No tracker is hit, so the left tracker
+  // must receive a synthetic Exit and clear its hover.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=150.0, y=10.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  // Move back onto the left tracker: it should hover again.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  // Expected: enter (true), leave (false), enter (true).
+  if log != [true, false, true] {
+    let rendered = log.map(b => if b { "true" } else { "false" }).join(", ")
+    fail("expected hover log [true, false, true] but got [\{rendered}]")
+  }
+}
+
+///|
+fn runtime_test_unused_log() -> Array[Bool] {
+  []
+}

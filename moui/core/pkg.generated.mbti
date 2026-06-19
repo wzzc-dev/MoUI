@@ -765,6 +765,7 @@ pub(all) enum PointerPhase {
   Down
   Up
   Cancel
+  Exit
 } derive(Eq, ToJson, @debug.Debug)
 
 type Program[Model, Msg]

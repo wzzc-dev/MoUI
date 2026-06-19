@@ -107,7 +107,11 @@ fn view_button_next_state(
       } else {
         @core.ButtonState::Normal
       }
-    @core.PointerPhase::Cancel => @core.ButtonState::Normal
+    // Synthetic runtime phase: the pointer left the element. Drop any hover or
+    // press state and return to rest. (`inside` is always false for an `Exit`,
+    // but the branch is unconditional so the intent is explicit.)
+    @core.PointerPhase::Exit | @core.PointerPhase::Cancel =>
+      @core.ButtonState::Normal
   }
 }
 
