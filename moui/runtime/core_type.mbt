@@ -20,6 +20,7 @@ using @core {
   type FontFamily,
   type FontSpec,
   type Frame,
+  type Key,
   type KeyboardEvent,
   type LayoutDirection,
   type LayoutResult,

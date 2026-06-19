@@ -1,9 +1,6 @@
 ///|
 fn ErasedViewNode::identity_key(self : ErasedViewNode) -> Key? {
-  match self.identity.key {
-    Some(key) => Some(Key::new(key.value()))
-    None => None
-  }
+  self.identity.key
 }
 
 ///|

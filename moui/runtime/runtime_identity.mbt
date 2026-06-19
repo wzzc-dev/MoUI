@@ -1,18 +1,8 @@
 ///|
-priv struct Key {
-  value : String
-} derive(Eq)
-
-///|
 priv struct DirtyFlags {
   mut needs_build : Bool
   mut needs_layout : Bool
   mut needs_paint : Bool
-}
-
-///|
-fn Key::new(value : String) -> Key {
-  { value, }
 }
 
 ///|
