@@ -25,22 +25,28 @@ fn ElementNode::measure_with_text_system(
   self : ElementNode,
   constraints : Constraints,
   environment~ : Environment,
+  style? : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
 ) -> MeasuredNode {
   if !self.dirty.needs_layout &&
-    self.layout_cache.cached_measure_constraints == Some(constraints) {
+    self.layout_cache.cached_measure_constraints == Some(constraints) &&
+    self.layout_cache.cached_measure_environment == Some(environment) &&
+    self.layout_cache.cached_measure_style == Some(style) {
     match self.layout_cache.cached_measured {
       Some(measured) => return measured
       None => ()
     }
   }
   let child_constraints = (self.erased_view_node.child_constraints)(constraints)
+  let child_environment = (self.erased_view_node.child_environment)(environment)
+  let child_style = (self.erased_view_node.child_style)(style)
   let children : Array[MeasuredNode] = []
   for child in self.children {
     children.push(
       child.measure_with_text_system(
         child_constraints,
-        environment~,
+        environment=child_environment,
+        style=child_style,
         text_system~,
       ),
     )
@@ -50,6 +56,7 @@ fn ElementNode::measure_with_text_system(
     child_sizes: children.map(child => child.size),
     text_system,
     environment,
+    style,
   })
   let measured = {
     element_id: self.id,
@@ -57,6 +64,8 @@ fn ElementNode::measure_with_text_system(
     children,
   }
   self.layout_cache.cached_measure_constraints = Some(constraints)
+  self.layout_cache.cached_measure_environment = Some(environment)
+  self.layout_cache.cached_measure_style = Some(style)
   self.layout_cache.cached_measured = Some(measured)
   self.dirty.needs_layout = false
   measured
@@ -67,11 +76,14 @@ fn ElementNode::place_with_text_system(
   self : ElementNode,
   bounds : Rect,
   environment~ : Environment,
+  style? : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
   layout_direction? : LayoutDirection = LayoutDirection::LeftToRight,
 ) -> PlacedNode {
   if !self.dirty.needs_layout &&
-    self.layout_cache.cached_place_frame == Some(bounds) {
+    self.layout_cache.cached_place_frame == Some(bounds) &&
+    self.layout_cache.cached_place_environment == Some(environment) &&
+    self.layout_cache.cached_place_style == Some(style) {
     match self.layout_cache.cached_placed {
       Some(placed) => return placed
       None => ()
@@ -81,16 +93,20 @@ fn ElementNode::place_with_text_system(
   let measured = self.measure_with_text_system(
     constraints,
     environment~,
+    style~,
     text_system~,
   )
   let placed = self.place_measured_with_text_system(
     measured,
     bounds,
     environment~,
+    style~,
     text_system~,
     layout_direction~,
   )
   self.layout_cache.cached_place_frame = Some(bounds)
+  self.layout_cache.cached_place_environment = Some(environment)
+  self.layout_cache.cached_place_style = Some(style)
   self.layout_cache.cached_placed = Some(placed)
   placed
 }
@@ -101,6 +117,7 @@ fn ElementNode::place_measured_with_text_system(
   measured : MeasuredNode,
   frame : Rect,
   environment~ : Environment,
+  style~ : ViewStyle,
   text_system~ : TextSystem,
   layout_direction~ : LayoutDirection,
 ) -> PlacedNode {
@@ -109,10 +126,13 @@ fn ElementNode::place_measured_with_text_system(
     child_sizes: self.children.map(child => child.intrinsic_size()),
     text_system,
     environment,
+    style,
   })
   let child_frames = result.child_frames.map(child_frame => {
     child_frame.offset(dx=frame.origin.x, dy=frame.origin.y)
   })
+  let child_environment = (self.erased_view_node.child_environment)(environment)
+  let child_style = (self.erased_view_node.child_style)(style)
   let children : Array[PlacedNode] = []
   for index, child in self.children {
     if index < child_frames.length() && index < measured.children.length() {
@@ -120,7 +140,8 @@ fn ElementNode::place_measured_with_text_system(
         child.place_measured_with_text_system(
           measured.children[index],
           child_frames[index],
-          environment~,
+          environment=child_environment,
+          style=child_style,
           text_system~,
           layout_direction~,
         ),
@@ -147,6 +168,7 @@ fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
       child_sizes: self.children.map(child => child.intrinsic_size()),
       text_system: TextSystem::fallback(),
       environment: Environment::neutral(),
+      style: ViewStyle::empty(),
     }).size
   self.layout_cache.cached_intrinsic_size = Some(size)
   size

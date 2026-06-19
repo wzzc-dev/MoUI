@@ -42,8 +42,12 @@ priv struct ElementComponentState {
 priv struct ElementLayoutCache {
   mut cached_intrinsic_size : Size?
   mut cached_measure_constraints : Constraints?
+  mut cached_measure_environment : Environment?
+  mut cached_measure_style : ViewStyle?
   mut cached_measured : MeasuredNode?
   mut cached_place_frame : Rect?
+  mut cached_place_environment : Environment?
+  mut cached_place_style : ViewStyle?
   mut cached_placed : PlacedNode?
 }
 
@@ -220,8 +224,12 @@ fn ElementLayoutCache::empty() -> ElementLayoutCache {
   {
     cached_intrinsic_size: None,
     cached_measure_constraints: None,
+    cached_measure_environment: None,
+    cached_measure_style: None,
     cached_measured: None,
     cached_place_frame: None,
+    cached_place_environment: None,
+    cached_place_style: None,
     cached_placed: None,
   }
 }
@@ -230,8 +238,12 @@ fn ElementLayoutCache::empty() -> ElementLayoutCache {
 fn ElementLayoutCache::clear(self : ElementLayoutCache) -> Unit {
   self.cached_intrinsic_size = None
   self.cached_measure_constraints = None
+  self.cached_measure_environment = None
+  self.cached_measure_style = None
   self.cached_measured = None
   self.cached_place_frame = None
+  self.cached_place_environment = None
+  self.cached_place_style = None
   self.cached_placed = None
 }
 

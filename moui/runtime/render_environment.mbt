@@ -1,5 +1,7 @@
 ///|
 priv struct RenderEnvironment {
+  environment : Environment
+  style : ViewStyle
   font : FontSpec?
   foreground : Color?
   corner_radius : Double?
@@ -24,6 +26,8 @@ fn RenderEnvironment::from_environment(
   environment : Environment,
 ) -> RenderEnvironment {
   {
+    environment,
+    style: ViewStyle::empty(),
     font: None,
     foreground: None,
     corner_radius: None,
@@ -49,17 +53,41 @@ fn RenderEnvironment::with_text_system(
 }
 
 ///|
+fn RenderEnvironment::with_child_context(
+  self : RenderEnvironment,
+  data : ErasedViewNode,
+) -> RenderEnvironment {
+  let environment = (data.child_environment)(self.environment)
+  let style = (data.child_style)(self.style)
+  {
+    ..self,
+    environment,
+    style,
+    enabled: environment.enabled,
+    scale_factor: environment.scale_factor,
+    text_scale: environment.text_scale,
+    locale: environment.locale,
+    layout_direction: environment.layout_direction,
+    accessibility_contrast: environment.accessibility_contrast,
+    reduced_motion: environment.reduced_motion,
+    content_size_category: environment.content_size_category,
+  }
+}
+
+///|
 fn RenderEnvironment::with_now_ms(
   self : RenderEnvironment,
   now_ms : Double,
 ) -> RenderEnvironment {
-  { ..self, now_ms: now_ms }
+  { ..self, now_ms, }
 }
 
 ///|
 fn RenderEnvironment::matches_default_cache_key(
   self : RenderEnvironment,
 ) -> Bool {
+  self.environment == Environment::neutral() &&
+  self.style == ViewStyle::empty() &&
   self.font is None &&
   self.foreground is None &&
   self.corner_radius is None &&
@@ -113,15 +141,5 @@ fn RenderEnvironment::matches_default_cache_key(
 fn render_environment_to_view_environment(
   environment : RenderEnvironment,
 ) -> Environment {
-  {
-    ..Environment::neutral(),
-    scale_factor: environment.scale_factor,
-    text_scale: environment.text_scale,
-    locale: environment.locale,
-    layout_direction: environment.layout_direction,
-    accessibility_contrast: environment.accessibility_contrast,
-    reduced_motion: environment.reduced_motion,
-    content_size_category: environment.content_size_category,
-    enabled: environment.enabled,
-  }
+  environment.environment
 }

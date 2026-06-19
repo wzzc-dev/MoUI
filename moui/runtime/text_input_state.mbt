@@ -5,6 +5,7 @@ fn ElementNode::focused_text_input(
   render : RenderNode,
   text_system? : TextSystem = TextSystem::fallback(),
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
 ) -> TextInputState? {
   if self.id == target {
     view_text_input_state(
@@ -13,8 +14,13 @@ fn ElementNode::focused_text_input(
       render,
       text_system,
       environment,
+      style,
     )
   } else {
+    let child_environment = (self.erased_view_node.child_environment)(
+      environment,
+    )
+    let child_style = (self.erased_view_node.child_style)(style)
     for index, child in self.children {
       if index < render.children.length() {
         match
@@ -22,7 +28,8 @@ fn ElementNode::focused_text_input(
             target,
             render.children[index],
             text_system~,
-            environment~,
+            environment=child_environment,
+            style=child_style,
           ) {
           Some(state) => return Some(state)
           None => ()
@@ -40,6 +47,7 @@ fn view_text_input_state(
   render : RenderNode,
   text_system : TextSystem,
   environment : Environment,
+  style : ViewStyle,
 ) -> TextInputState? {
   (data.text_input_state)({
     frame: render.frame,
@@ -48,6 +56,7 @@ fn view_text_input_state(
     state: { ..data.state, focused: true },
     text_control: element.control.text_context(),
     environment,
+    style,
     text_system,
     now_ms: 0.0,
   })

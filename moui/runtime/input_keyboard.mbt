@@ -4,6 +4,7 @@ fn ElementNode::dispatch_keyboard(
   target : ElementId,
   event : KeyboardEvent,
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   if self.id == target {
@@ -13,15 +14,21 @@ fn ElementNode::dispatch_keyboard(
       RenderNode::empty(),
       text_system,
       environment~,
+      style~,
     )
   } else {
+    let child_environment = (self.erased_view_node.child_environment)(
+      environment,
+    )
+    let child_style = (self.erased_view_node.child_style)(style)
     let mut changed = false
     let mut activated = false
     for child in self.children {
       let result = child.dispatch_keyboard(
         target,
         event,
-        environment~,
+        environment=child_environment,
+        style=child_style,
         text_system~,
       )
       changed = changed || result.changed
@@ -39,11 +46,13 @@ fn ElementNode::dispatch_keyboard_shortcut(
   self : ElementNode,
   event : KeyboardEvent,
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   let child_result = self.dispatch_keyboard_shortcut_to_children(
     event,
     environment~,
+    style~,
     text_system~,
   )
   if child_result.activated {
@@ -54,7 +63,7 @@ fn ElementNode::dispatch_keyboard_shortcut(
     if child_result.changed {
       child_result
     } else {
-      self.activate_first_child(environment~, text_system~)
+      self.activate_first_child(environment~, style~, text_system~)
     }
   } else {
     child_result
@@ -66,14 +75,18 @@ fn ElementNode::dispatch_keyboard_shortcut_to_children(
   self : ElementNode,
   event : KeyboardEvent,
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
   let mut changed = false
   let mut activated = false
+  let child_environment = (self.erased_view_node.child_environment)(environment)
+  let child_style = (self.erased_view_node.child_style)(style)
   for child in self.children {
     let result = child.dispatch_keyboard_shortcut(
       event,
-      environment~,
+      environment=child_environment,
+      style=child_style,
       text_system~,
     )
     changed = changed || result.changed
@@ -92,9 +105,14 @@ fn ElementNode::dispatch_keyboard_shortcut_to_children(
 fn ElementNode::activate_primary(
   self : ElementNode,
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
-  let child_result = self.activate_first_child(environment~, text_system~)
+  let child_result = self.activate_first_child(
+    environment~,
+    style~,
+    text_system~,
+  )
   if child_result.activated {
     child_result
   } else {
@@ -104,6 +122,7 @@ fn ElementNode::activate_primary(
       RenderNode::empty(),
       text_system,
       environment~,
+      style~,
     )
   }
 }
@@ -112,10 +131,17 @@ fn ElementNode::activate_primary(
 fn ElementNode::activate_first_child(
   self : ElementNode,
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> ElementEventResult {
+  let child_environment = (self.erased_view_node.child_environment)(environment)
+  let child_style = (self.erased_view_node.child_style)(style)
   for child in self.children {
-    let result = child.activate_primary(environment~, text_system~)
+    let result = child.activate_primary(
+      environment=child_environment,
+      style=child_style,
+      text_system~,
+    )
     if result.activated || result.changed {
       return result
     }

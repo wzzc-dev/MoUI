@@ -230,12 +230,12 @@ pub fn[Msg] icon(
   color? : @core.Color,
   weight? : Double = 1.6,
 ) -> @core.View[Msg] {
+  let verbs = icon_path(name)
+  let label = icon_label(name)
   let resolved_color = match color {
     Some(value) => value
     None => default_theme().palette.foreground
   }
-  let verbs = icon_path(name)
-  let label = icon_label(name)
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind="Icon"),
     revision=() => {

@@ -5,6 +5,8 @@ priv struct ErasedViewNode {
   children : () -> Array[ErasedViewNode]
   build_child : ((@core.ComponentContext) -> ErasedViewNode)?
   child_constraints : (Constraints) -> Constraints
+  child_environment : (Environment) -> Environment
+  child_style : (ViewStyle) -> ViewStyle
   layout : (@core.ViewLayoutContext) -> @core.ViewLayoutResult
   paint : (@core.ViewPaintContext) -> @core.ViewPaintPlan
   event : (@core.ViewEventContext) -> @core.ViewEventResult[Unit]

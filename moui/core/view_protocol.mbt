@@ -10,6 +10,7 @@ pub(all) struct ViewLayoutContext {
   child_sizes : Array[Size]
   text_system : TextSystem
   environment : Environment
+  style : ViewStyle
 }
 
 ///|
@@ -46,6 +47,7 @@ pub(all) struct ViewPaintContext {
   state : ViewStateContext
   text_control : TextControlStateContext
   environment : Environment
+  style : ViewStyle
   text_system : TextSystem
   /// Current animation clock time in milliseconds, threaded from the runtime's
   /// `FrameTick`. Controls read this to compute transition `progress` between
@@ -90,6 +92,7 @@ pub(all) struct ViewEventContext {
   text_control : TextControlStateContext
   text_system : TextSystem
   environment : Environment
+  style : ViewStyle
   /// Current animation clock time in ms, matching `ViewPaintContext.now_ms`.
   /// Event handlers read this to timestamp state transitions (e.g. recording
   /// when a button entered hover) so the next paint can interpolate progress.
@@ -176,6 +179,8 @@ priv struct ViewNode[Msg] {
   children_fn : () -> Array[View[Msg]]
   build_child_fn : ((ComponentContext) -> View[Msg])?
   child_constraints_fn : (Constraints) -> Constraints
+  child_environment_fn : (Environment) -> Environment
+  child_style_fn : (ViewStyle) -> ViewStyle
   layout_fn : (ViewLayoutContext) -> ViewLayoutResult
   paint_fn : (ViewPaintContext) -> ViewPaintPlan
   event_fn : (ViewEventContext) -> ViewEventResult[Msg]
@@ -344,6 +349,8 @@ fn[Msg] ViewNode::new(
   child_constraints? : (Constraints) -> Constraints = constraints => {
     constraints.loosen()
   },
+  child_environment? : (Environment) -> Environment = environment => environment,
+  child_style? : (ViewStyle) -> ViewStyle = style => style,
   layout~ : (ViewLayoutContext) -> ViewLayoutResult,
   paint? : (ViewPaintContext) -> ViewPaintPlan = _ctx => ViewPaintPlan::empty(),
   event? : (ViewEventContext) -> ViewEventResult[Msg] = _ctx => {
@@ -362,6 +369,8 @@ fn[Msg] ViewNode::new(
     children_fn: children,
     build_child_fn: build_child,
     child_constraints_fn: child_constraints,
+    child_environment_fn: child_environment,
+    child_style_fn: child_style,
     layout_fn: layout,
     paint_fn: paint,
     event_fn: event,
@@ -400,6 +409,22 @@ fn[Msg] ViewNode::child_constraints(
   constraints : Constraints,
 ) -> Constraints {
   (self.child_constraints_fn)(constraints)
+}
+
+///|
+fn[Msg] ViewNode::child_environment(
+  self : ViewNode[Msg],
+  environment : Environment,
+) -> Environment {
+  (self.child_environment_fn)(environment)
+}
+
+///|
+fn[Msg] ViewNode::child_style(
+  self : ViewNode[Msg],
+  style : ViewStyle,
+) -> ViewStyle {
+  (self.child_style_fn)(style)
 }
 
 ///|
@@ -478,6 +503,8 @@ fn[Msg, NextMsg] ViewNode::map(
       None => None
     },
     child_constraints=constraints => self.child_constraints(constraints),
+    child_environment=environment => self.child_environment(environment),
+    child_style=style => self.child_style(style),
     layout=context => self.layout(context),
     paint=context => self.paint(context),
     event=context => {
@@ -521,6 +548,8 @@ pub fn[Msg] View::node(
   child_constraints? : (Constraints) -> Constraints = constraints => {
     constraints.loosen()
   },
+  child_environment? : (Environment) -> Environment = environment => environment,
+  child_style? : (ViewStyle) -> ViewStyle = style => style,
   layout~ : (ViewLayoutContext) -> ViewLayoutResult,
   paint? : (ViewPaintContext) -> ViewPaintPlan = _ctx => ViewPaintPlan::empty(),
   event? : (ViewEventContext) -> ViewEventResult[Msg] = _ctx => {
@@ -540,6 +569,8 @@ pub fn[Msg] View::node(
       children~,
       build_child~,
       child_constraints~,
+      child_environment~,
+      child_style~,
       layout~,
       paint~,
       event~,
@@ -579,6 +610,19 @@ pub fn[Msg] View::child_constraints(
   constraints : Constraints,
 ) -> Constraints {
   self.node.child_constraints(constraints)
+}
+
+///|
+pub fn[Msg] View::child_environment(
+  self : View[Msg],
+  environment : Environment,
+) -> Environment {
+  self.node.child_environment(environment)
+}
+
+///|
+pub fn[Msg] View::child_style(self : View[Msg], style : ViewStyle) -> ViewStyle {
+  self.node.child_style(style)
 }
 
 ///|

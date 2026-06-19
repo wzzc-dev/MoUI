@@ -54,6 +54,8 @@ fn empty_erased_view_node() -> ErasedViewNode {
     children: () => [],
     build_child: None,
     child_constraints: constraints => constraints.loosen(),
+    child_environment: environment => environment,
+    child_style: style => style,
     layout: context => {
       @core.ViewLayoutResult::new(
         size=context.constraints.constrain(Size::new(width=0.0, height=0.0)),

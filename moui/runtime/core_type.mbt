@@ -42,4 +42,5 @@ using @core {
   type TextSystem,
   type ViewDirtyHint,
   type ViewSemanticsInfo,
+  type ViewStyle,
 }

@@ -4,6 +4,7 @@ fn ElementNode::dispatch_web_view_event(
   id : String,
   event : PlatformViewEvent,
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> Bool {
   let data = self.erased_view_node
@@ -16,6 +17,7 @@ fn ElementNode::dispatch_web_view_event(
     text_control: self.control.text_context(),
     text_system,
     environment,
+    style,
     now_ms: 0.0,
   })
   match result.state {
@@ -29,8 +31,18 @@ fn ElementNode::dispatch_web_view_event(
   if result.activated || result.changed || result.captured {
     true
   } else {
+    let child_environment = (self.erased_view_node.child_environment)(
+      environment,
+    )
+    let child_style = (self.erased_view_node.child_style)(style)
     self.children.any(child => {
-      child.dispatch_web_view_event(id, event, environment~, text_system~)
+      child.dispatch_web_view_event(
+        id,
+        event,
+        environment=child_environment,
+        style=child_style,
+        text_system~,
+      )
     })
   }
 }

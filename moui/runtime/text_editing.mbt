@@ -42,6 +42,7 @@ fn ElementNode::dispatch_view_text_command(
   intent : CommandIntent,
   paste_text~ : String?,
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
 ) -> TextCommandResult {
   let result = (data.text_command)(
@@ -54,6 +55,7 @@ fn ElementNode::dispatch_view_text_command(
       text_control: self.control.text_context(),
       text_system,
       environment,
+      style,
       now_ms: 0.0,
     },
     intent,

@@ -67,6 +67,37 @@ fn text_frame(
 }
 
 ///|
+fn text_color(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> @core.Color? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText({ text: value, color, .. }) =>
+        if value == text {
+          return Some(color)
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+fn has_text_color(
+  commands : Array[@core.DrawCommand],
+  text : String,
+  color : @core.Color,
+) -> Bool {
+  commands.any(command => {
+    command
+    is @core.DrawCommand::DrawText({ text: value, color: text_color, .. }) &&
+    value == text &&
+    text_color == color
+  })
+}
+
+///|
 fn @app.ShowcaseModel::runtime(
   self : @app.ShowcaseModel,
   width? : Double = 960.0,

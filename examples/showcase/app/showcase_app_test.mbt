@@ -49,8 +49,39 @@ test "showcase state toggles theme and active copy" {
   let runtime = model.runtime(width=760.0, height=420.0)
   let commands = runtime.draw_commands()
   assert_true(has_text(commands, "State-driven visuals are active"))
+  match text_color(commands, "MoUI View Showcase") {
+    Some(color) => assert_true(color == @views.dark_theme().palette.foreground)
+    None => fail("expected dark-themed showcase title text")
+  }
   assert_true(model.scheme == @moui.ColorScheme::Dark)
   assert_true(model.active)
+}
+
+///|
+test "showcase overview text stays legible in dark theme" {
+  let commands = @app.ShowcaseModel::new()
+    .update(@app.ShowcaseMsg::ToggleScheme)
+    .runtime(width=1400.0, height=760.0)
+    .draw_commands()
+  let theme = @views.dark_theme()
+  for
+    label in [
+      "Overview", "Layered card with image", "Renderer capability", "Keyboard: Meta+K",
+      "gradient", "transform", "text-shaping",
+    ] {
+    assert_true(has_text_color(commands, label, theme.palette.foreground))
+  }
+  for label in ["webgpu partial", "wgpu partial"] {
+    assert_true(has_text_color(commands, label, theme.palette.primary))
+  }
+  assert_true(has_text_color(commands, "skia supported", theme.palette.muted))
+  assert_true(
+    has_text_color(
+      commands,
+      "Showcase is now a data-driven catalog of MoUI views.",
+      theme.palette.muted,
+    ),
+  )
 }
 
 ///|

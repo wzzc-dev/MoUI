@@ -31,6 +31,7 @@ fn ElementNode::render_with_environment(
     state: { ..self.erased_view_node.state, focused: focused == Some(self.id) },
     text_control: self.control.text_context(),
     environment: render_environment_to_view_environment(environment),
+    style: environment.style,
     text_system: environment.text_system,
     now_ms: environment.now_ms,
   })
@@ -41,13 +42,14 @@ fn ElementNode::render_with_environment(
   post_commands.append(plan.post_commands)
   overlay_commands.append(plan.overlay_commands)
   platform_views.append(plan.platform_views)
+  let child_environment = environment.with_child_context(self.erased_view_node)
   for index, child in self.children {
     if index < placed.children.length() {
       children.push(
         child.render_with_environment(
           placed.children[index],
           focused,
-          environment,
+          child_environment,
         ),
       )
     }
