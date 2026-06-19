@@ -118,12 +118,7 @@ pub fn DesignSystemsModel::theme(self : DesignSystemsModel) -> @moui.Theme {
     }
     let spacing_scale = { ..base.spacing_scale, sm: 14.0 }
     let radius_scale = { ..base.radius_scale, md: 10.0 }
-    @common.custom(
-      base~,
-      palette~,
-      spacing_scale~,
-      radius_scale~,
-    )
+    @common.custom(base~, palette~, spacing_scale~, radius_scale~)
   } else {
     base
   }
@@ -468,6 +463,8 @@ fn DesignSystemsModel::component_matrix_panel(
       theme~,
       max_height=160.0,
     ).frame(width=240.0, height=40.0),
+    // Primary + tonal + outline + ghost button variants, driven by the
+    // resolved component tokens rather than the neutral theme scales.
     row(
       [
         button(
@@ -475,20 +472,69 @@ fn DesignSystemsModel::component_matrix_panel(
           on_click=ToggleCustom,
           theme~,
           style=styles.button.primary,
-          width=112.0,
-          height=38.0,
+          width=96.0,
+          height=36.0,
+        ),
+        button(
+          "Tonal",
+          on_click=ToggleCustom,
+          theme~,
+          style=styles.button.tonal,
+          width=88.0,
+          height=36.0,
+        ),
+        button(
+          "Outline",
+          on_click=ToggleCustom,
+          theme~,
+          style=styles.button.outline,
+          width=96.0,
+          height=36.0,
+        ),
+        button(
+          "Ghost",
+          on_click=ToggleCustom,
+          theme~,
+          style=styles.button.ghost,
+          width=80.0,
+          height=36.0,
+        ),
+      ],
+      spacing=theme.spacing_scale.xs,
+      align=@views.CrossAlign::Center,
+    ),
+    // Fluent 2 subtle / subtle-brand variants + underline text field. These
+    // only differ structurally from the neutral defaults when the preset
+    // supplies them (Fluent); other presets alias them to ghost/tonal.
+    row(
+      [
+        button(
+          "Subtle",
+          on_click=ToggleCustom,
+          theme~,
+          style=styles.button.subtle,
+          width=88.0,
+          height=36.0,
+        ),
+        button(
+          "Subtle brand",
+          on_click=ToggleCustom,
+          theme~,
+          style=styles.button.subtle_brand,
+          width=128.0,
+          height=36.0,
         ),
         text_field(
           self.draft,
           on_input=value => DraftChanged(value),
-          placeholder="Custom override",
+          placeholder="Underline field",
           theme~,
-          style=styles.text_field.outline,
-          width=220.0,
-          height=38.0,
+          style=styles.text_field.filled,
+          width=200.0,
+          height=36.0,
         ),
       ],
-      spacing=theme.spacing_scale.sm,
+      spacing=theme.spacing_scale.xs,
       align=@views.CrossAlign::Center,
     ),
   ]
@@ -508,7 +554,7 @@ fn DesignSystemsModel::component_matrix_panel(
       shown = shown + 1
     }
   }
-  design_panel(theme, "Component token matrix", rows, width=448.0, height=234.0)
+  design_panel(theme, "Component token matrix", rows, width=620.0, height=296.0)
 }
 
 ///|

@@ -616,6 +616,8 @@ fn editor_source_layout(
       border: None,
       radius: theme.radius_scale.sm,
       shadow: None,
+      bottom_border_only: false,
+      inner_focus_border: None,
     },
     focused: {
       foreground: appearance.foreground,
@@ -623,6 +625,8 @@ fn editor_source_layout(
       border: None,
       radius: theme.radius_scale.sm,
       shadow: None,
+      bottom_border_only: false,
+      inner_focus_border: None,
     },
     disabled: {
       foreground: appearance.foreground,
@@ -630,6 +634,8 @@ fn editor_source_layout(
       border: None,
       radius: theme.radius_scale.sm,
       shadow: None,
+      bottom_border_only: false,
+      inner_focus_border: None,
     },
     placeholder_color: appearance.placeholder,
     cursor_color: theme.palette.primary,

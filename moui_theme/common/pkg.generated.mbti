@@ -63,6 +63,8 @@ pub(all) struct DesignButtonCoreStyles {
   tonal : @views.ButtonStyle
   outline : @views.ButtonStyle
   ghost : @views.ButtonStyle
+  subtle : @views.ButtonStyle
+  subtle_brand : @views.ButtonStyle
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DesignButtonTokens {
@@ -70,6 +72,8 @@ pub(all) struct DesignButtonTokens {
   tonal : DesignControlStateTokens
   outline : DesignControlStateTokens
   ghost : DesignControlStateTokens
+  subtle : DesignControlStateTokens
+  subtle_brand : DesignControlStateTokens
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignButtonTokens::core_styles(Self, DesignStateLayerTokens) -> DesignButtonCoreStyles
 
@@ -154,6 +158,8 @@ pub(all) struct DesignControlStateTokens {
   border_width : Double
   radius : Double
   state_layer_alpha : Double
+  bottom_border_only : Bool
+  inner_focus_border : @core.Color?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignControlStateTokens::core_style(Self) -> @views.ControlStateStyle
 
@@ -241,6 +247,9 @@ pub(all) struct DesignElevationTokens {
   sm : @core.ShadowStyle
   md : @core.ShadowStyle
   lg : @core.ShadowStyle
+  card : @core.ShadowStyle?
+  flyout : @core.ShadowStyle?
+  dialog : @core.ShadowStyle?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignElevationTokens::core_shadow_scale(Self) -> @core.ShadowScale
 
@@ -738,6 +747,9 @@ pub(all) struct DesignSurfaceComponentTokens {
   base_radius : Double
   raised_radius : Double
   overlay_radius : Double
+  base_shadow : @core.ShadowStyle?
+  raised_shadow : @core.ShadowStyle?
+  overlay_shadow : @core.ShadowStyle?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSurfaceComponentTokens::core_styles(Self, @core.Theme) -> DesignSurfaceCoreStyles
 
@@ -878,6 +890,12 @@ pub fn DesignSystemTokens::with_radius(Self, DesignRadiusTokens) -> Self
 pub fn DesignSystemTokens::with_spacing(Self, DesignSpacingTokens) -> Self
 pub fn DesignSystemTokens::with_state_layer(Self, DesignStateLayerTokens) -> Self
 
+pub(all) enum DesignTextFieldAppearance {
+  Filled
+  Outline
+  Underline
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct DesignTextFieldCoreStyles {
   filled : @views.TextFieldStyle
   outline : @views.TextFieldStyle
@@ -891,6 +909,7 @@ pub(all) struct DesignTextFieldTokens {
   placeholder : @core.Color
   cursor : @core.Color
   font : @core.FontSpec
+  appearance : DesignTextFieldAppearance
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignTextFieldTokens::core_style(Self) -> @views.TextFieldStyle
 pub fn DesignTextFieldTokens::core_styles(Self) -> DesignTextFieldCoreStyles
