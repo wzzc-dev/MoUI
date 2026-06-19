@@ -108,6 +108,8 @@ pub fn[Msg] text_field(
     cursor_color=resolved_style.cursor_color,
     corner_radius=normal.radius,
     on_submit~,
+    bottom_border_only=normal.bottom_border_only,
+    inner_focus_border=focused.inner_focus_border,
   )
 }
 
@@ -141,6 +143,8 @@ pub fn[Msg] text_field_binding(
     cursor_color=resolved_style.cursor_color,
     corner_radius=normal.radius,
     on_submit~,
+    bottom_border_only=normal.bottom_border_only,
+    inner_focus_border=focused.inner_focus_border,
   )
 }
 

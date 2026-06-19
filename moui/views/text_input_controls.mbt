@@ -36,11 +36,13 @@ fn[Msg] text_field_control(
   on_submit? : Msg? = None,
   kind? : String = "TextField",
   key? : String? = None,
+  bottom_border_only? : Bool = false,
+  inner_focus_border? : @core.Color? = None,
 ) -> @core.View[Msg] {
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "textfield:\{value.get()}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{on_submit is Some(_)}"
+      "textfield:\{value.get()}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{on_submit is Some(_)}:\{bottom_border_only}:\{inner_focus_border is Some(_)}"
     },
     layout=ctx => {
       @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
@@ -66,6 +68,8 @@ fn[Msg] text_field_control(
         focused=ctx.focused,
         control=ctx.text_control,
         text_system=ctx.text_system,
+        bottom_border_only~,
+        inner_focus_border=if ctx.focused { inner_focus_border } else { None },
       )
       {
         commands,
@@ -135,6 +139,8 @@ fn[Msg] controlled_text_field_control(
   on_submit? : Msg? = None,
   kind? : String = "TextField",
   key? : String? = None,
+  bottom_border_only? : Bool = false,
+  inner_focus_border? : @core.Color? = None,
 ) -> @core.View[Msg] {
   text_field_control(
     value=@core.Binding::new(get=() => value, set=_next => ()),
@@ -152,6 +158,8 @@ fn[Msg] controlled_text_field_control(
     on_submit~,
     kind~,
     key~,
+    bottom_border_only~,
+    inner_focus_border~,
   )
 }
 
@@ -319,12 +327,24 @@ fn append_text_field_commands(
   focused~ : Bool,
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
+  bottom_border_only? : Bool = false,
+  inner_focus_border? : @core.Color? = None,
 ) -> Unit {
   ignore(size)
   let border = if focused { focused_border } else { border }
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
   commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
-  append_border(commands, rounded, border)
+  if bottom_border_only {
+    append_bottom_border(commands, frame, border)
+  } else {
+    append_border(commands, rounded, border)
+  }
+  // Fluent 2 focus reveal: paint an inner stroke inside the frame when focused.
+  match inner_focus_border {
+    Some(color) =>
+      append_inner_focus_border(commands, frame, color, corner_radius)
+    None => ()
+  }
   let display_text = text_with_composition(text, control, focused~)
   let display = if display_text == "" { placeholder } else { display_text }
   let color = if text == "" { placeholder_color } else { foreground }
@@ -457,6 +477,63 @@ fn append_border(
 }
 
 ///|
+/// Fluent 2 underline text field: paint only the bottom edge as a straight
+/// line, ignoring side/top borders and corner radius.
+fn append_bottom_border(
+  commands : Array[@core.DrawCommand],
+  frame : @core.Rect,
+  border : @core.BorderStyle?,
+) -> Unit {
+  match border {
+    Some(border) =>
+      if border.width > 0.0 {
+        let y = frame.origin.y + frame.size.height - border.width / 2.0
+        let path = @core.PathSpec::new(
+          verbs=[
+            @core.PathVerb::MoveTo(@core.Point::new(x=frame.origin.x, y~)),
+            @core.PathVerb::LineTo(
+              @core.Point::new(x=frame.origin.x + frame.size.width, y~),
+            ),
+          ],
+          stroke=Some(border.brush),
+          stroke_width=border.width,
+        )
+        commands.push(@core.DrawCommand::DrawPath(path))
+      }
+    None => ()
+  }
+}
+
+///|
+/// Fluent 2 focus reveal: paint an inner stroke inset 2px inside the control
+/// frame so focus reads as a distinct inner ring rather than a thicker outer
+/// border.
+fn append_inner_focus_border(
+  commands : Array[@core.DrawCommand],
+  frame : @core.Rect,
+  color : @core.Color,
+  corner_radius : Double,
+) -> Unit {
+  let inset = 2.0
+  let inner = @core.RoundedRect::new(
+    rect=@core.Rect::new(
+      x=frame.origin.x + inset,
+      y=frame.origin.y + inset,
+      width=frame.size.width - inset * 2.0,
+      height=frame.size.height - inset * 2.0,
+    ),
+    radius=(corner_radius - inset).clamp(min=0.0, max=corner_radius),
+  )
+  commands.push(
+    @core.DrawCommand::StrokeRoundedRectBrush(
+      inner,
+      @core.Brush::solid(color),
+      1.0,
+    ),
+  )
+}
+
+///|
 fn append_text_field_editing_overlay(
   commands : Array[@core.DrawCommand],
   text~ : String,
@@ -525,24 +602,24 @@ fn append_text_field_selection_commands(
         start,
         max_int(start, layout.caret_positions.length() - 1),
       )
-     let x0 = text_frame.origin.x + layout.caret_positions[start]
-     let x1 = text_frame.origin.x + layout.caret_positions[end]
-     if x1 > x0 {
+      let x0 = text_frame.origin.x + layout.caret_positions[start]
+      let x1 = text_frame.origin.x + layout.caret_positions[end]
+      if x1 > x0 {
         // Selection highlight tracks the primary palette token rather than a
         // hard-coded blue so it follows custom palette overrides.
         let selection_color = default_theme().palette.primary.with_alpha(0.22)
-       commands.push(
-         @core.DrawCommand::FillRect(
-           @core.Rect::new(
-             x=x0,
-             y=text_frame.origin.y + 6.0,
-             width=x1 - x0,
-             height=max_double(8.0, text_frame.size.height - 12.0),
-           ),
+        commands.push(
+          @core.DrawCommand::FillRect(
+            @core.Rect::new(
+              x=x0,
+              y=text_frame.origin.y + 6.0,
+              width=x1 - x0,
+              height=max_double(8.0, text_frame.size.height - 12.0),
+            ),
             selection_color,
-         ),
-       )
-     }
+          ),
+        )
+      }
     }
     None => ()
   }

@@ -31,6 +31,8 @@ fn host_test_text_field(
     border: normal_border,
     radius: 0.0,
     shadow: None,
+    bottom_border_only: false,
+    inner_focus_border: None,
   }
   let focused = { ..normal, border: focused_border }
   let field_style : @views.TextFieldStyle = {

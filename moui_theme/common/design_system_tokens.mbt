@@ -54,6 +54,12 @@ pub(all) struct DesignElevationTokens {
   sm : @core.ShadowStyle
   md : @core.ShadowStyle
   lg : @core.ShadowStyle
+  // Fluent 2 shadow tiers (shadow2/4/8/16/28/64). Neutral presets leave these
+  // `None`; Fluent fills them from the pinned source ramp so cards, flyouts,
+  // and dialogs carry distinct layered shadows instead of a single `lift`.
+  card : @core.ShadowStyle?
+  flyout : @core.ShadowStyle?
+  dialog : @core.ShadowStyle?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -90,6 +96,21 @@ pub(all) struct DesignControlStateTokens {
   border_width : Double
   radius : Double
   state_layer_alpha : Double
+  // Fluent 2 underline inputs render only the bottom edge; neutral for other
+  // systems which always draw a full border.
+  bottom_border_only : Bool
+  // Fluent 2 focus "reveal" paints an inner stroke inside the control frame.
+  // `None` means no inner focus border (the neutral default).
+  inner_focus_border : @core.Color?
+} derive(Eq, Debug, ToJson)
+
+///|
+/// TextField appearance tier. Fluent 2 ships an underline variant; the neutral
+/// default is `Outline` so existing presets keep their full-border behavior.
+pub(all) enum DesignTextFieldAppearance {
+  Filled
+  Outline
+  Underline
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -98,6 +119,10 @@ pub(all) struct DesignButtonTokens {
   tonal : DesignControlStateTokens
   outline : DesignControlStateTokens
   ghost : DesignControlStateTokens
+  // Fluent 2 subtle / subtle-brand variants. Neutral presets alias these to
+  // `ghost`/`tonal` so the shared builder keeps a uniform 4-variant surface.
+  subtle : DesignControlStateTokens
+  subtle_brand : DesignControlStateTokens
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -108,6 +133,8 @@ pub(all) struct DesignTextFieldTokens {
   placeholder : @core.Color
   cursor : @core.Color
   font : @core.FontSpec
+  // Fluent 2 declares an underline appearance; neutral presets use `Outline`.
+  appearance : DesignTextFieldAppearance
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -118,6 +145,12 @@ pub(all) struct DesignSurfaceComponentTokens {
   base_radius : Double
   raised_radius : Double
   overlay_radius : Double
+  // Per-tier elevation binding. Fluent 2 cards carry distinct shadows per
+  // layer (shadow2/4/28); neutral presets leave these `None` and rely on the
+  // flat surface idiom.
+  base_shadow : @core.ShadowStyle?
+  raised_shadow : @core.ShadowStyle?
+  overlay_shadow : @core.ShadowStyle?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -214,6 +247,8 @@ pub(all) struct DesignButtonCoreStyles {
   tonal : @views.ButtonStyle
   outline : @views.ButtonStyle
   ghost : @views.ButtonStyle
+  subtle : @views.ButtonStyle
+  subtle_brand : @views.ButtonStyle
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -387,6 +422,8 @@ pub fn DesignControlStateTokens::core_style(
     border: control_state_border(self),
     radius: self.radius,
     shadow: None,
+    bottom_border_only: self.bottom_border_only,
+    inner_focus_border: self.inner_focus_border,
   }
 }
 
@@ -400,6 +437,8 @@ pub fn DesignButtonTokens::core_styles(
     tonal: button_core_style(self.tonal, state_layer),
     outline: button_core_style(self.outline, state_layer),
     ghost: button_core_style(self.ghost, state_layer),
+    subtle: button_core_style(self.subtle, state_layer),
+    subtle_brand: button_core_style(self.subtle_brand, state_layer),
   }
 }
 
@@ -493,18 +532,26 @@ pub fn DesignSurfaceComponentTokens::core_styles(
     ..@views.SurfaceStyle::default(theme~),
     padding: @core.Insets::all(self.base_padding),
     radius: self.base_radius,
+    shadow: self.base_shadow,
   }
   let raised = {
     ..@views.SurfaceStyle::raised(theme~),
     padding: @core.Insets::all(self.raised_padding),
     radius: self.raised_radius,
+    shadow: self.raised_shadow,
+  }
+  let overlay_shadow = match self.overlay_shadow {
+    Some(value) => Some(value)
+    None => Some(theme.shadow_scale.sm)
   }
   let overlay = {
     ..@views.SurfaceStyle::default(theme~),
     brush: theme.surface_brush(@core.SurfaceLevel::Overlay),
     padding: @core.Insets::all(self.overlay_padding),
     radius: self.overlay_radius,
-    shadow: Some(theme.shadow_scale.sm),
+    // Fluent supplies a layered overlay shadow; otherwise fall back to the
+    // neutral minimal faint shadow used before per-tier elevation existed.
+    shadow: overlay_shadow,
     level: @core.SurfaceLevel::Overlay,
   }
   { base, raised, overlay }
@@ -1058,7 +1105,7 @@ fn fluent_design_tokens(
         info=color(r=0.51, g=0.73, b=1.0),
       )
   }
-  design_tokens(
+  let tokens = design_tokens(
     preset=DesignPreset::Fluent,
     scheme~,
     variant~,
@@ -1069,6 +1116,11 @@ fn fluent_design_tokens(
       { xs: 4.0, sm: 8.0, md: 12.0, lg: 20.0, xl: 32.0 },
       density,
     ),
+    // Fluent 2 border-radius tiers pinned from @fluentui/tokens: sm=2
+    // (borderRadiusSmall), md=4 (borderRadiusMedium), lg=8 (borderRadiusXLarge).
+    // The 6px borderRadiusLarge tier is PreviewMapped onto lg because the
+    // neutral large slot is shared with the 8px XLarge tier; controls stay on
+    // the smaller 2/4 pair so buttons and inputs read as crisp rectangles.
     radius={ sm: 2.0, md: 4.0, lg: 8.0, pill: 999.0 },
     typography=typography_tokens(
       title=22.0,
@@ -1076,7 +1128,7 @@ fn fluent_design_tokens(
       caption=12.0,
       control=14.0,
     ),
-    elevation=elevation_tokens(scheme, lift=1.0),
+    elevation=fluent_elevation_tokens(scheme),
     motion={
       fast_ms: 100.0,
       normal_ms: 200.0,
@@ -1084,6 +1136,76 @@ fn fluent_design_tokens(
       easing: @core.Easing::EaseOut,
     },
   )
+  fluent_component_overrides(tokens, palette, scheme)
+}
+
+///|
+/// Fluent 2 structural component differentiation applied on top of the shared
+/// `component_tokens` base. This is where Fluent stops being "just a palette
+/// swap": subtle/subtle-brand button variants, underline text-field appearance,
+/// focus inner-reveal borders, and per-tier card shadows.
+fn fluent_component_overrides(
+  tokens : DesignSystemTokens,
+  palette : DesignSemanticPalette,
+  scheme : @core.ColorScheme,
+) -> DesignSystemTokens {
+  let base = tokens.components
+  let button = {
+    ..base
+    // subtle: transparent background, foreground tint, hover reveals a faint
+    // neutral wash (colorNeutralBackground1Hover semantics).
+    .button,
+    subtle: control_state_tokens(
+      foreground=palette.foreground,
+      background=transparent(),
+      border=transparent(),
+      border_width=0.0,
+      radius=tokens.radius.md,
+      state_layer_alpha=tokens.state_layer.hover_alpha,
+    ),
+    // subtle-brand: transparent background, brand-tinted foreground, hover
+    // reveals a faint brand wash.
+    subtle_brand: control_state_tokens(
+      foreground=palette.primary,
+      background=transparent(),
+      border=transparent(),
+      border_width=0.0,
+      radius=tokens.radius.md,
+      state_layer_alpha=tokens.state_layer.hover_alpha,
+    ),
+  }
+  // Underline text field: bottom-border-only normal/focused, no side/top
+  // border, focus uses the brand stroke at 2px with an inner-reveal hint.
+  let underline_border_width = 1.0
+  let underline_focus_width = 2.0
+  let tf = base.text_field
+  let text_field = {
+    ..tf,
+    normal: {
+      ..tf.normal,
+      border: palette.outline,
+      border_width: underline_border_width,
+      bottom_border_only: true,
+      inner_focus_border: None,
+    },
+    focused: {
+      ..tf.focused,
+      border: palette.focus,
+      border_width: underline_focus_width,
+      bottom_border_only: true,
+      inner_focus_border: Some(palette.primary),
+    },
+    appearance: DesignTextFieldAppearance::Underline,
+  }
+  // Per-tier card shadows from the Fluent elevation ramp.
+  let surface = {
+    ..base.surface,
+    base_shadow: tokens.elevation.card,
+    raised_shadow: tokens.elevation.card,
+    overlay_shadow: tokens.elevation.flyout,
+  }
+  ignore(scheme)
+  { ..tokens, components: { ..base, button, text_field, surface } }
 }
 
 ///|
@@ -1266,7 +1388,16 @@ fn elevation_tokens(
   lift~ : Double,
 ) -> DesignElevationTokens {
   let shadows = shadow_scale(scheme, lift~)
-  { sm: shadows.sm, md: shadows.md, lg: shadows.lg }
+  // Neutral presets do not carry Fluent 2's layered card/flyout/dialog tiers;
+  // callers that need them (Fluent) override via `fluent_elevation_tokens`.
+  {
+    sm: shadows.sm,
+    md: shadows.md,
+    lg: shadows.lg,
+    card: None,
+    flyout: None,
+    dialog: None,
+  }
 }
 
 ///|
@@ -1278,6 +1409,55 @@ fn material_elevation_tokens(
     sm: { ..tokens.sm, offset: @core.Point::new(x=0.0, y=1.0) },
     md: { ..tokens.md, offset: @core.Point::new(x=0.0, y=6.0) },
     lg: { ..tokens.lg, offset: @core.Point::new(x=0.0, y=12.0) },
+    card: None,
+    flyout: None,
+    dialog: None,
+  }
+}
+
+///|
+/// Fluent 2 shadow tiers. The official @fluentui/tokens ramp defines
+/// shadow2/4/8/16/28/64 as ambient+key pairs; this models the visible key
+/// shadow per tier (offset + blur + alpha) since the runtime `ShadowStyle`
+/// is single-layer. Card/flyout/dialog map to shadow4/shadow16/shadow64 so
+/// layered surfaces separate cleanly without the heavy elevation Material uses.
+fn fluent_elevation_tokens(scheme : @core.ColorScheme) -> DesignElevationTokens {
+  let base_alpha = match scheme {
+    @core.ColorScheme::Light => 0.10
+    @core.ColorScheme::Dark => 0.28
+  }
+  // sm/md/lg stay on the neutral formula so generic controls (picker popup,
+  // feedback) keep their existing depth. Only the Fluent-specific tiers carry
+  // the layered card shadows.
+  let neutral = elevation_tokens(scheme, lift=1.0)
+  {
+    sm: neutral.sm,
+    md: neutral.md,
+    lg: neutral.lg,
+    // shadow4: resting card / raised surface.
+    card: Some(
+      @core.ShadowStyle::new(
+        color=color(r=0.0, g=0.0, b=0.0, a=base_alpha),
+        offset=@core.Point::new(x=0.0, y=2.0),
+        blur_radius=4.0,
+      ),
+    ),
+    // shadow16: flyout / menu / popover.
+    flyout: Some(
+      @core.ShadowStyle::new(
+        color=color(r=0.0, g=0.0, b=0.0, a=base_alpha * 1.6),
+        offset=@core.Point::new(x=0.0, y=8.0),
+        blur_radius=16.0,
+      ),
+    ),
+    // shadow64: dialog / modal overlay.
+    dialog: Some(
+      @core.ShadowStyle::new(
+        color=color(r=0.0, g=0.0, b=0.0, a=base_alpha * 2.4),
+        offset=@core.Point::new(x=0.0, y=32.0),
+        blur_radius=64.0,
+      ),
+    ),
   }
 }
 
@@ -1352,6 +1532,25 @@ fn component_tokens(
         radius=radius.md,
         state_layer_alpha=state_layer.hover_alpha,
       ),
+      // Neutral presets alias subtle/subtle-brand to ghost/tonal so the shared
+      // builder exposes a uniform 6-variant surface without imposing Fluent 2's
+      // transparent-on-brand hover semantics on Material/Carbon/Primer.
+      subtle: control_state_tokens(
+        foreground=palette.foreground,
+        background=transparent(),
+        border=transparent(),
+        border_width=0.0,
+        radius=radius.md,
+        state_layer_alpha=state_layer.hover_alpha,
+      ),
+      subtle_brand: control_state_tokens(
+        foreground=palette.primary,
+        background=transparent(),
+        border=transparent(),
+        border_width=0.0,
+        radius=radius.md,
+        state_layer_alpha=state_layer.hover_alpha,
+      ),
     },
     text_field: {
       normal: control_state_tokens(
@@ -1381,6 +1580,7 @@ fn component_tokens(
       placeholder: palette.muted,
       cursor: palette.focus,
       font: typography.body,
+      appearance: DesignTextFieldAppearance::Outline,
     },
     surface: {
       base_padding: spacing.md,
@@ -1389,6 +1589,9 @@ fn component_tokens(
       base_radius: radius.md,
       raised_radius: radius.lg,
       overlay_radius: radius.lg,
+      base_shadow: None,
+      raised_shadow: None,
+      overlay_shadow: None,
     },
     choice_control: {
       foreground: palette.foreground,
@@ -1502,8 +1705,19 @@ fn control_state_tokens(
   border_width~ : Double,
   radius~ : Double,
   state_layer_alpha~ : Double,
+  bottom_border_only? : Bool = false,
+  inner_focus_border? : @core.Color? = None,
 ) -> DesignControlStateTokens {
-  { foreground, background, border, border_width, radius, state_layer_alpha }
+  {
+    foreground,
+    background,
+    border,
+    border_width,
+    radius,
+    state_layer_alpha,
+    bottom_border_only,
+    inner_focus_border,
+  }
 }
 
 ///|
