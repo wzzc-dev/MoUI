@@ -562,38 +562,54 @@ addition to padding and frame.
 
 ## Visual
 
-The visual system keeps platform-neutral tokens and app-facing styles:
+The visual system is a `ThemeSpec -> resolve_theme -> Theme` pipeline. `core`
+owns the neutral schema and resolver; branded design systems are addon
+adapters that produce the same `@core.Theme`:
 
-- `core` owns the neutral `Theme` schema and `Theme::neutral()` fallback;
-  `@views.light_theme()` and `@views.dark_theme()` expose app-facing palettes,
-  spacing, radius, typography, shadow, motion, and surface scales.
-- `Theme` is a token record, not a compatibility bag. App and control code
-  reads canonical groups such as `theme.palette.foreground`,
-  `theme.palette.primary`, `theme.typography.body`,
-  `theme.spacing_scale.sm`, and `theme.radius_scale.md`; single-value aliases
-  such as theme-level `foreground`, `accent`, `spacing`, or `corner_radius`
-  should not be reintroduced.
-- `@views.theme(...)` and `@moui_theme/common.custom(...)` compose whole token
-  groups over an optional base theme. The default style stays MoUI Minimal;
-  Material, Carbon, Primer, Fluent, and other branded systems stay as
-  `moui_theme` adapters that resolve into the same neutral `@core.Theme`.
-- `ButtonStyle::filled/tonal/outline/ghost/subtle/subtle_brand` and
-  `TextFieldStyle::filled/outline/plain` project state styles into core draw
-  commands. `ControlStateStyle` carries optional `bottom_border_only` and
-  `inner_focus_border` fields so Fluent 2 underline inputs and focus-reveal
-  inner strokes render without adding variant-specific draw paths.
+- `core` owns `ThemeSpec` (preset/color-mode/density/contrast/seed/reduced-motion
+  intent), `resolve_theme(spec, system_scheme)` / `resolve_minimal_theme`, the
+  `Theme` schema, and `Theme::neutral()` fallback. `ColorPalette` carries the
+  full on*/container role matrix (primary/on_primary/primary_container,
+  secondary, tertiary, error, surface/on_surface/on_surface_variant, semantic
+  success/warning/danger/info with on-colors, outline/outline_variant, focus,
+  scrim) so a branded system does not need to derive roles ad hoc.
+- `Theme` is a token record with a first-class `components : ComponentThemes`
+  field (`button`, `text_field`, `surface`, `choice_control`, `progress`,
+  `slider`, `picker`, `feedback`, `badge`, `form_validation`). Each component
+  theme stores token sets (`ControlStateTokens`) resolved to
+  `ControlStateStyle` at paint time via `ButtonTheme::resolve(variant, state)`
+  etc. App and control code reads canonical groups such as
+  `theme.palette.foreground`, `theme.palette.on_primary`,
+  `theme.components.button.primary`, `theme.typography.body`,
+  `theme.spacing_scale.sm`, and `theme.radius_scale.md`.
+- `@views.light_theme()` / `@views.dark_theme()` resolve the Minimal preset
+  via `resolve_minimal_theme`. `@views.theme(...)` composes whole token groups
+  (including `components?`) over an optional base.
+- `Environment` carries `theme_spec` (user intent), `system_scheme`
+  (host-reported), and the resolved `theme`. `with_system_scheme` rebuilds the
+  full theme from `theme_spec` so a host `ThemeChanged(Dark)` event switches
+  palette/surfaces/shadows, not just a scheme flag. The legacy
+  `with_color_scheme` (which left the palette stale) is removed.
+- `ButtonVariant::style(theme)` resolves a variant from
+  `theme.components.button` via `ButtonVariantToken`; controls default to this
+  path and `style?` is a one-shot override. `ButtonVariant` covers
+  Primary/Tonal/Outline/Ghost/Subtle/SubtleBrand. `ControlStateStyle` carries
+  optional `bottom_border_only` and `inner_focus_border` fields so Fluent 2
+  underline inputs and focus-reveal inner strokes render without
+  variant-specific draw paths. `ControlStateStyle` lives in `core` and is
+  shared by the token resolver and the view-layer style structs.
+- `View::theme(...)` and `View::environment(...)` cascade the theme/environment
+  into child subtrees via the `child_environment` hook at layout/paint time;
+  their modifier revisions include a content fingerprint so reconcile detects
+  real theme changes.
 - `SurfaceStyle` supports surface brushes, radius, padding, border metadata,
   and shadow metadata.
-- `ComponentStyleOverlay` is the `@views`-side outlet for design-system
-  component tokens. `@core.Theme` stays a neutral scale-only record; an app
-  that wants Fluent 2 (or another branded system) to drive control appearance
-  builds a `DesignSystemTokens` value in `moui_theme`, calls
-  `core_component_styles()` to project it into `@views.*Style` values, and
-  passes individual styles via the `style?` argument on each control
-  constructor. This keeps the framework core design-system-free while letting
-  branded systems express structural differentiation (subtle/subtle-brand
-  button variants, underline text-field appearance, layered card/flyout/dialog
-  shadows) that the neutral scales alone cannot carry.
+- `moui_theme/*` produces a complete `@core.Theme` (palette + scales +
+  components) from `DesignSystemTokens::to_theme()`; `core_component_styles()`
+  is retained for diagnostic report generation. An app that wants Fluent 2
+  (or another branded system) to drive control appearance calls
+  `@fluent.theme(...)` once and passes it as the root theme; controls inherit
+  `components` automatically instead of per-control `style=` arguments.
 - `ShadowStyle` and `BorderStyle` are view-level style inputs; paint converts
   them into concrete `DrawCommand` payloads once the final frame is known.
 - `animated_value`, `animated_point`, `animated_color`, `TransitionSpec`, and

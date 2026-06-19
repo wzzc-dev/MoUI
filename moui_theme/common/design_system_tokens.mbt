@@ -327,32 +327,50 @@ pub fn DesignSchemeVariant::label(self : DesignSchemeVariant) -> String {
 }
 
 ///|
+/// Project the design-system semantic palette onto a full `@core.ColorPalette`.
+/// Uses `ColorPalette::from_seed` to derive the complete on*/container matrix,
+/// then overrides every role the design-system palette owns explicitly. This
+/// replaces the legacy 8-field `palette()` helper and the separate
+/// `core_semantic_colors()` projection (semantic colors now live on the
+/// palette itself).
 pub fn DesignSemanticPalette::core_palette(
   self : DesignSemanticPalette,
+  scheme : @core.ColorScheme,
 ) -> @core.ColorPalette {
-  palette(
-    foreground=self.foreground,
-    background=self.background,
-    surface=self.surface,
-    surface_variant=self.surface_variant,
-    primary=self.primary,
-    primary_foreground=self.primary_foreground,
-    outline=self.outline,
-    muted=self.muted,
-  )
+  {
+    ..@core.ColorPalette::from_seed(primary=self.primary, scheme),
+    foreground: self.foreground,
+    background: self.background,
+    surface: self.surface,
+    surface_variant: self.surface_variant,
+    primary: self.primary,
+    on_primary: self.primary_foreground,
+    outline: self.outline,
+    muted: self.muted,
+    success: self.success,
+    on_success: contrast_on(self.success),
+    warning: self.warning,
+    on_warning: contrast_on(self.warning),
+    info: self.info,
+    on_info: contrast_on(self.info),
+    danger: self.danger,
+    on_danger: contrast_on(self.danger),
+    error: self.danger,
+    on_error: contrast_on(self.danger),
+    focus: self.focus,
+    scrim: self.scrim,
+  }
 }
 
 ///|
-pub fn DesignSemanticPalette::core_semantic_colors(
-  self : DesignSemanticPalette,
-) -> @core.SemanticColorScale {
-  {
-    success: self.success,
-    warning: self.warning,
-    danger: self.danger,
-    info: self.info,
-    focus: self.focus,
-    scrim: self.scrim,
+/// Pick white or near-black for text drawn on top of `fill`, by perceived
+/// luminance. Mirrors the derivation in `core`'s `ColorPalette::from_seed`.
+fn contrast_on(fill : @core.Color) -> @core.Color {
+  let lum = fill.r * 0.299 + fill.g * 0.587 + fill.b * 0.114
+  if lum < 0.55 {
+    @core.Color::white()
+  } else {
+    @core.Color::rgba(r=0.10, g=0.10, b=0.12)
   }
 }
 
@@ -424,6 +442,41 @@ pub fn DesignControlStateTokens::core_style(
     shadow: None,
     bottom_border_only: self.bottom_border_only,
     inner_focus_border: self.inner_focus_border,
+  }
+}
+
+///|
+/// Project a design-system control-state token onto a `@core.ControlStateTokens`
+/// (the token layer stored on `Theme.components`). Drops `state_layer_alpha`
+/// because the state-layer model lives on the owning `ButtonTheme.state_layer`
+/// aggregate, not on individual state tokens.
+pub fn DesignControlStateTokens::core_tokens(
+  self : DesignControlStateTokens,
+) -> @core.ControlStateTokens {
+  @core.ControlStateTokens::new(
+    foreground=self.foreground,
+    background=self.background,
+    border=self.border,
+    border_width=self.border_width,
+    radius=self.radius,
+    bottom_border_only=self.bottom_border_only,
+    inner_focus_border=self.inner_focus_border,
+  )
+}
+
+///|
+/// Convert a design-system state-layer token set into the core form.
+pub fn DesignStateLayerTokens::core_tokens(
+  self : DesignStateLayerTokens,
+) -> @core.StateLayerTokens {
+  {
+    color: self.color,
+    hover_alpha: self.hover_alpha,
+    focus_alpha: self.focus_alpha,
+    pressed_alpha: self.pressed_alpha,
+    dragged_alpha: self.dragged_alpha,
+    selected_alpha: self.selected_alpha,
+    disabled_alpha: self.disabled_alpha,
   }
 }
 
@@ -612,6 +665,167 @@ pub fn DesignFormValidationTokens::core_style(
 }
 
 ///|
+/// Project the design-system component tokens onto a `@core.ComponentThemes`
+/// (the first-class `Theme.components` field). This is the single projection
+/// that lets a branded design system set `components` once on the root theme
+/// instead of passing `style=` to every control. `scheme` is required so
+/// surface brushes and shadow fallbacks can be resolved without recursing
+/// into `to_theme()` (which itself calls this method).
+pub fn DesignComponentTokens::core_themes(
+  self : DesignComponentTokens,
+  scheme : @core.ColorScheme,
+) -> @core.ComponentThemes {
+  let state_layer = self_button_state_layer(self)
+  let button : @core.ButtonTheme = {
+    primary: self.button.primary.core_tokens(),
+    tonal: self.button.tonal.core_tokens(),
+    outline: self.button.outline.core_tokens(),
+    ghost: self.button.ghost.core_tokens(),
+    subtle: self.button.subtle.core_tokens(),
+    subtle_brand: self.button.subtle_brand.core_tokens(),
+    state_layer,
+  }
+  let text_field : @core.TextFieldTheme = {
+    normal: self.text_field.normal.core_tokens(),
+    focused: self.text_field.focused.core_tokens(),
+    disabled: self.text_field.disabled.core_tokens(),
+    placeholder: self.text_field.placeholder,
+    cursor: self.text_field.cursor,
+    font: self.text_field.font,
+    appearance: core_text_field_appearance(self.text_field.appearance),
+  }
+  let surface : @core.SurfaceTheme = {
+    base_padding: self.surface.base_padding,
+    raised_padding: self.surface.raised_padding,
+    overlay_padding: self.surface.overlay_padding,
+    base_radius: self.surface.base_radius,
+    raised_radius: self.surface.raised_radius,
+    overlay_radius: self.surface.overlay_radius,
+    base_shadow: self.surface.base_shadow,
+    raised_shadow: self.surface.raised_shadow,
+    overlay_shadow: self.surface.overlay_shadow,
+  }
+  let choice_control : @core.ChoiceControlTheme = {
+    foreground: self.choice_control.foreground,
+    selected_color: self.choice_control.selected_color,
+    disabled_foreground: self.choice_control.disabled_foreground,
+    disabled_selected_color: self.choice_control.disabled_selected_color,
+    control_size: self.choice_control.control_size,
+  }
+  let progress : @core.ProgressTheme = {
+    foreground: self.progress.foreground,
+    background: self.progress.background,
+    radius: self.progress.radius,
+  }
+  let slider : @core.SliderTheme = {
+    foreground: self.slider.foreground,
+    background: self.slider.background,
+    thumb_color: self.slider.thumb_color,
+    track_height: self.slider.track_height,
+    thumb_size: self.slider.thumb_size,
+    radius: self.slider.radius,
+  }
+  let picker : @core.PickerTheme = {
+    font: self.picker.font,
+    foreground: self.picker.foreground,
+    background: self.picker.background,
+    radius: self.picker.radius,
+    popup_max_height: self.picker.popup_max_height,
+  }
+  let feedback : @core.FeedbackTheme = {
+    neutral: core_tone(self.feedback.neutral),
+    info: core_tone(self.feedback.info),
+    success: core_tone(self.feedback.success),
+    warning: core_tone(self.feedback.warning),
+    danger: core_tone(self.feedback.danger),
+    radius: self.feedback.radius,
+    padding: self.feedback.padding,
+  }
+  let badge : @core.BadgeTheme = {
+    neutral: core_tone(self.badge.neutral),
+    accent: core_tone(self.badge.accent),
+    success: core_tone(self.badge.success),
+    warning: core_tone(self.badge.warning),
+    danger: core_tone(self.badge.danger),
+    radius: self.badge.radius,
+    padding: self.badge.padding,
+  }
+  let form_validation : @core.FormValidationTheme = {
+    foreground: self.form_validation.foreground,
+    background: self.form_validation.background,
+    border: self.form_validation.border,
+    radius: self.form_validation.radius,
+    padding: self.form_validation.padding,
+  }
+  ignore(scheme)
+  {
+    button,
+    text_field,
+    surface,
+    choice_control,
+    progress,
+    slider,
+    picker,
+    feedback,
+    badge,
+    form_validation,
+  }
+}
+
+///|
+fn self_button_state_layer(
+  components : DesignComponentTokens,
+) -> @core.StateLayerTokens {
+  // The design-system button tokens do not carry their own state-layer; the
+  // shared `DesignStateLayerTokens` lives on `DesignSystemTokens.state_layer`.
+  // Callers pass it through `DesignSystemTokens::core_themes` instead. This
+  // helper is only reached when projecting bare `DesignComponentTokens`, so
+  // fall back to a neutral state-layer derived from the primary foreground.
+  ignore(components)
+  {
+    color: @core.Color::white(),
+    hover_alpha: 0.08,
+    focus_alpha: 0.12,
+    pressed_alpha: 0.12,
+    dragged_alpha: 0.16,
+    selected_alpha: 0.10,
+    disabled_alpha: 0.38,
+  }
+}
+
+///|
+fn core_text_field_appearance(
+  appearance : DesignTextFieldAppearance,
+) -> @core.TextFieldAppearance {
+  match appearance {
+    Filled => @core.TextFieldAppearance::Filled
+    Outline => @core.TextFieldAppearance::Outline
+    Underline => @core.TextFieldAppearance::Underline
+  }
+}
+
+///|
+fn core_tone(tokens : DesignToneTokens) -> @core.ToneTokens {
+  {
+    foreground: tokens.foreground,
+    background: tokens.background,
+    border: tokens.border,
+  }
+}
+
+///|
+/// Project the full design-system tokens (including the shared state-layer)
+/// onto a `@core.ComponentThemes`. This is the entry point `to_theme()` uses
+/// so the resolved theme carries first-class component themes.
+pub fn DesignSystemTokens::core_themes(
+  self : DesignSystemTokens,
+) -> @core.ComponentThemes {
+  let state_layer = self.state_layer.core_tokens()
+  let base = self.components.core_themes(self.scheme)
+  { ..base, button: { ..base.button, state_layer } }
+}
+
+///|
 pub fn DesignSystemTokens::core_component_styles(
   self : DesignSystemTokens,
 ) -> DesignCoreComponentStyles {
@@ -638,14 +852,14 @@ pub fn DesignSystemTokens::to_theme(self : DesignSystemTokens) -> @core.Theme {
     @core.ColorScheme::Dark => @views.dark_theme()
   }
   base
-  .with_palette(self.palette.core_palette())
-  .with_semantic_colors(self.palette.core_semantic_colors())
+  .with_palette(self.palette.core_palette(self.scheme))
   .with_spacing_scale(self.spacing.core_spacing_scale())
   .with_radius_scale(self.radius.core_radius_scale())
   .with_typography(self.typography.core_typography())
   .with_shadow_scale(self.elevation.core_shadow_scale())
   .with_motion(self.motion.core_motion())
   .with_surfaces(self.surfaces.core_surfaces())
+  .with_components(self.components.core_themes(self.scheme))
 }
 
 ///|
@@ -1466,7 +1680,7 @@ fn surface_tokens(
   palette : DesignSemanticPalette,
   scheme : @core.ColorScheme,
 ) -> DesignSurfaceTokens {
-  let surfaces = @core.SurfaceScale::default(palette.core_palette(), scheme)
+  let surfaces = @core.SurfaceScale::default(palette.core_palette(scheme), scheme)
   { base: surfaces.base, raised: surfaces.raised, overlay: surfaces.overlay }
 }
 

@@ -323,8 +323,7 @@ fn token_group_resolves_neutral_surface(
 ) -> Bool {
   match requirement {
     DesignSystemRequirement::SemanticPalette =>
-      theme.palette == tokens.palette.core_palette() &&
-      theme.semantic_colors == tokens.palette.core_semantic_colors()
+      theme.palette == tokens.palette.core_palette(tokens.scheme)
     DesignSystemRequirement::Typography =>
       theme.typography == tokens.typography.core_typography()
     DesignSystemRequirement::ShapeRadius =>

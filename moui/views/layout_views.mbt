@@ -157,7 +157,7 @@ fn[Msg] container_box(
         border~,
         corner_radius~,
         shadow~,
-        scheme=ctx.environment.color_scheme,
+        scheme=ctx.environment.color_scheme(),
       )
     },
     semantics=() => {

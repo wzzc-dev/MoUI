@@ -33,8 +33,12 @@ fn workbench_theme(scheme : @moui.ColorScheme) -> @moui.Theme {
   }
   {
     ..base,
-    palette: { ..base.palette, primary: accent },
-    semantic_colors: { ..base.semantic_colors, info: accent, focus: accent },
+    palette: {
+      ..base.palette,
+      primary: accent,
+      info: accent,
+      focus: accent,
+    },
   }
 }
 

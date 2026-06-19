@@ -176,7 +176,7 @@ pub fn HostServiceBridge::environment_with_system_theme(
   environment : @core.Environment,
 ) -> @core.Environment {
   match self.query_system_theme() {
-    Some(scheme) => environment.with_color_scheme(scheme)
+    Some(scheme) => environment.with_system_scheme(scheme)
     None => environment
   }
 }
