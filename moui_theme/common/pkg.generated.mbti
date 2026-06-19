@@ -538,6 +538,12 @@ pub(all) struct DesignSemanticPalette {
   background : @core.Color
   surface : @core.Color
   surface_variant : @core.Color
+  background_2 : @core.Color
+  background_3 : @core.Color
+  foreground_2 : @core.Color
+  stroke_1 : @core.Color
+  stroke_2 : @core.Color
+  brand_stroke : @core.Color
   primary : @core.Color
   primary_foreground : @core.Color
   outline : @core.Color
@@ -1062,6 +1068,11 @@ pub(all) struct DesignTypographyTokens {
   title : @core.FontSpec
   caption : @core.FontSpec
   control : @core.FontSpec
+  subtitle : @core.FontSpec?
+  title_large : @core.FontSpec?
+  title_medium : @core.FontSpec?
+  body_strong : @core.FontSpec?
+  caption_strong : @core.FontSpec?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignTypographyTokens::core_typography(Self) -> @core.TypographyScale
 

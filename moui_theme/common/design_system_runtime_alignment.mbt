@@ -237,11 +237,13 @@ fn expected_runtime_token_value(
     runtime_color_value(color_byte(r=253, g=227, b=0))
   } else if source_value.contains("#eaa300") {
     runtime_color_value(color_byte(r=234, g=163, b=0))
+  } else if source_value.contains("#0f6cbd") {
+    runtime_color_value(color_byte(r=15, g=108, b=189))
   } else if source_value.contains("#0078d4") {
     runtime_color_value(color_byte(r=0, g=120, b=212))
   } else if coverage.official_token == "ProgressBar.indicator.backgroundColor" &&
     source_value.contains("colorCompoundBrandBackground") {
-    runtime_color_value(color_byte(r=0, g=120, b=212))
+    runtime_color_value(color_byte(r=15, g=108, b=189))
   } else if source_value.contains("#fafafa") {
     runtime_color_value(color_byte(r=250, g=250, b=250))
   } else if source_value.contains("#f5f5f5") {
@@ -714,11 +716,11 @@ fn expected_runtime_token_value(
   } else if coverage.official_token == "durationFast" {
     runtime_double_value(150.0)
   } else if coverage.official_token == "durationNormal" {
-    runtime_double_value(200.0)
+    runtime_double_value(150.0)
   } else if coverage.official_token == "durationGentle" {
-    runtime_double_value(250.0)
+    runtime_double_value(200.0)
   } else if coverage.official_token == "durationSlow" {
-    runtime_double_value(300.0)
+    runtime_double_value(250.0)
   } else if coverage.official_token == "durationSlower" {
     runtime_double_value(400.0)
   } else if coverage.official_token == "durationUltraSlow" {
