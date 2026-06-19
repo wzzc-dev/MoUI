@@ -55,7 +55,6 @@ and Web wasm-gc builds.
 Use these additional checks when relevant:
 
 ```sh
-node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-api-surface.mjs
 moon info
 node scripts/smoke-check.mjs --check
