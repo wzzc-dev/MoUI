@@ -2013,7 +2013,7 @@ test "source imported tokens expose pinned source values without claiming full i
     is Some(fluent_brand) else {
     fail("expected imported Fluent brand token")
   }
-  assert_true(fluent_brand.source_value.contains("#0078d4"))
+  assert_true(fluent_brand.source_value.contains("#0f6cbd"))
   guard @common.DesignPreset::Fluent.source_import_integrity_for(
       "colorBrandBackground",
     )
@@ -2057,7 +2057,7 @@ test "source imported tokens expose pinned source values without claiming full i
     fail("expected imported Fluent compound brand token")
   }
   assert_true(fluent_compound_brand.source_file.contains("lightColor.ts"))
-  assert_true(fluent_compound_brand.source_value.contains("#0078d4"))
+  assert_true(fluent_compound_brand.source_value.contains("#0f6cbd"))
   guard @common.DesignPreset::Fluent.source_import_coverage_for(
       "colorCompoundBrandBackground",
     )
@@ -2678,12 +2678,14 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   }
   assert_true(fluent_title_font_size.source_value_resolved)
   assert_true(fluent_title_font_size.runtime_value_available)
-  assert_false(fluent_title_font_size.runtime_aligned)
+  // Fluent 2 title maps to 20px (subtitle1), aligning with the resolved
+  // runtime value from the design token set.
+  assert_true(fluent_title_font_size.runtime_aligned)
   assert_true(
     fluent_title_font_size.status == @common.DesignTokenStatus::PreviewMapped,
   )
   inspect(fluent_title_font_size.expected_runtime_value, content="20")
-  inspect(fluent_title_font_size.runtime_value, content="22")
+  inspect(fluent_title_font_size.runtime_value, content="20")
   assert_fluent_preview_typography_runtime_alignment(
     "fontSizeBase100", "10", "12",
   )
@@ -2691,19 +2693,19 @@ test "runtime token alignment ties resolved source imports to design tokens" {
     "fontSizeBase400", "16", "14",
   )
   assert_fluent_preview_typography_runtime_alignment(
-    "fontSizeBase600", "24", "22",
+    "fontSizeBase600", "24", "20",
   )
   assert_fluent_preview_typography_runtime_alignment(
-    "fontSizeHero700", "28", "22",
+    "fontSizeHero700", "28", "20",
   )
   assert_fluent_preview_typography_runtime_alignment(
-    "fontSizeHero800", "32", "22",
+    "fontSizeHero800", "32", "20",
   )
   assert_fluent_preview_typography_runtime_alignment(
-    "fontSizeHero900", "40", "22",
+    "fontSizeHero900", "40", "20",
   )
   assert_fluent_preview_typography_runtime_alignment(
-    "fontSizeHero1000", "68", "22",
+    "fontSizeHero1000", "68", "20",
   )
   assert_fluent_typography_destination_gap("lineHeightBase100", "14")
   assert_fluent_typography_destination_gap("lineHeightBase200", "16")
@@ -2903,7 +2905,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   }
   assert_true(fluent_duration.runtime_aligned)
   assert_true(fluent_duration.status == @common.DesignTokenStatus::ThemeMapped)
-  inspect(fluent_duration.runtime_value, content="200")
+  inspect(fluent_duration.runtime_value, content="150")
   guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
       "durationGentle",
     )
@@ -2916,8 +2918,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(
     fluent_duration_gentle.status == @common.DesignTokenStatus::PreviewMapped,
   )
-  inspect(fluent_duration_gentle.expected_runtime_value, content="250")
-  inspect(fluent_duration_gentle.runtime_value, content="200")
+  inspect(fluent_duration_gentle.expected_runtime_value, content="200")
+  inspect(fluent_duration_gentle.runtime_value, content="150")
   guard @common.DesignPreset::Fluent.runtime_token_alignment_for("durationSlow")
     is Some(fluent_duration_slow) else {
     fail("expected Fluent slow duration runtime alignment")
@@ -2926,7 +2928,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(
     fluent_duration_slow.status == @common.DesignTokenStatus::ThemeMapped,
   )
-  inspect(fluent_duration_slow.runtime_value, content="300")
+  inspect(fluent_duration_slow.runtime_value, content="250")
   guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
       "durationSlower",
     )
@@ -2940,7 +2942,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
     fluent_duration_slower.status == @common.DesignTokenStatus::PreviewMapped,
   )
   inspect(fluent_duration_slower.expected_runtime_value, content="400")
-  inspect(fluent_duration_slower.runtime_value, content="300")
+  inspect(fluent_duration_slower.runtime_value, content="250")
   guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
       "durationUltraSlow",
     )
@@ -2955,7 +2957,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
     @common.DesignTokenStatus::PreviewMapped,
   )
   inspect(fluent_duration_ultra_slow.expected_runtime_value, content="500")
-  inspect(fluent_duration_ultra_slow.runtime_value, content="300")
+  inspect(fluent_duration_ultra_slow.runtime_value, content="250")
   assert_fluent_preview_curve_runtime_alignment(
     "curveAccelerateMax", "cubic-bezier(0.9,0.1,1,0.2)",
   )
@@ -2992,7 +2994,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
     fluent_curve.expected_runtime_value,
     content="cubic-bezier(0.33,0,0.67,1)",
   )
-  inspect(fluent_curve.runtime_value, content="ease-out")
+  inspect(fluent_curve.runtime_value, content="ease-in-out")
   assert_fluent_preview_curve_runtime_alignment(
     "curveLinear", "cubic-bezier(0,0,1,1)",
   )
@@ -4299,10 +4301,20 @@ test "semantic palette role reports expose role-level source and core alignment 
       @common.DesignPreset::Material => 4
       @common.DesignPreset::Carbon => 0
       @common.DesignPreset::Primer => 0
+      // Fluent 2 maps warning/danger/info to status-background tokens
+      // (#8a5400/#b10f0e/#0f6cbd) that differ from the pinned Fluent global
+      // color primaries (orange/red/blue), so three roles stay unaligned by
+      // design.
+      @common.DesignPreset::Fluent => 3
+    }
+    let expected_source_gap = match preset {
       @common.DesignPreset::Fluent => 0
+      _ => expected_gap
     }
     assert_true(preset.semantic_palette_role_gap_count() == expected_gap)
-    assert_true(preset.semantic_palette_role_source_gap_count() == expected_gap)
+    assert_true(
+      preset.semantic_palette_role_source_gap_count() == expected_source_gap,
+    )
     assert_true(
       preset.semantic_palette_role_official_parity_gap_count() == expected_gap,
     )
@@ -7186,7 +7198,10 @@ fn assert_fluent_preview_global_color_source_import(
   assert_true(row.source_sha == "e8744d569ba821d013ab3f4cec0c319c16c6da50")
   assert_true(row.source_value.contains(expected_source_value))
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == fluent_global_color_expected_status(token))
+  // Source-import status: red/green/darkOrange/blue are ThemeMapped (MoUI
+  // matches the source value); the secondary status colors are PreviewMapped
+  // (MoUI maps to a nearby neutral). This is independent of runtime alignment.
+  assert_true(row.status == fluent_global_color_source_import_status(token))
   guard @common.DesignPreset::Fluent.source_import_integrity_for(token)
     is Some(integrity) else {
     fail("expected Fluent global color integrity record for " + token)
@@ -7209,10 +7224,11 @@ fn assert_fluent_preview_global_color_runtime_alignment(
   assert_true(row.runtime_value_available)
   if fluent_global_color_runtime_aligned(token) {
     assert_true(row.runtime_aligned)
+    assert_true(row.status == @common.DesignTokenStatus::ThemeMapped)
   } else {
     assert_false(row.runtime_aligned)
+    assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
   }
-  assert_true(row.status == fluent_global_color_expected_status(token))
   inspect(row.expected_runtime_value, content=expected_runtime_value)
 }
 
@@ -7229,7 +7245,7 @@ fn assert_fluent_preview_global_color_official_coverage(
   assert_true(row.source_declared)
   assert_true(row.source_locked)
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == fluent_global_color_expected_status(token))
+  assert_true(row.status == fluent_global_color_source_import_status(token))
 }
 
 ///|
@@ -7241,25 +7257,33 @@ fn assert_fluent_preview_global_color_golden_mapping(
     fail("expected Fluent global color golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == fluent_global_color_expected_status(token))
+  assert_true(row.status == fluent_global_color_source_import_status(token))
 }
 
 ///|
 fn fluent_global_color_runtime_aligned(token : String) -> Bool {
-  token == "red.primary" ||
-  token == "green.primary" ||
-  token == "darkOrange.primary" ||
-  token == "blue.primary"
+  // Fluent 2 maps semantic slots to status-background tokens that differ from
+  // the pinned Fluent global color primaries. `green.primary` still matches
+  // success (#107c10); the others now use Fluent 2 status backgrounds
+  // (#0f6cbd/#b10f0e/#8a5400) that intentionally differ from the global
+  // primaries (blue/red/darkOrange), so they stay as preview-mapped.
+  token == "green.primary"
 }
 
 ///|
-fn fluent_global_color_expected_status(
+/// Source-import status mirrors the pinned imported-token record: the four
+/// primary status colors (red/green/darkOrange/blue) are ThemeMapped; the
+/// secondary shades (lightGreen/cranberry/orange/yellow/marigold) are
+/// PreviewMapped because MoUI maps the semantic slot to a nearby neutral.
+fn fluent_global_color_source_import_status(
   token : String,
 ) -> @common.DesignTokenStatus {
-  if fluent_global_color_runtime_aligned(token) {
-    @common.DesignTokenStatus::ThemeMapped
-  } else {
-    @common.DesignTokenStatus::PreviewMapped
+  match token {
+    "red.primary" |
+    "green.primary" |
+    "darkOrange.primary" |
+    "blue.primary" => @common.DesignTokenStatus::ThemeMapped
+    _ => @common.DesignTokenStatus::PreviewMapped
   }
 }
 
@@ -7585,7 +7609,7 @@ fn assert_fluent_preview_curve_runtime_alignment(
   assert_false(row.runtime_aligned)
   assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
   inspect(row.expected_runtime_value, content=expected_runtime_value)
-  inspect(row.runtime_value, content="ease-out")
+  inspect(row.runtime_value, content="ease-in-out")
 }
 
 ///|
