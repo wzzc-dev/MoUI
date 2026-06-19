@@ -622,3 +622,56 @@ test "runtime semantics includes declared state modifiers" {
   assert_true(semantics.state.required)
   assert_true(semantics.state.disabled)
 }
+
+///|
+test "runtime propagates text style modifiers into draw commands" {
+  let color = @core.Color::rgba(r=0.91, g=0.12, b=0.18)
+  let font = @core.FontSpec::new(size=23.0, weight=700)
+  let root : @core.View[Unit] = @views.text("Styled", width=90.0, height=28.0)
+    .font(font)
+    .foreground(color)
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=120.0, height=40.0),
+  )
+  match runtime_test_text_run(runtime.draw_commands(), "Styled") {
+    Some(run) => {
+      assert_true(run.color == color)
+      assert_true(run.font == font)
+    }
+    None => fail("expected styled text draw command")
+  }
+}
+
+///|
+test "runtime propagates theme modifier into default text color" {
+  let theme = @views.dark_theme()
+  let root : @core.View[Unit] = @views.text("Themed", width=90.0, height=28.0).theme(
+    theme,
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=120.0, height=40.0),
+  )
+  match runtime_test_text_run(runtime.draw_commands(), "Themed") {
+    Some(run) => assert_true(run.color == theme.palette.foreground)
+    None => fail("expected themed text draw command")
+  }
+}
+
+///|
+fn runtime_test_text_run(
+  commands : Array[@core.DrawCommand],
+  text : String,
+) -> @core.TextRun? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::DrawText(run) =>
+        if run.text == text {
+          return Some(run)
+        }
+      _ => ()
+    }
+  }
+  None
+}

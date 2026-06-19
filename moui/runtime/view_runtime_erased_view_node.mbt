@@ -14,6 +14,8 @@ fn[Msg] erase_view_for_runtime(
       None => None
     },
     child_constraints: constraints => view.child_constraints(constraints),
+    child_environment: environment => view.child_environment(environment),
+    child_style: style => view.child_style(style),
     layout: context => view.layout(context),
     paint: context => view.paint(context),
     event: context => {
