@@ -69,13 +69,13 @@ pub fn custom(
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
   base? : @core.Theme,
   palette? : @core.ColorPalette,
-  semantic_colors? : @core.SemanticColorScale,
   spacing_scale? : @core.SpacingScale,
   radius_scale? : @core.RadiusScale,
   typography? : @core.TypographyScale,
   shadow_scale? : @core.ShadowScale,
   motion? : @core.MotionScale,
   surfaces? : @core.SurfaceScale,
+  components? : @core.ComponentThemes,
 ) -> @core.Theme {
   let mut theme = match base {
     Some(value) => value
@@ -87,10 +87,6 @@ pub fn custom(
   }
   match palette {
     Some(value) => theme = theme.with_palette(value)
-    None => ()
-  }
-  match semantic_colors {
-    Some(value) => theme = theme.with_semantic_colors(value)
     None => ()
   }
   match spacing_scale {
@@ -117,30 +113,11 @@ pub fn custom(
     Some(value) => theme = theme.with_surfaces(value)
     None => ()
   }
-  theme
-}
-
-///|
-fn palette(
-  foreground~ : @core.Color,
-  background~ : @core.Color,
-  surface~ : @core.Color,
-  surface_variant~ : @core.Color,
-  primary~ : @core.Color,
-  primary_foreground~ : @core.Color,
-  outline~ : @core.Color,
-  muted~ : @core.Color,
-) -> @core.ColorPalette {
-  {
-    foreground,
-    background,
-    surface,
-    surface_variant,
-    primary,
-    primary_foreground,
-    outline,
-    muted,
+  match components {
+    Some(value) => theme = theme.with_components(value)
+    None => ()
   }
+  theme
 }
 
 ///|

@@ -5,55 +5,17 @@ pub using @core {type Color}
 pub using @core {type ColorScheme}
 
 ///|
+/// Minimal light theme. Resolved from a `ThemeSpec` so the full palette
+/// (on*/container matrix), scales, and default `ComponentThemes` are derived
+/// consistently with the resolver path used by host `ThemeChanged` events.
 pub fn light_theme() -> @core.Theme {
-  let palette = @core.ColorPalette::light()
-  let semantic_colors = @core.SemanticColorScale::default(
-    palette,
-    @core.ColorScheme::Light,
-  )
-  let spacing_scale = @core.SpacingScale::default()
-  let radius_scale = @core.RadiusScale::default()
-  let typography = @core.TypographyScale::default()
-  let shadow_scale = @core.ShadowScale::default(scheme=@core.ColorScheme::Light)
-  let motion = @core.MotionScale::default()
-  let surfaces = @core.SurfaceScale::default(palette, @core.ColorScheme::Light)
-  {
-    scheme: @core.ColorScheme::Light,
-    palette,
-    semantic_colors,
-    spacing_scale,
-    radius_scale,
-    typography,
-    shadow_scale,
-    motion,
-    surfaces,
-  }
+  @core.resolve_minimal_theme(@core.ThemeSpec::minimal_light(), @core.ColorScheme::Light)
 }
 
 ///|
+/// Minimal dark theme. Mirrors `light_theme` via the resolver.
 pub fn dark_theme() -> @core.Theme {
-  let palette = @core.ColorPalette::dark()
-  let semantic_colors = @core.SemanticColorScale::default(
-    palette,
-    @core.ColorScheme::Dark,
-  )
-  let spacing_scale = @core.SpacingScale::default()
-  let radius_scale = @core.RadiusScale::default()
-  let typography = @core.TypographyScale::default()
-  let shadow_scale = @core.ShadowScale::default(scheme=@core.ColorScheme::Dark)
-  let motion = @core.MotionScale::default()
-  let surfaces = @core.SurfaceScale::default(palette, @core.ColorScheme::Dark)
-  {
-    scheme: @core.ColorScheme::Dark,
-    palette,
-    semantic_colors,
-    spacing_scale,
-    radius_scale,
-    typography,
-    shadow_scale,
-    motion,
-    surfaces,
-  }
+  @core.resolve_minimal_theme(@core.ThemeSpec::minimal_dark(), @core.ColorScheme::Dark)
 }
 
 ///|
@@ -62,17 +24,20 @@ pub fn default_theme() -> @core.Theme {
 }
 
 ///|
+/// Compose a theme by overriding individual token groups over an optional
+/// base. Semantic colors are no longer a separate group: they live on
+/// `ColorPalette` (success/danger/info/...), so override them via `palette?`.
 pub fn theme(
   base? : @core.Theme,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
   palette? : @core.ColorPalette,
-  semantic_colors? : @core.SemanticColorScale,
   spacing_scale? : @core.SpacingScale,
   radius_scale? : @core.RadiusScale,
   typography? : @core.TypographyScale,
   shadow_scale? : @core.ShadowScale,
   motion? : @core.MotionScale,
   surfaces? : @core.SurfaceScale,
+  components? : @core.ComponentThemes,
 ) -> @core.Theme {
   let mut base_theme = match base {
     Some(value) => value
@@ -84,10 +49,6 @@ pub fn theme(
   }
   match palette {
     Some(value) => base_theme = base_theme.with_palette(value)
-    None => ()
-  }
-  match semantic_colors {
-    Some(value) => base_theme = base_theme.with_semantic_colors(value)
     None => ()
   }
   match spacing_scale {
@@ -112,6 +73,10 @@ pub fn theme(
   }
   match surfaces {
     Some(value) => base_theme = base_theme.with_surfaces(value)
+    None => ()
+  }
+  match components {
+    Some(value) => base_theme = base_theme.with_components(value)
     None => ()
   }
   base_theme

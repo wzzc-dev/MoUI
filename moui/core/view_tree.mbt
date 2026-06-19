@@ -227,8 +227,8 @@ fn[Msg] modifier_revision(modifier : ViewModifier[Msg]) -> String {
       "main-axis-alignment:\{main_axis_alignment_label(alignment)}"
     CrossAxisAlignmentModifier(alignment) =>
       "cross-axis-alignment:\{cross_axis_alignment_label(alignment)}"
-    ThemeModifier(_) => "theme"
-    EnvironmentModifier(_) => "environment"
+    ThemeModifier(theme) => theme.revision_fingerprint()
+    EnvironmentModifier(env) => env.revision_fingerprint()
     AspectRatioModifier(ratio) => "aspect-ratio:\{ratio}"
     IntrinsicWidthModifier => "intrinsic-width"
     IntrinsicHeightModifier => "intrinsic-height"

@@ -47,7 +47,7 @@ fn[Msg] sheet_shell(
         commands,
         rounded,
         shadow,
-        ctx.environment.color_scheme,
+        ctx.environment.color_scheme(),
       )
       commands.push(
         @core.DrawCommand::FillRoundedRectBrush(rounded, background),

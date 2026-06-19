@@ -8,7 +8,7 @@ import {
 }
 
 // Values
-pub fn custom(scheme? : @core.ColorScheme, base? : @core.Theme, palette? : @core.ColorPalette, semantic_colors? : @core.SemanticColorScale, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
+pub fn custom(scheme? : @core.ColorScheme, base? : @core.Theme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale, components? : @core.ComponentThemes) -> @core.Theme
 
 pub fn custom_tokens(DesignSystemTokens, palette? : DesignSemanticPalette, typography? : DesignTypographyTokens, spacing? : DesignSpacingTokens, radius? : DesignRadiusTokens, elevation? : DesignElevationTokens, motion? : DesignMotionTokens, surfaces? : DesignSurfaceTokens, state_layer? : DesignStateLayerTokens, components? : DesignComponentTokens) -> DesignSystemTokens
 
@@ -150,6 +150,7 @@ pub(all) struct DesignComponentTokens {
   badge : DesignBadgeTokens
   form_validation : DesignFormValidationTokens
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignComponentTokens::core_themes(Self, @core.ColorScheme) -> @core.ComponentThemes
 
 pub(all) struct DesignControlStateTokens {
   foreground : @core.Color
@@ -161,7 +162,8 @@ pub(all) struct DesignControlStateTokens {
   bottom_border_only : Bool
   inner_focus_border : @core.Color?
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignControlStateTokens::core_style(Self) -> @views.ControlStateStyle
+pub fn DesignControlStateTokens::core_style(Self) -> @core.ControlStateStyle
+pub fn DesignControlStateTokens::core_tokens(Self) -> @core.ControlStateTokens
 
 pub(all) struct DesignCoreComponentStyles {
   button : DesignButtonCoreStyles
@@ -547,8 +549,7 @@ pub(all) struct DesignSemanticPalette {
   focus : @core.Color
   scrim : @core.Color
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignSemanticPalette::core_palette(Self) -> @core.ColorPalette
-pub fn DesignSemanticPalette::core_semantic_colors(Self) -> @core.SemanticColorScale
+pub fn DesignSemanticPalette::core_palette(Self, @core.ColorScheme) -> @core.ColorPalette
 
 pub(all) enum DesignSemanticPaletteRole {
   PaletteForeground
@@ -739,6 +740,7 @@ pub(all) struct DesignStateLayerTokens {
   selected_alpha : Double
   disabled_alpha : Double
 } derive(Eq, ToJson, @debug.Debug)
+pub fn DesignStateLayerTokens::core_tokens(Self) -> @core.StateLayerTokens
 
 pub(all) struct DesignSurfaceComponentTokens {
   base_padding : Double
@@ -884,6 +886,7 @@ pub(all) struct DesignSystemTokens {
   components : DesignComponentTokens
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSystemTokens::core_component_styles(Self) -> DesignCoreComponentStyles
+pub fn DesignSystemTokens::core_themes(Self) -> @core.ComponentThemes
 pub fn DesignSystemTokens::to_theme(Self) -> @core.Theme
 pub fn DesignSystemTokens::with_palette(Self, DesignSemanticPalette) -> Self
 pub fn DesignSystemTokens::with_radius(Self, DesignRadiusTokens) -> Self

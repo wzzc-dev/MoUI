@@ -88,7 +88,7 @@ test "host service bridge applies system theme to runtime environment" {
     .with_locale("zh-CN")
     .with_text_scale(1.25)
   let updated = bridge.environment_with_system_theme(environment)
-  assert_true(updated.color_scheme == @core.ColorScheme::Dark)
+  assert_true(updated.color_scheme() == @core.ColorScheme::Dark)
   assert_true(updated.theme.scheme == @core.ColorScheme::Dark)
   inspect(updated.locale, content="zh-CN")
   inspect(updated.text_scale, content="1.25")
@@ -131,7 +131,7 @@ test "host driver applies theme change to runtime environment" {
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
   let result = driver.dispatch(HostEvent::ThemeChanged(@core.ColorScheme::Dark))
-  assert_true(runtime.environment().color_scheme == @core.ColorScheme::Dark)
+  assert_true(runtime.environment().color_scheme() == @core.ColorScheme::Dark)
   assert_true(runtime.environment().theme.scheme == @core.ColorScheme::Dark)
   inspect(result.redraw_requested, content="true")
 }
