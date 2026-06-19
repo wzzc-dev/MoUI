@@ -817,3 +817,135 @@ test "runtime delivers synthetic Exit to clear hover on pointer leave" {
 fn runtime_test_unused_log() -> Array[Bool] {
   []
 }
+
+///|
+/// A hover-tracker that also records the pointer phase of every event it
+/// receives. Used to assert the synthetic `Exit` is never delivered to a
+/// descendant of the previously hovered element (which would clear the
+/// descendant's hover a frame before the `Move` re-sets it — a flicker).
+fn[Msg] runtime_test_hover_phase_tracker(
+  width~ : Double,
+  height~ : Double,
+  log~ : Array[Bool],
+  phases~ : Array[@core.PointerPhase],
+) -> @core.View[Msg] {
+  @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="HoverPhaseTracker"),
+    revision=() => "hover-phase-tracker:\{width}:\{height}",
+    layout=ctx => {
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(@core.Size::new(width~, height~)),
+      )
+    },
+    paint=_ctx => @core.ViewPaintPlan::commands([]),
+    event=ctx => {
+      match ctx.event {
+        @core.AppEvent::Pointer(event) => {
+          phases.push(event.phase)
+          let effective_inside = if event.phase == @core.PointerPhase::Exit {
+            false
+          } else {
+            ctx.frame.contains(event.position)
+          }
+          let next_hovered = match event.phase {
+            @core.PointerPhase::Down => ctx.state.hovered
+            @core.PointerPhase::Move => effective_inside
+            @core.PointerPhase::Up => effective_inside
+            @core.PointerPhase::Cancel | @core.PointerPhase::Exit => false
+          }
+          let changed = next_hovered != ctx.state.hovered
+          if changed {
+            log.push(next_hovered)
+          }
+          if changed {
+            {
+              ..@core.ViewEventResult::ignored(),
+              changed: true,
+              captured: true,
+              state: Some({ ..ctx.state, hovered: next_hovered }),
+              dirty: @core.ViewDirtyHint::ViewPaintDirty,
+            }
+          } else {
+            @core.ViewEventResult::ignored()
+          }
+        }
+        _ => @core.ViewEventResult::ignored()
+      }
+    },
+  )
+}
+
+///|
+/// Regression: when the pointer moves from empty space (so the previously
+/// hovered element is a parent container) onto a child button, the synthetic
+/// `Exit` delivered to the parent must NOT propagate into the child. If it did,
+/// the child would receive `Exit` (clearing its hover) immediately followed by
+/// `Move` (re-setting it) in the same event — a one-frame flicker. This mirrors
+/// the Showcase "Dialog" button, which sits inside a `scroll_view`/row and is
+/// reached by moving off empty space in the parent.
+test "runtime Exit does not propagate to descendant being entered" {
+  let child_log : Array[Bool] = []
+  let child_phases : Array[@core.PointerPhase] = []
+  // Parent fills the canvas [0,200]x[0,40]; child sits at [80,180]. Empty space
+  // [0,80) lets the pointer rest on the parent (not the child) first.
+  let child : @core.View[Unit] = runtime_test_hover_phase_tracker(
+    width=100.0,
+    height=40.0,
+    log=child_log,
+    phases=child_phases,
+  )
+  let root : @core.View[Unit] = @core.View::node(
+    identity=() => @core.ViewIdentity::new(kind="HoverParent"),
+    revision=() => "hover-parent",
+    children=() => [child],
+    child_constraints=_constraints => @core.Constraints::unbounded(),
+    layout=ctx => {
+      let frames : Array[@core.Rect] = []
+      for _index, _size in ctx.child_sizes {
+        frames.push(@core.Rect::new(x=80.0, y=0.0, width=100.0, height=40.0))
+      }
+      @core.ViewLayoutResult::new(
+        size=ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0)),
+        child_frames=frames,
+      )
+    },
+    paint=_ctx => @core.ViewPaintPlan::commands([]),
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=200.0, height=40.0),
+  )
+  ignore(runtime.layout())
+  // Rest the pointer on empty parent space (parent becomes hovered_element).
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=10.0, y=10.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  // Move onto the child button. The parent gets an Exit; the child must get
+  // only the Move (no Exit) — otherwise its hover flickers.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=100.0, y=10.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  // Child should have entered hover exactly once and never seen an Exit.
+  if child_log != [true] {
+    let rendered = child_log
+      .map(b => if b { "true" } else { "false" })
+      .join(", ")
+    fail("expected child hover log [true] but got [\{rendered}]")
+  }
+  let has_exit = child_phases.any(p => p == @core.PointerPhase::Exit)
+  if has_exit {
+    fail(
+      "child must not receive Exit while being entered; phase count=\{child_phases.length()}",
+    )
+  }
+}

@@ -125,12 +125,33 @@ pub fn animated_color(
   reduced_motion? : Bool = false,
 ) -> Color {
   let sampled = easing.sample(if reduced_motion { 1.0 } else { progress })
-  Color::rgba(
-    r=from.r + (to.r - from.r) * sampled,
-    g=from.g + (to.g - from.g) * sampled,
-    b=from.b + (to.b - from.b) * sampled,
-    a=from.a + (to.a - from.a) * sampled,
-  )
+  // Interpolate in premultiplied-alpha space. Straight RGBA lerp between a
+  // transparent color (e.g. `rgba(0,0,0,0)`) and an opaque light tint (e.g.
+  // `surface_variant`) walks the RGB toward the tint at half alpha, producing
+  // a mid-transition dark gray that flashes against the surface — "light →
+  // dark → light". Premultiplying keeps the visible hue at the destination
+  // throughout and only ramps coverage, so a transparent→opaque-tint fade
+  // stays the tint's color the whole way. When both endpoints are opaque this
+  // reduces to the same lerp as before, so opaque→opaque transitions are
+  // unchanged.
+  let from_pa = from.r * from.a
+  let from_pg = from.g * from.a
+  let from_pb = from.b * from.a
+  let to_pa = to.r * to.a
+  let to_pg = to.g * to.a
+  let to_pb = to.b * to.a
+  let pa = from_pa + (to_pa - from_pa) * sampled
+  let pg = from_pg + (to_pg - from_pg) * sampled
+  let pb = from_pb + (to_pb - from_pb) * sampled
+  let a = from.a + (to.a - from.a) * sampled
+  // Un-premultiply back to straight RGBA for the renderer. A fully transparent
+  // result has no defined hue; carry the destination RGB so a later increase
+  // in alpha doesn't resurrect a stray color.
+  if a <= 0.0 {
+    Color::rgba(r=to.r, g=to.g, b=to.b, a=0.0)
+  } else {
+    Color::rgba(r=pa / a, g=pg / a, b=pb / a, a~)
+  }
 }
 
 ///|

@@ -303,3 +303,66 @@ fn ElementNode::dispatch_pointer_to_target(
     None
   }
 }
+
+///|
+/// Deliver a pointer event to the exact element identified by `target` without
+/// propagating into its descendants. Used for the synthetic `Exit`: the event
+/// carries the pointer's current (now off-element) position, and a normal
+/// dispatch would hit-test that position against the target's children and
+/// re-deliver the `Exit` to a descendant that the pointer is actually entering
+/// — clearing its hover a frame before the `Move` re-sets it, which flickers.
+/// `Exit` means "the pointer left you specifically", so it stops at `target`.
+fn ElementNode::dispatch_pointer_event_to_target_only(
+  self : ElementNode,
+  target : ElementId,
+  event : PointerEvent,
+  render : RenderNode,
+  environment~ : Environment,
+  style~ : ViewStyle,
+  text_system~ : TextSystem,
+  now_ms~ : Double,
+) -> ElementEventResult? {
+  if self.id == target {
+    Some(
+      self.dispatch_view_event(
+        self.erased_view_node,
+        AppEvent::Pointer(event),
+        render,
+        text_system,
+        environment~,
+        style~,
+        now_ms~,
+      ),
+    )
+  } else {
+    let child_environment = (self.erased_view_node.child_environment)(
+      environment,
+    )
+    let child_style = (self.erased_view_node.child_style)(style)
+    let mut index = 0
+    while index < self.children.length() {
+      if index < render.children.length() {
+        match
+          self.children[index].dispatch_pointer_event_to_target_only(
+            target,
+            event,
+            render.children[index],
+            environment=child_environment,
+            style=child_style,
+            text_system~,
+            now_ms~,
+          ) {
+          Some(result) => {
+            if result.changed {
+              self.mark_pointer_paint_dirty()
+            }
+            return Some(result)
+          }
+          None => ()
+        }
+      }
+      index = index + 1
+    }
+    None
+  }
+}
