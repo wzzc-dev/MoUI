@@ -111,25 +111,43 @@ fn[Msg] button_control(
         None =>
           (button_state_brush(current_state, background, hovered_background, pressed_background), false)
       }
-      let commands : Array[@core.DrawCommand] = []
-      let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
-      emit_elevation_shadow(commands, rounded, shadow, ctx.environment.color_scheme)
-      commands.push(
-        @core.DrawCommand::FillRoundedRectBrush(rounded, background_brush),
-      )
-      match border {
-        Some(border) =>
-          if border.width > 0.0 {
-            commands.push(
-              @core.DrawCommand::StrokeRoundedRectBrush(
-                rounded,
-                border.brush,
-                border.width,
-              ),
-            )
+     let commands : Array[@core.DrawCommand] = []
+     let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
+     emit_elevation_shadow(commands, rounded, shadow, ctx.environment.color_scheme)
+     commands.push(
+       @core.DrawCommand::FillRoundedRectBrush(rounded, background_brush),
+     )
+      // High-contrast accessibility mode thickens borders and renders them in
+      // the foreground color so control edges stay legible regardless of the
+      // theme's subtle outline alpha. Borderless controls gain a thin outline
+      // so their bounds are always discoverable.
+      let resolved_border = match ctx.environment.accessibility_contrast {
+        @core.AccessibilityContrast::High =>
+          Some(
+            @core.BorderStyle::new(
+              brush=@core.Brush::solid(ctx.environment.theme.palette.foreground),
+              width=2.0,
+            ),
+          )
+        @core.AccessibilityContrast::Standard =>
+          match border {
+            Some(b) => Some(b)
+            None => None
           }
-        None => ()
       }
+      match resolved_border {
+       Some(border) =>
+         if border.width > 0.0 {
+           commands.push(
+             @core.DrawCommand::StrokeRoundedRectBrush(
+               rounded,
+               border.brush,
+               border.width,
+             ),
+           )
+         }
+       None => ()
+     }
       // Lay out the leading icon (vertically centered) and offset the text
       // frame to the right of it so the label stays centered in the remainder.
       let text_origin_x = ctx.frame.origin.x + padding_horizontal + icon_block_width
