@@ -44,6 +44,7 @@ fn[Msg] erase_view_for_runtime(
     },
     semantics: () => view.semantics(),
     focusable: () => view.accepts_focus(),
+    flex_weight: () => view.flex_weight(),
     state: erased_view_node_state_context_default(),
   }
 }
