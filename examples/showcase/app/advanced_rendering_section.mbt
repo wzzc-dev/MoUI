@@ -109,7 +109,7 @@ fn advanced_rendering_canvas(
           commands.push(
             @core.DrawCommand::FillRoundedRectBrush(
               @core.RoundedRect::new(rect=rect_b, radius=18.0),
-              @core.Brush::solid(theme.accent.multiply_alpha(0.84)),
+              @core.Brush::solid(theme.palette.primary.multiply_alpha(0.84)),
             ),
           )
           commands.push(@core.DrawCommand::PopLayer)
@@ -195,7 +195,7 @@ fn advanced_rendering_canvas(
                   y=frame.origin.y + height * 0.48,
                 ),
                 radius=width * 0.42,
-                center_color=theme.accent.multiply_alpha(0.78),
+                center_color=theme.palette.primary.multiply_alpha(0.78),
                 edge_color=theme.palette.primary.multiply_alpha(0.12),
               ),
             ),

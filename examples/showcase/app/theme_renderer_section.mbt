@@ -6,9 +6,8 @@ fn ShowcaseModel::theme_renderer_section(
   opacity : Double,
 ) -> @moui.View[ShowcaseMsg] {
   let custom_theme = @views.theme(
-    background=theme.palette.background,
-    accent=theme.palette.primary,
     scheme=theme.scheme,
+    palette=theme.palette,
   )
   let environment = @views.environment(theme=custom_theme)
   ignore(environment)
