@@ -102,6 +102,8 @@ pub fn[Msg] dialog_host(@core.View[Msg], dialog? : @core.View[Msg]?, presented? 
 
 pub fn[Msg] disclosure(String, content~ : @core.View[Msg], expanded~ : Bool, on_toggle~ : Msg, subtitle? : String, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
+pub fn[Msg] divider(axis? : @core.Axis, theme? : @core.Theme, thickness? : Double, color? : @core.Color, inset? : Double) -> @core.View[Msg]
+
 pub fn[Msg] drop_zone(title? : String, message? : String, on_drop~ : (Array[String]) -> Msg, theme? : @core.Theme, width? : Double, height? : Double, enabled? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] dropdown(String, Array[MenuItem[Msg]], state~ : DropdownState, on_toggle~ : Msg, placeholder? : String, theme? : @core.Theme, width? : Double, max_height? : Double) -> @core.View[Msg]
