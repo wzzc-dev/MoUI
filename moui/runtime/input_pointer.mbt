@@ -177,6 +177,37 @@ fn RenderNode::hit_bounds(self : RenderNode) -> Rect {
 }
 
 ///|
+/// Resolve the topmost element whose paint bounds contain `point`. Children are
+/// visited last-to-first so a later-drawn (top) sibling wins, mirroring
+/// `dispatch_pointer_to_children`'s hit order. Used by the runtime to track the
+/// hovered element across `PointerMoved` events so it can deliver a synthetic
+/// `Exit` to the previous target when the pointer moves off it. Returns `None`
+/// when no element is under the pointer.
+fn ElementNode::find_hover_target(
+  self : ElementNode,
+  point : Point,
+  render : RenderNode,
+) -> ElementId? {
+  if !render.hit_bounds().contains(point) {
+    return None
+  }
+  // Deeper hits win over this node's own bounds: a leaf button inside a panel
+  // should report the button, not the panel.
+  let mut index = self.children.length() - 1
+  while index >= 0 {
+    if index < render.children.length() {
+      match
+        self.children[index].find_hover_target(point, render.children[index]) {
+        Some(id) => return Some(id)
+        None => ()
+      }
+    }
+    index = index - 1
+  }
+  Some(self.id)
+}
+
+///|
 fn ElementNode::has_active_pointer_capture(
   self : ElementNode,
   phase : PointerPhase,

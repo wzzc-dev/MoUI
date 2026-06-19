@@ -156,7 +156,9 @@ fn recognize_button_tap(
       }
     Down => if inside { Pressed } else { Normal }
     Up => if inside { Hovered } else { Normal }
-    Cancel => Normal
+    // Synthetic runtime phase: the pointer left the element, so drop any hover
+    // or press state and return to rest.
+    Exit | Cancel => Normal
   }
   { next_state, activated: phase == Up && inside && current == Pressed }
 }
@@ -223,7 +225,7 @@ fn LongPressGestureState::update(
         }
         None => { state: self, recognized: false, cancelled: false }
       }
-    Up | Cancel => {
+    Up | Cancel | Exit => {
       let cancelled = self.phase == LongPressGesturePhase::Pressing
       {
         state: LongPressGestureState::new(
@@ -422,7 +424,7 @@ fn DragGestureState::update(
             event: None,
           }
       }
-    Cancel => {
+    Cancel | Exit => {
       let drag_event = match (self.origin, self.last_position) {
         (Some(origin), Some(last)) =>
           if self.phase == DragGesturePhase::Started ||
