@@ -424,12 +424,18 @@ fn RuntimeState::dispatch_hover_exit_if_needed(
   match self.hovered_element {
     Some(old) => {
       let exit_event = PointerEvent::new(position~, phase=PointerPhase::Exit)
+      // Deliver the Exit only to the previously hovered element itself, not
+      // into its descendants: the event position is the pointer's new spot,
+      // which may still sit inside a child of `old` (the child the pointer is
+      // now entering). Propagating would clear that child's hover a frame
+      // before the Move re-sets it — a visible flicker.
       match
-        self.element_tree.root.dispatch_pointer_to_target(
+        self.element_tree.root.dispatch_pointer_event_to_target_only(
           old,
           exit_event,
           self.render_tree.root,
           environment=self.environment,
+          style=ViewStyle::empty(),
           text_system=self.text_system,
           now_ms=self.now_ms,
         ) {
