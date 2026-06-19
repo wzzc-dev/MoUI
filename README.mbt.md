@@ -5,6 +5,8 @@ declarative UI apps with shared platform-neutral app logic. Native host cores
 own windows, events, services, and lifecycle, then receive concrete renderers
 through platform renderer provider packages.
 
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 The current mainline is native Skia raster plus the Web
 `wasm-gc + window/web + browser WebGPU host imports` path. Native WGPU remains
 available as an experimental diagnostic route while the MoonBit WGPU ecosystem
@@ -106,6 +108,16 @@ files into `website/web_wasm/docs/` with `node scripts/sync-website-docs.mjs`.
 - [AI collaboration](docs/ai-collaboration.md)
 - [2026 roadmap](docs/roadmap-2026.md)
 - [Release readiness](docs/release-readiness.md)
+
+## Contributing
+
+MoUI is maintained by a single maintainer with AI assistance and is open to
+external contributions. Pull requests are the primary entry point for changes.
+
+- [Contributing guide](CONTRIBUTING.md) — setup, package boundaries, PR requirements, DCO
+- [Governance](GOVERNANCE.md) — decision mechanism, RFC process, maintainer roles, project handover
+- [Security policy](SECURITY.md) — vulnerability reporting and support scope
+- [Code of conduct](CODE_OF_CONDUCT.md)
 
 ## License
 

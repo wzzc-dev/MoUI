@@ -1,0 +1,101 @@
+name: Bug report
+description: Report something that is not working as expected
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Before opening this issue,
+        please check the [docs](https://github.com/wzzc-dev/MoUI/tree/main/docs)
+        and existing issues to avoid duplicates.
+
+        Security vulnerabilities must **not** be reported here — see
+        [SECURITY.md](https://github.com/wzzc-dev/MoUI/blob/main/SECURITY.md)
+        for private disclosure.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: |
+        Minimal steps to reproduce the behavior. Include the smallest example
+        app or test case you can. Link to a branch or gist if helpful.
+      placeholder: |
+        1. Run `moon test examples/showcase/app --target native`
+        2. Open the showcase, navigate to ...
+        3. Click ...
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened. Include error output or a screenshot if relevant.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Which platform(s) does the bug occur on? Select all that apply.
+      multiple: true
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - Web (wasm-gc)
+  - type: dropdown
+    id: renderer
+    attributes:
+      label: Renderer
+      description: Which renderer(s) are affected? Select all that apply.
+      multiple: true
+      options:
+        - Native Skia (mainline)
+        - Native WGPU (diagnostic)
+        - Web WebGPU adapter
+        - Not sure
+  - type: input
+    id: moon-version
+    attributes:
+      label: MoonBit toolchain version
+      description: Output of `moon version`.
+      placeholder: "moon 0.1.20260608 (60bc8c3 2026-06-08)"
+    validations:
+      required: true
+  - type: textarea
+    id: moon-info
+    attributes:
+      label: moon info (if API-surface related)
+      description: |
+        If the bug relates to a public API, run `moon info` in the relevant
+        package and paste the output. Otherwise leave blank.
+      render: shell
+  - type: input
+    id: example
+    attributes:
+      label: Relevant example
+      description: Which example app reproduces the issue, if any.
+      placeholder: "examples/showcase/app"
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else relevant. OS version, Skia version, browser, etc.
+    validations:
+      required: false
