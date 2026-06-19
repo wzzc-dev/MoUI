@@ -55,9 +55,9 @@ fn[Msg] feedback_panel(
     theme~,
     padding=style.padding,
   )
-  // Toasts and snackbars float above content, so lift them with the theme's
-  // medium elevation shadow before drawing the tone border.
-  .shadow(theme.shadow_scale.md)
+  // Toasts and snackbars float above content; use the large elevation shadow
+  // (the only non-zero tier in the minimal theme) so they lift off content.
+  .shadow(theme.shadow_scale.lg)
   .border(
     @core.BorderStyle::new(
       brush=@core.Brush::solid(feedback_border(tone, style)),
