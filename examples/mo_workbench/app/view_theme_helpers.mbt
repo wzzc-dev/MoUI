@@ -22,11 +22,19 @@ fn ui_color(r : Double, g : Double, b : Double) -> @core.Color {
 
 ///|
 fn workbench_theme(scheme : @moui.ColorScheme) -> @moui.Theme {
-  match scheme {
+  let base = match scheme {
     @moui.ColorScheme::Light =>
-      @views.light_theme().with_accent(ui_color(0.22, 0.38, 0.95))
-    @moui.ColorScheme::Dark =>
-      @views.dark_theme().with_accent(ui_color(0.48, 0.62, 1.0))
+      @views.light_theme()
+    @moui.ColorScheme::Dark => @views.dark_theme()
+  }
+  let accent = match scheme {
+    @moui.ColorScheme::Light => ui_color(0.22, 0.38, 0.95)
+    @moui.ColorScheme::Dark => ui_color(0.48, 0.62, 1.0)
+  }
+  {
+    ..base,
+    palette: { ..base.palette, primary: accent },
+    semantic_colors: { ..base.semantic_colors, info: accent, focus: accent },
   }
 }
 

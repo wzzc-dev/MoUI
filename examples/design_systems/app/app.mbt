@@ -112,11 +112,17 @@ pub fn DesignSystemsModel::tokens(
 pub fn DesignSystemsModel::theme(self : DesignSystemsModel) -> @moui.Theme {
   let base = self.tokens().to_theme()
   if self.custom_enabled {
+    let palette = {
+      ..base.palette,
+      primary: @views.Color::rgba(r=0.82, g=0.18, b=0.42),
+    }
+    let spacing_scale = { ..base.spacing_scale, sm: 14.0 }
+    let radius_scale = { ..base.radius_scale, md: 10.0 }
     @common.custom(
       base~,
-      accent=@views.Color::rgba(r=0.82, g=0.18, b=0.42),
-      spacing=14.0,
-      corner_radius=10.0,
+      palette~,
+      spacing_scale~,
+      radius_scale~,
     )
   } else {
     base

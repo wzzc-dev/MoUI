@@ -232,7 +232,7 @@ pub fn[Msg] icon(
 ) -> @core.View[Msg] {
   let resolved_color = match color {
     Some(value) => value
-    None => default_theme().foreground
+    None => default_theme().palette.foreground
   }
   let verbs = icon_path(name)
   let label = icon_label(name)

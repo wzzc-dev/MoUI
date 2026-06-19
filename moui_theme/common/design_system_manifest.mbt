@@ -816,10 +816,6 @@ fn customization_coverage(
       status, "Custom themes can replace complete @core.Theme token groups.",
     ),
     customization(
-      "Theme compatibility override", "@common.custom(font/foreground/background/accent/spacing/corner_radius)",
-      status, "Custom themes can override legacy compatibility fields.",
-    ),
-    customization(
       "Design token base inheritance", "@common.custom_tokens(base=...)", status,
       "Custom design-system tokens can inherit from preset token bundles.",
     ),
