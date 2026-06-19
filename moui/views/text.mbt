@@ -2,22 +2,33 @@
 pub fn[Msg] text(
   text : String,
   role? : TextRole = TextRole::Body,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 160.0,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
   let size = @core.Size::new(width~, height~)
-  let font = role.font(theme)
-  let color = role.color(theme)
+  let theme_revision = match theme {
+    Some(value) => text_theme_revision(value)
+    None => "context"
+  }
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind="Text"),
     revision=() => {
-      "text:\{text}:\{size.width}:\{size.height}:\{font.size}:\{font.weight}:\{color.r}:\{color.g}:\{color.b}:\{color.a}"
+      "text:\{text}:\{size.width}:\{size.height}:\{text_role_revision(role)}:\{theme_revision}"
     },
     layout=ctx => {
       @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
     },
     paint=ctx => {
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let font = ctx.style.font.unwrap_or(role.font(resolved_theme))
+      let color = if ctx.environment.enabled {
+        ctx.style.foreground.unwrap_or(role.color(resolved_theme))
+      } else {
+        ctx.style.foreground
+        .unwrap_or(role.color(resolved_theme))
+        .multiply_alpha(0.7)
+      }
       @core.ViewPaintPlan::commands([
         @core.DrawCommand::DrawText(
           @core.TextRun::new(text~, frame=ctx.frame, font~, color~),
@@ -32,6 +43,37 @@ pub fn[Msg] text(
       )
     },
   )
+}
+
+///|
+fn text_role_revision(role : TextRole) -> String {
+  match role {
+    Body => "body"
+    Title => "title"
+    Caption => "caption"
+    Control => "control"
+    Mono => "mono"
+    Display => "display"
+    Headline => "headline"
+    Subtitle => "subtitle"
+    Label => "label"
+    Overline => "overline"
+  }
+}
+
+///|
+fn text_theme_revision(theme : @core.Theme) -> String {
+  let foreground = theme.palette.foreground
+  let muted = theme.palette.muted
+  "theme:\{text_scheme_revision(theme.scheme)}:\{foreground.r}:\{foreground.g}:\{foreground.b}:\{foreground.a}:\{muted.r}:\{muted.g}:\{muted.b}:\{muted.a}"
+}
+
+///|
+fn text_scheme_revision(scheme : @core.ColorScheme) -> String {
+  match scheme {
+    Light => "light"
+    Dark => "dark"
+  }
 }
 
 ///|

@@ -1333,6 +1333,8 @@ pub fn[Msg] View::border(Self[Msg], BorderStyle) -> Self[Msg]
 pub fn[Msg] View::build_child(Self[Msg]) -> ((ComponentContext) -> Self[Msg])?
 pub fn[Msg] View::caption(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::child_constraints(Self[Msg], Constraints) -> Constraints
+pub fn[Msg] View::child_environment(Self[Msg], Environment) -> Environment
+pub fn[Msg] View::child_style(Self[Msg], ViewStyle) -> ViewStyle
 pub fn[Msg] View::children(Self[Msg]) -> Array[Self[Msg]]
 pub fn[Msg] View::clip(Self[Msg]) -> Self[Msg]
 pub fn[Msg] View::corner_radius(Self[Msg], Double) -> Self[Msg]
@@ -1357,7 +1359,7 @@ pub fn[Msg] View::layout_priority(Self[Msg], Double) -> Self[Msg]
 pub fn[Msg] View::main_axis_alignment(Self[Msg], MainAxisAlignment) -> Self[Msg]
 pub fn[Msg, NextMsg] View::map(Self[Msg], (Msg) -> NextMsg) -> Self[NextMsg]
 pub fn[Msg] View::mono(Self[Msg]) -> Self[Msg]
-pub fn[Msg] View::node(identity~ : () -> ViewIdentity, revision? : () -> String, children? : () -> Array[Self[Msg]], build_child? : ((ComponentContext) -> Self[Msg])?, child_constraints? : (Constraints) -> Constraints, layout~ : (ViewLayoutContext) -> ViewLayoutResult, paint? : (ViewPaintContext) -> ViewPaintPlan, event? : (ViewEventContext) -> ViewEventResult[Msg], text_input_state? : (ViewPaintContext) -> TextInputState?, text_command? : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg], semantics? : () -> ViewSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
+pub fn[Msg] View::node(identity~ : () -> ViewIdentity, revision? : () -> String, children? : () -> Array[Self[Msg]], build_child? : ((ComponentContext) -> Self[Msg])?, child_constraints? : (Constraints) -> Constraints, child_environment? : (Environment) -> Environment, child_style? : (ViewStyle) -> ViewStyle, layout~ : (ViewLayoutContext) -> ViewLayoutResult, paint? : (ViewPaintContext) -> ViewPaintPlan, event? : (ViewEventContext) -> ViewEventResult[Msg], text_input_state? : (ViewPaintContext) -> TextInputState?, text_command? : (ViewEventContext, CommandIntent, String?) -> ViewTextCommandResult[Msg], semantics? : () -> ViewSemanticsInfo, focusable? : () -> Bool) -> Self[Msg]
 pub fn[Msg] View::offset(Self[Msg], dx? : Double, dy? : Double) -> Self[Msg]
 pub fn[Msg] View::on_double_tap(Self[Msg], Msg) -> Self[Msg]
 pub fn[Msg] View::on_drag(Self[Msg], (DragGestureEvent) -> Msg) -> Self[Msg]
@@ -1413,6 +1415,7 @@ pub(all) struct ViewEventContext {
   text_control : TextControlStateContext
   text_system : TextSystem
   environment : Environment
+  style : ViewStyle
   now_ms : Double
 }
 
@@ -1440,6 +1443,7 @@ pub(all) struct ViewLayoutContext {
   child_sizes : Array[Size]
   text_system : TextSystem
   environment : Environment
+  style : ViewStyle
 }
 
 pub(all) struct ViewLayoutResult {
@@ -1455,6 +1459,7 @@ pub(all) struct ViewPaintContext {
   state : ViewStateContext
   text_control : TextControlStateContext
   environment : Environment
+  style : ViewStyle
   text_system : TextSystem
   now_ms : Double
 }

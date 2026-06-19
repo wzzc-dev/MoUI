@@ -138,6 +138,7 @@ fn ElementNode::view_accepts_text_input(
     state: { ..data.state, focused: true },
     text_control: self.control.text_context(),
     environment: Environment::neutral(),
+    style: ViewStyle::empty(),
     text_system: TextSystem::fallback(),
     now_ms: 0.0,
   })

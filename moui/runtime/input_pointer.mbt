@@ -4,6 +4,7 @@ fn ElementNode::dispatch_pointer(
   event : PointerEvent,
   render : RenderNode,
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
   text_system? : TextSystem = TextSystem::fallback(),
   capture_lookup? : Bool = true,
   now_ms? : Double = 0.0,
@@ -12,6 +13,7 @@ fn ElementNode::dispatch_pointer(
     event,
     render,
     environment~,
+    style~,
     text_system~,
     capture_lookup~,
     now_ms~,
@@ -25,6 +27,7 @@ fn ElementNode::dispatch_pointer(
       render,
       text_system,
       environment~,
+      style~,
       now_ms~,
     )
     {
@@ -46,6 +49,7 @@ fn ElementNode::dispatch_view_event(
   render : RenderNode,
   text_system : TextSystem,
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
   now_ms? : Double = 0.0,
 ) -> ElementEventResult {
   let result = (data.event)({
@@ -57,6 +61,7 @@ fn ElementNode::dispatch_view_event(
     text_control: self.control.text_context(),
     text_system,
     environment,
+    style,
     now_ms,
   })
   match result.state {
@@ -110,6 +115,7 @@ fn ElementNode::dispatch_pointer_to_children(
   event : PointerEvent,
   render : RenderNode,
   environment~ : Environment,
+  style~ : ViewStyle,
   text_system~ : TextSystem,
   capture_lookup~ : Bool,
   now_ms~ : Double,
@@ -118,6 +124,8 @@ fn ElementNode::dispatch_pointer_to_children(
   let mut activated = false
   let mut focused : ElementId? = None
   let mut layout_changed = false
+  let child_environment = (self.erased_view_node.child_environment)(environment)
+  let child_style = (self.erased_view_node.child_style)(style)
   let mut index = self.children.length() - 1
   while index >= 0 {
     if index < render.children.length() {
@@ -129,7 +137,8 @@ fn ElementNode::dispatch_pointer_to_children(
         let result = child.dispatch_pointer(
           event,
           child_render,
-          environment~,
+          environment=child_environment,
+          style=child_style,
           text_system~,
           capture_lookup~,
           now_ms~,
@@ -215,6 +224,7 @@ fn ElementNode::dispatch_pointer_to_target(
   event : PointerEvent,
   render : RenderNode,
   environment? : Environment = Environment::neutral(),
+  style? : ViewStyle = ViewStyle::empty(),
   text_system~ : TextSystem,
   now_ms? : Double = 0.0,
 ) -> ElementEventResult? {
@@ -224,12 +234,17 @@ fn ElementNode::dispatch_pointer_to_target(
         event,
         render,
         environment~,
+        style~,
         text_system~,
         capture_lookup=false,
         now_ms~,
       ),
     )
   } else {
+    let child_environment = (self.erased_view_node.child_environment)(
+      environment,
+    )
+    let child_style = (self.erased_view_node.child_style)(style)
     let mut index = 0
     while index < self.children.length() {
       if index < render.children.length() {
@@ -238,7 +253,8 @@ fn ElementNode::dispatch_pointer_to_target(
             target,
             event,
             render.children[index],
-            environment~,
+            environment=child_environment,
+            style=child_style,
             text_system~,
             now_ms~,
           ) {
