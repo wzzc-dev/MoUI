@@ -52,15 +52,6 @@ View[Msg] -> ElementTree -> LayoutTree -> RenderTree -> DrawCommand -> renderer
 
 ## Quick Start
 
-Refresh registry packages, verify repo-local dependencies, then run the bounded
-development check:
-
-```sh
-moon update
-sh scripts/check-local-deps.sh
-sh scripts/dev-check.sh
-```
-
 The default daily baseline covers the core framework, maintenance baseline
 ratchets, Web wasm-gc, native Skia mainline contracts, Showcase, and Markdown
 Editor. Design Systems is addon diagnostic coverage; run

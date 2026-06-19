@@ -10,7 +10,6 @@ on:
       - "moui/moon.mod"
       - ".moonbit-toolchain"
       - ".github/actions/setup-moonbit/action.yml"
-      - "scripts/check-local-deps.sh"
       - ".github/workflows/moui-skia-fallback.yml"
   pull_request:
     paths:
@@ -19,7 +18,6 @@ on:
       - "moui/moon.mod"
       - ".moonbit-toolchain"
       - ".github/actions/setup-moonbit/action.yml"
-      - "scripts/check-local-deps.sh"
       - ".github/workflows/moui-skia-fallback.yml"
 
 jobs:

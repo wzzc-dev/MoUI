@@ -6,22 +6,6 @@ are generated from this `docs/` directory by `scripts/sync-website-docs.mjs`.
 
 ## Local Setup
 
-From the repository root, refresh registry packages and check repo-local
-dependency contracts:
-
-```sh
-moon update
-sh scripts/check-local-deps.sh
-```
-
-`moon update` refreshes registry packages. `scripts/check-local-deps.sh`
-verifies the expected `wzzc-dev/window` and `wzzc-dev/moui_skia` wiring,
-confirms `moon.work` does not reintroduce a local window checkout, checks the
-editable `moui_skia` acceptance surface, and validates the Skia capability
-contract. Current dependency versions live in `moui/moon.mod` and
-`moui_skia/moon.mod`; do not duplicate those versions in prose without checking
-the files first.
-
 The MoonBit package ecosystem moves quickly. If a dependency-related build
 fails, first run `moon update`, inspect the resolved package version, and check
 whether the failure is a registry/cache/dependency issue before changing MoUI
