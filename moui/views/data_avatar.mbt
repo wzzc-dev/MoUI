@@ -42,7 +42,7 @@ pub fn[Msg] avatar(
           theme~,
           width=size - 10.0,
           height=size - 10.0,
-        ).foreground(theme.palette.primary_foreground),
+        ).foreground(theme.palette.on_primary),
         width=size,
         height=size,
         background=theme.palette.primary,

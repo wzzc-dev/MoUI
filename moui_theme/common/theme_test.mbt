@@ -22,16 +22,16 @@ test "design presets support dark variants" {
 test "custom theme can override selected token groups" {
   let accent = @core.Color::rgba(r=0.86, g=0.18, b=0.42)
   let base = @common.DesignPreset::Carbon.theme()
-  let palette = { ..base.palette, primary: accent }
+  let palette = {
+    ..base.palette,
+    primary: accent,
+    danger: @core.Color::rgba(r=0.92, g=0.18, b=0.28),
+  }
   let spacing_scale = { ..base.spacing_scale, sm: 14.0 }
   let radius_scale = { ..base.radius_scale, md: 10.0 }
   let customized = @common.custom(
     base~,
     palette~,
-    semantic_colors={
-      ..base.semantic_colors,
-      danger: @core.Color::rgba(r=0.92, g=0.18, b=0.28),
-    },
     radius_scale~,
     spacing_scale~,
   )
@@ -40,8 +40,7 @@ test "custom theme can override selected token groups" {
   inspect(customized.spacing_scale.sm, content="14")
   assert_true(customized.palette.background == base.palette.background)
   assert_true(
-    customized.semantic_colors.danger ==
-    @core.Color::rgba(r=0.92, g=0.18, b=0.28),
+    customized.palette.danger == @core.Color::rgba(r=0.92, g=0.18, b=0.28),
   )
 }
 
@@ -6043,11 +6042,11 @@ test "design system tokens generate existing theme presets" {
     material_tokens.palette.danger.multiply_alpha(0.72),
   )
   assert_true(
-    material_tokens.to_theme().semantic_colors.success ==
+    material_tokens.to_theme().palette.success ==
     material_tokens.palette.success,
   )
   assert_true(
-    material_tokens.to_theme().semantic_colors.danger ==
+    material_tokens.to_theme().palette.danger ==
     material_tokens.palette.danger,
   )
 }
@@ -6329,7 +6328,7 @@ test "custom design system tokens inherit and recompute dependent groups" {
   )
   assert_true(customized.components.surface.base_padding == 17.0)
   assert_true(customized.to_theme().palette.primary == palette.primary)
-  assert_true(customized.to_theme().semantic_colors.success == palette.success)
+  assert_true(customized.to_theme().palette.success == palette.success)
 }
 
 ///|

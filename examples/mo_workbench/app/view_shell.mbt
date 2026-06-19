@@ -121,7 +121,7 @@ fn WorkbenchModel::view_with_environment(
 ) -> @moui.View[WorkbenchMsg] {
   self.view_for_size(
     env.viewport_size(),
-    scheme=self.appearance_color_scheme(env.environment().color_scheme),
+    scheme=self.appearance_color_scheme(env.environment().color_scheme()),
   )
 }
 
