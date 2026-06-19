@@ -8,6 +8,7 @@ pub(all) struct ViewIdentity {
 pub(all) struct ViewLayoutContext {
   constraints : Constraints
   child_sizes : Array[Size]
+  child_flex_weights : Array[Double]
   text_system : TextSystem
   environment : Environment
   style : ViewStyle
@@ -190,6 +191,7 @@ priv struct ViewNode[Msg] {
   ]
   semantics_fn : () -> ViewSemanticsInfo
   focusable_fn : () -> Bool
+  flex_weight_fn : () -> Double
 }
 
 ///|
@@ -362,6 +364,7 @@ fn[Msg] ViewNode::new(
   ] = (_ctx, _intent, _paste_text) => ViewTextCommandResult::ignored(),
   semantics? : () -> ViewSemanticsInfo = () => ViewSemanticsInfo::new(),
   focusable? : () -> Bool = () => false,
+  flex_weight? : () -> Double = () => 0.0,
 ) -> ViewNode[Msg] {
   {
     identity_fn: identity,
@@ -378,6 +381,7 @@ fn[Msg] ViewNode::new(
     text_command_fn: text_command,
     semantics_fn: semantics,
     focusable_fn: focusable,
+    flex_weight_fn: flex_weight,
   }
 }
 
@@ -490,6 +494,11 @@ fn[Msg] ViewNode::focusable(self : ViewNode[Msg]) -> Bool {
 }
 
 ///|
+fn[Msg] ViewNode::flex_weight(self : ViewNode[Msg]) -> Double {
+  (self.flex_weight_fn)()
+}
+
+///|
 fn[Msg, NextMsg] ViewNode::map(
   self : ViewNode[Msg],
   map : (Msg) -> NextMsg,
@@ -531,6 +540,7 @@ fn[Msg, NextMsg] ViewNode::map(
     },
     semantics=() => self.semantics(),
     focusable=() => self.focusable(),
+    flex_weight=() => self.flex_weight(),
   )
 }
 
@@ -561,6 +571,7 @@ pub fn[Msg] View::node(
   ] = (_ctx, _intent, _paste_text) => ViewTextCommandResult::ignored(),
   semantics? : () -> ViewSemanticsInfo = () => ViewSemanticsInfo::new(),
   focusable? : () -> Bool = () => false,
+  flex_weight? : () -> Double = () => 0.0,
 ) -> View[Msg] {
   {
     node: ViewNode::new(
@@ -578,6 +589,7 @@ pub fn[Msg] View::node(
       text_command~,
       semantics~,
       focusable~,
+      flex_weight~,
     ),
   }
 }
@@ -685,4 +697,9 @@ pub fn[Msg] View::semantics(self : View[Msg]) -> ViewSemanticsInfo {
 ///|
 pub fn[Msg] View::accepts_focus(self : View[Msg]) -> Bool {
   self.node.focusable()
+}
+
+///|
+pub fn[Msg] View::flex_weight(self : View[Msg]) -> Double {
+  self.node.flex_weight()
 }

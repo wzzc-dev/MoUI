@@ -16,6 +16,7 @@ priv struct ErasedViewNode {
   ]
   semantics : () -> @core.ViewSemanticsInfo
   focusable : () -> Bool
+  flex_weight : () -> Double
   state : @core.ViewStateContext
 }
 

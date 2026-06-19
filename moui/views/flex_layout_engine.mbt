@@ -25,6 +25,7 @@ fn[Msg] flex_layout(
           main_axis_alignment,
           cross_axis_alignment,
           ctx.child_sizes,
+          ctx.child_flex_weights,
           size,
         ),
       )
@@ -71,6 +72,7 @@ fn flex_child_frames(
   main_axis_alignment : @core.MainAxisAlignment,
   cross_axis_alignment : @core.CrossAxisAlignment,
   child_sizes : Array[@core.Size],
+  child_flex_weights : Array[Double],
   size : @core.Size,
 ) -> Array[@core.Rect] {
   let count = child_sizes.length()
@@ -88,14 +90,27 @@ fn flex_child_frames(
       @core.Axis::Horizontal => size.width
       @core.Axis::Vertical => size.height
     }
-    let remaining = view_max_double(
+    // Slack is the main-axis space left after every child's base size. Weighted
+    // children (flex_weight > 0) grow to consume it proportionally, so a layout
+    // like `[spacer(weight=1), content, spacer(weight=1)]` centers `content`.
+    let slack = view_max_double(
       0.0,
       available_main - child_main_total - total_spacing,
     )
+    let total_weight = flex_total_weight(child_flex_weights)
+    let main_sizes = flex_resolved_main_sizes(
+      axis,
+      child_sizes,
+      child_flex_weights,
+      total_weight,
+      slack,
+    )
+    let grown_total = flex_sum(main_sizes)
+    let remaining = view_max_double(0.0, available_main - grown_total - total_spacing)
     let offsets = flex_offsets(main_axis_alignment, remaining, spacing, count)
     let mut cursor = offsets.leading
-    for child_size in child_sizes {
-      let main_size = flex_child_main_size(axis, child_size)
+    for index, child_size in child_sizes {
+      let main_size = main_sizes[index]
       let cross_size = match axis {
         @core.Axis::Horizontal => child_size.height
         @core.Axis::Vertical => child_size.width
@@ -128,6 +143,56 @@ fn flex_child_frames(
     }
     frames
   }
+}
+
+///|
+/// Sum of positive flex weights; zero when no child wants to grow.
+fn flex_total_weight(weights : Array[Double]) -> Double {
+  let mut total = 0.0
+  for weight in weights {
+    if weight > 0.0 {
+      total = total + weight
+    }
+  }
+  total
+}
+
+///|
+/// Per-child main-axis sizes after applying flex growth. Each child starts at
+/// its measured base size; weighted children claim `slack * weight /
+/// total_weight` extra (only when `total_weight > 0`).
+fn flex_resolved_main_sizes(
+  axis : @core.Axis,
+  child_sizes : Array[@core.Size],
+  weights : Array[Double],
+  total_weight : Double,
+  slack : Double,
+) -> Array[Double] {
+  let sizes : Array[Double] = []
+  for index, child_size in child_sizes {
+    let base = flex_child_main_size(axis, child_size)
+    let weight = if index < weights.length() {
+      weights[index]
+    } else {
+      0.0
+    }
+    let grown = if total_weight > 0.0 && weight > 0.0 {
+      base + slack * weight / total_weight
+    } else {
+      base
+    }
+    sizes.push(view_max_double(0.0, grown))
+  }
+  sizes
+}
+
+///|
+fn flex_sum(values : Array[Double]) -> Double {
+  let mut total = 0.0
+  for value in values {
+    total = total + value
+  }
+  total
 }
 
 ///|

@@ -178,5 +178,6 @@ pub fn[Msg] spacer(
       }
       @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
     },
+    flex_weight=() => if weight > 0.0 { weight } else { 0.0 },
   )
 }

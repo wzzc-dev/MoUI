@@ -101,6 +101,7 @@ fn[Msg] modifier_view(
     },
     semantics=() => modifier_semantics(modifier),
     focusable=() => modifier_focusable(modifier),
+    flex_weight=() => modifier_flex_weight(modifier),
   )
 }
 
@@ -664,6 +665,18 @@ fn[Msg] modifier_focusable(modifier : ViewModifier[Msg]) -> Bool {
     | OnDoubleTapMessageModifier(_)
     | KeyboardShortcutModifier(_) => true
     _ => false
+  }
+}
+
+///|
+/// `FlexibleModifier` (applied via `View::flexible` / `View::expanded`)
+/// declares a flex growth weight so the parent `row`/`column` distributes
+/// leftover main-axis space to this node. All other modifiers pass the
+/// child's own weight through unchanged.
+fn[Msg] modifier_flex_weight(modifier : ViewModifier[Msg]) -> Double {
+  match modifier {
+    FlexibleModifier(weight) => weight
+    _ => 0.0
   }
 }
 

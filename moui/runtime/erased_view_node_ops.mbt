@@ -66,6 +66,7 @@ fn empty_erased_view_node() -> ErasedViewNode {
     },
     semantics: () => @core.ViewSemanticsInfo::new(),
     focusable: () => false,
+    flex_weight: () => 0.0,
     state: erased_view_node_state_context_default(),
   }
 }
