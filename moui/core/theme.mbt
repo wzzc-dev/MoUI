@@ -156,34 +156,33 @@ pub(all) struct Environment {
 pub fn ColorPalette::light() -> ColorPalette {
   // Warm-neutral light surfaces (zinc-tinted) with an indigo-violet accent.
   // Surfaces carry a faint cool-warm bias so cards read as elevated without
-  // heavy shadows; the accent is a saturated indigo that stays legible on both
-  // light and dark.
+ // heavy shadows; the accent is a saturated indigo that stays legible on both
+ // light and dark.
   {
-    foreground: Color::rgba(r=0.094, g=0.094, b=0.106),
-    background: Color::rgba(r=0.992, g=0.992, b=0.996),
+    // shadcn/minimal: zinc neutrals, near-black primary. Accent is optional.
+    foreground: Color::rgba(r=0.145, g=0.145, b=0.149),
+    background: Color::rgba(r=1.0, g=1.0, b=1.0),
     surface: Color::rgba(r=0.984, g=0.984, b=0.988),
-    surface_variant: Color::rgba(r=0.941, g=0.941, b=0.953),
-    primary: Color::rgba(r=0.345, g=0.337, b=0.839),
-    primary_foreground: Color::rgba(r=0.992, g=0.988, b=1.0),
-    outline: Color::rgba(r=0.831, g=0.831, b=0.851),
-    muted: Color::rgba(r=0.451, g=0.451, b=0.498),
+    surface_variant: Color::rgba(r=0.957, g=0.957, b=0.961),
+    primary: Color::rgba(r=0.145, g=0.145, b=0.149),
+    primary_foreground: Color::rgba(r=0.984, g=0.984, b=0.988),
+    outline: Color::rgba(r=0.898, g=0.898, b=0.906),
+    muted: Color::rgba(r=0.553, g=0.553, b=0.588),
   }
 }
 
 ///|
 pub fn ColorPalette::dark() -> ColorPalette {
-  // Deep neutral-charcoal dark surfaces with the same indigo accent lifted in
-  // lightness for dark-mode contrast. Surfaces step up by ~5% lightness per
-  // elevation tier so raised/overlay layers separate cleanly without borders.
+  // shadcn/minimal dark: zinc neutrals, near-white primary. Mirrors light.
   {
-    foreground: Color::rgba(r=0.953, g=0.953, b=0.965),
-    background: Color::rgba(r=0.094, g=0.094, b=0.106),
-    surface: Color::rgba(r=0.137, g=0.137, b=0.153),
-    surface_variant: Color::rgba(r=0.196, g=0.196, b=0.216),
-    primary: Color::rgba(r=0.580, g=0.565, b=0.949),
-    primary_foreground: Color::rgba(r=0.106, g=0.094, b=0.165),
-    outline: Color::rgba(r=0.310, g=0.310, b=0.337),
-    muted: Color::rgba(r=0.620, g=0.620, b=0.663),
+    foreground: Color::rgba(r=0.953, g=0.953, b=0.953),
+    background: Color::rgba(r=0.090, g=0.090, b=0.090),
+    surface: Color::rgba(r=0.145, g=0.145, b=0.145),
+    surface_variant: Color::rgba(r=0.212, g=0.212, b=0.212),
+    primary: Color::rgba(r=0.953, g=0.953, b=0.953),
+    primary_foreground: Color::rgba(r=0.145, g=0.145, b=0.145),
+    outline: Color::rgba(r=0.290, g=0.290, b=0.290),
+    muted: Color::rgba(r=0.643, g=0.643, b=0.643),
   }
 }
 
@@ -221,10 +220,9 @@ pub fn SpacingScale::default() -> SpacingScale {
 
 ///|
 pub fn RadiusScale::default() -> RadiusScale {
-  // Slightly larger radii than the legacy 4/8/12 set: modern UIs trend toward
-  // softer corners. `sm` stays tight for chips/inputs, `md` is the default
-  // control radius, `lg` is for cards/panels.
-  { sm: 6.0, md: 10.0, lg: 14.0, pill: 999.0 }
+  // shadcn/minimal: sharp, small radii. Controls read as crisp rectangles,
+  // not soft pills. `pill` retained for chips/badges that need full rounding.
+  { sm: 4.0, md: 6.0, lg: 8.0, pill: 999.0 }
 }
 
 ///|
@@ -249,29 +247,29 @@ pub fn TypographyScale::default() -> TypographyScale {
 pub fn ShadowScale::default(
   scheme? : ColorScheme = ColorScheme::Light,
 ) -> ShadowScale {
-  // Softer, lower-spread shadows than the legacy set. Light mode uses a faint
-  // cool-neutral shadow; dark mode lifts alpha so elevation reads against the
-  // dark surface. `sm` is a hairline lift for inputs/chips, `md` for cards,
-  // `lg` for popovers/dialogs.
+  // shadcn/minimal: near-zero shadows by default. Cards and buttons rely on
+  // borders, not elevation. Only `lg` (popovers/dialogs/menus) carries a
+  // faint shadow so floating layers separate from content. `sm`/`md` are
+  // effectively zero so controls stay flat.
   let alpha = match scheme {
-    Light => 0.10
-    Dark => 0.46
+    Light => 0.05
+    Dark => 0.50
   }
   {
     sm: ShadowStyle::new(
       color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha * 0.65),
-      offset=Point::new(x=0.0, y=1.0),
-      blur_radius=4.0,
+      offset=Point::new(x=0.0, y=0.0),
+      blur_radius=0.0,
     ),
     md: ShadowStyle::new(
       color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha),
-      offset=Point::new(x=0.0, y=3.0),
-      blur_radius=12.0,
+      offset=Point::new(x=0.0, y=0.0),
+      blur_radius=0.0,
     ),
     lg: ShadowStyle::new(
       color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha * 1.2),
-      offset=Point::new(x=0.0, y=8.0),
-      blur_radius=24.0,
+      offset=Point::new(x=0.0, y=4.0),
+      blur_radius=12.0,
       spread=0.0,
     ),
   }
@@ -292,28 +290,12 @@ pub fn SurfaceScale::default(
   palette : ColorPalette,
   scheme : ColorScheme,
 ) -> SurfaceScale {
-  // Subtle vertical gradient on the raised tier: light mode lifts the top
-  // toward white for a soft sheen; dark mode lifts toward the variant surface
-  // so the elevation edge is legible without a hard border.
-  let raised = match scheme {
-    Light =>
-      Brush::linear_gradient(
-        start=Point::new(x=0.0, y=0.0),
-        end=Point::new(x=0.0, y=64.0),
-        start_color=Color::white(),
-        end_color=palette.surface,
-      )
-    Dark =>
-      Brush::linear_gradient(
-        start=Point::new(x=0.0, y=0.0),
-        end=Point::new(x=0.0, y=64.0),
-        start_color=palette.surface_variant,
-        end_color=palette.surface,
-      )
-  }
+  ignore(scheme)
+  // shadcn/minimal: flat solid surfaces, no gradients. Layer separation comes
+  // from border tone, not surface sheen. Raised = surface, overlay = variant.
   {
     base: Brush::solid(palette.surface),
-    raised,
+    raised: Brush::solid(palette.surface),
     overlay: Brush::solid(palette.surface_variant),
   }
 }
