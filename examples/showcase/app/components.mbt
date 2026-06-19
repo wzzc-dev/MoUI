@@ -28,29 +28,29 @@ fn section_panel(
         state=scroll_state,
       )
   }
- container(
-   column(
-     [
-       column(
-         [
-           text(title, width=metrics.body_width, height=30.0)
-           .font(theme.typography.control)
-           .foreground(theme.palette.foreground),
-           text(summary, width=metrics.body_width, height=28.0)
-           .font(theme.typography.caption)
-           .foreground(theme.palette.muted),
-         ],
-         spacing=theme.spacing_scale.xs,
-         align=@views.CrossAlign::Start,
-       ),
+  container(
+    column(
+      [
+        column(
+          [
+            text(title, width=metrics.body_width, height=30.0)
+            .font(theme.typography.control)
+            .foreground(theme.palette.foreground),
+            text(summary, width=metrics.body_width, height=28.0)
+            .font(theme.typography.caption)
+            .foreground(theme.palette.muted),
+          ],
+          spacing=theme.spacing_scale.xs,
+          align=@views.CrossAlign::Start,
+        ),
         // A hairline separates the section header from its scrollable body so
         // the hierarchy reads even when the body is long and dense.
         divider(theme~),
-       scroll_body,
-     ],
-     spacing=theme.spacing_scale.md,
-     align=@views.CrossAlign::Start,
-   ),
+        scroll_body,
+      ],
+      spacing=theme.spacing_scale.md,
+      align=@views.CrossAlign::Start,
+    ),
     width=metrics.panel_width,
     height=metrics.panel_height,
     variant=@views.ContainerVariant::Base,
@@ -825,11 +825,11 @@ fn ShowcaseModel::sheet(
       spacing=theme.spacing_scale.md,
       align=@views.CrossAlign::Start,
     ),
-   presentation_mode=@core.SheetPresentationMode::BottomSheet,
-   background=theme.palette.surface,
-   corner_radius=theme.radius_scale.lg,
+    presentation_mode=@core.SheetPresentationMode::BottomSheet,
+    background=theme.palette.surface,
+    corner_radius=theme.radius_scale.lg,
     shadow=Some(theme.shadow_scale.lg),
- )
+  )
 }
 
 ///|

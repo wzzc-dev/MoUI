@@ -100,6 +100,10 @@ fn[Msg] modifier_view(
     child_constraints=constraints => {
       modifier_child_constraints(modifier, constraints)
     },
+    child_environment=environment => {
+      modifier_child_environment(modifier, environment)
+    },
+    child_style=style => modifier_child_style(modifier, style),
     layout=ctx => modifier_layout(modifier, ctx),
     paint=ctx => modifier_paint(modifier, ctx),
     event=ctx => modifier_event(modifier, ctx),
@@ -253,6 +257,33 @@ fn[Msg] modifier_child_constraints(
     FrameModifier(data) =>
       frame_modifier_constraints_for_measure(data, constraints)
     _ => constraints.loosen()
+  }
+}
+
+///|
+fn[Msg] modifier_child_environment(
+  modifier : ViewModifier[Msg],
+  environment : Environment,
+) -> Environment {
+  match modifier {
+    ThemeModifier(theme) => environment.with_theme(theme)
+    EnvironmentModifier(value) => value
+    DisabledModifier(disabled) => environment.with_enabled(!disabled)
+    _ => environment
+  }
+}
+
+///|
+fn[Msg] modifier_child_style(
+  modifier : ViewModifier[Msg],
+  style : ViewStyle,
+) -> ViewStyle {
+  match modifier {
+    ForegroundModifier(color) => { ..style, foreground: Some(color) }
+    FontModifier(font) => { ..style, font: Some(font) }
+    CornerRadiusModifier(radius) => { ..style, corner_radius: Some(radius) }
+    BackgroundModifier(brush) => { ..style, background: Some(brush) }
+    _ => style
   }
 }
 
