@@ -1249,26 +1249,14 @@ pub(all) struct Theme {
   shadow_scale : ShadowScale
   motion : MotionScale
   surfaces : SurfaceScale
-  font : FontSpec
-  foreground : Color
-  background : Color
-  accent : Color
-  spacing : Double
-  corner_radius : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Theme::neutral() -> Self
 pub fn Theme::surface_brush(Self, SurfaceLevel) -> Brush
-pub fn Theme::with_accent(Self, Color) -> Self
-pub fn Theme::with_background(Self, Color) -> Self
-pub fn Theme::with_corner_radius(Self, Double) -> Self
-pub fn Theme::with_font(Self, FontSpec) -> Self
-pub fn Theme::with_foreground(Self, Color) -> Self
 pub fn Theme::with_motion(Self, MotionScale) -> Self
 pub fn Theme::with_palette(Self, ColorPalette) -> Self
 pub fn Theme::with_radius_scale(Self, RadiusScale) -> Self
 pub fn Theme::with_semantic_colors(Self, SemanticColorScale) -> Self
 pub fn Theme::with_shadow_scale(Self, ShadowScale) -> Self
-pub fn Theme::with_spacing(Self, Double) -> Self
 pub fn Theme::with_spacing_scale(Self, SpacingScale) -> Self
 pub fn Theme::with_surfaces(Self, SurfaceScale) -> Self
 pub fn Theme::with_typography(Self, TypographyScale) -> Self

@@ -567,6 +567,16 @@ The visual system keeps platform-neutral tokens and app-facing styles:
 - `core` owns the neutral `Theme` schema and `Theme::neutral()` fallback;
   `@views.light_theme()` and `@views.dark_theme()` expose app-facing palettes,
   spacing, radius, typography, shadow, motion, and surface scales.
+- `Theme` is a token record, not a compatibility bag. App and control code
+  reads canonical groups such as `theme.palette.foreground`,
+  `theme.palette.primary`, `theme.typography.body`,
+  `theme.spacing_scale.sm`, and `theme.radius_scale.md`; single-value aliases
+  such as theme-level `foreground`, `accent`, `spacing`, or `corner_radius`
+  should not be reintroduced.
+- `@views.theme(...)` and `@moui_theme/common.custom(...)` compose whole token
+  groups over an optional base theme. The default style stays MoUI Minimal;
+  Material, Carbon, Primer, Fluent, and other branded systems stay as
+  `moui_theme` adapters that resolve into the same neutral `@core.Theme`.
 - `ButtonStyle::filled/tonal/outline/ghost` and
   `TextFieldStyle::filled/outline` project state styles into core draw
   commands.

@@ -8,7 +8,7 @@ import {
 }
 
 // Values
-pub fn custom(scheme? : @core.ColorScheme, base? : @core.Theme, palette? : @core.ColorPalette, semantic_colors? : @core.SemanticColorScale, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale, font? : @core.FontSpec, foreground? : @core.Color, background? : @core.Color, accent? : @core.Color, spacing? : Double, corner_radius? : Double) -> @core.Theme
+pub fn custom(scheme? : @core.ColorScheme, base? : @core.Theme, palette? : @core.ColorPalette, semantic_colors? : @core.SemanticColorScale, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
 
 pub fn custom_tokens(DesignSystemTokens, palette? : DesignSemanticPalette, typography? : DesignTypographyTokens, spacing? : DesignSpacingTokens, radius? : DesignRadiusTokens, elevation? : DesignElevationTokens, motion? : DesignMotionTokens, surfaces? : DesignSurfaceTokens, state_layer? : DesignStateLayerTokens, components? : DesignComponentTokens) -> DesignSystemTokens
 
@@ -194,7 +194,6 @@ pub(all) struct DesignCustomizationCoverage {
 pub(all) enum DesignCustomizationKind {
   ThemeInheritance
   ThemeTokenOverride
-  CompatibilityOverride
   DesignTokenInheritance
   DesignTokenGroupOverride
   ComponentTokenOverride

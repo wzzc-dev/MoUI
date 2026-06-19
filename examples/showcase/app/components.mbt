@@ -668,7 +668,7 @@ fn ShowcaseModel::vector_path_card(
         start=@moui.Point::new(x=left, y=top),
         end=@moui.Point::new(x=left + 72.0, y=bottom),
         start_color=theme.palette.primary.multiply_alpha(0.88),
-        end_color=theme.accent.multiply_alpha(0.82),
+        end_color=theme.palette.primary.multiply_alpha(0.82),
       )
       let stroke = @core.Brush::solid(
         theme.palette.foreground.multiply_alpha(0.72),
