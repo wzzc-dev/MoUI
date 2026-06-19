@@ -21,6 +21,12 @@ pub(all) struct ControlStateStyle {
   border : @core.BorderStyle?
   radius : Double
   shadow : @core.ShadowStyle?
+  // When true, paint only the bottom edge of the border (Fluent 2 underline
+  // inputs). Neutral controls leave this false and draw the full border.
+  bottom_border_only : Bool
+  // Optional inner focus-reveal stroke painted inside the control frame
+  // (Fluent 2 focus inner border). Neutral controls leave this None.
+  inner_focus_border : @core.Color?
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -115,6 +121,47 @@ pub(all) struct FormValidationStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// Aggregated per-control styles for design-system integration. This is the
+/// `@views`-side outlet for component tokens: an app that wants Fluent 2 (or
+/// any other design system) to drive control appearance builds this overlay
+/// and passes individual styles via the `style?` argument on each control
+/// constructor. The overlay itself stays in `@views` so the framework core
+/// remains a neutral token runtime with no design-system dependency.
+///
+/// Fields are optional so a caller can override only the controls it cares
+/// about; `None` means "fall back to the theme-scale resolution".
+pub(all) struct ComponentStyleOverlay {
+  button : ButtonStyle?
+  text_field : TextFieldStyle?
+  surface : SurfaceStyle?
+  choice_control : ChoiceControlStyle?
+  progress : ProgressStyle?
+  slider : SliderStyle?
+  picker : PickerStyle?
+  feedback : FeedbackStyle?
+  badge : BadgeStyle?
+  form_validation : FormValidationStyle?
+} derive(Eq, Debug, ToJson)
+
+///|
+/// An empty overlay; every field is `None` so controls fall back to theme
+/// resolution. Callers override individual fields with struct update syntax.
+pub fn ComponentStyleOverlay::empty() -> ComponentStyleOverlay {
+  {
+    button: None,
+    text_field: None,
+    surface: None,
+    choice_control: None,
+    progress: None,
+    slider: None,
+    picker: None,
+    feedback: None,
+    badge: None,
+    form_validation: None,
+  }
+}
+
+///|
 pub fn TextStyle::body(theme? : @core.Theme = default_theme()) -> TextStyle {
   { font: theme.typography.body, color: theme.palette.foreground }
 }
@@ -152,10 +199,7 @@ pub fn SurfaceStyle::raised(
   {
     brush: theme.surface_brush(@core.SurfaceLevel::Raised),
     border: Some(
-      @core.BorderStyle::new(
-        brush=@core.Brush::solid(border_color),
-        width=1.0,
-      ),
+      @core.BorderStyle::new(brush=@core.Brush::solid(border_color), width=1.0),
     ),
     radius: theme.radius_scale.lg,
     shadow: None,
@@ -171,8 +215,18 @@ fn control_state(
   border? : @core.BorderStyle,
   radius? : Double = 0.0,
   shadow? : @core.ShadowStyle,
+  bottom_border_only? : Bool = false,
+  inner_focus_border? : @core.Color? = None,
 ) -> ControlStateStyle {
-  { foreground, background, border, radius, shadow }
+  {
+    foreground,
+    background,
+    border,
+    radius,
+    shadow,
+    bottom_border_only,
+    inner_focus_border,
+  }
 }
 
 ///|
@@ -262,7 +316,9 @@ pub fn ButtonStyle::outline(
   )
   let pressed = control_state(
     foreground=theme.palette.foreground,
-    background=@core.Brush::solid(theme.palette.surface_variant.lerp(theme.palette.foreground, 0.06)),
+    background=@core.Brush::solid(
+      theme.palette.surface_variant.lerp(theme.palette.foreground, 0.06),
+    ),
     border~,
     radius=theme.radius_scale.md,
   )
@@ -282,7 +338,9 @@ pub fn ButtonStyle::outline(
 pub fn ButtonStyle::ghost(
   theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
-  let transparent = @core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0))
+  let transparent = @core.Brush::solid(
+    @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
+  )
   let normal = control_state(
     foreground=theme.palette.foreground,
     background=transparent,

@@ -341,7 +341,7 @@ test "source package inventories expose pinned package import gaps" {
     .any(item => {
       item.package_path == "packages/tokens/src/alias/*.ts" &&
       item.mapped_token_count == 12 &&
-      item.imported_token_count == 12
+      item.imported_token_count == 15
     }),
   )
   assert_true(

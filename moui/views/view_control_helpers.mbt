@@ -138,9 +138,7 @@ fn button_transition_scratch(
 /// Parse a previously encoded transition start. Returns `(from_state, start_ms)`
 /// when the scratch carries a valid `bt:` marker, or `None` when no transition
 /// is recorded (e.g. first paint or non-button scratch content).
-fn parse_button_transition(
-  scratch : String,
-) -> ((@core.ButtonState, Int)?) {
+fn parse_button_transition(scratch : String) -> (@core.ButtonState, Int)? {
   let parts = scratch.split(":").to_array()
   if parts.length() == 3 && parts[0] == "bt" {
     let from_code = match parts[1] {
@@ -181,9 +179,7 @@ fn parse_simple_int(text : String) -> Int? {
 /// Resolve the solid background color for a button state by reading the
 /// brush's fallback color. All built-in button styles use `Brush::solid`, so
 /// this is exact for them; gradient brushes degrade to their start color.
-fn button_state_color(
-  brush : @core.Brush,
-) -> @core.Color {
+fn button_state_color(brush : @core.Brush) -> @core.Color {
   brush.fallback_color()
 }
 

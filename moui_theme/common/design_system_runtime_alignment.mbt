@@ -459,6 +459,15 @@ fn expected_runtime_token_value(
   } else if coverage.official_token == "--shadow-floating-large" &&
     source_value.contains("offsetY: 40") {
     runtime_double_value(40.0)
+  } else if coverage.official_token == "shadow4" &&
+    source_value.contains("y: 2") {
+    runtime_double_value(2.0)
+  } else if coverage.official_token == "shadow16" &&
+    source_value.contains("y: 8") {
+    runtime_double_value(8.0)
+  } else if coverage.official_token == "shadow64" &&
+    source_value.contains("y: 32") {
+    runtime_double_value(32.0)
   } else if coverage.official_token == "--base-size-4" &&
     source_value.contains("value: 4") &&
     source_value.contains("unit: 'px'") {
@@ -818,6 +827,21 @@ fn actual_runtime_token_value(
       runtime_double_value(tokens.elevation.md.offset.y)
     "DesignElevationTokens.lg.offset.y" =>
       runtime_double_value(tokens.elevation.lg.offset.y)
+    "DesignElevationTokens.card" =>
+      match tokens.elevation.card {
+        Some(value) => runtime_double_value(value.offset.y)
+        None => runtime_unavailable()
+      }
+    "DesignElevationTokens.flyout" =>
+      match tokens.elevation.flyout {
+        Some(value) => runtime_double_value(value.offset.y)
+        None => runtime_unavailable()
+      }
+    "DesignElevationTokens.dialog" =>
+      match tokens.elevation.dialog {
+        Some(value) => runtime_double_value(value.offset.y)
+        None => runtime_unavailable()
+      }
     "DesignSpacingTokens.xs" => runtime_double_value(tokens.spacing.xs)
     "DesignSpacingTokens.sm" => runtime_double_value(tokens.spacing.sm)
     "DesignSpacingTokens.md" => runtime_double_value(tokens.spacing.md)

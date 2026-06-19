@@ -30,6 +30,23 @@ test "design systems app switches official presets and custom override" {
 }
 
 ///|
+test "design systems app renders fluent structural component variants" {
+  // Fluent 2 structural differentiation (subtle/subtle-brand buttons, underline
+  // text field) is surfaced through the component token matrix panel. The
+  // underline text field shares the draft state with the rest of the app, so
+  // we assert on the button variant labels that are always rendered.
+  let model = @app.DesignSystemsModel::new().update(
+    @app.DesignSystemsMsg::SelectPreset("fluent"),
+  )
+  assert_true(model.preset == @app.DesignSystemChoice::Fluent)
+  let commands = test_runtime(model.program()).draw_commands()
+  assert_true(has_text(commands, "Subtle"))
+  assert_true(has_text(commands, "Subtle brand"))
+  assert_true(has_text(commands, "Tonal"))
+  assert_true(has_text(commands, "Ghost"))
+}
+
+///|
 fn test_runtime(
   program : @moui.Program[@app.DesignSystemsModel, @app.DesignSystemsMsg],
 ) -> @runtime.AppRuntime {

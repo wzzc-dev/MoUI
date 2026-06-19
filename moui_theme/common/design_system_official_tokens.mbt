@@ -2317,6 +2317,33 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       source,
       "Fluent linear curve token; exact runtime parity remains preview.",
     ),
+    // Fluent 2 shadow tiers (shadow2/4/8/16/28/64). These are the first
+    // Fluent elevation anchors; the alias ramp is the official source of truth
+    // for layered card/flyout/dialog depth.
+    anchor(
+      DesignPreset::Fluent,
+      DesignTokenCategory::Elevation,
+      DesignTokenLayer::AliasToken,
+      "shadow4",
+      source,
+      "Fluent shadow4 alias declares the two-layer resting card shadow; MoUI maps the key layer to the Fluent card elevation tier.",
+    ),
+    anchor(
+      DesignPreset::Fluent,
+      DesignTokenCategory::Elevation,
+      DesignTokenLayer::AliasToken,
+      "shadow16",
+      source,
+      "Fluent shadow16 alias declares the two-layer flyout/menu shadow; MoUI maps the key layer to the Fluent flyout elevation tier.",
+    ),
+    anchor(
+      DesignPreset::Fluent,
+      DesignTokenCategory::Elevation,
+      DesignTokenLayer::AliasToken,
+      "shadow64",
+      source,
+      "Fluent shadow64 alias declares the two-layer dialog/modal shadow; MoUI maps the key layer to the Fluent dialog elevation tier.",
+    ),
   ]
 }
 

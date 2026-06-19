@@ -150,8 +150,8 @@ pub(all) struct Environment {
 pub fn ColorPalette::light() -> ColorPalette {
   // Warm-neutral light surfaces (zinc-tinted) with an indigo-violet accent.
   // Surfaces carry a faint cool-warm bias so cards read as elevated without
- // heavy shadows; the accent is a saturated indigo that stays legible on both
- // light and dark.
+  // heavy shadows; the accent is a saturated indigo that stays legible on both
+  // light and dark.
   {
     // shadcn/minimal: zinc neutrals, near-black primary. Accent is optional.
     foreground: Color::rgba(r=0.145, g=0.145, b=0.149),
@@ -242,28 +242,30 @@ pub fn ShadowScale::default(
   scheme? : ColorScheme = ColorScheme::Light,
 ) -> ShadowScale {
   // shadcn/minimal: near-zero shadows by default. Cards and buttons rely on
-  // borders, not elevation. Only `lg` (popovers/dialogs/menus) carries a
-  // faint shadow so floating layers separate from content. `sm`/`md` are
-  // effectively zero so controls stay flat.
+  // borders, not elevation. `sm` stays flat so controls read as crisp
+  // rectangles. `md` carries a hair of depth so floating mid layers (picker
+  // popups, feedback panels) separate without imposing Material-style
+  // elevation. `lg` (popovers/dialogs/menus) uses a soft, diffuse shadow so
+  // floating layers lift gently rather than reading as a hard drop.
   let alpha = match scheme {
-    Light => 0.05
+    Light => 0.06
     Dark => 0.50
   }
   {
     sm: ShadowStyle::new(
-      color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha * 0.65),
+      color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha * 0.5),
       offset=Point::new(x=0.0, y=0.0),
       blur_radius=0.0,
     ),
     md: ShadowStyle::new(
       color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha),
-      offset=Point::new(x=0.0, y=0.0),
-      blur_radius=0.0,
+      offset=Point::new(x=0.0, y=2.0),
+      blur_radius=8.0,
     ),
     lg: ShadowStyle::new(
-      color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha * 1.2),
-      offset=Point::new(x=0.0, y=4.0),
-      blur_radius=12.0,
+      color=Color::rgba(r=0.0, g=0.0, b=0.0, a=alpha * 1.4),
+      offset=Point::new(x=0.0, y=2.0),
+      blur_radius=16.0,
       spread=0.0,
     ),
   }
@@ -325,12 +327,7 @@ pub fn Theme::with_palette(self : Theme, palette : ColorPalette) -> Theme {
     info: palette.primary,
     focus: palette.primary,
   }
-  {
-    ..self,
-    palette,
-    semantic_colors,
-    surfaces,
-  }
+  { ..self, palette, semantic_colors, surfaces }
 }
 
 ///|
