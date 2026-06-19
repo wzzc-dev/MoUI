@@ -10,7 +10,6 @@ on:
       - "moui/moon.mod"
       - ".moonbit-toolchain"
       - ".github/actions/setup-moonbit/action.yml"
-      - "scripts/check-local-deps.sh"
       - ".github/workflows/moui-skia-real-skia-acceptance.yml"
   schedule:
     - cron: "41 4 * * 2"
