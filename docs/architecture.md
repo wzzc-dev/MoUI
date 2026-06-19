@@ -577,11 +577,23 @@ The visual system keeps platform-neutral tokens and app-facing styles:
   groups over an optional base theme. The default style stays MoUI Minimal;
   Material, Carbon, Primer, Fluent, and other branded systems stay as
   `moui_theme` adapters that resolve into the same neutral `@core.Theme`.
-- `ButtonStyle::filled/tonal/outline/ghost` and
-  `TextFieldStyle::filled/outline` project state styles into core draw
-  commands.
+- `ButtonStyle::filled/tonal/outline/ghost/subtle/subtle_brand` and
+  `TextFieldStyle::filled/outline/plain` project state styles into core draw
+  commands. `ControlStateStyle` carries optional `bottom_border_only` and
+  `inner_focus_border` fields so Fluent 2 underline inputs and focus-reveal
+  inner strokes render without adding variant-specific draw paths.
 - `SurfaceStyle` supports surface brushes, radius, padding, border metadata,
   and shadow metadata.
+- `ComponentStyleOverlay` is the `@views`-side outlet for design-system
+  component tokens. `@core.Theme` stays a neutral scale-only record; an app
+  that wants Fluent 2 (or another branded system) to drive control appearance
+  builds a `DesignSystemTokens` value in `moui_theme`, calls
+  `core_component_styles()` to project it into `@views.*Style` values, and
+  passes individual styles via the `style?` argument on each control
+  constructor. This keeps the framework core design-system-free while letting
+  branded systems express structural differentiation (subtle/subtle-brand
+  button variants, underline text-field appearance, layered card/flyout/dialog
+  shadows) that the neutral scales alone cannot carry.
 - `ShadowStyle` and `BorderStyle` are view-level style inputs; paint converts
   them into concrete `DrawCommand` payloads once the final frame is known.
 - `animated_value`, `animated_point`, `animated_color`, `TransitionSpec`, and

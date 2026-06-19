@@ -450,6 +450,20 @@ pub struct CommandMenuSection {
 }
 pub fn CommandMenuSection::new(title~ : String, commands~ : Array[@core.ActionCommand]) -> Self
 
+pub(all) struct ComponentStyleOverlay {
+  button : ButtonStyle?
+  text_field : TextFieldStyle?
+  surface : SurfaceStyle?
+  choice_control : ChoiceControlStyle?
+  progress : ProgressStyle?
+  slider : SliderStyle?
+  picker : PickerStyle?
+  feedback : FeedbackStyle?
+  badge : BadgeStyle?
+  form_validation : FormValidationStyle?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ComponentStyleOverlay::empty() -> Self
+
 pub(all) enum ContainerVariant {
   Base
   Raised
@@ -462,6 +476,8 @@ pub(all) struct ControlStateStyle {
   border : @core.BorderStyle?
   radius : Double
   shadow : @core.ShadowStyle?
+  bottom_border_only : Bool
+  inner_focus_border : @core.Color?
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum CrossAlign {
