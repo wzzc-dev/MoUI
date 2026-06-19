@@ -109,12 +109,25 @@ function sha256(filePath) {
   return hash.digest("hex");
 }
 
-function fetchFile(url, outputPath) {
+function logDownload(label, asset, outputPath) {
+  console.error(`Downloading ${label}:`);
+  console.error(`  url=${asset.url}`);
+  console.error(`  output=${outputPath}`);
+  if (asset.size) {
+    console.error(`  expected_size=${asset.size}`);
+  }
+  if (asset.sha256) {
+    console.error(`  expected_sha256=${asset.sha256}`);
+  }
+}
+
+function fetchFile(asset, outputPath) {
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  logDownload(`PDFium archive ${asset.name}`, asset, outputPath);
   if (process.platform === "win32") {
     const script = [
       "$ProgressPreference = 'SilentlyContinue'",
-      `Invoke-WebRequest -Uri ${JSON.stringify(url)} -OutFile ${JSON.stringify(outputPath)}`,
+      `Invoke-WebRequest -Uri ${JSON.stringify(asset.url)} -OutFile ${JSON.stringify(outputPath)}`,
     ].join("; ");
     const result = spawnSync(
       "powershell.exe",
@@ -137,7 +150,7 @@ function fetchFile(url, outputPath) {
       "2",
       "-o",
       outputPath,
-      url,
+      asset.url,
     ],
     "download PDFium archive",
   );
@@ -154,7 +167,7 @@ function ensureArchive(asset, archivePath) {
   if (fs.existsSync(tmpPath)) {
     fs.rmSync(tmpPath);
   }
-  fetchFile(asset.url, tmpPath);
+  fetchFile(asset, tmpPath);
   const actual = sha256(tmpPath);
   if (actual !== asset.sha256) {
     fs.rmSync(tmpPath, { force: true });

@@ -299,12 +299,27 @@ compute_sha256() {
 download_file() {
   local url="$1"
   local output="$2"
+  local label="${3:-Skia release file}"
+  local expected_sha256="${4:-}"
+  local expected_size="${5:-}"
   if ! command -v curl >/dev/null 2>&1; then
     echo "missing required command: curl" >&2
     exit 1
   fi
   mkdir -p "$(dirname "$output")"
+  {
+    echo "Downloading $label:"
+    echo "  url=$url"
+    echo "  output=$output"
+    if [[ -n "$expected_size" ]]; then
+      echo "  expected_size=$expected_size"
+    fi
+    if [[ -n "$expected_sha256" ]]; then
+      echo "  expected_sha256=$expected_sha256"
+    fi
+  } >&2
   if [[ -s "$output" ]]; then
+    echo "  mode=resume" >&2
     curl \
       --fail \
       --location \
@@ -319,6 +334,7 @@ download_file() {
       "$url"
     return
   fi
+  echo "  mode=fresh" >&2
   curl \
     --fail \
     --location \
@@ -353,15 +369,14 @@ ensure_package_extracted() {
       rm -f "$package_zip"
     fi
     if [[ $force -eq 1 || ! -f "$package_zip" ]]; then
-      echo "Downloading Skia release asset: $asset_name" >&2
-      download_file "$asset_url" "$package_zip"
+      download_file "$asset_url" "$package_zip" "Skia release asset $asset_name" "$asset_sha256" "$asset_size"
     fi
     actual_sha256="$(compute_sha256 "$package_zip" | tr '[:upper:]' '[:lower:]')"
     if [[ "$actual_sha256" != "$asset_sha256" ]]; then
       echo "Skia release asset SHA256 mismatch after initial check; retrying download: $package_zip" >&2
       echo "  expected=$asset_sha256" >&2
       echo "  actual=$actual_sha256" >&2
-      download_file "$asset_url" "$package_zip"
+      download_file "$asset_url" "$package_zip" "Skia release asset $asset_name" "$asset_sha256" "$asset_size"
       actual_sha256="$(compute_sha256 "$package_zip" | tr '[:upper:]' '[:lower:]')"
     fi
     if [[ "$actual_sha256" != "$asset_sha256" ]]; then
@@ -369,7 +384,7 @@ ensure_package_extracted() {
       echo "  expected=$asset_sha256" >&2
       echo "  actual=$actual_sha256" >&2
       rm -f "$package_zip"
-      download_file "$asset_url" "$package_zip"
+      download_file "$asset_url" "$package_zip" "Skia release asset $asset_name" "$asset_sha256" "$asset_size"
       actual_sha256="$(compute_sha256 "$package_zip" | tr '[:upper:]' '[:lower:]')"
     fi
     if [[ "$actual_sha256" != "$asset_sha256" ]]; then
@@ -389,8 +404,7 @@ ensure_source_extracted() {
   if [[ $force -eq 1 || ! -d "$source_dir" ]]; then
     mkdir -p "$tag_dir"
     if [[ $force -eq 1 || ! -f "$source_zip" ]]; then
-      echo "Downloading Skia release source archive for headers: $tag" >&2
-      download_file "$source_url" "$source_zip"
+      download_file "$source_url" "$source_zip" "Skia release source archive for headers $tag"
     fi
     extract_zip "$source_zip" "$source_dir"
   fi
