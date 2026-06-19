@@ -147,20 +147,20 @@ fn recognize_button_tap(
 ) -> TapGestureResult {
   let next_state = match phase {
     Move =>
-      if current == Pressed && inside {
-        Pressed
+      if current == ButtonState::Pressed && inside {
+        ButtonState::Pressed
       } else if inside {
-        Hovered
+        ButtonState::Hovered
       } else {
-        Normal
+        ButtonState::Normal
       }
-    Down => if inside { Pressed } else { Normal }
-    Up => if inside { Hovered } else { Normal }
+    Down => if inside { ButtonState::Pressed } else { ButtonState::Normal }
+    Up => if inside { ButtonState::Hovered } else { ButtonState::Normal }
     // Synthetic runtime phase: the pointer left the element, so drop any hover
     // or press state and return to rest.
-    Exit | Cancel => Normal
+    Exit | Cancel => ButtonState::Normal
   }
-  { next_state, activated: phase == Up && inside && current == Pressed }
+  { next_state, activated: phase == Up && inside && current == ButtonState::Pressed }
 }
 
 ///|

@@ -454,27 +454,27 @@ fn website_theme(dark : Bool) -> @moui.Theme {
     @moui.ColorScheme::Light
   }
   let palette : @core.ColorPalette = if dark {
-    {
-      foreground: @core.Color::rgba(r=0.91, g=0.92, b=0.96),
-      background: @core.Color::rgba(r=0.06, g=0.06, b=0.08),
-      surface: @core.Color::rgba(r=0.09, g=0.09, b=0.12),
-      surface_variant: @core.Color::rgba(r=0.15, g=0.16, b=0.22),
-      primary: @core.Color::rgba(r=0.18, g=0.83, b=0.75),
-      primary_foreground: @core.Color::white(),
-      outline: @core.Color::rgba(r=0.15, g=0.16, b=0.23),
-      muted: @core.Color::rgba(r=0.55, g=0.58, b=0.66),
-    }
+    @core.ColorPalette::from_seed(
+      primary=@core.Color::rgba(r=0.18, g=0.83, b=0.75),
+      @moui.ColorScheme::Dark,
+      foreground=@core.Color::rgba(r=0.91, g=0.92, b=0.96),
+      background=@core.Color::rgba(r=0.06, g=0.06, b=0.08),
+      surface=@core.Color::rgba(r=0.09, g=0.09, b=0.12),
+      surface_variant=@core.Color::rgba(r=0.15, g=0.16, b=0.22),
+      outline=@core.Color::rgba(r=0.15, g=0.16, b=0.23),
+      muted=@core.Color::rgba(r=0.55, g=0.58, b=0.66),
+    )
   } else {
-    {
-      foreground: @core.Color::rgba(r=0.07, g=0.09, b=0.14),
-      background: @core.Color::rgba(r=0.98, g=0.98, b=0.98),
-      surface: @core.Color::white(),
-      surface_variant: @core.Color::rgba(r=0.95, g=0.96, b=0.97),
-      primary: @core.Color::rgba(r=0.0, g=0.44, b=0.40),
-      primary_foreground: @core.Color::white(),
-      outline: @core.Color::rgba(r=0.90, g=0.91, b=0.93),
-      muted: @core.Color::rgba(r=0.42, g=0.45, b=0.50),
-    }
+    @core.ColorPalette::from_seed(
+      primary=@core.Color::rgba(r=0.0, g=0.44, b=0.40),
+      @moui.ColorScheme::Light,
+      foreground=@core.Color::rgba(r=0.07, g=0.09, b=0.14),
+      background=@core.Color::rgba(r=0.98, g=0.98, b=0.98),
+      surface=@core.Color::white(),
+      surface_variant=@core.Color::rgba(r=0.95, g=0.96, b=0.97),
+      outline=@core.Color::rgba(r=0.90, g=0.91, b=0.93),
+      muted=@core.Color::rgba(r=0.42, g=0.45, b=0.50),
+    )
   }
   let typography : @core.TypographyScale = {
     ..@core.TypographyScale::default(),

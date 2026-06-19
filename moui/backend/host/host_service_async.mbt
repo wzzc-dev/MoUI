@@ -303,7 +303,7 @@ pub fn HostRuntimeDriver::dispatch_service_completion(
       HostServiceResponse::SystemTheme(scheme),
     ) => {
       self.runtime.set_environment(
-        self.runtime.environment().with_color_scheme(scheme),
+        self.runtime.environment().with_system_scheme(scheme),
       )
       self.request_redraw_if_needed()
     }

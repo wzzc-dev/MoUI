@@ -4,6 +4,8 @@ pub(all) enum ButtonVariant {
   Tonal
   Outline
   Ghost
+  Subtle
+  SubtleBrand
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -55,15 +57,34 @@ pub(all) enum CrossAlign {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// Resolve a button variant into a `ButtonStyle` from the theme's first-class
+/// `components.button` token set. This replaces the legacy hand-written
+/// `ButtonStyle::filled/tonal/outline/ghost` helpers so a branded design
+/// system that sets `Theme.components` once drives every button's appearance
+/// without per-control `style=` arguments.
 fn ButtonVariant::style(
   self : ButtonVariant,
   theme : @core.Theme,
 ) -> ButtonStyle {
+  let bt = theme.components.button
+  let v = self.to_token()
+  {
+    normal: bt.resolve(v, @core.InteractionState::Normal),
+    hovered: bt.resolve(v, @core.InteractionState::Hovered),
+    pressed: bt.resolve(v, @core.InteractionState::Pressed),
+    disabled: bt.resolve(v, @core.InteractionState::Disabled),
+  }
+}
+
+///|
+fn ButtonVariant::to_token(self : ButtonVariant) -> @core.ButtonVariantToken {
   match self {
-    Primary => ButtonStyle::filled(theme~)
-    Tonal => ButtonStyle::tonal(theme~)
-    Outline => ButtonStyle::outline(theme~)
-    Ghost => ButtonStyle::ghost(theme~)
+    Primary => @core.ButtonVariantToken::Primary
+    Tonal => @core.ButtonVariantToken::Tonal
+    Outline => @core.ButtonVariantToken::Outline
+    Ghost => @core.ButtonVariantToken::Ghost
+    Subtle => @core.ButtonVariantToken::Subtle
+    SubtleBrand => @core.ButtonVariantToken::SubtleBrand
   }
 }
 

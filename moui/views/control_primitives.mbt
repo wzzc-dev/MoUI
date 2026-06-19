@@ -113,7 +113,7 @@ fn[Msg] button_control(
       }
      let commands : Array[@core.DrawCommand] = []
      let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
-     emit_elevation_shadow(commands, rounded, shadow, ctx.environment.color_scheme)
+     emit_elevation_shadow(commands, rounded, shadow, ctx.environment.color_scheme())
      commands.push(
        @core.DrawCommand::FillRoundedRectBrush(rounded, background_brush),
      )
@@ -454,7 +454,7 @@ fn append_checkbox_commands(
           text="✓",
           frame=box_rect,
           font=@core.FontSpec::new(size=box_side * 0.78, weight=700),
-          color=theme.palette.primary_foreground,
+          color=theme.palette.on_primary,
         ),
       ),
     )

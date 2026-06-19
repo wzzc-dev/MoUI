@@ -463,39 +463,41 @@ fn DesignSystemsModel::component_matrix_panel(
       theme~,
       max_height=160.0,
     ).frame(width=240.0, height=40.0),
-    // Primary + tonal + outline + ghost button variants, driven by the
-    // resolved component tokens rather than the neutral theme scales.
+    // Primary + tonal + outline + ghost button variants. The button resolves
+    // its style from `theme.components.button` via `variant=`, so a branded
+    // design system that sets `Theme.components` once drives every variant
+    // without per-control `style=` arguments.
     row(
       [
         button(
           "Primary",
           on_click=ToggleCustom,
+          variant=@views.ButtonVariant::Primary,
           theme~,
-          style=styles.button.primary,
           width=96.0,
           height=36.0,
         ),
         button(
           "Tonal",
           on_click=ToggleCustom,
+          variant=@views.ButtonVariant::Tonal,
           theme~,
-          style=styles.button.tonal,
           width=88.0,
           height=36.0,
         ),
         button(
           "Outline",
           on_click=ToggleCustom,
+          variant=@views.ButtonVariant::Outline,
           theme~,
-          style=styles.button.outline,
           width=96.0,
           height=36.0,
         ),
         button(
           "Ghost",
           on_click=ToggleCustom,
+          variant=@views.ButtonVariant::Ghost,
           theme~,
-          style=styles.button.ghost,
           width=80.0,
           height=36.0,
         ),
@@ -511,16 +513,16 @@ fn DesignSystemsModel::component_matrix_panel(
         button(
           "Subtle",
           on_click=ToggleCustom,
+          variant=@views.ButtonVariant::Subtle,
           theme~,
-          style=styles.button.subtle,
           width=88.0,
           height=36.0,
         ),
         button(
           "Subtle brand",
           on_click=ToggleCustom,
+          variant=@views.ButtonVariant::SubtleBrand,
           theme~,
-          style=styles.button.subtle_brand,
           width=128.0,
           height=36.0,
         ),
@@ -695,7 +697,7 @@ fn design_swatch(
 ) -> @moui.View[DesignSystemsMsg] {
   container(
     text(label, role=@views.TextRole::Caption, theme~, width=76.0, height=24.0).foreground(
-      theme.palette.primary_foreground,
+      theme.palette.on_primary,
     ),
     width=88.0,
     height=48.0,

@@ -96,7 +96,7 @@ pub fn[Msg] choice_chip(
 ///|
 fn chip_foreground(selected : Bool, theme : @core.Theme) -> @core.Color {
   if selected {
-    theme.palette.primary_foreground
+    theme.palette.on_primary
   } else {
     theme.palette.foreground
   }

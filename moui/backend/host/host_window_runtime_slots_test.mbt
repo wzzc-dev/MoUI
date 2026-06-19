@@ -176,10 +176,10 @@ test "host runtime driver exposes runtime state for platform slots" {
     size=@core.Size::new(width=320.0, height=240.0),
   )
   let driver = HostRuntimeDriver::new(runtime~, schedule_redraw=() => ())
-  let dark = runtime.environment().with_color_scheme(@core.ColorScheme::Dark)
+  let dark = runtime.environment().with_system_scheme(@core.ColorScheme::Dark)
   driver.set_environment(dark)
-  assert_true(driver.environment().color_scheme == @core.ColorScheme::Dark)
-  assert_true(runtime.environment().color_scheme == @core.ColorScheme::Dark)
+  assert_true(driver.environment().color_scheme() == @core.ColorScheme::Dark)
+  assert_true(runtime.environment().color_scheme() == @core.ColorScheme::Dark)
   driver.set_text_system(@core.TextSystem::fallback())
   assert_true(driver.focused_text_input() == runtime.focused_text_input())
 }

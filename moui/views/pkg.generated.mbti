@@ -302,7 +302,7 @@ pub fn[Msg] text_field(String, on_input~ : (String) -> Msg, on_submit? : Msg?, p
 
 pub fn[Msg] text_field_binding(@core.Binding[String], on_submit? : Msg?, placeholder? : String, variant? : TextFieldVariant, theme? : @core.Theme, style? : TextFieldStyle, width? : Double, height? : Double) -> @core.View[Msg]
 
-pub fn theme(base? : @core.Theme, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, semantic_colors? : @core.SemanticColorScale, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale) -> @core.Theme
+pub fn theme(base? : @core.Theme, scheme? : @core.ColorScheme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale, components? : @core.ComponentThemes) -> @core.Theme
 
 pub fn[Msg] toast(String, tone? : FeedbackTone, action? : StateViewAction[Msg]?, theme? : @core.Theme, style? : FeedbackStyle, width? : Double) -> @core.View[Msg]
 
@@ -380,10 +380,10 @@ pub struct BreadcrumbItem[Msg] {
 pub fn[Msg] BreadcrumbItem::new(id~ : String, label~ : String, message? : Msg?) -> Self[Msg]
 
 pub(all) struct ButtonStyle {
-  normal : ControlStateStyle
-  hovered : ControlStateStyle
-  pressed : ControlStateStyle
-  disabled : ControlStateStyle
+  normal : @core.ControlStateStyle
+  hovered : @core.ControlStateStyle
+  pressed : @core.ControlStateStyle
+  disabled : @core.ControlStateStyle
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ButtonStyle::filled(theme? : @core.Theme) -> Self
 pub fn ButtonStyle::ghost(theme? : @core.Theme) -> Self
@@ -395,6 +395,8 @@ pub(all) enum ButtonVariant {
   Tonal
   Outline
   Ghost
+  Subtle
+  SubtleBrand
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum ChipVariant {
@@ -450,34 +452,10 @@ pub struct CommandMenuSection {
 }
 pub fn CommandMenuSection::new(title~ : String, commands~ : Array[@core.ActionCommand]) -> Self
 
-pub(all) struct ComponentStyleOverlay {
-  button : ButtonStyle?
-  text_field : TextFieldStyle?
-  surface : SurfaceStyle?
-  choice_control : ChoiceControlStyle?
-  progress : ProgressStyle?
-  slider : SliderStyle?
-  picker : PickerStyle?
-  feedback : FeedbackStyle?
-  badge : BadgeStyle?
-  form_validation : FormValidationStyle?
-} derive(Eq, ToJson, @debug.Debug)
-pub fn ComponentStyleOverlay::empty() -> Self
-
 pub(all) enum ContainerVariant {
   Base
   Raised
   Overlay
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct ControlStateStyle {
-  foreground : @core.Color
-  background : @core.Brush
-  border : @core.BorderStyle?
-  radius : Double
-  shadow : @core.ShadowStyle?
-  bottom_border_only : Bool
-  inner_focus_border : @core.Color?
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum CrossAlign {
@@ -878,9 +856,9 @@ pub fn TableColumn::id(Self) -> String
 pub fn TableColumn::width(Self) -> Double
 
 pub(all) struct TextFieldStyle {
-  normal : ControlStateStyle
-  focused : ControlStateStyle
-  disabled : ControlStateStyle
+  normal : @core.ControlStateStyle
+  focused : @core.ControlStateStyle
+  disabled : @core.ControlStateStyle
   placeholder_color : @core.Color
   cursor_color : @core.Color
   font : @core.FontSpec
@@ -975,6 +953,8 @@ pub using @core {type ColorScheme}
 pub using @core {type CommandBinding}
 
 pub using @core {type CommandIntent}
+
+pub using @core {type ControlStateStyle}
 
 pub using @core {type KeyModifiers}
 

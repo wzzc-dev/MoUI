@@ -175,7 +175,7 @@ pub fn ComponentContext::theme(self : ComponentContext) -> Theme {
 
 ///|
 pub fn ComponentContext::color_scheme(self : ComponentContext) -> ColorScheme {
-  self.environment.color_scheme
+  self.environment.color_scheme()
 }
 
 ///|

@@ -15,19 +15,10 @@ pub(all) struct SurfaceStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) struct ControlStateStyle {
-  foreground : @core.Color
-  background : @core.Brush
-  border : @core.BorderStyle?
-  radius : Double
-  shadow : @core.ShadowStyle?
-  // When true, paint only the bottom edge of the border (Fluent 2 underline
-  // inputs). Neutral controls leave this false and draw the full border.
-  bottom_border_only : Bool
-  // Optional inner focus-reveal stroke painted inside the control frame
-  // (Fluent 2 focus inner border). Neutral controls leave this None.
-  inner_focus_border : @core.Color?
-} derive(Eq, Debug, ToJson)
+/// Resolved per-state control style. This is an alias of
+/// `@core.ControlStateStyle`; the type lives in `core` so both the token
+/// resolver and the view-layer style structs share one definition.
+pub using @core {type ControlStateStyle}
 
 ///|
 pub(all) struct ButtonStyle {
@@ -121,47 +112,6 @@ pub(all) struct FormValidationStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
-/// Aggregated per-control styles for design-system integration. This is the
-/// `@views`-side outlet for component tokens: an app that wants Fluent 2 (or
-/// any other design system) to drive control appearance builds this overlay
-/// and passes individual styles via the `style?` argument on each control
-/// constructor. The overlay itself stays in `@views` so the framework core
-/// remains a neutral token runtime with no design-system dependency.
-///
-/// Fields are optional so a caller can override only the controls it cares
-/// about; `None` means "fall back to the theme-scale resolution".
-pub(all) struct ComponentStyleOverlay {
-  button : ButtonStyle?
-  text_field : TextFieldStyle?
-  surface : SurfaceStyle?
-  choice_control : ChoiceControlStyle?
-  progress : ProgressStyle?
-  slider : SliderStyle?
-  picker : PickerStyle?
-  feedback : FeedbackStyle?
-  badge : BadgeStyle?
-  form_validation : FormValidationStyle?
-} derive(Eq, Debug, ToJson)
-
-///|
-/// An empty overlay; every field is `None` so controls fall back to theme
-/// resolution. Callers override individual fields with struct update syntax.
-pub fn ComponentStyleOverlay::empty() -> ComponentStyleOverlay {
-  {
-    button: None,
-    text_field: None,
-    surface: None,
-    choice_control: None,
-    progress: None,
-    slider: None,
-    picker: None,
-    feedback: None,
-    badge: None,
-    form_validation: None,
-  }
-}
-
-///|
 pub fn TextStyle::body(theme? : @core.Theme = default_theme()) -> TextStyle {
   { font: theme.typography.body, color: theme.palette.foreground }
 }
@@ -238,17 +188,17 @@ pub fn ButtonStyle::filled(
   // overlays rather than color shifts, so the button stays a solid block that
   // just dims — the shadcn idiom. Tracks any primary including near-black.
   let normal = control_state(
-    foreground=theme.palette.primary_foreground,
+    foreground=theme.palette.on_primary,
     background=@core.Brush::solid(primary),
     radius=theme.radius_scale.md,
   )
   let hovered = control_state(
-    foreground=theme.palette.primary_foreground,
+    foreground=theme.palette.on_primary,
     background=@core.Brush::solid(primary.multiply_alpha(0.90)),
     radius=theme.radius_scale.md,
   )
   let pressed = control_state(
-    foreground=theme.palette.primary_foreground,
+    foreground=theme.palette.on_primary,
     background=@core.Brush::solid(primary.multiply_alpha(0.80)),
     radius=theme.radius_scale.md,
   )
@@ -471,22 +421,22 @@ pub fn FeedbackStyle::default(
       border_alpha=0.78,
     ),
     info: tone_style(
-      foreground=theme.semantic_colors.info,
+      foreground=theme.palette.info,
       background_alpha~,
       border_alpha=0.78,
     ),
     success: tone_style(
-      foreground=theme.semantic_colors.success,
+      foreground=theme.palette.success,
       background_alpha~,
       border_alpha=0.78,
     ),
     warning: tone_style(
-      foreground=theme.semantic_colors.warning,
+      foreground=theme.palette.warning,
       background_alpha~,
       border_alpha=0.78,
     ),
     danger: tone_style(
-      foreground=theme.semantic_colors.danger,
+      foreground=theme.palette.danger,
       background_alpha~,
       border_alpha=0.78,
     ),
@@ -505,10 +455,10 @@ pub fn BadgeStyle::default(
       background: theme.palette.surface_variant,
       border: theme.palette.outline.multiply_alpha(0.42),
     },
-    accent: badge_tone(theme.semantic_colors.info),
-    success: badge_tone(theme.semantic_colors.success),
-    warning: badge_tone(theme.semantic_colors.warning),
-    danger: badge_tone(theme.semantic_colors.danger),
+    accent: badge_tone(theme.palette.info),
+    success: badge_tone(theme.palette.success),
+    warning: badge_tone(theme.palette.warning),
+    danger: badge_tone(theme.palette.danger),
     radius: theme.radius_scale.pill,
     padding: 3.0,
   }
@@ -518,7 +468,7 @@ pub fn BadgeStyle::default(
 pub fn FormValidationStyle::default(
   theme? : @core.Theme = default_theme(),
 ) -> FormValidationStyle {
-  let color = theme.semantic_colors.danger
+  let color = theme.palette.danger
   {
     foreground: color,
     background: color.multiply_alpha(0.12),

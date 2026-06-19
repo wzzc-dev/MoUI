@@ -31,6 +31,10 @@ pub fn normalize_grapheme_range(@unicode.TextGraphemeBoundaries, TextRange) -> T
 
 pub fn optional_rect_union(Rect?, Rect?) -> Rect?
 
+pub fn resolve_minimal_theme(ThemeSpec, ColorScheme) -> Theme
+
+pub fn resolve_theme(ThemeSpec, ColorScheme) -> Theme
+
 pub fn text_next_grapheme_caret_boundary(String, Int) -> Int
 
 pub fn text_previous_grapheme_caret_boundary(String, Int) -> Int
@@ -107,6 +111,16 @@ pub(all) enum Axis {
   Vertical
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct BadgeTheme {
+  neutral : ToneTokens
+  accent : ToneTokens
+  success : ToneTokens
+  warning : ToneTokens
+  danger : ToneTokens
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+
 pub struct Binding[T] {
   // private fields
 }
@@ -146,6 +160,27 @@ pub(all) enum ButtonState {
   Hovered
   Pressed
 } derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonState::to_interaction(Self) -> InteractionState
+
+pub(all) struct ButtonTheme {
+  primary : ControlStateTokens
+  tonal : ControlStateTokens
+  outline : ControlStateTokens
+  ghost : ControlStateTokens
+  subtle : ControlStateTokens
+  subtle_brand : ControlStateTokens
+  state_layer : StateLayerTokens
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ButtonTheme::resolve(Self, ButtonVariantToken, InteractionState) -> ControlStateStyle
+
+pub(all) enum ButtonVariantToken {
+  Primary
+  Tonal
+  Outline
+  Ghost
+  Subtle
+  SubtleBrand
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct CachedLayerSpec {
   key : String
@@ -154,6 +189,14 @@ pub(all) struct CachedLayerSpec {
   scale_factor : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CachedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
+
+pub(all) struct ChoiceControlTheme {
+  foreground : Color
+  selected_color : Color
+  disabled_foreground : Color
+  disabled_selected_color : Color
+  control_size : Double
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Color {
   r : Double
@@ -173,17 +216,52 @@ pub fn Color::rgba(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> Self
 pub fn Color::white() -> Self
 pub fn Color::with_alpha(Self, Double) -> Self
 
+pub(all) enum ColorMode {
+  Light
+  Dark
+  System
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct ColorPalette {
   foreground : Color
   background : Color
   surface : Color
   surface_variant : Color
   primary : Color
-  primary_foreground : Color
+  on_primary : Color
+  primary_container : Color
+  on_primary_container : Color
+  secondary : Color
+  on_secondary : Color
+  secondary_container : Color
+  on_secondary_container : Color
+  tertiary : Color
+  on_tertiary : Color
+  tertiary_container : Color
+  on_tertiary_container : Color
+  error : Color
+  on_error : Color
+  error_container : Color
+  on_error_container : Color
+  on_foreground : Color
+  on_surface : Color
+  on_surface_variant : Color
   outline : Color
+  outline_variant : Color
   muted : Color
+  success : Color
+  on_success : Color
+  warning : Color
+  on_warning : Color
+  info : Color
+  on_info : Color
+  danger : Color
+  on_danger : Color
+  focus : Color
+  scrim : Color
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ColorPalette::dark() -> Self
+pub fn ColorPalette::from_seed(primary~ : Color, ColorScheme, foreground? : Color, background? : Color, surface? : Color, surface_variant? : Color, outline? : Color, muted? : Color) -> Self
 pub fn ColorPalette::light() -> Self
 
 pub(all) enum ColorScheme {
@@ -272,6 +350,19 @@ pub(all) struct ComponentRuntimeContextInput {
   environment : Environment
 }
 
+pub(all) struct ComponentThemes {
+  button : ButtonTheme
+  text_field : TextFieldTheme
+  surface : SurfaceTheme
+  choice_control : ChoiceControlTheme
+  progress : ProgressTheme
+  slider : SliderTheme
+  picker : PickerTheme
+  feedback : FeedbackTheme
+  badge : BadgeTheme
+  form_validation : FormValidationTheme
+} derive(Eq, ToJson, @debug.Debug)
+
 type CompositionUpdate derive(Eq, ToJson, @debug.Debug)
 pub fn CompositionUpdate::cursor(Self) -> TextRange?
 pub fn CompositionUpdate::new(text~ : String, cursor? : TextRange?) -> Self
@@ -298,6 +389,28 @@ pub(all) enum ContentSizeCategory {
   Accessibility
 } derive(Eq, ToJson, @debug.Debug)
 pub fn ContentSizeCategory::text_scale(Self) -> Double
+
+pub(all) struct ControlStateStyle {
+  foreground : Color
+  background : Brush
+  border : BorderStyle?
+  radius : Double
+  shadow : ShadowStyle?
+  bottom_border_only : Bool
+  inner_focus_border : Color?
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ControlStateTokens {
+  foreground : Color
+  background : Color
+  border : Color
+  border_width : Double
+  radius : Double
+  bottom_border_only : Bool
+  inner_focus_border : Color?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ControlStateTokens::new(foreground~ : Color, background~ : Color, border~ : Color, border_width~ : Double, radius~ : Double, bottom_border_only? : Bool, inner_focus_border? : Color?) -> Self
+pub fn ControlStateTokens::resolve(Self) -> ControlStateStyle
 
 pub(all) enum CrossAxisAlignment {
   CrossStart
@@ -484,8 +597,9 @@ pub fn ElementId::new(Int) -> Self
 pub fn ElementId::value(Self) -> Int
 
 pub(all) struct Environment {
+  theme_spec : ThemeSpec
+  system_scheme : ColorScheme
   theme : Theme
-  color_scheme : ColorScheme
   scale_factor : Double
   text_scale : Double
   locale : String
@@ -495,17 +609,30 @@ pub(all) struct Environment {
   content_size_category : ContentSizeCategory
   enabled : Bool
 } derive(Eq, ToJson, @debug.Debug)
+pub fn Environment::color_scheme(Self) -> ColorScheme
 pub fn Environment::neutral() -> Self
+pub fn Environment::revision_fingerprint(Self) -> String
 pub fn Environment::with_accessibility_contrast(Self, AccessibilityContrast) -> Self
-pub fn Environment::with_color_scheme(Self, ColorScheme) -> Self
 pub fn Environment::with_content_size_category(Self, ContentSizeCategory) -> Self
 pub fn Environment::with_enabled(Self, Bool) -> Self
 pub fn Environment::with_layout_direction(Self, LayoutDirection) -> Self
 pub fn Environment::with_locale(Self, String) -> Self
 pub fn Environment::with_reduced_motion(Self, Bool) -> Self
 pub fn Environment::with_scale_factor(Self, Double) -> Self
+pub fn Environment::with_system_scheme(Self, ColorScheme) -> Self
 pub fn Environment::with_text_scale(Self, Double) -> Self
 pub fn Environment::with_theme(Self, Theme) -> Self
+pub fn Environment::with_theme_spec(Self, ThemeSpec) -> Self
+
+pub(all) struct FeedbackTheme {
+  neutral : ToneTokens
+  info : ToneTokens
+  success : ToneTokens
+  warning : ToneTokens
+  danger : ToneTokens
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum FilterEffect {
   Blur(Double)
@@ -586,6 +713,14 @@ pub(all) enum FontStyle {
   Italic
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct FormValidationTheme {
+  foreground : Color
+  background : Color
+  border : Color
+  radius : Double
+  padding : Double
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct Frame {
   time_ms : Double
   delta_ms : Double
@@ -616,6 +751,16 @@ pub(all) struct Insets {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Insets::all(Double) -> Self
 pub fn Insets::symmetric(horizontal? : Double, vertical? : Double) -> Self
+
+pub(all) enum InteractionState {
+  Normal
+  Hovered
+  Pressed
+  Focused
+  Disabled
+  Selected
+  Invalid
+} derive(Eq, ToJson, @debug.Debug)
 
 type Key derive(Eq)
 pub fn Key::new(String) -> Self
@@ -724,6 +869,14 @@ pub(all) enum PathVerb {
   Close
 } derive(Eq, ToJson, @debug.Debug)
 
+pub(all) struct PickerTheme {
+  font : FontSpec
+  foreground : Color
+  background : Brush
+  radius : Double
+  popup_max_height : Double
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum PlatformViewEvent {
   Named(name~ : String, value~ : String, detail~ : String, flag~ : Bool)
 } derive(Eq, ToJson, @debug.Debug)
@@ -777,6 +930,12 @@ pub fn[Model, Msg] Program::runtime_update(Self[Model, Msg], Model, Msg) -> (Mod
 pub fn[Model, Msg] Program::runtime_view(Self[Model, Msg], Model, ViewEnvironment) -> View[Msg]
 pub fn[Model, Msg] Program::simple(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
 pub fn[Model, Msg] Program::simple_with_environment(init~ : Model, update~ : (Model, Msg) -> Model, view~ : (Model, ViewEnvironment) -> View[Msg], subscriptions? : (Model) -> Subscription[Msg]) -> Self[Model, Msg]
+
+pub(all) struct ProgressTheme {
+  foreground : Color
+  background : Color
+  radius : Double
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct RadialGradientSpec {
   center : Point
@@ -856,16 +1015,6 @@ pub fn ScrollState::new(offset? : Point) -> Self
 pub fn ScrollState::offset(Self) -> Point
 pub fn ScrollState::scroll_to(Self, x~ : Double, y~ : Double) -> Unit
 pub fn ScrollState::set_offset(Self, Point) -> Unit
-
-pub(all) struct SemanticColorScale {
-  success : Color
-  warning : Color
-  danger : Color
-  info : Color
-  focus : Color
-  scrim : Color
-} derive(Eq, ToJson, @debug.Debug)
-pub fn SemanticColorScale::default(ColorPalette, ColorScheme) -> Self
 
 pub(all) enum SemanticsAction {
   Activate
@@ -976,6 +1125,15 @@ pub fn Size::clamp(Self, Constraints) -> Self
 pub fn Size::inflate(Self, Insets) -> Self
 pub fn Size::new(width~ : Double, height~ : Double) -> Self
 
+pub(all) struct SliderTheme {
+  foreground : Color
+  background : Color
+  thumb_color : Color
+  track_height : Double
+  thumb_size : Double
+  radius : Double
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) struct SpacingScale {
   xs : Double
   sm : Double
@@ -996,6 +1154,16 @@ pub fn[T] State::set(Self[T], T) -> Unit
 pub fn[T] State::subscribe(Self[T], () -> Unit) -> StateSubscription
 pub fn[T] State::update(Self[T], (T) -> T raise?) -> Unit raise?
 pub fn[T] State::version(Self[T]) -> Int
+
+pub(all) struct StateLayerTokens {
+  color : Color
+  hover_alpha : Double
+  focus_alpha : Double
+  pressed_alpha : Double
+  dragged_alpha : Double
+  selected_alpha : Double
+  disabled_alpha : Double
+} derive(Eq, ToJson, @debug.Debug)
 
 type StateListener
 
@@ -1052,6 +1220,18 @@ pub(all) struct SurfaceScale {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn SurfaceScale::default(ColorPalette, ColorScheme) -> Self
 
+pub(all) struct SurfaceTheme {
+  base_padding : Double
+  raised_padding : Double
+  overlay_padding : Double
+  base_radius : Double
+  raised_radius : Double
+  overlay_radius : Double
+  base_shadow : ShadowStyle?
+  raised_shadow : ShadowStyle?
+  overlay_shadow : ShadowStyle?
+} derive(Eq, ToJson, @debug.Debug)
+
 pub(all) enum TextAlign {
   TextStart
   TextCenter
@@ -1087,6 +1267,23 @@ pub(all) struct TextControlStateContext {
   undo_stack : Array[TextHistoryEntryContext]
   redo_stack : Array[TextHistoryEntryContext]
 } derive(Eq, ToJson, @debug.Debug)
+
+pub(all) enum TextFieldAppearance {
+  Filled
+  Outline
+  Underline
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct TextFieldTheme {
+  normal : ControlStateTokens
+  focused : ControlStateTokens
+  disabled : ControlStateTokens
+  placeholder : Color
+  cursor : Color
+  font : FontSpec
+  appearance : TextFieldAppearance
+} derive(Eq, ToJson, @debug.Debug)
+pub fn TextFieldTheme::resolve(Self, InteractionState) -> ControlStateStyle
 
 pub(all) struct TextHistoryEntryContext {
   text : String
@@ -1213,24 +1410,66 @@ pub fn TextSystem::register_font_data(Self, FontFamily, Bytes) -> Unit
 pub(all) struct Theme {
   scheme : ColorScheme
   palette : ColorPalette
-  semantic_colors : SemanticColorScale
   spacing_scale : SpacingScale
   radius_scale : RadiusScale
   typography : TypographyScale
   shadow_scale : ShadowScale
   motion : MotionScale
   surfaces : SurfaceScale
+  components : ComponentThemes
 } derive(Eq, ToJson, @debug.Debug)
 pub fn Theme::neutral() -> Self
+pub fn Theme::revision_fingerprint(Self) -> String
 pub fn Theme::surface_brush(Self, SurfaceLevel) -> Brush
+pub fn Theme::with_components(Self, ComponentThemes) -> Self
 pub fn Theme::with_motion(Self, MotionScale) -> Self
 pub fn Theme::with_palette(Self, ColorPalette) -> Self
 pub fn Theme::with_radius_scale(Self, RadiusScale) -> Self
-pub fn Theme::with_semantic_colors(Self, SemanticColorScale) -> Self
 pub fn Theme::with_shadow_scale(Self, ShadowScale) -> Self
 pub fn Theme::with_spacing_scale(Self, SpacingScale) -> Self
 pub fn Theme::with_surfaces(Self, SurfaceScale) -> Self
 pub fn Theme::with_typography(Self, TypographyScale) -> Self
+
+pub(all) enum ThemeDensity {
+  Compact
+  Standard
+  Comfortable
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ThemeDensity::label(Self) -> String
+pub fn ThemeDensity::multiplier(Self) -> Double
+
+pub(all) enum ThemePreset {
+  Minimal
+  Material
+  Carbon
+  Primer
+  Fluent
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct ThemeSpec {
+  preset : ThemePreset
+  color_mode : ColorMode
+  density : ThemeDensity
+  contrast : AccessibilityContrast
+  seed : Color?
+  reduced_motion : Bool
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ThemeSpec::default() -> Self
+pub fn ThemeSpec::minimal_dark() -> Self
+pub fn ThemeSpec::minimal_light() -> Self
+pub fn ThemeSpec::resolve_scheme(Self, ColorScheme) -> ColorScheme
+pub fn ThemeSpec::with_color_mode(Self, ColorMode) -> Self
+pub fn ThemeSpec::with_contrast(Self, AccessibilityContrast) -> Self
+pub fn ThemeSpec::with_density(Self, ThemeDensity) -> Self
+pub fn ThemeSpec::with_preset(Self, ThemePreset) -> Self
+pub fn ThemeSpec::with_reduced_motion(Self, Bool) -> Self
+pub fn ThemeSpec::with_seed(Self, Color?) -> Self
+
+pub(all) struct ToneTokens {
+  foreground : Color
+  background : Color
+  border : Color
+} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Transform2D {
   a : Double

@@ -7,23 +7,62 @@ pub(all) enum ColorScheme {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// Full semantic color palette. Extended from the original 8-role palette to
+/// the complete on*/container matrix used by Material 3 / Fluent 2 so a
+/// branded design system can express primary/secondary/tertiary/error
+/// container pairs and their on-colors instead of deriving them ad hoc with
+/// `multiply_alpha`/`lerp`. Semantic colors (success/warning/danger/info) are
+/// folded in directly; the separate `SemanticColorScale` is removed.
+///
+/// Role naming follows Compose Material 3 `ColorScheme`:
+/// - `on_<role>` is the text/icon color drawn on top of `<role>`.
+/// - `<role>_container` is a tinted surface variant; `on_<role>_container`
+///   is the text color on that container.
+/// `on_foreground` is an explicit alias of `background` for symmetry.
 pub(all) struct ColorPalette {
+  // Base surfaces.
   foreground : Color
   background : Color
   surface : Color
   surface_variant : Color
+  // Primary family.
   primary : Color
-  primary_foreground : Color
+  on_primary : Color
+  primary_container : Color
+  on_primary_container : Color
+  // Secondary family.
+  secondary : Color
+  on_secondary : Color
+  secondary_container : Color
+  on_secondary_container : Color
+  // Tertiary family.
+  tertiary : Color
+  on_tertiary : Color
+  tertiary_container : Color
+  on_tertiary_container : Color
+  // Error family.
+  error : Color
+  on_error : Color
+  error_container : Color
+  on_error_container : Color
+  // Surface text roles.
+  on_foreground : Color
+  on_surface : Color
+  on_surface_variant : Color
+  // Outlines.
   outline : Color
+  outline_variant : Color
   muted : Color
-} derive(Eq, Debug, ToJson)
-
-///|
-pub(all) struct SemanticColorScale {
+  // Semantic pairs (success/warning/danger/info with on-colors).
   success : Color
+  on_success : Color
   warning : Color
-  danger : Color
+  on_warning : Color
   info : Color
+  on_info : Color
+  danger : Color
+  on_danger : Color
+  // Focus + scrim.
   focus : Color
   scrim : Color
 } derive(Eq, Debug, ToJson)
@@ -120,22 +159,33 @@ pub(all) enum ContentSizeCategory {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// Resolved, drawable theme. A `Theme` is the output of `resolve_theme(spec,
+/// system_scheme)`: it carries the full palette, all scale tiers, and a
+/// first-class `components` aggregate. Controls read
+/// `ctx.environment.theme.components.<control>` at paint time; `style?` on a
+/// control constructor is a one-shot override.
 pub(all) struct Theme {
   scheme : ColorScheme
   palette : ColorPalette
-  semantic_colors : SemanticColorScale
   spacing_scale : SpacingScale
   radius_scale : RadiusScale
   typography : TypographyScale
   shadow_scale : ShadowScale
   motion : MotionScale
   surfaces : SurfaceScale
+  components : ComponentThemes
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// Runtime environment snapshot. Carries the user's `theme_spec` (intent), the
+/// current `system_scheme` (host-reported), and the resolved `theme` derived
+/// from both. Changing `system_scheme` rebuilds the full theme via
+/// `with_system_scheme`; the legacy `with_color_scheme` (which only flipped a
+/// flag and left the palette stale) is removed.
 pub(all) struct Environment {
+  theme_spec : ThemeSpec
+  system_scheme : ColorScheme
   theme : Theme
-  color_scheme : ColorScheme
   scale_factor : Double
   text_scale : Double
   locale : String
@@ -146,66 +196,167 @@ pub(all) struct Environment {
   enabled : Bool
 } derive(Eq, Debug, ToJson)
 
-///|
-pub fn ColorPalette::light() -> ColorPalette {
-  // Warm-neutral light surfaces (zinc-tinted) with an indigo-violet accent.
-  // Surfaces carry a faint cool-warm bias so cards read as elevated without
-  // heavy shadows; the accent is a saturated indigo that stays legible on both
-  // light and dark.
-  {
-    // shadcn/minimal: zinc neutrals, near-black primary. Accent is optional.
-    foreground: Color::rgba(r=0.145, g=0.145, b=0.149),
-    background: Color::rgba(r=1.0, g=1.0, b=1.0),
-    surface: Color::rgba(r=0.984, g=0.984, b=0.988),
-    surface_variant: Color::rgba(r=0.957, g=0.957, b=0.961),
-    primary: Color::rgba(r=0.145, g=0.145, b=0.149),
-    primary_foreground: Color::rgba(r=0.984, g=0.984, b=0.988),
-    outline: Color::rgba(r=0.898, g=0.898, b=0.906),
-    muted: Color::rgba(r=0.553, g=0.553, b=0.588),
-  }
-}
+// ---------------------------------------------------------------------------
+// ColorPalette factories
+// ---------------------------------------------------------------------------
 
 ///|
-pub fn ColorPalette::dark() -> ColorPalette {
-  // shadcn/minimal dark: zinc neutrals, near-white primary. Mirrors light.
-  {
-    foreground: Color::rgba(r=0.953, g=0.953, b=0.953),
-    background: Color::rgba(r=0.090, g=0.090, b=0.090),
-    surface: Color::rgba(r=0.145, g=0.145, b=0.145),
-    surface_variant: Color::rgba(r=0.212, g=0.212, b=0.212),
-    primary: Color::rgba(r=0.953, g=0.953, b=0.953),
-    primary_foreground: Color::rgba(r=0.145, g=0.145, b=0.145),
-    outline: Color::rgba(r=0.290, g=0.290, b=0.290),
-    muted: Color::rgba(r=0.643, g=0.643, b=0.643),
-  }
-}
-
-///|
-pub fn SemanticColorScale::default(
-  palette : ColorPalette,
+/// Build a palette from a primary color and scheme, deriving every on*/container
+/// role programmatically. This is the shared derivation used by both the
+/// Minimal preset and (optionally) branded addons that want a seed-driven
+/// palette without hand-writing 30+ colors.
+///
+/// Derivation rules:
+/// - `on_primary`/`on_secondary`/`on_tertiary`/`on_error` = white on dark
+///   primaries, near-black on light primaries (contrast-aware).
+/// - `<role>_container` = the role color lerped toward the surface by ~0.85
+///   (a soft tint); `on_<role>_container` = the role color darkened (light) or
+///   lightened (dark) for legibility on the tint.
+/// - `secondary`/`tertiary` default to a desaturated primary analog so the
+///   palette stays coherent when only a seed is supplied.
+pub fn ColorPalette::from_seed(
+  primary~ : Color,
   scheme : ColorScheme,
-) -> SemanticColorScale {
-  match scheme {
+  foreground? : Color,
+  background? : Color,
+  surface? : Color,
+  surface_variant? : Color,
+  outline? : Color,
+  muted? : Color,
+) -> ColorPalette {
+  let (fg, bg, surf, surf_var, outline_color, muted_color) = match scheme {
     Light =>
-      {
-        success: Color::rgba(r=0.10, g=0.50, b=0.30),
-        warning: Color::rgba(r=0.74, g=0.46, b=0.08),
-        danger: Color::rgba(r=0.76, g=0.16, b=0.18),
-        info: palette.primary,
-        focus: palette.primary,
-        scrim: Color::rgba(r=0.0, g=0.0, b=0.0, a=0.38),
-      }
+      (
+        foreground.unwrap_or(Color::rgba(r=0.145, g=0.145, b=0.149)),
+        background.unwrap_or(Color::rgba(r=1.0, g=1.0, b=1.0)),
+        surface.unwrap_or(Color::rgba(r=0.984, g=0.984, b=0.988)),
+        surface_variant.unwrap_or(Color::rgba(r=0.957, g=0.957, b=0.961)),
+        outline.unwrap_or(Color::rgba(r=0.898, g=0.898, b=0.906)),
+        muted.unwrap_or(Color::rgba(r=0.553, g=0.553, b=0.588)),
+      )
     Dark =>
-      {
-        success: Color::rgba(r=0.38, g=0.76, b=0.50),
-        warning: Color::rgba(r=0.98, g=0.78, b=0.36),
-        danger: Color::rgba(r=1.0, g=0.52, b=0.50),
-        info: palette.primary,
-        focus: palette.primary,
-        scrim: Color::rgba(r=0.0, g=0.0, b=0.0, a=0.62),
-      }
+      (
+        foreground.unwrap_or(Color::rgba(r=0.953, g=0.953, b=0.953)),
+        background.unwrap_or(Color::rgba(r=0.090, g=0.090, b=0.090)),
+        surface.unwrap_or(Color::rgba(r=0.145, g=0.145, b=0.145)),
+        surface_variant.unwrap_or(Color::rgba(r=0.212, g=0.212, b=0.212)),
+        outline.unwrap_or(Color::rgba(r=0.290, g=0.290, b=0.290)),
+        muted.unwrap_or(Color::rgba(r=0.643, g=0.643, b=0.643)),
+      )
+  }
+  // Contrast-aware on-color for a fill: white on dark fills, near-black on
+  // light fills. Uses perceived luminance as the threshold.
+  fn on_for(fill : Color) -> Color {
+    let lum = fill.r * 0.299 + fill.g * 0.587 + fill.b * 0.114
+    if lum < 0.55 {
+      Color::white()
+    } else {
+      Color::rgba(r=0.10, g=0.10, b=0.12)
+    }
+  }
+  // Container tint: fill lerped toward the surface by 0.85.
+  fn container_for(fill : Color) -> Color {
+    fill.lerp(surf, 0.85)
+  }
+  // On-container: fill darkened (light scheme) / lightened (dark scheme) for
+  // legibility on the soft tint.
+  fn on_container_for(fill : Color) -> Color {
+    match scheme {
+      Light => fill.darken(0.30)
+      Dark => fill.lighten(0.35)
+    }
+  }
+  let secondary = primary.lerp(surf, 0.45)
+  let tertiary = primary.lerp(
+    Color::rgba(r=0.55, g=0.30, b=0.70),
+    0.40,
+  )
+  let error = match scheme {
+    Light => Color::rgba(r=0.76, g=0.16, b=0.18)
+    Dark => Color::rgba(r=1.0, g=0.52, b=0.50)
+  }
+  let success = match scheme {
+    Light => Color::rgba(r=0.10, g=0.50, b=0.30)
+    Dark => Color::rgba(r=0.38, g=0.76, b=0.50)
+  }
+  let warning = match scheme {
+    Light => Color::rgba(r=0.74, g=0.46, b=0.08)
+    Dark => Color::rgba(r=0.98, g=0.78, b=0.36)
+  }
+  let info = primary
+  let danger = error
+  let focus = primary
+  let scrim = match scheme {
+    Light => Color::rgba(r=0.0, g=0.0, b=0.0, a=0.38)
+    Dark => Color::rgba(r=0.0, g=0.0, b=0.0, a=0.62)
+  }
+  let outline_variant = match scheme {
+    Light => outline_color.lerp(surf, 0.55)
+    Dark => outline_color.lerp(surf, 0.45)
+  }
+  {
+    foreground: fg,
+    background: bg,
+    surface: surf,
+    surface_variant: surf_var,
+    primary,
+    on_primary: on_for(primary),
+    primary_container: container_for(primary),
+    on_primary_container: on_container_for(primary),
+    secondary,
+    on_secondary: on_for(secondary),
+    secondary_container: container_for(secondary),
+    on_secondary_container: on_container_for(secondary),
+    tertiary,
+    on_tertiary: on_for(tertiary),
+    tertiary_container: container_for(tertiary),
+    on_tertiary_container: on_container_for(tertiary),
+    error,
+    on_error: on_for(error),
+    error_container: container_for(error),
+    on_error_container: on_container_for(error),
+    on_foreground: bg,
+    on_surface: fg,
+    on_surface_variant: muted_color,
+    outline: outline_color,
+    outline_variant,
+    muted: muted_color,
+    success,
+    on_success: on_for(success),
+    warning,
+    on_warning: on_for(warning),
+    info,
+    on_info: on_for(info),
+    danger,
+    on_danger: on_for(danger),
+    focus,
+    scrim,
   }
 }
+
+///|
+/// Minimal light palette (zinc neutrals, near-black primary). Equivalent to
+/// the legacy hand-written palette but now fills the full on*/container matrix
+/// via `from_seed`.
+pub fn ColorPalette::light() -> ColorPalette {
+  ColorPalette::from_seed(
+    primary=Color::rgba(r=0.145, g=0.145, b=0.149),
+    ColorScheme::Light,
+  )
+}
+
+///|
+/// Minimal dark palette (zinc neutrals, near-white primary). Mirrors light.
+pub fn ColorPalette::dark() -> ColorPalette {
+  ColorPalette::from_seed(
+    primary=Color::rgba(r=0.953, g=0.953, b=0.953),
+    ColorScheme::Dark,
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Scale defaults
+// ---------------------------------------------------------------------------
 
 ///|
 pub fn SpacingScale::default() -> SpacingScale {
@@ -296,46 +447,22 @@ pub fn SurfaceScale::default(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Theme factories
+// ---------------------------------------------------------------------------
+
 ///|
+/// Neutral fallback theme. Equivalent to resolving `ThemeSpec::default()` with
+/// a light system scheme. Carries default `ComponentThemes` derived from the
+/// minimal palette.
 pub fn Theme::neutral() -> Theme {
-  let palette = ColorPalette::light()
-  let semantic_colors = SemanticColorScale::default(palette, ColorScheme::Light)
-  let spacing_scale = SpacingScale::default()
-  let radius_scale = RadiusScale::default()
-  let typography = TypographyScale::default()
-  let shadow_scale = ShadowScale::default(scheme=ColorScheme::Light)
-  let motion = MotionScale::default()
-  let surfaces = SurfaceScale::default(palette, ColorScheme::Light)
-  {
-    scheme: ColorScheme::Light,
-    palette,
-    semantic_colors,
-    spacing_scale,
-    radius_scale,
-    typography,
-    shadow_scale,
-    motion,
-    surfaces,
-  }
+  resolve_minimal_theme(ThemeSpec::minimal_light(), ColorScheme::Light)
 }
 
 ///|
 pub fn Theme::with_palette(self : Theme, palette : ColorPalette) -> Theme {
   let surfaces = SurfaceScale::default(palette, self.scheme)
-  let semantic_colors = {
-    ..self.semantic_colors,
-    info: palette.primary,
-    focus: palette.primary,
-  }
-  { ..self, palette, semantic_colors, surfaces }
-}
-
-///|
-pub fn Theme::with_semantic_colors(
-  self : Theme,
-  semantic_colors : SemanticColorScale,
-) -> Theme {
-  { ..self, semantic_colors, }
+  { ..self, palette, surfaces }
 }
 
 ///|
@@ -343,7 +470,7 @@ pub fn Theme::with_spacing_scale(
   self : Theme,
   spacing_scale : SpacingScale,
 ) -> Theme {
-  { ..self, spacing_scale, }
+  { ..self, spacing_scale }
 }
 
 ///|
@@ -351,7 +478,7 @@ pub fn Theme::with_radius_scale(
   self : Theme,
   radius_scale : RadiusScale,
 ) -> Theme {
-  { ..self, radius_scale, }
+  { ..self, radius_scale }
 }
 
 ///|
@@ -359,7 +486,7 @@ pub fn Theme::with_typography(
   self : Theme,
   typography : TypographyScale,
 ) -> Theme {
-  { ..self, typography, }
+  { ..self, typography }
 }
 
 ///|
@@ -367,17 +494,17 @@ pub fn Theme::with_shadow_scale(
   self : Theme,
   shadow_scale : ShadowScale,
 ) -> Theme {
-  { ..self, shadow_scale, }
+  { ..self, shadow_scale }
 }
 
 ///|
 pub fn Theme::with_motion(self : Theme, motion : MotionScale) -> Theme {
-  { ..self, motion, }
+  { ..self, motion }
 }
 
 ///|
 pub fn Theme::with_surfaces(self : Theme, surfaces : SurfaceScale) -> Theme {
-  { ..self, surfaces, }
+  { ..self, surfaces }
 }
 
 ///|
@@ -389,12 +516,22 @@ pub fn Theme::surface_brush(self : Theme, level : SurfaceLevel) -> Brush {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Environment factories
+// ---------------------------------------------------------------------------
+
 ///|
+/// Neutral environment: Minimal theme following a light system scheme, standard
+/// density/contrast, full motion. The `theme_spec` records the intent so a
+/// later `ThemeChanged(Dark)` event rebuilds the full dark theme instead of
+/// leaving a stale light palette.
 pub fn Environment::neutral() -> Environment {
-  let theme = Theme::neutral()
+  let spec = ThemeSpec::default()
+  let theme = resolve_minimal_theme(spec, ColorScheme::Light)
   {
+    theme_spec: spec,
+    system_scheme: ColorScheme::Light,
     theme,
-    color_scheme: theme.scheme,
     scale_factor: 1.0,
     text_scale: 1.0,
     locale: "en-US",
@@ -407,19 +544,47 @@ pub fn Environment::neutral() -> Environment {
 }
 
 ///|
+/// Replace the theme. Also updates `system_scheme` to match the theme's scheme
+/// so the two stay consistent. Use `with_theme_spec` + `with_system_scheme`
+/// for the resolver-driven path; this helper is for callers that already have
+/// a fully resolved `Theme` (e.g. a branded addon that built one directly).
 pub fn Environment::with_theme(
   self : Environment,
   theme : Theme,
 ) -> Environment {
-  { ..self, theme, color_scheme: theme.scheme }
+  { ..self, theme, system_scheme: theme.scheme }
 }
 
 ///|
-pub fn Environment::with_color_scheme(
+/// Replace the system color scheme and rebuild the full theme from
+/// `theme_spec`. This is the host-facing entry point: a `ThemeChanged(Dark)`
+/// event calls this so the palette/surfaces/shadows actually switch to dark,
+/// fixing the old bug where only the scheme flag flipped.
+pub fn Environment::with_system_scheme(
   self : Environment,
-  color_scheme : ColorScheme,
+  system_scheme : ColorScheme,
 ) -> Environment {
-  { ..self, color_scheme, theme: { ..self.theme, scheme: color_scheme } }
+  let theme = resolve_theme(self.theme_spec, system_scheme)
+  { ..self, system_scheme, theme }
+}
+
+///|
+/// Replace the theme spec and rebuild the full theme against the current
+/// system scheme. App code calls this when the user picks a new preset,
+/// density, or contrast.
+pub fn Environment::with_theme_spec(
+  self : Environment,
+  theme_spec : ThemeSpec,
+) -> Environment {
+  let theme = resolve_theme(theme_spec, self.system_scheme)
+  { ..self, theme_spec, theme }
+}
+
+///|
+/// Read the effective color scheme (from the resolved theme). Kept as a
+/// convenience accessor so callers do not have to reach into `theme.scheme`.
+pub fn Environment::color_scheme(self : Environment) -> ColorScheme {
+  self.theme.scheme
 }
 
 ///|
@@ -443,7 +608,7 @@ pub fn Environment::with_locale(
   self : Environment,
   locale : String,
 ) -> Environment {
-  { ..self, locale, }
+  { ..self, locale }
 }
 
 ///|
@@ -451,23 +616,29 @@ pub fn Environment::with_layout_direction(
   self : Environment,
   layout_direction : LayoutDirection,
 ) -> Environment {
-  { ..self, layout_direction, }
+  { ..self, layout_direction }
 }
 
 ///|
+/// Update accessibility contrast. Also updates `theme_spec.contrast` so a
+/// subsequent system-scheme change re-resolves with the new contrast.
 pub fn Environment::with_accessibility_contrast(
   self : Environment,
   accessibility_contrast : AccessibilityContrast,
 ) -> Environment {
-  { ..self, accessibility_contrast, }
+  let spec = self.theme_spec.with_contrast(accessibility_contrast)
+  self.with_theme_spec(spec)
 }
 
 ///|
+/// Update reduced motion. Also updates `theme_spec.reduced_motion` so a
+/// subsequent re-resolve zeroes motion durations.
 pub fn Environment::with_reduced_motion(
   self : Environment,
   reduced_motion : Bool,
 ) -> Environment {
-  { ..self, reduced_motion, }
+  let spec = self.theme_spec.with_reduced_motion(reduced_motion)
+  self.with_theme_spec(spec)
 }
 
 ///|
@@ -487,7 +658,7 @@ pub fn Environment::with_enabled(
   self : Environment,
   enabled : Bool,
 ) -> Environment {
-  { ..self, enabled, }
+  { ..self, enabled }
 }
 
 ///|
@@ -509,4 +680,47 @@ pub fn ViewStyle::from_theme(theme : Theme) -> ViewStyle {
     background: Some(theme.surface_brush(SurfaceLevel::Base)),
     corner_radius: Some(theme.radius_scale.md),
   }
+}
+
+///|
+/// Content fingerprint for a `Theme`, used by `View::theme` modifier revision
+/// so reconcile can detect a real theme change (different palette/components)
+/// instead of treating every `.theme(...)` wrapper as identical. Covers scheme,
+/// the palette colors a paint pass reads, and the button/text-field component
+/// tokens that drive control appearance; this is not a full hash, just enough
+/// fields to distinguish visually distinct themes.
+pub fn Theme::revision_fingerprint(self : Theme) -> String {
+  let p = self.palette
+  let b = self.components.button.primary
+  "theme:\{scheme_label(self.scheme)}:fg:\{color_fp(p.foreground)}:bg:\{color_fp(p.background)}:sf:\{color_fp(p.surface)}:sv:\{color_fp(p.surface_variant)}:pr:\{color_fp(p.primary)}:op:\{color_fp(p.on_primary)}:ol:\{color_fp(p.outline)}:mt:\{color_fp(p.muted)}:sc:\{color_fp(p.success)}:wn:\{color_fp(p.warning)}:dg:\{color_fp(p.danger)}:if:\{color_fp(p.info)}:fc:\{color_fp(p.focus)}:bp:\{color_fp(b.foreground)}:\{color_fp(b.background)}:\{b.radius}:r:\{self.radius_scale.md}:sm:\{self.shadow_scale.md.blur_radius}"
+}
+
+///|
+/// Content fingerprint for an `Environment`, used by `View::environment`
+/// modifier revision. Combines the theme fingerprint with the a11y/motion
+/// fields that change paint output so a state-layer or reduced-motion change
+/// is not swallowed by reconcile.
+pub fn Environment::revision_fingerprint(self : Environment) -> String {
+  "env:\{self.theme.revision_fingerprint()}:sys:\{scheme_label(self.system_scheme)}:ct:\{contrast_label(self.accessibility_contrast)}:rm:\{self.reduced_motion}:en:\{self.enabled}:ts:\{self.text_scale}:sf:\{self.scale_factor}"
+}
+
+///|
+fn scheme_label(scheme : ColorScheme) -> String {
+  match scheme {
+    Light => "light"
+    Dark => "dark"
+  }
+}
+
+///|
+fn contrast_label(contrast : AccessibilityContrast) -> String {
+  match contrast {
+    Standard => "std"
+    High => "high"
+  }
+}
+
+///|
+fn color_fp(color : Color) -> String {
+  "\{color.r}:\{color.g}:\{color.b}:\{color.a}"
 }

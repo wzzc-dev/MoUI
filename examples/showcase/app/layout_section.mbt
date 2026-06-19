@@ -84,7 +84,7 @@ fn ShowcaseModel::layout_section(
       container(
         text("Overlay", width=62.0, height=18.0)
         .font(theme.typography.caption)
-        .foreground(theme.palette.primary_foreground),
+        .foreground(theme.palette.on_primary),
         width=82.0,
         height=26.0,
         background=theme.palette.primary.multiply_alpha(0.88),

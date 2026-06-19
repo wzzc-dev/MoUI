@@ -506,15 +506,15 @@ fn semantic_palette_role_core_value(
       PaletteSurface => theme.palette.surface
       PaletteSurfaceVariant => theme.palette.surface_variant
       PalettePrimary => theme.palette.primary
-      PalettePrimaryForeground => theme.palette.primary_foreground
+      PalettePrimaryForeground => theme.palette.on_primary
       PaletteOutline => theme.palette.outline
       PaletteMuted => theme.palette.muted
-      PaletteSuccess => theme.semantic_colors.success
-      PaletteWarning => theme.semantic_colors.warning
-      PaletteDanger => theme.semantic_colors.danger
-      PaletteInfo => theme.semantic_colors.info
-      PaletteFocus => theme.semantic_colors.focus
-      PaletteScrim => theme.semantic_colors.scrim
+      PaletteSuccess => theme.palette.success
+      PaletteWarning => theme.palette.warning
+      PaletteDanger => theme.palette.danger
+      PaletteInfo => theme.palette.info
+      PaletteFocus => theme.palette.focus
+      PaletteScrim => theme.palette.scrim
     },
   ).value
 }

@@ -171,7 +171,7 @@ test "workbench runtime follows light and dark chrome surfaces" {
   )
 
   runtime.set_environment(
-    runtime.environment().with_color_scheme(@moui.ColorScheme::Dark),
+    runtime.environment().with_system_scheme(@moui.ColorScheme::Dark),
   )
   let dark_commands = runtime.draw_commands()
   assert_true(
