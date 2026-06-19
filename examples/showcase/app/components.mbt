@@ -825,11 +825,11 @@ fn ShowcaseModel::sheet(
       spacing=theme.spacing_scale.md,
       align=@views.CrossAlign::Start,
     ),
-    presentation_mode=@core.SheetPresentationMode::BottomSheet,
-    background=theme.palette.surface,
-    corner_radius=theme.radius_scale.lg,
-    shadow=Some(theme.shadow_scale.md),
-  )
+   presentation_mode=@core.SheetPresentationMode::BottomSheet,
+   background=theme.palette.surface,
+   corner_radius=theme.radius_scale.lg,
+    shadow=Some(theme.shadow_scale.lg),
+ )
 }
 
 ///|
