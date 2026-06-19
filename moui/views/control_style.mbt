@@ -142,9 +142,9 @@ pub fn SurfaceStyle::default(
 pub fn SurfaceStyle::raised(
   theme? : @core.Theme = default_theme(),
 ) -> SurfaceStyle {
-  // Dark surfaces render nearly invisible black shadows, so lift the border
-  // toward a subtle white highlight in dark mode to read the elevation edge;
-  // light mode keeps the standard outline.
+  // shadcn/minimal: raised surfaces are flat with a border, no shadow. Layer
+  // separation comes from the outline tone. Dark mode uses a faint white edge
+  // since the outline token alone is too subtle against dark surfaces.
   let border_color = match theme.scheme {
     @core.ColorScheme::Light => theme.palette.outline
     @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.06)
@@ -158,7 +158,7 @@ pub fn SurfaceStyle::raised(
       ),
     ),
     radius: theme.radius_scale.lg,
-    shadow: Some(theme.shadow_scale.md),
+    shadow: None,
     padding: @core.Insets::all(theme.spacing_scale.lg),
     level: @core.SurfaceLevel::Raised,
   }
@@ -180,30 +180,27 @@ pub fn ButtonStyle::filled(
   theme? : @core.Theme = default_theme(),
 ) -> ButtonStyle {
   let primary = theme.palette.primary
-  // Derive hover/press shades from the palette primary instead of hard-coded
-  // rgba literals so the button tracks the active theme's accent color. Hover
-  // lightens slightly for a modern lift; press darkens to signal activation.
-  // A subtle resting shadow gives the primary CTA a tactile, elevated feel.
+  // shadcn/minimal: flat primary button, no shadow. Hover/press use opacity
+  // overlays rather than color shifts, so the button stays a solid block that
+  // just dims — the shadcn idiom. Tracks any primary including near-black.
   let normal = control_state(
     foreground=theme.palette.primary_foreground,
     background=@core.Brush::solid(primary),
-    shadow=theme.shadow_scale.sm,
     radius=theme.radius_scale.md,
   )
   let hovered = control_state(
     foreground=theme.palette.primary_foreground,
-    background=@core.Brush::solid(primary.lighten(0.06)),
-    shadow=theme.shadow_scale.md,
+    background=@core.Brush::solid(primary.multiply_alpha(0.90)),
     radius=theme.radius_scale.md,
   )
   let pressed = control_state(
     foreground=theme.palette.primary_foreground,
-    background=@core.Brush::solid(primary.darken(0.12)),
+    background=@core.Brush::solid(primary.multiply_alpha(0.80)),
     radius=theme.radius_scale.md,
   )
   let disabled = control_state(
     foreground=theme.palette.muted,
-    background=@core.Brush::solid(theme.palette.surface_variant.multiply_alpha(0.7)),
+    background=@core.Brush::solid(theme.palette.surface_variant),
     radius=theme.radius_scale.md,
   )
   { normal, hovered, pressed, disabled }
