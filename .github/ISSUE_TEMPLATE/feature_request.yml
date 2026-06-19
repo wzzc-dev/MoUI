@@ -1,0 +1,72 @@
+name: Feature request
+description: Suggest a new control, API, or framework capability
+title: "[feature] "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature. To help the maintainer triage, please
+        describe the problem first and the proposed solution second.
+
+        Architecturally sensitive requests (new top-level package, runtime
+        pipeline change, `core` contract change, status-class reclassification)
+        may need a lightweight RFC — see
+        [GOVERNANCE.md](https://github.com/wzzc-dev/MoUI/blob/main/GOVERNANCE.md#decision-mechanism).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem does this feature solve? What are you trying to do that the current API makes hard or impossible?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What you'd like the API or behavior to look like. A code sketch is welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you considered and why they fall short.
+    validations:
+      required: false
+  - type: dropdown
+    id: boundary
+    attributes:
+      label: Affected package boundary
+      description: |
+        Which owning package does this feature touch? See
+        [docs/moui-app-package-boundary.md](https://github.com/wzzc-dev/MoUI/blob/main/docs/moui-app-package-boundary.md)
+        for the ownership rules. New controls default to `moui/views`.
+      options:
+        - moui/core (kernel contracts)
+        - moui/views (controls & app-facing constructors)
+        - moui/runtime (lifecycle, trees, dispatch)
+        - moui/backend/host (host service contracts)
+        - moui/render/* (renderers)
+        - moui_theme/* (design-system addons)
+        - examples (apps)
+        - Not sure
+    validations:
+      required: true
+  - type: checkboxes
+    id: invariant
+    attributes:
+      label: Architectural invariants check
+      description: Confirm the feature respects the project invariants.
+      options:
+        - label: This feature does not add a new `core` enum variant, primitive constructor, or runtime lowering arm.
+          required: true
+        - label: This feature keeps ordinary app packages depending only on `moui` and `moui/views` (or documented exceptions).
+          required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mockups, links to similar features in other frameworks, related issues, etc.
+    validations:
+      required: false

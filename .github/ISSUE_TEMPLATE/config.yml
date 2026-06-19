@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/wzzc-dev/MoUI/tree/main/docs
+    about: Read the architecture, package boundary, development, and testing docs before opening an issue.
+  - name: Questions & discussion
+    url: https://github.com/wzzc-dev/MoUI/discussions
+    about: For questions and open-ended discussion, use GitHub Discussions instead of an issue.
+  - name: Security report
+    url: https://github.com/wzzc-dev/MoUI/security/advisories/new
+    about: Security vulnerabilities must be reported privately, not as a public issue. See SECURITY.md.
