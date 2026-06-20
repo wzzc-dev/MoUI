@@ -1,48 +1,117 @@
 ///|
+/// Append the standard control-background draw sequence to `commands`: an
+/// elevation shadow (when a key shadow is supplied), a rounded-rect fill in the
+/// resolved `background` brush, and a stroked border that honors high-contrast
+/// accessibility mode (thickened and forced to the theme foreground so control
+/// edges stay legible regardless of the theme's subtle outline alpha).
+///
+/// `background` is taken already-resolved so callers that interpolate the
+/// background across interaction states (e.g. `button_control`'s hover/press
+/// transition) can pass the blended brush through. `border` is the control's
+/// own border for standard contrast; it is overridden wholesale in
+/// high-contrast mode. The `frame` and `radius` define the rounded rect; the
+/// `shadow` and the ambient contrast/scheme are read from `ctx.environment` so
+/// every control shares the same a11y + elevation behavior without
+/// reimplementing it.
+fn append_control_background(
+  ctx : @core.ViewPaintContext,
+  commands : Array[@core.DrawCommand],
+  background : @core.Brush,
+  border : @core.BorderStyle?,
+  shadow : @core.ShadowStyle?,
+  radius : Double,
+) -> Unit {
+  let rounded = @core.RoundedRect::new(rect=ctx.frame, radius~)
+  emit_elevation_shadow(
+    commands,
+    rounded,
+    shadow,
+    ctx.environment.color_scheme(),
+  )
+  commands.push(@core.DrawCommand::FillRoundedRectBrush(rounded, background))
+  // High-contrast accessibility mode thickens borders and renders them in the
+  // foreground color so control edges stay legible regardless of the theme's
+  // subtle outline alpha. Borderless controls gain a thin outline so their
+  // bounds are always discoverable.
+  let resolved_border = match ctx.environment.accessibility_contrast {
+    @core.AccessibilityContrast::High =>
+      Some(
+        @core.BorderStyle::new(
+          brush=@core.Brush::solid(ctx.environment.theme.palette.foreground),
+          width=2.0,
+        ),
+      )
+    @core.AccessibilityContrast::Standard =>
+      match border {
+        Some(b) => Some(b)
+        None => None
+      }
+  }
+  match resolved_border {
+    Some(b) =>
+      if b.width > 0.0 {
+        commands.push(
+          @core.DrawCommand::StrokeRoundedRectBrush(rounded, b.brush, b.width),
+        )
+      }
+    None => ()
+  }
+}
+
+///|
 fn[Msg] button_control(
   text~ : String,
+  variant~ : ButtonVariant,
   min_size~ : @core.Size,
-  font~ : @core.FontSpec,
-  foreground~ : @core.Color,
-  background~ : @core.Brush,
-  hovered_background~ : @core.Brush,
-  pressed_background~ : @core.Brush,
-  padding_horizontal~ : Double,
-  padding_vertical~ : Double,
-  transition_duration_ms~ : Double,
-  transition_easing~ : @core.Easing,
-  border? : @core.BorderStyle? = None,
-  shadow? : @core.ShadowStyle? = None,
-  corner_radius? : Double = 0.0,
+  theme? : @core.Theme,
+  style? : ButtonStyle,
   leading_icon? : IconName? = None,
   on_click? : Msg? = None,
   kind? : String = "Button",
   key? : String? = None,
 ) -> @core.View[Msg] {
-  let icon_size = font.size
-  let icon_gap = padding_horizontal * 0.5
-  let icon_block_width = match leading_icon {
-    Some(_) => icon_size + icon_gap
-    None => 0.0
+  // Theme is resolved ambient-ly: an explicit `theme?` overrides the
+  // environment, otherwise the runtime's `ctx.environment.theme` is read at
+  // layout/paint time so the button tracks dark-mode/a11y/reduced-motion
+  // changes without the caller rebuilding the view tree.
+  let theme_revision = match theme {
+    Some(t) => t.revision_fingerprint()
+    None => "context"
+  }
+  let variant_label = match variant {
+    ButtonVariant::Primary => "primary"
+    ButtonVariant::Tonal => "tonal"
+    ButtonVariant::Outline => "outline"
+    ButtonVariant::Ghost => "ghost"
+    ButtonVariant::Subtle => "subtle"
+    ButtonVariant::SubtleBrand => "subtle_brand"
   }
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "button:\{text}:\{view_size_revision(min_size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_brush_revision(background)}:\{view_brush_revision(hovered_background)}:\{view_brush_revision(pressed_background)}:\{view_border_option_revision(border)}:\{view_shadow_option_revision(shadow)}:\{corner_radius}:\{padding_horizontal}:\{padding_vertical}:\{icon_block_width}:\{on_click is Some(_)}"
+      "button:\{text}:\{view_size_revision(min_size)}:\{variant_label}:\{theme_revision}:\{leading_icon is Some(_)}:\{on_click is Some(_)}"
     },
     layout=ctx => {
       // Content-driven sizing: measure the label with the real text system,
       // then pad it and floor it at the supplied minimum size. When a leading
       // icon is present, reserve its square plus a small gap before the label.
       // Constraints still clamp the result so parents can force a fixed frame.
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let font = resolved_theme.typography.control
+      let padding_horizontal = resolved_theme.spacing_scale.lg
+      let padding_vertical = resolved_theme.spacing_scale.sm
+      let icon_size = font.size
+      let icon_gap = padding_horizontal * 0.5
+      let icon_block_width = match leading_icon {
+        Some(_) => icon_size + icon_gap
+        None => 0.0
+      }
       let measured = ctx.text_system.measure_text(
         @core.TextLayoutInput::new(text~, font~),
       )
       let content_width = view_max_double(
         min_size.width,
-        icon_block_width +
-        measured.size.width +
-        padding_horizontal * 2.0,
+        icon_block_width + measured.size.width + padding_horizontal * 2.0,
       )
       let content_height = view_max_double(
         min_size.height,
@@ -55,6 +124,25 @@ fn[Msg] button_control(
       )
     },
     paint=ctx => {
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let resolved_style = match style {
+        Some(value) => value
+        None => variant.style(resolved_theme)
+      }
+      let normal = resolved_style.normal
+      let hovered = resolved_style.hovered
+      let pressed = resolved_style.pressed
+      let font = resolved_theme.typography.control
+      let foreground = normal.foreground
+      let padding_horizontal = resolved_theme.spacing_scale.lg
+      let icon_size = font.size
+      let icon_gap = padding_horizontal * 0.5
+      let icon_block_width = match leading_icon {
+        Some(_) => icon_size + icon_gap
+        None => 0.0
+      }
+      let transition_duration_ms = resolved_theme.motion.fast_ms
+      let transition_easing = resolved_theme.motion.easing
       let current_state = if ctx.state.pressed {
         @core.ButtonState::Pressed
       } else if ctx.state.hovered {
@@ -69,33 +157,57 @@ fn[Msg] button_control(
       // the current one so hover/press ease in instead of hard-cutting.
       let transition = parse_button_transition(ctx.state.scratch)
       let (background_brush, animating) = match transition {
-        Some((from_state, start_ms)) => {
+        Some((from_state, start_ms)) =>
           if ctx.environment.reduced_motion ||
             transition_duration_ms <= 0.0 ||
             ctx.now_ms <= 0.0 {
-            (button_state_brush(current_state, background, hovered_background, pressed_background), false)
+            (
+              button_state_brush(
+                current_state,
+                normal.background,
+                hovered.background,
+                pressed.background,
+              ),
+              false,
+            )
           } else {
             let start = start_ms.to_double()
             let raw_progress = (ctx.now_ms - start) / transition_duration_ms
             if raw_progress >= 1.0 {
-              (button_state_brush(current_state, background, hovered_background, pressed_background), false)
+              (
+                button_state_brush(
+                  current_state,
+                  normal.background,
+                  hovered.background,
+                  pressed.background,
+                ),
+                false,
+              )
             } else if raw_progress <= 0.0 {
-              (button_state_brush(from_state, background, hovered_background, pressed_background), true)
+              (
+                button_state_brush(
+                  from_state,
+                  normal.background,
+                  hovered.background,
+                  pressed.background,
+                ),
+                true,
+              )
             } else {
               let from_color = button_state_color(
                 button_state_brush(
                   from_state,
-                  background,
-                  hovered_background,
-                  pressed_background,
+                  normal.background,
+                  hovered.background,
+                  pressed.background,
                 ),
               )
               let to_color = button_state_color(
                 button_state_brush(
                   current_state,
-                  background,
-                  hovered_background,
-                  pressed_background,
+                  normal.background,
+                  hovered.background,
+                  pressed.background,
                 ),
               )
               let blended = @core.animated_color(
@@ -107,60 +219,48 @@ fn[Msg] button_control(
               (@core.Brush::solid(blended), true)
             }
           }
-        }
         None =>
-          (button_state_brush(current_state, background, hovered_background, pressed_background), false)
-      }
-     let commands : Array[@core.DrawCommand] = []
-     let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
-     emit_elevation_shadow(commands, rounded, shadow, ctx.environment.color_scheme())
-     commands.push(
-       @core.DrawCommand::FillRoundedRectBrush(rounded, background_brush),
-     )
-      // High-contrast accessibility mode thickens borders and renders them in
-      // the foreground color so control edges stay legible regardless of the
-      // theme's subtle outline alpha. Borderless controls gain a thin outline
-      // so their bounds are always discoverable.
-      let resolved_border = match ctx.environment.accessibility_contrast {
-        @core.AccessibilityContrast::High =>
-          Some(
-            @core.BorderStyle::new(
-              brush=@core.Brush::solid(ctx.environment.theme.palette.foreground),
-              width=2.0,
+          (
+            button_state_brush(
+              current_state,
+              normal.background,
+              hovered.background,
+              pressed.background,
             ),
+            false,
           )
-        @core.AccessibilityContrast::Standard =>
-          match border {
-            Some(b) => Some(b)
-            None => None
-          }
       }
-      match resolved_border {
-       Some(border) =>
-         if border.width > 0.0 {
-           commands.push(
-             @core.DrawCommand::StrokeRoundedRectBrush(
-               rounded,
-               border.brush,
-               border.width,
-             ),
-           )
-         }
-       None => ()
-     }
+      let commands : Array[@core.DrawCommand] = []
+      append_control_background(
+        ctx,
+        commands,
+        background_brush,
+        normal.border,
+        normal.shadow,
+        normal.radius,
+      )
       // Lay out the leading icon (vertically centered) and offset the text
       // frame to the right of it so the label stays centered in the remainder.
-      let text_origin_x = ctx.frame.origin.x + padding_horizontal + icon_block_width
+      let text_origin_x = ctx.frame.origin.x +
+        padding_horizontal +
+        icon_block_width
       let text_frame = @core.Rect::new(
         x=text_origin_x,
         y=ctx.frame.origin.y,
-        width=view_max_double(0.0, ctx.frame.size.width - padding_horizontal - icon_block_width - padding_horizontal),
+        width=view_max_double(
+          0.0,
+          ctx.frame.size.width -
+          padding_horizontal -
+          icon_block_width -
+          padding_horizontal,
+        ),
         height=ctx.frame.size.height,
       )
       match leading_icon {
         Some(name) => {
           let icon_origin_x = ctx.frame.origin.x + padding_horizontal
-          let icon_origin_y = ctx.frame.origin.y + (ctx.frame.size.height - icon_size) / 2.0
+          let icon_origin_y = ctx.frame.origin.y +
+            (ctx.frame.size.height - icon_size) / 2.0
           let scale = icon_size / 24.0
           let scaled = icon_scale_verbs(
             icon_path(name),
@@ -214,7 +314,12 @@ fn[Msg] button_control(
                 activated=true,
                 captured=true,
                 state=Some(
-                  view_button_state_context(ctx.state, current, next, ctx.now_ms),
+                  view_button_state_context(
+                    ctx.state,
+                    current,
+                    next,
+                    ctx.now_ms,
+                  ),
                 ),
                 dirty=@core.ViewDirtyHint::ViewPaintDirty,
                 messages=[message],
@@ -225,7 +330,12 @@ fn[Msg] button_control(
                 activated=false,
                 captured=true,
                 state=Some(
-                  view_button_state_context(ctx.state, current, next, ctx.now_ms),
+                  view_button_state_context(
+                    ctx.state,
+                    current,
+                    next,
+                    ctx.now_ms,
+                  ),
                 ),
                 dirty=@core.ViewDirtyHint::ViewPaintDirty,
               )
@@ -235,7 +345,12 @@ fn[Msg] button_control(
                 captured=inside || changed,
                 state=if changed {
                   Some(
-                    view_button_state_context(ctx.state, current, next, ctx.now_ms),
+                    view_button_state_context(
+                      ctx.state,
+                      current,
+                      next,
+                      ctx.now_ms,
+                    ),
                   )
                 } else {
                   None
@@ -335,7 +450,7 @@ fn[Msg] checkbox_control(
         0.0
       } else {
         let measured = ctx.text_system.measure_text(
-          @core.TextLayoutInput::new(text=label, font=font),
+          @core.TextLayoutInput::new(text=label, font~),
         )
         measured.size.width
       }
@@ -348,24 +463,24 @@ fn[Msg] checkbox_control(
         ),
       )
     },
-   paint=ctx => {
-     let commands : Array[@core.DrawCommand] = []
-     append_checkbox_commands(
-       commands,
-       label~,
-       checked=checked.get(),
-       font~,
-       foreground~,
-       check_color~,
-       size~,
-       box_shape~,
-       check_style~,
-       frame=ctx.frame,
+    paint=ctx => {
+      let commands : Array[@core.DrawCommand] = []
+      append_checkbox_commands(
+        commands,
+        label~,
+        checked=checked.get(),
+        font~,
+        foreground~,
+        check_color~,
+        size~,
+        box_shape~,
+        check_style~,
+        frame=ctx.frame,
         theme=ctx.environment.theme,
         focused=ctx.focused,
-     )
-     @core.ViewPaintPlan::commands(commands)
-   },
+      )
+      @core.ViewPaintPlan::commands(commands)
+    },
     event=ctx => {
       match ctx.event {
         @core.AppEvent::Pointer(event) =>
@@ -459,47 +574,46 @@ fn append_checkbox_commands(
   let box = @core.RoundedRect::new(rect=box_rect, radius=box_radius)
   if checked {
     match check_style {
-      @core.CheckMarkStyle::Checkmark =>
-        // Checkbox: fill the box with the accent and draw a "✓" glyph on top.
-        {
-          commands.push(@core.DrawCommand::FillRoundedRect(box, check_color))
-          commands.push(
-            @core.DrawCommand::DrawText(
-              @core.TextRun::new(
-                text="✓",
-                frame=box_rect,
-                font=@core.FontSpec::new(size=box_side * 0.78, weight=700),
-                color=theme.palette.on_primary,
-              ),
+      // Checkbox: fill the box with the accent and draw a "✓" glyph on top.
+      @core.CheckMarkStyle::Checkmark => {
+        commands.push(@core.DrawCommand::FillRoundedRect(box, check_color))
+        commands.push(
+          @core.DrawCommand::DrawText(
+            @core.TextRun::new(
+              text="✓",
+              frame=box_rect,
+              font=@core.FontSpec::new(size=box_side * 0.78, weight=700),
+              color=theme.palette.on_primary,
             ),
-          )
-        }
-      @core.CheckMarkStyle::Dot =>
-        // Radio: draw an outer ring + a smaller filled inner circle. The ring
-        // is the accent at rest; when selected the inner dot fills with the
-        // accent. Unchecked radios draw only the ring (handled below).
-        {
-          commands.push(@core.DrawCommand::StrokeRoundedRect(box, check_color, 2.0))
-          let inner_side = box_side * 0.5
-          let inner_rect = @core.Rect::new(
-            x=box_rect.origin.x + (box_side - inner_side) / 2.0,
-            y=box_rect.origin.y + (box_side - inner_side) / 2.0,
-            width=inner_side,
-            height=inner_side,
-          )
-          let inner = @core.RoundedRect::new(rect=inner_rect, radius=inner_side / 2.0)
-          commands.push(@core.DrawCommand::FillRoundedRect(inner, check_color))
-        }
+          ),
+        )
+      }
+      // Radio: draw an outer ring + a smaller filled inner circle. The ring
+      // is the accent at rest; when selected the inner dot fills with the
+      // accent. Unchecked radios draw only the ring (handled below).
+      @core.CheckMarkStyle::Dot => {
+        commands.push(
+          @core.DrawCommand::StrokeRoundedRect(box, check_color, 2.0),
+        )
+        let inner_side = box_side * 0.5
+        let inner_rect = @core.Rect::new(
+          x=box_rect.origin.x + (box_side - inner_side) / 2.0,
+          y=box_rect.origin.y + (box_side - inner_side) / 2.0,
+          width=inner_side,
+          height=inner_side,
+        )
+        let inner = @core.RoundedRect::new(
+          rect=inner_rect,
+          radius=inner_side / 2.0,
+        )
+        commands.push(@core.DrawCommand::FillRoundedRect(inner, check_color))
+      }
     }
   } else {
     // Unchecked uses a neutral outline (not the accent) so the control reads
     // as inactive at rest; the accent only appears on selection. Focus swaps
     // the outline to the accent to signal keyboard affordance.
-    let outline = if focused {
-      check_color
-    } else {
-      theme.palette.outline
-    }
+    let outline = if focused { check_color } else { theme.palette.outline }
     commands.push(@core.DrawCommand::StrokeRoundedRect(box, outline, 2.0))
   }
   commands.push(
