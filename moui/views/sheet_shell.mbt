@@ -2,17 +2,22 @@
 fn[Msg] sheet_shell(
   content~ : @core.View[Msg],
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
-  background~ : @core.Brush,
-  corner_radius~ : Double,
+  theme? : @core.Theme,
+  background? : @core.Brush,
+  corner_radius? : Double,
   shadow? : @core.ShadowStyle? = None,
   on_dismiss? : Msg? = None,
   kind? : String = "Sheet",
   key? : String? = None,
 ) -> @core.View[Msg] {
+  let theme_revision = match theme {
+    Some(t) => t.revision_fingerprint()
+    None => "context"
+  }
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "sheet:\{sheet_presentation_revision(presentation_mode)}:\{view_brush_revision(background)}:\{corner_radius}:\{view_shadow_option_revision(shadow)}:\{on_dismiss is Some(_)}"
+      "sheet:\{sheet_presentation_revision(presentation_mode)}:\{theme_revision}:\{shadow is Some(_)}:\{on_dismiss is Some(_)}"
     },
     children=() => [content],
     child_constraints=constraints => {
@@ -41,8 +46,20 @@ fn[Msg] sheet_shell(
       ])
     },
     paint=ctx => {
+      // Resolve the sheet surface ambient-ly so it tracks dark-mode / palette
+      // changes without the caller rebuilding the view tree.
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let resolved_background = background.unwrap_or(
+        @core.Brush::solid(resolved_theme.palette.surface),
+      )
+      let resolved_radius = corner_radius.unwrap_or(
+        resolved_theme.radius_scale.lg,
+      )
       let commands : Array[@core.DrawCommand] = []
-      let rounded = @core.RoundedRect::new(rect=ctx.frame, radius=corner_radius)
+      let rounded = @core.RoundedRect::new(
+        rect=ctx.frame,
+        radius=resolved_radius,
+      )
       emit_elevation_shadow(
         commands,
         rounded,
@@ -50,7 +67,7 @@ fn[Msg] sheet_shell(
         ctx.environment.color_scheme(),
       )
       commands.push(
-        @core.DrawCommand::FillRoundedRectBrush(rounded, background),
+        @core.DrawCommand::FillRoundedRectBrush(rounded, resolved_background),
       )
       @core.ViewPaintPlan::commands(commands)
     },

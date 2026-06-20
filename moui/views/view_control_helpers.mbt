@@ -40,15 +40,6 @@ fn view_shadow_option_revision(value : @core.ShadowStyle?) -> String {
 }
 
 ///|
-fn view_font_revision(font : @core.FontSpec) -> String {
-  let style = match font.style {
-    @core.FontStyle::Normal => "normal"
-    @core.FontStyle::Italic => "italic"
-  }
-  "\{font.size}:\{font.weight}:\{style}"
-}
-
-///|
 fn view_size_revision(size : @core.Size) -> String {
   "\{size.width}x\{size.height}"
 }

@@ -3,18 +3,16 @@ pub fn[Msg] progress(
   value : Double,
   width? : Double = 180.0,
   height? : Double = 8.0,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : ProgressStyle,
   foreground? : @core.Color,
   background? : @core.Color,
 ) -> @core.View[Msg] {
   let value = clamp_view_double(value, 0.0, 1.0)
-  let resolved_style = match style {
-    Some(value) => value
-    None => ProgressStyle::default(theme~)
+  let theme_revision = match theme {
+    Some(t) => t.revision_fingerprint()
+    None => "context"
   }
-  let foreground = resolve_control_color(foreground, resolved_style.foreground)
-  let background = resolve_control_color(background, resolved_style.background)
   custom_control(
     kind="Progress",
     measure=ctx => {
@@ -23,12 +21,27 @@ pub fn[Msg] progress(
       )
     },
     paint=ctx => {
+      // Resolve the progress style ambient-ly so the bar tracks dark-mode /
+      // palette changes without the caller rebuilding the view tree.
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let resolved_style = match style {
+        Some(value) => value
+        None => ProgressStyle::default(theme=resolved_theme)
+      }
+      let resolved_foreground = resolve_control_color(
+        foreground,
+        resolved_style.foreground,
+      )
+      let resolved_background = resolve_control_color(
+        background,
+        resolved_style.background,
+      )
       let frame = ctx.frame
       let radius = min_view_double(height / 2.0, resolved_style.radius)
       @core.ViewPaintPlan::commands([
         @core.DrawCommand::FillRoundedRectBrush(
           @core.RoundedRect::new(rect=frame, radius~),
-          @core.Brush::solid(background),
+          @core.Brush::solid(resolved_background),
         ),
         @core.DrawCommand::FillRoundedRectBrush(
           @core.RoundedRect::new(
@@ -40,7 +53,7 @@ pub fn[Msg] progress(
             ),
             radius~,
           ),
-          @core.Brush::solid(foreground),
+          @core.Brush::solid(resolved_foreground),
         ),
       ])
     },
@@ -51,5 +64,6 @@ pub fn[Msg] progress(
         value="\{value}",
       )
     },
+    revision=() => "progress:\{value}:\{width}:\{height}:\{theme_revision}",
   )
 }

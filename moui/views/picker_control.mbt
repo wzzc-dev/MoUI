@@ -24,19 +24,21 @@ fn[Msg] picker_control(
   items~ : Array[PickerOption],
   selected~ : @core.Binding[String],
   placeholder~ : String,
-  font~ : @core.FontSpec,
-  foreground~ : @core.Color,
-  background~ : @core.Brush,
-  corner_radius~ : Double,
+  theme? : @core.Theme,
+  style? : PickerStyle,
   max_height~ : Double,
   on_select? : ((String) -> Msg)? = None,
   kind? : String = "Picker",
   key? : String? = None,
 ) -> @core.View[Msg] {
+  let theme_revision = match theme {
+    Some(t) => t.revision_fingerprint()
+    None => "context"
+  }
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "picker:\{picker_items_revision(items)}:\{selected.get()}:\{placeholder}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_brush_revision(background)}:\{corner_radius}:\{max_height}:\{on_select is Some(_)}"
+      "picker:\{picker_items_revision(items)}:\{selected.get()}:\{placeholder}:\{theme_revision}:\{max_height}:\{on_select is Some(_)}"
     },
     layout=ctx => {
       @core.ViewLayoutResult::new(
@@ -46,23 +48,28 @@ fn[Msg] picker_control(
       )
     },
     paint=ctx => {
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let resolved_style = match style {
+        Some(value) => value
+        None => PickerStyle::default(theme=resolved_theme)
+      }
       let commands : Array[@core.DrawCommand] = []
       let overlay_commands : Array[@core.DrawCommand] = []
-     append_picker_commands(
-       commands,
-       overlay_commands,
-       frame=ctx.frame,
-       items~,
-       selected_id=selected.get(),
-       placeholder~,
-       font~,
-       foreground~,
-       background~,
-       corner_radius~,
-       max_height~,
-       expanded=ctx.state.expanded,
-        theme=ctx.environment.theme,
-     )
+      append_picker_commands(
+        commands,
+        overlay_commands,
+        frame=ctx.frame,
+        items~,
+        selected_id=selected.get(),
+        placeholder~,
+        font=resolved_style.font,
+        foreground=resolved_style.foreground,
+        background=resolved_style.background,
+        corner_radius=resolved_style.radius,
+        max_height~,
+        expanded=ctx.state.expanded,
+        theme=resolved_theme,
+      )
       {
         commands,
         child_layers: [],
@@ -119,9 +126,9 @@ fn append_picker_commands(
   font~ : @core.FontSpec,
   foreground~ : @core.Color,
   background~ : @core.Brush,
- corner_radius~ : Double,
- max_height~ : Double,
- expanded~ : Bool,
+  corner_radius~ : Double,
+  max_height~ : Double,
+  expanded~ : Bool,
   theme~ : @core.Theme,
 ) -> Unit {
   // Use the active theme so the field border tracks the real outline token.
@@ -166,20 +173,20 @@ fn append_picker_commands(
       ),
     ),
   )
- if expanded {
-   append_picker_popup_commands(
-     overlay_commands,
-     frame~,
-     items~,
-     selected_id~,
-     font~,
-     foreground~,
-     background~,
-     corner_radius~,
-     max_height~,
+  if expanded {
+    append_picker_popup_commands(
+      overlay_commands,
+      frame~,
+      items~,
+      selected_id~,
+      font~,
+      foreground~,
+      background~,
+      corner_radius~,
+      max_height~,
       theme~,
-   )
- }
+    )
+  }
 }
 
 ///|
