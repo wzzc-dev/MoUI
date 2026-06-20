@@ -60,9 +60,6 @@ moon build examples/showcase/web_wasm --target wasm-gc
 moon build examples/markdown_editor/web_wasm --target wasm-gc
 ```
 
-<<<<<<< Updated upstream
-For Web preview iteration:
-=======
 `moon update` refreshes registry packages, including the `window` fork package.
 `scripts/check-local-deps.sh` verifies the expected package versions, confirms
 that `moon.work` does not reintroduce a local window checkout, and checks the
@@ -278,7 +275,6 @@ before exiting.
 
 Use the lightweight preview loop when iterating on Showcase or another Web
 wasm-gc example:
->>>>>>> Stashed changes
 
 ```sh
 sh scripts/preview-loop.sh
