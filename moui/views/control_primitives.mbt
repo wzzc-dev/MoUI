@@ -316,6 +316,8 @@ fn[Msg] checkbox_control(
   foreground~ : @core.Color,
   check_color~ : @core.Color,
   size~ : @core.Size,
+  box_shape~ : @core.ChoiceControlShape,
+  check_style~ : @core.CheckMarkStyle,
   on_change? : ((Bool) -> Msg)? = None,
   kind? : String = "Checkbox",
   key? : String? = None,
@@ -323,7 +325,7 @@ fn[Msg] checkbox_control(
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "checkbox:\{label}:\{checked.get()}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(check_color)}:\{view_size_revision(size)}:\{on_change is Some(_)}"
+      "checkbox:\{label}:\{checked.get()}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(check_color)}:\{view_size_revision(size)}:\{box_shape.label()}:\{check_style.label()}:\{on_change is Some(_)}"
     },
     layout=ctx => {
       // Measure the label with the real text system instead of the old
@@ -356,6 +358,8 @@ fn[Msg] checkbox_control(
        foreground~,
        check_color~,
        size~,
+       box_shape~,
+       check_style~,
        frame=ctx.frame,
         theme=ctx.environment.theme,
         focused=ctx.focused,
@@ -430,6 +434,8 @@ fn append_checkbox_commands(
   foreground~ : @core.Color,
   check_color~ : @core.Color,
   size~ : @core.Size,
+  box_shape~ : @core.ChoiceControlShape,
+  check_style~ : @core.CheckMarkStyle,
   frame~ : @core.Rect,
   theme~ : @core.Theme,
   focused~ : Bool,
@@ -443,21 +449,48 @@ fn append_checkbox_commands(
     width=box_side,
     height=box_side,
   )
-  // Track the theme's small radius so checkboxes stay consistent with the
-  // rest of the control set.
-  let box = @core.RoundedRect::new(rect=box_rect, radius=theme.radius_scale.sm)
+  // Circle controls (radio) use a full-circle radius; square controls (checkbox)
+  // use the theme's small radius so checkboxes stay consistent with the rest of
+  // the control set.
+  let box_radius = match box_shape {
+    @core.ChoiceControlShape::Circle => box_side / 2.0
+    @core.ChoiceControlShape::Square => theme.radius_scale.sm
+  }
+  let box = @core.RoundedRect::new(rect=box_rect, radius=box_radius)
   if checked {
-    commands.push(@core.DrawCommand::FillRoundedRect(box, check_color))
-    commands.push(
-      @core.DrawCommand::DrawText(
-        @core.TextRun::new(
-          text="✓",
-          frame=box_rect,
-          font=@core.FontSpec::new(size=box_side * 0.78, weight=700),
-          color=theme.palette.on_primary,
-        ),
-      ),
-    )
+    match check_style {
+      @core.CheckMarkStyle::Checkmark =>
+        // Checkbox: fill the box with the accent and draw a "✓" glyph on top.
+        {
+          commands.push(@core.DrawCommand::FillRoundedRect(box, check_color))
+          commands.push(
+            @core.DrawCommand::DrawText(
+              @core.TextRun::new(
+                text="✓",
+                frame=box_rect,
+                font=@core.FontSpec::new(size=box_side * 0.78, weight=700),
+                color=theme.palette.on_primary,
+              ),
+            ),
+          )
+        }
+      @core.CheckMarkStyle::Dot =>
+        // Radio: draw an outer ring + a smaller filled inner circle. The ring
+        // is the accent at rest; when selected the inner dot fills with the
+        // accent. Unchecked radios draw only the ring (handled below).
+        {
+          commands.push(@core.DrawCommand::StrokeRoundedRect(box, check_color, 2.0))
+          let inner_side = box_side * 0.5
+          let inner_rect = @core.Rect::new(
+            x=box_rect.origin.x + (box_side - inner_side) / 2.0,
+            y=box_rect.origin.y + (box_side - inner_side) / 2.0,
+            width=inner_side,
+            height=inner_side,
+          )
+          let inner = @core.RoundedRect::new(rect=inner_rect, radius=inner_side / 2.0)
+          commands.push(@core.DrawCommand::FillRoundedRect(inner, check_color))
+        }
+    }
   } else {
     // Unchecked uses a neutral outline (not the accent) so the control reads
     // as inactive at rest; the accent only appears on selection. Focus swaps
