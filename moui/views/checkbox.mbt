@@ -8,6 +8,8 @@ pub fn[Msg] checkbox(
   foreground? : @core.Color,
   check_color? : @core.Color,
   box_size? : Double,
+  box_shape? : @core.ChoiceControlShape,
+  check_style? : @core.CheckMarkStyle,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
   let style = ChoiceControlStyle::default(theme~)
@@ -15,6 +17,7 @@ pub fn[Msg] checkbox(
   let foreground = resolve_control_color(foreground, style.foreground)
   let check_color = resolve_control_color(check_color, style.selected_color)
   let box_size = resolve_control_double(box_size, style.control_size)
+  let cc = theme.components.choice_control
   checkbox_control(
     label~,
     checked=@core.Binding::new(get=() => checked, set=_value => ()),
@@ -22,6 +25,8 @@ pub fn[Msg] checkbox(
     foreground~,
     check_color~,
     size=@core.Size::new(width=box_size, height~),
+    box_shape=box_shape.unwrap_or(cc.box_shape),
+    check_style=check_style.unwrap_or(cc.check_style),
     on_change=Some(on_change),
   )
 }
@@ -35,6 +40,8 @@ pub fn[Msg] checkbox_binding(
   foreground? : @core.Color,
   check_color? : @core.Color,
   box_size? : Double,
+  box_shape? : @core.ChoiceControlShape,
+  check_style? : @core.CheckMarkStyle,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
   let style = ChoiceControlStyle::default(theme~)
@@ -42,6 +49,7 @@ pub fn[Msg] checkbox_binding(
   let foreground = resolve_control_color(foreground, style.foreground)
   let check_color = resolve_control_color(check_color, style.selected_color)
   let box_size = resolve_control_double(box_size, style.control_size)
+  let cc = theme.components.choice_control
   checkbox_control(
     label~,
     checked~,
@@ -49,6 +57,8 @@ pub fn[Msg] checkbox_binding(
     foreground~,
     check_color~,
     size=@core.Size::new(width=box_size, height~),
+    box_shape=box_shape.unwrap_or(cc.box_shape),
+    check_style=check_style.unwrap_or(cc.check_style),
   )
 }
 

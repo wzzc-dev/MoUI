@@ -228,6 +228,8 @@ fn minimal_components(
     disabled_foreground: palette.muted,
     disabled_selected_color: palette.primary.multiply_alpha(0.42),
     control_size: 20.0,
+    box_shape: ChoiceControlShape::Square,
+    check_style: CheckMarkStyle::Checkmark,
   }
   let progress = {
     foreground: palette.primary,
@@ -241,6 +243,7 @@ fn minimal_components(
     track_height: 4.0,
     thumb_size: 18.0,
     radius: radius.pill,
+    thumb_shape: ThumbShape::Circle,
   }
   let picker = {
     font: typography.control,

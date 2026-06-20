@@ -602,6 +602,25 @@ adapters that produce the same `@core.Theme`:
   into child subtrees via the `child_environment` hook at layout/paint time;
   their modifier revisions include a content fingerprint so reconcile detects
   real theme changes.
+- `ChoiceControlTheme` carries `box_shape` (`Square`/`Circle`) and `check_style`
+  (`Checkmark`/`Dot`) so checkboxes render as rounded squares with a "✓" glyph
+  while radios render as circle rings with a filled inner dot (Fluent 2 style).
+  `checkbox`/`checkbox_binding` accept optional `box_shape?`/`check_style?`
+  overrides; `radio`/`radio_binding` pass `Circle`/`Dot`. `SliderTheme` carries
+  `thumb_shape` (`Rounded`/`Circle`); Fluent 2 sliders use a circular thumb.
+- `DesignSemanticPalette` carries a neutral ramp
+  (`background_2`/`background_3`/`background_4`, `foreground_2`,
+  `stroke_1`/`stroke_2`/`stroke_accessible`) and a separate `brand_stroke` so
+  Fluent 2's `colorNeutralBackground1/2/3/4`, `colorNeutralForeground1/2`,
+  `colorNeutralStroke1/2/Accessible`, and `colorBrandStroke1` are expressed
+  distinctly. `core_palette()` maps the ramp onto `ColorPalette` surface tiers
+  (surface=background_2, surface_variant=background_3, outline=stroke_1,
+  outline_variant=stroke_2). `divider` uses `outline_variant` (subtle
+  stroke_2); menus/popovers read `theme.components.surface.overlay_shadow`
+  (Fluent flyout shadow) falling back to `shadow_scale.lg`/`md`.
+- `presence_dot(status, ...)` renders a Fluent 2 PresenceBadge status dot
+  (Available/Away/Busy/Offline/Unknown) as a filled circle with a contrasting
+  border, overlayable on avatars.
 - `SurfaceStyle` supports surface brushes, radius, padding, border metadata,
   and shadow metadata.
 - `moui_theme/*` produces a complete `@core.Theme` (palette + scales +
