@@ -170,7 +170,9 @@ fn ElementNode::intrinsic_size(self : ElementNode) -> Size {
   let size = (self.erased_view_node.layout)({
       constraints: Constraints::unbounded(),
       child_sizes: self.children.map(child => child.intrinsic_size()),
-      child_flex_weights: self.children.map(child => (child.erased_view_node.flex_weight)()),
+      child_flex_weights: self.children.map(child => {
+        (child.erased_view_node.flex_weight)()
+      }),
       text_system: TextSystem::fallback(),
       environment: Environment::neutral(),
       style: ViewStyle::empty(),

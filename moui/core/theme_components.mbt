@@ -100,7 +100,9 @@ pub fn ControlStateTokens::new(
 /// dropped when `border_width <= 0.0`. `shadow` is always `None` here; layered
 /// shadows are attached by the component theme that owns the token (e.g.
 /// `SurfaceTheme`), not by individual control states.
-pub fn ControlStateTokens::resolve(self : ControlStateTokens) -> ControlStateStyle {
+pub fn ControlStateTokens::resolve(
+  self : ControlStateTokens,
+) -> ControlStateStyle {
   {
     foreground: self.foreground,
     background: Brush::Solid(self.background),
@@ -116,7 +118,10 @@ pub fn ControlStateTokens::resolve(self : ControlStateTokens) -> ControlStateSty
 fn control_state_border(state : ControlStateTokens) -> BorderStyle? {
   if state.border_width > 0.0 {
     Some(
-      BorderStyle::new(brush=Brush::Solid(state.border), width=state.border_width),
+      BorderStyle::new(
+        brush=Brush::Solid(state.border),
+        width=state.border_width,
+      ),
     )
   } else {
     None
@@ -182,43 +187,51 @@ pub fn ButtonTheme::resolve(
   let normal = base.resolve()
   match state {
     Normal => normal
-    Hovered => {
-      ..normal,
-      background: Brush::Solid(
-        state_layer_background(
-          base.background,
-          self.state_layer.color,
-          self.state_layer.hover_alpha,
+    Hovered =>
+      {
+        ..normal,
+        background: Brush::Solid(
+          state_layer_background(
+            base.background,
+            self.state_layer.color,
+            self.state_layer.hover_alpha,
+          ),
         ),
-      ),
-    }
-    Pressed => {
-      ..normal,
-      background: Brush::Solid(
-        state_layer_background(
-          base.background,
-          self.state_layer.color,
-          self.state_layer.pressed_alpha,
+      }
+    Pressed =>
+      {
+        ..normal,
+        background: Brush::Solid(
+          state_layer_background(
+            base.background,
+            self.state_layer.color,
+            self.state_layer.pressed_alpha,
+          ),
         ),
-      ),
-    }
-    Focused => {
-      ..normal,
-      background: Brush::Solid(
-        state_layer_background(
-          base.background,
-          self.state_layer.color,
-          self.state_layer.focus_alpha,
+      }
+    Focused =>
+      {
+        ..normal,
+        background: Brush::Solid(
+          state_layer_background(
+            base.background,
+            self.state_layer.color,
+            self.state_layer.focus_alpha,
+          ),
         ),
-      ),
-    }
-    Disabled => {
-      ..normal,
-      foreground: normal.foreground.multiply_alpha(self.state_layer.disabled_alpha),
-      background: normal.background.multiply_alpha(self.state_layer.disabled_alpha),
-      border: control_state_disabled_border(normal.border, self.state_layer),
-      shadow: None,
-    }
+      }
+    Disabled =>
+      {
+        ..normal,
+        foreground: normal.foreground.multiply_alpha(
+          self.state_layer.disabled_alpha,
+        ),
+        background: normal.background.multiply_alpha(
+          self.state_layer.disabled_alpha,
+        ),
+        border: control_state_disabled_border(normal.border, self.state_layer),
+        shadow: None,
+      }
     Selected | Invalid => normal
   }
 }
@@ -245,7 +258,10 @@ fn control_state_disabled_border(
 ) -> BorderStyle? {
   match border {
     Some(value) =>
-      Some({ ..value, brush: value.brush.multiply_alpha(state_layer.disabled_alpha) })
+      Some({
+        ..value,
+        brush: value.brush.multiply_alpha(state_layer.disabled_alpha),
+      })
     None => None
   }
 }
@@ -500,5 +516,5 @@ pub fn Theme::with_components(
   self : Theme,
   components : ComponentThemes,
 ) -> Theme {
-  { ..self, components }
+  { ..self, components, }
 }

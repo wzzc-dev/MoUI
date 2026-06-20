@@ -37,8 +37,9 @@ pub fn[Msg] presence_dot(
   let border_width = max_view_double(1.5, size * 0.15)
   let total = size + border_width * 2.0
   custom_layout(
-    measure=constraints =>
-      constraints.constrain(@core.Size::new(width=total, height=total)),
+    measure=constraints => {
+      constraints.constrain(@core.Size::new(width=total, height=total))
+    },
     paint=frame => {
       let dot_rect = @core.Rect::new(
         x=frame.origin.x + (frame.size.width - size) / 2.0,

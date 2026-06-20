@@ -119,7 +119,8 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       // by hit-testing — so without this the element's `hovered` flag sticks.
       // Skip while a pointer is captured (a drag) so the captured element keeps
       // its `pressed` state until `Up`, rather than being reset to `Normal`.
-      if event.phase == PointerPhase::Move && self.active_pointer_capture is None {
+      if event.phase == PointerPhase::Move &&
+        self.active_pointer_capture is None {
         self.dispatch_hover_exit_if_needed(event.position)
       }
       let result = match self.active_pointer_capture {

@@ -17,7 +17,12 @@ test "animated_color fades a transparent endpoint without a dark mid-frame" {
   // ramps coverage, so the midpoint stays the tint's color at half alpha.
   let from = @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
   let to = @core.Color::rgba(r=0.957, g=0.957, b=0.961, a=1.0)
-  let mid = @core.animated_color(from~, to~, progress=0.5, easing=@core.Easing::Linear)
+  let mid = @core.animated_color(
+    from~,
+    to~,
+    progress=0.5,
+    easing=@core.Easing::Linear,
+  )
   // Hue must stay at the destination tint, not darken toward black.
   assert_true(mid.r > 0.9)
   assert_true(mid.g > 0.9)
@@ -31,7 +36,12 @@ test "animated_color is unchanged for opaque-to-opaque transitions" {
   // existing opaque→opaque button hover transitions are unaffected.
   let from = @core.Color::rgba(r=0.1, g=0.2, b=0.3, a=1.0)
   let to = @core.Color::rgba(r=0.4, g=0.5, b=0.6, a=1.0)
-  let mid = @core.animated_color(from~, to~, progress=0.5, easing=@core.Easing::Linear)
+  let mid = @core.animated_color(
+    from~,
+    to~,
+    progress=0.5,
+    easing=@core.Easing::Linear,
+  )
   assert_true(animation_approx_eq(mid.r, 0.25))
   assert_true(animation_approx_eq(mid.g, 0.35))
   assert_true(animation_approx_eq(mid.b, 0.45))
@@ -42,8 +52,18 @@ test "animated_color is unchanged for opaque-to-opaque transitions" {
 test "animated_color snaps to endpoints at progress bounds" {
   let from = @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)
   let to = @core.Color::rgba(r=0.957, g=0.957, b=0.961, a=1.0)
-  let start = @core.animated_color(from~, to~, progress=0.0, easing=@core.Easing::Linear)
-  let end = @core.animated_color(from~, to~, progress=1.0, easing=@core.Easing::Linear)
+  let start = @core.animated_color(
+    from~,
+    to~,
+    progress=0.0,
+    easing=@core.Easing::Linear,
+  )
+  let end = @core.animated_color(
+    from~,
+    to~,
+    progress=1.0,
+    easing=@core.Easing::Linear,
+  )
   // At progress 0 the result is fully transparent; we carry the destination
   // hue so a later alpha rise can't resurrect a stray color.
   assert_true(start.a == 0.0)

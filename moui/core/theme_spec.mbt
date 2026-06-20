@@ -112,8 +112,11 @@ pub fn ThemeSpec::resolve_scheme(
 }
 
 ///|
-pub fn ThemeSpec::with_preset(self : ThemeSpec, preset : ThemePreset) -> ThemeSpec {
-  { ..self, preset }
+pub fn ThemeSpec::with_preset(
+  self : ThemeSpec,
+  preset : ThemePreset,
+) -> ThemeSpec {
+  { ..self, preset, }
 }
 
 ///|
@@ -121,12 +124,15 @@ pub fn ThemeSpec::with_color_mode(
   self : ThemeSpec,
   color_mode : ColorMode,
 ) -> ThemeSpec {
-  { ..self, color_mode }
+  { ..self, color_mode, }
 }
 
 ///|
-pub fn ThemeSpec::with_density(self : ThemeSpec, density : ThemeDensity) -> ThemeSpec {
-  { ..self, density }
+pub fn ThemeSpec::with_density(
+  self : ThemeSpec,
+  density : ThemeDensity,
+) -> ThemeSpec {
+  { ..self, density, }
 }
 
 ///|
@@ -134,12 +140,12 @@ pub fn ThemeSpec::with_contrast(
   self : ThemeSpec,
   contrast : AccessibilityContrast,
 ) -> ThemeSpec {
-  { ..self, contrast }
+  { ..self, contrast, }
 }
 
 ///|
 pub fn ThemeSpec::with_seed(self : ThemeSpec, seed : Color?) -> ThemeSpec {
-  { ..self, seed }
+  { ..self, seed, }
 }
 
 ///|
@@ -147,5 +153,5 @@ pub fn ThemeSpec::with_reduced_motion(
   self : ThemeSpec,
   reduced_motion : Bool,
 ) -> ThemeSpec {
-  { ..self, reduced_motion }
+  { ..self, reduced_motion, }
 }
