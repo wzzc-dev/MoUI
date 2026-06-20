@@ -354,6 +354,29 @@ fn editor_button(
 }
 
 ///|
+/// A compact ghost icon button for the find bar (prev/next/close), with a
+/// tooltip describing the action.
+fn editor_find_icon_button(
+  icon : @views.IconName,
+  tooltip_label : String,
+  message : MarkdownEditorMsg,
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
+  tooltip(
+    button(
+      "",
+      on_click=message,
+      variant=@views.ButtonVariant::Ghost,
+      theme~,
+      icon=Some(icon),
+      width=34.0,
+      height=34.0,
+    ),
+    tooltip_label,
+  )
+}
+
+///|
 /// A compact toggle chip for find/replace options. Renders as a small ghost
 /// button that switches to Tonal when active, with a tooltip describing the
 /// option.
