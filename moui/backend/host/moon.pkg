@@ -1,5 +1,6 @@
 import {
   "Milky2018/moon_accesskit" @accesskit,
+  "moonbitlang/core/encoding/utf8",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/runtime",
   "wzzc-dev/moui/render",
