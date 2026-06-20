@@ -2,15 +2,17 @@
 using @views {
   button,
   column,
+  container,
   empty,
   frame,
   padding_edges,
+  popover,
   row,
   scroll_view,
   spacer,
-  container,
   text,
   text_field,
+  tooltip,
 }
 
 ///|
@@ -36,6 +38,7 @@ pub struct MarkdownEditorApp {
   zen_mode_enabled : @moui.State[Bool]
   format_palette_visible : @moui.State[Bool]
   format_palette_query : @moui.State[String]
+  more_menu_visible : @moui.State[Bool]
   priv writing_appearance : @moui.State[MarkdownEditorAppearance]
   find_visible : @moui.State[Bool]
   find_query : @moui.State[String]
@@ -61,6 +64,14 @@ priv struct MarkdownEditorFormatPaletteItem {
   label : String
   group : String
   shortcut : String
+}
+
+///|
+/// A low-frequency command surfaced in the toolbar's "More" popover.
+priv struct MarkdownEditorMoreMenuItem {
+  label : String
+  shortcut : String
+  message : MarkdownEditorMsg
 }
 
 ///|
@@ -167,6 +178,8 @@ pub enum MarkdownEditorMsg {
   DismissAuxiliaryPanels
   ToggleSourcePreview
   ToggleSourceMode
+  ToggleMoreMenu
+  MoreMenuCommand(MarkdownEditorMsg)
   UpdateDocument(String)
   UpdateFindQuery(String)
   UpdateReplaceText(String)
@@ -218,6 +231,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     zen_mode_enabled: @moui.State::new(false),
     format_palette_visible: @moui.State::new(false),
     format_palette_query: @moui.State::new(""),
+    more_menu_visible: @moui.State::new(false),
     writing_appearance: @moui.State::new(PaperAppearance),
     find_visible: @moui.State::new(false),
     find_query: @moui.State::new(""),
@@ -293,6 +307,11 @@ fn MarkdownEditorApp::update(
     DismissAuxiliaryPanels => self.dismiss_auxiliary_panels()
     ToggleSourcePreview => self.toggle_source_preview()
     ToggleSourceMode => self.toggle_source_mode()
+    ToggleMoreMenu => self.toggle_more_menu()
+    MoreMenuCommand(message) => {
+      self.more_menu_visible.set(false)
+      let _ = self.update(message)
+    }
     UpdateDocument(value) => self.set_document_from_input(value)
     UpdateFindQuery(value) => self.update_find_query(value)
     UpdateReplaceText(value) => self.replace_text.set(value)
