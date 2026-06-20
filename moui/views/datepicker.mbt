@@ -11,23 +11,19 @@ pub fn[Msg] datepicker(
   on_select~ : (@core.DateValue) -> Msg,
   mode? : DatePickerMode = DatePickerMode::Date,
   placeholder? : String = "Select date",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : PickerStyle,
   min_date? : @core.DateValue? = None,
   max_date? : @core.DateValue? = None,
 ) -> @core.View[Msg] {
-  let resolved_style = match style {
-    Some(value) => value
-    None => PickerStyle::default(theme~)
-  }
+  // Style is resolved ambient-ly inside date_picker_control so the picker
+  // tracks dark-mode / palette changes without the caller rebuilding the tree.
   date_picker_control(
     selected=@core.Binding::new(get=() => selected, set=_value => ()),
     mode=mode.to_view_mode(),
     placeholder~,
-    font=resolved_style.font,
-    foreground=resolved_style.foreground,
-    background=resolved_style.background,
-    corner_radius=resolved_style.radius,
+    theme?,
+    style?,
     min_date~,
     max_date~,
     on_select=Some(on_select),
@@ -39,23 +35,17 @@ pub fn[Msg] datepicker_binding(
   selected~ : @core.Binding[@core.DateValue],
   mode? : DatePickerMode = DatePickerMode::Date,
   placeholder? : String = "Select date",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : PickerStyle,
   min_date? : @core.DateValue? = None,
   max_date? : @core.DateValue? = None,
 ) -> @core.View[Msg] {
-  let resolved_style = match style {
-    Some(value) => value
-    None => PickerStyle::default(theme~)
-  }
   date_picker_control(
     selected~,
     mode=mode.to_view_mode(),
     placeholder~,
-    font=resolved_style.font,
-    foreground=resolved_style.foreground,
-    background=resolved_style.background,
-    corner_radius=resolved_style.radius,
+    theme?,
+    style?,
     min_date~,
     max_date~,
   )

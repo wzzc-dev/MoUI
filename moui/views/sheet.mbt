@@ -2,16 +2,25 @@
 pub fn[Msg] sheet(
   content~ : @core.View[Msg],
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
-  background? : @core.Color = default_theme().palette.surface,
-  corner_radius? : Double = default_theme().radius_scale.lg,
+  theme? : @core.Theme,
+  background? : @core.Color,
+  corner_radius? : Double,
   shadow? : @core.ShadowStyle? = None,
   on_dismiss? : Msg? = None,
 ) -> @core.View[Msg] {
+  // The surface brush is resolved ambient-ly inside sheet_shell (an explicit
+  // theme? overrides ctx.environment.theme) so the sheet tracks dark-mode /
+  // palette changes without the caller rebuilding the view tree.
+  let background_brush : @core.Brush? = match background {
+    Some(color) => Some(@core.Brush::solid(color))
+    None => None
+  }
   sheet_shell(
     content~,
     presentation_mode~,
-    background=@core.Brush::solid(background),
-    corner_radius~,
+    theme?,
+    background?=background_brush,
+    corner_radius?,
     shadow~,
     on_dismiss~,
   )
@@ -23,11 +32,12 @@ pub fn[Msg] sheet_host(
   sheet? : @core.View[Msg]? = None,
   presented? : Bool = false,
   presentation_mode? : @core.SheetPresentationMode = @core.SheetPresentationMode::Modal,
+  theme? : @core.Theme,
   on_dismiss? : Msg? = None,
   trap_focus? : Bool = true,
 ) -> @core.View[Msg] {
   if presented && sheet is Some(sheet_spec) {
-    let theme = default_theme()
+    let resolved_theme = theme.unwrap_or(@core.Theme::neutral())
     let scrim = modal_scrim(alpha=0.28)
     let scrim_with_tap = match on_dismiss {
       Some(message) => scrim.on_tap(message)
@@ -38,11 +48,11 @@ pub fn[Msg] sheet_host(
       @core.SheetPresentationMode::Modal =>
         sheet_spec
         .frame(width=400.0, height=400.0)
-        .corner_radius(theme.radius_scale.lg)
+        .corner_radius(resolved_theme.radius_scale.lg)
         .align()
       @core.SheetPresentationMode::BottomSheet =>
         sheet_spec
-        .corner_radius(theme.radius_scale.lg)
+        .corner_radius(resolved_theme.radius_scale.lg)
         .align(alignment=@core.Alignment::new(x=0.0, y=1.0))
     }
     let aligned_sheet = if trap_focus {

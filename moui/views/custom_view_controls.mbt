@@ -13,9 +13,11 @@ fn[Msg] custom_control(
     @core.ViewSemanticsInfo::new()
   },
   focusable? : Bool = false,
+  revision? : () -> String = () => "",
 ) -> @core.View[Msg] {
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
+    revision~,
     layout=measure,
     paint~,
     event~,
