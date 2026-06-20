@@ -46,6 +46,7 @@ pub struct MarkdownEditorApp {
   priv writing_appearance : @moui.State[MarkdownEditorAppearance]
   find_visible : @moui.State[Bool]
   find_query : @moui.State[String]
+  find_options : @moui.State[MarkdownEditorFindOptions]
   replace_text : @moui.State[String]
   document_path : @moui.State[String]
   recent_document_paths : @moui.State[Array[String]]
@@ -76,6 +77,20 @@ priv struct MarkdownEditorMoreMenuItem {
   label : String
   shortcut : String
   message : MarkdownEditorMsg
+}
+
+///|
+/// Find/replace options. Defaults are case-insensitive substring matching,
+/// matching the original behavior.
+pub struct MarkdownEditorFindOptions {
+  case_sensitive : Bool
+  whole_word : Bool
+  regex : Bool
+} derive(Eq, Debug, ToJson)
+
+///|
+fn MarkdownEditorFindOptions::default() -> MarkdownEditorFindOptions {
+  { case_sensitive: false, whole_word: false, regex: false }
 }
 
 ///|
@@ -207,6 +222,9 @@ pub enum MarkdownEditorMsg {
   UpdateDocument(String)
   UpdateFindQuery(String)
   UpdateReplaceText(String)
+  ToggleFindCaseSensitive
+  ToggleFindWholeWord
+  ToggleFindRegex
   UpdateLinkTarget(String)
   UpdateImageTarget(String)
   UpdateFootnoteText(String)
@@ -263,6 +281,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     writing_appearance: @moui.State::new(PaperAppearance),
     find_visible: @moui.State::new(false),
     find_query: @moui.State::new(""),
+    find_options: @moui.State::new(MarkdownEditorFindOptions::default()),
     replace_text: @moui.State::new(""),
     document_path: @moui.State::new(""),
     recent_document_paths: @moui.State::new([]),
@@ -272,6 +291,29 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     redo_stack: @moui.State::new([]),
     editor_scroll: @core.ScrollState::new(),
   }
+}
+
+///|
+/// Construct the editor and apply persisted settings when host services are
+/// available. Backends that want settings to survive restarts should call this
+/// instead of `new()`.
+pub fn MarkdownEditorApp::new_with_services(
+  services : @host.HostAppServices,
+) -> MarkdownEditorApp {
+  let app = MarkdownEditorApp::new()
+  let settings = markdown_editor_load_settings(services)
+  app.apply_settings(settings)
+  app
+}
+
+///|
+/// Persist the current preferences. Backends can call this on shutdown or on a
+/// timer so settings survive the next launch.
+pub fn MarkdownEditorApp::persist_settings(
+  self : MarkdownEditorApp,
+  services : @host.HostAppServices,
+) -> Unit {
+  self.save_settings(services)
 }
 
 ///|
@@ -363,6 +405,10 @@ fn MarkdownEditorApp::update(
     UpdateDocument(value) => self.set_document_from_input(value)
     UpdateFindQuery(value) => self.update_find_query(value)
     UpdateReplaceText(value) => self.replace_text.set(value)
+    ToggleFindCaseSensitive =>
+      self.toggle_find_option(field="case_sensitive")
+    ToggleFindWholeWord => self.toggle_find_option(field="whole_word")
+    ToggleFindRegex => self.toggle_find_option(field="regex")
     UpdateLinkTarget(value) => self.link_target.set(value)
     UpdateImageTarget(value) => self.image_target.set(value)
     UpdateFootnoteText(value) => self.footnote_text.set(value)
