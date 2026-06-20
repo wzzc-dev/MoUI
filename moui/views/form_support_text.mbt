@@ -1,12 +1,19 @@
 ///|
 pub fn[Msg] form_error(
   message : String,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
-  text(message, role=TextRole::Caption, theme~, width~, height=24.0)
-  .foreground(resolve_form_validation_style(style, theme).foreground)
+  let resolved_theme = views_ambient_theme(theme)
+  text(
+    message,
+    role=TextRole::Caption,
+    theme=resolved_theme,
+    width~,
+    height=24.0,
+  )
+  .foreground(resolve_form_validation_style(style, resolved_theme).foreground)
   .semantics_role(@core.SemanticsRole::Text)
   .accessibility_label("Error: " + message)
 }
@@ -14,11 +21,18 @@ pub fn[Msg] form_error(
 ///|
 pub fn[Msg] form_helper_text(
   message : String,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
-  text(message, role=TextRole::Caption, theme~, width~, height=24.0)
-  .foreground(theme.palette.muted)
+  let resolved_theme = views_ambient_theme(theme)
+  text(
+    message,
+    role=TextRole::Caption,
+    theme=resolved_theme,
+    width~,
+    height=24.0,
+  )
+  .foreground(resolved_theme.palette.muted)
   .semantics_role(@core.SemanticsRole::Text)
 }
 

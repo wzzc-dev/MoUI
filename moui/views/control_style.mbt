@@ -112,48 +112,54 @@ pub(all) struct FormValidationStyle {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn TextStyle::body(theme? : @core.Theme = default_theme()) -> TextStyle {
-  { font: theme.typography.body, color: theme.palette.foreground }
-}
-
-///|
-pub fn TextStyle::title(theme? : @core.Theme = default_theme()) -> TextStyle {
-  { font: theme.typography.title, color: theme.palette.foreground }
-}
-
-///|
-pub fn SurfaceStyle::default(
-  theme? : @core.Theme = default_theme(),
-) -> SurfaceStyle {
+pub fn TextStyle::body(theme? : @core.Theme) -> TextStyle {
+  let resolved_theme = views_ambient_theme(theme)
   {
-    brush: theme.surface_brush(@core.SurfaceLevel::Base),
+    font: resolved_theme.typography.body,
+    color: resolved_theme.palette.foreground,
+  }
+}
+
+///|
+pub fn TextStyle::title(theme? : @core.Theme) -> TextStyle {
+  let resolved_theme = views_ambient_theme(theme)
+  {
+    font: resolved_theme.typography.title,
+    color: resolved_theme.palette.foreground,
+  }
+}
+
+///|
+pub fn SurfaceStyle::default(theme? : @core.Theme) -> SurfaceStyle {
+  let resolved_theme = views_ambient_theme(theme)
+  {
+    brush: resolved_theme.surface_brush(@core.SurfaceLevel::Base),
     border: None,
-    radius: theme.radius_scale.md,
+    radius: resolved_theme.radius_scale.md,
     shadow: None,
-    padding: @core.Insets::all(theme.spacing_scale.md),
+    padding: @core.Insets::all(resolved_theme.spacing_scale.md),
     level: @core.SurfaceLevel::Base,
   }
 }
 
 ///|
-pub fn SurfaceStyle::raised(
-  theme? : @core.Theme = default_theme(),
-) -> SurfaceStyle {
+pub fn SurfaceStyle::raised(theme? : @core.Theme) -> SurfaceStyle {
+  let resolved_theme = views_ambient_theme(theme)
   // shadcn/minimal: raised surfaces are flat with a border, no shadow. Layer
   // separation comes from the outline tone. Dark mode uses a faint white edge
   // since the outline token alone is too subtle against dark surfaces.
-  let border_color = match theme.scheme {
-    @core.ColorScheme::Light => theme.palette.outline
+  let border_color = match resolved_theme.scheme {
+    @core.ColorScheme::Light => resolved_theme.palette.outline
     @core.ColorScheme::Dark => @core.Color::white().multiply_alpha(0.06)
   }
   {
-    brush: theme.surface_brush(@core.SurfaceLevel::Raised),
+    brush: resolved_theme.surface_brush(@core.SurfaceLevel::Raised),
     border: Some(
       @core.BorderStyle::new(brush=@core.Brush::solid(border_color), width=1.0),
     ),
-    radius: theme.radius_scale.lg,
+    radius: resolved_theme.radius_scale.lg,
     shadow: None,
-    padding: @core.Insets::all(theme.spacing_scale.lg),
+    padding: @core.Insets::all(resolved_theme.spacing_scale.lg),
     level: @core.SurfaceLevel::Raised,
   }
 }
@@ -180,301 +186,308 @@ fn control_state(
 }
 
 ///|
-pub fn ButtonStyle::filled(
-  theme? : @core.Theme = default_theme(),
-) -> ButtonStyle {
-  let primary = theme.palette.primary
+pub fn ButtonStyle::filled(theme? : @core.Theme) -> ButtonStyle {
+  let resolved_theme = views_ambient_theme(theme)
+  let primary = resolved_theme.palette.primary
   // shadcn/minimal: flat primary button, no shadow. Hover/press use opacity
   // overlays rather than color shifts, so the button stays a solid block that
   // just dims — the shadcn idiom. Tracks any primary including near-black.
   let normal = control_state(
-    foreground=theme.palette.on_primary,
+    foreground=resolved_theme.palette.on_primary,
     background=@core.Brush::solid(primary),
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   let hovered = control_state(
-    foreground=theme.palette.on_primary,
+    foreground=resolved_theme.palette.on_primary,
     background=@core.Brush::solid(primary.multiply_alpha(0.90)),
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   let pressed = control_state(
-    foreground=theme.palette.on_primary,
+    foreground=resolved_theme.palette.on_primary,
     background=@core.Brush::solid(primary.multiply_alpha(0.80)),
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   let disabled = control_state(
-    foreground=theme.palette.muted,
-    background=@core.Brush::solid(theme.palette.surface_variant),
-    radius=theme.radius_scale.md,
+    foreground=resolved_theme.palette.muted,
+    background=@core.Brush::solid(resolved_theme.palette.surface_variant),
+    radius=resolved_theme.radius_scale.md,
   )
   { normal, hovered, pressed, disabled }
 }
 
 ///|
-pub fn ButtonStyle::tonal(
-  theme? : @core.Theme = default_theme(),
-) -> ButtonStyle {
+pub fn ButtonStyle::tonal(theme? : @core.Theme) -> ButtonStyle {
+  let resolved_theme = views_ambient_theme(theme)
   // Tonal uses a translucent primary tint over the surface so the control
   // reads as related to the accent without the full saturation of `filled`.
-  let base = theme.palette.surface.lerp(theme.palette.primary, 0.12)
+  let base = resolved_theme.palette.surface.lerp(
+    resolved_theme.palette.primary,
+    0.12,
+  )
   let normal = control_state(
-    foreground=theme.palette.primary,
+    foreground=resolved_theme.palette.primary,
     background=@core.Brush::solid(base),
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   // Layer a translucent primary tint over the tonal base for hover/press so
   // the control visibly responds to interaction while staying low-emphasis.
   let hovered = control_state(
-    foreground=theme.palette.primary,
-    background=@core.Brush::solid(base.lerp(theme.palette.primary, 0.22)),
-    radius=theme.radius_scale.md,
+    foreground=resolved_theme.palette.primary,
+    background=@core.Brush::solid(
+      base.lerp(resolved_theme.palette.primary, 0.22),
+    ),
+    radius=resolved_theme.radius_scale.md,
   )
   let pressed = control_state(
-    foreground=theme.palette.primary,
-    background=@core.Brush::solid(base.lerp(theme.palette.primary, 0.34)),
-    radius=theme.radius_scale.md,
+    foreground=resolved_theme.palette.primary,
+    background=@core.Brush::solid(
+      base.lerp(resolved_theme.palette.primary, 0.34),
+    ),
+    radius=resolved_theme.radius_scale.md,
   )
   let disabled = control_state(
-    foreground=theme.palette.muted,
+    foreground=resolved_theme.palette.muted,
     background=@core.Brush::solid(base.multiply_alpha(0.6)),
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   { normal, hovered, pressed, disabled }
 }
 
 ///|
-pub fn ButtonStyle::outline(
-  theme? : @core.Theme = default_theme(),
-) -> ButtonStyle {
+pub fn ButtonStyle::outline(theme? : @core.Theme) -> ButtonStyle {
+  let resolved_theme = views_ambient_theme(theme)
   // shadcn/minimal outline: 1px border at rest, surface-tint background on
   // hover/press. Foreground stays constant — no color shift, just a wash.
   let border = @core.BorderStyle::new(
-    brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.8)),
+    brush=@core.Brush::solid(resolved_theme.palette.outline.multiply_alpha(0.8)),
     width=1.0,
   )
   let normal = control_state(
-    foreground=theme.palette.foreground,
+    foreground=resolved_theme.palette.foreground,
     background=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
     border~,
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   let hovered = control_state(
-    foreground=theme.palette.foreground,
-    background=@core.Brush::solid(theme.palette.surface_variant),
+    foreground=resolved_theme.palette.foreground,
+    background=@core.Brush::solid(resolved_theme.palette.surface_variant),
     border~,
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   let pressed = control_state(
-    foreground=theme.palette.foreground,
+    foreground=resolved_theme.palette.foreground,
     background=@core.Brush::solid(
-      theme.palette.surface_variant.lerp(theme.palette.foreground, 0.06),
+      resolved_theme.palette.surface_variant.lerp(
+        resolved_theme.palette.foreground,
+        0.06,
+      ),
     ),
     border~,
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   let disabled = control_state(
-    foreground=theme.palette.muted,
+    foreground=resolved_theme.palette.muted,
     background=@core.Brush::solid(@core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0)),
     border=@core.BorderStyle::new(
-      brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.5)),
+      brush=@core.Brush::solid(
+        resolved_theme.palette.outline.multiply_alpha(0.5),
+      ),
       width=1.0,
     ),
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   { normal, hovered, pressed, disabled }
 }
 
 ///|
-pub fn ButtonStyle::ghost(
-  theme? : @core.Theme = default_theme(),
-) -> ButtonStyle {
+pub fn ButtonStyle::ghost(theme? : @core.Theme) -> ButtonStyle {
+  let resolved_theme = views_ambient_theme(theme)
   let transparent = @core.Brush::solid(
     @core.Color::rgba(r=0.0, g=0.0, b=0.0, a=0.0),
   )
   let normal = control_state(
-    foreground=theme.palette.foreground,
+    foreground=resolved_theme.palette.foreground,
     background=transparent,
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   // Ghost stays borderless and transparent at rest; hover/press introduce a
   // subtle foreground-tinted wash so the hit area is discoverable.
   let hovered = control_state(
-    foreground=theme.palette.foreground,
-    background=@core.Brush::solid(theme.palette.foreground.multiply_alpha(0.06)),
-    radius=theme.radius_scale.md,
+    foreground=resolved_theme.palette.foreground,
+    background=@core.Brush::solid(
+      resolved_theme.palette.foreground.multiply_alpha(0.06),
+    ),
+    radius=resolved_theme.radius_scale.md,
   )
   let pressed = control_state(
-    foreground=theme.palette.foreground,
-    background=@core.Brush::solid(theme.palette.foreground.multiply_alpha(0.12)),
-    radius=theme.radius_scale.md,
+    foreground=resolved_theme.palette.foreground,
+    background=@core.Brush::solid(
+      resolved_theme.palette.foreground.multiply_alpha(0.12),
+    ),
+    radius=resolved_theme.radius_scale.md,
   )
   let disabled = control_state(
-    foreground=theme.palette.muted,
+    foreground=resolved_theme.palette.muted,
     background=transparent,
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   { normal, hovered, pressed, disabled }
 }
 
 ///|
-pub fn TextFieldStyle::filled(
-  theme? : @core.Theme = default_theme(),
-) -> TextFieldStyle {
+pub fn TextFieldStyle::filled(theme? : @core.Theme) -> TextFieldStyle {
+  let resolved_theme = views_ambient_theme(theme)
   let normal = control_state(
-    foreground=theme.palette.foreground,
-    background=@core.Brush::solid(theme.palette.surface),
+    foreground=resolved_theme.palette.foreground,
+    background=@core.Brush::solid(resolved_theme.palette.surface),
     border=@core.BorderStyle::new(
-      brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.85)),
+      brush=@core.Brush::solid(
+        resolved_theme.palette.outline.multiply_alpha(0.85),
+      ),
       width=1.0,
     ),
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   let focused = control_state(
-    foreground=theme.palette.foreground,
-    background=@core.Brush::solid(theme.palette.surface),
+    foreground=resolved_theme.palette.foreground,
+    background=@core.Brush::solid(resolved_theme.palette.surface),
     border=@core.BorderStyle::new(
-      brush=@core.Brush::solid(theme.palette.primary),
+      brush=@core.Brush::solid(resolved_theme.palette.primary),
       width=2.0,
     ),
-    radius=theme.radius_scale.md,
+    radius=resolved_theme.radius_scale.md,
   )
   {
     normal,
     focused,
     disabled: normal,
-    placeholder_color: theme.palette.muted,
-    cursor_color: theme.palette.primary,
-    font: theme.typography.body,
+    placeholder_color: resolved_theme.palette.muted,
+    cursor_color: resolved_theme.palette.primary,
+    font: resolved_theme.typography.body,
   }
 }
 
 ///|
-pub fn TextFieldStyle::outline(
-  theme? : @core.Theme = default_theme(),
-) -> TextFieldStyle {
-  TextFieldStyle::filled(theme~)
+pub fn TextFieldStyle::outline(theme? : @core.Theme) -> TextFieldStyle {
+  let resolved_theme = views_ambient_theme(theme)
+  TextFieldStyle::filled(theme=resolved_theme)
 }
 
 ///|
-pub fn ChoiceControlStyle::default(
-  theme? : @core.Theme = default_theme(),
-) -> ChoiceControlStyle {
+pub fn ChoiceControlStyle::default(theme? : @core.Theme) -> ChoiceControlStyle {
+  let resolved_theme = views_ambient_theme(theme)
   {
-    foreground: theme.palette.foreground,
-    selected_color: theme.palette.primary,
-    disabled_foreground: theme.palette.muted,
-    disabled_selected_color: theme.palette.primary.multiply_alpha(0.42),
+    foreground: resolved_theme.palette.foreground,
+    selected_color: resolved_theme.palette.primary,
+    disabled_foreground: resolved_theme.palette.muted,
+    disabled_selected_color: resolved_theme.palette.primary.multiply_alpha(0.42),
     control_size: 20.0,
   }
 }
 
 ///|
-pub fn ProgressStyle::default(
-  theme? : @core.Theme = default_theme(),
-) -> ProgressStyle {
+pub fn ProgressStyle::default(theme? : @core.Theme) -> ProgressStyle {
+  let resolved_theme = views_ambient_theme(theme)
   {
-    foreground: theme.palette.primary,
-    background: theme.palette.surface_variant,
-    radius: theme.radius_scale.pill,
+    foreground: resolved_theme.palette.primary,
+    background: resolved_theme.palette.surface_variant,
+    radius: resolved_theme.radius_scale.pill,
   }
 }
 
 ///|
-pub fn SliderStyle::default(
-  theme? : @core.Theme = default_theme(),
-) -> SliderStyle {
+pub fn SliderStyle::default(theme? : @core.Theme) -> SliderStyle {
+  let resolved_theme = views_ambient_theme(theme)
   {
-    foreground: theme.palette.primary,
-    background: theme.palette.surface_variant.multiply_alpha(0.7),
-    thumb_color: theme.palette.primary,
+    foreground: resolved_theme.palette.primary,
+    background: resolved_theme.palette.surface_variant.multiply_alpha(0.7),
+    thumb_color: resolved_theme.palette.primary,
     track_height: 4.0,
     thumb_size: 18.0,
-    radius: theme.radius_scale.pill,
+    radius: resolved_theme.radius_scale.pill,
   }
 }
 
 ///|
-pub fn PickerStyle::default(
-  theme? : @core.Theme = default_theme(),
-) -> PickerStyle {
+pub fn PickerStyle::default(theme? : @core.Theme) -> PickerStyle {
+  let resolved_theme = views_ambient_theme(theme)
   {
-    font: theme.typography.control,
-    foreground: theme.palette.foreground,
-    background: @core.Brush::solid(theme.palette.surface),
-    radius: theme.radius_scale.md,
+    font: resolved_theme.typography.control,
+    foreground: resolved_theme.palette.foreground,
+    background: @core.Brush::solid(resolved_theme.palette.surface),
+    radius: resolved_theme.radius_scale.md,
     popup_max_height: 200.0,
   }
 }
 
 ///|
-pub fn FeedbackStyle::default(
-  theme? : @core.Theme = default_theme(),
-) -> FeedbackStyle {
-  let background_alpha = match theme.scheme {
+pub fn FeedbackStyle::default(theme? : @core.Theme) -> FeedbackStyle {
+  let resolved_theme = views_ambient_theme(theme)
+  let background_alpha = match resolved_theme.scheme {
     @core.ColorScheme::Light => 0.14
     @core.ColorScheme::Dark => 0.24
   }
   {
     neutral: tone_style(
-      foreground=theme.palette.muted,
+      foreground=resolved_theme.palette.muted,
       background_alpha~,
       border_alpha=0.78,
     ),
     info: tone_style(
-      foreground=theme.palette.info,
+      foreground=resolved_theme.palette.info,
       background_alpha~,
       border_alpha=0.78,
     ),
     success: tone_style(
-      foreground=theme.palette.success,
+      foreground=resolved_theme.palette.success,
       background_alpha~,
       border_alpha=0.78,
     ),
     warning: tone_style(
-      foreground=theme.palette.warning,
+      foreground=resolved_theme.palette.warning,
       background_alpha~,
       border_alpha=0.78,
     ),
     danger: tone_style(
-      foreground=theme.palette.danger,
+      foreground=resolved_theme.palette.danger,
       background_alpha~,
       border_alpha=0.78,
     ),
-    radius: theme.radius_scale.md,
-    padding: theme.spacing_scale.sm,
+    radius: resolved_theme.radius_scale.md,
+    padding: resolved_theme.spacing_scale.sm,
   }
 }
 
 ///|
-pub fn BadgeStyle::default(
-  theme? : @core.Theme = default_theme(),
-) -> BadgeStyle {
+pub fn BadgeStyle::default(theme? : @core.Theme) -> BadgeStyle {
+  let resolved_theme = views_ambient_theme(theme)
   {
     neutral: {
-      foreground: theme.palette.foreground,
-      background: theme.palette.surface_variant,
-      border: theme.palette.outline.multiply_alpha(0.42),
+      foreground: resolved_theme.palette.foreground,
+      background: resolved_theme.palette.surface_variant,
+      border: resolved_theme.palette.outline.multiply_alpha(0.42),
     },
-    accent: badge_tone(theme.palette.info),
-    success: badge_tone(theme.palette.success),
-    warning: badge_tone(theme.palette.warning),
-    danger: badge_tone(theme.palette.danger),
-    radius: theme.radius_scale.pill,
+    accent: badge_tone(resolved_theme.palette.info),
+    success: badge_tone(resolved_theme.palette.success),
+    warning: badge_tone(resolved_theme.palette.warning),
+    danger: badge_tone(resolved_theme.palette.danger),
+    radius: resolved_theme.radius_scale.pill,
     padding: 3.0,
   }
 }
 
 ///|
 pub fn FormValidationStyle::default(
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
 ) -> FormValidationStyle {
-  let color = theme.palette.danger
+  let resolved_theme = views_ambient_theme(theme)
+  let color = resolved_theme.palette.danger
   {
     foreground: color,
     background: color.multiply_alpha(0.12),
     border: color.multiply_alpha(0.72),
-    radius: theme.radius_scale.md,
-    padding: theme.spacing_scale.md,
+    radius: resolved_theme.radius_scale.md,
+    padding: resolved_theme.spacing_scale.md,
   }
 }
 

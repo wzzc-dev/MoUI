@@ -6,21 +6,22 @@ pub fn[Msg] progress_status(
   status? : String = "",
   tone? : FeedbackTone = FeedbackTone::Info,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   badge_style? : BadgeStyle,
   progress_style? : ProgressStyle,
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
-  let style = resolve_feedback_style(style, theme)
-  let badge_style = resolve_badge_style(badge_style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_feedback_style(style, resolved_theme)
+  let badge_style = resolve_badge_style(badge_style, resolved_theme)
   let progress_style = match progress_style {
     Some(value) => value
-    None => ProgressStyle::default(theme~)
+    None => ProgressStyle::default(theme=resolved_theme)
   }
   let inner_width = views_max_double(
     120.0,
-    width - theme.spacing_scale.md * 2.0,
+    width - resolved_theme.spacing_scale.md * 2.0,
   )
   let status_text = if status == "" {
     progress_status_label(value)
@@ -38,7 +39,7 @@ pub fn[Msg] progress_status(
         text(
           title,
           role=TextRole::Control,
-          theme~,
+          theme=resolved_theme,
           width=title_width,
           height=24.0,
         ),
@@ -46,12 +47,12 @@ pub fn[Msg] progress_status(
           status_text,
           tone=progress_status_badge_tone(tone),
           detail="Progress status for " + title,
-          theme~,
+          theme=resolved_theme,
           style=badge_style,
           width=status_width,
         ),
       ],
-      spacing=theme.spacing_scale.xs,
+      spacing=resolved_theme.spacing_scale.xs,
       align=CrossAlign::Center,
     ),
   ]
@@ -60,7 +61,7 @@ pub fn[Msg] progress_status(
       text(
         message,
         role=TextRole::Caption,
-        theme~,
+        theme=resolved_theme,
         width=inner_width,
         height=28.0,
       ),
@@ -79,7 +80,7 @@ pub fn[Msg] progress_status(
           action.label,
           on_click=action.message,
           variant=ButtonVariant::Tonal,
-          theme~,
+          theme=resolved_theme,
           width=128.0,
           height=34.0,
         ),
@@ -87,12 +88,16 @@ pub fn[Msg] progress_status(
     None => ()
   }
   container(
-    column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
+    column(
+      rows,
+      spacing=resolved_theme.spacing_scale.sm,
+      align=CrossAlign::Start,
+    ),
     width~,
     height=progress_status_height(message != "", action is Some(_)),
     background=feedback_background(tone, style),
     corner_radius=style.radius,
-    theme~,
+    theme=resolved_theme,
     padding=style.padding,
   )
   .border(

@@ -5,16 +5,21 @@ pub fn[Msg] form_actions(
   status? : String = "",
   primary_enabled? : Bool = true,
   secondary_enabled? : Bool = true,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let action_width = 116.0
   let rows : Array[@core.View[Msg]] = []
   if status != "" {
     rows.push(
-      text(status, role=TextRole::Caption, theme~, width~, height=24.0).foreground(
-        theme.palette.muted,
-      ),
+      text(
+        status,
+        role=TextRole::Caption,
+        theme=resolved_theme,
+        width~,
+        height=24.0,
+      ).foreground(resolved_theme.palette.muted),
     )
   }
   let actions : Array[@core.View[Msg]] = []
@@ -25,7 +30,7 @@ pub fn[Msg] form_actions(
           action.label,
           on_click=action.message,
           variant=ButtonVariant::Ghost,
-          theme~,
+          theme=resolved_theme,
           width=action_width,
           height=36.0,
         ).disabled(disabled=!secondary_enabled),
@@ -37,7 +42,7 @@ pub fn[Msg] form_actions(
       primary.label,
       on_click=primary.message,
       variant=ButtonVariant::Primary,
-      theme~,
+      theme=resolved_theme,
       width=action_width,
       height=36.0,
     ).disabled(disabled=!primary_enabled),
@@ -45,18 +50,22 @@ pub fn[Msg] form_actions(
   rows.push(
     row(
       actions,
-      spacing=theme.spacing_scale.sm,
+      spacing=resolved_theme.spacing_scale.sm,
       justify=MainAlign::End,
       align=CrossAlign::Center,
     ).frame(width~, height=40.0),
   )
   container(
-    column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Stretch),
+    column(
+      rows,
+      spacing=resolved_theme.spacing_scale.xs,
+      align=CrossAlign::Stretch,
+    ),
     width~,
     height=if status == "" { 52.0 } else { 82.0 },
     variant=ContainerVariant::Base,
-    theme~,
-    padding=theme.spacing_scale.xs,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.xs,
   )
   .semantics_role(@core.SemanticsRole::Group)
   .accessibility_label("Form actions")
@@ -72,10 +81,11 @@ pub fn[Msg] form_workflow_bar(
   valid_message? : String = "",
   invalid_title? : String = "Review required",
   status? : String = "",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
   if !summary.valid || valid_message != "" {
     rows.push(
@@ -84,7 +94,7 @@ pub fn[Msg] form_workflow_bar(
         title=invalid_title,
         valid_message~,
         action=if summary.valid { None } else { focus_invalid },
-        theme~,
+        theme=resolved_theme,
         style?,
         width~,
       ),
@@ -96,11 +106,15 @@ pub fn[Msg] form_workflow_bar(
       secondary~,
       status=form_workflow_status(summary, focus_scope, status),
       primary_enabled=summary.valid,
-      theme~,
+      theme=resolved_theme,
       width~,
     ),
   )
-  column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Stretch)
+  column(
+    rows,
+    spacing=resolved_theme.spacing_scale.sm,
+    align=CrossAlign::Stretch,
+  )
   .frame(width~)
   .semantics_role(@core.SemanticsRole::Group)
   .semantics_invalid(invalid=!summary.valid)

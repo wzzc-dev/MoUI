@@ -3,16 +3,17 @@ pub fn[Msg] toast(
   message : String,
   tone? : FeedbackTone = FeedbackTone::Neutral,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
-  let style = resolve_feedback_style(style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_feedback_style(style, resolved_theme)
   feedback_panel(
     message,
     tone~,
     action~,
-    theme~,
+    theme=resolved_theme,
     style~,
     width~,
     title="",
@@ -23,18 +24,21 @@ pub fn[Msg] toast(
 ///|
 pub fn[Msg] toast_stack(
   items : Array[ToastStackItem[Msg]],
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   width? : Double = 360.0,
   spacing? : Double = default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   if items.length() == 0 {
     empty()
   } else {
-    let style = resolve_feedback_style(style, theme)
+    let style = resolve_feedback_style(style, resolved_theme)
     let rows : Array[@core.View[Msg]] = []
     for item in items {
-      rows.push(toast_stack_row(item, theme~, style~, width~, spacing~))
+      rows.push(
+        toast_stack_row(item, theme=resolved_theme, style~, width~, spacing~),
+      )
     }
     column(rows, spacing~, align=CrossAlign::Stretch)
     .semantics_role(@core.SemanticsRole::Group)
@@ -46,16 +50,17 @@ pub fn[Msg] toast_stack(
 pub fn[Msg] snackbar(
   message : String,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
-  let style = resolve_feedback_style(style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_feedback_style(style, resolved_theme)
   feedback_panel(
     message,
     tone=FeedbackTone::Neutral,
     action~,
-    theme~,
+    theme=resolved_theme,
     style~,
     width~,
     title="",

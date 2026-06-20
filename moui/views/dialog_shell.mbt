@@ -6,12 +6,13 @@ pub fn[Msg] dialog(
   primary_action? : StateViewAction[Msg]? = None,
   secondary_action? : StateViewAction[Msg]? = None,
   dismiss_action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 432.0,
   height? : Double = 280.0,
 ) -> @core.View[Msg] {
-  let panel_padding = theme.spacing_scale.lg
-  let section_spacing = theme.spacing_scale.md
+  let resolved_theme = views_ambient_theme(theme)
+  let panel_padding = resolved_theme.spacing_scale.lg
+  let section_spacing = resolved_theme.spacing_scale.md
   let content_width = views_max_double(180.0, width - panel_padding * 2.0)
   let actions : Array[@core.View[Msg]] = []
   match secondary_action {
@@ -21,7 +22,7 @@ pub fn[Msg] dialog(
           action.label,
           on_click=action.message,
           variant=ButtonVariant::Ghost,
-          theme~,
+          theme=resolved_theme,
           width=dialog_action_width(action.label),
           height=36.0,
         ),
@@ -35,7 +36,7 @@ pub fn[Msg] dialog(
           action.label,
           on_click=action.message,
           variant=ButtonVariant::Primary,
-          theme~,
+          theme=resolved_theme,
           width=dialog_action_width(action.label),
           height=36.0,
         ),
@@ -58,7 +59,7 @@ pub fn[Msg] dialog(
       title,
       subtitle~,
       dismiss_action~,
-      theme~,
+      theme=resolved_theme,
       width=content_width,
       height=header_height,
     ),
@@ -68,7 +69,7 @@ pub fn[Msg] dialog(
     body_rows.push(
       row(
         actions,
-        spacing=theme.spacing_scale.sm,
+        spacing=resolved_theme.spacing_scale.sm,
         justify=MainAlign::End,
         align=CrossAlign::Center,
       ).frame(width=content_width, height=footer_height),
@@ -79,11 +80,11 @@ pub fn[Msg] dialog(
     width~,
     height~,
     variant=ContainerVariant::Raised,
-    theme~,
+    theme=resolved_theme,
     padding=panel_padding,
   )
-  .border(dialog_border(theme))
-  .shadow(theme.shadow_scale.lg)
+  .border(dialog_border(resolved_theme))
+  .shadow(resolved_theme.shadow_scale.lg)
   .semantics_role(@core.SemanticsRole::Dialog)
   .semantics_description(subtitle)
   .accessibility_label(title)

@@ -3,18 +3,19 @@ pub fn[Msg] focus_ring(
   child : @core.View[Msg],
   focused~ : Bool,
   label? : String = "Focused item",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double,
   height? : Double,
   padding? : Double = 3.0,
   radius? : Double = 8.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let ring = @core.BorderStyle::new(
     brush=@core.Brush::solid(
       if focused {
-        theme.palette.primary
+        resolved_theme.palette.primary
       } else {
-        theme.palette.outline.multiply_alpha(0.42)
+        resolved_theme.palette.outline.multiply_alpha(0.42)
       },
     ),
     width=if focused { 2.0 } else { 1.0 },
@@ -41,14 +42,22 @@ pub fn[Msg] menu_button(
   label : String,
   on_click? : Msg,
   variant? : ButtonVariant = ButtonVariant::Tonal,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 160.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let spec = match on_click {
     Some(message) =>
-      button(label, on_click=message, variant~, theme~, width~, height~)
-    None => button(label, variant~, theme~, width~, height~)
+      button(
+        label,
+        on_click=message,
+        variant~,
+        theme=resolved_theme,
+        width~,
+        height~,
+      )
+    None => button(label, variant~, theme=resolved_theme, width~, height~)
   }
   spec.semantics_role(@core.SemanticsRole::Menu)
 }

@@ -5,19 +5,26 @@ pub fn[Msg] disclosure(
   expanded~ : Bool,
   on_toggle~ : Msg,
   subtitle? : String = "",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let title_width = views_max_double(80.0, width - 54.0)
   let title_rows : Array[@core.View[Msg]] = [
-    text(title, role=TextRole::Control, theme~, width=title_width, height=24.0),
+    text(
+      title,
+      role=TextRole::Control,
+      theme=resolved_theme,
+      width=title_width,
+      height=24.0,
+    ),
   ]
   if subtitle != "" {
     title_rows.push(
       text(
         subtitle,
         role=TextRole::Caption,
-        theme~,
+        theme=resolved_theme,
         width=title_width,
         height=22.0,
       ),
@@ -33,20 +40,22 @@ pub fn[Msg] disclosure(
         },
         on_click=on_toggle,
         variant=ButtonVariant::Ghost,
-        theme~,
+        theme=resolved_theme,
         width=34.0,
         height=34.0,
       ),
       column(title_rows, spacing=0.0, align=CrossAlign::Start),
     ],
-    spacing=theme.spacing_scale.xs,
+    spacing=resolved_theme.spacing_scale.xs,
     align=CrossAlign::Center,
   )
   let rows : Array[@core.View[Msg]] = [header]
   if expanded {
-    rows.push(content.frame(width=width - theme.spacing_scale.md * 2.0))
+    rows.push(
+      content.frame(width=width - resolved_theme.spacing_scale.md * 2.0),
+    )
   }
-  column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start)
+  column(rows, spacing=resolved_theme.spacing_scale.sm, align=CrossAlign::Start)
   .semantics_role(@core.SemanticsRole::Group)
   .semantics_expanded(expanded~)
   .semantics_description(subtitle)
@@ -57,9 +66,10 @@ pub fn[Msg] accordion(
   sections : Array[WizardStep[Msg]],
   expanded~ : Array[String],
   on_toggle~ : (String) -> Msg,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
   for section in sections {
     rows.push(
@@ -69,12 +79,12 @@ pub fn[Msg] accordion(
         expanded=string_array_contains(expanded, section.id),
         on_toggle=on_toggle(section.id),
         subtitle=section.subtitle,
-        theme~,
+        theme=resolved_theme,
         width~,
       ).disabled(disabled=!section.enabled),
     )
   }
-  column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start).semantics_role(
+  column(rows, spacing=resolved_theme.spacing_scale.sm, align=CrossAlign::Start).semantics_role(
     @core.SemanticsRole::Group,
   )
 }
@@ -86,9 +96,10 @@ pub fn[Msg] collapsible_panel(
   expanded~ : Bool,
   on_toggle~ : Msg,
   subtitle? : String = "",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   container(
     disclosure(
       title,
@@ -96,16 +107,18 @@ pub fn[Msg] collapsible_panel(
       expanded~,
       on_toggle~,
       subtitle~,
-      theme~,
-      width=width - theme.spacing_scale.md * 2.0,
+      theme=resolved_theme,
+      width=width - resolved_theme.spacing_scale.md * 2.0,
     ),
     width~,
     variant=ContainerVariant::Base,
-    theme~,
-    padding=theme.spacing_scale.md,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.md,
   ).border(
     @core.BorderStyle::new(
-      brush=@core.Brush::solid(theme.palette.outline.multiply_alpha(0.64)),
+      brush=@core.Brush::solid(
+        resolved_theme.palette.outline.multiply_alpha(0.64),
+      ),
       width=1.0,
     ),
   )
@@ -115,20 +128,21 @@ pub fn[Msg] collapsible_panel(
 pub fn[Msg] resizable_panel(
   content~ : @core.View[Msg],
   size~ : Double,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   height? : Double = 160.0,
   min_size? : Double = 120.0,
   max_size? : Double = 520.0,
   on_drag? : ((Double) -> Msg)? = None,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let panel_width = disclosure_clamp_double(size, min_size, max_size)
   let handle = container(
     empty(),
     width=8.0,
     height~,
-    background=theme.palette.primary.multiply_alpha(0.38),
+    background=resolved_theme.palette.primary.multiply_alpha(0.38),
     corner_radius=4.0,
-    theme~,
+    theme=resolved_theme,
     padding=0.0,
   ).accessibility_label("Resize handle")
   let handle = match on_drag {
@@ -148,18 +162,18 @@ pub fn[Msg] resizable_panel(
     [
       container(
         content.frame(
-          width=panel_width - theme.spacing_scale.md * 2.0,
-          height=height - theme.spacing_scale.md * 2.0,
+          width=panel_width - resolved_theme.spacing_scale.md * 2.0,
+          height=height - resolved_theme.spacing_scale.md * 2.0,
         ),
         width=panel_width,
         height~,
         variant=ContainerVariant::Raised,
-        theme~,
-        padding=theme.spacing_scale.md,
+        theme=resolved_theme,
+        padding=resolved_theme.spacing_scale.md,
       ),
       handle,
     ],
-    spacing=theme.spacing_scale.xs,
+    spacing=resolved_theme.spacing_scale.xs,
     align=CrossAlign::Start,
   ).semantics_role(@core.SemanticsRole::Group)
 }

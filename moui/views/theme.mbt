@@ -89,6 +89,7 @@ pub fn theme(
 }
 
 ///|
-pub fn environment(theme? : @core.Theme = default_theme()) -> @core.Environment {
-  @core.Environment::neutral().with_theme(theme)
+pub fn environment(theme? : @core.Theme) -> @core.Environment {
+  let resolved_theme = views_ambient_theme(theme)
+  @core.Environment::neutral().with_theme(resolved_theme)
 }

@@ -1,17 +1,22 @@
 ///|
 pub fn[Msg] toolbar(
   children : Array[@core.View[Msg]],
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 520.0,
   height? : Double = 48.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   container(
-    row(children, spacing=theme.spacing_scale.sm, align=CrossAlign::Center),
+    row(
+      children,
+      spacing=resolved_theme.spacing_scale.sm,
+      align=CrossAlign::Center,
+    ),
     width~,
     height~,
     variant=ContainerVariant::Base,
-    theme~,
-    padding=theme.spacing_scale.xs,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.xs,
   ).semantics_role(@core.SemanticsRole::Group)
 }
 
@@ -19,10 +24,11 @@ pub fn[Msg] toolbar(
 pub fn[Msg] button_group(
   items : Array[ActionItem[Msg]],
   selected? : String = "",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   button_width? : Double = 88.0,
   height? : Double = 36.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let buttons : Array[@core.View[Msg]] = []
   for item in items {
     let variant = if item.id == selected {
@@ -35,7 +41,7 @@ pub fn[Msg] button_group(
         item.label,
         on_click=item.message,
         variant~,
-        theme~,
+        theme=resolved_theme,
         width=button_width,
         height~,
       )
@@ -51,10 +57,11 @@ pub fn[Msg] button_group(
 ///|
 pub fn[Msg] command_bar(
   items : Array[ActionItem[Msg]],
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 520.0,
   height? : Double = 48.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let commands : Array[@core.View[Msg]] = []
   for item in items {
     commands.push(
@@ -62,42 +69,47 @@ pub fn[Msg] command_bar(
         item.label,
         on_click=item.message,
         variant=ButtonVariant::Ghost,
-        theme~,
+        theme=resolved_theme,
         width=command_item_width(item.label),
         height=36.0,
       ).disabled(disabled=!item.enabled),
     )
   }
-  toolbar(commands, theme~, width~, height~)
+  toolbar(commands, theme=resolved_theme, width~, height~)
 }
 
 ///|
 pub fn[Msg] status_bar(
   items : Array[String],
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 520.0,
   height? : Double = 30.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let segments : Array[@core.View[Msg]] = []
   for item in items {
     segments.push(
       text(
         item,
         role=TextRole::Caption,
-        theme~,
+        theme=resolved_theme,
         width=command_item_width(item),
         height=22.0,
       ),
     )
   }
   container(
-    row(segments, spacing=theme.spacing_scale.sm, align=CrossAlign::Center),
+    row(
+      segments,
+      spacing=resolved_theme.spacing_scale.sm,
+      align=CrossAlign::Center,
+    ),
     width~,
     height~,
-    background=theme.palette.surface_variant.multiply_alpha(0.52),
-    corner_radius=theme.radius_scale.sm,
-    theme~,
-    padding=theme.spacing_scale.xs,
+    background=resolved_theme.palette.surface_variant.multiply_alpha(0.52),
+    corner_radius=resolved_theme.radius_scale.sm,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.xs,
   ).semantics_role(@core.SemanticsRole::Group)
 }
 
