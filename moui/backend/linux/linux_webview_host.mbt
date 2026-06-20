@@ -155,8 +155,8 @@ pub fn install_linux_webview_event_dispatcher(
     (wl_surface, kind, id, url, detail, flag) => {
       dispatch(
         wl_surface,
-        decode_webview_string(id),
-        native_webview_event(kind, url, detail, flag),
+        @host.webview_decode_ffi_string(id),
+        @host.webview_decode_native_event(kind, url, detail, flag),
       )
     },
   )
@@ -179,10 +179,10 @@ pub fn sync_linux_platform_views(
       linux_webview_sync(
         wl_display,
         wl_surface,
-        encode_webview_string(placement.id),
-        encode_webview_string(placement.property_or("url", "")),
-        encode_webview_string(placement.property_or("title", "")),
-        webview_policy_code(
+        @host.webview_encode_ffi_string(placement.id),
+        @host.webview_encode_ffi_string(placement.property_or("url", "")),
+        @host.webview_encode_ffi_string(placement.property_or("title", "")),
+        @host.webview_native_policy_code(
           @host.WebViewNavigationPolicy::from_revision_key(
             placement.property_or("policy", "http-https-file"),
           ),
@@ -211,79 +211,6 @@ fn linux_webview_platform_frame(
 }
 
 ///|
-/// Draw webview contents onto Skia canvas (for offscreen rendering)
-pub fn draw_linux_webview_contents(
-  window : @window_linux.Window,
-  canvas : @skia_native.Canvas,
-  frame : @core.DrawFrame,
-  content_offset_y? : Double = 0.0,
-) -> Unit {
-  let wl_surface = window.wl_surface()
-
-  for placement in frame.platform_views {
-    if placement.kind == "web_view" {
-      let id_bytes = encode_webview_string(placement.id)
-      let surface_data = linux_webview_get_surface_data(wl_surface, id_bytes)
-
-      if surface_data.surface_ptr.compare(0UL) != 0 &&
-        surface_data.width > 0 &&
-        surface_data.height > 0 {
-        // Get pixel data from Cairo surface
-        let pixels = linux_webview_get_surface_pixels(surface_data.surface_ptr)
-
-        // Create Skia bitmap from pixels
-        // Cairo format is BGRA (native endian), which matches Skia's N32 premul on little-endian
-        match
-          @skia_native.Bitmap::from_pixels(
-            pixels,
-            surface_data.width,
-            surface_data.height,
-            surface_data.stride,
-          ) {
-          Some(bitmap) =>
-            // Convert to image
-            match @skia_native.Image::from_bitmap(bitmap) {
-              Some(image) => {
-                // Calculate destination rect with content offset
-                let platform_frame = linux_webview_platform_frame(
-                  placement, content_offset_y,
-                )
-
-                // Source rect covers the entire surface
-                let src_rect = @moui_skia.Rect::from_xywh(
-                  0.0,
-                  0.0,
-                  Float::from_int(surface_data.width),
-                  Float::from_int(surface_data.height),
-                )
-
-                // Destination rect is the platform view frame
-                let dst_rect = @moui_skia.Rect::from_xywh(
-                  Float::from_double(platform_frame.origin.x),
-                  Float::from_double(platform_frame.origin.y),
-                  Float::from_double(platform_frame.size.width),
-                  Float::from_double(platform_frame.size.height),
-                )
-
-                // Draw image
-                canvas.draw_image_rect(
-                  image,
-                  src_rect,
-                  dst_rect,
-                  @moui_skia.Paint::new(),
-                  sampling=@moui_skia.SamplingOptions::linear(),
-                )
-              }
-              None => ()
-            }
-          None => ()
-        }
-      }
-    }
-  }
-}
-
-///|
 /// Draw webview contents using renderer's draw_platform_view_pixels method
 pub fn draw_linux_webview_to_renderer(
   window : @window_linux.Window,
@@ -295,7 +222,7 @@ pub fn draw_linux_webview_to_renderer(
 
   for placement in frame.platform_views {
     if placement.kind == "web_view" {
-      let id_bytes = encode_webview_string(placement.id)
+      let id_bytes = @host.webview_encode_ffi_string(placement.id)
       let surface_data = linux_webview_get_surface_data(wl_surface, id_bytes)
 
       if surface_data.surface_ptr.compare(0UL) != 0 &&
@@ -337,70 +264,13 @@ pub fn drain_linux_webview_commands(
 ) -> Int {
   let wl_surface = window.wl_surface()
   queue.drain_with_handler(command => {
-    let (kind, text, detail) = encode_webview_command(command.command)
+    let (kind, text, detail) = @host.webview_encode_native_command(command.command)
     linux_webview_command(
       wl_surface,
-      encode_webview_string(command.id),
+      @host.webview_encode_ffi_string(command.id),
       kind,
-      encode_webview_string(text),
-      encode_webview_string(detail),
+      @host.webview_encode_ffi_string(text),
+      @host.webview_encode_ffi_string(detail),
     )
   })
-}
-
-///|
-fn encode_webview_string(text : String) -> Bytes {
-  @utf8.encode(text[:], bom=false)
-}
-
-///|
-fn decode_webview_string(bytes : Bytes) -> String {
-  @utf8.decode_lossy(bytes[:], ignore_bom=true)
-}
-
-///|
-fn native_webview_event(
-  kind : Int,
-  url : Bytes,
-  detail : Bytes,
-  flag : Int,
-) -> @host.WebViewEvent {
-  let url_text = decode_webview_string(url)
-  let detail_text = decode_webview_string(detail)
-  match kind {
-    0 => @host.WebViewEvent::NavigationRequested(url_text)
-    1 => @host.WebViewEvent::NavigationStarted(url_text)
-    2 => @host.WebViewEvent::NavigationCommitted(url_text)
-    3 => @host.WebViewEvent::NavigationFinished(url_text)
-    4 => @host.WebViewEvent::NavigationFailed(url_text, detail_text)
-    5 => @host.WebViewEvent::TitleChanged(detail_text)
-    6 => @host.WebViewEvent::CanGoBackChanged(flag != 0)
-    7 => @host.WebViewEvent::CanGoForwardChanged(flag != 0)
-    8 => @host.WebViewEvent::JavaScriptResult(url_text, detail_text)
-    _ => @host.WebViewEvent::NavigationFailed(url_text, detail_text)
-  }
-}
-
-///|
-fn webview_policy_code(policy : @host.WebViewNavigationPolicy) -> Int {
-  match policy {
-    @host.WebViewNavigationPolicy::AllowHttpHttpsFile => 0
-    @host.WebViewNavigationPolicy::AllowHttpHttps => 1
-    @host.WebViewNavigationPolicy::AllowAll => 2
-  }
-}
-
-///|
-fn encode_webview_command(
-  command : @host.WebViewCommand,
-) -> (Int, String, String) {
-  match command {
-    @host.WebViewCommand::LoadUrl(url) => (0, url, "")
-    @host.WebViewCommand::Reload => (1, "", "")
-    @host.WebViewCommand::Stop => (2, "", "")
-    @host.WebViewCommand::GoBack => (3, "", "")
-    @host.WebViewCommand::GoForward => (4, "", "")
-    @host.WebViewCommand::EvaluateJavaScript(script, request_id) =>
-      (5, script, request_id)
-  }
 }

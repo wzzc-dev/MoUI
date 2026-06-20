@@ -205,50 +205,50 @@ test "linux webview fallback reports unavailable without WebKitGTK" {
 ///|
 test "linux webview maps native title history javascript and policy events" {
   match
-    native_webview_event(
+    @host.webview_decode_native_event(
       5,
-      encode_webview_string(""),
-      encode_webview_string("Loaded title"),
+      @host.webview_encode_ffi_string(""),
+      @host.webview_encode_ffi_string("Loaded title"),
       0,
     ) {
     @host.WebViewEvent::TitleChanged("Loaded title") => ()
     _ => fail("expected Linux WebView title event")
   }
   match
-    native_webview_event(
+    @host.webview_decode_native_event(
       6,
-      encode_webview_string(""),
-      encode_webview_string(""),
+      @host.webview_encode_ffi_string(""),
+      @host.webview_encode_ffi_string(""),
       1,
     ) {
     @host.WebViewEvent::CanGoBackChanged(true) => ()
     _ => fail("expected Linux WebView back-history event")
   }
   match
-    native_webview_event(
+    @host.webview_decode_native_event(
       7,
-      encode_webview_string(""),
-      encode_webview_string(""),
+      @host.webview_encode_ffi_string(""),
+      @host.webview_encode_ffi_string(""),
       0,
     ) {
     @host.WebViewEvent::CanGoForwardChanged(false) => ()
     _ => fail("expected Linux WebView forward-history event")
   }
   match
-    native_webview_event(
+    @host.webview_decode_native_event(
       8,
-      encode_webview_string("request-1"),
-      encode_webview_string("42"),
+      @host.webview_encode_ffi_string("request-1"),
+      @host.webview_encode_ffi_string("42"),
       0,
     ) {
     @host.WebViewEvent::JavaScriptResult("request-1", "42") => ()
     _ => fail("expected Linux WebView JavaScript result event")
   }
   match
-    native_webview_event(
+    @host.webview_decode_native_event(
       4,
-      encode_webview_string("ftp://example.test/file"),
-      encode_webview_string("WebView navigation policy blocked URL"),
+      @host.webview_encode_ffi_string("ftp://example.test/file"),
+      @host.webview_encode_ffi_string("WebView navigation policy blocked URL"),
       0,
     ) {
     @host.WebViewEvent::NavigationFailed(url, reason) => {
@@ -262,23 +262,23 @@ test "linux webview maps native title history javascript and policy events" {
 ///|
 test "linux webview encodes navigation policies and commands" {
   inspect(
-    webview_policy_code(@host.WebViewNavigationPolicy::AllowHttpHttpsFile),
+    @host.webview_native_policy_code(@host.WebViewNavigationPolicy::AllowHttpHttpsFile),
     content="0",
   )
   inspect(
-    webview_policy_code(@host.WebViewNavigationPolicy::AllowHttpHttps),
+    @host.webview_native_policy_code(@host.WebViewNavigationPolicy::AllowHttpHttps),
     content="1",
   )
   inspect(
-    webview_policy_code(@host.WebViewNavigationPolicy::AllowAll),
+    @host.webview_native_policy_code(@host.WebViewNavigationPolicy::AllowAll),
     content="2",
   )
-  let load = encode_webview_command(
+  let load = @host.webview_encode_native_command(
     @host.WebViewCommand::LoadUrl("https://example.test"),
   )
   inspect(load.0, content="0")
   inspect(load.1, content="https://example.test")
-  let eval = encode_webview_command(
+  let eval = @host.webview_encode_native_command(
     @host.WebViewCommand::EvaluateJavaScript("1 + 1", "sum"),
   )
   inspect(eval.0, content="5")
@@ -315,7 +315,7 @@ test "linux webview command queue drains FIFO through host contract" {
   inspect(queue.pending_count(), content="2")
   let commands : Array[String] = []
   let drained = queue.drain_with_handler(command => {
-    let (kind, text, detail) = encode_webview_command(command.command)
+    let (kind, text, detail) = @host.webview_encode_native_command(command.command)
     commands.push("\{command.id}:\{kind}:\{text}:\{detail}")
   })
   inspect(drained, content="2")

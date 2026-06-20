@@ -56,6 +56,16 @@ pub fn text_input_ime_request_diagnostics(@wzzc-dev/moui/core.TextInputState) ->
 
 pub fn touch_phase_to_host(@wzzc-dev/window/core.TouchPhase) -> HostScrollPhase
 
+pub fn webview_decode_ffi_string(Bytes) -> String
+
+pub fn webview_decode_native_event(Int, Bytes, Bytes, Int) -> WebViewEvent
+
+pub fn webview_encode_ffi_string(String) -> Bytes
+
+pub fn webview_encode_native_command(WebViewCommand) -> (Int, String, String)
+
+pub fn webview_native_policy_code(WebViewNavigationPolicy) -> Int
+
 pub fn window_event_is_context_menu_button(@wzzc-dev/window/core.WindowEvent) -> Bool
 
 pub fn window_event_is_context_menu_trigger(@wzzc-dev/window/core.WindowEvent) -> Bool
