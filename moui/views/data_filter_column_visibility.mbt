@@ -6,12 +6,13 @@ pub fn[Msg] column_visibility_panel(
   locked? : Array[String] = [],
   title? : String = "Column visibility",
   summary? : String = "",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let inner_width = views_max_double(
     120.0,
-    width - theme.spacing_scale.md * 2.0,
+    width - resolved_theme.spacing_scale.md * 2.0,
   )
   let visible_count = column_visibility_count(columns, visible)
   let summary_label = if summary == "" {
@@ -20,21 +21,27 @@ pub fn[Msg] column_visibility_panel(
     summary
   }
   let rows : Array[@core.View[Msg]] = [
-    text(title, role=TextRole::Control, theme~, width=inner_width, height=26.0),
+    text(
+      title,
+      role=TextRole::Control,
+      theme=resolved_theme,
+      width=inner_width,
+      height=26.0,
+    ),
     text(
       summary_label,
       role=TextRole::Caption,
-      theme~,
+      theme=resolved_theme,
       width=inner_width,
       height=22.0,
-    ).foreground(theme.palette.muted),
+    ).foreground(resolved_theme.palette.muted),
   ]
   if columns.length() == 0 {
     rows.push(
       text(
         "No columns",
         role=TextRole::Caption,
-        theme~,
+        theme=resolved_theme,
         width=inner_width,
         height=28.0,
       ),
@@ -47,19 +54,23 @@ pub fn[Msg] column_visibility_panel(
           visible=string_array_contains(visible, column.id),
           locked=string_array_contains(locked, column.id),
           on_toggle~,
-          theme~,
+          theme=resolved_theme,
           width=inner_width,
         ),
       )
     }
   }
   container(
-    column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
+    column(
+      rows,
+      spacing=resolved_theme.spacing_scale.xs,
+      align=CrossAlign::Start,
+    ),
     width~,
     height=column_visibility_panel_height(columns.length()),
     variant=ContainerVariant::Base,
-    theme~,
-    padding=theme.spacing_scale.md,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.md,
   )
   .semantics_role(@core.SemanticsRole::Group)
   .semantics_description(summary_label)

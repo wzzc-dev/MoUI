@@ -28,12 +28,13 @@ pub fn PresenceStatus::label(self : PresenceStatus) -> String {
 pub fn[Msg] presence_dot(
   status : PresenceStatus,
   size? : Double = 10.0,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   on_surface? : @core.Color,
 ) -> @core.View[Msg] {
-  let status_color = presence_status_color(status, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let status_color = presence_status_color(status, resolved_theme)
   // The border separates the dot from the host surface (avatar background).
-  let border_color = on_surface.unwrap_or(theme.palette.background)
+  let border_color = on_surface.unwrap_or(resolved_theme.palette.background)
   let border_width = max_view_double(1.5, size * 0.15)
   let total = size + border_width * 2.0
   custom_layout(

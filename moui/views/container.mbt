@@ -6,10 +6,11 @@ pub fn[Msg] container(
   background? : @core.Color,
   corner_radius? : Double = 0.0,
   variant? : ContainerVariant = ContainerVariant::Base,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   padding? : Double,
 ) -> @core.View[Msg] {
-  let style = variant.style(theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = variant.style(resolved_theme)
   let child_padding = match padding {
     Some(value) => @core.Insets::all(value)
     None => style.padding
@@ -38,14 +39,15 @@ pub fn[Msg] card(
   width? : Double,
   height? : Double,
   padding? : Double = 24.0,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   container(
     child,
     width?,
     height?,
     variant=ContainerVariant::Raised,
-    theme~,
+    theme=resolved_theme,
     padding~,
   )
 }
@@ -56,8 +58,9 @@ pub fn[Msg] center(
   width? : Double,
   height? : Double,
   background? : @core.Color,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let centered = custom_children_layout(
     children=[child],
     measure=ctx => {
@@ -108,7 +111,7 @@ pub fn[Msg] center(
         width?,
         height?,
         background=color,
-        theme~,
+        theme=resolved_theme,
         padding=0.0,
       )
     None => centered

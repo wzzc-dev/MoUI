@@ -4,22 +4,25 @@ pub fn[Msg] popover(
   content~ : @core.View[Msg],
   expanded~ : Bool,
   placement? : PopoverPlacement = PopoverPlacement::BottomStart,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 240.0,
   height? : Double = 160.0,
   trap_focus? : Bool = false,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let view = if expanded {
     let panel = container(
         content,
         width~,
         height~,
         variant=ContainerVariant::Overlay,
-        theme~,
-        padding=theme.spacing_scale.sm,
+        theme=resolved_theme,
+        padding=resolved_theme.spacing_scale.sm,
       )
       .shadow(
-        theme.components.surface.overlay_shadow.unwrap_or(theme.shadow_scale.md),
+        resolved_theme.components.surface.overlay_shadow.unwrap_or(
+          resolved_theme.shadow_scale.md,
+        ),
       )
       .align(alignment=popover_alignment(placement))
     let panel = if trap_focus { panel.focus_trap() } else { panel }

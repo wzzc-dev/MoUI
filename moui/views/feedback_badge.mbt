@@ -2,17 +2,18 @@
 pub fn[Msg] badge(
   label : String,
   tone? : BadgeTone = BadgeTone::Neutral,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : BadgeStyle,
   width? : Double = 72.0,
   height? : Double = 24.0,
 ) -> @core.View[Msg] {
-  let style = resolve_badge_style(style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_badge_style(style, resolved_theme)
   container(
     text(
       label,
       role=TextRole::Caption,
-      theme~,
+      theme=resolved_theme,
       width=width - style.padding * 2.0,
       height=height - style.padding * 2.0,
     ).foreground(badge_foreground(tone, style)),
@@ -29,12 +30,13 @@ pub fn[Msg] status_badge(
   label : String,
   tone? : BadgeTone = BadgeTone::Neutral,
   detail? : String = "",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : BadgeStyle,
   width? : Double = 72.0,
   height? : Double = 24.0,
 ) -> @core.View[Msg] {
-  let base = badge(label, tone~, theme~, style?, width~, height~).accessibility_label(
+  let resolved_theme = views_ambient_theme(theme)
+  let base = badge(label, tone~, theme=resolved_theme, style?, width~, height~).accessibility_label(
     "Status: " + label,
   )
   if detail == "" {
@@ -50,36 +52,51 @@ pub fn[Msg] stat_card(
   value : String,
   caption? : String = "",
   tone? : FeedbackTone = FeedbackTone::Neutral,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   width? : Double = 180.0,
   height? : Double = 116.0,
 ) -> @core.View[Msg] {
-  let style = resolve_feedback_style(style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_feedback_style(style, resolved_theme)
   let rows : Array[@core.View[Msg]] = [
-    text(label, role=TextRole::Caption, theme~, width=width - 24.0, height=22.0),
-    text(value, role=TextRole::Title, theme~, width=width - 24.0, height=34.0).foreground(
-      feedback_accent(tone, style),
+    text(
+      label,
+      role=TextRole::Caption,
+      theme=resolved_theme,
+      width=width - 24.0,
+      height=22.0,
     ),
+    text(
+      value,
+      role=TextRole::Title,
+      theme=resolved_theme,
+      width=width - 24.0,
+      height=34.0,
+    ).foreground(feedback_accent(tone, style)),
   ]
   if caption != "" {
     rows.push(
       text(
         caption,
         role=TextRole::Caption,
-        theme~,
+        theme=resolved_theme,
         width=width - 24.0,
         height=22.0,
       ),
     )
   }
   container(
-    column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
+    column(
+      rows,
+      spacing=resolved_theme.spacing_scale.xs,
+      align=CrossAlign::Start,
+    ),
     width~,
     height~,
     variant=ContainerVariant::Raised,
-    theme~,
-    padding=theme.spacing_scale.md,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.md,
   )
 }
 

@@ -4,26 +4,27 @@ pub fn[Msg] chip(
   selected? : Bool = false,
   on_click? : Msg? = None,
   variant? : ChipVariant = ChipVariant::Soft,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 112.0,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let child = text(
     label,
     role=TextRole::Control,
-    theme~,
+    theme=resolved_theme,
     width=width - 18.0,
     height=height - 8.0,
-  ).foreground(chip_foreground(selected, theme))
+  ).foreground(chip_foreground(selected, resolved_theme))
   let surfaced = container(
     child,
     width~,
     height~,
-    background=chip_background(selected, variant, theme),
+    background=chip_background(selected, variant, resolved_theme),
     corner_radius=height / 2.0,
     padding=4.0,
   )
-  let bordered = match chip_border(selected, variant, theme) {
+  let bordered = match chip_border(selected, variant, resolved_theme) {
     Some(border) => surfaced.border(border)
     None => surfaced
   }
@@ -39,15 +40,16 @@ pub fn[Msg] chip(
 ///|
 pub fn[Msg] tag(
   label : String,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 96.0,
   height? : Double = 28.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   chip(
     label,
     selected=false,
     variant=ChipVariant::Outline,
-    theme~,
+    theme=resolved_theme,
     width~,
     height~,
   ).semantics_role(@core.SemanticsRole::Text)
@@ -58,16 +60,17 @@ pub fn[Msg] filter_chip(
   label : String,
   selected~ : Bool,
   on_change~ : (Bool) -> Msg,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 120.0,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   chip(
     label,
     selected~,
     on_click=Some(on_change(!selected)),
     variant=ChipVariant::Soft,
-    theme~,
+    theme=resolved_theme,
     width~,
     height~,
   )
@@ -78,16 +81,17 @@ pub fn[Msg] choice_chip(
   label : String,
   selected~ : Bool,
   on_select~ : Msg,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 120.0,
   height? : Double = 32.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   chip(
     label,
     selected~,
     on_click=Some(on_select),
     variant=ChipVariant::Filled,
-    theme~,
+    theme=resolved_theme,
     width~,
     height~,
   )

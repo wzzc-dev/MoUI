@@ -4,16 +4,17 @@ pub fn[Msg] banner(
   message : String,
   tone? : FeedbackTone = FeedbackTone::Info,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   width? : Double = 420.0,
 ) -> @core.View[Msg] {
-  let style = resolve_feedback_style(style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_feedback_style(style, resolved_theme)
   feedback_panel(
     message,
     tone~,
     action~,
-    theme~,
+    theme=resolved_theme,
     style~,
     width~,
     title~,
@@ -26,16 +27,17 @@ pub fn[Msg] callout(
   title : String,
   message : String,
   tone? : FeedbackTone = FeedbackTone::Info,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
-  let style = resolve_feedback_style(style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_feedback_style(style, resolved_theme)
   feedback_panel(
     message,
     tone~,
     action=None,
-    theme~,
+    theme=resolved_theme,
     style~,
     width~,
     title~,

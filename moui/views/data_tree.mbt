@@ -5,9 +5,10 @@ pub fn[Msg] tree_view(
   selected? : String = "",
   on_select? : ((String) -> Msg)? = None,
   on_toggle? : ((String) -> Msg)? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 280.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
   for item in items {
     append_tree_rows(
@@ -18,11 +19,11 @@ pub fn[Msg] tree_view(
       selected~,
       on_select~,
       on_toggle~,
-      theme~,
+      theme=resolved_theme,
       width~,
     )
   }
-  column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start).semantics_role(
+  column(rows, spacing=resolved_theme.spacing_scale.xs, align=CrossAlign::Start).semantics_role(
     @core.SemanticsRole::Tree,
   )
 }

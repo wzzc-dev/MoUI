@@ -3,18 +3,19 @@ pub fn[Msg] drop_zone(
   title? : String = "Drop files here",
   message? : String = "",
   on_drop~ : (Array[String]) -> Msg,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 320.0,
   height? : Double = 104.0,
   enabled? : Bool = true,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let title_height = 28.0
   let message_height = if message == "" { 0.0 } else { 26.0 }
   let rows : Array[@core.View[Msg]] = [
     text(
       title,
       role=TextRole::Control,
-      theme~,
+      theme=resolved_theme,
       width=width - 32.0,
       height=title_height,
     ),
@@ -24,32 +25,36 @@ pub fn[Msg] drop_zone(
       text(
         message,
         role=TextRole::Caption,
-        theme~,
+        theme=resolved_theme,
         width=width - 32.0,
         height=message_height,
       ),
     )
   }
   let zone = container(
-      column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center),
+      column(
+        rows,
+        spacing=resolved_theme.spacing_scale.xs,
+        align=CrossAlign::Center,
+      ),
       width~,
       height~,
       background=if enabled {
-        theme.palette.surface_variant.multiply_alpha(0.54)
+        resolved_theme.palette.surface_variant.multiply_alpha(0.54)
       } else {
-        theme.palette.surface_variant.multiply_alpha(0.28)
+        resolved_theme.palette.surface_variant.multiply_alpha(0.28)
       },
-      corner_radius=theme.radius_scale.md,
-      theme~,
-      padding=theme.spacing_scale.md,
+      corner_radius=resolved_theme.radius_scale.md,
+      theme=resolved_theme,
+      padding=resolved_theme.spacing_scale.md,
     )
     .border(
       @core.BorderStyle::new(
         brush=@core.Brush::solid(
           if enabled {
-            theme.palette.primary.multiply_alpha(0.58)
+            resolved_theme.palette.primary.multiply_alpha(0.58)
           } else {
-            theme.palette.outline.multiply_alpha(0.46)
+            resolved_theme.palette.outline.multiply_alpha(0.46)
           },
         ),
         width=1.0,
@@ -74,17 +79,24 @@ pub fn[Msg] file_import_panel(
   title? : String = "Import files",
   drop_title? : String = "Drop files here",
   empty_message? : String = "No files selected",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let enabled = availability is FileImportAvailability::Available
   let rows : Array[@core.View[Msg]] = [
-    text(title, role=TextRole::Control, theme~, width=width - 32.0, height=28.0),
+    text(
+      title,
+      role=TextRole::Control,
+      theme=resolved_theme,
+      width=width - 32.0,
+      height=28.0,
+    ),
     drop_zone(
       title=drop_title,
       message=file_import_status_text(selection, availability, empty_message),
       on_drop~,
-      theme~,
+      theme=resolved_theme,
       width=width - 32.0,
       enabled~,
     ),
@@ -100,7 +112,7 @@ pub fn[Msg] file_import_panel(
           } else {
             ButtonVariant::Tonal
           },
-          theme~,
+          theme=resolved_theme,
           width=112.0,
           height=36.0,
         ).disabled(disabled=!enabled),
@@ -109,18 +121,22 @@ pub fn[Msg] file_import_panel(
   }
   let list = file_selection_list(
     selection,
-    theme~,
+    theme=resolved_theme,
     width=width - 32.0,
     empty_message~,
   )
   rows.push(list)
   container(
-    column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Start),
+    column(
+      rows,
+      spacing=resolved_theme.spacing_scale.sm,
+      align=CrossAlign::Start,
+    ),
     width~,
     height=file_import_panel_height(selection, on_browse is Some(_)),
     variant=ContainerVariant::Base,
-    theme~,
-    padding=theme.spacing_scale.md,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.md,
   )
   .semantics_role(@core.SemanticsRole::Group)
   .semantics_description("File import panel")

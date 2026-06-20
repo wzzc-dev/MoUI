@@ -3,16 +3,17 @@ pub fn[Msg] empty_state(
   title : String,
   message : String,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
-  let style = resolve_feedback_style(style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_feedback_style(style, resolved_theme)
   state_panel(
     title,
     message,
     action~,
-    theme~,
+    theme=resolved_theme,
     style~,
     width~,
     tone=FeedbackTone::Neutral,
@@ -23,16 +24,17 @@ pub fn[Msg] empty_state(
 pub fn[Msg] loading_state(
   title? : String = "Loading",
   message? : String = "Please wait while content is prepared.",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
-  let style = resolve_feedback_style(style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_feedback_style(style, resolved_theme)
   state_panel(
     title,
     message,
     action=None,
-    theme~,
+    theme=resolved_theme,
     style~,
     width~,
     tone=FeedbackTone::Info,
@@ -44,16 +46,17 @@ pub fn[Msg] error_state(
   title : String,
   message : String,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
-  let style = resolve_feedback_style(style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_feedback_style(style, resolved_theme)
   state_panel(
     title,
     message,
     action~,
-    theme~,
+    theme=resolved_theme,
     style~,
     width~,
     tone=FeedbackTone::Danger,
@@ -64,33 +67,34 @@ pub fn[Msg] error_state(
 pub fn[Msg] inline_error(
   message : String,
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FeedbackStyle,
   badge_style? : BadgeStyle,
   width? : Double = 360.0,
 ) -> @core.View[Msg] {
-  let style = resolve_feedback_style(style, theme)
-  let badge_style = resolve_badge_style(badge_style, theme)
+  let resolved_theme = views_ambient_theme(theme)
+  let style = resolve_feedback_style(style, resolved_theme)
+  let badge_style = resolve_badge_style(badge_style, resolved_theme)
   let action_width = match action {
     Some(_) => 86.0
     None => 0.0
   }
   let message_width = views_max_double(
     96.0,
-    width - 72.0 - action_width - theme.spacing_scale.sm,
+    width - 72.0 - action_width - resolved_theme.spacing_scale.sm,
   )
   let body : Array[@core.View[Msg]] = [
     badge(
       "Error",
       tone=BadgeTone::Danger,
-      theme~,
+      theme=resolved_theme,
       style=badge_style,
       width=64.0,
     ),
     text(
       message,
       role=TextRole::Caption,
-      theme~,
+      theme=resolved_theme,
       width=message_width,
       height=28.0,
     ).foreground(feedback_accent(FeedbackTone::Danger, style)),
@@ -102,7 +106,7 @@ pub fn[Msg] inline_error(
           action.label,
           on_click=action.message,
           variant=ButtonVariant::Ghost,
-          theme~,
+          theme=resolved_theme,
           width=86.0,
           height=32.0,
         ),
@@ -110,12 +114,12 @@ pub fn[Msg] inline_error(
     None => ()
   }
   container(
-    row(body, spacing=theme.spacing_scale.sm, align=CrossAlign::Center),
+    row(body, spacing=resolved_theme.spacing_scale.sm, align=CrossAlign::Center),
     width~,
     height=44.0,
     background=feedback_background(FeedbackTone::Danger, style),
     corner_radius=style.radius,
-    theme~,
+    theme=resolved_theme,
     padding=style.padding,
   )
   .border(

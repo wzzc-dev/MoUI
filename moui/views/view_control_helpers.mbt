@@ -1,4 +1,13 @@
 ///|
+/// Resolve an optional theme override against the neutral fallback. Composite
+/// views use this for construction-time layout reads (spacing/shadow); their
+/// leaf children receive the theme Option via `theme?=theme` so the children's
+/// paint-time colors track the ambient `ctx.environment.theme` directly.
+fn views_ambient_theme(theme : @core.Theme?) -> @core.Theme {
+  theme.unwrap_or(@core.Theme::neutral())
+}
+
+///|
 fn view_color_revision(color : @core.Color) -> String {
   "\{color.r},\{color.g},\{color.b},\{color.a}"
 }

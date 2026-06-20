@@ -3,14 +3,20 @@ pub fn[Msg] selectable_list(
   items : Array[SelectableListItem[Msg]],
   selected? : String = "",
   empty? : @core.View[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 360.0,
   row_height? : Double = 64.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   if items.length() == 0 {
     match empty {
       Some(view) => view
-      None => empty_state("No items", "There are no list items yet.", theme~)
+      None =>
+        empty_state(
+          "No items",
+          "There are no list items yet.",
+          theme=resolved_theme,
+        )
     }
   } else {
     let rows : Array[@core.View[Msg]] = []
@@ -19,22 +25,26 @@ pub fn[Msg] selectable_list(
         selectable_list_row(
           item,
           selected=item.id == selected,
-          theme~,
+          theme=resolved_theme,
           width~,
           row_height~,
         ),
       )
     }
     container(
-      column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
+      column(
+        rows,
+        spacing=resolved_theme.spacing_scale.xs,
+        align=CrossAlign::Start,
+      ),
       width~,
       height=selectable_list_height(
         items.length(),
         row_height,
-        spacing=theme.spacing_scale.xs,
+        spacing=resolved_theme.spacing_scale.xs,
       ),
       variant=ContainerVariant::Base,
-      theme~,
+      theme=resolved_theme,
       padding=0.0,
     )
     .semantics_role(@core.SemanticsRole::List)

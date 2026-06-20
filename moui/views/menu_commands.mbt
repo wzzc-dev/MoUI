@@ -20,10 +20,11 @@ pub using @core {type KeyboardShortcut}
 pub fn[Msg] menu_bar(
   menus : Array[MenuItem[Msg]],
   active? : String = "",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 520.0,
   height? : Double = 42.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let items : Array[@core.View[Msg]] = []
   for item in menus {
     let selected = item.id == active
@@ -36,7 +37,7 @@ pub fn[Msg] menu_bar(
         } else {
           ButtonVariant::Ghost
         },
-        theme~,
+        theme=resolved_theme,
         width=menu_command_item_width(item.label),
         height=34.0,
       )
@@ -46,12 +47,16 @@ pub fn[Msg] menu_bar(
     )
   }
   container(
-    row(items, spacing=theme.spacing_scale.xs, align=CrossAlign::Center),
+    row(
+      items,
+      spacing=resolved_theme.spacing_scale.xs,
+      align=CrossAlign::Center,
+    ),
     width~,
     height~,
     variant=ContainerVariant::Base,
-    theme~,
-    padding=theme.spacing_scale.xs,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.xs,
   )
   .semantics_role(@core.SemanticsRole::Menu)
   .accessibility_label("Menu bar")
@@ -61,10 +66,11 @@ pub fn[Msg] menu_bar(
 pub fn[Msg] command_menu(
   sections : Array[CommandMenuSection],
   on_select~ : (CommandIntent) -> Msg,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 320.0,
   max_height? : Double = 280.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
   for section in sections {
     if section.title != "" {
@@ -72,8 +78,8 @@ pub fn[Msg] command_menu(
         text(
           section.title,
           role=TextRole::Caption,
-          theme~,
-          width=width - theme.spacing_scale.md * 2.0,
+          theme=resolved_theme,
+          width=width - resolved_theme.spacing_scale.md * 2.0,
           height=22.0,
         ),
       )
@@ -83,8 +89,8 @@ pub fn[Msg] command_menu(
         command_menu_row(
           command,
           on_select~,
-          theme~,
-          width=width - theme.spacing_scale.md * 2.0,
+          theme=resolved_theme,
+          width=width - resolved_theme.spacing_scale.md * 2.0,
         ),
       )
     }
@@ -94,29 +100,35 @@ pub fn[Msg] command_menu(
       text(
         "No commands",
         role=TextRole::Caption,
-        theme~,
-        width=width - theme.spacing_scale.md * 2.0,
+        theme=resolved_theme,
+        width=width - resolved_theme.spacing_scale.md * 2.0,
         height=28.0,
       ),
     )
   }
   container(
     scroll_view(
-      column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
-      width=width - theme.spacing_scale.md * 2.0,
-      height=max_height - theme.spacing_scale.md * 2.0,
+      column(
+        rows,
+        spacing=resolved_theme.spacing_scale.xs,
+        align=CrossAlign::Start,
+      ),
+      width=width - resolved_theme.spacing_scale.md * 2.0,
+      height=max_height - resolved_theme.spacing_scale.md * 2.0,
     ),
     width~,
     height=max_height,
     variant=ContainerVariant::Overlay,
-    theme~,
-    padding=theme.spacing_scale.md,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.md,
   )
   // Floating menus lift with the component-theme overlay shadow when the
   // design system supplies one (Fluent flyout = shadow16), falling back to the
   // neutral large elevation shadow.
   .shadow(
-    theme.components.surface.overlay_shadow.unwrap_or(theme.shadow_scale.lg),
+    resolved_theme.components.surface.overlay_shadow.unwrap_or(
+      resolved_theme.shadow_scale.lg,
+    ),
   )
   .semantics_role(@core.SemanticsRole::Menu)
   .accessibility_label("Command menu")
@@ -127,16 +139,24 @@ pub fn[Msg] context_menu_region(
   child~ : @core.View[Msg],
   menu~ : @core.View[Msg],
   visible~ : Bool,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let content = if visible {
     overlay(
       child,
-      container(menu, variant=ContainerVariant::Overlay, theme~, padding=0.0)
+      container(
+        menu,
+        variant=ContainerVariant::Overlay,
+        theme=resolved_theme,
+        padding=0.0,
+      )
       // Context menus float above their host, so lift them with the component
       // overlay shadow (Fluent flyout) or the neutral large elevation shadow.
       .shadow(
-        theme.components.surface.overlay_shadow.unwrap_or(theme.shadow_scale.lg),
+        resolved_theme.components.surface.overlay_shadow.unwrap_or(
+          resolved_theme.shadow_scale.lg,
+        ),
       )
       .semantics_role(@core.SemanticsRole::Menu)
       .align(alignment=@core.Alignment::bottom_trailing()),

@@ -6,10 +6,11 @@ pub fn[Msg] number_field(
   step? : Double = 1.0,
   placeholder? : String = "0",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 220.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let control_width = match on_step {
     Some(_) => views_max_double(80.0, width - 88.0)
     None => width
@@ -20,7 +21,7 @@ pub fn[Msg] number_field(
       on_input~,
       placeholder~,
       variant~,
-      theme~,
+      theme=resolved_theme,
       width=control_width,
       height~,
     ),
@@ -31,14 +32,14 @@ pub fn[Msg] number_field(
         stepper(
           on_decrement=handle_step(0.0 - step),
           on_increment=handle_step(step),
-          theme~,
+          theme=resolved_theme,
           width=80.0,
           height~,
         ),
       )
     None => ()
   }
-  row(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center).frame(
+  row(rows, spacing=resolved_theme.spacing_scale.xs, align=CrossAlign::Center).frame(
     width~,
   )
 }
@@ -48,16 +49,17 @@ pub fn[Msg] stepper(
   on_decrement~ : Msg,
   on_increment~ : Msg,
   label? : String = "",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 140.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = [
     button(
       "-",
       on_click=on_decrement,
       variant=ButtonVariant::Outline,
-      theme~,
+      theme=resolved_theme,
       width=36.0,
       height~,
     ),
@@ -67,7 +69,7 @@ pub fn[Msg] stepper(
       text(
         label,
         role=TextRole::Control,
-        theme~,
+        theme=resolved_theme,
         width=views_max_double(24.0, width - 80.0),
         height~,
       ),
@@ -78,12 +80,12 @@ pub fn[Msg] stepper(
       "+",
       on_click=on_increment,
       variant=ButtonVariant::Outline,
-      theme~,
+      theme=resolved_theme,
       width=36.0,
       height~,
     ),
   )
-  row(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Center).frame(
+  row(rows, spacing=resolved_theme.spacing_scale.xs, align=CrossAlign::Center).frame(
     width~,
     height~,
   )

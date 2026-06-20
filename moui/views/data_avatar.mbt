@@ -2,9 +2,10 @@
 pub fn[Msg] avatar(
   label : String,
   image? : String? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   size? : Double = 40.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   match image {
     Some(source) =>
       @core.View::node(
@@ -39,13 +40,13 @@ pub fn[Msg] avatar(
         text(
           avatar_initials(label),
           role=TextRole::Control,
-          theme~,
+          theme=resolved_theme,
           width=size - 10.0,
           height=size - 10.0,
-        ).foreground(theme.palette.on_primary),
+        ).foreground(resolved_theme.palette.on_primary),
         width=size,
         height=size,
-        background=theme.palette.primary,
+        background=resolved_theme.palette.primary,
         corner_radius=size / 2.0,
         padding=5.0,
       ).accessibility_label(label)
@@ -55,15 +56,18 @@ pub fn[Msg] avatar(
 ///|
 pub fn[Msg] avatar_group(
   labels : Array[String],
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   size? : Double = 36.0,
   max_visible? : Int = 4,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let visible = views_min_int(labels.length(), views_max_int(0, max_visible))
   let children : Array[@core.View[Msg]] = []
   for index in 0..<visible {
     children.push(
-      avatar(labels[index], theme~, size~).key("avatar-" + labels[index]),
+      avatar(labels[index], theme=resolved_theme, size~).key(
+        "avatar-" + labels[index],
+      ),
     )
   }
   let remaining = labels.length() - visible
@@ -73,13 +77,13 @@ pub fn[Msg] avatar_group(
         text(
           "+\{remaining}",
           role=TextRole::Caption,
-          theme~,
+          theme=resolved_theme,
           width=size - 10.0,
           height=size - 10.0,
-        ).foreground(theme.palette.foreground),
+        ).foreground(resolved_theme.palette.foreground),
         width=size,
         height=size,
-        background=theme.palette.surface_variant,
+        background=resolved_theme.palette.surface_variant,
         corner_radius=size / 2.0,
         padding=5.0,
       ),

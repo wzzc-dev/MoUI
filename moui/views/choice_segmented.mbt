@@ -4,9 +4,10 @@ pub fn[Msg] segmented_control(
   selected~ : String,
   on_select~ : (String) -> Msg,
   size? : SegmentedControlSize = SegmentedControlSize::Regular,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let height = match size {
     Compact => 32.0
     Regular => 40.0
@@ -28,7 +29,7 @@ pub fn[Msg] segmented_control(
         } else {
           ButtonVariant::Ghost
         },
-        theme~,
+        theme=resolved_theme,
         width=item_width,
         height~,
       )
@@ -40,8 +41,8 @@ pub fn[Msg] segmented_control(
     row(segments, spacing=0.0, align=CrossAlign::Center),
     width~,
     height~,
-    background=theme.palette.surface_variant.multiply_alpha(0.55),
-    corner_radius=theme.radius_scale.md,
+    background=resolved_theme.palette.surface_variant.multiply_alpha(0.55),
+    corner_radius=resolved_theme.radius_scale.md,
     padding=2.0,
   ).semantics_role(@core.SemanticsRole::Group)
 }
