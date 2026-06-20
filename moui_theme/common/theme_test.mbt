@@ -6058,8 +6058,7 @@ test "design system tokens generate existing theme presets" {
     material_tokens.palette.success,
   )
   assert_true(
-    material_tokens.to_theme().palette.danger ==
-    material_tokens.palette.danger,
+    material_tokens.to_theme().palette.danger == material_tokens.palette.danger,
   )
 }
 
@@ -7279,10 +7278,8 @@ fn fluent_global_color_source_import_status(
   token : String,
 ) -> @common.DesignTokenStatus {
   match token {
-    "red.primary" |
-    "green.primary" |
-    "darkOrange.primary" |
-    "blue.primary" => @common.DesignTokenStatus::ThemeMapped
+    "red.primary" | "green.primary" | "darkOrange.primary" | "blue.primary" =>
+      @common.DesignTokenStatus::ThemeMapped
     _ => @common.DesignTokenStatus::PreviewMapped
   }
 }

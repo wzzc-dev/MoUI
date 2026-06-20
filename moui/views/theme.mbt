@@ -9,13 +9,19 @@ pub using @core {type ColorScheme}
 /// (on*/container matrix), scales, and default `ComponentThemes` are derived
 /// consistently with the resolver path used by host `ThemeChanged` events.
 pub fn light_theme() -> @core.Theme {
-  @core.resolve_minimal_theme(@core.ThemeSpec::minimal_light(), @core.ColorScheme::Light)
+  @core.resolve_minimal_theme(
+    @core.ThemeSpec::minimal_light(),
+    @core.ColorScheme::Light,
+  )
 }
 
 ///|
 /// Minimal dark theme. Mirrors `light_theme` via the resolver.
 pub fn dark_theme() -> @core.Theme {
-  @core.resolve_minimal_theme(@core.ThemeSpec::minimal_dark(), @core.ColorScheme::Dark)
+  @core.resolve_minimal_theme(
+    @core.ThemeSpec::minimal_dark(),
+    @core.ColorScheme::Dark,
+  )
 }
 
 ///|

@@ -21,30 +21,30 @@ pub fn[Msg] divider(
   let line_thickness = max_view_double(1.0, thickness)
   custom_layout(
     measure=constraints => {
-     match axis {
-       @core.Axis::Horizontal =>
-         constraints.constrain(
-           @core.Size::new(
+      match axis {
+        @core.Axis::Horizontal =>
+          constraints.constrain(
+            @core.Size::new(
               width=if constraints.max.width < 1.0e8 {
-               constraints.max.width
-             } else {
-               line_thickness
-             },
-             height=line_thickness,
-           ),
-         )
-       @core.Axis::Vertical =>
-         constraints.constrain(
-           @core.Size::new(
-             width=line_thickness,
+                constraints.max.width
+              } else {
+                line_thickness
+              },
+              height=line_thickness,
+            ),
+          )
+        @core.Axis::Vertical =>
+          constraints.constrain(
+            @core.Size::new(
+              width=line_thickness,
               height=if constraints.max.height < 1.0e8 {
-               constraints.max.height
-             } else {
-               line_thickness
-             },
-           ),
-         )
-     }
+                constraints.max.height
+              } else {
+                line_thickness
+              },
+            ),
+          )
+      }
     },
     paint=frame => {
       let rect = if inset > 0.0 {

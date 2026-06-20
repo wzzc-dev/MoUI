@@ -6,6 +6,7 @@ pub(all) enum DesignDensity {
 } derive(Eq, Debug, ToJson)
 
 ///|
+
 ///|
 /// Design-system semantic palette. Extended with a neutral background/foreground/
 /// stroke ramp so Fluent 2 (and any system with layered neutral surfaces) can
@@ -884,7 +885,7 @@ pub fn DesignSystemTokens::core_themes(
 ) -> @core.ComponentThemes {
   let state_layer = self.state_layer.core_tokens()
   let base = self.components.core_themes(self.scheme)
-  { ..base, button: { ..base.button, state_layer } }
+  { ..base, button: { ..base.button, state_layer, } }
 }
 
 ///|
@@ -1477,10 +1478,7 @@ fn fluent_component_overrides(
     // Primary button: Fluent 2 uses colorBrandBackground as fill and
     // colorBrandStroke1 as the rest border, separated from the fill color.
     .button,
-    primary: {
-      ..base.button.primary,
-      border: palette.brand_stroke,
-    },
+    primary: { ..base.button.primary, border: palette.brand_stroke },
     // subtle: transparent background, foreground tint, hover reveals a faint
     // neutral wash (colorNeutralBackground1Hover semantics).
     subtle: control_state_tokens(
@@ -1829,7 +1827,10 @@ fn surface_tokens(
   palette : DesignSemanticPalette,
   scheme : @core.ColorScheme,
 ) -> DesignSurfaceTokens {
-  let surfaces = @core.SurfaceScale::default(palette.core_palette(scheme), scheme)
+  let surfaces = @core.SurfaceScale::default(
+    palette.core_palette(scheme),
+    scheme,
+  )
   { base: surfaces.base, raised: surfaces.raised, overlay: surfaces.overlay }
 }
 

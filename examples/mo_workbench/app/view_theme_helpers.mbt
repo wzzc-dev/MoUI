@@ -23,8 +23,7 @@ fn ui_color(r : Double, g : Double, b : Double) -> @core.Color {
 ///|
 fn workbench_theme(scheme : @moui.ColorScheme) -> @moui.Theme {
   let base = match scheme {
-    @moui.ColorScheme::Light =>
-      @views.light_theme()
+    @moui.ColorScheme::Light => @views.light_theme()
     @moui.ColorScheme::Dark => @views.dark_theme()
   }
   let accent = match scheme {
@@ -33,12 +32,7 @@ fn workbench_theme(scheme : @moui.ColorScheme) -> @moui.Theme {
   }
   {
     ..base,
-    palette: {
-      ..base.palette,
-      primary: accent,
-      info: accent,
-      focus: accent,
-    },
+    palette: { ..base.palette, primary: accent, info: accent, focus: accent },
   }
 }
 
