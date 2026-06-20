@@ -124,7 +124,9 @@ pub fn drain_windows_webview_commands(
 ) -> Int {
   let hwnd = window.window_handle()
   queue.drain_with_handler(command => {
-    let (kind, text, detail) = @host.webview_encode_native_command(command.command)
+    let (kind, text, detail) = @host.webview_encode_native_command(
+      command.command,
+    )
     windows_webview_command(
       hwnd,
       @host.webview_encode_ffi_string(command.id),

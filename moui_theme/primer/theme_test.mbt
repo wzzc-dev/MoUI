@@ -9,7 +9,7 @@ test "primer package entrypoints align with common preset" {
     system_theme(system_scheme=@core.ColorScheme::Dark).scheme ==
     @core.ColorScheme::Dark,
   )
-  assert_true(report().preset == expected)
-  assert_true(manifest().preset == expected)
-  assert_true(component_token_matrix().length() > 0)
+  assert_true(@audit.design_system_report(preset()).preset == expected)
+  assert_true(@audit.manifest(preset()).preset == expected)
+  assert_true(@audit.component_token_matrix(preset()).length() > 0)
 }
