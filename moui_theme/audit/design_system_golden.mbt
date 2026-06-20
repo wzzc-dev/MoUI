@@ -47,7 +47,7 @@ pub fn source_usage(preset : @common.DesignPreset) -> Array[DesignSourceUsage] {
         count = count + 1
       }
     }
-    usages.push(source_usage(preset, source, count))
+    usages.push(source_usage_entry(preset, source, count))
   }
   usages
 }
@@ -2663,7 +2663,7 @@ fn mapping(
 }
 
 ///|
-fn source_usage(
+fn source_usage_entry(
   preset : @common.DesignPreset,
   source : DesignSystemSource,
   count : Int,
