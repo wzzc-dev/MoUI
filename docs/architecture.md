@@ -135,7 +135,6 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
 
 ## Scope
 
-<<<<<<< Updated upstream
 - Platform-neutral `core` contracts, opaque views, environment/event/geometry,
   draw models, and the private custom view protocol wrapped by `View[Msg]`.
   `core` should grow only cross-runtime protocols and shared
@@ -151,23 +150,23 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
   `View`, `Program`, `Effect`, `Subscription`, and `Theme` for
   `@wzzc-dev/moui` consumers. Neutral default/light/dark/custom theme builders
   live in `moui/views` and return plain `@moui.Theme` values.
-=======
-- Platform-neutral `core` runtime, view specs, Taffy-backed layout placement,
-  hit testing, and draw commands.
-- Public root package aliases common core view/runtime/theme types for
-  `@wzzc-dev/moui` consumers and exposes neutral default/light/dark/custom
-  theme builders directly over `@core.Theme`.
->>>>>>> Stashed changes
-- `moui_theme/common` is a repo-local addon diagnostic workspace member for shared
-  source-mapped design-system
-  manifests, source-usage audits for golden mappings, official-token/source-lock
-  coverage, source-lock quality reports, source-package inventories,
-  source-imported token records with pinned file shas and raw source
-  expressions plus official-anchor coverage, manifest/golden integrity gaps, runtime token
-  alignment reports for resolved source values, adaptation-difference reports,
-  token taxonomy reports, semantic palette role reports, typography role reports, token-group resolver reports, component-token matrices, density resolver reports, variant resolver reports, customization capability reports,
-  semantic/component token models, density and variant adapters, and custom theme builders over the
-  platform-neutral `@moui.Theme` token surface. It may import
+- `moui_theme/common` is the app-facing construction surface of the optional
+  design-system addon: `DesignPreset`, `DesignSystemTokens`, the per-system
+  token structs with their `core_*` projection methods, and the
+  construction-surface methods on `DesignPreset` (`theme`/`tokens`/`label`...).
+  It exposes only what an app needs to build a `@core.Theme` from a branded
+  system — no audit/diagnostics machinery.
+- `moui_theme/audit` is the design-system diagnostics package: source-mapped
+  manifests, golden mappings, official-token/source-lock coverage,
+  source-package inventories, source-imported token records with pinned file
+  shas, runtime token alignment, adaptation-difference, token taxonomy,
+  semantic palette / typography role, token-group resolver, component-token
+  matrix, density/variant resolver, and customization capability reports.
+  Audit methods are top-level `pub fn` (MoonBit forbids defining methods on a
+  type from another package), keyed by `@common.DesignPreset`. Apps reach it
+  via `@audit.xxx(@material.preset())`; the variant packages no longer re-export
+  audit entrypoints.
+- `moui_theme` is a repo-local addon workspace member. It may import
   `wzzc-dev/moui/core`, but `moui/core`, `moui/views`, and the root
   `wzzc-dev/moui` package do not depend on `moui_theme`. Concrete Material,
   Carbon, Primer, and Fluent names stay in this addon through the
@@ -183,16 +182,12 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
 
 ```text
 moui/                         root public facade workspace member
-<<<<<<< Updated upstream
 moui/core/                    platform-neutral contracts, opaque View, and custom view callback contracts
 moui/runtime/                 opaque app/host AppRuntime entrypoint, runtime state, tree/layout/paint, and program execution
 moui/views/                   public view constructors and concrete custom view control behavior
-=======
-moui/core/                    one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
-moui/views/                   public view constructors
->>>>>>> Stashed changes
-moui_theme/common/            addon diagnostic common source-mapped design-system model, aggregate design-system reports, token taxonomy reports, semantic palette role reports, typography role reports, golden mappings, source usage audits, source-lock quality reports, source-package inventories, source-imported token records, coverage gaps, integrity reports, runtime token alignment, official-token/source-lock coverage, token-group resolver reports, density resolver reports, variant resolver reports, customization capability reports, component-token matrices, adaptation reports, semantic/component tokens, coverage manifests, and custom Theme builders
-moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints over common tokens, manifests, reports, component matrices, and light/dark/high-contrast/system Theme helpers
+moui_theme/common/            addon construction surface: DesignPreset, DesignSystemTokens, per-system token structs + core_* projections, and the construction-surface DesignPreset methods
+moui_theme/audit/             addon diagnostics: manifests, golden mappings, official-token/source-lock coverage, source-import records, runtime alignment, taxonomy/role/resolver/matrix reports (top-level pub fn, not DesignPreset methods)
+moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints: light/dark/high-contrast/system Theme helpers, tokens, and theme_for_variant over common
 moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
 moui/backend/windows/         Windows native host core
 moui/backend/windows/skia/    Windows Skia renderer provider mainline
