@@ -166,7 +166,7 @@ fn component_style_resolver_record(
     source_locked,
     token_surface: component_token_surface(component),
     core_style_surface,
-    tokens_api: "@common.DesignPreset::tokens(...).components",
+    tokens_api: "DesignPreset::tokens(...).components",
     style_api: component_style_api(component),
     scheme,
     resolves_tokens,
@@ -315,17 +315,17 @@ fn component_core_style_resolves(
 ///|
 fn component_token_surface(component : String) -> String {
   match component {
-    "Button" => "@common.DesignComponentTokens.button"
-    "TextField" => "@common.DesignComponentTokens.text_field"
-    "Surface" => "@common.DesignComponentTokens.surface"
-    "ChoiceControl" => "@common.DesignComponentTokens.choice_control"
-    "Progress" => "@common.DesignComponentTokens.progress"
-    "Slider" => "@common.DesignComponentTokens.slider"
-    "Picker" => "@common.DesignComponentTokens.picker"
-    "DatePicker" => "@common.DesignComponentTokens.date_picker"
-    "Feedback" => "@common.DesignComponentTokens.feedback"
-    "Badge" => "@common.DesignComponentTokens.badge"
-    "FormValidation" => "@common.DesignComponentTokens.form_validation"
+    "Button" => "DesignComponentTokens.button"
+    "TextField" => "DesignComponentTokens.text_field"
+    "Surface" => "DesignComponentTokens.surface"
+    "ChoiceControl" => "DesignComponentTokens.choice_control"
+    "Progress" => "DesignComponentTokens.progress"
+    "Slider" => "DesignComponentTokens.slider"
+    "Picker" => "DesignComponentTokens.picker"
+    "DatePicker" => "DesignComponentTokens.date_picker"
+    "Feedback" => "DesignComponentTokens.feedback"
+    "Badge" => "DesignComponentTokens.badge"
+    "FormValidation" => "DesignComponentTokens.form_validation"
     _ => ""
   }
 }
@@ -333,18 +333,17 @@ fn component_token_surface(component : String) -> String {
 ///|
 fn component_style_api(component : String) -> String {
   match component {
-    "Button" => "@common.DesignSystemTokens::core_component_styles().button"
-    "TextField" =>
-      "@common.DesignSystemTokens::core_component_styles().text_field"
-    "Surface" => "@common.DesignSystemTokens::core_component_styles().surface"
-    "ChoiceControl" => "@common.DesignChoiceControlTokens::core_style"
-    "Progress" => "@common.DesignProgressTokens::core_style"
-    "Slider" => "@common.DesignSliderTokens::core_style"
-    "Picker" => "@common.DesignPickerTokens::core_style"
-    "DatePicker" => "@common.DesignPickerTokens::core_style"
-    "Feedback" => "@common.DesignFeedbackTokens::core_style"
-    "Badge" => "@common.DesignBadgeTokens::core_style"
-    "FormValidation" => "@common.DesignFormValidationTokens::core_style"
+    "Button" => "DesignSystemTokens::core_component_styles().button"
+    "TextField" => "DesignSystemTokens::core_component_styles().text_field"
+    "Surface" => "DesignSystemTokens::core_component_styles().surface"
+    "ChoiceControl" => "DesignChoiceControlTokens::core_style"
+    "Progress" => "DesignProgressTokens::core_style"
+    "Slider" => "DesignSliderTokens::core_style"
+    "Picker" => "DesignPickerTokens::core_style"
+    "DatePicker" => "DesignPickerTokens::core_style"
+    "Feedback" => "DesignFeedbackTokens::core_style"
+    "Badge" => "DesignBadgeTokens::core_style"
+    "FormValidation" => "DesignFormValidationTokens::core_style"
     _ => ""
   }
 }

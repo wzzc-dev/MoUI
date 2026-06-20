@@ -407,7 +407,7 @@ fn semantic_palette_role_remaining_gap(
   resolves_core_surface : Bool,
 ) -> String {
   if !resolves_core_surface {
-    "@common.DesignSemanticPalette." +
+    "DesignSemanticPalette." +
     role.label() +
     " does not currently resolve to its neutral @core theme surface."
   } else if evidence.official_token_count == 0 {
@@ -426,21 +426,20 @@ fn semantic_palette_role_token_surface(
   role : DesignSemanticPaletteRole,
 ) -> String {
   match role {
-    PaletteForeground => "@common.DesignSemanticPalette.foreground"
-    PaletteBackground => "@common.DesignSemanticPalette.background"
-    PaletteSurface => "@common.DesignSemanticPalette.surface"
-    PaletteSurfaceVariant => "@common.DesignSemanticPalette.surface_variant"
-    PalettePrimary => "@common.DesignSemanticPalette.primary"
-    PalettePrimaryForeground =>
-      "@common.DesignSemanticPalette.primary_foreground"
-    PaletteOutline => "@common.DesignSemanticPalette.outline"
-    PaletteMuted => "@common.DesignSemanticPalette.muted"
-    PaletteSuccess => "@common.DesignSemanticPalette.success"
-    PaletteWarning => "@common.DesignSemanticPalette.warning"
-    PaletteDanger => "@common.DesignSemanticPalette.danger"
-    PaletteInfo => "@common.DesignSemanticPalette.info"
-    PaletteFocus => "@common.DesignSemanticPalette.focus"
-    PaletteScrim => "@common.DesignSemanticPalette.scrim"
+    PaletteForeground => "DesignSemanticPalette.foreground"
+    PaletteBackground => "DesignSemanticPalette.background"
+    PaletteSurface => "DesignSemanticPalette.surface"
+    PaletteSurfaceVariant => "DesignSemanticPalette.surface_variant"
+    PalettePrimary => "DesignSemanticPalette.primary"
+    PalettePrimaryForeground => "DesignSemanticPalette.primary_foreground"
+    PaletteOutline => "DesignSemanticPalette.outline"
+    PaletteMuted => "DesignSemanticPalette.muted"
+    PaletteSuccess => "DesignSemanticPalette.success"
+    PaletteWarning => "DesignSemanticPalette.warning"
+    PaletteDanger => "DesignSemanticPalette.danger"
+    PaletteInfo => "DesignSemanticPalette.info"
+    PaletteFocus => "DesignSemanticPalette.focus"
+    PaletteScrim => "DesignSemanticPalette.scrim"
   }
 }
 

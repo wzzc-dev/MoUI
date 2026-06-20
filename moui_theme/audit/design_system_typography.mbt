@@ -357,7 +357,7 @@ fn typography_role_remaining_gap(
   resolves_core_surface : Bool,
 ) -> String {
   if !resolves_core_surface {
-    "@common.DesignTypographyTokens." +
+    "DesignTypographyTokens." +
     role.label() +
     " does not currently resolve to its neutral @core.TypographyScale slot."
   } else if evidence.official_token_count == 0 {
@@ -376,10 +376,10 @@ fn typography_role_remaining_gap(
 ///|
 fn typography_role_token_surface(role : DesignTypographyRole) -> String {
   match role {
-    TypographyBody => "@common.DesignTypographyTokens.body"
-    TypographyTitle => "@common.DesignTypographyTokens.title"
-    TypographyCaption => "@common.DesignTypographyTokens.caption"
-    TypographyControl => "@common.DesignTypographyTokens.control"
+    TypographyBody => "DesignTypographyTokens.body"
+    TypographyTitle => "DesignTypographyTokens.title"
+    TypographyCaption => "DesignTypographyTokens.caption"
+    TypographyControl => "DesignTypographyTokens.control"
   }
 }
 

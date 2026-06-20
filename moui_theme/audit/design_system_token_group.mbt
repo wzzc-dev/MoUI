@@ -274,7 +274,7 @@ fn token_group_resolver_record(
     token_path,
     source_locked,
     token_surface: token_group_surface(requirement, coverage.moui_surface),
-    tokens_api: "@common.DesignPreset::tokens(...)",
+    tokens_api: "DesignPreset::tokens(...)",
     theme_api: token_group_theme_api(requirement),
     scheme,
     resolves_tokens,
@@ -351,19 +351,19 @@ fn token_group_resolves_neutral_surface(
 fn token_group_theme_api(requirement : DesignSystemRequirement) -> String {
   match requirement {
     DesignSystemRequirement::SemanticPalette =>
-      "@common.DesignSemanticPalette::core_palette/core_semantic_colors -> @core.Theme"
+      "DesignSemanticPalette::core_palette/core_semantic_colors -> @core.Theme"
     DesignSystemRequirement::Typography =>
-      "@common.DesignTypographyTokens::core_typography -> @core.Theme"
+      "DesignTypographyTokens::core_typography -> @core.Theme"
     DesignSystemRequirement::ShapeRadius =>
-      "@common.DesignRadiusTokens::core_radius_scale -> @core.Theme"
+      "DesignRadiusTokens::core_radius_scale -> @core.Theme"
     DesignSystemRequirement::ElevationShadow =>
-      "@common.DesignElevationTokens::core_shadow_scale -> @core.Theme"
+      "DesignElevationTokens::core_shadow_scale -> @core.Theme"
     DesignSystemRequirement::Motion =>
-      "@common.DesignMotionTokens::core_motion -> @core.Theme"
+      "DesignMotionTokens::core_motion -> @core.Theme"
     DesignSystemRequirement::Surface =>
-      "@common.DesignSurfaceTokens::core_surfaces -> @core.Theme"
+      "DesignSurfaceTokens::core_surfaces -> @core.Theme"
     DesignSystemRequirement::StateLayer =>
-      "@common.DesignStateLayerTokens -> @common.DesignComponentTokens"
+      "DesignStateLayerTokens -> @common.DesignComponentTokens"
     _ => ""
   }
 }
@@ -377,19 +377,16 @@ fn token_group_surface(
   let surface = if coverage_surface == "" { fallback } else { coverage_surface }
   match requirement {
     DesignSystemRequirement::SemanticPalette =>
-      "@common.DesignSemanticPalette -> " + surface
+      "DesignSemanticPalette -> " + surface
     DesignSystemRequirement::Typography =>
-      "@common.DesignTypographyTokens -> " + surface
-    DesignSystemRequirement::ShapeRadius =>
-      "@common.DesignRadiusTokens -> " + surface
+      "DesignTypographyTokens -> " + surface
+    DesignSystemRequirement::ShapeRadius => "DesignRadiusTokens -> " + surface
     DesignSystemRequirement::ElevationShadow =>
-      "@common.DesignElevationTokens -> " + surface
-    DesignSystemRequirement::Motion =>
-      "@common.DesignMotionTokens -> " + surface
-    DesignSystemRequirement::Surface =>
-      "@common.DesignSurfaceTokens -> " + surface
+      "DesignElevationTokens -> " + surface
+    DesignSystemRequirement::Motion => "DesignMotionTokens -> " + surface
+    DesignSystemRequirement::Surface => "DesignSurfaceTokens -> " + surface
     DesignSystemRequirement::StateLayer =>
-      "@common.DesignStateLayerTokens -> " + surface
+      "DesignStateLayerTokens -> " + surface
     _ => surface
   }
 }
