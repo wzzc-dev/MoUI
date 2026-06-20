@@ -4,8 +4,9 @@ fn main {
     bridge=@macos_host.macos_service_bridge(),
   )
   let app = @app.MarkdownEditorApp::new_with_services(services)
+  let timer_source = @macos_host.macos_timer_source()
   let runtime = @runtime.new_program_with_dimensions(
-    program=app.program_with_services(services),
+    program=app.program_with_services(services, timer_source=Some(timer_source)),
     width=980.0,
     height=640.0,
   )
