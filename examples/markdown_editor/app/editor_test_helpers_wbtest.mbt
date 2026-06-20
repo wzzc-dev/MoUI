@@ -304,16 +304,6 @@ fn MarkdownEditorApp::document_info_for_test(
 }
 
 ///|
-fn MarkdownEditorApp::can_undo(self : MarkdownEditorApp) -> Bool {
-  self.undo_stack.get().length() > 0
-}
-
-///|
-fn MarkdownEditorApp::can_redo(self : MarkdownEditorApp) -> Bool {
-  self.redo_stack.get().length() > 0
-}
-
-///|
 fn MarkdownEditorApp::set_link_target(
   self : MarkdownEditorApp,
   target : String,

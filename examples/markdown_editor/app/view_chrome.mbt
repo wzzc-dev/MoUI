@@ -100,6 +100,7 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.zen_mode_enabled))
   ignore(ctx.watch(self.format_palette_visible))
   ignore(ctx.watch(self.format_palette_query))
+  ignore(ctx.watch(self.more_menu_visible))
   ignore(ctx.watch(self.writing_appearance))
   ignore(ctx.watch(self.find_visible))
   ignore(ctx.watch(self.find_query))
@@ -189,32 +190,7 @@ fn MarkdownEditorApp::chrome(
   selection : MarkdownEditorSelection,
   width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let toolbar = row(
-    [
-      editor_chrome_button("New", NewDocument, theme),
-      editor_chrome_button("Open", OpenDocument, theme),
-      editor_chrome_button("Save", SaveDocument, theme),
-      editor_chrome_button("Save As", SaveDocumentAs, theme),
-      editor_chrome_button("Import", ImportFromClipboard, theme),
-      editor_chrome_button("Export", ExportToClipboard, theme),
-      editor_chrome_button("HTML", ExportHtmlToClipboard, theme),
-      editor_chrome_button("Undo", Undo, theme),
-      editor_chrome_button("Redo", Redo, theme),
-      editor_chrome_button("Find", ToggleFind, theme),
-      editor_chrome_button("Cmd", ToggleFormatPalette, theme),
-      editor_chrome_button("Look", CycleWritingAppearance, theme),
-      editor_chrome_button("Files", ToggleFileSidebar, theme),
-      editor_chrome_button("Info", ToggleDocumentInfo, theme),
-      editor_chrome_button("Nav", ToggleOutline, theme),
-      editor_chrome_button("Focus", ToggleFocusMode, theme),
-      editor_chrome_button("Type", ToggleTypewriterMode, theme),
-      editor_chrome_button("Zen", ToggleZenMode, theme),
-      editor_chrome_button("Raw", ToggleSourceMode, theme),
-      editor_chrome_button("Src", ToggleSourcePreview, theme),
-    ],
-    spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Center,
-  ).repaint_boundary()
+  let toolbar = self.markdown_editor_toolbar(theme, source, selection)
   frame(
     row(
       [

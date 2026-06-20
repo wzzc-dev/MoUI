@@ -59,6 +59,11 @@ fn MarkdownEditorApp::toggle_format_palette(self : MarkdownEditorApp) -> Unit {
 }
 
 ///|
+fn MarkdownEditorApp::toggle_more_menu(self : MarkdownEditorApp) -> Unit {
+  self.more_menu_visible.set(!self.more_menu_visible.get())
+}
+
+///|
 fn MarkdownEditorApp::reset_format_palette(self : MarkdownEditorApp) -> Unit {
   self.format_palette_visible.set(false)
   self.format_palette_query.set("")
@@ -136,12 +141,14 @@ fn MarkdownEditorApp::dismiss_auxiliary_panels(
     self.file_sidebar_visible.get() ||
     self.document_info_visible.get() ||
     self.outline_visible.get() ||
-    self.source_preview_visible.get() {
+    self.source_preview_visible.get() ||
+    self.more_menu_visible.get() {
     self.reset_format_palette()
     self.file_sidebar_visible.set(false)
     self.document_info_visible.set(false)
     self.outline_visible.set(false)
     self.source_preview_visible.set(false)
+    self.more_menu_visible.set(false)
   } else {
     let selection = self.selection.get()
     if selection.selection is Some(_) {

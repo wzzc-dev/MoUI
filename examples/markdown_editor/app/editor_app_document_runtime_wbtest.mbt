@@ -357,25 +357,10 @@ test "markdown editor chrome renders document workflow state" {
       }
     }),
   )
+  // The toolbar is now icon-driven, so it renders DrawPath icon glyphs rather
+  // than text labels. At least one icon glyph must be present in the chrome.
   assert_true(
-    commands.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "New", .. })
-    }),
-  )
-  assert_true(
-    commands.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Save", .. })
-    }),
-  )
-  assert_true(
-    commands.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Open", .. })
-    }),
-  )
-  assert_true(
-    commands.any(command => {
-      command is @core.DrawCommand::DrawText({ text: "Save As", .. })
-    }),
+    commands.any(command => command is @core.DrawCommand::DrawPath(_)),
   )
 }
 

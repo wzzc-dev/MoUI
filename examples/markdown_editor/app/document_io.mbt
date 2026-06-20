@@ -327,6 +327,28 @@ fn MarkdownEditorApp::is_dirty(self : MarkdownEditorApp) -> Bool {
 }
 
 ///|
+/// True while a host file/clipboard transfer is in flight, so toolbar actions
+/// that would start another transfer can disable themselves.
+fn MarkdownEditorApp::transfer_in_progress(self : MarkdownEditorApp) -> Bool {
+  match self.transfer_status.get() {
+    TransferRequesting(_) | TransferPending(_, _) => true
+    _ => false
+  }
+}
+
+///|
+/// Whether the undo history has an entry to restore.
+fn MarkdownEditorApp::can_undo(self : MarkdownEditorApp) -> Bool {
+  self.undo_stack.get().length() > 0
+}
+
+///|
+/// Whether the redo history has an entry to restore.
+fn MarkdownEditorApp::can_redo(self : MarkdownEditorApp) -> Bool {
+  self.redo_stack.get().length() > 0
+}
+
+///|
 fn MarkdownEditorApp::transfer_status_label(self : MarkdownEditorApp) -> String {
   markdown_editor_transfer_status_label(self.transfer_status.get())
 }
