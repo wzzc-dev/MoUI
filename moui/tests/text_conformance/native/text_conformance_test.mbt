@@ -124,6 +124,8 @@ fn diagnostic_native_text_field_view(
       border: None,
       radius: 4.0,
       shadow: None,
+      bottom_border_only: false,
+      inner_focus_border: None,
     },
     focused: {
       foreground: @core.Color::black(),
@@ -131,6 +133,8 @@ fn diagnostic_native_text_field_view(
       border: None,
       radius: 4.0,
       shadow: None,
+      bottom_border_only: false,
+      inner_focus_border: None,
     },
     disabled: {
       foreground: @core.Color::black(),
@@ -138,6 +142,8 @@ fn diagnostic_native_text_field_view(
       border: None,
       radius: 4.0,
       shadow: None,
+      bottom_border_only: false,
+      inner_focus_border: None,
     },
     placeholder_color: @core.Color::gray(),
     cursor_color: @core.Color::blue(),
