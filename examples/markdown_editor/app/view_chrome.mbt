@@ -1,6 +1,7 @@
 ///|
 fn MarkdownEditorApp::root(
   self : MarkdownEditorApp,
+  viewport_height~ : Double = 520.0,
 ) -> @moui.View[MarkdownEditorMsg] {
   let theme = self.chrome_theme()
   let document = self.document.get()
@@ -54,6 +55,7 @@ fn MarkdownEditorApp::root(
           scroll_offset,
           (caret, selection) => SetSelection(caret, selection),
           offset => ToggleTaskAt(offset),
+          viewport_height~,
         ),
       ],
       spacing=theme.spacing_scale.lg,
@@ -140,7 +142,14 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.saved_document))
   ignore(ctx.watch(self.transfer_status))
   ignore(ctx.watch_scroll(self.editor_scroll))
-  self.root()
+  // Make the editor viewport fill the window instead of a fixed 520px. Reserve
+  // room for the chrome bar (34px) plus spacing so the page doesn't overflow.
+  let window_height = ctx.viewport_size().height
+  let viewport_height = markdown_editor_max_double(
+    320.0,
+    window_height - 120.0,
+  )
+  self.root(viewport_height~)
 }
 
 ///|
