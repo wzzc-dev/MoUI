@@ -64,6 +64,21 @@ test "markdown editor confirm discard runs the deferred action" {
 }
 
 ///|
+test "markdown editor dark mode toggle switches chrome theme" {
+  let app = MarkdownEditorApp::new()
+  // Light by default.
+  assert_true(!app.dark_mode_enabled.get())
+  // Toggling flips to dark.
+  let _ = app.update(ToggleDarkMode)
+  assert_true(app.dark_mode_enabled.get())
+  // The chrome theme helper reflects the toggle.
+  let light_palette = @views.light_theme().palette.background
+  let dark_palette = @views.dark_theme().palette.background
+  let resolved = app.chrome_theme().palette.background
+  assert_true(resolved == dark_palette && resolved != light_palette)
+}
+
+///|
 test "markdown editor confirm dialog renders when pending" {
   let app = MarkdownEditorApp::new()
   app.load_document_for_test("# Plan", path="/tmp/plan.md")
