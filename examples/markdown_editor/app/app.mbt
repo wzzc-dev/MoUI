@@ -241,6 +241,7 @@ pub enum MarkdownEditorMsg {
   ReplaceFindAll
   ApplyCommand(MarkdownEditorCommand)
   ToggleHeadingFold(Int)
+  CommandClickAt(Int)
   SetSelection(Int, @core.TextRange?)
   OpenRecentDocument(String)
   JumpToOutline(Int)
@@ -430,6 +431,7 @@ fn MarkdownEditorApp::update(
     ReplaceFindAll => self.replace_all_find_matches()
     ApplyCommand(command) => self.apply_command_to_selection(command)
     ToggleHeadingFold(source_start) => self.toggle_heading_fold(source_start)
+    CommandClickAt(offset) => self.handle_command_click(offset)
     SetSelection(caret, selection) => self.set_selection(caret, selection)
     OpenRecentDocument(path) =>
       self.transfer_status.set(
