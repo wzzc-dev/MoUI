@@ -8,7 +8,7 @@ pub(all) enum DesignTypographyRole {
 
 ///|
 pub(all) struct DesignTypographyRoleRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   role : DesignTypographyRole
   token_surface : String
   core_surface : String
@@ -56,8 +56,8 @@ priv struct TypographySourceEvidence {
 }
 
 ///|
-pub fn DesignTypographyRole::label(self : DesignTypographyRole) -> String {
-  match self {
+pub fn DesignTypographyRole::label(preset : DesignTypographyRole) -> String {
+  match preset {
     TypographyBody => "body"
     TypographyTitle => "title"
     TypographyCaption => "caption"
@@ -66,20 +66,24 @@ pub fn DesignTypographyRole::label(self : DesignTypographyRole) -> String {
 }
 
 ///|
-pub fn DesignPreset::typography_role_report(
-  self : DesignPreset,
+pub fn typography_role_report(
+  preset : @common.DesignPreset,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> Array[DesignTypographyRoleRecord] {
   [
-    typography_role_record(self, DesignTypographyRole::TypographyBody, scheme),
-    typography_role_record(self, DesignTypographyRole::TypographyTitle, scheme),
+    typography_role_record(preset, DesignTypographyRole::TypographyBody, scheme),
     typography_role_record(
-      self,
+      preset,
+      DesignTypographyRole::TypographyTitle,
+      scheme,
+    ),
+    typography_role_record(
+      preset,
       DesignTypographyRole::TypographyCaption,
       scheme,
     ),
     typography_role_record(
-      self,
+      preset,
       DesignTypographyRole::TypographyControl,
       scheme,
     ),
@@ -87,12 +91,12 @@ pub fn DesignPreset::typography_role_report(
 }
 
 ///|
-pub fn DesignPreset::typography_role_for(
-  self : DesignPreset,
+pub fn typography_role_for(
+  preset : @common.DesignPreset,
   role : DesignTypographyRole,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> DesignTypographyRoleRecord? {
-  for item in self.typography_role_report(scheme~) {
+  for item in typography_role_report(preset, scheme~) {
     if item.role == role {
       return Some(item)
     }
@@ -101,14 +105,14 @@ pub fn DesignPreset::typography_role_for(
 }
 
 ///|
-pub fn DesignPreset::typography_role_count(self : DesignPreset) -> Int {
-  self.typography_role_report().length()
+pub fn typography_role_count(preset : @common.DesignPreset) -> Int {
+  typography_role_report(preset).length()
 }
 
 ///|
-pub fn DesignPreset::typography_role_mapped_count(self : DesignPreset) -> Int {
+pub fn typography_role_mapped_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.typography_role_report() {
+  for item in typography_role_report(preset) {
     if item.resolves_core_surface && item.official_token_count > 0 {
       count = count + 1
     }
@@ -117,9 +121,9 @@ pub fn DesignPreset::typography_role_mapped_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::typography_role_aligned_count(self : DesignPreset) -> Int {
+pub fn typography_role_aligned_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.typography_role_report() {
+  for item in typography_role_report(preset) {
     if item.runtime_aligned_count > 0 {
       count = count + 1
     }
@@ -128,9 +132,9 @@ pub fn DesignPreset::typography_role_aligned_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::typography_role_gap_count(self : DesignPreset) -> Int {
+pub fn typography_role_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.typography_role_report() {
+  for item in typography_role_report(preset) {
     if item.required &&
       (
         !item.resolves_core_surface ||
@@ -147,11 +151,9 @@ pub fn DesignPreset::typography_role_gap_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::typography_role_source_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn typography_role_source_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.typography_role_report() {
+  for item in typography_role_report(preset) {
     if item.required &&
       (
         item.official_token_count == 0 ||
@@ -166,11 +168,11 @@ pub fn DesignPreset::typography_role_source_gap_count(
 }
 
 ///|
-pub fn DesignPreset::typography_role_official_parity_gap_count(
-  self : DesignPreset,
+pub fn typography_role_official_parity_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.typography_role_report() {
+  for item in typography_role_report(preset) {
     if item.required && item.remaining_gap != "none" {
       count = count + 1
     }
@@ -179,11 +181,11 @@ pub fn DesignPreset::typography_role_official_parity_gap_count(
 }
 
 ///|
-pub fn DesignPreset::typography_role_destination_gap_count(
-  self : DesignPreset,
+pub fn typography_role_destination_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.typography_role_report() {
+  for item in typography_role_report(preset) {
     count = count + item.runtime_destination_gap_count
   }
   count
@@ -191,7 +193,7 @@ pub fn DesignPreset::typography_role_destination_gap_count(
 
 ///|
 fn typography_role_record(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   role : DesignTypographyRole,
   scheme : @core.ColorScheme,
 ) -> DesignTypographyRoleRecord {
@@ -233,13 +235,13 @@ fn typography_role_record(
     remaining_gap: typography_role_remaining_gap(
       role, evidence, resolves_core_surface,
     ),
-    note: "Typography role resolves through DesignTypographyTokens into a neutral @core.TypographyScale slot.",
+    note: "Typography role resolves through @common.DesignTypographyTokens into a neutral @core.TypographyScale slot.",
   }
 }
 
 ///|
 fn typography_source_evidence(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   role : DesignTypographyRole,
 ) -> TypographySourceEvidence {
   let surfaces = typography_role_token_members(role)
@@ -258,7 +260,7 @@ fn typography_source_evidence(
   let mut expected_runtime_value = ""
   let mut selected_source_imported = false
   let mut selected_runtime_aligned = false
-  for item in preset.runtime_token_alignment_report() {
+  for item in runtime_token_alignment_report(preset) {
     if surfaces.any(surface => surface == item.moui_token) {
       official_token_count = official_token_count + 1
       if item.source_imported {
@@ -278,7 +280,7 @@ fn typography_source_evidence(
         expected_runtime_value = item.expected_runtime_value
         selected_source_imported = item.source_imported
         selected_runtime_aligned = item.runtime_aligned
-        match preset.official_token_coverage_for(item.official_token) {
+        match official_token_coverage_for(preset, item.official_token) {
           Some(coverage) => {
             source_declared = coverage.source_declared
             source_label = coverage.source_label
@@ -300,7 +302,8 @@ fn typography_source_evidence(
     }
   }
   if official_token == "" {
-    match preset.token_group_resolver_for(DesignSystemRequirement::Typography) {
+    match
+      token_group_resolver_for(preset, DesignSystemRequirement::Typography) {
       Some(group) => {
         source_declared = group.source_declared
         source_label = group.source_label
@@ -354,7 +357,7 @@ fn typography_role_remaining_gap(
   resolves_core_surface : Bool,
 ) -> String {
   if !resolves_core_surface {
-    "DesignTypographyTokens." +
+    "@common.DesignTypographyTokens." +
     role.label() +
     " does not currently resolve to its neutral @core.TypographyScale slot."
   } else if evidence.official_token_count == 0 {
@@ -373,10 +376,10 @@ fn typography_role_remaining_gap(
 ///|
 fn typography_role_token_surface(role : DesignTypographyRole) -> String {
   match role {
-    TypographyBody => "DesignTypographyTokens.body"
-    TypographyTitle => "DesignTypographyTokens.title"
-    TypographyCaption => "DesignTypographyTokens.caption"
-    TypographyControl => "DesignTypographyTokens.control"
+    TypographyBody => "@common.DesignTypographyTokens.body"
+    TypographyTitle => "@common.DesignTypographyTokens.title"
+    TypographyCaption => "@common.DesignTypographyTokens.caption"
+    TypographyControl => "@common.DesignTypographyTokens.control"
   }
 }
 
@@ -403,7 +406,7 @@ fn typography_role_token_members(role : DesignTypographyRole) -> Array[String] {
 
 ///|
 fn typography_role_token_font(
-  tokens : DesignSystemTokens,
+  tokens : @common.DesignSystemTokens,
   role : DesignTypographyRole,
 ) -> @core.FontSpec {
   match role {

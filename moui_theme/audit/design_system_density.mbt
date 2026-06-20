@@ -1,7 +1,7 @@
 ///|
 pub(all) struct DesignDensityResolverRecord {
-  preset : DesignPreset
-  density : DesignDensity
+  preset : @common.DesignPreset
+  density : @common.DesignDensity
   source_family : String
   official_source : String
   source_declared : Bool
@@ -28,24 +28,24 @@ pub(all) struct DesignDensityResolverRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignPreset::density_resolver_report(
-  self : DesignPreset,
+pub fn density_resolver_report(
+  preset : @common.DesignPreset,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> Array[DesignDensityResolverRecord] {
   [
-    density_resolver_record(self, DesignDensity::Compact, scheme),
-    density_resolver_record(self, DesignDensity::Standard, scheme),
-    density_resolver_record(self, DesignDensity::Comfortable, scheme),
+    density_resolver_record(preset, @common.DesignDensity::Compact, scheme),
+    density_resolver_record(preset, @common.DesignDensity::Standard, scheme),
+    density_resolver_record(preset, @common.DesignDensity::Comfortable, scheme),
   ]
 }
 
 ///|
-pub fn DesignPreset::density_resolver_for(
-  self : DesignPreset,
-  density : DesignDensity,
+pub fn density_resolver_for(
+  preset : @common.DesignPreset,
+  density : @common.DesignDensity,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> DesignDensityResolverRecord? {
-  for item in self.density_resolver_report(scheme~) {
+  for item in density_resolver_report(preset, scheme~) {
     if item.density == density {
       return Some(item)
     }
@@ -54,14 +54,14 @@ pub fn DesignPreset::density_resolver_for(
 }
 
 ///|
-pub fn DesignPreset::density_resolver_count(self : DesignPreset) -> Int {
-  self.density_resolver_report().length()
+pub fn density_resolver_count(preset : @common.DesignPreset) -> Int {
+  density_resolver_report(preset).length()
 }
 
 ///|
-pub fn DesignPreset::density_resolver_gap_count(self : DesignPreset) -> Int {
+pub fn density_resolver_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.density_resolver_report() {
+  for item in density_resolver_report(preset) {
     if !item.resolves_tokens ||
       !item.resolves_theme ||
       !item.resolves_components ||
@@ -75,11 +75,9 @@ pub fn DesignPreset::density_resolver_gap_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::density_resolver_source_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn density_resolver_source_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.density_resolver_report() {
+  for item in density_resolver_report(preset) {
     if !item.source_declared || !item.source_locked {
       count = count + 1
     }
@@ -88,11 +86,11 @@ pub fn DesignPreset::density_resolver_source_gap_count(
 }
 
 ///|
-pub fn DesignPreset::density_resolver_official_parity_gap_count(
-  self : DesignPreset,
+pub fn density_resolver_official_parity_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.density_resolver_report() {
+  for item in density_resolver_report(preset) {
     if item.remaining_gap != "none" {
       count = count + 1
     }
@@ -102,8 +100,8 @@ pub fn DesignPreset::density_resolver_official_parity_gap_count(
 
 ///|
 fn density_resolver_record(
-  preset : DesignPreset,
-  density : DesignDensity,
+  preset : @common.DesignPreset,
+  density : @common.DesignDensity,
   scheme : @core.ColorScheme,
 ) -> DesignDensityResolverRecord {
   let official_source = density_official_source(preset)
@@ -158,8 +156,8 @@ fn density_resolver_record(
     source_ref,
     token_path,
     source_locked,
-    tokens_api: "DesignPreset::tokens(..., density=...)",
-    theme_api: "DesignPreset::theme(..., density=...)",
+    tokens_api: "@common.DesignPreset::tokens(..., density=...)",
+    theme_api: "@common.DesignPreset::theme(..., density=...)",
     scheme,
     density_multiplier: density.multiplier(),
     spacing_sm: tokens.spacing.sm,
@@ -177,7 +175,7 @@ fn density_resolver_record(
 }
 
 ///|
-fn density_source_family(preset : DesignPreset) -> String {
+fn density_source_family(preset : @common.DesignPreset) -> String {
   match preset {
     Material => "Material density and spacing"
     Carbon => "Carbon productive and expressive density"
@@ -187,7 +185,7 @@ fn density_source_family(preset : DesignPreset) -> String {
 }
 
 ///|
-fn density_official_source(preset : DesignPreset) -> String {
+fn density_official_source(preset : @common.DesignPreset) -> String {
   match preset {
     Material => "https://material-web.dev/theming/material-theming/"
     Carbon => "https://carbondesignsystem.com/elements/themes/code/"
@@ -197,10 +195,10 @@ fn density_official_source(preset : DesignPreset) -> String {
 }
 
 ///|
-fn density_remaining_gap(preset : DesignPreset) -> String {
+fn density_remaining_gap(preset : @common.DesignPreset) -> String {
   if density_representative_spacing_aligned(preset) {
     "none"
-  } else if preset == DesignPreset::Material {
+  } else if preset == @common.DesignPreset::Material {
     "Material Web's pinned token source does not expose concrete spacing tokens for the neutral MoUI spacing scale; density remains a MoUI adapter until an official source anchor is available."
   } else {
     "At least one neutral spacing slot lacks a pinned official source-import record that exact-aligns with the current density-aware MoUI spacing scale."
@@ -208,14 +206,16 @@ fn density_remaining_gap(preset : DesignPreset) -> String {
 }
 
 ///|
-fn density_representative_spacing_aligned(preset : DesignPreset) -> Bool {
+fn density_representative_spacing_aligned(
+  preset : @common.DesignPreset,
+) -> Bool {
   for
     slot in [
-      "DesignSpacingTokens.xs", "DesignSpacingTokens.sm", "DesignSpacingTokens.md",
-      "DesignSpacingTokens.lg", "DesignSpacingTokens.xl",
+      "@common.DesignSpacingTokens.xs", "@common.DesignSpacingTokens.sm", "@common.DesignSpacingTokens.md",
+      "@common.DesignSpacingTokens.lg", "@common.DesignSpacingTokens.xl",
     ] {
     let mut aligned = false
-    for item in preset.runtime_token_alignment_report() {
+    for item in runtime_token_alignment_report(preset) {
       if item.moui_token == slot && item.source_imported && item.runtime_aligned {
         aligned = true
       }
@@ -229,10 +229,10 @@ fn density_representative_spacing_aligned(preset : DesignPreset) -> Bool {
 
 ///|
 fn density_source_for_url(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   url : String,
 ) -> DesignSystemSource? {
-  for source in preset.sources() {
+  for source in sources(preset) {
     if source.url == url {
       return Some(source)
     }
