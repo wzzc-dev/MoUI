@@ -354,6 +354,28 @@ fn editor_button(
 }
 
 ///|
+/// A compact toggle chip for find/replace options. Renders as a small ghost
+/// button that switches to Tonal when active, with a tooltip describing the
+/// option.
+fn editor_find_toggle(
+  glyph : String,
+  tooltip_label : String,
+  message : MarkdownEditorMsg,
+  active : Bool,
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
+  let variant = if active {
+    @views.ButtonVariant::Tonal
+  } else {
+    @views.ButtonVariant::Ghost
+  }
+  tooltip(
+    button(glyph, on_click=message, variant~, theme~, width=34.0, height=34.0),
+    tooltip_label,
+  )
+}
+
+///|
 fn MarkdownEditorApp::appearance_spec(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorAppearanceSpec {

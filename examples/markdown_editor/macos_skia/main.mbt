@@ -1,9 +1,9 @@
 ///|
 fn main {
-  let app = @app.MarkdownEditorApp::new()
   let services = @host.HostAppServices::new(
     bridge=@macos_host.macos_service_bridge(),
   )
+  let app = @app.MarkdownEditorApp::new_with_services(services)
   let runtime = @runtime.new_program_with_dimensions(
     program=app.program_with_services(services),
     width=980.0,

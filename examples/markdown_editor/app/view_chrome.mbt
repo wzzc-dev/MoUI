@@ -136,6 +136,7 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.writing_appearance))
   ignore(ctx.watch(self.find_visible))
   ignore(ctx.watch(self.find_query))
+  ignore(ctx.watch(self.find_options))
   ignore(ctx.watch(self.replace_text))
   ignore(ctx.watch(self.document_path))
   ignore(ctx.watch(self.recent_document_paths))
@@ -261,7 +262,9 @@ fn MarkdownEditorApp::find_bar(
   width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let query = self.find_query.get()
-  let matches = markdown_editor_find_matches(source, query)
+  let matches = markdown_editor_find_matches(
+    source, query, options=self.find_options.get(),
+  )
   frame(
     row(
       [
@@ -291,6 +294,27 @@ fn MarkdownEditorApp::find_bar(
           width=196.0,
           height=34.0,
         ).key("markdown-replace-text"),
+        editor_find_toggle(
+          "Aa",
+          "Match case",
+          ToggleFindCaseSensitive,
+          self.find_options.get().case_sensitive,
+          theme,
+        ),
+        editor_find_toggle(
+          "W",
+          "Whole word",
+          ToggleFindWholeWord,
+          self.find_options.get().whole_word,
+          theme,
+        ),
+        editor_find_toggle(
+          ".*",
+          "Regex",
+          ToggleFindRegex,
+          self.find_options.get().regex,
+          theme,
+        ),
         text(
           markdown_editor_find_status_label(query, matches, selection),
           width=72.0,
