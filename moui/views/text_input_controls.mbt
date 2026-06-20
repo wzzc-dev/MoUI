@@ -68,6 +68,7 @@ fn[Msg] text_field_control(
         focused=ctx.focused,
         control=ctx.text_control,
         text_system=ctx.text_system,
+        theme=ctx.environment.theme,
         bottom_border_only~,
         inner_focus_border=if ctx.focused { inner_focus_border } else { None },
       )
@@ -213,6 +214,7 @@ fn[Msg] search_bar_control(
         focused=ctx.focused,
         control=ctx.text_control,
         text_system=ctx.text_system,
+        theme=ctx.environment.theme,
       )
       {
         commands,
@@ -327,6 +329,7 @@ fn append_text_field_commands(
   focused~ : Bool,
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
+  theme~ : @core.Theme,
   bottom_border_only? : Bool = false,
   inner_focus_border? : @core.Color? = None,
 ) -> Unit {
@@ -378,6 +381,7 @@ fn append_text_field_commands(
       layout~,
       control~,
       cursor_color~,
+      theme~,
     )
   }
 }
@@ -400,6 +404,7 @@ fn append_searchbar_commands(
   focused~ : Bool,
   control~ : @core.TextControlStateContext,
   text_system~ : @core.TextSystem,
+  theme~ : @core.Theme,
 ) -> Unit {
   let rounded = @core.RoundedRect::new(rect=frame, radius=corner_radius)
   let border = if focused { focused_border } else { border }
@@ -443,6 +448,7 @@ fn append_searchbar_commands(
       layout~,
       control~,
       cursor_color~,
+      theme~,
     )
   }
   if text != "" {
@@ -542,6 +548,7 @@ fn append_text_field_editing_overlay(
   layout~ : @core.TextLayoutResult,
   control~ : @core.TextControlStateContext,
   cursor_color~ : @core.Color,
+  theme~ : @core.Theme,
 ) -> Unit {
   commands.push(@core.DrawCommand::PushClip(text_frame))
   if control.composition is None {
@@ -551,6 +558,7 @@ fn append_text_field_editing_overlay(
       text_frame,
       layout,
       control.selection,
+      theme,
     )
   } else {
     append_text_field_composition_underline(
@@ -585,6 +593,7 @@ fn append_text_field_selection_commands(
   text_frame : @core.Rect,
   layout : @core.TextLayoutResult,
   selection : @core.TextRange?,
+  theme : @core.Theme,
 ) -> Unit {
   match active_text_selection(selection) {
     Some(selection) => {
@@ -605,9 +614,10 @@ fn append_text_field_selection_commands(
       let x0 = text_frame.origin.x + layout.caret_positions[start]
       let x1 = text_frame.origin.x + layout.caret_positions[end]
       if x1 > x0 {
-        // Selection highlight tracks the primary palette token rather than a
-        // hard-coded blue so it follows custom palette overrides.
-        let selection_color = default_theme().palette.primary.with_alpha(0.22)
+        // Selection highlight tracks the ambient theme's primary palette token
+        // so it follows the active color scheme (light/dark) and custom palette
+        // overrides, rather than a hard-coded light theme.
+        let selection_color = theme.palette.primary.with_alpha(0.22)
         commands.push(
           @core.DrawCommand::FillRect(
             @core.Rect::new(

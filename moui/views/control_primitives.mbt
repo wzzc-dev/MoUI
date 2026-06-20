@@ -427,36 +427,50 @@ fn view_button_state_context(
 fn[Msg] checkbox_control(
   label~ : String,
   checked~ : @core.Binding[Bool],
-  font~ : @core.FontSpec,
-  foreground~ : @core.Color,
-  check_color~ : @core.Color,
-  size~ : @core.Size,
-  box_shape~ : @core.ChoiceControlShape,
-  check_style~ : @core.CheckMarkStyle,
+  theme? : @core.Theme,
+  font? : @core.FontSpec,
+  foreground? : @core.Color,
+  check_color? : @core.Color,
+  box_size? : Double,
+  box_shape? : @core.ChoiceControlShape,
+  check_style? : @core.CheckMarkStyle,
+  height? : Double = 32.0,
   on_change? : ((Bool) -> Msg)? = None,
   kind? : String = "Checkbox",
   key? : String? = None,
 ) -> @core.View[Msg] {
+  let theme_revision = match theme {
+    Some(t) => t.revision_fingerprint()
+    None => "context"
+  }
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "checkbox:\{label}:\{checked.get()}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(check_color)}:\{view_size_revision(size)}:\{box_shape.label()}:\{check_style.label()}:\{on_change is Some(_)}"
+      "checkbox:\{label}:\{checked.get()}:\{theme_revision}:\{font is Some(_)}:\{foreground is Some(_)}:\{check_color is Some(_)}:\{box_size is Some(_)}:\{box_shape is Some(_)}:\{check_style is Some(_)}:\{on_change is Some(_)}"
     },
     layout=ctx => {
-      // Measure the label with the real text system instead of the old
-      // `char_count * font.size * 0.58` estimate, so checkbox intrinsic
-      // width tracks the actual font instead of drifting across scripts.
+      // Resolve the choice-control style ambient-ly so the label measures
+      // against the real font (and tracks theme changes) instead of a
+      // construction-time baked value.
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let style = ChoiceControlStyle::default(theme=resolved_theme)
+      let resolved_font = resolve_choice_font(font, resolved_theme)
+      let resolved_box_size = resolve_control_double(
+        box_size,
+        style.control_size,
+      )
+      let box_width = resolved_box_size
       let label_width = if label.length() == 0 {
         0.0
       } else {
         let measured = ctx.text_system.measure_text(
-          @core.TextLayoutInput::new(text=label, font~),
+          @core.TextLayoutInput::new(text=label, font=resolved_font),
         )
         measured.size.width
       }
       let spacing = 8.0
-      let intrinsic_width = size.width + spacing + label_width
-      let intrinsic_height = view_max_double(size.height, font.size * 1.25)
+      let intrinsic_width = box_width + spacing + label_width
+      let intrinsic_height = view_max_double(height, resolved_font.size * 1.25)
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(
           @core.Size::new(width=intrinsic_width, height=intrinsic_height),
@@ -464,19 +478,35 @@ fn[Msg] checkbox_control(
       )
     },
     paint=ctx => {
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let style = ChoiceControlStyle::default(theme=resolved_theme)
+      let resolved_font = resolve_choice_font(font, resolved_theme)
+      let resolved_foreground = resolve_control_color(
+        foreground,
+        style.foreground,
+      )
+      let resolved_check_color = resolve_control_color(
+        check_color,
+        style.selected_color,
+      )
+      let resolved_box_size = resolve_control_double(
+        box_size,
+        style.control_size,
+      )
+      let cc = resolved_theme.components.choice_control
       let commands : Array[@core.DrawCommand] = []
       append_checkbox_commands(
         commands,
         label~,
         checked=checked.get(),
-        font~,
-        foreground~,
-        check_color~,
-        size~,
-        box_shape~,
-        check_style~,
+        font=resolved_font,
+        foreground=resolved_foreground,
+        check_color=resolved_check_color,
+        size=@core.Size::new(width=resolved_box_size, height=resolved_box_size),
+        box_shape=box_shape.unwrap_or(cc.box_shape),
+        check_style=check_style.unwrap_or(cc.check_style),
         frame=ctx.frame,
-        theme=ctx.environment.theme,
+        theme=resolved_theme,
         focused=ctx.focused,
       )
       @core.ViewPaintPlan::commands(commands)
