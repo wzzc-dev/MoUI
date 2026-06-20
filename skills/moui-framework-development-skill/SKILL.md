@@ -61,11 +61,6 @@ Use `#alias(old_api, deprecated)` only when compatibility is intentionally
 preserved. The default for this repo is to keep public surface small and
 owning-package boundaries clear.
 
-## Daily Check
-
-<<<<<<< Updated upstream
-Before handoff, prefer the Daily check:
-=======
 ## Package Map
 
 - `core/`: one MoonBit package for platform-neutral runtime, view specs, state,
@@ -210,15 +205,11 @@ Before handoff, prefer the Daily check:
 ## Validation Commands
 
 Daily check:
->>>>>>> Stashed changes
 
 ```sh
 sh scripts/dev-check.sh
 ```
 
-<<<<<<< Updated upstream
-It includes:
-=======
 The daily check runs `sh scripts/check-local-deps.sh`, which verifies
 `wzzc-dev/window@0.5.1-0.1.4`, confirms `moon.work` does not include a local
 window checkout, verifies the repo-local `moui_skia` workspace, and checks the
@@ -386,7 +377,6 @@ transform-scene pixel markers for the named browser session before the Web
 platform entry can be marked passed.
 
 Focused checks:
->>>>>>> Stashed changes
 
 ```sh
 node scripts/validate-guidance-consistency.mjs
