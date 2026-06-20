@@ -1,6 +1,6 @@
 ///|
 pub(all) struct DesignComponentStyleResolverRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   component : String
   official_scope : String
   official_source : String
@@ -22,32 +22,32 @@ pub(all) struct DesignComponentStyleResolverRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignPreset::component_style_resolver_report(
-  self : DesignPreset,
+pub fn component_style_resolver_report(
+  preset : @common.DesignPreset,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> Array[DesignComponentStyleResolverRecord] {
   [
-    component_style_resolver_record(self, "Button", scheme),
-    component_style_resolver_record(self, "TextField", scheme),
-    component_style_resolver_record(self, "Surface", scheme),
-    component_style_resolver_record(self, "ChoiceControl", scheme),
-    component_style_resolver_record(self, "Progress", scheme),
-    component_style_resolver_record(self, "Slider", scheme),
-    component_style_resolver_record(self, "Picker", scheme),
-    component_style_resolver_record(self, "DatePicker", scheme),
-    component_style_resolver_record(self, "Feedback", scheme),
-    component_style_resolver_record(self, "Badge", scheme),
-    component_style_resolver_record(self, "FormValidation", scheme),
+    component_style_resolver_record(preset, "Button", scheme),
+    component_style_resolver_record(preset, "TextField", scheme),
+    component_style_resolver_record(preset, "Surface", scheme),
+    component_style_resolver_record(preset, "ChoiceControl", scheme),
+    component_style_resolver_record(preset, "Progress", scheme),
+    component_style_resolver_record(preset, "Slider", scheme),
+    component_style_resolver_record(preset, "Picker", scheme),
+    component_style_resolver_record(preset, "DatePicker", scheme),
+    component_style_resolver_record(preset, "Feedback", scheme),
+    component_style_resolver_record(preset, "Badge", scheme),
+    component_style_resolver_record(preset, "FormValidation", scheme),
   ]
 }
 
 ///|
-pub fn DesignPreset::component_style_resolver_for(
-  self : DesignPreset,
+pub fn component_style_resolver_for(
+  preset : @common.DesignPreset,
   component : String,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> DesignComponentStyleResolverRecord? {
-  for item in self.component_style_resolver_report(scheme~) {
+  for item in component_style_resolver_report(preset, scheme~) {
     if item.component == component {
       return Some(item)
     }
@@ -56,16 +56,14 @@ pub fn DesignPreset::component_style_resolver_for(
 }
 
 ///|
-pub fn DesignPreset::component_style_resolver_count(self : DesignPreset) -> Int {
-  self.component_style_resolver_report().length()
+pub fn component_style_resolver_count(preset : @common.DesignPreset) -> Int {
+  component_style_resolver_report(preset).length()
 }
 
 ///|
-pub fn DesignPreset::component_style_resolver_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn component_style_resolver_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.component_style_resolver_report() {
+  for item in component_style_resolver_report(preset) {
     if !item.resolves_tokens ||
       !item.resolves_core_style ||
       item.status == DesignTokenStatus::NotMapped ||
@@ -78,11 +76,11 @@ pub fn DesignPreset::component_style_resolver_gap_count(
 }
 
 ///|
-pub fn DesignPreset::component_style_resolver_source_gap_count(
-  self : DesignPreset,
+pub fn component_style_resolver_source_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.component_style_resolver_report() {
+  for item in component_style_resolver_report(preset) {
     if !item.source_declared || !item.source_locked {
       count = count + 1
     }
@@ -91,11 +89,11 @@ pub fn DesignPreset::component_style_resolver_source_gap_count(
 }
 
 ///|
-pub fn DesignPreset::component_style_resolver_official_parity_gap_count(
-  self : DesignPreset,
+pub fn component_style_resolver_official_parity_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.component_style_resolver_report() {
+  for item in component_style_resolver_report(preset) {
     if item.remaining_gap != "none" {
       count = count + 1
     }
@@ -105,11 +103,11 @@ pub fn DesignPreset::component_style_resolver_official_parity_gap_count(
 
 ///|
 fn component_style_resolver_record(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   component : String,
   scheme : @core.ColorScheme,
 ) -> DesignComponentStyleResolverRecord {
-  let matrix = preset.component_token_matrix_for(component)
+  let matrix = component_token_matrix_for(preset, component)
   let (
     official_scope,
     official_source,
@@ -168,7 +166,7 @@ fn component_style_resolver_record(
     source_locked,
     token_surface: component_token_surface(component),
     core_style_surface,
-    tokens_api: "DesignPreset::tokens(...).components",
+    tokens_api: "@common.DesignPreset::tokens(...).components",
     style_api: component_style_api(component),
     scheme,
     resolves_tokens,
@@ -180,7 +178,7 @@ fn component_style_resolver_record(
 
 ///|
 fn component_tokens_resolve(
-  tokens : DesignSystemTokens,
+  tokens : @common.DesignSystemTokens,
   component : String,
 ) -> Bool {
   match component {
@@ -212,7 +210,7 @@ fn component_tokens_resolve(
       (
         tokens.components.slider.foreground == tokens.palette.primary ||
         (
-          tokens.preset == DesignPreset::Carbon &&
+          tokens.preset == @common.DesignPreset::Carbon &&
           tokens.scheme == @core.ColorScheme::Light &&
           tokens.components.slider.foreground == tokens.palette.foreground
         )
@@ -239,7 +237,7 @@ fn component_tokens_resolve(
 
 ///|
 fn component_core_style_resolves(
-  tokens : DesignSystemTokens,
+  tokens : @common.DesignSystemTokens,
   component : String,
 ) -> Bool {
   let styles = tokens.core_component_styles()
@@ -317,17 +315,17 @@ fn component_core_style_resolves(
 ///|
 fn component_token_surface(component : String) -> String {
   match component {
-    "Button" => "DesignComponentTokens.button"
-    "TextField" => "DesignComponentTokens.text_field"
-    "Surface" => "DesignComponentTokens.surface"
-    "ChoiceControl" => "DesignComponentTokens.choice_control"
-    "Progress" => "DesignComponentTokens.progress"
-    "Slider" => "DesignComponentTokens.slider"
-    "Picker" => "DesignComponentTokens.picker"
-    "DatePicker" => "DesignComponentTokens.date_picker"
-    "Feedback" => "DesignComponentTokens.feedback"
-    "Badge" => "DesignComponentTokens.badge"
-    "FormValidation" => "DesignComponentTokens.form_validation"
+    "Button" => "@common.DesignComponentTokens.button"
+    "TextField" => "@common.DesignComponentTokens.text_field"
+    "Surface" => "@common.DesignComponentTokens.surface"
+    "ChoiceControl" => "@common.DesignComponentTokens.choice_control"
+    "Progress" => "@common.DesignComponentTokens.progress"
+    "Slider" => "@common.DesignComponentTokens.slider"
+    "Picker" => "@common.DesignComponentTokens.picker"
+    "DatePicker" => "@common.DesignComponentTokens.date_picker"
+    "Feedback" => "@common.DesignComponentTokens.feedback"
+    "Badge" => "@common.DesignComponentTokens.badge"
+    "FormValidation" => "@common.DesignComponentTokens.form_validation"
     _ => ""
   }
 }
@@ -335,17 +333,18 @@ fn component_token_surface(component : String) -> String {
 ///|
 fn component_style_api(component : String) -> String {
   match component {
-    "Button" => "DesignSystemTokens::core_component_styles().button"
-    "TextField" => "DesignSystemTokens::core_component_styles().text_field"
-    "Surface" => "DesignSystemTokens::core_component_styles().surface"
-    "ChoiceControl" => "DesignChoiceControlTokens::core_style"
-    "Progress" => "DesignProgressTokens::core_style"
-    "Slider" => "DesignSliderTokens::core_style"
-    "Picker" => "DesignPickerTokens::core_style"
-    "DatePicker" => "DesignPickerTokens::core_style"
-    "Feedback" => "DesignFeedbackTokens::core_style"
-    "Badge" => "DesignBadgeTokens::core_style"
-    "FormValidation" => "DesignFormValidationTokens::core_style"
+    "Button" => "@common.DesignSystemTokens::core_component_styles().button"
+    "TextField" =>
+      "@common.DesignSystemTokens::core_component_styles().text_field"
+    "Surface" => "@common.DesignSystemTokens::core_component_styles().surface"
+    "ChoiceControl" => "@common.DesignChoiceControlTokens::core_style"
+    "Progress" => "@common.DesignProgressTokens::core_style"
+    "Slider" => "@common.DesignSliderTokens::core_style"
+    "Picker" => "@common.DesignPickerTokens::core_style"
+    "DatePicker" => "@common.DesignPickerTokens::core_style"
+    "Feedback" => "@common.DesignFeedbackTokens::core_style"
+    "Badge" => "@common.DesignBadgeTokens::core_style"
+    "FormValidation" => "@common.DesignFormValidationTokens::core_style"
     _ => ""
   }
 }

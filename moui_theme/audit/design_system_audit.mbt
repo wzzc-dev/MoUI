@@ -25,7 +25,7 @@ pub(all) enum DesignSystemRequirement {
 
 ///|
 pub(all) struct DesignSystemRequirementAudit {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   requirement : DesignSystemRequirement
   status : DesignTokenStatus
   evidence : String
@@ -33,8 +33,10 @@ pub(all) struct DesignSystemRequirementAudit {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignSystemRequirement::label(self : DesignSystemRequirement) -> String {
-  match self {
+pub fn DesignSystemRequirement::label(
+  preset : DesignSystemRequirement,
+) -> String {
+  match preset {
     OfficialSources => "official sources"
     SourceVersionLocks => "source version locks"
     SourcePackageInventory => "source package inventory"
@@ -60,97 +62,97 @@ pub fn DesignSystemRequirement::label(self : DesignSystemRequirement) -> String 
 }
 
 ///|
-pub fn DesignPreset::requirement_audit(
-  self : DesignPreset,
+pub fn requirement_audit(
+  preset : @common.DesignPreset,
 ) -> Array[DesignSystemRequirementAudit] {
-  let manifest = self.manifest()
+  let manifest = manifest(preset)
   [
-    official_sources_audit(self, manifest),
-    source_version_lock_audit(self),
-    source_package_inventory_audit(self),
-    source_imported_token_audit(self),
-    runtime_token_alignment_audit(self),
-    token_taxonomy_audit(self, manifest),
+    official_sources_audit(preset, manifest),
+    source_version_lock_audit(preset),
+    source_package_inventory_audit(preset),
+    source_imported_token_audit(preset),
+    runtime_token_alignment_audit(preset),
+    token_taxonomy_audit(preset, manifest),
     category_audit(
-      self,
+      preset,
       manifest,
       DesignSystemRequirement::SemanticPalette,
       DesignTokenCategory::Color,
-      "DesignSemanticPalette plus @core.ColorPalette and @core.SemanticColorScale adapters",
+      "@common.DesignSemanticPalette plus @core.ColorPalette and @core.SemanticColorScale adapters",
       "Complete official semantic role matrix and generated token import are pending.",
     ),
     category_audit(
-      self,
+      preset,
       manifest,
       DesignSystemRequirement::Typography,
       DesignTokenCategory::Typography,
-      "DesignTypographyTokens plus @core.TypographyScale adapter",
+      "@common.DesignTypographyTokens plus @core.TypographyScale adapter",
       "Complete official type ramp and font-family token import are pending.",
     ),
     multi_category_audit(
-      self,
+      preset,
       manifest,
       DesignSystemRequirement::SpacingDensity,
       [DesignTokenCategory::Spacing, DesignTokenCategory::Density],
-      "DesignSpacingTokens and DesignDensity resolve into @core.SpacingScale",
+      "@common.DesignSpacingTokens and @common.DesignDensity resolve into @core.SpacingScale",
       "Complete official size/density matrices and component density overrides are pending.",
     ),
     category_audit(
-      self,
+      preset,
       manifest,
       DesignSystemRequirement::ShapeRadius,
       DesignTokenCategory::Shape,
-      "DesignRadiusTokens plus @core.RadiusScale adapter",
+      "@common.DesignRadiusTokens plus @core.RadiusScale adapter",
       "Complete official shape role matrix is pending.",
     ),
     category_audit(
-      self,
+      preset,
       manifest,
       DesignSystemRequirement::ElevationShadow,
       DesignTokenCategory::Elevation,
-      "DesignElevationTokens plus @core.ShadowScale adapter",
+      "@common.DesignElevationTokens plus @core.ShadowScale adapter",
       "Official tonal elevation, layer, or shadow-level import is pending.",
     ),
     category_audit(
-      self,
+      preset,
       manifest,
       DesignSystemRequirement::Motion,
       DesignTokenCategory::Motion,
-      "DesignMotionTokens plus @core.MotionScale adapter",
+      "@common.DesignMotionTokens plus @core.MotionScale adapter",
       "Complete official duration/easing/component-motion import is pending.",
     ),
     category_audit(
-      self,
+      preset,
       manifest,
       DesignSystemRequirement::Surface,
       DesignTokenCategory::Surface,
-      "DesignSurfaceTokens plus @core.SurfaceScale adapter",
+      "@common.DesignSurfaceTokens plus @core.SurfaceScale adapter",
       "Complete official surface/layer role matrix is pending.",
     ),
     category_audit(
-      self,
+      preset,
       manifest,
       DesignSystemRequirement::StateLayer,
       DesignTokenCategory::StateLayer,
-      "DesignStateLayerTokens",
+      "@common.DesignStateLayerTokens",
       "Component-specific state-layer matrix and disabled-state role coverage are pending.",
     ),
-    scheme_variant_audit(self, manifest),
-    component_token_audit(self, manifest),
-    component_matrix_audit(self),
-    customization_audit(self, manifest),
-    official_token_coverage_audit(self),
-    golden_mapping_audit(self),
-    adaptation_difference_audit(self),
+    scheme_variant_audit(preset, manifest),
+    component_token_audit(preset, manifest),
+    component_matrix_audit(preset),
+    customization_audit(preset, manifest),
+    official_token_coverage_audit(preset),
+    golden_mapping_audit(preset),
+    adaptation_difference_audit(preset),
   ]
 }
 
 ///|
-pub fn DesignPreset::requirement_audit_for(
-  self : DesignPreset,
+pub fn requirement_audit_for(
+  preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
 ) -> DesignSystemRequirementAudit? {
-  for item in self.requirement_audit() {
+  for item in requirement_audit(preset) {
     if item.requirement == requirement {
       return Some(item)
     }
@@ -159,9 +161,9 @@ pub fn DesignPreset::requirement_audit_for(
 }
 
 ///|
-pub fn DesignPreset::requirement_gap_count(self : DesignPreset) -> Int {
+pub fn requirement_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.requirement_audit() {
+  for item in requirement_audit(preset) {
     if item.status != DesignTokenStatus::OfficialComplete {
       count = count + 1
     }
@@ -170,59 +172,61 @@ pub fn DesignPreset::requirement_gap_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::is_design_system_complete(self : DesignPreset) -> Bool {
-  self.manifest().is_official_complete() &&
-  self.requirement_gap_count() == 0 &&
-  self.source_lock_quality_gap_count() == 0 &&
-  self.source_package_import_gap_count() == 0 &&
-  self.source_package_snapshot_gap_count() == 0 &&
-  self.source_import_coverage_gap_count() == 0 &&
-  self.source_import_unanchored_count() == 0 &&
-  self.source_imported_token_source_lock_gap_count() == 0 &&
-  self.source_import_integrity_gap_count() == 0 &&
-  self.runtime_token_alignment_gap_count() == 0 &&
-  self.semantic_palette_role_gap_count() == 0 &&
-  self.semantic_palette_role_source_gap_count() == 0 &&
-  self.semantic_palette_role_official_parity_gap_count() == 0 &&
-  self.typography_role_gap_count() == 0 &&
-  self.typography_role_source_gap_count() == 0 &&
-  self.typography_role_official_parity_gap_count() == 0 &&
-  self.typography_role_destination_gap_count() == 0 &&
-  self.token_taxonomy_gap_count() == 0 &&
-  self.token_taxonomy_source_gap_count() == 0 &&
-  self.token_taxonomy_official_parity_gap_count() == 0 &&
-  self.unmapped_official_token_anchor_count() == 0 &&
-  self.official_token_anchor_source_gap_count() == 0 &&
-  self.token_group_resolver_gap_count() == 0 &&
-  self.token_group_resolver_source_gap_count() == 0 &&
-  self.token_group_resolver_official_parity_gap_count() == 0 &&
-  self.density_resolver_gap_count() == 0 &&
-  self.density_resolver_source_gap_count() == 0 &&
-  self.density_resolver_official_parity_gap_count() == 0 &&
-  self.variant_resolver_gap_count() == 0 &&
-  self.variant_resolver_source_gap_count() == 0 &&
-  self.variant_resolver_official_parity_gap_count() == 0 &&
-  self.unanchored_golden_mapping_count() == 0 &&
-  self.golden_gap_count() == 0 &&
-  self.adaptation_gap_count() == 0 &&
-  self.adaptation_source_lock_gap_count() == 0 &&
-  self.customization_capability_gap_count() == 0 &&
-  self.customization_official_parity_gap_count() == 0 &&
-  self.component_style_resolver_gap_count() == 0 &&
-  self.component_style_resolver_source_gap_count() == 0 &&
-  self.component_style_resolver_official_parity_gap_count() == 0 &&
-  self.component_token_matrix_gap_count() == 0 &&
-  self.component_token_matrix_source_gap_count() == 0
+pub fn is_design_system_complete(preset : @common.DesignPreset) -> Bool {
+  manifest(preset).is_official_complete() &&
+  requirement_gap_count(preset) == 0 &&
+  source_lock_quality_gap_count(preset) == 0 &&
+  source_package_import_gap_count(preset) == 0 &&
+  source_package_snapshot_gap_count(preset) == 0 &&
+  source_import_coverage_gap_count(preset) == 0 &&
+  source_import_unanchored_count(preset) == 0 &&
+  source_imported_token_source_lock_gap_count(preset) == 0 &&
+  source_import_integrity_gap_count(preset) == 0 &&
+  runtime_token_alignment_gap_count(preset) == 0 &&
+  semantic_palette_role_gap_count(preset) == 0 &&
+  semantic_palette_role_source_gap_count(preset) == 0 &&
+  semantic_palette_role_official_parity_gap_count(preset) == 0 &&
+  typography_role_gap_count(preset) == 0 &&
+  typography_role_source_gap_count(preset) == 0 &&
+  typography_role_official_parity_gap_count(preset) == 0 &&
+  typography_role_destination_gap_count(preset) == 0 &&
+  token_taxonomy_gap_count(preset) == 0 &&
+  token_taxonomy_source_gap_count(preset) == 0 &&
+  token_taxonomy_official_parity_gap_count(preset) == 0 &&
+  unmapped_official_token_anchor_count(preset) == 0 &&
+  official_token_anchor_source_gap_count(preset) == 0 &&
+  token_group_resolver_gap_count(preset) == 0 &&
+  token_group_resolver_source_gap_count(preset) == 0 &&
+  token_group_resolver_official_parity_gap_count(preset) == 0 &&
+  density_resolver_gap_count(preset) == 0 &&
+  density_resolver_source_gap_count(preset) == 0 &&
+  density_resolver_official_parity_gap_count(preset) == 0 &&
+  variant_resolver_gap_count(preset) == 0 &&
+  variant_resolver_source_gap_count(preset) == 0 &&
+  variant_resolver_official_parity_gap_count(preset) == 0 &&
+  unanchored_golden_mapping_count(preset) == 0 &&
+  golden_gap_count(preset) == 0 &&
+  adaptation_gap_count(preset) == 0 &&
+  adaptation_source_lock_gap_count(preset) == 0 &&
+  customization_capability_gap_count(preset) == 0 &&
+  customization_official_parity_gap_count(preset) == 0 &&
+  component_style_resolver_gap_count(preset) == 0 &&
+  component_style_resolver_source_gap_count(preset) == 0 &&
+  component_style_resolver_official_parity_gap_count(preset) == 0 &&
+  component_token_matrix_gap_count(preset) == 0 &&
+  component_token_matrix_source_gap_count(preset) == 0
 }
 
 ///|
 fn official_sources_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   manifest : DesignSystemManifest,
 ) -> DesignSystemRequirementAudit {
-  let undeclared = preset.undeclared_golden_source_count()
-  let undeclared_token_sources = preset.undeclared_official_token_anchor_source_count()
-  let unused = preset.unused_official_source_count()
+  let undeclared = undeclared_golden_source_count(preset)
+  let undeclared_token_sources = undeclared_official_token_anchor_source_count(
+    preset,
+  )
+  let unused = unused_official_source_count(preset)
   let source_locks = manifest.source_lock_count()
   let official_sources = manifest.official_source_count()
   let has_official_docs = manifest.sources.any(source => {
@@ -270,13 +274,13 @@ fn official_sources_audit(
 
 ///|
 fn source_version_lock_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
 ) -> DesignSystemRequirementAudit {
-  let records = preset.source_lock_report()
-  let stable = preset.stable_source_lock_count()
-  let gaps = preset.source_lock_quality_gap_count()
-  let moving = preset.moving_source_ref_count()
-  let status = if preset.manifest().is_official_complete() && gaps == 0 {
+  let records = source_lock_report(preset)
+  let stable = stable_source_lock_count(preset)
+  let gaps = source_lock_quality_gap_count(preset)
+  let moving = moving_source_ref_count(preset)
+  let status = if manifest(preset).is_official_complete() && gaps == 0 {
     DesignTokenStatus::OfficialComplete
   } else if records.length() == 0 {
     DesignTokenStatus::NotMapped
@@ -305,19 +309,19 @@ fn source_version_lock_audit(
 
 ///|
 fn source_imported_token_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
 ) -> DesignSystemRequirementAudit {
-  let anchors = preset.source_import_coverage_count()
-  let imported = preset.source_imported_official_token_count()
-  let import_records = preset.source_imported_token_count()
-  let gaps = preset.source_import_coverage_gap_count()
-  let unanchored = preset.source_import_unanchored_count()
-  let lock_gaps = preset.source_imported_token_source_lock_gap_count()
-  let integrity_gaps = preset.source_import_integrity_gap_count()
-  let manifest_lock_gaps = preset.source_import_manifest_lock_gap_count()
-  let anchor_mismatches = preset.source_import_anchor_mismatch_count()
-  let golden_mismatches = preset.source_import_golden_mismatch_count()
-  let status = if preset.manifest().is_official_complete() &&
+  let anchors = source_import_coverage_count(preset)
+  let imported = source_imported_official_token_count(preset)
+  let import_records = source_imported_token_count(preset)
+  let gaps = source_import_coverage_gap_count(preset)
+  let unanchored = source_import_unanchored_count(preset)
+  let lock_gaps = source_imported_token_source_lock_gap_count(preset)
+  let integrity_gaps = source_import_integrity_gap_count(preset)
+  let manifest_lock_gaps = source_import_manifest_lock_gap_count(preset)
+  let anchor_mismatches = source_import_anchor_mismatch_count(preset)
+  let golden_mismatches = source_import_golden_mismatch_count(preset)
+  let status = if manifest(preset).is_official_complete() &&
     gaps == 0 &&
     unanchored == 0 &&
     lock_gaps == 0 &&
@@ -367,17 +371,17 @@ fn source_imported_token_audit(
 
 ///|
 fn source_package_inventory_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
 ) -> DesignSystemRequirementAudit {
-  let rows = preset.source_package_inventory_count()
-  let snapshots = preset.source_package_snapshot_count()
-  let snapshot_gaps = preset.source_package_snapshot_gap_count()
-  let mapped = preset.source_package_mapped_token_count()
-  let imported = preset.source_package_imported_token_count()
-  let imported_records = preset.source_imported_token_count()
-  let imported_lock_gaps = preset.source_imported_token_source_lock_gap_count()
-  let import_gaps = preset.source_package_import_gap_count()
-  let status = if preset.manifest().is_official_complete() &&
+  let rows = source_package_inventory_count(preset)
+  let snapshots = source_package_snapshot_count(preset)
+  let snapshot_gaps = source_package_snapshot_gap_count(preset)
+  let mapped = source_package_mapped_token_count(preset)
+  let imported = source_package_imported_token_count(preset)
+  let imported_records = source_imported_token_count(preset)
+  let imported_lock_gaps = source_imported_token_source_lock_gap_count(preset)
+  let import_gaps = source_package_import_gap_count(preset)
+  let status = if manifest(preset).is_official_complete() &&
     import_gaps == 0 &&
     snapshot_gaps == 0 &&
     imported_lock_gaps == 0 {
@@ -415,14 +419,14 @@ fn source_package_inventory_audit(
 
 ///|
 fn runtime_token_alignment_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
 ) -> DesignSystemRequirementAudit {
-  let rows = preset.runtime_token_alignment_count()
-  let aligned = preset.runtime_token_aligned_count()
-  let gaps = preset.runtime_token_alignment_gap_count()
-  let unresolved = preset.runtime_token_source_value_gap_count()
-  let destination_gaps = preset.runtime_token_destination_gap_count()
-  let status = if preset.manifest().is_official_complete() && gaps == 0 {
+  let rows = runtime_token_alignment_count(preset)
+  let aligned = runtime_token_aligned_count(preset)
+  let gaps = runtime_token_alignment_gap_count(preset)
+  let unresolved = runtime_token_source_value_gap_count(preset)
+  let destination_gaps = runtime_token_destination_gap_count(preset)
+  let status = if manifest(preset).is_official_complete() && gaps == 0 {
     DesignTokenStatus::OfficialComplete
   } else if rows == 0 {
     DesignTokenStatus::NotMapped
@@ -455,15 +459,15 @@ fn runtime_token_alignment_audit(
 
 ///|
 fn token_taxonomy_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   manifest : DesignSystemManifest,
 ) -> DesignSystemRequirementAudit {
-  let rows = preset.token_taxonomy_count()
-  let required = preset.token_taxonomy_required_count()
-  let mapped = preset.token_taxonomy_mapped_count()
-  let gaps = preset.token_taxonomy_gap_count()
-  let source_gaps = preset.token_taxonomy_source_gap_count()
-  let parity_gaps = preset.token_taxonomy_official_parity_gap_count()
+  let rows = token_taxonomy_count(preset)
+  let required = token_taxonomy_required_count(preset)
+  let mapped = token_taxonomy_mapped_count(preset)
+  let gaps = token_taxonomy_gap_count(preset)
+  let source_gaps = token_taxonomy_source_gap_count(preset)
+  let parity_gaps = token_taxonomy_official_parity_gap_count(preset)
   let complete = gaps == 0 && source_gaps == 0
   let status = if manifest.is_official_complete() && parity_gaps == 0 {
     DesignTokenStatus::OfficialComplete
@@ -500,7 +504,7 @@ fn token_taxonomy_audit(
 
 ///|
 fn category_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   manifest : DesignSystemManifest,
   requirement : DesignSystemRequirement,
   category : DesignTokenCategory,
@@ -529,37 +533,37 @@ fn category_audit(
   let typography_requirement = requirement ==
     DesignSystemRequirement::Typography
   let semantic_role_gaps = if semantic_palette_requirement {
-    preset.semantic_palette_role_gap_count()
+    semantic_palette_role_gap_count(preset)
   } else {
     0
   }
   let semantic_role_source_gaps = if semantic_palette_requirement {
-    preset.semantic_palette_role_source_gap_count()
+    semantic_palette_role_source_gap_count(preset)
   } else {
     0
   }
   let semantic_role_parity_gaps = if semantic_palette_requirement {
-    preset.semantic_palette_role_official_parity_gap_count()
+    semantic_palette_role_official_parity_gap_count(preset)
   } else {
     0
   }
   let typography_role_gaps = if typography_requirement {
-    preset.typography_role_gap_count()
+    typography_role_gap_count(preset)
   } else {
     0
   }
   let typography_role_source_gaps = if typography_requirement {
-    preset.typography_role_source_gap_count()
+    typography_role_source_gap_count(preset)
   } else {
     0
   }
   let typography_role_destination_gaps = if typography_requirement {
-    preset.typography_role_destination_gap_count()
+    typography_role_destination_gap_count(preset)
   } else {
     0
   }
   let typography_role_parity_gaps = if typography_requirement {
-    preset.typography_role_official_parity_gap_count()
+    typography_role_official_parity_gap_count(preset)
   } else {
     0
   }
@@ -580,11 +584,11 @@ fn category_audit(
   let evidence = if semantic_palette_requirement {
     evidence +
     "; " +
-    preset.semantic_palette_role_count().to_string() +
+    semantic_palette_role_count(preset).to_string() +
     " semantic palette role records; " +
-    preset.semantic_palette_role_mapped_count().to_string() +
+    semantic_palette_role_mapped_count(preset).to_string() +
     " role mappings; " +
-    preset.semantic_palette_role_aligned_count().to_string() +
+    semantic_palette_role_aligned_count(preset).to_string() +
     " role alignments; " +
     semantic_role_gaps.to_string() +
     " role gaps; " +
@@ -598,11 +602,11 @@ fn category_audit(
   let evidence = if typography_requirement {
     evidence +
     "; " +
-    preset.typography_role_count().to_string() +
+    typography_role_count(preset).to_string() +
     " typography role records; " +
-    preset.typography_role_mapped_count().to_string() +
+    typography_role_mapped_count(preset).to_string() +
     " role mappings; " +
-    preset.typography_role_aligned_count().to_string() +
+    typography_role_aligned_count(preset).to_string() +
     " role alignments; " +
     typography_role_gaps.to_string() +
     " role gaps; " +
@@ -641,7 +645,7 @@ fn category_audit(
 
 ///|
 fn multi_category_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   manifest : DesignSystemManifest,
   requirement : DesignSystemRequirement,
   categories : Array[DesignTokenCategory],
@@ -655,17 +659,17 @@ fn multi_category_audit(
   let density_requirement = requirement ==
     DesignSystemRequirement::SpacingDensity
   let density_resolver_gaps = if density_requirement {
-    preset.density_resolver_gap_count()
+    density_resolver_gap_count(preset)
   } else {
     0
   }
   let density_source_gaps = if density_requirement {
-    preset.density_resolver_source_gap_count()
+    density_resolver_source_gap_count(preset)
   } else {
     0
   }
   let density_parity_gaps = if density_requirement {
-    preset.density_resolver_official_parity_gap_count()
+    density_resolver_official_parity_gap_count(preset)
   } else {
     0
   }
@@ -676,7 +680,7 @@ fn multi_category_audit(
   let evidence = if density_requirement {
     evidence +
     "; " +
-    preset.density_resolver_count().to_string() +
+    density_resolver_count(preset).to_string() +
     " density resolver records; " +
     density_resolver_gaps.to_string() +
     " resolver gaps; " +
@@ -702,16 +706,16 @@ fn multi_category_audit(
 
 ///|
 fn scheme_variant_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   manifest : DesignSystemManifest,
 ) -> DesignSystemRequirementAudit {
   let statuses : Array[DesignTokenStatus] = []
   for item in manifest.variant_coverage {
     statuses.push(item.status)
   }
-  let resolver_gaps = preset.variant_resolver_gap_count()
-  let source_gaps = preset.variant_resolver_source_gap_count()
-  let official_parity_gaps = preset.variant_resolver_official_parity_gap_count()
+  let resolver_gaps = variant_resolver_gap_count(preset)
+  let source_gaps = variant_resolver_source_gap_count(preset)
+  let official_parity_gaps = variant_resolver_official_parity_gap_count(preset)
   let status = complete_status_if_manifest_complete(
     manifest,
     combined_status(statuses, mapped_fallback=DesignTokenStatus::ThemeMapped),
@@ -726,7 +730,7 @@ fn scheme_variant_audit(
     },
     manifest.variant_coverage.length().to_string() +
     " scheme variants covered; " +
-    preset.variant_resolver_count().to_string() +
+    variant_resolver_count(preset).to_string() +
     " variant resolver records; " +
     resolver_gaps.to_string() +
     " resolver gaps; " +
@@ -742,7 +746,7 @@ fn scheme_variant_audit(
 
 ///|
 fn component_token_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   manifest : DesignSystemManifest,
 ) -> DesignSystemRequirementAudit {
   let statuses : Array[DesignTokenStatus] = []
@@ -771,9 +775,11 @@ fn component_token_audit(
       ),
     )
   }
-  let resolver_gaps = preset.component_style_resolver_gap_count()
-  let source_gaps = preset.component_style_resolver_source_gap_count()
-  let official_parity_gaps = preset.component_style_resolver_official_parity_gap_count()
+  let resolver_gaps = component_style_resolver_gap_count(preset)
+  let source_gaps = component_style_resolver_source_gap_count(preset)
+  let official_parity_gaps = component_style_resolver_official_parity_gap_count(
+    preset,
+  )
   audit(
     preset,
     DesignSystemRequirement::ComponentTokens,
@@ -784,7 +790,7 @@ fn component_token_audit(
     },
     manifest.component_coverage.length().to_string() +
     " component token surfaces covered; " +
-    preset.component_style_resolver_count().to_string() +
+    component_style_resolver_count(preset).to_string() +
     " component style resolver records; " +
     resolver_gaps.to_string() +
     " resolver gaps; " +
@@ -804,16 +810,16 @@ fn component_token_audit(
 
 ///|
 fn component_matrix_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
 ) -> DesignSystemRequirementAudit {
-  let rows = preset.component_token_matrix_count()
-  let mapped = preset.component_token_matrix_mapped_count()
-  let required = preset.component_token_matrix_required_count()
-  let source_imported = preset.component_token_matrix_source_imported_count()
-  let runtime_aligned = preset.component_token_matrix_runtime_aligned_count()
-  let gaps = preset.component_token_matrix_gap_count()
-  let source_gaps = preset.component_token_matrix_source_gap_count()
-  let status = if preset.manifest().is_official_complete() &&
+  let rows = component_token_matrix_count(preset)
+  let mapped = component_token_matrix_mapped_count(preset)
+  let required = component_token_matrix_required_count(preset)
+  let source_imported = component_token_matrix_source_imported_count(preset)
+  let runtime_aligned = component_token_matrix_runtime_aligned_count(preset)
+  let gaps = component_token_matrix_gap_count(preset)
+  let source_gaps = component_token_matrix_source_gap_count(preset)
+  let status = if manifest(preset).is_official_complete() &&
     gaps == 0 &&
     source_gaps == 0 {
     DesignTokenStatus::OfficialComplete
@@ -848,15 +854,15 @@ fn component_matrix_audit(
 
 ///|
 fn customization_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   manifest : DesignSystemManifest,
 ) -> DesignSystemRequirementAudit {
   let statuses : Array[DesignTokenStatus] = []
   for item in manifest.customization_coverage {
     statuses.push(item.status)
   }
-  let capability_gaps = preset.customization_capability_gap_count()
-  let official_parity_gaps = preset.customization_official_parity_gap_count()
+  let capability_gaps = customization_capability_gap_count(preset)
+  let official_parity_gaps = customization_official_parity_gap_count(preset)
   let status = complete_status_if_manifest_complete(
     manifest,
     combined_status(statuses, mapped_fallback=DesignTokenStatus::ThemeMapped),
@@ -867,7 +873,7 @@ fn customization_audit(
     status,
     manifest.customization_coverage.length().to_string() +
     " manifest customization APIs; " +
-    preset.customization_report_count().to_string() +
+    customization_report_count(preset).to_string() +
     " customization capability records; " +
     capability_gaps.to_string() +
     " API gaps; " +
@@ -880,10 +886,12 @@ fn customization_audit(
 }
 
 ///|
-fn golden_mapping_audit(preset : DesignPreset) -> DesignSystemRequirementAudit {
-  let mapped = preset.golden_mapped_count()
-  let gaps = preset.golden_gap_count()
-  let status = if preset.manifest().is_official_complete() && gaps == 0 {
+fn golden_mapping_audit(
+  preset : @common.DesignPreset,
+) -> DesignSystemRequirementAudit {
+  let mapped = golden_mapped_count(preset)
+  let gaps = golden_gap_count(preset)
+  let status = if manifest(preset).is_official_complete() && gaps == 0 {
     DesignTokenStatus::OfficialComplete
   } else if mapped > 0 && gaps > 0 {
     DesignTokenStatus::PreviewMapped
@@ -905,15 +913,15 @@ fn golden_mapping_audit(preset : DesignPreset) -> DesignSystemRequirementAudit {
 
 ///|
 fn official_token_coverage_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
 ) -> DesignSystemRequirementAudit {
-  let anchors = preset.official_token_anchor_count()
-  let mapped = preset.mapped_official_token_anchor_count()
-  let gaps = preset.unmapped_official_token_anchor_count()
-  let source_gaps = preset.official_token_anchor_source_gap_count()
-  let source_locks = preset.official_token_anchor_source_lock_count()
-  let unanchored = preset.unanchored_golden_mapping_count()
-  let status = if preset.manifest().is_official_complete() &&
+  let anchors = official_token_anchor_count(preset)
+  let mapped = mapped_official_token_anchor_count(preset)
+  let gaps = unmapped_official_token_anchor_count(preset)
+  let source_gaps = official_token_anchor_source_gap_count(preset)
+  let source_locks = official_token_anchor_source_lock_count(preset)
+  let unanchored = unanchored_golden_mapping_count(preset)
+  let status = if manifest(preset).is_official_complete() &&
     gaps == 0 &&
     source_gaps == 0 &&
     unanchored == 0 {
@@ -953,14 +961,14 @@ fn official_token_coverage_audit(
 
 ///|
 fn adaptation_difference_audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
 ) -> DesignSystemRequirementAudit {
-  let records = preset.adaptation_record_count()
-  let aligned = preset.aligned_adaptation_count()
-  let gaps = preset.adaptation_gap_count()
-  let source_gaps = preset.adaptation_source_lock_gap_count()
-  let undeclared = preset.undeclared_adaptation_source_count()
-  let status = if preset.manifest().is_official_complete() &&
+  let records = adaptation_record_count(preset)
+  let aligned = aligned_adaptation_count(preset)
+  let gaps = adaptation_gap_count(preset)
+  let source_gaps = adaptation_source_lock_gap_count(preset)
+  let undeclared = undeclared_adaptation_source_count(preset)
+  let status = if manifest(preset).is_official_complete() &&
     gaps == 0 &&
     source_gaps == 0 {
     DesignTokenStatus::OfficialComplete
@@ -1076,7 +1084,7 @@ fn gap_for_status(status : DesignTokenStatus, gap : String) -> String {
 
 ///|
 fn audit(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
   status : DesignTokenStatus,
   evidence : String,

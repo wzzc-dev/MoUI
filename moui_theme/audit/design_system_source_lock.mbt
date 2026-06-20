@@ -9,7 +9,7 @@ pub(all) enum DesignSourceRefKind {
 
 ///|
 pub(all) struct DesignSourceLockRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   source_label : String
   source_url : String
   source_kind : String
@@ -24,8 +24,8 @@ pub(all) struct DesignSourceLockRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignSourceRefKind::label(self : DesignSourceRefKind) -> String {
-  match self {
+pub fn DesignSourceRefKind::label(preset : DesignSourceRefKind) -> String {
+  match preset {
     WorkspaceRef => "workspace"
     LiveDocumentationRef => "live documentation"
     MovingBranchRef => "moving branch"
@@ -35,20 +35,20 @@ pub fn DesignSourceRefKind::label(self : DesignSourceRefKind) -> String {
 }
 
 ///|
-pub fn DesignPreset::source_lock_report(
-  self : DesignPreset,
+pub fn source_lock_report(
+  preset : @common.DesignPreset,
 ) -> Array[DesignSourceLockRecord] {
   let records : Array[DesignSourceLockRecord] = []
-  for source in self.sources() {
-    records.push(source_lock_record(self, source))
+  for source in sources(preset) {
+    records.push(source_lock_record(preset, source))
   }
   records
 }
 
 ///|
-pub fn DesignPreset::source_lock_quality_gap_count(self : DesignPreset) -> Int {
+pub fn source_lock_quality_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.source_lock_report() {
+  for item in source_lock_report(preset) {
     if !item.stable_lock {
       count = count + 1
     }
@@ -57,9 +57,9 @@ pub fn DesignPreset::source_lock_quality_gap_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::stable_source_lock_count(self : DesignPreset) -> Int {
+pub fn stable_source_lock_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.source_lock_report() {
+  for item in source_lock_report(preset) {
     if item.stable_lock {
       count = count + 1
     }
@@ -68,9 +68,9 @@ pub fn DesignPreset::stable_source_lock_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::source_snapshot_url_count(self : DesignPreset) -> Int {
+pub fn source_snapshot_url_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.source_lock_report() {
+  for item in source_lock_report(preset) {
     if item.snapshot_url != "" {
       count = count + 1
     }
@@ -79,9 +79,9 @@ pub fn DesignPreset::source_snapshot_url_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::source_snapshot_url_gap_count(self : DesignPreset) -> Int {
+pub fn source_snapshot_url_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.source_lock_report() {
+  for item in source_lock_report(preset) {
     if item.source_kind == "official-source" &&
       item.stable_lock &&
       item.snapshot_url == "" {
@@ -92,9 +92,9 @@ pub fn DesignPreset::source_snapshot_url_gap_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::moving_source_ref_count(self : DesignPreset) -> Int {
+pub fn moving_source_ref_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.source_lock_report() {
+  for item in source_lock_report(preset) {
     if item.ref_kind == DesignSourceRefKind::LiveDocumentationRef ||
       item.ref_kind == DesignSourceRefKind::MovingBranchRef {
       count = count + 1
@@ -104,14 +104,14 @@ pub fn DesignPreset::moving_source_ref_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::has_stable_source_locks(self : DesignPreset) -> Bool {
-  self.source_lock_report().length() > 0 &&
-  self.source_lock_quality_gap_count() == 0
+pub fn has_stable_source_locks(preset : @common.DesignPreset) -> Bool {
+  source_lock_report(preset).length() > 0 &&
+  source_lock_quality_gap_count(preset) == 0
 }
 
 ///|
 fn source_lock_record(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   source : DesignSystemSource,
 ) -> DesignSourceLockRecord {
   let ref_kind = source_ref_kind(source.source_ref)

@@ -1,6 +1,6 @@
 ///|
 pub(all) struct DesignRuntimeTokenAlignmentRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   category : DesignTokenCategory
   layer : DesignTokenLayer
   official_token : String
@@ -19,23 +19,23 @@ pub(all) struct DesignRuntimeTokenAlignmentRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignPreset::runtime_token_alignment_report(
-  self : DesignPreset,
+pub fn runtime_token_alignment_report(
+  preset : @common.DesignPreset,
 ) -> Array[DesignRuntimeTokenAlignmentRecord] {
   let rows : Array[DesignRuntimeTokenAlignmentRecord] = []
-  let tokens = self.tokens(scheme=@core.ColorScheme::Light)
-  for item in self.source_import_coverage() {
-    rows.push(runtime_token_alignment_record(self, item, tokens))
+  let tokens = preset.tokens(scheme=@core.ColorScheme::Light)
+  for item in source_import_coverage(preset) {
+    rows.push(runtime_token_alignment_record(preset, item, tokens))
   }
   rows
 }
 
 ///|
-pub fn DesignPreset::runtime_token_alignment_for(
-  self : DesignPreset,
+pub fn runtime_token_alignment_for(
+  preset : @common.DesignPreset,
   official_token : String,
 ) -> DesignRuntimeTokenAlignmentRecord? {
-  for item in self.runtime_token_alignment_report() {
+  for item in runtime_token_alignment_report(preset) {
     if item.official_token == official_token {
       return Some(item)
     }
@@ -44,14 +44,14 @@ pub fn DesignPreset::runtime_token_alignment_for(
 }
 
 ///|
-pub fn DesignPreset::runtime_token_alignment_count(self : DesignPreset) -> Int {
-  self.runtime_token_alignment_report().length()
+pub fn runtime_token_alignment_count(preset : @common.DesignPreset) -> Int {
+  runtime_token_alignment_report(preset).length()
 }
 
 ///|
-pub fn DesignPreset::runtime_token_aligned_count(self : DesignPreset) -> Int {
+pub fn runtime_token_aligned_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.runtime_token_alignment_report() {
+  for item in runtime_token_alignment_report(preset) {
     if item.runtime_aligned {
       count = count + 1
     }
@@ -60,11 +60,9 @@ pub fn DesignPreset::runtime_token_aligned_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::runtime_token_alignment_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn runtime_token_alignment_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.runtime_token_alignment_report() {
+  for item in runtime_token_alignment_report(preset) {
     if item.required && !item.runtime_aligned {
       count = count + 1
     }
@@ -73,11 +71,11 @@ pub fn DesignPreset::runtime_token_alignment_gap_count(
 }
 
 ///|
-pub fn DesignPreset::runtime_token_source_value_gap_count(
-  self : DesignPreset,
+pub fn runtime_token_source_value_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.runtime_token_alignment_report() {
+  for item in runtime_token_alignment_report(preset) {
     if item.required && item.source_imported && !item.source_value_resolved {
       count = count + 1
     }
@@ -86,11 +84,11 @@ pub fn DesignPreset::runtime_token_source_value_gap_count(
 }
 
 ///|
-pub fn DesignPreset::runtime_token_destination_gap_count(
-  self : DesignPreset,
+pub fn runtime_token_destination_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.runtime_token_alignment_report() {
+  for item in runtime_token_alignment_report(preset) {
     if item.required && item.source_imported && !item.runtime_value_available {
       count = count + 1
     }
@@ -100,9 +98,9 @@ pub fn DesignPreset::runtime_token_destination_gap_count(
 
 ///|
 fn runtime_token_alignment_record(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   coverage : DesignSourceImportCoverage,
-  tokens : DesignSystemTokens,
+  tokens : @common.DesignSystemTokens,
 ) -> DesignRuntimeTokenAlignmentRecord {
   let expected = expected_runtime_token_value(coverage)
   let actual = actual_runtime_token_value(coverage.moui_token, tokens)
@@ -149,7 +147,7 @@ fn runtime_alignment_note(
   runtime_aligned : Bool,
 ) -> String {
   if runtime_aligned {
-    "Resolved official source value matches the default light DesignSystemTokens runtime value."
+    "Resolved official source value matches the default light @common.DesignSystemTokens runtime value."
   } else if !coverage.source_imported {
     "No pinned source-import record covers this required official token anchor yet."
   } else if !expected.available {
@@ -157,7 +155,7 @@ fn runtime_alignment_note(
   } else if !actual.available {
     "The imported MoUI token destination is not exposed by the runtime alignment resolver yet."
   } else {
-    "The resolved official source value differs from the current default light DesignSystemTokens runtime value."
+    "The resolved official source value differs from the current default light @common.DesignSystemTokens runtime value."
   }
 }
 
@@ -173,7 +171,7 @@ fn expected_runtime_token_value(
 ) -> RuntimeTokenValue {
   let source_value = coverage.source_value
   if source_value.contains("#242424") {
-    runtime_color_value(color_byte(r=36, g=36, b=36))
+    runtime_color_value(@common.color_byte(r=36, g=36, b=36))
   } else if source_value.contains("#ffffff") {
     runtime_color_value(@core.Color::white())
   } else if source_value.contains("#fff") {
@@ -181,105 +179,105 @@ fn expected_runtime_token_value(
   } else if source_value.contains("#000000") || source_value.contains("#000") {
     runtime_color_value(@core.Color::black())
   } else if source_value.contains("#fef7ff") {
-    runtime_color_value(color_byte(r=254, g=247, b=255))
+    runtime_color_value(@common.color_byte(r=254, g=247, b=255))
   } else if source_value.contains("#1d1b20") {
-    runtime_color_value(color_byte(r=29, g=27, b=32))
+    runtime_color_value(@common.color_byte(r=29, g=27, b=32))
   } else if source_value.contains("#e7e0ec") {
-    runtime_color_value(color_byte(r=231, g=224, b=236))
+    runtime_color_value(@common.color_byte(r=231, g=224, b=236))
   } else if source_value.contains("#f3edf7") {
-    runtime_color_value(color_byte(r=243, g=237, b=247))
+    runtime_color_value(@common.color_byte(r=243, g=237, b=247))
   } else if source_value.contains("#79747e") {
-    runtime_color_value(color_byte(r=121, g=116, b=126))
+    runtime_color_value(@common.color_byte(r=121, g=116, b=126))
   } else if source_value.contains("#49454f") {
-    runtime_color_value(color_byte(r=73, g=69, b=79))
+    runtime_color_value(@common.color_byte(r=73, g=69, b=79))
   } else if source_value.contains("#6750a4") {
-    runtime_color_value(color_byte(r=103, g=80, b=164))
+    runtime_color_value(@common.color_byte(r=103, g=80, b=164))
   } else if source_value.contains("#b3261e") {
-    runtime_color_value(color_byte(r=179, g=38, b=30))
+    runtime_color_value(@common.color_byte(r=179, g=38, b=30))
   } else if source_value.contains("#f4f4f4") {
-    runtime_color_value(color_byte(r=244, g=244, b=244))
+    runtime_color_value(@common.color_byte(r=244, g=244, b=244))
   } else if source_value.contains("#e0e0e0") {
-    runtime_color_value(color_byte(r=224, g=224, b=224))
+    runtime_color_value(@common.color_byte(r=224, g=224, b=224))
   } else if source_value.contains("#161616") {
-    runtime_color_value(color_byte(r=22, g=22, b=22))
+    runtime_color_value(@common.color_byte(r=22, g=22, b=22))
   } else if source_value.contains("#8d8d8d") {
-    runtime_color_value(color_byte(r=141, g=141, b=141))
+    runtime_color_value(@common.color_byte(r=141, g=141, b=141))
   } else if source_value.contains("#525252") {
-    runtime_color_value(color_byte(r=82, g=82, b=82))
+    runtime_color_value(@common.color_byte(r=82, g=82, b=82))
   } else if source_value.contains("#0f62fe") {
-    runtime_color_value(color_byte(r=15, g=98, b=254))
+    runtime_color_value(@common.color_byte(r=15, g=98, b=254))
   } else if source_value.contains("#da1e28") {
-    runtime_color_value(color_byte(r=218, g=30, b=40))
+    runtime_color_value(@common.color_byte(r=218, g=30, b=40))
   } else if source_value.contains("#24a148") {
-    runtime_color_value(color_byte(r=36, g=161, b=72))
+    runtime_color_value(@common.color_byte(r=36, g=161, b=72))
   } else if source_value.contains("#f1c21b") {
-    runtime_color_value(color_byte(r=241, g=194, b=27))
+    runtime_color_value(@common.color_byte(r=241, g=194, b=27))
   } else if source_value.contains("#0043ce") {
-    runtime_color_value(color_byte(r=0, g=67, b=206))
+    runtime_color_value(@common.color_byte(r=0, g=67, b=206))
   } else if source_value.contains("rgba(black, 0.6)") {
-    runtime_color_value(color(r=0.0, g=0.0, b=0.0, a=0.6))
+    runtime_color_value(@common.color(r=0.0, g=0.0, b=0.0, a=0.6))
   } else if source_value.contains("rgba(0,0,0,0.4)") ||
     source_value.contains("rgba(0, 0, 0, 0.4)") {
-    runtime_color_value(color(r=0.0, g=0.0, b=0.0, a=0.4))
+    runtime_color_value(@common.color(r=0.0, g=0.0, b=0.0, a=0.4))
   } else if source_value.contains("#107c10") {
-    runtime_color_value(color_byte(r=16, g=124, b=16))
+    runtime_color_value(@common.color_byte(r=16, g=124, b=16))
   } else if source_value.contains("#13a10e") {
-    runtime_color_value(color_byte(r=19, g=161, b=14))
+    runtime_color_value(@common.color_byte(r=19, g=161, b=14))
   } else if source_value.contains("#d13438") {
-    runtime_color_value(color_byte(r=209, g=52, b=56))
+    runtime_color_value(@common.color_byte(r=209, g=52, b=56))
   } else if source_value.contains("#c50f1f") {
-    runtime_color_value(color_byte(r=197, g=15, b=31))
+    runtime_color_value(@common.color_byte(r=197, g=15, b=31))
   } else if source_value.contains("#da3b01") {
-    runtime_color_value(color_byte(r=218, g=59, b=1))
+    runtime_color_value(@common.color_byte(r=218, g=59, b=1))
   } else if source_value.contains("#f7630c") {
-    runtime_color_value(color_byte(r=247, g=99, b=12))
+    runtime_color_value(@common.color_byte(r=247, g=99, b=12))
   } else if source_value.contains("#fde300") {
-    runtime_color_value(color_byte(r=253, g=227, b=0))
+    runtime_color_value(@common.color_byte(r=253, g=227, b=0))
   } else if source_value.contains("#eaa300") {
-    runtime_color_value(color_byte(r=234, g=163, b=0))
+    runtime_color_value(@common.color_byte(r=234, g=163, b=0))
   } else if source_value.contains("#0f6cbd") {
-    runtime_color_value(color_byte(r=15, g=108, b=189))
+    runtime_color_value(@common.color_byte(r=15, g=108, b=189))
   } else if source_value.contains("#0078d4") {
-    runtime_color_value(color_byte(r=0, g=120, b=212))
+    runtime_color_value(@common.color_byte(r=0, g=120, b=212))
   } else if coverage.official_token == "ProgressBar.indicator.backgroundColor" &&
     source_value.contains("colorCompoundBrandBackground") {
-    runtime_color_value(color_byte(r=15, g=108, b=189))
+    runtime_color_value(@common.color_byte(r=15, g=108, b=189))
   } else if source_value.contains("#fafafa") {
-    runtime_color_value(color_byte(r=250, g=250, b=250))
+    runtime_color_value(@common.color_byte(r=250, g=250, b=250))
   } else if source_value.contains("#f5f5f5") {
-    runtime_color_value(color_byte(r=245, g=245, b=245))
+    runtime_color_value(@common.color_byte(r=245, g=245, b=245))
   } else if source_value.contains("#d1d1d1") {
-    runtime_color_value(color_byte(r=209, g=209, b=209))
+    runtime_color_value(@common.color_byte(r=209, g=209, b=209))
   } else if source_value.contains("#616161") {
-    runtime_color_value(color_byte(r=97, g=97, b=97))
+    runtime_color_value(@common.color_byte(r=97, g=97, b=97))
   } else if source_value.contains("#1f2328") {
-    runtime_color_value(color_byte(r=31, g=35, b=40))
+    runtime_color_value(@common.color_byte(r=31, g=35, b=40))
   } else if source_value.contains("#F6F8FA") || source_value.contains("#f6f8fa") {
-    runtime_color_value(color_byte(r=246, g=248, b=250))
+    runtime_color_value(@common.color_byte(r=246, g=248, b=250))
   } else if source_value.contains("#0969da") {
-    runtime_color_value(color_byte(r=9, g=105, b=218))
+    runtime_color_value(@common.color_byte(r=9, g=105, b=218))
   } else if source_value.contains("#C8D1DA") || source_value.contains("#c8d1da") {
     if source_value.contains("alpha: 0.4") {
-      runtime_color_value(color_byte(r=200, g=209, b=218, a=0.4))
+      runtime_color_value(@common.color_byte(r=200, g=209, b=218, a=0.4))
     } else {
-      runtime_color_value(color_byte(r=200, g=209, b=218))
+      runtime_color_value(@common.color_byte(r=200, g=209, b=218))
     }
   } else if source_value.contains("#D1D9E0") || source_value.contains("#d1d9e0") {
-    runtime_color_value(color_byte(r=209, g=217, b=224))
+    runtime_color_value(@common.color_byte(r=209, g=217, b=224))
   } else if source_value.contains("#818B98") || source_value.contains("#818b98") {
-    runtime_color_value(color_byte(r=129, g=139, b=152))
+    runtime_color_value(@common.color_byte(r=129, g=139, b=152))
   } else if source_value.contains("#59636E") || source_value.contains("#59636e") {
-    runtime_color_value(color_byte(r=89, g=99, b=110))
+    runtime_color_value(@common.color_byte(r=89, g=99, b=110))
   } else if source_value.contains("#1a7f37") {
-    runtime_color_value(color_byte(r=26, g=127, b=55))
+    runtime_color_value(@common.color_byte(r=26, g=127, b=55))
   } else if source_value.contains("#9a6700") {
-    runtime_color_value(color_byte(r=154, g=103, b=0))
+    runtime_color_value(@common.color_byte(r=154, g=103, b=0))
   } else if source_value.contains("#1f883d") {
-    runtime_color_value(color_byte(r=31, g=136, b=61))
+    runtime_color_value(@common.color_byte(r=31, g=136, b=61))
   } else if source_value.contains("#d1242f") {
-    runtime_color_value(color_byte(r=209, g=36, b=47))
+    runtime_color_value(@common.color_byte(r=209, g=36, b=47))
   } else if source_value.contains("#cf222e") {
-    runtime_color_value(color_byte(r=207, g=34, b=46))
+    runtime_color_value(@common.color_byte(r=207, g=34, b=46))
   } else if coverage.official_token == "--control-transparent-bgColor-hover" &&
     source_value.contains("alpha: 0.1") {
     runtime_double_value(0.1)
@@ -751,109 +749,117 @@ fn expected_runtime_token_value(
 ///|
 fn actual_runtime_token_value(
   moui_token : String,
-  tokens : DesignSystemTokens,
+  tokens : @common.DesignSystemTokens,
 ) -> RuntimeTokenValue {
   match moui_token {
-    "DesignSemanticPalette.foreground" =>
+    "@common.DesignSemanticPalette.foreground" =>
       runtime_color_value(tokens.palette.foreground)
-    "DesignSemanticPalette.background" =>
+    "@common.DesignSemanticPalette.background" =>
       runtime_color_value(tokens.palette.background)
-    "DesignSemanticPalette.surface" =>
+    "@common.DesignSemanticPalette.surface" =>
       runtime_color_value(tokens.palette.surface)
-    "DesignSemanticPalette.surface_variant" =>
+    "@common.DesignSemanticPalette.surface_variant" =>
       runtime_color_value(tokens.palette.surface_variant)
-    "DesignSemanticPalette.primary" =>
+    "@common.DesignSemanticPalette.primary" =>
       runtime_color_value(tokens.palette.primary)
-    "DesignSemanticPalette.primary_foreground" =>
+    "@common.DesignSemanticPalette.primary_foreground" =>
       runtime_color_value(tokens.palette.primary_foreground)
-    "DesignSemanticPalette.outline" =>
+    "@common.DesignSemanticPalette.outline" =>
       runtime_color_value(tokens.palette.outline)
-    "DesignSemanticPalette.muted" => runtime_color_value(tokens.palette.muted)
-    "DesignSemanticPalette.success" =>
+    "@common.DesignSemanticPalette.muted" =>
+      runtime_color_value(tokens.palette.muted)
+    "@common.DesignSemanticPalette.success" =>
       runtime_color_value(tokens.palette.success)
-    "DesignSemanticPalette.warning" =>
+    "@common.DesignSemanticPalette.warning" =>
       runtime_color_value(tokens.palette.warning)
-    "DesignSemanticPalette.danger" => runtime_color_value(tokens.palette.danger)
-    "DesignSemanticPalette.info" => runtime_color_value(tokens.palette.info)
-    "DesignSemanticPalette.focus" => runtime_color_value(tokens.palette.focus)
-    "DesignSemanticPalette.scrim" => runtime_color_value(tokens.palette.scrim)
-    "DesignComponentTokens.button.primary.background" =>
+    "@common.DesignSemanticPalette.danger" =>
+      runtime_color_value(tokens.palette.danger)
+    "@common.DesignSemanticPalette.info" =>
+      runtime_color_value(tokens.palette.info)
+    "@common.DesignSemanticPalette.focus" =>
+      runtime_color_value(tokens.palette.focus)
+    "@common.DesignSemanticPalette.scrim" =>
+      runtime_color_value(tokens.palette.scrim)
+    "@common.DesignComponentTokens.button.primary.background" =>
       runtime_color_value(tokens.components.button.primary.background)
-    "DesignComponentTokens.button.primary.foreground" =>
+    "@common.DesignComponentTokens.button.primary.foreground" =>
       runtime_color_value(tokens.components.button.primary.foreground)
-    "DesignComponentTokens.feedback.success.foreground" =>
+    "@common.DesignComponentTokens.feedback.success.foreground" =>
       runtime_color_value(tokens.components.feedback.success.foreground)
-    "DesignComponentTokens.form_validation.foreground" =>
+    "@common.DesignComponentTokens.form_validation.foreground" =>
       runtime_color_value(tokens.components.form_validation.foreground)
-    "DesignComponentTokens.progress.foreground" =>
+    "@common.DesignComponentTokens.progress.foreground" =>
       runtime_color_value(tokens.components.progress.foreground)
-    "DesignComponentTokens.slider.foreground" =>
+    "@common.DesignComponentTokens.slider.foreground" =>
       runtime_color_value(tokens.components.slider.foreground)
-    "DesignComponentTokens.text_field.normal.border_width" =>
+    "@common.DesignComponentTokens.text_field.normal.border_width" =>
       runtime_double_value(tokens.components.text_field.normal.border_width)
-    "DesignComponentTokens.text_field.focused.border_width" =>
+    "@common.DesignComponentTokens.text_field.focused.border_width" =>
       runtime_double_value(tokens.components.text_field.focused.border_width)
-    "DesignTextFieldTokens.focused.border" =>
+    "@common.DesignTextFieldTokens.focused.border" =>
       runtime_color_value(tokens.components.text_field.focused.border)
-    "DesignComponentTokens.picker.background" =>
+    "@common.DesignComponentTokens.picker.background" =>
       runtime_color_value(tokens.components.picker.background.fallback_color())
-    "DesignTypographyTokens.body.size" =>
+    "@common.DesignTypographyTokens.body.size" =>
       runtime_double_value(tokens.typography.body.size)
-    "DesignTypographyTokens.title.size" =>
+    "@common.DesignTypographyTokens.title.size" =>
       runtime_double_value(tokens.typography.title.size)
-    "DesignTypographyTokens.caption.size" =>
+    "@common.DesignTypographyTokens.caption.size" =>
       runtime_double_value(tokens.typography.caption.size)
-    "DesignTypographyTokens.control.size" =>
+    "@common.DesignTypographyTokens.control.size" =>
       runtime_double_value(tokens.typography.control.size)
-    "DesignTypographyTokens.body.weight" =>
+    "@common.DesignTypographyTokens.body.weight" =>
       runtime_int_value(tokens.typography.body.weight)
-    "DesignTypographyTokens.title.weight" =>
+    "@common.DesignTypographyTokens.title.weight" =>
       runtime_int_value(tokens.typography.title.weight)
-    "DesignTypographyTokens.control.weight" =>
+    "@common.DesignTypographyTokens.control.weight" =>
       runtime_int_value(tokens.typography.control.weight)
-    "DesignTypographyTokens.body.families" =>
+    "@common.DesignTypographyTokens.body.families" =>
       runtime_value(tokens.typography.body.css_family())
-    "DesignTypographyTokens.control.families" =>
+    "@common.DesignTypographyTokens.control.families" =>
       runtime_value(tokens.typography.control.css_family())
-    "DesignStateLayerTokens.hover_alpha" =>
+    "@common.DesignStateLayerTokens.hover_alpha" =>
       runtime_double_value(tokens.state_layer.hover_alpha)
-    "DesignStateLayerTokens.pressed_alpha" =>
+    "@common.DesignStateLayerTokens.pressed_alpha" =>
       runtime_double_value(tokens.state_layer.pressed_alpha)
-    "DesignRadiusTokens.sm" => runtime_double_value(tokens.radius.sm)
-    "DesignRadiusTokens.md" => runtime_double_value(tokens.radius.md)
-    "DesignRadiusTokens.lg" => runtime_double_value(tokens.radius.lg)
-    "DesignRadiusTokens.pill" => runtime_double_value(tokens.radius.pill)
-    "DesignElevationTokens.sm.offset.y" =>
+    "@common.DesignRadiusTokens.sm" => runtime_double_value(tokens.radius.sm)
+    "@common.DesignRadiusTokens.md" => runtime_double_value(tokens.radius.md)
+    "@common.DesignRadiusTokens.lg" => runtime_double_value(tokens.radius.lg)
+    "@common.DesignRadiusTokens.pill" =>
+      runtime_double_value(tokens.radius.pill)
+    "@common.DesignElevationTokens.sm.offset.y" =>
       runtime_double_value(tokens.elevation.sm.offset.y)
-    "DesignElevationTokens.md.offset.y" =>
+    "@common.DesignElevationTokens.md.offset.y" =>
       runtime_double_value(tokens.elevation.md.offset.y)
-    "DesignElevationTokens.lg.offset.y" =>
+    "@common.DesignElevationTokens.lg.offset.y" =>
       runtime_double_value(tokens.elevation.lg.offset.y)
-    "DesignElevationTokens.card" =>
+    "@common.DesignElevationTokens.card" =>
       match tokens.elevation.card {
         Some(value) => runtime_double_value(value.offset.y)
         None => runtime_unavailable()
       }
-    "DesignElevationTokens.flyout" =>
+    "@common.DesignElevationTokens.flyout" =>
       match tokens.elevation.flyout {
         Some(value) => runtime_double_value(value.offset.y)
         None => runtime_unavailable()
       }
-    "DesignElevationTokens.dialog" =>
+    "@common.DesignElevationTokens.dialog" =>
       match tokens.elevation.dialog {
         Some(value) => runtime_double_value(value.offset.y)
         None => runtime_unavailable()
       }
-    "DesignSpacingTokens.xs" => runtime_double_value(tokens.spacing.xs)
-    "DesignSpacingTokens.sm" => runtime_double_value(tokens.spacing.sm)
-    "DesignSpacingTokens.md" => runtime_double_value(tokens.spacing.md)
-    "DesignSpacingTokens.lg" => runtime_double_value(tokens.spacing.lg)
-    "DesignSpacingTokens.xl" => runtime_double_value(tokens.spacing.xl)
-    "DesignMotionTokens.fast_ms" => runtime_double_value(tokens.motion.fast_ms)
-    "DesignMotionTokens.normal_ms" =>
+    "@common.DesignSpacingTokens.xs" => runtime_double_value(tokens.spacing.xs)
+    "@common.DesignSpacingTokens.sm" => runtime_double_value(tokens.spacing.sm)
+    "@common.DesignSpacingTokens.md" => runtime_double_value(tokens.spacing.md)
+    "@common.DesignSpacingTokens.lg" => runtime_double_value(tokens.spacing.lg)
+    "@common.DesignSpacingTokens.xl" => runtime_double_value(tokens.spacing.xl)
+    "@common.DesignMotionTokens.fast_ms" =>
+      runtime_double_value(tokens.motion.fast_ms)
+    "@common.DesignMotionTokens.normal_ms" =>
       runtime_double_value(tokens.motion.normal_ms)
-    "DesignMotionTokens.slow_ms" => runtime_double_value(tokens.motion.slow_ms)
-    "DesignMotionTokens.easing" =>
+    "@common.DesignMotionTokens.slow_ms" =>
+      runtime_double_value(tokens.motion.slow_ms)
+    "@common.DesignMotionTokens.easing" =>
       runtime_value(easing_runtime_value(tokens.motion.easing))
     _ => runtime_unavailable()
   }

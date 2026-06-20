@@ -18,7 +18,7 @@ pub(all) enum DesignSemanticPaletteRole {
 
 ///|
 pub(all) struct DesignSemanticPaletteRoleRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   role : DesignSemanticPaletteRole
   token_surface : String
   core_surface : String
@@ -61,9 +61,9 @@ priv struct SemanticPaletteSourceEvidence {
 
 ///|
 pub fn DesignSemanticPaletteRole::label(
-  self : DesignSemanticPaletteRole,
+  preset : DesignSemanticPaletteRole,
 ) -> String {
-  match self {
+  match preset {
     PaletteForeground => "foreground"
     PaletteBackground => "background"
     PaletteSurface => "surface"
@@ -82,78 +82,78 @@ pub fn DesignSemanticPaletteRole::label(
 }
 
 ///|
-pub fn DesignPreset::semantic_palette_role_report(
-  self : DesignPreset,
+pub fn semantic_palette_role_report(
+  preset : @common.DesignPreset,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> Array[DesignSemanticPaletteRoleRecord] {
   [
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteForeground,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteBackground,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteSurface,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteSurfaceVariant,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PalettePrimary,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PalettePrimaryForeground,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteOutline,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteMuted,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteSuccess,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteWarning,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteDanger,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteInfo,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteFocus,
       scheme,
     ),
     semantic_palette_role_record(
-      self,
+      preset,
       DesignSemanticPaletteRole::PaletteScrim,
       scheme,
     ),
@@ -161,12 +161,12 @@ pub fn DesignPreset::semantic_palette_role_report(
 }
 
 ///|
-pub fn DesignPreset::semantic_palette_role_for(
-  self : DesignPreset,
+pub fn semantic_palette_role_for(
+  preset : @common.DesignPreset,
   role : DesignSemanticPaletteRole,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> DesignSemanticPaletteRoleRecord? {
-  for item in self.semantic_palette_role_report(scheme~) {
+  for item in semantic_palette_role_report(preset, scheme~) {
     if item.role == role {
       return Some(item)
     }
@@ -175,16 +175,14 @@ pub fn DesignPreset::semantic_palette_role_for(
 }
 
 ///|
-pub fn DesignPreset::semantic_palette_role_count(self : DesignPreset) -> Int {
-  self.semantic_palette_role_report().length()
+pub fn semantic_palette_role_count(preset : @common.DesignPreset) -> Int {
+  semantic_palette_role_report(preset).length()
 }
 
 ///|
-pub fn DesignPreset::semantic_palette_role_mapped_count(
-  self : DesignPreset,
-) -> Int {
+pub fn semantic_palette_role_mapped_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.semantic_palette_role_report() {
+  for item in semantic_palette_role_report(preset) {
     if item.resolves_core_surface && item.official_token_count > 0 {
       count = count + 1
     }
@@ -193,11 +191,11 @@ pub fn DesignPreset::semantic_palette_role_mapped_count(
 }
 
 ///|
-pub fn DesignPreset::semantic_palette_role_aligned_count(
-  self : DesignPreset,
+pub fn semantic_palette_role_aligned_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.semantic_palette_role_report() {
+  for item in semantic_palette_role_report(preset) {
     if item.runtime_aligned_count > 0 {
       count = count + 1
     }
@@ -206,11 +204,9 @@ pub fn DesignPreset::semantic_palette_role_aligned_count(
 }
 
 ///|
-pub fn DesignPreset::semantic_palette_role_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn semantic_palette_role_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.semantic_palette_role_report() {
+  for item in semantic_palette_role_report(preset) {
     if item.required &&
       (
         !item.resolves_core_surface ||
@@ -226,11 +222,11 @@ pub fn DesignPreset::semantic_palette_role_gap_count(
 }
 
 ///|
-pub fn DesignPreset::semantic_palette_role_source_gap_count(
-  self : DesignPreset,
+pub fn semantic_palette_role_source_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.semantic_palette_role_report() {
+  for item in semantic_palette_role_report(preset) {
     if item.required &&
       (
         item.official_token_count == 0 ||
@@ -245,11 +241,11 @@ pub fn DesignPreset::semantic_palette_role_source_gap_count(
 }
 
 ///|
-pub fn DesignPreset::semantic_palette_role_official_parity_gap_count(
-  self : DesignPreset,
+pub fn semantic_palette_role_official_parity_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.semantic_palette_role_report() {
+  for item in semantic_palette_role_report(preset) {
     if item.required && item.remaining_gap != "none" {
       count = count + 1
     }
@@ -259,7 +255,7 @@ pub fn DesignPreset::semantic_palette_role_official_parity_gap_count(
 
 ///|
 fn semantic_palette_role_record(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   role : DesignSemanticPaletteRole,
   scheme : @core.ColorScheme,
 ) -> DesignSemanticPaletteRoleRecord {
@@ -296,13 +292,13 @@ fn semantic_palette_role_record(
     remaining_gap: semantic_palette_role_remaining_gap(
       role, evidence, resolves_core_surface,
     ),
-    note: "Semantic palette role resolves through DesignSemanticPalette into a neutral @core theme surface.",
+    note: "Semantic palette role resolves through @common.DesignSemanticPalette into a neutral @core theme surface.",
   }
 }
 
 ///|
 fn semantic_palette_source_evidence(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   token_surface : String,
 ) -> SemanticPaletteSourceEvidence {
   let mut official_token = ""
@@ -319,7 +315,7 @@ fn semantic_palette_source_evidence(
   let mut expected_runtime_value = ""
   let mut selected_source_imported = false
   let mut selected_runtime_aligned = false
-  for item in preset.runtime_token_alignment_report() {
+  for item in runtime_token_alignment_report(preset) {
     if item.moui_token == token_surface {
       official_token_count = official_token_count + 1
       if item.source_imported {
@@ -336,7 +332,7 @@ fn semantic_palette_source_evidence(
         expected_runtime_value = item.expected_runtime_value
         selected_source_imported = item.source_imported
         selected_runtime_aligned = item.runtime_aligned
-        match preset.official_token_coverage_for(item.official_token) {
+        match official_token_coverage_for(preset, item.official_token) {
           Some(coverage) => {
             source_declared = coverage.source_declared
             source_label = coverage.source_label
@@ -359,7 +355,7 @@ fn semantic_palette_source_evidence(
   }
   if official_token == "" {
     match
-      preset.token_group_resolver_for(DesignSystemRequirement::SemanticPalette) {
+      token_group_resolver_for(preset, DesignSystemRequirement::SemanticPalette) {
       Some(group) => {
         source_declared = group.source_declared
         source_label = group.source_label
@@ -411,7 +407,7 @@ fn semantic_palette_role_remaining_gap(
   resolves_core_surface : Bool,
 ) -> String {
   if !resolves_core_surface {
-    "DesignSemanticPalette." +
+    "@common.DesignSemanticPalette." +
     role.label() +
     " does not currently resolve to its neutral @core theme surface."
   } else if evidence.official_token_count == 0 {
@@ -430,20 +426,21 @@ fn semantic_palette_role_token_surface(
   role : DesignSemanticPaletteRole,
 ) -> String {
   match role {
-    PaletteForeground => "DesignSemanticPalette.foreground"
-    PaletteBackground => "DesignSemanticPalette.background"
-    PaletteSurface => "DesignSemanticPalette.surface"
-    PaletteSurfaceVariant => "DesignSemanticPalette.surface_variant"
-    PalettePrimary => "DesignSemanticPalette.primary"
-    PalettePrimaryForeground => "DesignSemanticPalette.primary_foreground"
-    PaletteOutline => "DesignSemanticPalette.outline"
-    PaletteMuted => "DesignSemanticPalette.muted"
-    PaletteSuccess => "DesignSemanticPalette.success"
-    PaletteWarning => "DesignSemanticPalette.warning"
-    PaletteDanger => "DesignSemanticPalette.danger"
-    PaletteInfo => "DesignSemanticPalette.info"
-    PaletteFocus => "DesignSemanticPalette.focus"
-    PaletteScrim => "DesignSemanticPalette.scrim"
+    PaletteForeground => "@common.DesignSemanticPalette.foreground"
+    PaletteBackground => "@common.DesignSemanticPalette.background"
+    PaletteSurface => "@common.DesignSemanticPalette.surface"
+    PaletteSurfaceVariant => "@common.DesignSemanticPalette.surface_variant"
+    PalettePrimary => "@common.DesignSemanticPalette.primary"
+    PalettePrimaryForeground =>
+      "@common.DesignSemanticPalette.primary_foreground"
+    PaletteOutline => "@common.DesignSemanticPalette.outline"
+    PaletteMuted => "@common.DesignSemanticPalette.muted"
+    PaletteSuccess => "@common.DesignSemanticPalette.success"
+    PaletteWarning => "@common.DesignSemanticPalette.warning"
+    PaletteDanger => "@common.DesignSemanticPalette.danger"
+    PaletteInfo => "@common.DesignSemanticPalette.info"
+    PaletteFocus => "@common.DesignSemanticPalette.focus"
+    PaletteScrim => "@common.DesignSemanticPalette.scrim"
   }
 }
 
@@ -471,7 +468,7 @@ fn semantic_palette_role_core_surface(
 
 ///|
 fn semantic_palette_role_token_value(
-  tokens : DesignSystemTokens,
+  tokens : @common.DesignSystemTokens,
   role : DesignSemanticPaletteRole,
 ) -> String {
   runtime_color_value(

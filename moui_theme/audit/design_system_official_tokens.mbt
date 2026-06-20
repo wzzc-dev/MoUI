@@ -1,6 +1,6 @@
 ///|
 pub(all) struct DesignOfficialTokenAnchor {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   category : DesignTokenCategory
   layer : DesignTokenLayer
   official_token : String
@@ -11,7 +11,7 @@ pub(all) struct DesignOfficialTokenAnchor {
 
 ///|
 pub(all) struct DesignOfficialTokenCoverage {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   category : DesignTokenCategory
   layer : DesignTokenLayer
   official_token : String
@@ -31,7 +31,7 @@ pub(all) struct DesignOfficialTokenCoverage {
 
 ///|
 pub(all) struct DesignOfficialTokenSourceUsage {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   source_label : String
   source_url : String
   source_kind : String
@@ -46,10 +46,10 @@ pub(all) struct DesignOfficialTokenSourceUsage {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignPreset::official_token_anchors(
-  self : DesignPreset,
+pub fn official_token_anchors(
+  preset : @common.DesignPreset,
 ) -> Array[DesignOfficialTokenAnchor] {
-  match self {
+  match preset {
     Material => material_official_token_anchors()
     Carbon => carbon_official_token_anchors()
     Primer => primer_official_token_anchors()
@@ -58,23 +58,23 @@ pub fn DesignPreset::official_token_anchors(
 }
 
 ///|
-pub fn DesignPreset::official_token_coverage(
-  self : DesignPreset,
+pub fn official_token_coverage(
+  preset : @common.DesignPreset,
 ) -> Array[DesignOfficialTokenCoverage] {
   let coverage : Array[DesignOfficialTokenCoverage] = []
-  for anchor in self.official_token_anchors() {
-    coverage.push(official_token_coverage(self, anchor))
+  for anchor in official_token_anchors(preset) {
+    coverage.push(official_token_coverage(preset, anchor))
   }
   coverage
 }
 
 ///|
-pub fn DesignPreset::official_token_source_usage(
-  self : DesignPreset,
+pub fn official_token_source_usage(
+  preset : @common.DesignPreset,
 ) -> Array[DesignOfficialTokenSourceUsage] {
   let usages : Array[DesignOfficialTokenSourceUsage] = []
-  let coverage = self.official_token_coverage()
-  for source in self.sources() {
+  let coverage = official_token_coverage(preset)
+  for source in sources(preset) {
     let mut anchor_count = 0
     let mut mapped_anchor_count = 0
     let mut unmapped_required_anchor_count = 0
@@ -91,7 +91,7 @@ pub fn DesignPreset::official_token_source_usage(
     }
     usages.push(
       official_token_source_usage(
-        self,
+        preset,
         source,
         anchor_count~,
         mapped_anchor_count~,
@@ -103,16 +103,14 @@ pub fn DesignPreset::official_token_source_usage(
 }
 
 ///|
-pub fn DesignPreset::official_token_anchor_count(self : DesignPreset) -> Int {
-  self.official_token_anchors().length()
+pub fn official_token_anchor_count(preset : @common.DesignPreset) -> Int {
+  official_token_anchors(preset).length()
 }
 
 ///|
-pub fn DesignPreset::mapped_official_token_anchor_count(
-  self : DesignPreset,
-) -> Int {
+pub fn mapped_official_token_anchor_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.official_token_coverage() {
+  for item in official_token_coverage(preset) {
     if item.required &&
       item.mapped &&
       (
@@ -127,11 +125,11 @@ pub fn DesignPreset::mapped_official_token_anchor_count(
 }
 
 ///|
-pub fn DesignPreset::unmapped_official_token_anchor_count(
-  self : DesignPreset,
+pub fn unmapped_official_token_anchor_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.official_token_coverage() {
+  for item in official_token_coverage(preset) {
     if item.required &&
       (
         !item.mapped ||
@@ -146,12 +144,12 @@ pub fn DesignPreset::unmapped_official_token_anchor_count(
 }
 
 ///|
-pub fn DesignPreset::golden_mappings_without_official_anchor(
-  self : DesignPreset,
+pub fn golden_mappings_without_official_anchor(
+  preset : @common.DesignPreset,
 ) -> Array[DesignTokenMapping] {
   let missing : Array[DesignTokenMapping] = []
-  for mapping in self.golden_mappings() {
-    if !self.has_official_token_anchor(mapping.official_token) {
+  for mapping in golden_mappings(preset) {
+    if !has_official_token_anchor(preset, mapping.official_token) {
       missing.push(mapping)
     }
   }
@@ -159,18 +157,16 @@ pub fn DesignPreset::golden_mappings_without_official_anchor(
 }
 
 ///|
-pub fn DesignPreset::unanchored_golden_mapping_count(
-  self : DesignPreset,
-) -> Int {
-  self.golden_mappings_without_official_anchor().length()
+pub fn unanchored_golden_mapping_count(preset : @common.DesignPreset) -> Int {
+  golden_mappings_without_official_anchor(preset).length()
 }
 
 ///|
-pub fn DesignPreset::official_token_anchor_source_lock_count(
-  self : DesignPreset,
+pub fn official_token_anchor_source_lock_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.official_token_coverage() {
+  for item in official_token_coverage(preset) {
     if item.required && item.source_declared && item.source_locked {
       count = count + 1
     }
@@ -179,11 +175,11 @@ pub fn DesignPreset::official_token_anchor_source_lock_count(
 }
 
 ///|
-pub fn DesignPreset::official_token_anchor_source_gap_count(
-  self : DesignPreset,
+pub fn official_token_anchor_source_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.official_token_coverage() {
+  for item in official_token_coverage(preset) {
     if item.required && (!item.source_declared || !item.source_locked) {
       count = count + 1
     }
@@ -192,11 +188,11 @@ pub fn DesignPreset::official_token_anchor_source_gap_count(
 }
 
 ///|
-pub fn DesignPreset::undeclared_official_token_anchor_source_count(
-  self : DesignPreset,
+pub fn undeclared_official_token_anchor_source_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.official_token_coverage() {
+  for item in official_token_coverage(preset) {
     if item.required && !item.source_declared {
       count = count + 1
     }
@@ -205,29 +201,27 @@ pub fn DesignPreset::undeclared_official_token_anchor_source_count(
 }
 
 ///|
-pub fn DesignPreset::has_official_token_source_locks(
-  self : DesignPreset,
-) -> Bool {
-  self.official_token_anchor_count() > 0 &&
-  self.official_token_anchor_source_gap_count() == 0
+pub fn has_official_token_source_locks(preset : @common.DesignPreset) -> Bool {
+  official_token_anchor_count(preset) > 0 &&
+  official_token_anchor_source_gap_count(preset) == 0
 }
 
 ///|
-pub fn DesignPreset::has_official_token_anchor(
-  self : DesignPreset,
+pub fn has_official_token_anchor(
+  preset : @common.DesignPreset,
   official_token : String,
 ) -> Bool {
-  self
+  preset
   .official_token_anchors()
   .any(item => item.official_token == official_token)
 }
 
 ///|
-pub fn DesignPreset::official_token_coverage_for(
-  self : DesignPreset,
+pub fn official_token_coverage_for(
+  preset : @common.DesignPreset,
   official_token : String,
 ) -> DesignOfficialTokenCoverage? {
-  for item in self.official_token_coverage() {
+  for item in official_token_coverage(preset) {
     if item.official_token == official_token {
       return Some(item)
     }
@@ -237,7 +231,7 @@ pub fn DesignPreset::official_token_coverage_for(
 
 ///|
 fn official_token_coverage(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   anchor : DesignOfficialTokenAnchor,
 ) -> DesignOfficialTokenCoverage {
   let source = official_token_source_for_url(preset, anchor.official_source)
@@ -260,7 +254,7 @@ fn official_token_coverage(
       )
     None => (false, "", "", "", "", false)
   }
-  match preset.golden_mapping_for(anchor.official_token) {
+  match golden_mapping_for(preset, anchor.official_token) {
     Some(mapping) =>
       {
         preset,
@@ -307,7 +301,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
   let source = "https://material-web.dev/theming/material-theming/"
   [
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Surface,
       DesignTokenLayer::SystemToken,
       "--md-sys-color-background",
@@ -315,7 +309,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material background color role.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Color,
       DesignTokenLayer::SystemToken,
       "--md-sys-color-on-surface",
@@ -323,7 +317,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material on-surface color role.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Surface,
       DesignTokenLayer::SystemToken,
       "--md-sys-color-surface",
@@ -331,7 +325,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material surface color role.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Surface,
       DesignTokenLayer::SystemToken,
       "--md-sys-color-surface-variant",
@@ -339,7 +333,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material surface-variant color role.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Color,
       DesignTokenLayer::SystemToken,
       "--md-sys-color-outline",
@@ -347,7 +341,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material outline color role.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Color,
       DesignTokenLayer::SystemToken,
       "--md-sys-color-on-surface-variant",
@@ -355,7 +349,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material on-surface-variant color role.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Color,
       DesignTokenLayer::SystemToken,
       "--md-sys-color-primary",
@@ -363,7 +357,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material primary color role.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Color,
       DesignTokenLayer::SystemToken,
       "--md-sys-color-on-primary",
@@ -371,7 +365,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material on-primary color role.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Color,
       DesignTokenLayer::SystemToken,
       "--md-sys-color-error",
@@ -379,7 +373,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material error role for validation and danger feedback.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Color,
       DesignTokenLayer::SystemToken,
       "--md-sys-color-scrim",
@@ -387,7 +381,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material scrim color role.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Typography,
       DesignTokenLayer::SystemToken,
       "--md-sys-typescale-body-medium-size",
@@ -395,7 +389,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material body type scale size.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Typography,
       DesignTokenLayer::SystemToken,
       "--md-sys-typescale-headline-small-size",
@@ -403,7 +397,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material headline-small type scale size used by the neutral title slot.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Typography,
       DesignTokenLayer::SystemToken,
       "--md-sys-typescale-body-small-size",
@@ -411,7 +405,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material body-small type scale size used by the neutral caption slot.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Typography,
       DesignTokenLayer::SystemToken,
       "--md-sys-typescale-label-large-size",
@@ -419,7 +413,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material label-large type scale size used by the neutral control slot.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::SystemToken,
       "--md-sys-spacing-*",
@@ -428,7 +422,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       required=false,
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Shape,
       DesignTokenLayer::SystemToken,
       "--md-sys-shape-corner-medium",
@@ -436,7 +430,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material medium shape token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Elevation,
       DesignTokenLayer::SystemToken,
       "--md-sys-elevation-level1",
@@ -444,7 +438,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material level1 elevation token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Elevation,
       DesignTokenLayer::SystemToken,
       "--md-sys-elevation-level3",
@@ -452,7 +446,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material level3 elevation token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Elevation,
       DesignTokenLayer::SystemToken,
       "--md-sys-elevation-level5",
@@ -460,7 +454,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material level5 elevation token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Motion,
       DesignTokenLayer::SystemToken,
       "--md-sys-motion-duration-short4",
@@ -468,7 +462,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material short4 motion duration token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Motion,
       DesignTokenLayer::SystemToken,
       "--md-sys-motion-duration-medium2",
@@ -476,7 +470,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material medium2 motion duration token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Motion,
       DesignTokenLayer::SystemToken,
       "--md-sys-motion-duration-medium4",
@@ -484,7 +478,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material medium4 motion duration token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Motion,
       DesignTokenLayer::SystemToken,
       "--md-sys-motion-easing-standard",
@@ -492,7 +486,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material standard motion easing token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::Motion,
       DesignTokenLayer::SystemToken,
       "--md-sys-motion-*",
@@ -500,7 +494,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material motion token family remains preview-mapped until full import.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "--md-filled-button-container-color",
@@ -508,7 +502,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material filled button container token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "--md-filled-button-label-text-color",
@@ -516,7 +510,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material filled button label token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::StateLayer,
       DesignTokenLayer::ComponentToken,
       "--md-filled-button-pressed-state-layer-opacity",
@@ -524,7 +518,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material filled button pressed state-layer opacity token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "--md-linear-progress-active-indicator-color",
@@ -532,7 +526,7 @@ fn material_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Material linear progress active indicator token.",
     ),
     anchor(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "--md-menu-container-color",
@@ -550,7 +544,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
   let type_source = "https://github.com/carbon-design-system/carbon/tree/main/packages/type"
   [
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$background",
@@ -558,7 +552,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon background token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Surface,
       DesignTokenLayer::AliasToken,
       "$layer-01",
@@ -566,7 +560,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon layer token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Surface,
       DesignTokenLayer::AliasToken,
       "$layer-accent-01",
@@ -574,7 +568,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon layer accent token used as MoUI surface-variant adapter.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$text-primary",
@@ -582,7 +576,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon primary text token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$text-secondary",
@@ -590,7 +584,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon secondary text token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$text-on-color",
@@ -598,7 +592,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon foreground token for text on color surfaces.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$border-strong-01",
@@ -606,7 +600,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon strong border token used as MoUI outline adapter.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$background-brand",
@@ -614,7 +608,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon brand background token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$support-error",
@@ -622,7 +616,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon support error token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$support-success",
@@ -630,7 +624,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon support success token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$support-warning",
@@ -638,7 +632,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon support warning token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$support-info",
@@ -646,7 +640,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon support info token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$focus",
@@ -654,7 +648,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon focus token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "$overlay",
@@ -662,7 +656,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon overlay token used as MoUI scrim adapter.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "$button-primary",
@@ -670,7 +664,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon primary button token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::StateLayer,
       DesignTokenLayer::AliasToken,
       "$background-hover",
@@ -678,7 +672,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon hover background token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "$border-interactive",
@@ -686,7 +680,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon interactive border token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "$slider-filled-track",
@@ -694,7 +688,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon slider filled-track token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-01",
@@ -702,7 +696,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-01 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-02",
@@ -710,7 +704,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-02 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-03",
@@ -718,7 +712,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-03 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-04",
@@ -726,7 +720,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-04 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-05",
@@ -734,7 +728,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-05 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-06",
@@ -742,7 +736,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-06 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-07",
@@ -750,7 +744,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-07 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-08",
@@ -758,7 +752,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-08 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-09",
@@ -766,7 +760,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-09 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-10",
@@ -774,7 +768,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-10 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-11",
@@ -782,7 +776,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-11 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-12",
@@ -790,7 +784,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-12 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$spacing-13",
@@ -798,7 +792,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon spacing-13 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$layout-01",
@@ -806,7 +800,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon layout-01 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$layout-02",
@@ -814,7 +808,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon layout-02 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$layout-03",
@@ -822,7 +816,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon layout-03 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$layout-04",
@@ -830,7 +824,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon layout-04 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$layout-05",
@@ -838,7 +832,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon layout-05 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$layout-06",
@@ -846,7 +840,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon layout-06 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$layout-07",
@@ -854,7 +848,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon layout-07 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$container-01",
@@ -862,7 +856,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon container-01 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$container-02",
@@ -870,7 +864,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon container-02 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$container-03",
@@ -878,7 +872,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon container-03 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$container-04",
@@ -886,7 +880,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon container-04 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "$container-05",
@@ -894,7 +888,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon container-05 token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "$duration-fast-01",
@@ -902,7 +896,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon fast-01 duration token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "$duration-fast-02",
@@ -910,7 +904,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon fast-02 duration token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "$duration-moderate-01",
@@ -918,7 +912,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon moderate-01 duration token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "$duration-moderate-02",
@@ -926,7 +920,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon moderate-02 duration token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "$duration-slow-01",
@@ -934,7 +928,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon slow-01 duration token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "$duration-slow-02",
@@ -942,7 +936,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon slow-02 duration token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "easings.standard.productive",
@@ -950,7 +944,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon productive standard easing token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "easings.standard.expressive",
@@ -958,7 +952,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon expressive standard easing token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "easings.entrance.productive",
@@ -966,7 +960,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon productive entrance easing token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "easings.entrance.expressive",
@@ -974,7 +968,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon expressive entrance easing token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "easings.exit.productive",
@@ -982,7 +976,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon productive exit easing token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "easings.exit.expressive",
@@ -990,7 +984,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon expressive exit easing token.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "Carbon motion token family",
@@ -998,7 +992,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon motion family remains preview-mapped until full import.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "$body-02",
@@ -1006,7 +1000,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon body-02 type style used by the neutral body slot.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "$productive-heading-03",
@@ -1014,7 +1008,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon productive-heading-03 type style used by the neutral title slot.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "$caption-01",
@@ -1022,7 +1016,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon caption-01 type style used by the neutral caption slot.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "$label-02",
@@ -1030,7 +1024,7 @@ fn carbon_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Carbon label-02 type style used by the neutral control slot.",
     ),
     anchor(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::AliasToken,
       "$field",
@@ -1046,7 +1040,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
   let primitives_source = "https://primer.style/primitives/"
   [
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "--fgColor-default",
@@ -1054,7 +1048,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer default foreground token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "--fgColor-muted",
@@ -1062,7 +1056,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer muted foreground token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "--fgColor-accent",
@@ -1070,7 +1064,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer accent foreground token used by informational text.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Surface,
       DesignTokenLayer::AliasToken,
       "--bgColor-accent-emphasis",
@@ -1078,7 +1072,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer emphasized accent background token used as MoUI primary adapter.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "--fgColor-onEmphasis",
@@ -1086,7 +1080,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer foreground token used on emphasis fills.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "--fgColor-danger",
@@ -1094,7 +1088,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer danger foreground token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "--fgColor-success",
@@ -1102,7 +1096,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer success foreground token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "--fgColor-attention",
@@ -1110,7 +1104,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer attention foreground token used as MoUI warning adapter.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Surface,
       DesignTokenLayer::AliasToken,
       "--bgColor-default",
@@ -1118,7 +1112,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer default background token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Surface,
       DesignTokenLayer::AliasToken,
       "--bgColor-muted",
@@ -1126,7 +1120,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer muted background token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Surface,
       DesignTokenLayer::AliasToken,
       "--bgColor-inset",
@@ -1134,7 +1128,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer inset background token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "--borderColor-default",
@@ -1142,7 +1136,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer default border token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "--borderColor-accent-emphasis",
@@ -1150,7 +1144,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer emphasized accent border token used for selected/focused elements.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "--overlay-backdrop-bgColor",
@@ -1158,7 +1152,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer overlay backdrop background token used as MoUI scrim adapter.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "--button-primary-bgColor-rest",
@@ -1166,7 +1160,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer primary button background token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::StateLayer,
       DesignTokenLayer::ComponentToken,
       "--control-transparent-bgColor-hover",
@@ -1174,7 +1168,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer transparent control hover token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "--control-borderColor-emphasis",
@@ -1182,7 +1176,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer emphasized control border token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "--progressBar-fgColor-accent",
@@ -1190,7 +1184,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer progress bar accent token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::ReferenceToken,
       "--base-size-4",
@@ -1198,7 +1192,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 4px base size primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::ReferenceToken,
       "--base-size-8",
@@ -1206,7 +1200,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 8px base size primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::ReferenceToken,
       "--base-size-12",
@@ -1214,7 +1208,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 12px base size primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::ReferenceToken,
       "--base-size-16",
@@ -1222,7 +1216,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 16px base size primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::ReferenceToken,
       "--base-size-24",
@@ -1230,7 +1224,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 24px base size primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Typography,
       DesignTokenLayer::ReferenceToken,
       "--base-text-size-xs",
@@ -1238,7 +1232,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 12px extra-small text size primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Typography,
       DesignTokenLayer::ReferenceToken,
       "--base-text-size-sm",
@@ -1246,7 +1240,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 14px small/default body text size primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Typography,
       DesignTokenLayer::ReferenceToken,
       "--base-text-size-lg",
@@ -1254,7 +1248,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 20px large title text size primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Typography,
       DesignTokenLayer::ReferenceToken,
       "--base-text-weight-normal",
@@ -1262,7 +1256,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer normal text weight primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Typography,
       DesignTokenLayer::ReferenceToken,
       "--base-text-weight-semibold",
@@ -1270,7 +1264,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer semibold text weight primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "--borderRadius-small",
@@ -1278,7 +1272,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer small border-radius token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "--borderRadius-medium",
@@ -1286,7 +1280,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer medium border-radius token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "--borderRadius-large",
@@ -1294,7 +1288,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer large border-radius token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "--borderRadius-full",
@@ -1302,7 +1296,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer full border-radius token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "--borderRadius-default",
@@ -1310,7 +1304,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer default border-radius alias.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Elevation,
       DesignTokenLayer::AliasToken,
       "--shadow-resting-small",
@@ -1318,7 +1312,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer small resting shadow token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Elevation,
       DesignTokenLayer::AliasToken,
       "--shadow-resting-medium",
@@ -1326,7 +1320,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer medium resting shadow token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Elevation,
       DesignTokenLayer::AliasToken,
       "--shadow-floating-large",
@@ -1334,7 +1328,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer large floating shadow token.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-0",
@@ -1342,7 +1336,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 0ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-50",
@@ -1350,7 +1344,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 50ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-100",
@@ -1358,7 +1352,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 100ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-200",
@@ -1366,7 +1360,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 200ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-300",
@@ -1374,7 +1368,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 300ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-400",
@@ -1382,7 +1376,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 400ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-500",
@@ -1390,7 +1384,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 500ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-600",
@@ -1398,7 +1392,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 600ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-700",
@@ -1406,7 +1400,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 700ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-800",
@@ -1414,7 +1408,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 800ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-900",
@@ -1422,7 +1416,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 900ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-duration-1000",
@@ -1430,7 +1424,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer 1000ms duration primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-easing-linear",
@@ -1438,7 +1432,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer linear cubic-bezier primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-easing-ease",
@@ -1446,7 +1440,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer CSS default ease cubic-bezier primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-easing-easeIn",
@@ -1454,7 +1448,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer easeIn cubic-bezier primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-easing-easeOut",
@@ -1462,7 +1456,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer easeOut cubic-bezier primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "--base-easing-easeInOut",
@@ -1470,7 +1464,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer easeInOut cubic-bezier primitive.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "Primer animation token family",
@@ -1478,7 +1472,7 @@ fn primer_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Primer animation family remains preview-mapped until full import.",
     ),
     anchor(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "--control-bgColor-rest",
@@ -1494,7 +1488,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
   let component_source = "https://github.com/microsoft/fluentui/tree/master/packages/web-components"
   [
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "colorNeutralForeground1",
@@ -1502,7 +1496,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent primary foreground alias.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "colorNeutralForeground3",
@@ -1510,7 +1504,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent secondary foreground alias.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Surface,
       DesignTokenLayer::AliasToken,
       "colorNeutralBackground1",
@@ -1518,7 +1512,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent neutral background alias.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Surface,
       DesignTokenLayer::AliasToken,
       "colorNeutralBackground2",
@@ -1526,7 +1520,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent secondary neutral background alias.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Surface,
       DesignTokenLayer::AliasToken,
       "colorNeutralBackground3",
@@ -1534,7 +1528,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent tertiary neutral background alias.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "colorNeutralStroke1",
@@ -1542,7 +1536,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent neutral stroke alias.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "colorBrandBackground",
@@ -1550,7 +1544,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent brand background alias.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "colorNeutralForegroundOnBrand",
@@ -1558,7 +1552,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent foreground alias for text on brand backgrounds.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "colorBackgroundOverlay",
@@ -1566,7 +1560,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent overlay background alias used as MoUI scrim adapter.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::AliasToken,
       "colorStrokeFocus2",
@@ -1574,7 +1568,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent focus stroke alias used as MoUI focus adapter.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::ReferenceToken,
       "red.primary",
@@ -1582,7 +1576,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent global red primary reference color for danger-like status roles.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::ReferenceToken,
       "green.primary",
@@ -1590,7 +1584,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent global green primary reference color for success-like status roles.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::ReferenceToken,
       "lightGreen.primary",
@@ -1598,7 +1592,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent global light-green primary reference color for success-like status roles.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::ReferenceToken,
       "cranberry.primary",
@@ -1606,7 +1600,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent global cranberry primary reference color for danger-like status roles.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::ReferenceToken,
       "darkOrange.primary",
@@ -1614,7 +1608,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent global dark-orange primary reference color for warning-like status roles.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::ReferenceToken,
       "orange.primary",
@@ -1622,7 +1616,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent global orange primary reference color for warning-like status roles.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::ReferenceToken,
       "yellow.primary",
@@ -1630,7 +1624,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent global yellow primary reference color for warning-like status roles.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::ReferenceToken,
       "marigold.primary",
@@ -1638,7 +1632,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent global marigold primary reference color for warning-like status roles.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Color,
       DesignTokenLayer::ReferenceToken,
       "blue.primary",
@@ -1646,7 +1640,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent global blue primary reference color for info-like status roles.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontSizeBase100",
@@ -1654,7 +1648,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base 100 type ramp token; exact MoUI caption parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontSizeBase200",
@@ -1662,7 +1656,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent caption-size type ramp token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontSizeBase300",
@@ -1670,7 +1664,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base type ramp token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontSizeBase400",
@@ -1678,7 +1672,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base 400 type ramp token; exact neutral control parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontSizeBase500",
@@ -1686,7 +1680,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent title-size type ramp token; exact MoUI title size remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontSizeBase600",
@@ -1694,7 +1688,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base 600 type ramp token; exact neutral title parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontSizeHero700",
@@ -1702,7 +1696,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent hero 700 type ramp token; exact neutral title parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontSizeHero800",
@@ -1710,7 +1704,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent hero 800 type ramp token; exact neutral title parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontSizeHero900",
@@ -1718,7 +1712,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent hero 900 type ramp token; exact neutral title parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontSizeHero1000",
@@ -1726,7 +1720,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent hero 1000 type ramp token; exact neutral title parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "lineHeightBase100",
@@ -1734,7 +1728,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base 100 line-height token; neutral line-height support remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "lineHeightBase200",
@@ -1742,7 +1736,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base 200 line-height token; neutral line-height support remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "lineHeightBase300",
@@ -1750,7 +1744,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base 300 line-height token; neutral line-height support remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "lineHeightBase400",
@@ -1758,7 +1752,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base 400 line-height token; neutral line-height support remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "lineHeightBase500",
@@ -1766,7 +1760,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base 500 line-height token; neutral line-height support remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "lineHeightBase600",
@@ -1774,7 +1768,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base 600 line-height token; neutral line-height support remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "lineHeightHero700",
@@ -1782,7 +1776,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent hero 700 line-height token; neutral line-height support remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "lineHeightHero800",
@@ -1790,7 +1784,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent hero 800 line-height token; neutral line-height support remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "lineHeightHero900",
@@ -1798,7 +1792,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent hero 900 line-height token; neutral line-height support remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "lineHeightHero1000",
@@ -1806,7 +1800,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent hero 1000 line-height token; neutral line-height support remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontWeightRegular",
@@ -1814,7 +1808,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent regular font-weight token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontWeightMedium",
@@ -1822,7 +1816,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent medium font-weight token; exact neutral control parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontWeightSemibold",
@@ -1830,7 +1824,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent semibold font-weight token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontWeightBold",
@@ -1838,7 +1832,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent bold font-weight token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontFamilyBase",
@@ -1846,7 +1840,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent base font-family stack; exact neutral font-family parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontFamilyMonospace",
@@ -1854,7 +1848,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent monospace font-family stack; dedicated neutral monospace slot remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Typography,
       DesignTokenLayer::AliasToken,
       "fontFamilyNumeric",
@@ -1862,7 +1856,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent numeric font-family stack; dedicated neutral numeric slot remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::AliasToken,
       "strokeWidthThin",
@@ -1870,7 +1864,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent thin stroke-width token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::AliasToken,
       "strokeWidthThick",
@@ -1878,7 +1872,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent thick stroke-width token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::AliasToken,
       "strokeWidthThicker",
@@ -1886,7 +1880,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent thicker stroke-width token; exact neutral stroke parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::AliasToken,
       "strokeWidthThickest",
@@ -1894,7 +1888,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent thickest stroke-width token; exact neutral stroke parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadiusNone",
@@ -1902,7 +1896,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent zero border radius token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadiusMedium",
@@ -1910,7 +1904,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent medium border radius token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadiusSmall",
@@ -1918,7 +1912,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent small border radius token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadiusLarge",
@@ -1926,7 +1920,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent large border radius token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadiusXLarge",
@@ -1934,7 +1928,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-large border radius token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadius2XLarge",
@@ -1942,7 +1936,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent 2XL border radius token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadius3XLarge",
@@ -1950,7 +1944,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent 3XL border radius token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadius4XLarge",
@@ -1958,7 +1952,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent 4XL border radius token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadius5XLarge",
@@ -1966,7 +1960,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent 5XL border radius token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadius6XLarge",
@@ -1974,7 +1968,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent 6XL border radius token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Shape,
       DesignTokenLayer::AliasToken,
       "borderRadiusCircular",
@@ -1982,7 +1976,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent circular radius token; MoUI uses a neutral pill sentinel.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "colorCompoundBrandBackground",
@@ -1990,7 +1984,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent compound brand background token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::StateLayer,
       DesignTokenLayer::AliasToken,
       "colorNeutralBackground1Hover",
@@ -1998,7 +1992,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent neutral hover background alias.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "ProgressBar.indicator.backgroundColor",
@@ -2006,7 +2000,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent progress bar indicator background component rule.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "durationUltraFast",
@@ -2014,7 +2008,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent ultra-fast duration token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "durationFaster",
@@ -2022,7 +2016,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent faster duration token used by the neutral fast motion slot.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "durationFast",
@@ -2030,7 +2024,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent fast duration token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "durationNormal",
@@ -2038,7 +2032,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent normal duration token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "durationGentle",
@@ -2046,7 +2040,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent gentle duration token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "durationSlow",
@@ -2054,7 +2048,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent slow duration token used by the neutral slow motion slot.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "durationSlower",
@@ -2062,7 +2056,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent slower duration token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "durationUltraSlow",
@@ -2070,7 +2064,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent ultra-slow duration token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalNone",
@@ -2078,7 +2072,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent zero horizontal spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalXXS",
@@ -2086,7 +2080,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-extra-small horizontal spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalM",
@@ -2094,7 +2088,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent medium horizontal spacing token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalXS",
@@ -2102,7 +2096,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-small horizontal spacing token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalSNudge",
@@ -2110,7 +2104,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent small nudge horizontal spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalS",
@@ -2118,7 +2112,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent small horizontal spacing token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalMNudge",
@@ -2126,7 +2120,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent medium nudge horizontal spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalL",
@@ -2134,7 +2128,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent large horizontal spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalXL",
@@ -2142,7 +2136,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-large horizontal spacing token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalXXL",
@@ -2150,7 +2144,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-extra-large horizontal spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingHorizontalXXXL",
@@ -2158,7 +2152,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-extra-extra-large horizontal spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalNone",
@@ -2166,7 +2160,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent zero vertical spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalXXS",
@@ -2174,7 +2168,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-extra-small vertical spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalXS",
@@ -2182,7 +2176,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-small vertical spacing token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalSNudge",
@@ -2190,7 +2184,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent small nudge vertical spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalS",
@@ -2198,7 +2192,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent small vertical spacing token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalMNudge",
@@ -2206,7 +2200,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent medium nudge vertical spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalM",
@@ -2214,7 +2208,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent medium vertical spacing token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalL",
@@ -2222,7 +2216,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent large vertical spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalXL",
@@ -2230,7 +2224,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-large vertical spacing token.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalXXL",
@@ -2238,7 +2232,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-extra-large vertical spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Spacing,
       DesignTokenLayer::AliasToken,
       "spacingVerticalXXXL",
@@ -2246,7 +2240,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent extra-extra-extra-large vertical spacing token; exact neutral parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "curveAccelerateMax",
@@ -2254,7 +2248,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent maximum acceleration curve token; exact runtime parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "curveAccelerateMid",
@@ -2262,7 +2256,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent medium acceleration curve token; exact runtime parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "curveAccelerateMin",
@@ -2270,7 +2264,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent minimum acceleration curve token; exact runtime parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "curveDecelerateMax",
@@ -2278,7 +2272,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent maximum deceleration curve token; exact runtime parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "curveDecelerateMid",
@@ -2286,7 +2280,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent medium deceleration curve token; exact runtime parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "curveDecelerateMin",
@@ -2294,7 +2288,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent minimum deceleration curve token; exact runtime parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "curveEasyEaseMax",
@@ -2302,7 +2296,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent maximum easy-ease curve token; exact runtime parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "curveEasyEase",
@@ -2310,7 +2304,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent easy-ease curve token; exact runtime parity remains preview.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Motion,
       DesignTokenLayer::AliasToken,
       "curveLinear",
@@ -2321,7 +2315,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
     // Fluent elevation anchors; the alias ramp is the official source of truth
     // for layered card/flyout/dialog depth.
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Elevation,
       DesignTokenLayer::AliasToken,
       "shadow4",
@@ -2329,7 +2323,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent shadow4 alias declares the two-layer resting card shadow; MoUI maps the key layer to the Fluent card elevation tier.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Elevation,
       DesignTokenLayer::AliasToken,
       "shadow16",
@@ -2337,7 +2331,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
       "Fluent shadow16 alias declares the two-layer flyout/menu shadow; MoUI maps the key layer to the Fluent flyout elevation tier.",
     ),
     anchor(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignTokenCategory::Elevation,
       DesignTokenLayer::AliasToken,
       "shadow64",
@@ -2349,7 +2343,7 @@ fn fluent_official_token_anchors() -> Array[DesignOfficialTokenAnchor] {
 
 ///|
 fn anchor(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   category : DesignTokenCategory,
   layer : DesignTokenLayer,
   official_token : String,
@@ -2362,10 +2356,10 @@ fn anchor(
 
 ///|
 fn official_token_source_for_url(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   url : String,
 ) -> DesignSystemSource? {
-  for source in preset.sources() {
+  for source in sources(preset) {
     if source.url == url {
       return Some(source)
     }
@@ -2388,7 +2382,7 @@ fn official_token_source_locked(source : DesignSystemSource) -> Bool {
 
 ///|
 fn official_token_source_usage(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   source : DesignSystemSource,
   anchor_count~ : Int,
   mapped_anchor_count~ : Int,

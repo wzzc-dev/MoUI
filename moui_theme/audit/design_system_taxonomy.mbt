@@ -1,6 +1,6 @@
 ///|
 pub(all) struct DesignTokenTaxonomyRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   category : DesignTokenCategory
   layer : DesignTokenLayer
   source_family : String
@@ -33,29 +33,29 @@ priv struct DesignTokenTaxonomySourceEvidence {
 }
 
 ///|
-pub fn DesignPreset::token_taxonomy_report(
-  self : DesignPreset,
+pub fn token_taxonomy_report(
+  preset : @common.DesignPreset,
 ) -> Array[DesignTokenTaxonomyRecord] {
   [
-    token_taxonomy_record(self, DesignTokenCategory::Color),
-    token_taxonomy_record(self, DesignTokenCategory::Typography),
-    token_taxonomy_record(self, DesignTokenCategory::Spacing),
-    token_taxonomy_record(self, DesignTokenCategory::Density),
-    token_taxonomy_record(self, DesignTokenCategory::Shape),
-    token_taxonomy_record(self, DesignTokenCategory::Elevation),
-    token_taxonomy_record(self, DesignTokenCategory::Motion),
-    token_taxonomy_record(self, DesignTokenCategory::Surface),
-    token_taxonomy_record(self, DesignTokenCategory::StateLayer),
-    token_taxonomy_record(self, DesignTokenCategory::ComponentStyle),
+    token_taxonomy_record(preset, DesignTokenCategory::Color),
+    token_taxonomy_record(preset, DesignTokenCategory::Typography),
+    token_taxonomy_record(preset, DesignTokenCategory::Spacing),
+    token_taxonomy_record(preset, DesignTokenCategory::Density),
+    token_taxonomy_record(preset, DesignTokenCategory::Shape),
+    token_taxonomy_record(preset, DesignTokenCategory::Elevation),
+    token_taxonomy_record(preset, DesignTokenCategory::Motion),
+    token_taxonomy_record(preset, DesignTokenCategory::Surface),
+    token_taxonomy_record(preset, DesignTokenCategory::StateLayer),
+    token_taxonomy_record(preset, DesignTokenCategory::ComponentStyle),
   ]
 }
 
 ///|
-pub fn DesignPreset::token_taxonomy_for(
-  self : DesignPreset,
+pub fn token_taxonomy_for(
+  preset : @common.DesignPreset,
   category : DesignTokenCategory,
 ) -> DesignTokenTaxonomyRecord? {
-  for item in self.token_taxonomy_report() {
+  for item in token_taxonomy_report(preset) {
     if item.category == category {
       return Some(item)
     }
@@ -64,14 +64,14 @@ pub fn DesignPreset::token_taxonomy_for(
 }
 
 ///|
-pub fn DesignPreset::token_taxonomy_count(self : DesignPreset) -> Int {
-  self.token_taxonomy_report().length()
+pub fn token_taxonomy_count(preset : @common.DesignPreset) -> Int {
+  token_taxonomy_report(preset).length()
 }
 
 ///|
-pub fn DesignPreset::token_taxonomy_required_count(self : DesignPreset) -> Int {
+pub fn token_taxonomy_required_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.token_taxonomy_report() {
+  for item in token_taxonomy_report(preset) {
     if item.required {
       count = count + 1
     }
@@ -80,9 +80,9 @@ pub fn DesignPreset::token_taxonomy_required_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::token_taxonomy_mapped_count(self : DesignPreset) -> Int {
+pub fn token_taxonomy_mapped_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.token_taxonomy_report() {
+  for item in token_taxonomy_report(preset) {
     if item.status != DesignTokenStatus::NotMapped &&
       item.manifest_declared &&
       item.source_declared &&
@@ -94,9 +94,9 @@ pub fn DesignPreset::token_taxonomy_mapped_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::token_taxonomy_gap_count(self : DesignPreset) -> Int {
+pub fn token_taxonomy_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.token_taxonomy_report() {
+  for item in token_taxonomy_report(preset) {
     if item.required &&
       (
         item.status == DesignTokenStatus::NotMapped ||
@@ -111,11 +111,9 @@ pub fn DesignPreset::token_taxonomy_gap_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::token_taxonomy_source_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn token_taxonomy_source_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.token_taxonomy_report() {
+  for item in token_taxonomy_report(preset) {
     if item.required && (!item.source_declared || !item.source_locked) {
       count = count + 1
     }
@@ -124,11 +122,11 @@ pub fn DesignPreset::token_taxonomy_source_gap_count(
 }
 
 ///|
-pub fn DesignPreset::token_taxonomy_official_parity_gap_count(
-  self : DesignPreset,
+pub fn token_taxonomy_official_parity_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.token_taxonomy_report() {
+  for item in token_taxonomy_report(preset) {
     if item.required && item.remaining_gap != "none" {
       count = count + 1
     }
@@ -138,7 +136,7 @@ pub fn DesignPreset::token_taxonomy_official_parity_gap_count(
 
 ///|
 fn token_taxonomy_record(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   category : DesignTokenCategory,
 ) -> DesignTokenTaxonomyRecord {
   let coverage = token_taxonomy_coverage_for(preset, category)
@@ -193,10 +191,10 @@ fn token_taxonomy_record(
 
 ///|
 fn token_taxonomy_coverage_for(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   category : DesignTokenCategory,
 ) -> DesignTokenCoverage {
-  for item in preset.token_coverage() {
+  for item in token_coverage(preset) {
     if item.category == category {
       return item
     }
@@ -213,7 +211,7 @@ fn token_taxonomy_coverage_for(
 
 ///|
 fn token_taxonomy_source_evidence(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   category : DesignTokenCategory,
 ) -> DesignTokenTaxonomySourceEvidence {
   match category {
@@ -254,10 +252,10 @@ fn token_taxonomy_source_evidence(
 
 ///|
 fn token_taxonomy_from_token_group(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
 ) -> DesignTokenTaxonomySourceEvidence {
-  match preset.token_group_resolver_for(requirement) {
+  match token_group_resolver_for(preset, requirement) {
     Some(item) =>
       {
         source_declared: item.source_declared,
@@ -276,9 +274,9 @@ fn token_taxonomy_from_token_group(
 
 ///|
 fn token_taxonomy_from_density(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
 ) -> DesignTokenTaxonomySourceEvidence {
-  match preset.density_resolver_for(DesignDensity::Standard) {
+  match density_resolver_for(preset, @common.DesignDensity::Standard) {
     Some(item) =>
       {
         source_declared: item.source_declared,
@@ -287,7 +285,7 @@ fn token_taxonomy_from_density(
         source_ref: item.source_ref,
         token_path: item.token_path,
         source_locked: item.source_locked,
-        token_surface: "DesignSpacingTokens + DesignDensity -> @core.SpacingScale",
+        token_surface: "@common.DesignSpacingTokens + @common.DesignDensity -> @core.SpacingScale",
         status: item.status,
         remaining_gap: item.remaining_gap,
       }
@@ -297,11 +295,13 @@ fn token_taxonomy_from_density(
 
 ///|
 fn token_taxonomy_from_component_style(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
 ) -> DesignTokenTaxonomySourceEvidence {
-  let source_gap_count = preset.component_style_resolver_source_gap_count()
-  let parity_gap_count = preset.component_style_resolver_official_parity_gap_count()
-  for item in preset.component_style_resolver_report() {
+  let source_gap_count = component_style_resolver_source_gap_count(preset)
+  let parity_gap_count = component_style_resolver_official_parity_gap_count(
+    preset,
+  )
+  for item in component_style_resolver_report(preset) {
     return {
       source_declared: item.source_declared,
       source_label: item.source_label,
@@ -309,8 +309,8 @@ fn token_taxonomy_from_component_style(
       source_ref: item.source_ref,
       token_path: item.token_path,
       source_locked: item.source_locked && source_gap_count == 0,
-      token_surface: "DesignComponentTokens -> @core.*Style",
-      status: if preset.component_style_resolver_gap_count() == 0 {
+      token_surface: "@common.DesignComponentTokens -> @core.*Style",
+      status: if component_style_resolver_gap_count(preset) == 0 {
         DesignTokenStatus::ComponentMapped
       } else {
         DesignTokenStatus::NotMapped
@@ -415,17 +415,17 @@ fn token_taxonomy_default_token_surface(
   category : DesignTokenCategory,
 ) -> String {
   match category {
-    Color => "DesignSemanticPalette"
-    Typography => "DesignTypographyTokens"
-    Spacing => "DesignSpacingTokens"
-    Density => "DesignDensity"
-    Shape => "DesignRadiusTokens"
-    Elevation => "DesignElevationTokens"
-    Motion => "DesignMotionTokens"
-    Surface => "DesignSurfaceTokens"
-    StateLayer => "DesignStateLayerTokens"
-    ComponentStyle => "DesignComponentTokens"
-    SchemeVariant => "DesignSchemeVariant"
+    Color => "@common.DesignSemanticPalette"
+    Typography => "@common.DesignTypographyTokens"
+    Spacing => "@common.DesignSpacingTokens"
+    Density => "@common.DesignDensity"
+    Shape => "@common.DesignRadiusTokens"
+    Elevation => "@common.DesignElevationTokens"
+    Motion => "@common.DesignMotionTokens"
+    Surface => "@common.DesignSurfaceTokens"
+    StateLayer => "@common.DesignStateLayerTokens"
+    ComponentStyle => "@common.DesignComponentTokens"
+    SchemeVariant => "@common.DesignSchemeVariant"
     Customization => "custom_tokens/custom"
   }
 }
@@ -438,14 +438,15 @@ fn token_taxonomy_default_moui_surface(
     Color => "@core.ColorPalette + @core.SemanticColorScale"
     Typography => "@core.TypographyScale"
     Spacing => "@core.SpacingScale"
-    Density => "DesignDensity -> @core.SpacingScale"
+    Density => "@common.DesignDensity -> @core.SpacingScale"
     Shape => "@core.RadiusScale"
     Elevation => "@core.ShadowScale"
     Motion => "@core.MotionScale"
     Surface => "@core.SurfaceScale"
-    StateLayer => "DesignStateLayerTokens -> DesignComponentTokens"
-    ComponentStyle => "DesignComponentTokens -> @core.*Style"
-    SchemeVariant => "DesignSchemeVariant -> @core.Theme"
+    StateLayer =>
+      "@common.DesignStateLayerTokens -> @common.DesignComponentTokens"
+    ComponentStyle => "@common.DesignComponentTokens -> @core.*Style"
+    SchemeVariant => "@common.DesignSchemeVariant -> @core.Theme"
     Customization => "@common.custom/custom_tokens"
   }
 }
