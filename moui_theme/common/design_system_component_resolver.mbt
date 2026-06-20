@@ -191,10 +191,11 @@ fn component_tokens_resolve(
     "TextField" =>
       tokens.components.text_field.normal.background == tokens.palette.surface &&
       (
-        // Neutral presets bind the focused border to `palette.focus`; Fluent 2
-        // binds it to the separate `brand_stroke` token.
+      // Neutral presets bind the focused border to `palette.focus`; Fluent 2
+      // binds it to the separate `brand_stroke` token.
         tokens.components.text_field.focused.border == tokens.palette.focus ||
-        tokens.components.text_field.focused.border == tokens.palette.brand_stroke
+        tokens.components.text_field.focused.border ==
+        tokens.palette.brand_stroke
       ) &&
       tokens.components.text_field.cursor == tokens.palette.focus &&
       tokens.components.text_field.font == tokens.typography.body

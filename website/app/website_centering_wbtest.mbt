@@ -8,9 +8,7 @@ test "website homepage content is centered within the viewport" {
   let commands = runtime.draw_commands()
   // The top bar brand and each full-width section header sit between two
   // weighted spacers, so their left and right viewport margins must match.
-  let centered_labels = [
-    "Why use MoUI with MoonBit?", "Built with MoUI",
-  ]
+  let centered_labels = ["Why use MoUI with MoonBit?", "Built with MoUI"]
   for label in centered_labels {
     guard text_frame(commands, label) is Some(frame) else {
       fail("expected centered section header: \{label}")
@@ -34,11 +32,14 @@ test "website homepage content is centered within the viewport" {
   let hero_left = hero.origin.x
   let hero_right = viewport_width - (hero.origin.x + hero.size.width)
   assert_true(hero_left > 0.0)
-  assert_true((if hero_left > hero_right {
-    hero_left - hero_right
-  } else {
-    hero_right - hero_left
-  }) < 1.0)
+  assert_true(
+    (if hero_left > hero_right {
+      hero_left - hero_right
+    } else {
+      hero_right - hero_left
+    }) <
+    1.0,
+  )
 }
 
 ///|

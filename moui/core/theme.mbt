@@ -267,10 +267,7 @@ pub fn ColorPalette::from_seed(
     }
   }
   let secondary = primary.lerp(surf, 0.45)
-  let tertiary = primary.lerp(
-    Color::rgba(r=0.55, g=0.30, b=0.70),
-    0.40,
-  )
+  let tertiary = primary.lerp(Color::rgba(r=0.55, g=0.30, b=0.70), 0.40)
   let error = match scheme {
     Light => Color::rgba(r=0.76, g=0.16, b=0.18)
     Dark => Color::rgba(r=1.0, g=0.52, b=0.50)
@@ -470,7 +467,7 @@ pub fn Theme::with_spacing_scale(
   self : Theme,
   spacing_scale : SpacingScale,
 ) -> Theme {
-  { ..self, spacing_scale }
+  { ..self, spacing_scale, }
 }
 
 ///|
@@ -478,7 +475,7 @@ pub fn Theme::with_radius_scale(
   self : Theme,
   radius_scale : RadiusScale,
 ) -> Theme {
-  { ..self, radius_scale }
+  { ..self, radius_scale, }
 }
 
 ///|
@@ -486,7 +483,7 @@ pub fn Theme::with_typography(
   self : Theme,
   typography : TypographyScale,
 ) -> Theme {
-  { ..self, typography }
+  { ..self, typography, }
 }
 
 ///|
@@ -494,17 +491,17 @@ pub fn Theme::with_shadow_scale(
   self : Theme,
   shadow_scale : ShadowScale,
 ) -> Theme {
-  { ..self, shadow_scale }
+  { ..self, shadow_scale, }
 }
 
 ///|
 pub fn Theme::with_motion(self : Theme, motion : MotionScale) -> Theme {
-  { ..self, motion }
+  { ..self, motion, }
 }
 
 ///|
 pub fn Theme::with_surfaces(self : Theme, surfaces : SurfaceScale) -> Theme {
-  { ..self, surfaces }
+  { ..self, surfaces, }
 }
 
 ///|
@@ -608,7 +605,7 @@ pub fn Environment::with_locale(
   self : Environment,
   locale : String,
 ) -> Environment {
-  { ..self, locale }
+  { ..self, locale, }
 }
 
 ///|
@@ -616,7 +613,7 @@ pub fn Environment::with_layout_direction(
   self : Environment,
   layout_direction : LayoutDirection,
 ) -> Environment {
-  { ..self, layout_direction }
+  { ..self, layout_direction, }
 }
 
 ///|
@@ -658,7 +655,7 @@ pub fn Environment::with_enabled(
   self : Environment,
   enabled : Bool,
 ) -> Environment {
-  { ..self, enabled }
+  { ..self, enabled, }
 }
 
 ///|

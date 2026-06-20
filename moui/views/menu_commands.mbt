@@ -106,18 +106,20 @@ pub fn[Msg] command_menu(
       width=width - theme.spacing_scale.md * 2.0,
       height=max_height - theme.spacing_scale.md * 2.0,
     ),
-   width~,
-   height=max_height,
-   variant=ContainerVariant::Overlay,
-   theme~,
-   padding=theme.spacing_scale.md,
- )
+    width~,
+    height=max_height,
+    variant=ContainerVariant::Overlay,
+    theme~,
+    padding=theme.spacing_scale.md,
+  )
   // Floating menus lift with the component-theme overlay shadow when the
   // design system supplies one (Fluent flyout = shadow16), falling back to the
   // neutral large elevation shadow.
-  .shadow(theme.components.surface.overlay_shadow.unwrap_or(theme.shadow_scale.lg))
- .semantics_role(@core.SemanticsRole::Menu)
- .accessibility_label("Command menu")
+  .shadow(
+    theme.components.surface.overlay_shadow.unwrap_or(theme.shadow_scale.lg),
+  )
+  .semantics_role(@core.SemanticsRole::Menu)
+  .accessibility_label("Command menu")
 }
 
 ///|
@@ -130,12 +132,14 @@ pub fn[Msg] context_menu_region(
   let content = if visible {
     overlay(
       child,
-     container(menu, variant=ContainerVariant::Overlay, theme~, padding=0.0)
+      container(menu, variant=ContainerVariant::Overlay, theme~, padding=0.0)
       // Context menus float above their host, so lift them with the component
       // overlay shadow (Fluent flyout) or the neutral large elevation shadow.
-      .shadow(theme.components.surface.overlay_shadow.unwrap_or(theme.shadow_scale.lg))
-     .semantics_role(@core.SemanticsRole::Menu)
-     .align(alignment=@core.Alignment::bottom_trailing()),
+      .shadow(
+        theme.components.surface.overlay_shadow.unwrap_or(theme.shadow_scale.lg),
+      )
+      .semantics_role(@core.SemanticsRole::Menu)
+      .align(alignment=@core.Alignment::bottom_trailing()),
     )
   } else {
     child

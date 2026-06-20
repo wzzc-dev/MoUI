@@ -256,9 +256,9 @@ pub fn[Msg] selectable_list(Array[SelectableListItem[Msg]], selected? : String, 
 
 pub fn[Msg] selection_toolbar(selected_count~ : Int, total_count? : Int, actions? : Array[ActionItem[Msg]], on_clear? : Msg?, theme? : @core.Theme, width? : Double) -> @core.View[Msg]
 
-pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPresentationMode, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
+pub fn[Msg] sheet(content~ : @core.View[Msg], presentation_mode? : @core.SheetPresentationMode, theme? : @core.Theme, background? : @core.Color, corner_radius? : Double, shadow? : @core.ShadowStyle?, on_dismiss? : Msg?) -> @core.View[Msg]
 
-pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, on_dismiss? : Msg?, trap_focus? : Bool) -> @core.View[Msg]
+pub fn[Msg] sheet_host(child~ : @core.View[Msg], sheet? : @core.View[Msg]?, presented? : Bool, presentation_mode? : @core.SheetPresentationMode, theme? : @core.Theme, on_dismiss? : Msg?, trap_focus? : Bool) -> @core.View[Msg]
 
 pub fn[Msg] shortcut_button(String, on_click~ : Msg, shortcut~ : @core.KeyboardShortcut, variant? : ButtonVariant, theme? : @core.Theme, width? : Double, height? : Double, shortcut_width? : Double) -> @core.View[Msg]
 

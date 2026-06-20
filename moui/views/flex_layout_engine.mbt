@@ -99,14 +99,13 @@ fn flex_child_frames(
     )
     let total_weight = flex_total_weight(child_flex_weights)
     let main_sizes = flex_resolved_main_sizes(
-      axis,
-      child_sizes,
-      child_flex_weights,
-      total_weight,
-      slack,
+      axis, child_sizes, child_flex_weights, total_weight, slack,
     )
     let grown_total = flex_sum(main_sizes)
-    let remaining = view_max_double(0.0, available_main - grown_total - total_spacing)
+    let remaining = view_max_double(
+      0.0,
+      available_main - grown_total - total_spacing,
+    )
     let offsets = flex_offsets(main_axis_alignment, remaining, spacing, count)
     let mut cursor = offsets.leading
     for index, child_size in child_sizes {
@@ -171,11 +170,7 @@ fn flex_resolved_main_sizes(
   let sizes : Array[Double] = []
   for index, child_size in child_sizes {
     let base = flex_child_main_size(axis, child_size)
-    let weight = if index < weights.length() {
-      weights[index]
-    } else {
-      0.0
-    }
+    let weight = if index < weights.length() { weights[index] } else { 0.0 }
     let grown = if total_weight > 0.0 && weight > 0.0 {
       base + slack * weight / total_weight
     } else {
