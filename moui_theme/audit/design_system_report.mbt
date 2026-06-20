@@ -1,9 +1,9 @@
 ///|
 pub(all) struct DesignSystemReport {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   scheme : @core.ColorScheme
   system_scheme : @core.ColorScheme
-  density : DesignDensity
+  density : @common.DesignDensity
   status : DesignTokenStatus
   complete : Bool
   manifest : DesignSystemManifest
@@ -33,16 +33,16 @@ pub(all) struct DesignSystemReport {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignPreset::design_system_report(
-  self : DesignPreset,
+pub fn design_system_report(
+  preset : @common.DesignPreset,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
   system_scheme? : @core.ColorScheme = @core.ColorScheme::Dark,
-  density? : DesignDensity = DesignDensity::Standard,
+  density? : @common.DesignDensity = @common.DesignDensity::Standard,
 ) -> DesignSystemReport {
-  let manifest = self.manifest()
-  let complete = self.is_design_system_complete()
+  let manifest = manifest(preset)
+  let complete = is_design_system_complete(preset)
   {
-    preset: self,
+    preset,
     scheme,
     system_scheme,
     density,
@@ -53,62 +53,64 @@ pub fn DesignPreset::design_system_report(
     },
     complete,
     manifest,
-    requirement_audit: self.requirement_audit(),
-    token_taxonomy: self.token_taxonomy_report(),
-    semantic_palette_roles: self.semantic_palette_role_report(scheme~),
-    typography_roles: self.typography_role_report(scheme~),
-    sources: self.sources(),
-    source_locks: self.source_lock_report(),
-    source_packages: self.source_package_inventory(),
-    source_imports: self.source_imported_tokens(),
-    source_import_coverage: self.source_import_coverage(),
-    source_import_integrity: self.source_import_integrity_report(),
-    runtime_alignment: self.runtime_token_alignment_report(),
-    token_group_resolvers: self.token_group_resolver_report(scheme~),
-    density_resolvers: self.density_resolver_report(scheme~),
-    variant_resolvers: self.variant_resolver_report(system_scheme~, density~),
-    customization: self.customization_report(),
-    official_token_coverage: self.official_token_coverage(),
-    official_token_source_usage: self.official_token_source_usage(),
-    component_token_matrix: self.component_token_matrix(),
-    component_style_resolvers: self.component_style_resolver_report(scheme~),
-    adaptation: self.adaptation_report(),
-    golden_mappings: self.golden_mappings(),
-    unanchored_golden_mappings: self.golden_mappings_without_official_anchor(),
+    requirement_audit: requirement_audit(preset),
+    token_taxonomy: token_taxonomy_report(preset),
+    semantic_palette_roles: semantic_palette_role_report(preset, scheme~),
+    typography_roles: typography_role_report(preset, scheme~),
+    sources: sources(preset),
+    source_locks: source_lock_report(preset),
+    source_packages: source_package_inventory(preset),
+    source_imports: source_imported_tokens(preset),
+    source_import_coverage: source_import_coverage(preset),
+    source_import_integrity: source_import_integrity_report(preset),
+    runtime_alignment: runtime_token_alignment_report(preset),
+    token_group_resolvers: token_group_resolver_report(preset, scheme~),
+    density_resolvers: density_resolver_report(preset, scheme~),
+    variant_resolvers: variant_resolver_report(preset, system_scheme~, density~),
+    customization: customization_report(preset),
+    official_token_coverage: official_token_coverage(preset),
+    official_token_source_usage: official_token_source_usage(preset),
+    component_token_matrix: component_token_matrix(preset),
+    component_style_resolvers: component_style_resolver_report(preset, scheme~),
+    adaptation: adaptation_report(preset),
+    golden_mappings: golden_mappings(preset),
+    unanchored_golden_mappings: golden_mappings_without_official_anchor(preset),
     note: design_system_report_note(complete),
   }
 }
 
 ///|
-pub fn DesignSystemReport::evidence_row_count(self : DesignSystemReport) -> Int {
-  self.requirement_audit.length() +
-  self.token_taxonomy.length() +
-  self.semantic_palette_roles.length() +
-  self.typography_roles.length() +
-  self.sources.length() +
-  self.source_locks.length() +
-  self.source_packages.length() +
-  self.source_imports.length() +
-  self.source_import_coverage.length() +
-  self.source_import_integrity.length() +
-  self.runtime_alignment.length() +
-  self.token_group_resolvers.length() +
-  self.density_resolvers.length() +
-  self.variant_resolvers.length() +
-  self.customization.length() +
-  self.official_token_coverage.length() +
-  self.official_token_source_usage.length() +
-  self.component_token_matrix.length() +
-  self.component_style_resolvers.length() +
-  self.adaptation.length() +
-  self.golden_mappings.length() +
-  self.unanchored_golden_mappings.length()
+pub fn DesignSystemReport::evidence_row_count(
+  preset : DesignSystemReport,
+) -> Int {
+  preset.requirement_audit.length() +
+  preset.token_taxonomy.length() +
+  preset.semantic_palette_roles.length() +
+  preset.typography_roles.length() +
+  preset.sources.length() +
+  preset.source_locks.length() +
+  preset.source_packages.length() +
+  preset.source_imports.length() +
+  preset.source_import_coverage.length() +
+  preset.source_import_integrity.length() +
+  preset.runtime_alignment.length() +
+  preset.token_group_resolvers.length() +
+  preset.density_resolvers.length() +
+  preset.variant_resolvers.length() +
+  preset.customization.length() +
+  preset.official_token_coverage.length() +
+  preset.official_token_source_usage.length() +
+  preset.component_token_matrix.length() +
+  preset.component_style_resolvers.length() +
+  preset.adaptation.length() +
+  preset.golden_mappings.length() +
+  preset.unanchored_golden_mappings.length()
 }
 
 ///|
-pub fn DesignSystemReport::gap_count(self : DesignSystemReport) -> Int {
+pub fn DesignSystemReport::gap_count(preset : DesignSystemReport) -> Int {
   let mut count = 0
-  for item in self.requirement_audit {
+  for item in preset.requirement_audit {
     if item.status != DesignTokenStatus::OfficialComplete {
       count = count + 1
     }
@@ -118,10 +120,10 @@ pub fn DesignSystemReport::gap_count(self : DesignSystemReport) -> Int {
 
 ///|
 pub fn DesignSystemReport::typography_gap_count(
-  self : DesignSystemReport,
+  preset : DesignSystemReport,
 ) -> Int {
   let mut count = 0
-  for item in self.typography_roles {
+  for item in preset.typography_roles {
     if item.required &&
       (
         !item.resolves_core_surface ||
@@ -136,10 +138,10 @@ pub fn DesignSystemReport::typography_gap_count(
 
 ///|
 pub fn DesignSystemReport::semantic_palette_gap_count(
-  self : DesignSystemReport,
+  preset : DesignSystemReport,
 ) -> Int {
   let mut count = 0
-  for item in self.semantic_palette_roles {
+  for item in preset.semantic_palette_roles {
     if item.required &&
       (
         !item.resolves_core_surface ||
@@ -153,9 +155,11 @@ pub fn DesignSystemReport::semantic_palette_gap_count(
 }
 
 ///|
-pub fn DesignSystemReport::taxonomy_gap_count(self : DesignSystemReport) -> Int {
+pub fn DesignSystemReport::taxonomy_gap_count(
+  preset : DesignSystemReport,
+) -> Int {
   let mut count = 0
-  for item in self.token_taxonomy {
+  for item in preset.token_taxonomy {
     if item.required &&
       (
         item.status == DesignTokenStatus::NotMapped ||
@@ -171,9 +175,9 @@ pub fn DesignSystemReport::taxonomy_gap_count(self : DesignSystemReport) -> Int 
 
 ///|
 pub fn DesignSystemReport::has_official_completion_claim(
-  self : DesignSystemReport,
+  preset : DesignSystemReport,
 ) -> Bool {
-  self.status == DesignTokenStatus::OfficialComplete || self.complete
+  preset.status == DesignTokenStatus::OfficialComplete || preset.complete
 }
 
 ///|

@@ -1,6 +1,6 @@
 ///|
 pub(all) struct DesignTokenGroupResolverRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   requirement : DesignSystemRequirement
   category : DesignTokenCategory
   source_family : String
@@ -22,49 +22,49 @@ pub(all) struct DesignTokenGroupResolverRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignPreset::token_group_resolver_report(
-  self : DesignPreset,
+pub fn token_group_resolver_report(
+  preset : @common.DesignPreset,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> Array[DesignTokenGroupResolverRecord] {
   [
     token_group_resolver_record(
-      self,
+      preset,
       DesignSystemRequirement::SemanticPalette,
       DesignTokenCategory::Color,
       scheme,
     ),
     token_group_resolver_record(
-      self,
+      preset,
       DesignSystemRequirement::Typography,
       DesignTokenCategory::Typography,
       scheme,
     ),
     token_group_resolver_record(
-      self,
+      preset,
       DesignSystemRequirement::ShapeRadius,
       DesignTokenCategory::Shape,
       scheme,
     ),
     token_group_resolver_record(
-      self,
+      preset,
       DesignSystemRequirement::ElevationShadow,
       DesignTokenCategory::Elevation,
       scheme,
     ),
     token_group_resolver_record(
-      self,
+      preset,
       DesignSystemRequirement::Motion,
       DesignTokenCategory::Motion,
       scheme,
     ),
     token_group_resolver_record(
-      self,
+      preset,
       DesignSystemRequirement::Surface,
       DesignTokenCategory::Surface,
       scheme,
     ),
     token_group_resolver_record(
-      self,
+      preset,
       DesignSystemRequirement::StateLayer,
       DesignTokenCategory::StateLayer,
       scheme,
@@ -73,12 +73,12 @@ pub fn DesignPreset::token_group_resolver_report(
 }
 
 ///|
-pub fn DesignPreset::token_group_resolver_for(
-  self : DesignPreset,
+pub fn token_group_resolver_for(
+  preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
   scheme? : @core.ColorScheme = @core.ColorScheme::Light,
 ) -> DesignTokenGroupResolverRecord? {
-  for item in self.token_group_resolver_report(scheme~) {
+  for item in token_group_resolver_report(preset, scheme~) {
     if item.requirement == requirement {
       return Some(item)
     }
@@ -87,14 +87,14 @@ pub fn DesignPreset::token_group_resolver_for(
 }
 
 ///|
-pub fn DesignPreset::token_group_resolver_count(self : DesignPreset) -> Int {
-  self.token_group_resolver_report().length()
+pub fn token_group_resolver_count(preset : @common.DesignPreset) -> Int {
+  token_group_resolver_report(preset).length()
 }
 
 ///|
-pub fn DesignPreset::token_group_resolver_gap_count(self : DesignPreset) -> Int {
+pub fn token_group_resolver_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.token_group_resolver_report() {
+  for item in token_group_resolver_report(preset) {
     if !item.resolves_tokens ||
       !item.resolves_neutral_surface ||
       item.status == DesignTokenStatus::NotMapped ||
@@ -107,11 +107,11 @@ pub fn DesignPreset::token_group_resolver_gap_count(self : DesignPreset) -> Int 
 }
 
 ///|
-pub fn DesignPreset::token_group_resolver_source_gap_count(
-  self : DesignPreset,
+pub fn token_group_resolver_source_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.token_group_resolver_report() {
+  for item in token_group_resolver_report(preset) {
     if !item.source_declared || !item.source_locked {
       count = count + 1
     }
@@ -120,11 +120,11 @@ pub fn DesignPreset::token_group_resolver_source_gap_count(
 }
 
 ///|
-pub fn DesignPreset::token_group_resolver_official_parity_gap_count(
-  self : DesignPreset,
+pub fn token_group_resolver_official_parity_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.token_group_resolver_report() {
+  for item in token_group_resolver_report(preset) {
     if item.remaining_gap != "none" {
       count = count + 1
     }
@@ -150,11 +150,11 @@ fn token_group_requirement_supported(
 
 ///|
 fn token_group_resolver_count_for(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
 ) -> Int {
   let mut count = 0
-  for item in preset.token_group_resolver_report() {
+  for item in token_group_resolver_report(preset) {
     if item.requirement == requirement {
       count = count + 1
     }
@@ -164,11 +164,11 @@ fn token_group_resolver_count_for(
 
 ///|
 fn token_group_resolver_gap_count_for(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
 ) -> Int {
   let mut count = 0
-  for item in preset.token_group_resolver_report() {
+  for item in token_group_resolver_report(preset) {
     if item.requirement == requirement &&
       (
         !item.resolves_tokens ||
@@ -185,11 +185,11 @@ fn token_group_resolver_gap_count_for(
 
 ///|
 fn token_group_resolver_source_gap_count_for(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
 ) -> Int {
   let mut count = 0
-  for item in preset.token_group_resolver_report() {
+  for item in token_group_resolver_report(preset) {
     if item.requirement == requirement &&
       (!item.source_declared || !item.source_locked) {
       count = count + 1
@@ -200,11 +200,11 @@ fn token_group_resolver_source_gap_count_for(
 
 ///|
 fn token_group_resolver_parity_gap_count_for(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
 ) -> Int {
   let mut count = 0
-  for item in preset.token_group_resolver_report() {
+  for item in token_group_resolver_report(preset) {
     if item.requirement == requirement && item.remaining_gap != "none" {
       count = count + 1
     }
@@ -214,7 +214,7 @@ fn token_group_resolver_parity_gap_count_for(
 
 ///|
 fn token_group_resolver_record(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
   category : DesignTokenCategory,
   scheme : @core.ColorScheme,
@@ -274,7 +274,7 @@ fn token_group_resolver_record(
     token_path,
     source_locked,
     token_surface: token_group_surface(requirement, coverage.moui_surface),
-    tokens_api: "DesignPreset::tokens(...)",
+    tokens_api: "@common.DesignPreset::tokens(...)",
     theme_api: token_group_theme_api(requirement),
     scheme,
     resolves_tokens,
@@ -286,7 +286,7 @@ fn token_group_resolver_record(
 
 ///|
 fn token_group_resolves_tokens(
-  tokens : DesignSystemTokens,
+  tokens : @common.DesignSystemTokens,
   requirement : DesignSystemRequirement,
 ) -> Bool {
   match requirement {
@@ -317,7 +317,7 @@ fn token_group_resolves_tokens(
 
 ///|
 fn token_group_resolves_neutral_surface(
-  tokens : DesignSystemTokens,
+  tokens : @common.DesignSystemTokens,
   theme : @core.Theme,
   requirement : DesignSystemRequirement,
 ) -> Bool {
@@ -351,19 +351,19 @@ fn token_group_resolves_neutral_surface(
 fn token_group_theme_api(requirement : DesignSystemRequirement) -> String {
   match requirement {
     DesignSystemRequirement::SemanticPalette =>
-      "DesignSemanticPalette::core_palette/core_semantic_colors -> @core.Theme"
+      "@common.DesignSemanticPalette::core_palette/core_semantic_colors -> @core.Theme"
     DesignSystemRequirement::Typography =>
-      "DesignTypographyTokens::core_typography -> @core.Theme"
+      "@common.DesignTypographyTokens::core_typography -> @core.Theme"
     DesignSystemRequirement::ShapeRadius =>
-      "DesignRadiusTokens::core_radius_scale -> @core.Theme"
+      "@common.DesignRadiusTokens::core_radius_scale -> @core.Theme"
     DesignSystemRequirement::ElevationShadow =>
-      "DesignElevationTokens::core_shadow_scale -> @core.Theme"
+      "@common.DesignElevationTokens::core_shadow_scale -> @core.Theme"
     DesignSystemRequirement::Motion =>
-      "DesignMotionTokens::core_motion -> @core.Theme"
+      "@common.DesignMotionTokens::core_motion -> @core.Theme"
     DesignSystemRequirement::Surface =>
-      "DesignSurfaceTokens::core_surfaces -> @core.Theme"
+      "@common.DesignSurfaceTokens::core_surfaces -> @core.Theme"
     DesignSystemRequirement::StateLayer =>
-      "DesignStateLayerTokens -> DesignComponentTokens"
+      "@common.DesignStateLayerTokens -> @common.DesignComponentTokens"
     _ => ""
   }
 }
@@ -377,26 +377,29 @@ fn token_group_surface(
   let surface = if coverage_surface == "" { fallback } else { coverage_surface }
   match requirement {
     DesignSystemRequirement::SemanticPalette =>
-      "DesignSemanticPalette -> " + surface
+      "@common.DesignSemanticPalette -> " + surface
     DesignSystemRequirement::Typography =>
-      "DesignTypographyTokens -> " + surface
-    DesignSystemRequirement::ShapeRadius => "DesignRadiusTokens -> " + surface
+      "@common.DesignTypographyTokens -> " + surface
+    DesignSystemRequirement::ShapeRadius =>
+      "@common.DesignRadiusTokens -> " + surface
     DesignSystemRequirement::ElevationShadow =>
-      "DesignElevationTokens -> " + surface
-    DesignSystemRequirement::Motion => "DesignMotionTokens -> " + surface
-    DesignSystemRequirement::Surface => "DesignSurfaceTokens -> " + surface
+      "@common.DesignElevationTokens -> " + surface
+    DesignSystemRequirement::Motion =>
+      "@common.DesignMotionTokens -> " + surface
+    DesignSystemRequirement::Surface =>
+      "@common.DesignSurfaceTokens -> " + surface
     DesignSystemRequirement::StateLayer =>
-      "DesignStateLayerTokens -> " + surface
+      "@common.DesignStateLayerTokens -> " + surface
     _ => surface
   }
 }
 
 ///|
 fn token_group_coverage_for(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   category : DesignTokenCategory,
 ) -> DesignTokenCoverage {
-  for item in preset.token_coverage() {
+  for item in token_coverage(preset) {
     if item.category == category {
       return item
     }
@@ -413,7 +416,7 @@ fn token_group_coverage_for(
 
 ///|
 fn token_group_official_source(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   requirement : DesignSystemRequirement,
 ) -> String {
   match preset {
@@ -460,10 +463,10 @@ fn token_group_remaining_gap(requirement : DesignSystemRequirement) -> String {
 
 ///|
 fn token_group_source_for_url(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   url : String,
 ) -> DesignSystemSource? {
-  for source in preset.sources() {
+  for source in sources(preset) {
     if source.url == url {
       return Some(source)
     }

@@ -1,6 +1,6 @@
 ///|
 pub(all) struct DesignSourcePackageRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   package_name : String
   source_label : String
   source_url : String
@@ -19,10 +19,10 @@ pub(all) struct DesignSourcePackageRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignPreset::source_package_inventory(
-  self : DesignPreset,
+pub fn source_package_inventory(
+  preset : @common.DesignPreset,
 ) -> Array[DesignSourcePackageRecord] {
-  match self {
+  match preset {
     Material => material_source_package_inventory()
     Carbon => carbon_source_package_inventory()
     Primer => primer_source_package_inventory()
@@ -31,14 +31,14 @@ pub fn DesignPreset::source_package_inventory(
 }
 
 ///|
-pub fn DesignPreset::source_package_inventory_count(self : DesignPreset) -> Int {
-  self.source_package_inventory().length()
+pub fn source_package_inventory_count(preset : @common.DesignPreset) -> Int {
+  source_package_inventory(preset).length()
 }
 
 ///|
-pub fn DesignPreset::source_package_snapshot_count(self : DesignPreset) -> Int {
+pub fn source_package_snapshot_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.source_package_inventory() {
+  for item in source_package_inventory(preset) {
     if item.snapshot_url != "" {
       count = count + 1
     }
@@ -47,11 +47,9 @@ pub fn DesignPreset::source_package_snapshot_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::source_package_snapshot_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn source_package_snapshot_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.source_package_inventory() {
+  for item in source_package_inventory(preset) {
     if item.snapshot_url == "" {
       count = count + 1
     }
@@ -60,33 +58,29 @@ pub fn DesignPreset::source_package_snapshot_gap_count(
 }
 
 ///|
-pub fn DesignPreset::source_package_imported_token_count(
-  self : DesignPreset,
+pub fn source_package_imported_token_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.source_package_inventory() {
+  for item in source_package_inventory(preset) {
     count = count + item.imported_token_count
   }
   count
 }
 
 ///|
-pub fn DesignPreset::source_package_mapped_token_count(
-  self : DesignPreset,
-) -> Int {
+pub fn source_package_mapped_token_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.source_package_inventory() {
+  for item in source_package_inventory(preset) {
     count = count + item.mapped_token_count
   }
   count
 }
 
 ///|
-pub fn DesignPreset::source_package_import_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn source_package_import_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.source_package_inventory() {
+  for item in source_package_inventory(preset) {
     if item.imported_token_count == 0 ||
       item.status == DesignTokenStatus::NotMapped ||
       item.status == DesignTokenStatus::SourceMapped ||
@@ -101,7 +95,7 @@ pub fn DesignPreset::source_package_import_gap_count(
 fn material_source_package_inventory() -> Array[DesignSourcePackageRecord] {
   [
     source_package(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "Material system token SCSS",
       "tokens/_md-sys-*.scss",
       DesignTokenCategory::Color,
@@ -109,7 +103,7 @@ fn material_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=6,
       mapped_token_count=13,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Material,
+        @common.DesignPreset::Material,
         "tokens/_md-sys-*.scss",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -117,7 +111,7 @@ fn material_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package contains _md-sys-color, _md-sys-typescale, _md-sys-shape, _md-sys-elevation, _md-sys-motion, and _md-sys-state files.",
     ),
     source_package(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "Material reference palette SCSS",
       "tokens/versions/v0_192/_md-ref-palette.scss",
       DesignTokenCategory::Color,
@@ -125,7 +119,7 @@ fn material_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=1,
       mapped_token_count=9,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Material,
+        @common.DesignPreset::Material,
         "tokens/versions/v0_192/_md-ref-palette.scss",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -133,7 +127,7 @@ fn material_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned reference palette resolves Material light semantic color values used by the system color adapter.",
     ),
     source_package(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "Material component token SCSS",
       "tokens/_md-comp-*.scss",
       DesignTokenCategory::ComponentStyle,
@@ -141,7 +135,7 @@ fn material_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=35,
       mapped_token_count=5,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Material,
+        @common.DesignPreset::Material,
         "tokens/_md-comp-*.scss",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -155,7 +149,7 @@ fn material_source_package_inventory() -> Array[DesignSourcePackageRecord] {
 fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
   [
     source_package(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Carbon theme sets",
       "packages/themes/src/{white,g10,g90,g100}.ts",
       DesignTokenCategory::SchemeVariant,
@@ -163,7 +157,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=4,
       mapped_token_count=12,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Carbon,
+        @common.DesignPreset::Carbon,
         "packages/themes/src/{white,g10,g90,g100}.ts",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -171,7 +165,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package exposes Carbon theme set files for the shipped light and dark theme families.",
     ),
     source_package(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Carbon token source modules",
       "packages/themes/src/tokens/*.ts",
       DesignTokenCategory::ComponentStyle,
@@ -179,7 +173,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=10,
       mapped_token_count=8,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Carbon,
+        @common.DesignPreset::Carbon,
         "packages/themes/src/tokens/*.ts",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -187,7 +181,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package contains TokenSet, TokenGroup, layout, type, components, and v11 token source modules.",
     ),
     source_package(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Carbon motion source",
       "packages/motion/src/index.ts",
       DesignTokenCategory::Motion,
@@ -195,7 +189,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=1,
       mapped_token_count=13,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Carbon,
+        @common.DesignPreset::Carbon,
         "packages/motion/src/index.ts",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -203,7 +197,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned motion source exposes the full Carbon duration token set and productive/expressive easing curves.",
     ),
     source_package(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Carbon layout token source",
       "packages/layout/src/*.ts",
       DesignTokenCategory::Spacing,
@@ -211,7 +205,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=2,
       mapped_token_count=25,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Carbon,
+        @common.DesignPreset::Carbon,
         "packages/layout/src/*.ts",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -219,7 +213,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned layout source contains Carbon spacing01..spacing13, layout01..layout07, and container01..container05 numeric scales; values outside MoUI's xs/sm/md/lg/xl slots remain preview-collapsed.",
     ),
     source_package(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Carbon type token source",
       "packages/type/src/styles.ts",
       DesignTokenCategory::Typography,
@@ -227,7 +221,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=2,
       mapped_token_count=4,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Carbon,
+        @common.DesignPreset::Carbon,
         "packages/type/src/styles.ts",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -235,7 +229,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned type source maps selected Carbon body, heading, caption, and label font-size styles into neutral typography slots.",
     ),
     source_package(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Carbon component token modules",
       "packages/themes/src/component-tokens/**/*.ts",
       DesignTokenCategory::ComponentStyle,
@@ -243,7 +237,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=5,
       mapped_token_count=1,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Carbon,
+        @common.DesignPreset::Carbon,
         "packages/themes/src/component-tokens/**/*.ts",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -251,7 +245,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package contains button, content-switcher, notification, status, and tag component-token source modules.",
     ),
     source_package(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Carbon SCSS token output",
       "packages/themes/scss/*.scss",
       DesignTokenCategory::Color,
@@ -259,7 +253,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=6,
       mapped_token_count=8,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Carbon,
+        @common.DesignPreset::Carbon,
         "packages/themes/scss/*.scss",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -267,7 +261,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package contains SCSS output files such as _tokens, _themes, _theme, and _component-tokens.",
     ),
     source_package(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Carbon styles slider SCSS",
       "packages/styles/scss/components/slider/*.scss",
       DesignTokenCategory::ComponentStyle,
@@ -275,7 +269,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=2,
       mapped_token_count=1,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Carbon,
+        @common.DesignPreset::Carbon,
         "packages/styles/scss/components/slider/*.scss",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -283,7 +277,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned styles package contains the slider filled-track rule consumed by the neutral slider foreground token.",
     ),
     source_package(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Carbon color primitives",
       "packages/colors/src/colors.ts",
       DesignTokenCategory::Color,
@@ -291,7 +285,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=1,
       mapped_token_count=6,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Carbon,
+        @common.DesignPreset::Carbon,
         "packages/colors/src/colors.ts",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -305,7 +299,7 @@ fn carbon_source_package_inventory() -> Array[DesignSourcePackageRecord] {
 fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
   [
     source_package(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Primer base color mode primitives",
       "src/tokens/base/color/**/*.json5",
       DesignTokenCategory::Color,
@@ -313,7 +307,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=7,
       mapped_token_count=9,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Primer,
+        @common.DesignPreset::Primer,
         "src/tokens/base/color/**/*.json5",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -321,7 +315,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package contains the base light values resolved by functional color tokens, but the current records import the functional token layer directly.",
     ),
     source_package(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Primer functional color tokens",
       "src/tokens/functional/color/*.json5",
       DesignTokenCategory::Color,
@@ -329,7 +323,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=7,
       mapped_token_count=13,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Primer,
+        @common.DesignPreset::Primer,
         "src/tokens/functional/color/*.json5",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -337,7 +331,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package maps default foreground, muted foreground, accent/info, emphasized accent primary/focus, success, danger, background, muted/inset surfaces, and default border tokens.",
     ),
     source_package(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Primer base primitives",
       "src/tokens/base/{motion,size,typography}",
       DesignTokenCategory::Spacing,
@@ -345,7 +339,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=6,
       mapped_token_count=28,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Primer,
+        @common.DesignPreset::Primer,
         "src/tokens/base/{motion,size,typography}",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -353,7 +347,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package contains imported base motion timing/easing primitives, neutral size representatives, and neutral typography size/weight representatives.",
     ),
     source_package(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Primer functional size tokens",
       "src/tokens/functional/size/*.json5",
       DesignTokenCategory::Shape,
@@ -361,7 +355,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=8,
       mapped_token_count=5,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Primer,
+        @common.DesignPreset::Primer,
         "src/tokens/functional/size/*.json5",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -369,7 +363,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package imports the borderRadius small/medium/large/full/default radius tokens used by neutral radius slots.",
     ),
     source_package(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Primer functional shadow tokens",
       "src/tokens/functional/shadow/*.json5",
       DesignTokenCategory::Elevation,
@@ -377,7 +371,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=1,
       mapped_token_count=3,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Primer,
+        @common.DesignPreset::Primer,
         "src/tokens/functional/shadow/*.json5",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -385,7 +379,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package imports representative resting small, resting medium, and floating large shadow tokens for neutral elevation slots.",
     ),
     source_package(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Primer component primitives",
       "src/tokens/component/*.json5",
       DesignTokenCategory::ComponentStyle,
@@ -393,7 +387,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=20,
       mapped_token_count=6,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Primer,
+        @common.DesignPreset::Primer,
         "src/tokens/component/*.json5",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -407,7 +401,7 @@ fn primer_source_package_inventory() -> Array[DesignSourcePackageRecord] {
 fn fluent_source_package_inventory() -> Array[DesignSourcePackageRecord] {
   [
     source_package(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Fluent global tokens",
       "packages/tokens/src/global/*.ts",
       DesignTokenCategory::Color,
@@ -415,7 +409,7 @@ fn fluent_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=11,
       mapped_token_count=90,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Fluent,
+        @common.DesignPreset::Fluent,
         "packages/tokens/src/global/*.ts",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -423,7 +417,7 @@ fn fluent_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package imports full global font, stroke-width, horizontal and vertical spacing, radius, duration, curve, and expanded status reference color tokens used by neutral or preview slots.",
     ),
     source_package(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Fluent alias tokens",
       "packages/tokens/src/alias/*.ts",
       DesignTokenCategory::Color,
@@ -431,7 +425,7 @@ fn fluent_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=8,
       mapped_token_count=12,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Fluent,
+        @common.DesignPreset::Fluent,
         "packages/tokens/src/alias/*.ts",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -439,7 +433,7 @@ fn fluent_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package contains light, dark, high-contrast, Teams color, focus stroke, overlay, and font-family alias sources.",
     ),
     source_package(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Fluent theme token sets",
       "packages/tokens/src/themes/**",
       DesignTokenCategory::SchemeVariant,
@@ -447,7 +441,7 @@ fn fluent_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=3,
       mapped_token_count=1,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Fluent,
+        @common.DesignPreset::Fluent,
         "packages/tokens/src/themes/**",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -455,7 +449,7 @@ fn fluent_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       note="Pinned package exposes theme token sets under web and Teams theme directories.",
     ),
     source_package(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Fluent web component progress styles",
       "packages/web-components/src/progress-bar/*.ts",
       DesignTokenCategory::ComponentStyle,
@@ -463,7 +457,7 @@ fn fluent_source_package_inventory() -> Array[DesignSourcePackageRecord] {
       tracked_path_count=11,
       mapped_token_count=1,
       imported_token_count=source_imported_token_count_for_package(
-        DesignPreset::Fluent,
+        @common.DesignPreset::Fluent,
         "packages/web-components/src/progress-bar/*.ts",
       ),
       status=DesignTokenStatus::PreviewMapped,
@@ -475,7 +469,7 @@ fn fluent_source_package_inventory() -> Array[DesignSourcePackageRecord] {
 
 ///|
 fn source_package(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   package_name : String,
   package_path : String,
   category : DesignTokenCategory,
@@ -510,15 +504,15 @@ fn source_package(
 
 ///|
 fn source_package_lock_for(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   package_path : String,
 ) -> DesignSourceLockRecord {
-  for item in preset.source_lock_report() {
+  for item in source_lock_report(preset) {
     if item.token_path != "" && package_path.contains(item.token_path) {
       return item
     }
   }
-  for item in preset.source_lock_report() {
+  for item in source_lock_report(preset) {
     if item.source_kind == "official-source" {
       return item
     }
