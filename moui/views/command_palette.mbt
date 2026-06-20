@@ -3,10 +3,11 @@ pub fn[Msg] command_palette(
   commands : Array[ActionCommand],
   query? : String = "",
   on_select~ : (CommandIntent) -> Msg,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 420.0,
   max_height? : Double = 260.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
   for command in commands {
     if command_palette_matches(command, query) {
@@ -14,8 +15,8 @@ pub fn[Msg] command_palette(
         command_palette_row(
           command,
           on_select~,
-          theme~,
-          width=width - theme.spacing_scale.md * 2.0,
+          theme=resolved_theme,
+          width=width - resolved_theme.spacing_scale.md * 2.0,
         ),
       )
     }
@@ -25,27 +26,31 @@ pub fn[Msg] command_palette(
       text(
         "No commands",
         role=TextRole::Caption,
-        theme~,
-        width=width - theme.spacing_scale.md * 2.0,
+        theme=resolved_theme,
+        width=width - resolved_theme.spacing_scale.md * 2.0,
         height=28.0,
       ),
     )
   }
   container(
     scroll_view(
-      column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
-      width=width - theme.spacing_scale.md * 2.0,
-      height=max_height - theme.spacing_scale.md * 2.0,
+      column(
+        rows,
+        spacing=resolved_theme.spacing_scale.xs,
+        align=CrossAlign::Start,
+      ),
+      width=width - resolved_theme.spacing_scale.md * 2.0,
+      height=max_height - resolved_theme.spacing_scale.md * 2.0,
     ),
     width~,
     height=max_height,
     variant=ContainerVariant::Overlay,
-    theme~,
-    padding=theme.spacing_scale.md,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.md,
   )
   // Command palettes float over the whole window, so lift them with the
   // theme's large elevation shadow like a dialog/popover.
-  .shadow(theme.shadow_scale.lg)
+  .shadow(resolved_theme.shadow_scale.lg)
   .semantics_role(@core.SemanticsRole::Menu)
 }
 

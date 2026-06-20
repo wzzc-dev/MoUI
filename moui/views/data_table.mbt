@@ -10,13 +10,19 @@ pub fn[Msg] table(
   sortable_columns? : Array[String] = [],
   cell? : ((Int, TableColumn, String) -> @core.View[Msg])? = None,
   empty? : @core.View[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   row_height? : Double = 38.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   if rows.length() == 0 {
     match empty {
       Some(view) => view
-      None => empty_state("No rows", "There is no table data yet.", theme~)
+      None =>
+        empty_state(
+          "No rows",
+          "There is no table data yet.",
+          theme=resolved_theme,
+        )
     }
   } else {
     let table_width = table_columns_width(columns)
@@ -27,7 +33,7 @@ pub fn[Msg] table(
         sort_ascending~,
         on_sort~,
         sortable_columns~,
-        theme~,
+        theme=resolved_theme,
         row_height~,
       ),
     ]
@@ -40,7 +46,7 @@ pub fn[Msg] table(
           selected=selected_row == Some(row_index),
           on_row_select~,
           cell~,
-          theme~,
+          theme=resolved_theme,
           row_height~,
         ),
       )
@@ -50,7 +56,7 @@ pub fn[Msg] table(
       width=table_width,
       height=row_height * (rows.length() + 1).to_double(),
       variant=ContainerVariant::Base,
-      theme~,
+      theme=resolved_theme,
       padding=0.0,
     ).semantics_role(@core.SemanticsRole::Grid)
   }

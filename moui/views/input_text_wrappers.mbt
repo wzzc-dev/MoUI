@@ -5,10 +5,11 @@ pub fn[Msg] clearable_text_field(
   on_clear~ : Msg,
   placeholder? : String = "",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 280.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   row(
     [
       text_field(
@@ -16,7 +17,7 @@ pub fn[Msg] clearable_text_field(
         on_input~,
         placeholder~,
         variant~,
-        theme~,
+        theme=resolved_theme,
         width=views_max_double(80.0, width - 72.0),
         height~,
       ),
@@ -24,12 +25,12 @@ pub fn[Msg] clearable_text_field(
         "Clear",
         on_click=on_clear,
         variant=ButtonVariant::Ghost,
-        theme~,
+        theme=resolved_theme,
         width=64.0,
         height~,
       ),
     ],
-    spacing=theme.spacing_scale.xs,
+    spacing=resolved_theme.spacing_scale.xs,
     align=CrossAlign::Center,
   ).frame(width~)
 }
@@ -42,10 +43,11 @@ pub fn[Msg] password_field(
   on_toggle_reveal~ : Msg,
   placeholder? : String = "Password",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 280.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let display_value = if revealed { value } else { mask_text(value) }
   row(
     [
@@ -54,7 +56,7 @@ pub fn[Msg] password_field(
         on_input~,
         placeholder~,
         variant~,
-        theme~,
+        theme=resolved_theme,
         width=views_max_double(80.0, width - 72.0),
         height~,
       ),
@@ -66,12 +68,12 @@ pub fn[Msg] password_field(
         },
         on_click=on_toggle_reveal,
         variant=ButtonVariant::Ghost,
-        theme~,
+        theme=resolved_theme,
         width=64.0,
         height~,
       ),
     ],
-    spacing=theme.spacing_scale.xs,
+    spacing=resolved_theme.spacing_scale.xs,
     align=CrossAlign::Center,
   ).frame(width~)
 }

@@ -8,13 +8,14 @@ pub fn[Msg] wizard(
   steps : Array[WizardStep[Msg]],
   current~ : String,
   on_select~ : (String) -> Msg,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 520.0,
   height? : Double = 260.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let header_width = views_max_double(
     120.0,
-    width - theme.spacing_scale.md * 2.0,
+    width - resolved_theme.spacing_scale.md * 2.0,
   )
   let step_count = wizard_visible_step_count(steps.length())
   let step_width = views_max_double(
@@ -37,7 +38,7 @@ pub fn[Msg] wizard(
         step.title,
         on_click=on_select(step.id),
         variant~,
-        theme~,
+        theme=resolved_theme,
         width=step_width,
         height=36.0,
       )
@@ -51,19 +52,19 @@ pub fn[Msg] wizard(
       [
         row(
           step_buttons,
-          spacing=theme.spacing_scale.xs,
+          spacing=resolved_theme.spacing_scale.xs,
           align=CrossAlign::Center,
         ),
         content.frame(width=header_width, height=height - 74.0),
       ],
-      spacing=theme.spacing_scale.md,
+      spacing=resolved_theme.spacing_scale.md,
       align=CrossAlign::Start,
     ),
     width~,
     height~,
     variant=ContainerVariant::Raised,
-    theme~,
-    padding=theme.spacing_scale.md,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.md,
   ).semantics_role(@core.SemanticsRole::Group)
 }
 

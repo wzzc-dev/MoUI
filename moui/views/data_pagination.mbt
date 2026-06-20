@@ -4,11 +4,12 @@ pub fn[Msg] pagination(
   page_count~ : Int,
   on_previous~ : Msg,
   on_next~ : Msg,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 360.0,
   previous_label? : String = "Previous",
   next_label? : String = "Next",
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let total_pages = views_max_int(1, page_count)
   let current_page = views_min_int(views_max_int(0, page), total_pages - 1)
   let has_previous = current_page > 0
@@ -17,7 +18,7 @@ pub fn[Msg] pagination(
   let next_width = pagination_button_width(next_label)
   let label_width = views_max_double(
     88.0,
-    width - previous_width - next_width - theme.spacing_scale.sm * 2.0,
+    width - previous_width - next_width - resolved_theme.spacing_scale.sm * 2.0,
   )
   row(
     [
@@ -25,14 +26,14 @@ pub fn[Msg] pagination(
         previous_label,
         on_click=on_previous,
         variant=ButtonVariant::Outline,
-        theme~,
+        theme=resolved_theme,
         width=previous_width,
         height=36.0,
       ).disabled(disabled=!has_previous),
       text(
         "Page \{current_page + 1} of \{total_pages}",
         role=TextRole::Caption,
-        theme~,
+        theme=resolved_theme,
         width=label_width,
         height=28.0,
       ),
@@ -40,12 +41,12 @@ pub fn[Msg] pagination(
         next_label,
         on_click=on_next,
         variant=ButtonVariant::Outline,
-        theme~,
+        theme=resolved_theme,
         width=next_width,
         height=36.0,
       ).disabled(disabled=!has_next),
     ],
-    spacing=theme.spacing_scale.sm,
+    spacing=resolved_theme.spacing_scale.sm,
     align=CrossAlign::Center,
   )
   .semantics_role(@core.SemanticsRole::Group)

@@ -5,10 +5,11 @@ pub fn[Msg] dropdown(
   state~ : DropdownState,
   on_toggle~ : Msg,
   placeholder? : String = "Select",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 240.0,
   max_height? : Double = 180.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let selected_label = dropdown_selected_label(
     items,
     state.selected,
@@ -18,7 +19,7 @@ pub fn[Msg] dropdown(
       label + ": " + selected_label,
       on_click=on_toggle,
       variant=ButtonVariant::Tonal,
-      theme~,
+      theme=resolved_theme,
       width~,
     )
     .semantics_role(@core.SemanticsRole::Menu)
@@ -29,14 +30,14 @@ pub fn[Msg] dropdown(
     anchor~,
     content=dropdown_menu(
       items,
-      theme~,
-      width=width - theme.spacing_scale.sm * 2.0,
+      theme=resolved_theme,
+      width=width - resolved_theme.spacing_scale.sm * 2.0,
       max_height~,
       selected=state.selected,
       label=label + " options",
     ),
     expanded=state.expanded,
-    theme~,
+    theme=resolved_theme,
     width~,
     height=max_height,
   )
@@ -50,10 +51,11 @@ pub fn[Msg] combobox(
   expanded~ : Bool,
   on_toggle~ : Msg,
   placeholder? : String = "Search",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 280.0,
   max_height? : Double = 180.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let anchor = row(
     [
       text_field(
@@ -61,14 +63,14 @@ pub fn[Msg] combobox(
         on_input~,
         placeholder~,
         variant=TextFieldVariant::Outline,
-        theme~,
+        theme=resolved_theme,
         width=views_max_double(80.0, width - 70.0),
       ),
       button(
         "Open",
         on_click=on_toggle,
         variant=ButtonVariant::Ghost,
-        theme~,
+        theme=resolved_theme,
         width=62.0,
       )
       .semantics_expanded(expanded~)
@@ -81,19 +83,19 @@ pub fn[Msg] combobox(
         },
       ),
     ],
-    spacing=theme.spacing_scale.xs,
+    spacing=resolved_theme.spacing_scale.xs,
     align=CrossAlign::Center,
   ).frame(width~)
   popover(
     anchor~,
     content=dropdown_menu(
       items,
-      theme~,
-      width=width - theme.spacing_scale.sm * 2.0,
+      theme=resolved_theme,
+      width=width - resolved_theme.spacing_scale.sm * 2.0,
       max_height~,
     ),
     expanded~,
-    theme~,
+    theme=resolved_theme,
     width~,
     height=max_height,
   )
@@ -106,28 +108,29 @@ pub fn[Msg] autocomplete(
   suggestions : Array[MenuItem[Msg]],
   expanded~ : Bool,
   placeholder? : String = "Search",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 280.0,
   max_height? : Double = 180.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   popover(
     anchor=text_field(
       query,
       on_input~,
       placeholder~,
       variant=TextFieldVariant::Outline,
-      theme~,
+      theme=resolved_theme,
       width~,
     ),
     content=dropdown_menu(
       suggestions,
-      theme~,
-      width=width - theme.spacing_scale.sm * 2.0,
+      theme=resolved_theme,
+      width=width - resolved_theme.spacing_scale.sm * 2.0,
       max_height~,
       label="Autocomplete suggestions",
     ),
     expanded~,
-    theme~,
+    theme=resolved_theme,
     width~,
     height=max_height,
   )

@@ -3,18 +3,19 @@ pub fn[Msg] section_nav(
   title : String,
   items : Array[SectionNavItem[Msg]],
   selected~ : String,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 520.0,
   item_width? : Double = 150.0,
   item_height? : Double = 76.0,
   orientation? : @core.Axis = @core.Axis::Horizontal,
 ) -> @core.View[Msg] {
-  let item_padding = theme.spacing_scale.sm
+  let resolved_theme = views_ambient_theme(theme)
+  let item_padding = resolved_theme.spacing_scale.sm
   let item_content_width = views_max_double(
     72.0,
     item_width - item_padding * 2.0,
   )
-  let spacing = theme.spacing_scale.sm
+  let spacing = resolved_theme.spacing_scale.sm
   let item_views : Array[@core.View[Msg]] = []
   for item in items {
     let selected_item = item.id == selected
@@ -28,7 +29,7 @@ pub fn[Msg] section_nav(
         item.label,
         on_click=item.message,
         variant~,
-        theme~,
+        theme=resolved_theme,
         width=item_content_width,
         height=34.0,
       )
@@ -42,7 +43,7 @@ pub fn[Msg] section_nav(
         text(
           item.summary,
           role=TextRole::Caption,
-          theme~,
+          theme=resolved_theme,
           width=item_content_width,
           height=24.0,
         ),
@@ -50,7 +51,11 @@ pub fn[Msg] section_nav(
     }
     item_views.push(
       container(
-        column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
+        column(
+          rows,
+          spacing=resolved_theme.spacing_scale.xs,
+          align=CrossAlign::Start,
+        ),
         width=item_width,
         height=item_height,
         variant=if selected_item {
@@ -58,7 +63,7 @@ pub fn[Msg] section_nav(
         } else {
           ContainerVariant::Base
         },
-        theme~,
+        theme=resolved_theme,
         padding=item_padding,
       )
       .disabled(disabled=!item.enabled)
@@ -81,7 +86,7 @@ pub fn[Msg] section_nav(
       text(
         title,
         role=TextRole::Control,
-        theme~,
+        theme=resolved_theme,
         width=views_max_double(96.0, width - item_padding * 2.0),
         height=28.0,
       ),
@@ -100,7 +105,7 @@ pub fn[Msg] section_nav(
     width~,
     height=title_height + body_height + item_padding * 2.0,
     variant=ContainerVariant::Base,
-    theme~,
+    theme=resolved_theme,
     padding=item_padding,
   )
   .semantics_role(@core.SemanticsRole::List)
