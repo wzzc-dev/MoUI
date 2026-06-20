@@ -626,8 +626,10 @@ fn append_text_field_selection_commands(
       if x1 > x0 {
         // Selection highlight tracks the ambient theme's primary palette token
         // so it follows the active color scheme (light/dark) and custom palette
-        // overrides, rather than a hard-coded light theme.
-        let selection_color = theme.palette.primary.with_alpha(0.22)
+        // overrides, rather than a hard-coded light theme. The alpha matches the
+        // rich text editor selection highlight convention (0.18) so plain text
+        // fields and rich editors render selection highlights consistently.
+        let selection_color = theme.palette.primary.with_alpha(0.18)
         commands.push(
           @core.DrawCommand::FillRect(
             @core.Rect::new(

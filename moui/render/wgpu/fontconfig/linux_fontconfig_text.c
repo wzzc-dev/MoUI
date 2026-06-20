@@ -4,11 +4,11 @@
 #include <string.h>
 
 #if defined(__linux__)
-#include <dlfcn.h>
 #include <limits.h>
 #include <stdio.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_ADVANCES_H
 #include <fontconfig/fontconfig.h>
 #include <hb.h>
 #include <hb-ft.h>
@@ -172,20 +172,6 @@ int32_t moui_linux_fontconfig_debug_font_registration_protocol_version(void) {
 #if defined(__linux__)
 
 typedef struct {
-  void *handle;
-  FT_Error (*init_free_type)(FT_Library *);
-  FT_Error (*new_face)(FT_Library, const char *, FT_Long, FT_Face *);
-  FT_Error (*new_memory_face)(FT_Library, const FT_Byte *, FT_Long, FT_Long, FT_Face *);
-  FT_Error (*done_face)(FT_Face);
-  FT_Error (*done_free_type)(FT_Library);
-  FT_Error (*set_pixel_sizes)(FT_Face, FT_UInt, FT_UInt);
-  FT_Error (*select_size)(FT_Face, FT_Int);
-  FT_UInt (*get_char_index)(FT_Face, FT_ULong);
-  FT_Error (*load_glyph)(FT_Face, FT_UInt, FT_Int32);
-  FT_Error (*render_glyph)(FT_GlyphSlot, FT_Render_Mode);
-} MouiFreeTypeApi;
-
-typedef struct {
   int32_t source_kind;
   int32_t glyph_id;
   int32_t codepoint;
@@ -210,7 +196,6 @@ typedef struct {
 } MouiFontconfigResolvedFont;
 
 typedef struct {
-  MouiFreeTypeApi ft;
   FT_Library library;
   FT_Face face;
 } MouiFontconfigOpenFont;
@@ -221,51 +206,6 @@ static int32_t moui_linux_registered_font_count = 0;
 
 static moonbit_bytes_t moui_linux_empty_bytes(void) {
   return moonbit_make_bytes(0, 0);
-}
-
-static int32_t moui_linux_load_freetype(MouiFreeTypeApi *api) {
-  memset(api, 0, sizeof(*api));
-  const char *candidates[] = {
-    "libfreetype.so.6",
-    "libfreetype.so",
-  };
-  for (int i = 0; i < 2; i++) {
-    api->handle = dlopen(candidates[i], RTLD_LAZY | RTLD_LOCAL);
-    if (api->handle != NULL) {
-      break;
-    }
-  }
-  if (api->handle == NULL) {
-    return 0;
-  }
-#define MOUI_LOAD_FT(name, symbol)                                            \
-  do {                                                                        \
-    api->name = dlsym(api->handle, symbol);                                   \
-    if (api->name == NULL) {                                                  \
-      dlclose(api->handle);                                                   \
-      memset(api, 0, sizeof(*api));                                           \
-      return 0;                                                               \
-    }                                                                         \
-  } while (0)
-  MOUI_LOAD_FT(init_free_type, "FT_Init_FreeType");
-  MOUI_LOAD_FT(new_face, "FT_New_Face");
-  MOUI_LOAD_FT(new_memory_face, "FT_New_Memory_Face");
-  MOUI_LOAD_FT(done_face, "FT_Done_Face");
-  MOUI_LOAD_FT(done_free_type, "FT_Done_FreeType");
-  MOUI_LOAD_FT(set_pixel_sizes, "FT_Set_Pixel_Sizes");
-  MOUI_LOAD_FT(select_size, "FT_Select_Size");
-  MOUI_LOAD_FT(get_char_index, "FT_Get_Char_Index");
-  MOUI_LOAD_FT(load_glyph, "FT_Load_Glyph");
-  MOUI_LOAD_FT(render_glyph, "FT_Render_Glyph");
-#undef MOUI_LOAD_FT
-  return 1;
-}
-
-static void moui_linux_unload_freetype(MouiFreeTypeApi *api) {
-  if (api->handle != NULL) {
-    dlclose(api->handle);
-  }
-  memset(api, 0, sizeof(*api));
 }
 
 static char *moui_linux_cstring_from_bytes(const uint8_t *bytes, int32_t len) {
@@ -627,11 +567,10 @@ static int32_t moui_linux_pixel_size(MouiNativeFontSpec spec, double scale_facto
 }
 
 static int32_t moui_linux_select_freetype_size(
-  MouiFreeTypeApi *ft,
   FT_Face face,
   int32_t pixel_size
 ) {
-  if (ft->set_pixel_sizes(face, 0, (FT_UInt)pixel_size) == 0) {
+  if (FT_Set_Pixel_Sizes(face, 0, (FT_UInt)pixel_size) == 0) {
     return 1;
   }
   if (face->num_fixed_sizes <= 0) {
@@ -651,7 +590,7 @@ static int32_t moui_linux_select_freetype_size(
       best_ppem = ppem;
     }
   }
-  return ft->select_size(face, best) == 0;
+  return FT_Select_Size(face, best) == 0;
 }
 
 static int32_t moui_linux_open_resolved_font(
@@ -660,11 +599,7 @@ static int32_t moui_linux_open_resolved_font(
   MouiFontconfigOpenFont *open
 ) {
   memset(open, 0, sizeof(*open));
-  if (!moui_linux_load_freetype(&open->ft)) {
-    return 0;
-  }
-  if (open->ft.init_free_type(&open->library) != 0) {
-    moui_linux_unload_freetype(&open->ft);
+  if (FT_Init_FreeType(&open->library) != 0) {
     return 0;
   }
   int ok = 0;
@@ -673,7 +608,7 @@ static int32_t moui_linux_open_resolved_font(
     if (index >= 0 && index < moui_linux_registered_font_count) {
       MouiFontconfigRegisteredFont registered = moui_linux_registered_fonts[index];
       if (registered.data != NULL && registered.data_len > 0) {
-        ok = open->ft.new_memory_face(
+        ok = FT_New_Memory_Face(
           open->library,
           (const FT_Byte *)registered.data,
           (FT_Long)registered.data_len,
@@ -683,7 +618,7 @@ static int32_t moui_linux_open_resolved_font(
       }
     }
   } else {
-    ok = open->ft.new_face(
+    ok = FT_New_Face(
       open->library,
       resolved.path,
       (FT_Long)resolved.face_index,
@@ -691,15 +626,13 @@ static int32_t moui_linux_open_resolved_font(
     ) == 0;
   }
   if (!ok || open->face == NULL) {
-    open->ft.done_free_type(open->library);
-    moui_linux_unload_freetype(&open->ft);
+    FT_Done_FreeType(open->library);
     memset(open, 0, sizeof(*open));
     return 0;
   }
-  if (!moui_linux_select_freetype_size(&open->ft, open->face, pixel_size)) {
-    open->ft.done_face(open->face);
-    open->ft.done_free_type(open->library);
-    moui_linux_unload_freetype(&open->ft);
+  if (!moui_linux_select_freetype_size(open->face, pixel_size)) {
+    FT_Done_Face(open->face);
+    FT_Done_FreeType(open->library);
     memset(open, 0, sizeof(*open));
     return 0;
   }
@@ -708,12 +641,11 @@ static int32_t moui_linux_open_resolved_font(
 
 static void moui_linux_close_resolved_font(MouiFontconfigOpenFont *open) {
   if (open->face != NULL) {
-    open->ft.done_face(open->face);
+    FT_Done_Face(open->face);
   }
   if (open->library != NULL) {
-    open->ft.done_free_type(open->library);
+    FT_Done_FreeType(open->library);
   }
-  moui_linux_unload_freetype(&open->ft);
   memset(open, 0, sizeof(*open));
 }
 
@@ -810,6 +742,50 @@ static hb_buffer_t *moui_linux_shape_buffer(
   return buffer;
 }
 
+// Sum glyph advances directly from FreeType, bypassing HarfBuzz shaping. This
+// is used as a safe fallback for measurement when hb_shape() cannot be used:
+// when this stub is linked into an image that also statically links Skia's
+// bundled FreeType (a different version than the system libfreetype HarfBuzz
+// was built against), hb_ft_font_create installs callbacks that dereference
+// FT structs with mismatched offsets and segfault. FreeType's public opaque
+// handle API (FT_Get_Char_Index / FT_Load_Glyph / FT_Get_Advance) is ABI-stable
+// across those versions, so reading advances directly here is safe and yields a
+// correct-enough width for the diagnostic conformance matrix (complex-script
+// shaping is intentionally out of scope for this scaffold measurement path).
+static double moui_linux_freetype_advance_width(
+  FT_Face face,
+  const uint32_t *codepoints,
+  int32_t char_count,
+  int32_t *covered_out
+) {
+  double width = 0.0;
+  int32_t covered = 0;
+  for (int32_t i = 0; i < char_count; i++) {
+    FT_UInt glyph_id = FT_Get_Char_Index(face, (FT_ULong)codepoints[i]);
+    if (glyph_id == 0) {
+      // Character not covered by the resolved font. Return -1.0 so the caller
+      // can signal incomplete coverage (empty payload), letting the configured
+      // fallback engine (e.g. cosmic_text) take over for this text.
+      if (covered_out != NULL) {
+        *covered_out = 0;
+      }
+      return -1.0;
+    }
+    // FT_Load_Glyph with FT_LOAD_DEFAULT yields glyph->advance.x already scaled
+    // to the active pixel size, in 26.6 fixed point (matching HarfBuzz's
+    // hb_glyph_position units). This mirrors the existing raster path, which is
+    // known to work against the statically-linked FreeType.
+    if (FT_Load_Glyph(face, glyph_id, FT_LOAD_DEFAULT) == 0) {
+      width += (double)face->glyph->advance.x / 64.0;
+      covered++;
+    }
+  }
+  if (covered_out != NULL) {
+    *covered_out = covered;
+  }
+  return width;
+}
+
 static moonbit_bytes_t moui_linux_write_measure_payload(
   int32_t char_count,
   double width,
@@ -873,7 +849,6 @@ static uint32_t moui_linux_cache_source_hash(
 }
 
 static int32_t moui_linux_open_emoji_face(
-  MouiFreeTypeApi *ft,
   const char *path,
   int32_t pixel_size,
   FT_Library *library,
@@ -881,42 +856,34 @@ static int32_t moui_linux_open_emoji_face(
 ) {
   *library = NULL;
   *face = NULL;
-  if (!moui_linux_load_freetype(ft)) {
+  if (FT_Init_FreeType(library) != 0) {
     return 0;
   }
-  if (ft->init_free_type(library) != 0) {
-    moui_linux_unload_freetype(ft);
-    return 0;
-  }
-  if (ft->new_face(*library, path, 0, face) != 0) {
-    ft->done_free_type(*library);
+  if (FT_New_Face(*library, path, 0, face) != 0) {
+    FT_Done_FreeType(*library);
     *library = NULL;
-    moui_linux_unload_freetype(ft);
     return 0;
   }
-  if (!moui_linux_select_freetype_size(ft, *face, pixel_size)) {
-    ft->done_face(*face);
-    ft->done_free_type(*library);
+  if (!moui_linux_select_freetype_size(*face, pixel_size)) {
+    FT_Done_Face(*face);
+    FT_Done_FreeType(*library);
     *face = NULL;
     *library = NULL;
-    moui_linux_unload_freetype(ft);
     return 0;
   }
   return 1;
 }
 
 static void moui_linux_close_emoji_face(
-  MouiFreeTypeApi *ft,
   FT_Library library,
   FT_Face face
 ) {
   if (face != NULL) {
-    ft->done_face(face);
+    FT_Done_Face(face);
   }
   if (library != NULL) {
-    ft->done_free_type(library);
+    FT_Done_FreeType(library);
   }
-  moui_linux_unload_freetype(ft);
 }
 
 static int32_t moui_linux_parse_glyph_payload(
@@ -1007,7 +974,7 @@ static int32_t moui_linux_glyph_has_visible_bounds(
   if (glyph_id == 0 || open == NULL || open->face == NULL) {
     return 0;
   }
-  if (open->ft.load_glyph(
+  if (FT_Load_Glyph(
         open->face,
         (FT_UInt)glyph_id,
         FT_LOAD_COLOR | FT_LOAD_DEFAULT
@@ -1372,34 +1339,32 @@ moonbit_bytes_t moui_linux_fontconfig_measure_utf32(
     free(codepoints);
     return moui_linux_write_measure_payload(0, 0.0, height, baseline);
   }
-  hb_font_t *hb_font = NULL;
-  hb_buffer_t *buffer = moui_linux_shape_buffer(
+  // Measurement uses a safe FreeType advance summation instead of HarfBuzz
+  // shaping. See moui_linux_freetype_advance_width: hb_shape() segfaults in
+  // images that also statically link Skia's bundled FreeType (a different
+  // version than the system libfreetype HarfBuzz was built against). FreeType's
+  // opaque-handle advance API is ABI-stable, so this is safe and yields a
+  // correct-enough width for the diagnostic conformance matrix.
+  int32_t covered = 0;
+  double width = moui_linux_freetype_advance_width(
     open.face,
     codepoints,
     char_count,
-    &hb_font
+    &covered
   );
-  if (buffer == NULL) {
+  if (width < 0.0 || covered <= 0) {
+    // Incomplete character coverage: signal failure with an empty payload so
+    // the configured fallback engine (e.g. cosmic_text) handles this text.
     moui_linux_close_resolved_font(&open);
     free(codepoints);
     return moui_linux_empty_bytes();
   }
-  unsigned int glyph_count = 0;
-  hb_glyph_position_t *positions = hb_buffer_get_glyph_positions(
-    buffer,
-    &glyph_count
-  );
-  double width = positions != NULL
-    ? moui_linux_shaped_width(positions, glyph_count, 1.0)
-    : 0.0;
   moonbit_bytes_t out = moui_linux_write_measure_payload(
     char_count,
     width,
     height,
     baseline
   );
-  hb_buffer_destroy(buffer);
-  hb_font_destroy(hb_font);
   moui_linux_close_resolved_font(&open);
   free(codepoints);
   return out;
@@ -1515,13 +1480,13 @@ moonbit_bytes_t moui_linux_fontconfig_raster_glyph(moonbit_bytes_t payload) {
     return moui_linux_empty_bytes();
   }
   FT_UInt glyph_id = (FT_UInt)parsed.glyph_id;
-  if (open.ft.load_glyph(open.face, glyph_id, FT_LOAD_COLOR | FT_LOAD_DEFAULT) != 0) {
+  if (FT_Load_Glyph(open.face, glyph_id, FT_LOAD_COLOR | FT_LOAD_DEFAULT) != 0) {
     moui_linux_close_resolved_font(&open);
     return moui_linux_empty_bytes();
   }
   FT_GlyphSlot slot = open.face->glyph;
   if (slot->format != FT_GLYPH_FORMAT_BITMAP &&
-      open.ft.render_glyph(slot, FT_RENDER_MODE_NORMAL) != 0) {
+      FT_Render_Glyph(slot, FT_RENDER_MODE_NORMAL) != 0) {
     moui_linux_close_resolved_font(&open);
     return moui_linux_empty_bytes();
   }
@@ -1575,15 +1540,15 @@ int32_t moui_linux_fontconfig_debug_latin_raster_pixels(void) {
   if (!moui_linux_open_resolved_font(resolved, 18, &open)) {
     return -1;
   }
-  FT_UInt glyph_id = open.ft.get_char_index(open.face, (FT_ULong)'A');
+  FT_UInt glyph_id = FT_Get_Char_Index(open.face, (FT_ULong)'A');
   if (glyph_id == 0 ||
-      open.ft.load_glyph(open.face, glyph_id, FT_LOAD_DEFAULT) != 0) {
+      FT_Load_Glyph(open.face, glyph_id, FT_LOAD_DEFAULT) != 0) {
     moui_linux_close_resolved_font(&open);
     return 0;
   }
   FT_GlyphSlot slot = open.face->glyph;
   if (slot->format != FT_GLYPH_FORMAT_BITMAP &&
-      open.ft.render_glyph(slot, FT_RENDER_MODE_NORMAL) != 0) {
+      FT_Render_Glyph(slot, FT_RENDER_MODE_NORMAL) != 0) {
     moui_linux_close_resolved_font(&open);
     return 0;
   }
@@ -1627,22 +1592,21 @@ int32_t moui_linux_fontconfig_debug_color_emoji_raster_pixels(void) {
   if (path_len <= 0) {
     return -1;
   }
-  MouiFreeTypeApi ft = {0};
   FT_Library library = NULL;
   FT_Face face = NULL;
-  if (!moui_linux_open_emoji_face(&ft, font_path, 26, &library, &face)) {
+  if (!moui_linux_open_emoji_face(font_path, 26, &library, &face)) {
     return -1;
   }
-  FT_UInt glyph_id = ft.get_char_index(face, (FT_ULong)0x1F642u);
+  FT_UInt glyph_id = FT_Get_Char_Index(face, (FT_ULong)0x1F642u);
   if (glyph_id == 0 ||
-      ft.load_glyph(face, glyph_id, FT_LOAD_COLOR | FT_LOAD_DEFAULT) != 0) {
-    moui_linux_close_emoji_face(&ft, library, face);
+      FT_Load_Glyph(face, glyph_id, FT_LOAD_COLOR | FT_LOAD_DEFAULT) != 0) {
+    moui_linux_close_emoji_face(library, face);
     return 0;
   }
   FT_GlyphSlot slot = face->glyph;
   if (slot->format != FT_GLYPH_FORMAT_BITMAP &&
-      ft.render_glyph(slot, FT_RENDER_MODE_NORMAL) != 0) {
-    moui_linux_close_emoji_face(&ft, library, face);
+      FT_Render_Glyph(slot, FT_RENDER_MODE_NORMAL) != 0) {
+    moui_linux_close_emoji_face(library, face);
     return 0;
   }
   FT_Bitmap bitmap = slot->bitmap;
@@ -1650,7 +1614,7 @@ int32_t moui_linux_fontconfig_debug_color_emoji_raster_pixels(void) {
       bitmap.width <= 0 ||
       bitmap.rows <= 0 ||
       bitmap.buffer == NULL) {
-    moui_linux_close_emoji_face(&ft, library, face);
+    moui_linux_close_emoji_face(library, face);
     return 0;
   }
   int32_t count = 0;
@@ -1674,7 +1638,7 @@ int32_t moui_linux_fontconfig_debug_color_emoji_raster_pixels(void) {
       );
     }
   }
-  moui_linux_close_emoji_face(&ft, library, face);
+  moui_linux_close_emoji_face(library, face);
   return count;
 }
 
