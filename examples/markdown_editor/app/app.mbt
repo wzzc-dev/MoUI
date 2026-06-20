@@ -39,6 +39,9 @@ pub struct MarkdownEditorApp {
   format_palette_visible : @moui.State[Bool]
   format_palette_query : @moui.State[String]
   more_menu_visible : @moui.State[Bool]
+  toasts : @moui.State[@views.ToastQueue[MarkdownEditorMsg]]
+  autosave_draft : @moui.State[String]
+  priv pending_confirm : @moui.State[MarkdownEditorConfirmRequest?]
   priv writing_appearance : @moui.State[MarkdownEditorAppearance]
   find_visible : @moui.State[Bool]
   find_query : @moui.State[String]
@@ -72,6 +75,22 @@ priv struct MarkdownEditorMoreMenuItem {
   label : String
   shortcut : String
   message : MarkdownEditorMsg
+}
+
+///|
+/// A pending "unsaved changes" confirmation. The deferred message runs when the
+/// user picks Save (after a successful save) or Discard; Cancel clears it.
+pub struct MarkdownEditorConfirmRequest {
+  title : String
+  deferred : MarkdownEditorMsg
+}
+
+///|
+/// The user's response to a pending confirmation dialog.
+pub enum MarkdownEditorConfirmResolution {
+  ConfirmSave
+  ConfirmDiscard
+  ConfirmCancel
 }
 
 ///|
@@ -180,6 +199,9 @@ pub enum MarkdownEditorMsg {
   ToggleSourceMode
   ToggleMoreMenu
   MoreMenuCommand(MarkdownEditorMsg)
+  DismissToastTick
+  AutosaveTick
+  ResolvePendingConfirm(MarkdownEditorConfirmResolution)
   UpdateDocument(String)
   UpdateFindQuery(String)
   UpdateReplaceText(String)
@@ -232,6 +254,9 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     format_palette_visible: @moui.State::new(false),
     format_palette_query: @moui.State::new(""),
     more_menu_visible: @moui.State::new(false),
+    toasts: @moui.State::new(@views.ToastQueue::new()),
+    autosave_draft: @moui.State::new(""),
+    pending_confirm: @moui.State::new(None),
     writing_appearance: @moui.State::new(PaperAppearance),
     find_visible: @moui.State::new(false),
     find_query: @moui.State::new(""),
@@ -252,7 +277,15 @@ fn MarkdownEditorApp::update(
   message : MarkdownEditorMsg,
 ) -> MarkdownEditorApp {
   match message {
-    NewDocument => self.new_document()
+    NewDocument => {
+      if self.is_dirty() && self.pending_confirm.get() is None {
+        self.pending_confirm.set(
+          Some({ title: "Unsaved changes", deferred: NewDocument }),
+        )
+      } else {
+        self.new_document()
+      }
+    }
     SaveDocument =>
       if self.document_path.get() == "" {
         self.transfer_status.set(
@@ -269,10 +302,17 @@ fn MarkdownEditorApp::update(
       self.transfer_status.set(
         TransferUnavailable("save as requires host file dialog services"),
       )
-    OpenDocument =>
-      self.transfer_status.set(
-        TransferUnavailable("open requires host file dialog services"),
-      )
+    OpenDocument => {
+      if self.is_dirty() && self.pending_confirm.get() is None {
+        self.pending_confirm.set(
+          Some({ title: "Unsaved changes", deferred: OpenDocument }),
+        )
+      } else {
+        self.transfer_status.set(
+          TransferUnavailable("open requires host file dialog services"),
+        )
+      }
+    }
     ImportFromClipboard =>
       self.transfer_status.set(
         TransferUnavailable("clipboard import requires host services"),
@@ -312,6 +352,9 @@ fn MarkdownEditorApp::update(
       self.more_menu_visible.set(false)
       let _ = self.update(message)
     }
+    DismissToastTick => self.expire_toasts()
+    AutosaveTick => self.maybe_autosave()
+    ResolvePendingConfirm(resolution) => self.resolve_pending_confirm(resolution)
     UpdateDocument(value) => self.set_document_from_input(value)
     UpdateFindQuery(value) => self.update_find_query(value)
     UpdateReplaceText(value) => self.replace_text.set(value)
@@ -362,7 +405,15 @@ fn MarkdownEditorApp::update_with_services(
   match message {
     SaveDocument => (self, self.request_document_save(services))
     SaveDocumentAs => (self, self.request_file_save_as(services))
-    OpenDocument => (self, self.request_file_open(services))
+    OpenDocument =>
+      if self.is_dirty() && self.pending_confirm.get() is None {
+        self.pending_confirm.set(
+          Some({ title: "Unsaved changes", deferred: OpenDocument }),
+        )
+        (self, @moui.Effect::none())
+      } else {
+        (self, self.request_file_open(services))
+      }
     ImportFromClipboard => (self, self.request_clipboard_import(services))
     ExportToClipboard => (self, self.request_clipboard_export(services))
     ExportHtmlToClipboard => (self, self.request_html_export(services))
@@ -381,8 +432,11 @@ fn MarkdownEditorApp::update_with_services(
 fn MarkdownEditorApp::subscriptions(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
+  timer_source? : @host.HostTimerSource? = None,
 ) -> @moui.Subscription[MarkdownEditorMsg] {
-  match self.transfer_status.get() {
+  // The transfer completion subscription always wins while a host transfer is
+  // pending, since it owns the lifecycle of that async work.
+  let transfer_sub = match self.transfer_status.get() {
     TransferPending(id, kind) =>
       services.completion_subscription(
         id,
@@ -395,6 +449,38 @@ fn MarkdownEditorApp::subscriptions(
       )
     _ => @moui.Subscription::none()
   }
+  let subs : Array[@moui.Subscription[MarkdownEditorMsg]] = [transfer_sub]
+  // A repeating timer dismisses toasts once their TTL elapses. Only active
+  // while toasts are on screen, and only when a host timer source exists.
+  match timer_source {
+    Some(source) => {
+      if self.toasts.get().items.length() > 0 {
+        subs.push(
+          source.subscription(
+            interval_ms=1000.0,
+            key="markdown-editor:toast-dismiss",
+            label="Markdown editor toast dismiss tick",
+            map=_ => DismissToastTick,
+          ),
+        )
+      }
+      // Autosave every 5s when the document is dirty and has a path.
+      if self.is_dirty() &&
+        self.document_path.get() != "" &&
+        !self.transfer_in_progress() {
+        subs.push(
+          source.subscription(
+            interval_ms=5000.0,
+            key="markdown-editor:autosave",
+            label="Markdown editor autosave tick",
+            map=_ => AutosaveTick,
+          ),
+        )
+      }
+    }
+    None => ()
+  }
+  @moui.Subscription::batch(subs)
 }
 
 ///|
@@ -410,12 +496,13 @@ pub fn MarkdownEditorApp::program(
 pub fn MarkdownEditorApp::program_with_services(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
+  timer_source? : @host.HostTimerSource? = None,
 ) -> @moui.Program[MarkdownEditorApp, MarkdownEditorMsg] {
   @moui.Program::new(
     init=() => (self, @moui.Effect::none()),
     update=(app, message) => app.update_with_services(message, services),
     view=app => @views.component(ctx => app.reactive_root(ctx)),
-    subscriptions=app => app.subscriptions(services),
+    subscriptions=app => app.subscriptions(services, timer_source~),
   )
 }
 

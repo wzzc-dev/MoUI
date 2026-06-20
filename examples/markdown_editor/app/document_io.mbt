@@ -625,36 +625,59 @@ fn MarkdownEditorApp::apply_transfer_completion(
     @host.HostServiceResponse::ClipboardText(text) => {
       self.load_document(text, path="")
       self.transfer_status.set(TransferImported)
+      self.push_toast("Markdown imported", tone=@views.FeedbackTone::Success)
     }
     @host.HostServiceResponse::ClipboardWritten =>
       match markdown_editor_active_transfer_kind(self.transfer_status.get()) {
-        Some(ClipboardHtmlExport) =>
+        Some(ClipboardHtmlExport) => {
           self.transfer_status.set(TransferHtmlCopied)
-        _ => self.transfer_status.set(TransferCopied)
+          self.push_toast("HTML copied", tone=@views.FeedbackTone::Success)
+        }
+        _ => {
+          self.transfer_status.set(TransferCopied)
+          self.push_toast("Markdown copied", tone=@views.FeedbackTone::Success)
+        }
       }
     @host.HostServiceResponse::FileDialogSelection(paths) =>
       self.apply_file_dialog_selection(completion.request, paths)
     @host.HostServiceResponse::TextFileContent(path, text) => {
       self.load_document(text, path~)
       self.transfer_status.set(TransferOpened(path))
+      self.push_toast("Opened " + path, tone=@views.FeedbackTone::Success)
     }
     @host.HostServiceResponse::TextFileWritten(path) => {
       self.save_document_as(path)
       match markdown_editor_active_transfer_kind(self.transfer_status.get()) {
-        Some(FileSaveAs) => self.transfer_status.set(TransferSavedAs(path))
-        _ => self.transfer_status.set(TransferSaved(path))
+        Some(FileSaveAs) => {
+          self.transfer_status.set(TransferSavedAs(path))
+          self.push_toast("Saved " + path, tone=@views.FeedbackTone::Success)
+        }
+        _ => {
+          self.transfer_status.set(TransferSaved(path))
+          self.push_toast("Saved " + path, tone=@views.FeedbackTone::Success)
+        }
       }
     }
     @host.HostServiceResponse::UrlOpened =>
       self.transfer_status.set(TransferTargetOpened)
-    @host.HostServiceResponse::Unavailable(reason) =>
+    @host.HostServiceResponse::Unavailable(reason) => {
       self.transfer_status.set(TransferUnavailable(reason))
-    _ =>
+      self.push_toast(
+        "Action unavailable: " + reason,
+        tone=@views.FeedbackTone::Danger,
+      )
+    }
+    _ => {
       self.transfer_status.set(
         TransferUnavailable(
           "clipboard service returned an unsupported response",
         ),
       )
+      self.push_toast(
+        "Unsupported response",
+        tone=@views.FeedbackTone::Danger,
+      )
+    }
   }
 }
 
