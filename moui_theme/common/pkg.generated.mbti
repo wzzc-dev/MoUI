@@ -8,6 +8,10 @@ import {
 }
 
 // Values
+pub fn color(r~ : Double, g~ : Double, b~ : Double, a? : Double) -> @core.Color
+
+pub fn color_byte(r~ : Int, g~ : Int, b~ : Int, a? : Double) -> @core.Color
+
 pub fn custom(scheme? : @core.ColorScheme, base? : @core.Theme, palette? : @core.ColorPalette, spacing_scale? : @core.SpacingScale, radius_scale? : @core.RadiusScale, typography? : @core.TypographyScale, shadow_scale? : @core.ShadowScale, motion? : @core.MotionScale, surfaces? : @core.SurfaceScale, components? : @core.ComponentThemes) -> @core.Theme
 
 pub fn custom_tokens(DesignSystemTokens, palette? : DesignSemanticPalette, typography? : DesignTypographyTokens, spacing? : DesignSpacingTokens, radius? : DesignRadiusTokens, elevation? : DesignElevationTokens, motion? : DesignMotionTokens, surfaces? : DesignSurfaceTokens, state_layer? : DesignStateLayerTokens, components? : DesignComponentTokens) -> DesignSystemTokens
@@ -19,34 +23,6 @@ pub fn preset_for_variant(DesignPreset, variant? : DesignSchemeVariant, system_s
 // Errors
 
 // Types and methods
-pub(all) enum DesignAdaptationKind {
-  DirectRoleMapping
-  CollapsedRoleMatrix
-  Approximation
-  PendingOfficialImport
-  UnsupportedOfficialFeature
-  CustomizableOverride
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DesignAdaptationKind::label(Self) -> String
-
-pub(all) struct DesignAdaptationRecord {
-  preset : DesignPreset
-  kind : DesignAdaptationKind
-  category : DesignTokenCategory
-  official_scope : String
-  official_source : String
-  source_declared : Bool
-  source_label : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  moui_surface : String
-  status : DesignTokenStatus
-  difference : String
-  remaining_gap : String
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct DesignBadgeTokens {
   neutral : DesignToneTokens
   accent : DesignToneTokens
@@ -87,57 +63,6 @@ pub(all) struct DesignChoiceControlTokens {
   check_style : @core.CheckMarkStyle
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignChoiceControlTokens::core_style(Self) -> @views.ChoiceControlStyle
-
-pub(all) struct DesignComponentCoverage {
-  component : String
-  source_family : String
-  moui_surface : String
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignComponentStyleResolverRecord {
-  preset : DesignPreset
-  component : String
-  official_scope : String
-  official_source : String
-  source_declared : Bool
-  source_label : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  token_surface : String
-  core_style_surface : String
-  tokens_api : String
-  style_api : String
-  scheme : @core.ColorScheme
-  resolves_tokens : Bool
-  resolves_core_style : Bool
-  status : DesignTokenStatus
-  remaining_gap : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignComponentTokenMatrixRecord {
-  preset : DesignPreset
-  component : String
-  official_scope : String
-  official_source : String
-  source_declared : Bool
-  source_label : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  moui_surface : String
-  mapped_token_count : Int
-  required_token_count : Int
-  source_imported_token_count : Int
-  runtime_aligned_token_count : Int
-  pending_token_family : String
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DesignComponentTokens {
   button : DesignButtonTokens
@@ -181,36 +106,6 @@ pub(all) struct DesignCoreComponentStyles {
   form_validation : @views.FormValidationStyle
 } derive(Eq, ToJson, @debug.Debug)
 
-pub(all) struct DesignCustomizationCapabilityRecord {
-  preset : DesignPreset
-  kind : DesignCustomizationKind
-  capability : String
-  api_surface : String
-  token_surface : String
-  inherits_base : Bool
-  supports_override : Bool
-  recomputes_dependents : Bool
-  status : DesignTokenStatus
-  remaining_gap : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignCustomizationCoverage {
-  capability : String
-  api_surface : String
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum DesignCustomizationKind {
-  ThemeInheritance
-  ThemeTokenOverride
-  DesignTokenInheritance
-  DesignTokenGroupOverride
-  ComponentTokenOverride
-  VariantThemeResolution
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DesignCustomizationKind::label(Self) -> String
-
 pub(all) enum DesignDensity {
   Compact
   Standard
@@ -218,34 +113,6 @@ pub(all) enum DesignDensity {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignDensity::label(Self) -> String
 pub fn DesignDensity::multiplier(Self) -> Double
-
-pub(all) struct DesignDensityResolverRecord {
-  preset : DesignPreset
-  density : DesignDensity
-  source_family : String
-  official_source : String
-  source_declared : Bool
-  source_label : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  tokens_api : String
-  theme_api : String
-  scheme : @core.ColorScheme
-  density_multiplier : Double
-  spacing_sm : Double
-  spacing_md : Double
-  theme_spacing_sm : Double
-  theme_spacing_md : Double
-  surface_padding : Double
-  feedback_padding : Double
-  resolves_tokens : Bool
-  resolves_theme : Bool
-  resolves_components : Bool
-  status : DesignTokenStatus
-  remaining_gap : String
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DesignElevationTokens {
   sm : @core.ShadowStyle
@@ -285,50 +152,6 @@ pub(all) struct DesignMotionTokens {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignMotionTokens::core_motion(Self) -> @core.MotionScale
 
-pub(all) struct DesignOfficialTokenAnchor {
-  preset : DesignPreset
-  category : DesignTokenCategory
-  layer : DesignTokenLayer
-  official_token : String
-  official_source : String
-  required : Bool
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignOfficialTokenCoverage {
-  preset : DesignPreset
-  category : DesignTokenCategory
-  layer : DesignTokenLayer
-  official_token : String
-  official_source : String
-  source_declared : Bool
-  source_label : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  required : Bool
-  mapped : Bool
-  moui_token : String
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignOfficialTokenSourceUsage {
-  preset : DesignPreset
-  source_label : String
-  source_url : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  anchor_count : Int
-  mapped_anchor_count : Int
-  unmapped_required_anchor_count : Int
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct DesignPickerTokens {
   font : @core.FontSpec
   foreground : @core.Color
@@ -344,154 +167,12 @@ pub(all) enum DesignPreset {
   Primer
   Fluent
 } derive(Eq, ToJson, @debug.Debug)
-pub fn DesignPreset::adaptation_gap_count(Self) -> Int
-pub fn DesignPreset::adaptation_record_count(Self) -> Int
-pub fn DesignPreset::adaptation_report(Self) -> Array[DesignAdaptationRecord]
-pub fn DesignPreset::adaptation_report_for(Self, String) -> DesignAdaptationRecord?
-pub fn DesignPreset::adaptation_source_lock_gap_count(Self) -> Int
-pub fn DesignPreset::aligned_adaptation_count(Self) -> Int
-pub fn DesignPreset::component_coverage(Self) -> Array[DesignComponentCoverage]
-pub fn DesignPreset::component_style_resolver_count(Self) -> Int
-pub fn DesignPreset::component_style_resolver_for(Self, String, scheme? : @core.ColorScheme) -> DesignComponentStyleResolverRecord?
-pub fn DesignPreset::component_style_resolver_gap_count(Self) -> Int
-pub fn DesignPreset::component_style_resolver_official_parity_gap_count(Self) -> Int
-pub fn DesignPreset::component_style_resolver_report(Self, scheme? : @core.ColorScheme) -> Array[DesignComponentStyleResolverRecord]
-pub fn DesignPreset::component_style_resolver_source_gap_count(Self) -> Int
-pub fn DesignPreset::component_token_matrix(Self) -> Array[DesignComponentTokenMatrixRecord]
-pub fn DesignPreset::component_token_matrix_count(Self) -> Int
-pub fn DesignPreset::component_token_matrix_for(Self, String) -> DesignComponentTokenMatrixRecord?
-pub fn DesignPreset::component_token_matrix_gap_count(Self) -> Int
-pub fn DesignPreset::component_token_matrix_mapped_count(Self) -> Int
-pub fn DesignPreset::component_token_matrix_required_count(Self) -> Int
-pub fn DesignPreset::component_token_matrix_runtime_aligned_count(Self) -> Int
-pub fn DesignPreset::component_token_matrix_source_gap_count(Self) -> Int
-pub fn DesignPreset::component_token_matrix_source_imported_count(Self) -> Int
-pub fn DesignPreset::customization_capability_gap_count(Self) -> Int
-pub fn DesignPreset::customization_coverage(Self) -> Array[DesignCustomizationCoverage]
-pub fn DesignPreset::customization_official_parity_gap_count(Self) -> Int
-pub fn DesignPreset::customization_report(Self) -> Array[DesignCustomizationCapabilityRecord]
-pub fn DesignPreset::customization_report_count(Self) -> Int
-pub fn DesignPreset::customization_report_for(Self, String) -> DesignCustomizationCapabilityRecord?
-pub fn DesignPreset::density_resolver_count(Self) -> Int
-pub fn DesignPreset::density_resolver_for(Self, DesignDensity, scheme? : @core.ColorScheme) -> DesignDensityResolverRecord?
-pub fn DesignPreset::density_resolver_gap_count(Self) -> Int
-pub fn DesignPreset::density_resolver_official_parity_gap_count(Self) -> Int
-pub fn DesignPreset::density_resolver_report(Self, scheme? : @core.ColorScheme) -> Array[DesignDensityResolverRecord]
-pub fn DesignPreset::density_resolver_source_gap_count(Self) -> Int
-pub fn DesignPreset::design_system_report(Self, scheme? : @core.ColorScheme, system_scheme? : @core.ColorScheme, density? : DesignDensity) -> DesignSystemReport
-pub fn DesignPreset::golden_gap_count(Self) -> Int
-pub fn DesignPreset::golden_mapped_count(Self) -> Int
-pub fn DesignPreset::golden_mapping_for(Self, String) -> DesignTokenMapping?
-pub fn DesignPreset::golden_mappings(Self) -> Array[DesignTokenMapping]
-pub fn DesignPreset::golden_mappings_without_official_anchor(Self) -> Array[DesignTokenMapping]
-pub fn DesignPreset::has_golden_mapping(Self, String) -> Bool
-pub fn DesignPreset::has_official_token_anchor(Self, String) -> Bool
-pub fn DesignPreset::has_official_token_source_locks(Self) -> Bool
-pub fn DesignPreset::has_stable_source_locks(Self) -> Bool
-pub fn DesignPreset::is_design_system_complete(Self) -> Bool
 pub fn DesignPreset::label(Self) -> String
-pub fn DesignPreset::manifest(Self) -> DesignSystemManifest
-pub fn DesignPreset::mapped_official_token_anchor_count(Self) -> Int
-pub fn DesignPreset::moving_source_ref_count(Self) -> Int
-pub fn DesignPreset::official_token_anchor_count(Self) -> Int
-pub fn DesignPreset::official_token_anchor_source_gap_count(Self) -> Int
-pub fn DesignPreset::official_token_anchor_source_lock_count(Self) -> Int
-pub fn DesignPreset::official_token_anchors(Self) -> Array[DesignOfficialTokenAnchor]
-pub fn DesignPreset::official_token_coverage(Self) -> Array[DesignOfficialTokenCoverage]
-pub fn DesignPreset::official_token_coverage_for(Self, String) -> DesignOfficialTokenCoverage?
-pub fn DesignPreset::official_token_source_usage(Self) -> Array[DesignOfficialTokenSourceUsage]
-pub fn DesignPreset::requirement_audit(Self) -> Array[DesignSystemRequirementAudit]
-pub fn DesignPreset::requirement_audit_for(Self, DesignSystemRequirement) -> DesignSystemRequirementAudit?
-pub fn DesignPreset::requirement_gap_count(Self) -> Int
-pub fn DesignPreset::runtime_token_aligned_count(Self) -> Int
-pub fn DesignPreset::runtime_token_alignment_count(Self) -> Int
-pub fn DesignPreset::runtime_token_alignment_for(Self, String) -> DesignRuntimeTokenAlignmentRecord?
-pub fn DesignPreset::runtime_token_alignment_gap_count(Self) -> Int
-pub fn DesignPreset::runtime_token_alignment_report(Self) -> Array[DesignRuntimeTokenAlignmentRecord]
-pub fn DesignPreset::runtime_token_destination_gap_count(Self) -> Int
-pub fn DesignPreset::runtime_token_source_value_gap_count(Self) -> Int
-pub fn DesignPreset::semantic_palette_role_aligned_count(Self) -> Int
-pub fn DesignPreset::semantic_palette_role_count(Self) -> Int
-pub fn DesignPreset::semantic_palette_role_for(Self, DesignSemanticPaletteRole, scheme? : @core.ColorScheme) -> DesignSemanticPaletteRoleRecord?
-pub fn DesignPreset::semantic_palette_role_gap_count(Self) -> Int
-pub fn DesignPreset::semantic_palette_role_mapped_count(Self) -> Int
-pub fn DesignPreset::semantic_palette_role_official_parity_gap_count(Self) -> Int
-pub fn DesignPreset::semantic_palette_role_report(Self, scheme? : @core.ColorScheme) -> Array[DesignSemanticPaletteRoleRecord]
-pub fn DesignPreset::semantic_palette_role_source_gap_count(Self) -> Int
-pub fn DesignPreset::source_import_anchor_mismatch_count(Self) -> Int
-pub fn DesignPreset::source_import_coverage(Self) -> Array[DesignSourceImportCoverage]
-pub fn DesignPreset::source_import_coverage_count(Self) -> Int
-pub fn DesignPreset::source_import_coverage_for(Self, String) -> DesignSourceImportCoverage?
-pub fn DesignPreset::source_import_coverage_gap_count(Self) -> Int
-pub fn DesignPreset::source_import_golden_mismatch_count(Self) -> Int
-pub fn DesignPreset::source_import_integrity_for(Self, String) -> DesignSourceImportIntegrityRecord?
-pub fn DesignPreset::source_import_integrity_gap_count(Self) -> Int
-pub fn DesignPreset::source_import_integrity_report(Self) -> Array[DesignSourceImportIntegrityRecord]
-pub fn DesignPreset::source_import_manifest_lock_gap_count(Self) -> Int
-pub fn DesignPreset::source_import_scope_gap_count(Self) -> Int
-pub fn DesignPreset::source_import_unanchored_count(Self) -> Int
-pub fn DesignPreset::source_imported_official_token_count(Self) -> Int
-pub fn DesignPreset::source_imported_token_count(Self) -> Int
-pub fn DesignPreset::source_imported_token_for(Self, String) -> DesignSourceImportedToken?
-pub fn DesignPreset::source_imported_token_mapped_count(Self) -> Int
-pub fn DesignPreset::source_imported_token_source_lock_gap_count(Self) -> Int
-pub fn DesignPreset::source_imported_tokens(Self) -> Array[DesignSourceImportedToken]
-pub fn DesignPreset::source_lock_quality_gap_count(Self) -> Int
-pub fn DesignPreset::source_lock_report(Self) -> Array[DesignSourceLockRecord]
-pub fn DesignPreset::source_package_import_gap_count(Self) -> Int
-pub fn DesignPreset::source_package_imported_token_count(Self) -> Int
-pub fn DesignPreset::source_package_inventory(Self) -> Array[DesignSourcePackageRecord]
-pub fn DesignPreset::source_package_inventory_count(Self) -> Int
-pub fn DesignPreset::source_package_mapped_token_count(Self) -> Int
-pub fn DesignPreset::source_package_snapshot_count(Self) -> Int
-pub fn DesignPreset::source_package_snapshot_gap_count(Self) -> Int
-pub fn DesignPreset::source_snapshot_url_count(Self) -> Int
-pub fn DesignPreset::source_snapshot_url_gap_count(Self) -> Int
-pub fn DesignPreset::source_usage(Self) -> Array[DesignSourceUsage]
-pub fn DesignPreset::sources(Self) -> Array[DesignSystemSource]
-pub fn DesignPreset::stable_source_lock_count(Self) -> Int
 pub fn DesignPreset::summary(Self) -> String
 pub fn DesignPreset::theme(Self, scheme? : @core.ColorScheme, density? : DesignDensity) -> @core.Theme
 pub fn DesignPreset::theme_for_variant(Self, variant? : DesignSchemeVariant, system_scheme? : @core.ColorScheme, density? : DesignDensity) -> @core.Theme
-pub fn DesignPreset::token_coverage(Self) -> Array[DesignTokenCoverage]
-pub fn DesignPreset::token_group_resolver_count(Self) -> Int
-pub fn DesignPreset::token_group_resolver_for(Self, DesignSystemRequirement, scheme? : @core.ColorScheme) -> DesignTokenGroupResolverRecord?
-pub fn DesignPreset::token_group_resolver_gap_count(Self) -> Int
-pub fn DesignPreset::token_group_resolver_official_parity_gap_count(Self) -> Int
-pub fn DesignPreset::token_group_resolver_report(Self, scheme? : @core.ColorScheme) -> Array[DesignTokenGroupResolverRecord]
-pub fn DesignPreset::token_group_resolver_source_gap_count(Self) -> Int
-pub fn DesignPreset::token_taxonomy_count(Self) -> Int
-pub fn DesignPreset::token_taxonomy_for(Self, DesignTokenCategory) -> DesignTokenTaxonomyRecord?
-pub fn DesignPreset::token_taxonomy_gap_count(Self) -> Int
-pub fn DesignPreset::token_taxonomy_mapped_count(Self) -> Int
-pub fn DesignPreset::token_taxonomy_official_parity_gap_count(Self) -> Int
-pub fn DesignPreset::token_taxonomy_report(Self) -> Array[DesignTokenTaxonomyRecord]
-pub fn DesignPreset::token_taxonomy_required_count(Self) -> Int
-pub fn DesignPreset::token_taxonomy_source_gap_count(Self) -> Int
 pub fn DesignPreset::tokens(Self, scheme? : @core.ColorScheme, density? : DesignDensity) -> DesignSystemTokens
 pub fn DesignPreset::tokens_for_variant(Self, variant? : DesignSchemeVariant, system_scheme? : @core.ColorScheme, density? : DesignDensity) -> DesignSystemTokens
-pub fn DesignPreset::typography_role_aligned_count(Self) -> Int
-pub fn DesignPreset::typography_role_count(Self) -> Int
-pub fn DesignPreset::typography_role_destination_gap_count(Self) -> Int
-pub fn DesignPreset::typography_role_for(Self, DesignTypographyRole, scheme? : @core.ColorScheme) -> DesignTypographyRoleRecord?
-pub fn DesignPreset::typography_role_gap_count(Self) -> Int
-pub fn DesignPreset::typography_role_mapped_count(Self) -> Int
-pub fn DesignPreset::typography_role_official_parity_gap_count(Self) -> Int
-pub fn DesignPreset::typography_role_report(Self, scheme? : @core.ColorScheme) -> Array[DesignTypographyRoleRecord]
-pub fn DesignPreset::typography_role_source_gap_count(Self) -> Int
-pub fn DesignPreset::unanchored_golden_mapping_count(Self) -> Int
-pub fn DesignPreset::undeclared_adaptation_source_count(Self) -> Int
-pub fn DesignPreset::undeclared_golden_source_count(Self) -> Int
-pub fn DesignPreset::undeclared_official_token_anchor_source_count(Self) -> Int
-pub fn DesignPreset::unmapped_official_token_anchor_count(Self) -> Int
-pub fn DesignPreset::unused_official_source_count(Self) -> Int
-pub fn DesignPreset::variant_coverage(Self) -> Array[DesignVariantCoverage]
-pub fn DesignPreset::variant_resolver_count(Self) -> Int
-pub fn DesignPreset::variant_resolver_for(Self, DesignSchemeVariant, system_scheme? : @core.ColorScheme, density? : DesignDensity) -> DesignVariantResolverRecord?
-pub fn DesignPreset::variant_resolver_gap_count(Self) -> Int
-pub fn DesignPreset::variant_resolver_official_parity_gap_count(Self) -> Int
-pub fn DesignPreset::variant_resolver_report(Self, system_scheme? : @core.ColorScheme, density? : DesignDensity) -> Array[DesignVariantResolverRecord]
-pub fn DesignPreset::variant_resolver_source_gap_count(Self) -> Int
 
 pub(all) struct DesignProgressTokens {
   foreground : @core.Color
@@ -507,25 +188,6 @@ pub(all) struct DesignRadiusTokens {
   pill : Double
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignRadiusTokens::core_radius_scale(Self) -> @core.RadiusScale
-
-pub(all) struct DesignRuntimeTokenAlignmentRecord {
-  preset : DesignPreset
-  category : DesignTokenCategory
-  layer : DesignTokenLayer
-  official_token : String
-  required : Bool
-  source_imported : Bool
-  source_token : String
-  source_value : String
-  moui_token : String
-  source_value_resolved : Bool
-  expected_runtime_value : String
-  runtime_value_available : Bool
-  runtime_value : String
-  runtime_aligned : Bool
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum DesignSchemeVariant {
   SchemeLight
@@ -561,50 +223,6 @@ pub(all) struct DesignSemanticPalette {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSemanticPalette::core_palette(Self, @core.ColorScheme) -> @core.ColorPalette
 
-pub(all) enum DesignSemanticPaletteRole {
-  PaletteForeground
-  PaletteBackground
-  PaletteSurface
-  PaletteSurfaceVariant
-  PalettePrimary
-  PalettePrimaryForeground
-  PaletteOutline
-  PaletteMuted
-  PaletteSuccess
-  PaletteWarning
-  PaletteDanger
-  PaletteInfo
-  PaletteFocus
-  PaletteScrim
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DesignSemanticPaletteRole::label(Self) -> String
-
-pub(all) struct DesignSemanticPaletteRoleRecord {
-  preset : DesignPreset
-  role : DesignSemanticPaletteRole
-  token_surface : String
-  core_surface : String
-  official_token : String
-  official_token_count : Int
-  source_imported_count : Int
-  runtime_aligned_count : Int
-  source_declared : Bool
-  source_label : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  source_value : String
-  expected_runtime_value : String
-  token_value : String
-  core_value : String
-  resolves_core_surface : Bool
-  required : Bool
-  status : DesignTokenStatus
-  remaining_gap : String
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct DesignSliderTokens {
   foreground : @core.Color
   background : @core.Color
@@ -615,122 +233,6 @@ pub(all) struct DesignSliderTokens {
   thumb_shape : @core.ThumbShape
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSliderTokens::core_style(Self) -> @views.SliderStyle
-
-pub(all) struct DesignSourceImportCoverage {
-  preset : DesignPreset
-  category : DesignTokenCategory
-  layer : DesignTokenLayer
-  official_token : String
-  required : Bool
-  golden_mapped : Bool
-  source_imported : Bool
-  source_token : String
-  source_file : String
-  source_sha : String
-  source_value : String
-  moui_token : String
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignSourceImportIntegrityRecord {
-  preset : DesignPreset
-  category : DesignTokenCategory
-  layer : DesignTokenLayer
-  official_token : String
-  source_token : String
-  source_url : String
-  source_ref : String
-  token_path : String
-  source_file : String
-  source_declared : Bool
-  source_locked : Bool
-  source_file_scoped : Bool
-  anchor_declared : Bool
-  category_compatible : Bool
-  layer_compatible : Bool
-  golden_mapped : Bool
-  golden_moui_token : String
-  moui_token : String
-  moui_token_matches_golden : Bool
-  integrity_ok : Bool
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignSourceImportedToken {
-  preset : DesignPreset
-  category : DesignTokenCategory
-  layer : DesignTokenLayer
-  official_token : String
-  token_name : String
-  source_url : String
-  source_ref : String
-  token_path : String
-  package_path : String
-  source_file : String
-  source_sha : String
-  source_value : String
-  moui_token : String
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignSourceLockRecord {
-  preset : DesignPreset
-  source_label : String
-  source_url : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  snapshot_url : String
-  ref_kind : DesignSourceRefKind
-  declared_lock : Bool
-  stable_lock : Bool
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignSourcePackageRecord {
-  preset : DesignPreset
-  package_name : String
-  source_label : String
-  source_url : String
-  source_ref : String
-  token_path : String
-  snapshot_url : String
-  package_path : String
-  category : DesignTokenCategory
-  layer : DesignTokenLayer
-  tracked_path_count : Int
-  mapped_token_count : Int
-  imported_token_count : Int
-  status : DesignTokenStatus
-  pending_gap : String
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum DesignSourceRefKind {
-  WorkspaceRef
-  LiveDocumentationRef
-  MovingBranchRef
-  StableSnapshotRef
-  MissingRef
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DesignSourceRefKind::label(Self) -> String
-
-pub(all) struct DesignSourceUsage {
-  preset : DesignPreset
-  source_label : String
-  source_url : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  golden_mapping_count : Int
-  source_status : DesignTokenStatus
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DesignSpacingTokens {
   xs : Double
@@ -778,107 +280,6 @@ pub(all) struct DesignSurfaceTokens {
   overlay : @core.Brush
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSurfaceTokens::core_surfaces(Self) -> @core.SurfaceScale
-
-pub(all) struct DesignSystemManifest {
-  preset : DesignPreset
-  official_name : String
-  stage : DesignTokenStatus
-  sources : Array[DesignSystemSource]
-  token_coverage : Array[DesignTokenCoverage]
-  variant_coverage : Array[DesignVariantCoverage]
-  component_coverage : Array[DesignComponentCoverage]
-  customization_coverage : Array[DesignCustomizationCoverage]
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DesignSystemManifest::has_component(Self, String) -> Bool
-pub fn DesignSystemManifest::has_official_source_locks(Self) -> Bool
-pub fn DesignSystemManifest::has_token_category(Self, DesignTokenCategory) -> Bool
-pub fn DesignSystemManifest::has_variant(Self, DesignSchemeVariant) -> Bool
-pub fn DesignSystemManifest::is_official_complete(Self) -> Bool
-pub fn DesignSystemManifest::official_source_count(Self) -> Int
-pub fn DesignSystemManifest::source_lock_count(Self) -> Int
-
-pub(all) struct DesignSystemReport {
-  preset : DesignPreset
-  scheme : @core.ColorScheme
-  system_scheme : @core.ColorScheme
-  density : DesignDensity
-  status : DesignTokenStatus
-  complete : Bool
-  manifest : DesignSystemManifest
-  requirement_audit : Array[DesignSystemRequirementAudit]
-  token_taxonomy : Array[DesignTokenTaxonomyRecord]
-  semantic_palette_roles : Array[DesignSemanticPaletteRoleRecord]
-  typography_roles : Array[DesignTypographyRoleRecord]
-  sources : Array[DesignSystemSource]
-  source_locks : Array[DesignSourceLockRecord]
-  source_packages : Array[DesignSourcePackageRecord]
-  source_imports : Array[DesignSourceImportedToken]
-  source_import_coverage : Array[DesignSourceImportCoverage]
-  source_import_integrity : Array[DesignSourceImportIntegrityRecord]
-  runtime_alignment : Array[DesignRuntimeTokenAlignmentRecord]
-  token_group_resolvers : Array[DesignTokenGroupResolverRecord]
-  density_resolvers : Array[DesignDensityResolverRecord]
-  variant_resolvers : Array[DesignVariantResolverRecord]
-  customization : Array[DesignCustomizationCapabilityRecord]
-  official_token_coverage : Array[DesignOfficialTokenCoverage]
-  official_token_source_usage : Array[DesignOfficialTokenSourceUsage]
-  component_token_matrix : Array[DesignComponentTokenMatrixRecord]
-  component_style_resolvers : Array[DesignComponentStyleResolverRecord]
-  adaptation : Array[DesignAdaptationRecord]
-  golden_mappings : Array[DesignTokenMapping]
-  unanchored_golden_mappings : Array[DesignTokenMapping]
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DesignSystemReport::evidence_row_count(Self) -> Int
-pub fn DesignSystemReport::gap_count(Self) -> Int
-pub fn DesignSystemReport::has_official_completion_claim(Self) -> Bool
-pub fn DesignSystemReport::semantic_palette_gap_count(Self) -> Int
-pub fn DesignSystemReport::taxonomy_gap_count(Self) -> Int
-pub fn DesignSystemReport::typography_gap_count(Self) -> Int
-
-pub(all) enum DesignSystemRequirement {
-  OfficialSources
-  SourceVersionLocks
-  SourcePackageInventory
-  SourceImportedTokens
-  RuntimeTokenAlignment
-  TokenTaxonomy
-  SemanticPalette
-  Typography
-  SpacingDensity
-  ShapeRadius
-  ElevationShadow
-  Motion
-  Surface
-  StateLayer
-  SchemeVariants
-  ComponentTokens
-  ComponentMatrix
-  Customization
-  OfficialTokenCoverage
-  GoldenMappings
-  AdaptationDifferences
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DesignSystemRequirement::label(Self) -> String
-
-pub(all) struct DesignSystemRequirementAudit {
-  preset : DesignPreset
-  requirement : DesignSystemRequirement
-  status : DesignTokenStatus
-  evidence : String
-  remaining_gap : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignSystemSource {
-  label : String
-  url : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DesignSystemTokens {
   preset : DesignPreset
@@ -928,145 +329,12 @@ pub(all) struct DesignTextFieldTokens {
 pub fn DesignTextFieldTokens::core_style(Self) -> @views.TextFieldStyle
 pub fn DesignTextFieldTokens::core_styles(Self) -> DesignTextFieldCoreStyles
 
-pub(all) enum DesignTokenCategory {
-  Color
-  Typography
-  Spacing
-  Density
-  Shape
-  Elevation
-  Motion
-  Surface
-  StateLayer
-  SchemeVariant
-  ComponentStyle
-  Customization
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignTokenCoverage {
-  category : DesignTokenCategory
-  layer : DesignTokenLayer
-  source_family : String
-  moui_surface : String
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignTokenGroupResolverRecord {
-  preset : DesignPreset
-  requirement : DesignSystemRequirement
-  category : DesignTokenCategory
-  source_family : String
-  official_source : String
-  source_declared : Bool
-  source_label : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  token_surface : String
-  tokens_api : String
-  theme_api : String
-  scheme : @core.ColorScheme
-  resolves_tokens : Bool
-  resolves_neutral_surface : Bool
-  status : DesignTokenStatus
-  remaining_gap : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum DesignTokenLayer {
-  ReferenceToken
-  SystemToken
-  AliasToken
-  ComponentToken
-  MoUIAdapter
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignTokenMapping {
-  preset : DesignPreset
-  category : DesignTokenCategory
-  layer : DesignTokenLayer
-  official_token : String
-  official_source : String
-  moui_token : String
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) enum DesignTokenStatus {
-  NotMapped
-  SourceMapped
-  PreviewMapped
-  ThemeMapped
-  ComponentMapped
-  OfficialComplete
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignTokenTaxonomyRecord {
-  preset : DesignPreset
-  category : DesignTokenCategory
-  layer : DesignTokenLayer
-  source_family : String
-  source_declared : Bool
-  source_label : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  token_surface : String
-  moui_surface : String
-  manifest_declared : Bool
-  required : Bool
-  status : DesignTokenStatus
-  remaining_gap : String
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
 pub(all) struct DesignToneTokens {
   foreground : @core.Color
   background : @core.Color
   border : @core.Color
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignToneTokens::core_style(Self) -> @views.ToneStyle
-
-pub(all) enum DesignTypographyRole {
-  TypographyBody
-  TypographyTitle
-  TypographyCaption
-  TypographyControl
-} derive(Eq, ToJson, @debug.Debug)
-pub fn DesignTypographyRole::label(Self) -> String
-
-pub(all) struct DesignTypographyRoleRecord {
-  preset : DesignPreset
-  role : DesignTypographyRole
-  token_surface : String
-  core_surface : String
-  official_token : String
-  official_token_count : Int
-  source_imported_count : Int
-  runtime_aligned_count : Int
-  runtime_destination_gap_count : Int
-  source_declared : Bool
-  source_label : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  source_value : String
-  expected_runtime_value : String
-  token_size : Double
-  core_size : Double
-  token_weight : Int
-  core_weight : Int
-  token_family : String
-  core_family : String
-  resolves_core_surface : Bool
-  required : Bool
-  status : DesignTokenStatus
-  remaining_gap : String
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct DesignTypographyTokens {
   body : @core.FontSpec
@@ -1080,37 +348,6 @@ pub(all) struct DesignTypographyTokens {
   caption_strong : @core.FontSpec?
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignTypographyTokens::core_typography(Self) -> @core.TypographyScale
-
-pub(all) struct DesignVariantCoverage {
-  variant : DesignSchemeVariant
-  source_family : String
-  status : DesignTokenStatus
-  note : String
-} derive(Eq, ToJson, @debug.Debug)
-
-pub(all) struct DesignVariantResolverRecord {
-  preset : DesignPreset
-  variant : DesignSchemeVariant
-  source_family : String
-  official_source : String
-  source_declared : Bool
-  source_label : String
-  source_kind : String
-  source_ref : String
-  token_path : String
-  source_locked : Bool
-  tokens_api : String
-  theme_api : String
-  system_scheme : @core.ColorScheme
-  resolved_scheme : @core.ColorScheme
-  density : DesignDensity
-  resolves_tokens : Bool
-  resolves_theme : Bool
-  status : DesignTokenStatus
-  remaining_gap : String
-} derive(Eq, ToJson, @debug.Debug)
-
-type RuntimeTokenValue derive(Eq, ToJson, @debug.Debug)
 
 // Type aliases
 

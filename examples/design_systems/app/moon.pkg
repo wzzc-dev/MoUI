@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui",
   "wzzc-dev/moui/views",
+  "wzzc-dev/moui_theme/audit",
   "wzzc-dev/moui_theme/carbon",
   "wzzc-dev/moui_theme/common",
   "wzzc-dev/moui_theme/fluent",

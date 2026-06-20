@@ -5,6 +5,10 @@ import {
 
 supported_targets = "+native+wasm-gc"
 
+import {
+  "wzzc-dev/moui_theme/audit",
+} for "test"
+
 options(
   targets: { },
 )
