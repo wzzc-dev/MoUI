@@ -1,11 +1,12 @@
 ///|
 pub fn[Msg] description_list(
   items : Array[DescriptionItem],
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 360.0,
   term_width? : Double = 112.0,
   row_height? : Double = 30.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
   for item in items {
     rows.push(
@@ -14,27 +15,27 @@ pub fn[Msg] description_list(
           text(
             item.term,
             role=TextRole::Caption,
-            theme~,
+            theme=resolved_theme,
             width=term_width,
             height=row_height,
           ),
           text(
             item.detail,
             role=TextRole::Body,
-            theme~,
+            theme=resolved_theme,
             width=views_max_double(
               80.0,
-              width - term_width - theme.spacing_scale.sm,
+              width - term_width - resolved_theme.spacing_scale.sm,
             ),
             height=row_height,
           ),
         ],
-        spacing=theme.spacing_scale.sm,
+        spacing=resolved_theme.spacing_scale.sm,
         align=CrossAlign::Center,
       ),
     )
   }
-  column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start).semantics_role(
+  column(rows, spacing=resolved_theme.spacing_scale.xs, align=CrossAlign::Start).semantics_role(
     @core.SemanticsRole::Group,
   )
 }
@@ -46,20 +47,30 @@ pub fn[Msg] detail_panel(
   subtitle? : String = "",
   action? : StateViewAction[Msg]? = None,
   empty? : @core.View[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 280.0,
   height? : Double = 180.0,
 ) -> @core.View[Msg] {
-  let inner_width = views_max_double(96.0, width - theme.spacing_scale.md * 2.0)
+  let resolved_theme = views_ambient_theme(theme)
+  let inner_width = views_max_double(
+    96.0,
+    width - resolved_theme.spacing_scale.md * 2.0,
+  )
   let rows : Array[@core.View[Msg]] = [
-    text(title, role=TextRole::Control, theme~, width=inner_width, height=26.0),
+    text(
+      title,
+      role=TextRole::Control,
+      theme=resolved_theme,
+      width=inner_width,
+      height=26.0,
+    ),
   ]
   if subtitle != "" {
     rows.push(
       text(
         subtitle,
         role=TextRole::Caption,
-        theme~,
+        theme=resolved_theme,
         width=inner_width,
         height=22.0,
       ),
@@ -73,7 +84,7 @@ pub fn[Msg] detail_panel(
           text(
             "No detail selected",
             role=TextRole::Caption,
-            theme~,
+            theme=resolved_theme,
             width=inner_width,
             height=28.0,
           ),
@@ -83,7 +94,7 @@ pub fn[Msg] detail_panel(
     rows.push(
       description_list(
         items,
-        theme~,
+        theme=resolved_theme,
         width=inner_width,
         term_width=views_min_double(104.0, inner_width * 0.42),
         row_height=28.0,
@@ -97,7 +108,7 @@ pub fn[Msg] detail_panel(
           action.label,
           on_click=action.message,
           variant=ButtonVariant::Tonal,
-          theme~,
+          theme=resolved_theme,
           width=views_min_double(148.0, inner_width),
           height=36.0,
         ),
@@ -105,12 +116,16 @@ pub fn[Msg] detail_panel(
     None => ()
   }
   container(
-    column(rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
+    column(
+      rows,
+      spacing=resolved_theme.spacing_scale.xs,
+      align=CrossAlign::Start,
+    ),
     width~,
     height~,
     variant=ContainerVariant::Raised,
-    theme~,
-    padding=theme.spacing_scale.md,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.md,
   )
   .semantics_role(@core.SemanticsRole::Group)
   .accessibility_label(title)

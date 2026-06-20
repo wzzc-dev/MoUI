@@ -4,23 +4,30 @@ pub fn[Msg] form_validation_summary(
   title? : String = "Review required",
   valid_message? : String = "",
   action? : StateViewAction[Msg]? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : FormValidationStyle,
   width? : Double = 320.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   if summary.valid {
     if valid_message == "" {
       empty()
     } else {
-      form_validation_success(valid_message, action~, theme~, style?, width~)
+      form_validation_success(
+        valid_message,
+        action~,
+        theme=resolved_theme,
+        style?,
+        width~,
+      )
     }
   } else {
     form_validation_error_summary(
       summary,
       title~,
       action~,
-      theme~,
-      style=resolve_form_validation_style(style, theme),
+      theme=resolved_theme,
+      style=resolve_form_validation_style(style, resolved_theme),
       width~,
     )
   }

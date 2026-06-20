@@ -10,17 +10,21 @@ pub fn[Msg] form_field(
   required? : Bool = false,
   disabled? : Bool = false,
   read_only? : Bool = false,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 320.0,
   label_width? : Double = 120.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let resolved_status = form_field_resolved_status(
     status, required, disabled, read_only, error,
   )
   let content_width = match layout {
     Vertical => width
     Horizontal =>
-      views_max_double(80.0, width - label_width - theme.spacing_scale.md)
+      views_max_double(
+        80.0,
+        width - label_width - resolved_theme.spacing_scale.md,
+      )
   }
   let label_view = form_field_label(
     label,
@@ -30,7 +34,7 @@ pub fn[Msg] form_field(
       Vertical => width
       Horizontal => label_width
     },
-    theme~,
+    theme=resolved_theme,
   )
   let body_rows : Array[@core.View[Msg]] = [
     child.frame(width=content_width).disabled(disabled~),
@@ -41,7 +45,7 @@ pub fn[Msg] form_field(
       error~,
       status=resolved_status,
       validation_display~,
-      theme~,
+      theme=resolved_theme,
       width=content_width,
     ) {
     Some(view) => body_rows.push(view)
@@ -49,15 +53,16 @@ pub fn[Msg] form_field(
   }
   let body = column(
     body_rows,
-    spacing=theme.spacing_scale.xs,
+    spacing=resolved_theme.spacing_scale.xs,
     align=CrossAlign::Stretch,
   )
   let field = match layout {
-    Vertical => column([label_view, body], spacing=theme.spacing_scale.xs)
+    Vertical =>
+      column([label_view, body], spacing=resolved_theme.spacing_scale.xs)
     Horizontal =>
       row(
         [label_view, body],
-        spacing=theme.spacing_scale.md,
+        spacing=resolved_theme.spacing_scale.md,
         align=CrossAlign::Start,
       )
   }

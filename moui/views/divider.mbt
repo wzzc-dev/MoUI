@@ -6,17 +6,18 @@
 /// respect dark mode.
 pub fn[Msg] divider(
   axis? : @core.Axis = @core.Axis::Horizontal,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   thickness? : Double = 1.0,
   color? : @core.Color,
   inset? : Double = 0.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   // Dividers use `outline_variant` (Fluent 2 colorNeutralStroke2, the subtle
   // divider tier) rather than the stronger `outline` (colorNeutralStroke1) so
   // hairlines stay calm against the surfaces.
   let line_color = match color {
     Some(value) => value
-    None => theme.palette.outline_variant
+    None => resolved_theme.palette.outline_variant
   }
   let line_thickness = max_view_double(1.0, thickness)
   custom_layout(

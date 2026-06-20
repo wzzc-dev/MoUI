@@ -28,9 +28,10 @@ pub fn[Msg] resizable_split_view(
   max_primary_width? : Double = 420.0,
   spacing? : Double = default_theme().spacing_scale.sm,
   handle_width? : Double = 8.0,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   on_drag~ : (Double) -> Msg,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let width = navigation_clamp_double(
     primary_width, min_primary_width, max_primary_width,
   )
@@ -38,9 +39,9 @@ pub fn[Msg] resizable_split_view(
       empty(),
       width=handle_width,
       height~,
-      background=theme.palette.primary.multiply_alpha(0.38),
+      background=resolved_theme.palette.primary.multiply_alpha(0.38),
       corner_radius=handle_width / 2.0,
-      theme~,
+      theme=resolved_theme,
       padding=0.0,
     )
     .accessibility_label("Split resize handle")

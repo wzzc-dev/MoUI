@@ -4,9 +4,10 @@ pub fn[Msg] selection_toolbar(
   total_count? : Int = 0,
   actions? : Array[ActionItem[Msg]] = [],
   on_clear? : Msg? = None,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 520.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let selected = views_max_int(0, selected_count)
   let summary_width = views_max_double(120.0, width * 0.36)
   let action_width = views_max_double(80.0, width - summary_width - 92.0)
@@ -17,7 +18,7 @@ pub fn[Msg] selection_toolbar(
         action.label,
         on_click=action.message,
         variant=ButtonVariant::Tonal,
-        theme~,
+        theme=resolved_theme,
         width=selection_toolbar_action_width(action.label),
         height=32.0,
       ).disabled(disabled=selected == 0 || !action.enabled),
@@ -30,7 +31,7 @@ pub fn[Msg] selection_toolbar(
           "Clear",
           on_click=message,
           variant=ButtonVariant::Ghost,
-          theme~,
+          theme=resolved_theme,
           width=70.0,
           height=32.0,
         ).disabled(disabled=selected == 0),
@@ -43,31 +44,31 @@ pub fn[Msg] selection_toolbar(
         text(
           selection_toolbar_label(selected, total_count),
           role=TextRole::Caption,
-          theme~,
+          theme=resolved_theme,
           width=summary_width,
           height=28.0,
         ).foreground(
           if selected == 0 {
-            theme.palette.muted
+            resolved_theme.palette.muted
           } else {
-            theme.palette.foreground
+            resolved_theme.palette.foreground
           },
         ),
         flow(
           action_views,
           width=action_width,
-          spacing=theme.spacing_scale.xs,
-          row_spacing=theme.spacing_scale.xs,
+          spacing=resolved_theme.spacing_scale.xs,
+          row_spacing=resolved_theme.spacing_scale.xs,
         ),
       ],
-      spacing=theme.spacing_scale.sm,
+      spacing=resolved_theme.spacing_scale.sm,
       align=CrossAlign::Center,
     ),
     width~,
     height=selection_toolbar_height(action_views.length()),
     variant=ContainerVariant::Base,
-    theme~,
-    padding=theme.spacing_scale.sm,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.sm,
   )
   .semantics_role(@core.SemanticsRole::Group)
   .semantics_selected(selected=selected > 0)

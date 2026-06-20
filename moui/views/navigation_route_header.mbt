@@ -3,10 +3,11 @@ pub fn[Msg] route_header(
   title : String,
   subtitle? : String = "",
   actions? : Array[ActionItem[Msg]] = [],
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 520.0,
 ) -> @core.View[Msg] {
-  let padding = theme.spacing_scale.md
+  let resolved_theme = views_ambient_theme(theme)
+  let padding = resolved_theme.spacing_scale.md
   let content_width = views_max_double(120.0, width - padding * 2.0)
   let mut actions_width = 0.0
   for action in actions {
@@ -14,21 +15,27 @@ pub fn[Msg] route_header(
   }
   if actions.length() > 1 {
     actions_width = actions_width +
-      theme.spacing_scale.xs * (actions.length() - 1).to_double()
+      resolved_theme.spacing_scale.xs * (actions.length() - 1).to_double()
   }
   let title_width = views_max_double(
     120.0,
-    content_width - actions_width - theme.spacing_scale.md,
+    content_width - actions_width - resolved_theme.spacing_scale.md,
   )
   let title_rows : Array[@core.View[Msg]] = [
-    text(title, role=TextRole::Control, theme~, width=title_width, height=28.0),
+    text(
+      title,
+      role=TextRole::Control,
+      theme=resolved_theme,
+      width=title_width,
+      height=28.0,
+    ),
   ]
   if subtitle != "" {
     title_rows.push(
       text(
         subtitle,
         role=TextRole::Caption,
-        theme~,
+        theme=resolved_theme,
         width=title_width,
         height=24.0,
       ),
@@ -41,20 +48,24 @@ pub fn[Msg] route_header(
         action.label,
         on_click=action.message,
         variant=ButtonVariant::Tonal,
-        theme~,
+        theme=resolved_theme,
         width=route_header_action_width(action.label),
         height=34.0,
       ).disabled(disabled=!action.enabled),
     )
   }
   let children : Array[@core.View[Msg]] = [
-    column(title_rows, spacing=theme.spacing_scale.xs, align=CrossAlign::Start),
+    column(
+      title_rows,
+      spacing=resolved_theme.spacing_scale.xs,
+      align=CrossAlign::Start,
+    ),
   ]
   if action_buttons.length() > 0 {
     children.push(
       row(
         action_buttons,
-        spacing=theme.spacing_scale.xs,
+        spacing=resolved_theme.spacing_scale.xs,
         align=CrossAlign::Center,
       ),
     )
@@ -62,14 +73,14 @@ pub fn[Msg] route_header(
   container(
     row(
       children,
-      spacing=theme.spacing_scale.md,
+      spacing=resolved_theme.spacing_scale.md,
       justify=MainAlign::Between,
       align=CrossAlign::Center,
     ),
     width~,
     height=if subtitle == "" { 58.0 } else { 78.0 },
     variant=ContainerVariant::Base,
-    theme~,
+    theme=resolved_theme,
     padding~,
   )
   .semantics_role(@core.SemanticsRole::Group)

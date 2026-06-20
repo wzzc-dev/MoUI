@@ -6,9 +6,10 @@ pub fn[Msg] data_filter_bar(
   result_count? : Int = 0,
   on_clear? : Msg? = None,
   placeholder? : String = "Search rows",
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 520.0,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let search_width = views_max_double(160.0, width * 0.46)
   let meta_width = views_max_double(88.0, width - search_width - 96.0)
   let rows : Array[@core.View[Msg]] = [
@@ -19,23 +20,23 @@ pub fn[Msg] data_filter_bar(
           on_input=on_query,
           placeholder~,
           variant=TextFieldVariant::Outline,
-          theme~,
+          theme=resolved_theme,
         ).frame(width=search_width, height=36.0),
         text(
           data_filter_result_label(result_count),
           role=TextRole::Caption,
-          theme~,
+          theme=resolved_theme,
           width=meta_width,
           height=28.0,
-        ).foreground(theme.palette.muted),
+        ).foreground(resolved_theme.palette.muted),
       ],
-      spacing=theme.spacing_scale.sm,
+      spacing=resolved_theme.spacing_scale.sm,
       align=CrossAlign::Center,
     ),
   ]
   let chips : Array[@core.View[Msg]] = []
   for filter in filters {
-    chips.push(data_filter_button(filter, theme))
+    chips.push(data_filter_button(filter, resolved_theme))
   }
   match on_clear {
     Some(message) =>
@@ -43,7 +44,7 @@ pub fn[Msg] data_filter_bar(
         data_filter_clear_button(
           message,
           disabled=query == "" && !data_filter_has_selection(filters),
-          theme,
+          resolved_theme,
         ),
       )
     None => ()
@@ -52,19 +53,26 @@ pub fn[Msg] data_filter_bar(
     rows.push(
       flow(
         chips,
-        width=views_max_double(120.0, width - theme.spacing_scale.md * 2.0),
-        spacing=theme.spacing_scale.xs,
-        row_spacing=theme.spacing_scale.xs,
+        width=views_max_double(
+          120.0,
+          width - resolved_theme.spacing_scale.md * 2.0,
+        ),
+        spacing=resolved_theme.spacing_scale.xs,
+        row_spacing=resolved_theme.spacing_scale.xs,
       ),
     )
   }
   container(
-    column(rows, spacing=theme.spacing_scale.sm, align=CrossAlign::Stretch),
+    column(
+      rows,
+      spacing=resolved_theme.spacing_scale.sm,
+      align=CrossAlign::Stretch,
+    ),
     width~,
     height=data_filter_bar_height(chips.length()),
     variant=ContainerVariant::Base,
-    theme~,
-    padding=theme.spacing_scale.sm,
+    theme=resolved_theme,
+    padding=resolved_theme.spacing_scale.sm,
   )
   .semantics_role(@core.SemanticsRole::Group)
   .accessibility_label("Data filters")

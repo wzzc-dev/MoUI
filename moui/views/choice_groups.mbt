@@ -8,9 +8,10 @@ pub fn[Msg] radio_group(
   items : Array[ChoiceItem],
   selected~ : String,
   on_select~ : (String) -> Msg,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   spacing? : Double = default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
   for item in items {
     rows.push(
@@ -18,7 +19,7 @@ pub fn[Msg] radio_group(
         item.label,
         item.id == selected,
         on_change=_value => on_select(item.id),
-        theme~,
+        theme=resolved_theme,
       ).semantics_selected(selected=item.id == selected),
     )
   }
@@ -32,9 +33,10 @@ pub fn[Msg] checkbox_group(
   items : Array[ChoiceItem],
   selected~ : Array[String],
   on_change~ : (String, Bool) -> Msg,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   spacing? : Double = default_theme().spacing_scale.sm,
 ) -> @core.View[Msg] {
+  let resolved_theme = views_ambient_theme(theme)
   let rows : Array[@core.View[Msg]] = []
   for item in items {
     let checked = string_array_contains(selected, item.id)
@@ -43,7 +45,7 @@ pub fn[Msg] checkbox_group(
         item.label,
         checked~,
         on_change=value => on_change(item.id, value),
-        theme~,
+        theme=resolved_theme,
       ).semantics_checked(checked~),
     )
   }
