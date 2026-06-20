@@ -175,7 +175,7 @@ pub fn DesignSystemsModel::view(
 fn DesignSystemsModel::hero(
   self : DesignSystemsModel,
   theme : @moui.Theme,
-  report : @common.DesignSystemReport,
+  report : @audit.DesignSystemReport,
 ) -> @moui.View[DesignSystemsMsg] {
   ignore(self)
   container(
@@ -315,7 +315,7 @@ fn DesignSystemsModel::palette_panel(
   self : DesignSystemsModel,
   theme : @moui.Theme,
   tokens : @common.DesignSystemTokens,
-  report : @common.DesignSystemReport,
+  report : @audit.DesignSystemReport,
 ) -> @moui.View[DesignSystemsMsg] {
   ignore(self)
   design_panel(
@@ -360,7 +360,7 @@ fn DesignSystemsModel::typography_panel(
   self : DesignSystemsModel,
   theme : @moui.Theme,
   tokens : @common.DesignSystemTokens,
-  report : @common.DesignSystemReport,
+  report : @audit.DesignSystemReport,
 ) -> @moui.View[DesignSystemsMsg] {
   ignore(self)
   design_panel(
@@ -745,24 +745,24 @@ fn spacing_tile(
 }
 
 ///|
-fn design_status_label(status : @common.DesignTokenStatus) -> String {
+fn design_status_label(status : @audit.DesignTokenStatus) -> String {
   match status {
-    @common.DesignTokenStatus::NotMapped => "not mapped"
-    @common.DesignTokenStatus::SourceMapped => "source mapped"
-    @common.DesignTokenStatus::PreviewMapped => "preview"
-    @common.DesignTokenStatus::ThemeMapped => "theme mapped"
-    @common.DesignTokenStatus::ComponentMapped => "component"
-    @common.DesignTokenStatus::OfficialComplete => "official"
+    @audit.DesignTokenStatus::NotMapped => "not mapped"
+    @audit.DesignTokenStatus::SourceMapped => "source mapped"
+    @audit.DesignTokenStatus::PreviewMapped => "preview"
+    @audit.DesignTokenStatus::ThemeMapped => "theme mapped"
+    @audit.DesignTokenStatus::ComponentMapped => "component"
+    @audit.DesignTokenStatus::OfficialComplete => "official"
   }
 }
 
 ///|
-fn design_status_tone(status : @common.DesignTokenStatus) -> @views.BadgeTone {
+fn design_status_tone(status : @audit.DesignTokenStatus) -> @views.BadgeTone {
   match status {
-    @common.DesignTokenStatus::OfficialComplete => @views.BadgeTone::Success
-    @common.DesignTokenStatus::ThemeMapped
-    | @common.DesignTokenStatus::ComponentMapped => @views.BadgeTone::Accent
-    @common.DesignTokenStatus::NotMapped => @views.BadgeTone::Danger
+    @audit.DesignTokenStatus::OfficialComplete => @views.BadgeTone::Success
+    @audit.DesignTokenStatus::ThemeMapped
+    | @audit.DesignTokenStatus::ComponentMapped => @views.BadgeTone::Accent
+    @audit.DesignTokenStatus::NotMapped => @views.BadgeTone::Danger
     _ => @views.BadgeTone::Warning
   }
 }
@@ -808,54 +808,78 @@ fn design_report_for(
   scheme~ : @views.ColorScheme,
   system_scheme~ : @views.ColorScheme,
   density~ : @common.DesignDensity,
-) -> @common.DesignSystemReport {
+) -> @audit.DesignSystemReport {
   match preset {
-    Material => @material.report(scheme~, system_scheme~, density~)
-    Carbon => @carbon.report(scheme~, system_scheme~, density~)
-    Primer => @primer.report(scheme~, system_scheme~, density~)
-    Fluent => @fluent.report(scheme~, system_scheme~, density~)
+    Material =>
+      @audit.design_system_report(
+        @material.preset(),
+        scheme~,
+        system_scheme~,
+        density~,
+      )
+    Carbon =>
+      @audit.design_system_report(
+        @carbon.preset(),
+        scheme~,
+        system_scheme~,
+        density~,
+      )
+    Primer =>
+      @audit.design_system_report(
+        @primer.preset(),
+        scheme~,
+        system_scheme~,
+        density~,
+      )
+    Fluent =>
+      @audit.design_system_report(
+        @fluent.preset(),
+        scheme~,
+        system_scheme~,
+        density~,
+      )
   }
 }
 
 ///|
 fn design_source_imported_token_count(preset : DesignSystemChoice) -> Int {
   match preset {
-    Material => @material.preset().source_imported_token_count()
-    Carbon => @carbon.preset().source_imported_token_count()
-    Primer => @primer.preset().source_imported_token_count()
-    Fluent => @fluent.preset().source_imported_token_count()
+    Material => @audit.source_imported_token_count(@material.preset())
+    Carbon => @audit.source_imported_token_count(@carbon.preset())
+    Primer => @audit.source_imported_token_count(@primer.preset())
+    Fluent => @audit.source_imported_token_count(@fluent.preset())
   }
 }
 
 ///|
 fn design_density_resolver_gap_count(preset : DesignSystemChoice) -> Int {
   match preset {
-    Material => @material.preset().density_resolver_gap_count()
-    Carbon => @carbon.preset().density_resolver_gap_count()
-    Primer => @primer.preset().density_resolver_gap_count()
-    Fluent => @fluent.preset().density_resolver_gap_count()
+    Material => @audit.density_resolver_gap_count(@material.preset())
+    Carbon => @audit.density_resolver_gap_count(@carbon.preset())
+    Primer => @audit.density_resolver_gap_count(@primer.preset())
+    Fluent => @audit.density_resolver_gap_count(@fluent.preset())
   }
 }
 
 ///|
 fn design_component_token_matrix(
   preset : DesignSystemChoice,
-) -> Array[@common.DesignComponentTokenMatrixRecord] {
+) -> Array[@audit.DesignComponentTokenMatrixRecord] {
   match preset {
-    Material => @material.component_token_matrix()
-    Carbon => @carbon.component_token_matrix()
-    Primer => @primer.component_token_matrix()
-    Fluent => @fluent.component_token_matrix()
+    Material => @audit.component_token_matrix(@material.preset())
+    Carbon => @audit.component_token_matrix(@carbon.preset())
+    Primer => @audit.component_token_matrix(@primer.preset())
+    Fluent => @audit.component_token_matrix(@fluent.preset())
   }
 }
 
 ///|
 fn design_customization_report_count(preset : DesignSystemChoice) -> Int {
   match preset {
-    Material => @material.preset().customization_report_count()
-    Carbon => @carbon.preset().customization_report_count()
-    Primer => @primer.preset().customization_report_count()
-    Fluent => @fluent.preset().customization_report_count()
+    Material => @audit.customization_report_count(@material.preset())
+    Carbon => @audit.customization_report_count(@carbon.preset())
+    Primer => @audit.customization_report_count(@primer.preset())
+    Fluent => @audit.customization_report_count(@fluent.preset())
   }
 }
 
@@ -864,10 +888,10 @@ fn design_customization_capability_gap_count(
   preset : DesignSystemChoice,
 ) -> Int {
   match preset {
-    Material => @material.preset().customization_capability_gap_count()
-    Carbon => @carbon.preset().customization_capability_gap_count()
-    Primer => @primer.preset().customization_capability_gap_count()
-    Fluent => @fluent.preset().customization_capability_gap_count()
+    Material => @audit.customization_capability_gap_count(@material.preset())
+    Carbon => @audit.customization_capability_gap_count(@carbon.preset())
+    Primer => @audit.customization_capability_gap_count(@primer.preset())
+    Fluent => @audit.customization_capability_gap_count(@fluent.preset())
   }
 }
 

@@ -63,7 +63,7 @@ pub fn official_token_coverage(
 ) -> Array[DesignOfficialTokenCoverage] {
   let coverage : Array[DesignOfficialTokenCoverage] = []
   for anchor in official_token_anchors(preset) {
-    coverage.push(official_token_coverage(preset, anchor))
+    coverage.push(build_official_token_coverage(preset, anchor))
   }
   coverage
 }
@@ -90,7 +90,7 @@ pub fn official_token_source_usage(
       }
     }
     usages.push(
-      official_token_source_usage(
+      build_official_token_source_usage(
         preset,
         source,
         anchor_count~,
@@ -211,9 +211,9 @@ pub fn has_official_token_anchor(
   preset : @common.DesignPreset,
   official_token : String,
 ) -> Bool {
-  preset
-  .official_token_anchors()
-  .any(item => item.official_token == official_token)
+  official_token_anchors(preset).any(item => {
+    item.official_token == official_token
+  })
 }
 
 ///|
@@ -230,7 +230,7 @@ pub fn official_token_coverage_for(
 }
 
 ///|
-fn official_token_coverage(
+fn build_official_token_coverage(
   preset : @common.DesignPreset,
   anchor : DesignOfficialTokenAnchor,
 ) -> DesignOfficialTokenCoverage {
@@ -2381,7 +2381,7 @@ fn official_token_source_locked(source : DesignSystemSource) -> Bool {
 }
 
 ///|
-fn official_token_source_usage(
+fn build_official_token_source_usage(
   preset : @common.DesignPreset,
   source : DesignSystemSource,
   anchor_count~ : Int,

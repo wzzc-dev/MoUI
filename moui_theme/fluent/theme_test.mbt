@@ -9,9 +9,9 @@ test "fluent package entrypoints align with common preset" {
     system_theme(system_scheme=@core.ColorScheme::Dark).scheme ==
     @core.ColorScheme::Dark,
   )
-  assert_true(report().preset == expected)
-  assert_true(manifest().preset == expected)
-  assert_true(component_token_matrix().length() > 0)
+  assert_true(@audit.design_system_report(preset()).preset == expected)
+  assert_true(@audit.manifest(preset()).preset == expected)
+  assert_true(@audit.component_token_matrix(preset()).length() > 0)
 }
 
 ///|
@@ -70,19 +70,28 @@ test "fluent carries structural component differentiation beyond palette" {
 test "fluent shadow tokens align with pinned source values" {
   // shadow4/shadow16/shadow64 are source-locked and runtime-aligned: the
   // resolved key-shadow offset matches the pinned @fluentui/tokens value.
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for("shadow4")
+  guard @audit.runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
+      "shadow4",
+    )
     is Some(shadow4) else {
     fail("expected shadow4 runtime alignment")
   }
   assert_true(shadow4.runtime_aligned)
   inspect(shadow4.runtime_value, content="2")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for("shadow16")
+  guard @audit.runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
+      "shadow16",
+    )
     is Some(shadow16) else {
     fail("expected shadow16 runtime alignment")
   }
   assert_true(shadow16.runtime_aligned)
   inspect(shadow16.runtime_value, content="8")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for("shadow64")
+  guard @audit.runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
+      "shadow64",
+    )
     is Some(shadow64) else {
     fail("expected shadow64 runtime alignment")
   }

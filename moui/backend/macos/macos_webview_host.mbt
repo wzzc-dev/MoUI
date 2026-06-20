@@ -139,7 +139,9 @@ pub fn drain_macos_webview_commands(
   match macos_content_view_handle(window) {
     Some(raw_content_view_handle) =>
       queue.drain_with_handler(command => {
-        let (kind, text, detail) = @host.webview_encode_native_command(command.command)
+        let (kind, text, detail) = @host.webview_encode_native_command(
+          command.command,
+        )
         macos_webview_command(
           raw_content_view_handle,
           @host.webview_encode_ffi_string(command.id),

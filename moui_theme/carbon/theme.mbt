@@ -65,24 +65,3 @@ pub fn system_theme(
     density~,
   )
 }
-
-///|
-pub fn report(
-  scheme? : @core.ColorScheme = @core.ColorScheme::Light,
-  system_scheme? : @core.ColorScheme = @core.ColorScheme::Dark,
-  density? : @common.DesignDensity = @common.DesignDensity::Standard,
-) -> @common.DesignSystemReport {
-  preset().design_system_report(scheme~, system_scheme~, density~)
-}
-
-///|
-pub fn manifest() -> @common.DesignSystemManifest {
-  preset().manifest()
-}
-
-///|
-pub fn component_token_matrix() -> Array[
-  @common.DesignComponentTokenMatrixRecord,
-] {
-  preset().component_token_matrix()
-}

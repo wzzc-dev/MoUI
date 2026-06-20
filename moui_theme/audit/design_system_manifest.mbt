@@ -256,7 +256,7 @@ fn material_manifest() -> DesignSystemManifest {
     token_coverage: material_token_coverage(),
     variant_coverage: material_variant_coverage(),
     component_coverage: material_component_coverage(),
-    customization_coverage: customization_coverage(
+    customization_coverage: build_customization_coverage(
       DesignTokenStatus::ThemeMapped,
     ),
     note: "Current MoUI tokens are source-mapped previews, not full Material compliance.",
@@ -330,7 +330,7 @@ fn carbon_manifest() -> DesignSystemManifest {
     token_coverage: carbon_token_coverage(),
     variant_coverage: carbon_variant_coverage(),
     component_coverage: carbon_component_coverage(),
-    customization_coverage: customization_coverage(
+    customization_coverage: build_customization_coverage(
       DesignTokenStatus::ThemeMapped,
     ),
     note: "Current MoUI tokens are source-mapped previews, not full Carbon compliance.",
@@ -364,7 +364,7 @@ fn primer_manifest() -> DesignSystemManifest {
     token_coverage: primer_token_coverage(),
     variant_coverage: primer_variant_coverage(),
     component_coverage: primer_component_coverage(),
-    customization_coverage: customization_coverage(
+    customization_coverage: build_customization_coverage(
       DesignTokenStatus::ThemeMapped,
     ),
     note: "Current MoUI tokens are source-mapped previews, not full Primer compliance.",
@@ -406,7 +406,7 @@ fn fluent_manifest() -> DesignSystemManifest {
     token_coverage: fluent_token_coverage(),
     variant_coverage: fluent_variant_coverage(),
     component_coverage: fluent_component_coverage(),
-    customization_coverage: customization_coverage(
+    customization_coverage: build_customization_coverage(
       DesignTokenStatus::ThemeMapped,
     ),
     note: "Current MoUI tokens are source-mapped previews, not full Fluent compliance.",
@@ -796,7 +796,7 @@ fn neutral_component_coverage(
 }
 
 ///|
-fn customization_coverage(
+fn build_customization_coverage(
   status : DesignTokenStatus,
 ) -> Array[DesignCustomizationCoverage] {
   [

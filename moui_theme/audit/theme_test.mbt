@@ -53,7 +53,7 @@ test "official design presets expose source mapped manifests" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let manifest = preset.manifest()
+    let manifest = manifest(preset)
     assert_true(manifest.sources.length() >= 3)
     assert_false(manifest.is_official_complete())
     assert_true(manifest.official_source_count() >= 1)
@@ -62,18 +62,16 @@ test "official design presets expose source mapped manifests" {
     )
     assert_true(manifest.has_official_source_locks())
     assert_true(
-      preset.source_lock_report().length() == manifest.sources.length(),
+      source_lock_report(preset).length() == manifest.sources.length(),
     )
-    assert_true(preset.source_lock_quality_gap_count() > 0)
-    assert_true(preset.stable_source_lock_count() >= 1)
-    assert_true(preset.moving_source_ref_count() > 0)
-    assert_false(preset.has_stable_source_locks())
-    assert_true(manifest.has_token_category(@common.DesignTokenCategory::Color))
+    assert_true(source_lock_quality_gap_count(preset) > 0)
+    assert_true(stable_source_lock_count(preset) >= 1)
+    assert_true(moving_source_ref_count(preset) > 0)
+    assert_false(has_stable_source_locks(preset))
+    assert_true(manifest.has_token_category(DesignTokenCategory::Color))
+    assert_true(manifest.has_token_category(DesignTokenCategory::Typography))
     assert_true(
-      manifest.has_token_category(@common.DesignTokenCategory::Typography),
-    )
-    assert_true(
-      manifest.has_token_category(@common.DesignTokenCategory::ComponentStyle),
+      manifest.has_token_category(DesignTokenCategory::ComponentStyle),
     )
     assert_true(manifest.has_variant(@common.DesignSchemeVariant::SchemeLight))
     assert_true(manifest.has_variant(@common.DesignSchemeVariant::SchemeDark))
@@ -97,20 +95,20 @@ test "source lock reports distinguish declared locks from stable snapshots" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let records = preset.source_lock_report()
-    let stable = preset.stable_source_lock_count()
-    assert_true(records.length() == preset.sources().length())
+    let records = source_lock_report(preset)
+    let stable = stable_source_lock_count(preset)
+    assert_true(records.length() == sources(preset).length())
     assert_true(
-      preset.source_lock_quality_gap_count() == records.length() - stable,
+      source_lock_quality_gap_count(preset) == records.length() - stable,
     )
     assert_true(stable >= 1)
-    assert_true(preset.source_snapshot_url_count() == stable)
-    assert_true(preset.source_snapshot_url_gap_count() == 0)
-    assert_true(preset.moving_source_ref_count() == records.length() - stable)
-    assert_false(preset.has_stable_source_locks())
+    assert_true(source_snapshot_url_count(preset) == stable)
+    assert_true(source_snapshot_url_gap_count(preset) == 0)
+    assert_true(moving_source_ref_count(preset) == records.length() - stable)
+    assert_false(has_stable_source_locks(preset))
     assert_true(
       records.any(item => {
-        item.ref_kind == @common.DesignSourceRefKind::StableSnapshotRef &&
+        item.ref_kind == DesignSourceRefKind::StableSnapshotRef &&
         item.stable_lock &&
         item.token_path != "" &&
         item.snapshot_url.contains(item.source_ref) &&
@@ -119,18 +117,16 @@ test "source lock reports distinguish declared locks from stable snapshots" {
     )
     assert_true(
       records.any(item => {
-        item.ref_kind == @common.DesignSourceRefKind::LiveDocumentationRef
+        item.ref_kind == DesignSourceRefKind::LiveDocumentationRef
       }),
     )
     assert_false(
-      records.any(item => {
-        item.ref_kind == @common.DesignSourceRefKind::MovingBranchRef
-      }),
+      records.any(item => item.ref_kind == DesignSourceRefKind::MovingBranchRef),
     )
     for item in records {
       assert_true(item.declared_lock)
-      assert_true(item.status == @common.DesignTokenStatus::SourceMapped)
-      if item.ref_kind == @common.DesignSourceRefKind::StableSnapshotRef {
+      assert_true(item.status == DesignTokenStatus::SourceMapped)
+      if item.ref_kind == DesignSourceRefKind::StableSnapshotRef {
         assert_true(item.stable_lock)
         assert_true(item.snapshot_url != "")
         assert_true(item.note.contains("stable lock"))
@@ -155,18 +151,18 @@ test "source package inventories expose pinned package import gaps" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let rows = preset.source_package_inventory()
+    let rows = source_package_inventory(preset)
     assert_true(rows.length() >= 2)
-    assert_true(preset.source_package_inventory_count() == rows.length())
-    assert_true(preset.source_package_snapshot_count() == rows.length())
-    assert_true(preset.source_package_snapshot_gap_count() == 0)
-    assert_true(preset.source_package_mapped_token_count() > 0)
-    assert_true(preset.source_package_imported_token_count() > 0)
+    assert_true(source_package_inventory_count(preset) == rows.length())
+    assert_true(source_package_snapshot_count(preset) == rows.length())
+    assert_true(source_package_snapshot_gap_count(preset) == 0)
+    assert_true(source_package_mapped_token_count(preset) > 0)
+    assert_true(source_package_imported_token_count(preset) > 0)
     assert_true(
-      preset.source_package_imported_token_count() ==
-      preset.source_imported_token_count(),
+      source_package_imported_token_count(preset) ==
+      source_imported_token_count(preset),
     )
-    assert_true(preset.source_package_import_gap_count() == rows.length())
+    assert_true(source_package_import_gap_count(preset) == rows.length())
     assert_true(rows.any(item => item.imported_token_count > 0))
     for item in rows {
       assert_true(item.source_ref != "")
@@ -175,159 +171,129 @@ test "source package inventories expose pinned package import gaps" {
       assert_true(item.package_path != "")
       assert_true(item.tracked_path_count > 0)
       assert_true(item.pending_gap != "none")
-      assert_true(item.status == @common.DesignTokenStatus::PreviewMapped)
+      assert_true(item.status == DesignTokenStatus::PreviewMapped)
     }
   }
-  guard @common.DesignPreset::Material.source_package_inventory()[0]
+  guard source_package_inventory(@common.DesignPreset::Material)[0]
     is material_system else {
     fail("expected Material source package row")
   }
   assert_true(material_system.package_path.contains("_md-sys"))
   assert_true(material_system.mapped_token_count == 13)
   assert_true(
-    @common.DesignPreset::Material
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Material).any(item => {
       item.package_path == "tokens/versions/v0_192/_md-ref-palette.scss" &&
       item.imported_token_count == 9
     }),
   )
   assert_true(
-    @common.DesignPreset::Material
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Material).any(item => {
       item.package_path == "tokens/_md-comp-*.scss" &&
       item.mapped_token_count == 5 &&
       item.imported_token_count == 5
     }),
   )
   assert_true(
-    @common.DesignPreset::Carbon
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Carbon).any(item => {
       item.package_path == "packages/layout/src/*.ts" &&
       item.mapped_token_count == 25 &&
       item.imported_token_count == 25
     }),
   )
   assert_true(
-    @common.DesignPreset::Carbon
-    .source_lock_report()
-    .any(item => {
+    source_lock_report(@common.DesignPreset::Carbon).any(item => {
       item.source_url.contains("packages/colors") &&
       item.token_path == "packages/colors" &&
       item.stable_lock
     }),
   )
   assert_true(
-    @common.DesignPreset::Carbon
-    .source_lock_report()
-    .any(item => {
+    source_lock_report(@common.DesignPreset::Carbon).any(item => {
       item.source_url.contains("packages/styles") &&
       item.token_path == "packages/styles" &&
       item.stable_lock
     }),
   )
-  guard @common.DesignPreset::Carbon.source_package_inventory()[1]
+  guard source_package_inventory(@common.DesignPreset::Carbon)[1]
     is carbon_tokens else {
     fail("expected Carbon token source row")
   }
   assert_true(carbon_tokens.package_path.contains("src/tokens"))
   assert_true(
-    @common.DesignPreset::Carbon
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Carbon).any(item => {
       item.package_path == "packages/themes/src/{white,g10,g90,g100}.ts" &&
       item.imported_token_count == 17
     }),
   )
   assert_true(
-    @common.DesignPreset::Carbon
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Carbon).any(item => {
       item.package_path == "packages/themes/src/component-tokens/**/*.ts" &&
       item.imported_token_count == 1 &&
       item.mapped_token_count == 1
     }),
   )
   assert_true(
-    @common.DesignPreset::Carbon
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Carbon).any(item => {
       item.package_path == "packages/motion/src/index.ts" &&
       item.imported_token_count == 13 &&
       item.mapped_token_count == 13
     }),
   )
   assert_true(
-    @common.DesignPreset::Carbon
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Carbon).any(item => {
       item.package_path == "packages/styles/scss/components/slider/*.scss" &&
       item.imported_token_count == 1 &&
       item.mapped_token_count == 1
     }),
   )
   assert_true(
-    @common.DesignPreset::Carbon
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Carbon).any(item => {
       item.package_path == "packages/colors/src/colors.ts" &&
       item.source_url.contains("packages/colors") &&
       item.imported_token_count == 6
     }),
   )
-  guard @common.DesignPreset::Primer.source_package_inventory()[0]
+  guard source_package_inventory(@common.DesignPreset::Primer)[0]
     is primer_color else {
     fail("expected Primer color source row")
   }
   assert_true(primer_color.package_path.contains("base/color"))
   assert_true(
-    @common.DesignPreset::Primer
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Primer).any(item => {
       item.package_path == "src/tokens/functional/color/*.json5" &&
       item.imported_token_count == 16 &&
       item.mapped_token_count == 13
     }),
   )
   assert_true(
-    @common.DesignPreset::Primer
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Primer).any(item => {
       item.package_path == "src/tokens/base/{motion,size,typography}" &&
       item.imported_token_count == 28 &&
       item.mapped_token_count == 28
     }),
   )
   assert_true(
-    @common.DesignPreset::Primer
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Primer).any(item => {
       item.package_path == "src/tokens/functional/size/*.json5" &&
       item.imported_token_count == 5 &&
       item.mapped_token_count == 5
     }),
   )
   assert_true(
-    @common.DesignPreset::Primer
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Primer).any(item => {
       item.package_path == "src/tokens/functional/shadow/*.json5" &&
       item.imported_token_count == 3 &&
       item.mapped_token_count == 3
     }),
   )
   assert_true(
-    @common.DesignPreset::Primer
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Primer).any(item => {
       item.package_path == "src/tokens/component/*.json5" &&
       item.imported_token_count == 3 &&
       item.mapped_token_count == 6
     }),
   )
-  guard @common.DesignPreset::Fluent.source_package_inventory()[0]
+  guard source_package_inventory(@common.DesignPreset::Fluent)[0]
     is fluent_global else {
     fail("expected Fluent global source row")
   }
@@ -335,27 +301,21 @@ test "source package inventories expose pinned package import gaps" {
   assert_true(fluent_global.mapped_token_count == 90)
   assert_true(fluent_global.imported_token_count == 90)
   assert_true(
-    @common.DesignPreset::Fluent
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Fluent).any(item => {
       item.package_path == "packages/tokens/src/alias/*.ts" &&
       item.mapped_token_count == 12 &&
       item.imported_token_count == 15
     }),
   )
   assert_true(
-    @common.DesignPreset::Fluent
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Fluent).any(item => {
       item.package_path == "packages/tokens/src/themes/**" &&
       item.mapped_token_count == 1 &&
       item.imported_token_count == 0
     }),
   )
   assert_true(
-    @common.DesignPreset::Fluent
-    .source_package_inventory()
-    .any(item => {
+    source_package_inventory(@common.DesignPreset::Fluent).any(item => {
       item.package_path == "packages/web-components/src/progress-bar/*.ts" &&
       item.mapped_token_count == 1 &&
       item.imported_token_count == 1
@@ -372,30 +332,30 @@ test "source imported tokens expose pinned source values without claiming full i
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let rows = preset.source_imported_tokens()
+    let rows = source_imported_tokens(preset)
     assert_true(rows.length() > 0)
-    assert_true(preset.source_imported_token_count() == rows.length())
-    assert_true(preset.source_imported_token_mapped_count() > 0)
-    assert_true(preset.source_imported_token_source_lock_gap_count() == 0)
+    assert_true(source_imported_token_count(preset) == rows.length())
+    assert_true(source_imported_token_mapped_count(preset) > 0)
+    assert_true(source_imported_token_source_lock_gap_count(preset) == 0)
     assert_true(
-      preset.source_import_coverage_count() ==
-      preset.official_token_anchor_count(),
+      source_import_coverage_count(preset) ==
+      official_token_anchor_count(preset),
     )
-    assert_true(preset.source_imported_official_token_count() > 0)
-    assert_true(preset.source_import_coverage_gap_count() == 0)
-    assert_true(preset.source_import_unanchored_count() == 0)
-    assert_true(preset.source_import_integrity_gap_count() == 0)
-    assert_true(preset.source_import_manifest_lock_gap_count() == 0)
-    assert_true(preset.source_import_scope_gap_count() == 0)
-    assert_true(preset.source_import_anchor_mismatch_count() == 0)
-    assert_true(preset.source_import_golden_mismatch_count() == 0)
+    assert_true(source_imported_official_token_count(preset) > 0)
+    assert_true(source_import_coverage_gap_count(preset) == 0)
+    assert_true(source_import_unanchored_count(preset) == 0)
+    assert_true(source_import_integrity_gap_count(preset) == 0)
+    assert_true(source_import_manifest_lock_gap_count(preset) == 0)
+    assert_true(source_import_scope_gap_count(preset) == 0)
+    assert_true(source_import_anchor_mismatch_count(preset) == 0)
+    assert_true(source_import_golden_mismatch_count(preset) == 0)
     assert_true(
-      preset.runtime_token_alignment_count() ==
-      preset.official_token_anchor_count(),
+      runtime_token_alignment_count(preset) ==
+      official_token_anchor_count(preset),
     )
-    assert_true(preset.runtime_token_alignment_gap_count() > 0)
-    assert_true(preset.source_package_import_gap_count() > 0)
-    assert_false(preset.is_design_system_complete())
+    assert_true(runtime_token_alignment_gap_count(preset) > 0)
+    assert_true(source_package_import_gap_count(preset) > 0)
+    assert_false(is_design_system_complete(preset))
     for item in rows {
       assert_true(item.source_url != "")
       assert_true(item.source_ref != "")
@@ -408,7 +368,7 @@ test "source imported tokens expose pinned source values without claiming full i
       assert_true(item.official_token != "")
       assert_false(item.source_file.contains("moui/core"))
     }
-    for item in preset.source_import_coverage() {
+    for item in source_import_coverage(preset) {
       assert_true(item.official_token != "")
       let material_spacing_placeholder = preset ==
         @common.DesignPreset::Material &&
@@ -424,7 +384,7 @@ test "source imported tokens expose pinned source values without claiming full i
         assert_true(item.source_value != "")
       }
     }
-    for item in preset.source_import_integrity_report() {
+    for item in source_import_integrity_report(preset) {
       assert_true(item.integrity_ok)
       assert_true(item.source_declared)
       assert_true(item.source_locked)
@@ -438,7 +398,8 @@ test "source imported tokens expose pinned source values without claiming full i
       }
     }
   }
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-color-primary",
     )
     is Some(material_primary) else {
@@ -446,7 +407,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(material_primary.source_file.contains("_md-sys-color.scss"))
   assert_true(material_primary.source_value.contains("primary40"))
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "md-ref-palette.primary40",
     )
     is Some(material_primary_ref) else {
@@ -454,7 +416,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(material_primary_ref.source_value.contains("#6750a4"))
   assert_true(material_primary_ref.source_file.contains("_md-ref-palette.scss"))
-  guard @common.DesignPreset::Material.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-color-primary",
     )
     is Some(material_primary_coverage) else {
@@ -465,7 +428,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     material_primary_coverage.source_token == "md-ref-palette.primary40",
   )
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-filled-button-container-color",
     )
     is Some(material_button_container) else {
@@ -475,7 +439,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_button_container.source_value.contains("container-color"),
   )
   assert_true(material_button_container.source_value.contains("#6750a4"))
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-filled-button-label-text-color",
     )
     is Some(material_button_label) else {
@@ -483,7 +448,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(material_button_label.source_value.contains("label-text-color"))
   assert_true(material_button_label.source_value.contains("#fff"))
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-filled-button-pressed-state-layer-opacity",
     )
     is Some(material_button_pressed) else {
@@ -493,7 +459,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_button_pressed.source_value.contains("pressed-state-layer-opacity"),
   )
   assert_true(material_button_pressed.source_value.contains("0.12"))
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-typescale-body-medium-size",
     )
     is Some(material_body_size_import) else {
@@ -507,7 +474,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "6ed32803a82f80bff76431e72be2ba85339af479",
   )
   assert_true(material_body_size_import.source_value.contains("0.875rem"))
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-shape-corner-medium",
     )
     is Some(material_corner_import) else {
@@ -519,7 +487,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "31f390646c9e7eeb82129ee897f05209a03dc3b0",
   )
   assert_true(material_corner_import.source_value.contains("12px"))
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level1",
     )
     is Some(material_elevation_import) else {
@@ -534,7 +503,8 @@ test "source imported tokens expose pinned source values without claiming full i
   )
   assert_true(material_elevation_import.source_value.contains("level1"))
   assert_true(material_elevation_import.source_value.contains("1"))
-  guard @common.DesignPreset::Material.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level1",
     )
     is Some(material_elevation_coverage) else {
@@ -546,7 +516,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_elevation_coverage.moui_token ==
     "DesignElevationTokens.sm.offset.y",
   )
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level3",
     )
     is Some(material_elevation_level3_import) else {
@@ -563,7 +534,8 @@ test "source imported tokens expose pinned source values without claiming full i
   )
   assert_true(material_elevation_level3_import.source_value.contains("level3"))
   assert_true(material_elevation_level3_import.source_value.contains("6"))
-  guard @common.DesignPreset::Material.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level3",
     )
     is Some(material_elevation_level3_coverage) else {
@@ -575,7 +547,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_elevation_level3_coverage.moui_token ==
     "DesignElevationTokens.md.offset.y",
   )
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level5",
     )
     is Some(material_elevation_level5_import) else {
@@ -592,7 +565,8 @@ test "source imported tokens expose pinned source values without claiming full i
   )
   assert_true(material_elevation_level5_import.source_value.contains("level5"))
   assert_true(material_elevation_level5_import.source_value.contains("12"))
-  guard @common.DesignPreset::Material.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level5",
     )
     is Some(material_elevation_level5_coverage) else {
@@ -604,7 +578,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_elevation_level5_coverage.moui_token ==
     "DesignElevationTokens.lg.offset.y",
   )
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-*",
     )
     is Some(material_motion_import) else {
@@ -619,7 +594,8 @@ test "source imported tokens expose pinned source values without claiming full i
   )
   assert_true(material_motion_import.source_value.contains("duration-medium2"))
   assert_true(material_motion_import.source_value.contains("300ms"))
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-short4",
     )
     is Some(material_motion_short4_import) else {
@@ -636,7 +612,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_motion_short4_import.source_value.contains("duration-short4"),
   )
   assert_true(material_motion_short4_import.source_value.contains("200ms"))
-  guard @common.DesignPreset::Material.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-short4",
     )
     is Some(material_motion_short4_coverage) else {
@@ -647,7 +624,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     material_motion_short4_coverage.moui_token == "DesignMotionTokens.fast_ms",
   )
-  guard @common.DesignPreset::Material.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-short4",
     )
     is Some(material_motion_short4_integrity) else {
@@ -655,7 +633,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(material_motion_short4_integrity.integrity_ok)
   assert_true(material_motion_short4_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium2",
     )
     is Some(material_motion_medium2_import) else {
@@ -665,7 +644,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_motion_medium2_import.source_file.contains("_md-sys-motion.scss"),
   )
   assert_true(material_motion_medium2_import.source_value.contains("300ms"))
-  guard @common.DesignPreset::Material.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium2",
     )
     is Some(material_motion_medium2_coverage) else {
@@ -677,7 +657,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_motion_medium2_coverage.moui_token ==
     "DesignMotionTokens.normal_ms",
   )
-  guard @common.DesignPreset::Material.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium2",
     )
     is Some(material_motion_medium2_integrity) else {
@@ -685,7 +666,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(material_motion_medium2_integrity.integrity_ok)
   assert_true(material_motion_medium2_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium4",
     )
     is Some(material_motion_medium4_import) else {
@@ -695,7 +677,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_motion_medium4_import.source_file.contains("_md-sys-motion.scss"),
   )
   assert_true(material_motion_medium4_import.source_value.contains("400ms"))
-  guard @common.DesignPreset::Material.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium4",
     )
     is Some(material_motion_medium4_coverage) else {
@@ -706,7 +689,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     material_motion_medium4_coverage.moui_token == "DesignMotionTokens.slow_ms",
   )
-  guard @common.DesignPreset::Material.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium4",
     )
     is Some(material_motion_medium4_integrity) else {
@@ -714,7 +698,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(material_motion_medium4_integrity.integrity_ok)
   assert_true(material_motion_medium4_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-easing-standard",
     )
     is Some(material_motion_easing_import) else {
@@ -735,7 +720,8 @@ test "source imported tokens expose pinned source values without claiming full i
       "cubic-bezier(0.2, 0, 0, 1)",
     ),
   )
-  guard @common.DesignPreset::Material.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-easing-standard",
     )
     is Some(material_motion_easing_coverage) else {
@@ -747,10 +733,10 @@ test "source imported tokens expose pinned source values without claiming full i
     material_motion_easing_coverage.moui_token == "DesignMotionTokens.easing",
   )
   assert_true(
-    material_motion_easing_coverage.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    material_motion_easing_coverage.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Material.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-easing-standard",
     )
     is Some(material_motion_easing_integrity) else {
@@ -758,7 +744,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(material_motion_easing_integrity.integrity_ok)
   assert_true(material_motion_easing_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-linear-progress-active-indicator-color",
     )
     is Some(material_progress_import) else {
@@ -777,7 +764,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_progress_import.source_value.contains("active-indicator-color"),
   )
   assert_true(material_progress_import.source_value.contains("#6750a4"))
-  guard @common.DesignPreset::Material.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Material,
       "--md-linear-progress-active-indicator-color",
     )
     is Some(material_progress_coverage) else {
@@ -789,7 +777,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_progress_coverage.moui_token ==
     "DesignComponentTokens.progress.foreground",
   )
-  guard @common.DesignPreset::Material.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Material,
       "--md-linear-progress-active-indicator-color",
     )
     is Some(material_progress_integrity) else {
@@ -797,7 +786,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(material_progress_integrity.integrity_ok)
   assert_true(material_progress_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Material.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Material,
       "--md-menu-container-color",
     )
     is Some(material_menu_import) else {
@@ -810,7 +800,8 @@ test "source imported tokens expose pinned source values without claiming full i
   )
   assert_true(material_menu_import.source_value.contains("container-color"))
   assert_true(material_menu_import.source_value.contains("#f3edf7"))
-  guard @common.DesignPreset::Material.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Material,
       "--md-menu-container-color",
     )
     is Some(material_menu_coverage) else {
@@ -822,7 +813,8 @@ test "source imported tokens expose pinned source values without claiming full i
     material_menu_coverage.moui_token ==
     "DesignComponentTokens.picker.background",
   )
-  guard @common.DesignPreset::Material.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Material,
       "--md-menu-container-color",
     )
     is Some(material_menu_integrity) else {
@@ -830,12 +822,12 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(material_menu_integrity.integrity_ok)
   assert_true(material_menu_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Carbon.source_imported_token_for("$background")
+  guard source_imported_token_for(@common.DesignPreset::Carbon, "$background")
     is Some(carbon_background) else {
     fail("expected imported Carbon background token")
   }
   assert_true(carbon_background.source_value.contains("background = white"))
-  guard @common.DesignPreset::Carbon.source_imported_token_for("white")
+  guard source_imported_token_for(@common.DesignPreset::Carbon, "white")
     is Some(carbon_white) else {
     fail("expected imported Carbon white primitive")
   }
@@ -843,7 +835,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     carbon_white.source_file.contains("packages/colors/src/colors.ts"),
   )
-  guard @common.DesignPreset::Carbon.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
       "$button-primary",
     )
     is Some(carbon_button) else {
@@ -851,7 +844,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(carbon_button.source_value.contains("#0f62fe"))
   assert_true(carbon_button.source_file.contains("component-tokens/button"))
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Carbon,
       "$button-primary",
     )
     is Some(carbon_button_coverage) else {
@@ -863,7 +857,8 @@ test "source imported tokens expose pinned source values without claiming full i
     carbon_button_coverage.moui_token ==
     "DesignComponentTokens.button.primary.background",
   )
-  guard @common.DesignPreset::Carbon.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Carbon,
       "$button-primary",
     )
     is Some(carbon_button_integrity) else {
@@ -871,7 +866,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(carbon_button_integrity.integrity_ok)
   assert_true(carbon_button_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Carbon.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
       "$background-hover",
     )
     is Some(carbon_hover) else {
@@ -879,14 +875,16 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(carbon_hover.source_value.contains("adjustAlpha(gray50, 0.12)"))
   assert_true(carbon_hover.source_value.contains("hover alpha 0.12"))
-  guard @common.DesignPreset::Carbon.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Carbon,
       "$background-hover",
     )
     is Some(carbon_hover_integrity) else {
     fail("expected Carbon background-hover source-import integrity")
   }
   assert_true(carbon_hover_integrity.integrity_ok)
-  guard @common.DesignPreset::Carbon.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
       "$border-interactive",
     )
     is Some(carbon_border) else {
@@ -894,25 +892,27 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(carbon_border.source_value.contains("borderInteractive = blue60"))
   assert_true(carbon_border.source_value.contains("#0f62fe"))
-  guard @common.DesignPreset::Carbon.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Carbon,
       "$border-interactive",
     )
     is Some(carbon_border_integrity) else {
     fail("expected Carbon border-interactive source-import integrity")
   }
   assert_true(carbon_border_integrity.integrity_ok)
-  guard @common.DesignPreset::Carbon.source_imported_token_for("$field")
+  guard source_imported_token_for(@common.DesignPreset::Carbon, "$field")
     is Some(carbon_field) else {
     fail("expected imported Carbon field token")
   }
   assert_true(carbon_field.source_value.contains("field01 = gray10"))
   assert_true(carbon_field.source_value.contains("#f4f4f4"))
-  guard @common.DesignPreset::Carbon.source_import_integrity_for("$field")
+  guard source_import_integrity_for(@common.DesignPreset::Carbon, "$field")
     is Some(carbon_field_integrity) else {
     fail("expected Carbon field source-import integrity")
   }
   assert_true(carbon_field_integrity.integrity_ok)
-  guard @common.DesignPreset::Carbon.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
       "$slider-filled-track",
     )
     is Some(carbon_slider) else {
@@ -925,7 +925,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(carbon_slider.source_value.contains("slider__filled-track"))
   assert_true(carbon_slider.source_value.contains("$layer-selected-inverse"))
   assert_true(carbon_slider.source_value.contains("#161616"))
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Carbon,
       "$slider-filled-track",
     )
     is Some(carbon_slider_coverage) else {
@@ -937,7 +938,8 @@ test "source imported tokens expose pinned source values without claiming full i
     carbon_slider_coverage.moui_token ==
     "DesignComponentTokens.slider.foreground",
   )
-  guard @common.DesignPreset::Carbon.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Carbon,
       "$slider-filled-track",
     )
     is Some(carbon_slider_integrity) else {
@@ -999,7 +1001,10 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_carbon_preview_layout_source_import(
     "$container-05", "container05", "miniUnits(8)", "64px", "DesignSpacingTokens.xl",
   )
-  guard @common.DesignPreset::Carbon.source_imported_token_for("durationFast01")
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
+      "durationFast01",
+    )
     is Some(carbon_duration_fast01) else {
     fail("expected imported Carbon fast-01 duration token")
   }
@@ -1010,7 +1015,8 @@ test "source imported tokens expose pinned source values without claiming full i
   )
   assert_true(carbon_duration_fast01.source_value.contains("durationFast01"))
   assert_true(carbon_duration_fast01.source_value.contains("70ms"))
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Carbon,
       "$duration-fast-01",
     )
     is Some(carbon_duration_fast01_coverage) else {
@@ -1022,10 +1028,12 @@ test "source imported tokens expose pinned source values without claiming full i
     carbon_duration_fast01_coverage.moui_token == "DesignMotionTokens.fast_ms",
   )
   assert_true(
-    carbon_duration_fast01_coverage.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    carbon_duration_fast01_coverage.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Carbon.source_imported_token_for("durationFast02")
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
+      "durationFast02",
+    )
     is Some(carbon_duration_fast) else {
     fail("expected imported Carbon fast duration token")
   }
@@ -1036,7 +1044,8 @@ test "source imported tokens expose pinned source values without claiming full i
   )
   assert_true(carbon_duration_fast.source_value.contains("durationFast02"))
   assert_true(carbon_duration_fast.source_value.contains("110ms"))
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Carbon,
       "$duration-fast-02",
     )
     is Some(carbon_duration_fast_coverage) else {
@@ -1047,14 +1056,16 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     carbon_duration_fast_coverage.moui_token == "DesignMotionTokens.fast_ms",
   )
-  guard @common.DesignPreset::Carbon.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
       "durationModerate01",
     )
     is Some(carbon_duration_normal) else {
     fail("expected imported Carbon moderate-01 duration token")
   }
   assert_true(carbon_duration_normal.source_value.contains("150ms"))
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Carbon,
       "$duration-moderate-01",
     )
     is Some(carbon_duration_normal_coverage) else {
@@ -1065,7 +1076,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     carbon_duration_normal_coverage.moui_token == "DesignMotionTokens.normal_ms",
   )
-  guard @common.DesignPreset::Carbon.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Carbon,
       "$duration-moderate-01",
     )
     is Some(carbon_duration_normal_integrity) else {
@@ -1073,14 +1085,16 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(carbon_duration_normal_integrity.integrity_ok)
   assert_true(carbon_duration_normal_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Carbon.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
       "durationModerate02",
     )
     is Some(carbon_duration_slow) else {
     fail("expected imported Carbon moderate-02 duration token")
   }
   assert_true(carbon_duration_slow.source_value.contains("240ms"))
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Carbon,
       "$duration-moderate-02",
     )
     is Some(carbon_duration_slow_coverage) else {
@@ -1091,13 +1105,17 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     carbon_duration_slow_coverage.moui_token == "DesignMotionTokens.slow_ms",
   )
-  guard @common.DesignPreset::Carbon.source_imported_token_for("durationSlow02")
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
+      "durationSlow02",
+    )
     is Some(carbon_duration_slow02) else {
     fail("expected imported Carbon slow-02 duration token")
   }
   assert_true(carbon_duration_slow02.source_value.contains("durationSlow02"))
   assert_true(carbon_duration_slow02.source_value.contains("700ms"))
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Carbon,
       "$duration-slow-02",
     )
     is Some(carbon_duration_slow02_coverage) else {
@@ -1109,10 +1127,10 @@ test "source imported tokens expose pinned source values without claiming full i
     carbon_duration_slow02_coverage.moui_token == "DesignMotionTokens.slow_ms",
   )
   assert_true(
-    carbon_duration_slow02_coverage.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    carbon_duration_slow02_coverage.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Carbon.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
       "easings.standard.productive",
     )
     is Some(carbon_easing) else {
@@ -1121,7 +1139,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     carbon_easing.source_value.contains("cubic-bezier(0.2, 0, 0.38, 0.9)"),
   )
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Carbon,
       "easings.standard.productive",
     )
     is Some(carbon_easing_coverage) else {
@@ -1130,10 +1149,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(carbon_easing_coverage.source_imported)
   assert_true(carbon_easing_coverage.golden_mapped)
   assert_true(carbon_easing_coverage.moui_token == "DesignMotionTokens.easing")
-  assert_true(
-    carbon_easing_coverage.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Carbon.source_import_integrity_for(
+  assert_true(carbon_easing_coverage.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Carbon,
       "easings.standard.productive",
     )
     is Some(carbon_easing_integrity) else {
@@ -1141,7 +1159,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(carbon_easing_integrity.integrity_ok)
   assert_true(carbon_easing_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Carbon.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
       "easings.exit.expressive",
     )
     is Some(carbon_easing_exit) else {
@@ -1150,7 +1169,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     carbon_easing_exit.source_value.contains("cubic-bezier(0.4, 0.14, 1, 1)"),
   )
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Carbon,
       "easings.exit.expressive",
     )
     is Some(carbon_easing_exit_coverage) else {
@@ -1162,10 +1182,10 @@ test "source imported tokens expose pinned source values without claiming full i
     carbon_easing_exit_coverage.moui_token == "DesignMotionTokens.easing",
   )
   assert_true(
-    carbon_easing_exit_coverage.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    carbon_easing_exit_coverage.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Carbon.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Carbon,
       "easings.exit.expressive",
     )
     is Some(carbon_easing_exit_integrity) else {
@@ -1173,7 +1193,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(carbon_easing_exit_integrity.integrity_ok)
   assert_true(carbon_easing_exit_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Carbon.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Carbon,
       "Carbon motion token family",
     )
     is Some(carbon_motion_family) else {
@@ -1182,7 +1203,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(carbon_motion_family.source_file.contains("packages/motion"))
   assert_true(carbon_motion_family.source_value.contains("durationFast01"))
   assert_true(carbon_motion_family.source_value.contains("standard"))
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Carbon,
       "Carbon motion token family",
     )
     is Some(carbon_motion_family_coverage) else {
@@ -1192,10 +1214,10 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(carbon_motion_family_coverage.golden_mapped)
   assert_true(carbon_motion_family_coverage.moui_token == "DesignMotionTokens")
   assert_true(
-    carbon_motion_family_coverage.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    carbon_motion_family_coverage.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Carbon.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Carbon,
       "Carbon motion token family",
     )
     is Some(carbon_motion_family_integrity) else {
@@ -1203,7 +1225,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(carbon_motion_family_integrity.integrity_ok)
   assert_true(carbon_motion_family_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "fgColor.default.$value",
     )
     is Some(primer_foreground_import) else {
@@ -1211,7 +1234,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_foreground_import.source_value.contains("#1f2328"))
   assert_true(primer_foreground_import.source_file.contains("fgColor.json5"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--fgColor-default",
     )
     is Some(primer_foreground) else {
@@ -1219,7 +1243,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_foreground.source_imported)
   assert_true(primer_foreground.source_token == "fgColor.default.$value")
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.size.'4'.$value",
     )
     is Some(primer_base_size_xs_import) else {
@@ -1231,7 +1256,10 @@ test "source imported tokens expose pinned source values without claiming full i
     "f84e6a0f0553677724f1973d4b7270c61fa40c28",
   )
   assert_true(primer_base_size_xs_import.source_value.contains("value: 4"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for("--base-size-4")
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
+      "--base-size-4",
+    )
     is Some(primer_base_size_xs) else {
     fail("expected Primer base size 4 source-import coverage")
   }
@@ -1239,10 +1267,11 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_base_size_xs.golden_mapped)
   assert_true(primer_base_size_xs.source_token == "base.size.'4'.$value")
   assert_true(primer_base_size_xs.moui_token == "DesignSpacingTokens.xs")
-  assert_true(
-    primer_base_size_xs.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_coverage_for("--base-size-8")
+  assert_true(primer_base_size_xs.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
+      "--base-size-8",
+    )
     is Some(primer_base_size_sm) else {
     fail("expected Primer base size 8 source-import coverage")
   }
@@ -1250,10 +1279,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_base_size_sm.golden_mapped)
   assert_true(primer_base_size_sm.source_token == "base.size.'8'.$value")
   assert_true(primer_base_size_sm.moui_token == "DesignSpacingTokens.sm")
-  assert_true(
-    primer_base_size_sm.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  assert_true(primer_base_size_sm.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-size-12",
     )
     is Some(primer_base_size_md) else {
@@ -1263,10 +1291,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_base_size_md.golden_mapped)
   assert_true(primer_base_size_md.source_token == "base.size.'12'.$value")
   assert_true(primer_base_size_md.moui_token == "DesignSpacingTokens.md")
-  assert_true(
-    primer_base_size_md.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  assert_true(primer_base_size_md.status == DesignTokenStatus::ThemeMapped)
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.size.'16'.$value",
     )
     is Some(primer_base_size_import) else {
@@ -1279,7 +1306,8 @@ test "source imported tokens expose pinned source values without claiming full i
   )
   assert_true(primer_base_size_import.source_value.contains("value: 16"))
   assert_true(primer_base_size_import.source_value.contains("unit: 'px'"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-size-16",
     )
     is Some(primer_base_size) else {
@@ -1289,8 +1317,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_base_size.golden_mapped)
   assert_true(primer_base_size.source_token == "base.size.'16'.$value")
   assert_true(primer_base_size.moui_token == "DesignSpacingTokens.lg")
-  assert_true(primer_base_size.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  assert_true(primer_base_size.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--base-size-16",
     )
     is Some(primer_base_size_integrity) else {
@@ -1298,7 +1327,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_base_size_integrity.integrity_ok)
   assert_true(primer_base_size_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.size.'24'.$value",
     )
     is Some(primer_base_size_xl_import) else {
@@ -1310,7 +1340,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "f84e6a0f0553677724f1973d4b7270c61fa40c28",
   )
   assert_true(primer_base_size_xl_import.source_value.contains("value: 24"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-size-24",
     )
     is Some(primer_base_size_xl) else {
@@ -1320,10 +1351,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_base_size_xl.golden_mapped)
   assert_true(primer_base_size_xl.source_token == "base.size.'24'.$value")
   assert_true(primer_base_size_xl.moui_token == "DesignSpacingTokens.xl")
-  assert_true(
-    primer_base_size_xl.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  assert_true(primer_base_size_xl.status == DesignTokenStatus::ThemeMapped)
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.text.size.xs.$value",
     )
     is Some(primer_caption_size_import) else {
@@ -1337,7 +1367,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "642b424c0e0ebcc46e9ce8da12f96534fd24568d",
   )
   assert_true(primer_caption_size_import.source_value.contains("value: 0.75"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-text-size-xs",
     )
     is Some(primer_caption_size) else {
@@ -1349,10 +1380,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_caption_size.moui_token == "DesignTypographyTokens.caption.size",
   )
-  assert_true(
-    primer_caption_size.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  assert_true(primer_caption_size.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-text-size-sm",
     )
     is Some(primer_body_size) else {
@@ -1362,8 +1392,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_body_size.golden_mapped)
   assert_true(primer_body_size.source_token == "base.text.size.sm.$value")
   assert_true(primer_body_size.moui_token == "DesignTypographyTokens.body.size")
-  assert_true(primer_body_size.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  assert_true(primer_body_size.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-text-size-lg",
     )
     is Some(primer_title_size) else {
@@ -1375,10 +1406,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_title_size.moui_token == "DesignTypographyTokens.title.size",
   )
-  assert_true(
-    primer_title_size.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  assert_true(primer_title_size.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-text-weight-normal",
     )
     is Some(primer_body_weight) else {
@@ -1392,10 +1422,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_body_weight.moui_token == "DesignTypographyTokens.body.weight",
   )
-  assert_true(
-    primer_body_weight.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  assert_true(primer_body_weight.status == DesignTokenStatus::ThemeMapped)
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.text.weight.semibold.$value",
     )
     is Some(primer_control_weight_import) else {
@@ -1409,7 +1438,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "642b424c0e0ebcc46e9ce8da12f96534fd24568d",
   )
   assert_true(primer_control_weight_import.source_value.contains("600"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-text-weight-semibold",
     )
     is Some(primer_control_weight) else {
@@ -1423,10 +1453,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_control_weight.moui_token == "DesignTypographyTokens.control.weight",
   )
-  assert_true(
-    primer_control_weight.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  assert_true(primer_control_weight.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--base-text-size-sm",
     )
     is Some(primer_body_size_integrity) else {
@@ -1434,7 +1463,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_body_size_integrity.integrity_ok)
   assert_true(primer_body_size_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "borderRadius.small.$value",
     )
     is Some(primer_radius_small_import) else {
@@ -1446,7 +1476,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "e68682b0f98485e8a6a6f05c36cc8c5053f338b5",
   )
   assert_true(primer_radius_small_import.source_value.contains("value: 3"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-small",
     )
     is Some(primer_radius_small) else {
@@ -1456,10 +1487,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_radius_small.golden_mapped)
   assert_true(primer_radius_small.source_token == "borderRadius.small.$value")
   assert_true(primer_radius_small.moui_token == "DesignRadiusTokens.sm")
-  assert_true(
-    primer_radius_small.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  assert_true(primer_radius_small.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-medium",
     )
     is Some(primer_radius_medium) else {
@@ -1469,10 +1499,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_radius_medium.golden_mapped)
   assert_true(primer_radius_medium.source_token == "borderRadius.medium.$value")
   assert_true(primer_radius_medium.moui_token == "DesignRadiusTokens.md")
-  assert_true(
-    primer_radius_medium.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  assert_true(primer_radius_medium.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-large",
     )
     is Some(primer_radius_large) else {
@@ -1482,10 +1511,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_radius_large.golden_mapped)
   assert_true(primer_radius_large.source_token == "borderRadius.large.$value")
   assert_true(primer_radius_large.moui_token == "DesignRadiusTokens.lg")
-  assert_true(
-    primer_radius_large.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  assert_true(primer_radius_large.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-full",
     )
     is Some(primer_radius_full) else {
@@ -1495,10 +1523,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_radius_full.golden_mapped)
   assert_true(primer_radius_full.source_token == "borderRadius.full.$value")
   assert_true(primer_radius_full.moui_token == "DesignRadiusTokens.pill")
-  assert_true(
-    primer_radius_full.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  assert_true(primer_radius_full.status == DesignTokenStatus::PreviewMapped)
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "borderRadius.default.$value",
     )
     is Some(primer_radius_default_import) else {
@@ -1512,7 +1539,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_radius_default_import.source_value.contains("borderRadius.medium"),
   )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-default",
     )
     is Some(primer_radius_default) else {
@@ -1524,10 +1552,9 @@ test "source imported tokens expose pinned source values without claiming full i
     primer_radius_default.source_token == "borderRadius.default.$value",
   )
   assert_true(primer_radius_default.moui_token == "DesignRadiusTokens.md")
-  assert_true(
-    primer_radius_default.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  assert_true(primer_radius_default.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-medium",
     )
     is Some(primer_radius_integrity) else {
@@ -1535,7 +1562,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_radius_integrity.integrity_ok)
   assert_true(primer_radius_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "shadow.resting.small.$value",
     )
     is Some(primer_shadow_small_import) else {
@@ -1547,7 +1575,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "a20e0c19833d9664ee65f55ab6e034c939af63de",
   )
   assert_true(primer_shadow_small_import.source_value.contains("offsetY: 1"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--shadow-resting-small",
     )
     is Some(primer_shadow_small) else {
@@ -1559,10 +1588,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_shadow_small.moui_token == "DesignElevationTokens.sm.offset.y",
   )
-  assert_true(
-    primer_shadow_small.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  assert_true(primer_shadow_small.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--shadow-resting-medium",
     )
     is Some(primer_shadow_medium) else {
@@ -1576,10 +1604,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_shadow_medium.moui_token == "DesignElevationTokens.md.offset.y",
   )
-  assert_true(
-    primer_shadow_medium.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  assert_true(primer_shadow_medium.status == DesignTokenStatus::PreviewMapped)
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "shadow.floating.large.$value",
     )
     is Some(primer_shadow_large_import) else {
@@ -1591,7 +1618,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "a20e0c19833d9664ee65f55ab6e034c939af63de",
   )
   assert_true(primer_shadow_large_import.source_value.contains("offsetY: 40"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--shadow-floating-large",
     )
     is Some(primer_shadow_large) else {
@@ -1605,10 +1633,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_shadow_large.moui_token == "DesignElevationTokens.lg.offset.y",
   )
-  assert_true(
-    primer_shadow_large.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  assert_true(primer_shadow_large.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--shadow-resting-small",
     )
     is Some(primer_shadow_integrity) else {
@@ -1616,7 +1643,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_shadow_integrity.integrity_ok)
   assert_true(primer_shadow_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.duration.'0'.$value",
     )
     is Some(primer_duration_zero_import) else {
@@ -1628,7 +1656,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "7d1763e6c4ca45bdf70ae26e9c55cfb9fd09ef1f",
   )
   assert_true(primer_duration_zero_import.source_value.contains("value: 0"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-duration-0",
     )
     is Some(primer_duration_zero) else {
@@ -1638,10 +1667,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_duration_zero.golden_mapped)
   assert_true(primer_duration_zero.source_token == "base.duration.'0'.$value")
   assert_true(primer_duration_zero.moui_token == "DesignMotionTokens.fast_ms")
-  assert_true(
-    primer_duration_zero.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  assert_true(primer_duration_zero.status == DesignTokenStatus::PreviewMapped)
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.duration.'100'.$value",
     )
     is Some(primer_duration_fast_import) else {
@@ -1653,7 +1681,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "7d1763e6c4ca45bdf70ae26e9c55cfb9fd09ef1f",
   )
   assert_true(primer_duration_fast_import.source_value.contains("value: 100"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-duration-100",
     )
     is Some(primer_duration_fast) else {
@@ -1663,10 +1692,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_duration_fast.golden_mapped)
   assert_true(primer_duration_fast.source_token == "base.duration.'100'.$value")
   assert_true(primer_duration_fast.moui_token == "DesignMotionTokens.fast_ms")
-  assert_true(
-    primer_duration_fast.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  assert_true(primer_duration_fast.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-duration-200",
     )
     is Some(primer_duration_normal) else {
@@ -1679,10 +1707,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_duration_normal.moui_token == "DesignMotionTokens.normal_ms",
   )
-  assert_true(
-    primer_duration_normal.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  assert_true(primer_duration_normal.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-duration-300",
     )
     is Some(primer_duration_slow) else {
@@ -1691,10 +1718,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_duration_slow.source_imported)
   assert_true(primer_duration_slow.source_token == "base.duration.'300'.$value")
   assert_true(primer_duration_slow.moui_token == "DesignMotionTokens.slow_ms")
-  assert_true(
-    primer_duration_slow.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  assert_true(primer_duration_slow.status == DesignTokenStatus::PreviewMapped)
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.duration.'1000'.$value",
     )
     is Some(primer_duration_long_import) else {
@@ -1702,7 +1728,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_duration_long_import.source_file.contains("timing.json5"))
   assert_true(primer_duration_long_import.source_value.contains("value: 1000"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-duration-1000",
     )
     is Some(primer_duration_long) else {
@@ -1714,10 +1741,9 @@ test "source imported tokens expose pinned source values without claiming full i
     primer_duration_long.source_token == "base.duration.'1000'.$value",
   )
   assert_true(primer_duration_long.moui_token == "DesignMotionTokens.slow_ms")
-  assert_true(
-    primer_duration_long.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  assert_true(primer_duration_long.status == DesignTokenStatus::PreviewMapped)
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.easing.linear.$value",
     )
     is Some(primer_linear_import) else {
@@ -1729,7 +1755,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "e0e9196b89eada51c0ef9cd53fee9a9083374645",
   )
   assert_true(primer_linear_import.source_value.contains("0,0,1,1"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-easing-linear",
     )
     is Some(primer_linear) else {
@@ -1738,8 +1765,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_linear.source_imported)
   assert_true(primer_linear.source_token == "base.easing.linear.$value")
   assert_true(primer_linear.moui_token == "DesignMotionTokens.easing")
-  assert_true(primer_linear.status == @common.DesignTokenStatus::PreviewMapped)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  assert_true(primer_linear.status == DesignTokenStatus::PreviewMapped)
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.easing.easeOut.$value",
     )
     is Some(primer_easing_import) else {
@@ -1751,7 +1779,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "e0e9196b89eada51c0ef9cd53fee9a9083374645",
   )
   assert_true(primer_easing_import.source_value.contains("0.3,0.8,0.6,1"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-easing-easeOut",
     )
     is Some(primer_easing) else {
@@ -1760,8 +1789,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_easing.source_imported)
   assert_true(primer_easing.source_token == "base.easing.easeOut.$value")
   assert_true(primer_easing.moui_token == "DesignMotionTokens.easing")
-  assert_true(primer_easing.status == @common.DesignTokenStatus::PreviewMapped)
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  assert_true(primer_easing.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--base-easing-easeOut",
     )
     is Some(primer_easing_integrity) else {
@@ -1769,7 +1799,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_easing_integrity.integrity_ok)
   assert_true(primer_easing_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "base.easing.easeInOut.$value",
     )
     is Some(primer_ease_in_out_import) else {
@@ -1777,7 +1808,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_ease_in_out_import.source_file.contains("easing.json5"))
   assert_true(primer_ease_in_out_import.source_value.contains("0.6,0,0.2,1"))
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--base-easing-easeInOut",
     )
     is Some(primer_ease_in_out_integrity) else {
@@ -1785,7 +1817,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_ease_in_out_integrity.integrity_ok)
   assert_true(primer_ease_in_out_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "Primer animation token family",
     )
     is Some(primer_animation_family) else {
@@ -1794,7 +1827,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(primer_animation_family.source_file.contains("timing.json5"))
   assert_true(primer_animation_family.source_value.contains("base.duration"))
   assert_true(primer_animation_family.source_value.contains("base.easing"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "Primer animation token family",
     )
     is Some(primer_animation_family_coverage) else {
@@ -1806,10 +1840,10 @@ test "source imported tokens expose pinned source values without claiming full i
     primer_animation_family_coverage.moui_token == "DesignMotionTokens",
   )
   assert_true(
-    primer_animation_family_coverage.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    primer_animation_family_coverage.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "Primer animation token family",
     )
     is Some(primer_animation_family_integrity) else {
@@ -1817,7 +1851,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_animation_family_integrity.integrity_ok)
   assert_true(primer_animation_family_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "button.primary.bgColor.rest.$value",
     )
     is Some(primer_button_import) else {
@@ -1829,7 +1864,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "a1fe0c55d866663ee03883c7652248040a652c8e",
   )
   assert_true(primer_button_import.source_value.contains("#1f883d"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--button-primary-bgColor-rest",
     )
     is Some(primer_button) else {
@@ -1844,10 +1880,9 @@ test "source imported tokens expose pinned source values without claiming full i
     primer_button.moui_token ==
     "DesignComponentTokens.button.primary.background",
   )
-  assert_true(
-    primer_button.status == @common.DesignTokenStatus::ComponentMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  assert_true(primer_button.status == DesignTokenStatus::ComponentMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--button-primary-bgColor-rest",
     )
     is Some(primer_button_integrity) else {
@@ -1855,7 +1890,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_button_integrity.integrity_ok)
   assert_true(primer_button_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "control.bgColor.rest.$value",
     )
     is Some(primer_control_import) else {
@@ -1867,7 +1903,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "e59325362304202a432f44cd78b712b84a4cfcc0",
   )
   assert_true(primer_control_import.source_value.contains("#F6F8FA"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--control-bgColor-rest",
     )
     is Some(primer_control) else {
@@ -1879,10 +1916,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_control.moui_token == "DesignComponentTokens.picker.background",
   )
-  assert_true(
-    primer_control.status == @common.DesignTokenStatus::ComponentMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  assert_true(primer_control.status == DesignTokenStatus::ComponentMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--control-bgColor-rest",
     )
     is Some(primer_control_integrity) else {
@@ -1890,7 +1926,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_control_integrity.integrity_ok)
   assert_true(primer_control_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "control.transparent.bgColor.hover.alpha",
     )
     is Some(primer_control_hover_import) else {
@@ -1902,7 +1939,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "e59325362304202a432f44cd78b712b84a4cfcc0",
   )
   assert_true(primer_control_hover_import.source_value.contains("alpha: 0.1"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--control-transparent-bgColor-hover",
     )
     is Some(primer_control_hover) else {
@@ -1917,10 +1955,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_control_hover.moui_token == "DesignStateLayerTokens.hover_alpha",
   )
-  assert_true(
-    primer_control_hover.status == @common.DesignTokenStatus::ComponentMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  assert_true(primer_control_hover.status == DesignTokenStatus::ComponentMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--control-transparent-bgColor-hover",
     )
     is Some(primer_control_hover_integrity) else {
@@ -1928,7 +1965,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_control_hover_integrity.integrity_ok)
   assert_true(primer_control_hover_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "control.borderColor.emphasis.$value",
     )
     is Some(primer_control_border_import) else {
@@ -1945,7 +1983,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_control_border_import.source_value.contains("borderColor.json5"),
   )
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--control-borderColor-emphasis",
     )
     is Some(primer_control_border) else {
@@ -1960,9 +1999,10 @@ test "source imported tokens expose pinned source values without claiming full i
     primer_control_border.moui_token == "DesignTextFieldTokens.focused.border",
   )
   assert_true(
-    primer_control_border.status == @common.DesignTokenStatus::ComponentMapped,
+    primer_control_border.status == DesignTokenStatus::ComponentMapped,
   )
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--control-borderColor-emphasis",
     )
     is Some(primer_control_border_integrity) else {
@@ -1970,7 +2010,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_control_border_integrity.integrity_ok)
   assert_true(primer_control_border_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Primer.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Primer,
       "progressBar.bgColor.accent.$value",
     )
     is Some(primer_progress_import) else {
@@ -1982,7 +2023,8 @@ test "source imported tokens expose pinned source values without claiming full i
     "40816af4a1a546db95f856c616befe994e68ad75",
   )
   assert_true(primer_progress_import.source_value.contains("#0969da"))
-  guard @common.DesignPreset::Primer.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Primer,
       "--progressBar-fgColor-accent",
     )
     is Some(primer_progress) else {
@@ -1996,10 +2038,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     primer_progress.moui_token == "DesignComponentTokens.progress.foreground",
   )
-  assert_true(
-    primer_progress.status == @common.DesignTokenStatus::ComponentMapped,
-  )
-  guard @common.DesignPreset::Primer.source_import_integrity_for(
+  assert_true(primer_progress.status == DesignTokenStatus::ComponentMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Primer,
       "--progressBar-fgColor-accent",
     )
     is Some(primer_progress_integrity) else {
@@ -2007,14 +2048,16 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(primer_progress_integrity.integrity_ok)
   assert_true(primer_progress_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Fluent.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Fluent,
       "colorBrandBackground",
     )
     is Some(fluent_brand) else {
     fail("expected imported Fluent brand token")
   }
   assert_true(fluent_brand.source_value.contains("#0f6cbd"))
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Fluent,
       "colorBrandBackground",
     )
     is Some(fluent_brand_integrity) else {
@@ -2050,7 +2093,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_fluent_preview_global_color_source_import(
     "blue.primary", "#0078d4", "DesignSemanticPalette.info",
   )
-  guard @common.DesignPreset::Fluent.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Fluent,
       "colorCompoundBrandBackground",
     )
     is Some(fluent_compound_brand) else {
@@ -2058,7 +2102,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(fluent_compound_brand.source_file.contains("lightColor.ts"))
   assert_true(fluent_compound_brand.source_value.contains("#0f6cbd"))
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "colorCompoundBrandBackground",
     )
     is Some(fluent_compound_brand_coverage) else {
@@ -2071,10 +2116,10 @@ test "source imported tokens expose pinned source values without claiming full i
     "DesignComponentTokens.button.primary.background",
   )
   assert_true(
-    fluent_compound_brand_coverage.status ==
-    @common.DesignTokenStatus::ComponentMapped,
+    fluent_compound_brand_coverage.status == DesignTokenStatus::ComponentMapped,
   )
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "ProgressBar.indicator.backgroundColor",
     )
     is Some(fluent_progress) else {
@@ -2085,14 +2130,13 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     fluent_progress.moui_token == "DesignComponentTokens.progress.foreground",
   )
-  assert_true(
-    fluent_progress.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(fluent_progress.status == DesignTokenStatus::ComponentMapped)
   assert_true(fluent_progress.source_file.contains("progress-bar.styles.ts"))
   assert_true(
     fluent_progress.source_value.contains("colorCompoundBrandBackground"),
   )
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Fluent,
       "ProgressBar.indicator.backgroundColor",
     )
     is Some(fluent_progress_integrity) else {
@@ -2100,7 +2144,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(fluent_progress_integrity.integrity_ok)
   assert_true(fluent_progress_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(
+  guard source_import_integrity_for(
+      @common.DesignPreset::Fluent,
       "colorCompoundBrandBackground",
     )
     is Some(fluent_compound_brand_integrity) else {
@@ -2108,7 +2153,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(fluent_compound_brand_integrity.integrity_ok)
   assert_true(fluent_compound_brand_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "spacingHorizontalM",
     )
     is Some(fluent_spacing) else {
@@ -2117,8 +2163,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(fluent_spacing.source_imported)
   assert_true(fluent_spacing.golden_mapped)
   assert_true(fluent_spacing.moui_token == "DesignSpacingTokens.md")
-  assert_true(fluent_spacing.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(
+  assert_true(fluent_spacing.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Fluent,
       "spacingHorizontalM",
     )
     is Some(fluent_spacing_integrity) else {
@@ -2180,7 +2227,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_fluent_mapped_spacing_source_import(
     "spacingVerticalXXXL", "xxxl = '32px'", "DesignSpacingTokens.xl",
   )
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationUltraFast",
     )
     is Some(fluent_duration_ultra_fast) else {
@@ -2192,10 +2240,10 @@ test "source imported tokens expose pinned source values without claiming full i
     fluent_duration_ultra_fast.moui_token == "DesignMotionTokens.fast_ms",
   )
   assert_true(
-    fluent_duration_ultra_fast.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_ultra_fast.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationFaster",
     )
     is Some(fluent_duration_fast) else {
@@ -2204,10 +2252,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(fluent_duration_fast.source_imported)
   assert_true(fluent_duration_fast.golden_mapped)
   assert_true(fluent_duration_fast.moui_token == "DesignMotionTokens.fast_ms")
-  assert_true(
-    fluent_duration_fast.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(
+  assert_true(fluent_duration_fast.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Fluent,
       "durationFaster",
     )
     is Some(fluent_duration_fast_integrity) else {
@@ -2215,7 +2262,7 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(fluent_duration_fast_integrity.integrity_ok)
   assert_true(fluent_duration_fast_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Fluent.source_import_coverage_for("durationFast")
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, "durationFast")
     is Some(fluent_duration_fast_preview) else {
     fail("expected Fluent fast duration source-import coverage")
   }
@@ -2225,10 +2272,10 @@ test "source imported tokens expose pinned source values without claiming full i
     fluent_duration_fast_preview.moui_token == "DesignMotionTokens.fast_ms",
   )
   assert_true(
-    fluent_duration_fast_preview.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_fast_preview.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationNormal",
     )
     is Some(fluent_duration) else {
@@ -2237,8 +2284,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(fluent_duration.source_imported)
   assert_true(fluent_duration.golden_mapped)
   assert_true(fluent_duration.moui_token == "DesignMotionTokens.normal_ms")
-  assert_true(fluent_duration.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(
+  assert_true(fluent_duration.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Fluent,
       "durationNormal",
     )
     is Some(fluent_duration_integrity) else {
@@ -2246,7 +2294,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(fluent_duration_integrity.integrity_ok)
   assert_true(fluent_duration_integrity.moui_token_matches_golden)
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationGentle",
     )
     is Some(fluent_duration_gentle) else {
@@ -2257,20 +2306,17 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     fluent_duration_gentle.moui_token == "DesignMotionTokens.normal_ms",
   )
-  assert_true(
-    fluent_duration_gentle.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Fluent.source_import_coverage_for("durationSlow")
+  assert_true(fluent_duration_gentle.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, "durationSlow")
     is Some(fluent_duration_slow) else {
     fail("expected Fluent slow duration source-import coverage")
   }
   assert_true(fluent_duration_slow.source_imported)
   assert_true(fluent_duration_slow.golden_mapped)
   assert_true(fluent_duration_slow.moui_token == "DesignMotionTokens.slow_ms")
-  assert_true(
-    fluent_duration_slow.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  assert_true(fluent_duration_slow.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationSlower",
     )
     is Some(fluent_duration_slower) else {
@@ -2279,10 +2325,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(fluent_duration_slower.source_imported)
   assert_true(fluent_duration_slower.golden_mapped)
   assert_true(fluent_duration_slower.moui_token == "DesignMotionTokens.slow_ms")
-  assert_true(
-    fluent_duration_slower.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  assert_true(fluent_duration_slower.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationUltraSlow",
     )
     is Some(fluent_duration_ultra_slow) else {
@@ -2294,8 +2339,7 @@ test "source imported tokens expose pinned source values without claiming full i
     fluent_duration_ultra_slow.moui_token == "DesignMotionTokens.slow_ms",
   )
   assert_true(
-    fluent_duration_ultra_slow.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_ultra_slow.status == DesignTokenStatus::PreviewMapped,
   )
   assert_fluent_preview_curve_source_import(
     "curveAccelerateMax", "cubic-bezier(0.9,0.1,1,0.2)",
@@ -2318,15 +2362,19 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_fluent_preview_curve_source_import(
     "curveEasyEaseMax", "cubic-bezier(0.8,0,0.2,1)",
   )
-  guard @common.DesignPreset::Fluent.source_import_coverage_for("curveEasyEase")
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
+      "curveEasyEase",
+    )
     is Some(fluent_curve) else {
     fail("expected Fluent curve source-import coverage")
   }
   assert_true(fluent_curve.source_imported)
   assert_true(fluent_curve.golden_mapped)
   assert_true(fluent_curve.moui_token == "DesignMotionTokens.easing")
-  assert_true(fluent_curve.status == @common.DesignTokenStatus::PreviewMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(
+  assert_true(fluent_curve.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Fluent,
       "curveEasyEase",
     )
     is Some(fluent_curve_integrity) else {
@@ -2337,7 +2385,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_fluent_preview_curve_source_import(
     "curveLinear", "cubic-bezier(0,0,1,1)",
   )
-  guard @common.DesignPreset::Fluent.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Fluent,
       "fontSizeBase300",
     )
     is Some(fluent_font_size) else {
@@ -2345,7 +2394,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(fluent_font_size.source_file.contains("fonts.ts"))
   assert_true(fluent_font_size.source_value.contains("14px"))
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "fontSizeBase300",
     )
     is Some(fluent_font_coverage) else {
@@ -2353,10 +2403,9 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(fluent_font_coverage.source_imported)
   assert_true(fluent_font_coverage.golden_mapped)
-  assert_true(
-    fluent_font_coverage.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  assert_true(fluent_font_coverage.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "fontWeightSemibold",
     )
     is Some(fluent_semibold) else {
@@ -2367,8 +2416,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(
     fluent_semibold.moui_token == "DesignTypographyTokens.control.weight",
   )
-  assert_true(fluent_semibold.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(
+  assert_true(fluent_semibold.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_integrity_for(
+      @common.DesignPreset::Fluent,
       "fontWeightSemibold",
     )
     is Some(fluent_semibold_integrity) else {
@@ -2457,7 +2507,8 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_fluent_preview_stroke_width_source_import(
     "strokeWidthThickest", "4px", "DesignComponentTokens.text_field.focused.border_width",
   )
-  guard @common.DesignPreset::Fluent.source_imported_token_for(
+  guard source_imported_token_for(
+      @common.DesignPreset::Fluent,
       "spacingHorizontalXS",
     )
     is Some(fluent_spacing_xs_import) else {
@@ -2465,7 +2516,8 @@ test "source imported tokens expose pinned source values without claiming full i
   }
   assert_true(fluent_spacing_xs_import.source_file.contains("spacings.ts"))
   assert_true(fluent_spacing_xs_import.source_value.contains("'4px'"))
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "spacingHorizontalXS",
     )
     is Some(fluent_spacing_xs) else {
@@ -2474,10 +2526,9 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(fluent_spacing_xs.source_imported)
   assert_true(fluent_spacing_xs.golden_mapped)
   assert_true(fluent_spacing_xs.moui_token == "DesignSpacingTokens.xs")
-  assert_true(
-    fluent_spacing_xs.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Fluent.source_imported_token_for(
+  assert_true(fluent_spacing_xs.status == DesignTokenStatus::ThemeMapped)
+  guard source_imported_token_for(
+      @common.DesignPreset::Fluent,
       "borderRadiusCircular",
     )
     is Some(fluent_radius_circular_import) else {
@@ -2487,7 +2538,8 @@ test "source imported tokens expose pinned source values without claiming full i
     fluent_radius_circular_import.source_file.contains("borderRadius.ts"),
   )
   assert_true(fluent_radius_circular_import.source_value.contains("10000px"))
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(
+  guard source_import_coverage_for(
+      @common.DesignPreset::Fluent,
       "borderRadiusCircular",
     )
     is Some(fluent_radius_circular) else {
@@ -2496,9 +2548,7 @@ test "source imported tokens expose pinned source values without claiming full i
   assert_true(fluent_radius_circular.source_imported)
   assert_true(fluent_radius_circular.golden_mapped)
   assert_true(fluent_radius_circular.moui_token == "DesignRadiusTokens.pill")
-  assert_true(
-    fluent_radius_circular.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_radius_circular.status == DesignTokenStatus::PreviewMapped)
   assert_fluent_preview_radius_source_import(
     "borderRadiusNone", "borderRadiusNone: '0'", "DesignRadiusTokens.sm",
   )
@@ -2531,11 +2581,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let rows = preset.runtime_token_alignment_report()
-    assert_true(rows.length() == preset.official_token_anchor_count())
-    assert_true(preset.runtime_token_alignment_count() == rows.length())
-    assert_true(preset.runtime_token_alignment_gap_count() > 0)
-    assert_false(preset.is_design_system_complete())
+    let rows = runtime_token_alignment_report(preset)
+    assert_true(rows.length() == official_token_anchor_count(preset))
+    assert_true(runtime_token_alignment_count(preset) == rows.length())
+    assert_true(runtime_token_alignment_gap_count(preset) > 0)
+    assert_false(is_design_system_complete(preset))
     for item in rows {
       assert_true(item.official_token != "")
       let material_spacing_placeholder = preset ==
@@ -2554,7 +2604,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
       }
     }
   }
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "colorNeutralForeground1",
     )
     is Some(fluent_foreground) else {
@@ -2566,14 +2617,16 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(
     fluent_foreground.expected_runtime_value == fluent_foreground.runtime_value,
   )
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "colorBrandBackground",
     )
     is Some(fluent_brand) else {
     fail("expected Fluent brand runtime alignment")
   }
   assert_true(fluent_brand.runtime_aligned)
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "colorCompoundBrandBackground",
     )
     is Some(fluent_compound_brand) else {
@@ -2610,7 +2663,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_fluent_preview_global_color_runtime_alignment(
     "blue.primary", "rgba(0,0.47058823529411764,0.8313725490196079,1)",
   )
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "ProgressBar.indicator.backgroundColor",
     )
     is Some(fluent_progress) else {
@@ -2620,41 +2674,44 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(fluent_progress.source_value_resolved)
   assert_true(fluent_progress.runtime_value_available)
   assert_true(fluent_progress.runtime_aligned)
-  assert_true(
-    fluent_progress.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(fluent_progress.status == DesignTokenStatus::ComponentMapped)
   assert_true(
     fluent_progress.moui_token == "DesignComponentTokens.progress.foreground",
   )
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "colorNeutralBackground2",
     )
     is Some(fluent_surface) else {
     fail("expected Fluent surface runtime alignment")
   }
   assert_true(fluent_surface.runtime_aligned)
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "colorNeutralBackground3",
     )
     is Some(fluent_surface_variant) else {
     fail("expected Fluent surface-variant runtime alignment")
   }
   assert_true(fluent_surface_variant.runtime_aligned)
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "colorNeutralStroke1",
     )
     is Some(fluent_outline) else {
     fail("expected Fluent outline runtime alignment")
   }
   assert_true(fluent_outline.runtime_aligned)
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "colorNeutralForeground3",
     )
     is Some(fluent_muted) else {
     fail("expected Fluent muted runtime alignment")
   }
   assert_true(fluent_muted.runtime_aligned)
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "borderRadiusMedium",
     )
     is Some(fluent_radius) else {
@@ -2662,7 +2719,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   }
   assert_true(fluent_radius.runtime_aligned)
   inspect(fluent_radius.runtime_value, content="4")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "fontSizeBase300",
     )
     is Some(fluent_body_font_size) else {
@@ -2670,7 +2728,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   }
   assert_true(fluent_body_font_size.runtime_aligned)
   inspect(fluent_body_font_size.runtime_value, content="14")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "fontSizeBase500",
     )
     is Some(fluent_title_font_size) else {
@@ -2681,9 +2740,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   // Fluent 2 title maps to 20px (subtitle1), aligning with the resolved
   // runtime value from the design token set.
   assert_true(fluent_title_font_size.runtime_aligned)
-  assert_true(
-    fluent_title_font_size.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_title_font_size.status == DesignTokenStatus::PreviewMapped)
   inspect(fluent_title_font_size.expected_runtime_value, content="20")
   inspect(fluent_title_font_size.runtime_value, content="20")
   assert_fluent_preview_typography_runtime_alignment(
@@ -2720,7 +2777,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_fluent_preview_typography_runtime_alignment(
     "fontWeightMedium", "500", "600",
   )
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "fontWeightSemibold",
     )
     is Some(fluent_semibold) else {
@@ -2729,7 +2787,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(fluent_semibold.runtime_aligned)
   inspect(fluent_semibold.runtime_value, content="600")
   assert_fluent_mapped_typography_runtime_alignment("fontWeightBold", "700")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "fontFamilyBase",
     )
     is Some(fluent_family_base) else {
@@ -2741,7 +2800,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(fluent_family_base.status == PreviewMapped)
   assert_true(fluent_family_base.expected_runtime_value.contains("Segoe UI"))
   inspect(fluent_family_base.runtime_value, content="system-ui")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "fontFamilyMonospace",
     )
     is Some(fluent_family_monospace) else {
@@ -2751,7 +2811,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
     fluent_family_monospace.expected_runtime_value.contains("Consolas"),
   )
   inspect(fluent_family_monospace.runtime_value, content="system-ui")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "fontFamilyNumeric",
     )
     is Some(fluent_family_numeric) else {
@@ -2769,7 +2830,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_fluent_preview_stroke_width_runtime_alignment(
     "strokeWidthThickest", "4", "2",
   )
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "spacingHorizontalM",
     )
     is Some(fluent_spacing) else {
@@ -2777,7 +2839,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   }
   assert_true(fluent_spacing.runtime_aligned)
   inspect(fluent_spacing.runtime_value, content="12")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "spacingHorizontalXL",
     )
     is Some(fluent_spacing_xl) else {
@@ -2827,7 +2890,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
     "spacingVerticalXXL", "24", "32",
   )
   assert_fluent_mapped_spacing_runtime_alignment("spacingVerticalXXXL", "32")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "borderRadiusCircular",
     )
     is Some(fluent_radius_circular) else {
@@ -2836,9 +2900,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(fluent_radius_circular.source_value_resolved)
   assert_true(fluent_radius_circular.runtime_value_available)
   assert_false(fluent_radius_circular.runtime_aligned)
-  assert_true(
-    fluent_radius_circular.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_radius_circular.status == DesignTokenStatus::PreviewMapped)
   inspect(fluent_radius_circular.expected_runtime_value, content="10000")
   inspect(fluent_radius_circular.runtime_value, content="999")
   assert_fluent_preview_radius_runtime_alignment("borderRadiusNone", "0", "2")
@@ -2858,7 +2920,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_fluent_preview_radius_runtime_alignment(
     "borderRadius6XLarge", "40", "999",
   )
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "durationUltraFast",
     )
     is Some(fluent_duration_ultra_fast) else {
@@ -2868,23 +2931,24 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(fluent_duration_ultra_fast.runtime_value_available)
   assert_false(fluent_duration_ultra_fast.runtime_aligned)
   assert_true(
-    fluent_duration_ultra_fast.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_ultra_fast.status == DesignTokenStatus::PreviewMapped,
   )
   inspect(fluent_duration_ultra_fast.expected_runtime_value, content="50")
   inspect(fluent_duration_ultra_fast.runtime_value, content="100")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "durationFaster",
     )
     is Some(fluent_duration_fast) else {
     fail("expected Fluent faster duration runtime alignment")
   }
   assert_true(fluent_duration_fast.runtime_aligned)
-  assert_true(
-    fluent_duration_fast.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(fluent_duration_fast.status == DesignTokenStatus::ThemeMapped)
   inspect(fluent_duration_fast.runtime_value, content="100")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for("durationFast")
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
+      "durationFast",
+    )
     is Some(fluent_duration_fast_preview) else {
     fail("expected Fluent fast duration runtime alignment")
   }
@@ -2892,21 +2956,22 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(fluent_duration_fast_preview.runtime_value_available)
   assert_false(fluent_duration_fast_preview.runtime_aligned)
   assert_true(
-    fluent_duration_fast_preview.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_fast_preview.status == DesignTokenStatus::PreviewMapped,
   )
   inspect(fluent_duration_fast_preview.expected_runtime_value, content="150")
   inspect(fluent_duration_fast_preview.runtime_value, content="100")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "durationNormal",
     )
     is Some(fluent_duration) else {
     fail("expected Fluent duration runtime alignment")
   }
   assert_true(fluent_duration.runtime_aligned)
-  assert_true(fluent_duration.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(fluent_duration.status == DesignTokenStatus::ThemeMapped)
   inspect(fluent_duration.runtime_value, content="150")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "durationGentle",
     )
     is Some(fluent_duration_gentle) else {
@@ -2915,21 +2980,21 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(fluent_duration_gentle.source_value_resolved)
   assert_true(fluent_duration_gentle.runtime_value_available)
   assert_false(fluent_duration_gentle.runtime_aligned)
-  assert_true(
-    fluent_duration_gentle.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_duration_gentle.status == DesignTokenStatus::PreviewMapped)
   inspect(fluent_duration_gentle.expected_runtime_value, content="200")
   inspect(fluent_duration_gentle.runtime_value, content="150")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for("durationSlow")
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
+      "durationSlow",
+    )
     is Some(fluent_duration_slow) else {
     fail("expected Fluent slow duration runtime alignment")
   }
   assert_true(fluent_duration_slow.runtime_aligned)
-  assert_true(
-    fluent_duration_slow.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(fluent_duration_slow.status == DesignTokenStatus::ThemeMapped)
   inspect(fluent_duration_slow.runtime_value, content="250")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "durationSlower",
     )
     is Some(fluent_duration_slower) else {
@@ -2938,12 +3003,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(fluent_duration_slower.source_value_resolved)
   assert_true(fluent_duration_slower.runtime_value_available)
   assert_false(fluent_duration_slower.runtime_aligned)
-  assert_true(
-    fluent_duration_slower.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_duration_slower.status == DesignTokenStatus::PreviewMapped)
   inspect(fluent_duration_slower.expected_runtime_value, content="400")
   inspect(fluent_duration_slower.runtime_value, content="250")
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "durationUltraSlow",
     )
     is Some(fluent_duration_ultra_slow) else {
@@ -2953,8 +3017,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(fluent_duration_ultra_slow.runtime_value_available)
   assert_false(fluent_duration_ultra_slow.runtime_aligned)
   assert_true(
-    fluent_duration_ultra_slow.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_ultra_slow.status == DesignTokenStatus::PreviewMapped,
   )
   inspect(fluent_duration_ultra_slow.expected_runtime_value, content="500")
   inspect(fluent_duration_ultra_slow.runtime_value, content="250")
@@ -2979,7 +3042,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_fluent_preview_curve_runtime_alignment(
     "curveEasyEaseMax", "cubic-bezier(0.8,0,0.2,1)",
   )
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "curveEasyEase",
     )
     is Some(fluent_curve) else {
@@ -2989,7 +3053,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(fluent_curve.source_value_resolved)
   assert_true(fluent_curve.runtime_value_available)
   assert_false(fluent_curve.runtime_aligned)
-  assert_true(fluent_curve.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(fluent_curve.status == DesignTokenStatus::PreviewMapped)
   inspect(
     fluent_curve.expected_runtime_value,
     content="cubic-bezier(0.33,0,0.67,1)",
@@ -2998,7 +3062,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_fluent_preview_curve_runtime_alignment(
     "curveLinear", "cubic-bezier(0,0,1,1)",
   )
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Fluent,
       "colorNeutralBackground1Hover",
     )
     is Some(fluent_hover) else {
@@ -3007,21 +3072,24 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_false(fluent_hover.runtime_aligned)
   assert_true(fluent_hover.source_value_resolved)
   assert_true(fluent_hover.runtime_value_available)
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--fgColor-default",
     )
     is Some(primer_foreground) else {
     fail("expected Primer foreground runtime alignment")
   }
   assert_true(primer_foreground.runtime_aligned)
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--fgColor-accent",
     )
     is Some(primer_accent) else {
     fail("expected Primer accent runtime alignment")
   }
   assert_true(primer_accent.runtime_aligned)
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--button-primary-bgColor-rest",
     )
     is Some(primer_button) else {
@@ -3031,11 +3099,12 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_button.source_value_resolved)
   assert_true(primer_button.runtime_value_available)
   assert_false(primer_button.runtime_aligned)
-  assert_true(primer_button.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(primer_button.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     primer_button.expected_runtime_value != primer_button.runtime_value,
   )
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--progressBar-fgColor-accent",
     )
     is Some(primer_progress) else {
@@ -3045,10 +3114,9 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_progress.source_value_resolved)
   assert_true(primer_progress.runtime_value_available)
   assert_true(primer_progress.runtime_aligned)
-  assert_true(
-    primer_progress.status == @common.DesignTokenStatus::ComponentMapped,
-  )
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  assert_true(primer_progress.status == DesignTokenStatus::ComponentMapped)
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-size-4",
     )
     is Some(primer_base_size_xs) else {
@@ -3058,33 +3126,30 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_base_size_xs.source_value_resolved)
   assert_true(primer_base_size_xs.runtime_value_available)
   assert_true(primer_base_size_xs.runtime_aligned)
-  assert_true(
-    primer_base_size_xs.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_base_size_xs.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_base_size_xs.runtime_value, content="4")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-size-8",
     )
     is Some(primer_base_size_sm) else {
     fail("expected Primer base size 8 runtime alignment")
   }
   assert_true(primer_base_size_sm.runtime_aligned)
-  assert_true(
-    primer_base_size_sm.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_base_size_sm.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_base_size_sm.runtime_value, content="8")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-size-12",
     )
     is Some(primer_base_size_md) else {
     fail("expected Primer base size 12 runtime alignment")
   }
   assert_true(primer_base_size_md.runtime_aligned)
-  assert_true(
-    primer_base_size_md.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_base_size_md.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_base_size_md.runtime_value, content="12")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-size-16",
     )
     is Some(primer_base_size) else {
@@ -3094,20 +3159,20 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_base_size.source_value_resolved)
   assert_true(primer_base_size.runtime_value_available)
   assert_true(primer_base_size.runtime_aligned)
-  assert_true(primer_base_size.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(primer_base_size.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_base_size.runtime_value, content="16")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-size-24",
     )
     is Some(primer_base_size_xl) else {
     fail("expected Primer base size 24 runtime alignment")
   }
   assert_true(primer_base_size_xl.runtime_aligned)
-  assert_true(
-    primer_base_size_xl.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_base_size_xl.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_base_size_xl.runtime_value, content="24")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-text-size-xs",
     )
     is Some(primer_caption_size) else {
@@ -3117,53 +3182,50 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_caption_size.source_value_resolved)
   assert_true(primer_caption_size.runtime_value_available)
   assert_true(primer_caption_size.runtime_aligned)
-  assert_true(
-    primer_caption_size.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_caption_size.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_caption_size.runtime_value, content="12")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-text-size-sm",
     )
     is Some(primer_body_size) else {
     fail("expected Primer body text size runtime alignment")
   }
   assert_true(primer_body_size.runtime_aligned)
-  assert_true(primer_body_size.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(primer_body_size.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_body_size.runtime_value, content="14")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-text-size-lg",
     )
     is Some(primer_title_size) else {
     fail("expected Primer title text size runtime alignment")
   }
   assert_true(primer_title_size.runtime_aligned)
-  assert_true(
-    primer_title_size.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_title_size.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_title_size.runtime_value, content="20")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-text-weight-normal",
     )
     is Some(primer_body_weight) else {
     fail("expected Primer body text weight runtime alignment")
   }
   assert_true(primer_body_weight.runtime_aligned)
-  assert_true(
-    primer_body_weight.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_body_weight.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_body_weight.runtime_value, content="400")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-text-weight-semibold",
     )
     is Some(primer_control_weight) else {
     fail("expected Primer control text weight runtime alignment")
   }
   assert_true(primer_control_weight.runtime_aligned)
-  assert_true(
-    primer_control_weight.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_control_weight.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_control_weight.runtime_value, content="600")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-small",
     )
     is Some(primer_radius_small) else {
@@ -3173,58 +3235,53 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_radius_small.source_value_resolved)
   assert_true(primer_radius_small.runtime_value_available)
   assert_false(primer_radius_small.runtime_aligned)
-  assert_true(
-    primer_radius_small.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_radius_small.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_radius_small.expected_runtime_value, content="3")
   inspect(primer_radius_small.runtime_value, content="4")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-medium",
     )
     is Some(primer_radius_medium) else {
     fail("expected Primer medium radius runtime alignment")
   }
   assert_true(primer_radius_medium.runtime_aligned)
-  assert_true(
-    primer_radius_medium.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_radius_medium.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_radius_medium.runtime_value, content="6")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-large",
     )
     is Some(primer_radius_large) else {
     fail("expected Primer large radius runtime alignment")
   }
   assert_false(primer_radius_large.runtime_aligned)
-  assert_true(
-    primer_radius_large.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_radius_large.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_radius_large.expected_runtime_value, content="12")
   inspect(primer_radius_large.runtime_value, content="8")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-full",
     )
     is Some(primer_radius_full) else {
     fail("expected Primer full radius runtime alignment")
   }
   assert_false(primer_radius_full.runtime_aligned)
-  assert_true(
-    primer_radius_full.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_radius_full.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_radius_full.expected_runtime_value, content="9999")
   inspect(primer_radius_full.runtime_value, content="999")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-default",
     )
     is Some(primer_radius_default) else {
     fail("expected Primer default radius runtime alignment")
   }
   assert_true(primer_radius_default.runtime_aligned)
-  assert_true(
-    primer_radius_default.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_radius_default.status == DesignTokenStatus::ThemeMapped)
   inspect(primer_radius_default.runtime_value, content="6")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--shadow-resting-small",
     )
     is Some(primer_shadow_small) else {
@@ -3234,11 +3291,10 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_shadow_small.source_value_resolved)
   assert_true(primer_shadow_small.runtime_value_available)
   assert_true(primer_shadow_small.runtime_aligned)
-  assert_true(
-    primer_shadow_small.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_shadow_small.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_shadow_small.runtime_value, content="1")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--shadow-resting-medium",
     )
     is Some(primer_shadow_medium) else {
@@ -3247,12 +3303,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_shadow_medium.source_value_resolved)
   assert_true(primer_shadow_medium.runtime_value_available)
   assert_false(primer_shadow_medium.runtime_aligned)
-  assert_true(
-    primer_shadow_medium.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_shadow_medium.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_shadow_medium.expected_runtime_value, content="3")
   inspect(primer_shadow_medium.runtime_value, content="4")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--shadow-floating-large",
     )
     is Some(primer_shadow_large) else {
@@ -3261,12 +3316,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_shadow_large.source_value_resolved)
   assert_true(primer_shadow_large.runtime_value_available)
   assert_false(primer_shadow_large.runtime_aligned)
-  assert_true(
-    primer_shadow_large.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_shadow_large.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_shadow_large.expected_runtime_value, content="40")
   inspect(primer_shadow_large.runtime_value, content="10")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-duration-0",
     )
     is Some(primer_duration_zero) else {
@@ -3276,12 +3330,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_duration_zero.source_value_resolved)
   assert_true(primer_duration_zero.runtime_value_available)
   assert_false(primer_duration_zero.runtime_aligned)
-  assert_true(
-    primer_duration_zero.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_duration_zero.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_duration_zero.expected_runtime_value, content="0")
   inspect(primer_duration_zero.runtime_value, content="100")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-duration-100",
     )
     is Some(primer_duration_fast) else {
@@ -3292,7 +3345,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_duration_fast.runtime_value_available)
   assert_true(primer_duration_fast.runtime_aligned)
   inspect(primer_duration_fast.runtime_value, content="100")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-duration-200",
     )
     is Some(primer_duration_normal) else {
@@ -3302,12 +3356,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_duration_normal.source_value_resolved)
   assert_true(primer_duration_normal.runtime_value_available)
   assert_false(primer_duration_normal.runtime_aligned)
-  assert_true(
-    primer_duration_normal.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_duration_normal.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_duration_normal.expected_runtime_value, content="200")
   inspect(primer_duration_normal.runtime_value, content="160")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-duration-300",
     )
     is Some(primer_duration_slow) else {
@@ -3317,12 +3370,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_duration_slow.source_value_resolved)
   assert_true(primer_duration_slow.runtime_value_available)
   assert_false(primer_duration_slow.runtime_aligned)
-  assert_true(
-    primer_duration_slow.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_duration_slow.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_duration_slow.expected_runtime_value, content="300")
   inspect(primer_duration_slow.runtime_value, content="260")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-duration-1000",
     )
     is Some(primer_duration_long) else {
@@ -3332,12 +3384,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_duration_long.source_value_resolved)
   assert_true(primer_duration_long.runtime_value_available)
   assert_false(primer_duration_long.runtime_aligned)
-  assert_true(
-    primer_duration_long.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_duration_long.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_duration_long.expected_runtime_value, content="1000")
   inspect(primer_duration_long.runtime_value, content="260")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-easing-linear",
     )
     is Some(primer_linear) else {
@@ -3347,10 +3398,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_linear.source_value_resolved)
   assert_true(primer_linear.runtime_value_available)
   assert_false(primer_linear.runtime_aligned)
-  assert_true(primer_linear.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(primer_linear.status == DesignTokenStatus::PreviewMapped)
   inspect(primer_linear.expected_runtime_value, content="cubic-bezier(0,0,1,1)")
   inspect(primer_linear.runtime_value, content="ease-out")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-easing-easeOut",
     )
     is Some(primer_easing) else {
@@ -3360,13 +3412,14 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_easing.source_value_resolved)
   assert_true(primer_easing.runtime_value_available)
   assert_false(primer_easing.runtime_aligned)
-  assert_true(primer_easing.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(primer_easing.status == DesignTokenStatus::PreviewMapped)
   inspect(
     primer_easing.expected_runtime_value,
     content="cubic-bezier(0.3,0.8,0.6,1)",
   )
   inspect(primer_easing.runtime_value, content="ease-out")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--base-easing-easeInOut",
     )
     is Some(primer_ease_in_out) else {
@@ -3376,15 +3429,14 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_ease_in_out.source_value_resolved)
   assert_true(primer_ease_in_out.runtime_value_available)
   assert_false(primer_ease_in_out.runtime_aligned)
-  assert_true(
-    primer_ease_in_out.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_ease_in_out.status == DesignTokenStatus::PreviewMapped)
   inspect(
     primer_ease_in_out.expected_runtime_value,
     content="cubic-bezier(0.6,0,0.2,1)",
   )
   inspect(primer_ease_in_out.runtime_value, content="ease-out")
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--control-bgColor-rest",
     )
     is Some(primer_control) else {
@@ -3394,13 +3446,12 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_control.source_value_resolved)
   assert_true(primer_control.runtime_value_available)
   assert_true(primer_control.runtime_aligned)
-  assert_true(
-    primer_control.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(primer_control.status == DesignTokenStatus::ComponentMapped)
   assert_true(
     primer_control.moui_token == "DesignComponentTokens.picker.background",
   )
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--control-transparent-bgColor-hover",
     )
     is Some(primer_control_hover) else {
@@ -3410,14 +3461,13 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_control_hover.source_value_resolved)
   assert_true(primer_control_hover.runtime_value_available)
   assert_false(primer_control_hover.runtime_aligned)
-  assert_true(
-    primer_control_hover.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_control_hover.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     primer_control_hover.expected_runtime_value !=
     primer_control_hover.runtime_value,
   )
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--control-borderColor-emphasis",
     )
     is Some(primer_control_border) else {
@@ -3427,49 +3477,53 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(primer_control_border.source_value_resolved)
   assert_true(primer_control_border.runtime_value_available)
   assert_false(primer_control_border.runtime_aligned)
-  assert_true(
-    primer_control_border.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_control_border.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     primer_control_border.expected_runtime_value !=
     primer_control_border.runtime_value,
   )
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--bgColor-muted",
     )
     is Some(primer_surface) else {
     fail("expected Primer surface runtime alignment")
   }
   assert_true(primer_surface.runtime_aligned)
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--bgColor-inset",
     )
     is Some(primer_surface_variant) else {
     fail("expected Primer surface-variant runtime alignment")
   }
   assert_true(primer_surface_variant.runtime_aligned)
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--borderColor-default",
     )
     is Some(primer_outline) else {
     fail("expected Primer outline runtime alignment")
   }
   assert_true(primer_outline.runtime_aligned)
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--fgColor-muted",
     )
     is Some(primer_muted) else {
     fail("expected Primer muted runtime alignment")
   }
   assert_true(primer_muted.runtime_aligned)
-  guard @common.DesignPreset::Primer.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Primer,
       "--fgColor-danger",
     )
     is Some(primer_danger) else {
     fail("expected Primer danger runtime alignment")
   }
   assert_true(primer_danger.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-color-primary",
     )
     is Some(material_primary) else {
@@ -3478,28 +3532,32 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_primary.source_imported)
   assert_true(material_primary.source_value_resolved)
   assert_true(material_primary.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-color-on-primary",
     )
     is Some(material_on_primary) else {
     fail("expected Material on-primary runtime alignment row")
   }
   assert_true(material_on_primary.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-color-error",
     )
     is Some(material_error) else {
     fail("expected Material error runtime alignment row")
   }
   assert_true(material_error.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-color-outline",
     )
     is Some(material_outline) else {
     fail("expected Material outline runtime alignment row")
   }
   assert_true(material_outline.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-filled-button-container-color",
     )
     is Some(material_button_container) else {
@@ -3509,7 +3567,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_button_container.source_value_resolved)
   assert_true(material_button_container.runtime_value_available)
   assert_true(material_button_container.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-filled-button-label-text-color",
     )
     is Some(material_button_label) else {
@@ -3519,7 +3578,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_button_label.source_value_resolved)
   assert_true(material_button_label.runtime_value_available)
   assert_true(material_button_label.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-filled-button-pressed-state-layer-opacity",
     )
     is Some(material_button_pressed) else {
@@ -3529,7 +3589,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_button_pressed.source_value_resolved)
   assert_true(material_button_pressed.runtime_value_available)
   assert_true(material_button_pressed.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-typescale-body-medium-size",
     )
     is Some(material_body_size) else {
@@ -3539,7 +3600,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_body_size.source_value_resolved)
   assert_true(material_body_size.runtime_value_available)
   assert_true(material_body_size.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-shape-corner-medium",
     )
     is Some(material_corner) else {
@@ -3549,7 +3611,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_corner.source_value_resolved)
   assert_true(material_corner.runtime_value_available)
   assert_true(material_corner.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level1",
     )
     is Some(material_elevation) else {
@@ -3560,7 +3623,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_elevation.runtime_value_available)
   assert_true(material_elevation.runtime_aligned)
   inspect(material_elevation.runtime_value, content="1")
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level3",
     )
     is Some(material_elevation_level3) else {
@@ -3571,7 +3635,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_elevation_level3.runtime_value_available)
   assert_true(material_elevation_level3.runtime_aligned)
   inspect(material_elevation_level3.runtime_value, content="6")
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level5",
     )
     is Some(material_elevation_level5) else {
@@ -3582,7 +3647,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_elevation_level5.runtime_value_available)
   assert_true(material_elevation_level5.runtime_aligned)
   inspect(material_elevation_level5.runtime_value, content="12")
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-short4",
     )
     is Some(material_motion_short4) else {
@@ -3593,7 +3659,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_motion_short4.runtime_value_available)
   assert_true(material_motion_short4.runtime_aligned)
   inspect(material_motion_short4.runtime_value, content="200")
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium2",
     )
     is Some(material_motion_medium2) else {
@@ -3604,7 +3671,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_motion_medium2.runtime_value_available)
   assert_true(material_motion_medium2.runtime_aligned)
   inspect(material_motion_medium2.runtime_value, content="300")
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium4",
     )
     is Some(material_motion_medium4) else {
@@ -3615,7 +3683,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_motion_medium4.runtime_value_available)
   assert_true(material_motion_medium4.runtime_aligned)
   inspect(material_motion_medium4.runtime_value, content="400")
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-easing-standard",
     )
     is Some(material_motion_easing) else {
@@ -3625,15 +3694,14 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_motion_easing.source_value_resolved)
   assert_true(material_motion_easing.runtime_value_available)
   assert_false(material_motion_easing.runtime_aligned)
-  assert_true(
-    material_motion_easing.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(material_motion_easing.status == DesignTokenStatus::PreviewMapped)
   inspect(
     material_motion_easing.expected_runtime_value,
     content="cubic-bezier(0.2,0,0,1)",
   )
   inspect(material_motion_easing.runtime_value, content="ease-out")
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-*",
     )
     is Some(material_motion) else {
@@ -3643,7 +3711,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_motion.source_value_resolved)
   assert_true(material_motion.runtime_value_available)
   assert_true(material_motion.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-linear-progress-active-indicator-color",
     )
     is Some(material_progress) else {
@@ -3653,7 +3722,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_progress.source_value_resolved)
   assert_true(material_progress.runtime_value_available)
   assert_true(material_progress.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-menu-container-color",
     )
     is Some(material_menu) else {
@@ -3663,7 +3733,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(material_menu.source_value_resolved)
   assert_true(material_menu.runtime_value_available)
   assert_true(material_menu.runtime_aligned)
-  guard @common.DesignPreset::Material.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Material,
       "--md-sys-spacing-*",
     )
     is Some(material_spacing) else {
@@ -3672,28 +3743,31 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_false(material_spacing.source_imported)
   assert_false(material_spacing.required)
   assert_false(material_spacing.runtime_aligned)
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for("$background")
+  guard runtime_token_alignment_for(@common.DesignPreset::Carbon, "$background")
     is Some(carbon_background) else {
     fail("expected Carbon background runtime alignment row")
   }
   assert_true(carbon_background.source_imported)
   assert_true(carbon_background.source_value_resolved)
   assert_true(carbon_background.runtime_aligned)
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$text-primary",
     )
     is Some(carbon_text) else {
     fail("expected Carbon text runtime alignment row")
   }
   assert_true(carbon_text.runtime_aligned)
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$support-error",
     )
     is Some(carbon_error) else {
     fail("expected Carbon support-error runtime alignment row")
   }
   assert_true(carbon_error.runtime_aligned)
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$button-primary",
     )
     is Some(carbon_button) else {
@@ -3702,7 +3776,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_button.source_imported)
   assert_true(carbon_button.source_value_resolved)
   assert_true(carbon_button.runtime_aligned)
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$background-hover",
     )
     is Some(carbon_hover) else {
@@ -3712,7 +3787,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_hover.source_value_resolved)
   assert_true(carbon_hover.runtime_value_available)
   assert_true(carbon_hover.runtime_aligned)
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$border-interactive",
     )
     is Some(carbon_border) else {
@@ -3722,7 +3798,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_border.source_value_resolved)
   assert_true(carbon_border.runtime_value_available)
   assert_true(carbon_border.runtime_aligned)
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for("$field")
+  guard runtime_token_alignment_for(@common.DesignPreset::Carbon, "$field")
     is Some(carbon_field) else {
     fail("expected Carbon field runtime alignment row")
   }
@@ -3730,7 +3806,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_field.source_value_resolved)
   assert_true(carbon_field.runtime_value_available)
   assert_true(carbon_field.runtime_aligned)
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$slider-filled-track",
     )
     is Some(carbon_slider) else {
@@ -3740,9 +3817,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_slider.source_value_resolved)
   assert_true(carbon_slider.runtime_value_available)
   assert_true(carbon_slider.runtime_aligned)
-  assert_true(
-    carbon_slider.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(carbon_slider.status == DesignTokenStatus::ComponentMapped)
   assert_carbon_mapped_spacing_runtime_alignment("$spacing-01", "2")
   assert_carbon_preview_spacing_runtime_alignment("$spacing-02", "4", "2")
   assert_carbon_mapped_spacing_runtime_alignment("$spacing-03", "8")
@@ -3756,7 +3831,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_carbon_preview_spacing_runtime_alignment("$spacing-11", "80", "24")
   assert_carbon_preview_spacing_runtime_alignment("$spacing-12", "96", "24")
   assert_carbon_preview_spacing_runtime_alignment("$spacing-13", "160", "24")
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$duration-fast-01",
     )
     is Some(carbon_duration_fast01) else {
@@ -3766,12 +3842,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_duration_fast01.source_value_resolved)
   assert_true(carbon_duration_fast01.runtime_value_available)
   assert_false(carbon_duration_fast01.runtime_aligned)
-  assert_true(
-    carbon_duration_fast01.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(carbon_duration_fast01.status == DesignTokenStatus::PreviewMapped)
   inspect(carbon_duration_fast01.expected_runtime_value, content="70")
   inspect(carbon_duration_fast01.runtime_value, content="90")
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$duration-fast-02",
     )
     is Some(carbon_duration_fast) else {
@@ -3781,12 +3856,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_duration_fast.source_value_resolved)
   assert_true(carbon_duration_fast.runtime_value_available)
   assert_false(carbon_duration_fast.runtime_aligned)
-  assert_true(
-    carbon_duration_fast.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(carbon_duration_fast.status == DesignTokenStatus::PreviewMapped)
   inspect(carbon_duration_fast.expected_runtime_value, content="110")
   inspect(carbon_duration_fast.runtime_value, content="90")
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$duration-moderate-01",
     )
     is Some(carbon_duration_normal) else {
@@ -3797,7 +3871,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_duration_normal.runtime_value_available)
   assert_true(carbon_duration_normal.runtime_aligned)
   inspect(carbon_duration_normal.runtime_value, content="150")
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$duration-moderate-02",
     )
     is Some(carbon_duration_slow) else {
@@ -3808,7 +3883,8 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_duration_slow.runtime_value_available)
   assert_true(carbon_duration_slow.runtime_aligned)
   inspect(carbon_duration_slow.runtime_value, content="240")
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "$duration-slow-02",
     )
     is Some(carbon_duration_slow02) else {
@@ -3818,12 +3894,11 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_duration_slow02.source_value_resolved)
   assert_true(carbon_duration_slow02.runtime_value_available)
   assert_false(carbon_duration_slow02.runtime_aligned)
-  assert_true(
-    carbon_duration_slow02.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(carbon_duration_slow02.status == DesignTokenStatus::PreviewMapped)
   inspect(carbon_duration_slow02.expected_runtime_value, content="700")
   inspect(carbon_duration_slow02.runtime_value, content="240")
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "easings.standard.productive",
     )
     is Some(carbon_easing) else {
@@ -3833,13 +3908,14 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_easing.source_value_resolved)
   assert_true(carbon_easing.runtime_value_available)
   assert_false(carbon_easing.runtime_aligned)
-  assert_true(carbon_easing.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(carbon_easing.status == DesignTokenStatus::PreviewMapped)
   inspect(
     carbon_easing.expected_runtime_value,
     content="cubic-bezier(0.2,0,0.38,0.9)",
   )
   inspect(carbon_easing.runtime_value, content="ease-in-out")
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(
+  guard runtime_token_alignment_for(
+      @common.DesignPreset::Carbon,
       "easings.exit.expressive",
     )
     is Some(carbon_easing_exit) else {
@@ -3849,9 +3925,7 @@ test "runtime token alignment ties resolved source imports to design tokens" {
   assert_true(carbon_easing_exit.source_value_resolved)
   assert_true(carbon_easing_exit.runtime_value_available)
   assert_false(carbon_easing_exit.runtime_aligned)
-  assert_true(
-    carbon_easing_exit.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(carbon_easing_exit.status == DesignTokenStatus::PreviewMapped)
   inspect(
     carbon_easing_exit.expected_runtime_value,
     content="cubic-bezier(0.4,0.14,1,1)",
@@ -3861,60 +3935,60 @@ test "runtime token alignment ties resolved source imports to design tokens" {
 
 ///|
 test "source manifests keep preview presets from claiming full official coverage" {
-  let material = @common.DesignPreset::Material.manifest()
-  assert_true(material.stage == @common.DesignTokenStatus::PreviewMapped)
+  let material = manifest(@common.DesignPreset::Material)
+  assert_true(material.stage == DesignTokenStatus::PreviewMapped)
   assert_true(
     material.token_coverage.any(item => {
-      item.category == @common.DesignTokenCategory::StateLayer &&
-      item.status == @common.DesignTokenStatus::ComponentMapped
+      item.category == DesignTokenCategory::StateLayer &&
+      item.status == DesignTokenStatus::ComponentMapped
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "Progress" &&
-      item.status == @common.DesignTokenStatus::ComponentMapped &&
+      item.status == DesignTokenStatus::ComponentMapped &&
       item.moui_surface == "@views.ProgressStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "Slider" &&
-      item.status == @common.DesignTokenStatus::ComponentMapped &&
+      item.status == DesignTokenStatus::ComponentMapped &&
       item.moui_surface == "@views.SliderStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "Picker" &&
-      item.status == @common.DesignTokenStatus::ComponentMapped &&
+      item.status == DesignTokenStatus::ComponentMapped &&
       item.moui_surface == "@views.PickerStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "DatePicker" &&
-      item.status == @common.DesignTokenStatus::ComponentMapped &&
+      item.status == DesignTokenStatus::ComponentMapped &&
       item.moui_surface == "@views.PickerStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "Feedback" &&
-      item.status == @common.DesignTokenStatus::ComponentMapped &&
+      item.status == DesignTokenStatus::ComponentMapped &&
       item.moui_surface == "@views.FeedbackStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "Badge" &&
-      item.status == @common.DesignTokenStatus::ComponentMapped &&
+      item.status == DesignTokenStatus::ComponentMapped &&
       item.moui_surface == "@views.BadgeStyle"
     }),
   )
   assert_true(
     material.component_coverage.any(item => {
       item.component == "FormValidation" &&
-      item.status == @common.DesignTokenStatus::ComponentMapped &&
+      item.status == DesignTokenStatus::ComponentMapped &&
       item.moui_surface == "@views.FormValidationStyle"
     }),
   )
@@ -3922,7 +3996,7 @@ test "source manifests keep preview presets from claiming full official coverage
 
 ///|
 test "customization coverage advertises inheritance and token override APIs" {
-  let manifest = @common.DesignPreset::Carbon.manifest()
+  let manifest = manifest(@common.DesignPreset::Carbon)
   assert_true(manifest.customization_coverage.length() == 6)
   assert_true(
     manifest.customization_coverage.any(item => {
@@ -3933,7 +4007,7 @@ test "customization coverage advertises inheritance and token override APIs" {
   assert_true(
     manifest.customization_coverage.any(item => {
       item.capability == "Theme token group override" &&
-      item.status == @common.DesignTokenStatus::ThemeMapped
+      item.status == DesignTokenStatus::ThemeMapped
     }),
   )
   assert_true(
@@ -3945,7 +4019,7 @@ test "customization coverage advertises inheritance and token override APIs" {
   assert_true(
     manifest.customization_coverage.any(item => {
       item.capability == "Component token override" &&
-      item.status == @common.DesignTokenStatus::ComponentMapped
+      item.status == DesignTokenStatus::ComponentMapped
     }),
   )
   assert_true(
@@ -3965,62 +4039,60 @@ test "customization reports tie public APIs to neutral token surfaces" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let report = preset.customization_report()
+    let report = customization_report(preset)
     assert_true(
-      report.length() == preset.manifest().customization_coverage.length(),
+      report.length() == manifest(preset).customization_coverage.length(),
     )
-    assert_true(preset.customization_report_count() == 6)
-    assert_true(preset.customization_capability_gap_count() == 0)
-    assert_true(preset.customization_official_parity_gap_count() == 6)
+    assert_true(customization_report_count(preset) == 6)
+    assert_true(customization_capability_gap_count(preset) == 0)
+    assert_true(customization_official_parity_gap_count(preset) == 6)
     for item in report {
       assert_true(item.api_surface != "")
       assert_true(item.token_surface != "")
-      assert_true(item.status != @common.DesignTokenStatus::NotMapped)
+      assert_true(item.status != DesignTokenStatus::NotMapped)
       assert_true(
-        preset.manifest().customization_coverage.any(coverage => {
+        manifest(preset).customization_coverage.any(coverage => {
           coverage.capability == item.capability &&
           coverage.api_surface == item.api_surface
         }),
       )
     }
   }
-  guard @common.DesignPreset::Material.customization_report_for(
+  guard customization_report_for(
+      @common.DesignPreset::Material,
       "Design token group override",
     )
     is Some(group_override) else {
     fail("expected design-token group override capability")
   }
   assert_true(
-    group_override.kind ==
-    @common.DesignCustomizationKind::DesignTokenGroupOverride,
+    group_override.kind == DesignCustomizationKind::DesignTokenGroupOverride,
   )
   assert_true(group_override.inherits_base)
   assert_true(group_override.supports_override)
   assert_true(group_override.recomputes_dependents)
   assert_true(group_override.remaining_gap.contains("Official per-system"))
-  guard @common.DesignPreset::Primer.customization_report_for(
+  guard customization_report_for(
+      @common.DesignPreset::Primer,
       "Component token override",
     )
     is Some(component_override) else {
     fail("expected component token override capability")
   }
   assert_true(
-    component_override.kind ==
-    @common.DesignCustomizationKind::ComponentTokenOverride,
+    component_override.kind == DesignCustomizationKind::ComponentTokenOverride,
   )
-  assert_true(
-    component_override.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(component_override.status == DesignTokenStatus::ComponentMapped)
   assert_true(component_override.token_surface == "DesignComponentTokens")
-  guard @common.DesignPreset::Fluent.customization_report_for(
+  guard customization_report_for(
+      @common.DesignPreset::Fluent,
       "Variant Theme resolver",
     )
     is Some(variant_theme) else {
     fail("expected variant theme resolver capability")
   }
   assert_true(
-    variant_theme.kind ==
-    @common.DesignCustomizationKind::VariantThemeResolution,
+    variant_theme.kind == DesignCustomizationKind::VariantThemeResolution,
   )
   assert_true(variant_theme.recomputes_dependents)
   assert_false(variant_theme.supports_override)
@@ -4035,169 +4107,152 @@ test "requirement audits expose objective level gaps without claiming completion
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let audit = preset.requirement_audit()
+    let audit = requirement_audit(preset)
     assert_true(audit.length() >= 20)
-    assert_false(preset.is_design_system_complete())
-    assert_true(preset.requirement_gap_count() > 0)
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::OfficialSources,
+    assert_false(is_design_system_complete(preset))
+    assert_true(requirement_gap_count(preset) > 0)
+    guard requirement_audit_for(
+        preset,
+        DesignSystemRequirement::OfficialSources,
       )
       is Some(sources) else {
       fail("expected official sources audit")
     }
-    assert_true(sources.status == @common.DesignTokenStatus::SourceMapped)
+    assert_true(sources.status == DesignTokenStatus::SourceMapped)
     assert_true(sources.evidence.contains("source anchors"))
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::SourceVersionLocks,
+    guard requirement_audit_for(
+        preset,
+        DesignSystemRequirement::SourceVersionLocks,
       )
       is Some(source_versions) else {
       fail("expected source version lock audit")
     }
-    assert_true(
-      source_versions.status == @common.DesignTokenStatus::PreviewMapped,
-    )
+    assert_true(source_versions.status == DesignTokenStatus::PreviewMapped)
     assert_true(source_versions.evidence.contains("stable source locks"))
     assert_true(
       source_versions.remaining_gap.contains("Live official documentation"),
     )
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::SourcePackageInventory,
+    guard requirement_audit_for(
+        preset,
+        DesignSystemRequirement::SourcePackageInventory,
       )
       is Some(source_packages) else {
       fail("expected source package inventory audit")
     }
-    assert_true(
-      source_packages.status == @common.DesignTokenStatus::PreviewMapped,
-    )
+    assert_true(source_packages.status == DesignTokenStatus::PreviewMapped)
     assert_true(source_packages.evidence.contains("source package rows"))
     assert_true(source_packages.evidence.contains("imported tokens"))
     assert_true(source_packages.evidence.contains("source-import records"))
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::SourceImportedTokens,
+    guard requirement_audit_for(
+        preset,
+        DesignSystemRequirement::SourceImportedTokens,
       )
       is Some(source_imports) else {
       fail("expected source-imported token audit")
     }
-    assert_true(
-      source_imports.status == @common.DesignTokenStatus::SourceMapped,
-    )
+    assert_true(source_imports.status == DesignTokenStatus::SourceMapped)
     assert_true(source_imports.evidence.contains("official anchors"))
     assert_true(source_imports.evidence.contains("import coverage gaps"))
     assert_true(source_imports.evidence.contains("integrity gaps"))
     for
       requirement in [
-        @common.DesignSystemRequirement::SemanticPalette,
-        @common.DesignSystemRequirement::Typography,
-        @common.DesignSystemRequirement::ShapeRadius,
-        @common.DesignSystemRequirement::ElevationShadow,
-        @common.DesignSystemRequirement::Motion,
-        @common.DesignSystemRequirement::Surface,
-        @common.DesignSystemRequirement::StateLayer,
+        DesignSystemRequirement::SemanticPalette,
+        DesignSystemRequirement::Typography,
+        DesignSystemRequirement::ShapeRadius,
+        DesignSystemRequirement::ElevationShadow,
+        DesignSystemRequirement::Motion,
+        DesignSystemRequirement::Surface,
+        DesignSystemRequirement::StateLayer,
       ] {
-      guard preset.requirement_audit_for(requirement) is Some(token_group) else {
+      guard requirement_audit_for(preset, requirement) is Some(token_group) else {
         fail("expected token-group audit")
       }
-      assert_true(token_group.status != @common.DesignTokenStatus::NotMapped)
+      assert_true(token_group.status != DesignTokenStatus::NotMapped)
       assert_true(token_group.evidence.contains("token-group resolver records"))
       assert_true(token_group.evidence.contains("source-lock gaps"))
       assert_true(token_group.evidence.contains("official parity gaps"))
     }
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::SpacingDensity,
-      )
+    guard requirement_audit_for(preset, DesignSystemRequirement::SpacingDensity)
       is Some(spacing_density) else {
       fail("expected spacing density audit")
     }
-    assert_true(
-      spacing_density.status == @common.DesignTokenStatus::PreviewMapped,
-    )
+    assert_true(spacing_density.status == DesignTokenStatus::PreviewMapped)
     assert_true(spacing_density.evidence.contains("density resolver records"))
     assert_true(spacing_density.evidence.contains("source-lock gaps"))
     assert_true(spacing_density.evidence.contains("official parity gaps"))
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::SchemeVariants,
-      )
+    guard requirement_audit_for(preset, DesignSystemRequirement::SchemeVariants)
       is Some(scheme_variants) else {
       fail("expected scheme variant audit")
     }
-    assert_true(
-      scheme_variants.status == @common.DesignTokenStatus::PreviewMapped,
-    )
+    assert_true(scheme_variants.status == DesignTokenStatus::PreviewMapped)
     assert_true(scheme_variants.evidence.contains("variant resolver records"))
     assert_true(scheme_variants.evidence.contains("source-lock gaps"))
     assert_true(scheme_variants.evidence.contains("official parity gaps"))
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::RuntimeTokenAlignment,
+    guard requirement_audit_for(
+        preset,
+        DesignSystemRequirement::RuntimeTokenAlignment,
       )
       is Some(runtime_alignment) else {
       fail("expected runtime token alignment audit")
     }
-    assert_true(
-      runtime_alignment.status == @common.DesignTokenStatus::PreviewMapped,
-    )
+    assert_true(runtime_alignment.status == DesignTokenStatus::PreviewMapped)
     assert_true(runtime_alignment.evidence.contains("runtime token rows"))
     assert_true(runtime_alignment.evidence.contains("alignment gaps"))
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::Customization,
-      )
+    guard requirement_audit_for(preset, DesignSystemRequirement::Customization)
       is Some(customization) else {
       fail("expected customization audit")
     }
-    assert_true(
-      customization.status == @common.DesignTokenStatus::ComponentMapped,
-    )
+    assert_true(customization.status == DesignTokenStatus::ComponentMapped)
     assert_true(
       customization.evidence.contains("customization capability records"),
     )
     assert_true(customization.evidence.contains("official parity gaps"))
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::ComponentTokens,
+    guard requirement_audit_for(
+        preset,
+        DesignSystemRequirement::ComponentTokens,
       )
       is Some(components) else {
       fail("expected component token audit")
     }
-    assert_true(components.status == @common.DesignTokenStatus::ComponentMapped)
+    assert_true(components.status == DesignTokenStatus::ComponentMapped)
     assert_true(components.evidence.contains("component token surfaces"))
     assert_true(
       components.evidence.contains("component style resolver records"),
     )
     assert_true(components.evidence.contains("source-lock gaps"))
     assert_true(components.evidence.contains("official parity gaps"))
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::ComponentMatrix,
+    guard requirement_audit_for(
+        preset,
+        DesignSystemRequirement::ComponentMatrix,
       )
       is Some(component_matrix) else {
       fail("expected component matrix audit")
     }
-    assert_true(
-      component_matrix.status == @common.DesignTokenStatus::PreviewMapped,
-    )
+    assert_true(component_matrix.status == DesignTokenStatus::PreviewMapped)
     assert_true(component_matrix.evidence.contains("component matrix rows"))
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::OfficialTokenCoverage,
+    guard requirement_audit_for(
+        preset,
+        DesignSystemRequirement::OfficialTokenCoverage,
       )
       is Some(official_tokens) else {
       fail("expected official token coverage audit")
     }
-    assert_true(
-      official_tokens.status == @common.DesignTokenStatus::PreviewMapped,
-    )
+    assert_true(official_tokens.status == DesignTokenStatus::PreviewMapped)
     assert_true(official_tokens.evidence.contains("official token anchors"))
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::GoldenMappings,
-      )
+    guard requirement_audit_for(preset, DesignSystemRequirement::GoldenMappings)
       is Some(golden) else {
       fail("expected golden mapping audit")
     }
-    assert_true(golden.status == @common.DesignTokenStatus::PreviewMapped)
+    assert_true(golden.status == DesignTokenStatus::PreviewMapped)
     assert_true(golden.remaining_gap != "none")
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::AdaptationDifferences,
+    guard requirement_audit_for(
+        preset,
+        DesignSystemRequirement::AdaptationDifferences,
       )
       is Some(adaptation) else {
       fail("expected adaptation differences audit")
     }
-    assert_true(adaptation.status == @common.DesignTokenStatus::PreviewMapped)
+    assert_true(adaptation.status == DesignTokenStatus::PreviewMapped)
     assert_true(adaptation.evidence.contains("adaptation records"))
   }
 }
@@ -4211,17 +4266,17 @@ test "token taxonomy reports tie required categories to source locked neutral su
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let rows = preset.token_taxonomy_report()
+    let rows = token_taxonomy_report(preset)
     assert_true(rows.length() == 10)
-    assert_true(preset.token_taxonomy_count() == 10)
-    assert_true(preset.token_taxonomy_required_count() == 10)
-    assert_true(preset.token_taxonomy_mapped_count() == 10)
-    assert_true(preset.token_taxonomy_gap_count() == 0)
-    assert_true(preset.token_taxonomy_source_gap_count() == 0)
+    assert_true(token_taxonomy_count(preset) == 10)
+    assert_true(token_taxonomy_required_count(preset) == 10)
+    assert_true(token_taxonomy_mapped_count(preset) == 10)
+    assert_true(token_taxonomy_gap_count(preset) == 0)
+    assert_true(token_taxonomy_source_gap_count(preset) == 0)
     if preset == @common.DesignPreset::Material {
-      assert_true(preset.token_taxonomy_official_parity_gap_count() == 10)
+      assert_true(token_taxonomy_official_parity_gap_count(preset) == 10)
     } else {
-      assert_true(preset.token_taxonomy_official_parity_gap_count() == 8)
+      assert_true(token_taxonomy_official_parity_gap_count(preset) == 8)
     }
     for item in rows {
       assert_true(item.required)
@@ -4232,34 +4287,31 @@ test "token taxonomy reports tie required categories to source locked neutral su
       assert_true(item.token_surface != "")
       assert_true(item.moui_surface != "")
       assert_false(item.moui_surface.contains("moui/views"))
-      assert_true(item.status != @common.DesignTokenStatus::NotMapped)
+      assert_true(item.status != DesignTokenStatus::NotMapped)
     }
-    guard preset.token_taxonomy_for(@common.DesignTokenCategory::Color)
-      is Some(color) else {
+    guard token_taxonomy_for(preset, DesignTokenCategory::Color) is Some(color) else {
       fail("expected color taxonomy row")
     }
     assert_true(color.token_surface.contains("DesignSemanticPalette"))
     assert_true(color.moui_surface.contains("@core."))
-    guard preset.token_taxonomy_for(@common.DesignTokenCategory::Density)
+    guard token_taxonomy_for(preset, DesignTokenCategory::Density)
       is Some(density) else {
       fail("expected density taxonomy row")
     }
     assert_true(density.token_surface.contains("DesignDensity"))
     assert_true(density.moui_surface.contains("@core.SpacingScale"))
-    guard preset.token_taxonomy_for(@common.DesignTokenCategory::StateLayer)
+    guard token_taxonomy_for(preset, DesignTokenCategory::StateLayer)
       is Some(state_layer) else {
       fail("expected state-layer taxonomy row")
     }
     assert_true(state_layer.token_surface.contains("DesignStateLayerTokens"))
-    assert_true(
-      state_layer.status == @common.DesignTokenStatus::ComponentMapped,
-    )
-    guard preset.token_taxonomy_for(@common.DesignTokenCategory::ComponentStyle)
+    assert_true(state_layer.status == DesignTokenStatus::ComponentMapped)
+    guard token_taxonomy_for(preset, DesignTokenCategory::ComponentStyle)
       is Some(component) else {
       fail("expected component-style taxonomy row")
     }
     assert_true(component.token_surface.contains("DesignComponentTokens"))
-    assert_true(component.status == @common.DesignTokenStatus::ComponentMapped)
+    assert_true(component.status == DesignTokenStatus::ComponentMapped)
   }
 }
 
@@ -4272,23 +4324,25 @@ test "semantic palette role reports expose role-level source and core alignment 
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let rows = preset.semantic_palette_role_report(
+    let rows = semantic_palette_role_report(
+      preset,
       scheme=@core.ColorScheme::Light,
     )
     assert_true(rows.length() == 14)
-    assert_true(preset.semantic_palette_role_count() == 14)
-    assert_true(preset.semantic_palette_role_mapped_count() > 0)
-    assert_true(preset.semantic_palette_role_aligned_count() > 0)
+    assert_true(semantic_palette_role_count(preset) == 14)
+    assert_true(semantic_palette_role_mapped_count(preset) > 0)
+    assert_true(semantic_palette_role_aligned_count(preset) > 0)
     for item in rows {
       assert_true(item.required)
       assert_true(item.token_surface.contains("DesignSemanticPalette"))
       assert_true(item.core_surface.contains("@core."))
       assert_true(item.token_value == item.core_value)
       assert_true(item.resolves_core_surface)
-      assert_true(item.status != @common.DesignTokenStatus::NotMapped)
+      assert_true(item.status != DesignTokenStatus::NotMapped)
     }
-    guard preset.semantic_palette_role_for(
-        @common.DesignSemanticPaletteRole::PalettePrimary,
+    guard semantic_palette_role_for(
+        preset,
+        DesignSemanticPaletteRole::PalettePrimary,
       )
       is Some(primary) else {
       fail("expected primary semantic palette role")
@@ -4311,18 +4365,19 @@ test "semantic palette role reports expose role-level source and core alignment 
       @common.DesignPreset::Fluent => 0
       _ => expected_gap
     }
-    assert_true(preset.semantic_palette_role_gap_count() == expected_gap)
+    assert_true(semantic_palette_role_gap_count(preset) == expected_gap)
     assert_true(
-      preset.semantic_palette_role_source_gap_count() == expected_source_gap,
+      semantic_palette_role_source_gap_count(preset) == expected_source_gap,
     )
     assert_true(
-      preset.semantic_palette_role_official_parity_gap_count() == expected_gap,
+      semantic_palette_role_official_parity_gap_count(preset) == expected_gap,
     )
     assert_true(primary.official_token_count > 0)
     assert_true(primary.source_imported_count > 0)
     assert_true(primary.runtime_aligned_count > 0)
-    guard preset.semantic_palette_role_for(
-        @common.DesignSemanticPaletteRole::PaletteFocus,
+    guard semantic_palette_role_for(
+        preset,
+        DesignSemanticPaletteRole::PaletteFocus,
       )
       is Some(focus) else {
       fail("expected focus semantic palette role")
@@ -4351,9 +4406,9 @@ test "typography role reports expose role-level source and neutral typography ga
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let rows = preset.typography_role_report(scheme=@core.ColorScheme::Light)
+    let rows = typography_role_report(preset, scheme=@core.ColorScheme::Light)
     assert_true(rows.length() == 4)
-    assert_true(preset.typography_role_count() == 4)
+    assert_true(typography_role_count(preset) == 4)
     for item in rows {
       assert_true(item.required)
       assert_true(item.token_surface.contains("DesignTypographyTokens"))
@@ -4364,47 +4419,40 @@ test "typography role reports expose role-level source and neutral typography ga
       assert_true(item.resolves_core_surface)
       assert_true(item.source_declared)
       assert_true(item.source_locked)
-      assert_true(item.status != @common.DesignTokenStatus::NotMapped)
+      assert_true(item.status != DesignTokenStatus::NotMapped)
     }
-    guard preset.typography_role_for(
-        @common.DesignTypographyRole::TypographyBody,
-      )
+    guard typography_role_for(preset, DesignTypographyRole::TypographyBody)
       is Some(body) else {
       fail("expected body typography role")
     }
     assert_true(body.token_surface == "DesignTypographyTokens.body")
     assert_true(body.core_surface == "@core.TypographyScale.body")
-    guard preset.typography_role_for(
-        @common.DesignTypographyRole::TypographyTitle,
-      )
+    guard typography_role_for(preset, DesignTypographyRole::TypographyTitle)
       is Some(title) else {
       fail("expected title typography role")
     }
     assert_true(title.token_surface == "DesignTypographyTokens.title")
-    guard preset.requirement_audit_for(
-        @common.DesignSystemRequirement::Typography,
-      )
+    guard requirement_audit_for(preset, DesignSystemRequirement::Typography)
       is Some(typography_audit) else {
       fail("expected typography requirement audit")
     }
     assert_true(typography_audit.evidence.contains("typography role records"))
-    assert_true(
-      typography_audit.status == @common.DesignTokenStatus::PreviewMapped,
-    )
+    assert_true(typography_audit.status == DesignTokenStatus::PreviewMapped)
     if preset == @common.DesignPreset::Material ||
       preset == @common.DesignPreset::Carbon ||
       preset == @common.DesignPreset::Primer {
-      assert_true(preset.typography_role_gap_count() == 0)
-      assert_true(preset.typography_role_source_gap_count() == 0)
-      assert_true(preset.typography_role_destination_gap_count() == 0)
-      assert_true(preset.typography_role_official_parity_gap_count() == 0)
+      assert_true(typography_role_gap_count(preset) == 0)
+      assert_true(typography_role_source_gap_count(preset) == 0)
+      assert_true(typography_role_destination_gap_count(preset) == 0)
+      assert_true(typography_role_official_parity_gap_count(preset) == 0)
     } else {
-      assert_true(preset.typography_role_gap_count() > 0)
-      assert_true(preset.typography_role_official_parity_gap_count() > 0)
+      assert_true(typography_role_gap_count(preset) > 0)
+      assert_true(typography_role_official_parity_gap_count(preset) > 0)
     }
   }
-  guard @common.DesignPreset::Material.typography_role_for(
-      @common.DesignTypographyRole::TypographyBody,
+  guard typography_role_for(
+      @common.DesignPreset::Material,
+      DesignTypographyRole::TypographyBody,
     )
     is Some(material_body) else {
     fail("expected Material body typography role")
@@ -4416,8 +4464,9 @@ test "typography role reports expose role-level source and neutral typography ga
   assert_true(material_body.source_imported_count == 1)
   assert_true(material_body.runtime_aligned_count == 1)
   assert_true(material_body.remaining_gap == "none")
-  guard @common.DesignPreset::Carbon.typography_role_for(
-      @common.DesignTypographyRole::TypographyBody,
+  guard typography_role_for(
+      @common.DesignPreset::Carbon,
+      DesignTypographyRole::TypographyBody,
     )
     is Some(carbon_body) else {
     fail("expected Carbon body typography role")
@@ -4427,8 +4476,9 @@ test "typography role reports expose role-level source and neutral typography ga
   assert_true(carbon_body.source_imported_count == 1)
   assert_true(carbon_body.runtime_aligned_count == 1)
   assert_true(carbon_body.remaining_gap == "none")
-  guard @common.DesignPreset::Primer.typography_role_for(
-      @common.DesignTypographyRole::TypographyBody,
+  guard typography_role_for(
+      @common.DesignPreset::Primer,
+      DesignTypographyRole::TypographyBody,
     )
     is Some(primer_body) else {
     fail("expected Primer body typography role")
@@ -4437,8 +4487,9 @@ test "typography role reports expose role-level source and neutral typography ga
   assert_true(primer_body.source_imported_count >= 2)
   assert_true(primer_body.runtime_aligned_count >= 2)
   assert_true(primer_body.remaining_gap == "none")
-  guard @common.DesignPreset::Fluent.typography_role_for(
-      @common.DesignTypographyRole::TypographyBody,
+  guard typography_role_for(
+      @common.DesignPreset::Fluent,
+      DesignTypographyRole::TypographyBody,
     )
     is Some(fluent_body) else {
     fail("expected Fluent body typography role")
@@ -4459,7 +4510,8 @@ test "design system reports aggregate generation ready evidence surfaces" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let report = preset.design_system_report(
+    let report = design_system_report(
+      preset,
       scheme=@core.ColorScheme::Dark,
       system_scheme=@core.ColorScheme::Dark,
       density=@common.DesignDensity::Compact,
@@ -4468,88 +4520,85 @@ test "design system reports aggregate generation ready evidence surfaces" {
     assert_true(report.scheme == @core.ColorScheme::Dark)
     assert_true(report.system_scheme == @core.ColorScheme::Dark)
     assert_true(report.density == @common.DesignDensity::Compact)
-    assert_true(report.manifest == preset.manifest())
-    assert_true(report.complete == preset.is_design_system_complete())
-    assert_true(report.gap_count() == preset.requirement_gap_count())
-    assert_true(report.sources.length() == preset.sources().length())
+    assert_true(report.manifest == manifest(preset))
+    assert_true(report.complete == is_design_system_complete(preset))
+    assert_true(report.gap_count() == requirement_gap_count(preset))
+    assert_true(report.sources.length() == sources(preset).length())
     assert_true(
-      report.requirement_audit.length() == preset.requirement_audit().length(),
+      report.requirement_audit.length() == requirement_audit(preset).length(),
     )
-    assert_true(report.token_taxonomy.length() == preset.token_taxonomy_count())
-    assert_true(
-      report.taxonomy_gap_count() == preset.token_taxonomy_gap_count(),
-    )
+    assert_true(report.token_taxonomy.length() == token_taxonomy_count(preset))
+    assert_true(report.taxonomy_gap_count() == token_taxonomy_gap_count(preset))
     assert_true(
       report.semantic_palette_roles.length() ==
-      preset.semantic_palette_role_count(),
+      semantic_palette_role_count(preset),
     )
     assert_true(
       report.semantic_palette_gap_count() ==
-      preset.semantic_palette_role_official_parity_gap_count(),
+      semantic_palette_role_official_parity_gap_count(preset),
     )
     assert_true(
-      report.typography_roles.length() == preset.typography_role_count(),
+      report.typography_roles.length() == typography_role_count(preset),
     )
     assert_true(
       report.typography_gap_count() ==
-      preset.typography_role_official_parity_gap_count(),
+      typography_role_official_parity_gap_count(preset),
     )
     assert_true(
-      report.source_locks.length() == preset.source_lock_report().length(),
+      report.source_locks.length() == source_lock_report(preset).length(),
     )
     assert_true(
-      report.source_packages.length() == preset.source_package_inventory_count(),
+      report.source_packages.length() == source_package_inventory_count(preset),
     )
     assert_true(
-      report.source_imports.length() == preset.source_imported_token_count(),
+      report.source_imports.length() == source_imported_token_count(preset),
     )
     assert_true(
       report.source_import_coverage.length() ==
-      preset.source_import_coverage_count(),
+      source_import_coverage_count(preset),
     )
     assert_true(
       report.source_import_integrity.length() ==
-      preset.source_import_integrity_report().length(),
+      source_import_integrity_report(preset).length(),
     )
     assert_true(
-      report.runtime_alignment.length() ==
-      preset.runtime_token_alignment_count(),
+      report.runtime_alignment.length() == runtime_token_alignment_count(preset),
     )
     assert_true(
       report.token_group_resolvers.length() ==
-      preset.token_group_resolver_count(),
+      token_group_resolver_count(preset),
     )
     assert_true(
-      report.density_resolvers.length() == preset.density_resolver_count(),
+      report.density_resolvers.length() == density_resolver_count(preset),
     )
     assert_true(
-      report.variant_resolvers.length() == preset.variant_resolver_count(),
+      report.variant_resolvers.length() == variant_resolver_count(preset),
     )
     assert_true(
-      report.customization.length() == preset.customization_report_count(),
+      report.customization.length() == customization_report_count(preset),
     )
     assert_true(
       report.official_token_coverage.length() ==
-      preset.official_token_anchor_count(),
+      official_token_anchor_count(preset),
     )
     assert_true(
-      report.official_token_source_usage.length() == preset.sources().length(),
+      report.official_token_source_usage.length() == sources(preset).length(),
     )
     assert_true(
       report.component_token_matrix.length() ==
-      preset.component_token_matrix_count(),
+      component_token_matrix_count(preset),
     )
     assert_true(
       report.component_style_resolvers.length() ==
-      preset.component_style_resolver_count(),
+      component_style_resolver_count(preset),
     )
-    assert_true(report.adaptation.length() == preset.adaptation_record_count())
+    assert_true(report.adaptation.length() == adaptation_record_count(preset))
     assert_true(
-      report.golden_mappings.length() == preset.golden_mappings().length(),
+      report.golden_mappings.length() == golden_mappings(preset).length(),
     )
     assert_true(
       report.unanchored_golden_mappings.length() ==
-      preset.unanchored_golden_mapping_count(),
+      unanchored_golden_mapping_count(preset),
     )
     assert_true(report.evidence_row_count() > report.requirement_audit.length())
     for item in report.token_group_resolvers {
@@ -4566,7 +4615,7 @@ test "design system reports aggregate generation ready evidence surfaces" {
       assert_true(item.density == @common.DesignDensity::Compact)
     }
     if report.complete {
-      assert_true(report.status == @common.DesignTokenStatus::OfficialComplete)
+      assert_true(report.status == DesignTokenStatus::OfficialComplete)
     } else {
       assert_true(report.status == report.manifest.stage)
     }
@@ -4584,18 +4633,18 @@ test "component token matrices expose source locked official component gaps" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let rows = preset.component_token_matrix()
+    let rows = component_token_matrix(preset)
     assert_true(rows.length() == 11)
-    assert_true(preset.component_token_matrix_count() == 11)
-    assert_true(preset.component_token_matrix_mapped_count() > 0)
-    assert_true(preset.component_token_matrix_source_imported_count() > 0)
-    assert_true(preset.component_token_matrix_runtime_aligned_count() > 0)
+    assert_true(component_token_matrix_count(preset) == 11)
+    assert_true(component_token_matrix_mapped_count(preset) > 0)
+    assert_true(component_token_matrix_source_imported_count(preset) > 0)
+    assert_true(component_token_matrix_runtime_aligned_count(preset) > 0)
     assert_true(
-      preset.component_token_matrix_required_count() >
-      preset.component_token_matrix_mapped_count(),
+      component_token_matrix_required_count(preset) >
+      component_token_matrix_mapped_count(preset),
     )
-    assert_true(preset.component_token_matrix_gap_count() > 0)
-    assert_true(preset.component_token_matrix_source_gap_count() == 0)
+    assert_true(component_token_matrix_gap_count(preset) > 0)
+    assert_true(component_token_matrix_source_gap_count(preset) == 0)
     assert_false(rows.any(item => item.moui_surface.contains("moui/views")))
     assert_true(rows.any(item => item.component == "Button"))
     assert_true(rows.any(item => item.component == "TextField"))
@@ -4621,7 +4670,7 @@ test "component token matrices expose source locked official component gaps" {
       assert_true(item.pending_token_family != "")
     }
   }
-  guard @common.DesignPreset::Material.component_token_matrix_for("Button")
+  guard component_token_matrix_for(@common.DesignPreset::Material, "Button")
     is Some(material_button) else {
     fail("expected Material button matrix")
   }
@@ -4631,46 +4680,44 @@ test "component token matrices expose source locked official component gaps" {
   assert_true(
     material_button.required_token_count > material_button.mapped_token_count,
   )
-  guard @common.DesignPreset::Material.component_token_matrix_for("TextField")
+  guard component_token_matrix_for(@common.DesignPreset::Material, "TextField")
     is Some(material_text_field) else {
     fail("expected Material text-field matrix")
   }
   assert_true(material_text_field.source_imported_token_count == 0)
   assert_true(material_text_field.runtime_aligned_token_count == 0)
-  guard @common.DesignPreset::Carbon.component_token_matrix_for("Feedback")
+  guard component_token_matrix_for(@common.DesignPreset::Carbon, "Feedback")
     is Some(carbon_feedback) else {
     fail("expected Carbon feedback matrix")
   }
   assert_true(carbon_feedback.mapped_token_count == 2)
   assert_true(carbon_feedback.source_imported_token_count >= 4)
   assert_true(carbon_feedback.runtime_aligned_token_count >= 3)
-  guard @common.DesignPreset::Carbon.component_token_matrix_for("TextField")
+  guard component_token_matrix_for(@common.DesignPreset::Carbon, "TextField")
     is Some(carbon_text_field) else {
     fail("expected Carbon text-field matrix")
   }
   assert_true(carbon_text_field.source_imported_token_count == 2)
   assert_true(carbon_text_field.runtime_aligned_token_count == 2)
-  guard @common.DesignPreset::Primer.component_token_matrix_for("Button")
+  guard component_token_matrix_for(@common.DesignPreset::Primer, "Button")
     is Some(primer_button) else {
     fail("expected Primer button matrix")
   }
   assert_true(primer_button.source_imported_token_count == 1)
   assert_true(primer_button.runtime_aligned_token_count == 0)
-  guard @common.DesignPreset::Primer.component_token_matrix_for("Picker")
+  guard component_token_matrix_for(@common.DesignPreset::Primer, "Picker")
     is Some(primer_picker) else {
     fail("expected Primer picker matrix")
   }
   inspect(primer_picker.moui_surface, content="@views.PickerStyle")
   assert_true(primer_picker.source_imported_token_count >= 3)
   assert_true(primer_picker.runtime_aligned_token_count >= 1)
-  guard @common.DesignPreset::Fluent.component_token_matrix_for("DatePicker")
+  guard component_token_matrix_for(@common.DesignPreset::Fluent, "DatePicker")
     is Some(fluent_date_picker) else {
     fail("expected Fluent date-picker matrix")
   }
-  assert_true(
-    fluent_date_picker.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Fluent.component_token_matrix_for("Picker")
+  assert_true(fluent_date_picker.status == DesignTokenStatus::PreviewMapped)
+  guard component_token_matrix_for(@common.DesignPreset::Fluent, "Picker")
     is Some(fluent_picker) else {
     fail("expected Fluent picker matrix")
   }
@@ -4687,15 +4734,16 @@ test "component style resolver reports tie component tokens to neutral core styl
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let rows = preset.component_style_resolver_report(
+    let rows = component_style_resolver_report(
+      preset,
       scheme=@core.ColorScheme::Light,
     )
     assert_true(rows.length() == 11)
-    assert_true(preset.component_style_resolver_count() == 11)
-    assert_true(preset.component_style_resolver_gap_count() == 0)
-    assert_true(preset.component_style_resolver_source_gap_count() == 0)
+    assert_true(component_style_resolver_count(preset) == 11)
+    assert_true(component_style_resolver_gap_count(preset) == 0)
+    assert_true(component_style_resolver_source_gap_count(preset) == 0)
     assert_true(
-      preset.component_style_resolver_official_parity_gap_count() == 11,
+      component_style_resolver_official_parity_gap_count(preset) == 11,
     )
     for item in rows {
       assert_true(item.source_declared)
@@ -4707,29 +4755,29 @@ test "component style resolver reports tie component tokens to neutral core styl
       assert_true(item.style_api != "")
       assert_true(item.resolves_tokens)
       assert_true(item.resolves_core_style)
-      assert_true(item.status == @common.DesignTokenStatus::ComponentMapped)
+      assert_true(item.status == DesignTokenStatus::ComponentMapped)
     }
   }
-  guard @common.DesignPreset::Material.component_style_resolver_for("Button")
+  guard component_style_resolver_for(@common.DesignPreset::Material, "Button")
     is Some(material_button) else {
     fail("expected Material button style resolver")
   }
   assert_true(material_button.core_style_surface == "@views.ButtonStyle")
   assert_true(material_button.style_api.contains("core_component_styles"))
   assert_true(material_button.remaining_gap.contains("state layers"))
-  guard @common.DesignPreset::Carbon.component_style_resolver_for("Feedback")
+  guard component_style_resolver_for(@common.DesignPreset::Carbon, "Feedback")
     is Some(carbon_feedback) else {
     fail("expected Carbon feedback style resolver")
   }
   assert_true(carbon_feedback.style_api.contains("DesignFeedbackTokens"))
   assert_true(carbon_feedback.core_style_surface == "@views.FeedbackStyle")
-  guard @common.DesignPreset::Primer.component_style_resolver_for("Picker")
+  guard component_style_resolver_for(@common.DesignPreset::Primer, "Picker")
     is Some(primer_picker) else {
     fail("expected Primer picker style resolver")
   }
   assert_true(primer_picker.core_style_surface == "@views.PickerStyle")
   assert_true(primer_picker.token_surface.contains("picker"))
-  guard @common.DesignPreset::Fluent.component_style_resolver_for("DatePicker")
+  guard component_style_resolver_for(@common.DesignPreset::Fluent, "DatePicker")
     is Some(fluent_date_picker) else {
     fail("expected Fluent date-picker style resolver")
   }
@@ -4803,22 +4851,20 @@ test "adaptation reports expose source locked MoUI differences" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let records = preset.adaptation_report()
+    let records = adaptation_report(preset)
     assert_true(records.length() >= 7)
-    assert_true(preset.aligned_adaptation_count() > 0)
-    assert_true(preset.adaptation_gap_count() > 0)
-    assert_true(preset.adaptation_source_lock_gap_count() == 0)
-    assert_true(preset.undeclared_adaptation_source_count() == 0)
+    assert_true(aligned_adaptation_count(preset) > 0)
+    assert_true(adaptation_gap_count(preset) > 0)
+    assert_true(adaptation_source_lock_gap_count(preset) == 0)
+    assert_true(undeclared_adaptation_source_count(preset) == 0)
     assert_false(records.any(item => item.moui_surface.contains("moui/views")))
     assert_true(
-      records.any(item => {
-        item.kind == @common.DesignAdaptationKind::CollapsedRoleMatrix
-      }),
+      records.any(item => item.kind == DesignAdaptationKind::CollapsedRoleMatrix),
     )
     assert_true(
       records.any(item => {
-        item.kind == @common.DesignAdaptationKind::CustomizableOverride &&
-        item.status == @common.DesignTokenStatus::ThemeMapped
+        item.kind == DesignAdaptationKind::CustomizableOverride &&
+        item.status == DesignTokenStatus::ThemeMapped
       }),
     )
     for item in records {
@@ -4828,95 +4874,95 @@ test "adaptation reports expose source locked MoUI differences" {
       assert_true(item.remaining_gap != "")
     }
   }
-  guard @common.DesignPreset::Material.adaptation_report_for(
+  guard adaptation_report_for(
+      @common.DesignPreset::Material,
       "Material dynamic color generation",
     )
     is Some(material_dynamic) else {
     fail("expected Material dynamic color adaptation")
   }
+  assert_true(material_dynamic.status == DesignTokenStatus::SourceMapped)
   assert_true(
-    material_dynamic.status == @common.DesignTokenStatus::SourceMapped,
+    material_dynamic.kind == DesignAdaptationKind::PendingOfficialImport,
   )
-  assert_true(
-    material_dynamic.kind == @common.DesignAdaptationKind::PendingOfficialImport,
-  )
-  guard @common.DesignPreset::Carbon.adaptation_report_for(
+  guard adaptation_report_for(
+      @common.DesignPreset::Carbon,
       "Carbon white/g10/g90/g100 themes",
     )
     is Some(carbon_themes) else {
     fail("expected Carbon theme adaptation")
   }
-  assert_true(carbon_themes.status == @common.DesignTokenStatus::PreviewMapped)
-  guard @common.DesignPreset::Primer.adaptation_report_for(
+  assert_true(carbon_themes.status == DesignTokenStatus::PreviewMapped)
+  guard adaptation_report_for(
+      @common.DesignPreset::Primer,
       "Primer color modes and accessibility themes",
     )
     is Some(primer_modes) else {
     fail("expected Primer mode adaptation")
   }
-  assert_true(
-    primer_modes.kind == @common.DesignAdaptationKind::CollapsedRoleMatrix,
-  )
-  guard @common.DesignPreset::Primer.adaptation_report_for(
+  assert_true(primer_modes.kind == DesignAdaptationKind::CollapsedRoleMatrix)
+  guard adaptation_report_for(
+      @common.DesignPreset::Primer,
       "Primer typography primitives",
     )
     is Some(primer_typography) else {
     fail("expected Primer typography adaptation")
   }
-  assert_true(
-    primer_typography.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_typography.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     primer_typography.remaining_gap.contains("line-height") &&
     primer_typography.remaining_gap.contains("title weight"),
   )
-  guard @common.DesignPreset::Fluent.adaptation_report_for(
+  guard adaptation_report_for(
+      @common.DesignPreset::Fluent,
       "Fluent light/dark/high contrast themes",
     )
     is Some(fluent_variants) else {
     fail("expected Fluent variant adaptation")
   }
-  assert_true(fluent_variants.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Fluent.adaptation_report_for("Fluent type ramp")
+  assert_true(fluent_variants.status == DesignTokenStatus::ThemeMapped)
+  guard adaptation_report_for(@common.DesignPreset::Fluent, "Fluent type ramp")
     is Some(fluent_typography) else {
     fail("expected Fluent typography adaptation")
   }
-  assert_true(
-    fluent_typography.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_typography.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     fluent_typography.difference.contains("full Fluent global font file") &&
     fluent_typography.remaining_gap.contains("line-height") &&
     fluent_typography.remaining_gap.contains("font-family"),
   )
-  guard @common.DesignPreset::Fluent.adaptation_report_for(
+  guard adaptation_report_for(
+      @common.DesignPreset::Fluent,
       "Fluent spacing scales",
     )
     is Some(fluent_spacing) else {
     fail("expected Fluent spacing adaptation")
   }
-  assert_true(fluent_spacing.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(fluent_spacing.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     fluent_spacing.difference.contains("horizontal and vertical spacing") &&
     fluent_spacing.remaining_gap.contains("axis-specific"),
   )
-  guard @common.DesignPreset::Fluent.adaptation_report_for(
+  guard adaptation_report_for(
+      @common.DesignPreset::Fluent,
       "Fluent border radius scale",
     )
     is Some(fluent_radius) else {
     fail("expected Fluent radius adaptation")
   }
-  assert_true(fluent_radius.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(fluent_radius.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     fluent_radius.difference.contains("full Fluent global border-radius scale") &&
     fluent_radius.remaining_gap.contains("extended radius"),
   )
-  guard @common.DesignPreset::Fluent.adaptation_report_for(
+  guard adaptation_report_for(
+      @common.DesignPreset::Fluent,
       "Fluent shadow and stroke depth",
     )
     is Some(fluent_depth) else {
     fail("expected Fluent depth adaptation")
   }
-  assert_true(fluent_depth.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(fluent_depth.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     fluent_depth.difference.contains("global stroke widths") &&
     fluent_depth.remaining_gap.contains("shadow/depth") &&
@@ -4933,46 +4979,46 @@ test "official token anchors expose mapped coverage and required gaps" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    assert_true(preset.official_token_anchor_count() >= 8)
-    assert_true(preset.mapped_official_token_anchor_count() > 0)
-    assert_true(preset.unmapped_official_token_anchor_count() > 0)
-    assert_true(preset.unanchored_golden_mapping_count() == 0)
-    assert_true(preset.golden_mappings_without_official_anchor().length() == 0)
+    assert_true(official_token_anchor_count(preset) >= 8)
+    assert_true(mapped_official_token_anchor_count(preset) > 0)
+    assert_true(unmapped_official_token_anchor_count(preset) > 0)
+    assert_true(unanchored_golden_mapping_count(preset) == 0)
+    assert_true(golden_mappings_without_official_anchor(preset).length() == 0)
     if preset == @common.DesignPreset::Material {
       assert_true(
-        preset.official_token_anchor_source_lock_count() ==
-        preset.official_token_anchor_count() - 1,
+        official_token_anchor_source_lock_count(preset) ==
+        official_token_anchor_count(preset) - 1,
       )
     } else {
       assert_true(
-        preset.official_token_anchor_source_lock_count() ==
-        preset.official_token_anchor_count(),
+        official_token_anchor_source_lock_count(preset) ==
+        official_token_anchor_count(preset),
       )
     }
-    assert_true(preset.official_token_anchor_source_gap_count() == 0)
-    assert_true(preset.undeclared_official_token_anchor_source_count() == 0)
-    assert_true(preset.has_official_token_source_locks())
+    assert_true(official_token_anchor_source_gap_count(preset) == 0)
+    assert_true(undeclared_official_token_anchor_source_count(preset) == 0)
+    assert_true(has_official_token_source_locks(preset))
     assert_true(
-      preset.official_token_source_usage().length() == preset.sources().length(),
+      official_token_source_usage(preset).length() == sources(preset).length(),
     )
     assert_true(
-      preset
-      .official_token_source_usage()
-      .any(item => {
+      official_token_source_usage(preset).any(item => {
         item.anchor_count > 0 && item.source_locked && item.source_ref != ""
       }),
     )
-    assert_false(preset.is_design_system_complete())
+    assert_false(is_design_system_complete(preset))
     assert_true(
-      preset.has_official_token_anchor(
-        preset.official_token_anchors()[0].official_token,
+      has_official_token_anchor(
+        preset,
+        official_token_anchors(preset)[0].official_token,
       ),
     )
-    for mapping in preset.golden_mappings() {
-      assert_true(preset.has_official_token_anchor(mapping.official_token))
+    for mapping in golden_mappings(preset) {
+      assert_true(has_official_token_anchor(preset, mapping.official_token))
     }
   }
-  guard @common.DesignPreset::Material.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-color-primary",
     )
     is Some(material_primary) else {
@@ -4984,7 +5030,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   inspect(material_primary.source_kind, content="official-docs")
   inspect(material_primary.source_ref, content="live")
   inspect(material_primary.moui_token, content="DesignSemanticPalette.primary")
-  guard @common.DesignPreset::Material.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level1",
     )
     is Some(material_elevation) else {
@@ -4996,7 +5043,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(
     material_elevation.moui_token == "DesignElevationTokens.sm.offset.y",
   )
-  guard @common.DesignPreset::Material.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level3",
     )
     is Some(material_elevation_level3) else {
@@ -5008,7 +5056,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(
     material_elevation_level3.moui_token == "DesignElevationTokens.md.offset.y",
   )
-  guard @common.DesignPreset::Material.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-elevation-level5",
     )
     is Some(material_elevation_level5) else {
@@ -5020,7 +5069,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(
     material_elevation_level5.moui_token == "DesignElevationTokens.lg.offset.y",
   )
-  guard @common.DesignPreset::Material.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-short4",
     )
     is Some(material_motion_short4) else {
@@ -5030,7 +5080,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(material_motion_short4.source_declared)
   assert_true(material_motion_short4.source_locked)
   assert_true(material_motion_short4.moui_token == "DesignMotionTokens.fast_ms")
-  guard @common.DesignPreset::Material.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium2",
     )
     is Some(material_motion_medium2) else {
@@ -5042,7 +5093,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(
     material_motion_medium2.moui_token == "DesignMotionTokens.normal_ms",
   )
-  guard @common.DesignPreset::Material.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium4",
     )
     is Some(material_motion_medium4) else {
@@ -5054,7 +5106,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(
     material_motion_medium4.moui_token == "DesignMotionTokens.slow_ms",
   )
-  guard @common.DesignPreset::Material.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-easing-standard",
     )
     is Some(material_motion_easing) else {
@@ -5063,11 +5116,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(material_motion_easing.mapped)
   assert_true(material_motion_easing.source_declared)
   assert_true(material_motion_easing.source_locked)
-  assert_true(
-    material_motion_easing.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(material_motion_easing.status == DesignTokenStatus::PreviewMapped)
   assert_true(material_motion_easing.moui_token == "DesignMotionTokens.easing")
-  guard @common.DesignPreset::Material.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Material,
       "--md-sys-spacing-*",
     )
     is Some(material_spacing) else {
@@ -5075,7 +5127,7 @@ test "official token anchors expose mapped coverage and required gaps" {
   }
   assert_false(material_spacing.required)
   assert_false(material_spacing.mapped)
-  assert_true(material_spacing.status == @common.DesignTokenStatus::NotMapped)
+  assert_true(material_spacing.status == DesignTokenStatus::NotMapped)
   assert_carbon_mapped_spacing_official_coverage(
     "$spacing-01", "DesignSpacingTokens.xs",
   )
@@ -5115,7 +5167,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_carbon_preview_spacing_official_coverage(
     "$spacing-13", "DesignSpacingTokens.xl",
   )
-  guard @common.DesignPreset::Carbon.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Carbon,
       "$duration-moderate-01",
     )
     is Some(carbon_duration) else {
@@ -5127,7 +5180,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(carbon_duration.source_kind == "official-source")
   assert_true(carbon_duration.token_path == "packages/motion")
   assert_true(carbon_duration.moui_token == "DesignMotionTokens.normal_ms")
-  guard @common.DesignPreset::Carbon.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Carbon,
       "easings.standard.productive",
     )
     is Some(carbon_easing) else {
@@ -5136,9 +5190,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(carbon_easing.mapped)
   assert_true(carbon_easing.source_declared)
   assert_true(carbon_easing.source_locked)
-  assert_true(carbon_easing.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(carbon_easing.status == DesignTokenStatus::PreviewMapped)
   assert_true(carbon_easing.moui_token == "DesignMotionTokens.easing")
-  guard @common.DesignPreset::Carbon.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Carbon,
       "$duration-slow-02",
     )
     is Some(carbon_duration_slow02) else {
@@ -5147,11 +5202,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(carbon_duration_slow02.mapped)
   assert_true(carbon_duration_slow02.source_declared)
   assert_true(carbon_duration_slow02.source_locked)
-  assert_true(
-    carbon_duration_slow02.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(carbon_duration_slow02.status == DesignTokenStatus::PreviewMapped)
   assert_true(carbon_duration_slow02.moui_token == "DesignMotionTokens.slow_ms")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--button-primary-bgColor-rest",
     )
     is Some(primer_button) else {
@@ -5160,14 +5214,13 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_button.mapped)
   assert_true(primer_button.source_declared)
   assert_true(primer_button.source_locked)
-  assert_true(
-    primer_button.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(primer_button.status == DesignTokenStatus::ComponentMapped)
   assert_true(
     primer_button.moui_token ==
     "DesignComponentTokens.button.primary.background",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--control-bgColor-rest",
     )
     is Some(primer_control) else {
@@ -5176,13 +5229,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_control.mapped)
   assert_true(primer_control.source_declared)
   assert_true(primer_control.source_locked)
-  assert_true(
-    primer_control.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(primer_control.status == DesignTokenStatus::ComponentMapped)
   assert_true(
     primer_control.moui_token == "DesignComponentTokens.picker.background",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--control-transparent-bgColor-hover",
     )
     is Some(primer_control_hover) else {
@@ -5191,13 +5243,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_control_hover.mapped)
   assert_true(primer_control_hover.source_declared)
   assert_true(primer_control_hover.source_locked)
-  assert_true(
-    primer_control_hover.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(primer_control_hover.status == DesignTokenStatus::ComponentMapped)
   assert_true(
     primer_control_hover.moui_token == "DesignStateLayerTokens.hover_alpha",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--control-borderColor-emphasis",
     )
     is Some(primer_control_border) else {
@@ -5207,12 +5258,13 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_control_border.source_declared)
   assert_true(primer_control_border.source_locked)
   assert_true(
-    primer_control_border.status == @common.DesignTokenStatus::ComponentMapped,
+    primer_control_border.status == DesignTokenStatus::ComponentMapped,
   )
   assert_true(
     primer_control_border.moui_token == "DesignTextFieldTokens.focused.border",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-size-4",
     )
     is Some(primer_base_size_xs) else {
@@ -5221,11 +5273,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_base_size_xs.mapped)
   assert_true(primer_base_size_xs.source_declared)
   assert_true(primer_base_size_xs.source_locked)
-  assert_true(
-    primer_base_size_xs.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_base_size_xs.status == DesignTokenStatus::ThemeMapped)
   assert_true(primer_base_size_xs.moui_token == "DesignSpacingTokens.xs")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-size-8",
     )
     is Some(primer_base_size_sm) else {
@@ -5234,11 +5285,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_base_size_sm.mapped)
   assert_true(primer_base_size_sm.source_declared)
   assert_true(primer_base_size_sm.source_locked)
-  assert_true(
-    primer_base_size_sm.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_base_size_sm.status == DesignTokenStatus::ThemeMapped)
   assert_true(primer_base_size_sm.moui_token == "DesignSpacingTokens.sm")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-size-12",
     )
     is Some(primer_base_size_md) else {
@@ -5247,11 +5297,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_base_size_md.mapped)
   assert_true(primer_base_size_md.source_declared)
   assert_true(primer_base_size_md.source_locked)
-  assert_true(
-    primer_base_size_md.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_base_size_md.status == DesignTokenStatus::ThemeMapped)
   assert_true(primer_base_size_md.moui_token == "DesignSpacingTokens.md")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-size-16",
     )
     is Some(primer_base_size) else {
@@ -5260,9 +5309,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_base_size.mapped)
   assert_true(primer_base_size.source_declared)
   assert_true(primer_base_size.source_locked)
-  assert_true(primer_base_size.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(primer_base_size.status == DesignTokenStatus::ThemeMapped)
   assert_true(primer_base_size.moui_token == "DesignSpacingTokens.lg")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-size-24",
     )
     is Some(primer_base_size_xl) else {
@@ -5271,11 +5321,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_base_size_xl.mapped)
   assert_true(primer_base_size_xl.source_declared)
   assert_true(primer_base_size_xl.source_locked)
-  assert_true(
-    primer_base_size_xl.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_base_size_xl.status == DesignTokenStatus::ThemeMapped)
   assert_true(primer_base_size_xl.moui_token == "DesignSpacingTokens.xl")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-text-size-xs",
     )
     is Some(primer_caption_size) else {
@@ -5284,13 +5333,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_caption_size.mapped)
   assert_true(primer_caption_size.source_declared)
   assert_true(primer_caption_size.source_locked)
-  assert_true(
-    primer_caption_size.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_caption_size.status == DesignTokenStatus::ThemeMapped)
   assert_true(
     primer_caption_size.moui_token == "DesignTypographyTokens.caption.size",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-text-size-sm",
     )
     is Some(primer_body_size) else {
@@ -5299,9 +5347,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_body_size.mapped)
   assert_true(primer_body_size.source_declared)
   assert_true(primer_body_size.source_locked)
-  assert_true(primer_body_size.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(primer_body_size.status == DesignTokenStatus::ThemeMapped)
   assert_true(primer_body_size.moui_token == "DesignTypographyTokens.body.size")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-text-size-lg",
     )
     is Some(primer_title_size) else {
@@ -5310,13 +5359,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_title_size.mapped)
   assert_true(primer_title_size.source_declared)
   assert_true(primer_title_size.source_locked)
-  assert_true(
-    primer_title_size.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_title_size.status == DesignTokenStatus::ThemeMapped)
   assert_true(
     primer_title_size.moui_token == "DesignTypographyTokens.title.size",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-text-weight-normal",
     )
     is Some(primer_body_weight) else {
@@ -5325,13 +5373,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_body_weight.mapped)
   assert_true(primer_body_weight.source_declared)
   assert_true(primer_body_weight.source_locked)
-  assert_true(
-    primer_body_weight.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_body_weight.status == DesignTokenStatus::ThemeMapped)
   assert_true(
     primer_body_weight.moui_token == "DesignTypographyTokens.body.weight",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-text-weight-semibold",
     )
     is Some(primer_control_weight) else {
@@ -5340,13 +5387,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_control_weight.mapped)
   assert_true(primer_control_weight.source_declared)
   assert_true(primer_control_weight.source_locked)
-  assert_true(
-    primer_control_weight.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_control_weight.status == DesignTokenStatus::ThemeMapped)
   assert_true(
     primer_control_weight.moui_token == "DesignTypographyTokens.control.weight",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-small",
     )
     is Some(primer_radius_small) else {
@@ -5355,11 +5401,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_radius_small.mapped)
   assert_true(primer_radius_small.source_declared)
   assert_true(primer_radius_small.source_locked)
-  assert_true(
-    primer_radius_small.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_radius_small.status == DesignTokenStatus::PreviewMapped)
   assert_true(primer_radius_small.moui_token == "DesignRadiusTokens.sm")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-medium",
     )
     is Some(primer_radius_medium) else {
@@ -5368,11 +5413,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_radius_medium.mapped)
   assert_true(primer_radius_medium.source_declared)
   assert_true(primer_radius_medium.source_locked)
-  assert_true(
-    primer_radius_medium.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_radius_medium.status == DesignTokenStatus::ThemeMapped)
   assert_true(primer_radius_medium.moui_token == "DesignRadiusTokens.md")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-large",
     )
     is Some(primer_radius_large) else {
@@ -5381,11 +5425,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_radius_large.mapped)
   assert_true(primer_radius_large.source_declared)
   assert_true(primer_radius_large.source_locked)
-  assert_true(
-    primer_radius_large.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_radius_large.status == DesignTokenStatus::PreviewMapped)
   assert_true(primer_radius_large.moui_token == "DesignRadiusTokens.lg")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-full",
     )
     is Some(primer_radius_full) else {
@@ -5394,11 +5437,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_radius_full.mapped)
   assert_true(primer_radius_full.source_declared)
   assert_true(primer_radius_full.source_locked)
-  assert_true(
-    primer_radius_full.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_radius_full.status == DesignTokenStatus::PreviewMapped)
   assert_true(primer_radius_full.moui_token == "DesignRadiusTokens.pill")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-default",
     )
     is Some(primer_radius_default) else {
@@ -5407,11 +5449,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_radius_default.mapped)
   assert_true(primer_radius_default.source_declared)
   assert_true(primer_radius_default.source_locked)
-  assert_true(
-    primer_radius_default.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_radius_default.status == DesignTokenStatus::ThemeMapped)
   assert_true(primer_radius_default.moui_token == "DesignRadiusTokens.md")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--shadow-resting-small",
     )
     is Some(primer_shadow_small) else {
@@ -5420,13 +5461,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_shadow_small.mapped)
   assert_true(primer_shadow_small.source_declared)
   assert_true(primer_shadow_small.source_locked)
-  assert_true(
-    primer_shadow_small.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_shadow_small.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     primer_shadow_small.moui_token == "DesignElevationTokens.sm.offset.y",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--shadow-resting-medium",
     )
     is Some(primer_shadow_medium) else {
@@ -5435,13 +5475,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_shadow_medium.mapped)
   assert_true(primer_shadow_medium.source_declared)
   assert_true(primer_shadow_medium.source_locked)
-  assert_true(
-    primer_shadow_medium.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_shadow_medium.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     primer_shadow_medium.moui_token == "DesignElevationTokens.md.offset.y",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--shadow-floating-large",
     )
     is Some(primer_shadow_large) else {
@@ -5450,13 +5489,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_shadow_large.mapped)
   assert_true(primer_shadow_large.source_declared)
   assert_true(primer_shadow_large.source_locked)
-  assert_true(
-    primer_shadow_large.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_shadow_large.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     primer_shadow_large.moui_token == "DesignElevationTokens.lg.offset.y",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-duration-0",
     )
     is Some(primer_duration_zero) else {
@@ -5465,11 +5503,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_duration_zero.mapped)
   assert_true(primer_duration_zero.source_declared)
   assert_true(primer_duration_zero.source_locked)
-  assert_true(
-    primer_duration_zero.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_duration_zero.status == DesignTokenStatus::PreviewMapped)
   assert_true(primer_duration_zero.moui_token == "DesignMotionTokens.fast_ms")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-duration-100",
     )
     is Some(primer_duration_fast) else {
@@ -5478,11 +5515,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_duration_fast.mapped)
   assert_true(primer_duration_fast.source_declared)
   assert_true(primer_duration_fast.source_locked)
-  assert_true(
-    primer_duration_fast.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(primer_duration_fast.status == DesignTokenStatus::ThemeMapped)
   assert_true(primer_duration_fast.moui_token == "DesignMotionTokens.fast_ms")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-duration-200",
     )
     is Some(primer_duration_normal) else {
@@ -5491,13 +5527,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_duration_normal.mapped)
   assert_true(primer_duration_normal.source_declared)
   assert_true(primer_duration_normal.source_locked)
-  assert_true(
-    primer_duration_normal.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_duration_normal.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     primer_duration_normal.moui_token == "DesignMotionTokens.normal_ms",
   )
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-duration-300",
     )
     is Some(primer_duration_slow) else {
@@ -5506,11 +5541,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_duration_slow.mapped)
   assert_true(primer_duration_slow.source_declared)
   assert_true(primer_duration_slow.source_locked)
-  assert_true(
-    primer_duration_slow.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_duration_slow.status == DesignTokenStatus::PreviewMapped)
   assert_true(primer_duration_slow.moui_token == "DesignMotionTokens.slow_ms")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-duration-1000",
     )
     is Some(primer_duration_long) else {
@@ -5519,11 +5553,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_duration_long.mapped)
   assert_true(primer_duration_long.source_declared)
   assert_true(primer_duration_long.source_locked)
-  assert_true(
-    primer_duration_long.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_duration_long.status == DesignTokenStatus::PreviewMapped)
   assert_true(primer_duration_long.moui_token == "DesignMotionTokens.slow_ms")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-easing-linear",
     )
     is Some(primer_linear) else {
@@ -5532,9 +5565,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_linear.mapped)
   assert_true(primer_linear.source_declared)
   assert_true(primer_linear.source_locked)
-  assert_true(primer_linear.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(primer_linear.status == DesignTokenStatus::PreviewMapped)
   assert_true(primer_linear.moui_token == "DesignMotionTokens.easing")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-easing-easeOut",
     )
     is Some(primer_easing) else {
@@ -5543,9 +5577,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_easing.mapped)
   assert_true(primer_easing.source_declared)
   assert_true(primer_easing.source_locked)
-  assert_true(primer_easing.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(primer_easing.status == DesignTokenStatus::PreviewMapped)
   assert_true(primer_easing.moui_token == "DesignMotionTokens.easing")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--base-easing-easeInOut",
     )
     is Some(primer_ease_in_out) else {
@@ -5554,11 +5589,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_ease_in_out.mapped)
   assert_true(primer_ease_in_out.source_declared)
   assert_true(primer_ease_in_out.source_locked)
-  assert_true(
-    primer_ease_in_out.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(primer_ease_in_out.status == DesignTokenStatus::PreviewMapped)
   assert_true(primer_ease_in_out.moui_token == "DesignMotionTokens.easing")
-  guard @common.DesignPreset::Primer.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Primer,
       "--progressBar-fgColor-accent",
     )
     is Some(primer_progress) else {
@@ -5567,9 +5601,7 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(primer_progress.mapped)
   assert_true(primer_progress.source_declared)
   assert_true(primer_progress.source_locked)
-  assert_true(
-    primer_progress.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(primer_progress.status == DesignTokenStatus::ComponentMapped)
   assert_true(
     primer_progress.moui_token == "DesignComponentTokens.progress.foreground",
   )
@@ -5600,7 +5632,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_fluent_preview_global_color_official_coverage(
     "blue.primary", "DesignSemanticPalette.info",
   )
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "spacingHorizontalM",
     )
     is Some(fluent_spacing) else {
@@ -5610,7 +5643,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_spacing.source_declared)
   assert_true(fluent_spacing.source_locked)
   assert_true(fluent_spacing.moui_token == "DesignSpacingTokens.md")
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "spacingHorizontalXL",
     )
     is Some(fluent_spacing_xl) else {
@@ -5674,7 +5708,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_fluent_mapped_spacing_official_coverage(
     "spacingVerticalXXXL", "DesignSpacingTokens.xl",
   )
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "fontWeightSemibold",
     )
     is Some(fluent_semibold) else {
@@ -5767,7 +5802,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_fluent_preview_stroke_width_official_coverage(
     "strokeWidthThickest", "DesignComponentTokens.text_field.focused.border_width",
   )
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "borderRadiusCircular",
     )
     is Some(fluent_radius_circular) else {
@@ -5777,9 +5813,7 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_radius_circular.source_declared)
   assert_true(fluent_radius_circular.source_locked)
   assert_true(fluent_radius_circular.moui_token == "DesignRadiusTokens.pill")
-  assert_true(
-    fluent_radius_circular.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_radius_circular.status == DesignTokenStatus::PreviewMapped)
   assert_fluent_preview_radius_official_coverage(
     "borderRadiusNone", "DesignRadiusTokens.sm",
   )
@@ -5801,7 +5835,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_fluent_preview_radius_official_coverage(
     "borderRadius6XLarge", "DesignRadiusTokens.pill",
   )
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationUltraFast",
     )
     is Some(fluent_duration_ultra_fast) else {
@@ -5811,13 +5846,13 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_duration_ultra_fast.source_declared)
   assert_true(fluent_duration_ultra_fast.source_locked)
   assert_true(
-    fluent_duration_ultra_fast.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_ultra_fast.status == DesignTokenStatus::PreviewMapped,
   )
   assert_true(
     fluent_duration_ultra_fast.moui_token == "DesignMotionTokens.fast_ms",
   )
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationFaster",
     )
     is Some(fluent_duration_fast) else {
@@ -5826,11 +5861,12 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_duration_fast.mapped)
   assert_true(fluent_duration_fast.source_declared)
   assert_true(fluent_duration_fast.source_locked)
-  assert_true(
-    fluent_duration_fast.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(fluent_duration_fast.status == DesignTokenStatus::ThemeMapped)
   assert_true(fluent_duration_fast.moui_token == "DesignMotionTokens.fast_ms")
-  guard @common.DesignPreset::Fluent.official_token_coverage_for("durationFast")
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
+      "durationFast",
+    )
     is Some(fluent_duration_fast_preview) else {
     fail("expected Fluent fast duration official token coverage")
   }
@@ -5838,13 +5874,13 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_duration_fast_preview.source_declared)
   assert_true(fluent_duration_fast_preview.source_locked)
   assert_true(
-    fluent_duration_fast_preview.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_fast_preview.status == DesignTokenStatus::PreviewMapped,
   )
   assert_true(
     fluent_duration_fast_preview.moui_token == "DesignMotionTokens.fast_ms",
   )
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationNormal",
     )
     is Some(fluent_duration) else {
@@ -5853,9 +5889,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_duration.mapped)
   assert_true(fluent_duration.source_declared)
   assert_true(fluent_duration.source_locked)
-  assert_true(fluent_duration.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(fluent_duration.status == DesignTokenStatus::ThemeMapped)
   assert_true(fluent_duration.moui_token == "DesignMotionTokens.normal_ms")
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationGentle",
     )
     is Some(fluent_duration_gentle) else {
@@ -5864,24 +5901,24 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_duration_gentle.mapped)
   assert_true(fluent_duration_gentle.source_declared)
   assert_true(fluent_duration_gentle.source_locked)
-  assert_true(
-    fluent_duration_gentle.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_duration_gentle.status == DesignTokenStatus::PreviewMapped)
   assert_true(
     fluent_duration_gentle.moui_token == "DesignMotionTokens.normal_ms",
   )
-  guard @common.DesignPreset::Fluent.official_token_coverage_for("durationSlow")
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
+      "durationSlow",
+    )
     is Some(fluent_duration_slow) else {
     fail("expected Fluent slow duration official token coverage")
   }
   assert_true(fluent_duration_slow.mapped)
   assert_true(fluent_duration_slow.source_declared)
   assert_true(fluent_duration_slow.source_locked)
-  assert_true(
-    fluent_duration_slow.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(fluent_duration_slow.status == DesignTokenStatus::ThemeMapped)
   assert_true(fluent_duration_slow.moui_token == "DesignMotionTokens.slow_ms")
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationSlower",
     )
     is Some(fluent_duration_slower) else {
@@ -5890,11 +5927,10 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_duration_slower.mapped)
   assert_true(fluent_duration_slower.source_declared)
   assert_true(fluent_duration_slower.source_locked)
-  assert_true(
-    fluent_duration_slower.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_duration_slower.status == DesignTokenStatus::PreviewMapped)
   assert_true(fluent_duration_slower.moui_token == "DesignMotionTokens.slow_ms")
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "durationUltraSlow",
     )
     is Some(fluent_duration_ultra_slow) else {
@@ -5904,13 +5940,13 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_duration_ultra_slow.source_declared)
   assert_true(fluent_duration_ultra_slow.source_locked)
   assert_true(
-    fluent_duration_ultra_slow.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_ultra_slow.status == DesignTokenStatus::PreviewMapped,
   )
   assert_true(
     fluent_duration_ultra_slow.moui_token == "DesignMotionTokens.slow_ms",
   )
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "colorCompoundBrandBackground",
     )
     is Some(fluent_compound_brand) else {
@@ -5920,13 +5956,14 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_compound_brand.source_declared)
   assert_true(fluent_compound_brand.source_locked)
   assert_true(
-    fluent_compound_brand.status == @common.DesignTokenStatus::ComponentMapped,
+    fluent_compound_brand.status == DesignTokenStatus::ComponentMapped,
   )
   assert_true(
     fluent_compound_brand.moui_token ==
     "DesignComponentTokens.button.primary.background",
   )
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "ProgressBar.indicator.backgroundColor",
     )
     is Some(fluent_progress) else {
@@ -5935,9 +5972,7 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_progress.mapped)
   assert_true(fluent_progress.source_declared)
   assert_true(fluent_progress.source_locked)
-  assert_true(
-    fluent_progress.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(fluent_progress.status == DesignTokenStatus::ComponentMapped)
   assert_true(
     fluent_progress.moui_token == "DesignComponentTokens.progress.foreground",
   )
@@ -5948,7 +5983,8 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_fluent_preview_curve_official_coverage("curveDecelerateMid")
   assert_fluent_preview_curve_official_coverage("curveDecelerateMin")
   assert_fluent_preview_curve_official_coverage("curveEasyEaseMax")
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(
+  guard official_token_coverage_for(
+      @common.DesignPreset::Fluent,
       "curveEasyEase",
     )
     is Some(fluent_curve) else {
@@ -5957,7 +5993,7 @@ test "official token anchors expose mapped coverage and required gaps" {
   assert_true(fluent_curve.mapped)
   assert_true(fluent_curve.source_declared)
   assert_true(fluent_curve.source_locked)
-  assert_true(fluent_curve.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(fluent_curve.status == DesignTokenStatus::PreviewMapped)
   assert_true(fluent_curve.moui_token == "DesignMotionTokens.easing")
   assert_fluent_preview_curve_official_coverage("curveLinear")
 }
@@ -6099,12 +6135,12 @@ test "token group resolver reports tie core token groups to neutral surfaces" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let report = preset.token_group_resolver_report()
+    let report = token_group_resolver_report(preset)
     assert_true(report.length() == 7)
-    assert_true(preset.token_group_resolver_count() == 7)
-    assert_true(preset.token_group_resolver_gap_count() == 0)
-    assert_true(preset.token_group_resolver_source_gap_count() == 0)
-    assert_true(preset.token_group_resolver_official_parity_gap_count() == 7)
+    assert_true(token_group_resolver_count(preset) == 7)
+    assert_true(token_group_resolver_gap_count(preset) == 0)
+    assert_true(token_group_resolver_source_gap_count(preset) == 0)
+    assert_true(token_group_resolver_official_parity_gap_count(preset) == 7)
     for item in report {
       assert_true(item.source_declared)
       assert_true(item.source_locked)
@@ -6114,11 +6150,12 @@ test "token group resolver reports tie core token groups to neutral surfaces" {
       assert_true(item.theme_api != "")
       assert_true(item.resolves_tokens)
       assert_true(item.resolves_neutral_surface)
-      assert_true(item.status != @common.DesignTokenStatus::NotMapped)
+      assert_true(item.status != DesignTokenStatus::NotMapped)
     }
   }
-  guard @common.DesignPreset::Material.token_group_resolver_for(
-      @common.DesignSystemRequirement::SemanticPalette,
+  guard token_group_resolver_for(
+      @common.DesignPreset::Material,
+      DesignSystemRequirement::SemanticPalette,
     )
     is Some(material_palette) else {
     fail("expected Material semantic palette token-group resolver")
@@ -6126,23 +6163,23 @@ test "token group resolver reports tie core token groups to neutral surfaces" {
   assert_true(material_palette.source_label == "Material Web color theming")
   assert_true(material_palette.token_surface.contains("DesignSemanticPalette"))
   assert_true(material_palette.remaining_gap.contains("semantic palette"))
-  guard @common.DesignPreset::Fluent.token_group_resolver_for(
-      @common.DesignSystemRequirement::Motion,
+  guard token_group_resolver_for(
+      @common.DesignPreset::Fluent,
+      DesignSystemRequirement::Motion,
     )
     is Some(fluent_motion) else {
     fail("expected Fluent motion token-group resolver")
   }
   assert_true(fluent_motion.source_label == "Fluent 2 design tokens")
   assert_true(fluent_motion.theme_api.contains("DesignMotionTokens"))
-  guard @common.DesignPreset::Carbon.token_group_resolver_for(
-      @common.DesignSystemRequirement::StateLayer,
+  guard token_group_resolver_for(
+      @common.DesignPreset::Carbon,
+      DesignSystemRequirement::StateLayer,
     )
     is Some(carbon_state_layer) else {
     fail("expected Carbon state-layer token-group resolver")
   }
-  assert_true(
-    carbon_state_layer.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(carbon_state_layer.status == DesignTokenStatus::ComponentMapped)
   assert_true(carbon_state_layer.theme_api.contains("DesignComponentTokens"))
 }
 
@@ -6155,15 +6192,18 @@ test "density resolver reports tie spacing scales to source mapped adapters" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let report = preset.density_resolver_report(scheme=@core.ColorScheme::Light)
+    let report = density_resolver_report(
+      preset,
+      scheme=@core.ColorScheme::Light,
+    )
     assert_true(report.length() == 3)
-    assert_true(preset.density_resolver_count() == 3)
-    assert_true(preset.density_resolver_gap_count() == 0)
-    assert_true(preset.density_resolver_source_gap_count() == 0)
+    assert_true(density_resolver_count(preset) == 3)
+    assert_true(density_resolver_gap_count(preset) == 0)
+    assert_true(density_resolver_source_gap_count(preset) == 0)
     if preset == @common.DesignPreset::Material {
-      assert_true(preset.density_resolver_official_parity_gap_count() == 3)
+      assert_true(density_resolver_official_parity_gap_count(preset) == 3)
     } else {
-      assert_true(preset.density_resolver_official_parity_gap_count() == 0)
+      assert_true(density_resolver_official_parity_gap_count(preset) == 0)
     }
     for item in report {
       assert_true(item.source_declared)
@@ -6180,16 +6220,18 @@ test "density resolver reports tie spacing scales to source mapped adapters" {
       assert_true(item.feedback_padding == item.spacing_sm)
     }
   }
-  guard @common.DesignPreset::Carbon.density_resolver_for(
+  guard density_resolver_for(
+      @common.DesignPreset::Carbon,
       @common.DesignDensity::Compact,
     )
     is Some(carbon_compact) else {
     fail("expected Carbon compact density resolver")
   }
-  assert_true(carbon_compact.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(carbon_compact.status == DesignTokenStatus::ThemeMapped)
   assert_true(carbon_compact.source_label == "Carbon themes")
   inspect(carbon_compact.density_multiplier, content="0.82")
-  guard @common.DesignPreset::Material.density_resolver_for(
+  guard density_resolver_for(
+      @common.DesignPreset::Material,
       @common.DesignDensity::Comfortable,
     )
     is Some(material_comfortable) else {
@@ -6197,7 +6239,8 @@ test "density resolver reports tie spacing scales to source mapped adapters" {
   }
   assert_true(material_comfortable.spacing_md > material_comfortable.spacing_sm)
   assert_true(material_comfortable.remaining_gap.contains("Material Web"))
-  guard @common.DesignPreset::Fluent.density_resolver_for(
+  guard density_resolver_for(
+      @common.DesignPreset::Fluent,
       @common.DesignDensity::Standard,
       scheme=@core.ColorScheme::Dark,
     )
@@ -6246,15 +6289,16 @@ test "variant resolver reports tie scheme variants to source mapped adapters" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let report = preset.variant_resolver_report(
+    let report = variant_resolver_report(
+      preset,
       system_scheme=@core.ColorScheme::Dark,
       density=@common.DesignDensity::Compact,
     )
-    assert_true(report.length() == preset.variant_coverage().length())
-    assert_true(preset.variant_resolver_count() == report.length())
-    assert_true(preset.variant_resolver_source_gap_count() == 0)
-    assert_true(preset.variant_resolver_gap_count() == 2)
-    assert_true(preset.variant_resolver_official_parity_gap_count() == 4)
+    assert_true(report.length() == variant_coverage(preset).length())
+    assert_true(variant_resolver_count(preset) == report.length())
+    assert_true(variant_resolver_source_gap_count(preset) == 0)
+    assert_true(variant_resolver_gap_count(preset) == 2)
+    assert_true(variant_resolver_official_parity_gap_count(preset) == 4)
     for item in report {
       assert_true(item.source_declared)
       assert_true(item.source_locked)
@@ -6266,7 +6310,8 @@ test "variant resolver reports tie scheme variants to source mapped adapters" {
       assert_true(item.density == @common.DesignDensity::Compact)
     }
   }
-  guard @common.DesignPreset::Material.variant_resolver_for(
+  guard variant_resolver_for(
+      @common.DesignPreset::Material,
       @common.DesignSchemeVariant::SchemeHighContrast,
       system_scheme=@core.ColorScheme::Dark,
       density=@common.DesignDensity::Compact,
@@ -6279,20 +6324,20 @@ test "variant resolver reports tie scheme variants to source mapped adapters" {
     @common.DesignSchemeVariant::SchemeHighContrast,
   )
   assert_true(material_high_contrast.resolved_scheme == @core.ColorScheme::Dark)
-  assert_true(
-    material_high_contrast.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(material_high_contrast.status == DesignTokenStatus::ThemeMapped)
   assert_true(material_high_contrast.official_source.contains("material-web"))
-  guard @common.DesignPreset::Carbon.variant_resolver_for(
+  guard variant_resolver_for(
+      @common.DesignPreset::Carbon,
       @common.DesignSchemeVariant::SchemeLight,
     )
     is Some(carbon_light) else {
     fail("expected Carbon light variant resolver")
   }
   assert_true(carbon_light.resolved_scheme == @core.ColorScheme::Light)
-  assert_true(carbon_light.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(carbon_light.status == DesignTokenStatus::PreviewMapped)
   assert_true(carbon_light.remaining_gap.contains("Official scheme variant"))
-  guard @common.DesignPreset::Fluent.variant_resolver_for(
+  guard variant_resolver_for(
+      @common.DesignPreset::Fluent,
       @common.DesignSchemeVariant::SchemeSystem,
       system_scheme=@core.ColorScheme::Dark,
     )
@@ -6351,25 +6396,25 @@ test "official design presets expose source mapped golden token mappings" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let mappings = preset.golden_mappings()
+    let mappings = golden_mappings(preset)
     assert_true(mappings.length() >= 8)
-    assert_true(preset.golden_mapped_count() >= 6)
-    assert_true(preset.golden_gap_count() >= 1)
+    assert_true(golden_mapped_count(preset) >= 6)
+    assert_true(golden_gap_count(preset) >= 1)
     assert_false(mappings.any(item => item.moui_token.contains("moui/views.")))
     assert_true(
-      mappings.any(item => item.category == @common.DesignTokenCategory::Color),
+      mappings.any(item => item.category == DesignTokenCategory::Color),
     )
     assert_true(
       mappings.any(item => {
-        item.category == @common.DesignTokenCategory::ComponentStyle &&
-        item.status == @common.DesignTokenStatus::ComponentMapped
+        item.category == DesignTokenCategory::ComponentStyle &&
+        item.status == DesignTokenStatus::ComponentMapped
       }),
     )
     assert_true(
       mappings.any(item => {
-        item.status == @common.DesignTokenStatus::SourceMapped ||
-        item.status == @common.DesignTokenStatus::PreviewMapped ||
-        item.status == @common.DesignTokenStatus::NotMapped
+        item.status == DesignTokenStatus::SourceMapped ||
+        item.status == DesignTokenStatus::PreviewMapped ||
+        item.status == DesignTokenStatus::NotMapped
       }),
     )
   }
@@ -6384,17 +6429,17 @@ test "golden mappings trace back to declared manifest sources" {
       @common.DesignPreset::Primer,
       @common.DesignPreset::Fluent,
     ] {
-    let usages = preset.source_usage()
-    assert_true(usages.length() == preset.sources().length())
-    assert_true(preset.undeclared_golden_source_count() == 0)
+    let usages = source_usage(preset)
+    assert_true(usages.length() == sources(preset).length())
+    assert_true(undeclared_golden_source_count(preset) == 0)
     assert_true(usages.any(item => item.golden_mapping_count > 0))
-    assert_true(preset.unused_official_source_count() > 0)
+    assert_true(unused_official_source_count(preset) > 0)
     assert_true(
       usages.any(item => {
         item.source_kind == "official-source" &&
         item.source_ref != "" &&
         item.token_path != "" &&
-        item.source_status == @common.DesignTokenStatus::SourceMapped &&
+        item.source_status == DesignTokenStatus::SourceMapped &&
         item.golden_mapping_count == 0
       }),
     )
@@ -6403,7 +6448,8 @@ test "golden mappings trace back to declared manifest sources" {
 
 ///|
 test "progress and slider golden mappings use component tokens" {
-  guard @common.DesignPreset::Material.golden_mapping_for(
+  guard golden_mapping_for(
+      @common.DesignPreset::Material,
       "--md-linear-progress-active-indicator-color",
     )
     is Some(material_progress) else {
@@ -6413,10 +6459,8 @@ test "progress and slider golden mappings use component tokens" {
     material_progress.moui_token,
     content="DesignComponentTokens.progress.foreground",
   )
-  assert_true(
-    material_progress.status == @common.DesignTokenStatus::ComponentMapped,
-  )
-  guard @common.DesignPreset::Carbon.golden_mapping_for("$slider-filled-track")
+  assert_true(material_progress.status == DesignTokenStatus::ComponentMapped)
+  guard golden_mapping_for(@common.DesignPreset::Carbon, "$slider-filled-track")
     is Some(carbon_slider) else {
     fail("expected Carbon slider token mapping")
   }
@@ -6424,14 +6468,13 @@ test "progress and slider golden mappings use component tokens" {
     carbon_slider.moui_token,
     content="DesignComponentTokens.slider.foreground",
   )
-  assert_true(
-    carbon_slider.status == @common.DesignTokenStatus::ComponentMapped,
-  )
+  assert_true(carbon_slider.status == DesignTokenStatus::ComponentMapped)
 }
 
 ///|
 test "picker golden mappings use component tokens" {
-  guard @common.DesignPreset::Material.golden_mapping_for(
+  guard golden_mapping_for(
+      @common.DesignPreset::Material,
       "--md-menu-container-color",
     )
     is Some(material_picker) else {
@@ -6441,59 +6484,60 @@ test "picker golden mappings use component tokens" {
     material_picker.moui_token,
     content="DesignComponentTokens.picker.background",
   )
+  assert_true(material_picker.status == DesignTokenStatus::ComponentMapped)
+  assert_true(has_golden_mapping(@common.DesignPreset::Carbon, "$field"))
   assert_true(
-    material_picker.status == @common.DesignTokenStatus::ComponentMapped,
-  )
-  assert_true(@common.DesignPreset::Carbon.has_golden_mapping("$field"))
-  assert_true(
-    @common.DesignPreset::Primer.has_golden_mapping("--control-bgColor-rest"),
+    has_golden_mapping(@common.DesignPreset::Primer, "--control-bgColor-rest"),
   )
 }
 
 ///|
 test "status color golden mappings use semantic palette roles" {
-  guard @common.DesignPreset::Material.golden_mapping_for(
+  guard golden_mapping_for(
+      @common.DesignPreset::Material,
       "--md-sys-color-error",
     )
     is Some(material_error) else {
     fail("expected Material error token mapping")
   }
   inspect(material_error.moui_token, content="DesignSemanticPalette.danger")
-  assert_true(material_error.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Carbon.golden_mapping_for("$support-success")
+  assert_true(material_error.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Carbon, "$support-success")
     is Some(carbon_success) else {
     fail("expected Carbon support-success token mapping")
   }
   inspect(carbon_success.moui_token, content="DesignSemanticPalette.success")
-  assert_true(carbon_success.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Carbon.golden_mapping_for("$support-error")
+  assert_true(carbon_success.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Carbon, "$support-error")
     is Some(carbon_error) else {
     fail("expected Carbon support-error token mapping")
   }
   inspect(carbon_error.moui_token, content="DesignSemanticPalette.danger")
-  assert_true(carbon_error.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(carbon_error.status == DesignTokenStatus::ThemeMapped)
   assert_true(
-    @common.DesignPreset::Primer.has_golden_mapping("--fgColor-danger"),
+    has_golden_mapping(@common.DesignPreset::Primer, "--fgColor-danger"),
   )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--fgColor-success")
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--fgColor-success")
     is Some(primer_success) else {
     fail("expected Primer success token mapping")
   }
   inspect(primer_success.moui_token, content="DesignSemanticPalette.success")
-  assert_true(primer_success.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(primer_success.status == DesignTokenStatus::ThemeMapped)
 }
 
 ///|
 test "golden mappings resolve known official token names" {
-  guard @common.DesignPreset::Material.golden_mapping_for(
+  guard golden_mapping_for(
+      @common.DesignPreset::Material,
       "--md-sys-color-primary",
     )
     is Some(material_primary) else {
     fail("expected Material primary token mapping")
   }
   inspect(material_primary.moui_token, content="DesignSemanticPalette.primary")
-  assert_true(material_primary.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Material.golden_mapping_for(
+  assert_true(material_primary.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-short4",
     )
     is Some(material_motion_short4) else {
@@ -6503,10 +6547,9 @@ test "golden mappings resolve known official token names" {
     material_motion_short4.moui_token,
     content="DesignMotionTokens.fast_ms",
   )
-  assert_true(
-    material_motion_short4.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Material.golden_mapping_for(
+  assert_true(material_motion_short4.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium2",
     )
     is Some(material_motion_medium2) else {
@@ -6516,10 +6559,9 @@ test "golden mappings resolve known official token names" {
     material_motion_medium2.moui_token,
     content="DesignMotionTokens.normal_ms",
   )
-  assert_true(
-    material_motion_medium2.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Material.golden_mapping_for(
+  assert_true(material_motion_medium2.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-duration-medium4",
     )
     is Some(material_motion_medium4) else {
@@ -6529,10 +6571,9 @@ test "golden mappings resolve known official token names" {
     material_motion_medium4.moui_token,
     content="DesignMotionTokens.slow_ms",
   )
-  assert_true(
-    material_motion_medium4.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Material.golden_mapping_for(
+  assert_true(material_motion_medium4.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Material,
       "--md-sys-motion-easing-standard",
     )
     is Some(material_motion_easing) else {
@@ -6542,11 +6583,9 @@ test "golden mappings resolve known official token names" {
     material_motion_easing.moui_token,
     content="DesignMotionTokens.easing",
   )
+  assert_true(material_motion_easing.status == DesignTokenStatus::PreviewMapped)
   assert_true(
-    material_motion_easing.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  assert_true(
-    @common.DesignPreset::Carbon.has_golden_mapping("$button-primary"),
+    has_golden_mapping(@common.DesignPreset::Carbon, "$button-primary"),
   )
   assert_carbon_mapped_spacing_golden_mapping(
     "$spacing-01", "DesignSpacingTokens.xs",
@@ -6587,106 +6626,96 @@ test "golden mappings resolve known official token names" {
   assert_carbon_preview_spacing_golden_mapping(
     "$spacing-13", "DesignSpacingTokens.xl",
   )
-  guard @common.DesignPreset::Carbon.golden_mapping_for("$duration-moderate-01")
+  guard golden_mapping_for(
+      @common.DesignPreset::Carbon,
+      "$duration-moderate-01",
+    )
     is Some(carbon_duration) else {
     fail("expected Carbon moderate duration token mapping")
   }
   assert_true(carbon_duration.moui_token == "DesignMotionTokens.normal_ms")
-  assert_true(carbon_duration.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Carbon.golden_mapping_for(
+  assert_true(carbon_duration.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Carbon,
       "easings.standard.productive",
     )
     is Some(carbon_easing) else {
     fail("expected Carbon standard productive easing token mapping")
   }
   assert_true(carbon_easing.moui_token == "DesignMotionTokens.easing")
-  assert_true(carbon_easing.status == @common.DesignTokenStatus::PreviewMapped)
-  guard @common.DesignPreset::Carbon.golden_mapping_for("$duration-fast-01")
+  assert_true(carbon_easing.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(@common.DesignPreset::Carbon, "$duration-fast-01")
     is Some(carbon_duration_fast01) else {
     fail("expected Carbon fast-01 duration token mapping")
   }
   assert_true(carbon_duration_fast01.moui_token == "DesignMotionTokens.fast_ms")
-  assert_true(
-    carbon_duration_fast01.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Carbon.golden_mapping_for(
+  assert_true(carbon_duration_fast01.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Carbon,
       "easings.exit.expressive",
     )
     is Some(carbon_easing_exit) else {
     fail("expected Carbon expressive exit easing token mapping")
   }
   assert_true(carbon_easing_exit.moui_token == "DesignMotionTokens.easing")
+  assert_true(carbon_easing_exit.status == DesignTokenStatus::PreviewMapped)
   assert_true(
-    carbon_easing_exit.status == @common.DesignTokenStatus::PreviewMapped,
+    has_golden_mapping(@common.DesignPreset::Primer, "--fgColor-default"),
   )
-  assert_true(
-    @common.DesignPreset::Primer.has_golden_mapping("--fgColor-default"),
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-size-4")
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-size-4")
     is Some(primer_base_size_xs) else {
     fail("expected Primer base size 4 token mapping")
   }
   assert_true(primer_base_size_xs.moui_token == "DesignSpacingTokens.xs")
-  assert_true(
-    primer_base_size_xs.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-size-8")
+  assert_true(primer_base_size_xs.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-size-8")
     is Some(primer_base_size_sm) else {
     fail("expected Primer base size 8 token mapping")
   }
   assert_true(primer_base_size_sm.moui_token == "DesignSpacingTokens.sm")
-  assert_true(
-    primer_base_size_sm.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-size-12")
+  assert_true(primer_base_size_sm.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-size-12")
     is Some(primer_base_size_md) else {
     fail("expected Primer base size 12 token mapping")
   }
   assert_true(primer_base_size_md.moui_token == "DesignSpacingTokens.md")
-  assert_true(
-    primer_base_size_md.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-size-16")
+  assert_true(primer_base_size_md.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-size-16")
     is Some(primer_base_size) else {
     fail("expected Primer base size token mapping")
   }
   assert_true(primer_base_size.moui_token == "DesignSpacingTokens.lg")
-  assert_true(primer_base_size.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-size-24")
+  assert_true(primer_base_size.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-size-24")
     is Some(primer_base_size_xl) else {
     fail("expected Primer base size 24 token mapping")
   }
   assert_true(primer_base_size_xl.moui_token == "DesignSpacingTokens.xl")
-  assert_true(
-    primer_base_size_xl.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-text-size-xs")
+  assert_true(primer_base_size_xl.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-text-size-xs")
     is Some(primer_caption_size) else {
     fail("expected Primer caption text size token mapping")
   }
   assert_true(
     primer_caption_size.moui_token == "DesignTypographyTokens.caption.size",
   )
-  assert_true(
-    primer_caption_size.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-text-size-sm")
+  assert_true(primer_caption_size.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-text-size-sm")
     is Some(primer_body_size) else {
     fail("expected Primer body text size token mapping")
   }
   assert_true(primer_body_size.moui_token == "DesignTypographyTokens.body.size")
-  assert_true(primer_body_size.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-text-size-lg")
+  assert_true(primer_body_size.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-text-size-lg")
     is Some(primer_title_size) else {
     fail("expected Primer title text size token mapping")
   }
   assert_true(
     primer_title_size.moui_token == "DesignTypographyTokens.title.size",
   )
-  assert_true(
-    primer_title_size.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for(
+  assert_true(primer_title_size.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Primer,
       "--base-text-weight-normal",
     )
     is Some(primer_body_weight) else {
@@ -6695,10 +6724,9 @@ test "golden mappings resolve known official token names" {
   assert_true(
     primer_body_weight.moui_token == "DesignTypographyTokens.body.weight",
   )
-  assert_true(
-    primer_body_weight.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for(
+  assert_true(primer_body_weight.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Primer,
       "--base-text-weight-semibold",
     )
     is Some(primer_control_weight) else {
@@ -6707,52 +6735,45 @@ test "golden mappings resolve known official token names" {
   assert_true(
     primer_control_weight.moui_token == "DesignTypographyTokens.control.weight",
   )
-  assert_true(
-    primer_control_weight.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--borderRadius-small")
+  assert_true(primer_control_weight.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--borderRadius-small")
     is Some(primer_radius_small) else {
     fail("expected Primer small radius token mapping")
   }
   assert_true(primer_radius_small.moui_token == "DesignRadiusTokens.sm")
-  assert_true(
-    primer_radius_small.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--borderRadius-medium")
+  assert_true(primer_radius_small.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Primer,
+      "--borderRadius-medium",
+    )
     is Some(primer_radius_medium) else {
     fail("expected Primer medium radius token mapping")
   }
   assert_true(primer_radius_medium.moui_token == "DesignRadiusTokens.md")
-  assert_true(
-    primer_radius_medium.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--borderRadius-large")
+  assert_true(primer_radius_medium.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--borderRadius-large")
     is Some(primer_radius_large) else {
     fail("expected Primer large radius token mapping")
   }
   assert_true(primer_radius_large.moui_token == "DesignRadiusTokens.lg")
-  assert_true(
-    primer_radius_large.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--borderRadius-full")
+  assert_true(primer_radius_large.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--borderRadius-full")
     is Some(primer_radius_full) else {
     fail("expected Primer full radius token mapping")
   }
   assert_true(primer_radius_full.moui_token == "DesignRadiusTokens.pill")
-  assert_true(
-    primer_radius_full.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for(
+  assert_true(primer_radius_full.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Primer,
       "--borderRadius-default",
     )
     is Some(primer_radius_default) else {
     fail("expected Primer default radius token mapping")
   }
   assert_true(primer_radius_default.moui_token == "DesignRadiusTokens.md")
-  assert_true(
-    primer_radius_default.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for(
+  assert_true(primer_radius_default.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Primer,
       "--shadow-resting-small",
     )
     is Some(primer_shadow_small) else {
@@ -6761,10 +6782,9 @@ test "golden mappings resolve known official token names" {
   assert_true(
     primer_shadow_small.moui_token == "DesignElevationTokens.sm.offset.y",
   )
-  assert_true(
-    primer_shadow_small.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for(
+  assert_true(primer_shadow_small.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Primer,
       "--shadow-resting-medium",
     )
     is Some(primer_shadow_medium) else {
@@ -6773,10 +6793,9 @@ test "golden mappings resolve known official token names" {
   assert_true(
     primer_shadow_medium.moui_token == "DesignElevationTokens.md.offset.y",
   )
-  assert_true(
-    primer_shadow_medium.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for(
+  assert_true(primer_shadow_medium.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Primer,
       "--shadow-floating-large",
     )
     is Some(primer_shadow_large) else {
@@ -6785,75 +6804,65 @@ test "golden mappings resolve known official token names" {
   assert_true(
     primer_shadow_large.moui_token == "DesignElevationTokens.lg.offset.y",
   )
-  assert_true(
-    primer_shadow_large.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-duration-0")
+  assert_true(primer_shadow_large.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-duration-0")
     is Some(primer_duration_zero) else {
     fail("expected Primer 0ms duration token mapping")
   }
   assert_true(primer_duration_zero.moui_token == "DesignMotionTokens.fast_ms")
-  assert_true(
-    primer_duration_zero.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-duration-100")
+  assert_true(primer_duration_zero.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-duration-100")
     is Some(primer_duration_fast) else {
     fail("expected Primer 100ms duration token mapping")
   }
   assert_true(primer_duration_fast.moui_token == "DesignMotionTokens.fast_ms")
-  assert_true(
-    primer_duration_fast.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-duration-200")
+  assert_true(primer_duration_fast.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-duration-200")
     is Some(primer_duration_normal) else {
     fail("expected Primer 200ms duration token mapping")
   }
   assert_true(
     primer_duration_normal.moui_token == "DesignMotionTokens.normal_ms",
   )
-  assert_true(
-    primer_duration_normal.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-duration-300")
+  assert_true(primer_duration_normal.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-duration-300")
     is Some(primer_duration_slow) else {
     fail("expected Primer 300ms duration token mapping")
   }
   assert_true(primer_duration_slow.moui_token == "DesignMotionTokens.slow_ms")
-  assert_true(
-    primer_duration_slow.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-duration-1000")
+  assert_true(primer_duration_slow.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-duration-1000")
     is Some(primer_duration_long) else {
     fail("expected Primer 1000ms duration token mapping")
   }
   assert_true(primer_duration_long.moui_token == "DesignMotionTokens.slow_ms")
-  assert_true(
-    primer_duration_long.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-easing-linear")
+  assert_true(primer_duration_long.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(@common.DesignPreset::Primer, "--base-easing-linear")
     is Some(primer_linear) else {
     fail("expected Primer linear easing token mapping")
   }
   assert_true(primer_linear.moui_token == "DesignMotionTokens.easing")
-  assert_true(primer_linear.status == @common.DesignTokenStatus::PreviewMapped)
-  guard @common.DesignPreset::Primer.golden_mapping_for("--base-easing-easeOut")
+  assert_true(primer_linear.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Primer,
+      "--base-easing-easeOut",
+    )
     is Some(primer_easing) else {
     fail("expected Primer easeOut token mapping")
   }
   assert_true(primer_easing.moui_token == "DesignMotionTokens.easing")
-  assert_true(primer_easing.status == @common.DesignTokenStatus::PreviewMapped)
-  guard @common.DesignPreset::Primer.golden_mapping_for(
+  assert_true(primer_easing.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(
+      @common.DesignPreset::Primer,
       "--base-easing-easeInOut",
     )
     is Some(primer_ease_in_out) else {
     fail("expected Primer easeInOut token mapping")
   }
   assert_true(primer_ease_in_out.moui_token == "DesignMotionTokens.easing")
+  assert_true(primer_ease_in_out.status == DesignTokenStatus::PreviewMapped)
   assert_true(
-    primer_ease_in_out.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  assert_true(
-    @common.DesignPreset::Fluent.has_golden_mapping("colorBrandBackground"),
+    has_golden_mapping(@common.DesignPreset::Fluent, "colorBrandBackground"),
   )
   assert_fluent_preview_global_color_golden_mapping(
     "red.primary", "DesignSemanticPalette.danger",
@@ -6882,7 +6891,7 @@ test "golden mappings resolve known official token names" {
   assert_fluent_preview_global_color_golden_mapping(
     "blue.primary", "DesignSemanticPalette.info",
   )
-  guard @common.DesignPreset::Fluent.golden_mapping_for("durationUltraFast")
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "durationUltraFast")
     is Some(fluent_duration_ultra_fast) else {
     fail("expected Fluent ultra-fast duration token mapping")
   }
@@ -6890,18 +6899,15 @@ test "golden mappings resolve known official token names" {
     fluent_duration_ultra_fast.moui_token == "DesignMotionTokens.fast_ms",
   )
   assert_true(
-    fluent_duration_ultra_fast.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_ultra_fast.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Fluent.golden_mapping_for("durationFaster")
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "durationFaster")
     is Some(fluent_duration_fast) else {
     fail("expected Fluent faster duration token mapping")
   }
   assert_true(fluent_duration_fast.moui_token == "DesignMotionTokens.fast_ms")
-  assert_true(
-    fluent_duration_fast.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Fluent.golden_mapping_for("durationFast")
+  assert_true(fluent_duration_fast.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "durationFast")
     is Some(fluent_duration_fast_preview) else {
     fail("expected Fluent fast duration token mapping")
   }
@@ -6909,42 +6915,35 @@ test "golden mappings resolve known official token names" {
     fluent_duration_fast_preview.moui_token == "DesignMotionTokens.fast_ms",
   )
   assert_true(
-    fluent_duration_fast_preview.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_fast_preview.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Fluent.golden_mapping_for("durationNormal")
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "durationNormal")
     is Some(fluent_duration) else {
     fail("expected Fluent duration token mapping")
   }
   assert_true(fluent_duration.moui_token == "DesignMotionTokens.normal_ms")
-  assert_true(fluent_duration.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Fluent.golden_mapping_for("durationGentle")
+  assert_true(fluent_duration.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "durationGentle")
     is Some(fluent_duration_gentle) else {
     fail("expected Fluent gentle duration token mapping")
   }
   assert_true(
     fluent_duration_gentle.moui_token == "DesignMotionTokens.normal_ms",
   )
-  assert_true(
-    fluent_duration_gentle.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Fluent.golden_mapping_for("durationSlow")
+  assert_true(fluent_duration_gentle.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "durationSlow")
     is Some(fluent_duration_slow) else {
     fail("expected Fluent slow duration token mapping")
   }
   assert_true(fluent_duration_slow.moui_token == "DesignMotionTokens.slow_ms")
-  assert_true(
-    fluent_duration_slow.status == @common.DesignTokenStatus::ThemeMapped,
-  )
-  guard @common.DesignPreset::Fluent.golden_mapping_for("durationSlower")
+  assert_true(fluent_duration_slow.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "durationSlower")
     is Some(fluent_duration_slower) else {
     fail("expected Fluent slower duration token mapping")
   }
   assert_true(fluent_duration_slower.moui_token == "DesignMotionTokens.slow_ms")
-  assert_true(
-    fluent_duration_slower.status == @common.DesignTokenStatus::PreviewMapped,
-  )
-  guard @common.DesignPreset::Fluent.golden_mapping_for("durationUltraSlow")
+  assert_true(fluent_duration_slower.status == DesignTokenStatus::PreviewMapped)
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "durationUltraSlow")
     is Some(fluent_duration_ultra_slow) else {
     fail("expected Fluent ultra-slow duration token mapping")
   }
@@ -6952,23 +6951,20 @@ test "golden mappings resolve known official token names" {
     fluent_duration_ultra_slow.moui_token == "DesignMotionTokens.slow_ms",
   )
   assert_true(
-    fluent_duration_ultra_slow.status ==
-    @common.DesignTokenStatus::PreviewMapped,
+    fluent_duration_ultra_slow.status == DesignTokenStatus::PreviewMapped,
   )
-  guard @common.DesignPreset::Fluent.golden_mapping_for("spacingHorizontalM")
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "spacingHorizontalM")
     is Some(fluent_spacing) else {
     fail("expected Fluent spacing token mapping")
   }
   assert_true(fluent_spacing.moui_token == "DesignSpacingTokens.md")
-  assert_true(fluent_spacing.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Fluent.golden_mapping_for("spacingHorizontalXL")
+  assert_true(fluent_spacing.status == DesignTokenStatus::ThemeMapped)
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "spacingHorizontalXL")
     is Some(fluent_spacing_xl) else {
     fail("expected Fluent extra-large spacing token mapping")
   }
   assert_true(fluent_spacing_xl.moui_token == "DesignSpacingTokens.lg")
-  assert_true(
-    fluent_spacing_xl.status == @common.DesignTokenStatus::ThemeMapped,
-  )
+  assert_true(fluent_spacing_xl.status == DesignTokenStatus::ThemeMapped)
   assert_fluent_preview_spacing_golden_mapping(
     "spacingHorizontalNone", "DesignSpacingTokens.xs",
   )
@@ -7023,14 +7019,14 @@ test "golden mappings resolve known official token names" {
   assert_fluent_mapped_spacing_golden_mapping(
     "spacingVerticalXXXL", "DesignSpacingTokens.xl",
   )
-  guard @common.DesignPreset::Fluent.golden_mapping_for("fontWeightSemibold")
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "fontWeightSemibold")
     is Some(fluent_semibold) else {
     fail("expected Fluent semibold token mapping")
   }
   assert_true(
     fluent_semibold.moui_token == "DesignTypographyTokens.control.weight",
   )
-  assert_true(fluent_semibold.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(fluent_semibold.status == DesignTokenStatus::ThemeMapped)
   assert_fluent_preview_typography_golden_mapping(
     "fontSizeBase100", "DesignTypographyTokens.caption.size",
   )
@@ -7112,14 +7108,12 @@ test "golden mappings resolve known official token names" {
   assert_fluent_preview_stroke_width_golden_mapping(
     "strokeWidthThickest", "DesignComponentTokens.text_field.focused.border_width",
   )
-  guard @common.DesignPreset::Fluent.golden_mapping_for("borderRadiusCircular")
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "borderRadiusCircular")
     is Some(fluent_radius_circular) else {
     fail("expected Fluent circular radius token mapping")
   }
   assert_true(fluent_radius_circular.moui_token == "DesignRadiusTokens.pill")
-  assert_true(
-    fluent_radius_circular.status == @common.DesignTokenStatus::PreviewMapped,
-  )
+  assert_true(fluent_radius_circular.status == DesignTokenStatus::PreviewMapped)
   assert_fluent_preview_radius_golden_mapping(
     "borderRadiusNone", "DesignRadiusTokens.sm",
   )
@@ -7148,12 +7142,12 @@ test "golden mappings resolve known official token names" {
   assert_fluent_preview_curve_golden_mapping("curveDecelerateMid")
   assert_fluent_preview_curve_golden_mapping("curveDecelerateMin")
   assert_fluent_preview_curve_golden_mapping("curveEasyEaseMax")
-  guard @common.DesignPreset::Fluent.golden_mapping_for("curveEasyEase")
+  guard golden_mapping_for(@common.DesignPreset::Fluent, "curveEasyEase")
     is Some(fluent_curve) else {
     fail("expected Fluent curve token mapping")
   }
   assert_true(fluent_curve.moui_token == "DesignMotionTokens.easing")
-  assert_true(fluent_curve.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(fluent_curve.status == DesignTokenStatus::PreviewMapped)
   assert_fluent_preview_curve_golden_mapping("curveLinear")
 }
 
@@ -7162,7 +7156,7 @@ fn assert_fluent_preview_curve_source_import(
   token : String,
   expected_source_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent curve source-import coverage for " + token)
   }
@@ -7173,7 +7167,7 @@ fn assert_fluent_preview_curve_source_import(
   assert_true(row.source_value.contains(expected_source_value))
   assert_true(row.moui_token == "DesignMotionTokens.easing")
   assert_true(row.status == PreviewMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(token)
+  guard source_import_integrity_for(@common.DesignPreset::Fluent, token)
     is Some(integrity) else {
     fail("expected Fluent curve integrity record for " + token)
   }
@@ -7187,7 +7181,7 @@ fn assert_fluent_preview_global_color_source_import(
   expected_source_value : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent global color source-import coverage for " + token)
   }
@@ -7201,7 +7195,7 @@ fn assert_fluent_preview_global_color_source_import(
   // matches the source value); the secondary status colors are PreviewMapped
   // (MoUI maps to a nearby neutral). This is independent of runtime alignment.
   assert_true(row.status == fluent_global_color_source_import_status(token))
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(token)
+  guard source_import_integrity_for(@common.DesignPreset::Fluent, token)
     is Some(integrity) else {
     fail("expected Fluent global color integrity record for " + token)
   }
@@ -7214,7 +7208,7 @@ fn assert_fluent_preview_global_color_runtime_alignment(
   token : String,
   expected_runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent global color runtime alignment for " + token)
   }
@@ -7223,10 +7217,10 @@ fn assert_fluent_preview_global_color_runtime_alignment(
   assert_true(row.runtime_value_available)
   if fluent_global_color_runtime_aligned(token) {
     assert_true(row.runtime_aligned)
-    assert_true(row.status == @common.DesignTokenStatus::ThemeMapped)
+    assert_true(row.status == DesignTokenStatus::ThemeMapped)
   } else {
     assert_false(row.runtime_aligned)
-    assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+    assert_true(row.status == DesignTokenStatus::PreviewMapped)
   }
   inspect(row.expected_runtime_value, content=expected_runtime_value)
 }
@@ -7236,7 +7230,7 @@ fn assert_fluent_preview_global_color_official_coverage(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent global color official coverage for " + token)
   }
@@ -7252,7 +7246,7 @@ fn assert_fluent_preview_global_color_golden_mapping(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Fluent, token) is Some(row) else {
     fail("expected Fluent global color golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
@@ -7276,11 +7270,11 @@ fn fluent_global_color_runtime_aligned(token : String) -> Bool {
 /// PreviewMapped because MoUI maps the semantic slot to a nearby neutral.
 fn fluent_global_color_source_import_status(
   token : String,
-) -> @common.DesignTokenStatus {
+) -> DesignTokenStatus {
   match token {
     "red.primary" | "green.primary" | "darkOrange.primary" | "blue.primary" =>
-      @common.DesignTokenStatus::ThemeMapped
-    _ => @common.DesignTokenStatus::PreviewMapped
+      DesignTokenStatus::ThemeMapped
+    _ => DesignTokenStatus::PreviewMapped
   }
 }
 
@@ -7290,7 +7284,7 @@ fn assert_fluent_preview_typography_source_import(
   expected_source_value : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent typography source-import coverage for " + token)
   }
@@ -7301,7 +7295,7 @@ fn assert_fluent_preview_typography_source_import(
   assert_true(row.source_value.contains(expected_source_value))
   assert_true(row.moui_token == moui_token)
   assert_true(row.status == PreviewMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(token)
+  guard source_import_integrity_for(@common.DesignPreset::Fluent, token)
     is Some(integrity) else {
     fail("expected Fluent typography integrity record for " + token)
   }
@@ -7315,7 +7309,7 @@ fn assert_fluent_mapped_typography_source_import(
   expected_source_value : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail(
       "expected mapped Fluent typography source-import coverage for " + token,
@@ -7328,7 +7322,7 @@ fn assert_fluent_mapped_typography_source_import(
   assert_true(row.source_value.contains(expected_source_value))
   assert_true(row.moui_token == moui_token)
   assert_true(row.status == ThemeMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(token)
+  guard source_import_integrity_for(@common.DesignPreset::Fluent, token)
     is Some(integrity) else {
     fail("expected mapped Fluent typography integrity record for " + token)
   }
@@ -7342,7 +7336,7 @@ fn assert_fluent_preview_typography_runtime_alignment(
   expected_runtime_value : String,
   runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent typography runtime alignment for " + token)
   }
@@ -7360,7 +7354,7 @@ fn assert_fluent_typography_destination_gap(
   token : String,
   expected_runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent typography destination gap for " + token)
   }
@@ -7377,7 +7371,7 @@ fn assert_fluent_mapped_typography_runtime_alignment(
   token : String,
   runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected mapped Fluent typography runtime alignment for " + token)
   }
@@ -7394,7 +7388,7 @@ fn assert_fluent_preview_typography_official_coverage(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent typography official token coverage for " + token)
   }
@@ -7410,7 +7404,7 @@ fn assert_fluent_mapped_typography_official_coverage(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail(
       "expected mapped Fluent typography official token coverage for " + token,
@@ -7428,7 +7422,7 @@ fn assert_fluent_preview_typography_golden_mapping(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Fluent, token) is Some(row) else {
     fail("expected Fluent typography golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
@@ -7440,7 +7434,7 @@ fn assert_fluent_mapped_typography_golden_mapping(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Fluent, token) is Some(row) else {
     fail("expected mapped Fluent typography golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
@@ -7453,7 +7447,7 @@ fn assert_fluent_mapped_stroke_width_source_import(
   expected_source_value : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail(
       "expected mapped Fluent stroke-width source-import coverage for " + token,
@@ -7466,7 +7460,7 @@ fn assert_fluent_mapped_stroke_width_source_import(
   assert_true(row.source_value.contains(expected_source_value))
   assert_true(row.moui_token == moui_token)
   assert_true(row.status == ComponentMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(token)
+  guard source_import_integrity_for(@common.DesignPreset::Fluent, token)
     is Some(integrity) else {
     fail("expected mapped Fluent stroke-width integrity record for " + token)
   }
@@ -7480,7 +7474,7 @@ fn assert_fluent_preview_stroke_width_source_import(
   expected_source_value : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent stroke-width source-import coverage for " + token)
   }
@@ -7491,7 +7485,7 @@ fn assert_fluent_preview_stroke_width_source_import(
   assert_true(row.source_value.contains(expected_source_value))
   assert_true(row.moui_token == moui_token)
   assert_true(row.status == PreviewMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(token)
+  guard source_import_integrity_for(@common.DesignPreset::Fluent, token)
     is Some(integrity) else {
     fail("expected Fluent stroke-width integrity record for " + token)
   }
@@ -7504,7 +7498,7 @@ fn assert_fluent_mapped_stroke_width_runtime_alignment(
   token : String,
   runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected mapped Fluent stroke-width runtime alignment for " + token)
   }
@@ -7522,7 +7516,7 @@ fn assert_fluent_preview_stroke_width_runtime_alignment(
   expected_runtime_value : String,
   runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent stroke-width runtime alignment for " + token)
   }
@@ -7540,7 +7534,7 @@ fn assert_fluent_mapped_stroke_width_official_coverage(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected mapped Fluent stroke-width official coverage for " + token)
   }
@@ -7556,7 +7550,7 @@ fn assert_fluent_preview_stroke_width_official_coverage(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent stroke-width official coverage for " + token)
   }
@@ -7572,7 +7566,7 @@ fn assert_fluent_mapped_stroke_width_golden_mapping(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Fluent, token) is Some(row) else {
     fail("expected mapped Fluent stroke-width golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
@@ -7584,7 +7578,7 @@ fn assert_fluent_preview_stroke_width_golden_mapping(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Fluent, token) is Some(row) else {
     fail("expected Fluent stroke-width golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
@@ -7596,7 +7590,7 @@ fn assert_fluent_preview_curve_runtime_alignment(
   token : String,
   expected_runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent curve runtime alignment for " + token)
   }
@@ -7604,14 +7598,14 @@ fn assert_fluent_preview_curve_runtime_alignment(
   assert_true(row.source_value_resolved)
   assert_true(row.runtime_value_available)
   assert_false(row.runtime_aligned)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
   inspect(row.expected_runtime_value, content=expected_runtime_value)
   inspect(row.runtime_value, content="ease-in-out")
 }
 
 ///|
 fn assert_fluent_preview_curve_official_coverage(token : String) -> Unit raise {
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent curve official token coverage for " + token)
   }
@@ -7619,16 +7613,16 @@ fn assert_fluent_preview_curve_official_coverage(token : String) -> Unit raise {
   assert_true(row.source_declared)
   assert_true(row.source_locked)
   assert_true(row.moui_token == "DesignMotionTokens.easing")
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
 }
 
 ///|
 fn assert_fluent_preview_curve_golden_mapping(token : String) -> Unit raise {
-  guard @common.DesignPreset::Fluent.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Fluent, token) is Some(row) else {
     fail("expected Fluent curve golden mapping for " + token)
   }
   assert_true(row.moui_token == "DesignMotionTokens.easing")
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
 }
 
 ///|
@@ -7639,7 +7633,7 @@ fn assert_carbon_mapped_layout_source_import(
   expected_px : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Carbon, token)
     is Some(row) else {
     fail("expected Carbon layout source-import coverage for " + token)
   }
@@ -7651,8 +7645,8 @@ fn assert_carbon_mapped_layout_source_import(
   assert_true(row.source_value.contains(expected_mini_units))
   assert_true(row.source_value.contains(expected_px))
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Carbon.source_import_integrity_for(token)
+  assert_true(row.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_integrity_for(@common.DesignPreset::Carbon, token)
     is Some(integrity) else {
     fail("expected Carbon layout integrity record for " + token)
   }
@@ -7668,7 +7662,7 @@ fn assert_carbon_preview_layout_source_import(
   expected_px : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Carbon.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Carbon, token)
     is Some(row) else {
     fail("expected Carbon preview layout source-import coverage for " + token)
   }
@@ -7680,8 +7674,8 @@ fn assert_carbon_preview_layout_source_import(
   assert_true(row.source_value.contains(expected_mini_units))
   assert_true(row.source_value.contains(expected_px))
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
-  guard @common.DesignPreset::Carbon.source_import_integrity_for(token)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_integrity_for(@common.DesignPreset::Carbon, token)
     is Some(integrity) else {
     fail("expected Carbon preview layout integrity record for " + token)
   }
@@ -7694,7 +7688,7 @@ fn assert_carbon_mapped_spacing_runtime_alignment(
   token : String,
   runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Carbon, token)
     is Some(row) else {
     fail("expected Carbon spacing runtime alignment for " + token)
   }
@@ -7702,7 +7696,7 @@ fn assert_carbon_mapped_spacing_runtime_alignment(
   assert_true(row.source_value_resolved)
   assert_true(row.runtime_value_available)
   assert_true(row.runtime_aligned)
-  assert_true(row.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(row.status == DesignTokenStatus::ThemeMapped)
   inspect(row.runtime_value, content=runtime_value)
 }
 
@@ -7712,7 +7706,7 @@ fn assert_carbon_preview_spacing_runtime_alignment(
   expected_runtime_value : String,
   runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Carbon.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Carbon, token)
     is Some(row) else {
     fail("expected Carbon preview spacing runtime alignment for " + token)
   }
@@ -7720,7 +7714,7 @@ fn assert_carbon_preview_spacing_runtime_alignment(
   assert_true(row.source_value_resolved)
   assert_true(row.runtime_value_available)
   assert_false(row.runtime_aligned)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
   inspect(row.expected_runtime_value, content=expected_runtime_value)
   inspect(row.runtime_value, content=runtime_value)
 }
@@ -7730,7 +7724,7 @@ fn assert_carbon_mapped_spacing_official_coverage(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Carbon.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Carbon, token)
     is Some(row) else {
     fail("expected Carbon spacing official token coverage for " + token)
   }
@@ -7740,7 +7734,7 @@ fn assert_carbon_mapped_spacing_official_coverage(
   assert_true(row.source_kind == "official-source")
   assert_true(row.token_path == "packages/layout")
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(row.status == DesignTokenStatus::ThemeMapped)
 }
 
 ///|
@@ -7748,7 +7742,7 @@ fn assert_carbon_preview_spacing_official_coverage(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Carbon.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Carbon, token)
     is Some(row) else {
     fail("expected Carbon preview spacing official token coverage for " + token)
   }
@@ -7758,7 +7752,7 @@ fn assert_carbon_preview_spacing_official_coverage(
   assert_true(row.source_kind == "official-source")
   assert_true(row.token_path == "packages/layout")
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
 }
 
 ///|
@@ -7766,11 +7760,11 @@ fn assert_carbon_mapped_spacing_golden_mapping(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Carbon.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Carbon, token) is Some(row) else {
     fail("expected Carbon spacing golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(row.status == DesignTokenStatus::ThemeMapped)
 }
 
 ///|
@@ -7778,11 +7772,11 @@ fn assert_carbon_preview_spacing_golden_mapping(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Carbon.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Carbon, token) is Some(row) else {
     fail("expected Carbon preview spacing golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
 }
 
 ///|
@@ -7791,7 +7785,7 @@ fn assert_fluent_preview_spacing_source_import(
   expected_source_value : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent spacing source-import coverage for " + token)
   }
@@ -7801,8 +7795,8 @@ fn assert_fluent_preview_spacing_source_import(
   assert_true(row.source_sha == "fa5df4c81834b5abfb508d2317e4c50eff101d1c")
   assert_true(row.source_value.contains(expected_source_value))
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(token)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_integrity_for(@common.DesignPreset::Fluent, token)
     is Some(integrity) else {
     fail("expected Fluent spacing integrity record for " + token)
   }
@@ -7816,7 +7810,7 @@ fn assert_fluent_preview_spacing_runtime_alignment(
   expected_runtime_value : String,
   runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent spacing runtime alignment for " + token)
   }
@@ -7824,7 +7818,7 @@ fn assert_fluent_preview_spacing_runtime_alignment(
   assert_true(row.source_value_resolved)
   assert_true(row.runtime_value_available)
   assert_false(row.runtime_aligned)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
   inspect(row.expected_runtime_value, content=expected_runtime_value)
   inspect(row.runtime_value, content=runtime_value)
 }
@@ -7834,7 +7828,7 @@ fn assert_fluent_preview_spacing_official_coverage(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent spacing official token coverage for " + token)
   }
@@ -7842,7 +7836,7 @@ fn assert_fluent_preview_spacing_official_coverage(
   assert_true(row.source_declared)
   assert_true(row.source_locked)
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
 }
 
 ///|
@@ -7850,11 +7844,11 @@ fn assert_fluent_preview_spacing_golden_mapping(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Fluent, token) is Some(row) else {
     fail("expected Fluent spacing golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
 }
 
 ///|
@@ -7863,7 +7857,7 @@ fn assert_fluent_mapped_spacing_source_import(
   expected_source_value : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected mapped Fluent spacing source-import coverage for " + token)
   }
@@ -7873,8 +7867,8 @@ fn assert_fluent_mapped_spacing_source_import(
   assert_true(row.source_sha == "fa5df4c81834b5abfb508d2317e4c50eff101d1c")
   assert_true(row.source_value.contains(expected_source_value))
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::ThemeMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(token)
+  assert_true(row.status == DesignTokenStatus::ThemeMapped)
+  guard source_import_integrity_for(@common.DesignPreset::Fluent, token)
     is Some(integrity) else {
     fail("expected mapped Fluent spacing integrity record for " + token)
   }
@@ -7887,7 +7881,7 @@ fn assert_fluent_mapped_spacing_runtime_alignment(
   token : String,
   runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected mapped Fluent spacing runtime alignment for " + token)
   }
@@ -7895,7 +7889,7 @@ fn assert_fluent_mapped_spacing_runtime_alignment(
   assert_true(row.source_value_resolved)
   assert_true(row.runtime_value_available)
   assert_true(row.runtime_aligned)
-  assert_true(row.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(row.status == DesignTokenStatus::ThemeMapped)
   inspect(row.runtime_value, content=runtime_value)
 }
 
@@ -7904,7 +7898,7 @@ fn assert_fluent_mapped_spacing_official_coverage(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected mapped Fluent spacing official token coverage for " + token)
   }
@@ -7912,7 +7906,7 @@ fn assert_fluent_mapped_spacing_official_coverage(
   assert_true(row.source_declared)
   assert_true(row.source_locked)
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(row.status == DesignTokenStatus::ThemeMapped)
 }
 
 ///|
@@ -7920,11 +7914,11 @@ fn assert_fluent_mapped_spacing_golden_mapping(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Fluent, token) is Some(row) else {
     fail("expected mapped Fluent spacing golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::ThemeMapped)
+  assert_true(row.status == DesignTokenStatus::ThemeMapped)
 }
 
 ///|
@@ -7933,7 +7927,7 @@ fn assert_fluent_preview_radius_source_import(
   expected_source_value : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.source_import_coverage_for(token)
+  guard source_import_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent radius source-import coverage for " + token)
   }
@@ -7943,8 +7937,8 @@ fn assert_fluent_preview_radius_source_import(
   assert_true(row.source_sha == "64523745129486fad856000b0443b55d47a21e9f")
   assert_true(row.source_value.contains(expected_source_value))
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
-  guard @common.DesignPreset::Fluent.source_import_integrity_for(token)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
+  guard source_import_integrity_for(@common.DesignPreset::Fluent, token)
     is Some(integrity) else {
     fail("expected Fluent radius integrity record for " + token)
   }
@@ -7958,7 +7952,7 @@ fn assert_fluent_preview_radius_runtime_alignment(
   expected_runtime_value : String,
   runtime_value : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.runtime_token_alignment_for(token)
+  guard runtime_token_alignment_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent radius runtime alignment for " + token)
   }
@@ -7966,7 +7960,7 @@ fn assert_fluent_preview_radius_runtime_alignment(
   assert_true(row.source_value_resolved)
   assert_true(row.runtime_value_available)
   assert_false(row.runtime_aligned)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
   inspect(row.expected_runtime_value, content=expected_runtime_value)
   inspect(row.runtime_value, content=runtime_value)
 }
@@ -7976,7 +7970,7 @@ fn assert_fluent_preview_radius_official_coverage(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.official_token_coverage_for(token)
+  guard official_token_coverage_for(@common.DesignPreset::Fluent, token)
     is Some(row) else {
     fail("expected Fluent radius official token coverage for " + token)
   }
@@ -7984,7 +7978,7 @@ fn assert_fluent_preview_radius_official_coverage(
   assert_true(row.source_declared)
   assert_true(row.source_locked)
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
 }
 
 ///|
@@ -7992,9 +7986,9 @@ fn assert_fluent_preview_radius_golden_mapping(
   token : String,
   moui_token : String,
 ) -> Unit raise {
-  guard @common.DesignPreset::Fluent.golden_mapping_for(token) is Some(row) else {
+  guard golden_mapping_for(@common.DesignPreset::Fluent, token) is Some(row) else {
     fail("expected Fluent radius golden mapping for " + token)
   }
   assert_true(row.moui_token == moui_token)
-  assert_true(row.status == @common.DesignTokenStatus::PreviewMapped)
+  assert_true(row.status == DesignTokenStatus::PreviewMapped)
 }

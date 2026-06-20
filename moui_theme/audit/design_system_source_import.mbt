@@ -213,7 +213,7 @@ pub fn source_import_coverage(
 ) -> Array[DesignSourceImportCoverage] {
   let rows : Array[DesignSourceImportCoverage] = []
   for anchor in official_token_anchors(preset) {
-    rows.push(source_import_coverage(preset, anchor))
+    rows.push(build_source_import_coverage(preset, anchor))
   }
   rows
 }
@@ -364,7 +364,7 @@ fn source_import_integrity_record(
 }
 
 ///|
-fn source_import_coverage(
+fn build_source_import_coverage(
   preset : @common.DesignPreset,
   anchor : DesignOfficialTokenAnchor,
 ) -> DesignSourceImportCoverage {

@@ -262,11 +262,15 @@ test "linux webview maps native title history javascript and policy events" {
 ///|
 test "linux webview encodes navigation policies and commands" {
   inspect(
-    @host.webview_native_policy_code(@host.WebViewNavigationPolicy::AllowHttpHttpsFile),
+    @host.webview_native_policy_code(
+      @host.WebViewNavigationPolicy::AllowHttpHttpsFile,
+    ),
     content="0",
   )
   inspect(
-    @host.webview_native_policy_code(@host.WebViewNavigationPolicy::AllowHttpHttps),
+    @host.webview_native_policy_code(
+      @host.WebViewNavigationPolicy::AllowHttpHttps,
+    ),
     content="1",
   )
   inspect(
@@ -315,7 +319,9 @@ test "linux webview command queue drains FIFO through host contract" {
   inspect(queue.pending_count(), content="2")
   let commands : Array[String] = []
   let drained = queue.drain_with_handler(command => {
-    let (kind, text, detail) = @host.webview_encode_native_command(command.command)
+    let (kind, text, detail) = @host.webview_encode_native_command(
+      command.command,
+    )
     commands.push("\{command.id}:\{kind}:\{text}:\{detail}")
   })
   inspect(drained, content="2")

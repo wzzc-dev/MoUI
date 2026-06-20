@@ -264,7 +264,9 @@ pub fn drain_linux_webview_commands(
 ) -> Int {
   let wl_surface = window.wl_surface()
   queue.drain_with_handler(command => {
-    let (kind, text, detail) = @host.webview_encode_native_command(command.command)
+    let (kind, text, detail) = @host.webview_encode_native_command(
+      command.command,
+    )
     linux_webview_command(
       wl_surface,
       @host.webview_encode_ffi_string(command.id),
