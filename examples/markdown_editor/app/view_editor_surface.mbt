@@ -619,11 +619,11 @@ fn editor_source_layout(
   scroll_offset : @moui.Point,
   on_selection_change : (Int, @core.TextRange?) -> MarkdownEditorMsg,
   on_prefix_click : (Int) -> MarkdownEditorMsg,
+  viewport_height~ : Double = 520.0,
 ) -> @moui.View[MarkdownEditorMsg] {
   let editor_width = markdown_editor_primary_editor_width(
     show_source, show_outline, show_files, show_info, appearance,
   )
-  let viewport_height = markdown_editor_viewport_height()
   let content_height = markdown_editor_max_double(
     viewport_height,
     @moui_richtext.rich_text_document_height(snapshot.rich_text, editor_font) +
