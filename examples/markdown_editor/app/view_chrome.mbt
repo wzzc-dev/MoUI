@@ -65,7 +65,7 @@ fn MarkdownEditorApp::root(
     spacing=theme.spacing_scale.sm,
     align=@views.CrossAlign::Start,
   )
-  markdown_editor_centered_workspace(
+  let centered = markdown_editor_centered_workspace(
     appearance,
     padding_edges(
       workspace,
@@ -74,6 +74,21 @@ fn MarkdownEditorApp::root(
       bottom=theme.spacing_scale.xl,
       left=theme.spacing_scale.md,
     ),
+  )
+  // Stack the toast layer and confirm dialog above the workspace so they float
+  // over the editor without displacing it.
+  @views.stack(
+    [
+      centered,
+      @views.align(
+        self.toast_layer(theme),
+        alignment=@core.Alignment::new(x=0.5, y=0.0),
+      ),
+      @views.align(
+        self.confirm_dialog(theme),
+        alignment=@core.Alignment::center(),
+      ),
+    ],
   )
 }
 
@@ -101,6 +116,8 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.format_palette_visible))
   ignore(ctx.watch(self.format_palette_query))
   ignore(ctx.watch(self.more_menu_visible))
+  ignore(ctx.watch(self.toasts))
+  ignore(ctx.watch(self.pending_confirm))
   ignore(ctx.watch(self.writing_appearance))
   ignore(ctx.watch(self.find_visible))
   ignore(ctx.watch(self.find_query))
