@@ -41,6 +41,7 @@ pub struct MarkdownEditorApp {
   more_menu_visible : @moui.State[Bool]
   toasts : @moui.State[@views.ToastQueue[MarkdownEditorMsg]]
   autosave_draft : @moui.State[String]
+  dark_mode_enabled : @moui.State[Bool]
   priv pending_confirm : @moui.State[MarkdownEditorConfirmRequest?]
   priv writing_appearance : @moui.State[MarkdownEditorAppearance]
   find_visible : @moui.State[Bool]
@@ -199,6 +200,7 @@ pub enum MarkdownEditorMsg {
   ToggleSourceMode
   ToggleMoreMenu
   MoreMenuCommand(MarkdownEditorMsg)
+  ToggleDarkMode
   DismissToastTick
   AutosaveTick
   ResolvePendingConfirm(MarkdownEditorConfirmResolution)
@@ -256,6 +258,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     more_menu_visible: @moui.State::new(false),
     toasts: @moui.State::new(@views.ToastQueue::new()),
     autosave_draft: @moui.State::new(""),
+    dark_mode_enabled: @moui.State::new(false),
     pending_confirm: @moui.State::new(None),
     writing_appearance: @moui.State::new(PaperAppearance),
     find_visible: @moui.State::new(false),
@@ -348,6 +351,8 @@ fn MarkdownEditorApp::update(
     ToggleSourcePreview => self.toggle_source_preview()
     ToggleSourceMode => self.toggle_source_mode()
     ToggleMoreMenu => self.toggle_more_menu()
+    ToggleDarkMode =>
+      self.dark_mode_enabled.set(!self.dark_mode_enabled.get())
     MoreMenuCommand(message) => {
       self.more_menu_visible.set(false)
       let _ = self.update(message)

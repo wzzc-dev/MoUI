@@ -2,6 +2,7 @@
 pub fn markdown_block_to_rich_text(
   block : MarkdownBlock,
   base : @core.FontSpec,
+  base_dir? : String? = None,
 ) -> RichTextBlock {
   match block.kind {
     Heading(level) => {
@@ -11,32 +12,32 @@ pub fn markdown_block_to_rich_text(
         weight: 700,
       }
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, font),
+        runs=markdown_inlines_to_rich_text(block.inlines, font, base_dir~),
         font=Some(font),
         line_height=Some(base.size * markdown_heading_line_height_scale(level)),
       )
     }
     UnorderedListItem =>
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, base),
+        runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         prefix="• ",
         line_height=Some(base.size * 1.55),
       )
     TaskListItem(checked) =>
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, base),
+        runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         prefix=if checked { "☑ " } else { "☐ " },
         line_height=Some(base.size * 1.55),
       )
     OrderedListItem(number) =>
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, base),
+        runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         prefix="\{number}. ",
         line_height=Some(base.size * 1.55),
       )
     Blockquote =>
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, base),
+        runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         color=Some(@core.Color::black().multiply_alpha(0.82)),
         border_left=Some(
           @core.BorderStyle::new(
@@ -94,7 +95,7 @@ pub fn markdown_block_to_rich_text(
             ),
             background_radius=4.0,
           ),
-          ..markdown_inlines_to_rich_text(block.inlines, base),
+          ..markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         ],
         color=Some(@core.Color::black().multiply_alpha(0.82)),
         border_left=Some(
@@ -148,7 +149,7 @@ pub fn markdown_block_to_rich_text(
       )
     Paragraph =>
       RichTextBlock::new(
-        runs=markdown_inlines_to_rich_text(block.inlines, base),
+        runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         line_height=Some(base.size * 1.55),
       )
   }
@@ -165,8 +166,8 @@ pub fn markdown_code_block_runs(
     size: base.size * 0.92,
   }
   match block.code_language {
-    Some(language) =>
-      [
+    Some(language) => {
+      let runs : Array[RichTextRun] = [
         RichTextRun::new(
           text=language,
           font=Some({ ..font, size: base.size * 0.78, weight: 700 }),
@@ -174,8 +175,23 @@ pub fn markdown_code_block_runs(
           color=Some(@core.Color::black().multiply_alpha(0.56)),
         ),
         RichTextRun::new(text="\n", font=Some(font)),
-        RichTextRun::new(text=block.text, font=Some(font)),
       ]
+      // Apply syntax highlighting when the language is supported; otherwise emit
+      // the source as a single plain run.
+      if code_highlight_supports_language(language) {
+        for span in code_highlight_tokenize(block.text, language) {
+          let color = if span.kind is CodePlain {
+            None
+          } else {
+            Some(code_highlight_color(span.kind))
+          }
+          runs.push(RichTextRun::new(text=span.text, font=Some(font), color~))
+        }
+      } else {
+        runs.push(RichTextRun::new(text=block.text, font=Some(font)))
+      }
+      runs
+    }
     None => [RichTextRun::new(text=block.text, font=Some(font))]
   }
 }
@@ -214,6 +230,7 @@ pub fn markdown_heading_line_height_scale(level : Int) -> Double {
 pub fn markdown_inlines_to_rich_text(
   inlines : Array[MarkdownInline],
   base : @core.FontSpec,
+  base_dir? : String? = None,
 ) -> Array[RichTextRun] {
   let runs : Array[RichTextRun] = []
   for span in inlines {
@@ -221,7 +238,7 @@ pub fn markdown_inlines_to_rich_text(
       RichTextRun::new(
         text=markdown_inline_source_text(span),
         visual_text=Some(markdown_inline_visual_text(span)),
-        image_source=markdown_inline_image_source(span),
+        image_source=markdown_inline_image_source(span, base_dir~),
         image_size=markdown_inline_image_size(span, base),
         font=Some(markdown_inline_font(span.kind, base)),
         background=markdown_inline_background(span.kind),
@@ -242,10 +259,65 @@ pub fn markdown_inline_visual_text(inline : MarkdownInline) -> String {
 }
 
 ///|
-pub fn markdown_inline_image_source(inline : MarkdownInline) -> String? {
+pub fn markdown_inline_image_source(
+  inline : MarkdownInline,
+  base_dir? : String? = None,
+) -> String? {
   match inline.kind {
-    Image => inline.target
+    Image =>
+      match inline.target {
+        Some(target) => Some(markdown_resolve_image_source(target, base_dir))
+        None => None
+      }
     _ => None
+  }
+}
+
+///|
+/// Resolve a markdown image target against the document's directory. Absolute
+/// paths, `data:`/`http:`/`https:` URIs and absolute POSIX paths are returned
+/// unchanged; relative paths are joined to `base_dir` (the directory of the
+/// open `.md` file) so the renderer — which resolves `DrawImage` sources
+/// against the process cwd — can find images sitting next to the document.
+fn markdown_resolve_image_source(target : String, base_dir : String?) -> String {
+  match base_dir {
+    Some(dir) => {
+      if dir == "" ||
+        markdown_target_is_absolute(target) {
+        target
+      } else {
+        markdown_join_path(dir, target)
+      }
+    }
+    None => target
+  }
+}
+
+///|
+/// True for sources that should not be re-rooted: data/URL URIs and absolute
+/// POSIX/Windows paths.
+fn markdown_target_is_absolute(target : String) -> Bool {
+  target.has_prefix("data:") ||
+  target.has_prefix("http://") ||
+  target.has_prefix("https://") ||
+  target.has_prefix("file://") ||
+  target.has_prefix("/") ||
+  target.has_prefix("\\") ||
+  (target.length() >= 2 && target[1] == ':')
+}
+
+///|
+/// Join a directory and a relative path with a single `/` separator. Does not
+/// canonicalize `..` segments; the renderer/host fs resolves them.
+fn markdown_join_path(dir : String, rel : String) -> String {
+  let dir_chars = dir.to_array()
+  let has_slash = dir_chars.length() > 0 &&
+    (dir_chars[dir_chars.length() - 1] == '/' ||
+    dir_chars[dir_chars.length() - 1] == '\\')
+  if has_slash {
+    dir + rel
+  } else {
+    dir + "/" + rel
   }
 }
 

@@ -2,7 +2,7 @@
 fn MarkdownEditorApp::root(
   self : MarkdownEditorApp,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let theme = @views.light_theme()
+  let theme = self.chrome_theme()
   let document = self.document.get()
   let appearance = self.appearance_spec()
   let editor_font = markdown_editor_appearance_font(appearance)
@@ -93,6 +93,18 @@ fn MarkdownEditorApp::root(
 }
 
 ///|
+/// Resolve the chrome theme from the dark-mode toggle. The framework ships a
+/// full dark theme (`@views.dark_theme()`), so toggling is a one-liner here;
+/// the editor surface and panels inherit the theme via the environment.
+fn MarkdownEditorApp::chrome_theme(self : MarkdownEditorApp) -> @moui.Theme {
+  if self.dark_mode_enabled.get() {
+    @views.dark_theme()
+  } else {
+    @views.light_theme()
+  }
+}
+
+///|
 fn MarkdownEditorApp::reactive_root(
   self : MarkdownEditorApp,
   ctx : @core.ComponentContext,
@@ -118,6 +130,7 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.more_menu_visible))
   ignore(ctx.watch(self.toasts))
   ignore(ctx.watch(self.pending_confirm))
+  ignore(ctx.watch(self.dark_mode_enabled))
   ignore(ctx.watch(self.writing_appearance))
   ignore(ctx.watch(self.find_visible))
   ignore(ctx.watch(self.find_query))

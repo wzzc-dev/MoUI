@@ -7,6 +7,7 @@ pub fn MarkdownEditorSnapshot::parse(source : String) -> MarkdownEditorSnapshot 
 pub fn MarkdownEditorSnapshot::parse_with_font(
   source : String,
   base : @core.FontSpec,
+  base_dir? : String? = None,
 ) -> MarkdownEditorSnapshot {
   let blocks = parse_markdown_editor_blocks(source)
   let word_count = markdown_editor_word_count(source)
@@ -14,7 +15,7 @@ pub fn MarkdownEditorSnapshot::parse_with_font(
   {
     source,
     blocks,
-    rich_text: markdown_editor_blocks_to_rich_text(source, blocks, base),
+    rich_text: markdown_editor_blocks_to_rich_text(source, blocks, base, base_dir~),
     line_count: markdown_editor_line_count(source),
     word_count,
     reading_minutes: markdown_editor_reading_minutes(word_count),
@@ -29,8 +30,9 @@ pub fn MarkdownEditorSnapshot::parse_with_font(
 pub fn markdown_editor_format(
   source : String,
   base? : @core.FontSpec = @core.FontSpec::new(),
+  base_dir? : String? = None,
 ) -> RichTextDocument {
-  MarkdownEditorSnapshot::parse_with_font(source, base).rich_text
+  MarkdownEditorSnapshot::parse_with_font(source, base, base_dir~).rich_text
 }
 
 ///|
@@ -38,8 +40,9 @@ pub fn markdown_editor_format_for_selection(
   source : String,
   selection : MarkdownEditorSelection,
   base? : @core.FontSpec = @core.FontSpec::new(),
+  base_dir? : String? = None,
 ) -> RichTextDocument {
-  let document = markdown_editor_format(source, base~)
+  let document = markdown_editor_format(source, base~, base_dir~)
   let blocks : Array[RichTextBlock] = []
   for block in document.blocks {
     let runs : Array[RichTextRun] = []
@@ -64,8 +67,11 @@ pub fn markdown_editor_format_for_writing_mode(
   selection : MarkdownEditorSelection,
   base? : @core.FontSpec = @core.FontSpec::new(),
   focus_mode~ : Bool,
+  base_dir? : String? = None,
 ) -> RichTextDocument {
-  let document = markdown_editor_format_for_selection(source, selection, base~)
+  let document = markdown_editor_format_for_selection(
+    source, selection, base~, base_dir~,
+  )
   if focus_mode {
     markdown_editor_dim_inactive_blocks(document, selection)
   } else {
@@ -800,10 +806,13 @@ pub fn markdown_editor_blocks_to_rich_text(
   source : String,
   blocks : Array[MarkdownEditorBlock],
   base : @core.FontSpec,
+  base_dir? : String? = None,
 ) -> RichTextDocument {
   let rich_blocks : Array[RichTextBlock] = []
   for block in blocks {
-    rich_blocks.push(markdown_editor_block_to_rich_text(source, block, base))
+    rich_blocks.push(
+      markdown_editor_block_to_rich_text(source, block, base, base_dir~),
+    )
   }
   RichTextDocument::new(blocks=rich_blocks)
 }
@@ -813,8 +822,9 @@ pub fn markdown_editor_block_to_rich_text(
   source : String,
   editor_block : MarkdownEditorBlock,
   base : @core.FontSpec,
+  base_dir? : String? = None,
 ) -> RichTextBlock {
-  let block = markdown_block_to_rich_text(editor_block.block, base)
+  let block = markdown_block_to_rich_text(editor_block.block, base, base_dir~)
   {
     ..block,
     runs: markdown_editor_runs_with_source_ranges(block.runs, editor_block),
