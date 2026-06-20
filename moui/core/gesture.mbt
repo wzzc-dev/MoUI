@@ -160,7 +160,10 @@ fn recognize_button_tap(
     // or press state and return to rest.
     Exit | Cancel => ButtonState::Normal
   }
-  { next_state, activated: phase == Up && inside && current == ButtonState::Pressed }
+  {
+    next_state,
+    activated: phase == Up && inside && current == ButtonState::Pressed,
+  }
 }
 
 ///|

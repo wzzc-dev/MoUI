@@ -5,10 +5,7 @@ fn ShowcaseModel::theme_renderer_section(
   metrics : ShowcaseMetrics,
   opacity : Double,
 ) -> @moui.View[ShowcaseMsg] {
-  let custom_theme = @views.theme(
-    scheme=theme.scheme,
-    palette=theme.palette,
-  )
+  let custom_theme = @views.theme(scheme=theme.scheme, palette=theme.palette)
   let environment = @views.environment(theme=custom_theme)
   ignore(environment)
   self.section_panel(

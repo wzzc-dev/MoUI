@@ -23,144 +23,156 @@ pub(all) enum IconName {
 /// normalized 0..24 space; `icon` scales them to the final frame.
 fn icon_path(name : IconName) -> Array[@core.PathVerb] {
   match name {
-    Check => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=5.0, y=13.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=18.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=19.0, y=6.0)),
-    ]
-    Close => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=6.0, y=6.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=18.0, y=18.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=18.0, y=6.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=6.0, y=18.0)),
-    ]
-    ChevronDown => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=6.0, y=9.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=15.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=18.0, y=9.0)),
-    ]
-    ChevronRight => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=9.0, y=6.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=15.0, y=12.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=9.0, y=18.0)),
-    ]
-    ChevronLeft => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=15.0, y=6.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=9.0, y=12.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=15.0, y=18.0)),
-    ]
-    Plus => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=5.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=19.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=5.0, y=12.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=19.0, y=12.0)),
-    ]
-    Minus => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=5.0, y=12.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=19.0, y=12.0)),
-    ]
+    Check =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=5.0, y=13.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=10.0, y=18.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=19.0, y=6.0)),
+      ]
+    Close =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=6.0, y=6.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=18.0, y=18.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=18.0, y=6.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=6.0, y=18.0)),
+      ]
+    ChevronDown =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=6.0, y=9.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=15.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=18.0, y=9.0)),
+      ]
+    ChevronRight =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=9.0, y=6.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=15.0, y=12.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=9.0, y=18.0)),
+      ]
+    ChevronLeft =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=15.0, y=6.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=9.0, y=12.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=15.0, y=18.0)),
+      ]
+    Plus =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=5.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=19.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=5.0, y=12.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=19.0, y=12.0)),
+      ]
+    Minus =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=5.0, y=12.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=19.0, y=12.0)),
+      ]
     // Magnifier: circle approximated by four quadratic curves + handle.
-    Search => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=11.0, y=11.0)),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=11.0, y=7.0),
-        @core.Point::new(x=7.5, y=7.0),
-      ),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=4.0, y=7.0),
-        @core.Point::new(x=4.0, y=11.0),
-      ),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=4.0, y=15.0),
-        @core.Point::new(x=7.5, y=15.0),
-      ),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=11.0, y=15.0),
-        @core.Point::new(x=11.0, y=11.0),
-      ),
-      @core.PathVerb::MoveTo(@core.Point::new(x=14.5, y=14.5)),
-      @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=20.0)),
-    ]
-    ArrowRight => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=5.0, y=12.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=19.0, y=12.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=13.0, y=6.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=19.0, y=12.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=13.0, y=18.0)),
-    ]
+    Search =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=11.0, y=11.0)),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=11.0, y=7.0),
+          @core.Point::new(x=7.5, y=7.0),
+        ),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=4.0, y=7.0),
+          @core.Point::new(x=4.0, y=11.0),
+        ),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=4.0, y=15.0),
+          @core.Point::new(x=7.5, y=15.0),
+        ),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=11.0, y=15.0),
+          @core.Point::new(x=11.0, y=11.0),
+        ),
+        @core.PathVerb::MoveTo(@core.Point::new(x=14.5, y=14.5)),
+        @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=20.0)),
+      ]
+    ArrowRight =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=5.0, y=12.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=19.0, y=12.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=13.0, y=6.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=19.0, y=12.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=13.0, y=18.0)),
+      ]
     // Simplified gear: a center circle plus six short radial ticks.
-    Settings => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=9.0)),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=12.0, y=7.0),
-        @core.Point::new(x=10.0, y=7.0),
-      ),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=8.0, y=7.0),
-        @core.Point::new(x=8.0, y=10.0),
-      ),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=8.0, y=13.0),
-        @core.Point::new(x=10.0, y=13.0),
-      ),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=12.0, y=13.0),
-        @core.Point::new(x=12.0, y=10.0),
-      ),
-      @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=3.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=5.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=19.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=21.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=3.0, y=12.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=5.0, y=12.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=19.0, y=12.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=21.0, y=12.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=5.6, y=5.6)),
-      @core.PathVerb::LineTo(@core.Point::new(x=7.0, y=7.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=17.0, y=17.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=18.4, y=18.4)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=18.4, y=5.6)),
-      @core.PathVerb::LineTo(@core.Point::new(x=17.0, y=7.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=7.0, y=17.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=5.6, y=18.4)),
-    ]
+    Settings =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=9.0)),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=12.0, y=7.0),
+          @core.Point::new(x=10.0, y=7.0),
+        ),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=8.0, y=7.0),
+          @core.Point::new(x=8.0, y=10.0),
+        ),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=8.0, y=13.0),
+          @core.Point::new(x=10.0, y=13.0),
+        ),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=12.0, y=13.0),
+          @core.Point::new(x=12.0, y=10.0),
+        ),
+        @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=3.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=5.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=19.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=12.0, y=21.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=3.0, y=12.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=5.0, y=12.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=19.0, y=12.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=21.0, y=12.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=5.6, y=5.6)),
+        @core.PathVerb::LineTo(@core.Point::new(x=7.0, y=7.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=17.0, y=17.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=18.4, y=18.4)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=18.4, y=5.6)),
+        @core.PathVerb::LineTo(@core.Point::new(x=17.0, y=7.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=7.0, y=17.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=5.6, y=18.4)),
+      ]
     // Trash can: lid + body outline.
-    Trash => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=7.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=7.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=9.0, y=7.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=9.0, y=5.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=15.0, y=5.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=15.0, y=7.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=6.0, y=7.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=7.0, y=20.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=17.0, y=20.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=18.0, y=7.0)),
-    ]
+    Trash =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=4.0, y=7.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=20.0, y=7.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=9.0, y=7.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=9.0, y=5.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=15.0, y=5.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=15.0, y=7.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=6.0, y=7.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=7.0, y=20.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=17.0, y=20.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=18.0, y=7.0)),
+      ]
     // Info: circle + dot + stem.
-    Info => [
-      @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=12.0)),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=12.0, y=8.0),
-        @core.Point::new(x=8.0, y=8.0),
-      ),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=4.0, y=8.0),
-        @core.Point::new(x=4.0, y=12.0),
-      ),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=4.0, y=16.0),
-        @core.Point::new(x=8.0, y=16.0),
-      ),
-      @core.PathVerb::QuadTo(
-        @core.Point::new(x=12.0, y=16.0),
-        @core.Point::new(x=12.0, y=12.0),
-      ),
-      @core.PathVerb::MoveTo(@core.Point::new(x=8.0, y=19.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=8.0, y=19.0)),
-      @core.PathVerb::MoveTo(@core.Point::new(x=8.0, y=11.0)),
-      @core.PathVerb::LineTo(@core.Point::new(x=8.0, y=15.0)),
-    ]
+    Info =>
+      [
+        @core.PathVerb::MoveTo(@core.Point::new(x=12.0, y=12.0)),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=12.0, y=8.0),
+          @core.Point::new(x=8.0, y=8.0),
+        ),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=4.0, y=8.0),
+          @core.Point::new(x=4.0, y=12.0),
+        ),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=4.0, y=16.0),
+          @core.Point::new(x=8.0, y=16.0),
+        ),
+        @core.PathVerb::QuadTo(
+          @core.Point::new(x=12.0, y=16.0),
+          @core.Point::new(x=12.0, y=12.0),
+        ),
+        @core.PathVerb::MoveTo(@core.Point::new(x=8.0, y=19.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=8.0, y=19.0)),
+        @core.PathVerb::MoveTo(@core.Point::new(x=8.0, y=11.0)),
+        @core.PathVerb::LineTo(@core.Point::new(x=8.0, y=15.0)),
+      ]
   }
 }
 
@@ -172,10 +184,7 @@ fn icon_scale_point(
   origin_y : Double,
   scale : Double,
 ) -> @core.Point {
-  @core.Point::new(
-    x=origin_x + point.x * scale,
-    y=origin_y + point.y * scale,
-  )
+  @core.Point::new(x=origin_x + point.x * scale, y=origin_y + point.y * scale)
 }
 
 ///|
@@ -192,11 +201,15 @@ fn icon_scale_verbs(
     match verb {
       @core.PathVerb::MoveTo(point) =>
         scaled.push(
-          @core.PathVerb::MoveTo(icon_scale_point(point, origin_x, origin_y, scale)),
+          @core.PathVerb::MoveTo(
+            icon_scale_point(point, origin_x, origin_y, scale),
+          ),
         )
       @core.PathVerb::LineTo(point) =>
         scaled.push(
-          @core.PathVerb::LineTo(icon_scale_point(point, origin_x, origin_y, scale)),
+          @core.PathVerb::LineTo(
+            icon_scale_point(point, origin_x, origin_y, scale),
+          ),
         )
       @core.PathVerb::QuadTo(control, end) =>
         scaled.push(
@@ -266,10 +279,7 @@ pub fn[Msg] icon(
       ])
     },
     semantics=() => {
-      @core.ViewSemanticsInfo::new(
-        role=@core.SemanticsRole::Text,
-        label~,
-      )
+      @core.ViewSemanticsInfo::new(role=@core.SemanticsRole::Text, label~)
     },
   )
 }

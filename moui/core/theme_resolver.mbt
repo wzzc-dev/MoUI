@@ -49,11 +49,14 @@ pub fn resolve_minimal_theme(
   let typography = TypographyScale::default()
   let shadow_scale = ShadowScale::default(scheme~)
   let motion = match spec.reduced_motion {
-    true => { ..MotionScale::default(), fast_ms: 0.0, normal_ms: 0.0, slow_ms: 0.0 }
+    true =>
+      { ..MotionScale::default(), fast_ms: 0.0, normal_ms: 0.0, slow_ms: 0.0 }
     false => MotionScale::default()
   }
   let surfaces = SurfaceScale::default(palette, scheme)
-  let components = minimal_components(palette, scheme, spacing_scale, radius_scale, typography)
+  let components = minimal_components(
+    palette, scheme, spacing_scale, radius_scale, typography,
+  )
   {
     scheme,
     palette,
@@ -83,7 +86,10 @@ fn apply_density(base : SpacingScale, density : ThemeDensity) -> SpacingScale {
 /// High-contrast palette: snap surfaces to pure black/white, outlines to the
 /// foreground, and semantic colors to their maximum-saturation forms so edges
 /// and state stay legible regardless of the base palette's subtle alphas.
-fn high_contrast_palette(palette : ColorPalette, scheme : ColorScheme) -> ColorPalette {
+fn high_contrast_palette(
+  palette : ColorPalette,
+  scheme : ColorScheme,
+) -> ColorPalette {
   match scheme {
     Light =>
       {

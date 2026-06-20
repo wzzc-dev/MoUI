@@ -18,7 +18,9 @@ pub fn[Msg] popover(
         theme~,
         padding=theme.spacing_scale.sm,
       )
-      .shadow(theme.components.surface.overlay_shadow.unwrap_or(theme.shadow_scale.md))
+      .shadow(
+        theme.components.surface.overlay_shadow.unwrap_or(theme.shadow_scale.md),
+      )
       .align(alignment=popover_alignment(placement))
     let panel = if trap_focus { panel.focus_trap() } else { panel }
     stack([anchor, panel])

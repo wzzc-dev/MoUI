@@ -276,7 +276,7 @@ fn ElementNode::render_focused_with_text_system(
     placed,
     focused,
     RenderEnvironment::from_environment(environment)
-      .with_text_system(text_system)
-      .with_now_ms(now_ms),
+    .with_text_system(text_system)
+    .with_now_ms(now_ms),
   )
 }
