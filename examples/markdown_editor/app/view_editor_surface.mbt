@@ -765,7 +765,9 @@ fn editor_source_layout(
     }
     if show_outline {
       side_children.push(
-        outline_inspector(snapshot, selection, theme, height=viewport_height),
+        outline_inspector(
+          app, snapshot, selection, theme, height=viewport_height,
+        ),
       )
     }
     if show_source {

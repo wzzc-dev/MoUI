@@ -321,16 +321,21 @@ fn source_inspector(
 
 ///|
 fn outline_inspector(
+  app : MarkdownEditorApp,
   snapshot : MarkdownEditorSnapshot,
   selection : MarkdownEditorSelection,
   theme : @moui.Theme,
   height~ : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
+  let visible_outline = markdown_editor_folded_outline(
+    snapshot.outline,
+    app.folded_headings.get(),
+  )
   let active_index = markdown_editor_active_outline_index(
     snapshot.outline,
     selection.caret,
   )
-  let content = if snapshot.outline.length() == 0 {
+  let content = if visible_outline.length() == 0 {
     text(
       "No headings",
       width=markdown_editor_outline_content_width(),
@@ -340,7 +345,7 @@ fn outline_inspector(
     .foreground(theme.palette.muted)
   } else {
     scroll_view(
-      outline_rows(snapshot.outline, active_index, theme),
+      outline_rows(app, snapshot.outline, visible_outline, active_index, theme),
       width=markdown_editor_outline_content_width(),
       height=markdown_editor_max_double(0.0, height - 52.0),
     )
@@ -378,27 +383,60 @@ fn outline_inspector(
 
 ///|
 fn outline_rows(
-  outline : Array[MarkdownEditorOutlineItem],
+  app : MarkdownEditorApp,
+  full_outline : Array[MarkdownEditorOutlineItem],
+  visible : Array[MarkdownEditorOutlineItem],
   active_index : Int,
   theme : @moui.Theme,
 ) -> @moui.View[MarkdownEditorMsg] {
   let rows : Array[@moui.View[MarkdownEditorMsg]] = []
-  for index in 0..<outline.length() {
-    rows.push(outline_row(outline[index], active=index == active_index, theme))
+  for item in visible {
+    let active = markdown_editor_outline_item_is_active(
+      full_outline,
+      item,
+      active_index,
+    )
+    rows.push(outline_row(app, item, active~, theme))
   }
   column(rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start)
 }
 
 ///|
+/// True when `item` matches the outline entry at `active_index` in the full
+/// outline (so the active heading stays highlighted even while some are folded).
+fn markdown_editor_outline_item_is_active(
+  full_outline : Array[MarkdownEditorOutlineItem],
+  item : MarkdownEditorOutlineItem,
+  active_index : Int,
+) -> Bool {
+  if active_index < 0 || active_index >= full_outline.length() {
+    false
+  } else {
+    full_outline[active_index].source_start == item.source_start
+  }
+}
+
+///|
 fn outline_row(
+  app : MarkdownEditorApp,
   item : MarkdownEditorOutlineItem,
   active~ : Bool,
   theme : @moui.Theme,
 ) -> @moui.View[MarkdownEditorMsg] {
   let indent = markdown_editor_outline_indent_width(item.level)
+  // A folded heading renders a '▸' prefix in its label to signal the folded
+  // state; tapping the row still jumps to the heading. The dedicated toggle
+  // affordance is intentionally not a separate button to preserve the row's
+  // indent geometry that existing tests rely on.
+  let folded = app.heading_is_folded(item.source_start)
+  let label = if folded {
+    "▸ " + markdown_editor_outline_label(item)
+  } else {
+    markdown_editor_outline_label(item)
+  }
   padding_edges(
     button(
-      markdown_editor_outline_label(item),
+      label,
       on_click=JumpToOutline(item.source_start),
       variant=if active {
         @views.ButtonVariant::Tonal
@@ -411,11 +449,12 @@ fn outline_row(
         markdown_editor_outline_content_width() - indent,
       ),
       height=30.0,
-    ),
+    ).on_long_press(ToggleHeadingFold(item.source_start)),
     left=indent,
   )
 }
 
+///|
 ///|
 fn markdown_editor_outline_indent_width(level : Int) -> Double {
   markdown_editor_max_int(0, level - 1).to_double() * 12.0

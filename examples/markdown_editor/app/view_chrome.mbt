@@ -133,6 +133,7 @@ fn MarkdownEditorApp::reactive_root(
   ignore(ctx.watch(self.toasts))
   ignore(ctx.watch(self.pending_confirm))
   ignore(ctx.watch(self.dark_mode_enabled))
+  ignore(ctx.watch(self.folded_headings))
   ignore(ctx.watch(self.writing_appearance))
   ignore(ctx.watch(self.find_visible))
   ignore(ctx.watch(self.find_query))
