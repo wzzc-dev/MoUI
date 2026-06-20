@@ -3,37 +3,23 @@ pub fn[Msg] button(
   text : String,
   on_click? : Msg,
   variant? : ButtonVariant = ButtonVariant::Primary,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : ButtonStyle,
   icon? : IconName? = None,
   width? : Double = 100.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
-  let resolved_style = match style {
-    Some(value) => value
-    None => variant.style(theme)
-  }
-  let normal = resolved_style.normal
-  let hovered = resolved_style.hovered
-  let pressed = resolved_style.pressed
   // `width`/`height` act as minimums: the button measures its label (plus an
   // optional leading icon) and grows to fit the content with padding from the
-  // theme scale.
+  // theme scale. Theme/style are resolved ambient-ly inside `button_control`
+  // (an explicit `theme?` overrides `ctx.environment.theme`, otherwise the
+  // button tracks dark-mode/a11y/reduced-motion changes without a rebuild).
   button_control(
     text~,
+    variant~,
     min_size=@core.Size::new(width~, height~),
-    font=theme.typography.control,
-    foreground=normal.foreground,
-    background=normal.background,
-    hovered_background=hovered.background,
-    pressed_background=pressed.background,
-    padding_horizontal=theme.spacing_scale.lg,
-    padding_vertical=theme.spacing_scale.sm,
-    transition_duration_ms=theme.motion.fast_ms,
-    transition_easing=theme.motion.easing,
-    border=normal.border,
-    shadow=normal.shadow,
-    corner_radius=normal.radius,
+    theme?,
+    style?,
     leading_icon=icon,
     on_click~,
   )
@@ -45,29 +31,30 @@ pub fn[Msg] shortcut_button(
   on_click~ : Msg,
   shortcut~ : KeyboardShortcut,
   variant? : ButtonVariant = ButtonVariant::Primary,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 200.0,
   height? : Double = 44.0,
   shortcut_width? : Double = 76.0,
 ) -> @core.View[Msg] {
-  let spacing = theme.spacing_scale.xs
+  let resolved_theme = theme.unwrap_or(@core.Theme::neutral())
+  let spacing = resolved_theme.spacing_scale.xs
   let button_width = views_max_double(72.0, width - shortcut_width - spacing)
   let shortcut_label = shortcut.display_label()
   row(
     [
-      button(label, on_click~, variant~, theme~, width=button_width, height~),
+      button(label, on_click~, variant~, theme?, width=button_width, height~),
       container(
         text(
           shortcut_label,
           role=TextRole::Mono,
-          theme~,
+          theme?,
           width=views_max_double(24.0, shortcut_width - 12.0),
           height=views_max_double(16.0, height - 12.0),
-        ).foreground(theme.palette.muted),
+        ).foreground(resolved_theme.palette.muted),
         width=shortcut_width,
         height~,
         variant=ContainerVariant::Base,
-        theme~,
+        theme?,
         padding=6.0,
       )
       .semantics_role(@core.SemanticsRole::Text)

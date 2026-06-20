@@ -660,6 +660,65 @@ test "runtime propagates theme modifier into default text color" {
 }
 
 ///|
+/// A primary button paints its background from `theme.palette.primary`. Because
+/// the button resolves its style ambient-ly at paint time (reading
+/// `ctx.environment.theme` rather than baking a light theme at construction),
+/// switching the environment's color scheme must recolor the same view tree
+/// without rebuilding it. This is the core ambient-theme contract: the button
+/// view is constructed once below, then `set_environment` flips the scheme.
+test "ambient button recolors when environment scheme flips without rebuild" {
+  let light_env = @core.Environment::neutral()
+  let dark_env = light_env.with_system_scheme(@core.ColorScheme::Dark)
+  let light_primary = light_env.theme.palette.primary
+  let dark_primary = dark_env.theme.palette.primary
+  // Sanity: the two schemes must actually differ, otherwise the test proves
+  // nothing.
+  assert_true(light_primary != dark_primary)
+  // The button view is constructed ONCE against the light environment. No
+  // `theme=` argument is passed, so it must read the ambient theme at paint.
+  let root : @core.View[Unit] = @views.button(
+    "Ambient",
+    on_click=(),
+    width=120.0,
+    height=40.0,
+  )
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=120.0, height=40.0),
+    environment=light_env,
+  )
+  // First paint: button background must be the light primary.
+  match runtime_test_solid_fill_color(runtime.draw_commands()) {
+    Some(color) => assert_true(color == light_primary)
+    None => fail("expected a solid fill for the ambient button")
+  }
+  // Flip the environment to dark WITHOUT rebuilding the view tree. The runtime
+  // marks the tree dirty and re-paints; the same button node must now emit the
+  // dark primary.
+  runtime.set_environment(dark_env)
+  match runtime_test_solid_fill_color(runtime.draw_commands()) {
+    Some(color) => assert_true(color == dark_primary)
+    None => fail("expected a solid fill for the ambient button after flip")
+  }
+}
+
+///|
+/// Extract the first solid-fill rounded-rect color from a draw-command list.
+/// Used to assert the ambient background of a control.
+fn runtime_test_solid_fill_color(
+  commands : Array[@core.DrawCommand],
+) -> @core.Color? {
+  for command in commands {
+    match command {
+      @core.DrawCommand::FillRoundedRectBrush(_, @core.Brush::Solid(color)) =>
+        return Some(color)
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 fn runtime_test_text_run(
   commands : Array[@core.DrawCommand],
   text : String,
@@ -752,22 +811,28 @@ test "runtime delivers synthetic Exit to clear hover on pointer leave" {
   let root : @core.View[Unit] = @core.View::node(
     identity=() => @core.ViewIdentity::new(kind="HoverStage"),
     revision=() => "hover-stage",
-    children=() => [
-      runtime_test_hover_tracker(width=100.0, height=40.0, log~),
-      runtime_test_hover_tracker(width=100.0, height=40.0, log=runtime_test_unused_log()),
-    ],
+    children=() => {
+      [
+        runtime_test_hover_tracker(width=100.0, height=40.0, log~),
+        runtime_test_hover_tracker(
+          width=100.0,
+          height=40.0,
+          log=runtime_test_unused_log(),
+        ),
+      ]
+    },
     child_constraints=_constraints => @core.Constraints::unbounded(),
     layout=ctx => {
       let frames : Array[@core.Rect] = []
       // Left tracker at [0,0,100,40], right tracker at [200,0,100,40].
       for index, _size in ctx.child_sizes {
         let x = if index == 0 { 0.0 } else { 200.0 }
-        frames.push(
-          @core.Rect::new(x~, y=0.0, width=100.0, height=40.0),
-        )
+        frames.push(@core.Rect::new(x~, y=0.0, width=100.0, height=40.0))
       }
       @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(@core.Size::new(width=300.0, height=40.0)),
+        size=ctx.constraints.constrain(
+          @core.Size::new(width=300.0, height=40.0),
+        ),
         child_frames=frames,
       )
     },
@@ -905,7 +970,9 @@ test "runtime Exit does not propagate to descendant being entered" {
         frames.push(@core.Rect::new(x=80.0, y=0.0, width=100.0, height=40.0))
       }
       @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(@core.Size::new(width=200.0, height=40.0)),
+        size=ctx.constraints.constrain(
+          @core.Size::new(width=200.0, height=40.0),
+        ),
         child_frames=frames,
       )
     },
