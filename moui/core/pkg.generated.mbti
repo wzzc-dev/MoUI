@@ -190,12 +190,26 @@ pub(all) struct CachedLayerSpec {
 } derive(Eq, ToJson, @debug.Debug)
 pub fn CachedLayerSpec::new(key~ : String, frame~ : Rect, content_revision~ : Int, scale_factor? : Double) -> Self
 
+pub(all) enum CheckMarkStyle {
+  Checkmark
+  Dot
+} derive(Eq, ToJson, @debug.Debug)
+pub fn CheckMarkStyle::label(Self) -> String
+
+pub(all) enum ChoiceControlShape {
+  Square
+  Circle
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ChoiceControlShape::label(Self) -> String
+
 pub(all) struct ChoiceControlTheme {
   foreground : Color
   selected_color : Color
   disabled_foreground : Color
   disabled_selected_color : Color
   control_size : Double
+  box_shape : ChoiceControlShape
+  check_style : CheckMarkStyle
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct Color {
@@ -1132,6 +1146,7 @@ pub(all) struct SliderTheme {
   track_height : Double
   thumb_size : Double
   radius : Double
+  thumb_shape : ThumbShape
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) struct SpacingScale {
@@ -1464,6 +1479,12 @@ pub fn ThemeSpec::with_density(Self, ThemeDensity) -> Self
 pub fn ThemeSpec::with_preset(Self, ThemePreset) -> Self
 pub fn ThemeSpec::with_reduced_motion(Self, Bool) -> Self
 pub fn ThemeSpec::with_seed(Self, Color?) -> Self
+
+pub(all) enum ThumbShape {
+  Rounded
+  Circle
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ThumbShape::label(Self) -> String
 
 pub(all) struct ToneTokens {
   foreground : Color

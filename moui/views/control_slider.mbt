@@ -20,7 +20,13 @@ pub fn[Msg] slider(
   let knob = min_view_double(height, resolved_style.thumb_size)
   let track_height = min_view_double(height, resolved_style.track_height)
   let track_radius = min_view_double(track_height / 2.0, resolved_style.radius)
-  let thumb_radius = min_view_double(knob / 2.0, resolved_style.radius)
+  // Circle thumbs force a full circle (radius = knob/2) regardless of the
+  // theme radius; Rounded thumbs respect the resolved radius.
+  let thumb_shape = theme.components.slider.thumb_shape
+  let thumb_radius = match thumb_shape {
+    @core.ThumbShape::Circle => knob / 2.0
+    @core.ThumbShape::Rounded => min_view_double(knob / 2.0, resolved_style.radius)
+  }
   let foreground_color = resolve_control_color(
     foreground,
     resolved_style.foreground,

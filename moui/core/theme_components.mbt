@@ -344,12 +344,67 @@ pub(all) struct SurfaceTheme {
 // ---------------------------------------------------------------------------
 
 ///|
+/// Shape of a choice-control box (checkbox/radio). `Square` draws a rounded
+/// rectangle; `Circle` draws a full circle. Fluent 2 radios use `Circle`,
+/// checkboxes use `Square`.
+pub(all) enum ChoiceControlShape {
+  Square
+  Circle
+} derive(Eq, Debug, ToJson)
+
+///|
+/// Short label for revision/identity strings.
+pub fn ChoiceControlShape::label(self : ChoiceControlShape) -> String {
+  match self {
+    Square => "square"
+    Circle => "circle"
+  }
+}
+
+///|
+/// How a selected choice control marks itself. `Checkmark` draws a "✓" glyph
+/// on the filled box; `Dot` draws a small filled inner circle (radio style).
+pub(all) enum CheckMarkStyle {
+  Checkmark
+  Dot
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn CheckMarkStyle::label(self : CheckMarkStyle) -> String {
+  match self {
+    Checkmark => "checkmark"
+    Dot => "dot"
+  }
+}
+
+///|
+/// Shape of a slider thumb. `Rounded` uses the theme radius; `Circle` forces a
+/// full circle (thumb radius = thumb_size / 2). Fluent 2 sliders use `Circle`.
+pub(all) enum ThumbShape {
+  Rounded
+  Circle
+} derive(Eq, Debug, ToJson)
+
+///|
+pub fn ThumbShape::label(self : ThumbShape) -> String {
+  match self {
+    Rounded => "rounded"
+    Circle => "circle"
+  }
+}
+
+///|
 pub(all) struct ChoiceControlTheme {
   foreground : Color
   selected_color : Color
   disabled_foreground : Color
   disabled_selected_color : Color
   control_size : Double
+  // Shape of the indicator box. Square for checkboxes, Circle for radios.
+  box_shape : ChoiceControlShape
+  // How a selected indicator renders its mark. Checkmark for checkboxes, Dot
+  // for radios.
+  check_style : CheckMarkStyle
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -367,6 +422,8 @@ pub(all) struct SliderTheme {
   track_height : Double
   thumb_size : Double
   radius : Double
+  // Thumb shape. Circle forces a round thumb regardless of `radius`.
+  thumb_shape : ThumbShape
 } derive(Eq, Debug, ToJson)
 
 ///|

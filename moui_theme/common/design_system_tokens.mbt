@@ -34,6 +34,12 @@ pub(all) struct DesignSemanticPalette {
   // colorBrandBackground from colorBrandStroke1. Presets without a separate
   // brand stroke set this to `primary`.
   brand_stroke : @core.Color
+  // colorNeutralBackground4 (subtle inset / toolbar). Presets without a ramp
+  // alias this to `background_3`.
+  background_4 : @core.Color
+  // colorNeutralStrokeAccessible (stronger than stroke_1, used for high-contrast
+  // control borders). Presets without a ramp alias this to `stroke_1`.
+  stroke_accessible : @core.Color
   primary : @core.Color
   primary_foreground : @core.Color
   outline : @core.Color
@@ -194,6 +200,8 @@ pub(all) struct DesignChoiceControlTokens {
   disabled_foreground : @core.Color
   disabled_selected_color : @core.Color
   control_size : Double
+  box_shape : @core.ChoiceControlShape
+  check_style : @core.CheckMarkStyle
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -211,6 +219,7 @@ pub(all) struct DesignSliderTokens {
   track_height : Double
   thumb_size : Double
   radius : Double
+  thumb_shape : @core.ThumbShape
 } derive(Eq, Debug, ToJson)
 
 ///|
@@ -761,6 +770,8 @@ pub fn DesignComponentTokens::core_themes(
     disabled_foreground: self.choice_control.disabled_foreground,
     disabled_selected_color: self.choice_control.disabled_selected_color,
     control_size: self.choice_control.control_size,
+    box_shape: self.choice_control.box_shape,
+    check_style: self.choice_control.check_style,
   }
   let progress : @core.ProgressTheme = {
     foreground: self.progress.foreground,
@@ -774,6 +785,7 @@ pub fn DesignComponentTokens::core_themes(
     track_height: self.slider.track_height,
     thumb_size: self.slider.thumb_size,
     radius: self.slider.radius,
+    thumb_shape: self.slider.thumb_shape,
   }
   let picker : @core.PickerTheme = {
     font: self.picker.font,
@@ -1360,6 +1372,9 @@ fn fluent_design_tokens(
         // colorNeutralStroke1 (strong border) / Stroke2 (subtle divider).
         stroke_1=Some(color_byte(r=209, g=209, b=209)),
         stroke_2=Some(color_byte(r=224, g=224, b=224)),
+        // colorNeutralBackground4 (light) = #EBEBEB, StrokeAccessible = #616161.
+        background_4=Some(color_byte(r=235, g=235, b=235)),
+        stroke_accessible=Some(color_byte(r=97, g=97, b=97)),
         // colorBrandBackground (primary fill) / colorBrandStroke1.
         primary=color_byte(r=15, g=108, b=189),
         primary_foreground=@core.Color::white(),
@@ -1389,6 +1404,9 @@ fn fluent_design_tokens(
         // colorNeutralStroke1 (dark) = #525252, Stroke2 = #3D3D3D.
         stroke_1=Some(color_byte(r=82, g=82, b=82)),
         stroke_2=Some(color_byte(r=61, g=61, b=61)),
+        // colorNeutralBackground4 (dark) = #0A0A0A, StrokeAccessible = #FFFFFF.
+        background_4=Some(color_byte(r=10, g=10, b=10)),
+        stroke_accessible=Some(@core.Color::white()),
         // colorBrandBackground (dark) = #115EA3, BrandStroke1 = #2886DE.
         primary=color_byte(r=17, g=94, b=163),
         primary_foreground=@core.Color::white(),
@@ -1648,9 +1666,11 @@ fn semantic_palette(
   // aliases so presets without a ramp keep their old appearance.
   background_2? : @core.Color? = None,
   background_3? : @core.Color? = None,
+  background_4? : @core.Color? = None,
   foreground_2? : @core.Color? = None,
   stroke_1? : @core.Color? = None,
   stroke_2? : @core.Color? = None,
+  stroke_accessible? : @core.Color? = None,
   brand_stroke? : @core.Color? = None,
 ) -> DesignSemanticPalette {
   {
@@ -1660,9 +1680,11 @@ fn semantic_palette(
     surface_variant,
     background_2: background_2.unwrap_or(surface),
     background_3: background_3.unwrap_or(surface_variant),
+    background_4: background_4.unwrap_or(surface_variant),
     foreground_2: foreground_2.unwrap_or(muted),
     stroke_1: stroke_1.unwrap_or(outline),
     stroke_2: stroke_2.unwrap_or(outline),
+    stroke_accessible: stroke_accessible.unwrap_or(outline),
     brand_stroke: brand_stroke.unwrap_or(primary),
     primary,
     primary_foreground,
@@ -1940,6 +1962,8 @@ fn component_tokens(
       disabled_foreground: palette.muted,
       disabled_selected_color: palette.primary.multiply_alpha(0.42),
       control_size: 20.0,
+      box_shape: @core.ChoiceControlShape::Square,
+      check_style: @core.CheckMarkStyle::Checkmark,
     },
     progress: {
       foreground: palette.primary,
@@ -1953,6 +1977,7 @@ fn component_tokens(
       track_height: 6.0,
       thumb_size: 20.0,
       radius: radius.pill,
+      thumb_shape: @core.ThumbShape::Circle,
     },
     picker: {
       font: typography.control,
