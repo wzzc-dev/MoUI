@@ -83,33 +83,23 @@ pub fn[Msg] text_field(
   on_submit? : Msg? = None,
   placeholder? : String = "",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : TextFieldStyle,
   width? : Double = 240.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
-  let resolved_style = match style {
-    Some(value) => value
-    None => variant.style(theme)
-  }
-  let normal = resolved_style.normal
-  let focused = resolved_style.focused
+  // Style is resolved ambient-ly inside the control (an explicit theme?
+  // overrides ctx.environment.theme) so the field tracks dark-mode / a11y
+  // changes without the caller rebuilding the view tree.
   controlled_text_field_control(
     value~,
     on_input~,
     placeholder~,
     size=@core.Size::new(width~, height~),
-    font=resolved_style.font,
-    foreground=normal.foreground,
-    placeholder_color=resolved_style.placeholder_color,
-    background=normal.background,
-    border=normal.border,
-    focused_border=focused.border,
-    cursor_color=resolved_style.cursor_color,
-    corner_radius=normal.radius,
+    theme?,
+    variant~,
+    style?,
     on_submit~,
-    bottom_border_only=normal.bottom_border_only,
-    inner_focus_border=focused.inner_focus_border,
   )
 }
 
@@ -119,32 +109,19 @@ pub fn[Msg] text_field_binding(
   on_submit? : Msg? = None,
   placeholder? : String = "",
   variant? : TextFieldVariant = TextFieldVariant::Filled,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   style? : TextFieldStyle,
   width? : Double = 240.0,
   height? : Double = 40.0,
 ) -> @core.View[Msg] {
-  let resolved_style = match style {
-    Some(value) => value
-    None => variant.style(theme)
-  }
-  let normal = resolved_style.normal
-  let focused = resolved_style.focused
   text_field_control(
     value~,
     placeholder~,
     size=@core.Size::new(width~, height~),
-    font=resolved_style.font,
-    foreground=normal.foreground,
-    placeholder_color=resolved_style.placeholder_color,
-    background=normal.background,
-    border=normal.border,
-    focused_border=focused.border,
-    cursor_color=resolved_style.cursor_color,
-    corner_radius=normal.radius,
+    theme?,
+    variant~,
+    style?,
     on_submit~,
-    bottom_border_only=normal.bottom_border_only,
-    inner_focus_border=focused.inner_focus_border,
   )
 }
 
@@ -155,7 +132,7 @@ pub fn[Msg] text_area(
   placeholder? : String = "",
   lines? : Int = 4,
   variant? : TextFieldVariant = TextFieldVariant::Outline,
-  theme? : @core.Theme = default_theme(),
+  theme? : @core.Theme,
   width? : Double = 320.0,
   line_height? : Double = 28.0,
 ) -> @core.View[Msg] {
@@ -164,7 +141,7 @@ pub fn[Msg] text_area(
     on_input~,
     placeholder~,
     variant~,
-    theme~,
+    theme?,
     width~,
     height=views_max_double(line_height, lines.to_double() * line_height),
   ).accessibility_label("Multiline text area")

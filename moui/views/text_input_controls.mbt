@@ -24,30 +24,39 @@ fn[Msg] text_field_control(
   value~ : @core.Binding[String],
   placeholder~ : String,
   size~ : @core.Size,
-  font~ : @core.FontSpec,
-  foreground~ : @core.Color,
-  placeholder_color~ : @core.Color,
-  background~ : @core.Brush,
-  border? : @core.BorderStyle? = None,
-  focused_border? : @core.BorderStyle? = None,
-  cursor_color~ : @core.Color,
-  corner_radius? : Double = 0.0,
+  theme? : @core.Theme,
+  variant? : TextFieldVariant = TextFieldVariant::Filled,
+  style? : TextFieldStyle,
   on_input? : ((String) -> Msg)? = None,
   on_submit? : Msg? = None,
   kind? : String = "TextField",
   key? : String? = None,
-  bottom_border_only? : Bool = false,
-  inner_focus_border? : @core.Color? = None,
 ) -> @core.View[Msg] {
+  let theme_revision = match theme {
+    Some(t) => t.revision_fingerprint()
+    None => "context"
+  }
+  let variant_label = match variant {
+    TextFieldVariant::Filled => "filled"
+    TextFieldVariant::Outline => "outline"
+    TextFieldVariant::Plain => "plain"
+  }
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "textfield:\{value.get()}:\{placeholder}:\{view_size_revision(size)}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{on_submit is Some(_)}:\{bottom_border_only}:\{inner_focus_border is Some(_)}"
+      "textfield:\{value.get()}:\{placeholder}:\{view_size_revision(size)}:\{variant_label}:\{theme_revision}:\{on_submit is Some(_)}"
     },
     layout=ctx => {
       @core.ViewLayoutResult::new(size=ctx.constraints.constrain(size))
     },
     paint=ctx => {
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let resolved_style = match style {
+        Some(value) => value
+        None => variant.style(resolved_theme)
+      }
+      let normal = resolved_style.normal
+      let focused = resolved_style.focused
       let commands : Array[@core.DrawCommand] = []
       let overlay_commands : Array[@core.DrawCommand] = []
       append_text_field_commands(
@@ -56,21 +65,25 @@ fn[Msg] text_field_control(
         text=value.get(),
         placeholder~,
         size~,
-        font~,
-        foreground~,
-        placeholder_color~,
-        background~,
-        border~,
-        focused_border~,
-        cursor_color~,
-        corner_radius~,
+        font=resolved_style.font,
+        foreground=normal.foreground,
+        placeholder_color=resolved_style.placeholder_color,
+        background=normal.background,
+        border=normal.border,
+        focused_border=focused.border,
+        cursor_color=resolved_style.cursor_color,
+        corner_radius=normal.radius,
         frame=ctx.frame,
         focused=ctx.focused,
         control=ctx.text_control,
         text_system=ctx.text_system,
-        theme=ctx.environment.theme,
-        bottom_border_only~,
-        inner_focus_border=if ctx.focused { inner_focus_border } else { None },
+        theme=resolved_theme,
+        bottom_border_only=normal.bottom_border_only,
+        inner_focus_border=if ctx.focused {
+          focused.inner_focus_border
+        } else {
+          None
+        },
       )
       {
         commands,
@@ -93,11 +106,16 @@ fn[Msg] text_field_control(
       )
     },
     text_input_state=ctx => {
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let resolved_style = match style {
+        Some(value) => value
+        None => variant.style(resolved_theme)
+      }
       Some(
         text_input_state_for_single_line(
           text=value.get(),
           frame=ctx.frame,
-          font~,
+          font=resolved_style.font,
           control=ctx.text_control,
           text_system=ctx.text_system,
           search_bar=false,
@@ -129,38 +147,24 @@ fn[Msg] controlled_text_field_control(
   on_input~ : (String) -> Msg,
   placeholder~ : String,
   size~ : @core.Size,
-  font~ : @core.FontSpec,
-  foreground~ : @core.Color,
-  placeholder_color~ : @core.Color,
-  background~ : @core.Brush,
-  border? : @core.BorderStyle? = None,
-  focused_border? : @core.BorderStyle? = None,
-  cursor_color~ : @core.Color,
-  corner_radius? : Double = 0.0,
+  theme? : @core.Theme,
+  variant? : TextFieldVariant = TextFieldVariant::Filled,
+  style? : TextFieldStyle,
   on_submit? : Msg? = None,
   kind? : String = "TextField",
   key? : String? = None,
-  bottom_border_only? : Bool = false,
-  inner_focus_border? : @core.Color? = None,
 ) -> @core.View[Msg] {
   text_field_control(
     value=@core.Binding::new(get=() => value, set=_next => ()),
     placeholder~,
     size~,
-    font~,
-    foreground~,
-    placeholder_color~,
-    background~,
-    border~,
-    focused_border~,
-    cursor_color~,
-    corner_radius~,
+    theme?,
+    variant~,
+    style?,
     on_input=Some(on_input),
     on_submit~,
     kind~,
     key~,
-    bottom_border_only~,
-    inner_focus_border~,
   )
 }
 
@@ -168,24 +172,28 @@ fn[Msg] controlled_text_field_control(
 fn[Msg] search_bar_control(
   query~ : @core.Binding[String],
   placeholder~ : String,
-  font~ : @core.FontSpec,
-  foreground~ : @core.Color,
-  placeholder_color~ : @core.Color,
-  background~ : @core.Brush,
-  border? : @core.BorderStyle? = None,
-  focused_border? : @core.BorderStyle? = None,
-  cursor_color~ : @core.Color,
-  corner_radius~ : Double,
+  theme? : @core.Theme,
+  variant? : TextFieldVariant = TextFieldVariant::Filled,
+  style? : TextFieldStyle,
   on_input? : ((String) -> Msg)? = None,
   on_submit? : Msg? = None,
   on_clear? : Msg? = None,
   kind? : String = "SearchBar",
   key? : String? = None,
 ) -> @core.View[Msg] {
+  let theme_revision = match theme {
+    Some(t) => t.revision_fingerprint()
+    None => "context"
+  }
+  let variant_label = match variant {
+    TextFieldVariant::Filled => "filled"
+    TextFieldVariant::Outline => "outline"
+    TextFieldVariant::Plain => "plain"
+  }
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "searchbar:\{query.get()}:\{placeholder}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_color_revision(placeholder_color)}:\{view_brush_revision(background)}:\{view_border_option_revision(border)}:\{view_border_option_revision(focused_border)}:\{view_color_revision(cursor_color)}:\{corner_radius}:\{on_submit is Some(_)}:\{on_clear is Some(_)}"
+      "searchbar:\{query.get()}:\{placeholder}:\{variant_label}:\{theme_revision}:\{on_submit is Some(_)}:\{on_clear is Some(_)}"
     },
     layout=ctx => {
       @core.ViewLayoutResult::new(
@@ -195,6 +203,13 @@ fn[Msg] search_bar_control(
       )
     },
     paint=ctx => {
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let resolved_style = match style {
+        Some(value) => value
+        None => variant.style(resolved_theme)
+      }
+      let normal = resolved_style.normal
+      let focused = resolved_style.focused
       let commands : Array[@core.DrawCommand] = []
       let overlay_commands : Array[@core.DrawCommand] = []
       append_searchbar_commands(
@@ -202,19 +217,19 @@ fn[Msg] search_bar_control(
         overlay_commands,
         text=query.get(),
         placeholder~,
-        font~,
-        foreground~,
-        placeholder_color~,
-        background~,
-        border~,
-        focused_border~,
-        cursor_color~,
-        corner_radius~,
+        font=resolved_style.font,
+        foreground=normal.foreground,
+        placeholder_color=resolved_style.placeholder_color,
+        background=normal.background,
+        border=normal.border,
+        focused_border=focused.border,
+        cursor_color=resolved_style.cursor_color,
+        corner_radius=normal.radius,
         frame=ctx.frame,
         focused=ctx.focused,
         control=ctx.text_control,
         text_system=ctx.text_system,
-        theme=ctx.environment.theme,
+        theme=resolved_theme,
       )
       {
         commands,
@@ -237,11 +252,16 @@ fn[Msg] search_bar_control(
       )
     },
     text_input_state=ctx => {
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let resolved_style = match style {
+        Some(value) => value
+        None => variant.style(resolved_theme)
+      }
       Some(
         text_input_state_for_single_line(
           text=query.get(),
           frame=ctx.frame,
-          font~,
+          font=resolved_style.font,
           control=ctx.text_control,
           text_system=ctx.text_system,
           search_bar=true,
@@ -278,14 +298,9 @@ fn[Msg] controlled_search_bar_control(
   query~ : String,
   on_input~ : (String) -> Msg,
   placeholder~ : String,
-  font~ : @core.FontSpec,
-  foreground~ : @core.Color,
-  placeholder_color~ : @core.Color,
-  background~ : @core.Brush,
-  border? : @core.BorderStyle? = None,
-  focused_border? : @core.BorderStyle? = None,
-  cursor_color~ : @core.Color,
-  corner_radius~ : Double,
+  theme? : @core.Theme,
+  variant? : TextFieldVariant = TextFieldVariant::Filled,
+  style? : TextFieldStyle,
   on_submit? : Msg? = None,
   on_clear? : Msg? = None,
   kind? : String = "SearchBar",
@@ -294,14 +309,9 @@ fn[Msg] controlled_search_bar_control(
   search_bar_control(
     query=@core.Binding::new(get=() => query, set=_next => ()),
     placeholder~,
-    font~,
-    foreground~,
-    placeholder_color~,
-    background~,
-    border~,
-    focused_border~,
-    cursor_color~,
-    corner_radius~,
+    theme?,
+    variant~,
+    style?,
     on_input=Some(on_input),
     on_submit~,
     on_clear~,
