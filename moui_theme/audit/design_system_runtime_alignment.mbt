@@ -752,114 +752,106 @@ fn actual_runtime_token_value(
   tokens : @common.DesignSystemTokens,
 ) -> RuntimeTokenValue {
   match moui_token {
-    "@common.DesignSemanticPalette.foreground" =>
+    "DesignSemanticPalette.foreground" =>
       runtime_color_value(tokens.palette.foreground)
-    "@common.DesignSemanticPalette.background" =>
+    "DesignSemanticPalette.background" =>
       runtime_color_value(tokens.palette.background)
-    "@common.DesignSemanticPalette.surface" =>
+    "DesignSemanticPalette.surface" =>
       runtime_color_value(tokens.palette.surface)
-    "@common.DesignSemanticPalette.surface_variant" =>
+    "DesignSemanticPalette.surface_variant" =>
       runtime_color_value(tokens.palette.surface_variant)
-    "@common.DesignSemanticPalette.primary" =>
+    "DesignSemanticPalette.primary" =>
       runtime_color_value(tokens.palette.primary)
-    "@common.DesignSemanticPalette.primary_foreground" =>
+    "DesignSemanticPalette.primary_foreground" =>
       runtime_color_value(tokens.palette.primary_foreground)
-    "@common.DesignSemanticPalette.outline" =>
+    "DesignSemanticPalette.outline" =>
       runtime_color_value(tokens.palette.outline)
-    "@common.DesignSemanticPalette.muted" =>
-      runtime_color_value(tokens.palette.muted)
-    "@common.DesignSemanticPalette.success" =>
+    "DesignSemanticPalette.muted" => runtime_color_value(tokens.palette.muted)
+    "DesignSemanticPalette.success" =>
       runtime_color_value(tokens.palette.success)
-    "@common.DesignSemanticPalette.warning" =>
+    "DesignSemanticPalette.warning" =>
       runtime_color_value(tokens.palette.warning)
-    "@common.DesignSemanticPalette.danger" =>
-      runtime_color_value(tokens.palette.danger)
-    "@common.DesignSemanticPalette.info" =>
-      runtime_color_value(tokens.palette.info)
-    "@common.DesignSemanticPalette.focus" =>
-      runtime_color_value(tokens.palette.focus)
-    "@common.DesignSemanticPalette.scrim" =>
-      runtime_color_value(tokens.palette.scrim)
-    "@common.DesignComponentTokens.button.primary.background" =>
+    "DesignSemanticPalette.danger" => runtime_color_value(tokens.palette.danger)
+    "DesignSemanticPalette.info" => runtime_color_value(tokens.palette.info)
+    "DesignSemanticPalette.focus" => runtime_color_value(tokens.palette.focus)
+    "DesignSemanticPalette.scrim" => runtime_color_value(tokens.palette.scrim)
+    "DesignComponentTokens.button.primary.background" =>
       runtime_color_value(tokens.components.button.primary.background)
-    "@common.DesignComponentTokens.button.primary.foreground" =>
+    "DesignComponentTokens.button.primary.foreground" =>
       runtime_color_value(tokens.components.button.primary.foreground)
-    "@common.DesignComponentTokens.feedback.success.foreground" =>
+    "DesignComponentTokens.feedback.success.foreground" =>
       runtime_color_value(tokens.components.feedback.success.foreground)
-    "@common.DesignComponentTokens.form_validation.foreground" =>
+    "DesignComponentTokens.form_validation.foreground" =>
       runtime_color_value(tokens.components.form_validation.foreground)
-    "@common.DesignComponentTokens.progress.foreground" =>
+    "DesignComponentTokens.progress.foreground" =>
       runtime_color_value(tokens.components.progress.foreground)
-    "@common.DesignComponentTokens.slider.foreground" =>
+    "DesignComponentTokens.slider.foreground" =>
       runtime_color_value(tokens.components.slider.foreground)
-    "@common.DesignComponentTokens.text_field.normal.border_width" =>
+    "DesignComponentTokens.text_field.normal.border_width" =>
       runtime_double_value(tokens.components.text_field.normal.border_width)
-    "@common.DesignComponentTokens.text_field.focused.border_width" =>
+    "DesignComponentTokens.text_field.focused.border_width" =>
       runtime_double_value(tokens.components.text_field.focused.border_width)
-    "@common.DesignTextFieldTokens.focused.border" =>
+    "DesignTextFieldTokens.focused.border" =>
       runtime_color_value(tokens.components.text_field.focused.border)
-    "@common.DesignComponentTokens.picker.background" =>
+    "DesignComponentTokens.picker.background" =>
       runtime_color_value(tokens.components.picker.background.fallback_color())
-    "@common.DesignTypographyTokens.body.size" =>
+    "DesignTypographyTokens.body.size" =>
       runtime_double_value(tokens.typography.body.size)
-    "@common.DesignTypographyTokens.title.size" =>
+    "DesignTypographyTokens.title.size" =>
       runtime_double_value(tokens.typography.title.size)
-    "@common.DesignTypographyTokens.caption.size" =>
+    "DesignTypographyTokens.caption.size" =>
       runtime_double_value(tokens.typography.caption.size)
-    "@common.DesignTypographyTokens.control.size" =>
+    "DesignTypographyTokens.control.size" =>
       runtime_double_value(tokens.typography.control.size)
-    "@common.DesignTypographyTokens.body.weight" =>
+    "DesignTypographyTokens.body.weight" =>
       runtime_int_value(tokens.typography.body.weight)
-    "@common.DesignTypographyTokens.title.weight" =>
+    "DesignTypographyTokens.title.weight" =>
       runtime_int_value(tokens.typography.title.weight)
-    "@common.DesignTypographyTokens.control.weight" =>
+    "DesignTypographyTokens.control.weight" =>
       runtime_int_value(tokens.typography.control.weight)
-    "@common.DesignTypographyTokens.body.families" =>
+    "DesignTypographyTokens.body.families" =>
       runtime_value(tokens.typography.body.css_family())
-    "@common.DesignTypographyTokens.control.families" =>
+    "DesignTypographyTokens.control.families" =>
       runtime_value(tokens.typography.control.css_family())
-    "@common.DesignStateLayerTokens.hover_alpha" =>
+    "DesignStateLayerTokens.hover_alpha" =>
       runtime_double_value(tokens.state_layer.hover_alpha)
-    "@common.DesignStateLayerTokens.pressed_alpha" =>
+    "DesignStateLayerTokens.pressed_alpha" =>
       runtime_double_value(tokens.state_layer.pressed_alpha)
-    "@common.DesignRadiusTokens.sm" => runtime_double_value(tokens.radius.sm)
-    "@common.DesignRadiusTokens.md" => runtime_double_value(tokens.radius.md)
-    "@common.DesignRadiusTokens.lg" => runtime_double_value(tokens.radius.lg)
-    "@common.DesignRadiusTokens.pill" =>
-      runtime_double_value(tokens.radius.pill)
-    "@common.DesignElevationTokens.sm.offset.y" =>
+    "DesignRadiusTokens.sm" => runtime_double_value(tokens.radius.sm)
+    "DesignRadiusTokens.md" => runtime_double_value(tokens.radius.md)
+    "DesignRadiusTokens.lg" => runtime_double_value(tokens.radius.lg)
+    "DesignRadiusTokens.pill" => runtime_double_value(tokens.radius.pill)
+    "DesignElevationTokens.sm.offset.y" =>
       runtime_double_value(tokens.elevation.sm.offset.y)
-    "@common.DesignElevationTokens.md.offset.y" =>
+    "DesignElevationTokens.md.offset.y" =>
       runtime_double_value(tokens.elevation.md.offset.y)
-    "@common.DesignElevationTokens.lg.offset.y" =>
+    "DesignElevationTokens.lg.offset.y" =>
       runtime_double_value(tokens.elevation.lg.offset.y)
-    "@common.DesignElevationTokens.card" =>
+    "DesignElevationTokens.card" =>
       match tokens.elevation.card {
         Some(value) => runtime_double_value(value.offset.y)
         None => runtime_unavailable()
       }
-    "@common.DesignElevationTokens.flyout" =>
+    "DesignElevationTokens.flyout" =>
       match tokens.elevation.flyout {
         Some(value) => runtime_double_value(value.offset.y)
         None => runtime_unavailable()
       }
-    "@common.DesignElevationTokens.dialog" =>
+    "DesignElevationTokens.dialog" =>
       match tokens.elevation.dialog {
         Some(value) => runtime_double_value(value.offset.y)
         None => runtime_unavailable()
       }
-    "@common.DesignSpacingTokens.xs" => runtime_double_value(tokens.spacing.xs)
-    "@common.DesignSpacingTokens.sm" => runtime_double_value(tokens.spacing.sm)
-    "@common.DesignSpacingTokens.md" => runtime_double_value(tokens.spacing.md)
-    "@common.DesignSpacingTokens.lg" => runtime_double_value(tokens.spacing.lg)
-    "@common.DesignSpacingTokens.xl" => runtime_double_value(tokens.spacing.xl)
-    "@common.DesignMotionTokens.fast_ms" =>
-      runtime_double_value(tokens.motion.fast_ms)
-    "@common.DesignMotionTokens.normal_ms" =>
+    "DesignSpacingTokens.xs" => runtime_double_value(tokens.spacing.xs)
+    "DesignSpacingTokens.sm" => runtime_double_value(tokens.spacing.sm)
+    "DesignSpacingTokens.md" => runtime_double_value(tokens.spacing.md)
+    "DesignSpacingTokens.lg" => runtime_double_value(tokens.spacing.lg)
+    "DesignSpacingTokens.xl" => runtime_double_value(tokens.spacing.xl)
+    "DesignMotionTokens.fast_ms" => runtime_double_value(tokens.motion.fast_ms)
+    "DesignMotionTokens.normal_ms" =>
       runtime_double_value(tokens.motion.normal_ms)
-    "@common.DesignMotionTokens.slow_ms" =>
-      runtime_double_value(tokens.motion.slow_ms)
-    "@common.DesignMotionTokens.easing" =>
+    "DesignMotionTokens.slow_ms" => runtime_double_value(tokens.motion.slow_ms)
+    "DesignMotionTokens.easing" =>
       runtime_value(easing_runtime_value(tokens.motion.easing))
     _ => runtime_unavailable()
   }
