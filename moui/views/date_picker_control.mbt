@@ -10,20 +10,22 @@ fn[Msg] date_picker_control(
   selected~ : @core.Binding[@core.DateValue],
   mode~ : DatePickerDisplayMode,
   placeholder~ : String,
-  font~ : @core.FontSpec,
-  foreground~ : @core.Color,
-  background~ : @core.Brush,
-  corner_radius~ : Double,
+  theme? : @core.Theme,
+  style? : PickerStyle,
   min_date? : @core.DateValue? = None,
   max_date? : @core.DateValue? = None,
   on_select? : ((@core.DateValue) -> Msg)? = None,
   kind? : String = "DatePicker",
   key? : String? = None,
 ) -> @core.View[Msg] {
+  let theme_revision = match theme {
+    Some(t) => t.revision_fingerprint()
+    None => "context"
+  }
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind~, key~),
     revision=() => {
-      "datepicker:\{datepicker_display_value(selected.get(), mode)}:\{datepicker_mode_revision(mode)}:\{placeholder}:\{view_font_revision(font)}:\{view_color_revision(foreground)}:\{view_brush_revision(background)}:\{corner_radius}:\{datepicker_value_option_revision(min_date)}:\{datepicker_value_option_revision(max_date)}:\{on_select is Some(_)}"
+      "datepicker:\{datepicker_display_value(selected.get(), mode)}:\{datepicker_mode_revision(mode)}:\{placeholder}:\{theme_revision}:\{datepicker_value_option_revision(min_date)}:\{datepicker_value_option_revision(max_date)}:\{on_select is Some(_)}"
     },
     layout=ctx => {
       @core.ViewLayoutResult::new(
@@ -32,26 +34,31 @@ fn[Msg] date_picker_control(
         ),
       )
     },
-   paint=ctx => {
-     let commands : Array[@core.DrawCommand] = []
-     let overlay_commands : Array[@core.DrawCommand] = []
-     append_datepicker_commands(
-       commands,
-       overlay_commands,
-       frame=ctx.frame,
-       selected=selected.get(),
-       view_date=datepicker_view_date(ctx.state, selected.get()),
-       mode~,
-       placeholder~,
-       font~,
-       foreground~,
-       background~,
-       corner_radius~,
-       min_date~,
-       max_date~,
-       expanded=ctx.state.expanded,
-        theme=ctx.environment.theme,
-     )
+    paint=ctx => {
+      let resolved_theme = theme.unwrap_or(ctx.environment.theme)
+      let resolved_style = match style {
+        Some(value) => value
+        None => PickerStyle::default(theme=resolved_theme)
+      }
+      let commands : Array[@core.DrawCommand] = []
+      let overlay_commands : Array[@core.DrawCommand] = []
+      append_datepicker_commands(
+        commands,
+        overlay_commands,
+        frame=ctx.frame,
+        selected=selected.get(),
+        view_date=datepicker_view_date(ctx.state, selected.get()),
+        mode~,
+        placeholder~,
+        font=resolved_style.font,
+        foreground=resolved_style.foreground,
+        background=resolved_style.background,
+        corner_radius=resolved_style.radius,
+        min_date~,
+        max_date~,
+        expanded=ctx.state.expanded,
+        theme=resolved_theme,
+      )
       {
         commands,
         child_layers: [],
@@ -104,9 +111,9 @@ fn append_datepicker_commands(
   foreground~ : @core.Color,
   background~ : @core.Brush,
   corner_radius~ : Double,
- min_date~ : @core.DateValue?,
- max_date~ : @core.DateValue?,
- expanded~ : Bool,
+  min_date~ : @core.DateValue?,
+  max_date~ : @core.DateValue?,
+  expanded~ : Bool,
   theme~ : @core.Theme,
 ) -> Unit {
   // Use the active theme (threaded from the paint environment) instead of a
@@ -153,19 +160,19 @@ fn append_datepicker_commands(
       ),
     ),
   )
- if expanded {
-   append_datepicker_popup_commands(
-     overlay_commands,
-     frame~,
-     selected~,
-     view_date~,
-     foreground~,
-     background~,
-     min_date~,
-     max_date~,
+  if expanded {
+    append_datepicker_popup_commands(
+      overlay_commands,
+      frame~,
+      selected~,
+      view_date~,
+      foreground~,
+      background~,
+      min_date~,
+      max_date~,
       theme~,
-   )
- }
+    )
+  }
 }
 
 ///|
