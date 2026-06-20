@@ -488,6 +488,73 @@ fn markdown_editor_source_inspector_width() -> Double {
 }
 
 ///|
+/// A thin scroll indicator drawn at the right edge of the editor viewport.
+/// The framework's `scroll_view` exposes only the current offset (not the
+/// content size), so this is a presence indicator — visible while the document
+/// is scrolled — rather than a proportional thumb. It fades out at the top so
+/// the page edge stays clean when unscrolled.
+fn markdown_editor_scroll_indicator(
+  scroll : @core.ScrollState,
+  viewport_height~ : Double,
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
+  let offset_y = scroll.offset().y
+  // Hide entirely while at the top (no content scrolled past).
+  if offset_y <= 0.0 {
+    @views.empty()
+  } else {
+    let indicator_alpha = if offset_y > 40.0 {
+      0.5
+    } else {
+      offset_y / 40.0 * 0.5
+    }
+    @views.custom_layout(
+      measure=constraints =>
+        constraints.constrain(
+          @core.Size::new(width=0.0, height=viewport_height),
+        ),
+      paint=bounds => {
+        // A 3px-wide track pinned to the right edge of the laid-out frame.
+        let track_x = bounds.origin.x + bounds.size.width - 3.0
+        let track = @core.Rect::new(
+          x=track_x,
+          y=bounds.origin.y,
+          width=3.0,
+          height=bounds.size.height,
+        )
+        let thumb_height = markdown_editor_max_double(
+          40.0,
+          bounds.size.height * 0.18,
+        )
+        // Position the thumb proportionally to the offset within the visible
+        // region (approximate, since content size is unknown).
+        let max_thumb_travel = markdown_editor_max_double(
+          1.0,
+          bounds.size.height - thumb_height,
+        )
+        let thumb_y = track.origin.y +
+          markdown_editor_min_double(max_thumb_travel, offset_y / 4.0)
+        let track_color = theme.palette.muted.multiply_alpha(0.18)
+        let thumb_color = theme.palette.muted.multiply_alpha(indicator_alpha)
+        [
+          @core.DrawCommand::FillRect(track, track_color),
+          @core.DrawCommand::FillRect(
+            @core.Rect::new(
+              x=track.origin.x,
+              y=thumb_y,
+              width=track.size.width,
+              height=thumb_height,
+            ),
+            thumb_color,
+          ),
+        ]
+      },
+      semantics_label="Editor scroll indicator",
+    )
+  }
+}
+
+///|
 fn markdown_editor_viewport_height() -> Double {
   520.0
 }
@@ -649,8 +716,18 @@ fn editor_source_layout(
   } else {
     editor
   }
+  // Overlay a scroll indicator on the right edge so long documents give a
+  // visual cue of the scroll position.
+  let editor_with_indicator = @views.stack([
+    editor_view,
+    markdown_editor_scroll_indicator(
+      app.editor_scroll,
+      viewport_height~,
+      theme,
+    ),
+  ])
   if !show_source && !show_outline && !show_files && !show_info {
-    editor_view
+    editor_with_indicator
   } else {
     let side_children : Array[@moui.View[MarkdownEditorMsg]] = []
     if show_files {
@@ -658,7 +735,7 @@ fn editor_source_layout(
         files_inspector(app, snapshot, theme, height=viewport_height),
       )
     }
-    side_children.push(editor_view)
+    side_children.push(editor_with_indicator)
     if show_info {
       side_children.push(
         document_info_inspector(snapshot, theme, height=viewport_height),
