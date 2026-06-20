@@ -156,8 +156,8 @@ fn density_resolver_record(
     source_ref,
     token_path,
     source_locked,
-    tokens_api: "@common.DesignPreset::tokens(..., density=...)",
-    theme_api: "@common.DesignPreset::theme(..., density=...)",
+    tokens_api: "DesignPreset::tokens(..., density=...)",
+    theme_api: "DesignPreset::theme(..., density=...)",
     scheme,
     density_multiplier: density.multiplier(),
     spacing_sm: tokens.spacing.sm,
@@ -211,8 +211,8 @@ fn density_representative_spacing_aligned(
 ) -> Bool {
   for
     slot in [
-      "@common.DesignSpacingTokens.xs", "@common.DesignSpacingTokens.sm", "@common.DesignSpacingTokens.md",
-      "@common.DesignSpacingTokens.lg", "@common.DesignSpacingTokens.xl",
+      "DesignSpacingTokens.xs", "DesignSpacingTokens.sm", "DesignSpacingTokens.md",
+      "DesignSpacingTokens.lg", "DesignSpacingTokens.xl",
     ] {
     let mut aligned = false
     for item in runtime_token_alignment_report(preset) {

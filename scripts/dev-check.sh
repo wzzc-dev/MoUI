@@ -33,7 +33,11 @@ for arg in "$@"; do
     --help|-h)
       printf 'Usage: %s [--platform-examples-test] [--platform-examples-build] [--skia-real-smoke] [--wgpu-experimental] [--theme-diagnostics]\n' "$0"
       printf '\n'
+<<<<<<< Updated upstream
       printf 'Runs bounded mainline package checks, guidance consistency checks, and Showcase and Markdown Editor app/Web checks.\n'
+=======
+      printf 'Runs bounded mainline package checks, guidance consistency checks, Showcase and Markdown Editor app/Web checks, and checked evidence manifest schema validation.\n'
+>>>>>>> Stashed changes
       printf 'Pass --platform-examples-test to also run current-platform backend tests.\n'
       printf 'Pass --platform-examples-build to also build current-platform native examples.\n'
       printf 'Pass --skia-real-smoke to run the opt-in real Skia smoke when local Skia link flags are configured.\n'
