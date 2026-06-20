@@ -354,45 +354,6 @@ fn editor_button(
 }
 
 ///|
-fn editor_chrome_button(
-  label : String,
-  message : MarkdownEditorMsg,
-  theme : @moui.Theme,
-) -> @moui.View[MarkdownEditorMsg] {
-  let width = if label == "Src" ||
-    label == "Nav" ||
-    label == "Cmd" ||
-    label == "Raw" ||
-    label == "Zen" {
-    42.0
-  } else if label == "Type" {
-    48.0
-  } else if label == "Focus" {
-    58.0
-  } else if label == "Save As" {
-    76.0
-  } else if label == "Open" {
-    54.0
-  } else if label == "Import" || label == "Export" {
-    66.0
-  } else if label == "New" {
-    48.0
-  } else if label == "Save" {
-    52.0
-  } else {
-    54.0
-  }
-  button(
-    label,
-    on_click=message,
-    variant=@views.ButtonVariant::Ghost,
-    theme~,
-    width~,
-    height=30.0,
-  )
-}
-
-///|
 fn MarkdownEditorApp::appearance_spec(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorAppearanceSpec {
