@@ -323,8 +323,18 @@ fn MarkdownEditorApp::find_bar(
         )
         .font(theme.typography.caption)
         .foreground(theme.palette.muted),
-        editor_button("Prev", FindPrevious, @views.ButtonVariant::Ghost, theme),
-        editor_button("Next", FindNext, @views.ButtonVariant::Ghost, theme),
+        editor_find_icon_button(
+          @views.IconName::ChevronLeft,
+          "Previous match",
+          FindPrevious,
+          theme,
+        ),
+        editor_find_icon_button(
+          @views.IconName::ChevronRight,
+          "Next match",
+          FindNext,
+          theme,
+        ),
         editor_button(
           "Replace",
           ReplaceFindCurrent,
@@ -332,7 +342,12 @@ fn MarkdownEditorApp::find_bar(
           theme,
         ),
         editor_button("All", ReplaceFindAll, @views.ButtonVariant::Tonal, theme),
-        editor_button("Done", CloseFind, @views.ButtonVariant::Ghost, theme),
+        editor_find_icon_button(
+          @views.IconName::Close,
+          "Close find bar",
+          CloseFind,
+          theme,
+        ),
       ],
       spacing=theme.spacing_scale.xs,
       align=@views.CrossAlign::Center,
