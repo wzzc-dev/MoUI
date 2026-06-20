@@ -1,7 +1,7 @@
 ///|
 pub(all) struct DesignVariantResolverRecord {
-  preset : DesignPreset
-  variant : DesignSchemeVariant
+  preset : @common.DesignPreset
+  variant : @common.DesignSchemeVariant
   source_family : String
   official_source : String
   source_declared : Bool
@@ -14,7 +14,7 @@ pub(all) struct DesignVariantResolverRecord {
   theme_api : String
   system_scheme : @core.ColorScheme
   resolved_scheme : @core.ColorScheme
-  density : DesignDensity
+  density : @common.DesignDensity
   resolves_tokens : Bool
   resolves_theme : Bool
   status : DesignTokenStatus
@@ -22,26 +22,26 @@ pub(all) struct DesignVariantResolverRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignPreset::variant_resolver_report(
-  self : DesignPreset,
+pub fn variant_resolver_report(
+  preset : @common.DesignPreset,
   system_scheme? : @core.ColorScheme = @core.ColorScheme::Dark,
-  density? : DesignDensity = DesignDensity::Standard,
+  density? : @common.DesignDensity = @common.DesignDensity::Standard,
 ) -> Array[DesignVariantResolverRecord] {
   let records : Array[DesignVariantResolverRecord] = []
-  for item in self.variant_coverage() {
-    records.push(variant_resolver_record(self, item, system_scheme, density))
+  for item in variant_coverage(preset) {
+    records.push(variant_resolver_record(preset, item, system_scheme, density))
   }
   records
 }
 
 ///|
-pub fn DesignPreset::variant_resolver_for(
-  self : DesignPreset,
-  variant : DesignSchemeVariant,
+pub fn variant_resolver_for(
+  preset : @common.DesignPreset,
+  variant : @common.DesignSchemeVariant,
   system_scheme? : @core.ColorScheme = @core.ColorScheme::Dark,
-  density? : DesignDensity = DesignDensity::Standard,
+  density? : @common.DesignDensity = @common.DesignDensity::Standard,
 ) -> DesignVariantResolverRecord? {
-  for item in self.variant_resolver_report(system_scheme~, density~) {
+  for item in variant_resolver_report(preset, system_scheme~, density~) {
     if item.variant == variant {
       return Some(item)
     }
@@ -50,14 +50,14 @@ pub fn DesignPreset::variant_resolver_for(
 }
 
 ///|
-pub fn DesignPreset::variant_resolver_count(self : DesignPreset) -> Int {
-  self.variant_resolver_report().length()
+pub fn variant_resolver_count(preset : @common.DesignPreset) -> Int {
+  variant_resolver_report(preset).length()
 }
 
 ///|
-pub fn DesignPreset::variant_resolver_gap_count(self : DesignPreset) -> Int {
+pub fn variant_resolver_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.variant_resolver_report() {
+  for item in variant_resolver_report(preset) {
     if !item.resolves_tokens ||
       !item.resolves_theme ||
       item.status == DesignTokenStatus::NotMapped ||
@@ -70,11 +70,9 @@ pub fn DesignPreset::variant_resolver_gap_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::variant_resolver_source_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn variant_resolver_source_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.variant_resolver_report() {
+  for item in variant_resolver_report(preset) {
     if !item.source_declared || !item.source_locked {
       count = count + 1
     }
@@ -83,11 +81,11 @@ pub fn DesignPreset::variant_resolver_source_gap_count(
 }
 
 ///|
-pub fn DesignPreset::variant_resolver_official_parity_gap_count(
-  self : DesignPreset,
+pub fn variant_resolver_official_parity_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.variant_resolver_report() {
+  for item in variant_resolver_report(preset) {
     if item.remaining_gap != "none" {
       count = count + 1
     }
@@ -97,10 +95,10 @@ pub fn DesignPreset::variant_resolver_official_parity_gap_count(
 
 ///|
 fn variant_resolver_record(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   coverage : DesignVariantCoverage,
   system_scheme : @core.ColorScheme,
-  density : DesignDensity,
+  density : @common.DesignDensity,
 ) -> DesignVariantResolverRecord {
   let official_source = variant_official_source(preset)
   let source = variant_source_for_url(preset, official_source)
@@ -155,8 +153,8 @@ fn variant_resolver_record(
     source_ref,
     token_path,
     source_locked,
-    tokens_api: "DesignPreset::tokens_for_variant(...)",
-    theme_api: "DesignPreset::theme_for_variant(...)",
+    tokens_api: "@common.DesignPreset::tokens_for_variant(...)",
+    theme_api: "@common.DesignPreset::theme_for_variant(...)",
     system_scheme,
     resolved_scheme: tokens.scheme,
     density,
@@ -168,7 +166,7 @@ fn variant_resolver_record(
 }
 
 ///|
-fn variant_official_source(preset : DesignPreset) -> String {
+fn variant_official_source(preset : @common.DesignPreset) -> String {
   match preset {
     Material => "https://material-web.dev/theming/color/"
     Carbon => "https://carbondesignsystem.com/elements/themes/code/"
@@ -188,10 +186,10 @@ fn variant_remaining_gap(coverage : DesignVariantCoverage) -> String {
 
 ///|
 fn variant_source_for_url(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   url : String,
 ) -> DesignSystemSource? {
-  for source in preset.sources() {
+  for source in sources(preset) {
     if source.url == url {
       return Some(source)
     }

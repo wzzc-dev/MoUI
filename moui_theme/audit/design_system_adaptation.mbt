@@ -10,7 +10,7 @@ pub(all) enum DesignAdaptationKind {
 
 ///|
 pub(all) struct DesignAdaptationRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   kind : DesignAdaptationKind
   category : DesignTokenCategory
   official_scope : String
@@ -28,8 +28,8 @@ pub(all) struct DesignAdaptationRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignAdaptationKind::label(self : DesignAdaptationKind) -> String {
-  match self {
+pub fn DesignAdaptationKind::label(preset : DesignAdaptationKind) -> String {
+  match preset {
     DirectRoleMapping => "direct role mapping"
     CollapsedRoleMatrix => "collapsed role matrix"
     Approximation => "approximation"
@@ -40,10 +40,10 @@ pub fn DesignAdaptationKind::label(self : DesignAdaptationKind) -> String {
 }
 
 ///|
-pub fn DesignPreset::adaptation_report(
-  self : DesignPreset,
+pub fn adaptation_report(
+  preset : @common.DesignPreset,
 ) -> Array[DesignAdaptationRecord] {
-  match self {
+  match preset {
     Material => material_adaptation_report()
     Carbon => carbon_adaptation_report()
     Primer => primer_adaptation_report()
@@ -52,11 +52,11 @@ pub fn DesignPreset::adaptation_report(
 }
 
 ///|
-pub fn DesignPreset::adaptation_report_for(
-  self : DesignPreset,
+pub fn adaptation_report_for(
+  preset : @common.DesignPreset,
   official_scope : String,
 ) -> DesignAdaptationRecord? {
-  for item in self.adaptation_report() {
+  for item in adaptation_report(preset) {
     if item.official_scope == official_scope {
       return Some(item)
     }
@@ -65,14 +65,14 @@ pub fn DesignPreset::adaptation_report_for(
 }
 
 ///|
-pub fn DesignPreset::adaptation_record_count(self : DesignPreset) -> Int {
-  self.adaptation_report().length()
+pub fn adaptation_record_count(preset : @common.DesignPreset) -> Int {
+  adaptation_report(preset).length()
 }
 
 ///|
-pub fn DesignPreset::aligned_adaptation_count(self : DesignPreset) -> Int {
+pub fn aligned_adaptation_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.adaptation_report() {
+  for item in adaptation_report(preset) {
     if item.status == DesignTokenStatus::ThemeMapped ||
       item.status == DesignTokenStatus::ComponentMapped ||
       item.status == DesignTokenStatus::OfficialComplete {
@@ -83,9 +83,9 @@ pub fn DesignPreset::aligned_adaptation_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::adaptation_gap_count(self : DesignPreset) -> Int {
+pub fn adaptation_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.adaptation_report() {
+  for item in adaptation_report(preset) {
     if item.status == DesignTokenStatus::NotMapped ||
       item.status == DesignTokenStatus::SourceMapped ||
       item.status == DesignTokenStatus::PreviewMapped {
@@ -96,11 +96,9 @@ pub fn DesignPreset::adaptation_gap_count(self : DesignPreset) -> Int {
 }
 
 ///|
-pub fn DesignPreset::adaptation_source_lock_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn adaptation_source_lock_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.adaptation_report() {
+  for item in adaptation_report(preset) {
     if !item.source_declared || !item.source_locked {
       count = count + 1
     }
@@ -109,11 +107,9 @@ pub fn DesignPreset::adaptation_source_lock_gap_count(
 }
 
 ///|
-pub fn DesignPreset::undeclared_adaptation_source_count(
-  self : DesignPreset,
-) -> Int {
+pub fn undeclared_adaptation_source_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.adaptation_report() {
+  for item in adaptation_report(preset) {
     if !item.source_declared {
       count = count + 1
     }
@@ -126,73 +122,73 @@ fn material_adaptation_report() -> Array[DesignAdaptationRecord] {
   let source = "https://material-web.dev/theming/material-theming/"
   [
     adaptation(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::Color,
       "Material sys color roles",
       source,
-      "DesignSemanticPalette + @core.ColorPalette",
+      "@common.DesignSemanticPalette + @core.ColorPalette",
       DesignTokenStatus::PreviewMapped,
       "Primary, on-primary, and error roles map into MoUI semantic slots; the full secondary, tertiary, inverse, and surface-container matrix is collapsed.",
       "Generated Material scheme import and full role matrix are pending.",
     ),
     adaptation(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignAdaptationKind::PendingOfficialImport,
       DesignTokenCategory::Color,
       "Material dynamic color generation",
       source,
-      "DesignPreset::tokens",
+      "@common.DesignPreset::tokens",
       DesignTokenStatus::SourceMapped,
       "MoUI exposes static Material preview tokens rather than generating a full scheme from a seed color.",
       "Seed-color generation and source-locked generated token import are pending.",
     ),
     adaptation(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::Typography,
       "Material type scale",
       source,
-      "DesignTypographyTokens",
+      "@common.DesignTypographyTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI collapses the Material type scale into body, title, caption, and control slots.",
       "Complete display/headline/title/body/label token import is pending.",
     ),
     adaptation(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignAdaptationKind::Approximation,
       DesignTokenCategory::Elevation,
       "Material tonal elevation",
       source,
-      "DesignElevationTokens",
+      "@common.DesignElevationTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI approximates elevation with shadows and surface colors.",
       "Tonal elevation overlays and level-specific Material roles are pending.",
     ),
     adaptation(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignAdaptationKind::DirectRoleMapping,
       DesignTokenCategory::StateLayer,
       "Material state-layer opacity",
       source,
-      "DesignStateLayerTokens",
+      "@common.DesignStateLayerTokens",
       DesignTokenStatus::ComponentMapped,
       "Shared hover, focus, pressed, dragged, selected, and disabled opacity slots exist.",
       "Component-specific state-layer matrices are pending.",
     ),
     adaptation(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::ComponentStyle,
       "Material component tokens",
       source,
-      "DesignComponentTokens",
+      "@common.DesignComponentTokens",
       DesignTokenStatus::ComponentMapped,
       "Representative button, input, progress, picker, feedback, badge, and validation tokens map to neutral component styles.",
       "The full Material component token matrix is pending.",
     ),
     adaptation(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       DesignAdaptationKind::CustomizableOverride,
       DesignTokenCategory::Customization,
       "Material theme customization",
@@ -210,73 +206,73 @@ fn carbon_adaptation_report() -> Array[DesignAdaptationRecord] {
   let source = "https://carbondesignsystem.com/elements/themes/code/"
   [
     adaptation(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::SchemeVariant,
       "Carbon white/g10/g90/g100 themes",
       source,
-      "DesignSchemeVariant",
+      "@common.DesignSchemeVariant",
       DesignTokenStatus::PreviewMapped,
       "MoUI maps Carbon theme families into light, dark, high-contrast, and system variants.",
       "Exact white/g10/g90/g100 generated token sets are pending.",
     ),
     adaptation(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignAdaptationKind::DirectRoleMapping,
       DesignTokenCategory::Color,
       "Carbon background/layer/text/support roles",
       source,
-      "DesignSemanticPalette + @core.SemanticColorScale",
+      "@common.DesignSemanticPalette + @core.SemanticColorScale",
       DesignTokenStatus::ThemeMapped,
       "Background, layer, text, brand, support-error, and support-success roles map into semantic slots.",
       "The complete Carbon role matrix is pending.",
     ),
     adaptation(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignAdaptationKind::Approximation,
       DesignTokenCategory::Spacing,
       "Carbon spacing and density",
       source,
-      "DesignSpacingTokens + DesignDensity",
+      "@common.DesignSpacingTokens + @common.DesignDensity",
       DesignTokenStatus::PreviewMapped,
       "MoUI adapts Carbon density into compact, standard, and comfortable spacing multipliers.",
       "Productive/expressive size matrices and component density overrides are pending.",
     ),
     adaptation(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignAdaptationKind::Approximation,
       DesignTokenCategory::Elevation,
       "Carbon layer and shadow tokens",
       source,
-      "DesignSurfaceTokens + DesignElevationTokens",
+      "@common.DesignSurfaceTokens + @common.DesignElevationTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI maps layer-like surfaces and shadows into neutral surface/elevation slots.",
       "Complete Carbon layer stack and shadow token import is pending.",
     ),
     adaptation(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignAdaptationKind::PendingOfficialImport,
       DesignTokenCategory::Motion,
       "Carbon motion tokens",
       source,
-      "DesignMotionTokens",
+      "@common.DesignMotionTokens",
       DesignTokenStatus::PreviewMapped,
       "Carbon duration/easing tokens are imported, but MoUI collapses them into three neutral duration slots and one easing enum.",
       "A richer neutral motion model is pending.",
     ),
     adaptation(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::ComponentStyle,
       "Carbon component tokens",
       source,
-      "DesignComponentTokens",
+      "@common.DesignComponentTokens",
       DesignTokenStatus::ComponentMapped,
       "Button, field, slider, feedback, badge, and validation mappings target neutral component style structs.",
       "The full Carbon component token matrix is pending.",
     ),
     adaptation(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       DesignAdaptationKind::CustomizableOverride,
       DesignTokenCategory::Customization,
       "Carbon custom themes",
@@ -294,95 +290,95 @@ fn primer_adaptation_report() -> Array[DesignAdaptationRecord] {
   let source = "https://primer.style/product/primitives/color/"
   [
     adaptation(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::SchemeVariant,
       "Primer color modes and accessibility themes",
       source,
-      "DesignSchemeVariant",
+      "@common.DesignSchemeVariant",
       DesignTokenStatus::PreviewMapped,
       "MoUI collapses Primer light, dark, colorblind, and high-contrast modes into light, dark, high-contrast, and system variants.",
       "Exact Primer mode matrix and mode-specific overrides are pending.",
     ),
     adaptation(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignAdaptationKind::DirectRoleMapping,
       DesignTokenCategory::Color,
       "Primer fg/bg/border/status roles",
       source,
-      "DesignSemanticPalette + @core.SemanticColorScale",
+      "@common.DesignSemanticPalette + @core.SemanticColorScale",
       DesignTokenStatus::ThemeMapped,
       "Foreground, background, border, accent, danger, and success roles map into MoUI semantic slots.",
       "The full Primer primitive color matrix is pending.",
     ),
     adaptation(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignAdaptationKind::Approximation,
       DesignTokenCategory::Spacing,
       "Primer size and spacing primitives",
       source,
-      "DesignSpacingTokens + DesignDensity",
+      "@common.DesignSpacingTokens + @common.DesignDensity",
       DesignTokenStatus::PreviewMapped,
       "MoUI imports the five neutral Primer base-size representatives and applies density multipliers through five spacing slots.",
       "Remaining Primer size primitives, negative sizes, z-index, and typography imports are pending.",
     ),
     adaptation(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignAdaptationKind::Approximation,
       DesignTokenCategory::Typography,
       "Primer typography primitives",
       source,
-      "DesignTypographyTokens",
+      "@common.DesignTypographyTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI imports representative Primer text sizes and weights for caption, body, title, and control slots.",
       "Remaining Primer text sizes, line-height, font-family, and exact title weight coverage are pending.",
     ),
     adaptation(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignAdaptationKind::Approximation,
       DesignTokenCategory::Shape,
       "Primer borderRadius primitives",
       source,
-      "DesignRadiusTokens",
+      "@common.DesignRadiusTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI imports Primer borderRadius medium/default directly and maps small, large, and full into neutral radius slots.",
       "Exact Primer small, large, and full radius parity plus component-specific radius overrides remain pending.",
     ),
     adaptation(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignAdaptationKind::Approximation,
       DesignTokenCategory::Elevation,
       "Primer shadow primitives",
       source,
-      "DesignElevationTokens",
+      "@common.DesignElevationTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI imports representative Primer resting small, resting medium, and floating large shadows into neutral elevation slots.",
       "Exact multi-layer shadow parity, mode overrides, high-contrast variants, inset shadows, and remaining floating/resting levels remain pending.",
     ),
     adaptation(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignAdaptationKind::PendingOfficialImport,
       DesignTokenCategory::Motion,
       "Primer animation primitives",
       source,
-      "DesignMotionTokens",
+      "@common.DesignMotionTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI imports Primer base duration/easing primitives but collapses them into three neutral duration slots and one easing enum.",
       "A richer neutral motion model and full animation-family parity are pending.",
     ),
     adaptation(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::ComponentStyle,
       "Primer control tokens",
       source,
-      "DesignComponentTokens",
+      "@common.DesignComponentTokens",
       DesignTokenStatus::ComponentMapped,
       "Control, button, progress, picker, feedback, badge, and validation mappings target neutral component styles.",
       "The complete Primer component token matrix is pending.",
     ),
     adaptation(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       DesignAdaptationKind::CustomizableOverride,
       DesignTokenCategory::Customization,
       "Primer custom primitives",
@@ -400,95 +396,95 @@ fn fluent_adaptation_report() -> Array[DesignAdaptationRecord] {
   let source = "https://fluent2.microsoft.design/design-tokens"
   [
     adaptation(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::Color,
       "Fluent global and alias color tokens",
       source,
-      "DesignSemanticPalette + @core.ColorPalette",
+      "@common.DesignSemanticPalette + @core.ColorPalette",
       DesignTokenStatus::PreviewMapped,
       "MoUI maps core foreground, background, brand, and status aliases into semantic slots.",
       "Complete global/alias color role import is pending.",
     ),
     adaptation(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignAdaptationKind::DirectRoleMapping,
       DesignTokenCategory::SchemeVariant,
       "Fluent light/dark/high contrast themes",
       source,
-      "DesignSchemeVariant",
+      "@common.DesignSchemeVariant",
       DesignTokenStatus::ThemeMapped,
       "Light, dark, high-contrast, and system-aware variants are represented.",
       "Exact Fluent generated theme token sets are pending.",
     ),
     adaptation(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::Typography,
       "Fluent type ramp",
       source,
-      "DesignTypographyTokens",
+      "@common.DesignTypographyTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI source-imports the full Fluent global font file, but collapses the type ramp into body, title, caption, and control slots.",
       "Dedicated neutral line-height, font-family, and expanded type-ramp slots are pending.",
     ),
     adaptation(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::Spacing,
       "Fluent spacing scales",
       source,
-      "DesignSpacingTokens",
+      "@common.DesignSpacingTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI imports the full Fluent horizontal and vertical spacing aliases, but collapses axis, none, nudge, and extended values into five neutral spacing slots.",
       "Exact axis-specific, nudge, and extended neutral spacing slots are pending.",
     ),
     adaptation(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::Shape,
       "Fluent border radius scale",
       source,
-      "DesignRadiusTokens",
+      "@common.DesignRadiusTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI imports the full Fluent global border-radius scale, but collapses none, large, 2XL-6XL, and circular values into four neutral radius slots.",
       "Exact zero, extended radius, and circular sentinel parity are pending.",
     ),
     adaptation(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignAdaptationKind::Approximation,
       DesignTokenCategory::Elevation,
       "Fluent shadow and stroke depth",
       source,
-      "DesignElevationTokens",
+      "@common.DesignElevationTokens",
       DesignTokenStatus::PreviewMapped,
       "MoUI imports Fluent global stroke widths into neutral component border-width slots and still approximates depth through neutral shadow slots and outline colors.",
       "Complete Fluent shadow/depth import and richer neutral stroke-width scale parity are pending.",
     ),
     adaptation(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignAdaptationKind::Approximation,
       DesignTokenCategory::Motion,
       "Fluent duration and curve tokens",
       source,
-      "DesignMotionTokens",
+      "@common.DesignMotionTokens",
       DesignTokenStatus::PreviewMapped,
       "Fluent duration and curve rows are source-imported, but MoUI collapses them into three duration slots and one neutral easing slot.",
       "A richer neutral motion curve model is pending.",
     ),
     adaptation(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignAdaptationKind::CollapsedRoleMatrix,
       DesignTokenCategory::ComponentStyle,
       "Fluent component tokens",
       source,
-      "DesignComponentTokens",
+      "@common.DesignComponentTokens",
       DesignTokenStatus::ComponentMapped,
       "Compound brand, progress, picker, feedback, badge, and validation mappings target neutral component styles.",
       "The complete Fluent component token matrix is pending.",
     ),
     adaptation(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       DesignAdaptationKind::CustomizableOverride,
       DesignTokenCategory::Customization,
       "Fluent brand customization",
@@ -503,7 +499,7 @@ fn fluent_adaptation_report() -> Array[DesignAdaptationRecord] {
 
 ///|
 fn adaptation(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   kind : DesignAdaptationKind,
   category : DesignTokenCategory,
   official_scope : String,
@@ -554,10 +550,10 @@ fn adaptation(
 
 ///|
 fn adaptation_source_for_url(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   url : String,
 ) -> DesignSystemSource? {
-  for source in preset.sources() {
+  for source in sources(preset) {
     if source.url == url {
       return Some(source)
     }

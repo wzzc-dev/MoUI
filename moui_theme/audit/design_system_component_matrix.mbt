@@ -1,6 +1,6 @@
 ///|
 pub(all) struct DesignComponentTokenMatrixRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   component : String
   official_scope : String
   official_source : String
@@ -21,10 +21,10 @@ pub(all) struct DesignComponentTokenMatrixRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignPreset::component_token_matrix(
-  self : DesignPreset,
+pub fn component_token_matrix(
+  preset : @common.DesignPreset,
 ) -> Array[DesignComponentTokenMatrixRecord] {
-  match self {
+  match preset {
     Material => material_component_token_matrix()
     Carbon => carbon_component_token_matrix()
     Primer => primer_component_token_matrix()
@@ -33,11 +33,11 @@ pub fn DesignPreset::component_token_matrix(
 }
 
 ///|
-pub fn DesignPreset::component_token_matrix_for(
-  self : DesignPreset,
+pub fn component_token_matrix_for(
+  preset : @common.DesignPreset,
   component : String,
 ) -> DesignComponentTokenMatrixRecord? {
-  for item in self.component_token_matrix() {
+  for item in component_token_matrix(preset) {
     if item.component == component {
       return Some(item)
     }
@@ -46,16 +46,14 @@ pub fn DesignPreset::component_token_matrix_for(
 }
 
 ///|
-pub fn DesignPreset::component_token_matrix_count(self : DesignPreset) -> Int {
-  self.component_token_matrix().length()
+pub fn component_token_matrix_count(preset : @common.DesignPreset) -> Int {
+  component_token_matrix(preset).length()
 }
 
 ///|
-pub fn DesignPreset::component_token_matrix_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn component_token_matrix_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.component_token_matrix() {
+  for item in component_token_matrix(preset) {
     if item.status == DesignTokenStatus::NotMapped ||
       item.status == DesignTokenStatus::SourceMapped ||
       item.status == DesignTokenStatus::PreviewMapped ||
@@ -67,11 +65,11 @@ pub fn DesignPreset::component_token_matrix_gap_count(
 }
 
 ///|
-pub fn DesignPreset::component_token_matrix_source_gap_count(
-  self : DesignPreset,
+pub fn component_token_matrix_source_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.component_token_matrix() {
+  for item in component_token_matrix(preset) {
     if !item.source_declared || !item.source_locked {
       count = count + 1
     }
@@ -80,44 +78,44 @@ pub fn DesignPreset::component_token_matrix_source_gap_count(
 }
 
 ///|
-pub fn DesignPreset::component_token_matrix_mapped_count(
-  self : DesignPreset,
+pub fn component_token_matrix_mapped_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.component_token_matrix() {
+  for item in component_token_matrix(preset) {
     count = count + item.mapped_token_count
   }
   count
 }
 
 ///|
-pub fn DesignPreset::component_token_matrix_required_count(
-  self : DesignPreset,
+pub fn component_token_matrix_required_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.component_token_matrix() {
+  for item in component_token_matrix(preset) {
     count = count + item.required_token_count
   }
   count
 }
 
 ///|
-pub fn DesignPreset::component_token_matrix_source_imported_count(
-  self : DesignPreset,
+pub fn component_token_matrix_source_imported_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.component_token_matrix() {
+  for item in component_token_matrix(preset) {
     count = count + item.source_imported_token_count
   }
   count
 }
 
 ///|
-pub fn DesignPreset::component_token_matrix_runtime_aligned_count(
-  self : DesignPreset,
+pub fn component_token_matrix_runtime_aligned_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.component_token_matrix() {
+  for item in component_token_matrix(preset) {
     count = count + item.runtime_aligned_token_count
   }
   count
@@ -128,7 +126,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
   let source = "https://material-web.dev/theming/material-theming/"
   [
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "Button",
       "md filled/elevated/outlined/text button tokens",
       source,
@@ -140,7 +138,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
       "Filled button container, label, and pressed state-layer tokens are mapped.",
     ),
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "TextField",
       "md text-field tokens",
       source,
@@ -152,7 +150,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
       "Focused border flows through the neutral focus token; full text-field matrix is pending.",
     ),
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "Surface",
       "md surface/container roles",
       source,
@@ -164,7 +162,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
       "Neutral base/raised/overlay surfaces map a subset of Material surface roles.",
     ),
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "ChoiceControl",
       "md checkbox/radio/switch tokens",
       source,
@@ -176,7 +174,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
       "Shared selected and disabled colors exist; component-specific control matrices are pending.",
     ),
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "Progress",
       "md linear progress tokens",
       source,
@@ -188,7 +186,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
       "Active indicator color maps to the neutral progress foreground.",
     ),
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "Slider",
       "md slider tokens",
       source,
@@ -200,7 +198,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
       "Neutral slider foreground/thumb tokens exist; Material slider token import is pending.",
     ),
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "Picker",
       "md menu/select tokens",
       source,
@@ -212,7 +210,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
       "Menu container color maps to the neutral picker background.",
     ),
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "DatePicker",
       "md date-picker tokens",
       source,
@@ -224,7 +222,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
       "DatePicker currently reuses neutral picker tokens.",
     ),
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "Feedback",
       "Material status/error roles",
       source,
@@ -236,7 +234,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
       "Error role maps to danger feedback; other status tone source import is pending.",
     ),
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "Badge",
       "Material badge tokens",
       source,
@@ -248,7 +246,7 @@ fn material_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] 
       "Badge tone tokens are generated from MoUI semantic palette roles.",
     ),
     matrix_record(
-      DesignPreset::Material,
+      @common.DesignPreset::Material,
       "FormValidation",
       "Material supporting/error text roles",
       source,
@@ -267,7 +265,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
   let source = "https://carbondesignsystem.com/elements/color/tokens/"
   [
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Button",
       "Carbon button tokens",
       source,
@@ -279,7 +277,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "$button-primary maps to the neutral primary button background.",
     ),
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "TextField",
       "Carbon field and border tokens",
       source,
@@ -291,7 +289,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "$field and $border-interactive map to neutral field background/focus tokens.",
     ),
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Surface",
       "Carbon layer tokens",
       source,
@@ -303,7 +301,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "$layer-01 maps to the neutral surface role.",
     ),
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "ChoiceControl",
       "Carbon selection control tokens",
       source,
@@ -315,7 +313,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Interactive border/brand colors feed the shared choice-control selected color.",
     ),
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Progress",
       "Carbon progress indicator tokens",
       source,
@@ -327,7 +325,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Progress currently derives from the Carbon primary semantic color.",
     ),
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Slider",
       "Carbon slider tokens",
       source,
@@ -339,7 +337,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "$slider-filled-track maps to neutral slider foreground.",
     ),
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Picker",
       "Carbon field/menu tokens",
       source,
@@ -351,7 +349,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "$field maps to the neutral picker background.",
     ),
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "DatePicker",
       "Carbon date picker tokens",
       source,
@@ -363,7 +361,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "DatePicker currently reuses neutral picker tokens.",
     ),
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Feedback",
       "Carbon support/status tokens",
       source,
@@ -375,7 +373,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "$support-success and $support-error map to neutral feedback tones.",
     ),
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "Badge",
       "Carbon tag/status tokens",
       source,
@@ -387,7 +385,7 @@ fn carbon_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Badge tone tokens are generated from MoUI semantic palette roles.",
     ),
     matrix_record(
-      DesignPreset::Carbon,
+      @common.DesignPreset::Carbon,
       "FormValidation",
       "Carbon invalid field tokens",
       source,
@@ -406,7 +404,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
   let source = "https://primer.style/product/primitives/color/"
   [
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Button",
       "Primer button tokens",
       source,
@@ -418,7 +416,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "--button-primary-bgColor-rest maps to the neutral primary button background.",
     ),
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "TextField",
       "Primer control border/background tokens",
       source,
@@ -430,7 +428,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "--control-bgColor-rest and --control-borderColor-emphasis cover part of the neutral input matrix.",
     ),
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Surface",
       "Primer canvas/overlay tokens",
       source,
@@ -442,7 +440,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "--bgColor-default maps to the neutral background/surface baseline.",
     ),
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "ChoiceControl",
       "Primer control selection tokens",
       source,
@@ -454,7 +452,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Accent foreground feeds the neutral selected control color.",
     ),
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Progress",
       "Primer progress tokens",
       source,
@@ -466,7 +464,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "--progressBar-fgColor-accent maps to neutral progress foreground.",
     ),
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Slider",
       "Primer range/control tokens",
       source,
@@ -478,7 +476,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Slider currently derives from the Primer accent semantic color.",
     ),
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Picker",
       "Primer select/control tokens",
       source,
@@ -490,7 +488,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "--control-bgColor-rest maps to neutral picker background.",
     ),
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "DatePicker",
       "Primer date picker tokens",
       source,
@@ -502,7 +500,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "DatePicker currently reuses neutral picker tokens.",
     ),
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Feedback",
       "Primer status roles",
       source,
@@ -514,7 +512,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "--fgColor-success and --fgColor-danger map to neutral feedback tones.",
     ),
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "Badge",
       "Primer label/status tokens",
       source,
@@ -526,7 +524,7 @@ fn primer_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Badge tone tokens are generated from MoUI semantic palette roles.",
     ),
     matrix_record(
-      DesignPreset::Primer,
+      @common.DesignPreset::Primer,
       "FormValidation",
       "Primer danger validation tokens",
       source,
@@ -545,7 +543,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
   let source = "https://fluent2.microsoft.design/design-tokens"
   [
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Button",
       "Fluent compound/button tokens",
       source,
@@ -557,7 +555,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "colorCompoundBrandBackground maps to neutral primary action background.",
     ),
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "TextField",
       "Fluent input field tokens",
       source,
@@ -569,7 +567,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Neutral field tokens derive from Fluent foreground/background aliases.",
     ),
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Surface",
       "Fluent neutral background tokens",
       source,
@@ -581,7 +579,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "colorNeutralBackground1 maps to the neutral background/surface baseline.",
     ),
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "ChoiceControl",
       "Fluent checkbox/radio/switch tokens",
       source,
@@ -593,7 +591,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Brand background feeds the neutral selected control color.",
     ),
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Progress",
       "Fluent progress tokens",
       source,
@@ -605,7 +603,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "ProgressBar.indicator.backgroundColor maps to neutral progress foreground.",
     ),
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Slider",
       "Fluent slider tokens",
       source,
@@ -617,7 +615,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Slider currently derives from the Fluent brand semantic color.",
     ),
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Picker",
       "Fluent menu/dropdown tokens",
       source,
@@ -629,7 +627,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "colorNeutralBackground1 maps to neutral picker background.",
     ),
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "DatePicker",
       "Fluent date picker tokens",
       source,
@@ -641,7 +639,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "DatePicker currently reuses neutral picker tokens.",
     ),
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Feedback",
       "Fluent status aliases",
       source,
@@ -653,7 +651,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Status tones derive from Fluent-style semantic palette values.",
     ),
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "Badge",
       "Fluent badge/status tokens",
       source,
@@ -665,7 +663,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
       "Badge tone tokens are generated from MoUI semantic palette roles.",
     ),
     matrix_record(
-      DesignPreset::Fluent,
+      @common.DesignPreset::Fluent,
       "FormValidation",
       "Fluent validation/error tokens",
       source,
@@ -681,7 +679,7 @@ fn fluent_component_token_matrix() -> Array[DesignComponentTokenMatrixRecord] {
 
 ///|
 fn matrix_record(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   component : String,
   official_scope : String,
   official_source : String,
@@ -742,10 +740,10 @@ fn matrix_record(
 
 ///|
 fn component_matrix_source_for_url(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   url : String,
 ) -> DesignSystemSource? {
-  for source in preset.sources() {
+  for source in sources(preset) {
     if source.url == url {
       return Some(source)
     }
@@ -755,7 +753,7 @@ fn component_matrix_source_for_url(
 
 ///|
 fn component_matrix_source_imported_count_for(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   component : String,
 ) -> Int {
   match preset {
@@ -805,7 +803,7 @@ fn component_matrix_source_imported_count_for(
 
 ///|
 fn component_matrix_runtime_aligned_count_for(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   component : String,
 ) -> Int {
   match preset {

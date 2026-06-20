@@ -10,7 +10,7 @@ pub(all) enum DesignCustomizationKind {
 
 ///|
 pub(all) struct DesignCustomizationCapabilityRecord {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   kind : DesignCustomizationKind
   capability : String
   api_surface : String
@@ -23,8 +23,10 @@ pub(all) struct DesignCustomizationCapabilityRecord {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignCustomizationKind::label(self : DesignCustomizationKind) -> String {
-  match self {
+pub fn DesignCustomizationKind::label(
+  preset : DesignCustomizationKind,
+) -> String {
+  match preset {
     ThemeInheritance => "theme inheritance"
     ThemeTokenOverride => "theme token override"
     DesignTokenInheritance => "design-token inheritance"
@@ -35,12 +37,12 @@ pub fn DesignCustomizationKind::label(self : DesignCustomizationKind) -> String 
 }
 
 ///|
-pub fn DesignPreset::customization_report(
-  self : DesignPreset,
+pub fn customization_report(
+  preset : @common.DesignPreset,
 ) -> Array[DesignCustomizationCapabilityRecord] {
   [
     customization_capability_record(
-      self,
+      preset,
       DesignCustomizationKind::ThemeInheritance,
       "Theme base inheritance",
       "@common.custom(base=...)",
@@ -51,7 +53,7 @@ pub fn DesignPreset::customization_report(
       status=DesignTokenStatus::ThemeMapped,
     ),
     customization_capability_record(
-      self,
+      preset,
       DesignCustomizationKind::ThemeTokenOverride,
       "Theme token group override",
       "@common.custom(palette/semantic_colors/spacing_scale/radius_scale/typography/shadow_scale/motion/surfaces)",
@@ -62,44 +64,44 @@ pub fn DesignPreset::customization_report(
       status=DesignTokenStatus::ThemeMapped,
     ),
     customization_capability_record(
-      self,
+      preset,
       DesignCustomizationKind::DesignTokenInheritance,
       "Design token base inheritance",
       "@common.custom_tokens(base=...)",
-      "DesignSystemTokens",
+      "@common.DesignSystemTokens",
       inherits_base=true,
       supports_override=false,
       recomputes_dependents=true,
       status=DesignTokenStatus::ThemeMapped,
     ),
     customization_capability_record(
-      self,
+      preset,
       DesignCustomizationKind::DesignTokenGroupOverride,
       "Design token group override",
       "@common.custom_tokens(palette/typography/spacing/radius/elevation/motion/surfaces/state_layer)",
-      "DesignSystemTokens",
+      "@common.DesignSystemTokens",
       inherits_base=true,
       supports_override=true,
       recomputes_dependents=true,
       status=DesignTokenStatus::ThemeMapped,
     ),
     customization_capability_record(
-      self,
+      preset,
       DesignCustomizationKind::ComponentTokenOverride,
       "Component token override",
       "@common.custom_tokens(components=...)",
-      "DesignComponentTokens",
+      "@common.DesignComponentTokens",
       inherits_base=true,
       supports_override=true,
       recomputes_dependents=false,
       status=DesignTokenStatus::ComponentMapped,
     ),
     customization_capability_record(
-      self,
+      preset,
       DesignCustomizationKind::VariantThemeResolution,
       "Variant Theme resolver",
-      "DesignPreset::theme_for_variant(...)",
-      "DesignSchemeVariant -> @core.Theme",
+      "@common.DesignPreset::theme_for_variant(...)",
+      "@common.DesignSchemeVariant -> @core.Theme",
       inherits_base=false,
       supports_override=false,
       recomputes_dependents=true,
@@ -109,11 +111,11 @@ pub fn DesignPreset::customization_report(
 }
 
 ///|
-pub fn DesignPreset::customization_report_for(
-  self : DesignPreset,
+pub fn customization_report_for(
+  preset : @common.DesignPreset,
   capability : String,
 ) -> DesignCustomizationCapabilityRecord? {
-  for item in self.customization_report() {
+  for item in customization_report(preset) {
     if item.capability == capability {
       return Some(item)
     }
@@ -122,16 +124,14 @@ pub fn DesignPreset::customization_report_for(
 }
 
 ///|
-pub fn DesignPreset::customization_report_count(self : DesignPreset) -> Int {
-  self.customization_report().length()
+pub fn customization_report_count(preset : @common.DesignPreset) -> Int {
+  customization_report(preset).length()
 }
 
 ///|
-pub fn DesignPreset::customization_capability_gap_count(
-  self : DesignPreset,
-) -> Int {
+pub fn customization_capability_gap_count(preset : @common.DesignPreset) -> Int {
   let mut count = 0
-  for item in self.customization_report() {
+  for item in customization_report(preset) {
     if item.status == DesignTokenStatus::NotMapped ||
       item.status == DesignTokenStatus::SourceMapped ||
       item.status == DesignTokenStatus::PreviewMapped {
@@ -142,11 +142,11 @@ pub fn DesignPreset::customization_capability_gap_count(
 }
 
 ///|
-pub fn DesignPreset::customization_official_parity_gap_count(
-  self : DesignPreset,
+pub fn customization_official_parity_gap_count(
+  preset : @common.DesignPreset,
 ) -> Int {
   let mut count = 0
-  for item in self.customization_report() {
+  for item in customization_report(preset) {
     if item.remaining_gap != "none" {
       count = count + 1
     }
@@ -156,7 +156,7 @@ pub fn DesignPreset::customization_official_parity_gap_count(
 
 ///|
 fn customization_capability_record(
-  preset : DesignPreset,
+  preset : @common.DesignPreset,
   kind : DesignCustomizationKind,
   capability : String,
   api_surface : String,

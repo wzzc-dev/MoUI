@@ -152,7 +152,7 @@ fn shadow(
 }
 
 ///|
-fn color(
+pub fn color(
   r~ : Double,
   g~ : Double,
   b~ : Double,
@@ -162,7 +162,12 @@ fn color(
 }
 
 ///|
-fn color_byte(r~ : Int, g~ : Int, b~ : Int, a? : Double = 1.0) -> @core.Color {
+pub fn color_byte(
+  r~ : Int,
+  g~ : Int,
+  b~ : Int,
+  a? : Double = 1.0,
+) -> @core.Color {
   color(
     r=r.to_double() / 255.0,
     g=g.to_double() / 255.0,

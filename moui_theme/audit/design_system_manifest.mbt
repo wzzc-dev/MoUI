@@ -24,14 +24,6 @@ pub(all) enum DesignTokenLayer {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub(all) enum DesignSchemeVariant {
-  SchemeLight
-  SchemeDark
-  SchemeHighContrast
-  SchemeSystem
-} derive(Eq, Debug, ToJson)
-
-///|
 pub(all) enum DesignTokenStatus {
   NotMapped
   SourceMapped
@@ -64,7 +56,7 @@ pub(all) struct DesignTokenCoverage {
 
 ///|
 pub(all) struct DesignVariantCoverage {
-  variant : DesignSchemeVariant
+  variant : @common.DesignSchemeVariant
   source_family : String
   status : DesignTokenStatus
   note : String
@@ -89,7 +81,7 @@ pub(all) struct DesignCustomizationCoverage {
 
 ///|
 pub(all) struct DesignSystemManifest {
-  preset : DesignPreset
+  preset : @common.DesignPreset
   official_name : String
   stage : DesignTokenStatus
   sources : Array[DesignSystemSource]
@@ -101,8 +93,8 @@ pub(all) struct DesignSystemManifest {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub fn DesignPreset::manifest(self : DesignPreset) -> DesignSystemManifest {
-  match self {
+pub fn manifest(preset : @common.DesignPreset) -> DesignSystemManifest {
+  match preset {
     Material => material_manifest()
     Carbon => carbon_manifest()
     Primer => primer_manifest()
@@ -111,64 +103,64 @@ pub fn DesignPreset::manifest(self : DesignPreset) -> DesignSystemManifest {
 }
 
 ///|
-pub fn DesignPreset::sources(self : DesignPreset) -> Array[DesignSystemSource] {
-  self.manifest().sources
+pub fn sources(preset : @common.DesignPreset) -> Array[DesignSystemSource] {
+  manifest(preset).sources
 }
 
 ///|
-pub fn DesignPreset::token_coverage(
-  self : DesignPreset,
+pub fn token_coverage(
+  preset : @common.DesignPreset,
 ) -> Array[DesignTokenCoverage] {
-  self.manifest().token_coverage
+  manifest(preset).token_coverage
 }
 
 ///|
-pub fn DesignPreset::variant_coverage(
-  self : DesignPreset,
+pub fn variant_coverage(
+  preset : @common.DesignPreset,
 ) -> Array[DesignVariantCoverage] {
-  self.manifest().variant_coverage
+  manifest(preset).variant_coverage
 }
 
 ///|
-pub fn DesignPreset::component_coverage(
-  self : DesignPreset,
+pub fn component_coverage(
+  preset : @common.DesignPreset,
 ) -> Array[DesignComponentCoverage] {
-  self.manifest().component_coverage
+  manifest(preset).component_coverage
 }
 
 ///|
-pub fn DesignPreset::customization_coverage(
-  self : DesignPreset,
+pub fn customization_coverage(
+  preset : @common.DesignPreset,
 ) -> Array[DesignCustomizationCoverage] {
-  self.manifest().customization_coverage
+  manifest(preset).customization_coverage
 }
 
 ///|
 pub fn DesignSystemManifest::is_official_complete(
-  self : DesignSystemManifest,
+  preset : DesignSystemManifest,
 ) -> Bool {
-  let mut complete = self.stage == DesignTokenStatus::OfficialComplete
-  for item in self.sources {
+  let mut complete = preset.stage == DesignTokenStatus::OfficialComplete
+  for item in preset.sources {
     if item.status != DesignTokenStatus::OfficialComplete {
       complete = false
     }
   }
-  for item in self.token_coverage {
+  for item in preset.token_coverage {
     if item.status != DesignTokenStatus::OfficialComplete {
       complete = false
     }
   }
-  for item in self.variant_coverage {
+  for item in preset.variant_coverage {
     if item.status != DesignTokenStatus::OfficialComplete {
       complete = false
     }
   }
-  for item in self.component_coverage {
+  for item in preset.component_coverage {
     if item.status != DesignTokenStatus::OfficialComplete {
       complete = false
     }
   }
-  for item in self.customization_coverage {
+  for item in preset.customization_coverage {
     if item.status != DesignTokenStatus::OfficialComplete {
       complete = false
     }
@@ -178,34 +170,34 @@ pub fn DesignSystemManifest::is_official_complete(
 
 ///|
 pub fn DesignSystemManifest::has_token_category(
-  self : DesignSystemManifest,
+  preset : DesignSystemManifest,
   category : DesignTokenCategory,
 ) -> Bool {
-  self.token_coverage.any(item => item.category == category)
+  preset.token_coverage.any(item => item.category == category)
 }
 
 ///|
 pub fn DesignSystemManifest::has_variant(
-  self : DesignSystemManifest,
-  variant : DesignSchemeVariant,
+  preset : DesignSystemManifest,
+  variant : @common.DesignSchemeVariant,
 ) -> Bool {
-  self.variant_coverage.any(item => item.variant == variant)
+  preset.variant_coverage.any(item => item.variant == variant)
 }
 
 ///|
 pub fn DesignSystemManifest::has_component(
-  self : DesignSystemManifest,
+  preset : DesignSystemManifest,
   component : String,
 ) -> Bool {
-  self.component_coverage.any(item => item.component == component)
+  preset.component_coverage.any(item => item.component == component)
 }
 
 ///|
 pub fn DesignSystemManifest::official_source_count(
-  self : DesignSystemManifest,
+  preset : DesignSystemManifest,
 ) -> Int {
   let mut count = 0
-  for source in self.sources {
+  for source in preset.sources {
     if source.source_kind == "official-source" {
       count = count + 1
     }
@@ -215,10 +207,10 @@ pub fn DesignSystemManifest::official_source_count(
 
 ///|
 pub fn DesignSystemManifest::source_lock_count(
-  self : DesignSystemManifest,
+  preset : DesignSystemManifest,
 ) -> Int {
   let mut count = 0
-  for source in self.sources {
+  for source in preset.sources {
     if source.source_kind == "official-source" &&
       source.source_ref != "" &&
       source.token_path != "" &&
@@ -231,16 +223,16 @@ pub fn DesignSystemManifest::source_lock_count(
 
 ///|
 pub fn DesignSystemManifest::has_official_source_locks(
-  self : DesignSystemManifest,
+  preset : DesignSystemManifest,
 ) -> Bool {
-  let official_sources = self.official_source_count()
-  official_sources > 0 && self.source_lock_count() == official_sources
+  let official_sources = preset.official_source_count()
+  official_sources > 0 && preset.source_lock_count() == official_sources
 }
 
 ///|
 fn material_manifest() -> DesignSystemManifest {
   {
-    preset: DesignPreset::Material,
+    preset: @common.DesignPreset::Material,
     official_name: "Material Design 3",
     stage: DesignTokenStatus::PreviewMapped,
     sources: [
@@ -274,7 +266,7 @@ fn material_manifest() -> DesignSystemManifest {
 ///|
 fn carbon_manifest() -> DesignSystemManifest {
   {
-    preset: DesignPreset::Carbon,
+    preset: @common.DesignPreset::Carbon,
     official_name: "IBM Carbon Design System",
     stage: DesignTokenStatus::PreviewMapped,
     sources: [
@@ -348,7 +340,7 @@ fn carbon_manifest() -> DesignSystemManifest {
 ///|
 fn primer_manifest() -> DesignSystemManifest {
   {
-    preset: DesignPreset::Primer,
+    preset: @common.DesignPreset::Primer,
     official_name: "GitHub Primer",
     stage: DesignTokenStatus::PreviewMapped,
     sources: [
@@ -382,7 +374,7 @@ fn primer_manifest() -> DesignSystemManifest {
 ///|
 fn fluent_manifest() -> DesignSystemManifest {
   {
-    preset: DesignPreset::Fluent,
+    preset: @common.DesignPreset::Fluent,
     official_name: "Microsoft Fluent 2",
     stage: DesignTokenStatus::PreviewMapped,
     sources: [
@@ -452,9 +444,9 @@ fn material_token_coverage() -> Array[DesignTokenCoverage] {
       DesignTokenCategory::Density,
       DesignTokenLayer::SystemToken,
       "Material density",
-      "DesignDensity -> @core.SpacingScale",
+      "@common.DesignDensity -> @core.SpacingScale",
       DesignTokenStatus::ThemeMapped,
-      "Density-aware spacing resolver is exposed by DesignPreset::tokens.",
+      "Density-aware spacing resolver is exposed by @common.DesignPreset::tokens.",
     ),
     coverage(
       DesignTokenCategory::Shape,
@@ -492,7 +484,7 @@ fn material_token_coverage() -> Array[DesignTokenCoverage] {
       DesignTokenCategory::StateLayer,
       DesignTokenLayer::ComponentToken,
       "md.comp.* state-layer tokens",
-      "DesignStateLayerTokens",
+      "@common.DesignStateLayerTokens",
       DesignTokenStatus::ComponentMapped,
       "State-layer opacity tokens are represented; full component-specific matrix is pending.",
     ),
@@ -500,7 +492,7 @@ fn material_token_coverage() -> Array[DesignTokenCoverage] {
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       "md.comp.* tokens",
-      "DesignComponentTokens",
+      "@common.DesignComponentTokens",
       DesignTokenStatus::ComponentMapped,
       "Button, text-field, surface, choice-control, progress, slider, picker, date-picker, feedback, badge, and form-validation token sets exist; full Material component matrix is pending.",
     ),
@@ -597,9 +589,9 @@ fn common_official_token_coverage(
       DesignTokenCategory::Density,
       DesignTokenLayer::AliasToken,
       density_family,
-      "DesignDensity -> @core.SpacingScale",
+      "@common.DesignDensity -> @core.SpacingScale",
       DesignTokenStatus::ThemeMapped,
-      "Density variants resolve through DesignPreset::tokens.",
+      "Density variants resolve through @common.DesignPreset::tokens.",
     ),
     coverage(
       DesignTokenCategory::Shape,
@@ -637,7 +629,7 @@ fn common_official_token_coverage(
       DesignTokenCategory::StateLayer,
       DesignTokenLayer::ComponentToken,
       state_family,
-      "DesignStateLayerTokens",
+      "@common.DesignStateLayerTokens",
       DesignTokenStatus::ComponentMapped,
       "Interaction-state tokens are represented; full component-specific matrix is pending.",
     ),
@@ -645,7 +637,7 @@ fn common_official_token_coverage(
       DesignTokenCategory::ComponentStyle,
       DesignTokenLayer::ComponentToken,
       component_family,
-      "DesignComponentTokens",
+      "@common.DesignComponentTokens",
       DesignTokenStatus::ComponentMapped,
       "Button, text-field, surface, choice-control, progress, slider, picker, date-picker, feedback, badge, and form-validation token sets exist; complete official component matrix is pending.",
     ),
@@ -671,25 +663,25 @@ fn primer_variant_coverage() -> Array[DesignVariantCoverage] {
 fn fluent_variant_coverage() -> Array[DesignVariantCoverage] {
   [
     variant(
-      DesignSchemeVariant::SchemeLight,
+      @common.DesignSchemeVariant::SchemeLight,
       "Fluent light theme",
       DesignTokenStatus::PreviewMapped,
       "Mapped to the MoUI light preset.",
     ),
     variant(
-      DesignSchemeVariant::SchemeDark,
+      @common.DesignSchemeVariant::SchemeDark,
       "Fluent dark theme",
       DesignTokenStatus::PreviewMapped,
       "Mapped to the MoUI dark preset.",
     ),
     variant(
-      DesignSchemeVariant::SchemeHighContrast,
+      @common.DesignSchemeVariant::SchemeHighContrast,
       "Fluent high contrast theme",
       DesignTokenStatus::ThemeMapped,
       "Dedicated high-contrast token adapter exists in moui_theme/common.",
     ),
     variant(
-      DesignSchemeVariant::SchemeSystem,
+      @common.DesignSchemeVariant::SchemeSystem,
       "Fluent system-aware theme selection",
       DesignTokenStatus::ThemeMapped,
       "Preset-preserving system-scheme token resolver exists in moui_theme/common.",
@@ -703,25 +695,25 @@ fn official_variant_coverage(
 ) -> Array[DesignVariantCoverage] {
   [
     variant(
-      DesignSchemeVariant::SchemeLight,
+      @common.DesignSchemeVariant::SchemeLight,
       source_family,
       DesignTokenStatus::PreviewMapped,
       "Mapped to the MoUI light preset.",
     ),
     variant(
-      DesignSchemeVariant::SchemeDark,
+      @common.DesignSchemeVariant::SchemeDark,
       source_family,
       DesignTokenStatus::PreviewMapped,
       "Mapped to the MoUI dark preset.",
     ),
     variant(
-      DesignSchemeVariant::SchemeHighContrast,
+      @common.DesignSchemeVariant::SchemeHighContrast,
       source_family,
       DesignTokenStatus::ThemeMapped,
       "Dedicated high-contrast token adapter exists in moui_theme/common.",
     ),
     variant(
-      DesignSchemeVariant::SchemeSystem,
+      @common.DesignSchemeVariant::SchemeSystem,
       source_family,
       DesignTokenStatus::ThemeMapped,
       "Preset-preserving system-scheme token resolver exists in moui_theme/common.",
@@ -830,7 +822,8 @@ fn customization_coverage(
       "Custom design-system tokens can replace component token bundles explicitly.",
     ),
     customization(
-      "Variant Theme resolver", "DesignPreset::theme_for_variant(...)", status, "Preset variants can resolve directly to neutral @core.Theme values.",
+      "Variant Theme resolver", "@common.DesignPreset::theme_for_variant(...)", status,
+      "Preset variants can resolve directly to neutral @core.Theme values.",
     ),
   ]
 }
@@ -862,7 +855,7 @@ fn coverage(
 
 ///|
 fn variant(
-  variant : DesignSchemeVariant,
+  variant : @common.DesignSchemeVariant,
   source_family : String,
   status : DesignTokenStatus,
   note : String,

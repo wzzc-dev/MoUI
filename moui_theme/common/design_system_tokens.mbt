@@ -6,6 +6,17 @@ pub(all) enum DesignDensity {
 } derive(Eq, Debug, ToJson)
 
 ///|
+/// Variant of a design-system theme resolved against a system color scheme.
+/// Construction-surface enum (lives in `common` because `DesignSystemTokens.variant`
+/// and `tokens_for_variant` consume it); audit records reference it via `@common`.
+pub(all) enum DesignSchemeVariant {
+  SchemeLight
+  SchemeDark
+  SchemeHighContrast
+  SchemeSystem
+} derive(Eq, Debug, ToJson)
+
+///|
 
 ///|
 /// Design-system semantic palette. Extended with a neutral background/foreground/
