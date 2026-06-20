@@ -349,6 +349,29 @@ fn MarkdownEditorApp::can_redo(self : MarkdownEditorApp) -> Bool {
 }
 
 ///|
+/// Derive the directory of the open document, used to resolve relative image
+/// sources against the document's location rather than the process cwd. Returns
+/// None (no re-rooting) when there is no path.
+fn markdown_editor_document_base_dir(path : String) -> String? {
+  if path == "" {
+    None
+  } else {
+    let chars = path.to_array()
+    let mut last_sep = -1
+    for i, ch in chars {
+      if ch == '/' || ch == '\\' {
+        last_sep = i
+      }
+    }
+    if last_sep <= 0 {
+      None
+    } else {
+      Some(String::from_array(chars[0:last_sep]))
+    }
+  }
+}
+
+///|
 fn MarkdownEditorApp::transfer_status_label(self : MarkdownEditorApp) -> String {
   markdown_editor_transfer_status_label(self.transfer_status.get())
 }

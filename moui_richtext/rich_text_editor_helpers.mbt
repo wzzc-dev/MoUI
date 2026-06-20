@@ -414,6 +414,57 @@ test {
 }
 
 ///|
+test "markdown image source resolves relative targets against base_dir" {
+  let image = markdown_inline("cat.png", Image, target=Some("cat.png"))
+  // Without a base_dir, the target is returned verbatim.
+  inspect(markdown_inline_image_source(image), content="Some(cat.png)")
+  // With a base_dir, a relative target is rooted at the document directory.
+  inspect(
+    markdown_inline_image_source(image, base_dir=Some("/tmp/docs")),
+    content="Some(/tmp/docs/cat.png)",
+  )
+  // Trailing separators are handled without doubling.
+  inspect(
+    markdown_inline_image_source(image, base_dir=Some("/tmp/docs/")),
+    content="Some(/tmp/docs/cat.png)",
+  )
+  // Absolute paths, data: and http: URIs are never re-rooted.
+  let abs = markdown_inline("/abs/cat.png", Image, target=Some("/abs/cat.png"))
+  inspect(
+    markdown_inline_image_source(abs, base_dir=Some("/tmp/docs")),
+    content="Some(/abs/cat.png)",
+  )
+  let url = markdown_inline("u", Image, target=Some("https://e.com/c.png"))
+  inspect(
+    markdown_inline_image_source(url, base_dir=Some("/tmp/docs")),
+    content="Some(https://e.com/c.png)",
+  )
+  let data = markdown_inline(
+    "d",
+    Image,
+    target=Some("data:image/png;base64,AAAA"),
+  )
+  inspect(
+    markdown_inline_image_source(data, base_dir=Some("/tmp/docs")),
+    content="Some(data:image/png;base64,AAAA)",
+  )
+}
+
+///|
+test "code highlight tokenizer classifies moonbit keywords and strings" {
+  let spans = code_highlight_tokenize("let x = \"hi\" // note", "moonbit")
+  // Expect: keyword(let) plain(x =) string("hi") plain( ) comment(// note)
+  let kinds = spans.map(span => span.kind)
+  assert_true(kinds.contains(CodeKeyword))
+  assert_true(kinds.contains(CodeString))
+  assert_true(kinds.contains(CodeComment))
+  // Unsupported language falls back to a single plain span.
+  let plain = code_highlight_tokenize("let x = 1", "rust")
+  assert_eq(plain.length(), 1)
+  assert_true(plain[0].kind == CodePlain)
+}
+
+///|
 fn composition_start_index(
   text : String,
   caret : Int,

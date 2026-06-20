@@ -288,6 +288,7 @@ fn markdown_editor_more_menu_items() -> Array[
       message: CycleWritingAppearance,
     },
     { label: "Quick Format…", shortcut: "⌘⇧P", message: ToggleFormatPalette },
+    { label: "Toggle Dark Mode", shortcut: "", message: ToggleDarkMode },
   ]
 }
 
