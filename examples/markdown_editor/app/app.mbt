@@ -42,6 +42,7 @@ pub struct MarkdownEditorApp {
   toasts : @moui.State[@views.ToastQueue[MarkdownEditorMsg]]
   autosave_draft : @moui.State[String]
   dark_mode_enabled : @moui.State[Bool]
+  folded_headings : @moui.State[Array[Int]]
   priv pending_confirm : @moui.State[MarkdownEditorConfirmRequest?]
   priv writing_appearance : @moui.State[MarkdownEditorAppearance]
   find_visible : @moui.State[Bool]
@@ -239,6 +240,7 @@ pub enum MarkdownEditorMsg {
   ReplaceFindCurrent
   ReplaceFindAll
   ApplyCommand(MarkdownEditorCommand)
+  ToggleHeadingFold(Int)
   SetSelection(Int, @core.TextRange?)
   OpenRecentDocument(String)
   JumpToOutline(Int)
@@ -277,6 +279,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     toasts: @moui.State::new(@views.ToastQueue::new()),
     autosave_draft: @moui.State::new(""),
     dark_mode_enabled: @moui.State::new(false),
+    folded_headings: @moui.State::new([]),
     pending_confirm: @moui.State::new(None),
     writing_appearance: @moui.State::new(PaperAppearance),
     find_visible: @moui.State::new(false),
@@ -426,6 +429,7 @@ fn MarkdownEditorApp::update(
     ReplaceFindCurrent => self.replace_current_find_match()
     ReplaceFindAll => self.replace_all_find_matches()
     ApplyCommand(command) => self.apply_command_to_selection(command)
+    ToggleHeadingFold(source_start) => self.toggle_heading_fold(source_start)
     SetSelection(caret, selection) => self.set_selection(caret, selection)
     OpenRecentDocument(path) =>
       self.transfer_status.set(
