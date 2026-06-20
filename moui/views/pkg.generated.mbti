@@ -40,9 +40,9 @@ pub fn[Msg] card(@core.View[Msg], width? : Double, height? : Double, padding? : 
 
 pub fn[Msg] center(@core.View[Msg], width? : Double, height? : Double, background? : @core.Color, theme? : @core.Theme) -> @core.View[Msg]
 
-pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] checkbox(String, checked~ : Bool, on_change~ : (Bool) -> Msg, theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, box_shape? : @core.ChoiceControlShape, check_style? : @core.CheckMarkStyle, height? : Double) -> @core.View[Msg]
 
-pub fn[Msg] checkbox_binding(String, checked~ : @core.Binding[Bool], theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, height? : Double) -> @core.View[Msg]
+pub fn[Msg] checkbox_binding(String, checked~ : @core.Binding[Bool], theme? : @core.Theme, font? : @core.FontSpec, foreground? : @core.Color, check_color? : @core.Color, box_size? : Double, box_shape? : @core.ChoiceControlShape, check_style? : @core.CheckMarkStyle, height? : Double) -> @core.View[Msg]
 
 pub fn[Msg] checkbox_group(Array[ChoiceItem], selected~ : Array[String], on_change~ : (String, Bool) -> Msg, theme? : @core.Theme, spacing? : Double) -> @core.View[Msg]
 
@@ -209,6 +209,8 @@ pub fn[Msg] picker_binding(Array[PickerItem], selected~ : @core.Binding[String],
 pub fn picker_item(String, String) -> PickerItem
 
 pub fn[Msg] popover(anchor~ : @core.View[Msg], content~ : @core.View[Msg], expanded~ : Bool, placement? : PopoverPlacement, theme? : @core.Theme, width? : Double, height? : Double, trap_focus? : Bool) -> @core.View[Msg]
+
+pub fn[Msg] presence_dot(PresenceStatus, size? : Double, theme? : @core.Theme, on_surface? : @core.Color) -> @core.View[Msg]
 
 pub fn[Msg] progress(Double, width? : Double, height? : Double, theme? : @core.Theme, style? : ProgressStyle, foreground? : @core.Color, background? : @core.Color) -> @core.View[Msg]
 
@@ -672,6 +674,15 @@ pub(all) enum PopoverPlacement {
   TopStart
   TopEnd
 }
+
+pub(all) enum PresenceStatus {
+  Available
+  Away
+  Busy
+  Offline
+  Unknown
+} derive(Eq, ToJson, @debug.Debug)
+pub fn PresenceStatus::label(Self) -> String
 
 pub(all) struct ProgressStyle {
   foreground : @core.Color

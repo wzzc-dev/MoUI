@@ -40,6 +40,8 @@ pub fn[Msg] radio(
     theme~,
     foreground?,
     check_color?,
+    box_shape=@core.ChoiceControlShape::Circle,
+    check_style=@core.CheckMarkStyle::Dot,
   ).semantics_role(@core.SemanticsRole::Radio)
 }
 
@@ -75,7 +77,13 @@ pub fn[Msg] radio_binding(
   foreground? : @core.Color,
   check_color? : @core.Color,
 ) -> @core.View[Msg] {
-  checkbox_binding(label, checked=selected, theme~, foreground?, check_color?).semantics_role(
-    @core.SemanticsRole::Radio,
-  )
+  checkbox_binding(
+    label,
+    checked=selected,
+    theme~,
+    foreground?,
+    check_color?,
+    box_shape=@core.ChoiceControlShape::Circle,
+    check_style=@core.CheckMarkStyle::Dot,
+  ).semantics_role(@core.SemanticsRole::Radio)
 }

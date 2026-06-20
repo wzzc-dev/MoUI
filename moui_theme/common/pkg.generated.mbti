@@ -83,6 +83,8 @@ pub(all) struct DesignChoiceControlTokens {
   disabled_foreground : @core.Color
   disabled_selected_color : @core.Color
   control_size : Double
+  box_shape : @core.ChoiceControlShape
+  check_style : @core.CheckMarkStyle
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignChoiceControlTokens::core_style(Self) -> @views.ChoiceControlStyle
 
@@ -544,6 +546,8 @@ pub(all) struct DesignSemanticPalette {
   stroke_1 : @core.Color
   stroke_2 : @core.Color
   brand_stroke : @core.Color
+  background_4 : @core.Color
+  stroke_accessible : @core.Color
   primary : @core.Color
   primary_foreground : @core.Color
   outline : @core.Color
@@ -608,6 +612,7 @@ pub(all) struct DesignSliderTokens {
   track_height : Double
   thumb_size : Double
   radius : Double
+  thumb_shape : @core.ThumbShape
 } derive(Eq, ToJson, @debug.Debug)
 pub fn DesignSliderTokens::core_style(Self) -> @views.SliderStyle
 

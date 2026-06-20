@@ -11,13 +11,12 @@ pub fn[Msg] divider(
   color? : @core.Color,
   inset? : Double = 0.0,
 ) -> @core.View[Msg] {
+  // Dividers use `outline_variant` (Fluent 2 colorNeutralStroke2, the subtle
+  // divider tier) rather than the stronger `outline` (colorNeutralStroke1) so
+  // hairlines stay calm against the surfaces.
   let line_color = match color {
     Some(value) => value
-    None =>
-      match theme.scheme {
-        @core.ColorScheme::Light => theme.palette.outline.multiply_alpha(0.6)
-        @core.ColorScheme::Dark => theme.palette.outline.multiply_alpha(0.5)
-      }
+    None => theme.palette.outline_variant
   }
   let line_thickness = max_view_double(1.0, thickness)
   custom_layout(
