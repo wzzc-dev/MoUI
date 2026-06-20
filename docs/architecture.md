@@ -590,6 +590,16 @@ adapters that produce the same `@core.Theme`:
   full theme from `theme_spec` so a host `ThemeChanged(Dark)` event switches
   palette/surfaces/shadows, not just a scheme flag. The legacy
   `with_color_scheme` (which left the palette stale) is removed.
+- Controls resolve their styles **ambient-ly** at paint time: each control's
+  `theme?` parameter is optional (no `default_theme()` capture), and paint
+  closures read `theme.unwrap_or(ctx.environment.theme)` so a button/checkbox/
+  text field/progress/slider/picker/etc. tracks dark-mode / high-contrast /
+  reduced-motion / palette changes via `set_environment` without the caller
+  rebuilding the view tree. Leaf controls emit a `"context"` revision token so
+  reconcile defers to environment-driven repaints. Composite views resolve
+  construction-time layout reads (spacing/shadow) through a shared
+  `views_ambient_theme(theme)` helper (falling back to `Theme::neutral`) and
+  pass the resolved theme to their leaf children.
 - `ButtonVariant::style(theme)` resolves a variant from
   `theme.components.button` via `ButtonVariantToken`; controls default to this
   path and `style?` is a one-shot override. `ButtonVariant` covers
