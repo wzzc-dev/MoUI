@@ -611,6 +611,7 @@ fn editor_source_layout(
         selection,
         base=editor_font,
         focus_mode=app.focus_mode_enabled.get(),
+        base_dir=markdown_editor_document_base_dir(app.document_path.get()),
       )
     }
   }
