@@ -228,6 +228,7 @@ pub fn window_event_to_host_with_modifiers(
           @core.PointerEvent::new(
             position=physical_position_to_core(position, scale_factor~),
             phase=@core.PointerPhase::Move,
+            modifiers~,
           ),
         ),
       )
@@ -242,6 +243,7 @@ pub fn window_event_to_host_with_modifiers(
                     position=physical_position_to_core(position, scale_factor~),
                     phase=element_state_to_pointer_phase(state),
                     button~,
+                    modifiers~,
                   ),
                 ),
               )

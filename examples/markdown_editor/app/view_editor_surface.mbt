@@ -743,6 +743,7 @@ fn editor_source_layout(
     corner_radius=editor_style.normal.radius,
     on_selection_change=Some(on_selection_change),
     on_prefix_click=Some(on_prefix_click),
+    on_command_click=Some(offset => CommandClickAt(offset)),
     input_transform=Some(markdown_editor_transform_input),
     accepts_tab_input=true,
   ).key("markdown-editor")

@@ -15,6 +15,7 @@ pub fn[Msg] rich_text_editor(
   on_input? : ((String) -> Msg)? = None,
   on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
   on_prefix_click? : ((Int) -> Msg)? = None,
+  on_command_click? : ((Int) -> Msg)? = None,
   input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = false,
   kind? : String = "RichTextEditor",
@@ -53,6 +54,7 @@ pub fn[Msg] rich_text_editor(
         on_input~,
         on_selection_change~,
         on_prefix_click~,
+        on_command_click~,
         input_transform~,
         accepts_tab_input~,
       )
@@ -114,6 +116,7 @@ pub fn[Msg] controlled_rich_text_editor(
   corner_radius? : Double = 0.0,
   on_selection_change? : ((Int, @core.TextRange?) -> Msg)? = None,
   on_prefix_click? : ((Int) -> Msg)? = None,
+  on_command_click? : ((Int) -> Msg)? = None,
   input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)? = None,
   accepts_tab_input? : Bool = false,
   kind? : String = "RichTextEditor",
@@ -135,6 +138,7 @@ pub fn[Msg] controlled_rich_text_editor(
     on_input=Some(on_input),
     on_selection_change~,
     on_prefix_click~,
+    on_command_click~,
     input_transform~,
     accepts_tab_input~,
     kind~,
@@ -733,6 +737,7 @@ fn[Msg] rich_text_editor_event(
   on_input~ : ((String) -> Msg)?,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   on_prefix_click~ : ((Int) -> Msg)?,
+  on_command_click~ : ((Int) -> Msg)?,
   input_transform~ : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?,
   accepts_tab_input~ : Bool,
 ) -> @core.ViewEventResult[Msg] {
@@ -745,6 +750,7 @@ fn[Msg] rich_text_editor_event(
         font~,
         on_selection_change~,
         on_prefix_click~,
+        on_command_click~,
         event~,
       )
     @core.AppEvent::Keyboard(event) =>
@@ -779,6 +785,7 @@ fn[Msg] rich_text_pointer_event(
   font~ : @core.FontSpec,
   on_selection_change~ : ((Int, @core.TextRange?) -> Msg)?,
   on_prefix_click~ : ((Int) -> Msg)?,
+  on_command_click~ : ((Int) -> Msg)?,
   event~ : @core.PointerEvent,
 ) -> @core.ViewEventResult[Msg] {
   let inside = ctx.frame.contains(event.position)
@@ -788,45 +795,70 @@ fn[Msg] rich_text_pointer_event(
         let text = value.get()
         let document = format(text)
         let content = rich_text_editor_content_rect(ctx.frame)
-        let prefix_messages = match on_prefix_click {
-          Some(handler) =>
-            match
-              rich_text_document_prefix_source_offset_at_point(
-                document,
-                event.position,
-                content,
-                font,
-                ctx.text_system,
-              ) {
-              Some(offset) => [handler(offset)]
+        // A Cmd/Ctrl-held click opens links/images instead of moving the caret:
+        // dispatch the command-click hook with the source offset and swallow the
+        // caret placement so the selection is not disturbed.
+        let command_modifiers = event.modifiers.meta || event.modifiers.control
+        match (command_modifiers, on_command_click) {
+          (true, Some(handler)) => {
+            let offset = rich_text_document_source_offset_at_point(
+              document,
+              event.position,
+              content,
+              font,
+              ctx.text_system,
+            ).unwrap_or(text_length(text))
+            view_event_result(
+              changed=true,
+              focused=true,
+              captured=true,
+              text_control=Some(ctx.text_control),
+              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              messages=[handler(offset)],
+            )
+          }
+          _ => {
+            let prefix_messages = match on_prefix_click {
+              Some(handler) =>
+                match
+                  rich_text_document_prefix_source_offset_at_point(
+                    document,
+                    event.position,
+                    content,
+                    font,
+                    ctx.text_system,
+                  ) {
+                  Some(offset) => [handler(offset)]
+                  None => []
+                }
               None => []
             }
-          None => []
+            let caret = rich_text_document_source_offset_at_point(
+              document,
+              event.position,
+              content,
+              font,
+              ctx.text_system,
+            ).unwrap_or(text_length(text))
+            let next_control = {
+              ..ctx.text_control,
+              caret,
+              selection: None,
+              text_selection_anchor: Some(caret),
+              composition: None,
+              composition_cursor: None,
+            }
+            view_event_result(
+              changed=true,
+              focused=true,
+              captured=true,
+              text_control=Some(next_control),
+              dirty=@core.ViewDirtyHint::ViewPaintDirty,
+              messages=prefix_messages +
+                selection_messages(on_selection_change, caret, None),
+            )
+          }
         }
-        let caret = rich_text_document_source_offset_at_point(
-          document,
-          event.position,
-          content,
-          font,
-          ctx.text_system,
-        ).unwrap_or(text_length(text))
-        let next_control = {
-          ..ctx.text_control,
-          caret,
-          selection: None,
-          text_selection_anchor: Some(caret),
-          composition: None,
-          composition_cursor: None,
-        }
-        view_event_result(
-          changed=true,
-          focused=true,
-          captured=true,
-          text_control=Some(next_control),
-          dirty=@core.ViewDirtyHint::ViewPaintDirty,
-          messages=prefix_messages +
-            selection_messages(on_selection_change, caret, None),
-        )
       } else {
         @core.ViewEventResult::ignored()
       }
