@@ -78,7 +78,7 @@ pub fn requirement_audit(
       manifest,
       DesignSystemRequirement::SemanticPalette,
       DesignTokenCategory::Color,
-      "@common.DesignSemanticPalette plus @core.ColorPalette and @core.SemanticColorScale adapters",
+      "DesignSemanticPalette plus @core.ColorPalette and @core.SemanticColorScale adapters",
       "Complete official semantic role matrix and generated token import are pending.",
     ),
     category_audit(
@@ -86,7 +86,7 @@ pub fn requirement_audit(
       manifest,
       DesignSystemRequirement::Typography,
       DesignTokenCategory::Typography,
-      "@common.DesignTypographyTokens plus @core.TypographyScale adapter",
+      "DesignTypographyTokens plus @core.TypographyScale adapter",
       "Complete official type ramp and font-family token import are pending.",
     ),
     multi_category_audit(
@@ -94,7 +94,7 @@ pub fn requirement_audit(
       manifest,
       DesignSystemRequirement::SpacingDensity,
       [DesignTokenCategory::Spacing, DesignTokenCategory::Density],
-      "@common.DesignSpacingTokens and @common.DesignDensity resolve into @core.SpacingScale",
+      "DesignSpacingTokens and @common.DesignDensity resolve into @core.SpacingScale",
       "Complete official size/density matrices and component density overrides are pending.",
     ),
     category_audit(
@@ -102,7 +102,7 @@ pub fn requirement_audit(
       manifest,
       DesignSystemRequirement::ShapeRadius,
       DesignTokenCategory::Shape,
-      "@common.DesignRadiusTokens plus @core.RadiusScale adapter",
+      "DesignRadiusTokens plus @core.RadiusScale adapter",
       "Complete official shape role matrix is pending.",
     ),
     category_audit(
@@ -110,7 +110,7 @@ pub fn requirement_audit(
       manifest,
       DesignSystemRequirement::ElevationShadow,
       DesignTokenCategory::Elevation,
-      "@common.DesignElevationTokens plus @core.ShadowScale adapter",
+      "DesignElevationTokens plus @core.ShadowScale adapter",
       "Official tonal elevation, layer, or shadow-level import is pending.",
     ),
     category_audit(
@@ -118,7 +118,7 @@ pub fn requirement_audit(
       manifest,
       DesignSystemRequirement::Motion,
       DesignTokenCategory::Motion,
-      "@common.DesignMotionTokens plus @core.MotionScale adapter",
+      "DesignMotionTokens plus @core.MotionScale adapter",
       "Complete official duration/easing/component-motion import is pending.",
     ),
     category_audit(
@@ -126,7 +126,7 @@ pub fn requirement_audit(
       manifest,
       DesignSystemRequirement::Surface,
       DesignTokenCategory::Surface,
-      "@common.DesignSurfaceTokens plus @core.SurfaceScale adapter",
+      "DesignSurfaceTokens plus @core.SurfaceScale adapter",
       "Complete official surface/layer role matrix is pending.",
     ),
     category_audit(
@@ -134,7 +134,7 @@ pub fn requirement_audit(
       manifest,
       DesignSystemRequirement::StateLayer,
       DesignTokenCategory::StateLayer,
-      "@common.DesignStateLayerTokens",
+      "DesignStateLayerTokens",
       "Component-specific state-layer matrix and disabled-state role coverage are pending.",
     ),
     scheme_variant_audit(preset, manifest),

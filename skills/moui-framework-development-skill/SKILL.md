@@ -63,13 +63,330 @@ owning-package boundaries clear.
 
 ## Daily Check
 
+<<<<<<< Updated upstream
 Before handoff, prefer the Daily check:
+=======
+## Package Map
+
+- `core/`: one MoonBit package for platform-neutral runtime, view specs, state,
+  app-owned route/history helpers, `Program` / `Effect` / `Subscription`,
+  layout, input, semantics, rich text editing, draw commands, styles, and theme
+  tokens. Keep files grouped by responsibility
+  (`runtime_state`,
+  `component_context`, `input_*`, `paint_*`, `rich_text_*`) without adding
+  subpackages.
+- root `moui`: public facade over core/views plus neutral default/light/dark
+  theme helpers and custom `@core.Theme` builder APIs. It does not import
+  `moui_theme`.
+- `moui_theme/common/`: repo-local addon common package for shared
+  source-mapped design-system
+  manifests, golden token mappings, golden source-usage audits,
+  source-lock quality reports, source-package inventories,
+  source-imported token records with pinned file shas, raw source expressions,
+  official-anchor coverage gaps, manifest/golden integrity reports, runtime
+  token alignment reports for resolved source values,
+  official-token/source-lock coverage, adaptation-difference reports,
+  token taxonomy reports, semantic palette role reports, typography role reports,
+  component-token matrices, semantic/component token models, density and
+  variant adapters, coverage metadata, and custom token/theme helpers that return
+  platform-neutral
+  `@core.Theme` values; it may depend on `wzzc-dev/moui/core`, while
+  `moui/core`, `moui/views`, and the root `wzzc-dev/moui` workspace member must
+  not depend on `moui_theme`. `moui_theme/material`, `moui_theme/carbon`,
+  `moui_theme/primer`, and `moui_theme/fluent` expose package-local
+  official-system entrypoints over the common model for light/dark/high-contrast
+  and system themes, tokens, manifests, reports, and component matrices.
+  Concrete design-language names stay here rather than in `core` or `views`.
+  External presets stay source-mapped previews until
+  tests prove
+  official source, token category, variant, component-token, customization,
+  official-token golden mapping coverage, golden mapping source usage, stable
+  source version locks, source-package import coverage,
+  source-imported token source-lock coverage, source-imported token
+  official-anchor coverage, source-imported token manifest/golden integrity,
+  runtime token alignment, token taxonomy parity, semantic palette role parity,
+  typography role parity,
+  component-token matrix coverage plus
+  adaptation-difference closure.
+- `views/`: public view constructors returning opaque `@core.View[Msg]`.
+- `backend/host/`: shared `HostEvent`, surface metrics, input contracts,
+  window lifecycle registry, window scene resolver, per-window runtime slot
+  collection, platform-window id map, renderer-neutral `HostWindowRenderer`
+  diagnostics, render-frame cached-layer fallback command replay, image-resource change callback bridge, image-resource repaint
+  routing and tracked-window revision/status diagnostics plus repaint-result
+  previous/current status counts,
+  image-resource load completion apply bridge,
+  native async image loading-record scheduler,
+  native provider async-image scheduling hooks,
+  native async image completion source and deferred native completion request source,
+  host-event subscription source fanout, window-scoped subscription source,
+  platform event-source bundles for feeding normalized Web/native host and window
+  events into app-owned subscriptions,
+  scheduler-backed timer subscription source, route/deep-link subscription source,
+  window request/completion queue, text-input session, window-event conversion,
+  async host-service queue, and frame-aware redraw driver with
+  idle/scheduled/in-frame/follow-up coalescing, and native WebView
+  capability/command/event contracts.
+- `backend/web/`: wasm-gc Web host, canvas constraints, resolver-backed
+  multi-canvas window slots, browser runtime bridge, async browser
+  file-open/save text completion for shared text-file reads/writes, and
+  accessibility adapter. Web reports `web_view` unavailable and must not use an
+  iframe overlay as a substitute for native WebView.
+- `backend/macos/`: AppKit/window host, resolver-backed multi-window slots,
+  native WKWebView platform-view sync, and CAMetalLayer WGPU surface creation.
+- `backend/windows/`: Win32/window host, resolver-backed multi-window slots,
+  optional WebView2 platform-view sync, and HWND WGPU surface creation.
+- `backend/linux/`: Wayland host over `wzzc-dev/window@0.5.1-0.1.4`, Linux
+  host-service bridge, text-input/IME request sync, drag/drop conversion, a
+  native Skia mainline presenter path plus native WGPU diagnostic surface path,
+  optional WebKitGTK platform-view sync, shared host event conversion, and
+  explicit native menu/AT-SPI follow-up reporting.
+- `render/`: renderer facade, shared draw helpers, and capability report API.
+- `render/skia/`: native Skia raster mainline renderer over the local
+  `moui_skia` binding, including renderer-local command/reason diagnostics for
+  unsupported Skia fallbacks, renderer-local image-resource lifecycle change
+  callbacks, and `skia_image_load_completion` source decode completion payloads
+  plus opt-in post-present async image loading for native providers. The
+  binding/renderer may expose an explicit macOS Metal/Ganesh GPU context and
+  offscreen GPU surface preflight, but provider/window GPU presentation remains
+  separate matching-host evidence and must not replace the raster mainline
+  without real smoke proof. Host-layer completion routing and native
+  provider/platform redraw scheduling from async image load/error notifications
+  remain outside `render/skia`.
+- `render/wgpu/`: experimental native wgpu renderer, including source decode
+  completion helpers used by provider-owned native image loader hooks.
+- `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
+- `render/wgpu/coretext/`: macOS CoreText provider.
+- `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
+- `render/wgpu/fontconfig/`: Linux fontconfig/FreeType provider boundary with
+  a narrow native color-emoji path and Cosmic fallback for general text.
+- `render/wgpu/text_protocol/`: shared native text provider payload protocol.
+- `render/webgpu_adapter/`: wasm-gc bridge to browser WebGPU host imports.
+- `moui/tests/skia_renderer_smoke/native`: opt-in real-Skia renderer smoke that
+  verifies MoUI draw commands against captured Skia presenter pixels and checks
+  async image second-frame repaint through the host completion route.
+- `moui/tests/skia_text_emoji_smoke/native`: opt-in real-Skia text/emoji proof
+  smoke that records renderer-proof markers only after captured Skia pixels and
+  font/glyph metadata plus text-system evidence prove color emoji, ZWJ
+  grapheme, paragraph wrapping, and bidi observations. Native paragraph
+  wrapping, bidi layout, and selection-rectangle proof must use the real
+  SkParagraph path and include `engine=skparagraph` markers.
+- `moui/tests/text_conformance/{native,web}`: opt-in diagnostic text matrix
+  packages for comparing supported text systems and documented gaps.
+- `examples/*/app`: shared application logic.
+- `examples/*/{web_wasm,<platform>_<renderer>}`: platform/renderer profile
+  entrypoints where an example has a runnable host package.
+- `examples/webview_demo/{app,macos_skia,windows_skia,linux_skia,web_wasm}`:
+  native WebView host-contract demo; Web wasm is an unavailable fallback and
+  not an iframe implementation.
+- `examples/showcase/{macos_skia,windows_skia,linux_skia}` and
+  `examples/markdown_editor/{macos_skia,windows_skia,linux_skia}`: recommended
+  native Skia renderer example entrypoints.
+- `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}`:
+  dedicated design-system addon diagnostic sampler entrypoints over the shared
+  `examples/design_systems/app` logic.
+- `examples/pdf_workbench/app`, `examples/pdf_workbench/pdflite_adapter`, and
+  `examples/pdf_workbench/macos_skia`: lightweight PDF UI shell, separate
+  `pdflite` adapter checks, and native Skia mainline entrypoint.
+- `examples/showcase/{macos_wgpu_cosmic,windows_wgpu_cosmic,linux_wgpu_cosmic}`: explicit Moon
+  Cosmic text-provider comparison entrypoints on the native WGPU diagnostic
+  route.
+
+## Development Workflow
+
+1. Confirm the user goal and non-goals.
+2. Read the relevant docs and `moon.pkg` package boundary.
+3. Prefer `moon ide doc`, `moon ide outline`, `moon ide peek-def`, and
+   `moon ide find-references` for MoonBit API discovery.
+4. Keep edits small and package-local.
+5. Preserve `///|` delimiters.
+6. Add or update focused package tests.
+7. Run targeted validation first.
+8. Run `moon fmt`.
+9. Run `moon info` after public API changes.
+10. Update docs, `AGENTS.md`, and repo-local skills when guidance changes.
+11. Report changed files, validation commands, and remaining risks.
+
+## Validation Commands
+
+Daily check:
+>>>>>>> Stashed changes
 
 ```sh
 sh scripts/dev-check.sh
 ```
 
+<<<<<<< Updated upstream
 It includes:
+=======
+The daily check runs `sh scripts/check-local-deps.sh`, which verifies
+`wzzc-dev/window@0.5.1-0.1.4`, confirms `moon.work` does not include a local
+window checkout, verifies the repo-local `moui_skia` workspace, and checks the
+window package's MoUI-oriented smoke/evidence files when the package is present
+in the MoonBit registry cache, including `scripts/record_moui_evidence.sh`.
+Use `scripts/run-window-package-smoke.sh <platform>` for matching-host smoke
+runs from the resolved package instead of creating a local window checkout. Run
+`moon update` if the package cache is stale or missing. The MoonBit package
+ecosystem is still maturing, so dependency resolution, registry cache state, and
+package regressions are plausible causes for otherwise surprising failures.
+Treat those window smoke helpers as dependency-level matching-host evidence,
+not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
+validation.
+The same local-dependency check also requires the `moui_skia` binding workspace's
+`skia-platform-status.json`, `skia-provider-lock.json`,
+`SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
+and verifier scripts, then runs
+`moui_skia/scripts/verify-platform-status.sh` and
+`moui_skia/scripts/verify-native-capability-contract.sh`. Treat
+that as binding-level Skia provider/status and native capability evidence; MoUI
+renderer pixels and platform runtime behavior still need the opt-in real-Skia
+smoke or matching-host example runs.
+The runnable `moui_skia` GitHub Actions workflows live in the repository root
+as `.github/workflows/moui-skia-*.yml`, and Copilot setup lives at root
+`.github/workflows/copilot-setup-steps.yml`. Keep workflow files there while
+`moui_skia` is a workspace member; nested workflow files are not discovered by
+GitHub Actions in the monorepo.
+Daily `dev-check` also runs the MoonBit-backed API surface guard, checked
+conformance artifact guard, dedicated checked-artifact validators for platform
+runtime evidence, Web runtime handoff/presentation, conformance capture, and
+renderer proof manifests, plus app/Web checks for Showcase and Markdown Editor.
+Use `sh scripts/dev-check.sh --theme-diagnostics` for `moui_theme` and Design
+Systems addon diagnostic coverage. Keep `docs/testing.md` and repo-local skills
+synchronized when adding or removing daily quality gates.
+For Web runtime evidence, use `record-web-runtime-presentation.mjs` to collect
+the browser-session artifact, then fold it into
+`platform-runtime-evidence.json` with
+`record-platform-evidence-manifest.mjs ... web --web-presentation-manifest ...`.
+When Web folding runs in GitHub Actions, expect `github-actions` provenance
+from the successful non-skipped job/run. When it runs locally, expect
+`matching-host-artifact` provenance for the browser-session manifest and
+screenshots. Do not invent CI run URL, runner, or job fields for local
+artifacts.
+The canonical Actions job for Web browser-session evidence is
+`web-runtime-presentation`; it runs `scripts/ci-web-runtime-presentation.sh` to
+build Showcase and Markdown Editor Web wasm-gc targets, serve the repository,
+start Chrome CDP, record and fold the presentation manifest, validate the Web
+platform entry, and upload `moui-web-runtime-presentation` artifacts.
+Renderer proof is tracked separately in schema v1 manifests under
+`artifacts/conformance/renderer-proof/<backend>-<platform>.json`. Validate them
+with `scripts/validate-renderer-proof-manifest.mjs`; passed entries require
+GitHub Actions provenance plus exactly `radialGradient`, `transformPixels`,
+`colorEmojiPixels`, `zwjGrapheme`, `bidiLayout`, `paragraphWrapping`,
+`selectionRects`, `graphemeEditing`, `imeCandidateAnchor`,
+`imeCompositionVisual`, and `asyncImageSecondFrame` observations with strong
+marker tokens. Passed
+`colorEmojiPixels` observations must also include `font-metadata` /
+`glyph-metadata` evidence and structured metadata fields, including a non-empty
+glyph key plus positive glyph width/height; native Skia color emoji proof must
+also include `fallback-request`, `emoji-hint`, and `stable-glyph-key` tokens
+plus fallback script/language tag-list/count metadata, resolved missing-glyph count,
+fallback request character metadata, missing-glyph recovery readiness, and a
+glyph key that contains the recorded
+source/text-system/shaper/script/language-tags/language-count/fallback-request-character/format metadata. Native Skia `paragraphWrapping`,
+`bidiLayout`, and `selectionRects` observations must include SkParagraph
+markers such as `native_paragraph_ready=true`, `bidi_visual_order_ready=true`,
+`line-metrics`, `later-line-pixels`, `visual-order`, `selection-rects`,
+`line-range`, `rect-geometry`, and `hit-test` as appropriate. Package-only tests, skipped jobs,
+missing uploaded artifacts, blank screenshots, caret-only
+diagnostics, heuristic visual-order logs, fallback paragraph geometry,
+coverage-only font matching, provider preflights,
+preflight-only checks, and fallback-safe descriptor audits must stay failed
+proof. Complete local observations may be
+preserved for debugging, but without GitHub Actions provenance the manifest
+status stays failed. The native Skia proof matrix
+configures the locked release Skia artifact with required SkParagraph support
+before running real renderer/text smokes. Native WGPU proof remains a
+non-blocking diagnostic and still requires a
+usable runner WGPU adapter for offscreen readback.
+Native Skia `graphemeEditing`, `imeCandidateAnchor`, and
+`imeCompositionVisual` renderer-proof markers come from the text/emoji smoke's
+shared grapheme-boundary contract, host IME request diagnostics including UTF-8
+cursor/anchor offsets plus composition cursor evidence, Skia caret geometry,
+and captured text-field composition pixels; they do not replace matching-host
+native IME runtime evidence.
+The `renderer-proof-summary` job requires the native Skia macOS, Windows,
+Linux, and WebGPU wasm proof
+artifacts to validate as passed before mainline capability promotion; native
+WGPU diagnostic artifacts are uploaded separately but do not block the summary.
+The platform evidence manifest is schema v2 and records the
+`wzzc-dev/window@0.5.1-0.1.4` package monitor/cursor probe as
+`monitorCursor`; native passed entries must set it to
+`yes`, while Web browser-session evidence may leave it pending. Native passed
+entries must also set `imeCandidateAnchor`, `imeSurroundingText`,
+`imeCompositionVisual`, `imeCommitDelete`, `imeCursorUpdate`,
+`imeScrollAnchor`, `imeScaleDprAnchor`, and `imeResizeAnchor` to `yes` from
+matching-host Showcase
+runtime artifacts; host-core unit tests, package logs, provider preflights, and
+coarse `textInput` observations are not enough. Native entries
+also record a `skiaEvidence` block for Skia provider/preflight commands,
+fallback-unavailable checks, real-renderer smoke, async image second-frame
+smoke, and Showcase first-frame status. Any `status=passed` platform
+entry, and any
+`skiaEvidence.status=passed` route, must include `evidenceProvenance` that
+traces the claim to a non-skipped successful GitHub Actions job/run or to a
+matching-host artifact bundle. Build-only jobs, package-only jobs,
+provider/preflight summaries, dependency smokes, and skipped workflow-dispatch
+paths are not runtime proof. `artifacts/platform-evidence/*/README.md` files
+are placeholder documentation and must not be used as passed platform, Skia, or
+provenance artifacts. `skiaEvidence.status=passed` is Skia-route
+evidence, not a complete platform-services claim by itself, but native platform
+entries cannot be marked `passed` unless their Skia evidence is also `passed`.
+Use `record-native-ime-evidence.mjs` for matching-host IME logs when you only
+want to validate and update native IME observations; it deliberately leaves the
+broader platform runtime status unchanged and rejects generic host unit-test or
+package logs without matching-host runtime, native-app, `renderer=skia`,
+matching app, platform-protocol,
+candidate-anchor, surrounding-text, composition, commit/delete, cursor, scroll,
+scale/DPR, resize, and Showcase markers. The `renderer=skia`, app, and
+platform-protocol markers are exact whitespace-delimited tokens; suffixed
+labels are not matching-host runtime IME evidence.
+For macOS, the first-party producer is the Showcase native Skia
+entrypoint with
+`MOUI_MACOS_NATIVE_IME_EVIDENCE=1 moon run examples/showcase/macos_skia --target native`;
+store that run as
+`artifacts/platform-evidence/macos/ime-showcase-runtime.log` and pass it to
+each macOS native IME recorder log option after confirming it prints the
+Showcase marker. The macOS recorder also requires AppKit
+`NSTextInputClient` markers: candidate/surrounding/composition logs must include
+`appkit-setMarkedText` and `appkit-firstRectForCharacterRange`, and
+post-commit logs, including commit/delete, cursor, scroll, scale/DPR, resize,
+and Showcase runtime markers, must include `appkit-insertText`.
+Use
+`record-native-skia-evidence.mjs` for matching-host Skia logs when you only
+want to validate and update `skiaEvidence`; it deliberately leaves the broader
+platform runtime status unchanged. Its provider-preflight log check requires
+both the matching Skia provider identity and a passing preflight, test, or build
+marker; do not use generic passing test output as provider evidence. Its
+Showcase and Markdown Editor first-frame checks require app-identifying
+`title=MoUI Showcase` and `title=MoUI Markdown Editor` markers on the platform
+first-frame line, respectively.
+Use `record-macos-platform-runtime-evidence.mjs` only for macOS platform
+promotion after macOS `skiaEvidence` is passed and every native IME observation
+has already been recorded by `record-native-ime-evidence.mjs`. The macOS helper
+validates the `wzzc-dev/window@0.5.1-0.1.4` package runtime smoke transcript
+through `--window-smoke-log` for window/open/resize/redraw/input/monitor/cursor/shutdown
+source observations, and validates a Showcase or Markdown Editor `macos_skia`
+first-frame source log through `--app-runtime-log` before delegating to the
+generic platform manifest recorder. Collect the macOS window package transcript
+with `WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=... scripts/run-window-package-smoke.sh macos --run`
+so the AppKit smoke app writes the marker artifact itself; do not use outer
+shell redirection as the source artifact for monitor/current-monitor evidence.
+Do not use renderer-proof IME markers, provider preflights, or the window
+package smoke alone as macOS platform-passed evidence.
+For local macOS matching-host collection after Skia evidence is already passed,
+prefer `scripts/record-macos-local-runtime-evidence.sh`; it runs the AppKit
+window smoke, runs the Markdown Editor IME producer, folds native IME
+observations, promotes the macOS platform entry with `matching-host-artifact`
+provenance, and validates the macOS entry without changing Windows, Linux, or
+global Skia claims.
+A passed presentation manifest must include WebGPU startup, wasm startup,
+canvas sizing, resize/input event-bridge delivery, Markdown Editor text input,
+clean target close, clean console, nonblank screenshots, and Showcase
+transform-scene pixel markers for the named browser session before the Web
+platform entry can be marked passed.
+
+Focused checks:
+>>>>>>> Stashed changes
 
 ```sh
 node scripts/validate-guidance-consistency.mjs

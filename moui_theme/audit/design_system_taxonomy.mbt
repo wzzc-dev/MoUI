@@ -285,7 +285,7 @@ fn token_taxonomy_from_density(
         source_ref: item.source_ref,
         token_path: item.token_path,
         source_locked: item.source_locked,
-        token_surface: "@common.DesignSpacingTokens + @common.DesignDensity -> @core.SpacingScale",
+        token_surface: "DesignSpacingTokens + @common.DesignDensity -> @core.SpacingScale",
         status: item.status,
         remaining_gap: item.remaining_gap,
       }
@@ -309,7 +309,7 @@ fn token_taxonomy_from_component_style(
       source_ref: item.source_ref,
       token_path: item.token_path,
       source_locked: item.source_locked && source_gap_count == 0,
-      token_surface: "@common.DesignComponentTokens -> @core.*Style",
+      token_surface: "DesignComponentTokens -> @core.*Style",
       status: if component_style_resolver_gap_count(preset) == 0 {
         DesignTokenStatus::ComponentMapped
       } else {
@@ -415,17 +415,17 @@ fn token_taxonomy_default_token_surface(
   category : DesignTokenCategory,
 ) -> String {
   match category {
-    Color => "@common.DesignSemanticPalette"
-    Typography => "@common.DesignTypographyTokens"
-    Spacing => "@common.DesignSpacingTokens"
-    Density => "@common.DesignDensity"
-    Shape => "@common.DesignRadiusTokens"
-    Elevation => "@common.DesignElevationTokens"
-    Motion => "@common.DesignMotionTokens"
-    Surface => "@common.DesignSurfaceTokens"
-    StateLayer => "@common.DesignStateLayerTokens"
-    ComponentStyle => "@common.DesignComponentTokens"
-    SchemeVariant => "@common.DesignSchemeVariant"
+    Color => "DesignSemanticPalette"
+    Typography => "DesignTypographyTokens"
+    Spacing => "DesignSpacingTokens"
+    Density => "DesignDensity"
+    Shape => "DesignRadiusTokens"
+    Elevation => "DesignElevationTokens"
+    Motion => "DesignMotionTokens"
+    Surface => "DesignSurfaceTokens"
+    StateLayer => "DesignStateLayerTokens"
+    ComponentStyle => "DesignComponentTokens"
+    SchemeVariant => "DesignSchemeVariant"
     Customization => "custom_tokens/custom"
   }
 }
@@ -438,15 +438,14 @@ fn token_taxonomy_default_moui_surface(
     Color => "@core.ColorPalette + @core.SemanticColorScale"
     Typography => "@core.TypographyScale"
     Spacing => "@core.SpacingScale"
-    Density => "@common.DesignDensity -> @core.SpacingScale"
+    Density => "DesignDensity -> @core.SpacingScale"
     Shape => "@core.RadiusScale"
     Elevation => "@core.ShadowScale"
     Motion => "@core.MotionScale"
     Surface => "@core.SurfaceScale"
-    StateLayer =>
-      "@common.DesignStateLayerTokens -> @common.DesignComponentTokens"
-    ComponentStyle => "@common.DesignComponentTokens -> @core.*Style"
-    SchemeVariant => "@common.DesignSchemeVariant -> @core.Theme"
+    StateLayer => "DesignStateLayerTokens -> @common.DesignComponentTokens"
+    ComponentStyle => "DesignComponentTokens -> @core.*Style"
+    SchemeVariant => "DesignSchemeVariant -> @core.Theme"
     Customization => "@common.custom/custom_tokens"
   }
 }

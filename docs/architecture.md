@@ -135,6 +135,7 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
 
 ## Scope
 
+<<<<<<< Updated upstream
 - Platform-neutral `core` contracts, opaque views, environment/event/geometry,
   draw models, and the private custom view protocol wrapped by `View[Msg]`.
   `core` should grow only cross-runtime protocols and shared
@@ -150,6 +151,13 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
   `View`, `Program`, `Effect`, `Subscription`, and `Theme` for
   `@wzzc-dev/moui` consumers. Neutral default/light/dark/custom theme builders
   live in `moui/views` and return plain `@moui.Theme` values.
+=======
+- Platform-neutral `core` runtime, view specs, Taffy-backed layout placement,
+  hit testing, and draw commands.
+- Public root package aliases common core view/runtime/theme types for
+  `@wzzc-dev/moui` consumers and exposes neutral default/light/dark/custom
+  theme builders directly over `@core.Theme`.
+>>>>>>> Stashed changes
 - `moui_theme/common` is a repo-local addon diagnostic workspace member for shared
   source-mapped design-system
   manifests, source-usage audits for golden mappings, official-token/source-lock
@@ -175,9 +183,14 @@ manual smoke gates described in `docs/testing.md` and `docs/release-readiness.md
 
 ```text
 moui/                         root public facade workspace member
+<<<<<<< Updated upstream
 moui/core/                    platform-neutral contracts, opaque View, and custom view callback contracts
 moui/runtime/                 opaque app/host AppRuntime entrypoint, runtime state, tree/layout/paint, and program execution
 moui/views/                   public view constructors and concrete custom view control behavior
+=======
+moui/core/                    one package for platform-neutral runtime, state, layout, input, editor, paint, and view model
+moui/views/                   public view constructors
+>>>>>>> Stashed changes
 moui_theme/common/            addon diagnostic common source-mapped design-system model, aggregate design-system reports, token taxonomy reports, semantic palette role reports, typography role reports, golden mappings, source usage audits, source-lock quality reports, source-package inventories, source-imported token records, coverage gaps, integrity reports, runtime token alignment, official-token/source-lock coverage, token-group resolver reports, density resolver reports, variant resolver reports, customization capability reports, component-token matrices, adaptation reports, semantic/component tokens, coverage manifests, and custom Theme builders
 moui_theme/{material,carbon,primer,fluent}/ package-local official-system entrypoints over common tokens, manifests, reports, component matrices, and light/dark/high-contrast/system Theme helpers
 moui/backend/host/            shared HostEvent, HostWindowEventSource, HostTimerSource, HostRouteSource, metrics, HostWindowRenderer, native async image completion source, input, redraw driver, window/core + dpi event conversion
