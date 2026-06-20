@@ -4,6 +4,7 @@ import {
   "wzzc-dev/moui",
   "wzzc-dev/moui_richtext",
   "wzzc-dev/moui/views",
+  "moonbitlang/core/json",
 }
 
 import {

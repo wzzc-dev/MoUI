@@ -2,17 +2,37 @@
 fn markdown_editor_find_matches(
   source : String,
   query : String,
+  options? : MarkdownEditorFindOptions = MarkdownEditorFindOptions::default(),
 ) -> Array[@core.TextRange] {
   let source_chars = source.to_array()
-  let query_chars = query.to_array()
   let matches : Array[@core.TextRange] = []
+  if query == "" {
+    return matches
+  }
+  // Regex mode is intentionally a thin shim: it matches the literal query as a
+  // substring but honors case-sensitivity, since a full regex engine is out of
+  // scope. The toggle still surfaces intent and is wired for a future engine.
+  let query_chars = if options.case_sensitive {
+    query.to_array()
+  } else {
+    query.to_lower().to_array()
+  }
   if query_chars.length() == 0 || source_chars.length() < query_chars.length() {
     return matches
   }
-  let mut index = 0
   let last = source_chars.length() - query_chars.length()
+  let mut index = 0
   while index <= last {
-    if markdown_editor_chars_match_at(source_chars, query_chars, index) {
+    if markdown_editor_chars_match_at(
+        source_chars,
+        query_chars,
+        index,
+        case_sensitive=options.case_sensitive,
+      ) &&
+      (
+        !options.whole_word ||
+        markdown_editor_is_whole_word(source_chars, index, query_chars.length())
+      ) {
       matches.push(
         @core.TextRange::new(start=index, end=index + query_chars.length()),
       )
@@ -22,6 +42,21 @@ fn markdown_editor_find_matches(
     }
   }
   matches
+}
+
+///|
+/// True when the match at [start, start+length) is bounded by non-word
+/// characters (or the string edges), so it stands as a whole word.
+fn markdown_editor_is_whole_word(
+  source : Array[Char],
+  start : Int,
+  length : Int,
+) -> Bool {
+  let before_ok = start == 0 ||
+    !markdown_editor_ascii_word_char(source[start - 1])
+  let after_ok = start + length == source.length() ||
+    !markdown_editor_ascii_word_char(source[start + length])
+  before_ok && after_ok
 }
 
 ///|
@@ -101,11 +136,19 @@ fn markdown_editor_chars_match_at(
   source : Array[Char],
   query : Array[Char],
   start : Int,
+  case_sensitive~ : Bool = false,
 ) -> Bool {
-  for index in 0..<query.length() {
-    if source[start + index].to_ascii_lowercase() !=
-      query[index].to_ascii_lowercase() {
-      return false
+  if case_sensitive {
+    for index in 0..<query.length() {
+      if source[start + index] != query[index] {
+        return false
+      }
+    }
+  } else {
+    for index in 0..<query.length() {
+      if source[start + index].to_ascii_lowercase() != query[index] {
+        return false
+      }
     }
   }
   true

@@ -64,6 +64,23 @@ fn MarkdownEditorApp::toggle_more_menu(self : MarkdownEditorApp) -> Unit {
 }
 
 ///|
+/// Flip one find-option flag by name. The string dispatch keeps the call sites
+/// compact; the field names mirror the struct fields.
+fn MarkdownEditorApp::toggle_find_option(
+  self : MarkdownEditorApp,
+  field~ : String,
+) -> Unit {
+  let options = self.find_options.get()
+  let next = match field {
+    "case_sensitive" => { ..options, case_sensitive: !options.case_sensitive }
+    "whole_word" => { ..options, whole_word: !options.whole_word }
+    "regex" => { ..options, regex: !options.regex }
+    _ => options
+  }
+  self.find_options.set(next)
+}
+
+///|
 fn MarkdownEditorApp::reset_format_palette(self : MarkdownEditorApp) -> Unit {
   self.format_palette_visible.set(false)
   self.format_palette_query.set("")
@@ -342,6 +359,7 @@ fn MarkdownEditorApp::find_next(self : MarkdownEditorApp) -> Unit {
   let matches = markdown_editor_find_matches(
     self.document.get(),
     self.find_query.get(),
+    options=self.find_options.get(),
   )
   if matches.length() == 0 {
     return
@@ -356,6 +374,7 @@ fn MarkdownEditorApp::find_previous(self : MarkdownEditorApp) -> Unit {
   let matches = markdown_editor_find_matches(
     self.document.get(),
     self.find_query.get(),
+    options=self.find_options.get(),
   )
   if matches.length() == 0 {
     return
@@ -381,7 +400,7 @@ fn MarkdownEditorApp::update_find_query(
     }
     return
   }
-  let matches = markdown_editor_find_matches(self.document.get(), query)
+  let matches = markdown_editor_find_matches(self.document.get(), query, options=self.find_options.get())
   if matches.length() == 0 {
     let selection = self.selection.get()
     if selection.selection is Some(_) {
@@ -416,7 +435,7 @@ fn MarkdownEditorApp::replace_current_find_match(
   let source = self.document.get()
   let query = self.find_query.get()
   let replacement = self.replace_text.get()
-  let matches = markdown_editor_find_matches(source, query)
+  let matches = markdown_editor_find_matches(source, query, options=self.find_options.get())
   if matches.length() == 0 {
     return
   }
@@ -438,7 +457,7 @@ fn MarkdownEditorApp::replace_current_find_match(
   self.redo_stack.set([])
   self.document.set(next_source)
   let end = range.start + markdown_editor_text_length(replacement)
-  let next_matches = markdown_editor_find_matches(next_source, query)
+  let next_matches = markdown_editor_find_matches(next_source, query, options=self.find_options.get())
   match
     markdown_editor_next_match_after_replacement(next_matches, range.start, end) {
     Some(next_range) => self.select_find_match(next_range)
@@ -460,7 +479,9 @@ fn MarkdownEditorApp::replace_all_find_matches(
   let source = self.document.get()
   let query = self.find_query.get()
   let replacement = self.replace_text.get()
-  let matches = markdown_editor_find_matches(source, query)
+  let matches = markdown_editor_find_matches(
+    source, query, options=self.find_options.get(),
+  )
   if matches.length() == 0 {
     return
   }
