@@ -254,6 +254,7 @@ pub fn markdown_inlines_to_rich_text(
         image_source=markdown_inline_image_source(span, base_dir~),
         image_size=markdown_inline_image_size(span, base),
         font=Some(markdown_inline_font(span.kind, base)),
+        color=markdown_inline_color(span.kind),
         background=markdown_inline_background(span.kind),
         decoration=markdown_inline_decoration(span.kind),
       ),
@@ -390,6 +391,16 @@ pub fn markdown_inline_font(
         size: font.size * 0.92,
       }
     Plain => font
+  }
+}
+
+///|
+/// Inline run colors. Links/autolinks render in Typora's blue so they read as
+/// actionable; everything else inherits the block foreground (None).
+pub fn markdown_inline_color(kind : MarkdownInlineKind) -> @core.Color? {
+  match kind {
+    Link | Autolink => Some(@core.Color::rgba(r=0.13, g=0.45, b=0.94, a=1.0))
+    _ => None
   }
 }
 
