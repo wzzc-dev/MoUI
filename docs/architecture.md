@@ -126,7 +126,6 @@ Architecture-sensitive changes should usually run:
 sh scripts/dev-check.sh
 moon info
 node scripts/validate-api-surface.mjs
-node scripts/validate-maintenance-baseline.mjs
 ```
 
 Use focused package tests while editing, then the daily validation script before
@@ -211,9 +210,15 @@ moui/render/wgpu/fontconfig/  Linux fontconfig/HarfBuzz/FreeType provider scaffo
 moui/tests/tooling/           quickcheck and pixelmatch integration tests
 moui/tests/text_conformance/  opt-in native/Web text diagnostic matrix
 moui/tests/skia_renderer_smoke/native/ opt-in real-Skia renderer pixel smoke
+moui/tests/skia_cached_layer_benchmark/ opt-in real-Skia cached-layer benchmark harness
+moui/tests/skia_text_emoji_smoke/ opt-in real-Skia text/emoji renderer smoke
+moui/tests/wgpu_renderer_smoke/ opt-in native WGPU renderer smoke
 examples/counter/app/         smallest shared app shape
-examples/counter/{web_wasm,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
+examples/counter/{macos_skia,web_wasm,macos_wgpu,windows_wgpu,linux_wgpu}/ platform counter entrypoints
 examples/counter/windows_wgpu_cosmic/ Windows counter selecting Moon Cosmic text
+examples/agent_counter/       minimal agent-controllable runtime example (shared app at example root plus main/ and macos_skia/ entrypoints)
+examples/button_freeze_probe/app/ minimal native Skia button-freeze repro app
+examples/button_freeze_probe/{macos_skia,windows_skia,linux_skia}/ platform Button Freeze Probe entrypoints
 examples/showcase/app/        shared MoUI framework showcase app with Counter/Todo patterns, no moui_theme dependency
 examples/design_systems/app/  dedicated addon diagnostic source-mapped design-system preview/parity example using moui_theme
 examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/ Design Systems addon diagnostic host entrypoints
@@ -237,6 +242,12 @@ examples/markdown_editor/windows_wgpu_cosmic/ Windows Markdown Editor selecting 
 examples/markdown_editor/linux_skia/ Linux Markdown editor selecting native Skia raster
 examples/webview_demo/app/ shared native WebView demo app
 examples/webview_demo/{macos_skia,windows_skia,linux_skia,web_wasm}/ platform WebView demo entrypoints
+examples/pdf_workbench/app/  shared PDF reader/light editor app
+examples/pdf_workbench/{macos_skia,windows_skia,linux_skia}/ platform PDF Workbench Skia entrypoints
+examples/pdf_workbench/{pdflite_adapter,pdflite_service_protocol,pdflite_service_native_transport,pdflite_service_cli,pdfium_adapter}/ app-private PDF parse/writeback/raster adapter and service subpackages
+examples/mo_workbench/app/   shared multi-backend agent desktop dogfood app
+examples/mo_workbench/native_transport/ app-private Pi RPC native process transport subpackage
+examples/mo_workbench/macos_skia/ macOS Mo Workbench native Skia entrypoint
 examples/{settings,data_table,file_importer,command_palette}/app/ shared app-pattern packages without platform entrypoints
 ```
 
@@ -682,9 +693,9 @@ system that matches its WebGPU glyph path. See [Text system](text-system.md).
 ## Built-In And Custom Views
 
 The public `views` package includes text, button, text field, checkbox, image,
-surface/container, row/column, stack, scroll, grid, list, frame, padding,
-spacer, navigation stack, tab view, dialog host, lazy list, toggle, radio,
-slider, progress, menu button, tooltip, and layout helper functions.
+container, row/column, stack, scroll_view, grid, list, frame, padding, spacer,
+navigation stack, tab view, dialog host, lazy list, toggle, radio, slider,
+progress, menu button, tooltip, and layout helper functions.
 
 See [View catalog](view-catalog.md) for the current public constructor matrix,
 test coverage, and example coverage.

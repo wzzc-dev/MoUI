@@ -24,9 +24,6 @@ The daily gate includes these command tokens and should stay synchronized with
 `scripts/dev-check.sh`:
 
 ```sh
-node scripts/validate-guidance-consistency.mjs
-node --check scripts/validate-maintenance-baseline.mjs
-node scripts/validate-maintenance-baseline.mjs
 node --check scripts/validate-api-surface.mjs
 node scripts/validate-api-surface.mjs
 node scripts/validate-renderer-provider-manifests.mjs
@@ -95,6 +92,8 @@ moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdflite_service_protocol --target native
+moon test examples/pdf_workbench/pdflite_service_native_transport --target native
+moon test examples/pdf_workbench/pdfium_adapter --target native
 ```
 
 Use `moon test moui/render/wgpu --target native` only for the native WGPU
@@ -102,8 +101,8 @@ diagnostic route. Use `moon fmt` before handoff. Run `moon info` and review
 `pkg.generated.mbti` diffs after public API changes.
 
 When splitting oversized implementation or test files, reducing source-level
-`pub(all)`, or shrinking the root facade, run
-`node scripts/validate-maintenance-baseline.mjs` and ratchet the relevant
+`pub(all)`, or shrinking the root facade, run the maintenance baseline guard
+(ratchet budget tracked in the API surface guard) and ratchet the relevant
 budget downward in the same change.
 
 ## Conformance Slices
@@ -200,6 +199,5 @@ When changing repository guidance, update the synchronized surfaces together:
 Then run:
 
 ```sh
-node scripts/validate-guidance-consistency.mjs
 node scripts/sync-website-docs.mjs --check
 ```

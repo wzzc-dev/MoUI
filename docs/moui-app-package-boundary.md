@@ -127,7 +127,8 @@ capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当
 
 ## 普通共享 App 包
 
-普通共享 app 包指 `examples/*/app` 这类平台无关的业务逻辑包。它们应该默认只依赖：
+普通共享 app 包指 `examples/*/app` 这类平台无关的业务逻辑包，以及同形态的
+`website/app` 和把共享 app 放在示例根目录的 `examples/agent_counter`。它们应该默认只依赖：
 
 - `wzzc-dev/moui`
 - `wzzc-dev/moui/views`
@@ -150,7 +151,7 @@ capability 展示依赖 `@render`；普通 app 不应把这两个示例用途当
 - `wzzc-dev/moui/backend/{macos,windows,linux}/wgpu`
 - `moui_theme/*`，除非该 app 本身是设计系统 addon 或 preview app。
 
-已知例外见上方“现状声明”：`showcase/app` 暂时依赖 `@render` 用于 capability 报告，
+已知例外见上方“目标边界声明”：`showcase/app` 暂时依赖 `@render` 用于 capability 报告，
 并依赖 `@runtime` 用于 diagnostics snapshot 示例。前者应在 capability 报告收敛为
 app-facing API 后移除；后者仅限 diagnostics 示例，不代表普通 app 默认可依赖 runtime。
 
@@ -286,7 +287,20 @@ WGPU 相关 backend/render 包只作为实验或诊断入口使用，不是普�
 - `moui/backend/host`：host service、window/event/service 协议。
 - `moui/backend/*`：平台 backend。
 - `moui/render/*`：renderer facade 和具体 renderer 实现。
+- `moui_richtext`：富文本/Markdown 文档、编辑、命令、输入、粘贴、表格与源码映射逻辑
+  addon，供 rich editing app（如 `examples/markdown_editor`、`examples/mo_workbench`、
+  `examples/showcase`）按需直接依赖；不进入 `core`、`views` 或 root facade 默认依赖。
+- `moui_agent` / `moui_agent_mcp`：agent 协议、schema、host runtime 与 MCP router
+  support addon，供 agent-controllable app（如 `examples/agent_counter`）按需直接依赖；
+  不进入 `core`、`views` 或 root facade 默认依赖。
 - `moui_theme/*`：设计系统 addon，不进入 `core`、`views` 或 root facade 的默认依赖。
+
+普通 app 默认只依赖 `moui` 与 `moui/views`；直接依赖 `moui_richtext`、
+`moui_agent*`、`moui_theme/*` 等 addon 仅在 app 明确需要该能力时才允许。直接依赖
+`moui/core`、`moui/backend/host` 的普通 app 由 API surface guard 的 advanced-app
+白名单约束（当前覆盖 `examples/markdown_editor/app`、`examples/mo_workbench/app`、
+`examples/pdf_workbench/app`、`examples/showcase/app`、`website/app` 中的 core 导入，
+以及 `examples/showcase/app` 的 runtime 导入）。
 
 ## Review Checklist
 
