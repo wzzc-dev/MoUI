@@ -76,6 +76,13 @@ test "markdown editor dark mode toggle switches chrome theme" {
   let dark_palette = @views.dark_theme().palette.background
   let resolved = app.chrome_theme().palette.background
   assert_true(resolved == dark_palette && resolved != light_palette)
+  // The editor appearance now follows dark mode: page background flips from
+  // white to dark, so the editor body is no longer a white island in a dark
+  // chrome.
+  let light_spec = MarkdownEditorApp::new().appearance_spec()
+  let dark_spec = app.appearance_spec()
+  assert_true(dark_spec.page_background != light_spec.page_background)
+  assert_true(dark_spec.foreground != light_spec.foreground)
 }
 
 ///|
