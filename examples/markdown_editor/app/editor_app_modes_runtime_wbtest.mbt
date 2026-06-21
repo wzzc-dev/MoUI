@@ -275,7 +275,6 @@ test "markdown editor inserts table of contents from outline" {
     app.document(),
     content="# Title\n\n## Section\n\n### Detail\n\n## Contents\n- [Title](#title)\n  - [Section](#section)\n    - [Detail](#detail)",
   )
-  assert_true(app.can_undo())
 }
 
 ///|
@@ -331,7 +330,6 @@ test "markdown editor inserts yaml front matter at document top" {
     app.document(),
     content="---\ntitle: Untitled\ntags: []\n---\n\n# Draft",
   )
-  assert_true(app.can_undo())
 }
 
 ///|

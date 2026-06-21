@@ -25,7 +25,7 @@ fn MarkdownEditorApp::root(
   if !zen {
     children.push(
       self.chrome(
-        theme, snapshot, block_label, document, selection, workspace_width,
+        theme, document, selection, workspace_width,
       ),
     )
   }
@@ -245,8 +245,6 @@ fn markdown_editor_centered_workspace(
 fn MarkdownEditorApp::chrome(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
-  snapshot : MarkdownEditorSnapshot,
-  block_label : String,
   source : String,
   selection : MarkdownEditorSelection,
   width : Double,

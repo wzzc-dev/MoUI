@@ -337,18 +337,6 @@ fn MarkdownEditorApp::transfer_in_progress(self : MarkdownEditorApp) -> Bool {
 }
 
 ///|
-/// Whether the undo history has an entry to restore.
-fn MarkdownEditorApp::can_undo(self : MarkdownEditorApp) -> Bool {
-  self.undo_stack.get().length() > 0
-}
-
-///|
-/// Whether the redo history has an entry to restore.
-fn MarkdownEditorApp::can_redo(self : MarkdownEditorApp) -> Bool {
-  self.redo_stack.get().length() > 0
-}
-
-///|
 /// Derive the directory of the open document, used to resolve relative image
 /// sources against the document's location rather than the process cwd. Returns
 /// None (no re-rooting) when there is no path.

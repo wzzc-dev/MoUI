@@ -240,6 +240,14 @@ fn markdown_editor_alt_shortcut(key : String) -> @core.KeyboardShortcut {
 }
 
 ///|
+fn markdown_editor_alt_shift_shortcut(key : String) -> @core.KeyboardShortcut {
+  @core.KeyboardShortcut::new(
+    key~,
+    modifiers=@core.KeyModifiers::new(alt=true, shift=true),
+  )
+}
+
+///|
 fn markdown_editor_meta_alt_shortcut(key : String) -> @core.KeyboardShortcut {
   @core.KeyboardShortcut::new(
     key~,
@@ -927,6 +935,16 @@ pub fn MarkdownEditorApp::action_commands(
       "Table Align Auto",
       markdown_editor_control_shift_shortcut("0"),
       () => ignore(self.update(ApplyCommand(SetTableColumnAlignment(None)))),
+    ),
+    markdown_editor_command_binding(
+      "Undo Formatting Command",
+      markdown_editor_alt_shortcut("z"),
+      () => ignore(self.update(Undo)),
+    ),
+    markdown_editor_command_binding(
+      "Redo Formatting Command",
+      markdown_editor_alt_shift_shortcut("z"),
+      () => ignore(self.update(Redo)),
     ),
   ])
 }
