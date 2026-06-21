@@ -84,14 +84,26 @@ fn MarkdownEditorApp::root(
       left=theme.spacing_scale.md,
     ),
   )
-  // Stack the toast layer and confirm dialog above the workspace so they float
-  // over the editor without displacing it.
+  // Stack the toast layer, More-menu popover, and confirm dialog above the
+  // workspace so they float over the editor without displacing it. The More
+  // menu is a top-level overlay so it paints above the editor page card.
   @views.stack(
     [
       centered,
       @views.align(
         self.toast_layer(theme),
         alignment=@core.Alignment::new(x=0.5, y=0.0),
+      ),
+      // The More menu sits at the top-right, offset down past the title bar
+      // (36px) plus a small gap so it drops from the ⋯ button. A padding-top
+      // on the content pushes it below the bar; align keeps it top-trailing.
+      @views.align(
+        padding_edges(
+          self.more_menu_overlay(theme),
+          top=44.0,
+          right=theme.spacing_scale.md,
+        ),
+        alignment=@core.Alignment::top_trailing(),
       ),
       @views.align(
         self.confirm_dialog(theme),
@@ -203,7 +215,7 @@ fn markdown_editor_centered_workspace(
     measure=ctx => ctx.constraints.max,
     place=ctx => {
       let child_size = ctx.child_sizes[0]
-      let x = if ctx.frame.size.width >= 1100.0 {
+      let x = if ctx.frame.size.width > child_size.width {
         ctx.frame.origin.x +
         markdown_editor_max_double(
           0.0,
