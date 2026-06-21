@@ -68,9 +68,19 @@ fn MarkdownEditorApp::markdown_editor_more_menu(
   }
   ignore(source)
   ignore(selection)
+  // Cap the menu at a viewport-friendly height and let it scroll, so a long
+  // command list (view/panel toggles were added in T5) never spills off-screen
+  // or collapses its rows.
+  let visible_rows = if rows.length() < 10 { rows.length() } else { 10 }
+  let menu_height = row_height * visible_rows.to_double() +
+    theme.spacing_scale.sm * 2.0
   let content = container(
     padding_edges(
-      column(rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start),
+      scroll_view(
+        column(rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start),
+        width=232.0,
+        height=menu_height,
+      ),
       top=theme.spacing_scale.xs,
       right=theme.spacing_scale.sm,
       bottom=theme.spacing_scale.xs,
@@ -87,7 +97,7 @@ fn MarkdownEditorApp::markdown_editor_more_menu(
     expanded~,
     theme~,
     width=240.0,
-    height=row_height * rows.length().to_double() + theme.spacing_scale.sm,
+    height=menu_height + theme.spacing_scale.sm * 2.0,
   )
 }
 
