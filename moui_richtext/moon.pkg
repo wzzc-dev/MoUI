@@ -1,6 +1,7 @@
 import {
   "wzzc-dev/moui/core",
   "mizchi/markdown" @md,
+  "moonbitlang/core/debug",
 }
 
 supported_targets = "+native+wasm-gc"

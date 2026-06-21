@@ -50,19 +50,14 @@ fn restore_text_history(
     return { text: current, control, changed: false }
   }
   let restored = source[source.length() - 1]
-  let next_source : Array[@core.TextHistoryEntryContext] = []
-  for index in 0..<(source.length() - 1) {
-    next_source.push(source[index])
-  }
+  let next_source = source[:source.length() - 1].to_owned()
   let current_entry : @core.TextHistoryEntryContext = {
     text: current,
     caret: control.caret,
     selection: control.selection,
   }
   let destination = if undo { control.redo_stack } else { control.undo_stack }
-  let next_destination : Array[@core.TextHistoryEntryContext] = []
-  next_destination.append(destination)
-  next_destination.push(current_entry)
+  let next_destination = destination + [current_entry]
   let next_control = if undo {
     {
       ..control,
@@ -379,10 +374,10 @@ fn move_text_caret_index(
 ) -> Int {
   let length = text_length(text)
   let caret = clamp_int(caret, 0, length)
+  let boundaries = @core.TextGraphemeBoundaries::new(text~)
   match direction {
-    MoveLeft =>
-      @core.TextGraphemeBoundaries::new(text~).previous_boundary(caret)
-    MoveRight => @core.TextGraphemeBoundaries::new(text~).next_boundary(caret)
+    MoveLeft => boundaries.previous_boundary(caret)
+    MoveRight => boundaries.next_boundary(caret)
     MoveStart => 0
     MoveEnd => length
   }
@@ -417,25 +412,25 @@ test {
 test "markdown image source resolves relative targets against base_dir" {
   let image = markdown_inline("cat.png", Image, target=Some("cat.png"))
   // Without a base_dir, the target is returned verbatim.
-  inspect(markdown_inline_image_source(image), content="Some(cat.png)")
+  @debug.debug_inspect(markdown_inline_image_source(image), content="Some(cat.png)")
   // With a base_dir, a relative target is rooted at the document directory.
-  inspect(
+  @debug.debug_inspect(
     markdown_inline_image_source(image, base_dir=Some("/tmp/docs")),
     content="Some(/tmp/docs/cat.png)",
   )
   // Trailing separators are handled without doubling.
-  inspect(
+  @debug.debug_inspect(
     markdown_inline_image_source(image, base_dir=Some("/tmp/docs/")),
     content="Some(/tmp/docs/cat.png)",
   )
   // Absolute paths, data: and http: URIs are never re-rooted.
   let abs = markdown_inline("/abs/cat.png", Image, target=Some("/abs/cat.png"))
-  inspect(
+  @debug.debug_inspect(
     markdown_inline_image_source(abs, base_dir=Some("/tmp/docs")),
     content="Some(/abs/cat.png)",
   )
   let url = markdown_inline("u", Image, target=Some("https://e.com/c.png"))
-  inspect(
+  @debug.debug_inspect(
     markdown_inline_image_source(url, base_dir=Some("/tmp/docs")),
     content="Some(https://e.com/c.png)",
   )
@@ -444,7 +439,7 @@ test "markdown image source resolves relative targets against base_dir" {
     Image,
     target=Some("data:image/png;base64,AAAA"),
   )
-  inspect(
+  @debug.debug_inspect(
     markdown_inline_image_source(data, base_dir=Some("/tmp/docs")),
     content="Some(data:image/png;base64,AAAA)",
   )
@@ -526,8 +521,8 @@ fn is_undo_shortcut(event : @core.KeyboardEvent) -> Bool {
 ///|
 fn is_redo_shortcut(event : @core.KeyboardEvent) -> Bool {
   event.pressed &&
-  (event.key == "z" || event.key == "Z") &&
-  event.modifiers.shift &&
+  ((event.modifiers.shift && (event.key == "z" || event.key == "Z")) ||
+   (!event.modifiers.shift && (event.key == "y" || event.key == "Y"))) &&
   (event.modifiers.meta || event.modifiers.control)
 }
 
