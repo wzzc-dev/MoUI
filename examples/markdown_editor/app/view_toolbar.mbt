@@ -51,54 +51,67 @@ fn MarkdownEditorApp::markdown_editor_more_menu(
   source : String,
   selection : MarkdownEditorSelection,
 ) -> @moui.View[MarkdownEditorMsg] {
+  // Only the anchor button lives in the chrome bar; the popover content is
+  // rendered as a top-level overlay (more_menu_overlay) so it floats above
+  // the editor page card instead of being covered by it.
+  let _ = source
+  let _ = selection
   let expanded = self.more_menu_visible.get()
-  let anchor = markdown_editor_toolbar_button(
+  markdown_editor_toolbar_button(
     @views.IconName::Settings,
     "More",
     ToggleMoreMenu,
     theme~,
     active=expanded,
   )
-  let row_height = 30.0
-  let rows : Array[@moui.View[MarkdownEditorMsg]] = []
-  for item in markdown_editor_more_menu_items() {
-    rows.push(
-      markdown_editor_more_menu_row(item, theme~, row_height~),
-    )
-  }
-  ignore(source)
-  ignore(selection)
-  // Cap the menu at a viewport-friendly height and let it scroll, so a long
-  // command list (view/panel toggles were added in T5) never spills off-screen
-  // or collapses its rows.
-  let visible_rows = if rows.length() < 10 { rows.length() } else { 10 }
-  let menu_height = row_height * visible_rows.to_double() +
-    theme.spacing_scale.sm * 2.0
-  let content = container(
-    padding_edges(
-      scroll_view(
-        column(rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start),
-        width=232.0,
-        height=menu_height,
+}
+
+///|
+/// The More-menu popover content, rendered as a top-level overlay anchored to
+/// the top-right of the workspace (just below the title bar) so it paints
+/// above the editor page card. Returns empty when the menu is closed.
+fn MarkdownEditorApp::more_menu_overlay(
+  self : MarkdownEditorApp,
+  theme : @moui.Theme,
+) -> @moui.View[MarkdownEditorMsg] {
+  let expanded = self.more_menu_visible.get()
+  if !expanded {
+    @views.empty()
+  } else {
+    let row_height = 30.0
+    let rows : Array[@moui.View[MarkdownEditorMsg]] = []
+    for item in markdown_editor_more_menu_items() {
+      rows.push(
+        markdown_editor_more_menu_row(item, theme~, row_height~),
+      )
+    }
+    let visible_rows = if rows.length() < 10 { rows.length() } else { 10 }
+    let menu_height = row_height * visible_rows.to_double() +
+      theme.spacing_scale.sm * 2.0
+    let content = container(
+      padding_edges(
+        scroll_view(
+          column(
+            rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start,
+          ),
+          width=232.0,
+          height=menu_height,
+        ),
+        top=theme.spacing_scale.xs,
+        right=theme.spacing_scale.sm,
+        bottom=theme.spacing_scale.xs,
+        left=theme.spacing_scale.sm,
       ),
-      top=theme.spacing_scale.xs,
-      right=theme.spacing_scale.sm,
-      bottom=theme.spacing_scale.xs,
-      left=theme.spacing_scale.sm,
-    ),
-    width=232.0,
-    variant=@views.ContainerVariant::Overlay,
-    theme~,
-    padding=0.0,
-  )
-  popover(
-    anchor~,
-    content~,
-    expanded~,
-    theme~,
-    width=240.0,
-    height=menu_height + theme.spacing_scale.sm * 2.0,
-  )
+      width=232.0,
+      variant=@views.ContainerVariant::Overlay,
+      theme~,
+      padding=0.0,
+    )
+    // The caller wraps this in a top-trailing align with a top offset so the
+    // popover drops from the ⋯ button in the title bar and paints above the
+    // editor page card.
+    content
+  }
 }
 
 ///|
