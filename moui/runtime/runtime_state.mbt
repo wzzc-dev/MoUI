@@ -22,12 +22,6 @@ priv struct RuntimeState {
   dirty_paint_elements : Array[ElementId]
   mut focused_element : ElementId?
   mut active_pointer_capture : ElementId?
-  /// Element id under the pointer as of the most recent `PointerMoved`. The
-  /// runtime compares this against the next move's hit-test to detect when the
-  /// pointer leaves an element and delivers a synthetic `Exit` to the previous
-  /// target so it can clear hover state. Host backends never produce `Exit`;
-  /// this field is the only source of those events.
-  mut hovered_element : ElementId?
   mut environment : Environment
   mut text_system : TextSystem
   mut redraw_callback : (() -> Unit)?
@@ -97,7 +91,6 @@ fn RuntimeState::new_erased_view_node(
     dirty_paint_elements: [],
     focused_element: None,
     active_pointer_capture: None,
-    hovered_element: None,
     environment,
     text_system: TextSystem::fallback(),
     redraw_callback: None,
@@ -184,7 +177,6 @@ fn RuntimeState::destroy(self : RuntimeState) -> Unit {
   self.dirty_paint_elements.clear()
   self.focused_element = None
   self.active_pointer_capture = None
-  self.hovered_element = None
   self.needs_rebuild = false
   self.needs_layout = false
   self.needs_paint = false

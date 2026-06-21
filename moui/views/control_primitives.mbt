@@ -307,20 +307,33 @@ fn[Msg] button_control(
             inside &&
             current == @core.ButtonState::Pressed
           let changed = next != current || activated
+          // A synthetic `Exit` (pointer left the element) should clear hover
+          // immediately rather than animate a fade-out. The fade relies on the
+          // host ticking redraws from the same subtree, and inside overlays /
+          // cached repaint boundaries that follow-up can stall partway —
+          // leaving a faint hover tint stuck on screen. Snapping straight to
+          // the rest state (no `bt:` transition scratch) makes the clearance
+          // deterministic and stops the redraw loop as soon as the element
+          // repaints.
+          let is_instant_clear = event.phase == @core.PointerPhase::Exit &&
+            current != @core.ButtonState::Normal
+          let next_state = if is_instant_clear {
+            {
+              ..view_button_state_context(ctx.state, current, next, ctx.now_ms),
+              scratch: "",
+            }
+          } else if changed {
+            view_button_state_context(ctx.state, current, next, ctx.now_ms)
+          } else {
+            ctx.state
+          }
           match (activated, on_click) {
             (true, Some(message)) =>
               view_event_result(
                 changed~,
                 activated=true,
                 captured=true,
-                state=Some(
-                  view_button_state_context(
-                    ctx.state,
-                    current,
-                    next,
-                    ctx.now_ms,
-                  ),
-                ),
+                state=Some(next_state),
                 dirty=@core.ViewDirtyHint::ViewPaintDirty,
                 messages=[message],
               )
@@ -329,14 +342,7 @@ fn[Msg] button_control(
                 changed~,
                 activated=false,
                 captured=true,
-                state=Some(
-                  view_button_state_context(
-                    ctx.state,
-                    current,
-                    next,
-                    ctx.now_ms,
-                  ),
-                ),
+                state=Some(next_state),
                 dirty=@core.ViewDirtyHint::ViewPaintDirty,
               )
             (false, _) =>
@@ -344,14 +350,7 @@ fn[Msg] button_control(
                 changed~,
                 captured=inside || changed,
                 state=if changed {
-                  Some(
-                    view_button_state_context(
-                      ctx.state,
-                      current,
-                      next,
-                      ctx.now_ms,
-                    ),
-                  )
+                  Some(next_state)
                 } else {
                   None
                 },

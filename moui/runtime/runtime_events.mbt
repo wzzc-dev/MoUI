@@ -113,16 +113,6 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
           self.mark_dirty(self.element_tree.id())
         }
       }
-      // Track hover across moves so the previously hovered element gets a
-      // synthetic `Exit` when the pointer leaves it. Host backends only emit
-      // `Move`, and a move landing outside an element is never delivered to it
-      // by hit-testing — so without this the element's `hovered` flag sticks.
-      // Skip while a pointer is captured (a drag) so the captured element keeps
-      // its `pressed` state until `Up`, rather than being reset to `Normal`.
-      if event.phase == PointerPhase::Move &&
-        self.active_pointer_capture is None {
-        self.dispatch_hover_exit_if_needed(event.position)
-      }
       let result = match self.active_pointer_capture {
         Some(target) =>
           if event.phase == PointerPhase::Down {
@@ -175,18 +165,6 @@ fn RuntimeState::dispatch_event(self : RuntimeState, event : AppEvent) -> Unit {
       } else if event.phase == PointerPhase::Up ||
         event.phase == PointerPhase::Cancel {
         self.active_pointer_capture = None
-        // After a press cycle ends, re-resolve the hover target at the current
-        // position so subsequent moves deliver `Exit` from the right element.
-        // `Up` lands on whatever is under the pointer now (the button stays
-        // hovered); `Cancel` clears hover outright.
-        self.hovered_element = if event.phase == PointerPhase::Cancel {
-          None
-        } else {
-          self.element_tree.root.find_hover_target(
-            event.position,
-            self.render_tree.root,
-          )
-        }
       }
       self.needs_redraw = self.needs_redraw || result.changed
       self.needs_rebuild = self.needs_rebuild || result.activated
@@ -390,67 +368,4 @@ fn RuntimeState::clear_stale_pointer_capture(self : RuntimeState) -> Unit {
       }
     None => ()
   }
-  // A rebuild can also remove the hovered element (e.g. a hovered button's
-  // subtree is swapped out). Drop the stale id so we never try to dispatch an
-  // `Exit` to an element that no longer exists.
-  match self.hovered_element {
-    Some(target) =>
-      if !self.element_tree.root.contains_element_id(target) {
-        self.hovered_element = None
-      }
-    None => ()
-  }
-}
-
-///|
-/// Resolve the element now under `position` and, when it differs from the
-/// previously hovered one, deliver a synthetic `Exit` pointer event to the old
-/// target so it can clear its hover state. The `Exit` is dispatched directly to
-/// the target id (bypassing hit-testing, since the pointer is by definition no
-/// longer over it) and carries the current position so views that re-check
-/// `inside` see `false`. Updates `hovered_element` to the new target (or
-/// `None`). Paint/redraw dirty flags propagate from the `Exit` result so the
-/// cleared hover actually repaints.
-fn RuntimeState::dispatch_hover_exit_if_needed(
-  self : RuntimeState,
-  position : Point,
-) -> Unit {
-  let new_hovered = self.element_tree.root.find_hover_target(
-    position,
-    self.render_tree.root,
-  )
-  if new_hovered == self.hovered_element {
-    return
-  }
-  match self.hovered_element {
-    Some(old) => {
-      let exit_event = PointerEvent::new(position~, phase=PointerPhase::Exit)
-      // Deliver the Exit only to the previously hovered element itself, not
-      // into its descendants: the event position is the pointer's new spot,
-      // which may still sit inside a child of `old` (the child the pointer is
-      // now entering). Propagating would clear that child's hover a frame
-      // before the Move re-sets it — a visible flicker.
-      match
-        self.element_tree.root.dispatch_pointer_event_to_target_only(
-          old,
-          exit_event,
-          self.render_tree.root,
-          environment=self.environment,
-          style=ViewStyle::empty(),
-          text_system=self.text_system,
-          now_ms=self.now_ms,
-        ) {
-        Some(result) => {
-          self.needs_redraw = self.needs_redraw || result.changed
-          self.needs_paint = self.needs_paint || result.changed
-          if result.changed {
-            self.mark_current_dirty_elements()
-          }
-        }
-        None => ()
-      }
-    }
-    None => ()
-  }
-  self.hovered_element = new_hovered
 }

@@ -12,15 +12,21 @@ pub fn append_markdown_ast_block(Array[MarkdownBlock], @markdown.Block, Array[Ma
 
 pub fn append_markdown_inline_ast(Array[MarkdownInline], @markdown.Inline, Array[MarkdownReferenceDefinition]) -> Unit
 
+pub fn code_highlight_color(CodeHighlightToken) -> @core.Color
+
+pub fn code_highlight_supports_language(String) -> Bool
+
+pub fn code_highlight_tokenize(String, String) -> Array[CodeHighlightSpan]
+
 pub fn[Msg] controlled_markdown_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, accepts_tab_input? : Bool, key? : String?) -> @core.View[Msg]
 
-pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
+pub fn[Msg] controlled_rich_text_editor(value~ : String, on_input~ : (String) -> Msg, placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn markdown_append_parsed_inline_segment(Array[MarkdownInline], String, Array[MarkdownReferenceDefinition]) -> Unit
 
 pub fn markdown_block(MarkdownBlockKind, String) -> MarkdownBlock
 
-pub fn markdown_block_to_rich_text(MarkdownBlock, @core.FontSpec) -> RichTextBlock
+pub fn markdown_block_to_rich_text(MarkdownBlock, @core.FontSpec, base_dir? : String?) -> RichTextBlock
 
 pub fn markdown_blocks_text(Array[@markdown.Block]) -> String
 
@@ -138,11 +144,11 @@ pub fn markdown_editor_block_source_prefix_padding(MarkdownEditorBlock) -> Strin
 
 pub fn markdown_editor_block_source_text(MarkdownEditorBlock) -> String
 
-pub fn markdown_editor_block_to_rich_text(String, MarkdownEditorBlock, @core.FontSpec) -> RichTextBlock
+pub fn markdown_editor_block_to_rich_text(String, MarkdownEditorBlock, @core.FontSpec, base_dir? : String?) -> RichTextBlock
 
 pub fn markdown_editor_block_with_references(MarkdownBlock, Array[MarkdownReferenceDefinition]) -> MarkdownBlock
 
-pub fn markdown_editor_blocks_to_rich_text(String, Array[MarkdownEditorBlock], @core.FontSpec) -> RichTextDocument
+pub fn markdown_editor_blocks_to_rich_text(String, Array[MarkdownEditorBlock], @core.FontSpec, base_dir? : String?) -> RichTextDocument
 
 pub fn markdown_editor_bracketed_reference_range_at_caret(Array[Char], Int, image~ : Bool) -> @core.TextRange?
 
@@ -314,11 +320,11 @@ pub fn markdown_editor_footnote_open_before(Array[Char], Int) -> Int?
 
 pub fn markdown_editor_footnote_reference_label_at(String, Int) -> String?
 
-pub fn markdown_editor_format(String, base? : @core.FontSpec) -> RichTextDocument
+pub fn markdown_editor_format(String, base? : @core.FontSpec, base_dir? : String?) -> RichTextDocument
 
-pub fn markdown_editor_format_for_selection(String, MarkdownEditorSelection, base? : @core.FontSpec) -> RichTextDocument
+pub fn markdown_editor_format_for_selection(String, MarkdownEditorSelection, base? : @core.FontSpec, base_dir? : String?) -> RichTextDocument
 
-pub fn markdown_editor_format_for_writing_mode(String, MarkdownEditorSelection, base? : @core.FontSpec, focus_mode~ : Bool) -> RichTextDocument
+pub fn markdown_editor_format_for_writing_mode(String, MarkdownEditorSelection, base? : @core.FontSpec, focus_mode~ : Bool, base_dir? : String?) -> RichTextDocument
 
 pub fn markdown_editor_format_source_mode(String, @core.FontSpec) -> RichTextDocument
 
@@ -918,13 +924,15 @@ pub fn markdown_inline(String, MarkdownInlineKind, target? : String?) -> Markdow
 
 pub fn markdown_inline_background(MarkdownInlineKind) -> @core.Brush?
 
+pub fn markdown_inline_color(MarkdownInlineKind) -> @core.Color?
+
 pub fn markdown_inline_decoration(MarkdownInlineKind) -> RichTextDecoration?
 
 pub fn markdown_inline_font(MarkdownInlineKind, @core.FontSpec) -> @core.FontSpec
 
 pub fn markdown_inline_image_size(MarkdownInline, @core.FontSpec) -> @core.Size?
 
-pub fn markdown_inline_image_source(MarkdownInline) -> String?
+pub fn markdown_inline_image_source(MarkdownInline, base_dir? : String?) -> String?
 
 pub fn markdown_inline_plain_text(@markdown.Inline) -> String
 
@@ -936,7 +944,7 @@ pub fn markdown_inline_visual_text(MarkdownInline) -> String
 
 pub fn markdown_inlines_from_ast(Array[@markdown.Inline], Array[MarkdownReferenceDefinition]) -> Array[MarkdownInline]
 
-pub fn markdown_inlines_to_rich_text(Array[MarkdownInline], @core.FontSpec) -> Array[RichTextRun]
+pub fn markdown_inlines_to_rich_text(Array[MarkdownInline], @core.FontSpec, base_dir? : String?) -> Array[RichTextRun]
 
 pub fn markdown_input_transform(String, Int, @core.TextRange?, String) -> RichTextInputTransform?
 
@@ -1024,13 +1032,26 @@ pub fn rich_text_document_caret_rect_at_source(RichTextDocument, Int, @core.Rect
 
 pub fn rich_text_document_height(RichTextDocument, @core.FontSpec) -> Double
 
-pub fn[Msg] rich_text_editor(value~ : @core.Binding[String], placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
+pub fn[Msg] rich_text_editor(value~ : @core.Binding[String], placeholder~ : String, size~ : @core.Size, format~ : (String) -> RichTextDocument, font~ : @core.FontSpec, foreground~ : @core.Color, placeholder_color~ : @core.Color, background~ : @core.Brush, border? : @core.BorderStyle?, focused_border? : @core.BorderStyle?, cursor_color~ : @core.Color, corner_radius? : Double, on_input? : ((String) -> Msg)?, on_selection_change? : ((Int, @core.TextRange?) -> Msg)?, on_prefix_click? : ((Int) -> Msg)?, on_command_click? : ((Int) -> Msg)?, input_transform? : ((String, Int, @core.TextRange?, String) -> RichTextInputTransform?)?, accepts_tab_input? : Bool, kind? : String, key? : String?) -> @core.View[Msg]
 
 pub fn rich_text_editor_content_rect(@core.Rect) -> @core.Rect
 
 // Errors
 
 // Types and methods
+pub struct CodeHighlightSpan {
+  text : String
+  kind : CodeHighlightToken
+}
+
+pub enum CodeHighlightToken {
+  CodePlain
+  CodeKeyword
+  CodeString
+  CodeComment
+  CodeNumber
+} derive(Eq, @debug.Debug)
+
 pub(all) struct MarkdownBlock {
   kind : MarkdownBlockKind
   text : String
@@ -1247,7 +1268,7 @@ pub(all) struct MarkdownEditorSnapshot {
   outline : Array[MarkdownEditorOutlineItem]
 } derive(Eq, ToJson, @debug.Debug)
 pub fn MarkdownEditorSnapshot::parse(String) -> Self
-pub fn MarkdownEditorSnapshot::parse_with_font(String, @core.FontSpec) -> Self
+pub fn MarkdownEditorSnapshot::parse_with_font(String, @core.FontSpec, base_dir? : String?) -> Self
 
 pub(all) struct MarkdownEditorTableCellRange {
   hit_start : Int

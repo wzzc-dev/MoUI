@@ -612,6 +612,23 @@ pub(all) enum IconName {
   Settings
   Trash
   Info
+  FileNew
+  FolderOpen
+  Save
+  Clipboard
+  Bold
+  Italic
+  CodeInline
+  Link
+  Heading
+  ListBullet
+  ListOrdered
+  ListTask
+  Quote
+  Table
+  Eye
+  Focus
+  Columns
 } derive(Eq, ToJson, @debug.Debug)
 
 pub(all) enum MainAlign {
