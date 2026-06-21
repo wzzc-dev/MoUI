@@ -402,7 +402,20 @@ fn editor_find_toggle(
 fn MarkdownEditorApp::appearance_spec(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorAppearanceSpec {
-  self.writing_appearance.get().spec(dark=self.dark_mode_enabled.get())
+  let base = self.writing_appearance.get().spec(dark=self.dark_mode_enabled.get())
+  { ..base, font_family: markdown_editor_font_family_stack(self.font_family.get()) }
+}
+
+///|
+/// Map the user's font-family choice to a FontFamilyStack.
+fn markdown_editor_font_family_stack(
+  family : MarkdownEditorFontFamily,
+) -> @core.FontFamilyStack {
+  match family {
+    SansFont => @core.FontFamilyStack::sans_serif()
+    SerifFont => @core.FontFamilyStack::serif()
+    MonoFont => @core.FontFamilyStack::monospace()
+  }
 }
 
 ///|
@@ -439,6 +452,7 @@ fn MarkdownEditorAppearance::spec(
           page_background: @core.Color::rgba(r=0.13, g=0.14, b=0.16),
           window_background: @core.Color::rgba(r=0.08, g=0.09, b=0.10),
           page_border: @core.Color::white().multiply_alpha(0.10),
+          font_family: @core.FontFamilyStack::sans_serif(),
         }
       } else {
         {
@@ -451,6 +465,7 @@ fn MarkdownEditorAppearance::spec(
           page_background: @core.Color::white(),
           window_background: @core.Color::rgba(r=0.992, g=0.992, b=0.99),
           page_border: @core.Color::black().multiply_alpha(0.10),
+          font_family: @core.FontFamilyStack::sans_serif(),
         }
       }
     WarmAppearance =>
@@ -465,6 +480,7 @@ fn MarkdownEditorAppearance::spec(
           page_background: @core.Color::rgba(r=0.16, g=0.14, b=0.11),
           window_background: @core.Color::rgba(r=0.10, g=0.08, b=0.06),
           page_border: @core.Color::rgba(r=0.60, g=0.48, b=0.30, a=0.22),
+          font_family: @core.FontFamilyStack::sans_serif(),
         }
       } else {
         {
@@ -477,6 +493,7 @@ fn MarkdownEditorAppearance::spec(
           page_background: @core.Color::rgba(r=1.0, g=0.984, b=0.936),
           window_background: @core.Color::rgba(r=0.968, g=0.944, b=0.890),
           page_border: @core.Color::rgba(r=0.48, g=0.34, b=0.18, a=0.18),
+          font_family: @core.FontFamilyStack::sans_serif(),
         }
       }
     WideAppearance =>
@@ -491,6 +508,7 @@ fn MarkdownEditorAppearance::spec(
           page_background: @core.Color::rgba(r=0.11, g=0.13, b=0.16),
           window_background: @core.Color::rgba(r=0.07, g=0.08, b=0.10),
           page_border: @core.Color::rgba(r=0.40, g=0.52, b=0.66, a=0.22),
+          font_family: @core.FontFamilyStack::sans_serif(),
         }
       } else {
         {
@@ -503,6 +521,7 @@ fn MarkdownEditorAppearance::spec(
           page_background: @core.Color::rgba(r=0.986, g=0.990, b=0.994),
           window_background: @core.Color::rgba(r=0.936, g=0.946, b=0.958),
           page_border: @core.Color::rgba(r=0.18, g=0.24, b=0.32, a=0.16),
+          font_family: @core.FontFamilyStack::sans_serif(),
         }
       }
   }
@@ -512,7 +531,10 @@ fn MarkdownEditorAppearance::spec(
 fn markdown_editor_appearance_font(
   appearance : MarkdownEditorAppearanceSpec,
 ) -> @core.FontSpec {
-  @core.FontSpec::new(size=appearance.editor_font_size)
+  @core.FontSpec::new(
+    size=appearance.editor_font_size,
+    families=appearance.font_family,
+  )
 }
 
 ///|

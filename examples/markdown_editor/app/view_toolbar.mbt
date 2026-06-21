@@ -113,6 +113,7 @@ fn markdown_editor_more_menu_items() -> Array[
     },
     { label: "Quick Format…", shortcut: "⌘⇧P", message: ToggleFormatPalette },
     { label: "Toggle Dark Mode", shortcut: "", message: ToggleDarkMode },
+    { label: "Cycle Font Family", shortcut: "", message: CycleFontFamily },
     { label: "Focus Mode", shortcut: "⌘⇧F", message: ToggleFocusMode },
     { label: "Typewriter Mode", shortcut: "⌘⇧T", message: ToggleTypewriterMode },
     { label: "Zen Mode", shortcut: "⌘⌥Z", message: ToggleZenMode },
