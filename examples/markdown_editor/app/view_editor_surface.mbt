@@ -686,8 +686,13 @@ fn editor_source_layout(
     normal: {
       foreground: appearance.foreground,
       background: @core.Brush::solid(appearance.page_background),
-      border: None,
-      radius: theme.radius_scale.sm,
+      border: Some(
+        @core.BorderStyle::new(
+          brush=@core.Brush::solid(appearance.page_border),
+          width=1.0,
+        ),
+      ),
+      radius: theme.radius_scale.md,
       shadow: None,
       bottom_border_only: false,
       inner_focus_border: None,
@@ -695,8 +700,13 @@ fn editor_source_layout(
     focused: {
       foreground: appearance.foreground,
       background: @core.Brush::solid(appearance.page_background),
-      border: None,
-      radius: theme.radius_scale.sm,
+      border: Some(
+        @core.BorderStyle::new(
+          brush=@core.Brush::solid(appearance.page_border),
+          width=1.0,
+        ),
+      ),
+      radius: theme.radius_scale.md,
       shadow: None,
       bottom_border_only: false,
       inner_focus_border: None,
@@ -704,8 +714,13 @@ fn editor_source_layout(
     disabled: {
       foreground: appearance.foreground,
       background: @core.Brush::solid(appearance.page_background),
-      border: None,
-      radius: theme.radius_scale.sm,
+      border: Some(
+        @core.BorderStyle::new(
+          brush=@core.Brush::solid(appearance.page_border),
+          width=1.0,
+        ),
+      ),
+      radius: theme.radius_scale.md,
       shadow: None,
       bottom_border_only: false,
       inner_focus_border: None,
@@ -763,7 +778,15 @@ fn editor_source_layout(
     editor
   }
   // Overlay a scroll indicator on the right edge so long documents give a
-  // visual cue of the scroll position.
+  // visual cue of the scroll position. A soft drop shadow turns the editor
+  // into a floating page card over the window background (Typora's "paper on
+  // desk" look).
+  let page_shadow = @core.ShadowStyle::new(
+    color=@core.Color::black().multiply_alpha(0.12),
+    offset=@core.Point::new(x=0.0, y=2.0),
+    blur_radius=16.0,
+    spread=0.0,
+  )
   let editor_with_indicator = @views.stack([
     editor_view,
     markdown_editor_scroll_indicator(
@@ -771,7 +794,7 @@ fn editor_source_layout(
       viewport_height~,
       theme,
     ),
-  ])
+  ]).shadow(page_shadow)
   if !show_source && !show_outline && !show_files && !show_info {
     editor_with_indicator
   } else {
