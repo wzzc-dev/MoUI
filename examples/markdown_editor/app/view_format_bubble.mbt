@@ -21,11 +21,31 @@ fn MarkdownEditorApp::format_bubble(
         [
           format_bubble_button("B", "Bold", ApplyCommand(Bold), theme),
           format_bubble_button("I", "Italic", ApplyCommand(Italic), theme),
-          format_bubble_button("S", "Strikethrough", ApplyCommand(Strikethrough), theme),
+          format_bubble_button(
+            "S",
+            "Strikethrough",
+            ApplyCommand(Strikethrough),
+            theme,
+          ),
           format_bubble_button("</>", "Code", ApplyCommand(Code), theme),
-          format_bubble_button("H1", "Heading 1", ApplyCommand(Heading(1)), theme),
-          format_bubble_button("H2", "Heading 2", ApplyCommand(Heading(2)), theme),
-          format_bubble_button("•", "Bullet list", ApplyCommand(BulletList), theme),
+          format_bubble_button(
+            "H1",
+            "Heading 1",
+            ApplyCommand(Heading(1)),
+            theme,
+          ),
+          format_bubble_button(
+            "H2",
+            "Heading 2",
+            ApplyCommand(Heading(2)),
+            theme,
+          ),
+          format_bubble_button(
+            "•",
+            "Bullet list",
+            ApplyCommand(BulletList),
+            theme,
+          ),
           format_bubble_button("❝", "Quote", ApplyCommand(Quote), theme),
           format_bubble_button("🔗", "Link", ApplyCommand(Link), theme),
         ],
@@ -79,15 +99,17 @@ fn markdown_editor_format_bubble_overlay(
     Some(range) => range.start != range.end
     None => false
   }
-  if !has_range || app.zen_mode_enabled.get() ||
-    app.source_mode_enabled.get() {
+  if !has_range || app.zen_mode_enabled.get() || app.source_mode_enabled.get() {
     @views.empty()
   } else {
     let bubble = app.format_bubble(theme)
     @views.custom_children_layout(
       children=[bubble],
-      measure=ctx =>
-        ctx.constraints.constrain(@moui.Size::new(width=editor_width, height=viewport_height)),
+      measure=ctx => {
+        ctx.constraints.constrain(
+          @moui.Size::new(width=editor_width, height=viewport_height),
+        )
+      },
       place=ctx => {
         let bubble_size = ctx.child_sizes[0]
         let editor_frame = @core.Rect::new(
@@ -100,9 +122,10 @@ fn markdown_editor_format_bubble_overlay(
           Some(range) => range.normalized().start
           None => selection.caret
         }
-        let content = @moui_richtext.rich_text_editor_content_rect(
-          editor_frame,
-        ).offset(dx=0.0, dy=-scroll_offset.y)
+        let content = @moui_richtext.rich_text_editor_content_rect(editor_frame).offset(
+          dx=0.0,
+          dy=-scroll_offset.y,
+        )
         match
           @moui_richtext.rich_text_document_caret_rect_at_source(
             snapshot.rich_text,
@@ -114,10 +137,7 @@ fn markdown_editor_format_bubble_overlay(
             let x = markdown_editor_clamp_double(
               rect.origin.x + rect.size.width / 2.0 - bubble_size.width / 2.0,
               0.0,
-              markdown_editor_max_double(
-                0.0,
-                editor_width - bubble_size.width,
-              ),
+              markdown_editor_max_double(0.0, editor_width - bubble_size.width),
             )
             let preferred_above = rect.origin.y -
               bubble_size.height -

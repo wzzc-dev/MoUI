@@ -53,13 +53,11 @@ fn markdown_editor_load_settings(
 ///|
 /// Parse and decode a settings JSON string, falling back to defaults on any
 /// error. Kept separate so the raise-based json API is contained in one place.
-fn markdown_editor_decode_settings(
-  text : String,
-) -> MarkdownEditorSettings {
+fn markdown_editor_decode_settings(text : String) -> MarkdownEditorSettings {
   let parsed = @json.parse(text) catch {
     _ => return MarkdownEditorSettings::default()
   }
-  let settings : MarkdownEditorSettings = try @json.from_json(parsed) catch {
+  let settings : MarkdownEditorSettings = @json.from_json(parsed) catch {
     _ => return MarkdownEditorSettings::default()
   }
   settings
@@ -97,7 +95,9 @@ fn MarkdownEditorApp::apply_settings(
   settings : MarkdownEditorSettings,
 ) -> Unit {
   self.dark_mode_enabled.set(settings.dark_mode)
-  self.font_family.set(markdown_editor_font_family_from_label(settings.font_family))
+  self.font_family.set(
+    markdown_editor_font_family_from_label(settings.font_family),
+  )
   self.focus_mode_enabled.set(settings.focus_mode)
   self.typewriter_mode_enabled.set(settings.typewriter_mode)
   self.zen_mode_enabled.set(settings.zen_mode)

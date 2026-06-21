@@ -81,9 +81,7 @@ fn MarkdownEditorApp::more_menu_overlay(
     let row_height = 30.0
     let rows : Array[@moui.View[MarkdownEditorMsg]] = []
     for item in markdown_editor_more_menu_items() {
-      rows.push(
-        markdown_editor_more_menu_row(item, theme~, row_height~),
-      )
+      rows.push(markdown_editor_more_menu_row(item, theme~, row_height~))
     }
     let visible_rows = if rows.length() < 10 { rows.length() } else { 10 }
     let menu_height = row_height * visible_rows.to_double() +
@@ -92,7 +90,9 @@ fn MarkdownEditorApp::more_menu_overlay(
       padding_edges(
         scroll_view(
           column(
-            rows, spacing=theme.spacing_scale.xs, align=@views.CrossAlign::Start,
+            rows,
+            spacing=theme.spacing_scale.xs,
+            align=@views.CrossAlign::Start,
           ),
           width=232.0,
           height=menu_height,
@@ -117,9 +117,7 @@ fn MarkdownEditorApp::more_menu_overlay(
 ///|
 /// Low-frequency commands surfaced in the "More" popover, each paired with the
 /// message to dispatch and a shortcut hint for the trailing label.
-fn markdown_editor_more_menu_items() -> Array[
-  MarkdownEditorMoreMenuItem,
-] {
+fn markdown_editor_more_menu_items() -> Array[MarkdownEditorMoreMenuItem] {
   [
     { label: "Save As…", shortcut: "⌘⇧S", message: SaveDocumentAs },
     {
@@ -127,18 +125,34 @@ fn markdown_editor_more_menu_items() -> Array[
       shortcut: "⌘⌥I",
       message: ImportFromClipboard,
     },
-    { label: "Export Markdown", shortcut: "⌘⌥S", message: ExportToClipboard },
-    { label: "Export HTML", shortcut: "⌘⌥E", message: ExportHtmlToClipboard },
+    {
+      label: "Export Markdown",
+      shortcut: "⌘⌥S",
+      message: ExportToClipboard,
+    },
+    {
+      label: "Export HTML",
+      shortcut: "⌘⌥E",
+      message: ExportHtmlToClipboard,
+    },
     {
       label: "Cycle Writing Look",
       shortcut: "⌘⌥L",
       message: CycleWritingAppearance,
     },
-    { label: "Quick Format…", shortcut: "⌘⇧P", message: ToggleFormatPalette },
+    {
+      label: "Quick Format…",
+      shortcut: "⌘⇧P",
+      message: ToggleFormatPalette,
+    },
     { label: "Toggle Dark Mode", shortcut: "", message: ToggleDarkMode },
     { label: "Cycle Font Family", shortcut: "", message: CycleFontFamily },
     { label: "Focus Mode", shortcut: "⌘⇧F", message: ToggleFocusMode },
-    { label: "Typewriter Mode", shortcut: "⌘⇧T", message: ToggleTypewriterMode },
+    {
+      label: "Typewriter Mode",
+      shortcut: "⌘⇧T",
+      message: ToggleTypewriterMode,
+    },
     { label: "Zen Mode", shortcut: "⌘⌥Z", message: ToggleZenMode },
     { label: "Source Mode", shortcut: "⌘⇧/", message: ToggleSourceMode },
     { label: "Outline", shortcut: "⌘⌥O", message: ToggleOutline },

@@ -349,11 +349,7 @@ fn[Msg] button_control(
               view_event_result(
                 changed~,
                 captured=inside || changed,
-                state=if changed {
-                  Some(next_state)
-                } else {
-                  None
-                },
+                state=if changed { Some(next_state) } else { None },
                 dirty=if changed {
                   @core.ViewDirtyHint::ViewPaintDirty
                 } else {

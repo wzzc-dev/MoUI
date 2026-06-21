@@ -402,8 +402,13 @@ fn editor_find_toggle(
 fn MarkdownEditorApp::appearance_spec(
   self : MarkdownEditorApp,
 ) -> MarkdownEditorAppearanceSpec {
-  let base = self.writing_appearance.get().spec(dark=self.dark_mode_enabled.get())
-  { ..base, font_family: markdown_editor_font_family_stack(self.font_family.get()) }
+  let base = self.writing_appearance
+    .get()
+    .spec(dark=self.dark_mode_enabled.get())
+  {
+    ..base,
+    font_family: markdown_editor_font_family_stack(self.font_family.get()),
+  }
 }
 
 ///|
@@ -619,10 +624,11 @@ fn markdown_editor_scroll_indicator(
       offset_y / 40.0 * 0.5
     }
     @views.custom_layout(
-      measure=constraints =>
+      measure=constraints => {
         constraints.constrain(
           @core.Size::new(width=0.0, height=viewport_height),
-        ),
+        )
+      },
       paint=bounds => {
         // A 3px-wide track pinned to the right edge of the laid-out frame.
         let track_x = bounds.origin.x + bounds.size.width - 3.0
@@ -729,7 +735,7 @@ fn editor_source_layout(
   scroll_offset : @moui.Point,
   on_selection_change : (Int, @core.TextRange?) -> MarkdownEditorMsg,
   on_prefix_click : (Int) -> MarkdownEditorMsg,
-  viewport_height~ : Double = 520.0,
+  viewport_height? : Double = 520.0,
 ) -> @moui.View[MarkdownEditorMsg] {
   let editor_width = markdown_editor_primary_editor_width(
     show_source, show_outline, show_files, show_info, appearance,
@@ -854,14 +860,10 @@ fn editor_source_layout(
   )
   let editor_with_indicator = @views.stack([
     editor_view,
-    markdown_editor_scroll_indicator(
-      app.editor_scroll,
-      viewport_height~,
-      theme,
-    ),
+    markdown_editor_scroll_indicator(app.editor_scroll, viewport_height~, theme),
     markdown_editor_format_bubble_overlay(
-      app, snapshot, selection, editor_font, theme, normalized_offset,
-      editor_width, viewport_height,
+      app, snapshot, selection, editor_font, theme, normalized_offset, editor_width,
+      viewport_height,
     ),
   ]).shadow(page_shadow)
   if !show_source && !show_outline && !show_files && !show_info {
@@ -882,7 +884,11 @@ fn editor_source_layout(
     if show_outline {
       side_children.push(
         outline_inspector(
-          app, snapshot, selection, theme, height=viewport_height,
+          app,
+          snapshot,
+          selection,
+          theme,
+          height=viewport_height,
         ),
       )
     }

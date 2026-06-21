@@ -392,9 +392,7 @@ fn outline_rows(
   let rows : Array[@moui.View[MarkdownEditorMsg]] = []
   for item in visible {
     let active = markdown_editor_outline_item_is_active(
-      full_outline,
-      item,
-      active_index,
+      full_outline, item, active_index,
     )
     rows.push(outline_row(app, item, active~, theme))
   }
@@ -455,6 +453,7 @@ fn outline_row(
 }
 
 ///|
+
 ///|
 fn markdown_editor_outline_indent_width(level : Int) -> Double {
   markdown_editor_max_int(0, level - 1).to_double() * 12.0

@@ -453,7 +453,10 @@ test "markdown editor click places caret after hidden heading marker" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(x=app.editor_content_x(980.0, inner_x=2.0), y=84.0),
+        position=@moui.Point::new(
+          x=app.editor_content_x(980.0, inner_x=2.0),
+          y=84.0,
+        ),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -473,7 +476,10 @@ test "markdown editor click maps inline formatted text to source offset" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(x=app.editor_content_x(980.0, inner_x=100.0), y=84.0),
+        position=@moui.Point::new(
+          x=app.editor_content_x(980.0, inner_x=100.0),
+          y=84.0,
+        ),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -489,7 +495,10 @@ test "markdown editor selection highlight uses formatted heading range" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(x=app.editor_content_x(980.0, inner_x=2.0), y=84.0),
+        position=@moui.Point::new(
+          x=app.editor_content_x(980.0, inner_x=2.0),
+          y=84.0,
+        ),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -516,7 +525,10 @@ test "markdown editor drag selection tracks markdown source range" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(x=app.editor_content_x(980.0, inner_x=2.0), y=84.0),
+        position=@moui.Point::new(
+          x=app.editor_content_x(980.0, inner_x=2.0),
+          y=84.0,
+        ),
         phase=@core.PointerPhase::Down,
       ),
     ),
@@ -524,7 +536,10 @@ test "markdown editor drag selection tracks markdown source range" {
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
-        position=@moui.Point::new(x=app.editor_content_x(980.0, inner_x=434.0), y=84.0),
+        position=@moui.Point::new(
+          x=app.editor_content_x(980.0, inner_x=434.0),
+          y=84.0,
+        ),
         phase=@core.PointerPhase::Move,
       ),
     ),

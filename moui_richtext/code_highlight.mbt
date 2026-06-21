@@ -139,7 +139,8 @@ pub fn code_highlight_tokenize(
       while j < n {
         if chars[j].is_ascii_digit() {
           j = j + 1
-        } else if chars[j] == '.' && !seen_dot &&
+        } else if chars[j] == '.' &&
+          !seen_dot &&
           j + 1 < n &&
           chars[j + 1].is_ascii_digit() {
           seen_dot = true
@@ -165,11 +166,7 @@ pub fn code_highlight_tokenize(
         }
       }
       let word = String::from_array(chars[i:j])
-      let kind = if keywords.contains(word) {
-        CodeKeyword
-      } else {
-        CodePlain
-      }
+      let kind = if keywords.contains(word) { CodeKeyword } else { CodePlain }
       spans.push({ text: word, kind })
       i = j
       continue
@@ -212,20 +209,21 @@ fn code_highlight_merge_adjacent(
 /// The keyword set for a given language id (already lower-cased).
 fn code_highlight_keywords(language : String) -> Array[String] {
   match language {
-    "moonbit" | "moon" => [
-      "fn", "let", "mut", "pub", "priv", "struct", "enum", "type", "match",
-      "if", "else", "for", "while", "return", "break", "continue", "true",
-      "false", "Unit", "Bool", "Int", "Double", "String", "Char", "Array",
-      "ignore", "trait", "impl", "extern", "derive", "test", "in", "is",
-      "as", "where", "try", "catch", "raise",
-    ]
-    "js" | "javascript" => [
-      "function", "const", "let", "var", "return", "if", "else", "for",
-      "while", "do", "break", "continue", "switch", "case", "default",
-      "class", "extends", "new", "this", "super", "import", "export", "from",
-      "async", "await", "yield", "try", "catch", "finally", "throw", "typeof",
-      "instanceof", "in", "of", "true", "false", "null", "undefined", "void",
-    ]
+    "moonbit" | "moon" =>
+      [
+        "fn", "let", "mut", "pub", "priv", "struct", "enum", "type", "match", "if",
+        "else", "for", "while", "return", "break", "continue", "true", "false", "Unit",
+        "Bool", "Int", "Double", "String", "Char", "Array", "ignore", "trait", "impl",
+        "extern", "derive", "test", "in", "is", "as", "where", "try", "catch", "raise",
+      ]
+    "js" | "javascript" =>
+      [
+        "function", "const", "let", "var", "return", "if", "else", "for", "while",
+        "do", "break", "continue", "switch", "case", "default", "class", "extends",
+        "new", "this", "super", "import", "export", "from", "async", "await", "yield",
+        "try", "catch", "finally", "throw", "typeof", "instanceof", "in", "of", "true",
+        "false", "null", "undefined", "void",
+      ]
     "json" => ["true", "false", "null"]
     "markdown" | "md" => []
     _ => []
