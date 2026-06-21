@@ -126,6 +126,18 @@ fn ElementNode::dispatch_pointer_to_children(
   let mut layout_changed = false
   let child_environment = (self.erased_view_node.child_environment)(environment)
   let child_style = (self.erased_view_node.child_style)(style)
+  // On a `Move`, the pointer can only be over one element, so only one child
+  // receives the event. Any *other* child that still holds hover (from a prior
+  // move) has been left behind and must get a synthetic `Exit` to clear it —
+  // host backends never emit a leave event, and a move outside a child is not
+  // delivered to it by hit-testing. Doing this in the same traversal that
+  // delivers the `Move` keeps the `Exit` target identical to whatever the
+  // `Move` previously hovered, regardless of repaint boundaries, overlays, or
+  // element-id churn, which a separate top-down hover resolver got wrong. An
+  // `Exit` itself cascades the same way, so a hovered leaf deep inside an
+  // overlay still gets cleared when the pointer leaves the overlay's frame.
+  let is_move = event.phase == PointerPhase::Move ||
+    event.phase == PointerPhase::Exit
   let mut index = self.children.length() - 1
   while index >= 0 {
     if index < render.children.length() {
@@ -156,6 +168,28 @@ fn ElementNode::dispatch_pointer_to_children(
           result.focused is Some(_) {
           break
         }
+      } else if is_move && child.has_hovered_descendant() {
+        // Pointer moved off this child (or a descendant it previously
+        // hovered) — send an `Exit` so its hover clears. The exit carries the
+        // current position, which is by definition outside the child, so views
+        // that re-check `inside` see `false`.
+        let exit_event = PointerEvent::new(
+          position=event.position,
+          phase=PointerPhase::Exit,
+        )
+        let exit_result = child.dispatch_pointer(
+          exit_event,
+          child_render,
+          environment=child_environment,
+          style=child_style,
+          text_system~,
+          capture_lookup=false,
+          now_ms~,
+        )
+        changed = changed || exit_result.changed
+        if exit_result.changed && child.has_dirty_layout() {
+          layout_changed = true
+        }
       }
     }
     index = index - 1
@@ -172,39 +206,25 @@ fn ElementNode::dispatch_pointer_to_children(
 }
 
 ///|
-fn RenderNode::hit_bounds(self : RenderNode) -> Rect {
-  self.paint_bounds
+/// True if this element or any descendant currently reports `hovered` in its
+/// view state. Used to decide which children to send a synthetic `Exit` to on a
+/// `Move` that no longer hits them. A child without hover has nothing to clear,
+/// so it is skipped — this keeps the extra dispatch off the common case.
+fn ElementNode::has_hovered_descendant(self : ElementNode) -> Bool {
+  if self.erased_view_node.state.hovered {
+    return true
+  }
+  for child in self.children {
+    if child.has_hovered_descendant() {
+      return true
+    }
+  }
+  false
 }
 
 ///|
-/// Resolve the topmost element whose paint bounds contain `point`. Children are
-/// visited last-to-first so a later-drawn (top) sibling wins, mirroring
-/// `dispatch_pointer_to_children`'s hit order. Used by the runtime to track the
-/// hovered element across `PointerMoved` events so it can deliver a synthetic
-/// `Exit` to the previous target when the pointer moves off it. Returns `None`
-/// when no element is under the pointer.
-fn ElementNode::find_hover_target(
-  self : ElementNode,
-  point : Point,
-  render : RenderNode,
-) -> ElementId? {
-  if !render.hit_bounds().contains(point) {
-    return None
-  }
-  // Deeper hits win over this node's own bounds: a leaf button inside a panel
-  // should report the button, not the panel.
-  let mut index = self.children.length() - 1
-  while index >= 0 {
-    if index < render.children.length() {
-      match
-        self.children[index].find_hover_target(point, render.children[index]) {
-        Some(id) => return Some(id)
-        None => ()
-      }
-    }
-    index = index - 1
-  }
-  Some(self.id)
+fn RenderNode::hit_bounds(self : RenderNode) -> Rect {
+  self.paint_bounds
 }
 
 ///|
@@ -281,69 +301,6 @@ fn ElementNode::dispatch_pointer_to_target(
       if index < render.children.length() {
         match
           self.children[index].dispatch_pointer_to_target(
-            target,
-            event,
-            render.children[index],
-            environment=child_environment,
-            style=child_style,
-            text_system~,
-            now_ms~,
-          ) {
-          Some(result) => {
-            if result.changed {
-              self.mark_pointer_paint_dirty()
-            }
-            return Some(result)
-          }
-          None => ()
-        }
-      }
-      index = index + 1
-    }
-    None
-  }
-}
-
-///|
-/// Deliver a pointer event to the exact element identified by `target` without
-/// propagating into its descendants. Used for the synthetic `Exit`: the event
-/// carries the pointer's current (now off-element) position, and a normal
-/// dispatch would hit-test that position against the target's children and
-/// re-deliver the `Exit` to a descendant that the pointer is actually entering
-/// — clearing its hover a frame before the `Move` re-sets it, which flickers.
-/// `Exit` means "the pointer left you specifically", so it stops at `target`.
-fn ElementNode::dispatch_pointer_event_to_target_only(
-  self : ElementNode,
-  target : ElementId,
-  event : PointerEvent,
-  render : RenderNode,
-  environment~ : Environment,
-  style~ : ViewStyle,
-  text_system~ : TextSystem,
-  now_ms~ : Double,
-) -> ElementEventResult? {
-  if self.id == target {
-    Some(
-      self.dispatch_view_event(
-        self.erased_view_node,
-        AppEvent::Pointer(event),
-        render,
-        text_system,
-        environment~,
-        style~,
-        now_ms~,
-      ),
-    )
-  } else {
-    let child_environment = (self.erased_view_node.child_environment)(
-      environment,
-    )
-    let child_style = (self.erased_view_node.child_style)(style)
-    let mut index = 0
-    while index < self.children.length() {
-      if index < render.children.length() {
-        match
-          self.children[index].dispatch_pointer_event_to_target_only(
             target,
             event,
             render.children[index],
