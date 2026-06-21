@@ -61,8 +61,7 @@ moon build examples/markdown_editor/web_wasm --target wasm-gc
 ```
 
 `moon update` refreshes registry packages, including the `window` fork package.
-`scripts/check-local-deps.sh` verifies the expected package versions, confirms
-that `moon.work` does not reintroduce a local window checkout, and checks the
+The default `sh scripts/dev-check.sh` path guards dependency shape and the
 repo-local `moui_skia` acceptance surface. The Skia binding is part of the main
 checkout at `moui_skia`.
 
@@ -118,16 +117,16 @@ WINDOW_MOUI_MACOS_SMOKE_LOG_PATH=artifacts/platform-evidence/macos/window-macos-
 ```
 
 The Skia binding is editable in the main repository at `moui_skia`. The default
-daily check validates fallback-safe Skia package tests and the binding
-workspace's platform status contract. `scripts/check-local-deps.sh` requires
-`skia-platform-status.json`, `skia-provider-lock.json`,
-`SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
-and the verifier scripts, then runs
+daily check validates fallback-safe Skia package tests (`moon test moui_skia
+--target native`) and the binding workspace's platform status contract. The
+binding workspace itself ships
 `moui_skia/scripts/verify-platform-status.sh` and
-`moui_skia/scripts/verify-native-capability-contract.sh`. That
-proves the editable binding workspace still has a pinned real-Skia
+`moui_skia/scripts/verify-native-capability-contract.sh`, which require
+`skia-platform-status.json`, `skia-provider-lock.json`,
+`SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, and `native/ownership.json`
+to prove the editable binding workspace still has a pinned real-Skia
 artifact/status contract, CI evidence wiring, fallback parity, FFI
-ownership/borrow coverage, and native smoke marker coverage. It does not prove
+ownership/borrow coverage, and native smoke marker coverage. That does not prove
 a MoUI platform entrypoint has rendered with real Skia; use `--skia-real-smoke`
 after configuring real Skia native link flags for that renderer-level proof.
 The binding's GitHub Actions workflows are maintained at the repository root as
@@ -510,13 +509,14 @@ moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native
 moon test moui/backend/web --target wasm-gc
 node scripts/validate-renderer-provider-manifests.mjs
-node scripts/validate-maintenance-baseline.mjs
 sh scripts/dev-check.sh --platform-examples-test
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
+moon test examples/pdf_workbench/pdflite_service_protocol --target native
+moon test examples/pdf_workbench/pdflite_service_native_transport --target native
 moon test examples/pdf_workbench/pdfium_adapter --target native
 moon build examples/counter/web_wasm --target wasm-gc
 moon build examples/showcase/web_wasm --target wasm-gc
