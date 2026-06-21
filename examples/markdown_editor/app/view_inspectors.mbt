@@ -75,7 +75,7 @@ fn files_inspector(
     height~,
     variant=@views.ContainerVariant::Base,
     theme~,
-    background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
+    background=theme.palette.surface,
     corner_radius=theme.radius_scale.sm,
     padding=0.0,
   )
@@ -170,7 +170,7 @@ fn document_info_inspector(
     height~,
     variant=@views.ContainerVariant::Base,
     theme~,
-    background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
+    background=theme.palette.surface,
     corner_radius=theme.radius_scale.sm,
     padding=0.0,
   )
@@ -313,7 +313,7 @@ fn source_inspector(
     height~,
     variant=@views.ContainerVariant::Base,
     theme~,
-    background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
+    background=theme.palette.surface,
     corner_radius=theme.radius_scale.sm,
     padding=0.0,
   )
@@ -375,7 +375,7 @@ fn outline_inspector(
     height~,
     variant=@views.ContainerVariant::Base,
     theme~,
-    background=@core.Color::rgba(r=0.975, g=0.975, b=0.972),
+    background=theme.palette.surface,
     corner_radius=theme.radius_scale.sm,
     padding=0.0,
   )
