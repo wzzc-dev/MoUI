@@ -32,10 +32,15 @@ default daily gate. Daily checks do not require fresh matching-host promotion.
 
 ## Engineering Baseline Ratchets
 
-`node scripts/validate-maintenance-baseline.mjs` is part of the default
-`dev-check` path. It scans MoUI-owned MoonBit source under `moui/`, `examples/`,
-and `website/`, excluding generated `pkg.generated.mbti` files, vendored
-`.mooncakes/` trees, build output, and generated Unicode fixture tests.
+The maintenance baseline ratchets are implemented as the MoonBit tool at
+`tools/moui/validate_maintenance_baseline`. They scan MoUI-owned MoonBit source
+under `moui/`, `examples/`, and `website/`, excluding generated
+`pkg.generated.mbti` files, vendored `.mooncakes/` trees, build output, and
+generated Unicode fixture tests. The guard has no `scripts/` JS entrypoint yet
+and is not wired into the default `dev-check` path; run it directly with
+`moon run tools/moui/validate_maintenance_baseline --target native` when
+splitting files, shrinking `pub(all)`, or reducing root facade forwards, then
+ratchet the relevant budget downward in the same change.
 
 The guard tracks three budgets:
 
