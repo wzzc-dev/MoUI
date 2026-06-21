@@ -696,10 +696,7 @@ fn MarkdownEditorApp::apply_transfer_completion(
           "clipboard service returned an unsupported response",
         ),
       )
-      self.push_toast(
-        "Unsupported response",
-        tone=@views.FeedbackTone::Danger,
-      )
+      self.push_toast("Unsupported response", tone=@views.FeedbackTone::Danger)
     }
   }
 }

@@ -15,7 +15,12 @@ pub fn MarkdownEditorSnapshot::parse_with_font(
   {
     source,
     blocks,
-    rich_text: markdown_editor_blocks_to_rich_text(source, blocks, base, base_dir~),
+    rich_text: markdown_editor_blocks_to_rich_text(
+      source,
+      blocks,
+      base,
+      base_dir~,
+    ),
     line_count: markdown_editor_line_count(source),
     word_count,
     reading_minutes: markdown_editor_reading_minutes(word_count),
@@ -70,7 +75,10 @@ pub fn markdown_editor_format_for_writing_mode(
   base_dir? : String? = None,
 ) -> RichTextDocument {
   let document = markdown_editor_format_for_selection(
-    source, selection, base~, base_dir~,
+    source,
+    selection,
+    base~,
+    base_dir~,
   )
   if focus_mode {
     markdown_editor_dim_inactive_blocks(document, selection)

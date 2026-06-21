@@ -136,7 +136,7 @@ fn markdown_editor_chars_match_at(
   source : Array[Char],
   query : Array[Char],
   start : Int,
-  case_sensitive~ : Bool = false,
+  case_sensitive? : Bool = false,
 ) -> Bool {
   if case_sensitive {
     for index in 0..<query.length() {
