@@ -41,6 +41,7 @@ test "markdown editor settings round-trip through JSON" {
   // instead verify the in-memory settings struct round-trips via JSON.
   let original : MarkdownEditorSettings = {
     dark_mode: true,
+    font_family: "Serif",
     writing_appearance: "Warm",
     focus_mode: true,
     typewriter_mode: false,

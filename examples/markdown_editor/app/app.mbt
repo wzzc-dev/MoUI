@@ -42,6 +42,7 @@ pub struct MarkdownEditorApp {
   toasts : @moui.State[@views.ToastQueue[MarkdownEditorMsg]]
   autosave_draft : @moui.State[String]
   dark_mode_enabled : @moui.State[Bool]
+  font_family : @moui.State[MarkdownEditorFontFamily]
   folded_headings : @moui.State[Array[Int]]
   priv pending_confirm : @moui.State[MarkdownEditorConfirmRequest?]
   priv writing_appearance : @moui.State[MarkdownEditorAppearance]
@@ -138,7 +139,17 @@ priv struct MarkdownEditorAppearanceSpec {
   page_background : @core.Color
   window_background : @core.Color
   page_border : @core.Color
+  font_family : @core.FontFamilyStack
 }
+
+///|
+/// The editor's body font family, user-selectable (Typora offers serif/sans/
+/// mono). Stored in settings so the choice survives restarts.
+pub enum MarkdownEditorFontFamily {
+  SansFont
+  SerifFont
+  MonoFont
+} derive(Eq, Debug, ToJson)
 
 ///|
 priv enum MarkdownEditorAppearance {
@@ -217,6 +228,7 @@ pub enum MarkdownEditorMsg {
   ToggleMoreMenu
   MoreMenuCommand(MarkdownEditorMsg)
   ToggleDarkMode
+  CycleFontFamily
   DismissToastTick
   AutosaveTick
   ResolvePendingConfirm(MarkdownEditorConfirmResolution)
@@ -280,6 +292,7 @@ pub fn MarkdownEditorApp::new() -> MarkdownEditorApp {
     toasts: @moui.State::new(@views.ToastQueue::new()),
     autosave_draft: @moui.State::new(""),
     dark_mode_enabled: @moui.State::new(false),
+    font_family: @moui.State::new(SansFont),
     folded_headings: @moui.State::new([]),
     pending_confirm: @moui.State::new(None),
     writing_appearance: @moui.State::new(PaperAppearance),
@@ -399,6 +412,14 @@ fn MarkdownEditorApp::update(
     ToggleMoreMenu => self.toggle_more_menu()
     ToggleDarkMode =>
       self.dark_mode_enabled.set(!self.dark_mode_enabled.get())
+    CycleFontFamily => {
+      let next = match self.font_family.get() {
+        SansFont => SerifFont
+        SerifFont => MonoFont
+        MonoFont => SansFont
+      }
+      self.font_family.set(next)
+    }
     MoreMenuCommand(message) => {
       self.more_menu_visible.set(false)
       let _ = self.update(message)

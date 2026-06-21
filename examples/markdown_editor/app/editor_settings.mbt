@@ -3,6 +3,7 @@
 /// to the app so appearance, theme and panel state survive restarts.
 pub struct MarkdownEditorSettings {
   dark_mode : Bool
+  font_family : String
   writing_appearance : String
   focus_mode : Bool
   typewriter_mode : Bool
@@ -17,6 +18,7 @@ pub struct MarkdownEditorSettings {
 fn MarkdownEditorSettings::default() -> MarkdownEditorSettings {
   {
     dark_mode: false,
+    font_family: "Sans",
     writing_appearance: "Paper",
     focus_mode: false,
     typewriter_mode: false,
@@ -73,6 +75,7 @@ fn MarkdownEditorApp::save_settings(
 ) -> Unit {
   let settings : MarkdownEditorSettings = {
     dark_mode: self.dark_mode_enabled.get(),
+    font_family: markdown_editor_font_family_label(self.font_family.get()),
     writing_appearance: self.appearance_label(),
     focus_mode: self.focus_mode_enabled.get(),
     typewriter_mode: self.typewriter_mode_enabled.get(),
@@ -94,6 +97,7 @@ fn MarkdownEditorApp::apply_settings(
   settings : MarkdownEditorSettings,
 ) -> Unit {
   self.dark_mode_enabled.set(settings.dark_mode)
+  self.font_family.set(markdown_editor_font_family_from_label(settings.font_family))
   self.focus_mode_enabled.set(settings.focus_mode)
   self.typewriter_mode_enabled.set(settings.typewriter_mode)
   self.zen_mode_enabled.set(settings.zen_mode)
@@ -105,5 +109,27 @@ fn MarkdownEditorApp::apply_settings(
     "Warm" => self.set_writing_appearance(WarmAppearance)
     "Wide" => self.set_writing_appearance(WideAppearance)
     _ => self.set_writing_appearance(PaperAppearance)
+  }
+}
+
+///|
+fn markdown_editor_font_family_label(
+  family : MarkdownEditorFontFamily,
+) -> String {
+  match family {
+    SansFont => "Sans"
+    SerifFont => "Serif"
+    MonoFont => "Mono"
+  }
+}
+
+///|
+fn markdown_editor_font_family_from_label(
+  label : String,
+) -> MarkdownEditorFontFamily {
+  match label {
+    "Serif" => SerifFont
+    "Mono" => MonoFont
+    _ => SansFont
   }
 }
