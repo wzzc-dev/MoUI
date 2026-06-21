@@ -924,8 +924,9 @@ pub(all) struct PointerEvent {
   button : Int
   wheel_delta : Point
   time_ms : Double
+  modifiers : KeyModifiers
 } derive(Eq, ToJson, @debug.Debug)
-pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int, wheel_delta? : Point, time_ms? : Double) -> Self
+pub fn PointerEvent::new(position~ : Point, phase~ : PointerPhase, button? : Int, wheel_delta? : Point, time_ms? : Double, modifiers? : KeyModifiers) -> Self
 
 pub(all) enum PointerPhase {
   Move

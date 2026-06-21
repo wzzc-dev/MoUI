@@ -3,8 +3,10 @@ package "examples/markdown_editor/app"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
   "wzzc-dev/moui_richtext",
 }
 
@@ -32,8 +34,15 @@ pub struct MarkdownEditorApp {
   zen_mode_enabled : @core.State[Bool]
   format_palette_visible : @core.State[Bool]
   format_palette_query : @core.State[String]
+  more_menu_visible : @core.State[Bool]
+  toasts : @core.State[@views.ToastQueue[MarkdownEditorMsg]]
+  autosave_draft : @core.State[String]
+  dark_mode_enabled : @core.State[Bool]
+  font_family : @core.State[MarkdownEditorFontFamily]
+  folded_headings : @core.State[Array[Int]]
   find_visible : @core.State[Bool]
   find_query : @core.State[String]
+  find_options : @core.State[MarkdownEditorFindOptions]
   replace_text : @core.State[String]
   document_path : @core.State[String]
   recent_document_paths : @core.State[Array[String]]
@@ -45,9 +54,34 @@ pub struct MarkdownEditorApp {
 }
 pub fn MarkdownEditorApp::action_commands(Self, services? : @host.HostAppServices) -> @core.ActionCommandMap
 pub fn MarkdownEditorApp::new() -> Self
+pub fn MarkdownEditorApp::new_with_services(@host.HostAppServices) -> Self
+pub fn MarkdownEditorApp::persist_settings(Self, @host.HostAppServices) -> Unit
 pub fn MarkdownEditorApp::program(Self) -> @core.Program[Self, MarkdownEditorMsg]
-pub fn MarkdownEditorApp::program_with_services(Self, @host.HostAppServices) -> @core.Program[Self, MarkdownEditorMsg]
+pub fn MarkdownEditorApp::program_with_services(Self, @host.HostAppServices, timer_source? : @host.HostTimerSource?) -> @core.Program[Self, MarkdownEditorMsg]
 pub fn MarkdownEditorApp::save_document_as(Self, String) -> Unit
+
+pub struct MarkdownEditorConfirmRequest {
+  title : String
+  deferred : MarkdownEditorMsg
+}
+
+pub enum MarkdownEditorConfirmResolution {
+  ConfirmSave
+  ConfirmDiscard
+  ConfirmCancel
+}
+
+pub struct MarkdownEditorFindOptions {
+  case_sensitive : Bool
+  whole_word : Bool
+  regex : Bool
+} derive(Eq, ToJson, @debug.Debug)
+
+pub enum MarkdownEditorFontFamily {
+  SansFont
+  SerifFont
+  MonoFont
+} derive(Eq, ToJson, @debug.Debug)
 
 type MarkdownEditorHistoryEntry derive(Eq, ToJson, @debug.Debug)
 
@@ -80,9 +114,19 @@ pub enum MarkdownEditorMsg {
   DismissAuxiliaryPanels
   ToggleSourcePreview
   ToggleSourceMode
+  ToggleMoreMenu
+  MoreMenuCommand(MarkdownEditorMsg)
+  ToggleDarkMode
+  CycleFontFamily
+  DismissToastTick
+  AutosaveTick
+  ResolvePendingConfirm(MarkdownEditorConfirmResolution)
   UpdateDocument(String)
   UpdateFindQuery(String)
   UpdateReplaceText(String)
+  ToggleFindCaseSensitive
+  ToggleFindWholeWord
+  ToggleFindRegex
   UpdateLinkTarget(String)
   UpdateImageTarget(String)
   UpdateFootnoteText(String)
@@ -97,6 +141,8 @@ pub enum MarkdownEditorMsg {
   ReplaceFindCurrent
   ReplaceFindAll
   ApplyCommand(@moui_richtext.MarkdownEditorCommand)
+  ToggleHeadingFold(Int)
+  CommandClickAt(Int)
   SetSelection(Int, @core.TextRange?)
   OpenRecentDocument(String)
   JumpToOutline(Int)
@@ -108,6 +154,19 @@ pub enum MarkdownEditorMsg {
   OutdentLines
   ToggleTaskAt(Int)
 }
+
+pub struct MarkdownEditorSettings {
+  dark_mode : Bool
+  font_family : String
+  writing_appearance : String
+  focus_mode : Bool
+  typewriter_mode : Bool
+  zen_mode : Bool
+  source_preview : Bool
+  outline : Bool
+  files : Bool
+  document_info : Bool
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 type MarkdownEditorTargetKind derive(Eq, ToJson, @debug.Debug)
 

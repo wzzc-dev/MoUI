@@ -941,13 +941,12 @@ fn[Msg] runtime_test_hover_phase_tracker(
 }
 
 ///|
-/// Regression: when the pointer moves from empty space (so the previously
-/// hovered element is a parent container) onto a child button, the synthetic
-/// `Exit` delivered to the parent must NOT propagate into the child. If it did,
-/// the child would receive `Exit` (clearing its hover) immediately followed by
-/// `Move` (re-setting it) in the same event — a one-frame flicker. This mirrors
-/// the Showcase "Dialog" button, which sits inside a `scroll_view`/row and is
-/// reached by moving off empty space in the parent.
+/// Regression: when the pointer moves from empty parent space onto a child
+/// button, the child must hover without receiving a spurious `Exit` in the same
+/// event (which would clear its hover a frame before the `Move` re-sets it — a
+/// flicker). The hover-clearing `Exit` is only sent to children the pointer no
+/// longer hits, so a child being entered never gets one. Mirrors the Showcase
+/// "Dialog" button reached by moving off empty space in its parent.
 test "runtime Exit does not propagate to descendant being entered" {
   let child_log : Array[Bool] = []
   let child_phases : Array[@core.PointerPhase] = []
@@ -983,7 +982,7 @@ test "runtime Exit does not propagate to descendant being entered" {
     size=@core.Size::new(width=200.0, height=40.0),
   )
   ignore(runtime.layout())
-  // Rest the pointer on empty parent space (parent becomes hovered_element).
+  // Rest the pointer on empty parent space.
   runtime.dispatch_event(
     @core.AppEvent::Pointer(
       @core.PointerEvent::new(
@@ -1013,6 +1012,114 @@ test "runtime Exit does not propagate to descendant being entered" {
   if has_exit {
     fail(
       "child must not receive Exit while being entered; phase count=\{child_phases.length()}",
+    )
+  }
+}
+
+///|
+/// Count `FillRoundedRectBrush` commands whose solid color has nonzero alpha —
+/// the hover background a ghost/outline button paints. Used to assert hover
+/// clears after the pointer leaves.
+fn runtime_test_hover_fill_count(
+  commands : Array[@core.DrawCommand],
+) -> Int {
+  let mut n = 0
+  for cmd in commands {
+    match cmd {
+      @core.DrawCommand::FillRoundedRectBrush(_, brush) =>
+        match brush {
+          @core.Brush::Solid(color) =>
+            if color.a > 0.0 {
+              n = n + 1
+            }
+          _ => ()
+        }
+      _ => ()
+    }
+  }
+  n
+}
+
+///|
+/// Regression for the markdown_editor "More" menu: a ghost button floating in a
+/// `stack` > `align` > `container(Overlay)` > `scroll_view` > `column` overlay.
+/// Hovering a row then moving the pointer off into the workspace must clear the
+/// hover background — even though the overlay's `align` wrapper spans the whole
+/// canvas (so a naive top-down hover resolver returns the wrapper, not the
+/// button, and never fires an `Exit`). The hover-clearing `Exit` is delivered
+/// in the same traversal as the `Move`, so it reaches the button regardless of
+/// how the overlay is nested.
+test "runtime clears hover on a button nested in an overlay" {
+  let theme = @views.light_theme()
+  let row : @core.View[Unit] = @views.button(
+    "Row",
+    variant=@views.ButtonVariant::Ghost,
+    theme~,
+    width=168.0,
+    height=36.0,
+  )
+  // Overlay anchored top-trailing, mirroring the markdown popover.
+  let overlay : @core.View[Unit] = @views
+  .container(
+    @views.scroll_view(
+      @views.column([row], spacing=4.0),
+      width=232.0,
+      height=200.0,
+    ),
+    theme~,
+    width=232.0,
+    height=200.0,
+    variant=@views.ContainerVariant::Overlay,
+  )
+  .align(alignment=@core.Alignment::top_trailing())
+  let root : @core.View[Unit] = @views.stack([
+    @views.container(
+      @views.text("workspace", width=400.0, height=300.0),
+      width=400.0,
+      height=300.0,
+    ),
+    overlay,
+  ])
+  let runtime = AppRuntime::new_view(
+    root~,
+    size=@core.Size::new(width=400.0, height=300.0),
+  )
+  ignore(runtime.layout())
+  ignore(runtime.draw_frame())
+  let baseline = runtime_test_hover_fill_count(runtime.draw_commands())
+  // The overlay is top-trailing in a 400-wide canvas; the button sits inside it
+  // near x≈300, y≈20.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=300.0, y=20.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  runtime.advance_time(16.0)
+  ignore(runtime.draw_frame())
+  let on_hover = runtime_test_hover_fill_count(runtime.draw_commands())
+  // Hover must have appeared.
+  if on_hover <= baseline {
+    fail("hover fill did not appear: baseline=\{baseline} on_hover=\{on_hover}")
+  }
+  // Move the pointer off the overlay into the workspace center.
+  runtime.dispatch_event(
+    @core.AppEvent::Pointer(
+      @core.PointerEvent::new(
+        position=@core.Point::new(x=200.0, y=150.0),
+        phase=@core.PointerPhase::Move,
+      ),
+    ),
+  )
+  runtime.advance_time(16.0)
+  ignore(runtime.draw_frame())
+  let after_off = runtime_test_hover_fill_count(runtime.draw_commands())
+  // The hover background must clear (return to at most the baseline count).
+  if after_off > baseline {
+    fail(
+      "hover did not clear after move-off: baseline=\{baseline} after_off=\{after_off}",
     )
   }
 }
