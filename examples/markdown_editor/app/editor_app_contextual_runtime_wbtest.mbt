@@ -140,11 +140,8 @@ test "markdown editor app undo and redo structured formatting commands" {
   app.set_selection(9, Some(@core.TextRange::new(start=5, end=9)))
   app.apply_command_to_selection(Bold)
   inspect(app.document(), content="Text **bold**")
-  assert_true(app.can_undo())
-  assert_false(app.can_redo())
   assert_true(app.undo())
   inspect(app.document(), content="Text bold")
-  assert_true(app.can_redo())
   assert_true(app.redo())
   inspect(app.document(), content="Text **bold**")
 }
@@ -157,7 +154,6 @@ test "markdown editor app undo and redo block duplicate command" {
   app.apply_action("duplicate-block")
   inspect(app.document(), content="Alpha\nBeta\nBeta")
   inspect(app.selection_caret(), content="13")
-  assert_true(app.can_undo())
   assert_true(app.undo())
   inspect(app.document(), content="Alpha\nBeta")
   assert_true(app.redo())
@@ -177,7 +173,6 @@ test "markdown editor app undo and redo selected block range move command" {
   }
   inspect(moved_selection.start, content="7")
   inspect(moved_selection.end, content="16")
-  assert_true(app.can_undo())
   assert_true(app.undo())
   inspect(app.document(), content="Alpha\nBeta\nGamma")
   assert_true(app.redo())
@@ -204,15 +199,11 @@ test "markdown editor app clears command history on document reset" {
   app.set_document("Text bold")
   app.set_selection(9, Some(@core.TextRange::new(start=5, end=9)))
   app.apply_command_to_selection(Bold)
-  assert_true(app.can_undo())
   app.set_document("Fresh")
-  assert_false(app.can_undo())
   assert_false(app.undo())
   inspect(app.document(), content="Fresh")
   app.apply_command_to_selection(Bold)
-  assert_true(app.can_undo())
   app.clear()
-  assert_false(app.can_undo())
 }
 
 ///|

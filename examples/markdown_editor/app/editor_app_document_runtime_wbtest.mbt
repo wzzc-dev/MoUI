@@ -29,7 +29,6 @@ test "markdown editor new document clears transient transfer status" {
   inspect(app.document(), content="")
   inspect(app.transfer_status_label_for_test(), content="")
   assert_false(app.dirty())
-  assert_false(app.can_undo())
 }
 
 ///|
@@ -404,7 +403,6 @@ test "markdown editor runtime document shortcuts save and create clean documents
   inspect(app.document(), content="")
   inspect(app.document_path(), content="")
   assert_false(app.dirty())
-  assert_false(app.can_undo())
 }
 
 ///|

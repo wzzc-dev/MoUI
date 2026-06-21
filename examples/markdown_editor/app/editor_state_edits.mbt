@@ -206,7 +206,7 @@ fn MarkdownEditorApp::apply_named_editor_action(
     self.set_writing_appearance(WideAppearance)
     true
   } else if action == "find" {
-    self.toggle_find()
+    ignore(self.update(ToggleFind))
     true
   } else if action == "new-document" {
     self.new_document()
@@ -219,6 +219,12 @@ fn MarkdownEditorApp::apply_named_editor_action(
     true
   } else if action == "save-as" {
     ignore(self.update(SaveDocumentAs))
+    true
+  } else if action == "undo" {
+    ignore(self.update(Undo))
+    true
+  } else if action == "redo" {
+    ignore(self.update(Redo))
     true
   } else if action == "clipboard-import" {
     ignore(self.update(ImportFromClipboard))
