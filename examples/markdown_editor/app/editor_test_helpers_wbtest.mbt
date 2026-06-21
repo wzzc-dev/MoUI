@@ -462,6 +462,33 @@ fn MarkdownEditorApp::runtime_with_services(
 }
 
 ///|
+/// The horizontal origin of the editor's text content, accounting for the
+/// window width, the root padding (left md=12, right xl=24), and horizontal
+/// centering of the page card. Tests use this so their click coordinates land
+/// inside the centered editor. `inner_x` is the offset from the content's left
+/// edge (the editor content rect has a 14px horizontal inset).
+fn MarkdownEditorApp::editor_content_x(
+  self : MarkdownEditorApp,
+  window_width : Double,
+  inner_x? : Double = 4.0,
+) -> Double {
+  let appearance = self.appearance_spec()
+  let show_sidebar = self.outline_visible.get() ||
+    self.file_sidebar_visible.get() ||
+    self.document_info_visible.get() ||
+    self.source_preview_visible.get()
+  let editor_width = if show_sidebar {
+    appearance.side_editor_width
+  } else {
+    appearance.page_width
+  }
+  let workspace_width = window_width - 12.0 - 24.0
+  let centered_editor_x = 12.0 +
+    markdown_editor_max_double(0.0, (workspace_width - editor_width) / 2.0)
+  centered_editor_x + 14.0 + inner_x
+}
+
+///|
 fn markdown_editor_apply_command(
   source : String,
   command : MarkdownEditorCommand,
