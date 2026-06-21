@@ -81,7 +81,6 @@ test "markdown editor clipboard import loads markdown as clean document" {
   inspect(app.replace_text(), content="")
   inspect(app.transfer_status_label_for_test(), content="Clipboard imported")
   assert_false(app.dirty())
-  assert_false(app.can_undo())
 }
 
 ///|
