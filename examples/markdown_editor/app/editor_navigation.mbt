@@ -400,7 +400,11 @@ fn MarkdownEditorApp::update_find_query(
     }
     return
   }
-  let matches = markdown_editor_find_matches(self.document.get(), query, options=self.find_options.get())
+  let matches = markdown_editor_find_matches(
+    self.document.get(),
+    query,
+    options=self.find_options.get(),
+  )
   if matches.length() == 0 {
     let selection = self.selection.get()
     if selection.selection is Some(_) {
@@ -435,7 +439,11 @@ fn MarkdownEditorApp::replace_current_find_match(
   let source = self.document.get()
   let query = self.find_query.get()
   let replacement = self.replace_text.get()
-  let matches = markdown_editor_find_matches(source, query, options=self.find_options.get())
+  let matches = markdown_editor_find_matches(
+    source,
+    query,
+    options=self.find_options.get(),
+  )
   if matches.length() == 0 {
     return
   }
@@ -457,7 +465,11 @@ fn MarkdownEditorApp::replace_current_find_match(
   self.redo_stack.set([])
   self.document.set(next_source)
   let end = range.start + markdown_editor_text_length(replacement)
-  let next_matches = markdown_editor_find_matches(next_source, query, options=self.find_options.get())
+  let next_matches = markdown_editor_find_matches(
+    next_source,
+    query,
+    options=self.find_options.get(),
+  )
   match
     markdown_editor_next_match_after_replacement(next_matches, range.start, end) {
     Some(next_range) => self.select_find_match(next_range)
@@ -480,7 +492,9 @@ fn MarkdownEditorApp::replace_all_find_matches(
   let query = self.find_query.get()
   let replacement = self.replace_text.get()
   let matches = markdown_editor_find_matches(
-    source, query, options=self.find_options.get(),
+    source,
+    query,
+    options=self.find_options.get(),
   )
   if matches.length() == 0 {
     return

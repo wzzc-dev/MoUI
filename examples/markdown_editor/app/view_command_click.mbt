@@ -16,7 +16,8 @@ fn MarkdownEditorApp::handle_command_click(
       let _ = self.update(OpenTarget)
     }
     None =>
-      match @moui_richtext.markdown_editor_selected_image_target(source, probe) {
+      match
+        @moui_richtext.markdown_editor_selected_image_target(source, probe) {
         Some(target) => {
           // Select the image inline and surface its target palette.
           self.image_target.set(target)

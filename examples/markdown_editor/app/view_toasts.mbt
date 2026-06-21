@@ -8,8 +8,8 @@ let markdown_editor_toast_counter : @moui.State[Int] = @moui.State::new(0)
 fn MarkdownEditorApp::push_toast(
   self : MarkdownEditorApp,
   message : String,
-  tone~ : @views.FeedbackTone = @views.FeedbackTone::Neutral,
-  ttl_ms~ : Double = 3500.0,
+  tone? : @views.FeedbackTone = @views.FeedbackTone::Neutral,
+  ttl_ms? : Double = 3500.0,
 ) -> Unit {
   let counter = markdown_editor_toast_counter.get()
   markdown_editor_toast_counter.set(counter + 1)

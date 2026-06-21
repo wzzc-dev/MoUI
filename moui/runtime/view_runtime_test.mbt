@@ -1020,18 +1020,13 @@ test "runtime Exit does not propagate to descendant being entered" {
 /// Count `FillRoundedRectBrush` commands whose solid color has nonzero alpha —
 /// the hover background a ghost/outline button paints. Used to assert hover
 /// clears after the pointer leaves.
-fn runtime_test_hover_fill_count(
-  commands : Array[@core.DrawCommand],
-) -> Int {
+fn runtime_test_hover_fill_count(commands : Array[@core.DrawCommand]) -> Int {
   let mut n = 0
   for cmd in commands {
     match cmd {
       @core.DrawCommand::FillRoundedRectBrush(_, brush) =>
         match brush {
-          @core.Brush::Solid(color) =>
-            if color.a > 0.0 {
-              n = n + 1
-            }
+          @core.Brush::Solid(color) => if color.a > 0.0 { n = n + 1 }
           _ => ()
         }
       _ => ()
@@ -1059,8 +1054,7 @@ test "runtime clears hover on a button nested in an overlay" {
     height=36.0,
   )
   // Overlay anchored top-trailing, mirroring the markdown popover.
-  let overlay : @core.View[Unit] = @views
-  .container(
+  let overlay : @core.View[Unit] = @views.container(
     @views.scroll_view(
       @views.column([row], spacing=4.0),
       width=232.0,
@@ -1070,8 +1064,7 @@ test "runtime clears hover on a button nested in an overlay" {
     width=232.0,
     height=200.0,
     variant=@views.ContainerVariant::Overlay,
-  )
-  .align(alignment=@core.Alignment::top_trailing())
+  ).align(alignment=@core.Alignment::top_trailing())
   let root : @core.View[Unit] = @views.stack([
     @views.container(
       @views.text("workspace", width=400.0, height=300.0),

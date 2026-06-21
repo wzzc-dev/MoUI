@@ -41,9 +41,7 @@ test "markdown editor folded outline hides nested children" {
   // Fold the H2 "Second" (the second outline item): it hides H3 "Third", and
   // the sibling H2 "Fourth" reappears, so First + Second + Fourth = 3 visible.
   let second_start = snapshot.outline[1].source_start
-  let folded = markdown_editor_folded_outline(
-    snapshot.outline, [second_start],
-  )
+  let folded = markdown_editor_folded_outline(snapshot.outline, [second_start])
   assert_eq(folded.length(), 3)
   assert_true(folded[0].title == "First")
   assert_true(folded[1].title == "Second")

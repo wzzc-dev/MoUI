@@ -1,7 +1,7 @@
 ///|
 fn MarkdownEditorApp::root(
   self : MarkdownEditorApp,
-  viewport_height~ : Double = 520.0,
+  viewport_height? : Double = 520.0,
 ) -> @moui.View[MarkdownEditorMsg] {
   let theme = self.chrome_theme()
   let document = self.document.get()
@@ -87,30 +87,28 @@ fn MarkdownEditorApp::root(
   // Stack the toast layer, More-menu popover, and confirm dialog above the
   // workspace so they float over the editor without displacing it. The More
   // menu is a top-level overlay so it paints above the editor page card.
-  @views.stack(
-    [
-      centered,
-      @views.align(
-        self.toast_layer(theme),
-        alignment=@core.Alignment::new(x=0.5, y=0.0),
+  @views.stack([
+    centered,
+    @views.align(
+      self.toast_layer(theme),
+      alignment=@core.Alignment::new(x=0.5, y=0.0),
+    ),
+    // The More menu sits at the top-right, offset down past the title bar
+    // (36px) plus a small gap so it drops from the ⋯ button. A padding-top
+    // on the content pushes it below the bar; align keeps it top-trailing.
+    @views.align(
+      padding_edges(
+        self.more_menu_overlay(theme),
+        top=44.0,
+        right=theme.spacing_scale.md,
       ),
-      // The More menu sits at the top-right, offset down past the title bar
-      // (36px) plus a small gap so it drops from the ⋯ button. A padding-top
-      // on the content pushes it below the bar; align keeps it top-trailing.
-      @views.align(
-        padding_edges(
-          self.more_menu_overlay(theme),
-          top=44.0,
-          right=theme.spacing_scale.md,
-        ),
-        alignment=@core.Alignment::top_trailing(),
-      ),
-      @views.align(
-        self.confirm_dialog(theme),
-        alignment=@core.Alignment::center(),
-      ),
-    ],
-  )
+      alignment=@core.Alignment::top_trailing(),
+    ),
+    @views.align(
+      self.confirm_dialog(theme),
+      alignment=@core.Alignment::center(),
+    ),
+  ])
 }
 
 ///|
@@ -167,10 +165,7 @@ fn MarkdownEditorApp::reactive_root(
   // Make the editor viewport fill the window instead of a fixed 520px. Reserve
   // room for the chrome bar (34px) plus spacing so the page doesn't overflow.
   let window_height = ctx.viewport_size().height
-  let viewport_height = markdown_editor_max_double(
-    320.0,
-    window_height - 120.0,
-  )
+  let viewport_height = markdown_editor_max_double(320.0, window_height - 120.0)
   self.root(viewport_height~)
 }
 
@@ -262,15 +257,19 @@ fn MarkdownEditorApp::chrome(
   )
   let dirty = self.is_dirty()
   let unsaved_dot = text(
-    if dirty { "● " } else { "" },
-    width=20.0,
-    height=28.0,
-  )
-  .font(theme.typography.body)
-  .foreground(theme.palette.primary.multiply_alpha(0.85))
-  let title_text = text(title, height=28.0).font(theme.typography.body).foreground(
-    theme.palette.foreground,
-  )
+      if dirty {
+        "● "
+      } else {
+        ""
+      },
+      width=20.0,
+      height=28.0,
+    )
+    .font(theme.typography.body)
+    .foreground(theme.palette.primary.multiply_alpha(0.85))
+  let title_text = text(title, height=28.0)
+    .font(theme.typography.body)
+    .foreground(theme.palette.foreground)
   // The "⋯" menu button reuses the More popover (file/view/format commands).
   let menu = self.markdown_editor_more_menu(theme, source, selection)
   frame(
@@ -323,7 +322,9 @@ fn MarkdownEditorApp::find_bar(
 ) -> @moui.View[MarkdownEditorMsg] {
   let query = self.find_query.get()
   let matches = markdown_editor_find_matches(
-    source, query, options=self.find_options.get(),
+    source,
+    query,
+    options=self.find_options.get(),
   )
   frame(
     row(

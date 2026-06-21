@@ -338,7 +338,7 @@ fn MarkdownEditorApp::update(
   message : MarkdownEditorMsg,
 ) -> MarkdownEditorApp {
   match message {
-    NewDocument => {
+    NewDocument =>
       if self.is_dirty() && self.pending_confirm.get() is None {
         self.pending_confirm.set(
           Some({ title: "Unsaved changes", deferred: NewDocument }),
@@ -346,7 +346,6 @@ fn MarkdownEditorApp::update(
       } else {
         self.new_document()
       }
-    }
     SaveDocument =>
       if self.document_path.get() == "" {
         self.transfer_status.set(
@@ -363,7 +362,7 @@ fn MarkdownEditorApp::update(
       self.transfer_status.set(
         TransferUnavailable("save as requires host file dialog services"),
       )
-    OpenDocument => {
+    OpenDocument =>
       if self.is_dirty() && self.pending_confirm.get() is None {
         self.pending_confirm.set(
           Some({ title: "Unsaved changes", deferred: OpenDocument }),
@@ -373,7 +372,6 @@ fn MarkdownEditorApp::update(
           TransferUnavailable("open requires host file dialog services"),
         )
       }
-    }
     ImportFromClipboard =>
       self.transfer_status.set(
         TransferUnavailable("clipboard import requires host services"),
@@ -409,8 +407,7 @@ fn MarkdownEditorApp::update(
     ToggleSourcePreview => self.toggle_source_preview()
     ToggleSourceMode => self.toggle_source_mode()
     ToggleMoreMenu => self.toggle_more_menu()
-    ToggleDarkMode =>
-      self.dark_mode_enabled.set(!self.dark_mode_enabled.get())
+    ToggleDarkMode => self.dark_mode_enabled.set(!self.dark_mode_enabled.get())
     CycleFontFamily => {
       let next = match self.font_family.get() {
         SansFont => SerifFont
@@ -425,12 +422,12 @@ fn MarkdownEditorApp::update(
     }
     DismissToastTick => self.expire_toasts()
     AutosaveTick => self.maybe_autosave()
-    ResolvePendingConfirm(resolution) => self.resolve_pending_confirm(resolution)
+    ResolvePendingConfirm(resolution) =>
+      self.resolve_pending_confirm(resolution)
     UpdateDocument(value) => self.set_document_from_input(value)
     UpdateFindQuery(value) => self.update_find_query(value)
     UpdateReplaceText(value) => self.replace_text.set(value)
-    ToggleFindCaseSensitive =>
-      self.toggle_find_option(field="case_sensitive")
+    ToggleFindCaseSensitive => self.toggle_find_option(field="case_sensitive")
     ToggleFindWholeWord => self.toggle_find_option(field="whole_word")
     ToggleFindRegex => self.toggle_find_option(field="regex")
     UpdateLinkTarget(value) => self.link_target.set(value)
