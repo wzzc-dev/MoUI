@@ -36,185 +36,9 @@ fn markdown_editor_toolbar_button(
 }
 
 ///|
-/// A vertical separator between toolbar groups.
-fn markdown_editor_toolbar_separator(
-  theme : @moui.Theme,
-) -> @moui.View[MarkdownEditorMsg] {
-  @views.divider(
-    axis=@core.Axis::Vertical,
-    theme~,
-    thickness=1.0,
-    inset=4.0,
-  )
-}
-
-///|
-/// A compact row of toolbar buttons for the editor chrome. Commands are split
-/// into four labelled groups (File / Edit / View / Panels) separated by thin
-/// dividers, matching the affordance density of Typora / VS Code. Low-frequency
-/// items (Import, Export, HTML, cycle Look) collapse into a "More" popover so
-/// the bar never overflows on narrow windows.
-fn MarkdownEditorApp::markdown_editor_toolbar(
-  self : MarkdownEditorApp,
-  theme : @moui.Theme,
-  source : String,
-  selection : MarkdownEditorSelection,
-) -> @moui.View[MarkdownEditorMsg] {
-  let transfer_active = self.transfer_in_progress()
-  let dirty = self.is_dirty()
-  let can_save = dirty && !transfer_active
-  let file_group = row(
-    [
-      markdown_editor_toolbar_button(
-        @views.IconName::FileNew,
-        "New Document",
-        NewDocument,
-        theme~,
-        shortcut="⌘N",
-      ),
-      markdown_editor_toolbar_button(
-        @views.IconName::FolderOpen,
-        "Open Document",
-        OpenDocument,
-        theme~,
-        disabled=transfer_active,
-        shortcut="⌘O",
-      ),
-      markdown_editor_toolbar_button(
-        @views.IconName::Save,
-        "Save",
-        SaveDocument,
-        theme~,
-        disabled=!can_save,
-        shortcut="⌘S",
-      ),
-    ],
-    spacing=theme.spacing_scale.xs,
-    align=@views.CrossAlign::Center,
-  )
-  let edit_group = row(
-    [
-      markdown_editor_toolbar_button(
-        @views.IconName::ChevronLeft,
-        "Undo",
-        Undo,
-        theme~,
-        disabled=!self.can_undo(),
-        shortcut="⌘Z",
-      ),
-      markdown_editor_toolbar_button(
-        @views.IconName::ChevronRight,
-        "Redo",
-        Redo,
-        theme~,
-        disabled=!self.can_redo(),
-        shortcut="⌘⇧Z",
-      ),
-      markdown_editor_toolbar_button(
-        @views.IconName::Search,
-        "Find",
-        ToggleFind,
-        theme~,
-        active=self.find_visible.get(),
-        shortcut="⌘F",
-      ),
-    ],
-    spacing=theme.spacing_scale.xs,
-    align=@views.CrossAlign::Center,
-  )
-  let view_group = row(
-    [
-      markdown_editor_toolbar_button(
-        @views.IconName::Focus,
-        "Focus Mode",
-        ToggleFocusMode,
-        theme~,
-        active=self.focus_mode_enabled.get(),
-        shortcut="⌘⇧F",
-      ),
-      markdown_editor_toolbar_button(
-        @views.IconName::Columns,
-        "Typewriter Mode",
-        ToggleTypewriterMode,
-        theme~,
-        active=self.typewriter_mode_enabled.get(),
-        shortcut="⌘⇧T",
-      ),
-      markdown_editor_toolbar_button(
-        @views.IconName::Eye,
-        "Zen Mode",
-        ToggleZenMode,
-        theme~,
-        active=self.zen_mode_enabled.get(),
-        shortcut="⌘⌥Z",
-      ),
-      markdown_editor_toolbar_button(
-        @views.IconName::CodeInline,
-        "Source Mode",
-        ToggleSourceMode,
-        theme~,
-        active=self.source_mode_enabled.get(),
-        shortcut="⌘⇧/",
-      ),
-    ],
-    spacing=theme.spacing_scale.xs,
-    align=@views.CrossAlign::Center,
-  )
-  let panels_group = row(
-    [
-      markdown_editor_toolbar_button(
-        @views.IconName::ListBullet,
-        "Outline",
-        ToggleOutline,
-        theme~,
-        active=self.outline_visible.get(),
-        shortcut="⌘⌥O",
-      ),
-      markdown_editor_toolbar_button(
-        @views.IconName::FolderOpen,
-        "Files",
-        ToggleFileSidebar,
-        theme~,
-        active=self.file_sidebar_visible.get(),
-        shortcut="⌘⌥P",
-      ),
-      markdown_editor_toolbar_button(
-        @views.IconName::Info,
-        "Document Info",
-        ToggleDocumentInfo,
-        theme~,
-        active=self.document_info_visible.get(),
-        shortcut="⌘⌥D",
-      ),
-      markdown_editor_toolbar_button(
-        @views.IconName::Columns,
-        "Source Preview",
-        ToggleSourcePreview,
-        theme~,
-        active=self.source_preview_visible.get(),
-        shortcut="⌘/",
-      ),
-    ],
-    spacing=theme.spacing_scale.xs,
-    align=@views.CrossAlign::Center,
-  )
-  let more = self.markdown_editor_more_menu(theme, source, selection)
-  row(
-    [
-      file_group,
-      markdown_editor_toolbar_separator(theme),
-      edit_group,
-      markdown_editor_toolbar_separator(theme),
-      panels_group,
-      markdown_editor_toolbar_separator(theme),
-      view_group,
-      markdown_editor_toolbar_separator(theme),
-      more,
-    ],
-    spacing=theme.spacing_scale.sm,
-    align=@views.CrossAlign::Center,
-  ).repaint_boundary()
-}
+/// The top-level toolbar was removed in favor of Typora's title-bar + menu
+/// aesthetic; the per-group buttons below are retained for the "More" popover
+/// anchor and future affordances.
 
 ///|
 /// The "More" popover collects low-frequency document commands (Save As,
@@ -289,6 +113,14 @@ fn markdown_editor_more_menu_items() -> Array[
     },
     { label: "Quick Format…", shortcut: "⌘⇧P", message: ToggleFormatPalette },
     { label: "Toggle Dark Mode", shortcut: "", message: ToggleDarkMode },
+    { label: "Focus Mode", shortcut: "⌘⇧F", message: ToggleFocusMode },
+    { label: "Typewriter Mode", shortcut: "⌘⇧T", message: ToggleTypewriterMode },
+    { label: "Zen Mode", shortcut: "⌘⌥Z", message: ToggleZenMode },
+    { label: "Source Mode", shortcut: "⌘⇧/", message: ToggleSourceMode },
+    { label: "Outline", shortcut: "⌘⌥O", message: ToggleOutline },
+    { label: "Files", shortcut: "⌘⌥P", message: ToggleFileSidebar },
+    { label: "Document Info", shortcut: "⌘⌥D", message: ToggleDocumentInfo },
+    { label: "Source Preview", shortcut: "⌘/", message: ToggleSourcePreview },
   ]
 }
 

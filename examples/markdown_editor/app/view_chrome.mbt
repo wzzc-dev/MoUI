@@ -62,6 +62,13 @@ fn MarkdownEditorApp::root(
       align=@views.CrossAlign::Start,
     ),
   )
+  if !zen {
+    children.push(
+      self.bottom_status_bar(
+        theme, snapshot, block_label, document, selection, workspace_width,
+      ),
+    )
+  }
   let workspace = column(
     children,
     spacing=theme.spacing_scale.sm,
@@ -222,6 +229,11 @@ fn markdown_editor_centered_workspace(
 }
 
 ///|
+/// The top chrome bar, restyled to Typora's title-bar aesthetic: the document
+/// title with an unsaved indicator dot on the left, and a single "⋯" menu
+/// button on the right that opens a popover with file/view/format commands.
+/// The busy status string (word count, block label, modes) moves to a slim
+/// bottom status bar so the title bar stays uncluttered.
 fn MarkdownEditorApp::chrome(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
@@ -231,27 +243,61 @@ fn MarkdownEditorApp::chrome(
   selection : MarkdownEditorSelection,
   width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let toolbar = self.markdown_editor_toolbar(theme, source, selection)
+  let title = markdown_editor_document_title(
+    path=self.document_path.get(),
+    fallback="Untitled",
+  )
+  let dirty = self.is_dirty()
+  let unsaved_dot = text(
+    if dirty { "● " } else { "" },
+    width=20.0,
+    height=28.0,
+  )
+  .font(theme.typography.body)
+  .foreground(theme.palette.primary.multiply_alpha(0.85))
+  let title_text = text(title, height=28.0).font(theme.typography.body).foreground(
+    theme.palette.foreground,
+  )
+  // The "⋯" menu button reuses the More popover (file/view/format commands).
+  let menu = self.markdown_editor_more_menu(theme, source, selection)
   frame(
     row(
-      [
-        text(
-          self.document_status_label(snapshot, block_label, selection) +
-          markdown_editor_active_format_suffix(source, selection),
-          width=300.0,
-          height=28.0,
-        )
-        .font(theme.typography.caption)
-        .foreground(@core.Color::black().multiply_alpha(0.42)),
-        spacer(),
-        toolbar,
-      ],
+      [unsaved_dot, title_text, spacer(), menu],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Center,
     ),
     width~,
-    height=34.0,
-  )
+    height=36.0,
+  ).repaint_boundary()
+}
+
+///|
+/// A slim bottom status bar carrying the document status string (title /
+/// saved state / block label / word count / modes), so the title bar can stay
+/// focused on the document name.
+fn MarkdownEditorApp::bottom_status_bar(
+  self : MarkdownEditorApp,
+  theme : @moui.Theme,
+  snapshot : MarkdownEditorSnapshot,
+  block_label : String,
+  source : String,
+  selection : MarkdownEditorSelection,
+  width : Double,
+) -> @moui.View[MarkdownEditorMsg] {
+  let _ = snapshot
+  let _ = block_label
+  frame(
+    text(
+      self.document_status_label(snapshot, block_label, selection) +
+      markdown_editor_active_format_suffix(source, selection),
+      width~,
+      height=20.0,
+    )
+    .font(theme.typography.caption)
+    .foreground(theme.palette.muted),
+    width~,
+    height=24.0,
+  ).repaint_boundary()
 }
 
 ///|
