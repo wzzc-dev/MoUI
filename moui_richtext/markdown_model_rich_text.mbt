@@ -295,14 +295,12 @@ pub fn markdown_inline_image_source(
 /// against the process cwd — can find images sitting next to the document.
 fn markdown_resolve_image_source(target : String, base_dir : String?) -> String {
   match base_dir {
-    Some(dir) => {
-      if dir == "" ||
-        markdown_target_is_absolute(target) {
+    Some(dir) =>
+      if dir == "" || markdown_target_is_absolute(target) {
         target
       } else {
         markdown_join_path(dir, target)
       }
-    }
     None => target
   }
 }
@@ -326,8 +324,10 @@ fn markdown_target_is_absolute(target : String) -> Bool {
 fn markdown_join_path(dir : String, rel : String) -> String {
   let dir_chars = dir.to_array()
   let has_slash = dir_chars.length() > 0 &&
-    (dir_chars[dir_chars.length() - 1] == '/' ||
-    dir_chars[dir_chars.length() - 1] == '\\')
+    (
+      dir_chars[dir_chars.length() - 1] == '/' ||
+      dir_chars[dir_chars.length() - 1] == '\\'
+    )
   if has_slash {
     dir + rel
   } else {
