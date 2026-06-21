@@ -837,6 +837,10 @@ fn editor_source_layout(
       viewport_height~,
       theme,
     ),
+    markdown_editor_format_bubble_overlay(
+      app, snapshot, selection, editor_font, theme, normalized_offset,
+      editor_width, viewport_height,
+    ),
   ]).shadow(page_shadow)
   if !show_source && !show_outline && !show_files && !show_info {
     editor_with_indicator
