@@ -15,6 +15,13 @@ pub fn markdown_block_to_rich_text(
         runs=markdown_inlines_to_rich_text(block.inlines, font, base_dir~),
         font=Some(font),
         line_height=Some(base.size * markdown_heading_line_height_scale(level)),
+        // Typora-style heading spacing: breath above, a little below.
+        inset={
+          top: base.size * 0.6,
+          right: 0.0,
+          bottom: base.size * 0.3,
+          left: 0.0,
+        },
       )
     }
     UnorderedListItem =>
@@ -39,24 +46,28 @@ pub fn markdown_block_to_rich_text(
       RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         color=Some(@core.Color::black().multiply_alpha(0.82)),
+        background=Some(
+          @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.05)),
+        ),
         border_left=Some(
           @core.BorderStyle::new(
             brush=@core.Brush::solid(@core.Color::black().multiply_alpha(0.32)),
             width=4.0,
           ),
         ),
-        inset={ top: 4.0, right: 0.0, bottom: 12.0, left: 14.0 },
+        inset={ top: 6.0, right: 0.0, bottom: 12.0, left: 14.0 },
         line_height=Some(base.size * 1.55),
+        corner_radius=4.0,
       )
     CodeBlock =>
       RichTextBlock::new(
         runs=markdown_code_block_runs(block, base),
         background=Some(
-          @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.08)),
+          @core.Brush::solid(@core.Color::rgba(r=0.12, g=0.13, b=0.15, a=0.06)),
         ),
-        inset={ top: 8.0, right: 10.0, bottom: 8.0, left: 10.0 },
+        inset={ top: 12.0, right: 14.0, bottom: 12.0, left: 14.0 },
         line_height=Some(base.size * 1.1),
-        corner_radius=6.0,
+        corner_radius=8.0,
       )
     HorizontalRule =>
       RichTextBlock::new(runs=[], line_height=Some(base.size * 1.0), rule=true)
@@ -151,6 +162,8 @@ pub fn markdown_block_to_rich_text(
       RichTextBlock::new(
         runs=markdown_inlines_to_rich_text(block.inlines, base, base_dir~),
         line_height=Some(base.size * 1.55),
+        // Paragraph spacing below for readability between blocks.
+        inset={ top: 0.0, right: 0.0, bottom: base.size * 0.4, left: 0.0 },
       )
   }
 }

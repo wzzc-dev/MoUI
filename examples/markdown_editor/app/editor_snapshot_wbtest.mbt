@@ -252,7 +252,7 @@ test "markdown editor snapshot preserves visible empty paragraph lines" {
       snapshot.rich_text,
       @core.FontSpec::new(),
     ).to_int(),
-    content="99",
+    content="124",
   )
 }
 
@@ -277,7 +277,7 @@ test "markdown editor caret geometry lands on inserted blank line" {
   inspect(heading.blocks.length(), content="2")
   inspect(paragraph.blocks.length(), content="2")
   assert_true(heading_blank.origin.y > content.origin.y + 20.0)
-  inspect(paragraph_blank.origin.y.to_int(), content="48")
+  inspect(paragraph_blank.origin.y.to_int(), content="55")
 }
 
 ///|
