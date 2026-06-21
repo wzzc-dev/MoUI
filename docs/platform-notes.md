@@ -553,6 +553,15 @@ Linux runtime requirements are intentionally native:
   file-dialog selections require a desktop dialog helper on the matching host.
 - zlib in the final native link; Linux entrypoints and `backend/linux` include
   `-lz`.
+- glib-2.0 development headers and runtime library. `backend/linux`
+  unconditionally drives `HostTimerSource` subscriptions through the GLib main
+  loop (`g_timeout_add` / `g_source_remove`), so the `moui` prebuild resolves
+  `glib-2.0` through `pkg-config` and feeds the resulting `-I` include flags
+  into `stub-cc-flags` and `-lglib-2.0` into `cc-link-flags` for
+  `backend/linux`. On hosts where `pkg-config` cannot find `glib-2.0`, both
+  resolve to empty (the C stub body is guarded by `#ifdef __linux__` and only
+  matters on Linux). Distro-specific setups can override the resolved flags
+  with `MOUI_LINUX_GLIB_STUB_CC_FLAGS` and `MOUI_LINUX_GLIB_CC_LINK_FLAGS`.
 - Optional WebKitGTK development packages when building with
   `MOUI_LINUX_ENABLE_WEBKITGTK` for native WebView support. Fallback builds do
   not link WebKitGTK and report WebView unavailable. A configured host should

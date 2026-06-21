@@ -87,6 +87,22 @@ function linuxWebKitGtkFlags(config) {
   );
 }
 
+function linuxGlibFlags(config) {
+  const explicitStub = configEnvValue(config, "MOUI_LINUX_GLIB_STUB_CC_FLAGS");
+  const explicitLink = configEnvValue(config, "MOUI_LINUX_GLIB_CC_LINK_FLAGS");
+  if (explicitStub || explicitLink) {
+    return { stubCcFlags: explicitStub, linkFlags: explicitLink };
+  }
+  // glib-2.0 is a core Linux backend dependency: linux_timer_host.c drives
+  // HostTimerSource subscriptions via the GLib main loop. On non-Linux hosts
+  // pkg-config will not find glib-2.0 and both flags resolve to "", which is
+  // fine because the C stub body is guarded by `#ifdef __linux__`.
+  return {
+    stubCcFlags: runPkgConfig(["glib-2.0"], "--cflags"),
+    linkFlags: runPkgConfig(["glib-2.0"], "--libs"),
+  };
+}
+
 function windowsWebView2Flags(config) {
   const explicitStub = configEnvValue(
     config,
@@ -125,6 +141,7 @@ function main() {
   const config = readJsonFromStdin();
   const windows = windowsWebView2Flags(config);
   const linux = linuxWebKitGtkFlags(config);
+  const linuxGlib = linuxGlibFlags(config);
   const linkConfigs = [];
   if (windows.linkFlags) {
     linkConfigs.push({
@@ -138,6 +155,12 @@ function main() {
       link_flags: linux.linkFlags,
     });
   }
+  if (linuxGlib.linkFlags) {
+    linkConfigs.push({
+      package: "wzzc-dev/moui/backend/linux",
+      link_flags: linuxGlib.linkFlags,
+    });
+  }
   console.log(
     JSON.stringify({
       vars: {
@@ -145,6 +168,8 @@ function main() {
         MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS: windows.linkFlags,
         MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS: linux.stubCcFlags,
         MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS: linux.linkFlags,
+        MOUI_LINUX_GLIB_STUB_CC_FLAGS: linuxGlib.stubCcFlags,
+        MOUI_LINUX_GLIB_CC_LINK_FLAGS: linuxGlib.linkFlags,
       },
       link_configs: linkConfigs,
     }),
