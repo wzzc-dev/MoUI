@@ -54,9 +54,11 @@ void *moui_windows_timer_start(double interval_ms,
   if (period_ms == 0) {
     period_ms = 1;
   }
-  HANDLE timer_queue = GetTimerQueue();
+  // Use the default timer queue (TimerQueue = NULL). There is no
+  // GetTimerQueue() in the Windows API; NULL is the documented way to
+  // schedule against the process default queue.
   BOOL ok = CreateTimerQueueTimer(
-      &timer->queue_timer, timer_queue, moui_windows_timer_proc, timer,
+      &timer->queue_timer, NULL, moui_windows_timer_proc, timer,
       period_ms, period_ms, WT_EXECUTEDEFAULT);
   if (!ok) {
     moonbit_decref(closure);
@@ -73,7 +75,9 @@ void moui_windows_timer_cancel(void *handle) {
   }
   MouiWindowsTimer *timer = (MouiWindowsTimer *)handle;
   if (timer->queue_timer != NULL) {
-    DeleteTimerQueueTimer(GetTimerQueue(), timer->queue_timer,
+    // TimerQueue = NULL targets the default queue, matching the queue used
+    // at creation time in moui_windows_timer_start.
+    DeleteTimerQueueTimer(NULL, timer->queue_timer,
                           INVALID_HANDLE_VALUE);
     timer->queue_timer = NULL;
   }
