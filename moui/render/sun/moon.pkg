@@ -1,0 +1,11 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui_sun/graphics" @sun_graphics,
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

@@ -19,6 +19,10 @@ test "renderer capability report tracks draw command support" {
     @render.RendererFeatureStatus::Supported,
   )
   assert_true(
+    image.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
+    @render.RendererFeatureStatus::Gap,
+  )
+  assert_true(
     image
     .note_for_backend(@render.RendererBackendKind::NativeWgpu)
     .contains("mizchi/image"),
@@ -63,6 +67,10 @@ test "renderer capability report tracks draw command support" {
     rect.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
     @render.RendererFeatureStatus::Supported,
   )
+  assert_true(
+    rect.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
+    @render.RendererFeatureStatus::Ready,
+  )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::RoundedRect,
     )
@@ -88,6 +96,10 @@ test "renderer capability report tracks draw command support" {
   assert_true(
     gradient.status_for_backend(@render.RendererBackendKind::SkiaRasterNative) ==
     @render.RendererFeatureStatus::Supported,
+  )
+  assert_true(
+    gradient.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
+    @render.RendererFeatureStatus::Partial,
   )
   assert_true(
     gradient
@@ -118,6 +130,11 @@ test "renderer capability report tracks draw command support" {
     gradient
     .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
     .contains("Web renderer smoke"),
+  )
+  assert_true(
+    gradient
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("moui_sun PaintShader"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::Shadow)
     is Some(shadow) else {
@@ -765,19 +782,32 @@ test "renderer capability follow ups stay focused on incomplete features" {
 ///|
 test "renderer capability report exposes backend-driven entries" {
   let backends = @render.renderer_capability_backends()
-  inspect(backends.length(), content="3")
+  inspect(backends.length(), content="4")
   assert_true(backends[0] == @render.RendererBackendKind::SkiaRasterNative)
   assert_true(backends[1] == @render.RendererBackendKind::WebGpuWasm)
   assert_true(backends[2] == @render.RendererBackendKind::NativeWgpu)
+  assert_true(backends[3] == @render.RendererBackendKind::SunRasterNative)
   let wgpu = @render.renderer_backend_capabilities(
     @render.RendererBackendKind::NativeWgpu,
   )
   let skia = @render.renderer_backend_capabilities(
     @render.RendererBackendKind::SkiaRasterNative,
   )
+  let sun = @render.renderer_backend_capabilities(
+    @render.RendererBackendKind::SunRasterNative,
+  )
   inspect(wgpu.length(), content="17")
   inspect(skia.length(), content="17")
+  inspect(sun.length(), content="17")
   assert_true(skia.any(capability => capability.note.contains("moui_skia")))
+  assert_true(sun.any(capability => capability.note.contains("moui_sun")))
+  assert_true(
+    sun.any(capability => {
+      capability.feature == @render.RendererFeature::Text &&
+      capability.status == @render.RendererFeatureStatus::Partial &&
+      capability.note.contains("placeholder glyph")
+    }),
+  )
 }
 
 ///|
