@@ -73,6 +73,8 @@ run_built_executable() {
 
 run node --check scripts/validate-api-surface.mjs
 run node scripts/validate-api-surface.mjs
+run node --check scripts/validate-maintenance-baseline.mjs
+run node scripts/validate-maintenance-baseline.mjs
 run node scripts/validate-renderer-provider-manifests.mjs
 run node scripts/validate-skia-entrypoints.mjs
 run node scripts/test-validate-skia-entrypoints.mjs
