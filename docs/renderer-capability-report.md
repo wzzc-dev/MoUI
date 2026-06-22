@@ -52,12 +52,15 @@ to app code or view/runtime trees. Current descriptors are:
   and `Web`.
 - `SkiaRasterNative`: family `Skia`, presentation `CpuPixelFrame`, target
   `Native`.
+- `SunRasterNative`: family `Sun`, presentation `CpuPixelFrame`, target
+  `Native`.
 
 `RendererDescriptor` describes static renderer capability identity. Native host
 runtime assembly is handled by platform renderer providers instead:
 `backend/<platform>/skia` selects the `SkiaRasterNative` native mainline and
-`backend/<platform>/wgpu` selects the `NativeWgpu` diagnostic route. The
-`RendererSelection` helper remains useful for reports and tests that match
+`backend/<platform>/wgpu` selects the `NativeWgpu` diagnostic route.
+`backend/<platform>/sun` selects the experimental `SunRasterNative` CPU raster
+route. The `RendererSelection` helper remains useful for reports and tests that match
 families or backend ids, but it is not a native host-core option or provider
 contract. Web keeps using the WebGPU wasm backend; future Skia Web or Skia GPU
 variants can add new `RendererBackendKind` values without changing the

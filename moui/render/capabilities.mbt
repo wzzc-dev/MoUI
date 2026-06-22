@@ -177,6 +177,7 @@ pub fn renderer_capability_backends() -> Array[RendererBackendKind] {
     RendererBackendKind::SkiaRasterNative,
     RendererBackendKind::WebGpuWasm,
     RendererBackendKind::NativeWgpu,
+    RendererBackendKind::SunRasterNative,
   ]
 }
 
@@ -219,7 +220,72 @@ fn renderer_feature_capability_entry(
       web_status,
       web_note,
     ),
+    renderer_backend_feature(
+      feature,
+      RendererBackendKind::SunRasterNative,
+      sun_feature_status(feature),
+      sun_feature_note(feature),
+    ),
   ])
+}
+
+///|
+fn sun_feature_status(feature : RendererFeature) -> RendererFeatureStatus {
+  match feature {
+    Rect | RoundedRect | Clip | Transform | Opacity | PathVector =>
+      RendererFeatureStatus::Supported
+    Gradient => RendererFeatureStatus::Partial
+    BlendMode => RendererFeatureStatus::Partial
+    Text => RendererFeatureStatus::Partial
+    Image
+    | Shadow
+    | LayerCompositing
+    | FilterEffect
+    | ShaderEffect
+    | TextShaping
+    | EmojiText
+    | AsyncImage => RendererFeatureStatus::Gap
+  }
+}
+
+///|
+fn sun_feature_note(feature : RendererFeature) -> String {
+  match feature {
+    Rect =>
+      "Sun raster renders clear, rect fill, and rect stroke commands through moui_sun/graphics Canvas."
+    RoundedRect =>
+      "Sun raster renders rounded rect fills and strokes through moui_sun/graphics rounded path helpers."
+    Gradient =>
+      "Sun raster maps MoUI linear and radial brushes to moui_sun PaintShader for rect and path drawing; runtime evidence is still experimental."
+    Shadow =>
+      "Sun raster records DrawShadow as an unsupported command until blurred shadow drawing is implemented."
+    Text =>
+      "Sun raster draws a debug placeholder glyph path for ASCII TextRun content so experimental native entrypoints are visible, while still recording DrawText diagnostics until moui_sun/text font shaping is wired."
+    Image =>
+      "Sun raster records DrawImage as unsupported until MoUI ImageRun sources are wired to moui_sun Pixmap decoding and resource lifecycle records."
+    Clip =>
+      "Sun raster applies rectangular clips through moui_sun Canvas clip state; rounded clips are approximated by their bounding rectangles with diagnostics."
+    Transform =>
+      "Sun raster maps MoUI affine transform scopes to moui_sun Canvas transform state."
+    Opacity =>
+      "Sun raster applies scoped opacity by multiplying Paint opacity for supported primitive commands."
+    LayerCompositing =>
+      "Sun raster records PushLayer/PopLayer as unsupported until offscreen layer composition is wired."
+    BlendMode =>
+      "Sun raster Paint supports blend modes, but the first MoUI adapter only maps primitive source-over drawing and leaves layer blend scopes unsupported."
+    FilterEffect =>
+      "Sun raster records PushFilter/PopFilter as unsupported until moui_sun PaintFilter scopes are wired to MoUI FilterEffect."
+    PathVector =>
+      "Sun raster maps MoUI PathSpec verbs to moui_sun Path fill and stroke drawing."
+    ShaderEffect =>
+      "Sun raster records DrawShaderEffect as unsupported and does not run MoUI shader-effect builtins yet."
+    TextShaping =>
+      "moui_sun/text has experimental shaping/layout primitives, but they are not yet connected to MoUI DrawText."
+    EmojiText =>
+      "Sun text and emoji rendering remain unclaimed until moui_sun/text proves color emoji and grapheme behavior through MoUI renderer tests."
+    AsyncImage =>
+      "Sun raster has no MoUI ImageResourceLoadCompletion or native async image lifecycle wiring yet."
+  }
 }
 
 ///|

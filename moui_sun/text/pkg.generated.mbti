@@ -1,0 +1,469 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_sun/text"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/x/fs",
+}
+
+// Values
+pub fn file_exists(String) -> Bool
+
+pub fn get_line_break_class(Int) -> LineBreakClass
+
+pub fn grayscale_to_rgba(FixedArray[Byte], Int, Int) -> FixedArray[Byte]
+
+pub fn is_line_break_allowed(LineBreakClass, LineBreakClass) -> Bool
+
+pub fn layout_text_face(FontFace, String, LayoutConfig) -> TextLayout
+
+pub fn[L : FontLoader] load_font_data(L, String) -> Result[FontData, FontLoadError]
+
+pub fn[L : FontLoader] load_font_face(L, String) -> Result[FontFace, FontLoadError]
+
+pub fn plan_font_fallback(Array[FontFace], String) -> FontFallbackPlan
+
+pub fn read_file(String) -> Bytes raise @fs.IOError
+
+pub fn render_text_mask_face(FontFace, String, Int, Int, Double, Double, LayoutConfig) -> CoverageMask
+
+pub fn select_font_face_index_for_char(Array[FontFace], Int) -> Int
+
+pub fn write_file(String, Bytes) -> Unit raise @fs.IOError
+
+// Errors
+
+// Types and methods
+type CoverageMask derive(@debug.Debug)
+pub fn CoverageMask::copy(Self) -> Self
+pub fn CoverageMask::get_height(Self) -> Int
+pub fn CoverageMask::get_pixels(Self) -> FixedArray[Byte]
+pub fn CoverageMask::get_width(Self) -> Int
+pub fn CoverageMask::new(Int, Int, FixedArray[Byte]) -> Self
+
+type FaceGlyphMaskCacheResult derive(@debug.Debug)
+pub fn FaceGlyphMaskCacheResult::did_rasterize(Self) -> Bool
+pub fn FaceGlyphMaskCacheResult::get_mask(Self) -> CoverageMask
+pub fn FaceGlyphMaskCacheResult::get_placement(Self) -> FaceGlyphMaskPlacement
+
+type FaceGlyphMaskPlacement derive(@debug.Debug)
+pub fn FaceGlyphMaskPlacement::get_draw_offset_x(Self) -> Int
+pub fn FaceGlyphMaskPlacement::get_draw_offset_y(Self) -> Int
+pub fn FaceGlyphMaskPlacement::get_height(Self) -> Int
+pub fn FaceGlyphMaskPlacement::get_origin_x(Self) -> Double
+pub fn FaceGlyphMaskPlacement::get_origin_y(Self) -> Double
+pub fn FaceGlyphMaskPlacement::get_width(Self) -> Int
+
+type FileFontLoader derive(@debug.Debug)
+pub fn FileFontLoader::clear(Self) -> Unit
+pub fn FileFontLoader::contains(Self, String) -> Bool
+pub fn FileFontLoader::insert(Self, String, FontFileSource) -> FontFileSource
+pub fn FileFontLoader::is_empty(Self) -> Bool
+pub fn FileFontLoader::len(Self) -> Int
+pub fn FileFontLoader::new() -> Self
+pub fn FileFontLoader::remove(Self, String) -> Unit
+pub impl FontLoader for FileFontLoader
+
+type Font derive(@debug.Debug)
+
+type FontData derive(@debug.Debug)
+pub fn FontData::get_data(Self) -> Bytes
+pub fn FontData::get_font_index(Self) -> Int
+pub fn FontData::new(Bytes, font_index? : Int) -> Self
+pub fn FontData::parse(Self) -> Result[FontFace, FontParseError]
+
+type FontFace derive(@debug.Debug)
+pub fn FontFace::char_to_glyph(Self, Int) -> Int
+pub fn FontFace::from_bytes(Bytes) -> Result[Self, FontParseError]
+pub fn FontFace::from_data(FontData) -> Result[Self, FontParseError]
+pub fn FontFace::get_metrics(Self) -> FontMetrics
+pub fn FontFace::get_units_per_em(Self) -> Int
+pub fn FontFace::has_glyph_for_char(Self, Int) -> Bool
+
+type FontFaceCache derive(@debug.Debug)
+pub fn FontFaceCache::capacity(Self) -> Int
+pub fn FontFaceCache::clear(Self) -> Unit
+pub fn FontFaceCache::contains(Self, String) -> Bool
+pub fn FontFaceCache::get(Self, String) -> FontFace?
+pub fn[L : FontLoader] FontFaceCache::get_or_load(Self, String, L) -> Result[FontFace, FontLoadError]
+pub fn[L : FontLoader] FontFaceCache::get_or_load_result(Self, String, L) -> Result[FontFaceCacheParseResult, FontLoadError]
+pub fn FontFaceCache::get_or_parse(Self, String, Bytes) -> Result[FontFace, FontParseError]
+pub fn FontFaceCache::get_or_parse_result(Self, String, Bytes) -> Result[FontFaceCacheParseResult, FontParseError]
+pub fn FontFaceCache::insert(Self, String, FontFace) -> FontFace
+pub fn FontFaceCache::is_capacity_bounded(Self) -> Bool
+pub fn FontFaceCache::is_empty(Self) -> Bool
+pub fn FontFaceCache::len(Self) -> Int
+pub fn FontFaceCache::new() -> Self
+pub fn FontFaceCache::remove(Self, String) -> Unit
+pub fn FontFaceCache::with_capacity(Int) -> Self
+
+type FontFaceCacheParseResult derive(@debug.Debug)
+pub fn FontFaceCacheParseResult::did_hit_cache(Self) -> Bool
+pub fn FontFaceCacheParseResult::did_parse(Self) -> Bool
+pub fn FontFaceCacheParseResult::get_face(Self) -> FontFace
+
+type FontFallbackPlan derive(@debug.Debug)
+pub fn FontFallbackPlan::get_char_count(Self) -> Int
+pub fn FontFallbackPlan::get_missing_char_count(Self) -> Int
+pub fn FontFallbackPlan::get_spans(Self) -> Array[FontFallbackSpan]
+pub fn FontFallbackPlan::has_missing_glyphs(Self) -> Bool
+pub fn FontFallbackPlan::is_empty(Self) -> Bool
+pub fn FontFallbackPlan::span_count(Self) -> Int
+
+type FontFallbackSpan derive(@debug.Debug)
+pub fn FontFallbackSpan::get_char_count(Self) -> Int
+pub fn FontFallbackSpan::get_face_index(Self) -> Int
+pub fn FontFallbackSpan::get_text(Self) -> String
+pub fn FontFallbackSpan::is_missing(Self) -> Bool
+
+type FontFileSource derive(Eq, @debug.Debug)
+pub fn FontFileSource::get_font_index(Self) -> Int
+pub fn FontFileSource::get_path(Self) -> String
+pub fn FontFileSource::new(String, font_index? : Int) -> Self
+
+type FontHead derive(Eq, @debug.Debug)
+
+type FontHhea derive(Eq, @debug.Debug)
+
+pub(all) enum FontLoadError {
+  MissingFontData(String)
+  FontFileReadFailed(String, String)
+  FontParseFailed(String, FontParseError)
+} derive(Eq, @debug.Debug)
+
+pub struct FontMetrics {
+  units_per_em : Int
+  ascent : Int
+  descent : Int
+  line_gap : Int
+} derive(Eq, @debug.Debug)
+pub fn FontMetrics::line_height(Self) -> Int
+pub fn FontMetrics::new(units_per_em~ : Int, ascent~ : Int, descent~ : Int, line_gap? : Int) -> Self
+
+pub(all) enum FontParseError {
+  UnexpectedEndOfData(Int, Int, Int)
+  InvalidFontHeader(UInt)
+  UnsupportedFontIndex(Int)
+  MissingTable(String)
+  TableOutOfBounds(String, Int, Int, Int)
+  TableTooShort(String, Int, Int)
+  UnsupportedIndexToLocFormat(Int)
+  MissingHorizontalMetrics
+  UnsortedLocaOffsets
+  UnsortedGlyphContourEndpoints
+  GlyphFlagRepeatOverflow
+  UnsupportedCmapVersion(Int)
+  InvalidCmapSegmentCount(Int)
+  InvalidCmapSegmentRange(Int, Int)
+  InvalidCmapGroupRange(Int, Int)
+} derive(Eq, @debug.Debug)
+
+type GlyphAtlasEntry derive(@debug.Debug)
+pub fn GlyphAtlasEntry::get_height(Self) -> Int
+pub fn GlyphAtlasEntry::get_key(Self) -> String
+pub fn GlyphAtlasEntry::get_width(Self) -> Int
+pub fn GlyphAtlasEntry::get_x(Self) -> Int
+pub fn GlyphAtlasEntry::get_y(Self) -> Int
+pub fn GlyphAtlasEntry::new(key~ : String, x~ : Int, y~ : Int, width~ : Int, height~ : Int) -> Self
+
+type GlyphComponent derive(@debug.Debug)
+
+type GlyphContour derive(@debug.Debug)
+
+type GlyphData derive(@debug.Debug)
+
+type GlyphId derive(Eq, @debug.Debug)
+pub fn GlyphId::new(Int) -> Self
+pub fn GlyphId::to_int(Self) -> Int
+
+type GlyphInfo derive(Eq, @debug.Debug)
+pub fn GlyphInfo::get_cluster(Self) -> Int
+pub fn GlyphInfo::get_glyph_id(Self) -> GlyphId
+pub fn GlyphInfo::new(glyph_id~ : GlyphId, cluster~ : Int) -> Self
+
+type GlyphMaskAtlas derive(@debug.Debug)
+pub fn GlyphMaskAtlas::can_fit(Self, CoverageMask) -> Bool
+pub fn GlyphMaskAtlas::clear(Self) -> Unit
+pub fn GlyphMaskAtlas::get(Self, String) -> GlyphAtlasEntry?
+pub fn GlyphMaskAtlas::get_capacity(Self) -> Int
+pub fn GlyphMaskAtlas::get_free_pixel_count(Self) -> Int
+pub fn GlyphMaskAtlas::get_height(Self) -> Int
+pub fn GlyphMaskAtlas::get_occupancy_ratio(Self) -> Double
+pub fn GlyphMaskAtlas::get_used_pixel_count(Self) -> Int
+pub fn GlyphMaskAtlas::get_width(Self) -> Int
+pub fn GlyphMaskAtlas::insert(Self, String, CoverageMask) -> GlyphAtlasEntry?
+pub fn GlyphMaskAtlas::insert_or_clear(Self, String, CoverageMask) -> GlyphMaskAtlasInsertResult?
+pub fn GlyphMaskAtlas::is_empty(Self) -> Bool
+pub fn GlyphMaskAtlas::len(Self) -> Int
+pub fn GlyphMaskAtlas::new(Int, Int) -> Self
+pub fn GlyphMaskAtlas::to_mask(Self) -> CoverageMask
+
+type GlyphMaskAtlasInsertResult derive(@debug.Debug)
+pub fn GlyphMaskAtlasInsertResult::did_clear(Self) -> Bool
+pub fn GlyphMaskAtlasInsertResult::did_reuse(Self) -> Bool
+pub fn GlyphMaskAtlasInsertResult::get_entry(Self) -> GlyphAtlasEntry
+
+type GlyphMaskCache derive(@debug.Debug)
+pub fn GlyphMaskCache::capacity(Self) -> Int
+pub fn GlyphMaskCache::clear(Self) -> Unit
+pub fn GlyphMaskCache::contains(Self, String) -> Bool
+pub fn GlyphMaskCache::get(Self, String) -> CoverageMask?
+pub fn GlyphMaskCache::get_or_rasterize_face_glyph_result(Self, String, FontFace, Int, Double) -> FaceGlyphMaskCacheResult?
+pub fn GlyphMaskCache::insert(Self, String, CoverageMask) -> CoverageMask
+pub fn GlyphMaskCache::is_capacity_bounded(Self) -> Bool
+pub fn GlyphMaskCache::is_empty(Self) -> Bool
+pub fn GlyphMaskCache::len(Self) -> Int
+pub fn GlyphMaskCache::new() -> Self
+pub fn GlyphMaskCache::remove(Self, String) -> Unit
+pub fn GlyphMaskCache::with_capacity(Int) -> Self
+
+type GlyphMaskCacheRasterizeResult derive(@debug.Debug)
+
+type GlyphPoint derive(Eq, @debug.Debug)
+
+type GlyphPosition derive(Eq, @debug.Debug)
+pub fn GlyphPosition::get_glyph_id(Self) -> GlyphId
+pub fn GlyphPosition::get_x_advance(Self) -> Int
+pub fn GlyphPosition::get_x_offset(Self) -> Int
+pub fn GlyphPosition::get_y_advance(Self) -> Int
+pub fn GlyphPosition::get_y_offset(Self) -> Int
+pub fn GlyphPosition::new(glyph_id~ : GlyphId, x_advance? : Int, y_advance? : Int, x_offset? : Int, y_offset? : Int) -> Self
+
+type GlyphRun derive(@debug.Debug)
+pub fn GlyphRun::get_baseline_y(Self) -> Double
+pub fn GlyphRun::get_glyphs(Self) -> Array[PositionedGlyph]
+pub fn GlyphRun::get_width(Self) -> Double
+pub fn GlyphRun::glyph_count(Self) -> Int
+
+type KernPair derive(Eq, @debug.Debug)
+
+pub struct LayoutConfig {
+  max_width : Double
+  font_size : Double
+  line_height : Double
+  alignment : TextAlign
+  letter_spacing : Double
+  word_spacing : Double
+} derive(@debug.Debug)
+pub fn LayoutConfig::new(max_width? : Double, font_size? : Double, line_height? : Double, alignment? : TextAlign, letter_spacing? : Double, word_spacing? : Double) -> Self
+
+type LayoutLine derive(@debug.Debug)
+
+pub struct LayoutMetrics {
+  width : Double
+  height : Double
+  baseline : Double
+} derive(Eq, @debug.Debug)
+pub fn LayoutMetrics::new(width~ : Double, height~ : Double, baseline~ : Double) -> Self
+
+type LayoutResult derive(@debug.Debug)
+
+pub enum LineBreakClass {
+  BK
+  CR
+  LF
+  SP
+  OP
+  CL
+  QU
+  GL
+  NS
+  EX
+  SY
+  IS
+  NU
+  AL
+  ID
+  IN
+  HY
+  BA
+  BB
+  B2
+  ZW
+  CM
+  WJ
+  H2
+  H3
+  JL
+  JT
+  JV
+  CP
+  RI
+  EB
+  EModifier
+  ZWJ
+  AI
+  Unknown
+} derive(Eq, @debug.Debug)
+pub fn LineBreakClass::to_string(Self) -> String
+pub impl Show for LineBreakClass
+
+type LineSegment derive(@debug.Debug)
+
+type LongHorMetric derive(Eq, @debug.Debug)
+
+type MemoryFontLoader derive(@debug.Debug)
+pub fn MemoryFontLoader::clear(Self) -> Unit
+pub fn MemoryFontLoader::contains(Self, String) -> Bool
+pub fn MemoryFontLoader::insert(Self, String, FontData) -> FontData
+pub fn MemoryFontLoader::is_empty(Self) -> Bool
+pub fn MemoryFontLoader::len(Self) -> Int
+pub fn MemoryFontLoader::new() -> Self
+pub fn MemoryFontLoader::remove(Self, String) -> Unit
+pub impl FontLoader for MemoryFontLoader
+
+type PositionedGlyph derive(@debug.Debug)
+pub fn PositionedGlyph::get_advance_width(Self) -> Double
+pub fn PositionedGlyph::get_glyph_id(Self) -> Int
+pub fn PositionedGlyph::get_x(Self) -> Double
+pub fn PositionedGlyph::get_y(Self) -> Double
+
+type Rasterizer
+pub fn Rasterizer::clear(Self) -> Unit
+pub fn Rasterizer::draw_line(Self, Double, Double, Double, Double) -> Unit
+pub fn Rasterizer::get_height(Self) -> Int
+pub fn Rasterizer::get_pixels(Self) -> FixedArray[Byte]
+pub fn Rasterizer::get_width(Self) -> Int
+pub fn Rasterizer::new(Int, Int) -> Self
+pub fn Rasterizer::rasterize_text_face(Self, FontFace, String, Double, Double, LayoutConfig) -> Unit
+pub fn Rasterizer::to_mask(Self) -> CoverageMask
+
+type Script derive(Eq, @debug.Debug)
+pub fn Script::cjk() -> Self
+pub fn Script::cyrillic() -> Self
+pub fn Script::get_tag(Self) -> String
+pub fn Script::latin() -> Self
+
+type ShapedText derive(@debug.Debug)
+pub fn ShapedText::get_glyphs(Self) -> Array[GlyphInfo]
+pub fn ShapedText::get_positions(Self) -> Array[GlyphPosition]
+pub fn ShapedText::get_width(Self) -> Int
+pub fn ShapedText::glyph_count(Self) -> Int
+
+type ShapingBuffer derive(@debug.Debug)
+pub fn ShapingBuffer::get_direction(Self) -> TextDirection
+pub fn ShapingBuffer::get_font_size(Self) -> Double
+pub fn ShapingBuffer::get_script(Self) -> Script
+pub fn ShapingBuffer::get_text(Self) -> String
+pub fn ShapingBuffer::new(String, direction? : TextDirection, script? : Script, font_size? : Double) -> Self
+pub fn ShapingBuffer::shape(Self, FontData) -> ShapedText
+
+type SimpleGlyph derive(@debug.Debug)
+
+type TableRecord derive(Eq, @debug.Debug)
+
+pub(all) enum TextAlign {
+  Left
+  Center
+  Right
+  Justify
+} derive(Eq, @debug.Debug)
+
+type TextCaret derive(Eq, @debug.Debug)
+pub fn TextCaret::get_baseline_y(Self) -> Double
+pub fn TextCaret::get_height(Self) -> Double
+pub fn TextCaret::get_index(Self) -> Int
+pub fn TextCaret::get_line(Self) -> Int
+pub fn TextCaret::get_x(Self) -> Double
+pub fn TextCaret::get_y(Self) -> Double
+
+pub enum TextDirection {
+  LeftToRight
+  RightToLeft
+} derive(Eq, @debug.Debug)
+pub fn TextDirection::left_to_right() -> Self
+pub fn TextDirection::right_to_left() -> Self
+
+type TextLayout derive(@debug.Debug)
+pub fn TextLayout::get_baseline(Self) -> Double
+pub fn TextLayout::get_height(Self) -> Double
+pub fn TextLayout::get_metrics(Self) -> LayoutMetrics
+pub fn TextLayout::get_runs(Self) -> Array[GlyphRun]
+pub fn TextLayout::get_width(Self) -> Double
+pub fn TextLayout::layout(FontFace, String, LayoutConfig) -> Self
+pub fn TextLayout::run_count(Self) -> Int
+
+type TextMaskCache derive(@debug.Debug)
+pub fn TextMaskCache::capacity(Self) -> Int
+pub fn TextMaskCache::clear(Self) -> Unit
+pub fn TextMaskCache::contains(Self, String) -> Bool
+pub fn TextMaskCache::get(Self, String) -> CoverageMask?
+pub fn TextMaskCache::get_or_render_face(Self, String, FontFace, String, Int, Int, Double, Double, LayoutConfig) -> CoverageMask
+pub fn TextMaskCache::get_or_render_face_result(Self, String, FontFace, String, Int, Int, Double, Double, LayoutConfig) -> TextMaskCacheRenderResult
+pub fn TextMaskCache::insert(Self, String, CoverageMask) -> CoverageMask
+pub fn TextMaskCache::is_capacity_bounded(Self) -> Bool
+pub fn TextMaskCache::is_empty(Self) -> Bool
+pub fn TextMaskCache::len(Self) -> Int
+pub fn TextMaskCache::new() -> Self
+pub fn TextMaskCache::remove(Self, String) -> Unit
+pub fn TextMaskCache::with_capacity(Int) -> Self
+
+type TextMaskCacheRenderResult derive(@debug.Debug)
+pub fn TextMaskCacheRenderResult::did_render(Self) -> Bool
+pub fn TextMaskCacheRenderResult::get_mask(Self) -> CoverageMask
+
+type TextSelectionRect derive(Eq, @debug.Debug)
+pub fn TextSelectionRect::get_baseline_y(Self) -> Double
+pub fn TextSelectionRect::get_end_index(Self) -> Int
+pub fn TextSelectionRect::get_height(Self) -> Double
+pub fn TextSelectionRect::get_line(Self) -> Int
+pub fn TextSelectionRect::get_start_index(Self) -> Int
+pub fn TextSelectionRect::get_width(Self) -> Double
+pub fn TextSelectionRect::get_x(Self) -> Double
+pub fn TextSelectionRect::get_y(Self) -> Double
+
+type TextSystem derive(@debug.Debug)
+pub fn TextSystem::caret_at_text_position(Self, String, String, Double, Double, LayoutConfig) -> Result[TextCaret, FontLoadError]
+pub fn TextSystem::caret_for_text(Self, String, String, Int, LayoutConfig) -> Result[TextCaret, FontLoadError]
+pub fn TextSystem::clear_font_face_cache(Self) -> Unit
+pub fn TextSystem::clear_fonts(Self) -> Unit
+pub fn TextSystem::contains_cached_font_face(Self, String) -> Bool
+pub fn TextSystem::contains_font(Self, String) -> Bool
+pub fn TextSystem::font_count(Self) -> Int
+pub fn TextSystem::font_face_cache_capacity(Self) -> Int
+pub fn TextSystem::font_face_cache_len(Self) -> Int
+pub fn TextSystem::get_font_data(Self, String) -> Result[FontData, FontLoadError]
+pub fn TextSystem::get_font_face(Self, String) -> Result[FontFace, FontLoadError]
+pub fn TextSystem::get_font_face_result(Self, String) -> Result[FontFaceCacheParseResult, FontLoadError]
+pub fn TextSystem::get_font_key(Self, Int) -> String?
+pub fn TextSystem::get_font_keys(Self) -> Array[String]
+pub fn TextSystem::is_font_face_cache_capacity_bounded(Self) -> Bool
+pub fn TextSystem::layout_text(Self, String, String, LayoutConfig) -> Result[TextLayout, FontLoadError]
+pub fn TextSystem::new() -> Self
+pub fn TextSystem::prepare_layout(Self, String, String, LayoutConfig) -> Result[TextSystemLayout, FontLoadError]
+pub fn TextSystem::register_font_bytes(Self, String, Bytes, font_index? : Int) -> Result[FontFace, FontParseError]
+pub fn TextSystem::register_font_bytes_result(Self, String, Bytes, font_index? : Int) -> Result[TextSystemFontRegistration, FontParseError]
+pub fn TextSystem::register_font_data(Self, String, FontData) -> Result[FontFace, FontParseError]
+pub fn TextSystem::register_font_data_result(Self, String, FontData) -> Result[TextSystemFontRegistration, FontParseError]
+pub fn TextSystem::register_font_file(Self, String, String, font_index? : Int) -> Result[FontFace, FontLoadError]
+pub fn TextSystem::register_font_file_result(Self, String, String, font_index? : Int) -> Result[TextSystemFontRegistration, FontLoadError]
+pub fn TextSystem::remove_font(Self, String) -> Bool
+pub fn TextSystem::selection_rects_for_text(Self, String, String, Int, Int, LayoutConfig) -> Result[Array[TextSelectionRect], FontLoadError]
+pub fn TextSystem::with_font_cache_capacity(Int) -> Self
+pub impl FontLoader for TextSystem
+
+type TextSystemFontRegistration derive(@debug.Debug)
+pub fn TextSystemFontRegistration::did_replace(Self) -> Bool
+pub fn TextSystemFontRegistration::did_replace_cached_face(Self) -> Bool
+pub fn TextSystemFontRegistration::get_face(Self) -> FontFace
+pub fn TextSystemFontRegistration::get_font_count(Self) -> Int
+pub fn TextSystemFontRegistration::get_font_data(Self) -> FontData
+pub fn TextSystemFontRegistration::get_key(Self) -> String
+
+type TextSystemLayout derive(@debug.Debug)
+pub fn TextSystemLayout::caret_at_position(Self, Double, Double) -> TextCaret
+pub fn TextSystemLayout::caret_for_index(Self, Int) -> TextCaret
+pub fn TextSystemLayout::get_config(Self) -> LayoutConfig
+pub fn TextSystemLayout::get_face(Self) -> FontFace
+pub fn TextSystemLayout::get_key(Self) -> String
+pub fn TextSystemLayout::get_layout(Self) -> TextLayout
+pub fn TextSystemLayout::get_text(Self) -> String
+pub fn TextSystemLayout::selection_rects(Self, Int, Int) -> Array[TextSelectionRect]
+
+// Type aliases
+
+// Traits
+pub(open) trait FontLoader {
+  fn load_font_data(Self, String) -> Result[FontData, FontLoadError]
+}
+

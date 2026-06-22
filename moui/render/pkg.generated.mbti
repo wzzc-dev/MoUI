@@ -183,6 +183,7 @@ pub(all) enum RendererBackendKind {
   SkiaRasterNative
   SkiaRasterWeb
   SkiaGpuNative
+  SunRasterNative
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererBackendKind::family(Self) -> RendererFamily
 pub fn RendererBackendKind::label(Self) -> String
@@ -229,6 +230,7 @@ pub(all) enum RendererFamily {
   Wgpu
   WebGpu
   Skia
+  Sun
 } derive(Eq, ToJson, @debug.Debug)
 pub fn RendererFamily::label(Self) -> String
 
