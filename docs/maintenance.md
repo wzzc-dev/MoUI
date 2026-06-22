@@ -36,11 +36,11 @@ The maintenance baseline ratchets are implemented as the MoonBit tool at
 `tools/moui/validate_maintenance_baseline`. They scan MoUI-owned MoonBit source
 under `moui/`, `examples/`, and `website/`, excluding generated
 `pkg.generated.mbti` files, vendored `.mooncakes/` trees, build output, and
-generated Unicode fixture tests. The guard has no `scripts/` JS entrypoint yet
-and is not wired into the default `dev-check` path; run it directly with
-`moon run tools/moui/validate_maintenance_baseline --target native` when
-splitting files, shrinking `pub(all)`, or reducing root facade forwards, then
-ratchet the relevant budget downward in the same change.
+generated Unicode fixture tests. The default `sh scripts/dev-check.sh` path
+runs the guard through `node scripts/validate-maintenance-baseline.mjs`; run
+that wrapper directly when splitting files, shrinking `pub(all)`, or reducing
+root facade forwards, then ratchet the relevant budget downward in the same
+change.
 
 The guard tracks three budgets:
 
@@ -49,14 +49,13 @@ The guard tracks three budgets:
   `moui/backend/host/host_test.mbt`, Skia renderer text/tests, and large
   example app files;
 - direct package source `pub(all)` counts for core, views, host, render,
-  Skia, mainline examples, Mo Workbench, PDF Workbench, and Website;
+  mainline examples, Mo Workbench, PDF Workbench, and Website;
 - root facade `pub type` forwarding count in `moui/moui.mbt`.
 
 Current `max` values intentionally match today's debt so unrelated changes do
-not need to solve the whole backlog. The printed `target` values are the next
-long-term maintenance line. When a refactor splits a file, moves control-level
-entrypoints into `views`, shrinks public surface area, or removes root facade
-forwards, lower the corresponding budget in the same commit.
+not need to solve the whole backlog. When a refactor splits a file, moves
+control-level entrypoints into `views`, shrinks public surface area, or removes
+root facade forwards, lower the corresponding budget in the same commit.
 
 ## Diagnostic Routes
 

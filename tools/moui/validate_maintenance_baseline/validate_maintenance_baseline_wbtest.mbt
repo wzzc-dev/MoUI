@@ -32,6 +32,54 @@ test "tracked budgets include current maintenance hotspots" {
 }
 
 ///|
+test "pub all budgets lock current maintenance exposure" {
+  let labels = pub_all_budgets().map(budget => budget.label)
+  inspect(labels.contains("moui/core"), content="true")
+  inspect(labels.contains("moui/views"), content="true")
+  inspect(labels.contains("moui/backend/host"), content="true")
+  inspect(labels.contains("examples/markdown_editor/app"), content="true")
+  inspect(labels.contains("website/app"), content="true")
+}
+
+///|
+test "pub all token and root facade forward counts are line based" {
+  let pub_all_source =
+    #|pub(all) struct One {}
+    #|let text = "pub(all) inside a string still counts for the ratchet"
+    #|pub fn two() -> Unit { () }
+    #|pub(all) enum Three { A }
+  let root_facade_source =
+    #|///|
+    #|pub type View[Msg] = @core.View[Msg]
+    #|  pub type Theme = @core.Theme
+    #|pub fn helper() -> Unit { () }
+  inspect(count_lines_containing_token(pub_all_source, "pub(all)"), content="3")
+  inspect(count_root_facade_forwards(root_facade_source), content="2")
+}
+
+///|
+test "count budget overflow messages include kind count and max" {
+  let overflows = [
+    {
+      kind: "root facade forwards",
+      label: "moui/moui.mbt",
+      count: 37,
+      max_count: 36,
+    },
+    { kind: "pub(all)", label: "moui/core", count: 281, max_count: 280 },
+  ]
+  debug_inspect(
+    count_budget_overflow_messages(overflows),
+    content=(
+      #|[
+      #|  "pub(all) budget exceeded: moui/core count=281 max=280",
+      #|  "root facade forwards budget exceeded: moui/moui.mbt count=37 max=36",
+      #|]
+    ),
+  )
+}
+
+///|
 test "line budget overflow paths are sorted from most lines to fewest" {
   let overflows = [
     { path: "small.mbt", lines: 12 },
