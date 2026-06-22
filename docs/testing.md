@@ -26,6 +26,8 @@ The daily gate includes these command tokens and should stay synchronized with
 ```sh
 node --check scripts/validate-api-surface.mjs
 node scripts/validate-api-surface.mjs
+node --check scripts/validate-maintenance-baseline.mjs
+node scripts/validate-maintenance-baseline.mjs
 node scripts/validate-renderer-provider-manifests.mjs
 node scripts/validate-skia-entrypoints.mjs
 node scripts/test-validate-skia-entrypoints.mjs
@@ -102,8 +104,7 @@ diagnostic route. Use `moon fmt` before handoff. Run `moon info` and review
 
 When splitting oversized implementation or test files, reducing source-level
 `pub(all)`, or shrinking the root facade, run the maintenance baseline guard
-(ratchet budget tracked in the API surface guard) and ratchet the relevant
-budget downward in the same change.
+and ratchet the relevant budget downward in the same change.
 
 ## Conformance Slices
 

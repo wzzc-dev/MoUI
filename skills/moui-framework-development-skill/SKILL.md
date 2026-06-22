@@ -237,10 +237,11 @@ as `.github/workflows/moui-skia-*.yml`, and Copilot setup lives at root
 `.github/workflows/copilot-setup-steps.yml`. Keep workflow files there while
 `moui_skia` is a workspace member; nested workflow files are not discovered by
 GitHub Actions in the monorepo.
-Daily `dev-check` also runs the MoonBit-backed API surface guard, checked
-conformance artifact guard, dedicated checked-artifact validators for platform
-runtime evidence, Web runtime handoff/presentation, conformance capture, and
-renderer proof manifests, plus app/Web checks for Showcase and Markdown Editor.
+Daily `dev-check` also runs the MoonBit-backed maintenance baseline guard, API
+surface guard, checked conformance artifact guard, dedicated checked-artifact
+validators for platform runtime evidence, Web runtime handoff/presentation,
+conformance capture, and renderer proof manifests, plus app/Web checks for
+Showcase and Markdown Editor.
 Use `sh scripts/dev-check.sh --theme-diagnostics` for `moui_theme` and Design
 Systems addon diagnostic coverage. Keep `docs/testing.md` and repo-local skills
 synchronized when adding or removing daily quality gates.
