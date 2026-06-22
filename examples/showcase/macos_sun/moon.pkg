@@ -1,0 +1,19 @@
+import {
+  "moonbitlang/core/env",
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/macos" @macos_backend,
+  "wzzc-dev/moui/backend/macos/sun" @macos_sun_backend,
+  "examples/showcase/app",
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -framework CoreGraphics -framework CoreFoundation -lobjc -lz",
+    },
+  },
+  targets: { "main.mbt": [ "native" ] },
+)

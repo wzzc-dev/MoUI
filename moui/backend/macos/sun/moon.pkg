@@ -1,0 +1,24 @@
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/macos" @macos_host,
+  "wzzc-dev/moui/render",
+  "wzzc-dev/moui/render/sun" @sun_renderer,
+  "wzzc-dev/moui_sun/softbuffer" @sun_softbuffer,
+  "wzzc-dev/window/macos" @window_macos,
+}
+
+import {
+  "wzzc-dev/moui/core",
+} for "wbtest"
+
+supported_targets = "native"
+
+options(
+  link: {
+    "native": {
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -framework CoreGraphics -framework CoreFoundation -lobjc -lz",
+    },
+  },
+  targets: { },
+)

@@ -1,0 +1,758 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_sun/renderer"
+
+import {
+  "moonbitlang/core/debug",
+  "wzzc-dev/moui_sun/graphics",
+  "wzzc-dev/moui_sun/text",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct CachedBmpPixmapDrawResult {
+  did_decode_pixmap : Bool
+} derive(@debug.Debug)
+pub fn CachedBmpPixmapDrawResult::did_decode_pixmap(Self) -> Bool
+pub fn CachedBmpPixmapDrawResult::did_hit_cache(Self) -> Bool
+
+pub struct CachedFontAtlasDrawResult {
+  did_parse_font : Bool
+  atlas_result : TextAtlasDrawResult
+} derive(@debug.Debug)
+pub fn CachedFontAtlasDrawResult::did_clear_atlas(Self) -> Bool
+pub fn CachedFontAtlasDrawResult::did_hit_font_cache(Self) -> Bool
+pub fn CachedFontAtlasDrawResult::did_parse_font(Self) -> Bool
+pub fn CachedFontAtlasDrawResult::get_atlas_hit_count(Self) -> Int
+pub fn CachedFontAtlasDrawResult::get_atlas_inserted_count(Self) -> Int
+pub fn CachedFontAtlasDrawResult::get_atlas_result(Self) -> TextAtlasDrawResult
+pub fn CachedFontAtlasDrawResult::get_cache_hit_count(Self) -> Int
+pub fn CachedFontAtlasDrawResult::get_drawn_glyph_count(Self) -> Int
+pub fn CachedFontAtlasDrawResult::get_glyph_count(Self) -> Int
+pub fn CachedFontAtlasDrawResult::get_rasterized_glyph_count(Self) -> Int
+pub fn CachedFontAtlasDrawResult::get_skipped_glyph_count(Self) -> Int
+
+pub struct CachedFontFallbackAtlasDrawResult {
+  parsed_font_count : Int
+  font_cache_hit_count : Int
+  fallback_result : TextFallbackAtlasDrawResult
+} derive(@debug.Debug)
+pub fn CachedFontFallbackAtlasDrawResult::did_clear_atlas(Self) -> Bool
+pub fn CachedFontFallbackAtlasDrawResult::get_advance_width(Self) -> Double
+pub fn CachedFontFallbackAtlasDrawResult::get_atlas_hit_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_atlas_inserted_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_atlas_result(Self) -> TextAtlasDrawResult
+pub fn CachedFontFallbackAtlasDrawResult::get_cache_hit_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_drawn_glyph_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_drawn_span_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_fallback_result(Self) -> TextFallbackAtlasDrawResult
+pub fn CachedFontFallbackAtlasDrawResult::get_font_cache_hit_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_glyph_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_missing_char_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_missing_span_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_parsed_font_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_rasterized_glyph_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_skipped_glyph_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_skipped_span_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::get_span_count(Self) -> Int
+pub fn CachedFontFallbackAtlasDrawResult::has_missing_glyphs(Self) -> Bool
+
+pub struct CachedFontFallbackDrawResult {
+  parsed_font_count : Int
+  font_cache_hit_count : Int
+  fallback_result : TextFallbackDrawResult
+} derive(@debug.Debug)
+pub fn CachedFontFallbackDrawResult::get_advance_width(Self) -> Double
+pub fn CachedFontFallbackDrawResult::get_drawn_span_count(Self) -> Int
+pub fn CachedFontFallbackDrawResult::get_fallback_result(Self) -> TextFallbackDrawResult
+pub fn CachedFontFallbackDrawResult::get_font_cache_hit_count(Self) -> Int
+pub fn CachedFontFallbackDrawResult::get_missing_char_count(Self) -> Int
+pub fn CachedFontFallbackDrawResult::get_missing_span_count(Self) -> Int
+pub fn CachedFontFallbackDrawResult::get_parsed_font_count(Self) -> Int
+pub fn CachedFontFallbackDrawResult::get_rendered_mask_count(Self) -> Int
+pub fn CachedFontFallbackDrawResult::get_skipped_span_count(Self) -> Int
+pub fn CachedFontFallbackDrawResult::get_span_count(Self) -> Int
+pub fn CachedFontFallbackDrawResult::get_text_cache_hit_count(Self) -> Int
+pub fn CachedFontFallbackDrawResult::has_missing_glyphs(Self) -> Bool
+
+pub struct CachedFontTextDrawResult {
+  did_parse_font : Bool
+  text_result : TextMaskDrawResult
+} derive(@debug.Debug)
+pub fn CachedFontTextDrawResult::did_hit_font_cache(Self) -> Bool
+pub fn CachedFontTextDrawResult::did_hit_text_cache(Self) -> Bool
+pub fn CachedFontTextDrawResult::did_parse_font(Self) -> Bool
+pub fn CachedFontTextDrawResult::did_render_mask(Self) -> Bool
+pub fn CachedFontTextDrawResult::get_text_result(Self) -> TextMaskDrawResult
+
+pub struct CachedPixmapDrawResult {
+  did_insert_pixmap : Bool
+} derive(@debug.Debug)
+pub fn CachedPixmapDrawResult::did_hit_cache(Self) -> Bool
+pub fn CachedPixmapDrawResult::did_insert_pixmap(Self) -> Bool
+
+pub struct CachedPngPixmapDrawResult {
+  did_decode_pixmap : Bool
+} derive(@debug.Debug)
+pub fn CachedPngPixmapDrawResult::did_decode_pixmap(Self) -> Bool
+pub fn CachedPngPixmapDrawResult::did_hit_cache(Self) -> Bool
+
+pub struct CachedRgbaPixmapDrawResult {
+  did_decode_pixmap : Bool
+} derive(@debug.Debug)
+pub fn CachedRgbaPixmapDrawResult::did_decode_pixmap(Self) -> Bool
+pub fn CachedRgbaPixmapDrawResult::did_hit_cache(Self) -> Bool
+
+pub struct FontBytesFallbackSource {
+  font_key : String
+  font_data : Bytes
+} derive(@debug.Debug)
+pub fn FontBytesFallbackSource::get_font_data(Self) -> Bytes
+pub fn FontBytesFallbackSource::get_font_key(Self) -> String
+pub fn FontBytesFallbackSource::new(String, Bytes) -> Self
+
+pub enum RenderCommand {
+  Clear(@graphics.Color)
+  FillRect(Double, Double, Double, Double, @graphics.Paint)
+  StrokeRect(Double, Double, Double, Double, @graphics.Paint)
+  FillPath(@graphics.Path, @graphics.Paint)
+  StrokePath(@graphics.Path, @graphics.Paint)
+  DrawPixmap(@graphics.Pixmap, Int, Int, @graphics.Paint)
+  DrawPixmapKeyed(String, @graphics.Pixmap, Int, Int, @graphics.Paint)
+  DrawBmpBytesKeyed(String, Bytes, Int, Int, @graphics.Paint)
+  DrawPngBytesKeyed(String, Bytes, Int, Int, @graphics.Paint)
+  DrawRgbaBytesKeyed(String, Bytes, Int, Int, Int, Int, @graphics.Paint)
+  DrawSampledBmpBytesKeyed(String, Bytes, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling)
+  DrawSampledPngBytesKeyed(String, Bytes, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling)
+  DrawSampledRgbaBytesKeyed(String, Bytes, Int, Int, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling)
+  DrawQualityBmpBytesKeyed(String, Bytes, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality)
+  DrawQualityBmpBytesRectKeyed(String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality)
+  DrawQualityPngBytesKeyed(String, Bytes, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality)
+  DrawQualityPngBytesRectKeyed(String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality)
+  DrawQualityRgbaBytesKeyed(String, Bytes, Int, Int, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality)
+  DrawQualityRgbaBytesRectKeyed(String, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality)
+  DrawTransformedSampledBmpBytesKeyed(String, Bytes, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling)
+  DrawTransformedSampledBmpBytesRectKeyed(String, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling)
+  DrawTransformedQualityBmpBytesKeyed(String, Bytes, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality)
+  DrawTransformedQualityBmpBytesRectKeyed(String, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality)
+  DrawTransformedSampledPngBytesKeyed(String, Bytes, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling)
+  DrawTransformedSampledPngBytesRectKeyed(String, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling)
+  DrawTransformedQualityPngBytesKeyed(String, Bytes, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality)
+  DrawTransformedQualityPngBytesRectKeyed(String, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality)
+  DrawTransformedSampledRgbaBytesKeyed(String, Bytes, Int, Int, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling)
+  DrawTransformedSampledRgbaBytesRectKeyed(String, Bytes, Int, Int, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling)
+  DrawTransformedQualityRgbaBytesKeyed(String, Bytes, Int, Int, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality)
+  DrawTransformedQualityRgbaBytesRectKeyed(String, Bytes, Int, Int, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality)
+  DrawSampledBmpBytesRectKeyed(String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling)
+  DrawSampledPngBytesRectKeyed(String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling)
+  DrawSampledRgbaBytesRectKeyed(String, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling)
+  DrawBmpBytesRectKeyed(String, Bytes, @graphics.PixelRect, Int, Int, @graphics.Paint)
+  DrawPngBytesRectKeyed(String, Bytes, @graphics.PixelRect, Int, Int, @graphics.Paint)
+  DrawRgbaBytesRectKeyed(String, Bytes, Int, Int, @graphics.PixelRect, Int, Int, @graphics.Paint)
+  DrawTiledBmpBytesRectKeyed(String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint)
+  DrawTiledPngBytesRectKeyed(String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint)
+  DrawTiledRgbaBytesRectKeyed(String, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint)
+  DrawNinePatchBmpBytesKeyed(String, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.Paint, @graphics.ImageSampling)
+  DrawNinePatchPngBytesKeyed(String, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.Paint, @graphics.ImageSampling)
+  DrawNinePatchRgbaBytesKeyed(String, Bytes, Int, Int, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.Paint, @graphics.ImageSampling)
+  DrawPixmapRect(@graphics.Pixmap, @graphics.PixelRect, Int, Int, @graphics.Paint)
+  DrawPixmapRectKeyed(String, @graphics.Pixmap, @graphics.PixelRect, Int, Int, @graphics.Paint)
+  DrawTextFace(@text.FontFace, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
+  DrawTextFaceKeyed(String, @text.FontFace, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
+  DrawFontBytesKeyed(String, Bytes, String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
+  DrawFontBytesAtlasKeyed(String, Bytes, String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
+  DrawFontBytesFallbackKeyed(Array[FontBytesFallbackSource], String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
+  DrawFontBytesFallbackAtlasKeyed(Array[FontBytesFallbackSource], String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
+  DrawLoadedFontKeyed(String, String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
+  DrawLoadedFontFallbackKeyed(Array[String], String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
+  DrawLoadedFontFallbackAtlasKeyed(Array[String], String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
+  DrawLoadedFontAtlasKeyed(String, String, String, Double, Double, @text.LayoutConfig, @graphics.Paint)
+} derive(@debug.Debug)
+
+pub struct RenderPipeline {
+  commands : Array[RenderCommand]
+} derive(@debug.Debug)
+pub fn RenderPipeline::analyze(Self, Int, Int) -> RenderPipelineAnalysis
+pub fn RenderPipeline::batch_plan(Self, Int, Int) -> RenderPipelineBatchPlan
+pub fn RenderPipeline::clear_canvas(Self, @graphics.Color) -> Self
+pub fn RenderPipeline::clear_commands(Self) -> Unit
+pub fn RenderPipeline::diff(Self, Self, Int, Int) -> RenderPipelineDiffResult
+pub fn RenderPipeline::dirty_present_plan(Self, Int, Int, Int) -> @graphics.DirtyPresentPlan
+pub fn RenderPipeline::draw_bmp_bytes_keyed(Self, String, Bytes, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_bmp_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_font_bytes_atlas_keyed(Self, String, Bytes, String, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_font_bytes_fallback_atlas_keyed(Self, Array[FontBytesFallbackSource], String, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_font_bytes_fallback_keyed(Self, Array[FontBytesFallbackSource], String, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_font_bytes_keyed(Self, String, Bytes, String, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_loaded_font_atlas_keyed(Self, String, String, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_loaded_font_fallback_atlas_keyed(Self, Array[String], String, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_loaded_font_fallback_keyed(Self, Array[String], String, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_loaded_font_keyed(Self, String, String, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_nine_patch_bmp_bytes_keyed(Self, String, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_nine_patch_png_bytes_keyed(Self, String, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_nine_patch_rgba_bytes_keyed(Self, String, Bytes, Int, Int, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_pixmap(Self, @graphics.Pixmap, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_pixmap_keyed(Self, String, @graphics.Pixmap, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_pixmap_rect(Self, @graphics.Pixmap, @graphics.PixelRect, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_pixmap_rect_keyed(Self, String, @graphics.Pixmap, @graphics.PixelRect, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_png_bytes_keyed(Self, String, Bytes, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_png_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_quality_bmp_bytes_keyed(Self, String, Bytes, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_quality_bmp_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_quality_png_bytes_keyed(Self, String, Bytes, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_quality_png_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_quality_rgba_bytes_keyed(Self, String, Bytes, Int, Int, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_quality_rgba_bytes_rect_keyed(Self, String, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_rgba_bytes_keyed(Self, String, Bytes, Int, Int, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_rgba_bytes_rect_keyed(Self, String, Bytes, Int, Int, @graphics.PixelRect, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_sampled_bmp_bytes_keyed(Self, String, Bytes, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_sampled_bmp_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_sampled_png_bytes_keyed(Self, String, Bytes, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_sampled_png_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_sampled_rgba_bytes_keyed(Self, String, Bytes, Int, Int, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_sampled_rgba_bytes_rect_keyed(Self, String, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_text_face(Self, @text.FontFace, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_text_face_keyed(Self, String, @text.FontFace, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_tiled_bmp_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_tiled_png_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_tiled_rgba_bytes_rect_keyed(Self, String, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, @graphics.Paint) -> Self
+pub fn RenderPipeline::draw_transformed_quality_bmp_bytes_keyed(Self, String, Bytes, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_transformed_quality_bmp_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_transformed_quality_png_bytes_keyed(Self, String, Bytes, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_transformed_quality_png_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_transformed_quality_rgba_bytes_keyed(Self, String, Bytes, Int, Int, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_transformed_quality_rgba_bytes_rect_keyed(Self, String, Bytes, Int, Int, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageQuality) -> Self
+pub fn RenderPipeline::draw_transformed_sampled_bmp_bytes_keyed(Self, String, Bytes, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_transformed_sampled_bmp_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_transformed_sampled_png_bytes_keyed(Self, String, Bytes, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_transformed_sampled_png_bytes_rect_keyed(Self, String, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_transformed_sampled_rgba_bytes_keyed(Self, String, Bytes, Int, Int, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::draw_transformed_sampled_rgba_bytes_rect_keyed(Self, String, Bytes, Int, Int, @graphics.PixelRect, Double, Double, Double, Double, @graphics.Paint, @graphics.ImageSampling) -> Self
+pub fn RenderPipeline::fill_path(Self, @graphics.Path, @graphics.Paint) -> Self
+pub fn RenderPipeline::fill_rect(Self, Double, Double, Double, Double, @graphics.Paint) -> Self
+pub fn RenderPipeline::get_commands(Self) -> Array[RenderCommand]
+pub fn RenderPipeline::is_empty(Self) -> Bool
+pub fn RenderPipeline::len(Self) -> Int
+pub fn RenderPipeline::new() -> Self
+pub fn RenderPipeline::push(Self, RenderCommand) -> Self
+pub fn RenderPipeline::replay_result(Self, Renderer) -> Result[RenderPipelineReplayResult, RenderPipelineReplayError]
+pub fn[L : @text.FontLoader] RenderPipeline::replay_with_font_loader_resources_result(Self, Renderer, RendererResources, L) -> Result[RenderPipelineResourceReplayResult, RenderPipelineResourceReplayError]
+pub fn RenderPipeline::replay_with_renderer_resources_result(Self, Renderer, RendererResources) -> Result[RenderPipelineResourceReplayResult, RenderPipelineResourceReplayError]
+pub fn RenderPipeline::resource_plan(Self) -> RenderPipelineResourcePlan
+pub fn RenderPipeline::stroke_path(Self, @graphics.Path, @graphics.Paint) -> Self
+pub fn RenderPipeline::stroke_rect(Self, Double, Double, Double, Double, @graphics.Paint) -> Self
+
+pub struct RenderPipelineAnalysis {
+  command_count : Int
+  clear_count : Int
+  fill_count : Int
+  stroke_count : Int
+  image_count : Int
+  text_count : Int
+  dirty_region : @graphics.DirtyRegion
+} derive(@debug.Debug)
+pub fn RenderPipelineAnalysis::get_clear_count(Self) -> Int
+pub fn RenderPipelineAnalysis::get_command_count(Self) -> Int
+pub fn RenderPipelineAnalysis::get_dirty_bounds(Self) -> @graphics.PixelRect?
+pub fn RenderPipelineAnalysis::get_dirty_rect_count(Self) -> Int
+pub fn RenderPipelineAnalysis::get_dirty_region(Self) -> @graphics.DirtyRegion
+pub fn RenderPipelineAnalysis::get_fill_count(Self) -> Int
+pub fn RenderPipelineAnalysis::get_image_count(Self) -> Int
+pub fn RenderPipelineAnalysis::get_present_plan(Self, Int, Int, Int) -> @graphics.DirtyPresentPlan
+pub fn RenderPipelineAnalysis::get_stroke_count(Self) -> Int
+pub fn RenderPipelineAnalysis::get_text_count(Self) -> Int
+pub fn RenderPipelineAnalysis::has_dirty(Self) -> Bool
+
+pub struct RenderPipelineBatch {
+  kind : RenderPipelineBatchKind
+  start_index : Int
+  command_count : Int
+  dirty_region : @graphics.DirtyRegion
+} derive(@debug.Debug)
+pub fn RenderPipelineBatch::get_command_count(Self) -> Int
+pub fn RenderPipelineBatch::get_dirty_bounds(Self) -> @graphics.PixelRect?
+pub fn RenderPipelineBatch::get_dirty_rect_count(Self) -> Int
+pub fn RenderPipelineBatch::get_dirty_region(Self) -> @graphics.DirtyRegion
+pub fn RenderPipelineBatch::get_kind(Self) -> RenderPipelineBatchKind
+pub fn RenderPipelineBatch::get_present_plan(Self, Int, Int, Int) -> @graphics.DirtyPresentPlan
+pub fn RenderPipelineBatch::get_start_index(Self) -> Int
+pub fn RenderPipelineBatch::has_dirty(Self) -> Bool
+
+pub(all) enum RenderPipelineBatchKind {
+  Clear
+  Fill
+  Stroke
+  Image
+  Text
+} derive(Eq, @debug.Debug)
+
+pub struct RenderPipelineBatchPlan {
+  command_count : Int
+  batches : Array[RenderPipelineBatch]
+  dirty_region : @graphics.DirtyRegion
+} derive(@debug.Debug)
+pub fn RenderPipelineBatchPlan::get_batch_count(Self) -> Int
+pub fn RenderPipelineBatchPlan::get_batches(Self) -> Array[RenderPipelineBatch]
+pub fn RenderPipelineBatchPlan::get_command_count(Self) -> Int
+pub fn RenderPipelineBatchPlan::get_dirty_bounds(Self) -> @graphics.PixelRect?
+pub fn RenderPipelineBatchPlan::get_dirty_region(Self) -> @graphics.DirtyRegion
+pub fn RenderPipelineBatchPlan::get_present_plan(Self, Int, Int, Int) -> @graphics.DirtyPresentPlan
+pub fn RenderPipelineBatchPlan::has_dirty(Self) -> Bool
+
+pub struct RenderPipelineDiffResult {
+  previous_command_count : Int
+  next_command_count : Int
+  retained_command_count : Int
+  changed_command_count : Int
+  inserted_command_count : Int
+  removed_command_count : Int
+  dirty_region : @graphics.DirtyRegion
+} derive(@debug.Debug)
+pub fn RenderPipelineDiffResult::get_changed_command_count(Self) -> Int
+pub fn RenderPipelineDiffResult::get_dirty_bounds(Self) -> @graphics.PixelRect?
+pub fn RenderPipelineDiffResult::get_dirty_rect_count(Self) -> Int
+pub fn RenderPipelineDiffResult::get_dirty_region(Self) -> @graphics.DirtyRegion
+pub fn RenderPipelineDiffResult::get_inserted_command_count(Self) -> Int
+pub fn RenderPipelineDiffResult::get_next_command_count(Self) -> Int
+pub fn RenderPipelineDiffResult::get_present_plan(Self, Int, Int, Int) -> @graphics.DirtyPresentPlan
+pub fn RenderPipelineDiffResult::get_previous_command_count(Self) -> Int
+pub fn RenderPipelineDiffResult::get_removed_command_count(Self) -> Int
+pub fn RenderPipelineDiffResult::get_retained_command_count(Self) -> Int
+pub fn RenderPipelineDiffResult::has_changes(Self) -> Bool
+pub fn RenderPipelineDiffResult::has_dirty(Self) -> Bool
+
+pub struct RenderPipelineFontDependency {
+  command_index : Int
+  font_key : String
+  font_byte_count : Int
+} derive(@debug.Debug)
+pub fn RenderPipelineFontDependency::get_command_index(Self) -> Int
+pub fn RenderPipelineFontDependency::get_font_byte_count(Self) -> Int
+pub fn RenderPipelineFontDependency::get_font_key(Self) -> String
+
+pub struct RenderPipelineImageDependency {
+  command_index : Int
+  resource_key : String?
+  source_width : Int
+  source_height : Int
+  source_pixel_count : Int
+} derive(@debug.Debug)
+pub fn RenderPipelineImageDependency::get_command_index(Self) -> Int
+pub fn RenderPipelineImageDependency::get_resource_key(Self) -> String?
+pub fn RenderPipelineImageDependency::get_source_height(Self) -> Int
+pub fn RenderPipelineImageDependency::get_source_pixel_count(Self) -> Int
+pub fn RenderPipelineImageDependency::get_source_width(Self) -> Int
+pub fn RenderPipelineImageDependency::has_resource_key(Self) -> Bool
+
+pub(all) enum RenderPipelineReplayError {
+  ImageDecodeFailed(String, @graphics.PixmapDecodeError)
+  FontParseFailed(String, @text.FontParseError)
+  FontLoaderRequired(String)
+} derive(Eq, @debug.Debug)
+
+pub struct RenderPipelineReplayResult {
+  command_count : Int
+  clear_count : Int
+  fill_count : Int
+  stroke_count : Int
+  image_count : Int
+  text_count : Int
+} derive(Eq, @debug.Debug)
+pub fn RenderPipelineReplayResult::get_clear_count(Self) -> Int
+pub fn RenderPipelineReplayResult::get_command_count(Self) -> Int
+pub fn RenderPipelineReplayResult::get_fill_count(Self) -> Int
+pub fn RenderPipelineReplayResult::get_image_count(Self) -> Int
+pub fn RenderPipelineReplayResult::get_stroke_count(Self) -> Int
+pub fn RenderPipelineReplayResult::get_text_count(Self) -> Int
+
+pub struct RenderPipelineResourcePlan {
+  command_count : Int
+  font_dependencies : Array[RenderPipelineFontDependency]
+  image_dependencies : Array[RenderPipelineImageDependency]
+  text_dependencies : Array[RenderPipelineTextDependency]
+} derive(@debug.Debug)
+pub fn RenderPipelineResourcePlan::get_command_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_font_byte_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_font_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_font_dependencies(Self) -> Array[RenderPipelineFontDependency]
+pub fn RenderPipelineResourcePlan::get_image_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_image_dependencies(Self) -> Array[RenderPipelineImageDependency]
+pub fn RenderPipelineResourcePlan::get_image_source_pixel_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_keyed_font_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_keyed_image_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_keyed_resource_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_keyed_text_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_resource_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_text_byte_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_text_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_text_dependencies(Self) -> Array[RenderPipelineTextDependency]
+pub fn RenderPipelineResourcePlan::get_text_glyph_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::get_text_run_count(Self) -> Int
+pub fn RenderPipelineResourcePlan::has_resources(Self) -> Bool
+
+pub(all) enum RenderPipelineResourceReplayError {
+  ImageDecodeFailed(String, @graphics.PixmapDecodeError)
+  FontDataMissing(String)
+  FontFileReadFailed(String, String)
+  FontParseFailed(String, @text.FontParseError)
+  FontLoaderRequired(String)
+} derive(Eq, @debug.Debug)
+
+pub struct RenderPipelineResourceReplayResult {
+  replay_result : RenderPipelineReplayResult
+  keyed_font_count : Int
+  font_cache_hit_count : Int
+  font_parse_count : Int
+  keyed_image_count : Int
+  image_cache_hit_count : Int
+  image_cache_insert_count : Int
+  keyed_text_count : Int
+  text_cache_hit_count : Int
+  text_mask_render_count : Int
+  keyed_atlas_text_count : Int
+  glyph_cache_hit_count : Int
+  glyph_mask_render_count : Int
+  atlas_cache_hit_count : Int
+  atlas_insert_count : Int
+  atlas_clear_count : Int
+} derive(Eq, @debug.Debug)
+pub fn RenderPipelineResourceReplayResult::get_atlas_cache_hit_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_atlas_clear_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_atlas_insert_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_clear_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_command_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_fill_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_font_cache_hit_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_font_parse_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_glyph_cache_hit_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_glyph_mask_render_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_image_cache_hit_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_image_cache_insert_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_image_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_keyed_atlas_text_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_keyed_font_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_keyed_image_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_keyed_resource_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_keyed_text_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_replay_result(Self) -> RenderPipelineReplayResult
+pub fn RenderPipelineResourceReplayResult::get_resource_cache_hit_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_resource_cache_miss_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_stroke_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_text_cache_hit_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_text_count(Self) -> Int
+pub fn RenderPipelineResourceReplayResult::get_text_mask_render_count(Self) -> Int
+
+pub struct RenderPipelineTextDependency {
+  command_index : Int
+  resource_key : String?
+  text_byte_count : Int
+  run_count : Int
+  glyph_count : Int
+  layout_width : Double
+  layout_height : Double
+} derive(@debug.Debug)
+pub fn RenderPipelineTextDependency::get_command_index(Self) -> Int
+pub fn RenderPipelineTextDependency::get_glyph_count(Self) -> Int
+pub fn RenderPipelineTextDependency::get_layout_height(Self) -> Double
+pub fn RenderPipelineTextDependency::get_layout_width(Self) -> Double
+pub fn RenderPipelineTextDependency::get_resource_key(Self) -> String?
+pub fn RenderPipelineTextDependency::get_run_count(Self) -> Int
+pub fn RenderPipelineTextDependency::get_text_byte_count(Self) -> Int
+pub fn RenderPipelineTextDependency::has_resource_key(Self) -> Bool
+
+pub struct Renderer {
+  canvas : @graphics.Canvas
+} derive(@debug.Debug)
+pub fn Renderer::analyze_pipeline(Self, RenderPipeline) -> RenderPipelineAnalysis
+pub fn Renderer::diff_pipelines(Self, RenderPipeline, RenderPipeline) -> RenderPipelineDiffResult
+pub fn Renderer::draw_bmp_bytes_cached(Self, Bytes, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_bmp_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, RendererResources, String, @graphics.Paint) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_bmp_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_bmp_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Int, Int, RendererResources, String, @graphics.Paint) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_coverage_mask(Self, @text.CoverageMask, @graphics.Paint) -> Unit
+pub fn Renderer::draw_font_bytes_atlas_with_renderer_resources(Self, Bytes, String, Double, Double, @text.LayoutConfig, RendererResources, String, String, @graphics.Paint) -> Result[CachedFontAtlasDrawResult, @text.FontParseError]
+pub fn Renderer::draw_font_bytes_cached_with_renderer_resources(Self, Bytes, String, Double, Double, @text.LayoutConfig, RendererResources, String, String, @graphics.Paint) -> Result[CachedFontTextDrawResult, @text.FontParseError]
+pub fn Renderer::draw_font_bytes_fallback_line_atlas_with_renderer_resources(Self, Array[FontBytesFallbackSource], String, Double, Double, @text.LayoutConfig, RendererResources, String, @graphics.Paint) -> Result[CachedFontFallbackAtlasDrawResult, @text.FontParseError]
+pub fn Renderer::draw_font_bytes_fallback_line_cached_with_renderer_resources(Self, Array[FontBytesFallbackSource], String, Double, Double, @text.LayoutConfig, RendererResources, String, @graphics.Paint) -> Result[CachedFontFallbackDrawResult, @text.FontParseError]
+pub fn Renderer::draw_glyph_atlas_entry(Self, @text.CoverageMask, @text.GlyphAtlasEntry, Int, Int, @graphics.Paint) -> Unit
+pub fn[L : @text.FontLoader] Renderer::draw_loaded_font_atlas_with_renderer_resources(Self, L, String, Double, Double, @text.LayoutConfig, RendererResources, String, String, @graphics.Paint) -> Result[CachedFontAtlasDrawResult, @text.FontLoadError]
+pub fn[L : @text.FontLoader] Renderer::draw_loaded_font_cached_with_renderer_resources(Self, L, String, Double, Double, @text.LayoutConfig, RendererResources, String, String, @graphics.Paint) -> Result[CachedFontTextDrawResult, @text.FontLoadError]
+pub fn Renderer::draw_nine_patch_bmp_bytes_cached(Self, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_nine_patch_bmp_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_nine_patch_pixmap_cached(Self, @graphics.Pixmap, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> CachedPixmapDrawResult
+pub fn Renderer::draw_nine_patch_pixmap_cached_with_renderer_resources(Self, @graphics.Pixmap, Int, Int, Int, Int, @graphics.NinePatchInsets, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> CachedPixmapDrawResult
+pub fn Renderer::draw_nine_patch_png_bytes_cached(Self, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_nine_patch_png_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_nine_patch_rgba_bytes_cached(Self, Bytes, Int, Int, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_nine_patch_rgba_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, Int, Int, @graphics.NinePatchInsets, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_pipeline_result(Self, RenderPipeline) -> Result[RenderPipelineReplayResult, RenderPipelineReplayError]
+pub fn[L : @text.FontLoader] Renderer::draw_pipeline_with_font_loader_resources_result(Self, RenderPipeline, RendererResources, L) -> Result[RenderPipelineResourceReplayResult, RenderPipelineResourceReplayError]
+pub fn Renderer::draw_pipeline_with_renderer_resources_result(Self, RenderPipeline, RendererResources) -> Result[RenderPipelineResourceReplayResult, RenderPipelineResourceReplayError]
+pub fn Renderer::draw_pixmap_cached(Self, @graphics.Pixmap, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> CachedPixmapDrawResult
+pub fn Renderer::draw_pixmap_cached_with_renderer_resources(Self, @graphics.Pixmap, Int, Int, RendererResources, String, @graphics.Paint) -> CachedPixmapDrawResult
+pub fn Renderer::draw_pixmap_rect_cached(Self, @graphics.Pixmap, @graphics.PixelRect, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> CachedPixmapDrawResult
+pub fn Renderer::draw_pixmap_rect_cached_with_renderer_resources(Self, @graphics.Pixmap, @graphics.PixelRect, Int, Int, RendererResources, String, @graphics.Paint) -> CachedPixmapDrawResult
+pub fn Renderer::draw_png_bytes_cached(Self, Bytes, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_png_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, RendererResources, String, @graphics.Paint) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_png_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_png_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Int, Int, RendererResources, String, @graphics.Paint) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_bmp_bytes_cached(Self, Bytes, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_bmp_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_bmp_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_bmp_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_nine_patch_bmp_bytes_cached(Self, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_nine_patch_bmp_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_nine_patch_pixmap_cached(Self, @graphics.Pixmap, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> CachedPixmapDrawResult
+pub fn Renderer::draw_quality_nine_patch_pixmap_cached_with_renderer_resources(Self, @graphics.Pixmap, Int, Int, Int, Int, @graphics.NinePatchInsets, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> CachedPixmapDrawResult
+pub fn Renderer::draw_quality_nine_patch_png_bytes_cached(Self, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_nine_patch_png_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, @graphics.NinePatchInsets, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_nine_patch_rgba_bytes_cached(Self, Bytes, Int, Int, Int, Int, Int, Int, @graphics.NinePatchInsets, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_nine_patch_rgba_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, Int, Int, @graphics.NinePatchInsets, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_pixmap_cached(Self, @graphics.Pixmap, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> CachedPixmapDrawResult
+pub fn Renderer::draw_quality_pixmap_cached_with_renderer_resources(Self, @graphics.Pixmap, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> CachedPixmapDrawResult
+pub fn Renderer::draw_quality_pixmap_rect_cached(Self, @graphics.Pixmap, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> CachedPixmapDrawResult
+pub fn Renderer::draw_quality_pixmap_rect_cached_with_renderer_resources(Self, @graphics.Pixmap, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> CachedPixmapDrawResult
+pub fn Renderer::draw_quality_png_bytes_cached(Self, Bytes, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_png_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_png_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_png_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_rgba_bytes_cached(Self, Bytes, Int, Int, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_rgba_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_rgba_bytes_rect_cached(Self, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_quality_rgba_bytes_rect_cached_with_renderer_resources(Self, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_rgba_bytes_cached(Self, Bytes, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_rgba_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, RendererResources, String, @graphics.Paint) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_rgba_bytes_rect_cached(Self, Bytes, Int, Int, @graphics.PixelRect, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_rgba_bytes_rect_cached_with_renderer_resources(Self, Bytes, Int, Int, @graphics.PixelRect, Int, Int, RendererResources, String, @graphics.Paint) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_bmp_bytes_cached(Self, Bytes, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_bmp_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_bmp_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_bmp_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_pixmap_cached(Self, @graphics.Pixmap, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> CachedPixmapDrawResult
+pub fn Renderer::draw_sampled_pixmap_cached_with_renderer_resources(Self, @graphics.Pixmap, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> CachedPixmapDrawResult
+pub fn Renderer::draw_sampled_pixmap_rect_cached(Self, @graphics.Pixmap, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> CachedPixmapDrawResult
+pub fn Renderer::draw_sampled_pixmap_rect_cached_with_renderer_resources(Self, @graphics.Pixmap, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> CachedPixmapDrawResult
+pub fn Renderer::draw_sampled_png_bytes_cached(Self, Bytes, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_png_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_png_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_png_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_rgba_bytes_cached(Self, Bytes, Int, Int, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_rgba_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_rgba_bytes_rect_cached(Self, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_sampled_rgba_bytes_rect_cached_with_renderer_resources(Self, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_text_face(Self, @text.FontFace, String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> Unit
+pub fn Renderer::draw_text_face_atlas(Self, @text.FontFace, String, Double, Double, @text.LayoutConfig, @text.GlyphMaskCache, @text.GlyphMaskAtlas, String, @graphics.Paint) -> TextAtlasDrawResult
+pub fn Renderer::draw_text_face_atlas_with_renderer_resources(Self, @text.FontFace, String, Double, Double, @text.LayoutConfig, RendererResources, String, @graphics.Paint) -> TextAtlasDrawResult
+pub fn Renderer::draw_text_face_atlas_with_resources(Self, @text.FontFace, String, Double, Double, @text.LayoutConfig, RendererTextResources, String, @graphics.Paint) -> TextAtlasDrawResult
+pub fn Renderer::draw_text_face_cached(Self, @text.FontFace, String, Double, Double, @text.LayoutConfig, @text.TextMaskCache, String, @graphics.Paint) -> TextMaskDrawResult
+pub fn Renderer::draw_text_face_cached_with_renderer_resources(Self, @text.FontFace, String, Double, Double, @text.LayoutConfig, RendererResources, String, @graphics.Paint) -> TextMaskDrawResult
+pub fn Renderer::draw_text_face_cached_with_resources(Self, @text.FontFace, String, Double, Double, @text.LayoutConfig, RendererTextResources, String, @graphics.Paint) -> TextMaskDrawResult
+pub fn Renderer::draw_text_fallback_line(Self, Array[@text.FontFace], String, Double, Double, @text.LayoutConfig, @graphics.Paint) -> TextFallbackDrawResult
+pub fn Renderer::draw_text_fallback_line_atlas(Self, Array[@text.FontFace], String, Double, Double, @text.LayoutConfig, @text.GlyphMaskCache, @text.GlyphMaskAtlas, String, @graphics.Paint) -> TextFallbackAtlasDrawResult
+pub fn Renderer::draw_text_fallback_line_atlas_with_renderer_resources(Self, Array[@text.FontFace], String, Double, Double, @text.LayoutConfig, RendererResources, String, @graphics.Paint) -> TextFallbackAtlasDrawResult
+pub fn Renderer::draw_text_fallback_line_atlas_with_resources(Self, Array[@text.FontFace], String, Double, Double, @text.LayoutConfig, RendererTextResources, String, @graphics.Paint) -> TextFallbackAtlasDrawResult
+pub fn Renderer::draw_text_fallback_line_cached(Self, Array[@text.FontFace], String, Double, Double, @text.LayoutConfig, @text.TextMaskCache, String, @graphics.Paint) -> TextFallbackDrawResult
+pub fn Renderer::draw_text_fallback_line_cached_with_renderer_resources(Self, Array[@text.FontFace], String, Double, Double, @text.LayoutConfig, RendererResources, String, @graphics.Paint) -> TextFallbackDrawResult
+pub fn Renderer::draw_text_fallback_line_cached_with_resources(Self, Array[@text.FontFace], String, Double, Double, @text.LayoutConfig, RendererTextResources, String, @graphics.Paint) -> TextFallbackDrawResult
+pub fn Renderer::draw_tiled_bmp_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_tiled_bmp_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_tiled_pixmap_rect_cached(Self, @graphics.Pixmap, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> CachedPixmapDrawResult
+pub fn Renderer::draw_tiled_pixmap_rect_cached_with_renderer_resources(Self, @graphics.Pixmap, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint) -> CachedPixmapDrawResult
+pub fn Renderer::draw_tiled_png_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_tiled_png_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_tiled_rgba_bytes_rect_cached(Self, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, @graphics.PixmapCache, String, @graphics.Paint) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_tiled_rgba_bytes_rect_cached_with_renderer_resources(Self, Bytes, Int, Int, @graphics.PixelRect, Int, Int, Int, Int, RendererResources, String, @graphics.Paint) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_bmp_bytes_cached(Self, Bytes, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_bmp_bytes_cached_with_renderer_resources(Self, Bytes, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_bmp_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_bmp_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_pixmap_cached(Self, @graphics.Pixmap, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> CachedPixmapDrawResult
+pub fn Renderer::draw_transformed_quality_pixmap_cached_with_renderer_resources(Self, @graphics.Pixmap, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> CachedPixmapDrawResult
+pub fn Renderer::draw_transformed_quality_pixmap_rect_cached(Self, @graphics.Pixmap, @graphics.PixelRect, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> CachedPixmapDrawResult
+pub fn Renderer::draw_transformed_quality_pixmap_rect_cached_with_renderer_resources(Self, @graphics.Pixmap, @graphics.PixelRect, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> CachedPixmapDrawResult
+pub fn Renderer::draw_transformed_quality_png_bytes_cached(Self, Bytes, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_png_bytes_cached_with_renderer_resources(Self, Bytes, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_png_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_png_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_rgba_bytes_cached(Self, Bytes, Int, Int, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_rgba_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_rgba_bytes_rect_cached(Self, Bytes, Int, Int, @graphics.PixelRect, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_quality_rgba_bytes_rect_cached_with_renderer_resources(Self, Bytes, Int, Int, @graphics.PixelRect, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageQuality) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_bmp_bytes_cached(Self, Bytes, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_bmp_bytes_cached_with_renderer_resources(Self, Bytes, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_bmp_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_bmp_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedBmpPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_pixmap_cached(Self, @graphics.Pixmap, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> CachedPixmapDrawResult
+pub fn Renderer::draw_transformed_sampled_pixmap_cached_with_renderer_resources(Self, @graphics.Pixmap, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> CachedPixmapDrawResult
+pub fn Renderer::draw_transformed_sampled_pixmap_rect_cached(Self, @graphics.Pixmap, @graphics.PixelRect, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> CachedPixmapDrawResult
+pub fn Renderer::draw_transformed_sampled_pixmap_rect_cached_with_renderer_resources(Self, @graphics.Pixmap, @graphics.PixelRect, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> CachedPixmapDrawResult
+pub fn Renderer::draw_transformed_sampled_png_bytes_cached(Self, Bytes, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_png_bytes_cached_with_renderer_resources(Self, Bytes, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_png_bytes_rect_cached(Self, Bytes, @graphics.PixelRect, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_png_bytes_rect_cached_with_renderer_resources(Self, Bytes, @graphics.PixelRect, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedPngPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_rgba_bytes_cached(Self, Bytes, Int, Int, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_rgba_bytes_cached_with_renderer_resources(Self, Bytes, Int, Int, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_rgba_bytes_rect_cached(Self, Bytes, Int, Int, @graphics.PixelRect, Double, Double, Double, Double, @graphics.PixmapCache, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::draw_transformed_sampled_rgba_bytes_rect_cached_with_renderer_resources(Self, Bytes, Int, Int, @graphics.PixelRect, Double, Double, Double, Double, RendererResources, String, @graphics.Paint, @graphics.ImageSampling) -> Result[CachedRgbaPixmapDrawResult, @graphics.PixmapDecodeError]
+pub fn Renderer::get_canvas(Self) -> @graphics.Canvas
+pub fn Renderer::new(@graphics.Canvas) -> Self
+pub fn Renderer::plan_pipeline_batches(Self, RenderPipeline) -> RenderPipelineBatchPlan
+pub fn Renderer::plan_pipeline_resources(Self, RenderPipeline) -> RenderPipelineResourcePlan
+
+pub struct RendererResources {
+  font_cache : @text.FontFaceCache
+  text : RendererTextResources
+  image_cache : @graphics.PixmapCache
+} derive(@debug.Debug)
+pub fn RendererResources::clear(Self) -> Unit
+pub fn RendererResources::contains_font_face(Self, String) -> Bool
+pub fn RendererResources::contains_glyph_mask(Self, String) -> Bool
+pub fn RendererResources::contains_image(Self, String) -> Bool
+pub fn RendererResources::contains_text_mask(Self, String) -> Bool
+pub fn RendererResources::get_font_face_cache(Self) -> @text.FontFaceCache
+pub fn RendererResources::get_glyph_mask_atlas(Self) -> @text.GlyphMaskAtlas
+pub fn RendererResources::get_glyph_mask_cache(Self) -> @text.GlyphMaskCache
+pub fn RendererResources::get_image_cache(Self) -> @graphics.PixmapCache
+pub fn RendererResources::get_text_mask_cache(Self) -> @text.TextMaskCache
+pub fn RendererResources::get_text_resources(Self) -> RendererTextResources
+pub fn RendererResources::new(Int, Int) -> Self
+pub fn RendererResources::snapshot(Self) -> RendererResourcesSnapshot
+pub fn RendererResources::with_capacities(Int, Int, Int, Int, Int) -> Self
+pub fn RendererResources::with_font_capacity(Int, Int, Int, Int, Int, Int) -> Self
+
+pub struct RendererResourcesSnapshot {
+  font_face_count : Int
+  font_face_capacity : Int
+  font_face_is_bounded : Bool
+  text_snapshot : RendererTextResourcesSnapshot
+  image_count : Int
+  image_capacity : Int
+  image_is_bounded : Bool
+} derive(@debug.Debug)
+pub fn RendererResourcesSnapshot::get_font_face_capacity(Self) -> Int
+pub fn RendererResourcesSnapshot::get_font_face_count(Self) -> Int
+pub fn RendererResourcesSnapshot::get_image_capacity(Self) -> Int
+pub fn RendererResourcesSnapshot::get_image_count(Self) -> Int
+pub fn RendererResourcesSnapshot::get_text_snapshot(Self) -> RendererTextResourcesSnapshot
+pub fn RendererResourcesSnapshot::is_font_face_capacity_bounded(Self) -> Bool
+pub fn RendererResourcesSnapshot::is_image_capacity_bounded(Self) -> Bool
+
+pub struct RendererTextResources {
+  text_cache : @text.TextMaskCache
+  glyph_cache : @text.GlyphMaskCache
+  atlas : @text.GlyphMaskAtlas
+} derive(@debug.Debug)
+pub fn RendererTextResources::clear(Self) -> Unit
+pub fn RendererTextResources::contains_glyph_mask(Self, String) -> Bool
+pub fn RendererTextResources::contains_text_mask(Self, String) -> Bool
+pub fn RendererTextResources::get_glyph_mask_atlas(Self) -> @text.GlyphMaskAtlas
+pub fn RendererTextResources::get_glyph_mask_cache(Self) -> @text.GlyphMaskCache
+pub fn RendererTextResources::get_text_mask_cache(Self) -> @text.TextMaskCache
+pub fn RendererTextResources::new(Int, Int) -> Self
+pub fn RendererTextResources::snapshot(Self) -> RendererTextResourcesSnapshot
+pub fn RendererTextResources::with_capacities(Int, Int, Int, Int) -> Self
+
+pub struct RendererTextResourcesSnapshot {
+  text_mask_count : Int
+  text_mask_capacity : Int
+  text_mask_is_bounded : Bool
+  glyph_mask_count : Int
+  glyph_mask_capacity : Int
+  glyph_mask_is_bounded : Bool
+  atlas_entry_count : Int
+  atlas_width : Int
+  atlas_height : Int
+  atlas_capacity : Int
+  atlas_used_pixel_count : Int
+  atlas_free_pixel_count : Int
+  atlas_occupancy_ratio : Double
+} derive(@debug.Debug)
+pub fn RendererTextResourcesSnapshot::get_atlas_capacity(Self) -> Int
+pub fn RendererTextResourcesSnapshot::get_atlas_entry_count(Self) -> Int
+pub fn RendererTextResourcesSnapshot::get_atlas_free_pixel_count(Self) -> Int
+pub fn RendererTextResourcesSnapshot::get_atlas_height(Self) -> Int
+pub fn RendererTextResourcesSnapshot::get_atlas_occupancy_ratio(Self) -> Double
+pub fn RendererTextResourcesSnapshot::get_atlas_used_pixel_count(Self) -> Int
+pub fn RendererTextResourcesSnapshot::get_atlas_width(Self) -> Int
+pub fn RendererTextResourcesSnapshot::get_glyph_mask_capacity(Self) -> Int
+pub fn RendererTextResourcesSnapshot::get_glyph_mask_count(Self) -> Int
+pub fn RendererTextResourcesSnapshot::get_text_mask_capacity(Self) -> Int
+pub fn RendererTextResourcesSnapshot::get_text_mask_count(Self) -> Int
+pub fn RendererTextResourcesSnapshot::is_glyph_mask_capacity_bounded(Self) -> Bool
+pub fn RendererTextResourcesSnapshot::is_text_mask_capacity_bounded(Self) -> Bool
+
+pub struct TextAtlasDrawResult {
+  glyph_count : Int
+  drawn_glyph_count : Int
+  skipped_glyph_count : Int
+  cache_hit_count : Int
+  rasterized_glyph_count : Int
+  atlas_hit_count : Int
+  atlas_inserted_count : Int
+  did_clear_atlas : Bool
+} derive(@debug.Debug)
+pub fn TextAtlasDrawResult::did_clear_atlas(Self) -> Bool
+pub fn TextAtlasDrawResult::get_atlas_hit_count(Self) -> Int
+pub fn TextAtlasDrawResult::get_atlas_inserted_count(Self) -> Int
+pub fn TextAtlasDrawResult::get_cache_hit_count(Self) -> Int
+pub fn TextAtlasDrawResult::get_drawn_glyph_count(Self) -> Int
+pub fn TextAtlasDrawResult::get_glyph_count(Self) -> Int
+pub fn TextAtlasDrawResult::get_rasterized_glyph_count(Self) -> Int
+pub fn TextAtlasDrawResult::get_skipped_glyph_count(Self) -> Int
+
+pub struct TextFallbackAtlasDrawResult {
+  plan : @text.FontFallbackPlan
+  drawn_span_count : Int
+  skipped_span_count : Int
+  advance_width : Double
+  atlas_result : TextAtlasDrawResult
+} derive(@debug.Debug)
+pub fn TextFallbackAtlasDrawResult::did_clear_atlas(Self) -> Bool
+pub fn TextFallbackAtlasDrawResult::get_advance_width(Self) -> Double
+pub fn TextFallbackAtlasDrawResult::get_atlas_hit_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_atlas_inserted_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_atlas_result(Self) -> TextAtlasDrawResult
+pub fn TextFallbackAtlasDrawResult::get_cache_hit_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_drawn_glyph_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_drawn_span_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_glyph_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_missing_char_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_missing_span_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_plan(Self) -> @text.FontFallbackPlan
+pub fn TextFallbackAtlasDrawResult::get_rasterized_glyph_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_skipped_glyph_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_skipped_span_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::get_span_count(Self) -> Int
+pub fn TextFallbackAtlasDrawResult::has_missing_glyphs(Self) -> Bool
+
+pub struct TextFallbackDrawResult {
+  plan : @text.FontFallbackPlan
+  drawn_span_count : Int
+  skipped_span_count : Int
+  rendered_mask_count : Int
+  cache_hit_count : Int
+  advance_width : Double
+} derive(@debug.Debug)
+pub fn TextFallbackDrawResult::get_advance_width(Self) -> Double
+pub fn TextFallbackDrawResult::get_cache_hit_count(Self) -> Int
+pub fn TextFallbackDrawResult::get_drawn_span_count(Self) -> Int
+pub fn TextFallbackDrawResult::get_missing_char_count(Self) -> Int
+pub fn TextFallbackDrawResult::get_missing_span_count(Self) -> Int
+pub fn TextFallbackDrawResult::get_plan(Self) -> @text.FontFallbackPlan
+pub fn TextFallbackDrawResult::get_rendered_mask_count(Self) -> Int
+pub fn TextFallbackDrawResult::get_skipped_span_count(Self) -> Int
+pub fn TextFallbackDrawResult::get_span_count(Self) -> Int
+pub fn TextFallbackDrawResult::has_missing_glyphs(Self) -> Bool
+
+pub struct TextMaskDrawResult {
+  did_render_mask : Bool
+} derive(@debug.Debug)
+pub fn TextMaskDrawResult::did_hit_cache(Self) -> Bool
+pub fn TextMaskDrawResult::did_render_mask(Self) -> Bool
+
+// Type aliases
+
+// Traits
+

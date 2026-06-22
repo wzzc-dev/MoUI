@@ -1,0 +1,11 @@
+import {
+  "wzzc-dev/moui_sun/graphics",
+}
+
+supported_targets = "native"
+
+options(
+  "native-stub": [ "native_renderer.c" ],
+  targets: { "ffi.mbt": [ "native" ] },
+  "link-flags": "user32.lib gdi32.lib kernel32.lib ole32.lib oleaut32.lib shell32.lib dwmapi.lib imm32.lib advapi32.lib",
+)

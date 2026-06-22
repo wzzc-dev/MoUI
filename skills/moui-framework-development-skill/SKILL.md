@@ -150,6 +150,11 @@ owning-package boundaries clear.
   remain outside `render/skia`.
 - `render/wgpu/`: experimental native wgpu renderer, including source decode
   completion helpers used by provider-owned native image loader hooks.
+- `render/sun/`: experimental native Sun CPU raster renderer over the
+  repo-local `moui_sun` workspace. It claims a conservative primitive subset
+  and draws debug placeholder glyphs for ASCII text while recording text
+  diagnostics; image, shadow, layer, filter, and shader commands remain
+  unsupported diagnostics until MoUI-level proof exists.
 - `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
 - `render/wgpu/coretext/`: macOS CoreText provider.
 - `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
@@ -186,6 +191,9 @@ owning-package boundaries clear.
 - `examples/showcase/{macos_wgpu_cosmic,windows_wgpu_cosmic,linux_wgpu_cosmic}`: explicit Moon
   Cosmic text-provider comparison entrypoints on the native WGPU diagnostic
   route.
+- `examples/showcase/{macos_sun,windows_sun,linux_sun}`: experimental Sun CPU
+  raster entrypoints. Do not add Markdown Editor Sun entrypoints until text and
+  editor runtime evidence exists.
 
 ## Development Workflow
 
@@ -223,6 +231,10 @@ package regressions are plausible causes for otherwise surprising failures.
 Treat those window smoke helpers as dependency-level matching-host evidence,
 not as a replacement for MoUI Showcase/Markdown Editor platform entrypoint
 validation.
+`moui_sun` is a repo-local editable workspace member under the single
+`wzzc-dev/moui_sun` module. Keep Sun graphics/text/softbuffer surface area in
+that workspace and keep MoUI integration in `render/sun` plus
+`backend/<platform>/sun`.
 The same local-dependency check also requires the `moui_skia` binding workspace's
 `skia-platform-status.json`, `skia-provider-lock.json`,
 `SKIA_PLATFORM_STATUS.md`, `native/capabilities.json`, `native/ownership.json`,
