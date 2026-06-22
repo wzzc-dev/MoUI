@@ -41,6 +41,20 @@ test "renderer descriptor models backend family selection and presentation" {
     ),
   )
   assert_true(
+    @render.RendererSelection::Family(@render.RendererFamily::Sun).matches_backend(
+      @render.RendererBackendKind::SunRasterNative,
+    ),
+  )
+  assert_true(
+    @render.RendererBackendKind::SunRasterNative.family() ==
+    @render.RendererFamily::Sun,
+  )
+  inspect(
+    @render.RendererBackendKind::SunRasterNative.label(),
+    content="sun-raster-native",
+  )
+  inspect(@render.RendererFamily::Sun.label(), content="sun")
+  assert_true(
     @render.RendererSelection::native_default().matches_backend(
       @render.RendererBackendKind::SkiaRasterNative,
     ),

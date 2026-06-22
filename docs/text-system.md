@@ -7,6 +7,10 @@ shapes are no longer part of the framework contract.
 Native Skia is the recommended native renderer/text route, Web uses browser
 WebGPU plus browser text integration, and the native WGPU provider stack below
 remains an explicit diagnostic route for comparing provider behavior.
+The experimental Sun CPU raster backend currently exposes the core fallback
+`TextSystem` and draws renderer-local debug placeholder glyphs for ASCII
+`DrawText`; it does not yet wire `moui_sun/text` font shaping or real glyph
+rasterization into MoUI text layout.
 
 ## Runtime Boundary
 

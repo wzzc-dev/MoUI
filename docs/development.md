@@ -83,6 +83,7 @@ members = [
   "./tools",
   "./moui_skia",
   "./moui_theme",
+  "./moui_sun",
   "./examples/counter",
   "./examples/button_freeze_probe",
   "./examples/showcase",
@@ -504,8 +505,13 @@ Useful focused commands:
 ```sh
 moon test moui/render/wgpu --target native
 moon test moui/render/skia --target native
+moon test moui/render/sun --target native
 moon test moui_skia --target native
 sh scripts/dev-check.sh --theme-diagnostics
+moon test moui_sun/graphics --target native
+moon test moui_sun/text --target native
+moon test moui_sun/renderer --target native
+moon test moui_sun/softbuffer --target native
 moon build moui/tests/skia_renderer_smoke/native --target native
 moon test moui/render/webgpu_adapter --target wasm-gc
 moon test moui/tests/tooling --target native
@@ -532,8 +538,12 @@ moon build examples/design_systems/linux_skia --target native
 moon build examples/pdf_workbench/macos_skia --target native
 moon build examples/pdf_workbench/windows_skia --target native
 moon build examples/pdf_workbench/linux_skia --target native
+moon build examples/showcase/macos_sun --target native
+moon build examples/showcase/windows_skia --target native
+moon build examples/showcase/windows_sun --target native
 moon build examples/markdown_editor/windows_skia --target native
 moon build examples/showcase/linux_skia --target native
+moon build examples/showcase/linux_sun --target native
 moon build examples/markdown_editor/linux_skia --target native
 ```
 
