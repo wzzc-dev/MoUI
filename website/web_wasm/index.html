@@ -22,6 +22,28 @@
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
       }
 
+      #renderer-badge {
+        display: none;
+        position: fixed;
+        left: 12px;
+        bottom: 12px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font: 11px/1.4 "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        color: #555;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      body.canvas2d #renderer-badge {
+        display: block;
+        background: rgba(255, 247, 237, 0.9);
+        border-color: rgba(234, 179, 8, 0.3);
+        color: #92400e;
+      }
+
       canvas {
         display: block;
         width: 100%;
@@ -103,6 +125,7 @@
       <div id="status">Loading wasm-gc...</div>
       <pre id="log"></pre>
     </aside>
+    <div id="renderer-badge">Canvas2D</div>
 
     <script type="module">
       import { bootMouiWasmGcApp } from "../../moui/backend/web/runtime.js";
@@ -123,6 +146,10 @@
       const setStatus = message => {
         status.textContent = message;
         append(message);
+        // Show Canvas2D badge if we detect fallback
+        if (message === "WebGPU unavailable; switching to Canvas2D renderer.") {
+          document.body.classList.add("canvas2d");
+        }
       };
 
       bootMouiWasmGcApp({
@@ -148,6 +175,49 @@
       }).then(() => {
         status.textContent = "Running";
         append("MoonBit wasm-gc started.");
+        // Keep canvas filling the viewport and notify MoonBit runtime
+        const canvas = document.querySelector("canvas");
+        const host = document.getElementById("canvas-host");
+        console.log('[BOOT-DEBUG] .then() fired:', {
+          hasCanvas: !!canvas,
+          hasHost: !!host,
+          canvas: canvas ? { id: canvas.id, w: canvas.width, h: canvas.height, clientW: canvas.clientWidth, clientH: canvas.clientHeight, styleW: canvas.style.width, styleH: canvas.style.height } : null,
+          host: host ? { clientW: host.clientWidth, clientH: host.clientHeight } : null,
+          window: { innerW: window.innerWidth, innerH: window.innerHeight, dpr: window.devicePixelRatio },
+        });
+        // Dispatch initial resize so MoonBit runtime uses viewport size
+        if (canvas && host) {
+          const resizeCanvasToViewport = () => {
+            const w = host.clientWidth || window.innerWidth || 1;
+            const h = host.clientHeight || window.innerHeight || 1;
+            const dpr = window.devicePixelRatio || 1;
+            console.log('[BOOT-DEBUG] resizeCanvasToViewport before:', { targetW: w, targetH: h, canvasW: canvas.width, canvasH: canvas.height });
+            if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+              canvas.width = Math.max(1, Math.round(w * dpr));
+              canvas.height = Math.max(1, Math.round(h * dpr));
+              canvas.style.width = `${w}px`;
+              canvas.style.height = `${h}px`;
+              console.log('[BOOT-DEBUG] resizeCanvasToViewport after resize:', { w: canvas.width, h: canvas.height, styleW: canvas.style.width, styleH: canvas.style.height, clientW: canvas.clientWidth, clientH: canvas.clientHeight });
+            } else {
+              console.log('[BOOT-DEBUG] resizeCanvasToViewport: no change needed');
+            }
+            // Dispatch synthetic resize to notify MoonBit runtime
+            console.log('[BOOT-DEBUG] dispatching window.resize event...');
+            window.dispatchEvent(new Event("resize"));
+            console.log('[BOOT-DEBUG] after dispatchEvent, canvas:', { w: canvas.width, h: canvas.height, clientW: canvas.clientWidth, clientH: canvas.clientHeight });
+          };
+          // Fire immediately to set initial size
+          resizeCanvasToViewport();
+          // Also observe for future resizes
+          if (typeof ResizeObserver === "function") {
+            console.log('[BOOT-DEBUG] setting up ResizeObserver');
+            const ro = new ResizeObserver(entries => {
+              console.log('[BOOT-DEBUG] ResizeObserver fired:', entries.map(e => ({ contentRect: e.contentRect })));
+              resizeCanvasToViewport();
+            });
+            ro.observe(host);
+          }
+        }
       }).catch(error => {
         document.body.classList.add("failed");
         status.textContent = "Failed";

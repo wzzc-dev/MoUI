@@ -2,6 +2,7 @@ import {
   connectWindowWeb,
   createWindowWebImports,
 } from "./browser_runtime.js";
+import { createCanvas2dImports } from "./canvas2d_runtime.js";
 
 const VISUAL_STRIDE_FLOATS = 22;
 const TEXT_STRIDE_FLOATS = 8;
@@ -2838,8 +2839,13 @@ function alphaBlend() {
 
 export async function createWebGpuImportsAsync(options = {}) {
   const report = options.onStatus ?? (() => {});
+  const fallbackToCanvas2d = () => {
+    report("WebGPU unavailable; switching to Canvas2D renderer.");
+    return createCanvas2dImports(options);
+  };
+
   if (options.forceUnavailable === true || typeof navigator === "undefined" || !navigator.gpu) {
-    throw new Error("Browser WebGPU is required for the MoUI wasm-gc web backend.");
+    return fallbackToCanvas2d();
   }
   const timeoutMs = options.timeoutMs ?? 8000;
   const withTimeout = (promise, label) =>
@@ -2853,18 +2859,31 @@ export async function createWebGpuImportsAsync(options = {}) {
       ),
     ]);
   report("Requesting WebGPU adapter...");
-  const adapter = await withTimeout(
-    navigator.gpu.requestAdapter(),
-    "requesting a WebGPU adapter",
-  );
+  let adapter;
+  try {
+    adapter = await withTimeout(
+      navigator.gpu.requestAdapter(),
+      "requesting a WebGPU adapter",
+    );
+  } catch (error) {
+    report("WebGPU adapter request failed: " + error.message);
+    return fallbackToCanvas2d();
+  }
   if (!adapter) {
-    throw new Error("No WebGPU adapter is available.");
+    report("No WebGPU adapter available.");
+    return fallbackToCanvas2d();
   }
   report("Requesting WebGPU device...");
-  const device = await withTimeout(
-    adapter.requestDevice(),
-    "requesting a WebGPU device",
-  );
+  let device;
+  try {
+    device = await withTimeout(
+      adapter.requestDevice(),
+      "requesting a WebGPU device",
+    );
+  } catch (error) {
+    report("WebGPU device request failed: " + error.message);
+    return fallbackToCanvas2d();
+  }
   device.addEventListener?.("uncapturederror", event => {
     const message = event?.error?.message || event?.error || "unknown WebGPU error";
     globalThis.console?.error?.(`MoUI WebGPU uncaptured error: ${message}`);
@@ -2881,6 +2900,7 @@ export async function createWebGpuImportsAsync(options = {}) {
     report(`WebGPU device lost: ${message}`);
   });
   const format = navigator.gpu.getPreferredCanvasFormat();
+  report("WebGPU ready.");
   return createWebGpuImports({ ...options, device, format });
 }
 
