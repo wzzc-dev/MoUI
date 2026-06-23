@@ -23,14 +23,6 @@ function truthy(value) {
   return /^(1|true|yes|on)$/i.test(String(value || "").trim());
 }
 
-function shellPath(value) {
-  const text = String(value || "");
-  if (/^[A-Za-z0-9_./:\\-]+$/.test(text)) {
-    return text;
-  }
-  return JSON.stringify(text);
-}
-
 function runPkgConfig(packages, flag) {
   const result = spawnSync("pkg-config", [flag, ...packages], {
     encoding: "utf8",
@@ -40,51 +32,6 @@ function runPkgConfig(packages, flag) {
     return "";
   }
   return result.stdout.trim();
-}
-
-function prependMissingDefine(flags, define) {
-  const text = String(flags || "").trim();
-  if (text.split(/\s+/).includes(define)) {
-    return text;
-  }
-  return text ? `${define} ${text}` : define;
-}
-
-function linuxWebKitGtkFlags(config) {
-  const explicitStub = configEnvValue(
-    config,
-    "MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS",
-  );
-  const explicitLink = configEnvValue(
-    config,
-    "MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS",
-  );
-  if (explicitStub || explicitLink) {
-    return {
-      stubCcFlags: prependMissingDefine(
-        explicitStub,
-        "-DMOUI_LINUX_ENABLE_WEBKITGTK",
-      ),
-      linkFlags: explicitLink,
-    };
-  }
-  if (!truthy(configEnvValue(config, "MOUI_LINUX_ENABLE_WEBKITGTK"))) {
-    return { stubCcFlags: "", linkFlags: "" };
-  }
-  for (const webkitPackage of ["webkit2gtk-4.1", "webkit2gtk-4.0"]) {
-    const packages = ["gtk+-3.0", webkitPackage];
-    const cflags = runPkgConfig(packages, "--cflags");
-    const libs = runPkgConfig(packages, "--libs");
-    if (cflags && libs) {
-      return {
-        stubCcFlags: `-DMOUI_LINUX_ENABLE_WEBKITGTK ${cflags}`,
-        linkFlags: libs,
-      };
-    }
-  }
-  throw new Error(
-    "MOUI_LINUX_ENABLE_WEBKITGTK is set, but pkg-config could not find gtk+-3.0 with webkit2gtk-4.1 or webkit2gtk-4.0.",
-  );
 }
 
 function linuxGlibFlags(config) {
@@ -103,58 +50,10 @@ function linuxGlibFlags(config) {
   };
 }
 
-function windowsWebView2Flags(config) {
-  const explicitStub = configEnvValue(
-    config,
-    "MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS",
-  );
-  const explicitLink = configEnvValue(
-    config,
-    "MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS",
-  );
-  if (explicitStub || explicitLink) {
-    return {
-      stubCcFlags: prependMissingDefine(
-        explicitStub,
-        "-DMOUI_WINDOWS_ENABLE_WEBVIEW2",
-      ),
-      linkFlags: explicitLink,
-    };
-  }
-  if (!truthy(configEnvValue(config, "MOUI_WINDOWS_ENABLE_WEBVIEW2"))) {
-    return { stubCcFlags: "", linkFlags: "" };
-  }
-  const includeDir = configEnvValue(config, "MOUI_WINDOWS_WEBVIEW2_INCLUDE");
-  const linkFlags = configEnvValue(config, "MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS");
-  if (!includeDir || !linkFlags) {
-    throw new Error(
-      "MOUI_WINDOWS_ENABLE_WEBVIEW2 requires MOUI_WINDOWS_WEBVIEW2_INCLUDE and MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS, or explicit MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS/MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS.",
-    );
-  }
-  return {
-    stubCcFlags: `-DMOUI_WINDOWS_ENABLE_WEBVIEW2 -I${shellPath(includeDir)}`,
-    linkFlags,
-  };
-}
-
 function main() {
   const config = readJsonFromStdin();
-  const windows = windowsWebView2Flags(config);
-  const linux = linuxWebKitGtkFlags(config);
   const linuxGlib = linuxGlibFlags(config);
   const linkConfigs = [];
-  if (windows.linkFlags) {
-    linkConfigs.push({
-      package: "wzzc-dev/moui/backend/windows",
-      link_flags: windows.linkFlags,
-    });
-  }
-  if (linux.linkFlags) {
-    linkConfigs.push({
-      package: "wzzc-dev/moui/backend/linux",
-      link_flags: linux.linkFlags,
-    });
-  }
   if (linuxGlib.linkFlags) {
     linkConfigs.push({
       package: "wzzc-dev/moui/backend/linux",
@@ -164,10 +63,6 @@ function main() {
   console.log(
     JSON.stringify({
       vars: {
-        MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS: windows.stubCcFlags,
-        MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS: windows.linkFlags,
-        MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS: linux.stubCcFlags,
-        MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS: linux.linkFlags,
         MOUI_LINUX_GLIB_STUB_CC_FLAGS: linuxGlib.stubCcFlags,
         MOUI_LINUX_GLIB_CC_LINK_FLAGS: linuxGlib.linkFlags,
       },
