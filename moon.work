@@ -23,7 +23,7 @@ members = [
   "./examples/command_palette",
   "./examples/mo_workbench",
   "./examples/webview_demo",
-  "./examples/excel",
+  "./examples/excal",
   "./benchmarks/app_cached_layer",
   "./website",
 ]
