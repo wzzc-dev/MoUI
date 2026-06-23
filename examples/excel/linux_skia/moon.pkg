@@ -1,0 +1,15 @@
+import {
+  "wzzc-dev/moui/runtime",
+  "wzzc-dev/moui/backend/host",
+  "wzzc-dev/moui/backend/linux" @linux_host,
+  "wzzc-dev/moui/backend/linux/skia" @linux_skia_backend,
+  "examples/excel/app" @excel_app,
+}
+
+supported_targets = "native"
+
+options(
+  "is-main": true,
+  link: { "native": { "cc-link-flags": "-lz" } },
+  targets: { "main.mbt": [ "native" ] },
+)
