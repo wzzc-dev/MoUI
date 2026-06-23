@@ -364,20 +364,21 @@ Windows native examples use the MSVC toolchain with Visual Studio C++ build
 tools and vcpkg `zlib:x64-windows`. The Skia entrypoints are the recommended
 native mainline. WGPU diagnostic entrypoints still use `wgpu_mbt` dynamic mode
 with the official `wgpu-windows-x86_64-msvc-release.zip` release.
-Windows native WebView support is gated behind
-`MOUI_WINDOWS_ENABLE_WEBVIEW2`. Fallback builds compile without the WebView2 SDK
-and report `HostWebViewCapabilities.available=false`; builds with the flag use
-WebView2 controllers parented to the app HWND, sync `DrawFrame.platform_views`,
-forward controlled navigation and title/history/script events, and drain
-`HostWebViewCommandQueue` commands after renderer presentation. The `moui`
-module prebuild leaves WebView2 flags empty by default; enable the real bridge
-by setting environment variables such as
-`MOUI_WINDOWS_ENABLE_WEBVIEW2=1`,
-`MOUI_WINDOWS_WEBVIEW2_INCLUDE=<webview2-sdk-include>`, and
-`MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS="<WebView2Loader link flags>"`, or by setting
-the explicit `MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS` /
-`MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS` pair. The prebuild adds
-`-DMOUI_WINDOWS_ENABLE_WEBVIEW2` when explicit WebView2 flags are provided.
+	Windows native WebView support is auto-detected by the `moui_webview`
+	prebuild from the `.tools/webview2/` cache directory (set up by
+	`scripts/windows/setup_msvc_deps.ps1 -InstallWebView2`), matching how Linux
+	auto-detects WebKitGTK via `pkg-config`. Fallback builds compile without the
+	WebView2 SDK and report `HostWebViewCapabilities.available=false`; builds with
+	the SDK use WebView2 controllers parented to the app HWND, sync
+	`DrawFrame.platform_views`, forward controlled navigation and
+	title/history/script events, and drain `HostWebViewCommandQueue` commands after
+	renderer presentation. Override auto-detection by setting environment variables
+	such as `MOUI_WINDOWS_ENABLE_WEBVIEW2=1`,
+	`MOUI_WINDOWS_WEBVIEW2_INCLUDE=<webview2-sdk-include>`, and
+	`MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS="<WebView2Loader link flags>"`, or by setting
+	the explicit `MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS` /
+	`MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS` pair. The prebuild adds
+	`-DMOUI_WINDOWS_ENABLE_WEBVIEW2` when WebView2 flags are resolved.
 
 For MSVC setup and packaging:
 

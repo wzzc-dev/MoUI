@@ -1,4 +1,6 @@
 const { spawnSync } = require("child_process");
+const path = require("path");
+const fs = require("fs");
 
 function readJsonFromStdin() {
   try {
@@ -83,6 +85,54 @@ function linuxWebKitGtkFlags(config) {
   return { stubCcFlags: "", linkFlags: "" };
 }
 
+function autoDetectWindowsWebView2() {
+  // Auto-detect WebView2 SDK from the well-known .tools/webview2/ location,
+  // matching the pattern used by scripts/windows/webview2_sdk.ps1.
+  // build.js lives at <repo>/moui_webview/build.js, so __dirname/.. is the repo root.
+  const repoRoot = path.resolve(__dirname, "..");
+  const toolsDir = path.join(repoRoot, ".tools", "webview2");
+  let foundDir = null;
+  try {
+    if (fs.existsSync(toolsDir)) {
+      const entries = fs.readdirSync(toolsDir);
+      const wvDir = entries.find(function (e) {
+        return e.startsWith("Microsoft.Web.WebView2.");
+      });
+      if (wvDir) {
+        foundDir = path.join(toolsDir, wvDir);
+      }
+    }
+  } catch (_) {
+    // ignore any filesystem errors and fall through
+  }
+  if (!foundDir) {
+    return null;
+  }
+  const header = path.join(foundDir, "build", "native", "include", "WebView2.h");
+  const staticLib = path.join(
+    foundDir,
+    "build",
+    "native",
+    "x64",
+    "WebView2LoaderStatic.lib",
+  );
+  if (!fs.existsSync(header) || !fs.existsSync(staticLib)) {
+    return null;
+  }
+  // Forward-slash paths (consistent with Convert-WebView2BuildPath).
+  // MSVC link.exe accepts forward slashes, and this avoids backslash
+  // escaping issues in JSON serialization and shell processing.
+  const includeDir = path
+    .join(foundDir, "build", "native", "include")
+    .replace(/\\/g, "/");
+  const libPath = staticLib.replace(/\\/g, "/");
+  return {
+    stubCcFlags:
+      "-DMOUI_WINDOWS_ENABLE_WEBVIEW2 -I" + shellPath(includeDir),
+    linkFlags: shellPath(libPath) + " version.lib",
+  };
+}
+
 function windowsWebView2Flags(config) {
   const explicitStub = configEnvValue(
     config,
@@ -101,20 +151,33 @@ function windowsWebView2Flags(config) {
       linkFlags: explicitLink,
     };
   }
-  if (!truthy(configEnvValue(config, "MOUI_WINDOWS_ENABLE_WEBVIEW2"))) {
-    return { stubCcFlags: "", linkFlags: "" };
-  }
-  const includeDir = configEnvValue(config, "MOUI_WINDOWS_WEBVIEW2_INCLUDE");
-  const linkFlags = configEnvValue(config, "MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS");
-  if (!includeDir || !linkFlags) {
-    throw new Error(
-      "MOUI_WINDOWS_ENABLE_WEBVIEW2 requires MOUI_WINDOWS_WEBVIEW2_INCLUDE and MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS, or explicit MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS/MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS.",
+  if (truthy(configEnvValue(config, "MOUI_WINDOWS_ENABLE_WEBVIEW2"))) {
+    const includeDir = configEnvValue(
+      config,
+      "MOUI_WINDOWS_WEBVIEW2_INCLUDE",
     );
+    const linkFlags = configEnvValue(
+      config,
+      "MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS",
+    );
+    if (!includeDir || !linkFlags) {
+      throw new Error(
+        "MOUI_WINDOWS_ENABLE_WEBVIEW2 requires MOUI_WINDOWS_WEBVIEW2_INCLUDE and MOUI_WINDOWS_WEBVIEW2_LINK_FLAGS, or explicit MOUI_WINDOWS_WEBVIEW2_STUB_CC_FLAGS/MOUI_WINDOWS_WEBVIEW2_CC_LINK_FLAGS.",
+      );
+    }
+    return {
+      stubCcFlags:
+        "-DMOUI_WINDOWS_ENABLE_WEBVIEW2 -I" + shellPath(includeDir),
+      linkFlags,
+    };
   }
-  return {
-    stubCcFlags: `-DMOUI_WINDOWS_ENABLE_WEBVIEW2 -I${shellPath(includeDir)}`,
-    linkFlags,
-  };
+  // No explicit env vars — try auto-detect from .tools/webview2/
+  var auto = autoDetectWindowsWebView2();
+  if (auto) {
+    return auto;
+  }
+  // WebView2 SDK not found — compile without it
+  return { stubCcFlags: "", linkFlags: "" };
 }
 
 function main() {

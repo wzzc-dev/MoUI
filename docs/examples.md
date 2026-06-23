@@ -149,10 +149,11 @@ Native entrypoints pass the same `HostWebViewCommandQueue` to the Skia provider
 options so macOS `WKWebView`, Windows WebView2 builds, and Linux WebKitGTK
 builds can drain commands after rendering. Web wasm passes an unavailable
 capability and renders fallback UI; it does not create an iframe overlay.
-Windows real WebView builds are opt-in: set the matching
-`MOUI_WINDOWS_WEBVIEW2_*` environment variables so the prebuild can add native
-dependency flags; otherwise the Windows entrypoint compiles as an unavailable
-fallback. Linux WebKitGTK builds are auto-detected via `pkg-config` when
+	Windows real WebView builds are auto-detected by the prebuild from
+	`.tools/webview2/` (set up by `scripts/windows/setup_msvc_deps.ps1 -InstallWebView2`),
+	matching how Linux auto-detects WebKitGTK via `pkg-config`. Override with
+	`MOUI_WINDOWS_WEBVIEW2_*` environment variables for custom SDK paths.
+	Linux WebKitGTK builds are auto-detected via `pkg-config` when
 `libwebkit2gtk-4.1-dev` is installed. Override with `MOUI_LINUX_WEBKITGTK_*`
 environment variables for custom setups.
 Linux WebKitGTK builds also require a matching-host smoke before claiming
