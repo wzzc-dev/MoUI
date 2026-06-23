@@ -1,3 +1,6 @@
+// Browser WebGPU is required for the primary rendering path.
+// canvas2d_runtime.js provides a Canvas2D fallback when WebGPU is
+// unavailable (e.g. WebKitGTK, older browsers, restricted contexts).
 import {
   connectWindowWeb,
   createWindowWebImports,
