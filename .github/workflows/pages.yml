@@ -61,6 +61,7 @@ jobs:
           mkdir -p dist/pages/moui/backend/web
           cp moui/backend/web/runtime.js dist/pages/moui/backend/web/runtime.js
           cp moui/backend/web/browser_runtime.js dist/pages/moui/backend/web/browser_runtime.js
+          cp moui/backend/web/canvas2d_runtime.js dist/pages/moui/backend/web/canvas2d_runtime.js
 
           mkdir -p dist/pages/_build/wasm-gc/debug/build/website/web_wasm
           cp _build/wasm-gc/debug/build/website/web_wasm/web_wasm.wasm \
@@ -77,6 +78,7 @@ jobs:
           test -f dist/pages/docs/moui-skia-readme.md
           test -f dist/pages/moui/backend/web/runtime.js
           test -f dist/pages/moui/backend/web/browser_runtime.js
+          test -f dist/pages/moui/backend/web/canvas2d_runtime.js
           test -f dist/pages/_build/wasm-gc/debug/build/website/web_wasm/web_wasm.wasm
 
       - name: Upload GitHub Pages artifact
