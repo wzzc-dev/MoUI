@@ -45,8 +45,7 @@ pub(all) struct LinuxAccessibilityBridgeInfo {
 pub struct LinuxHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv event_sources : @host.HostPlatformEventSources?
-  priv web_view_commands : @host.HostWebViewCommandQueue?
-  priv web_view_events : @host.HostWebViewEventSource?
+  priv webview_plugin : @host.WebviewPlugin?
 }
 
 ///|
@@ -83,8 +82,7 @@ struct LinuxApp {
   platform_slots : LinuxWindowPlatformSlots
   image_repaint_tracker : @host.HostImageResourceRepaintTracker
   event_sources : @host.HostPlatformEventSources?
-  web_view_commands : @host.HostWebViewCommandQueue?
-  web_view_events : @host.HostWebViewEventSource?
+  webview_plugin : @host.WebviewPlugin?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
@@ -108,10 +106,9 @@ priv struct LinuxWindowPlatformSlots {
 pub fn LinuxHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   event_sources? : @host.HostPlatformEventSources? = None,
-  web_view_commands? : @host.HostWebViewCommandQueue? = None,
-  web_view_events? : @host.HostWebViewEventSource? = None,
+  webview_plugin? : @host.WebviewPlugin? = None,
 ) -> LinuxHostAppOptions {
-  { scene_resolver, event_sources, web_view_commands, web_view_events }
+  { scene_resolver, event_sources, webview_plugin }
 }
 
 ///|

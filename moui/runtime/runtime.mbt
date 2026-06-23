@@ -189,16 +189,12 @@ fn[Msg] runtime_component_view(
       } else {
         @core.Size::new(width=0.0, height=0.0)
       }
+      let size = ctx.constraints.constrain(child_size)
       @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(child_size),
+        size~,
         child_frames=if ctx.child_sizes.length() > 0 {
           [
-            @core.Rect::new(
-              x=0.0,
-              y=0.0,
-              width=child_size.width,
-              height=child_size.height,
-            ),
+            @core.Rect::new(x=0.0, y=0.0, width=size.width, height=size.height),
           ]
         } else {
           []

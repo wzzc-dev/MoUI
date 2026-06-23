@@ -502,7 +502,14 @@ fn MacosApp::dispose_window(
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
-      dispose_macos_platform_views(slot.window)
+      match self.webview_plugin {
+        Some(plugin) =>
+          match macos_native_view_handle(slot.window) {
+            Some(handle) => (plugin.dispose_platform_views)(handle)
+            None => ()
+          }
+        None => ()
+      }
       slot.renderer.set_image_resource_change_callback(None)
       slot.renderer.dispose()
       slot.window.drop()

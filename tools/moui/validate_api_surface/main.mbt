@@ -108,13 +108,13 @@ fn views_facade_core_alias_tokens() -> Array[String] {
 
 ///|
 fn views_facade_host_alias_tokens() -> Array[String] {
-  ["WebViewEvent", "WebViewNavigationPolicy"]
+  []
 }
 
 ///|
 fn views_facade_required_tokens() -> Array[String] {
   let tokens = [
-    "\"wzzc-dev/moui/core\"", "\"wzzc-dev/moui/backend/host\"", "pub fn[Msg] button(",
+    "\"wzzc-dev/moui/core\"", "pub fn[Msg] button(",
     "pub fn[Msg] column(", "pub(all) struct ButtonStyle", "pub(all) struct FormFieldState",
     "pub(all) struct RouteLocation", "pub(all) struct RouteHistoryState", "type RouteFocusStore",
     "type RouterState", "pub fn resolve_route(", "pub(all) enum DatePickerMode",
@@ -271,8 +271,7 @@ fn package_budgets() -> Array[PackageBudget] {
       max_pub_all_lines: 100,
       required_tokens: [
         "HostWindowRenderer", "HostAsyncImageLoader", "HostRouteSource", "pub(all) struct HostRouteLocation",
-        "pub(all) struct HostRouteQueryParam", "pub(all) struct WebViewSpec", "pub(all) enum WebViewCommand",
-        "pub(all) enum WebViewEvent", "pub(all) enum WebViewNavigationPolicy",
+        "pub(all) struct HostRouteQueryParam",
       ],
       forbidden_tokens: [
         "\"wzzc-dev/moui/render/skia\"", "\"wzzc-dev/moui/render/wgpu\"", "SkiaRasterRenderer",
@@ -339,14 +338,9 @@ fn view_return_rules() -> Array[ViewReturnRule] {
       name: "navigation_stack",
       signature_prefix: "pub fn[Msg] navigation_stack(",
       return_token: "-> @core.View[Msg]",
-    },
-    {
-      name: "web_view",
-      signature_prefix: "pub fn[Msg] web_view(",
-      return_token: "-> @core.View[Msg]",
-    },
-  ]
-}
+	    },
+	  ]
+	}
 
 ///|
 fn legacy_core_family_budgets() -> Array[LegacyCoreFamilyBudget] {

@@ -47,14 +47,25 @@ fn[Msg] padding_layout(
     child_constraints=constraints => constraints.deflate(insets),
     layout=ctx => {
       let child_size = first_child_size(ctx.child_sizes)
+      let size = ctx.constraints.constrain(child_size.inflate(insets))
+      // Clamp the child frame to the deflated available area so a greedy child
+      // (e.g. web_view reporting max constraints) cannot overflow this node's
+      // own frame in the place pass.
+      let available = ctx.constraints.deflate(insets)
       @core.ViewLayoutResult::new(
-        size=ctx.constraints.constrain(child_size.inflate(insets)),
+        size~,
         child_frames=[
           @core.Rect::new(
             x=insets.left,
             y=insets.top,
-            width=child_size.width,
-            height=child_size.height,
+            width=view_min_double(
+              view_max_double(0.0, available.max.width),
+              child_size.width,
+            ),
+            height=view_min_double(
+              view_max_double(0.0, available.max.height),
+              child_size.height,
+            ),
           ),
         ],
       )

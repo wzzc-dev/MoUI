@@ -2,16 +2,16 @@
 fn ElementNode::dispatch_web_view_event(
   self : ElementNode,
   id : String,
-  event : PlatformViewEvent,
-  environment? : Environment = Environment::neutral(),
-  style? : ViewStyle = ViewStyle::empty(),
-  text_system? : TextSystem = TextSystem::fallback(),
+  event : @core.PlatformViewEvent,
+  environment? : @core.Environment = @core.Environment::neutral(),
+  style? : @core.ViewStyle = @core.ViewStyle::empty(),
+  text_system? : @core.TextSystem = @core.TextSystem::fallback(),
 ) -> Bool {
   let data = self.erased_view_node
   let result = (data.event)({
-    frame: Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
+    frame: @core.Rect::new(x=0.0, y=0.0, width=0.0, height=0.0),
     child_frames: [],
-    event: AppEvent::PlatformView(id, event),
+    event: @core.AppEvent::PlatformView(id, event),
     focused: false,
     state: data.state,
     text_control: self.control.text_context(),

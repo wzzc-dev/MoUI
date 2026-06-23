@@ -1,12 +1,12 @@
 ///|
 fn main {
-  let commands = @host.HostWebViewCommandQueue::new()
+  let commands = @webview_host.HostWebViewCommandQueue::new()
   @web.run_app(
     "MoUI WebView Demo",
     @runtime.new_program_with_dimensions(
       program=@webview_demo.program(
         commands~,
-        capabilities=@host.HostWebViewCapabilities::unavailable(
+        capabilities=@webview_host.HostWebViewCapabilities::unavailable(
           description="Web wasm does not embed native WebView.",
         ),
       ),

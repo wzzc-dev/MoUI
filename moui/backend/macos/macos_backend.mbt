@@ -19,8 +19,7 @@ pub(all) struct MacosAccessibilityBridgeInfo {
 pub struct MacosHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv event_sources : @host.HostPlatformEventSources?
-  priv web_view_commands : @host.HostWebViewCommandQueue?
-  priv web_view_events : @host.HostWebViewEventSource?
+  priv webview_plugin : @host.WebviewPlugin?
 }
 
 ///|
@@ -52,8 +51,7 @@ struct MacosApp {
   platform_slots : MacosWindowPlatformSlots
   image_repaint_tracker : @host.HostImageResourceRepaintTracker
   event_sources : @host.HostPlatformEventSources?
-  web_view_commands : @host.HostWebViewCommandQueue?
-  web_view_events : @host.HostWebViewEventSource?
+  webview_plugin : @host.WebviewPlugin?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
@@ -81,10 +79,9 @@ priv struct MacosWindowPlatformSlots {
 pub fn MacosHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   event_sources? : @host.HostPlatformEventSources? = None,
-  web_view_commands? : @host.HostWebViewCommandQueue? = None,
-  web_view_events? : @host.HostWebViewEventSource? = None,
+  webview_plugin? : @host.WebviewPlugin? = None,
 ) -> MacosHostAppOptions {
-  { scene_resolver, event_sources, web_view_commands, web_view_events }
+  { scene_resolver, event_sources, webview_plugin }
 }
 
 ///|
@@ -93,6 +90,17 @@ pub fn MacosHostSmokeOptions::new(
   native_ime_runtime_smoke? : Bool = false,
 ) -> MacosHostSmokeOptions {
   { first_frame_smoke_auto_exit, native_ime_runtime_smoke }
+}
+
+///|
+///|
+/// Platform utility: get the native content view handle from a macOS window.
+/// Used by the WebviewPlugin sync/dispose callbacks to pass the window
+/// pointer to the platform-agnostic plugin.
+pub fn macos_native_view_handle(window : @window_macos.Window) -> UInt64? {
+  Some(window.content_view_handle()) catch {
+    _ => None
+  }
 }
 
 ///|

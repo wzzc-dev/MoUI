@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wzzc-dev/moui_webview/views"
+
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui_webview/host",
+}
+
+// Values
+pub fn[Msg] web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : @host.WebViewNavigationPolicy, on_event? : ((@host.WebViewEvent) -> Msg)?) -> @core.View[Msg]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

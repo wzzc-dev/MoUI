@@ -177,95 +177,105 @@ fn MacosApp::dispatch_pointer_or_context_menu(
 }
 
 ///|
-fn MacosApp::redraw_window(
-  self : MacosApp,
-  window_id : @host.HostWindowId,
-) -> Bool {
-  match
-    (
-      self.platform_slots.lookup_host(window_id),
-      self.runtime_slots.lookup(window_id),
-    ) {
-    (Some(platform_slot), Some(runtime_slot)) => {
-      platform_slot.window.pre_present_notify()
-      runtime_slot.driver.begin_redraw()
-      let frame = runtime_slot.driver.draw_frame()
-      let result = platform_slot.renderer.render_frame(frame)
-      sync_macos_platform_views(platform_slot.window, frame)
-      self.drain_web_view_commands(platform_slot)
-      runtime_slot.driver.apply_render_frame_result(result)
-      runtime_slot.driver.finish_redraw()
-      if result.presented {
-        ignore(
-          self.image_repaint_tracker.record_presented(
-            window_id,
-            platform_slot.renderer,
-          ),
-        )
-      }
-      ignore(
-        self.renderer_provider.schedule_image_resource_loads(
-          window_id,
-          platform_slot.renderer,
-          self.image_resource_completion_source(),
-        ),
-      )
-      self.sync_text_input_session()
-      if self.record_native_ime_runtime_smoke(window_id) {
-        true
-      } else if self.first_frame_smoke_auto_exit &&
-        platform_slot.renderer.present_count() > 0 {
-        println(
-          "macOS renderer presented first frame; exiting by request; title=" +
-          runtime_slot.record.title,
-        )
-        self.first_frame_smoke_auto_exit = false
-        self.dispose_window(window_id)
-        true
-      } else {
-        false
-      }
-    }
-    _ => false
-  }
-}
+	fn MacosApp::redraw_window(
+	  self : MacosApp,
+	  window_id : @host.HostWindowId,
+	) -> Bool {
+	  match
+	    (
+	      self.platform_slots.lookup_host(window_id),
+	      self.runtime_slots.lookup(window_id),
+	    ) {
+	    (Some(platform_slot), Some(runtime_slot)) => {
+	      platform_slot.window.pre_present_notify()
+	      runtime_slot.driver.begin_redraw()
+	      let frame = runtime_slot.driver.draw_frame()
+	      let result = platform_slot.renderer.render_frame(frame)
+	      match self.webview_plugin {
+	        Some(plugin) =>
+	          match macos_native_view_handle(platform_slot.window) {
+	            Some(handle) => {
+	              (plugin.sync_platform_views)(handle, frame, 0.0)
+	              (plugin.drain_commands)(handle)
+	            }
+	            None => ()
+	          }
+	        None => ()
+	      }
+	      runtime_slot.driver.apply_render_frame_result(result)
+	      runtime_slot.driver.finish_redraw()
+	      if result.presented {
+	        ignore(
+	          self.image_repaint_tracker.record_presented(
+	            window_id,
+	            platform_slot.renderer,
+	          ),
+	        )
+	      }
+	      ignore(
+	        self.renderer_provider.schedule_image_resource_loads(
+	          window_id,
+	          platform_slot.renderer,
+	          self.image_resource_completion_source(),
+	        ),
+	      )
+	      self.sync_text_input_session()
+	      if self.record_native_ime_runtime_smoke(window_id) {
+	        true
+	      } else if self.first_frame_smoke_auto_exit &&
+	        platform_slot.renderer.present_count() > 0 {
+	        println(
+	          "macOS renderer presented first frame; exiting by request; title=" +
+	          runtime_slot.record.title,
+	        )
+	        self.first_frame_smoke_auto_exit = false
+	        self.dispose_window(window_id)
+	        true
+	      } else {
+	        false
+	      }
+	    }
+	    _ => false
+	  }
+	}
 
-///|
-fn MacosApp::dispatch_web_view_event(
-  self : MacosApp,
-  raw_content_view_handle : UInt64,
-  id : String,
-  event : @host.WebViewEvent,
-) -> Unit {
-  match self.web_view_host_id(raw_content_view_handle) {
-    Some(window_id) => {
-      let host_event = @host.HostEvent::WebView(id, event)
-      match self.runtime_slots.lookup(window_id) {
-        Some(slot) => ignore(slot.driver.dispatch(host_event))
-        None => ()
-      }
-      ignore(self.publish_subscription_event(window_id, host_event))
-      match self.web_view_events {
-        Some(source) =>
-          ignore(
-            source.publish(@host.HostWebViewEvent::new(window_id~, id~, event~)),
-          )
-        None => ()
-      }
-      self.sync_text_input_session()
-      self.request_redraw_window_if_needed(window_id)
-    }
-    None => ()
-  }
-}
+	///|
+	/// Handle a decoded webview event received from the plugin's native event
+	/// dispatcher. Constructs a PlatformViewEvent and dispatches it into the
+	/// runtime tree, bypassing HostEvent entirely.
+	fn MacosApp::dispatch_webview_event_from_plugin(
+	  self : MacosApp,
+	  window_ptr : UInt64,
+	  id : String,
+	  name : String,
+	  value : String,
+	  detail : String,
+	  flag : Bool,
+	) -> Unit {
+	  let platform_event = @core.PlatformViewEvent::Named(
+	    name~, value~, detail~, flag~,
+	  )
+	  match self.webview_host_id(window_ptr) {
+	    Some(window_id) => {
+	      match self.runtime_slots.lookup(window_id) {
+	        Some(slot) =>
+	          slot.driver.dispatch_platform_view(id, platform_event)
+	        None => ()
+	      }
+	      self.sync_text_input_session()
+	      self.request_redraw_window_if_needed(window_id)
+	    }
+	    None => ()
+	  }
+	}
 
-///|
-fn MacosApp::web_view_host_id(
-  self : MacosApp,
-  raw_content_view_handle : UInt64,
-) -> @host.HostWindowId? {
+	///|
+	fn MacosApp::webview_host_id(
+	  self : MacosApp,
+	  raw_content_view_handle : UInt64,
+	) -> @host.HostWindowId? {
   for slot in self.platform_slots.slots {
-    match macos_content_view_handle(slot.window) {
+    match macos_native_view_handle(slot.window) {
       Some(handle) =>
         if handle == raw_content_view_handle {
           return Some(slot.host_id)
@@ -274,16 +284,4 @@ fn MacosApp::web_view_host_id(
     }
   }
   None
-}
-
-///|
-fn MacosApp::drain_web_view_commands(
-  self : MacosApp,
-  platform_slot : MacosWindowPlatformSlot,
-) -> Unit {
-  match self.web_view_commands {
-    Some(queue) =>
-      ignore(drain_macos_webview_commands(platform_slot.window, queue))
-    None => ()
-  }
 }

@@ -15,7 +15,9 @@ fn[Msg] flex_layout(
     },
     children=() => children,
     layout=ctx => {
-      let measured = flex_measured_size(axis, spacing, ctx.child_sizes)
+      let measured = flex_measured_size(
+        axis, spacing, ctx.child_sizes, ctx.child_flex_weights,
+      )
       let size = ctx.constraints.constrain(measured)
       @core.ViewLayoutResult::new(
         size~,
@@ -41,17 +43,27 @@ fn flex_measured_size(
   axis : @core.Axis,
   spacing : Double,
   child_sizes : Array[@core.Size],
+  child_flex_weights : Array[Double],
 ) -> @core.Size {
   let mut main = 0.0
   let mut cross = 0.0
   for index, size in child_sizes {
+    let weight = if index < child_flex_weights.length() {
+      child_flex_weights[index]
+    } else {
+      0.0
+    }
+    // Weighted children are tight-fit (flex-basis 0): they claim no main-axis
+    // base, only growing later to consume slack. Their cross-axis size still
+    // counts so a row/column reports the right height/width.
+    let main_contribution = flex_child_main_base(axis, size, weight)
     match axis {
       @core.Axis::Horizontal => {
-        main = main + size.width
+        main = main + main_contribution
         cross = view_max_double(cross, size.height)
       }
       @core.Axis::Vertical => {
-        main = main + size.height
+        main = main + main_contribution
         cross = view_max_double(cross, size.width)
       }
     }
@@ -82,17 +94,22 @@ fn flex_child_frames(
   } else {
     let total_spacing = spacing * (count.to_double() - 1.0)
     let mut child_main_total = 0.0
-    for child_size in child_sizes {
+    for index, child_size in child_sizes {
+      let weight = if index < child_flex_weights.length() {
+        child_flex_weights[index]
+      } else {
+        0.0
+      }
       child_main_total = child_main_total +
-        flex_child_main_size(axis, child_size)
+        flex_child_main_base(axis, child_size, weight)
     }
     let available_main = match axis {
       @core.Axis::Horizontal => size.width
       @core.Axis::Vertical => size.height
     }
     // Slack is the main-axis space left after every child's base size. Weighted
-    // children (flex_weight > 0) grow to consume it proportionally, so a layout
-    // like `[spacer(weight=1), content, spacer(weight=1)]` centers `content`.
+    // children are tight-fit (base 0), so they share the full leftover space by
+    // weight — `[expanded(greedy), fixed]` keeps the fixed sibling on-screen.
     let slack = view_max_double(
       0.0,
       available_main - child_main_total - total_spacing,
@@ -157,9 +174,10 @@ fn flex_total_weight(weights : Array[Double]) -> Double {
 }
 
 ///|
-/// Per-child main-axis sizes after applying flex growth. Each child starts at
-/// its measured base size; weighted children claim `slack * weight /
-/// total_weight` extra (only when `total_weight > 0`).
+/// Per-child main-axis sizes after applying flex growth. Weighted children are
+/// tight-fit (base 0) and claim `slack * weight / total_weight`; unweighted
+/// children keep their measured base size. Only applies when
+/// `total_weight > 0`.
 fn flex_resolved_main_sizes(
   axis : @core.Axis,
   child_sizes : Array[@core.Size],
@@ -169,8 +187,8 @@ fn flex_resolved_main_sizes(
 ) -> Array[Double] {
   let sizes : Array[Double] = []
   for index, child_size in child_sizes {
-    let base = flex_child_main_size(axis, child_size)
     let weight = if index < weights.length() { weights[index] } else { 0.0 }
+    let base = flex_child_main_base(axis, child_size, weight)
     let grown = if total_weight > 0.0 && weight > 0.0 {
       base + slack * weight / total_weight
     } else {
@@ -195,6 +213,22 @@ fn flex_child_main_size(axis : @core.Axis, size : @core.Size) -> Double {
   match axis {
     @core.Axis::Horizontal => size.width
     @core.Axis::Vertical => size.height
+  }
+}
+
+///|
+/// The main-axis base size used for slack/growth math. Weighted children
+/// (weight > 0) are tight-fit: their base is 0 so they don't crowd out
+/// siblings before growth. Unweighted children keep their measured size.
+fn flex_child_main_base(
+  axis : @core.Axis,
+  size : @core.Size,
+  weight : Double,
+) -> Double {
+  if weight > 0.0 {
+    0.0
+  } else {
+    flex_child_main_size(axis, size)
   }
 }
 

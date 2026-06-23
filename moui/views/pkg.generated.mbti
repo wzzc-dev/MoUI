@@ -3,7 +3,6 @@ package "wzzc-dev/moui/views"
 
 import {
   "moonbitlang/core/debug",
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
 }
 
@@ -329,8 +328,6 @@ pub fn[Msg] tree_view(Array[TreeItem], expanded~ : Array[String], selected? : St
 pub fn validate_form(Array[FormFieldState]) -> FormValidationResult
 
 pub fn[T, Msg] virtual_list(Array[T], (T) -> String, (T) -> @core.View[Msg], state? : @core.ScrollState, item_height? : Double, viewport_height? : Double, spacing? : Double, overscan? : Int, empty? : @core.View[Msg]?) -> @core.View[Msg]
-
-pub fn[Msg] web_view(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : @host.WebViewNavigationPolicy, on_event? : ((@host.WebViewEvent) -> Msg)?) -> @core.View[Msg]
 
 pub fn[Msg] wizard(Array[WizardStep[Msg]], current~ : String, on_select~ : (String) -> Msg, theme? : @core.Theme, width? : Double, height? : Double) -> @core.View[Msg]
 
@@ -987,10 +984,6 @@ pub using @core {type ControlStateStyle}
 pub using @core {type KeyModifiers}
 
 pub using @core {type KeyboardShortcut}
-
-pub using @host {type WebViewEvent}
-
-pub using @host {type WebViewNavigationPolicy}
 
 // Traits
 

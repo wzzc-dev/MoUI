@@ -287,6 +287,10 @@ fn[Msg] modifier_layout(
       PaddingModifier(insets) => child_size.inflate(insets)
       FrameModifier(data) => resolve_frame_modifier_size(data, child_size)
       AspectRatioModifier(ratio) => aspect_ratio_size(child_size, ratio)
+      // Tight-fit (flex-basis 0): measured size is zero so the parent flex
+      // distributes the full main-axis space by weight without leaking the
+      // child's greedy measurement into the cached intrinsic size.
+      FlexibleModifier(_) => Size::new(width=0.0, height=0.0)
       _ => child_size
     },
   )

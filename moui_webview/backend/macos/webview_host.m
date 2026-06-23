@@ -287,9 +287,13 @@ void moui_macos_webview_sync(uint64_t raw_content_view_handle, moonbit_bytes_t i
                                                   identifier:identifier] autorelease];
     [g_records addObject:record];
   }
-  CGFloat flippedY = parent.bounds.size.height - y - height;
+  // The window content view (MBWContentView) overrides `isFlipped` to return
+  // YES, so it already uses a top-left origin matching the MoonBit layout
+  // frame (origin.y grows downward). Do NOT flip the Y axis here; doing so
+  // anchors the webview to the bottom of the window and keeps its distance
+  // to the bottom edge fixed across vertical resizes.
   [record syncURL:moui_macos_webview_string_from_bytes(url)
-            frame:NSMakeRect(x, flippedY, width, height)
+            frame:NSMakeRect(x, y, width, height)
            policy:policy];
 }
 

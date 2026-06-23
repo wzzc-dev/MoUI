@@ -64,6 +64,8 @@ pub fn linux_input_capabilities() -> @host.HostInputCapabilities {
 ///|
 pub fn linux_capability_summary(
   services? : @host.HostServiceCapabilities = service_capabilities(),
+  web_view_available? : Bool = false,
+  web_view_description? : String = "Native WebView is unavailable on this host.",
 ) -> @host.HostCapabilitySummary {
   @host.HostCapabilitySummary::from_contracts(
     info=backend_info().host_info,
@@ -77,7 +79,8 @@ pub fn linux_capability_summary(
     drag_drop_available=true,
     async_services=false,
     native_accessibility_available=backend_info().accessibility.native_platform_bridge_available,
-    web_view=linux_webview_capabilities(),
+    web_view_available~,
+    web_view_description~,
     description="Wayland host summary with renderer/window readiness, Linux clipboard/file dialog/text-file/open URL/menu services, text-input/IME requests, file drag/drop, and AT-SPI accessibility binding.",
   )
 }

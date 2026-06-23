@@ -96,7 +96,8 @@ pub fn macos_capability_summary(
     drag_drop_available=true,
     async_services=false,
     native_accessibility_available=backend_info().accessibility.native_platform_bridge_available,
-    web_view=macos_webview_capabilities(),
+    web_view_available=true,
+    web_view_description="macOS WKWebView native embedding is available.",
     description="AppKit host with clipboard, file dialog, URL, system theme, native context menu, text input, and file-drop contracts.",
   )
 }
