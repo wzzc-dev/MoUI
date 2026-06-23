@@ -2,6 +2,7 @@ members = [
   "./moui",
   "./moui_richtext",
   "./moui_tester",
+  "./moui_webview",
   "./moui_devtools",
   "./moui_agent",
   "./moui_agent_mcp",

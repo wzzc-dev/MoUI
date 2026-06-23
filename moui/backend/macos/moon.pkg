@@ -23,12 +23,11 @@ supported_targets = "native"
 options(
   link: {
     "native": {
-      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -framework WebKit -lz",
+      "cc-link-flags": "-framework AppKit -framework QuartzCore -framework UniformTypeIdentifiers -lz",
     },
   },
   "native-stub": [
     "macos_service_host.m",
-    "macos_webview_host.m",
     "macos_timer_host.m",
   ],
   targets: { },

@@ -1,0 +1,20 @@
+import {
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend/host" @moui_host,
+  "wzzc-dev/moui_webview/host" @host,
+  "wzzc-dev/window/macos" @window_macos,
+}
+
+supported_targets = "native"
+
+options(
+  link: {
+    "native": {
+      "cc-link-flags": "-framework WebKit",
+    },
+  },
+  "native-stub": [
+    "webview_host.m",
+  ],
+  targets: { },
+)

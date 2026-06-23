@@ -99,8 +99,7 @@ fn create_macos_app(
     platform_slots: MacosWindowPlatformSlots::new(),
     image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
     event_sources: options.event_sources,
-    web_view_commands: options.web_view_commands,
-    web_view_events: options.web_view_events,
+    webview_plugin: options.webview_plugin,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
@@ -111,9 +110,13 @@ fn create_macos_app(
     native_ime_runtime_smoke_before_commit_text: "",
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  install_macos_webview_event_dispatcher((native_view, id, event) => {
-    app.dispatch_web_view_event(native_view, id, event)
-  })
+  match options.webview_plugin {
+    Some(plugin) =>
+      (plugin.install_event_dispatcher)((window_ptr, id, name, value, detail, flag) => {
+        app.dispatch_webview_event_from_plugin(window_ptr, id, name, value, detail, flag)
+      })
+    None => ()
+  }
   (event_loop, app)
 }
 

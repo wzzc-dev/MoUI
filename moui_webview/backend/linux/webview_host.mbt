@@ -134,13 +134,13 @@ pub fn linux_webview_capabilities() -> @host.HostWebViewCapabilities {
 }
 
 ///|
-fn pump_linux_webview_runtime(max_iterations? : Int = 64) -> Bool {
+pub fn pump_linux_webview_runtime(max_iterations? : Int = 64) -> Bool {
   let pumped = linux_webview_pump(max_iterations)
   pumped > 0 || linux_webview_has_active_work() != 0
 }
 
 ///|
-fn linux_webview_runtime_next_tick_ms(delay_ms? : Int = 16) -> Int64 {
+pub fn linux_webview_runtime_next_tick_ms(delay_ms? : Int = 16) -> Int64 {
   linux_webview_next_tick_ms(delay_ms)
 }
 
@@ -214,7 +214,7 @@ fn linux_webview_platform_frame(
 /// Draw webview contents using renderer's draw_platform_view_pixels method
 pub fn draw_linux_webview_to_renderer(
   window : @window_linux.Window,
-  renderer : @host.HostWindowRenderer,
+  renderer : @moui_host.HostWindowRenderer,
   frame : @core.DrawFrame,
   content_offset_y? : Double = 0.0,
 ) -> Unit {

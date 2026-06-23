@@ -143,22 +143,16 @@ pub impl @window_linux.ApplicationHandler for LinuxApp with fn about_to_wait(
   self,
   event_loop,
 ) {
-  // Drain pending webview commands before pumping GTK events.
-  // This ensures LoadUrl commands reach WebKit before GTK processes
-  // stale navigation events (e.g., initial page load completing after
-  // the user has already navigated elsewhere).
-  for slot in self.platform_slots.slots {
-    self.drain_web_view_commands(slot)
+  // Drain pending webview commands through the plugin (if installed).
+  // The plugin manages its own native event pump internally.
+  match self.webview_plugin {
+    Some(plugin) =>
+      for slot in self.platform_slots.slots {
+        (plugin.drain_commands)(slot.window.wl_surface())
+      }
+    None => ()
   }
-  if pump_linux_webview_runtime() {
-    event_loop.set_control_flow(
-      @window_core.ControlFlow::wait_until(
-        linux_webview_runtime_next_tick_ms(delay_ms=16),
-      ),
-    )
-  } else {
-    event_loop.set_control_flow(@window_core.ControlFlow::Wait)
-  }
+  event_loop.set_control_flow(@window_core.ControlFlow::Wait)
   self.drain_window_requests(event_loop)
 }
 
@@ -334,23 +328,24 @@ fn LinuxApp::redraw_window(
         decorations=platform_slot.decorations,
       )
 
-      // Set up webview pixel drawing to happen during render_frame (after commands, before flush)
+	  // Set up webview pixel drawing through the plugin
       let has_webviews = frame.platform_views.length() > 0
       if has_webviews {
-        let win = platform_slot.window
-        let f = frame
-        let offset_y = platform_slot.decorations.titlebar_height
-        let renderer = platform_slot.renderer
-        platform_slot.renderer.set_platform_view_draw_fn(
-          Some(fn() {
-            draw_linux_webview_to_renderer(
-              win,
-              renderer,
-              f,
-              content_offset_y=offset_y,
-            )
-          }),
-        )
+        match self.webview_plugin {
+          Some(plugin) =>
+            match plugin.setup_platform_view_draw {
+              Some(setup_fn) => {
+                let f = frame
+                let renderer = platform_slot.renderer
+                let offset_y = platform_slot.decorations.titlebar_height
+                platform_slot.renderer.set_platform_view_draw_fn(
+                  Some(fn() { setup_fn(renderer, f, offset_y) }),
+                )
+              }
+              None => ()
+            }
+          None => ()
+        }
       }
 
       let result = platform_slot.renderer.render_frame({
@@ -368,12 +363,14 @@ fn LinuxApp::redraw_window(
         platform_slot.renderer.set_platform_view_draw_fn(None)
       }
 
-      sync_linux_platform_views(
-        platform_slot.window,
-        frame,
-        content_offset_y=platform_slot.decorations.titlebar_height,
-      )
-      self.drain_web_view_commands(platform_slot)
+      match self.webview_plugin {
+        Some(plugin) => {
+          let handle = platform_slot.window.wl_surface()
+          (plugin.sync_platform_views)(handle, frame, platform_slot.decorations.titlebar_height)
+          (plugin.drain_commands)(handle)
+        }
+        None => ()
+      }
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
       if result.presented {
@@ -410,25 +407,24 @@ fn LinuxApp::redraw_window(
 }
 
 ///|
-fn LinuxApp::dispatch_web_view_event(
+///|
+fn LinuxApp::dispatch_webview_event_from_plugin(
   self : LinuxApp,
-  native_surface : UInt64,
+  window_ptr : UInt64,
   id : String,
-  event : @host.WebViewEvent,
+  name : String,
+  value : String,
+  detail : String,
+  flag : Bool,
 ) -> Unit {
-  match self.web_view_host_id(native_surface) {
+  let platform_event = @core.PlatformViewEvent::Named(
+    name~, value~, detail~, flag~,
+  )
+  match self.webview_host_id(window_ptr) {
     Some(window_id) => {
-      let host_event = @host.HostEvent::WebView(id, event)
       match self.runtime_slots.lookup(window_id) {
-        Some(slot) => ignore(slot.driver.dispatch(host_event))
-        None => ()
-      }
-      ignore(self.publish_subscription_event(window_id, host_event))
-      match self.web_view_events {
-        Some(source) =>
-          ignore(
-            source.publish(@host.HostWebViewEvent::new(window_id~, id~, event~)),
-          )
+        Some(slot) =>
+          slot.driver.dispatch_platform_view(id, platform_event)
         None => ()
       }
       self.sync_text_input_session()
@@ -449,16 +445,4 @@ fn LinuxApp::web_view_host_id(
     }
   }
   None
-}
-
-///|
-fn LinuxApp::drain_web_view_commands(
-  self : LinuxApp,
-  platform_slot : LinuxWindowPlatformSlot,
-) -> Unit {
-  match self.web_view_commands {
-    Some(queue) =>
-      ignore(drain_linux_webview_commands(platform_slot.window, queue))
-    None => ()
-  }
 }
