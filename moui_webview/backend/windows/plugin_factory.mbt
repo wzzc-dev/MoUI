@@ -1,14 +1,13 @@
 ///|
-/// Build a `PlatformViewPlugin` (kind `"web_view"`) for the macOS native
-/// WKWebView bridge. The command queue holds pending LoadUrl/Reload/etc.
-/// commands enqueued by the app; the window handle is passed at call time by
-/// the host. Events are decoded from the native bridge into
-/// `@core.PlatformViewEvent` and handed to the host callback directly, so the
-/// host never re-packs the payload.
-pub fn create_macos_webview_plugin(
+/// Build a `PlatformViewPlugin` (kind `"web_view"`) for the Windows WebView2
+/// native bridge. The command queue holds pending LoadUrl/Reload/etc.
+/// commands enqueued by the app; the host passes the window's HWND at call
+/// time. Events are decoded from the native bridge into
+/// `@core.PlatformViewEvent` and handed to the host callback directly.
+pub fn create_windows_webview_plugin(
   commands : @host.HostWebViewCommandQueue,
 ) -> @moui_host.PlatformViewPlugin {
-  let capabilities_summary = if macos_webview_native_available() != 0 {
+  let capabilities_summary = if windows_webview_native_available() != 0 {
     "available"
   } else {
     "unavailable"
@@ -17,33 +16,28 @@ pub fn create_macos_webview_plugin(
     kind="web_view",
     capabilities_summary~,
     install_event_dispatcher=fn(callback) {
-      macos_webview_install_event_callback(
-        fn(cb, raw_handle, kind, id, url, detail, flag) {
-          cb(raw_handle, kind, id, url, detail, flag)
+      windows_webview_install_event_callback(
+        fn(cb, hwnd, kind, id, url, detail, flag) {
+          cb(hwnd, kind, id, url, detail, flag)
         },
-        (raw_handle, kind, id, url, detail, flag) => {
+        (hwnd, kind, id, url, detail, flag) => {
           let id_str = @host.webview_decode_ffi_string(id)
-          // Decode the native event to WebViewEvent, then convert to the
-          // platform-neutral PlatformViewEvent to get the correct
-          // name/value/detail/flag mapping (e.g. TitleChanged puts the title
-          // in `value`, not `detail`; CanGoBackChanged puts the bool in
-          // `flag`).
           let web_event = @host.webview_decode_native_event(
             kind, url, detail, flag,
           )
           let platform_event = @host.WebViewEvent::to_platform_event(
             web_event,
           )
-          callback(raw_handle, id_str, platform_event)
+          callback(hwnd, id_str, platform_event)
         },
       )
     },
-    sync_platform_views=fn(handle, frame, _offset_y) {
-      macos_webview_platform_views_begin(handle)
+    sync_platform_views=fn(hwnd, frame, _offset_y) {
+      windows_webview_platform_views_begin(hwnd)
       for placement in frame.platform_views {
         if placement.kind == "web_view" {
-          macos_webview_sync(
-            handle,
+          windows_webview_sync(
+            hwnd,
             @host.webview_encode_ffi_string(placement.id),
             @host.webview_encode_ffi_string(placement.property_or("url", "")),
             @host.webview_encode_ffi_string(placement.property_or("title", "")),
@@ -59,16 +53,16 @@ pub fn create_macos_webview_plugin(
           )
         }
       }
-      macos_webview_platform_views_end(handle)
+      windows_webview_platform_views_end(hwnd)
     },
-    drain_commands=fn(handle) {
+    drain_commands=fn(hwnd) {
       ignore(
         commands.drain_with_handler(command => {
           let (kind, text, detail) = @host.webview_encode_native_command(
             command.command,
           )
-          macos_webview_command(
-            handle,
+          windows_webview_command(
+            hwnd,
             @host.webview_encode_ffi_string(command.id),
             kind,
             @host.webview_encode_ffi_string(text),
@@ -77,8 +71,8 @@ pub fn create_macos_webview_plugin(
         }),
       )
     },
-    dispose_platform_views=fn(handle) {
-      macos_webview_platform_views_dispose(handle)
+    dispose_platform_views=fn(hwnd) {
+      windows_webview_platform_views_dispose(hwnd)
     },
     setup_platform_view_draw=None,
     poll_native=None,

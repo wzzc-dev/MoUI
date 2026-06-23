@@ -2,8 +2,8 @@
 package "examples/webview_demo/app"
 
 import {
-  "wzzc-dev/moui/backend/host",
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui_webview/host",
 }
 
 // Values

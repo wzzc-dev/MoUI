@@ -46,6 +46,8 @@ pub fn physical_position_to_core(@dpi.PhysicalPositionF64, scale_factor? : Doubl
 
 pub fn physical_size_to_core(@dpi.PhysicalSize) -> @wzzc-dev/moui/core.Size
 
+pub fn platform_view_plugins_next_deadline(Array[PlatformViewPlugin]) -> Int64?
+
 pub fn semantics_action_label(@wzzc-dev/moui/core.SemanticsAction) -> String
 
 pub fn surface_metrics_from_physical(@dpi.PhysicalSize, scale_factor? : Double) -> HostSurfaceMetrics
@@ -924,6 +926,18 @@ pub(all) enum PlatformChannelResponse {
   Error(String)
 } derive(Eq, ToJson, @debug.Debug)
 
+pub struct PlatformViewPlugin {
+  kind : String
+  capabilities_summary : String
+  install_event_dispatcher : ((UInt64, String, @wzzc-dev/moui/core.PlatformViewEvent) -> Unit) -> Unit
+  sync_platform_views : (UInt64, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit
+  drain_commands : (UInt64) -> Unit
+  dispose_platform_views : (UInt64) -> Unit
+  setup_platform_view_draw : ((UInt64, HostWindowRenderer, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit)?
+  poll_native : (() -> Int64?)?
+}
+pub fn PlatformViewPlugin::new(kind~ : String, capabilities_summary~ : String, install_event_dispatcher~ : ((UInt64, String, @wzzc-dev/moui/core.PlatformViewEvent) -> Unit) -> Unit, sync_platform_views~ : (UInt64, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit, drain_commands~ : (UInt64) -> Unit, dispose_platform_views~ : (UInt64) -> Unit, setup_platform_view_draw? : ((UInt64, HostWindowRenderer, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit)?, poll_native? : (() -> Int64?)?) -> Self
+
 pub(all) struct RedrawScheduler {
   mut state : RedrawSchedulerState
   mut schedule : () -> Unit
@@ -984,18 +998,8 @@ pub(all) enum TextInputSessionAction {
   DisableIme(@wzzc-dev/window/core.ImeRequest)
 } derive(Eq, @debug.Debug)
 
-pub struct WebviewPlugin {
-  capabilities_summary : String
-  install_event_dispatcher : ((UInt64, String, String, String, String, Bool) -> Unit) -> Unit
-  sync_platform_views : (UInt64, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit
-  drain_commands : (UInt64) -> Unit
-  dispose_platform_views : (UInt64) -> Unit
-  setup_platform_view_draw : ((HostWindowRenderer, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit)?
-}
-pub fn WebviewPlugin::new(capabilities_summary~ : String, install_event_dispatcher~ : ((UInt64, String, String, String, String, Bool) -> Unit) -> Unit, sync_platform_views~ : (UInt64, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit, drain_commands~ : (UInt64) -> Unit, dispose_platform_views~ : (UInt64) -> Unit, setup_platform_view_draw? : ((HostWindowRenderer, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit)?) -> Self
-
 // Type aliases
-pub type WebViewEventCallback = (UInt64, String, String, String, String, Bool) -> Unit
+pub type PlatformViewEventCallback = (UInt64, String, @wzzc-dev/moui/core.PlatformViewEvent) -> Unit
 
 // Traits
 
