@@ -41,7 +41,7 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 pub struct WindowsHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv event_sources : @host.HostPlatformEventSources?
-  priv webview_plugin : @host.WebviewPlugin?
+  priv platform_view_plugins : Array[@host.PlatformViewPlugin]
 }
 
 ///|
@@ -72,7 +72,7 @@ struct WindowsApp {
   platform_slots : WindowsWindowPlatformSlots
   image_repaint_tracker : @host.HostImageResourceRepaintTracker
   event_sources : @host.HostPlatformEventSources?
-  webview_plugin : @host.WebviewPlugin?
+  platform_view_plugins : Array[@host.PlatformViewPlugin]
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
@@ -95,9 +95,9 @@ priv struct WindowsWindowPlatformSlots {
 pub fn WindowsHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   event_sources? : @host.HostPlatformEventSources? = None,
-  webview_plugin? : @host.WebviewPlugin? = None,
+  platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> WindowsHostAppOptions {
-  { scene_resolver, event_sources, webview_plugin }
+  { scene_resolver, event_sources, platform_view_plugins }
 }
 
 ///|
@@ -214,18 +214,16 @@ fn run_app_with_renderer_provider_internal(
     platform_slots: WindowsWindowPlatformSlots::new(),
     image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
     event_sources: options.event_sources,
-    webview_plugin: options.webview_plugin,
+    platform_view_plugins: options.platform_view_plugins,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  match options.webview_plugin {
-    Some(plugin) =>
-      (plugin.install_event_dispatcher)((window_ptr, id, name, value, detail, flag) => {
-        app.dispatch_webview_event_from_plugin(window_ptr, id, name, value, detail, flag)
-      })
-    None => ()
+  for plugin in options.platform_view_plugins {
+    (plugin.install_event_dispatcher)((window_ptr, id, event) => {
+      app.dispatch_platform_view_event_from_plugin(window_ptr, id, event)
+    })
   }
   event_loop.run_app(app)
 }
@@ -725,13 +723,10 @@ fn WindowsApp::redraw_window(
       runtime_slot.driver.begin_redraw()
       let frame = runtime_slot.driver.draw_frame()
       let result = platform_slot.renderer.render_frame(frame)
-      match self.webview_plugin {
-        Some(plugin) => {
-          let handle = platform_slot.window.window_handle()
-          (plugin.sync_platform_views)(handle, frame, 0.0)
-          (plugin.drain_commands)(handle)
-        }
-        None => ()
+      let handle = platform_slot.window.window_handle()
+      for plugin in self.platform_view_plugins {
+        (plugin.sync_platform_views)(handle, frame, 0.0)
+        (plugin.drain_commands)(handle)
       }
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
@@ -769,23 +764,19 @@ fn WindowsApp::redraw_window(
 }
 
 ///|
-fn WindowsApp::dispatch_webview_event_from_plugin(
+/// Handle a decoded platform-view event received from a plugin's native event
+/// dispatcher. Routes it into the runtime tree via
+/// `HostRuntimeDriver::dispatch_platform_view`, bypassing `HostEvent` entirely.
+fn WindowsApp::dispatch_platform_view_event_from_plugin(
   self : WindowsApp,
   window_ptr : UInt64,
   id : String,
-  name : String,
-  value : String,
-  detail : String,
-  flag : Bool,
+  event : @core.PlatformViewEvent,
 ) -> Unit {
-  let platform_event = @core.PlatformViewEvent::Named(
-    name~, value~, detail~, flag~,
-  )
-  match self.webview_host_id(window_ptr) {
+  match self.platform_view_host_id(window_ptr) {
     Some(window_id) => {
       match self.runtime_slots.lookup(window_id) {
-        Some(slot) =>
-          slot.driver.dispatch_platform_view(id, platform_event)
+        Some(slot) => slot.driver.dispatch_platform_view(id, event)
         None => ()
       }
       self.sync_text_input_session()
@@ -796,7 +787,9 @@ fn WindowsApp::dispatch_webview_event_from_plugin(
 }
 
 ///|
-fn WindowsApp::web_view_host_id(
+/// Resolve a native window handle back to its `HostWindowId` by scanning the
+/// live platform slots. Used to route native platform-view events.
+fn WindowsApp::platform_view_host_id(
   self : WindowsApp,
   native_window : UInt64,
 ) -> @host.HostWindowId? {
@@ -1268,9 +1261,9 @@ fn WindowsApp::dispose_window(
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
-      match self.webview_plugin {
-        Some(plugin) => (plugin.dispose_platform_views)(slot.window.window_handle())
-        None => ()
+      let handle = slot.window.window_handle()
+      for plugin in self.platform_view_plugins {
+        (plugin.dispose_platform_views)(handle)
       }
       slot.renderer.set_image_resource_change_callback(None)
       slot.renderer.dispose()
