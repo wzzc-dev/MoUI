@@ -562,15 +562,13 @@ Linux runtime requirements are intentionally native:
   resolve to empty (the C stub body is guarded by `#ifdef __linux__` and only
   matters on Linux). Distro-specific setups can override the resolved flags
   with `MOUI_LINUX_GLIB_STUB_CC_FLAGS` and `MOUI_LINUX_GLIB_CC_LINK_FLAGS`.
-- Optional WebKitGTK development packages when building with
-  `MOUI_LINUX_ENABLE_WEBKITGTK` for native WebView support. Fallback builds do
-  not link WebKitGTK and report WebView unavailable. A configured host should
-  set `MOUI_LINUX_ENABLE_WEBKITGTK=1`; the `moui` prebuild resolves
-  `gtk+-3.0` with `webkit2gtk-4.1` or `webkit2gtk-4.0` through `pkg-config`.
-  Distro-specific setups can override that with
-  `MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` and
-  `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS`; the prebuild adds
-  `-DMOUI_LINUX_ENABLE_WEBKITGTK` when explicit WebKitGTK flags are provided.
+- WebKitGTK development packages (`libwebkit2gtk-4.1-dev` or `4.0`) for native
+  WebView support. The `moui_webview` prebuild auto-detects
+  `gtk+-3.0` with `webkit2gtk-4.1` or `webkit2gtk-4.0` through `pkg-config`;
+  if found, it enables the native bridge. Fallback builds do not link WebKitGTK
+  and report WebView unavailable. Distro-specific setups can override the
+  detection with `MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` and
+  `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS`.
 
 Useful focused commands on a configured Linux host:
 
@@ -612,10 +610,8 @@ provides `Window::present_rgba_pixels`, implemented with reusable `wl_shm`
 buffers, buffer-release tracking, `wl_surface_attach`, damage, commit, and
 display flush. Keeping the `wl_shm` presenter in the window backend avoids
 duplicating Wayland registry and buffer ownership in MoUI.
-Linux native WebView support is WebKitGTK-gated. Fallback builds do not link
-GTK/WebKitGTK, report `HostWebViewCapabilities.available=false`, and still
-compile the WebView Demo as unavailable UI. With `MOUI_LINUX_ENABLE_WEBKITGTK=1`
-and matching native dependencies, the host syncs placements from
+Linux native WebView support is auto-detected via `pkg-config`. When
+WebKitGTK development packages are installed, the host syncs placements from
 `DrawFrame.platform_views` using the Wayland surface handle, offsets placement
 below client decorations when needed, pumps the GTK main context from the Linux
 event-loop wait path, forwards navigation/title/history/JavaScript events
@@ -685,15 +681,13 @@ package smoke artifacts; keep the MoUI Showcase
 application-level observation. Keep `linux_wgpu` and `linux_wgpu_cosmic` as WGPU diagnostic
 observation when a Vulkan/WGPU stack is configured.
 
-For Linux WebView runtime evidence on a configured host, build or run the demo
-with WebKitGTK enabled and cite the smoke log separately from Skia first-frame
-evidence:
+For Linux WebView runtime evidence on a configured host with WebKitGTK
+installed, build or run the demo and cite the smoke log separately from Skia
+first-frame evidence:
 
 ```sh
-MOUI_LINUX_ENABLE_WEBKITGTK=1 \
-  moon check examples/webview_demo/linux_skia --target native
-MOUI_LINUX_ENABLE_WEBKITGTK=1 \
-  moon run examples/webview_demo/linux_skia --target native
+moon check examples/webview_demo/linux_skia --target native
+moon run examples/webview_demo/linux_skia --target native
 ```
 
 That smoke should exercise placement, controlled navigation policy failures,

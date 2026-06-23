@@ -75,9 +75,10 @@ moon run examples/webview_demo/linux_skia --target native
 ```
 
 The Linux entrypoint requires WebKitGTK (`webkit2gtk-4.1` or `4.0`) with
-`gtk+-3.0`.  Set `MOUI_LINUX_ENABLE_WEBKITGTK=1` or the explicit
+`gtk+-3.0`.  The build system auto-detects WebKitGTK via `pkg-config`;
+install `libwebkit2gtk-4.1-dev` to enable the native bridge.  Override with
 `MOUI_LINUX_WEBKITGTK_STUB_CC_FLAGS` / `MOUI_LINUX_WEBKITGTK_CC_LINK_FLAGS`
-environment variables to enable the native bridge.  Without WebKitGTK, the
+environment variables for custom setups.  Without WebKitGTK, the
 demo compiles and reports "unavailable".
 
 ### Web (wasm-gc)
