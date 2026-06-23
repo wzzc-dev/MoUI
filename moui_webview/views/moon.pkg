@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui_webview/host" @host,
 }
 
 supported_targets = "+native+wasm-gc"

@@ -56,16 +56,6 @@ pub fn text_input_ime_request_diagnostics(@wzzc-dev/moui/core.TextInputState) ->
 
 pub fn touch_phase_to_host(@wzzc-dev/window/core.TouchPhase) -> HostScrollPhase
 
-pub fn webview_decode_ffi_string(Bytes) -> String
-
-pub fn webview_decode_native_event(Int, Bytes, Bytes, Int) -> WebViewEvent
-
-pub fn webview_encode_ffi_string(String) -> Bytes
-
-pub fn webview_encode_native_command(WebViewCommand) -> (Int, String, String)
-
-pub fn webview_native_policy_code(WebViewNavigationPolicy) -> Int
-
 pub fn window_event_is_context_menu_button(@wzzc-dev/window/core.WindowEvent) -> Bool
 
 pub fn window_event_is_context_menu_trigger(@wzzc-dev/window/core.WindowEvent) -> Bool
@@ -181,13 +171,14 @@ pub(all) struct HostCapabilitySummary {
   drag_drop_available : Bool
   async_services : Bool
   native_accessibility_available : Bool
-  web_view : HostWebViewCapabilities
+  web_view_available : Bool
+  web_view_description : String
   description : String
 } derive(Eq, ToJson, @debug.Debug)
-pub fn HostCapabilitySummary::from_contracts(info~ : HostAppInfo, services~ : HostServiceCapabilities, input~ : HostInputCapabilities, label? : String, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view? : HostWebViewCapabilities, description? : String) -> Self
+pub fn HostCapabilitySummary::from_contracts(info~ : HostAppInfo, services~ : HostServiceCapabilities, input~ : HostInputCapabilities, label? : String, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view_available? : Bool, web_view_description? : String, description? : String) -> Self
 pub fn HostCapabilitySummary::has_required_app_basics(Self) -> Bool
 pub fn HostCapabilitySummary::input_count(Self) -> Int
-pub fn HostCapabilitySummary::new(backend~ : HostBackendKind, label? : String, services? : HostServiceCapabilities, input? : HostInputCapabilities, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view? : HostWebViewCapabilities, description? : String) -> Self
+pub fn HostCapabilitySummary::new(backend~ : HostBackendKind, label? : String, services? : HostServiceCapabilities, input? : HostInputCapabilities, window_lifecycle? : Bool, multi_window? : Bool, text_input_available? : Bool, ime_available? : Bool, drag_drop_available? : Bool, async_services? : Bool, native_accessibility_available? : Bool, web_view_available? : Bool, web_view_description? : String, description? : String) -> Self
 pub fn HostCapabilitySummary::preflight_fields(Self) -> String
 pub fn HostCapabilitySummary::service_count(Self) -> Int
 pub fn HostCapabilitySummary::test_host(label? : String) -> Self
@@ -226,7 +217,6 @@ pub(all) enum HostEvent {
   Keyboard(@wzzc-dev/moui/core.KeyboardEvent)
   TextInput(@wzzc-dev/moui/core.TextInputEvent)
   DragDrop(@wzzc-dev/moui/core.DragDropEvent)
-  WebView(String, WebViewEvent)
   ThemeChanged(@wzzc-dev/moui/core.ColorScheme)
   Command(@wzzc-dev/moui/core.CommandIntent)
   RedrawRequested
@@ -465,6 +455,7 @@ pub fn HostRuntimeDriver::dispatch(Self, HostEvent) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_action_command_with_services(Self, @wzzc-dev/moui/core.ActionCommand, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_command_with_services(Self, @wzzc-dev/moui/core.CommandIntent, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::dispatch_keyboard_with_services(Self, @wzzc-dev/moui/core.KeyboardEvent, HostServiceBridge) -> HostEventResult
+pub fn HostRuntimeDriver::dispatch_platform_view(Self, String, @wzzc-dev/moui/core.PlatformViewEvent) -> Unit
 pub fn HostRuntimeDriver::dispatch_service_completion(Self, HostCompletedServiceResponse, HostServiceBridge) -> HostEventResult
 pub fn HostRuntimeDriver::draw_commands(Self) -> Array[@wzzc-dev/moui/core.DrawCommand]
 pub fn HostRuntimeDriver::draw_frame(Self) -> @wzzc-dev/moui/core.DrawFrame
@@ -620,51 +611,6 @@ pub struct HostTimerSource {
 }
 pub fn HostTimerSource::new(start_timer~ : (Double, (@wzzc-dev/moui/core.Frame) -> Unit) -> (() -> Unit)?) -> Self
 pub fn[Msg] HostTimerSource::subscription(Self, interval_ms~ : Double, key? : String, label? : String, map~ : (@wzzc-dev/moui/core.Frame) -> Msg) -> @wzzc-dev/moui/core.Subscription[Msg]
-
-pub(all) struct HostWebViewCapabilities {
-  available : Bool
-  controlled_navigation : Bool
-  commands : Bool
-  javascript_evaluation : Bool
-  native_embedding : Bool
-  description : String
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostWebViewCapabilities::native_available(javascript_evaluation? : Bool, description? : String) -> Self
-pub fn HostWebViewCapabilities::unavailable(description? : String) -> Self
-
-pub struct HostWebViewCommandQueue {
-  // private fields
-}
-pub fn HostWebViewCommandQueue::drain_with_handler(Self, (HostWebViewQueuedCommand) -> Unit) -> Int
-pub fn HostWebViewCommandQueue::enqueue(Self, id~ : String, command~ : WebViewCommand) -> Unit
-pub fn HostWebViewCommandQueue::evaluate_javascript(Self, id~ : String, script~ : String, request_id? : String) -> Unit
-pub fn HostWebViewCommandQueue::go_back(Self, id~ : String) -> Unit
-pub fn HostWebViewCommandQueue::go_forward(Self, id~ : String) -> Unit
-pub fn HostWebViewCommandQueue::load_url(Self, id~ : String, url~ : String) -> Unit
-pub fn HostWebViewCommandQueue::new() -> Self
-pub fn HostWebViewCommandQueue::pending_count(Self) -> Int
-pub fn HostWebViewCommandQueue::reload(Self, id~ : String) -> Unit
-pub fn HostWebViewCommandQueue::stop(Self, id~ : String) -> Unit
-
-pub(all) struct HostWebViewEvent {
-  window_id : HostWindowId
-  id : String
-  event : WebViewEvent
-} derive(Eq, ToJson, @debug.Debug)
-pub fn HostWebViewEvent::new(window_id~ : HostWindowId, id~ : String, event~ : WebViewEvent) -> Self
-
-pub struct HostWebViewEventSource {
-  // private fields
-}
-pub fn HostWebViewEventSource::active_handler_count(Self) -> Int
-pub fn HostWebViewEventSource::new() -> Self
-pub fn HostWebViewEventSource::publish(Self, HostWebViewEvent) -> Int
-pub fn[Msg] HostWebViewEventSource::subscription(Self, key? : String, label? : String, map~ : (HostWebViewEvent) -> Msg?) -> @wzzc-dev/moui/core.Subscription[Msg]
-
-pub(all) struct HostWebViewQueuedCommand {
-  id : String
-  command : WebViewCommand
-} derive(Eq, ToJson, @debug.Debug)
 
 pub struct HostWindowCommands {
   queue : HostWindowRequestQueue
@@ -1038,54 +984,18 @@ pub(all) enum TextInputSessionAction {
   DisableIme(@wzzc-dev/window/core.ImeRequest)
 } derive(Eq, @debug.Debug)
 
-pub(all) enum WebViewCommand {
-  LoadUrl(String)
-  Reload
-  Stop
-  GoBack
-  GoForward
-  EvaluateJavaScript(String, String)
-} derive(Eq, ToJson, @debug.Debug)
-pub fn WebViewCommand::evaluate_javascript(script~ : String, request_id? : String) -> Self
-pub fn WebViewCommand::load_url(String) -> Self
-
-pub(all) enum WebViewEvent {
-  NavigationRequested(String)
-  NavigationStarted(String)
-  NavigationCommitted(String)
-  NavigationFinished(String)
-  NavigationFailed(String, String)
-  TitleChanged(String)
-  CanGoBackChanged(Bool)
-  CanGoForwardChanged(Bool)
-  JavaScriptResult(String, String)
-} derive(Eq, ToJson, @debug.Debug)
-pub fn WebViewEvent::from_platform_event(@wzzc-dev/moui/core.PlatformViewEvent) -> Self?
-pub fn WebViewEvent::to_platform_event(Self) -> @wzzc-dev/moui/core.PlatformViewEvent
-
-pub(all) enum WebViewNavigationPolicy {
-  AllowHttpHttpsFile
-  AllowHttpHttps
-  AllowAll
-} derive(Eq, ToJson, @debug.Debug)
-pub fn WebViewNavigationPolicy::from_revision_key(String) -> Self
-pub fn WebViewNavigationPolicy::revision_key(Self) -> String
-
-pub(all) struct WebViewSpec {
-  key : @wzzc-dev/moui/core.Key?
-  id : String
-  url : String
-  width : Double?
-  height : Double?
-  title : String
-  policy : WebViewNavigationPolicy
-  on_event : ((WebViewEvent) -> Unit)?
+pub struct WebviewPlugin {
+  capabilities_summary : String
+  install_event_dispatcher : ((UInt64, String, String, String, String, Bool) -> Unit) -> Unit
+  sync_platform_views : (UInt64, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit
+  drain_commands : (UInt64) -> Unit
+  dispose_platform_views : (UInt64) -> Unit
+  setup_platform_view_draw : ((HostWindowRenderer, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit)?
 }
-pub fn WebViewSpec::allows_url(Self, String) -> Bool
-pub fn WebViewSpec::new(id~ : String, url~ : String, width? : Double?, height? : Double?, title? : String, policy? : WebViewNavigationPolicy, on_event? : ((WebViewEvent) -> Unit)?) -> Self
-pub fn WebViewSpec::platform_view_placement(Self, frame~ : @wzzc-dev/moui/core.Rect, clip? : @wzzc-dev/moui/core.Rect?) -> @wzzc-dev/moui/core.PlatformViewPlacement
+pub fn WebviewPlugin::new(capabilities_summary~ : String, install_event_dispatcher~ : ((UInt64, String, String, String, String, Bool) -> Unit) -> Unit, sync_platform_views~ : (UInt64, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit, drain_commands~ : (UInt64) -> Unit, dispose_platform_views~ : (UInt64) -> Unit, setup_platform_view_draw? : ((HostWindowRenderer, @wzzc-dev/moui/core.DrawFrame, Double) -> Unit)?) -> Self
 
 // Type aliases
+pub type WebViewEventCallback = (UInt64, String, String, String, String, Bool) -> Unit
 
 // Traits
 

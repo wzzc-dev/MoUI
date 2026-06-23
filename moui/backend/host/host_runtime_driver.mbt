@@ -61,12 +61,6 @@ pub fn HostRuntimeDriver::dispatch(
       self.runtime.dispatch_event(@core.AppEvent::DragDrop(event))
       self.request_redraw_if_needed()
     }
-    WebView(id, event) => {
-      self.runtime.dispatch_event(
-        @core.AppEvent::PlatformView(id, event.to_platform_event()),
-      )
-      self.request_redraw_if_needed()
-    }
     ThemeChanged(scheme) => {
       self.runtime.set_environment(
         self.runtime.environment().with_system_scheme(scheme),
@@ -83,10 +77,24 @@ pub fn HostRuntimeDriver::dispatch(
     }
     CloseRequested => {
       self.close_requested = true
-      self.runtime.dispatch_event(@core.AppEvent::CloseRequested)
+      self.request_redraw_if_needed()
     }
   }
   self.event_result()
+}
+
+///|
+/// Dispatch a platform view event directly to the runtime tree.
+/// Used by the WebviewPlugin infrastructure to route decoded native
+/// webview events without going through HostEvent (which no longer
+/// carries a WebView variant).
+pub fn HostRuntimeDriver::dispatch_platform_view(
+  self : HostRuntimeDriver,
+  id : String,
+  event : @core.PlatformViewEvent,
+) -> Unit {
+  self.runtime.dispatch_event(@core.AppEvent::PlatformView(id, event))
+  self.request_redraw()
 }
 
 ///|

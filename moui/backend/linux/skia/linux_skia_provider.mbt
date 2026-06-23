@@ -2,8 +2,7 @@
 pub struct LinuxSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
-  priv web_view_commands : @host.HostWebViewCommandQueue?
-  priv web_view_events : @host.HostWebViewEventSource?
+  priv webview_plugin : @host.WebviewPlugin?
 }
 
 ///|
@@ -15,10 +14,9 @@ pub struct LinuxSkiaSmokeOptions {
 pub fn LinuxSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
-  web_view_commands? : @host.HostWebViewCommandQueue? = None,
-  web_view_events? : @host.HostWebViewEventSource? = None,
+  webview_plugin? : @host.WebviewPlugin? = None,
 ) -> LinuxSkiaAppOptions {
-  { scene_resolver, font_resolution, web_view_commands, web_view_events }
+  { scene_resolver, font_resolution, webview_plugin }
 }
 
 ///|
@@ -55,8 +53,7 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@linux_host.LinuxHostAppOptions::new(
       scene_resolver=options.scene_resolver,
-      web_view_commands=options.web_view_commands,
-      web_view_events=options.web_view_events,
+      webview_plugin=options.webview_plugin,
     ),
     window_requests~,
   )
@@ -80,8 +77,7 @@ pub fn run_smoke_app_with_options(
     provider=renderer_provider(options~),
     options=@linux_host.LinuxHostAppOptions::new(
       scene_resolver=options.scene_resolver,
-      web_view_commands=options.web_view_commands,
-      web_view_events=options.web_view_events,
+      webview_plugin=options.webview_plugin,
     ),
     smoke_options=@linux_host.LinuxHostSmokeOptions::new(
       first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,

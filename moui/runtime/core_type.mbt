@@ -24,7 +24,6 @@ using @core {
   type KeyboardEvent,
   type LayoutDirection,
   type LayoutResult,
-  type PlatformViewEvent,
   type PlatformViewPlacement,
   type PointerEvent,
   type PointerPhase,
