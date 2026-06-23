@@ -1,0 +1,10 @@
+import {
+  "examples/excel/cell",
+  "examples/excel/formula",
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

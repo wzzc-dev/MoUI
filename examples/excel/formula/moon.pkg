@@ -1,0 +1,11 @@
+import {
+  "moonbitlang/core/math",
+  "moonbitlang/core/string",
+  "examples/excel/cell",
+}
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)
