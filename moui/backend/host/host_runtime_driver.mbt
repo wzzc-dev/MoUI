@@ -85,9 +85,9 @@ pub fn HostRuntimeDriver::dispatch(
 
 ///|
 /// Dispatch a platform view event directly to the runtime tree.
-/// Used by the WebviewPlugin infrastructure to route decoded native
-/// webview events without going through HostEvent (which no longer
-/// carries a WebView variant).
+/// Used by the `PlatformViewPlugin` infrastructure to route decoded native
+/// platform-view events without going through `HostEvent` (which no longer
+/// carries a platform-view variant).
 pub fn HostRuntimeDriver::dispatch_platform_view(
   self : HostRuntimeDriver,
   id : String,

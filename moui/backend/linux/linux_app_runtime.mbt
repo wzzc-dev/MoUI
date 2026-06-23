@@ -66,18 +66,16 @@ fn run_app_with_renderer_provider_internal(
     platform_slots: LinuxWindowPlatformSlots::new(),
     image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
     event_sources: options.event_sources,
-    webview_plugin: options.webview_plugin,
+    platform_view_plugins: options.platform_view_plugins,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  match options.webview_plugin {
-    Some(plugin) =>
-      (plugin.install_event_dispatcher)((window_ptr, id, name, value, detail, flag) => {
-        app.dispatch_webview_event_from_plugin(window_ptr, id, name, value, detail, flag)
-      })
-    None => ()
+  for plugin in options.platform_view_plugins {
+    (plugin.install_event_dispatcher)((window_ptr, id, event) => {
+      app.dispatch_platform_view_event_from_plugin(window_ptr, id, event)
+    })
   }
   event_loop.run_app(app)
 }

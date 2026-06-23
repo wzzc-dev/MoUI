@@ -14,7 +14,7 @@ pub struct MacosSkiaAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv font_resolution : @skia_renderer.SkiaFontResolution
   priv surface_route : @skia_renderer.SkiaSurfaceRoute
-  priv webview_plugin : @host.WebviewPlugin?
+  priv platform_view_plugins : Array[@host.PlatformViewPlugin]
 }
 
 ///|
@@ -28,13 +28,13 @@ pub fn MacosSkiaAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   font_resolution? : @skia_renderer.SkiaFontResolution = @skia_renderer.SkiaFontResolution::SystemFontMgr,
   surface_route? : @skia_renderer.SkiaSurfaceRoute = @skia_renderer.SkiaSurfaceRoute::RasterSurfaceRoute,
-  webview_plugin? : @host.WebviewPlugin? = None,
+  platform_view_plugins? : Array[@host.PlatformViewPlugin] = [],
 ) -> MacosSkiaAppOptions {
   {
     scene_resolver,
     font_resolution,
     surface_route,
-    webview_plugin,
+    platform_view_plugins,
   }
 }
 
@@ -73,7 +73,7 @@ pub fn run_app_with_options(
     provider=renderer_provider(options~),
     options=@macos_host.MacosHostAppOptions::new(
       scene_resolver=options.scene_resolver,
-      webview_plugin=options.webview_plugin,
+      platform_view_plugins=options.platform_view_plugins,
     ),
     window_requests~,
   )
@@ -95,37 +95,37 @@ pub fn run_smoke_app_with_options(
     title,
     runtime,
     provider=renderer_provider(options~),
-	    options=@macos_host.MacosHostAppOptions::new(
-	      scene_resolver=options.scene_resolver,
-	      webview_plugin=options.webview_plugin,
-	    ),
-	    smoke_options=@macos_host.MacosHostSmokeOptions::new(
-	      first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
-	      native_ime_runtime_smoke=smoke_options.native_ime_runtime_smoke,
-	    ),
-	    window_requests~,
-	  )
-	}
+    options=@macos_host.MacosHostAppOptions::new(
+      scene_resolver=options.scene_resolver,
+      platform_view_plugins=options.platform_view_plugins,
+    ),
+    smoke_options=@macos_host.MacosHostSmokeOptions::new(
+      first_frame_smoke_auto_exit=smoke_options.first_frame_smoke_auto_exit,
+      native_ime_runtime_smoke=smoke_options.native_ime_runtime_smoke,
+    ),
+    window_requests~,
+  )
+}
 
-	///|
-	pub async fn run_app_with_options_async_pump(
-	  title : String,
-	  runtime : @runtime.AppRuntime,
-	  options~ : MacosSkiaAppOptions,
-	  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
-	  frame_interval_ms? : Int = 8,
-	) -> Unit {
-	  if !macos_skia_provider_ready() {
-	    println(macos_skia_unavailable_message())
-	    return ()
-	  }
-	  @macos_host.run_app_with_renderer_provider_async_pump(
-	    title,
-	    runtime,
-	    provider=renderer_provider(options~),
-	    options=@macos_host.MacosHostAppOptions::new(
-	      scene_resolver=options.scene_resolver,
-	      webview_plugin=options.webview_plugin,
+///|
+pub async fn run_app_with_options_async_pump(
+  title : String,
+  runtime : @runtime.AppRuntime,
+  options~ : MacosSkiaAppOptions,
+  window_requests? : @host.HostWindowRequestQueue = @host.HostWindowRequestQueue::new(),
+  frame_interval_ms? : Int = 8,
+) -> Unit {
+  if !macos_skia_provider_ready() {
+    println(macos_skia_unavailable_message())
+    return ()
+  }
+  @macos_host.run_app_with_renderer_provider_async_pump(
+    title,
+    runtime,
+    provider=renderer_provider(options~),
+    options=@macos_host.MacosHostAppOptions::new(
+      scene_resolver=options.scene_resolver,
+      platform_view_plugins=options.platform_view_plugins,
     ),
     window_requests~,
     frame_interval_ms~,

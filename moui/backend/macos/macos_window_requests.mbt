@@ -502,11 +502,10 @@ fn MacosApp::dispose_window(
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
-      match self.webview_plugin {
-        Some(plugin) =>
-          match macos_native_view_handle(slot.window) {
-            Some(handle) => (plugin.dispose_platform_views)(handle)
-            None => ()
+      match macos_native_view_handle(slot.window) {
+        Some(handle) =>
+          for plugin in self.platform_view_plugins {
+            (plugin.dispose_platform_views)(handle)
           }
         None => ()
       }

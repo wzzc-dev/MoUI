@@ -13,7 +13,7 @@ fn main {
       height=760.0,
     ),
     options=@macos_skia_backend.MacosSkiaAppOptions::new(
-      webview_plugin=Some(plugin),
+      platform_view_plugins=[plugin],
     ),
   )
 }

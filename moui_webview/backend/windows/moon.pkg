@@ -1,5 +1,6 @@
 import {
   "wzzc-dev/moui/core",
+  "wzzc-dev/moui/backend/host" @moui_host,
   "wzzc-dev/moui_webview/host" @host,
   "wzzc-dev/window/windows" @win,
 }
