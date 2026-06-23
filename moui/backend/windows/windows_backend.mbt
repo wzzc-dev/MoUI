@@ -41,8 +41,7 @@ pub(all) struct WindowsAccessibilityBridgeInfo {
 pub struct WindowsHostAppOptions {
   priv scene_resolver : @host.HostWindowSceneResolver
   priv event_sources : @host.HostPlatformEventSources?
-  priv web_view_commands : @host.HostWebViewCommandQueue?
-  priv web_view_events : @host.HostWebViewEventSource?
+  priv webview_plugin : @host.WebviewPlugin?
 }
 
 ///|
@@ -73,8 +72,7 @@ struct WindowsApp {
   platform_slots : WindowsWindowPlatformSlots
   image_repaint_tracker : @host.HostImageResourceRepaintTracker
   event_sources : @host.HostPlatformEventSources?
-  web_view_commands : @host.HostWebViewCommandQueue?
-  web_view_events : @host.HostWebViewEventSource?
+  webview_plugin : @host.WebviewPlugin?
   mut last_pointer : @core.Point
   mut modifiers : @core.KeyModifiers
   mut first_frame_smoke_auto_exit : Bool
@@ -97,10 +95,9 @@ priv struct WindowsWindowPlatformSlots {
 pub fn WindowsHostAppOptions::new(
   scene_resolver? : @host.HostWindowSceneResolver = @host.HostWindowSceneResolver::unavailable(),
   event_sources? : @host.HostPlatformEventSources? = None,
-  web_view_commands? : @host.HostWebViewCommandQueue? = None,
-  web_view_events? : @host.HostWebViewEventSource? = None,
+  webview_plugin? : @host.WebviewPlugin? = None,
 ) -> WindowsHostAppOptions {
-  { scene_resolver, event_sources, web_view_commands, web_view_events }
+  { scene_resolver, event_sources, webview_plugin }
 }
 
 ///|
@@ -217,16 +214,19 @@ fn run_app_with_renderer_provider_internal(
     platform_slots: WindowsWindowPlatformSlots::new(),
     image_repaint_tracker: @host.HostImageResourceRepaintTracker::new(),
     event_sources: options.event_sources,
-    web_view_commands: options.web_view_commands,
-    web_view_events: options.web_view_events,
+    webview_plugin: options.webview_plugin,
     last_pointer: @core.Point::new(x=0.0, y=0.0),
     modifiers: @core.KeyModifiers::none(),
     first_frame_smoke_auto_exit: smoke_options.first_frame_smoke_auto_exit,
   }
   app.driver.set_redraw_scheduler(() => app.request_redraw())
-  install_windows_webview_event_dispatcher((native_window, id, event) => {
-    app.dispatch_web_view_event(native_window, id, event)
-  })
+  match options.webview_plugin {
+    Some(plugin) =>
+      (plugin.install_event_dispatcher)((window_ptr, id, name, value, detail, flag) => {
+        app.dispatch_webview_event_from_plugin(window_ptr, id, name, value, detail, flag)
+      })
+    None => ()
+  }
   event_loop.run_app(app)
 }
 
@@ -291,7 +291,8 @@ pub fn windows_capability_summary(
     drag_drop_available=true,
     async_services=false,
     native_accessibility_available=windows_accessibility_bridge_info().native_platform_bridge_available,
-    web_view=windows_webview_capabilities(),
+    web_view_available=true,
+    web_view_description="Windows WebView2 native embedding is available.",
     description="Win32 host with clipboard, file dialog, URL, system theme, native context menu, text input, and file-drop contracts.",
   )
 }
@@ -724,8 +725,14 @@ fn WindowsApp::redraw_window(
       runtime_slot.driver.begin_redraw()
       let frame = runtime_slot.driver.draw_frame()
       let result = platform_slot.renderer.render_frame(frame)
-      sync_windows_platform_views(platform_slot.window, frame)
-      self.drain_web_view_commands(platform_slot)
+      match self.webview_plugin {
+        Some(plugin) => {
+          let handle = platform_slot.window.window_handle()
+          (plugin.sync_platform_views)(handle, frame, 0.0)
+          (plugin.drain_commands)(handle)
+        }
+        None => ()
+      }
       runtime_slot.driver.apply_render_frame_result(result)
       runtime_slot.driver.finish_redraw()
       if result.presented {
@@ -762,25 +769,23 @@ fn WindowsApp::redraw_window(
 }
 
 ///|
-fn WindowsApp::dispatch_web_view_event(
+fn WindowsApp::dispatch_webview_event_from_plugin(
   self : WindowsApp,
-  native_window : UInt64,
+  window_ptr : UInt64,
   id : String,
-  event : @host.WebViewEvent,
+  name : String,
+  value : String,
+  detail : String,
+  flag : Bool,
 ) -> Unit {
-  match self.web_view_host_id(native_window) {
+  let platform_event = @core.PlatformViewEvent::Named(
+    name~, value~, detail~, flag~,
+  )
+  match self.webview_host_id(window_ptr) {
     Some(window_id) => {
-      let host_event = @host.HostEvent::WebView(id, event)
       match self.runtime_slots.lookup(window_id) {
-        Some(slot) => ignore(slot.driver.dispatch(host_event))
-        None => ()
-      }
-      ignore(self.publish_subscription_event(window_id, host_event))
-      match self.web_view_events {
-        Some(source) =>
-          ignore(
-            source.publish(@host.HostWebViewEvent::new(window_id~, id~, event~)),
-          )
+        Some(slot) =>
+          slot.driver.dispatch_platform_view(id, platform_event)
         None => ()
       }
       self.sync_text_input_session()
@@ -801,18 +806,6 @@ fn WindowsApp::web_view_host_id(
     }
   }
   None
-}
-
-///|
-fn WindowsApp::drain_web_view_commands(
-  self : WindowsApp,
-  platform_slot : WindowsWindowPlatformSlot,
-) -> Unit {
-  match self.web_view_commands {
-    Some(queue) =>
-      ignore(drain_windows_webview_commands(platform_slot.window, queue))
-    None => ()
-  }
 }
 
 ///|
@@ -1275,7 +1268,10 @@ fn WindowsApp::dispose_window(
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
-      dispose_windows_platform_views(slot.window)
+      match self.webview_plugin {
+        Some(plugin) => (plugin.dispose_platform_views)(slot.window.window_handle())
+        None => ()
+      }
       slot.renderer.set_image_resource_change_callback(None)
       slot.renderer.dispose()
       slot.window.drop()

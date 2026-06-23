@@ -5,8 +5,8 @@ pub fn[Msg] web_view(
   width? : Double? = None,
   height? : Double? = None,
   title? : String = "",
-  policy? : WebViewNavigationPolicy = WebViewNavigationPolicy::AllowHttpHttpsFile,
-  on_event? : ((WebViewEvent) -> Msg)? = None,
+  policy? : @host.WebViewNavigationPolicy = @host.WebViewNavigationPolicy::AllowHttpHttpsFile,
+  on_event? : ((@host.WebViewEvent) -> Msg)? = None,
 ) -> @core.View[Msg] {
   @core.View::node(
     identity=() => @core.ViewIdentity::new(kind="WebView", key=Some(id)),
@@ -17,8 +17,8 @@ pub fn[Msg] web_view(
       @core.ViewLayoutResult::new(
         size=ctx.constraints.constrain(
           @core.Size::new(
-            width=width.unwrap_or(640.0),
-            height=height.unwrap_or(360.0),
+            width=width.unwrap_or(ctx.constraints.max.width),
+            height=height.unwrap_or(ctx.constraints.max.height),
           ),
         ),
       )

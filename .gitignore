@@ -17,3 +17,4 @@ dist/
 .idea/
 .vscode/
 website/web_wasm/docs/*
+trace.json

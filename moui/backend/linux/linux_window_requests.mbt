@@ -518,7 +518,10 @@ fn LinuxApp::dispose_window(
   ignore(self.platform_windows.remove_host(window_id))
   match self.platform_slots.remove_host(window_id) {
     Some(slot) => {
-      dispose_linux_platform_views(slot.window)
+      match self.webview_plugin {
+        Some(plugin) => (plugin.dispose_platform_views)(slot.window.wl_surface())
+        None => ()
+      }
       slot.renderer.set_image_resource_change_callback(None)
       slot.renderer.dispose()
       slot.window.drop()

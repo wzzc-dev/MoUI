@@ -230,9 +230,9 @@ test "virtual node scroll updates state and marks layout dirty" {
 
 ///|
 test "virtual node webview paints platform view and dispatches events" {
-  let received : Array[@views.WebViewEvent] = []
+  let received : Array[@webview_host.WebViewEvent] = []
   let runtime = AppRuntime::new_view(
-    root=@views.web_view(
+    root=@webview_views.web_view(
       id="docs",
       url="https://example.com",
       width=Some(320.0),
@@ -255,20 +255,20 @@ test "virtual node webview paints platform view and dispatches events" {
   runtime.dispatch_event(
     @core.AppEvent::PlatformView(
       "docs",
-      @views.WebViewEvent::TitleChanged("Loaded").to_platform_event(),
+      @webview_host.WebViewEvent::TitleChanged("Loaded").to_platform_event(),
     ),
   )
-  if received != [@views.WebViewEvent::TitleChanged("Loaded")] {
+  if received != [@webview_host.WebViewEvent::TitleChanged("Loaded")] {
     fail("expected virtual node webview to dispatch event")
   }
 }
 
 ///|
 test "nested virtual node webview dispatches events through generic children" {
-  let received : Array[@views.WebViewEvent] = []
+  let received : Array[@webview_host.WebViewEvent] = []
   let runtime = AppRuntime::new_view(
     root=runtime_test_padding(
-      child=@views.web_view(
+      child=@webview_views.web_view(
         id="nested",
         url="https://example.com/nested",
         width=Some(320.0),
@@ -284,11 +284,11 @@ test "nested virtual node webview dispatches events through generic children" {
   runtime.dispatch_event(
     @core.AppEvent::PlatformView(
       "nested",
-      @views.WebViewEvent::NavigationFinished("https://example.com/nested").to_platform_event(),
+      @webview_host.WebViewEvent::NavigationFinished("https://example.com/nested").to_platform_event(),
     ),
   )
   if received !=
-    [@views.WebViewEvent::NavigationFinished("https://example.com/nested")] {
+    [@webview_host.WebViewEvent::NavigationFinished("https://example.com/nested")] {
     fail("expected nested virtual node webview to dispatch event")
   }
 }

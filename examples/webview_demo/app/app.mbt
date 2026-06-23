@@ -8,6 +8,8 @@ using @views {
   container,
   text,
   text_field,
+}
+using @webview_views {
   web_view,
 }
 
@@ -27,8 +29,8 @@ pub struct Model {
   can_go_forward : Bool
   js_result : String
   logs : Array[String]
-  commands : @host.HostWebViewCommandQueue
-  capabilities : @host.HostWebViewCapabilities
+  commands : @webview_host.HostWebViewCommandQueue
+  capabilities : @webview_host.HostWebViewCapabilities
 }
 
 ///|
@@ -40,13 +42,13 @@ pub(all) enum Msg {
   GoBack
   GoForward
   EvaluateLocation
-  WebViewEvent(@views.WebViewEvent)
+  WebViewEvent(@webview_host.WebViewEvent)
 }
 
 ///|
 pub fn Model::new(
-  commands~ : @host.HostWebViewCommandQueue,
-  capabilities~ : @host.HostWebViewCapabilities,
+  commands~ : @webview_host.HostWebViewCommandQueue,
+  capabilities~ : @webview_host.HostWebViewCapabilities,
   url? : String = default_url,
 ) -> Model {
   {
@@ -122,26 +124,26 @@ fn Model::with_log(self : Model, entry : String) -> Model {
 ///|
 fn Model::apply_web_view_event(
   self : Model,
-  event : @views.WebViewEvent,
+  event : @webview_host.WebViewEvent,
 ) -> Model {
   match event {
-    @views.WebViewEvent::NavigationRequested(url) =>
+    @webview_host.WebViewEvent::NavigationRequested(url) =>
       self.with_log("request " + url).with_url(url)
-    @views.WebViewEvent::NavigationStarted(url) =>
+    @webview_host.WebViewEvent::NavigationStarted(url) =>
       { ..self.with_log("start " + url), status: "loading" }
-    @views.WebViewEvent::NavigationCommitted(url) =>
+    @webview_host.WebViewEvent::NavigationCommitted(url) =>
       { ..self.with_log("commit " + url), url, address: url, status: "loaded" }
-    @views.WebViewEvent::NavigationFinished(url) =>
+    @webview_host.WebViewEvent::NavigationFinished(url) =>
       { ..self.with_log("finish " + url), url, address: url, status: "done" }
-    @views.WebViewEvent::NavigationFailed(url, reason) =>
+    @webview_host.WebViewEvent::NavigationFailed(url, reason) =>
       { ..self.with_log("failed " + url), status: reason }
-    @views.WebViewEvent::TitleChanged(value) =>
+    @webview_host.WebViewEvent::TitleChanged(value) =>
       { ..self.with_log("title " + value), title: value }
-    @views.WebViewEvent::CanGoBackChanged(value) =>
+    @webview_host.WebViewEvent::CanGoBackChanged(value) =>
       { ..self, can_go_back: value }
-    @views.WebViewEvent::CanGoForwardChanged(value) =>
+    @webview_host.WebViewEvent::CanGoForwardChanged(value) =>
       { ..self, can_go_forward: value }
-    @views.WebViewEvent::JavaScriptResult(request_id, value) =>
+    @webview_host.WebViewEvent::JavaScriptResult(request_id, value) =>
       {
         ..self.with_log("js " + request_id),
         js_result: value,
@@ -203,7 +205,7 @@ fn toolbar(model : Model) -> @moui.View[Msg] {
           variant=@views.TextFieldVariant::Outline,
           width=520.0,
           height=36.0,
-        ).expanded(),
+        ),
         button(
           "Open",
           on_click=LoadAddress,
@@ -245,14 +247,13 @@ fn browser_surface(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
     web_view(
       id=web_view_id,
       url=model.url,
-      height=Some(540.0),
       title=model.title,
       on_event=Some(event => WebViewEvent(event)),
     )
   } else {
     unavailable_view(model, theme)
   }
-  container(child, height=568.0, padding=8.0)
+  container(child, padding=8.0)
 }
 
 ///|
@@ -288,22 +289,22 @@ fn status_panel(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
       spacing=10.0,
     ),
     width=292.0,
-    height=568.0,
     padding=16.0,
   )
 }
 
 ///|
 fn status_chip(model : Model, theme : @moui.Theme) -> @moui.View[Msg] {
-  let color = if model.capabilities.available {
-    theme.palette.primary
+  let (background, foreground) = if model.capabilities.available {
+    (theme.palette.primary_container, theme.palette.on_primary_container)
   } else {
-    theme.palette.surface_variant
+    (theme.palette.surface_variant, theme.palette.foreground)
   }
   text(capability_text(model.capabilities))
   .font(theme.typography.control)
+  .foreground(foreground)
   .padding(8.0)
-  .background(color)
+  .background(background)
   .corner_radius(6.0)
 }
 
@@ -330,7 +331,7 @@ fn event_log(logs : Array[String], theme : @moui.Theme) -> @moui.View[Msg] {
 }
 
 ///|
-fn capability_text(capabilities : @host.HostWebViewCapabilities) -> String {
+fn capability_text(capabilities : @webview_host.HostWebViewCapabilities) -> String {
   if capabilities.available {
     "available"
   } else {
@@ -360,8 +361,8 @@ fn compact_text(value : String) -> String {
 
 ///|
 pub fn program(
-  commands~ : @host.HostWebViewCommandQueue,
-  capabilities~ : @host.HostWebViewCapabilities,
+  commands~ : @webview_host.HostWebViewCommandQueue,
+  capabilities~ : @webview_host.HostWebViewCapabilities,
 ) -> @moui.Program[Model, Msg] {
   @moui.Program::simple(
     init=Model::new(commands~, capabilities~),
