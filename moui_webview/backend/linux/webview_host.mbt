@@ -128,7 +128,7 @@ pub fn linux_webview_capabilities() -> @host.HostWebViewCapabilities {
     )
   } else {
     @host.HostWebViewCapabilities::unavailable(
-      description="Linux WebKitGTK native embedding is unavailable; build with MOUI_LINUX_ENABLE_WEBKITGTK and matching native dependencies to enable it.",
+      description="Linux WebKitGTK native embedding is unavailable; install libwebkit2gtk-4.1-dev and matching native dependencies to enable it.",
     )
   }
 }

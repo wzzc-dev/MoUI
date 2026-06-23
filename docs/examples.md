@@ -149,10 +149,12 @@ Native entrypoints pass the same `HostWebViewCommandQueue` to the Skia provider
 options so macOS `WKWebView`, Windows WebView2 builds, and Linux WebKitGTK
 builds can drain commands after rendering. Web wasm passes an unavailable
 capability and renders fallback UI; it does not create an iframe overlay.
-Windows/Linux real WebView builds are opt-in: set the matching
-`MOUI_WINDOWS_WEBVIEW2_*` or `MOUI_LINUX_WEBKITGTK_*` environment variables so
-the `moui` prebuild can add native dependency flags; otherwise those
-entrypoints compile as unavailable fallbacks.
+Windows real WebView builds are opt-in: set the matching
+`MOUI_WINDOWS_WEBVIEW2_*` environment variables so the prebuild can add native
+dependency flags; otherwise the Windows entrypoint compiles as an unavailable
+fallback. Linux WebKitGTK builds are auto-detected via `pkg-config` when
+`libwebkit2gtk-4.1-dev` is installed. Override with `MOUI_LINUX_WEBKITGTK_*`
+environment variables for custom setups.
 Linux WebKitGTK builds also require a matching-host smoke before claiming
 runtime evidence: the backend pumps the GTK main context, syncs
 `DrawFrame.platform_views` placements, forwards navigation/title/history/script
@@ -169,11 +171,10 @@ moon check examples/webview_demo/linux_skia --target native
 moon check examples/webview_demo/web_wasm --target wasm-gc
 ```
 
-Configured Linux WebKitGTK check:
+Configured Linux WebKitGTK check (auto-detected when packages are installed):
 
 ```sh
-MOUI_LINUX_ENABLE_WEBKITGTK=1 \
-  moon check examples/webview_demo/linux_skia --target native
+moon check examples/webview_demo/linux_skia --target native
 ```
 
 Showcase is organized around the main catalog order:
