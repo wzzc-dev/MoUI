@@ -1,0 +1,21 @@
+import {
+  "wzzc-dev/moui",
+  "wzzc-dev/moui/core",
+  "wzzc-dev/moui/views",
+  "wzzc-dev/moui/backend/host",
+  "moonbitlang/core/string",
+  "examples/excel/cell",
+  "examples/excel/formula",
+  "examples/excel/sheet",
+  "examples/excel/xlsx" @excel_xlsx,
+}
+
+import {
+  "wzzc-dev/moui/runtime",
+} for "test"
+
+supported_targets = "native"
+
+options(
+  targets: { },
+)

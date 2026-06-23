@@ -41,6 +41,7 @@ shape outside `examples/` so MoUI can render its own bilingual homepage.
 | Design Systems | Addon diagnostic source-mapped design-system preview and parity sampler | `examples/design_systems/app/`, `examples/design_systems/{web_wasm,macos_skia,windows_skia,linux_skia}/` | Material, Carbon, Primer, and Fluent switching through the `moui_theme/material`, `moui_theme/carbon`, `moui_theme/primer`, and `moui_theme/fluent` entrypoints over shared `moui_theme/common` models, light/dark/high-contrast/system variants, compact/standard/comfortable density, semantic palette roles, typography specimen, spacing/density grid, component-token matrix sampling, component style bundle usage, custom inheritance/override API, Web and native Skia host entrypoints, coverage/parity status labels, and explicit source-mapped preview wording rather than official-complete claims |
 | Settings | Settings shell pattern | `examples/settings/app/` | Form sections, sidebar navigation, segmented theme mode, toggle preferences, saveable state snapshot/restore |
 | Data Table | Operational data browser pattern | `examples/data_table/app/` | Search/filter toolbar pattern, status chips, `ColumnVisibilityState`, sortable table headers with `DataSortState`, app-owned column width/order state, row selection with `SelectionState`, selection toolbar actions, tree filters, loading/error/empty states, `PaginationState`, public `pagination` and `detail_panel`, model-level filtering and data slicing |
+| Excel | Spreadsheet workbook prototype | `examples/excel/{cell,formula,sheet,xlsx,app}/`, `examples/excel/{macos_skia,linux_skia}/` | Native `.xlsx` workbook load/save flow through an app-private `xlsx` adapter, desktop spreadsheet shell, formula/name bars, sheet tabs, cell edit/copy/cut/paste/delete, row/column insertion, undo/redo, formula evaluation, number formats, color swatches, heat-map display, host file services, and macOS/Linux Skia entrypoints |
 | File Importer | File import workflow pattern | `examples/file_importer/app/` | Drop zone, file dialog facade, unavailable service state, pending completion handling, selected file list |
 | WebView Demo | Native platform WebView pattern | `examples/webview_demo/app/` | Controlled `web_view` primitive, native host capability fallback, address bar, navigation commands, JavaScript evaluation command, macOS/Windows/Linux Skia native entrypoints, Web wasm unavailable fallback without iframe |
 | PDF Workbench | PDF reading and light editing prototype | `examples/pdf_workbench/app/` | Clean native PDF reader/editor shell, host binary file service open/save flow, PDFium page bitmap preview, fit-width responsive reading canvas, scrollable page/inspector panels, reader fullscreen toggle, page navigation/direct page jump/search/metadata summaries, undoable/discardable preview rotate/crop/stamp/title/bookmark/note edit state, separate `pdflite_adapter` package for real parsing/writeback checks, JSONL pdflite helper protocol plus native process transport, native-only `pdfium_adapter` package for page rasterization, macOS/Windows/Linux Skia native entrypoints |
@@ -252,6 +253,28 @@ table sort-header, row-selection, `column_visibility_panel`,
 `selection_toolbar`, `pagination`, and `detail_panel` helpers for reusable view
 structure. Filter predicates, async requests, pointer-specific header gestures,
 column width/order persistence, and bulk action effects remain app-owned.
+
+## Excel
+
+The Excel example is a native spreadsheet-workbook prototype. The app package
+owns the MoUI shell, TEA messages, host-service file effects, and command map,
+while app-private `cell`, `formula`, `sheet`, and `xlsx` packages own cell
+coordinates/value formatting, formula evaluation, pure workbook operations, and
+`mbtexcel` import/export. The visible surface is intentionally desktop
+spreadsheet-first: grouped file/edit/format/number/view controls, formula and
+cell-reference inputs, scrollable grid, bottom sheet tabs, status bar, color
+swatches, number formatting, and heat-map display.
+
+Focused Excel checks:
+
+```sh
+moon test examples/excel/cell --target native
+moon test examples/excel/formula --target native
+moon test examples/excel/sheet --target native
+moon test examples/excel/xlsx --target native
+moon test examples/excel/app --target native
+moon check examples/excel/macos_skia --target native
+```
 
 ## File Importer
 
@@ -958,6 +981,11 @@ moon test examples/showcase/app --target native
 moon test examples/counter/app --target native
 moon test examples/settings/app --target native
 moon test examples/data_table/app --target native
+moon test examples/excel/cell --target native
+moon test examples/excel/formula --target native
+moon test examples/excel/sheet --target native
+moon test examples/excel/xlsx --target native
+moon test examples/excel/app --target native
 moon test examples/file_importer/app --target native
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_service_protocol --target native

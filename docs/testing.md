@@ -91,6 +91,11 @@ moon test moui_skia --target native
 moon test examples/counter/app --target native
 moon test examples/showcase/app --target native
 moon test examples/markdown_editor/app --target native
+moon test examples/excel/cell --target native
+moon test examples/excel/formula --target native
+moon test examples/excel/sheet --target native
+moon test examples/excel/xlsx --target native
+moon test examples/excel/app --target native
 moon test examples/pdf_workbench/app --target native
 moon test examples/pdf_workbench/pdflite_adapter --target native
 moon test examples/pdf_workbench/pdflite_service_protocol --target native

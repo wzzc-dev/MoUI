@@ -33,6 +33,7 @@ code.
 - `./examples/pdf_workbench`
 - `./examples/settings`
 - `./examples/data_table`
+- `./examples/excel`
 - `./examples/file_importer`
 - `./examples/command_palette`
 - `./examples/mo_workbench`
@@ -89,6 +90,7 @@ members = [
   "./examples/markdown_editor",
   "./examples/settings",
   "./examples/data_table",
+  "./examples/excel",
   "./examples/file_importer",
   "./examples/pdf_workbench",
   "./examples/webview_demo",
