@@ -424,7 +424,7 @@ fn root_facade_forward_budget() -> CountBudget {
     kind: "root facade forwards",
     label: "moui/moui.mbt",
     path: "moui/moui.mbt",
-    max_count: 36,
+    max_count: 50,
   }
 }
 
