@@ -176,6 +176,14 @@ static gboolean on_decide_policy(WebKitWebView *webview,
       webkit_navigation_policy_decision_get_navigation_action(nav);
   WebKitURIRequest *request = webkit_navigation_action_get_request(action);
   const char *uri = webkit_uri_request_get_uri(request);
+  fprintf(stderr, "[webview-debug] on_decide_policy uri=%s allow_next=%d\n",
+          uri ? uri : "(null)", view->allow_next_navigation);
+  // Skip internal WebKit navigations (about:blank) — no event emitted.
+  // These are WebKit housekeeping loads that would otherwise overwrite
+  // the model's address field with an internal URI.
+  if (uri != NULL && strcmp(uri, "about:blank") == 0) {
+    return FALSE;
+  }
   if (!webview_policy_allows(view->policy, uri)) {
     view->allow_next_navigation = 0;
     view->navigation_pending = 0;
@@ -198,18 +206,47 @@ static void on_load_changed(WebKitWebView *webview, WebKitLoadEvent load_event,
                             gpointer user_data) {
   MOUILinuxWebView *view = (MOUILinuxWebView *)user_data;
   const char *uri = webkit_web_view_get_uri(webview);
+  fprintf(stderr, "[webview-debug] on_load_changed event=%d uri=%s\n",
+          load_event, uri ? uri : "(null)");
+  // Drop events with a NULL, empty, or internal URI. The initial
+  // about:blank load that WebKitGTK fires automatically after widget
+  // creation has no meaningful URI. When the real URL is loaded
+  // immediately afterward the about:blank events may carry "about:blank"
+  // or a NULL URI. Emitting any navigation event for such internal URIs
+  // would overwrite the model's address field.
+  if (uri == NULL || uri[0] == '\0' || strcmp(uri, "about:blank") == 0) {
+    fprintf(stderr, "[webview-debug] on_load_changed DROPPED event=%d\n",
+            load_event);
+    if (load_event == WEBKIT_LOAD_FINISHED) {
+      view->navigation_pending = 0;
+    }
+    return;
+  }
   switch (load_event) {
   case WEBKIT_LOAD_COMMITTED:
+    fprintf(stderr, "[webview-debug] on_load_changed COMMITTED uri=%s cancelled_url=%s\n",
+            uri, view->cancelled_url ? view->cancelled_url : "(null)");
+    // Skip stale COMMITTED events from a navigation that was replaced
+    // by a newer one (e.g., initial page commit arriving after the user
+    // navigated elsewhere).
+    if (view->cancelled_url != NULL &&
+        strcmp(view->cancelled_url, uri) == 0) {
+      free(view->cancelled_url);
+      view->cancelled_url = NULL;
+      break;
+    }
     free(view->current_url);
-    view->current_url = strdup(uri ? uri : "");
+    view->current_url = strdup(uri);
     moui_linux_webview_emit(view->parent_surface, 2, view->id, uri, "", 0);
     break;
   case WEBKIT_LOAD_FINISHED: {
+    fprintf(stderr, "[webview-debug] on_load_changed FINISHED uri=%s cancelled_url=%s\n",
+            uri, view->cancelled_url ? view->cancelled_url : "(null)");
     view->navigation_pending = 0;
     // Skip stale WEBKIT_LOAD_FINISHED events from a navigation that was
     // replaced by a newer one (e.g., initial page load finishing after
     // the user navigated elsewhere). Only skip if the URL matches exactly.
-    if (view->cancelled_url != NULL && uri != NULL &&
+    if (view->cancelled_url != NULL &&
         strcmp(view->cancelled_url, uri) == 0) {
       free(view->cancelled_url);
       view->cancelled_url = NULL;
