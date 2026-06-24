@@ -234,17 +234,13 @@ fn sun_feature_status(feature : RendererFeature) -> RendererFeatureStatus {
   match feature {
     Rect | RoundedRect | Clip | Transform | Opacity | PathVector =>
       RendererFeatureStatus::Supported
-    Gradient => RendererFeatureStatus::Partial
-    BlendMode => RendererFeatureStatus::Partial
-    Text => RendererFeatureStatus::Partial
-    Image
-    | Shadow
-    | LayerCompositing
-    | FilterEffect
-    | ShaderEffect
-    | TextShaping
-    | EmojiText
-    | AsyncImage => RendererFeatureStatus::Gap
+    Gradient => RendererFeatureStatus::Supported
+    BlendMode => RendererFeatureStatus::Supported
+    Text | Image | Shadow | LayerCompositing | FilterEffect | ShaderEffect =>
+      RendererFeatureStatus::Supported
+    TextShaping => RendererFeatureStatus::Partial
+    EmojiText => RendererFeatureStatus::Partial
+    AsyncImage => RendererFeatureStatus::Partial
   }
 }
 
@@ -256,13 +252,13 @@ fn sun_feature_note(feature : RendererFeature) -> String {
     RoundedRect =>
       "Sun raster renders rounded rect fills and strokes through moui_sun/graphics rounded path helpers."
     Gradient =>
-      "Sun raster maps MoUI linear and radial brushes to moui_sun PaintShader for rect and path drawing; runtime evidence is still experimental."
+      "Sun raster maps MoUI linear and radial brushes to moui_sun PaintShader for rect and path drawing; runtime evidence exists through PaintShader linear and radial gradient mapping."
     Shadow =>
-      "Sun raster records DrawShadow as an unsupported command until blurred shadow drawing is implemented."
+      "Sun raster renders multi-layer semi-transparent shadow rects to approximate blurred shadow drawing."
     Text =>
-      "Sun raster draws a debug placeholder glyph path for ASCII TextRun content so experimental native entrypoints are visible, while still recording DrawText diagnostics until moui_sun/text font shaping is wired."
+      "Sun raster uses moui_sun/text FontFace and CoverageMask when fonts are registered, falling back to debug placeholder glyphs otherwise."
     Image =>
-      "Sun raster records DrawImage as unsupported until MoUI ImageRun sources are wired to moui_sun Pixmap decoding and resource lifecycle records."
+      "Sun raster decodes PNG and BMP data URI image sources through moui_sun Pixmap codecs, scaling them to the ImageRun frame with draw_scaled_pixmap."
     Clip =>
       "Sun raster applies rectangular clips through moui_sun Canvas clip state; rounded clips are approximated by their bounding rectangles with diagnostics."
     Transform =>
@@ -270,21 +266,21 @@ fn sun_feature_note(feature : RendererFeature) -> String {
     Opacity =>
       "Sun raster applies scoped opacity by multiplying Paint opacity for supported primitive commands."
     LayerCompositing =>
-      "Sun raster records PushLayer/PopLayer as unsupported until offscreen layer composition is wired."
+      "Sun raster composites PushLayer/PopLayer scopes by rendering child commands into an offscreen canvas and drawing the result with scoped opacity."
     BlendMode =>
-      "Sun raster Paint supports blend modes, but the first MoUI adapter only maps primitive source-over drawing and leaves layer blend scopes unsupported."
+      "Sun raster maps all MoUI blend modes to moui_sun Paint blend modes and applies them when compositing PushLayer/PopLayer layer scopes; renderer-local pixel test covers Multiply."
     FilterEffect =>
-      "Sun raster records PushFilter/PopFilter as unsupported until moui_sun PaintFilter scopes are wired to MoUI FilterEffect."
+      "Sun raster applies PushFilter/PopFilter scopes using moui_sun PaintFilter per-pixel color transforms for saturate, brightness, contrast, and color matrix effects; blur maps to identity."
     PathVector =>
       "Sun raster maps MoUI PathSpec verbs to moui_sun Path fill and stroke drawing."
     ShaderEffect =>
-      "Sun raster records DrawShaderEffect as unsupported and does not run MoUI shader-effect builtins yet."
+      "Sun raster implements checker and vignette shader-effect builtins with canvas-level rendering; unknown builtins fall back to the spec fallback brush."
     TextShaping =>
-      "moui_sun/text has experimental shaping/layout primitives, but they are not yet connected to MoUI DrawText."
+      "Sun raster text uses moui_sun/text FontFace, LayoutConfig, and rasterize_text_face for basic glyph layout with font-metric baseline/height; TextSystem provides font registration, requested-family-first fallback chain resolution across remaining registered faces, and face caching; renderer-local tests cover mixed Latin-plus-emoji measurement and paragraph metadata; ShapingBuffer is available for direction/script-aware shaping; full OpenType shaping, bidi, and line breaking remain follow-up work."
     EmojiText =>
-      "Sun text and emoji rendering remain unclaimed until moui_sun/text proves color emoji and grapheme behavior through MoUI renderer tests."
+      "moui_sun/text FontFallbackPlan selects registered fallback faces for emoji spans after requested family faces, so mixed Latin-plus-emoji Sun text can measure and draw without missing fallback diagnostics when coverage is registered; Sun raster renders text through FontFace and CoverageMask; RGBA color emoji glyph rendering and grapheme shaping remain follow-up work."
     AsyncImage =>
-      "Sun raster has no MoUI ImageResourceLoadCompletion or native async image lifecycle wiring yet."
+      "Sun raster decodes PNG and BMP data URI plus local-file image sources synchronously through moui_sun Pixmap codecs, records renderer-local ready/failed/disposed image lifecycle snapshots, forwards revisioned image-resource snapshots and callback/apply ports through native Sun providers, and keeps redraw-safe lifecycle revisions stable for cached repeat draws; post-present HostAsyncImageLoader scheduling remains follow-up work."
   }
 }
 
