@@ -20,6 +20,10 @@ For task-specific workflows, use the repo-local skills:
   smoke commands.
 - `docs/release-readiness.md` for release gates, smoke gate catalog policy, and
   artifact policy.
+- `docs/button-styling-guide.md` for the button color/style resolution pipeline
+  and app-level override strategies (per-control `style=`, theme component
+  override, palette seed). Read this before any "change button color" task
+  instead of re-deriving the pipeline from source.
 
 ## Working Rules
 
@@ -37,6 +41,25 @@ For task-specific workflows, use the repo-local skills:
   diagnostic unless the request explicitly changes that policy.
 - Use `moon ide doc`, `moon ide outline`, `moon ide peek-def`, and
   `moon ide find-references` for MoonBit API discovery before inventing names.
+- `docs/button-styling-guide.md` documents the button style resolution pipeline
+  (palette → component tokens → state resolution → control paint) and the three
+  app-level override strategies. When changing any of the following, update
+  that doc so future "change button color" tasks stay accurate:
+  - `@core.ColorPalette` / `ColorPalette::from_seed` / `light()` / `dark()`
+    in `moui/core/theme.mbt`;
+  - `@core.ButtonTheme`, `ControlStateTokens`, `StateLayerTokens`, or
+    `ButtonTheme::resolve` in `moui/core/theme_components.mbt`;
+  - `minimal_components` / `minimal_state_layer` in
+    `moui/core/theme_resolver.mbt`;
+  - `ButtonVariant::style` / `ButtonVariant::to_token` in
+    `moui/views/style_api.mbt`;
+  - `ButtonStyle` / `ButtonStyle::filled/tonal/outline/ghost` / `control_state`
+    in `moui/views/control_style.mbt`;
+  - `button` / `button_control` paint resolution in `moui/views/button.mbt` or
+    `moui/views/control_primitives.mbt`;
+  - the `ButtonVariant` enum surface or the `ControlStateStyle` struct fields.
+  Prefer app-level overrides (Strategy A/B in the doc) over framework edits;
+  if a framework edit is unavoidable, update the doc in the same change.
 
 ## Validation
 
