@@ -96,6 +96,7 @@ pub async fn run_app_with_options_async_pump(
 pub fn renderer_provider(
   options? : MacosSunAppOptions = MacosSunAppOptions::new(),
 ) -> @macos_host.MacosRendererProvider {
+  ignore(options)
   @macos_host.MacosRendererProvider::new(create_renderer=(window, metrics) => {
     create_renderer(window, metrics, options)
   })
@@ -106,6 +107,7 @@ pub fn macos_sun_provider_preflight_summary(
   options? : MacosSunAppOptions = MacosSunAppOptions::new(),
   smoke_options? : MacosSunSmokeOptions = MacosSunSmokeOptions::new(),
 ) -> String {
+  ignore(options)
   let info = @sun_renderer.backend_info()
   let render_status = if macos_sun_provider_ready() {
     "experimental-ready"
@@ -123,7 +125,7 @@ pub fn macos_sun_provider_preflight_summary(
 
 ///|
 fn sun_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_text_system=SunRasterRenderer.text_system; renderer_image_resources=none; renderer_async_image_loading=none; renderer_present_count=SunRasterRenderer.present_count; renderer_dispose=SunRasterRenderer.dispose"
+  "renderer_bridge=HostWindowRenderer; renderer_text_system=SunRasterRenderer.text_system; renderer_image_resources=SunRasterRenderer.image_resources; renderer_async_image_loading=sync; renderer_image_resource_apply=SunRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SunRasterRenderer.set_image_resource_change_callback; renderer_present_count=SunRasterRenderer.present_count; renderer_dispose=SunRasterRenderer.dispose"
 }
 
 ///|
@@ -227,7 +229,14 @@ fn host_renderer_from_sun(
       }
     },
     text_system=() => renderer.text_system(),
-    image_resources=() => [],
+    image_resources=() => renderer.image_resources(),
+    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+    apply_image_resource_load_completion=Some(completion => {
+      renderer.apply_image_resource_load_completion(completion)
+    }),
+    set_image_resource_change_callback=callback => {
+      renderer.set_image_resource_change_callback(callback)
+    },
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
   )
@@ -237,10 +246,27 @@ fn host_renderer_from_sun(
 fn renderer_metrics_from_host(
   metrics : @host.HostSurfaceMetrics,
 ) -> @render.RendererSurfaceMetrics {
+  let scale_factor = if metrics.scale_factor > 0.0 {
+    metrics.scale_factor
+  } else {
+    1.0
+  }
+  let physical_size = @core.Size::new(
+    width=if metrics.physical_size.width > 0.0 {
+      metrics.physical_size.width
+    } else {
+      metrics.logical_size.width * scale_factor
+    },
+    height=if metrics.physical_size.height > 0.0 {
+      metrics.physical_size.height
+    } else {
+      metrics.logical_size.height * scale_factor
+    },
+  )
   @render.RendererSurfaceMetrics::new(
     logical_size=metrics.logical_size,
-    physical_size=metrics.physical_size,
-    scale_factor=metrics.scale_factor,
+    physical_size~,
+    scale_factor~,
   )
 }
 

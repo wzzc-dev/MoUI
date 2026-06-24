@@ -7,10 +7,17 @@ shapes are no longer part of the framework contract.
 Native Skia is the recommended native renderer/text route, Web uses browser
 WebGPU plus browser text integration, and the native WGPU provider stack below
 remains an explicit diagnostic route for comparing provider behavior.
-The experimental Sun CPU raster backend currently exposes the core fallback
-`TextSystem` and draws renderer-local debug placeholder glyphs for ASCII
-`DrawText`; it does not yet wire `moui_sun/text` font shaping or real glyph
-rasterization into MoUI text layout.
+The Sun CPU raster backend now exposes a renderer-backed `TextSystem` over
+`moui_sun/text`, including font registration, fallback-face resolution,
+single-line measurement adapted to core grapheme-stable caret arrays, and
+basic paragraph geometry through the shared core fallback paragraph contract.
+Sun resolves requested font families first, then appends the remaining
+registered faces as a fallback chain, so mixed text such as Latin plus emoji can
+measure and draw without missing-glyph diagnostics when registered font coverage
+exists.
+When no registered font face covers a draw, Sun still falls back to
+renderer-local placeholder glyphs. Full bidi, advanced shaping, and color
+emoji rasterization remain follow-up work.
 
 ## Runtime Boundary
 

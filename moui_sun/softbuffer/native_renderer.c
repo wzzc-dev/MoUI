@@ -229,6 +229,16 @@ static void renderer_msg_void(renderer_objc_id receiver, const char* selector) {
         renderer_darwin_api.objc_msg_send)(receiver, renderer_sel(selector));
 }
 
+static double renderer_backing_scale_factor(renderer_objc_id view) {
+    renderer_objc_id ns_window = renderer_msg_id(view, "window");
+    if (ns_window == NULL) {
+        return 1.0;
+    }
+    double backing_scale = ((double (*)(renderer_objc_id, renderer_objc_sel))
+        renderer_darwin_api.objc_msg_send)(ns_window, renderer_sel("backingScaleFactor"));
+    return backing_scale > 0.0 ? backing_scale : 1.0;
+}
+
 // Get view bounds (NSRect/CGRect) via ObjC runtime.
 // On ARM64, the compiler handles the HFA (4 doubles) return in v0-v3.
 static renderer_cgrect_t renderer_view_bounds(renderer_objc_id view) {
@@ -505,14 +515,12 @@ void renderer_present_surface_rect(
     int32_t width,
     int32_t height
 ) {
-    fprintf(stderr, "[SunDiag] present: entered sw=%d sh=%d\n", surface_width, surface_height);
     if (pixels == NULL || surface_width <= 0 || surface_height <= 0 || width <= 0 || height <= 0) {
-        fprintf(stderr, "[SunDiag] present: invalid args\n");
         return;
     }
 
     renderer_objc_id view = renderer_content_view(window);
-    if (view == NULL) { fprintf(stderr, "[SunDiag] present: no content view\n"); return; }
+    if (view == NULL) { return; }
 
     // Find or create NSImageView subview (created once, reused)
     renderer_objc_id image_view = renderer_find_or_create_image_view(view);
@@ -540,14 +548,7 @@ void renderer_present_surface_rect(
         renderer_objc_id ns_image_alloc = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel))
             renderer_darwin_api.objc_msg_send)(ns_image_class, renderer_sel("alloc"));
         if (ns_image_alloc != NULL) {
-            // Get backingScaleFactor for point dimensions
-            renderer_objc_id ns_window = renderer_msg_id(view, "window");
-            double backing_scale = 2.0;
-            if (ns_window != NULL) {
-                backing_scale = ((double (*)(renderer_objc_id, renderer_objc_sel))
-                    renderer_darwin_api.objc_msg_send)(ns_window, renderer_sel("backingScaleFactor"));
-                if (backing_scale <= 0.0) { backing_scale = 2.0; }
-            }
+            double backing_scale = renderer_backing_scale_factor(view);
             double point_w = (double)surface_width / backing_scale;
             double point_h = (double)surface_height / backing_scale;
             // initWithCGImage:size: takes (CGImageRef, NSSize). NSSize = two doubles on arm64.
@@ -568,7 +569,6 @@ void renderer_present_surface_rect(
     }
 
     renderer_darwin_api.cg_image_release(cg_image);
-    fprintf(stderr, "[SunDiag] present: complete\n");
 }
 
 #else

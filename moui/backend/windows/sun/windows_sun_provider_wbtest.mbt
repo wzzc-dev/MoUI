@@ -16,7 +16,21 @@ test "Windows Sun preflight describes experimental host bridge" {
   assert_true(
     preflight.contains("renderer_text_system=SunRasterRenderer.text_system"),
   )
-  assert_true(preflight.contains("renderer_image_resources=none"))
-  assert_true(preflight.contains("renderer_async_image_loading=none"))
+  assert_true(
+    preflight.contains(
+      "renderer_image_resources=SunRasterRenderer.image_resources",
+    ),
+  )
+  assert_true(preflight.contains("renderer_async_image_loading=sync"))
+  assert_true(
+    preflight.contains(
+      "renderer_image_resource_apply=SunRasterRenderer.apply_image_resource_load_completion",
+    ),
+  )
+  assert_true(
+    preflight.contains(
+      "renderer_image_resource_change=SunRasterRenderer.set_image_resource_change_callback",
+    ),
+  )
   assert_true(preflight.contains("first_frame_smoke=enabled"))
 }

@@ -20,7 +20,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     image.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
-    @render.RendererFeatureStatus::Gap,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     image
@@ -69,7 +69,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     rect.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
-    @render.RendererFeatureStatus::Ready,
+    @render.RendererFeatureStatus::Supported,
   )
   guard @render.renderer_feature_capability(
       @render.RendererFeature::RoundedRect,
@@ -99,7 +99,7 @@ test "renderer capability report tracks draw command support" {
   )
   assert_true(
     gradient.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
-    @render.RendererFeatureStatus::Partial,
+    @render.RendererFeatureStatus::Supported,
   )
   assert_true(
     gradient
@@ -340,6 +340,15 @@ test "renderer capability report tracks draw command support" {
     @render.RendererFeatureStatus::Supported,
   )
   assert_true(
+    blend.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
+    @render.RendererFeatureStatus::Supported,
+  )
+  assert_true(
+    blend
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("moui_sun Paint blend modes"),
+  )
+  assert_true(
     blend
     .note_for_backend(@render.RendererBackendKind::NativeWgpu)
     .contains("backdrop-sampling"),
@@ -511,6 +520,32 @@ test "renderer capability report tracks draw command support" {
   assert_true(skia_text_note.contains("emoji-family fonts"))
   assert_true(skia_text_note.contains("glyph-run drawing"))
   assert_true(skia_text_note.contains("SkShaper"))
+  assert_true(
+    text_shaping.status_for_backend(
+      @render.RendererBackendKind::SunRasterNative,
+    ) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
+    text_shaping
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("FontFace"),
+  )
+  assert_true(
+    text_shaping
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("requested-family-first fallback chain"),
+  )
+  assert_true(
+    text_shaping
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("mixed Latin-plus-emoji measurement"),
+  )
+  assert_true(
+    text_shaping
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("ShapingBuffer"),
+  )
   guard @render.renderer_feature_capability(@render.RendererFeature::EmojiText)
     is Some(emoji) else {
     fail("expected emoji capability")
@@ -556,6 +591,25 @@ test "renderer capability report tracks draw command support" {
     emoji
     .note_for_backend(@render.RendererBackendKind::WebGpuWasm)
     .contains("grapheme"),
+  )
+  assert_true(
+    emoji.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
+    emoji
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("FontFallbackPlan"),
+  )
+  assert_true(
+    emoji
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("registered fallback faces"),
+  )
+  assert_true(
+    emoji
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("without missing fallback diagnostics"),
   )
   guard @render.renderer_feature_capability(@render.RendererFeature::AsyncImage)
     is Some(async_image) else {
@@ -621,6 +675,45 @@ test "renderer capability report tracks draw command support" {
   assert_true(web_image_note.contains("redraw"))
   assert_true(web_image_note.contains("Image.onload"))
   assert_true(web_image_note.contains("Image.onerror"))
+  assert_true(
+    async_image.status_for_backend(@render.RendererBackendKind::SunRasterNative) ==
+    @render.RendererFeatureStatus::Partial,
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("data URI"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("local-file"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("moui_sun Pixmap codecs"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("ready/failed/disposed"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("callback/apply ports"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("cached repeat draws"),
+  )
+  assert_true(
+    async_image
+    .note_for_backend(@render.RendererBackendKind::SunRasterNative)
+    .contains("HostAsyncImageLoader"),
+  )
 }
 
 ///|
@@ -804,8 +897,8 @@ test "renderer capability report exposes backend-driven entries" {
   assert_true(
     sun.any(capability => {
       capability.feature == @render.RendererFeature::Text &&
-      capability.status == @render.RendererFeatureStatus::Partial &&
-      capability.note.contains("placeholder glyph")
+      capability.status == @render.RendererFeatureStatus::Supported &&
+      capability.note.contains("FontFace")
     }),
   )
 }
