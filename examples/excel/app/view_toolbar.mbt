@@ -1,7 +1,8 @@
+using @moui { type Theme}
 ///|
 fn build_toolbar(
   model : ExcelModel,
-  theme : @core.Theme,
+  theme : Theme,
 ) -> @moui.View[ExcelMsg] {
   let format = model.selected_format()
   let align_id = align_id(format.align)
@@ -157,7 +158,7 @@ fn build_toolbar(
 }
 
 ///|
-fn group_label(label : String, theme : @core.Theme) -> @moui.View[ExcelMsg] {
+fn group_label(label : String, theme : Theme) -> @moui.View[ExcelMsg] {
   @views.text(
     label,
     role=@views.TextRole::Caption,
@@ -171,7 +172,7 @@ fn group_label(label : String, theme : @core.Theme) -> @moui.View[ExcelMsg] {
 fn tool_button(
   label : String,
   msg : ExcelMsg,
-  theme : @core.Theme,
+  theme : Theme,
   icon? : @views.IconName? = None,
   variant? : @views.ButtonVariant = @views.ButtonVariant::Ghost,
   width? : Double = 64.0,
@@ -195,7 +196,7 @@ fn format_button(
   label : String,
   msg : ExcelMsg,
   active : Bool,
-  theme : @core.Theme,
+  theme : Theme,
   icon? : @views.IconName? = None,
 ) -> @moui.View[ExcelMsg] {
   @views.tooltip(
@@ -220,7 +221,7 @@ fn format_button(
 fn color_swatch(
   hex : String,
   msg : ExcelMsg,
-  theme : @core.Theme,
+  theme : Theme,
 ) -> @moui.View[ExcelMsg] {
   let bg = if hex.is_empty() {
     theme.palette.surface
@@ -237,8 +238,8 @@ fn color_swatch(
     padding=0.0,
   )
   .border(
-    @core.BorderStyle::new(
-      brush=@core.Brush::solid(theme.palette.outline),
+    @moui.BorderStyle::new(
+      brush=@moui.Brush::solid(theme.palette.outline),
       width=1.0,
     ),
   )

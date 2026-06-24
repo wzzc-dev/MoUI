@@ -144,6 +144,20 @@ pub fn Bitmap::alloc_n32_premul(size : @skia.ISize) -> Bitmap? {
 }
 
 ///|
+pub fn Bitmap::from_pixels(
+  pixels : Bytes,
+  width : Int,
+  height : Int,
+  row_bytes : Int,
+) -> Bitmap? {
+  ignore(pixels)
+  ignore(width)
+  ignore(height)
+  ignore(row_bytes)
+  None
+}
+
+///|
 pub fn Bitmap::is_available(self : Bitmap) -> Bool {
   ignore(self)
   false
