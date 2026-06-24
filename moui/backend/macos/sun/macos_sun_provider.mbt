@@ -197,11 +197,11 @@ fn macos_sun_present_target(
     present=frame => {
       surface.resize(frame.width, frame.height)
       match
-        surface.present_bytes(
+        surface.present_pixels(
           frame.width,
           frame.height,
           frame.row_bytes,
-          frame.bytes,
+          frame.pixels,
         ) {
         Ok(_) => true
         Err(_) => {
@@ -272,9 +272,5 @@ fn renderer_metrics_from_host(
 
 ///|
 fn size_dim_to_int(value : Double) -> Int {
-  if value != value || value <= 0.0 {
-    0
-  } else {
-    value.ceil().to_int().max(1)
-  }
+  value.ceil().max(1.0).to_int()
 }
