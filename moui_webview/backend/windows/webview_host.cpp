@@ -242,7 +242,9 @@ static void install_handlers(MOUWindowsWebView *view) {
               return S_OK;
             }
             if (view->allow_next_navigation) {
-              view->allow_next_navigation = false;
+              // Keep allow_next_navigation true for the entire navigation
+              // sequence (including HTTP redirects). Only navigate_controlled
+              // resets it when starting a new sequence.
               emit_wide(view->parent, 1, view->id, url, L"", 0);
             } else {
               args->put_Cancel(TRUE);
@@ -261,7 +263,10 @@ static void install_handlers(MOUWindowsWebView *view) {
             std::wstring url = source ? source : L"";
             CoTaskMemFree(source);
             view->current_url = url;
-            view->navigation_pending = false;
+            // Do NOT clear navigation_pending here — only navigate_controlled
+            // manages it. SourceChanged fires mid-navigation (e.g. on redirect)
+            // and clearing the flag here would cause navigate_controlled to
+            // call Navigate() again, restarting the in-progress navigation.
             emit_wide(view->parent, 2, view->id, url, L"", 0);
             return S_OK;
           })
@@ -271,13 +276,13 @@ static void install_handlers(MOUWindowsWebView *view) {
       Callback<ICoreWebView2NavigationCompletedEventHandler>(
           [view](ICoreWebView2 *, ICoreWebView2NavigationCompletedEventArgs *args)
               -> HRESULT {
+            view->navigation_pending = false;
+            view->allow_next_navigation = false;
             BOOL success = FALSE;
             args->get_IsSuccess(&success);
             if (success) {
-              view->navigation_pending = false;
               emit_wide(view->parent, 3, view->id, view->current_url, L"", 0);
             } else {
-              view->navigation_pending = false;
               COREWEBVIEW2_WEB_ERROR_STATUS status;
               args->get_WebErrorStatus(&status);
               emit_wide(view->parent, 4, view->id, view->current_url,
