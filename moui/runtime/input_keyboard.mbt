@@ -60,10 +60,23 @@ fn ElementNode::dispatch_keyboard_shortcut(
   } else if self.erased_view_node.identity.kind.has_prefix(
       "Modified<KeyboardShortcut>",
     ) {
-    if child_result.changed {
+    // Give the modifier node itself a chance to handle the keyboard event
+    // (so its `handle_keyboard_shortcut` runs). Only if the node reports a
+    // change (meaning the shortcut matched) do we activate the first child.
+    let own = self.dispatch_view_event(
+      self.erased_view_node,
+      AppEvent::Keyboard(event),
+      RenderNode::empty(),
+      text_system,
+      environment~,
+      style~,
+    )
+    if own.changed {
+      self.activate_first_child(environment~, style~, text_system~)
+    } else if child_result.changed {
       child_result
     } else {
-      self.activate_first_child(environment~, style~, text_system~)
+      { changed: false, activated: false, focused: None }
     }
   } else {
     child_result
