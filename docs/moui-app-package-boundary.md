@@ -189,13 +189,13 @@ root facade 暴露的是 app-safe 的 kernel 类型别名，不是把整个 `cor
 推荐由 `wzzc-dev/moui` 暴露的类型包括：
 
 - app shape：`View`、`Program`、`Effect`、`Subscription`、`Theme`
-- 几何：`Point`、`Size`、`Rect`、`Insets`、`Constraints`、`Axis`
+- 几何与布局：`Point`、`Size`、`Rect`、`Insets`、`Constraints`、`Axis`、`Alignment`
 - 绘制基础值：`Color`、`Brush`、`BorderStyle`、`ShadowStyle`
 - 文本基础值：`FontSpec`、`FontFamily`、`TextRange`、`TextAlign`
 - 状态：`State`、`Binding`、`DerivedState`
 - 环境：`Environment`、`ViewEnvironment`、`ColorScheme`、`LayoutDirection`
 - app 状态 holder：`ScrollState`、`FocusState`、`NavigationState`
-- 交互：`CommandIntent`、`KeyboardShortcut`、`KeyModifiers`
+- 交互：`ActionCommand`、`ActionCommandMap`、`CommandBinding`、`CommandIntent`、`KeyboardShortcut`、`KeyModifiers`
 - 常用数据模型：`DateValue`
 
 不应该进入 root facade 的类型包括：

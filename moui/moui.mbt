@@ -105,3 +105,15 @@ pub type KeyModifiers = @core.KeyModifiers
 
 ///|
 pub type DateValue = @core.DateValue
+
+///|
+pub type Alignment = @core.Alignment
+
+///|
+pub type ActionCommand = @core.ActionCommand
+
+///|
+pub type ActionCommandMap = @core.ActionCommandMap
+
+///|
+pub type CommandBinding = @core.CommandBinding

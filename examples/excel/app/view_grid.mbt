@@ -1,5 +1,5 @@
 ///|
-fn build_grid(model : ExcelModel, theme : @core.Theme) -> @moui.View[ExcelMsg] {
+fn build_grid(model : ExcelModel, theme : @moui.Theme) -> @moui.View[ExcelMsg] {
   let sheet = model.active_sheet()
   let heat_range = if model.heat_map { heat_map_range(sheet) } else { None }
   let rows : Array[@moui.View[ExcelMsg]] = []
@@ -26,7 +26,7 @@ fn build_grid(model : ExcelModel, theme : @core.Theme) -> @moui.View[ExcelMsg] {
 ///|
 fn build_header_row(
   sheet : @sheet.Sheet,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
   let cells : Array[@moui.View[ExcelMsg]] = [
     header_cell("", row_header_width, col_header_height, theme),
@@ -44,7 +44,7 @@ fn build_data_row(
   model : ExcelModel,
   row : Int,
   heat_range : (Double, Double)?,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
   let sheet = model.active_sheet()
   let cells : Array[@moui.View[ExcelMsg]] = [
@@ -61,7 +61,7 @@ fn header_cell(
   label : String,
   width : Double,
   height : Double,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
   @views.container(
     @views.align(
@@ -72,7 +72,7 @@ fn header_cell(
         width=width - 4.0,
         height=height - 4.0,
       ),
-      alignment=@core.Alignment::center(),
+      alignment=@moui.Alignment::center(),
     ),
     width~,
     height~,
@@ -88,7 +88,7 @@ fn build_cell(
   row : Int,
   col : Int,
   heat_range : (Double, Double)?,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
   let sheet = model.active_sheet()
   let cell = sheet.get_cell(row, col)
@@ -98,8 +98,8 @@ fn build_cell(
   }
   let editing = selected && model.editing
   let bg = cell_background(model, cell, row, col, heat_range, theme)
-  let border = @core.BorderStyle::new(
-    brush=@core.Brush::solid(
+  let border = @moui.BorderStyle::new(
+    brush=@moui.Brush::solid(
       if selected {
         theme.palette.primary
       } else {
@@ -140,7 +140,7 @@ fn cell_display_content(
   cell : @cell.Cell,
   row : Int,
   col : Int,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
   let selected = match model.workbook.selection {
     Some(sel) => sel.row == row && sel.col == col
@@ -176,8 +176,8 @@ fn cell_background(
   row : Int,
   col : Int,
   heat_range : (Double, Double)?,
-  theme : @core.Theme,
-) -> @core.Color {
+  theme : @moui.Theme,
+) -> @moui.Color {
   if cell.format.bg_color.length() >= 6 {
     parse_hex_color(cell.format.bg_color).unwrap_or(theme.palette.surface)
   } else {
@@ -230,19 +230,19 @@ fn heat_color(
   value : Double,
   min_value : Double,
   max_value : Double,
-) -> @core.Color {
+) -> @moui.Color {
   if max_value <= min_value {
-    return @core.Color::rgba(r=0.89, g=0.95, b=1.0, a=1.0)
+    return @moui.Color::rgba(r=0.89, g=0.95, b=1.0, a=1.0)
   }
   let t = (value - min_value) / (max_value - min_value)
   let red = 0.89 + (0.99 - 0.89) * t
   let green = 0.96 + (0.89 - 0.96) * t
   let blue = 1.0 + (0.82 - 1.0) * t
-  @core.Color::rgba(r=red, g=green, b=blue, a=1.0)
+  @moui.Color::rgba(r=red, g=green, b=blue, a=1.0)
 }
 
 ///|
-fn parse_hex_color(hex : String) -> @core.Color? {
+fn parse_hex_color(hex : String) -> @moui.Color? {
   let start = if hex.length() >= 1 && hex[0] == '#' { 1 } else { 0 }
   if hex.length() < start + 6 {
     return None
@@ -251,7 +251,7 @@ fn parse_hex_color(hex : String) -> @core.Color? {
     (hex_pair(hex, start), hex_pair(hex, start + 2), hex_pair(hex, start + 4)) {
     (Some(red), Some(green), Some(blue)) =>
       Some(
-        @core.Color::rgba(
+        @moui.Color::rgba(
           r=red.to_double() / 255.0,
           g=green.to_double() / 255.0,
           b=blue.to_double() / 255.0,

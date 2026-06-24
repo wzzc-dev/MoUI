@@ -1,7 +1,6 @@
-///|
 fn build_sheet_tabs(
   model : ExcelModel,
-  theme : @core.Theme,
+  theme : Theme,
 ) -> @moui.View[ExcelMsg] {
   let tabs : Array[@moui.View[ExcelMsg]] = []
   for i, name in model.sheet_names() {
@@ -68,7 +67,7 @@ fn build_sheet_tabs(
 ///|
 fn build_status_bar(
   model : ExcelModel,
-  theme : @core.Theme,
+  theme : Theme,
 ) -> @moui.View[ExcelMsg] {
   let sheet = model.active_sheet()
   let selected = if model.selected_ref().is_empty() {
@@ -107,7 +106,7 @@ fn build_status_bar(
 }
 
 ///|
-fn build_more_menu_overlay(theme : @core.Theme) -> @moui.View[ExcelMsg] {
+fn build_more_menu_overlay(theme : Theme) -> @moui.View[ExcelMsg] {
   @views.container(
     @views.column(
       [
@@ -158,7 +157,7 @@ fn build_more_menu_overlay(theme : @core.Theme) -> @moui.View[ExcelMsg] {
 fn context_menu_item(
   label : String,
   action : ContextMenuAction,
-  theme : @core.Theme,
+  theme : Theme,
 ) -> @moui.View[ExcelMsg] {
   @views.button(
     label,
