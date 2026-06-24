@@ -23,6 +23,7 @@ pub fn Bitmap::alloc_n32_premul(@moui_skia.ISize) -> Self?
 pub fn Bitmap::byte_size(Self) -> Int
 pub fn Bitmap::dimensions(Self) -> @moui_skia.ISize
 pub fn Bitmap::erase_color(Self, @moui_skia.Color) -> Unit
+pub fn Bitmap::from_pixels(Bytes, Int, Int, Int) -> Self?
 pub fn Bitmap::height(Self) -> Int
 pub fn Bitmap::image_info(Self) -> @moui_skia.ImageInfo
 pub fn Bitmap::is_available(Self) -> Bool
