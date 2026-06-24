@@ -52,6 +52,11 @@ API surface guards, smoke catalog validation, core/view/render/backend package
 tests, `moui_tester`, `moui_devtools`, Showcase and Markdown Editor app tests,
 and Web wasm-gc builds.
 
+- Root facade type forwards are enforced by `tools/moui/validate_api_surface/main.mbt`.
+  If a future change exposes additional app-safe root facade aliases through
+  `moui/pkg.generated.mbti`, update `root_facade_app_safe_aliases()` in that file
+  to keep the CI guard in sync.
+
 Use these additional checks when relevant:
 
 ```sh

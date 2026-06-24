@@ -81,11 +81,12 @@ fn parse_cli(args : Array[String]) -> Result[CliOptions, String] {
 fn root_facade_app_safe_aliases() -> Array[String] {
   [
     "View", "Program", "Effect", "Subscription", "Theme", "Point", "Size", "Rect",
-    "Insets", "Constraints", "Axis", "Color", "Brush", "BorderStyle", "ShadowStyle",
+    "Insets", "Constraints", "Axis", "Alignment", "Color", "Brush", "BorderStyle", "ShadowStyle",
     "FontSpec", "FontFamily", "FontFamilyStack", "TextRange", "TextAlign", "State",
     "Binding", "DerivedState", "Environment", "ViewEnvironment", "ColorScheme", "LayoutDirection",
     "AccessibilityContrast", "ContentSizeCategory", "ScrollState", "FocusState",
     "NavigationState", "CommandIntent", "KeyboardShortcut", "KeyModifiers", "DateValue",
+    "ActionCommand", "ActionCommandMap", "CommandBinding",
   ]
 }
 
