@@ -76,6 +76,7 @@ pub fn run_smoke_app_with_options(
 pub fn renderer_provider(
   options? : WindowsSunAppOptions = WindowsSunAppOptions::new(),
 ) -> @windows_host.WindowsRendererProvider {
+  ignore(options)
   @windows_host.WindowsRendererProvider::new(create_renderer=(window, metrics) => {
     create_renderer(window, metrics, options)
   })
@@ -86,6 +87,7 @@ pub fn windows_sun_provider_preflight_summary(
   options? : WindowsSunAppOptions = WindowsSunAppOptions::new(),
   smoke_options? : WindowsSunSmokeOptions = WindowsSunSmokeOptions::new(),
 ) -> String {
+  ignore(options)
   let info = @sun_renderer.backend_info()
   let render_status = if windows_sun_provider_ready() {
     "experimental-ready"
@@ -103,7 +105,7 @@ pub fn windows_sun_provider_preflight_summary(
 
 ///|
 fn sun_host_renderer_bridge_preflight() -> String {
-  "renderer_bridge=HostWindowRenderer; renderer_text_system=SunRasterRenderer.text_system; renderer_image_resources=none; renderer_async_image_loading=none; renderer_present_count=SunRasterRenderer.present_count; renderer_dispose=SunRasterRenderer.dispose"
+  "renderer_bridge=HostWindowRenderer; renderer_text_system=SunRasterRenderer.text_system; renderer_image_resources=SunRasterRenderer.image_resources; renderer_async_image_loading=sync; renderer_image_resource_apply=SunRasterRenderer.apply_image_resource_load_completion; renderer_image_resource_change=SunRasterRenderer.set_image_resource_change_callback; renderer_present_count=SunRasterRenderer.present_count; renderer_dispose=SunRasterRenderer.dispose"
 }
 
 ///|
@@ -193,7 +195,14 @@ fn host_renderer_from_sun(
       }
     },
     text_system=() => renderer.text_system(),
-    image_resources=() => [],
+    image_resources=() => renderer.image_resources(),
+    image_resource_snapshot=Some(() => renderer.image_resource_snapshot()),
+    apply_image_resource_load_completion=Some(completion => {
+      renderer.apply_image_resource_load_completion(completion)
+    }),
+    set_image_resource_change_callback=callback => {
+      renderer.set_image_resource_change_callback(callback)
+    },
     present_count=() => renderer.present_count(),
     dispose=() => renderer.dispose(),
   )

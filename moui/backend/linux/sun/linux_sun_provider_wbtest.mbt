@@ -16,8 +16,22 @@ test "Linux Sun preflight describes direct Wayland pixel presenter" {
   assert_true(
     preflight.contains("renderer_text_system=SunRasterRenderer.text_system"),
   )
-  assert_true(preflight.contains("renderer_image_resources=none"))
-  assert_true(preflight.contains("renderer_async_image_loading=none"))
+  assert_true(
+    preflight.contains(
+      "renderer_image_resources=SunRasterRenderer.image_resources",
+    ),
+  )
+  assert_true(preflight.contains("renderer_async_image_loading=sync"))
+  assert_true(
+    preflight.contains(
+      "renderer_image_resource_apply=SunRasterRenderer.apply_image_resource_load_completion",
+    ),
+  )
+  assert_true(
+    preflight.contains(
+      "renderer_image_resource_change=SunRasterRenderer.set_image_resource_change_callback",
+    ),
+  )
   assert_true(
     preflight.contains("linux_presenter=window_linux.present_rgba_pixels"),
   )
