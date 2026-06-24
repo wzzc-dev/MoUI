@@ -156,9 +156,10 @@ tag-sequence, prepend-mark, script-mark, and Hangul Jamo samples; Cosmic run-lay
 assert glyph output plus monotonic caret coverage through the provider-safe
 mapped layout path, and focused Cosmic
 tests cover platform emoji fallback font loading and emoji codepoint resolution
-when such a font is available. Full bidi, line breaking, typography
-conformance, native emoji font fallback across all providers, color emoji
-conformance, and provider shaping parity are still follow-up work.
+when such a font is available. Bidi reordering and paragraph line breaking are
+now marked ready in the Skia text maturity preflight; color emoji
+determinism, native emoji font fallback across all providers, and provider
+shaping parity are still follow-up work.
 The cross-package text boundary is documented in [Text system](text-system.md).
 Native image support is synchronous from the app model's point of view.
 `WgpuRenderer::image_resources()` still exposes renderer-local image resource
@@ -269,8 +270,9 @@ now accepts complete fallback runs immediately and accepts partial default-font
 fallback only when it reduces missing glyph ids or recovers visible text from a
 blank primary run. The companion
 `text maturity audit partial` backend-info summary keeps audited Skia text
-baseline checks separate from tracked gaps for bidi, paragraph line breaking,
-deterministic color emoji, and provider shaping parity; neither
+baseline checks separate from the remaining tracked gap for deterministic color
+emoji and provider shaping parity; bidi reordering and paragraph line breaking
+are now marked ready. Neither
 diagnostic replaces the existing MoUI draw-command replay or proves full shaping
 parity. macOS presents
 the frame through a `CGImage` on a `CALayer`, Windows through a top-down BGRA

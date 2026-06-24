@@ -154,10 +154,11 @@ Sinhala mark, Khmer vowel/coeng, Myanmar mark, Hangul Jamo, and bidi samples,
 and they now
 inject `skia_text_system()` into a public `AppRuntime` text field to prove the
 Skia measurement path drives focused text-input composition caret geometry and
-selection highlight drawing. Fallback-safe diagnostics do not claim visual bidi
-reordering, native-platform IME runtime behavior, or native SkParagraph parity;
-only matching-host real-Skia SkParagraph smoke logs may claim those
-observations. macOS tester-owned first-frame smoke entrypoints still explicitly
+selection highlight drawing. Fallback-safe diagnostics do not claim
+native-platform IME runtime behavior or native SkParagraph runtime parity; the
+text maturity preflight now marks bidi reordering and paragraph line breaking
+ready, while only matching-host real-Skia SkParagraph smoke logs may claim
+native paragraph runtime observation. macOS tester-owned first-frame smoke entrypoints still explicitly
 select `SkiaFontResolution::EmptyTypeface`; that keeps CLI smoke runs on the
 safer default-font retry path without changing the normal app default. The fallback-safe Skia
 renderer tests also consume the
@@ -171,10 +172,11 @@ fallback-request, representative shaped/fallback caret, emoji-hint, and
 empty-typeface retry boundaries, missing-glyph recovery rule, and the Skia
 mixed-run fallback segment path separately from tracked gaps. The paragraph API is now present for line metrics
 and geometry, and the optional SkParagraph route is wired through the native
-binding. Native paragraph and bidi readiness remain release gates until
-matching-host macOS, Windows, and Linux Skia mainline smoke logs include real
-SkParagraph observation. Deterministic color emoji, future Unicode grapheme data
-refreshes, and broader typography conformance remain follow-up work.
+binding. The text maturity preflight now marks bidi reordering and paragraph
+line breaking ready; native paragraph runtime readiness remains a release gate
+until matching-host macOS, Windows, and Linux Skia mainline smoke logs include
+real SkParagraph observation. Deterministic color emoji, future Unicode grapheme
+data refreshes, and broader typography conformance remain follow-up work.
 
 Renderer text/emoji smoke now has a stronger audit boundary:
 `colorEmojiPixels` must carry high-saturation glyph/raster observation plus
