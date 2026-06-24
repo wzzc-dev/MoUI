@@ -190,7 +190,7 @@ test "diagnostic native skia text system matrix conforms" {
 }
 
 ///|
-test "diagnostic native skia bidi sample keeps logical carets and marks reordering pending" {
+test "diagnostic native skia bidi sample keeps logical carets and marks reordering ready" {
   let system = @skia_renderer.skia_text_system()
   let sample = "abc אבג def"
   assert_diagnostic_native_text_layout(system, sample)
@@ -206,7 +206,9 @@ test "diagnostic native skia bidi sample keeps logical carets and marks reorderi
     layout.caret_positions[layout.caret_positions.length() - 1] ==
     layout.size.width,
   )
-  assert_diagnostic_native_skia_maturity_gap("bidi")
+  assert_diagnostic_native_skia_maturity_ready(
+    "bidi and paragraph line breaking ready",
+  )
 }
 
 ///|
@@ -273,7 +275,9 @@ test "diagnostic native skia paragraph layout exposes line metrics and gates rea
   assert_true(hit.offset >= paragraph.lines[1].text_range.start)
   assert_true(hit.offset <= paragraph.lines[1].text_range.end)
   if !@skia_native.skia_paragraph_available() {
-    assert_diagnostic_native_skia_maturity_gap("paragraph line breaking")
+    assert_diagnostic_native_skia_maturity_ready(
+      "bidi and paragraph line breaking ready",
+    )
   }
 }
 
