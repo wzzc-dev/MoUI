@@ -1,7 +1,7 @@
 ///|
 fn build_formula_bar(
   model : ExcelModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
   let suggestions = build_autocomplete(model, theme)
   let preview = formula_preview(model)
@@ -61,7 +61,7 @@ fn build_formula_bar(
 ///|
 fn build_autocomplete(
   model : ExcelModel,
-  theme : @core.Theme,
+  theme : @moui.Theme,
 ) -> @moui.View[ExcelMsg] {
   if model.autocomplete_suggestions.is_empty() {
     @views.empty()
