@@ -253,7 +253,7 @@ pub fn ExcelApp::set_pending(
 }
 
 ///|
-pub fn ExcelApp::subscriptions(self : ExcelApp) -> @core.Subscription[ExcelMsg] {
+pub fn ExcelApp::subscriptions(self : ExcelApp) -> @moui.Subscription[ExcelMsg] {
   let current = self.model.get()
   match current.file_status {
     ExcelFileStatus::Pending(id) =>
@@ -262,7 +262,7 @@ pub fn ExcelApp::subscriptions(self : ExcelApp) -> @core.Subscription[ExcelMsg] 
         map=completion => ExcelMsg::HostCompleted(completion),
         label="Excel file operation completion",
       )
-    ExcelFileStatus::Idle => @core.Subscription::none()
+    ExcelFileStatus::Idle => @moui.Subscription::none()
   }
 }
 
