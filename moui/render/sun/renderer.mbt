@@ -888,11 +888,7 @@ fn sun_scope_pop_command(scope : SunCanvasScopeKind) -> String {
 
 ///|
 fn sun_dim_to_int(value : Double) -> Int {
-  if value != value || value <= 0.0 {
-    0
-  } else {
-    value.ceil().to_int().max(1)
-  }
+  value.ceil().max(1.0).to_int()
 }
 
 ///|

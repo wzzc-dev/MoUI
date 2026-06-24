@@ -38,31 +38,73 @@ void renderer_present_surface_rect(
     int32_t width,
     int32_t height
 ) {
-    (void)surface_width;
-    (void)surface_height;
-    HWND hwnd = (HWND)(uintptr_t)window;
-    HDC hdc = GetDC(hwnd);
-    if (!hdc) return;
+    if (pixels == NULL || surface_width <= 0 || surface_height <= 0 || width <= 0 || height <= 0) {
+        return;
+    }
 
-    BITMAPINFO bmi = {0};
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = width;
-    bmi.bmiHeader.biHeight = -height; // Top-down
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
+    renderer_objc_id view = renderer_content_view(window);
+    if (view == NULL) { return; }
 
-    StretchDIBits(
-        hdc,
-        x, y, width, height,
-        0, 0, width, height,
-        pixels,
-        &bmi,
-        DIB_RGB_COLORS,
-        SRCCOPY
-    );
+    // Find or create passthrough NSImageView subview (created once, reused)
+    renderer_objc_id image_view = renderer_find_or_create_image_view(view);
+    if (image_view == NULL) { return; }
 
-    ReleaseDC(hwnd, hdc);
+    // Get content view bounds and window scale factor
+    renderer_cgrect_t view_bounds = renderer_view_bounds(view);
+    double scale = renderer_backing_scale_factor(view);
+
+    // Update image view frame to match content view bounds (like Skia)
+    if (view_bounds.width > 0.0 && view_bounds.height > 0.0) {
+        ((void (*)(renderer_objc_id, renderer_objc_sel, renderer_cgrect_t))
+            renderer_darwin_api.objc_msg_send)(
+                image_view, renderer_sel("setFrame:"), view_bounds);
+    }
+
+    // Create CGImage from pixel data
+    renderer_backing_t* backing = renderer_backing_for_view(view, surface_width, surface_height);
+    if (backing == NULL) { return; }
+    renderer_copy_rect_to_backing(backing, pixels, x, y, width, height);
+
+    void* cg_image = renderer_create_cg_image(backing);
+    if (cg_image == NULL) { return; }
+
+    // Create NSImage using logical-point size (matching Skia presenter)
+    renderer_objc_id ns_image_class = renderer_darwin_api.objc_get_class("NSImage");
+    if (ns_image_class != NULL) {
+        renderer_objc_id ns_image_alloc = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel))
+            renderer_darwin_api.objc_msg_send)(ns_image_class, renderer_sel("alloc"));
+        if (ns_image_alloc != NULL) {
+            // NSImage size must be in points (logical size), not physical pixels.
+            // Skia uses view.bounds; we do the same, falling back to physical
+            // pixels divided by the backing scale factor when bounds are empty.
+            double point_w, point_h;
+            if (view_bounds.width > 0.0 && view_bounds.height > 0.0) {
+                point_w = view_bounds.width;
+                point_h = view_bounds.height;
+            } else {
+                point_w = (double)surface_width / scale;
+                point_h = (double)surface_height / scale;
+            }
+
+
+            // initWithCGImage:size: takes (CGImageRef, NSSize). NSSize = two doubles on arm64.
+            renderer_objc_id ns_image = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel, void*, double, double))
+                renderer_darwin_api.objc_msg_send)(
+                    ns_image_alloc, renderer_sel("initWithCGImage:size:"),
+                    cg_image, point_w, point_h);
+            if (ns_image != NULL) {
+                ((void (*)(renderer_objc_id, renderer_objc_sel, renderer_objc_id))
+                    renderer_darwin_api.objc_msg_send)(
+                        image_view, renderer_sel("setImage:"), ns_image);
+                ((void (*)(renderer_objc_id, renderer_objc_sel, intptr_t))
+                    renderer_darwin_api.objc_msg_send)(
+                        image_view, renderer_sel("setNeedsDisplay:"), (intptr_t)1);
+                renderer_msg_void(ns_image, "release");
+            }
+        }
+    }
+
+    renderer_darwin_api.cg_image_release(cg_image);
 }
 
 #elif defined(__APPLE__)
@@ -82,6 +124,12 @@ typedef struct {
     double width;
     double height;
 } renderer_cgrect_t;
+
+// NSPoint/CGPoint-equivalent struct (two doubles, 16 bytes).
+typedef struct {
+    double x;
+    double y;
+} renderer_cgpoint_t;
 
 typedef void* renderer_objc_id;
 typedef void* renderer_objc_class;
@@ -111,6 +159,22 @@ typedef void* (*renderer_cg_image_create_fn)(
 );
 typedef void (*renderer_cg_release_fn)(void*);
 
+// ObjC runtime class-creation function pointers used to register a passthrough
+// NSImageView subclass whose hitTest: returns nil so pointer events fall
+// through to the underlying content view (matching the Skia presenter).
+typedef renderer_objc_class (*renderer_objc_allocate_class_pair_fn)(
+    renderer_objc_class,
+    const char*,
+    size_t
+);
+typedef bool (*renderer_class_add_method_fn)(
+    renderer_objc_class,
+    renderer_objc_sel,
+    void*,
+    const char*
+);
+typedef void (*renderer_objc_register_class_pair_fn)(renderer_objc_class);
+
 typedef struct {
     bool attempted;
     bool ready;
@@ -126,6 +190,9 @@ typedef struct {
     void* cg_context_draw_image;
     void* cg_context_translate_ctm;
     void* cg_context_scale_ctm;
+    renderer_objc_allocate_class_pair_fn objc_allocate_class_pair;
+    renderer_class_add_method_fn class_add_method;
+    renderer_objc_register_class_pair_fn objc_register_class_pair;
 } renderer_darwin_api_t;
 
 typedef struct renderer_backing {
@@ -190,6 +257,18 @@ static bool renderer_load_darwin_api(void) {
         renderer_dlsym_any(core_graphics, "CGContextTranslateCTM");
     renderer_darwin_api.cg_context_scale_ctm =
         renderer_dlsym_any(core_graphics, "CGContextScaleCTM");
+    renderer_darwin_api.objc_allocate_class_pair =
+        (renderer_objc_allocate_class_pair_fn)renderer_dlsym_any(
+            objc,
+            "objc_allocateClassPair"
+        );
+    renderer_darwin_api.class_add_method =
+        (renderer_class_add_method_fn)renderer_dlsym_any(objc, "class_addMethod");
+    renderer_darwin_api.objc_register_class_pair =
+        (renderer_objc_register_class_pair_fn)renderer_dlsym_any(
+            objc,
+            "objc_registerClassPair"
+        );
 
     renderer_darwin_api.ready =
         renderer_darwin_api.objc_get_class != NULL &&
@@ -237,6 +316,58 @@ static double renderer_backing_scale_factor(renderer_objc_id view) {
     double backing_scale = ((double (*)(renderer_objc_id, renderer_objc_sel))
         renderer_darwin_api.objc_msg_send)(ns_window, renderer_sel("backingScaleFactor"));
     return backing_scale > 0.0 ? backing_scale : 1.0;
+}
+
+// hitTest: implementation that always returns nil so the image view never
+// intercepts pointer events. This mirrors MOUIMacosSkiaPassthroughImageView.
+// Signature: - (NSView *)hitTest:(NSPoint)point;
+// NSPoint is a struct of two doubles; on arm64 it is passed in v0/v1.
+static renderer_objc_id renderer_passthrough_hit_test(
+    renderer_objc_id self,
+    renderer_objc_sel _cmd,
+    renderer_cgpoint_t point
+) {
+    (void)self;
+    (void)_cmd;
+    (void)point;
+    return NULL;
+}
+
+static renderer_objc_class renderer_passthrough_image_view_class(void) {
+    static renderer_objc_class cached = NULL;
+    if (cached != NULL) {
+        return cached;
+    }
+    if (!renderer_darwin_api.ready) {
+        return NULL;
+    }
+    renderer_objc_class ns_image_view_class = renderer_darwin_api.objc_get_class("NSImageView");
+    if (ns_image_view_class == NULL) {
+        return NULL;
+    }
+    renderer_objc_class new_class = renderer_darwin_api.objc_allocate_class_pair(
+        ns_image_view_class,
+        "MouiSunPassthroughImageView",
+        0
+    );
+    if (new_class == NULL) {
+        // Another module may have already registered the class; look it up.
+        cached = renderer_darwin_api.objc_get_class("MouiSunPassthroughImageView");
+        return cached;
+    }
+    // hitTest: returns a pointer; type encoding "16@0:8{CGPoint=dd}16" on arm64,
+    // but the portable encoding for an object return with a struct arg is
+    // "@16@0:8{CGPoint=dd}16". Use the standard NSView hitTest signature.
+    bool added = renderer_darwin_api.class_add_method(
+        new_class,
+        renderer_sel("hitTest:"),
+        (void*)renderer_passthrough_hit_test,
+        "@16@0:8{CGPoint=dd}16"
+    );
+    (void)added;
+    renderer_darwin_api.objc_register_class_pair(new_class);
+    cached = new_class;
+    return cached;
 }
 
 // Get view bounds (NSRect/CGRect) via ObjC runtime.
@@ -454,9 +585,16 @@ static renderer_objc_id renderer_find_or_create_image_view(renderer_objc_id view
         }
     }
 
-    // Create new NSImageView
+    // Use a passthrough NSImageView subclass whose hitTest: returns nil so
+    // pointer events fall through to the content view (matching Skia).
+    renderer_objc_class image_view_class = renderer_passthrough_image_view_class();
+    if (image_view_class == NULL) {
+        image_view_class = ns_image_view_class;
+    }
+
+    // Create new passthrough image view
     renderer_objc_id alloc_view = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel))
-        renderer_darwin_api.objc_msg_send)(ns_image_view_class, renderer_sel("alloc"));
+        renderer_darwin_api.objc_msg_send)(image_view_class, renderer_sel("alloc"));
     if (alloc_view == NULL) { return NULL; }
 
     // Get content view's bounds for initial size
@@ -522,19 +660,21 @@ void renderer_present_surface_rect(
     renderer_objc_id view = renderer_content_view(window);
     if (view == NULL) { return; }
 
-    // Find or create NSImageView subview (created once, reused)
+    // Find or create passthrough NSImageView subview (created once, reused)
     renderer_objc_id image_view = renderer_find_or_create_image_view(view);
     if (image_view == NULL) { return; }
 
-    // Update image view frame to match content view bounds (like Skia does)
+    // Get content view bounds and window scale factor
     renderer_cgrect_t view_bounds = renderer_view_bounds(view);
+    double scale = renderer_backing_scale_factor(view);
+
     if (view_bounds.width > 0.0 && view_bounds.height > 0.0) {
         ((void (*)(renderer_objc_id, renderer_objc_sel, renderer_cgrect_t))
             renderer_darwin_api.objc_msg_send)(
                 image_view, renderer_sel("setFrame:"), view_bounds);
     }
 
-    // Create CGImage from pixel data (minimal allocation per frame)
+    // Create CGImage from pixel data
     renderer_backing_t* backing = renderer_backing_for_view(view, surface_width, surface_height);
     if (backing == NULL) { return; }
     renderer_copy_rect_to_backing(backing, pixels, x, y, width, height);
@@ -542,15 +682,25 @@ void renderer_present_surface_rect(
     void* cg_image = renderer_create_cg_image(backing);
     if (cg_image == NULL) { return; }
 
-    // Create NSImage from CGImage and set on imageView (proven working approach like Skia)
+    // Create NSImage using logical-point size (matching Skia presenter)
     renderer_objc_id ns_image_class = renderer_darwin_api.objc_get_class("NSImage");
     if (ns_image_class != NULL) {
         renderer_objc_id ns_image_alloc = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel))
             renderer_darwin_api.objc_msg_send)(ns_image_class, renderer_sel("alloc"));
         if (ns_image_alloc != NULL) {
-            double backing_scale = renderer_backing_scale_factor(view);
-            double point_w = (double)surface_width / backing_scale;
-            double point_h = (double)surface_height / backing_scale;
+            // NSImage size must be in points (logical size), not physical pixels.
+            // Skia uses view.bounds; we do the same, falling back to physical
+            // pixels divided by the backing scale factor when bounds are empty.
+            double point_w, point_h;
+            if (view_bounds.width > 0.0 && view_bounds.height > 0.0) {
+                point_w = view_bounds.width;
+                point_h = view_bounds.height;
+            } else {
+                point_w = (double)surface_width / scale;
+                point_h = (double)surface_height / scale;
+            }
+
+
             // initWithCGImage:size: takes (CGImageRef, NSSize). NSSize = two doubles on arm64.
             renderer_objc_id ns_image = ((renderer_objc_id (*)(renderer_objc_id, renderer_objc_sel, void*, double, double))
                 renderer_darwin_api.objc_msg_send)(
