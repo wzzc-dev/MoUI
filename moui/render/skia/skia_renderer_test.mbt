@@ -13,7 +13,10 @@ test "skia renderer backend info reflects native availability" {
   assert_true(
     info.description.contains("Unicode 17 grapheme boundary contract ready"),
   )
-  assert_true(info.description.contains("bidi, paragraph line breaking"))
+  assert_true(
+    info.description.contains("bidi and paragraph line breaking ready"),
+  )
+  assert_true(info.description.contains("color emoji pending"))
   assert_true(info.description.contains("flush-and-submit finalization"))
   if skia_available() {
     assert_true(info.status == @render.RendererCapabilityStatus::Supported)

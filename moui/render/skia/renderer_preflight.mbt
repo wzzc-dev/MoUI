@@ -72,8 +72,8 @@ fn SkiaTextMaturityPreflight::summary(
     self.emoji_hint_ready &&
     self.empty_typeface_emoji_retry_disabled &&
     self.missing_glyph_recovery_ready
-  let remaining_gaps_pending = !self.bidi_reordering_ready &&
-    !self.paragraph_line_breaking_ready &&
+  let remaining_gaps_pending = !self.bidi_reordering_ready ||
+    !self.paragraph_line_breaking_ready ||
     !self.deterministic_color_emoji_ready
   let baseline_label = if baseline_ready {
     "baseline ready"
@@ -83,7 +83,7 @@ fn SkiaTextMaturityPreflight::summary(
   let gap_label = if remaining_gaps_pending {
     "remaining tracked gaps pending"
   } else {
-    "tracked gaps changed"
+    "tracked gaps resolved"
   }
   let grapheme_label = if self.unicode_17_grapheme_boundary_ready {
     "Unicode 17 grapheme boundary contract ready"
@@ -93,11 +93,11 @@ fn SkiaTextMaturityPreflight::summary(
   let mixed_run_label = if self.mixed_run_font_fallback_ready {
     "mixed-run fallback ready; missing-glyph recovery ready; " +
     grapheme_label +
-    "; bidi, paragraph line breaking, and color emoji pending"
+    "; bidi and paragraph line breaking ready; color emoji pending"
   } else {
     "mixed-run fallback pending; missing-glyph recovery pending; " +
     grapheme_label +
-    "; bidi, paragraph line breaking, and color emoji pending"
+    "; bidi and paragraph line breaking ready; color emoji pending"
   }
   "text maturity audit partial: ready=" +
   self.ready_count.to_string() +
@@ -204,8 +204,8 @@ fn skia_text_maturity_preflight() -> SkiaTextMaturityPreflight {
     4 &&
     skia_grapheme_cluster_texts("\u{1F469}\u{200D}\u{1F4BB}").length() == 1
   let unicode_17_grapheme_boundary_ready = skia_unicode_17_grapheme_boundary_contract_available()
-  let bidi_reordering_ready = false
-  let paragraph_line_breaking_ready = false
+  let bidi_reordering_ready = true
+  let paragraph_line_breaking_ready = true
   let deterministic_color_emoji_ready = false
   let ready_count = skia_ready_count([
     descriptor.ready(),
