@@ -1,7 +1,11 @@
 import {
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/x/fs",
   "wzzc-dev/moui/core",
   "wzzc-dev/moui/render",
   "wzzc-dev/moui_sun/graphics" @sun_graphics,
+  "wzzc-dev/moui_sun/renderer" @sun_renderer,
+  "wzzc-dev/moui_sun/text" @sun_text,
 }
 
 supported_targets = "native"

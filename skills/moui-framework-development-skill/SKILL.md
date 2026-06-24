@@ -150,11 +150,11 @@ owning-package boundaries clear.
   remain outside `render/skia`.
 - `render/wgpu/`: experimental native wgpu renderer, including source decode
   completion helpers used by provider-owned native image loader hooks.
-- `render/sun/`: experimental native Sun CPU raster renderer over the
-  repo-local `moui_sun` workspace. It claims a conservative primitive subset
-  and draws debug placeholder glyphs for ASCII text while recording text
-  diagnostics; image, shadow, layer, filter, and shader commands remain
-  unsupported diagnostics until MoUI-level proof exists.
+- `render/sun/`: native Sun CPU raster renderer over the repo-local `moui_sun`
+  workspace. It renders rects, rounded rects, paths, gradients, text (via
+  moui_sun/text FontFace), images (PNG/BMP data URIs), shadows, layers,
+  filters, and shader effects. TextShaping, EmojiText, and AsyncImage remain
+  tracked as gaps.
 - `render/wgpu/cosmic_text/`: standalone Moon Cosmic provider.
 - `render/wgpu/coretext/`: macOS CoreText provider.
 - `render/wgpu/directwrite/`: Windows DirectWrite scaffold.
@@ -191,8 +191,8 @@ owning-package boundaries clear.
 - `examples/showcase/{macos_wgpu_cosmic,windows_wgpu_cosmic,linux_wgpu_cosmic}`: explicit Moon
   Cosmic text-provider comparison entrypoints on the native WGPU diagnostic
   route.
-- `examples/showcase/{macos_sun,windows_sun,linux_sun}`: experimental Sun CPU
-  raster entrypoints. Do not add Markdown Editor Sun entrypoints until text and
+- `examples/showcase/{macos_sun,windows_sun,linux_sun}`: Sun CPU raster
+  entrypoints. Do not add Markdown Editor Sun entrypoints until text and
   editor runtime evidence exists.
 
 ## Development Workflow

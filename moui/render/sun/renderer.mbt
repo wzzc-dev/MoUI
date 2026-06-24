@@ -41,6 +41,8 @@ priv enum SunCanvasScopeKind {
   RoundedClip
   Transform
   Opacity
+  Layer
+  Filter
 } derive(Eq)
 
 ///|
@@ -52,6 +54,12 @@ pub(all) struct SunRasterRenderer {
   mut unsupported_command_count : Int
   unsupported_command_diagnostics : Array[SunUnsupportedCommandDiagnostic]
   mut last_frame : SunPixelFrame?
+  text_system : @sun_text.TextSystem
+  resources : @sun_renderer.RendererResources
+  image_lifecycle : @render.ImageResourceLifecycle
+  mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
+  mut canvas_stack : Array[@sun_graphics.Canvas]
+  mut filter_stack : Array[@sun_graphics.PaintFilter]
 }
 
 ///|
@@ -70,7 +78,7 @@ pub fn backend_info() -> @render.RendererBackendInfo {
     can_render=true,
     can_resize=true,
     owns_surface=true,
-    description="Experimental native Sun CPU raster renderer over moui_sun graphics/text primitives with structured unsupported-command diagnostics.",
+    description="Native Sun CPU raster renderer over moui_sun graphics/text primitives with structured unsupported-command diagnostics.",
   )
 }
 
@@ -89,7 +97,7 @@ pub fn sun_raster_native_descriptor() -> @render.RendererDescriptor {
     capabilities=@render.renderer_backend_capabilities(
       @render.RendererBackendKind::SunRasterNative,
     ),
-    description="Experimental native Sun CPU raster renderer that presents copied RGBA pixel frames to host providers.",
+    description="Native Sun CPU raster renderer that presents copied RGBA pixel frames to host providers.",
   )
 }
 
@@ -103,7 +111,7 @@ pub fn create_with_present_target(
   guard width > 0 && height > 0 else {
     raise SunRendererError::InvalidSurfaceSize(width, height)
   }
-  {
+  let renderer = {
     metrics,
     target,
     canvas: @sun_graphics.Canvas::new(width, height),
@@ -111,7 +119,17 @@ pub fn create_with_present_target(
     unsupported_command_count: 0,
     unsupported_command_diagnostics: [],
     last_frame: None,
+    text_system: @sun_text.TextSystem::with_font_cache_capacity(64),
+    resources: @sun_renderer.RendererResources::with_font_capacity(
+      1024, 1024, 64, 256, 256, 128,
+    ),
+    image_lifecycle: @render.ImageResourceLifecycle::new(),
+    on_image_resource_change: None,
+    canvas_stack: [],
+    filter_stack: [],
   }
+  renderer.register_default_platform_fonts()
+  renderer
 }
 
 ///|
@@ -135,8 +153,9 @@ pub fn SunRasterRenderer::render(
   self.unsupported_command_diagnostics.clear()
   let canvas_scopes : Array[SunCanvasScopeKind] = []
   let opacity_stack : Array[Double] = []
+  let blend_mode_stack : Array[@sun_graphics.BlendMode] = []
   for command in commands {
-    self.render_command(command, canvas_scopes, opacity_stack)
+    self.render_command(command, canvas_scopes, opacity_stack, blend_mode_stack)
   }
   if !canvas_scopes.is_empty() {
     for scope in canvas_scopes {
@@ -145,54 +164,19 @@ pub fn SunRasterRenderer::render(
         "command stream ended with an open \{sun_scope_name(scope)} scope",
       )
     }
+    while !self.canvas_stack.is_empty() {
+      match self.canvas_stack.pop() {
+        Some(parent_canvas) => self.canvas = parent_canvas
+        None => ()
+      }
+    }
+    self.filter_stack.clear()
+    while !blend_mode_stack.is_empty() {
+      ignore(blend_mode_stack.pop())
+    }
   }
   let frame = self.read_frame()
   self.last_frame = Some(frame)
-  // Diagnostic: check multiple pixel values
-  println("\{self.present_count}: frame=\{frame.width}x\{frame.height} scale=\{self.metrics.scale_factor} commands=\{commands.length()} unsupported=\{self.unsupported_command_count}")
-  // Print first 8 commands
-  let max_cmds = if commands.length() < 8 { commands.length() } else { 8 }
-  for cmd_i in 0..<max_cmds {
-    let cmd_str = match commands[cmd_i] {
-      @core.DrawCommand::Clear(c) =>
-        "Clear rgba=\{c.r},\{c.g},\{c.b},\{c.a}"
-      @core.DrawCommand::FillRect(r, c) =>
-        "FillRect x=\{r.origin.x} y=\{r.origin.y} w=\{r.size.width} h=\{r.size.height} color=\{c.r},\{c.g},\{c.b},\{c.a}"
-      @core.DrawCommand::DrawText(t) =>
-        "DrawText \"\{t.text}\" x=\{t.frame.origin.x} y=\{t.frame.origin.y} w=\{t.frame.size.width} h=\{t.frame.size.height}"
-      _ => "other command"
-    }
-    println("  [\{cmd_i}] \{cmd_str}")
-  }
-  // Scan for non-white pixels in grid
-  let mut found = false
-  let mut sy = 0
-  while sy < frame.height && !found {
-    let mut sx = 0
-    while sx < frame.width && !found {
-      let off = (sy * frame.width + sx) * 4
-      let pr = frame.pixels[off].to_int()
-      let pg = frame.pixels[off + 1].to_int()
-      let pb = frame.pixels[off + 2].to_int()
-      if pr < 245 || pg < 245 || pb < 245 {
-        println("  color at \{sx},\{sy} = rgba(\{pr},\{pg},\{pb},\{frame.pixels[off+3].to_int()})")
-        found = true
-      }
-      sx = sx + 40
-    }
-    sy = sy + 40
-  }
-  if !found {
-    // Show a few sample pixels
-    println("  all scanned pixels are near-white (>245). Samples:")
-    let sample_positions : Array[Int] = [0, 0, frame.width / 2, frame.height / 2, frame.width - 1, frame.height - 1]
-    for si in 0..<3 {
-      let sx_val = sample_positions[si * 2]
-      let sy_val = sample_positions[si * 2 + 1]
-      let soff = (sy_val * frame.width + sx_val) * 4
-      println("    (\{sx_val},\{sy_val}) = rgba(\{frame.pixels[soff].to_int()},\{frame.pixels[soff+1].to_int()},\{frame.pixels[soff+2].to_int()},\{frame.pixels[soff+3].to_int()})")
-    }
-  }
   if (self.target.present)(frame) {
     self.present_count = self.present_count + 1
   } else {
@@ -204,8 +188,14 @@ pub fn SunRasterRenderer::render(
 pub fn SunRasterRenderer::text_system(
   self : SunRasterRenderer,
 ) -> @core.TextSystem {
-  ignore(self)
-  @core.TextSystem::fallback()
+  @core.TextSystem::new(
+    id="sun-raster-text-system",
+    measure=input => self.measure_text_layout(input),
+    paragraph_layout=Some(input => self.paragraph_layout_result(input)),
+    register_font_data=(family, data) => {
+      self.register_font_family_data(family, data)
+    },
+  )
 }
 
 ///|
@@ -236,7 +226,54 @@ pub fn SunRasterRenderer::last_frame(
 
 ///|
 pub fn SunRasterRenderer::dispose(self : SunRasterRenderer) -> Unit {
-  ignore(self)
+  let previous_revision = self.image_lifecycle.revision()
+  let records = self.image_lifecycle.snapshot()
+  for record in records {
+    ignore(self.image_lifecycle.dispose(record.source))
+  }
+  self.notify_image_resource_change_if_needed(previous_revision)
+}
+
+///|
+pub fn SunRasterRenderer::register_font_bytes(
+  self : SunRasterRenderer,
+  key : String,
+  data : Bytes,
+) -> Unit {
+  ignore(self.text_system.register_font_bytes(key, data))
+}
+
+///|
+pub fn SunRasterRenderer::image_resources(
+  self : SunRasterRenderer,
+) -> Array[@render.ImageResourceRecord] {
+  self.image_lifecycle.snapshot()
+}
+
+///|
+pub fn SunRasterRenderer::image_resource_snapshot(
+  self : SunRasterRenderer,
+) -> @render.ImageResourceSnapshot {
+  self.image_lifecycle.snapshot_with_revision()
+}
+
+///|
+pub fn SunRasterRenderer::apply_image_resource_load_completion(
+  self : SunRasterRenderer,
+  completion : @render.ImageResourceLoadCompletion,
+) -> @render.ImageResourceSnapshot {
+  let previous_revision = self.image_lifecycle.revision()
+  let snapshot = self.image_lifecycle.apply_load_completion(completion)
+  self.notify_image_resource_change_if_needed(previous_revision)
+  snapshot
+}
+
+///|
+pub fn SunRasterRenderer::set_image_resource_change_callback(
+  self : SunRasterRenderer,
+  callback : ((@render.ImageResourceSnapshot) -> Unit)?,
+) -> Unit {
+  self.on_image_resource_change = callback
 }
 
 ///|
@@ -282,6 +319,7 @@ fn SunRasterRenderer::render_command(
   command : @core.DrawCommand,
   canvas_scopes : Array[SunCanvasScopeKind],
   opacity_stack : Array[Double],
+  blend_mode_stack : Array[@sun_graphics.BlendMode],
 ) -> Unit {
   let opacity = sun_current_opacity(opacity_stack)
   match command {
@@ -315,20 +353,9 @@ fn SunRasterRenderer::render_command(
       self.fill_rounded_rect(rounded, brush, opacity)
     @core.DrawCommand::StrokeRoundedRectBrush(rounded, brush, width) =>
       self.stroke_rounded_rect(rounded, brush, width, opacity)
-    @core.DrawCommand::DrawShadow(_) =>
-      self.record_unsupported_command(
-        "DrawShadow", "Sun renderer does not implement blurred shadow drawing yet",
-      )
-    @core.DrawCommand::DrawText(run) => {
-      self.draw_text_placeholder(run, opacity)
-      self.record_unsupported_command(
-        "DrawText", "Sun raster drew debug placeholder glyphs; moui_sun/text font shaping is not wired to MoUI TextRun yet",
-      )
-    }
-    @core.DrawCommand::DrawImage(_) =>
-      self.record_unsupported_command(
-        "DrawImage", "Sun image resource decoding is not wired to MoUI ImageRun yet",
-      )
+    @core.DrawCommand::DrawShadow(shadow) => self.draw_shadow(shadow, opacity)
+    @core.DrawCommand::DrawText(run) => self.draw_text(run, opacity)
+    @core.DrawCommand::DrawImage(image) => self.draw_image(image, opacity)
     @core.DrawCommand::PushClip(rect) => {
       self.canvas.save()
       canvas_scopes.push(SunCanvasScopeKind::Clip)
@@ -375,27 +402,138 @@ fn SunRasterRenderer::render_command(
         opacity_stack,
         SunCanvasScopeKind::Opacity,
       )
-    @core.DrawCommand::PushLayer(_) =>
-      self.record_unsupported_command(
-        "PushLayer", "Sun renderer does not implement offscreen layer scopes yet",
-      )
+    @core.DrawCommand::PushLayer(_spec) => {
+      self.canvas_stack.push(self.canvas)
+      blend_mode_stack.push(sun_blend_mode(_spec.blend_mode))
+      let w = self.canvas.get_pixmap().get_width()
+      let h = self.canvas.get_pixmap().get_height()
+      self.canvas = @sun_graphics.Canvas::new(w, h)
+      self.canvas.clear(@sun_graphics.Color::new(r=0, g=0, b=0, a=0))
+      canvas_scopes.push(SunCanvasScopeKind::Layer)
+    }
     @core.DrawCommand::PopLayer =>
-      self.record_unsupported_command(
-        "PopLayer", "Sun renderer does not implement offscreen layer scopes yet",
-      )
-    @core.DrawCommand::PushFilter(_) =>
-      self.record_unsupported_command(
-        "PushFilter", "Sun renderer does not implement filter scopes yet",
-      )
-    @core.DrawCommand::PopFilter =>
-      self.record_unsupported_command(
-        "PopFilter", "Sun renderer does not implement filter scopes yet",
-      )
+      match canvas_scopes.pop() {
+        Some(SunCanvasScopeKind::Layer) => {
+          let layer_pixmap = self.canvas.get_pixmap()
+          match self.canvas_stack.pop() {
+            Some(parent_canvas) => {
+              self.canvas = parent_canvas
+              let layer_blend = match blend_mode_stack.pop() {
+                Some(m) => m
+                None => @sun_graphics.BlendMode::SourceOver
+              }
+              self.canvas.draw_pixmap(
+                layer_pixmap,
+                0,
+                0,
+                @sun_graphics.Paint::new()
+                .set_opacity(opacity)
+                .set_blend_mode(layer_blend),
+              )
+            }
+            None =>
+              self.record_unsupported_command(
+                "PopLayer", "PopLayer has no matching canvas stack entry",
+              )
+          }
+        }
+        Some(other) => {
+          canvas_scopes.push(other)
+          self.record_unsupported_command(
+            "PopLayer",
+            "pop did not match active \{sun_scope_name(other)} scope",
+          )
+        }
+        None =>
+          self.record_unsupported_command(
+            "PopLayer", "pop has no matching push scope",
+          )
+      }
+    @core.DrawCommand::PushFilter(effect) => {
+      self.canvas_stack.push(self.canvas)
+      self.filter_stack.push(sun_filter_effect(effect))
+      let w = self.canvas.get_pixmap().get_width()
+      let h = self.canvas.get_pixmap().get_height()
+      self.canvas = @sun_graphics.Canvas::new(w, h)
+      self.canvas.clear(@sun_graphics.Color::new(r=0, g=0, b=0, a=0))
+      canvas_scopes.push(SunCanvasScopeKind::Filter)
+    }
+    @core.DrawCommand::PopFilter => {
+      let filter = self.filter_stack.pop()
+      match canvas_scopes.pop() {
+        Some(SunCanvasScopeKind::Filter) => {
+          let layer_pixmap = self.canvas.get_pixmap()
+          match self.canvas_stack.pop() {
+            Some(parent_canvas) => {
+              self.canvas = parent_canvas
+              match filter {
+                Some(paint_filter) => {
+                  let w = layer_pixmap.get_width()
+                  let h = layer_pixmap.get_height()
+                  let pixels = layer_pixmap.get_pixels()
+                  for py in 0..<h {
+                    for px in 0..<w {
+                      let offset = (py * w + px) * 4
+                      let src = @sun_graphics.Color::new(
+                        r=pixels[offset],
+                        g=pixels[offset + 1],
+                        b=pixels[offset + 2],
+                        a=pixels[offset + 3],
+                      )
+                      let filtered = paint_filter.apply(src)
+                      let paint = @sun_graphics.Paint::new()
+                        .set_color(filtered)
+                        .set_opacity(opacity)
+                      self.canvas.fill_rect(
+                        px.to_double(),
+                        py.to_double(),
+                        1.0,
+                        1.0,
+                        paint,
+                      )
+                    }
+                  }
+                }
+                None =>
+                  self.canvas.draw_pixmap(
+                    layer_pixmap,
+                    0,
+                    0,
+                    @sun_graphics.Paint::new().set_opacity(opacity),
+                  )
+              }
+            }
+            None =>
+              self.record_unsupported_command(
+                "PopFilter", "PopFilter has no matching canvas stack entry",
+              )
+          }
+        }
+        Some(other) => {
+          canvas_scopes.push(other)
+          match filter {
+            Some(f) => self.filter_stack.push(f)
+            None => ()
+          }
+          self.record_unsupported_command(
+            "PopFilter",
+            "pop did not match active \{sun_scope_name(other)} scope",
+          )
+        }
+        None => {
+          match filter {
+            Some(f) => self.filter_stack.push(f)
+            None => ()
+          }
+          self.record_unsupported_command(
+            "PopFilter", "pop has no matching push scope",
+          )
+        }
+      }
+    }
     @core.DrawCommand::DrawPath(path) => self.draw_path(path, opacity)
-    @core.DrawCommand::DrawShaderEffect(_) =>
-      self.record_unsupported_command(
-        "DrawShaderEffect", "Sun renderer does not implement shader effects yet",
-      )
+    @core.DrawCommand::DrawShaderEffect(spec) =>
+      self.draw_shader_effect(spec, opacity)
     @core.DrawCommand::BeginCachedLayer(_) =>
       self.record_unsupported_command(
         "BeginCachedLayer", "Sun renderer does not implement cached layer scopes yet",
@@ -719,6 +857,8 @@ fn sun_scope_name(scope : SunCanvasScopeKind) -> String {
     RoundedClip => "rounded-clip"
     Transform => "transform"
     Opacity => "opacity"
+    Layer => "layer"
+    Filter => "filter"
   }
 }
 
@@ -729,6 +869,8 @@ fn sun_scope_push_command(scope : SunCanvasScopeKind) -> String {
     RoundedClip => "PushRoundedClip"
     Transform => "PushTransform"
     Opacity => "PushOpacity"
+    Layer => "PushLayer"
+    Filter => "PushFilter"
   }
 }
 
@@ -739,6 +881,8 @@ fn sun_scope_pop_command(scope : SunCanvasScopeKind) -> String {
     RoundedClip => "PopRoundedClip"
     Transform => "PopTransform"
     Opacity => "PopOpacity"
+    Layer => "PopLayer"
+    Filter => "PopFilter"
   }
 }
 
@@ -896,4 +1040,584 @@ fn sun_path(path : @core.PathSpec) -> @sun_graphics.Path {
     }
   }
   out
+}
+
+///|
+fn SunRasterRenderer::draw_text(
+  self : SunRasterRenderer,
+  run : @core.TextRun,
+  opacity : Double,
+) -> Unit {
+  guard run.frame.size.width > 0.0 && run.frame.size.height > 0.0 else {
+    return
+  }
+  let lines = sun_draw_text_lines(run.text)
+  guard !lines.is_empty() else { return }
+  let config = sun_text_layout_config(run.font, run.frame.size.width)
+  let faces = self.resolved_faces(run.font)
+  guard !faces.is_empty() else {
+    self.draw_text_placeholder(run, opacity)
+    return
+  }
+  let paint = sun_paint(run.color, opacity)
+  let mut max_width = 0.0
+  let line_widths : Array[Double] = []
+  for line in lines {
+    let width = sun_measure_fallback_line_width(faces, line, config)
+    line_widths.push(width)
+    max_width = max_width.max(width)
+  }
+  let line_height = config.line_height.max(run.font.size * 1.2).max(1.0)
+  let total_height = line_height * lines.length().to_double()
+  let origin_y = run.frame.origin.y +
+    (run.frame.size.height - total_height).max(0.0) * 0.5
+  let renderer = @sun_renderer.Renderer::new(self.canvas)
+  let mut line_index = 0
+  for line in lines {
+    let baseline_y = origin_y +
+      line_index.to_double() * line_height +
+      sun_text_baseline_for_faces(faces, config)
+    if baseline_y > run.frame.origin.y + run.frame.size.height + line_height {
+      return
+    }
+    let line_width = line_widths[line_index]
+    let x = sun_text_placeholder_start_x(run, line_width)
+    let key = sun_text_cache_key(run, line_index, line)
+    let result = renderer.draw_text_fallback_line_cached_with_renderer_resources(
+      faces,
+      line,
+      x,
+      baseline_y,
+      config,
+      self.resources,
+      key,
+      paint,
+    )
+    if result.get_plan().has_missing_glyphs() {
+      self.record_unsupported_command(
+        "DrawText",
+        "Sun renderer fell back to placeholder glyphs for missing fallback spans in text: \{run.text}",
+      )
+      self.draw_text_placeholder(
+        @core.TextRun::new(
+          text=line,
+          frame=@core.Rect::new(
+            x~,
+            y=origin_y + line_index.to_double() * line_height,
+            width=run.frame.size.width,
+            height=line_height,
+          ),
+          font=run.font,
+          color=run.color,
+          align=@core.TextAlign::TextStart,
+        ),
+        opacity,
+      )
+    }
+    line_index += 1
+  }
+}
+
+///|
+fn SunRasterRenderer::draw_shadow(
+  self : SunRasterRenderer,
+  shadow : @core.ShadowSpec,
+  opacity : Double,
+) -> Unit {
+  let rect = shadow.rect.rect
+  let base_color = shadow.color
+  let spread = shadow.spread.max(0.0)
+  for layer in 0..<3 {
+    let expand = spread + shadow.blur_radius * (layer.to_double() + 1.0) * 0.5
+    let layer_alpha = sun_clamp_unit(
+      base_color.a * opacity * (1.0 - layer.to_double() * 0.25),
+    )
+    let layer_color = @core.Color::rgba(
+      r=base_color.r,
+      g=base_color.g,
+      b=base_color.b,
+      a=layer_alpha,
+    )
+    self.canvas.fill_rect(
+      rect.origin.x + shadow.offset.x - expand,
+      rect.origin.y + shadow.offset.y - expand,
+      rect.size.width + expand * 2.0,
+      rect.size.height + expand * 2.0,
+      sun_paint(layer_color, 1.0),
+    )
+  }
+}
+
+///|
+fn SunRasterRenderer::draw_shader_effect(
+  self : SunRasterRenderer,
+  spec : @core.ShaderEffectSpec,
+  opacity : Double,
+) -> Unit {
+  let frame = spec.frame
+  match spec.name {
+    "checker" => {
+      let size = if spec.uniforms.length() > 0 {
+        spec.uniforms[0].max(2.0)
+      } else {
+        16.0
+      }
+      let c1 = @sun_graphics.Color::new(r=200, g=200, b=200, a=255)
+      let c2 = @sun_graphics.Color::new(r=255, g=255, b=255, a=255)
+      let paint = @sun_graphics.Paint::new().set_opacity(opacity)
+      let mut y = frame.origin.y
+      let mut row = 0
+      while y < frame.origin.y + frame.size.height {
+        let mut x = frame.origin.x
+        let mut col = 0
+        while x < frame.origin.x + frame.size.width {
+          ignore(paint.set_color(if (row + col) % 2 == 0 { c1 } else { c2 }))
+          self.canvas.fill_rect(x, y, size, size, paint)
+          x = x + size
+          col = col + 1
+        }
+        y = y + size
+        row = row + 1
+      }
+    }
+    "vignette" => {
+      let center_x = frame.origin.x + frame.size.width * 0.5
+      let center_y = frame.origin.y + frame.size.height * 0.5
+      let radius = frame.size.width.min(frame.size.height) * 0.5
+      let steps = 20
+      for i in 0..<steps {
+        let t = i.to_double() / steps.to_double()
+        let r = radius * (1.0 - t * 0.5)
+        let alpha = sun_clamp_unit(t * opacity * 0.3)
+        let color = @sun_graphics.Color::new(
+          r=0,
+          g=0,
+          b=0,
+          a=sun_channel(alpha),
+        )
+        let paint = @sun_graphics.Paint::new().set_color(color)
+        self.canvas.fill_rect(
+          center_x - r,
+          center_y - r,
+          r * 2.0,
+          r * 2.0,
+          paint,
+        )
+      }
+    }
+    _ => {
+      let fallback_paint = sun_brush_paint(spec.fallback, opacity)
+      self.canvas.fill_rect(
+        frame.origin.x,
+        frame.origin.y,
+        frame.size.width,
+        frame.size.height,
+        fallback_paint,
+      )
+    }
+  }
+}
+
+///|
+fn sun_filter_effect(effect : @core.FilterEffect) -> @sun_graphics.PaintFilter {
+  match effect {
+    @core.FilterEffect::Blur(_) => @sun_graphics.PaintFilter::identity()
+    @core.FilterEffect::Saturate(factor) =>
+      @sun_graphics.PaintFilter::saturate(factor)
+    @core.FilterEffect::Brightness(factor) =>
+      @sun_graphics.PaintFilter::brightness(factor)
+    @core.FilterEffect::Contrast(factor) =>
+      @sun_graphics.PaintFilter::contrast(factor)
+    @core.FilterEffect::ColorMatrix(values) =>
+      @sun_graphics.PaintFilter::color_matrix(values)
+  }
+}
+
+///|
+fn sun_blend_mode(mode : @core.BlendMode) -> @sun_graphics.BlendMode {
+  match mode {
+    @core.BlendMode::SourceOver => @sun_graphics.BlendMode::SourceOver
+    @core.BlendMode::Multiply => @sun_graphics.BlendMode::Multiply
+    @core.BlendMode::Screen => @sun_graphics.BlendMode::Screen
+    @core.BlendMode::Overlay => @sun_graphics.BlendMode::Overlay
+    @core.BlendMode::Darken => @sun_graphics.BlendMode::Darken
+    @core.BlendMode::Lighten => @sun_graphics.BlendMode::Lighten
+  }
+}
+
+///|
+fn SunRasterRenderer::register_font_family_data(
+  self : SunRasterRenderer,
+  family : @core.FontFamily,
+  data : Bytes,
+) -> Unit {
+  for key in sun_font_family_registration_keys(family) {
+    ignore(self.text_system.register_font_bytes(key, data))
+  }
+}
+
+///|
+fn SunRasterRenderer::register_default_platform_fonts(
+  self : SunRasterRenderer,
+) -> Unit {
+  for source in sun_default_platform_font_sources() {
+    let data : Bytes? = Some(@fs.read_file_to_bytes(source.path)) catch {
+      _ => None
+    }
+    match data {
+      Some(data) =>
+        for family in source.families {
+          self.register_font_family_data(family, data)
+        }
+      None => ()
+    }
+  }
+}
+
+///|
+priv struct SunDefaultPlatformFontSource {
+  path : String
+  families : Array[@core.FontFamily]
+}
+
+///|
+fn sun_default_platform_font_sources() -> Array[SunDefaultPlatformFontSource] {
+  [
+    {
+      path: "/System/Library/Fonts/Supplemental/Arial.ttf",
+      families: [
+        @core.FontFamily::SystemUi,
+        @core.FontFamily::UiSansSerif,
+        @core.FontFamily::SansSerif,
+        @core.FontFamily::Name("Arial"),
+        @core.FontFamily::Name("Helvetica"),
+      ],
+    },
+    {
+      path: "/System/Library/Fonts/Supplemental/Courier New.ttf",
+      families: [
+        @core.FontFamily::UiMonospace,
+        @core.FontFamily::Monospace,
+        @core.FontFamily::Name("Courier New"),
+        @core.FontFamily::Name("Menlo"),
+      ],
+    },
+    {
+      path: "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
+      families: [
+        @core.FontFamily::UiSerif,
+        @core.FontFamily::Serif,
+        @core.FontFamily::Name("Times New Roman"),
+      ],
+    },
+  ]
+}
+
+///|
+fn sun_font_family_registration_keys(
+  family : @core.FontFamily,
+) -> Array[String] {
+  let keys : Array[String] = []
+  match family {
+    @core.FontFamily::Name(name) => {
+      keys.push(name)
+      keys.push(name.to_lower())
+    }
+    _ => {
+      let css = family.css_name()
+      keys.push(css)
+      keys.push(css.to_lower())
+    }
+  }
+  keys
+}
+
+///|
+fn SunRasterRenderer::resolved_faces(
+  self : SunRasterRenderer,
+  font : @core.FontSpec,
+) -> Array[@sun_text.FontFace] {
+  let faces : Array[@sun_text.FontFace] = []
+  let seen : Map[String, Unit] = {}
+  for key in sun_font_spec_candidate_keys(font) {
+    if seen.contains(key) {
+      continue
+    }
+    seen[key] = ()
+    match self.text_system.get_font_face(key) {
+      Ok(face) => faces.push(face)
+      Err(_) => ()
+    }
+  }
+  for key in self.text_system.get_font_keys() {
+    if seen.contains(key) {
+      continue
+    }
+    seen[key] = ()
+    match self.text_system.get_font_face(key) {
+      Ok(face) => faces.push(face)
+      Err(_) => ()
+    }
+  }
+  faces
+}
+
+///|
+fn sun_font_spec_candidate_keys(font : @core.FontSpec) -> Array[String] {
+  let keys : Array[String] = []
+  for family in font.families.families {
+    match family {
+      @core.FontFamily::Name(name) => {
+        keys.push(name)
+        keys.push(name.to_lower())
+      }
+      _ => {
+        let css = family.css_name()
+        keys.push(css)
+        keys.push(css.to_lower())
+      }
+    }
+  }
+  keys
+}
+
+///|
+fn sun_text_layout_config(
+  font : @core.FontSpec,
+  max_width : Double,
+) -> @sun_text.LayoutConfig {
+  @sun_text.LayoutConfig::new(
+    max_width=max_width.max(0.0),
+    font_size=font.size,
+    line_height=(font.size * 1.2).max(1.0),
+    alignment=@sun_text.TextAlign::Left,
+  )
+}
+
+///|
+fn SunRasterRenderer::measure_text_layout(
+  self : SunRasterRenderer,
+  input : @core.TextLayoutInput,
+) -> @core.TextLayoutResult {
+  let faces = self.resolved_faces(input.font)
+  if faces.is_empty() {
+    return @core.TextSystem::fallback().measure_text(input)
+  }
+  let config = sun_text_layout_config(
+    input.font,
+    input.max_width.unwrap_or(1000000000.0),
+  )
+  let lines = sun_draw_text_lines(input.text)
+  let carets : Array[Double] = []
+  let chars = input.text.to_array()
+  for _ in 0..<(chars.length() + 1) {
+    carets.push(0.0)
+  }
+  let mut max_width = 0.0
+  let mut cursor_scalar = 0
+  let mut baseline = 0.0
+  let line_height = config.line_height.max(input.font.size * 1.2).max(1.0)
+  for line_index in 0..<lines.length() {
+    let line = lines[line_index]
+    let measured = self.measure_single_line_text(faces, line, config)
+    if line_index == 0 {
+      baseline = measured.baseline
+    }
+    let line_carets = measured.caret_positions
+    let scalar_count = line.to_array().length()
+    for line_offset in 0..<(scalar_count + 1) {
+      let global = cursor_scalar + line_offset
+      if global < carets.length() && line_offset < line_carets.length() {
+        carets[global] = line_carets[line_offset]
+      }
+    }
+    cursor_scalar += scalar_count
+    if line_index + 1 < lines.length() && cursor_scalar < carets.length() {
+      carets[cursor_scalar] = 0.0
+      cursor_scalar += 1
+    }
+    max_width = max_width.max(measured.size.width)
+  }
+  let stabilized = @core.fallback_stabilize_grapheme_cluster_carets(
+    input.text,
+    carets,
+  )
+  @core.TextLayoutResult::{
+    size: @core.Size::new(
+      width=max_width.min(input.max_width.unwrap_or(max_width)),
+      height=line_height * lines.length().to_double(),
+    ),
+    baseline,
+    caret_positions: stabilized,
+  }
+}
+
+///|
+fn SunRasterRenderer::measure_single_line_text(
+  self : SunRasterRenderer,
+  faces : Array[@sun_text.FontFace],
+  text : String,
+  config : @sun_text.LayoutConfig,
+) -> @core.TextLayoutResult {
+  ignore(self)
+  if text == "" {
+    return @core.TextLayoutResult::{
+      size: @core.Size::new(width=0.0, height=config.line_height),
+      baseline: sun_text_baseline_for_faces(faces, config),
+      caret_positions: [0.0],
+    }
+  }
+  let fallback = @sun_text.plan_font_fallback(faces, text)
+  let carets : Array[Double] = [0.0]
+  let mut width = 0.0
+  let mut emitted_scalars = 0
+  for span in fallback.get_spans() {
+    let span_width = if span.is_missing() {
+      sun_measure_missing_span_width(span.get_text(), config)
+    } else {
+      @sun_text.TextLayout::layout(
+        faces[span.get_face_index()],
+        span.get_text(),
+        config,
+      ).get_width()
+    }
+    let per_scalar = if span.get_char_count() > 0 {
+      span_width / span.get_char_count().to_double()
+    } else {
+      0.0
+    }
+    for _ in 0..<span.get_char_count() {
+      emitted_scalars += 1
+      width += per_scalar
+      if emitted_scalars > 0 {
+        carets.push(width)
+      }
+    }
+  }
+  while carets.length() < text.to_array().length() + 1 {
+    carets.push(width)
+  }
+  @core.TextLayoutResult::{
+    size: @core.Size::new(width~, height=config.line_height),
+    baseline: sun_text_baseline_for_faces(faces, config),
+    caret_positions: carets,
+  }
+}
+
+///|
+fn SunRasterRenderer::paragraph_layout_result(
+  self : SunRasterRenderer,
+  input : @core.TextLayoutInput,
+) -> @core.TextParagraphLayoutResult {
+  @core.TextSystem::new(id="sun-raster-text-system", measure=measure_input => {
+    self.measure_text_layout(measure_input)
+  }).layout_paragraph(input)
+}
+
+///|
+fn sun_measure_fallback_line_width(
+  faces : Array[@sun_text.FontFace],
+  text : String,
+  config : @sun_text.LayoutConfig,
+) -> Double {
+  let result = sun_measure_single_line_text_like(text, faces, config)
+  result
+}
+
+///|
+fn sun_measure_single_line_text_like(
+  text : String,
+  faces : Array[@sun_text.FontFace],
+  config : @sun_text.LayoutConfig,
+) -> Double {
+  if text == "" {
+    return 0.0
+  }
+  let plan = @sun_text.plan_font_fallback(faces, text)
+  let mut width = 0.0
+  let mut emitted_scalars = 0
+  for span in plan.get_spans() {
+    if emitted_scalars > 0 {
+      width += config.letter_spacing
+    }
+    let span_width = if span.is_missing() {
+      sun_measure_missing_span_width(span.get_text(), config)
+    } else {
+      @sun_text.TextLayout::layout(
+        faces[span.get_face_index()],
+        span.get_text(),
+        config,
+      ).get_width()
+    }
+    width += span_width
+    emitted_scalars += span.get_char_count()
+  }
+  width
+}
+
+///|
+fn sun_measure_missing_span_width(
+  text : String,
+  config : @sun_text.LayoutConfig,
+) -> Double {
+  let scalar_count = text.to_array().length()
+  if scalar_count <= 0 {
+    0.0
+  } else {
+    config.font_size * 0.6 * scalar_count.to_double()
+  }
+}
+
+///|
+fn sun_draw_text_lines(text : String) -> Array[String] {
+  let chars = text.to_array()
+  let lines : Array[String] = []
+  let mut start = 0
+  let mut index = 0
+  while index < chars.length() {
+    if chars[index] == '\n' {
+      let end = if index > start && chars[index - 1] == '\r' {
+        index - 1
+      } else {
+        index
+      }
+      lines.push(String::from_array(chars[start:end]))
+      start = index + 1
+    }
+    index += 1
+  }
+  lines.push(String::from_array(chars[start:chars.length()]))
+  lines
+}
+
+///|
+fn sun_text_baseline_for_faces(
+  faces : Array[@sun_text.FontFace],
+  config : @sun_text.LayoutConfig,
+) -> Double {
+  if faces.is_empty() {
+    return config.font_size * 0.8
+  }
+  let units = faces[0].get_units_per_em().to_double()
+  if units <= 0.0 {
+    config.font_size * 0.8
+  } else {
+    faces[0].get_metrics().ascent.to_double() * config.font_size / units
+  }
+}
+
+///|
+fn sun_text_cache_key(
+  run : @core.TextRun,
+  line_index : Int,
+  text : String,
+) -> String {
+  "sun:text:" +
+  line_index.to_string() +
+  ":" +
+  run.font.size.to_string() +
+  ":" +
+  run.color.to_json().stringify() +
+  ":" +
+  text
 }
