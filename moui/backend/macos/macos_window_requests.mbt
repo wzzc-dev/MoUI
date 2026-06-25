@@ -151,9 +151,14 @@ fn MacosApp::create_resolved_window(
   event_loop : @window_macos.ActiveEventLoop,
   resolved : @host.HostWindowResolvedOpen,
 ) -> @host.HostWindowRequestResult {
+  let platform = @window_core.PlatformWindowAttributes::default()
+    .with_fullsize_content_view(true)
+    .with_titlebar_transparent(true)
+    .with_movable_by_window_background(true)
   let attributes = @window_core.WindowAttributes::default()
     .with_title(resolved.record.title)
     .with_surface_size(host_metrics_to_dpi_size(resolved.record.metrics))
+    .with_platform_attributes(platform)
   let window : @window_macos.Window? = Some(
     event_loop.try_create_window(attributes),
   ) catch {

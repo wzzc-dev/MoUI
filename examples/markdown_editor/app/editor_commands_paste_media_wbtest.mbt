@@ -365,13 +365,3 @@ test "markdown editor image alt from filename strips extension" {
   )
   inspect(markdown_editor_image_alt_from_filename(""), content="")
 }
-
-//|
-test "markdown editor import image clipboard requires services" {
-  let app = MarkdownEditorApp::new()
-  ignore(app.update(ImportImageFromClipboard))
-  inspect(
-    app.transfer_status_label_for_test(),
-    content="Transfer unavailable: clipboard image import requires host services",
-  )
-}

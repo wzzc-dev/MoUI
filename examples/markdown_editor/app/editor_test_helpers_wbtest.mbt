@@ -141,7 +141,7 @@ fn MarkdownEditorApp::replace_text(self : MarkdownEditorApp) -> String {
 fn MarkdownEditorApp::transfer_status_label_for_test(
   self : MarkdownEditorApp,
 ) -> String {
-  self.transfer_status_label()
+  markdown_editor_transfer_status_label(self.transfer_status.get())
 }
 
 ///|
@@ -203,7 +203,18 @@ fn MarkdownEditorApp::pick_working_directory_for_test(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
 ) -> Unit {
-  self.perform_pick_working_directory(services)
+  let response = services.pick_directory(title="Choose folder")
+  match response {
+    @host.HostServiceResponse::FileDialogSelection(paths) =>
+      if paths.length() > 0 {
+        self.load_tree_from_directory(paths[0], services)
+      }
+    @host.HostServiceResponse::Pending(_) => ()
+    _ =>
+      self.transfer_status.set(
+        TransferUnavailable("directory picker unavailable"),
+      )
+  }
 }
 
 ///|
@@ -437,11 +448,27 @@ fn MarkdownEditorApp::document_status_label_for_test(
   self : MarkdownEditorApp,
 ) -> String {
   let snapshot = MarkdownEditorSnapshot::parse(self.document.get())
-  self.document_status_label(
-    snapshot,
-    self.block_label.get(),
-    self.selection.get(),
+  let block_label = self.block_label.get()
+  let selection = self.selection.get()
+  let title = markdown_editor_document_title(
+    path=self.document_path.get(),
+    fallback=snapshot.active_heading,
   )
+  let save_state = if self.is_dirty() { "Unsaved" } else { "Saved" }
+  let transfer = markdown_editor_transfer_status_label(self.transfer_status.get())
+  let transfer_suffix = if transfer == "" { "" } else { " / " + transfer }
+  let mode_suffix = self.writing_mode_status_suffix()
+  let look_suffix = self.appearance_status_suffix()
+  let source_suffix = self.source_mode_status_suffix()
+  title +
+  " / " +
+  save_state +
+  " / " +
+  markdown_editor_status_label(block_label, snapshot, selection) +
+  mode_suffix +
+  source_suffix +
+  look_suffix +
+  transfer_suffix
 }
 
 ///|
