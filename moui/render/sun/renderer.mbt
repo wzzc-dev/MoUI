@@ -41,8 +41,8 @@ priv enum SunCanvasScopeKind {
   RoundedClip
   Transform
   Opacity
-  Layer
-  Filter
+ Layer
+ Filter
 } derive(Eq)
 
 ///|
@@ -60,6 +60,14 @@ pub(all) struct SunRasterRenderer {
   mut on_image_resource_change : ((@render.ImageResourceSnapshot) -> Unit)?
   mut canvas_stack : Array[@sun_graphics.Canvas]
   mut filter_stack : Array[@sun_graphics.PaintFilter]
+  mut cached_layer_pixmaps : Map[String, @sun_graphics.Pixmap]
+  mut cached_layer_revisions : Map[String, Int]
+  mut cached_layer_scales : Map[String, Double]
+  mut cached_layer_order : Array[String]
+  mut cached_layer_hit_count : Int
+  mut cached_layer_miss_count : Int
+  mut blur_radius_stack : Array[Double]
+  mut rounded_clip_stack : Array[@core.RoundedRect]
 }
 
 ///|
@@ -127,6 +135,14 @@ pub fn create_with_present_target(
     on_image_resource_change: None,
     canvas_stack: [],
     filter_stack: [],
+    cached_layer_pixmaps: {},
+    cached_layer_revisions: {},
+    cached_layer_scales: {},
+    cached_layer_order: [],
+    cached_layer_hit_count: 0,
+    cached_layer_miss_count: 0,
+    blur_radius_stack: [],
+    rounded_clip_stack: [],
   }
   renderer.register_default_platform_fonts()
   renderer
@@ -154,9 +170,14 @@ pub fn SunRasterRenderer::render(
   let canvas_scopes : Array[SunCanvasScopeKind] = []
   let opacity_stack : Array[Double] = []
   let blend_mode_stack : Array[@sun_graphics.BlendMode] = []
-  for command in commands {
-    self.render_command(command, canvas_scopes, opacity_stack, blend_mode_stack)
-  }
+  self.render_cached_command_range(
+    commands,
+    0,
+    commands.length(),
+    canvas_scopes,
+    opacity_stack,
+    blend_mode_stack,
+  )
   if !canvas_scopes.is_empty() {
     for scope in canvas_scopes {
       self.record_unsupported_command(
@@ -225,6 +246,20 @@ pub fn SunRasterRenderer::last_frame(
 }
 
 ///|
+pub fn SunRasterRenderer::cached_layer_hit_count(
+  self : SunRasterRenderer,
+) -> Int {
+  self.cached_layer_hit_count
+}
+
+///|
+pub fn SunRasterRenderer::cached_layer_miss_count(
+  self : SunRasterRenderer,
+) -> Int {
+  self.cached_layer_miss_count
+}
+
+///|
 pub fn SunRasterRenderer::dispose(self : SunRasterRenderer) -> Unit {
   let previous_revision = self.image_lifecycle.revision()
   let records = self.image_lifecycle.snapshot()
@@ -232,6 +267,9 @@ pub fn SunRasterRenderer::dispose(self : SunRasterRenderer) -> Unit {
     ignore(self.image_lifecycle.dispose(record.source))
   }
   self.notify_image_resource_change_if_needed(previous_revision)
+  self.clear_cached_layers()
+  self.rounded_clip_stack = []
+  self.blur_radius_stack = []
 }
 
 ///|
@@ -368,19 +406,53 @@ fn SunRasterRenderer::render_command(
         SunCanvasScopeKind::Clip,
       )
     @core.DrawCommand::PushRoundedClip(rounded) => {
-      self.canvas.save()
+      self.canvas_stack.push(self.canvas)
+      self.rounded_clip_stack.push(rounded)
+      let w = self.canvas.get_pixmap().get_width()
+      let h = self.canvas.get_pixmap().get_height()
+      self.canvas = @sun_graphics.Canvas::new(w, h)
+      self.canvas.clear(@sun_graphics.Color::new(r=0, g=0, b=0, a=0))
       canvas_scopes.push(SunCanvasScopeKind::RoundedClip)
-      self.canvas.intersect_clip_rect(sun_rect(rounded.rect))
-      self.record_unsupported_command(
-        "PushRoundedClip", "Sun renderer approximates rounded clips with their bounding rectangle",
-      )
     }
     @core.DrawCommand::PopRoundedClip =>
-      self.pop_canvas_scope(
-        canvas_scopes,
-        opacity_stack,
-        SunCanvasScopeKind::RoundedClip,
-      )
+      match canvas_scopes.pop() {
+        Some(SunCanvasScopeKind::RoundedClip) => {
+          let layer_pixmap = self.canvas.get_pixmap()
+          match self.canvas_stack.pop() {
+            Some(parent_canvas) => {
+              match self.rounded_clip_stack.pop() {
+                Some(rounded) => {
+                  self.canvas = parent_canvas
+                  self.composite_rounded_clip(layer_pixmap, rounded, opacity)
+                }
+                None => {
+                  self.canvas = parent_canvas
+                  self.record_unsupported_command(
+                    "PopRoundedClip",
+                    "PopRoundedClip has no matching rounded clip stack entry",
+                  )
+                }
+              }
+            }
+            None =>
+              self.record_unsupported_command(
+                "PopRoundedClip",
+                "PopRoundedClip has no matching canvas stack entry",
+              )
+          }
+        }
+        Some(other) => {
+          canvas_scopes.push(other)
+          self.record_unsupported_command(
+            "PopRoundedClip",
+            "pop did not match active \{sun_scope_name(other)} scope",
+          )
+        }
+        None =>
+          self.record_unsupported_command(
+            "PopRoundedClip", "pop has no matching push scope",
+          )
+      }
     @core.DrawCommand::PushTransform(transform) => {
       self.canvas.save()
       canvas_scopes.push(SunCanvasScopeKind::Transform)
@@ -452,6 +524,11 @@ fn SunRasterRenderer::render_command(
     @core.DrawCommand::PushFilter(effect) => {
       self.canvas_stack.push(self.canvas)
       self.filter_stack.push(sun_filter_effect(effect))
+      match effect {
+        @core.FilterEffect::Blur(radius) =>
+          self.blur_radius_stack.push(radius.max(0.0))
+        _ => self.blur_radius_stack.push(0.0)
+      }
       let w = self.canvas.get_pixmap().get_width()
       let h = self.canvas.get_pixmap().get_height()
       self.canvas = @sun_graphics.Canvas::new(w, h)
@@ -460,48 +537,41 @@ fn SunRasterRenderer::render_command(
     }
     @core.DrawCommand::PopFilter => {
       let filter = self.filter_stack.pop()
+      let blur_radius = match self.blur_radius_stack.pop() {
+        Some(r) => r
+        None => 0.0
+      }
       match canvas_scopes.pop() {
         Some(SunCanvasScopeKind::Filter) => {
           let layer_pixmap = self.canvas.get_pixmap()
+          let effective_pixmap = if blur_radius > 0.0 {
+            sun_box_blur_pixmap(layer_pixmap, blur_radius)
+          } else {
+            layer_pixmap
+          }
           match self.canvas_stack.pop() {
             Some(parent_canvas) => {
               self.canvas = parent_canvas
-              match filter {
-                Some(paint_filter) => {
-                  let w = layer_pixmap.get_width()
-                  let h = layer_pixmap.get_height()
-                  let pixels = layer_pixmap.get_pixels()
-                  for py in 0..<h {
-                    for px in 0..<w {
-                      let offset = (py * w + px) * 4
-                      let src = @sun_graphics.Color::new(
-                        r=pixels[offset],
-                        g=pixels[offset + 1],
-                        b=pixels[offset + 2],
-                        a=pixels[offset + 3],
-                      )
-                      let filtered = paint_filter.apply(src)
-                      let paint = @sun_graphics.Paint::new()
-                        .set_color(filtered)
-                        .set_opacity(opacity)
-                      self.canvas.fill_rect(
-                        px.to_double(),
-                        py.to_double(),
-                        1.0,
-                        1.0,
-                        paint,
-                      )
-                    }
+              // Apply color filter at the pixmap level instead of
+              // per-pixel fill_rect calls to avoid w*h Paint allocations
+              // and per-pixel clip/transform overhead.
+              // Skip the pixmap copy when the filter is identity (common
+              // for blur-only PushFilter scopes).
+              let composited = match filter {
+                Some(paint_filter) =>
+                  if paint_filter.is_identity() {
+                    effective_pixmap
+                  } else {
+                    sun_filter_pixmap(effective_pixmap, paint_filter)
                   }
-                }
-                None =>
-                  self.canvas.draw_pixmap(
-                    layer_pixmap,
-                    0,
-                    0,
-                    @sun_graphics.Paint::new().set_opacity(opacity),
-                  )
+                None => effective_pixmap
               }
+              self.canvas.draw_pixmap(
+                composited,
+                0,
+                0,
+                @sun_graphics.Paint::new().set_opacity(opacity),
+              )
             }
             None =>
               self.record_unsupported_command(
@@ -515,6 +585,7 @@ fn SunRasterRenderer::render_command(
             Some(f) => self.filter_stack.push(f)
             None => ()
           }
+          self.blur_radius_stack.push(blur_radius)
           self.record_unsupported_command(
             "PopFilter",
             "pop did not match active \{sun_scope_name(other)} scope",
@@ -525,6 +596,7 @@ fn SunRasterRenderer::render_command(
             Some(f) => self.filter_stack.push(f)
             None => ()
           }
+          self.blur_radius_stack.push(blur_radius)
           self.record_unsupported_command(
             "PopFilter", "pop has no matching push scope",
           )
@@ -536,16 +608,71 @@ fn SunRasterRenderer::render_command(
       self.draw_shader_effect(spec, opacity)
     @core.DrawCommand::BeginCachedLayer(_) =>
       self.record_unsupported_command(
-        "BeginCachedLayer", "Sun renderer does not implement cached layer scopes yet",
+        "BeginCachedLayer", "cached layer scope not intercepted by render_cached_command_range",
       )
     @core.DrawCommand::EndCachedLayer(_) =>
       self.record_unsupported_command(
-        "EndCachedLayer", "Sun renderer does not implement cached layer scopes yet",
+        "EndCachedLayer", "cached layer scope intercepted by render_cached_command_range",
       )
     @core.DrawCommand::DrawCachedLayer(_) =>
       self.record_unsupported_command(
-        "DrawCachedLayer", "Sun renderer does not implement cached layer draws yet",
+        "DrawCachedLayer", "cached layer draw not intercepted by render_cached_command_range",
       )
+  }
+}
+
+///|
+fn SunRasterRenderer::composite_rounded_clip(
+  self : SunRasterRenderer,
+  layer_pixmap : @sun_graphics.Pixmap,
+  rounded : @core.RoundedRect,
+  opacity : Double,
+) -> Unit {
+  let parent_pixmap = self.canvas.get_pixmap()
+  let w = layer_pixmap.get_width()
+  let h = layer_pixmap.get_height()
+  let rect = rounded.rect
+  let radius = rounded.radius.max(0.0)
+  let cx = rect.origin.x + rect.size.width * 0.5
+  let cy = rect.origin.y + rect.size.height * 0.5
+  let hx = rect.size.width * 0.5
+  let hy = rect.size.height * 0.5
+  let r = radius.min(hx).min(hy)
+  for py in 0..<h {
+    for px in 0..<w {
+      let src = layer_pixmap.get_pixel(px, py)
+      if src.a.to_int() > 0 {
+        let px_d = px.to_double() + 0.5
+        let py_d = py.to_double() + 0.5
+        let qx = (px_d - cx).abs() - (hx - r)
+        let qy = (py_d - cy).abs() - (hy - r)
+        let outside_dist = if qx > 0.0 && qy > 0.0 {
+          (qx * qx + qy * qy).sqrt()
+        } else if qx > 0.0 {
+          qx
+        } else if qy > 0.0 {
+          qy
+        } else {
+          0.0
+        }
+        let d = outside_dist - r
+        let coverage = (0.5 - d).max(0.0).min(1.0)
+        if coverage > 0.0 {
+          let masked_a = sun_clamp_unit(
+            src.a.to_int().to_double() / 255.0 * coverage * opacity,
+          )
+          if masked_a > 0.0 {
+            let masked = @sun_graphics.Color::new(
+              r=src.r,
+              g=src.g,
+              b=src.b,
+              a=sun_channel(masked_a),
+            )
+            parent_pixmap.blend_pixel(px, py, masked)
+          }
+        }
+      }
+    }
   }
 }
 
@@ -988,6 +1115,8 @@ fn sun_brush_stroke_paint(
   sun_brush_paint(brush, opacity)
   .set_style(@sun_graphics.PaintStyle::Stroke)
   .set_stroke_width(width)
+  .set_stroke_cap(@sun_graphics.StrokeCap::Round)
+  .set_stroke_join(@sun_graphics.StrokeJoin::Round)
 }
 
 ///|
@@ -1121,27 +1250,63 @@ fn SunRasterRenderer::draw_shadow(
   opacity : Double,
 ) -> Unit {
   let rect = shadow.rect.rect
+  let corner_radius = shadow.rect.radius.max(0.0)
   let base_color = shadow.color
   let spread = shadow.spread.max(0.0)
-  for layer in 0..<3 {
-    let expand = spread + shadow.blur_radius * (layer.to_double() + 1.0) * 0.5
-    let layer_alpha = sun_clamp_unit(
-      base_color.a * opacity * (1.0 - layer.to_double() * 0.25),
-    )
-    let layer_color = @core.Color::rgba(
-      r=base_color.r,
-      g=base_color.g,
-      b=base_color.b,
-      a=layer_alpha,
-    )
-    self.canvas.fill_rect(
-      rect.origin.x + shadow.offset.x - expand,
-      rect.origin.y + shadow.offset.y - expand,
-      rect.size.width + expand * 2.0,
-      rect.size.height + expand * 2.0,
-      sun_paint(layer_color, 1.0),
-    )
+  let blur_r = shadow.blur_radius.max(0.0)
+  guard opacity > 0.0 else { return }
+  guard base_color.a > 0.0 else { return }
+  let pad = (blur_r * 2.0).ceil().to_int().max(1)
+  let inner_w = rect.size.width + spread * 2.0
+  let inner_h = rect.size.height + spread * 2.0
+  let shadow_w = inner_w.ceil().to_int().max(1) + pad * 2
+  let shadow_h = inner_h.ceil().to_int().max(1) + pad * 2
+  let shadow_pixmap = @sun_graphics.Pixmap::new(shadow_w, shadow_h)
+  let shadow_color = @sun_graphics.Color::new(
+    r=sun_channel(base_color.r),
+    g=sun_channel(base_color.g),
+    b=sun_channel(base_color.b),
+    a=sun_channel(sun_clamp_unit(base_color.a * opacity)),
+  )
+  let cx = pad.to_double() + inner_w * 0.5
+  let cy = pad.to_double() + inner_h * 0.5
+  let hx = inner_w * 0.5
+  let hy = inner_h * 0.5
+  let scaled_radius = corner_radius.min(hx).min(hy)
+  for sy in 0..<shadow_h {
+    for sx in 0..<shadow_w {
+      let px = sx.to_double() + 0.5
+      let py = sy.to_double() + 0.5
+      let qx = (px - cx).abs() - (hx - scaled_radius)
+      let qy = (py - cy).abs() - (hy - scaled_radius)
+      let outside_dist = if qx > 0.0 && qy > 0.0 {
+        (qx * qx + qy * qy).sqrt()
+      } else if qx > 0.0 {
+        qx
+      } else if qy > 0.0 {
+        qy
+      } else {
+        0.0
+      }
+      let d = outside_dist - scaled_radius
+      if d < 0.5 {
+        shadow_pixmap.set_pixel(sx, sy, shadow_color)
+      }
+    }
   }
+  let blurred = if blur_r > 0.5 {
+    sun_box_blur_pixmap(shadow_pixmap, blur_r)
+  } else {
+    shadow_pixmap
+  }
+  let draw_x = rect.origin.x + shadow.offset.x - spread - pad.to_double()
+  let draw_y = rect.origin.y + shadow.offset.y - spread - pad.to_double()
+  self.canvas.draw_pixmap(
+    blurred,
+    draw_x.to_int(),
+    draw_y.to_int(),
+    @sun_graphics.Paint::new().set_opacity(1.0),
+  )
 }
 
 ///|
@@ -1192,13 +1357,7 @@ fn SunRasterRenderer::draw_shader_effect(
           a=sun_channel(alpha),
         )
         let paint = @sun_graphics.Paint::new().set_color(color)
-        self.canvas.fill_rect(
-          center_x - r,
-          center_y - r,
-          r * 2.0,
-          r * 2.0,
-          paint,
-        )
+        self.canvas.fill_circle(center_x, center_y, r, paint)
       }
     }
     _ => {
@@ -1217,7 +1376,8 @@ fn SunRasterRenderer::draw_shader_effect(
 ///|
 fn sun_filter_effect(effect : @core.FilterEffect) -> @sun_graphics.PaintFilter {
   match effect {
-    @core.FilterEffect::Blur(_) => @sun_graphics.PaintFilter::identity()
+    @core.FilterEffect::Blur(_) =>
+      @sun_graphics.PaintFilter::identity()
     @core.FilterEffect::Saturate(factor) =>
       @sun_graphics.PaintFilter::saturate(factor)
     @core.FilterEffect::Brightness(factor) =>
@@ -1227,6 +1387,150 @@ fn sun_filter_effect(effect : @core.FilterEffect) -> @sun_graphics.PaintFilter {
     @core.FilterEffect::ColorMatrix(values) =>
       @sun_graphics.PaintFilter::color_matrix(values)
   }
+}
+
+///|
+fn sun_box_blur_pixmap(
+  src : @sun_graphics.Pixmap,
+  radius : Double,
+) -> @sun_graphics.Pixmap {
+  let r = radius.max(0.0).to_int()
+  guard r > 0 else { return src }
+  // Three-pass box blur approximates a Gaussian kernel, producing
+  // much smoother falloff than a single pass while keeping the same
+  // effective blur spread (each pass uses the full integer radius).
+  let pass1 = sun_single_box_blur(src, r)
+  let pass2 = sun_single_box_blur(pass1, r)
+  sun_single_box_blur(pass2, r)
+}
+
+
+///|
+fn sun_single_box_blur(
+  src : @sun_graphics.Pixmap,
+  r : Int,
+) -> @sun_graphics.Pixmap {
+  let w = src.get_width()
+  let h = src.get_height()
+  guard w > 0 && h > 0 else { return src }
+  let k = 2 * r + 1
+  let temp = @sun_graphics.Pixmap::new(w, h)
+  // Horizontal pass with sliding window
+  for y in 0..<h {
+    let mut sum_r = 0.0
+    let mut sum_g = 0.0
+    let mut sum_b = 0.0
+    let mut sum_a = 0.0
+    for dx in (0 - r)..<(r + 1) {
+      let c = src.get_pixel(dx.max(0).min(w - 1), y)
+      sum_r = sum_r + c.r.to_int().to_double()
+      sum_g = sum_g + c.g.to_int().to_double()
+      sum_b = sum_b + c.b.to_int().to_double()
+      sum_a = sum_a + c.a.to_int().to_double()
+    }
+    temp.set_pixel(
+      0,
+      y,
+      @sun_graphics.Color::new(
+        r=sun_blur_channel(sum_r, k),
+        g=sun_blur_channel(sum_g, k),
+        b=sun_blur_channel(sum_b, k),
+        a=sun_blur_channel(sum_a, k),
+      ),
+    )
+    for x in 1..<w {
+      let leave = src.get_pixel((x - 1 - r).max(0), y)
+      let enter = src.get_pixel((x + r).min(w - 1), y)
+      sum_r = sum_r + enter.r.to_int().to_double() - leave.r.to_int().to_double()
+      sum_g = sum_g + enter.g.to_int().to_double() - leave.g.to_int().to_double()
+      sum_b = sum_b + enter.b.to_int().to_double() - leave.b.to_int().to_double()
+      sum_a = sum_a + enter.a.to_int().to_double() - leave.a.to_int().to_double()
+      temp.set_pixel(
+        x,
+        y,
+        @sun_graphics.Color::new(
+          r=sun_blur_channel(sum_r, k),
+          g=sun_blur_channel(sum_g, k),
+          b=sun_blur_channel(sum_b, k),
+          a=sun_blur_channel(sum_a, k),
+        ),
+      )
+    }
+  }
+  let dst = @sun_graphics.Pixmap::new(w, h)
+  // Vertical pass with sliding window
+  for x in 0..<w {
+    let mut sum_r = 0.0
+    let mut sum_g = 0.0
+    let mut sum_b = 0.0
+    let mut sum_a = 0.0
+    for dy in (0 - r)..<(r + 1) {
+      let c = temp.get_pixel(x, dy.max(0).min(h - 1))
+      sum_r = sum_r + c.r.to_int().to_double()
+      sum_g = sum_g + c.g.to_int().to_double()
+      sum_b = sum_b + c.b.to_int().to_double()
+      sum_a = sum_a + c.a.to_int().to_double()
+    }
+    dst.set_pixel(
+      x,
+      0,
+      @sun_graphics.Color::new(
+        r=sun_blur_channel(sum_r, k),
+        g=sun_blur_channel(sum_g, k),
+        b=sun_blur_channel(sum_b, k),
+        a=sun_blur_channel(sum_a, k),
+      ),
+    )
+    for y in 1..<h {
+      let leave = temp.get_pixel(x, (y - 1 - r).max(0))
+      let enter = temp.get_pixel(x, (y + r).min(h - 1))
+      sum_r = sum_r + enter.r.to_int().to_double() - leave.r.to_int().to_double()
+      sum_g = sum_g + enter.g.to_int().to_double() - leave.g.to_int().to_double()
+      sum_b = sum_b + enter.b.to_int().to_double() - leave.b.to_int().to_double()
+      sum_a = sum_a + enter.a.to_int().to_double() - leave.a.to_int().to_double()
+      dst.set_pixel(
+        x,
+        y,
+        @sun_graphics.Color::new(
+          r=sun_blur_channel(sum_r, k),
+          g=sun_blur_channel(sum_g, k),
+          b=sun_blur_channel(sum_b, k),
+          a=sun_blur_channel(sum_a, k),
+        ),
+      )
+    }
+  }
+  dst
+}
+
+
+///|
+fn sun_blur_channel(sum : Double, count : Int) -> Byte {
+  ((sum / count.to_double()) + 0.5).to_int().max(0).min(255).to_byte()
+}
+
+///|
+fn sun_filter_pixmap(
+  src : @sun_graphics.Pixmap,
+  filter : @sun_graphics.PaintFilter,
+) -> @sun_graphics.Pixmap {
+  let w = src.get_width()
+  let h = src.get_height()
+  let dst = @sun_graphics.Pixmap::new(w, h)
+  let pixels = src.get_pixels()
+  for y in 0..<h {
+    for x in 0..<w {
+      let offset = (y * w + x) * 4
+      let src_color = @sun_graphics.Color::new(
+        r=pixels[offset],
+        g=pixels[offset + 1],
+        b=pixels[offset + 2],
+        a=pixels[offset + 3],
+      )
+      dst.set_pixel(x, y, filter.apply(src_color))
+    }
+  }
+  dst
 }
 
 ///|
