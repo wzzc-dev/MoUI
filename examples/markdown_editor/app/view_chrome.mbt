@@ -25,7 +25,7 @@ fn MarkdownEditorApp::root(
   if !zen {
     children.push(
       self.chrome(
-        theme, document, selection, workspace_width,
+        theme, document, selection, snapshot, workspace_width,
       ),
     )
   }
@@ -243,16 +243,15 @@ fn markdown_editor_centered_workspace(
 }
 
 ///|
-/// Quiet title bar in Typora style: document title with a subtle unsaved dot
-/// on the left, and a single "⋯" menu button on the right. No toolbar
-/// clutter — all formatting flows through the format bubble / format palette
-/// or keyboard shortcuts. The bottom status bar carries word count and mode
-/// indicators so the title bar stays clean and focused on the document name.
+/// Typora-style title bar: file menu on the left, centered document title,
+/// word count on the right. No toolbar clutter — all formatting flows through
+/// the format bubble / format palette or keyboard shortcuts.
 fn MarkdownEditorApp::chrome(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
   source : String,
   selection : MarkdownEditorSelection,
+  snapshot : MarkdownEditorSnapshot,
   width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
   let title = markdown_editor_document_title(
@@ -267,14 +266,32 @@ fn MarkdownEditorApp::chrome(
   } else {
     empty()
   }
+
   let title_text = text(title, height=20.0)
     .font(theme.typography.body)
     .foreground(theme.palette.foreground)
-  // The "⋯" menu button reuses the More popover (file/view/format commands).
+
+  // Right: word count like Typora
+  let word_count_label = text(
+    snapshot.word_count.to_string() + " 词",
+    height=20.0,
+  )
+  .font(theme.typography.caption)
+  .foreground(theme.palette.muted)
+
+  // Right: menu button
   let menu = self.markdown_editor_more_menu(theme, source, selection)
+
   frame(
     row(
-      [unsaved_dot, title_text, spacer(), menu],
+      [
+        spacer(min_length=0.0, weight=1.0),
+        title_text,
+        unsaved_dot,
+        spacer(min_length=0.0, weight=1.0),
+        word_count_label,
+        menu,
+      ],
       spacing=theme.spacing_scale.sm,
       align=@views.CrossAlign::Center,
     ),
@@ -284,9 +301,7 @@ fn MarkdownEditorApp::chrome(
 }
 
 ///|
-/// Minimal bottom status bar: word/line count + active format + mode
-/// indicators. Slim enough to stay out of the way while still keeping the
-/// writer informed.
+/// Minimal bottom status bar: tree toggle + concise status + word count.
 fn MarkdownEditorApp::bottom_status_bar(
   self : MarkdownEditorApp,
   theme : @moui.Theme,
@@ -296,12 +311,10 @@ fn MarkdownEditorApp::bottom_status_bar(
   selection : MarkdownEditorSelection,
   width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
-  let _ = snapshot
-  let _ = block_label
+  let _ = source
   let show_files = self.file_sidebar_visible.get()
-  let toggle_label = if show_files { "☰" } else { "☰" }
   let tree_button = button(
-    toggle_label,
+    if show_files { "◉" } else { "◎" },
     on_click=ToggleFileSidebar,
     variant=@views.ButtonVariant::Ghost,
     theme~,
@@ -310,14 +323,17 @@ fn MarkdownEditorApp::bottom_status_bar(
   )
   .font(theme.typography.caption)
   .foreground(theme.palette.muted.multiply_alpha(0.7))
+
+  // Typora-style concise status: word count only
+  let status = snapshot.word_count.to_string() + " 词 / " + snapshot.line_count.to_string() + " 行"
+
   frame(
     row(
       [
         tree_button,
         text(
-          self.document_status_label(snapshot, block_label, selection) +
-          markdown_editor_active_format_suffix(source, selection),
-          width=width - 28.0,
+          status,
+          width=width - 36.0,
           height=18.0,
         )
         .font(theme.typography.caption)
