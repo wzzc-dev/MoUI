@@ -425,37 +425,3 @@ fn markdown_editor_toggle_image_center(source : String, wrap : Bool) -> String {
 }
 
 ///|
-fn markdown_editor_wrap_image_in_center(source : String, _offset : Int) -> String {
-  markdown_editor_toggle_image_center(source, true)
-}
-
-///|
-fn markdown_editor_unwrap_image_center(source : String, _offset : Int) -> String {
-  markdown_editor_toggle_image_center(source, false)
-}
-
-///|
-/// Check if the first image (`![`) in the source is centered.
-fn markdown_editor_image_is_centered_in_doc(source : String) -> Bool {
-  let lines = source.split("\n").to_array()
-  let line_views : Array[String] = []
-  for line in lines {
-    line_views.push(line.to_owned())
-  }
-  for i in 0..<line_views.length() {
-    if line_views[i].contains("![") {
-      if i > 0 && i + 1 < line_views.length() {
-        let prev = line_views[i - 1]
-        let next = line_views[i + 1]
-        if prev.trim().to_owned() == "<center>" &&
-          next.trim().to_owned() == "</center>" {
-          return true
-        }
-      }
-      return false
-    }
-  }
-  false
-}
-
-///|

@@ -65,14 +65,6 @@ pub struct MarkdownEditorApp {
 }
 
 ///|
-
-///|
-enum MarkdownEditorDirectoryTreeMsg {
-  SelectTreePath(String)
-  ToggleTreePath(String)
-}
-
-///|
 struct MarkdownEditorHistoryEntry {
   source : String
   selection : MarkdownEditorSelection
@@ -281,11 +273,7 @@ pub enum MarkdownEditorMsg {
   SelectTreePath(String)
   ToggleTreePath(String)
   ToggleFileTree
-  DirectoryListingReceived(String, Array[@views.TreeItem])
-  ImportImageFromClipboard
   InsertMediaFromFileDrop(String)
-  SelectImage(Int)
-  DeselectImage
   ToggleImageCenter
 }
 
@@ -508,11 +496,6 @@ fn MarkdownEditorApp::update(
       }
       self.expanded_tree_paths.set(next)
     }
-    DirectoryListingReceived(path, items) => {
-      self.working_directory.set(path)
-      self.directory_tree_items.set(items)
-      self.transfer_status.set(TransferReady)
-    }
     JumpToOutline(source_start) => self.jump_to_outline(source_start)
     JumpToNextHeading => self.jump_to_next_heading()
     JumpToPreviousHeading => self.jump_to_previous_heading()
@@ -521,23 +504,7 @@ fn MarkdownEditorApp::update(
     IndentLines => self.shift_current_lines(indent=true)
     OutdentLines => self.shift_current_lines(indent=false)
     ToggleTaskAt(offset) => self.toggle_task_at(offset)
-    ImportImageFromClipboard =>
-      self.transfer_status.set(
-        TransferUnavailable(
-          "clipboard image import requires host services",
-        ),
-      )
     InsertMediaFromFileDrop(path) => self.insert_media_from_path(path)
-    SelectImage(offset) => {
-      self.selected_image_offset.set(Some(offset))
-      self.image_centered.set(markdown_editor_image_is_centered_in_doc(
-        self.document.get(),
-      ))
-    }
-    DeselectImage => {
-      self.selected_image_offset.set(None)
-      self.image_centered.set(false)
-    }
     ToggleImageCenter => {
       let doc = self.document.get()
       let centered = !self.image_centered.get()
@@ -572,8 +539,6 @@ fn MarkdownEditorApp::update_with_services(
         (self, self.request_file_open(services))
       }
     ImportFromClipboard => (self, self.request_clipboard_import(services))
-    ImportImageFromClipboard =>
-      (self, self.request_clipboard_image_import(services))
     ExportToClipboard => (self, self.request_clipboard_export(services))
     ExportHtmlToClipboard => (self, self.request_html_export(services))
     OpenTarget => (self, self.request_open_target(services))
@@ -602,7 +567,6 @@ fn MarkdownEditorApp::update_with_services(
       self.apply_transfer_completion_with_services(completion, services)
       (self, @moui.Effect::none())
     }
-    DirectoryListingReceived(_, _) => (self, @moui.Effect::none())
     _ => (self.update(message), @moui.Effect::none())
   }
 }

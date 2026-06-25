@@ -80,6 +80,7 @@ fn markdown_editor_command_from_action(
 }
 
 ///|
+#warnings("-unused_value")
 fn markdown_editor_command_active(
   source : String,
   selection : MarkdownEditorSelection,
@@ -106,37 +107,6 @@ fn markdown_editor_command_active(
       markdown_editor_active_block_label(source, selection) == "Rule"
     Table => markdown_editor_active_block_label(source, selection) == "Table"
     _ => false
-  }
-}
-
-///|
-fn markdown_editor_active_format_suffix(
-  source : String,
-  selection : MarkdownEditorSelection,
-) -> String {
-  let labels : Array[String] = []
-  if markdown_editor_command_active(source, selection, Bold) {
-    labels.push("Bold")
-  }
-  if markdown_editor_command_active(source, selection, Italic) {
-    labels.push("Italic")
-  }
-  if markdown_editor_command_active(source, selection, Code) {
-    labels.push("Code")
-  }
-  if markdown_editor_command_active(source, selection, Strikethrough) {
-    labels.push("Strike")
-  }
-  if markdown_editor_command_active(source, selection, Link) {
-    labels.push("Link")
-  }
-  if markdown_editor_command_active(source, selection, Image) {
-    labels.push("Image")
-  }
-  if labels.length() == 0 {
-    ""
-  } else {
-    " / Active: " + labels.join(", ")
   }
 }
 
