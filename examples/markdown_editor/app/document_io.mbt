@@ -248,7 +248,7 @@ fn MarkdownEditorApp::request_text_file_read(
 
 ///|
 fn MarkdownEditorApp::request_pick_working_directory(
-  self : MarkdownEditorApp,
+  _self : MarkdownEditorApp,
   services : @host.HostAppServices,
 ) -> @moui.Effect[MarkdownEditorMsg] {
   @moui.Effect::host_service(
@@ -269,63 +269,6 @@ fn MarkdownEditorApp::request_pick_working_directory(
       )
     },
   )
-}
-
-///|
-fn MarkdownEditorApp::request_list_directory(
-  self : MarkdownEditorApp,
-  path : String,
-  services : @host.HostAppServices,
-) -> @moui.Effect[MarkdownEditorMsg] {
-  if path == "" {
-    return @moui.Effect::none()
-  }
-  @moui.Effect::host_service(
-    key="markdown-editor:list-directory:" + path,
-    label="List directory",
-    run=dispatch => {
-      let request = @host.HostServiceRequest::ListDirectory(path)
-      let response = services.list_directory(path)
-      dispatch(
-        DirectoryListingReceived(
-          path,
-          markdown_editor_tree_items_from_response(path, response),
-        ),
-      )
-    },
-  )
-}
-
-///|
-fn markdown_editor_tree_items_from_response(
-  path : String,
-  response : @host.HostServiceResponse,
-) -> Array[@views.TreeItem] {
-  match response {
-    @host.HostServiceResponse::DirectoryListing(_, entries) =>
-      markdown_editor_tree_items_from_listing(path, entries)
-    @host.HostServiceResponse::Unavailable(_) => []
-    _ => []
-  }
-}
-
-///|
-fn MarkdownEditorApp::perform_pick_working_directory(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
-  let response = services.pick_directory(title="Choose folder")
-  match response {
-    @host.HostServiceResponse::FileDialogSelection(paths) =>
-      if paths.length() > 0 {
-        self.load_tree_from_directory(paths[0], services)
-      }
-    @host.HostServiceResponse::Pending(_) => ()
-    _ =>
-      self.transfer_status.set(
-        TransferUnavailable("directory picker unavailable"),
-      )
-  }
 }
 
 ///|
@@ -523,11 +466,6 @@ fn markdown_editor_document_base_dir(path : String) -> String? {
 }
 
 ///|
-fn MarkdownEditorApp::transfer_status_label(self : MarkdownEditorApp) -> String {
-  markdown_editor_transfer_status_label(self.transfer_status.get())
-}
-
-///|
 fn MarkdownEditorApp::request_clipboard_import(
   self : MarkdownEditorApp,
   services : @host.HostAppServices,
@@ -547,53 +485,6 @@ fn MarkdownEditorApp::request_clipboard_import(
         ),
       )
     },
-  )
-}
-
-///|
-fn MarkdownEditorApp::request_clipboard_image_import(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> @moui.Effect[MarkdownEditorMsg] {
-  self.transfer_status.set(TransferRequesting(ClipboardImport))
-  @moui.Effect::host_service(
-    key="markdown-editor:clipboard-image-import",
-    label="Import image from clipboard",
-    run=dispatch => {
-      let request = @host.HostServiceRequest::Clipboard(
-        @host.HostClipboardRequest::ReadImage,
-      )
-      let response = services.read_clipboard_image()
-      dispatch(
-        HostTransferCompleted(
-          markdown_editor_host_completion_for_response(request, response),
-        ),
-      )
-    },
-  )
-}
-
-///|
-fn MarkdownEditorApp::perform_clipboard_image_import(
-  self : MarkdownEditorApp,
-  services : @host.HostAppServices,
-) -> Unit {
-  self.transfer_status.set(TransferRequesting(ClipboardImport))
-  let request = @host.HostServiceRequest::Clipboard(
-    @host.HostClipboardRequest::ReadImage,
-  )
-  let response = services.read_clipboard_image()
-  match response {
-    @host.HostServiceResponse::Pending(id) =>
-      ignore(
-        services.on_completed(id, completion => {
-          self.apply_transfer_completion(completion)
-        }),
-      )
-    _ => ()
-  }
-  self.apply_transfer_completion(
-    markdown_editor_host_completion_for_response(request, response),
   )
 }
 
@@ -991,7 +882,7 @@ fn MarkdownEditorApp::apply_transfer_completion_with_services(
         paths,
         services,
       )
-    @host.HostServiceResponse::DirectoryListing(path, entries) =>
+    @host.HostServiceResponse::DirectoryListing(path, _entries) =>
       self.apply_directory_listing(path, completion.response)
     _ => self.apply_transfer_completion(completion)
   }
@@ -1089,7 +980,8 @@ fn MarkdownEditorApp::apply_file_dialog_selection_with_services(
   }
 }
 
-///|
+
+#warnings("-unused_value")
 fn markdown_editor_transfer_status_label(
   status : MarkdownEditorTransferStatus,
 ) -> String {
@@ -1181,6 +1073,7 @@ fn markdown_editor_host_completion_for_response(
 }
 
 ///|
+#warnings("-unused_value")
 fn markdown_editor_status_label(
   block_label : String,
   snapshot : MarkdownEditorSnapshot,
