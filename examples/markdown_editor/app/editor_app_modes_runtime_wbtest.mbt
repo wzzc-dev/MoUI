@@ -401,37 +401,28 @@ test "markdown editor image center wraps image in center tags" {
   let app = MarkdownEditorApp::new()
   app.set_document("Before\n\n![photo](img.png)\n\nAfter")
   let offset = app.document().find("![photo]").unwrap_or(0)
-  ignore(app.update(SelectImage(offset)))
-  inspect(@debug.to_string(app.selected_image_offset.get()), content="Some(8)")
+  app.selected_image_offset.set(Some(offset))
   ignore(app.update(ToggleImageCenter))
   let doc = app.document()
   assert_true(doc.contains("<center>"))
   assert_true(doc.contains("</center>"))
   assert_true(doc.contains("![photo](img.png)"))
-  assert_true(doc.starts_with("Before"))
-  assert_true(doc.ends_with("After"))
+  assert_true(doc.has_prefix("Before"))
+  assert_true(doc.has_suffix("After"))
   ignore(app.update(ToggleImageCenter))
   assert_false(app.document().contains("<center>"))
 }
 
 //|
 test "markdown editor image center detects centered state" {
-  let wrapped = markdown_editor_wrap_image_in_center(
+  let wrapped = markdown_editor_toggle_image_center(
     "Before\n\n![photo](img.png)\n\nAfter",
-    8,
+    true,
   )
   assert_true(wrapped.contains("<center>"))
   assert_true(wrapped.contains("</center>"))
-  let unwrapped = markdown_editor_unwrap_image_center(wrapped, 8)
+  let unwrapped = markdown_editor_toggle_image_center(wrapped, false)
   assert_false(unwrapped.contains("<center>"))
   assert_false(unwrapped.contains("</center>"))
 }
 
-//|
-test "markdown editor image select deselect resets state" {
-  let app = MarkdownEditorApp::new()
-  ignore(app.update(SelectImage(42)))
-  inspect(@debug.to_string(app.selected_image_offset.get()), content="Some(42)")
-  ignore(app.update(DeselectImage))
-  inspect(@debug.to_string(app.selected_image_offset.get()), content="None")
-}

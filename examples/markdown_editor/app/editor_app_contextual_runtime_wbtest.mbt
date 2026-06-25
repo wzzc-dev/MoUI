@@ -1,26 +1,4 @@
 ///|
-test "markdown editor status reports active inline format" {
-  inspect(
-    markdown_editor_active_format_suffix(
-      "Text **bold** and [MoUI](https://moui.dev)",
-      { caret: 9, selection: None },
-    ),
-    content=" / Active: Bold",
-  )
-  inspect(
-    markdown_editor_active_format_suffix(
-      "Text **bold** and [MoUI](https://moui.dev)",
-      { caret: 21, selection: None },
-    ),
-    content=" / Active: Link",
-  )
-  inspect(
-    markdown_editor_active_format_suffix("Plain", { caret: 2, selection: None }),
-    content="",
-  )
-}
-
-///|
 test "markdown editor toolbar active state follows caret context" {
   let source = "# Title\n\nText **bold** and [MoUI](https://moui.dev)\n- item\n> quote"
   inspect(

@@ -78,7 +78,7 @@ fn MarkdownEditorApp::root(
     appearance,
     padding_edges(
       workspace,
-      top=theme.spacing_scale.md,
+      top=0.0,
       right=theme.spacing_scale.xl,
       bottom=theme.spacing_scale.xl,
       left=theme.spacing_scale.md,
@@ -266,6 +266,17 @@ fn MarkdownEditorApp::chrome(
   } else {
     empty()
   }
+  // Left: file menu button like Typora
+  let file_menu = button(
+    "文件",
+    on_click=ToggleMoreMenu,
+    variant=@views.ButtonVariant::Ghost,
+    theme~,
+    width=40.0,
+    height=28.0,
+  )
+  .font(theme.typography.caption)
+  .foreground(theme.palette.muted)
 
   let title_text = text(title, height=20.0)
     .font(theme.typography.body)
@@ -285,6 +296,8 @@ fn MarkdownEditorApp::chrome(
   frame(
     row(
       [
+        spacer(min_length=70.0, weight=0.0),
+        file_menu,
         spacer(min_length=0.0, weight=1.0),
         title_text,
         unsaved_dot,
@@ -311,7 +324,9 @@ fn MarkdownEditorApp::bottom_status_bar(
   selection : MarkdownEditorSelection,
   width : Double,
 ) -> @moui.View[MarkdownEditorMsg] {
+  let _ = block_label
   let _ = source
+  let _ = selection
   let show_files = self.file_sidebar_visible.get()
   let tree_button = button(
     if show_files { "◉" } else { "◎" },
@@ -744,34 +759,7 @@ fn markdown_editor_format_palette_items() -> Array[
 }
 
 ///|
-fn MarkdownEditorApp::document_status_label(
-  self : MarkdownEditorApp,
-  snapshot : MarkdownEditorSnapshot,
-  block_label : String,
-  selection : MarkdownEditorSelection,
-) -> String {
-  let title = markdown_editor_document_title(
-    path=self.document_path.get(),
-    fallback=snapshot.active_heading,
-  )
-  let save_state = if self.is_dirty() { "Unsaved" } else { "Saved" }
-  let transfer = self.transfer_status_label()
-  let transfer_suffix = if transfer == "" { "" } else { " / " + transfer }
-  let mode_suffix = self.writing_mode_status_suffix()
-  let look_suffix = self.appearance_status_suffix()
-  let source_suffix = self.source_mode_status_suffix()
-  title +
-  " / " +
-  save_state +
-  " / " +
-  markdown_editor_status_label(block_label, snapshot, selection) +
-  mode_suffix +
-  source_suffix +
-  look_suffix +
-  transfer_suffix
-}
-
-///|
+#warnings("-unused_value")
 fn MarkdownEditorApp::source_mode_status_suffix(
   self : MarkdownEditorApp,
 ) -> String {
@@ -783,6 +771,7 @@ fn MarkdownEditorApp::source_mode_status_suffix(
 }
 
 ///|
+#warnings("-unused_value")
 fn MarkdownEditorApp::appearance_status_suffix(
   self : MarkdownEditorApp,
 ) -> String {
@@ -795,6 +784,7 @@ fn MarkdownEditorApp::appearance_status_suffix(
 }
 
 ///|
+#warnings("-unused_value")
 fn MarkdownEditorApp::writing_mode_status_suffix(
   self : MarkdownEditorApp,
 ) -> String {

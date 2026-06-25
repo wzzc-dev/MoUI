@@ -15,7 +15,6 @@ test "code highlight tokenizes Python with keyword comment and plain spans" {
   )
   let comment_spans = spans.filter(span => highlight_kind_name(span.kind) == "CodeComment")
   let keyword_spans = spans.filter(span => highlight_kind_name(span.kind) == "CodeKeyword")
-  let plain_spans = spans.filter(span => highlight_kind_name(span.kind) == "CodePlain")
   assert_true(comment_spans.any(span => span.text == "# config.py"))
   assert_true(keyword_spans.any(span => span.text == "def"))
   assert_true(
@@ -42,9 +41,6 @@ test "code highlight tokenizes TypeScript with keywords and numbers" {
   let keyword_spans = spans
     .filter(span => highlight_kind_name(span.kind) == "CodeKeyword")
   let keyword_texts = keyword_spans.map(span => span.text)
-  let plain_spans = spans
-    .filter(span => highlight_kind_name(span.kind) == "CodePlain")
-  let plain_texts = plain_spans.map(span => span.text)
   assert_true(keyword_texts.contains("const"))
   assert_true(keyword_texts.contains("async"))
   assert_true(keyword_texts.contains("function"))
@@ -70,7 +66,6 @@ test "code highlight tokenizes YAML with line comments and plain keys" {
     "# deployment\nservice:\n  image: nginx:1.25\n  replicas: 3\n", "yaml",
   )
   let comment_spans = spans.filter(span => highlight_kind_name(span.kind) == "CodeComment")
-  let plain_spans = spans.filter(span => highlight_kind_name(span.kind) == "CodePlain")
   assert_true(comment_spans.any(span => span.text == "# deployment"))
   assert_true(
     spans.any(span => {
