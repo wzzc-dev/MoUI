@@ -8,6 +8,16 @@ extern "C" fn macos_clipboard_read_text_bytes() -> Bytes = "moui_macos_clipboard
 #borrow(text)
 extern "C" fn macos_clipboard_write_text_bytes(text : Bytes) -> Int = "moui_macos_clipboard_write_text"
 
+//|
+extern "C" fn macos_clipboard_has_image() -> Int = "moui_macos_clipboard_has_image"
+
+//|
+extern "C" fn macos_clipboard_read_image_bytes() -> Bytes = "moui_macos_clipboard_read_image"
+
+//|
+#borrow(data)
+extern "C" fn macos_clipboard_write_image_bytes(data : Bytes) -> Int = "moui_macos_clipboard_write_image"
+
 ///|
 #borrow(url)
 extern "C" fn macos_open_url_bytes(url : Bytes) -> Int = "moui_macos_open_url"
@@ -150,6 +160,8 @@ pub fn macos_service_bridge(
           menu_command_response(commands, menu(commands))
         @host.HostServiceRequest::QuerySystemTheme =>
           @host.HostServiceResponse::SystemTheme(system_theme)
+        @host.HostServiceRequest::ListDirectory(_) =>
+          @host.HostServiceResponse::Unavailable("directory listing not available on macOS backend")
       }
     },
   )
@@ -256,5 +268,23 @@ fn dispatch_macos_clipboard(
         @host.HostServiceResponse::Unavailable("clipboard write failed")
       }
     }
+    @host.HostClipboardRequest::ReadImage =>
+      if macos_clipboard_has_image() != 0 {
+        @host.HostServiceResponse::ClipboardImage(
+          macos_clipboard_read_image_bytes(),
+        )
+      } else {
+        @host.HostServiceResponse::Unavailable(
+          "clipboard does not contain image",
+        )
+      }
+    @host.HostClipboardRequest::WriteImage(_mime, bytes) =>
+      if macos_clipboard_write_image_bytes(bytes) != 0 {
+        @host.HostServiceResponse::ClipboardWritten
+      } else {
+        @host.HostServiceResponse::Unavailable(
+          "clipboard image write failed",
+        )
+      }
   }
 }

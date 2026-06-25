@@ -254,6 +254,16 @@ test "markdown editor runtime quick format row applies command" {
   assert_false(app.format_palette_visible())
 }
 
+//|
+test "markdown editor set document from input anchors scroll position" {
+  let app = MarkdownEditorApp::new()
+  app.edit_document("# Long\n\nParagraph text\n\nMore text\n\nEnd")
+  app.editor_scroll.scroll_to(x=0.0, y=50.0)
+  let before = app.editor_scroll_y()
+  app.set_document_from_input("# Long\n\nParagraph text updated\n\nMore text\n\nEnd")
+  inspect(app.editor_scroll_y(), content=before.to_string())
+}
+
 ///|
 test "markdown editor quick format submit applies first filtered command" {
   let app = MarkdownEditorApp::new()
@@ -384,4 +394,44 @@ test "markdown editor runtime front matter shortcuts insert metadata" {
     ),
   )
   assert_true(control_app.document().has_prefix("---\ntitle: Untitled"))
+}
+
+//|
+test "markdown editor image center wraps image in center tags" {
+  let app = MarkdownEditorApp::new()
+  app.set_document("Before\n\n![photo](img.png)\n\nAfter")
+  let offset = app.document().find("![photo]").unwrap_or(0)
+  ignore(app.update(SelectImage(offset)))
+  inspect(@debug.to_string(app.selected_image_offset.get()), content="Some(8)")
+  ignore(app.update(ToggleImageCenter))
+  let doc = app.document()
+  assert_true(doc.contains("<center>"))
+  assert_true(doc.contains("</center>"))
+  assert_true(doc.contains("![photo](img.png)"))
+  assert_true(doc.starts_with("Before"))
+  assert_true(doc.ends_with("After"))
+  ignore(app.update(ToggleImageCenter))
+  assert_false(app.document().contains("<center>"))
+}
+
+//|
+test "markdown editor image center detects centered state" {
+  let wrapped = markdown_editor_wrap_image_in_center(
+    "Before\n\n![photo](img.png)\n\nAfter",
+    8,
+  )
+  assert_true(wrapped.contains("<center>"))
+  assert_true(wrapped.contains("</center>"))
+  let unwrapped = markdown_editor_unwrap_image_center(wrapped, 8)
+  assert_false(unwrapped.contains("<center>"))
+  assert_false(unwrapped.contains("</center>"))
+}
+
+//|
+test "markdown editor image select deselect resets state" {
+  let app = MarkdownEditorApp::new()
+  ignore(app.update(SelectImage(42)))
+  inspect(@debug.to_string(app.selected_image_offset.get()), content="Some(42)")
+  ignore(app.update(DeselectImage))
+  inspect(@debug.to_string(app.selected_image_offset.get()), content="None")
 }

@@ -247,6 +247,169 @@ fn MarkdownEditorApp::request_text_file_read(
 }
 
 ///|
+fn MarkdownEditorApp::request_pick_working_directory(
+  self : MarkdownEditorApp,
+  services : @host.HostAppServices,
+) -> @moui.Effect[MarkdownEditorMsg] {
+  @moui.Effect::host_service(
+    key="markdown-editor:pick-working-directory",
+    label="Pick working directory",
+    run=dispatch => {
+      let request = @host.HostServiceRequest::FileDialog(
+        @host.HostFileDialogOptions::new(
+          kind=@host.HostFileDialogKind::PickDirectory,
+          title="Choose folder",
+        ),
+      )
+      let response = services.pick_directory(title="Choose folder")
+      dispatch(
+        HostTransferCompleted(
+          markdown_editor_host_completion_for_response(request, response),
+        ),
+      )
+    },
+  )
+}
+
+///|
+fn MarkdownEditorApp::request_list_directory(
+  self : MarkdownEditorApp,
+  path : String,
+  services : @host.HostAppServices,
+) -> @moui.Effect[MarkdownEditorMsg] {
+  if path == "" {
+    return @moui.Effect::none()
+  }
+  @moui.Effect::host_service(
+    key="markdown-editor:list-directory:" + path,
+    label="List directory",
+    run=dispatch => {
+      let request = @host.HostServiceRequest::ListDirectory(path)
+      let response = services.list_directory(path)
+      dispatch(
+        DirectoryListingReceived(
+          path,
+          markdown_editor_tree_items_from_response(path, response),
+        ),
+      )
+    },
+  )
+}
+
+///|
+fn markdown_editor_tree_items_from_response(
+  path : String,
+  response : @host.HostServiceResponse,
+) -> Array[@views.TreeItem] {
+  match response {
+    @host.HostServiceResponse::DirectoryListing(_, entries) =>
+      markdown_editor_tree_items_from_listing(path, entries)
+    @host.HostServiceResponse::Unavailable(_) => []
+    _ => []
+  }
+}
+
+///|
+fn MarkdownEditorApp::perform_pick_working_directory(
+  self : MarkdownEditorApp,
+  services : @host.HostAppServices,
+) -> Unit {
+  let response = services.pick_directory(title="Choose folder")
+  match response {
+    @host.HostServiceResponse::FileDialogSelection(paths) =>
+      if paths.length() > 0 {
+        self.load_tree_from_directory(paths[0], services)
+      }
+    @host.HostServiceResponse::Pending(_) => ()
+    _ =>
+      self.transfer_status.set(
+        TransferUnavailable("directory picker unavailable"),
+      )
+  }
+}
+
+///|
+fn MarkdownEditorApp::load_tree_from_directory(
+  self : MarkdownEditorApp,
+  path : String,
+  services : @host.HostAppServices,
+) -> Unit {
+  self.working_directory.set(path)
+  let response = services.list_directory(path)
+  self.apply_directory_listing(path, response)
+}
+
+///|
+fn MarkdownEditorApp::apply_directory_listing(
+  self : MarkdownEditorApp,
+  path : String,
+  response : @host.HostServiceResponse,
+) -> Unit {
+  match response {
+    @host.HostServiceResponse::DirectoryListing(_path, entries) => {
+      self.directory_tree_items.set(
+        markdown_editor_tree_items_from_listing(path, entries),
+      )
+      // Auto-expand root to show children
+      let current = self.expanded_tree_paths.get()
+      if current.length() == 0 {
+        self.expanded_tree_paths.set([path])
+      }
+      self.transfer_status.set(TransferReady)
+    }
+    @host.HostServiceResponse::Pending(_) => ()
+    @host.HostServiceResponse::Unavailable(reason) =>
+      self.transfer_status.set(
+        TransferUnavailable(
+          "directory listing unavailable: " + reason,
+        ),
+      )
+    _ =>
+      self.transfer_status.set(
+        TransferUnavailable("unsupported directory listing response"),
+      )
+  }
+}
+
+///|
+fn markdown_editor_tree_items_from_listing(
+  path : String,
+  entries : Array[@host.HostDirectoryEntry],
+) -> Array[@views.TreeItem] {
+  let root_name = markdown_editor_file_name(path)
+  let label = if root_name == "" { path } else { root_name }
+  let child_items : Array[@views.TreeItem] = []
+  for entry in entries {
+    if entry.is_directory {
+      let child_path = markdown_editor_join_path(entry.path, entry.name)
+      child_items.push(
+        @views.tree_item(
+          id=child_path,
+          label=entry.name,
+          children=[],
+        ),
+      )
+    } else {
+      child_items.push(
+        @views.tree_item(id=entry.path, label=entry.name),
+      )
+    }
+  }
+  [
+    @views.tree_item(id=path, label=label, children=child_items),
+  ]
+}
+
+///|
+fn markdown_editor_join_path(dir : String, file : String) -> String {
+  if dir.has_suffix("/") || dir.has_suffix("\\") {
+    dir + file
+  } else {
+    dir + "/" + file
+  }
+}
+
+///|
 fn MarkdownEditorApp::request_text_file_write(
   self : MarkdownEditorApp,
   path : String,
@@ -385,6 +548,113 @@ fn MarkdownEditorApp::request_clipboard_import(
       )
     },
   )
+}
+
+///|
+fn MarkdownEditorApp::request_clipboard_image_import(
+  self : MarkdownEditorApp,
+  services : @host.HostAppServices,
+) -> @moui.Effect[MarkdownEditorMsg] {
+  self.transfer_status.set(TransferRequesting(ClipboardImport))
+  @moui.Effect::host_service(
+    key="markdown-editor:clipboard-image-import",
+    label="Import image from clipboard",
+    run=dispatch => {
+      let request = @host.HostServiceRequest::Clipboard(
+        @host.HostClipboardRequest::ReadImage,
+      )
+      let response = services.read_clipboard_image()
+      dispatch(
+        HostTransferCompleted(
+          markdown_editor_host_completion_for_response(request, response),
+        ),
+      )
+    },
+  )
+}
+
+///|
+fn MarkdownEditorApp::perform_clipboard_image_import(
+  self : MarkdownEditorApp,
+  services : @host.HostAppServices,
+) -> Unit {
+  self.transfer_status.set(TransferRequesting(ClipboardImport))
+  let request = @host.HostServiceRequest::Clipboard(
+    @host.HostClipboardRequest::ReadImage,
+  )
+  let response = services.read_clipboard_image()
+  match response {
+    @host.HostServiceResponse::Pending(id) =>
+      ignore(
+        services.on_completed(id, completion => {
+          self.apply_transfer_completion(completion)
+        }),
+      )
+    _ => ()
+  }
+  self.apply_transfer_completion(
+    markdown_editor_host_completion_for_response(request, response),
+  )
+}
+
+///|
+fn MarkdownEditorApp::insert_media_from_path(
+  self : MarkdownEditorApp,
+  path : String,
+) -> Unit {
+  let file_name = markdown_editor_file_name(path)
+  let alt = markdown_editor_image_alt_from_filename(file_name)
+  let image_md = "![" + alt + "](" + path + ")"
+  self.insert_text_at_cursor(image_md)
+}
+
+///|
+fn markdown_editor_image_alt_from_filename(file_name : String) -> String {
+  let chars = file_name.to_array()
+  let dot_pos = markdown_editor_last_dot_position(chars)
+  let no_ext = match dot_pos {
+    Some(dot) => String::from_array(chars[:dot])
+    None => file_name
+  }
+  let result : Array[Char] = []
+  for ch in no_ext {
+    result.push(match ch {
+      '-' | '_' => ' '
+      _ => ch
+    })
+  }
+  String::from_array(result).trim().to_owned()
+}
+
+///|
+fn markdown_editor_last_dot_position(chars : Array[Char]) -> Int? {
+  let mut pos : Int? = None
+  for index, ch in chars {
+    if ch == '.' {
+      pos = Some(index)
+    }
+  }
+  pos
+}
+
+///|
+fn MarkdownEditorApp::insert_text_at_cursor(
+  self : MarkdownEditorApp,
+  text : String,
+) -> Unit {
+  let doc = self.document.get()
+  let sel = self.selection.get()
+  let caret = sel.caret
+  let range = sel.selection
+  let (before, after) = match range {
+    Some(r) => (doc[:r.start].to_owned(), doc[r.end:].to_owned())
+    None => (doc[:caret].to_owned(), doc[caret:].to_owned())
+  }
+  let new_caret = before.length() + text.length()
+  self.document.set(before + text + after)
+  self.selection.set({ caret: new_caret, selection: None })
+  self.sync_target_inputs()
+  self.maybe_center_typewriter_selection()
 }
 
 ///|
@@ -638,6 +908,13 @@ fn MarkdownEditorApp::apply_transfer_completion(
       self.transfer_status.set(TransferImported)
       self.push_toast("Markdown imported", tone=@views.FeedbackTone::Success)
     }
+    @host.HostServiceResponse::ClipboardImage(bytes) => {
+      let base64_data = @base64.encode(bytes[:])
+      let image_md = "![pasted image](data:image/png;base64," + base64_data + ")"
+      self.insert_text_at_cursor(image_md)
+      self.transfer_status.set(TransferImported)
+      self.push_toast("Image pasted", tone=@views.FeedbackTone::Success)
+    }
     @host.HostServiceResponse::ClipboardWritten =>
       match markdown_editor_active_transfer_kind(self.transfer_status.get()) {
         Some(ClipboardHtmlExport) => {
@@ -671,6 +948,8 @@ fn MarkdownEditorApp::apply_transfer_completion(
     }
     @host.HostServiceResponse::UrlOpened =>
       self.transfer_status.set(TransferTargetOpened)
+    @host.HostServiceResponse::DirectoryListing(path, entries) =>
+      self.apply_directory_listing(path, @host.HostServiceResponse::DirectoryListing(path, entries))
     @host.HostServiceResponse::Unavailable(reason) => {
       self.transfer_status.set(TransferUnavailable(reason))
       self.push_toast(
@@ -712,6 +991,8 @@ fn MarkdownEditorApp::apply_transfer_completion_with_services(
         paths,
         services,
       )
+    @host.HostServiceResponse::DirectoryListing(path, entries) =>
+      self.apply_directory_listing(path, completion.response)
     _ => self.apply_transfer_completion(completion)
   }
 }
@@ -798,6 +1079,9 @@ fn MarkdownEditorApp::apply_file_dialog_selection_with_services(
     @host.HostServiceRequest::FileDialog(
       { kind: @host.HostFileDialogKind::OpenFile, .. }
     ) => self.perform_text_file_read(path, services)
+    @host.HostServiceRequest::FileDialog(
+      { kind: @host.HostFileDialogKind::PickDirectory, .. }
+    ) => self.load_tree_from_directory(path, services)
     _ =>
       self.transfer_status.set(
         TransferUnavailable("unsupported file dialog response"),
@@ -970,4 +1254,20 @@ fn markdown_editor_file_name(path : String) -> String {
     }
   }
   String::from_array(chars[start:]).trim().to_owned()
+}
+
+///|
+fn markdown_editor_parent_directory(path : String) -> String {
+  let chars = path.to_array()
+  let mut last_slash : Int = -1
+  for index in 0..<chars.length() {
+    if chars[index] == '/' {
+      last_slash = index
+    }
+  }
+  if last_slash <= 0 {
+    ""
+  } else {
+    String::from_array(chars[:last_slash])
+  }
 }

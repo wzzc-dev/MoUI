@@ -342,6 +342,17 @@ export function createWindowWebImports(options = {}) {
     return `${error?.message || error || fallback}`;
   };
 
+  const base64ToUint8Array = value => {
+    try {
+      const binary = atob(`${value ?? ""}`);
+      const out = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
+      return out;
+    } catch {
+      return undefined;
+    }
+  };
+
   const logicalCanvasWidth = canvas =>
     Math.max(1, Math.round(canvas?.clientWidth || canvas?.width || 1));
 
@@ -624,6 +635,100 @@ export function createWindowWebImports(options = {}) {
             asyncFailureMessage(error, "clipboard read failed"),
           );
         });
+    },
+    clipboard_read_image_async(requestId) {
+      if (!navigator.clipboard?.read) {
+        completeAsyncText(
+          "web_complete_async_clipboard_read_image",
+          requestId,
+          false,
+          "clipboard image read requires navigator.clipboard.read",
+        );
+        return;
+      }
+      navigator.clipboard
+        .read()
+        .then(items => {
+          if (!items || items.length === 0) {
+            completeAsyncText(
+              "web_complete_async_clipboard_read_image",
+              requestId,
+              false,
+              "clipboard contains no items",
+            );
+            return;
+          }
+          const item = items[0];
+          const pngType = "image/png";
+          if (!item.types.includes(pngType)) {
+            completeAsyncText(
+              "web_complete_async_clipboard_read_image",
+              requestId,
+              false,
+              "clipboard item does not contain PNG image",
+            );
+            return;
+          }
+          item
+            .getType(pngType)
+            .then(blob => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result;
+                const base64 = result.split(",")[1] || "";
+                completeAsyncText(
+                  "web_complete_async_clipboard_read_image",
+                  requestId,
+                  true,
+                  base64,
+                );
+              };
+              reader.onerror = () => {
+                completeAsyncText(
+                  "web_complete_async_clipboard_read_image",
+                  requestId,
+                  false,
+                  "failed to read image blob",
+                );
+              };
+              reader.readAsDataURL(blob);
+            })
+            .catch(error => {
+              completeAsyncText(
+                "web_complete_async_clipboard_read_image",
+                requestId,
+                false,
+                asyncFailureMessage(error, "failed to read clipboard image"),
+              );
+            });
+        })
+        .catch(error => {
+          completeAsyncText(
+            "web_complete_async_clipboard_read_image",
+            requestId,
+            false,
+            asyncFailureMessage(error, "clipboard image read failed"),
+          );
+        });
+    },
+    clipboard_write_image(data) {
+      const base64 = stringValue(data);
+      if (!base64) {
+        return false;
+      }
+      if (!navigator.clipboard?.write) {
+        return false;
+      }
+      const binary = base64ToUint8Array(base64);
+      if (!binary) {
+        return false;
+      }
+      const blob = new Blob([binary], { type: "image/png" });
+      navigator.clipboard
+        .write([new ClipboardItem({ "image/png": blob })])
+        .then(() => {})
+        .catch(() => {});
+      return true;
     },
     file_dialog_open_async(requestId, kind, title, filters, defaultName) {
       const complete = (ok, value) =>

@@ -110,11 +110,16 @@ fn MarkdownEditorApp::set_selection(
 }
 
 ///|
+/// Update the document from typed input while anchoring the scroll position so
+/// the viewport stays stable. This prevents line-wrapping or content-shift
+/// jitter during continuous typing.
 fn MarkdownEditorApp::set_document_from_input(
   self : MarkdownEditorApp,
   value : String,
 ) -> Unit {
+  let anchor = self.editor_scroll.offset()
   self.document.set(value)
+  self.editor_scroll.scroll_to(x=anchor.x, y=anchor.y)
   self.sync_target_inputs()
   self.maybe_center_typewriter_selection()
 }
@@ -253,6 +258,9 @@ fn MarkdownEditorApp::apply_named_editor_action(
   } else if action == "previous-heading" {
     ignore(self.update(JumpToPreviousHeading))
     true
+  } else if action == "image-center" {
+    ignore(self.update(ToggleImageCenter))
+    true
   } else {
     match markdown_editor_command_from_action(action) {
       Some(command) => {
@@ -351,6 +359,103 @@ fn MarkdownEditorApp::toggle_current_task(self : MarkdownEditorApp) -> Unit {
     }
     None => ()
   }
+}
+
+///|
+/// Search source for first line containing `![` (image markdown),
+/// then wrap or unwrap it with `<center>` tags depending on `wrap`.
+fn markdown_editor_toggle_image_center(source : String, wrap : Bool) -> String {
+  let lines = source.split("\n").to_array()
+  let line_views : Array[String] = []
+  for line in lines {
+    line_views.push(line.to_owned())
+  }
+  let mut img_idx : Int? = None
+  for i in 0..<line_views.length() {
+    if line_views[i].contains("![") {
+      img_idx = Some(i)
+      break
+    }
+  }
+  match img_idx {
+    Some(idx) => {
+      if wrap {
+        let result = StringBuilder::new()
+        for j in 0..<idx {
+          if j > 0 { result.write_char('\n') }
+          result.write_string(line_views[j])
+        }
+        if idx > 0 { result.write_char('\n') }
+        result.write_string("<center>")
+        result.write_char('\n')
+        result.write_string(line_views[idx])
+        result.write_char('\n')
+        result.write_string("</center>")
+        for j in (idx + 1)..<line_views.length() {
+          result.write_char('\n')
+          result.write_string(line_views[j])
+        }
+        result.to_string()
+      } else {
+        // Unwrap: need <center> and </center> around
+        if idx > 0 && idx + 1 < line_views.length() {
+          let prev_chars = line_views[idx - 1].to_array()
+          let next_chars = line_views[idx + 1].to_array()
+          if String::from_array(prev_chars).trim().to_owned() == "<center>" &&
+            String::from_array(next_chars).trim().to_owned() == "</center>" {
+            let result = StringBuilder::new()
+            for j in 0..<(idx - 1) {
+              if j > 0 { result.write_char('\n') }
+              result.write_string(line_views[j])
+            }
+            if idx - 1 > 0 { result.write_char('\n') }
+            result.write_string(line_views[idx])
+            for j in (idx + 2)..<line_views.length() {
+              result.write_char('\n')
+              result.write_string(line_views[j])
+            }
+            return result.to_string()
+          }
+        }
+        source
+      }
+    }
+    None => source
+  }
+}
+
+///|
+fn markdown_editor_wrap_image_in_center(source : String, _offset : Int) -> String {
+  markdown_editor_toggle_image_center(source, true)
+}
+
+///|
+fn markdown_editor_unwrap_image_center(source : String, _offset : Int) -> String {
+  markdown_editor_toggle_image_center(source, false)
+}
+
+///|
+/// Check if the first image (`![`) in the source is centered.
+fn markdown_editor_image_is_centered_in_doc(source : String) -> Bool {
+  let lines = source.split("\n").to_array()
+  let line_views : Array[String] = []
+  for line in lines {
+    line_views.push(line.to_owned())
+  }
+  for i in 0..<line_views.length() {
+    if line_views[i].contains("![") {
+      if i > 0 && i + 1 < line_views.length() {
+        let prev = line_views[i - 1]
+        let next = line_views[i + 1]
+        if prev.trim().to_owned() == "<center>" &&
+          next.trim().to_owned() == "</center>" {
+          return true
+        }
+      }
+      return false
+    }
+  }
+  false
 }
 
 ///|

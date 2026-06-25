@@ -1,0 +1,37 @@
+# AI Session Logs
+
+This directory stores summaries of significant AI-agent-assisted
+development sessions for MoUI.
+
+## Purpose
+
+- Record **what was done**, **why**, and **what was learned**.
+- Help future agents (and maintainers) understand context that is
+  not captured in commit messages alone.
+- Track patterns that work well or pitfalls to avoid.
+
+## Naming Convention
+
+```
+YYYY-MM-DD-short-description.md
+```
+
+Example: `2026-06-25-button-variant-refactor.md`
+
+## When to Log a Session
+
+- Multi-file changes that touch architecture boundaries.
+- Sessions that produced an ADR.
+- Sessions where significant debugging or discovery happened.
+- Sessions that established a new pattern or anti-pattern.
+- **Not needed** for routine single-file edits, test additions, or doc tweaks.
+
+## Template
+
+Copy `TEMPLATE.md` and fill in the relevant sections.
+Keep it brief — aim for 1–2 pages max per session.
+
+## Index
+
+<!-- Add new entries newest-first: -->
+<!-- - [2026-06-25: Button variant refactor](2026-06-25-button-variant-refactor.md) -->

@@ -839,6 +839,11 @@ fn editor_source_layout(
     width=editor_width,
     height=viewport_height,
     state=Some(app.editor_scroll),
+  ).on_file_drop((paths, _position) =>
+    match paths {
+      [path, ..] if path != "" => InsertMediaFromFileDrop(path)
+      _ => DismissAuxiliaryPanels
+    }
   )
   let editor_view = if !show_source && !app.source_mode_enabled.get() {
     floating_target_palette(
